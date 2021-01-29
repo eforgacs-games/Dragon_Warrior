@@ -1,5 +1,6 @@
 from os.path import join
 
+FPS = 60
 REPLIT_DATA_DIR = '..\\data'
 DATA_DIR = '..\\data'
 FONTS_DIR = join(DATA_DIR, 'fonts')
