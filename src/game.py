@@ -2,7 +2,7 @@ import random
 import sys
 
 import pygame as pg
-from pygame import init, Surface, USEREVENT, time, quit, FULLSCREEN, RESIZABLE, DOUBLEBUF
+from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, DOUBLEBUF
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -18,13 +18,12 @@ from src import maps
 from src.camera import Camera
 from src.common import Direction, play_sound, bump_sfx, UNARMED_HERO_PATH, get_image, \
     menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally
-from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED
+from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.maps import parse_animated_spritesheet
 
 
 class Game:
     GAME_TITLE = "Dragon Warrior"
-    FPS = 60
     BACK_FILL_COLOR = BLACK
     MOVE_EVENT = USEREVENT + 1
     # time.set_timer(MOVE_EVENT, 100)
@@ -58,9 +57,11 @@ class Game:
             unarmed_hero_sheet.get_width() * self.scale, unarmed_hero_sheet.get_height() * self.scale))
         self.unarmed_hero_images = parse_animated_spritesheet(unarmed_hero_tilesheet, is_roaming=True)
 
-        self.current_map = maps.TantegelThroneRoom(hero_images=self.unarmed_hero_images)
+        # self.current_map can be changed to other maps for development purposes
+
+        # self.current_map = maps.TantegelThroneRoom(hero_images=self.unarmed_hero_images)
         # self.current_map = maps.TantegelCourtyard(hero_images=self.unarmed_hero_images)
-        # self.current_map = maps.Overworld(hero_images=self.unarmed_hero_images)
+        self.current_map = maps.Overworld(hero_images=self.unarmed_hero_images)
 
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
         self.bigmap = Surface((self.current_map.width, self.current_map.height)).convert()
@@ -104,7 +105,7 @@ class Game:
         :return: None
         """
         while True:
-            self.clock.tick(self.FPS)
+            self.clock.tick(FPS)
             self.get_events()
             self.draw_all()
             self.update_screen()
@@ -176,7 +177,7 @@ class Game:
 
         pg.event.pump()
 
-    def process_staircase_warps(self, staircase_dict: dict, staircase_location) -> None:
+    def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
         if (self.hero_layout_row, self.hero_layout_column) == staircase_location:
             if staircase_dict['stair_direction'] == 'down':
                 play_sound(stairs_down_sfx)
