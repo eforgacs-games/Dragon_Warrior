@@ -56,56 +56,64 @@ class CommandMenu(Menu):
         self.command_menu.add.button('DOOR', self.door, margin=(9, 0))
         self.command_menu.add.button('TAKE', self.take, margin=(9, 0))
 
-    def talk(self):
+    @staticmethod
+    def talk():
         """
         Talk to an NPC. (Not yet implemented)
         :return: To be determined upon implementation
         """
         print("TALK")
 
-    def status(self):
+    @staticmethod
+    def status():
         """
         Display the current player's status. (Not yet implemented)
         :return: To be determined upon implementation
         """
         print("STATUS")
 
-    def stairs(self):
+    @staticmethod
+    def stairs():
         """
         Go up or down a staircase. (Not yet implemented)
         :return: To be determined upon implementation
         """
         print("STAIRS")
 
-    def search(self):
+    @staticmethod
+    def search():
         """
         Search the ground for items. (Not yet implemented)
         :return: To be determined upon implementation
         """
         print("SEARCH")
 
-    def spell(self):
+    @staticmethod
+    def spell():
         """
         Cast a magic spell. (Not yet implemented)
         :return: To be determined upon implementation
         """
         print("SPELL")
 
-    def item(self):
+    @staticmethod
+    def item():
         """
         View/use items. (Not yet implemented)
         :return: To be determined upon implementation
         """
         print("ITEM")
 
-    def door(self):
+    @staticmethod
+    def door():
         """
         Open a door. (Not yet implemented)
         :return: To be determined upon implementation
         """
         print("DOOR")
 
-    def take(self):
+    @staticmethod
+    def take():
         """
         Take an item. (Not yet implemented)
         :return: To be determined upon implementation

@@ -310,23 +310,23 @@ class Game:
             self.character_rects.append(command_menu_rect)
         self.command_menu_launched = True
 
-    def move_player(self, key) -> None:
+    def move_player(self, current_key) -> None:
         """
         Move the player in a specified direction.
-        :param key: The key currently being pressed by the user.
+        :param current_key: The key currently being pressed by the user.
         """
         # block establishes direction if needed and whether to start or stop moving
         # TODO(ELF): separate dependency of camera pos and player pos
         curr_pos_x, curr_pos_y = self.camera.get_pos()
 
         if not self.player_moving:
-            if key[K_UP] or key[K_w]:
+            if current_key[K_UP] or current_key[K_w]:
                 self.current_map.player.direction = Direction.UP.value
-            elif key[K_DOWN] or key[K_s]:
+            elif current_key[K_DOWN] or current_key[K_s]:
                 self.current_map.player.direction = Direction.DOWN.value
-            elif key[K_LEFT] or key[K_a]:
+            elif current_key[K_LEFT] or current_key[K_a]:
                 self.current_map.player.direction = Direction.LEFT.value
-            elif key[K_RIGHT] or key[K_d]:
+            elif current_key[K_RIGHT] or current_key[K_d]:
                 self.current_map.player.direction = Direction.RIGHT.value
             else:  # player not moving and no moving key pressed
                 return
