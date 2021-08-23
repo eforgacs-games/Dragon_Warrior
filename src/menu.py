@@ -19,12 +19,15 @@ class Menu:
                                                                   widget_background_color=BLACK,
                                                                   widget_font_color=WHITE,
                                                                   widget_font_size=8 * SCALE,
-                                                                  widget_margin=(10 * SCALE, 5 * SCALE),
-                                                                  widget_offset=(0, 5 * SCALE),
                                                                   widget_selection_effect=pygame_menu.widgets.
-                                                                  LeftArrowSelection(blink_ms=500,
-                                                                                     arrow_size=(SCALE * 5, SCALE * 6)))
-        # TODO: Fix LeftArrowSelection size.
+                                                                  LeftArrowSelection(
+                                                                      # TODO: Disabling blinking arrow for now,
+                                                                      #  because the arrow disappears between selections.
+                                                                      #  Might be a problem with pygame-menu. Investigation needed.
+                                                                      # blink_ms=500,
+                                                                      # TODO: Fix LeftArrowSelection size.
+                                                                      arrow_size=(SCALE * 5, SCALE * 6))
+                                                                  )
 
 
 class CommandMenu(Menu):
@@ -35,26 +38,22 @@ class CommandMenu(Menu):
                                                         (row - 6) * TILE_SIZE,
                                                         8 * TILE_SIZE,
                                                         5 * TILE_SIZE)
-        self.command_menu = pygame_menu.Menu(height=command_menu_subsurface.get_height() * 3,
-                                             width=command_menu_subsurface.get_width() * 2,
-                                             title='COMMAND',
+        self.command_menu = pygame_menu.Menu('COMMAND',
+                                             command_menu_subsurface.get_width() * 2,
+                                             command_menu_subsurface.get_height() * 3,
                                              center_content=False,
-                                             # column_max_width=(TILE_SIZE * 1, TILE_SIZE * 3),
+                                             column_max_width=(TILE_SIZE * 4, TILE_SIZE * 4),
                                              columns=2,
-                                             enabled=True,
-                                             joystick_enabled=True,
-                                             mouse_enabled=False,
-                                             mouse_visible=False,
                                              rows=4,
                                              theme=self.dragon_warrior_menu_theme)
-        self.command_menu.add.button('TALK', self.talk, margin=(9, 0))
-        self.command_menu.add.button('STATUS', self.status, margin=(9, 0))
-        self.command_menu.add.button('STAIRS', self.stairs, margin=(9, 0))
-        self.command_menu.add.button('SEARCH', self.search, margin=(9, 0))
-        self.command_menu.add.button('SPELL', self.spell, margin=(9, 0))
-        self.command_menu.add.button('ITEM', self.item, margin=(9, 0))
-        self.command_menu.add.button('DOOR', self.door, margin=(9, 0))
-        self.command_menu.add.button('TAKE', self.take, margin=(9, 0))
+        self.command_menu.add.button('TALK', self.talk, margin=(9, 4))
+        self.command_menu.add.button('STATUS', self.status, margin=(9, 4))
+        self.command_menu.add.button('STAIRS', self.stairs, margin=(9, 4))
+        self.command_menu.add.button('SEARCH', self.search, margin=(9, 4))
+        self.command_menu.add.button('SPELL', self.spell, margin=(0, 4))
+        self.command_menu.add.button('ITEM', self.item, margin=(0, 4))
+        self.command_menu.add.button('DOOR', self.door, margin=(0, 4))
+        self.command_menu.add.button('TAKE', self.take, margin=(0, 4))
 
     @staticmethod
     def talk():
