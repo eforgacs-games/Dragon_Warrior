@@ -39,8 +39,7 @@ class CommandMenu(Menu):
                                              width=command_menu_subsurface.get_width() * 2,
                                              title='COMMAND',
                                              center_content=False,
-                                             column_force_fit_text=False,
-                                             column_max_width=(TILE_SIZE * 1, TILE_SIZE * 3),
+                                             # column_max_width=(TILE_SIZE * 1, TILE_SIZE * 3),
                                              columns=2,
                                              enabled=True,
                                              joystick_enabled=True,
@@ -48,14 +47,14 @@ class CommandMenu(Menu):
                                              mouse_visible=False,
                                              rows=4,
                                              theme=self.dragon_warrior_menu_theme)
-        self.command_menu.add_button('TALK', self.talk)
-        self.command_menu.add_button('STATUS', self.status)
-        self.command_menu.add_button('STAIRS', self.stairs)
-        self.command_menu.add_button('SEARCH', self.search)
-        self.command_menu.add_button('SPELL', self.spell)
-        self.command_menu.add_button('ITEM', self.item)
-        self.command_menu.add_button('DOOR', self.door)
-        self.command_menu.add_button('TAKE', self.take)
+        self.command_menu.add.button('TALK', self.talk, margin=(9, 0))
+        self.command_menu.add.button('STATUS', self.status, margin=(9, 0))
+        self.command_menu.add.button('STAIRS', self.stairs, margin=(9, 0))
+        self.command_menu.add.button('SEARCH', self.search, margin=(9, 0))
+        self.command_menu.add.button('SPELL', self.spell, margin=(9, 0))
+        self.command_menu.add.button('ITEM', self.item, margin=(9, 0))
+        self.command_menu.add.button('DOOR', self.door, margin=(9, 0))
+        self.command_menu.add.button('TAKE', self.take, margin=(9, 0))
 
     def talk(self):
         """
