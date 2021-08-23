@@ -58,21 +58,21 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        # self.current_map = maps.TantegelThroneRoom(hero_images=self.unarmed_hero_images)
+        self.current_map = maps.TantegelThroneRoom(hero_images=self.unarmed_hero_images)
         # self.current_map = maps.TantegelCourtyard(hero_images=self.unarmed_hero_images)
-        self.current_map = maps.Overworld(hero_images=self.unarmed_hero_images)
+        # self.current_map = maps.Overworld(hero_images=self.unarmed_hero_images)
 
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
-        self.bigmap = Surface((self.current_map.width, self.current_map.height)).convert()
-        self.bigmap.fill(self.BACK_FILL_COLOR)
+        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
+        self.big_map.fill(self.BACK_FILL_COLOR)
         self.player_moving = False
         self.speed = 2
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
             get_character_position(roaming_character)
         # Make the big scrollable map
-        self.background = self.bigmap.subsurface(0, 0, self.current_map.width,
-                                                 self.current_map.height).convert()
+        self.background = self.big_map.subsurface(0, 0, self.current_map.width,
+                                                  self.current_map.height).convert()
         self.current_map.load_map()
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
@@ -89,8 +89,8 @@ class Game:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
         self.events = get()
-        self.background = self.bigmap.subsurface(0, 0, self.current_map.width,
-                                                 self.current_map.height).convert()
+        self.background = self.big_map.subsurface(0, 0, self.current_map.width,
+                                                  self.current_map.height).convert()
         self.command_menu_subsurface = self.background.subsurface((self.hero_layout_column - 2) * TILE_SIZE,
                                                                   (self.hero_layout_row - 6) * TILE_SIZE,
                                                                   8 * TILE_SIZE,
@@ -189,9 +189,9 @@ class Game:
         :return: None
         """
         for group in self.current_map.all_floor_sprite_groups:
-            group.draw(self.bigmap)
+            group.draw(self.big_map)
         self.screen.fill(self.BACK_FILL_COLOR)
-        self.background = self.bigmap.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
+        self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
 
         for character in self.current_map.characters:
             if self.enable_animate:
@@ -254,8 +254,8 @@ class Game:
         self.pause_all_movement()
         self.background = Surface(self.screen.get_size()).convert()
         self.current_map = next_map
-        self.bigmap = Surface((self.current_map.width, self.current_map.height)).convert()
-        self.bigmap.fill(self.BACK_FILL_COLOR)
+        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
+        self.big_map.fill(self.BACK_FILL_COLOR)
         self.fade(self.win_width, self.win_height, fade_out=True)
         if MUSIC_ENABLED:
             mixer.music.stop()
