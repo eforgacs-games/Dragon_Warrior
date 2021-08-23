@@ -1,8 +1,7 @@
 import random
 import sys
 
-import pygame as pg
-from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, DOUBLEBUF
+from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, DOUBLEBUF, mixer, QUIT, event, key, K_j, K_k, K_i, K_u, display, time, K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -87,8 +86,8 @@ class Game:
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
         if MUSIC_ENABLED:
-            pg.mixer.music.load(self.current_map.music_file_path)
-            pg.mixer.music.play(-1)
+            mixer.music.load(self.current_map.music_file_path)
+            mixer.music.play(-1)
         self.events = get()
         self.background = self.bigmap.subsurface(0, 0, self.current_map.width,
                                                  self.current_map.height).convert()
@@ -117,42 +116,41 @@ class Game:
         """
         self.events = get()
 
-        for event in self.events:
-            if event.type == pg.QUIT:
+        for current_event in self.events:
+            if current_event.type == QUIT:
                 quit()
                 sys.exit()
-        pg.event.pump()
-        key = pg.key.get_pressed()
+        event.pump()
+        current_key = key.get_pressed()
         self.hero_layout_column = self.current_map.player.rect.x // TILE_SIZE
         self.hero_layout_row = self.current_map.player.rect.y // TILE_SIZE
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
         if self.enable_movement:
-            self.move_player(key)
+            self.move_player(current_key)
 
         for staircase_location, staircase_dict in self.current_map.staircases.items():
             self.process_staircase_warps(staircase_dict, staircase_location)
 
-        if key[pg.K_j]:
+        if current_key[K_j]:
             # B button
             self.unlaunch_command_menu()
             # print("J key pressed (B button).")
-        if key[pg.K_k]:
+        if current_key[K_k]:
             # A button
             # print("K key pressed (A button).")
             if not self.player_moving:
                 self.command_menu_launch_signaled = True
                 self.pause_all_movement()
-        if key[pg.K_i]:
+        if current_key[K_i]:
             # Start button
             if self.paused:
                 self.unpause_all_movement()
             else:
                 self.pause_all_movement()
             print("I key pressed (Start button).")
-        if key[pg.K_u]:
+        if current_key[K_u]:
             # Select button
-            pass
             print("U key pressed (Select button).")
         # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed.
 
@@ -175,7 +173,7 @@ class Game:
         # For debugging purposes, this prints out the next tile that the player will land on.
         # print(self.get_tile_by_coordinates(player_next_coordinates[1], player_next_coordinates[0]))
 
-        pg.event.pump()
+        event.pump()
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
         if (self.hero_layout_row, self.hero_layout_column) == staircase_location:
@@ -219,7 +217,7 @@ class Game:
         """Update the screen's display."""
         if self.command_menu_launched:
             self.cmd_menu.command_menu.update(self.events)
-        pg.display.update()
+        display.update()
 
     def fade(self, width: int, height: int, fade_out: bool) -> None:
         """
@@ -232,7 +230,7 @@ class Game:
         @type fade_out: bool
         If true, fades out. If false, fades in.
         """
-        fade = pg.Surface((width, height))
+        fade = Surface((width, height))
         fade.fill(BLACK)
         self.opacity = 0
         for alpha in range(300):
@@ -244,8 +242,8 @@ class Game:
             fade.set_alpha(self.opacity)
             self.background.fill(BLACK)
             self.screen.blit(fade, (0, 0))
-            pg.display.update()
-            pg.time.delay(5)
+            display.update()
+            time.delay(5)
 
     def map_change(self, next_map) -> None:
         """
@@ -260,11 +258,11 @@ class Game:
         self.bigmap.fill(self.BACK_FILL_COLOR)
         self.fade(self.win_width, self.win_height, fade_out=True)
         if MUSIC_ENABLED:
-            pg.mixer.music.stop()
+            mixer.music.stop()
         self.current_map.load_map()
         if MUSIC_ENABLED:
-            pg.mixer.music.load(self.current_map.music_file_path)
-            pg.mixer.music.play(-1)
+            mixer.music.load(self.current_map.music_file_path)
+            mixer.music.play(-1)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
@@ -322,13 +320,13 @@ class Game:
         curr_pos_x, curr_pos_y = self.camera.get_pos()
 
         if not self.player_moving:
-            if key[pg.K_UP] or key[pg.K_w]:
+            if key[K_UP] or key[K_w]:
                 self.current_map.player.direction = Direction.UP.value
-            elif key[pg.K_DOWN] or key[pg.K_s]:
+            elif key[K_DOWN] or key[K_s]:
                 self.current_map.player.direction = Direction.DOWN.value
-            elif key[pg.K_LEFT] or key[pg.K_a]:
+            elif key[K_LEFT] or key[K_a]:
                 self.current_map.player.direction = Direction.LEFT.value
-            elif key[pg.K_RIGHT] or key[pg.K_d]:
+            elif key[K_RIGHT] or key[K_d]:
                 self.current_map.player.direction = Direction.RIGHT.value
             else:  # player not moving and no moving key pressed
                 return
