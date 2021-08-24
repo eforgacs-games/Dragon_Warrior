@@ -2,6 +2,7 @@ import pygame_menu
 
 from common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE
 from config import SCALE, TILE_SIZE
+from data.text.dialog import Dialog
 
 
 class Menu:
@@ -68,9 +69,10 @@ class CommandMenu(Menu):
         Talk to an NPC. (Not yet implemented)
         :return: To be determined upon implementation
         """
+        dialog = Dialog(player_name='Eddie')
         # for now, implementing using print statements. will be useful for debugging as well.
         if self.next_tile in [character.name for character in self.characters]:
-            print("'This is the character's dialog.'")
+            dialog.dialog_lookup[self.next_tile]()
         else:
             print("'There is no one there.'")
 

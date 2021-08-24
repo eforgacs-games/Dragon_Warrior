@@ -15,7 +15,7 @@ from src.config import TILE_SIZE, SCALE, COLOR_KEY
 # Index values for the map tiles corresponding to location on tilesheet.
 from src.player import Player
 from src.roaming_character import RoamingCharacter
-
+offset = TILE_SIZE // 2
 all_impassable_tiles = (
     'ROOF', 'WALL', 'WOOD', 'DOOR', 'BARRIER', 'WEAPON_SIGN', 'INN_SIGN', 'MOUNTAINS', 'WATER', 'BOTTOM_COAST',
     'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST', 'TOP_COAST', 'TOP_RIGHT_COAST', 'RIGHT_COAST',
@@ -215,16 +215,18 @@ class DragonWarriorMap:
 
     def load_map(self) -> None:
         # start_time = time.time()
-        x_offset = TILE_SIZE // 2
-        y_offset = TILE_SIZE // 2
+
         tiles_in_current_loaded_map = set([self.get_tile_by_value(tile) for row in self.layout for tile in row])
         self.impassable_tiles = tuple(tiles_in_current_loaded_map & set(all_impassable_tiles))
         for y in range(len(self.layout)):
             for x in range(len(self.layout[y])):
-                self.center_pt = (x * TILE_SIZE) + x_offset, (y * TILE_SIZE) + y_offset
+                self.center_pt = self.get_center_point(x, y)
                 self.map_floor_tiles(x, y)
                 self.map_character_tiles(x, y)
         # print("--- %s seconds ---" % (time.time() - start_time))
+
+    def get_center_point(self, x, y):
+        return (x * TILE_SIZE) + offset, (y * TILE_SIZE) + offset
 
     def map_character_tiles(self, x, y) -> None:
         for character, character_dict in self.character_key.items():
