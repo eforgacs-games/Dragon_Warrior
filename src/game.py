@@ -76,10 +76,10 @@ class Game:
         self.current_map.load_map()
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row)
         self.next_tile = self.get_next_tile(character_column=self.hero_layout_column,
                                             character_row=self.hero_layout_row,
                                             direction=self.current_map.player.direction)
+        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.next_tile, self.current_map.characters)
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
                              current_map=self.current_map, speed=None)
         self.command_menu_launch_signaled = False
@@ -108,6 +108,7 @@ class Game:
             self.get_events()
             self.draw_all()
             self.update_screen()
+
 
     def get_events(self) -> None:
         """
@@ -303,6 +304,7 @@ class Game:
         Launch the command menu, which is used by the player to interact with the world in the game.
         :return: None
         """
+        self.cmd_menu.next_tile = self.get_next_tile(self.hero_layout_column, self.hero_layout_row, self.current_map.player.direction)
         if not self.command_menu_launched:
             play_sound(menu_button_sfx)
         command_menu_rect = self.cmd_menu.command_menu.draw(self.command_menu_subsurface)

@@ -32,8 +32,11 @@ class Menu:
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, column, row):
+    def __init__(self, background, column, row, next_tile, characters):
         super().__init__()
+        self.next_tile = next_tile
+        self.characters = characters
+        self.player_name = ''
         command_menu_subsurface = background.subsurface((column - 2) * TILE_SIZE,
                                                         (row - 6) * TILE_SIZE,
                                                         8 * TILE_SIZE,
@@ -65,16 +68,13 @@ class CommandMenu(Menu):
         Talk to an NPC. (Not yet implemented)
         :return: To be determined upon implementation
         """
-        # open another window
-        # check if block in front of player contains an NPC
-        # if it does:
-        #      print the contents of the NPC's dialog to the window
-        # else:
-        #      print 'There is no one there.' to the window
-        print("TALK")
+        # for now, implementing using print statements. will be useful for debugging as well.
+        if self.next_tile in [character.name for character in self.characters]:
+            print("'This is the character's dialog.'")
+        else:
+            print("'There is no one there.'")
 
-    @staticmethod
-    def status():
+    def status(self):
         """
         Display the current player's status. (Not yet implemented)
         :return: To be determined upon implementation
@@ -82,18 +82,17 @@ class CommandMenu(Menu):
         # open another window (11 tall x 10 wide)
         # print the following attributes:
         # example below:
-
-        # NAME: ED
-        # STRENGTH: 22
-        # MAXIMUM HP: 44
-        # MAXIMUM MP: 29
-        # ATTACK POWER: 37
-        # DEFENSE POWER: 20
-        # WEAPON: Hand Axe
-        # ARMOR: Chain Mail
-        # SHIELD: Small Shield
-
-        print("STATUS")
+        print(f"""
+        NAME: {self.player_name}
+        STRENGTH: 22
+        MAXIMUM HP: 44
+        MAXIMUM MP: 29
+        ATTACK POWER: 37
+        DEFENSE POWER: 20
+        WEAPON: Hand Axe
+        ARMOR: Chain Mail
+        SHIELD: Small Shield
+        """)
 
     @staticmethod
     def stairs():
@@ -108,19 +107,19 @@ class CommandMenu(Menu):
         # open a window and print: 'There are no stairs here.'
         print("STAIRS")
 
-    @staticmethod
-    def search():
+    def search(self):
         """
         Search the ground for items. (Not yet implemented)
         :return: To be determined upon implementation
         """
         # open a window
+        print(f"{self.player_name} searched the ground all about.")
+        print(f"But there found nothing.")
         # print f"{player_name} searched the ground all about."
         # wait for input...
         # check if there is anything on the ground:
         # if so:
         # print: f"There is a {item}."
-        print("SEARCH")
 
     @staticmethod
     def spell():
@@ -140,12 +139,15 @@ class CommandMenu(Menu):
         # the implementation of this will vary upon which item is being used.
         print("ITEM")
 
-    @staticmethod
-    def door():
+    def door(self):
         """
         Open a door. (Not yet implemented)
         :return: To be determined upon implementation
         """
+        if self.next_tile != 'DOOR':
+            print("There is no door here.")
+        else:
+            print("Thou hast not a key to use.")
         # check if there is a door in front of the player
         # if there is a door in front:
         #   check if it is a locked door
@@ -157,10 +159,8 @@ class CommandMenu(Menu):
         #           open a window and print "Thou hast not a key to use."
         #   else:
         #       open the door
-        print("DOOR")
 
-    @staticmethod
-    def take():
+    def take(self):
         """
         Take an item. (Not yet implemented)
         :return: To be determined upon implementation
@@ -171,4 +171,5 @@ class CommandMenu(Menu):
         #   take it and update inventory accordingly
         # else:
         #   print 'There is nothing to take here, {player_name}.'
+        print(f'There is nothing to take here, {self.player_name}.')
         print("TAKE")
