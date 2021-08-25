@@ -87,6 +87,10 @@ def parse_animated_spritesheet(sheet, is_roaming=False) -> Tuple[list, list, lis
     return facing_down, facing_left, facing_up, facing_right
 
 
+def get_center_point(x, y):
+    return (x * TILE_SIZE) + offset, (y * TILE_SIZE) + offset
+
+
 class DragonWarriorMap:
     def __init__(self, hero_images, layout):
 
@@ -213,27 +217,26 @@ class DragonWarriorMap:
     #     staircase_locations = np.asarray(np.where(self.layout_numpy_array == self.tile_key['BRICK_STAIRDN']['val'])).T
     #     return staircase_locations
 
-    def load_map(self) -> None:
+    def load_map(self, player) -> None:
         # start_time = time.time()
 
         tiles_in_current_loaded_map = set([self.get_tile_by_value(tile) for row in self.layout for tile in row])
         self.impassable_tiles = tuple(tiles_in_current_loaded_map & set(all_impassable_tiles))
+
         for y in range(len(self.layout)):
             for x in range(len(self.layout[y])):
-                self.center_pt = self.get_center_point(x, y)
+                self.center_pt = get_center_point(x, y)
                 self.map_floor_tiles(x, y)
-                self.map_character_tiles(x, y)
+                self.map_character_tiles(x, y, player)
         # print("--- %s seconds ---" % (time.time() - start_time))
 
-    def get_center_point(self, x, y):
-        return (x * TILE_SIZE) + offset, (y * TILE_SIZE) + offset
-
-    def map_character_tiles(self, x, y) -> None:
+    def map_character_tiles(self, x, y, player) -> None:
         for character, character_dict in self.character_key.items():
             if self.layout[y][x] > 32:  # anything below 32 is a floor tile
                 if self.layout[y][x] == character_dict['val']:
                     if self.layout[y][x] == 33:  # 'HERO' hardcoded value
-                        self.map_player(character_dict['underlying_tile'])
+                        player.__init__(self.center_pt, self.hero_images)
+                        self.map_player(character_dict['underlying_tile'], player)
                     elif character_dict['four_sided']:
                         self.map_four_sided_npc(name=character, direction=character_dict['direction'],
                                                 underlying_tile=character_dict['underlying_tile'],
@@ -273,10 +276,9 @@ class DragonWarriorMap:
         self.character_sprites.append(sprites)
         self.add_tile_by_value_and_group(underlying_tile)
 
-    def map_player(self, underlying_tile) -> None:
+    def map_player(self, underlying_tile, player) -> None:
         # TODO(ELF): Fix underlying tiles so that they aren't all bricks.
-        self.player = Player(center_point=self.center_pt,
-                             images=self.hero_images)
+        self.player = player
         self.player_sprites = LayeredDirty(self.player)
         self.player.direction = self.hero_initial_direction()
         self.add_tile_by_value_and_group(underlying_tile)

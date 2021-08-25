@@ -19,6 +19,7 @@ from src.common import Direction, play_sound, bump_sfx, UNARMED_HERO_PATH, get_i
     menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.maps import parse_animated_spritesheet
+from src.player import Player
 
 
 def draw_menu_on_subsurface(menu_to_draw, subsurface):
@@ -78,7 +79,8 @@ class Game:
         # Make the big scrollable map
         self.background = self.big_map.subsurface(0, 0, self.current_map.width,
                                                   self.current_map.height).convert()
-        self.current_map.load_map()
+        self.player = Player(center_point=None, images=None)
+        self.current_map.load_map(self.player)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.next_tile = self.get_next_tile(character_column=self.hero_layout_column,
@@ -160,7 +162,7 @@ class Game:
             # A button
             # print("K key pressed (A button).")
             if not self.player_moving:
-                # TODO: pause_all_movement may be temporarily commented out for dialog box debugging purposes.
+                # pause_all_movement may be temporarily commented out for dialog box debugging purposes.
                 self.cmd_menu.launch_signaled = True
                 self.pause_all_movement()
         if current_key[K_i]:
@@ -173,7 +175,7 @@ class Game:
         if current_key[K_u]:
             # Select button
             print("U key pressed (Select button).")
-        # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed.
+        # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed. (modernization)
 
         # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
         #     self.scale = self.scale + 1
@@ -310,7 +312,7 @@ class Game:
         self.fade(self.win_width, self.win_height, fade_out=True)
         if MUSIC_ENABLED:
             mixer.music.stop()
-        self.current_map.load_map()
+        self.current_map.load_map(self.player)
         if MUSIC_ENABLED:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
