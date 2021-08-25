@@ -3,23 +3,25 @@ from src.common import Direction
 
 
 class AnimatedSprite(BaseSprite):
-    def __init__(self, center_point, direction, images, name):
-        down_images = images[0]
-        left_images = images[1]
-        up_images = images[2]
-        right_images = images[3]
-        super().__init__(center_point, images[0][0])
-        self.name = name
+    def __init__(self, center_point, direction, images, identifier):
+        self.identifier = identifier
         self.current_frame = 0
         self.frame_count = 0
         self.frame_delay = 2
         self.direction = direction
-        self.images_map = {
-            Direction.DOWN.value: down_images,
-            Direction.LEFT.value: left_images,
-            Direction.UP.value: up_images,
-            Direction.RIGHT.value: right_images
-        }
+        if images is not None:
+            down_images = images[0]
+            left_images = images[1]
+            up_images = images[2]
+            right_images = images[3]
+            self.images_map = {
+                Direction.DOWN.value: down_images,
+                Direction.LEFT.value: left_images,
+                Direction.UP.value: up_images,
+                Direction.RIGHT.value: right_images
+            }
+            if center_point is not None:
+                super().__init__(center_point, images[0][0])
 
     def animate(self):
         max_frame = 1
