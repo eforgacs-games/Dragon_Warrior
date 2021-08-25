@@ -89,7 +89,7 @@ class Game:
                                             character_row=self.hero_layout_row,
                                             direction=self.current_map.player.direction)
         self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.next_tile, self.current_map.characters, self.dlg_box)
+        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.next_tile, self.current_map.characters, self.dlg_box, self.player)
 
         self.menus = self.cmd_menu, self.dlg_box
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
@@ -416,24 +416,24 @@ class Game:
 
     def move_laterally(self, character) -> None:
         if is_facing_left(character):
-            if character.name == "HERO":
+            if character.identifier == "HERO":
                 self.move(delta_x=-self.speed, delta_y=0)
             else:
                 self.move_roaming_character(character, delta_x=-self.speed, delta_y=0)
         elif is_facing_right(character):
-            if character.name == "HERO":
+            if character.identifier == "HERO":
                 self.move(delta_x=self.speed, delta_y=0)
             else:
                 self.move_roaming_character(character, delta_x=self.speed, delta_y=0)
 
     def move_medially(self, character) -> None:
         if is_facing_up(character):
-            if character.name == "HERO":
+            if character.identifier == "HERO":
                 self.move(delta_x=0, delta_y=self.speed)
             else:
                 self.move_roaming_character(character, delta_x=0, delta_y=self.speed)
         elif is_facing_down(character):
-            if character.name == "HERO":
+            if character.identifier == "HERO":
                 self.move(delta_x=0, delta_y=-self.speed)
             else:
                 self.move_roaming_character(character, delta_x=0, delta_y=-self.speed)
