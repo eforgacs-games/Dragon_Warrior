@@ -58,7 +58,7 @@ BOTTOM_TOP_LEFT_COAST = 31
 BOTTOM_TOP_RIGHT_COAST = 32
 
 
-def parse_animated_spritesheet(sheet, is_roaming=False) -> Tuple[list, list, list, list]:
+def parse_animated_spritesheet(sheet) -> Tuple[list, list, list, list]:
     """
     Parses spritesheets and creates image lists. If is_roaming is True
     the sprite will have four lists of images, one for each direction. If
@@ -74,7 +74,9 @@ def parse_animated_spritesheet(sheet, is_roaming=False) -> Tuple[list, list, lis
         rect = (i * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE)
         facing_down.append(sheet.subsurface(rect))
 
-        if is_roaming:
+        is_four_sided = sheet.get_size()[0] % 128 == 0
+        if is_four_sided:
+            # is_four_sided
             rect = ((i + 2) * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE)
             facing_left.append(sheet.subsurface(rect))
 
@@ -248,7 +250,7 @@ class DragonWarriorMap:
     def map_four_sided_npc(self, name, direction, underlying_tile, image_path, is_roaming=False) -> None:
         sheet = get_image(image_path)
         sheet = scale(sheet, (sheet.get_width() * self.scale, sheet.get_height() * self.scale))
-        images = parse_animated_spritesheet(sheet, is_roaming=True)
+        images = parse_animated_spritesheet(sheet)
         character_sprites = LayeredDirty()
         if is_roaming:
             character = RoamingCharacter(self.center_pt, direction, images, name)
