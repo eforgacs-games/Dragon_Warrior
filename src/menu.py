@@ -1,8 +1,9 @@
 import pygame_menu
 
-from common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE
+from common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, play_sound, menu_button_sfx
 from config import SCALE, TILE_SIZE
 from data.text.dialog import Dialog
+from src.common import print_with_beep_sfx
 
 
 class Menu:
@@ -33,48 +34,57 @@ class Menu:
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, column, row, next_tile, characters):
+    def __init__(self, background, column, row, next_tile, characters, dialog_box):
         super().__init__()
+        self.dialog_box = dialog_box
         self.next_tile = next_tile
         self.characters = characters
-        self.player_name = ''
+        self.player_name = 'Eddie'
+        self.launch_signaled = False
+        self.launched = False
         command_menu_subsurface = background.subsurface((column - 2) * TILE_SIZE,
                                                         (row - 6) * TILE_SIZE,
                                                         8 * TILE_SIZE,
                                                         5 * TILE_SIZE)
-        self.command_menu = pygame_menu.Menu('COMMAND',
-                                             command_menu_subsurface.get_width() * 2,
-                                             command_menu_subsurface.get_height() * 3,
-                                             center_content=False,
-                                             column_max_width=(TILE_SIZE * 4, TILE_SIZE * 4),
-                                             columns=2,
-                                             rows=4,
-                                             theme=self.dragon_warrior_menu_theme,
-                                             mouse_enabled=False,
-                                             mouse_visible=False,
-                                             )
+
+        self.menu = pygame_menu.Menu('COMMAND',
+                                     command_menu_subsurface.get_width() * 2,
+                                     command_menu_subsurface.get_height() * 3,
+                                     center_content=False,
+                                     column_max_width=(TILE_SIZE * 4, TILE_SIZE * 3),
+                                     columns=2,
+                                     rows=4,
+                                     theme=self.dragon_warrior_menu_theme,
+                                     mouse_enabled=False,
+                                     mouse_visible=False,
+                                     menu_id='command'
+                                     )
+
         # TODO: Allow for selection of options using the K ("A" button).
         #  Currently selection is only possible by use of the Enter button.
-        self.command_menu.add.button('TALK', self.talk, margin=(9, 4))
-        self.command_menu.add.button('STATUS', self.status, margin=(9, 4))
-        self.command_menu.add.button('STAIRS', self.stairs, margin=(9, 4))
-        self.command_menu.add.button('SEARCH', self.search, margin=(9, 4))
-        self.command_menu.add.button('SPELL', self.spell, margin=(0, 4))
-        self.command_menu.add.button('ITEM', self.item, margin=(0, 4))
-        self.command_menu.add.button('DOOR', self.door, margin=(0, 4))
-        self.command_menu.add.button('TAKE', self.take, margin=(0, 4))
+        self.menu.add.button('TALK', self.talk, margin=(9, 4))
+        self.menu.add.button('STATUS', self.status, margin=(9, 4))
+        self.menu.add.button('STAIRS', self.stairs, margin=(9, 4))
+        self.menu.add.button('SEARCH', self.search, margin=(9, 4))
+        self.menu.add.button('SPELL', self.spell, margin=(0, 4))
+        self.menu.add.button('ITEM', self.item, margin=(0, 4))
+        self.menu.add.button('DOOR', self.door, margin=(0, 4))
+        self.menu.add.button('TAKE', self.take, margin=(0, 4))
 
     def talk(self):
         """
         Talk to an NPC. (Not yet implemented)
         :return: To be determined upon implementation
         """
+        play_sound(menu_button_sfx)
         dialog = Dialog(player_name='Eddie')
+
         # for now, implementing using print statements. will be useful for debugging as well.
         if self.next_tile in [character.name for character in self.characters]:
+            self.dialog_box_launch_signaled = True
             dialog.dialog_lookup[self.next_tile]()
         else:
-            print("'There is no one there.'")
+            print_with_beep_sfx("'There is no one there.'")
 
     def status(self):
         """
@@ -84,6 +94,7 @@ class CommandMenu(Menu):
         # open another window (11 tall x 10 wide)
         # print the following attributes:
         # example below:
+        play_sound(menu_button_sfx)
         print(f"""
         NAME: {self.player_name}
         STRENGTH: 22
@@ -102,18 +113,20 @@ class CommandMenu(Menu):
         Go up or down a staircase. (Not yet implemented)
         :return: To be determined upon implementation
         """
+        play_sound(menu_button_sfx)
         # this might be something we could turn off as one of the "modernization" updates, but the implementation would be as follows:
         # check if the player is standing on a staircase
         # if so, activate the staircase warp to wherever the staircase leads
         # else:
-        # open a window and print: 'There are no stairs here.'
-        print("STAIRS")
+        # open a window and print:
+        print("'There are no stairs here.'")
 
     def search(self):
         """
         Search the ground for items. (Not yet implemented)
         :return: To be determined upon implementation
         """
+        play_sound(menu_button_sfx)
         # open a window
         print(f"{self.player_name} searched the ground all about.")
         print(f"But there found nothing.")
@@ -123,14 +136,14 @@ class CommandMenu(Menu):
         # if so:
         # print: f"There is a {item}."
 
-    @staticmethod
-    def spell():
+    def spell(self):
         """
         Cast a magic spell. (Not yet implemented)
         :return: To be determined upon implementation
         """
+        play_sound(menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
-        print("SPELL")
+        print(f"{self.player_name} cannot yet use the spell.")
 
     @staticmethod
     def item():
@@ -138,14 +151,17 @@ class CommandMenu(Menu):
         View/use items. (Not yet implemented)
         :return: To be determined upon implementation
         """
+        play_sound(menu_button_sfx)
         # the implementation of this will vary upon which item is being used.
-        print("ITEM")
+        # if no items:
+        print("Nothing of use has yet been given to thee.")
 
     def door(self):
         """
         Open a door. (Not yet implemented)
         :return: To be determined upon implementation
         """
+        play_sound(menu_button_sfx)
         if self.next_tile != 'DOOR':
             print("There is no door here.")
         else:
@@ -167,11 +183,30 @@ class CommandMenu(Menu):
         Take an item. (Not yet implemented)
         :return: To be determined upon implementation
         """
+        play_sound(menu_button_sfx)
         # open a window
         # check if there is something to take
         # if there is something to take:
         #   take it and update inventory accordingly
         # else:
-        #   print 'There is nothing to take here, {player_name}.'
         print(f'There is nothing to take here, {self.player_name}.')
-        print("TAKE")
+
+
+class DialogBox(Menu):
+    def __init__(self, background, column, row):
+        super().__init__()
+        self.launch_signaled = False
+        self.launched = False
+        self.dialog_box_subsurface = background.subsurface((column - 2) * TILE_SIZE,
+                                                           (row - 6) * TILE_SIZE,
+                                                           12 * TILE_SIZE,
+                                                           5 * TILE_SIZE)
+        self.menu = pygame_menu.Menu('Dialog Box',
+                                     self.dialog_box_subsurface.get_width(),
+                                     self.dialog_box_subsurface.get_height(),
+                                     center_content=False,
+                                     theme=self.dragon_warrior_menu_theme,
+                                     mouse_enabled=False,
+                                     mouse_visible=False,
+                                     menu_id='dialog_box'
+                                     )

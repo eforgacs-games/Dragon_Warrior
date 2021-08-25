@@ -21,10 +21,15 @@ from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.maps import parse_animated_spritesheet
 
 
+def draw_menu_on_subsurface(menu_to_draw, subsurface):
+    return menu_to_draw.draw(subsurface)
+
+
 class Game:
     GAME_TITLE = "Dragon Warrior"
     BACK_FILL_COLOR = BLACK
     MOVE_EVENT = USEREVENT + 1
+
     # time.set_timer(MOVE_EVENT, 100)
 
     def __init__(self):
@@ -33,7 +38,7 @@ class Game:
         self.opacity = 0
         init()
 
-        self.command_menu_launched, self.paused = False, False
+        self.paused = False
         # Create the game window.
         if FULLSCREEN_ENABLED:
             flags = FULLSCREEN | DOUBLEBUF
@@ -79,10 +84,12 @@ class Game:
         self.next_tile = self.get_next_tile(character_column=self.hero_layout_column,
                                             character_row=self.hero_layout_row,
                                             direction=self.current_map.player.direction)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.next_tile, self.current_map.characters)
+        self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
+        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.next_tile, self.current_map.characters, self.dlg_box)
+
+        self.menus = self.cmd_menu, self.dlg_box
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
                              current_map=self.current_map, speed=None)
-        self.command_menu_launch_signaled = False
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
         if MUSIC_ENABLED:
@@ -91,12 +98,24 @@ class Game:
         self.events = get()
         self.background = self.big_map.subsurface(0, 0, self.current_map.width,
                                                   self.current_map.height).convert()
-        self.command_menu_subsurface = self.background.subsurface((self.hero_layout_column - 2) * TILE_SIZE,
-                                                                  (self.hero_layout_row - 6) * TILE_SIZE,
-                                                                  8 * TILE_SIZE,
-                                                                  5 * TILE_SIZE)
+        self.command_menu_subsurface = self.set_background_subsurface(
+            left=(self.hero_layout_column - 2) * TILE_SIZE,
+            top=(self.hero_layout_row - 6) * TILE_SIZE,
+            width=8 * TILE_SIZE,
+            height=5 * TILE_SIZE
+        )
+        self.dialog_box_subsurface = self.set_background_subsurface(
+            left=TILE_SIZE,
+            top=TILE_SIZE,
+            width=12 * TILE_SIZE,
+            height=5 * TILE_SIZE
+        )
 
         # pg.event.set_allowed([pg.QUIT])
+
+    def set_win_width_and_height(self):
+        self.win_width = NES_RES[0] * self.scale
+        self.win_height = NES_RES[1] * self.scale
 
     def main(self) -> None:
         """
@@ -108,7 +127,6 @@ class Game:
             self.get_events()
             self.draw_all()
             self.update_screen()
-
 
     def get_events(self) -> None:
         """
@@ -135,13 +153,15 @@ class Game:
 
         if current_key[K_j]:
             # B button
-            self.unlaunch_command_menu()
+            self.unlaunch_menu(self.cmd_menu)
+            self.unlaunch_menu(self.dlg_box)
             # print("J key pressed (B button).")
         if current_key[K_k]:
             # A button
             # print("K key pressed (A button).")
             if not self.player_moving:
-                self.command_menu_launch_signaled = True
+                # TODO: pause_all_movement may be temporarily commented out for dialog box debugging purposes.
+                self.cmd_menu.launch_signaled = True
                 self.pause_all_movement()
         if current_key[K_i]:
             # Start button
@@ -201,23 +221,53 @@ class Game:
                 character.pause()
         for sprites in self.current_map.character_sprites:
             self.character_rects.append(sprites.draw(self.background))
-        if self.command_menu_launch_signaled:
-            self.command_menu_subsurface = self.background.subsurface((self.hero_layout_column - 2) * TILE_SIZE,
-                                                                      (self.hero_layout_row - 6) * TILE_SIZE,
-                                                                      8 * TILE_SIZE,
-                                                                      5 * TILE_SIZE)
-            if not self.command_menu_launched:
-                self.launch_command_menu()
-            else:
-                command_menu_rect = self.cmd_menu.command_menu.draw(self.command_menu_subsurface)
-                if command_menu_rect:
-                    self.character_rects.append(command_menu_rect)
+        for menu_or_dialog_box in self.menus:
+            self.handle_menu_launch(menu_or_dialog_box)
         self.screen.blit(self.background, self.camera.get_pos())
+
+    def handle_menu_launch(self, menu_to_launch):
+        if menu_to_launch.launch_signaled:
+            if menu_to_launch.menu.get_id() == 'command':
+                self.command_menu_subsurface = self.set_background_subsurface(
+                    left=(self.hero_layout_column - 2) * TILE_SIZE,  # 11 (first empty square to the left of menu)
+                    top=(self.hero_layout_row - 6) * TILE_SIZE,  # 4
+                    width=8 * TILE_SIZE,
+                    height=5 * TILE_SIZE
+                )
+            elif menu_to_launch.menu.get_id() == 'dialog_box':
+                self.dialog_box_subsurface = self.set_background_subsurface(
+                    # left=(self.hero_layout_column + 6) * TILE_SIZE,
+                    # top=(self.hero_layout_row + 6) * TILE_SIZE,
+                    left=TILE_SIZE,
+                    top=TILE_SIZE,
+                    width=12 * TILE_SIZE,
+                    height=5 * TILE_SIZE
+                )
+            if not menu_to_launch.launched:
+                self.launch_menu(menu_to_launch.menu.get_id())
+            else:
+                if menu_to_launch.menu.get_id() == 'command':
+                    rect = draw_menu_on_subsurface(menu_to_launch.menu, self.command_menu_subsurface)
+                elif menu_to_launch.menu.get_id() == 'dialog_box':
+                    rect = draw_menu_on_subsurface(menu_to_launch.menu, self.dialog_box_subsurface)
+                else:
+                    rect = None
+                if rect:
+                    self.character_rects.append(rect)
+
+    def set_background_subsurface(self, left, top, width, height):
+        return self.background.subsurface(
+            left,
+            top,
+            width,
+            height
+        )
 
     def update_screen(self):
         """Update the screen's display."""
-        if self.command_menu_launched:
-            self.cmd_menu.command_menu.update(self.events)
+        for menu_or_dialog_box in self.menus:
+            if menu_or_dialog_box.launched:
+                menu_or_dialog_box.menu.update(self.events)
         display.update()
 
     def fade(self, width: int, height: int, fade_out: bool) -> None:
@@ -274,14 +324,15 @@ class Game:
 
         # play_music(self.current_map.music_file_path)
 
-    def unlaunch_command_menu(self) -> None:
+    def unlaunch_menu(self, menu_obj) -> None:
         """
-        Unlaunch the command menu.
+        Un-launch a menu.
         :return: None
         """
-        self.command_menu_launch_signaled = False
-        self.unpause_all_movement()
-        self.command_menu_launched = False
+        menu_obj.launch_signaled = False
+        if menu_obj.menu.get_id() == 'command':
+            self.unpause_all_movement()
+        menu_obj.launched = False
 
     def unpause_all_movement(self) -> None:
         """
@@ -299,18 +350,26 @@ class Game:
         self.enable_animate, self.enable_roaming, self.enable_movement = False, False, False
         self.paused = True
 
-    def launch_command_menu(self) -> None:
+    def launch_menu(self, menu_to_launch) -> None:
         """
-        Launch the command menu, which is used by the player to interact with the world in the game.
+        Launch either the command menu, which is used by the player to interact with the world in the game, or a dialog box.
+        :param menu_to_launch:
         :return: None
         """
-        self.cmd_menu.next_tile = self.get_next_tile(self.hero_layout_column, self.hero_layout_row, self.current_map.player.direction)
-        if not self.command_menu_launched:
-            play_sound(menu_button_sfx)
-        command_menu_rect = self.cmd_menu.command_menu.draw(self.command_menu_subsurface)
-        if command_menu_rect:
-            self.character_rects.append(command_menu_rect)
-        self.command_menu_launched = True
+        if menu_to_launch == 'command':
+            self.cmd_menu.next_tile = self.get_next_tile(self.hero_layout_column, self.hero_layout_row, self.current_map.player.direction)
+            if not self.cmd_menu.launched:
+                play_sound(menu_button_sfx)
+            self.set_and_append_rect(self.cmd_menu.menu, self.command_menu_subsurface)
+            self.cmd_menu.launched = True
+        elif menu_to_launch == 'dialog_box':
+            self.set_and_append_rect(self.dlg_box.menu, self.dialog_box_subsurface)
+            self.dlg_box.launched = True
+
+    def set_and_append_rect(self, menu_to_set, subsurface):
+        menu_rect = draw_menu_on_subsurface(menu_to_set, subsurface)
+        if menu_rect:
+            self.character_rects.append(menu_rect)
 
     def move_player(self, current_key) -> None:
         """
