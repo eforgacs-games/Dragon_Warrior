@@ -5,25 +5,25 @@ class Dialog:
     def __init__(self, player):
         self.player = player
         self.dialog_lookup = {
-            'KING_LORIK': self.king_lorik_spoken_to_dialog,
+            'KING_LORIK': self.king_lorik_dialog,
             'RIGHT_FACE_GUARD': self.right_face_guard_tantegel_throne_room,
             'LEFT_FACE_GUARD': self.left_face_guard_tantegel_throne_room,
             'ROAMING_GUARD': self.roaming_guard_tantegel_throne_room
         }
+        self.initial_dialog = False
+        self.throne_room_door_locked = True
 
-    def king_lorik_initial_dialog(self):
-        print_with_beep_sfx("'Descendant of Erdrick, listen now to my words.'")
-        print_with_beep_sfx("'It is told that in ages past Erdrick fought demons with a Ball of Light.'")
-        print_with_beep_sfx("'Then came the Dragonlord who stole the precious globe and hid it in the darkness.'")
-        print_with_beep_sfx(f"'Now, {self.player.name}, thou must help us recover the Ball of Light and restore peace to our land.'")
-        print_with_beep_sfx("'The Dragonlord must be defeated.'")
-        print_with_beep_sfx("'Take now whatever thou may find in these Treasure Chests to aid thee in thy quest.'")
-        print_with_beep_sfx("'Then speak with the guards, for they have much knowledge that may aid thee.'")
-        print_with_beep_sfx(f"'May the light shine upon thee, {self.player.name}.'")
-
-    def king_lorik_spoken_to_dialog(self):
-        door_locked = True
-        if door_locked:
+    def king_lorik_dialog(self):
+        if self.initial_dialog:
+            print_with_beep_sfx("'Descendant of Erdrick, listen now to my words.'")
+            print_with_beep_sfx("'It is told that in ages past Erdrick fought demons with a Ball of Light.'")
+            print_with_beep_sfx("'Then came the Dragonlord who stole the precious globe and hid it in the darkness.'")
+            print_with_beep_sfx(f"'Now, {self.player.name}, thou must help us recover the Ball of Light and restore peace to our land.'")
+            print_with_beep_sfx("'The Dragonlord must be defeated.'")
+            print_with_beep_sfx("'Take now whatever thou may find in these Treasure Chests to aid thee in thy quest.'")
+            print_with_beep_sfx("'Then speak with the guards, for they have much knowledge that may aid thee.'")
+            print_with_beep_sfx(f"'May the light shine upon thee, {self.player.name}.'")
+        if self.throne_room_door_locked:
             print_with_beep_sfx("'When thou art finished preparing for thy departure, please see me.\nI shall wait.'")
         else:
             print_with_beep_sfx(f"'I am greatly pleased that thou hast returned, {self.player.name}.'")
