@@ -1,7 +1,8 @@
 import random
 import sys
 
-from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, DOUBLEBUF, mixer, QUIT, event, key, K_j, K_k, K_i, K_u, display, time, K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d
+from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, DOUBLEBUF, mixer, QUIT, event, display, time, \
+    key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -30,6 +31,7 @@ class Game:
     GAME_TITLE = "Dragon Warrior"
     BACK_FILL_COLOR = BLACK
     MOVE_EVENT = USEREVENT + 1
+    ROAMING_CHARACTER_GO_COOLDOWN = 3000
 
     # time.set_timer(MOVE_EVENT, 100)
 
@@ -46,7 +48,7 @@ class Game:
         else:
             flags = RESIZABLE | DOUBLEBUF
         self.scale = SCALE
-        # video_infos = pg.display.Info()
+        # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
         self.win_width = NES_RES[0] * self.scale
         self.win_height = NES_RES[1] * self.scale
@@ -55,12 +57,13 @@ class Game:
         self.screen = set_mode((self.win_width, self.win_height), flags)
         self.screen.set_alpha(None)
         set_caption(self.GAME_TITLE)
-        self.roaming_character_go_cooldown = 3000
         self.next_tile_checked = False
         unarmed_hero_sheet = get_image(UNARMED_HERO_PATH)
         unarmed_hero_tilesheet = scale(unarmed_hero_sheet, (
-            unarmed_hero_sheet.get_width() * self.scale, unarmed_hero_sheet.get_height() * self.scale))
-        self.unarmed_hero_images = parse_animated_spritesheet(unarmed_hero_tilesheet, is_roaming=True)
+            unarmed_hero_sheet.get_width() * self.scale,
+            unarmed_hero_sheet.get_height() * self.scale
+        ))
+        self.unarmed_hero_images = parse_animated_spritesheet(unarmed_hero_tilesheet)
 
         # self.current_map can be changed to other maps for development purposes
 
@@ -549,7 +552,7 @@ class Game:
             now = get_ticks()
             if roaming_character.last_roaming_clock_check is None:
                 roaming_character.last_roaming_clock_check = now
-            if now - roaming_character.last_roaming_clock_check >= self.roaming_character_go_cooldown:
+            if now - roaming_character.last_roaming_clock_check >= self.ROAMING_CHARACTER_GO_COOLDOWN:
                 roaming_character.last_roaming_clock_check = now
                 if not roaming_character.is_moving:
                     roaming_character.direction = random.choice(list(map(int, Direction)))
