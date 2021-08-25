@@ -78,6 +78,7 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         dialog = Dialog(player_name='Eddie')
+        # TODO: Get an actual dialog box to show!
 
         # for now, implementing using print statements. will be useful for debugging as well.
         if self.next_tile in [character.name for character in self.characters]:
