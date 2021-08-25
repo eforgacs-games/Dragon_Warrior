@@ -13,8 +13,8 @@ from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_
 from src.config import TILE_SIZE, SCALE, COLOR_KEY
 # Tile Key:
 # Index values for the map tiles corresponding to location on tilesheet.
-from src.player import Player
 from src.roaming_character import RoamingCharacter
+
 offset = TILE_SIZE // 2
 all_impassable_tiles = (
     'ROOF', 'WALL', 'WOOD', 'DOOR', 'BARRIER', 'WEAPON_SIGN', 'INN_SIGN', 'MOUNTAINS', 'WATER', 'BOTTOM_COAST',
@@ -119,6 +119,8 @@ class DragonWarriorMap:
         self.height = len(self.layout) * TILE_SIZE
         self.width = len(self.layout[0]) * TILE_SIZE
 
+        # Tile groups
+
         self.roof_group = Group()  # 0
         self.wall_group = Group()  # 1
         self.wood_group = Group()  # 2
@@ -221,10 +223,8 @@ class DragonWarriorMap:
 
     def load_map(self, player) -> None:
         # start_time = time.time()
-
         tiles_in_current_loaded_map = set([self.get_tile_by_value(tile) for row in self.layout for tile in row])
         self.impassable_tiles = tuple(tiles_in_current_loaded_map & set(all_impassable_tiles))
-
         for y in range(len(self.layout)):
             for x in range(len(self.layout[y])):
                 self.center_pt = get_center_point(x, y)
