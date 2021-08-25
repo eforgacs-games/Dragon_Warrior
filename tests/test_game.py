@@ -45,7 +45,7 @@ class TestGame(TestCase):
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
         unarmed_hero_sheet = scale(unarmed_hero_sheet,
                                    (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))
-        self.hero_images = parse_animated_spritesheet(unarmed_hero_sheet, is_roaming=True)
+        self.hero_images = parse_animated_spritesheet(unarmed_hero_sheet)
         self.game.current_map.player = Player(center_point=self.center_pt,
                                               images=self.hero_images)
         self.game.hero_row = 0
