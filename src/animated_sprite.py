@@ -3,8 +3,8 @@ from src.common import Direction
 
 
 class AnimatedSprite(BaseSprite):
-    def __init__(self, center_point, direction, images, name):
-        self.name = name
+    def __init__(self, center_point, direction, images, identifier):
+        self.identifier = identifier
         self.current_frame = 0
         self.frame_count = 0
         self.frame_delay = 2

@@ -34,12 +34,12 @@ class Menu:
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, column, row, next_tile, characters, dialog_box):
+    def __init__(self, background, column, row, next_tile, characters, dialog_box, player):
         super().__init__()
         self.dialog_box = dialog_box
         self.next_tile = next_tile
         self.characters = characters
-        self.player_name = 'Eddie'
+        self.player = player
         self.launch_signaled = False
         self.launched = False
         command_menu_subsurface = background.subsurface((column - 2) * TILE_SIZE,
@@ -77,11 +77,11 @@ class CommandMenu(Menu):
         :return: To be determined upon implementation
         """
         play_sound(menu_button_sfx)
-        dialog = Dialog(player_name='Eddie')
+        dialog = Dialog(player=self.player)
         # TODO: Get an actual dialog box to show!
 
         # for now, implementing using print statements. will be useful for debugging as well.
-        if self.next_tile in [character.name for character in self.characters]:
+        if self.next_tile in [character.identifier for character in self.characters]:
             self.dialog_box.launch_signaled = True
             dialog.dialog_lookup[self.next_tile]()
         else:
@@ -97,15 +97,15 @@ class CommandMenu(Menu):
         # example below:
         play_sound(menu_button_sfx)
         print(f"""
-        NAME: {self.player_name}
-        STRENGTH: 22
-        MAXIMUM HP: 44
-        MAXIMUM MP: 29
-        ATTACK POWER: 37
-        DEFENSE POWER: 20
-        WEAPON: Hand Axe
-        ARMOR: Chain Mail
-        SHIELD: Small Shield
+        NAME: {self.player.name}
+        STRENGTH: {self.player.strength}
+        MAXIMUM HP: {self.player.maximum_hp}
+        MAXIMUM MP: {self.player.maximum_mp}
+        ATTACK POWER: {self.player.attack_power}
+        DEFENSE POWER: {self.player.defense_power}
+        WEAPON: {self.player.weapon}
+        ARMOR: {self.player.armor}
+        SHIELD: {self.player.shield}
         """)
 
     @staticmethod
@@ -129,9 +129,9 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # open a window
-        print(f"{self.player_name} searched the ground all about.")
+        print(f"{self.player.name} searched the ground all about.")
         print(f"But there found nothing.")
-        # print f"{player_name} searched the ground all about."
+        # print f"{player.name} searched the ground all about."
         # wait for input...
         # check if there is anything on the ground:
         # if so:
@@ -144,7 +144,7 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
-        print(f"{self.player_name} cannot yet use the spell.")
+        print(f"{self.player.name} cannot yet use the spell.")
 
     @staticmethod
     def item():
@@ -190,7 +190,7 @@ class CommandMenu(Menu):
         # if there is something to take:
         #   take it and update inventory accordingly
         # else:
-        print(f'There is nothing to take here, {self.player_name}.')
+        print(f'There is nothing to take here, {self.player.name}.')
 
 
 class DialogBox(Menu):

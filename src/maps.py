@@ -254,7 +254,7 @@ class DragonWarriorMap:
         character_sprites = LayeredDirty()
         if is_roaming:
             character = RoamingCharacter(self.center_pt, direction, images, name)
-            character.position = self.get_initial_character_location(character.name)
+            character.position = self.get_initial_character_location(character.identifier)
             self.roaming_characters.append(character)
         else:
             character = AnimatedSprite(self.center_pt, direction, images, name)
