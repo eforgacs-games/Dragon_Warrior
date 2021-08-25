@@ -9,16 +9,16 @@ from src.maps import parse_animated_spritesheet
 class TestAnimatedSprite(TestCase):
     def setUp(self) -> None:
         mock = MagicMock()
-        self.mock_images = parse_animated_spritesheet(mock, is_roaming=True)
+        self.mock_images = parse_animated_spritesheet(mock)
         self.anim_sprite = AnimatedSprite(center_point=None, direction=None,
                                           down_images=self.mock_images[Direction.DOWN.value],
                                           left_images=self.mock_images[Direction.LEFT.value],
                                           up_images=self.mock_images[Direction.UP.value],
                                           right_images=self.mock_images[Direction.RIGHT.value],
-                                          name='Mock')
+                                          identifier='Mock')
 
     def test_initialized_values(self):
-        self.assertEqual(self.anim_sprite.name, 'Mock')
+        self.assertEqual(self.anim_sprite.identifier, 'Mock')
         self.assertEqual(self.anim_sprite.down_images, self.mock_images[Direction.DOWN.value])
         self.assertEqual(self.anim_sprite.left_images, self.mock_images[Direction.LEFT.value])
         self.assertEqual(self.anim_sprite.up_images, self.mock_images[Direction.UP.value])
