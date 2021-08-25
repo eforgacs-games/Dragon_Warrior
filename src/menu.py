@@ -81,7 +81,7 @@ class CommandMenu(Menu):
 
         # for now, implementing using print statements. will be useful for debugging as well.
         if self.next_tile in [character.name for character in self.characters]:
-            self.dialog_box_launch_signaled = True
+            self.dialog_box.launch_signaled = True
             dialog.dialog_lookup[self.next_tile]()
         else:
             print_with_beep_sfx("'There is no one there.'")

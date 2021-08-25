@@ -7,9 +7,6 @@ class BaseSprite(DirtySprite):
     """
 
     def __init__(self, center_pt, image):
-        """
-        Constructor
-        """
         DirtySprite.__init__(self)
 
         # Set up the image and rect for the image.
@@ -17,4 +14,5 @@ class BaseSprite(DirtySprite):
         self.rect = image.get_rect()
 
         # Ensure rect is centered, makes it image size independent.
-        self.rect.center = center_pt
+        if center_pt:
+            self.rect.center = center_pt
