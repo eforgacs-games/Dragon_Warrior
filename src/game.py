@@ -71,7 +71,6 @@ class Game:
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(self.BACK_FILL_COLOR)
-        self.player_moving = False
         self.speed = 2
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
@@ -161,7 +160,7 @@ class Game:
         if current_key[K_k]:
             # A button
             # print("K key pressed (A button).")
-            if not self.player_moving:
+            if not self.player.is_moving:
                 # pause_all_movement may be temporarily commented out for dialog box debugging purposes.
                 self.cmd_menu.launch_signaled = True
                 self.pause_all_movement()
@@ -382,7 +381,7 @@ class Game:
         # TODO(ELF): separate dependency of camera pos and player pos
         curr_pos_x, curr_pos_y = self.camera.get_pos()
 
-        if not self.player_moving:
+        if not self.player.is_moving:
             if current_key[K_UP] or current_key[K_w]:
                 self.current_map.player.direction = Direction.UP.value
             elif current_key[K_DOWN] or current_key[K_s]:
@@ -393,16 +392,16 @@ class Game:
                 self.current_map.player.direction = Direction.RIGHT.value
             else:  # player not moving and no moving key pressed
                 return
-            self.player_moving = True
+            self.player.is_moving = True
         else:  # determine if player has reached new tile
             self.current_map.player_sprites.dirty = 1
             if is_facing_medially(self.current_map.player):
                 if curr_pos_y % TILE_SIZE == 0:
-                    self.player_moving, self.next_tile_checked = False, False
+                    self.player.is_moving, self.next_tile_checked = False, False
                     return
             elif is_facing_laterally(self.current_map.player):
                 if curr_pos_x % TILE_SIZE == 0:
-                    self.player_moving, self.next_tile_checked = False, False
+                    self.player.is_moving, self.next_tile_checked = False, False
                     return
 
         self.camera.move(self.current_map.player.direction)
