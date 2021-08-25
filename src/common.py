@@ -37,8 +37,12 @@ def retrieve_audio_resource(_sound_library, path, sound):
 # Sound
 
 _sound_library = {}
-bump_sfx = join(SFX_DIR, '42 Dragon Quest 1 - Bumping into Walls (22khz mono).wav')
+
+# menu
 menu_button_sfx = join(SFX_DIR, '32 Dragon Quest 1 - Menu Button (22khz mono).wav')
+text_beep_sfx = join(SFX_DIR, 'text_beep.wav')
+# movement
+bump_sfx = join(SFX_DIR, '42 Dragon Quest 1 - Bumping into Walls (22khz mono).wav')
 stairs_down_sfx = join(SFX_DIR, '30 Dragon Quest 1 - Stairs Down (22khz mono).wav')
 stairs_up_sfx = join(SFX_DIR, '29 Dragon Quest 1 - Stairs Up (22khz mono).wav')
 
@@ -148,3 +152,10 @@ def get_tile_by_coordinates(column: int, row: int, game_map) -> str:
     """
     if row < len(game_map.layout) and column < len(game_map.layout[0]):
         return game_map.get_tile_by_value(game_map.layout[row][column])
+
+
+def print_with_beep_sfx(string_to_print):
+    for _ in string_to_print:
+        play_sound(text_beep_sfx)
+        pygame.time.wait(1)
+    print(string_to_print)

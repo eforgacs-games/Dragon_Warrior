@@ -6,3 +6,5 @@ class Player(AnimatedSprite):
 
     def __init__(self, center_point, images, direction=Direction.DOWN.value):
         AnimatedSprite.__init__(self, center_point, direction, images, name='HERO')
+
+        self.is_moving = False
