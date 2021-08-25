@@ -247,6 +247,8 @@ class Game:
                     width=12 * TILE_SIZE,
                     height=5 * TILE_SIZE
                 )
+            else:
+                print("No menu launched")
             if not menu_to_launch.launched:
                 self.launch_menu(menu_to_launch.menu.get_id())
             else:
