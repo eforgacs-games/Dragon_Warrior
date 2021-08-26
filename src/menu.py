@@ -25,7 +25,9 @@ class Menu:
                                                                   LeftArrowSelection(
                                                                       # TODO: Disabling blinking arrow for now,
                                                                       #  because the arrow disappears between selections.
-                                                                      #  Might be a problem with pygame-menu. Investigation needed.
+                                                                      #  Might be a problem with pygame-menu.
+                                                                      #  Or a problem with the animation being shut off when the menu launches.
+                                                                      #  Investigation needed.
                                                                       # blink_ms=500,
                                                                       # TODO: Fix LeftArrowSelection size.
                                                                       arrow_size=(SCALE * 5, SCALE * 6))
@@ -34,9 +36,10 @@ class Menu:
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, column, row, next_tile, characters, dialog_box, player):
+    def __init__(self, background, column, row, current_tile, next_tile, characters, dialog_box, player):
         super().__init__()
         self.dialog_box = dialog_box
+        self.current_tile = current_tile
         self.next_tile = next_tile
         self.characters = characters
         self.player = player
@@ -108,19 +111,18 @@ class CommandMenu(Menu):
         SHIELD: {self.player.shield}
         """)
 
-    @staticmethod
-    def stairs():
+    def stairs(self):
         """
         Go up or down a staircase. (Not yet implemented)
         :return: To be determined upon implementation
         """
         play_sound(menu_button_sfx)
         # this might be something we could turn off as one of the "modernization" updates, but the implementation would be as follows:
-        # check if the player is standing on a staircase
-        # if so, activate the staircase warp to wherever the staircase leads
-        # else:
-        # open a window and print:
-        print("'There are no stairs here.'")
+        if self.current_tile in ('BRICK_STAIRDN', 'BRICK_STAIRUP', 'GRASS_STAIRDN'):
+            print("'There are stairs here.'")
+            # TODO: activate the staircase warp to wherever the staircase leads
+        else:
+            print("'There are no stairs here.'")
 
     def search(self):
         """
@@ -130,12 +132,13 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # open a window
         print(f"{self.player.name} searched the ground all about.")
-        print(f"But there found nothing.")
-        # print f"{player.name} searched the ground all about."
         # wait for input...
-        # check if there is anything on the ground:
-        # if so:
-        # print: f"There is a {item}."
+        if self.current_tile == 'CHEST':
+            print("There is a treasure box.")
+        # elif there is a hidden item:
+        # print(f"There is a {hidden_item}")
+        else:
+            print(f"But there found nothing.")
 
     def spell(self):
         """
@@ -144,18 +147,22 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
-        print(f"{self.player.name} cannot yet use the spell.")
+        if not self.player.spells:
+            print(f"{self.player.name} cannot yet use the spell.")
+        else:
+            print(self.player.spells)
 
-    @staticmethod
-    def item():
+    def item(self):
         """
         View/use items. (Not yet implemented)
         :return: To be determined upon implementation
         """
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which item is being used.
-        # if no items:
-        print("Nothing of use has yet been given to thee.")
+        if not self.player.inventory:
+            print("Nothing of use has yet been given to thee.")
+        else:
+            print(self.player.inventory)
 
     def door(self):
         """
@@ -163,21 +170,14 @@ class CommandMenu(Menu):
         :return: To be determined upon implementation
         """
         play_sound(menu_button_sfx)
-        if self.next_tile != 'DOOR':
-            print("There is no door here.")
+        if self.next_tile == 'DOOR':
+            if 'key' in self.player.inventory:
+                # actually open the door
+                print("Door opened!")
+            else:
+                print("Thou hast not a key to use.")
         else:
-            print("Thou hast not a key to use.")
-        # check if there is a door in front of the player
-        # if there is a door in front:
-        #   check if it is a locked door
-        #   if it is locked:
-        #       check if the player has a key
-        #       if the player does have a key:
-        #           open the door
-        #       else:
-        #           open a window and print "Thou hast not a key to use."
-        #   else:
-        #       open the door
+            print("There is no door here.")
 
     def take(self):
         """
@@ -186,11 +186,13 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # open a window
-        # check if there is something to take
-        # if there is something to take:
-        #   take it and update inventory accordingly
-        # else:
-        print(f'There is nothing to take here, {self.player.name}.')
+        if self.current_tile == 'CHEST':
+            print("Took what was in the treasure box.")
+        #     take it and update inventory accordingly
+        # elif there is a hidden item
+        # take the hidden item
+        else:
+            print(f'There is nothing to take here, {self.player.name}.')
 
 
 class DialogBox(Menu):

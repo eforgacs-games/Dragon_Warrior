@@ -229,23 +229,27 @@ class DragonWarriorMap:
             for x in range(len(self.layout[y])):
                 self.center_pt = get_center_point(x, y)
                 self.map_floor_tiles(x, y)
-                self.map_character_tiles(x, y, player)
+                self.map_character_tiles(y, x, player)
         # print("--- %s seconds ---" % (time.time() - start_time))
 
-    def map_character_tiles(self, x, y, player) -> None:
+    def map_character_tiles(self, row, column, player) -> None:
         for character, character_dict in self.character_key.items():
-            if self.layout[y][x] > 32:  # anything below 32 is a floor tile
-                if self.layout[y][x] == character_dict['val']:
-                    if self.layout[y][x] == 33:  # 'HERO' hardcoded value
+            if self.layout[row][column] > 32:  # anything below 32 is a floor tile
+                if self.layout[row][column] == character_dict['val']:
+                    if self.layout[row][column] == 33:  # 'HERO' hardcoded value
                         player.__init__(self.center_pt, self.hero_images)
                         self.map_player(character_dict['underlying_tile'], player)
+                        # TODO: This is a good way to reset the tile after mapping the character, but it breaks collision and also the talk function.
+                        self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
                     elif character_dict['four_sided']:
                         self.map_four_sided_npc(name=character, direction=character_dict['direction'],
                                                 underlying_tile=character_dict['underlying_tile'],
                                                 image_path=character_dict['path'], is_roaming=character_dict['roaming'])
+                        self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
                     else:
                         self.map_two_sided_npc(image_path=character_dict['path'], name=character,
                                                underlying_tile=character_dict['underlying_tile'])
+                        self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
 
     def map_four_sided_npc(self, name, direction, underlying_tile, image_path, is_roaming=False) -> None:
         sheet = get_image(image_path)
