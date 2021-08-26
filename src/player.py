@@ -1,10 +1,9 @@
 from random import randint
 
-from src.animated_sprite import AnimatedSprite
+from src.sprites.animated_sprite import AnimatedSprite
 from src.common import Direction
 
 # TODO: Fix ranges to not be random integers, and instead based on the character's name.
-from src.config import TILE_SIZE
 
 experience_chart = {
     1: {'exp': 0, 'strength': randint(3, 6), 'agility': randint(3, 6), 'max_hp': randint(13, 16), 'max_mp': 0, 'spell': None},

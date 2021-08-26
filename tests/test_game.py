@@ -6,10 +6,10 @@ from pygame.imageext import load_extended
 from pygame.transform import scale
 
 from src.camera import Camera
-from src.common import UNARMED_HERO_PATH, Direction
+from src.common import UNARMED_HERO_PATH, get_tile_by_coordinates
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
-from src.maps import DragonWarriorMap, parse_animated_spritesheet
+from src.maps import DragonWarriorMap, parse_animated_sprite_sheet
 from src.player import Player
 
 
@@ -23,10 +23,11 @@ def create_key_mock(pressed_key):
 
 
 class TestMockMap(DragonWarriorMap):
-    def __init__(self, hero_images):
-        super().__init__(None)
+    def __init__(self):
         self.layout = [[34, 0],
                        [1, 2]]
+        super().__init__(None, self.layout)
+
         self.height = len(self.layout * TILE_SIZE)
         self.width = len(self.layout[0] * TILE_SIZE)
         self.layout_numpy_array = np.array(self.layout)
@@ -38,14 +39,14 @@ class TestGame(TestCase):
         self.game = Game()
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
-        self.game.current_map = TestMockMap(hero_images=None)
+        self.game.current_map = TestMockMap()
 
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
 
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
         unarmed_hero_sheet = scale(unarmed_hero_sheet,
                                    (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))
-        self.hero_images = parse_animated_spritesheet(unarmed_hero_sheet)
+        self.hero_images = parse_animated_sprite_sheet(unarmed_hero_sheet)
         self.game.current_map.player = Player(center_point=self.center_pt,
                                               images=self.hero_images)
         self.game.hero_row = 0
@@ -80,10 +81,10 @@ class TestGame(TestCase):
         self.assertEqual(self.game.move_player(key), None)
 
     def test_get_tile_by_coordinates(self):
-        self.assertEqual(self.game.get_tile_by_coordinates(0, 0), 'HERO')
-        self.assertEqual(self.game.get_tile_by_coordinates(1, 0), 'ROOF')
-        self.assertEqual(self.game.get_tile_by_coordinates(0, 1), 'WALL')
-        self.assertEqual(self.game.get_tile_by_coordinates(1, 1), 'WOOD')
+        self.assertEqual(get_tile_by_coordinates(0, 0, self.game.current_map), 'HERO')
+        self.assertEqual(get_tile_by_coordinates(1, 0, self.game.current_map), 'ROOF')
+        self.assertEqual(get_tile_by_coordinates(0, 1, self.game.current_map), 'WALL')
+        self.assertEqual(get_tile_by_coordinates(1, 1, self.game.current_map), 'WOOD')
 
     # TODO: implement test_handle_roaming_character_map_edge_side_collision.
 

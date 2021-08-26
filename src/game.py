@@ -9,17 +9,17 @@ from pygame.time import Clock
 from pygame.time import get_ticks
 from pygame.transform import scale
 
-import menu
-from common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from config import NES_RES
-from maps import get_character_position, get_next_coordinates
-from roaming_character import handle_roaming_character_sides_collision
+import src.menu as menu
+from src.common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
+from src.config import NES_RES
+from src.maps import get_character_position, get_next_coordinates
+from src.sprites.roaming_character import handle_roaming_character_sides_collision
 from src import maps
 from src.camera import Camera
 from src.common import Direction, play_sound, bump_sfx, UNARMED_HERO_PATH, get_image, \
     menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
-from src.maps import parse_animated_spritesheet
+from src.maps import parse_animated_sprite_sheet
 from src.player import Player
 
 
@@ -63,7 +63,7 @@ class Game:
             unarmed_hero_sheet.get_width() * self.scale,
             unarmed_hero_sheet.get_height() * self.scale
         ))
-        self.unarmed_hero_images = parse_animated_spritesheet(unarmed_hero_tilesheet)
+        self.unarmed_hero_images = parse_animated_sprite_sheet(unarmed_hero_tilesheet)
 
         # self.current_map can be changed to other maps for development purposes
 

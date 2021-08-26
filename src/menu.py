@@ -1,7 +1,7 @@
 import pygame_menu
 
-from common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, play_sound, menu_button_sfx
-from config import SCALE, TILE_SIZE
+from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, play_sound, menu_button_sfx
+from src.config import SCALE, TILE_SIZE
 from data.text.dialog import Dialog
 from src.common import print_with_beep_sfx
 
@@ -118,7 +118,7 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # this might be something we could turn off as one of the "modernization" updates, but the implementation would be as follows:
-        if self.current_tile in ('BRICK_STAIRDN', 'BRICK_STAIRUP', 'GRASS_STAIRDN'):
+        if self.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIRUP', 'GRASS_STAIRDN'):
             print("'There are stairs here.'")
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
