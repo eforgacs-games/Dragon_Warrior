@@ -89,9 +89,9 @@ class TestGame(TestCase):
     # def test_hero_underlying_tile_not_implemented(self):
     #     self.assertRaises(NotImplementedError, self.game.current_map.hero_underlying_tile)
 
-    def test_move_player_return_value(self):
-        key = pygame.key.get_pressed()
-        self.assertEqual(self.game.move_player(key), None)
+    # def test_move_player_return_value(self):
+    #     key = pygame.key.get_pressed()
+    #     self.assertEqual(self.game.move_player(key), None)
 
     def test_get_tile_by_coordinates(self):
         self.assertEqual('HERO', get_tile_by_coordinates(0, 0, self.game.current_map))
