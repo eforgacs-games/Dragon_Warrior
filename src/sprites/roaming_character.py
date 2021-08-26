@@ -1,5 +1,5 @@
-from config import TILE_SIZE
-from src.animated_sprite import AnimatedSprite
+from src.config import TILE_SIZE
+from src.sprites.animated_sprite import AnimatedSprite
 
 
 class RoamingCharacter(AnimatedSprite):
