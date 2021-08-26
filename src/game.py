@@ -2,7 +2,7 @@ import random
 import sys
 
 from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, DOUBLEBUF, mixer, QUIT, event, display, time, \
-    key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d
+    key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d, surface
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -12,7 +12,7 @@ from pygame.transform import scale
 import menu
 from common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from config import NES_RES
-from maps import get_character_position
+from maps import get_character_position, get_next_coordinates
 from roaming_character import handle_roaming_character_sides_collision
 from src import maps
 from src.camera import Camera
@@ -37,7 +37,7 @@ class Game:
 
     def __init__(self):
         # Initialize pygame
-        self.character_rects = []
+        self.foreground_rects = []
         self.opacity = 0
         init()
 
@@ -85,11 +85,12 @@ class Game:
         self.current_map.load_map(self.player)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
+        self.current_tile = get_tile_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.next_tile = self.get_next_tile(character_column=self.hero_layout_column,
                                             character_row=self.hero_layout_row,
                                             direction=self.current_map.player.direction)
         self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.next_tile, self.current_map.characters, self.dlg_box, self.player)
+        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.next_tile, self.current_map.characters, self.dlg_box, self.player)
 
         self.menus = self.cmd_menu, self.dlg_box
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
@@ -145,8 +146,8 @@ class Game:
                 sys.exit()
         event.pump()
         current_key = key.get_pressed()
-        self.hero_layout_column = self.current_map.player.rect.x // TILE_SIZE
-        self.hero_layout_row = self.current_map.player.rect.y // TILE_SIZE
+        self.hero_layout_column = self.player.rect.x // TILE_SIZE
+        self.hero_layout_row = self.player.rect.y // TILE_SIZE
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
         if self.enable_movement:
@@ -182,22 +183,23 @@ class Game:
         # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
         #     self.scale = self.scale + 1
 
+        self.current_tile = get_tile_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
+        self.cmd_menu.current_tile = self.current_tile
         # For debugging purposes, this prints out the current tile that the player is standing on.
-        # print(self.get_tile_by_coordinates(self.current_map.player.rect.y // TILE_SIZE,
-        #                                    self.current_map.player.rect.x // TILE_SIZE))
+        # print(self.current_tile)
 
+        self.player.current_coordinates = self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE
         # For debugging purposes, this prints out the current coordinates that the player is standing on.
-        # print(self.current_map.player.rect.y // TILE_SIZE, self.current_map.player.rect.x // TILE_SIZE)
+        # print(self.player.current_coordinates)
 
-        # player_next_coordinates = get_next_coordinates(self.current_map.player.rect.x // TILE_SIZE,
-        #                                                self.current_map.player.rect.y // TILE_SIZE,
-        #                                                self.current_map.player.direction)
+        self.player.next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
+                                                            self.player.rect.y // TILE_SIZE,
+                                                            self.player.direction)
         # For debugging purposes, this prints out the next coordinates that the player will land on.
-        # print(player_next_coordinates)
+        # print(self.player.next_coordinates)
 
         # For debugging purposes, this prints out the next tile that the player will land on.
-        # print(self.get_tile_by_coordinates(player_next_coordinates[1], player_next_coordinates[0]))
-
+        # print(get_tile_by_coordinates(self.player.next_coordinates[1], self.player.next_coordinates[0], self.current_map))
         event.pump()
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
@@ -224,7 +226,7 @@ class Game:
             else:
                 character.pause()
         for sprites in self.current_map.character_sprites:
-            self.character_rects.append(sprites.draw(self.background))
+            self.foreground_rects.append(sprites.draw(self.background))
         for menu_or_dialog_box in self.menus:
             self.handle_menu_launch(menu_or_dialog_box)
         self.screen.blit(self.background, self.camera.get_pos())
@@ -238,6 +240,7 @@ class Game:
                     width=8 * TILE_SIZE,
                     height=5 * TILE_SIZE
                 )
+                rect = draw_menu_on_subsurface(menu_to_launch.menu, self.command_menu_subsurface)
             elif menu_to_launch.menu.get_id() == 'dialog_box':
                 self.dialog_box_subsurface = self.set_background_subsurface(
                     # left=(self.hero_layout_column + 6) * TILE_SIZE,
@@ -247,21 +250,16 @@ class Game:
                     width=12 * TILE_SIZE,
                     height=5 * TILE_SIZE
                 )
+                rect = draw_menu_on_subsurface(menu_to_launch.menu, self.dialog_box_subsurface)
             else:
+                rect = None
                 print("No menu launched")
             if not menu_to_launch.launched:
                 self.launch_menu(menu_to_launch.menu.get_id())
             else:
-                if menu_to_launch.menu.get_id() == 'command':
-                    rect = draw_menu_on_subsurface(menu_to_launch.menu, self.command_menu_subsurface)
-                elif menu_to_launch.menu.get_id() == 'dialog_box':
-                    rect = draw_menu_on_subsurface(menu_to_launch.menu, self.dialog_box_subsurface)
-                else:
-                    rect = None
-                if rect:
-                    self.character_rects.append(rect)
+                self.foreground_rects.append(rect)
 
-    def set_background_subsurface(self, left, top, width, height):
+    def set_background_subsurface(self, left, top, width, height) -> surface.Surface:
         return self.background.subsurface(
             left,
             top,
@@ -269,7 +267,7 @@ class Game:
             height
         )
 
-    def update_screen(self):
+    def update_screen(self) -> None:
         """Update the screen's display."""
         for menu_or_dialog_box in self.menus:
             if menu_or_dialog_box.launched:
@@ -363,7 +361,7 @@ class Game:
         :return: None
         """
         if menu_to_launch == 'command':
-            self.cmd_menu.next_tile = self.get_next_tile(self.hero_layout_column, self.hero_layout_row, self.current_map.player.direction)
+            self.cmd_menu.next_tile = self.get_next_tile(self.hero_layout_column, self.hero_layout_row, self.player.direction)
             if not self.cmd_menu.launched:
                 play_sound(menu_button_sfx)
             self.set_and_append_rect(self.cmd_menu.menu, self.command_menu_subsurface)
@@ -375,7 +373,7 @@ class Game:
     def set_and_append_rect(self, menu_to_set, subsurface):
         menu_rect = draw_menu_on_subsurface(menu_to_set, subsurface)
         if menu_rect:
-            self.character_rects.append(menu_rect)
+            self.foreground_rects.append(menu_rect)
 
     def move_player(self, current_key) -> None:
         """
@@ -388,32 +386,32 @@ class Game:
 
         if not self.player.is_moving:
             if current_key[K_UP] or current_key[K_w]:
-                self.current_map.player.direction = Direction.UP.value
+                self.player.direction = Direction.UP.value
             elif current_key[K_DOWN] or current_key[K_s]:
-                self.current_map.player.direction = Direction.DOWN.value
+                self.player.direction = Direction.DOWN.value
             elif current_key[K_LEFT] or current_key[K_a]:
-                self.current_map.player.direction = Direction.LEFT.value
+                self.player.direction = Direction.LEFT.value
             elif current_key[K_RIGHT] or current_key[K_d]:
-                self.current_map.player.direction = Direction.RIGHT.value
+                self.player.direction = Direction.RIGHT.value
             else:  # player not moving and no moving key pressed
                 return
             self.player.is_moving = True
         else:  # determine if player has reached new tile
             self.current_map.player_sprites.dirty = 1
-            if is_facing_medially(self.current_map.player):
+            if is_facing_medially(self.player):
                 if curr_pos_y % TILE_SIZE == 0:
                     self.player.is_moving, self.next_tile_checked = False, False
                     return
-            elif is_facing_laterally(self.current_map.player):
+            elif is_facing_laterally(self.player):
                 if curr_pos_x % TILE_SIZE == 0:
                     self.player.is_moving, self.next_tile_checked = False, False
                     return
 
-        self.camera.move(self.current_map.player.direction)
-        if is_facing_medially(self.current_map.player):
-            self.move_medially(self.current_map.player)
-        elif is_facing_laterally(self.current_map.player):
-            self.move_laterally(self.current_map.player)
+        self.camera.move(self.player.direction)
+        if is_facing_medially(self.player):
+            self.move_medially(self.player)
+        elif is_facing_laterally(self.player):
+            self.move_laterally(self.player)
         self.current_map.player_sprites.dirty = 1
 
     def move_laterally(self, character) -> None:
@@ -452,16 +450,16 @@ class Game:
         if not self.next_tile_checked:
             self.next_tile = self.get_next_tile(character_column=self.hero_layout_column,
                                                 character_row=self.hero_layout_row,
-                                                direction=self.current_map.player.direction)
+                                                direction=self.player.direction)
             self.next_tile_checked = True
 
         if not self.is_impassable(self.next_tile):
             if not self.roaming_character_in_path_of_character():
                 if delta_x:
-                    self.current_map.player.rect.x += delta_x
+                    self.player.rect.x += delta_x
                     next_cam_pos_x = curr_cam_pos_x + -delta_x
                 if delta_y:
-                    self.current_map.player.rect.y += -delta_y
+                    self.player.rect.y += -delta_y
                     next_cam_pos_y = curr_cam_pos_y + delta_y
             else:
                 play_sound(bump_sfx)
@@ -475,7 +473,7 @@ class Game:
         roaming_character_locations = [(roaming_character.column, roaming_character.row) for roaming_character in
                                        self.current_map.roaming_characters]
         return self.get_next_coordinates(self.hero_layout_column, self.hero_layout_row,
-                                         self.current_map.player.direction) in roaming_character_locations
+                                         self.player.direction) in roaming_character_locations
 
     def get_next_tile(self, character_column: int, character_row: int, direction) -> str:
         """
@@ -525,20 +523,20 @@ class Game:
         :return: tuple: The x, y coordinates (in terms of tile size) of the next position of the player.
         """
         max_x_bound, max_y_bound, min_bound = self.current_map.width - TILE_SIZE, self.current_map.height - TILE_SIZE, 0
-        if self.current_map.player.rect.x < min_bound:
-            self.current_map.player.rect.x = min_bound
+        if self.player.rect.x < min_bound:
+            self.player.rect.x = min_bound
             play_sound(bump_sfx)
             next_pos_x += -self.speed
-        elif self.current_map.player.rect.x > max_x_bound:
-            self.current_map.player.rect.x = max_x_bound
+        elif self.player.rect.x > max_x_bound:
+            self.player.rect.x = max_x_bound
             play_sound(bump_sfx)
             next_pos_x += self.speed
-        elif self.current_map.player.rect.y < min_bound:
-            self.current_map.player.rect.y = min_bound
+        elif self.player.rect.y < min_bound:
+            self.player.rect.y = min_bound
             play_sound(bump_sfx)
             next_pos_y -= self.speed
-        elif self.current_map.player.rect.y > max_y_bound:
-            self.current_map.player.rect.y = max_y_bound
+        elif self.player.rect.y > max_y_bound:
+            self.player.rect.y = max_y_bound
             play_sound(bump_sfx)
             next_pos_y += self.speed
         return next_pos_x, next_pos_y
