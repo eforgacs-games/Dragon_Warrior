@@ -1,4 +1,4 @@
-from src.base_sprite import BaseSprite
+from src.sprites.base_sprite import BaseSprite
 from src.common import Direction
 
 

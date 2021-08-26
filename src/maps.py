@@ -1,19 +1,20 @@
 from typing import Tuple
 
 import numpy as np
+from pygame import surface
 from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
 
-from src.animated_sprite import AnimatedSprite
-from src.base_sprite import BaseSprite
+from src.sprites.animated_sprite import AnimatedSprite
+from src.sprites.base_sprite import BaseSprite
 from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_PATH, get_image, \
     GUARD_PATH, MAN_PATH, tantegel_castle_courtyard_music, WOMAN_PATH, WISE_MAN_PATH, \
     SOLDIER_PATH, MERCHANT_PATH, PRINCESS_GWAELIN_PATH, DRAGONLORD_PATH, UNARMED_HERO_PATH, MAP_TILES_PATH, \
     overworld_music
 from src.config import TILE_SIZE, SCALE, COLOR_KEY
 # Tile Key:
-# Index values for the map tiles corresponding to location on tilesheet.
-from src.roaming_character import RoamingCharacter
+# Index values for the map tiles corresponding to location on tile sheet.
+from src.sprites.roaming_character import RoamingCharacter
 
 offset = TILE_SIZE // 2
 all_impassable_tiles = (
@@ -29,8 +30,8 @@ WOOD = 2
 BRICK = 3
 CHEST = 4
 DOOR = 5
-BRICK_STAIRDN = 6
-BRICK_STAIRUP = 7
+BRICK_STAIR_DOWN = 6
+BRICK_STAIR_UP = 7
 BARRIER = 8
 WEAPON_SIGN = 9
 INN_SIGN = 10
@@ -41,7 +42,7 @@ TREES = 14
 HILLS = 15
 MOUNTAINS = 16
 CAVE = 17
-GRASS_STAIRDN = 18
+GRASS_STAIR_DOWN = 18
 SAND = 19
 MARSH = 20
 BRIDGE = 21
@@ -58,9 +59,9 @@ BOTTOM_TOP_LEFT_COAST = 31
 BOTTOM_TOP_RIGHT_COAST = 32
 
 
-def parse_animated_spritesheet(sheet) -> Tuple[list, list, list, list]:
+def parse_animated_sprite_sheet(sheet: surface.Surface) -> Tuple[list, list, list, list]:
     """
-    Parses spritesheets and creates image lists. If is_roaming is True
+    Parses sprite sheets and creates image lists. If is_roaming is True
     the sprite will have four lists of images, one for each direction. If
     is_roaming is False then there will be one list of 2 images.
     """
@@ -127,8 +128,8 @@ class DragonWarriorMap:
         self.brick_group = Group()  # 3
         self.chest_group = Group()  # 4
         self.door_group = Group()  # 5
-        self.brick_stairdn_group = Group()  # 6
-        self.brick_stairup_group = Group()  # 7
+        self.brick_stair_down_group = Group()  # 6
+        self.brick_stair_up_group = Group()  # 7
         self.barrier_group = Group()  # 8
         self.weapon_sign_group = Group()  # 9
         self.inn_sign_group = Group()  # 10
@@ -139,7 +140,7 @@ class DragonWarriorMap:
         self.hills_group = Group()  # 15
         self.mountains_group = Group()  # 16
         self.cave_group = Group()  # 17
-        self.grass_stairdn_group = Group()  # 18
+        self.grass_stair_down_group = Group()  # 18
         self.sand_group = Group()  # 19
         self.marsh_group = Group()  # 20
         self.bridge_group = Group()  # 21
@@ -162,8 +163,8 @@ class DragonWarriorMap:
             ('BRICK', {'val': 3, 'group': self.brick_group}),
             ('CHEST', {'val': 4, 'group': self.chest_group}),
             ('DOOR', {'val': 5, 'group': self.door_group}),
-            ('BRICK_STAIRDN', {'val': 6, 'group': self.brick_stairdn_group}),
-            ('BRICK_STAIRUP', {'val': 7, 'group': self.brick_stairup_group}),
+            ('BRICK_STAIR_DOWN', {'val': 6, 'group': self.brick_stair_down_group}),
+            ('BRICK_STAIR_UP', {'val': 7, 'group': self.brick_stair_up_group}),
             ('BARRIER', {'val': 8, 'group': self.barrier_group}),
             ('WEAPON_SIGN', {'val': 9, 'group': self.weapon_sign_group}),
             ('INN_SIGN', {'val': 10, 'group': self.inn_sign_group}),
@@ -174,7 +175,7 @@ class DragonWarriorMap:
             ('HILLS', {'val': 15, 'group': self.hills_group}),
             ('MOUNTAINS', {'val': 16, 'group': self.mountains_group}),
             ('CAVE', {'val': 17, 'group': self.cave_group}),
-            ('GRASS_STAIRDN', {'val': 18, 'group': self.grass_stairdn_group}),
+            ('GRASS_STAIR_DOWN', {'val': 18, 'group': self.grass_stair_down_group}),
             ('SAND', {'val': 19, 'group': self.sand_group}),
             ('MARSH', {'val': 20, 'group': self.marsh_group}),
             ('BRIDGE', {'val': 21, 'group': self.bridge_group}),
@@ -213,13 +214,22 @@ class DragonWarriorMap:
         return list(self.tile_key.keys())[position]
 
     def get_initial_character_location(self, character_name: str) -> np.ndarray:
+        """
+        Gets the initial location of any character specified.
+        :param character_name: Name of the character to find
+        :return:
+        """
         hero_layout_position = np.asarray(
             np.where(self.layout_numpy_array == self.character_key[character_name]['val'])).T
         return hero_layout_position
 
-    # def get_staircase_locations(self):
-    #     staircase_locations = np.asarray(np.where(self.layout_numpy_array == self.tile_key['BRICK_STAIRDN']['val'])).T
-    #     return staircase_locations
+    def get_staircase_locations(self):
+        """
+        Dynamically generates a list of staircase locations. Currently unused, but might be useful for staircase warps.
+        :return:
+        """
+        staircase_locations = np.asarray(np.where(self.layout_numpy_array == self.tile_key['BRICK_STAIR_DOWN']['val'])).T
+        return staircase_locations
 
     def load_map(self, player) -> None:
         # start_time = time.time()
@@ -239,7 +249,8 @@ class DragonWarriorMap:
                     if self.layout[row][column] == 33:  # 'HERO' hardcoded value
                         player.__init__(self.center_pt, self.hero_images)
                         self.map_player(character_dict['underlying_tile'], player)
-                        # TODO: This is a good way to reset the tile after mapping the character, but it breaks collision and also the talk function.
+                        # TODO: This is a good way to reset the tile after mapping the character, but it breaks collision and also the TALK function.
+                        #  What it will help with is keeping a good state of the floor for the TAKE and SEARCH functions.
                         self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
                     elif character_dict['four_sided']:
                         self.map_four_sided_npc(name=character, direction=character_dict['direction'],
@@ -254,7 +265,7 @@ class DragonWarriorMap:
     def map_four_sided_npc(self, name, direction, underlying_tile, image_path, is_roaming=False) -> None:
         sheet = get_image(image_path)
         sheet = scale(sheet, (sheet.get_width() * self.scale, sheet.get_height() * self.scale))
-        images = parse_animated_spritesheet(sheet)
+        images = parse_animated_sprite_sheet(sheet)
         character_sprites = LayeredDirty()
         if is_roaming:
             character = RoamingCharacter(self.center_pt, direction, images, name)
@@ -275,7 +286,7 @@ class DragonWarriorMap:
         sprites = LayeredDirty()
         sheet = get_image(image_path)
         sheet = scale(sheet, (sheet.get_width() * SCALE, sheet.get_height() * SCALE))
-        images = parse_animated_spritesheet(sheet)
+        images = parse_animated_sprite_sheet(sheet)
         character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, name)
         sprites.add(character)
         self.characters.append(character)
@@ -407,26 +418,26 @@ class TantegelCourtyard(DragonWarriorMap):
         tantegel_courtyard = [[13] * 7 + row + [13] * 7 for row in tantegel_courtyard]
         super().__init__(hero_images, tantegel_courtyard)
 
-        up_staircase = {'map': Overworld(self.hero_images), 'stair_direction': 'up'}
+        up_staircase = {'map': Alefgard(self.hero_images), 'stair_direction': 'up'}
         staircases_keys = [(37, min(n, 26)) for n in range(9, 27, 1)]
         staircases_values = [up_staircase] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
         self.music_file_path = tantegel_castle_courtyard_music
 
     def hero_underlying_tile(self):
-        return 'BRICK_STAIRUP'
+        return 'BRICK_STAIR_UP'
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
 
-class Overworld(DragonWarriorMap):
+class Alefgard(DragonWarriorMap):
     """
-    This is Alefgard, the overworld by which the player travels between cities. The map is a 124 x 124 tile grid.
+    This is Alefgard, the world by which the player travels between cities. The map is a 124 x 124 tile grid.
     """
 
     def __init__(self, hero_images):
-        overworld = [
+        alefgard = [
             [WATER] * 62,  # 1
             [WATER] * 62,  # 2
             [WATER] * 62,  # 3
@@ -510,7 +521,7 @@ class Overworld(DragonWarriorMap):
             [22, 22, 22, 22, 22, 22, 22, 22, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 13, 13, 13, 13, 13, 13, 13, 13, 14, 14, 14, 14, 14, 26, 22, 22, 22, 22, 22, 22, 22, 22, 20, 20, 22, 22],  # 81
             [22, 22, 22, 22, 22, 22, 22, 22, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 13, 13, 13, 13, 13, 13, 13, 13, 13, 14, 14, 14, 26, 22, 22, 22, 22, 22, 22, 22, 22, 22, 20, 20, 22, 22],  # 82
         ]
-        super().__init__(hero_images, overworld)
+        super().__init__(hero_images, alefgard)
         self.music_file_path = overworld_music
         self.staircases = {}
 
@@ -523,9 +534,9 @@ class Overworld(DragonWarriorMap):
 
 def parse_map_tiles(map_path):
     map_sheet = get_image(map_path).convert()
-    map_tilesheet = scale(map_sheet, (map_sheet.get_width() * SCALE, map_sheet.get_height() * SCALE))
+    map_tile_sheet = scale(map_sheet, (map_sheet.get_width() * SCALE, map_sheet.get_height() * SCALE))
     map_tiles = []
-    width, height = map_tilesheet.get_size()
+    width, height = map_tile_sheet.get_size()
 
     for x in range(0, width // TILE_SIZE):
         row = []
@@ -533,7 +544,7 @@ def parse_map_tiles(map_path):
 
         for y in range(0, height // TILE_SIZE):
             rect = (x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-            row.append(map_tilesheet.subsurface(rect))
+            row.append(map_tile_sheet.subsurface(rect))
     return map_tiles
 
 
