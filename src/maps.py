@@ -294,7 +294,6 @@ class DragonWarriorMap:
         self.add_tile_by_value_and_group(underlying_tile)
 
     def map_player(self, underlying_tile, player) -> None:
-        # TODO(ELF): Fix underlying tiles so that they aren't all bricks.
         self.player = player
         self.player_sprites = LayeredDirty(self.player)
         self.player.direction = self.hero_initial_direction()
