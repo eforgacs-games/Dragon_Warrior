@@ -102,8 +102,8 @@ class CommandMenu(Menu):
         print(f"""
         NAME: {self.player.name}
         STRENGTH: {self.player.strength}
-        MAXIMUM HP: {self.player.maximum_hp}
-        MAXIMUM MP: {self.player.maximum_mp}
+        MAXIMUM HP: {self.player.max_hp}
+        MAXIMUM MP: {self.player.max_mp}
         ATTACK POWER: {self.player.attack_power}
         DEFENSE POWER: {self.player.defense_power}
         WEAPON: {self.player.weapon}

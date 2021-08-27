@@ -1,0 +1,174 @@
+https://gamefaqs.gamespot.com/nes/563408-dragon-warrior/faqs/18342
+
+                            akira slime's guide to:
+
+                         +----------------------------+
+                         |Names, Stats, and Levels for|
+                         |       DRAGON WARRIOR       |
+                         +----------------------------+
+
+version 1.0
+ - With hope, the first and final.
+-------------------------------------------------------------------------------
+
+Table of Contents
+
+1.) Introduction.
+2.) How names affect your stats.
+3.) Conclusion
+
+
+-------------------------------------------------------------------------------
+1.) Introduction.
+-------------------------------------------------------------------------------
+
+ The relationship between the hero's name and stats has been something that has
+bugged me for a while - it was one of those things I knew about, but couldn't
+be bothered taking any further. In any case, it eventually got to the point
+where I decided to get off my rear-end and figure out what was going on. The
+following is the results of some unexpectedly extensive research that followed.
+
+
+-------------------------------------------------------------------------------
+2.) How names affect your stats.
+-------------------------------------------------------------------------------
+
+ In the game of Dragon Warrior, the initial stats, and stats gained with
+subsequent level gains, are all predetermined by the name you enter at the
+start of the game. Unfair as it is, this means that some names are destined to
+be stronger than others.
+
+ Below is a list of steps that can calculate all of your stats from any name of
+choosing. I hope that this could help some of you create a more preferable
+character, rather than be potentially ripped-off by the system :)
+
+
+STEP 1.------------------------------------------------------------------------
+
+ Take only up to the first four letters of your name, find the corresponding
+number for each letter in the chart bellow, then find the total of these
+numbers.
+
+note: _ is a blank
+
+_                                       a   b   c   d   e   f
+g   h   i   j   k   l   m   n   o   p   q   r   s   t   u   v
+w   x   y   z   A   B   C   D   E   F   G   H   I   J   K   L
+M   N   O   P   Q   R   S   T   U   V   W   X   Y   Z
+'                           .   ,   -       ?   !       )   (
+-------------------------------------------------------------
+0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+
+
+STEP 2.------------------------------------------------------------------------
+
+ Divide the total by 16. Find the remainder of the result in the chart below to
+find the corresponding initial stats and growth structure.
+
+note: The "initial" MP stat is not applied until the hero reaches level 3
+
+remainder   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+-------------------------------------------------------------------------
+ strength   3   4   3   4   4   4   4   4   5   4   5   4   6   4   6   4
+  agility   3   3   4   4   4   4   4   4   5   5   4   4   6   6   4   4
+   max HP  15  15  13  13  15  15  14  14  15  15  15  15  15  15  16  16
+   max MP   5   4   5   4   5   5   5   5   5   6   5   6   5   7   5   7
+   growth   A   B   C   D   A   B   C   D   A   B   C   D   A   B   C   D
+
+(Remember that a "remainder" is the number left over after dividing a number.
+For example, 17/5 = 3 "remainder" 2.)
+
+Notice that the larger remainders seem to be relatively better off.
+
+
+STEP 3.------------------------------------------------------------------------
+
+ View the table below to find which individual growth rates are associated with
+the growth type given above.
+
+growth Str Agi  HP  MP
+----------------------
+     A   1   2   1   2
+     B   2   1   2   1
+     C   1   1   2   2
+     D   2   2   1   1
+
+
+
+STEP 4.------------------------------------------------------------------------
+
+ Finally, view the table below to see your growth rates. The stat rates are
+represented as the total additional points given after the initial status
+endowments.
+
+Lv    Exp   Str1 Str2   Agi1 Agi2    HP1  HP1    MP1  MP2     Spells
+--------------------------------------------------------------------
+ 1      0      -    -      -    -      -    -      -    -
+ 2      7      1    1      0    0      7    6      -    -
+ 3     23      3    3      2    2      9    8      -    -       HEAL
+ 4     47      3    3      4   4      16   14     11   10       HURT
+ 5    110      8    7      6   6      20   18     15   14
+ 6    220     12   11      6   6      23   21     19   17
+ 7    450     14   13     13   12     25   23     21   19      SLEEP
+ 8    800     18   16     16   15     31   28     24   22
+ 9   1300     26   24     18   16     35   32     31   28    RADIANT
+10   2000     31   28     27   24     39   35     35   32  STOPSPELL
+11   2900     36   33     31   28     47   42     45   41
+12   4000     44   40     36   33     48   43     53   48    OUTSIDE
+13   5500     48   43     44   40     55   50     59   53     RETURN
+14   7500     56   51     51   46     63   57     65   59
+15  10000     64   58     60   54     71   64     67   60      REPEL
+16  13000     68   61     66   60     77   69     90   81
+17  17000     68   61     74   67     85   77     95   86   HEALMORE
+18  21000     81   73     80   72    100   90    103   93
+19  25000     83   75     82   74    115  104    110   99   HURTMORE
+20  29000     88   79     84   76    123  111    123  111
+21  33000     91   82     86   78    134  121    130  117
+22  37000     93   84     86   78    143  129    141  127
+23  41000     95   86     90   81    150  135    148  133
+24  45000     99   89     94   85    155  140    156  140
+25  49000    109   98     96   87    159  143    156  140
+26  53000    113  102    101   91    165  149    163  148
+27  57000    121  109    103   93    174  157    170  153
+28  61000    126  114    111   100   180  162    175  158
+29  65000    131  118    116   105   185  167    185  167
+30  65535    136  123    126   114   195  176    195  176
+
+Notice that the "1" growth rates are significantly better than the "2" growth
+rates. The best combination will depend on your preferences over strength,
+agility, HP, and MP.
+
+
+-------------------------------------------------------------------------------
+3.) Conclusion
+-------------------------------------------------------------------------------
+
+So, what is there to get out of this jumble?
+
+Well, matters of preference aside, the only conclusive recommendation I can
+give is that names with remainders greater than 11 are marginally better off,
+whereas names with a remainder less than 4 are marginally worse off.
+
+The only hope I'm left with is that some of you would be marginally better off
+from reading this FAQ :)
+
+
+-------------------------------------------------------------------------------
+
+Any information, questions, comments, criticisms, and the like, are all very
+welcome. Just send them to akiraslime@hotmail.com.
+
+Alternatively, you could find me and many other Dragon Warrior players on the
+Dragon Warrior message board at GameFAQs.
+
+
+-------------------------------------------------------------------------------
+
+Finally, I'd like to thank Warlock and TharkasDB who helped verify some of the
+calculations.
+
+
+-------------------------------------------------------------------------------
+
+All rights reserved to Akira Speirs. Copyright 2002.
+Restore Page
