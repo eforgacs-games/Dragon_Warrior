@@ -109,7 +109,7 @@ class Player(AnimatedSprite):
         self.is_moving = False
         self.current_coordinates = None
         self.next_coordinates = None
-        self.name = 'Zelda'
+        self.name = 'Edward'
         # pre-set attributes
         self.growth = ""
         # status menu

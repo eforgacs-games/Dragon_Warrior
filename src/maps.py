@@ -424,6 +424,9 @@ class TantegelCourtyard(DragonWarriorMap):
         self.music_file_path = tantegel_castle_courtyard_music
 
     def hero_underlying_tile(self):
+        # TODO: Super TODO. Make characters have initial coordinates
+        #  Instead of underlying tiles,
+        #  set up the map with just the background tiles.
         return 'BRICK_STAIR_UP'
 
     def hero_initial_direction(self):
