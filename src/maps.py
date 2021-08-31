@@ -1,3 +1,4 @@
+import time
 from typing import Tuple
 
 import numpy as np
@@ -234,8 +235,23 @@ class DragonWarriorMap:
         staircase_locations = np.asarray(np.where(self.layout_numpy_array == self.tile_key['BRICK_STAIR_DOWN']['val'])).T
         return staircase_locations
 
+    def timeit(method):
+        def timed(*args, **kw):
+            ts = time.time()
+            result = method(*args, **kw)
+            te = time.time()
+            if 'log_time' in kw:
+                name = kw.get('log_name', method.__name__.upper())
+                kw['log_time'][name] = int((te - ts) * 1000)
+            else:
+                print(
+                    f'{method.__name__!r}  {(te - ts) * 1000:2.2f} ms')
+            return result
+
+        return timed
+
+    @timeit
     def load_map(self, player) -> None:
-        # start_time = time.time()
         tiles_in_current_loaded_map = set([self.get_tile_by_value(tile) for row in self.layout for tile in row])
         self.impassable_tiles = tuple(tiles_in_current_loaded_map & set(all_impassable_tiles))
         for y in range(len(self.layout)):
@@ -243,7 +259,6 @@ class DragonWarriorMap:
                 self.center_pt = get_center_point(x, y)
                 self.map_floor_tiles(x, y)
                 self.map_character_tiles(y, x, player)
-        # print("--- %s seconds ---" % (time.time() - start_time))
 
     def map_character_tiles(self, row, column, player) -> None:
         for character, character_dict in self.character_key.items():
