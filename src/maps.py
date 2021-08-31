@@ -5,15 +5,16 @@ from pygame import surface
 from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
 
-from src.sprites.animated_sprite import AnimatedSprite
-from src.sprites.base_sprite import BaseSprite
 from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_PATH, get_image, \
     GUARD_PATH, MAN_PATH, tantegel_castle_courtyard_music, WOMAN_PATH, WISE_MAN_PATH, \
     SOLDIER_PATH, MERCHANT_PATH, PRINCESS_GWAELIN_PATH, DRAGONLORD_PATH, UNARMED_HERO_PATH, MAP_TILES_PATH, \
     overworld_music
 from src.config import TILE_SIZE, SCALE, COLOR_KEY
+from src.sprites.animated_sprite import AnimatedSprite
+from src.sprites.base_sprite import BaseSprite
 # Tile Key:
 # Index values for the map tiles corresponding to location on tile sheet.
+from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 
 offset = TILE_SIZE // 2
@@ -103,6 +104,7 @@ class DragonWarriorMap:
         self.player = None
         self.player_sprites = None
         self.characters = []
+        self.fixed_characters = []
         self.roaming_characters = []
         self.hero_images = hero_images
         self.character_sprites = []
@@ -228,6 +230,7 @@ class DragonWarriorMap:
         Dynamically generates a list of staircase locations. Currently unused, but might be useful for staircase warps.
         :return:
         """
+        # also needs BRICK_STAIR_UP and GRASS_STAIR_DOWN
         staircase_locations = np.asarray(np.where(self.layout_numpy_array == self.tile_key['BRICK_STAIR_DOWN']['val'])).T
         return staircase_locations
 
@@ -244,35 +247,34 @@ class DragonWarriorMap:
 
     def map_character_tiles(self, row, column, player) -> None:
         for character, character_dict in self.character_key.items():
-            if self.layout[row][column] > 32:  # anything below 32 is a floor tile
-                if self.layout[row][column] == character_dict['val']:
-                    if self.layout[row][column] == 33:  # 'HERO' hardcoded value
+            current_tile = self.layout[row][column]
+            if current_tile > 32:  # anything below 32 is a floor tile
+                if current_tile == character_dict['val']:
+                    if current_tile == 33:  # 'HERO' value
                         player.__init__(self.center_pt, self.hero_images)
                         self.map_player(character_dict['underlying_tile'], player)
-                        # TODO: This is a good way to reset the tile after mapping the character, but it breaks collision and also the TALK function.
-                        #  What it will help with is keeping a good state of the floor for the TAKE and SEARCH functions.
-                        self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
+                        if current_tile == 39:  # 'ROAMING_GUARD' value
+                            # TODO: Extend this for other roaming characters as well, not just roaming guard.
+                            self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
                     elif character_dict['four_sided']:
-                        self.map_four_sided_npc(name=character, direction=character_dict['direction'],
+                        self.map_four_sided_npc(identifier=character, direction=character_dict['direction'],
                                                 underlying_tile=character_dict['underlying_tile'],
                                                 image_path=character_dict['path'], is_roaming=character_dict['roaming'])
-                        self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
                     else:
                         self.map_two_sided_npc(image_path=character_dict['path'], name=character,
                                                underlying_tile=character_dict['underlying_tile'])
-                        self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
 
-    def map_four_sided_npc(self, name, direction, underlying_tile, image_path, is_roaming=False) -> None:
+    def map_four_sided_npc(self, identifier, direction, underlying_tile, image_path, is_roaming=False) -> None:
         sheet = get_image(image_path)
         sheet = scale(sheet, (sheet.get_width() * self.scale, sheet.get_height() * self.scale))
         images = parse_animated_sprite_sheet(sheet)
         character_sprites = LayeredDirty()
         if is_roaming:
-            character = RoamingCharacter(self.center_pt, direction, images, name)
+            character = RoamingCharacter(self.center_pt, direction, images, identifier)
             character.position = self.get_initial_character_location(character.identifier)
             self.roaming_characters.append(character)
         else:
-            character = AnimatedSprite(self.center_pt, direction, images, name)
+            character = FixedCharacter(self.center_pt, direction, images, identifier)
         character_sprites.add(character)
         self.add_tile_by_value_and_group(underlying_tile)
         self.characters.append(character)
@@ -425,8 +427,8 @@ class TantegelCourtyard(DragonWarriorMap):
 
     def hero_underlying_tile(self):
         # TODO: Super TODO. Make characters have initial coordinates
-        #  Instead of underlying tiles,
-        #  set up the map with just the background tiles.
+        #  Instead of underlying tiles, set up the map with just the background tiles.
+        #  Right now this implementation has a band-aid over it, in that it has
         return 'BRICK_STAIR_UP'
 
     def hero_initial_direction(self):
