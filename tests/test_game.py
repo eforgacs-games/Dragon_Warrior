@@ -1,7 +1,7 @@
 from abc import ABC
 from unittest import TestCase
+from unittest.mock import MagicMock
 
-import numpy as np
 import pygame
 from pygame.imageext import load_extended
 from pygame.transform import scale
@@ -12,6 +12,7 @@ from src.config import SCALE, TILE_SIZE
 from src.game import Game
 from src.maps import DragonWarriorMap, parse_animated_sprite_sheet
 from src.player import Player
+from src.sprites.roaming_character import RoamingCharacter
 
 
 def create_key_mock(pressed_key):
@@ -23,15 +24,14 @@ def create_key_mock(pressed_key):
     return helper
 
 
+layout = [[33, 0, 3],
+          [1, 2, 3],
+          [3, 3, 3]]
+
+
 class TestMockMap(DragonWarriorMap, ABC):
     def __init__(self):
-        self.layout = [[33, 0],
-                       [1, 2]]
-        super().__init__(None, self.layout)
-
-        self.height = len(self.layout * TILE_SIZE)
-        self.width = len(self.layout[0] * TILE_SIZE)
-        self.layout_numpy_array = np.array(self.layout)
+        super().__init__(None, layout)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -111,3 +111,25 @@ class TestGame(TestCase):
     #     self.game.current_map.roaming_characters.append(self.roaming_guard)
     #     self.game.move_roaming_characters()
     #     self.assertEqual(initial_roaming_guard_position, )  # current roaming guard position)
+
+    def test_move_roaming_character_medially(self):
+        test_roaming_character = RoamingCharacter(None, Direction.UP.value, None, 'ROAMING_GUARD')
+        test_roaming_character.rect = MagicMock()
+        test_roaming_character.row = 2
+        test_roaming_character.column = 2
+        self.game.move_medially(test_roaming_character)
+        self.assertEqual(1, test_roaming_character.row)
+        test_roaming_character.direction = Direction.DOWN.value
+        self.game.move_medially(test_roaming_character)
+        self.assertEqual(2, test_roaming_character.row)
+
+    def test_move_roaming_character_laterally(self):
+        test_roaming_character = RoamingCharacter(None, Direction.LEFT.value, None, 'ROAMING_GUARD')
+        test_roaming_character.rect = MagicMock()
+        test_roaming_character.row = 2
+        test_roaming_character.column = 2
+        self.game.move_laterally(test_roaming_character)
+        self.assertEqual(1, test_roaming_character.column)
+        test_roaming_character.direction = Direction.RIGHT.value
+        self.game.move_laterally(test_roaming_character)
+        self.assertEqual(2, test_roaming_character.column)

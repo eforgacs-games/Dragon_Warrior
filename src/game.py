@@ -420,11 +420,13 @@ class Game:
                 self.move(delta_x=-self.speed, delta_y=0)
             else:
                 self.move_roaming_character(character, delta_x=-self.speed, delta_y=0)
+                character.column -= 1
         elif is_facing_right(character):
             if character.identifier == "HERO":
                 self.move(delta_x=self.speed, delta_y=0)
             else:
                 self.move_roaming_character(character, delta_x=self.speed, delta_y=0)
+                character.column += 1
 
     def move_medially(self, character) -> None:
         if is_facing_up(character):
@@ -432,11 +434,13 @@ class Game:
                 self.move(delta_x=0, delta_y=self.speed)
             else:
                 self.move_roaming_character(character, delta_x=0, delta_y=self.speed)
+                character.row -= 1
         elif is_facing_down(character):
             if character.identifier == "HERO":
                 self.move(delta_x=0, delta_y=-self.speed)
             else:
                 self.move_roaming_character(character, delta_x=0, delta_y=-self.speed)
+                character.row += 1
 
     def move(self, delta_x, delta_y) -> None:
         """
