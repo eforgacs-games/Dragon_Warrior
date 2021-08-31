@@ -147,9 +147,13 @@ class Player(AnimatedSprite):
 
     def __init__(self, center_point, images, direction=Direction.DOWN.value):
         AnimatedSprite.__init__(self, center_point, direction, images, identifier='HERO')
+
+        # map/collision-related attributes
         self.is_moving = False
-        self.current_coordinates = None
+        self.coordinates = None
         self.next_coordinates = None
+
+        # character attributes
         self.name = 'Edward'
         # pre-set attributes
         self.growth = ""
