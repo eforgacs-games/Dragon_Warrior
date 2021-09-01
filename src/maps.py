@@ -1,4 +1,3 @@
-import time
 from typing import Tuple
 
 import numpy as np
@@ -17,6 +16,7 @@ from src.sprites.base_sprite import BaseSprite
 # Index values for the map tiles corresponding to location on tile sheet.
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
+from src.utilities import timeit
 
 offset = TILE_SIZE // 2
 all_impassable_tiles = (
@@ -235,21 +235,6 @@ class DragonWarriorMap:
         staircase_locations = np.asarray(np.where(self.layout_numpy_array == self.tile_key['BRICK_STAIR_DOWN']['val'])).T
         return staircase_locations
 
-    def timeit(method):
-        def timed(*args, **kw):
-            ts = time.time()
-            result = method(*args, **kw)
-            te = time.time()
-            if 'log_time' in kw:
-                name = kw.get('log_name', method.__name__.upper())
-                kw['log_time'][name] = int((te - ts) * 1000)
-            else:
-                print(
-                    f'{method.__name__!r}  {(te - ts) * 1000:2.2f} ms')
-            return result
-
-        return timed
-
     @timeit
     def load_map(self, player) -> None:
         tiles_in_current_loaded_map = set([self.get_tile_by_value(tile) for row in self.layout for tile in row])
@@ -257,27 +242,29 @@ class DragonWarriorMap:
         for y in range(len(self.layout)):
             for x in range(len(self.layout[y])):
                 self.center_pt = get_center_point(x, y)
-                self.map_floor_tiles(x, y)
-                self.map_character_tiles(y, x, player)
+                if self.layout[y][x] < 32:  # anything below 32 is a floor tile
+                    self.map_floor_tiles(x, y)
+                else:
+                    self.map_character_tiles(y, x, player)
 
+    @timeit
     def map_character_tiles(self, row, column, player) -> None:
+        current_tile = self.layout[row][column]
         for character, character_dict in self.character_key.items():
-            current_tile = self.layout[row][column]
-            if current_tile > 32:  # anything below 32 is a floor tile
-                if current_tile == character_dict['val']:
-                    if current_tile == 33:  # 'HERO' value
-                        player.__init__(self.center_pt, self.hero_images)
-                        self.map_player(character_dict['underlying_tile'], player)
-                        if current_tile == 39:  # 'ROAMING_GUARD' value
-                            # TODO: Extend this for other roaming characters as well, not just roaming guard.
-                            self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
-                    elif character_dict['four_sided']:
-                        self.map_four_sided_npc(identifier=character, direction=character_dict['direction'],
-                                                underlying_tile=character_dict['underlying_tile'],
-                                                image_path=character_dict['path'], is_roaming=character_dict['roaming'])
-                    else:
-                        self.map_two_sided_npc(image_path=character_dict['path'], name=character,
-                                               underlying_tile=character_dict['underlying_tile'])
+            if current_tile == character_dict['val']:
+                if current_tile == 33:  # 'HERO' value
+                    player.__init__(self.center_pt, self.hero_images)
+                    self.map_player(character_dict['underlying_tile'], player)
+                    if current_tile == 39:  # 'ROAMING_GUARD' value
+                        # TODO: Extend this for other roaming characters as well, not just roaming guard.
+                        self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
+                elif character_dict['four_sided']:
+                    self.map_four_sided_npc(identifier=character, direction=character_dict['direction'],
+                                            underlying_tile=character_dict['underlying_tile'],
+                                            image_path=character_dict['path'], is_roaming=character_dict['roaming'])
+                else:
+                    self.map_two_sided_npc(image_path=character_dict['path'], name=character,
+                                           underlying_tile=character_dict['underlying_tile'])
 
     def map_four_sided_npc(self, identifier, direction, underlying_tile, image_path, is_roaming=False) -> None:
         sheet = get_image(image_path)
@@ -285,11 +272,11 @@ class DragonWarriorMap:
         images = parse_animated_sprite_sheet(sheet)
         character_sprites = LayeredDirty()
         if is_roaming:
-            character = RoamingCharacter(self.center_pt, direction, images, identifier)
+            character = RoamingCharacter(self.center_pt, direction, images, identifier, None)
             character.position = self.get_initial_character_location(character.identifier)
             self.roaming_characters.append(character)
         else:
-            character = FixedCharacter(self.center_pt, direction, images, identifier)
+            character = FixedCharacter(self.center_pt, direction, images, identifier, None)
         character_sprites.add(character)
         self.add_tile_by_value_and_group(underlying_tile)
         self.characters.append(character)
@@ -304,7 +291,7 @@ class DragonWarriorMap:
         sheet = get_image(image_path)
         sheet = scale(sheet, (sheet.get_width() * SCALE, sheet.get_height() * SCALE))
         images = parse_animated_sprite_sheet(sheet)
-        character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, name)
+        character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, name, None)
         sprites.add(character)
         self.characters.append(character)
         self.character_sprites.append(sprites)
