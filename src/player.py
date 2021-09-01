@@ -146,7 +146,7 @@ def get_initial_stats(remainder):
 class Player(AnimatedSprite):
 
     def __init__(self, center_point, images, direction=Direction.DOWN.value):
-        AnimatedSprite.__init__(self, center_point, direction, images, identifier='HERO')
+        AnimatedSprite.__init__(self, center_point, direction, images, identifier='HERO', dialog=None)
 
         # map/collision-related attributes
         self.is_moving = False

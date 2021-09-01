@@ -90,7 +90,7 @@ class Game:
                                                        character_row=self.hero_layout_row,
                                                        direction=self.current_map.player.direction)
         self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.next_tile, self.current_map.characters, self.dlg_box, self.player)
+        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.next_tile, self.current_map.characters, self.dlg_box, self.player, self.current_map.__class__.__name__)
 
         self.menus = self.cmd_menu, self.dlg_box
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
@@ -420,13 +420,11 @@ class Game:
                 self.move(delta_x=-self.speed, delta_y=0)
             else:
                 self.move_roaming_character(character, delta_x=-self.speed, delta_y=0)
-                character.column -= 1
         elif is_facing_right(character):
             if character.identifier == "HERO":
                 self.move(delta_x=self.speed, delta_y=0)
             else:
                 self.move_roaming_character(character, delta_x=self.speed, delta_y=0)
-                character.column += 1
 
     def move_medially(self, character) -> None:
         if is_facing_up(character):
@@ -434,13 +432,11 @@ class Game:
                 self.move(delta_x=0, delta_y=self.speed)
             else:
                 self.move_roaming_character(character, delta_x=0, delta_y=self.speed)
-                character.row -= 1
         elif is_facing_down(character):
             if character.identifier == "HERO":
                 self.move(delta_x=0, delta_y=-self.speed)
             else:
                 self.move_roaming_character(character, delta_x=0, delta_y=-self.speed)
-                character.row += 1
 
     def move(self, delta_x, delta_y) -> None:
         """
@@ -580,8 +576,12 @@ class Game:
                         return
             if is_facing_medially(roaming_character):
                 self.move_medially(roaming_character)
+                print(f"Player row/column: {self.player.coordinates}")
+                print(f"Roaming character row/column: {roaming_character.row}, {roaming_character.column}")
             elif is_facing_laterally(roaming_character):
                 self.move_laterally(roaming_character)
+                print(f"Player row/column: {self.player.coordinates}")
+                print(f"Roaming character row/column: {roaming_character.row}, {roaming_character.column}")
             else:
                 print("Invalid direction.")
             handle_roaming_character_sides_collision(self.current_map, roaming_character)
@@ -604,14 +604,22 @@ class Game:
         if not self.is_impassable(roaming_character.next_tile) and (
                 roaming_character.column, roaming_character.row) != (self.hero_layout_column, self.hero_layout_row):
             character_value = self.current_map.character_key[roaming_character.identifier]['val']
+            underlying_tile_val = self.current_map.tile_key[self.current_map.character_key[roaming_character.identifier]['underlying_tile']]['val']
             if delta_x:
+                # set current coordinates to underlying tile value
+                self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
+                # set next coordinates to roaming character value
+                self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
                 roaming_character.rect.x += delta_x
+                roaming_character.column += delta_x // 2
+
             if delta_y:
+                # set current coordinates to underlying tile value
+                self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
+                # set next coordinates to roaming character value
+                self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
                 roaming_character.rect.y += -delta_y
-            # set next coordinates to roaming character value
-            self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
-            # set current coordinates to underlying tile value
-            self.current_map.layout[roaming_character.row][roaming_character.column] = self.current_map.tile_key[self.current_map.character_key[roaming_character.identifier]['underlying_tile']]['val']
+                roaming_character.row += -delta_y // 2
 
 
 def run():
