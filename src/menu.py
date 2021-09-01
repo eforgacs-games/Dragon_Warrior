@@ -1,5 +1,7 @@
 import pygame_menu
 
+from data.text import dialog_lookup_table
+from data.text.dialog_lookup_table import DialogLookupTable
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, play_sound, menu_button_sfx
 from src.config import SCALE, TILE_SIZE
 from data.text.dialog import Dialog
@@ -36,7 +38,7 @@ class Menu:
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, column, row, current_tile, next_tile, characters, dialog_box, player):
+    def __init__(self, background, column, row, current_tile, next_tile, characters, dialog_box, player, map_name):
         super().__init__()
         self.dialog_box = dialog_box
         self.current_tile = current_tile
@@ -45,6 +47,7 @@ class CommandMenu(Menu):
         self.player = player
         self.launch_signaled = False
         self.launched = False
+        self.map_name = map_name
         command_menu_subsurface = background.subsurface((column - 2) * TILE_SIZE,
                                                         (row - 6) * TILE_SIZE,
                                                         8 * TILE_SIZE,
@@ -86,7 +89,8 @@ class CommandMenu(Menu):
         # for now, implementing using print statements. will be useful for debugging as well.
         if self.next_tile in [character.identifier for character in self.characters]:
             self.dialog_box.launch_signaled = True
-            dialog.dialog_lookup[self.next_tile]()
+            dlt = DialogLookupTable(self.player)
+            dlt.dialog_lookup[self.map_name][self.next_tile].say_dialog()
         else:
             print_with_beep_sfx("'There is no one there.'")
 
