@@ -1,11 +1,9 @@
 import pygame_menu
 
-from data.text import dialog_lookup_table
 from data.text.dialog_lookup_table import DialogLookupTable
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, play_sound, menu_button_sfx
-from src.config import SCALE, TILE_SIZE
-from data.text.dialog import Dialog
 from src.common import print_with_beep_sfx
+from src.config import SCALE, TILE_SIZE
 
 
 class Menu:
@@ -83,7 +81,7 @@ class CommandMenu(Menu):
         :return: To be determined upon implementation
         """
         play_sound(menu_button_sfx)
-        dialog = Dialog(player=self.player)
+        # dialog = Dialog(player=self.player)
         # TODO: Get an actual dialog box to show!
 
         # for now, implementing using print statements. will be useful for debugging as well.
