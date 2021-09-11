@@ -11,7 +11,7 @@ from src.common import UNARMED_HERO_PATH, get_tile_by_coordinates, Direction
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
 from src.maps import DragonWarriorMap, parse_animated_sprite_sheet
-from src.player import Player
+from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
 
 
