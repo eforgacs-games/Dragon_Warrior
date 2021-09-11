@@ -10,17 +10,17 @@ from pygame.time import get_ticks
 from pygame.transform import scale
 
 import src.menu as menu
-from src.common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import NES_RES
-from src.maps import get_character_position, get_next_coordinates
-from src.sprites.roaming_character import handle_roaming_character_sides_collision
 from src import maps
 from src.camera import Camera
 from src.common import Direction, play_sound, bump_sfx, UNARMED_HERO_PATH, get_image, \
     menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally
+from src.common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
+from src.config import NES_RES
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
+from src.maps import get_character_position, get_next_coordinates
 from src.maps import parse_animated_sprite_sheet
-from src.player import Player
+from src.player.player import Player
+from src.sprites.roaming_character import handle_roaming_character_sides_collision
 
 
 def draw_menu_on_subsurface(menu_to_draw, subsurface):
@@ -86,11 +86,11 @@ class Game:
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.current_tile = get_tile_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
-        self.next_tile = self.get_next_tile(character_column=self.hero_layout_column,
-                                            character_row=self.hero_layout_row,
-                                            direction=self.current_map.player.direction)
+        self.next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
+                                                       character_row=self.hero_layout_row,
+                                                       direction=self.current_map.player.direction)
         self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.next_tile, self.current_map.characters, self.dlg_box, self.player)
+        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.next_tile, self.current_map.characters, self.dlg_box, self.player, self.current_map.__class__.__name__)
 
         self.menus = self.cmd_menu, self.dlg_box
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
@@ -188,7 +188,7 @@ class Game:
         # For debugging purposes, this prints out the current tile that the player is standing on.
         # print(self.current_tile)
 
-        self.player.current_coordinates = self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE
+        self.player.coordinates = self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE
         # For debugging purposes, this prints out the current coordinates that the player is standing on.
         # print(self.player.current_coordinates)
 
@@ -361,7 +361,7 @@ class Game:
         :return: None
         """
         if menu_to_launch == 'command':
-            self.cmd_menu.next_tile = self.get_next_tile(self.hero_layout_column, self.hero_layout_row, self.player.direction)
+            self.cmd_menu.next_tile = self.get_next_tile_identifier(self.hero_layout_column, self.hero_layout_row, self.player.direction)
             if not self.cmd_menu.launched:
                 play_sound(menu_button_sfx)
             self.set_and_append_rect(self.cmd_menu.menu, self.command_menu_subsurface)
@@ -448,9 +448,9 @@ class Game:
         curr_cam_pos_x, curr_cam_pos_y = self.camera.get_pos()
         next_cam_pos_x, next_cam_pos_y = curr_cam_pos_x, curr_cam_pos_y
         if not self.next_tile_checked:
-            self.next_tile = self.get_next_tile(character_column=self.hero_layout_column,
-                                                character_row=self.hero_layout_row,
-                                                direction=self.player.direction)
+            self.next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
+                                                           character_row=self.hero_layout_row,
+                                                           direction=self.player.direction)
             self.next_tile_checked = True
 
         if not self.is_impassable(self.next_tile):
@@ -475,7 +475,13 @@ class Game:
         return self.get_next_coordinates(self.hero_layout_column, self.hero_layout_row,
                                          self.player.direction) in roaming_character_locations
 
-    def get_next_tile(self, character_column: int, character_row: int, direction) -> str:
+    def fixed_character_in_path_of_character(self) -> bool:
+        fixed_character_locations = [(fixed_character.column, fixed_character.row) for fixed_character in
+                                     self.current_map.fixed_characters]
+        return self.get_next_coordinates(self.hero_layout_column, self.hero_layout_row,
+                                         self.player.direction) in fixed_character_locations
+
+    def get_next_tile_identifier(self, character_column: int, character_row: int, direction) -> str:
         """
         Retrieve the next tile to be stepped on by a particular character.
         :type character_column: int
@@ -574,6 +580,8 @@ class Game:
                 self.move_laterally(roaming_character)
             else:
                 print("Invalid direction.")
+            # print(f"Player row/column: {self.player.coordinates}")
+            # print(f"Roaming character row/column: {roaming_character.row}, {roaming_character.column}")
             handle_roaming_character_sides_collision(self.current_map, roaming_character)
 
     def move_roaming_character(self, roaming_character, delta_x, delta_y) -> None:
@@ -584,17 +592,32 @@ class Game:
         :param roaming_character: Roaming character to be moved.
         :return: None
         """
+        next_coordinates = get_next_coordinates(roaming_character.column, roaming_character.row, roaming_character.direction)
         if not roaming_character.next_tile_checked:
-            roaming_character.next_tile = self.get_next_tile(character_column=roaming_character.column,
-                                                             character_row=roaming_character.row,
-                                                             direction=roaming_character.direction)
+            roaming_character.next_tile = self.get_next_tile_identifier(character_column=roaming_character.column,
+                                                                        character_row=roaming_character.row,
+                                                                        direction=roaming_character.direction)
+
             roaming_character.next_tile_checked = True
         if not self.is_impassable(roaming_character.next_tile) and (
                 roaming_character.column, roaming_character.row) != (self.hero_layout_column, self.hero_layout_row):
+            character_value = self.current_map.character_key[roaming_character.identifier]['val']
+            underlying_tile_val = self.current_map.tile_key[self.current_map.character_key[roaming_character.identifier]['underlying_tile']]['val']
             if delta_x:
+                # set current coordinates to underlying tile value
+                self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
+                # set next coordinates to roaming character value
+                self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
                 roaming_character.rect.x += delta_x
+                roaming_character.column += delta_x // 2
+
             if delta_y:
+                # set current coordinates to underlying tile value
+                self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
+                # set next coordinates to roaming character value
+                self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
                 roaming_character.rect.y += -delta_y
+                roaming_character.row += -delta_y // 2
 
 
 def run():
