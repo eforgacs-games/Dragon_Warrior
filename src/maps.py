@@ -255,9 +255,8 @@ class DragonWarriorMap:
                 if current_tile == 33:  # 'HERO' value
                     player.__init__(self.center_pt, self.hero_images)
                     self.map_player(character_dict['underlying_tile'], player)
-                    if current_tile == 39:  # 'ROAMING_GUARD' value
-                        # TODO: Extend this for other roaming characters as well, not just roaming guard.
-                        self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
+                # elif current_tile == 39:  # 'ROAMING_GUARD' value
+                #     self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
                 elif character_dict['four_sided']:
                     self.map_four_sided_npc(identifier=character, direction=character_dict['direction'],
                                             underlying_tile=character_dict['underlying_tile'],
