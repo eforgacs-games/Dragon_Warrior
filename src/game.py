@@ -19,7 +19,7 @@ from src.config import NES_RES
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.maps import get_character_position, get_next_coordinates
 from src.maps import parse_animated_sprite_sheet
-from src.player import Player
+from src.player.player import Player
 from src.sprites.roaming_character import handle_roaming_character_sides_collision
 
 
@@ -576,14 +576,12 @@ class Game:
                         return
             if is_facing_medially(roaming_character):
                 self.move_medially(roaming_character)
-                print(f"Player row/column: {self.player.coordinates}")
-                print(f"Roaming character row/column: {roaming_character.row}, {roaming_character.column}")
             elif is_facing_laterally(roaming_character):
                 self.move_laterally(roaming_character)
-                print(f"Player row/column: {self.player.coordinates}")
-                print(f"Roaming character row/column: {roaming_character.row}, {roaming_character.column}")
             else:
                 print("Invalid direction.")
+            # print(f"Player row/column: {self.player.coordinates}")
+            # print(f"Roaming character row/column: {roaming_character.row}, {roaming_character.column}")
             handle_roaming_character_sides_collision(self.current_map, roaming_character)
 
     def move_roaming_character(self, roaming_character, delta_x, delta_y) -> None:
