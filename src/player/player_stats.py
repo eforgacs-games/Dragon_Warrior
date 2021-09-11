@@ -50,6 +50,7 @@ levels_list = {
     30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130, 'max_hp': 210, 'max_mp': 200, 'spell': None},
 }
 
+# may not need this anymore
 initial_stats_chart = {
     # keys are remainders after calculating using the letter_calculations chart
     # probably best to use https://www.woodus.com/den/games/web/dwsim/calc.htm to calculate initial stats for each name on the side
@@ -92,60 +93,108 @@ def get_remainder(name):
     return remainder
 
 
-def apply_transformation_to_experience_chart(remainder: int):
+def apply_transformation_to_levels_list(remainder: int):
     # growth_rate = growth_rates[growth_rate_type]['strength']
     # basing this on https://guides.gamercorner.net/dw/name-stats/
     if remainder == 0:
         # example: "ma", "Steve"
         # strength and agility penalized
         # decrement = 1
-        for i in range(1, 5):
-            levels_list[i]['strength'] -= 1
-        for i in range(5, 8):
-            levels_list[i]['strength'] -= 2
-        for i in range(8, 10):
-            levels_list[i]['strength'] -= 3
-        for i in range(10, 12):
-            levels_list[i]['strength'] -= 4
-        levels_list[12]['strength'] -= 5
-        for i in range(13, 15):
-            levels_list[i]['strength'] -= 6
-        levels_list[15]['strength'] -= 7
-        for i in range(16, 18):
-            levels_list[i]['strength'] -= 8
-        for i in range(18, 20):
-            levels_list[i]['strength'] -= 9
-        for i in range(20, 24):
-            levels_list[i]['strength'] -= 10
-        levels_list[24]['strength'] -= 11
-        for i in range(25, 27):
-            levels_list[i]['strength'] -= 12
-        for i in range(27, 29):
-            levels_list[i]['strength'] -= 13
-        for i in range(29, 31):
-            levels_list[i]['strength'] -= 14
+
+        # strength
+        apply_strength_transformation_0()
         # agility
-        for i in range(1, 7):
-            levels_list[i]['agility'] -= 1
-        for i in range(7, 9):
-            levels_list[i]['agility'] -= 2
-        levels_list[9]['agility'] -= 3
-        for i in range(10, 13):
-            levels_list[i]['agility'] -= 4
-        levels_list[13]['agility'] -= 5
-        levels_list[14]['agility'] -= 6
-        for i in range(15, 17):
-            levels_list[i]['agility'] -= 7
-        levels_list[17]['agility'] -= 8
-        for i in range(18, 23):
-            levels_list[i]['agility'] -= 9
-        for i in range(23, 26):
-            levels_list[i]['agility'] -= 10
-        for i in range(26, 28):
-            levels_list[i]['agility'] -= 11
-        for i in range(28, 30):
-            levels_list[i]['agility'] -= 12
-        levels_list[30]['agility'] -= 13
+        apply_agility_transformation_0_1()
+    elif remainder == 1:
+        # example: "Eva"
+        apply_agility_transformation_0_1()
+        apply_max_mp_transformation_1()
+    elif remainder == 2:
+        # example: "Im"
+        apply_strength_transformation_0()
+    else:
+        pass
+
+
+def apply_max_mp_transformation_1():
+    levels_list[3]['max_mp'] -= 1
+    for i in range(4, 6):
+        levels_list[i]['max_mp'] -= 2
+    for i in range(6, 9):
+        levels_list[i]['max_mp'] -= 3
+    for i in range(9, 11):
+        levels_list[i]['max_mp'] -= 4
+    levels_list[11]['max_mp'] -= 5
+    levels_list[12]['max_mp'] -= 6
+    for i in range(13, 15):
+        levels_list[i]['max_mp'] -= 7
+    levels_list[15]['max_mp'] -= 8
+    for i in range(16, 18):
+        levels_list[i]['max_mp'] -= 10
+    levels_list[18]['max_mp'] -= 11
+    levels_list[19]['max_mp'] -= 12
+    levels_list[20]['max_mp'] -= 13
+    levels_list[21]['max_mp'] -= 14
+    levels_list[22]['max_mp'] -= 15
+    levels_list[23]['max_mp'] -= 16
+    for i in range(24, 27):
+        levels_list[i]['max_mp'] -= 17
+    for i in range(27, 29):
+        levels_list[i]['max_mp'] -= 18
+    levels_list[29]['max_mp'] -= 19
+    levels_list[30]['max_mp'] -= 20
+
+
+def apply_strength_transformation_0():
+    for i in range(1, 5):
+        levels_list[i]['strength'] -= 1
+    for i in range(5, 8):
+        levels_list[i]['strength'] -= 2
+    for i in range(8, 10):
+        levels_list[i]['strength'] -= 3
+    for i in range(10, 12):
+        levels_list[i]['strength'] -= 4
+    levels_list[12]['strength'] -= 5
+    for i in range(13, 15):
+        levels_list[i]['strength'] -= 6
+    levels_list[15]['strength'] -= 7
+    for i in range(16, 18):
+        levels_list[i]['strength'] -= 8
+    for i in range(18, 20):
+        levels_list[i]['strength'] -= 9
+    for i in range(20, 24):
+        levels_list[i]['strength'] -= 10
+    levels_list[24]['strength'] -= 11
+    for i in range(25, 27):
+        levels_list[i]['strength'] -= 12
+    for i in range(27, 29):
+        levels_list[i]['strength'] -= 13
+    for i in range(29, 31):
+        levels_list[i]['strength'] -= 14
+
+
+def apply_agility_transformation_0_1():
+    for i in range(1, 7):
+        levels_list[i]['agility'] -= 1
+    for i in range(7, 9):
+        levels_list[i]['agility'] -= 2
+    levels_list[9]['agility'] -= 3
+    for i in range(10, 13):
+        levels_list[i]['agility'] -= 4
+    levels_list[13]['agility'] -= 5
+    levels_list[14]['agility'] -= 6
+    for i in range(15, 17):
+        levels_list[i]['agility'] -= 7
+    levels_list[17]['agility'] -= 8
+    for i in range(18, 23):
+        levels_list[i]['agility'] -= 9
+    for i in range(23, 26):
+        levels_list[i]['agility'] -= 10
+    for i in range(26, 28):
+        levels_list[i]['agility'] -= 11
+    for i in range(28, 30):
+        levels_list[i]['agility'] -= 12
+    levels_list[30]['agility'] -= 13
 
 
 def get_initial_stats(remainder):
