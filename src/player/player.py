@@ -76,5 +76,4 @@ class Player(AnimatedSprite):
         self.agility = levels_list[1]["agility"]
         self.max_hp = levels_list[1]["max_hp"]
         self.max_mp = levels_list[1]["max_mp"]
-        self.growth = levels_list[1]["growth"]
         self.agility = levels_list[1]["agility"]
