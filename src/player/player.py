@@ -1,6 +1,6 @@
 from src.common import Direction
 from src.items import weapons
-from src.player.player_stats import levels_list, get_remainder, get_initial_stats
+from src.player.player_stats import levels_list, apply_transformation_to_levels_list
 from src.sprites.animated_sprite import AnimatedSprite
 
 
@@ -71,12 +71,10 @@ class Player(AnimatedSprite):
             return
 
     def set_initial_stats(self):
-        remainder = get_remainder(self.name)
-        initial_stats_row = get_initial_stats(remainder)
-        self.strength = initial_stats_row["strength"]
-        self.agility = initial_stats_row["agility"]
-        self.max_hp = initial_stats_row["max_hp"]
-        self.max_mp = initial_stats_row["max_mp"]
-        self.growth = initial_stats_row["growth"]
-        self.agility = initial_stats_row["agility"]
-        self.agility = initial_stats_row["agility"]
+        apply_transformation_to_levels_list(self.name)
+        self.strength = levels_list[1]["strength"]
+        self.agility = levels_list[1]["agility"]
+        self.max_hp = levels_list[1]["max_hp"]
+        self.max_mp = levels_list[1]["max_mp"]
+        self.growth = levels_list[1]["growth"]
+        self.agility = levels_list[1]["agility"]
