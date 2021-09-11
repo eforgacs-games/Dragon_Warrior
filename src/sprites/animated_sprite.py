@@ -3,12 +3,13 @@ from src.common import Direction
 
 
 class AnimatedSprite(BaseSprite):
-    def __init__(self, center_point, direction, images, identifier):
+    def __init__(self, center_point, direction, images, identifier, dialog):
         self.identifier = identifier
         self.current_frame = 0
         self.frame_count = 0
         self.frame_delay = 2
         self.direction = direction
+        self.dialog = dialog
         if images is not None:
             down_images = images[0]
             left_images = images[1]
