@@ -1,5 +1,24 @@
 from math import floor
 
+# probably best to use https://www.woodus.com/den/games/web/dwsim/calc.htm to calculate initial stats for each name on the side
+# example names:
+# 0: "ma", "Steve"
+# 1: "na", "Eva"
+# 2: "Im"
+# 3: "Va",
+# 4: "Ga", "Eddie", "Justin", "Lawrence"
+# 5: "Ed", "Joey"
+# 6: "TED", "Walter"
+# 7: "Uno", "Eon"
+# 8: "gooo"
+# 9: "La", "Sejin"
+# 10: "Wam", "Stephen"
+# 11: "Gan", "James", "Jason"
+# 12: "Gao"
+# 13: "Gap", "Jacquie", "Gina"
+# 14: "Wall"
+# 15: "Name", "Larry", "Edward", "ED", "Joseph"
+
 letter_calculations = {
     0: (" ", "g", "w", "M", "'"),
     1: ("h", "x", "N"),
@@ -52,42 +71,6 @@ levels_list = {
     30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130, 'max_hp': 210, 'max_mp': 200, 'spell': None},
 }
 
-# may not need this anymore
-initial_stats_chart = {
-    # keys are remainders after calculating using the letter_calculations chart
-    # probably best to use https://www.woodus.com/den/games/web/dwsim/calc.htm to calculate initial stats for each name on the side
-    # example names commented on side
-    0: {"max_hp": 15, "max_mp": 0, "strength": 3, "agility": 3, "attack": 3, "defense": 1, "growth": "A"},  # "ma", "Steve"
-    1: {"max_hp": 15, "max_mp": 0, "strength": 4, "agility": 3, "attack": 4, "defense": 1, "growth": "B"},  # "na", "Eva"
-    2: {"max_hp": 13, "max_mp": 0, "strength": 3, "agility": 4, "attack": 3, "defense": 2, "growth": "C"},  # "Im"
-    3: {"max_hp": 13, "max_mp": 0, "strength": 4, "agility": 4, "attack": 4, "defense": 2, "growth": "D"},  # "Va",
-    4: {"max_hp": 15, "max_mp": 0, "strength": 4, "agility": 4, "attack": 4, "defense": 2, "growth": "A"},  # "Ga", "Eddie", "Justin", "Lawrence"
-    5: {"max_hp": 15, "max_mp": 0, "strength": 4, "agility": 4, "attack": 4, "defense": 2, "growth": "B"},  # "Ed", "Joey"
-    6: {"max_hp": 14, "max_mp": 0, "strength": 4, "agility": 4, "attack": 4, "defense": 2, "growth": "C"},  # "TED", "Walter"
-    7: {"max_hp": 14, "max_mp": 0, "strength": 4, "agility": 4, "attack": 4, "defense": 2, "growth": "D"},  # "Uno", "Eon"
-    8: {"max_hp": 15, "max_mp": 0, "strength": 5, "agility": 5, "attack": 5, "defense": 2, "growth": "A"},  # "gooo"
-    9: {"max_hp": 15, "max_mp": 0, "strength": 4, "agility": 5, "attack": 4, "defense": 2, "growth": "B"},  # "La", "Sejin"
-    10: {"max_hp": 15, "max_mp": 0, "strength": 5, "agility": 4, "attack": 5, "defense": 2, "growth": "C"},  # "Wam", "Stephen"
-    11: {"max_hp": 15, "max_mp": 0, "strength": 4, "agility": 4, "attack": 4, "defense": 2, "growth": "D"},  # "Gan", "James", "Jason"
-    12: {"max_hp": 15, "max_mp": 0, "strength": 6, "agility": 6, "attack": 6, "defense": 3, "growth": "A"},  # "Gao"
-    13: {"max_hp": 15, "max_mp": 0, "strength": 4, "agility": 6, "attack": 4, "defense": 3, "growth": "B"},  # "Gap", "Jacquie", "Gina"
-    14: {"max_hp": 16, "max_mp": 0, "strength": 6, "agility": 4, "attack": 6, "defense": 2, "growth": "C"},  # "Wall"
-    15: {"max_hp": 16, "max_mp": 0, "strength": 4, "agility": 4, "attack": 4, "defense": 2, "growth": "D"}  # "Name", "Larry", "Edward", "ED", "Joseph"
-}
-
-growth_rates = {
-    "A": {"strength": 1, "agility": 2, "HP": 1, "MP": 2},
-    "B": {"strength": 2, "agility": 1, "HP": 2, "MP": 1},
-    "C": {"strength": 1, "agility": 1, "HP": 2, "MP": 2},
-    "D": {"strength": 2, "agility": 2, "HP": 1, "MP": 1},
-}
-
-
-def get_remainder(name):
-    total = get_total_name_score(name)
-    remainder = total % 16
-    return remainder
-
 
 def get_total_name_score(name):
     """Gets name score based on the first four characters of the name."""
@@ -136,88 +119,3 @@ def apply_transformation_to_levels_list(name: str):
             if stat == 'max_mp' and i <= 2:
                 continue
             levels_list[i][stat] = stat_calc(bonus, levels_list[i][stat])
-
-
-def apply_max_mp_transformation_1():
-    levels_list[3]['max_mp'] -= 1
-    for i in range(4, 6):
-        levels_list[i]['max_mp'] -= 2
-    for i in range(6, 9):
-        levels_list[i]['max_mp'] -= 3
-    for i in range(9, 11):
-        levels_list[i]['max_mp'] -= 4
-    levels_list[11]['max_mp'] -= 5
-    levels_list[12]['max_mp'] -= 6
-    for i in range(13, 15):
-        levels_list[i]['max_mp'] -= 7
-    levels_list[15]['max_mp'] -= 8
-    for i in range(16, 18):
-        levels_list[i]['max_mp'] -= 10
-    levels_list[18]['max_mp'] -= 11
-    levels_list[19]['max_mp'] -= 12
-    levels_list[20]['max_mp'] -= 13
-    levels_list[21]['max_mp'] -= 14
-    levels_list[22]['max_mp'] -= 15
-    levels_list[23]['max_mp'] -= 16
-    for i in range(24, 27):
-        levels_list[i]['max_mp'] -= 17
-    for i in range(27, 29):
-        levels_list[i]['max_mp'] -= 18
-    levels_list[29]['max_mp'] -= 19
-    levels_list[30]['max_mp'] -= 20
-
-
-def apply_strength_transformation_0():
-    for i in range(1, 5):
-        levels_list[i]['strength'] -= 1
-    for i in range(5, 8):
-        levels_list[i]['strength'] -= 2
-    for i in range(8, 10):
-        levels_list[i]['strength'] -= 3
-    for i in range(10, 12):
-        levels_list[i]['strength'] -= 4
-    levels_list[12]['strength'] -= 5
-    for i in range(13, 15):
-        levels_list[i]['strength'] -= 6
-    levels_list[15]['strength'] -= 7
-    for i in range(16, 18):
-        levels_list[i]['strength'] -= 8
-    for i in range(18, 20):
-        levels_list[i]['strength'] -= 9
-    for i in range(20, 24):
-        levels_list[i]['strength'] -= 10
-    levels_list[24]['strength'] -= 11
-    for i in range(25, 27):
-        levels_list[i]['strength'] -= 12
-    for i in range(27, 29):
-        levels_list[i]['strength'] -= 13
-    for i in range(29, 31):
-        levels_list[i]['strength'] -= 14
-
-
-def apply_agility_transformation_0_1():
-    for i in range(1, 7):
-        levels_list[i]['agility'] -= 1
-    for i in range(7, 9):
-        levels_list[i]['agility'] -= 2
-    levels_list[9]['agility'] -= 3
-    for i in range(10, 13):
-        levels_list[i]['agility'] -= 4
-    levels_list[13]['agility'] -= 5
-    levels_list[14]['agility'] -= 6
-    for i in range(15, 17):
-        levels_list[i]['agility'] -= 7
-    levels_list[17]['agility'] -= 8
-    for i in range(18, 23):
-        levels_list[i]['agility'] -= 9
-    for i in range(23, 26):
-        levels_list[i]['agility'] -= 10
-    for i in range(26, 28):
-        levels_list[i]['agility'] -= 11
-    for i in range(28, 30):
-        levels_list[i]['agility'] -= 12
-    levels_list[30]['agility'] -= 13
-
-
-def get_initial_stats(remainder):
-    return initial_stats_chart[remainder]
