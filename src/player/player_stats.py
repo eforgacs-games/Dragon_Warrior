@@ -1,3 +1,5 @@
+from math import floor
+
 letter_calculations = {
     0: (" ", "g", "w", "M", "'"),
     1: ("h", "x", "N"),
@@ -82,6 +84,13 @@ growth_rates = {
 
 
 def get_remainder(name):
+    total = get_total_name_score(name)
+    remainder = total % 16
+    return remainder
+
+
+def get_total_name_score(name):
+    """Gets name score based on the first four characters of the name."""
     name = name[0:4]
     total = 0
     for letter in name:
@@ -89,31 +98,44 @@ def get_remainder(name):
             if letter in letters:
                 total += score
                 break
-    remainder = total % 16
-    return remainder
+    return total
 
 
-def apply_transformation_to_levels_list(remainder: int):
-    # growth_rate = growth_rates[growth_rate_type]['strength']
-    # basing this on https://guides.gamercorner.net/dw/name-stats/
-    if remainder == 0:
-        # example: "ma", "Steve"
-        # strength and agility penalized
-        # decrement = 1
+def get_bonus(name_score):
+    return (name_score // 4) % 4
 
-        # strength
-        apply_strength_transformation_0()
-        # agility
-        apply_agility_transformation_0_1()
-    elif remainder == 1:
-        # example: "Eva"
-        apply_agility_transformation_0_1()
-        apply_max_mp_transformation_1()
-    elif remainder == 2:
-        # example: "Im"
-        apply_strength_transformation_0()
+
+def stat_calc(bonus, base):
+    return floor(base * .9) + bonus
+
+
+def determine_penalized_stats(name_score):
+    # TODO: Make this actually map using the binary values.
+    stats_to_penalize = name_score % 4
+    if stats_to_penalize == 0:
+        return ['strength', 'agility']
+    elif stats_to_penalize == 1:
+        return ['max_mp', 'agility']
+    elif stats_to_penalize == 2:
+        return ['strength', 'max_hp']
+    elif stats_to_penalize == 3:
+        return ['max_hp', 'max_mp']
+    elif stats_to_penalize == 4:
+        return ['strength', 'agility']
     else:
-        pass
+        print("Unable to determine stats to penalize.")
+
+
+def apply_transformation_to_levels_list(name: str):
+    # basing this on https://guides.gamercorner.net/dw/name-stats/
+    total_name_score = get_total_name_score(name)
+    bonus = get_bonus(total_name_score)
+    penalized_stats = determine_penalized_stats(total_name_score)
+    for i in range(1, len(levels_list) + 1):
+        for stat in penalized_stats:
+            if stat == 'max_mp' and i <= 2:
+                continue
+            levels_list[i][stat] = stat_calc(bonus, levels_list[i][stat])
 
 
 def apply_max_mp_transformation_1():
