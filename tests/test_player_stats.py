@@ -54,7 +54,7 @@ high_strength_agility_15 = (
 class Test(TestCase):
 
     def setUp(self) -> None:
-        self.mock_levels_list = {
+        player_stats.levels_list = {
             1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
             2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
             3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
@@ -86,7 +86,6 @@ class Test(TestCase):
             29: {'exp': 4000, 'total_exp': 62000, 'strength': 135, 'agility': 120, 'max_hp': 200, 'max_mp': 190, 'spell': None},
             30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130, 'max_hp': 210, 'max_mp': 200, 'spell': None},
         }
-        player_stats.levels_list = self.mock_levels_list
         self.mock_levels_list_0 = {
             1: {'exp': 0, 'total_exp': 0, 'strength': 4 - 1, 'agility': 4 - 1, 'max_hp': 15, 'max_mp': 0, 'spell': None},
             2: {'exp': 7, 'total_exp': 7, 'strength': 5 - 1, 'agility': 4 - 1, 'max_hp': 22, 'max_mp': 0, 'spell': None},
@@ -629,7 +628,6 @@ class Test(TestCase):
         """Strength and Agility penalized.
         Example name: Steve
         """
-
         player_stats.apply_transformation_to_levels_list("Steve")
         self.assertEqual(self.mock_levels_list_0, player_stats.levels_list)
 
@@ -737,3 +735,19 @@ class Test(TestCase):
         """
         player_stats.apply_transformation_to_levels_list("Edward")
         self.assertEqual(self.mock_levels_list_15, player_stats.levels_list)
+
+    def test_determine_penalized_stats(self):
+        self.assertIn('agility', player_stats.determine_penalized_stats(0))
+        self.assertIn('strength', player_stats.determine_penalized_stats(0))
+
+        self.assertIn('agility', player_stats.determine_penalized_stats(1))
+        self.assertIn('max_mp', player_stats.determine_penalized_stats(1))
+
+        self.assertIn('max_hp', player_stats.determine_penalized_stats(2))
+        self.assertIn('strength', player_stats.determine_penalized_stats(2))
+
+        self.assertIn('max_hp', player_stats.determine_penalized_stats(3))
+        self.assertIn('max_mp', player_stats.determine_penalized_stats(3))
+
+        self.assertIn('agility', player_stats.determine_penalized_stats(4))
+        self.assertIn('strength', player_stats.determine_penalized_stats(4))
