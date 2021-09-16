@@ -72,7 +72,7 @@ levels_list = {
 }
 
 
-def get_total_name_score(name):
+def get_total_name_score(name: str) -> int:
     """Gets name score based on the first four characters of the name."""
     name = name[0:4]
     total = 0
@@ -84,27 +84,33 @@ def get_total_name_score(name):
     return total
 
 
-def get_bonus(name_score):
+def get_bonus(name_score: int) -> int:
     return (name_score // 4) % 4
 
 
-def stat_calc(bonus, base):
+def stat_calc(bonus: int, base: int) -> int:
     return floor(base * .9) + bonus
 
 
-def determine_penalized_stats(name_score):
+def determine_penalized_stats(name_score: int) -> tuple[str, str]:
     # TODO: Make this actually map using the binary values.
     stats_to_penalize = name_score % 4
+    chart_of_stats_to_penalize = 'strength', 'agility', 'max_hp', 'max_mp'
     if stats_to_penalize == 0:
-        return ['strength', 'agility']
+        # 00
+        return 'strength', 'agility'
     elif stats_to_penalize == 1:
-        return ['max_mp', 'agility']
+        # 01
+        return 'max_mp', 'agility'
     elif stats_to_penalize == 2:
-        return ['strength', 'max_hp']
+        # 10
+        return 'strength', 'max_hp'
     elif stats_to_penalize == 3:
-        return ['max_hp', 'max_mp']
-    elif stats_to_penalize == 4:
-        return ['strength', 'agility']
+        # 11
+        return 'max_hp', 'max_mp'
+    # elif stats_to_penalize == 4:
+    #     # 100
+    #     return 'strength', 'agility'
     else:
         print("Unable to determine stats to penalize.")
 

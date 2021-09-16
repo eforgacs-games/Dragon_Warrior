@@ -1,6 +1,7 @@
 from unittest import TestCase
 
-from src.player.player_stats import apply_transformation_to_levels_list, levels_list, get_total_name_score, get_bonus
+# from src.player.player_stats import apply_transformation_to_levels_list, levels_list, get_total_name_score, get_bonus
+from src.player import player_stats
 
 """Names are from https://gamefaqs.gamespot.com/boards/563408-dragon-warrior/72498979"""
 high_12 = (
@@ -51,8 +52,9 @@ high_strength_agility_15 = (
 
 
 class Test(TestCase):
+
     def setUp(self) -> None:
-        self.levels_list = {
+        self.mock_levels_list = {
             1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
             2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
             3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
@@ -84,6 +86,7 @@ class Test(TestCase):
             29: {'exp': 4000, 'total_exp': 62000, 'strength': 135, 'agility': 120, 'max_hp': 200, 'max_mp': 190, 'spell': None},
             30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130, 'max_hp': 210, 'max_mp': 200, 'spell': None},
         }
+        player_stats.levels_list = self.mock_levels_list
         self.mock_levels_list_0 = {
             1: {'exp': 0, 'total_exp': 0, 'strength': 4 - 1, 'agility': 4 - 1, 'max_hp': 15, 'max_mp': 0, 'spell': None},
             2: {'exp': 7, 'total_exp': 7, 'strength': 5 - 1, 'agility': 4 - 1, 'max_hp': 22, 'max_mp': 0, 'spell': None},
@@ -612,124 +615,125 @@ class Test(TestCase):
         }
 
     def test_get_total_name_score(self):
-        self.assertEqual(31, get_total_name_score("Edward"))
-        self.assertEqual(36, get_total_name_score("Eddie"))
-        self.assertEqual(43, get_total_name_score("James"))
+        self.assertEqual(31, player_stats.get_total_name_score("Edward"))
+        self.assertEqual(36, player_stats.get_total_name_score("Eddie"))
+        self.assertEqual(43, player_stats.get_total_name_score("James"))
 
     def test_get_bonus(self):
-        self.assertEqual(0, get_bonus(33))
-        self.assertEqual(1, get_bonus(52))
-        self.assertEqual(2, get_bonus(43))
-        self.assertEqual(3, get_bonus(31))
+        self.assertEqual(0, player_stats.get_bonus(33))
+        self.assertEqual(1, player_stats.get_bonus(52))
+        self.assertEqual(2, player_stats.get_bonus(43))
+        self.assertEqual(3, player_stats.get_bonus(31))
 
     def test_apply_transformation_to_levels_list_0(self):
         """Strength and Agility penalized.
         Example name: Steve
         """
-        apply_transformation_to_levels_list("Steve")
-        self.assertEqual(self.mock_levels_list_0, levels_list)
+
+        player_stats.apply_transformation_to_levels_list("Steve")
+        self.assertEqual(self.mock_levels_list_0, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_1(self):
         """Agility and Maximum MP penalized.
         Example name: Eva
         """
-        apply_transformation_to_levels_list("Eva")
-        self.assertEqual(self.mock_levels_list_1, levels_list)
+        player_stats.apply_transformation_to_levels_list("Eva")
+        self.assertEqual(self.mock_levels_list_1, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_2(self):
         """Strength and Maximum HP penalized.
         Example name: Im
         """
-        apply_transformation_to_levels_list("Im")
-        self.assertEqual(self.mock_levels_list_2, levels_list)
+        player_stats.apply_transformation_to_levels_list("Im")
+        self.assertEqual(self.mock_levels_list_2, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_3(self):
         """Strength and Maximum HP penalized.
         Example name: Va
         """
-        apply_transformation_to_levels_list("Va")
-        self.assertEqual(self.mock_levels_list_3, levels_list)
+        player_stats.apply_transformation_to_levels_list("Va")
+        self.assertEqual(self.mock_levels_list_3, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_4(self):
         """Strength and Agility penalized.
         Example name: Eddie
         """
-        apply_transformation_to_levels_list("Eddie")
-        self.assertEqual(self.mock_levels_list_4, levels_list)
+        player_stats.apply_transformation_to_levels_list("Eddie")
+        self.assertEqual(self.mock_levels_list_4, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_5(self):
         """Agility and Maximum MP penalized.
         Example name: Ed
         """
-        apply_transformation_to_levels_list("Ed")
-        self.assertEqual(self.mock_levels_list_5, levels_list)
+        player_stats.apply_transformation_to_levels_list("Ed")
+        self.assertEqual(self.mock_levels_list_5, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_6(self):
         """Strength and Maximum HP penalized.
         Example name: Walter
         """
-        apply_transformation_to_levels_list("Walter")
-        self.assertEqual(self.mock_levels_list_6, levels_list)
+        player_stats.apply_transformation_to_levels_list("Walter")
+        self.assertEqual(self.mock_levels_list_6, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_7(self):
         """Maximum HP and Maximum MP penalized.
         Example name: Uno
         """
-        apply_transformation_to_levels_list("Uno")
-        self.assertEqual(self.mock_levels_list_7, levels_list)
+        player_stats.apply_transformation_to_levels_list("Uno")
+        self.assertEqual(self.mock_levels_list_7, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_8(self):
         """Maximum HP and Maximum MP penalized.
         Example name: gooo
         """
-        apply_transformation_to_levels_list("gooo")
-        self.assertEqual(self.mock_levels_list_8, levels_list)
+        player_stats.apply_transformation_to_levels_list("gooo")
+        self.assertEqual(self.mock_levels_list_8, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_9(self):
         """Strength and Agility penalized.
         Example name: Sejin
         """
-        apply_transformation_to_levels_list("Sejin")
-        self.assertEqual(self.mock_levels_list_9, levels_list)
+        player_stats.apply_transformation_to_levels_list("Sejin")
+        self.assertEqual(self.mock_levels_list_9, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_10(self):
         """Strength and Maximum HP penalized.
         Example name: Stephen
         """
-        apply_transformation_to_levels_list("Stephen")
-        self.assertEqual(self.mock_levels_list_10, levels_list)
+        player_stats.apply_transformation_to_levels_list("Stephen")
+        self.assertEqual(self.mock_levels_list_10, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_11(self):
         """Maximum HP and Maximum MP penalized.
         Example name: James
         """
-        apply_transformation_to_levels_list("James")
-        self.assertEqual(self.mock_levels_list_11, levels_list)
+        player_stats.apply_transformation_to_levels_list("James")
+        self.assertEqual(self.mock_levels_list_11, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_12(self):
         """Strength and Agility penalized.
         Example name: Gao
         """
-        apply_transformation_to_levels_list("Gao")
-        self.assertEqual(self.mock_levels_list_12, levels_list)
+        player_stats.apply_transformation_to_levels_list("Gao")
+        self.assertEqual(self.mock_levels_list_12, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_13(self):
         """Agility and Maximum MP penalized.
         Example name: Jacquie / Gina
         """
-        apply_transformation_to_levels_list("Jacquie")
-        self.assertEqual(self.mock_levels_list_13, levels_list)
+        player_stats.apply_transformation_to_levels_list("Jacquie")
+        self.assertEqual(self.mock_levels_list_13, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_14(self):
         """Strength and Maximum HP penalized.
         Example name: Wall
         """
-        apply_transformation_to_levels_list("Wall")
-        self.assertEqual(self.mock_levels_list_14, levels_list)
+        player_stats.apply_transformation_to_levels_list("Wall")
+        self.assertEqual(self.mock_levels_list_14, player_stats.levels_list)
 
     def test_apply_transformation_to_levels_list_15(self):
         """Maximum HP and Maximum MP penalized.
         Example name: Edward / Larry / Joseph
         """
-        apply_transformation_to_levels_list("Edward")
-        self.assertEqual(self.mock_levels_list_15, levels_list)
+        player_stats.apply_transformation_to_levels_list("Edward")
+        self.assertEqual(self.mock_levels_list_15, player_stats.levels_list)
