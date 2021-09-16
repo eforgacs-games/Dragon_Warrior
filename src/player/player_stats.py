@@ -92,27 +92,18 @@ def stat_calc(bonus: int, base: int) -> int:
     return floor(base * .9) + bonus
 
 
-def determine_penalized_stats(name_score: int) -> tuple[str, str]:
-    # TODO: Make this actually map using the binary values.
+def determine_penalized_stats(name_score: int) -> list:
+    """Determine the stats to penalize based on the last four bits of the binary representation of the name score.
+    if second to last bit is 0, agility is penalized.
+    if second to last bit is 1, max_hp is penalized.
+    if last bit is 0, strength is penalized.
+    if last bit is 1, max_mp is penalized.
+    """
     stats_to_penalize = name_score % 4
-    chart_of_stats_to_penalize = 'strength', 'agility', 'max_hp', 'max_mp'
-    if stats_to_penalize == 0:
-        # 00
-        return 'strength', 'agility'
-    elif stats_to_penalize == 1:
-        # 01
-        return 'max_mp', 'agility'
-    elif stats_to_penalize == 2:
-        # 10
-        return 'strength', 'max_hp'
-    elif stats_to_penalize == 3:
-        # 11
-        return 'max_hp', 'max_mp'
-    # elif stats_to_penalize == 4:
-    #     # 100
-    #     return 'strength', 'agility'
-    else:
-        print("Unable to determine stats to penalize.")
+    num_bits = 2
+    bits = [(stats_to_penalize >> bit) & 1 for bit in range(num_bits - 1, -1, -1)]
+    chart_of_stats_to_penalize = ('agility', 'max_hp'), ('strength', 'max_mp')
+    return [chart_of_stats_to_penalize[i][bits[i]] for i in range(len(bits))]
 
 
 def apply_transformation_to_levels_list(name: str):
