@@ -7,7 +7,7 @@
 ABOUT
 =====
 
-This is a clone of Dragon Warrior for the NES, done in Python.
+This is a clone of Dragon Warrior for the Nintendo Entertainment System, done in Python.
 
 
 REQUIREMENTS
