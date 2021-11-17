@@ -242,7 +242,7 @@ class DragonWarriorMap:
         for y in range(len(self.layout)):
             for x in range(len(self.layout[y])):
                 self.center_pt = get_center_point(x, y)
-                if self.layout[y][x] < 32:  # anything below 32 is a floor tile
+                if self.layout[y][x] <= 32:  # anything below 32 is a floor tile
                     self.map_floor_tiles(x, y)
                 else:
                     self.map_character_tiles(y, x, player)
