@@ -19,6 +19,7 @@ from math import floor
 # 14: "Wall"
 # 15: "Name", "Larry", "Edward", "ED", "Joseph"
 
+
 letter_calculations = {
     0: (" ", "g", "w", "M", "'"),
     1: ("h", "x", "N"),
@@ -92,21 +93,18 @@ def stat_calc(bonus: int, base: int) -> int:
     return floor(base * .9) + bonus
 
 
-def determine_penalized_stats(name_score: int) -> list:
-    """Determine the stats to penalize based on the last four bits of the binary representation of the name score.
+def determine_penalized_stats(name_score: int) -> tuple[str, ...]:
+    """Determine the stats to penalize based on the last bits of the binary representation of the name score.
     if second to last bit is 0, agility is penalized.
     if second to last bit is 1, max_hp is penalized.
     if last bit is 0, strength is penalized.
     if last bit is 1, max_mp is penalized.
     """
-    stats_to_penalize = name_score % 4
-    num_bits = 2
-    bits = [(stats_to_penalize >> bit) & 1 for bit in range(num_bits - 1, -1, -1)]
-    chart_of_stats_to_penalize = ('agility', 'max_hp'), ('strength', 'max_mp')
-    return [chart_of_stats_to_penalize[i][bits[i]] for i in range(len(bits))]
+    bits = [(name_score % 4 >> bit) & 1 for bit in range(1, -1, -1)]
+    return tuple((('agility', 'max_hp'), ('strength', 'max_mp'))[i][bits[i]] for i in range(len(bits)))
 
 
-def apply_transformation_to_levels_list(name: str):
+def apply_transformation_to_levels_list(name: str) -> None:
     # basing this on https://guides.gamercorner.net/dw/name-stats/
     total_name_score = get_total_name_score(name)
     bonus = get_bonus(total_name_score)
