@@ -135,12 +135,12 @@ class CommandMenu(Menu):
         # open a window
         print(f"{self.player.name} searched the ground all about.")
         # wait for input...
-        if self.current_tile == 'CHEST':
-            print("There is a treasure box.")
+        if self.current_tile == 'TREASURE_BOX':
+            print(f"There is a {self.current_tile.lower().replace('_', ' ')}.")
         # elif there is a hidden item:
         # print(f"There is a {hidden_item}")
-        else:
-            print(f"But there found nothing.")
+        # else:
+        #     print(f"But there found nothing.")
 
     def spell(self):
         """
@@ -188,7 +188,7 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # open a window
-        if self.current_tile == 'CHEST':
+        if self.current_tile == 'TREASURE_BOX':
             print("Took what was in the treasure box.")
         #     take it and update inventory accordingly
         # elif there is a hidden item
