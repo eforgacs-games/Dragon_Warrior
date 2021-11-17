@@ -257,44 +257,33 @@ class DragonWarriorMap:
                     self.map_player(character_dict['underlying_tile'], player)
                 # elif current_tile == 39:  # 'ROAMING_GUARD' value
                 #     self.layout[row][column] = self.tile_key[character_dict['underlying_tile']]['val']
-                elif character_dict['four_sided']:
-                    self.map_four_sided_npc(identifier=character, direction=character_dict['direction'],
-                                            underlying_tile=character_dict['underlying_tile'],
-                                            image_path=character_dict['path'], is_roaming=character_dict['roaming'])
                 else:
-                    self.map_two_sided_npc(image_path=character_dict['path'], name=character,
-                                           underlying_tile=character_dict['underlying_tile'])
+                    self.map_npc(identifier=character, direction=character_dict.get('direction'),
+                                 underlying_tile=character_dict['underlying_tile'],
+                                 image_path=character_dict['path'], four_sided=character_dict['four_sided'], is_roaming=character_dict['roaming'])
 
-    def map_four_sided_npc(self, identifier, direction, underlying_tile, image_path, is_roaming=False) -> None:
+    def map_npc(self, identifier, direction, underlying_tile, image_path, four_sided, is_roaming=False) -> None:
         sheet = get_image(image_path)
+        character_sprites = LayeredDirty()
         sheet = scale(sheet, (sheet.get_width() * self.scale, sheet.get_height() * self.scale))
         images = parse_animated_sprite_sheet(sheet)
-        character_sprites = LayeredDirty()
-        if is_roaming:
-            character = RoamingCharacter(self.center_pt, direction, images, identifier, None)
-            character.position = self.get_initial_character_location(character.identifier)
-            self.roaming_characters.append(character)
+        if four_sided:
+            if is_roaming:
+                character = RoamingCharacter(self.center_pt, direction, images, identifier, None)
+                character.position = self.get_initial_character_location(character.identifier)
+                self.roaming_characters.append(character)
+            else:
+                character = FixedCharacter(self.center_pt, direction, images, identifier, None)
         else:
-            character = FixedCharacter(self.center_pt, direction, images, identifier, None)
+            character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, identifier, None)
         character_sprites.add(character)
-        self.add_tile_by_value_and_group(underlying_tile)
         self.characters.append(character)
+        self.add_tile_by_value_and_group(underlying_tile)
         self.character_sprites.append(character_sprites)
 
     def add_tile_by_value_and_group(self, underlying_tile) -> None:
         self.add_tile(tile_value=self.tile_key[underlying_tile]['val'],
                       tile_group=self.tile_key[underlying_tile]['group'])
-
-    def map_two_sided_npc(self, image_path, name, underlying_tile) -> None:
-        sprites = LayeredDirty()
-        sheet = get_image(image_path)
-        sheet = scale(sheet, (sheet.get_width() * SCALE, sheet.get_height() * SCALE))
-        images = parse_animated_sprite_sheet(sheet)
-        character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, name, None)
-        sprites.add(character)
-        self.characters.append(character)
-        self.character_sprites.append(sprites)
-        self.add_tile_by_value_and_group(underlying_tile)
 
     def map_player(self, underlying_tile, player) -> None:
         self.player = player
