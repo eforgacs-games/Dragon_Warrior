@@ -30,7 +30,7 @@ ROOF = 0
 WALL = 1
 WOOD = 2
 BRICK = 3
-CHEST = 4
+TREASURE_BOX = 4
 DOOR = 5
 BRICK_STAIR_DOWN = 6
 BRICK_STAIR_UP = 7
@@ -129,7 +129,7 @@ class DragonWarriorMap:
         self.wall_group = Group()  # 1
         self.wood_group = Group()  # 2
         self.brick_group = Group()  # 3
-        self.chest_group = Group()  # 4
+        self.treasure_box_group = Group()  # 4
         self.door_group = Group()  # 5
         self.brick_stair_down_group = Group()  # 6
         self.brick_stair_up_group = Group()  # 7
@@ -164,7 +164,7 @@ class DragonWarriorMap:
             ('WALL', {'val': 1, 'group': self.wall_group}),
             ('WOOD', {'val': 2, 'group': self.wood_group}),
             ('BRICK', {'val': 3, 'group': self.brick_group}),
-            ('CHEST', {'val': 4, 'group': self.chest_group}),
+            ('TREASURE_BOX', {'val': 4, 'group': self.treasure_box_group}),
             ('DOOR', {'val': 5, 'group': self.door_group}),
             ('BRICK_STAIR_DOWN', {'val': 6, 'group': self.brick_stair_down_group}),
             ('BRICK_STAIR_UP', {'val': 7, 'group': self.brick_stair_up_group}),
@@ -543,14 +543,15 @@ def parse_map_tiles(map_path):
 
 
 def get_next_coordinates(character_column, character_row, direction):
-    if direction == Direction.UP.value:
-        return character_row - 1, character_column
-    elif direction == Direction.DOWN.value:
-        return character_row + 1, character_column
-    elif direction == Direction.LEFT.value:
-        return character_row, character_column - 1
-    elif direction == Direction.RIGHT.value:
-        return character_row, character_column + 1
+    match direction:
+        case Direction.UP.value:
+            return character_row - 1, character_column
+        case Direction.DOWN.value:
+            return character_row + 1, character_column
+        case Direction.LEFT.value:
+            return character_row, character_column - 1
+        case Direction.RIGHT.value:
+            return character_row, character_column + 1
 
 
 def get_character_position(character):

@@ -204,10 +204,11 @@ class Game:
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
         if (self.hero_layout_row, self.hero_layout_column) == staircase_location:
-            if staircase_dict['stair_direction'] == 'down':
-                play_sound(stairs_down_sfx)
-            elif staircase_dict['stair_direction'] == 'up':
-                play_sound(stairs_up_sfx)
+            match staircase_dict['stair_direction']:
+                case 'down':
+                    play_sound(stairs_down_sfx)
+                case 'up':
+                    play_sound(stairs_up_sfx)
             self.map_change(staircase_dict['map'])
 
     def draw_all(self) -> None:
