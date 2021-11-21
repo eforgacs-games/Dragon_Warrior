@@ -95,10 +95,10 @@ def get_image(path):
     if image is None:
         canonicalized_path = path.replace('/', sep).replace('\\', sep)
         if exists(canonicalized_path):
-            image = pygame.image.load(canonicalized_path)
+            image = pygame.image.load(canonicalized_path).convert_alpha()
             _image_library[path] = image
         else:
-            image = pygame.image.load(find_file(ntpath.basename(canonicalized_path), root_project_path))
+            image = pygame.image.load(find_file(ntpath.basename(canonicalized_path), root_project_path)).convert_alpha()
             _image_library[path] = image
     return image
 
