@@ -17,7 +17,7 @@ from src.common import Direction, play_sound, bump_sfx, UNARMED_HERO_PATH, get_i
 from src.common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
-from src.maps import get_character_position, get_next_coordinates
+from src.maps import get_character_position, get_next_coordinates, map_lookup
 from src.maps import parse_animated_sprite_sheet
 from src.player.player import Player
 from src.sprites.roaming_character import handle_roaming_character_sides_collision
@@ -37,6 +37,7 @@ class Game:
 
     def __init__(self):
         # Initialize pygame
+        self.loop_count = 1
         self.foreground_rects = []
         self.opacity = 0
         init()
@@ -67,9 +68,10 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom(hero_images=self.unarmed_hero_images)
+        # self.current_map = maps.TantegelThroneRoom(hero_images=self.unarmed_hero_images)
         # self.current_map = maps.TantegelCourtyard(hero_images=self.unarmed_hero_images)
-        # self.current_map = maps.Overworld(hero_images=self.unarmed_hero_images)
+        # self.current_map = maps.Alefgard(hero_images=self.unarmed_hero_images)
+        self.current_map = maps.Brecconary(hero_images=self.unarmed_hero_images)
 
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
@@ -101,8 +103,6 @@ class Game:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
         self.events = get()
-        self.background = self.big_map.subsurface(0, 0, self.current_map.width,
-                                                  self.current_map.height).convert()
         self.command_menu_subsurface = self.set_background_subsurface(
             left=(self.hero_layout_column - 2) * TILE_SIZE,
             top=(self.hero_layout_row - 6) * TILE_SIZE,
@@ -130,8 +130,11 @@ class Game:
         while True:
             self.clock.tick(FPS)
             self.get_events()
-            self.draw_all()
+            self.draw_all(self.loop_count)
             self.update_screen()
+            # print(self.hero_layout_row, self.hero_layout_column)
+            print(self.clock.get_fps())
+            self.loop_count += 1
 
     def get_events(self) -> None:
         """
@@ -209,25 +212,24 @@ class Game:
                     play_sound(stairs_down_sfx)
                 case 'up':
                     play_sound(stairs_up_sfx)
-            self.map_change(staircase_dict['map'])
+            self.map_change(map_lookup[staircase_dict['map']](self.unarmed_hero_images))
 
-    def draw_all(self) -> None:
+    def draw_all(self, loop_count) -> None:
         """
         Draw map, sprites, background, menu and other surfaces.
         :return: None
         """
-        for group in self.current_map.all_floor_sprite_groups:
+        if loop_count == 1:
+            self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height)
+        for group in self.current_map.floor_sprite_groups:
             group.draw(self.big_map)
-        self.screen.fill(self.BACK_FILL_COLOR)
-        self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
-
+        for sprites in self.current_map.character_sprites:
+            self.foreground_rects.append(sprites.draw(self.background)[0])
         for character in self.current_map.characters:
             if self.enable_animate:
                 character.animate()
             else:
                 character.pause()
-        for sprites in self.current_map.character_sprites:
-            self.foreground_rects.append(sprites.draw(self.background))
         for menu_or_dialog_box in self.menus:
             self.handle_menu_launch(menu_or_dialog_box)
         self.screen.blit(self.background, self.camera.get_pos())
@@ -293,7 +295,7 @@ class Game:
             if fade_out:
                 self.opacity += 1
             else:
-                # TODO(ELF): Fix fade in.
+                # TODO(ELF): Fix fade in. Maybe this link will help? https://stackoverflow.com/questions/54881269/pygame-fade-to-black-function
                 self.opacity -= 1
             fade.set_alpha(self.opacity)
             self.background.fill(BLACK)
@@ -308,10 +310,8 @@ class Game:
         :return: None
         """
         self.pause_all_movement()
-        self.background = Surface(self.screen.get_size()).convert()
         self.current_map = next_map
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
-        self.big_map.fill(self.BACK_FILL_COLOR)
         self.fade(self.win_width, self.win_height, fade_out=True)
         if MUSIC_ENABLED:
             mixer.music.stop()
@@ -324,7 +324,7 @@ class Game:
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
                              current_map=self.current_map, speed=None)
         self.fade(self.win_width, self.win_height, fade_out=False)
-
+        self.loop_count = 1
         self.unpause_all_movement()
 
         # play_music(self.current_map.music_file_path)
