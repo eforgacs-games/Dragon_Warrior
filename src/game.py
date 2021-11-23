@@ -69,10 +69,10 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom(hero_images=self.unarmed_hero_images)
+        # self.current_map = maps.TantegelThroneRoom(hero_images=self.unarmed_hero_images)
         # self.current_map = maps.TantegelCourtyard(hero_images=self.unarmed_hero_images)
         # self.current_map = maps.Alefgard(hero_images=self.unarmed_hero_images)
-        # self.current_map = maps.Brecconary(hero_images=self.unarmed_hero_images)
+        self.current_map = maps.Brecconary(hero_images=self.unarmed_hero_images)
 
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
@@ -132,7 +132,7 @@ class Game:
             self.get_events()
             self.draw_all(self.loop_count)
             self.update_screen()
-            # print(self.hero_layout_row, self.hero_layout_column)
+            print(self.hero_layout_row, self.hero_layout_column)
             # print(self.clock.get_fps())
             self.loop_count += 1
 
@@ -155,9 +155,9 @@ class Game:
             self.move_roaming_characters()
         if self.enable_movement:
             self.move_player(current_key)
-
-        for staircase_location, staircase_dict in self.current_map.staircases.items():
-            self.process_staircase_warps(staircase_dict, staircase_location)
+        if self.tiles_moved_since_spawn > 0:
+            for staircase_location, staircase_dict in self.current_map.staircases.items():
+                self.process_staircase_warps(staircase_dict, staircase_location)
 
         if current_key[K_j]:
             # B button
