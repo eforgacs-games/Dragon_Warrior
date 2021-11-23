@@ -4,12 +4,14 @@ from src.common import print_with_beep_sfx
 class Dialog:
     def __init__(self, player):
         self.player = player
-
-        self.dialog_text = [""]
+        self.dialog_text = None
 
     def say_dialog(self):
-        for line in self.dialog_text:
-            print_with_beep_sfx(line)
+        if self.dialog_text:
+            for line in self.dialog_text:
+                print_with_beep_sfx(line)
+        else:
+            print("Character has no dialog.")
 
     @staticmethod
     def roaming_guard_tantegel_throne_room():
@@ -24,4 +26,3 @@ class Dialog:
         print_with_beep_sfx("'Dost thou know about Princess Gwaelin?'")
         print_with_beep_sfx("'Half a year now hath passed since the Princess was kidnapped by the enemy.'")
         print_with_beep_sfx("'Never does the King speak of it, but he must be suffering much.'")
-
