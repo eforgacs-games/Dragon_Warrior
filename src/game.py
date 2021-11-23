@@ -7,18 +7,15 @@ from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
-from pygame.transform import scale
 
 import src.menu as menu
 from src import maps
 from src.camera import Camera
-from src.common import Direction, play_sound, bump_sfx, UNARMED_HERO_PATH, get_image, \
-    menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally
+from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally
 from src.common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.maps import get_character_position, get_next_coordinates, map_lookup
-from src.maps import parse_animated_sprite_sheet
 from src.player.player import Player
 from src.sprites.roaming_character import handle_roaming_character_sides_collision
 
@@ -60,19 +57,13 @@ class Game:
         self.screen.set_alpha(None)
         set_caption(self.GAME_TITLE)
         self.next_tile_checked = False
-        unarmed_hero_sheet = get_image(UNARMED_HERO_PATH)
-        unarmed_hero_tilesheet = scale(unarmed_hero_sheet, (
-            unarmed_hero_sheet.get_width() * self.scale,
-            unarmed_hero_sheet.get_height() * self.scale
-        ))
-        self.unarmed_hero_images = parse_animated_sprite_sheet(unarmed_hero_tilesheet)
 
         # self.current_map can be changed to other maps for development purposes
 
-        # self.current_map = maps.TantegelThroneRoom(hero_images=self.unarmed_hero_images)
-        # self.current_map = maps.TantegelCourtyard(hero_images=self.unarmed_hero_images)
-        # self.current_map = maps.Alefgard(hero_images=self.unarmed_hero_images)
-        self.current_map = maps.Brecconary(hero_images=self.unarmed_hero_images)
+        # self.current_map = maps.TantegelThroneRoom()
+        self.current_map = maps.TantegelCourtyard()
+        # self.current_map = maps.Alefgard()
+        # self.current_map = maps.Brecconary()
 
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
@@ -92,8 +83,12 @@ class Game:
         self.next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
                                                        character_row=self.hero_layout_row,
                                                        direction=self.current_map.player.direction)
+        self.next_next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
+                                                            character_row=self.hero_layout_row,
+                                                            direction=self.current_map.player.direction,
+                                                            offset=2)
         self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.next_tile, self.current_map.characters, self.dlg_box, self.player, self.current_map.__class__.__name__)
+        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.next_tile, self.next_next_tile, self.current_map.characters, self.dlg_box, self.player, self.current_map.__class__.__name__)
 
         self.menus = self.cmd_menu, self.dlg_box
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
@@ -132,7 +127,7 @@ class Game:
             self.get_events()
             self.draw_all(self.loop_count)
             self.update_screen()
-            print(self.hero_layout_row, self.hero_layout_column)
+            # print(self.hero_layout_row, self.hero_layout_column)
             # print(self.clock.get_fps())
             self.loop_count += 1
 
@@ -212,7 +207,7 @@ class Game:
                     play_sound(stairs_down_sfx)
                 case 'up':
                     play_sound(stairs_up_sfx)
-            self.change_map(map_lookup[staircase_dict['map']](self.unarmed_hero_images))
+            self.change_map(map_lookup[staircase_dict['map']]())
 
     def draw_all(self, loop_count) -> None:
         """
@@ -221,7 +216,6 @@ class Game:
         """
         self.screen.fill(self.BACK_FILL_COLOR)
         if loop_count == 1:
-
             self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height)
         self.current_map.floor_sprite_groups = [val.get('group') for val in self.current_map.floor_tile_key.values() if self.current_map.get_tile_by_value(val['val']) == self.current_map.hero_underlying_tile() or any(val['val'] in row for row in self.current_map.layout)]
         for group in self.current_map.floor_sprite_groups:
@@ -328,6 +322,7 @@ class Game:
         self.loop_count = 1
         self.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
+        self.cmd_menu.map_name = self.current_map.__class__.__name__
         if MUSIC_ENABLED:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
@@ -489,24 +484,25 @@ class Game:
         return self.get_next_coordinates(self.hero_layout_column, self.hero_layout_row,
                                          self.player.direction) in fixed_character_locations
 
-    def get_next_tile_identifier(self, character_column: int, character_row: int, direction) -> str:
+    def get_next_tile_identifier(self, character_column: int, character_row: int, direction, offset=1) -> str:
         """
-        Retrieve the next tile to be stepped on by a particular character.
+        Retrieve the next tile in front of a particular character.
         :type character_column: int
         :type character_row: int
         :param character_column: The character's column within the map layout.
         :param character_row: The character's row within the map layout.
         :param direction: The direction which the character is facing.
+        :param offset: How many tiles offset of the character to check. Defaults to 1 (the next tile).
         :return: str: The next tile that the character will step on (e.g., 'BRICK').
         """
         if direction == Direction.UP.value:
-            return get_tile_by_coordinates(character_column, character_row - 1, self.current_map)
+            return get_tile_by_coordinates(character_column, character_row - offset, self.current_map)
         elif direction == Direction.DOWN.value:
-            return get_tile_by_coordinates(character_column, character_row + 1, self.current_map)
+            return get_tile_by_coordinates(character_column, character_row + offset, self.current_map)
         elif direction == Direction.LEFT.value:
-            return get_tile_by_coordinates(character_column - 1, character_row, self.current_map)
+            return get_tile_by_coordinates(character_column - offset, character_row, self.current_map)
         elif direction == Direction.RIGHT.value:
-            return get_tile_by_coordinates(character_column + 1, character_row, self.current_map)
+            return get_tile_by_coordinates(character_column + offset, character_row, self.current_map)
 
     def get_next_coordinates(self, character_column: int, character_row: int, direction: int) -> tuple:
         if character_row < len(self.current_map.layout) and character_column < len(self.current_map.layout[0]):

@@ -78,6 +78,7 @@ BLACK, WHITE, RED = (0, 0, 0), (255, 255, 255), (255, 0, 0)
 _image_library = {}
 MAP_TILES_PATH = join(IMAGES_DIR, 'tileset.png')
 UNARMED_HERO_PATH = join(IMAGES_DIR, 'unarmed_hero.png')
+ARMED_HERO_PATH = join(IMAGES_DIR, 'armed_hero.png')
 KING_LORIK_PATH = join(IMAGES_DIR, 'king_lorik.png')
 GUARD_PATH = join(IMAGES_DIR, 'guard.png')
 MAN_PATH = join(IMAGES_DIR, 'man.png')
