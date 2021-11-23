@@ -300,7 +300,9 @@ class Alefgard(DragonWarriorMap):
     def __init__(self, hero_images):
         super().__init__(hero_images, MapLayouts.alefgard)
         self.music_file_path = overworld_music
-        self.staircases = {(45, 52): {'map': 'Brecconary', 'stair_direction': 'up'}}
+        self.staircases = {
+            (45, 52): {'map': 'Brecconary', 'stair_direction': 'up'},
+            (47, 47): {'map': 'TantegelCourtyard', 'stair_direction': 'up'}}
 
     def hero_underlying_tile(self):
         return 'CASTLE'
@@ -315,9 +317,10 @@ class Brecconary(DragonWarriorMap):
         super().__init__(hero_images, MapLayouts.brecconary)
         # up_staircase = {'map': Alefgard(self.hero_images), 'stair_direction': 'up'}
         up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
-        west_gate = [(min(n, 24), 9) for n in range(22, 24)]
-        north_gate = [(7, min(n, 26)) for n in range(23, 26)]
-        staircases_keys = west_gate + north_gate
+        west_gate = [(min(n, 24), 9) for n in range(21, 25)]
+        north_gate = [(7, min(n, 26)) for n in range(23, 27)]
+        east_gate = [(min(n, 25), 40) for n in range(21, 26)]
+        staircases_keys = west_gate + north_gate + east_gate
         staircases_values = [up_staircase] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
         self.music_file_path = village_music
