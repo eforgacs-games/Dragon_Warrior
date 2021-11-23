@@ -37,6 +37,7 @@ class Game:
 
     def __init__(self):
         # Initialize pygame
+        self.tiles_moved_since_spawn = 0
         self.loop_count = 1
         self.foreground_rects = []
         self.opacity = 0
@@ -68,10 +69,10 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        # self.current_map = maps.TantegelThroneRoom(hero_images=self.unarmed_hero_images)
+        self.current_map = maps.TantegelThroneRoom(hero_images=self.unarmed_hero_images)
         # self.current_map = maps.TantegelCourtyard(hero_images=self.unarmed_hero_images)
         # self.current_map = maps.Alefgard(hero_images=self.unarmed_hero_images)
-        self.current_map = maps.Brecconary(hero_images=self.unarmed_hero_images)
+        # self.current_map = maps.Brecconary(hero_images=self.unarmed_hero_images)
 
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
@@ -95,8 +96,7 @@ class Game:
         self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.next_tile, self.current_map.characters, self.dlg_box, self.player, self.current_map.__class__.__name__)
 
         self.menus = self.cmd_menu, self.dlg_box
-        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
-                             current_map=self.current_map, speed=None)
+        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
         if MUSIC_ENABLED:
@@ -133,7 +133,7 @@ class Game:
             self.draw_all(self.loop_count)
             self.update_screen()
             # print(self.hero_layout_row, self.hero_layout_column)
-            print(self.clock.get_fps())
+            # print(self.clock.get_fps())
             self.loop_count += 1
 
     def get_events(self) -> None:
@@ -212,17 +212,21 @@ class Game:
                     play_sound(stairs_down_sfx)
                 case 'up':
                     play_sound(stairs_up_sfx)
-            self.map_change(map_lookup[staircase_dict['map']](self.unarmed_hero_images))
+            self.change_map(map_lookup[staircase_dict['map']](self.unarmed_hero_images))
 
     def draw_all(self, loop_count) -> None:
         """
         Draw map, sprites, background, menu and other surfaces.
         :return: None
         """
+        self.screen.fill(self.BACK_FILL_COLOR)
         if loop_count == 1:
+
             self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height)
+        self.current_map.floor_sprite_groups = [val.get('group') for val in self.current_map.floor_tile_key.values() if self.current_map.get_tile_by_value(val['val']) == self.current_map.hero_underlying_tile() or any(val['val'] in row for row in self.current_map.layout)]
         for group in self.current_map.floor_sprite_groups:
-            group.draw(self.big_map)
+            if group:
+                group.draw(self.big_map)
         for sprites in self.current_map.character_sprites:
             self.foreground_rects.append(sprites.draw(self.background)[0])
         for character in self.current_map.characters:
@@ -303,7 +307,7 @@ class Game:
             display.update()
             time.delay(5)
 
-    def map_change(self, next_map) -> None:
+    def change_map(self, next_map) -> None:
         """
         Change to a different map.
         :param next_map: The next map to be loaded.
@@ -316,16 +320,17 @@ class Game:
         if MUSIC_ENABLED:
             mixer.music.stop()
         self.current_map.load_map(self.player)
-        if MUSIC_ENABLED:
-            mixer.music.load(self.current_map.music_file_path)
-            mixer.music.play(-1)
+
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
-        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
-                             current_map=self.current_map, speed=None)
+        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
         self.fade(self.win_width, self.win_height, fade_out=False)
         self.loop_count = 1
         self.unpause_all_movement()
+        self.tiles_moved_since_spawn = 0
+        if MUSIC_ENABLED:
+            mixer.music.load(self.current_map.music_file_path)
+            mixer.music.play(-1)
 
         # play_music(self.current_map.music_file_path)
 
@@ -401,10 +406,12 @@ class Game:
             self.current_map.player_sprites.dirty = 1
             if is_facing_medially(self.player):
                 if curr_pos_y % TILE_SIZE == 0:
+                    self.tiles_moved_since_spawn += 1
                     self.player.is_moving, self.next_tile_checked = False, False
                     return
             elif is_facing_laterally(self.player):
                 if curr_pos_x % TILE_SIZE == 0:
+                    self.tiles_moved_since_spawn += 1
                     self.player.is_moving, self.next_tile_checked = False, False
                     return
 
@@ -553,7 +560,6 @@ class Game:
         Move all roaming characters in the current map.
         :return: None
         """
-        # TODO: Extend roaming characters beyond just the roaming guard.
         for roaming_character in self.current_map.roaming_characters:
             get_character_position(roaming_character)
             now = get_ticks()
@@ -579,10 +585,6 @@ class Game:
                 self.move_medially(roaming_character)
             elif is_facing_laterally(roaming_character):
                 self.move_laterally(roaming_character)
-            else:
-                print("Invalid direction.")
-            # print(f"Player row/column: {self.player.coordinates}")
-            # print(f"Roaming character row/column: {roaming_character.row}, {roaming_character.column}")
             handle_roaming_character_sides_collision(self.current_map, roaming_character)
 
     def move_roaming_character(self, roaming_character, delta_x, delta_y) -> None:
