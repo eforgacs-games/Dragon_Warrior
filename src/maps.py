@@ -89,76 +89,40 @@ class DragonWarriorMap:
         self.height = len(self.layout) * TILE_SIZE
         self.width = len(self.layout[0]) * TILE_SIZE
 
-        # Tile groups
-
-        self.roof_group = Group()  # 0
-        self.wall_group = Group()  # 1
-        self.wood_group = Group()  # 2
-        self.brick_group = Group()  # 3
-        self.treasure_box_group = Group()  # 4
-        self.door_group = Group()  # 5
-        self.brick_stair_down_group = Group()  # 6
-        self.brick_stair_up_group = Group()  # 7
-        self.barrier_group = Group()  # 8
-        self.weapon_sign_group = Group()  # 9
-        self.inn_sign_group = Group()  # 10
-        self.castle_group = Group()  # 11
-        self.town_group = Group()  # 12
-        self.grass_group = Group()  # 13
-        self.trees_group = Group()  # 14
-        self.hills_group = Group()  # 15
-        self.mountains_group = Group()  # 16
-        self.cave_group = Group()  # 17
-        self.grass_stair_down_group = Group()  # 18
-        self.sand_group = Group()  # 19
-        self.marsh_group = Group()  # 20
-        self.bridge_group = Group()  # 21
-        self.water_group = Group()  # 22
-        self.bottom_coast_group = Group()  # 23
-        self.bottom_left_coast_group = Group()  # 24
-        self.left_coast_group = Group()  # 25
-        self.top_left_coast_group = Group()  # 26
-        self.top_coast_group = Group()  # 27
-        self.top_right_coast_group = Group()  # 28
-        self.right_coast_group = Group()  # 29
-        self.bottom_right_coast_group = Group()  # 30
-        self.bottom_top_left_coast_group = Group()  # 31
-        self.bottom_top_right_coast_group = Group()  # 32
-
         self.floor_tile_key = dict([
-            ('ROOF', {'val': 0, 'group': self.roof_group}),
-            ('WALL', {'val': 1, 'group': self.wall_group}),
-            ('WOOD', {'val': 2, 'group': self.wood_group}),
-            ('BRICK', {'val': 3, 'group': self.brick_group}),
-            ('TREASURE_BOX', {'val': 4, 'group': self.treasure_box_group}),
-            ('DOOR', {'val': 5, 'group': self.door_group}),
-            ('BRICK_STAIR_DOWN', {'val': 6, 'group': self.brick_stair_down_group}),
-            ('BRICK_STAIR_UP', {'val': 7, 'group': self.brick_stair_up_group}),
-            ('BARRIER', {'val': 8, 'group': self.barrier_group}),
-            ('WEAPON_SIGN', {'val': 9, 'group': self.weapon_sign_group}),
-            ('INN_SIGN', {'val': 10, 'group': self.inn_sign_group}),
-            ('CASTLE', {'val': 11, 'group': self.castle_group}),
-            ('TOWN', {'val': 12, 'group': self.town_group}),
-            ('GRASS', {'val': 13, 'group': self.grass_group}),
-            ('TREES', {'val': 14, 'group': self.trees_group}),
-            ('HILLS', {'val': 15, 'group': self.hills_group}),
-            ('MOUNTAINS', {'val': 16, 'group': self.mountains_group}),
-            ('CAVE', {'val': 17, 'group': self.cave_group}),
-            ('GRASS_STAIR_DOWN', {'val': 18, 'group': self.grass_stair_down_group}),
-            ('SAND', {'val': 19, 'group': self.sand_group}),
-            ('MARSH', {'val': 20, 'group': self.marsh_group}),
-            ('BRIDGE', {'val': 21, 'group': self.bridge_group}),
-            ('WATER', {'val': 22, 'group': self.water_group}),
-            ('BOTTOM_COAST', {'val': 23, 'group': self.bottom_coast_group}),
-            ('BOTTOM_LEFT_COAST', {'val': 24, 'group': self.bottom_left_coast_group}),
-            ('LEFT_COAST', {'val': 25, 'group': self.left_coast_group}),
-            ('TOP_LEFT_COAST', {'val': 26, 'group': self.top_left_coast_group}),
-            ('TOP_COAST', {'val': 27, 'group': self.top_coast_group}),
-            ('TOP_RIGHT_COAST', {'val': 28, 'group': self.top_right_coast_group}),
-            ('RIGHT_COAST', {'val': 29, 'group': self.right_coast_group}),
-            ('BOTTOM_RIGHT_COAST', {'val': 30, 'group': self.bottom_right_coast_group}),
-            ('BOTTOM_TOP_LEFT_COAST', {'val': 31, 'group': self.bottom_top_left_coast_group}),
-            ('BOTTOM_TOP_RIGHT_COAST', {'val': 32, 'group': self.bottom_top_right_coast_group}),
+            ('ROOF', {'val': 0, 'group': Group()}),
+            ('WALL', {'val': 1, 'group': Group()}),
+            ('WOOD', {'val': 2, 'group': Group()}),
+            ('BRICK', {'val': 3, 'group': Group()}),
+            ('TREASURE_BOX', {'val': 4, 'group': Group()}),
+            ('DOOR', {'val': 5, 'group': Group()}),
+            ('BRICK_STAIR_DOWN', {'val': 6, 'group': Group()}),
+            ('BRICK_STAIR_UP', {'val': 7, 'group': Group()}),
+            ('BARRIER', {'val': 8, 'group': Group()}),
+            ('WEAPON_SIGN', {'val': 9, 'group': Group()}),
+            ('INN_SIGN', {'val': 10, 'group': Group()}),
+            ('CASTLE', {'val': 11, 'group': Group()}),
+            ('TOWN', {'val': 12, 'group': Group()}),
+            ('GRASS', {'val': 13, 'group': Group()}),
+            ('TREES', {'val': 14, 'group': Group()}),
+            ('HILLS', {'val': 15, 'group': Group()}),
+            ('MOUNTAINS', {'val': 16, 'group': Group()}),
+            ('CAVE', {'val': 17, 'group': Group()}),
+            ('GRASS_STAIR_DOWN', {'val': 18, 'group': Group()}),
+            ('SAND', {'val': 19, 'group': Group()}),
+            ('MARSH', {'val': 20, 'group': Group()}),
+            ('BRIDGE', {'val': 21, 'group': Group()}),
+            ('WATER', {'val': 22, 'group': Group()}),
+            ('BOTTOM_COAST', {'val': 23, 'group': Group()}),
+            ('BOTTOM_LEFT_COAST', {'val': 24, 'group': Group()}),
+            ('LEFT_COAST', {'val': 25, 'group': Group()}),
+            ('TOP_LEFT_COAST', {'val': 26, 'group': Group()}),
+            ('TOP_COAST', {'val': 27, 'group': Group()}),
+            ('TOP_RIGHT_COAST', {'val': 28, 'group': Group()}),
+            ('RIGHT_COAST', {'val': 29, 'group': Group()}),
+            ('BOTTOM_RIGHT_COAST', {'val': 30, 'group': Group()}),
+            ('BOTTOM_TOP_LEFT_COAST', {'val': 31, 'group': Group()}),
+            ('BOTTOM_TOP_RIGHT_COAST', {'val': 32, 'group': Group()}),
         ])
         self.character_key = dict([
             ('HERO', {'val': 33, 'four_sided': True, 'path': UNARMED_HERO_PATH, 'roaming': False, 'underlying_tile': self.hero_underlying_tile()}),
@@ -260,8 +224,9 @@ class DragonWarriorMap:
         self.characters.append(self.player)
         self.character_sprites.append(self.player_sprites)
 
+    # @timeit
     def map_floor_tiles(self, x, y) -> None:
-        for tile, tile_dict in self.tile_key.items():
+        for tile, tile_dict in self.floor_tile_key.items():
             if self.layout[y][x] < 33:
                 if self.layout[y][x] == tile_dict['val']:
                     self.add_tile(tile_value=tile_dict['val'], tile_group=tile_dict['group'])
@@ -269,9 +234,9 @@ class DragonWarriorMap:
     def add_tile(self, tile_value, tile_group) -> None:
         if tile_value <= 10:
             tile = BaseSprite(self.center_pt, self.map_tiles[tile_value][0])
-        elif tile_value <= 21:
+        elif 10 < tile_value <= 21:
             tile = BaseSprite(self.center_pt, self.map_tiles[tile_value - 11][1])
-        elif tile_value < 33:
+        elif 21 < tile_value < 33:
             tile = BaseSprite(self.center_pt, self.map_tiles[tile_value - 22][2])
         else:
             print("Invalid tile.")
@@ -312,7 +277,7 @@ class TantegelCourtyard(DragonWarriorMap):
     def __init__(self, hero_images):
         super().__init__(hero_images, MapLayouts.tantegel_courtyard)
         up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
-        staircases_keys = [(37, min(n, 26)) for n in range(9, 27, 1)]
+        staircases_keys = [(37, min(n, 26)) for n in range(9, 27)]
         staircases_values = [up_staircase] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
         self.music_file_path = tantegel_castle_courtyard_music
@@ -348,11 +313,11 @@ class Brecconary(DragonWarriorMap):
 
     def __init__(self, hero_images):
         super().__init__(hero_images, MapLayouts.brecconary)
-        # TODO: There is a circular reference created by instantiating the destination map in the up_staircase variable. Fix this
         # up_staircase = {'map': Alefgard(self.hero_images), 'stair_direction': 'up'}
         up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
-        # staircases_keys = [(37, min(n, 26)) for n in range(9, 27, 1)]
-        staircases_keys = [(0, 0)]
+        west_gate = [(min(n, 24), 9) for n in range(22, 24)]
+        north_gate = [(7, min(n, 26)) for n in range(23, 26)]
+        staircases_keys = west_gate + north_gate
         staircases_values = [up_staircase] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
         self.music_file_path = village_music

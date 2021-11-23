@@ -2,12 +2,11 @@ from src.config import TILE_SIZE
 
 
 class Camera:
-    def __init__(self, hero_position, current_map, speed):
+    def __init__(self, hero_position, current_map):
         self.current_map = current_map
         self.x = None
         self.y = None
         self.set_camera_position(hero_position)
-        Camera.speed = speed
 
     def set_camera_position(self, hero_position: tuple):
         """
