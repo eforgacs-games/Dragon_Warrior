@@ -9,7 +9,7 @@ from map_layouts import MapLayouts
 from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_PATH, get_image, \
     GUARD_PATH, MAN_PATH, tantegel_castle_courtyard_music, WOMAN_PATH, WISE_MAN_PATH, \
     SOLDIER_PATH, MERCHANT_PATH, PRINCESS_GWAELIN_PATH, DRAGONLORD_PATH, UNARMED_HERO_PATH, MAP_TILES_PATH, \
-    overworld_music, village_music
+    overworld_music, village_music, ARMED_HERO_PATH
 from src.config import TILE_SIZE, SCALE, COLOR_KEY
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
@@ -63,7 +63,7 @@ def get_center_point(x, y):
 
 
 class DragonWarriorMap:
-    def __init__(self, hero_images, layout):
+    def __init__(self, layout):
 
         # Character variables
 
@@ -73,7 +73,6 @@ class DragonWarriorMap:
         self.characters = []
         self.fixed_characters = []
         self.roaming_characters = []
-        self.hero_images = hero_images
         self.character_sprites = []
 
         # Map variables
@@ -186,12 +185,16 @@ class DragonWarriorMap:
 
     def map_character(self, character, character_dict, current_tile, player):
         if current_tile == 33:  # 'HERO' value
-            player.__init__(self.center_pt, self.hero_images)
+            if not self.player:
+                player.__init__(self.center_pt, self.scale_spritesheet(UNARMED_HERO_PATH))
             self.map_player(character_dict['underlying_tile'], player)
         else:
             self.map_npc(identifier=character, direction=character_dict.get('direction'),
                          underlying_tile=character_dict['underlying_tile'],
                          image_path=character_dict['path'], four_sided=character_dict['four_sided'], is_roaming=character_dict['roaming'])
+
+    def scale_spritesheet(self, image_path):
+        return parse_animated_sprite_sheet(scale(get_image(image_path), (get_image(image_path).get_width() * self.scale, get_image(image_path).get_height() * self.scale)))
 
     def map_npc(self, identifier, direction, underlying_tile, image_path, four_sided, is_roaming=False) -> None:
         sheet = get_image(image_path)
@@ -257,8 +260,8 @@ class TantegelThroneRoom(DragonWarriorMap):
     This is the first map in the game, the Tantegel Castle throne room.
     """
 
-    def __init__(self, hero_images):
-        super().__init__(hero_images, MapLayouts.tantegel_throne_room)
+    def __init__(self):
+        super().__init__(MapLayouts.tantegel_throne_room)
         self.staircases = {(14, 18): {'map': 'TantegelCourtyard', 'stair_direction': 'down'}}
         self.music_file_path = tantegel_castle_throne_room_music
 
@@ -274,8 +277,8 @@ class TantegelCourtyard(DragonWarriorMap):
     This is the courtyard of Tantegel Castle.
     """
 
-    def __init__(self, hero_images):
-        super().__init__(hero_images, MapLayouts.tantegel_courtyard)
+    def __init__(self):
+        super().__init__(MapLayouts.tantegel_courtyard)
         up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
         staircases_keys = [(37, min(n, 26)) for n in range(9, 27)]
         staircases_values = [up_staircase] * len(staircases_keys)
@@ -297,8 +300,8 @@ class Alefgard(DragonWarriorMap):
     This is Alefgard, the world by which the player travels between cities. The map is a 124 x 124 tile grid.
     """
 
-    def __init__(self, hero_images):
-        super().__init__(hero_images, MapLayouts.alefgard)
+    def __init__(self):
+        super().__init__(MapLayouts.alefgard)
         self.music_file_path = overworld_music
         self.staircases = {
             (45, 52): {'map': 'Brecconary', 'stair_direction': 'up'},
@@ -313,8 +316,8 @@ class Alefgard(DragonWarriorMap):
 
 class Brecconary(DragonWarriorMap):
 
-    def __init__(self, hero_images):
-        super().__init__(hero_images, MapLayouts.brecconary)
+    def __init__(self):
+        super().__init__(MapLayouts.brecconary)
         # up_staircase = {'map': Alefgard(self.hero_images), 'stair_direction': 'up'}
         up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
         west_gate = [(min(n, 24), 9) for n in range(21, 25)]

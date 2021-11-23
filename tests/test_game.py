@@ -31,7 +31,7 @@ layout = [[33, 0, 3],
 
 class TestMockMap(DragonWarriorMap, ABC):
     def __init__(self):
-        super().__init__(None, layout)
+        super().__init__(layout)
 
     def hero_underlying_tile(self):
         return 'BRICK'
