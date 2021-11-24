@@ -61,9 +61,10 @@ class Game:
         # self.current_map can be changed to other maps for development purposes
 
         # self.current_map = maps.TantegelThroneRoom()
-        self.current_map = maps.TantegelCourtyard()
+        # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
+        self.current_map = maps.Garinham()
 
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
@@ -217,7 +218,8 @@ class Game:
         self.screen.fill(self.BACK_FILL_COLOR)
         if loop_count == 1:
             self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height)
-        self.current_map.floor_sprite_groups = [val.get('group') for val in self.current_map.floor_tile_key.values() if self.current_map.get_tile_by_value(val['val']) == self.current_map.hero_underlying_tile() or any(val['val'] in row for row in self.current_map.layout)]
+            self.current_map.floor_sprite_groups = [val.get('group') for val in self.current_map.floor_tile_key.values() if self.current_map.get_tile_by_value(val['val']) == self.current_map.hero_underlying_tile() or any(val['val'] in row for row in self.current_map.layout)]
+        # TODO: this for loop is what is slowing down the overworld map. make it so that this only executes while moving, or else just draws the squares where there are characters
         for group in self.current_map.floor_sprite_groups:
             if group:
                 group.draw(self.big_map)
