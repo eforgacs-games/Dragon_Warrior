@@ -9,7 +9,7 @@ from map_layouts import MapLayouts
 from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_PATH, get_image, \
     GUARD_PATH, MAN_PATH, tantegel_castle_courtyard_music, WOMAN_PATH, WISE_MAN_PATH, \
     SOLDIER_PATH, MERCHANT_PATH, PRINCESS_GWAELIN_PATH, DRAGONLORD_PATH, UNARMED_HERO_PATH, MAP_TILES_PATH, \
-    overworld_music, village_music, ARMED_HERO_PATH
+    overworld_music, village_music
 from src.config import TILE_SIZE, SCALE, COLOR_KEY
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
@@ -320,7 +320,32 @@ class Brecconary(DragonWarriorMap):
         super().__init__(MapLayouts.brecconary)
         # up_staircase = {'map': Alefgard(self.hero_images), 'stair_direction': 'up'}
         up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
-        west_gate = [(min(n, 24), 9) for n in range(21, 25)]
+        west_gate = vertical_warp_line((21, 9), (24, 9))
+        north_gate = [(7, min(n, 26)) for n in range(23, 27)]
+        east_gate = [(min(n, 25), 40) for n in range(21, 26)]
+        staircases_keys = west_gate + north_gate + east_gate
+        staircases_values = [up_staircase] * len(staircases_keys)
+        self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.music_file_path = village_music
+
+    def hero_underlying_tile(self):
+        return 'BRICK'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+
+def vertical_warp_line(top_point, bottom_point):
+    return [(min(n, bottom_point[0]), bottom_point[1]) for n in range(top_point[0], bottom_point[0] + 1)]
+
+
+class Garinham(DragonWarriorMap):
+
+    def __init__(self):
+        super().__init__(MapLayouts.garinham)
+        # up_staircase = {'map': Alefgard(self.hero_images), 'stair_direction': 'up'}
+        up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
+        west_gate = vertical_warp_line((13, 8), (15, 8))
         north_gate = [(7, min(n, 26)) for n in range(23, 27)]
         east_gate = [(min(n, 25), 40) for n in range(21, 26)]
         staircases_keys = west_gate + north_gate + east_gate
