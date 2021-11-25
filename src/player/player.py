@@ -13,6 +13,7 @@ class Player(AnimatedSprite):
         self.is_moving = False
         self.coordinates = None
         self.next_coordinates = None
+        self.next_next_coordinates = None
         self.next_tile = None
         self.next_next_tile = None
 
