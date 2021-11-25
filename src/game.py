@@ -60,8 +60,8 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        # self.current_map = maps.TantegelThroneRoom()
-        self.current_map = maps.TantegelCourtyard()
+        self.current_map = maps.TantegelThroneRoom()
+        # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
@@ -128,8 +128,8 @@ class Game:
             self.get_events()
             self.draw_all(self.loop_count)
             self.update_screen()
-            print(self.hero_layout_row, self.hero_layout_column)
-            # print(self.clock.get_fps())
+            # print(self.hero_layout_row, self.hero_layout_column)
+            print(self.clock.get_fps())
             self.loop_count += 1
 
     def get_events(self) -> None:
@@ -223,13 +223,12 @@ class Game:
         for group in self.current_map.floor_sprite_groups:
             if group:
                 group.draw(self.big_map)
-        for sprites in self.current_map.character_sprites:
-            self.foreground_rects.append(sprites.draw(self.background)[0])
-        for character in self.current_map.characters:
+        for character_identifier, character_dict in self.current_map.characters.items():
+            self.foreground_rects.append(character_dict['character_sprites'].draw(self.background)[0])
             if self.enable_animate:
-                character.animate()
+                character_dict['character'].animate()
             else:
-                character.pause()
+                character_dict['character'].pause()
         for menu_or_dialog_box in self.menus:
             self.handle_menu_launch(menu_or_dialog_box)
         self.screen.blit(self.background, self.camera.get_pos())
