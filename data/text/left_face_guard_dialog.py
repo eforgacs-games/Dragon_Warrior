@@ -3,7 +3,7 @@ from data.text.dialog import Dialog
 
 class LeftFaceGuardDialog(Dialog):
     def __init__(self, player, map_name):
-        super().__init__(player)
+        super().__init__(player, None)
         if map_name == 'TantegelThroneRoom':
             self.dialog_text = (
                 "'If thou hast collected all the Treasure Chests, a key will be found.'",

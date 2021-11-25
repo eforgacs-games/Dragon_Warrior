@@ -9,14 +9,15 @@ from data.text.woman_dialog import WomanDialog
 
 
 class DialogLookupTable:
-    def __init__(self, player, map_name):
+
+    def __init__(self, player, map_name, dialog_character):
         self.dialog_lookup = {'KING_LORIK': KingLorikDialog(player,
                                                             is_initial_dialog=False,
                                                             throne_room_door_locked=True),
-                              'RIGHT_FACE_GUARD': RightFaceGuardDialog(player, map_name),
+                              'RIGHT_FACE_GUARD': RightFaceGuardDialog(player, map_name, None),
                               'LEFT_FACE_GUARD': LeftFaceGuardDialog(player, map_name),
                               'ROAMING_GUARD': RoamingGuardDialog(player, map_name),
-                              'MERCHANT': MerchantDialog(player, map_name),
+                              'MERCHANT': MerchantDialog(player, map_name, dialog_character),
                               'MAN': ManDialog(player, map_name),
                               'WOMAN': WomanDialog(player, map_name),
                               'WISE_MAN': WiseManDialog(player, map_name)}

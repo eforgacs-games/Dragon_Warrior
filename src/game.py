@@ -192,6 +192,10 @@ class Game:
         self.player.next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
                                                             self.player.rect.y // TILE_SIZE,
                                                             self.player.direction)
+        self.player.next_next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
+                                                                 self.player.rect.y // TILE_SIZE,
+                                                                 self.player.direction, offset=2)
+
         # For debugging purposes, this prints out the next coordinates that the player will land on.
         # print(self.player.next_coordinates)
 
@@ -203,6 +207,13 @@ class Game:
         # print(f'Next tile: {self.next_tile}')
 
         event.pump()
+
+    def get_character_identifier_by_coordinates(self, coordinates):
+        for character_identifier, character_info in self.current_map.characters.items():
+            if character_info['coordinates'] == coordinates:
+                return character_identifier
+            else:
+                return None
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
         if (self.hero_layout_row, self.hero_layout_column) == staircase_location:
