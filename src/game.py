@@ -61,10 +61,10 @@ class Game:
         # self.current_map can be changed to other maps for development purposes
 
         # self.current_map = maps.TantegelThroneRoom()
-        # self.current_map = maps.TantegelCourtyard()
+        self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
-        self.current_map = maps.Garinham()
+        # self.current_map = maps.Garinham()
 
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
@@ -128,7 +128,7 @@ class Game:
             self.get_events()
             self.draw_all(self.loop_count)
             self.update_screen()
-            # print(self.hero_layout_row, self.hero_layout_column)
+            print(self.hero_layout_row, self.hero_layout_column)
             # print(self.clock.get_fps())
             self.loop_count += 1
 
@@ -309,6 +309,7 @@ class Game:
         :param next_map: The next map to be loaded.
         :return: None
         """
+        # TODO(ELF): Reset location so that talk function works.
         self.pause_all_movement()
         self.current_map = next_map
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
@@ -459,7 +460,7 @@ class Game:
             self.next_tile_checked = True
 
         if not self.is_impassable(self.next_tile):
-            if not self.roaming_character_in_path_of_character():
+            if not self.character_in_path_of_player():
                 if delta_x:
                     self.player.rect.x += delta_x
                     next_cam_pos_x = curr_cam_pos_x + -delta_x
@@ -474,17 +475,14 @@ class Game:
         next_cam_pos_x, next_cam_pos_y = self.handle_sides_collision(next_cam_pos_x, next_cam_pos_y)
         self.camera.set_pos((next_cam_pos_x, next_cam_pos_y))
 
-    def roaming_character_in_path_of_character(self) -> bool:
+    def character_in_path_of_player(self) -> bool:
+        fixed_character_locations = [(fixed_character.column, fixed_character.row) for fixed_character in
+                                     self.current_map.fixed_characters]
         roaming_character_locations = [(roaming_character.column, roaming_character.row) for roaming_character in
                                        self.current_map.roaming_characters]
         return self.get_next_coordinates(self.hero_layout_column, self.hero_layout_row,
-                                         self.player.direction) in roaming_character_locations
-
-    def fixed_character_in_path_of_character(self) -> bool:
-        fixed_character_locations = [(fixed_character.column, fixed_character.row) for fixed_character in
-                                     self.current_map.fixed_characters]
-        return self.get_next_coordinates(self.hero_layout_column, self.hero_layout_row,
-                                         self.player.direction) in fixed_character_locations
+                                         self.player.direction) in fixed_character_locations or self.get_next_coordinates(self.hero_layout_column, self.hero_layout_row,
+                                                                                                                          self.player.direction) in roaming_character_locations
 
     def get_next_tile_identifier(self, character_column: int, character_row: int, direction, offset=1) -> str:
         """

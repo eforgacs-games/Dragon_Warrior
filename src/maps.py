@@ -62,6 +62,24 @@ def get_center_point(x, y):
     return (x * TILE_SIZE) + offset, (y * TILE_SIZE) + offset
 
 
+def warp_line(lower_bound, upper_bound):
+    # check if vertical
+    if lower_bound[0] != upper_bound[0]:
+        return vertical_warp_line(lower_bound, upper_bound)
+    elif lower_bound[1] != upper_bound[1]:
+        return horizontal_warp_line(lower_bound, upper_bound)
+    else:
+        print("Invalid warp line coordinates.")
+
+
+def horizontal_warp_line(left_point, right_point):
+    return [(right_point[0], min(n, right_point[1])) for n in range(left_point[0], left_point[1] + 1)]
+
+
+def vertical_warp_line(top_point, bottom_point):
+    return [(min(n, bottom_point[0]), bottom_point[1]) for n in range(top_point[0], bottom_point[0] + 1)]
+
+
 class DragonWarriorMap:
     def __init__(self, layout):
 
@@ -320,8 +338,8 @@ class Brecconary(DragonWarriorMap):
         super().__init__(MapLayouts.brecconary)
         # up_staircase = {'map': Alefgard(self.hero_images), 'stair_direction': 'up'}
         up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
-        west_gate = vertical_warp_line((21, 9), (24, 9))
-        north_gate = [(7, min(n, 26)) for n in range(23, 27)]
+        west_gate = warp_line((21, 9), (24, 9))
+        north_gate = warp_line((7, 23), (7, 26))
         east_gate = [(min(n, 25), 40) for n in range(21, 26)]
         staircases_keys = west_gate + north_gate + east_gate
         staircases_values = [up_staircase] * len(staircases_keys)
@@ -335,20 +353,15 @@ class Brecconary(DragonWarriorMap):
         return Direction.RIGHT.value
 
 
-def vertical_warp_line(top_point, bottom_point):
-    return [(min(n, bottom_point[0]), bottom_point[1]) for n in range(top_point[0], bottom_point[0] + 1)]
-
-
 class Garinham(DragonWarriorMap):
 
     def __init__(self):
         super().__init__(MapLayouts.garinham)
         # up_staircase = {'map': Alefgard(self.hero_images), 'stair_direction': 'up'}
         up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
-        west_gate = vertical_warp_line((13, 8), (15, 8))
-        north_gate = [(7, min(n, 26)) for n in range(23, 27)]
-        east_gate = [(min(n, 25), 40) for n in range(21, 26)]
-        staircases_keys = west_gate + north_gate + east_gate
+        west_gate = warp_line((13, 8), (15, 8))
+        east_gate = warp_line((11, 29), (14, 29))
+        staircases_keys = west_gate + east_gate
         staircases_values = [up_staircase] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
         self.music_file_path = village_music
