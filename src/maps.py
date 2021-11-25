@@ -200,22 +200,20 @@ class DragonWarriorMap:
         current_tile = self.layout[row][column]
         for character, character_dict in self.character_key.items():
             if current_tile == character_dict['val']:
-                self.map_character(character, character_dict, current_tile, player)
+                self.map_character(character, character_dict, current_tile, player, (row, column))
 
-    def map_character(self, character, character_dict, current_tile, player):
+    def map_character(self, character, character_dict, current_tile, player, coordinates):
         if current_tile == self.character_key['HERO']['val']:
             if not self.player:
                 player.__init__(self.center_pt, self.scale_spritesheet(UNARMED_HERO_PATH))
-            self.map_player(character_dict['underlying_tile'], player)
+            self.map_player(character_dict['underlying_tile'], player, coordinates)
         else:
-            self.map_npc(identifier=character, direction=character_dict.get('direction'),
-                         underlying_tile=character_dict['underlying_tile'],
-                         image_path=character_dict['path'], four_sided=character_dict['four_sided'], is_roaming=character_dict['roaming'])
+            self.map_npc(identifier=character, direction=character_dict.get('direction'), underlying_tile=character_dict['underlying_tile'], image_path=character_dict['path'], four_sided=character_dict['four_sided'], coordinates=coordinates, is_roaming=character_dict['roaming'])
 
     def scale_spritesheet(self, image_path):
         return parse_animated_sprite_sheet(scale(get_image(image_path), (get_image(image_path).get_width() * self.scale, get_image(image_path).get_height() * self.scale)))
 
-    def map_npc(self, identifier, direction, underlying_tile, image_path, four_sided, is_roaming=False) -> None:
+    def map_npc(self, identifier, direction, underlying_tile, image_path, four_sided, coordinates, is_roaming=False) -> None:
         sheet = get_image(image_path)
         character_sprites = LayeredDirty()
         sheet = scale(sheet, (sheet.get_width() * self.scale, sheet.get_height() * self.scale))
@@ -238,19 +236,19 @@ class DragonWarriorMap:
                     count += 1
         if count > 1:
             character.identifier = f'{identifier}_{count}'
-        self.characters[character.identifier] = {'character': character, 'character_sprites': character_sprites, 'tile_value': self.character_key[identifier]['val']}
+        self.characters[character.identifier] = {'character': character, 'character_sprites': character_sprites, 'tile_value': self.character_key[identifier]['val'], 'coordinates': coordinates}
         self.add_tile_by_value_and_group(underlying_tile)
 
     def add_tile_by_value_and_group(self, underlying_tile) -> None:
         self.add_tile(tile_value=self.tile_key[underlying_tile]['val'],
                       tile_group=self.tile_key[underlying_tile]['group'])
 
-    def map_player(self, underlying_tile, player) -> None:
+    def map_player(self, underlying_tile, player, coordinates) -> None:
         self.player = player
         self.player_sprites = LayeredDirty(self.player)
         self.player.direction = self.hero_initial_direction()
         self.add_tile_by_value_and_group(underlying_tile)
-        self.characters['HERO'] = {'character': self.player, 'character_sprites': self.player_sprites, 'tile_value': self.character_key['HERO']['val']}
+        self.characters['HERO'] = {'character': self.player, 'character_sprites': self.player_sprites, 'tile_value': self.character_key['HERO']['val'], 'coordinates': coordinates}
 
     # @timeit
     def map_floor_tiles(self, x, y) -> None:
@@ -407,16 +405,16 @@ def parse_map_tiles(map_path):
     return map_tiles
 
 
-def get_next_coordinates(character_column, character_row, direction):
+def get_next_coordinates(character_column, character_row, direction, offset=1):
     match direction:
         case Direction.UP.value:
-            return character_row - 1, character_column
+            return character_row - offset, character_column
         case Direction.DOWN.value:
-            return character_row + 1, character_column
+            return character_row + offset, character_column
         case Direction.LEFT.value:
-            return character_row, character_column - 1
+            return character_row, character_column - offset
         case Direction.RIGHT.value:
-            return character_row, character_column + 1
+            return character_row, character_column + offset
 
 
 def get_character_position(character):

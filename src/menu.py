@@ -84,20 +84,20 @@ class CommandMenu(Menu):
         # TODO: Get an actual dialog box to show!
 
         # for now, implementing using print statements. will be useful for debugging as well.
-        if self.player.next_tile in self.characters.keys():
-            self.launch_dialog()
-            # TODO(ELF): Make NPC face towards player.
-        elif self.player.next_tile == 'WOOD':
-            if self.player.next_next_tile in self.characters.keys():
-                self.launch_dialog()
-            else:
-                print_with_beep_sfx("'There is no one there.'")
-        else:
+        # if self.player.next_tile in self.characters.keys():
+        #     self.launch_dialog(self.player.next_tile)
+        # TODO(ELF): Make NPC face towards player.
+        if self.player.next_tile not in self.characters.keys() and self.player.next_next_tile not in self.characters.keys():
             print_with_beep_sfx("'There is no one there.'")
+            return
+        for character_identifier, character_info in self.characters.items():
+            if character_info['coordinates'] == self.player.next_coordinates or self.player.next_tile == 'WOOD' and character_info['coordinates'] == self.player.next_next_coordinates:
+                self.launch_dialog(character_identifier)
+                break
 
-    def launch_dialog(self):
+    def launch_dialog(self, dialog_character):
         self.dialog_box.launch_signaled = True
-        dlt = DialogLookupTable(self.player, self.map_name)
+        dlt = DialogLookupTable(self.player, self.map_name, dialog_character)
         character = dlt.dialog_lookup.get(self.player.next_tile)
         merchant = dlt.dialog_lookup.get(self.player.next_next_tile)
         if character:

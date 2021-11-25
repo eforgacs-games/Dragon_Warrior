@@ -4,7 +4,7 @@ from src.common import print_with_beep_sfx
 
 class KingLorikDialog(Dialog):
     def __init__(self, player, is_initial_dialog, throne_room_door_locked):
-        super().__init__(player)
+        super().__init__(player, None)
         self.is_initial_dialog = is_initial_dialog
         self.throne_room_door_locked = throne_room_door_locked
         if self.throne_room_door_locked:
