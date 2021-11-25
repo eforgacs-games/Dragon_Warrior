@@ -7,12 +7,14 @@ from src.sprites.animated_sprite import AnimatedSprite
 class Player(AnimatedSprite):
 
     def __init__(self, center_point, images, direction=Direction.DOWN.value):
-        AnimatedSprite.__init__(self, center_point, direction, images, identifier='HERO', dialog=None)
+        AnimatedSprite.__init__(self, center_point, direction, images, identifier='HERO')
 
         # map/collision-related attributes
         self.is_moving = False
         self.coordinates = None
         self.next_coordinates = None
+        self.next_tile = None
+        self.next_next_tile = None
 
         # character attributes
         self.name = 'Edward'

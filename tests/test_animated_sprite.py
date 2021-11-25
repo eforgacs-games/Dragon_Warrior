@@ -11,7 +11,7 @@ class TestAnimatedSprite(TestCase):
         mock = MagicMock()
         mock.get_size = MagicMock(return_value=(128, 0))
         self.mock_images = parse_animated_sprite_sheet(mock)
-        self.anim_sprite = AnimatedSprite(center_point=None, direction=None, images=self.mock_images, identifier='Mock', dialog=None)
+        self.anim_sprite = AnimatedSprite(center_point=None, direction=None, images=self.mock_images, identifier='Mock')
 
     def test_initialized_values(self):
         self.assertEqual(self.anim_sprite.identifier, 'Mock')

@@ -5,12 +5,12 @@ from pygame import surface
 from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
 
-from src.map_layouts import MapLayouts
 from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_PATH, get_image, \
     GUARD_PATH, MAN_PATH, tantegel_castle_courtyard_music, WOMAN_PATH, WISE_MAN_PATH, \
     SOLDIER_PATH, MERCHANT_PATH, PRINCESS_GWAELIN_PATH, DRAGONLORD_PATH, UNARMED_HERO_PATH, MAP_TILES_PATH, \
     overworld_music, village_music
 from src.config import TILE_SIZE, SCALE, COLOR_KEY
+from src.map_layouts import MapLayouts
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
 # Tile Key:
@@ -193,6 +193,7 @@ class DragonWarriorMap:
                     self.map_floor_tiles(x, y)
                 else:
                     self.map_character_tiles(y, x, player)
+        self.set_character_initial_directions()
 
     # @timeit
     def map_character_tiles(self, row, column, player) -> None:
@@ -202,7 +203,7 @@ class DragonWarriorMap:
                 self.map_character(character, character_dict, current_tile, player)
 
     def map_character(self, character, character_dict, current_tile, player):
-        if current_tile == 33:  # 'HERO' value
+        if current_tile == self.character_key['HERO']['val']:
             if not self.player:
                 player.__init__(self.center_pt, self.scale_spritesheet(UNARMED_HERO_PATH))
             self.map_player(character_dict['underlying_tile'], player)
@@ -221,13 +222,13 @@ class DragonWarriorMap:
         images = parse_animated_sprite_sheet(sheet)
         if four_sided:
             if is_roaming:
-                character = RoamingCharacter(self.center_pt, direction, images, identifier, None)
+                character = RoamingCharacter(self.center_pt, direction, images, identifier)
                 character.position = self.get_initial_character_location(character.identifier)
                 self.roaming_characters.append(character)
             else:
-                character = FixedCharacter(self.center_pt, direction, images, identifier, None)
+                character = FixedCharacter(self.center_pt, direction, images, identifier)
         else:
-            character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, identifier, None)
+            character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, identifier)
         character_sprites.add(character)
         # self.character_key[identifier]['val']
         count = 1
@@ -278,6 +279,9 @@ class DragonWarriorMap:
     def hero_initial_direction(self):
         raise NotImplementedError("Method not implemented")
 
+    def set_character_initial_directions(self):
+        raise NotImplementedError("Method not implemented")
+
 
 class TantegelThroneRoom(DragonWarriorMap):
     """
@@ -321,15 +325,17 @@ class TantegelCourtyard(DragonWarriorMap):
 
 class Alefgard(DragonWarriorMap):
     """
-    This is Alefgard, the world by which the player travels between cities. The map is a 124 x 124 tile grid.
+    This is Alefgard, the world by which the player travels between castles, villages, and dungeonswwwwwwwwwww.
     """
 
     def __init__(self):
         super().__init__(MapLayouts.alefgard)
         self.music_file_path = overworld_music
         self.staircases = {
-            (45, 52): {'map': 'Brecconary', 'stair_direction': 'up'},
-            (47, 47): {'map': 'TantegelCourtyard', 'stair_direction': 'up'}}
+            (46, 54): {'map': 'Brecconary', 'stair_direction': 'up'},
+            (48, 49): {'map': 'TantegelCourtyard', 'stair_direction': 'up'},
+            (7, 8): {'map': 'Garinham', 'stair_direction': 'up'}
+        }
 
     def hero_underlying_tile(self):
         return 'CASTLE'
@@ -346,7 +352,7 @@ class Brecconary(DragonWarriorMap):
         up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
         west_gate = warp_line((21, 9), (24, 9))
         north_gate = warp_line((7, 23), (7, 26))
-        east_gate = [(min(n, 25), 40) for n in range(21, 26)]
+        east_gate = warp_line((21, 40), (25, 40))
         staircases_keys = west_gate + north_gate + east_gate
         staircases_values = [up_staircase] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
@@ -377,6 +383,12 @@ class Garinham(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
+
+    def set_character_initial_directions(self):
+        self.characters['MERCHANT']['character'].direction = Direction.LEFT.value
+        self.characters['MERCHANT_2']['character'].direction = Direction.LEFT.value
+        self.characters['MERCHANT_3']['character'].direction = Direction.UP.value
+        self.characters['WISE_MAN']['character'].direction = Direction.RIGHT.value
 
 
 def parse_map_tiles(map_path):
@@ -415,5 +427,6 @@ map_lookup = {
     "TantegelThroneRoom": TantegelThroneRoom,
     "TantegelCourtyard": TantegelCourtyard,
     "Alefgard": Alefgard,
-    "Brecconary": Brecconary
+    "Brecconary": Brecconary,
+    "Garinham": Garinham
 }
