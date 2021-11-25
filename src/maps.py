@@ -168,9 +168,10 @@ class DragonWarriorMap:
         :param character_name: Name of the character to find
         :return:
         """
-        hero_layout_position = np.asarray(
+        # TODO(ELF): Only works if there is only one of these characters. Make work with multiple.
+        character_layout_position = np.asarray(
             np.where(self.layout_numpy_array == self.character_key[character_name]['val'])).T
-        return hero_layout_position
+        return character_layout_position
 
     def get_staircase_locations(self):
         """
@@ -228,9 +229,16 @@ class DragonWarriorMap:
         else:
             character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, identifier, None)
         character_sprites.add(character)
-        self.characters[character.identifier] = {'character': character}
+        # self.character_key[identifier]['val']
+        count = 1
+        if self.characters.values():
+            for character_dict in self.characters.values():
+                if character_dict['tile_value'] == self.character_key[identifier]['val']:
+                    count += 1
+        if count > 1:
+            character.identifier = f'{identifier}_{count}'
+        self.characters[character.identifier] = {'character': character, 'character_sprites': character_sprites, 'tile_value': self.character_key[identifier]['val']}
         self.add_tile_by_value_and_group(underlying_tile)
-        self.characters[character.identifier]['character_sprites'] = character_sprites
 
     def add_tile_by_value_and_group(self, underlying_tile) -> None:
         self.add_tile(tile_value=self.tile_key[underlying_tile]['val'],
@@ -241,8 +249,7 @@ class DragonWarriorMap:
         self.player_sprites = LayeredDirty(self.player)
         self.player.direction = self.hero_initial_direction()
         self.add_tile_by_value_and_group(underlying_tile)
-        self.characters['HERO'] = {'character': self.player}
-        self.characters['HERO']['character_sprites'] = self.player_sprites
+        self.characters['HERO'] = {'character': self.player, 'character_sprites': self.player_sprites, 'tile_value': self.character_key['HERO']['val']}
 
     # @timeit
     def map_floor_tiles(self, x, y) -> None:
