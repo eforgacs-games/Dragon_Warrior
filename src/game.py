@@ -63,9 +63,8 @@ class Game:
         # self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
-        # self.current_map = maps.Brecconary()
-        self.current_map = maps.Garinham()
-
+        self.current_map = maps.Brecconary()
+        # self.current_map = maps.Garinham()
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(self.BACK_FILL_COLOR)
@@ -205,6 +204,7 @@ class Game:
         # For debugging purposes, this prints out the current FPS.
         # print(self.clock.get_fps())
         # print(f'Next tile: {self.next_tile}')
+        # print(f'{self.get_character_identifier_by_coordinates(self.player.next_next_coordinates)}')
 
         event.pump()
 
