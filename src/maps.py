@@ -5,7 +5,7 @@ from pygame import surface
 from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
 
-from map_layouts import MapLayouts
+from src.map_layouts import MapLayouts
 from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_PATH, get_image, \
     GUARD_PATH, MAN_PATH, tantegel_castle_courtyard_music, WOMAN_PATH, WISE_MAN_PATH, \
     SOLDIER_PATH, MERCHANT_PATH, PRINCESS_GWAELIN_PATH, DRAGONLORD_PATH, UNARMED_HERO_PATH, MAP_TILES_PATH, \
@@ -88,10 +88,9 @@ class DragonWarriorMap:
         self.scale = SCALE
         self.player = None
         self.player_sprites = None
-        self.characters = []
+        self.characters = {}
         self.fixed_characters = []
         self.roaming_characters = []
-        self.character_sprites = []
 
         # Map variables
 
@@ -229,9 +228,9 @@ class DragonWarriorMap:
         else:
             character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, identifier, None)
         character_sprites.add(character)
-        self.characters.append(character)
+        self.characters[character.identifier] = {'character': character}
         self.add_tile_by_value_and_group(underlying_tile)
-        self.character_sprites.append(character_sprites)
+        self.characters[character.identifier]['character_sprites'] = character_sprites
 
     def add_tile_by_value_and_group(self, underlying_tile) -> None:
         self.add_tile(tile_value=self.tile_key[underlying_tile]['val'],
@@ -242,8 +241,8 @@ class DragonWarriorMap:
         self.player_sprites = LayeredDirty(self.player)
         self.player.direction = self.hero_initial_direction()
         self.add_tile_by_value_and_group(underlying_tile)
-        self.characters.append(self.player)
-        self.character_sprites.append(self.player_sprites)
+        self.characters['HERO'] = {'character': self.player}
+        self.characters['HERO']['character_sprites'] = self.player_sprites
 
     # @timeit
     def map_floor_tiles(self, x, y) -> None:
