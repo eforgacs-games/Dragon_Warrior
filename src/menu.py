@@ -36,12 +36,10 @@ class Menu:
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, column, row, current_tile, next_tile, next_next_tile, characters, dialog_box, player, map_name):
+    def __init__(self, background, column, row, current_tile, characters, dialog_box, player, map_name):
         super().__init__()
         self.dialog_box = dialog_box
         self.current_tile = current_tile
-        self.next_tile = next_tile
-        self.next_next_tile = next_next_tile
         self.characters = characters
         self.player = player
         self.launch_signaled = False
@@ -86,11 +84,11 @@ class CommandMenu(Menu):
         # TODO: Get an actual dialog box to show!
 
         # for now, implementing using print statements. will be useful for debugging as well.
-        if self.next_tile in [character.identifier for character in self.characters]:
+        if self.player.next_tile in self.characters.keys():
             self.launch_dialog()
             # TODO(ELF): Make NPC face towards player.
-        elif self.next_tile == 'WOOD':
-            if self.next_next_tile in [character.identifier for character in self.characters]:
+        elif self.player.next_tile == 'WOOD':
+            if self.player.next_next_tile in self.characters.keys():
                 self.launch_dialog()
             else:
                 print_with_beep_sfx("'There is no one there.'")
@@ -100,9 +98,12 @@ class CommandMenu(Menu):
     def launch_dialog(self):
         self.dialog_box.launch_signaled = True
         dlt = DialogLookupTable(self.player, self.map_name)
-        character = dlt.dialog_lookup.get(self.next_tile)
+        character = dlt.dialog_lookup.get(self.player.next_tile)
+        merchant = dlt.dialog_lookup.get(self.player.next_next_tile)
         if character:
             character.say_dialog()
+        elif merchant:
+            merchant.say_dialog()
         else:
             print("Character not in lookup table.")
 
@@ -186,7 +187,7 @@ class CommandMenu(Menu):
         :return: To be determined upon implementation
         """
         play_sound(menu_button_sfx)
-        if self.next_tile == 'DOOR':
+        if self.player.next_tile == 'DOOR':
             if 'key' in self.player.inventory:
                 # actually open the door
                 print("Door opened!")

@@ -60,11 +60,11 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom()
+        # self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
-        # self.current_map = maps.Garinham()
+        self.current_map = maps.Garinham()
 
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
@@ -81,15 +81,15 @@ class Game:
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.current_tile = get_tile_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
-        self.next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                       character_row=self.hero_layout_row,
-                                                       direction=self.current_map.player.direction)
-        self.next_next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                            character_row=self.hero_layout_row,
-                                                            direction=self.current_map.player.direction,
-                                                            offset=2)
+        self.player.next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
+                                                              character_row=self.hero_layout_row,
+                                                              direction=self.current_map.player.direction)
+        self.player.next_next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
+                                                                   character_row=self.hero_layout_row,
+                                                                   direction=self.current_map.player.direction,
+                                                                   offset=3)
         self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.next_tile, self.next_next_tile, self.current_map.characters, self.dlg_box, self.player, self.current_map.__class__.__name__)
+        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.current_map.characters, self.dlg_box, self.player, self.current_map.__class__.__name__)
 
         self.menus = self.cmd_menu, self.dlg_box
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
@@ -128,8 +128,6 @@ class Game:
             self.get_events()
             self.draw_all(self.loop_count)
             self.update_screen()
-            # print(self.hero_layout_row, self.hero_layout_column)
-            print(self.clock.get_fps())
             self.loop_count += 1
 
     def get_events(self) -> None:
@@ -189,7 +187,7 @@ class Game:
 
         self.player.coordinates = self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE
         # For debugging purposes, this prints out the current coordinates that the player is standing on.
-        # print(self.player.current_coordinates)
+        # print(self.player.coordinates)
 
         self.player.next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
                                                             self.player.rect.y // TILE_SIZE,
@@ -199,6 +197,11 @@ class Game:
 
         # For debugging purposes, this prints out the next tile that the player will land on.
         # print(get_tile_by_coordinates(self.player.next_coordinates[1], self.player.next_coordinates[0], self.current_map))
+
+        # For debugging purposes, this prints out the current FPS.
+        # print(self.clock.get_fps())
+        # print(f'Next tile: {self.next_tile}')
+
         event.pump()
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
@@ -364,7 +367,7 @@ class Game:
         :return: None
         """
         if menu_to_launch == 'command':
-            self.cmd_menu.next_tile = self.get_next_tile_identifier(self.hero_layout_column, self.hero_layout_row, self.player.direction)
+            self.player.next_tile = self.get_next_tile_identifier(self.hero_layout_column, self.hero_layout_row, self.player.direction)
             if not self.cmd_menu.launched:
                 play_sound(menu_button_sfx)
             self.set_and_append_rect(self.cmd_menu.menu, self.command_menu_subsurface)
@@ -453,12 +456,15 @@ class Game:
         curr_cam_pos_x, curr_cam_pos_y = self.camera.get_pos()
         next_cam_pos_x, next_cam_pos_y = curr_cam_pos_x, curr_cam_pos_y
         if not self.next_tile_checked:
-            self.next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                           character_row=self.hero_layout_row,
-                                                           direction=self.player.direction)
+            self.player.next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
+                                                                  character_row=self.hero_layout_row,
+                                                                  direction=self.player.direction)
+            self.player.next_next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
+                                                                       character_row=self.hero_layout_row,
+                                                                       direction=self.player.direction, offset=3)
             self.next_tile_checked = True
 
-        if not self.is_impassable(self.next_tile):
+        if not self.is_impassable(self.player.next_tile):
             if not self.character_in_path_of_player():
                 if delta_x:
                     self.player.rect.x += delta_x

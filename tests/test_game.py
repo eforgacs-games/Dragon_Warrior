@@ -41,7 +41,7 @@ class TestMockMap(DragonWarriorMap, ABC):
 
 
 def setup_roaming_character(row, column, direction):
-    test_roaming_character = RoamingCharacter(None, direction, None, 'ROAMING_GUARD', None)
+    test_roaming_character = RoamingCharacter(None, direction, None, 'ROAMING_GUARD')
     test_roaming_character.rect = MagicMock()
     test_roaming_character.row = row
     test_roaming_character.column = column
