@@ -17,6 +17,7 @@ from src.sprites.base_sprite import BaseSprite
 # Index values for the map tiles corresponding to location on tile sheet.
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
+from src.utilities import timeit
 
 offset = TILE_SIZE // 2
 all_impassable_tiles = (
@@ -229,15 +230,14 @@ class DragonWarriorMap:
             character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, identifier)
         character_sprites.add(character)
         # self.character_key[identifier]['val']
-        count = 1
-        if self.characters.values():
-            for character_dict in self.characters.values():
-                if character_dict['tile_value'] == self.character_key[identifier]['val']:
-                    count += 1
-        if count > 1:
-            character.identifier = f'{identifier}_{count}'
+        self.set_identifiers_for_duplicate_characters(character, identifier)
         self.characters[character.identifier] = {'character': character, 'character_sprites': character_sprites, 'tile_value': self.character_key[identifier]['val'], 'coordinates': coordinates}
         self.add_tile_by_value_and_group(underlying_tile)
+
+    def set_identifiers_for_duplicate_characters(self, character, identifier):
+        character_count = [character_dict['tile_value'] for character_dict in self.characters.values()].count(self.character_key[identifier]['val']) + 1
+        if character_count > 1:
+            character.identifier = f'{identifier}_{character_count}'
 
     def add_tile_by_value_and_group(self, underlying_tile) -> None:
         self.add_tile(tile_value=self.tile_key[underlying_tile]['val'],
@@ -250,12 +250,13 @@ class DragonWarriorMap:
         self.add_tile_by_value_and_group(underlying_tile)
         self.characters['HERO'] = {'character': self.player, 'character_sprites': self.player_sprites, 'tile_value': self.character_key['HERO']['val'], 'coordinates': coordinates}
 
-    # @timeit
+    @timeit
     def map_floor_tiles(self, x, y) -> None:
         for tile, tile_dict in self.floor_tile_key.items():
             if self.layout[y][x] < 33:
                 if self.layout[y][x] == tile_dict['val']:
                     self.add_tile(tile_value=tile_dict['val'], tile_group=tile_dict['group'])
+                    break
 
     def add_tile(self, tile_value, tile_group) -> None:
         if tile_value <= 10:
@@ -280,6 +281,9 @@ class DragonWarriorMap:
     def set_character_initial_directions(self):
         raise NotImplementedError("Method not implemented")
 
+    def set_character_initial_direction(self, character_identifier, direction):
+        self.characters[character_identifier]['character'].direction = direction.value
+
 
 class TantegelThroneRoom(DragonWarriorMap):
     """
@@ -296,6 +300,9 @@ class TantegelThroneRoom(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.UP.value
+
+    def set_character_initial_directions(self):
+        pass
 
 
 class TantegelCourtyard(DragonWarriorMap):
@@ -320,6 +327,9 @@ class TantegelCourtyard(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
+    def set_character_initial_directions(self):
+        self.set_character_initial_direction('WISE_MAN', Direction.LEFT)
+
 
 class Alefgard(DragonWarriorMap):
     """
@@ -340,6 +350,9 @@ class Alefgard(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.DOWN.value
+
+    def set_character_initial_directions(self):
+        pass
 
 
 class Brecconary(DragonWarriorMap):
@@ -362,6 +375,9 @@ class Brecconary(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
+    def set_character_initial_directions(self):
+        self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
+
 
 class Garinham(DragonWarriorMap):
 
@@ -383,10 +399,10 @@ class Garinham(DragonWarriorMap):
         return Direction.RIGHT.value
 
     def set_character_initial_directions(self):
-        self.characters['MERCHANT']['character'].direction = Direction.LEFT.value
-        self.characters['MERCHANT_2']['character'].direction = Direction.LEFT.value
-        self.characters['MERCHANT_3']['character'].direction = Direction.UP.value
-        self.characters['WISE_MAN']['character'].direction = Direction.RIGHT.value
+        self.set_character_initial_direction('MERCHANT', Direction.LEFT)
+        self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
+        self.set_character_initial_direction('MERCHANT_3', Direction.UP)
+        self.set_character_initial_direction('WISE_MAN', Direction.RIGHT)
 
 
 def parse_map_tiles(map_path):
