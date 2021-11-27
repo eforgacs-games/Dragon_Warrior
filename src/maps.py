@@ -17,7 +17,6 @@ from src.sprites.base_sprite import BaseSprite
 # Index values for the map tiles corresponding to location on tile sheet.
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
-from src.utilities import timeit
 
 offset = TILE_SIZE // 2
 all_impassable_tiles = (
@@ -74,7 +73,7 @@ def warp_line(lower_bound, upper_bound):
 
 
 def horizontal_warp_line(left_point, right_point):
-    return [(right_point[0], min(n, right_point[1])) for n in range(left_point[0], left_point[1] + 1)]
+    return [(right_point[0], min(n, right_point[1])) for n in range(left_point[1], right_point[1] + 1)]
 
 
 def vertical_warp_line(top_point, bottom_point):
@@ -194,7 +193,8 @@ class DragonWarriorMap:
                     self.map_floor_tiles(x, y)
                 else:
                     self.map_character_tiles(y, x, player)
-        self.set_character_initial_directions()
+        self.set_characters_initial_directions()
+        self.set_custom_underlying_tiles()
 
     # @timeit
     def map_character_tiles(self, row, column, player) -> None:
@@ -250,13 +250,12 @@ class DragonWarriorMap:
         self.add_tile_by_value_and_group(underlying_tile)
         self.characters['HERO'] = {'character': self.player, 'character_sprites': self.player_sprites, 'tile_value': self.character_key['HERO']['val'], 'coordinates': coordinates}
 
-    @timeit
+    # @timeit
     def map_floor_tiles(self, x, y) -> None:
-        for tile, tile_dict in self.floor_tile_key.items():
-            if self.layout[y][x] < 33:
-                if self.layout[y][x] == tile_dict['val']:
-                    self.add_tile(tile_value=tile_dict['val'], tile_group=tile_dict['group'])
-                    break
+        for tile_dict in self.floor_tile_key.values():
+            if self.layout[y][x] < 33 and self.layout[y][x] == tile_dict['val']:
+                self.add_tile(tile_value=tile_dict['val'], tile_group=tile_dict['group'])
+                break
 
     def add_tile(self, tile_value, tile_group) -> None:
         if tile_value <= 10:
@@ -278,11 +277,14 @@ class DragonWarriorMap:
     def hero_initial_direction(self):
         raise NotImplementedError("Method not implemented")
 
-    def set_character_initial_directions(self):
+    def set_characters_initial_directions(self):
         raise NotImplementedError("Method not implemented")
 
     def set_character_initial_direction(self, character_identifier, direction):
         self.characters[character_identifier]['character'].direction = direction.value
+
+    def set_custom_underlying_tiles(self):
+        raise NotImplementedError("Method not implemented")
 
 
 class TantegelThroneRoom(DragonWarriorMap):
@@ -301,7 +303,10 @@ class TantegelThroneRoom(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.UP.value
 
-    def set_character_initial_directions(self):
+    def set_characters_initial_directions(self):
+        pass
+
+    def set_custom_underlying_tiles(self):
         pass
 
 
@@ -312,10 +317,14 @@ class TantegelCourtyard(DragonWarriorMap):
 
     def __init__(self):
         super().__init__(MapLayouts.tantegel_courtyard)
-        up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
+        alefgard = {'map': 'Alefgard', 'stair_direction': 'up'}
+        # TODO(ELF): add (14, 14) and have it redirect to TantegelThroneRoom
+        #  TODO(ELF): replace staircases_keys with call to function warp_line, and get coordinates for warp_line (37, 9) - (37, 26)
         staircases_keys = [(37, min(n, 26)) for n in range(9, 27)]
-        staircases_values = [up_staircase] * len(staircases_keys)
+        # staircase_keys = warp_line((37, 9), (37, 26))
+        staircases_values = [alefgard] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'stair_direction': 'up'}
         self.music_file_path = tantegel_castle_courtyard_music
 
     def hero_underlying_tile(self):
@@ -327,13 +336,16 @@ class TantegelCourtyard(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
-    def set_character_initial_directions(self):
+    def set_characters_initial_directions(self):
         self.set_character_initial_direction('WISE_MAN', Direction.LEFT)
+
+    def set_custom_underlying_tiles(self):
+        pass
 
 
 class Alefgard(DragonWarriorMap):
     """
-    This is Alefgard, the world by which the player travels between castles, villages, and dungeonswwwwwwwwwww.
+    This is Alefgard, the world by which the player travels between castles, villages, and dungeons.
     """
 
     def __init__(self):
@@ -351,7 +363,10 @@ class Alefgard(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.DOWN.value
 
-    def set_character_initial_directions(self):
+    def set_characters_initial_directions(self):
+        pass
+
+    def set_custom_underlying_tiles(self):
         pass
 
 
@@ -375,8 +390,14 @@ class Brecconary(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
-    def set_character_initial_directions(self):
+    def set_characters_initial_directions(self):
         self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
+        self.set_character_initial_direction('WOMAN', Direction.LEFT)
+
+    def set_custom_underlying_tiles(self):
+        # TODO(ELF): Setting underlying tiles like this as is doesn't work.
+        pass
+        # self.characters['WOMAN']['character'].underlying_tile = 'BRICK'
 
 
 class Garinham(DragonWarriorMap):
@@ -398,7 +419,7 @@ class Garinham(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
-    def set_character_initial_directions(self):
+    def set_characters_initial_directions(self):
         self.set_character_initial_direction('MERCHANT', Direction.LEFT)
         self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
         self.set_character_initial_direction('MERCHANT_3', Direction.UP)
@@ -421,16 +442,16 @@ def parse_map_tiles(map_path):
     return map_tiles
 
 
-def get_next_coordinates(character_column, character_row, direction, offset=1):
+def get_next_coordinates(character_column, character_row, direction, offset_from_character=1):
     match direction:
         case Direction.UP.value:
-            return character_row - offset, character_column
+            return character_row - offset_from_character, character_column
         case Direction.DOWN.value:
-            return character_row + offset, character_column
+            return character_row + offset_from_character, character_column
         case Direction.LEFT.value:
-            return character_row, character_column - offset
+            return character_row, character_column - offset_from_character
         case Direction.RIGHT.value:
-            return character_row, character_column + offset
+            return character_row, character_column + offset_from_character
 
 
 def get_character_position(character):

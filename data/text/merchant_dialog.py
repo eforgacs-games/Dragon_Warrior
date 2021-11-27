@@ -11,7 +11,7 @@ class MerchantDialog(Dialog):
                 )
             case 'Brecconary':
                 self.dialog_text = (
-                    "'We deal in weapons and armor."
+                    "'We deal in weapons and armor. \n"
                     "Dost thou wish to buy anything today?'",
                 )
             case 'Garinham':
