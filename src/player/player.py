@@ -16,6 +16,7 @@ class Player(AnimatedSprite):
         self.next_next_coordinates = None
         self.next_tile = None
         self.next_next_tile = None
+        self.bumped = False
 
         # character attributes
         self.name = 'Edward'
