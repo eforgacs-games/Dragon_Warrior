@@ -181,29 +181,36 @@ class Game:
 
         self.current_tile = get_tile_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.cmd_menu.current_tile = self.current_tile
-        # For debugging purposes, this prints out the current tile that the player is standing on.
-        # print(self.current_tile)
 
         self.player.coordinates = self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE
-        # For debugging purposes, this prints out the current coordinates that the player is standing on.
-        # print(self.player.coordinates)
 
         self.player.next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
                                                             self.player.rect.y // TILE_SIZE,
                                                             self.player.direction)
         self.player.next_next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
                                                                  self.player.rect.y // TILE_SIZE,
-                                                                 self.player.direction, offset=2)
+                                                                 self.player.direction, offset_from_character=2)
 
-        # For debugging purposes, this prints out the next coordinates that the player will land on.
+        # Debugging area
+
+        # For debugging purposes, this prints out the current tile that the player is standing on.
+        # print(self.current_tile)
+
+        # For debugging purposes, this prints out the current coordinates that the player is standing on.
+        # print(self.player.coordinates)
+
+        # This prints out the next coordinates that the player will land on.
         # print(self.player.next_coordinates)
 
-        # For debugging purposes, this prints out the next tile that the player will land on.
+        # This prints out the next tile that the player will land on.
         # print(get_tile_by_coordinates(self.player.next_coordinates[1], self.player.next_coordinates[0], self.current_map))
 
-        # For debugging purposes, this prints out the current FPS.
+        # This prints out the current FPS.
         # print(self.clock.get_fps())
-        # print(f'Next tile: {self.next_tile}')
+
+        # This prints out the next tile, and the next next tile.
+        print(f'Next tile: {self.player.next_tile}')
+        print(f'Next next tile: {self.player.next_next_tile}')
         # print(f'{self.get_character_identifier_by_coordinates(self.player.next_next_coordinates)}')
 
         event.pump()
@@ -397,6 +404,7 @@ class Game:
         Move the player in a specified direction.
         :param current_key: The key currently being pressed by the user.
         """
+        # TODO(ELF): Allow for key taps, to just face in a particular direction
         # block establishes direction if needed and whether to start or stop moving
         # TODO(ELF): separate dependency of camera pos and player pos
         curr_pos_x, curr_pos_y = self.camera.get_pos()
@@ -466,6 +474,8 @@ class Game:
         """
         curr_cam_pos_x, curr_cam_pos_y = self.camera.get_pos()
         next_cam_pos_x, next_cam_pos_y = curr_cam_pos_x, curr_cam_pos_y
+        pre_bump_next_tile = self.player.next_tile
+        pre_bump_next_next_tile = self.player.next_next_tile
         if not self.next_tile_checked:
             self.player.next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
                                                                   character_row=self.hero_layout_row,
@@ -484,12 +494,24 @@ class Game:
                     self.player.rect.y += -delta_y
                     next_cam_pos_y = curr_cam_pos_y + delta_y
             else:
-                play_sound(bump_sfx)
+                self.bump_and_reset(pre_bump_next_tile, pre_bump_next_next_tile)
+
         else:
-            play_sound(bump_sfx)
+            self.bump_and_reset(pre_bump_next_tile, pre_bump_next_next_tile)
 
         next_cam_pos_x, next_cam_pos_y = self.handle_sides_collision(next_cam_pos_x, next_cam_pos_y)
         self.camera.set_pos((next_cam_pos_x, next_cam_pos_y))
+
+    def bump_and_reset(self, pre_bump_next_tile, pre_bump_next_next_tile):
+        if self.player.next_tile != pre_bump_next_tile:
+            self.player.next_tile = pre_bump_next_tile
+        if self.player.next_next_tile != pre_bump_next_next_tile:
+            self.player.next_next_tile = pre_bump_next_next_tile
+        self.bump()
+
+    def bump(self):
+        play_sound(bump_sfx)
+        self.player.bumped = True
 
     def character_in_path_of_player(self) -> bool:
         fixed_character_locations = [(fixed_character.column, fixed_character.row) for fixed_character in
@@ -551,19 +573,19 @@ class Game:
         max_x_bound, max_y_bound, min_bound = self.current_map.width - TILE_SIZE, self.current_map.height - TILE_SIZE, 0
         if self.player.rect.x < min_bound:
             self.player.rect.x = min_bound
-            play_sound(bump_sfx)
+            self.bump()
             next_pos_x += -self.speed
         elif self.player.rect.x > max_x_bound:
             self.player.rect.x = max_x_bound
-            play_sound(bump_sfx)
+            self.bump()
             next_pos_x += self.speed
         elif self.player.rect.y < min_bound:
             self.player.rect.y = min_bound
-            play_sound(bump_sfx)
+            self.bump()
             next_pos_y -= self.speed
         elif self.player.rect.y > max_y_bound:
             self.player.rect.y = max_y_bound
-            play_sound(bump_sfx)
+            self.bump()
             next_pos_y += self.speed
         return next_pos_x, next_pos_y
 
