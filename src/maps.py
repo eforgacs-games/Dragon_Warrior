@@ -81,7 +81,7 @@ def vertical_warp_line(top_point, bottom_point):
 
 
 class DragonWarriorMap:
-    def __init__(self, layout):
+    def __init__(self, layout, last_map=None):
 
         # Character variables
 
@@ -104,60 +104,60 @@ class DragonWarriorMap:
         self.staircases = {}
         self.height = len(self.layout) * TILE_SIZE
         self.width = len(self.layout[0]) * TILE_SIZE
+        self.last_map = last_map
 
-        self.floor_tile_key = dict([
-            ('ROOF', {'val': 0, 'group': Group()}),
-            ('WALL', {'val': 1, 'group': Group()}),
-            ('WOOD', {'val': 2, 'group': Group()}),
-            ('BRICK', {'val': 3, 'group': Group()}),
-            ('TREASURE_BOX', {'val': 4, 'group': Group()}),
-            ('DOOR', {'val': 5, 'group': Group()}),
-            ('BRICK_STAIR_DOWN', {'val': 6, 'group': Group()}),
-            ('BRICK_STAIR_UP', {'val': 7, 'group': Group()}),
-            ('BARRIER', {'val': 8, 'group': Group()}),
-            ('WEAPON_SIGN', {'val': 9, 'group': Group()}),
-            ('INN_SIGN', {'val': 10, 'group': Group()}),
-            ('CASTLE', {'val': 11, 'group': Group()}),
-            ('TOWN', {'val': 12, 'group': Group()}),
-            ('GRASS', {'val': 13, 'group': Group()}),
-            ('TREES', {'val': 14, 'group': Group()}),
-            ('HILLS', {'val': 15, 'group': Group()}),
-            ('MOUNTAINS', {'val': 16, 'group': Group()}),
-            ('CAVE', {'val': 17, 'group': Group()}),
-            ('GRASS_STAIR_DOWN', {'val': 18, 'group': Group()}),
-            ('SAND', {'val': 19, 'group': Group()}),
-            ('MARSH', {'val': 20, 'group': Group()}),
-            ('BRIDGE', {'val': 21, 'group': Group()}),
-            ('WATER', {'val': 22, 'group': Group()}),
-            ('BOTTOM_COAST', {'val': 23, 'group': Group()}),
-            ('BOTTOM_LEFT_COAST', {'val': 24, 'group': Group()}),
-            ('LEFT_COAST', {'val': 25, 'group': Group()}),
-            ('TOP_LEFT_COAST', {'val': 26, 'group': Group()}),
-            ('TOP_COAST', {'val': 27, 'group': Group()}),
-            ('TOP_RIGHT_COAST', {'val': 28, 'group': Group()}),
-            ('RIGHT_COAST', {'val': 29, 'group': Group()}),
-            ('BOTTOM_RIGHT_COAST', {'val': 30, 'group': Group()}),
-            ('BOTTOM_TOP_LEFT_COAST', {'val': 31, 'group': Group()}),
-            ('BOTTOM_TOP_RIGHT_COAST', {'val': 32, 'group': Group()}),
-        ])
-        self.character_key = dict([
-            ('HERO', {'val': 33, 'four_sided': True, 'path': UNARMED_HERO_PATH, 'roaming': False, 'underlying_tile': self.hero_underlying_tile()}),
-            ('KING_LORIK', {'val': 34, 'four_sided': False, 'path': KING_LORIK_PATH, 'roaming': False, 'underlying_tile': 'BRICK'}),
-            ('DOWN_FACE_GUARD', {'val': 35, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'}),
-            ('LEFT_FACE_GUARD', {'val': 36, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.LEFT.value, 'underlying_tile': 'BRICK'}),
-            ('UP_FACE_GUARD', {'val': 37, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.UP.value, 'underlying_tile': 'BRICK'}),
-            ('RIGHT_FACE_GUARD', {'val': 38, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.RIGHT.value, 'underlying_tile': 'BRICK'}),
-            ('ROAMING_GUARD', {'val': 39, 'four_sided': True, 'path': GUARD_PATH, 'roaming': True, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'}),
-            ('MAN', {'val': 40, 'four_sided': True, 'path': MAN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'}),
-            ('WOMAN', {'val': 41, 'four_sided': True, 'path': WOMAN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'GRASS'}),
-            ('WISE_MAN', {'val': 42, 'four_sided': True, 'path': WISE_MAN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'}),
-            ('SOLDIER', {'val': 43, 'four_sided': True, 'path': SOLDIER_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'}),
-            ('MERCHANT', {'val': 44, 'four_sided': True, 'path': MERCHANT_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'}),
-            ('PRINCESS_GWAELIN', {'val': 45, 'four_sided': False, 'path': PRINCESS_GWAELIN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'}),
-            ('DRAGONLORD', {'val': 46, 'four_sided': True, 'path': DRAGONLORD_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'}),
-        ])
+        self.floor_tile_key = {
+            'ROOF': {'val': 0, 'group': Group()},
+            'WALL': {'val': 1, 'group': Group()},
+            'WOOD': {'val': 2, 'group': Group()},
+            'BRICK': {'val': 3, 'group': Group()},
+            'TREASURE_BOX': {'val': 4, 'group': Group()},
+            'DOOR': {'val': 5, 'group': Group()},
+            'BRICK_STAIR_DOWN': {'val': 6, 'group': Group()},
+            'BRICK_STAIR_UP': {'val': 7, 'group': Group()},
+            'BARRIER': {'val': 8, 'group': Group()},
+            'WEAPON_SIGN': {'val': 9, 'group': Group()},
+            'INN_SIGN': {'val': 10, 'group': Group()},
+            'CASTLE': {'val': 11, 'group': Group()},
+            'TOWN': {'val': 12, 'group': Group()},
+            'GRASS': {'val': 13, 'group': Group()},
+            'TREES': {'val': 14, 'group': Group()},
+            'HILLS': {'val': 15, 'group': Group()},
+            'MOUNTAINS': {'val': 16, 'group': Group()},
+            'CAVE': {'val': 17, 'group': Group()},
+            'GRASS_STAIR_DOWN': {'val': 18, 'group': Group()},
+            'SAND': {'val': 19, 'group': Group()},
+            'MARSH': {'val': 20, 'group': Group()},
+            'BRIDGE': {'val': 21, 'group': Group()},
+            'WATER': {'val': 22, 'group': Group()},
+            'BOTTOM_COAST': {'val': 23, 'group': Group()},
+            'BOTTOM_LEFT_COAST': {'val': 24, 'group': Group()},
+            'LEFT_COAST': {'val': 25, 'group': Group()},
+            'TOP_LEFT_COAST': {'val': 26, 'group': Group()},
+            'TOP_COAST': {'val': 27, 'group': Group()},
+            'TOP_RIGHT_COAST': {'val': 28, 'group': Group()},
+            'RIGHT_COAST': {'val': 29, 'group': Group()},
+            'BOTTOM_RIGHT_COAST': {'val': 30, 'group': Group()},
+            'BOTTOM_TOP_LEFT_COAST': {'val': 31, 'group': Group()},
+            'BOTTOM_TOP_RIGHT_COAST': {'val': 32, 'group': Group()}
+        }
+        self.character_key = {
+            'HERO': {'val': 33, 'four_sided': True, 'path': UNARMED_HERO_PATH, 'roaming': False, 'underlying_tile': self.hero_underlying_tile()},
+            'KING_LORIK': {'val': 34, 'four_sided': False, 'path': KING_LORIK_PATH, 'roaming': False, 'underlying_tile': 'BRICK'},
+            'DOWN_FACE_GUARD': {'val': 35, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
+            'LEFT_FACE_GUARD': {'val': 36, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.LEFT.value, 'underlying_tile': 'BRICK'},
+            'UP_FACE_GUARD': {'val': 37, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.UP.value, 'underlying_tile': 'BRICK'},
+            'RIGHT_FACE_GUARD': {'val': 38, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.RIGHT.value, 'underlying_tile': 'BRICK'},
+            'ROAMING_GUARD': {'val': 39, 'four_sided': True, 'path': GUARD_PATH, 'roaming': True, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
+            'MAN': {'val': 40, 'four_sided': True, 'path': MAN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
+            'WOMAN': {'val': 41, 'four_sided': True, 'path': WOMAN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'GRASS'},
+            'WISE_MAN': {'val': 42, 'four_sided': True, 'path': WISE_MAN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
+            'SOLDIER': {'val': 43, 'four_sided': True, 'path': SOLDIER_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
+            'MERCHANT': {'val': 44, 'four_sided': True, 'path': MERCHANT_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
+            'PRINCESS_GWAELIN': {'val': 45, 'four_sided': False, 'path': PRINCESS_GWAELIN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
+            'DRAGONLORD': {'val': 46, 'four_sided': True, 'path': DRAGONLORD_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'}
+        }
         self.tile_key = dict(list(self.floor_tile_key.items()) + list(self.character_key.items()))
-        self.floor_sprite_groups = [val.get('group') for val in self.floor_tile_key.values() if self.get_tile_by_value(val['val']) == self.hero_underlying_tile() or any(val['val'] in row for row in self.layout)]
 
     def get_tile_by_value(self, position: int) -> str:
         return list(self.tile_key.keys())[position]
@@ -179,8 +179,13 @@ class DragonWarriorMap:
         :return:
         """
         # also needs BRICK_STAIR_UP and GRASS_STAIR_DOWN
-        staircase_locations = np.asarray(np.where(self.layout_numpy_array == self.tile_key['BRICK_STAIR_DOWN']['val'])).T
-        return staircase_locations
+        brick_stair_down_staircase_locations = self.find_tile_in_layout_by_value('BRICK_STAIR_DOWN')
+        brick_stair_up_staircase_locations = self.find_tile_in_layout_by_value('BRICK_STAIR_UP')
+        grass_stair_down_staircase_locations = self.find_tile_in_layout_by_value('GRASS_STAIR_DOWN')
+        return brick_stair_down_staircase_locations + brick_stair_up_staircase_locations + grass_stair_down_staircase_locations
+
+    def find_tile_in_layout_by_value(self, tile):
+        return np.asarray(np.where(self.layout_numpy_array == self.tile_key[tile]['val'])).T
 
     # @timeit
     def load_map(self, player) -> None:
@@ -232,32 +237,33 @@ class DragonWarriorMap:
         # self.character_key[identifier]['val']
         self.set_identifiers_for_duplicate_characters(character, identifier)
         self.characters[character.identifier] = {'character': character, 'character_sprites': character_sprites, 'tile_value': self.character_key[identifier]['val'], 'coordinates': coordinates}
-        self.add_tile_by_value_and_group(underlying_tile)
+        self.add_tile_by_value_and_group(self.tile_key[underlying_tile])
 
     def set_identifiers_for_duplicate_characters(self, character, identifier):
         character_count = [character_dict['tile_value'] for character_dict in self.characters.values()].count(self.character_key[identifier]['val']) + 1
         if character_count > 1:
             character.identifier = f'{identifier}_{character_count}'
 
-    def add_tile_by_value_and_group(self, underlying_tile) -> None:
-        self.add_tile(tile_value=self.tile_key[underlying_tile]['val'],
-                      tile_group=self.tile_key[underlying_tile]['group'])
+    def add_tile_by_value_and_group(self, tile_dict) -> None:
+        self.add_tile(tile_dict)
 
     def map_player(self, underlying_tile, player, coordinates) -> None:
         self.player = player
         self.player_sprites = LayeredDirty(self.player)
         self.player.direction = self.hero_initial_direction()
-        self.add_tile_by_value_and_group(underlying_tile)
+        self.add_tile_by_value_and_group(self.tile_key[underlying_tile])
         self.characters['HERO'] = {'character': self.player, 'character_sprites': self.player_sprites, 'tile_value': self.character_key['HERO']['val'], 'coordinates': coordinates}
 
     # @timeit
     def map_floor_tiles(self, x, y) -> None:
         for tile_dict in self.floor_tile_key.values():
             if self.layout[y][x] < 33 and self.layout[y][x] == tile_dict['val']:
-                self.add_tile(tile_value=tile_dict['val'], tile_group=tile_dict['group'])
+                self.add_tile(tile_dict)
                 break
 
-    def add_tile(self, tile_value, tile_group) -> None:
+    def add_tile(self, tile_dict) -> None:
+        tile_value = tile_dict.get('val')
+        tile_group = tile_dict.get('group')
         if tile_value <= 10:
             tile = BaseSprite(self.center_pt, self.map_tiles[tile_value][0])
         elif 10 < tile_value <= 21:
@@ -424,6 +430,9 @@ class Garinham(DragonWarriorMap):
         self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
         self.set_character_initial_direction('MERCHANT_3', Direction.UP)
         self.set_character_initial_direction('WISE_MAN', Direction.RIGHT)
+
+    def set_custom_underlying_tiles(self):
+        pass
 
 
 def parse_map_tiles(map_path):
