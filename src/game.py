@@ -49,12 +49,11 @@ class Game:
         self.scale = SCALE
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
-        self.win_width = NES_RES[0] * self.scale
-        self.win_height = NES_RES[1] * self.scale
+        self.win_width, self.win_height = NES_RES[0] * self.scale, NES_RES[1] * self.scale
         # self.win_width = current_screen_width
         # self.win_height = current_screen_height
         self.screen = set_mode((self.win_width, self.win_height), flags)
-        self.screen.set_alpha(None)
+        # self.screen.set_alpha(None)
         set_caption(self.GAME_TITLE)
         self.next_tile_checked = False
 
@@ -62,8 +61,8 @@ class Game:
 
         # self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.TantegelCourtyard()
-        # self.current_map = maps.Alefgard()
-        self.current_map = maps.Brecconary()
+        self.current_map = maps.Alefgard()
+        # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
@@ -125,7 +124,7 @@ class Game:
         while True:
             self.clock.tick(FPS)
             self.get_events()
-            self.draw_all(self.loop_count)
+            self.draw_all()
             self.update_screen()
             self.loop_count += 1
 
@@ -193,10 +192,10 @@ class Game:
 
         # Debugging area
 
-        # For debugging purposes, this prints out the current tile that the player is standing on.
+        # This prints out the current tile that the player is standing on.
         # print(self.current_tile)
 
-        # For debugging purposes, this prints out the current coordinates that the player is standing on.
+        # This prints out the current coordinates that the player is standing on.
         # print(self.player.coordinates)
 
         # This prints out the next coordinates that the player will land on.
@@ -206,11 +205,12 @@ class Game:
         # print(get_tile_by_coordinates(self.player.next_coordinates[1], self.player.next_coordinates[0], self.current_map))
 
         # This prints out the current FPS.
-        # print(self.clock.get_fps())
+        print(self.clock.get_fps())
 
         # This prints out the next tile, and the next next tile.
-        print(f'Next tile: {self.player.next_tile}')
-        print(f'Next next tile: {self.player.next_next_tile}')
+        # print(f'Next tile: {self.player.next_tile}')
+        # print(f'Next next tile: {self.player.next_next_tile}')
+        # print(f'{self.get_character_identifier_by_coordinates(self.player.next_coordinates)}')
         # print(f'{self.get_character_identifier_by_coordinates(self.player.next_next_coordinates)}')
 
         event.pump()
@@ -231,20 +231,24 @@ class Game:
                     play_sound(stairs_up_sfx)
             self.change_map(map_lookup[staircase_dict['map']]())
 
-    def draw_all(self, loop_count) -> None:
+    def draw_all(self) -> None:
         """
         Draw map, sprites, background, menu and other surfaces.
         :return: None
         """
         self.screen.fill(self.BACK_FILL_COLOR)
-        if loop_count == 1:
+        if self.loop_count == 1:
             self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height)
-            self.current_map.floor_sprite_groups = [val.get('group') for val in self.current_map.floor_tile_key.values() if self.current_map.get_tile_by_value(val['val']) == self.current_map.hero_underlying_tile() or any(val['val'] in row for row in self.current_map.layout)]
         # TODO: this for loop is what is slowing down the overworld map. make it so that this only executes while moving, or else just draws the squares where there are characters
-        for group in self.current_map.floor_sprite_groups:
+        for tile, tile_dict in self.current_map.floor_tile_key.items():
+            group = tile_dict.get('group')
             if group:
+                # screen_coordinates = self.screen.get_rect()
+                # for sprites in group.sprites():
+                #     if sprites:
+                # also check if group is in current window, default screen size is 15 tall x 16 wide
                 group.draw(self.big_map)
-        for character_identifier, character_dict in self.current_map.characters.items():
+        for character_dict in self.current_map.characters.values():
             self.foreground_rects.append(character_dict['character_sprites'].draw(self.background)[0])
             if self.enable_animate:
                 character_dict['character'].animate()

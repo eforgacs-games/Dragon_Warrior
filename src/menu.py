@@ -154,8 +154,8 @@ class CommandMenu(Menu):
             print(f"There is a {self.current_tile.lower().replace('_', ' ')}.")
         # elif there is a hidden item:
         # print(f"There is a {hidden_item}")
-        # else:
-        #     print(f"But there found nothing.")
+        else:
+            print(f"But there found nothing.")
 
     def spell(self):
         """
