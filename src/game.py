@@ -60,8 +60,8 @@ class Game:
         # self.current_map can be changed to other maps for development purposes
 
         # self.current_map = maps.TantegelThroneRoom()
-        # self.current_map = maps.TantegelCourtyard()
-        self.current_map = maps.Alefgard()
+        self.current_map = maps.TantegelCourtyard()
+        # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
@@ -239,15 +239,17 @@ class Game:
         self.screen.fill(self.BACK_FILL_COLOR)
         if self.loop_count == 1:
             self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height)
-        # TODO: this for loop is what is slowing down the overworld map. make it so that this only executes while moving, or else just draws the squares where there are characters
+        # TODO: this for loop is what is slowing down the overworld map.
+        #  make it so that this only executes while moving, or else just draws the squares where there are characters
         for tile, tile_dict in self.current_map.floor_tile_key.items():
-            group = tile_dict.get('group')
-            if group:
+            # group = tile_dict.get('group')
+            # if group:
+            #     group.draw(self.big_map)
+            if tile in self.current_map.tiles_in_current_map:
+                tile_dict['group'].draw(self.big_map)
                 # screen_coordinates = self.screen.get_rect()
                 # for sprites in group.sprites():
-                #     if sprites:
                 # also check if group is in current window, default screen size is 15 tall x 16 wide
-                group.draw(self.big_map)
         for character_dict in self.current_map.characters.values():
             self.foreground_rects.append(character_dict['character_sprites'].draw(self.background)[0])
             if self.enable_animate:

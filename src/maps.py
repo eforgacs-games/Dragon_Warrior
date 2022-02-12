@@ -85,6 +85,7 @@ class DragonWarriorMap:
 
         # Character variables
 
+        self.tiles_in_current_map = []
         self.scale = SCALE
         self.player = None
         self.player_sprites = None
@@ -107,39 +108,39 @@ class DragonWarriorMap:
         self.last_map = last_map
 
         self.floor_tile_key = {
-            'ROOF': {'val': 0, 'group': Group()},
-            'WALL': {'val': 1, 'group': Group()},
-            'WOOD': {'val': 2, 'group': Group()},
-            'BRICK': {'val': 3, 'group': Group()},
-            'TREASURE_BOX': {'val': 4, 'group': Group()},
-            'DOOR': {'val': 5, 'group': Group()},
-            'BRICK_STAIR_DOWN': {'val': 6, 'group': Group()},
-            'BRICK_STAIR_UP': {'val': 7, 'group': Group()},
-            'BARRIER': {'val': 8, 'group': Group()},
-            'WEAPON_SIGN': {'val': 9, 'group': Group()},
-            'INN_SIGN': {'val': 10, 'group': Group()},
-            'CASTLE': {'val': 11, 'group': Group()},
-            'TOWN': {'val': 12, 'group': Group()},
-            'GRASS': {'val': 13, 'group': Group()},
-            'TREES': {'val': 14, 'group': Group()},
-            'HILLS': {'val': 15, 'group': Group()},
-            'MOUNTAINS': {'val': 16, 'group': Group()},
-            'CAVE': {'val': 17, 'group': Group()},
-            'GRASS_STAIR_DOWN': {'val': 18, 'group': Group()},
-            'SAND': {'val': 19, 'group': Group()},
-            'MARSH': {'val': 20, 'group': Group()},
-            'BRIDGE': {'val': 21, 'group': Group()},
-            'WATER': {'val': 22, 'group': Group()},
-            'BOTTOM_COAST': {'val': 23, 'group': Group()},
-            'BOTTOM_LEFT_COAST': {'val': 24, 'group': Group()},
-            'LEFT_COAST': {'val': 25, 'group': Group()},
-            'TOP_LEFT_COAST': {'val': 26, 'group': Group()},
-            'TOP_COAST': {'val': 27, 'group': Group()},
-            'TOP_RIGHT_COAST': {'val': 28, 'group': Group()},
-            'RIGHT_COAST': {'val': 29, 'group': Group()},
-            'BOTTOM_RIGHT_COAST': {'val': 30, 'group': Group()},
-            'BOTTOM_TOP_LEFT_COAST': {'val': 31, 'group': Group()},
-            'BOTTOM_TOP_RIGHT_COAST': {'val': 32, 'group': Group()}
+            'ROOF': {'val': 0},
+            'WALL': {'val': 1},
+            'WOOD': {'val': 2},
+            'BRICK': {'val': 3},
+            'TREASURE_BOX': {'val': 4},
+            'DOOR': {'val': 5},
+            'BRICK_STAIR_DOWN': {'val': 6},
+            'BRICK_STAIR_UP': {'val': 7},
+            'BARRIER': {'val': 8},
+            'WEAPON_SIGN': {'val': 9},
+            'INN_SIGN': {'val': 10},
+            'CASTLE': {'val': 11},
+            'TOWN': {'val': 12},
+            'GRASS': {'val': 13},
+            'TREES': {'val': 14},
+            'HILLS': {'val': 15},
+            'MOUNTAINS': {'val': 16},
+            'CAVE': {'val': 17},
+            'GRASS_STAIR_DOWN': {'val': 18},
+            'SAND': {'val': 19},
+            'MARSH': {'val': 20},
+            'BRIDGE': {'val': 21},
+            'WATER': {'val': 22},
+            'BOTTOM_COAST': {'val': 23},
+            'BOTTOM_LEFT_COAST': {'val': 24},
+            'LEFT_COAST': {'val': 25},
+            'TOP_LEFT_COAST': {'val': 26},
+            'TOP_COAST': {'val': 27},
+            'TOP_RIGHT_COAST': {'val': 28},
+            'RIGHT_COAST': {'val': 29},
+            'BOTTOM_RIGHT_COAST': {'val': 30},
+            'BOTTOM_TOP_LEFT_COAST': {'val': 31},
+            'BOTTOM_TOP_RIGHT_COAST': {'val': 32}
         }
         self.character_key = {
             'HERO': {'val': 33, 'four_sided': True, 'path': UNARMED_HERO_PATH, 'roaming': False, 'underlying_tile': self.hero_underlying_tile()},
@@ -160,6 +161,7 @@ class DragonWarriorMap:
         self.tile_key = dict(list(self.floor_tile_key.items()) + list(self.character_key.items()))
 
     def get_tile_by_value(self, position: int) -> str:
+        """Returns the tile name from the integer value associated with it."""
         return list(self.tile_key.keys())[position]
 
     def get_initial_character_location(self, character_name: str) -> np.ndarray:
@@ -189,8 +191,8 @@ class DragonWarriorMap:
 
     # @timeit
     def load_map(self, player) -> None:
-        tiles_in_current_loaded_map = set([self.get_tile_by_value(tile) for row in self.layout for tile in row])
-        self.impassable_tiles = tuple(tiles_in_current_loaded_map & set(all_impassable_tiles))
+        self.tiles_in_current_map = self.get_tiles_in_current_map()
+        self.impassable_tiles = tuple(self.tiles_in_current_map & set(all_impassable_tiles))
         for y in range(len(self.layout)):
             for x in range(len(self.layout[y])):
                 self.center_pt = get_center_point(x, y)
@@ -200,6 +202,12 @@ class DragonWarriorMap:
                     self.map_character_tiles(y, x, player)
         self.set_characters_initial_directions()
         self.set_custom_underlying_tiles()
+
+    def get_tiles_in_current_map(self):
+        tiles_in_current_map = set([self.get_tile_by_value(tile) for row in self.layout for tile in row])
+        tiles_in_current_map.add(self.tile_key['HERO']['underlying_tile'])
+        # TODO(ELF): Add underlying tile of player to draw list
+        return tiles_in_current_map
 
     # @timeit
     def map_character_tiles(self, row, column, player) -> None:
@@ -237,21 +245,18 @@ class DragonWarriorMap:
         # self.character_key[identifier]['val']
         self.set_identifiers_for_duplicate_characters(character, identifier)
         self.characters[character.identifier] = {'character': character, 'character_sprites': character_sprites, 'tile_value': self.character_key[identifier]['val'], 'coordinates': coordinates}
-        self.add_tile_by_value_and_group(self.tile_key[underlying_tile])
+        self.add_tile(self.floor_tile_key[underlying_tile])
 
     def set_identifiers_for_duplicate_characters(self, character, identifier):
         character_count = [character_dict['tile_value'] for character_dict in self.characters.values()].count(self.character_key[identifier]['val']) + 1
         if character_count > 1:
             character.identifier = f'{identifier}_{character_count}'
 
-    def add_tile_by_value_and_group(self, tile_dict) -> None:
-        self.add_tile(tile_dict)
-
     def map_player(self, underlying_tile, player, coordinates) -> None:
         self.player = player
         self.player_sprites = LayeredDirty(self.player)
         self.player.direction = self.hero_initial_direction()
-        self.add_tile_by_value_and_group(self.tile_key[underlying_tile])
+        self.add_tile(self.floor_tile_key[underlying_tile])
         self.characters['HERO'] = {'character': self.player, 'character_sprites': self.player_sprites, 'tile_value': self.character_key['HERO']['val'], 'coordinates': coordinates}
 
     # @timeit
@@ -264,6 +269,8 @@ class DragonWarriorMap:
     def add_tile(self, tile_dict) -> None:
         tile_value = tile_dict.get('val')
         tile_group = tile_dict.get('group')
+        if tile_group is None:
+            self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'] = Group()
         if tile_value <= 10:
             tile = BaseSprite(self.center_pt, self.map_tiles[tile_value][0])
         elif 10 < tile_value <= 21:
@@ -273,7 +280,8 @@ class DragonWarriorMap:
         else:
             print("Invalid tile.")
             tile = None
-        tile_group.add(tile)
+            return
+        self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'].add(tile)
 
     @property
     def hero_underlying_tile(self):
