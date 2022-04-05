@@ -279,7 +279,6 @@ class DragonWarriorMap:
             tile = BaseSprite(self.center_pt, self.map_tiles[tile_value - 22][2])
         else:
             print("Invalid tile.")
-            tile = None
             return
         self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'].add(tile)
 
