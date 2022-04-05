@@ -1,8 +1,8 @@
-from os.path import join
+from os.path import join, realpath, dirname
 
 FPS = 60
 REPLIT_DATA_DIR = '..\\data'
-DATA_DIR = '..\\data'
+DATA_DIR = join(dirname(dirname(realpath(__file__))), 'data')
 FONTS_DIR = join(DATA_DIR, 'fonts')
 IMAGES_DIR = join(DATA_DIR, 'images')
 SOUND_DIR = join(DATA_DIR, 'sound')
