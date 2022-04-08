@@ -273,9 +273,9 @@ class DragonWarriorMap:
             self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'] = Group()
         if tile_value <= 10:
             tile = BaseSprite(self.center_pt, self.map_tiles[tile_value][0])
-        elif 10 < tile_value <= 21:
+        elif tile_value <= 21:
             tile = BaseSprite(self.center_pt, self.map_tiles[tile_value - 11][1])
-        elif 21 < tile_value < 33:
+        elif tile_value < 33:
             tile = BaseSprite(self.center_pt, self.map_tiles[tile_value - 22][2])
         else:
             print("Invalid tile.")
