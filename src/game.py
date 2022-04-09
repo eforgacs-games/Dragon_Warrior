@@ -65,7 +65,7 @@ class Game:
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
-        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
+        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
         self.big_map.fill(self.BACK_FILL_COLOR)
         self.speed = 2
         for roaming_character in self.current_map.roaming_characters:
@@ -87,7 +87,8 @@ class Game:
                                                                    direction=self.current_map.player.direction,
                                                                    offset=3)
         self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.current_map.characters, self.dlg_box, self.player, self.current_map.__class__.__name__)
+        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.current_map.characters,
+                                         self.dlg_box, self.player, self.current_map.__class__.__name__)
 
         self.menus = self.cmd_menu, self.dlg_box
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
@@ -314,7 +315,7 @@ class Game:
         @type fade_out: bool
         If true, fades out. If false, fades in.
         """
-        fade = Surface((width, height))
+        fade = Surface((width, height))  # lgtm [py/call/wrong-arguments]
         fade.fill(BLACK)
         self.opacity = 0
         for alpha in range(300):
@@ -338,7 +339,7 @@ class Game:
         # TODO(ELF): Reset location so that talk function works.
         self.pause_all_movement()
         self.current_map = next_map
-        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
+        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
         self.fade(self.win_width, self.win_height, fade_out=True)
         if MUSIC_ENABLED:
             mixer.music.stop()
@@ -525,7 +526,8 @@ class Game:
         roaming_character_locations = [(roaming_character.column, roaming_character.row) for roaming_character in
                                        self.current_map.roaming_characters]
         return self.get_next_coordinates(self.hero_layout_column, self.hero_layout_row,
-                                         self.player.direction) in fixed_character_locations or self.get_next_coordinates(self.hero_layout_column, self.hero_layout_row,
+                                         self.player.direction) in fixed_character_locations or self.get_next_coordinates(self.hero_layout_column,
+                                                                                                                          self.hero_layout_row,
                                                                                                                           self.player.direction) in roaming_character_locations
 
     def get_next_tile_identifier(self, character_column: int, character_row: int, direction, offset=1) -> str:
