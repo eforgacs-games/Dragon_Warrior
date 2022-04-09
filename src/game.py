@@ -65,7 +65,7 @@ class Game:
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
-        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
+        self.big_map = Surface(size=(self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(self.BACK_FILL_COLOR)
         self.speed = 2
         for roaming_character in self.current_map.roaming_characters:
@@ -314,7 +314,7 @@ class Game:
         @type fade_out: bool
         If true, fades out. If false, fades in.
         """
-        fade = Surface((width, height))
+        fade = Surface(size=(width, height))
         fade.fill(BLACK)
         self.opacity = 0
         for alpha in range(300):
@@ -338,7 +338,7 @@ class Game:
         # TODO(ELF): Reset location so that talk function works.
         self.pause_all_movement()
         self.current_map = next_map
-        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()
+        self.big_map = Surface(size=(self.current_map.width, self.current_map.height)).convert()
         self.fade(self.win_width, self.win_height, fade_out=True)
         if MUSIC_ENABLED:
             mixer.music.stop()
