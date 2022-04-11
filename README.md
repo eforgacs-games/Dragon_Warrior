@@ -4,6 +4,8 @@
 
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/eforgacs-games/Dragon_Warrior.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/eforgacs-games/Dragon_Warrior/context:python)
 
+![Python application](https://github.com/eforgacs-games/Dragon_Warrior/actions/workflows/python-app.yml/badge.svg)
+
 # ABOUT
 
 
