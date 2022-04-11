@@ -1,3 +1,4 @@
+import os
 from abc import ABC
 from unittest import TestCase
 from unittest.mock import MagicMock
@@ -13,6 +14,8 @@ from src.game import Game
 from src.maps import DragonWarriorMap, parse_animated_sprite_sheet
 from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
+
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
 def create_key_mock(pressed_key):
