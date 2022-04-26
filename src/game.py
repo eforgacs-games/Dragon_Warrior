@@ -13,7 +13,7 @@ from src import maps
 from src.camera import Camera
 from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally
 from src.common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import NES_RES
+from src.config import NES_RES, SHOW_FPS
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.maps import get_character_position, get_next_coordinates, map_lookup
 from src.player.player import Player
@@ -59,8 +59,8 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        # self.current_map = maps.TantegelThroneRoom()
-        self.current_map = maps.TantegelCourtyard()
+        self.current_map = maps.TantegelThroneRoom()
+        # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
@@ -206,7 +206,8 @@ class Game:
         # print(get_tile_by_coordinates(self.player.next_coordinates[1], self.player.next_coordinates[0], self.current_map))
 
         # This prints out the current FPS.
-        print(self.clock.get_fps())
+        if SHOW_FPS:
+            print(self.clock.get_fps())
 
         # This prints out the next tile, and the next next tile.
         # print(f'Next tile: {self.player.next_tile}')
@@ -565,7 +566,7 @@ class Game:
         """
         Check if a tile is impassable (a tile that blocks the player from moving).
         :param tile: Tile to be checked for impassibility.
-        :return: bool: A boolean value stating whether or not the tile is impassable.
+        :return: bool: A boolean value stating whether the tile is impassable.
         """
         return tile in self.current_map.impassable_tiles
 
