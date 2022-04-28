@@ -9,15 +9,13 @@ from pygame.transform import scale
 
 from src.camera import Camera
 from src.common import UNARMED_HERO_PATH, get_tile_by_coordinates, Direction
-from src.config import SCALE, TILE_SIZE, MUSIC_ENABLED, SOUND_ENABLED
+from src.config import SCALE, TILE_SIZE
 from src.game import Game
 from src.maps import DragonWarriorMap, parse_animated_sprite_sheet
 from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
-MUSIC_ENABLED = False
-SOUND_ENABLED = False
 
 
 def create_key_mock(pressed_key):
@@ -57,6 +55,7 @@ class TestGame(TestCase):
 
     def setUp(self) -> None:
         self.game = Game()
+        self.game.music_enabled = False
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
         self.game.current_map = TestMockMap()
