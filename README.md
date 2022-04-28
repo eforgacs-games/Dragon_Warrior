@@ -33,6 +33,13 @@ J: Close Command Menu
 
 I: Pause
 
+## Demo video
+
+
+
+https://user-images.githubusercontent.com/23140027/165859033-1abe8a84-af2e-48c1-9d74-38cd700d98b5.mp4
+
+
 
 ## Run on Repl.it
 
