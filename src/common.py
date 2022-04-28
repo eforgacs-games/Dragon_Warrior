@@ -1,12 +1,13 @@
 # Constants
 import ntpath
 import os
+import time
 from enum import IntEnum
 from os.path import join, sep, exists
 
 import pygame
 
-from src.config import SFX_DIR, SOUND_ENABLED, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR
+from src.config import SFX_DIR, SOUND_ENABLED, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED
 
 
 class Direction(IntEnum):
@@ -162,7 +163,20 @@ def get_tile_by_coordinates(column: int, row: int, game_map) -> str:
 
 
 def print_with_beep_sfx(string_to_print):
-    for _ in string_to_print:
+    match TEXT_SPEED:
+        case "Slow":
+            sleep_time = 0.03
+        case "Medium":
+            sleep_time = 0.02
+        case "Fast":
+            sleep_time = 0.01
+        case _:
+            sleep_time = 0
+    for char in string_to_print:
+        # prints in chunks, not one fluid print
         play_sound(text_beep_sfx)
-        pygame.time.wait(1)
-    print(string_to_print)
+        print(char, end='', flush=True)
+        time.sleep(sleep_time)
+        # pygame.time.wait(1)
+    print("\n")
+
