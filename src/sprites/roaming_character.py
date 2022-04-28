@@ -9,6 +9,9 @@ class RoamingCharacter(AnimatedSprite):
         self.column = None
         self.row = None
         self.moving = False
+        self.previous_previous_tile = None
+        self.previous_tile = None
+        self.current_tile = None
         self.next_tile = None
         self.next_tile_checked = None
 
