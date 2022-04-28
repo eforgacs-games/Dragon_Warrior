@@ -14,8 +14,9 @@ class Camera:
         :type hero_position: tuple
         :param hero_position: Position of the hero, in (column, row) format.
         """
-        self.x = (-hero_position[0] + 8) * TILE_SIZE
-        self.y = (-hero_position[1] + 7) * TILE_SIZE
+        column, row = hero_position
+        self.x = (-column + 8) * TILE_SIZE
+        self.y = (-row + 7) * TILE_SIZE
 
     def get_pos(self) -> tuple:
         """
