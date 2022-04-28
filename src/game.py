@@ -72,13 +72,12 @@ class Game:
             roaming_character.last_roaming_clock_check = get_ticks()
             get_character_position(roaming_character)
         # Make the big scrollable map
-        self.background = self.big_map.subsurface(0, 0, self.current_map.width,
-                                                  self.current_map.height).convert()
+        self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
         self.player = Player(center_point=None, images=None)
         self.current_map.load_map(self.player)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
-        self.current_tile = get_tile_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
+        self.player.current_tile = get_tile_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.player.next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
                                                               character_row=self.hero_layout_row,
                                                               direction=self.current_map.player.direction)
@@ -87,7 +86,8 @@ class Game:
                                                                    direction=self.current_map.player.direction,
                                                                    offset=3)
         self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.current_tile, self.current_map.characters,
+        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.player.current_tile,
+                                         self.current_map.characters,
                                          self.dlg_box, self.player, self.current_map.__class__.__name__)
 
         self.menus = self.cmd_menu, self.dlg_box
@@ -156,6 +156,7 @@ class Game:
             # B button
             self.unlaunch_menu(self.cmd_menu)
             self.unlaunch_menu(self.dlg_box)
+            self.draw_all_tiles_in_current_map()
             # print("J key pressed (B button).")
         if current_key[K_k]:
             # A button
@@ -179,8 +180,8 @@ class Game:
         # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
         #     self.scale = self.scale + 1
 
-        self.current_tile = get_tile_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
-        self.cmd_menu.current_tile = self.current_tile
+        self.player.current_tile = get_tile_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
+        self.cmd_menu.current_tile = self.player.current_tile
 
         self.player.coordinates = self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE
 
@@ -194,7 +195,7 @@ class Game:
         # Debugging area
 
         # This prints out the current tile that the player is standing on.
-        # print(self.current_tile)
+        # print(self.player.current_tile)
 
         # This prints out the current coordinates that the player is standing on.
         # print(self.player.coordinates)
@@ -239,19 +240,49 @@ class Game:
         :return: None
         """
         self.screen.fill(self.BACK_FILL_COLOR)
+        # if isinstance(self.current_map, maps.Alefgard):
+        #     # width_offset = 2336
+        #     width_offset = TILE_SIZE * self.hero_layout_column + 24
+        #     height_offset = TILE_SIZE * self.hero_layout_row + 25
+        # else:
+        width_offset = 0
+        height_offset = 0
         if self.loop_count == 1:
-            self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height)
+            self.background = self.big_map.subsurface(0, 0, self.current_map.width - width_offset, self.current_map.height - height_offset)
         # TODO: this for loop is what is slowing down the overworld map.
         #  make it so that this only executes while moving, or else just draws the squares where there are characters
-        for tile, tile_dict in self.current_map.floor_tile_key.items():
-            # group = tile_dict.get('group')
-            # if group:
-            #     group.draw(self.big_map)
-            if tile in self.current_map.tiles_in_current_map:
-                tile_dict['group'].draw(self.big_map)
-                # screen_coordinates = self.screen.get_rect()
-                # for sprites in group.sprites():
+        # print(self.background.get_rect())
+
+        # performance optimization to only draw the tile type that the hero is standing on, and surrounding tiles
+        # won't work where there are moving NPCs, so only use this in the overworld
+        if not self.current_map.roaming_characters:
+            # basically, if you're in the overworld, since there are no roaming characters there
+            player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(self.get_surrounding_tiles(self.player.coordinates, radius=1))
+            if self.player.is_moving:
+                tile_types_to_draw = list(
+                    dict.fromkeys(self.replace_characters_with_underlying_tiles(set(filter(None, [self.player.current_tile] + player_surrounding_tiles)))))
+            else:
+                tile_types_to_draw = self.replace_characters_with_underlying_tiles([self.player.current_tile])
+            if self.loop_count == 1:
+                # draw everything once on the first go-around
+                self.draw_all_tiles_in_current_map()
+            tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
+            for tile, tile_dict in self.current_map.floor_tile_key.items():
+                if tile in tile_types_to_draw:
+                    tile_dict['group'].draw(self.background)
                 # also check if group is in current window, default screen size is 15 tall x 16 wide
+        else:
+            # just draw everything, because you're not in the overworld, and you get 60 FPS pretty consistently even with no GPU
+            # could try to optimize this later by only drawing the tiles where there's movement,
+            # but the juice might not be worth the squeeze
+            if self.loop_count == 1:
+                self.draw_all_tiles_in_current_map()
+            for tile, tile_dict in self.current_map.floor_tile_key.items():
+                if tile in list(filter(lambda x: not self.is_impassable(x), self.current_map.tile_types_in_current_map)):
+                    tile_dict['group'].draw(self.background)
+
+        # to make this work in all maps: draw tile under hero, AND tiles under NPCs
+        # in addition to the trajectory of the NPCs
         for character_dict in self.current_map.characters.values():
             self.foreground_rects.append(character_dict['character_sprites'].draw(self.background)[0])
             if self.enable_animate:
@@ -261,6 +292,47 @@ class Game:
         for menu_or_dialog_box in self.menus:
             self.handle_menu_launch(menu_or_dialog_box)
         self.screen.blit(self.background, self.camera.get_pos())
+
+    def draw_all_tiles_in_current_map(self):
+        for tile, tile_dict in self.current_map.floor_tile_key.items():
+            if tile in self.current_map.tile_types_in_current_map:
+                tile_dict['group'].draw(self.background)
+
+    def generate_upcoming_numeric_tiles(self):
+        if self.hero_layout_row and self.hero_layout_column:
+            hero_upcoming_numeric_tiles = self.get_character_upcoming_numeric_tiles(self.hero_layout_row, self.hero_layout_column)
+        else:
+            hero_upcoming_numeric_tiles = []
+        character_upcoming_tile_list = []
+        for character in self.current_map.roaming_characters:
+            if character.row and character.column:
+                character_upcoming_tile_list.append(self.get_character_upcoming_numeric_tiles(character.row, character.column))
+            # print(f"{character}: {character.row}, {character.column}")
+        character_upcoming_numeric_tiles = [item for sublist in character_upcoming_tile_list for item in sublist]
+        all_upcoming_tiles = hero_upcoming_numeric_tiles + character_upcoming_numeric_tiles
+        return all_upcoming_tiles, character_upcoming_numeric_tiles, character_upcoming_tile_list
+
+    def replace_characters_with_underlying_tiles(self, tile_types_to_draw):
+        for character in self.current_map.character_key.keys():
+            if character in tile_types_to_draw:
+                tile_types_to_draw = list(
+                    map(lambda x: x.replace(character, self.current_map.character_key[character]['underlying_tile']), tile_types_to_draw))
+        return tile_types_to_draw
+
+    def convert_numeric_tile_list_to_unique_tile_values(self, numeric_tile_list):
+        converted_tiles = []
+        for tile_value in dict.fromkeys(numeric_tile_list):
+            converted_tiles.append(self.current_map.get_tile_by_value(tile_value))
+        return converted_tiles
+
+    def get_character_upcoming_numeric_tiles(self, character_row, character_column):
+        """Gets upcoming tiles in current row and column, two offset from current position."""
+        upcoming_tiles_in_current_row_and_column = []
+        for tile in self.current_map.layout[character_row][character_column - 4:character_column + 4]:
+            upcoming_tiles_in_current_row_and_column.append(tile)
+        for i in range(character_row - 4, character_row + 4):
+            upcoming_tiles_in_current_row_and_column.append(self.current_map.layout[i][character_column])
+        return upcoming_tiles_in_current_row_and_column
 
     def handle_menu_launch(self, menu_to_launch):
         if menu_to_launch.launch_signaled:
@@ -341,7 +413,7 @@ class Game:
         self.pause_all_movement()
         self.current_map = next_map
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
-        self.fade(self.win_width, self.win_height, fade_out=True)
+        self.fade(self.current_map.width, self.current_map.height, fade_out=True)
         if MUSIC_ENABLED:
             mixer.music.stop()
         self.current_map.load_map(self.player)
@@ -349,7 +421,7 @@ class Game:
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
-        self.fade(self.win_width, self.win_height, fade_out=False)
+        # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
         self.loop_count = 1
         self.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
@@ -492,7 +564,6 @@ class Game:
                                                                        character_row=self.hero_layout_row,
                                                                        direction=self.player.direction, offset=3)
             self.next_tile_checked = True
-
         if not self.is_impassable(self.player.next_tile):
             if not self.character_in_path_of_player():
                 if delta_x:
@@ -640,9 +711,21 @@ class Game:
         """
         next_coordinates = get_next_coordinates(roaming_character.column, roaming_character.row, roaming_character.direction)
         if not roaming_character.next_tile_checked:
+            roaming_character.next_next_tile = self.get_next_tile_identifier(character_column=roaming_character.column,
+                                                                             character_row=roaming_character.row,
+                                                                             direction=roaming_character.direction,
+                                                                             offset=2)
             roaming_character.next_tile = self.get_next_tile_identifier(character_column=roaming_character.column,
                                                                         character_row=roaming_character.row,
                                                                         direction=roaming_character.direction)
+            roaming_character.previous_tile = self.get_next_tile_identifier(character_column=roaming_character.column,
+                                                                            character_row=roaming_character.row,
+                                                                            direction=roaming_character.direction,
+                                                                            offset=-1)
+            roaming_character.previous_previous_tile = self.get_next_tile_identifier(character_column=roaming_character.column,
+                                                                                     character_row=roaming_character.row,
+                                                                                     direction=roaming_character.direction,
+                                                                                     offset=-2)
 
             roaming_character.next_tile_checked = True
         if not self.is_impassable(roaming_character.next_tile) and (
@@ -664,6 +747,36 @@ class Game:
                 self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
                 roaming_character.rect.y += -delta_y
                 roaming_character.row += -delta_y // 2
+
+    def get_surrounding_tiles(self, coordinates, radius=1):
+        x = coordinates[0]
+        y = coordinates[1]
+        neighbors = [
+            self.current_map.layout[x - 1][y - 1],
+            self.current_map.layout[x - 1][y],
+            self.current_map.layout[x - 1][y + 1],
+
+            self.current_map.layout[x][y - 1],
+            self.current_map.layout[x][y + 1],
+
+            self.current_map.layout[x + 1][y - 1],
+            self.current_map.layout[x + 1][y],
+            self.current_map.layout[x + 1][y + 1]
+        ]
+        if radius > 1:
+            for i in range(2, radius):
+                neighbors.append(self.current_map.layout[x - i][y - i])
+                neighbors.append(self.current_map.layout[x - i][y])
+                neighbors.append(self.current_map.layout[x - i][y + i])
+
+                neighbors.append(self.current_map.layout[x][y - i])
+                neighbors.append(self.current_map.layout[x][y + i])
+
+                neighbors.append(self.current_map.layout[x + i][y - i])
+                neighbors.append(self.current_map.layout[x + i][y])
+                neighbors.append(self.current_map.layout[x + i][y + i])
+
+        return neighbors
 
 
 def run():

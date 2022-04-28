@@ -138,7 +138,7 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # this might be something we could turn off as one of the "modernization" updates, but the implementation would be as follows:
-        if self.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIRUP', 'GRASS_STAIRDN'):
+        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIRUP', 'GRASS_STAIRDN'):
             print("'There are stairs here.'")
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
@@ -153,8 +153,8 @@ class CommandMenu(Menu):
         # open a window
         print(f"{self.player.name} searched the ground all about.")
         # wait for input...
-        if self.current_tile == 'TREASURE_BOX':
-            print(f"There is a {self.current_tile.lower().replace('_', ' ')}.")
+        if self.player.current_tile == 'TREASURE_BOX':
+            print(f"There is a {self.player.current_tile.lower().replace('_', ' ')}.")
         # elif there is a hidden item:
         # print(f"There is a {hidden_item}")
         else:
@@ -206,7 +206,7 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # open a window
-        if self.current_tile == 'TREASURE_BOX':
+        if self.player.current_tile == 'TREASURE_BOX':
             print("Took what was in the treasure box.")
         #     take it and update inventory accordingly
         # elif there is a hidden item
