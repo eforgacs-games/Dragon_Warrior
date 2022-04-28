@@ -55,7 +55,6 @@ class TestGame(TestCase):
 
     def setUp(self) -> None:
         self.game = Game()
-        self.game.music_enabled = False
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
         self.game.current_map = TestMockMap()
