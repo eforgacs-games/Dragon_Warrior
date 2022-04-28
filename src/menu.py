@@ -91,19 +91,22 @@ class CommandMenu(Menu):
             print_with_beep_sfx("'There is no one there.'")
             return
         for character_identifier, character_info in self.characters.items():
-            if character_info['coordinates'] == self.player.next_coordinates or self.player.next_tile == 'WOOD' and character_info['coordinates'] == self.player.next_next_coordinates:
+            if character_info['coordinates'] == self.player.next_coordinates or self.npc_is_across_counter(character_info):
                 self.launch_dialog(character_identifier)
                 break
+
+    def npc_is_across_counter(self, character_info):
+        return self.player.next_tile == 'WOOD' and character_info['coordinates'] == self.player.next_next_coordinates
 
     def launch_dialog(self, dialog_character):
         self.dialog_box.launch_signaled = True
         dlt = DialogLookupTable(self.player, self.map_name, dialog_character)
         character = dlt.dialog_lookup.get(self.player.next_tile)
-        merchant = dlt.dialog_lookup.get(self.player.next_next_tile)
+        speaking_npc = dlt.dialog_lookup.get(self.player.next_next_tile)
         if character:
             character.say_dialog()
-        elif merchant:
-            merchant.say_dialog()
+        elif speaking_npc:
+            speaking_npc.say_dialog()
         else:
             print("Character not in lookup table.")
 
@@ -135,7 +138,7 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # this might be something we could turn off as one of the "modernization" updates, but the implementation would be as follows:
-        if self.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIRUP', 'GRASS_STAIRDN'):
+        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIRUP', 'GRASS_STAIRDN'):
             print("'There are stairs here.'")
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
@@ -150,8 +153,8 @@ class CommandMenu(Menu):
         # open a window
         print(f"{self.player.name} searched the ground all about.")
         # wait for input...
-        if self.current_tile == 'TREASURE_BOX':
-            print(f"There is a {self.current_tile.lower().replace('_', ' ')}.")
+        if self.player.current_tile == 'TREASURE_BOX':
+            print(f"There is a {self.player.current_tile.lower().replace('_', ' ')}.")
         # elif there is a hidden item:
         # print(f"There is a {hidden_item}")
         else:
@@ -203,7 +206,7 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # open a window
-        if self.current_tile == 'TREASURE_BOX':
+        if self.player.current_tile == 'TREASURE_BOX':
             print("Took what was in the treasure box.")
         #     take it and update inventory accordingly
         # elif there is a hidden item
