@@ -94,7 +94,8 @@ class Game:
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
-        if MUSIC_ENABLED:
+        self.music_enabled = MUSIC_ENABLED
+        if self.music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
         self.events = get()
@@ -414,7 +415,7 @@ class Game:
         self.current_map = next_map
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
         self.fade(self.current_map.width, self.current_map.height, fade_out=True)
-        if MUSIC_ENABLED:
+        if self.music_enabled:
             mixer.music.stop()
         self.current_map.load_map(self.player)
 
@@ -426,7 +427,7 @@ class Game:
         self.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
         self.cmd_menu.map_name = self.current_map.__class__.__name__
-        if MUSIC_ENABLED:
+        if self.music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
 
