@@ -85,7 +85,7 @@ class DragonWarriorMap:
 
         # Character variables
 
-        self.tiles_in_current_map = []
+        self.tile_types_in_current_map = []
         self.scale = SCALE
         self.player = None
         self.player_sprites = None
@@ -191,8 +191,8 @@ class DragonWarriorMap:
 
     # @timeit
     def load_map(self, player) -> None:
-        self.tiles_in_current_map = self.get_tiles_in_current_map()
-        self.impassable_tiles = tuple(self.tiles_in_current_map & set(all_impassable_tiles))
+        self.tile_types_in_current_map = self.get_tiles_in_current_map()
+        self.impassable_tiles = tuple(self.tile_types_in_current_map & set(all_impassable_tiles))
         for y in range(len(self.layout)):
             for x in range(len(self.layout[y])):
                 self.center_pt = get_center_point(x, y)
