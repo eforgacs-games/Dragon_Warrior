@@ -86,9 +86,8 @@ class Game:
                                                                    direction=self.current_map.player.direction,
                                                                    offset=3)
         self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.player.current_tile,
-                                         self.current_map.characters,
-                                         self.dlg_box, self.player, self.current_map.__class__.__name__)
+        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.player.current_tile, self.current_map,
+                                         self.dlg_box, self.player)
 
         self.menus = self.cmd_menu, self.dlg_box
         self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
@@ -410,7 +409,6 @@ class Game:
         :param next_map: The next map to be loaded.
         :return: None
         """
-        # TODO(ELF): Reset location so that talk function works.
         self.pause_all_movement()
         self.current_map = next_map
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
@@ -426,7 +424,9 @@ class Game:
         self.loop_count = 1
         self.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
+        self.menus = self.cmd_menu, self.dlg_box
         self.cmd_menu.map_name = self.current_map.__class__.__name__
+        self.cmd_menu.characters = self.current_map.characters
         if self.music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
