@@ -1,7 +1,7 @@
 import pygame_menu
 
 from data.text.dialog_lookup_table import DialogLookupTable
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, play_sound, menu_button_sfx
+from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, play_sound, menu_button_sfx, get_opposite_direction
 from src.common import print_with_beep_sfx
 from src.config import SCALE, TILE_SIZE
 
@@ -36,15 +36,16 @@ class Menu:
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, column, row, current_tile, characters, dialog_box, player, map_name):
+    def __init__(self, background, column, row, current_tile, current_map, dialog_box, player):
         super().__init__()
         self.dialog_box = dialog_box
         self.current_tile = current_tile
-        self.characters = characters
+        self.characters = current_map.characters
         self.player = player
         self.launch_signaled = False
         self.launched = False
-        self.map_name = map_name
+        self.map_name = current_map.__class__.__name__
+        self.background = background
         command_menu_subsurface = background.subsurface((column - 2) * TILE_SIZE,
                                                         (row - 6) * TILE_SIZE,
                                                         8 * TILE_SIZE,
@@ -84,14 +85,15 @@ class CommandMenu(Menu):
         # TODO: Get an actual dialog box to show!
 
         # for now, implementing using print statements. will be useful for debugging as well.
-        # if self.player.next_tile in self.characters.keys():
-        #     self.launch_dialog(self.player.next_tile)
-        # TODO(ELF): Make NPC face towards player.
         if self.player.next_tile not in self.characters.keys() and self.player.next_next_tile not in self.characters.keys():
             print_with_beep_sfx("'There is no one there.'")
             return
         for character_identifier, character_info in self.characters.items():
             if character_info['coordinates'] == self.player.next_coordinates or self.npc_is_across_counter(character_info):
+                if character_info['character'].direction != get_opposite_direction(self.player.direction):
+                    character_info['character'].direction = get_opposite_direction(self.player.direction)
+                    character_info['character'].animate()
+                    character_info['character'].pause()
                 self.launch_dialog(character_identifier)
                 break
 
@@ -102,11 +104,11 @@ class CommandMenu(Menu):
         self.dialog_box.launch_signaled = True
         dlt = DialogLookupTable(self.player, self.map_name, dialog_character)
         character = dlt.dialog_lookup.get(self.player.next_tile)
-        speaking_npc = dlt.dialog_lookup.get(self.player.next_next_tile)
+        character_across_counter = dlt.dialog_lookup.get(self.player.next_next_tile)
         if character:
             character.say_dialog()
-        elif speaking_npc:
-            speaking_npc.say_dialog()
+        elif character_across_counter:
+            character_across_counter.say_dialog()
         else:
             print("Character not in lookup table.")
 
