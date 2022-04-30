@@ -17,6 +17,13 @@ class Direction(IntEnum):
     RIGHT = 3
 
 
+def get_opposite_direction(direction: int) -> int:
+    if direction >= 2:
+        return direction - 2
+    else:
+        return direction + 2
+
+
 # Files/Directories
 root_project_path = os.getcwd().split('DragonWarrior', 1)[0]
 
@@ -179,4 +186,3 @@ def print_with_beep_sfx(string_to_print):
         time.sleep(sleep_time)
         # pygame.time.wait(1)
     print("\n")
-
