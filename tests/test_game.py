@@ -17,6 +17,7 @@ from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 def create_key_mock(pressed_key):
@@ -55,7 +56,6 @@ def setup_roaming_character(row, column, direction):
 class TestGame(TestCase):
 
     def setUp(self) -> None:
-        mixer.init()
         self.game = Game()
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
