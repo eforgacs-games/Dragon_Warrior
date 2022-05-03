@@ -37,7 +37,7 @@ def convert_to_frames_since_start_time(start_time):
 
 
 def convert_to_milliseconds(FPS):
-    return (FPS / 60) * 1000
+    return int((FPS / 60) * 1000)
 
 
 class Game:
@@ -204,15 +204,20 @@ class Game:
         # TODO: Might be good to add these control keys to an F1 help screen.
         display.flip()
         intro_banner_with_text_enabled = True
-        last_sparkle_long = None
-        last_long_sparkle_clock_check = None
-        # start_time = get_ticks()
         intro_banner_with_text_enabled_start_time = get_ticks()
+
+        last_long_sparkle_clock_check = None
+        last_first_short_sparkle_clock_check = None
+        last_second_short_sparkle_clock_check = None
+
         first_long_sparkle_done = False
+        first_short_sparkle_done = False
+        second_short_sparkle_done = False
         while intro_banner_with_text_enabled:
             frames_since_program_launch = convert_to_frames_since_start_time(start_time=self.start_time)
             frames_since_banner_launch = convert_to_frames_since_start_time(intro_banner_with_text_enabled_start_time)
             if int(frames_since_banner_launch) >= 32:
+                # first long sparkle
                 if not first_long_sparkle_done:
                     first_long_sparkle_done = True
                     last_long_sparkle_clock_check = get_ticks()
@@ -223,38 +228,30 @@ class Game:
                         print(f'{frames_since_program_launch} long sparkle')
                         last_long_sparkle_clock_check = get_ticks()
                         self.banner_sparkle(short=False)
-
-
-
-                    # if frames_since_long_sparkle_time >= 256:
-                    #     frames_since_long_sparkle_time = 0
-                    #     self.banner_sparkle(short=False)
-
-            # elif int(frames_since_program_launch) == 160:
-            #     self.banner_sparkle(short=True)
-            # elif int(frames_since_program_launch) == 192:
-            #     self.banner_sparkle(short=True)
-            # if frames_since_program_launch >= 654:
-            #     print(frames_since_banner_launch)
-            # print(f'Seconds: {seconds}\n'
-            #       f'Frames: {frames_since_banner_launch}')
-            # if last_long_sparkle_clock_check is None:
-            #     last_long_sparkle_clock_check = frames_since_banner_launch
-            # if frames_since_banner_launch >= 128:  # first sparkle is long, it starts 654 frames in (654 (start of sparkle) - 620 (start of screen) = 34, ends at 678 frames in
-            #     last_long_sparkle_clock_check = frames_since_banner_launch
-            #     if last_sparkle_long is None:
-            #         last_sparkle_long = False
-            #     elif not last_sparkle_long:
-            #         print(f'Long sparkle began at {frames_since_program_launch}\n')
-            #         self.banner_sparkle(short=last_sparkle_long)
-            #         last_sparkle_long = True
-            #     else:
-            #         for i in range(2):
-            #             # second sparkle is short, it begins at 782 frames in (128 frames after the long first sparkle)
-            #             print(f'Short sparkle began at {frames_since_program_launch}\n')
-            #             self.banner_sparkle(short=last_sparkle_long)
-            #             # third sparkle also short, begins at 814 frames in (32 after last short sparkle)
-            #         last_sparkle_long = False
+            if int(frames_since_banner_launch) >= 160:
+                # first short sparkle
+                if not first_short_sparkle_done:
+                    first_short_sparkle_done = True
+                    last_first_short_sparkle_clock_check = get_ticks()
+                    print(f'{frames_since_program_launch} short sparkle')
+                    self.banner_sparkle(short=True)
+                else:
+                    if get_ticks() - last_first_short_sparkle_clock_check >= convert_to_milliseconds(256):
+                        last_first_short_sparkle_clock_check = get_ticks()
+                        print(f'{frames_since_program_launch} short sparkle')
+                        self.banner_sparkle(short=True)
+            # second short sparkle
+            if int(frames_since_banner_launch) >= 192:
+                if not second_short_sparkle_done:
+                    second_short_sparkle_done = True
+                    last_second_short_sparkle_clock_check = get_ticks()
+                    print(f'{frames_since_program_launch} short sparkle')
+                    self.banner_sparkle(short=True)
+                else:
+                    if get_ticks() - last_second_short_sparkle_clock_check >= convert_to_milliseconds(256):
+                        last_second_short_sparkle_clock_check = get_ticks()
+                        print(f'{frames_since_program_launch} short sparkle')
+                        self.banner_sparkle(short=True)
             self.clock.tick(FPS)
             for current_event in get():
                 if current_event.type == QUIT:
