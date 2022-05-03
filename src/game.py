@@ -2,7 +2,7 @@ import random
 import sys
 
 from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, \
-    K_LEFT, K_a, K_RIGHT, K_d, SCALED, time, KEYUP
+    K_LEFT, K_a, K_RIGHT, K_d, KEYUP
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -16,7 +16,7 @@ from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_
 from src.common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
-from src.intro import draw_text, show_start_screen, wait_for_key
+from src.intro import draw_text, show_start_screen
 from src.maps import get_character_position, get_next_coordinates, map_lookup
 from src.menu import draw_menu_on_subsurface
 from src.player.player import Player
