@@ -1,19 +1,23 @@
+import os
 import random
 import sys
+from os.path import join
 
-from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, DOUBLEBUF, mixer, QUIT, event, display, time, \
-    key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d, surface
+from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, time, \
+    key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d, SCALED, KEYUP, font, image
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
+from pygame.transform import scale
 
 import src.menu as menu
 from src import maps
 from src.camera import Camera
-from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally
+from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally, \
+    WHITE, intro_overture, ORANGE, PINK, SMB_FONT_PATH, DRAGON_QUEST_FONT_PATH, village_music, INTRO_BANNER_PATH, INTRO_BANNER_WITH_DRAGON_PATH
 from src.common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import NES_RES, SHOW_FPS
+from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, IMAGES_DIR
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.maps import get_character_position, get_next_coordinates, map_lookup
 from src.player.player import Player
@@ -22,6 +26,18 @@ from src.sprites.roaming_character import handle_roaming_character_sides_collisi
 
 def draw_menu_on_subsurface(menu_to_draw, subsurface):
     return menu_to_draw.draw(subsurface)
+
+
+def convert_to_frames(time_to_convert):
+    return int(60 * (time_to_convert / 1000))
+
+
+def convert_to_frames_since_start_time(start_time):
+    return convert_to_frames(get_ticks() - start_time)
+
+
+def convert_to_milliseconds(FPS):
+    return (FPS / 60) * 1000
 
 
 class Game:
@@ -43,9 +59,12 @@ class Game:
         self.paused = False
         # Create the game window.
         if FULLSCREEN_ENABLED:
-            flags = FULLSCREEN | DOUBLEBUF
+            flags = FULLSCREEN | SCALED
         else:
-            flags = RESIZABLE | DOUBLEBUF
+            flags = RESIZABLE | SCALED
+        # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
+        # without SCALED, it will show more of the map, but will also not center the camera
+        # it might be a nice comfort addition to add to center the camera, while also showing more of the map
         self.scale = SCALE
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
@@ -90,25 +109,30 @@ class Game:
                                          self.dlg_box, self.player)
 
         self.menus = self.cmd_menu, self.dlg_box
-        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
+        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
+                             current_map=self.current_map,
+                             screen=self.screen)
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
         self.music_enabled = MUSIC_ENABLED
         if self.music_enabled:
-            mixer.music.load(self.current_map.music_file_path)
+            if SPLASH_SCREEN_ENABLED:
+                mixer.music.load(intro_overture)
+            else:
+                mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
         self.events = get()
-        self.command_menu_subsurface = self.set_background_subsurface(
-            left=(self.hero_layout_column - 2) * TILE_SIZE,
-            top=(self.hero_layout_row - 6) * TILE_SIZE,
-            width=8 * TILE_SIZE,
-            height=5 * TILE_SIZE
+        self.command_menu_subsurface = self.background.subsurface(
+            (self.hero_layout_column - 2) * TILE_SIZE,
+            (self.hero_layout_row - 6) * TILE_SIZE,
+            8 * TILE_SIZE,
+            5 * TILE_SIZE
         )
-        self.dialog_box_subsurface = self.set_background_subsurface(
-            left=TILE_SIZE,
-            top=TILE_SIZE,
-            width=12 * TILE_SIZE,
-            height=5 * TILE_SIZE
+        self.dialog_box_subsurface = self.background.subsurface(
+            TILE_SIZE,
+            TILE_SIZE,
+            12 * TILE_SIZE,
+            5 * TILE_SIZE
         )
 
         # pg.event.set_allowed([pg.QUIT])
@@ -122,6 +146,9 @@ class Game:
         Main loop.
         :return: None
         """
+        if SPLASH_SCREEN_ENABLED:
+            self.show_start_screen()
+            self.show_main_menu_screen()
         while True:
             self.clock.tick(FPS)
             self.get_events()
@@ -129,13 +156,155 @@ class Game:
             self.update_screen()
             self.loop_count += 1
 
+    def show_main_menu_screen(self):
+        self.screen.fill(self.BACK_FILL_COLOR)
+        self.draw_text(">BEGIN A NEW QUEST", 15, WHITE, self.screen.get_width() / 2, self.screen.get_height() / 2, DRAGON_QUEST_FONT_PATH)
+        #
+        display.flip()
+        if self.music_enabled:
+            mixer.music.load(village_music)
+            mixer.music.play(-1)
+        self.wait_for_key()
+        play_sound(menu_button_sfx)
+        self.fade(self.screen.get_width(), self.screen.get_height(), fade_out=True)
+        if self.music_enabled:
+            mixer.music.load(self.current_map.music_file_path)
+            mixer.music.play(-1)
+
+    def show_start_screen(self):
+        self.screen.fill(self.BACK_FILL_COLOR)
+        self.show_intro_banner(INTRO_BANNER_PATH)
+        display.flip()
+        waiting = True
+        self.start_time = get_ticks()
+        while waiting:
+            seconds = (get_ticks() - self.start_time) / 1000
+            frames = 60 * seconds
+            print(f'Seconds: {seconds}\n'
+                  f'Frames: {frames}')
+            self.clock.tick(FPS)
+            for current_event in get():
+                if current_event.type == QUIT:
+                    quit()
+                    sys.exit()
+                if current_event.type == KEYUP:
+                    waiting = False
+            if frames >= 620:  # intro banner with text displays 620 frames in
+                waiting = False
+        self.show_intro_dragon_banner_with_text()
+
+    def show_intro_dragon_banner_with_text(self):
+        self.show_intro_banner(INTRO_BANNER_WITH_DRAGON_PATH)
+        self.draw_text("-PUSH ANY KEY -", 15, ORANGE, self.screen.get_width() / 2, self.screen.get_height() * 10 / 16, DRAGON_QUEST_FONT_PATH)
+        self.draw_text("K key: A Button", 15, PINK, self.screen.get_width() / 2, self.screen.get_height() * 11 / 16, DRAGON_QUEST_FONT_PATH)
+        self.draw_text("J key: B Button", 15, PINK, self.screen.get_width() / 2, self.screen.get_height() * 12 / 16, DRAGON_QUEST_FONT_PATH)
+        self.draw_text("I key: Start", 15, PINK, self.screen.get_width() / 2, self.screen.get_height() * 13 / 16, DRAGON_QUEST_FONT_PATH)
+        self.draw_text("WASD / Arrow Keys: Move", 15, PINK, self.screen.get_width() / 2, self.screen.get_height() * 14 / 16, DRAGON_QUEST_FONT_PATH)
+        self.draw_text("(↑ ← ↓ →)", 15, PINK, self.screen.get_width() / 2, self.screen.get_height() * 15 / 16, SMB_FONT_PATH)
+        # TODO: Might be good to add these control keys to an F1 help screen.
+        display.flip()
+        intro_banner_with_text_enabled = True
+        last_sparkle_long = None
+        last_long_sparkle_clock_check = None
+        # start_time = get_ticks()
+        intro_banner_with_text_enabled_start_time = get_ticks()
+        first_long_sparkle_done = False
+        while intro_banner_with_text_enabled:
+            frames_since_program_launch = convert_to_frames_since_start_time(start_time=self.start_time)
+            frames_since_banner_launch = convert_to_frames_since_start_time(intro_banner_with_text_enabled_start_time)
+            if int(frames_since_banner_launch) >= 32:
+                if not first_long_sparkle_done:
+                    first_long_sparkle_done = True
+                    last_long_sparkle_clock_check = get_ticks()
+                    print(f'{frames_since_program_launch} long sparkle')
+                    self.banner_sparkle(short=False)
+                else:
+                    if get_ticks() - last_long_sparkle_clock_check >= convert_to_milliseconds(256):
+                        print(f'{frames_since_program_launch} long sparkle')
+                        last_long_sparkle_clock_check = get_ticks()
+                        self.banner_sparkle(short=False)
+
+
+
+                    # if frames_since_long_sparkle_time >= 256:
+                    #     frames_since_long_sparkle_time = 0
+                    #     self.banner_sparkle(short=False)
+
+            # elif int(frames_since_program_launch) == 160:
+            #     self.banner_sparkle(short=True)
+            # elif int(frames_since_program_launch) == 192:
+            #     self.banner_sparkle(short=True)
+            # if frames_since_program_launch >= 654:
+            #     print(frames_since_banner_launch)
+            # print(f'Seconds: {seconds}\n'
+            #       f'Frames: {frames_since_banner_launch}')
+            # if last_long_sparkle_clock_check is None:
+            #     last_long_sparkle_clock_check = frames_since_banner_launch
+            # if frames_since_banner_launch >= 128:  # first sparkle is long, it starts 654 frames in (654 (start of sparkle) - 620 (start of screen) = 34, ends at 678 frames in
+            #     last_long_sparkle_clock_check = frames_since_banner_launch
+            #     if last_sparkle_long is None:
+            #         last_sparkle_long = False
+            #     elif not last_sparkle_long:
+            #         print(f'Long sparkle began at {frames_since_program_launch}\n')
+            #         self.banner_sparkle(short=last_sparkle_long)
+            #         last_sparkle_long = True
+            #     else:
+            #         for i in range(2):
+            #             # second sparkle is short, it begins at 782 frames in (128 frames after the long first sparkle)
+            #             print(f'Short sparkle began at {frames_since_program_launch}\n')
+            #             self.banner_sparkle(short=last_sparkle_long)
+            #             # third sparkle also short, begins at 814 frames in (32 after last short sparkle)
+            #         last_sparkle_long = False
+            self.clock.tick(FPS)
+            for current_event in get():
+                if current_event.type == QUIT:
+                    quit()
+                    sys.exit()
+                if current_event.type == KEYUP:
+                    intro_banner_with_text_enabled = False
+        self.fade(self.screen.get_width(), self.screen.get_height(), fade_out=True)
+
+    def banner_sparkle(self, short):
+        # first (long) sparkle starts 654 frames in, ends at 678 frames in, lasts (678 - 654 = 24 frames)
+        for banner in os.listdir(join(IMAGES_DIR, 'intro_banner', 'sparkle')):
+            if short:
+                speed = 12
+            else:
+                speed = 24
+            for i in range(speed):
+                self.show_intro_banner(join(IMAGES_DIR, 'intro_banner', 'sparkle', banner))
+            display.flip()
+
+    def show_intro_banner(self, intro_banner_path):
+        intro_banner = image.load(intro_banner_path)
+        intro_banner = scale(intro_banner, (self.screen.get_width(), intro_banner.get_height() * 2))
+        intro_banner_rect = intro_banner.get_rect()
+        intro_banner_rect.midtop = (self.screen.get_width() / 2, self.screen.get_height() * 1 / 6)
+        self.screen.blit(intro_banner, intro_banner_rect)
+
+    def wait_for_key(self):
+        waiting = True
+        while waiting:
+            self.clock.tick(FPS)
+            for current_event in get():
+                if current_event.type == QUIT:
+                    quit()
+                    sys.exit()
+                if current_event.type == KEYUP:
+                    waiting = False
+
+    def draw_text(self, text, size, color, x, y, font_name):
+        text_surface = font.Font(font_name, size).render(text, True, color)
+        text_rect = text_surface.get_rect()
+        text_rect.midtop = (x, y)
+        self.screen.blit(text_surface, text_rect)
+
     def get_events(self) -> None:
         """
         Handle all events in main loop.
         :return: None
         """
         self.events = get()
-
         for current_event in self.events:
             if current_event.type == QUIT:
                 quit()
@@ -337,21 +506,21 @@ class Game:
     def handle_menu_launch(self, menu_to_launch):
         if menu_to_launch.launch_signaled:
             if menu_to_launch.menu.get_id() == 'command':
-                self.command_menu_subsurface = self.set_background_subsurface(
-                    left=(self.hero_layout_column - 2) * TILE_SIZE,  # 11 (first empty square to the left of menu)
-                    top=(self.hero_layout_row - 6) * TILE_SIZE,  # 4
-                    width=8 * TILE_SIZE,
-                    height=5 * TILE_SIZE
+                self.command_menu_subsurface = self.background.subsurface(
+                    (self.hero_layout_column - 2) * TILE_SIZE,  # 11 (first empty square to the left of menu)
+                    (self.hero_layout_row - 6) * TILE_SIZE,  # 4
+                    8 * TILE_SIZE,
+                    5 * TILE_SIZE
                 )
                 rect = draw_menu_on_subsurface(menu_to_launch.menu, self.command_menu_subsurface)
             elif menu_to_launch.menu.get_id() == 'dialog_box':
-                self.dialog_box_subsurface = self.set_background_subsurface(
+                self.dialog_box_subsurface = self.background.subsurface(
                     # left=(self.hero_layout_column + 6) * TILE_SIZE,
                     # top=(self.hero_layout_row + 6) * TILE_SIZE,
-                    left=TILE_SIZE,
-                    top=TILE_SIZE,
-                    width=12 * TILE_SIZE,
-                    height=5 * TILE_SIZE
+                    TILE_SIZE,
+                    TILE_SIZE,
+                    12 * TILE_SIZE,
+                    5 * TILE_SIZE
                 )
                 rect = draw_menu_on_subsurface(menu_to_launch.menu, self.dialog_box_subsurface)
             else:
@@ -361,14 +530,6 @@ class Game:
                 self.launch_menu(menu_to_launch.menu.get_id())
             else:
                 self.foreground_rects.append(rect)
-
-    def set_background_subsurface(self, left, top, width, height) -> surface.Surface:
-        return self.background.subsurface(
-            left,
-            top,
-            width,
-            height
-        )
 
     def update_screen(self) -> None:
         """Update the screen's display."""
@@ -419,7 +580,7 @@ class Game:
 
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
-        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
+        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map, screen=None)
         # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
         self.loop_count = 1
         self.unpause_all_movement()
@@ -565,22 +726,18 @@ class Game:
                                                                        character_row=self.hero_layout_row,
                                                                        direction=self.player.direction, offset=3)
             self.next_tile_checked = True
-        if not self.is_impassable(self.player.next_tile):
-            if not self.character_in_path_of_player():
-                if delta_x:
-                    self.player.rect.x += delta_x
-                    next_cam_pos_x = curr_cam_pos_x + -delta_x
-                if delta_y:
-                    self.player.rect.y += -delta_y
-                    next_cam_pos_y = curr_cam_pos_y + delta_y
-            else:
-                self.bump_and_reset(pre_bump_next_tile, pre_bump_next_next_tile)
-
-        else:
+        if self.is_impassable(self.player.next_tile) or self.character_in_path_of_player():
             self.bump_and_reset(pre_bump_next_tile, pre_bump_next_next_tile)
 
-        next_cam_pos_x, next_cam_pos_y = self.handle_sides_collision(next_cam_pos_x, next_cam_pos_y)
-        self.camera.set_pos((next_cam_pos_x, next_cam_pos_y))
+        else:
+            if delta_x:
+                self.player.rect.x += delta_x
+                next_cam_pos_x = curr_cam_pos_x + -delta_x
+            if delta_y:
+                self.player.rect.y += -delta_y
+                next_cam_pos_y = curr_cam_pos_y + delta_y
+
+        self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
 
     def bump_and_reset(self, pre_bump_next_tile, pre_bump_next_next_tile):
         if self.player.next_tile != pre_bump_next_tile:
@@ -642,9 +799,9 @@ class Game:
         """
         return tile in self.current_map.impassable_tiles
 
-    def handle_sides_collision(self, next_pos_x: int, next_pos_y: int) -> tuple:
+    def move_and_handle_sides_collision(self, next_pos_x: int, next_pos_y: int) -> tuple:
         """
-        Handle collision with the sides of the map (for the player).
+        Move while handling collision with the sides of the map (for the player).
         :type next_pos_x: int
         :type next_pos_y: int
         :param next_pos_x: Next x position (in terms of tile size).
@@ -677,11 +834,10 @@ class Game:
         """
         for roaming_character in self.current_map.roaming_characters:
             get_character_position(roaming_character)
-            now = get_ticks()
             if roaming_character.last_roaming_clock_check is None:
-                roaming_character.last_roaming_clock_check = now
-            if now - roaming_character.last_roaming_clock_check >= self.ROAMING_CHARACTER_GO_COOLDOWN:
-                roaming_character.last_roaming_clock_check = now
+                roaming_character.last_roaming_clock_check = get_ticks()
+            if get_ticks() - roaming_character.last_roaming_clock_check >= self.ROAMING_CHARACTER_GO_COOLDOWN:
+                roaming_character.last_roaming_clock_check = get_ticks()
                 if not roaming_character.is_moving:
                     roaming_character.direction = random.choice(list(map(int, Direction)))
                 else:  # character not moving and no input

@@ -71,7 +71,7 @@ class TestGame(TestCase):
         self.game.hero_column = 0
         self.hero_layout_column, self.hero_layout_row = self.game.current_map.player.rect.x // TILE_SIZE, self.game.current_map.player.rect.y // TILE_SIZE
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
-        self.camera = Camera(hero_position=(self.hero_layout_row, self.hero_layout_column), current_map=self.game.current_map)
+        self.camera = Camera(hero_position=(self.hero_layout_row, self.hero_layout_column), current_map=self.game.current_map, screen=None)
         pygame.key.get_pressed = create_key_mock(pygame.K_RIGHT)
         pygame.key.get_pressed = create_key_mock(pygame.K_UP)
         pygame.key.get_pressed = create_key_mock(pygame.K_DOWN)
