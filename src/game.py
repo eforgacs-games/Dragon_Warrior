@@ -18,7 +18,6 @@ from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.intro import draw_text, show_start_screen
 from src.maps import get_character_position, get_next_coordinates, map_lookup
-from src.menu import draw_menu_on_subsurface
 from src.player.player import Player
 from src.sprites.roaming_character import handle_roaming_character_sides_collision
 from src.visual_effects import fade
@@ -387,7 +386,7 @@ class Game:
                     8 * TILE_SIZE,
                     5 * TILE_SIZE
                 )
-                rect = draw_menu_on_subsurface(menu_to_launch.menu, self.command_menu_subsurface)
+                rect = menu.draw_menu_on_subsurface(menu_to_launch.menu, self.command_menu_subsurface)
             elif menu_to_launch.menu.get_id() == 'dialog_box':
                 self.dialog_box_subsurface = self.background.subsurface(
                     # left=(self.hero_layout_column + 6) * TILE_SIZE,
@@ -397,7 +396,7 @@ class Game:
                     12 * TILE_SIZE,
                     5 * TILE_SIZE
                 )
-                rect = draw_menu_on_subsurface(menu_to_launch.menu, self.dialog_box_subsurface)
+                rect = menu.draw_menu_on_subsurface(menu_to_launch.menu, self.dialog_box_subsurface)
             else:
                 rect = None
                 print("No menu launched")
@@ -486,7 +485,7 @@ class Game:
             self.dlg_box.launched = True
 
     def set_and_append_rect(self, menu_to_set, subsurface):
-        menu_rect = draw_menu_on_subsurface(menu_to_set, subsurface)
+        menu_rect = menu.draw_menu_on_subsurface(menu_to_set, subsurface)
         if menu_rect:
             self.foreground_rects.append(menu_rect)
 
