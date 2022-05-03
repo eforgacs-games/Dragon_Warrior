@@ -235,3 +235,7 @@ class DialogBox(Menu):
                                      mouse_visible=False,
                                      menu_id='dialog_box'
                                      )
+
+
+def draw_menu_on_subsurface(menu_to_draw, subsurface):
+    return menu_to_draw.draw(subsurface)

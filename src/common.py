@@ -193,3 +193,42 @@ def print_with_beep_sfx(string_to_print):
         time.sleep(sleep_time)
         # pygame.time.wait(1)
     print("\n")
+
+
+def convert_to_frames(time_to_convert):
+    return int(60 * (time_to_convert / 1000))
+
+
+def convert_to_milliseconds(FPS):
+    return int((FPS / 60) * 1000)
+
+
+def get_surrounding_tiles(coordinates, map_layout, radius=1):
+    x = coordinates[0]
+    y = coordinates[1]
+    neighbors = [
+        map_layout[x - 1][y - 1],
+        map_layout[x - 1][y],
+        map_layout[x - 1][y + 1],
+
+        map_layout[x][y - 1],
+        map_layout[x][y + 1],
+
+        map_layout[x + 1][y - 1],
+        map_layout[x + 1][y],
+        map_layout[x + 1][y + 1]
+    ]
+    if radius > 1:
+        for i in range(2, radius):
+            neighbors.append(map_layout[x - i][y - i])
+            neighbors.append(map_layout[x - i][y])
+            neighbors.append(map_layout[x - i][y + i])
+
+            neighbors.append(map_layout[x][y - i])
+            neighbors.append(map_layout[x][y + i])
+
+            neighbors.append(map_layout[x + i][y - i])
+            neighbors.append(map_layout[x + i][y])
+            neighbors.append(map_layout[x + i][y + i])
+
+    return neighbors
