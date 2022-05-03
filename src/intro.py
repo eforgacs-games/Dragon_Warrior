@@ -65,7 +65,6 @@ def show_intro_dragon_banner_with_text(screen, start_time, clock, background):
     first_short_sparkle_done = False
     second_short_sparkle_done = False
     while intro_banner_with_text_enabled:
-        frames_since_program_launch = convert_to_frames_since_start_time(start_time=start_time)
         frames_since_banner_launch = convert_to_frames_since_start_time(intro_banner_with_text_enabled_start_time)
         if int(frames_since_banner_launch) >= 32:
             # first long sparkle
