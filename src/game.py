@@ -1,43 +1,27 @@
-import os
 import random
 import sys
-from os.path import join
 
-from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, time, \
-    key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d, SCALED, KEYUP, font, image
+from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, \
+    K_LEFT, K_a, K_RIGHT, K_d, SCALED, time, KEYUP
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
-from pygame.transform import scale
 
 import src.menu as menu
 from src import maps
 from src.camera import Camera
 from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally, \
-    WHITE, intro_overture, ORANGE, PINK, SMB_FONT_PATH, DRAGON_QUEST_FONT_PATH, village_music, INTRO_BANNER_PATH, INTRO_BANNER_WITH_DRAGON_PATH
+    WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tiles
 from src.common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, IMAGES_DIR
+from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
+from src.intro import draw_text, show_start_screen, wait_for_key
 from src.maps import get_character_position, get_next_coordinates, map_lookup
+from src.menu import draw_menu_on_subsurface
 from src.player.player import Player
 from src.sprites.roaming_character import handle_roaming_character_sides_collision
-
-
-def draw_menu_on_subsurface(menu_to_draw, subsurface):
-    return menu_to_draw.draw(subsurface)
-
-
-def convert_to_frames(time_to_convert):
-    return int(60 * (time_to_convert / 1000))
-
-
-def convert_to_frames_since_start_time(start_time):
-    return convert_to_frames(get_ticks() - start_time)
-
-
-def convert_to_milliseconds(FPS):
-    return int((FPS / 60) * 1000)
+from src.visual_effects import fade
 
 
 class Game:
@@ -50,6 +34,7 @@ class Game:
 
     def __init__(self):
         # Initialize pygame
+        self.start_time = get_ticks()
         self.tiles_moved_since_spawn = 0
         self.loop_count = 1
         self.foreground_rects = []
@@ -147,8 +132,8 @@ class Game:
         :return: None
         """
         if SPLASH_SCREEN_ENABLED:
-            self.show_start_screen()
-            self.show_main_menu_screen()
+            show_start_screen(self.screen, self.start_time, self.clock, self.background)
+            self.show_main_menu_screen(self.screen)
         while True:
             self.clock.tick(FPS)
             self.get_events()
@@ -156,145 +141,34 @@ class Game:
             self.update_screen()
             self.loop_count += 1
 
-    def show_main_menu_screen(self):
-        self.screen.fill(self.BACK_FILL_COLOR)
-        self.draw_text(">BEGIN A NEW QUEST", 15, WHITE, self.screen.get_width() / 2, self.screen.get_height() / 2, DRAGON_QUEST_FONT_PATH)
-        #
-        display.flip()
+    def show_main_menu_screen(self, screen):
+        main_menu_screen_enabled = True
         if self.music_enabled:
             mixer.music.load(village_music)
             mixer.music.play(-1)
-        self.wait_for_key()
+        while main_menu_screen_enabled:
+            screen.fill(BLACK)
+            # totally dummy option for now, just a placeholder
+            for i in range(128):
+                draw_text(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.screen)
+                display.flip()
+            screen.fill(BLACK)
+            for i in range(128):
+                draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.screen)
+                display.flip()
+            screen.fill(BLACK)
+            self.clock.tick(FPS)
+            for current_event in get():
+                if current_event.type == QUIT:
+                    quit()
+                    sys.exit()
+                if current_event.type == KEYUP:
+                    main_menu_screen_enabled = False
         play_sound(menu_button_sfx)
-        self.fade(self.screen.get_width(), self.screen.get_height(), fade_out=True)
+        fade(screen.get_width(), screen.get_height(), fade_out=True, background=self.background, screen=self.screen)
         if self.music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
-
-    def show_start_screen(self):
-        self.screen.fill(self.BACK_FILL_COLOR)
-        self.show_intro_banner(INTRO_BANNER_PATH)
-        display.flip()
-        waiting = True
-        self.start_time = get_ticks()
-        while waiting:
-            seconds = (get_ticks() - self.start_time) / 1000
-            frames = 60 * seconds
-            print(f'Seconds: {seconds}\n'
-                  f'Frames: {frames}')
-            self.clock.tick(FPS)
-            for current_event in get():
-                if current_event.type == QUIT:
-                    quit()
-                    sys.exit()
-                if current_event.type == KEYUP:
-                    waiting = False
-            if frames >= 620:  # intro banner with text displays 620 frames in
-                waiting = False
-        self.show_intro_dragon_banner_with_text()
-
-    def show_intro_dragon_banner_with_text(self):
-        self.show_intro_banner(INTRO_BANNER_WITH_DRAGON_PATH)
-        self.draw_text("-PUSH ANY KEY -", 15, ORANGE, self.screen.get_width() / 2, self.screen.get_height() * 10 / 16, DRAGON_QUEST_FONT_PATH)
-        self.draw_text("K key: A Button", 15, PINK, self.screen.get_width() / 2, self.screen.get_height() * 11 / 16, DRAGON_QUEST_FONT_PATH)
-        self.draw_text("J key: B Button", 15, PINK, self.screen.get_width() / 2, self.screen.get_height() * 12 / 16, DRAGON_QUEST_FONT_PATH)
-        self.draw_text("I key: Start", 15, PINK, self.screen.get_width() / 2, self.screen.get_height() * 13 / 16, DRAGON_QUEST_FONT_PATH)
-        self.draw_text("WASD / Arrow Keys: Move", 15, PINK, self.screen.get_width() / 2, self.screen.get_height() * 14 / 16, DRAGON_QUEST_FONT_PATH)
-        self.draw_text("(↑ ← ↓ →)", 15, PINK, self.screen.get_width() / 2, self.screen.get_height() * 15 / 16, SMB_FONT_PATH)
-        # TODO: Might be good to add these control keys to an F1 help screen.
-        display.flip()
-        intro_banner_with_text_enabled = True
-        intro_banner_with_text_enabled_start_time = get_ticks()
-
-        last_long_sparkle_clock_check = None
-        last_first_short_sparkle_clock_check = None
-        last_second_short_sparkle_clock_check = None
-
-        first_long_sparkle_done = False
-        first_short_sparkle_done = False
-        second_short_sparkle_done = False
-        while intro_banner_with_text_enabled:
-            frames_since_program_launch = convert_to_frames_since_start_time(start_time=self.start_time)
-            frames_since_banner_launch = convert_to_frames_since_start_time(intro_banner_with_text_enabled_start_time)
-            if int(frames_since_banner_launch) >= 32:
-                # first long sparkle
-                if not first_long_sparkle_done:
-                    first_long_sparkle_done = True
-                    last_long_sparkle_clock_check = get_ticks()
-                    print(f'{frames_since_program_launch} long sparkle')
-                    self.banner_sparkle(short=False)
-                else:
-                    if get_ticks() - last_long_sparkle_clock_check >= convert_to_milliseconds(256):
-                        print(f'{frames_since_program_launch} long sparkle')
-                        last_long_sparkle_clock_check = get_ticks()
-                        self.banner_sparkle(short=False)
-            if int(frames_since_banner_launch) >= 160:
-                # first short sparkle
-                if not first_short_sparkle_done:
-                    first_short_sparkle_done = True
-                    last_first_short_sparkle_clock_check = get_ticks()
-                    print(f'{frames_since_program_launch} short sparkle')
-                    self.banner_sparkle(short=True)
-                else:
-                    if get_ticks() - last_first_short_sparkle_clock_check >= convert_to_milliseconds(256):
-                        last_first_short_sparkle_clock_check = get_ticks()
-                        print(f'{frames_since_program_launch} short sparkle')
-                        self.banner_sparkle(short=True)
-            # second short sparkle
-            if int(frames_since_banner_launch) >= 192:
-                if not second_short_sparkle_done:
-                    second_short_sparkle_done = True
-                    last_second_short_sparkle_clock_check = get_ticks()
-                    print(f'{frames_since_program_launch} short sparkle')
-                    self.banner_sparkle(short=True)
-                else:
-                    if get_ticks() - last_second_short_sparkle_clock_check >= convert_to_milliseconds(256):
-                        last_second_short_sparkle_clock_check = get_ticks()
-                        print(f'{frames_since_program_launch} short sparkle')
-                        self.banner_sparkle(short=True)
-            self.clock.tick(FPS)
-            for current_event in get():
-                if current_event.type == QUIT:
-                    quit()
-                    sys.exit()
-                if current_event.type == KEYUP:
-                    intro_banner_with_text_enabled = False
-        self.fade(self.screen.get_width(), self.screen.get_height(), fade_out=True)
-
-    def banner_sparkle(self, short):
-        # first (long) sparkle starts 654 frames in, ends at 678 frames in, lasts (678 - 654 = 24 frames)
-        for banner in os.listdir(join(IMAGES_DIR, 'intro_banner', 'sparkle')):
-            if short:
-                speed = 12
-            else:
-                speed = 24
-            for i in range(speed):
-                self.show_intro_banner(join(IMAGES_DIR, 'intro_banner', 'sparkle', banner))
-            display.flip()
-
-    def show_intro_banner(self, intro_banner_path):
-        intro_banner = image.load(intro_banner_path)
-        intro_banner = scale(intro_banner, (self.screen.get_width(), intro_banner.get_height() * 2))
-        intro_banner_rect = intro_banner.get_rect()
-        intro_banner_rect.midtop = (self.screen.get_width() / 2, self.screen.get_height() * 1 / 6)
-        self.screen.blit(intro_banner, intro_banner_rect)
-
-    def wait_for_key(self):
-        waiting = True
-        while waiting:
-            self.clock.tick(FPS)
-            for current_event in get():
-                if current_event.type == QUIT:
-                    quit()
-                    sys.exit()
-                if current_event.type == KEYUP:
-                    waiting = False
-
-    def draw_text(self, text, size, color, x, y, font_name):
-        text_surface = font.Font(font_name, size).render(text, True, color)
-        text_rect = text_surface.get_rect()
-        text_rect.midtop = (x, y)
-        self.screen.blit(text_surface, text_rect)
 
     def get_events(self) -> None:
         """
@@ -423,7 +297,8 @@ class Game:
         # won't work where there are moving NPCs, so only use this in the overworld
         if not self.current_map.roaming_characters:
             # basically, if you're in the overworld, since there are no roaming characters there
-            player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(self.get_surrounding_tiles(self.player.coordinates, radius=1))
+            player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(
+                get_surrounding_tiles(self.player.coordinates, self.current_map.layout, radius=1))
             if self.player.is_moving:
                 tile_types_to_draw = list(
                     dict.fromkeys(self.replace_characters_with_underlying_tiles(set(filter(None, [self.player.current_tile] + player_surrounding_tiles)))))
@@ -535,32 +410,6 @@ class Game:
                 menu_or_dialog_box.menu.update(self.events)
         display.update()
 
-    def fade(self, width: int, height: int, fade_out: bool) -> None:
-        """
-        Fade to/from current scene to/from black.
-        :return: None
-        @param width: int
-        Width of surface to fade.
-        @param height:
-        Height of surface to fade.
-        @type fade_out: bool
-        If true, fades out. If false, fades in.
-        """
-        fade = Surface((width, height))  # lgtm [py/call/wrong-arguments]
-        fade.fill(BLACK)
-        self.opacity = 0
-        for alpha in range(300):
-            if fade_out:
-                self.opacity += 1
-            else:
-                # TODO(ELF): Fix fade in. Maybe this link will help? https://stackoverflow.com/questions/54881269/pygame-fade-to-black-function
-                self.opacity -= 1
-            fade.set_alpha(self.opacity)
-            self.background.fill(BLACK)
-            self.screen.blit(fade, (0, 0))
-            display.update()
-            time.delay(5)
-
     def change_map(self, next_map) -> None:
         """
         Change to a different map.
@@ -570,7 +419,7 @@ class Game:
         self.pause_all_movement()
         self.current_map = next_map
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
-        self.fade(self.current_map.width, self.current_map.height, fade_out=True)
+        fade(self.current_map.width, self.current_map.height, fade_out=True, background=self.background, screen=self.screen)
         if self.music_enabled:
             mixer.music.stop()
         self.current_map.load_map(self.player)
@@ -901,36 +750,6 @@ class Game:
                 self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
                 roaming_character.rect.y += -delta_y
                 roaming_character.row += -delta_y // 2
-
-    def get_surrounding_tiles(self, coordinates, radius=1):
-        x = coordinates[0]
-        y = coordinates[1]
-        neighbors = [
-            self.current_map.layout[x - 1][y - 1],
-            self.current_map.layout[x - 1][y],
-            self.current_map.layout[x - 1][y + 1],
-
-            self.current_map.layout[x][y - 1],
-            self.current_map.layout[x][y + 1],
-
-            self.current_map.layout[x + 1][y - 1],
-            self.current_map.layout[x + 1][y],
-            self.current_map.layout[x + 1][y + 1]
-        ]
-        if radius > 1:
-            for i in range(2, radius):
-                neighbors.append(self.current_map.layout[x - i][y - i])
-                neighbors.append(self.current_map.layout[x - i][y])
-                neighbors.append(self.current_map.layout[x - i][y + i])
-
-                neighbors.append(self.current_map.layout[x][y - i])
-                neighbors.append(self.current_map.layout[x][y + i])
-
-                neighbors.append(self.current_map.layout[x + i][y - i])
-                neighbors.append(self.current_map.layout[x + i][y])
-                neighbors.append(self.current_map.layout[x + i][y + i])
-
-        return neighbors
 
 
 def run():
