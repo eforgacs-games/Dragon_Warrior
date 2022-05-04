@@ -27,7 +27,7 @@ class Game:
     GAME_TITLE = "Dragon Warrior"
     BACK_FILL_COLOR = BLACK
     MOVE_EVENT = USEREVENT + 1
-    ROAMING_CHARACTER_GO_COOLDOWN = 3000
+    ROAMING_CHARACTER_GO_COOLDOWN = 1000
 
     # time.set_timer(MOVE_EVENT, 100)
 
@@ -291,8 +291,29 @@ class Game:
         height_offset = 0
         if self.loop_count == 1:
             self.background = self.big_map.subsurface(0, 0, self.current_map.width - width_offset, self.current_map.height - height_offset)
-        # TODO: this for loop is what is slowing down the overworld map.
-        #  make it so that this only executes while moving, or else just draws the squares where there are characters
+        # this for loop is a good place to look to improve overall FPS, reduce frame drops, etc.
+        # while the improvements up until now have been significant enough to keep the FPS at 60
+        # even while on the overworld map, there are still improvements that can be made:
+        # some basic pseudocode --
+
+        # TODO: Improve implementation of the following "not moving" optimization.
+
+        # one optimization to make while not moving:
+
+        # on overworld map:
+        #     if not self.player.is_moving:
+        #         there are no roaming characters, so only update the middle square where the player is
+        #     else:
+        #         do the normal logic
+        # on non-overworld maps
+        #     if not self.player.is_moving:
+        #         only update the middle square where the player is
+        #         and the squares where roaming characters are now or will be
+        #     else:
+        #         do the normal logic
+
+        # right now we're pretty close with the surrounding tiles check, but we could be doing better
+
         # print(self.background.get_rect())
 
         # performance optimization to only draw the tile type that the hero is standing on, and surrounding tiles
@@ -737,21 +758,22 @@ class Game:
                 roaming_character.column, roaming_character.row) != (self.hero_layout_column, self.hero_layout_row):
             character_value = self.current_map.character_key[roaming_character.identifier]['val']
             underlying_tile_val = self.current_map.tile_key[self.current_map.character_key[roaming_character.identifier]['underlying_tile']]['val']
-            if delta_x:
-                # set current coordinates to underlying tile value
-                self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
-                # set next coordinates to roaming character value
-                self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
-                roaming_character.rect.x += delta_x
-                roaming_character.column += delta_x // 2
+            if type(self.current_map.layout[next_coordinates[0]]) != tuple:
+                if delta_x:
+                    # set current coordinates to underlying tile value
+                    self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
+                    # set next coordinates to roaming character value
+                    self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
+                    roaming_character.rect.x += delta_x
+                    roaming_character.column += delta_x // 2
 
-            if delta_y:
-                # set current coordinates to underlying tile value
-                self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
-                # set next coordinates to roaming character value
-                self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
-                roaming_character.rect.y += -delta_y
-                roaming_character.row += -delta_y // 2
+                if delta_y:
+                    # set current coordinates to underlying tile value
+                    self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
+                    # set next coordinates to roaming character value
+                    self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
+                    roaming_character.rect.y += -delta_y
+                    roaming_character.row += -delta_y // 2
 
 
 def run():
