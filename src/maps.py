@@ -331,7 +331,6 @@ class TantegelCourtyard(DragonWarriorMap):
     def __init__(self):
         super().__init__(MapLayouts.tantegel_courtyard)
         alefgard = {'map': 'Alefgard', 'stair_direction': 'up'}
-        # TODO(ELF): add (14, 14) and have it redirect to TantegelThroneRoom
         #  TODO(ELF): replace staircases_keys with call to function warp_line, and get coordinates for warp_line (37, 9) - (37, 26)
         staircases_keys = [(37, min(n, 26)) for n in range(9, 27)]
         # staircase_keys = warp_line((37, 9), (37, 26))
