@@ -4,6 +4,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 import pygame
+from pygame import mixer
 from pygame.imageext import load_extended
 from pygame.transform import scale
 
@@ -16,6 +17,7 @@ from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 def create_key_mock(pressed_key):
@@ -59,6 +61,7 @@ class TestGame(TestCase):
         self.center_pt = 0, 0
         self.game.current_map = TestMockMap()
 
+
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
 
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
@@ -71,7 +74,7 @@ class TestGame(TestCase):
         self.game.hero_column = 0
         self.hero_layout_column, self.hero_layout_row = self.game.current_map.player.rect.x // TILE_SIZE, self.game.current_map.player.rect.y // TILE_SIZE
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
-        self.camera = Camera(hero_position=(self.hero_layout_row, self.hero_layout_column), current_map=self.game.current_map)
+        self.camera = Camera(hero_position=(self.hero_layout_row, self.hero_layout_column), current_map=self.game.current_map, screen=None)
         pygame.key.get_pressed = create_key_mock(pygame.K_RIGHT)
         pygame.key.get_pressed = create_key_mock(pygame.K_UP)
         pygame.key.get_pressed = create_key_mock(pygame.K_DOWN)
