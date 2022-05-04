@@ -44,9 +44,9 @@ def banner_sparkle(short, screen):
         display.flip()
 
 
-def show_intro_dragon_banner_with_text(screen, start_time, clock, background):
+def show_intro_dragon_banner_with_text(screen, clock, background):
     show_intro_banner(INTRO_BANNER_WITH_DRAGON_PATH, screen)
-    draw_text("-PUSH ANY KEY -", 15, ORANGE, screen.get_width() / 2, screen.get_height() * 10 / 16, DRAGON_QUEST_FONT_PATH, screen)
+    draw_text("- PUSH ANY KEY -", 15, ORANGE, screen.get_width() / 2, screen.get_height() * 10 / 16, DRAGON_QUEST_FONT_PATH, screen)
     draw_text("K key: A Button", 15, PINK, screen.get_width() / 2, screen.get_height() * 11 / 16, DRAGON_QUEST_FONT_PATH, screen)
     draw_text("J key: B Button", 15, PINK, screen.get_width() / 2, screen.get_height() * 12 / 16, DRAGON_QUEST_FONT_PATH, screen)
     draw_text("I key: Start", 15, PINK, screen.get_width() / 2, screen.get_height() * 13 / 16, DRAGON_QUEST_FONT_PATH, screen)
@@ -128,7 +128,7 @@ def show_start_screen(screen, start_time, clock, background):
                 waiting = False
         if frames >= 620:  # intro banner with text displays 620 frames in
             waiting = False
-    show_intro_dragon_banner_with_text(screen, start_time, clock, background)
+    show_intro_dragon_banner_with_text(screen, clock, background)
 
 
 def wait_for_key(clock):
