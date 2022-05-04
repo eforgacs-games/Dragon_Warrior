@@ -72,10 +72,11 @@ if ORCHESTRA_MUSIC_ENABLED:
     village_music = join(MUSIC_DIR, 'orchestra', '03 People.mp3')
     overworld_music = join(MUSIC_DIR, 'orchestra', '04 Unknown World.mp3')
 else:
-    tantegel_castle_throne_room_music = join(MUSIC_DIR, '02 Dragon Quest 1 - Tantegel Castle (22khz_mono).ogg')
-    tantegel_castle_courtyard_music = join(MUSIC_DIR, '03 Dragon Quest 1 - Tantegel Castle (Lower) (22khz mono).ogg')
-    village_music = join(MUSIC_DIR, '04 Dragon Quest 1 - Peaceful Village (22khz mono).ogg')
-    overworld_music = join(MUSIC_DIR, '05 Dragon Quest 1 - Kingdom of Alefgard (22khz mono).ogg')
+    intro_overture = join(MUSIC_DIR, 'NES', '01 Dragon Quest 1 - Intro ~ Overture (22khz mono).ogg')
+    tantegel_castle_throne_room_music = join(MUSIC_DIR, 'NES', '02 Dragon Quest 1 - Tantegel Castle (22khz_mono).ogg')
+    tantegel_castle_courtyard_music = join(MUSIC_DIR, 'NES', '03 Dragon Quest 1 - Tantegel Castle (Lower) (22khz mono).ogg')
+    village_music = join(MUSIC_DIR, 'NES', '04 Dragon Quest 1 - Peaceful Village (22khz mono).ogg')
+    overworld_music = join(MUSIC_DIR, 'NES', '05 Dragon Quest 1 - Kingdom of Alefgard (22khz mono).ogg')
 
 
 def play_music(path='data/sound/music'):
@@ -88,7 +89,7 @@ def play_music(path='data/sound/music'):
 
 # Images
 
-BLACK, WHITE, RED = (0, 0, 0), (255, 255, 255), (255, 0, 0)
+BLACK, WHITE, RED, ORANGE, PINK = (0, 0, 0), (255, 255, 255), (255, 0, 0), (234, 158, 34), (243, 106, 255)
 _image_library = {}
 MAP_TILES_PATH = join(IMAGES_DIR, 'tileset.png')
 UNARMED_HERO_PATH = join(IMAGES_DIR, 'unarmed_hero.png')
@@ -102,6 +103,8 @@ SOLDIER_PATH = join(IMAGES_DIR, 'soldier.png')
 MERCHANT_PATH = join(IMAGES_DIR, 'merchant.png')
 PRINCESS_GWAELIN_PATH = join(IMAGES_DIR, 'princess_gwaelin.png')
 DRAGONLORD_PATH = join(IMAGES_DIR, 'dragonlord.png')
+INTRO_BANNER_PATH = join(IMAGES_DIR, 'intro_banner', 'intro_banner.png')
+INTRO_BANNER_WITH_DRAGON_PATH = join(IMAGES_DIR, 'intro_banner', 'intro_banner_with_dragon.png')
 
 
 def get_image(path):
@@ -126,6 +129,10 @@ if exists(DRAGON_QUEST_FONT_PATH):
     DRAGON_QUEST_FONT = pygame.font.Font(DRAGON_QUEST_FONT_PATH, 15)
 else:
     DRAGON_QUEST_FONT = pygame.font.Font(find_file('dragon-quest.ttf', root_project_path), 15)
+
+SMB_FONT_PATH = join(FONTS_DIR, 'super_mario_bros__nes_font.ttf')
+SMB_FONT = pygame.font.Font(SMB_FONT_PATH, 15)
+
 
 
 # Characters
@@ -186,3 +193,42 @@ def print_with_beep_sfx(string_to_print):
         time.sleep(sleep_time)
         # pygame.time.wait(1)
     print("\n")
+
+
+def convert_to_frames(time_to_convert):
+    return int(60 * (time_to_convert / 1000))
+
+
+def convert_to_milliseconds(FPS):
+    return int((FPS / 60) * 1000)
+
+
+def get_surrounding_tiles(coordinates, map_layout, radius=1):
+    x = coordinates[0]
+    y = coordinates[1]
+    neighbors = [
+        map_layout[x - 1][y - 1],
+        map_layout[x - 1][y],
+        map_layout[x - 1][y + 1],
+
+        map_layout[x][y - 1],
+        map_layout[x][y + 1],
+
+        map_layout[x + 1][y - 1],
+        map_layout[x + 1][y],
+        map_layout[x + 1][y + 1]
+    ]
+    if radius > 1:
+        for i in range(2, radius):
+            neighbors.append(map_layout[x - i][y - i])
+            neighbors.append(map_layout[x - i][y])
+            neighbors.append(map_layout[x - i][y + i])
+
+            neighbors.append(map_layout[x][y - i])
+            neighbors.append(map_layout[x][y + i])
+
+            neighbors.append(map_layout[x + i][y - i])
+            neighbors.append(map_layout[x + i][y])
+            neighbors.append(map_layout[x + i][y + i])
+
+    return neighbors

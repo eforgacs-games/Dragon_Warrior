@@ -1,8 +1,8 @@
 import random
 import sys
 
-from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, DOUBLEBUF, mixer, QUIT, event, display, time, \
-    key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d, surface
+from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, \
+    K_LEFT, K_a, K_RIGHT, K_d, KEYUP
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -11,17 +11,16 @@ from pygame.time import get_ticks
 import src.menu as menu
 from src import maps
 from src.camera import Camera
-from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally
+from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally, \
+    WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tiles
 from src.common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import NES_RES, SHOW_FPS
+from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
+from src.intro import draw_text, show_start_screen
 from src.maps import get_character_position, get_next_coordinates, map_lookup
 from src.player.player import Player
 from src.sprites.roaming_character import handle_roaming_character_sides_collision
-
-
-def draw_menu_on_subsurface(menu_to_draw, subsurface):
-    return menu_to_draw.draw(subsurface)
+from src.visual_effects import fade
 
 
 class Game:
@@ -34,6 +33,7 @@ class Game:
 
     def __init__(self):
         # Initialize pygame
+        self.start_time = get_ticks()
         self.tiles_moved_since_spawn = 0
         self.loop_count = 1
         self.foreground_rects = []
@@ -43,9 +43,15 @@ class Game:
         self.paused = False
         # Create the game window.
         if FULLSCREEN_ENABLED:
-            flags = FULLSCREEN | DOUBLEBUF
+            # if it's segfaulting, try maybe not using the SCALED flag
+            # flags = FULLSCREEN | SCALED
+            flags = FULLSCREEN
         else:
-            flags = RESIZABLE | DOUBLEBUF
+            # flags = RESIZABLE | SCALED
+            flags = RESIZABLE
+        # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
+        # without SCALED, it will show more of the map, but will also not center the camera
+        # it might be a nice comfort addition to add to center the camera, while also showing more of the map
         self.scale = SCALE
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
@@ -90,25 +96,30 @@ class Game:
                                          self.dlg_box, self.player)
 
         self.menus = self.cmd_menu, self.dlg_box
-        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
+        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
+                             current_map=self.current_map,
+                             screen=self.screen)
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
         self.music_enabled = MUSIC_ENABLED
         if self.music_enabled:
-            mixer.music.load(self.current_map.music_file_path)
+            if SPLASH_SCREEN_ENABLED:
+                mixer.music.load(intro_overture)
+            else:
+                mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
         self.events = get()
-        self.command_menu_subsurface = self.set_background_subsurface(
-            left=(self.hero_layout_column - 2) * TILE_SIZE,
-            top=(self.hero_layout_row - 6) * TILE_SIZE,
-            width=8 * TILE_SIZE,
-            height=5 * TILE_SIZE
+        self.command_menu_subsurface = self.background.subsurface(
+            (self.hero_layout_column - 2) * TILE_SIZE,
+            (self.hero_layout_row - 6) * TILE_SIZE,
+            8 * TILE_SIZE,
+            5 * TILE_SIZE
         )
-        self.dialog_box_subsurface = self.set_background_subsurface(
-            left=TILE_SIZE,
-            top=TILE_SIZE,
-            width=12 * TILE_SIZE,
-            height=5 * TILE_SIZE
+        self.dialog_box_subsurface = self.background.subsurface(
+            TILE_SIZE,
+            TILE_SIZE,
+            12 * TILE_SIZE,
+            5 * TILE_SIZE
         )
 
         # pg.event.set_allowed([pg.QUIT])
@@ -122,6 +133,9 @@ class Game:
         Main loop.
         :return: None
         """
+        if SPLASH_SCREEN_ENABLED:
+            show_start_screen(self.screen, self.start_time, self.clock, self.background)
+            self.show_main_menu_screen(self.screen)
         while True:
             self.clock.tick(FPS)
             self.get_events()
@@ -129,13 +143,41 @@ class Game:
             self.update_screen()
             self.loop_count += 1
 
+    def show_main_menu_screen(self, screen):
+        main_menu_screen_enabled = True
+        if self.music_enabled:
+            mixer.music.load(village_music)
+            mixer.music.play(-1)
+        while main_menu_screen_enabled:
+            screen.fill(BLACK)
+            # totally dummy option for now, just a placeholder
+            for i in range(128):
+                draw_text(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.screen)
+                display.flip()
+            screen.fill(BLACK)
+            for i in range(128):
+                draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.screen)
+                display.flip()
+            screen.fill(BLACK)
+            self.clock.tick(FPS)
+            for current_event in get():
+                if current_event.type == QUIT:
+                    quit()
+                    sys.exit()
+                if current_event.type == KEYUP:
+                    main_menu_screen_enabled = False
+        play_sound(menu_button_sfx)
+        fade(screen.get_width(), screen.get_height(), fade_out=True, background=self.background, screen=self.screen)
+        if self.music_enabled:
+            mixer.music.load(self.current_map.music_file_path)
+            mixer.music.play(-1)
+
     def get_events(self) -> None:
         """
         Handle all events in main loop.
         :return: None
         """
         self.events = get()
-
         for current_event in self.events:
             if current_event.type == QUIT:
                 quit()
@@ -257,7 +299,8 @@ class Game:
         # won't work where there are moving NPCs, so only use this in the overworld
         if not self.current_map.roaming_characters:
             # basically, if you're in the overworld, since there are no roaming characters there
-            player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(self.get_surrounding_tiles(self.player.coordinates, radius=1))
+            player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(
+                get_surrounding_tiles(self.player.coordinates, self.current_map.layout, radius=1))
             if self.player.is_moving:
                 tile_types_to_draw = list(
                     dict.fromkeys(self.replace_characters_with_underlying_tiles(set(filter(None, [self.player.current_tile] + player_surrounding_tiles)))))
@@ -337,23 +380,23 @@ class Game:
     def handle_menu_launch(self, menu_to_launch):
         if menu_to_launch.launch_signaled:
             if menu_to_launch.menu.get_id() == 'command':
-                self.command_menu_subsurface = self.set_background_subsurface(
-                    left=(self.hero_layout_column - 2) * TILE_SIZE,  # 11 (first empty square to the left of menu)
-                    top=(self.hero_layout_row - 6) * TILE_SIZE,  # 4
-                    width=8 * TILE_SIZE,
-                    height=5 * TILE_SIZE
+                self.command_menu_subsurface = self.background.subsurface(
+                    (self.hero_layout_column - 2) * TILE_SIZE,  # 11 (first empty square to the left of menu)
+                    (self.hero_layout_row - 6) * TILE_SIZE,  # 4
+                    8 * TILE_SIZE,
+                    5 * TILE_SIZE
                 )
-                rect = draw_menu_on_subsurface(menu_to_launch.menu, self.command_menu_subsurface)
+                rect = menu.draw_menu_on_subsurface(menu_to_launch.menu, self.command_menu_subsurface)
             elif menu_to_launch.menu.get_id() == 'dialog_box':
-                self.dialog_box_subsurface = self.set_background_subsurface(
+                self.dialog_box_subsurface = self.background.subsurface(
                     # left=(self.hero_layout_column + 6) * TILE_SIZE,
                     # top=(self.hero_layout_row + 6) * TILE_SIZE,
-                    left=TILE_SIZE,
-                    top=TILE_SIZE,
-                    width=12 * TILE_SIZE,
-                    height=5 * TILE_SIZE
+                    TILE_SIZE,
+                    TILE_SIZE,
+                    12 * TILE_SIZE,
+                    5 * TILE_SIZE
                 )
-                rect = draw_menu_on_subsurface(menu_to_launch.menu, self.dialog_box_subsurface)
+                rect = menu.draw_menu_on_subsurface(menu_to_launch.menu, self.dialog_box_subsurface)
             else:
                 rect = None
                 print("No menu launched")
@@ -362,46 +405,12 @@ class Game:
             else:
                 self.foreground_rects.append(rect)
 
-    def set_background_subsurface(self, left, top, width, height) -> surface.Surface:
-        return self.background.subsurface(
-            left,
-            top,
-            width,
-            height
-        )
-
     def update_screen(self) -> None:
         """Update the screen's display."""
         for menu_or_dialog_box in self.menus:
             if menu_or_dialog_box.launched:
                 menu_or_dialog_box.menu.update(self.events)
         display.update()
-
-    def fade(self, width: int, height: int, fade_out: bool) -> None:
-        """
-        Fade to/from current scene to/from black.
-        :return: None
-        @param width: int
-        Width of surface to fade.
-        @param height:
-        Height of surface to fade.
-        @type fade_out: bool
-        If true, fades out. If false, fades in.
-        """
-        fade = Surface((width, height))  # lgtm [py/call/wrong-arguments]
-        fade.fill(BLACK)
-        self.opacity = 0
-        for alpha in range(300):
-            if fade_out:
-                self.opacity += 1
-            else:
-                # TODO(ELF): Fix fade in. Maybe this link will help? https://stackoverflow.com/questions/54881269/pygame-fade-to-black-function
-                self.opacity -= 1
-            fade.set_alpha(self.opacity)
-            self.background.fill(BLACK)
-            self.screen.blit(fade, (0, 0))
-            display.update()
-            time.delay(5)
 
     def change_map(self, next_map) -> None:
         """
@@ -412,14 +421,14 @@ class Game:
         self.pause_all_movement()
         self.current_map = next_map
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
-        self.fade(self.current_map.width, self.current_map.height, fade_out=True)
+        fade(self.current_map.width, self.current_map.height, fade_out=True, background=self.background, screen=self.screen)
         if self.music_enabled:
             mixer.music.stop()
         self.current_map.load_map(self.player)
 
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
-        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map)
+        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map, screen=None)
         # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
         self.loop_count = 1
         self.unpause_all_movement()
@@ -476,7 +485,7 @@ class Game:
             self.dlg_box.launched = True
 
     def set_and_append_rect(self, menu_to_set, subsurface):
-        menu_rect = draw_menu_on_subsurface(menu_to_set, subsurface)
+        menu_rect = menu.draw_menu_on_subsurface(menu_to_set, subsurface)
         if menu_rect:
             self.foreground_rects.append(menu_rect)
 
@@ -565,22 +574,18 @@ class Game:
                                                                        character_row=self.hero_layout_row,
                                                                        direction=self.player.direction, offset=3)
             self.next_tile_checked = True
-        if not self.is_impassable(self.player.next_tile):
-            if not self.character_in_path_of_player():
-                if delta_x:
-                    self.player.rect.x += delta_x
-                    next_cam_pos_x = curr_cam_pos_x + -delta_x
-                if delta_y:
-                    self.player.rect.y += -delta_y
-                    next_cam_pos_y = curr_cam_pos_y + delta_y
-            else:
-                self.bump_and_reset(pre_bump_next_tile, pre_bump_next_next_tile)
-
-        else:
+        if self.is_impassable(self.player.next_tile) or self.character_in_path_of_player():
             self.bump_and_reset(pre_bump_next_tile, pre_bump_next_next_tile)
 
-        next_cam_pos_x, next_cam_pos_y = self.handle_sides_collision(next_cam_pos_x, next_cam_pos_y)
-        self.camera.set_pos((next_cam_pos_x, next_cam_pos_y))
+        else:
+            if delta_x:
+                self.player.rect.x += delta_x
+                next_cam_pos_x = curr_cam_pos_x + -delta_x
+            if delta_y:
+                self.player.rect.y += -delta_y
+                next_cam_pos_y = curr_cam_pos_y + delta_y
+
+        self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
 
     def bump_and_reset(self, pre_bump_next_tile, pre_bump_next_next_tile):
         if self.player.next_tile != pre_bump_next_tile:
@@ -642,9 +647,9 @@ class Game:
         """
         return tile in self.current_map.impassable_tiles
 
-    def handle_sides_collision(self, next_pos_x: int, next_pos_y: int) -> tuple:
+    def move_and_handle_sides_collision(self, next_pos_x: int, next_pos_y: int) -> tuple:
         """
-        Handle collision with the sides of the map (for the player).
+        Move while handling collision with the sides of the map (for the player).
         :type next_pos_x: int
         :type next_pos_y: int
         :param next_pos_x: Next x position (in terms of tile size).
@@ -677,11 +682,10 @@ class Game:
         """
         for roaming_character in self.current_map.roaming_characters:
             get_character_position(roaming_character)
-            now = get_ticks()
             if roaming_character.last_roaming_clock_check is None:
-                roaming_character.last_roaming_clock_check = now
-            if now - roaming_character.last_roaming_clock_check >= self.ROAMING_CHARACTER_GO_COOLDOWN:
-                roaming_character.last_roaming_clock_check = now
+                roaming_character.last_roaming_clock_check = get_ticks()
+            if get_ticks() - roaming_character.last_roaming_clock_check >= self.ROAMING_CHARACTER_GO_COOLDOWN:
+                roaming_character.last_roaming_clock_check = get_ticks()
                 if not roaming_character.is_moving:
                     roaming_character.direction = random.choice(list(map(int, Direction)))
                 else:  # character not moving and no input
@@ -748,36 +752,6 @@ class Game:
                 self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
                 roaming_character.rect.y += -delta_y
                 roaming_character.row += -delta_y // 2
-
-    def get_surrounding_tiles(self, coordinates, radius=1):
-        x = coordinates[0]
-        y = coordinates[1]
-        neighbors = [
-            self.current_map.layout[x - 1][y - 1],
-            self.current_map.layout[x - 1][y],
-            self.current_map.layout[x - 1][y + 1],
-
-            self.current_map.layout[x][y - 1],
-            self.current_map.layout[x][y + 1],
-
-            self.current_map.layout[x + 1][y - 1],
-            self.current_map.layout[x + 1][y],
-            self.current_map.layout[x + 1][y + 1]
-        ]
-        if radius > 1:
-            for i in range(2, radius):
-                neighbors.append(self.current_map.layout[x - i][y - i])
-                neighbors.append(self.current_map.layout[x - i][y])
-                neighbors.append(self.current_map.layout[x - i][y + i])
-
-                neighbors.append(self.current_map.layout[x][y - i])
-                neighbors.append(self.current_map.layout[x][y + i])
-
-                neighbors.append(self.current_map.layout[x + i][y - i])
-                neighbors.append(self.current_map.layout[x + i][y])
-                neighbors.append(self.current_map.layout[x + i][y + i])
-
-        return neighbors
 
 
 def run():
