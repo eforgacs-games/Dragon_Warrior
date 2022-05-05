@@ -165,7 +165,7 @@ class Game:
                 if current_event.type == QUIT:
                     quit()
                     sys.exit()
-                if current_event.type == KEYUP:
+                elif current_event.type == KEYUP:
                     main_menu_screen_enabled = False
         play_sound(menu_button_sfx)
         fade(screen.get_width(), screen.get_height(), fade_out=True, background=self.background, screen=self.screen)
