@@ -16,7 +16,7 @@ from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_
 from src.common import get_tile_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
-from src.intro import draw_text, show_start_screen
+from src.intro import draw_text, Intro
 from src.maps import get_character_position, get_next_coordinates, map_lookup
 from src.player.player import Player
 from src.sprites.roaming_character import handle_roaming_character_sides_collision
@@ -134,7 +134,8 @@ class Game:
         :return: None
         """
         if SPLASH_SCREEN_ENABLED:
-            show_start_screen(self.screen, self.start_time, self.clock, self.background)
+            intro = Intro()
+            intro.show_start_screen(self.screen, self.start_time, self.clock, self.background)
             self.show_main_menu_screen(self.screen)
         while True:
             self.clock.tick(FPS)

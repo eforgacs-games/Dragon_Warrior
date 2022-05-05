@@ -196,7 +196,7 @@ def print_with_beep_sfx(string_to_print):
 
 
 def convert_to_frames(time_to_convert):
-    return int(60 * (time_to_convert / 1000))
+    return 60 * (time_to_convert / 1000)
 
 
 def convert_to_milliseconds(FPS):
