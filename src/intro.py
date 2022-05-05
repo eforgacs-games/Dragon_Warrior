@@ -35,7 +35,6 @@ def draw_text(text, size, color, x, y, font_name, screen):
 def banner_sparkle(short, screen):
     # first (long) sparkle starts 654 frames in, ends at 678 frames in, lasts (678 - 654 = 24 frames)
     # first (short) sparkle starts 782 frames in, ends at 794 frames in, lasts (794 - 782 = 12 frames)
-    # before_sparkle = get_ticks()
     for banner in os.listdir(join(IMAGES_DIR, 'intro_banner', 'sparkle')):
         before_frame = convert_to_frames(get_ticks())
         if short:
@@ -45,11 +44,6 @@ def banner_sparkle(short, screen):
         while convert_to_frames(get_ticks()) < before_frame + frames_per_slide:
             show_intro_banner(join(IMAGES_DIR, 'intro_banner', 'sparkle', banner), screen)
             display.flip()
-    # after_sparkle = get_ticks()
-    # if short:
-    #     print(f'short sparkle took {convert_to_frames(after_sparkle - before_sparkle)} frames')
-    # else:
-    #     print(f'long sparkle took {convert_to_frames(after_sparkle - before_sparkle)} frames')
 
 
 def draw_banner_text(screen):
@@ -94,15 +88,14 @@ class Intro:
         display.flip()
         waiting = True
         while waiting:
-            frames = convert_to_frames_since_start_time(start_time)
             clock.tick(FPS)
             for current_event in get():
                 if current_event.type == QUIT:
                     quit()
                     sys.exit()
-                if current_event.type == KEYUP:
+                elif current_event.type == KEYUP:
                     waiting = False
-            if frames >= 620:  # intro banner with text displays 620 frames in
+            if convert_to_frames_since_start_time(start_time) >= 620:  # intro banner with text displays 620 frames in
                 waiting = False
         self.show_intro_dragon_banner_with_text(screen, clock, background)
 
@@ -121,24 +114,24 @@ class Intro:
                 if current_event.type == QUIT:
                     quit()
                     sys.exit()
-                if current_event.type == KEYUP:
+                elif current_event.type == KEYUP:
                     intro_banner_with_text_enabled = False
         fade(screen.get_width(), screen.get_height(), fade_out=True, background=background, screen=screen)
 
-    def handle_all_sparkles(self, intro_banner_with_text_enabled_start_time, screen):
-        frames_since_banner_launch = convert_to_frames_since_start_time(intro_banner_with_text_enabled_start_time)
-        if int(frames_since_banner_launch) >= 32:
+    def handle_all_sparkles(self, start_time, screen):
+        frames_since_banner_launch = convert_to_frames_since_start_time(start_time)
+        if frames_since_banner_launch >= 32:
             self.first_long_sparkle_done, self.last_long_sparkle_clock_check = handle_sparkles(screen, self.first_long_sparkle_done,
                                                                                                self.last_long_sparkle_clock_check,
                                                                                                short=False)
-        if int(frames_since_banner_launch) >= 160:
-            self.first_short_sparkle_done, self.last_first_short_sparkle_clock_check = handle_sparkles(screen, self.first_short_sparkle_done,
-                                                                                                       self.last_first_short_sparkle_clock_check,
-                                                                                                       short=True)
-        if int(frames_since_banner_launch) >= 192:
-            self.second_short_sparkle_done, self.last_second_short_sparkle_clock_check = handle_sparkles(screen, self.second_short_sparkle_done,
-                                                                                                         self.last_second_short_sparkle_clock_check,
-                                                                                                         short=True)
+            if frames_since_banner_launch >= 32 + 128:  # 160
+                self.first_short_sparkle_done, self.last_first_short_sparkle_clock_check = handle_sparkles(screen, self.first_short_sparkle_done,
+                                                                                                           self.last_first_short_sparkle_clock_check,
+                                                                                                           short=True)
+                if frames_since_banner_launch >= 32 + 128 + 32:  # 192
+                    self.second_short_sparkle_done, self.last_second_short_sparkle_clock_check = handle_sparkles(screen, self.second_short_sparkle_done,
+                                                                                                                 self.last_second_short_sparkle_clock_check,
+                                                                                                                 short=True)
 
 
 def wait_for_key(clock):
@@ -149,5 +142,5 @@ def wait_for_key(clock):
             if current_event.type == QUIT:
                 quit()
                 sys.exit()
-            if current_event.type == KEYUP:
+            elif current_event.type == KEYUP:
                 waiting = False
