@@ -200,7 +200,7 @@ def convert_to_frames(time_to_convert):
 
 
 def convert_to_milliseconds(FPS):
-    return int((FPS / 60) * 1000)
+    return (FPS / 60) * 1000
 
 
 def get_surrounding_tiles(coordinates, map_layout, radius=1):
