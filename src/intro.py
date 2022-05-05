@@ -42,9 +42,9 @@ def banner_sparkle(short, screen):
             frames_per_slide = 1.5
         else:
             frames_per_slide = 3
-        while convert_to_frames(get_ticks()) <= before_frame + frames_per_slide:
+        while convert_to_frames(get_ticks()) < before_frame + frames_per_slide:
             show_intro_banner(join(IMAGES_DIR, 'intro_banner', 'sparkle', banner), screen)
-        display.flip()
+            display.flip()
     # after_sparkle = get_ticks()
     # if short:
     #     print(f'short sparkle took {convert_to_frames(after_sparkle - before_sparkle)} frames')
