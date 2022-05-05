@@ -152,11 +152,11 @@ class Game:
         while main_menu_screen_enabled:
             screen.fill(BLACK)
             # totally dummy option for now, just a placeholder
-            for i in range(128):
+            for i in range(256):
                 draw_text(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.screen)
                 display.flip()
             screen.fill(BLACK)
-            for i in range(128):
+            for i in range(256):
                 draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.screen)
                 display.flip()
             screen.fill(BLACK)
