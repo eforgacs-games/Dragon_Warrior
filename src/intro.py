@@ -94,7 +94,7 @@ class Intro:
         display.flip()
         waiting = True
         while waiting:
-            frames = 60 * (get_ticks() - start_time) / 1000
+            frames = convert_to_frames_since_start_time(start_time)
             clock.tick(FPS)
             for current_event in get():
                 if current_event.type == QUIT:
