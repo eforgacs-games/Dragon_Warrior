@@ -88,6 +88,24 @@ class Intro:
         self.first_short_sparkle_done = False
         self.second_short_sparkle_done = False
 
+    def show_start_screen(self, screen, start_time, clock, background):
+        screen.fill(BLACK)
+        show_intro_banner(INTRO_BANNER_PATH, screen)
+        display.flip()
+        waiting = True
+        while waiting:
+            frames = 60 * (get_ticks() - start_time) / 1000
+            clock.tick(FPS)
+            for current_event in get():
+                if current_event.type == QUIT:
+                    quit()
+                    sys.exit()
+                if current_event.type == KEYUP:
+                    waiting = False
+            if frames >= 620:  # intro banner with text displays 620 frames in
+                waiting = False
+        self.show_intro_dragon_banner_with_text(screen, clock, background)
+
     def show_intro_dragon_banner_with_text(self, screen, clock, background):
         show_intro_banner(INTRO_BANNER_WITH_DRAGON_PATH, screen)
         draw_banner_text(screen)
@@ -111,7 +129,8 @@ class Intro:
         frames_since_banner_launch = convert_to_frames_since_start_time(intro_banner_with_text_enabled_start_time)
         if int(frames_since_banner_launch) >= 32:
             self.first_long_sparkle_done, self.last_long_sparkle_clock_check = handle_sparkles(screen, self.first_long_sparkle_done,
-                                                                                               self.last_long_sparkle_clock_check, short=False)
+                                                                                               self.last_long_sparkle_clock_check,
+                                                                                               short=False)
         if int(frames_since_banner_launch) >= 160:
             self.first_short_sparkle_done, self.last_first_short_sparkle_clock_check = handle_sparkles(screen, self.first_short_sparkle_done,
                                                                                                        self.last_first_short_sparkle_clock_check,
@@ -120,24 +139,6 @@ class Intro:
             self.second_short_sparkle_done, self.last_second_short_sparkle_clock_check = handle_sparkles(screen, self.second_short_sparkle_done,
                                                                                                          self.last_second_short_sparkle_clock_check,
                                                                                                          short=True)
-
-    def show_start_screen(self, screen, start_time, clock, background):
-        screen.fill(BLACK)
-        show_intro_banner(INTRO_BANNER_PATH, screen)
-        display.flip()
-        waiting = True
-        while waiting:
-            frames = 60 * (get_ticks() - start_time) / 1000
-            clock.tick(FPS)
-            for current_event in get():
-                if current_event.type == QUIT:
-                    quit()
-                    sys.exit()
-                if current_event.type == KEYUP:
-                    waiting = False
-            if frames >= 620:  # intro banner with text displays 620 frames in
-                waiting = False
-        self.show_intro_dragon_banner_with_text(screen, clock, background)
 
 
 def wait_for_key(clock):
