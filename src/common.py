@@ -134,7 +134,6 @@ SMB_FONT_PATH = join(FONTS_DIR, 'super_mario_bros__nes_font.ttf')
 SMB_FONT = pygame.font.Font(SMB_FONT_PATH, 15)
 
 
-
 # Characters
 
 
@@ -196,11 +195,11 @@ def print_with_beep_sfx(string_to_print):
 
 
 def convert_to_frames(time_to_convert):
-    return 60 * (time_to_convert / 1000)
+    return 60 * time_to_convert / 1000
 
 
-def convert_to_milliseconds(FPS):
-    return (FPS / 60) * 1000
+def convert_to_milliseconds(fps):
+    return fps / 60 * 1000
 
 
 def get_surrounding_tiles(coordinates, map_layout, radius=1):
