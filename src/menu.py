@@ -46,6 +46,7 @@ class CommandMenu(Menu):
         self.launched = False
         self.map_name = current_map.__class__.__name__
         self.background = background
+        # TODO: This gives a ValueError if the map is too small.
         command_menu_subsurface = background.subsurface((column - 2) * TILE_SIZE,
                                                         (row - 6) * TILE_SIZE,
                                                         8 * TILE_SIZE,

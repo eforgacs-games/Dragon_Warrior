@@ -4,7 +4,6 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 import pygame
-from pygame import mixer
 from pygame.imageext import load_extended
 from pygame.transform import scale
 
@@ -60,7 +59,6 @@ class TestGame(TestCase):
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
         self.game.current_map = TestMockMap()
-
 
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
 
