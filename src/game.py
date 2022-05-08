@@ -23,6 +23,24 @@ from src.sprites.roaming_character import handle_roaming_character_sides_collisi
 from src.visual_effects import fade
 
 
+def bump(character):
+    if character.identifier == 'HERO':
+        if not character.last_bump_time:
+            character.last_bump_time = get_ticks()
+        if get_ticks() - character.last_bump_time >= convert_to_milliseconds(15):
+            character.last_bump_time = get_ticks()
+            play_sound(bump_sfx)
+    character.bumped = True
+
+
+def bump_and_reset(character, pre_bump_next_tile, pre_bump_next_next_tile):
+    if character.next_tile_id != pre_bump_next_tile:
+        character.next_tile_id = pre_bump_next_tile
+    if character.next_next_tile_id != pre_bump_next_next_tile:
+        character.next_next_tile_id = pre_bump_next_next_tile
+    bump(character)
+
+
 class Game:
     GAME_TITLE = "Dragon Warrior"
     BACK_FILL_COLOR = BLACK
@@ -69,7 +87,7 @@ class Game:
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
-        # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
+
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
         self.big_map.fill(self.BACK_FILL_COLOR)
         self.speed = 2
@@ -79,7 +97,6 @@ class Game:
         # Make the big scrollable map
         self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
         self.player = Player(center_point=None, images=None)
-        self.player.next_tile_checked = False
         self.current_map.load_map(self.player)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
@@ -555,85 +572,65 @@ class Game:
 
     def move_laterally(self, character) -> None:
         if is_facing_left(character):
-            if character.identifier == "HERO":
-                self.move(delta_x=-self.speed, delta_y=0)
-            else:
-                self.move_roaming_character(character, delta_x=-self.speed, delta_y=0)
+            self.move(character, delta_x=-self.speed, delta_y=0)
         elif is_facing_right(character):
-            if character.identifier == "HERO":
-                self.move(delta_x=self.speed, delta_y=0)
-            else:
-                self.move_roaming_character(character, delta_x=self.speed, delta_y=0)
+            self.move(character, delta_x=self.speed, delta_y=0)
 
     def move_medially(self, character) -> None:
         if is_facing_up(character):
-            if character.identifier == "HERO":
-                self.move(delta_x=0, delta_y=self.speed)
-            else:
-                self.move_roaming_character(character, delta_x=0, delta_y=self.speed)
+            self.move(character, delta_x=0, delta_y=self.speed)
         elif is_facing_down(character):
-            if character.identifier == "HERO":
-                self.move(delta_x=0, delta_y=-self.speed)
-            else:
-                self.move_roaming_character(character, delta_x=0, delta_y=-self.speed)
+            self.move(character, delta_x=0, delta_y=-self.speed)
 
-    def move(self, delta_x, delta_y) -> None:
+    def move(self, character, delta_x, delta_y) -> None:
         """
-        The method that actuates the movement of the player from within the move_player method.
+        The method that actuates movement of characters from within the move_player method.
+        :param character: Character to move
         :param delta_x: Change in x position.
         :param delta_y: Change in y position.
         :return: None
         """
-        curr_cam_pos_x, curr_cam_pos_y = self.camera.get_pos()
-        next_cam_pos_x, next_cam_pos_y = curr_cam_pos_x, curr_cam_pos_y
-        self.check_next_tile(self.player)
-        if self.is_impassable(self.player.next_tile_id) or self.character_in_path_of_player():
-            self.bump_and_reset(self.player.next_tile_id, self.player.next_next_tile_id)
-
+        if character.identifier == 'HERO':
+            curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.get_pos()
+        self.check_next_tile(character)
+        if self.is_impassable(character.next_tile_id):
+            bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
+        elif self.character_in_path(character):
+            bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
         else:
             if delta_x:
-                self.player.rect.x += delta_x
-                next_cam_pos_x = curr_cam_pos_x + -delta_x
+                character.rect.x += delta_x
+                character.column += delta_x // 2
+                if character.identifier == 'HERO':
+                    next_cam_pos_x = curr_cam_pos_x + -delta_x
             if delta_y:
-                self.player.rect.y += -delta_y
-                next_cam_pos_y = curr_cam_pos_y + delta_y
-
-        self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
+                character.rect.y += -delta_y
+                character.row += -delta_y // 2
+                if character.identifier == 'HERO':
+                    next_cam_pos_y = curr_cam_pos_y + delta_y
+        if character.identifier == 'HERO':
+            self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
 
     def check_next_tile(self, character):
         if not character.next_tile_checked:
-            character.next_tile_id = self.get_next_tile_identifier(character_column=self.player.column,
-                                                                   character_row=self.player.row,
+            character.next_tile_id = self.get_next_tile_identifier(character_column=character.column,
+                                                                   character_row=character.row,
                                                                    direction=character.direction)
-            character.next_next_tile_id = self.get_next_tile_identifier(character_column=self.player.column,
-                                                                        character_row=self.player.row,
+            character.next_next_tile_id = self.get_next_tile_identifier(character_column=character.column,
+                                                                        character_row=character.row,
                                                                         direction=character.direction, offset=2)
             character.next_tile_checked = True
 
-    def bump_and_reset(self, pre_bump_next_tile, pre_bump_next_next_tile):
-        if self.player.next_tile_id != pre_bump_next_tile:
-            self.player.next_tile_id = pre_bump_next_tile
-        if self.player.next_next_tile_id != pre_bump_next_next_tile:
-            self.player.next_next_tile_id = pre_bump_next_next_tile
-        self.bump()
-
-    def bump(self):
-        if not self.player.last_bump_time:
-            self.player.last_bump_time = get_ticks()
-        if get_ticks() - self.player.last_bump_time >= convert_to_milliseconds(15):
-            self.player.last_bump_time = get_ticks()
-            play_sound(bump_sfx)
-        self.player.bumped = True
-
-    def character_in_path_of_player(self) -> bool:
+    def character_in_path(self, character) -> bool:
         fixed_character_locations = [(fixed_character.column, fixed_character.row) for fixed_character in
                                      self.current_map.fixed_characters]
         roaming_character_locations = [(roaming_character.column, roaming_character.row) for roaming_character in
                                        self.current_map.roaming_characters]
-        return self.get_next_coordinates(self.player.column, self.player.row,
-                                         self.player.direction) in fixed_character_locations or self.get_next_coordinates(self.player.column,
-                                                                                                                          self.player.row,
-                                                                                                                          self.player.direction) in roaming_character_locations
+        return self.get_next_coordinates(character.column, character.row,
+                                         character.direction) in fixed_character_locations or \
+               self.get_next_coordinates(character.column,
+                                         character.row,
+                                         character.direction) in roaming_character_locations
 
     def get_next_tile_identifier(self, character_column: int, character_row: int, direction, offset=1) -> str:
         """
@@ -686,19 +683,19 @@ class Game:
         max_x_bound, max_y_bound, min_bound = self.current_map.width - TILE_SIZE, self.current_map.height - TILE_SIZE, 0
         if self.player.rect.x < min_bound:
             self.player.rect.x = min_bound
-            self.bump()
+            bump(self.player)
             next_pos_x += -self.speed
         elif self.player.rect.x > max_x_bound:
             self.player.rect.x = max_x_bound
-            self.bump()
+            bump(self.player)
             next_pos_x += self.speed
         elif self.player.rect.y < min_bound:
             self.player.rect.y = min_bound
-            self.bump()
+            bump(self.player)
             next_pos_y -= self.speed
         elif self.player.rect.y > max_y_bound:
             self.player.rect.y = max_y_bound
-            self.bump()
+            bump(self.player)
             next_pos_y += self.speed
         return next_pos_x, next_pos_y
 
@@ -732,37 +729,6 @@ class Game:
             elif is_facing_laterally(roaming_character):
                 self.move_laterally(roaming_character)
             handle_roaming_character_sides_collision(self.current_map, roaming_character)
-
-    def move_roaming_character(self, roaming_character, delta_x, delta_y) -> None:
-        """
-        The method that actuates the movement of the roaming characters from within the move_roaming_characters method.
-        :param delta_x: Change in x position.
-        :param delta_y: Change in y position.
-        :param roaming_character: Roaming character to be moved.
-        :return: None
-        """
-        next_coordinates = get_next_coordinates(roaming_character.column, roaming_character.row, roaming_character.direction)
-        self.check_next_tile(roaming_character)
-        if not self.is_impassable(roaming_character.next_tile_id) and (roaming_character.column, roaming_character.row) != (
-        self.player.column, self.player.row):
-            character_value = self.current_map.character_key[roaming_character.identifier]['val']
-            underlying_tile_val = self.current_map.tile_key[self.current_map.character_key[roaming_character.identifier]['underlying_tile']]['val']
-            if type(self.current_map.layout[next_coordinates[0]]) != tuple:
-                if delta_x:
-                    # set current coordinates to underlying tile value
-                    self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
-                    # set next coordinates to roaming character value
-                    self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
-                    roaming_character.rect.x += delta_x
-                    roaming_character.column += delta_x // 2
-
-                if delta_y:
-                    # set current coordinates to underlying tile value
-                    self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
-                    # set next coordinates to roaming character value
-                    self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
-                    roaming_character.rect.y += -delta_y
-                    roaming_character.row += -delta_y // 2
 
 
 def run():
