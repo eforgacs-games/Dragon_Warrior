@@ -134,7 +134,6 @@ SMB_FONT_PATH = join(FONTS_DIR, 'super_mario_bros__nes_font.ttf')
 SMB_FONT = pygame.font.Font(SMB_FONT_PATH, 15)
 
 
-
 # Characters
 
 
@@ -165,7 +164,7 @@ def is_facing_laterally(character):
 # Maps
 
 
-def get_tile_by_coordinates(column: int, row: int, game_map) -> str:
+def get_tile_id_by_coordinates(column: int, row: int, game_map) -> str:
     """
     Retrieve the tile name from the coordinates of the tile on the map.
     :param column: The column of the tile.
@@ -196,11 +195,11 @@ def print_with_beep_sfx(string_to_print):
 
 
 def convert_to_frames(time_to_convert):
-    return int(60 * (time_to_convert / 1000))
+    return 60 * time_to_convert / 1000
 
 
-def convert_to_milliseconds(FPS):
-    return int((FPS / 60) * 1000)
+def convert_to_milliseconds(fps):
+    return fps / 60 * 1000
 
 
 def get_surrounding_tiles(coordinates, map_layout, radius=1):
