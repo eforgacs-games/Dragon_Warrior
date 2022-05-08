@@ -83,6 +83,8 @@ def vertical_warp_line(top_point, bottom_point):
 class DragonWarriorMap:
     def __init__(self, layout, last_map=None):
 
+        self.identifier = self.__class__.__name__
+
         # Character variables
 
         self.tile_types_in_current_map = []
@@ -252,7 +254,6 @@ class DragonWarriorMap:
         self.add_tile(self.floor_tile_key[underlying_tile])
         self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
-
     def set_identifiers_for_duplicate_characters(self, character, identifier):
         character_count = [character_dict['tile_value'] for character_dict in self.characters.values()].count(self.character_key[identifier]['val']) + 1
         if character_count > 1:
@@ -313,7 +314,8 @@ class TantegelThroneRoom(DragonWarriorMap):
     """
 
     def __init__(self):
-        super().__init__(MapLayouts.tantegel_throne_room)
+        super().__init__(MapLayouts().tantegel_throne_room)
+
         self.staircases = {(14, 18): {'map': 'TantegelCourtyard', 'stair_direction': 'down'}}
         self.music_file_path = tantegel_castle_throne_room_music
 
@@ -336,7 +338,7 @@ class TantegelCourtyard(DragonWarriorMap):
     """
 
     def __init__(self):
-        super().__init__(MapLayouts.tantegel_courtyard)
+        super().__init__(MapLayouts().tantegel_courtyard)
         alefgard = {'map': 'Alefgard', 'stair_direction': 'up'}
         #  TODO(ELF): replace staircases_keys with call to function warp_line, and get coordinates for warp_line (37, 9) - (37, 26)
         staircases_keys = [(37, min(n, 26)) for n in range(9, 27)]
@@ -368,7 +370,7 @@ class Alefgard(DragonWarriorMap):
     """
 
     def __init__(self):
-        super().__init__(MapLayouts.alefgard)
+        super().__init__(MapLayouts().alefgard)
         self.music_file_path = overworld_music
         self.staircases = {
             (46, 54): {'map': 'Brecconary', 'stair_direction': 'up'},
@@ -392,7 +394,7 @@ class Alefgard(DragonWarriorMap):
 class Brecconary(DragonWarriorMap):
 
     def __init__(self):
-        super().__init__(MapLayouts.brecconary)
+        super().__init__(MapLayouts().brecconary)
         # up_staircase = {'map': Alefgard(self.hero_images), 'stair_direction': 'up'}
         up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
         west_gate = warp_line((21, 9), (24, 9))
@@ -422,7 +424,7 @@ class Brecconary(DragonWarriorMap):
 class Garinham(DragonWarriorMap):
 
     def __init__(self):
-        super().__init__(MapLayouts.garinham)
+        super().__init__(MapLayouts().garinham)
         # up_staircase = {'map': Alefgard(self.hero_images), 'stair_direction': 'up'}
         up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
         west_gate = warp_line((13, 8), (15, 8))
@@ -480,10 +482,3 @@ def get_character_position(character):
     character.column, character.row = character.rect.x // TILE_SIZE, character.rect.y // TILE_SIZE
 
 
-map_lookup = {
-    "TantegelThroneRoom": TantegelThroneRoom,
-    "TantegelCourtyard": TantegelCourtyard,
-    "Alefgard": Alefgard,
-    "Brecconary": Brecconary,
-    "Garinham": Garinham
-}
