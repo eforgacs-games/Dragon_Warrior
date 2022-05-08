@@ -16,7 +16,7 @@ class Player(AnimatedSprite):
         self.next_next_coordinates = None
         self.current_tile = None
         self.next_tile_id = None
-        self.next_next_tile = None
+        self.next_next_tile_id = None
         self.bumped = False
         self.last_bump_time = None
 

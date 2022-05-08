@@ -87,10 +87,10 @@ class Game:
         self.player.next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
                                                                  character_row=self.hero_layout_row,
                                                                  direction=self.current_map.player.direction)
-        self.player.next_next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                                   character_row=self.hero_layout_row,
-                                                                   direction=self.current_map.player.direction,
-                                                                   offset=3)
+        self.player.next_next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
+                                                                      character_row=self.hero_layout_row,
+                                                                      direction=self.current_map.player.direction,
+                                                                      offset=3)
         self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
         self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.player.current_tile, self.current_map,
                                          self.dlg_box, self.player)
@@ -590,12 +590,12 @@ class Game:
             self.player.next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
                                                                      character_row=self.hero_layout_row,
                                                                      direction=self.player.direction)
-            self.player.next_next_tile = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                                       character_row=self.hero_layout_row,
-                                                                       direction=self.player.direction, offset=2)
+            self.player.next_next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
+                                                                          character_row=self.hero_layout_row,
+                                                                          direction=self.player.direction, offset=2)
             self.next_tile_checked = True
         if self.is_impassable(self.player.next_tile_id) or self.character_in_path_of_player():
-            self.bump_and_reset(self.player.next_tile_id, self.player.next_next_tile)
+            self.bump_and_reset(self.player.next_tile_id, self.player.next_next_tile_id)
 
         else:
             if delta_x:
@@ -610,8 +610,8 @@ class Game:
     def bump_and_reset(self, pre_bump_next_tile, pre_bump_next_next_tile):
         if self.player.next_tile_id != pre_bump_next_tile:
             self.player.next_tile_id = pre_bump_next_tile
-        if self.player.next_next_tile != pre_bump_next_next_tile:
-            self.player.next_next_tile = pre_bump_next_next_tile
+        if self.player.next_next_tile_id != pre_bump_next_next_tile:
+            self.player.next_next_tile_id = pre_bump_next_next_tile
         self.bump()
 
     def bump(self):
