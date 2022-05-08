@@ -17,7 +17,9 @@ from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down,
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.intro import draw_text, Intro
-from src.maps import get_character_position, get_next_coordinates, map_lookup
+from src.map_layouts import MapLayouts
+from src.maps import get_character_position, get_next_coordinates
+from src.map_lookups import map_lookup
 from src.player.player import Player
 from src.sprites.roaming_character import handle_roaming_character_sides_collision
 from src.visual_effects import fade
@@ -56,7 +58,6 @@ class Game:
         self.tiles_moved_since_spawn = 0
         self.loop_count = 1
         self.foreground_rects = []
-        self.opacity = 0
         init()
 
         self.paused = False
@@ -75,6 +76,7 @@ class Game:
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
         self.win_width, self.win_height = NES_RES[0] * self.scale, NES_RES[1] * self.scale
+        self.speed = 2
         # self.win_width = current_screen_width
         # self.win_height = current_screen_height
         self.screen = set_mode((self.win_width, self.win_height), flags)
@@ -91,7 +93,7 @@ class Game:
 
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
         self.big_map.fill(self.BACK_FILL_COLOR)
-        self.speed = 2
+
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
             get_character_position(roaming_character)
@@ -100,6 +102,7 @@ class Game:
         self.player = Player(center_point=None, images=None)
         self.current_map.load_map(self.player)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
+
         self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.player.next_tile_id = self.get_next_tile_identifier(character_column=self.player.column,
@@ -256,7 +259,7 @@ class Game:
         # Debugging area
 
         # This prints out the current tile that the player is standing on.
-        # print(self.player.current_tile)
+        # print(f"self.player.current_tile: {self.player.current_tile}")
 
         # This prints out the current coordinates that the player is standing on.
         # print(self.player.coordinates)
@@ -461,19 +464,21 @@ class Game:
         self.pause_all_movement()
         self.last_map = self.current_map
         self.current_map = next_map
-        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
         fade(self.current_map.width, self.current_map.height, fade_out=True, background=self.background, screen=self.screen)
+        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
+        self.big_map.fill(self.BACK_FILL_COLOR)
+        for roaming_character in self.current_map.roaming_characters:
+            roaming_character.last_roaming_clock_check = get_ticks()
+            get_character_position(roaming_character)
         if self.music_enabled:
             mixer.music.stop()
+        layouts = MapLayouts()
+        self.current_map.layout = layouts.map_layout_lookup[self.current_map.__class__.__name__]
         self.current_map.load_map(self.player)
 
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        if initial_hero_location.any():
-            self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
-        else:
-            if type(self.last_map) == maps.TantegelCourtyard:
-                self.player.row, self.player.column = 15, 15
-        self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)), current_map=self.current_map, screen=None)
+        self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
+        self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)), current_map=self.current_map, screen=self.screen)
         # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
         self.loop_count = 1
         self.unpause_all_movement()
@@ -606,11 +611,13 @@ class Game:
         else:
             if delta_x:
                 character.rect.x += delta_x
-                character.column += delta_x // 2
+                # this causes the fade out to happen a square before the player touches a staircase
+                # character.column += delta_x // 2
                 next_cam_pos_x = curr_cam_pos_x + -delta_x
             if delta_y:
                 character.rect.y += -delta_y
-                character.row += -delta_y // 2
+                # this causes the fade out to happen a square before the player touches a staircase
+                # character.row += -delta_y // 2
                 next_cam_pos_y = curr_cam_pos_y + delta_y
         if character.identifier == 'HERO':
             self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
