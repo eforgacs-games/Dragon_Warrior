@@ -164,7 +164,7 @@ def is_facing_laterally(character):
 # Maps
 
 
-def get_tile_by_coordinates(column: int, row: int, game_map) -> str:
+def get_tile_id_by_coordinates(column: int, row: int, game_map) -> str:
     """
     Retrieve the tile name from the coordinates of the tile on the map.
     :param column: The column of the tile.
