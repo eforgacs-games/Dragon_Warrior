@@ -235,17 +235,23 @@ class DragonWarriorMap:
         if four_sided:
             if is_roaming:
                 character = RoamingCharacter(self.center_pt, direction, images, identifier)
-                character.position = self.get_initial_character_location(character.identifier)
+                character.row, character.column = coordinates
                 self.roaming_characters.append(character)
             else:
                 character = FixedCharacter(self.center_pt, direction, images, identifier)
+                character.row, character.column = coordinates
+                self.fixed_characters.append(character)
         else:
             character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, identifier)
+            character.row, character.column = coordinates
+            self.fixed_characters.append(character)
         character_sprites.add(character)
         # self.character_key[identifier]['val']
         self.set_identifiers_for_duplicate_characters(character, identifier)
         self.characters[character.identifier] = {'character': character, 'character_sprites': character_sprites, 'tile_value': self.character_key[identifier]['val'], 'coordinates': coordinates}
         self.add_tile(self.floor_tile_key[underlying_tile])
+        self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
+
 
     def set_identifiers_for_duplicate_characters(self, character, identifier):
         character_count = [character_dict['tile_value'] for character_dict in self.characters.values()].count(self.character_key[identifier]['val']) + 1
@@ -258,6 +264,7 @@ class DragonWarriorMap:
         self.player.direction = self.hero_initial_direction()
         self.add_tile(self.floor_tile_key[underlying_tile])
         self.characters['HERO'] = {'character': self.player, 'character_sprites': self.player_sprites, 'tile_value': self.character_key['HERO']['val'], 'coordinates': coordinates}
+        self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
     # @timeit
     def map_floor_tiles(self, x, y) -> None:
