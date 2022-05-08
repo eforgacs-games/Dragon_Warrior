@@ -9,7 +9,7 @@ from pygame.imageext import load_extended
 from pygame.transform import scale
 
 from src.camera import Camera
-from src.common import UNARMED_HERO_PATH, get_tile_by_coordinates, Direction
+from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
 from src.maps import DragonWarriorMap, parse_animated_sprite_sheet
@@ -107,10 +107,10 @@ class TestGame(TestCase):
     #     self.assertEqual(self.game.move_player(key), None)
 
     def test_get_tile_by_coordinates(self):
-        self.assertEqual('HERO', get_tile_by_coordinates(0, 0, self.game.current_map))
-        self.assertEqual('ROOF', get_tile_by_coordinates(1, 0, self.game.current_map))
-        self.assertEqual('WALL', get_tile_by_coordinates(0, 1, self.game.current_map))
-        self.assertEqual('WOOD', get_tile_by_coordinates(1, 1, self.game.current_map))
+        self.assertEqual('HERO', get_tile_id_by_coordinates(0, 0, self.game.current_map))
+        self.assertEqual('ROOF', get_tile_id_by_coordinates(1, 0, self.game.current_map))
+        self.assertEqual('WALL', get_tile_id_by_coordinates(0, 1, self.game.current_map))
+        self.assertEqual('WOOD', get_tile_id_by_coordinates(1, 1, self.game.current_map))
 
     # TODO: implement test_handle_roaming_character_map_edge_side_collision.
 
