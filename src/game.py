@@ -61,7 +61,6 @@ class Game:
         self.screen = set_mode((self.win_width, self.win_height), flags)
         # self.screen.set_alpha(None)
         set_caption(self.GAME_TITLE)
-        self.next_tile_checked = False
 
         # self.current_map can be changed to other maps for development purposes
 
@@ -80,23 +79,24 @@ class Game:
         # Make the big scrollable map
         self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
         self.player = Player(center_point=None, images=None)
+        self.player.next_tile_checked = False
         self.current_map.load_map(self.player)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
+        self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
-        self.player.next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                                 character_row=self.hero_layout_row,
+        self.player.next_tile_id = self.get_next_tile_identifier(character_column=self.player.column,
+                                                                 character_row=self.player.row,
                                                                  direction=self.current_map.player.direction)
-        self.player.next_next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                                      character_row=self.hero_layout_row,
+        self.player.next_next_tile_id = self.get_next_tile_identifier(character_column=self.player.column,
+                                                                      character_row=self.player.row,
                                                                       direction=self.current_map.player.direction,
                                                                       offset=3)
-        self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.player.current_tile, self.current_map,
+        self.dlg_box = menu.DialogBox(self.background, self.player.column, self.player.row)
+        self.cmd_menu = menu.CommandMenu(self.background, self.player.column, self.player.row, self.player.current_tile, self.current_map,
                                          self.dlg_box, self.player)
 
         self.menus = self.cmd_menu, self.dlg_box
-        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
+        self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                              current_map=self.current_map,
                              screen=self.screen)
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
@@ -110,8 +110,8 @@ class Game:
             mixer.music.play(-1)
         self.events = get()
         self.command_menu_subsurface = self.background.subsurface(
-            (self.hero_layout_column - 2) * TILE_SIZE,
-            (self.hero_layout_row - 6) * TILE_SIZE,
+            (self.player.column - 2) * TILE_SIZE,
+            (self.player.row - 6) * TILE_SIZE,
             8 * TILE_SIZE,
             5 * TILE_SIZE
         )
@@ -185,8 +185,8 @@ class Game:
                 sys.exit()
         event.pump()
         current_key = key.get_pressed()
-        self.hero_layout_column = self.player.rect.x // TILE_SIZE
-        self.hero_layout_row = self.player.rect.y // TILE_SIZE
+        self.player.column = self.player.rect.x // TILE_SIZE
+        self.player.row = self.player.rect.y // TILE_SIZE
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
         if self.enable_movement:
@@ -269,7 +269,7 @@ class Game:
                 return None
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
-        if (self.hero_layout_row, self.hero_layout_column) == staircase_location:
+        if (self.player.row, self.player.column) == staircase_location:
             match staircase_dict['stair_direction']:
                 case 'down':
                     play_sound(stairs_down_sfx)
@@ -285,8 +285,8 @@ class Game:
         self.screen.fill(self.BACK_FILL_COLOR)
         # if isinstance(self.current_map, maps.Alefgard):
         #     # width_offset = 2336
-        #     width_offset = TILE_SIZE * self.hero_layout_column + 24
-        #     height_offset = TILE_SIZE * self.hero_layout_row + 25
+        #     width_offset = TILE_SIZE * self.player.column + 24
+        #     height_offset = TILE_SIZE * self.player.row + 25
         # else:
         width_offset = 0
         height_offset = 0
@@ -364,8 +364,8 @@ class Game:
                 tile_dict['group'].draw(self.background)
 
     def generate_upcoming_numeric_tiles(self):
-        if self.hero_layout_row and self.hero_layout_column:
-            hero_upcoming_numeric_tiles = self.get_character_upcoming_numeric_tiles(self.hero_layout_row, self.hero_layout_column)
+        if self.player.row and self.player.column:
+            hero_upcoming_numeric_tiles = self.get_character_upcoming_numeric_tiles(self.player.row, self.player.column)
         else:
             hero_upcoming_numeric_tiles = []
         character_upcoming_tile_list = []
@@ -403,16 +403,16 @@ class Game:
         if menu_to_launch.launch_signaled:
             if menu_to_launch.menu.get_id() == 'command':
                 self.command_menu_subsurface = self.background.subsurface(
-                    (self.hero_layout_column - 2) * TILE_SIZE,  # 11 (first empty square to the left of menu)
-                    (self.hero_layout_row - 6) * TILE_SIZE,  # 4
+                    (self.player.column - 2) * TILE_SIZE,  # 11 (first empty square to the left of menu)
+                    (self.player.row - 6) * TILE_SIZE,  # 4
                     8 * TILE_SIZE,
                     5 * TILE_SIZE
                 )
                 rect = menu.draw_menu_on_subsurface(menu_to_launch.menu, self.command_menu_subsurface)
             elif menu_to_launch.menu.get_id() == 'dialog_box':
                 self.dialog_box_subsurface = self.background.subsurface(
-                    # left=(self.hero_layout_column + 6) * TILE_SIZE,
-                    # top=(self.hero_layout_row + 6) * TILE_SIZE,
+                    # left=(self.player.column + 6) * TILE_SIZE,
+                    # top=(self.player.row + 6) * TILE_SIZE,
                     TILE_SIZE,
                     TILE_SIZE,
                     12 * TILE_SIZE,
@@ -449,8 +449,8 @@ class Game:
         self.current_map.load_map(self.player)
 
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
-        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map, screen=None)
+        self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
+        self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)), current_map=self.current_map, screen=None)
         # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
         self.loop_count = 1
         self.unpause_all_movement()
@@ -497,7 +497,7 @@ class Game:
         :return: None
         """
         if menu_to_launch == 'command':
-            self.player.next_tile_id = self.get_next_tile_identifier(self.hero_layout_column, self.hero_layout_row, self.player.direction)
+            self.player.next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row, self.player.direction)
             if not self.cmd_menu.launched:
                 play_sound(menu_button_sfx)
             self.set_and_append_rect(self.cmd_menu.menu, self.command_menu_subsurface)
@@ -538,12 +538,12 @@ class Game:
             if is_facing_medially(self.player):
                 if curr_pos_y % TILE_SIZE == 0:
                     self.tiles_moved_since_spawn += 1
-                    self.player.is_moving, self.next_tile_checked = False, False
+                    self.player.is_moving, self.player.next_tile_checked = False, False
                     return
             elif is_facing_laterally(self.player):
                 if curr_pos_x % TILE_SIZE == 0:
                     self.tiles_moved_since_spawn += 1
-                    self.player.is_moving, self.next_tile_checked = False, False
+                    self.player.is_moving, self.player.next_tile_checked = False, False
                     return
 
         self.camera.move(self.player.direction)
@@ -586,14 +586,7 @@ class Game:
         """
         curr_cam_pos_x, curr_cam_pos_y = self.camera.get_pos()
         next_cam_pos_x, next_cam_pos_y = curr_cam_pos_x, curr_cam_pos_y
-        if not self.next_tile_checked:
-            self.player.next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                                     character_row=self.hero_layout_row,
-                                                                     direction=self.player.direction)
-            self.player.next_next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                                          character_row=self.hero_layout_row,
-                                                                          direction=self.player.direction, offset=2)
-            self.next_tile_checked = True
+        self.check_next_tile(self.player)
         if self.is_impassable(self.player.next_tile_id) or self.character_in_path_of_player():
             self.bump_and_reset(self.player.next_tile_id, self.player.next_next_tile_id)
 
@@ -606,6 +599,16 @@ class Game:
                 next_cam_pos_y = curr_cam_pos_y + delta_y
 
         self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
+
+    def check_next_tile(self, character):
+        if not character.next_tile_checked:
+            character.next_tile_id = self.get_next_tile_identifier(character_column=self.player.column,
+                                                                   character_row=self.player.row,
+                                                                   direction=character.direction)
+            character.next_next_tile_id = self.get_next_tile_identifier(character_column=self.player.column,
+                                                                        character_row=self.player.row,
+                                                                        direction=character.direction, offset=2)
+            character.next_tile_checked = True
 
     def bump_and_reset(self, pre_bump_next_tile, pre_bump_next_next_tile):
         if self.player.next_tile_id != pre_bump_next_tile:
@@ -627,9 +630,9 @@ class Game:
                                      self.current_map.fixed_characters]
         roaming_character_locations = [(roaming_character.column, roaming_character.row) for roaming_character in
                                        self.current_map.roaming_characters]
-        return self.get_next_coordinates(self.hero_layout_column, self.hero_layout_row,
-                                         self.player.direction) in fixed_character_locations or self.get_next_coordinates(self.hero_layout_column,
-                                                                                                                          self.hero_layout_row,
+        return self.get_next_coordinates(self.player.column, self.player.row,
+                                         self.player.direction) in fixed_character_locations or self.get_next_coordinates(self.player.column,
+                                                                                                                          self.player.row,
                                                                                                                           self.player.direction) in roaming_character_locations
 
     def get_next_tile_identifier(self, character_column: int, character_row: int, direction, offset=1) -> str:
@@ -739,14 +742,9 @@ class Game:
         :return: None
         """
         next_coordinates = get_next_coordinates(roaming_character.column, roaming_character.row, roaming_character.direction)
-        if not roaming_character.next_tile_checked:
-            roaming_character.next_tile_id = self.get_next_tile_identifier(character_column=roaming_character.column,
-                                                                           character_row=roaming_character.row,
-                                                                           direction=roaming_character.direction)
-            roaming_character.next_tile_checked = True
-
-        if not self.is_impassable(roaming_character.next_tile_id) and (
-                roaming_character.column, roaming_character.row) != (self.hero_layout_column, self.hero_layout_row):
+        self.check_next_tile(roaming_character)
+        if not self.is_impassable(roaming_character.next_tile_id) and (roaming_character.column, roaming_character.row) != (
+        self.player.column, self.player.row):
             character_value = self.current_map.character_key[roaming_character.identifier]['val']
             underlying_tile_val = self.current_map.tile_key[self.current_map.character_key[roaming_character.identifier]['underlying_tile']]['val']
             if type(self.current_map.layout[next_coordinates[0]]) != tuple:
