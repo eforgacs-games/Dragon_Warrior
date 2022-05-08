@@ -85,7 +85,7 @@ class CommandMenu(Menu):
         # TODO: Get an actual dialog box to show!
 
         # for now, implementing using print statements. will be useful for debugging as well.
-        if self.player.next_tile not in self.characters.keys() and self.player.next_next_tile not in self.characters.keys():
+        if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
             print_with_beep_sfx("'There is no one there.'")
             return
         for character_identifier, character_info in self.characters.items():
@@ -98,13 +98,13 @@ class CommandMenu(Menu):
                 break
 
     def npc_is_across_counter(self, character_info):
-        return self.player.next_tile == 'WOOD' and character_info['coordinates'] == self.player.next_next_coordinates
+        return self.player.next_tile_id == 'WOOD' and character_info['coordinates'] == self.player.next_next_coordinates
 
     def launch_dialog(self, dialog_character):
         self.dialog_box.launch_signaled = True
         dlt = DialogLookupTable(self.player, self.map_name, dialog_character)
-        character = dlt.dialog_lookup.get(self.player.next_tile)
-        character_across_counter = dlt.dialog_lookup.get(self.player.next_next_tile)
+        character = dlt.dialog_lookup.get(self.player.next_tile_id)
+        character_across_counter = dlt.dialog_lookup.get(self.player.next_next_tile_id)
         if character:
             character.say_dialog()
         elif character_across_counter:
@@ -192,7 +192,7 @@ class CommandMenu(Menu):
         :return: To be determined upon implementation
         """
         play_sound(menu_button_sfx)
-        if self.player.next_tile == 'DOOR':
+        if self.player.next_tile_id == 'DOOR':
             if 'key' in self.player.inventory:
                 # actually open the door
                 print("Door opened!")
