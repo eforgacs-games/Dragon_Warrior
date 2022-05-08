@@ -51,6 +51,7 @@ class Game:
 
     def __init__(self):
         # Initialize pygame
+        self.last_map = None
         self.start_time = get_ticks()
         self.tiles_moved_since_spawn = 0
         self.loop_count = 1
@@ -458,6 +459,7 @@ class Game:
         :return: None
         """
         self.pause_all_movement()
+        self.last_map = self.current_map
         self.current_map = next_map
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
         fade(self.current_map.width, self.current_map.height, fade_out=True, background=self.background, screen=self.screen)
@@ -466,7 +468,11 @@ class Game:
         self.current_map.load_map(self.player)
 
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
+        if initial_hero_location.any():
+            self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
+        else:
+            if type(self.last_map) == maps.TantegelCourtyard:
+                self.player.row, self.player.column = 15, 15
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)), current_map=self.current_map, screen=None)
         # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
         self.loop_count = 1
@@ -590,8 +596,8 @@ class Game:
         :param delta_y: Change in y position.
         :return: None
         """
-        if character.identifier == 'HERO':
-            curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.get_pos()
+
+        curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.get_pos()
         self.check_next_tile(character)
         if self.is_impassable(character.next_tile_id):
             bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
@@ -601,13 +607,11 @@ class Game:
             if delta_x:
                 character.rect.x += delta_x
                 character.column += delta_x // 2
-                if character.identifier == 'HERO':
-                    next_cam_pos_x = curr_cam_pos_x + -delta_x
+                next_cam_pos_x = curr_cam_pos_x + -delta_x
             if delta_y:
                 character.rect.y += -delta_y
                 character.row += -delta_y // 2
-                if character.identifier == 'HERO':
-                    next_cam_pos_y = curr_cam_pos_y + delta_y
+                next_cam_pos_y = curr_cam_pos_y + delta_y
         if character.identifier == 'HERO':
             self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
 
