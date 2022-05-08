@@ -10,6 +10,9 @@ class Player(AnimatedSprite):
         AnimatedSprite.__init__(self, center_point, direction, images, identifier='HERO')
 
         # map/collision-related attributes
+        self.row = None
+        self.column = None
+        self.next_tile_checked = False
         self.is_moving = False
         self.coordinates = None
         self.next_coordinates = None
