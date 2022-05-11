@@ -211,14 +211,10 @@ class Game:
         event.pump()
         current_key = key.get_pressed()
         if not self.player.is_moving:
-            self.player.column, self.player.row = self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE
-        for character, character_dict in self.current_map.characters.items():
-            if character_dict['character'].__class__.__name__ == 'RoamingCharacter':
-                if not character_dict['character'].is_moving:
-                    character_dict['character'].column = character_dict['character'].rect.x // TILE_SIZE
-                    character_dict['character'].row = character_dict['character'].rect.y // TILE_SIZE
+            self.update_player_position()
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
+            self.update_roaming_character_positions()
         if self.enable_movement:
             self.move_player(current_key)
         # currently can't process staircases right next to one another, need to fix
@@ -310,6 +306,17 @@ class Game:
         # print(f'{self.get_character_identifier_by_coordinates(self.player.next_next_coordinates)}')
 
         event.pump()
+
+    def update_player_position(self):
+        self.player.column, self.player.row = self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE
+
+    def update_roaming_character_positions(self):
+        for character, character_dict in self.current_map.characters.items():
+            if character_dict['character'].__class__.__name__ == 'RoamingCharacter':
+                if not character_dict['character'].is_moving:
+                    character_dict['character'].column = character_dict['character'].rect.x // TILE_SIZE
+                    character_dict['character'].row = character_dict['character'].rect.y // TILE_SIZE
+                    # print(f"Column: {character_dict['character'].column}, Row: {character_dict['character'].row}")
 
     def draw_temporary_text(self, text):
         self.temporary_text_on_screen = True
@@ -611,7 +618,7 @@ class Game:
                     self.player.is_moving, self.player.next_tile_checked = False, False
                     return
 
-        self.camera.move(self.player.direction)
+        # self.camera.move(self.player.direction)
         if is_facing_medially(self.player):
             self.move_medially(self.player)
         elif is_facing_laterally(self.player):
@@ -789,7 +796,6 @@ class Game:
                 self.move_medially(roaming_character)
             elif is_facing_laterally(roaming_character):
                 self.move_laterally(roaming_character)
-
             # handle_roaming_character_sides_collision(self.current_map, roaming_character)
 
 
