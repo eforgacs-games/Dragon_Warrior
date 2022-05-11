@@ -14,7 +14,6 @@ class Player(AnimatedSprite):
         self.column = None
         self.next_tile_checked = False
         self.is_moving = False
-        self.coordinates = None
         self.next_coordinates = None
         self.next_next_coordinates = None
         self.current_tile = None

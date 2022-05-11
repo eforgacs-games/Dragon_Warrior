@@ -478,7 +478,7 @@ def get_next_coordinates(character_column, character_row, direction, offset_from
             return character_row, character_column + offset_from_character
 
 
-def get_character_position(character):
+def set_character_position(character):
     character.column, character.row = character.rect.x // TILE_SIZE, character.rect.y // TILE_SIZE
 
 

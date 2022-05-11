@@ -105,6 +105,7 @@ PRINCESS_GWAELIN_PATH = join(IMAGES_DIR, 'princess_gwaelin.png')
 DRAGONLORD_PATH = join(IMAGES_DIR, 'dragonlord.png')
 INTRO_BANNER_PATH = join(IMAGES_DIR, 'intro_banner', 'intro_banner.png')
 INTRO_BANNER_WITH_DRAGON_PATH = join(IMAGES_DIR, 'intro_banner', 'intro_banner_with_dragon.png')
+ICON_PATH = join(IMAGES_DIR, 'walking_hero.gif')
 
 
 def get_image(path):
