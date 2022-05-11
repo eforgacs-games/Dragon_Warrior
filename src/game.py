@@ -214,9 +214,10 @@ class Game:
         if not self.player.is_moving:
             self.player.column, self.player.row = self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE
         for character, character_dict in self.current_map.characters.items():
-            if not character_dict['character'].is_moving:
-                character_dict['character'].column = character_dict['character'].rect.x // TILE_SIZE
-                character_dict['character'].row = character_dict['character'].rect.y // TILE_SIZE
+            if character_dict['character'].__class__.__name__ == 'RoamingCharacter':
+                if not character_dict['character'].is_moving:
+                    character_dict['character'].column = character_dict['character'].rect.x // TILE_SIZE
+                    character_dict['character'].row = character_dict['character'].rect.y // TILE_SIZE
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
         if self.enable_movement:
@@ -789,6 +790,7 @@ class Game:
                 self.move_medially(roaming_character)
             elif is_facing_laterally(roaming_character):
                 self.move_laterally(roaming_character)
+
             # handle_roaming_character_sides_collision(self.current_map, roaming_character)
 
 
