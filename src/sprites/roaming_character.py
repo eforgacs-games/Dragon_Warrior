@@ -8,12 +8,12 @@ class RoamingCharacter(AnimatedSprite):
         self.last_roaming_clock_check = None
         self.column = None
         self.row = None
-        self.moving = False
+        self.is_moving = False
         self.previous_previous_tile = None
         self.previous_tile = None
         self.current_tile = None
-        self.next_tile = None
-        self.next_tile_checked = None
+        self.next_tile_id = None
+        self.next_tile_checked = False
 
 
 def handle_roaming_character_sides_collision(current_map, roaming_character):
