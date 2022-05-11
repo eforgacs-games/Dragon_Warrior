@@ -212,8 +212,7 @@ class Game:
         event.pump()
         current_key = key.get_pressed()
         if not self.player.is_moving:
-            self.player.column = self.player.rect.x // TILE_SIZE
-            self.player.row = self.player.rect.y // TILE_SIZE
+            self.player.column, self.player.row = self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE
         for character, character_dict in self.current_map.characters.items():
             if not character_dict['character'].is_moving:
                 character_dict['character'].column = character_dict['character'].rect.x // TILE_SIZE
@@ -222,7 +221,9 @@ class Game:
             self.move_roaming_characters()
         if self.enable_movement:
             self.move_player(current_key)
-        if self.tiles_moved_since_spawn > 0:
+        # currently can't process staircases right next to one another, need to fix
+        # so that we can check if self.tiles_moved_since_spawn >= 1:
+        if self.tiles_moved_since_spawn > 1:
             for staircase_location, staircase_dict in self.current_map.staircases.items():
                 self.process_staircase_warps(staircase_dict, staircase_location)
 
