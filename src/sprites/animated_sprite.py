@@ -9,7 +9,6 @@ class AnimatedSprite(BaseSprite):
         self.frame_count = 0
         self.frame_delay = 2
         self.direction = direction
-        self.is_moving = False
         if images is not None:
             down_images = images[0]
             left_images = images[1]
