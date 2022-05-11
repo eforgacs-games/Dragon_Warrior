@@ -26,7 +26,7 @@ def show_intro_banner(intro_banner_path, screen):
 
 
 def draw_text(text, size, color, x, y, font_name, screen):
-    text_surface = font.Font(font_name, size).render(text, True, color)
+    text_surface = font.Font(font_name, size).render(text, True, color, BLACK)
     text_rect = text_surface.get_rect()
     text_rect.midtop = (x, y)
     screen.blit(text_surface, text_rect)

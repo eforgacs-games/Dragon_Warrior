@@ -46,6 +46,7 @@ class CommandMenu(Menu):
         self.launched = False
         self.map_name = current_map.__class__.__name__
         self.background = background
+        # TODO: This gives a ValueError if the map is too small.
         command_menu_subsurface = background.subsurface((column - 2) * TILE_SIZE,
                                                         (row - 6) * TILE_SIZE,
                                                         8 * TILE_SIZE,
@@ -85,7 +86,9 @@ class CommandMenu(Menu):
         # TODO: Get an actual dialog box to show!
 
         # for now, implementing using print statements. will be useful for debugging as well.
-        if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
+        character_coordinates = [character_dict['coordinates'] for character_dict in self.characters.values()]
+        if not any(c in character_coordinates for c in [self.player.next_coordinates, self.player.next_next_coordinates]):
+        # if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
             print_with_beep_sfx("'There is no one there.'")
             return
         for character_identifier, character_info in self.characters.items():
@@ -103,12 +106,9 @@ class CommandMenu(Menu):
     def launch_dialog(self, dialog_character):
         self.dialog_box.launch_signaled = True
         dlt = DialogLookupTable(self.player, self.map_name, dialog_character)
-        character = dlt.dialog_lookup.get(self.player.next_tile_id)
-        character_across_counter = dlt.dialog_lookup.get(self.player.next_next_tile_id)
+        character = dlt.dialog_lookup.get(dialog_character)
         if character:
             character.say_dialog()
-        elif character_across_counter:
-            character_across_counter.say_dialog()
         else:
             print("Character not in lookup table.")
 
