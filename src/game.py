@@ -2,7 +2,7 @@ import random
 import sys
 
 from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, \
-    K_LEFT, K_a, K_RIGHT, K_d, KEYUP
+    K_LEFT, K_a, K_RIGHT, K_d, KEYUP, K_2, K_1, image
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -12,15 +12,34 @@ import src.menu as menu
 from src import maps
 from src.camera import Camera
 from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally, \
-    WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tiles, convert_to_milliseconds
+    WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tiles, convert_to_milliseconds, ICON_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.intro import draw_text, Intro
-from src.maps import get_character_position, get_next_coordinates, map_lookup
+from src.map_layouts import MapLayouts
+from src.map_lookups import map_lookup
+from src.maps import set_character_position, get_next_coordinates
 from src.player.player import Player
-from src.sprites.roaming_character import handle_roaming_character_sides_collision
 from src.visual_effects import fade
+
+
+def bump(character):
+    if character.identifier == 'HERO':
+        if not character.last_bump_time:
+            character.last_bump_time = get_ticks()
+        if get_ticks() - character.last_bump_time >= convert_to_milliseconds(15):
+            character.last_bump_time = get_ticks()
+            play_sound(bump_sfx)
+    character.bumped = True
+
+
+def bump_and_reset(character, pre_bump_next_tile, pre_bump_next_next_tile):
+    if character.next_tile_id != pre_bump_next_tile:
+        character.next_tile_id = pre_bump_next_tile
+    if character.next_next_tile_id != pre_bump_next_next_tile:
+        character.next_next_tile_id = pre_bump_next_next_tile
+    bump(character)
 
 
 class Game:
@@ -33,11 +52,14 @@ class Game:
 
     def __init__(self):
         # Initialize pygame
+        self.draw_text_start = None
+        self.temporary_text_on_screen = None
+        self.fps = FPS
+        self.last_map = None
         self.start_time = get_ticks()
         self.tiles_moved_since_spawn = 0
         self.loop_count = 1
         self.foreground_rects = []
-        self.opacity = 0
         init()
 
         self.paused = False
@@ -56,12 +78,12 @@ class Game:
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
         self.win_width, self.win_height = NES_RES[0] * self.scale, NES_RES[1] * self.scale
+        self.speed = 2
         # self.win_width = current_screen_width
         # self.win_height = current_screen_height
         self.screen = set_mode((self.win_width, self.win_height), flags)
         # self.screen.set_alpha(None)
         set_caption(self.GAME_TITLE)
-        self.next_tile_checked = False
 
         # self.current_map can be changed to other maps for development purposes
 
@@ -70,33 +92,34 @@ class Game:
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
-        # self.current_map = maps.TestMap(hero_images=self.unarmed_hero_images)
+
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
         self.big_map.fill(self.BACK_FILL_COLOR)
-        self.speed = 2
+
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
-            get_character_position(roaming_character)
+            set_character_position(roaming_character)
         # Make the big scrollable map
         self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
         self.player = Player(center_point=None, images=None)
         self.current_map.load_map(self.player)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
+
+        self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
-        self.player.next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                                 character_row=self.hero_layout_row,
+        self.player.next_tile_id = self.get_next_tile_identifier(character_column=self.player.column,
+                                                                 character_row=self.player.row,
                                                                  direction=self.current_map.player.direction)
-        self.player.next_next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                                      character_row=self.hero_layout_row,
+        self.player.next_next_tile_id = self.get_next_tile_identifier(character_column=self.player.column,
+                                                                      character_row=self.player.row,
                                                                       direction=self.current_map.player.direction,
                                                                       offset=3)
-        self.dlg_box = menu.DialogBox(self.background, self.hero_layout_column, self.hero_layout_row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.hero_layout_column, self.hero_layout_row, self.player.current_tile, self.current_map,
+        self.dlg_box = menu.DialogBox(self.background, self.player.column, self.player.row)
+        self.cmd_menu = menu.CommandMenu(self.background, self.player.column, self.player.row, self.player.current_tile, self.current_map,
                                          self.dlg_box, self.player)
 
         self.menus = self.cmd_menu, self.dlg_box
-        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)),
+        self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                              current_map=self.current_map,
                              screen=self.screen)
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
@@ -110,8 +133,8 @@ class Game:
             mixer.music.play(-1)
         self.events = get()
         self.command_menu_subsurface = self.background.subsurface(
-            (self.hero_layout_column - 2) * TILE_SIZE,
-            (self.hero_layout_row - 6) * TILE_SIZE,
+            (self.player.column - 2) * TILE_SIZE,
+            (self.player.row - 6) * TILE_SIZE,
             8 * TILE_SIZE,
             5 * TILE_SIZE
         )
@@ -121,6 +144,8 @@ class Game:
             12 * TILE_SIZE,
             5 * TILE_SIZE
         )
+
+        display.set_icon(image.load(ICON_PATH))
 
         # pg.event.set_allowed([pg.QUIT])
 
@@ -138,7 +163,7 @@ class Game:
             intro.show_start_screen(self.screen, self.start_time, self.clock, self.background)
             self.show_main_menu_screen(self.screen)
         while True:
-            self.clock.tick(FPS)
+            self.clock.tick(self.fps)
             self.get_events()
             self.draw_all()
             self.update_screen()
@@ -160,7 +185,7 @@ class Game:
                 draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.screen)
                 display.flip()
             screen.fill(BLACK)
-            self.clock.tick(FPS)
+            self.clock.tick(self.fps)
             for current_event in get():
                 if current_event.type == QUIT:
                     quit()
@@ -185,13 +210,16 @@ class Game:
                 sys.exit()
         event.pump()
         current_key = key.get_pressed()
-        self.hero_layout_column = self.player.rect.x // TILE_SIZE
-        self.hero_layout_row = self.player.rect.y // TILE_SIZE
+        if not self.player.is_moving:
+            self.update_player_position()
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
+            self.update_roaming_character_positions()
         if self.enable_movement:
             self.move_player(current_key)
-        if self.tiles_moved_since_spawn > 0:
+        # currently can't process staircases right next to one another, need to fix
+        # so that we can check if self.tiles_moved_since_spawn >= 1:
+        if self.tiles_moved_since_spawn > 1:
             for staircase_location, staircase_dict in self.current_map.staircases.items():
                 self.process_staircase_warps(staircase_dict, staircase_location)
 
@@ -223,10 +251,23 @@ class Game:
         # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
         #     self.scale = self.scale + 1
 
+        if current_key[K_2]:
+            # self.draw_all_tiles_in_current_map()
+            self.fps = 120
+            # self.temporary_text_on_screen = True
+            # self.draw_text_start = get_ticks()
+            # self.draw_temporary_text("DOUBLE (200%) SPEED")
+            # draw_text("DOUBLE SPEED", 15, WHITE, self.player.rect.x, self.player.rect.y, DRAGON_QUEST_FONT_PATH, self.background)
+
+        if current_key[K_1]:
+            # self.draw_all_tiles_in_current_map()
+            self.fps = 60
+            # self.temporary_text_on_screen = True
+            # self.draw_text_start = get_ticks()
+            # draw_text("NORMAL SPEED", 15, WHITE, self.screen.get_width() / 2, self.screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.background)
+
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
-
-        self.player.coordinates = self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE
 
         self.player.next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
                                                             self.player.rect.y // TILE_SIZE,
@@ -235,19 +276,24 @@ class Game:
                                                                  self.player.rect.y // TILE_SIZE,
                                                                  self.player.direction, offset_from_character=2)
 
+        if self.temporary_text_on_screen:
+            if get_ticks() - self.draw_text_start > 5000:
+                self.draw_all_tiles_in_current_map()
+
         # Debugging area
 
         # This prints out the current tile that the player is standing on.
-        # print(self.player.current_tile)
+        # print(f"self.player.current_tile: {self.player.current_tile}")
 
         # This prints out the current coordinates that the player is standing on.
         # print(self.player.coordinates)
+        # print(f"{self.player.x, self.player.y}")
 
         # This prints out the next coordinates that the player will land on.
         # print(self.player.next_coordinates)
 
         # This prints out the next tile that the player will land on.
-        # print(get_tile_by_coordinates(self.player.next_coordinates[1], self.player.next_coordinates[0], self.current_map))
+        # print(get_tile_id_by_coordinates(self.player.next_coordinates[1], self.player.next_coordinates[0], self.current_map))
 
         # This prints out the current FPS.
         if SHOW_FPS:
@@ -261,6 +307,24 @@ class Game:
 
         event.pump()
 
+    def update_player_position(self):
+        self.player.column, self.player.row = self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE
+
+    def update_roaming_character_positions(self):
+        for character, character_dict in self.current_map.characters.items():
+            if character_dict['character'].__class__.__name__ == 'RoamingCharacter':
+                if not character_dict['character'].is_moving:
+                    character_dict['character'].column = character_dict['character'].rect.x // TILE_SIZE
+                    character_dict['character'].row = character_dict['character'].rect.y // TILE_SIZE
+                    # print(f"Column: {character_dict['character'].column}, Row: {character_dict['character'].row}")
+
+    def draw_temporary_text(self, text):
+        self.temporary_text_on_screen = True
+        self.draw_text_start = get_ticks()
+        draw_text(text, 15, WHITE, self.screen.get_width() / 2, self.screen.get_height() / 4, DRAGON_QUEST_FONT_PATH,
+                  self.screen)
+        # display.flip()
+
     def get_character_identifier_by_coordinates(self, coordinates):
         for character_identifier, character_info in self.current_map.characters.items():
             if character_info['coordinates'] == coordinates:
@@ -269,7 +333,7 @@ class Game:
                 return None
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
-        if (self.hero_layout_row, self.hero_layout_column) == staircase_location:
+        if (self.player.row, self.player.column) == staircase_location:
             match staircase_dict['stair_direction']:
                 case 'down':
                     play_sound(stairs_down_sfx)
@@ -285,8 +349,8 @@ class Game:
         self.screen.fill(self.BACK_FILL_COLOR)
         # if isinstance(self.current_map, maps.Alefgard):
         #     # width_offset = 2336
-        #     width_offset = TILE_SIZE * self.hero_layout_column + 24
-        #     height_offset = TILE_SIZE * self.hero_layout_row + 25
+        #     width_offset = TILE_SIZE * self.player.column + 24
+        #     height_offset = TILE_SIZE * self.player.row + 25
         # else:
         width_offset = 0
         height_offset = 0
@@ -322,7 +386,7 @@ class Game:
         if not self.current_map.roaming_characters:
             # basically, if you're in the overworld, since there are no roaming characters there
             player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(
-                get_surrounding_tiles(self.player.coordinates, self.current_map.layout, radius=1))
+                get_surrounding_tiles((self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE), self.current_map.layout, radius=1))
             if self.player.is_moving:
                 tile_types_to_draw = list(
                     dict.fromkeys(self.replace_characters_with_underlying_tiles(set(filter(None, [self.player.current_tile] + player_surrounding_tiles)))))
@@ -364,8 +428,8 @@ class Game:
                 tile_dict['group'].draw(self.background)
 
     def generate_upcoming_numeric_tiles(self):
-        if self.hero_layout_row and self.hero_layout_column:
-            hero_upcoming_numeric_tiles = self.get_character_upcoming_numeric_tiles(self.hero_layout_row, self.hero_layout_column)
+        if self.player.row and self.player.column:
+            hero_upcoming_numeric_tiles = self.get_character_upcoming_numeric_tiles(self.player.row, self.player.column)
         else:
             hero_upcoming_numeric_tiles = []
         character_upcoming_tile_list = []
@@ -403,16 +467,16 @@ class Game:
         if menu_to_launch.launch_signaled:
             if menu_to_launch.menu.get_id() == 'command':
                 self.command_menu_subsurface = self.background.subsurface(
-                    (self.hero_layout_column - 2) * TILE_SIZE,  # 11 (first empty square to the left of menu)
-                    (self.hero_layout_row - 6) * TILE_SIZE,  # 4
+                    (self.player.column - 2) * TILE_SIZE,  # 11 (first empty square to the left of menu)
+                    (self.player.row - 6) * TILE_SIZE,  # 4
                     8 * TILE_SIZE,
                     5 * TILE_SIZE
                 )
                 rect = menu.draw_menu_on_subsurface(menu_to_launch.menu, self.command_menu_subsurface)
             elif menu_to_launch.menu.get_id() == 'dialog_box':
                 self.dialog_box_subsurface = self.background.subsurface(
-                    # left=(self.hero_layout_column + 6) * TILE_SIZE,
-                    # top=(self.hero_layout_row + 6) * TILE_SIZE,
+                    # left=(self.player.column + 6) * TILE_SIZE,
+                    # top=(self.player.row + 6) * TILE_SIZE,
                     TILE_SIZE,
                     TILE_SIZE,
                     12 * TILE_SIZE,
@@ -441,16 +505,23 @@ class Game:
         :return: None
         """
         self.pause_all_movement()
+        self.last_map = self.current_map
         self.current_map = next_map
-        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
         fade(self.current_map.width, self.current_map.height, fade_out=True, background=self.background, screen=self.screen)
+        self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
+        self.big_map.fill(self.BACK_FILL_COLOR)
+        for roaming_character in self.current_map.roaming_characters:
+            roaming_character.last_roaming_clock_check = get_ticks()
+            set_character_position(roaming_character)
         if self.music_enabled:
             mixer.music.stop()
+        layouts = MapLayouts()
+        self.current_map.layout = layouts.map_layout_lookup[self.current_map.__class__.__name__]
         self.current_map.load_map(self.player)
 
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        self.hero_layout_row, self.hero_layout_column = initial_hero_location.take(0), initial_hero_location.take(1)
-        self.camera = Camera(hero_position=(int(self.hero_layout_column), int(self.hero_layout_row)), current_map=self.current_map, screen=None)
+        self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
+        self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)), current_map=self.current_map, screen=self.screen)
         # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
         self.loop_count = 1
         self.unpause_all_movement()
@@ -497,7 +568,7 @@ class Game:
         :return: None
         """
         if menu_to_launch == 'command':
-            self.player.next_tile_id = self.get_next_tile_identifier(self.hero_layout_column, self.hero_layout_row, self.player.direction)
+            self.player.next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row, self.player.direction)
             if not self.cmd_menu.launched:
                 play_sound(menu_button_sfx)
             self.set_and_append_rect(self.cmd_menu.menu, self.command_menu_subsurface)
@@ -534,19 +605,20 @@ class Game:
                 return
             self.player.is_moving = True
         else:  # determine if player has reached new tile
+            # not sure if setting the player sprites to dirty makes a difference
             self.current_map.player_sprites.dirty = 1
             if is_facing_medially(self.player):
                 if curr_pos_y % TILE_SIZE == 0:
                     self.tiles_moved_since_spawn += 1
-                    self.player.is_moving, self.next_tile_checked = False, False
+                    self.player.is_moving, self.player.next_tile_checked = False, False
                     return
             elif is_facing_laterally(self.player):
                 if curr_pos_x % TILE_SIZE == 0:
                     self.tiles_moved_since_spawn += 1
-                    self.player.is_moving, self.next_tile_checked = False, False
+                    self.player.is_moving, self.player.next_tile_checked = False, False
                     return
 
-        self.camera.move(self.player.direction)
+        # self.camera.move(self.player.direction)
         if is_facing_medially(self.player):
             self.move_medially(self.player)
         elif is_facing_laterally(self.player):
@@ -555,82 +627,79 @@ class Game:
 
     def move_laterally(self, character) -> None:
         if is_facing_left(character):
-            if character.identifier == "HERO":
-                self.move(delta_x=-self.speed, delta_y=0)
-            else:
-                self.move_roaming_character(character, delta_x=-self.speed, delta_y=0)
+            self.move(character, delta_x=-self.speed, delta_y=0)
         elif is_facing_right(character):
-            if character.identifier == "HERO":
-                self.move(delta_x=self.speed, delta_y=0)
-            else:
-                self.move_roaming_character(character, delta_x=self.speed, delta_y=0)
+            self.move(character, delta_x=self.speed, delta_y=0)
 
     def move_medially(self, character) -> None:
         if is_facing_up(character):
-            if character.identifier == "HERO":
-                self.move(delta_x=0, delta_y=self.speed)
-            else:
-                self.move_roaming_character(character, delta_x=0, delta_y=self.speed)
+            self.move(character, delta_x=0, delta_y=self.speed)
         elif is_facing_down(character):
-            if character.identifier == "HERO":
-                self.move(delta_x=0, delta_y=-self.speed)
-            else:
-                self.move_roaming_character(character, delta_x=0, delta_y=-self.speed)
+            self.move(character, delta_x=0, delta_y=-self.speed)
 
-    def move(self, delta_x, delta_y) -> None:
+    def move(self, character, delta_x, delta_y) -> None:
         """
-        The method that actuates the movement of the player from within the move_player method.
+        The method that actuates movement of characters from within the move_player method.
+        :param character: Character to move
         :param delta_x: Change in x position.
         :param delta_y: Change in y position.
         :return: None
         """
-        curr_cam_pos_x, curr_cam_pos_y = self.camera.get_pos()
-        next_cam_pos_x, next_cam_pos_y = curr_cam_pos_x, curr_cam_pos_y
-        if not self.next_tile_checked:
-            self.player.next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                                     character_row=self.hero_layout_row,
-                                                                     direction=self.player.direction)
-            self.player.next_next_tile_id = self.get_next_tile_identifier(character_column=self.hero_layout_column,
-                                                                          character_row=self.hero_layout_row,
-                                                                          direction=self.player.direction, offset=2)
-            self.next_tile_checked = True
-        if self.is_impassable(self.player.next_tile_id) or self.character_in_path_of_player():
-            self.bump_and_reset(self.player.next_tile_id, self.player.next_next_tile_id)
+        # coords = numpy.argwhere(self.current_map.layout_numpy_array)
+        # x_min, y_min = coords.min(axis=0)
+        # x_max, y_max = coords.max(axis=0)
+        # b = cropped = self.current_map.layout_numpy_array[x_min:x_max + 1, y_min:y_max + 1]
+        # # print(b)
 
+        curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.get_pos()
+        self.check_next_tile(character)
+        character.next_tile_id = self.get_next_tile_identifier(character_column=character.column,
+                                                               character_row=character.row,
+                                                               direction=character.direction)
+        character.next_next_tile_id = self.get_next_tile_identifier(character_column=character.column,
+                                                                    character_row=character.row,
+                                                                    direction=character.direction, offset=2)
+        if self.is_impassable(character.next_tile_id):
+            bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
+        elif self.character_in_path(character):
+            bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
         else:
             if delta_x:
-                self.player.rect.x += delta_x
+                character.rect.x += delta_x
+                # this causes the fade out to happen a square before the player touches a staircase
                 next_cam_pos_x = curr_cam_pos_x + -delta_x
+                # character.column += delta_x // 2
             if delta_y:
-                self.player.rect.y += -delta_y
+                character.rect.y += -delta_y
+                # this causes the fade out to happen a square before the player touches a staircase
                 next_cam_pos_y = curr_cam_pos_y + delta_y
+                # character.row += -delta_y // 2
+        if character.identifier == 'HERO':
+            self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
 
-        self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
+    def check_next_tile(self, character):
+        if not character.next_tile_checked or not character.next_tile_id:
+            character.next_tile_id = self.get_next_tile_identifier(character_column=character.column,
+                                                                   character_row=character.row,
+                                                                   direction=character.direction)
+        character.next_next_tile_id = self.get_next_tile_identifier(character_column=character.column,
+                                                                    character_row=character.row,
+                                                                    direction=character.direction, offset=2)
 
-    def bump_and_reset(self, pre_bump_next_tile, pre_bump_next_next_tile):
-        if self.player.next_tile_id != pre_bump_next_tile:
-            self.player.next_tile_id = pre_bump_next_tile
-        if self.player.next_next_tile_id != pre_bump_next_next_tile:
-            self.player.next_next_tile_id = pre_bump_next_next_tile
-        self.bump()
-
-    def bump(self):
-        if not self.player.last_bump_time:
-            self.player.last_bump_time = get_ticks()
-        if get_ticks() - self.player.last_bump_time >= convert_to_milliseconds(15):
-            self.player.last_bump_time = get_ticks()
-            play_sound(bump_sfx)
-        self.player.bumped = True
-
-    def character_in_path_of_player(self) -> bool:
+    def character_in_path(self, character) -> bool:
         fixed_character_locations = [(fixed_character.column, fixed_character.row) for fixed_character in
                                      self.current_map.fixed_characters]
         roaming_character_locations = [(roaming_character.column, roaming_character.row) for roaming_character in
                                        self.current_map.roaming_characters]
-        return self.get_next_coordinates(self.hero_layout_column, self.hero_layout_row,
-                                         self.player.direction) in fixed_character_locations or self.get_next_coordinates(self.hero_layout_column,
-                                                                                                                          self.hero_layout_row,
-                                                                                                                          self.player.direction) in roaming_character_locations
+        next_coordinates = self.get_next_coordinates(character.column, character.row, character.direction)
+        if character.identifier != 'HERO':
+            return next_coordinates in fixed_character_locations + roaming_character_locations + [(self.player.column, self.player.row)]
+        # elif next_coordinates in fixed_character_locations + roaming_character_locations:
+        #     for fixed_character in self.current_map.fixed_characters:
+        #         if next_coordinates == (fixed_character.column, fixed_character.row):
+        #             print(f"{fixed_character.identifier} in the way of {character.identifier}")
+        else:
+            return next_coordinates in fixed_character_locations + roaming_character_locations + [(self.player.column, self.player.row)]
 
     def get_next_tile_identifier(self, character_column: int, character_row: int, direction, offset=1) -> str:
         """
@@ -683,19 +752,19 @@ class Game:
         max_x_bound, max_y_bound, min_bound = self.current_map.width - TILE_SIZE, self.current_map.height - TILE_SIZE, 0
         if self.player.rect.x < min_bound:
             self.player.rect.x = min_bound
-            self.bump()
+            bump(self.player)
             next_pos_x += -self.speed
         elif self.player.rect.x > max_x_bound:
             self.player.rect.x = max_x_bound
-            self.bump()
+            bump(self.player)
             next_pos_x += self.speed
         elif self.player.rect.y < min_bound:
             self.player.rect.y = min_bound
-            self.bump()
+            bump(self.player)
             next_pos_y -= self.speed
         elif self.player.rect.y > max_y_bound:
             self.player.rect.y = max_y_bound
-            self.bump()
+            bump(self.player)
             next_pos_y += self.speed
         return next_pos_x, next_pos_y
 
@@ -705,10 +774,9 @@ class Game:
         :return: None
         """
         for roaming_character in self.current_map.roaming_characters:
-            get_character_position(roaming_character)
-            if roaming_character.last_roaming_clock_check is None:
-                roaming_character.last_roaming_clock_check = get_ticks()
-            if get_ticks() - roaming_character.last_roaming_clock_check >= self.ROAMING_CHARACTER_GO_COOLDOWN:
+            curr_pos_x, curr_pos_y = roaming_character.rect.x, roaming_character.rect.y
+            # set_character_position(roaming_character)
+            if roaming_character.last_roaming_clock_check is None or get_ticks() - roaming_character.last_roaming_clock_check >= self.ROAMING_CHARACTER_GO_COOLDOWN:
                 roaming_character.last_roaming_clock_check = get_ticks()
                 if not roaming_character.is_moving:
                     roaming_character.direction = random.choice(list(map(int, Direction)))
@@ -717,54 +785,18 @@ class Game:
                 roaming_character.is_moving = True
             else:  # determine if character has reached new tile
                 if is_facing_medially(roaming_character):
-                    if roaming_character.rect.y % TILE_SIZE == 0:
+                    if curr_pos_y % TILE_SIZE == 0:
                         roaming_character.is_moving, roaming_character.next_tile_checked = False, False
                         return
                 elif is_facing_laterally(roaming_character):
-                    if roaming_character.rect.x % TILE_SIZE == 0:
+                    if curr_pos_x % TILE_SIZE == 0:
                         roaming_character.is_moving, roaming_character.next_tile_checked = False, False
                         return
             if is_facing_medially(roaming_character):
                 self.move_medially(roaming_character)
             elif is_facing_laterally(roaming_character):
                 self.move_laterally(roaming_character)
-            handle_roaming_character_sides_collision(self.current_map, roaming_character)
-
-    def move_roaming_character(self, roaming_character, delta_x, delta_y) -> None:
-        """
-        The method that actuates the movement of the roaming characters from within the move_roaming_characters method.
-        :param delta_x: Change in x position.
-        :param delta_y: Change in y position.
-        :param roaming_character: Roaming character to be moved.
-        :return: None
-        """
-        next_coordinates = get_next_coordinates(roaming_character.column, roaming_character.row, roaming_character.direction)
-        if not roaming_character.next_tile_checked:
-            roaming_character.next_tile_id = self.get_next_tile_identifier(character_column=roaming_character.column,
-                                                                           character_row=roaming_character.row,
-                                                                           direction=roaming_character.direction)
-            roaming_character.next_tile_checked = True
-
-        if not self.is_impassable(roaming_character.next_tile_id) and (
-                roaming_character.column, roaming_character.row) != (self.hero_layout_column, self.hero_layout_row):
-            character_value = self.current_map.character_key[roaming_character.identifier]['val']
-            underlying_tile_val = self.current_map.tile_key[self.current_map.character_key[roaming_character.identifier]['underlying_tile']]['val']
-            if type(self.current_map.layout[next_coordinates[0]]) != tuple:
-                if delta_x:
-                    # set current coordinates to underlying tile value
-                    self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
-                    # set next coordinates to roaming character value
-                    self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
-                    roaming_character.rect.x += delta_x
-                    roaming_character.column += delta_x // 2
-
-                if delta_y:
-                    # set current coordinates to underlying tile value
-                    self.current_map.layout[roaming_character.row][roaming_character.column] = underlying_tile_val
-                    # set next coordinates to roaming character value
-                    self.current_map.layout[next_coordinates[0]][next_coordinates[1]] = character_value
-                    roaming_character.rect.y += -delta_y
-                    roaming_character.row += -delta_y // 2
+            # handle_roaming_character_sides_collision(self.current_map, roaming_character)
 
 
 def run():

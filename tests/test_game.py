@@ -4,12 +4,11 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 import pygame
-from pygame import mixer
 from pygame.imageext import load_extended
 from pygame.transform import scale
 
 from src.camera import Camera
-from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction
+from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, GUARD_PATH, get_image
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
 from src.maps import DragonWarriorMap, parse_animated_sprite_sheet
@@ -60,7 +59,6 @@ class TestGame(TestCase):
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
         self.game.current_map = TestMockMap()
-
 
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
 
@@ -127,21 +125,26 @@ class TestGame(TestCase):
 
     def test_move_roaming_character_medially(self):
         test_roaming_character = setup_roaming_character(row=2, column=2, direction=Direction.UP.value)
+        test_roaming_character.rect.y = 0
         self.game.move_medially(test_roaming_character)
-        self.assertEqual(1, test_roaming_character.row)
+        self.assertEqual(-2, test_roaming_character.rect.y)
         test_roaming_character.direction = Direction.DOWN.value
         self.game.move_medially(test_roaming_character)
-        self.assertEqual(2, test_roaming_character.row)
+        self.assertEqual(0, test_roaming_character.rect.y)
 
     def test_move_roaming_character_laterally(self):
         test_roaming_character = setup_roaming_character(row=2, column=2, direction=Direction.LEFT.value)
+        test_roaming_character.rect.x = 0
         self.game.move_laterally(test_roaming_character)
-        self.assertEqual(1, test_roaming_character.column)
+        self.assertEqual(-2, test_roaming_character.rect.x)
         test_roaming_character.direction = Direction.RIGHT.value
         self.game.move_laterally(test_roaming_character)
-        self.assertEqual(2, test_roaming_character.column)
+        self.assertEqual(0, test_roaming_character.rect.x)
 
     def test_roaming_character_blocked_by_object(self):
         test_roaming_character = setup_roaming_character(row=2, column=0, direction=Direction.UP.value)
+        test_roaming_character.rect.y = 0
         self.game.move_medially(test_roaming_character)
-        self.assertEqual(2, test_roaming_character.row)
+        self.assertEqual(0, test_roaming_character.rect.y)
+
+    # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
