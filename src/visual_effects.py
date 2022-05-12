@@ -19,11 +19,12 @@ def fade(width: int, height: int, fade_out: bool, background, screen) -> None:
     fade_surface = Surface((width, height))  # lgtm [py/call/wrong-arguments]
     fade_surface.fill(BLACK)
     opacity = 0
-    for alpha in range(300):
+    for alpha in range(255):
         if fade_out:
             opacity += 1
         else:
             # TODO(ELF): Fix fade in. Maybe this link will help? https://stackoverflow.com/questions/54881269/pygame-fade-to-black-function
+            #  https://stackoverflow.com/questions/58540537/how-to-fade-the-screen-out-and-back-in-using-pygame
             opacity -= 1
         fade_surface.set_alpha(opacity)
         background.fill(BLACK)
