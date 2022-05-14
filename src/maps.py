@@ -1,3 +1,5 @@
+import inspect
+import sys
 from typing import Tuple
 
 import numpy as np
@@ -8,7 +10,7 @@ from pygame.transform import scale
 from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_PATH, get_image, \
     GUARD_PATH, MAN_PATH, tantegel_castle_courtyard_music, WOMAN_PATH, WISE_MAN_PATH, \
     SOLDIER_PATH, MERCHANT_PATH, PRINCESS_GWAELIN_PATH, DRAGONLORD_PATH, UNARMED_HERO_PATH, MAP_TILES_PATH, \
-    overworld_music, village_music
+    overworld_music, village_music, dungeon_floor_4_music, dungeon_floor_1_music, dungeon_floor_2_music
 from src.config import TILE_SIZE, SCALE, COLOR_KEY
 from src.map_layouts import MapLayouts
 from src.sprites.animated_sprite import AnimatedSprite
@@ -224,10 +226,12 @@ class DragonWarriorMap:
                 player.__init__(self.center_pt, self.scale_spritesheet(UNARMED_HERO_PATH))
             self.map_player(character_dict['underlying_tile'], player, coordinates)
         else:
-            self.map_npc(identifier=character, direction=character_dict.get('direction'), underlying_tile=character_dict['underlying_tile'], image_path=character_dict['path'], four_sided=character_dict['four_sided'], coordinates=coordinates, is_roaming=character_dict['roaming'])
+            self.map_npc(character, character_dict.get('direction'), character_dict['underlying_tile'], character_dict['path'], character_dict['four_sided'],
+                         coordinates, character_dict['roaming'])
 
     def scale_spritesheet(self, image_path):
-        return parse_animated_sprite_sheet(scale(get_image(image_path), (get_image(image_path).get_width() * self.scale, get_image(image_path).get_height() * self.scale)))
+        return parse_animated_sprite_sheet(
+            scale(get_image(image_path), (get_image(image_path).get_width() * self.scale, get_image(image_path).get_height() * self.scale)))
 
     def map_npc(self, identifier, direction, underlying_tile, image_path, four_sided, coordinates, is_roaming=False) -> None:
         sheet = get_image(image_path)
@@ -250,7 +254,10 @@ class DragonWarriorMap:
         character_sprites.add(character)
         # self.character_key[identifier]['val']
         self.set_identifiers_for_duplicate_characters(character, identifier)
-        self.characters[character.identifier] = {'character': character, 'character_sprites': character_sprites, 'tile_value': self.character_key[identifier]['val'], 'coordinates': coordinates}
+        self.characters[character.identifier] = {'character': character,
+                                                 'character_sprites': character_sprites,
+                                                 'tile_value': self.character_key[identifier]['val'],
+                                                 'coordinates': coordinates}
         self.add_tile(self.floor_tile_key[underlying_tile])
         self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
@@ -264,7 +271,10 @@ class DragonWarriorMap:
         self.player_sprites = LayeredDirty(self.player)
         self.player.direction = self.hero_initial_direction()
         self.add_tile(self.floor_tile_key[underlying_tile])
-        self.characters['HERO'] = {'character': self.player, 'character_sprites': self.player_sprites, 'tile_value': self.character_key['HERO']['val'], 'coordinates': coordinates}
+        self.characters['HERO'] = {'character': self.player,
+                                   'character_sprites': self.player_sprites,
+                                   'tile_value': self.character_key['HERO']['val'],
+                                   'coordinates': coordinates}
         self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
     # @timeit
@@ -346,6 +356,7 @@ class TantegelCourtyard(DragonWarriorMap):
         staircases_values = [alefgard] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
         self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'stair_direction': 'up'}
+        self.staircases[(36, 36)] = {'map': 'TantegelUnderground', 'stair_direction': 'up'}
         self.music_file_path = tantegel_castle_courtyard_music
 
     def hero_underlying_tile(self):
@@ -364,6 +375,25 @@ class TantegelCourtyard(DragonWarriorMap):
         pass
 
 
+class TantegelUnderground(DragonWarriorMap):
+    def __init__(self):
+        super().__init__(MapLayouts().tantegel_underground)
+        self.music_file_path = tantegel_castle_courtyard_music
+        self.staircases = {(4, 1): {'map': 'TantegelCourtyard', 'stair_direction': 'up'}}
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+    def set_characters_initial_directions(self):
+        pass
+        # self.set_character_initial_direction('WISE_MAN', Direction.DOWN)
+
+    def set_custom_underlying_tiles(self):
+        pass
+
 class Alefgard(DragonWarriorMap):
     """
     This is Alefgard, the world by which the player travels between castles, villages, and dungeons.
@@ -373,9 +403,19 @@ class Alefgard(DragonWarriorMap):
         super().__init__(MapLayouts().alefgard)
         self.music_file_path = overworld_music
         self.staircases = {
-            (46, 54): {'map': 'Brecconary', 'stair_direction': 'up'},
+            # (row, column)
+            # castles
             (48, 49): {'map': 'TantegelCourtyard', 'stair_direction': 'up'},
-            (7, 8): {'map': 'Garinham', 'stair_direction': 'up'}
+            # villages
+            (46, 54): {'map': 'Brecconary', 'stair_direction': 'up'},
+            (7, 8): {'map': 'Garinham', 'stair_direction': 'up'},
+            (15, 110): {'map': 'Kol', 'stair_direction': 'up'},
+            # cave
+            (17, 34): {'map': 'ErdricksCaveB1', 'stair_direction': 'up'},
+            (49, 110): {'map': 'SwampCave', 'stair_direction': 'up'},
+            (62, 35): {'map': 'MountainCaveB1', 'stair_direction': 'up'},
+            (94, 31): {'map': 'Hauksness', 'stair_direction': 'up'},
+            (107, 79): {'map': 'Cantlin', 'stair_direction': 'up'},
         }
 
     def hero_underlying_tile(self):
@@ -450,6 +490,168 @@ class Garinham(DragonWarriorMap):
         pass
 
 
+class Kol(DragonWarriorMap):
+
+    def __init__(self):
+        super().__init__(MapLayouts().kol)
+        self.music_file_path = village_music
+
+    def hero_underlying_tile(self):
+        return 'SAND'
+
+    def hero_initial_direction(self):
+        return Direction.UP.value
+
+    def set_characters_initial_directions(self):
+        pass
+
+    def set_custom_underlying_tiles(self):
+        pass
+
+
+class Rimuldar(DragonWarriorMap):
+
+    def __init__(self):
+        super().__init__(MapLayouts().rimuldar)
+        self.music_file_path = village_music
+
+    def hero_underlying_tile(self):
+        return 'BRICK'
+
+    def hero_initial_direction(self):
+        return Direction.LEFT.value
+
+    def set_characters_initial_directions(self):
+        pass
+
+    def set_custom_underlying_tiles(self):
+        pass
+
+
+class Hauksness(DragonWarriorMap):
+
+    def __init__(self):
+        super().__init__(MapLayouts().hauksness)
+        self.music_file_path = dungeon_floor_4_music
+
+    def hero_underlying_tile(self):
+        return 'BRICK'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+    def set_characters_initial_directions(self):
+        pass
+
+    def set_custom_underlying_tiles(self):
+        pass
+
+
+class Cantlin(DragonWarriorMap):
+
+    def __init__(self):
+        super().__init__(MapLayouts().cantlin)
+        self.music_file_path = village_music
+        up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
+        # west_gate = warp_line((21, 9), (24, 9))
+        north_gate = warp_line((7, 0), (7, 29))
+        # east_gate = warp_line((21, 40), (25, 40))
+        # staircases_keys = west_gate + north_gate + east_gate
+        staircases_keys = north_gate
+        staircases_values = [up_staircase] * len(staircases_keys)
+        self.staircases = dict(zip(staircases_keys, staircases_values))
+
+    def hero_underlying_tile(self):
+        return 'BRICK'
+
+    def hero_initial_direction(self):
+        return Direction.DOWN.value
+
+    def set_characters_initial_directions(self):
+        pass
+
+    def set_custom_underlying_tiles(self):
+        pass
+
+
+class ErdricksCaveB1(DragonWarriorMap):
+    def __init__(self):
+        super().__init__(MapLayouts().erdricks_cave_b1)
+        self.music_file_path = dungeon_floor_1_music
+        self.staircases = {(1, 1): {'map': 'Alefgard', 'stair_direction': 'up'},
+                           (10, 10): {'map': 'ErdricksCaveB2', 'stair_direction': 'down'}}
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+    def set_characters_initial_directions(self):
+        pass
+
+    def set_custom_underlying_tiles(self):
+        pass
+
+
+class ErdricksCaveB2(DragonWarriorMap):
+    def __init__(self):
+        super().__init__(MapLayouts().erdricks_cave_b2)
+        self.music_file_path = dungeon_floor_2_music
+        self.staircases = {(10, 9): {'map': 'ErdricksCaveB1', 'stair_direction': 'up'}}
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+    def set_characters_initial_directions(self):
+        pass
+
+    def set_custom_underlying_tiles(self):
+        pass
+
+
+class SwampCave(DragonWarriorMap):
+    def __init__(self):
+        super().__init__(MapLayouts().swamp_cave)
+        self.music_file_path = dungeon_floor_1_music
+        self.staircases = {(1, 1): {'map': 'Alefgard', 'stair_direction': 'up'},
+                           (31, 1): {'map': 'Alefgard', 'stair_direction': 'up'}}
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+    def set_characters_initial_directions(self):
+        pass
+
+    def set_custom_underlying_tiles(self):
+        pass
+
+
+class MountainCaveB1(DragonWarriorMap):
+    def __init__(self):
+        super().__init__(MapLayouts().mountain_cave_b1)
+        self.music_file_path = dungeon_floor_1_music
+        self.staircases = {}
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+    def set_characters_initial_directions(self):
+        pass
+
+    def set_custom_underlying_tiles(self):
+        pass
+
+
 def parse_map_tiles(map_path):
     map_sheet = get_image(map_path).convert()
     map_tile_sheet = scale(map_sheet, (map_sheet.get_width() * SCALE, map_sheet.get_height() * SCALE))
@@ -482,3 +684,5 @@ def set_character_position(character):
     character.column, character.row = character.rect.x // TILE_SIZE, character.rect.y // TILE_SIZE
 
 
+# Lookup of all map names with their associated class
+map_lookup = {map_name: map_class for map_name, map_class in inspect.getmembers(sys.modules[__name__], inspect.isclass)}
