@@ -1,3 +1,5 @@
+import logging
+
 import pygame_menu
 
 from data.text.dialog_lookup_table import DialogLookupTable
@@ -47,34 +49,41 @@ class CommandMenu(Menu):
         self.map_name = current_map.__class__.__name__
         self.background = background
         # TODO: This gives a ValueError if the map is too small.
-        command_menu_subsurface = background.subsurface((column - 2) * TILE_SIZE,
-                                                        (row - 6) * TILE_SIZE,
-                                                        8 * TILE_SIZE,
-                                                        5 * TILE_SIZE)
+        try:
+            command_menu_subsurface = background.subsurface((column - 2) * TILE_SIZE,
+                                                            (row - 6) * TILE_SIZE,
+                                                            8 * TILE_SIZE,
+                                                            5 * TILE_SIZE)
+            self.menu = pygame_menu.Menu('COMMAND',
+                                         command_menu_subsurface.get_width() * 2,
+                                         command_menu_subsurface.get_height() * 3,
+                                         center_content=False,
+                                         column_max_width=(TILE_SIZE * 4, TILE_SIZE * 3),
+                                         columns=2,
+                                         rows=4,
+                                         theme=self.dragon_warrior_menu_theme,
+                                         mouse_enabled=False,
+                                         mouse_visible=False,
+                                         menu_id='command'
+                                         )
+            # TODO: Allow for selection of options using the K ("A" button).
+            #  Currently selection is only possible by use of the Enter button.
+            self.menu.add.button('TALK', self.talk, margin=(9, 4))
+            self.menu.add.button('STATUS', self.status, margin=(9, 4))
+            self.menu.add.button('STAIRS', self.stairs, margin=(9, 4))
+            self.menu.add.button('SEARCH', self.search, margin=(9, 4))
+            self.menu.add.button('SPELL', self.spell, margin=(0, 4))
+            self.menu.add.button('ITEM', self.item, margin=(0, 4))
+            self.menu.add.button('DOOR', self.door, margin=(0, 4))
+            self.menu.add.button('TAKE', self.take, margin=(0, 4))
+        except ValueError as e:
+            logging.error(e)
+            self.command_menu_subsurface = None
+            self.menu = None
 
-        self.menu = pygame_menu.Menu('COMMAND',
-                                     command_menu_subsurface.get_width() * 2,
-                                     command_menu_subsurface.get_height() * 3,
-                                     center_content=False,
-                                     column_max_width=(TILE_SIZE * 4, TILE_SIZE * 3),
-                                     columns=2,
-                                     rows=4,
-                                     theme=self.dragon_warrior_menu_theme,
-                                     mouse_enabled=False,
-                                     mouse_visible=False,
-                                     menu_id='command'
-                                     )
 
-        # TODO: Allow for selection of options using the K ("A" button).
-        #  Currently selection is only possible by use of the Enter button.
-        self.menu.add.button('TALK', self.talk, margin=(9, 4))
-        self.menu.add.button('STATUS', self.status, margin=(9, 4))
-        self.menu.add.button('STAIRS', self.stairs, margin=(9, 4))
-        self.menu.add.button('SEARCH', self.search, margin=(9, 4))
-        self.menu.add.button('SPELL', self.spell, margin=(0, 4))
-        self.menu.add.button('ITEM', self.item, margin=(0, 4))
-        self.menu.add.button('DOOR', self.door, margin=(0, 4))
-        self.menu.add.button('TAKE', self.take, margin=(0, 4))
+
+
 
     def talk(self):
         """
@@ -222,19 +231,25 @@ class DialogBox(Menu):
         super().__init__()
         self.launch_signaled = False
         self.launched = False
-        self.dialog_box_subsurface = background.subsurface((column - 2) * TILE_SIZE,
-                                                           (row - 6) * TILE_SIZE,
-                                                           12 * TILE_SIZE,
-                                                           5 * TILE_SIZE)
-        self.menu = pygame_menu.Menu('Dialog Box',
-                                     self.dialog_box_subsurface.get_width(),
-                                     self.dialog_box_subsurface.get_height(),
-                                     center_content=False,
-                                     theme=self.dragon_warrior_menu_theme,
-                                     mouse_enabled=False,
-                                     mouse_visible=False,
-                                     menu_id='dialog_box'
-                                     )
+        try:
+            self.dialog_box_subsurface = background.subsurface((column - 2) * TILE_SIZE,
+                                                               (row - 6) * TILE_SIZE,
+                                                               12 * TILE_SIZE,
+                                                               5 * TILE_SIZE)
+            self.menu = pygame_menu.Menu('Dialog Box',
+                                         self.dialog_box_subsurface.get_width(),
+                                         self.dialog_box_subsurface.get_height(),
+                                         center_content=False,
+                                         theme=self.dragon_warrior_menu_theme,
+                                         mouse_enabled=False,
+                                         mouse_visible=False,
+                                         menu_id='dialog_box'
+                                         )
+        except ValueError as e:
+            logging.error(e)
+            self.dialog_box_subsurface = None
+            self.menu = None
+
 
 
 def draw_menu_on_subsurface(menu_to_draw, subsurface):
