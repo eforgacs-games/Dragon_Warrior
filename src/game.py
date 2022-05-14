@@ -136,18 +136,18 @@ class Game:
                 mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
         self.events = get()
-        self.command_menu_subsurface = self.background.subsurface(
-            (self.player.column - 2) * TILE_SIZE,
-            (self.player.row - 6) * TILE_SIZE,
-            8 * TILE_SIZE,
-            5 * TILE_SIZE
-        )
-        self.dialog_box_subsurface = self.background.subsurface(
-            TILE_SIZE,
-            TILE_SIZE,
-            12 * TILE_SIZE,
-            5 * TILE_SIZE
-        )
+        # self.command_menu_subsurface = self.background.subsurface(
+        #     (self.player.column - 2) * TILE_SIZE,
+        #     (self.player.row - 6) * TILE_SIZE,
+        #     8 * TILE_SIZE,
+        #     5 * TILE_SIZE
+        # )
+        # self.dialog_box_subsurface = self.background.subsurface(
+        #     TILE_SIZE,
+        #     TILE_SIZE,
+        #     12 * TILE_SIZE,
+        #     5 * TILE_SIZE
+        # )
 
         display.set_icon(image.load(ICON_PATH))
 
@@ -227,7 +227,7 @@ class Game:
         # a quick fix would be to add an exception in the conditional for
         # the map where staircases right next to each other need to be enabled,
         # as done with Cantlin below
-        if self.tiles_moved_since_spawn > 1 or self.current_map.identifier == 'Cantlin':
+        if self.tiles_moved_since_spawn > 1 or self.current_map.identifier in ('Cantlin', 'Hauksness'):
             for staircase_location, staircase_dict in self.current_map.staircases.items():
                 self.process_staircase_warps(staircase_dict, staircase_location)
 
