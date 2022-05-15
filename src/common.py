@@ -72,11 +72,19 @@ if ORCHESTRA_MUSIC_ENABLED:
     village_music = join(MUSIC_DIR, 'orchestra', '03 People.mp3')
     overworld_music = join(MUSIC_DIR, 'orchestra', '04 Unknown World.mp3')
 else:
-    intro_overture = join(MUSIC_DIR, 'NES', '01 Dragon Quest 1 - Intro ~ Overture (22khz mono).ogg')
-    tantegel_castle_throne_room_music = join(MUSIC_DIR, 'NES', '02 Dragon Quest 1 - Tantegel Castle (22khz_mono).ogg')
-    tantegel_castle_courtyard_music = join(MUSIC_DIR, 'NES', '03 Dragon Quest 1 - Tantegel Castle (Lower) (22khz mono).ogg')
-    village_music = join(MUSIC_DIR, 'NES', '04 Dragon Quest 1 - Peaceful Village (22khz mono).ogg')
-    overworld_music = join(MUSIC_DIR, 'NES', '05 Dragon Quest 1 - Kingdom of Alefgard (22khz mono).ogg')
+    intro_overture = join(MUSIC_DIR, 'NES', '01 Dragon Quest 1 - Intro ~ Overture.mp3')
+    tantegel_castle_throne_room_music = join(MUSIC_DIR, 'NES', '02 Dragon Quest 1 - Tantegel Castle.mp3')
+    tantegel_castle_courtyard_music = join(MUSIC_DIR, 'NES', '03 Dragon Quest 1 - Tantegel Castle (Lower).mp3')
+    village_music = join(MUSIC_DIR, 'NES', '04 Dragon Quest 1 - Peaceful Village.mp3')
+    overworld_music = join(MUSIC_DIR, 'NES', '05 Dragon Quest 1 - Kingdom of Alefgard.mp3')
+    dungeon_floor_1_music = join(MUSIC_DIR, 'NES', '06 Dragon Quest 1 - Dark Dungeon ~ Floor 1.mp3')
+    dungeon_floor_2_music = join(MUSIC_DIR, 'NES', '07 Dragon Quest 1 - Dark Dungeon ~ Floor 2.mp3')
+    dungeon_floor_3_music = join(MUSIC_DIR, 'NES', '08 Dragon Quest 1 - Dark Dungeon ~ Floor 3.mp3')
+    dungeon_floor_4_music = join(MUSIC_DIR, 'NES', '09 Dragon Quest 1 - Dark Dungeon ~ Floor 4.mp3')
+    dungeon_floor_5_music = join(MUSIC_DIR, 'NES', '10 Dragon Quest 1 - Dark Dungeon ~ Floor 5.mp3')
+    dungeon_floor_6_music = join(MUSIC_DIR, 'NES', '11 Dragon Quest 1 - Dark Dungeon ~ Floor 6.mp3')
+    dungeon_floor_7_music = join(MUSIC_DIR, 'NES', '12 Dragon Quest 1 - Dark Dungeon ~ Floor 7.mp3')
+    dungeon_floor_8_music = join(MUSIC_DIR, 'NES', '13 Dragon Quest 1 - Dark Dungeon ~ Floor 8.mp3')
 
 
 def play_music(path='data/sound/music'):
@@ -203,32 +211,34 @@ def convert_to_milliseconds(fps):
     return fps / 60 * 1000
 
 
-def get_surrounding_tiles(coordinates, map_layout, radius=1):
+def get_surrounding_tile_values(coordinates, map_layout, direction, radius=1):
     x = coordinates[0]
     y = coordinates[1]
+
+    # TODO: This bugs out if you get too close to the edge.
     neighbors = [
-        map_layout[x - 1][y - 1],
+        # map_layout[x - 1][y - 1],
         map_layout[x - 1][y],
-        map_layout[x - 1][y + 1],
+        # map_layout[x - 1][y + 1],
 
         map_layout[x][y - 1],
         map_layout[x][y + 1],
 
-        map_layout[x + 1][y - 1],
+        # map_layout[x + 1][y - 1],
         map_layout[x + 1][y],
-        map_layout[x + 1][y + 1]
+        # map_layout[x + 1][y + 1]
     ]
     if radius > 1:
         for i in range(2, radius):
-            neighbors.append(map_layout[x - i][y - i])
+            # neighbors.append(map_layout[x - i][y - i])
             neighbors.append(map_layout[x - i][y])
-            neighbors.append(map_layout[x - i][y + i])
+            # neighbors.append(map_layout[x - i][y + i])
 
             neighbors.append(map_layout[x][y - i])
             neighbors.append(map_layout[x][y + i])
 
-            neighbors.append(map_layout[x + i][y - i])
+            # neighbors.append(map_layout[x + i][y - i])
             neighbors.append(map_layout[x + i][y])
-            neighbors.append(map_layout[x + i][y + i])
+            # neighbors.append(map_layout[x + i][y + i])
 
     return neighbors
