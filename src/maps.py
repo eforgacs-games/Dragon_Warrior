@@ -1,5 +1,6 @@
 import inspect
 import sys
+from abc import ABC
 from typing import Tuple
 
 import numpy as np
@@ -10,7 +11,8 @@ from pygame.transform import scale
 from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_PATH, get_image, \
     GUARD_PATH, MAN_PATH, tantegel_castle_courtyard_music, WOMAN_PATH, WISE_MAN_PATH, \
     SOLDIER_PATH, MERCHANT_PATH, PRINCESS_GWAELIN_PATH, DRAGONLORD_PATH, UNARMED_HERO_PATH, MAP_TILES_PATH, \
-    overworld_music, village_music, dungeon_floor_4_music, dungeon_floor_1_music, dungeon_floor_2_music
+    overworld_music, village_music, dungeon_floor_4_music, dungeon_floor_1_music, dungeon_floor_2_music, dungeon_floor_3_music, dungeon_floor_5_music, \
+    dungeon_floor_6_music, dungeon_floor_7_music, dungeon_floor_8_music
 from src.config import TILE_SIZE, SCALE, COLOR_KEY
 from src.map_layouts import MapLayouts
 from src.sprites.animated_sprite import AnimatedSprite
@@ -22,7 +24,7 @@ from src.sprites.roaming_character import RoamingCharacter
 
 offset = TILE_SIZE // 2
 all_impassable_tiles = (
-    'ROOF', 'WALL', 'WOOD', 'DOOR', 'BARRIER', 'WEAPON_SIGN', 'INN_SIGN', 'MOUNTAINS', 'WATER', 'BOTTOM_COAST',
+    'ROOF', 'WALL', 'WOOD', 'DOOR', 'WEAPON_SIGN', 'INN_SIGN', 'MOUNTAINS', 'WATER', 'BOTTOM_COAST',
     'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST', 'TOP_COAST', 'TOP_RIGHT_COAST', 'RIGHT_COAST',
     'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST', 'BOTTOM_TOP_COAST', 'BOTTOM_TOP_RIGHT_COAST', 'KING_LORIK',
     'DOWN_FACE_GUARD', 'LEFT_FACE_GUARD', 'UP_FACE_GUARD', 'RIGHT_FACE_GUARD', 'MAN', 'WOMAN', 'WISE_MAN', 'SOLDIER',
@@ -148,21 +150,33 @@ class DragonWarriorMap:
             'BOTTOM_TOP_RIGHT_COAST': {'val': 32}
         }
         self.character_key = {
-            'HERO': {'val': 33, 'four_sided': True, 'path': UNARMED_HERO_PATH, 'roaming': False, 'underlying_tile': self.hero_underlying_tile()},
-            'KING_LORIK': {'val': 34, 'four_sided': False, 'path': KING_LORIK_PATH, 'roaming': False, 'underlying_tile': 'BRICK'},
-            'DOWN_FACE_GUARD': {'val': 35, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
-            'LEFT_FACE_GUARD': {'val': 36, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.LEFT.value, 'underlying_tile': 'BRICK'},
-            'UP_FACE_GUARD': {'val': 37, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.UP.value, 'underlying_tile': 'BRICK'},
-            'RIGHT_FACE_GUARD': {'val': 38, 'four_sided': True, 'path': GUARD_PATH, 'roaming': False, 'direction': Direction.RIGHT.value, 'underlying_tile': 'BRICK'},
-            'ROAMING_GUARD': {'val': 39, 'four_sided': True, 'path': GUARD_PATH, 'roaming': True, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
-            'MAN': {'val': 40, 'four_sided': True, 'path': MAN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
-            'WOMAN': {'val': 41, 'four_sided': True, 'path': WOMAN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'GRASS'},
-            'WISE_MAN': {'val': 42, 'four_sided': True, 'path': WISE_MAN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
-            'SOLDIER': {'val': 43, 'four_sided': True, 'path': SOLDIER_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
-            'MERCHANT': {'val': 44, 'four_sided': True, 'path': MERCHANT_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
-            'PRINCESS_GWAELIN': {'val': 45, 'four_sided': False, 'path': PRINCESS_GWAELIN_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'},
-            'DRAGONLORD': {'val': 46, 'four_sided': True, 'path': DRAGONLORD_PATH, 'roaming': False, 'direction': Direction.DOWN.value, 'underlying_tile': 'BRICK'}
+            'HERO': {'val': 33, 'path': UNARMED_HERO_PATH},
+            'KING_LORIK': {'val': 34, 'path': KING_LORIK_PATH},
+            'DOWN_FACE_GUARD': {'val': 35, 'path': GUARD_PATH, 'direction': Direction.DOWN.value},
+            'LEFT_FACE_GUARD': {'val': 36, 'path': GUARD_PATH, 'direction': Direction.LEFT.value},
+            'UP_FACE_GUARD': {'val': 37, 'path': GUARD_PATH, 'direction': Direction.UP.value},
+            'RIGHT_FACE_GUARD': {'val': 38, 'path': GUARD_PATH, 'direction': Direction.RIGHT.value},
+            'ROAMING_GUARD': {'val': 39, 'path': GUARD_PATH, 'direction': Direction.DOWN.value},
+            'MAN': {'val': 40, 'path': MAN_PATH, 'direction': Direction.DOWN.value},
+            'WOMAN': {'val': 41, 'path': WOMAN_PATH, 'direction': Direction.DOWN.value, 'underlying_tile': 'GRASS'},
+            'WISE_MAN': {'val': 42, 'path': WISE_MAN_PATH, 'direction': Direction.DOWN.value},
+            'SOLDIER': {'val': 43, 'path': SOLDIER_PATH, 'direction': Direction.DOWN.value},
+            'MERCHANT': {'val': 44, 'path': MERCHANT_PATH, 'direction': Direction.DOWN.value},
+            'PRINCESS_GWAELIN': {'val': 45, 'path': PRINCESS_GWAELIN_PATH, 'direction': Direction.DOWN.value},
+            'DRAGONLORD': {'val': 46, 'path': DRAGONLORD_PATH, 'direction': Direction.DOWN.value}
         }
+        for character, character_dict in self.character_key.items():
+            if character in ('KING_LORIK', 'PRINCESS_GWAELIN'):
+                character_dict['four_sided'] = False
+            else:
+                character_dict['four_sided'] = True
+            character_dict['roaming'] = True if character == 'ROAMING_GUARD' else False
+            if character == 'HERO':
+                character_dict['underlying_tile'] = self.hero_underlying_tile()
+            elif character == 'WOMAN':
+                character_dict['underlying_tile'] = 'GRASS'
+            else:
+                character_dict['underlying_tile'] = 'BRICK'
         self.tile_key = dict(list(self.floor_tile_key.items()) + list(self.character_key.items()))
 
     def get_tile_by_value(self, position: int) -> str:
@@ -319,6 +333,14 @@ class DragonWarriorMap:
         raise NotImplementedError("Method not implemented")
 
 
+class MapWithoutNPCs(DragonWarriorMap, ABC):
+    def set_characters_initial_directions(self):
+        pass
+
+    def set_custom_underlying_tiles(self):
+        pass
+
+
 class TantegelThroneRoom(DragonWarriorMap):
     """
     This is the first map in the game, the Tantegel Castle throne room.
@@ -394,6 +416,102 @@ class TantegelUnderground(DragonWarriorMap):
 
     def set_custom_underlying_tiles(self):
         pass
+
+
+class CharlockB1(MapWithoutNPCs):
+    def __init__(self):
+        super().__init__(MapLayouts().charlock_b1)
+        self.music_file_path = dungeon_floor_1_music
+
+    def hero_underlying_tile(self):
+        return 'BRICK'
+
+    def hero_initial_direction(self):
+        return Direction.UP.value
+
+
+class CharlockB2(MapWithoutNPCs):
+    def __init__(self):
+        super().__init__(MapLayouts().charlock_b2)
+        self.music_file_path = dungeon_floor_2_music
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+
+class CharlockB3(MapWithoutNPCs):
+    def __init__(self):
+        super().__init__(MapLayouts().charlock_b3)
+        self.music_file_path = dungeon_floor_3_music
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+
+class CharlockB4(MapWithoutNPCs):
+    def __init__(self):
+        super().__init__(MapLayouts().charlock_b4)
+        self.music_file_path = dungeon_floor_4_music
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+
+class CharlockB5(MapWithoutNPCs):
+    def __init__(self):
+        super().__init__(MapLayouts().charlock_b5)
+        self.music_file_path = dungeon_floor_5_music
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_DOWN'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+
+class CharlockB6(MapWithoutNPCs):
+    def __init__(self):
+        super().__init__(MapLayouts().charlock_b6)
+        self.music_file_path = dungeon_floor_6_music
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+
+class CharlockB7(MapWithoutNPCs):
+    def __init__(self):
+        super().__init__(MapLayouts().charlock_b7)
+        self.music_file_path = dungeon_floor_7_music
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+
+class CharlockB8(MapWithoutNPCs):
+    def __init__(self):
+        super().__init__(MapLayouts().charlock_b8)
+        self.music_file_path = dungeon_floor_8_music
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
 
 
 class Alefgard(DragonWarriorMap):
@@ -533,7 +651,7 @@ class Rimuldar(DragonWarriorMap):
         pass
 
 
-class Hauksness(DragonWarriorMap):
+class Hauksness(MapWithoutNPCs):
 
     def __init__(self):
         super().__init__(MapLayouts().hauksness)
@@ -551,12 +669,6 @@ class Hauksness(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
-
-    def set_characters_initial_directions(self):
-        pass
-
-    def set_custom_underlying_tiles(self):
-        pass
 
 
 class Cantlin(DragonWarriorMap):
@@ -585,7 +697,7 @@ class Cantlin(DragonWarriorMap):
         pass
 
 
-class ErdricksCaveB1(DragonWarriorMap):
+class ErdricksCaveB1(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().erdricks_cave_b1)
         self.music_file_path = dungeon_floor_1_music
@@ -598,14 +710,8 @@ class ErdricksCaveB1(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
-    def set_characters_initial_directions(self):
-        pass
 
-    def set_custom_underlying_tiles(self):
-        pass
-
-
-class ErdricksCaveB2(DragonWarriorMap):
+class ErdricksCaveB2(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().erdricks_cave_b2)
         self.music_file_path = dungeon_floor_2_music
@@ -616,12 +722,6 @@ class ErdricksCaveB2(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
-
-    def set_characters_initial_directions(self):
-        pass
-
-    def set_custom_underlying_tiles(self):
-        pass
 
 
 class SwampCave(DragonWarriorMap):
@@ -644,7 +744,7 @@ class SwampCave(DragonWarriorMap):
         pass
 
 
-class MountainCaveB1(DragonWarriorMap):
+class MountainCaveB1(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().mountain_cave_b1)
         self.music_file_path = dungeon_floor_1_music
@@ -655,12 +755,6 @@ class MountainCaveB1(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
-
-    def set_characters_initial_directions(self):
-        pass
-
-    def set_custom_underlying_tiles(self):
-        pass
 
 
 def parse_map_tiles(map_path):

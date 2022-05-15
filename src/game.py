@@ -134,6 +134,7 @@ class Game:
                 mixer.music.load(intro_overture)
             else:
                 mixer.music.load(self.current_map.music_file_path)
+            mixer.music.set_volume(0.5)
             mixer.music.play(-1)
         self.events = get()
         # self.command_menu_subsurface = self.background.subsurface(
