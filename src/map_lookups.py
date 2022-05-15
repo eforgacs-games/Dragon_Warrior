@@ -1,13 +1,7 @@
-from src.maps import TantegelThroneRoom, TantegelCourtyard, Alefgard, Brecconary, Garinham
+from src.maps import TantegelThroneRoom, TantegelCourtyard
 
+# TODO(ELF): Add last map and coordinates, so that we can put the player
+#  in a sensible place after map changes
 last_map_lookup = {
     TantegelThroneRoom: {TantegelCourtyard: (5, 5)},
-}
-
-map_lookup = {
-    "TantegelThroneRoom": TantegelThroneRoom,
-    "TantegelCourtyard": TantegelCourtyard,
-    "Alefgard": Alefgard,
-    "Brecconary": Brecconary,
-    "Garinham": Garinham
 }

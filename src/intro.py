@@ -2,13 +2,13 @@ import os
 import sys
 from os.path import join
 
-from pygame import image, font, display, QUIT, quit, KEYUP
+from pygame import image, font, display, QUIT, quit, KEYUP, draw
 from pygame.event import get
 from pygame.time import get_ticks
 from pygame.transform import scale
 
 from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, DRAGON_QUEST_FONT_PATH, PINK, SMB_FONT_PATH, convert_to_milliseconds, BLACK, \
-    INTRO_BANNER_PATH
+    INTRO_BANNER_PATH, WHITE
 from src.config import IMAGES_DIR, FPS
 from src.visual_effects import fade
 
@@ -28,6 +28,14 @@ def show_intro_banner(intro_banner_path, screen):
 def draw_text(text, size, color, x, y, font_name, screen):
     text_surface = font.Font(font_name, size).render(text, True, color, BLACK)
     text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    screen.blit(text_surface, text_rect)
+
+
+def draw_text_with_rectangle(text, size, color, x, y, font_name, screen):
+    text_surface = font.Font(font_name, size).render(text, True, color, BLACK)
+    text_rect = text_surface.get_rect()
+    draw.rect(text_surface, WHITE, text_rect, width=1)
     text_rect.midtop = (x, y)
     screen.blit(text_surface, text_rect)
 
@@ -97,6 +105,7 @@ class Intro:
                     waiting = False
             if convert_to_frames_since_start_time(start_time) >= 620:  # intro banner with text displays 620 frames in
                 waiting = False
+            display.flip()
         self.show_intro_dragon_banner_with_text(screen, clock, background)
 
     def show_intro_dragon_banner_with_text(self, screen, clock, background):
@@ -116,6 +125,7 @@ class Intro:
                     sys.exit()
                 elif current_event.type == KEYUP:
                     intro_banner_with_text_enabled = False
+            display.flip()
         fade(screen.get_width(), screen.get_height(), fade_out=True, background=background, screen=screen)
 
     def handle_all_sparkles(self, start_time, screen):
