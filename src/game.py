@@ -2,7 +2,7 @@ import random
 import sys
 
 from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, \
-    K_LEFT, K_a, K_RIGHT, K_d, KEYUP, K_2, K_1, image
+    K_LEFT, K_a, K_RIGHT, K_d, KEYUP, K_2, K_1, image, K_3
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -11,35 +11,19 @@ from pygame.time import get_ticks
 import src.menu as menu
 from src import maps
 from src.camera import Camera
-from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally, \
-    WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tiles, convert_to_milliseconds, ICON_PATH
+from src.common import Direction, play_sound, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally, \
+    WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tile_values, ICON_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
-from src.intro import draw_text, Intro
+from src.intro import draw_text, Intro, draw_text_with_rectangle
 from src.map_layouts import MapLayouts
-from src.map_lookups import map_lookup
+from src.maps import map_lookup
 from src.maps import set_character_position, get_next_coordinates
+from src.movement import bump_and_reset
 from src.player.player import Player
+from src.sound import bump
 from src.visual_effects import fade
-
-
-def bump(character):
-    if character.identifier == 'HERO':
-        if not character.last_bump_time:
-            character.last_bump_time = get_ticks()
-        if get_ticks() - character.last_bump_time >= convert_to_milliseconds(15):
-            character.last_bump_time = get_ticks()
-            play_sound(bump_sfx)
-    character.bumped = True
-
-
-def bump_and_reset(character, pre_bump_next_tile, pre_bump_next_next_tile):
-    if character.next_tile_id != pre_bump_next_tile:
-        character.next_tile_id = pre_bump_next_tile
-    if character.next_next_tile_id != pre_bump_next_next_tile:
-        character.next_next_tile_id = pre_bump_next_next_tile
-    bump(character)
 
 
 class Game:
@@ -47,8 +31,6 @@ class Game:
     BACK_FILL_COLOR = BLACK
     MOVE_EVENT = USEREVENT + 1
     ROAMING_CHARACTER_GO_COOLDOWN = 1000
-
-    # time.set_timer(MOVE_EVENT, 100)
 
     def __init__(self):
         # Initialize pygame
@@ -92,6 +74,9 @@ class Game:
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
+        # self.current_map = maps.ErdricksCaveB1()
+        # self.current_map = maps.Rimuldar()
+        # self.current_map = maps.Cantlin()
 
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
         self.big_map.fill(self.BACK_FILL_COLOR)
@@ -130,20 +115,21 @@ class Game:
                 mixer.music.load(intro_overture)
             else:
                 mixer.music.load(self.current_map.music_file_path)
+            mixer.music.set_volume(0.5)
             mixer.music.play(-1)
         self.events = get()
-        self.command_menu_subsurface = self.background.subsurface(
-            (self.player.column - 2) * TILE_SIZE,
-            (self.player.row - 6) * TILE_SIZE,
-            8 * TILE_SIZE,
-            5 * TILE_SIZE
-        )
-        self.dialog_box_subsurface = self.background.subsurface(
-            TILE_SIZE,
-            TILE_SIZE,
-            12 * TILE_SIZE,
-            5 * TILE_SIZE
-        )
+        # self.command_menu_subsurface = self.background.subsurface(
+        #     (self.player.column - 2) * TILE_SIZE,
+        #     (self.player.row - 6) * TILE_SIZE,
+        #     8 * TILE_SIZE,
+        #     5 * TILE_SIZE
+        # )
+        # self.dialog_box_subsurface = self.background.subsurface(
+        #     TILE_SIZE,
+        #     TILE_SIZE,
+        #     12 * TILE_SIZE,
+        #     5 * TILE_SIZE
+        # )
 
         display.set_icon(image.load(ICON_PATH))
 
@@ -178,11 +164,13 @@ class Game:
             screen.fill(BLACK)
             # totally dummy option for now, just a placeholder
             for i in range(256):
-                draw_text(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.screen)
+                draw_text_with_rectangle(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 3, DRAGON_QUEST_FONT_PATH,
+                                         self.screen)
                 display.flip()
             screen.fill(BLACK)
             for i in range(256):
-                draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.screen)
+                draw_text_with_rectangle(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 3, DRAGON_QUEST_FONT_PATH,
+                                         self.screen)
                 display.flip()
             screen.fill(BLACK)
             self.clock.tick(self.fps)
@@ -218,8 +206,10 @@ class Game:
         if self.enable_movement:
             self.move_player(current_key)
         # currently can't process staircases right next to one another, need to fix
-        # so that we can check if self.tiles_moved_since_spawn >= 1:
-        if self.tiles_moved_since_spawn > 1:
+        # a quick fix would be to add an exception in the conditional for
+        # the map where staircases right next to each other need to be enabled,
+        # as done with Cantlin below
+        if self.tiles_moved_since_spawn > 1 or self.current_map.identifier in ('Cantlin', 'Hauksness'):
             for staircase_location, staircase_dict in self.current_map.staircases.items():
                 self.process_staircase_warps(staircase_dict, staircase_location)
 
@@ -250,6 +240,12 @@ class Game:
 
         # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
         #     self.scale = self.scale + 1
+        if current_key[K_1]:
+            # self.draw_all_tiles_in_current_map()
+            self.fps = 60
+            # self.temporary_text_on_screen = True
+            # self.draw_text_start = get_ticks()
+            # draw_text("NORMAL SPEED", 15, WHITE, self.screen.get_width() / 2, self.screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.background)
 
         if current_key[K_2]:
             # self.draw_all_tiles_in_current_map()
@@ -258,13 +254,8 @@ class Game:
             # self.draw_text_start = get_ticks()
             # self.draw_temporary_text("DOUBLE (200%) SPEED")
             # draw_text("DOUBLE SPEED", 15, WHITE, self.player.rect.x, self.player.rect.y, DRAGON_QUEST_FONT_PATH, self.background)
-
-        if current_key[K_1]:
-            # self.draw_all_tiles_in_current_map()
-            self.fps = 60
-            # self.temporary_text_on_screen = True
-            # self.draw_text_start = get_ticks()
-            # draw_text("NORMAL SPEED", 15, WHITE, self.screen.get_width() / 2, self.screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.background)
+        if current_key[K_3]:
+            self.fps = 240
 
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
@@ -286,8 +277,7 @@ class Game:
         # print(f"self.player.current_tile: {self.player.current_tile}")
 
         # This prints out the current coordinates that the player is standing on.
-        # print(self.player.coordinates)
-        # print(f"{self.player.x, self.player.y}")
+        # print(f"{self.player.row, self.player.column}")
 
         # This prints out the next coordinates that the player will land on.
         # print(self.player.next_coordinates)
@@ -385,12 +375,16 @@ class Game:
         # won't work where there are moving NPCs, so only use this in the overworld
         if not self.current_map.roaming_characters:
             # basically, if you're in the overworld, since there are no roaming characters there
-            player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(
-                get_surrounding_tiles((self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE), self.current_map.layout, radius=1))
-            if self.player.is_moving:
-                tile_types_to_draw = list(
-                    dict.fromkeys(self.replace_characters_with_underlying_tiles(set(filter(None, [self.player.current_tile] + player_surrounding_tiles)))))
-            else:
+            try:
+                surrounding_tile_values = get_surrounding_tile_values((self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE),
+                                                                      self.current_map.layout, self.player.direction)
+                player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(surrounding_tile_values)
+                if self.player.is_moving:
+                    tile_types_to_draw = list(
+                        dict.fromkeys(self.replace_characters_with_underlying_tiles(set(filter(None, [self.player.current_tile] + player_surrounding_tiles)))))
+                else:
+                    tile_types_to_draw = self.replace_characters_with_underlying_tiles([self.player.current_tile])
+            except IndexError:
                 tile_types_to_draw = self.replace_characters_with_underlying_tiles([self.player.current_tile])
             if self.loop_count == 1:
                 # draw everything once on the first go-around
@@ -507,7 +501,7 @@ class Game:
         self.pause_all_movement()
         self.last_map = self.current_map
         self.current_map = next_map
-        fade(self.current_map.width, self.current_map.height, fade_out=True, background=self.background, screen=self.screen)
+        fade(self.screen.get_width(), self.screen.get_height(), fade_out=True, background=self.background, screen=self.screen)
         self.big_map = Surface((self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
         self.big_map.fill(self.BACK_FILL_COLOR)
         for roaming_character in self.current_map.roaming_characters:
