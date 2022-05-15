@@ -11,8 +11,8 @@ from pygame.time import get_ticks
 import src.menu as menu
 from src import maps
 from src.camera import Camera
-from src.common import Direction, play_sound, bump_sfx, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally, \
-    WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tile_values, convert_to_milliseconds, ICON_PATH
+from src.common import Direction, play_sound, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally, \
+    WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tile_values, ICON_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -20,26 +20,10 @@ from src.intro import draw_text, Intro, draw_text_with_rectangle
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.maps import set_character_position, get_next_coordinates
+from src.movement import bump_and_reset
 from src.player.player import Player
+from src.sound import bump
 from src.visual_effects import fade
-
-
-def bump(character):
-    if character.identifier == 'HERO':
-        if not character.last_bump_time:
-            character.last_bump_time = get_ticks()
-        if get_ticks() - character.last_bump_time >= convert_to_milliseconds(15):
-            character.last_bump_time = get_ticks()
-            play_sound(bump_sfx)
-    character.bumped = True
-
-
-def bump_and_reset(character, pre_bump_next_tile, pre_bump_next_next_tile):
-    if character.next_tile_id != pre_bump_next_tile:
-        character.next_tile_id = pre_bump_next_tile
-    if character.next_next_tile_id != pre_bump_next_next_tile:
-        character.next_next_tile_id = pre_bump_next_next_tile
-    bump(character)
 
 
 class Game:
@@ -47,8 +31,6 @@ class Game:
     BACK_FILL_COLOR = BLACK
     MOVE_EVENT = USEREVENT + 1
     ROAMING_CHARACTER_GO_COOLDOWN = 1000
-
-    # time.set_timer(MOVE_EVENT, 100)
 
     def __init__(self):
         # Initialize pygame
