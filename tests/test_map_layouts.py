@@ -13,7 +13,7 @@ class TestMapLayouts(TestCase):
     def test_player_in_every_map(self):
         for map_name, map_layout in self.map_layouts.map_layout_lookup.items():
             log = logging.getLogger("TestLog")
-            log.debug(f"Testing: {map_name}")
+            log.debug(f"Testing map: {map_name}")
             self.assertTrue(any(33 in row for row in map_layout))
 
 
