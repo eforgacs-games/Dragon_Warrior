@@ -2,7 +2,7 @@ import random
 import sys
 
 from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, \
-    K_LEFT, K_a, K_RIGHT, K_d, KEYUP, K_2, K_1, image, K_3
+    K_LEFT, K_a, K_RIGHT, K_d, KEYUP, K_2, K_1, image, K_3, K_4
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -256,6 +256,9 @@ class Game:
             # draw_text("DOUBLE SPEED", 15, WHITE, self.player.rect.x, self.player.rect.y, DRAGON_QUEST_FONT_PATH, self.background)
         if current_key[K_3]:
             self.fps = 240
+
+        if current_key[K_4]:
+            self.fps = 480
 
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
