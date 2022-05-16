@@ -87,7 +87,7 @@ class Game:
         # Make the big scrollable map
         self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
         self.player = Player(center_point=None, images=None)
-        self.current_map.load_map(self.player)
+        self.current_map.load_map(self.player, None)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
 
         self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
@@ -511,8 +511,19 @@ class Game:
             mixer.music.stop()
         layouts = MapLayouts()
         self.current_map.layout = layouts.map_layout_lookup[self.current_map.__class__.__name__]
-        self.current_map.load_map(self.player)
-
+        last_map_staircase_dict = self.last_map.staircases.get((self.player.row, self.player.column))
+        destination_coordinates = last_map_staircase_dict.get('destination_coordinates')
+        if not destination_coordinates:
+            self.current_map.load_map(self.player, None)
+        else:
+            self.current_map.layout[self.current_map.get_initial_character_location('HERO')[0][0]][self.current_map.get_initial_character_location('HERO')[0][1]] = self.current_map.floor_tile_key[self.current_map.hero_underlying_tile()]['val']
+            if self.current_map.character_key['HERO']['underlying_tile'] != self.current_map.get_tile_by_value(self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]]):
+                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
+            self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
+            self.current_map.load_map(self.player, destination_coordinates)
+        destination_direction = last_map_staircase_dict.get('direction')
+        if destination_direction:
+            self.current_map.player.direction = destination_direction
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)), current_map=self.current_map, screen=self.screen)
@@ -526,6 +537,8 @@ class Game:
         if self.music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
+        if destination_coordinates:
+            self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
 
         # play_music(self.current_map.music_file_path)
 
