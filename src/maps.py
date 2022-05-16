@@ -691,7 +691,11 @@ class Rimuldar(DragonWarriorMap):
 
     def __init__(self):
         super().__init__(MapLayouts().rimuldar)
-        self.create_town_gates(east_gate=warp_line((0, 30), (30, 30)))
+        self.create_town_gates(
+            north_gate=warp_line((6, 0), (6, len(self.layout[0]))),
+            east_gate=warp_line((0, 38), (len(self.layout), 38)),
+            west_gate=warp_line((0, 7), (len(self.layout), 7)),
+            south_gate=warp_line((36, 0), (36, len(self.layout[0]))))
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
 
