@@ -376,12 +376,12 @@ class DragonWarriorMap:
             if staircase_dict['map'] == 'Alefgard':
                 staircase_dict['destination_coordinates'] = alefgard_lookup_dict[self.__class__.__name__]['alefgard_coordinates']
 
-    def create_town_gates(self, north_gate, east_gate, west_gate, south_gate):
+    def create_town_gates(self, north_gate=None, east_gate=None, west_gate=None, south_gate=None):
         staircases_keys = []
-        staircases_keys += [north_gate] if north_gate is not None else []
-        staircases_keys += [east_gate] if east_gate is not None else []
-        staircases_keys += [west_gate] if west_gate is not None else []
-        staircases_keys += [south_gate] if south_gate is not None else []
+        staircases_keys += north_gate if north_gate is not None else []
+        staircases_keys += east_gate if east_gate is not None else []
+        staircases_keys += west_gate if west_gate is not None else []
+        staircases_keys += south_gate if south_gate is not None else []
         staircases_values = [up_staircase] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
 
@@ -615,12 +615,9 @@ class Brecconary(DragonWarriorMap):
 
     def __init__(self):
         super().__init__(MapLayouts().brecconary)
-        west_gate = warp_line((21, 9), (24, 9))
-        north_gate = warp_line((7, 23), (7, 26))
-        east_gate = warp_line((21, 40), (25, 40))
-        staircases_keys = west_gate + north_gate + east_gate
-        staircases_values = [up_staircase] * len(staircases_keys)
-        self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.create_town_gates(north_gate=warp_line((7, 23), (7, 26)),
+                               east_gate=warp_line((21, 40), (25, 40)),
+                               west_gate=warp_line((21, 9), (24, 9)))
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
 
@@ -644,11 +641,8 @@ class Garinham(DragonWarriorMap):
 
     def __init__(self):
         super().__init__(MapLayouts().garinham)
-        west_gate = warp_line((13, 8), (15, 8))
-        east_gate = warp_line((11, 29), (14, 29))
-        staircases_keys = west_gate + east_gate
-        staircases_values = [up_staircase] * len(staircases_keys)
-        self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.create_town_gates(west_gate=warp_line((13, 8), (15, 8)),
+                               east_gate=warp_line((11, 29), (14, 29)))
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
 
@@ -697,10 +691,7 @@ class Rimuldar(DragonWarriorMap):
 
     def __init__(self):
         super().__init__(MapLayouts().rimuldar)
-        east_gate = warp_line((0, 30), (30, 30))
-        staircases_keys = east_gate
-        staircases_values = [up_staircase] * len(staircases_keys)
-        self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.create_town_gates(east_gate=warp_line((0, 30), (30, 30)))
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
 
@@ -722,13 +713,11 @@ class Hauksness(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().hauksness)
         self.music_file_path = dungeon_floor_4_music
-        north_gate = warp_line((7, 9), (7, 28))
-        east_gate = warp_line((0, 29), (len(self.layout), 29))
-        west_gate = warp_line((0, 8), (len(self.layout), 8))
-        south_gate = warp_line((28, 9), (28, 28))
-        staircases_keys = north_gate + east_gate + west_gate + south_gate
-        staircases_values = [up_staircase] * len(staircases_keys)
-        self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.create_town_gates(north_gate=warp_line((7, 9), (7, 28)),
+                               east_gate=warp_line((0, 29), (len(self.layout), 29)),
+                               west_gate=warp_line((0, 8), (len(self.layout), 8)),
+                               south_gate=warp_line((28, 9), (28, 28))
+                               )
         self.set_town_to_overworld_warps()
 
     def hero_underlying_tile(self):
@@ -743,13 +732,10 @@ class Cantlin(DragonWarriorMap):
     def __init__(self):
         super().__init__(MapLayouts().cantlin)
         self.music_file_path = village_music
-        # west_gate = warp_line((21, 9), (24, 9))
-        north_gate = warp_line((7, 0), (7, 29))
-        # east_gate = warp_line((21, 40), (25, 40))
-        # staircases_keys = west_gate + north_gate + east_gate
-        staircases_keys = north_gate
-        staircases_values = [up_staircase] * len(staircases_keys)
-        self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.create_town_gates(north_gate=warp_line((7, 0), (7, 29))
+                               # west_gate = warp_line((21, 9), (24, 9))
+                               # east_gate = warp_line((21, 40), (25, 40))
+                               )
         self.set_town_to_overworld_warps()
 
     def hero_underlying_tile(self):
