@@ -2,7 +2,7 @@ import random
 import sys
 
 from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, \
-    K_LEFT, K_a, K_RIGHT, K_d, KEYUP, K_2, K_1, image, K_3
+    K_LEFT, K_a, K_RIGHT, K_d, KEYUP, K_2, K_1, image, K_3, K_4
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -87,7 +87,7 @@ class Game:
         # Make the big scrollable map
         self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
         self.player = Player(center_point=None, images=None)
-        self.current_map.load_map(self.player)
+        self.current_map.load_map(self.player, None)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
 
         self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
@@ -209,7 +209,7 @@ class Game:
         # a quick fix would be to add an exception in the conditional for
         # the map where staircases right next to each other need to be enabled,
         # as done with Cantlin below
-        if self.tiles_moved_since_spawn > 1 or self.current_map.identifier in ('Cantlin', 'Hauksness'):
+        if self.tiles_moved_since_spawn > 1 or self.current_map.identifier in ('Cantlin', 'Hauksness', 'Rimuldar'):
             for staircase_location, staircase_dict in self.current_map.staircases.items():
                 self.process_staircase_warps(staircase_dict, staircase_location)
 
@@ -256,6 +256,9 @@ class Game:
             # draw_text("DOUBLE SPEED", 15, WHITE, self.player.rect.x, self.player.rect.y, DRAGON_QUEST_FONT_PATH, self.background)
         if current_key[K_3]:
             self.fps = 240
+
+        if current_key[K_4]:
+            self.fps = 480
 
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
@@ -511,8 +514,19 @@ class Game:
             mixer.music.stop()
         layouts = MapLayouts()
         self.current_map.layout = layouts.map_layout_lookup[self.current_map.__class__.__name__]
-        self.current_map.load_map(self.player)
-
+        last_map_staircase_dict = self.last_map.staircases.get((self.player.row, self.player.column))
+        destination_coordinates = last_map_staircase_dict.get('destination_coordinates')
+        if not destination_coordinates:
+            self.current_map.load_map(self.player, None)
+        else:
+            self.current_map.layout[self.current_map.get_initial_character_location('HERO')[0][0]][self.current_map.get_initial_character_location('HERO')[0][1]] = self.current_map.floor_tile_key[self.current_map.hero_underlying_tile()]['val']
+            if self.current_map.character_key['HERO']['underlying_tile'] != self.current_map.get_tile_by_value(self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]]):
+                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
+            self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
+            self.current_map.load_map(self.player, destination_coordinates)
+        destination_direction = last_map_staircase_dict.get('direction')
+        if destination_direction:
+            self.current_map.player.direction = destination_direction
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)), current_map=self.current_map, screen=self.screen)
@@ -526,6 +540,8 @@ class Game:
         if self.music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
+        if destination_coordinates:
+            self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
 
         # play_music(self.current_map.music_file_path)
 
