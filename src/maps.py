@@ -24,9 +24,9 @@ from src.sprites.roaming_character import RoamingCharacter
 
 offset = TILE_SIZE // 2
 all_impassable_tiles = (
-'ROOF', 'WALL', 'WOOD', 'DOOR', 'WEAPON_SIGN', 'INN_SIGN', 'MOUNTAINS', 'WATER', 'BOTTOM_COAST', 'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST',
-'TOP_COAST', 'TOP_RIGHT_COAST', 'RIGHT_COAST', 'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST', 'BOTTOM_TOP_COAST', 'BOTTOM_TOP_RIGHT_COAST', 'KING_LORIK',
-'DOWN_FACE_GUARD', 'LEFT_FACE_GUARD', 'UP_FACE_GUARD', 'RIGHT_FACE_GUARD', 'MAN', 'WOMAN', 'WISE_MAN', 'SOLDIER', 'MERCHANT')
+    'ROOF', 'WALL', 'WOOD', 'DOOR', 'WEAPON_SIGN', 'INN_SIGN', 'MOUNTAINS', 'WATER', 'BOTTOM_COAST', 'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST',
+    'TOP_COAST', 'TOP_RIGHT_COAST', 'RIGHT_COAST', 'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST', 'BOTTOM_TOP_COAST', 'BOTTOM_TOP_RIGHT_COAST', 'KING_LORIK',
+    'DOWN_FACE_GUARD', 'LEFT_FACE_GUARD', 'UP_FACE_GUARD', 'RIGHT_FACE_GUARD', 'MAN', 'WOMAN', 'WISE_MAN', 'SOLDIER', 'MERCHANT')
 up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
 
 
@@ -364,6 +364,27 @@ class DragonWarriorMap:
     def set_custom_underlying_tiles(self):
         raise NotImplementedError("Method not implemented")
 
+    def set_town_to_overworld_warps(self):
+        """Sets the exit location to the overworld (Alefgard) from within a town"""
+        for staircase_dict in self.staircases.values():
+            alefgard_staircases = Alefgard().staircases
+            # TODO(ELF): Probably don't need this extra alefgard_lookup_dict - maybe remove it later
+            alefgard_lookup_dict = {}
+            for alefgard_coordinates, alefgard_staircase_dict in alefgard_staircases.items():
+                alefgard_lookup_dict[alefgard_staircase_dict.get('map')] = alefgard_staircase_dict
+                alefgard_lookup_dict[alefgard_staircase_dict.get('map')]['alefgard_coordinates'] = alefgard_coordinates
+            if staircase_dict['map'] == 'Alefgard':
+                staircase_dict['destination_coordinates'] = alefgard_lookup_dict[self.__class__.__name__]['alefgard_coordinates']
+
+    def create_town_gates(self, north_gate, east_gate, west_gate, south_gate):
+        staircases_keys = []
+        staircases_keys += [north_gate] if north_gate is not None else []
+        staircases_keys += [east_gate] if east_gate is not None else []
+        staircases_keys += [west_gate] if west_gate is not None else []
+        staircases_keys += [south_gate] if south_gate is not None else []
+        staircases_values = [up_staircase] * len(staircases_keys)
+        self.staircases = dict(zip(staircases_keys, staircases_values))
+
 
 class MapWithoutNPCs(DragonWarriorMap, ABC):
     def set_characters_initial_directions(self):
@@ -381,7 +402,8 @@ class TantegelThroneRoom(DragonWarriorMap):
     def __init__(self):
         super().__init__(MapLayouts().tantegel_throne_room)
 
-        self.staircases = {(14, 18): {'map': 'TantegelCourtyard', 'stair_direction': 'down', 'destination_coordinates': (14, 14), 'direction': Direction.RIGHT.value}}
+        self.staircases = {
+            (14, 18): {'map': 'TantegelCourtyard', 'stair_direction': 'down', 'destination_coordinates': (14, 14), 'direction': Direction.RIGHT.value}}
         self.music_file_path = tantegel_castle_throne_room_music
 
     def hero_underlying_tile(self):
@@ -410,8 +432,10 @@ class TantegelCourtyard(DragonWarriorMap):
         # staircase_keys = warp_line((37, 9), (37, 26))
         staircases_values = [alefgard] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
-        self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'stair_direction': 'up', 'destination_coordinates': (14, 18), 'direction': Direction.LEFT.value}
-        self.staircases[(36, 36)] = {'map': 'TantegelUnderground', 'stair_direction': 'up', 'destination_coordinates': ()}
+        self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'stair_direction': 'up', 'destination_coordinates': (14, 18),
+                                     'direction': Direction.LEFT.value}
+        self.staircases[(36, 36)] = {'map': 'TantegelUnderground', 'stair_direction': 'down'}
+        self.set_town_to_overworld_warps()
         self.music_file_path = tantegel_castle_courtyard_music
 
     def hero_underlying_tile(self):
@@ -434,7 +458,7 @@ class TantegelUnderground(DragonWarriorMap):
     def __init__(self):
         super().__init__(MapLayouts().tantegel_underground)
         self.music_file_path = tantegel_castle_courtyard_music
-        self.staircases = {(4, 1): {'map': 'TantegelCourtyard', 'stair_direction': 'up', 'destination_coordinates': ()}}
+        self.staircases = {(4, 1): {'map': 'TantegelCourtyard', 'stair_direction': 'up', 'destination_coordinates': (36, 36)}}
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -557,18 +581,22 @@ class Alefgard(DragonWarriorMap):
         self.staircases = {
             # (row, column)
             # castles
-            (50, 49): {'map': 'TantegelCourtyard', 'stair_direction': 'up', 'destination_coordinates': (36, 17), 'direction': Direction.UP.value},
+            (50, 49): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 18), 'direction': Direction.UP.value},
             # villages
-            (48, 54): {'map': 'Brecconary', 'stair_direction': 'up'},
-            (9, 8): {'map': 'Garinham', 'stair_direction': 'up'},
-            (17, 110): {'map': 'Kol', 'stair_direction': 'up'},
+            (48, 54): {'map': 'Brecconary'},
+            (9, 8): {'map': 'Garinham'},
+            (17, 110): {'map': 'Kol'},
             # cave
-            (19, 34): {'map': 'ErdricksCaveB1', 'stair_direction': 'up'},
-            (51, 110): {'map': 'SwampCave', 'stair_direction': 'up'},
-            (64, 35): {'map': 'MountainCaveB1', 'stair_direction': 'up'},
-            (96, 31): {'map': 'Hauksness', 'stair_direction': 'up'},
-            (109, 79): {'map': 'Cantlin', 'stair_direction': 'up'},
+            (19, 34): {'map': 'ErdricksCaveB1'},
+            (51, 110): {'map': 'SwampCave'},
+            (56, 110): {'map': 'SwampCave', 'destination_coordinates': (36, 4)},
+            (64, 35): {'map': 'MountainCaveB1'},
+            (96, 31): {'map': 'Hauksness'},
+            (79, 108): {'map': 'Rimuldar'},
+            (109, 79): {'map': 'Cantlin'},
         }
+        for staircase_dict in self.staircases.values():
+            staircase_dict['stair_direction'] = 'up'
 
     def hero_underlying_tile(self):
         return 'CASTLE'
@@ -593,6 +621,7 @@ class Brecconary(DragonWarriorMap):
         staircases_keys = west_gate + north_gate + east_gate
         staircases_values = [up_staircase] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.set_town_to_overworld_warps()
         self.music_file_path = village_music
 
     def hero_underlying_tile(self):
@@ -620,6 +649,7 @@ class Garinham(DragonWarriorMap):
         staircases_keys = west_gate + east_gate
         staircases_values = [up_staircase] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.set_town_to_overworld_warps()
         self.music_file_path = village_music
 
     def hero_underlying_tile(self):
@@ -643,13 +673,12 @@ class Kol(DragonWarriorMap):
     def __init__(self):
         super().__init__(MapLayouts().kol)
         self.music_file_path = village_music
-        west_gate = warp_line((7, 8), (32, 8))
-        north_gate = warp_line((7, 8), (7, 33))
-        east_gate = warp_line((7, 33), (32, 33))
-        south_gate = warp_line((32, 8), (32, 33))
-        staircases_keys = west_gate + north_gate + east_gate + south_gate
-        staircases_values = [up_staircase] * len(staircases_keys)
-        self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.create_town_gates(north_gate=warp_line((7, 8), (7, 33)),
+                               east_gate=warp_line((7, 33), (32, 33)),
+                               west_gate=warp_line((7, 8), (32, 8)),
+                               south_gate=warp_line((32, 8), (32, 33))
+                               )
+        self.set_town_to_overworld_warps()
 
     def hero_underlying_tile(self):
         return 'SAND'
@@ -668,6 +697,11 @@ class Rimuldar(DragonWarriorMap):
 
     def __init__(self):
         super().__init__(MapLayouts().rimuldar)
+        east_gate = warp_line((0, 30), (30, 30))
+        staircases_keys = east_gate
+        staircases_values = [up_staircase] * len(staircases_keys)
+        self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.set_town_to_overworld_warps()
         self.music_file_path = village_music
 
     def hero_underlying_tile(self):
@@ -695,6 +729,7 @@ class Hauksness(MapWithoutNPCs):
         staircases_keys = north_gate + east_gate + west_gate + south_gate
         staircases_values = [up_staircase] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.set_town_to_overworld_warps()
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -715,6 +750,7 @@ class Cantlin(DragonWarriorMap):
         staircases_keys = north_gate
         staircases_values = [up_staircase] * len(staircases_keys)
         self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.set_town_to_overworld_warps()
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -735,6 +771,7 @@ class ErdricksCaveB1(MapWithoutNPCs):
         self.music_file_path = dungeon_floor_1_music
         self.staircases = {(1, 1): {'map': 'Alefgard', 'stair_direction': 'up'},
                            (10, 10): {'map': 'ErdricksCaveB2', 'stair_direction': 'down'}}
+        self.set_town_to_overworld_warps()
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -762,6 +799,8 @@ class SwampCave(DragonWarriorMap):
         self.music_file_path = dungeon_floor_1_music
         self.staircases = {(6, 4): {'map': 'Alefgard', 'stair_direction': 'up'},
                            (36, 4): {'map': 'Alefgard', 'stair_direction': 'up'}}
+        self.set_town_to_overworld_warps()
+        self.staircases[(36, 4)]['destination_coordinates'] = (56, 110)
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -781,6 +820,7 @@ class MountainCaveB1(MapWithoutNPCs):
         super().__init__(MapLayouts().mountain_cave_b1)
         self.music_file_path = dungeon_floor_1_music
         self.staircases = {}
+        self.set_town_to_overworld_warps()
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
