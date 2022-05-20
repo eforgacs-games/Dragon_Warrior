@@ -81,10 +81,6 @@ class CommandMenu(Menu):
             self.command_menu_subsurface = None
             self.menu = None
 
-
-
-
-
     def talk(self):
         """
         Talk to an NPC. (Not yet implemented)
@@ -96,8 +92,8 @@ class CommandMenu(Menu):
 
         # for now, implementing using print statements. will be useful for debugging as well.
         character_coordinates = [character_dict['coordinates'] for character_dict in self.characters.values()]
-        if not any(c in character_coordinates for c in [self.player.next_coordinates, self.player.next_next_coordinates]):
         # if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
+        if not any(c in character_coordinates for c in [self.player.next_coordinates, self.player.next_next_coordinates]):
             print_with_beep_sfx("'There is no one there.'")
             return
         for character_identifier, character_info in self.characters.items():
@@ -149,7 +145,7 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # this might be something we could turn off as one of the "modernization" updates, but the implementation would be as follows:
-        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIRUP', 'GRASS_STAIRDN'):
+        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN'):
             print("'There are stairs here.'")
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
@@ -249,8 +245,3 @@ class DialogBox(Menu):
             logging.error(e)
             self.dialog_box_subsurface = None
             self.menu = None
-
-
-
-def draw_menu_on_subsurface(menu_to_draw, subsurface):
-    return menu_to_draw.draw(subsurface)
