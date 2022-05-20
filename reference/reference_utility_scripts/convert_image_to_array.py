@@ -85,7 +85,6 @@ def match_tiles(filename, map_array):
     for individual_tile_file in glob.glob(os.path.join(individual_tiles_dir, '*.png')):
         # filename = os.path.join(individual_tiles_path, '12.png') # village
         template = cv2.imread(individual_tile_file)
-        w, h = template.shape[:-1]
         res = cv2.matchTemplate(image_to_convert_rgb, template, cv2.TM_CCOEFF_NORMED)
         threshold = 0.8
         loc = np.where(res >= threshold)
