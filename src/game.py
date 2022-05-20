@@ -148,6 +148,7 @@ class Game:
             intro = Intro()
             intro.show_start_screen(self.screen, self.start_time, self.clock, self.background)
             self.show_main_menu_screen(self.screen)
+        self.draw_all()
         while True:
             self.clock.tick(self.fps)
             self.get_events()

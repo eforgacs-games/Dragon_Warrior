@@ -588,12 +588,14 @@ class Alefgard(DragonWarriorMap):
             (17, 110): {'map': 'Kol'},
             # cave
             (19, 34): {'map': 'ErdricksCaveB1'},
-            (51, 110): {'map': 'SwampCave'},
+            (51, 110): {'map': 'SwampCave', 'destination_coordinates': (6, 4)},
             (56, 110): {'map': 'SwampCave', 'destination_coordinates': (36, 4)},
             (64, 35): {'map': 'MountainCaveB1'},
             (96, 31): {'map': 'Hauksness'},
             (79, 108): {'map': 'Rimuldar'},
             (109, 79): {'map': 'Cantlin'},
+            (116, 114): {'map': 'MagicTemple'},
+            (8, 87): {'map': 'StaffOfRainCave'},
         }
         for staircase_dict in self.staircases.values():
             staircase_dict['stair_direction'] = 'up'
@@ -602,7 +604,7 @@ class Alefgard(DragonWarriorMap):
         return 'CASTLE'
 
     def hero_initial_direction(self):
-        return Direction.DOWN.value
+        return Direction.DOWN.value if self.character_key['HERO']['underlying_tile'] != 'GRASS_STAIR_DOWN' else Direction.LEFT.value
 
     def set_characters_initial_directions(self):
         pass
@@ -787,10 +789,8 @@ class SwampCave(DragonWarriorMap):
     def __init__(self):
         super().__init__(MapLayouts().swamp_cave)
         self.music_file_path = dungeon_floor_1_music
-        self.staircases = {(6, 4): {'map': 'Alefgard', 'stair_direction': 'up'},
-                           (36, 4): {'map': 'Alefgard', 'stair_direction': 'up'}}
-        self.set_town_to_overworld_warps()
-        self.staircases[(36, 4)]['destination_coordinates'] = (56, 110)
+        self.staircases = {(6, 4): {'map': 'Alefgard', 'stair_direction': 'up', 'destination_coordinates': (51, 110)},
+                           (36, 4): {'map': 'Alefgard', 'stair_direction': 'up', 'destination_coordinates': (56, 110)}}
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -817,6 +817,46 @@ class MountainCaveB1(MapWithoutNPCs):
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
+
+
+class StaffOfRainCave(DragonWarriorMap):
+    def __init__(self):
+        super().__init__(MapLayouts().staff_of_rain_cave)
+        self.music_file_path = tantegel_castle_courtyard_music
+        self.staircases = {(11, 6): {'map': 'Alefgard', 'stair_direction': 'up'}}
+        self.set_town_to_overworld_warps()
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+    def set_characters_initial_directions(self):
+        self.set_character_initial_direction('WISE_MAN', Direction.RIGHT)
+
+    def set_custom_underlying_tiles(self):
+        pass
+
+
+class MagicTemple(DragonWarriorMap):
+    def __init__(self):
+        super().__init__(MapLayouts().magic_temple)
+        self.music_file_path = tantegel_castle_courtyard_music
+        self.staircases = {(6, 2): {'map': 'Alefgard', 'stair_direction': 'up'}}
+        self.set_town_to_overworld_warps()
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+    def set_characters_initial_directions(self):
+        self.set_character_initial_direction('WISE_MAN', Direction.LEFT)
+
+    def set_custom_underlying_tiles(self):
+        pass
 
 
 # Lookup of all map names with their associated class
