@@ -554,7 +554,7 @@ class CharlockB8(MapWithoutNPCs):
         return Direction.RIGHT.value
 
 
-class Alefgard(DragonWarriorMap):
+class Alefgard(MapWithoutNPCs):
     """
     This is Alefgard, the world by which the player travels between castles, villages, and dungeons.
     """
@@ -589,9 +589,6 @@ class Alefgard(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.DOWN.value if self.character_key['HERO']['underlying_tile'] != 'GRASS_STAIR_DOWN' else Direction.LEFT.value
-
-    def set_characters_initial_directions(self):
-        pass
 
 
 class Brecconary(DragonWarriorMap):
