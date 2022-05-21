@@ -252,7 +252,6 @@ class DragonWarriorMap:
                 else:
                     self.map_character_tiles(y, x, player)
         self.set_characters_initial_directions()
-        self.set_custom_underlying_tiles()
 
     def get_tiles_in_current_map(self):
         tiles_in_current_map = set([self.get_tile_by_value(tile) for row in self.layout for tile in row])
@@ -361,9 +360,6 @@ class DragonWarriorMap:
     def set_character_initial_direction(self, character_identifier, direction):
         self.characters[character_identifier]['character'].direction = direction.value
 
-    def set_custom_underlying_tiles(self):
-        raise NotImplementedError("Method not implemented")
-
     def set_town_to_overworld_warps(self):
         """Sets the exit location to the overworld (Alefgard) from within a town"""
         for staircase_dict in self.staircases.values():
@@ -390,9 +386,6 @@ class MapWithoutNPCs(DragonWarriorMap, ABC):
     def set_characters_initial_directions(self):
         pass
 
-    def set_custom_underlying_tiles(self):
-        pass
-
 
 class TantegelThroneRoom(DragonWarriorMap):
     """
@@ -413,9 +406,6 @@ class TantegelThroneRoom(DragonWarriorMap):
         return Direction.UP.value
 
     def set_characters_initial_directions(self):
-        pass
-
-    def set_custom_underlying_tiles(self):
         pass
 
 
@@ -450,9 +440,6 @@ class TantegelCourtyard(DragonWarriorMap):
     def set_characters_initial_directions(self):
         self.set_character_initial_direction('WISE_MAN', Direction.LEFT)
 
-    def set_custom_underlying_tiles(self):
-        pass
-
 
 class TantegelUnderground(DragonWarriorMap):
     def __init__(self):
@@ -469,9 +456,6 @@ class TantegelUnderground(DragonWarriorMap):
     def set_characters_initial_directions(self):
         pass
         # self.set_character_initial_direction('WISE_MAN', Direction.DOWN)
-
-    def set_custom_underlying_tiles(self):
-        pass
 
 
 class CharlockB1(MapWithoutNPCs):
@@ -570,7 +554,7 @@ class CharlockB8(MapWithoutNPCs):
         return Direction.RIGHT.value
 
 
-class Alefgard(DragonWarriorMap):
+class Alefgard(MapWithoutNPCs):
     """
     This is Alefgard, the world by which the player travels between castles, villages, and dungeons.
     """
@@ -606,12 +590,6 @@ class Alefgard(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.DOWN.value if self.character_key['HERO']['underlying_tile'] != 'GRASS_STAIR_DOWN' else Direction.LEFT.value
 
-    def set_characters_initial_directions(self):
-        pass
-
-    def set_custom_underlying_tiles(self):
-        pass
-
 
 class Brecconary(DragonWarriorMap):
 
@@ -632,11 +610,6 @@ class Brecconary(DragonWarriorMap):
     def set_characters_initial_directions(self):
         self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
         self.set_character_initial_direction('WOMAN', Direction.LEFT)
-
-    def set_custom_underlying_tiles(self):
-        # TODO(ELF): Setting underlying tiles like this as is doesn't work.
-        pass
-        # self.characters['WOMAN']['character'].underlying_tile = 'BRICK'
 
 
 class Garinham(DragonWarriorMap):
@@ -660,9 +633,6 @@ class Garinham(DragonWarriorMap):
         self.set_character_initial_direction('MERCHANT_3', Direction.UP)
         self.set_character_initial_direction('WISE_MAN', Direction.RIGHT)
 
-    def set_custom_underlying_tiles(self):
-        pass
-
 
 class Kol(DragonWarriorMap):
 
@@ -685,9 +655,6 @@ class Kol(DragonWarriorMap):
     def set_characters_initial_directions(self):
         pass
 
-    def set_custom_underlying_tiles(self):
-        pass
-
 
 class Rimuldar(DragonWarriorMap):
 
@@ -708,9 +675,6 @@ class Rimuldar(DragonWarriorMap):
         return Direction.LEFT.value
 
     def set_characters_initial_directions(self):
-        pass
-
-    def set_custom_underlying_tiles(self):
         pass
 
 
@@ -751,9 +715,6 @@ class Cantlin(DragonWarriorMap):
         return Direction.DOWN.value
 
     def set_characters_initial_directions(self):
-        pass
-
-    def set_custom_underlying_tiles(self):
         pass
 
 
@@ -801,9 +762,6 @@ class SwampCave(DragonWarriorMap):
     def set_characters_initial_directions(self):
         pass
 
-    def set_custom_underlying_tiles(self):
-        pass
-
 
 class MountainCaveB1(MapWithoutNPCs):
     def __init__(self):
@@ -835,9 +793,6 @@ class StaffOfRainCave(DragonWarriorMap):
     def set_characters_initial_directions(self):
         self.set_character_initial_direction('WISE_MAN', Direction.RIGHT)
 
-    def set_custom_underlying_tiles(self):
-        pass
-
 
 class MagicTemple(DragonWarriorMap):
     def __init__(self):
@@ -854,9 +809,6 @@ class MagicTemple(DragonWarriorMap):
 
     def set_characters_initial_directions(self):
         self.set_character_initial_direction('WISE_MAN', Direction.LEFT)
-
-    def set_custom_underlying_tiles(self):
-        pass
 
 
 # Lookup of all map names with their associated class
