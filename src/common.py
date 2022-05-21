@@ -211,7 +211,7 @@ def convert_to_milliseconds(fps):
     return fps / 60 * 1000
 
 
-def get_surrounding_tile_values(coordinates, map_layout, direction, radius=1):
+def get_surrounding_tile_values(coordinates, map_layout, radius=1):
     x = coordinates[0]
     y = coordinates[1]
 

@@ -118,6 +118,8 @@ class Game:
             mixer.music.set_volume(0.5)
             mixer.music.play(-1)
         self.events = get()
+        self.command_menu_subsurface = None
+        self.dialog_box_subsurface = None
         # self.command_menu_subsurface = self.background.subsurface(
         #     (self.player.column - 2) * TILE_SIZE,
         #     (self.player.row - 6) * TILE_SIZE,
@@ -134,10 +136,6 @@ class Game:
         display.set_icon(image.load(ICON_PATH))
 
         # pg.event.set_allowed([pg.QUIT])
-
-    def set_win_width_and_height(self):
-        self.win_width = NES_RES[0] * self.scale
-        self.win_height = NES_RES[1] * self.scale
 
     def main(self) -> None:
         """
@@ -156,7 +154,7 @@ class Game:
             self.update_screen()
             self.loop_count += 1
 
-    def show_main_menu_screen(self, screen):
+    def show_main_menu_screen(self, screen) -> None:
         main_menu_screen_enabled = True
         if self.music_enabled:
             mixer.music.load(village_music)
@@ -319,7 +317,7 @@ class Game:
                   self.screen)
         # display.flip()
 
-    def get_character_identifier_by_coordinates(self, coordinates):
+    def get_character_identifier_by_coordinates(self, coordinates) -> str | None:
         for character_identifier, character_info in self.current_map.characters.items():
             if character_info['coordinates'] == coordinates:
                 return character_identifier
@@ -381,11 +379,12 @@ class Game:
             # basically, if you're in the overworld, since there are no roaming characters there
             try:
                 surrounding_tile_values = get_surrounding_tile_values((self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE),
-                                                                      self.current_map.layout, self.player.direction)
+                                                                      self.current_map.layout)
                 player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(surrounding_tile_values)
                 if self.player.is_moving:
                     tile_types_to_draw = list(
-                        dict.fromkeys(self.replace_characters_with_underlying_tiles(set(filter(None, [self.player.current_tile] + player_surrounding_tiles)))))
+                        dict.fromkeys(
+                            self.replace_characters_with_underlying_tiles(set(filter(None, [self.player.current_tile] + player_surrounding_tiles)))))
                 else:
                     tile_types_to_draw = self.replace_characters_with_underlying_tiles([self.player.current_tile])
             except IndexError:
@@ -425,20 +424,6 @@ class Game:
             if tile in self.current_map.tile_types_in_current_map:
                 tile_dict['group'].draw(self.background)
 
-    def generate_upcoming_numeric_tiles(self):
-        if self.player.row and self.player.column:
-            hero_upcoming_numeric_tiles = self.get_character_upcoming_numeric_tiles(self.player.row, self.player.column)
-        else:
-            hero_upcoming_numeric_tiles = []
-        character_upcoming_tile_list = []
-        for character in self.current_map.roaming_characters:
-            if character.row and character.column:
-                character_upcoming_tile_list.append(self.get_character_upcoming_numeric_tiles(character.row, character.column))
-            # print(f"{character}: {character.row}, {character.column}")
-        character_upcoming_numeric_tiles = [item for sublist in character_upcoming_tile_list for item in sublist]
-        all_upcoming_tiles = hero_upcoming_numeric_tiles + character_upcoming_numeric_tiles
-        return all_upcoming_tiles, character_upcoming_numeric_tiles, character_upcoming_tile_list
-
     def replace_characters_with_underlying_tiles(self, tile_types_to_draw):
         for character in self.current_map.character_key.keys():
             if character in tile_types_to_draw:
@@ -452,15 +437,6 @@ class Game:
             converted_tiles.append(self.current_map.get_tile_by_value(tile_value))
         return converted_tiles
 
-    def get_character_upcoming_numeric_tiles(self, character_row, character_column):
-        """Gets upcoming tiles in current row and column, two offset from current position."""
-        upcoming_tiles_in_current_row_and_column = []
-        for tile in self.current_map.layout[character_row][character_column - 4:character_column + 4]:
-            upcoming_tiles_in_current_row_and_column.append(tile)
-        for i in range(character_row - 4, character_row + 4):
-            upcoming_tiles_in_current_row_and_column.append(self.current_map.layout[i][character_column])
-        return upcoming_tiles_in_current_row_and_column
-
     def handle_menu_launch(self, menu_to_launch):
         if menu_to_launch.launch_signaled:
             if menu_to_launch.menu.get_id() == 'command':
@@ -470,7 +446,7 @@ class Game:
                     8 * TILE_SIZE,
                     5 * TILE_SIZE
                 )
-                rect = menu.draw_menu_on_subsurface(menu_to_launch.menu, self.command_menu_subsurface)
+                rect = menu_to_launch.menu.draw(self.command_menu_subsurface)
             elif menu_to_launch.menu.get_id() == 'dialog_box':
                 self.dialog_box_subsurface = self.background.subsurface(
                     # left=(self.player.column + 6) * TILE_SIZE,
@@ -480,7 +456,7 @@ class Game:
                     12 * TILE_SIZE,
                     5 * TILE_SIZE
                 )
-                rect = menu.draw_menu_on_subsurface(menu_to_launch.menu, self.dialog_box_subsurface)
+                rect = menu_to_launch.menu.draw(self.dialog_box_subsurface)
             else:
                 rect = None
                 print("No menu launched")
@@ -520,9 +496,13 @@ class Game:
         if not destination_coordinates:
             self.current_map.load_map(self.player, None)
         else:
-            self.current_map.layout[self.current_map.get_initial_character_location('HERO')[0][0]][self.current_map.get_initial_character_location('HERO')[0][1]] = self.current_map.floor_tile_key[self.current_map.hero_underlying_tile()]['val']
-            if self.current_map.character_key['HERO']['underlying_tile'] != self.current_map.get_tile_by_value(self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]]):
-                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
+            self.current_map.layout[self.current_map.get_initial_character_location('HERO')[0][0]][
+                self.current_map.get_initial_character_location('HERO')[0][1]] = self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']][
+                'val']
+            if self.current_map.character_key['HERO']['underlying_tile'] != self.current_map.get_tile_by_value(
+                    self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]]):
+                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
+                    self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
             self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
             self.current_map.load_map(self.player, destination_coordinates)
         destination_direction = last_map_staircase_dict.get('direction')
@@ -589,7 +569,7 @@ class Game:
             self.dlg_box.launched = True
 
     def set_and_append_rect(self, menu_to_set, subsurface):
-        menu_rect = menu.draw_menu_on_subsurface(menu_to_set, subsurface)
+        menu_rect = menu_to_set.draw(subsurface)
         if menu_rect:
             self.foreground_rects.append(menu_rect)
 
