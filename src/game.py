@@ -382,17 +382,16 @@ class Game:
                                                                       self.current_map.layout)
                 player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(surrounding_tile_values)
                 if self.player.is_moving:
-                    tile_types_to_draw = list(
-                        dict.fromkeys(
-                            self.replace_characters_with_underlying_tiles(set(filter(None, [self.player.current_tile] + player_surrounding_tiles)))))
+                    tile_types_to_draw = set(
+                        self.replace_characters_with_underlying_tiles(set(filter(None, [self.player.current_tile] + player_surrounding_tiles))))
                 else:
-                    tile_types_to_draw = self.replace_characters_with_underlying_tiles([self.player.current_tile])
+                    tile_types_to_draw = set(self.replace_characters_with_underlying_tiles([self.player.current_tile]))
             except IndexError:
                 tile_types_to_draw = self.replace_characters_with_underlying_tiles([self.player.current_tile])
             if self.loop_count == 1:
                 # draw everything once on the first go-around
                 self.draw_all_tiles_in_current_map()
-            tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
+            # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
             for tile, tile_dict in self.current_map.floor_tile_key.items():
                 if tile in tile_types_to_draw:
                     tile_dict['group'].draw(self.background)
@@ -404,7 +403,7 @@ class Game:
             if self.loop_count == 1:
                 self.draw_all_tiles_in_current_map()
             for tile, tile_dict in self.current_map.floor_tile_key.items():
-                if tile in list(filter(lambda x: not self.is_impassable(x), self.current_map.tile_types_in_current_map)):
+                if tile in set(self.current_map.tile_types_in_current_map):
                     tile_dict['group'].draw(self.background)
 
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
@@ -433,7 +432,7 @@ class Game:
 
     def convert_numeric_tile_list_to_unique_tile_values(self, numeric_tile_list):
         converted_tiles = []
-        for tile_value in dict.fromkeys(numeric_tile_list):
+        for tile_value in set(numeric_tile_list):
             converted_tiles.append(self.current_map.get_tile_by_value(tile_value))
         return converted_tiles
 
