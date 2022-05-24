@@ -1,7 +1,7 @@
 import random
 import sys
 
-from pygame import init, Surface, USEREVENT, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, \
+from pygame import init, Surface, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, K_UP, K_w, K_DOWN, K_s, \
     K_LEFT, K_a, K_RIGHT, K_d, KEYUP, K_2, K_1, image, K_3, K_4
 from pygame.display import set_mode, set_caption
 from pygame.event import get
@@ -29,8 +29,6 @@ from src.visual_effects import fade
 class Game:
     GAME_TITLE = "Dragon Warrior"
     BACK_FILL_COLOR = BLACK
-    MOVE_EVENT = USEREVENT + 1
-    ROAMING_CHARACTER_GO_COOLDOWN = 1000
 
     def __init__(self):
         # Initialize pygame
@@ -372,40 +370,38 @@ class Game:
         # right now we're pretty close with the surrounding tiles check, but we could be doing better
 
         # print(self.background.get_rect())
-
+        if self.loop_count == 1:
+            # draw everything once on the first go-around
+            self.draw_all_tiles_in_current_map()
         # performance optimization to only draw the tile type that the hero is standing on, and surrounding tiles
         # won't work where there are moving NPCs, so only use this in the overworld
-        if not self.current_map.roaming_characters:
-            # basically, if you're in the overworld, since there are no roaming characters there
-            try:
-                surrounding_tile_values = get_surrounding_tile_values((self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE),
-                                                                      self.current_map.layout)
-                player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(surrounding_tile_values)
-                if self.player.is_moving:
-                    tile_types_to_draw = set(
-                        self.replace_characters_with_underlying_tiles(set(filter(None, [self.player.current_tile] + player_surrounding_tiles))))
-                else:
-                    tile_types_to_draw = set(self.replace_characters_with_underlying_tiles([self.player.current_tile]))
-            except IndexError:
-                tile_types_to_draw = self.replace_characters_with_underlying_tiles([self.player.current_tile])
-            if self.loop_count == 1:
-                # draw everything once on the first go-around
-                self.draw_all_tiles_in_current_map()
-            # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
-            for tile, tile_dict in self.current_map.floor_tile_key.items():
-                if tile in tile_types_to_draw:
-                    tile_dict['group'].draw(self.background)
-                # also check if group is in current window, default screen size is 15 tall x 16 wide
-        else:
-            # just draw everything, because you're not in the overworld, and you get 60 FPS pretty consistently even with no GPU
-            # could try to optimize this later by only drawing the tiles where there's movement,
-            # but the juice might not be worth the squeeze
-            if self.loop_count == 1:
-                self.draw_all_tiles_in_current_map()
-            for tile, tile_dict in self.current_map.floor_tile_key.items():
-                if tile in set(self.current_map.tile_types_in_current_map):
-                    tile_dict['group'].draw(self.background)
+        # if not self.current_map.roaming_characters:
+            # basically, if you're in the overworld or another map with no roaming characters
+        try:
+            surrounding_tile_values = get_surrounding_tile_values((self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE),
+                                                                  self.current_map.layout)
+            player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(surrounding_tile_values)
+            all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
+            all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
+            tile_types_to_draw = self.replace_characters_with_underlying_tiles([self.player.current_tile] +
+                                                                               all_roaming_character_surrounding_tiles +
+                                                                               all_fixed_character_underlying_tiles)
+            if self.player.is_moving:
+                tile_types_to_draw += self.replace_characters_with_underlying_tiles(set(filter(None, player_surrounding_tiles)))
+        except IndexError:
+            all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
+            all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
+            tile_types_to_draw = self.replace_characters_with_underlying_tiles([self.player.current_tile] +
+                                                                               all_roaming_character_surrounding_tiles +
+                                                                               all_fixed_character_underlying_tiles)
 
+            # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
+
+        for tile, tile_dict in self.current_map.floor_tile_key.items():
+            if tile in tile_types_to_draw:
+                tile_dict['group'].draw(self.background)
+
+        # also check if group is in current window, default screen size is 15 tall x 16 wide
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
         for character_dict in self.current_map.characters.values():
@@ -417,6 +413,24 @@ class Game:
         for menu_or_dialog_box in self.menus:
             self.handle_menu_launch(menu_or_dialog_box)
         self.screen.blit(self.background, self.camera.get_pos())
+
+    def get_fixed_character_underlying_tiles(self):
+        all_fixed_character_underlying_tiles = []
+        for fixed_character in self.current_map.fixed_characters:
+            fixed_character_coordinates = self.current_map.characters[fixed_character.identifier]['coordinates']
+            all_fixed_character_underlying_tiles.append(
+                self.current_map.get_tile_by_value(self.current_map.layout[fixed_character_coordinates[0]][fixed_character_coordinates[1]]))
+        return all_fixed_character_underlying_tiles
+
+    def get_all_roaming_character_surrounding_tiles(self):
+        all_roaming_character_surrounding_tiles = []
+        for roaming_character in self.current_map.roaming_characters:
+            roaming_character_surrounding_tile_values = get_surrounding_tile_values(
+                (roaming_character.rect.y // TILE_SIZE, roaming_character.rect.x // TILE_SIZE), self.current_map.layout)
+            roaming_character_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(roaming_character_surrounding_tile_values)
+            for tile in roaming_character_surrounding_tiles:
+                all_roaming_character_surrounding_tiles.append(tile)
+        return all_roaming_character_surrounding_tiles
 
     def draw_all_tiles_in_current_map(self):
         for tile, tile_dict in self.current_map.floor_tile_key.items():
@@ -496,8 +510,9 @@ class Game:
             self.current_map.load_map(self.player, None)
         else:
             self.current_map.layout[self.current_map.get_initial_character_location('HERO')[0][0]][
-                self.current_map.get_initial_character_location('HERO')[0][1]] = self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']][
-                'val']
+                self.current_map.get_initial_character_location('HERO')[0][1]] = \
+                self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']][
+                    'val']
             if self.current_map.character_key['HERO']['underlying_tile'] != self.current_map.get_tile_by_value(
                     self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]]):
                 self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
@@ -667,7 +682,7 @@ class Game:
         if character.identifier == 'HERO':
             self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
 
-    def check_next_tile(self, character):
+    def check_next_tile(self, character) -> None:
         if not character.next_tile_checked or not character.next_tile_id:
             character.next_tile_id = self.get_next_tile_identifier(character_column=character.column,
                                                                    character_row=character.row,
@@ -766,7 +781,7 @@ class Game:
         for roaming_character in self.current_map.roaming_characters:
             curr_pos_x, curr_pos_y = roaming_character.rect.x, roaming_character.rect.y
             # set_character_position(roaming_character)
-            if roaming_character.last_roaming_clock_check is None or get_ticks() - roaming_character.last_roaming_clock_check >= self.ROAMING_CHARACTER_GO_COOLDOWN:
+            if roaming_character.last_roaming_clock_check is None or get_ticks() - roaming_character.last_roaming_clock_check >= 1000:
                 roaming_character.last_roaming_clock_check = get_ticks()
                 if not roaming_character.is_moving:
                     roaming_character.direction = random.choice(list(map(int, Direction)))
