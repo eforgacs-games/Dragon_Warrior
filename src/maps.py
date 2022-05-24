@@ -17,8 +17,6 @@ from src.config import TILE_SIZE, SCALE, COLOR_KEY
 from src.map_layouts import MapLayouts
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
-# Tile Key:
-# Index values for the map tiles corresponding to location on tile sheet.
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 
@@ -144,6 +142,9 @@ class DragonWarriorMap:
         self.height = len(self.layout) * TILE_SIZE
         self.width = len(self.layout[0]) * TILE_SIZE
         self.last_map = last_map
+
+        # Tile Key:
+        # Index values for the map tiles corresponding to location on tile sheet.
 
         self.floor_tile_key = {
             'ROOF': {'val': 0},
@@ -326,7 +327,7 @@ class DragonWarriorMap:
     # @timeit
     def map_floor_tiles(self, x, y) -> None:
         for tile_dict in self.floor_tile_key.values():
-            if self.layout[y][x] < 33 and self.layout[y][x] == tile_dict['val']:
+            if self.layout[y][x] == tile_dict['val']:
                 self.add_tile(tile_dict)
                 break
 

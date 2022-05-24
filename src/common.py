@@ -241,4 +241,4 @@ def get_surrounding_tile_values(coordinates, map_layout, radius=1):
             neighbors.append(map_layout[x + i][y])
             # neighbors.append(map_layout[x + i][y + i])
 
-    return neighbors
+    return neighbors + [map_layout[x][y]]
