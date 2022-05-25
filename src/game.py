@@ -619,12 +619,16 @@ class Game:
             self.current_map.player_sprites.dirty = 1
             if is_facing_medially(self.player):
                 if curr_pos_y % TILE_SIZE == 0:
-                    self.tiles_moved_since_spawn += 1
+                    if not self.player.bumped:
+                        self.tiles_moved_since_spawn += 1
                     self.player.is_moving, self.player.next_tile_checked = False, False
                     return
             elif is_facing_laterally(self.player):
                 if curr_pos_x % TILE_SIZE == 0:
-                    self.tiles_moved_since_spawn += 1
+                    if not self.player.bumped:
+                        self.tiles_moved_since_spawn += 1
+                    else:
+                        self.player.bumped = False
                     self.player.is_moving, self.player.next_tile_checked = False, False
                     return
 
@@ -671,6 +675,7 @@ class Game:
                                                                     direction_value=character.direction_value, offset=2)
         if self.is_impassable(character.next_tile_id):
             bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
+
         elif self.character_in_path(character):
             bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
         else:
