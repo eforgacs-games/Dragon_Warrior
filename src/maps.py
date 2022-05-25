@@ -116,6 +116,7 @@ def set_character_position(character):
 class DragonWarriorMap:
     def __init__(self, layout, last_map=None):
 
+        self.music_file_path = None
         self.destination_coordinates = None
         self.identifier = self.__class__.__name__
 
@@ -316,7 +317,7 @@ class DragonWarriorMap:
     def map_player(self, underlying_tile, player, coordinates) -> None:
         self.player = player
         self.player_sprites = LayeredDirty(self.player)
-        self.player.direction = self.hero_initial_direction()
+        self.player.direction_value = self.hero_initial_direction()
         self.add_tile(self.floor_tile_key[underlying_tile])
         self.characters['HERO'] = {'character': self.player,
                                    'character_sprites': self.player_sprites,
@@ -359,7 +360,7 @@ class DragonWarriorMap:
         raise NotImplementedError("Method not implemented")
 
     def set_character_initial_direction(self, character_identifier, direction):
-        self.characters[character_identifier]['character'].direction = direction.value
+        self.characters[character_identifier]['character'].direction_value = direction.value
 
     def set_town_to_overworld_warps(self):
         """Sets the exit location to the overworld (Alefgard) from within a town"""

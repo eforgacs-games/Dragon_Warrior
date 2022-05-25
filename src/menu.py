@@ -10,6 +10,7 @@ from src.config import SCALE, TILE_SIZE
 
 class Menu:
     def __init__(self):
+        self.menu = None
         self.dragon_warrior_menu_theme = pygame_menu.themes.Theme(background_color=BLACK,
                                                                   cursor_color=WHITE,
                                                                   cursor_selection_color=WHITE,
@@ -34,6 +35,8 @@ class Menu:
                                                                       # TODO: Fix LeftArrowSelection size.
                                                                       arrow_size=(SCALE * 5, SCALE * 6))
                                                                   )
+        self.launch_signaled = False
+        self.launched = False
 
 
 class CommandMenu(Menu):
@@ -44,8 +47,6 @@ class CommandMenu(Menu):
         self.current_tile = current_tile
         self.characters = current_map.characters
         self.player = player
-        self.launch_signaled = False
-        self.launched = False
         self.map_name = current_map.__class__.__name__
         self.background = background
         # TODO: This gives a ValueError if the map is too small.
@@ -98,8 +99,8 @@ class CommandMenu(Menu):
             return
         for character_identifier, character_info in self.characters.items():
             if character_info['coordinates'] == self.player.next_coordinates or self.npc_is_across_counter(character_info):
-                if character_info['character'].direction != get_opposite_direction(self.player.direction):
-                    character_info['character'].direction = get_opposite_direction(self.player.direction)
+                if character_info['character'].direction_value != get_opposite_direction(self.player.direction_value):
+                    character_info['character'].direction_value = get_opposite_direction(self.player.direction_value)
                     character_info['character'].animate()
                     character_info['character'].pause()
                 self.launch_dialog(character_identifier)
@@ -225,8 +226,6 @@ class CommandMenu(Menu):
 class DialogBox(Menu):
     def __init__(self, background, column, row):
         super().__init__()
-        self.launch_signaled = False
-        self.launched = False
         try:
             self.dialog_box_subsurface = background.subsurface((column - 2) * TILE_SIZE,
                                                                (row - 6) * TILE_SIZE,
