@@ -418,12 +418,7 @@ class TantegelCourtyard(DragonWarriorMap):
 
     def __init__(self):
         super().__init__(MapLayouts().tantegel_courtyard)
-        alefgard = {'map': 'Alefgard', 'stair_direction': 'up'}
-        #  TODO(ELF): replace staircases_keys with call to function warp_line, and get coordinates for warp_line (37, 9) - (37, 26)
-        staircases_keys = [(37, min(n, 26)) for n in range(9, 27)]
-        # staircase_keys = warp_line((37, 9), (37, 26))
-        staircases_values = [alefgard] * len(staircases_keys)
-        self.staircases = dict(zip(staircases_keys, staircases_values))
+        self.create_town_gates(south_gate=warp_line((37, 9), (37, 26)))
         self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'stair_direction': 'up', 'destination_coordinates': (14, 18),
                                      'direction': Direction.LEFT.value}
         self.staircases[(36, 36)] = {'map': 'TantegelUnderground', 'stair_direction': 'down'}
@@ -479,7 +474,8 @@ class CharlockB2(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b2)
         self.music_file_path = dungeon_floor_2_music
-        self.staircases = {(): {'map': 'CharlockB1', 'stair_direction': 'up', 'destination_coordinates': ()}}
+        self.staircases = {(1, 10): {'map': 'CharlockB1', 'stair_direction': 'up', 'destination_coordinates': (8, 17)},
+                           (20, 9): {'map': 'CharlockB3', 'stair_direction': 'up', 'destination_coordinates': (1, 7)}}
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
