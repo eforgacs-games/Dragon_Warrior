@@ -464,6 +464,9 @@ class CharlockB1(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b1)
         self.music_file_path = dungeon_floor_1_music
+        self.staircases = {(8, 17): {'map': 'CharlockB2', 'stair_direction': 'down', 'destination_coordinates': ()},  # A
+                           (21, 11): {'map': 'CharlockB2', 'stair_direction': 'down', 'destination_coordinates': ()},  # B
+                           (21, 22): {'map': 'CharlockB2', 'stair_direction': 'down', 'destination_coordinates': ()}}  # C
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -476,6 +479,7 @@ class CharlockB2(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b2)
         self.music_file_path = dungeon_floor_2_music
+        self.staircases = {(): {'map': 'CharlockB1', 'stair_direction': 'up', 'destination_coordinates': ()}}
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
