@@ -15,7 +15,7 @@ TILE_SIZE = 16 * SCALE
 NES_RES = (256, 240)
 DEV_MODE = False
 if DEV_MODE:
-    MUSIC_ENABLED = False
+    MUSIC_ENABLED = False  # lgtm [py/unreachable-statement]
     SOUND_ENABLED = False
     ORCHESTRA_MUSIC_ENABLED = False
     FULLSCREEN_ENABLED = False
