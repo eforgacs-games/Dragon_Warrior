@@ -128,7 +128,7 @@ class TestGame(TestCase):
         test_roaming_character.rect.y = 0
         self.game.move_medially(test_roaming_character)
         self.assertEqual(-2, test_roaming_character.rect.y)
-        test_roaming_character.direction = Direction.DOWN.value
+        test_roaming_character.direction_value = Direction.DOWN.value
         self.game.move_medially(test_roaming_character)
         self.assertEqual(0, test_roaming_character.rect.y)
 
@@ -137,7 +137,7 @@ class TestGame(TestCase):
         test_roaming_character.rect.x = 0
         self.game.move_laterally(test_roaming_character)
         self.assertEqual(-2, test_roaming_character.rect.x)
-        test_roaming_character.direction = Direction.RIGHT.value
+        test_roaming_character.direction_value = Direction.RIGHT.value
         self.game.move_laterally(test_roaming_character)
         self.assertEqual(0, test_roaming_character.rect.x)
 
