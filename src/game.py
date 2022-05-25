@@ -16,7 +16,7 @@ from src.camera import Camera
 from src.common import Direction, play_sound, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally, \
     WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tile_values, ICON_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED
+from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.intro import draw_text, Intro, draw_text_with_rectangle
 from src.map_layouts import MapLayouts
@@ -262,8 +262,8 @@ class Game:
         # This prints out the current tile that the player is standing on.
         # print(f"self.player.current_tile: {self.player.current_tile}")
 
-        # This prints out the current coordinates that the player is standing on.
-        # print(f"{self.player.row, self.player.column}")
+        if SHOW_COORDINATES:
+            print(f"{self.player.row, self.player.column}")
 
         # This prints out the next coordinates that the player will land on.
         # print(self.player.next_coordinates)

@@ -26,6 +26,8 @@ else:
     ORCHESTRA_MUSIC_ENABLED = False
     FULLSCREEN_ENABLED = False
     SPLASH_SCREEN_ENABLED = True
-SHOW_FPS = True
+SHOW_FPS = False
+# This prints out the current coordinates that the player is standing on.
+SHOW_COORDINATES = False
 COLOR_KEY = (0, 128, 128)
 TEXT_SPEED = "Fast"
