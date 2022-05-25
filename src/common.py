@@ -147,19 +147,19 @@ SMB_FONT = pygame.font.Font(SMB_FONT_PATH, 15)
 
 
 def is_facing_down(character):
-    return character.direction == Direction.DOWN.value
+    return character.direction_value == Direction.DOWN.value
 
 
 def is_facing_up(character):
-    return character.direction == Direction.UP.value
+    return character.direction_value == Direction.UP.value
 
 
 def is_facing_right(character):
-    return character.direction == Direction.RIGHT.value
+    return character.direction_value == Direction.RIGHT.value
 
 
 def is_facing_left(character):
-    return character.direction == Direction.LEFT.value
+    return character.direction_value == Direction.LEFT.value
 
 
 def is_facing_medially(character):

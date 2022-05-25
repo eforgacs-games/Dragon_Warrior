@@ -6,8 +6,8 @@ from src.sprites.animated_sprite import AnimatedSprite
 
 class Player(AnimatedSprite):
 
-    def __init__(self, center_point, images, direction=Direction.DOWN.value):
-        AnimatedSprite.__init__(self, center_point, direction, images, identifier='HERO')
+    def __init__(self, center_point, images, direction_value=Direction.DOWN.value):
+        AnimatedSprite.__init__(self, center_point, direction_value, images, identifier='HERO')
 
         # map/collision-related attributes
         self.row = None
