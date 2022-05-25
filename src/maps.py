@@ -475,9 +475,11 @@ class CharlockB1(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b1)
         self.music_file_path = dungeon_floor_1_music
-        self.staircases = {(7, 17): {'map': 'CharlockB2', 'destination_coordinates': (3, 12)},  # A
-                           (21, 11): {'map': 'CharlockB2', 'destination_coordinates': ()},  # B
-                           (21, 22): {'map': 'CharlockB2', 'destination_coordinates': ()}}  # C
+        self.create_town_gates(south_gate=(warp_line((26, 15), (26, 18))))
+        self.set_town_to_overworld_warps()
+        self.staircases[(7, 17)] = {'map': 'CharlockB2', 'destination_coordinates': (3, 12)}  # A
+        self.staircases[(21, 11)] = {'map': 'CharlockB2', 'destination_coordinates': ()}  # B
+        self.staircases[(21, 22)] = {'map': 'CharlockB2', 'destination_coordinates': ()}  # C
         self.assign_stair_directions()
 
     def hero_underlying_tile(self):
@@ -506,9 +508,13 @@ class CharlockB3(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b3)
         self.music_file_path = dungeon_floor_3_music
-        self.staircases = {(3, 8): {'map': 'CharlockB2', 'destination_coordinates': (22, 11)},  # J
-                           (3, 6): {'map': 'CharlockB4', 'destination_coordinates': (3, 10)},  # K
-                           }
+        self.staircases = {
+            (1, 1): {'map': 'CharlockB2'},  # D
+            (3, 8): {'map': 'CharlockB2', 'destination_coordinates': (22, 11)},  # J
+            (3, 6): {'map': 'CharlockB4', 'destination_coordinates': (3, 10)},  # K
+            (11, 3): {'map': 'CharlockB4', 'destination_coordinates': (7, 8)},  # M
+            (12, 4): {'map': 'CharlockB4', 'destination_coordinates': (12, 3)},  # N
+        }
         self.assign_stair_directions()
 
     def hero_underlying_tile(self):
@@ -522,10 +528,14 @@ class CharlockB4(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b4)
         self.music_file_path = dungeon_floor_4_music
-        self.staircases = {(3, 10): {'map': 'CharlockB3', 'destination_coordinates': (3, 6)},  # K
-                           (9, 4): {'map': 'CharlockB5', 'destination_coordinates': (12, 3)},
-                           (12, 3): {'map': 'CharlockB3', 'destination_coordinates': (12, 3)},  # N
-                           }
+        self.staircases = {
+            (3, 10): {'map': 'CharlockB3', 'destination_coordinates': (3, 6)},  # K
+            (7, 8): {'map': 'CharlockB3', 'destination_coordinates': (11, 3)},  # M
+            (12, 3): {'map': 'CharlockB3', 'destination_coordinates': (12, 4)},  # N
+            (9, 4): {'map': 'CharlockB5', 'destination_coordinates': (12, 3)},  # O
+            (0, 0): {'map': 'CharlockB5', 'destination_coordinates': (10, 10)},  # P
+
+        }
         self.assign_stair_directions()
 
     def hero_underlying_tile(self):
@@ -539,7 +549,13 @@ class CharlockB5(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b5)
         self.music_file_path = dungeon_floor_5_music
-        self.staircases = {}
+        self.staircases = {
+            (4, 11): {'map': 'CharlockB6', 'destination_coordinates': (3, 7)},  # R
+            (5, 5): {'map': 'CharlockB6', 'destination_coordinates': (3, 12)},  # Q
+            (10, 10): {'map': 'CharlockB4', 'destination_coordinates': ()},  # P
+            (12, 3): {'map': 'CharlockB4', 'destination_coordinates': (9, 4)}  # O
+        }
+        self.assign_stair_directions()
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_DOWN'
@@ -552,6 +568,14 @@ class CharlockB6(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b6)
         self.music_file_path = dungeon_floor_6_music
+        self.staircases = {
+            (3, 12): {'map': 'CharlockB5', 'destination_coordinates': (5, 5)},  # Q
+            (3, 7): {'map': 'CharlockB5', 'destination_coordinates': (4, 11)},  # R
+            (8, 8): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)},  # S
+            (3, 3): {'map': 'CharlockB7Wide'},  # T
+
+        }
+        self.assign_stair_directions()
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -564,6 +588,11 @@ class CharlockB7Wide(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b7_wide)
         self.music_file_path = dungeon_floor_7_music
+        self.staircases = {
+            (5, 3): {'map': 'CharlockB6', 'destination_coordinates': (3, 3)},  # T
+            (5, 12): {'map': 'CharlockB8'}  # U
+        }
+        self.assign_stair_directions()
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -576,6 +605,11 @@ class CharlockB7Narrow(MapWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b7_narrow)
         self.music_file_path = dungeon_floor_7_music
+        self.staircases = {
+            (3, 3): {'map': 'CharlockB6', 'destination_coordinates': (8, 8)},
+            # (3, 12): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)}
+        }
+        self.assign_stair_directions()
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -584,16 +618,23 @@ class CharlockB7Narrow(MapWithoutNPCs):
         return Direction.RIGHT.value
 
 
-class CharlockB8(MapWithoutNPCs):
+class CharlockB8(DragonWarriorMap):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b8)
         self.music_file_path = dungeon_floor_8_music
+        self.staircases = {
+            (33, 16): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 12)}
+        }
+        self.assign_stair_directions()
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
+
+    def set_characters_initial_directions(self):
+        self.set_character_initial_direction('DRAGONLORD', Direction.DOWN)
 
 
 class Alefgard(MapWithoutNPCs):
@@ -608,6 +649,7 @@ class Alefgard(MapWithoutNPCs):
             # (row, column)
             # castles
             (50, 49): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 18), 'direction': Direction.UP.value},
+            (55, 54): {'map': 'CharlockB1'},
             # villages
             (48, 54): {'map': 'Brecconary'},
             (9, 8): {'map': 'Garinham'},
