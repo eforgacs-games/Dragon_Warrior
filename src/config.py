@@ -15,7 +15,7 @@ TILE_SIZE = 16 * SCALE
 NES_RES = (256, 240)
 DEV_MODE = False
 if DEV_MODE:
-    MUSIC_ENABLED = False
+    MUSIC_ENABLED = False  # lgtm [py/unreachable-statement]
     SOUND_ENABLED = False
     ORCHESTRA_MUSIC_ENABLED = False
     FULLSCREEN_ENABLED = False
@@ -26,6 +26,8 @@ else:
     ORCHESTRA_MUSIC_ENABLED = False
     FULLSCREEN_ENABLED = False
     SPLASH_SCREEN_ENABLED = True
-SHOW_FPS = True
+SHOW_FPS = False
+# This prints out the current coordinates that the player is standing on.
+SHOW_COORDINATES = False
 COLOR_KEY = (0, 128, 128)
 TEXT_SPEED = "Fast"
