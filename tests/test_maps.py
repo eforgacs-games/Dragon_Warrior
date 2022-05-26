@@ -20,6 +20,6 @@ class TestDragonWarriorMap(TestCase):
 
     def test_music_path_in_every_map(self):
         for dw_map, map_class in inspect.getmembers(maps, inspect.isclass):
-            if dw_map not in ('ABC', 'AnimatedSprite', 'BaseSprite', 'Direction', 'DragonWarriorMap', 'FixedCharacter', 'Group', 'LayeredDirty', 'MapLayouts', 'MapWithoutNPCs', 'RoamingCharacter'):
+            if dw_map not in ('ABC', 'AnimatedSprite', 'BaseSprite', 'BasementWithNPCs', 'BasementWithoutNPCs', 'Direction', 'DragonWarriorMap', 'FixedCharacter', 'Group', 'LayeredDirty', 'MapLayouts', 'MapWithoutNPCs', 'RoamingCharacter'):
                 initialized_map_class = map_class()
                 self.assertTrue(hasattr(initialized_map_class, 'music_file_path'))

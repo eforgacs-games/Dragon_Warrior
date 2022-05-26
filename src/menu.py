@@ -3,13 +3,16 @@ import logging
 import pygame_menu
 
 from data.text.dialog_lookup_table import DialogLookupTable
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, play_sound, menu_button_sfx, get_opposite_direction
+from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx
+from src.sound import play_sound
+from src.menu_functions import get_opposite_direction
 from src.common import print_with_beep_sfx
 from src.config import SCALE, TILE_SIZE
 
 
 class Menu:
     def __init__(self):
+        self.menu = None
         self.dragon_warrior_menu_theme = pygame_menu.themes.Theme(background_color=BLACK,
                                                                   cursor_color=WHITE,
                                                                   cursor_selection_color=WHITE,
@@ -34,24 +37,24 @@ class Menu:
                                                                       # TODO: Fix LeftArrowSelection size.
                                                                       arrow_size=(SCALE * 5, SCALE * 6))
                                                                   )
+        self.launch_signaled = False
+        self.launched = False
 
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, column, row, current_tile, current_map, dialog_box, player):
+    def __init__(self, background, current_map, dialog_box, player):
         super().__init__()
         self.dialog_box = dialog_box
-        self.current_tile = current_tile
+        self.current_tile = player.current_tile
         self.characters = current_map.characters
         self.player = player
-        self.launch_signaled = False
-        self.launched = False
         self.map_name = current_map.__class__.__name__
         self.background = background
         # TODO: This gives a ValueError if the map is too small.
         try:
-            command_menu_subsurface = background.subsurface((column - 2) * TILE_SIZE,
-                                                            (row - 6) * TILE_SIZE,
+            command_menu_subsurface = background.subsurface((player.column - 2) * TILE_SIZE,
+                                                            (player.row - 6) * TILE_SIZE,
                                                             8 * TILE_SIZE,
                                                             5 * TILE_SIZE)
             self.menu = pygame_menu.Menu('COMMAND',
@@ -98,8 +101,8 @@ class CommandMenu(Menu):
             return
         for character_identifier, character_info in self.characters.items():
             if character_info['coordinates'] == self.player.next_coordinates or self.npc_is_across_counter(character_info):
-                if character_info['character'].direction != get_opposite_direction(self.player.direction):
-                    character_info['character'].direction = get_opposite_direction(self.player.direction)
+                if character_info['character'].direction_value != get_opposite_direction(self.player.direction_value):
+                    character_info['character'].direction_value = get_opposite_direction(self.player.direction_value)
                     character_info['character'].animate()
                     character_info['character'].pause()
                 self.launch_dialog(character_identifier)
@@ -165,7 +168,7 @@ class CommandMenu(Menu):
         # elif there is a hidden item:
         # print(f"There is a {hidden_item}")
         else:
-            print(f"But there found nothing.")
+            print("But there found nothing.")
 
     def spell(self):
         """
@@ -225,8 +228,6 @@ class CommandMenu(Menu):
 class DialogBox(Menu):
     def __init__(self, background, column, row):
         super().__init__()
-        self.launch_signaled = False
-        self.launched = False
         try:
             self.dialog_box_subsurface = background.subsurface((column - 2) * TILE_SIZE,
                                                                (row - 6) * TILE_SIZE,

@@ -1,5 +1,4 @@
 import os
-from abc import ABC
 from unittest import TestCase
 from unittest.mock import MagicMock
 
@@ -8,10 +7,11 @@ from pygame.imageext import load_extended
 from pygame.transform import scale
 
 from src.camera import Camera
-from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, GUARD_PATH, get_image
+from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
-from src.maps import DragonWarriorMap, parse_animated_sprite_sheet
+from src.maps import MapWithoutNPCs, TantegelThroneRoom
+from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
 
@@ -30,10 +30,10 @@ def create_key_mock(pressed_key):
 
 layout = [[33, 0, 3],
           [1, 2, 3],
-          [3, 3, 3]]
+          [3, 3, 39]]
 
 
-class TestMockMap(DragonWarriorMap, ABC):
+class TestMockMap(MapWithoutNPCs):
     def __init__(self):
         super().__init__(layout)
 
@@ -59,25 +59,14 @@ class TestGame(TestCase):
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
         self.game.current_map = TestMockMap()
-
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
-
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
-        unarmed_hero_sheet = scale(unarmed_hero_sheet,
-                                   (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))
-        self.hero_images = parse_animated_sprite_sheet(unarmed_hero_sheet)
-        self.game.current_map.player = Player(center_point=self.center_pt,
-                                              images=self.hero_images)
-        self.game.hero_row = 0
-        self.game.hero_column = 0
-        self.hero_layout_column, self.hero_layout_row = self.game.current_map.player.rect.x // TILE_SIZE, self.game.current_map.player.rect.y // TILE_SIZE
+        self.hero_images = parse_animated_sprite_sheet(
+            scale(unarmed_hero_sheet, (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)))
+        self.game.current_map.player = Player(self.center_pt, self.hero_images)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
-        self.camera = Camera(hero_position=(self.hero_layout_row, self.hero_layout_column), current_map=self.game.current_map, screen=None)
-        pygame.key.get_pressed = create_key_mock(pygame.K_RIGHT)
-        pygame.key.get_pressed = create_key_mock(pygame.K_UP)
-        pygame.key.get_pressed = create_key_mock(pygame.K_DOWN)
-        pygame.key.get_pressed = create_key_mock(pygame.K_LEFT)
-
+        self.camera = Camera((self.game.current_map.player.rect.y // TILE_SIZE, self.game.current_map.player.rect.x // TILE_SIZE), self.game.current_map,
+                             None)
     # def test_get_initial_camera_position(self):
     #     initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
     #     self.assertEqual(self.camera.set_camera_position(initial_hero_location), (0, 0))
@@ -128,7 +117,7 @@ class TestGame(TestCase):
         test_roaming_character.rect.y = 0
         self.game.move_medially(test_roaming_character)
         self.assertEqual(-2, test_roaming_character.rect.y)
-        test_roaming_character.direction = Direction.DOWN.value
+        test_roaming_character.direction_value = Direction.DOWN.value
         self.game.move_medially(test_roaming_character)
         self.assertEqual(0, test_roaming_character.rect.y)
 
@@ -137,7 +126,7 @@ class TestGame(TestCase):
         test_roaming_character.rect.x = 0
         self.game.move_laterally(test_roaming_character)
         self.assertEqual(-2, test_roaming_character.rect.x)
-        test_roaming_character.direction = Direction.RIGHT.value
+        test_roaming_character.direction_value = Direction.RIGHT.value
         self.game.move_laterally(test_roaming_character)
         self.assertEqual(0, test_roaming_character.rect.x)
 
@@ -148,3 +137,65 @@ class TestGame(TestCase):
         self.assertEqual(0, test_roaming_character.rect.y)
 
     # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
+
+    def test_handle_fps_changes(self):
+        self.assertEqual(60, self.game.fps)
+        pygame.key.get_pressed = create_key_mock(pygame.K_2)
+        self.game.handle_fps_changes(pygame.key.get_pressed())
+        self.assertEqual(120, self.game.fps)
+        pygame.key.get_pressed = create_key_mock(pygame.K_3)
+        self.game.handle_fps_changes(pygame.key.get_pressed())
+        self.assertEqual(240, self.game.fps)
+        pygame.key.get_pressed = create_key_mock(pygame.K_4)
+        self.game.handle_fps_changes(pygame.key.get_pressed())
+        self.assertEqual(480, self.game.fps)
+
+    def test_handle_keypresses_start(self):
+        self.assertFalse(self.game.paused)
+        pygame.key.get_pressed = create_key_mock(pygame.K_i)
+        self.game.handle_keypresses(pygame.key.get_pressed())
+        self.assertTrue(self.game.paused)
+        pygame.key.get_pressed = create_key_mock(pygame.K_i)
+        self.game.handle_keypresses(pygame.key.get_pressed())
+        self.assertFalse(self.game.paused)
+
+    def test_handle_keypresses_command_menu(self):
+        self.assertFalse(self.game.cmd_menu.launch_signaled)
+        pygame.key.get_pressed = create_key_mock(pygame.K_k)
+        self.game.handle_keypresses(pygame.key.get_pressed())
+        self.assertTrue(self.game.cmd_menu.launch_signaled)
+        pygame.key.get_pressed = create_key_mock(pygame.K_j)
+        self.game.handle_keypresses(pygame.key.get_pressed())
+        self.assertFalse(self.game.cmd_menu.launch_signaled)
+
+    def test_replace_characters_with_underlying_tiles(self):
+        self.assertEqual(['BRICK'], self.game.replace_characters_with_underlying_tiles([self.game.player.current_tile]))
+
+    def test_convert_numeric_tile_list_to_unique_tile_values(self):
+        self.assertEqual(['WALL',
+                          'WOOD',
+                          'BRICK',
+                          'TREASURE_BOX',
+                          'DOOR',
+                          'BRICK_STAIR_DOWN',
+                          'BRICK_STAIR_UP',
+                          'BARRIER',
+                          'WEAPON_SIGN'], self.game.convert_numeric_tile_list_to_unique_tile_values([1, 2, 3, 4, 5, 6, 7, 8, 9]))
+
+    def test_handle_menu_launch(self):
+        self.game.cmd_menu.launch_signaled = True
+        self.game.handle_menu_launch(self.game.cmd_menu)
+        self.assertTrue(self.game.cmd_menu.launched)
+
+    def test_change_map(self):
+        self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
+        self.game.change_map(TantegelThroneRoom())
+        self.assertEqual('TestMockMap', self.game.last_map.identifier)
+        self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
+
+    # gives an IndexError: list index out of range because the constants for K_UP, etc. are huge
+    # def test_move_player_directions(self):
+    #     self.assertEqual(Direction.UP.value, self.game.player.direction_value)
+    #     pygame.key.get_pressed = create_key_mock(pygame.K_s)
+    #     self.game.move_player(pygame.key.get_pressed())
+    #     self.assertEqual(Direction.DOWN.value, self.game.player.direction_value)
