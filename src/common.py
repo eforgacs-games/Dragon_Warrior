@@ -7,7 +7,7 @@ from os.path import join, sep, exists
 
 import pygame
 
-from src.config import SFX_DIR, SOUND_ENABLED, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED
+from src.config import SFX_DIR, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED, SOUND_ENABLED
 
 
 class Direction(IntEnum):
@@ -15,13 +15,6 @@ class Direction(IntEnum):
     LEFT = 1
     UP = 2
     RIGHT = 3
-
-
-def get_opposite_direction(direction: int) -> int:
-    if direction >= 2:
-        return direction - 2
-    else:
-        return direction + 2
 
 
 # Files/Directories
