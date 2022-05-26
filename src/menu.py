@@ -43,18 +43,18 @@ class Menu:
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, column, row, current_tile, current_map, dialog_box, player):
+    def __init__(self, background, current_map, dialog_box, player):
         super().__init__()
         self.dialog_box = dialog_box
-        self.current_tile = current_tile
+        self.current_tile = player.current_tile
         self.characters = current_map.characters
         self.player = player
         self.map_name = current_map.__class__.__name__
         self.background = background
         # TODO: This gives a ValueError if the map is too small.
         try:
-            command_menu_subsurface = background.subsurface((column - 2) * TILE_SIZE,
-                                                            (row - 6) * TILE_SIZE,
+            command_menu_subsurface = background.subsurface((player.column - 2) * TILE_SIZE,
+                                                            (player.row - 6) * TILE_SIZE,
                                                             8 * TILE_SIZE,
                                                             5 * TILE_SIZE)
             self.menu = pygame_menu.Menu('COMMAND',

@@ -90,34 +90,22 @@ class Game:
         self.player = Player(center_point=None, images=None)
         self.current_map.load_map(self.player, None)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
-
         self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
-        self.player.next_tile_id = self.get_next_tile_identifier(character_column=self.player.column,
-                                                                 character_row=self.player.row,
-                                                                 direction_value=self.current_map.player.direction_value)
-        self.player.next_next_tile_id = self.get_next_tile_identifier(character_column=self.player.column,
-                                                                      character_row=self.player.row,
-                                                                      direction_value=self.current_map.player.direction_value,
-                                                                      offset=3)
+        self.player.next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row, self.current_map.player.direction_value)
+        self.player.next_next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row, self.current_map.player.direction_value, offset=3)
         self.dlg_box = menu.DialogBox(self.background, self.player.column, self.player.row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.player.column, self.player.row, self.player.current_tile, self.current_map,
-                                         self.dlg_box, self.player)
+        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.dlg_box, self.player)
 
         self.menus = self.cmd_menu, self.dlg_box
-        self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
-                             current_map=self.current_map,
-                             screen=self.screen)
+        self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen)
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
         self.music_enabled = MUSIC_ENABLED
-        if self.music_enabled:
-            if SPLASH_SCREEN_ENABLED:
-                mixer.music.load(intro_overture)
-            else:
-                mixer.music.load(self.current_map.music_file_path)
-            mixer.music.set_volume(0.5)
-            mixer.music.play(-1)
+        if SPLASH_SCREEN_ENABLED:
+            self.load_and_play_music(intro_overture)
+        else:
+            self.load_and_play_music(self.current_map.music_file_path)
         self.events = get()
         self.command_menu_subsurface = None
         self.dialog_box_subsurface = None
@@ -157,9 +145,7 @@ class Game:
 
     def show_main_menu_screen(self, screen) -> None:
         main_menu_screen_enabled = True
-        if self.music_enabled:
-            mixer.music.load(village_music)
-            mixer.music.play(-1)
+        self.load_and_play_music(village_music)
         while main_menu_screen_enabled:
             screen.fill(BLACK)
             # totally dummy option for now, just a placeholder
@@ -182,9 +168,7 @@ class Game:
                     main_menu_screen_enabled = False
         play_sound(menu_button_sfx)
         fade(screen.get_width(), screen.get_height(), fade_out=True, background=self.background, screen=self.screen)
-        if self.music_enabled:
-            mixer.music.load(self.current_map.music_file_path)
-            mixer.music.play(-1)
+        self.load_and_play_music(self.current_map.music_file_path)
 
     def get_events(self) -> None:
         """
@@ -199,7 +183,7 @@ class Game:
         event.pump()
         current_key = key.get_pressed()
         if not self.player.is_moving:
-            self.update_player_position()
+            set_character_position(self.player)
         if self.enable_movement:
             self.move_player(current_key)
         if self.enable_roaming and self.current_map.roaming_characters:
@@ -304,16 +288,11 @@ class Game:
         if current_key[K_4]:
             self.fps = 480
 
-    def update_player_position(self) -> None:
-        self.player.column, self.player.row = self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE
-
     def update_roaming_character_positions(self) -> None:
         for character, character_dict in self.current_map.characters.items():
             if character_dict['character'].__class__.__name__ == 'RoamingCharacter':
                 if not character_dict['character'].is_moving:
-                    character_dict['character'].column = character_dict['character'].rect.x // TILE_SIZE
-                    character_dict['character'].row = character_dict['character'].rect.y // TILE_SIZE
-                    # print(f"Column: {character_dict['character'].column}, Row: {character_dict['character'].row}")
+                    set_character_position(character_dict['character'])
 
     def draw_temporary_text(self, text: str) -> None:
         self.temporary_text_on_screen = True
@@ -379,8 +358,7 @@ class Game:
         # if not self.current_map.roaming_characters:
         # basically, if you're in the overworld or another map with no roaming characters
         try:
-            surrounding_tile_values = get_surrounding_tile_values((self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE),
-                                                                  self.current_map.layout)
+            surrounding_tile_values = get_surrounding_tile_values((self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE), self.current_map.layout)
             player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(surrounding_tile_values)
             all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
             all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
@@ -533,13 +511,17 @@ class Game:
         self.menus = self.cmd_menu, self.dlg_box
         self.cmd_menu.map_name = self.current_map.__class__.__name__
         self.cmd_menu.characters = self.current_map.characters
-        if self.music_enabled:
-            mixer.music.load(self.current_map.music_file_path)
-            mixer.music.play(-1)
+        self.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
 
         # play_music(self.current_map.music_file_path)
+
+    def load_and_play_music(self, music_path):
+        """Loads and plays music on repeat."""
+        if self.music_enabled:
+            mixer.music.load(music_path)
+            mixer.music.play(-1)
 
     def unlaunch_menu(self, menu_to_unlaunch: menu.Menu) -> None:
         """
@@ -627,8 +609,6 @@ class Game:
                         self.player.bumped = False
                     self.player.is_moving, self.player.next_tile_checked = False, False
                     return
-
-        # self.camera.move(self.player.direction)
         if is_facing_medially(self.player):
             self.move_medially(self.player)
         elif is_facing_laterally(self.player):
@@ -703,14 +683,7 @@ class Game:
         roaming_character_locations = [(roaming_character.column, roaming_character.row) for roaming_character in
                                        self.current_map.roaming_characters]
         next_coordinates = self.get_next_coordinates(character.column, character.row, character.direction_value)
-        if character.identifier != 'HERO':
-            return next_coordinates in fixed_character_locations + roaming_character_locations + [(self.player.column, self.player.row)]
-        # elif next_coordinates in fixed_character_locations + roaming_character_locations:
-        #     for fixed_character in self.current_map.fixed_characters:
-        #         if next_coordinates == (fixed_character.column, fixed_character.row):
-        #             print(f"{fixed_character.identifier} in the way of {character.identifier}")
-        else:
-            return next_coordinates in fixed_character_locations + roaming_character_locations + [(self.player.column, self.player.row)]
+        return next_coordinates in fixed_character_locations + roaming_character_locations + [(self.player.column, self.player.row)]
 
     def get_next_tile_identifier(self, character_column: int, character_row: int, direction_value: int, offset: int = 1) -> str:
         """
