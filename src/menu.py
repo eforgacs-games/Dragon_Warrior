@@ -168,7 +168,7 @@ class CommandMenu(Menu):
         # elif there is a hidden item:
         # print(f"There is a {hidden_item}")
         else:
-            print(f"But there found nothing.")
+            print("But there found nothing.")
 
     def spell(self):
         """
