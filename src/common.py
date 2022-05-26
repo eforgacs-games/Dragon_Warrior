@@ -204,34 +204,24 @@ def convert_to_milliseconds(fps):
     return fps / 60 * 1000
 
 
-def get_surrounding_tile_values(coordinates, map_layout, radius=1):
+def get_surrounding_tile_values(coordinates, map_layout):
     x = coordinates[0]
     y = coordinates[1]
-
-    # TODO: This bugs out if you get too close to the edge.
-    neighbors = [
-        # map_layout[x - 1][y - 1],
-        map_layout[x - 1][y],
-        # map_layout[x - 1][y + 1],
-
-        map_layout[x][y - 1],
-        map_layout[x][y + 1],
-
-        # map_layout[x + 1][y - 1],
-        map_layout[x + 1][y],
-        # map_layout[x + 1][y + 1]
-    ]
-    if radius > 1:
-        for i in range(2, radius):
-            # neighbors.append(map_layout[x - i][y - i])
-            neighbors.append(map_layout[x - i][y])
-            # neighbors.append(map_layout[x - i][y + i])
-
-            neighbors.append(map_layout[x][y - i])
-            neighbors.append(map_layout[x][y + i])
-
-            # neighbors.append(map_layout[x + i][y - i])
-            neighbors.append(map_layout[x + i][y])
-            # neighbors.append(map_layout[x + i][y + i])
-
-    return neighbors + [map_layout[x][y]]
+    try:
+        left = map_layout[x - 1][y] if x - 1 >= 0 else None
+    except IndexError:
+        left = None
+    try:
+        down = map_layout[x][y - 1] if y - 1 >= 0 else None
+    except IndexError:
+        down = None
+    try:
+        right = map_layout[x][y + 1]
+    except IndexError:
+        right = None
+    try:
+        up = map_layout[x + 1][y]
+    except IndexError:
+        up = None
+    neighbors = [x for x in [left, down, right, up] if x is not None]
+    return set(neighbors + [map_layout[x][y]])
