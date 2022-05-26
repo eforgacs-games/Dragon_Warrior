@@ -18,10 +18,10 @@ from src.common import Direction, play_sound, menu_button_sfx, stairs_down_sfx, 
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
+from src.game_functions import set_character_position, get_next_coordinates
 from src.intro import draw_text, Intro, draw_text_with_rectangle
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
-from src.maps import set_character_position, get_next_coordinates
 from src.movement import bump_and_reset
 from src.player.player import Player
 from src.sound import bump
@@ -31,7 +31,6 @@ from src.visual_effects import fade
 
 
 class Game:
-    GAME_TITLE = "Dragon Warrior"
     BACK_FILL_COLOR = BLACK
 
     def __init__(self):
@@ -67,7 +66,7 @@ class Game:
         # self.win_height = current_screen_height
         self.screen = set_mode((self.win_width, self.win_height), flags)
         # self.screen.set_alpha(None)
-        set_caption(self.GAME_TITLE)
+        set_caption("Dragon Warrior")
 
         # self.current_map can be changed to other maps for development purposes
 
