@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from src.common import Direction
-from src.maps import parse_animated_sprite_sheet
+from src.maps_functions import parse_animated_sprite_sheet
 from src.sprites.animated_sprite import AnimatedSprite
 
 
