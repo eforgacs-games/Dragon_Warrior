@@ -1,5 +1,4 @@
 import os
-from abc import ABC
 from unittest import TestCase
 from unittest.mock import MagicMock
 
@@ -8,10 +7,10 @@ from pygame.imageext import load_extended
 from pygame.transform import scale
 
 from src.camera import Camera
-from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, GUARD_PATH, get_image
+from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
-from src.maps import DragonWarriorMap
+from src.maps import MapWithoutNPCs
 from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
@@ -34,7 +33,7 @@ layout = [[33, 0, 3],
           [3, 3, 3]]
 
 
-class TestMockMap(DragonWarriorMap, ABC):
+class TestMockMap(MapWithoutNPCs):
     def __init__(self):
         super().__init__(layout)
 
@@ -60,20 +59,12 @@ class TestGame(TestCase):
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
         self.game.current_map = TestMockMap()
-
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
-
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
-        unarmed_hero_sheet = scale(unarmed_hero_sheet,
-                                   (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))
-        self.hero_images = parse_animated_sprite_sheet(unarmed_hero_sheet)
-        self.game.current_map.player = Player(center_point=self.center_pt,
-                                              images=self.hero_images)
-        self.game.hero_row = 0
-        self.game.hero_column = 0
-        self.hero_layout_column, self.hero_layout_row = self.game.current_map.player.rect.x // TILE_SIZE, self.game.current_map.player.rect.y // TILE_SIZE
+        self.hero_images = parse_animated_sprite_sheet(scale(unarmed_hero_sheet, (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)))
+        self.game.current_map.player = Player(self.center_pt, self.hero_images)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
-        self.camera = Camera(hero_position=(self.hero_layout_row, self.hero_layout_column), current_map=self.game.current_map, screen=None)
+        self.camera = Camera((self.game.current_map.player.rect.y // TILE_SIZE, self.game.current_map.player.rect.x // TILE_SIZE), self.game.current_map, None)
         pygame.key.get_pressed = create_key_mock(pygame.K_RIGHT)
         pygame.key.get_pressed = create_key_mock(pygame.K_UP)
         pygame.key.get_pressed = create_key_mock(pygame.K_DOWN)

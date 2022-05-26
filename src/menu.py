@@ -3,7 +3,9 @@ import logging
 import pygame_menu
 
 from data.text.dialog_lookup_table import DialogLookupTable
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, play_sound, menu_button_sfx, get_opposite_direction
+from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx
+from src.sound import play_sound
+from src.menu_functions import get_opposite_direction
 from src.common import print_with_beep_sfx
 from src.config import SCALE, TILE_SIZE
 
