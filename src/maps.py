@@ -271,13 +271,13 @@ class DragonWarriorMap:
     def map_character(self, character, character_dict, current_tile, player, coordinates):
         if current_tile == self.character_key['HERO']['val']:
             if not self.player:
-                player.__init__(self.center_pt, self.scale_spritesheet(UNARMED_HERO_PATH))
+                player.__init__(self.center_pt, self.scale_sprite_sheet(UNARMED_HERO_PATH))
             self.map_player(character_dict['underlying_tile'], player, coordinates)
         else:
             self.map_npc(character, character_dict.get('direction'), character_dict['underlying_tile'], character_dict['path'], character_dict['four_sided'],
                          coordinates, character_dict['roaming'])
 
-    def scale_spritesheet(self, image_path):
+    def scale_sprite_sheet(self, image_path):
         return parse_animated_sprite_sheet(
             scale(get_image(image_path), (get_image(image_path).get_width() * self.scale, get_image(image_path).get_height() * self.scale)))
 
@@ -369,8 +369,8 @@ class DragonWarriorMap:
             # TODO(ELF): Probably don't need this extra alefgard_lookup_dict - maybe remove it later
             alefgard_lookup_dict = {}
             for alefgard_coordinates, alefgard_staircase_dict in alefgard_staircases.items():
-                alefgard_lookup_dict[alefgard_staircase_dict.get('map')] = alefgard_staircase_dict
-                alefgard_lookup_dict[alefgard_staircase_dict.get('map')]['alefgard_coordinates'] = alefgard_coordinates
+                alefgard_lookup_dict[alefgard_staircase_dict['map']] = alefgard_staircase_dict
+                alefgard_lookup_dict[alefgard_staircase_dict['map']]['alefgard_coordinates'] = alefgard_coordinates
             if staircase_dict['map'] == 'Alefgard':
                 staircase_dict['destination_coordinates'] = alefgard_lookup_dict[self.__class__.__name__]['alefgard_coordinates']
 
@@ -385,19 +385,37 @@ class DragonWarriorMap:
 
     def assign_stair_directions(self):
         for staircase_coordinates, staircase_dict in self.staircases.items():
-            if self.layout[staircase_coordinates[0]][staircase_coordinates[1]] == 33:
+            layout_staircase_coordinates = self.layout[staircase_coordinates[0]][staircase_coordinates[1]]
+            if layout_staircase_coordinates == 33:
                 staircase_dict['stair_direction'] = 'up' if self.hero_underlying_tile() == 'BRICK_STAIR_UP' else 'down'
-            elif self.layout[staircase_coordinates[0]][staircase_coordinates[1]] == 6:
+            elif layout_staircase_coordinates == 6:
                 staircase_dict['stair_direction'] = 'down'
-            elif self.layout[staircase_coordinates[0]][staircase_coordinates[1]] == 7:
+            elif layout_staircase_coordinates == 7:
                 staircase_dict['stair_direction'] = 'up'
-            elif self.layout[staircase_coordinates[0]][staircase_coordinates[1]] == 18:
+            elif layout_staircase_coordinates == 18:
                 staircase_dict['stair_direction'] = 'down'
 
 
 class MapWithoutNPCs(DragonWarriorMap, ABC):
     def set_characters_initial_directions(self):
         pass
+
+
+class BasementWithNPCs(DragonWarriorMap, ABC):
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+
+class BasementWithoutNPCs(MapWithoutNPCs):
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
 
 
 class TantegelThroneRoom(DragonWarriorMap):
@@ -454,24 +472,20 @@ class TantegelCourtyard(DragonWarriorMap):
         self.set_character_initial_direction('WISE_MAN', Direction.LEFT)
 
 
-class TantegelUnderground(DragonWarriorMap):
+class TantegelUnderground(BasementWithNPCs):
     def __init__(self):
         super().__init__(MapLayouts().tantegel_underground)
         self.music_file_path = tantegel_castle_courtyard_music
         self.staircases = {(4, 1): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 36)}}
         self.assign_stair_directions()
 
-    def hero_underlying_tile(self):
-        return 'BRICK_STAIR_UP'
-
-    def hero_initial_direction(self):
-        return Direction.RIGHT.value
-
     def set_characters_initial_directions(self):
         self.set_character_initial_direction('WISE_MAN', Direction.DOWN)
 
 
 class CharlockB1(MapWithoutNPCs):
+    """Main entrance to Charlock Castle."""
+
     def __init__(self):
         super().__init__(MapLayouts().charlock_b1)
         self.music_file_path = dungeon_floor_1_music
@@ -489,102 +503,82 @@ class CharlockB1(MapWithoutNPCs):
         return Direction.UP.value
 
 
-class CharlockB2(MapWithoutNPCs):
+class CharlockB2(BasementWithoutNPCs):
+    """First inner basement in Charlock Castle."""
+
     def __init__(self):
         super().__init__(MapLayouts().charlock_b2)
         self.music_file_path = dungeon_floor_2_music
         self.staircases = {(3, 12): {'map': 'CharlockB1', 'destination_coordinates': (7, 17)},  # A
+                           (7, 5): {'map': 'CharlockB3', 'destination_coordinates': (3, 3)},  # D
+                           (17, 5): {'map': 'CharlockB3', 'destination_coordinates': (4, 3)},  # E
+                           (4, 18): {'map': 'CharlockB3', 'destination_coordinates': (3, 11)},  # F
+                           (10, 16): {'map': 'CharlockB3', 'destination_coordinates': (7, 7)},  # G
                            (22, 11): {'map': 'CharlockB3', 'destination_coordinates': (3, 8)}}  # J
         self.assign_stair_directions()
 
-    def hero_underlying_tile(self):
-        return 'BRICK_STAIR_UP'
 
-    def hero_initial_direction(self):
-        return Direction.RIGHT.value
-
-
-class CharlockB3(MapWithoutNPCs):
+class CharlockB3(BasementWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b3)
         self.music_file_path = dungeon_floor_3_music
         self.staircases = {
             (1, 1): {'map': 'CharlockB2'},  # D
+            (3, 11): {'map': 'CharlockB2', 'destination_coordinates': (4, 18)},  # F
+            (7, 7): {'map': 'CharlockB2', 'destination_coordinates': (10, 16)},  # G
             (3, 8): {'map': 'CharlockB2', 'destination_coordinates': (22, 11)},  # J
             (3, 6): {'map': 'CharlockB4', 'destination_coordinates': (3, 10)},  # K
+            (4, 12): {'map': 'CharlockB4', 'destination_coordinates': (5, 5)},  # L
             (11, 3): {'map': 'CharlockB4', 'destination_coordinates': (7, 8)},  # M
             (12, 4): {'map': 'CharlockB4', 'destination_coordinates': (12, 3)},  # N
         }
         self.assign_stair_directions()
 
-    def hero_underlying_tile(self):
-        return 'BRICK_STAIR_UP'
 
-    def hero_initial_direction(self):
-        return Direction.RIGHT.value
-
-
-class CharlockB4(MapWithoutNPCs):
+class CharlockB4(BasementWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b4)
         self.music_file_path = dungeon_floor_4_music
         self.staircases = {
             (3, 10): {'map': 'CharlockB3', 'destination_coordinates': (3, 6)},  # K
+            (5, 5): {'map': 'CharlockB3', 'destination_coordinates': (4, 12)},  # L
             (7, 8): {'map': 'CharlockB3', 'destination_coordinates': (11, 3)},  # M
             (12, 3): {'map': 'CharlockB3', 'destination_coordinates': (12, 4)},  # N
             (9, 4): {'map': 'CharlockB5', 'destination_coordinates': (12, 3)},  # O
-            (0, 0): {'map': 'CharlockB5', 'destination_coordinates': (10, 10)},  # P
+            (10, 10): {'map': 'CharlockB5', 'destination_coordinates': (10, 10)},  # P
 
         }
         self.assign_stair_directions()
 
-    def hero_underlying_tile(self):
-        return 'BRICK_STAIR_UP'
 
-    def hero_initial_direction(self):
-        return Direction.RIGHT.value
-
-
-class CharlockB5(MapWithoutNPCs):
+class CharlockB5(BasementWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b5)
         self.music_file_path = dungeon_floor_5_music
         self.staircases = {
             (4, 11): {'map': 'CharlockB6', 'destination_coordinates': (3, 7)},  # R
             (5, 5): {'map': 'CharlockB6', 'destination_coordinates': (3, 12)},  # Q
-            (10, 10): {'map': 'CharlockB4', 'destination_coordinates': ()},  # P
+            (10, 10): {'map': 'CharlockB4', 'destination_coordinates': (10, 10)},  # P
             (12, 3): {'map': 'CharlockB4', 'destination_coordinates': (9, 4)}  # O
         }
         self.assign_stair_directions()
 
-    def hero_underlying_tile(self):
-        return 'BRICK_STAIR_DOWN'
 
-    def hero_initial_direction(self):
-        return Direction.RIGHT.value
-
-
-class CharlockB6(MapWithoutNPCs):
+class CharlockB6(BasementWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b6)
         self.music_file_path = dungeon_floor_6_music
         self.staircases = {
             (3, 12): {'map': 'CharlockB5', 'destination_coordinates': (5, 5)},  # Q
             (3, 7): {'map': 'CharlockB5', 'destination_coordinates': (4, 11)},  # R
+            (3, 3): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 3)},  # T
             (8, 8): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)},  # S
-            (3, 3): {'map': 'CharlockB7Wide'},  # T
 
         }
         self.assign_stair_directions()
 
-    def hero_underlying_tile(self):
-        return 'BRICK_STAIR_UP'
 
-    def hero_initial_direction(self):
-        return Direction.RIGHT.value
-
-
-class CharlockB7Wide(MapWithoutNPCs):
+class CharlockB7Wide(BasementWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b7_wide)
         self.music_file_path = dungeon_floor_7_music
@@ -594,14 +588,8 @@ class CharlockB7Wide(MapWithoutNPCs):
         }
         self.assign_stair_directions()
 
-    def hero_underlying_tile(self):
-        return 'BRICK_STAIR_UP'
 
-    def hero_initial_direction(self):
-        return Direction.RIGHT.value
-
-
-class CharlockB7Narrow(MapWithoutNPCs):
+class CharlockB7Narrow(BasementWithoutNPCs):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b7_narrow)
         self.music_file_path = dungeon_floor_7_music
@@ -611,14 +599,10 @@ class CharlockB7Narrow(MapWithoutNPCs):
         }
         self.assign_stair_directions()
 
-    def hero_underlying_tile(self):
-        return 'BRICK_STAIR_UP'
-
-    def hero_initial_direction(self):
-        return Direction.RIGHT.value
-
 
 class CharlockB8(DragonWarriorMap):
+    """Deepest level of Charlock Castle, and location of the Dragonlord."""
+
     def __init__(self):
         super().__init__(MapLayouts().charlock_b8)
         self.music_file_path = dungeon_floor_8_music

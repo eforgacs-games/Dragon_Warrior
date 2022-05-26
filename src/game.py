@@ -510,8 +510,8 @@ class Game:
             mixer.music.stop()
         layouts = MapLayouts()
         self.current_map.layout = layouts.map_layout_lookup[self.current_map.__class__.__name__]
-        last_map_staircase_dict = self.last_map.staircases.get((self.player.row, self.player.column))
-        destination_coordinates = last_map_staircase_dict.get('destination_coordinates')
+        current_map_staircase_dict = self.last_map.staircases[(self.player.row, self.player.column)]
+        destination_coordinates = current_map_staircase_dict.get('destination_coordinates')
         if not destination_coordinates:
             self.current_map.load_map(self.player, None)
         else:
@@ -525,7 +525,7 @@ class Game:
                     self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
             self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
             self.current_map.load_map(self.player, destination_coordinates)
-        destination_direction = last_map_staircase_dict.get('direction')
+        destination_direction = current_map_staircase_dict.get('direction')
         if destination_direction:
             self.current_map.player.direction_value = destination_direction
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
