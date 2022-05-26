@@ -13,7 +13,7 @@ from pygame.time import get_ticks
 import src.menu as menu
 from src import maps
 from src.camera import Camera
-from src.common import Direction, play_sound, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally, \
+from src.common import Direction, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, is_facing_laterally, \
     WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tile_values, ICON_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES
@@ -24,7 +24,7 @@ from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.movement import bump_and_reset
 from src.player.player import Player
-from src.sound import bump
+from src.sound import bump, play_sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 from src.visual_effects import fade
