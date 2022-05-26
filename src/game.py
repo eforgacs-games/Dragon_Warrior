@@ -200,11 +200,12 @@ class Game:
         current_key = key.get_pressed()
         if not self.player.is_moving:
             self.update_player_position()
+        if self.enable_movement:
+            self.move_player(current_key)
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
             self.update_roaming_character_positions()
-        if self.enable_movement:
-            self.move_player(current_key)
+
         # currently can't process staircases right next to one another, need to fix
         # a quick fix would be to add an exception in the conditional for
         # the map where staircases right next to each other need to be enabled,
@@ -213,34 +214,7 @@ class Game:
             for staircase_location, staircase_dict in self.current_map.staircases.items():
                 self.process_staircase_warps(staircase_dict, staircase_location)
 
-        if current_key[K_j]:
-            # B button
-            self.unlaunch_menu(self.cmd_menu)
-            self.unlaunch_menu(self.dlg_box)
-            self.draw_all_tiles_in_current_map()
-            # print("J key pressed (B button).")
-        if current_key[K_k]:
-            # A button
-            # print("K key pressed (A button).")
-            if not self.player.is_moving:
-                # pause_all_movement may be temporarily commented out for dialog box debugging purposes.
-                self.cmd_menu.launch_signaled = True
-                self.pause_all_movement()
-        if current_key[K_i]:
-            # Start button
-            if self.paused:
-                self.unpause_all_movement()
-            else:
-                self.pause_all_movement()
-            print("I key pressed (Start button).")
-        if current_key[K_u]:
-            # Select button
-            print("U key pressed (Select button).")
-        # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed. (modernization)
-
-        # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
-        #     self.scale = self.scale + 1
-        self.handle_fps_changes(current_key)
+        self.handle_keypresses(current_key)
 
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
@@ -282,6 +256,35 @@ class Game:
 
         event.pump()
 
+    def handle_keypresses(self, current_key):
+        if current_key[K_j]:
+            # B button
+            self.unlaunch_menu(self.cmd_menu)
+            self.unlaunch_menu(self.dlg_box)
+            self.draw_all_tiles_in_current_map()
+            # print("J key pressed (B button).")
+        if current_key[K_k]:
+            # A button
+            # print("K key pressed (A button).")
+            if not self.player.is_moving:
+                # pause_all_movement may be temporarily commented out for dialog box debugging purposes.
+                self.cmd_menu.launch_signaled = True
+                self.pause_all_movement()
+        if current_key[K_i]:
+            # Start button
+            if self.paused:
+                self.unpause_all_movement()
+            else:
+                self.pause_all_movement()
+            print("I key pressed (Start button).")
+        if current_key[K_u]:
+            # Select button
+            print("U key pressed (Select button).")
+        # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed. (modernization)
+        # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
+        #     self.scale = self.scale + 1
+        self.handle_fps_changes(current_key)
+
     def handle_fps_changes(self, current_key) -> None:
         if current_key[K_1]:
             # self.draw_all_tiles_in_current_map()
@@ -318,13 +321,6 @@ class Game:
         draw_text(text, 15, WHITE, self.screen.get_width() / 2, self.screen.get_height() / 4, DRAGON_QUEST_FONT_PATH,
                   self.screen)
         # display.flip()
-
-    def get_character_identifier_by_coordinates(self, coordinates: tuple) -> str | None:
-        for character_identifier, character_info in self.current_map.characters.items():
-            if character_info['coordinates'] == coordinates:
-                return character_identifier
-            else:
-                return None
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
         if (self.player.row, self.player.column) == staircase_location:
