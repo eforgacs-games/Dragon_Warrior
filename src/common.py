@@ -7,7 +7,7 @@ from os.path import join, sep, exists
 
 import pygame
 
-from src.config import SFX_DIR, SOUND_ENABLED, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED
+from src.config import SFX_DIR, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED, SOUND_ENABLED
 
 
 class Direction(IntEnum):
@@ -15,13 +15,6 @@ class Direction(IntEnum):
     LEFT = 1
     UP = 2
     RIGHT = 3
-
-
-def get_opposite_direction(direction: int) -> int:
-    if direction >= 2:
-        return direction - 2
-    else:
-        return direction + 2
 
 
 # Files/Directories
@@ -147,19 +140,19 @@ SMB_FONT = pygame.font.Font(SMB_FONT_PATH, 15)
 
 
 def is_facing_down(character):
-    return character.direction == Direction.DOWN.value
+    return character.direction_value == Direction.DOWN.value
 
 
 def is_facing_up(character):
-    return character.direction == Direction.UP.value
+    return character.direction_value == Direction.UP.value
 
 
 def is_facing_right(character):
-    return character.direction == Direction.RIGHT.value
+    return character.direction_value == Direction.RIGHT.value
 
 
 def is_facing_left(character):
-    return character.direction == Direction.LEFT.value
+    return character.direction_value == Direction.LEFT.value
 
 
 def is_facing_medially(character):
@@ -211,34 +204,24 @@ def convert_to_milliseconds(fps):
     return fps / 60 * 1000
 
 
-def get_surrounding_tile_values(coordinates, map_layout, radius=1):
+def get_surrounding_tile_values(coordinates, map_layout):
     x = coordinates[0]
     y = coordinates[1]
-
-    # TODO: This bugs out if you get too close to the edge.
-    neighbors = [
-        # map_layout[x - 1][y - 1],
-        map_layout[x - 1][y],
-        # map_layout[x - 1][y + 1],
-
-        map_layout[x][y - 1],
-        map_layout[x][y + 1],
-
-        # map_layout[x + 1][y - 1],
-        map_layout[x + 1][y],
-        # map_layout[x + 1][y + 1]
-    ]
-    if radius > 1:
-        for i in range(2, radius):
-            # neighbors.append(map_layout[x - i][y - i])
-            neighbors.append(map_layout[x - i][y])
-            # neighbors.append(map_layout[x - i][y + i])
-
-            neighbors.append(map_layout[x][y - i])
-            neighbors.append(map_layout[x][y + i])
-
-            # neighbors.append(map_layout[x + i][y - i])
-            neighbors.append(map_layout[x + i][y])
-            # neighbors.append(map_layout[x + i][y + i])
-
-    return neighbors
+    try:
+        left = map_layout[x - 1][y] if x - 1 >= 0 else None
+    except IndexError:
+        left = None
+    try:
+        down = map_layout[x][y - 1] if y - 1 >= 0 else None
+    except IndexError:
+        down = None
+    try:
+        right = map_layout[x][y + 1]
+    except IndexError:
+        right = None
+    try:
+        up = map_layout[x + 1][y]
+    except IndexError:
+        up = None
+    neighbors = [x for x in [left, down, right, up] if x is not None]
+    return set(neighbors + [map_layout[x][y]])
