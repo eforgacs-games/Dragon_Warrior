@@ -2,8 +2,8 @@ from data.text.dialog import Dialog
 
 
 class LeftFaceGuardDialog(Dialog):
-    def __init__(self, player, map_name):
-        super().__init__(player, None)
+    def __init__(self, player, map_name, screen):
+        super().__init__(player, None, screen)
         match map_name:
             case 'TantegelThroneRoom':
                 self.dialog_text = (
