@@ -3,8 +3,8 @@ from src.common import print_with_beep_sfx, play_sound, confirmation_sfx
 
 
 class KingLorikDialog(Dialog):
-    def __init__(self, player, throne_room_door_locked, screen):
-        super().__init__(player, None, screen)
+    def __init__(self, player, map_name, screen, throne_room_door_locked):
+        super().__init__(player, screen)
         self.throne_room_door_locked = throne_room_door_locked
         self.is_initial_dialog = True
         self.initial_dialog_text = (
@@ -35,11 +35,7 @@ class KingLorikDialog(Dialog):
             if not self.throne_room_door_locked:
                 self.dialog_text = self.returned_dialog_text
                 self.prompt_for_save()
-        self.dialog_box_drop_down_effect()
-        for line in self.dialog_text:
-            # print_with_beep_sfx(line)
-            show_text_in_dialog_box(line, self.screen)
-        self.dialog_box_drop_up_effect(current_map, background, camera_position)
+        show_text_in_dialog_box(self.dialog_text, background, camera_position, current_map, self.screen)
 
     def prompt_for_save(self):
         deeds = input("Will thou tell me now of thy deeds so they won't be forgotten?'").lower().strip()

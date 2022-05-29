@@ -2,10 +2,11 @@ import logging
 
 import pygame_menu
 
-from data.text.dialog import show_text_in_dialog_box
+from data.text.dialog import show_line_in_dialog_box, show_text_in_dialog_box
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx
 from src.config import SCALE, TILE_SIZE
+from src.items import treasure
 from src.menu_functions import get_opposite_direction
 from src.sound import play_sound
 
@@ -82,7 +83,7 @@ class CommandMenu(Menu):
             self.menu.add.button('ITEM', self.item, margin=(0, 4))
             self.menu.add.button('DOOR', self.door, margin=(0, 4))
             self.menu.add.button('TAKE', self.take, margin=(0, 4))
-            self.dialog_lookup_table = DialogLookup(self.player, self.map_name, None, self.screen)
+            self.dialog_lookup = DialogLookup(self.player, self.map_name, self.screen)
         except ValueError as e:
             logging.error(e)
             self.command_menu_subsurface = None
@@ -101,7 +102,8 @@ class CommandMenu(Menu):
         # if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
         if not any(
                 c in character_coordinates for c in [self.player.next_coordinates, self.player.next_next_coordinates]):
-            show_text_in_dialog_box("There is no one there.", self.screen)
+            show_text_in_dialog_box(("There is no one there.",), self.background, self.camera_position,
+                                    self.current_map, self.screen)
             return
         for character_identifier, character_info in self.characters.items():
             if character_info['coordinates'] == self.player.next_coordinates or self.npc_is_across_counter(
@@ -118,7 +120,7 @@ class CommandMenu(Menu):
 
     def launch_dialog(self, dialog_character, current_map, background, camera_position):
         self.dialog_box.launch_signaled = True
-        character = self.dialog_lookup_table.lookup_table.get(dialog_character)
+        character = self.dialog_lookup.lookup_table.get(dialog_character)
         if character:
             character.say_dialog(current_map, background, camera_position)
         else:
@@ -156,7 +158,8 @@ class CommandMenu(Menu):
             print("'There are stairs here.'")
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
-            print("'There are no stairs here.'")
+            show_text_in_dialog_box(("There are no stairs here.",), self.background, self.camera_position,
+                                    self.current_map, self.screen)
 
     def search(self):
         """
@@ -165,14 +168,16 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         # open a window
-        print(f"{self.player.name} searched the ground all about.")
+        text_to_print = [f"{self.player.name} searched the ground all about.", ]
         # wait for input...
         if self.player.current_tile == 'TREASURE_BOX':
-            print(f"There is a {self.player.current_tile.lower().replace('_', ' ')}.")
+            text_to_print.append(f"There is a {self.player.current_tile.lower().replace('_', ' ')}.")
         # elif there is a hidden item:
         # print(f"There is a {hidden_item}")
         else:
-            print("But there found nothing.")
+            text_to_print.append("But there found nothing.")
+        show_text_in_dialog_box(text_to_print, self.background, self.camera_position, self.current_map, self.screen,
+                                add_quotes=False)
 
     def spell(self):
         """
@@ -182,9 +187,10 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
         if not self.player.spells:
-            print(f"{self.player.name} cannot yet use the spell.")
+            show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), self.background,
+                                    self.camera_position, self.current_map, self.screen, add_quotes=False)
         else:
-            print(self.player.spells)
+            show_line_in_dialog_box(self.player.spells, self.screen)
 
     def item(self):
         """
@@ -194,9 +200,10 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which item is being used.
         if not self.player.inventory:
-            print("Nothing of use has yet been given to thee.")
+            show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), self.background,
+                                    self.camera_position, self.current_map, self.screen, add_quotes=False)
         else:
-            print(self.player.inventory)
+            show_line_in_dialog_box(self.player.inventory, self.screen)
 
     def door(self):
         """
@@ -209,9 +216,11 @@ class CommandMenu(Menu):
                 # actually open the door
                 print("Door opened!")
             else:
-                print("Thou hast not a key to use.")
+                show_text_in_dialog_box(("Thou hast not a key to use.",), self.background, self.camera_position,
+                                        self.current_map, self.screen, add_quotes=False)
         else:
-            print("There is no door here.")
+            show_text_in_dialog_box(("There is no door here.",), self.background, self.camera_position,
+                                    self.current_map, self.screen, add_quotes=False)
 
     def take(self):
         """
@@ -221,12 +230,30 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # open a window
         if self.player.current_tile == 'TREASURE_BOX':
-            print("Took what was in the treasure box.")
+            map_treasure_info = treasure[self.map_name]
+            current_treasure_info = map_treasure_info[(self.player.row, self.player.column)]
+            item_name = current_treasure_info['item']
+            if item_name == 'GOLD':
+                # TODO(ELF): Add get item sound effect.
+                # play_sound(get_item_sfx)
+                gold_amount = current_treasure_info['amount']
+                show_line_in_dialog_box(f"Of {item_name} thou hast gained {gold_amount}",
+                                        self.screen)
+                self.player.gold += gold_amount
+
+                self.player.current_tile = 'BRICK'
+                self.current_map.add_tile(self.current_map.floor_tile_key['BRICK'])
+
+                # del map_treasure_info[(self.player.row, self.player.column)]
+            else:
+                print("Error obtaining treasure.")
         #     take it and update inventory accordingly
         # elif there is a hidden item
         # take the hidden item
         else:
-            print(f'There is nothing to take here, {self.player.name}.')
+            show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",), self.background,
+                                    self.camera_position,
+                                    self.current_map, self.screen)
 
 
 class DialogBox(Menu):

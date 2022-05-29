@@ -3,7 +3,7 @@ from data.text.dialog import Dialog
 
 class ManDialog(Dialog):
     def __init__(self, player, map_name, screen):
-        super().__init__(player, None, screen)
+        super().__init__(player, screen)
         match map_name:
             case 'Brecconary':
                 self.dialog_text = (

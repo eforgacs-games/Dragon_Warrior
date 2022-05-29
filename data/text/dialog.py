@@ -8,10 +8,12 @@ from src.config import TILE_SIZE
 from src.text import draw_text
 
 
-def show_text_in_dialog_box(line, screen):
+def show_line_in_dialog_box(line, screen, add_quotes=True):
+    """Shows a single line in a dialog box."""
     display_current_line = True
     finished_printing = False
-    line = f"`{line}’"
+    if add_quotes:
+        line = f"`{line}’"
     while display_current_line:
         black_box = Surface((TILE_SIZE * 12, TILE_SIZE * 5), flags=SRCALPHA)
         black_box.fill(BLACK)
@@ -39,16 +41,7 @@ def show_text_in_dialog_box(line, screen):
                   DRAGON_QUEST_FONT_PATH,
                   screen, center_align=False)
         display.flip()
-        for i in range(256):
-            draw_text("▼", 15, WHITE, screen.get_width() / 2, (screen.get_height() * 3 / 4) + 30,
-                      DRAGON_QUEST_FONT_PATH,
-                      screen)
-            display.flip()
-        for i in range(256):
-            draw_text("▼", 15, BLACK, screen.get_width() / 2, (screen.get_height() * 3 / 4) + 30,
-                      DRAGON_QUEST_FONT_PATH,
-                      screen)
-            display.flip()
+        blink_down_arrow(screen)
         for current_event in get():
             if current_event.type == KEYDOWN:
                 # if current_key[K_KP_ENTER] or current_key[K_k]:
@@ -56,46 +49,63 @@ def show_text_in_dialog_box(line, screen):
                 display_current_line = False
 
 
+def blink_down_arrow(screen):
+    for i in range(256):
+        draw_text("▼", 15, WHITE, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32,
+                  DRAGON_QUEST_FONT_PATH,
+                  screen)
+        display.flip()
+    for i in range(256):
+        draw_text("▼", 15, BLACK, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32,
+                  DRAGON_QUEST_FONT_PATH,
+                  screen)
+        display.flip()
+
+
+def dialog_box_drop_up_effect(current_map, background, camera_position, screen):
+    """Outro effect for dialog box."""
+    screen.blit(background, camera_position)
+    for i in range(4, -1, -1):
+        for j in range(32):
+            for tile_dict in current_map.floor_tile_key.values():
+                # TODO(ELF): This can be improved - no need to redraw every tile on the map.
+                if tile_dict.get('group'):
+                    tile_dict['group'].draw(background)
+            screen.blit(background, camera_position)
+            black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i))
+            black_box.fill(BLACK)
+            screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
+            display.flip()
+
+
+def dialog_box_drop_down_effect(screen):
+    """Intro effect for dialog box."""
+    for i in range(6):
+        for j in range(32):
+            black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i))
+            black_box.fill(BLACK)
+            screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
+            display.update()
+
+
+def show_text_in_dialog_box(text, background, camera_position, current_map, screen, add_quotes=True):
+    """Shows a passage of text in a dialog box."""
+    dialog_box_drop_down_effect(screen)
+    for line in text:
+        show_line_in_dialog_box(line, screen, add_quotes)
+    dialog_box_drop_up_effect(current_map, background, camera_position, screen)
+
+
 class Dialog:
-    def __init__(self, player, dialog_character, screen):
+    def __init__(self, player, screen):
         self.screen = screen
         self.player = player
-        self.dialog_character = dialog_character
+        self.dialog_character = ''
         self.dialog_text = []
 
     def say_dialog(self, current_map, background, camera_position):
         if self.dialog_text:
-            # for line in self.dialog_text:
-            #     draw_text(line, 15, WHITE, self.screen.get_width() / 2, self.screen.get_height() / 2,
-            #               DRAGON_QUEST_FONT_PATH,
-            #               self.screen)
-            #     display.update()
-            self.dialog_box_drop_down_effect()
-            for line in self.dialog_text:
-                show_text_in_dialog_box(line, self.screen)
-            self.dialog_box_drop_up_effect(current_map, background, camera_position)
+            show_text_in_dialog_box(self.dialog_text, background, camera_position, current_map, self.screen)
+
         else:
             print(f"Character has no dialog: {self.dialog_character}")
-
-    def dialog_box_drop_down_effect(self):
-        """Intro effect for dialog box."""
-        for i in range(6):
-            for j in range(32):
-                black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i))
-                black_box.fill(BLACK)
-                self.screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
-                display.update()
-
-    def dialog_box_drop_up_effect(self, current_map, background, camera_position):
-        """Outro effect for dialog box."""
-        self.screen.blit(background, camera_position)
-        for i in range(4, -1, -1):
-            for j in range(32):
-                for tile_dict in current_map.floor_tile_key.values():
-                    if tile_dict.get('group'):
-                        tile_dict['group'].draw(background)
-                self.screen.blit(background, camera_position)
-                black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i))
-                black_box.fill(BLACK)
-                self.screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
-                display.flip()
