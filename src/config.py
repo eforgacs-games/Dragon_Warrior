@@ -28,9 +28,8 @@ else:
     FULLSCREEN_ENABLED = False
     SPLASH_SCREEN_ENABLED = True
     INITIAL_DIALOG_ENABLED = True
-INITIAL_DIALOG_ENABLED = True
 SHOW_FPS = False
 # This prints out the current coordinates that the player is standing on.
-SHOW_COORDINATES = False
+SHOW_COORDINATES = True
 COLOR_KEY = (0, 128, 128)
 TEXT_SPEED = "Fast"

@@ -2,8 +2,8 @@ from data.text.dialog import Dialog
 
 
 class WiseManDialog(Dialog):
-    def __init__(self, player, map_name):
-        super().__init__(player, None, None)
+    def __init__(self, player, map_name, screen):
+        super().__init__(player, screen)
         match map_name:
             case 'TantegelCourtyard':
                 self.dialog_text = (

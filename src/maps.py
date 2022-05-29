@@ -245,7 +245,7 @@ class DragonWarriorMap:
                 break
 
     def add_tile(self, tile_dict) -> None:
-        tile_value = tile_dict.get('val')
+        tile_value = tile_dict['val']
         tile_group = tile_dict.get('group')
         if tile_group is None:
             self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'] = Group()
