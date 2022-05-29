@@ -3,7 +3,7 @@ from data.text.dialog import Dialog
 
 class WomanDialog(Dialog):
     def __init__(self, player, map_name):
-        super().__init__(player, None)
+        super().__init__(player, None, None)
         match map_name:
             case 'TantegelCourtyard':
                 self.dialog_text = (

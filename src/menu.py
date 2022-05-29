@@ -4,10 +4,10 @@ import pygame_menu
 
 from data.text.dialog_lookup_table import DialogLookupTable
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx
-from src.sound import play_sound
-from src.menu_functions import get_opposite_direction
 from src.common import print_with_beep_sfx
 from src.config import SCALE, TILE_SIZE
+from src.menu_functions import get_opposite_direction
+from src.sound import play_sound
 
 
 class Menu:
@@ -41,16 +41,19 @@ class Menu:
         self.launched = False
 
 
+
 class CommandMenu(Menu):
 
-    def __init__(self, background, current_map, dialog_box, player):
+    def __init__(self, background, current_map, dialog_box, player, screen):
         super().__init__()
         self.dialog_box = dialog_box
         self.current_tile = player.current_tile
+        self.current_map = current_map
         self.characters = current_map.characters
         self.player = player
         self.map_name = current_map.__class__.__name__
         self.background = background
+        self.screen = screen
         # TODO: This gives a ValueError if the map is too small.
         try:
             command_menu_subsurface = background.subsurface((player.column - 2) * TILE_SIZE,
@@ -79,6 +82,7 @@ class CommandMenu(Menu):
             self.menu.add.button('ITEM', self.item, margin=(0, 4))
             self.menu.add.button('DOOR', self.door, margin=(0, 4))
             self.menu.add.button('TAKE', self.take, margin=(0, 4))
+            self.dialog_lookup_table = DialogLookupTable(self.player, self.map_name, None, self.screen)
         except ValueError as e:
             logging.error(e)
             self.command_menu_subsurface = None
@@ -96,11 +100,13 @@ class CommandMenu(Menu):
         # for now, implementing using print statements. will be useful for debugging as well.
         character_coordinates = [character_dict['coordinates'] for character_dict in self.characters.values()]
         # if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
-        if not any(c in character_coordinates for c in [self.player.next_coordinates, self.player.next_next_coordinates]):
+        if not any(
+                c in character_coordinates for c in [self.player.next_coordinates, self.player.next_next_coordinates]):
             print_with_beep_sfx("'There is no one there.'")
             return
         for character_identifier, character_info in self.characters.items():
-            if character_info['coordinates'] == self.player.next_coordinates or self.npc_is_across_counter(character_info):
+            if character_info['coordinates'] == self.player.next_coordinates or self.npc_is_across_counter(
+                    character_info):
                 if character_info['character'].direction_value != get_opposite_direction(self.player.direction_value):
                     character_info['character'].direction_value = get_opposite_direction(self.player.direction_value)
                     character_info['character'].animate()
@@ -113,8 +119,7 @@ class CommandMenu(Menu):
 
     def launch_dialog(self, dialog_character):
         self.dialog_box.launch_signaled = True
-        dlt = DialogLookupTable(self.player, self.map_name, dialog_character)
-        character = dlt.dialog_lookup.get(dialog_character)
+        character = self.dialog_lookup_table.dialog_lookup.get(dialog_character)
         if character:
             character.say_dialog()
         else:
