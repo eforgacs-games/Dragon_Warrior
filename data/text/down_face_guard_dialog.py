@@ -6,5 +6,5 @@ class DownFaceGuardDialog(Dialog):
         super().__init__(player, dialog_character, screen)
         if map_name == 'TantegelCourtyard':
             self.dialog_text = (
-                "'King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later.'",
+                "King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later.",
             )

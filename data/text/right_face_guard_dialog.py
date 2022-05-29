@@ -7,11 +7,11 @@ class RightFaceGuardDialog(Dialog):
         match map_name:
             case 'TantegelThroneRoom':
                 self.dialog_text = (
-                    "'East of this castle is a town where armor, weapons, and many other items may be purchased.'",
-                    f"'Return to the Inn for a rest if thou art wounded in battle, {self.player.name}.'",
-                    "'Sleep heals all.'"
+                    "East of this castle is a town where armor, weapons, and many other items may be purchased.",
+                    f"Return to the Inn for a rest if thou art wounded in battle, {self.player.name}.",
+                    "Sleep heals all."
                 )
             case 'TantegelCourtyard':
                 self.dialog_text = (
-                    "'Welcome to Tantegel Castle.'",
+                    "Welcome to Tantegel Castle.",
                 )

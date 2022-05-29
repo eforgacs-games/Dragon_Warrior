@@ -20,12 +20,15 @@ if DEV_MODE:
     ORCHESTRA_MUSIC_ENABLED = False
     FULLSCREEN_ENABLED = False
     SPLASH_SCREEN_ENABLED = False
+    INITIAL_DIALOG_ENABLED = False
 else:
     MUSIC_ENABLED = True
     SOUND_ENABLED = True
     ORCHESTRA_MUSIC_ENABLED = False
     FULLSCREEN_ENABLED = False
     SPLASH_SCREEN_ENABLED = True
+    INITIAL_DIALOG_ENABLED = True
+INITIAL_DIALOG_ENABLED = True
 SHOW_FPS = False
 # This prints out the current coordinates that the player is standing on.
 SHOW_COORDINATES = False
