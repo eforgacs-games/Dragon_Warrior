@@ -2,8 +2,8 @@ from data.text.dialog import Dialog
 
 
 class MerchantDialog(Dialog):
-    def __init__(self, player, map_name, dialog_character, screen):
-        super().__init__(player, dialog_character, screen)
+    def __init__(self, player, map_name, screen):
+        super().__init__(player, screen)
         match map_name:
             case 'TantegelCourtyard':
                 self.dialog_text = (
