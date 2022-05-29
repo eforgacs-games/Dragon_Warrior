@@ -10,16 +10,16 @@ from data.text.wise_man_dialog import WiseManDialog
 from data.text.woman_dialog import WomanDialog
 
 
-class DialogLookupTable:
+class DialogLookup:
 
     def __init__(self, player, map_name, dialog_character, screen):
-        self.dialog_lookup = {'KING_LORIK': KingLorikDialog(player, throne_room_door_locked=True, screen=screen),
-                              'UP_FACE_GUARD': UpFaceGuardDialog(player, map_name, dialog_character, screen),
-                              'DOWN_FACE_GUARD': DownFaceGuardDialog(player, map_name, dialog_character, screen),
-                              'RIGHT_FACE_GUARD': RightFaceGuardDialog(player, map_name, dialog_character, screen),
-                              'LEFT_FACE_GUARD': LeftFaceGuardDialog(player, map_name, screen),
-                              'ROAMING_GUARD': RoamingGuardDialog(player, map_name, screen),
-                              'MERCHANT': MerchantDialog(player, map_name, dialog_character, screen),
-                              'MAN': ManDialog(player, map_name, screen),
-                              'WOMAN': WomanDialog(player, map_name),
-                              'WISE_MAN': WiseManDialog(player, map_name)}
+        self.lookup_table = {'KING_LORIK': KingLorikDialog(player, throne_room_door_locked=True, screen=screen),
+                             'UP_FACE_GUARD': UpFaceGuardDialog(player, map_name, dialog_character, screen),
+                             'DOWN_FACE_GUARD': DownFaceGuardDialog(player, map_name, dialog_character, screen),
+                             'RIGHT_FACE_GUARD': RightFaceGuardDialog(player, map_name, dialog_character, screen),
+                             'LEFT_FACE_GUARD': LeftFaceGuardDialog(player, map_name, screen),
+                             'ROAMING_GUARD': RoamingGuardDialog(player, map_name, screen),
+                             'MERCHANT': MerchantDialog(player, map_name, dialog_character, screen),
+                             'MAN': ManDialog(player, map_name, screen),
+                             'WOMAN': WomanDialog(player, map_name),
+                             'WISE_MAN': WiseManDialog(player, map_name)}

@@ -7,10 +7,10 @@ class WomanDialog(Dialog):
         match map_name:
             case 'TantegelCourtyard':
                 self.dialog_text = (
-                    "'Where oh where can I find Princess Gwaelin?'",
+                    "Where oh where can I find Princess Gwaelin?",
                 )
             case 'Brecconary':
                 self.dialog_text = (
-                    "'Welcome! \n"
-                    "Enter the shop and speak to its keeper across the desk.'",
+                    "Welcome! \n"
+                    "Enter the shop and speak to its keeper across the desk.",
                 )

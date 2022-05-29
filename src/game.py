@@ -18,7 +18,7 @@ from src.common import Direction, menu_button_sfx, stairs_down_sfx, stairs_up_sf
     is_facing_laterally, \
     WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tile_values, ICON_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES
+from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.game_functions import set_character_position, get_next_coordinates
 from src.intro import Intro
@@ -98,10 +98,11 @@ class Game:
         self.player.next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row, self.current_map.player.direction_value)
         self.player.next_next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row, self.current_map.player.direction_value, offset=3)
         self.dlg_box = menu.DialogBox(self.background, self.player.column, self.player.row)
-        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.dlg_box, self.player, self.screen)
+        self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen)
+        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.dlg_box, self.player, self.screen,
+                                         self.camera.get_pos())
 
         self.menus = self.cmd_menu, self.dlg_box
-        self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen)
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
         self.music_enabled = MUSIC_ENABLED
@@ -386,15 +387,31 @@ class Game:
         # also check if group is in current window, default screen size is 15 tall x 16 wide
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
+        self.handle_sprite_drawing_and_animation()
+        self.screen.blit(self.background, self.camera.get_pos())
+        if self.in_initial_king_lorik_conversation():
+            self.enable_movement = False
+            for current_event in self.events:
+                if current_event.type == KEYUP:
+                    self.cmd_menu.dialog_lookup_table.lookup_table['KING_LORIK'].say_dialog(self.current_map, self.background,
+                                                                                            self.camera.get_pos())
+                    self.enable_movement = True
+        else:
+            for menu_or_dialog_box in self.menus:
+                self.handle_menu_launch(menu_or_dialog_box)
+                self.screen.blit(self.background, self.camera.get_pos())
+
+    def in_initial_king_lorik_conversation(self):
+        return INITIAL_DIALOG_ENABLED and self.current_map.identifier == 'TantegelThroneRoom' and self.cmd_menu.dialog_lookup_table.lookup_table[
+            'KING_LORIK'].is_initial_dialog
+
+    def handle_sprite_drawing_and_animation(self):
         for character_dict in self.current_map.characters.values():
             self.foreground_rects.append(character_dict['character_sprites'].draw(self.background)[0])
             if self.enable_animate:
                 character_dict['character'].animate()
             else:
                 character_dict['character'].pause()
-        for menu_or_dialog_box in self.menus:
-            self.handle_menu_launch(menu_or_dialog_box)
-        self.screen.blit(self.background, self.camera.get_pos())
 
     def get_fixed_character_underlying_tiles(self) -> List[str]:
         all_fixed_character_underlying_tiles = []
@@ -644,7 +661,7 @@ class Game:
         # b = cropped = self.current_map.layout_numpy_array[x_min:x_max + 1, y_min:y_max + 1]
         # # print(b)
 
-        curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.get_pos()
+        self.cmd_menu.camera_position = curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.get_pos()
         self.check_next_tile(character)
         character.next_tile_id = self.get_next_tile_identifier(character_column=character.column,
                                                                character_row=character.row,
@@ -667,7 +684,7 @@ class Game:
                 # this causes the fade out to happen a square before the player touches a staircase
                 next_cam_pos_y = curr_cam_pos_y + delta_y
                 # character.row += -delta_y // 2
-        if character.identifier == 'HERO':
+        if character.identifier == 'HERO' and self.enable_movement:
             self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
 
     def check_next_tile(self, character: Player | RoamingCharacter) -> None:
