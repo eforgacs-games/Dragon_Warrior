@@ -2,9 +2,9 @@ import logging
 
 import pygame_menu
 
-from data.text.dialog_lookup_table import DialogLookupTable
+from data.text.dialog import show_text_in_dialog_box
+from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx
-from src.common import print_with_beep_sfx
 from src.config import SCALE, TILE_SIZE
 from src.menu_functions import get_opposite_direction
 from src.sound import play_sound
@@ -41,10 +41,9 @@ class Menu:
         self.launched = False
 
 
-
 class CommandMenu(Menu):
 
-    def __init__(self, background, current_map, dialog_box, player, screen):
+    def __init__(self, background, current_map, dialog_box, player, screen, camera_position):
         super().__init__()
         self.dialog_box = dialog_box
         self.current_tile = player.current_tile
@@ -54,6 +53,7 @@ class CommandMenu(Menu):
         self.map_name = current_map.__class__.__name__
         self.background = background
         self.screen = screen
+        self.camera_position = camera_position
         # TODO: This gives a ValueError if the map is too small.
         try:
             command_menu_subsurface = background.subsurface((player.column - 2) * TILE_SIZE,
@@ -82,7 +82,7 @@ class CommandMenu(Menu):
             self.menu.add.button('ITEM', self.item, margin=(0, 4))
             self.menu.add.button('DOOR', self.door, margin=(0, 4))
             self.menu.add.button('TAKE', self.take, margin=(0, 4))
-            self.dialog_lookup_table = DialogLookupTable(self.player, self.map_name, None, self.screen)
+            self.dialog_lookup_table = DialogLookup(self.player, self.map_name, None, self.screen)
         except ValueError as e:
             logging.error(e)
             self.command_menu_subsurface = None
@@ -90,19 +90,18 @@ class CommandMenu(Menu):
 
     def talk(self):
         """
-        Talk to an NPC. (Not yet implemented)
-        :return: To be determined upon implementation
+        Talk to an NPC.
+        :return: None
         """
         play_sound(menu_button_sfx)
         # dialog = Dialog(player=self.player)
-        # TODO: Get an actual dialog box to show!
 
         # for now, implementing using print statements. will be useful for debugging as well.
         character_coordinates = [character_dict['coordinates'] for character_dict in self.characters.values()]
         # if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
         if not any(
                 c in character_coordinates for c in [self.player.next_coordinates, self.player.next_next_coordinates]):
-            print_with_beep_sfx("'There is no one there.'")
+            show_text_in_dialog_box("There is no one there.", self.screen)
             return
         for character_identifier, character_info in self.characters.items():
             if character_info['coordinates'] == self.player.next_coordinates or self.npc_is_across_counter(
@@ -111,19 +110,19 @@ class CommandMenu(Menu):
                     character_info['character'].direction_value = get_opposite_direction(self.player.direction_value)
                     character_info['character'].animate()
                     character_info['character'].pause()
-                self.launch_dialog(character_identifier)
+                self.launch_dialog(character_identifier, self.current_map, self.background, self.camera_position)
                 break
 
     def npc_is_across_counter(self, character_info):
         return self.player.next_tile_id == 'WOOD' and character_info['coordinates'] == self.player.next_next_coordinates
 
-    def launch_dialog(self, dialog_character):
+    def launch_dialog(self, dialog_character, current_map, background, camera_position):
         self.dialog_box.launch_signaled = True
-        character = self.dialog_lookup_table.dialog_lookup.get(dialog_character)
+        character = self.dialog_lookup_table.lookup_table.get(dialog_character)
         if character:
-            character.say_dialog()
+            character.say_dialog(current_map, background, camera_position)
         else:
-            print("Character not in lookup table.")
+            print(f"Character not in lookup table: {dialog_character}")
 
     def status(self):
         """

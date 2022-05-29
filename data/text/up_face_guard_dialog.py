@@ -6,5 +6,5 @@ class UpFaceGuardDialog(Dialog):
         super().__init__(player, dialog_character, screen)
         if map_name == 'TantegelCourtyard':
             self.dialog_text = (
-                "'If thou art planning to take a rest, first see King Lorik.'",
+                "If thou art planning to take a rest, first see King Lorik.",
             )
