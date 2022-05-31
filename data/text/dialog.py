@@ -15,7 +15,7 @@ def show_line_in_dialog_box(line, screen, add_quotes=True):
     if add_quotes:
         line = f"`{line}’"
     while display_current_line:
-        black_box = Surface((TILE_SIZE * 12, TILE_SIZE * 5), flags=SRCALPHA)
+        black_box = Surface((TILE_SIZE * 12, TILE_SIZE * 5))  # lgtm [py/call/wrong-arguments]
         black_box.fill(BLACK)
         screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
         if not finished_printing:
@@ -72,7 +72,7 @@ def dialog_box_drop_up_effect(current_map, background, camera_position, screen):
             tile_dict['group'].draw(background)
     for i in range(4, -1, -1):
         dialog_box_underlying_tiles = get_dialog_box_underlying_tiles(current_map, i)
-        black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i), flags=SRCALPHA)
+        black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
         black_box.fill(BLACK)
         for j in range(64):
             for tile, tile_dict in current_map.floor_tile_key.items():
