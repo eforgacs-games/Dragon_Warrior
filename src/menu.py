@@ -237,8 +237,7 @@ class CommandMenu(Menu):
                 # TODO(ELF): Add get item sound effect.
                 # play_sound(get_item_sfx)
                 gold_amount = current_treasure_info['amount']
-                show_line_in_dialog_box(f"Of {item_name} thou hast gained {gold_amount}",
-                                        self.screen)
+                show_line_in_dialog_box(f"Of {item_name} thou hast gained {gold_amount}", self.screen)
                 self.player.gold += gold_amount
 
                 self.player.current_tile = 'BRICK'
@@ -252,8 +251,7 @@ class CommandMenu(Menu):
         # take the hidden item
         else:
             show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",), self.background,
-                                    self.camera_position,
-                                    self.current_map, self.screen)
+                                    self.camera_position, self.current_map, self.screen)
 
 
 class DialogBox(Menu):
