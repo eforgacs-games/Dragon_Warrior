@@ -1,6 +1,6 @@
 import time
 
-from pygame import display, Surface, KEYDOWN, SRCALPHA
+from pygame import display, Surface, KEYDOWN
 from pygame.event import get
 
 from src.common import WHITE, DRAGON_QUEST_FONT_PATH, BLACK, play_sound, menu_button_sfx, text_beep_sfx
