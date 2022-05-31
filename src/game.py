@@ -1,6 +1,6 @@
 import random
 import sys
-from typing import List
+from typing import List, Tuple
 
 import pygame_menu
 from pygame import init, Surface, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, \
@@ -12,6 +12,7 @@ from pygame.time import Clock
 from pygame.time import get_ticks
 
 import src.menu as menu
+from data.text.dialog import show_text_in_dialog_box
 from data.text.dialog_lookup_table import DialogLookup
 from src import maps
 from src.camera import Camera
@@ -30,7 +31,7 @@ from src.player.player import Player
 from src.sound import bump, play_sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
-from src.text import draw_text, draw_text_with_rectangle
+from src.text import draw_text
 from src.visual_effects import fade
 
 
@@ -158,18 +159,16 @@ class Game:
         while main_menu_screen_enabled:
             screen.fill(BLACK)
             # totally dummy option for now, just a placeholder
-            for i in range(256):
-                draw_text_with_rectangle(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2,
-                                         screen.get_height() / 3, DRAGON_QUEST_FONT_PATH,
-                                         self.screen)
+            for i in range(128):
+                draw_text(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2,
+                                       screen.get_height() / 3, DRAGON_QUEST_FONT_PATH,
+                                       self.screen)
                 display.flip()
-            screen.fill(BLACK)
-            for i in range(256):
-                draw_text_with_rectangle(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2,
-                                         screen.get_height() / 3, DRAGON_QUEST_FONT_PATH,
-                                         self.screen)
+            for i in range(128):
+                draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2,
+                                           screen.get_height() / 3, DRAGON_QUEST_FONT_PATH,
+                                           self.screen)
                 display.flip()
-            screen.fill(BLACK)
             self.clock.tick(self.fps)
             for current_event in get():
                 if current_event.type == QUIT:
@@ -206,7 +205,7 @@ class Game:
         # the map where staircases right next to each other need to be enabled,
         # as done with Cantlin below
         if self.tiles_moved_since_spawn > 1 or self.current_map.identifier in (
-        'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1'):
+                'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1'):
             for staircase_location, staircase_dict in self.current_map.staircases.items():
                 self.process_staircase_warps(staircase_dict, staircase_location)
 
@@ -222,10 +221,6 @@ class Game:
         self.player.next_next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
                                                                  self.player.rect.y // TILE_SIZE,
                                                                  self.player.direction_value, offset_from_character=2)
-
-        if self.temporary_text_on_screen:
-            if get_ticks() - self.draw_text_start > 5000:
-                self.draw_all_tiles_in_current_map()
 
         # Debugging area
 
@@ -284,21 +279,16 @@ class Game:
 
     def handle_fps_changes(self, current_key) -> None:
         if current_key[K_1]:
-            # self.draw_all_tiles_in_current_map()
+            self.draw_temporary_text(("Game set to normal speed.",))
             self.fps = 60
-            # self.temporary_text_on_screen = True
-            # self.draw_text_start = get_ticks()
-            # draw_text("NORMAL SPEED", 15, WHITE, self.screen.get_width() / 2, self.screen.get_height() / 2, DRAGON_QUEST_FONT_PATH, self.background)
         if current_key[K_2]:
-            # self.draw_all_tiles_in_current_map()
+            self.draw_temporary_text(("Game set to double speed.",))
             self.fps = 120
-            # self.temporary_text_on_screen = True
-            # self.draw_text_start = get_ticks()
-            # self.draw_temporary_text("DOUBLE (200%) SPEED")
-            # draw_text("DOUBLE SPEED", 15, WHITE, self.player.rect.x, self.player.rect.y, DRAGON_QUEST_FONT_PATH, self.background)
         if current_key[K_3]:
+            self.draw_temporary_text(("Game set to triple speed.",))
             self.fps = 240
         if current_key[K_4]:
+            self.draw_temporary_text(("Game set to quadruple speed.",))
             self.fps = 480
 
     def update_roaming_character_positions(self) -> None:
@@ -307,12 +297,12 @@ class Game:
                 if not character_dict['character'].is_moving:
                     set_character_position(character_dict['character'])
 
-    def draw_temporary_text(self, text: str) -> None:
+    def draw_temporary_text(self, text: Tuple[str] | List[str], add_quotes=False) -> None:
         self.temporary_text_on_screen = True
         self.draw_text_start = get_ticks()
-        draw_text(text, 15, WHITE, self.screen.get_width() / 2, self.screen.get_height() / 4, DRAGON_QUEST_FONT_PATH,
-                  self.screen)
-        # display.flip()
+        show_text_in_dialog_box(text, self.background, self.camera.get_pos(), self.current_map, self.screen,
+                                add_quotes=add_quotes,
+                                temp_text_start=self.draw_text_start)
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
         if (self.player.row, self.player.column) == staircase_location:
@@ -411,7 +401,7 @@ class Game:
         else:
             for menu_or_dialog_box in self.menus:
                 self.handle_menu_launch(menu_or_dialog_box)
-                self.screen.blit(self.background, self.camera.get_pos())
+                # self.screen.blit(self.background, self.camera.get_pos())
 
     def in_initial_king_lorik_conversation(self):
         return INITIAL_DIALOG_ENABLED and self.current_map.identifier == 'TantegelThroneRoom' and \
@@ -468,13 +458,15 @@ class Game:
     def handle_menu_launch(self, menu_to_launch: menu.Menu) -> None:
         if menu_to_launch.launch_signaled:
             if menu_to_launch.menu.get_id() == 'command':
-                self.command_menu_subsurface = self.background.subsurface(
-                    (self.player.column - 2) * TILE_SIZE,  # 11 (first empty square to the left of menu)
-                    (self.player.row - 6) * TILE_SIZE,  # 4
-                    8 * TILE_SIZE,
-                    5 * TILE_SIZE
+                self.command_menu_subsurface = self.screen.subsurface(
+                    (6 * TILE_SIZE,  # 11 (first empty square to the left of menu)
+                     TILE_SIZE),  # 4
+                    (8 * TILE_SIZE,
+                     5 * TILE_SIZE)
                 )
+                self.command_menu_subsurface.fill(BLACK)
                 rect = menu_to_launch.menu.draw(self.command_menu_subsurface)
+                display.update()
             elif menu_to_launch.menu.get_id() == 'dialog_box':
                 self.dialog_box_subsurface = self.background.subsurface(
                     # left=(self.player.column + 6) * TILE_SIZE,
