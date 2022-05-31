@@ -30,6 +30,6 @@ else:
     INITIAL_DIALOG_ENABLED = True
 SHOW_FPS = False
 # This prints out the current coordinates that the player is standing on.
-SHOW_COORDINATES = True
+SHOW_COORDINATES = False
 COLOR_KEY = (0, 128, 128)
 TEXT_SPEED = "Fast"
