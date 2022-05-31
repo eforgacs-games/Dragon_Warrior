@@ -1,20 +1,24 @@
 import time
+from typing import Tuple, List
 
 from pygame import display, Surface, KEYDOWN
 from pygame.event import get
+from pygame.time import get_ticks
 
 from src.common import WHITE, DRAGON_QUEST_FONT_PATH, BLACK, play_sound, menu_button_sfx, text_beep_sfx
 from src.config import TILE_SIZE
 from src.text import draw_text
 
 
-def show_line_in_dialog_box(line, screen, add_quotes=True):
+def show_line_in_dialog_box(line, screen, add_quotes=True, temp_text_start=None):
     """Shows a single line in a dialog box."""
     display_current_line = True
     finished_printing = False
     if add_quotes:
         line = f"`{line}’"
     while display_current_line:
+        if temp_text_start:
+            current_time = get_ticks()
         black_box = Surface((TILE_SIZE * 12, TILE_SIZE * 5))  # lgtm [py/call/wrong-arguments]
         black_box.fill(BLACK)
         screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
@@ -47,6 +51,10 @@ def show_line_in_dialog_box(line, screen, add_quotes=True):
                 # if current_key[K_KP_ENTER] or current_key[K_k]:
                 play_sound(menu_button_sfx)
                 display_current_line = False
+        if temp_text_start:
+            if current_time - temp_text_start >= 250:
+                play_sound(menu_button_sfx)
+                display_current_line = False
 
 
 def blink_down_arrow(screen):
@@ -54,6 +62,7 @@ def blink_down_arrow(screen):
         draw_text("▼", 15, WHITE, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32,
                   DRAGON_QUEST_FONT_PATH,
                   screen)
+        # TODO(ELF): Change display.flip() to display.update() and pass in a rect.
         display.flip()
     for i in range(256):
         draw_text("▼", 15, BLACK, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32,
@@ -102,11 +111,12 @@ def dialog_box_drop_down_effect(screen):
             display.update()
 
 
-def show_text_in_dialog_box(text, background, camera_position, current_map, screen, add_quotes=True):
+def show_text_in_dialog_box(text: Tuple[str] | List[str], background, camera_position, current_map, screen, add_quotes=True,
+                            temp_text_start=None):
     """Shows a passage of text in a dialog box."""
     dialog_box_drop_down_effect(screen)
     for line in text:
-        show_line_in_dialog_box(line, screen, add_quotes)
+        show_line_in_dialog_box(line, screen, add_quotes, temp_text_start)
     dialog_box_drop_up_effect(current_map, background, camera_position, screen)
 
 

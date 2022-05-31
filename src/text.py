@@ -22,6 +22,8 @@ def draw_text(text, size, color, x, y, font_name, screen, center_align=True, tex
             text_rect.midleft = (x, y_position)
         screen.blit(text_surface, text_rect)
         y_position += 16
+        if chunk == chunks[len(chunks) - 1]:
+            return chunk
 
 
 def draw_text_with_rectangle(text, size, color, x, y, font_name, screen):
