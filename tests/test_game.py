@@ -21,7 +21,8 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 def create_key_mock(pressed_key):
     def helper():
-        tmp = [0] * 300
+        # increase this number as necessary to accommodate keys used
+        tmp = [0] * 200
         tmp[pressed_key] = 1
         return tmp
 
@@ -139,6 +140,7 @@ class TestGame(TestCase):
     # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
 
     def test_handle_fps_changes(self):
+        self.game.current_map.player.row = 1
         self.assertEqual(60, self.game.fps)
         pygame.key.get_pressed = create_key_mock(pygame.K_2)
         self.game.handle_fps_changes(pygame.key.get_pressed())
