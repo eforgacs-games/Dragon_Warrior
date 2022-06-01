@@ -103,12 +103,9 @@ class Game:
                                                                  self.current_map.player.direction_value)
         self.player.next_next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row,
                                                                       self.current_map.player.direction_value, offset=3)
-        self.dlg_box = menu.DialogBox(self.background, self.player.column, self.player.row)
         self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen)
-        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.dlg_box, self.player, self.screen,
-                                         self.camera.get_pos())
+        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.player, self.screen, self.camera.get_pos())
 
-        self.menus = self.cmd_menu, self.dlg_box
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
         self.music_enabled = MUSIC_ENABLED
@@ -160,14 +157,10 @@ class Game:
             screen.fill(BLACK)
             # totally dummy option for now, just a placeholder
             for i in range(128):
-                draw_text(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2,
-                                       screen.get_height() / 3, DRAGON_QUEST_FONT_PATH,
-                                       self.screen)
+                draw_text(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 3, DRAGON_QUEST_FONT_PATH, self.screen)
                 display.flip()
             for i in range(128):
-                draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2,
-                                           screen.get_height() / 3, DRAGON_QUEST_FONT_PATH,
-                                           self.screen)
+                draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 3, DRAGON_QUEST_FONT_PATH, self.screen)
                 display.flip()
             self.clock.tick(self.fps)
             for current_event in get():
@@ -252,7 +245,6 @@ class Game:
         if current_key[K_j]:
             # B button
             self.unlaunch_menu(self.cmd_menu)
-            self.unlaunch_menu(self.dlg_box)
             self.draw_all_tiles_in_current_map()
             # print("J key pressed (B button).")
         if current_key[K_k]:
@@ -391,22 +383,28 @@ class Game:
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation()
         self.screen.blit(self.background, self.camera.get_pos())
-        if self.in_initial_king_lorik_conversation():
-            self.enable_movement = False
-            for current_event in self.events:
-                if current_event.type == KEYUP:
-                    self.cmd_menu.dialog_lookup.lookup_table['KING_LORIK'].say_dialog(self.current_map, self.background,
-                                                                                      self.camera.get_pos())
-                    self.enable_movement = True
+        if INITIAL_DIALOG_ENABLED:
+            if self.in_initial_king_lorik_conversation():
+                self.enable_movement = False
+                for current_event in self.events:
+                    if current_event.type == KEYUP:
+                        show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'],
+                                                self.background, self.camera.get_pos(), self.current_map, self.screen)
+                        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
+                        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+                            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
+                        self.enable_movement = True
+            else:
+                self.handle_menu_launch(self.cmd_menu)
         else:
-            for menu_or_dialog_box in self.menus:
-                self.handle_menu_launch(menu_or_dialog_box)
-                # self.screen.blit(self.background, self.camera.get_pos())
+            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
+            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+                self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
+            self.handle_menu_launch(self.cmd_menu)
 
     def in_initial_king_lorik_conversation(self):
         return INITIAL_DIALOG_ENABLED and self.current_map.identifier == 'TantegelThroneRoom' and \
-               self.cmd_menu.dialog_lookup.lookup_table[
-                   'KING_LORIK'].is_initial_dialog
+               self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog']
 
     def handle_sprite_drawing_and_animation(self):
         for character_dict in self.current_map.characters.values():
@@ -467,16 +465,6 @@ class Game:
                 self.command_menu_subsurface.fill(BLACK)
                 rect = menu_to_launch.menu.draw(self.command_menu_subsurface)
                 display.update()
-            elif menu_to_launch.menu.get_id() == 'dialog_box':
-                self.dialog_box_subsurface = self.background.subsurface(
-                    # left=(self.player.column + 6) * TILE_SIZE,
-                    # top=(self.player.row + 6) * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE,
-                    12 * TILE_SIZE,
-                    5 * TILE_SIZE
-                )
-                rect = menu_to_launch.menu.draw(self.dialog_box_subsurface)
             else:
                 rect = None
                 print("No menu launched")
@@ -487,9 +475,8 @@ class Game:
 
     def update_screen(self) -> None:
         """Update the screen's display."""
-        for menu_or_dialog_box in self.menus:
-            if menu_or_dialog_box.launched:
-                menu_or_dialog_box.menu.update(self.events)
+        if self.cmd_menu.launched:
+            self.cmd_menu.menu.update(self.events)
         display.update()
 
     def change_map(self, next_map: maps.DragonWarriorMap) -> None:
@@ -539,14 +526,13 @@ class Game:
         self.loop_count = 1
         self.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
-        self.menus = self.cmd_menu, self.dlg_box
         self.cmd_menu.current_map = self.current_map
         self.cmd_menu.map_name = self.current_map.__class__.__name__
         self.cmd_menu.characters = self.current_map.characters
         self.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
-        self.cmd_menu.dialog_lookup = DialogLookup(self.player, self.current_map.identifier, self.screen)
+        self.cmd_menu.dialog_lookup = DialogLookup(self.player)
 
         # play_music(self.current_map.music_file_path)
 

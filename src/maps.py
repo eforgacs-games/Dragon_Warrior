@@ -361,7 +361,7 @@ class TantegelCourtyard(DragonWarriorMap):
             east_gate=warp_line((6, 37), (37, 37)),
             south_gate=warp_line((37, 9), (37, 26)))
         self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18), 'direction': Direction.LEFT.value}
-        self.staircases[(36, 36)] = {'map': 'TantegelUnderground'}
+        self.staircases[(36, 36)] = {'map': 'TantegelCellar'}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
         self.music_file_path = tantegel_castle_courtyard_music
@@ -379,7 +379,7 @@ class TantegelCourtyard(DragonWarriorMap):
         self.set_character_initial_direction('WISE_MAN', Direction.LEFT)
 
 
-class TantegelUnderground(BasementWithNPCs):
+class TantegelCellar(BasementWithNPCs):
     def __init__(self):
         super().__init__(MapLayouts().tantegel_underground)
         self.music_file_path = tantegel_castle_courtyard_music
