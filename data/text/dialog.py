@@ -52,7 +52,7 @@ def show_line_in_dialog_box(line, screen, add_quotes=True, temp_text_start=None)
                 play_sound(menu_button_sfx)
                 display_current_line = False
         if temp_text_start:
-            if current_time - temp_text_start >= 250:
+            if current_time - temp_text_start >= 200:
                 play_sound(menu_button_sfx)
                 display_current_line = False
 
@@ -125,11 +125,3 @@ class Dialog:
         self.screen = screen
         self.player = player
         self.dialog_character = ''
-        self.dialog_text = []
-
-    def say_dialog(self, current_map, background, camera_position):
-        if self.dialog_text:
-            show_text_in_dialog_box(self.dialog_text, background, camera_position, current_map, self.screen)
-
-        else:
-            print(f"Character has no dialog: {self.dialog_character}")
