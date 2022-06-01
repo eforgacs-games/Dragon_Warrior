@@ -10,17 +10,9 @@ from src.config import SCALE, TILE_SIZE, COLOR_KEY
 def parse_map_tiles(map_path):
     map_sheet = get_image(map_path).convert()
     map_tile_sheet = scale(map_sheet, (map_sheet.get_width() * SCALE, map_sheet.get_height() * SCALE))
-    map_tiles = []
     width, height = map_tile_sheet.get_size()
-
-    for x in range(0, width // TILE_SIZE):
-        row = []
-        map_tiles.append(row)
-
-        for y in range(0, height // TILE_SIZE):
-            rect = (x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-            row.append(map_tile_sheet.subsurface(rect))
-    return map_tiles
+    return [[map_tile_sheet.subsurface((x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)) for y in range(0, height // TILE_SIZE)]
+            for x in range(0, width // TILE_SIZE)]
 
 
 def warp_line(lower_bound, upper_bound) -> List[tuple]:
