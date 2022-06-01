@@ -158,29 +158,26 @@ class DragonWarriorMap:
         self.destination_coordinates = destination_coordinates
         self.tile_types_in_current_map = self.get_tiles_in_current_map()
         self.impassable_tiles = tuple(self.tile_types_in_current_map & set(all_impassable_tiles))
-        for y in range(len(self.layout)):
-            for x in range(len(self.layout[y])):
-                self.center_pt = get_center_point(x, y)
-                if self.layout[y][x] <= 32:  # anything below 32 is a floor tile
-                    self.map_floor_tiles(x, y)
+        for row in range(len(self.layout)):
+            for column in range(len(self.layout[row])):
+                self.center_pt = get_center_point(column, row)
+                if self.layout[row][column] <= 32:  # anything below 32 is a floor tile
+                    self.map_floor_tiles(column, row)
                 else:
-                    self.map_character_tiles(y, x, player)
+                    self.map_character_tiles(column, row, player)
         self.set_characters_initial_directions()
 
-    def get_tiles_in_current_map(self):
-        tiles_in_current_map = set([self.get_tile_by_value(tile) for row in self.layout for tile in row])
-        tiles_in_current_map.add(self.tile_key['HERO']['underlying_tile'])
-        # TODO(ELF): Add underlying tile of player to draw list
-        return tiles_in_current_map
+    def get_tiles_in_current_map(self) -> set:
+        return set([self.get_tile_by_value(tile) for row in self.layout for tile in row] + [self.tile_key['HERO']['underlying_tile']])
 
     # @timeit
-    def map_character_tiles(self, row, column, player) -> None:
+    def map_character_tiles(self, column, row, player) -> None:
         current_tile = self.layout[row][column]
         for character, character_dict in self.character_key.items():
             if current_tile == character_dict['val']:
                 self.map_character(character, character_dict, current_tile, player, (row, column))
 
-    def map_character(self, character, character_dict, current_tile, player, coordinates):
+    def map_character(self, character, character_dict, current_tile, player, coordinates) -> None:
         if current_tile == self.character_key['HERO']['val']:
             if not self.player:
                 player.__init__(self.center_pt, self.scale_sprite_sheet(UNARMED_HERO_PATH))
@@ -238,14 +235,14 @@ class DragonWarriorMap:
         self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
     # @timeit
-    def map_floor_tiles(self, x, y) -> None:
+    def map_floor_tiles(self, column, row) -> None:
         for tile_dict in self.floor_tile_key.values():
-            if self.layout[y][x] == tile_dict['val']:
+            if self.layout[row][column] == tile_dict['val']:
                 self.add_tile(tile_dict)
                 break
 
     def add_tile(self, tile_dict) -> None:
-        tile_value = tile_dict.get('val')
+        tile_value = tile_dict['val']
         tile_group = tile_dict.get('group')
         if tile_group is None:
             self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'] = Group()
@@ -255,9 +252,6 @@ class DragonWarriorMap:
             tile = BaseSprite(self.center_pt, self.map_tiles[tile_value - 11][1])
         elif tile_value < 33:
             tile = BaseSprite(self.center_pt, self.map_tiles[tile_value - 22][2])
-        else:
-            print("Invalid tile.")
-            return
         self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'].add(tile)
 
     @property
