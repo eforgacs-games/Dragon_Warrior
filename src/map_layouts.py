@@ -941,7 +941,7 @@ class MapLayouts:
 
             'TantegelThroneRoom': self.tantegel_throne_room,
             'TantegelCourtyard': self.tantegel_courtyard,
-            'TantegelUnderground': self.tantegel_underground,
+            'TantegelCellar': self.tantegel_underground,
 
             'CharlockB1': self.charlock_b1,
             'CharlockB2': self.charlock_b2,
