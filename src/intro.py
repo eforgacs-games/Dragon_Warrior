@@ -2,14 +2,16 @@ import os
 import sys
 from os.path import join
 
-from pygame import image, font, display, QUIT, quit, KEYUP, draw
+from pygame import image, display, QUIT, quit, KEYUP
 from pygame.event import get
 from pygame.time import get_ticks
 from pygame.transform import scale
 
-from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, DRAGON_QUEST_FONT_PATH, PINK, SMB_FONT_PATH, convert_to_milliseconds, BLACK, \
-    INTRO_BANNER_PATH, WHITE
+from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, DRAGON_QUEST_FONT_PATH, PINK, \
+    SMB_FONT_PATH, convert_to_milliseconds, BLACK, \
+    INTRO_BANNER_PATH
 from src.config import IMAGES_DIR, FPS
+from src.text import draw_text
 from src.visual_effects import fade
 
 
@@ -23,21 +25,6 @@ def show_intro_banner(intro_banner_path, screen):
     intro_banner_rect = intro_banner.get_rect()
     intro_banner_rect.midtop = (screen.get_width() / 2, screen.get_height() * 1 / 6)
     screen.blit(intro_banner, intro_banner_rect)
-
-
-def draw_text(text, size, color, x, y, font_name, screen):
-    text_surface = font.Font(font_name, size).render(text, True, color, BLACK)
-    text_rect = text_surface.get_rect()
-    text_rect.midtop = (x, y)
-    screen.blit(text_surface, text_rect)
-
-
-def draw_text_with_rectangle(text, size, color, x, y, font_name, screen):
-    text_surface = font.Font(font_name, size).render(text, True, color, BLACK)
-    text_rect = text_surface.get_rect()
-    draw.rect(text_surface, WHITE, text_rect, width=1)
-    text_rect.midtop = (x, y)
-    screen.blit(text_surface, text_rect)
 
 
 def banner_sparkle(short, screen):
@@ -59,7 +46,7 @@ def draw_banner_text(screen):
     draw_text("K key: A Button", 15, PINK, screen.get_width() / 2, screen.get_height() * 11 / 16, DRAGON_QUEST_FONT_PATH, screen)
     draw_text("J key: B Button", 15, PINK, screen.get_width() / 2, screen.get_height() * 12 / 16, DRAGON_QUEST_FONT_PATH, screen)
     draw_text("I key: Start", 15, PINK, screen.get_width() / 2, screen.get_height() * 13 / 16, DRAGON_QUEST_FONT_PATH, screen)
-    draw_text("WASD / Arrow Keys: Move", 15, PINK, screen.get_width() / 2, screen.get_height() * 14 / 16, DRAGON_QUEST_FONT_PATH, screen)
+    draw_text("WASD / Arrow Keys: Move", 15, PINK, screen.get_width() / 2, screen.get_height() * 14 / 16, DRAGON_QUEST_FONT_PATH, screen, text_wrap_length=23)
     draw_text("(↑ ← ↓ →)", 15, PINK, screen.get_width() / 2, screen.get_height() * 15 / 16, SMB_FONT_PATH, screen)
 
 
