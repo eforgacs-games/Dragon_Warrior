@@ -2,7 +2,6 @@ import random
 import sys
 from typing import List, Tuple
 
-import pygame_menu
 from pygame import init, Surface, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, \
     K_UP, K_w, K_DOWN, K_s, \
     K_LEFT, K_a, K_RIGHT, K_d, KEYUP, K_2, K_1, image, K_3, K_4
@@ -114,20 +113,6 @@ class Game:
         else:
             self.load_and_play_music(self.current_map.music_file_path)
         self.events = get()
-        self.command_menu_subsurface = None
-        self.dialog_box_subsurface = None
-        # self.command_menu_subsurface = self.background.subsurface(
-        #     (self.player.column - 2) * TILE_SIZE,
-        #     (self.player.row - 6) * TILE_SIZE,
-        #     8 * TILE_SIZE,
-        #     5 * TILE_SIZE
-        # )
-        # self.dialog_box_subsurface = self.background.subsurface(
-        #     TILE_SIZE,
-        #     TILE_SIZE,
-        #     12 * TILE_SIZE,
-        #     5 * TILE_SIZE
-        # )
 
         display.set_icon(image.load(ICON_PATH))
 
@@ -457,14 +442,14 @@ class Game:
     def handle_menu_launch(self, menu_to_launch: menu.Menu) -> None:
         if menu_to_launch.launch_signaled:
             if menu_to_launch.menu.get_id() == 'command':
-                self.command_menu_subsurface = self.screen.subsurface(
+                command_menu_subsurface = self.screen.subsurface(
                     (6 * TILE_SIZE,  # 11 (first empty square to the left of menu)
                      TILE_SIZE),  # 4
                     (8 * TILE_SIZE,
                      5 * TILE_SIZE)
                 )
-                self.command_menu_subsurface.fill(BLACK)
-                rect = menu_to_launch.menu.draw(self.command_menu_subsurface)
+                command_menu_subsurface.fill(BLACK)
+                rect = menu_to_launch.menu.draw(command_menu_subsurface)
                 display.update()
             else:
                 rect = None
@@ -580,16 +565,7 @@ class Game:
                                                                      self.player.direction_value)
             if not self.cmd_menu.launched:
                 play_sound(menu_button_sfx)
-            self.set_and_append_rect(self.cmd_menu.menu, self.command_menu_subsurface)
             self.cmd_menu.launched = True
-        elif menu_to_launch == 'dialog_box':
-            self.set_and_append_rect(self.dlg_box.menu, self.dialog_box_subsurface)
-            self.dlg_box.launched = True
-
-    def set_and_append_rect(self, menu_to_set: pygame_menu.menu.Menu, subsurface: Surface) -> None:
-        menu_rect = menu_to_set.draw(subsurface)
-        if menu_rect:
-            self.foreground_rects.append(menu_rect)
 
     def move_player(self, current_key) -> None:
         """
