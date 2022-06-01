@@ -42,6 +42,7 @@ _sound_library = {}
 # menu
 menu_button_sfx = join(SFX_DIR, '32 Dragon Quest 1 - Menu Button (22khz mono).wav')
 text_beep_sfx = join(SFX_DIR, 'text_beep.wav')
+confirmation_sfx = join(SFX_DIR, '33 Dragon Quest 1 - Confirmation (22khz mono).wav')
 # movement
 bump_sfx = join(SFX_DIR, '42 Dragon Quest 1 - Bumping into Walls (22khz mono).wav')
 stairs_down_sfx = join(SFX_DIR, '30 Dragon Quest 1 - Stairs Down (22khz mono).wav')
