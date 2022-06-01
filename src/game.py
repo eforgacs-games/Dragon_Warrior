@@ -375,7 +375,7 @@ class Game:
             # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
 
         for tile, tile_dict in self.current_map.floor_tile_key.items():
-            if tile in set(tile_types_to_draw):
+            if tile_dict.get('group') and tile in set(tile_types_to_draw):
                 tile_dict['group'].draw(self.background)
 
         # also check if group is in current window, default screen size is 15 tall x 16 wide
@@ -390,17 +390,18 @@ class Game:
                     if current_event.type == KEYUP:
                         show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'],
                                                 self.background, self.camera.get_pos(), self.current_map, self.screen)
-                        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
-                        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-                            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
+                        self.set_to_post_initial_dialog()
                         self.enable_movement = True
             else:
                 self.handle_menu_launch(self.cmd_menu)
         else:
-            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
-            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-                self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
+            self.set_to_post_initial_dialog()
             self.handle_menu_launch(self.cmd_menu)
+
+    def set_to_post_initial_dialog(self):
+        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
+        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
 
     def in_initial_king_lorik_conversation(self):
         return INITIAL_DIALOG_ENABLED and self.current_map.identifier == 'TantegelThroneRoom' and \
