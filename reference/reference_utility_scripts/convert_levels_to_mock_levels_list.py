@@ -13,10 +13,10 @@ for filename in os.listdir(raw_files_dir):
             line = line.replace(',', '')
             line = re.sub('\u2212', '\u002D', line)
 
-            line = re.sub("\t([A-Z]+)", fr'\t"\1"', line)
+            line = re.sub("\t([A-Z]+)", r'\t"\1"', line)
             line = re.sub("\t-", "\tNone", line)
             line = re.sub("(\d+)\t(\d+)\t(\d+)\t(\d+.*)\t(\d+.*)\t(\d+.*)\t(\d+.*)\t(.*)",
-                          r"\1: {'exp': \2, 'total_exp': \3, 'strength': \4, 'agility': \5, 'max_hp': \6, 'max_mp': \7, 'spell': \8},",
+                          r"\1: {'total_exp': \2, 'strength': \3, 'agility': \4, 'max_hp': \5, 'max_mp': \6, 'spell': \7},",
                           line)
             line = line.replace('"None"', "None")
             output_file.write(line)

@@ -512,8 +512,8 @@ each half-byte (nibble) is one tile.
 For example: FF FF FF
 F6 FF 6F results in:
 
-þþþþþþ (FFFFFF
-þ°þþ°þ F6FF6F)
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (FFFFFF
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ F6FF6F)
 
 For actual bytes used in tileset, see charts at top.
 Listing:
@@ -570,13 +570,13 @@ Example:
 
 This produces this:
 
-°°°²²²°°°
-°°²²²²²°°
-°²²²²²²²°
-²²²²^²²²²
-°²²²²²²²°
-°°²²²²²°°
-°°°²²²°°°
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½^ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 Number| Tile
 ------+-------------------
@@ -645,7 +645,7 @@ A0-BF = Facing Right
 C0-DF = Facing Downwards
 E0-FF = Facing Left
 
-Byte 3: (Dialouge Block)
+Byte 3: (Dialogue Block)
 
 ~ Obviously, determines what the person says. ~
 

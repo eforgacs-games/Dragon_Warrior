@@ -34,7 +34,9 @@ layout = [[33, 0, 3],
           [3, 3, 39]]
 
 
-class TestMockMap(MapWithoutNPCs):
+class MockMap(MapWithoutNPCs):
+    __test__ = False
+
     def __init__(self):
         super().__init__(layout)
 
@@ -59,7 +61,7 @@ class TestGame(TestCase):
         self.game = Game()
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
-        self.game.current_map = TestMockMap()
+        self.game.current_map = MockMap()
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
         self.hero_images = parse_animated_sprite_sheet(
@@ -68,6 +70,7 @@ class TestGame(TestCase):
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
         self.camera = Camera((self.game.current_map.player.rect.y // TILE_SIZE, self.game.current_map.player.rect.x // TILE_SIZE), self.game.current_map,
                              None)
+
     # def test_get_initial_camera_position(self):
     #     initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
     #     self.assertEqual(self.camera.set_camera_position(initial_hero_location), (0, 0))
@@ -192,8 +195,32 @@ class TestGame(TestCase):
     def test_change_map(self):
         self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
         self.game.change_map(TantegelThroneRoom())
-        self.assertEqual('TestMockMap', self.game.last_map.identifier)
+        self.assertEqual('MockMap', self.game.last_map.identifier)
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
+
+    def test_king_lorik_initial_dialog(self):
+        self.assertEqual((
+            "Descendant of Erdrick, listen now to my words.",
+            "It is told that in ages past Erdrick fought demons with a Ball of Light.",
+            "Then came the Dragonlord who stole the precious globe and hid it in the darkness.",
+            "Now, Edward, thou must help us recover the Ball of Light and restore peace to our land.",
+            "The Dragonlord must be defeated.",
+            "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest.",
+            "Then speak with the guards, for they have much knowledge that may aid thee.",
+            "May the light shine upon thee, Edward."
+        ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+
+    def test_king_lorik_post_initial_dialog(self):
+        self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
+        self.game.set_to_post_initial_dialog()
+        self.assertEqual((
+            "When thou art finished preparing for thy departure, please see me.\n"
+            "I shall wait.",
+        ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+
+    def test_wise_man_tantegel_courtyard_dialog(self):
+        self.assertEqual(("Edward's coming was foretold by legend. May the light shine upon "
+                          'this brave warrior.',), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelCourtyard']['WISE_MAN']['dialog'])
 
     # gives an IndexError: list index out of range because the constants for K_UP, etc. are huge
     # def test_move_player_directions(self):

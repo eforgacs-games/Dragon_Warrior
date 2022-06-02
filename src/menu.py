@@ -1,14 +1,17 @@
 import logging
 
 import pygame_menu
+from pygame import image
 
 from data.text.dialog import show_line_in_dialog_box, show_text_in_dialog_box
 from data.text.dialog_lookup_table import DialogLookup
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx
+from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, COMMAND_MENU_BACKGROUND_PATH
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.menu_functions import get_opposite_direction
 from src.sound import play_sound
+
+background_image = image.load(COMMAND_MENU_BACKGROUND_PATH)
 
 
 class Menu:
@@ -44,9 +47,9 @@ class Menu:
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, current_map, dialog_box, player, screen, camera_position):
+    def __init__(self, background, current_map, player, screen, camera_position):
         super().__init__()
-        self.dialog_box = dialog_box
+        self.dialog_box_launch_signaled = False
         self.current_tile = player.current_tile
         self.current_map = current_map
         self.characters = current_map.characters
@@ -57,22 +60,23 @@ class CommandMenu(Menu):
         self.camera_position = camera_position
         # TODO: This gives a ValueError if the map is too small.
         try:
-            command_menu_subsurface = background.subsurface((player.column - 2) * TILE_SIZE,
-                                                            (player.row - 6) * TILE_SIZE,
-                                                            8 * TILE_SIZE,
-                                                            5 * TILE_SIZE)
-            self.menu = pygame_menu.Menu('COMMAND',
-                                         command_menu_subsurface.get_width() * 2,
-                                         command_menu_subsurface.get_height() * 3,
-                                         center_content=False,
-                                         column_max_width=(TILE_SIZE * 4, TILE_SIZE * 3),
-                                         columns=2,
-                                         rows=4,
-                                         theme=self.dragon_warrior_menu_theme,
-                                         mouse_enabled=False,
-                                         mouse_visible=False,
-                                         menu_id='command'
-                                         )
+            command_menu_surface = background.subsurface((player.column - 2) * TILE_SIZE,
+                                              (player.row - 6) * TILE_SIZE,
+                                              8 * TILE_SIZE,
+                                              5 * TILE_SIZE)
+            self.menu = pygame_menu.Menu(
+                title='COMMAND',
+                width=command_menu_surface.get_width() * 2,
+                height=command_menu_surface.get_height() * 3,
+                center_content=False,
+                column_max_width=(TILE_SIZE * 4, TILE_SIZE * 3),
+                columns=2,
+                rows=4,
+                theme=self.dragon_warrior_menu_theme,
+                mouse_enabled=False,
+                mouse_visible=False,
+                menu_id='command',
+            )
             # TODO: Allow for selection of options using the K ("A" button).
             #  Currently selection is only possible by use of the Enter button.
             self.menu.add.button('TALK', self.talk, margin=(9, 4))
@@ -83,7 +87,7 @@ class CommandMenu(Menu):
             self.menu.add.button('ITEM', self.item, margin=(0, 4))
             self.menu.add.button('DOOR', self.door, margin=(0, 4))
             self.menu.add.button('TAKE', self.take, margin=(0, 4))
-            self.dialog_lookup = DialogLookup(self.player, self.map_name, self.screen)
+            self.dialog_lookup = DialogLookup(self.player)
         except ValueError as e:
             logging.error(e)
             self.command_menu_subsurface = None
@@ -98,31 +102,37 @@ class CommandMenu(Menu):
         # dialog = Dialog(player=self.player)
 
         # for now, implementing using print statements. will be useful for debugging as well.
-        character_coordinates = [character_dict['coordinates'] for character_dict in self.characters.values()]
+        character_coordinates = [(character_dict['character'].row, character_dict['character'].column) for character_dict in self.characters.values()]
         # if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
         if not any(
                 c in character_coordinates for c in [self.player.next_coordinates, self.player.next_next_coordinates]):
             show_text_in_dialog_box(("There is no one there.",), self.background, self.camera_position,
                                     self.current_map, self.screen)
             return
-        for character_identifier, character_info in self.characters.items():
-            if character_info['coordinates'] == self.player.next_coordinates or self.npc_is_across_counter(
-                    character_info):
-                if character_info['character'].direction_value != get_opposite_direction(self.player.direction_value):
-                    character_info['character'].direction_value = get_opposite_direction(self.player.direction_value)
-                    character_info['character'].animate()
-                    character_info['character'].pause()
+        for character_identifier, character_dict in self.characters.items():
+            if (character_dict['character'].row, character_dict['character'].column) == self.player.next_coordinates or self.npc_is_across_counter(
+                    character_dict):
+                if character_dict['character'].direction_value != get_opposite_direction(self.player.direction_value):
+                    character_dict['character'].direction_value = get_opposite_direction(self.player.direction_value)
+                    character_dict['character'].animate()
+                    character_dict['character'].pause()
                 self.launch_dialog(character_identifier, self.current_map, self.background, self.camera_position)
                 break
 
-    def npc_is_across_counter(self, character_info):
-        return self.player.next_tile_id == 'WOOD' and character_info['coordinates'] == self.player.next_next_coordinates
+    def npc_is_across_counter(self, character_dict):
+        return self.player.next_tile_id == 'WOOD' and (
+            character_dict['character'].row, character_dict['character'].column) == self.player.next_next_coordinates
 
     def launch_dialog(self, dialog_character, current_map, background, camera_position):
-        self.dialog_box.launch_signaled = True
-        character = self.dialog_lookup.lookup_table.get(dialog_character)
+        self.dialog_box_launch_signaled = True
+        character = self.dialog_lookup.lookup_table[current_map.identifier].get(dialog_character)
         if character:
-            character.say_dialog(current_map, background, camera_position)
+            if character.get('dialog'):
+                show_text_in_dialog_box(character['dialog'], background, camera_position, current_map, self.screen)
+                if character.get('side_effect'):
+                    character['side_effect']()
+            else:
+                print(f"Character has no dialog: {dialog_character}")
         else:
             print(f"Character not in lookup table: {dialog_character}")
 
@@ -190,7 +200,7 @@ class CommandMenu(Menu):
             show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), self.background,
                                     self.camera_position, self.current_map, self.screen, add_quotes=False)
         else:
-            show_line_in_dialog_box(self.player.spells, self.screen)
+            show_line_in_dialog_box('\n \n'.join([spell for spell in self.player.spells]), self.screen, add_quotes=False)
 
     def item(self):
         """
@@ -203,7 +213,7 @@ class CommandMenu(Menu):
             show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), self.background,
                                     self.camera_position, self.current_map, self.screen, add_quotes=False)
         else:
-            show_line_in_dialog_box(self.player.inventory, self.screen)
+            show_text_in_dialog_box(self.player.inventory, self.screen)
 
     def door(self):
         """
@@ -252,26 +262,3 @@ class CommandMenu(Menu):
         else:
             show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",), self.background,
                                     self.camera_position, self.current_map, self.screen)
-
-
-class DialogBox(Menu):
-    def __init__(self, background, column, row):
-        super().__init__()
-        try:
-            self.dialog_box_subsurface = background.subsurface((column - 2) * TILE_SIZE,
-                                                               (row - 6) * TILE_SIZE,
-                                                               12 * TILE_SIZE,
-                                                               5 * TILE_SIZE)
-            self.menu = pygame_menu.Menu('Dialog Box',
-                                         self.dialog_box_subsurface.get_width(),
-                                         self.dialog_box_subsurface.get_height(),
-                                         center_content=False,
-                                         theme=self.dragon_warrior_menu_theme,
-                                         mouse_enabled=False,
-                                         mouse_visible=False,
-                                         menu_id='dialog_box'
-                                         )
-        except ValueError as e:
-            logging.error(e)
-            self.dialog_box_subsurface = None
-            self.menu = None
