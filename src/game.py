@@ -81,8 +81,8 @@ class Game:
         # self.current_map = maps.Rimuldar()
         # self.current_map = maps.Cantlin()
 
-        self.big_map = Surface(
-            (self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
+        self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
+            (self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(BLACK)
 
         for roaming_character in self.current_map.roaming_characters:
@@ -481,8 +481,8 @@ class Game:
         self.current_map = next_map
         fade(self.screen.get_width(), self.screen.get_height(), fade_out=True, background=self.background,
              screen=self.screen)
-        self.big_map = Surface(
-            (self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
+        self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
+            (self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(BLACK)
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
