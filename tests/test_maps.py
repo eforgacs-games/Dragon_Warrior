@@ -3,7 +3,7 @@ import os
 from unittest import TestCase
 
 from src import maps
-from tests.test_game import TestMockMap
+from tests.test_game import MockMap
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -12,7 +12,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 class TestDragonWarriorMap(TestCase):
 
     def setUp(self) -> None:
-        self.dragon_warrior_map = TestMockMap()
+        self.dragon_warrior_map = MockMap()
 
     def test_get_initial_character_location(self):
         self.assertEqual(self.dragon_warrior_map.get_initial_character_location('HERO').take(0), 0)

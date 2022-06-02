@@ -710,7 +710,7 @@ class MapLayouts:
 
         self.erdricks_cave_b1 = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 33, 3, 1, 3, 3, 3, 3, 1, 1, 3, 1], # second value here should be 33, change it back when done editing
+            [1, 33, 3, 1, 3, 3, 3, 3, 1, 1, 3, 1],
             [1, 1, 3, 1, 3, 1, 1, 3, 3, 3, 3, 1],
             [1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 3, 1],
             [1, 1, 3, 1, 1, 1, 3, 1, 1, 3, 3, 1],
@@ -941,7 +941,7 @@ class MapLayouts:
 
             'TantegelThroneRoom': self.tantegel_throne_room,
             'TantegelCourtyard': self.tantegel_courtyard,
-            'TantegelUnderground': self.tantegel_underground,
+            'TantegelCellar': self.tantegel_underground,
 
             'CharlockB1': self.charlock_b1,
             'CharlockB2': self.charlock_b2,
@@ -980,4 +980,3 @@ class MapLayouts:
 
 
         }
-

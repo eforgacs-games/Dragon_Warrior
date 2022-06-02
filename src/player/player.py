@@ -24,8 +24,6 @@ class Player(AnimatedSprite):
 
         # character attributes
         self.name = 'Edward'
-        # pre-set attributes
-        self.growth = ""
         # status menu
         self.strength = 0
         self.agility = 0
@@ -50,16 +48,13 @@ class Player(AnimatedSprite):
         self.current_hp = self.max_hp
         self.current_mp = self.max_mp
         self.gold = 0
-        self.experience = 0
+        self.total_experience = 0
 
-        self.level = self.set_level_by_experience()
+        self.level = self.get_level_by_experience()
 
         self.points_to_next_level = self.get_points_to_next_level()
 
         self.spells = []
-        for i in range(1, self.level):
-            if levels_list[i].get('spell'):
-                self.spells.append(levels_list[i]['spell'])
         self.inventory = []
 
     def update_attack_power(self):
@@ -68,20 +63,38 @@ class Player(AnimatedSprite):
 
     def get_points_to_next_level(self):
         if levels_list.get(self.level + 1):
-            return levels_list[self.level + 1]['exp'] - self.experience
+            return levels_list[self.level + 1]['exp'] - self.total_experience
         else:
             return 0
 
-    def set_level_by_experience(self):
-        for level in levels_list:
-            if levels_list[level]['exp'] <= self.experience:
+    def get_level_by_experience(self):
+        for level in reversed(levels_list):
+            if self.total_experience >= levels_list[level]['total_exp']:
                 return level
-            return
 
     def set_initial_stats(self):
         apply_transformation_to_levels_list(self.name)
-        self.strength = levels_list[1]["strength"]
-        self.agility = levels_list[1]["agility"]
-        self.max_hp = levels_list[1]["max_hp"]
-        self.max_mp = levels_list[1]["max_mp"]
-        self.agility = levels_list[1]["agility"]
+        self.set_stats_by_level(1)
+
+    def update_stats_to_current_level(self):
+        self.set_stats_by_level(self.level)
+
+    def set_stats_by_level(self, level):
+        self.strength = levels_list[level]['strength']
+        self.agility = levels_list[level]['agility']
+        self.max_hp = levels_list[level]['max_hp']
+        self.max_mp = levels_list[level]['max_mp']
+        self.agility = levels_list[level]['agility']
+        for i in range(1, level + 1):
+            if levels_list[i].get('spell'):
+                if levels_list[i]['spell'] not in self.spells:
+                    self.spells.append(levels_list[i]['spell'])
+
+    def update_stats_by_level(self):
+        self.strength = levels_list[self.level]['strength']
+
+    def restore_hp(self):
+        self.current_hp = self.max_hp
+
+    def restore_mp(self):
+        self.current_mp = self.max_mp

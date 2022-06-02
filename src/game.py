@@ -2,10 +2,8 @@ import random
 import sys
 from typing import List, Tuple
 
-import pygame_menu
-from pygame import init, Surface, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, \
-    K_UP, K_w, K_DOWN, K_s, \
-    K_LEFT, K_a, K_RIGHT, K_d, KEYUP, K_2, K_1, image, K_3, K_4
+from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
+    display, event, image, init, key, mixer, quit
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -36,7 +34,6 @@ from src.visual_effects import fade
 
 
 class Game:
-    BACK_FILL_COLOR = BLACK
 
     def __init__(self):
         # Initialize pygame
@@ -86,7 +83,7 @@ class Game:
 
         self.big_map = Surface(
             (self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
-        self.big_map.fill(self.BACK_FILL_COLOR)
+        self.big_map.fill(BLACK)
 
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
@@ -95,6 +92,13 @@ class Game:
         self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
         self.player = Player(center_point=None, images=None)
         self.current_map.load_map(self.player, None)
+
+        # Good for debugging, and will be useful later when the player's level increases and the stats need to be increased to match
+
+        # self.player.total_experience = 26000
+        # self.player.level = self.player.get_level_by_experience()
+        # self.player.update_stats_to_current_level()
+
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE,
@@ -103,12 +107,9 @@ class Game:
                                                                  self.current_map.player.direction_value)
         self.player.next_next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row,
                                                                       self.current_map.player.direction_value, offset=3)
-        self.dlg_box = menu.DialogBox(self.background, self.player.column, self.player.row)
         self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen)
-        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.dlg_box, self.player, self.screen,
-                                         self.camera.get_pos())
+        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.player, self.screen, self.camera.get_pos())
 
-        self.menus = self.cmd_menu, self.dlg_box
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
         self.music_enabled = MUSIC_ENABLED
@@ -117,23 +118,9 @@ class Game:
         else:
             self.load_and_play_music(self.current_map.music_file_path)
         self.events = get()
-        self.command_menu_subsurface = None
-        self.dialog_box_subsurface = None
-        # self.command_menu_subsurface = self.background.subsurface(
-        #     (self.player.column - 2) * TILE_SIZE,
-        #     (self.player.row - 6) * TILE_SIZE,
-        #     8 * TILE_SIZE,
-        #     5 * TILE_SIZE
-        # )
-        # self.dialog_box_subsurface = self.background.subsurface(
-        #     TILE_SIZE,
-        #     TILE_SIZE,
-        #     12 * TILE_SIZE,
-        #     5 * TILE_SIZE
-        # )
 
         display.set_icon(image.load(ICON_PATH))
-
+        self.player.restore_hp()
         # pg.event.set_allowed([pg.QUIT])
 
     def main(self) -> None:
@@ -160,14 +147,10 @@ class Game:
             screen.fill(BLACK)
             # totally dummy option for now, just a placeholder
             for i in range(128):
-                draw_text(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2,
-                                       screen.get_height() / 3, DRAGON_QUEST_FONT_PATH,
-                                       self.screen)
+                draw_text(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 3, DRAGON_QUEST_FONT_PATH, self.screen)
                 display.flip()
             for i in range(128):
-                draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2,
-                                           screen.get_height() / 3, DRAGON_QUEST_FONT_PATH,
-                                           self.screen)
+                draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 3, DRAGON_QUEST_FONT_PATH, self.screen)
                 display.flip()
             self.clock.tick(self.fps)
             for current_event in get():
@@ -252,7 +235,6 @@ class Game:
         if current_key[K_j]:
             # B button
             self.unlaunch_menu(self.cmd_menu)
-            self.unlaunch_menu(self.dlg_box)
             self.draw_all_tiles_in_current_map()
             # print("J key pressed (B button).")
         if current_key[K_k]:
@@ -319,7 +301,7 @@ class Game:
         Draw map, sprites, background, menu and other surfaces.
         :return: None
         """
-        self.screen.fill(self.BACK_FILL_COLOR)
+        self.screen.fill(BLACK)
         # if isinstance(self.current_map, maps.Alefgard):
         #     # width_offset = 2336
         #     width_offset = TILE_SIZE * self.player.column + 24
@@ -383,7 +365,7 @@ class Game:
             # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
 
         for tile, tile_dict in self.current_map.floor_tile_key.items():
-            if tile in set(tile_types_to_draw):
+            if tile_dict.get('group') and tile in set(tile_types_to_draw):
                 tile_dict['group'].draw(self.background)
 
         # also check if group is in current window, default screen size is 15 tall x 16 wide
@@ -391,22 +373,29 @@ class Game:
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation()
         self.screen.blit(self.background, self.camera.get_pos())
-        if self.in_initial_king_lorik_conversation():
-            self.enable_movement = False
-            for current_event in self.events:
-                if current_event.type == KEYUP:
-                    self.cmd_menu.dialog_lookup.lookup_table['KING_LORIK'].say_dialog(self.current_map, self.background,
-                                                                                      self.camera.get_pos())
-                    self.enable_movement = True
+        if INITIAL_DIALOG_ENABLED:
+            if self.in_initial_king_lorik_conversation():
+                self.enable_movement = False
+                for current_event in self.events:
+                    if current_event.type == KEYUP:
+                        show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'],
+                                                self.background, self.camera.get_pos(), self.current_map, self.screen)
+                        self.set_to_post_initial_dialog()
+                        self.enable_movement = True
+            else:
+                self.handle_menu_launch(self.cmd_menu)
         else:
-            for menu_or_dialog_box in self.menus:
-                self.handle_menu_launch(menu_or_dialog_box)
-                # self.screen.blit(self.background, self.camera.get_pos())
+            self.set_to_post_initial_dialog()
+            self.handle_menu_launch(self.cmd_menu)
+
+    def set_to_post_initial_dialog(self):
+        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
+        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
 
     def in_initial_king_lorik_conversation(self):
         return INITIAL_DIALOG_ENABLED and self.current_map.identifier == 'TantegelThroneRoom' and \
-               self.cmd_menu.dialog_lookup.lookup_table[
-                   'KING_LORIK'].is_initial_dialog
+               self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog']
 
     def handle_sprite_drawing_and_animation(self):
         for character_dict in self.current_map.characters.values():
@@ -458,25 +447,15 @@ class Game:
     def handle_menu_launch(self, menu_to_launch: menu.Menu) -> None:
         if menu_to_launch.launch_signaled:
             if menu_to_launch.menu.get_id() == 'command':
-                self.command_menu_subsurface = self.screen.subsurface(
+                command_menu_subsurface = self.screen.subsurface(
                     (6 * TILE_SIZE,  # 11 (first empty square to the left of menu)
                      TILE_SIZE),  # 4
                     (8 * TILE_SIZE,
                      5 * TILE_SIZE)
                 )
-                self.command_menu_subsurface.fill(BLACK)
-                rect = menu_to_launch.menu.draw(self.command_menu_subsurface)
+                command_menu_subsurface.fill(BLACK)
+                rect = menu_to_launch.menu.draw(command_menu_subsurface)
                 display.update()
-            elif menu_to_launch.menu.get_id() == 'dialog_box':
-                self.dialog_box_subsurface = self.background.subsurface(
-                    # left=(self.player.column + 6) * TILE_SIZE,
-                    # top=(self.player.row + 6) * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE,
-                    12 * TILE_SIZE,
-                    5 * TILE_SIZE
-                )
-                rect = menu_to_launch.menu.draw(self.dialog_box_subsurface)
             else:
                 rect = None
                 print("No menu launched")
@@ -487,9 +466,8 @@ class Game:
 
     def update_screen(self) -> None:
         """Update the screen's display."""
-        for menu_or_dialog_box in self.menus:
-            if menu_or_dialog_box.launched:
-                menu_or_dialog_box.menu.update(self.events)
+        if self.cmd_menu.launched:
+            self.cmd_menu.menu.update(self.events)
         display.update()
 
     def change_map(self, next_map: maps.DragonWarriorMap) -> None:
@@ -505,7 +483,7 @@ class Game:
              screen=self.screen)
         self.big_map = Surface(
             (self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
-        self.big_map.fill(self.BACK_FILL_COLOR)
+        self.big_map.fill(BLACK)
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
             set_character_position(roaming_character)
@@ -539,14 +517,13 @@ class Game:
         self.loop_count = 1
         self.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
-        self.menus = self.cmd_menu, self.dlg_box
         self.cmd_menu.current_map = self.current_map
         self.cmd_menu.map_name = self.current_map.__class__.__name__
         self.cmd_menu.characters = self.current_map.characters
         self.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
-        self.cmd_menu.dialog_lookup = DialogLookup(self.player, self.current_map.identifier, self.screen)
+        self.cmd_menu.dialog_lookup = DialogLookup(self.player)
 
         # play_music(self.current_map.music_file_path)
 
@@ -593,16 +570,7 @@ class Game:
                                                                      self.player.direction_value)
             if not self.cmd_menu.launched:
                 play_sound(menu_button_sfx)
-            self.set_and_append_rect(self.cmd_menu.menu, self.command_menu_subsurface)
             self.cmd_menu.launched = True
-        elif menu_to_launch == 'dialog_box':
-            self.set_and_append_rect(self.dlg_box.menu, self.dialog_box_subsurface)
-            self.dlg_box.launched = True
-
-    def set_and_append_rect(self, menu_to_set: pygame_menu.menu.Menu, subsurface: Surface) -> None:
-        menu_rect = menu_to_set.draw(subsurface)
-        if menu_rect:
-            self.foreground_rects.append(menu_rect)
 
     def move_player(self, current_key) -> None:
         """
