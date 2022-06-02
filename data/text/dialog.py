@@ -105,7 +105,7 @@ def get_dialog_box_underlying_tiles(current_map, current_box_height):
 def dialog_box_drop_down_effect(screen):
     """Intro effect for dialog box."""
     for i in range(6):
-        black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i))
+        black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
         black_box.fill(BLACK)
         for j in range(64):
             screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
