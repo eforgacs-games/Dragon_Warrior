@@ -61,7 +61,7 @@ class DialogLookup:
                 'RIGHT_FACE_GUARD_2': {'dialog': ("Welcome to Tantegel Castle.",)},
                 'WISE_MAN': {'dialog': (
                     f"{player.name}'s coming was foretold by legend. "
-                    f"May the light shine upon this brave warrior.",)}},
+                    f"May the light shine upon this brave warrior.",), 'side_effect': player.restore_mp}},
             'TantegelCellar': {'WISE_MAN': {'dialog': ("I have been waiting long for one such as thee.", "Take the Treasure Chest.")}},
             'Brecconary': {
                 'WOMAN': {'dialog': ("Welcome! \nEnter the shop and speak to its keeper across the desk.",)},

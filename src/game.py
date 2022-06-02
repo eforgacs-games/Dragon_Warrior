@@ -2,9 +2,8 @@ import random
 import sys
 from typing import List, Tuple
 
-from pygame import init, Surface, quit, FULLSCREEN, RESIZABLE, mixer, QUIT, event, display, key, K_j, K_k, K_i, K_u, \
-    K_UP, K_w, K_DOWN, K_s, \
-    K_LEFT, K_a, K_RIGHT, K_d, KEYUP, K_2, K_1, image, K_3, K_4
+from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
+    display, event, image, init, key, mixer, quit
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -35,7 +34,6 @@ from src.visual_effects import fade
 
 
 class Game:
-    BACK_FILL_COLOR = BLACK
 
     def __init__(self):
         # Initialize pygame
@@ -85,7 +83,7 @@ class Game:
 
         self.big_map = Surface(
             (self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
-        self.big_map.fill(self.BACK_FILL_COLOR)
+        self.big_map.fill(BLACK)
 
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
@@ -94,6 +92,13 @@ class Game:
         self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
         self.player = Player(center_point=None, images=None)
         self.current_map.load_map(self.player, None)
+
+        # Good for debugging, and will be useful later when the player's level increases and the stats need to be increased to match
+
+        # self.player.total_experience = 26000
+        # self.player.level = self.player.get_level_by_experience()
+        # self.player.update_stats_to_current_level()
+
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE,
@@ -115,7 +120,7 @@ class Game:
         self.events = get()
 
         display.set_icon(image.load(ICON_PATH))
-
+        self.player.restore_hp()
         # pg.event.set_allowed([pg.QUIT])
 
     def main(self) -> None:
@@ -296,7 +301,7 @@ class Game:
         Draw map, sprites, background, menu and other surfaces.
         :return: None
         """
-        self.screen.fill(self.BACK_FILL_COLOR)
+        self.screen.fill(BLACK)
         # if isinstance(self.current_map, maps.Alefgard):
         #     # width_offset = 2336
         #     width_offset = TILE_SIZE * self.player.column + 24
@@ -478,7 +483,7 @@ class Game:
              screen=self.screen)
         self.big_map = Surface(
             (self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
-        self.big_map.fill(self.BACK_FILL_COLOR)
+        self.big_map.fill(BLACK)
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
             set_character_position(roaming_character)
