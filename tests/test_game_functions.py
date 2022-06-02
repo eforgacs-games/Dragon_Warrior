@@ -20,7 +20,7 @@ layout = [[33, 0, 3],
           [3, 3, 3]]
 
 
-class TestMockMap(MapWithoutNPCs):
+class MockMap(MapWithoutNPCs):
     def __init__(self):
         super().__init__(layout)
 
@@ -37,7 +37,7 @@ class Test(TestCase):
         self.game = Game()
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
-        self.game.current_map = TestMockMap()
+        self.game.current_map = MockMap()
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
         self.hero_images = parse_animated_sprite_sheet(

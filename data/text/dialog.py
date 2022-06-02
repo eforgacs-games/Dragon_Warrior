@@ -1,11 +1,11 @@
 import time
 from typing import Tuple, List
 
-from pygame import display, Surface, KEYDOWN
+from pygame import display, Surface, KEYDOWN, image, transform
 from pygame.event import get
 from pygame.time import get_ticks
 
-from src.common import WHITE, DRAGON_QUEST_FONT_PATH, BLACK, play_sound, menu_button_sfx, text_beep_sfx
+from src.common import WHITE, DRAGON_QUEST_FONT_PATH, BLACK, play_sound, menu_button_sfx, text_beep_sfx, DIALOG_BOX_BACKGROUND_PATH
 from src.config import TILE_SIZE
 from src.text import draw_text
 
@@ -20,7 +20,7 @@ def show_line_in_dialog_box(line, screen, add_quotes=True, temp_text_start=None)
         if temp_text_start:
             current_time = get_ticks()
         black_box = Surface((TILE_SIZE * 12, TILE_SIZE * 5))  # lgtm [py/call/wrong-arguments]
-        black_box.fill(BLACK)
+        set_window_background(black_box, DIALOG_BOX_BACKGROUND_PATH)
         screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
         if not finished_printing:
             for i in range(len(line)):
@@ -41,9 +41,7 @@ def show_line_in_dialog_box(line, screen, add_quotes=True, temp_text_start=None)
         #                       DRAGON_QUEST_FONT_PATH,
         #                       self.screen)
         # else:
-        draw_text(line, 15, WHITE, TILE_SIZE * 3, TILE_SIZE * 9.75,
-                  DRAGON_QUEST_FONT_PATH,
-                  screen, center_align=False)
+        draw_text(line, 15, WHITE, TILE_SIZE * 3, TILE_SIZE * 9.75, DRAGON_QUEST_FONT_PATH, screen, center_align=False)
         display.flip()
         blink_down_arrow(screen)
         for current_event in get():
@@ -52,22 +50,25 @@ def show_line_in_dialog_box(line, screen, add_quotes=True, temp_text_start=None)
                 play_sound(menu_button_sfx)
                 display_current_line = False
         if temp_text_start:
-            if current_time - temp_text_start >= 250:
+            if current_time - temp_text_start >= 200:
                 play_sound(menu_button_sfx)
                 display_current_line = False
 
 
+def set_window_background(black_box, background_path):
+    black_box.fill(BLACK)
+    dialog_box_background = image.load(background_path)
+    dialog_box_background = transform.scale(dialog_box_background, black_box.get_size())
+    black_box.blit(dialog_box_background, black_box.get_rect())
+
+
 def blink_down_arrow(screen):
     for i in range(256):
-        draw_text("▼", 15, WHITE, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32,
-                  DRAGON_QUEST_FONT_PATH,
-                  screen)
+        draw_text("▼", 15, WHITE, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32, DRAGON_QUEST_FONT_PATH, screen)
         # TODO(ELF): Change display.flip() to display.update() and pass in a rect.
         display.flip()
     for i in range(256):
-        draw_text("▼", 15, BLACK, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32,
-                  DRAGON_QUEST_FONT_PATH,
-                  screen)
+        draw_text("▼", 15, BLACK, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32, DRAGON_QUEST_FONT_PATH, screen)
         display.flip()
 
 
@@ -125,11 +126,3 @@ class Dialog:
         self.screen = screen
         self.player = player
         self.dialog_character = ''
-        self.dialog_text = []
-
-    def say_dialog(self, current_map, background, camera_position):
-        if self.dialog_text:
-            show_text_in_dialog_box(self.dialog_text, background, camera_position, current_map, self.screen)
-
-        else:
-            print(f"Character has no dialog: {self.dialog_character}")
