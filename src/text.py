@@ -13,7 +13,7 @@ class DialogBoxWrapper(textwrap.TextWrapper):
         return lines
 
 
-def draw_text(text, size, color, x, y, font_name, screen, center_align=True, text_wrap_length=21):
+def draw_text(text, size, color, x, y, font_name, screen, center_align=True, text_wrap_length=21, letter_by_letter=False):
     # n = 34
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
@@ -22,6 +22,17 @@ def draw_text(text, size, color, x, y, font_name, screen, center_align=True, tex
     dialog_box_wrapper = DialogBoxWrapper(width=text_wrap_length, break_long_words=False)
     chunks = dialog_box_wrapper.wrap(text)
     for chunk in chunks:
+        # TODO(ELF): Add letter by letter text scrolling.
+        # if letter_by_letter:
+        #     for letter in chunk:
+        #         text_surface = font.Font(font_name, size).render(letter, True, color, BLACK)
+        #         text_rect = text_surface.get_rect()
+        #         if center_align:
+        #             text_rect.midtop = (x, y_position)
+        #         else:
+        #             text_rect.midleft = (x, y_position)
+        #         screen.blit(text_surface, text_rect)
+        # else:
         text_surface = font.Font(font_name, size).render(chunk, True, color, BLACK)
         text_rect = text_surface.get_rect()
         if center_align:
