@@ -34,7 +34,9 @@ layout = [[33, 0, 3],
           [3, 3, 39]]
 
 
-class TestMockMap(MapWithoutNPCs):
+class MockMap(MapWithoutNPCs):
+    __test__ = False
+
     def __init__(self):
         super().__init__(layout)
 
@@ -59,7 +61,7 @@ class TestGame(TestCase):
         self.game = Game()
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
-        self.game.current_map = TestMockMap()
+        self.game.current_map = MockMap()
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
         self.hero_images = parse_animated_sprite_sheet(
@@ -193,7 +195,7 @@ class TestGame(TestCase):
     def test_change_map(self):
         self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
         self.game.change_map(TantegelThroneRoom())
-        self.assertEqual('TestMockMap', self.game.last_map.identifier)
+        self.assertEqual('MockMap', self.game.last_map.identifier)
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
 
     def test_king_lorik_initial_dialog(self):
