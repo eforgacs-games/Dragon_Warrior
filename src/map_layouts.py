@@ -710,7 +710,7 @@ class MapLayouts:
 
         self.erdricks_cave_b1 = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 33, 3, 1, 3, 3, 3, 3, 1, 1, 3, 1], # second value here should be 33, change it back when done editing
+            [1, 33, 3, 1, 3, 3, 3, 3, 1, 1, 3, 1],
             [1, 1, 3, 1, 3, 1, 1, 3, 3, 3, 3, 1],
             [1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 3, 1],
             [1, 1, 3, 1, 1, 1, 3, 1, 1, 3, 3, 1],
@@ -980,4 +980,3 @@ class MapLayouts:
 
 
         }
-

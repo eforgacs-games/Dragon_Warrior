@@ -73,7 +73,7 @@ def perform_conversion(map_array, filename):
         print(f"{filename} AssertionError: {e}")
     match_tiles(filename, map_array)
     # count_tiles()
-    with open(f"output/output.py", 'a') as outfile:
+    with open("output/output.py", 'a') as outfile:
         outfile.write(f"self.{filename.split('.png')[0]} = [\n")
         for item in map_array:
             outfile.write(f"    {item},\n")
@@ -114,5 +114,5 @@ image_tile_width = image_to_convert_rgb.shape[0] // SINGLE_TILE_SIZE  # 124 for 
 image_tile_height = image_to_convert_rgb.shape[1] // SINGLE_TILE_SIZE
 dragon_warrior_map_array = [[floor_tile_key['GRASS']] * image_tile_height for i in range(image_tile_width)]
 perform_conversion(dragon_warrior_map_array, map_filename)
-    # create_output_file(map_filename)
-    # print(DataFrame(overworld_map_array))
+# create_output_file(map_filename)
+# print(DataFrame(overworld_map_array))

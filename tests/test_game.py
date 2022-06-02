@@ -203,11 +203,11 @@ class TestGame(TestCase):
             "Descendant of Erdrick, listen now to my words.",
             "It is told that in ages past Erdrick fought demons with a Ball of Light.",
             "Then came the Dragonlord who stole the precious globe and hid it in the darkness.",
-            f"Now, Edward, thou must help us recover the Ball of Light and restore peace to our land.",
+            "Now, Edward, thou must help us recover the Ball of Light and restore peace to our land.",
             "The Dragonlord must be defeated.",
             "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest.",
             "Then speak with the guards, for they have much knowledge that may aid thee.",
-            f"May the light shine upon thee, Edward."
+            "May the light shine upon thee, Edward."
         ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 
     def test_king_lorik_post_initial_dialog(self):
