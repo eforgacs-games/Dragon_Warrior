@@ -1,15 +1,22 @@
 import logging
+import time
+from typing import Tuple, List
 
 import pygame_menu
-from pygame import image
+from pygame import image, Surface, display, KEYDOWN
+from pygame.event import get
+from pygame.time import get_ticks
 
-from data.text.dialog import show_line_in_dialog_box, show_text_in_dialog_box
+from data.text.dialog import get_dialog_box_underlying_tiles, set_window_background, \
+    blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, COMMAND_MENU_BACKGROUND_PATH
+from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, COMMAND_MENU_BACKGROUND_PATH, DIALOG_BOX_BACKGROUND_PATH, text_beep_sfx, \
+    open_treasure_sfx
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.menu_functions import get_opposite_direction
 from src.sound import play_sound
+from src.text import draw_text
 
 background_image = image.load(COMMAND_MENU_BACKGROUND_PATH)
 
@@ -104,37 +111,120 @@ class CommandMenu(Menu):
         # for now, implementing using print statements. will be useful for debugging as well.
         character_coordinates = [(character_dict['character'].row, character_dict['character'].column) for character_dict in self.characters.values()]
         # if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
-        if not any(
-                c in character_coordinates for c in [self.player.next_coordinates, self.player.next_next_coordinates]):
-            show_text_in_dialog_box(("There is no one there.",), self.background, self.camera_position,
-                                    self.current_map, self.screen)
-            return
-        for character_identifier, character_dict in self.characters.items():
-            if (character_dict['character'].row, character_dict['character'].column) == self.player.next_coordinates or self.npc_is_across_counter(
-                    character_dict):
-                if character_dict['character'].direction_value != get_opposite_direction(self.player.direction_value):
-                    character_dict['character'].direction_value = get_opposite_direction(self.player.direction_value)
-                    character_dict['character'].animate()
-                    character_dict['character'].pause()
-                self.launch_dialog(character_identifier, self.current_map, self.background, self.camera_position)
-                break
+
+        if any(c in character_coordinates for c in [self.player.next_coordinates]) or \
+                any(c in character_coordinates for c in [self.player.next_next_coordinates]) and self.player.next_tile_id == 'WOOD':
+            for character_identifier, character_dict in self.characters.items():
+                if (character_dict['character'].row, character_dict['character'].column) == self.player.next_coordinates or self.npc_is_across_counter(
+                        character_dict):
+                    if character_dict['character'].direction_value != get_opposite_direction(self.player.direction_value):
+                        character_dict['character'].direction_value = get_opposite_direction(self.player.direction_value)
+                        character_dict['character'].animate()
+                        character_dict['character'].pause()
+                    self.launch_dialog(character_identifier, self.current_map)
+                    break
+        else:
+            self.show_text_in_dialog_box(("There is no one there.",))
 
     def npc_is_across_counter(self, character_dict):
         return self.player.next_tile_id == 'WOOD' and (
             character_dict['character'].row, character_dict['character'].column) == self.player.next_next_coordinates
 
-    def launch_dialog(self, dialog_character, current_map, background, camera_position):
+    def launch_dialog(self, dialog_character, current_map):
         self.dialog_box_launch_signaled = True
         character = self.dialog_lookup.lookup_table[current_map.identifier].get(dialog_character)
         if character:
             if character.get('dialog'):
-                show_text_in_dialog_box(character['dialog'], background, camera_position, current_map, self.screen)
+                self.show_text_in_dialog_box(character['dialog'])
                 if character.get('side_effect'):
                     character['side_effect']()
             else:
                 print(f"Character has no dialog: {dialog_character}")
         else:
             print(f"Character not in lookup table: {dialog_character}")
+
+    def show_line_in_dialog_box(self, line, add_quotes=True, temp_text_start=None):
+        """Shows a single line in a dialog box."""
+        current_time = None
+        display_current_line = True
+        if add_quotes:
+            line = f"`{line}’"
+        while display_current_line:
+            if temp_text_start:
+                current_time = get_ticks()
+            self.create_dialog_box_window()
+            # if print_by_character:
+            #     for i in range(len(line)):
+            #         for j in range(16):
+            #             white_line = line[:i]
+            #             black_line = line[i:]
+            #             draw_text(white_line, 15, WHITE, self.screen.get_width() / 2, (self.screen.get_height() * 5 / 8),
+            #                       DRAGON_QUEST_FONT_PATH,
+            #                       self.screen)
+            #             draw_text(black_line, 15, BLACK, self.screen.get_width() / 2, (self.screen.get_height() * 5 / 8),
+            #                       DRAGON_QUEST_FONT_PATH,
+            #                       self.screen)
+            # else:
+            draw_text(line, 15, WHITE, TILE_SIZE * 3, TILE_SIZE * 9.75, DRAGON_QUEST_FONT_PATH, self.screen, center_align=False)
+            display.flip()
+            blink_down_arrow(self.screen)
+            # playing with fire a bit here with the short-circuiting
+            if (temp_text_start and current_time - temp_text_start >= 200) or any([current_event.type == KEYDOWN for current_event in get()]):
+                play_sound(menu_button_sfx)
+                display_current_line = False
+
+    def create_dialog_box_window(self):
+        black_box = Surface((TILE_SIZE * 12, TILE_SIZE * 5))  # lgtm [py/call/wrong-arguments]
+        set_window_background(black_box, DIALOG_BOX_BACKGROUND_PATH)
+        self.screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
+
+    def show_text_in_dialog_box(self, text: Tuple[str] | List[str], add_quotes=True, temp_text_start=None):
+        """Shows a passage of text in a dialog box."""
+        self.dialog_box_drop_down_effect()
+        for line in text:
+            # TODO(ELF): This currently just makes the sound for printing by letter.
+            #  Need to actually show the letters one by one.
+            self.show_line_in_dialog_box(line, add_quotes, temp_text_start)
+            for letter_index, letter in enumerate(line):
+                time.sleep(0.01)
+                if letter_index % 2 == 0:
+                    play_sound(text_beep_sfx)
+
+        self.dialog_box_drop_up_effect()
+
+    def dialog_box_drop_down_effect(self):
+        """Intro effect for dialog box."""
+        for i in range(6):
+            black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
+            black_box.fill(BLACK)
+            for j in range(64):
+                self.screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
+                display.update()
+
+    def dialog_box_drop_up_effect(self):
+        """Outro effect for dialog box."""
+        # TODO(ELF): Needs work - doesn't always drop up smoothly. One observation is that it appears to work better closer
+        #  to the origin (0, 0) of the map.
+        # draw all the tiles initially once
+        for tile, tile_dict in self.current_map.floor_tile_key.items():
+            if tile in self.current_map.tile_types_in_current_map:
+                tile_dict['group'].draw(self.background)
+        for i in range(4, -1, -1):
+            dialog_box_underlying_tiles = get_dialog_box_underlying_tiles(self.current_map, i)
+            black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
+            black_box.fill(BLACK)
+            for j in range(64):
+                for tile, tile_dict in self.current_map.floor_tile_key.items():
+                    if tile in dialog_box_underlying_tiles:
+                        tile_dict['group'].draw(self.background)
+                self.background.blit(self.current_map.characters['HERO']['character_sprites'].sprites()[0].image,
+                                     (self.current_map.player.column * TILE_SIZE, self.current_map.player.row * TILE_SIZE))
+                for character, character_dict in self.current_map.characters.items():
+                    self.background.blit(character_dict['character_sprites'].sprites()[0].image,
+                                         (character_dict['character'].column * TILE_SIZE, character_dict['character'].row * TILE_SIZE))
+                self.screen.blit(self.background, self.camera_position)
+                self.screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
+                display.update()
 
     def status(self):
         """
@@ -168,8 +258,7 @@ class CommandMenu(Menu):
             print("'There are stairs here.'")
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
-            show_text_in_dialog_box(("There are no stairs here.",), self.background, self.camera_position,
-                                    self.current_map, self.screen)
+            self.show_text_in_dialog_box(("There are no stairs here.",))
 
     def search(self):
         """
@@ -186,8 +275,7 @@ class CommandMenu(Menu):
         # print(f"There is a {hidden_item}")
         else:
             text_to_print.append("But there found nothing.")
-        show_text_in_dialog_box(text_to_print, self.background, self.camera_position, self.current_map, self.screen,
-                                add_quotes=False)
+        self.show_text_in_dialog_box(text_to_print, add_quotes=False)
 
     def spell(self):
         """
@@ -197,10 +285,9 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
         if not self.player.spells:
-            show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), self.background,
-                                    self.camera_position, self.current_map, self.screen, add_quotes=False)
+            self.show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), add_quotes=False)
         else:
-            show_line_in_dialog_box('\n \n'.join([spell for spell in self.player.spells]), self.screen, add_quotes=False)
+            self.show_line_in_dialog_box('\n \n'.join([spell for spell in self.player.spells]), add_quotes=False)
 
     def item(self):
         """
@@ -210,10 +297,9 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which item is being used.
         if not self.player.inventory:
-            show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), self.background,
-                                    self.camera_position, self.current_map, self.screen, add_quotes=False)
+            self.show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), add_quotes=False)
         else:
-            show_text_in_dialog_box(self.player.inventory, self.screen)
+            self.show_text_in_dialog_box(self.player.inventory, add_quotes=False)
 
     def door(self):
         """
@@ -226,11 +312,9 @@ class CommandMenu(Menu):
                 # actually open the door
                 print("Door opened!")
             else:
-                show_text_in_dialog_box(("Thou hast not a key to use.",), self.background, self.camera_position,
-                                        self.current_map, self.screen, add_quotes=False)
+                self.show_text_in_dialog_box(("Thou hast not a key to use.",), False)
         else:
-            show_text_in_dialog_box(("There is no door here.",), self.background, self.camera_position,
-                                    self.current_map, self.screen, add_quotes=False)
+            self.show_text_in_dialog_box(("There is no door here.",), False)
 
     def take(self):
         """
@@ -245,9 +329,9 @@ class CommandMenu(Menu):
             item_name = current_treasure_info['item']
             if item_name == 'GOLD':
                 # TODO(ELF): Add get item sound effect.
-                # play_sound(get_item_sfx)
+                play_sound(open_treasure_sfx)
                 gold_amount = current_treasure_info['amount']
-                show_line_in_dialog_box(f"Of {item_name} thou hast gained {gold_amount}", self.screen)
+                self.show_line_in_dialog_box(f"Of {item_name} thou hast gained {gold_amount}")
                 self.player.gold += gold_amount
 
                 self.player.current_tile = 'BRICK'
@@ -260,5 +344,4 @@ class CommandMenu(Menu):
         # elif there is a hidden item
         # take the hidden item
         else:
-            show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",), self.background,
-                                    self.camera_position, self.current_map, self.screen)
+            self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",))

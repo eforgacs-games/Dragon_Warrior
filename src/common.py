@@ -40,13 +40,15 @@ def retrieve_audio_resource(_sound_library, path, sound):
 _sound_library = {}
 
 # menu
-menu_button_sfx = join(SFX_DIR, '32 Dragon Quest 1 - Menu Button (22khz mono).wav')
 text_beep_sfx = join(SFX_DIR, 'text_beep.wav')
-confirmation_sfx = join(SFX_DIR, '33 Dragon Quest 1 - Confirmation (22khz mono).wav')
+stairs_up_sfx = join(SFX_DIR, '29 Dragon Quest 1 - Stairs Up.mp3')
+stairs_down_sfx = join(SFX_DIR, '30 Dragon Quest 1 - Stairs Down.mp3')
+menu_button_sfx = join(SFX_DIR, '32 Dragon Quest 1 - Menu Button.mp3')
+confirmation_sfx = join(SFX_DIR, '33 Dragon Quest 1 - Confirmation.mp3')
 # movement
-bump_sfx = join(SFX_DIR, '42 Dragon Quest 1 - Bumping into Walls (22khz mono).wav')
-stairs_down_sfx = join(SFX_DIR, '30 Dragon Quest 1 - Stairs Down (22khz mono).wav')
-stairs_up_sfx = join(SFX_DIR, '29 Dragon Quest 1 - Stairs Up (22khz mono).wav')
+
+bump_sfx = join(SFX_DIR, '42 Dragon Quest 1 - Bumping into Walls.mp3')
+open_treasure_sfx = join(SFX_DIR, '44 Dragon Quest 1 - Open Treasure.mp3')
 
 
 def play_sound(path='data/sound/sfx'):
@@ -61,10 +63,19 @@ def play_sound(path='data/sound/sfx'):
 
 _music_library = {}
 if ORCHESTRA_MUSIC_ENABLED:
+    intro_overture = join(MUSIC_DIR, 'orchestra', '01 Overture March (London Philharmonic Orchestra Version).mp3')
     tantegel_castle_throne_room_music = join(MUSIC_DIR, 'orchestra', '02 Chateau Ladutorm.mp3')
     tantegel_castle_courtyard_music = join(MUSIC_DIR, 'orchestra', '02 Chateau Ladutorm.mp3')
     village_music = join(MUSIC_DIR, 'orchestra', '03 People.mp3')
     overworld_music = join(MUSIC_DIR, 'orchestra', '04 Unknown World.mp3')
+    dungeon_floor_1_music = \
+        dungeon_floor_2_music = \
+        dungeon_floor_3_music = \
+        dungeon_floor_4_music = \
+        dungeon_floor_5_music = \
+        dungeon_floor_6_music = \
+        dungeon_floor_7_music = \
+        dungeon_floor_8_music = join(MUSIC_DIR, 'orchestra', '06 Dungeon.mp3')
 else:
     intro_overture = join(MUSIC_DIR, 'NES', '01 Dragon Quest 1 - Intro ~ Overture.mp3')
     tantegel_castle_throne_room_music = join(MUSIC_DIR, 'NES', '02 Dragon Quest 1 - Tantegel Castle.mp3')

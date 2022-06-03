@@ -17,8 +17,7 @@ class DialogLookup:
                 ), 'returned_dialog': (
                     f"I am greatly pleased that thou hast returned, {player.name}.",
                     f"Before reaching thy next level of experience thou must gain {player.points_to_next_level} Points."
-                ),
-                    'is_initial_dialog': True},
+                )},
                 'UP_FACE_GUARD': {'dialog': (
                     "If thou art planning to take a rest, first see King Lorik.",)},
                 'DOWN_FACE_GUARD': {'dialog': (
