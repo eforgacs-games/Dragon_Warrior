@@ -12,6 +12,7 @@ from src.text import draw_text
 
 def show_line_in_dialog_box(line, screen, add_quotes=True, temp_text_start=None):
     """Shows a single line in a dialog box."""
+    current_time = None
     display_current_line = True
     finished_printing = False
     if add_quotes:
@@ -22,13 +23,7 @@ def show_line_in_dialog_box(line, screen, add_quotes=True, temp_text_start=None)
         black_box = Surface((TILE_SIZE * 12, TILE_SIZE * 5))  # lgtm [py/call/wrong-arguments]
         set_window_background(black_box, DIALOG_BOX_BACKGROUND_PATH)
         screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
-        if not finished_printing:
-            for i in range(len(line)):
-                time.sleep(0.01)
-                if i % 2 == 0:
-                    play_sound(text_beep_sfx)
-                if i == len(line) - 1:
-                    finished_printing = True
+        finished_printing = handle_letter_scrolling_dialog_box(finished_printing, line)
         # if print_by_character:
         #     for i in range(len(line)):
         #         for j in range(16):
@@ -44,15 +39,27 @@ def show_line_in_dialog_box(line, screen, add_quotes=True, temp_text_start=None)
         draw_text(line, 15, WHITE, TILE_SIZE * 3, TILE_SIZE * 9.75, DRAGON_QUEST_FONT_PATH, screen, center_align=False)
         display.flip()
         blink_down_arrow(screen)
+        if temp_text_start and current_time - temp_text_start >= 200:
+            play_sound(menu_button_sfx)
+            display_current_line = False
         for current_event in get():
             if current_event.type == KEYDOWN:
                 # if current_key[K_KP_ENTER] or current_key[K_k]:
                 play_sound(menu_button_sfx)
                 display_current_line = False
-        if temp_text_start:
-            if current_time - temp_text_start >= 200:
-                play_sound(menu_button_sfx)
-                display_current_line = False
+
+
+def handle_letter_scrolling_dialog_box(finished_printing, line):
+    """Handles the letter by letter scrolling of text within the show_line_in_dialog_box method."""
+    # TODO(ELF): This currently just makes the sound for printing by letter. Need to actually show the letters one by one.
+    if not finished_printing:
+        for i in range(len(line)):
+            time.sleep(0.01)
+            if i % 2 == 0:
+                play_sound(text_beep_sfx)
+            elif i == len(line) - 1:
+                finished_printing = True
+    return finished_printing
 
 
 def set_window_background(black_box, background_path):
@@ -88,6 +95,10 @@ def dialog_box_drop_up_effect(current_map, background, camera_position, screen):
             for tile, tile_dict in current_map.floor_tile_key.items():
                 if tile in dialog_box_underlying_tiles:
                     tile_dict['group'].draw(background)
+            background.blit(current_map.characters['HERO']['character_sprites'].sprites()[0].image, (current_map.player.column * TILE_SIZE, current_map.player.row * TILE_SIZE))
+            for character, character_dict in current_map.characters.items():
+                background.blit(character_dict['character_sprites'].sprites()[0].image,
+                                (character_dict['character'].column * TILE_SIZE, character_dict['character'].row * TILE_SIZE))
             screen.blit(background, camera_position)
             screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
             display.update()
