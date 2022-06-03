@@ -213,14 +213,12 @@ class TestGame(TestCase):
     def test_king_lorik_post_initial_dialog(self):
         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
         self.game.set_to_post_initial_dialog()
-        self.assertEqual((
-            "When thou art finished preparing for thy departure, please see me.\n"
-            "I shall wait.",
-        ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+        self.assertEqual("When thou art finished preparing for thy departure, please see me.\n"
+                         "I shall wait.", self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 
     def test_wise_man_tantegel_courtyard_dialog(self):
-        self.assertEqual(("Edward's coming was foretold by legend. May the light shine upon "
-                          'this brave warrior.',), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelCourtyard']['WISE_MAN']['dialog'])
+        self.assertEqual("Edward's coming was foretold by legend. May the light shine upon "
+                         'this brave warrior.', self.game.cmd_menu.dialog_lookup.lookup_table['TantegelCourtyard']['WISE_MAN']['dialog'])
 
     # gives an IndexError: list index out of range because the constants for K_UP, etc. are huge
     # def test_move_player_directions(self):
