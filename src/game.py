@@ -374,28 +374,26 @@ class Game:
         self.handle_sprite_drawing_and_animation()
         self.screen.blit(self.background, self.camera.get_pos())
         if INITIAL_DIALOG_ENABLED:
-            if self.in_initial_king_lorik_conversation():
-                self.enable_movement = False
-                for current_event in self.events:
-                    if current_event.type == KEYUP:
-                        show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'],
-                                                self.background, self.camera.get_pos(), self.current_map, self.screen)
-                        self.set_to_post_initial_dialog()
-                        self.enable_movement = True
-            else:
-                self.handle_menu_launch(self.cmd_menu)
+            if self.current_map.identifier == 'TantegelThroneRoom' and \
+                    self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog']:
+                self.run_automatic_initial_dialog()
         else:
             self.set_to_post_initial_dialog()
-            self.handle_menu_launch(self.cmd_menu)
+        self.handle_menu_launch(self.cmd_menu)
+
+    def run_automatic_initial_dialog(self):
+        self.enable_movement = False
+        for current_event in self.events:
+            if current_event.type == KEYUP:
+                show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'],
+                                        self.background, self.camera.get_pos(), self.current_map, self.screen)
+                self.set_to_post_initial_dialog()
+                self.enable_movement = True
 
     def set_to_post_initial_dialog(self):
         self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
         self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
             self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
-
-    def in_initial_king_lorik_conversation(self):
-        return INITIAL_DIALOG_ENABLED and self.current_map.identifier == 'TantegelThroneRoom' and \
-               self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog']
 
     def handle_sprite_drawing_and_animation(self):
         for character_dict in self.current_map.characters.values():
