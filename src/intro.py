@@ -43,10 +43,9 @@ def banner_sparkle(short, screen):
 
 def draw_banner_text(screen):
     draw_text("- PUSH ANY KEY -", 15, ORANGE, screen.get_width() / 2, screen.get_height() * 10 / 16, DRAGON_QUEST_FONT_PATH, screen)
-    draw_text("K key: A Button", 15, PINK, screen.get_width() / 2, screen.get_height() * 11 / 16, DRAGON_QUEST_FONT_PATH, screen)
-    draw_text("J key: B Button", 15, PINK, screen.get_width() / 2, screen.get_height() * 12 / 16, DRAGON_QUEST_FONT_PATH, screen)
-    draw_text("I key: Start", 15, PINK, screen.get_width() / 2, screen.get_height() * 13 / 16, DRAGON_QUEST_FONT_PATH, screen)
-    draw_text("WASD / Arrow Keys: Move", 15, PINK, screen.get_width() / 2, screen.get_height() * 14 / 16, DRAGON_QUEST_FONT_PATH, screen, text_wrap_length=23)
+    pink_banner_text = ("K key: A Button", "J key: B Button", "I key: Start", "WASD / Arrow Keys: Move")
+    for i in range(11, 15):
+        draw_text(pink_banner_text[i - 11], 15, PINK, screen.get_width() / 2, screen.get_height() * i / 16, DRAGON_QUEST_FONT_PATH, screen, text_wrap_length=23)
     draw_text("(↑ ← ↓ →)", 15, PINK, screen.get_width() / 2, screen.get_height() * 15 / 16, SMB_FONT_PATH, screen)
 
 
