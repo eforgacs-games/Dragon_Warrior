@@ -10,7 +10,6 @@ from pygame.time import Clock
 from pygame.time import get_ticks
 
 import src.menu as menu
-from data.text.dialog import show_text_in_dialog_box
 from data.text.dialog_lookup_table import DialogLookup
 from src import maps
 from src.camera import Camera
@@ -36,7 +35,7 @@ from src.visual_effects import fade
 class Game:
 
     def __init__(self):
-        # Initialize pygame
+        self.is_initial_dialog = True
         self.draw_text_start = None
         self.temporary_text_on_screen = None
         self.fps = FPS
@@ -81,8 +80,8 @@ class Game:
         # self.current_map = maps.Rimuldar()
         # self.current_map = maps.Cantlin()
 
-        self.big_map = Surface(
-            (self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
+        self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
+            (self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(BLACK)
 
         for roaming_character in self.current_map.roaming_characters:
@@ -198,6 +197,9 @@ class Game:
                                                               self.player.rect.y // TILE_SIZE, self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
 
+        self.player.next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row,
+                                                                 self.player.direction_value)
+
         self.player.next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
                                                             self.player.rect.y // TILE_SIZE,
                                                             self.player.direction_value)
@@ -282,9 +284,7 @@ class Game:
     def draw_temporary_text(self, text: Tuple[str] | List[str], add_quotes=False) -> None:
         self.temporary_text_on_screen = True
         self.draw_text_start = get_ticks()
-        show_text_in_dialog_box(text, self.background, self.camera.get_pos(), self.current_map, self.screen,
-                                add_quotes=add_quotes,
-                                temp_text_start=self.draw_text_start)
+        self.cmd_menu.show_text_in_dialog_box(text, add_quotes=add_quotes, temp_text_start=self.draw_text_start)
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
         if (self.player.row, self.player.column) == staircase_location:
@@ -374,28 +374,27 @@ class Game:
         self.handle_sprite_drawing_and_animation()
         self.screen.blit(self.background, self.camera.get_pos())
         if INITIAL_DIALOG_ENABLED:
-            if self.in_initial_king_lorik_conversation():
-                self.enable_movement = False
-                for current_event in self.events:
-                    if current_event.type == KEYUP:
-                        show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'],
-                                                self.background, self.camera.get_pos(), self.current_map, self.screen)
-                        self.set_to_post_initial_dialog()
-                        self.enable_movement = True
-            else:
-                self.handle_menu_launch(self.cmd_menu)
+            if self.current_map.identifier == 'TantegelThroneRoom':
+                if self.is_initial_dialog:
+                    self.run_automatic_initial_dialog()
+                else:
+                    self.set_to_post_initial_dialog()
         else:
             self.set_to_post_initial_dialog()
-            self.handle_menu_launch(self.cmd_menu)
+        self.handle_menu_launch(self.cmd_menu)
+
+    def run_automatic_initial_dialog(self):
+        self.enable_movement = False
+        for current_event in self.events:
+            if current_event.type == KEYUP:
+                self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+                self.set_to_post_initial_dialog()
 
     def set_to_post_initial_dialog(self):
-        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
+        self.is_initial_dialog = False
         self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
             self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
-
-    def in_initial_king_lorik_conversation(self):
-        return INITIAL_DIALOG_ENABLED and self.current_map.identifier == 'TantegelThroneRoom' and \
-               self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog']
+        self.enable_movement = True
 
     def handle_sprite_drawing_and_animation(self):
         for character_dict in self.current_map.characters.values():
@@ -481,8 +480,8 @@ class Game:
         self.current_map = next_map
         fade(self.screen.get_width(), self.screen.get_height(), fade_out=True, background=self.background,
              screen=self.screen)
-        self.big_map = Surface(
-            (self.current_map.width, self.current_map.height)).convert()  # lgtm [py/call/wrong-arguments]
+        self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
+            (self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(BLACK)
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
@@ -566,8 +565,6 @@ class Game:
         :return: None
         """
         if menu_to_launch == 'command':
-            self.player.next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row,
-                                                                     self.player.direction_value)
             if not self.cmd_menu.launched:
                 play_sound(menu_button_sfx)
             self.cmd_menu.launched = True
