@@ -1,5 +1,4 @@
 import logging
-import time
 from typing import Tuple, List
 
 import pygame_menu
@@ -7,11 +6,9 @@ from pygame import image, Surface, display, KEYDOWN
 from pygame.event import get
 from pygame.time import get_ticks
 
-from data.text.dialog import get_dialog_box_underlying_tiles, set_window_background, \
-    blink_down_arrow
+from data.text.dialog import get_dialog_box_underlying_tiles, set_window_background, blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, COMMAND_MENU_BACKGROUND_PATH, DIALOG_BOX_BACKGROUND_PATH, text_beep_sfx, \
-    open_treasure_sfx
+from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, COMMAND_MENU_BACKGROUND_PATH, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.menu_functions import get_opposite_direction
@@ -178,17 +175,21 @@ class CommandMenu(Menu):
         set_window_background(black_box, DIALOG_BOX_BACKGROUND_PATH)
         self.screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
 
-    def show_text_in_dialog_box(self, text: Tuple[str] | List[str], add_quotes=True, temp_text_start=None):
+    def show_text_in_dialog_box(self, text: Tuple[str] | List[str] | str, add_quotes=True, temp_text_start=None):
         """Shows a passage of text in a dialog box."""
         self.dialog_box_drop_down_effect()
-        for line in text:
-            # TODO(ELF): This currently just makes the sound for printing by letter.
-            #  Need to actually show the letters one by one.
-            self.show_line_in_dialog_box(line, add_quotes, temp_text_start)
-            for letter_index, letter in enumerate(line):
-                time.sleep(0.01)
-                if letter_index % 2 == 0:
-                    play_sound(text_beep_sfx)
+        if type(text) == str:
+            self.show_line_in_dialog_box(text)
+        else:
+            for line in text:
+                self.show_line_in_dialog_box(line, add_quotes, temp_text_start)
+                # TODO(ELF): This commented out code just makes the sound for printing by letter.
+                #  Need to actually show the letters one by one.
+                #  (Better to leave it commented out until it's working)
+                # for letter_index, letter in enumerate(line):
+                #     time.sleep(0.01)
+                #     if letter_index % 2 == 0:
+                #         play_sound(text_beep_sfx)
 
         self.dialog_box_drop_up_effect()
 
