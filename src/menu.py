@@ -61,9 +61,9 @@ class CommandMenu(Menu):
         # TODO: This gives a ValueError if the map is too small.
         try:
             command_menu_surface = background.subsurface((player.column - 2) * TILE_SIZE,
-                                              (player.row - 6) * TILE_SIZE,
-                                              8 * TILE_SIZE,
-                                              5 * TILE_SIZE)
+                                                         (player.row - 6) * TILE_SIZE,
+                                                         8 * TILE_SIZE,
+                                                         5 * TILE_SIZE)
             self.menu = pygame_menu.Menu(
                 title='COMMAND',
                 width=command_menu_surface.get_width() * 2,
