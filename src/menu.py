@@ -11,6 +11,7 @@ from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, COMMAND_MENU_BACKGROUND_PATH, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
+from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.sound import play_sound
 from src.text import draw_text
@@ -288,7 +289,7 @@ class CommandMenu(Menu):
         if not self.player.spells:
             self.show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), add_quotes=False)
         else:
-            self.show_line_in_dialog_box('\n \n'.join([spell for spell in self.player.spells]), add_quotes=False)
+            self.show_text_in_dialog_box('\n \n'.join([spell for spell in self.player.spells]), add_quotes=False)
 
     def item(self):
         """
@@ -325,24 +326,43 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # open a window
         if self.player.current_tile == 'TREASURE_BOX':
-            map_treasure_info = treasure[self.map_name]
-            current_treasure_info = map_treasure_info[(self.player.row, self.player.column)]
-            item_name = current_treasure_info['item']
-            if item_name == 'GOLD':
-                # TODO(ELF): Add get item sound effect.
-                play_sound(open_treasure_sfx)
-                gold_amount = current_treasure_info['amount']
-                self.show_line_in_dialog_box(f"Of {item_name} thou hast gained {gold_amount}")
-                self.player.gold += gold_amount
+            treasure_info = treasure[self.map_name][(self.player.row, self.player.column)]
+            item_name = treasure_info['item']
+            if item_name:
+                if item_name == 'GOLD':
+                    play_sound(open_treasure_sfx)
+                    gold_amount = treasure_info['amount']
+                    self.show_text_in_dialog_box(f"Of {item_name} thou hast gained {gold_amount}")
+                    self.player.gold += gold_amount
 
-                self.player.current_tile = 'BRICK'
-                self.current_map.add_tile(self.current_map.floor_tile_key['BRICK'])
+                    # self.player.current_tile = 'BRICK'
+                    self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row)
 
-                # del map_treasure_info[(self.player.row, self.player.column)]
+                else:
+                    play_sound(open_treasure_sfx)
+                    self.show_text_in_dialog_box(f"Fortune smiles upon thee, {self.player.name}.\n"
+                                                 f"Thou hast found the {item_name}.")
+
+                    self.player.inventory.append(item_name)
+
+                    # self.player.current_tile = 'BRICK'
+                    self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row)
+                    self.screen.blit(self.background, self.camera_position)
+
             else:
-                print("Error obtaining treasure.")
+                self.show_text_in_dialog_box("Unfortunately, it is empty.")
         #     take it and update inventory accordingly
         # elif there is a hidden item
         # take the hidden item
         else:
             self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",))
+
+    def set_tile_by_coordinates(self, tile_identifier, column, row):
+        # TODO(ELF): Needs work, original tile sometimes flashes through.
+        self.current_map.layout[row][column] = self.current_map.floor_tile_key[tile_identifier]['val']
+        tile_dict = self.current_map.floor_tile_key[tile_identifier]
+        center_pt = get_center_point(column, row)
+        self.current_map.add_tile(tile_dict, center_pt)
+        for tile, tile_dict in self.current_map.floor_tile_key.items():
+            if tile in self.current_map.tile_types_in_current_map:
+                tile_dict['group'].draw(self.background)
