@@ -13,9 +13,8 @@ import src.menu as menu
 from data.text.dialog_lookup_table import DialogLookup
 from src import maps
 from src.camera import Camera
-from src.common import Direction, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, BLACK, is_facing_medially, \
-    is_facing_laterally, \
-    WHITE, intro_overture, DRAGON_QUEST_FONT_PATH, village_music, get_surrounding_tile_values, ICON_PATH
+from src.common import BLACK, DRAGON_QUEST_FONT_PATH, Direction, ICON_PATH, WHITE, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
+    is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -394,7 +393,6 @@ class Game:
         self.is_initial_dialog = False
         self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
             self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
-        self.enable_movement = True
 
     def handle_sprite_drawing_and_animation(self):
         for character_dict in self.current_map.characters.values():

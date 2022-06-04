@@ -215,7 +215,7 @@ class DragonWarriorMap:
                                                  'character_sprites': character_sprites,
                                                  'tile_value': self.character_key[identifier]['val'],
                                                  'coordinates': coordinates}
-        self.add_tile(self.floor_tile_key[underlying_tile])
+        self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
         self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
     def set_identifiers_for_duplicate_characters(self, character, identifier):
@@ -227,7 +227,7 @@ class DragonWarriorMap:
         self.player = player
         self.player_sprites = LayeredDirty(self.player)
         self.player.direction_value = self.hero_initial_direction()
-        self.add_tile(self.floor_tile_key[underlying_tile])
+        self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
         self.characters['HERO'] = {'character': self.player,
                                    'character_sprites': self.player_sprites,
                                    'tile_value': self.character_key['HERO']['val'],
@@ -238,20 +238,20 @@ class DragonWarriorMap:
     def map_floor_tiles(self, column, row) -> None:
         for tile_dict in self.floor_tile_key.values():
             if self.layout[row][column] == tile_dict['val']:
-                self.add_tile(tile_dict)
+                self.add_tile(tile_dict, self.center_pt)
                 break
 
-    def add_tile(self, tile_dict) -> None:
+    def add_tile(self, tile_dict, center_pt) -> None:
         tile_value = tile_dict['val']
         tile_group = tile_dict.get('group')
         if tile_group is None:
             self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'] = Group()
         if tile_value <= 10:
-            tile = BaseSprite(self.center_pt, self.map_tiles[tile_value][0])
+            tile = BaseSprite(center_pt, self.map_tiles[tile_value][0])
         elif tile_value <= 21:
-            tile = BaseSprite(self.center_pt, self.map_tiles[tile_value - 11][1])
+            tile = BaseSprite(center_pt, self.map_tiles[tile_value - 11][1])
         elif tile_value < 33:
-            tile = BaseSprite(self.center_pt, self.map_tiles[tile_value - 22][2])
+            tile = BaseSprite(center_pt, self.map_tiles[tile_value - 22][2])
         self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'].add(tile)
 
     @property
