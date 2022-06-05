@@ -1,4 +1,4 @@
-from src.common import Direction
+from src.common import Direction, get_next_tile_identifier
 from src.items import weapons
 from src.player.player_stats import levels_list, apply_transformation_to_levels_list
 from src.sprites.animated_sprite import AnimatedSprite
@@ -17,8 +17,8 @@ class Player(AnimatedSprite):
         self.next_coordinates = None
         self.next_next_coordinates = None
         self.current_tile = None
-        self.next_tile_id = None
-        self.next_next_tile_id = None
+        self.next_tile_id = get_next_tile_identifier(self.column, self.row, self.direction_value, current_map)
+        self.next_next_tile_id = get_next_tile_identifier(self.column, self.row, self.direction_value, current_map, offset=2)
         self.bumped = False
         self.last_bump_time = None
 

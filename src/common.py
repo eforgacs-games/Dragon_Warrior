@@ -239,3 +239,25 @@ def get_surrounding_tile_values(coordinates, map_layout):
         up = None
     neighbors = [x for x in [left, down, right, up] if x is not None]
     return set(neighbors + [map_layout[x][y]])
+
+
+def get_next_tile_identifier(character_column: int, character_row: int, direction_value: int, current_map, offset: int = 1) -> str:
+    """
+    Retrieve the identifier (human-readable name) of the next tile in front of a particular character.
+    :type character_column: int
+    :type character_row: int
+    :param character_column: The character's column within the map layout.
+    :param character_row: The character's row within the map layout.
+    :param direction_value: The direction which the character is facing.
+    :param current_map: The current map class.
+    :param offset: How many tiles offset of the character to check. Defaults to 1 (the next tile).
+    :return: str: The next tile that the character will step on (e.g., 'BRICK').
+    """
+    if direction_value == Direction.UP.value:
+        return get_tile_id_by_coordinates(character_column, character_row - offset, current_map)
+    elif direction_value == Direction.DOWN.value:
+        return get_tile_id_by_coordinates(character_column, character_row + offset, current_map)
+    elif direction_value == Direction.LEFT.value:
+        return get_tile_id_by_coordinates(character_column - offset, character_row, current_map)
+    elif direction_value == Direction.RIGHT.value:
+        return get_tile_id_by_coordinates(character_column + offset, character_row, current_map)
