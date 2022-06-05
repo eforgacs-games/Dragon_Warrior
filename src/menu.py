@@ -365,11 +365,12 @@ class CommandMenu(Menu):
             player.current_tile = new_tile_identifier
         self.current_map.layout[row][column] = self.current_map.floor_tile_key[new_tile_identifier]['val']
         center_pt = get_center_point(column, row)
-        self.current_map.add_tile(self.current_map.floor_tile_key[new_tile_identifier], center_pt)
+
         self.current_map.floor_tile_key[old_tile_identifier]['group'] = Group()
-        # self.current_map.floor_tile_key[new_tile_identifier]['group'].draw(self.background)
+        self.current_map.add_tile(self.current_map.floor_tile_key[new_tile_identifier], center_pt)
         for row in range(len(self.current_map.layout)):
             for column in range(len(self.current_map.layout[row])):
                 self.current_map.center_pt = get_center_point(column, row)
-                if self.current_map.layout[row][column] <= 32:  # anything below 32 is a floor tile
+                if self.current_map.layout[row][column] <= max(self.current_map.floor_tile_key[old_tile_identifier]['val'],
+                                                               self.current_map.floor_tile_key[new_tile_identifier]['val']):
                     self.current_map.map_floor_tiles(column, row)
