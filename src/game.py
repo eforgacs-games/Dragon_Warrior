@@ -13,7 +13,7 @@ import src.menu as menu
 from src import maps
 from src.camera import Camera
 from src.common import BLACK, DRAGON_QUEST_FONT_PATH, Direction, ICON_PATH, WHITE, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
-    is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music
+    is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -94,12 +94,7 @@ class Game:
         # self.player.level = self.player.get_level_by_experience()
         # self.player.update_stats_to_current_level()
 
-        self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE,
-                                                              self.player.rect.y // TILE_SIZE, self.current_map)
-        self.player.next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row,
-                                                                 self.player.direction_value)
-        self.player.next_next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row,
-                                                                      self.player.direction_value, offset=3)
+        self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen)
         self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.player, self.screen, self.camera.get_pos(), self)
 
@@ -191,8 +186,7 @@ class Game:
                                                               self.player.rect.y // TILE_SIZE, self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
 
-        self.player.next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row,
-                                                                 self.player.direction_value)
+        self.player.next_tile_id = get_next_tile_identifier(self.player.column, self.player.row, self.player.direction_value, self.current_map)
 
         self.player.next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
                                                             self.player.rect.y // TILE_SIZE,
@@ -638,12 +632,8 @@ class Game:
 
         self.cmd_menu.camera_position = curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.get_pos()
         self.check_next_tile(character)
-        character.next_tile_id = self.get_next_tile_identifier(character_column=character.column,
-                                                               character_row=character.row,
-                                                               direction_value=character.direction_value)
-        character.next_next_tile_id = self.get_next_tile_identifier(character_column=character.column,
-                                                                    character_row=character.row,
-                                                                    direction_value=character.direction_value, offset=2)
+        character.next_tile_id = get_next_tile_identifier(character.column, character.row, character.direction_value, self.current_map)
+        character.next_next_tile_id = get_next_tile_identifier(character.column, character.row, character.direction_value, self.current_map, offset=2)
         if self.is_impassable(character.next_tile_id):
             bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
         elif self.character_in_path(character):
@@ -664,12 +654,8 @@ class Game:
 
     def check_next_tile(self, character: Player | RoamingCharacter) -> None:
         if not character.next_tile_checked or not character.next_tile_id:
-            character.next_tile_id = self.get_next_tile_identifier(character_column=character.column,
-                                                                   character_row=character.row,
-                                                                   direction_value=character.direction_value)
-        character.next_next_tile_id = self.get_next_tile_identifier(character_column=character.column,
-                                                                    character_row=character.row,
-                                                                    direction_value=character.direction_value, offset=2)
+            character.next_tile_id = get_next_tile_identifier(character.column, character.row, character.direction_value, self.current_map)
+        character.next_next_tile_id = get_next_tile_identifier(character.column, character.row, character.direction_value, self.current_map, offset=2)
 
     def character_in_path(self, character: RoamingCharacter | FixedCharacter) -> bool:
         fixed_character_locations = [(fixed_character.column, fixed_character.row) for fixed_character in
@@ -679,27 +665,6 @@ class Game:
         next_coordinates = self.get_next_coordinates(character.column, character.row, character.direction_value)
         return next_coordinates in fixed_character_locations + roaming_character_locations + [
             (self.player.column, self.player.row)]
-
-    def get_next_tile_identifier(self, character_column: int, character_row: int, direction_value: int,
-                                 offset: int = 1) -> str:
-        """
-        Retrieve the identifier (human-readable name) of the next tile in front of a particular character.
-        :type character_column: int
-        :type character_row: int
-        :param character_column: The character's column within the map layout.
-        :param character_row: The character's row within the map layout.
-        :param direction_value: The direction which the character is facing.
-        :param offset: How many tiles offset of the character to check. Defaults to 1 (the next tile).
-        :return: str: The next tile that the character will step on (e.g., 'BRICK').
-        """
-        if direction_value == Direction.UP.value:
-            return get_tile_id_by_coordinates(character_column, character_row - offset, self.current_map)
-        elif direction_value == Direction.DOWN.value:
-            return get_tile_id_by_coordinates(character_column, character_row + offset, self.current_map)
-        elif direction_value == Direction.LEFT.value:
-            return get_tile_id_by_coordinates(character_column - offset, character_row, self.current_map)
-        elif direction_value == Direction.RIGHT.value:
-            return get_tile_id_by_coordinates(character_column + offset, character_row, self.current_map)
 
     def get_next_coordinates(self, character_column: int, character_row: int, direction: int) -> tuple:
         if character_row < len(self.current_map.layout) and character_column < len(self.current_map.layout[0]):
