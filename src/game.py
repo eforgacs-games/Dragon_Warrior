@@ -83,9 +83,7 @@ class Game:
             (self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(BLACK)
 
-        for roaming_character in self.current_map.roaming_characters:
-            roaming_character.last_roaming_clock_check = get_ticks()
-            set_character_position(roaming_character)
+        self.set_roaming_character_positions()
         # Make the big scrollable map
         self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
         self.player = Player(center_point=None, images=None)
@@ -481,31 +479,17 @@ class Game:
         self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
             (self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(BLACK)
-        for roaming_character in self.current_map.roaming_characters:
-            roaming_character.last_roaming_clock_check = get_ticks()
-            set_character_position(roaming_character)
+        self.set_roaming_character_positions()
         if self.music_enabled:
             mixer.music.stop()
         layouts = MapLayouts()
         self.current_map.layout = layouts.map_layout_lookup[self.current_map.__class__.__name__]
         current_map_staircase_dict = self.last_map.staircases[(self.player.row, self.player.column)]
         destination_coordinates = current_map_staircase_dict.get('destination_coordinates')
-        if not destination_coordinates:
-            self.current_map.load_map(self.player, None)
-        else:
-            self.current_map.layout[self.current_map.get_initial_character_location('HERO')[0][0]][
-                self.current_map.get_initial_character_location('HERO')[0][1]] = \
-                self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']][
-                    'val']
-            if self.current_map.character_key['HERO']['underlying_tile'] != self.current_map.get_tile_by_value(
-                    self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]]):
-                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
-                    self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
-            self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
-            self.current_map.load_map(self.player, destination_coordinates)
-        destination_direction = current_map_staircase_dict.get('direction')
-        if destination_direction:
-            self.current_map.player.direction_value = destination_direction
+        if destination_coordinates:
+            self.handle_player_position_on_map_change(destination_coordinates)
+        self.current_map.load_map(self.player, destination_coordinates)
+        self.handle_player_direction_on_map_change(current_map_staircase_dict)
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
@@ -514,15 +498,32 @@ class Game:
         self.loop_count = 1
         self.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
-        self.cmd_menu.current_map = self.current_map
-        self.cmd_menu.map_name = self.current_map.__class__.__name__
-        self.cmd_menu.characters = self.current_map.characters
+        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.player, self.screen, self.camera.get_pos())
         self.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
-        self.cmd_menu.dialog_lookup = DialogLookup(self.player)
 
         # play_music(self.current_map.music_file_path)
+
+    def handle_player_direction_on_map_change(self, current_map_staircase_dict):
+        destination_direction = current_map_staircase_dict.get('direction')
+        if destination_direction:
+            self.current_map.player.direction_value = destination_direction
+
+    def handle_player_position_on_map_change(self, destination_coordinates):
+        self.current_map.layout[self.current_map.get_initial_character_location('HERO')[0][0]][
+            self.current_map.get_initial_character_location('HERO')[0][1]] = \
+            self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']
+        if self.current_map.character_key['HERO']['underlying_tile'] != self.current_map.get_tile_by_value(
+                self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]]):
+            self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
+                self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
+        self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
+
+    def set_roaming_character_positions(self):
+        for roaming_character in self.current_map.roaming_characters:
+            roaming_character.last_roaming_clock_check = get_ticks()
+            set_character_position(roaming_character)
 
     def load_and_play_music(self, music_path):
         """Loads and plays music on repeat."""
