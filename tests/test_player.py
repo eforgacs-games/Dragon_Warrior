@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from src.common import Direction
 from src.maps import MapWithoutNPCs
 from src.player.player import Player
 
