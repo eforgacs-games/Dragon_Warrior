@@ -180,7 +180,7 @@ class DragonWarriorMap:
     def map_character(self, character, character_dict, current_tile, player, coordinates) -> None:
         if current_tile == self.character_key['HERO']['val']:
             if not self.player:
-                player.__init__(self.center_pt, self.scale_sprite_sheet(UNARMED_HERO_PATH))
+                player.__init__(self.center_pt, self.scale_sprite_sheet(UNARMED_HERO_PATH), self)
             self.map_player(character_dict['underlying_tile'], player, coordinates)
         else:
             self.map_npc(character, character_dict.get('direction'), character_dict['underlying_tile'], character_dict['path'], character_dict['four_sided'],
