@@ -66,7 +66,7 @@ class TestGame(TestCase):
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
         self.hero_images = parse_animated_sprite_sheet(
             scale(unarmed_hero_sheet, (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)))
-        self.game.current_map.player = Player(self.center_pt, self.hero_images)
+        self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
         self.camera = Camera((self.game.current_map.player.rect.y // TILE_SIZE, self.game.current_map.player.rect.x // TILE_SIZE), self.game.current_map,
                              None)
@@ -143,7 +143,6 @@ class TestGame(TestCase):
     # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
 
     def test_handle_fps_changes(self):
-        self.game.current_map.player.row = 1
         self.assertEqual(60, self.game.fps)
         pygame.key.get_pressed = create_key_mock(pygame.K_2)
         self.game.handle_fps_changes(pygame.key.get_pressed())

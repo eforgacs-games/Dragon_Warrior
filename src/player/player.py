@@ -6,12 +6,12 @@ from src.sprites.animated_sprite import AnimatedSprite
 
 class Player(AnimatedSprite):
 
-    def __init__(self, center_point, images, direction_value=Direction.DOWN.value):
+    def __init__(self, center_point, images, current_map, direction_value=Direction.DOWN.value):
         AnimatedSprite.__init__(self, center_point, direction_value, images, identifier='HERO')
 
         # map/collision-related attributes
-        self.row = None
-        self.column = None
+        initial_hero_location = current_map.get_initial_character_location('HERO')
+        self.row, self.column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.next_tile_checked = False
         self.is_moving = False
         self.next_coordinates = None
