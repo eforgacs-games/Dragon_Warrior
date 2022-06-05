@@ -1,8 +1,25 @@
 from unittest import TestCase
 
+from src.maps import MapWithoutNPCs
 from src.player.player import Player
-from test_game import MockMap
 
+
+layout = [[33, 0, 3],
+          [1, 2, 3],
+          [3, 3, 39]]
+
+
+class MockMap(MapWithoutNPCs):
+    __test__ = False
+
+    def __init__(self):
+        super().__init__(layout)
+
+    def hero_underlying_tile(self):
+        return 'BRICK'
+
+    def hero_initial_direction(self):
+        return Direction.DOWN.value
 
 class TestPlayer(TestCase):
 
