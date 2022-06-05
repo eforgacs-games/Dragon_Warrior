@@ -10,7 +10,6 @@ from pygame.time import Clock
 from pygame.time import get_ticks
 
 import src.menu as menu
-from data.text.dialog_lookup_table import DialogLookup
 from src import maps
 from src.camera import Camera
 from src.common import BLACK, DRAGON_QUEST_FONT_PATH, Direction, ICON_PATH, WHITE, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
@@ -86,7 +85,7 @@ class Game:
         self.set_roaming_character_positions()
         # Make the big scrollable map
         self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
-        self.player = Player(center_point=None, images=None)
+        self.player = Player(center_point=None, images=None, current_map=self.current_map)
         self.current_map.load_map(self.player, None)
 
         # Good for debugging, and will be useful later when the player's level increases and the stats need to be increased to match
@@ -95,16 +94,14 @@ class Game:
         # self.player.level = self.player.get_level_by_experience()
         # self.player.update_stats_to_current_level()
 
-        initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE,
                                                               self.player.rect.y // TILE_SIZE, self.current_map)
         self.player.next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row,
-                                                                 self.current_map.player.direction_value)
+                                                                 self.player.direction_value)
         self.player.next_next_tile_id = self.get_next_tile_identifier(self.player.column, self.player.row,
-                                                                      self.current_map.player.direction_value, offset=3)
+                                                                      self.player.direction_value, offset=3)
         self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen)
-        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.player, self.screen, self.camera.get_pos())
+        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.player, self.screen, self.camera.get_pos(), self)
 
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
@@ -498,7 +495,7 @@ class Game:
         self.loop_count = 1
         self.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
-        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.player, self.screen, self.camera.get_pos())
+        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.player, self.screen, self.camera.get_pos(), self)
         self.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
