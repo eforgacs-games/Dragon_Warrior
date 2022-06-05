@@ -1,4 +1,3 @@
-import logging
 from typing import Tuple, List
 
 import pygame_menu
@@ -54,7 +53,7 @@ class Menu:
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, current_map, player, screen, camera_position):
+    def __init__(self, background, current_map, player, screen, camera_position, game):
         super().__init__()
         self.dialog_box_launch_signaled = False
         self.current_tile = player.current_tile
@@ -65,66 +64,33 @@ class CommandMenu(Menu):
         self.background = background
         self.screen = screen
         self.camera_position = camera_position
-        # TODO: This gives a ValueError if the map is too small.
-        try:
-            command_menu_surface = background.subsurface((player.column - 2) * TILE_SIZE,
-                                                         (player.row - 6) * TILE_SIZE,
-                                                         8 * TILE_SIZE,
-                                                         5 * TILE_SIZE)
-            self.menu = pygame_menu.Menu(
-                title='COMMAND',
-                width=command_menu_surface.get_width() * 2,
-                height=command_menu_surface.get_height() * 3,
-                center_content=False,
-                column_max_width=(TILE_SIZE * 4, TILE_SIZE * 3),
-                columns=2,
-                rows=4,
-                theme=self.dragon_warrior_menu_theme,
-                mouse_enabled=False,
-                mouse_visible=False,
-                menu_id='command',
-            )
-            # TODO: Allow for selection of options using the K ("A" button).
-            #  Currently selection is only possible by use of the Enter button.
-            self.menu.add.button('TALK', self.talk, margin=(9, 4))
-            self.menu.add.button('STATUS', self.status, margin=(9, 4))
-            self.menu.add.button('STAIRS', self.stairs, margin=(9, 4))
-            self.menu.add.button('SEARCH', self.search, margin=(9, 4))
-            self.menu.add.button('SPELL', self.spell, margin=(0, 4))
-            self.menu.add.button('ITEM', self.item, margin=(0, 4))
-            self.menu.add.button('DOOR', self.door, margin=(0, 4))
-            self.menu.add.button('TAKE', self.take, margin=(0, 4))
-            self.dialog_lookup = DialogLookup(self.player)
-        except ValueError as e:
-            logging.error(e)
-            self.command_menu_subsurface = None
-            self.menu = None
-
-    def talk(self):
-        """
-        Talk to an NPC.
-        :return: None
-        """
-        play_sound(menu_button_sfx)
-        # dialog = Dialog(player=self.player)
-
-        # for now, implementing using print statements. will be useful for debugging as well.
-        character_coordinates = [(character_dict['character'].row, character_dict['character'].column) for character_dict in self.characters.values()]
-        # if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
-
-        if any(c in character_coordinates for c in [self.player.next_coordinates]) or \
-                any(c in character_coordinates for c in [self.player.next_next_coordinates]) and self.player.next_tile_id == 'WOOD':
-            for character_identifier, character_dict in self.characters.items():
-                if (character_dict['character'].row, character_dict['character'].column) == self.player.next_coordinates or self.npc_is_across_counter(
-                        character_dict):
-                    if character_dict['character'].direction_value != get_opposite_direction(self.player.direction_value):
-                        character_dict['character'].direction_value = get_opposite_direction(self.player.direction_value)
-                        character_dict['character'].animate()
-                        character_dict['character'].pause()
-                    self.launch_dialog(character_identifier, self.current_map)
-                    break
-        else:
-            self.show_text_in_dialog_box(("There is no one there.",))
+        self.dialog_lookup = DialogLookup(self.player)
+        self.window_drop_down_effect(width=8, height=5, x=5, y=1)
+        self.game = game
+        command_menu_surface = self.create_window(width=8, height=5, x=5, y=1)
+        self.menu = pygame_menu.Menu(
+            title='COMMAND',
+            width=command_menu_surface.get_width() * 2,
+            height=command_menu_surface.get_height() * 3,
+            center_content=False,
+            column_max_width=(TILE_SIZE * 4, TILE_SIZE * 3),
+            columns=2,
+            rows=4,
+            theme=self.dragon_warrior_menu_theme,
+            mouse_enabled=False,
+            mouse_visible=False,
+            menu_id='command',
+        )
+        # TODO: Allow for selection of options using the K ("A" button).
+        #  Currently selection is only possible by use of the Enter button.
+        self.menu.add.button('TALK', self.talk, margin=(9, 4))
+        self.menu.add.button('STATUS', self.status, margin=(9, 4))
+        self.menu.add.button('STAIRS', self.stairs, margin=(9, 4))
+        self.menu.add.button('SEARCH', self.search, margin=(9, 4))
+        self.menu.add.button('SPELL', self.spell, margin=(0, 4))
+        self.menu.add.button('ITEM', self.item, margin=(0, 4))
+        self.menu.add.button('DOOR', self.door, margin=(0, 4))
+        self.menu.add.button('TAKE', self.take, margin=(0, 4))
 
     def npc_is_across_counter(self, character_dict):
         return self.player.next_tile_id == 'WOOD' and (
@@ -152,7 +118,7 @@ class CommandMenu(Menu):
         while display_current_line:
             if temp_text_start:
                 current_time = get_ticks()
-            self.create_dialog_box_window()
+            self.create_window(width=12, height=5, x=2, y=9)
             # if print_by_character:
             #     for i in range(len(line)):
             #         for j in range(16):
@@ -173,14 +139,15 @@ class CommandMenu(Menu):
                 play_sound(menu_button_sfx)
                 display_current_line = False
 
-    def create_dialog_box_window(self):
-        black_box = Surface((TILE_SIZE * 12, TILE_SIZE * 5))  # lgtm [py/call/wrong-arguments]
+    def create_window(self, width, height, x, y):
+        black_box = Surface((TILE_SIZE * width, TILE_SIZE * height))  # lgtm [py/call/wrong-arguments]
         set_window_background(black_box, DIALOG_BOX_BACKGROUND_PATH)
-        self.screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
+        self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
+        return black_box
 
     def show_text_in_dialog_box(self, text: Tuple[str] | List[str] | str, add_quotes=True, temp_text_start=None):
         """Shows a passage of text in a dialog box."""
-        self.dialog_box_drop_down_effect()
+        self.window_drop_down_effect(width=12, height=5, x=2, y=9)
         if type(text) == str:
             self.show_line_in_dialog_box(text, add_quotes, temp_text_start)
         else:
@@ -194,41 +161,74 @@ class CommandMenu(Menu):
                 #     if letter_index % 2 == 0:
                 #         play_sound(text_beep_sfx)
 
-        self.dialog_box_drop_up_effect()
+        self.window_drop_up_effect(width=12, height=5, x=2, y=9)
 
-    def dialog_box_drop_down_effect(self):
-        """Intro effect for dialog box."""
-        for i in range(6):
-            black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
+    def window_drop_down_effect(self, width, height, x, y):
+        """Intro effect for windows."""
+        for i in range(height + 1):
+            black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
             for j in range(64):
-                self.screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
+                self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
                 display.update()
 
-    def dialog_box_drop_up_effect(self):
-        """Outro effect for dialog box."""
+    def window_drop_up_effect(self, width, height, x, y):
+        """Outro effect for windows."""
         # TODO(ELF): Needs work - doesn't always drop up smoothly. One observation is that it appears to work better closer
         #  to the origin (0, 0) of the map.
         # draw all the tiles initially once
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile in self.current_map.tile_types_in_current_map:
                 tile_dict['group'].draw(self.background)
-        for i in range(4, -1, -1):
+        for i in range(height - 1, -1, -1):
             dialog_box_underlying_tiles = get_dialog_box_underlying_tiles(self.current_map, i)
-            black_box = Surface((TILE_SIZE * 12, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
+            black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
             for j in range(64):
                 for tile, tile_dict in self.current_map.floor_tile_key.items():
                     if tile in dialog_box_underlying_tiles:
                         tile_dict['group'].draw(self.background)
                 self.background.blit(self.current_map.characters['HERO']['character_sprites'].sprites()[0].image,
-                                     (self.current_map.player.column * TILE_SIZE, self.current_map.player.row * TILE_SIZE))
+                                     (self.player.column * TILE_SIZE, self.player.row * TILE_SIZE))
                 for character, character_dict in self.current_map.characters.items():
                     self.background.blit(character_dict['character_sprites'].sprites()[0].image,
                                          (character_dict['character'].column * TILE_SIZE, character_dict['character'].row * TILE_SIZE))
                 self.screen.blit(self.background, self.camera_position)
-                self.screen.blit(black_box, (TILE_SIZE * 2, TILE_SIZE * 9))
+                self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
                 display.update()
+
+    # Menu functions
+
+    def talk(self):
+        """
+        Talk to an NPC.
+        :return: None
+        """
+        play_sound(menu_button_sfx)
+        # dialog = Dialog(player=self.player)
+
+        # for now, implementing using print statements. will be useful for debugging as well.
+        character_coordinates = [(character_dict['character'].row, character_dict['character'].column) for character_dict in self.characters.values()]
+        # if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
+
+        if any(c in character_coordinates for c in [self.player.next_coordinates]) or \
+                any(c in character_coordinates for c in [self.player.next_next_coordinates]) and self.player.next_tile_id == 'WOOD':
+            for character_identifier, character_dict in self.characters.items():
+                if (character_dict['character'].row, character_dict['character'].column) == self.player.next_coordinates or self.npc_is_across_counter(
+                        character_dict):
+                    if character_dict['character'].direction_value != get_opposite_direction(self.player.direction_value):
+                        character_dict['character'].direction_value = get_opposite_direction(self.player.direction_value)
+                        character_dict['character'].animate()
+                        character_dict['character'].pause()
+                    self.launch_dialog(character_identifier, self.current_map)
+                    break
+        else:
+            self.show_text_in_dialog_box(("There is no one there.",))
+        self.game.unlaunch_menu(self)
+        self.game.unpause_all_movement()
+        # TODO(ELF): Add drop up effect upon closing command menu - currently blits to the wrong place,
+        #  and also clears the command menu before blitting.
+        # self.window_drop_up_effect(width=8, height=5, x=5, y=1)
 
     def status(self):
         """
@@ -250,6 +250,8 @@ class CommandMenu(Menu):
         ARMOR: {self.player.armor}
         SHIELD: {self.player.shield}
         """)
+        self.game.unlaunch_menu(self)
+        self.game.unpause_all_movement()
 
     def stairs(self):
         """
@@ -263,6 +265,8 @@ class CommandMenu(Menu):
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
             self.show_text_in_dialog_box(("There are no stairs here.",))
+        self.game.unlaunch_menu(self)
+        self.game.unpause_all_movement()
 
     def search(self):
         """
@@ -280,6 +284,8 @@ class CommandMenu(Menu):
         else:
             text_to_print.append("But there found nothing.")
         self.show_text_in_dialog_box(text_to_print, add_quotes=False)
+        self.game.unlaunch_menu(self)
+        self.game.unpause_all_movement()
 
     def spell(self):
         """
@@ -292,6 +298,8 @@ class CommandMenu(Menu):
             self.show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), add_quotes=False)
         else:
             self.show_text_in_dialog_box(convert_list_to_newline_separated_string(self.player.spells), add_quotes=False)
+        self.game.unlaunch_menu(self)
+        self.game.unpause_all_movement()
 
     def item(self):
         """
@@ -304,6 +312,8 @@ class CommandMenu(Menu):
             self.show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), add_quotes=False)
         else:
             self.show_text_in_dialog_box(convert_list_to_newline_separated_string(self.player.inventory), add_quotes=False)
+        self.game.unlaunch_menu(self)
+        self.game.unpause_all_movement()
 
     def door(self):
         """
@@ -319,6 +329,8 @@ class CommandMenu(Menu):
                 self.show_text_in_dialog_box(("Thou hast not a key to use.",), False)
         else:
             self.show_text_in_dialog_box(("There is no door here.",), False)
+        self.game.unlaunch_menu(self)
+        self.game.unpause_all_movement()
 
     def take(self):
         """
@@ -336,7 +348,7 @@ class CommandMenu(Menu):
                     gold_amount = treasure_info['amount']
 
                     self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-                    self.show_text_in_dialog_box(f"Of {item_name} thou hast gained {gold_amount}")
+                    self.show_text_in_dialog_box(f"Of {item_name} thou hast gained {gold_amount}", add_quotes=False)
 
                     self.player.gold += gold_amount
                 else:
@@ -344,7 +356,7 @@ class CommandMenu(Menu):
 
                     self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
                     self.show_text_in_dialog_box(f"Fortune smiles upon thee, {self.player.name}.\n"
-                                                 f"Thou hast found the {item_name}.")
+                                                 f"Thou hast found the {item_name}.", add_quotes=False)
 
                     self.player.inventory.append(item_name)
 
@@ -356,6 +368,8 @@ class CommandMenu(Menu):
         # take the hidden item
         else:
             self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",))
+        self.game.unlaunch_menu(self)
+        self.game.unpause_all_movement()
 
     def set_tile_by_coordinates(self, new_tile_identifier, column, row, player):
         # TODO(ELF): This works, but resets whenever the map is reloaded.

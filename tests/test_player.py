@@ -1,12 +1,13 @@
 from unittest import TestCase
 
 from src.player.player import Player
+from test_game import MockMap
 
 
 class TestPlayer(TestCase):
 
     def setUp(self):
-        self.player = Player(center_point=None, images=None)
+        self.player = Player(center_point=None, images=None, current_map=MockMap())
 
     def test_get_level_by_experience(self):
         self.assertEqual(1, self.player.level)
