@@ -4,15 +4,17 @@ from typing import Tuple, List
 import pygame_menu
 from pygame import image, Surface, display, KEYDOWN
 from pygame.event import get
+from pygame.sprite import Group
 from pygame.time import get_ticks
 
 from data.text.dialog import get_dialog_box_underlying_tiles, set_window_background, blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, COMMAND_MENU_BACKGROUND_PATH, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx
+from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, COMMAND_MENU_BACKGROUND_PATH, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
+    get_tile_id_by_coordinates
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.maps_functions import get_center_point
-from src.menu_functions import get_opposite_direction
+from src.menu_functions import get_opposite_direction, convert_list_to_newline_separated_string
 from src.sound import play_sound
 from src.text import draw_text
 
@@ -180,7 +182,7 @@ class CommandMenu(Menu):
         """Shows a passage of text in a dialog box."""
         self.dialog_box_drop_down_effect()
         if type(text) == str:
-            self.show_line_in_dialog_box(text)
+            self.show_line_in_dialog_box(text, add_quotes, temp_text_start)
         else:
             for line in text:
                 self.show_line_in_dialog_box(line, add_quotes, temp_text_start)
@@ -289,7 +291,7 @@ class CommandMenu(Menu):
         if not self.player.spells:
             self.show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), add_quotes=False)
         else:
-            self.show_text_in_dialog_box('\n \n'.join([spell for spell in self.player.spells]), add_quotes=False)
+            self.show_text_in_dialog_box(convert_list_to_newline_separated_string(self.player.spells), add_quotes=False)
 
     def item(self):
         """
@@ -301,7 +303,7 @@ class CommandMenu(Menu):
         if not self.player.inventory:
             self.show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), add_quotes=False)
         else:
-            self.show_text_in_dialog_box(self.player.inventory, add_quotes=False)
+            self.show_text_in_dialog_box(convert_list_to_newline_separated_string(self.player.inventory), add_quotes=False)
 
     def door(self):
         """
@@ -332,23 +334,21 @@ class CommandMenu(Menu):
                 if item_name == 'GOLD':
                     play_sound(open_treasure_sfx)
                     gold_amount = treasure_info['amount']
+
+                    self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
                     self.show_text_in_dialog_box(f"Of {item_name} thou hast gained {gold_amount}")
+
                     self.player.gold += gold_amount
-
-                    # self.player.current_tile = 'BRICK'
-                    self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row)
-
                 else:
                     play_sound(open_treasure_sfx)
+
+                    self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
                     self.show_text_in_dialog_box(f"Fortune smiles upon thee, {self.player.name}.\n"
                                                  f"Thou hast found the {item_name}.")
 
                     self.player.inventory.append(item_name)
 
                     # self.player.current_tile = 'BRICK'
-                    self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row)
-                    self.screen.blit(self.background, self.camera_position)
-
             else:
                 self.show_text_in_dialog_box("Unfortunately, it is empty.")
         #     take it and update inventory accordingly
@@ -357,12 +357,19 @@ class CommandMenu(Menu):
         else:
             self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",))
 
-    def set_tile_by_coordinates(self, tile_identifier, column, row):
-        # TODO(ELF): Needs work, original tile sometimes flashes through.
-        self.current_map.layout[row][column] = self.current_map.floor_tile_key[tile_identifier]['val']
-        tile_dict = self.current_map.floor_tile_key[tile_identifier]
+    def set_tile_by_coordinates(self, new_tile_identifier, column, row, player):
+        # TODO(ELF): This works, but resets whenever the map is reloaded.
+        self.current_tile = 'BRICK'
+        old_tile_identifier = get_tile_id_by_coordinates(column, row, self.current_map)
+        if column == player.column and row == player.row:
+            player.current_tile = new_tile_identifier
+        self.current_map.layout[row][column] = self.current_map.floor_tile_key[new_tile_identifier]['val']
         center_pt = get_center_point(column, row)
-        self.current_map.add_tile(tile_dict, center_pt)
-        for tile, tile_dict in self.current_map.floor_tile_key.items():
-            if tile in self.current_map.tile_types_in_current_map:
-                tile_dict['group'].draw(self.background)
+        self.current_map.add_tile(self.current_map.floor_tile_key[new_tile_identifier], center_pt)
+        self.current_map.floor_tile_key[old_tile_identifier]['group'] = Group()
+        # self.current_map.floor_tile_key[new_tile_identifier]['group'].draw(self.background)
+        for row in range(len(self.current_map.layout)):
+            for column in range(len(self.current_map.layout[row])):
+                self.current_map.center_pt = get_center_point(column, row)
+                if self.current_map.layout[row][column] <= 32:  # anything below 32 is a floor tile
+                    self.current_map.map_floor_tiles(column, row)
