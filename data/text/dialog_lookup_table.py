@@ -5,6 +5,8 @@ class DialogLookup:
 
         where_is_princess_gwaelin = "Where oh where can I find Princess Gwaelin?"
         welcome_to_tantegel = "Welcome to Tantegel Castle."
+        brecconary_inn_cost = 6
+        garinham_inn_cost = 25
         tools_intro = "Welcome.\n" \
                       "We deal in tools.\n" \
                       "What can I do for thee?"
@@ -22,12 +24,17 @@ class DialogLookup:
                 ), 'post_initial_dialog': "When thou art finished preparing for thy departure, please see me.\n"
                                           "I shall wait.",
                     'returned_dialog': (
-                    f"I am greatly pleased that thou hast returned, {player.name}.",
-                    f"Before reaching thy next level of experience thou must gain {player.points_to_next_level} Points."
-                )},
-                'UP_FACE_GUARD': {'dialog': "If thou art planning to take a rest, first see King Lorik."},
-                'DOWN_FACE_GUARD': {'dialog': (
-                    "King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later.",)},
+                        f"I am greatly pleased that thou hast returned, {player.name}.",
+                        f"Before reaching thy next level of experience thou must gain {player.points_to_next_level} Points.",
+                        "Will thou tell me now of thy deeds so they won't be forgotten?",
+                        # if yes:
+                        "Thy deeds have been recorded on the Imperial Scrolls of Honor.",
+                        "Dost thou wish to continue thy quest?",
+                        # if yes:
+                        f"Goodbye now, {player.name}.\n'Take care and tempt not the Fates.",
+                        # if no:
+                        # "Rest then for awhile."
+                    )},
                 'RIGHT_FACE_GUARD': {'dialog': (
                     "East of this castle is a town where armor, weapons, and many other items may be purchased.",
                     f"Return to the Inn for a rest if thou art wounded in battle, {player.name}.",
@@ -61,6 +68,9 @@ class DialogLookup:
                 'WOMAN_2': {'dialog': where_is_princess_gwaelin},
                 'RIGHT_FACE_GUARD': {'dialog': where_is_princess_gwaelin},
                 'LEFT_FACE_GUARD': {'dialog': welcome_to_tantegel},
+                'DOWN_FACE_GUARD': {'dialog': (
+                    "King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later.",)},
+                'UP_FACE_GUARD': {'dialog': "If thou art planning to take a rest, first see King Lorik."},
                 'RIGHT_FACE_GUARD_2': {'dialog': welcome_to_tantegel},
                 'WISE_MAN': {'dialog': f"{player.name}'s coming was foretold by legend. "
                                        f"May the light shine upon this brave warrior.", 'side_effect': player.restore_mp}},
@@ -69,15 +79,14 @@ class DialogLookup:
                 'MAN': {'dialog': "There is a town where magic keys can be purchased."},
                 'WISE_MAN': {'dialog': "If thou art cursed, come again."},
                 'MERCHANT': {'dialog': (weapons_and_armor_intro,)},
-                'WOMAN': {'dialog': "Welcome! \n"
-                                    "Enter the shop and speak to its keeper across the desk."},
+                'MERCHANT_2': {'dialog': self.get_inn_intro(brecconary_inn_cost)},
+                'WOMAN_2': {'dialog': "Welcome! \n"
+                                      "Enter the shop and speak to its keeper across the desk."},
             },
             'Garinham': {
                 'MERCHANT': {'dialog': (tools_intro,)},
                 'MERCHANT_2': {'dialog': (
-                    "Welcome to the traveler's Inn.\n"
-                    "Room and board is 25 GOLD per night.\n"
-                    "Dost thou want a room?",
+                    self.get_inn_intro(garinham_inn_cost),
                 )},
                 'MERCHANT_3': {'dialog': weapons_and_armor_intro},
                 'WISE_MAN': {'dialog': "Many believe that Princess Gwaelin is hidden away in a cave."}
@@ -88,3 +97,9 @@ class DialogLookup:
         for map_dict in self.lookup_table.values():
             for character_identifier, character_dict in map_dict.items():
                 character_dict['dialog_character'] = character_identifier
+
+    @staticmethod
+    def get_inn_intro(inn_cost):
+        return "Welcome to the traveler's Inn.\n" \
+               f"Room and board is {inn_cost} GOLD per night.\n" \
+               "Dost thou want a room?"
