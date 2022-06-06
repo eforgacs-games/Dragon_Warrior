@@ -46,7 +46,6 @@ class DragonWarriorMap:
 
         self.tiles_in_current_loaded_map = None
         self.layout = layout
-        self.layout_numpy_array = np.array(self.layout)
         self.center_pt = None
         self.map_tiles = parse_map_tiles(map_path=MAP_TILES_PATH)
         self.impassable_tiles = all_impassable_tiles
@@ -136,7 +135,7 @@ class DragonWarriorMap:
         """
         # TODO(ELF): Only works if there is only one of these characters. Make work with multiple.
         character_layout_position = np.asarray(
-            np.where(self.layout_numpy_array == self.character_key[character_name]['val'])).T
+            np.where(np.array(self.layout) == self.character_key[character_name]['val'])).T
         return character_layout_position
 
     def get_staircase_locations(self):
@@ -151,7 +150,7 @@ class DragonWarriorMap:
         return brick_stair_down_staircase_locations + brick_stair_up_staircase_locations + grass_stair_down_staircase_locations
 
     def find_tile_in_layout_by_value(self, tile):
-        return np.asarray(np.where(self.layout_numpy_array == self.tile_key[tile]['val'])).T
+        return np.asarray(np.where(np.array(self.layout) == self.tile_key[tile]['val'])).T
 
     # @timeit
     def load_map(self, player, destination_coordinates) -> None:
