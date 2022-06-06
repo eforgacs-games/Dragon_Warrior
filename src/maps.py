@@ -44,6 +44,7 @@ class DragonWarriorMap:
 
         # Map variables
 
+        self.initial_coordinates = ()
         self.tiles_in_current_loaded_map = None
         self.layout = layout
         self.center_pt = None
@@ -115,10 +116,10 @@ class DragonWarriorMap:
             else:
                 character_dict['four_sided'] = True
             character_dict['roaming'] = True if character == 'ROAMING_GUARD' else False
-            # if character == 'HERO':
-            #     character_dict['underlying_tile'] = self.hero_underlying_tile()
+            if character == 'HERO':
+                character_dict['underlying_tile'] = self.hero_underlying_tile()
             # TODO(ELF): Pretty rough logic here. Need to make this more extensible.
-            if character == 'WOMAN':
+            elif character == 'WOMAN':
                 character_dict['underlying_tile'] = 'GRASS'
             else:
                 character_dict['underlying_tile'] = 'BRICK'
@@ -336,16 +337,11 @@ class TantegelThroneRoom(DragonWarriorMap):
         self.staircases = {
             (14, 18): {'map': 'TantegelCourtyard', 'destination_coordinates': (14, 14), 'direction': Direction.RIGHT.value}}
         self.music_file_path = tantegel_castle_throne_room_music
+        self.initial_coordinates = (10, 13)
         self.assign_stair_directions()
 
     def hero_underlying_tile(self):
-        underlying_tiles = {
-            (10, 13): 'BRICK',
-            (14, 18): 'BRICK_STAIR_DOWN'
-        }
-        initial_hero_location = self.get_initial_character_location('HERO')
-        if initial_hero_location.size > 0:
-            return underlying_tiles[(initial_hero_location.take(0), initial_hero_location.take(1))]
+        return 'BRICK'
 
     def hero_initial_direction(self):
         return Direction.UP.value
@@ -370,22 +366,11 @@ class TantegelCourtyard(DragonWarriorMap):
         self.staircases[(36, 36)] = {'map': 'TantegelCellar'}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
+        self.initial_coordinates = (14, 14)
         self.music_file_path = tantegel_castle_courtyard_music
 
     def hero_underlying_tile(self):
-        # TODO: Super TODO. Make characters have initial coordinates
-        #  Instead of underlying tiles, set up the map with just the background tiles.
-        #  Right now this implementation has a band-aid over it
-        underlying_tiles = {
-            (10, 13): 'BRICK',
-            (14, 14): 'BRICK_STAIR_UP'
-        }
-        # if self.player:
-        initial_hero_location = self.get_initial_character_location('HERO')
-        if initial_hero_location.size > 0:
-            return underlying_tiles[(initial_hero_location.take(0), initial_hero_location.take(1))]
-        else:
-            return 'BRICK_STAIR_UP'
+        return 'BRICK_STAIR_UP'
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
@@ -559,7 +544,7 @@ class Alefgard(MapWithoutNPCs):
             (50, 49): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 18), 'direction': Direction.UP.value},
             (55, 54): {'map': 'CharlockB1'},
             # villages
-            (48, 54): {'map': 'Brecconary'},
+            (48, 54): {'map': 'Brecconary', 'destination_coordinates': (23, 10)},
             (9, 8): {'map': 'Garinham'},
             (17, 110): {'map': 'Kol'},
             # cave
@@ -575,6 +560,7 @@ class Alefgard(MapWithoutNPCs):
         }
         for staircase_dict in self.staircases.values():
             staircase_dict['stair_direction'] = 'up'
+        self.initial_coordinates = (50, 49)
 
     def hero_underlying_tile(self):
         return 'CASTLE'
@@ -592,6 +578,7 @@ class Brecconary(DragonWarriorMap):
                                west_gate=warp_line((21, 9), (24, 9)))
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
+        self.initial_coordinates = (23, 10)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -612,6 +599,7 @@ class Garinham(DragonWarriorMap):
                                east_gate=warp_line((11, 29), (14, 29)))
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
+        self.initial_coordinates = (14, 9)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -636,6 +624,7 @@ class Kol(DragonWarriorMap):
                                west_gate=warp_line((7, 8), (32, 8)),
                                south_gate=warp_line((32, 8), (32, 33)))
         self.set_town_to_overworld_warps()
+        self.initial_coordinates = (30, 29)
 
     def hero_underlying_tile(self):
         return 'SAND'
@@ -657,6 +646,7 @@ class Rimuldar(DragonWarriorMap):
                                south_gate=warp_line((36, 0), (36, len(self.layout[0]))))
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
+        self.initial_coordinates = (22, 37)
 
     def hero_underlying_tile(self):
         return 'BRICK'
