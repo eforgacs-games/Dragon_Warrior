@@ -34,6 +34,7 @@ from src.visual_effects import fade
 class Game:
 
     def __init__(self):
+        self.big_map = None
         self.layouts = MapLayouts()
         self.is_initial_dialog = True
         self.draw_text_start = None
@@ -80,12 +81,9 @@ class Game:
         # self.current_map = maps.Rimuldar()
         # self.current_map = maps.Cantlin()
 
-        self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
-            (self.current_map.width, self.current_map.height)).convert()
-        self.big_map.fill(BLACK)
+        self.set_big_map()
 
         self.set_roaming_character_positions()
-        # Make the big scrollable map
         self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
         self.player = Player(center_point=None, images=None, current_map=self.current_map)
         self.current_map.load_map(self.player, None)
@@ -471,9 +469,7 @@ class Game:
         self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
         fade(self.screen.get_width(), self.screen.get_height(), fade_out=True, background=self.background,
              screen=self.screen)
-        self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
-            (self.current_map.width, self.current_map.height)).convert()
-        self.big_map.fill(BLACK)
+        self.set_big_map()
         self.set_roaming_character_positions()
         if self.music_enabled:
             mixer.music.stop()
@@ -492,7 +488,6 @@ class Game:
                 self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
             self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
         self.current_map.load_map(self.player, destination_coordinates)
-        self.handle_player_direction_on_map_change(current_map_staircase_dict)
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                              current_map=self.current_map, screen=self.screen)
         # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
@@ -506,10 +501,15 @@ class Game:
 
         # play_music(self.current_map.music_file_path)
 
+    def set_big_map(self):
+        self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
+            (self.current_map.width, self.current_map.height)).convert()
+        self.big_map.fill(BLACK)
+
     def handle_player_direction_on_map_change(self, current_map_staircase_dict):
         destination_direction = current_map_staircase_dict.get('direction')
         if destination_direction:
-            self.current_map.player.direction_value = destination_direction
+            self.player.direction_value = destination_direction
 
     def handle_player_position_on_map_change(self, destination_coordinates):
         self.current_map.layout[self.current_map.get_initial_character_location('HERO')[0][0]][
