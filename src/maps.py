@@ -117,6 +117,7 @@ class DragonWarriorMap:
             character_dict['roaming'] = True if character == 'ROAMING_GUARD' else False
             if character == 'HERO':
                 character_dict['underlying_tile'] = self.hero_underlying_tile()
+            # TODO(ELF): Pretty rough logic here. Need to make this more extensible.
             elif character == 'WOMAN':
                 character_dict['underlying_tile'] = 'GRASS'
             else:
@@ -133,7 +134,6 @@ class DragonWarriorMap:
         :param character_name: Name of the character to find
         :return:
         """
-        # TODO(ELF): Only works if there is only one of these characters. Make work with multiple.
         character_layout_position = np.asarray(
             np.where(np.array(self.layout) == self.character_key[character_name]['val'])).T
         return character_layout_position
@@ -215,7 +215,7 @@ class DragonWarriorMap:
                                                  'tile_value': self.character_key[identifier]['val'],
                                                  'coordinates': coordinates}
         self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
-        self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
+        # self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
     def set_identifiers_for_duplicate_characters(self, character, identifier):
         character_count = [character_dict['tile_value'] for character_dict in self.characters.values()].count(self.character_key[identifier]['val']) + 1
@@ -265,7 +265,8 @@ class DragonWarriorMap:
         raise NotImplementedError("Method not implemented")
 
     def set_character_initial_direction(self, character_identifier, direction) -> None:
-        self.characters[character_identifier]['character'].direction_value = direction.value
+        if self.characters.get(character_identifier):
+            self.characters[character_identifier]['character'].direction_value = direction.value
 
     def set_town_to_overworld_warps(self) -> None:
         """Sets the exit location to the overworld (Alefgard) from within a town"""
@@ -338,7 +339,13 @@ class TantegelThroneRoom(DragonWarriorMap):
         self.assign_stair_directions()
 
     def hero_underlying_tile(self):
-        return 'BRICK'
+        underlying_tiles = {
+            (10, 13): 'BRICK',
+            (14, 18): 'BRICK_STAIR_DOWN'
+        }
+        initial_hero_location = self.get_initial_character_location('HERO')
+        if initial_hero_location.size > 0:
+            return underlying_tiles[(initial_hero_location.take(0), initial_hero_location.take(1))]
 
     def hero_initial_direction(self):
         return Direction.UP.value
@@ -369,7 +376,16 @@ class TantegelCourtyard(DragonWarriorMap):
         # TODO: Super TODO. Make characters have initial coordinates
         #  Instead of underlying tiles, set up the map with just the background tiles.
         #  Right now this implementation has a band-aid over it
-        return 'BRICK_STAIR_UP'
+        underlying_tiles = {
+            (10, 13): 'BRICK',
+            (14, 14): 'BRICK_STAIR_UP'
+        }
+        # if self.player:
+        initial_hero_location = self.get_initial_character_location('HERO')
+        if initial_hero_location.size > 0:
+            return underlying_tiles[(initial_hero_location.take(0), initial_hero_location.take(1))]
+        else:
+            return 'BRICK_STAIR_UP'
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
