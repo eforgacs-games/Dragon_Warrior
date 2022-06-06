@@ -1,12 +1,31 @@
 from unittest import TestCase
 
+from src.common import Direction
+from src.maps import MapWithoutNPCs
 from src.player.player import Player
 
+
+layout = [[33, 0, 3],
+          [1, 2, 3],
+          [3, 3, 39]]
+
+
+class MockMap(MapWithoutNPCs):
+    __test__ = False
+
+    def __init__(self):
+        super().__init__(layout)
+
+    def hero_underlying_tile(self):
+        return 'BRICK'
+
+    def hero_initial_direction(self):
+        return Direction.DOWN.value
 
 class TestPlayer(TestCase):
 
     def setUp(self):
-        self.player = Player(center_point=None, images=None)
+        self.player = Player(center_point=None, images=None, current_map=MockMap())
 
     def test_get_level_by_experience(self):
         self.assertEqual(1, self.player.level)
