@@ -34,6 +34,7 @@ from src.visual_effects import fade
 class Game:
 
     def __init__(self):
+        self.background = None
         self.big_map = None
         self.layouts = MapLayouts()
         self.is_initial_dialog = True
@@ -84,7 +85,7 @@ class Game:
         self.set_big_map()
 
         self.set_roaming_character_positions()
-        self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
+
         self.player = Player(center_point=None, images=None, current_map=self.current_map)
         self.current_map.load_map(self.player, None)
 
@@ -477,21 +478,15 @@ class Game:
         destination_coordinates = current_map_staircase_dict.get('destination_coordinates')
         self.current_map.destination_coordinates = destination_coordinates
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        if initial_hero_location.size > 0:
-            self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
-        else:
-            self.player.row, self.player.column = destination_coordinates[0], destination_coordinates[1]
+        if initial_hero_location.size <= 0:
+            # self.player.row, self.player.column = destination_coordinates[0], destination_coordinates[1]
             initial_hero_location = np.array([self.player.row, self.player.column])
+        # else:
+        #     self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         if destination_coordinates:
-            self.reset_initial_hero_location_tile(initial_hero_location)
-            # if the underlying tile in the character key doesn't match what's at the destination, then change it
-            if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
-                self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_UP'
-            elif self.player.current_tile == 'BRICK_STAIR_UP':
-                self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_DOWN'
-            else:
-                # TODO(ELF): The stairs are an improvement, but this part still needs fixing.
-                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.hero_underlying_tile()
+            if self.current_map.initial_coordinates != destination_coordinates:
+                self.reset_initial_hero_location_tile()
+            self.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
             self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
         self.current_map.load_map(self.player, destination_coordinates)
         self.handle_player_direction_on_map_change(current_map_staircase_dict)
@@ -508,14 +503,29 @@ class Game:
 
         # play_music(self.current_map.music_file_path)
 
-    def reset_initial_hero_location_tile(self, initial_hero_location):
-        self.current_map.layout[initial_hero_location.take(0)][initial_hero_location.take(1)] = \
-            self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']
+    def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
+        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
+            self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_UP'
+        elif self.player.current_tile == 'BRICK_STAIR_UP':
+            self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_DOWN'
+        else:
+            if destination_coordinates != (initial_hero_location.take(0), initial_hero_location.take(1)):
+                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
+                    self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
+            else:
+                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.hero_underlying_tile()
+
+    def reset_initial_hero_location_tile(self):
+        if self.current_map.layout[self.current_map.initial_coordinates[0]][self.current_map.initial_coordinates[1]] != \
+                self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']:
+            self.current_map.layout[self.current_map.initial_coordinates[0]][self.current_map.initial_coordinates[1]] = \
+                self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']
 
     def set_big_map(self):
         self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
             (self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(BLACK)
+        self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
 
     def handle_player_direction_on_map_change(self, current_map_staircase_dict):
         destination_direction = current_map_staircase_dict.get('direction')

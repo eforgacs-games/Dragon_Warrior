@@ -192,6 +192,7 @@ class TestGame(TestCase):
         self.assertTrue(self.game.cmd_menu.launched)
 
     def test_change_map(self):
+        # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
         self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
         self.game.change_map(TantegelThroneRoom())
         self.assertEqual('MockMap', self.game.last_map.identifier)
