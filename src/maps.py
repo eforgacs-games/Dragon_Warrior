@@ -12,8 +12,8 @@ from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_
     overworld_music, village_music, dungeon_floor_1_music, dungeon_floor_2_music, dungeon_floor_3_music, dungeon_floor_4_music, dungeon_floor_5_music, \
     dungeon_floor_6_music, dungeon_floor_7_music, dungeon_floor_8_music
 from src.config import TILE_SIZE, SCALE
-from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point
 from src.map_layouts import MapLayouts
+from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
 from src.sprites.fixed_character import FixedCharacter
@@ -179,8 +179,9 @@ class DragonWarriorMap:
 
     def map_character(self, character, character_dict, current_tile, player, coordinates) -> None:
         if current_tile == self.character_key['HERO']['val']:
-            if not self.player:
-                player.__init__(self.center_pt, self.scale_sprite_sheet(UNARMED_HERO_PATH), self)
+            # TODO(ELF): not the greatest thing to call the constructor every single time the character is mapped.
+            #  instead, it should just pass the player object from map to map and keep all the attributes.
+            player.__init__(self.center_pt, self.scale_sprite_sheet(UNARMED_HERO_PATH), self)
             self.map_player(character_dict['underlying_tile'], player, coordinates)
         else:
             self.map_npc(character, character_dict.get('direction'), character_dict['underlying_tile'], character_dict['path'], character_dict['four_sided'],
@@ -224,11 +225,10 @@ class DragonWarriorMap:
             character.identifier = f'{identifier}_{character_count}'
 
     def map_player(self, underlying_tile, player, coordinates) -> None:
-        self.player = player
-        self.player_sprites = LayeredDirty(self.player)
-        self.player.direction_value = self.hero_initial_direction()
+        self.player_sprites = LayeredDirty(player)
+        player.direction_value = self.hero_initial_direction()
         self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
-        self.characters['HERO'] = {'character': self.player,
+        self.characters['HERO'] = {'character': player,
                                    'character_sprites': self.player_sprites,
                                    'tile_value': self.character_key['HERO']['val'],
                                    'coordinates': coordinates}
