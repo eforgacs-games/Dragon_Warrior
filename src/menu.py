@@ -6,7 +6,7 @@ from pygame.event import get
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
-from data.text.dialog import get_dialog_box_underlying_tiles, set_window_background, blink_down_arrow
+from data.text.dialog import set_window_background, blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, COMMAND_MENU_BACKGROUND_PATH, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates
@@ -181,12 +181,11 @@ class CommandMenu(Menu):
             if tile in self.current_map.tile_types_in_current_map:
                 tile_dict['group'].draw(self.background)
         for i in range(height - 1, -1, -1):
-            dialog_box_underlying_tiles = get_dialog_box_underlying_tiles(self.current_map, i)
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
             for j in range(64):
                 for tile, tile_dict in self.current_map.floor_tile_key.items():
-                    if tile in dialog_box_underlying_tiles:
+                    if tile in self.get_dialog_box_underlying_tiles(self.current_map, i):
                         tile_dict['group'].draw(self.background)
                 self.background.blit(self.current_map.characters['HERO']['character_sprites'].sprites()[0].image,
                                      (self.player.column * TILE_SIZE, self.player.row * TILE_SIZE))
@@ -388,3 +387,11 @@ class CommandMenu(Menu):
                 if self.current_map.layout[row][column] <= max(self.current_map.floor_tile_key[old_tile_identifier]['val'],
                                                                self.current_map.floor_tile_key[new_tile_identifier]['val']):
                     self.current_map.map_floor_tiles(column, row)
+
+    def get_dialog_box_underlying_tiles(self, current_map, current_box_height):
+        # TODO(ELF): Can be improved further by narrowing the columns to just where the box is, not only the rows.
+        box_start_row = 2
+        box_end_row = current_box_height + box_start_row
+        row_tile_sets = [set(row) for row in
+                         current_map.layout[self.player.row + box_start_row:self.player.row + box_end_row]]
+        return set([item for sublist in row_tile_sets for item in sublist])

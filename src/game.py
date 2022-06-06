@@ -204,6 +204,8 @@ class Game:
         if SHOW_COORDINATES:
             print(f"{self.player.row, self.player.column}")
 
+        # print(f"Inventory: {self.player.inventory}, Gold: {self.player.gold}")
+
         # This prints out the next coordinates that the player will land on.
         # print(self.player.next_coordinates)
 
@@ -488,7 +490,13 @@ class Game:
                 self.reset_initial_hero_location_tile()
             self.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
             self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
+        gold = self.player.gold
+        inventory = self.player.inventory
         self.current_map.load_map(self.player, destination_coordinates)
+        # TODO(ELF): Really not ideal to do it this way, but until I figure out how to not call the player constructor in the load_map method
+        #  this will have to do.
+        self.player.gold = gold
+        self.player.inventory = inventory
         self.handle_player_direction_on_map_change(current_map_staircase_dict)
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                              current_map=self.current_map, screen=self.screen)
