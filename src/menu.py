@@ -358,7 +358,6 @@ class CommandMenu(Menu):
                     self.show_text_in_dialog_box(f"Fortune smiles upon thee, {self.player.name}.\n"
                                                  f"Thou hast found the {item_name}.", add_quotes=False)
                     # could probably assign the new treasure box values by using this line:
-                    # layouts.map_layout_lookup[self.current_map.__class__.__name__]
                     self.player.inventory.append(item_name)
 
                     # self.player.current_tile = 'BRICK'
@@ -378,7 +377,7 @@ class CommandMenu(Menu):
         old_tile_identifier = get_tile_id_by_coordinates(column, row, self.current_map)
         if column == player.column and row == player.row:
             player.current_tile = new_tile_identifier
-        self.current_map.layout[row][column] = self.current_map.floor_tile_key[new_tile_identifier]['val']
+        self.current_map.layout[row][column] = self.game.layouts.map_layout_lookup[self.current_map.__class__.__name__][row][column] = self.current_map.floor_tile_key[new_tile_identifier]['val']
         center_pt = get_center_point(column, row)
 
         self.current_map.floor_tile_key[old_tile_identifier]['group'] = Group()
