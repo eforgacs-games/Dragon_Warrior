@@ -477,12 +477,14 @@ class Game:
         self.current_map.layout = layouts.map_layout_lookup[self.current_map.__class__.__name__]
         current_map_staircase_dict = self.last_map.staircases[(self.player.row, self.player.column)]
         destination_coordinates = current_map_staircase_dict.get('destination_coordinates')
+        initial_hero_location = self.current_map.get_initial_character_location('HERO')
+        self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         if destination_coordinates:
             self.handle_player_position_on_map_change(destination_coordinates)
         self.current_map.load_map(self.player, destination_coordinates)
         self.handle_player_direction_on_map_change(current_map_staircase_dict)
-        initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
+
+
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                              current_map=self.current_map, screen=self.screen)
         # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
