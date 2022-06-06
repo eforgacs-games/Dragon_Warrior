@@ -14,7 +14,7 @@ import src.menu as menu
 from src import maps
 from src.camera import Camera
 from src.common import BLACK, DRAGON_QUEST_FONT_PATH, Direction, ICON_PATH, WHITE, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
-    is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier
+    is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -86,7 +86,7 @@ class Game:
 
         self.set_roaming_character_positions()
 
-        self.player = Player(center_point=None, images=None, current_map=self.current_map)
+        self.player = Player(center_point=None, images=self.current_map.scale_sprite_sheet(UNARMED_HERO_PATH), current_map=self.current_map)
         self.current_map.load_map(self.player, None)
 
         # Good for debugging, and will be useful later when the player's level increases and the stats need to be increased to match
@@ -175,9 +175,10 @@ class Game:
         # currently can't process staircases right next to one another, need to fix
         # a quick fix would be to add an exception in the conditional for
         # the map where staircases right next to each other need to be enabled,
-        # as done with Cantlin below
-        if self.tiles_moved_since_spawn > 1 or self.current_map.identifier in (
-                'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1'):
+        # as done with Cantlin and others below
+        immediate_move_maps = ('Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
+        # a quick fix to prevent buggy warping - set to > 2
+        if self.tiles_moved_since_spawn > 2 or (self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps):
             for staircase_location, staircase_dict in self.current_map.staircases.items():
                 self.process_staircase_warps(staircase_dict, staircase_location)
 
@@ -205,6 +206,7 @@ class Game:
             print(f"{self.player.row, self.player.column}")
 
         # print(f"Inventory: {self.player.inventory}, Gold: {self.player.gold}")
+        # print(self.tiles_moved_since_spawn)
 
         # This prints out the next coordinates that the player will land on.
         # print(self.player.next_coordinates)
@@ -481,22 +483,13 @@ class Game:
         self.current_map.destination_coordinates = destination_coordinates
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         if initial_hero_location.size <= 0:
-            # self.player.row, self.player.column = destination_coordinates[0], destination_coordinates[1]
             initial_hero_location = np.array([self.player.row, self.player.column])
-        # else:
-        #     self.player.row, self.player.column = initial_hero_location.take(0), initial_hero_location.take(1)
         if destination_coordinates:
             if self.current_map.initial_coordinates != destination_coordinates:
                 self.reset_initial_hero_location_tile()
             self.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
             self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
-        gold = self.player.gold
-        inventory = self.player.inventory
         self.current_map.load_map(self.player, destination_coordinates)
-        # TODO(ELF): Really not ideal to do it this way, but until I figure out how to not call the player constructor in the load_map method
-        #  this will have to do.
-        self.player.gold = gold
-        self.player.inventory = inventory
         self.handle_player_direction_on_map_change(current_map_staircase_dict)
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                              current_map=self.current_map, screen=self.screen)
@@ -508,8 +501,6 @@ class Game:
         self.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
-
-        # play_music(self.current_map.music_file_path)
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
@@ -539,16 +530,6 @@ class Game:
         destination_direction = current_map_staircase_dict.get('direction')
         if destination_direction:
             self.player.direction_value = destination_direction
-
-    def handle_player_position_on_map_change(self, destination_coordinates):
-        self.current_map.layout[self.current_map.get_initial_character_location('HERO')[0][0]][
-            self.current_map.get_initial_character_location('HERO')[0][1]] = \
-            self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']
-        if self.current_map.character_key['HERO']['underlying_tile'] != self.current_map.get_tile_by_value(
-                self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]]):
-            self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
-                self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
-        self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
 
     def set_roaming_character_positions(self):
         for roaming_character in self.current_map.roaming_characters:
@@ -626,7 +607,10 @@ class Game:
             if is_facing_medially(self.player):
                 if curr_pos_y % TILE_SIZE == 0:
                     if not self.player.bumped:
+                        # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning - should always be 0 when the map starts.
                         self.tiles_moved_since_spawn += 1
+                    else:
+                        self.player.bumped = False
                     self.player.is_moving, self.player.next_tile_checked = False, False
                     return
             elif is_facing_laterally(self.player):
