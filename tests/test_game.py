@@ -198,6 +198,14 @@ class TestGame(TestCase):
         self.assertEqual('MockMap', self.game.last_map.identifier)
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
 
+    def test_change_map_maintain_inventory_and_gold(self):
+        self.game.player.gold = 120
+        self.game.player.inventory = ['Torch']
+        self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
+        self.game.change_map(TantegelThroneRoom())
+        self.assertEqual(120, self.game.player.gold)
+        self.assertEqual(['Torch'], self.game.player.inventory)
+
     def test_king_lorik_initial_dialog(self):
         self.assertEqual((
             "Descendant of Erdrick, listen now to my words.",
