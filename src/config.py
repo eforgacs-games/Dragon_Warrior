@@ -28,7 +28,6 @@ else:
     FULLSCREEN_ENABLED = False
     SPLASH_SCREEN_ENABLED = True
     INITIAL_DIALOG_ENABLED = True
-ORCHESTRA_MUSIC_ENABLED = True
 SHOW_FPS = False
 # This prints out the current coordinates that the player is standing on.
 SHOW_COORDINATES = False

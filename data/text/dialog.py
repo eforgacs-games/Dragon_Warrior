@@ -21,10 +21,3 @@ def blink_down_arrow(screen):
         display.flip()
 
 
-def get_dialog_box_underlying_tiles(current_map, current_box_height):
-    # TODO(ELF): Can be improved further by narrowing the columns to just where the box is, not only the rows.
-    box_start_row = 2
-    box_end_row = current_box_height + box_start_row
-    row_tile_sets = [set(row) for row in
-                     current_map.layout[current_map.player.row + box_start_row:current_map.player.row + box_end_row]]
-    return set([item for sublist in row_tile_sets for item in sublist])
