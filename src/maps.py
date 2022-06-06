@@ -115,10 +115,10 @@ class DragonWarriorMap:
             else:
                 character_dict['four_sided'] = True
             character_dict['roaming'] = True if character == 'ROAMING_GUARD' else False
-            if character == 'HERO':
-                character_dict['underlying_tile'] = self.hero_underlying_tile()
+            # if character == 'HERO':
+            #     character_dict['underlying_tile'] = self.hero_underlying_tile()
             # TODO(ELF): Pretty rough logic here. Need to make this more extensible.
-            elif character == 'WOMAN':
+            if character == 'WOMAN':
                 character_dict['underlying_tile'] = 'GRASS'
             else:
                 character_dict['underlying_tile'] = 'BRICK'

@@ -483,11 +483,18 @@ class Game:
             self.player.row, self.player.column = destination_coordinates[0], destination_coordinates[1]
             initial_hero_location = np.array([self.player.row, self.player.column])
         if destination_coordinates:
-            self.current_map.layout[initial_hero_location.take(0)][initial_hero_location.take(1)] = self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']
-            if self.current_map.character_key['HERO']['underlying_tile'] != self.current_map.get_tile_by_value(self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]]):
-                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
+            self.reset_initial_hero_location_tile(initial_hero_location)
+            # if the underlying tile in the character key doesn't match what's at the destination, then change it
+            if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
+                self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_UP'
+            elif self.player.current_tile == 'BRICK_STAIR_UP':
+                self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_DOWN'
+            else:
+                # TODO(ELF): The stairs are an improvement, but this part still needs fixing.
+                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.hero_underlying_tile()
             self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
         self.current_map.load_map(self.player, destination_coordinates)
+        self.handle_player_direction_on_map_change(current_map_staircase_dict)
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                              current_map=self.current_map, screen=self.screen)
         # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
@@ -500,6 +507,10 @@ class Game:
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
 
         # play_music(self.current_map.music_file_path)
+
+    def reset_initial_hero_location_tile(self, initial_hero_location):
+        self.current_map.layout[initial_hero_location.take(0)][initial_hero_location.take(1)] = \
+            self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']
 
     def set_big_map(self):
         self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
@@ -514,7 +525,7 @@ class Game:
     def handle_player_position_on_map_change(self, destination_coordinates):
         self.current_map.layout[self.current_map.get_initial_character_location('HERO')[0][0]][
             self.current_map.get_initial_character_location('HERO')[0][1]] = \
-        self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']
+            self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']
         if self.current_map.character_key['HERO']['underlying_tile'] != self.current_map.get_tile_by_value(
                 self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]]):
             self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
