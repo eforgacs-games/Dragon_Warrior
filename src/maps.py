@@ -543,21 +543,21 @@ class Alefgard(MapWithoutNPCs):
             # (row, column)
             # castles
             (50, 49): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 18), 'direction': Direction.UP.value},
-            (55, 54): {'map': 'CharlockB1'},
+            (55, 54): {'map': 'CharlockB1', 'destination_coordinates': (25, 17)},
             # villages
             (48, 54): {'map': 'Brecconary', 'destination_coordinates': (23, 10)},
-            (9, 8): {'map': 'Garinham'},
-            (17, 110): {'map': 'Kol'},
+            (9, 8): {'map': 'Garinham', 'destination_coordinates': (14, 9)},
+            (17, 110): {'map': 'Kol', 'destination_coordinates': (30, 29)},
             # cave
-            (19, 34): {'map': 'ErdricksCaveB1'},
+            (19, 34): {'map': 'ErdricksCaveB1', 'destination_coordinates': (1, 1)},
             (51, 110): {'map': 'SwampCave', 'destination_coordinates': (6, 4)},
             (56, 110): {'map': 'SwampCave', 'destination_coordinates': (36, 4)},
-            (64, 35): {'map': 'MountainCaveB1'},
-            (96, 31): {'map': 'Hauksness'},
-            (79, 108): {'map': 'Rimuldar'},
-            (109, 79): {'map': 'Cantlin'},
-            (116, 114): {'map': 'MagicTemple'},
-            (8, 87): {'map': 'StaffOfRainCave'},
+            (64, 35): {'map': 'MountainCaveB1', 'destination_coordinates': (7, 1)},
+            (96, 31): {'map': 'Hauksness', 'destination_coordinates': (18, 9)},
+            (79, 108): {'map': 'Rimuldar', 'destination_coordinates': (22, 37)},
+            (109, 79): {'map': 'Cantlin', 'destination_coordinates': (8, 15)},
+            (116, 114): {'map': 'MagicTemple', 'destination_coordinates': (6, 2)},
+            (8, 87): {'map': 'StaffOfRainCave', 'destination_coordinates': (11, 6)},
         }
         for staircase_dict in self.staircases.values():
             staircase_dict['stair_direction'] = 'up'

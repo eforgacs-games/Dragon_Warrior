@@ -79,9 +79,9 @@ class Game:
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
-        # self.current_map = maps.ErdricksCaveB1()
+        # self.current_map = maps.Hauksness()
         # self.current_map = maps.Rimuldar()
-        # self.current_map = maps.Cantlin()
+        # self.current_map = maps.CharlockB1()
 
         self.set_big_map()
 
@@ -207,6 +207,8 @@ class Game:
 
         if SHOW_COORDINATES:
             print(f"{self.player.row, self.player.column}")
+
+        # print(self.camera.get_pos())
 
         # print(f"Inventory: {self.player.inventory}, Gold: {self.player.gold}")
         # print(self.tiles_moved_since_spawn)
