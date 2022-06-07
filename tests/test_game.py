@@ -69,11 +69,15 @@ class TestGame(TestCase):
         self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
         self.camera = Camera((self.game.current_map.player.rect.y // TILE_SIZE, self.game.current_map.player.rect.x // TILE_SIZE), self.game.current_map,
-                             None)
+                             self.game.screen)
 
-    # def test_get_initial_camera_position(self):
-    #     initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
-    #     self.assertEqual(self.camera.set_camera_position(initial_hero_location), (0, 0))
+    def test_get_initial_camera_position(self):
+        self.assertEqual((288.0, 256.0), self.camera.get_pos())
+        self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
+        # self.game.change_map(TantegelThroneRoom())
+        # self.assertEqual((-160.0, -96.0), self.camera.get_pos())
+        # self.game.change_map(TantegelCourtyard())
+        # self.assertEqual((-192.0, -224.0), self.camera.get_pos())
     #     self.game.current_map.layout = [[1, 0],
     #                                     [34, 2]]
     #     initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
