@@ -78,6 +78,7 @@ class TestGame(TestCase):
         # self.assertEqual((-160.0, -96.0), self.camera.get_pos())
         # self.game.change_map(TantegelCourtyard())
         # self.assertEqual((-192.0, -224.0), self.camera.get_pos())
+
     #     self.game.current_map.layout = [[1, 0],
     #                                     [34, 2]]
     #     initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
@@ -238,3 +239,37 @@ class TestGame(TestCase):
     #     pygame.key.get_pressed = create_key_mock(pygame.K_s)
     #     self.game.move_player(pygame.key.get_pressed())
     #     self.assertEqual(Direction.DOWN.value, self.game.player.direction_value)
+
+    def test_run_automatic_initial_dialog(self):
+        self.assertTrue(self.game.is_initial_dialog)
+        # pygame.key.get_pressed = create_key_mock(pygame.K_j)
+        self.game.run_automatic_initial_dialog()
+        self.assertFalse(self.game.enable_movement)
+        # TODO(ELF): Need to enable the following checks:
+        # self.assertFalse(self.game.is_initial_dialog)
+        # self.assertTrue(self.game.automatic_initial_dialog_run)
+
+    def test_set_to_save_prompt(self):
+        self.assertEqual((
+                    "Descendant of Erdrick, listen now to my words.",
+                    "It is told that in ages past Erdrick fought demons with a Ball of Light.",
+                    "Then came the Dragonlord who stole the precious globe and hid it in the darkness.",
+                    f"Now, {self.game.player.name}, thou must help us recover the Ball of Light and restore peace to our land.",
+                    "The Dragonlord must be defeated.",
+                    "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest.",
+                    "Then speak with the guards, for they have much knowledge that may aid thee.",
+                    f"May the light shine upon thee, {self.game.player.name}."
+                ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+        self.game.set_to_save_prompt()
+        self.assertEqual((
+                        f"I am greatly pleased that thou hast returned, {self.game.player.name}.",
+                        f"Before reaching thy next level of experience thou must gain {self.game.player.points_to_next_level} Points.",
+                        "Will thou tell me now of thy deeds so they won't be forgotten?",
+                        # if yes:
+                        "Thy deeds have been recorded on the Imperial Scrolls of Honor.",
+                        "Dost thou wish to continue thy quest?",
+                        # if yes:
+                        f"Goodbye now, {self.game.player.name}.\n'Take care and tempt not the Fates.",
+                        # if no:
+                        # "Rest then for awhile."
+                    ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
