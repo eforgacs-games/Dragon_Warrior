@@ -338,8 +338,8 @@ class TantegelThroneRoom(DragonWarriorMap):
         self.staircases = {
             (14, 18): {'map': 'TantegelCourtyard', 'destination_coordinates': (14, 14), 'direction': Direction.RIGHT.value}}
         self.music_file_path = tantegel_castle_throne_room_music
-        self.initial_coordinates = (10, 13)
         self.assign_stair_directions()
+        self.initial_coordinates = (10, 13)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -364,7 +364,7 @@ class TantegelCourtyard(DragonWarriorMap):
             east_gate=warp_line((6, 37), (37, 37)),
             south_gate=warp_line((37, 9), (37, 26)))
         self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18), 'direction': Direction.LEFT.value}
-        self.staircases[(36, 36)] = {'map': 'TantegelCellar'}
+        self.staircases[(36, 36)] = {'map': 'TantegelCellar', 'destination_coordinates': (4, 1)}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
         self.initial_coordinates = (14, 14)
@@ -386,6 +386,7 @@ class TantegelCellar(BasementWithNPCs):
         self.music_file_path = tantegel_castle_courtyard_music
         self.staircases = {(4, 1): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 36)}}
         self.assign_stair_directions()
+        self.initial_coordinates = (4, 1)
 
     def set_characters_initial_directions(self):
         self.set_character_initial_direction('WISE_MAN', Direction.DOWN)
@@ -403,6 +404,7 @@ class CharlockB1(MapWithoutNPCs):
         self.staircases[(21, 11)] = {'map': 'CharlockB2', 'destination_coordinates': ()}  # B
         self.staircases[(21, 22)] = {'map': 'CharlockB2', 'destination_coordinates': ()}  # C
         self.assign_stair_directions()
+        self.initial_coordinates = (25, 17)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -424,6 +426,7 @@ class CharlockB2(BasementWithoutNPCs):
                            (10, 16): {'map': 'CharlockB3', 'destination_coordinates': (7, 7)},  # G
                            (22, 11): {'map': 'CharlockB3', 'destination_coordinates': (3, 8)}}  # J
         self.assign_stair_directions()
+        self.initial_coordinates = (3, 12)
 
 
 class CharlockB3(BasementWithoutNPCs):
@@ -441,6 +444,7 @@ class CharlockB3(BasementWithoutNPCs):
             (12, 4): {'map': 'CharlockB4', 'destination_coordinates': (12, 3)},  # N
         }
         self.assign_stair_directions()
+        self.initial_coordinates = (3, 8)
 
 
 class CharlockB4(BasementWithoutNPCs):
@@ -457,6 +461,7 @@ class CharlockB4(BasementWithoutNPCs):
 
         }
         self.assign_stair_directions()
+        self.initial_coordinates = (3, 10)
 
 
 class CharlockB5(BasementWithoutNPCs):
@@ -470,6 +475,7 @@ class CharlockB5(BasementWithoutNPCs):
             (12, 3): {'map': 'CharlockB4', 'destination_coordinates': (9, 4)}  # O
         }
         self.assign_stair_directions()
+        self.initial_coordinates = (12, 3)
 
 
 class CharlockB6(BasementWithoutNPCs):
@@ -484,6 +490,7 @@ class CharlockB6(BasementWithoutNPCs):
 
         }
         self.assign_stair_directions()
+        self.initial_coordinates = (3, 12)
 
 
 class CharlockB7Wide(BasementWithoutNPCs):
@@ -507,9 +514,10 @@ class CharlockB7Narrow(BasementWithoutNPCs):
         self.music_file_path = dungeon_floor_7_music
         self.staircases = {
             (3, 3): {'map': 'CharlockB6', 'destination_coordinates': (8, 8)},
-            # (3, 12): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)}
+            (3, 12): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)}
         }
         self.assign_stair_directions()
+        self.initial_coordinates = (3, 3)
 
 
 class CharlockB8(DragonWarriorMap):
@@ -520,6 +528,7 @@ class CharlockB8(DragonWarriorMap):
         self.music_file_path = dungeon_floor_8_music
         self.staircases = {(33, 16): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 12)}}
         self.assign_stair_directions()
+        self.initial_coordinates = (33, 16)
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -669,6 +678,7 @@ class Hauksness(MapWithoutNPCs):
                                west_gate=warp_line((0, 8), (len(self.layout), 8)),
                                south_gate=warp_line((28, 9), (28, 28)))
         self.set_town_to_overworld_warps()
+        self.initial_coordinates = (18, 9)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -687,6 +697,7 @@ class Cantlin(DragonWarriorMap):
                                # east_gate = warp_line((21, 40), (25, 40))
                                )
         self.set_town_to_overworld_warps()
+        self.initial_coordinates = (8, 15)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -706,6 +717,7 @@ class ErdricksCaveB1(MapWithoutNPCs):
                            (10, 10): {'map': 'ErdricksCaveB2'}}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
+        self.initial_coordinates = (1, 1)
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -720,6 +732,7 @@ class ErdricksCaveB2(MapWithoutNPCs):
         self.music_file_path = dungeon_floor_2_music
         self.staircases = {(10, 9): {'map': 'ErdricksCaveB1'}}
         self.assign_stair_directions()
+        self.initial_coordinates = (10, 9)
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -735,6 +748,7 @@ class SwampCave(DragonWarriorMap):
         self.staircases = {(6, 4): {'map': 'Alefgard', 'destination_coordinates': (51, 110)},
                            (36, 4): {'map': 'Alefgard', 'destination_coordinates': (56, 110)}}
         self.assign_stair_directions()
+        self.initial_coordinates = (6, 4)
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -752,6 +766,7 @@ class MountainCaveB1(MapWithoutNPCs):
         self.music_file_path = dungeon_floor_1_music
         self.staircases = {}
         self.set_town_to_overworld_warps()
+        self.initial_coordinates = (7, 1)
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -767,6 +782,7 @@ class StaffOfRainCave(DragonWarriorMap):
         self.staircases = {(11, 6): {'map': 'Alefgard'}}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
+        self.initial_coordinates = (11, 6)
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -785,6 +801,7 @@ class MagicTemple(DragonWarriorMap):
         self.staircases = {(6, 2): {'map': 'Alefgard'}}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
+        self.initial_coordinates = (6, 2)
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
