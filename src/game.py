@@ -34,6 +34,7 @@ from src.visual_effects import fade
 class Game:
 
     def __init__(self):
+
         self.background = None
         self.big_map = None
         self.layouts = MapLayouts()
@@ -78,9 +79,9 @@ class Game:
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
-        # self.current_map = maps.ErdricksCaveB1()
+        # self.current_map = maps.Hauksness()
         # self.current_map = maps.Rimuldar()
-        # self.current_map = maps.Cantlin()
+        # self.current_map = maps.CharlockB1()
 
         self.set_big_map()
 
@@ -110,6 +111,8 @@ class Game:
 
         display.set_icon(image.load(ICON_PATH))
         self.player.restore_hp()
+        self.automatic_initial_dialog_run = False
+        self.allow_save_prompt = False
         # pg.event.set_allowed([pg.QUIT])
 
     def main(self) -> None:
@@ -204,6 +207,8 @@ class Game:
 
         if SHOW_COORDINATES:
             print(f"{self.player.row, self.player.column}")
+
+        # print(self.camera.get_pos())
 
         # print(f"Inventory: {self.player.inventory}, Gold: {self.player.gold}")
         # print(self.tiles_moved_since_spawn)
@@ -372,22 +377,34 @@ class Game:
                 if self.is_initial_dialog:
                     self.run_automatic_initial_dialog()
                 else:
-                    self.set_to_post_initial_dialog()
+                    if self.allow_save_prompt:
+                        self.set_to_save_prompt()
+                    else:
+                        self.set_to_post_initial_dialog()
+                        if not self.cmd_menu.launched:
+                            self.enable_movement = True
+
         else:
             self.set_to_post_initial_dialog()
+            self.enable_movement = True
         self.handle_menu_launch(self.cmd_menu)
 
     def run_automatic_initial_dialog(self):
         self.enable_movement = False
         for current_event in self.events:
-            if current_event.type == KEYUP:
+            if current_event.type == KEYUP and not self.automatic_initial_dialog_run:
                 self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
                 self.set_to_post_initial_dialog()
+                self.automatic_initial_dialog_run = True
 
     def set_to_post_initial_dialog(self):
         self.is_initial_dialog = False
         self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
             self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
+
+    def set_to_save_prompt(self):
+        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['returned_dialog']
 
     def handle_sprite_drawing_and_animation(self):
         for character_dict in self.current_map.characters.values():
@@ -471,6 +488,9 @@ class Game:
         self.pause_all_movement()
         self.last_map = self.current_map
         self.current_map = next_map
+        if not self.allow_save_prompt:
+            if self.last_map.identifier == 'TantegelThroneRoom':
+                self.allow_save_prompt = True
         self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
         fade(self.screen.get_width(), self.screen.get_height(), fade_out=True, background=self.background,
              screen=self.screen)
@@ -491,6 +511,10 @@ class Game:
             self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
         self.current_map.load_map(self.player, destination_coordinates)
         self.handle_player_direction_on_map_change(current_map_staircase_dict)
+        #  this is probably what we need here:
+
+        #    self.camera = Camera((self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE),
+        #                              current_map=self.current_map, screen=self.screen)
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                              current_map=self.current_map, screen=self.screen)
         # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
@@ -500,6 +524,7 @@ class Game:
         self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.player, self.screen, self.camera.get_pos(), self)
         self.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
+            # really not sure if the 1 and 0 here are supposed to be switched
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
