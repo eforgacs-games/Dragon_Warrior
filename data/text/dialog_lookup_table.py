@@ -73,13 +73,18 @@ class DialogLookup:
                 'UP_FACE_GUARD': {'dialog': "If thou art planning to take a rest, first see King Lorik."},
                 'RIGHT_FACE_GUARD_2': {'dialog': welcome_to_tantegel},
                 'WISE_MAN': {'dialog': f"{player.name}'s coming was foretold by legend. "
-                                       f"May the light shine upon this brave warrior.", 'side_effect': player.restore_mp}},
+                                       f"May the light shine upon this brave warrior.", 'side_effects': (player.restore_mp,)}},
             'TantegelCellar': {'WISE_MAN': {'dialog': ("I have been waiting long for one such as thee.", "Take the Treasure Chest.")}},
             'Brecconary': {
                 'MAN': {'dialog': "There is a town where magic keys can be purchased."},
                 'WISE_MAN': {'dialog': "If thou art cursed, come again."},
                 'MERCHANT': {'dialog': (weapons_and_armor_intro,)},
-                'MERCHANT_2': {'dialog': self.get_inn_intro(brecconary_inn_cost)},
+                'MERCHANT_2': {'dialog': (self.get_inn_intro(brecconary_inn_cost),
+                                          "Good night.",
+                                          "Good morning.\n"
+                                          "Thou seems to have spent a good night.",
+                                          "I shall see thee again."
+                                          ), 'side_effects': (player.restore_hp, player.restore_mp)},
                 'WOMAN_2': {'dialog': "Welcome! \n"
                                       "Enter the shop and speak to its keeper across the desk."},
             },
