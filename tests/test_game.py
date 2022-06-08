@@ -283,7 +283,8 @@ class TestGame(TestCase):
         self.game.player.current_hp = 1
         self.game.player.current_mp = 1
         self.game.player.direction_value = Direction.RIGHT.value
-        self.game.cmd_menu.automatic_skip_text = True
+        self.game.cmd_menu.skip_text = True
+        self.game.player.gold = 10
         self.game.player.row, self.game.player.column = 29, 18
         self.game.player.next_next_coordinates = get_next_coordinates(18, 29, self.game.player.direction_value, offset_from_character=2)
         self.game.player.next_tile_id = get_next_tile_identifier(self.game.player.column,
@@ -293,3 +294,10 @@ class TestGame(TestCase):
         self.game.cmd_menu.talk()
         self.assertEqual(self.game.player.max_hp, self.game.player.current_hp)
         self.assertEqual(self.game.player.max_mp, self.game.player.current_mp)
+        self.assertEqual(4, self.game.player.gold)
+        self.game.player.current_hp = 2
+        self.game.player.current_mp = 3
+        self.game.cmd_menu.talk()
+        self.assertEqual(2, self.game.player.current_hp)
+        self.assertEqual(3, self.game.player.current_mp)
+        self.assertEqual(4, self.game.player.gold)

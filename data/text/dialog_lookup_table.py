@@ -8,6 +8,8 @@ from src.game_functions import draw_all_tiles_in_current_map
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.visual_effects import fade
 
+yes = True
+
 
 class DialogLookup:
     def __init__(self, command_menu):
@@ -99,23 +101,7 @@ class DialogLookup:
                 'MERCHANT': {'dialog': (weapons_and_armor_intro,)},
                 'MERCHANT_2': {'dialog': [self.get_inn_intro(brecconary_inn_cost),
                                           partial(play_sound, confirmation_sfx),
-                                          # prompt yes or no
-
-                                          # if yes:
-
-                                          # if has enough money:
-                                          "Good night.",
-                                          partial(self.inn_sleep, brecconary_inn_cost),
-                                          "Good morning.\n"
-                                          "Thou seems to have spent a good night.",
-                                          "I shall see thee again."
-
-                                          # else (not enough money):
-                                          # "Thou hast not enough money.",
-
-                                          # if no
-                                          # "Okay.\n"
-                                          # "Good-bye, traveler."
+                                          partial(self.check_stay_at_inn, brecconary_inn_cost),
                                           ]},
                 'WOMAN_2': {'dialog': "Welcome! \n"
                                       "Enter the shop and speak to its keeper across the desk."},
@@ -141,7 +127,22 @@ class DialogLookup:
                f"Room and board is {inn_cost} GOLD per night.\n" \
                "Dost thou want a room?"
 
+    def check_stay_at_inn(self, inn_cost):
+        if yes:
+            # TODO(ELF): Implement an actual yes/no check. Right now this is a top level variable
+            self.check_money(inn_cost)
+        else:
+            self.command_menu.show_line_in_dialog_box("Okay.\n"
+                                                      "Good-bye, traveler.", add_quotes=True, skip_text=self.command_menu.skip_text)
+
+    def check_money(self, inn_cost):
+        if self.player.gold >= inn_cost:
+            self.inn_sleep(inn_cost)
+        else:
+            self.command_menu.show_line_in_dialog_box("Thou hast not enough money.", add_quotes=True, skip_text=self.command_menu.skip_text)
+
     def inn_sleep(self, inn_cost):
+        self.command_menu.show_text_in_dialog_box("Good night.", add_quotes=True, skip_text=self.command_menu.skip_text)
         fade(fade_out=True, screen=self.screen)
         if MUSIC_ENABLED:
             mixer.music.stop()
@@ -161,3 +162,7 @@ class DialogLookup:
         self.screen.blit(self.background, self.camera_position)
         self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 5, TILE_SIZE * 1))
         display.flip()
+        self.command_menu.show_line_in_dialog_box("Good morning.\n" +
+                                                  "Thou seems to have spent a good night.",
+                                                  add_quotes=True, skip_text=self.command_menu.skip_text)
+        self.command_menu.show_line_in_dialog_box("I shall see thee again.", add_quotes=True, skip_text=self.command_menu.skip_text)
