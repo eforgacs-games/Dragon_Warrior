@@ -1,23 +1,22 @@
+import functools
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import image, Surface, display, KEYDOWN
+from pygame import Surface, display, KEYDOWN
 from pygame.event import get
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
 from data.text.dialog import set_window_background, blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, COMMAND_MENU_BACKGROUND_PATH, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
-    get_tile_id_by_coordinates
+from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
+    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.maps_functions import get_center_point
-from src.menu_functions import get_opposite_direction, convert_list_to_newline_separated_string
+from src.menu_functions import get_opposite_direction, convert_list_to_newline_separated_string, draw_player_sprites
 from src.sound import play_sound
 from src.text import draw_text
-
-background_image = image.load(COMMAND_MENU_BACKGROUND_PATH)
 
 
 class Menu:
@@ -54,24 +53,24 @@ class Menu:
 
 class CommandMenu(Menu):
 
-    def __init__(self, background, current_map, player, screen, camera_position, game):
+    def __init__(self, game):
         super().__init__()
-        self.current_tile = player.current_tile
-        self.current_map = current_map
-        self.characters = current_map.characters
-        self.player = player
-        self.map_name = current_map.__class__.__name__
-        self.background = background
-        self.screen = screen
-        self.camera_position = camera_position
-        self.dialog_lookup = DialogLookup(self.player)
-        self.window_drop_down_effect(width=8, height=5, x=5, y=1)
         self.game = game
-        command_menu_surface = self.create_window(width=8, height=5, x=5, y=1)
+        self.player = self.game.player
+        self.background = self.game.background
+        self.screen = self.game.screen
+        self.camera_position = self.game.camera.get_pos()
+        self.current_map = self.game.current_map
+        self.current_tile = self.player.current_tile
+        self.characters = self.current_map.characters
+        self.map_name = self.current_map.__class__.__name__
+        self.window_drop_down_effect(width=8, height=5, x=5, y=1)
+        self.command_menu_surface = self.create_window(width=8, height=5, x=5, y=1, background=COMMAND_MENU_STATIC_BACKGROUND_PATH)
+        self.dialog_lookup = DialogLookup(self)
         self.menu = pygame_menu.Menu(
             title='COMMAND',
-            width=command_menu_surface.get_width() * 2,
-            height=command_menu_surface.get_height() * 3,
+            width=self.command_menu_surface.get_width() * 2,
+            height=self.command_menu_surface.get_height() * 3,
             center_content=False,
             column_max_width=(TILE_SIZE * 4, TILE_SIZE * 3),
             columns=2,
@@ -100,6 +99,7 @@ class CommandMenu(Menu):
         character = self.dialog_lookup.lookup_table[current_map.identifier].get(dialog_character)
         if character:
             if character.get('dialog'):
+                self.dialog_lookup.camera_position = self.camera_position
                 self.show_text_in_dialog_box(character['dialog'], self.automatic_skip_text)
                 if character.get('side_effects'):
                     for side_effect in character['side_effects']:
@@ -109,45 +109,50 @@ class CommandMenu(Menu):
         else:
             print(f"Character not in lookup table: {dialog_character}")
 
-    def show_line_in_dialog_box(self, line: str, automatic_skip_text: bool, add_quotes: bool = True, temp_text_start: int = None):
+    def show_line_in_dialog_box(self, line: str | functools.partial, automatic_skip_text: bool, add_quotes: bool = True, temp_text_start: int = None):
         """Shows a single line in a dialog box.
         :param line: The line of text to print.
         :param automatic_skip_text: Whether to automatically skip the text.
         :param add_quotes: Adds single quotes to be displayed on the screen.
         :param temp_text_start: The time at which temporary text started.
         """
-        current_time = None
-        display_current_line = True
-        if add_quotes:
-            line = f"`{line}’"
-        while display_current_line:
-            if temp_text_start:
-                current_time = get_ticks()
-            self.create_window(width=12, height=5, x=2, y=9)
-            # if print_by_character:
-            #     for i in range(len(line)):
-            #         for j in range(16):
-            #             white_line = line[:i]
-            #             black_line = line[i:]
-            #             draw_text(white_line, 15, WHITE, self.screen.get_width() / 2, (self.screen.get_height() * 5 / 8),
-            #                       DRAGON_QUEST_FONT_PATH,
-            #                       self.screen)
-            #             draw_text(black_line, 15, BLACK, self.screen.get_width() / 2, (self.screen.get_height() * 5 / 8),
-            #                       DRAGON_QUEST_FONT_PATH,
-            #                       self.screen)
-            # else:
-            draw_text(line, 15, WHITE, TILE_SIZE * 3, TILE_SIZE * 9.75, DRAGON_QUEST_FONT_PATH, self.screen, center_align=False)
-            display.flip()
-            blink_down_arrow(self.screen)
-            # playing with fire a bit here with the short-circuiting
-            if automatic_skip_text or (temp_text_start and current_time - temp_text_start >= 200) or any(
-                    [current_event.type == KEYDOWN for current_event in get()]):
-                play_sound(menu_button_sfx)
-                display_current_line = False
+        if line:
+            if type(line) == str:
+                current_time = None
+                display_current_line = True
+                if add_quotes:
+                    line = f"`{line}’"
+                while display_current_line:
+                    if temp_text_start:
+                        current_time = get_ticks()
+                    self.create_window(width=12, height=5, x=2, y=9, background=DIALOG_BOX_BACKGROUND_PATH)
+                    # if print_by_character:
+                    #     for i in range(len(line)):
+                    #         for j in range(16):
+                    #             white_line = line[:i]
+                    #             black_line = line[i:]
+                    #             draw_text(white_line, 15, WHITE, self.screen.get_width() / 2, (self.screen.get_height() * 5 / 8),
+                    #                       DRAGON_QUEST_FONT_PATH,
+                    #                       self.screen)
+                    #             draw_text(black_line, 15, BLACK, self.screen.get_width() / 2, (self.screen.get_height() * 5 / 8),
+                    #                       DRAGON_QUEST_FONT_PATH,
+                    #                       self.screen)
+                    # else:
+                    draw_text(line, 15, WHITE, TILE_SIZE * 3, TILE_SIZE * 9.75, DRAGON_QUEST_FONT_PATH, self.screen, center_align=False)
+                    display.flip()
+                    blink_down_arrow(self.screen)
+                    # playing with fire a bit here with the short-circuiting
+                    if automatic_skip_text or (temp_text_start and current_time - temp_text_start >= 200) or any(
+                            [current_event.type == KEYDOWN for current_event in get()]):
+                        play_sound(menu_button_sfx)
+                        display_current_line = False
+            else:
+                # if the line is a method
+                line()
 
-    def create_window(self, width, height, x, y):
+    def create_window(self, width, height, x, y, background):
         black_box = Surface((TILE_SIZE * width, TILE_SIZE * height))  # lgtm [py/call/wrong-arguments]
-        set_window_background(black_box, DIALOG_BOX_BACKGROUND_PATH)
+        set_window_background(black_box, background)
         self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
         return black_box
 
@@ -198,8 +203,7 @@ class CommandMenu(Menu):
                 for tile, tile_dict in self.current_map.floor_tile_key.items():
                     if tile in self.get_dialog_box_underlying_tiles(self.current_map, i):
                         tile_dict['group'].draw(self.background)
-                self.background.blit(self.current_map.characters['HERO']['character_sprites'].sprites()[0].image,
-                                     (self.player.column * TILE_SIZE, self.player.row * TILE_SIZE))
+                draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
                 for character, character_dict in self.current_map.characters.items():
                     self.background.blit(character_dict['character_sprites'].sprites()[0].image,
                                          (character_dict['character'].column * TILE_SIZE, character_dict['character'].row * TILE_SIZE))
