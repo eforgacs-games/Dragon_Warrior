@@ -34,25 +34,26 @@ from src.visual_effects import fade
 class Game:
 
     def __init__(self):
-
+        # map/graphics
         self.background = None
         self.big_map = None
         self.layouts = MapLayouts()
+        # text
         self.is_initial_dialog = True
-        self.draw_text_start = None
-        self.temporary_text_on_screen = None
+        self.automatic_skip_text = False
+        # intro
+        self.start_time = get_ticks()
+        # engine
         self.fps = FPS
         self.last_map = None
-        self.start_time = get_ticks()
         self.tiles_moved_since_spawn = 0
         self.loop_count = 1
         self.foreground_rects = []
         init()
-
         self.paused = False
         # Create the game window.
         if FULLSCREEN_ENABLED:
-            # if it's segfaulting, try maybe not using the SCALED flag
+            # if it's producing a segmentation fault, try maybe not using the SCALED flag
             # flags = FULLSCREEN | SCALED
             flags = FULLSCREEN
         else:
@@ -64,11 +65,9 @@ class Game:
         self.scale = SCALE
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
-        self.win_width, self.win_height = NES_RES[0] * self.scale, NES_RES[1] * self.scale
         self.speed = 2
-        # self.win_width = current_screen_width
-        # self.win_height = current_screen_height
-        self.screen = set_mode((self.win_width, self.win_height), flags)
+        win_width, win_height = NES_RES[0] * self.scale, NES_RES[1] * self.scale
+        self.screen = set_mode((win_width, win_height), flags)
         # self.screen.set_alpha(None)
         set_caption("Dragon Warrior")
 
@@ -223,7 +222,7 @@ class Game:
         if SHOW_FPS:
             print(self.clock.get_fps())
 
-        # This prints out the next tile, and the next next tile.
+        # This prints out the next_tile, and the next_next_tile.
         # print(f'Next tile: {self.player.next_tile}')
         # print(f'Next next tile: {self.player.next_next_tile}')
         # print(f'{self.get_character_identifier_by_coordinates(self.player.next_coordinates)}')
@@ -280,9 +279,7 @@ class Game:
                     set_character_position(character_dict['character'])
 
     def draw_temporary_text(self, text: Tuple[str] | List[str], add_quotes=False) -> None:
-        self.temporary_text_on_screen = True
-        self.draw_text_start = get_ticks()
-        self.cmd_menu.show_text_in_dialog_box(text, False, add_quotes=add_quotes, temp_text_start=self.draw_text_start)
+        self.cmd_menu.show_text_in_dialog_box(text, False, add_quotes=add_quotes, temp_text_start=get_ticks())
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
         if (self.player.row, self.player.column) == staircase_location:
