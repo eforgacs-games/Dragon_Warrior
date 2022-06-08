@@ -48,7 +48,7 @@ class Menu:
                                                                   )
         self.launch_signaled = False
         self.launched = False
-        self.automatic_skip_text = False
+        self.skip_text = False
 
 
 class CommandMenu(Menu):
@@ -100,7 +100,7 @@ class CommandMenu(Menu):
         if character:
             if character.get('dialog'):
                 self.dialog_lookup.camera_position = self.camera_position
-                self.show_text_in_dialog_box(character['dialog'], self.automatic_skip_text)
+                self.show_text_in_dialog_box(character['dialog'], add_quotes=True, skip_text=self.skip_text)
                 if character.get('side_effects'):
                     for side_effect in character['side_effects']:
                         side_effect()
@@ -109,10 +109,10 @@ class CommandMenu(Menu):
         else:
             print(f"Character not in lookup table: {dialog_character}")
 
-    def show_line_in_dialog_box(self, line: str | functools.partial, automatic_skip_text: bool, add_quotes: bool = True, temp_text_start: int = None):
+    def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool, temp_text_start: int = None, skip_text: bool = False):
         """Shows a single line in a dialog box.
         :param line: The line of text to print.
-        :param automatic_skip_text: Whether to automatically skip the text.
+        :param skip_text: Whether to automatically skip the text.
         :param add_quotes: Adds single quotes to be displayed on the screen.
         :param temp_text_start: The time at which temporary text started.
         """
@@ -142,7 +142,7 @@ class CommandMenu(Menu):
                     display.flip()
                     blink_down_arrow(self.screen)
                     # playing with fire a bit here with the short-circuiting
-                    if automatic_skip_text or (temp_text_start and current_time - temp_text_start >= 200) or any(
+                    if skip_text or (temp_text_start and current_time - temp_text_start >= 200) or any(
                             [current_event.type == KEYDOWN for current_event in get()]):
                         play_sound(menu_button_sfx)
                         display_current_line = False
@@ -156,19 +156,19 @@ class CommandMenu(Menu):
         self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
         return black_box
 
-    def show_text_in_dialog_box(self, text: Tuple[str] | List[str] | str, automatic_skip_text, add_quotes=True, temp_text_start=None):
+    def show_text_in_dialog_box(self, text: Tuple[str] | List[str] | str, add_quotes=False, temp_text_start=None, skip_text=False):
         """Shows a passage of text in a dialog box.
         :param text: The text to print.
-        :param automatic_skip_text: Whether to automatically skip the text.
+        :param skip_text: Whether to automatically skip the text.
         :param add_quotes: Adds single quotes to be displayed on the screen.
         :param temp_text_start: The time at which temporary text started.
         """
         self.window_drop_down_effect(width=12, height=5, x=2, y=9)
         if type(text) == str:
-            self.show_line_in_dialog_box(text, automatic_skip_text, add_quotes, temp_text_start)
+            self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text)
         else:
             for line in text:
-                self.show_line_in_dialog_box(line, automatic_skip_text, add_quotes, temp_text_start)
+                self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text)
                 # TODO(ELF): This commented out code just makes the sound for printing by letter.
                 #  Need to actually show the letters one by one.
                 #  (Better to leave it commented out until it's working)
@@ -237,7 +237,7 @@ class CommandMenu(Menu):
                     self.launch_dialog(character_identifier, self.current_map)
                     break
         else:
-            self.show_text_in_dialog_box(("There is no one there.",), self.automatic_skip_text)
+            self.show_text_in_dialog_box(("There is no one there.",), add_quotes=True, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
         # TODO(ELF): Add drop up effect upon closing command menu - currently blits to the wrong place,
@@ -278,7 +278,8 @@ class CommandMenu(Menu):
             print("'There are stairs here.'")
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
-            self.show_text_in_dialog_box(("There are no stairs here.",), self.automatic_skip_text)
+            # the original game has quotes in this dialog box
+            self.show_text_in_dialog_box(("There are no stairs here.",), add_quotes=True, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
@@ -297,7 +298,7 @@ class CommandMenu(Menu):
         # print(f"There is a {hidden_item}")
         else:
             text_to_print.append("But there found nothing.")
-        self.show_text_in_dialog_box(text_to_print, self.automatic_skip_text, add_quotes=False)
+        self.show_text_in_dialog_box(text_to_print, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
@@ -309,9 +310,9 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
         if not self.player.spells:
-            self.show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), self.automatic_skip_text, add_quotes=False)
+            self.show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), skip_text=self.skip_text)
         else:
-            self.show_text_in_dialog_box(convert_list_to_newline_separated_string(self.player.spells), self.automatic_skip_text, add_quotes=False)
+            self.show_text_in_dialog_box(convert_list_to_newline_separated_string(self.player.spells), skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
@@ -323,9 +324,9 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which item is being used.
         if not self.player.inventory:
-            self.show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), self.automatic_skip_text, add_quotes=False)
+            self.show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), skip_text=self.skip_text)
         else:
-            self.show_text_in_dialog_box(convert_list_to_newline_separated_string(self.player.inventory), self.automatic_skip_text, add_quotes=False)
+            self.show_text_in_dialog_box(convert_list_to_newline_separated_string(self.player.inventory), skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
@@ -340,9 +341,9 @@ class CommandMenu(Menu):
                 # actually open the door
                 print("Door opened!")
             else:
-                self.show_text_in_dialog_box(("Thou hast not a key to use.",), self.automatic_skip_text, False)
+                self.show_text_in_dialog_box(("Thou hast not a key to use.",), skip_text=self.skip_text)
         else:
-            self.show_text_in_dialog_box(("There is no door here.",), self.automatic_skip_text, False)
+            self.show_text_in_dialog_box(("There is no door here.",), skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
@@ -362,7 +363,7 @@ class CommandMenu(Menu):
                     gold_amount = treasure_info['amount']
 
                     self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-                    self.show_text_in_dialog_box(f"Of {item_name} thou hast gained {gold_amount}", self.automatic_skip_text, add_quotes=False)
+                    self.show_text_in_dialog_box(f"Of GOLD thou hast gained {gold_amount}", skip_text=self.skip_text)
 
                     self.player.gold += gold_amount
                 else:
@@ -370,18 +371,18 @@ class CommandMenu(Menu):
 
                     self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
                     self.show_text_in_dialog_box(f"Fortune smiles upon thee, {self.player.name}.\n"
-                                                 f"Thou hast found the {item_name}.", self.automatic_skip_text, add_quotes=False)
+                                                 f"Thou hast found the {item_name}.", skip_text=self.skip_text)
                     # could probably assign the new treasure box values by using this line:
                     self.player.inventory.append(item_name)
 
                     # self.player.current_tile = 'BRICK'
             else:
-                self.show_text_in_dialog_box("Unfortunately, it is empty.", self.automatic_skip_text)
+                self.show_text_in_dialog_box("Unfortunately, it is empty.", skip_text=self.skip_text)
         #     take it and update inventory accordingly
         # elif there is a hidden item
         # take the hidden item
         else:
-            self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",), self.automatic_skip_text)
+            self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",), skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
