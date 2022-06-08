@@ -112,7 +112,7 @@ class Intro:
                 elif current_event.type == KEYUP:
                     intro_banner_with_text_enabled = False
             display.flip()
-        fade(screen.get_width(), screen.get_height(), fade_out=True, background=background, screen=screen)
+        fade(fade_out=True, screen=screen)
 
     def handle_all_sparkles(self, start_time, screen):
         frames_since_banner_launch = convert_to_frames_since_start_time(start_time)
