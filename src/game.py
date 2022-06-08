@@ -18,7 +18,7 @@ from src.common import BLACK, DRAGON_QUEST_FONT_PATH, Direction, ICON_PATH, WHIT
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
-from src.game_functions import set_character_position, get_next_coordinates
+from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles
 from src.intro import Intro
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
@@ -73,10 +73,10 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom()
+        # self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
-        # self.current_map = maps.Brecconary()
+        self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.Hauksness()
         # self.current_map = maps.Rimuldar()
@@ -97,7 +97,7 @@ class Game:
 
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen)
-        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.player, self.screen, self.camera.get_pos(), self)
+        self.cmd_menu = menu.CommandMenu(self)
 
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
@@ -151,7 +151,7 @@ class Game:
                 elif current_event.type == KEYUP:
                     main_menu_screen_enabled = False
         play_sound(menu_button_sfx)
-        fade(screen.get_width(), screen.get_height(), fade_out=True, background=self.background, screen=self.screen)
+        fade(fade_out=True, screen=self.screen)
         self.load_and_play_music(self.current_map.music_file_path)
 
     def get_events(self) -> None:
@@ -178,7 +178,7 @@ class Game:
         # a quick fix would be to add an exception in the conditional for
         # the map where staircases right next to each other need to be enabled,
         # as done with Cantlin and others below
-        immediate_move_maps = ('Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
+        immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
         # a quick fix to prevent buggy warping - set to > 2
         if self.tiles_moved_since_spawn > 2 or (self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps):
             for staircase_location, staircase_dict in self.current_map.staircases.items():
@@ -234,7 +234,7 @@ class Game:
         if current_key[K_j]:
             # B button
             self.unlaunch_menu(self.cmd_menu)
-            self.draw_all_tiles_in_current_map()
+            draw_all_tiles_in_current_map(self.current_map, self.background)
             # print("J key pressed (B button).")
         if current_key[K_k]:
             # A button
@@ -334,7 +334,7 @@ class Game:
         # print(self.background.get_rect())
         if self.loop_count == 1:
             # draw everything once on the first go-around
-            self.draw_all_tiles_in_current_map()
+            draw_all_tiles_in_current_map(self.current_map, self.background)
         # performance optimization to only draw the tile type that the hero is standing on, and surrounding tiles
         # won't work where there are moving NPCs, so only use this in the overworld
         # if not self.current_map.roaming_characters:
@@ -345,18 +345,18 @@ class Game:
             player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(surrounding_tile_values)
             all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
             all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
-            tile_types_to_draw = self.replace_characters_with_underlying_tiles([self.player.current_tile] +
-                                                                               all_roaming_character_surrounding_tiles +
-                                                                               all_fixed_character_underlying_tiles)
+            tile_types_to_draw = replace_characters_with_underlying_tiles([self.player.current_tile] +
+                                                                          all_roaming_character_surrounding_tiles +
+                                                                          all_fixed_character_underlying_tiles, self.current_map.character_key)
             if self.player.is_moving:
-                tile_types_to_draw += self.replace_characters_with_underlying_tiles(
-                    list(filter(None, player_surrounding_tiles)))
+                tile_types_to_draw += replace_characters_with_underlying_tiles(
+                    list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
         except IndexError:
             all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
             all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
-            tile_types_to_draw = self.replace_characters_with_underlying_tiles([self.player.current_tile] +
-                                                                               all_roaming_character_surrounding_tiles +
-                                                                               all_fixed_character_underlying_tiles)
+            tile_types_to_draw = replace_characters_with_underlying_tiles([self.player.current_tile] +
+                                                                          all_roaming_character_surrounding_tiles +
+                                                                          all_fixed_character_underlying_tiles, self.current_map.character_key)
 
             # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
 
@@ -407,10 +407,13 @@ class Game:
     def handle_sprite_drawing_and_animation(self):
         for character_dict in self.current_map.characters.values():
             self.foreground_rects.append(character_dict['character_sprites'].draw(self.background)[0])
-            if self.enable_animate:
-                character_dict['character'].animate()
-            else:
-                character_dict['character'].pause()
+            self.handle_sprite_animation(character_dict)
+
+    def handle_sprite_animation(self, character_dict):
+        if self.enable_animate:
+            character_dict['character'].animate()
+        else:
+            character_dict['character'].pause()
 
     def get_fixed_character_underlying_tiles(self) -> List[str]:
         all_fixed_character_underlying_tiles = []
@@ -432,19 +435,6 @@ class Game:
                 all_roaming_character_surrounding_tiles.append(tile)
         return all_roaming_character_surrounding_tiles
 
-    def draw_all_tiles_in_current_map(self) -> None:
-        for tile, tile_dict in self.current_map.floor_tile_key.items():
-            if tile in self.current_map.tile_types_in_current_map:
-                tile_dict['group'].draw(self.background)
-
-    def replace_characters_with_underlying_tiles(self, tile_types_to_draw: List[str]) -> List[str]:
-        for character in self.current_map.character_key.keys():
-            if character in tile_types_to_draw:
-                tile_types_to_draw = list(
-                    map(lambda x: x.replace(character, self.current_map.character_key[character]['underlying_tile']),
-                        tile_types_to_draw))
-        return tile_types_to_draw
-
     def convert_numeric_tile_list_to_unique_tile_values(self, numeric_tile_list: List[int]) -> List[str]:
         converted_tiles = []
         for tile_value in set(numeric_tile_list):
@@ -461,20 +451,16 @@ class Game:
                      5 * TILE_SIZE)
                 )
                 command_menu_subsurface.fill(BLACK)
-                rect = menu_to_launch.menu.draw(command_menu_subsurface)
-                display.update()
-            else:
-                rect = None
-                print("No menu launched")
+                menu_to_launch.menu.draw(command_menu_subsurface)
+                display.flip()
             if not menu_to_launch.launched:
                 self.launch_menu(menu_to_launch.menu.get_id())
-            else:
-                self.foreground_rects.append(rect)
 
     def update_screen(self) -> None:
         """Update the screen's display."""
         if self.cmd_menu.launched:
             self.cmd_menu.menu.update(self.events)
+            self.enable_movement = False
         display.update()
 
     def change_map(self, next_map: maps.DragonWarriorMap) -> None:
@@ -490,8 +476,7 @@ class Game:
             if self.last_map.identifier == 'TantegelThroneRoom':
                 self.allow_save_prompt = True
         self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
-        fade(self.screen.get_width(), self.screen.get_height(), fade_out=True, background=self.background,
-             screen=self.screen)
+        fade(fade_out=True, screen=self.screen)
         self.set_big_map()
         self.set_roaming_character_positions()
         if self.music_enabled:
@@ -519,7 +504,7 @@ class Game:
         self.loop_count = 1
         self.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
-        self.cmd_menu = menu.CommandMenu(self.background, self.current_map, self.player, self.screen, self.camera.get_pos(), self)
+        self.cmd_menu = menu.CommandMenu(self)
         self.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             # really not sure if the 1 and 0 here are supposed to be switched

@@ -6,9 +6,9 @@ from src.text import draw_text
 
 def set_window_background(black_box, background_path):
     black_box.fill(BLACK)
-    dialog_box_background = image.load(background_path)
-    dialog_box_background = transform.scale(dialog_box_background, black_box.get_size())
-    black_box.blit(dialog_box_background, black_box.get_rect())
+    background_image = image.load(background_path)
+    background_image = transform.scale(background_image, black_box.get_size())
+    black_box.blit(background_image, black_box.get_rect())
 
 
 def blink_down_arrow(screen):

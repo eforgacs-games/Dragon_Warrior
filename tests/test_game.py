@@ -10,7 +10,7 @@ from src.camera import Camera
 from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
-from src.game_functions import get_next_coordinates
+from src.game_functions import get_next_coordinates, replace_characters_with_underlying_tiles
 from src.maps import MapWithoutNPCs, TantegelThroneRoom, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
@@ -60,14 +60,10 @@ class TestGame(TestCase):
 
     def setUp(self) -> None:
         self.game = Game()
-        self.game.camera_pos = 0, 0
-        self.center_pt = 0, 0
         self.game.current_map = MockMap()
-        self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
-        self.hero_images = parse_animated_sprite_sheet(
-            scale(unarmed_hero_sheet, (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)))
-        self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map)
+        self.game.current_map.player = Player((0, 0), parse_animated_sprite_sheet(
+            scale(unarmed_hero_sheet, (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))), self.game.current_map)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
         self.camera = Camera((self.game.current_map.player.rect.y // TILE_SIZE, self.game.current_map.player.rect.x // TILE_SIZE), self.game.current_map,
                              self.game.screen)
@@ -179,7 +175,8 @@ class TestGame(TestCase):
         self.assertFalse(self.game.cmd_menu.launch_signaled)
 
     def test_replace_characters_with_underlying_tiles(self):
-        self.assertEqual(['BRICK'], self.game.replace_characters_with_underlying_tiles([self.game.player.current_tile]))
+        # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
+        self.assertEqual(['BRICK'], replace_characters_with_underlying_tiles([self.game.player.current_tile], self.game.current_map.character_key))
 
     def test_convert_numeric_tile_list_to_unique_tile_values(self):
         self.assertEqual(['WALL',
@@ -205,6 +202,7 @@ class TestGame(TestCase):
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
 
     def test_change_map_maintain_inventory_and_gold(self):
+        # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
         self.game.player.gold = 120
         self.game.player.inventory = ['Torch']
         self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
