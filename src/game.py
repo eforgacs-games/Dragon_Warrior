@@ -282,7 +282,7 @@ class Game:
     def draw_temporary_text(self, text: Tuple[str] | List[str], add_quotes=False) -> None:
         self.temporary_text_on_screen = True
         self.draw_text_start = get_ticks()
-        self.cmd_menu.show_text_in_dialog_box(text, add_quotes=add_quotes, temp_text_start=self.draw_text_start)
+        self.cmd_menu.show_text_in_dialog_box(text, False, add_quotes=add_quotes, temp_text_start=self.draw_text_start)
 
     def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
         if (self.player.row, self.player.column) == staircase_location:
@@ -393,7 +393,8 @@ class Game:
         self.enable_movement = False
         for current_event in self.events:
             if current_event.type == KEYUP and not self.automatic_initial_dialog_run:
-                self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+                self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'],
+                                                      self.automatic_skip_text)
                 self.set_to_post_initial_dialog()
                 self.automatic_initial_dialog_run = True
 
