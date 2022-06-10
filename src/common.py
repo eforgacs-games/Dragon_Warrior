@@ -123,6 +123,7 @@ ICON_PATH = join(IMAGES_DIR, 'walking_hero.gif')
 DIALOG_BOX_BACKGROUND_PATH = join(IMAGES_DIR, 'dialog_box_background.png')
 COMMAND_MENU_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_background.png')
 COMMAND_MENU_STATIC_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_static.png')
+CONFIRMATION_STATIC_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_static.png')
 
 
 def get_image(path):
