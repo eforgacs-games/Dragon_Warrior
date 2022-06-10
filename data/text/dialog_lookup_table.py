@@ -100,9 +100,10 @@ class DialogLookup:
                 'WISE_MAN': {'dialog': "If thou art cursed, come again."},
                 'MERCHANT': {'dialog': (weapons_and_armor_intro,)},
                 'MERCHANT_2': {'dialog': [self.get_inn_intro(brecconary_inn_cost),
-                                          partial(play_sound, confirmation_sfx),
                                           partial(self.check_stay_at_inn, brecconary_inn_cost),
                                           ]},
+                'UP_FACE_GUARD': {'dialog': ("Tell King Lorik that the search for his daughter hath failed.",
+                                             "I am almost gone....")},
                 'WOMAN_2': {'dialog': "Welcome! \n"
                                       "Enter the shop and speak to its keeper across the desk."},
             },
@@ -128,6 +129,7 @@ class DialogLookup:
                "Dost thou want a room?"
 
     def check_stay_at_inn(self, inn_cost):
+        play_sound(confirmation_sfx)
         if yes:
             # TODO(ELF): Implement an actual yes/no check. Right now this is a top level variable
             self.check_money(inn_cost)
@@ -163,6 +165,5 @@ class DialogLookup:
         self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 5, TILE_SIZE * 1))
         display.flip()
         self.command_menu.show_line_in_dialog_box("Good morning.\n" +
-                                                  "Thou seems to have spent a good night.",
-                                                  add_quotes=True, skip_text=self.command_menu.skip_text)
+                                                  "Thou seems to have spent a good night.", add_quotes=True, skip_text=self.command_menu.skip_text)
         self.command_menu.show_line_in_dialog_box("I shall see thee again.", add_quotes=True, skip_text=self.command_menu.skip_text)
