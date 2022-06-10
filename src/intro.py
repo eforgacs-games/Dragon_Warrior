@@ -76,7 +76,7 @@ class Intro:
         self.first_short_sparkle_done = False
         self.second_short_sparkle_done = False
 
-    def show_start_screen(self, screen, start_time, clock, background):
+    def show_start_screen(self, screen, start_time, clock):
         screen.fill(BLACK)
         show_intro_banner(INTRO_BANNER_PATH, screen)
         display.flip()
@@ -92,9 +92,9 @@ class Intro:
             if convert_to_frames_since_start_time(start_time) >= 620:  # intro banner with text displays 620 frames in
                 waiting = False
             display.flip()
-        self.show_intro_dragon_banner_with_text(screen, clock, background)
+        self.show_intro_dragon_banner_with_text(screen, clock)
 
-    def show_intro_dragon_banner_with_text(self, screen, clock, background):
+    def show_intro_dragon_banner_with_text(self, screen, clock):
         show_intro_banner(INTRO_BANNER_WITH_DRAGON_PATH, screen)
         draw_banner_text(screen)
         # TODO: Might be good to add these control keys to an F1 help screen.
@@ -120,11 +120,11 @@ class Intro:
             self.first_long_sparkle_done, self.last_long_sparkle_clock_check = handle_sparkles(screen, self.first_long_sparkle_done,
                                                                                                self.last_long_sparkle_clock_check,
                                                                                                short=False)
-            if frames_since_banner_launch >= 32 + 128:  # 160
+            if frames_since_banner_launch >= 160:  # 32 + 128
                 self.first_short_sparkle_done, self.last_first_short_sparkle_clock_check = handle_sparkles(screen, self.first_short_sparkle_done,
                                                                                                            self.last_first_short_sparkle_clock_check,
                                                                                                            short=True)
-                if frames_since_banner_launch >= 32 + 128 + 32:  # 192
+                if frames_since_banner_launch >= 192:  # 32 + 128 + 32
                     self.second_short_sparkle_done, self.last_second_short_sparkle_clock_check = handle_sparkles(screen, self.second_short_sparkle_done,
                                                                                                                  self.last_second_short_sparkle_clock_check,
                                                                                                                  short=True)
