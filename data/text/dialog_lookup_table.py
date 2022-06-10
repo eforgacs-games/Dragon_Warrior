@@ -99,9 +99,7 @@ class DialogLookup:
                 'MAN': {'dialog': "There is a town where magic keys can be purchased."},
                 'WISE_MAN': {'dialog': "If thou art cursed, come again."},
                 'MERCHANT': {'dialog': (weapons_and_armor_intro,)},
-                'MERCHANT_2': {'dialog': [self.get_inn_intro(brecconary_inn_cost),
-                                          partial(self.check_stay_at_inn, brecconary_inn_cost),
-                                          ]},
+                'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost), )},
                 'UP_FACE_GUARD': {'dialog': ("Tell King Lorik that the search for his daughter hath failed.",
                                              "I am almost gone....")},
                 'WOMAN_2': {'dialog': "Welcome! \n"
@@ -129,11 +127,13 @@ class DialogLookup:
                "Dost thou want a room?"
 
     def check_stay_at_inn(self, inn_cost):
+        self.command_menu.show_line_in_dialog_box(self.get_inn_intro(inn_cost), add_quotes=True, skip_text=True)
         play_sound(confirmation_sfx)
-        if yes:
+        response = input("Dost thou want a room?")
+        if response == "y":
             # TODO(ELF): Implement an actual yes/no check. Right now this is a top level variable
             self.check_money(inn_cost)
-        else:
+        elif response == "n":
             self.command_menu.show_line_in_dialog_box("Okay.\n"
                                                       "Good-bye, traveler.", add_quotes=True, skip_text=self.command_menu.skip_text)
 
