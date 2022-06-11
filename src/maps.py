@@ -179,8 +179,7 @@ class DragonWarriorMap:
 
     def map_character(self, character, character_dict, current_tile, player, coordinates) -> None:
         if current_tile == self.character_key['HERO']['val']:
-            # TODO(ELF): not the greatest thing to call the constructor every single time the character is mapped.
-            #  instead, it should just pass the player object from map to map and keep all the attributes.
+            # will this cause issues with the hero images (holding sword/shield)? time will tell...
             AnimatedSprite.__init__(player, self.center_pt, player.direction_value, images=self.scale_sprite_sheet(UNARMED_HERO_PATH), identifier='HERO')
             self.map_player(character_dict['underlying_tile'], player, coordinates)
         else:
