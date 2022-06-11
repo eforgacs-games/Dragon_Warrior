@@ -147,12 +147,11 @@ class DialogLookup:
                             blinking_yes = False
                         else:
                             blinking_yes = True
-
-                    elif (blinking_yes and current_event.unicode == '\r') or current_event.unicode == 'y':
+                    elif (blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'y':
                         play_sound(menu_button_sfx)
                         yes_path_function()
                         blinking = False
-                    elif (not blinking_yes and current_event.unicode == '\r') or current_event.unicode == 'n':
+                    elif (not blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'n':
                         play_sound(menu_button_sfx)
                         no_path_function()
                         blinking = False
