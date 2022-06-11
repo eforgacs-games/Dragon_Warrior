@@ -149,7 +149,8 @@ class Game:
                     quit()
                     sys.exit()
                 elif current_event.type == KEYUP:
-                    main_menu_screen_enabled = False
+                    if current_event.key in (K_i, K_k):
+                        main_menu_screen_enabled = False
         play_sound(menu_button_sfx)
         fade(fade_out=True, screen=self.screen)
         self.load_and_play_music(self.current_map.music_file_path)
