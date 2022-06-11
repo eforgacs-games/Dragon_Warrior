@@ -121,7 +121,7 @@ class Game:
         """
         if SPLASH_SCREEN_ENABLED:
             intro = Intro()
-            intro.show_start_screen(self.screen, self.start_time, self.clock, self.background)
+            intro.show_start_screen(self.screen, self.start_time, self.clock)
             self.show_main_menu_screen(self.screen)
         self.draw_all()
         while True:
