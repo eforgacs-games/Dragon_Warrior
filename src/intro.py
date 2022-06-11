@@ -2,7 +2,7 @@ import os
 import sys
 from os.path import join
 
-from pygame import image, display, QUIT, quit, KEYUP
+from pygame import image, display, QUIT, quit, KEYUP, K_i, K_k
 from pygame.event import get
 from pygame.time import get_ticks
 from pygame.transform import scale
@@ -42,7 +42,7 @@ def banner_sparkle(short, screen):
 
 
 def draw_banner_text(screen):
-    draw_text("- PUSH ANY KEY -", 15, ORANGE, screen.get_width() / 2, screen.get_height() * 10 / 16, DRAGON_QUEST_FONT_PATH, screen)
+    draw_text("-PUSH START-", 15, ORANGE, screen.get_width() / 2, screen.get_height() * 10 / 16, DRAGON_QUEST_FONT_PATH, screen)
     pink_banner_text = ("K key: A Button", "J key: B Button", "I key: Start", "WASD / Arrow Keys: Move")
     for i in range(11, 15):
         draw_text(pink_banner_text[i - 11], 15, PINK, screen.get_width() / 2, screen.get_height() * i / 16, DRAGON_QUEST_FONT_PATH, screen, text_wrap_length=23)
@@ -88,7 +88,8 @@ class Intro:
                     quit()
                     sys.exit()
                 elif current_event.type == KEYUP:
-                    waiting = False
+                    if current_event.key in (K_i, K_k):
+                        waiting = False
             if convert_to_frames_since_start_time(start_time) >= 620:  # intro banner with text displays 620 frames in
                 waiting = False
             display.flip()
@@ -110,7 +111,8 @@ class Intro:
                     quit()
                     sys.exit()
                 elif current_event.type == KEYUP:
-                    intro_banner_with_text_enabled = False
+                    if current_event.key in (K_i, K_k):
+                        intro_banner_with_text_enabled = False
             display.flip()
         fade(fade_out=True, screen=screen)
 
