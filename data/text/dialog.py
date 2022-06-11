@@ -1,6 +1,7 @@
 from pygame import display, image, transform
 
-from src.common import WHITE, DRAGON_QUEST_FONT_PATH, BLACK
+from src.common import WHITE, DRAGON_QUEST_FONT_PATH, BLACK, CONFIRMATION_STATIC_YES_BACKGROUND_PATH, CONFIRMATION_STATIC_BACKGROUND_PATH, \
+    CONFIRMATION_STATIC_NO_BACKGROUND_PATH
 from src.text import draw_text
 
 
@@ -21,3 +22,19 @@ def blink_down_arrow(screen):
         display.flip()
 
 
+def blink_yes_confirmation(command_menu):
+    for i in range(512):
+        command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_YES_BACKGROUND_PATH)
+        display.flip()
+    for i in range(512):
+        command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
+        display.flip()
+
+
+def blink_no_confirmation(command_menu):
+    for i in range(512):
+        command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_NO_BACKGROUND_PATH)
+        display.flip()
+    for i in range(512):
+        command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
+        display.flip()

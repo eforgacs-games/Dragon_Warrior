@@ -109,7 +109,7 @@ class CommandMenu(Menu):
         else:
             print(f"Character not in lookup table: {dialog_character}")
 
-    def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool, temp_text_start: int = None, skip_text: bool = False):
+    def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True, temp_text_start: int = None, skip_text: bool = False):
         """Shows a single line in a dialog box.
         :param line: The line of text to print.
         :param skip_text: Whether to automatically skip the text.
