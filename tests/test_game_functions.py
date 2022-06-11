@@ -47,15 +47,17 @@ class Test(TestCase):
                              None)
 
     def test_set_character_position(self):
-        self.assertEqual(0, self.game.current_map.player.column)
-        self.assertEqual(0, self.game.current_map.player.row)
-        self.assertEqual(-1, self.game.current_map.player.rect.x // TILE_SIZE)
-        self.assertEqual(-1, self.game.current_map.player.rect.y // TILE_SIZE)
-        set_character_position(self.game.current_map.player)
-        self.assertEqual((self.game.current_map.player.column, self.game.current_map.player.row), (self.game.current_map.player.rect.x // TILE_SIZE, self.game.current_map.player.rect.y // TILE_SIZE))
-        self.assertEqual((self.game.current_map.player.column, self.game.current_map.player.row), (-1, -1))
+        # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
+        self.assertEqual(13, self.game.player.column)
+        self.assertEqual(10, self.game.player.row)
+        self.assertEqual(13, self.game.player.rect.x // TILE_SIZE)
+        self.assertEqual(10, self.game.player.rect.y // TILE_SIZE)
+        set_character_position(self.game.player)
+        self.assertEqual((self.game.player.column, self.game.player.row), (self.game.player.rect.x // TILE_SIZE, self.game.player.rect.y // TILE_SIZE))
+        self.assertEqual((self.game.player.column, self.game.player.row), (13, 10))
 
     def test_get_next_coordinates(self):
+        # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
         self.game.player.direction_value = 0
         self.assertEqual((11, 13), get_next_coordinates(self.game.player.rect.x // TILE_SIZE,
                                                         self.game.player.rect.y // TILE_SIZE,
