@@ -65,7 +65,7 @@ class CommandMenu(Menu):
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
         self.window_drop_down_effect(width=8, height=5, x=5, y=1)
-        self.command_menu_surface = self.create_window(width=8, height=5, x=5, y=1, background=COMMAND_MENU_STATIC_BACKGROUND_PATH)
+        self.command_menu_surface = self.create_window(width=8, height=5, x=5, y=1, window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH)
         self.dialog_lookup = DialogLookup(self)
         self.menu = pygame_menu.Menu(
             title='COMMAND',
@@ -125,7 +125,7 @@ class CommandMenu(Menu):
                 while display_current_line:
                     if temp_text_start:
                         current_time = get_ticks()
-                    self.create_window(width=12, height=5, x=2, y=9, background=DIALOG_BOX_BACKGROUND_PATH)
+                    self.create_window(width=12, height=5, x=2, y=9, window_background=DIALOG_BOX_BACKGROUND_PATH)
                     # if print_by_character:
                     #     for i in range(len(line)):
                     #         for j in range(16):
@@ -150,20 +150,25 @@ class CommandMenu(Menu):
                 # if the line is a method
                 line()
 
-    def create_window(self, width, height, x, y, background):
-        black_box = Surface((TILE_SIZE * width, TILE_SIZE * height))  # lgtm [py/call/wrong-arguments]
-        set_window_background(black_box, background)
-        self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
-        return black_box
+    def create_window(self, width, height, x, y, window_background):
+        window_box = Surface((TILE_SIZE * width, TILE_SIZE * height))  # lgtm [py/call/wrong-arguments]
+        set_window_background(window_box, window_background)
+        self.screen.blit(window_box, (TILE_SIZE * x, TILE_SIZE * y))
+        return window_box
 
-    def show_text_in_dialog_box(self, text: Tuple[str] | List[str] | str, add_quotes=False, temp_text_start=None, skip_text=False):
+    def show_text_in_dialog_box(self, text: Tuple[str] | List[str] | str, add_quotes=False, temp_text_start=None, skip_text=False, drop_down=True,
+                                drop_up=True):
         """Shows a passage of text in a dialog box.
+
         :param text: The text to print.
         :param skip_text: Whether to automatically skip the text.
         :param add_quotes: Adds single quotes to be displayed on the screen.
         :param temp_text_start: The time at which temporary text started.
+        :param drop_down: Whether to display the drop-down effect.
+        :param drop_up: Whether to display the drop-up effect.
         """
-        self.window_drop_down_effect(width=12, height=5, x=2, y=9)
+        if drop_down:
+            self.window_drop_down_effect(width=12, height=5, x=2, y=9)
         if type(text) == str:
             self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text)
         else:
@@ -176,8 +181,8 @@ class CommandMenu(Menu):
                 #     time.sleep(0.01)
                 #     if letter_index % 2 == 0:
                 #         play_sound(text_beep_sfx)
-
-        self.window_drop_up_effect(width=12, height=5, x=2, y=9)
+        if drop_up:
+            self.window_drop_up_effect(width=12, height=5, x=2, y=9)
 
     def window_drop_down_effect(self, width, height, x, y):
         """Intro effect for windows."""
