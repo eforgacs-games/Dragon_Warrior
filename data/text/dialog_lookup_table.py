@@ -1,6 +1,6 @@
 from functools import partial
 
-from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP
+from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s
 from pygame.event import get
 
 from src.common import play_sound, confirmation_sfx, special_item_sfx, CONFIRMATION_STATIC_BACKGROUND_PATH, CONFIRMATION_STATIC_YES_BACKGROUND_PATH, \
@@ -142,16 +142,20 @@ class DialogLookup:
                 blinking = False
             for current_event in get():
                 if current_event.type == KEYDOWN:
-                    if current_event.key == K_DOWN or current_event.key == K_UP:
+                    if current_event.key in (K_DOWN, K_UP, K_w, K_s):
                         if blinking_yes:
+                            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_NO_BACKGROUND_PATH)
                             blinking_yes = False
                         else:
+                            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_YES_BACKGROUND_PATH)
                             blinking_yes = True
                     elif (blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'y':
+                        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_YES_BACKGROUND_PATH)
                         play_sound(menu_button_sfx)
                         yes_path_function()
                         blinking = False
                     elif (not blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'n':
+                        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_NO_BACKGROUND_PATH)
                         play_sound(menu_button_sfx)
                         no_path_function()
                         blinking = False
