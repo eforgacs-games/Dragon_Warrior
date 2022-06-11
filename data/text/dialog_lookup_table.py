@@ -3,7 +3,8 @@ from functools import partial
 from pygame import display, time, mixer, KEYDOWN
 from pygame.event import get
 
-from src.common import play_sound, confirmation_sfx, special_item_sfx, CONFIRMATION_STATIC_BACKGROUND_PATH, CONFIRMATION_STATIC_YES_BACKGROUND_PATH
+from src.common import play_sound, confirmation_sfx, special_item_sfx, CONFIRMATION_STATIC_BACKGROUND_PATH, CONFIRMATION_STATIC_YES_BACKGROUND_PATH, \
+    menu_button_sfx
 from src.config import MUSIC_ENABLED, TILE_SIZE
 from src.game_functions import draw_all_tiles_in_current_map
 from src.menu_functions import draw_player_sprites, draw_character_sprites
@@ -116,12 +117,12 @@ class DialogLookup:
                                  yes_path_function=partial(self.command_menu.show_line_in_dialog_box, player_please_save_the_princess,
                                                            add_quotes=True), no_path_function=partial(self.command_menu.show_text_in_dialog_box,
                                                                                                       (
-                                                                                                      "Half a year now hath passed since the Princess was kidnapped by the enemy.",
-                                                                                                      "Never does the King speak of it, but he must be suffering much.",
-                                                                                                      player_please_save_the_princess),
-                                                                                                      drop_down=False, drop_up=False), current_key=None)
+                                                                                                          "Half a year now hath passed since the Princess was kidnapped by the enemy.",
+                                                                                                          "Never does the King speak of it, but he must be suffering much.",
+                                                                                                          player_please_save_the_princess),
+                                                                                                      drop_down=False, drop_up=False))
 
-    def confirmation_prompt(self, prompt_line, yes_path_function, no_path_function, current_key, finally_function=None):
+    def confirmation_prompt(self, prompt_line, yes_path_function, no_path_function, finally_function=None):
         self.command_menu.show_line_in_dialog_box(prompt_line, add_quotes=True, skip_text=True)
         self.command_menu.window_drop_down_effect(4, 3, 5, 2)
         self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
@@ -133,9 +134,11 @@ class DialogLookup:
             for current_event in get():
                 if current_event.type == KEYDOWN:
                     if current_event.unicode == 'y' and yes_path_function is not None:
+                        play_sound(menu_button_sfx)
                         yes_path_function()
                         blinking = False
                     elif current_event.unicode == 'n' and no_path_function is not None:
+                        play_sound(menu_button_sfx)
                         no_path_function()
                         blinking = False
         if finally_function is not None:
@@ -161,7 +164,7 @@ class DialogLookup:
                                  no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                           "Okay.\n"
                                                           "Good-bye, traveler.", add_quotes=True,
-                                                          skip_text=self.command_menu.skip_text), current_key=None)
+                                                          skip_text=self.command_menu.skip_text))
 
     def check_money(self, inn_cost):
         if self.player.gold >= inn_cost:
