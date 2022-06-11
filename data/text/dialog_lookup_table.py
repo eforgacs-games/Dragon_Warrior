@@ -120,9 +120,9 @@ class DialogLookup:
                                                                                                           "Half a year now hath passed since the Princess was kidnapped by the enemy.",
                                                                                                           "Never does the King speak of it, but he must be suffering much.",
                                                                                                           player_please_save_the_princess),
-                                                                                                      drop_down=False, drop_up=False))
+                                                                                                      drop_down=False, drop_up=False, skip_text=self.command_menu.skip_text))
 
-    def confirmation_prompt(self, prompt_line, yes_path_function, no_path_function, finally_function=None):
+    def confirmation_prompt(self, prompt_line, yes_path_function, no_path_function, finally_function=None, skip_text=False):
         self.command_menu.show_line_in_dialog_box(prompt_line, add_quotes=True, skip_text=True)
         self.command_menu.window_drop_down_effect(4, 3, 5, 2)
         self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
@@ -131,6 +131,10 @@ class DialogLookup:
         blinking = True
         while blinking:
             self.blink_yes_confirmation()
+            if skip_text:
+                play_sound(menu_button_sfx)
+                yes_path_function()
+                blinking = False
             for current_event in get():
                 if current_event.type == KEYDOWN:
                     if current_event.unicode == 'y' and yes_path_function is not None:
@@ -164,7 +168,7 @@ class DialogLookup:
                                  no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                           "Okay.\n"
                                                           "Good-bye, traveler.", add_quotes=True,
-                                                          skip_text=self.command_menu.skip_text))
+                                                          skip_text=self.command_menu.skip_text), skip_text=self.command_menu.skip_text)
 
     def check_money(self, inn_cost):
         if self.player.gold >= inn_cost:
