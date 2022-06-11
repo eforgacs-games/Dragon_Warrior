@@ -1,10 +1,10 @@
 from functools import partial
 
-from pygame import display, time, mixer, KEYDOWN
+from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP
 from pygame.event import get
 
 from src.common import play_sound, confirmation_sfx, special_item_sfx, CONFIRMATION_STATIC_BACKGROUND_PATH, CONFIRMATION_STATIC_YES_BACKGROUND_PATH, \
-    menu_button_sfx
+    menu_button_sfx, CONFIRMATION_STATIC_NO_BACKGROUND_PATH
 from src.config import MUSIC_ENABLED, TILE_SIZE
 from src.game_functions import draw_all_tiles_in_current_map
 from src.menu_functions import draw_player_sprites, draw_character_sprites
@@ -120,7 +120,8 @@ class DialogLookup:
                                                                                                           "Half a year now hath passed since the Princess was kidnapped by the enemy.",
                                                                                                           "Never does the King speak of it, but he must be suffering much.",
                                                                                                           player_please_save_the_princess),
-                                                                                                      drop_down=False, drop_up=False, skip_text=self.command_menu.skip_text))
+                                                                                                      drop_down=False, drop_up=False,
+                                                                                                      skip_text=self.command_menu.skip_text))
 
     def confirmation_prompt(self, prompt_line, yes_path_function, no_path_function, finally_function=None, skip_text=False):
         self.command_menu.show_line_in_dialog_box(prompt_line, add_quotes=True, skip_text=True)
@@ -129,19 +130,29 @@ class DialogLookup:
         display.flip()
         play_sound(confirmation_sfx)
         blinking = True
+        blinking_yes = True
         while blinking:
-            self.blink_yes_confirmation()
+            if blinking_yes:
+                self.blink_yes_confirmation()
+            else:
+                self.blink_no_confirmation()
             if skip_text:
                 play_sound(menu_button_sfx)
                 yes_path_function()
                 blinking = False
             for current_event in get():
                 if current_event.type == KEYDOWN:
-                    if current_event.unicode == 'y' and yes_path_function is not None:
+                    if current_event.key == K_DOWN or current_event.key == K_UP:
+                        if blinking_yes:
+                            blinking_yes = False
+                        else:
+                            blinking_yes = True
+
+                    elif (blinking_yes and current_event.unicode == '\r') or current_event.unicode == 'y':
                         play_sound(menu_button_sfx)
                         yes_path_function()
                         blinking = False
-                    elif current_event.unicode == 'n' and no_path_function is not None:
+                    elif (not blinking_yes and current_event.unicode == '\r') or current_event.unicode == 'n':
                         play_sound(menu_button_sfx)
                         no_path_function()
                         blinking = False
@@ -151,6 +162,14 @@ class DialogLookup:
     def blink_yes_confirmation(self):
         for i in range(512):
             self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_YES_BACKGROUND_PATH)
+            display.flip()
+        for i in range(512):
+            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
+            display.flip()
+
+    def blink_no_confirmation(self):
+        for i in range(512):
+            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_NO_BACKGROUND_PATH)
             display.flip()
         for i in range(512):
             self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
@@ -168,7 +187,8 @@ class DialogLookup:
                                  no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                           "Okay.\n"
                                                           "Good-bye, traveler.", add_quotes=True,
-                                                          skip_text=self.command_menu.skip_text), skip_text=self.command_menu.skip_text)
+                                                          skip_text=self.command_menu.skip_text),
+                                 skip_text=self.command_menu.skip_text)
 
     def check_money(self, inn_cost):
         if self.player.gold >= inn_cost:
