@@ -3,12 +3,16 @@ from functools import partial
 from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s
 from pygame.event import get
 
+from data.text.dialog import blink_yes_confirmation, blink_no_confirmation
 from src.common import play_sound, confirmation_sfx, special_item_sfx, CONFIRMATION_STATIC_BACKGROUND_PATH, CONFIRMATION_STATIC_YES_BACKGROUND_PATH, \
     menu_button_sfx, CONFIRMATION_STATIC_NO_BACKGROUND_PATH
 from src.config import MUSIC_ENABLED, TILE_SIZE
 from src.game_functions import draw_all_tiles_in_current_map
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.visual_effects import fade
+
+weapons_and_armor_intro = "We deal in weapons and armor.\n" \
+                          "Dost thou wish to buy anything today?"
 
 
 class DialogLookup:
@@ -19,9 +23,6 @@ class DialogLookup:
         self.current_map = command_menu.current_map
         self.background = command_menu.background
         self.camera_position = command_menu.camera_position
-
-        weapons_and_armor_intro = "We deal in weapons and armor.\n" \
-                                  "Dost thou wish to buy anything today?"
 
         where_is_princess_gwaelin = "Where oh where can I find Princess Gwaelin?"
         welcome_to_tantegel = "Welcome to Tantegel Castle."
@@ -89,7 +90,7 @@ class DialogLookup:
             'Brecconary': {
                 'MAN': {'dialog': "There is a town where magic keys can be purchased."},
                 'WISE_MAN': {'dialog': "If thou art cursed, come again."},
-                'MERCHANT': {'dialog': (weapons_and_armor_intro,)},
+                'MERCHANT': {'dialog': (self.check_buy_weapons_armor,)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'UP_FACE_GUARD': {'dialog': ("Tell King Lorik that the search for his daughter hath failed.",
                                              "I am almost gone....")},
@@ -114,17 +115,16 @@ class DialogLookup:
     def tantegel_throne_room_roaming_guard(self):
         player_please_save_the_princess = f"{self.player.name}, please save the Princess."
         self.confirmation_prompt("Dost thou know about Princess Gwaelin?",
-                                 yes_path_function=partial(self.command_menu.show_line_in_dialog_box, player_please_save_the_princess,
-                                                           add_quotes=True), no_path_function=partial(self.command_menu.show_text_in_dialog_box,
-                                                                                                      (
-                                                                                                          "Half a year now hath passed since the Princess was kidnapped by the enemy.",
-                                                                                                          "Never does the King speak of it, but he must be suffering much.",
-                                                                                                          player_please_save_the_princess),
-                                                                                                      drop_down=False, drop_up=False,
-                                                                                                      skip_text=self.command_menu.skip_text))
+                                 yes_path_function=partial(self.command_menu.show_line_in_dialog_box, player_please_save_the_princess),
+                                 no_path_function=partial(self.command_menu.show_text_in_dialog_box,
+                                                          ("Half a year now hath passed since the Princess was kidnapped by the enemy.",
+                                                           "Never does the King speak of it, but he must be suffering much.",
+                                                           player_please_save_the_princess),
+                                                          drop_down=False, drop_up=False,
+                                                          skip_text=self.command_menu.skip_text))
 
     def confirmation_prompt(self, prompt_line, yes_path_function, no_path_function, finally_function=None, skip_text=False):
-        self.command_menu.show_line_in_dialog_box(prompt_line, add_quotes=True, skip_text=True)
+        self.command_menu.show_line_in_dialog_box(prompt_line, skip_text=True)
         self.command_menu.window_drop_down_effect(4, 3, 5, 2)
         self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
         display.flip()
@@ -133,9 +133,9 @@ class DialogLookup:
         blinking_yes = True
         while blinking:
             if blinking_yes:
-                self.blink_yes_confirmation()
+                blink_yes_confirmation(self.command_menu)
             else:
-                self.blink_no_confirmation()
+                blink_no_confirmation(self.command_menu)
             if skip_text:
                 play_sound(menu_button_sfx)
                 yes_path_function()
@@ -162,34 +162,24 @@ class DialogLookup:
         if finally_function is not None:
             finally_function()
 
-    def blink_yes_confirmation(self):
-        for i in range(512):
-            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_YES_BACKGROUND_PATH)
-            display.flip()
-        for i in range(512):
-            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
-            display.flip()
-
-    def blink_no_confirmation(self):
-        for i in range(512):
-            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_NO_BACKGROUND_PATH)
-            display.flip()
-        for i in range(512):
-            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
-            display.flip()
-
     @staticmethod
     def get_inn_intro(inn_cost):
         return "Welcome to the traveler's Inn.\n" \
                f"Room and board is {inn_cost} GOLD per night.\n" \
                "Dost thou want a room?"
 
+    def check_buy_weapons_armor(self):
+        self.confirmation_prompt(weapons_and_armor_intro,
+                                 # TODO(ELF): Add store inventory to yes_path_function.
+                                 yes_path_function=partial(self.command_menu.show_line_in_dialog_box, "What dost thou wish to buy?"),
+                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."))
+
     def check_stay_at_inn(self, inn_cost):
-        self.command_menu.show_line_in_dialog_box(self.get_inn_intro(inn_cost), add_quotes=True, skip_text=True)
-        self.confirmation_prompt(self.get_inn_intro(inn_cost), yes_path_function=partial(self.check_money, inn_cost),
+        self.confirmation_prompt(self.get_inn_intro(inn_cost),
+                                 yes_path_function=partial(self.check_money, inn_cost),
                                  no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                           "Okay.\n"
-                                                          "Good-bye, traveler.", add_quotes=True,
+                                                          "Good-bye, traveler.",
                                                           skip_text=self.command_menu.skip_text),
                                  skip_text=self.command_menu.skip_text)
 
@@ -197,10 +187,10 @@ class DialogLookup:
         if self.player.gold >= inn_cost:
             self.inn_sleep(inn_cost)
         else:
-            self.command_menu.show_line_in_dialog_box("Thou hast not enough money.", add_quotes=True, skip_text=self.command_menu.skip_text)
+            self.command_menu.show_line_in_dialog_box("Thou hast not enough money.", skip_text=self.command_menu.skip_text)
 
     def inn_sleep(self, inn_cost):
-        self.command_menu.show_text_in_dialog_box("Good night.", add_quotes=True, skip_text=self.command_menu.skip_text)
+        self.command_menu.show_text_in_dialog_box("Good night.", skip_text=self.command_menu.skip_text)
         fade(fade_out=True, screen=self.screen)
         if MUSIC_ENABLED:
             mixer.music.stop()
@@ -221,5 +211,5 @@ class DialogLookup:
         self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 5, TILE_SIZE * 1))
         display.flip()
         self.command_menu.show_line_in_dialog_box("Good morning.\n" +
-                                                  "Thou seems to have spent a good night.", add_quotes=True, skip_text=self.command_menu.skip_text)
-        self.command_menu.show_line_in_dialog_box("I shall see thee again.", add_quotes=True, skip_text=self.command_menu.skip_text)
+                                                  "Thou seems to have spent a good night.", skip_text=self.command_menu.skip_text)
+        self.command_menu.show_line_in_dialog_box("I shall see thee again.", skip_text=self.command_menu.skip_text)

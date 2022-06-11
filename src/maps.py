@@ -14,7 +14,6 @@ from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_
 from src.config import TILE_SIZE, SCALE
 from src.map_layouts import MapLayouts
 from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point
-from src.player.player import Player
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
 from src.sprites.fixed_character import FixedCharacter
