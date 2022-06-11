@@ -1,8 +1,9 @@
 from functools import partial
 
-from pygame import display, time, mixer
+from pygame import display, time, mixer, KEYDOWN
+from pygame.event import get
 
-from src.common import play_sound, confirmation_sfx, special_item_sfx
+from src.common import play_sound, confirmation_sfx, special_item_sfx, CONFIRMATION_STATIC_BACKGROUND_PATH, CONFIRMATION_STATIC_YES_BACKGROUND_PATH
 from src.config import MUSIC_ENABLED, TILE_SIZE
 from src.game_functions import draw_all_tiles_in_current_map
 from src.menu_functions import draw_player_sprites, draw_character_sprites
@@ -63,16 +64,7 @@ class DialogLookup:
                     "Once used, the key will disappear, but the door will be open and thou may pass through."
                 )},
                 'ROAMING_GUARD': {'dialog': (
-                    # know_about_princess = input("Dost thou know about Princess Gwaelin?'")
-                    # if not know_about_princess:
-                    #     print_with_beep_sfx("Half a year now hath passed since the Princess was kidnapped by the enemy.")
-                    #     print_with_beep_sfx("Never does the King speak of it, but he must be suffering much.")
-                    # else:
-                    #     print_with_beep_sfx(f"{self.player.name}, please save the Princess.")
-                    # TODO: Reset this later to use input(), but just for testing it out we can leave it this way for now.
-                    "Dost thou know about Princess Gwaelin?",
-                    "Half a year now hath passed since the Princess was kidnapped by the enemy.",
-                    "Never does the King speak of it, but he must be suffering much."
+                    self.tantegel_throne_room_roaming_guard,
                 )}},
             'TantegelCourtyard': {
                 'MERCHANT': {'dialog': ("Magic keys! They will unlock any door. \nDost thou wish to purchase one for 85 GOLD?",)},
@@ -118,6 +110,45 @@ class DialogLookup:
             for character_identifier, character_dict in map_dict.items():
                 character_dict['dialog_character'] = character_identifier
 
+    def tantegel_throne_room_roaming_guard(self):
+        player_please_save_the_princess = f"{self.player.name}, please save the Princess."
+        self.confirmation_prompt("Dost thou know about Princess Gwaelin?",
+                                 yes_path_function=partial(self.command_menu.show_line_in_dialog_box, player_please_save_the_princess,
+                                                           add_quotes=True), no_path_function=partial(self.command_menu.show_text_in_dialog_box,
+                                                                                                      (
+                                                                                                      "Half a year now hath passed since the Princess was kidnapped by the enemy.",
+                                                                                                      "Never does the King speak of it, but he must be suffering much.",
+                                                                                                      player_please_save_the_princess),
+                                                                                                      drop_down=False, drop_up=False), current_key=None)
+
+    def confirmation_prompt(self, prompt_line, yes_path_function, no_path_function, current_key, finally_function=None):
+        self.command_menu.show_line_in_dialog_box(prompt_line, add_quotes=True, skip_text=True)
+        self.command_menu.window_drop_down_effect(4, 3, 5, 2)
+        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
+        display.flip()
+        play_sound(confirmation_sfx)
+        blinking = True
+        while blinking:
+            self.blink_yes_confirmation()
+            for current_event in get():
+                if current_event.type == KEYDOWN:
+                    if current_event.unicode == 'y' and yes_path_function is not None:
+                        yes_path_function()
+                        blinking = False
+                    elif current_event.unicode == 'n' and no_path_function is not None:
+                        no_path_function()
+                        blinking = False
+        if finally_function is not None:
+            finally_function()
+
+    def blink_yes_confirmation(self):
+        for i in range(512):
+            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_YES_BACKGROUND_PATH)
+            display.flip()
+        for i in range(512):
+            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
+            display.flip()
+
     @staticmethod
     def get_inn_intro(inn_cost):
         return "Welcome to the traveler's Inn.\n" \
@@ -126,14 +157,11 @@ class DialogLookup:
 
     def check_stay_at_inn(self, inn_cost):
         self.command_menu.show_line_in_dialog_box(self.get_inn_intro(inn_cost), add_quotes=True, skip_text=True)
-        play_sound(confirmation_sfx)
-        # TODO(ELF): Change this implementation to work through the game screen instead of the console.
-        response = input("Dost thou want a room?")
-        if response == "y":
-            self.check_money(inn_cost)
-        elif response == "n":
-            self.command_menu.show_line_in_dialog_box("Okay.\n"
-                                                      "Good-bye, traveler.", add_quotes=True, skip_text=self.command_menu.skip_text)
+        self.confirmation_prompt(self.get_inn_intro(inn_cost), yes_path_function=partial(self.check_money, inn_cost),
+                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                                          "Okay.\n"
+                                                          "Good-bye, traveler.", add_quotes=True,
+                                                          skip_text=self.command_menu.skip_text), current_key=None)
 
     def check_money(self, inn_cost):
         if self.player.gold >= inn_cost:

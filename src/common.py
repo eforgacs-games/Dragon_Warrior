@@ -124,6 +124,8 @@ DIALOG_BOX_BACKGROUND_PATH = join(IMAGES_DIR, 'dialog_box_background.png')
 COMMAND_MENU_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_background.png')
 COMMAND_MENU_STATIC_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_static.png')
 CONFIRMATION_STATIC_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_static.png')
+CONFIRMATION_STATIC_YES_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_static_yes.png')
+CONFIRMATION_STATIC_NO_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_static_no.png')
 
 
 def get_image(path):
