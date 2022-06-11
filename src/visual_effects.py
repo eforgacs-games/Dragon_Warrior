@@ -3,19 +3,15 @@ from pygame import Surface, display, time
 from src.common import BLACK
 
 
-def fade(width: int, height: int, fade_out: bool, background, screen) -> None:
+def fade(fade_out: bool, screen: Surface) -> None:
     """
     Fade to/from current scene to/from black.
     @param screen: The screen.
-    @param background: The background.
     :return: None
-    @param width: int
-    Width of surface to fade.
-    @param height:
-    Height of surface to fade.
     @type fade_out: bool
     If true, fades out. If false, fades in.
     """
+    width, height = screen.get_width(), screen.get_height()
     fade_surface = Surface((width, height))  # lgtm [py/call/wrong-arguments]
     fade_surface.fill(BLACK)
     opacity = 0
@@ -27,7 +23,6 @@ def fade(width: int, height: int, fade_out: bool, background, screen) -> None:
             #  https://stackoverflow.com/questions/58540537/how-to-fade-the-screen-out-and-back-in-using-pygame
             opacity -= 1
         fade_surface.set_alpha(opacity)
-        background.fill(BLACK)
         screen.blit(fade_surface, (0, 0))
         display.update()
         time.delay(5)

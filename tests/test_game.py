@@ -7,10 +7,11 @@ from pygame.imageext import load_extended
 from pygame.transform import scale
 
 from src.camera import Camera
-from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction
+from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
-from src.maps import MapWithoutNPCs, TantegelThroneRoom
+from src.game_functions import get_next_coordinates, replace_characters_with_underlying_tiles
+from src.maps import MapWithoutNPCs, TantegelThroneRoom, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
@@ -59,14 +60,10 @@ class TestGame(TestCase):
 
     def setUp(self) -> None:
         self.game = Game()
-        self.game.camera_pos = 0, 0
-        self.center_pt = 0, 0
         self.game.current_map = MockMap()
-        self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
-        self.hero_images = parse_animated_sprite_sheet(
-            scale(unarmed_hero_sheet, (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)))
-        self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map)
+        self.game.current_map.player = Player((0, 0), parse_animated_sprite_sheet(
+            scale(unarmed_hero_sheet, (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))), self.game.current_map)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
         self.camera = Camera((self.game.current_map.player.rect.y // TILE_SIZE, self.game.current_map.player.rect.x // TILE_SIZE), self.game.current_map,
                              self.game.screen)
@@ -178,7 +175,8 @@ class TestGame(TestCase):
         self.assertFalse(self.game.cmd_menu.launch_signaled)
 
     def test_replace_characters_with_underlying_tiles(self):
-        self.assertEqual(['BRICK'], self.game.replace_characters_with_underlying_tiles([self.game.player.current_tile]))
+        # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
+        self.assertEqual(['BRICK'], replace_characters_with_underlying_tiles([self.game.player.current_tile], self.game.current_map.character_key))
 
     def test_convert_numeric_tile_list_to_unique_tile_values(self):
         self.assertEqual(['WALL',
@@ -204,6 +202,7 @@ class TestGame(TestCase):
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
 
     def test_change_map_maintain_inventory_and_gold(self):
+        # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
         self.game.player.gold = 120
         self.game.player.inventory = ['Torch']
         self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
@@ -251,25 +250,54 @@ class TestGame(TestCase):
 
     def test_set_to_save_prompt(self):
         self.assertEqual((
-                    "Descendant of Erdrick, listen now to my words.",
-                    "It is told that in ages past Erdrick fought demons with a Ball of Light.",
-                    "Then came the Dragonlord who stole the precious globe and hid it in the darkness.",
-                    f"Now, {self.game.player.name}, thou must help us recover the Ball of Light and restore peace to our land.",
-                    "The Dragonlord must be defeated.",
-                    "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest.",
-                    "Then speak with the guards, for they have much knowledge that may aid thee.",
-                    f"May the light shine upon thee, {self.game.player.name}."
-                ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+            "Descendant of Erdrick, listen now to my words.",
+            "It is told that in ages past Erdrick fought demons with a Ball of Light.",
+            "Then came the Dragonlord who stole the precious globe and hid it in the darkness.",
+            f"Now, {self.game.player.name}, thou must help us recover the Ball of Light and restore peace to our land.",
+            "The Dragonlord must be defeated.",
+            "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest.",
+            "Then speak with the guards, for they have much knowledge that may aid thee.",
+            f"May the light shine upon thee, {self.game.player.name}."
+        ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
         self.game.set_to_save_prompt()
         self.assertEqual((
-                        f"I am greatly pleased that thou hast returned, {self.game.player.name}.",
-                        f"Before reaching thy next level of experience thou must gain {self.game.player.points_to_next_level} Points.",
-                        "Will thou tell me now of thy deeds so they won't be forgotten?",
-                        # if yes:
-                        "Thy deeds have been recorded on the Imperial Scrolls of Honor.",
-                        "Dost thou wish to continue thy quest?",
-                        # if yes:
-                        f"Goodbye now, {self.game.player.name}.\n'Take care and tempt not the Fates.",
-                        # if no:
-                        # "Rest then for awhile."
-                    ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+            f"I am greatly pleased that thou hast returned, {self.game.player.name}.",
+            f"Before reaching thy next level of experience thou must gain {self.game.player.points_to_next_level} Points.",
+            "Will thou tell me now of thy deeds so they won't be forgotten?",
+            # if yes:
+            "Thy deeds have been recorded on the Imperial Scrolls of Honor.",
+            "Dost thou wish to continue thy quest?",
+            # if yes:
+            f"Goodbye now, {self.game.player.name}.\n'Take care and tempt not the Fates.",
+            # if no:
+            # "Rest then for awhile."
+        ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+
+    def test_travelers_inn(self):
+        self.game.current_map = Alefgard()
+        self.game.player.row, self.game.player.column = 48, 54
+        # organically switch maps to Brecconary, as though entering from Alefgard
+        for staircase_location, staircase_dict in self.game.current_map.staircases.items():
+            self.game.process_staircase_warps(staircase_dict, staircase_location)
+        self.assertEqual('Brecconary', self.game.current_map.identifier)
+        self.game.player.current_hp = 1
+        self.game.player.current_mp = 1
+        self.game.player.direction_value = Direction.RIGHT.value
+        self.game.cmd_menu.skip_text = True
+        self.game.player.gold = 10
+        self.game.player.row, self.game.player.column = 29, 18
+        self.game.player.next_next_coordinates = get_next_coordinates(18, 29, self.game.player.direction_value, offset_from_character=2)
+        self.game.player.next_tile_id = get_next_tile_identifier(self.game.player.column,
+                                                                 self.game.player.row,
+                                                                 self.game.player.direction_value,
+                                                                 self.game.current_map)
+        self.game.cmd_menu.talk()
+        self.assertEqual(self.game.player.max_hp, self.game.player.current_hp)
+        self.assertEqual(self.game.player.max_mp, self.game.player.current_mp)
+        self.assertEqual(4, self.game.player.gold)
+        self.game.player.current_hp = 2
+        self.game.player.current_mp = 3
+        self.game.cmd_menu.talk()
+        self.assertEqual(2, self.game.player.current_hp)
+        self.assertEqual(3, self.game.player.current_mp)
+        self.assertEqual(4, self.game.player.gold)

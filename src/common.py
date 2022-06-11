@@ -41,6 +41,7 @@ _sound_library = {}
 
 # menu
 text_beep_sfx = join(SFX_DIR, 'text_beep.wav')
+special_item_sfx = join(SFX_DIR, '21 Dragon Quest 1 - Special Item.mp3')
 stairs_up_sfx = join(SFX_DIR, '29 Dragon Quest 1 - Stairs Up.mp3')
 stairs_down_sfx = join(SFX_DIR, '30 Dragon Quest 1 - Stairs Down.mp3')
 menu_button_sfx = join(SFX_DIR, '32 Dragon Quest 1 - Menu Button.mp3')
@@ -121,6 +122,10 @@ INTRO_BANNER_WITH_DRAGON_PATH = join(IMAGES_DIR, 'intro_banner', 'intro_banner_w
 ICON_PATH = join(IMAGES_DIR, 'walking_hero.gif')
 DIALOG_BOX_BACKGROUND_PATH = join(IMAGES_DIR, 'dialog_box_background.png')
 COMMAND_MENU_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_background.png')
+COMMAND_MENU_STATIC_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_static.png')
+CONFIRMATION_STATIC_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_static.png')
+CONFIRMATION_STATIC_YES_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_static_yes.png')
+CONFIRMATION_STATIC_NO_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_static_no.png')
 
 
 def get_image(path):
