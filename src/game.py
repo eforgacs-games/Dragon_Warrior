@@ -14,7 +14,8 @@ import src.menu as menu
 from src import maps
 from src.camera import Camera
 from src.common import BLACK, DRAGON_QUEST_FONT_PATH, Direction, ICON_PATH, WHITE, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
-    is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH
+    is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
+    convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -35,6 +36,7 @@ class Game:
 
     def __init__(self):
         # map/graphics
+
         self.background = None
         self.big_map = None
         self.layouts = MapLayouts()
@@ -49,6 +51,9 @@ class Game:
         self.tiles_moved_since_spawn = 0
         self.loop_count = 1
         self.foreground_rects = []
+        self.not_moving_time_start = None
+        self.display_hovering_stats = False
+        self.hovering_stats_displayed = False
         init()
         self.paused = False
         # Create the game window.
@@ -242,6 +247,7 @@ class Game:
             # print("K key pressed (A button).")
             if not self.player.is_moving:
                 # pause_all_movement may be temporarily commented out for dialog box debugging purposes.
+                self.display_hovering_stats = True
                 self.cmd_menu.launch_signaled = True
                 self.pause_all_movement()
         if current_key[K_i]:
@@ -352,6 +358,15 @@ class Game:
             if self.player.is_moving:
                 tile_types_to_draw += replace_characters_with_underlying_tiles(
                     list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
+                self.not_moving_time_start = None
+                self.display_hovering_stats = False
+                self.hovering_stats_displayed = False
+            else:
+                if not self.not_moving_time_start:
+                    self.not_moving_time_start = get_ticks()
+                else:
+                    if convert_to_frames_since_start_time(self.not_moving_time_start) >= 51:
+                        self.display_hovering_stats = True
         except IndexError:
             all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
             all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
@@ -370,6 +385,20 @@ class Game:
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation()
         self.screen.blit(self.background, self.camera.get_pos())
+        if self.display_hovering_stats:
+            if not self.hovering_stats_displayed:
+                self.cmd_menu.window_drop_down_effect(4, 6, 1, 2)
+                self.cmd_menu.create_window(4, 6, 1, 2, HOVERING_STATS_BACKGROUND_PATH)
+                self.hovering_stats_displayed = True
+            self.cmd_menu.create_window(4, 6, 1, 2, HOVERING_STATS_BACKGROUND_PATH)
+        self.handle_menu_launch(self.cmd_menu)
+        self.handle_initial_dialog()
+        if self.cmd_menu.launched:
+            self.cmd_menu.menu.update(self.events)
+            self.enable_movement = False
+        display.flip()
+
+    def handle_initial_dialog(self):
         if INITIAL_DIALOG_ENABLED:
             if self.current_map.identifier == 'TantegelThroneRoom':
                 if self.is_initial_dialog:
@@ -384,8 +413,8 @@ class Game:
 
         else:
             self.set_to_post_initial_dialog()
-            self.enable_movement = True
-        self.handle_menu_launch(self.cmd_menu)
+            if not self.cmd_menu.launched:
+                self.enable_movement = True
 
     def run_automatic_initial_dialog(self):
         self.enable_movement = False
@@ -457,12 +486,10 @@ class Game:
             if not menu_to_launch.launched:
                 self.launch_menu(menu_to_launch.menu.get_id())
 
-    def update_screen(self) -> None:
+    @staticmethod
+    def update_screen() -> None:
         """Update the screen's display."""
-        if self.cmd_menu.launched:
-            self.cmd_menu.menu.update(self.events)
-            self.enable_movement = False
-        display.update()
+        display.flip()
 
     def change_map(self, next_map: maps.DragonWarriorMap) -> None:
         """
