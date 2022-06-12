@@ -13,7 +13,7 @@ from pygame.time import get_ticks
 import src.menu as menu
 from src import maps
 from src.camera import Camera
-from src.common import BLACK, DRAGON_QUEST_FONT_PATH, Direction, ICON_PATH, WHITE, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
+from src.common import BLACK, Direction, ICON_PATH, WHITE, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
     convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
@@ -143,10 +143,10 @@ class Game:
             screen.fill(BLACK)
             # totally dummy option for now, just a placeholder
             for i in range(128):
-                draw_text(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 3, DRAGON_QUEST_FONT_PATH, self.screen)
+                draw_text(">BEGIN A NEW QUEST", WHITE, screen.get_width() / 2, screen.get_height() / 3, self.screen)
                 display.flip()
             for i in range(128):
-                draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 3, DRAGON_QUEST_FONT_PATH, self.screen)
+                draw_text(" BEGIN A NEW QUEST", WHITE, screen.get_width() / 2, screen.get_height() / 3, self.screen)
                 display.flip()
             self.clock.tick(self.fps)
             for current_event in get():
@@ -393,6 +393,29 @@ class Game:
                 self.cmd_menu.create_window(4, 6, 1, 2, HOVERING_STATS_BACKGROUND_PATH)
                 self.hovering_stats_displayed = True
             self.cmd_menu.create_window(4, 6, 1, 2, HOVERING_STATS_BACKGROUND_PATH)
+            draw_text(self.player.name[:4], WHITE, TILE_SIZE * 2.99, TILE_SIZE * 2, self.screen)
+            draw_text(f"{self.player.level}", WHITE, TILE_SIZE * 4.2, TILE_SIZE * 2.99, self.screen)
+
+            hp_string = f"{self.player.current_hp}"
+            if len(hp_string) >= 2:
+                draw_text(hp_string, WHITE, TILE_SIZE * 4, TILE_SIZE * 3.99, self.screen)
+            else:
+                draw_text(hp_string, WHITE, TILE_SIZE * 4.2, TILE_SIZE * 3.99, self.screen)
+            mp_string = f"{self.player.current_mp}"
+            if len(mp_string) >= 2:
+                draw_text(mp_string, WHITE, TILE_SIZE * 4, TILE_SIZE * 4.99, self.screen)
+            else:
+                draw_text(mp_string, WHITE, TILE_SIZE * 4.2, TILE_SIZE * 4.99, self.screen)
+            gold_string = f"{self.player.gold}"
+            if len(gold_string) >= 5:
+                draw_text(gold_string, WHITE, TILE_SIZE * 3.2, TILE_SIZE * 5.99, self.screen)
+            else:
+                draw_text(gold_string, WHITE, TILE_SIZE * 4.2, TILE_SIZE * 5.99, self.screen)
+            experience_string = f"{self.player.total_experience}"
+            if len(experience_string) >= 5:
+                draw_text(experience_string, WHITE, TILE_SIZE * 3.2, TILE_SIZE * 6.99, self.screen)
+            else:
+                draw_text(experience_string, WHITE, TILE_SIZE * 4.2, TILE_SIZE * 6.99, self.screen)
         self.handle_menu_launch(self.cmd_menu)
         self.handle_initial_dialog()
         if self.cmd_menu.launched:
