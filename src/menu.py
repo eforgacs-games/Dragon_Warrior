@@ -7,10 +7,10 @@ from pygame.event import get
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
-from data.text.dialog import set_window_background, blink_down_arrow
+from data.text.dialog import blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
-    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH
+    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.maps_functions import get_center_point
@@ -65,7 +65,7 @@ class CommandMenu(Menu):
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
         self.window_drop_down_effect(width=8, height=5, x=5, y=1)
-        self.command_menu_surface = self.create_window(width=8, height=5, x=5, y=1, window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH)
+        self.command_menu_surface = create_window(x=5, y=1, width=8, height=5, window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH, screen=self.screen)
         self.dialog_lookup = DialogLookup(self)
         self.menu = pygame_menu.Menu(
             title='COMMAND',
@@ -109,8 +109,10 @@ class CommandMenu(Menu):
         else:
             print(f"Character not in lookup table: {dialog_character}")
 
-    def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True, temp_text_start: int = None, skip_text: bool = False):
+    def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True, temp_text_start: int = None, skip_text: bool = False,
+                                last_line=False):
         """Shows a single line in a dialog box.
+        :param last_line:
         :param line: The line of text to print.
         :param skip_text: Whether to automatically skip the text.
         :param add_quotes: Adds single quotes to be displayed on the screen.
@@ -125,7 +127,7 @@ class CommandMenu(Menu):
                 while display_current_line:
                     if temp_text_start:
                         current_time = get_ticks()
-                    self.create_window(width=12, height=5, x=2, y=9, window_background=DIALOG_BOX_BACKGROUND_PATH)
+                    create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH, screen=self.screen)
                     # if print_by_character:
                     #     for i in range(len(line)):
                     #         for j in range(16):
@@ -138,9 +140,10 @@ class CommandMenu(Menu):
                     #                       DRAGON_QUEST_FONT_PATH,
                     #                       self.screen)
                     # else:
-                    draw_text(line, 15, WHITE, TILE_SIZE * 3, TILE_SIZE * 9.75, DRAGON_QUEST_FONT_PATH, self.screen, center_align=False)
+                    draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, center_align=False)
                     display.flip()
-                    blink_down_arrow(self.screen)
+                    if not last_line:
+                        blink_down_arrow(self.screen)
                     # playing with fire a bit here with the short-circuiting
                     if skip_text or (temp_text_start and current_time - temp_text_start >= 200) or any(
                             [current_event.type == KEYDOWN for current_event in get()]):
@@ -150,12 +153,6 @@ class CommandMenu(Menu):
             else:
                 # if the line is a method
                 line()
-
-    def create_window(self, width, height, x, y, window_background):
-        window_box = Surface((TILE_SIZE * width, TILE_SIZE * height))  # lgtm [py/call/wrong-arguments]
-        set_window_background(window_box, window_background)
-        self.screen.blit(window_box, (TILE_SIZE * x, TILE_SIZE * y))
-        return window_box
 
     def show_text_in_dialog_box(self, text: Tuple[str] | List[str] | str, add_quotes=False, temp_text_start=None, skip_text=False, drop_down=True,
                                 drop_up=True):
@@ -171,10 +168,13 @@ class CommandMenu(Menu):
         if drop_down:
             self.window_drop_down_effect(width=12, height=5, x=2, y=9)
         if type(text) == str:
-            self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text)
+            self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, last_line=True)
         else:
-            for line in text:
-                self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text)
+            for line_index, line in enumerate(text):
+                if line_index == len(text) - 1:
+                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text, last_line=True)
+                else:
+                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text)
                 # TODO(ELF): This commented out code just makes the sound for printing by letter.
                 #  Need to actually show the letters one by one.
                 #  (Better to leave it commented out until it's working)
@@ -205,7 +205,7 @@ class CommandMenu(Menu):
         for i in range(height - 1, -1, -1):
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
-            for j in range(64):
+            for j in range(32):
                 for tile, tile_dict in self.current_map.floor_tile_key.items():
                     if tile in self.get_dialog_box_underlying_tiles(self.current_map, i):
                         tile_dict['group'].draw(self.background)
@@ -243,7 +243,7 @@ class CommandMenu(Menu):
                     self.launch_dialog(character_identifier, self.current_map)
                     break
         else:
-            self.show_text_in_dialog_box(("There is no one there.",), add_quotes=True, skip_text=self.skip_text)
+            self.show_text_in_dialog_box("There is no one there.", add_quotes=True, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
         # TODO(ELF): Add drop up effect upon closing command menu - currently blits to the wrong place,

@@ -10,18 +10,20 @@ from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
 
-import src.menu as menu
 from src import maps
 from src.camera import Camera
-from src.common import BLACK, DRAGON_QUEST_FONT_PATH, Direction, ICON_PATH, WHITE, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
-    is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH
+from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
+    is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
+    convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
-from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles
+from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles, \
+    draw_hovering_stats_window
 from src.intro import Intro
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
+from src.menu import CommandMenu, Menu
 from src.movement import bump_and_reset
 from src.player.player import Player
 from src.sound import bump, play_sound
@@ -35,6 +37,7 @@ class Game:
 
     def __init__(self):
         # map/graphics
+
         self.background = None
         self.big_map = None
         self.layouts = MapLayouts()
@@ -49,6 +52,9 @@ class Game:
         self.tiles_moved_since_spawn = 0
         self.loop_count = 1
         self.foreground_rects = []
+        self.not_moving_time_start = None
+        self.display_hovering_stats = False
+        self.hovering_stats_displayed = False
         init()
         self.paused = False
         # Create the game window.
@@ -97,7 +103,7 @@ class Game:
 
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE, self.current_map)
         self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen)
-        self.cmd_menu = menu.CommandMenu(self)
+        self.cmd_menu = CommandMenu(self)
 
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
@@ -138,10 +144,10 @@ class Game:
             screen.fill(BLACK)
             # totally dummy option for now, just a placeholder
             for i in range(128):
-                draw_text(">BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 3, DRAGON_QUEST_FONT_PATH, self.screen)
+                draw_text(">BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
                 display.flip()
             for i in range(128):
-                draw_text(" BEGIN A NEW QUEST", 15, WHITE, screen.get_width() / 2, screen.get_height() / 3, DRAGON_QUEST_FONT_PATH, self.screen)
+                draw_text(" BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
                 display.flip()
             self.clock.tick(self.fps)
             for current_event in get():
@@ -242,6 +248,7 @@ class Game:
             # print("K key pressed (A button).")
             if not self.player.is_moving:
                 # pause_all_movement may be temporarily commented out for dialog box debugging purposes.
+                self.display_hovering_stats = True
                 self.cmd_menu.launch_signaled = True
                 self.pause_all_movement()
         if current_key[K_i]:
@@ -352,6 +359,17 @@ class Game:
             if self.player.is_moving:
                 tile_types_to_draw += replace_characters_with_underlying_tiles(
                     list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
+                self.not_moving_time_start = None
+                self.display_hovering_stats = False
+                if self.hovering_stats_displayed:
+                    self.cmd_menu.window_drop_up_effect(4, 6, 1, 2)
+                    self.hovering_stats_displayed = False
+            else:
+                if not self.not_moving_time_start:
+                    self.not_moving_time_start = get_ticks()
+                else:
+                    if convert_to_frames_since_start_time(self.not_moving_time_start) >= 51:
+                        self.display_hovering_stats = True
         except IndexError:
             all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
             all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
@@ -370,6 +388,23 @@ class Game:
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation()
         self.screen.blit(self.background, self.camera.get_pos())
+        if self.display_hovering_stats:
+            if not self.hovering_stats_displayed:
+                self.drop_down_hovering_stats_window()
+            draw_hovering_stats_window(self.screen, self.player)
+        self.handle_menu_launch(self.cmd_menu)
+        self.handle_initial_dialog()
+        if self.cmd_menu.launched:
+            self.cmd_menu.menu.update(self.events)
+            self.enable_movement = False
+        display.flip()
+
+    def drop_down_hovering_stats_window(self):
+        self.cmd_menu.window_drop_down_effect(4, 6, 1, 2)
+        create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, self.screen)
+        self.hovering_stats_displayed = True
+
+    def handle_initial_dialog(self):
         if INITIAL_DIALOG_ENABLED:
             if self.current_map.identifier == 'TantegelThroneRoom':
                 if self.is_initial_dialog:
@@ -384,8 +419,8 @@ class Game:
 
         else:
             self.set_to_post_initial_dialog()
-            self.enable_movement = True
-        self.handle_menu_launch(self.cmd_menu)
+            if not self.cmd_menu.launched:
+                self.enable_movement = True
 
     def run_automatic_initial_dialog(self):
         self.enable_movement = False
@@ -442,7 +477,7 @@ class Game:
             converted_tiles.append(self.current_map.get_tile_by_value(tile_value))
         return converted_tiles
 
-    def handle_menu_launch(self, menu_to_launch: menu.Menu) -> None:
+    def handle_menu_launch(self, menu_to_launch: Menu) -> None:
         if menu_to_launch.launch_signaled:
             if menu_to_launch.menu.get_id() == 'command':
                 command_menu_subsurface = self.screen.subsurface(
@@ -457,12 +492,10 @@ class Game:
             if not menu_to_launch.launched:
                 self.launch_menu(menu_to_launch.menu.get_id())
 
-    def update_screen(self) -> None:
+    @staticmethod
+    def update_screen() -> None:
         """Update the screen's display."""
-        if self.cmd_menu.launched:
-            self.cmd_menu.menu.update(self.events)
-            self.enable_movement = False
-        display.update()
+        display.flip()
 
     def change_map(self, next_map: maps.DragonWarriorMap) -> None:
         """
@@ -505,7 +538,7 @@ class Game:
         self.loop_count = 1
         self.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
-        self.cmd_menu = menu.CommandMenu(self)
+        self.cmd_menu = CommandMenu(self)
         self.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             # really not sure if the 1 and 0 here are supposed to be switched
@@ -551,7 +584,7 @@ class Game:
             mixer.music.load(music_path)
             mixer.music.play(-1)
 
-    def unlaunch_menu(self, menu_to_unlaunch: menu.Menu) -> None:
+    def unlaunch_menu(self, menu_to_unlaunch: Menu) -> None:
         """
         Un-launch a menu.
         :return: None

@@ -2,7 +2,7 @@ import textwrap
 
 from pygame import font, draw
 
-from src.common import BLACK, WHITE
+from src.common import BLACK, WHITE, DRAGON_QUEST_FONT_PATH
 
 
 class DialogBoxWrapper(textwrap.TextWrapper):
@@ -13,7 +13,7 @@ class DialogBoxWrapper(textwrap.TextWrapper):
         return lines
 
 
-def draw_text(text, size, color, x, y, font_name, screen, center_align=True, text_wrap_length=21, letter_by_letter=False):
+def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_FONT_PATH, center_align=True, text_wrap_length=21, letter_by_letter=False):
     # n = 34
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
@@ -40,7 +40,7 @@ def draw_text(text, size, color, x, y, font_name, screen, center_align=True, tex
         else:
             text_rect.midleft = (x, y_position)
         screen.blit(text_surface, text_rect)
-        y_position += 16
+        y_position += 17
         if chunk == chunks[len(chunks) - 1]:
             return chunk
 

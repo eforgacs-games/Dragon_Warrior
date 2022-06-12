@@ -1,12 +1,7 @@
 import os
 from unittest import TestCase
 
-import pygame
-from pygame.display import set_mode
-
-from src.camera import Camera
 from src.common import Direction
-from src.config import NES_RES, SCALE
 from src.game import Game
 from src.maps import MapWithoutNPCs
 
