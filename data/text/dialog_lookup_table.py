@@ -129,7 +129,7 @@ class DialogLookup:
     def confirmation_prompt(self, prompt_line, yes_path_function, no_path_function, finally_function=None, skip_text=False):
         self.command_menu.show_line_in_dialog_box(prompt_line, skip_text=True)
         self.command_menu.window_drop_down_effect(4, 3, 5, 2)
-        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_BACKGROUND_PATH)
+        self.command_menu.create_window(5, 2, 4, 3, CONFIRMATION_BACKGROUND_PATH)
         display.flip()
         play_sound(confirmation_sfx)
         blinking = True
@@ -147,19 +147,19 @@ class DialogLookup:
                 if current_event.type == KEYDOWN:
                     if current_event.key in (K_DOWN, K_UP, K_w, K_s):
                         if blinking_yes:
-                            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_NO_BACKGROUND_PATH)
+                            self.command_menu.create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH)
                             blinking_yes = False
                         else:
-                            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_YES_BACKGROUND_PATH)
+                            self.command_menu.create_window(5, 2, 4, 3, CONFIRMATION_YES_BACKGROUND_PATH)
                             blinking_yes = True
                     elif (blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'y':
-                        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_YES_BACKGROUND_PATH)
+                        self.command_menu.create_window(5, 2, 4, 3, CONFIRMATION_YES_BACKGROUND_PATH)
                         play_sound(menu_button_sfx)
                         event.pump()
                         yes_path_function()
                         blinking = False
                     elif (not blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode in ('n', 'j'):
-                        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_NO_BACKGROUND_PATH)
+                        self.command_menu.create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH)
                         play_sound(menu_button_sfx)
                         event.pump()
                         no_path_function()
@@ -184,7 +184,7 @@ class DialogLookup:
     def open_store_inventory(self, current_store_inventory, static_store_image):
         self.command_menu.show_line_in_dialog_box("What dost thou wish to buy?", skip_text=True)
         self.command_menu.window_drop_down_effect(9, 7, 6, 2)
-        self.command_menu.create_window(9, 7, 6, 2, static_store_image)
+        self.command_menu.create_window(6, 2, 9, 7, static_store_image)
         display.flip()
         selecting = True
         current_item_index = 0
@@ -195,10 +195,10 @@ class DialogLookup:
             current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
             frames_elapsed = convert_to_frames_since_start_time(start_time)
             if frames_elapsed <= 16:
-                self.command_menu.create_window(9, 7, 6, 2, current_item_menu_image)
+                self.command_menu.create_window(6, 2, 9, 7, current_item_menu_image)
                 display.flip()
             elif frames_elapsed <= 32:
-                self.command_menu.create_window(9, 7, 6, 2, static_store_image)
+                self.command_menu.create_window(6, 2, 9, 7, static_store_image)
                 display.flip()
             else:
                 start_time = get_ticks()
@@ -219,7 +219,7 @@ class DialogLookup:
                     elif current_event.key in (K_RETURN, K_k):
                         selected_item = current_item_name
             if selected_item:
-                self.command_menu.create_window(9, 7, 6, 2, current_item_menu_image)
+                self.command_menu.create_window(6, 2, 9, 7, current_item_menu_image)
                 display.flip()
                 self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
                 selecting = False
