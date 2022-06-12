@@ -1,53 +1,51 @@
 from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event
 from pygame.event import get
+from pygame.time import get_ticks
 
 from src.common import WHITE, BLACK, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, \
-    CONFIRMATION_NO_BACKGROUND_PATH, play_sound, confirmation_sfx, menu_button_sfx, create_window
+    CONFIRMATION_NO_BACKGROUND_PATH, play_sound, confirmation_sfx, menu_button_sfx, create_window, convert_to_frames_since_start_time
 from src.text import draw_text
 
 
 def blink_down_arrow(screen):
-    for i in range(256):
+    down_arrow_start = get_ticks()
+    if convert_to_frames_since_start_time(down_arrow_start) > 32:
+        down_arrow_start = get_ticks()
+    while convert_to_frames_since_start_time(down_arrow_start) <= 16:
         draw_text("▼", screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32, screen, WHITE)
         # TODO(ELF): Change display.flip() to display.update() and pass in a rect.
         display.flip()
-    for i in range(256):
+    while 16 < convert_to_frames_since_start_time(down_arrow_start) <= 32:
         draw_text("▼", screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32, screen, BLACK)
         display.flip()
 
 
-def blink_yes_confirmation(command_menu):
-    blink_switch(command_menu, image_1=CONFIRMATION_YES_BACKGROUND_PATH, image_2=CONFIRMATION_BACKGROUND_PATH, width=4, height=3, x=5, y=2)
-
-
-def blink_no_confirmation(command_menu):
-    blink_switch(command_menu, image_1=CONFIRMATION_NO_BACKGROUND_PATH, image_2=CONFIRMATION_BACKGROUND_PATH, width=4, height=3, x=5, y=2)
-
-
-def blink_switch(command_menu, image_1=CONFIRMATION_YES_BACKGROUND_PATH, image_2=CONFIRMATION_BACKGROUND_PATH, time=512, width=4, height=3, x=5, y=2):
-    # not as accurate as the implementation in open_store_inventory,
-    # since that one uses the actual 16 frames of screen time for the arrow
-    for i in range(time):
+def blink_switch(command_menu, image_1, image_2, width, height, x, y, start):
+    blink_start = start
+    if convert_to_frames_since_start_time(blink_start) > 32:
+        blink_start = get_ticks()
+    while convert_to_frames_since_start_time(blink_start) <= 16:
         create_window(x, y, width, height, image_1, command_menu.screen)
         display.flip()
-    for i in range(time):
+    while 16 < convert_to_frames_since_start_time(blink_start) <= 32:
         create_window(x, y, width, height, image_2, command_menu.screen)
         display.flip()
 
 
 def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, finally_function=None, skip_text=False):
-    command_menu.show_line_in_dialog_box(prompt_line, skip_text=True)
-    command_menu.window_drop_down_effect(4, 3, 5, 2)
+    command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, last_line=True)
+    command_menu.window_drop_down_effect(5, 2, 4, 3)
     create_window(5, 2, 4, 3, CONFIRMATION_BACKGROUND_PATH, command_menu.screen)
     display.flip()
     play_sound(confirmation_sfx)
     blinking = True
     blinking_yes = True
+    blink_start = get_ticks()
     while blinking:
         if blinking_yes:
-            blink_yes_confirmation(command_menu)
+            blink_switch(command_menu, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, width=4, height=3, x=5, y=2, start=blink_start)
         else:
-            blink_no_confirmation(command_menu)
+            blink_switch(command_menu, CONFIRMATION_NO_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, width=4, height=3, x=5, y=2, start=blink_start)
         if skip_text:
             play_sound(menu_button_sfx)
             yes_path_function()
@@ -55,6 +53,7 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         for current_event in get():
             if current_event.type == KEYDOWN:
                 if current_event.key in (K_DOWN, K_UP, K_w, K_s):
+                    blink_start = get_ticks()
                     if blinking_yes:
                         create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH, command_menu.screen)
                         blinking_yes = False
