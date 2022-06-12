@@ -4,7 +4,6 @@ from src.common import Direction
 from src.maps import MapWithoutNPCs
 from src.player.player import Player
 
-
 layout = [[33, 0, 3],
           [1, 2, 3],
           [3, 3, 39]]
@@ -21,6 +20,7 @@ class MockMap(MapWithoutNPCs):
 
     def hero_initial_direction(self):
         return Direction.DOWN.value
+
 
 class TestPlayer(TestCase):
 

@@ -8,6 +8,7 @@ layout = [[33, 0, 3],
           [4, 2, 3],
           [3, 3, 39]]
 
+
 # os.environ["SDL_VIDEODRIVER"] = "dummy"
 # os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
@@ -32,8 +33,8 @@ class TestCommandMenu(TestCase):
         self.game.current_map.load_map(self.game.player)
 
     # def test_take(self):
-        # pygame.key.get_pressed = create_key_mock(pygame.K_s)
-        # self.game.cmd_menu.take()
-        # pygame.key.get_pressed = create_key_mock(pygame.K_k)
-        # self.assertEqual(self.game.current_map.tile_key['BRICK']['val'],
-        #                  self.game.current_map.layout[0][1])
+    # pygame.key.get_pressed = create_key_mock(pygame.K_s)
+    # self.game.cmd_menu.take()
+    # pygame.key.get_pressed = create_key_mock(pygame.K_k)
+    # self.assertEqual(self.game.current_map.tile_key['BRICK']['val'],
+    #                  self.game.current_map.layout[0][1])

@@ -1,14 +1,13 @@
 from functools import partial
 
-from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, event, K_RETURN, K_j
+from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, K_RETURN, K_j
 from pygame.event import get, pump
 from pygame.time import get_ticks
 
-from data.text.dialog import blink_yes_confirmation, blink_no_confirmation
-from src.common import play_sound, confirmation_sfx, special_item_sfx, CONFIRMATION_BACKGROUND_PATH, CONFIRMATION_YES_BACKGROUND_PATH, \
-    menu_button_sfx, CONFIRMATION_NO_BACKGROUND_PATH, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time
+from data.text.dialog import confirmation_prompt, get_inn_intro
+from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, create_window
 from src.config import MUSIC_ENABLED, TILE_SIZE
-from src.game_functions import draw_all_tiles_in_current_map
+from src.game_functions import draw_all_tiles_in_current_map, draw_hovering_stats_window
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
@@ -117,74 +116,24 @@ class DialogLookup:
 
     def tantegel_throne_room_roaming_guard(self):
         player_please_save_the_princess = f"{self.player.name}, please save the Princess."
-        self.confirmation_prompt("Dost thou know about Princess Gwaelin?",
-                                 yes_path_function=partial(self.command_menu.show_line_in_dialog_box, player_please_save_the_princess),
-                                 no_path_function=partial(self.command_menu.show_text_in_dialog_box,
-                                                          ("Half a year now hath passed since the Princess was kidnapped by the enemy.",
-                                                           "Never does the King speak of it, but he must be suffering much.",
-                                                           player_please_save_the_princess),
-                                                          drop_down=False, drop_up=False,
-                                                          skip_text=self.command_menu.skip_text))
-
-    def confirmation_prompt(self, prompt_line, yes_path_function, no_path_function, finally_function=None, skip_text=False):
-        self.command_menu.show_line_in_dialog_box(prompt_line, skip_text=True)
-        self.command_menu.window_drop_down_effect(4, 3, 5, 2)
-        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_BACKGROUND_PATH)
-        display.flip()
-        play_sound(confirmation_sfx)
-        blinking = True
-        blinking_yes = True
-        while blinking:
-            if blinking_yes:
-                blink_yes_confirmation(self.command_menu)
-            else:
-                blink_no_confirmation(self.command_menu)
-            if skip_text:
-                play_sound(menu_button_sfx)
-                yes_path_function()
-                blinking = False
-            for current_event in get():
-                if current_event.type == KEYDOWN:
-                    if current_event.key in (K_DOWN, K_UP, K_w, K_s):
-                        if blinking_yes:
-                            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_NO_BACKGROUND_PATH)
-                            blinking_yes = False
-                        else:
-                            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_YES_BACKGROUND_PATH)
-                            blinking_yes = True
-                    elif (blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'y':
-                        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_YES_BACKGROUND_PATH)
-                        play_sound(menu_button_sfx)
-                        event.pump()
-                        yes_path_function()
-                        blinking = False
-                    elif (not blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode in ('n', 'j'):
-                        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_NO_BACKGROUND_PATH)
-                        play_sound(menu_button_sfx)
-                        event.pump()
-                        no_path_function()
-                        blinking = False
-            event.pump()
-
-        if finally_function is not None:
-            finally_function()
-
-    @staticmethod
-    def get_inn_intro(inn_cost):
-        return "Welcome to the traveler's Inn.\n" \
-               f"Room and board is {inn_cost} GOLD per night.\n" \
-               "Dost thou want a room?"
+        confirmation_prompt(self.command_menu, "Dost thou know about Princess Gwaelin?",
+                            yes_path_function=partial(self.command_menu.show_line_in_dialog_box, player_please_save_the_princess, last_line=True),
+                            no_path_function=partial(self.command_menu.show_text_in_dialog_box,
+                                                     ("Half a year now hath passed since the Princess was kidnapped by the enemy.",
+                                                      "Never does the King speak of it, but he must be suffering much.",
+                                                      player_please_save_the_princess),
+                                                     drop_down=False, drop_up=False,
+                                                     skip_text=self.command_menu.skip_text))
 
     def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
-        self.confirmation_prompt(weapons_and_armor_intro,
-                                 # TODO(ELF): Add store inventory to yes_path_function.
-                                 yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
-                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."))
+        confirmation_prompt(self.command_menu, weapons_and_armor_intro,
+                            yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."))
 
     def open_store_inventory(self, current_store_inventory, static_store_image):
         self.command_menu.show_line_in_dialog_box("What dost thou wish to buy?", skip_text=True)
         self.command_menu.window_drop_down_effect(9, 7, 6, 2)
-        self.command_menu.create_window(9, 7, 6, 2, static_store_image)
+        create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
         display.flip()
         selecting = True
         current_item_index = 0
@@ -195,10 +144,10 @@ class DialogLookup:
             current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
             frames_elapsed = convert_to_frames_since_start_time(start_time)
             if frames_elapsed <= 16:
-                self.command_menu.create_window(9, 7, 6, 2, current_item_menu_image)
+                create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen)
                 display.flip()
             elif frames_elapsed <= 32:
-                self.command_menu.create_window(9, 7, 6, 2, static_store_image)
+                create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
                 display.flip()
             else:
                 start_time = get_ticks()
@@ -219,7 +168,7 @@ class DialogLookup:
                     elif current_event.key in (K_RETURN, K_k):
                         selected_item = current_item_name
             if selected_item:
-                self.command_menu.create_window(9, 7, 6, 2, current_item_menu_image)
+                create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen)
                 display.flip()
                 self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
                 selecting = False
@@ -227,7 +176,7 @@ class DialogLookup:
             # print(f"Item index {current_item_index}: {current_item_name}")
 
     def buy_item_dialog(self, selected_item, current_store_inventory, static_store_image):
-        self.command_menu.show_line_in_dialog_box(f"The {selected_item}?")
+        self.command_menu.show_line_in_dialog_box(f"The {selected_item}?", last_line=False)
         selected_item_dict = current_store_inventory[selected_item]
         selected_item_type = selected_item_dict['type']
         if self.player.gold > selected_item_dict['cost']:
@@ -238,22 +187,21 @@ class DialogLookup:
                 old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.armor, armor)
             elif selected_item_type == 'shield':
                 old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.shield, shields)
-            self.confirmation_prompt("Is that Okay.?",
-                                     yes_path_function=partial(self.complete_transaction, selected_item, current_store_inventory, old_item_cost),
-                                     no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Oh, yes? That's too bad."))
+            confirmation_prompt(self.command_menu, "Is that Okay.?",
+                                yes_path_function=partial(self.complete_transaction, selected_item, current_store_inventory, old_item_cost),
+                                no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Oh, yes? That's too bad.", last_line=False))
         else:
             self.command_menu.show_line_in_dialog_box("Sorry.\n"
-                                                      "Thou hast not enough money.")
-        self.confirmation_prompt("Dost thou wish to buy anything more?",
-                                 yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
-                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."))
+                                                      "Thou hast not enough money.", last_line=False)
+        confirmation_prompt(self.command_menu, "Dost thou wish to buy anything more?",
+                            yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.", last_line=True))
 
     def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
         if old_item:
             if old_item_lookup_table[old_item].get('cost'):
                 old_item_cost = old_item_lookup_table[old_item]['cost'] // 2
-                self.command_menu.show_line_in_dialog_box(
-                    f"Then I will buy thy {old_item} for {old_item_cost} GOLD.")
+                self.command_menu.show_line_in_dialog_box(f"Then I will buy thy {old_item} for {old_item_cost} GOLD.", last_line=False)
         return old_item_cost
 
     def complete_transaction(self, item, current_store_inventory, old_item_cost):
@@ -268,16 +216,17 @@ class DialogLookup:
             self.player.armor = item
         elif item_type == 'shield':
             self.player.shield = item
+        # TODO(ELF): Update money (GOLD) display in hovering stats window.
+        draw_hovering_stats_window(self.screen, self.player)
         self.command_menu.show_line_in_dialog_box("I thank thee.")
 
     def check_stay_at_inn(self, inn_cost):
-        self.confirmation_prompt(self.get_inn_intro(inn_cost),
-                                 yes_path_function=partial(self.check_money, inn_cost),
-                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                          "Okay.\n"
-                                                          "Good-bye, traveler.",
-                                                          skip_text=self.command_menu.skip_text),
-                                 skip_text=self.command_menu.skip_text)
+        confirmation_prompt(self.command_menu, get_inn_intro(inn_cost),
+                            yes_path_function=partial(self.check_money, inn_cost),
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                                     "Okay.\n"
+                                                     "Good-bye, traveler.",
+                                                     skip_text=self.command_menu.skip_text), skip_text=self.command_menu.skip_text)
 
     def check_money(self, inn_cost):
         if self.player.gold >= inn_cost:

@@ -7,9 +7,8 @@ from pygame.event import get
 from pygame.time import get_ticks
 from pygame.transform import scale
 
-from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, DRAGON_QUEST_FONT_PATH, PINK, \
-    SMB_FONT_PATH, convert_to_milliseconds, BLACK, \
-    INTRO_BANNER_PATH, convert_to_frames_since_start_time
+from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, PINK, SMB_FONT_PATH, convert_to_milliseconds, BLACK, INTRO_BANNER_PATH, \
+    convert_to_frames_since_start_time
 from src.config import IMAGES_DIR, FPS
 from src.text import draw_text
 from src.visual_effects import fade
@@ -38,11 +37,11 @@ def banner_sparkle(short, screen):
 
 
 def draw_banner_text(screen):
-    draw_text("-PUSH START-", 15, ORANGE, screen.get_width() / 2, screen.get_height() * 10 / 16, DRAGON_QUEST_FONT_PATH, screen)
+    draw_text("-PUSH START-", screen.get_width() / 2, screen.get_height() * 10 / 16, screen, ORANGE)
     pink_banner_text = ("K key: A Button", "J key: B Button", "I key: Start", "WASD / Arrow Keys: Move")
     for i in range(11, 15):
-        draw_text(pink_banner_text[i - 11], 15, PINK, screen.get_width() / 2, screen.get_height() * i / 16, DRAGON_QUEST_FONT_PATH, screen, text_wrap_length=23)
-    draw_text("(↑ ← ↓ →)", 15, PINK, screen.get_width() / 2, screen.get_height() * 15 / 16, SMB_FONT_PATH, screen)
+        draw_text(pink_banner_text[i - 11], screen.get_width() / 2, screen.get_height() * i / 16, screen, PINK, text_wrap_length=23)
+    draw_text("(↑ ← ↓ →)", screen.get_width() / 2, screen.get_height() * 15 / 16, screen, PINK, font_name=SMB_FONT_PATH)
 
 
 def repeated_sparkle(screen, clock_check, short):
