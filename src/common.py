@@ -5,10 +5,10 @@ import time
 from enum import IntEnum
 from os.path import join, sep, exists
 
-import pygame
+from pygame import Surface, image, transform, mixer, font
 from pygame.time import get_ticks
 
-from src.config import SFX_DIR, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED, SOUND_ENABLED, FPS
+from src.config import SFX_DIR, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED, SOUND_ENABLED, FPS, TILE_SIZE
 
 
 class Direction(IntEnum):
@@ -31,7 +31,7 @@ def find_file(name, path):
 def retrieve_audio_resource(_sound_library, path, sound):
     if sound is None:
         canonicalized_path = path.replace('/', sep).replace('\\', sep)
-        sound = pygame.mixer.Sound(canonicalized_path)
+        sound = mixer.Sound(canonicalized_path)
         _sound_library[path] = sound
     return sound
 
@@ -121,12 +121,16 @@ DRAGONLORD_PATH = join(IMAGES_DIR, 'dragonlord.png')
 INTRO_BANNER_PATH = join(IMAGES_DIR, 'intro_banner', 'intro_banner.png')
 INTRO_BANNER_WITH_DRAGON_PATH = join(IMAGES_DIR, 'intro_banner', 'intro_banner_with_dragon.png')
 ICON_PATH = join(IMAGES_DIR, 'walking_hero.gif')
+
+# menus/windows
+
 DIALOG_BOX_BACKGROUND_PATH = join(IMAGES_DIR, 'dialog_box_background.png')
 COMMAND_MENU_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_background.png')
 COMMAND_MENU_STATIC_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_static.png')
 CONFIRMATION_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation.png')
 CONFIRMATION_YES_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_yes.png')
 CONFIRMATION_NO_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_no.png')
+HOVERING_STATS_BACKGROUND_PATH = join(IMAGES_DIR, 'hovering_stats_window.png')
 
 # shops
 
@@ -144,29 +148,29 @@ BRECCONARY_WEAPONS_SHOP_SMALL_SHIELD_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS
 
 def get_image(path):
     global _image_library
-    image = _image_library.get(path)
-    if image is None:
+    image_to_load = _image_library.get(path)
+    if image_to_load is None:
         canonicalized_path = path.replace('/', sep).replace('\\', sep)
         if exists(canonicalized_path):
-            image = pygame.image.load(canonicalized_path).convert_alpha()
-            _image_library[path] = image
+            image_to_load = image.load(canonicalized_path).convert_alpha()
+            _image_library[path] = image_to_load
         else:
-            image = pygame.image.load(find_file(ntpath.basename(canonicalized_path), root_project_path)).convert_alpha()
-            _image_library[path] = image
-    return image
+            image_to_load = image.load(find_file(ntpath.basename(canonicalized_path), root_project_path)).convert_alpha()
+            _image_library[path] = image_to_load
+    return image_to_load
 
 
 # Fonts
 
-pygame.font.init()
+font.init()
 DRAGON_QUEST_FONT_PATH = join(FONTS_DIR, 'dragon-quest.ttf')
 if exists(DRAGON_QUEST_FONT_PATH):
-    DRAGON_QUEST_FONT = pygame.font.Font(DRAGON_QUEST_FONT_PATH, 15)
+    DRAGON_QUEST_FONT = font.Font(DRAGON_QUEST_FONT_PATH, 15)
 else:
-    DRAGON_QUEST_FONT = pygame.font.Font(find_file('dragon-quest.ttf', root_project_path), 15)
+    DRAGON_QUEST_FONT = font.Font(find_file('dragon-quest.ttf', root_project_path), 15)
 
 SMB_FONT_PATH = join(FONTS_DIR, 'super_mario_bros__nes_font.ttf')
-SMB_FONT = pygame.font.Font(SMB_FONT_PATH, 15)
+SMB_FONT = font.Font(SMB_FONT_PATH, 15)
 
 
 # Characters
@@ -286,3 +290,17 @@ def get_next_tile_identifier(character_column: int, character_row: int, directio
 
 def convert_to_frames_since_start_time(start_time):
     return convert_to_frames(get_ticks() - start_time)
+
+
+def create_window(x, y, width, height, window_background, screen):
+    window_box = Surface((TILE_SIZE * width, TILE_SIZE * height))  # lgtm [py/call/wrong-arguments]
+    set_window_background(window_box, window_background)
+    screen.blit(window_box, (TILE_SIZE * x, TILE_SIZE * y))
+    return window_box
+
+
+def set_window_background(black_box, background_path):
+    black_box.fill(BLACK)
+    background_image = image.load(background_path)
+    background_image = transform.scale(background_image, black_box.get_size())
+    black_box.blit(background_image, black_box.get_rect())

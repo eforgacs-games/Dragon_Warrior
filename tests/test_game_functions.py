@@ -74,6 +74,3 @@ class Test(TestCase):
         self.assertEqual((10, 14), get_next_coordinates(self.game.player.rect.x // TILE_SIZE,
                                                         self.game.player.rect.y // TILE_SIZE,
                                                         self.game.player.direction_value))
-
-
-
