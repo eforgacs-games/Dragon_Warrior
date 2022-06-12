@@ -1,14 +1,16 @@
 from functools import partial
 
-from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s
-from pygame.event import get
+from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, event, K_RETURN, K_j
+from pygame.event import get, pump
 
-from data.text.dialog import blink_yes_confirmation, blink_no_confirmation
-from src.common import play_sound, confirmation_sfx, special_item_sfx, CONFIRMATION_STATIC_BACKGROUND_PATH, CONFIRMATION_STATIC_YES_BACKGROUND_PATH, \
-    menu_button_sfx, CONFIRMATION_STATIC_NO_BACKGROUND_PATH
+from data.text.dialog import blink_yes_confirmation, blink_no_confirmation, blink_switch
+from src.common import play_sound, confirmation_sfx, special_item_sfx, CONFIRMATION_BACKGROUND_PATH, CONFIRMATION_YES_BACKGROUND_PATH, \
+    menu_button_sfx, CONFIRMATION_NO_BACKGROUND_PATH, BRECCONARY_WEAPONS_SHOP_PATH
 from src.config import MUSIC_ENABLED, TILE_SIZE
 from src.game_functions import draw_all_tiles_in_current_map
+from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
+from src.shops import brecconary_store_inventory
 from src.visual_effects import fade
 
 weapons_and_armor_intro = "We deal in weapons and armor.\n" \
@@ -90,7 +92,7 @@ class DialogLookup:
             'Brecconary': {
                 'MAN': {'dialog': "There is a town where magic keys can be purchased."},
                 'WISE_MAN': {'dialog': "If thou art cursed, come again."},
-                'MERCHANT': {'dialog': (self.check_buy_weapons_armor,)},
+                'MERCHANT': {'dialog': (partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'UP_FACE_GUARD': {'dialog': ("Tell King Lorik that the search for his daughter hath failed.",
                                              "I am almost gone....")},
@@ -100,7 +102,7 @@ class DialogLookup:
             'Garinham': {
                 'MERCHANT': {'dialog': (tools_intro,)},
                 'MERCHANT_2': {'dialog': (
-                    self.get_inn_intro(garinham_inn_cost),
+                    (partial(self.check_stay_at_inn, garinham_inn_cost),),
                 )},
                 'MERCHANT_3': {'dialog': weapons_and_armor_intro},
                 'WISE_MAN': {'dialog': "Many believe that Princess Gwaelin is hidden away in a cave."}
@@ -126,7 +128,7 @@ class DialogLookup:
     def confirmation_prompt(self, prompt_line, yes_path_function, no_path_function, finally_function=None, skip_text=False):
         self.command_menu.show_line_in_dialog_box(prompt_line, skip_text=True)
         self.command_menu.window_drop_down_effect(4, 3, 5, 2)
-        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
+        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_BACKGROUND_PATH)
         display.flip()
         play_sound(confirmation_sfx)
         blinking = True
@@ -144,21 +146,25 @@ class DialogLookup:
                 if current_event.type == KEYDOWN:
                     if current_event.key in (K_DOWN, K_UP, K_w, K_s):
                         if blinking_yes:
-                            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_NO_BACKGROUND_PATH)
+                            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_NO_BACKGROUND_PATH)
                             blinking_yes = False
                         else:
-                            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_YES_BACKGROUND_PATH)
+                            self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_YES_BACKGROUND_PATH)
                             blinking_yes = True
                     elif (blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'y':
-                        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_YES_BACKGROUND_PATH)
+                        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_YES_BACKGROUND_PATH)
                         play_sound(menu_button_sfx)
+                        event.pump()
                         yes_path_function()
                         blinking = False
-                    elif (not blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'n':
-                        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_NO_BACKGROUND_PATH)
+                    elif (not blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode in ('n', 'j'):
+                        self.command_menu.create_window(4, 3, 5, 2, CONFIRMATION_NO_BACKGROUND_PATH)
                         play_sound(menu_button_sfx)
+                        event.pump()
                         no_path_function()
                         blinking = False
+            event.pump()
+
         if finally_function is not None:
             finally_function()
 
@@ -168,11 +174,88 @@ class DialogLookup:
                f"Room and board is {inn_cost} GOLD per night.\n" \
                "Dost thou want a room?"
 
-    def check_buy_weapons_armor(self):
+    def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
         self.confirmation_prompt(weapons_and_armor_intro,
                                  # TODO(ELF): Add store inventory to yes_path_function.
-                                 yes_path_function=partial(self.command_menu.show_line_in_dialog_box, "What dost thou wish to buy?"),
+                                 yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
                                  no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."))
+
+    def open_store_inventory(self, current_store_inventory, static_store_image):
+        self.command_menu.show_line_in_dialog_box("What dost thou wish to buy?", skip_text=True)
+        self.command_menu.window_drop_down_effect(9, 7, 6, 2)
+        self.command_menu.create_window(9, 7, 6, 2, static_store_image)
+        display.flip()
+        selecting = True
+        current_item_index = 0
+        while selecting:
+            current_item_name = list(current_store_inventory)[current_item_index]
+            current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
+            # TODO(ELF): Reset the blink timer every time the up or down keys are pressed.
+            blink_switch(self.command_menu, static_store_image, current_item_menu_image, 128, 9, 7, 6, 2)
+            selected_item = None
+            for current_event in get():
+                if current_event.type == KEYDOWN:
+                    if current_event.key in (K_DOWN, K_s):
+                        if current_item_index < len(current_store_inventory) - 1:
+                            current_item_index += 1
+                    elif current_event.key in (K_UP, K_w):
+                        if current_item_index > 0:
+                            current_item_index -= 1
+                    elif current_event.key in (K_j,):
+                        self.command_menu.show_line_in_dialog_box("Please, come again.")
+                        selecting = False
+                    elif current_event.key in (K_RETURN, K_k):
+                        selected_item = current_item_name
+            if selected_item:
+                self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
+                selecting = False
+
+            pump()
+            # print(f"Item index {current_item_index}: {current_item_name}")
+
+    def buy_item_dialog(self, selected_item, current_store_inventory, static_store_image):
+        self.command_menu.show_line_in_dialog_box(f"The {selected_item}?")
+        selected_item_dict = current_store_inventory[selected_item]
+        selected_item_type = selected_item_dict['type']
+        if self.player.gold > selected_item_dict['cost']:
+            old_item_cost = None
+            if selected_item_type == 'weapon':
+                old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.weapon, weapons)
+            elif selected_item_type == 'armor':
+                old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.armor, armor)
+            elif selected_item_type == 'shield':
+                old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.shield, shields)
+            self.confirmation_prompt("Is that Okay.?",
+                                     yes_path_function=partial(self.complete_transaction, selected_item, current_store_inventory, old_item_cost),
+                                     no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Oh, yes? That's too bad."))
+        else:
+            self.command_menu.show_line_in_dialog_box("Sorry.\n"
+                                                      "Thou hast not enough money.")
+        self.confirmation_prompt("Dost thou wish to buy anything more?",
+                                 yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
+                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."))
+
+    def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
+        if old_item:
+            if old_item_lookup_table[old_item].get('cost'):
+                old_item_cost = old_item_lookup_table[old_item]['cost'] // 2
+                self.command_menu.show_line_in_dialog_box(
+                    f"Then I will buy thy {old_item} for {old_item_cost} GOLD.")
+        return old_item_cost
+
+    def complete_transaction(self, item, current_store_inventory, old_item_cost):
+        item_dict = current_store_inventory[item]
+        item_type = item_dict['type']
+        self.player.gold -= item_dict['cost']
+        if old_item_cost:
+            self.player.gold += old_item_cost
+        if item_type == 'weapon':
+            self.player.weapon = item
+        elif item_type == 'armor':
+            self.player.armor = item
+        elif item_type == 'shield':
+            self.player.shield = item
+        self.command_menu.show_line_in_dialog_box("I thank thee.")
 
     def check_stay_at_inn(self, inn_cost):
         self.confirmation_prompt(self.get_inn_intro(inn_cost),
