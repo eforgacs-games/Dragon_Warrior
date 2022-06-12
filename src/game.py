@@ -360,7 +360,9 @@ class Game:
                     list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
                 self.not_moving_time_start = None
                 self.display_hovering_stats = False
-                self.hovering_stats_displayed = False
+                if self.hovering_stats_displayed:
+                    self.cmd_menu.window_drop_up_effect(4, 6, 1, 2)
+                    self.hovering_stats_displayed = False
             else:
                 if not self.not_moving_time_start:
                     self.not_moving_time_start = get_ticks()
