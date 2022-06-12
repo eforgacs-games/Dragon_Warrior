@@ -1,6 +1,6 @@
 from typing import List
 
-from src.common import Direction, WHITE
+from src.common import Direction, HOVERING_STATS_BACKGROUND_PATH, create_window
 from src.config import TILE_SIZE
 from src.text import draw_text
 
@@ -49,3 +49,13 @@ def draw_stats_strings_with_alignments(stat_string, y_position, screen):
         draw_text(stat_string, TILE_SIZE * 3.99, TILE_SIZE * y_position, screen)
     else:
         draw_text(stat_string, TILE_SIZE * 4.2, TILE_SIZE * y_position, screen)
+
+
+def draw_hovering_stats_window(screen, player):
+    create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, screen)
+    draw_text(player.name[:4], TILE_SIZE * 2.99, TILE_SIZE * 2, screen)
+    draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen)
+    draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen)
+    draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen)
+    draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen)
+    draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen)

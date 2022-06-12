@@ -1,16 +1,9 @@
-from pygame import display, image, transform, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event
+from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event
 from pygame.event import get
 
 from src.common import WHITE, BLACK, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, \
-    CONFIRMATION_NO_BACKGROUND_PATH, play_sound, confirmation_sfx, menu_button_sfx
+    CONFIRMATION_NO_BACKGROUND_PATH, play_sound, confirmation_sfx, menu_button_sfx, create_window
 from src.text import draw_text
-
-
-def set_window_background(black_box, background_path):
-    black_box.fill(BLACK)
-    background_image = image.load(background_path)
-    background_image = transform.scale(background_image, black_box.get_size())
-    black_box.blit(background_image, black_box.get_rect())
 
 
 def blink_down_arrow(screen):
@@ -35,17 +28,17 @@ def blink_switch(command_menu, image_1=CONFIRMATION_YES_BACKGROUND_PATH, image_2
     # not as accurate as the implementation in open_store_inventory,
     # since that one uses the actual 16 frames of screen time for the arrow
     for i in range(time):
-        command_menu.create_window(x, y, width, height, image_1, command_menu.screen)
+        create_window(x, y, width, height, image_1, command_menu.screen)
         display.flip()
     for i in range(time):
-        command_menu.create_window(x, y, width, height, image_2, command_menu.screen)
+        create_window(x, y, width, height, image_2, command_menu.screen)
         display.flip()
 
 
 def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, finally_function=None, skip_text=False):
     command_menu.show_line_in_dialog_box(prompt_line, skip_text=True)
     command_menu.window_drop_down_effect(4, 3, 5, 2)
-    command_menu.create_window(5, 2, 4, 3, CONFIRMATION_BACKGROUND_PATH, command_menu.screen)
+    create_window(5, 2, 4, 3, CONFIRMATION_BACKGROUND_PATH, command_menu.screen)
     display.flip()
     play_sound(confirmation_sfx)
     blinking = True
@@ -63,19 +56,19 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
             if current_event.type == KEYDOWN:
                 if current_event.key in (K_DOWN, K_UP, K_w, K_s):
                     if blinking_yes:
-                        command_menu.create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH, command_menu.screen)
+                        create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH, command_menu.screen)
                         blinking_yes = False
                     else:
-                        command_menu.create_window(5, 2, 4, 3, CONFIRMATION_YES_BACKGROUND_PATH, command_menu.screen)
+                        create_window(5, 2, 4, 3, CONFIRMATION_YES_BACKGROUND_PATH, command_menu.screen)
                         blinking_yes = True
                 elif (blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'y':
-                    command_menu.create_window(5, 2, 4, 3, CONFIRMATION_YES_BACKGROUND_PATH, command_menu.screen)
+                    create_window(5, 2, 4, 3, CONFIRMATION_YES_BACKGROUND_PATH, command_menu.screen)
                     play_sound(menu_button_sfx)
                     event.pump()
                     yes_path_function()
                     blinking = False
                 elif (not blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode in ('n', 'j'):
-                    command_menu.create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH, command_menu.screen)
+                    create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH, command_menu.screen)
                     play_sound(menu_button_sfx)
                     event.pump()
                     no_path_function()
