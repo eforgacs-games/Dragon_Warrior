@@ -61,10 +61,10 @@ class Game:
         if FULLSCREEN_ENABLED:
             # if it's producing a segmentation fault, try maybe not using the SCALED flag
             # flags = FULLSCREEN | SCALED
-            flags = FULLSCREEN | SCALED
+            flags = FULLSCREEN
         else:
             # flags = RESIZABLE | SCALED
-            flags = RESIZABLE | SCALED
+            flags = RESIZABLE
         # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
         # without SCALED, it will show more of the map, but will also not center the camera
         # it might be a nice comfort addition to add to center the camera, while also showing more of the map
