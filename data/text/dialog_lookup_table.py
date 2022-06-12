@@ -128,11 +128,11 @@ class DialogLookup:
     def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
         confirmation_prompt(self.command_menu, weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."))
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.", last_line=True))
 
     def open_store_inventory(self, current_store_inventory, static_store_image):
         self.command_menu.show_line_in_dialog_box("What dost thou wish to buy?", skip_text=True)
-        self.command_menu.window_drop_down_effect(9, 7, 6, 2)
+        self.command_menu.window_drop_down_effect(6, 2, 9, 7)
         create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
         display.flip()
         selecting = True
@@ -163,7 +163,7 @@ class DialogLookup:
                             current_item_index -= 1
                             start_time = get_ticks()
                     elif current_event.key == K_j:
-                        self.command_menu.show_line_in_dialog_box("Please, come again.")
+                        self.command_menu.show_line_in_dialog_box("Please, come again.", last_line=True)
                         selecting = False
                     elif current_event.key in (K_RETURN, K_k):
                         selected_item = current_item_name

@@ -10,7 +10,7 @@ from pygame.time import get_ticks
 from data.text.dialog import blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
-    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window
+    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.maps_functions import get_center_point
@@ -64,7 +64,7 @@ class CommandMenu(Menu):
         self.current_tile = self.player.current_tile
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
-        self.window_drop_down_effect(width=8, height=5, x=5, y=1)
+        self.window_drop_down_effect(x=5, y=1, width=8, height=5)
         self.command_menu_surface = create_window(x=5, y=1, width=8, height=5, window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH, screen=self.screen)
         self.dialog_lookup = DialogLookup(self)
         self.menu = pygame_menu.Menu(
@@ -145,7 +145,7 @@ class CommandMenu(Menu):
                     if not last_line:
                         blink_down_arrow(self.screen)
                     # playing with fire a bit here with the short-circuiting
-                    if skip_text or (temp_text_start and current_time - temp_text_start >= 200) or any(
+                    if skip_text or (temp_text_start and current_time - temp_text_start >= 400) or any(
                             [current_event.type == KEYDOWN for current_event in get()]):
                         if not skip_text:
                             play_sound(menu_button_sfx)
@@ -166,7 +166,7 @@ class CommandMenu(Menu):
         :param drop_up: Whether to display the drop-up effect.
         """
         if drop_down:
-            self.window_drop_down_effect(width=12, height=5, x=2, y=9)
+            self.window_drop_down_effect(x=2, y=9, width=12, height=5)
         if type(text) == str:
             self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, last_line=True)
         else:
@@ -183,21 +183,21 @@ class CommandMenu(Menu):
                 #     if letter_index % 2 == 0:
                 #         play_sound(text_beep_sfx)
         if drop_up:
-            self.window_drop_up_effect(width=12, height=5, x=2, y=9)
+            self.window_drop_up_effect(x=2, y=9, width=12, height=5)
 
-    def window_drop_down_effect(self, width, height, x, y):
+    def window_drop_down_effect(self, x, y, width, height):
         """Intro effect for windows."""
         for i in range(height + 1):
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
-            for j in range(64):
+            drop_down_start = get_ticks()
+            # each "bar" lasts 1 frame
+            while convert_to_frames_since_start_time(drop_down_start) < 1:
                 self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
                 display.update()
 
-    def window_drop_up_effect(self, width, height, x, y):
+    def window_drop_up_effect(self, x, y, width, height):
         """Outro effect for windows."""
-        # TODO(ELF): Needs work - doesn't always drop up smoothly. One observation is that it appears to work better closer
-        #  to the origin (0, 0) of the map.
         # draw all the tiles initially once
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile in self.current_map.tile_types_in_current_map:
@@ -205,7 +205,8 @@ class CommandMenu(Menu):
         for i in range(height - 1, -1, -1):
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
-            for j in range(32):
+            drop_up_start = get_ticks()
+            while convert_to_frames_since_start_time(drop_up_start) < 1:
                 for tile, tile_dict in self.current_map.floor_tile_key.items():
                     if tile in self.get_dialog_box_underlying_tiles(self.current_map, i):
                         tile_dict['group'].draw(self.background)
