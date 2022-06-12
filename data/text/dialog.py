@@ -34,8 +34,8 @@ def blink_switch(command_menu, image_1=CONFIRMATION_YES_BACKGROUND_PATH, image_2
     # not as accurate as the implementation in open_store_inventory,
     # since that one uses the actual 16 frames of screen time for the arrow
     for i in range(time):
-        command_menu.create_window(width, height, x, y, image_1)
+        command_menu.create_window(x, y, width, height, image_1)
         display.flip()
     for i in range(time):
-        command_menu.create_window(width, height, x, y, image_2)
+        command_menu.create_window(x, y, width, height, image_2)
         display.flip()

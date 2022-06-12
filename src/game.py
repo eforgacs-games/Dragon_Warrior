@@ -390,9 +390,9 @@ class Game:
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
                 self.cmd_menu.window_drop_down_effect(4, 6, 1, 2)
-                self.cmd_menu.create_window(4, 6, 1, 2, HOVERING_STATS_BACKGROUND_PATH)
+                self.cmd_menu.create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH)
                 self.hovering_stats_displayed = True
-            self.cmd_menu.create_window(4, 6, 1, 2, HOVERING_STATS_BACKGROUND_PATH)
+            self.cmd_menu.create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH)
             draw_text(self.player.name[:4], WHITE, TILE_SIZE * 2.99, TILE_SIZE * 2, self.screen)
             self.draw_stats_strings_with_alignments(f"{self.player.level}", 2.99)
             self.draw_stats_strings_with_alignments(f"{self.player.current_hp}", 3.99)
