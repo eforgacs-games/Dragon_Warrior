@@ -4,17 +4,18 @@ from typing import List, Tuple
 
 import numpy as np
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit, SCALED
+    display, event, image, init, key, mixer, quit
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
+from pygame.transform import scale
 
 from src import maps
 from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
-    convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window
+    convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -29,7 +30,6 @@ from src.player.player import Player
 from src.sound import bump, play_sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
-from src.text import draw_text
 from src.visual_effects import fade
 
 
@@ -147,10 +147,14 @@ class Game:
             if convert_to_frames_since_start_time(right_arrow_start) > 32:
                 right_arrow_start = get_ticks()
             while convert_to_frames_since_start_time(right_arrow_start) <= 16:
-                draw_text(">BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
+                begin_quest_selected_image = scale(image.load(BEGIN_QUEST_SELECTED_PATH), (screen.get_width(), screen.get_height()))
+                screen.blit(begin_quest_selected_image, (0, 0))
+                # draw_text(">BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
                 display.flip()
             while 16 < convert_to_frames_since_start_time(right_arrow_start) <= 32:
-                draw_text(" BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
+                begin_quest_image = scale(image.load(BEGIN_QUEST_PATH), (screen.get_width(), screen.get_height()))
+                screen.blit(begin_quest_image, (0, 0))
+                # draw_text(" BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
                 display.flip()
             self.clock.tick(self.fps)
             for current_event in get():
