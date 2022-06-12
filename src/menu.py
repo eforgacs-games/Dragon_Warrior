@@ -65,7 +65,7 @@ class CommandMenu(Menu):
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
         self.window_drop_down_effect(width=8, height=5, x=5, y=1)
-        self.command_menu_surface = self.create_window(x=5, y=1, width=8, height=5, window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH)
+        self.command_menu_surface = self.create_window(x=5, y=1, width=8, height=5, window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH, screen=self.screen)
         self.dialog_lookup = DialogLookup(self)
         self.menu = pygame_menu.Menu(
             title='COMMAND',
@@ -127,7 +127,7 @@ class CommandMenu(Menu):
                 while display_current_line:
                     if temp_text_start:
                         current_time = get_ticks()
-                    self.create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH)
+                    self.create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH, screen=self.screen)
                     # if print_by_character:
                     #     for i in range(len(line)):
                     #         for j in range(16):
@@ -154,10 +154,11 @@ class CommandMenu(Menu):
                 # if the line is a method
                 line()
 
-    def create_window(self, x, y, width, height, window_background):
+    @staticmethod
+    def create_window(x, y, width, height, window_background, screen):
         window_box = Surface((TILE_SIZE * width, TILE_SIZE * height))  # lgtm [py/call/wrong-arguments]
         set_window_background(window_box, window_background)
-        self.screen.blit(window_box, (TILE_SIZE * x, TILE_SIZE * y))
+        screen.blit(window_box, (TILE_SIZE * x, TILE_SIZE * y))
         return window_box
 
     def show_text_in_dialog_box(self, text: Tuple[str] | List[str] | str, add_quotes=False, temp_text_start=None, skip_text=False, drop_down=True,

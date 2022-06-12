@@ -133,7 +133,7 @@ class DialogLookup:
     def open_store_inventory(self, current_store_inventory, static_store_image):
         self.command_menu.show_line_in_dialog_box("What dost thou wish to buy?", skip_text=True)
         self.command_menu.window_drop_down_effect(9, 7, 6, 2)
-        self.command_menu.create_window(6, 2, 9, 7, static_store_image)
+        self.command_menu.create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
         display.flip()
         selecting = True
         current_item_index = 0
@@ -144,10 +144,10 @@ class DialogLookup:
             current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
             frames_elapsed = convert_to_frames_since_start_time(start_time)
             if frames_elapsed <= 16:
-                self.command_menu.create_window(6, 2, 9, 7, current_item_menu_image)
+                self.command_menu.create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen)
                 display.flip()
             elif frames_elapsed <= 32:
-                self.command_menu.create_window(6, 2, 9, 7, static_store_image)
+                self.command_menu.create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
                 display.flip()
             else:
                 start_time = get_ticks()
@@ -168,7 +168,7 @@ class DialogLookup:
                     elif current_event.key in (K_RETURN, K_k):
                         selected_item = current_item_name
             if selected_item:
-                self.command_menu.create_window(6, 2, 9, 7, current_item_menu_image)
+                self.command_menu.create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen)
                 display.flip()
                 self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
                 selecting = False
@@ -216,6 +216,7 @@ class DialogLookup:
             self.player.armor = item
         elif item_type == 'shield':
             self.player.shield = item
+        # TODO(ELF): Update money (GOLD) display in hovering stats window.
         self.command_menu.show_line_in_dialog_box("I thank thee.")
 
     def check_stay_at_inn(self, inn_cost):
