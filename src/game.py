@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import numpy as np
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit
+    display, event, image, init, key, mixer, quit, SCALED
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -61,10 +61,10 @@ class Game:
         if FULLSCREEN_ENABLED:
             # if it's producing a segmentation fault, try maybe not using the SCALED flag
             # flags = FULLSCREEN | SCALED
-            flags = FULLSCREEN
+            flags = FULLSCREEN | SCALED
         else:
             # flags = RESIZABLE | SCALED
-            flags = RESIZABLE
+            flags = RESIZABLE | SCALED
         # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
         # without SCALED, it will show more of the map, but will also not center the camera
         # it might be a nice comfort addition to add to center the camera, while also showing more of the map
@@ -140,13 +140,16 @@ class Game:
     def show_main_menu_screen(self, screen) -> None:
         main_menu_screen_enabled = True
         self.load_and_play_music(village_music)
+        right_arrow_start = get_ticks()
         while main_menu_screen_enabled:
             screen.fill(BLACK)
             # totally dummy option for now, just a placeholder
-            for i in range(128):
+            if convert_to_frames_since_start_time(right_arrow_start) > 32:
+                right_arrow_start = get_ticks()
+            while convert_to_frames_since_start_time(right_arrow_start) <= 16:
                 draw_text(">BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
                 display.flip()
-            for i in range(128):
+            while 16 < convert_to_frames_since_start_time(right_arrow_start) <= 32:
                 draw_text(" BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
                 display.flip()
             self.clock.tick(self.fps)
@@ -362,7 +365,7 @@ class Game:
                 self.not_moving_time_start = None
                 self.display_hovering_stats = False
                 if self.hovering_stats_displayed:
-                    self.cmd_menu.window_drop_up_effect(4, 6, 1, 2)
+                    self.cmd_menu.window_drop_up_effect(1, 2, 4, 6)
                     self.hovering_stats_displayed = False
             else:
                 if not self.not_moving_time_start:
@@ -400,7 +403,7 @@ class Game:
         display.flip()
 
     def drop_down_hovering_stats_window(self):
-        self.cmd_menu.window_drop_down_effect(4, 6, 1, 2)
+        self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
         create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, self.screen)
         self.hovering_stats_displayed = True
 
