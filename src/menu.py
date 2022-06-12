@@ -109,8 +109,10 @@ class CommandMenu(Menu):
         else:
             print(f"Character not in lookup table: {dialog_character}")
 
-    def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True, temp_text_start: int = None, skip_text: bool = False):
+    def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True, temp_text_start: int = None, skip_text: bool = False,
+                                last_line=False):
         """Shows a single line in a dialog box.
+        :param last_line:
         :param line: The line of text to print.
         :param skip_text: Whether to automatically skip the text.
         :param add_quotes: Adds single quotes to be displayed on the screen.
@@ -140,7 +142,8 @@ class CommandMenu(Menu):
                     # else:
                     draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, center_align=False)
                     display.flip()
-                    blink_down_arrow(self.screen)
+                    if not last_line:
+                        blink_down_arrow(self.screen)
                     # playing with fire a bit here with the short-circuiting
                     if skip_text or (temp_text_start and current_time - temp_text_start >= 200) or any(
                             [current_event.type == KEYDOWN for current_event in get()]):
@@ -171,10 +174,13 @@ class CommandMenu(Menu):
         if drop_down:
             self.window_drop_down_effect(width=12, height=5, x=2, y=9)
         if type(text) == str:
-            self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text)
+            self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, last_line=True)
         else:
-            for line in text:
-                self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text)
+            for line_index, line in enumerate(text):
+                if line_index == len(text) - 1:
+                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text, last_line=True)
+                else:
+                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text)
                 # TODO(ELF): This commented out code just makes the sound for printing by letter.
                 #  Need to actually show the letters one by one.
                 #  (Better to leave it commented out until it's working)
@@ -243,7 +249,7 @@ class CommandMenu(Menu):
                     self.launch_dialog(character_identifier, self.current_map)
                     break
         else:
-            self.show_text_in_dialog_box(("There is no one there.",), add_quotes=True, skip_text=self.skip_text)
+            self.show_text_in_dialog_box("There is no one there.", add_quotes=True, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
         # TODO(ELF): Add drop up effect upon closing command menu - currently blits to the wrong place,
