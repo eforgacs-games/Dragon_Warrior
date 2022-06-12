@@ -144,7 +144,8 @@ class CommandMenu(Menu):
                     # playing with fire a bit here with the short-circuiting
                     if skip_text or (temp_text_start and current_time - temp_text_start >= 200) or any(
                             [current_event.type == KEYDOWN for current_event in get()]):
-                        play_sound(menu_button_sfx)
+                        if not skip_text:
+                            play_sound(menu_button_sfx)
                         display_current_line = False
             else:
                 # if the line is a method

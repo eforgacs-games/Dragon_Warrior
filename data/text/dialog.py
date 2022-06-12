@@ -1,7 +1,7 @@
 from pygame import display, image, transform
 
-from src.common import WHITE, DRAGON_QUEST_FONT_PATH, BLACK, CONFIRMATION_STATIC_YES_BACKGROUND_PATH, CONFIRMATION_STATIC_BACKGROUND_PATH, \
-    CONFIRMATION_STATIC_NO_BACKGROUND_PATH
+from src.common import WHITE, DRAGON_QUEST_FONT_PATH, BLACK, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, \
+    CONFIRMATION_NO_BACKGROUND_PATH
 from src.text import draw_text
 
 
@@ -23,18 +23,17 @@ def blink_down_arrow(screen):
 
 
 def blink_yes_confirmation(command_menu):
-    for i in range(512):
-        command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_YES_BACKGROUND_PATH)
-        display.flip()
-    for i in range(512):
-        command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
-        display.flip()
+    blink_switch(command_menu, image_1=CONFIRMATION_YES_BACKGROUND_PATH, image_2=CONFIRMATION_BACKGROUND_PATH, width=4, height=3, x=5, y=2)
 
 
 def blink_no_confirmation(command_menu):
-    for i in range(512):
-        command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_NO_BACKGROUND_PATH)
+    blink_switch(command_menu, image_1=CONFIRMATION_NO_BACKGROUND_PATH, image_2=CONFIRMATION_BACKGROUND_PATH, width=4, height=3, x=5, y=2)
+
+
+def blink_switch(command_menu, image_1=CONFIRMATION_YES_BACKGROUND_PATH, image_2=CONFIRMATION_BACKGROUND_PATH, time=512, width=4, height=3, x=5, y=2):
+    for i in range(time):
+        command_menu.create_window(width, height, x, y, image_1)
         display.flip()
-    for i in range(512):
-        command_menu.create_window(4, 3, 5, 2, CONFIRMATION_STATIC_BACKGROUND_PATH)
+    for i in range(time):
+        command_menu.create_window(width, height, x, y, image_2)
         display.flip()
