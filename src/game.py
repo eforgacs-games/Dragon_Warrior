@@ -144,10 +144,10 @@ class Game:
             screen.fill(BLACK)
             # totally dummy option for now, just a placeholder
             for i in range(128):
-                draw_text(">BEGIN A NEW QUEST", WHITE, screen.get_width() / 2, screen.get_height() / 3, self.screen)
+                draw_text(">BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
                 display.flip()
             for i in range(128):
-                draw_text(" BEGIN A NEW QUEST", WHITE, screen.get_width() / 2, screen.get_height() / 3, self.screen)
+                draw_text(" BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
                 display.flip()
             self.clock.tick(self.fps)
             for current_event in get():
@@ -406,7 +406,7 @@ class Game:
 
     def draw_hovering_stats_window(self):
         self.cmd_menu.create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH)
-        draw_text(self.player.name[:4], WHITE, TILE_SIZE * 2.99, TILE_SIZE * 2, self.screen)
+        draw_text(self.player.name[:4], TILE_SIZE * 2.99, TILE_SIZE * 2, self.screen)
         draw_stats_strings_with_alignments(f"{self.player.level}", 2.99, self.screen)
         draw_stats_strings_with_alignments(f"{self.player.current_hp}", 3.99, self.screen)
         draw_stats_strings_with_alignments(f"{self.player.current_mp}", 4.99, self.screen)
