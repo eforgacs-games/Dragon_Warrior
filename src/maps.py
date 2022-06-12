@@ -14,7 +14,6 @@ from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_
 from src.config import TILE_SIZE, SCALE
 from src.map_layouts import MapLayouts
 from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point
-from src.player.player import Player
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
 from src.sprites.fixed_character import FixedCharacter
@@ -180,9 +179,8 @@ class DragonWarriorMap:
 
     def map_character(self, character, character_dict, current_tile, player, coordinates) -> None:
         if current_tile == self.character_key['HERO']['val']:
-            # TODO(ELF): not the greatest thing to call the constructor every single time the character is mapped.
-            #  instead, it should just pass the player object from map to map and keep all the attributes.
-            super(Player, player).__init__(self.center_pt, player.direction_value, self.scale_sprite_sheet(UNARMED_HERO_PATH), identifier='HERO')
+            # will this cause issues with the hero images (holding sword/shield)? time will tell...
+            AnimatedSprite.__init__(player, self.center_pt, player.direction_value, images=self.scale_sprite_sheet(UNARMED_HERO_PATH), identifier='HERO')
             self.map_player(character_dict['underlying_tile'], player, coordinates)
         else:
             self.map_npc(character, character_dict.get('direction'), character_dict['underlying_tile'], character_dict['path'], character_dict['four_sided'],
