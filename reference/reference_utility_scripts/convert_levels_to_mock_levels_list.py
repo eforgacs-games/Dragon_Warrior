@@ -21,5 +21,3 @@ for filename in os.listdir(raw_files_dir):
             line = line.replace('"None"', "None")
             output_file.write(line)
         output_file.write("\n}")
-
-
