@@ -9,14 +9,10 @@ from pygame.transform import scale
 
 from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, DRAGON_QUEST_FONT_PATH, PINK, \
     SMB_FONT_PATH, convert_to_milliseconds, BLACK, \
-    INTRO_BANNER_PATH
+    INTRO_BANNER_PATH, convert_to_frames_since_start_time
 from src.config import IMAGES_DIR, FPS
 from src.text import draw_text
 from src.visual_effects import fade
-
-
-def convert_to_frames_since_start_time(start_time):
-    return convert_to_frames(get_ticks() - start_time)
 
 
 def show_intro_banner(intro_banner_path, screen):

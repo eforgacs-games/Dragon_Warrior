@@ -6,8 +6,9 @@ from enum import IntEnum
 from os.path import join, sep, exists
 
 import pygame
+from pygame.time import get_ticks
 
-from src.config import SFX_DIR, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED, SOUND_ENABLED
+from src.config import SFX_DIR, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED, SOUND_ENABLED, FPS
 
 
 class Direction(IntEnum):
@@ -123,9 +124,22 @@ ICON_PATH = join(IMAGES_DIR, 'walking_hero.gif')
 DIALOG_BOX_BACKGROUND_PATH = join(IMAGES_DIR, 'dialog_box_background.png')
 COMMAND_MENU_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_background.png')
 COMMAND_MENU_STATIC_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_static.png')
-CONFIRMATION_STATIC_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_static.png')
-CONFIRMATION_STATIC_YES_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_static_yes.png')
-CONFIRMATION_STATIC_NO_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_static_no.png')
+CONFIRMATION_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation.png')
+CONFIRMATION_YES_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_yes.png')
+CONFIRMATION_NO_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_no.png')
+
+# shops
+
+IMAGES_SHOPS_DIR = join(IMAGES_DIR, 'shops')
+IMAGES_SHOPS_BRECCONARY_PATH = join(IMAGES_SHOPS_DIR, 'brecconary')
+IMAGES_SHOPS_BRECCONARY_WEAPONS_PATH = join(IMAGES_SHOPS_BRECCONARY_PATH, 'weapons')
+BRECCONARY_WEAPONS_SHOP_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_PATH, 'brecconary_shop.png')
+BRECCONARY_WEAPONS_SHOP_BAMBOO_POLE_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_PATH, 'brecconary_shop_bamboo_pole.png')
+BRECCONARY_WEAPONS_SHOP_CLUB_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_PATH, 'brecconary_shop_club.png')
+BRECCONARY_WEAPONS_SHOP_COPPER_SWORD_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_PATH, 'brecconary_shop_copper_sword.png')
+BRECCONARY_WEAPONS_SHOP_CLOTHES_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_PATH, 'brecconary_shop_clothes.png')
+BRECCONARY_WEAPONS_SHOP_LEATHER_ARMOR_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_PATH, 'brecconary_shop_leather_armor.png')
+BRECCONARY_WEAPONS_SHOP_SMALL_SHIELD_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_PATH, 'brecconary_shop_small_shield.png')
 
 
 def get_image(path):
@@ -216,11 +230,13 @@ def print_with_beep_sfx(string_to_print):
 
 
 def convert_to_frames(time_to_convert):
-    return 60 * time_to_convert / 1000
+    # TODO(ELF): change FPS to be self.fps (the actual FPS setting if it is changed to double/triple/quadruple etc. speed).
+    return FPS * time_to_convert / 1000
 
 
-def convert_to_milliseconds(fps):
-    return fps / 60 * 1000
+def convert_to_milliseconds(fps_to_convert):
+    # TODO(ELF): change FPS to be self.fps (the actual FPS setting if it is changed to double/triple/quadruple etc. speed).
+    return fps_to_convert / FPS * 1000
 
 
 def get_surrounding_tile_values(coordinates, map_layout):
@@ -266,3 +282,7 @@ def get_next_tile_identifier(character_column: int, character_row: int, directio
         return get_tile_id_by_coordinates(character_column - offset, character_row, current_map)
     elif direction_value == Direction.RIGHT.value:
         return get_tile_id_by_coordinates(character_column + offset, character_row, current_map)
+
+
+def convert_to_frames_since_start_time(start_time):
+    return convert_to_frames(get_ticks() - start_time)
