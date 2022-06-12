@@ -40,7 +40,7 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
         else:
             text_rect.midleft = (x, y_position)
         screen.blit(text_surface, text_rect)
-        y_position += 16
+        y_position += 17
         if chunk == chunks[len(chunks) - 1]:
             return chunk
 
