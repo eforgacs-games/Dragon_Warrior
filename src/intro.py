@@ -38,11 +38,11 @@ def banner_sparkle(short, screen):
 
 
 def draw_banner_text(screen):
-    draw_text("-PUSH START-", ORANGE, screen.get_width() / 2, screen.get_height() * 10 / 16, screen)
+    draw_text("-PUSH START-", screen.get_width() / 2, screen.get_height() * 10 / 16, screen, ORANGE)
     pink_banner_text = ("K key: A Button", "J key: B Button", "I key: Start", "WASD / Arrow Keys: Move")
     for i in range(11, 15):
-        draw_text(pink_banner_text[i - 11], PINK, screen.get_width() / 2, screen.get_height() * i / 16, screen, text_wrap_length=23)
-    draw_text("(↑ ← ↓ →)", PINK, screen.get_width() / 2, screen.get_height() * 15 / 16, screen, font_name=SMB_FONT_PATH)
+        draw_text(pink_banner_text[i - 11], screen.get_width() / 2, screen.get_height() * i / 16, screen, PINK, text_wrap_length=23)
+    draw_text("(↑ ← ↓ →)", screen.get_width() / 2, screen.get_height() * 15 / 16, screen, PINK, font_name=SMB_FONT_PATH)
 
 
 def repeated_sparkle(screen, clock_check, short):

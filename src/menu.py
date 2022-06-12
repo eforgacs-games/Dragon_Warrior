@@ -138,7 +138,7 @@ class CommandMenu(Menu):
                     #                       DRAGON_QUEST_FONT_PATH,
                     #                       self.screen)
                     # else:
-                    draw_text(line, WHITE, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, 15, DRAGON_QUEST_FONT_PATH, center_align=False)
+                    draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, center_align=False)
                     display.flip()
                     blink_down_arrow(self.screen)
                     # playing with fire a bit here with the short-circuiting
@@ -205,7 +205,7 @@ class CommandMenu(Menu):
         for i in range(height - 1, -1, -1):
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
-            for j in range(64):
+            for j in range(32):
                 for tile, tile_dict in self.current_map.floor_tile_key.items():
                     if tile in self.get_dialog_box_underlying_tiles(self.current_map, i):
                         tile_dict['group'].draw(self.background)

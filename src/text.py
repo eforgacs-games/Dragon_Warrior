@@ -13,7 +13,7 @@ class DialogBoxWrapper(textwrap.TextWrapper):
         return lines
 
 
-def draw_text(text, color, x, y, screen, size=16, font_name=DRAGON_QUEST_FONT_PATH, center_align=True, text_wrap_length=21, letter_by_letter=False):
+def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_FONT_PATH, center_align=True, text_wrap_length=21, letter_by_letter=False):
     # n = 34
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
