@@ -418,5 +418,3 @@ class CommandMenu(Menu):
         row_tile_sets = [set(row) for row in
                          current_map.layout[self.player.row + box_start_row:self.player.row + box_end_row]]
         return set([item for sublist in row_tile_sets for item in sublist])
-
-
