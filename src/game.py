@@ -394,34 +394,31 @@ class Game:
                 self.hovering_stats_displayed = True
             self.cmd_menu.create_window(4, 6, 1, 2, HOVERING_STATS_BACKGROUND_PATH)
             draw_text(self.player.name[:4], WHITE, TILE_SIZE * 2.99, TILE_SIZE * 2, self.screen)
-            draw_text(f"{self.player.level}", WHITE, TILE_SIZE * 4.2, TILE_SIZE * 2.99, self.screen)
-
-            hp_string = f"{self.player.current_hp}"
-            if len(hp_string) >= 2:
-                draw_text(hp_string, WHITE, TILE_SIZE * 4, TILE_SIZE * 3.99, self.screen)
-            else:
-                draw_text(hp_string, WHITE, TILE_SIZE * 4.2, TILE_SIZE * 3.99, self.screen)
-            mp_string = f"{self.player.current_mp}"
-            if len(mp_string) >= 2:
-                draw_text(mp_string, WHITE, TILE_SIZE * 4, TILE_SIZE * 4.99, self.screen)
-            else:
-                draw_text(mp_string, WHITE, TILE_SIZE * 4.2, TILE_SIZE * 4.99, self.screen)
-            gold_string = f"{self.player.gold}"
-            if len(gold_string) >= 5:
-                draw_text(gold_string, WHITE, TILE_SIZE * 3.2, TILE_SIZE * 5.99, self.screen)
-            else:
-                draw_text(gold_string, WHITE, TILE_SIZE * 4.2, TILE_SIZE * 5.99, self.screen)
-            experience_string = f"{self.player.total_experience}"
-            if len(experience_string) >= 5:
-                draw_text(experience_string, WHITE, TILE_SIZE * 3.2, TILE_SIZE * 6.99, self.screen)
-            else:
-                draw_text(experience_string, WHITE, TILE_SIZE * 4.2, TILE_SIZE * 6.99, self.screen)
+            self.draw_stats_strings_with_alignments(f"{self.player.level}", 2.99)
+            self.draw_stats_strings_with_alignments(f"{self.player.current_hp}", 3.99)
+            self.draw_stats_strings_with_alignments(f"{self.player.current_mp}", 4.99)
+            self.draw_stats_strings_with_alignments(f"{self.player.gold}", 5.99)
+            self.draw_stats_strings_with_alignments(f"{self.player.total_experience}", 6.99)
         self.handle_menu_launch(self.cmd_menu)
         self.handle_initial_dialog()
         if self.cmd_menu.launched:
             self.cmd_menu.menu.update(self.events)
             self.enable_movement = False
         display.flip()
+
+    def draw_stats_strings_with_alignments(self, stat_string, y_position):
+        if len(stat_string) >= 5:
+            draw_text(stat_string, WHITE, TILE_SIZE * 3.2, TILE_SIZE * y_position, self.screen)
+        elif len(stat_string) > 4:
+            draw_text(stat_string, WHITE, TILE_SIZE * 3.2, TILE_SIZE * y_position, self.screen)
+        elif len(stat_string) > 3:
+            draw_text(stat_string, WHITE, TILE_SIZE * 3.44, TILE_SIZE * y_position, self.screen)
+        elif len(stat_string) > 2:
+            draw_text(stat_string, WHITE, TILE_SIZE * 3.67, TILE_SIZE * y_position, self.screen)
+        elif len(stat_string) > 1:
+            draw_text(stat_string, WHITE, TILE_SIZE * 3.99, TILE_SIZE * y_position, self.screen)
+        else:
+            draw_text(stat_string, WHITE, TILE_SIZE * 4.2, TILE_SIZE * y_position, self.screen)
 
     def handle_initial_dialog(self):
         if INITIAL_DIALOG_ENABLED:
