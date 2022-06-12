@@ -6,8 +6,9 @@ from enum import IntEnum
 from os.path import join, sep, exists
 
 import pygame
+from pygame.time import get_ticks
 
-from src.config import SFX_DIR, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED, SOUND_ENABLED
+from src.config import SFX_DIR, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED, SOUND_ENABLED, FPS
 
 
 class Direction(IntEnum):
@@ -229,11 +230,13 @@ def print_with_beep_sfx(string_to_print):
 
 
 def convert_to_frames(time_to_convert):
-    return 60 * time_to_convert / 1000
+    # TODO(ELF): change FPS to be self.fps (the actual FPS setting if it is changed to double/triple/quadruple etc. speed).
+    return FPS * time_to_convert / 1000
 
 
-def convert_to_milliseconds(fps):
-    return fps / 60 * 1000
+def convert_to_milliseconds(fps_to_convert):
+    # TODO(ELF): change FPS to be self.fps (the actual FPS setting if it is changed to double/triple/quadruple etc. speed).
+    return fps_to_convert / FPS * 1000
 
 
 def get_surrounding_tile_values(coordinates, map_layout):
@@ -279,3 +282,7 @@ def get_next_tile_identifier(character_column: int, character_row: int, directio
         return get_tile_id_by_coordinates(character_column - offset, character_row, current_map)
     elif direction_value == Direction.RIGHT.value:
         return get_tile_id_by_coordinates(character_column + offset, character_row, current_map)
+
+
+def convert_to_frames_since_start_time(start_time):
+    return convert_to_frames(get_ticks() - start_time)

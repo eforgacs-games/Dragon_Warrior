@@ -2,10 +2,11 @@ from functools import partial
 
 from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, event, K_RETURN, K_j
 from pygame.event import get, pump
+from pygame.time import get_ticks
 
-from data.text.dialog import blink_yes_confirmation, blink_no_confirmation, blink_switch
+from data.text.dialog import blink_yes_confirmation, blink_no_confirmation
 from src.common import play_sound, confirmation_sfx, special_item_sfx, CONFIRMATION_BACKGROUND_PATH, CONFIRMATION_YES_BACKGROUND_PATH, \
-    menu_button_sfx, CONFIRMATION_NO_BACKGROUND_PATH, BRECCONARY_WEAPONS_SHOP_PATH
+    menu_button_sfx, CONFIRMATION_NO_BACKGROUND_PATH, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time
 from src.config import MUSIC_ENABLED, TILE_SIZE
 from src.game_functions import draw_all_tiles_in_current_map
 from src.items import weapons, armor, shields
@@ -187,29 +188,41 @@ class DialogLookup:
         display.flip()
         selecting = True
         current_item_index = 0
+        start_time = get_ticks()
+        # arrow stays on and off for 16 frames at a time
         while selecting:
             current_item_name = list(current_store_inventory)[current_item_index]
             current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
-            # TODO(ELF): Reset the blink timer every time the up or down keys are pressed.
-            blink_switch(self.command_menu, static_store_image, current_item_menu_image, 128, 9, 7, 6, 2)
+            frames_elapsed = convert_to_frames_since_start_time(start_time)
+            if frames_elapsed <= 16:
+                self.command_menu.create_window(9, 7, 6, 2, current_item_menu_image)
+                display.flip()
+            elif 16 < frames_elapsed <= 32:
+                self.command_menu.create_window(9, 7, 6, 2, static_store_image)
+                display.flip()
+            else:
+                start_time = get_ticks()
             selected_item = None
             for current_event in get():
                 if current_event.type == KEYDOWN:
                     if current_event.key in (K_DOWN, K_s):
                         if current_item_index < len(current_store_inventory) - 1:
                             current_item_index += 1
+                            start_time = get_ticks()
                     elif current_event.key in (K_UP, K_w):
                         if current_item_index > 0:
                             current_item_index -= 1
-                    elif current_event.key in (K_j,):
+                            start_time = get_ticks()
+                    elif current_event.key == K_j:
                         self.command_menu.show_line_in_dialog_box("Please, come again.")
                         selecting = False
                     elif current_event.key in (K_RETURN, K_k):
                         selected_item = current_item_name
             if selected_item:
+                self.command_menu.create_window(9, 7, 6, 2, current_item_menu_image)
+                display.flip()
                 self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
                 selecting = False
-
             pump()
             # print(f"Item index {current_item_index}: {current_item_name}")
 
