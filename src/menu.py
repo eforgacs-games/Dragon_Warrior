@@ -138,7 +138,7 @@ class CommandMenu(Menu):
                     #                       DRAGON_QUEST_FONT_PATH,
                     #                       self.screen)
                     # else:
-                    draw_text(line, 15, WHITE, TILE_SIZE * 3, TILE_SIZE * 9.75, DRAGON_QUEST_FONT_PATH, self.screen, center_align=False)
+                    draw_text(line, WHITE, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, 15, DRAGON_QUEST_FONT_PATH, center_align=False)
                     display.flip()
                     blink_down_arrow(self.screen)
                     # playing with fire a bit here with the short-circuiting

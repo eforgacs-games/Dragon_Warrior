@@ -1,6 +1,6 @@
 from pygame import display, image, transform
 
-from src.common import WHITE, DRAGON_QUEST_FONT_PATH, BLACK, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, \
+from src.common import WHITE, BLACK, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, \
     CONFIRMATION_NO_BACKGROUND_PATH
 from src.text import draw_text
 
@@ -14,11 +14,11 @@ def set_window_background(black_box, background_path):
 
 def blink_down_arrow(screen):
     for i in range(256):
-        draw_text("▼", 15, WHITE, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32, DRAGON_QUEST_FONT_PATH, screen)
+        draw_text("▼", WHITE, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32, screen)
         # TODO(ELF): Change display.flip() to display.update() and pass in a rect.
         display.flip()
     for i in range(256):
-        draw_text("▼", 15, BLACK, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32, DRAGON_QUEST_FONT_PATH, screen)
+        draw_text("▼", BLACK, screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32, screen)
         display.flip()
 
 
