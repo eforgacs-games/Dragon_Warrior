@@ -7,7 +7,7 @@ from pygame.time import get_ticks
 from data.text.dialog import confirmation_prompt, get_inn_intro
 from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, create_window
 from src.config import MUSIC_ENABLED, TILE_SIZE
-from src.game_functions import draw_all_tiles_in_current_map
+from src.game_functions import draw_all_tiles_in_current_map, draw_hovering_stats_window
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
@@ -217,6 +217,7 @@ class DialogLookup:
         elif item_type == 'shield':
             self.player.shield = item
         # TODO(ELF): Update money (GOLD) display in hovering stats window.
+        draw_hovering_stats_window(self.screen, self.player)
         self.command_menu.show_line_in_dialog_box("I thank thee.")
 
     def check_stay_at_inn(self, inn_cost):
