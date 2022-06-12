@@ -389,22 +389,28 @@ class Game:
         self.screen.blit(self.background, self.camera.get_pos())
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
-                self.cmd_menu.window_drop_down_effect(4, 6, 1, 2)
-                self.cmd_menu.create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH)
-                self.hovering_stats_displayed = True
-            self.cmd_menu.create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH)
-            draw_text(self.player.name[:4], WHITE, TILE_SIZE * 2.99, TILE_SIZE * 2, self.screen)
-            self.draw_stats_strings_with_alignments(f"{self.player.level}", 2.99)
-            self.draw_stats_strings_with_alignments(f"{self.player.current_hp}", 3.99)
-            self.draw_stats_strings_with_alignments(f"{self.player.current_mp}", 4.99)
-            self.draw_stats_strings_with_alignments(f"{self.player.gold}", 5.99)
-            self.draw_stats_strings_with_alignments(f"{self.player.total_experience}", 6.99)
+                self.drop_down_hovering_stats_window()
+            self.draw_hovering_stats_window()
         self.handle_menu_launch(self.cmd_menu)
         self.handle_initial_dialog()
         if self.cmd_menu.launched:
             self.cmd_menu.menu.update(self.events)
             self.enable_movement = False
         display.flip()
+
+    def drop_down_hovering_stats_window(self):
+        self.cmd_menu.window_drop_down_effect(4, 6, 1, 2)
+        self.cmd_menu.create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH)
+        self.hovering_stats_displayed = True
+
+    def draw_hovering_stats_window(self):
+        self.cmd_menu.create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH)
+        draw_text(self.player.name[:4], WHITE, TILE_SIZE * 2.99, TILE_SIZE * 2, self.screen)
+        self.draw_stats_strings_with_alignments(f"{self.player.level}", 2.99)
+        self.draw_stats_strings_with_alignments(f"{self.player.current_hp}", 3.99)
+        self.draw_stats_strings_with_alignments(f"{self.player.current_mp}", 4.99)
+        self.draw_stats_strings_with_alignments(f"{self.player.gold}", 5.99)
+        self.draw_stats_strings_with_alignments(f"{self.player.total_experience}", 6.99)
 
     def draw_stats_strings_with_alignments(self, stat_string, y_position):
         if len(stat_string) >= 5:
