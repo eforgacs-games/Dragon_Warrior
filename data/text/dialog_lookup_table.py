@@ -197,7 +197,7 @@ class DialogLookup:
             if frames_elapsed <= 16:
                 self.command_menu.create_window(9, 7, 6, 2, current_item_menu_image)
                 display.flip()
-            elif 16 < frames_elapsed <= 32:
+            elif frames_elapsed <= 32:
                 self.command_menu.create_window(9, 7, 6, 2, static_store_image)
                 display.flip()
             else:
