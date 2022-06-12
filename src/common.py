@@ -6,9 +6,10 @@ from enum import IntEnum
 from os.path import join, sep, exists
 
 import pygame
+from pygame import Surface, image, transform
 from pygame.time import get_ticks
 
-from src.config import SFX_DIR, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED, SOUND_ENABLED, FPS
+from src.config import SFX_DIR, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED, SOUND_ENABLED, FPS, TILE_SIZE
 
 
 class Direction(IntEnum):
@@ -290,3 +291,17 @@ def get_next_tile_identifier(character_column: int, character_row: int, directio
 
 def convert_to_frames_since_start_time(start_time):
     return convert_to_frames(get_ticks() - start_time)
+
+
+def create_window(x, y, width, height, window_background, screen):
+    window_box = Surface((TILE_SIZE * width, TILE_SIZE * height))  # lgtm [py/call/wrong-arguments]
+    set_window_background(window_box, window_background)
+    screen.blit(window_box, (TILE_SIZE * x, TILE_SIZE * y))
+    return window_box
+
+
+def set_window_background(black_box, background_path):
+    black_box.fill(BLACK)
+    background_image = image.load(background_path)
+    background_image = transform.scale(background_image, black_box.get_size())
+    black_box.blit(background_image, black_box.get_rect())
