@@ -19,7 +19,8 @@ from src.common import BLACK, Direction, ICON_PATH, WHITE, get_surrounding_tile_
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
-from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles
+from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles, \
+    draw_stats_strings_with_alignments
 from src.intro import Intro
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
@@ -406,25 +407,11 @@ class Game:
     def draw_hovering_stats_window(self):
         self.cmd_menu.create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH)
         draw_text(self.player.name[:4], WHITE, TILE_SIZE * 2.99, TILE_SIZE * 2, self.screen)
-        self.draw_stats_strings_with_alignments(f"{self.player.level}", 2.99)
-        self.draw_stats_strings_with_alignments(f"{self.player.current_hp}", 3.99)
-        self.draw_stats_strings_with_alignments(f"{self.player.current_mp}", 4.99)
-        self.draw_stats_strings_with_alignments(f"{self.player.gold}", 5.99)
-        self.draw_stats_strings_with_alignments(f"{self.player.total_experience}", 6.99)
-
-    def draw_stats_strings_with_alignments(self, stat_string, y_position):
-        if len(stat_string) >= 5:
-            draw_text(stat_string, WHITE, TILE_SIZE * 3.2, TILE_SIZE * y_position, self.screen)
-        elif len(stat_string) > 4:
-            draw_text(stat_string, WHITE, TILE_SIZE * 3.2, TILE_SIZE * y_position, self.screen)
-        elif len(stat_string) > 3:
-            draw_text(stat_string, WHITE, TILE_SIZE * 3.44, TILE_SIZE * y_position, self.screen)
-        elif len(stat_string) > 2:
-            draw_text(stat_string, WHITE, TILE_SIZE * 3.67, TILE_SIZE * y_position, self.screen)
-        elif len(stat_string) > 1:
-            draw_text(stat_string, WHITE, TILE_SIZE * 3.99, TILE_SIZE * y_position, self.screen)
-        else:
-            draw_text(stat_string, WHITE, TILE_SIZE * 4.2, TILE_SIZE * y_position, self.screen)
+        draw_stats_strings_with_alignments(f"{self.player.level}", 2.99, self.screen)
+        draw_stats_strings_with_alignments(f"{self.player.current_hp}", 3.99, self.screen)
+        draw_stats_strings_with_alignments(f"{self.player.current_mp}", 4.99, self.screen)
+        draw_stats_strings_with_alignments(f"{self.player.gold}", 5.99, self.screen)
+        draw_stats_strings_with_alignments(f"{self.player.total_experience}", 6.99, self.screen)
 
     def handle_initial_dialog(self):
         if INITIAL_DIALOG_ENABLED:

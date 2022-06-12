@@ -1,7 +1,8 @@
 from typing import List
 
-from src.common import Direction
+from src.common import Direction, WHITE
 from src.config import TILE_SIZE
+from src.text import draw_text
 
 
 def set_character_position(character):
@@ -33,3 +34,18 @@ def replace_characters_with_underlying_tiles(tile_types_to_draw: List[str], curr
                 map(lambda x: x.replace(character, current_map_character_key[character]['underlying_tile']),
                     tile_types_to_draw))
     return tile_types_to_draw
+
+
+def draw_stats_strings_with_alignments(stat_string, y_position, screen):
+    if len(stat_string) >= 5:
+        draw_text(stat_string, WHITE, TILE_SIZE * 3.2, TILE_SIZE * y_position, screen)
+    elif len(stat_string) > 4:
+        draw_text(stat_string, WHITE, TILE_SIZE * 3.2, TILE_SIZE * y_position, screen)
+    elif len(stat_string) > 3:
+        draw_text(stat_string, WHITE, TILE_SIZE * 3.44, TILE_SIZE * y_position, screen)
+    elif len(stat_string) > 2:
+        draw_text(stat_string, WHITE, TILE_SIZE * 3.67, TILE_SIZE * y_position, screen)
+    elif len(stat_string) > 1:
+        draw_text(stat_string, WHITE, TILE_SIZE * 3.99, TILE_SIZE * y_position, screen)
+    else:
+        draw_text(stat_string, WHITE, TILE_SIZE * 4.2, TILE_SIZE * y_position, screen)
