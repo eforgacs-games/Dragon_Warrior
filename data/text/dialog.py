@@ -31,6 +31,8 @@ def blink_no_confirmation(command_menu):
 
 
 def blink_switch(command_menu, image_1=CONFIRMATION_YES_BACKGROUND_PATH, image_2=CONFIRMATION_BACKGROUND_PATH, time=512, width=4, height=3, x=5, y=2):
+    # not as accurate as the implementation in open_store_inventory,
+    # since that one uses the actual 16 frames of screen time for the arrow
     for i in range(time):
         command_menu.create_window(width, height, x, y, image_1)
         display.flip()
