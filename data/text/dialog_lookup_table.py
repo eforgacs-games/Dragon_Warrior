@@ -117,7 +117,7 @@ class DialogLookup:
     def tantegel_throne_room_roaming_guard(self):
         player_please_save_the_princess = f"{self.player.name}, please save the Princess."
         confirmation_prompt(self.command_menu, "Dost thou know about Princess Gwaelin?",
-                            yes_path_function=partial(self.command_menu.show_line_in_dialog_box, player_please_save_the_princess),
+                            yes_path_function=partial(self.command_menu.show_line_in_dialog_box, player_please_save_the_princess, last_line=True),
                             no_path_function=partial(self.command_menu.show_text_in_dialog_box,
                                                      ("Half a year now hath passed since the Princess was kidnapped by the enemy.",
                                                       "Never does the King speak of it, but he must be suffering much.",
@@ -176,7 +176,7 @@ class DialogLookup:
             # print(f"Item index {current_item_index}: {current_item_name}")
 
     def buy_item_dialog(self, selected_item, current_store_inventory, static_store_image):
-        self.command_menu.show_line_in_dialog_box(f"The {selected_item}?")
+        self.command_menu.show_line_in_dialog_box(f"The {selected_item}?", last_line=False)
         selected_item_dict = current_store_inventory[selected_item]
         selected_item_type = selected_item_dict['type']
         if self.player.gold > selected_item_dict['cost']:
@@ -189,20 +189,19 @@ class DialogLookup:
                 old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.shield, shields)
             confirmation_prompt(self.command_menu, "Is that Okay.?",
                                 yes_path_function=partial(self.complete_transaction, selected_item, current_store_inventory, old_item_cost),
-                                no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Oh, yes? That's too bad."))
+                                no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Oh, yes? That's too bad.", last_line=False))
         else:
             self.command_menu.show_line_in_dialog_box("Sorry.\n"
-                                                      "Thou hast not enough money.")
+                                                      "Thou hast not enough money.", last_line=False)
         confirmation_prompt(self.command_menu, "Dost thou wish to buy anything more?",
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."))
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.", last_line=True))
 
     def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
         if old_item:
             if old_item_lookup_table[old_item].get('cost'):
                 old_item_cost = old_item_lookup_table[old_item]['cost'] // 2
-                self.command_menu.show_line_in_dialog_box(
-                    f"Then I will buy thy {old_item} for {old_item_cost} GOLD.")
+                self.command_menu.show_line_in_dialog_box(f"Then I will buy thy {old_item} for {old_item_cost} GOLD.", last_line=False)
         return old_item_cost
 
     def complete_transaction(self, item, current_store_inventory, old_item_cost):
