@@ -121,12 +121,16 @@ DRAGONLORD_PATH = join(IMAGES_DIR, 'dragonlord.png')
 INTRO_BANNER_PATH = join(IMAGES_DIR, 'intro_banner', 'intro_banner.png')
 INTRO_BANNER_WITH_DRAGON_PATH = join(IMAGES_DIR, 'intro_banner', 'intro_banner_with_dragon.png')
 ICON_PATH = join(IMAGES_DIR, 'walking_hero.gif')
+
+# menus/windows
+
 DIALOG_BOX_BACKGROUND_PATH = join(IMAGES_DIR, 'dialog_box_background.png')
 COMMAND_MENU_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_background.png')
 COMMAND_MENU_STATIC_BACKGROUND_PATH = join(IMAGES_DIR, 'command_menu_static.png')
 CONFIRMATION_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation.png')
 CONFIRMATION_YES_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_yes.png')
 CONFIRMATION_NO_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_no.png')
+HOVERING_STATS_BACKGROUND_PATH = join(IMAGES_DIR, 'hovering_stats_window.png')
 
 # shops
 
