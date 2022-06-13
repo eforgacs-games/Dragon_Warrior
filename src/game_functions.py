@@ -88,14 +88,12 @@ def multiple_image_blink(blink_start, screen, unselected_image, selected_image, 
             elif current_event.type == KEYUP:
                 if current_event.key in (K_RETURN, K_i, K_k):
                     blinking = False
-                elif current_event.key in (K_DOWN, K_s):
-                    if current_item_index < len(all_selected_images) - 1:
-                        current_item_index += 1
-                        blink_start = get_ticks()
-                elif current_event.key in (K_UP, K_w):
-                    if current_item_index > 0:
-                        current_item_index -= 1
-                        blink_start = get_ticks()
+                elif current_event.key in (K_DOWN, K_s) and current_item_index < len(all_selected_images) - 1:
+                    current_item_index += 1
+                    blink_start = get_ticks()
+                elif current_event.key in (K_UP, K_w) and current_item_index > 0:
+                    current_item_index -= 1
+                    blink_start = get_ticks()
     play_sound(menu_button_sfx)
 
 
