@@ -48,6 +48,8 @@ class Test(TestCase):
 
     def test_set_character_position(self):
         # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
+        self.game.player.column = 13
+        self.game.player.row = 10
         self.assertEqual(13, self.game.player.column)
         self.assertEqual(10, self.game.player.row)
         self.assertEqual(13, self.game.player.rect.x // TILE_SIZE)
