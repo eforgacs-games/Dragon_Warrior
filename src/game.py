@@ -14,12 +14,13 @@ from src import maps
 from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
-    convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window
+    convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
+    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles, \
-    draw_hovering_stats_window
+    draw_hovering_stats_window, multiple_image_blink
 from src.intro import Intro
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
@@ -29,7 +30,6 @@ from src.player.player import Player
 from src.sound import bump, play_sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
-from src.text import draw_text
 from src.visual_effects import fade
 
 
@@ -138,26 +138,13 @@ class Game:
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
-        main_menu_screen_enabled = True
         self.load_and_play_music(village_music)
-        while main_menu_screen_enabled:
-            screen.fill(BLACK)
-            # totally dummy option for now, just a placeholder
-            for i in range(128):
-                draw_text(">BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
-                display.flip()
-            for i in range(128):
-                draw_text(" BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
-                display.flip()
-            self.clock.tick(self.fps)
-            for current_event in get():
-                if current_event.type == QUIT:
-                    quit()
-                    sys.exit()
-                elif current_event.type == KEYUP:
-                    if current_event.key in (K_i, K_k):
-                        main_menu_screen_enabled = False
-        play_sound(menu_button_sfx)
+        right_arrow_start = get_ticks()
+        multiple_image_blink(right_arrow_start, screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [])
+        # adventure_log_blinking = True
+        # while adventure_log_blinking:
+        right_arrow_start = get_ticks()
+        multiple_image_blink(right_arrow_start, screen, ADVENTURE_LOG_PATH, ADVENTURE_LOG_1_PATH, [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH])
         fade(fade_out=True, screen=self.screen)
         self.load_and_play_music(self.current_map.music_file_path)
 
@@ -175,7 +162,7 @@ class Game:
         current_key = key.get_pressed()
         if not self.player.is_moving:
             set_character_position(self.player)
-        if self.enable_movement:
+        if self.enable_movement and not self.paused:
             self.move_player(current_key)
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
@@ -255,8 +242,10 @@ class Game:
             # Start button
             if self.paused:
                 self.unpause_all_movement()
+                self.paused = False
             else:
                 self.pause_all_movement()
+                self.paused = True
             print("I key pressed (Start button).")
         if current_key[K_u]:
             # Select button
@@ -362,7 +351,7 @@ class Game:
                 self.not_moving_time_start = None
                 self.display_hovering_stats = False
                 if self.hovering_stats_displayed:
-                    self.cmd_menu.window_drop_up_effect(4, 6, 1, 2)
+                    self.cmd_menu.window_drop_up_effect(1, 2, 4, 6)
                     self.hovering_stats_displayed = False
             else:
                 if not self.not_moving_time_start:
@@ -388,19 +377,20 @@ class Game:
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation()
         self.screen.blit(self.background, self.camera.get_pos())
+        self.handle_initial_dialog()
+
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
                 self.drop_down_hovering_stats_window()
             draw_hovering_stats_window(self.screen, self.player)
         self.handle_menu_launch(self.cmd_menu)
-        self.handle_initial_dialog()
         if self.cmd_menu.launched:
             self.cmd_menu.menu.update(self.events)
             self.enable_movement = False
         display.flip()
 
     def drop_down_hovering_stats_window(self):
-        self.cmd_menu.window_drop_down_effect(4, 6, 1, 2)
+        self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
         create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, self.screen)
         self.hovering_stats_displayed = True
 
@@ -408,6 +398,8 @@ class Game:
         if INITIAL_DIALOG_ENABLED:
             if self.current_map.identifier == 'TantegelThroneRoom':
                 if self.is_initial_dialog:
+                    self.display_hovering_stats = False
+                    self.cmd_menu.launch_signaled = False
                     self.run_automatic_initial_dialog()
                 else:
                     if self.allow_save_prompt:
@@ -600,7 +592,6 @@ class Game:
         :return: None
         """
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
-        self.paused = False
 
     def pause_all_movement(self) -> None:
         """
@@ -608,7 +599,6 @@ class Game:
         :return: None
         """
         self.enable_animate, self.enable_roaming, self.enable_movement = False, False, False
-        self.paused = True
 
     def launch_menu(self, menu_to_launch: str) -> None:
         """

@@ -1,6 +1,12 @@
+import sys
 from typing import List
 
-from src.common import Direction, HOVERING_STATS_BACKGROUND_PATH, create_window
+from pygame import image, display, QUIT, quit, KEYUP, K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN
+from pygame.event import get
+from pygame.time import get_ticks
+from pygame.transform import scale
+
+from src.common import Direction, HOVERING_STATS_BACKGROUND_PATH, create_window, BLACK, convert_to_frames_since_start_time, play_sound, menu_button_sfx
 from src.config import TILE_SIZE
 from src.text import draw_text
 
@@ -59,3 +65,46 @@ def draw_hovering_stats_window(screen, player):
     draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen)
     draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen)
     draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen)
+
+
+def multiple_image_blink(blink_start, screen, unselected_image, selected_image, other_selected_images):
+    # TODO(ELF): very similar to open_store_inventory() - maybe try to merge them if you can
+    blinking = True
+    current_item_index = 0
+    if other_selected_images:
+        all_selected_images = [selected_image] + other_selected_images
+    else:
+        all_selected_images = [selected_image]
+    while blinking:
+        screen.fill(BLACK)
+        # totally dummy option for now, just a placeholder
+        if convert_to_frames_since_start_time(blink_start) > 32:
+            blink_start = get_ticks()
+        alternate_blink(all_selected_images[current_item_index], unselected_image, blink_start, screen)
+        for current_event in get():
+            if current_event.type == QUIT:
+                quit()
+                sys.exit()
+            elif current_event.type == KEYUP:
+                if current_event.key in (K_RETURN, K_i, K_k):
+                    blinking = False
+                elif current_event.key in (K_DOWN, K_s) and current_item_index < len(all_selected_images) - 1:
+                    current_item_index += 1
+                    blink_start = get_ticks()
+                elif current_event.key in (K_UP, K_w) and current_item_index > 0:
+                    current_item_index -= 1
+                    blink_start = get_ticks()
+    play_sound(menu_button_sfx)
+
+
+def alternate_blink(image_1, image_2, right_arrow_start, screen):
+    while convert_to_frames_since_start_time(right_arrow_start) <= 16:
+        selected_image = scale(image.load(image_1), (screen.get_width(), screen.get_height()))
+        screen.blit(selected_image, (0, 0))
+        # draw_text(">BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
+        display.flip()
+    while 16 < convert_to_frames_since_start_time(right_arrow_start) <= 32:
+        unselected_image = scale(image.load(image_2), (screen.get_width(), screen.get_height()))
+        screen.blit(unselected_image, (0, 0))
+        # draw_text(" BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
+        display.flip()
