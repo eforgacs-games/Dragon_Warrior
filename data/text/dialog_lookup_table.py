@@ -154,14 +154,12 @@ class DialogLookup:
             selected_item = None
             for current_event in get():
                 if current_event.type == KEYDOWN:
-                    if current_event.key in (K_DOWN, K_s):
-                        if current_item_index < len(current_store_inventory) - 1:
-                            current_item_index += 1
-                            start_time = get_ticks()
-                    elif current_event.key in (K_UP, K_w):
-                        if current_item_index > 0:
-                            current_item_index -= 1
-                            start_time = get_ticks()
+                    if current_event.key in (K_DOWN, K_s) and current_item_index < len(current_store_inventory) - 1:
+                        current_item_index += 1
+                        start_time = get_ticks()
+                    elif current_event.key in (K_UP, K_w) and current_item_index > 0:
+                        current_item_index -= 1
+                        start_time = get_ticks()
                     elif current_event.key == K_j:
                         self.command_menu.show_line_in_dialog_box("Please, come again.", last_line=True)
                         selecting = False
