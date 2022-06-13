@@ -133,6 +133,10 @@ CONFIRMATION_NO_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_no.png')
 HOVERING_STATS_BACKGROUND_PATH = join(IMAGES_DIR, 'hovering_stats_window.png')
 BEGIN_QUEST_PATH = join(IMAGES_DIR, 'begin_quest.png')
 BEGIN_QUEST_SELECTED_PATH = join(IMAGES_DIR, 'begin_quest_selected.png')
+ADVENTURE_LOG_PATH = join(IMAGES_DIR, 'adventure_log.png')
+ADVENTURE_LOG_1_PATH = join(IMAGES_DIR, 'adventure_log_1.png')
+ADVENTURE_LOG_2_PATH = join(IMAGES_DIR, 'adventure_log_2.png')
+ADVENTURE_LOG_3_PATH = join(IMAGES_DIR, 'adventure_log_3.png')
 
 # shops
 
