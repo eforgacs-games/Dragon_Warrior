@@ -86,6 +86,7 @@ def select_from_vertical_menu(blink_start, screen, unselected_image, selected_im
                 sys.exit()
             elif current_event.type == KEYDOWN:
                 if current_event.key in (K_RETURN, K_i, K_k):
+                    play_sound(menu_button_sfx)
                     return current_item_index
                 elif current_event.key in (K_DOWN, K_s) and current_item_index < len(all_selected_images) - 1:
                     current_item_index += 1
@@ -93,7 +94,7 @@ def select_from_vertical_menu(blink_start, screen, unselected_image, selected_im
                 elif current_event.key in (K_UP, K_w) and current_item_index > 0:
                     current_item_index -= 1
                     blink_start = get_ticks()
-    play_sound(menu_button_sfx)
+
 
 
 def alternate_blink(image_1, image_2, right_arrow_start, screen):
