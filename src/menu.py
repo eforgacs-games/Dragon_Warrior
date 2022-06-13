@@ -186,7 +186,7 @@ class CommandMenu(Menu):
             self.window_drop_up_effect(x=2, y=9, width=12, height=5)
 
     def window_drop_down_effect(self, x, y, width, height):
-        """Intro effect for windows."""
+        """Intro effect for menus."""
         for i in range(height + 1):
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
@@ -197,7 +197,7 @@ class CommandMenu(Menu):
                 display.update()
 
     def window_drop_up_effect(self, x, y, width, height):
-        """Outro effect for windows."""
+        """Outro effect for menus."""
         # draw all the tiles initially once
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile in self.current_map.tile_types_in_current_map:
