@@ -375,12 +375,13 @@ class Game:
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation()
         self.screen.blit(self.background, self.camera.get_pos())
+        self.handle_initial_dialog()
+
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
                 self.drop_down_hovering_stats_window()
             draw_hovering_stats_window(self.screen, self.player)
         self.handle_menu_launch(self.cmd_menu)
-        self.handle_initial_dialog()
         if self.cmd_menu.launched:
             self.cmd_menu.menu.update(self.events)
             self.enable_movement = False
@@ -395,6 +396,7 @@ class Game:
         if INITIAL_DIALOG_ENABLED:
             if self.current_map.identifier == 'TantegelThroneRoom':
                 if self.is_initial_dialog:
+                    self.display_hovering_stats = False
                     self.run_automatic_initial_dialog()
                 else:
                     if self.allow_save_prompt:
