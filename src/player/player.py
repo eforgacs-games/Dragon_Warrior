@@ -22,8 +22,10 @@ class Player(AnimatedSprite):
         self.bumped = False
         self.last_bump_time = None
 
+        self.adventure_log = 0
+
         # character attributes
-        self.name = 'Edward'
+        self.name = ''
         # status menu
         self.strength = 0
         self.agility = 0
