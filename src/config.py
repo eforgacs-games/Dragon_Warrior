@@ -13,21 +13,19 @@ SFX_DIR = join(SOUND_DIR, 'sfx')
 SCALE = 2
 TILE_SIZE = 16 * SCALE
 NES_RES = (256, 240)
+FULLSCREEN_ENABLED = False
 DEV_MODE = False
 if DEV_MODE:
     MUSIC_ENABLED = False  # lgtm [py/unreachable-statement]
     SOUND_ENABLED = False
-    ORCHESTRA_MUSIC_ENABLED = False
-    FULLSCREEN_ENABLED = False
     SPLASH_SCREEN_ENABLED = False
     INITIAL_DIALOG_ENABLED = False
 else:
     MUSIC_ENABLED = True
     SOUND_ENABLED = True
-    ORCHESTRA_MUSIC_ENABLED = False
-    FULLSCREEN_ENABLED = False
     SPLASH_SCREEN_ENABLED = True
     INITIAL_DIALOG_ENABLED = True
+ORCHESTRA_MUSIC_ENABLED = False
 SHOW_FPS = False
 # This prints out the current coordinates that the player is standing on.
 SHOW_COORDINATES = False
