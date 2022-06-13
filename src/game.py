@@ -162,7 +162,7 @@ class Game:
         current_key = key.get_pressed()
         if not self.player.is_moving:
             set_character_position(self.player)
-        if self.enable_movement:
+        if self.enable_movement and not self.paused:
             self.move_player(current_key)
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
@@ -242,8 +242,10 @@ class Game:
             # Start button
             if self.paused:
                 self.unpause_all_movement()
+                self.paused = False
             else:
                 self.pause_all_movement()
+                self.paused = True
             print("I key pressed (Start button).")
         if current_key[K_u]:
             # Select button
@@ -397,6 +399,7 @@ class Game:
             if self.current_map.identifier == 'TantegelThroneRoom':
                 if self.is_initial_dialog:
                     self.display_hovering_stats = False
+                    self.cmd_menu.launch_signaled = False
                     self.run_automatic_initial_dialog()
                 else:
                     if self.allow_save_prompt:
@@ -589,7 +592,6 @@ class Game:
         :return: None
         """
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
-        self.paused = False
 
     def pause_all_movement(self) -> None:
         """
@@ -597,7 +599,6 @@ class Game:
         :return: None
         """
         self.enable_animate, self.enable_roaming, self.enable_movement = False, False, False
-        self.paused = True
 
     def launch_menu(self, menu_to_launch: str) -> None:
         """
