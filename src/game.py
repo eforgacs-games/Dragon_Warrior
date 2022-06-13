@@ -9,18 +9,18 @@ from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
-from pygame.transform import scale
 
 from src import maps
 from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
-    convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH
+    convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
+    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles, \
-    draw_hovering_stats_window
+    draw_hovering_stats_window, multiple_image_blink
 from src.intro import Intro
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
@@ -138,33 +138,13 @@ class Game:
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
-        main_menu_screen_enabled = True
         self.load_and_play_music(village_music)
         right_arrow_start = get_ticks()
-        while main_menu_screen_enabled:
-            screen.fill(BLACK)
-            # totally dummy option for now, just a placeholder
-            if convert_to_frames_since_start_time(right_arrow_start) > 32:
-                right_arrow_start = get_ticks()
-            while convert_to_frames_since_start_time(right_arrow_start) <= 16:
-                begin_quest_selected_image = scale(image.load(BEGIN_QUEST_SELECTED_PATH), (screen.get_width(), screen.get_height()))
-                screen.blit(begin_quest_selected_image, (0, 0))
-                # draw_text(">BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
-                display.flip()
-            while 16 < convert_to_frames_since_start_time(right_arrow_start) <= 32:
-                begin_quest_image = scale(image.load(BEGIN_QUEST_PATH), (screen.get_width(), screen.get_height()))
-                screen.blit(begin_quest_image, (0, 0))
-                # draw_text(" BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
-                display.flip()
-            self.clock.tick(self.fps)
-            for current_event in get():
-                if current_event.type == QUIT:
-                    quit()
-                    sys.exit()
-                elif current_event.type == KEYUP:
-                    if current_event.key in (K_i, K_k):
-                        main_menu_screen_enabled = False
-        play_sound(menu_button_sfx)
+        multiple_image_blink(right_arrow_start, screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [])
+        # adventure_log_blinking = True
+        # while adventure_log_blinking:
+        right_arrow_start = get_ticks()
+        multiple_image_blink(right_arrow_start, screen, ADVENTURE_LOG_PATH, ADVENTURE_LOG_1_PATH, [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH])
         fade(fade_out=True, screen=self.screen)
         self.load_and_play_music(self.current_map.music_file_path)
 
