@@ -6,6 +6,7 @@ import pygame
 from pygame.imageext import load_extended
 from pygame.transform import scale
 
+from data.text.dialog_lookup_table import DialogLookup
 from src.camera import Camera
 from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier
 from src.config import SCALE, TILE_SIZE
@@ -60,12 +61,14 @@ class TestGame(TestCase):
 
     def setUp(self) -> None:
         self.game = Game()
+        self.game.player.name = "Edward"
+        self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu)
         self.game.current_map = MockMap()
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
-        self.game.current_map.player = Player((0, 0), parse_animated_sprite_sheet(
+        self.game.player = Player((0, 0), parse_animated_sprite_sheet(
             scale(unarmed_hero_sheet, (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))), self.game.current_map)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
-        self.camera = Camera((self.game.current_map.player.rect.y // TILE_SIZE, self.game.current_map.player.rect.x // TILE_SIZE), self.game.current_map,
+        self.camera = Camera((self.game.player.rect.y // TILE_SIZE, self.game.player.rect.x // TILE_SIZE), self.game.current_map,
                              self.game.screen)
 
     def test_get_initial_camera_position(self):
@@ -175,8 +178,8 @@ class TestGame(TestCase):
         self.assertFalse(self.game.cmd_menu.launch_signaled)
 
     def test_replace_characters_with_underlying_tiles(self):
-        # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
-        self.assertEqual(['BRICK'], replace_characters_with_underlying_tiles([self.game.player.current_tile], self.game.current_map.character_key))
+        self.game.current_map.character_key['HERO']['underlying_tile'] = 'BRICK'
+        self.assertEqual(['BRICK'], replace_characters_with_underlying_tiles(['HERO'], self.game.current_map.character_key))
 
     def test_convert_numeric_tile_list_to_unique_tile_values(self):
         self.assertEqual(['WALL',
@@ -195,14 +198,16 @@ class TestGame(TestCase):
         self.assertTrue(self.game.cmd_menu.launched)
 
     def test_change_map(self):
-        # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
+        self.game.player.row = 10
+        self.game.player.column = 13
         self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
         self.game.change_map(TantegelThroneRoom())
         self.assertEqual('MockMap', self.game.last_map.identifier)
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
 
     def test_change_map_maintain_inventory_and_gold(self):
-        # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
+        self.game.player.row = 10
+        self.game.player.column = 13
         self.game.player.gold = 120
         self.game.player.inventory = ['Torch']
         self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
@@ -249,6 +254,7 @@ class TestGame(TestCase):
         # self.assertTrue(self.game.automatic_initial_dialog_run)
 
     def test_set_to_save_prompt(self):
+        self.game.player.name = "Edward"
         self.assertEqual((
             "Descendant of Erdrick, listen now to my words.",
             "It is told that in ages past Erdrick fought demons with a Ball of Light.",
