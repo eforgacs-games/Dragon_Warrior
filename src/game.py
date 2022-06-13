@@ -175,6 +175,7 @@ class Game:
                     sys.exit()
                 elif current_event.type == KEYDOWN:
                     if current_event.key in (K_RETURN, K_i, K_k):
+                        play_sound(menu_button_sfx)
                         if current_letter == "0":
                             return name
                         elif current_letter == "1":
