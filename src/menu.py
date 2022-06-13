@@ -57,6 +57,7 @@ class CommandMenu(Menu):
         super().__init__()
         self.game = game
         self.player = self.game.player
+
         self.background = self.game.background
         self.screen = self.game.screen
         self.camera_position = self.game.camera.get_pos()
