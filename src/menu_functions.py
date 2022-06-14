@@ -192,7 +192,8 @@ def select_name(blink_start, screen, command_menu):
                         if any(current_event.unicode in sublist for sublist in name_selection_array) and current_event.unicode not in ("0", "1"):
                             play_sound(menu_button_sfx)
                             name += current_event.unicode
-                            current_item_coordinates = [(ix,iy) for ix, row in enumerate(name_selection_array) for iy, i in enumerate(row) if i == current_event.unicode]
+                            current_item_coordinates = [(ix, iy) for ix, row in enumerate(name_selection_array) for iy, i in enumerate(row) if
+                                                        i == current_event.unicode]
                             current_item_row = current_item_coordinates[0][0]
                             current_item_column = current_item_coordinates[0][1]
 

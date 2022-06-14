@@ -135,6 +135,8 @@ class DragonWarriorMap:
         :param character_name: Name of the character to find
         :return:
         """
+        # pure Python implementation - maybe try this out, see which is faster?
+        # character_layout_position = [(ix, iy) for ix, row in enumerate(self.layout) for iy, i in enumerate(row) if i == character_name]
         character_layout_position = np.asarray(
             np.where(np.array(self.layout) == self.character_key[character_name]['val'])).T
         return character_layout_position
