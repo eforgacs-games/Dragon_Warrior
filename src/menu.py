@@ -10,7 +10,7 @@ from pygame.time import get_ticks
 from data.text.dialog import blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
-    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time
+    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.maps_functions import get_center_point
@@ -47,7 +47,6 @@ class Menu:
                                                                       arrow_size=(SCALE * 5, SCALE * 6))
                                                                   )
         self.launch_signaled = False
-        self.launched = False
         self.skip_text = False
 
 
@@ -65,7 +64,7 @@ class CommandMenu(Menu):
         self.current_tile = self.player.current_tile
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
-        self.window_drop_down_effect(x=5, y=1, width=8, height=5)
+
         self.command_menu_surface = create_window(x=5, y=1, width=8, height=5, window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH, screen=self.screen)
         self.dialog_lookup = DialogLookup(self)
         self.menu = pygame_menu.Menu(
@@ -91,6 +90,7 @@ class CommandMenu(Menu):
         self.menu.add.button('ITEM', self.item, margin=(0, 4))
         self.menu.add.button('DOOR', self.door, margin=(0, 4))
         self.menu.add.button('TAKE', self.take, margin=(0, 4))
+        self.menu.disable()
 
     def npc_is_across_counter(self, character_dict):
         return self.player.next_tile_id == 'WOOD' and (
@@ -349,11 +349,12 @@ class CommandMenu(Menu):
         if self.player.next_tile_id == 'DOOR':
             if 'key' in self.player.inventory:
                 # actually open the door
+                play_sound(open_door_sfx)
                 print("Door opened!")
             else:
-                self.show_text_in_dialog_box(("Thou hast not a key to use.",), skip_text=self.skip_text)
+                self.show_text_in_dialog_box("Thou hast not a key to use.", skip_text=self.skip_text)
         else:
-            self.show_text_in_dialog_box(("There is no door here.",), skip_text=self.skip_text)
+            self.show_text_in_dialog_box("There is no door here.", skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 

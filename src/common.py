@@ -47,10 +47,12 @@ stairs_up_sfx = join(SFX_DIR, '29 Dragon Quest 1 - Stairs Up.mp3')
 stairs_down_sfx = join(SFX_DIR, '30 Dragon Quest 1 - Stairs Down.mp3')
 menu_button_sfx = join(SFX_DIR, '32 Dragon Quest 1 - Menu Button.mp3')
 confirmation_sfx = join(SFX_DIR, '33 Dragon Quest 1 - Confirmation.mp3')
+
 # movement
 
 bump_sfx = join(SFX_DIR, '42 Dragon Quest 1 - Bumping into Walls.mp3')
 open_treasure_sfx = join(SFX_DIR, '44 Dragon Quest 1 - Open Treasure.mp3')
+open_door_sfx = join(SFX_DIR, '45 Dragon Quest 1 - Open Door.mp3')
 
 
 def play_sound(path='data/sound/sfx'):
@@ -225,7 +227,6 @@ NAME_SELECTION_STATIC_IMAGE_LEN_5 = join(NAME_SELECTION_DIR, '68_static_image_le
 NAME_SELECTION_STATIC_IMAGE_LEN_6 = join(NAME_SELECTION_DIR, '69_static_image_len_6.png')
 NAME_SELECTION_STATIC_IMAGE_LEN_7 = join(NAME_SELECTION_DIR, '70_static_image_len_7.png')
 NAME_SELECTION_STATIC_IMAGE_LEN_8 = join(NAME_SELECTION_DIR, '71_static_image_len_8.png')
-
 
 # shops
 
