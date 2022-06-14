@@ -135,6 +135,8 @@ def select_name(blink_start, screen, command_menu):
                                          # temp_text_start=get_ticks(),
                                          drop_down=False,
                                          drop_up=False)
+    screen.blit(selected_image, (0, 0))
+    display.flip()
     while blinking:
         selected_image_lookup = {
             0: NAME_SELECTION_STATIC_IMAGE_LEN_0,
