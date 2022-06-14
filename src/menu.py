@@ -142,7 +142,7 @@ class CommandMenu(Menu):
                     #                       self.screen)
                     # else:
                     draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, center_align=False)
-                    display.flip()
+                    display.update(Rect(2 * TILE_SIZE, 9 * TILE_SIZE, 12 * TILE_SIZE, 5 * TILE_SIZE))
                     if not last_line:
                         blink_down_arrow(self.screen)
                     # playing with fire a bit here with the short-circuiting
