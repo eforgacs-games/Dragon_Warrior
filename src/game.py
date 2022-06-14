@@ -20,11 +20,12 @@ from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down,
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles, \
-    draw_hovering_stats_window, multiple_image_blink
+    draw_hovering_stats_window, select_from_vertical_menu
 from src.intro import Intro
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu, Menu
+from src.menu_functions import select_name
 from src.movement import bump_and_reset
 from src.player.player import Player
 from src.sound import bump, play_sound
@@ -139,14 +140,21 @@ class Game:
 
     def show_main_menu_screen(self, screen) -> None:
         self.load_and_play_music(village_music)
-        right_arrow_start = get_ticks()
-        multiple_image_blink(right_arrow_start, screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [])
+        select_from_vertical_menu(get_ticks(), screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [])
         # adventure_log_blinking = True
         # while adventure_log_blinking:
-        right_arrow_start = get_ticks()
-        multiple_image_blink(right_arrow_start, screen, ADVENTURE_LOG_PATH, ADVENTURE_LOG_1_PATH, [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH])
+        self.player.adventure_log = select_from_vertical_menu(get_ticks(), screen, ADVENTURE_LOG_PATH,
+                                                              ADVENTURE_LOG_1_PATH,
+                                                              [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]) + 1
+
+        blink_start = get_ticks()
+
+        self.player.name = select_name(blink_start, screen, self.cmd_menu)
+        self.player.set_initial_stats()
+        play_sound(menu_button_sfx)
         fade(fade_out=True, screen=self.screen)
         self.load_and_play_music(self.current_map.music_file_path)
+        self.cmd_menu = CommandMenu(self)
 
     def get_events(self) -> None:
         """
