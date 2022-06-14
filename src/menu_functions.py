@@ -137,19 +137,18 @@ def select_name(blink_start, screen, command_menu):
                                          drop_up=False)
     screen.blit(selected_image, (0, 0))
     display.flip()
+    selected_image_lookup = {
+        0: NAME_SELECTION_STATIC_IMAGE_LEN_0,
+        1: NAME_SELECTION_STATIC_IMAGE_LEN_1,
+        2: NAME_SELECTION_STATIC_IMAGE_LEN_2,
+        3: NAME_SELECTION_STATIC_IMAGE_LEN_3,
+        4: NAME_SELECTION_STATIC_IMAGE_LEN_4,
+        5: NAME_SELECTION_STATIC_IMAGE_LEN_5,
+        6: NAME_SELECTION_STATIC_IMAGE_LEN_6,
+        7: NAME_SELECTION_STATIC_IMAGE_LEN_7,
+        8: NAME_SELECTION_STATIC_IMAGE_LEN_8,
+    }
     while blinking:
-        selected_image_lookup = {
-            0: NAME_SELECTION_STATIC_IMAGE_LEN_0,
-            1: NAME_SELECTION_STATIC_IMAGE_LEN_1,
-            2: NAME_SELECTION_STATIC_IMAGE_LEN_2,
-            3: NAME_SELECTION_STATIC_IMAGE_LEN_3,
-            4: NAME_SELECTION_STATIC_IMAGE_LEN_4,
-            5: NAME_SELECTION_STATIC_IMAGE_LEN_5,
-            6: NAME_SELECTION_STATIC_IMAGE_LEN_6,
-            7: NAME_SELECTION_STATIC_IMAGE_LEN_7,
-            8: NAME_SELECTION_STATIC_IMAGE_LEN_8,
-        }
-
         if len(name) > 8:
             last_char = name[-1]
             name = re.sub(r".$", last_char, name[:8])
@@ -166,7 +165,18 @@ def select_name(blink_start, screen, command_menu):
                 sys.exit()
             elif current_event.type == KEYDOWN:
                 if current_event.key == K_TAB:
-                    enable_joystick_input = toggle_joystick_input(command_menu, enable_joystick_input)
+                    if enable_joystick_input:
+                        enable_joystick_input = False
+                        # TODO(ELF): adding the drop-up effect here shows the Tantegel Throne Room while the effect happens -
+                        #  make it work with a black screen.
+                        command_menu.show_text_in_dialog_box("Joystick input disabled.", temp_text_start=get_ticks(), drop_up=False)
+                        screen.blit(scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height())), (0, 0))
+                        display.flip()
+                    else:
+                        enable_joystick_input = True
+                        command_menu.show_text_in_dialog_box("Joystick input enabled.", temp_text_start=get_ticks(), drop_up=False)
+                        screen.blit(scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height())), (0, 0))
+                        display.flip()
                 if enable_joystick_input:
                     if current_event.key in (K_RETURN, K_i, K_k):
                         play_sound(menu_button_sfx)
@@ -204,18 +214,6 @@ def select_name(blink_start, screen, command_menu):
                                                     i == current_event.unicode]
                         current_item_row = current_item_coordinates[0][0]
                         current_item_column = current_item_coordinates[0][1]
-
-
-def toggle_joystick_input(command_menu, enable_joystick_input):
-    if enable_joystick_input:
-        enable_joystick_input = False
-        # TODO(ELF): adding the drop-up effect here shows the Tantegel Throne Room while the effect happens -
-        #  make it work with a black screen.
-        command_menu.show_text_in_dialog_box("Joystick input disabled.", temp_text_start=get_ticks(), drop_up=False)
-    else:
-        enable_joystick_input = True
-        command_menu.show_text_in_dialog_box("Joystick input enabled.", temp_text_start=get_ticks(), drop_up=False)
-    return enable_joystick_input
 
 
 def blink_with_name(blink_start, current_letter_image_path, name, screen, static_image):
