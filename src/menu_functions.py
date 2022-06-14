@@ -2,7 +2,7 @@ import re
 import sys
 from typing import List
 
-from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_i, K_k, K_j, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, image
+from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_i, K_k, K_j, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, image, K_TAB, K_BACKSPACE
 from pygame.event import get
 from pygame.time import get_ticks
 from pygame.transform import scale
@@ -119,11 +119,20 @@ def draw_character_sprites(current_map, background, column, row, character_ident
                     (column * TILE_SIZE, row * TILE_SIZE))
 
 
-def select_name(blink_start, screen):
+def select_name(blink_start, screen, command_menu):
     current_item_row = 0
     current_item_column = 0
     blinking = True
     name = ""
+    enable_joystick_input = False
+    selected_image = scale(image.load(NAME_SELECTION_STATIC_IMAGE), (screen.get_width(), screen.get_height()))
+    screen.blit(selected_image, (0, 0))
+    display.flip()
+    command_menu.show_text_in_dialog_box("Type your name using the keyboard.\n"
+                                         "If you are using a joystick, press the TAB key to switch to joystick input.",
+                                         # temp_text_start=get_ticks(),
+                                         drop_down=False,
+                                         drop_up=False)
     while blinking:
         if len(name) > 8:
             last_char = name[-1]
@@ -136,37 +145,56 @@ def select_name(blink_start, screen):
         if convert_to_frames_since_start_time(blink_start) > 32:
             blink_start = get_ticks()
         blink_with_name(blink_start, current_letter_image_path, name, screen)
-
-        display.flip()
         for current_event in get():
             if current_event.type == QUIT:
                 quit()
                 sys.exit()
             elif current_event.type == KEYDOWN:
-                if current_event.key in (K_RETURN, K_i, K_k):
-                    play_sound(menu_button_sfx)
-                    if current_letter == "0":
-                        return name
-                    elif current_letter == "1":
+                # joystick name input
+                if current_event.key == K_TAB:
+                    if enable_joystick_input:
+                        enable_joystick_input = False
+                        # TODO(ELF): adding the drop-up effect here shows the Tantegel Throne Room while the effect happens -
+                        #  make it work with a black screen.
+                        command_menu.show_text_in_dialog_box("Joystick input disabled.", temp_text_start=get_ticks(), drop_up=False)
+                    else:
+                        enable_joystick_input = True
+                        command_menu.show_text_in_dialog_box("Joystick input enabled.", temp_text_start=get_ticks(), drop_up=False)
+                if enable_joystick_input:
+                    if current_event.key in (K_RETURN, K_i, K_k):
+                        play_sound(menu_button_sfx)
+                        if current_letter == "0":
+                            return name
+                        elif current_letter == "1":
+                            # back up cursor instead of deleting letters
+                            name = name[:-1]
+                        else:
+                            name += current_letter
+                    elif current_event.key == K_j:
                         # back up cursor instead of deleting letters
                         name = name[:-1]
+                    elif current_event.key in (K_DOWN, K_s) and current_item_row + 1 < len(name_selection_array):
+                        current_item_row += 1
+                        # screen.blit(image.load(current_letter_image_path), (0, 0))
+                    elif current_event.key in (K_UP, K_w) and current_item_row > 0:
+                        current_item_row -= 1
+                        # screen.blit(image.load(current_letter_image_path), (0, 0))
+                    elif current_event.key in (K_LEFT, K_a) and current_item_column > 0:
+                        current_item_column -= 1
+                        # screen.blit(image.load(current_letter_image_path), (0, 0))
+                    elif current_event.key in (K_RIGHT, K_d) and current_item_column < len(name_selection_array[current_item_row]) - 1:
+                        current_item_column += 1
+                        # screen.blit(image.load(current_letter_image_path), (0, 0))
+                else:
+                    if current_event.key == K_BACKSPACE:
+                        name = name[:-1]
                     else:
-                        name += current_letter
-                elif current_event.key == K_j:
-                    # back up cursor instead of deleting letters
-                    name = name[:-1]
-                elif current_event.key in (K_DOWN, K_s) and current_item_row + 1 < len(name_selection_array):
-                    current_item_row += 1
-                    # screen.blit(image.load(current_letter_image_path), (0, 0))
-                elif current_event.key in (K_UP, K_w) and current_item_row > 0:
-                    current_item_row -= 1
-                    # screen.blit(image.load(current_letter_image_path), (0, 0))
-                elif current_event.key in (K_LEFT, K_a) and current_item_column > 0:
-                    current_item_column -= 1
-                    # screen.blit(image.load(current_letter_image_path), (0, 0))
-                elif current_event.key in (K_RIGHT, K_d) and current_item_column < len(name_selection_array[current_item_row]) - 1:
-                    current_item_column += 1
-                    # screen.blit(image.load(current_letter_image_path), (0, 0))
+                        if any(current_event.unicode in sublist for sublist in name_selection_array) and current_event.unicode not in ("0", "1"):
+                            play_sound(menu_button_sfx)
+                            name += current_event.unicode
+                            current_item_coordinates = [(ix,iy) for ix, row in enumerate(name_selection_array) for iy, i in enumerate(row) if i == current_event.unicode]
+                            current_item_row = current_item_coordinates[0][0]
+                            current_item_column = current_item_coordinates[0][1]
 
 
 def blink_with_name(blink_start, current_letter_image_path, name, screen):
