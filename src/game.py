@@ -135,7 +135,7 @@ class Game:
             self.clock.tick(self.fps)
             self.get_events()
             self.draw_all()
-            self.update_screen()
+            display.flip()
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
@@ -170,7 +170,7 @@ class Game:
         current_key = key.get_pressed()
         if not self.player.is_moving:
             set_character_position(self.player)
-        if self.enable_movement and not self.paused:
+        if self.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
             self.move_player(current_key)
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
@@ -394,9 +394,11 @@ class Game:
                 self.drop_down_hovering_stats_window()
             draw_hovering_stats_window(self.screen, self.player)
         self.handle_menu_launch(self.cmd_menu)
-        self.cmd_menu.menu.update(self.events)
-        if not self.cmd_menu.launched and not self.is_initial_dialog:
-            self.enable_movement = True
+        if self.cmd_menu.menu.is_enabled():
+            self.cmd_menu.menu.update(self.events)
+        else:
+            if not self.is_initial_dialog:
+                self.enable_movement = True
 
     def drop_down_hovering_stats_window(self):
         self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
@@ -419,7 +421,7 @@ class Game:
 
         else:
             self.set_to_post_initial_dialog()
-            if not self.cmd_menu.launched:
+            if not self.cmd_menu.menu.is_enabled():
                 self.enable_movement = True
 
     def run_automatic_initial_dialog(self):
@@ -486,16 +488,13 @@ class Game:
                     (8 * TILE_SIZE,
                      5 * TILE_SIZE)
                 )
-                command_menu_subsurface.fill(BLACK)
-                menu_to_launch.menu.draw(command_menu_subsurface)
-                display.update(command_menu_subsurface.get_rect())
-            if not menu_to_launch.launched:
-                self.launch_menu(menu_to_launch.menu.get_id())
-
-    @staticmethod
-    def update_screen() -> None:
-        """Update the screen's display."""
-        display.flip()
+                if not self.cmd_menu.menu.is_enabled():
+                    play_sound(menu_button_sfx)
+                    self.cmd_menu.window_drop_down_effect(x=6, y=1, width=8, height=5)
+                    self.cmd_menu.menu.enable()
+                else:
+                    menu_to_launch.menu.draw(command_menu_subsurface)
+                    display.update(command_menu_subsurface.get_rect())
 
     def change_map(self, next_map: maps.DragonWarriorMap) -> None:
         """
@@ -591,8 +590,10 @@ class Game:
         """
         menu_to_unlaunch.launch_signaled = False
         if menu_to_unlaunch.menu.get_id() == 'command':
-            self.unpause_all_movement()
-        menu_to_unlaunch.launched = False
+            if self.cmd_menu.menu.is_enabled():
+                self.unpause_all_movement()
+                self.cmd_menu.window_drop_up_effect(x=6, y=1, width=8, height=5)
+                self.cmd_menu.menu.disable()
 
     def unpause_all_movement(self) -> None:
         """
@@ -607,17 +608,6 @@ class Game:
         :return: None
         """
         self.enable_animate, self.enable_roaming, self.enable_movement = False, False, False
-
-    def launch_menu(self, menu_to_launch: str) -> None:
-        """
-        Launch either the command menu, which is used by the player to interact with the world in the game, or a dialog box.
-        :param menu_to_launch:
-        :return: None
-        """
-        if menu_to_launch == 'command':
-            if not self.cmd_menu.launched:
-                play_sound(menu_button_sfx)
-            self.cmd_menu.launched = True
 
     def move_player(self, current_key) -> None:
         """
