@@ -57,6 +57,7 @@ class CommandMenu(Menu):
         super().__init__()
         self.game = game
         self.player = self.game.player
+
         self.background = self.game.background
         self.screen = self.game.screen
         self.camera_position = self.game.camera.get_pos()
@@ -145,7 +146,7 @@ class CommandMenu(Menu):
                     if not last_line:
                         blink_down_arrow(self.screen)
                     # playing with fire a bit here with the short-circuiting
-                    if skip_text or (temp_text_start and current_time - temp_text_start >= 400) or any(
+                    if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
                             [current_event.type == KEYDOWN for current_event in get()]):
                         if not skip_text:
                             play_sound(menu_button_sfx)
@@ -186,7 +187,7 @@ class CommandMenu(Menu):
             self.window_drop_up_effect(x=2, y=9, width=12, height=5)
 
     def window_drop_down_effect(self, x, y, width, height):
-        """Intro effect for windows."""
+        """Intro effect for menus."""
         for i in range(height + 1):
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
@@ -197,7 +198,7 @@ class CommandMenu(Menu):
                 display.update()
 
     def window_drop_up_effect(self, x, y, width, height):
-        """Outro effect for windows."""
+        """Outro effect for menus."""
         # draw all the tiles initially once
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile in self.current_map.tile_types_in_current_map:
