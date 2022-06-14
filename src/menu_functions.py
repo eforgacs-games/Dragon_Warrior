@@ -129,14 +129,14 @@ def select_name(blink_start, screen, command_menu):
     enable_joystick_input = False
     unselected_image = scale(image.load(NAME_SELECTION_STATIC_IMAGE_LEN_0), (screen.get_width(), screen.get_height()))
     screen.blit(unselected_image, (0, 0))
-    display.flip()
+    display.update(unselected_image.get_rect())
     command_menu.show_text_in_dialog_box("Type your name using the keyboard.\n"
                                          "If you are using a joystick, press the TAB key to switch to joystick input.",
                                          # temp_text_start=get_ticks(),
                                          drop_down=False,
                                          drop_up=False)
     screen.blit(unselected_image, (0, 0))
-    display.flip()
+    display.update(unselected_image.get_rect())
     selected_image_lookup = {
         0: NAME_SELECTION_STATIC_IMAGE_LEN_0,
         1: NAME_SELECTION_STATIC_IMAGE_LEN_1,

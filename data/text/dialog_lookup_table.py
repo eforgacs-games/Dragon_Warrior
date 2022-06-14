@@ -1,6 +1,6 @@
 from functools import partial
 
-from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, K_RETURN, K_j
+from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, K_RETURN, K_j, Rect
 from pygame.event import get, pump
 from pygame.time import get_ticks
 
@@ -133,8 +133,9 @@ class DialogLookup:
     def open_store_inventory(self, current_store_inventory, static_store_image):
         self.command_menu.show_line_in_dialog_box("What dost thou wish to buy?", skip_text=True)
         self.command_menu.window_drop_down_effect(6, 2, 9, 7)
-        store_inventory_window = create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
-        display.update(store_inventory_window.get_rect())
+        # store_inventory_window = create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
+        # display.update(store_inventory_window.get_rect())
+        store_inventory_window_rect = Rect(6 * TILE_SIZE, 2 * TILE_SIZE, 9 * TILE_SIZE, 7 * TILE_SIZE)
         selecting = True
         current_item_index = 0
         start_time = get_ticks()
@@ -145,10 +146,10 @@ class DialogLookup:
             frames_elapsed = convert_to_frames_since_start_time(start_time)
             if frames_elapsed <= 16:
                 create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen)
-                display.flip()
+                display.update(store_inventory_window_rect)
             elif frames_elapsed <= 32:
                 create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
-                display.flip()
+                display.update(store_inventory_window_rect)
             else:
                 start_time = get_ticks()
             selected_item = None
@@ -167,7 +168,7 @@ class DialogLookup:
                         selected_item = current_item_name
             if selected_item:
                 create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen)
-                display.flip()
+                display.update(store_inventory_window_rect)
                 self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
                 selecting = False
             pump()
@@ -233,7 +234,7 @@ class DialogLookup:
             self.command_menu.show_line_in_dialog_box("Thou hast not enough money.", skip_text=self.command_menu.skip_text)
 
     def inn_sleep(self, inn_cost):
-        self.command_menu.show_text_in_dialog_box("Good night.", skip_text=self.command_menu.skip_text)
+        self.command_menu.show_line_in_dialog_box("Good night.", skip_text=self.command_menu.skip_text)
         fade(fade_out=True, screen=self.screen)
         if MUSIC_ENABLED:
             mixer.music.stop()
@@ -253,6 +254,6 @@ class DialogLookup:
         self.screen.blit(self.background, self.camera_position)
         self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 5, TILE_SIZE * 1))
         display.flip()
-        self.command_menu.show_line_in_dialog_box("Good morning.\n" +
-                                                  "Thou seems to have spent a good night.", skip_text=self.command_menu.skip_text)
-        self.command_menu.show_line_in_dialog_box("I shall see thee again.", skip_text=self.command_menu.skip_text)
+        self.command_menu.show_text_in_dialog_box(("Good morning.\n" +
+                                                  "Thou seems to have spent a good night.",
+                                                   "I shall see thee again."), drop_up=False, skip_text=self.command_menu.skip_text)
