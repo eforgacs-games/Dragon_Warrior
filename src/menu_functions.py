@@ -17,7 +17,7 @@ from src.common import NAME_SELECTION_UPPER_A, NAME_SELECTION_UPPER_B, NAME_SELE
     NAME_SELECTION_LOWER_G, NAME_SELECTION_LOWER_H, NAME_SELECTION_LOWER_I, NAME_SELECTION_LOWER_J, NAME_SELECTION_LOWER_K, NAME_SELECTION_LOWER_L, \
     NAME_SELECTION_LOWER_M, NAME_SELECTION_LOWER_N, NAME_SELECTION_LOWER_O, NAME_SELECTION_LOWER_P, NAME_SELECTION_LOWER_Q, NAME_SELECTION_LOWER_R, \
     NAME_SELECTION_LOWER_S, NAME_SELECTION_LOWER_T, NAME_SELECTION_LOWER_U, NAME_SELECTION_LOWER_V, NAME_SELECTION_LOWER_W, NAME_SELECTION_LOWER_X, \
-    NAME_SELECTION_LOWER_Y, NAME_SELECTION_LOWER_Z, NAME_SELECTION_COMMA, NAME_SELECTION_PERIOD, NAME_SELECTION_BACK, NAME_SELECTION_END, BLACK, \
+    NAME_SELECTION_LOWER_Y, NAME_SELECTION_LOWER_Z, NAME_SELECTION_COMMA, NAME_SELECTION_PERIOD, NAME_SELECTION_BACK, NAME_SELECTION_END, \
     convert_to_frames_since_start_time, play_sound, menu_button_sfx, NAME_SELECTION_STATIC_IMAGE_LEN_0, NAME_SELECTION_STATIC_IMAGE_LEN_1, \
     NAME_SELECTION_STATIC_IMAGE_LEN_2, NAME_SELECTION_STATIC_IMAGE_LEN_3, NAME_SELECTION_STATIC_IMAGE_LEN_4, NAME_SELECTION_STATIC_IMAGE_LEN_5, \
     NAME_SELECTION_STATIC_IMAGE_LEN_6, NAME_SELECTION_STATIC_IMAGE_LEN_7, NAME_SELECTION_STATIC_IMAGE_LEN_8
@@ -127,15 +127,15 @@ def select_name(blink_start, screen, command_menu):
     blinking = True
     name = ""
     enable_joystick_input = False
-    selected_image = scale(image.load(NAME_SELECTION_STATIC_IMAGE_LEN_0), (screen.get_width(), screen.get_height()))
-    screen.blit(selected_image, (0, 0))
+    unselected_image = scale(image.load(NAME_SELECTION_STATIC_IMAGE_LEN_0), (screen.get_width(), screen.get_height()))
+    screen.blit(unselected_image, (0, 0))
     display.flip()
     command_menu.show_text_in_dialog_box("Type your name using the keyboard.\n"
                                          "If you are using a joystick, press the TAB key to switch to joystick input.",
                                          # temp_text_start=get_ticks(),
                                          drop_down=False,
                                          drop_up=False)
-    screen.blit(selected_image, (0, 0))
+    screen.blit(unselected_image, (0, 0))
     display.flip()
     selected_image_lookup = {
         0: NAME_SELECTION_STATIC_IMAGE_LEN_0,
@@ -152,13 +152,13 @@ def select_name(blink_start, screen, command_menu):
         if len(name) > 8:
             last_char = name[-1]
             name = re.sub(r".$", last_char, name[:8])
-        selected_image = selected_image_lookup[len(name)]
         current_letter = name_selection_array[current_item_row][current_item_column]
         current_letter_image_path = name_selection_image_lookup[current_letter]
-        screen.fill(BLACK)
+        unselected_image = selected_image_lookup[len(name)]
+        # screen.fill(BLACK)
         if convert_to_frames_since_start_time(blink_start) > 32:
             blink_start = get_ticks()
-        blink_with_name(blink_start, current_letter_image_path, name, screen, selected_image)
+        blink_with_name(blink_start, current_letter_image_path, name, screen, unselected_image)
         for current_event in get():
             if current_event.type == QUIT:
                 quit()
@@ -192,20 +192,19 @@ def select_name(blink_start, screen, command_menu):
                         name = name[:-1]
                     elif current_event.key in (K_DOWN, K_s) and current_item_row + 1 < len(name_selection_array):
                         current_item_row += 1
-                        # screen.blit(image.load(current_letter_image_path), (0, 0))
                     elif current_event.key in (K_UP, K_w) and current_item_row > 0:
                         current_item_row -= 1
-                        # screen.blit(image.load(current_letter_image_path), (0, 0))
                     elif current_event.key in (K_LEFT, K_a) and current_item_column > 0:
                         current_item_column -= 1
-                        # screen.blit(image.load(current_letter_image_path), (0, 0))
                     elif current_event.key in (K_RIGHT, K_d) and current_item_column < len(name_selection_array[current_item_row]) - 1:
                         current_item_column += 1
-                        # screen.blit(image.load(current_letter_image_path), (0, 0))
                 else:
                     if current_event.key == K_BACKSPACE:
                         name = name[:-1]
                     elif current_event.key == K_RETURN:
+                        current_letter = name_selection_array[len(name_selection_array) - 1][len(name_selection_array[current_item_row]) - 1]
+                        current_letter_image_path = name_selection_image_lookup[current_letter]
+                        draw_image_with_name(current_letter_image_path, name, screen)
                         return name
                     elif any(current_event.unicode in sublist for sublist in name_selection_array) and current_event.unicode not in ("0", "1"):
                         play_sound(menu_button_sfx)
