@@ -146,7 +146,7 @@ class CommandMenu(Menu):
                     if not last_line:
                         blink_down_arrow(self.screen)
                     # playing with fire a bit here with the short-circuiting
-                    if skip_text or (temp_text_start and current_time - temp_text_start >= 400) or any(
+                    if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
                             [current_event.type == KEYDOWN for current_event in get()]):
                         if not skip_text:
                             play_sound(menu_button_sfx)
