@@ -150,6 +150,7 @@ class Game:
         blink_start = get_ticks()
 
         self.player.name = select_name(blink_start, screen, self.cmd_menu)
+        self.player.set_initial_stats()
         play_sound(menu_button_sfx)
         fade(fade_out=True, screen=self.screen)
         self.load_and_play_music(self.current_map.music_file_path)
