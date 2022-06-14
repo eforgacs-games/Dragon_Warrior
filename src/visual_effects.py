@@ -24,5 +24,5 @@ def fade(fade_out: bool, screen: Surface) -> None:
             opacity -= 1
         fade_surface.set_alpha(opacity)
         screen.blit(fade_surface, (0, 0))
-        display.update()
+        display.flip()
         time.delay(5)

@@ -133,8 +133,8 @@ class DialogLookup:
     def open_store_inventory(self, current_store_inventory, static_store_image):
         self.command_menu.show_line_in_dialog_box("What dost thou wish to buy?", skip_text=True)
         self.command_menu.window_drop_down_effect(6, 2, 9, 7)
-        create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
-        display.flip()
+        store_inventory_window = create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
+        display.update(store_inventory_window.get_rect())
         selecting = True
         current_item_index = 0
         start_time = get_ticks()
