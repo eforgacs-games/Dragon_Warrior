@@ -21,16 +21,17 @@ def blink_down_arrow(screen):
         display.update(arrow_screen_portion)
 
 
-def blink_switch(command_menu, image_1, image_2, width, height, x, y, start):
+def blink_switch(command_menu, image_1, image_2, x, y, width, height, start):
     blink_start = start
+    image_rect = Rect(x * TILE_SIZE, y * TILE_SIZE, width * TILE_SIZE, height * TILE_SIZE)
     if convert_to_frames_since_start_time(blink_start) > 32:
         blink_start = get_ticks()
     while convert_to_frames_since_start_time(blink_start) <= 16:
         create_window(x, y, width, height, image_1, command_menu.screen)
-        display.flip()
+        display.update(image_rect)
     while 16 < convert_to_frames_since_start_time(blink_start) <= 32:
         create_window(x, y, width, height, image_2, command_menu.screen)
-        display.flip()
+        display.update(image_rect)
 
 
 def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, finally_function=None, skip_text=False):
@@ -44,9 +45,9 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     blink_start = get_ticks()
     while blinking:
         if blinking_yes:
-            blink_switch(command_menu, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, width=4, height=3, x=5, y=2, start=blink_start)
+            blink_switch(command_menu, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2, width=4, height=3, start=blink_start)
         else:
-            blink_switch(command_menu, CONFIRMATION_NO_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, width=4, height=3, x=5, y=2, start=blink_start)
+            blink_switch(command_menu, CONFIRMATION_NO_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2, width=4, height=3, start=blink_start)
         if skip_text:
             play_sound(menu_button_sfx)
             yes_path_function()

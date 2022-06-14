@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import numpy as np
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit
+    display, event, image, init, key, mixer, quit, K_F1
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -21,11 +21,11 @@ from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATE
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles, \
     draw_hovering_stats_window, select_from_vertical_menu
-from src.intro import Intro
+from src.intro import Intro, controls
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu, Menu
-from src.menu_functions import select_name
+from src.menu_functions import select_name, convert_list_to_newline_separated_string
 from src.movement import bump_and_reset
 from src.player.player import Player
 from src.sound import bump, play_sound
@@ -261,6 +261,8 @@ class Game:
         # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed. (modernization)
         # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
         #     self.scale = self.scale + 1
+        if current_key[K_F1]:
+            self.cmd_menu.show_text_in_dialog_box(f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
         self.handle_fps_changes(current_key)
 
     def handle_fps_changes(self, current_key) -> None:
@@ -392,10 +394,9 @@ class Game:
                 self.drop_down_hovering_stats_window()
             draw_hovering_stats_window(self.screen, self.player)
         self.handle_menu_launch(self.cmd_menu)
-        if self.cmd_menu.launched:
-            self.cmd_menu.menu.update(self.events)
-            self.enable_movement = False
-        display.flip()
+        self.cmd_menu.menu.update(self.events)
+        if not self.cmd_menu.launched and not self.is_initial_dialog:
+            self.enable_movement = True
 
     def drop_down_hovering_stats_window(self):
         self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
@@ -406,6 +407,7 @@ class Game:
         if INITIAL_DIALOG_ENABLED:
             if self.current_map.identifier == 'TantegelThroneRoom':
                 if self.is_initial_dialog:
+                    display.flip()
                     self.display_hovering_stats = False
                     self.cmd_menu.launch_signaled = False
                     self.run_automatic_initial_dialog()
@@ -414,8 +416,6 @@ class Game:
                         self.set_to_save_prompt()
                     else:
                         self.set_to_post_initial_dialog()
-                        if not self.cmd_menu.launched:
-                            self.enable_movement = True
 
         else:
             self.set_to_post_initial_dialog()
@@ -488,7 +488,7 @@ class Game:
                 )
                 command_menu_subsurface.fill(BLACK)
                 menu_to_launch.menu.draw(command_menu_subsurface)
-                display.flip()
+                display.update(command_menu_subsurface.get_rect())
             if not menu_to_launch.launched:
                 self.launch_menu(menu_to_launch.menu.get_id())
 
