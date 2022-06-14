@@ -2,7 +2,7 @@ import functools
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN
+from pygame import Surface, display, KEYDOWN, Rect
 from pygame.event import get
 from pygame.sprite import Group
 from pygame.time import get_ticks
@@ -188,6 +188,7 @@ class CommandMenu(Menu):
 
     def window_drop_down_effect(self, x, y, width, height):
         """Intro effect for menus."""
+        window_rect = Rect(x * TILE_SIZE, y * TILE_SIZE, width * TILE_SIZE, height * TILE_SIZE)
         for i in range(height + 1):
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
@@ -195,7 +196,7 @@ class CommandMenu(Menu):
             # each "bar" lasts 1 frame
             while convert_to_frames_since_start_time(drop_down_start) < 1:
                 self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
-                display.update()
+                display.update(window_rect)
 
     def window_drop_up_effect(self, x, y, width, height):
         """Outro effect for menus."""
@@ -203,6 +204,7 @@ class CommandMenu(Menu):
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile in self.current_map.tile_types_in_current_map:
                 tile_dict['group'].draw(self.background)
+        window_rect = Rect(TILE_SIZE * x, TILE_SIZE * y, TILE_SIZE * width, TILE_SIZE * height)
         for i in range(height - 1, -1, -1):
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
@@ -217,7 +219,7 @@ class CommandMenu(Menu):
                                          (character_dict['character'].column * TILE_SIZE, character_dict['character'].row * TILE_SIZE))
                 self.screen.blit(self.background, self.camera_position)
                 self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
-                display.update()
+                display.update(window_rect)
 
     # Menu functions
 
