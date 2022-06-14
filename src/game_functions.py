@@ -1,7 +1,7 @@
 import sys
 from typing import List
 
-from pygame import image, display, QUIT, quit, KEYUP, K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN
+from pygame import image, display, QUIT, quit, K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN, KEYDOWN
 from pygame.event import get
 from pygame.time import get_ticks
 from pygame.transform import scale
@@ -67,17 +67,16 @@ def draw_hovering_stats_window(screen, player):
     draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen)
 
 
-def multiple_image_blink(blink_start, screen, unselected_image, selected_image, other_selected_images):
+def select_from_vertical_menu(blink_start, screen, unselected_image, selected_image, other_selected_images):
     # TODO(ELF): very similar to open_store_inventory() - maybe try to merge them if you can
-    blinking = True
     current_item_index = 0
     if other_selected_images:
         all_selected_images = [selected_image] + other_selected_images
     else:
         all_selected_images = [selected_image]
+    blinking = True
     while blinking:
         screen.fill(BLACK)
-        # totally dummy option for now, just a placeholder
         if convert_to_frames_since_start_time(blink_start) > 32:
             blink_start = get_ticks()
         alternate_blink(all_selected_images[current_item_index], unselected_image, blink_start, screen)
@@ -85,16 +84,16 @@ def multiple_image_blink(blink_start, screen, unselected_image, selected_image, 
             if current_event.type == QUIT:
                 quit()
                 sys.exit()
-            elif current_event.type == KEYUP:
+            elif current_event.type == KEYDOWN:
                 if current_event.key in (K_RETURN, K_i, K_k):
-                    blinking = False
+                    play_sound(menu_button_sfx)
+                    return current_item_index
                 elif current_event.key in (K_DOWN, K_s) and current_item_index < len(all_selected_images) - 1:
                     current_item_index += 1
                     blink_start = get_ticks()
                 elif current_event.key in (K_UP, K_w) and current_item_index > 0:
                     current_item_index -= 1
                     blink_start = get_ticks()
-    play_sound(menu_button_sfx)
 
 
 def alternate_blink(image_1, image_2, right_arrow_start, screen):

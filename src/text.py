@@ -18,7 +18,6 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
     # chunks = [text[i:i + n] for i in range(0, len(text), n)]
-    y_position = y
     dialog_box_wrapper = DialogBoxWrapper(width=text_wrap_length, break_long_words=False)
     chunks = dialog_box_wrapper.wrap(text)
     for chunk in chunks:
@@ -36,11 +35,11 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
         text_surface = font.Font(font_name, size).render(chunk, True, color, BLACK)
         text_rect = text_surface.get_rect()
         if center_align:
-            text_rect.midtop = (x, y_position)
+            text_rect.midtop = (x, y)
         else:
-            text_rect.midleft = (x, y_position)
+            text_rect.midleft = (x, y)
         screen.blit(text_surface, text_rect)
-        y_position += 17
+        y += 17
         if chunk == chunks[len(chunks) - 1]:
             return chunk
 
