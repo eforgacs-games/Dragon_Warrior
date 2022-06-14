@@ -18,7 +18,9 @@ from src.common import NAME_SELECTION_UPPER_A, NAME_SELECTION_UPPER_B, NAME_SELE
     NAME_SELECTION_LOWER_M, NAME_SELECTION_LOWER_N, NAME_SELECTION_LOWER_O, NAME_SELECTION_LOWER_P, NAME_SELECTION_LOWER_Q, NAME_SELECTION_LOWER_R, \
     NAME_SELECTION_LOWER_S, NAME_SELECTION_LOWER_T, NAME_SELECTION_LOWER_U, NAME_SELECTION_LOWER_V, NAME_SELECTION_LOWER_W, NAME_SELECTION_LOWER_X, \
     NAME_SELECTION_LOWER_Y, NAME_SELECTION_LOWER_Z, NAME_SELECTION_COMMA, NAME_SELECTION_PERIOD, NAME_SELECTION_BACK, NAME_SELECTION_END, BLACK, \
-    convert_to_frames_since_start_time, play_sound, menu_button_sfx, NAME_SELECTION_STATIC_IMAGE
+    convert_to_frames_since_start_time, play_sound, menu_button_sfx, NAME_SELECTION_STATIC_IMAGE_LEN_0, NAME_SELECTION_STATIC_IMAGE_LEN_1, \
+    NAME_SELECTION_STATIC_IMAGE_LEN_2, NAME_SELECTION_STATIC_IMAGE_LEN_3, NAME_SELECTION_STATIC_IMAGE_LEN_4, NAME_SELECTION_STATIC_IMAGE_LEN_5, \
+    NAME_SELECTION_STATIC_IMAGE_LEN_6, NAME_SELECTION_STATIC_IMAGE_LEN_7, NAME_SELECTION_STATIC_IMAGE_LEN_8
 from src.config import TILE_SIZE
 from src.text import draw_text
 
@@ -125,7 +127,7 @@ def select_name(blink_start, screen, command_menu):
     blinking = True
     name = ""
     enable_joystick_input = False
-    selected_image = scale(image.load(NAME_SELECTION_STATIC_IMAGE), (screen.get_width(), screen.get_height()))
+    selected_image = scale(image.load(NAME_SELECTION_STATIC_IMAGE_LEN_0), (screen.get_width(), screen.get_height()))
     screen.blit(selected_image, (0, 0))
     display.flip()
     command_menu.show_text_in_dialog_box("Type your name using the keyboard.\n"
@@ -134,17 +136,29 @@ def select_name(blink_start, screen, command_menu):
                                          drop_down=False,
                                          drop_up=False)
     while blinking:
+        selected_image_lookup = {
+            0: NAME_SELECTION_STATIC_IMAGE_LEN_0,
+            1: NAME_SELECTION_STATIC_IMAGE_LEN_1,
+            2: NAME_SELECTION_STATIC_IMAGE_LEN_2,
+            3: NAME_SELECTION_STATIC_IMAGE_LEN_3,
+            4: NAME_SELECTION_STATIC_IMAGE_LEN_4,
+            5: NAME_SELECTION_STATIC_IMAGE_LEN_5,
+            6: NAME_SELECTION_STATIC_IMAGE_LEN_6,
+            7: NAME_SELECTION_STATIC_IMAGE_LEN_7,
+            8: NAME_SELECTION_STATIC_IMAGE_LEN_8,
+        }
+
         if len(name) > 8:
             last_char = name[-1]
             name = re.sub(r".$", last_char, name[:8])
-
+        selected_image = selected_image_lookup[len(name)]
         print(name)
         current_letter = name_selection_array[current_item_row][current_item_column]
         current_letter_image_path = name_selection_image_lookup[current_letter]
         screen.fill(BLACK)
         if convert_to_frames_since_start_time(blink_start) > 32:
             blink_start = get_ticks()
-        blink_with_name(blink_start, current_letter_image_path, name, screen)
+        blink_with_name(blink_start, current_letter_image_path, name, screen, selected_image)
         for current_event in get():
             if current_event.type == QUIT:
                 quit()
@@ -198,11 +212,11 @@ def select_name(blink_start, screen, command_menu):
                             current_item_column = current_item_coordinates[0][1]
 
 
-def blink_with_name(blink_start, current_letter_image_path, name, screen):
+def blink_with_name(blink_start, current_letter_image_path, name, screen, static_image):
     while convert_to_frames_since_start_time(blink_start) <= 16:
         show_image_with_name(current_letter_image_path, name, screen)
     while 16 < convert_to_frames_since_start_time(blink_start) <= 32:
-        show_image_with_name(NAME_SELECTION_STATIC_IMAGE, name, screen)
+        show_image_with_name(static_image, name, screen)
 
 
 def show_image_with_name(current_letter_image_path, name, screen):
