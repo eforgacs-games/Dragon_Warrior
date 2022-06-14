@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import numpy as np
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit, KEYDOWN, K_RETURN
+    display, event, image, init, key, mixer, quit
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -15,17 +15,17 @@ from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
     convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
-    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, NAME_SELECTION_STATIC_IMAGE
+    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles, \
-    draw_hovering_stats_window, select_from_vertical_menu, alternate_blink
+    draw_hovering_stats_window, select_from_vertical_menu
 from src.intro import Intro
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu, Menu
-from src.menu_functions import name_selection_array, name_selection_image_lookup
+from src.menu_functions import select_name
 from src.movement import bump_and_reset
 from src.player.player import Player
 from src.sound import bump, play_sound
@@ -149,59 +149,11 @@ class Game:
 
         blink_start = get_ticks()
 
-        self.player.name = self.select_name(blink_start, screen)
+        self.player.name = select_name(blink_start, screen)
         play_sound(menu_button_sfx)
         fade(fade_out=True, screen=self.screen)
         self.load_and_play_music(self.current_map.music_file_path)
         self.cmd_menu = CommandMenu(self)
-
-    @staticmethod
-    def select_name(blink_start, screen):
-        current_item_row = 0
-        current_item_column = 0
-        blinking = True
-        name = ""
-        while blinking:
-            print(name)
-            current_letter = name_selection_array[current_item_row][current_item_column]
-            current_letter_image_path = name_selection_image_lookup[current_letter]
-            screen.fill(BLACK)
-            if convert_to_frames_since_start_time(blink_start) > 32:
-                blink_start = get_ticks()
-            alternate_blink(current_letter_image_path, NAME_SELECTION_STATIC_IMAGE, blink_start, screen)
-            for current_event in get():
-                if current_event.type == QUIT:
-                    quit()
-                    sys.exit()
-                elif current_event.type == KEYDOWN:
-                    if current_event.key in (K_RETURN, K_i, K_k):
-                        play_sound(menu_button_sfx)
-                        if current_letter == "0":
-                            return name
-                        elif current_letter == "1":
-                            name = name[:-1]
-                        else:
-                            name += current_letter
-                    elif current_event.key in (K_DOWN, K_s) and current_item_row + 1 < len(name_selection_array):
-                        current_item_row += 1
-                        current_letter = name_selection_array[current_item_row][current_item_column]
-                        current_letter_image_path = name_selection_image_lookup[current_letter]
-                        screen.blit(image.load(current_letter_image_path), (0, 0))
-                    elif current_event.key in (K_UP, K_w) and current_item_row > 0:
-                        current_item_row -= 1
-                        current_letter = name_selection_array[current_item_row][current_item_column]
-                        current_letter_image_path = name_selection_image_lookup[current_letter]
-                        screen.blit(image.load(current_letter_image_path), (0, 0))
-                    elif current_event.key in (K_LEFT, K_a) and current_item_column > 0:
-                        current_item_column -= 1
-                        current_letter = name_selection_array[current_item_row][current_item_column]
-                        current_letter_image_path = name_selection_image_lookup[current_letter]
-                        screen.blit(image.load(current_letter_image_path), (0, 0))
-                    elif current_event.key in (K_RIGHT, K_d) and current_item_column < len(name_selection_array[current_item_row]) - 1:
-                        current_item_column += 1
-                        current_letter = name_selection_array[current_item_row][current_item_column]
-                        current_letter_image_path = name_selection_image_lookup[current_letter]
-                        screen.blit(image.load(current_letter_image_path), (0, 0))
 
     def get_events(self) -> None:
         """

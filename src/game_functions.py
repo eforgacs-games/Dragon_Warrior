@@ -96,7 +96,6 @@ def select_from_vertical_menu(blink_start, screen, unselected_image, selected_im
                     blink_start = get_ticks()
 
 
-
 def alternate_blink(image_1, image_2, right_arrow_start, screen):
     while convert_to_frames_since_start_time(right_arrow_start) <= 16:
         selected_image = scale(image.load(image_1), (screen.get_width(), screen.get_height()))

@@ -1,4 +1,11 @@
+import re
+import sys
 from typing import List
+
+from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_i, K_k, K_j, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, image
+from pygame.event import get
+from pygame.time import get_ticks
+from pygame.transform import scale
 
 from src.common import NAME_SELECTION_UPPER_A, NAME_SELECTION_UPPER_B, NAME_SELECTION_UPPER_C, NAME_SELECTION_UPPER_D, NAME_SELECTION_UPPER_E, \
     NAME_SELECTION_UPPER_F, NAME_SELECTION_UPPER_G, NAME_SELECTION_UPPER_H, NAME_SELECTION_UPPER_I, NAME_SELECTION_UPPER_J, NAME_SELECTION_UPPER_K, \
@@ -10,8 +17,10 @@ from src.common import NAME_SELECTION_UPPER_A, NAME_SELECTION_UPPER_B, NAME_SELE
     NAME_SELECTION_LOWER_G, NAME_SELECTION_LOWER_H, NAME_SELECTION_LOWER_I, NAME_SELECTION_LOWER_J, NAME_SELECTION_LOWER_K, NAME_SELECTION_LOWER_L, \
     NAME_SELECTION_LOWER_M, NAME_SELECTION_LOWER_N, NAME_SELECTION_LOWER_O, NAME_SELECTION_LOWER_P, NAME_SELECTION_LOWER_Q, NAME_SELECTION_LOWER_R, \
     NAME_SELECTION_LOWER_S, NAME_SELECTION_LOWER_T, NAME_SELECTION_LOWER_U, NAME_SELECTION_LOWER_V, NAME_SELECTION_LOWER_W, NAME_SELECTION_LOWER_X, \
-    NAME_SELECTION_LOWER_Y, NAME_SELECTION_LOWER_Z, NAME_SELECTION_COMMA, NAME_SELECTION_PERIOD, NAME_SELECTION_BACK, NAME_SELECTION_END
+    NAME_SELECTION_LOWER_Y, NAME_SELECTION_LOWER_Z, NAME_SELECTION_COMMA, NAME_SELECTION_PERIOD, NAME_SELECTION_BACK, NAME_SELECTION_END, BLACK, \
+    convert_to_frames_since_start_time, play_sound, menu_button_sfx, NAME_SELECTION_STATIC_IMAGE
 from src.config import TILE_SIZE
+from src.text import draw_text
 
 name_selection_array = [
     ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"],
@@ -108,3 +117,67 @@ def draw_player_sprites(current_map, background, column, row):
 def draw_character_sprites(current_map, background, column, row, character_identifier='HERO'):
     background.blit(current_map.characters[character_identifier]['character_sprites'].sprites()[0].image,
                     (column * TILE_SIZE, row * TILE_SIZE))
+
+
+def select_name(blink_start, screen):
+    current_item_row = 0
+    current_item_column = 0
+    blinking = True
+    name = ""
+    while blinking:
+        if len(name) > 8:
+            last_char = name[-1]
+            name = re.sub(r".$", last_char, name[:8])
+
+        print(name)
+        current_letter = name_selection_array[current_item_row][current_item_column]
+        current_letter_image_path = name_selection_image_lookup[current_letter]
+        screen.fill(BLACK)
+        if convert_to_frames_since_start_time(blink_start) > 32:
+            blink_start = get_ticks()
+        blink_with_name(blink_start, current_letter_image_path, name, screen)
+
+        display.flip()
+        for current_event in get():
+            if current_event.type == QUIT:
+                quit()
+                sys.exit()
+            elif current_event.type == KEYDOWN:
+                if current_event.key in (K_RETURN, K_i, K_k):
+                    play_sound(menu_button_sfx)
+                    if current_letter == "0":
+                        return name
+                    elif current_letter == "1":
+                        # back up cursor instead of deleting letters
+                        name = name[:-1]
+                    else:
+                        name += current_letter
+                elif current_event.key == K_j:
+                    # back up cursor instead of deleting letters
+                    name = name[:-1]
+                elif current_event.key in (K_DOWN, K_s) and current_item_row + 1 < len(name_selection_array):
+                    current_item_row += 1
+                    # screen.blit(image.load(current_letter_image_path), (0, 0))
+                elif current_event.key in (K_UP, K_w) and current_item_row > 0:
+                    current_item_row -= 1
+                    # screen.blit(image.load(current_letter_image_path), (0, 0))
+                elif current_event.key in (K_LEFT, K_a) and current_item_column > 0:
+                    current_item_column -= 1
+                    # screen.blit(image.load(current_letter_image_path), (0, 0))
+                elif current_event.key in (K_RIGHT, K_d) and current_item_column < len(name_selection_array[current_item_row]) - 1:
+                    current_item_column += 1
+                    # screen.blit(image.load(current_letter_image_path), (0, 0))
+
+
+def blink_with_name(blink_start, current_letter_image_path, name, screen):
+    while convert_to_frames_since_start_time(blink_start) <= 16:
+        show_image_with_name(current_letter_image_path, name, screen)
+    while 16 < convert_to_frames_since_start_time(blink_start) <= 32:
+        show_image_with_name(NAME_SELECTION_STATIC_IMAGE, name, screen)
+
+
+def show_image_with_name(current_letter_image_path, name, screen):
+    selected_image = scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height()))
+    screen.blit(selected_image, (0, 0))
+    draw_text(name, TILE_SIZE * 6.01, TILE_SIZE * 4.3, screen, center_align=False)
+    display.flip()
