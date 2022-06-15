@@ -66,10 +66,10 @@ class Game:
         if self.fullscreen_enabled:
             # if it's producing a segmentation fault, try maybe not using the SCALED flag
             # flags = FULLSCREEN | SCALED
-            flags = FULLSCREEN
+            self.flags = FULLSCREEN
         else:
             # flags = RESIZABLE | SCALED
-            flags = RESIZABLE
+            self.flags = RESIZABLE
         # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
         # without SCALED, it will show more of the map, but will also not center the camera
         # it might be a nice comfort addition to add to center the camera, while also showing more of the map
@@ -78,7 +78,7 @@ class Game:
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
         self.speed = 2
         win_width, win_height = NES_RES[0] * self.scale, NES_RES[1] * self.scale
-        self.screen = set_mode((win_width, win_height), flags)
+        self.screen = set_mode((win_width, win_height), self.flags)
         # self.screen.set_alpha(None)
         set_caption("Dragon Warrior")
 
@@ -134,6 +134,7 @@ class Game:
         if self.splash_screen_enabled:
             intro = Intro()
             intro.show_start_screen(self.screen, self.start_time, self.clock)
+            self.load_and_play_music(village_music)
             self.show_main_menu_screen(self.screen)
         self.draw_all()
         while True:
@@ -144,7 +145,6 @@ class Game:
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
-        self.load_and_play_music(village_music)
         select_from_vertical_menu(get_ticks(), screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [])
         # adventure_log_blinking = True
         # while adventure_log_blinking:

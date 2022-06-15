@@ -151,4 +151,8 @@ class Test(TestCase):
                                                           [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))
         # test without other_selected_images
         with patch.object(event, 'get', return_value=[mocked_down, mocked_down, mocked_up, mocked_return]) as mock_method:
-            self.assertEqual(0, select_from_vertical_menu(get_ticks(), self.game.screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, []))
+            start_time = get_ticks()
+            while get_ticks() - start_time <= 64:
+                # just to hit the blink_start reset line
+                self.assertEqual(0, select_from_vertical_menu(start_time, self.game.screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, []))
+            self.assertEqual(0, select_from_vertical_menu(start_time, self.game.screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, []))
