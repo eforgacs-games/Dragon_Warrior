@@ -43,6 +43,7 @@ class Game:
         self.big_map = None
         self.layouts = MapLayouts()
         # text
+        self.initial_dialog_enabled = INITIAL_DIALOG_ENABLED
         self.is_initial_dialog = True
         self.skip_text = False
         # intro
@@ -146,10 +147,7 @@ class Game:
         self.player.adventure_log = select_from_vertical_menu(get_ticks(), screen, ADVENTURE_LOG_PATH,
                                                               ADVENTURE_LOG_1_PATH,
                                                               [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]) + 1
-
-        blink_start = get_ticks()
-
-        self.player.name = select_name(blink_start, screen, self.cmd_menu)
+        self.player.name = select_name(get_ticks(), screen, self.cmd_menu)
         self.player.set_initial_stats()
         play_sound(menu_button_sfx)
         fade(fade_out=True, screen=self.screen)
@@ -233,11 +231,28 @@ class Game:
         event.pump()
 
     def handle_keypresses(self, current_key):
+        self.handle_b_button(current_key)
+        self.handle_a_button(current_key)
+        self.handle_start_button(current_key)
+        self.handle_select_button(current_key)
+        # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed. (modernization)
+        # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
+        #     self.scale = self.scale + 1
+        self.handle_help_button(current_key)
+        self.handle_fps_changes(current_key)
+
+    def handle_help_button(self, current_key):
+        if current_key[K_F1]:
+            self.cmd_menu.show_text_in_dialog_box(f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
+
+    def handle_b_button(self, current_key):
         if current_key[K_j]:
             # B button
             self.unlaunch_menu(self.cmd_menu)
             draw_all_tiles_in_current_map(self.current_map, self.background)
             # print("J key pressed (B button).")
+
+    def handle_a_button(self, current_key):
         if current_key[K_k]:
             # A button
             # print("K key pressed (A button).")
@@ -246,6 +261,8 @@ class Game:
                 self.display_hovering_stats = True
                 self.cmd_menu.launch_signaled = True
                 self.pause_all_movement()
+
+    def handle_start_button(self, current_key):
         if current_key[K_i]:
             # Start button
             if self.paused:
@@ -255,15 +272,12 @@ class Game:
                 self.pause_all_movement()
                 self.paused = True
             print("I key pressed (Start button).")
+
+    @staticmethod
+    def handle_select_button(current_key):
         if current_key[K_u]:
             # Select button
-            print("U key pressed (Select button).")
-        # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed. (modernization)
-        # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
-        #     self.scale = self.scale + 1
-        if current_key[K_F1]:
-            self.cmd_menu.show_text_in_dialog_box(f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
-        self.handle_fps_changes(current_key)
+            pass
 
     def handle_fps_changes(self, current_key) -> None:
         if current_key[K_1]:
@@ -406,7 +420,8 @@ class Game:
         self.hovering_stats_displayed = True
 
     def handle_initial_dialog(self):
-        if INITIAL_DIALOG_ENABLED:
+
+        if self.initial_dialog_enabled:
             if self.current_map.identifier == 'TantegelThroneRoom':
                 if self.is_initial_dialog:
                     display.flip()
@@ -427,7 +442,7 @@ class Game:
     def run_automatic_initial_dialog(self):
         self.enable_movement = False
         for current_event in self.events:
-            if current_event.type == KEYUP and not self.automatic_initial_dialog_run:
+            if (current_event.type == KEYUP and not self.automatic_initial_dialog_run) or self.skip_text:
                 self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
                                                       skip_text=self.skip_text)
                 self.set_to_post_initial_dialog()

@@ -1,19 +1,23 @@
 import os
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pygame
+from pygame import K_F1, K_u
 from pygame.imageext import load_extended
 from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
 from src.camera import Camera
-from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier
+from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, village_music
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
 from src.game_functions import get_next_coordinates, replace_characters_with_underlying_tiles
+from src.intro import controls
 from src.maps import MapWithoutNPCs, TantegelThroneRoom, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
+from src.menu import CommandMenu
+from src.menu_functions import convert_list_to_newline_separated_string
 from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
 
@@ -21,10 +25,23 @@ os.environ["SDL_VIDEODRIVER"] = "dummy"
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
+def create_get_pressed_mock_array(max_key=K_u):
+    return [0] * (max_key + 1)
+
+
+def create_f1_key_mock(pressed_key):
+    def helper():
+        tmp = create_get_pressed_mock_array(K_F1)
+        tmp[pressed_key] = 1
+        return tmp
+
+    return helper
+
+
 def create_key_mock(pressed_key):
     def helper():
         # increase this number as necessary to accommodate keys used
-        tmp = [0] * 200
+        tmp = create_get_pressed_mock_array()
         tmp[pressed_key] = 1
         return tmp
 
@@ -159,22 +176,22 @@ class TestGame(TestCase):
         self.game.handle_fps_changes(pygame.key.get_pressed())
         self.assertEqual(480, self.game.fps)
 
-    def test_handle_keypresses_start(self):
+    def test_handle_start_button(self):
         self.assertFalse(self.game.paused)
         pygame.key.get_pressed = create_key_mock(pygame.K_i)
-        self.game.handle_keypresses(pygame.key.get_pressed())
+        self.game.handle_start_button(pygame.key.get_pressed())
         self.assertTrue(self.game.paused)
         pygame.key.get_pressed = create_key_mock(pygame.K_i)
-        self.game.handle_keypresses(pygame.key.get_pressed())
+        self.game.handle_start_button(pygame.key.get_pressed())
         self.assertFalse(self.game.paused)
 
-    def test_handle_keypresses_command_menu(self):
+    def test_handle_a_button_and_b_button(self):
         self.assertFalse(self.game.cmd_menu.launch_signaled)
         pygame.key.get_pressed = create_key_mock(pygame.K_k)
-        self.game.handle_keypresses(pygame.key.get_pressed())
+        self.game.handle_a_button(pygame.key.get_pressed())
         self.assertTrue(self.game.cmd_menu.launch_signaled)
         pygame.key.get_pressed = create_key_mock(pygame.K_j)
-        self.game.handle_keypresses(pygame.key.get_pressed())
+        self.game.handle_b_button(pygame.key.get_pressed())
         self.assertFalse(self.game.cmd_menu.launch_signaled)
 
     def test_replace_characters_with_underlying_tiles(self):
@@ -195,7 +212,7 @@ class TestGame(TestCase):
     def test_handle_menu_launch(self):
         self.game.cmd_menu.launch_signaled = True
         self.game.handle_menu_launch(self.game.cmd_menu)
-        self.assertTrue(self.game.cmd_menu.launched)
+        self.assertTrue(self.game.cmd_menu.menu.is_enabled())
 
     def test_change_map(self):
         self.game.player.row = 10
@@ -307,3 +324,54 @@ class TestGame(TestCase):
         self.assertEqual(2, self.game.player.current_hp)
         self.assertEqual(3, self.game.player.current_mp)
         self.assertEqual(4, self.game.player.gold)
+
+    def test_load_and_play_music(self):
+        with patch.object(Game, 'load_and_play_music', return_value=None) as mock_load_and_play_music:
+            thing = Game()
+            thing.load_and_play_music(village_music)
+        mock_load_and_play_music.assert_called_with(village_music)
+
+    def test_unlaunch_menu(self):
+        self.game.cmd_menu.menu.enable()
+        with patch.object(CommandMenu, 'window_drop_up_effect', return_value=None) as mock_window_drop_up_effect:
+            self.assertFalse(self.game.cmd_menu.launch_signaled)
+            self.game.unlaunch_menu(self.game.cmd_menu)
+            self.assertTrue(self.game.enable_animate)
+            self.assertTrue(self.game.enable_roaming)
+            self.assertTrue(self.game.enable_movement)
+            self.assertFalse(self.game.cmd_menu.menu.is_enabled())
+        mock_window_drop_up_effect.assert_called_with(x=6, y=1, width=8, height=5)
+
+    def test_handle_initial_dialog(self):
+        self.game.skip_text = True
+        self.game.current_map.identifier = 'TantegelThroneRoom'
+        self.game.handle_initial_dialog()
+        self.assertFalse(self.game.display_hovering_stats)
+        self.assertFalse(self.game.cmd_menu.launch_signaled)
+        self.assertFalse(self.game.enable_movement)
+        self.assertFalse(self.game.is_initial_dialog)
+        self.assertTrue(self.game.automatic_initial_dialog_run)
+        # self.game.handle_initial_dialog()
+        # self.assertFalse(self.game.is_initial_dialog)
+
+    def test_drop_down_hovering_stats_window(self):
+        with patch.object(CommandMenu, 'window_drop_down_effect', return_value=None) as mock_window_drop_down_effect:
+            self.game.drop_down_hovering_stats_window()
+            self.assertTrue(self.game.hovering_stats_displayed)
+        mock_window_drop_down_effect.assert_called_with(1, 2, 4, 6)
+
+    def test_handle_select_button(self):
+        pygame.key.get_pressed = create_key_mock(pygame.K_u)
+        self.game.handle_select_button(pygame.key.get_pressed())
+
+    def test_handle_help_button(self):
+        with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
+            pygame.key.get_pressed = create_f1_key_mock(pygame.K_F1)
+            self.game.handle_help_button(pygame.key.get_pressed())
+        mock_show_text_in_dialog_box.assert_called_with(f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
+
+    def test_handle_keypresses(self):
+        pygame.key.get_pressed = create_f1_key_mock(pygame.K_k)
+        self.game.handle_keypresses(pygame.key.get_pressed())
+        pygame.key.get_pressed = create_f1_key_mock(pygame.K_j)
+        self.game.handle_keypresses(pygame.key.get_pressed())
