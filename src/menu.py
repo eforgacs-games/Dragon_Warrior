@@ -2,8 +2,7 @@ import functools
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN, Rect
-from pygame.event import get
+from pygame import Surface, display, KEYDOWN, Rect, event
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
@@ -147,7 +146,7 @@ class CommandMenu(Menu):
                         blink_down_arrow(self.screen)
                     # playing with fire a bit here with the short-circuiting
                     if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
-                            [current_event.type == KEYDOWN for current_event in get()]):
+                            [current_event.type == KEYDOWN for current_event in event.get()]):
                         if not skip_text:
                             play_sound(menu_button_sfx)
                         display_current_line = False

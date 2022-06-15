@@ -2,8 +2,8 @@ import re
 import sys
 from typing import List
 
-from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_i, K_k, K_j, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, image, K_TAB, K_BACKSPACE, Rect
-from pygame.event import get
+from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_i, K_k, K_j, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, image, K_TAB, K_BACKSPACE, Rect, \
+    event
 from pygame.time import get_ticks
 from pygame.transform import scale
 
@@ -159,7 +159,7 @@ def select_name(blink_start, screen, command_menu):
         if convert_to_frames_since_start_time(blink_start) > 32:
             blink_start = get_ticks()
         blink_with_name(blink_start, current_letter_image_path, name, screen, unselected_image)
-        for current_event in get():
+        for current_event in event.get():
             if current_event.type == QUIT:
                 quit()
                 sys.exit()
