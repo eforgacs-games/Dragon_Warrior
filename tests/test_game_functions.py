@@ -1,14 +1,16 @@
 import os
 from unittest import TestCase, mock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
+from pygame import KEYDOWN, K_RETURN, event, K_s, K_w
 from pygame.image import load_extended
 from pygame.time import get_ticks
 from pygame.transform import scale
 
 from src import game_functions, text
 from src.camera import Camera
-from src.common import Direction, UNARMED_HERO_PATH, NAME_SELECTION_UPPER_A, NAME_SELECTION_STATIC_IMAGE_LEN_0
+from src.common import Direction, UNARMED_HERO_PATH, NAME_SELECTION_UPPER_A, NAME_SELECTION_STATIC_IMAGE_LEN_0, ADVENTURE_LOG_PATH, ADVENTURE_LOG_1_PATH, \
+    ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH
 from src.config import TILE_SIZE, SCALE
 from src.game import Game
 from src.game_functions import get_next_coordinates, set_character_position, draw_hovering_stats_window, draw_stats_strings_with_alignments, alternate_blink, \
@@ -95,10 +97,16 @@ class Test(TestCase):
         mock_draw_stats_strings_with_alignments.assert_any_call("8", 5.99, self.game.screen)
         mock_draw_stats_strings_with_alignments.assert_called_with("1984", 6.99, self.game.screen)
 
-    # @mock.patch.object(text, "draw_text")
-    # def test_draw_stats_strings_with_alignments(self, mock_draw_text):
-    #     draw_stats_strings_with_alignments("12345", 1, self.game.screen)
-    #     mock_draw_text.assert_any_call("12345", TILE_SIZE * 3.2, TILE_SIZE, self.game.screen)
+    @mock.patch.object(text, "draw_text")
+    def test_draw_stats_strings_with_alignments(self, mock_draw_text):
+        self.assertIsNone(draw_stats_strings_with_alignments("12345", 1, self.game.screen))
+        self.assertIsNone(draw_stats_strings_with_alignments("1234", 1, self.game.screen))
+        self.assertIsNone(draw_stats_strings_with_alignments("123", 1, self.game.screen))
+        self.assertIsNone(draw_stats_strings_with_alignments("12", 1, self.game.screen))
+        self.assertIsNone(draw_stats_strings_with_alignments("1", 1, self.game.screen))
+        # TODO(ELF): Assert that draw_text calls are made.
+        # mock_draw_text.assert_any_call("12345", 3.2, self.game.cmd_menu.dialog_lookup.screen)
+        # mock_draw_text.assert_any_call("12345", TILE_SIZE * 3.2, TILE_SIZE, self.game.screen)
 
     # "1", 134.4, 32, self.game.screen
 
@@ -108,6 +116,36 @@ class Test(TestCase):
         unselected_image = NAME_SELECTION_STATIC_IMAGE_LEN_0
         alternate_blink(selected_image, unselected_image, get_ticks(), self.game.screen)
 
-    # def test_select_from_vertical_menu(self):
-    #     select_from_vertical_menu(get_ticks(), self.game.screen, NAME_SELECTION_STATIC_IMAGE_LEN_0, NAME_SELECTION_UPPER_A, None)
+    def test_select_from_vertical_menu(self):
+        mocked_return = MagicMock()
+        mocked_return.type = KEYDOWN
+        mocked_return.key = K_RETURN
+        with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
+            self.assertEqual(0, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
+                                                          ADVENTURE_LOG_1_PATH,
+                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))
+        mocked_up = MagicMock()
+        mocked_up.type = KEYDOWN
+        mocked_up.key = K_w
+        with patch.object(event, 'get', return_value=[mocked_up, mocked_return]) as mock_method:
+            self.assertEqual(0, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
+                                                          ADVENTURE_LOG_1_PATH,
+                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))
 
+        mocked_down = MagicMock()
+        mocked_down.type = KEYDOWN
+        mocked_down.key = K_s
+        with patch.object(event, 'get', return_value=[mocked_down, mocked_return]) as mock_method:
+            self.assertEqual(1, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
+                                                          ADVENTURE_LOG_1_PATH,
+                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))
+
+        with patch.object(event, 'get', return_value=[mocked_down, mocked_down, mocked_return]) as mock_method:
+            self.assertEqual(2, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
+                                                          ADVENTURE_LOG_1_PATH,
+                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))
+
+        with patch.object(event, 'get', return_value=[mocked_down, mocked_down, mocked_up, mocked_return]) as mock_method:
+            self.assertEqual(1, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
+                                                          ADVENTURE_LOG_1_PATH,
+                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))

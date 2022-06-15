@@ -1,8 +1,7 @@
 import sys
 from typing import List
 
-from pygame import image, display, QUIT, quit, K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN, KEYDOWN
-from pygame.event import get
+from pygame import image, display, QUIT, quit, K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN, KEYDOWN, event
 from pygame.time import get_ticks
 from pygame.transform import scale
 
@@ -43,9 +42,7 @@ def replace_characters_with_underlying_tiles(tile_types_to_draw: List[str], curr
 
 
 def draw_stats_strings_with_alignments(stat_string, y_position, screen):
-    if len(stat_string) >= 5:
-        draw_text(stat_string, TILE_SIZE * 3.2, TILE_SIZE * y_position, screen)
-    elif len(stat_string) > 4:
+    if len(stat_string) > 4:
         draw_text(stat_string, TILE_SIZE * 3.2, TILE_SIZE * y_position, screen)
     elif len(stat_string) > 3:
         draw_text(stat_string, TILE_SIZE * 3.44, TILE_SIZE * y_position, screen)
@@ -80,7 +77,7 @@ def select_from_vertical_menu(blink_start, screen, unselected_image, selected_im
         if convert_to_frames_since_start_time(blink_start) > 32:
             blink_start = get_ticks()
         alternate_blink(all_selected_images[current_item_index], unselected_image, blink_start, screen)
-        for current_event in get():
+        for current_event in event.get():
             if current_event.type == QUIT:
                 quit()
                 sys.exit()
