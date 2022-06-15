@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pygame
-from pygame import K_F1, K_z, K_UP, event, KEYDOWN, K_RETURN
+from pygame import K_F1, K_z, K_UP, event, KEYDOWN, K_RETURN, RESIZABLE
 from pygame.imageext import load_extended
 from pygame.sprite import LayeredDirty
 from pygame.transform import scale
@@ -493,3 +493,11 @@ class TestGame(TestCase):
         mocked_return.key = K_RETURN
         with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
             self.game.show_main_menu_screen(self.game.screen)
+
+    def test_flags(self):
+        self.game.fullscreen_enabled = False
+        self.game.__init__()
+        self.assertEqual(RESIZABLE, self.game.flags)
+        # self.game.fullscreen_enabled = True
+        # self.game.__init__()
+        # self.assertEqual(FULLSCREEN, self.game.flags)
