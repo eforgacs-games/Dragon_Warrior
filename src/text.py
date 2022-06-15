@@ -1,6 +1,6 @@
 import textwrap
 
-from pygame import font, draw
+from pygame import font
 
 from src.common import BLACK, WHITE, DRAGON_QUEST_FONT_PATH
 
@@ -42,11 +42,3 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
         y += 17
         if chunk == chunks[len(chunks) - 1]:
             return chunk
-
-
-def draw_text_with_rectangle(text, size, color, x, y, font_name, screen):
-    text_surface = font.Font(font_name, size).render(text, True, color, BLACK)
-    text_rect = text_surface.get_rect()
-    draw.rect(text_surface, WHITE, text_rect, width=1)
-    text_rect.midtop = (x, y)
-    screen.blit(text_surface, text_rect)
