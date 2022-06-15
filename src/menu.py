@@ -186,7 +186,7 @@ class CommandMenu(Menu):
         if drop_up:
             self.window_drop_up_effect(x=2, y=9, width=12, height=5)
 
-    def window_drop_down_effect(self, x, y, width, height):
+    def window_drop_down_effect(self, x, y, width, height) -> None:
         """Intro effect for menus."""
         window_rect = Rect(x * TILE_SIZE, y * TILE_SIZE, width * TILE_SIZE, height * TILE_SIZE)
         for i in range(height + 1):
@@ -198,7 +198,7 @@ class CommandMenu(Menu):
                 self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
                 display.update(window_rect)
 
-    def window_drop_up_effect(self, x, y, width, height):
+    def window_drop_up_effect(self, x, y, width, height) -> None:
         """Outro effect for menus."""
         # draw all the tiles initially once
         for tile, tile_dict in self.current_map.floor_tile_key.items():
