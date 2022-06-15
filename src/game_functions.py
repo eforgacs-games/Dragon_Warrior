@@ -1,7 +1,6 @@
-import sys
 from typing import List
 
-from pygame import image, display, QUIT, quit, K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN, KEYDOWN, event
+from pygame import image, display, K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN, KEYDOWN, event
 from pygame.time import get_ticks
 from pygame.transform import scale
 
@@ -78,10 +77,7 @@ def select_from_vertical_menu(blink_start, screen, unselected_image, selected_im
             blink_start = get_ticks()
         alternate_blink(all_selected_images[current_item_index], unselected_image, blink_start, screen)
         for current_event in event.get():
-            if current_event.type == QUIT:
-                quit()
-                sys.exit()
-            elif current_event.type == KEYDOWN:
+            if current_event.type == KEYDOWN:
                 if current_event.key in (K_RETURN, K_i, K_k):
                     play_sound(menu_button_sfx)
                     return current_item_index
