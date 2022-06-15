@@ -10,7 +10,7 @@ from pygame.transform import scale
 from src import game_functions, text
 from src.camera import Camera
 from src.common import Direction, UNARMED_HERO_PATH, NAME_SELECTION_UPPER_A, NAME_SELECTION_STATIC_IMAGE_LEN_0, ADVENTURE_LOG_PATH, ADVENTURE_LOG_1_PATH, \
-    ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH
+    ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH
 from src.config import TILE_SIZE, SCALE
 from src.game import Game
 from src.game_functions import get_next_coordinates, set_character_position, draw_hovering_stats_window, draw_stats_strings_with_alignments, alternate_blink, \
@@ -149,3 +149,6 @@ class Test(TestCase):
             self.assertEqual(1, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
                                                           ADVENTURE_LOG_1_PATH,
                                                           [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))
+        # test without other_selected_images
+        with patch.object(event, 'get', return_value=[mocked_down, mocked_down, mocked_up, mocked_return]) as mock_method:
+            self.assertEqual(0, select_from_vertical_menu(get_ticks(), self.game.screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, []))
