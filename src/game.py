@@ -38,16 +38,17 @@ class Game:
 
     def __init__(self):
         # map/graphics
-
         self.background = None
         self.big_map = None
         self.layouts = MapLayouts()
+        self.fullscreen_enabled = FULLSCREEN_ENABLED
         # text
         self.initial_dialog_enabled = INITIAL_DIALOG_ENABLED
         self.is_initial_dialog = True
         self.skip_text = False
         # intro
         self.start_time = get_ticks()
+        self.splash_screen_enabled = SPLASH_SCREEN_ENABLED
         # engine
         self.fps = FPS
         self.last_map = None
@@ -57,10 +58,12 @@ class Game:
         self.not_moving_time_start = None
         self.display_hovering_stats = False
         self.hovering_stats_displayed = False
+        # debugging
+        self.show_coordinates = SHOW_COORDINATES
         init()
         self.paused = False
         # Create the game window.
-        if FULLSCREEN_ENABLED:
+        if self.fullscreen_enabled:
             # if it's producing a segmentation fault, try maybe not using the SCALED flag
             # flags = FULLSCREEN | SCALED
             flags = FULLSCREEN
@@ -110,7 +113,8 @@ class Game:
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
         self.music_enabled = MUSIC_ENABLED
-        if SPLASH_SCREEN_ENABLED:
+
+        if self.splash_screen_enabled:
             self.load_and_play_music(intro_overture)
         else:
             self.load_and_play_music(self.current_map.music_file_path)
@@ -127,7 +131,7 @@ class Game:
         Main loop.
         :return: None
         """
-        if SPLASH_SCREEN_ENABLED:
+        if self.splash_screen_enabled:
             intro = Intro()
             intro.show_start_screen(self.screen, self.start_time, self.clock)
             self.show_main_menu_screen(self.screen)
@@ -204,7 +208,7 @@ class Game:
         # This prints out the current tile that the player is standing on.
         # print(f"self.player.current_tile: {self.player.current_tile}")
 
-        if SHOW_COORDINATES:
+        if self.show_coordinates:
             print(f"{self.player.row, self.player.column}")
 
         # print(self.camera.get_pos())

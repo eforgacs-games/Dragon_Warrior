@@ -3,8 +3,9 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pygame
-from pygame import K_F1, K_u
+from pygame import K_F1, K_z, K_UP
 from pygame.imageext import load_extended
+from pygame.sprite import LayeredDirty
 from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
@@ -14,7 +15,7 @@ from src.config import SCALE, TILE_SIZE
 from src.game import Game
 from src.game_functions import get_next_coordinates, replace_characters_with_underlying_tiles
 from src.intro import controls
-from src.maps import MapWithoutNPCs, TantegelThroneRoom, Alefgard
+from src.maps import MapWithoutNPCs, TantegelThroneRoom, Alefgard, TantegelCourtyard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.menu import CommandMenu
 from src.menu_functions import convert_list_to_newline_separated_string
@@ -25,13 +26,22 @@ os.environ["SDL_VIDEODRIVER"] = "dummy"
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
-def create_get_pressed_mock_array(max_key=K_u):
+def create_get_pressed_mock_array(max_key=K_z):
     return [0] * (max_key + 1)
 
 
 def create_f1_key_mock(pressed_key):
     def helper():
         tmp = create_get_pressed_mock_array(K_F1)
+        tmp[pressed_key] = 1
+        return tmp
+
+    return helper
+
+
+def create_move_player_key_mock(pressed_key):
+    def helper():
+        tmp = create_get_pressed_mock_array(K_UP)
         tmp[pressed_key] = 1
         return tmp
 
@@ -213,6 +223,7 @@ class TestGame(TestCase):
         self.game.cmd_menu.launch_signaled = True
         self.game.handle_menu_launch(self.game.cmd_menu)
         self.assertTrue(self.game.cmd_menu.menu.is_enabled())
+        self.game.handle_menu_launch(self.game.cmd_menu)
 
     def test_change_map(self):
         self.game.player.row = 10
@@ -221,6 +232,14 @@ class TestGame(TestCase):
         self.game.change_map(TantegelThroneRoom())
         self.assertEqual('MockMap', self.game.last_map.identifier)
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
+        self.game.player.row = 14
+        self.game.player.column = 18
+        self.game.change_map(TantegelCourtyard())
+        self.assertTrue(self.game.allow_save_prompt)
+        self.game.music_enabled = False
+        self.game.player.row = 14
+        self.game.player.column = 14
+        self.game.change_map(TantegelThroneRoom())
 
     def test_change_map_maintain_inventory_and_gold(self):
         self.game.player.row = 10
@@ -345,12 +364,35 @@ class TestGame(TestCase):
     def test_handle_initial_dialog(self):
         self.game.skip_text = True
         self.game.current_map.identifier = 'TantegelThroneRoom'
+        self.assertEqual(('Descendant of Erdrick, listen now to my words.',
+                          'It is told that in ages past Erdrick fought demons with a Ball of Light.',
+                          'Then came the Dragonlord who stole the precious globe and hid it in the '
+                          'darkness.',
+                          'Now, Edward, thou must help us recover the Ball of Light and restore peace '
+                          'to our land.',
+                          'The Dragonlord must be defeated.',
+                          'Take now whatever thou may find in these Treasure Chests to aid thee in thy '
+                          'quest.',
+                          'Then speak with the guards, for they have much knowledge that may aid thee.',
+                          'May the light shine upon thee, Edward.'),
+                         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
         self.game.handle_initial_dialog()
         self.assertFalse(self.game.display_hovering_stats)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
         self.assertFalse(self.game.enable_movement)
         self.assertFalse(self.game.is_initial_dialog)
         self.assertTrue(self.game.automatic_initial_dialog_run)
+        self.assertEqual('When thou art finished preparing for thy departure, please see me.\nI shall wait.',
+                         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+        self.game.allow_save_prompt = True
+        self.game.handle_initial_dialog()
+        self.assertEqual(('I am greatly pleased that thou hast returned, Edward.',
+                          'Before reaching thy next level of experience thou must gain 7 Points.',
+                          "Will thou tell me now of thy deeds so they won't be forgotten?",
+                          'Thy deeds have been recorded on the Imperial Scrolls of Honor.',
+                          'Dost thou wish to continue thy quest?',
+                          "Goodbye now, Edward.\n'Take care and tempt not the Fates."),
+                         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
         # self.game.handle_initial_dialog()
         # self.assertFalse(self.game.is_initial_dialog)
 
@@ -375,3 +417,72 @@ class TestGame(TestCase):
         self.game.handle_keypresses(pygame.key.get_pressed())
         pygame.key.get_pressed = create_f1_key_mock(pygame.K_j)
         self.game.handle_keypresses(pygame.key.get_pressed())
+
+    def test_get_events(self):
+        self.game.get_events()
+        # this is a weird value for the player current tile
+        self.assertEqual('ROAMING_GUARD', self.game.player.current_tile)
+        self.assertEqual((0, -1), self.game.player.next_coordinates)
+        self.assertEqual((1, -1), self.game.player.next_next_coordinates)
+
+    def test_draw_all(self):
+        self.game.draw_all()
+        self.assertTrue(self.game.not_moving_time_start)
+
+    # def test_handle_sprite_drawing_and_animation(self):
+    #     self.game.handle_sprite_drawing_and_animation()
+
+    def test_move_roaming_characters(self):
+        # test with no roaming characters
+        self.game.move_roaming_characters()
+        self.game.player.row = 10
+        self.game.player.column = 13
+        self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
+        self.game.change_map(TantegelThroneRoom())
+        self.game.current_map.load_map(self.game.player, (14, 18))
+        # test with moving characters before they're moving
+        for roaming_character in self.game.current_map.roaming_characters:
+            self.assertFalse(roaming_character.is_moving)
+        self.game.move_roaming_characters()
+        for roaming_character in self.game.current_map.roaming_characters:
+            self.assertTrue(roaming_character.is_moving)
+        # test with moving characters once they're moving
+        self.game.move_roaming_characters()
+
+    def test_move_and_handle_sides_collision(self):
+        self.game.player.rect.x = -1
+        self.game.move_and_handle_sides_collision(-1, 1)
+        self.assertEqual(0, self.game.player.rect.x)
+        self.game.player.rect.y = -1
+        self.game.move_and_handle_sides_collision(1, -1)
+        self.assertEqual(0, self.game.player.rect.y)
+        self.game.player.rect.x = 65
+        self.game.move_and_handle_sides_collision(65, 1)
+        self.assertEqual(64, self.game.player.rect.x)
+        self.game.player.rect.y = 65
+        self.game.move_and_handle_sides_collision(1, 65)
+        self.assertEqual(64, self.game.player.rect.y)
+
+    def test_move_player_up(self):
+        pygame.key.get_pressed = create_move_player_key_mock(pygame.K_w)
+        self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.game.move_player(pygame.key.get_pressed())
+        self.assertEqual(Direction.UP.value, self.game.player.direction_value)
+
+    def test_move_player_left(self):
+        pygame.key.get_pressed = create_move_player_key_mock(pygame.K_a)
+        self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.game.move_player(pygame.key.get_pressed())
+        self.assertEqual(Direction.LEFT.value, self.game.player.direction_value)
+
+    def test_move_player_down(self):
+        pygame.key.get_pressed = create_move_player_key_mock(pygame.K_s)
+        self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.game.move_player(pygame.key.get_pressed())
+        self.assertEqual(Direction.DOWN.value, self.game.player.direction_value)
+
+    def test_move_player_right(self):
+        pygame.key.get_pressed = create_move_player_key_mock(pygame.K_d)
+        self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.game.move_player(pygame.key.get_pressed())
+        self.assertEqual(Direction.RIGHT.value, self.game.player.direction_value)
