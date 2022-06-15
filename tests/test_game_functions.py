@@ -1,14 +1,18 @@
 import os
-from unittest import TestCase
+from unittest import TestCase, mock
+from unittest.mock import patch
 
 from pygame.image import load_extended
+from pygame.time import get_ticks
 from pygame.transform import scale
 
+from src import game_functions, text
 from src.camera import Camera
-from src.common import Direction, UNARMED_HERO_PATH
+from src.common import Direction, UNARMED_HERO_PATH, NAME_SELECTION_UPPER_A, NAME_SELECTION_STATIC_IMAGE_LEN_0
 from src.config import TILE_SIZE, SCALE
 from src.game import Game
-from src.game_functions import get_next_coordinates, set_character_position
+from src.game_functions import get_next_coordinates, set_character_position, draw_hovering_stats_window, draw_stats_strings_with_alignments, alternate_blink, \
+    select_from_vertical_menu
 from src.maps import MapWithoutNPCs
 from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
@@ -76,3 +80,34 @@ class Test(TestCase):
         self.assertEqual((10, 14), get_next_coordinates(self.game.player.rect.x // TILE_SIZE,
                                                         self.game.player.rect.y // TILE_SIZE,
                                                         self.game.player.direction_value))
+
+    @mock.patch.object(game_functions, "draw_stats_strings_with_alignments")
+    def test_draw_hovering_stats_window(self, mock_draw_stats_strings_with_alignments):
+        self.game.player.level = 7
+        self.game.player.current_hp = 50
+        self.game.player.current_mp = 25
+        self.game.player.gold = 8
+        self.game.player.total_experience = 1984
+        draw_hovering_stats_window(self.game.screen, self.game.player)
+        mock_draw_stats_strings_with_alignments.assert_any_call("7", 2.99, self.game.screen)
+        mock_draw_stats_strings_with_alignments.assert_any_call("50", 3.99, self.game.screen)
+        mock_draw_stats_strings_with_alignments.assert_any_call("25", 4.99, self.game.screen)
+        mock_draw_stats_strings_with_alignments.assert_any_call("8", 5.99, self.game.screen)
+        mock_draw_stats_strings_with_alignments.assert_called_with("1984", 6.99, self.game.screen)
+
+    # @mock.patch.object(text, "draw_text")
+    # def test_draw_stats_strings_with_alignments(self, mock_draw_text):
+    #     draw_stats_strings_with_alignments("12345", 1, self.game.screen)
+    #     mock_draw_text.assert_any_call("12345", TILE_SIZE * 3.2, TILE_SIZE, self.game.screen)
+
+    # "1", 134.4, 32, self.game.screen
+
+    def test_alternate_blink(self):
+        # TODO(ELF): Actually test something with test_alternate_blink().
+        selected_image = NAME_SELECTION_UPPER_A
+        unselected_image = NAME_SELECTION_STATIC_IMAGE_LEN_0
+        alternate_blink(selected_image, unselected_image, get_ticks(), self.game.screen)
+
+    # def test_select_from_vertical_menu(self):
+    #     select_from_vertical_menu(get_ticks(), self.game.screen, NAME_SELECTION_STATIC_IMAGE_LEN_0, NAME_SELECTION_UPPER_A, None)
+
