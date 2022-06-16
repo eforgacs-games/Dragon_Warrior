@@ -37,7 +37,7 @@ class MockMap(MapWithoutNPCs):
         return Direction.DOWN.value
 
 
-class Test(TestCase):
+class TestGameFunctions(TestCase):
 
     def setUp(self) -> None:
         self.game = Game()
