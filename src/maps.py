@@ -141,21 +141,6 @@ class DragonWarriorMap:
             np.where(np.array(self.layout) == self.character_key[character_name]['val'])).T
         return character_layout_position
 
-    def get_staircase_locations(self):
-        """
-        Dynamically generates a list of staircase locations. Currently unused, but might be useful for staircase warps.
-        :return:
-        """
-        # also needs BRICK_STAIR_UP and GRASS_STAIR_DOWN
-        brick_stair_down_staircase_locations = self.find_tile_in_layout_by_value('BRICK_STAIR_DOWN')
-        brick_stair_up_staircase_locations = self.find_tile_in_layout_by_value('BRICK_STAIR_UP')
-        grass_stair_down_staircase_locations = self.find_tile_in_layout_by_value('GRASS_STAIR_DOWN')
-        return brick_stair_down_staircase_locations + brick_stair_up_staircase_locations + grass_stair_down_staircase_locations
-
-    def find_tile_in_layout_by_value(self, tile):
-        return np.asarray(np.where(np.array(self.layout) == self.tile_key[tile]['val'])).T
-
-    # @timeit
     def load_map(self, player, destination_coordinates) -> None:
         self.destination_coordinates = destination_coordinates
         self.tile_types_in_current_map = self.get_tiles_in_current_map()

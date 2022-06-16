@@ -2,8 +2,7 @@ import os
 import sys
 from os.path import join
 
-from pygame import image, display, QUIT, quit, KEYUP, K_i, K_k
-from pygame.event import get
+from pygame import image, display, QUIT, quit, K_i, K_k, Rect, Surface, event, KEYDOWN
 from pygame.time import get_ticks
 from pygame.transform import scale
 
@@ -13,16 +12,19 @@ from src.config import IMAGES_DIR, FPS
 from src.text import draw_text
 from src.visual_effects import fade
 
+controls = "K key: A Button", "J key: B Button", "I key: Start", "WASD / Arrow Keys: Move"
 
-def show_intro_banner(intro_banner_path, screen):
+
+def show_intro_banner(intro_banner_path, screen) -> Rect:
     intro_banner = image.load(intro_banner_path)
     intro_banner = scale(intro_banner, (screen.get_width(), intro_banner.get_height() * 2))
     intro_banner_rect = intro_banner.get_rect()
     intro_banner_rect.midtop = (screen.get_width() / 2, screen.get_height() * 1 / 6)
     screen.blit(intro_banner, intro_banner_rect)
+    return intro_banner_rect
 
 
-def banner_sparkle(short, screen):
+def banner_sparkle(short: bool, screen: Surface) -> None:
     # first (long) sparkle starts 654 frames in, ends at 678 frames in, lasts (678 - 654 = 24 frames)
     # first (short) sparkle starts 782 frames in, ends at 794 frames in, lasts (794 - 782 = 12 frames)
     for banner in os.listdir(join(IMAGES_DIR, 'intro_banner', 'sparkle')):
@@ -32,19 +34,19 @@ def banner_sparkle(short, screen):
         else:
             frames_per_slide = 3
         while convert_to_frames(get_ticks()) < before_frame + frames_per_slide:
-            show_intro_banner(join(IMAGES_DIR, 'intro_banner', 'sparkle', banner), screen)
-            display.flip()
+            intro_banner_rect = show_intro_banner(join(IMAGES_DIR, 'intro_banner', 'sparkle', banner), screen)
+            display.update(intro_banner_rect)
 
 
-def draw_banner_text(screen):
+def draw_banner_text(screen: Surface):
     draw_text("-PUSH START-", screen.get_width() / 2, screen.get_height() * 10 / 16, screen, ORANGE)
-    pink_banner_text = ("K key: A Button", "J key: B Button", "I key: Start", "WASD / Arrow Keys: Move")
+    pink_banner_text = controls
     for i in range(11, 15):
         draw_text(pink_banner_text[i - 11], screen.get_width() / 2, screen.get_height() * i / 16, screen, PINK, text_wrap_length=23)
     draw_text("(↑ ← ↓ →)", screen.get_width() / 2, screen.get_height() * 15 / 16, screen, PINK, font_name=SMB_FONT_PATH)
 
 
-def repeated_sparkle(screen, clock_check, short):
+def repeated_sparkle(screen: Surface, clock_check, short) -> int | float:
     if get_ticks() - clock_check >= convert_to_milliseconds(256):
         clock_check = get_ticks()
         banner_sparkle(short, screen)
@@ -73,21 +75,21 @@ class Intro:
 
     def show_start_screen(self, screen, start_time, clock):
         screen.fill(BLACK)
-        show_intro_banner(INTRO_BANNER_PATH, screen)
-        display.flip()
+        intro_banner_rect = show_intro_banner(INTRO_BANNER_PATH, screen)
+        display.update(intro_banner_rect)
         waiting = True
         while waiting:
             clock.tick(FPS)
-            for current_event in get():
+            for current_event in event.get():
                 if current_event.type == QUIT:
                     quit()
                     sys.exit()
-                elif current_event.type == KEYUP:
+                elif current_event.type == KEYDOWN:
                     if current_event.key in (K_i, K_k):
                         waiting = False
             if convert_to_frames_since_start_time(start_time) >= 620:  # intro banner with text displays 620 frames in
                 waiting = False
-            display.flip()
+            display.update(intro_banner_rect)
         self.show_intro_dragon_banner_with_text(screen, clock)
 
     def show_intro_dragon_banner_with_text(self, screen, clock):
@@ -101,11 +103,11 @@ class Intro:
         while intro_banner_with_text_enabled:
             self.handle_all_sparkles(intro_banner_with_text_enabled_start_time, screen)
             clock.tick(FPS)
-            for current_event in get():
+            for current_event in event.get():
                 if current_event.type == QUIT:
                     quit()
                     sys.exit()
-                elif current_event.type == KEYUP:
+                elif current_event.type == KEYDOWN:
                     if current_event.key in (K_i, K_k):
                         intro_banner_with_text_enabled = False
             display.flip()
@@ -125,15 +127,3 @@ class Intro:
                     self.second_short_sparkle_done, self.last_second_short_sparkle_clock_check = handle_sparkles(screen, self.second_short_sparkle_done,
                                                                                                                  self.last_second_short_sparkle_clock_check,
                                                                                                                  short=True)
-
-
-def wait_for_key(clock):
-    waiting = True
-    while waiting:
-        clock.tick(FPS)
-        for current_event in get():
-            if current_event.type == QUIT:
-                quit()
-                sys.exit()
-            elif current_event.type == KEYUP:
-                waiting = False
