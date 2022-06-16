@@ -86,7 +86,6 @@ class Player(AnimatedSprite):
         self.agility = levels_list[level]['agility']
         self.max_hp = levels_list[level]['max_hp']
         self.max_mp = levels_list[level]['max_mp']
-        self.agility = levels_list[level]['agility']
         for i in range(1, level + 1):
             if levels_list[i].get('spell'):
                 if levels_list[i]['spell'] not in self.spells:
@@ -94,6 +93,9 @@ class Player(AnimatedSprite):
 
     def update_stats_by_level(self):
         self.strength = levels_list[self.level]['strength']
+        self.agility = levels_list[self.level]['agility']
+        self.max_hp = levels_list[self.level]['max_hp']
+        self.max_mp = levels_list[self.level]['max_mp']
 
     def restore_hp(self):
         self.current_hp = self.max_hp
