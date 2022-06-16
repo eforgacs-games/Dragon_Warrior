@@ -1,14 +1,13 @@
 # Constants
 import ntpath
 import os
-import time
 from enum import IntEnum
 from os.path import join, sep, exists
 
 from pygame import Surface, image, transform, mixer, font
 from pygame.time import get_ticks
 
-from src.config import SFX_DIR, MUSIC_ENABLED, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, TEXT_SPEED, SOUND_ENABLED, FPS, TILE_SIZE
+from src.config import SFX_DIR, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, SOUND_ENABLED, FPS, TILE_SIZE
 
 
 class Direction(IntEnum):
@@ -94,15 +93,6 @@ else:
     dungeon_floor_6_music = join(MUSIC_DIR, 'NES', '11 Dragon Quest 1 - Dark Dungeon ~ Floor 6.mp3')
     dungeon_floor_7_music = join(MUSIC_DIR, 'NES', '12 Dragon Quest 1 - Dark Dungeon ~ Floor 7.mp3')
     dungeon_floor_8_music = join(MUSIC_DIR, 'NES', '13 Dragon Quest 1 - Dark Dungeon ~ Floor 8.mp3')
-
-
-def play_music(path='data/sound/music'):
-    if MUSIC_ENABLED:
-        global _music_library
-        music = _music_library.get(path)
-        music = retrieve_audio_resource(_music_library, path, music)
-        music.play(-1)
-
 
 # Images
 
@@ -259,11 +249,10 @@ def get_image(path):
 # Fonts
 
 font.init()
+
 DRAGON_QUEST_FONT_PATH = join(FONTS_DIR, 'dragon-quest.ttf')
-if exists(DRAGON_QUEST_FONT_PATH):
-    DRAGON_QUEST_FONT = font.Font(DRAGON_QUEST_FONT_PATH, 15)
-else:
-    DRAGON_QUEST_FONT = font.Font(find_file('dragon-quest.ttf', root_project_path), 15)
+
+DRAGON_QUEST_FONT = font.Font(DRAGON_QUEST_FONT_PATH, 15)
 
 SMB_FONT_PATH = join(FONTS_DIR, 'super_mario_bros__nes_font.ttf')
 SMB_FONT = font.Font(SMB_FONT_PATH, 15)
@@ -310,25 +299,6 @@ def get_tile_id_by_coordinates(column: int, row: int, game_map) -> str:
         return game_map.get_tile_by_value(game_map.layout[row][column])
 
 
-def print_with_beep_sfx(string_to_print):
-    match TEXT_SPEED:
-        case "Slow":
-            sleep_time = 0.03
-        case "Medium":
-            sleep_time = 0.02
-        case "Fast":
-            sleep_time = 0.01
-        case _:
-            sleep_time = 0
-    for char in string_to_print:
-        # prints in chunks, not one fluid print
-        play_sound(text_beep_sfx)
-        print(char, end='', flush=True)
-        time.sleep(sleep_time)
-        # pygame.time.wait(1)
-    print("\n")
-
-
 def convert_to_frames(time_to_convert):
     # TODO(ELF): change FPS to be self.fps (the actual FPS setting if it is changed to double/triple/quadruple etc. speed).
     return FPS * time_to_convert / 1000
@@ -359,7 +329,12 @@ def get_surrounding_tile_values(coordinates, map_layout):
     except IndexError:
         up = None
     neighbors = [x for x in [left, down, right, up] if x is not None]
-    return set(neighbors + [map_layout[x][y]])
+    current_tile = [map_layout[x][y]] if x < len(map_layout) and y < len(map_layout[0]) else None
+    if current_tile:
+        all_neighbors = set(neighbors + current_tile)
+    else:
+        all_neighbors = set(neighbors)
+    return all_neighbors
 
 
 def get_next_tile_identifier(character_column: int, character_row: int, direction_value: int, current_map, offset: int = 1) -> str:

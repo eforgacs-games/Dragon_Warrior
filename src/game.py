@@ -10,7 +10,7 @@ from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
 
-from src import maps
+from src import maps, menu_functions
 from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
@@ -25,7 +25,7 @@ from src.intro import Intro, controls
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu, Menu
-from src.menu_functions import select_name, convert_list_to_newline_separated_string
+from src.menu_functions import convert_list_to_newline_separated_string
 from src.movement import bump_and_reset
 from src.player.player import Player
 from src.sound import bump, play_sound
@@ -151,7 +151,7 @@ class Game:
         self.player.adventure_log = select_from_vertical_menu(get_ticks(), screen, ADVENTURE_LOG_PATH,
                                                               ADVENTURE_LOG_1_PATH,
                                                               [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]) + 1
-        self.player.name = select_name(get_ticks(), screen, self.cmd_menu)
+        self.player.name = menu_functions.select_name(get_ticks(), screen, self.cmd_menu)
         self.player.set_initial_stats()
         play_sound(menu_button_sfx)
         fade(fade_out=True, screen=self.screen)
@@ -182,11 +182,7 @@ class Game:
         # a quick fix would be to add an exception in the conditional for
         # the map where staircases right next to each other need to be enabled,
         # as done with Cantlin and others below
-        immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
-        # a quick fix to prevent buggy warping - set to > 2
-        if self.tiles_moved_since_spawn > 2 or (self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps):
-            for staircase_location, staircase_dict in self.current_map.staircases.items():
-                self.process_staircase_warps(staircase_dict, staircase_location)
+        self.handle_warps()
 
         self.handle_keypresses(current_key)
 
@@ -233,6 +229,13 @@ class Game:
         # print(f'{self.get_character_identifier_by_coordinates(self.player.next_next_coordinates)}')
 
         event.pump()
+
+    def handle_warps(self):
+        immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
+        # a quick fix to prevent buggy warping - set to > 2
+        if self.tiles_moved_since_spawn > 2 or (self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps):
+            for staircase_location, staircase_dict in self.current_map.staircases.items():
+                self.process_staircase_warps(staircase_dict, staircase_location)
 
     def handle_keypresses(self, current_key):
         self.handle_b_button(current_key)

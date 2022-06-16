@@ -1,5 +1,8 @@
 import os
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
+
+from pygame import KEYDOWN, K_RETURN, event
 
 from src.common import Direction
 from src.game import Game
@@ -42,3 +45,21 @@ class TestCommandMenu(TestCase):
 
     def test_npc_is_across_counter(self):
         self.assertFalse(self.game.cmd_menu.npc_is_across_counter(self.game.current_map.characters['HERO']))
+
+    def test_take_item(self):
+        self.assertEqual([], self.game.player.inventory)
+        mocked_return = MagicMock()
+        mocked_return.type = KEYDOWN
+        mocked_return.key = K_RETURN
+        with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
+            self.game.cmd_menu.take_item("test_item")
+        self.assertIn("test_item", self.game.player.inventory)
+
+    def test_take_gold(self):
+        self.assertEqual(0, self.game.player.gold)
+        mocked_return = MagicMock()
+        mocked_return.type = KEYDOWN
+        mocked_return.key = K_RETURN
+        with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
+            self.game.cmd_menu.take_gold({'item': 'GOLD', 'amount': 120})
+        self.assertEqual(120, self.game.player.gold)
