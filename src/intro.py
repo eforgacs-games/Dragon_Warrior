@@ -2,7 +2,7 @@ import os
 import sys
 from os.path import join
 
-from pygame import image, display, QUIT, quit, KEYUP, K_i, K_k
+from pygame import image, display, QUIT, quit, KEYUP, K_i, K_k, Rect, Surface
 from pygame.event import get
 from pygame.time import get_ticks
 from pygame.transform import scale
@@ -16,7 +16,7 @@ from src.visual_effects import fade
 controls = "K key: A Button", "J key: B Button", "I key: Start", "WASD / Arrow Keys: Move"
 
 
-def show_intro_banner(intro_banner_path, screen):
+def show_intro_banner(intro_banner_path, screen) -> Rect:
     intro_banner = image.load(intro_banner_path)
     intro_banner = scale(intro_banner, (screen.get_width(), intro_banner.get_height() * 2))
     intro_banner_rect = intro_banner.get_rect()
@@ -25,7 +25,7 @@ def show_intro_banner(intro_banner_path, screen):
     return intro_banner_rect
 
 
-def banner_sparkle(short, screen):
+def banner_sparkle(short: bool, screen: Surface) -> None:
     # first (long) sparkle starts 654 frames in, ends at 678 frames in, lasts (678 - 654 = 24 frames)
     # first (short) sparkle starts 782 frames in, ends at 794 frames in, lasts (794 - 782 = 12 frames)
     for banner in os.listdir(join(IMAGES_DIR, 'intro_banner', 'sparkle')):
@@ -39,7 +39,7 @@ def banner_sparkle(short, screen):
             display.update(intro_banner_rect)
 
 
-def draw_banner_text(screen):
+def draw_banner_text(screen: Surface):
     draw_text("-PUSH START-", screen.get_width() / 2, screen.get_height() * 10 / 16, screen, ORANGE)
     pink_banner_text = controls
     for i in range(11, 15):
@@ -47,7 +47,7 @@ def draw_banner_text(screen):
     draw_text("(↑ ← ↓ →)", screen.get_width() / 2, screen.get_height() * 15 / 16, screen, PINK, font_name=SMB_FONT_PATH)
 
 
-def repeated_sparkle(screen, clock_check, short):
+def repeated_sparkle(screen: Surface, clock_check, short) -> int:
     if get_ticks() - clock_check >= convert_to_milliseconds(256):
         clock_check = get_ticks()
         banner_sparkle(short, screen)
@@ -128,15 +128,3 @@ class Intro:
                     self.second_short_sparkle_done, self.last_second_short_sparkle_clock_check = handle_sparkles(screen, self.second_short_sparkle_done,
                                                                                                                  self.last_second_short_sparkle_clock_check,
                                                                                                                  short=True)
-
-
-def wait_for_key(clock):
-    waiting = True
-    while waiting:
-        clock.tick(FPS)
-        for current_event in get():
-            if current_event.type == QUIT:
-                quit()
-                sys.exit()
-            elif current_event.type == KEYUP:
-                waiting = False
