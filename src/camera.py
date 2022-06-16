@@ -37,6 +37,4 @@ class Camera:
         self.y = coord[1]
         # TODO: Investigate Python getters/setters (prop and props live templates?)
 
-    def move(self, direction):
-        # TODO: Migrate game move method here.
-        pass
+    # TODO: Migrate game move method here.

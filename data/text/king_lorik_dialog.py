@@ -1,4 +1,4 @@
-from src.common import print_with_beep_sfx, play_sound, confirmation_sfx
+from src.common import play_sound, confirmation_sfx
 
 
 def prompt_for_save(player):
@@ -6,10 +6,10 @@ def prompt_for_save(player):
     deeds = input("Will thou tell me now of thy deeds so they won't be forgotten?").lower().strip()
     play_sound(confirmation_sfx)
     if deeds == "y":
-        print_with_beep_sfx("Thy deeds have been recorded on the Imperial Scrolls of Honor.")
+        print("Thy deeds have been recorded on the Imperial Scrolls of Honor.")
     continuing = input("Dost thou wish to continue thy quest?").lower().strip()
     play_sound(confirmation_sfx)
     if continuing == "y":
-        print_with_beep_sfx(f"Goodbye now, {player.name}.\n'Take care and tempt not the Fates.")
+        print(f"Goodbye now, {player.name}.\n'Take care and tempt not the Fates.")
     elif continuing == "N":
-        print_with_beep_sfx("Rest then for awhile.")
+        print("Rest then for awhile.")

@@ -2,8 +2,7 @@ import os
 import sys
 from os.path import join
 
-from pygame import image, display, QUIT, quit, KEYUP, K_i, K_k, Rect, Surface
-from pygame.event import get
+from pygame import image, display, QUIT, quit, K_i, K_k, Rect, Surface, event, KEYDOWN
 from pygame.time import get_ticks
 from pygame.transform import scale
 
@@ -47,7 +46,7 @@ def draw_banner_text(screen: Surface):
     draw_text("(↑ ← ↓ →)", screen.get_width() / 2, screen.get_height() * 15 / 16, screen, PINK, font_name=SMB_FONT_PATH)
 
 
-def repeated_sparkle(screen: Surface, clock_check, short) -> int:
+def repeated_sparkle(screen: Surface, clock_check, short) -> int | float:
     if get_ticks() - clock_check >= convert_to_milliseconds(256):
         clock_check = get_ticks()
         banner_sparkle(short, screen)
@@ -81,11 +80,11 @@ class Intro:
         waiting = True
         while waiting:
             clock.tick(FPS)
-            for current_event in get():
+            for current_event in event.get():
                 if current_event.type == QUIT:
                     quit()
                     sys.exit()
-                elif current_event.type == KEYUP:
+                elif current_event.type == KEYDOWN:
                     if current_event.key in (K_i, K_k):
                         waiting = False
             if convert_to_frames_since_start_time(start_time) >= 620:  # intro banner with text displays 620 frames in
@@ -104,11 +103,11 @@ class Intro:
         while intro_banner_with_text_enabled:
             self.handle_all_sparkles(intro_banner_with_text_enabled_start_time, screen)
             clock.tick(FPS)
-            for current_event in get():
+            for current_event in event.get():
                 if current_event.type == QUIT:
                     quit()
                     sys.exit()
-                elif current_event.type == KEYUP:
+                elif current_event.type == KEYDOWN:
                     if current_event.key in (K_i, K_k):
                         intro_banner_with_text_enabled = False
             display.flip()
