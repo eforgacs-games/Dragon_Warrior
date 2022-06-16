@@ -4,13 +4,13 @@ from typing import List, Tuple
 
 import numpy as np
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit
+    display, event, image, init, key, mixer, quit, K_F1
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
 
-from src import maps
+from src import maps, menu_functions
 from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
@@ -21,11 +21,11 @@ from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATE
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles, \
     draw_hovering_stats_window, select_from_vertical_menu
-from src.intro import Intro
+from src.intro import Intro, controls
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu, Menu
-from src.menu_functions import select_name
+from src.menu_functions import convert_list_to_newline_separated_string
 from src.movement import bump_and_reset
 from src.player.player import Player
 from src.sound import bump, play_sound
@@ -38,15 +38,17 @@ class Game:
 
     def __init__(self):
         # map/graphics
-
         self.background = None
         self.big_map = None
         self.layouts = MapLayouts()
+        self.fullscreen_enabled = FULLSCREEN_ENABLED
         # text
+        self.initial_dialog_enabled = INITIAL_DIALOG_ENABLED
         self.is_initial_dialog = True
         self.skip_text = False
         # intro
         self.start_time = get_ticks()
+        self.splash_screen_enabled = SPLASH_SCREEN_ENABLED
         # engine
         self.fps = FPS
         self.last_map = None
@@ -56,16 +58,18 @@ class Game:
         self.not_moving_time_start = None
         self.display_hovering_stats = False
         self.hovering_stats_displayed = False
+        # debugging
+        self.show_coordinates = SHOW_COORDINATES
         init()
         self.paused = False
         # Create the game window.
-        if FULLSCREEN_ENABLED:
+        if self.fullscreen_enabled:
             # if it's producing a segmentation fault, try maybe not using the SCALED flag
             # flags = FULLSCREEN | SCALED
-            flags = FULLSCREEN
+            self.flags = FULLSCREEN
         else:
             # flags = RESIZABLE | SCALED
-            flags = RESIZABLE
+            self.flags = RESIZABLE
         # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
         # without SCALED, it will show more of the map, but will also not center the camera
         # it might be a nice comfort addition to add to center the camera, while also showing more of the map
@@ -74,7 +78,7 @@ class Game:
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
         self.speed = 2
         win_width, win_height = NES_RES[0] * self.scale, NES_RES[1] * self.scale
-        self.screen = set_mode((win_width, win_height), flags)
+        self.screen = set_mode((win_width, win_height), self.flags)
         # self.screen.set_alpha(None)
         set_caption("Dragon Warrior")
 
@@ -109,7 +113,8 @@ class Game:
         self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
         self.clock = Clock()
         self.music_enabled = MUSIC_ENABLED
-        if SPLASH_SCREEN_ENABLED:
+
+        if self.splash_screen_enabled:
             self.load_and_play_music(intro_overture)
         else:
             self.load_and_play_music(self.current_map.music_file_path)
@@ -126,30 +131,27 @@ class Game:
         Main loop.
         :return: None
         """
-        if SPLASH_SCREEN_ENABLED:
+        if self.splash_screen_enabled:
             intro = Intro()
             intro.show_start_screen(self.screen, self.start_time, self.clock)
+            self.load_and_play_music(village_music)
             self.show_main_menu_screen(self.screen)
         self.draw_all()
         while True:
             self.clock.tick(self.fps)
             self.get_events()
             self.draw_all()
-            self.update_screen()
+            display.flip()
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
-        self.load_and_play_music(village_music)
         select_from_vertical_menu(get_ticks(), screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [])
         # adventure_log_blinking = True
         # while adventure_log_blinking:
         self.player.adventure_log = select_from_vertical_menu(get_ticks(), screen, ADVENTURE_LOG_PATH,
                                                               ADVENTURE_LOG_1_PATH,
                                                               [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]) + 1
-
-        blink_start = get_ticks()
-
-        self.player.name = select_name(blink_start, screen, self.cmd_menu)
+        self.player.name = menu_functions.select_name(get_ticks(), screen, self.cmd_menu)
         self.player.set_initial_stats()
         play_sound(menu_button_sfx)
         fade(fade_out=True, screen=self.screen)
@@ -170,7 +172,7 @@ class Game:
         current_key = key.get_pressed()
         if not self.player.is_moving:
             set_character_position(self.player)
-        if self.enable_movement and not self.paused:
+        if self.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
             self.move_player(current_key)
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
@@ -180,11 +182,7 @@ class Game:
         # a quick fix would be to add an exception in the conditional for
         # the map where staircases right next to each other need to be enabled,
         # as done with Cantlin and others below
-        immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
-        # a quick fix to prevent buggy warping - set to > 2
-        if self.tiles_moved_since_spawn > 2 or (self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps):
-            for staircase_location, staircase_dict in self.current_map.staircases.items():
-                self.process_staircase_warps(staircase_dict, staircase_location)
+        self.handle_warps()
 
         self.handle_keypresses(current_key)
 
@@ -206,7 +204,7 @@ class Game:
         # This prints out the current tile that the player is standing on.
         # print(f"self.player.current_tile: {self.player.current_tile}")
 
-        if SHOW_COORDINATES:
+        if self.show_coordinates:
             print(f"{self.player.row, self.player.column}")
 
         # print(self.camera.get_pos())
@@ -232,12 +230,36 @@ class Game:
 
         event.pump()
 
+    def handle_warps(self):
+        immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
+        # a quick fix to prevent buggy warping - set to > 2
+        if self.tiles_moved_since_spawn > 2 or (self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps):
+            for staircase_location, staircase_dict in self.current_map.staircases.items():
+                self.process_staircase_warps(staircase_dict, staircase_location)
+
     def handle_keypresses(self, current_key):
+        self.handle_b_button(current_key)
+        self.handle_a_button(current_key)
+        self.handle_start_button(current_key)
+        self.handle_select_button(current_key)
+        # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed. (modernization)
+        # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
+        #     self.scale = self.scale + 1
+        self.handle_help_button(current_key)
+        self.handle_fps_changes(current_key)
+
+    def handle_help_button(self, current_key):
+        if current_key[K_F1]:
+            self.cmd_menu.show_text_in_dialog_box(f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
+
+    def handle_b_button(self, current_key):
         if current_key[K_j]:
             # B button
             self.unlaunch_menu(self.cmd_menu)
             draw_all_tiles_in_current_map(self.current_map, self.background)
             # print("J key pressed (B button).")
+
+    def handle_a_button(self, current_key):
         if current_key[K_k]:
             # A button
             # print("K key pressed (A button).")
@@ -246,6 +268,8 @@ class Game:
                 self.display_hovering_stats = True
                 self.cmd_menu.launch_signaled = True
                 self.pause_all_movement()
+
+    def handle_start_button(self, current_key):
         if current_key[K_i]:
             # Start button
             if self.paused:
@@ -255,13 +279,12 @@ class Game:
                 self.pause_all_movement()
                 self.paused = True
             print("I key pressed (Start button).")
+
+    @staticmethod
+    def handle_select_button(current_key):
         if current_key[K_u]:
             # Select button
-            print("U key pressed (Select button).")
-        # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed. (modernization)
-        # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
-        #     self.scale = self.scale + 1
-        self.handle_fps_changes(current_key)
+            pass
 
     def handle_fps_changes(self, current_key) -> None:
         if current_key[K_1]:
@@ -392,10 +415,11 @@ class Game:
                 self.drop_down_hovering_stats_window()
             draw_hovering_stats_window(self.screen, self.player)
         self.handle_menu_launch(self.cmd_menu)
-        if self.cmd_menu.launched:
+        if self.cmd_menu.menu.is_enabled():
             self.cmd_menu.menu.update(self.events)
-            self.enable_movement = False
-        display.flip()
+        else:
+            if not self.is_initial_dialog:
+                self.enable_movement = True
 
     def drop_down_hovering_stats_window(self):
         self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
@@ -403,9 +427,11 @@ class Game:
         self.hovering_stats_displayed = True
 
     def handle_initial_dialog(self):
-        if INITIAL_DIALOG_ENABLED:
+
+        if self.initial_dialog_enabled:
             if self.current_map.identifier == 'TantegelThroneRoom':
                 if self.is_initial_dialog:
+                    display.flip()
                     self.display_hovering_stats = False
                     self.cmd_menu.launch_signaled = False
                     self.run_automatic_initial_dialog()
@@ -414,18 +440,16 @@ class Game:
                         self.set_to_save_prompt()
                     else:
                         self.set_to_post_initial_dialog()
-                        if not self.cmd_menu.launched:
-                            self.enable_movement = True
 
         else:
             self.set_to_post_initial_dialog()
-            if not self.cmd_menu.launched:
+            if not self.cmd_menu.menu.is_enabled():
                 self.enable_movement = True
 
     def run_automatic_initial_dialog(self):
         self.enable_movement = False
         for current_event in self.events:
-            if current_event.type == KEYUP and not self.automatic_initial_dialog_run:
+            if (current_event.type == KEYUP and not self.automatic_initial_dialog_run) or self.skip_text:
                 self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
                                                       skip_text=self.skip_text)
                 self.set_to_post_initial_dialog()
@@ -486,16 +510,13 @@ class Game:
                     (8 * TILE_SIZE,
                      5 * TILE_SIZE)
                 )
-                command_menu_subsurface.fill(BLACK)
-                menu_to_launch.menu.draw(command_menu_subsurface)
-                display.flip()
-            if not menu_to_launch.launched:
-                self.launch_menu(menu_to_launch.menu.get_id())
-
-    @staticmethod
-    def update_screen() -> None:
-        """Update the screen's display."""
-        display.flip()
+                if not self.cmd_menu.menu.is_enabled():
+                    play_sound(menu_button_sfx)
+                    self.cmd_menu.window_drop_down_effect(x=6, y=1, width=8, height=5)
+                    self.cmd_menu.menu.enable()
+                else:
+                    menu_to_launch.menu.draw(command_menu_subsurface)
+                    display.update(command_menu_subsurface.get_rect())
 
     def change_map(self, next_map: maps.DragonWarriorMap) -> None:
         """
@@ -591,8 +612,10 @@ class Game:
         """
         menu_to_unlaunch.launch_signaled = False
         if menu_to_unlaunch.menu.get_id() == 'command':
-            self.unpause_all_movement()
-        menu_to_unlaunch.launched = False
+            if self.cmd_menu.menu.is_enabled():
+                self.unpause_all_movement()
+                self.cmd_menu.window_drop_up_effect(x=6, y=1, width=8, height=5)
+                self.cmd_menu.menu.disable()
 
     def unpause_all_movement(self) -> None:
         """
@@ -607,17 +630,6 @@ class Game:
         :return: None
         """
         self.enable_animate, self.enable_roaming, self.enable_movement = False, False, False
-
-    def launch_menu(self, menu_to_launch: str) -> None:
-        """
-        Launch either the command menu, which is used by the player to interact with the world in the game, or a dialog box.
-        :param menu_to_launch:
-        :return: None
-        """
-        if menu_to_launch == 'command':
-            if not self.cmd_menu.launched:
-                play_sound(menu_button_sfx)
-            self.cmd_menu.launched = True
 
     def move_player(self, current_key) -> None:
         """

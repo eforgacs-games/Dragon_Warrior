@@ -2,15 +2,14 @@ import functools
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN
-from pygame.event import get
+from pygame import Surface, display, KEYDOWN, Rect, event
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
 from data.text.dialog import blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
-    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time
+    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.maps_functions import get_center_point
@@ -47,7 +46,6 @@ class Menu:
                                                                       arrow_size=(SCALE * 5, SCALE * 6))
                                                                   )
         self.launch_signaled = False
-        self.launched = False
         self.skip_text = False
 
 
@@ -65,7 +63,7 @@ class CommandMenu(Menu):
         self.current_tile = self.player.current_tile
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
-        self.window_drop_down_effect(x=5, y=1, width=8, height=5)
+
         self.command_menu_surface = create_window(x=5, y=1, width=8, height=5, window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH, screen=self.screen)
         self.dialog_lookup = DialogLookup(self)
         self.menu = pygame_menu.Menu(
@@ -91,6 +89,7 @@ class CommandMenu(Menu):
         self.menu.add.button('ITEM', self.item, margin=(0, 4))
         self.menu.add.button('DOOR', self.door, margin=(0, 4))
         self.menu.add.button('TAKE', self.take, margin=(0, 4))
+        self.menu.disable()
 
     def npc_is_across_counter(self, character_dict):
         return self.player.next_tile_id == 'WOOD' and (
@@ -102,13 +101,10 @@ class CommandMenu(Menu):
             if character.get('dialog'):
                 self.dialog_lookup.camera_position = self.camera_position
                 self.show_text_in_dialog_box(character['dialog'], add_quotes=True, skip_text=self.skip_text)
-                if character.get('side_effects'):
-                    for side_effect in character['side_effects']:
-                        side_effect()
-            else:
-                print(f"Character has no dialog: {dialog_character}")
-        else:
-            print(f"Character not in lookup table: {dialog_character}")
+        #     else:
+        #         print(f"Character has no dialog: {dialog_character}")
+        # else:
+        #     print(f"Character not in lookup table: {dialog_character}")
 
     def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True, temp_text_start: int = None, skip_text: bool = False,
                                 last_line=False):
@@ -142,12 +138,12 @@ class CommandMenu(Menu):
                     #                       self.screen)
                     # else:
                     draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, center_align=False)
-                    display.flip()
+                    display.update(Rect(2 * TILE_SIZE, 9 * TILE_SIZE, 12 * TILE_SIZE, 5 * TILE_SIZE))
                     if not last_line:
                         blink_down_arrow(self.screen)
                     # playing with fire a bit here with the short-circuiting
                     if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
-                            [current_event.type == KEYDOWN for current_event in get()]):
+                            [current_event.type == KEYDOWN for current_event in event.get()]):
                         if not skip_text:
                             play_sound(menu_button_sfx)
                         display_current_line = False
@@ -186,8 +182,9 @@ class CommandMenu(Menu):
         if drop_up:
             self.window_drop_up_effect(x=2, y=9, width=12, height=5)
 
-    def window_drop_down_effect(self, x, y, width, height):
+    def window_drop_down_effect(self, x, y, width, height) -> None:
         """Intro effect for menus."""
+        window_rect = Rect(x * TILE_SIZE, y * TILE_SIZE, width * TILE_SIZE, height * TILE_SIZE)
         for i in range(height + 1):
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
@@ -195,14 +192,15 @@ class CommandMenu(Menu):
             # each "bar" lasts 1 frame
             while convert_to_frames_since_start_time(drop_down_start) < 1:
                 self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
-                display.update()
+                display.update(window_rect)
 
-    def window_drop_up_effect(self, x, y, width, height):
+    def window_drop_up_effect(self, x, y, width, height) -> None:
         """Outro effect for menus."""
         # draw all the tiles initially once
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile in self.current_map.tile_types_in_current_map:
                 tile_dict['group'].draw(self.background)
+        window_rect = Rect(TILE_SIZE * x, TILE_SIZE * y, TILE_SIZE * width, TILE_SIZE * height)
         for i in range(height - 1, -1, -1):
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
@@ -217,7 +215,48 @@ class CommandMenu(Menu):
                                          (character_dict['character'].column * TILE_SIZE, character_dict['character'].row * TILE_SIZE))
                 self.screen.blit(self.background, self.camera_position)
                 self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
-                display.update()
+                display.update(window_rect)
+
+    def take_item(self, item_name: str):
+        play_sound(open_treasure_sfx)
+        self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
+        self.show_text_in_dialog_box(f"Fortune smiles upon thee, {self.player.name}.\n"
+                                     f"Thou hast found the {item_name}.", skip_text=self.skip_text)
+        # could probably assign the new treasure box values by using this line:
+        self.player.inventory.append(item_name)
+
+    def take_gold(self, treasure_info: dict):
+        play_sound(open_treasure_sfx)
+        gold_amount = treasure_info['amount']
+        self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
+        self.show_text_in_dialog_box(f"Of GOLD thou hast gained {gold_amount}", skip_text=self.skip_text)
+        self.player.gold += gold_amount
+
+    def set_tile_by_coordinates(self, new_tile_identifier, column, row, player):
+        self.current_tile = 'BRICK'
+        old_tile_identifier = get_tile_id_by_coordinates(column, row, self.current_map)
+        if column == player.column and row == player.row:
+            player.current_tile = new_tile_identifier
+        self.current_map.layout[row][column] = self.game.layouts.map_layout_lookup[self.current_map.__class__.__name__][row][column] = \
+            self.current_map.floor_tile_key[new_tile_identifier]['val']
+        center_pt = get_center_point(column, row)
+
+        self.current_map.floor_tile_key[old_tile_identifier]['group'] = Group()
+        self.current_map.add_tile(self.current_map.floor_tile_key[new_tile_identifier], center_pt)
+        for row in range(len(self.current_map.layout)):
+            for column in range(len(self.current_map.layout[row])):
+                self.current_map.center_pt = get_center_point(column, row)
+                if self.current_map.layout[row][column] <= max(self.current_map.floor_tile_key[old_tile_identifier]['val'],
+                                                               self.current_map.floor_tile_key[new_tile_identifier]['val']):
+                    self.current_map.map_floor_tiles(column, row)
+
+    def get_dialog_box_underlying_tiles(self, current_map, current_box_height):
+        # TODO(ELF): Can be improved further by narrowing the columns to just where the box is, not only the rows.
+        box_start_row = 2
+        box_end_row = current_box_height + box_start_row
+        row_tile_sets = [set(row) for row in
+                         current_map.layout[self.player.row + box_start_row:self.player.row + box_end_row]]
+        return set([item for sublist in row_tile_sets for item in sublist])
 
     # Menu functions
 
@@ -347,11 +386,12 @@ class CommandMenu(Menu):
         if self.player.next_tile_id == 'DOOR':
             if 'key' in self.player.inventory:
                 # actually open the door
+                play_sound(open_door_sfx)
                 print("Door opened!")
             else:
-                self.show_text_in_dialog_box(("Thou hast not a key to use.",), skip_text=self.skip_text)
+                self.show_text_in_dialog_box("Thou hast not a key to use.", skip_text=self.skip_text)
         else:
-            self.show_text_in_dialog_box(("There is no door here.",), skip_text=self.skip_text)
+            self.show_text_in_dialog_box("There is no door here.", skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
@@ -367,23 +407,9 @@ class CommandMenu(Menu):
             item_name = treasure_info['item']
             if item_name:
                 if item_name == 'GOLD':
-                    play_sound(open_treasure_sfx)
-                    gold_amount = treasure_info['amount']
-
-                    self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-                    self.show_text_in_dialog_box(f"Of GOLD thou hast gained {gold_amount}", skip_text=self.skip_text)
-
-                    self.player.gold += gold_amount
+                    self.take_gold(treasure_info)
                 else:
-                    play_sound(open_treasure_sfx)
-
-                    self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-                    self.show_text_in_dialog_box(f"Fortune smiles upon thee, {self.player.name}.\n"
-                                                 f"Thou hast found the {item_name}.", skip_text=self.skip_text)
-                    # could probably assign the new treasure box values by using this line:
-                    self.player.inventory.append(item_name)
-
-                    # self.player.current_tile = 'BRICK'
+                    self.take_item(item_name)
             else:
                 self.show_text_in_dialog_box("Unfortunately, it is empty.", skip_text=self.skip_text)
         #     take it and update inventory accordingly
@@ -393,30 +419,3 @@ class CommandMenu(Menu):
             self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",), skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
-
-    def set_tile_by_coordinates(self, new_tile_identifier, column, row, player):
-        # TODO(ELF): This works, but resets whenever the map is reloaded.
-        self.current_tile = 'BRICK'
-        old_tile_identifier = get_tile_id_by_coordinates(column, row, self.current_map)
-        if column == player.column and row == player.row:
-            player.current_tile = new_tile_identifier
-        self.current_map.layout[row][column] = self.game.layouts.map_layout_lookup[self.current_map.__class__.__name__][row][column] = \
-            self.current_map.floor_tile_key[new_tile_identifier]['val']
-        center_pt = get_center_point(column, row)
-
-        self.current_map.floor_tile_key[old_tile_identifier]['group'] = Group()
-        self.current_map.add_tile(self.current_map.floor_tile_key[new_tile_identifier], center_pt)
-        for row in range(len(self.current_map.layout)):
-            for column in range(len(self.current_map.layout[row])):
-                self.current_map.center_pt = get_center_point(column, row)
-                if self.current_map.layout[row][column] <= max(self.current_map.floor_tile_key[old_tile_identifier]['val'],
-                                                               self.current_map.floor_tile_key[new_tile_identifier]['val']):
-                    self.current_map.map_floor_tiles(column, row)
-
-    def get_dialog_box_underlying_tiles(self, current_map, current_box_height):
-        # TODO(ELF): Can be improved further by narrowing the columns to just where the box is, not only the rows.
-        box_start_row = 2
-        box_end_row = current_box_height + box_start_row
-        row_tile_sets = [set(row) for row in
-                         current_map.layout[self.player.row + box_start_row:self.player.row + box_end_row]]
-        return set([item for sublist in row_tile_sets for item in sublist])
