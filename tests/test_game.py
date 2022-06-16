@@ -1,14 +1,15 @@
 import os
-from unittest import TestCase
+from unittest import TestCase, mock
 from unittest.mock import MagicMock, patch
 
 import pygame
-from pygame import K_F1, K_z, K_UP, RESIZABLE
+from pygame import K_F1, K_z, K_UP, RESIZABLE, event, KEYDOWN, K_RETURN
 from pygame.imageext import load_extended
 from pygame.sprite import LayeredDirty
 from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
+from src import menu_functions
 from src.camera import Camera
 from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, village_music
 from src.config import SCALE, TILE_SIZE
@@ -271,7 +272,7 @@ class TestGame(TestCase):
 
     def test_wise_man_tantegel_courtyard_dialog(self):
         self.assertEqual("Edward's coming was foretold by legend. May the light shine upon "
-                         'this brave warrior.', self.game.cmd_menu.dialog_lookup.lookup_table['TantegelCourtyard']['WISE_MAN']['dialog'])
+                         'this brave warrior.', self.game.cmd_menu.dialog_lookup.lookup_table['TantegelCourtyard']['WISE_MAN']['dialog'][0])
 
     # gives an IndexError: list index out of range because the constants for K_UP, etc. are huge
     # def test_move_player_directions(self):
@@ -363,6 +364,8 @@ class TestGame(TestCase):
 
     def test_handle_initial_dialog(self):
         self.game.skip_text = True
+        self.game.initial_dialog_enabled = True
+        self.game.is_initial_dialog = True
         self.game.current_map.identifier = 'TantegelThroneRoom'
         self.assertEqual(('Descendant of Erdrick, listen now to my words.',
                           'It is told that in ages past Erdrick fought demons with a Ball of Light.',
@@ -424,6 +427,12 @@ class TestGame(TestCase):
         self.assertEqual('ROAMING_GUARD', self.game.player.current_tile)
         self.assertEqual((0, -1), self.game.player.next_coordinates)
         self.assertEqual((1, -1), self.game.player.next_next_coordinates)
+        self.game.enable_roaming = True
+        self.game.player.row = 10
+        self.game.player.column = 13
+        self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
+        self.game.change_map(TantegelThroneRoom())
+        self.game.get_events()
 
     def test_draw_all(self):
         self.game.draw_all()
@@ -503,3 +512,20 @@ class TestGame(TestCase):
         # self.game.fullscreen_enabled = True
         # self.game.__init__()
         # self.assertEqual(FULLSCREEN, self.game.flags)
+
+    @mock.patch.object(menu_functions, "select_name", return_value="ed")
+    def test_show_main_menu_screen(self, mock_select_name):
+        mocked_return = MagicMock()
+        mocked_return.type = KEYDOWN
+        mocked_return.key = K_RETURN
+        with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
+            self.game.show_main_menu_screen(self.game.screen)
+        self.assertEqual(1, self.game.player.adventure_log)
+        self.assertEqual('ed', self.game.player.name)
+
+        self.assertEqual(1, self.game.player.level)
+
+        # self.assertEqual(1, self.game.player.strength)
+        # self.assertEqual(1, self.game.player.agility)
+        # self.assertEqual(15, self.game.player.max_hp)
+        # self.assertEqual(0, self.game.player.max_mp)

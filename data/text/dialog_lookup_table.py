@@ -86,8 +86,8 @@ class DialogLookup:
                     "King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later.",)},
                 'UP_FACE_GUARD': {'dialog': "If thou art planning to take a rest, first see King Lorik."},
                 'RIGHT_FACE_GUARD_2': {'dialog': welcome_to_tantegel},
-                'WISE_MAN': {'dialog': f"{self.player.name}'s coming was foretold by legend. "
-                                       f"May the light shine upon this brave warrior.", 'side_effects': (self.player.restore_mp,)}},
+                'WISE_MAN': {'dialog': (f"{self.player.name}'s coming was foretold by legend. "
+                                       f"May the light shine upon this brave warrior.", self.player.restore_mp)}},
             'TantegelCellar': {'WISE_MAN': {'dialog': ("I have been waiting long for one such as thee.", "Take the Treasure Chest.")}},
             'Brecconary': {
                 'MAN': {'dialog': "There is a town where magic keys can be purchased."},
