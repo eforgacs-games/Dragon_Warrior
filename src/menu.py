@@ -1,4 +1,5 @@
 import functools
+from collections import Counter
 from typing import Tuple, List
 
 import pygame_menu
@@ -248,14 +249,13 @@ class CommandMenu(Menu):
         self.player.gold += gold_amount
 
     def set_tile_by_coordinates(self, new_tile_identifier, column, row, player):
-        self.current_tile = 'BRICK'
         old_tile_identifier = get_tile_id_by_coordinates(column, row, self.current_map)
         if column == player.column and row == player.row:
+            self.current_tile = new_tile_identifier
             player.current_tile = new_tile_identifier
         self.current_map.layout[row][column] = self.game.layouts.map_layout_lookup[self.current_map.__class__.__name__][row][column] = \
             self.current_map.floor_tile_key[new_tile_identifier]['val']
         center_pt = get_center_point(column, row)
-
         self.current_map.floor_tile_key[old_tile_identifier]['group'] = Group()
         self.current_map.add_tile(self.current_map.floor_tile_key[new_tile_identifier], center_pt)
         for row in range(len(self.current_map.layout)):
@@ -388,7 +388,14 @@ class CommandMenu(Menu):
         if not self.player.inventory:
             self.show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), skip_text=self.skip_text)
         else:
-            self.show_text_in_dialog_box(convert_list_to_newline_separated_string(self.player.inventory), skip_text=self.skip_text)
+            inventory_counter = Counter(self.player.inventory)
+            inventory_string = ""
+            for item, item_amount in inventory_counter.items():
+                if item == "Magic Key":
+                    inventory_string += f"{item} {item_amount}\n"
+                else:
+                    inventory_string += f"{item}\n"
+            self.show_text_in_dialog_box(inventory_string, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
@@ -399,10 +406,11 @@ class CommandMenu(Menu):
         """
         play_sound(menu_button_sfx)
         if self.player.next_tile_id == 'DOOR':
-            if 'key' in self.player.inventory:
+            if 'Magic Key' in self.player.inventory:
                 # actually open the door
+                self.player.inventory.remove('Magic Key')
+                self.set_tile_by_coordinates('BRICK', self.player.next_coordinates[1], self.player.next_coordinates[0], self.player)
                 play_sound(open_door_sfx)
-                print("Door opened!")
             else:
                 self.show_text_in_dialog_box("Thou hast not a key to use.", skip_text=self.skip_text)
         else:
