@@ -9,5 +9,6 @@ def bump(character):
             character.last_bump_time = time.get_ticks()
         if time.get_ticks() - character.last_bump_time >= convert_to_milliseconds(15):
             character.last_bump_time = time.get_ticks()
-            play_sound(bump_sfx)
+            if character.current_tile not in ('BRICK_STAIR_UP', 'BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
+                play_sound(bump_sfx)
     character.bumped = True
