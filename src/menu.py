@@ -151,7 +151,7 @@ class CommandMenu(Menu):
                 # if the line is a method
                 line()
 
-    def show_text_in_dialog_box(self, text: Tuple[str] | List[str] | str, add_quotes=False, temp_text_start=None, skip_text=False, drop_down=True,
+    def show_text_in_dialog_box(self, text: Tuple | List | str, add_quotes=False, temp_text_start=None, skip_text=False, drop_down=True,
                                 drop_up=True):
         """Shows a passage of text in a dialog box.
 
@@ -220,9 +220,24 @@ class CommandMenu(Menu):
     def take_item(self, item_name: str):
         play_sound(open_treasure_sfx)
         self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-        self.show_text_in_dialog_box(f"Fortune smiles upon thee, {self.player.name}.\n"
-                                     f"Thou hast found the {item_name}.", skip_text=self.skip_text)
+        found_item_text = f"Fortune smiles upon thee, {self.player.name}.\n" \
+                          f"Thou hast found the {item_name}."
+
+        if item_name == "Tablet":
+            self.show_text_in_dialog_box((
+                found_item_text,
+                "The tablet reads as follows:",
+                "I am Erdrick and thou art my descendant.",
+                "Three items were needed to reach the Isle of Dragons, which is south of Brecconary.",
+                "I gathered these items, reached the island, and there defeated a creature of great evil.",
+                "Now I have entrusted the three items to three worthy keepers.",
+                "Their descendants will protect the items until thy quest leads thee to seek them out.",
+                "When a new evil arises, find the three items, then fight!"),
+                drop_down=False
+            )
         # could probably assign the new treasure box values by using this line:
+        else:
+            self.show_text_in_dialog_box(found_item_text, skip_text=self.skip_text)
         self.player.inventory.append(item_name)
 
     def take_gold(self, treasure_info: dict):
