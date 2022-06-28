@@ -32,5 +32,7 @@ shields = {
 treasure = {
     'TantegelThroneRoom': {(7, 17): {'item': 'Magic Key'},
                            (10, 14): {'item': "GOLD", 'amount': 120},
-                           (10, 15): {'item': "Torch"}}
+                           (10, 15): {'item': "Torch"}},
+    'ErdricksCaveB2': {(4, 10): {'item': 'Tablet'}}
+
 }
