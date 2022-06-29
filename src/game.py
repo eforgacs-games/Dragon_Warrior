@@ -521,13 +521,12 @@ class Game:
     def run_automatic_post_death_dialog(self):
         self.enable_movement = False
         for current_event in self.events:
-            if (current_event.type == KEYUP and not self.automatic_initial_dialog_run) or self.skip_text:
+            if current_event.type == KEYUP or self.skip_text:
                 self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
                                                       add_quotes=True,
                                                       skip_text=self.skip_text)
                 self.is_post_death_dialog = False
                 self.set_to_save_prompt()
-        event.clear()
 
     def set_to_post_initial_dialog(self):
         self.is_initial_dialog = False
