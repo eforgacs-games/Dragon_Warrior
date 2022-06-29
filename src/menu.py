@@ -10,7 +10,7 @@ from pygame.time import get_ticks
 from data.text.dialog import blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
-    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx
+    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, Direction
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.maps_functions import get_center_point
@@ -108,13 +108,14 @@ class CommandMenu(Menu):
         #     print(f"Character not in lookup table: {dialog_character}")
 
     def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True, temp_text_start: int = None, skip_text: bool = False,
-                                last_line=False):
+                                last_line=False, disable_sound=False):
         """Shows a single line in a dialog box.
         :param last_line:
         :param line: The line of text to print.
         :param skip_text: Whether to automatically skip the text.
         :param add_quotes: Adds single quotes to be displayed on the screen.
         :param temp_text_start: The time at which temporary text started.
+        :param disable_sound: Whether to disable the sound.
         """
         if line:
             if type(line) == str:
@@ -145,17 +146,18 @@ class CommandMenu(Menu):
                     # playing with fire a bit here with the short-circuiting
                     if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
                             [current_event.type == KEYDOWN for current_event in event.get()]):
-                        if not skip_text:
+                        if not skip_text and not disable_sound:
                             play_sound(menu_button_sfx)
                         display_current_line = False
             else:
                 # if the line is a method
                 line()
 
-    def show_text_in_dialog_box(self, text: Tuple | List | str, add_quotes=False, temp_text_start=None, skip_text=False, drop_down=True,
-                                drop_up=True):
+    def show_text_in_dialog_box(self, text: Tuple | List | str, add_quotes=False, temp_text_start=None, skip_text=False, drop_down=True, drop_up=True,
+                                disable_sound=False):
         """Shows a passage of text in a dialog box.
 
+        :param disable_sound:
         :param text: The text to print.
         :param skip_text: Whether to automatically skip the text.
         :param add_quotes: Adds single quotes to be displayed on the screen.
@@ -166,13 +168,13 @@ class CommandMenu(Menu):
         if drop_down:
             self.window_drop_down_effect(x=2, y=9, width=12, height=5)
         if type(text) == str:
-            self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, last_line=True)
+            self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, last_line=True, disable_sound=disable_sound)
         else:
             for line_index, line in enumerate(text):
                 if line_index == len(text) - 1:
-                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text, last_line=True)
+                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text, last_line=True, disable_sound=disable_sound)
                 else:
-                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text)
+                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text, disable_sound=disable_sound)
                 # TODO(ELF): This commented out code just makes the sound for printing by letter.
                 #  Need to actually show the letters one by one.
                 #  (Better to leave it commented out until it's working)
@@ -210,6 +212,7 @@ class CommandMenu(Menu):
                 for tile, tile_dict in self.current_map.floor_tile_key.items():
                     if tile in self.get_dialog_box_underlying_tiles(self.current_map, i):
                         tile_dict['group'].draw(self.background)
+                # TODO(ELF): The sprites move one square off when the window is dropped down.
                 draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
                 for character, character_dict in self.current_map.characters.items():
                     self.background.blit(character_dict['character_sprites'].sprites()[0].image,
@@ -233,9 +236,7 @@ class CommandMenu(Menu):
                 "I gathered these items, reached the island, and there defeated a creature of great evil.",
                 "Now I have entrusted the three items to three worthy keepers.",
                 "Their descendants will protect the items until thy quest leads thee to seek them out.",
-                "When a new evil arises, find the three items, then fight!"),
-                drop_down=False
-            )
+                "When a new evil arises, find the three items, then fight!"), drop_down=False)
         # could probably assign the new treasure box values by using this line:
         else:
             self.show_text_in_dialog_box(found_item_text, skip_text=self.skip_text)
