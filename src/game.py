@@ -15,7 +15,7 @@ from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
     convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
-    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx
+    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -31,7 +31,7 @@ from src.player.player import Player
 from src.sound import bump, play_sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
-from src.visual_effects import fade
+from src.visual_effects import fade, flash_transparent_color
 
 
 class Game:
@@ -86,9 +86,9 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        # self.current_map = maps.TantegelThroneRoom()
+        self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.TantegelCourtyard()
-        self.current_map = maps.Alefgard()
+        # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.Hauksness()
@@ -280,13 +280,7 @@ class Game:
         self.player.current_hp -= damage_amount
         play_sound(swamp_sfx)
         self.player.received_environment_damage = True
-        swamp_step_start_time = get_ticks()
-        red_flash_surface = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
-        red_flash_surface.set_alpha(192)
-        red_flash_surface.fill((255, 0, 0))
-        self.screen.blit(red_flash_surface, (0, 0))
-        while convert_to_frames_since_start_time(swamp_step_start_time) < 3:
-            display.flip()
+        flash_transparent_color(RED, self.screen)
 
     def handle_warps(self):
         immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
