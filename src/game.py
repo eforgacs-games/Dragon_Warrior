@@ -199,7 +199,7 @@ class Game:
         self.player.next_next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
                                                                  self.player.rect.y // TILE_SIZE,
                                                                  self.player.direction_value, offset_from_character=2)
-        self.handle_swamp_damage()
+        self.handle_environment_damage()
 
         # Debugging area
 
@@ -232,22 +232,28 @@ class Game:
 
         event.pump()
 
-    def handle_swamp_damage(self):
+    def handle_environment_damage(self):
         if not self.player.is_moving:
             if self.player.current_tile == 'MARSH':
-                if not self.player.received_swamp_damage:
-                    self.player.current_hp -= 2
-                    play_sound(swamp_sfx)
-                    self.player.received_swamp_damage = True
-                    # TODO(ELF): Make red flash transparent.
-                    swamp_step_start_time = get_ticks()
-                    red_flash_surface = Surface((self.screen.get_width(), self.screen.get_height()))
-                    red_flash_surface.fill(RED)
-                    while convert_to_frames_since_start_time(swamp_step_start_time) < 3:
-                        self.screen.blit(red_flash_surface, (0, 0))
-                        display.flip()
+                if not self.player.received_environment_damage:
+                    self.damage_step(damage_amount=2)
+            elif self.player.current_tile == 'BARRIER':
+                if not self.player.received_environment_damage:
+                    self.damage_step(damage_amount=15)
         else:
-            self.player.received_swamp_damage = False
+            self.player.received_environment_damage = False
+
+    def damage_step(self, damage_amount):
+        self.player.current_hp -= damage_amount
+        play_sound(swamp_sfx)
+        self.player.received_environment_damage = True
+        # TODO(ELF): Make red flash transparent.
+        swamp_step_start_time = get_ticks()
+        red_flash_surface = Surface((self.screen.get_width(), self.screen.get_height()))
+        red_flash_surface.fill(RED)
+        while convert_to_frames_since_start_time(swamp_step_start_time) < 3:
+            self.screen.blit(red_flash_surface, (0, 0))
+            display.flip()
 
     def handle_warps(self):
         immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
