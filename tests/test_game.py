@@ -1,15 +1,14 @@
 import os
-from unittest import TestCase, mock
+from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pygame
-from pygame import K_F1, K_z, K_UP, RESIZABLE, event, KEYDOWN, K_RETURN
+from pygame import K_F1, K_z, K_UP, RESIZABLE
 from pygame.imageext import load_extended
 from pygame.sprite import LayeredDirty
 from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
-from src import menu_functions
 from src.camera import Camera
 from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, village_music
 from src.config import SCALE, TILE_SIZE
@@ -321,7 +320,7 @@ class TestGame(TestCase):
         self.game.player.row, self.game.player.column = 48, 54
         # organically switch maps to Brecconary, as though entering from Alefgard
         for staircase_location, staircase_dict in self.game.current_map.staircases.items():
-            self.game.process_staircase_warps(staircase_dict, staircase_location)
+            self.game.process_staircase_warps(staircase_location, staircase_dict)
         self.assertEqual('Brecconary', self.game.current_map.identifier)
         self.game.player.current_hp = 1
         self.game.player.current_mp = 1

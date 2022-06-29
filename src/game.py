@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import numpy as np
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit, K_F1
+    display, event, image, init, key, mixer, quit, K_F1, time
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -15,7 +15,7 @@ from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
     convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
-    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, RED
+    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, RED, death_sfx
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -201,6 +201,28 @@ class Game:
                                                                  self.player.direction_value, offset_from_character=2)
         self.handle_environment_damage()
 
+        if self.player.current_hp <= 0:
+            self.player.current_hp = 0
+            self.player.is_dead = True
+        else:
+            self.player.is_dead = False
+        if self.player.is_dead:
+            if self.music_enabled:
+                mixer.music.stop()
+                mixer.music.load(death_sfx)
+                mixer.music.play(1)
+            self.enable_movement = False
+            death_start_time = get_ticks()
+            while convert_to_frames_since_start_time(death_start_time) < 500:
+                self.cmd_menu.show_text_in_dialog_box("Thou art dead.")
+                time.wait(1)
+            next_map = map_lookup['TantegelThroneRoom']()
+            self.change_map(next_map)
+            self.player.gold = self.player.gold // 2
+            # revive player
+            self.player.current_hp = self.player.max_hp
+            self.player.is_dead = False
+
         # Debugging area
 
         # This prints out the current tile that the player is standing on.
@@ -261,7 +283,7 @@ class Game:
         # a quick fix to prevent buggy warping - set to > 2
         if self.tiles_moved_since_spawn > 2 or (self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps):
             for staircase_location, staircase_dict in self.current_map.staircases.items():
-                self.process_staircase_warps(staircase_dict, staircase_location)
+                self.process_staircase_warps(staircase_location, staircase_dict)
 
     def handle_keypresses(self, current_key):
         self.handle_b_button(current_key)
@@ -335,7 +357,7 @@ class Game:
     def draw_temporary_text(self, text: Tuple[str] | List[str], add_quotes=False) -> None:
         self.cmd_menu.show_text_in_dialog_box(text, add_quotes=add_quotes, temp_text_start=get_ticks(), skip_text=False)
 
-    def process_staircase_warps(self, staircase_dict: dict, staircase_location: tuple) -> None:
+    def process_staircase_warps(self, staircase_location: tuple, staircase_dict: dict) -> None:
         if (self.player.row, self.player.column) == staircase_location:
             self.player.bumped = False
             match staircase_dict['stair_direction']:
@@ -562,8 +584,12 @@ class Game:
         self.set_roaming_character_positions()
         if self.music_enabled:
             mixer.music.stop()
-        current_map_staircase_dict = self.last_map.staircases[(self.player.row, self.player.column)]
-        destination_coordinates = current_map_staircase_dict.get('destination_coordinates')
+        if not self.player.is_dead:
+            current_map_staircase_dict = self.last_map.staircases[(self.player.row, self.player.column)]
+            destination_coordinates = current_map_staircase_dict.get('destination_coordinates')
+        else:
+            current_map_staircase_dict = None
+            destination_coordinates = (10, 13)  # TantegelThroneRoom, in front of King Lorik
         self.current_map.destination_coordinates = destination_coordinates
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
         if initial_hero_location.size <= 0:
@@ -616,9 +642,12 @@ class Game:
         self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
 
     def handle_player_direction_on_map_change(self, current_map_staircase_dict):
-        destination_direction = current_map_staircase_dict.get('direction')
-        if destination_direction:
-            self.player.direction_value = destination_direction
+        if not self.player.is_dead:
+            destination_direction = current_map_staircase_dict.get('direction')
+            if destination_direction:
+                self.player.direction_value = destination_direction
+        else:
+            self.player.direction_value = Direction.UP.value
 
     def set_roaming_character_positions(self):
         for roaming_character in self.current_map.roaming_characters:
