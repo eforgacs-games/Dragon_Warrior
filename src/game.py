@@ -15,7 +15,7 @@ from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
     convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
-    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, RED, death_sfx
+    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -46,6 +46,7 @@ class Game:
         # text
         self.initial_dialog_enabled = INITIAL_DIALOG_ENABLED
         self.is_initial_dialog = True
+        self.is_post_death_dialog = False
         self.skip_text = False
         # intro
         self.start_time = get_ticks()
@@ -85,9 +86,9 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom()
+        # self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.TantegelCourtyard()
-        # self.current_map = maps.Alefgard()
+        self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.Hauksness()
@@ -201,27 +202,7 @@ class Game:
                                                                  self.player.direction_value, offset_from_character=2)
         self.handle_environment_damage()
 
-        if self.player.current_hp <= 0:
-            self.player.current_hp = 0
-            self.player.is_dead = True
-        else:
-            self.player.is_dead = False
-        if self.player.is_dead:
-            if self.music_enabled:
-                mixer.music.stop()
-                mixer.music.load(death_sfx)
-                mixer.music.play(1)
-            self.enable_movement = False
-            death_start_time = get_ticks()
-            while convert_to_frames_since_start_time(death_start_time) < 500:
-                self.cmd_menu.show_text_in_dialog_box("Thou art dead.")
-                time.wait(1)
-            next_map = map_lookup['TantegelThroneRoom']()
-            self.change_map(next_map)
-            self.player.gold = self.player.gold // 2
-            # revive player
-            self.player.current_hp = self.player.max_hp
-            self.player.is_dead = False
+        self.handle_death()
 
         # Debugging area
 
@@ -254,6 +235,35 @@ class Game:
 
         event.pump()
 
+    def handle_death(self):
+        if self.player.current_hp <= 0:
+            self.player.current_hp = 0
+            self.player.is_dead = True
+        else:
+            self.player.is_dead = False
+        if self.player.is_dead:
+            display.flip()
+            if self.music_enabled:
+                mixer.music.stop()
+                mixer.music.load(death_sfx)
+                mixer.music.play(1)
+            self.enable_movement = False
+            death_start_time = get_ticks()
+            while convert_to_frames_since_start_time(death_start_time) < 318:
+                time.wait(1)
+            event.clear()
+            self.cmd_menu.show_text_in_dialog_box("Thou art dead.", disable_sound=True)
+            self.set_post_death_attributes()
+
+    def set_post_death_attributes(self):
+        next_map = map_lookup['TantegelThroneRoom']()
+        self.change_map(next_map)
+        self.player.gold = self.player.gold // 2
+        # revive player
+        self.player.current_hp = self.player.max_hp
+        self.player.is_dead = False
+        self.is_post_death_dialog = True
+
     def handle_environment_damage(self):
         if not self.player.armor == "Erdrick's Armor":
             if not self.player.is_moving:
@@ -270,12 +280,12 @@ class Game:
         self.player.current_hp -= damage_amount
         play_sound(swamp_sfx)
         self.player.received_environment_damage = True
-        # TODO(ELF): Make red flash transparent.
         swamp_step_start_time = get_ticks()
         red_flash_surface = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
-        red_flash_surface.fill(RED)
+        red_flash_surface.set_alpha(192)
+        red_flash_surface.fill((255, 0, 0))
+        self.screen.blit(red_flash_surface, (0, 0))
         while convert_to_frames_since_start_time(swamp_step_start_time) < 3:
-            self.screen.blit(red_flash_surface, (0, 0))
             display.flip()
 
     def handle_warps(self):
@@ -383,7 +393,7 @@ class Game:
         height_offset = 0
         if self.loop_count == 1:
             self.background = self.big_map.subsurface(0, 0, self.current_map.width - width_offset,
-                                                      self.current_map.height - height_offset)
+                                                      self.current_map.height - height_offset).convert()
         # this for loop is a good place to look to improve overall FPS, reduce frame drops, etc.
         # while the improvements up until now have been significant enough to keep the FPS at 60
         # even while on the overworld map, there are still improvements that can be made:
@@ -457,6 +467,7 @@ class Game:
         self.handle_sprite_drawing_and_animation()
         self.screen.blit(self.background, self.camera.get_pos())
         self.handle_initial_dialog()
+        self.handle_post_death_dialog()
 
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
@@ -483,6 +494,7 @@ class Game:
                     self.display_hovering_stats = False
                     self.cmd_menu.launch_signaled = False
                     self.run_automatic_initial_dialog()
+                    event.clear()
                 else:
                     if self.allow_save_prompt:
                         self.set_to_save_prompt()
@@ -494,6 +506,15 @@ class Game:
             if not self.cmd_menu.menu.is_enabled():
                 self.enable_movement = True
 
+    def handle_post_death_dialog(self):
+        if self.current_map.identifier == 'TantegelThroneRoom':
+            if self.is_post_death_dialog:
+                display.flip()
+                self.display_hovering_stats = False
+                self.cmd_menu.launch_signaled = False
+                self.run_automatic_post_death_dialog()
+                event.clear()
+
     def run_automatic_initial_dialog(self):
         self.enable_movement = False
         for current_event in self.events:
@@ -502,6 +523,17 @@ class Game:
                                                       skip_text=self.skip_text)
                 self.set_to_post_initial_dialog()
                 self.automatic_initial_dialog_run = True
+
+    def run_automatic_post_death_dialog(self):
+        self.enable_movement = False
+        for current_event in self.events:
+            if (current_event.type == KEYUP and not self.automatic_initial_dialog_run) or self.skip_text:
+                self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
+                                                      add_quotes=True,
+                                                      skip_text=self.skip_text)
+                self.is_post_death_dialog = False
+                self.set_to_save_prompt()
+        event.clear()
 
     def set_to_post_initial_dialog(self):
         self.is_initial_dialog = False
@@ -639,7 +671,7 @@ class Game:
         self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
             (self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(BLACK)
-        self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert()
+        self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert_alpha()
 
     def handle_player_direction_on_map_change(self, current_map_staircase_dict):
         if not self.player.is_dead:

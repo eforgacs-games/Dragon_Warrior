@@ -57,7 +57,11 @@ class DialogLookup:
                         f"Goodbye now, {self.player.name}.\n'Take care and tempt not the Fates.",
                         # if no:
                         # "Rest then for awhile."
-                    )},
+                    ),
+                    'post_death_dialog': (f"Death should not have taken thee, {self.player.name}.",
+                                          "I will give thee another chance.",
+                                          f"To reach the next level, thy Experience Points must increase by {self.player.points_to_next_level}.",
+                                          f"Now, go, {self.player.name}!")},
                 'RIGHT_FACE_GUARD': {'dialog': (
                     "East of this castle is a town where armor, weapons, and many other items may be purchased.",
                     f"Return to the Inn for a rest if thou art wounded in battle, {self.player.name}.",
@@ -87,7 +91,7 @@ class DialogLookup:
                 'UP_FACE_GUARD': {'dialog': "If thou art planning to take a rest, first see King Lorik."},
                 'RIGHT_FACE_GUARD_2': {'dialog': welcome_to_tantegel},
                 'WISE_MAN': {'dialog': (f"{self.player.name}'s coming was foretold by legend. "
-                                       f"May the light shine upon this brave warrior.", self.player.restore_mp)}},
+                                        f"May the light shine upon this brave warrior.", self.player.restore_mp)}},
             'TantegelCellar': {'WISE_MAN': {'dialog': ("I have been waiting long for one such as thee.", "Take the Treasure Chest.")}},
             'Brecconary': {
                 'MAN': {'dialog': "There is a town where magic keys can be purchased."},
@@ -255,5 +259,5 @@ class DialogLookup:
         self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 5, TILE_SIZE * 1))
         display.flip()
         self.command_menu.show_text_in_dialog_box(("Good morning.\n" +
-                                                  "Thou seems to have spent a good night.",
-                                                   "I shall see thee again."), drop_up=False, skip_text=self.command_menu.skip_text)
+                                                   "Thou seems to have spent a good night.",
+                                                   "I shall see thee again."), skip_text=self.command_menu.skip_text, drop_up=False)
