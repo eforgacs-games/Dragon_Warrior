@@ -250,7 +250,7 @@ class Game:
         self.player.received_environment_damage = True
         # TODO(ELF): Make red flash transparent.
         swamp_step_start_time = get_ticks()
-        red_flash_surface = Surface((self.screen.get_width(), self.screen.get_height()))
+        red_flash_surface = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
         red_flash_surface.fill(RED)
         while convert_to_frames_since_start_time(swamp_step_start_time) < 3:
             self.screen.blit(red_flash_surface, (0, 0))
