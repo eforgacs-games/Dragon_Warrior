@@ -44,6 +44,7 @@ text_beep_sfx = join(SFX_DIR, 'text_beep.wav')
 special_item_sfx = join(SFX_DIR, '21 Dragon Quest 1 - Special Item.mp3')
 stairs_up_sfx = join(SFX_DIR, '29 Dragon Quest 1 - Stairs Up.mp3')
 stairs_down_sfx = join(SFX_DIR, '30 Dragon Quest 1 - Stairs Down.mp3')
+swamp_sfx = join(SFX_DIR, '31 Dragon Quest 1 - Swamp.mp3')
 menu_button_sfx = join(SFX_DIR, '32 Dragon Quest 1 - Menu Button.mp3')
 confirmation_sfx = join(SFX_DIR, '33 Dragon Quest 1 - Confirmation.mp3')
 
