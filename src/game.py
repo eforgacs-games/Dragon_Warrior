@@ -233,15 +233,16 @@ class Game:
         event.pump()
 
     def handle_environment_damage(self):
-        if not self.player.is_moving:
-            if self.player.current_tile == 'MARSH':
-                if not self.player.received_environment_damage:
-                    self.damage_step(damage_amount=2)
-            elif self.player.current_tile == 'BARRIER':
-                if not self.player.received_environment_damage:
-                    self.damage_step(damage_amount=15)
-        else:
-            self.player.received_environment_damage = False
+        if not self.player.armor == "Erdrick's Armor":
+            if not self.player.is_moving:
+                if self.player.current_tile == 'MARSH':
+                    if not self.player.received_environment_damage:
+                        self.damage_step(damage_amount=2)
+                elif self.player.current_tile == 'BARRIER':
+                    if not self.player.received_environment_damage:
+                        self.damage_step(damage_amount=15)
+            else:
+                self.player.received_environment_damage = False
 
     def damage_step(self, damage_amount):
         self.player.current_hp -= damage_amount
