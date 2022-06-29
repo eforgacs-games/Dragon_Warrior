@@ -21,6 +21,7 @@ class Player(AnimatedSprite):
         self.next_next_tile_id = get_next_tile_identifier(self.column, self.row, self.direction_value, current_map, offset=2)
         self.bumped = False
         self.last_bump_time = None
+        self.received_swamp_damage = False
 
         self.adventure_log = 0
 

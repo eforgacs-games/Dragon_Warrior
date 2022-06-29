@@ -15,7 +15,7 @@ from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
     convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
-    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH
+    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, RED
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -38,6 +38,7 @@ class Game:
 
     def __init__(self):
         # map/graphics
+
         self.background = None
         self.big_map = None
         self.layouts = MapLayouts()
@@ -198,6 +199,7 @@ class Game:
         self.player.next_next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
                                                                  self.player.rect.y // TILE_SIZE,
                                                                  self.player.direction_value, offset_from_character=2)
+        self.handle_swamp_damage()
 
         # Debugging area
 
@@ -229,6 +231,23 @@ class Game:
         # print(f'{self.get_character_identifier_by_coordinates(self.player.next_next_coordinates)}')
 
         event.pump()
+
+    def handle_swamp_damage(self):
+        if not self.player.is_moving:
+            if self.player.current_tile == 'MARSH':
+                if not self.player.received_swamp_damage:
+                    self.player.current_hp -= 2
+                    play_sound(swamp_sfx)
+                    self.player.received_swamp_damage = True
+                    # TODO(ELF): Make red flash transparent.
+                    swamp_step_start_time = get_ticks()
+                    red_flash_surface = Surface((self.screen.get_width(), self.screen.get_height()))
+                    red_flash_surface.fill(RED)
+                    while convert_to_frames_since_start_time(swamp_step_start_time) < 3:
+                        self.screen.blit(red_flash_surface, (0, 0))
+                        display.flip()
+        else:
+            self.player.received_swamp_damage = False
 
     def handle_warps(self):
         immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
