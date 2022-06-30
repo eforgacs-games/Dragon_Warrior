@@ -52,6 +52,7 @@ class Player(AnimatedSprite):
         self.current_mp = self.max_mp
         self.gold = 0
         self.total_experience = 0
+        self.is_dead = False
 
         self.level = self.get_level_by_experience()
 

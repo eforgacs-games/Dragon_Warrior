@@ -5,13 +5,13 @@ from pygame.event import get, pump
 from pygame.time import get_ticks
 
 from data.text.dialog import confirmation_prompt, get_inn_intro
-from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, create_window
+from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, create_window, WHITE
 from src.config import MUSIC_ENABLED, TILE_SIZE
 from src.game_functions import draw_all_tiles_in_current_map, draw_hovering_stats_window
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
-from src.visual_effects import fade
+from src.visual_effects import fade, flash_transparent_color
 
 weapons_and_armor_intro = "We deal in weapons and armor.\n" \
                           "Dost thou wish to buy anything today?"
@@ -57,7 +57,11 @@ class DialogLookup:
                         f"Goodbye now, {self.player.name}.\n'Take care and tempt not the Fates.",
                         # if no:
                         # "Rest then for awhile."
-                    )},
+                    ),
+                    'post_death_dialog': (f"Death should not have taken thee, {self.player.name}.",
+                                          "I will give thee another chance.",
+                                          f"To reach the next level, thy Experience Points must increase by {self.player.points_to_next_level}.",
+                                          f"Now, go, {self.player.name}!")},
                 'RIGHT_FACE_GUARD': {'dialog': (
                     "East of this castle is a town where armor, weapons, and many other items may be purchased.",
                     f"Return to the Inn for a rest if thou art wounded in battle, {self.player.name}.",
@@ -87,7 +91,7 @@ class DialogLookup:
                 'UP_FACE_GUARD': {'dialog': "If thou art planning to take a rest, first see King Lorik."},
                 'RIGHT_FACE_GUARD_2': {'dialog': welcome_to_tantegel},
                 'WISE_MAN': {'dialog': (f"{self.player.name}'s coming was foretold by legend. "
-                                       f"May the light shine upon this brave warrior.", self.player.restore_mp)}},
+                                        f"May the light shine upon this brave warrior.", self.flash_and_restore_mp)}},
             'TantegelCellar': {'WISE_MAN': {'dialog': ("I have been waiting long for one such as thee.", "Take the Treasure Chest.")}},
             'Brecconary': {
                 'MAN': {'dialog': "There is a town where magic keys can be purchased."},
@@ -129,6 +133,27 @@ class DialogLookup:
         confirmation_prompt(self.command_menu, weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.", last_line=True))
+
+    def flash_and_restore_mp(self):
+        self.player.restore_mp()
+        # flash for 3 frames on, 3 frames off
+        # flash white 8 times
+        # TODO(ELF): This flashes once, but needs to flash 8 times.
+        flash_transparent_color(WHITE, self.screen, transparency=128)
+        display.flip()
+        flash_transparent_color(WHITE, self.screen, transparency=255)
+        display.flip()
+        # draw_all_tiles_in_current_map(self.current_map, self.background)
+        # draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
+        # display.flip()
+
+        # start_time = get_ticks()
+        # if convert_to_frames_since_start_time(start_time) <= 25:
+        #     if convert_to_frames_since_start_time(start_time) % 3 == 0:
+        #         start_flash = get_ticks()
+        #         while convert_to_frames_since_start_time(start_flash) < 3:
+        #             flash_transparent_color(WHITE, self.screen)
+        #             display.flip()
 
     def open_store_inventory(self, current_store_inventory, static_store_image):
         self.command_menu.show_line_in_dialog_box("What dost thou wish to buy?", skip_text=True)
@@ -255,5 +280,5 @@ class DialogLookup:
         self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 5, TILE_SIZE * 1))
         display.flip()
         self.command_menu.show_text_in_dialog_box(("Good morning.\n" +
-                                                  "Thou seems to have spent a good night.",
-                                                   "I shall see thee again."), drop_up=False, skip_text=self.command_menu.skip_text)
+                                                   "Thou seems to have spent a good night.",
+                                                   "I shall see thee again."), skip_text=self.command_menu.skip_text, drop_up=False)

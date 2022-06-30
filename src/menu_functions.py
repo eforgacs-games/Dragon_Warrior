@@ -131,10 +131,7 @@ def select_name(blink_start, screen, command_menu):
     screen.blit(unselected_image, (0, 0))
     display.update(unselected_image.get_rect())
     command_menu.show_text_in_dialog_box("Type your name using the keyboard.\n"
-                                         "If you are using a joystick, press the TAB key to switch to joystick input.",
-                                         # temp_text_start=get_ticks(),
-                                         drop_down=False,
-                                         drop_up=False)
+                                         "If you are using a joystick, press the TAB key to switch to joystick input.", drop_down=False, drop_up=False)
     screen.blit(unselected_image, (0, 0))
     display.update(unselected_image.get_rect())
     selected_image_lookup = {
