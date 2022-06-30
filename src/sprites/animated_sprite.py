@@ -9,6 +9,12 @@ class AnimatedSprite(BaseSprite):
         self.frame_count = 0
         self.frame_delay = 2
         self.direction_value = direction_value
+        self.images_map = {}
+        self.set_images(images)
+        if center_point is not None and images is not None:
+            super().__init__(center_point, images[0][0])
+
+    def set_images(self, images):
         if images is not None:
             down_images = images[0]
             left_images = images[1]
@@ -20,8 +26,6 @@ class AnimatedSprite(BaseSprite):
                 Direction.UP.value: up_images,
                 Direction.RIGHT.value: right_images
             }
-            if center_point is not None:
-                super().__init__(center_point, images[0][0])
 
     def animate(self):
         max_frame = 1
