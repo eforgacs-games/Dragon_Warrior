@@ -201,7 +201,7 @@ class CommandMenu(Menu):
         """Outro effect for menus."""
         # draw all the tiles initially once
         for tile, tile_dict in self.current_map.floor_tile_key.items():
-            if tile in self.current_map.tile_types_in_current_map:
+            if tile in self.current_map.tile_types_in_current_map and tile_dict.get('group'):
                 tile_dict['group'].draw(self.background)
         window_rect = Rect(TILE_SIZE * x, TILE_SIZE * y, TILE_SIZE * width, TILE_SIZE * height)
         for i in range(height - 1, -1, -1):

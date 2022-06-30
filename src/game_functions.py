@@ -27,7 +27,7 @@ def get_next_coordinates(character_column, character_row, direction, offset_from
 
 def draw_all_tiles_in_current_map(current_map, background) -> None:
     for tile, tile_dict in current_map.floor_tile_key.items():
-        if tile in current_map.tile_types_in_current_map:
+        if tile in current_map.tile_types_in_current_map and tile_dict.get('group'):
             tile_dict['group'].draw(background)
 
 

@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import numpy as np
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit, K_F1, time
+    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -446,8 +446,9 @@ class Game:
                                                                           all_roaming_character_surrounding_tiles +
                                                                           all_fixed_character_underlying_tiles, self.current_map.character_key)
             if self.player.is_moving:
-                tile_types_to_draw += replace_characters_with_underlying_tiles(
-                    list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
+                if not self.current_map.is_dark:
+                    tile_types_to_draw += replace_characters_with_underlying_tiles(
+                        list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
                 self.not_moving_time_start = None
                 self.display_hovering_stats = False
                 if self.hovering_stats_displayed:
@@ -468,9 +469,10 @@ class Game:
 
             # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
 
-        for tile, tile_dict in self.current_map.floor_tile_key.items():
-            if tile_dict.get('group') and tile in set(tile_types_to_draw):
-                tile_dict['group'].draw(self.background)
+        if not self.current_map.is_dark:
+            for tile, tile_dict in self.current_map.floor_tile_key.items():
+                if tile_dict.get('group') and tile in set(tile_types_to_draw):
+                    tile_dict['group'].draw(self.background)
 
         # also check if group is in current window, default screen size is 15 tall x 16 wide
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
@@ -479,7 +481,10 @@ class Game:
         self.screen.blit(self.background, self.camera.get_pos())
         self.handle_initial_dialog()
         self.handle_post_death_dialog()
-
+        if self.current_map.is_dark:
+            darkness = Surface((self.screen.get_width(), self.screen.get_height()))
+            darkness.fill(BLACK)
+            self.background.blit(darkness, (0, 0))
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
                 self.drop_down_hovering_stats_window()
@@ -520,7 +525,6 @@ class Game:
     def handle_post_death_dialog(self):
         if self.current_map.identifier == 'TantegelThroneRoom':
             if self.is_post_death_dialog:
-                display.flip()
                 self.display_hovering_stats = False
                 self.cmd_menu.launch_signaled = False
                 self.run_automatic_post_death_dialog()
@@ -538,12 +542,13 @@ class Game:
     def run_automatic_post_death_dialog(self):
         self.enable_movement = False
         for current_event in self.events:
-            if current_event.type == KEYUP or self.skip_text:
+            if current_event.type == KEYDOWN or self.skip_text:
                 self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
                                                       add_quotes=True,
                                                       skip_text=self.skip_text)
                 self.is_post_death_dialog = False
                 self.set_to_save_prompt()
+                self.enable_movement = True
 
     def set_to_post_initial_dialog(self):
         self.is_initial_dialog = False
@@ -660,9 +665,9 @@ class Game:
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
-        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
+        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN', 'CAVE'):
             self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_UP'
-        elif self.player.current_tile == 'BRICK_STAIR_UP':
+        elif self.player.current_tile == 'BRICK_STAIR_UP' and self.current_map.identifier != 'Alefgard':
             self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_DOWN'
         else:
             if destination_coordinates != (initial_hero_location.take(0), initial_hero_location.take(1)):
