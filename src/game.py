@@ -15,7 +15,8 @@ from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
     convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
-    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED
+    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, ARMED_HERO_WITH_SHIELD_PATH, \
+    UNARMED_HERO_WITH_SHIELD_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -200,6 +201,9 @@ class Game:
         self.player.next_next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
                                                                  self.player.rect.y // TILE_SIZE,
                                                                  self.player.direction_value, offset_from_character=2)
+
+        self.set_player_images_by_equipment()
+
         self.handle_environment_damage()
 
         self.handle_death()
@@ -234,6 +238,19 @@ class Game:
         # print(f'{self.get_character_identifier_by_coordinates(self.player.next_next_coordinates)}')
 
         event.pump()
+
+    def set_player_images_by_equipment(self):
+        if self.player.weapon:
+            if self.player.shield:
+                self.player.images = self.current_map.scale_sprite_sheet(ARMED_HERO_WITH_SHIELD_PATH)
+                self.player.set_images(self.player.images)
+
+            else:
+                self.player.images = self.current_map.scale_sprite_sheet(ARMED_HERO_PATH)
+                self.player.set_images(self.player.images)
+        elif self.player.shield:
+            self.player.images = self.current_map.scale_sprite_sheet(UNARMED_HERO_WITH_SHIELD_PATH)
+            self.player.set_images(self.player.images)
 
     def handle_death(self):
         if self.player.current_hp <= 0:
