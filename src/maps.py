@@ -28,6 +28,7 @@ all_impassable_tiles = (
 class DragonWarriorMap:
     def __init__(self, layout, last_map=None):
 
+        self.is_dark = None
         self.music_file_path = None
         self.destination_coordinates = None
         self.identifier = self.__class__.__name__
@@ -148,7 +149,7 @@ class DragonWarriorMap:
         for row in range(len(self.layout)):
             for column in range(len(self.layout[row])):
                 self.center_pt = get_center_point(column, row)
-                if self.layout[row][column] <= 32:  # anything below 32 is a floor tile
+                if self.layout[row][column] <= 32 and not self.is_dark:  # anything below 32 is a floor tile
                     self.map_floor_tiles(column, row)
                 else:
                     self.map_character_tiles(column, row, player)
@@ -312,6 +313,12 @@ class BasementWithoutNPCs(MapWithoutNPCs):
         return Direction.RIGHT.value
 
 
+class CaveMap(DragonWarriorMap, ABC):
+    def __init__(self, layout):
+        super().__init__(layout)
+        self.is_dark = True
+
+
 class TantegelThroneRoom(DragonWarriorMap):
     """
     This is the first map in the game, the Tantegel Castle throne room.
@@ -398,7 +405,7 @@ class CharlockB1(MapWithoutNPCs):
         return Direction.UP.value
 
 
-class CharlockB2(BasementWithoutNPCs):
+class CharlockB2(BasementWithoutNPCs, CaveMap):
     """First inner basement in Charlock Castle."""
 
     def __init__(self):
@@ -414,7 +421,7 @@ class CharlockB2(BasementWithoutNPCs):
         self.initial_coordinates = (3, 12)
 
 
-class CharlockB3(BasementWithoutNPCs):
+class CharlockB3(BasementWithoutNPCs, CaveMap):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b3)
         self.music_file_path = dungeon_floor_3_music
@@ -432,7 +439,7 @@ class CharlockB3(BasementWithoutNPCs):
         self.initial_coordinates = (3, 8)
 
 
-class CharlockB4(BasementWithoutNPCs):
+class CharlockB4(BasementWithoutNPCs, CaveMap):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b4)
         self.music_file_path = dungeon_floor_4_music
@@ -449,7 +456,7 @@ class CharlockB4(BasementWithoutNPCs):
         self.initial_coordinates = (3, 10)
 
 
-class CharlockB5(BasementWithoutNPCs):
+class CharlockB5(BasementWithoutNPCs, CaveMap):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b5)
         self.music_file_path = dungeon_floor_5_music
@@ -463,7 +470,7 @@ class CharlockB5(BasementWithoutNPCs):
         self.initial_coordinates = (12, 3)
 
 
-class CharlockB6(BasementWithoutNPCs):
+class CharlockB6(BasementWithoutNPCs, CaveMap):
     def __init__(self):
         super().__init__(MapLayouts().charlock_b6)
         self.music_file_path = dungeon_floor_6_music
@@ -478,7 +485,7 @@ class CharlockB6(BasementWithoutNPCs):
         self.initial_coordinates = (3, 12)
 
 
-class CharlockB7Wide(BasementWithoutNPCs):
+class CharlockB7Wide(BasementWithoutNPCs, CaveMap):
     """A wide hallway right before the last level of Charlock Castle."""
 
     def __init__(self):
@@ -491,7 +498,7 @@ class CharlockB7Wide(BasementWithoutNPCs):
         self.assign_stair_directions()
 
 
-class CharlockB7Narrow(BasementWithoutNPCs):
+class CharlockB7Narrow(BasementWithoutNPCs, CaveMap):
     """A dead end path in Charlock Castle that loops unto itself."""
 
     def __init__(self):
@@ -694,7 +701,7 @@ class Cantlin(DragonWarriorMap):
         pass
 
 
-class ErdricksCaveB1(MapWithoutNPCs):
+class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
     def __init__(self):
         super().__init__(MapLayouts().erdricks_cave_b1)
         self.music_file_path = dungeon_floor_1_music
@@ -711,7 +718,7 @@ class ErdricksCaveB1(MapWithoutNPCs):
         return Direction.RIGHT.value
 
 
-class ErdricksCaveB2(MapWithoutNPCs):
+class ErdricksCaveB2(MapWithoutNPCs, CaveMap):
     def __init__(self):
         super().__init__(MapLayouts().erdricks_cave_b2)
         self.music_file_path = dungeon_floor_2_music
@@ -726,7 +733,7 @@ class ErdricksCaveB2(MapWithoutNPCs):
         return Direction.RIGHT.value
 
 
-class SwampCave(DragonWarriorMap):
+class SwampCave(CaveMap):
     def __init__(self):
         super().__init__(MapLayouts().swamp_cave)
         self.music_file_path = dungeon_floor_1_music
@@ -745,7 +752,7 @@ class SwampCave(DragonWarriorMap):
         pass
 
 
-class MountainCaveB1(MapWithoutNPCs):
+class MountainCaveB1(MapWithoutNPCs, CaveMap):
     def __init__(self):
         super().__init__(MapLayouts().mountain_cave_b1)
         self.music_file_path = dungeon_floor_1_music
