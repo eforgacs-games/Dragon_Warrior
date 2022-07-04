@@ -240,4 +240,4 @@ def blink_with_name(blink_start, current_letter_image_path, name, screen, static
 def draw_image_with_name(current_letter_image_path, name, screen):
     selected_image = scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height()))
     screen.blit(selected_image, (0, 0))
-    draw_text(name, TILE_SIZE * 6.01, TILE_SIZE * 4.3, screen, center_align=False)
+    draw_text(name, TILE_SIZE * 6.01, TILE_SIZE * 4.3, screen, alignment='left')
