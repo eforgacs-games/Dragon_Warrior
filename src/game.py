@@ -480,7 +480,7 @@ class Game:
         self.handle_initial_dialog()
         self.handle_post_death_dialog()
         if self.current_map.is_dark:
-            darkness = Surface((self.screen.get_width(), self.screen.get_height())) # lgtm [py/call/wrong-arguments]
+            darkness = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
             if not self.torch_active:
                 darkness_hole = darkness.subsurface((self.screen.get_width() / 2), (self.screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE, TILE_SIZE)
             else:
