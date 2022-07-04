@@ -10,8 +10,7 @@ class Player(AnimatedSprite):
         AnimatedSprite.__init__(self, center_point, direction_value, images, identifier='HERO')
 
         # map/collision-related attributes
-        initial_hero_location = current_map.get_initial_character_location('HERO')
-        self.row, self.column = initial_hero_location.take(0), initial_hero_location.take(1)
+        self.row, self.column = current_map.get_initial_character_location('HERO')
         self.next_tile_checked = False
         self.is_moving = False
         self.next_coordinates = None
