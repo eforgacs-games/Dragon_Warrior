@@ -140,7 +140,7 @@ class CommandMenu(Menu):
                     #                       DRAGON_QUEST_FONT_PATH,
                     #                       self.screen)
                     # else:
-                    draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, center_align=False)
+                    draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen)
                     display.update(Rect(2 * TILE_SIZE, 9 * TILE_SIZE, 12 * TILE_SIZE, 5 * TILE_SIZE))
                     if not last_line:
                         blink_down_arrow(self.screen)
@@ -323,26 +323,36 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         show_status = True
         self.window_drop_down_effect(4, 3, 10, 11)
-        status_window = create_window(4, 3, 10, 11, STATUS_WINDOW_BACKGROUND_PATH, self.screen)
+        create_window(4, 3, 10, 11, STATUS_WINDOW_BACKGROUND_PATH, self.screen)
+        draw_text(self.player.name, TILE_SIZE * 13, TILE_SIZE * 3.75, self.screen, alignment='right')
+        draw_text(str(self.player.strength), TILE_SIZE * 13, TILE_SIZE * 4.75, self.screen, alignment='right')
+        draw_text(str(self.player.agility), TILE_SIZE * 13, TILE_SIZE * 5.75, self.screen, alignment='right')
+        draw_text(str(self.player.max_hp), TILE_SIZE * 13, TILE_SIZE * 6.75, self.screen, alignment='right')
+        draw_text(str(self.player.max_mp), TILE_SIZE * 13, TILE_SIZE * 7.75, self.screen, alignment='right')
+        draw_text(str(self.player.attack_power), TILE_SIZE * 13, TILE_SIZE * 8.75, self.screen, alignment='right')
+        draw_text(str(self.player.defense_power), TILE_SIZE * 13, TILE_SIZE * 9.75, self.screen, alignment='right')
+        draw_text(self.player.weapon, TILE_SIZE * 11.75, TILE_SIZE * 10.75, self.screen, text_wrap_length=9, alignment='right')
+        draw_text(self.player.armor, TILE_SIZE * 11.55, TILE_SIZE * 11.75, self.screen, text_wrap_length=9, alignment='right')
+        draw_text(self.player.shield, TILE_SIZE * 11.75, TILE_SIZE * 12.75, self.screen, text_wrap_length=9, alignment='right')
         display.update((4 * TILE_SIZE, 3 * TILE_SIZE, 10 * TILE_SIZE, 11 * TILE_SIZE))
-        # 4 in 3 down
         while show_status:
             for current_event in event.get():
                 if current_event.type == KEYDOWN:
                     if current_event.key in (K_ESCAPE, K_RETURN, K_k, K_j):
                         show_status = False
-        self.window_drop_up_effect(width=4, height=3, x=10, y=11)
-        print(f"""
-        NAME: {self.player.name}
-        STRENGTH: {self.player.strength}
-        MAXIMUM HP: {self.player.max_hp}
-        MAXIMUM MP: {self.player.max_mp}
-        ATTACK POWER: {self.player.attack_power}
-        DEFENSE POWER: {self.player.defense_power}
-        WEAPON: {self.player.weapon}
-        ARMOR: {self.player.armor}
-        SHIELD: {self.player.shield}
-        """)
+        self.window_drop_up_effect(4, 3, 10, 11)
+        # print(f"""
+        # NAME: {self.player.name}
+        # STRENGTH: {self.player.strength}
+        # AGILITY: {self.player.agility}
+        # MAXIMUM HP: {self.player.max_hp}
+        # MAXIMUM MP: {self.player.max_mp}
+        # ATTACK POWER: {self.player.attack_power}
+        # DEFENSE POWER: {self.player.defense_power}
+        # WEAPON: {self.player.weapon}
+        # ARMOR: {self.player.armor}
+        # SHIELD: {self.player.shield}
+        # """)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
