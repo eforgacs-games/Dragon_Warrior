@@ -3,14 +3,15 @@ from collections import Counter
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN, Rect, event
+from pygame import Surface, display, KEYDOWN, Rect, event, K_ESCAPE, K_RETURN, K_k, K_j
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
 from data.text.dialog import blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
-    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx
+    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
+    STATUS_WINDOW_BACKGROUND_PATH
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.maps_functions import get_center_point
@@ -139,7 +140,7 @@ class CommandMenu(Menu):
                     #                       DRAGON_QUEST_FONT_PATH,
                     #                       self.screen)
                     # else:
-                    draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, center_align=False)
+                    draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen)
                     display.update(Rect(2 * TILE_SIZE, 9 * TILE_SIZE, 12 * TILE_SIZE, 5 * TILE_SIZE))
                     if not last_line:
                         blink_down_arrow(self.screen)
@@ -307,42 +308,61 @@ class CommandMenu(Menu):
             self.show_text_in_dialog_box("There is no one there.", add_quotes=True, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
-        # TODO(ELF): Add drop up effect upon closing command menu - currently blits to the wrong place,
-        #  and also clears the command menu before blitting.
-        # self.window_drop_up_effect(width=8, height=5, x=5, y=1)
 
-    def status(self):
+    def status(self) -> None:
         """
-        Display the current player's status. (Not yet implemented)
-        :return: To be determined upon implementation
+        Display the current player's status.
+        :return: None
         """
         # open another window (11 tall x 10 wide)
         # print the following attributes:
         # example below:
         play_sound(menu_button_sfx)
-        print(f"""
-        NAME: {self.player.name}
-        STRENGTH: {self.player.strength}
-        MAXIMUM HP: {self.player.max_hp}
-        MAXIMUM MP: {self.player.max_mp}
-        ATTACK POWER: {self.player.attack_power}
-        DEFENSE POWER: {self.player.defense_power}
-        WEAPON: {self.player.weapon}
-        ARMOR: {self.player.armor}
-        SHIELD: {self.player.shield}
-        """)
+        show_status = True
+        self.window_drop_down_effect(4, 3, 10, 11)
+        create_window(4, 3, 10, 11, STATUS_WINDOW_BACKGROUND_PATH, self.screen)
+        draw_text(self.player.name, TILE_SIZE * 13, TILE_SIZE * 3.75, self.screen, alignment='right')
+        draw_text(str(self.player.strength), TILE_SIZE * 13, TILE_SIZE * 4.75, self.screen, alignment='right')
+        draw_text(str(self.player.agility), TILE_SIZE * 13, TILE_SIZE * 5.75, self.screen, alignment='right')
+        draw_text(str(self.player.max_hp), TILE_SIZE * 13, TILE_SIZE * 6.75, self.screen, alignment='right')
+        draw_text(str(self.player.max_mp), TILE_SIZE * 13, TILE_SIZE * 7.75, self.screen, alignment='right')
+        draw_text(str(self.player.attack_power), TILE_SIZE * 13, TILE_SIZE * 8.75, self.screen, alignment='right')
+        draw_text(str(self.player.defense_power), TILE_SIZE * 13, TILE_SIZE * 9.75, self.screen, alignment='right')
+        draw_text(self.player.weapon, TILE_SIZE * 11.75, TILE_SIZE * 10.75, self.screen, text_wrap_length=9, alignment='right')
+        draw_text(self.player.armor, TILE_SIZE * 11.55, TILE_SIZE * 11.75, self.screen, text_wrap_length=9, alignment='right')
+        draw_text(self.player.shield, TILE_SIZE * 11.75, TILE_SIZE * 12.75, self.screen, text_wrap_length=9, alignment='right')
+        display.update((4 * TILE_SIZE, 3 * TILE_SIZE, 10 * TILE_SIZE, 11 * TILE_SIZE))
+        while show_status:
+            for current_event in event.get():
+                if current_event.type == KEYDOWN:
+                    if current_event.key in (K_ESCAPE, K_RETURN, K_k, K_j):
+                        show_status = False
+        self.window_drop_up_effect(4, 3, 10, 11)
+        # print(f"""
+        # NAME: {self.player.name}
+        # STRENGTH: {self.player.strength}
+        # AGILITY: {self.player.agility}
+        # MAXIMUM HP: {self.player.max_hp}
+        # MAXIMUM MP: {self.player.max_mp}
+        # ATTACK POWER: {self.player.attack_power}
+        # DEFENSE POWER: {self.player.defense_power}
+        # WEAPON: {self.player.weapon}
+        # ARMOR: {self.player.armor}
+        # SHIELD: {self.player.shield}
+        # """)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
-    def stairs(self):
+    def stairs(self) -> None:
         """
-        Go up or down a staircase. (Not yet implemented)
-        :return: To be determined upon implementation
+        Go up or down a staircase.
+        :return: None
         """
         play_sound(menu_button_sfx)
-        # this might be something we could turn off as one of the "modernization" updates, but the implementation would be as follows:
+        # this might be something we could turn off as one of the "modernization" updates
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN'):
-            print("'There are stairs here.'")
+            self.game.process_staircase_warps((self.game.player.row, self.game.player.column),
+                                              self.game.current_map.staircases[(self.game.player.row, self.game.player.column)])
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
             # the original game has quotes in this dialog box
@@ -350,10 +370,10 @@ class CommandMenu(Menu):
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
-    def search(self):
+    def search(self) -> None:
         """
-        Search the ground for items. (Not yet implemented)
-        :return: To be determined upon implementation
+        Search the ground for items.
+        :return: None
         """
         play_sound(menu_button_sfx)
         # open a window
@@ -404,10 +424,10 @@ class CommandMenu(Menu):
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
-    def door(self):
+    def door(self) -> None:
         """
-        Open a door. (Not yet implemented)
-        :return: To be determined upon implementation
+        Open a door.
+        :return: None
         """
         play_sound(menu_button_sfx)
         if self.player.next_tile_id == 'DOOR':
@@ -423,10 +443,10 @@ class CommandMenu(Menu):
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
-    def take(self):
+    def take(self) -> None:
         """
-        Take an item. (Not yet implemented)
-        :return: To be determined upon implementation
+        Take an item.
+        :return: None
         """
         play_sound(menu_button_sfx)
         # open a window
