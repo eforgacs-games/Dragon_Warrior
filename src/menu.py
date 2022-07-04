@@ -166,7 +166,7 @@ class CommandMenu(Menu):
         :param drop_up: Whether to display the drop-up effect.
         """
         if drop_down:
-            self.window_drop_down_effect(x=2, y=9, width=12, height=5)
+            self.window_drop_down_effect(2, 9, 12, 5)
         if type(text) == str:
             self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, last_line=True, disable_sound=disable_sound)
         else:
@@ -200,26 +200,30 @@ class CommandMenu(Menu):
     def window_drop_up_effect(self, x, y, width, height) -> None:
         """Outro effect for menus."""
         # draw all the tiles initially once
-        for tile, tile_dict in self.current_map.floor_tile_key.items():
-            if tile in self.current_map.tile_types_in_current_map:
-                tile_dict['group'].draw(self.background)
-        window_rect = Rect(TILE_SIZE * x, TILE_SIZE * y, TILE_SIZE * width, TILE_SIZE * height)
-        for i in range(height - 1, -1, -1):
-            black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
-            black_box.fill(BLACK)
-            drop_up_start = get_ticks()
-            while convert_to_frames_since_start_time(drop_up_start) < 1:
-                for tile, tile_dict in self.current_map.floor_tile_key.items():
-                    if tile in self.get_dialog_box_underlying_tiles(self.current_map, i):
-                        tile_dict['group'].draw(self.background)
-                # TODO(ELF): The sprites move one square off when the window is dropped down.
-                draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
-                for character, character_dict in self.current_map.characters.items():
-                    self.background.blit(character_dict['character_sprites'].sprites()[0].image,
-                                         (character_dict['character'].column * TILE_SIZE, character_dict['character'].row * TILE_SIZE))
-                self.screen.blit(self.background, self.camera_position)
-                self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
-                display.update(window_rect)
+        if not self.current_map.is_dark:
+            # if the map is dark, drawing all the tiles to the screen basically creates an exploit that shows the map tiles lit up,
+            # even without a torch or radiant
+            # might be good to revisit this later with just a black background?
+            for tile, tile_dict in self.current_map.floor_tile_key.items():
+                if tile in self.current_map.tile_types_in_current_map and tile_dict.get('group'):
+                    tile_dict['group'].draw(self.background)
+            window_rect = Rect(TILE_SIZE * x, TILE_SIZE * y, TILE_SIZE * width, TILE_SIZE * height)
+            for i in range(height - 1, -1, -1):
+                black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
+                black_box.fill(BLACK)
+                drop_up_start = get_ticks()
+                while convert_to_frames_since_start_time(drop_up_start) < 1:
+                    for tile, tile_dict in self.current_map.floor_tile_key.items():
+                        if tile in self.get_dialog_box_underlying_tiles(self.current_map, i):
+                            tile_dict['group'].draw(self.background)
+                    # TODO(ELF): The sprites move one square off when the window is dropped down.
+                    draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
+                    for character, character_dict in self.current_map.characters.items():
+                        self.background.blit(character_dict['character_sprites'].sprites()[0].image,
+                                             (character_dict['character'].column * TILE_SIZE, character_dict['character'].row * TILE_SIZE))
+                    self.screen.blit(self.background, self.camera_position)
+                    self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
+                    display.update(window_rect)
 
     def take_item(self, item_name: str):
         play_sound(open_treasure_sfx)

@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import numpy as np
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit, K_F1, time
+    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -16,7 +16,7 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
     convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, ARMED_HERO_WITH_SHIELD_PATH, \
-    UNARMED_HERO_WITH_SHIELD_PATH
+    UNARMED_HERO_WITH_SHIELD_PATH, WHITE
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -61,6 +61,7 @@ class Game:
         self.not_moving_time_start = None
         self.display_hovering_stats = False
         self.hovering_stats_displayed = False
+        self.torch_active = False
         # debugging
         self.show_coordinates = SHOW_COORDINATES
         init()
@@ -479,7 +480,18 @@ class Game:
         self.screen.blit(self.background, self.camera.get_pos())
         self.handle_initial_dialog()
         self.handle_post_death_dialog()
-
+        if self.current_map.is_dark:
+            darkness = Surface((self.screen.get_width(), self.screen.get_height()))
+            if not self.torch_active:
+                darkness_hole = darkness.subsurface((self.screen.get_width() / 2), (self.screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE, TILE_SIZE)
+            else:
+                darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE, (self.screen.get_height() / 2) - (TILE_SIZE * 1.5),
+                                                    TILE_SIZE * 3,
+                                                    TILE_SIZE * 3)
+            darkness.fill(BLACK)
+            darkness_hole.fill(WHITE)
+            darkness.set_colorkey(WHITE)
+            self.screen.blit(darkness, (0, 0))
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
                 self.drop_down_hovering_stats_window()
@@ -520,7 +532,6 @@ class Game:
     def handle_post_death_dialog(self):
         if self.current_map.identifier == 'TantegelThroneRoom':
             if self.is_post_death_dialog:
-                display.flip()
                 self.display_hovering_stats = False
                 self.cmd_menu.launch_signaled = False
                 self.run_automatic_post_death_dialog()
@@ -538,12 +549,13 @@ class Game:
     def run_automatic_post_death_dialog(self):
         self.enable_movement = False
         for current_event in self.events:
-            if current_event.type == KEYUP or self.skip_text:
+            if current_event.type == KEYDOWN or self.skip_text:
                 self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
                                                       add_quotes=True,
                                                       skip_text=self.skip_text)
                 self.is_post_death_dialog = False
                 self.set_to_save_prompt()
+                self.enable_movement = True
 
     def set_to_post_initial_dialog(self):
         self.is_initial_dialog = False
@@ -602,7 +614,7 @@ class Game:
                 )
                 if not self.cmd_menu.menu.is_enabled():
                     play_sound(menu_button_sfx)
-                    self.cmd_menu.window_drop_down_effect(x=6, y=1, width=8, height=5)
+                    self.cmd_menu.window_drop_down_effect(6, 1, 8, 5)
                     self.cmd_menu.menu.enable()
                 else:
                     menu_to_launch.menu.draw(command_menu_subsurface)
@@ -660,9 +672,9 @@ class Game:
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]))
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
-        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
+        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN', 'CAVE'):
             self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_UP'
-        elif self.player.current_tile == 'BRICK_STAIR_UP':
+        elif self.player.current_tile == 'BRICK_STAIR_UP' and self.current_map.identifier != 'Alefgard':
             self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_DOWN'
         else:
             if destination_coordinates != (initial_hero_location.take(0), initial_hero_location.take(1)):
@@ -796,12 +808,6 @@ class Game:
         :param delta_y: Change in y position.
         :return: None
         """
-        # coords = numpy.argwhere(self.current_map.layout_numpy_array)
-        # x_min, y_min = coords.min(axis=0)
-        # x_max, y_max = coords.max(axis=0)
-        # b = cropped = self.current_map.layout_numpy_array[x_min:x_max + 1, y_min:y_max + 1]
-        # # print(b)
-
         self.cmd_menu.camera_position = curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.get_pos()
         self.check_next_tile(character)
         character.next_tile_id = get_next_tile_identifier(character.column, character.row, character.direction_value, self.current_map)
