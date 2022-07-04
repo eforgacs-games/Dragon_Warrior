@@ -149,7 +149,7 @@ class DragonWarriorMap:
         for row in range(len(self.layout)):
             for column in range(len(self.layout[row])):
                 self.center_pt = get_center_point(column, row)
-                if self.layout[row][column] <= 32 and not self.is_dark:  # anything below 32 is a floor tile
+                if self.layout[row][column] <= 32:  # anything below 32 is a floor tile
                     self.map_floor_tiles(column, row)
                 else:
                     self.map_character_tiles(column, row, player)
