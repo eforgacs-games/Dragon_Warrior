@@ -2,7 +2,6 @@ import random
 import sys
 from typing import List, Tuple
 
-import numpy as np
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
     display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN
 from pygame.display import set_mode, set_caption
@@ -646,8 +645,8 @@ class Game:
             destination_coordinates = (10, 13)  # TantegelThroneRoom, in front of King Lorik
         self.current_map.destination_coordinates = destination_coordinates
         initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        if initial_hero_location.size <= 0:
-            initial_hero_location = np.array([self.player.row, self.player.column])
+        if not initial_hero_location:
+            initial_hero_location = self.player.row, self.player.column
         if destination_coordinates:
             if self.current_map.initial_coordinates != destination_coordinates:
                 self.reset_initial_hero_location_tile()
@@ -677,7 +676,7 @@ class Game:
         elif self.player.current_tile == 'BRICK_STAIR_UP' and self.current_map.identifier != 'Alefgard':
             self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_DOWN'
         else:
-            if destination_coordinates != (initial_hero_location.take(0), initial_hero_location.take(1)):
+            if destination_coordinates != initial_hero_location:
                 self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
                     self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
             else:
