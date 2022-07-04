@@ -14,7 +14,7 @@ This is a clone of Dragon Warrior for the Nintendo Entertainment System, done in
 
 # REQUIREMENTS
 
-[Python 3.10 (or higher)](https://www.python.org/), [PyGame](https://www.pygame.org/news), [PyGame Menu](https://github.com/ppizarror/pygame-menu), [NumPy](https://numpy.org/)
+[Python 3.10 (or higher)](https://www.python.org/), [PyGame](https://www.pygame.org/news), [PyGame Menu](https://github.com/ppizarror/pygame-menu)
 
 # INSTRUCTIONS
 
