@@ -166,7 +166,7 @@ class CommandMenu(Menu):
         :param drop_up: Whether to display the drop-up effect.
         """
         if drop_down:
-            self.window_drop_down_effect(x=2, y=9, width=12, height=5)
+            self.window_drop_down_effect(2, 9, 12, 5)
         if type(text) == str:
             self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, last_line=True, disable_sound=disable_sound)
         else:

@@ -613,7 +613,7 @@ class Game:
                 )
                 if not self.cmd_menu.menu.is_enabled():
                     play_sound(menu_button_sfx)
-                    self.cmd_menu.window_drop_down_effect(x=6, y=1, width=8, height=5)
+                    self.cmd_menu.window_drop_down_effect(6, 1, 8, 5)
                     self.cmd_menu.menu.enable()
                 else:
                     menu_to_launch.menu.draw(command_menu_subsurface)
