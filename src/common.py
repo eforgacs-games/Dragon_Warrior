@@ -127,6 +127,7 @@ CONFIRMATION_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation.png')
 CONFIRMATION_YES_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_yes.png')
 CONFIRMATION_NO_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_no.png')
 HOVERING_STATS_BACKGROUND_PATH = join(IMAGES_DIR, 'hovering_stats_window.png')
+STATUS_WINDOW_BACKGROUND_PATH = join(IMAGES_DIR, 'status_window_background.png')
 IMAGES_MENUS_DIR = join(IMAGES_DIR, 'menus')
 
 # main menu
@@ -367,7 +368,7 @@ def convert_to_frames_since_start_time(start_time):
     return convert_to_frames(get_ticks() - start_time)
 
 
-def create_window(x, y, width, height, window_background, screen):
+def create_window(x, y, width, height, window_background, screen) -> Surface:
     window_box = Surface((TILE_SIZE * width, TILE_SIZE * height))  # lgtm [py/call/wrong-arguments]
     set_window_background(window_box, window_background)
     screen.blit(window_box, (TILE_SIZE * x, TILE_SIZE * y))
