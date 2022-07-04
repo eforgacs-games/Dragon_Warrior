@@ -308,14 +308,11 @@ class CommandMenu(Menu):
             self.show_text_in_dialog_box("There is no one there.", add_quotes=True, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
-        # TODO(ELF): Add drop up effect upon closing command menu - currently blits to the wrong place,
-        #  and also clears the command menu before blitting.
-        # self.window_drop_up_effect(width=8, height=5, x=5, y=1)
 
-    def status(self):
+    def status(self) -> None:
         """
-        Display the current player's status. (Not yet implemented)
-        :return: To be determined upon implementation
+        Display the current player's status.
+        :return: None
         """
         # open another window (11 tall x 10 wide)
         # print the following attributes:
@@ -356,15 +353,16 @@ class CommandMenu(Menu):
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
-    def stairs(self):
+    def stairs(self) -> None:
         """
-        Go up or down a staircase. (Not yet implemented)
-        :return: To be determined upon implementation
+        Go up or down a staircase.
+        :return: None
         """
         play_sound(menu_button_sfx)
-        # this might be something we could turn off as one of the "modernization" updates, but the implementation would be as follows:
+        # this might be something we could turn off as one of the "modernization" updates
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN'):
-            print("'There are stairs here.'")
+            self.game.process_staircase_warps((self.game.player.row, self.game.player.column),
+                                              self.game.current_map.staircases[(self.game.player.row, self.game.player.column)])
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
             # the original game has quotes in this dialog box
@@ -372,10 +370,10 @@ class CommandMenu(Menu):
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
-    def search(self):
+    def search(self) -> None:
         """
-        Search the ground for items. (Not yet implemented)
-        :return: To be determined upon implementation
+        Search the ground for items.
+        :return: None
         """
         play_sound(menu_button_sfx)
         # open a window
@@ -426,10 +424,10 @@ class CommandMenu(Menu):
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
-    def door(self):
+    def door(self) -> None:
         """
-        Open a door. (Not yet implemented)
-        :return: To be determined upon implementation
+        Open a door.
+        :return: None
         """
         play_sound(menu_button_sfx)
         if self.player.next_tile_id == 'DOOR':
@@ -445,10 +443,10 @@ class CommandMenu(Menu):
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
-    def take(self):
+    def take(self) -> None:
         """
-        Take an item. (Not yet implemented)
-        :return: To be determined upon implementation
+        Take an item.
+        :return: None
         """
         play_sound(menu_button_sfx)
         # open a window
