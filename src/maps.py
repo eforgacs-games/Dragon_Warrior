@@ -2,7 +2,6 @@ import inspect
 import sys
 from abc import ABC
 
-import numpy as np
 from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
 
@@ -130,17 +129,16 @@ class DragonWarriorMap:
         """Returns the tile name from the integer value associated with it."""
         return list(self.tile_key.keys())[position]
 
-    def get_initial_character_location(self, character_name: str) -> np.ndarray:
+    def get_initial_character_location(self, character_name: str):
         """
         Gets the initial location of any character specified.
         :param character_name: Name of the character to find
         :return:
         """
-        # pure Python implementation - maybe try this out, see which is faster?
-        # character_layout_position = [(ix, iy) for ix, row in enumerate(self.layout) for iy, i in enumerate(row) if i == character_name]
-        character_layout_position = np.asarray(
-            np.where(np.array(self.layout) == self.character_key[character_name]['val'])).T
-        return character_layout_position
+        character_layout_position = [(ix, iy) for ix, row in enumerate(self.layout) for iy, i in enumerate(row) if
+                                     i == self.character_key[character_name]['val']]
+        if character_layout_position:
+            return character_layout_position[0][0], character_layout_position[0][1]
 
     def load_map(self, player, destination_coordinates) -> None:
         self.destination_coordinates = destination_coordinates
