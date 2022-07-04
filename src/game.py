@@ -16,7 +16,7 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
     convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, ARMED_HERO_WITH_SHIELD_PATH, \
-    UNARMED_HERO_WITH_SHIELD_PATH
+    UNARMED_HERO_WITH_SHIELD_PATH, WHITE
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -61,6 +61,7 @@ class Game:
         self.not_moving_time_start = None
         self.display_hovering_stats = False
         self.hovering_stats_displayed = False
+        self.torch_active = False
         # debugging
         self.show_coordinates = SHOW_COORDINATES
         init()
@@ -446,9 +447,8 @@ class Game:
                                                                           all_roaming_character_surrounding_tiles +
                                                                           all_fixed_character_underlying_tiles, self.current_map.character_key)
             if self.player.is_moving:
-                if not self.current_map.is_dark:
-                    tile_types_to_draw += replace_characters_with_underlying_tiles(
-                        list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
+                tile_types_to_draw += replace_characters_with_underlying_tiles(
+                    list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
                 self.not_moving_time_start = None
                 self.display_hovering_stats = False
                 if self.hovering_stats_displayed:
@@ -469,10 +469,9 @@ class Game:
 
             # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
 
-        if not self.current_map.is_dark:
-            for tile, tile_dict in self.current_map.floor_tile_key.items():
-                if tile_dict.get('group') and tile in set(tile_types_to_draw):
-                    tile_dict['group'].draw(self.background)
+        for tile, tile_dict in self.current_map.floor_tile_key.items():
+            if tile_dict.get('group') and tile in set(tile_types_to_draw):
+                tile_dict['group'].draw(self.background)
 
         # also check if group is in current window, default screen size is 15 tall x 16 wide
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
@@ -483,8 +482,15 @@ class Game:
         self.handle_post_death_dialog()
         if self.current_map.is_dark:
             darkness = Surface((self.screen.get_width(), self.screen.get_height()))
+            if not self.torch_active:
+                darkness_hole = darkness.subsurface((self.screen.get_width() / 2), (self.screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE, TILE_SIZE)
+            else:
+                darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE, (self.screen.get_height() / 2) - (TILE_SIZE * 1.5), TILE_SIZE * 3,
+                                                    TILE_SIZE * 3)
             darkness.fill(BLACK)
-            self.background.blit(darkness, (0, 0))
+            darkness_hole.fill(WHITE)
+            darkness.set_colorkey(WHITE)
+            self.screen.blit(darkness, (0, 0))
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
                 self.drop_down_hovering_stats_window()
