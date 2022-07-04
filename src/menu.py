@@ -3,14 +3,15 @@ from collections import Counter
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN, Rect, event
+from pygame import Surface, display, KEYDOWN, Rect, event, K_ESCAPE, K_RETURN, K_k, K_j
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
 from data.text.dialog import blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
-    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx
+    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
+    STATUS_WINDOW_BACKGROUND_PATH
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.maps_functions import get_center_point
@@ -320,6 +321,17 @@ class CommandMenu(Menu):
         # print the following attributes:
         # example below:
         play_sound(menu_button_sfx)
+        show_status = True
+        self.window_drop_down_effect(4, 3, 10, 11)
+        status_window = create_window(4, 3, 10, 11, STATUS_WINDOW_BACKGROUND_PATH, self.screen)
+        display.update((4 * TILE_SIZE, 3 * TILE_SIZE, 10 * TILE_SIZE, 11 * TILE_SIZE))
+        # 4 in 3 down
+        while show_status:
+            for current_event in event.get():
+                if current_event.type == KEYDOWN:
+                    if current_event.key in (K_ESCAPE, K_RETURN, K_k, K_j):
+                        show_status = False
+        self.window_drop_up_effect(width=4, height=3, x=10, y=11)
         print(f"""
         NAME: {self.player.name}
         STRENGTH: {self.player.strength}
