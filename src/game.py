@@ -485,7 +485,8 @@ class Game:
             if not self.torch_active:
                 darkness_hole = darkness.subsurface((self.screen.get_width() / 2), (self.screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE, TILE_SIZE)
             else:
-                darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE, (self.screen.get_height() / 2) - (TILE_SIZE * 1.5), TILE_SIZE * 3,
+                darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE, (self.screen.get_height() / 2) - (TILE_SIZE * 1.5),
+                                                    TILE_SIZE * 3,
                                                     TILE_SIZE * 3)
             darkness.fill(BLACK)
             darkness_hole.fill(WHITE)
@@ -807,12 +808,6 @@ class Game:
         :param delta_y: Change in y position.
         :return: None
         """
-        # coords = numpy.argwhere(self.current_map.layout_numpy_array)
-        # x_min, y_min = coords.min(axis=0)
-        # x_max, y_max = coords.max(axis=0)
-        # b = cropped = self.current_map.layout_numpy_array[x_min:x_max + 1, y_min:y_max + 1]
-        # # print(b)
-
         self.cmd_menu.camera_position = curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.get_pos()
         self.check_next_tile(character)
         character.next_tile_id = get_next_tile_identifier(character.column, character.row, character.direction_value, self.current_map)
