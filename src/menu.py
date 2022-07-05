@@ -11,7 +11,7 @@ from data.text.dialog import blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
-    STATUS_WINDOW_BACKGROUND_PATH
+    STATUS_WINDOW_BACKGROUND_PATH, COMMAND_MENU_BACKGROUND_PATH
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.maps_functions import get_center_point
@@ -184,7 +184,7 @@ class CommandMenu(Menu):
                 #     if letter_index % 2 == 0:
                 #         play_sound(text_beep_sfx)
         if drop_up:
-            self.window_drop_up_effect(x=2, y=9, width=12, height=5)
+            self.window_drop_up_effect(2, 9, 12, 5)
 
     def window_drop_down_effect(self, x, y, width, height) -> None:
         """Intro effect for menus."""
