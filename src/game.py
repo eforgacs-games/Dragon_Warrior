@@ -3,9 +3,10 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN
+    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect
 from pygame.display import set_mode, set_caption
 from pygame.event import get
+from pygame.sprite import Group
 from pygame.time import Clock
 from pygame.time import get_ticks
 
@@ -87,8 +88,8 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom()
-        # self.current_map = maps.TantegelCourtyard()
+        # self.current_map = maps.TantegelThroneRoom()
+        self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
@@ -468,11 +469,52 @@ class Game:
 
             # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
 
+        group_to_draw = Group()
+        tiles_drawn = []
+        camera_screen_rect = Rect(((self.player.column * TILE_SIZE) - (TILE_SIZE * 8)), ((self.player.row * TILE_SIZE) - TILE_SIZE * 7), self.screen.get_width(), self.screen.get_height())
+        # screen_surface = self.background.subsurface(((self.player.column * TILE_SIZE) - (TILE_SIZE * 8)), ((self.player.row * TILE_SIZE) - TILE_SIZE * 7), self.screen.get_width(), self.screen.get_height())
+
+        # screen_surface.fill(WHITE)
+        character_rects = [character_dict['character'].rect for character_dict in self.current_map.characters.values()] + [Rect(character.row * TILE_SIZE, character.column * TILE_SIZE, TILE_SIZE, TILE_SIZE) for character in self.current_map.roaming_characters] + [character.rect for character in self.current_map.fixed_characters]
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile_dict.get('group') and tile in set(tile_types_to_draw):
-                tile_dict['group'].draw(self.background)
+                for tile_to_draw in tile_dict['group']:
+                    # if tile is onscreen
+                    # and tile collides with the player
+                    # or tile collides with any roaming characters
+                    # screen size:
+                    # 16 width x 15 high
+                    # maximum of 240 tiles
 
-        # also check if group is in current window, default screen size is 15 tall x 16 wide
+                    # 3 x 3 rect around player
+                    # rect_to_check = Rect(self.player.column * TILE_SIZE, self.player.row * TILE_SIZE, TILE_SIZE * 1.01, TILE_SIZE * 1.01)
+
+                    if camera_screen_rect.colliderect(tile_to_draw.rect):
+                        group_to_draw.add(tile_to_draw)
+                        tiles_drawn.append(tile)
+
+                        # if self.player.rect.colliderect(tile_to_draw.rect):
+                        #     group_to_draw.add(tile_to_draw)
+                        #     tiles_drawn.append(tile)
+                        # # elif tile_to_draw.rect.collidelist(character_rects) != -1:
+                        # # # if there are roaming characters, check if the tile is colliding with any of them
+                        # for character_rect in character_rects:
+                        #     if character_rect.colliderect(tile_to_draw.rect):
+                        #         group_to_draw.add(tile_to_draw)
+                        #         tiles_drawn.append(tile)
+
+                            # if any(character_rect.colliderect(tile_to_draw) for character_rect in character_rects):
+                            #     group_to_draw.add(tile_to_draw)
+                            #     tiles_drawn.append(tile_to_draw)
+                            # if there are no roaming characters
+
+                            # or the tile behind the player collides with the tile to draw
+
+                        # if self.player.rect.colliderect(tile_to_draw.rect) or (self.player.is_moving and rect_to_check.colliderect(tile_to_draw.rect)):
+                        # if self.player.rect.colliderect(tile_to_draw.rect) or (
+                        #         len(self.current_map.characters.items()) > 1 and tile_to_draw.rect.collidelist(character_rects) != -1):
+        # print(f"{len(tiles_drawn)}: {tiles_drawn}")
+        group_to_draw.draw(self.background)
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation()
