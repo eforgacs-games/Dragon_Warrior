@@ -3,7 +3,7 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect
+    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect, SCALED
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.sprite import Group
@@ -33,6 +33,12 @@ from src.sound import bump, play_sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 from src.visual_effects import fade, flash_transparent_color
+
+
+def get_three_by_three_rect(character):
+    left = character.rect.left - TILE_SIZE
+    top = character.rect.top - TILE_SIZE
+    return Rect(left, top, TILE_SIZE * 2.1, TILE_SIZE * 2.1)
 
 
 class Game:
@@ -69,11 +75,11 @@ class Game:
         # Create the game window.
         if self.fullscreen_enabled:
             # if it's producing a segmentation fault, try maybe not using the SCALED flag
-            # flags = FULLSCREEN | SCALED
-            self.flags = FULLSCREEN
+            self.flags = FULLSCREEN | SCALED
+            # self.flags = FULLSCREEN
         else:
-            # flags = RESIZABLE | SCALED
-            self.flags = RESIZABLE
+            self.flags = RESIZABLE | SCALED
+            # self.flags = RESIZABLE
         # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
         # without SCALED, it will show more of the map, but will also not center the camera
         # it might be a nice comfort addition to add to center the camera, while also showing more of the map
@@ -88,8 +94,8 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        # self.current_map = maps.TantegelThroneRoom()
-        self.current_map = maps.TantegelCourtyard()
+        self.current_map = maps.TantegelThroneRoom()
+        # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
@@ -326,7 +332,6 @@ class Game:
         if current_key[K_j]:
             # B button
             self.unlaunch_menu(self.cmd_menu)
-            draw_all_tiles_in_current_map(self.current_map, self.background)
             # print("J key pressed (B button).")
 
     def handle_a_button(self, current_key):
@@ -358,16 +363,16 @@ class Game:
 
     def handle_fps_changes(self, current_key) -> None:
         if current_key[K_1]:
-            self.draw_temporary_text(("Game set to normal speed.",))
+            self.draw_temporary_text(("Game set to normal speed.\n(60 FPS)",))
             self.fps = 60
         if current_key[K_2]:
-            self.draw_temporary_text(("Game set to double speed.",))
+            self.draw_temporary_text(("Game set to double speed.\n(120 FPS)",))
             self.fps = 120
         if current_key[K_3]:
-            self.draw_temporary_text(("Game set to triple speed.",))
+            self.draw_temporary_text(("Game set to triple speed.\n(240 FPS)",))
             self.fps = 240
         if current_key[K_4]:
-            self.draw_temporary_text(("Game set to quadruple speed.",))
+            self.draw_temporary_text(("Game set to quadruple speed.\n(480 FPS)",))
             self.fps = 480
 
     def update_roaming_character_positions(self) -> None:
@@ -396,11 +401,6 @@ class Game:
         :return: None
         """
         self.screen.fill(BLACK)
-        # if isinstance(self.current_map, maps.Alefgard):
-        #     # width_offset = 2336
-        #     width_offset = TILE_SIZE * self.player.column + 24
-        #     height_offset = TILE_SIZE * self.player.row + 25
-        # else:
         width_offset = 0
         height_offset = 0
         if self.loop_count == 1:
@@ -471,11 +471,13 @@ class Game:
 
         group_to_draw = Group()
         tiles_drawn = []
-        camera_screen_rect = Rect(((self.player.column * TILE_SIZE) - (TILE_SIZE * 8)), ((self.player.row * TILE_SIZE) - TILE_SIZE * 7), self.screen.get_width(), self.screen.get_height())
-        # screen_surface = self.background.subsurface(((self.player.column * TILE_SIZE) - (TILE_SIZE * 8)), ((self.player.row * TILE_SIZE) - TILE_SIZE * 7), self.screen.get_width(), self.screen.get_height())
-
-        # screen_surface.fill(WHITE)
-        character_rects = [character_dict['character'].rect for character_dict in self.current_map.characters.values()] + [Rect(character.row * TILE_SIZE, character.column * TILE_SIZE, TILE_SIZE, TILE_SIZE) for character in self.current_map.roaming_characters] + [character.rect for character in self.current_map.fixed_characters]
+        camera_screen_rect = Rect(((self.player.column * TILE_SIZE) - (TILE_SIZE * 8)), ((self.player.row * TILE_SIZE) - TILE_SIZE * 7),
+                                  self.screen.get_width(), self.screen.get_height())
+        collision_check_rects = []
+        for roaming_character in self.current_map.roaming_characters:
+            collision_check_rects.append(get_three_by_three_rect(roaming_character))
+        for fixed_character in self.current_map.fixed_characters:
+            collision_check_rects.append(fixed_character.rect)
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile_dict.get('group') and tile in set(tile_types_to_draw):
                 for tile_to_draw in tile_dict['group']:
@@ -490,29 +492,19 @@ class Game:
                     # rect_to_check = Rect(self.player.column * TILE_SIZE, self.player.row * TILE_SIZE, TILE_SIZE * 1.01, TILE_SIZE * 1.01)
 
                     if camera_screen_rect.colliderect(tile_to_draw.rect):
-                        group_to_draw.add(tile_to_draw)
-                        tiles_drawn.append(tile)
+                        if self.player.is_moving:
+                            if get_three_by_three_rect(self.player).colliderect(tile_to_draw.rect):
+                                group_to_draw.add(tile_to_draw)
+                                tiles_drawn.append(tile)
+                        else:
+                            if self.player.rect.colliderect(tile_to_draw.rect):
+                                group_to_draw.add(tile_to_draw)
+                                tiles_drawn.append(tile)
 
-                        # if self.player.rect.colliderect(tile_to_draw.rect):
-                        #     group_to_draw.add(tile_to_draw)
-                        #     tiles_drawn.append(tile)
-                        # # elif tile_to_draw.rect.collidelist(character_rects) != -1:
-                        # # # if there are roaming characters, check if the tile is colliding with any of them
-                        # for character_rect in character_rects:
-                        #     if character_rect.colliderect(tile_to_draw.rect):
-                        #         group_to_draw.add(tile_to_draw)
-                        #         tiles_drawn.append(tile)
-
-                            # if any(character_rect.colliderect(tile_to_draw) for character_rect in character_rects):
-                            #     group_to_draw.add(tile_to_draw)
-                            #     tiles_drawn.append(tile_to_draw)
-                            # if there are no roaming characters
-
-                            # or the tile behind the player collides with the tile to draw
-
-                        # if self.player.rect.colliderect(tile_to_draw.rect) or (self.player.is_moving and rect_to_check.colliderect(tile_to_draw.rect)):
-                        # if self.player.rect.colliderect(tile_to_draw.rect) or (
-                        #         len(self.current_map.characters.items()) > 1 and tile_to_draw.rect.collidelist(character_rects) != -1):
+                    for collision_check_rect in collision_check_rects:
+                        if collision_check_rect.colliderect(tile_to_draw):
+                            group_to_draw.add(tile_to_draw)
+                            tiles_drawn.append(tile)
         # print(f"{len(tiles_drawn)}: {tiles_drawn}")
         group_to_draw.draw(self.background)
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
@@ -766,6 +758,7 @@ class Game:
                 self.unpause_all_movement()
                 self.cmd_menu.window_drop_up_effect(x=6, y=1, width=8, height=5)
                 self.cmd_menu.menu.disable()
+        draw_all_tiles_in_current_map(self.current_map, self.background)
 
     def unpause_all_movement(self) -> None:
         """
