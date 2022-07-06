@@ -3,7 +3,7 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect, SCALED
+    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.sprite import Group
