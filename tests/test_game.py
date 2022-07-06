@@ -360,7 +360,7 @@ class TestGame(TestCase):
             self.assertTrue(self.game.enable_roaming)
             self.assertTrue(self.game.enable_movement)
             self.assertFalse(self.game.cmd_menu.menu.is_enabled())
-        mock_window_drop_up_effect.assert_called_with(x=6, y=1, width=8, height=5)
+        mock_window_drop_up_effect.assert_called_with(6, 1, 8, 5)
 
     def test_handle_initial_dialog(self):
         self.game.skip_text = True
@@ -401,7 +401,8 @@ class TestGame(TestCase):
 
     def test_drop_down_hovering_stats_window(self):
         with patch.object(CommandMenu, 'window_drop_down_effect', return_value=None) as mock_window_drop_down_effect:
-            self.game.drop_down_hovering_stats_window()
+            self.game.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
+            self.game.hovering_stats_displayed = True
             self.assertTrue(self.game.hovering_stats_displayed)
         mock_window_drop_down_effect.assert_called_with(1, 2, 4, 6)
 

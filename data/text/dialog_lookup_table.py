@@ -111,7 +111,11 @@ class DialogLookup:
                 'MERCHANT_3': {'dialog': weapons_and_armor_intro},
                 'WISE_MAN': {'dialog': "Many believe that Princess Gwaelin is hidden away in a cave."}
 
-            }
+            },
+            'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
+                                                        "Thus, I propose a test.",
+                                                        "There is a Silver Harp that beckons to the creatures of the Dragonlord.",
+                                                        "Bring this to me and I will reward thee with the Staff of Rain.")}}
         }
 
         for map_dict in self.lookup_table.values():
@@ -240,7 +244,6 @@ class DialogLookup:
             self.player.armor = item
         elif item_type == 'shield':
             self.player.shield = item
-        # TODO(ELF): Update money (GOLD) display in hovering stats window.
         draw_hovering_stats_window(self.screen, self.player)
         self.command_menu.show_line_in_dialog_box("I thank thee.")
 
@@ -277,7 +280,7 @@ class DialogLookup:
             if character != 'HERO':
                 draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1], character_dict['coordinates'][0], character)
         self.screen.blit(self.background, self.camera_position)
-        self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 5, TILE_SIZE * 1))
+        self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
         display.flip()
         self.command_menu.show_text_in_dialog_box(("Good morning.\n" +
                                                    "Thou seems to have spent a good night.",
