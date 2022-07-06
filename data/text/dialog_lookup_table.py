@@ -111,7 +111,11 @@ class DialogLookup:
                 'MERCHANT_3': {'dialog': weapons_and_armor_intro},
                 'WISE_MAN': {'dialog': "Many believe that Princess Gwaelin is hidden away in a cave."}
 
-            }
+            },
+            'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
+                                                        "Thus, I propose a test.",
+                                                        "There is a Silver Harp that beckons to the creatures of the Dragonlord.",
+                                                        "Bring this to me and I will reward thee with the Staff of Rain.")}}
         }
 
         for map_dict in self.lookup_table.values():
