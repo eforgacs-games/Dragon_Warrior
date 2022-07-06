@@ -3,7 +3,7 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect
+    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect, SCALED
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.sprite import Group
@@ -70,11 +70,11 @@ class Game:
         # Create the game window.
         if self.fullscreen_enabled:
             # according to pygame docs: "SCALED is considered an experimental API and may change in future releases."
-            # self.flags = FULLSCREEN | SCALED
-            self.flags = FULLSCREEN
+            self.flags = FULLSCREEN | SCALED
+            # self.flags = FULLSCREEN
         else:
-            # self.flags = RESIZABLE | SCALED
-            self.flags = RESIZABLE
+            self.flags = RESIZABLE | SCALED
+            # self.flags = RESIZABLE
         # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
         # without SCALED, it will show more of the map, but will also not center the camera
         # it might be a nice comfort addition to add to center the camera, while also showing more of the map
@@ -312,7 +312,7 @@ class Game:
         self.handle_a_button(current_key)
         self.handle_start_button(current_key)
         self.handle_select_button(current_key)
-        # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed. (modernization)
+        # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed (or scroll wheel is moved). (modernization)
         # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
         #     self.scale = self.scale + 1
         self.handle_help_button(current_key)
@@ -400,37 +400,8 @@ class Game:
         if self.loop_count == 1:
             self.background = self.big_map.subsurface(0, 0, self.current_map.width - width_offset,
                                                       self.current_map.height - height_offset).convert()
-        # this for loop is a good place to look to improve overall FPS, reduce frame drops, etc.
-        # while the improvements up until now have been significant enough to keep the FPS at 60
-        # even while on the overworld map, there are still improvements that can be made:
-        # some basic pseudocode --
-
-        # TODO: Improve implementation of the following "not moving" optimization.
-
-        # one optimization to make while not moving:
-
-        # on overworld map:
-        #     if not self.player.is_moving:
-        #         there are no roaming characters, so only update the middle square where the player is
-        #     else:
-        #         do the normal logic
-        # on non-overworld maps
-        #     if not self.player.is_moving:
-        #         only update the middle square where the player is
-        #         and the squares where roaming characters are now or will be
-        #     else:
-        #         do the normal logic
-
-        # right now we're pretty close with the surrounding tiles check, but we could be doing better
-
-        # print(self.background.get_rect())
-        if self.loop_count == 1:
             # draw everything once on the first go-around
             draw_all_tiles_in_current_map(self.current_map, self.background)
-        # performance optimization to only draw the tile type that the hero is standing on, and surrounding tiles
-        # won't work where there are moving NPCs, so only use this in the overworld
-        # if not self.current_map.roaming_characters:
-        # basically, if you're in the overworld or another map with no roaming characters
         try:
             surrounding_tile_values = get_surrounding_tile_values(
                 (self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE), self.current_map.layout)
@@ -473,16 +444,6 @@ class Game:
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile_dict.get('group') and tile in set(tile_types_to_draw):
                 for tile_to_draw in tile_dict['group']:
-                    # if tile is onscreen
-                    # and tile collides with the player
-                    # or tile collides with any roaming characters
-                    # screen size:
-                    # 16 width x 15 high
-                    # maximum of 240 tiles
-
-                    # 3 x 3 rect around player
-                    # rect_to_check = Rect(self.player.column * TILE_SIZE, self.player.row * TILE_SIZE, TILE_SIZE * 1.01, TILE_SIZE * 1.01)
-
                     if camera_screen_rect.colliderect(tile_to_draw.rect):
                         if self.player.is_moving:
                             if get_surrounding_rect(self.player).colliderect(tile_to_draw.rect):

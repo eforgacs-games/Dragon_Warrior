@@ -1,11 +1,12 @@
 import os
 from unittest import TestCase
+from unittest.mock import patch
 
 from src.common import Direction
 from src.game import Game
 from src.maps import MapWithoutNPCs
 
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 layout = [[33, 0, 3],
@@ -28,7 +29,8 @@ class MockMap(MapWithoutNPCs):
 
 class TestCamera(TestCase):
     def setUp(self) -> None:
-        self.game = Game()
+        with patch('src.game.SCALED'):
+            self.game = Game()
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
 
