@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pygame
-from pygame import K_F1, K_z, K_UP, RESIZABLE
+from pygame import K_F1, K_z, K_UP, RESIZABLE, SCALED
 from pygame.imageext import load_extended
 from pygame.sprite import LayeredDirty
 from pygame.transform import scale
@@ -22,7 +22,7 @@ from src.menu_functions import convert_list_to_newline_separated_string
 from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
 
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
@@ -87,7 +87,8 @@ def setup_roaming_character(row, column, direction):
 class TestGame(TestCase):
 
     def setUp(self) -> None:
-        self.game = Game()
+        with patch('src.game.SCALED'):
+            self.game = Game()
         self.game.player.name = "Edward"
         self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu)
         self.game.current_map = MockMap()
@@ -498,7 +499,7 @@ class TestGame(TestCase):
     def test_flags(self):
         self.game.fullscreen_enabled = False
         self.game.__init__()
-        self.assertEqual(RESIZABLE, self.game.flags)
+        self.assertEqual(RESIZABLE | SCALED, self.game.flags)
         # self.game.fullscreen_enabled = True
         # self.game.__init__()
         # self.assertEqual(FULLSCREEN, self.game.flags)
