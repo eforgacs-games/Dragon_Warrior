@@ -14,7 +14,7 @@ from src import maps, menu_functions
 from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
-    convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
+    convert_to_frames_since_start_time, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, ARMED_HERO_WITH_SHIELD_PATH, \
     UNARMED_HERO_WITH_SHIELD_PATH, WHITE
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
