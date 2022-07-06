@@ -240,7 +240,6 @@ class DialogLookup:
             self.player.armor = item
         elif item_type == 'shield':
             self.player.shield = item
-        # TODO(ELF): Update money (GOLD) display in hovering stats window.
         draw_hovering_stats_window(self.screen, self.player)
         self.command_menu.show_line_in_dialog_box("I thank thee.")
 
