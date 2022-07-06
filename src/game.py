@@ -325,11 +325,7 @@ class Game:
     def handle_b_button(self, current_key):
         if current_key[K_j]:
             # B button
-            self.hovering_stats_displayed = True
-            self.display_hovering_stats = True
             self.unlaunch_menu(self.cmd_menu)
-            self.hovering_stats_displayed = True
-            self.display_hovering_stats = True
             # print("J key pressed (B button).")
 
     def handle_a_button(self, current_key):
@@ -490,7 +486,8 @@ class Game:
             self.screen.blit(darkness, (0, 0))
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
-                self.drop_down_hovering_stats_window()
+                self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
+                self.hovering_stats_displayed = True
             draw_hovering_stats_window(self.screen, self.player)
         self.handle_menu_launch(self.cmd_menu)
         if self.cmd_menu.menu.is_enabled():
@@ -498,11 +495,6 @@ class Game:
         else:
             if not self.is_initial_dialog:
                 self.enable_movement = True
-
-    def drop_down_hovering_stats_window(self):
-        self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
-        create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, self.screen)
-        self.hovering_stats_displayed = True
 
     def handle_initial_dialog(self):
 
