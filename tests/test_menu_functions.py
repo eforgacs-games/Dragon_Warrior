@@ -9,7 +9,7 @@ from src.common import NAME_SELECTION_UPPER_A
 from src.game import Game
 from src.menu_functions import select_name, get_opposite_direction, truncate_name, toggle_joystick_input
 
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 

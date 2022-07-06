@@ -19,7 +19,7 @@ from src.maps import MapWithoutNPCs
 from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
 
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 layout = [[33, 0, 3],
           [1, 2, 3],
