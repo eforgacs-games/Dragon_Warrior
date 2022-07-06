@@ -11,8 +11,9 @@ from data.text.dialog import blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
-    STATUS_WINDOW_BACKGROUND_PATH
+    STATUS_WINDOW_BACKGROUND_PATH, HOVERING_STATS_BACKGROUND_PATH
 from src.config import SCALE, TILE_SIZE
+from src.game_functions import draw_hovering_stats_window
 from src.items import treasure
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction, convert_list_to_newline_separated_string
@@ -26,7 +27,6 @@ class Menu:
         self.dragon_warrior_menu_theme = pygame_menu.themes.Theme(background_color=BLACK,
                                                                   cursor_color=WHITE,
                                                                   cursor_selection_color=WHITE,
-                                                                  focus_background_color=BLACK,
                                                                   title_background_color=BLACK,
                                                                   title_font=DRAGON_QUEST_FONT_PATH,
                                                                   title_font_size=8 * SCALE,
@@ -55,6 +55,7 @@ class CommandMenu(Menu):
 
     def __init__(self, game):
         super().__init__()
+
         self.game = game
         self.player = self.game.player
 
@@ -229,8 +230,9 @@ class CommandMenu(Menu):
                     self.screen.blit(self.background, self.camera_position)
                     if self.launch_signaled:
                         self.screen.blit(self.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
-                    self.screen.blit(black_box, (TILE_SIZE * left, TILE_SIZE * top))
-                    display.update(black_box.get_rect())
+                    if self.game.display_hovering_stats:
+                        draw_hovering_stats_window(self.screen, self.player)
+                    display.update(self.screen.blit(black_box, (TILE_SIZE * left, TILE_SIZE * top)))
 
     def take_item(self, item_name: str):
         play_sound(open_treasure_sfx)
