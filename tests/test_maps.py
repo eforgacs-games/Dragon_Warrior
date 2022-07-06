@@ -1,6 +1,7 @@
 import inspect
 import os
 from unittest import TestCase
+from unittest.mock import patch
 
 from src import maps
 from src.game import Game
@@ -13,7 +14,8 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 class TestDragonWarriorMap(TestCase):
 
     def setUp(self) -> None:
-        self.game = Game()
+        with patch('src.game.SCALED'):
+            self.game = Game()
         self.dragon_warrior_map = MockMap()
 
     def test_get_initial_character_location(self):
