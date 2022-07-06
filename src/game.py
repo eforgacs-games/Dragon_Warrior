@@ -711,7 +711,7 @@ class Game:
         if menu_to_unlaunch.menu.get_id() == 'command':
             if self.cmd_menu.menu.is_enabled():
                 self.unpause_all_movement()
-                self.cmd_menu.window_drop_up_effect(left=6, top=1, width=8, height=5)
+                self.cmd_menu.window_drop_up_effect(6, 1, 8, 5)
                 self.cmd_menu.menu.disable()
         draw_all_tiles_in_current_map(self.current_map, self.background)
 
