@@ -1,5 +1,6 @@
 import os
 from unittest import TestCase
+from unittest.mock import patch
 
 from src.common import Direction
 from src.game import Game
@@ -30,7 +31,8 @@ class MockMap(MapWithoutNPCs):
 class Test(TestCase):
 
     def setUp(self) -> None:
-        self.game = Game()
+        with patch('src.game.SCALED'):
+            self.game = Game()
         self.game.current_map = MockMap()
 
     def test_bump_and_reset(self):

@@ -40,7 +40,8 @@ class MockMap(MapWithoutNPCs):
 class TestGameFunctions(TestCase):
 
     def setUp(self) -> None:
-        self.game = Game()
+        with patch('src.game.SCALED'):
+            self.game = Game()
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
         self.game.current_map = MockMap()
