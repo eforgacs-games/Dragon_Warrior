@@ -32,7 +32,8 @@ class MockMap(MapWithoutNPCs):
 class TestCommandMenu(TestCase):
 
     def setUp(self) -> None:
-        self.game = Game()
+        with patch('src.game.SCALED'):
+            self.game = Game()
         self.game.current_map = MockMap()
         self.game.current_map.load_map(self.game.player, (0, 0))
 

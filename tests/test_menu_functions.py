@@ -15,7 +15,8 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 class TestMenuFunctions(TestCase):
     def setUp(self) -> None:
-        self.game = Game()
+        with patch('src.game.SCALED'):
+            self.game = Game()
 
     def test_select_name(self):
         # mocked_k = MagicMock()

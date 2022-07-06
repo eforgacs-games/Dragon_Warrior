@@ -16,7 +16,8 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 class TestIntro(TestCase):
 
     def setUp(self) -> None:
-        self.game = Game()
+        with patch('src.game.SCALED'):
+            self.game = Game()
         self.intro = Intro()
 
     def test_show_intro_banner(self):
