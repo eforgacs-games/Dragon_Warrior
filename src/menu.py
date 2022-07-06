@@ -184,7 +184,7 @@ class CommandMenu(Menu):
                 #     if letter_index % 2 == 0:
                 #         play_sound(text_beep_sfx)
         if drop_up:
-            self.window_drop_up_effect(x=2, y=9, width=12, height=5)
+            self.window_drop_up_effect(2, 9, 12, 5)
 
     def window_drop_down_effect(self, x, y, width, height) -> None:
         """Intro effect for menus."""

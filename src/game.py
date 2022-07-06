@@ -3,9 +3,10 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, K_u, K_w, QUIT, RESIZABLE, Surface, \
-    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN
+    display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect
 from pygame.display import set_mode, set_caption
 from pygame.event import get
+from pygame.sprite import Group
 from pygame.time import Clock
 from pygame.time import get_ticks
 
@@ -20,7 +21,7 @@ from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down,
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles, \
-    draw_hovering_stats_window, select_from_vertical_menu
+    draw_hovering_stats_window, select_from_vertical_menu, get_surrounding_rect
 from src.intro import Intro, controls
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
@@ -61,17 +62,18 @@ class Game:
         self.display_hovering_stats = False
         self.hovering_stats_displayed = False
         self.torch_active = False
+        self.speed = 2
         # debugging
         self.show_coordinates = SHOW_COORDINATES
         init()
         self.paused = False
         # Create the game window.
         if self.fullscreen_enabled:
-            # if it's producing a segmentation fault, try maybe not using the SCALED flag
-            # flags = FULLSCREEN | SCALED
+            # according to pygame docs: "SCALED is considered an experimental API and may change in future releases."
+            # self.flags = FULLSCREEN | SCALED
             self.flags = FULLSCREEN
         else:
-            # flags = RESIZABLE | SCALED
+            # self.flags = RESIZABLE | SCALED
             self.flags = RESIZABLE
         # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
         # without SCALED, it will show more of the map, but will also not center the camera
@@ -79,7 +81,6 @@ class Game:
         self.scale = SCALE
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
-        self.speed = 2
         win_width, win_height = NES_RES[0] * self.scale, NES_RES[1] * self.scale
         self.screen = set_mode((win_width, win_height), self.flags)
         # self.screen.set_alpha(None)
@@ -325,7 +326,6 @@ class Game:
         if current_key[K_j]:
             # B button
             self.unlaunch_menu(self.cmd_menu)
-            draw_all_tiles_in_current_map(self.current_map, self.background)
             # print("J key pressed (B button).")
 
     def handle_a_button(self, current_key):
@@ -357,16 +357,16 @@ class Game:
 
     def handle_fps_changes(self, current_key) -> None:
         if current_key[K_1]:
-            self.draw_temporary_text(("Game set to normal speed.",))
+            self.draw_temporary_text(("Game set to normal speed.\n(60 FPS)",))
             self.fps = 60
         if current_key[K_2]:
-            self.draw_temporary_text(("Game set to double speed.",))
+            self.draw_temporary_text(("Game set to double speed.\n(120 FPS)",))
             self.fps = 120
         if current_key[K_3]:
-            self.draw_temporary_text(("Game set to triple speed.",))
+            self.draw_temporary_text(("Game set to triple speed.\n(240 FPS)",))
             self.fps = 240
         if current_key[K_4]:
-            self.draw_temporary_text(("Game set to quadruple speed.",))
+            self.draw_temporary_text(("Game set to quadruple speed.\n(480 FPS)",))
             self.fps = 480
 
     def update_roaming_character_positions(self) -> None:
@@ -395,11 +395,6 @@ class Game:
         :return: None
         """
         self.screen.fill(BLACK)
-        # if isinstance(self.current_map, maps.Alefgard):
-        #     # width_offset = 2336
-        #     width_offset = TILE_SIZE * self.player.column + 24
-        #     height_offset = TILE_SIZE * self.player.row + 25
-        # else:
         width_offset = 0
         height_offset = 0
         if self.loop_count == 1:
@@ -468,11 +463,47 @@ class Game:
 
             # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
 
+        group_to_draw = Group()
+        camera_screen_rect = Rect(self.player.rect.x - TILE_SIZE * 8, self.player.rect.y - TILE_SIZE * 7,
+                                  self.screen.get_width(), self.screen.get_height())
+        double_camera_screen_rect = camera_screen_rect.inflate(camera_screen_rect.width * 0.25, camera_screen_rect.height * 0.25)
+        fixed_character_rects = [fixed_character.rect for fixed_character in self.current_map.fixed_characters]
+        roaming_character_rects = [roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character) for roaming_character in self.current_map.roaming_characters]
+        # tiles_drawn = []
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile_dict.get('group') and tile in set(tile_types_to_draw):
-                tile_dict['group'].draw(self.background)
+                for tile_to_draw in tile_dict['group']:
+                    # if tile is onscreen
+                    # and tile collides with the player
+                    # or tile collides with any roaming characters
+                    # screen size:
+                    # 16 width x 15 high
+                    # maximum of 240 tiles
 
-        # also check if group is in current window, default screen size is 15 tall x 16 wide
+                    # 3 x 3 rect around player
+                    # rect_to_check = Rect(self.player.column * TILE_SIZE, self.player.row * TILE_SIZE, TILE_SIZE * 1.01, TILE_SIZE * 1.01)
+
+                    if camera_screen_rect.colliderect(tile_to_draw.rect):
+                        if self.player.is_moving:
+                            if get_surrounding_rect(self.player).colliderect(tile_to_draw.rect):
+                                group_to_draw.add(tile_to_draw)
+                                # tiles_drawn.append(tile)
+                        else:
+                            if self.player.rect.colliderect(tile_to_draw.rect):
+                                group_to_draw.add(tile_to_draw)
+                                # tiles_drawn.append(tile)
+                        for fixed_character_rect in fixed_character_rects:
+                            if fixed_character_rect.colliderect(tile_to_draw):
+                                group_to_draw.add(tile_to_draw)
+                                # tiles_drawn.append(tile)
+
+                    if double_camera_screen_rect.colliderect(tile_to_draw.rect):
+                        for roaming_character_rect in roaming_character_rects:
+                            if roaming_character_rect.colliderect(tile_to_draw):
+                                group_to_draw.add(tile_to_draw)
+                                # tiles_drawn.append(tile)
+        # print(f"{len(tiles_drawn)}: {tiles_drawn}")
+        group_to_draw.draw(self.background)
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation()
@@ -724,6 +755,7 @@ class Game:
                 self.unpause_all_movement()
                 self.cmd_menu.window_drop_up_effect(x=6, y=1, width=8, height=5)
                 self.cmd_menu.menu.disable()
+        draw_all_tiles_in_current_map(self.current_map, self.background)
 
     def unpause_all_movement(self) -> None:
         """
