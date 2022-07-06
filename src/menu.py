@@ -15,7 +15,7 @@ from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DI
 from src.config import SCALE, TILE_SIZE
 from src.items import treasure
 from src.maps_functions import get_center_point
-from src.menu_functions import get_opposite_direction, convert_list_to_newline_separated_string, draw_player_sprites
+from src.menu_functions import get_opposite_direction, convert_list_to_newline_separated_string
 from src.sound import play_sound
 from src.text import draw_text
 
@@ -45,7 +45,7 @@ class Menu:
                                                                       #  Investigation needed.
                                                                       # blink_ms=500,
                                                                       # TODO: Fix LeftArrowSelection size.
-                                                                      arrow_size=(SCALE * 5, SCALE * 6))
+                                                                  )
                                                                   )
         self.launch_signaled = False
         self.skip_text = False
@@ -83,14 +83,14 @@ class CommandMenu(Menu):
         )
         # TODO: Allow for selection of options using the K ("A" button).
         #  Currently selection is only possible by use of the Enter button.
-        self.menu.add.button('TALK', self.talk, margin=(9, 4))
-        self.menu.add.button('STATUS', self.status, margin=(9, 4))
-        self.menu.add.button('STAIRS', self.stairs, margin=(9, 4))
-        self.menu.add.button('SEARCH', self.search, margin=(9, 4))
-        self.menu.add.button('SPELL', self.spell, margin=(0, 4))
-        self.menu.add.button('ITEM', self.item, margin=(0, 4))
-        self.menu.add.button('DOOR', self.door, margin=(0, 4))
-        self.menu.add.button('TAKE', self.take, margin=(0, 4))
+        self.menu.add.button('TALK', self.talk, padding=(9, 5, 8, 16))
+        self.menu.add.button('STATUS', self.status, padding=(4, 5, 8, 16))
+        self.menu.add.button('STAIRS', self.stairs, padding=(4, 5, 8, 16))
+        self.menu.add.button('SEARCH', self.search, padding=(4, 5, 8, 16))
+        self.menu.add.button('SPELL', self.spell, padding=(9, 0, 8, 16))
+        self.menu.add.button('ITEM', self.item, padding=(4, 0, 8, 16))
+        self.menu.add.button('DOOR', self.door, padding=(4, 0, 8, 16))
+        self.menu.add.button('TAKE', self.take, padding=(4, 0, 8, 16))
         self.menu.disable()
 
     def npc_is_across_counter(self, character_dict):
@@ -186,45 +186,51 @@ class CommandMenu(Menu):
         if drop_up:
             self.window_drop_up_effect(2, 9, 12, 5)
 
-    def window_drop_down_effect(self, x, y, width, height) -> None:
+    def window_drop_down_effect(self, left, top, width, height) -> None:
         """Intro effect for menus."""
-        window_rect = Rect(x * TILE_SIZE, y * TILE_SIZE, width * TILE_SIZE, height * TILE_SIZE)
+        window_rect = Rect(left * TILE_SIZE, top * TILE_SIZE, width * TILE_SIZE, height * TILE_SIZE)
         for i in range(height + 1):
             black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
             drop_down_start = get_ticks()
             # each "bar" lasts 1 frame
             while convert_to_frames_since_start_time(drop_down_start) < 1:
-                self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
+                self.screen.blit(black_box, (TILE_SIZE * left, TILE_SIZE * top))
                 display.update(window_rect)
 
-    def window_drop_up_effect(self, x, y, width, height) -> None:
+    def window_drop_up_effect(self, left, top, width, height) -> None:
         """Outro effect for menus."""
         # draw all the tiles initially once
+
+        camera_screen_rect = Rect(self.player.rect.x - TILE_SIZE * 8, self.player.rect.y - TILE_SIZE * 7,
+                                  self.screen.get_width(), self.screen.get_height())
         if not self.current_map.is_dark:
             # if the map is dark, drawing all the tiles to the screen basically creates an exploit that shows the map tiles lit up,
             # even without a torch or radiant
             # might be good to revisit this later with just a black background?
+            group_to_draw = Group()
             for tile, tile_dict in self.current_map.floor_tile_key.items():
                 if tile in self.current_map.tile_types_in_current_map and tile_dict.get('group'):
-                    tile_dict['group'].draw(self.background)
-            window_rect = Rect(TILE_SIZE * x, TILE_SIZE * y, TILE_SIZE * width, TILE_SIZE * height)
+                    for tile_sprite in tile_dict['group']:
+                        if camera_screen_rect.colliderect(tile_sprite.rect):
+                            group_to_draw.add(tile_sprite)
+            group_to_draw.draw(self.background)
+
             for i in range(height - 1, -1, -1):
                 black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
                 black_box.fill(BLACK)
                 drop_up_start = get_ticks()
                 while convert_to_frames_since_start_time(drop_up_start) < 1:
-                    for tile, tile_dict in self.current_map.floor_tile_key.items():
-                        if tile in self.get_dialog_box_underlying_tiles(self.current_map, i):
-                            tile_dict['group'].draw(self.background)
-                    # TODO(ELF): The sprites move one square off when the window is dropped down.
-                    draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
+                    # draw_player_sprites(self.current_map, self.background, self.player.rect.x, self.player.rect.y)
                     for character, character_dict in self.current_map.characters.items():
-                        self.background.blit(character_dict['character_sprites'].sprites()[0].image,
-                                             (character_dict['character'].column * TILE_SIZE, character_dict['character'].row * TILE_SIZE))
+                        if camera_screen_rect.colliderect(character_dict['character'].rect):
+                            self.background.blit(character_dict['character_sprites'].sprites()[0].image,
+                                                 (character_dict['character'].rect.x, character_dict['character'].rect.y))
                     self.screen.blit(self.background, self.camera_position)
-                    self.screen.blit(black_box, (TILE_SIZE * x, TILE_SIZE * y))
-                    display.update(window_rect)
+                    if self.launch_signaled:
+                        self.screen.blit(self.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
+                    self.screen.blit(black_box, (TILE_SIZE * left, TILE_SIZE * top))
+                    display.update(black_box.get_rect())
 
     def take_item(self, item_name: str):
         play_sound(open_treasure_sfx)
@@ -306,6 +312,7 @@ class CommandMenu(Menu):
                     break
         else:
             self.show_text_in_dialog_box("There is no one there.", add_quotes=True, skip_text=self.skip_text)
+
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
