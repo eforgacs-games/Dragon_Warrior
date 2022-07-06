@@ -21,7 +21,7 @@ from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down,
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles, \
-    draw_hovering_stats_window, select_from_vertical_menu
+    draw_hovering_stats_window, select_from_vertical_menu, get_surrounding_rect
 from src.intro import Intro, controls
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
@@ -33,12 +33,6 @@ from src.sound import bump, play_sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 from src.visual_effects import fade, flash_transparent_color
-
-
-def get_three_by_three_rect(character):
-    left = character.rect.left - TILE_SIZE
-    top = character.rect.top - TILE_SIZE
-    return Rect(left, top, TILE_SIZE * 2.1, TILE_SIZE * 2.1)
 
 
 class Game:
@@ -471,13 +465,11 @@ class Game:
 
         group_to_draw = Group()
         tiles_drawn = []
-        camera_screen_rect = Rect(((self.player.column * TILE_SIZE) - (TILE_SIZE * 8)), ((self.player.row * TILE_SIZE) - TILE_SIZE * 7),
+        camera_screen_rect = Rect(self.player.rect.x - TILE_SIZE * 8, self.player.rect.y - TILE_SIZE * 7,
                                   self.screen.get_width(), self.screen.get_height())
-        collision_check_rects = []
-        for roaming_character in self.current_map.roaming_characters:
-            collision_check_rects.append(get_three_by_three_rect(roaming_character))
-        for fixed_character in self.current_map.fixed_characters:
-            collision_check_rects.append(fixed_character.rect)
+        double_camera_screen_rect = camera_screen_rect.inflate(camera_screen_rect.width * 0.25, camera_screen_rect.height * 0.25)
+        fixed_character_rects = [fixed_character.rect for fixed_character in self.current_map.fixed_characters]
+        roaming_character_rects = [roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character) for roaming_character in self.current_map.roaming_characters]
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile_dict.get('group') and tile in set(tile_types_to_draw):
                 for tile_to_draw in tile_dict['group']:
@@ -493,19 +485,24 @@ class Game:
 
                     if camera_screen_rect.colliderect(tile_to_draw.rect):
                         if self.player.is_moving:
-                            if get_three_by_three_rect(self.player).colliderect(tile_to_draw.rect):
+                            if get_surrounding_rect(self.player).colliderect(tile_to_draw.rect):
                                 group_to_draw.add(tile_to_draw)
                                 tiles_drawn.append(tile)
                         else:
                             if self.player.rect.colliderect(tile_to_draw.rect):
                                 group_to_draw.add(tile_to_draw)
                                 tiles_drawn.append(tile)
+                        for fixed_character_rect in fixed_character_rects:
+                            if fixed_character_rect.colliderect(tile_to_draw):
+                                group_to_draw.add(tile_to_draw)
+                                tiles_drawn.append(tile)
 
-                    for collision_check_rect in collision_check_rects:
-                        if collision_check_rect.colliderect(tile_to_draw):
-                            group_to_draw.add(tile_to_draw)
-                            tiles_drawn.append(tile)
-        # print(f"{len(tiles_drawn)}: {tiles_drawn}")
+                    if double_camera_screen_rect.colliderect(tile_to_draw.rect):
+                        for roaming_character_rect in roaming_character_rects:
+                            if roaming_character_rect.colliderect(tile_to_draw):
+                                group_to_draw.add(tile_to_draw)
+                                tiles_drawn.append(tile)
+        print(f"{len(tiles_drawn)}: {tiles_drawn}")
         group_to_draw.draw(self.background)
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
