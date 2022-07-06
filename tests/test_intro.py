@@ -9,14 +9,15 @@ from src.common import INTRO_BANNER_PATH, convert_to_frames_since_start_time, co
 from src.game import Game
 from src.intro import show_intro_banner, repeated_sparkle, Intro, draw_banner_text
 
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestIntro(TestCase):
 
     def setUp(self) -> None:
-        self.game = Game()
+        with patch('src.game.SCALED'):
+            self.game = Game()
         self.intro = Intro()
 
     def test_show_intro_banner(self):

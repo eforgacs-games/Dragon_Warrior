@@ -1,12 +1,13 @@
 import os
 from unittest import TestCase
+from unittest.mock import patch
 
 from src.common import Direction
 from src.game import Game
 from src.maps import MapWithoutNPCs
 from src.movement import bump_and_reset
 
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 layout = [[33, 0, 3],
@@ -30,7 +31,8 @@ class MockMap(MapWithoutNPCs):
 class Test(TestCase):
 
     def setUp(self) -> None:
-        self.game = Game()
+        with patch('src.game.SCALED'):
+            self.game = Game()
         self.game.current_map = MockMap()
 
     def test_bump_and_reset(self):
