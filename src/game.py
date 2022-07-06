@@ -325,7 +325,11 @@ class Game:
     def handle_b_button(self, current_key):
         if current_key[K_j]:
             # B button
+            self.hovering_stats_displayed = True
+            self.display_hovering_stats = True
             self.unlaunch_menu(self.cmd_menu)
+            self.hovering_stats_displayed = True
+            self.display_hovering_stats = True
             # print("J key pressed (B button).")
 
     def handle_a_button(self, current_key):
@@ -439,7 +443,8 @@ class Game:
                                   self.screen.get_width(), self.screen.get_height())
         double_camera_screen_rect = camera_screen_rect.inflate(camera_screen_rect.width * 0.25, camera_screen_rect.height * 0.25)
         fixed_character_rects = [fixed_character.rect for fixed_character in self.current_map.fixed_characters]
-        roaming_character_rects = [roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character) for roaming_character in self.current_map.roaming_characters]
+        roaming_character_rects = [roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character) for roaming_character in
+                                   self.current_map.roaming_characters]
         # tiles_drawn = []
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile_dict.get('group') and tile in set(tile_types_to_draw):
@@ -714,7 +719,7 @@ class Game:
         if menu_to_unlaunch.menu.get_id() == 'command':
             if self.cmd_menu.menu.is_enabled():
                 self.unpause_all_movement()
-                self.cmd_menu.window_drop_up_effect(x=6, y=1, width=8, height=5)
+                self.cmd_menu.window_drop_up_effect(left=6, top=1, width=8, height=5)
                 self.cmd_menu.menu.disable()
         draw_all_tiles_in_current_map(self.current_map, self.background)
 

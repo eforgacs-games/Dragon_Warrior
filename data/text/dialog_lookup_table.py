@@ -277,7 +277,7 @@ class DialogLookup:
             if character != 'HERO':
                 draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1], character_dict['coordinates'][0], character)
         self.screen.blit(self.background, self.camera_position)
-        self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 5, TILE_SIZE * 1))
+        self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
         display.flip()
         self.command_menu.show_text_in_dialog_box(("Good morning.\n" +
                                                    "Thou seems to have spent a good night.",
