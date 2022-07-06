@@ -62,25 +62,25 @@ class Game:
         self.display_hovering_stats = False
         self.hovering_stats_displayed = False
         self.torch_active = False
+        self.speed = 2
         # debugging
         self.show_coordinates = SHOW_COORDINATES
         init()
         self.paused = False
         # Create the game window.
         if self.fullscreen_enabled:
-            # if it's producing a segmentation fault, try maybe not using the SCALED flag
-            self.flags = FULLSCREEN | SCALED
-            # self.flags = FULLSCREEN
+            # according to pygame docs: "SCALED is considered an experimental API and may change in future releases."
+            # self.flags = FULLSCREEN | SCALED
+            self.flags = FULLSCREEN
         else:
-            self.flags = RESIZABLE | SCALED
-            # self.flags = RESIZABLE
+            # self.flags = RESIZABLE | SCALED
+            self.flags = RESIZABLE
         # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
         # without SCALED, it will show more of the map, but will also not center the camera
         # it might be a nice comfort addition to add to center the camera, while also showing more of the map
         self.scale = SCALE
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
-        self.speed = 2
         win_width, win_height = NES_RES[0] * self.scale, NES_RES[1] * self.scale
         self.screen = set_mode((win_width, win_height), self.flags)
         # self.screen.set_alpha(None)
