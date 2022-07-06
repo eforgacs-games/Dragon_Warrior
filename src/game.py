@@ -487,22 +487,22 @@ class Game:
                         if self.player.is_moving:
                             if get_surrounding_rect(self.player).colliderect(tile_to_draw.rect):
                                 group_to_draw.add(tile_to_draw)
-                                tiles_drawn.append(tile)
+                                # tiles_drawn.append(tile)
                         else:
                             if self.player.rect.colliderect(tile_to_draw.rect):
                                 group_to_draw.add(tile_to_draw)
-                                tiles_drawn.append(tile)
+                                # tiles_drawn.append(tile)
                         for fixed_character_rect in fixed_character_rects:
                             if fixed_character_rect.colliderect(tile_to_draw):
                                 group_to_draw.add(tile_to_draw)
-                                tiles_drawn.append(tile)
+                                # tiles_drawn.append(tile)
 
                     if double_camera_screen_rect.colliderect(tile_to_draw.rect):
                         for roaming_character_rect in roaming_character_rects:
                             if roaming_character_rect.colliderect(tile_to_draw):
                                 group_to_draw.add(tile_to_draw)
-                                tiles_drawn.append(tile)
-        print(f"{len(tiles_drawn)}: {tiles_drawn}")
+                                # tiles_drawn.append(tile)
+        # print(f"{len(tiles_drawn)}: {tiles_drawn}")
         group_to_draw.draw(self.background)
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
