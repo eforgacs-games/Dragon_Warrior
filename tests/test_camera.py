@@ -6,7 +6,7 @@ from src.common import Direction
 from src.game import Game
 from src.maps import MapWithoutNPCs
 
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 layout = [[33, 0, 3],

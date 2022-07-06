@@ -12,7 +12,7 @@ layout = [[33, 0, 3],
           [4, 2, 3],
           [3, 3, 39]]
 
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
