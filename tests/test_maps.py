@@ -7,7 +7,7 @@ from src import maps
 from src.game import Game
 from tests.test_game import MockMap
 
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
