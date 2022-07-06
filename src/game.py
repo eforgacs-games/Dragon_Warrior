@@ -464,12 +464,12 @@ class Game:
             # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
 
         group_to_draw = Group()
-        tiles_drawn = []
         camera_screen_rect = Rect(self.player.rect.x - TILE_SIZE * 8, self.player.rect.y - TILE_SIZE * 7,
                                   self.screen.get_width(), self.screen.get_height())
         double_camera_screen_rect = camera_screen_rect.inflate(camera_screen_rect.width * 0.25, camera_screen_rect.height * 0.25)
         fixed_character_rects = [fixed_character.rect for fixed_character in self.current_map.fixed_characters]
         roaming_character_rects = [roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character) for roaming_character in self.current_map.roaming_characters]
+        # tiles_drawn = []
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile_dict.get('group') and tile in set(tile_types_to_draw):
                 for tile_to_draw in tile_dict['group']:
