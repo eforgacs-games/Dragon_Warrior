@@ -14,7 +14,7 @@ from src import maps, menu_functions
 from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
-    convert_to_frames_since_start_time, HOVERING_STATS_BACKGROUND_PATH, create_window, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
+    convert_to_frames_since_start_time, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, ARMED_HERO_WITH_SHIELD_PATH, \
     UNARMED_HERO_WITH_SHIELD_PATH, WHITE
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
@@ -439,7 +439,8 @@ class Game:
                                   self.screen.get_width(), self.screen.get_height())
         double_camera_screen_rect = camera_screen_rect.inflate(camera_screen_rect.width * 0.25, camera_screen_rect.height * 0.25)
         fixed_character_rects = [fixed_character.rect for fixed_character in self.current_map.fixed_characters]
-        roaming_character_rects = [roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character) for roaming_character in self.current_map.roaming_characters]
+        roaming_character_rects = [roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character) for roaming_character in
+                                   self.current_map.roaming_characters]
         # tiles_drawn = []
         for tile, tile_dict in self.current_map.floor_tile_key.items():
             if tile_dict.get('group') and tile in set(tile_types_to_draw):
@@ -485,7 +486,8 @@ class Game:
             self.screen.blit(darkness, (0, 0))
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
-                self.drop_down_hovering_stats_window()
+                self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
+                self.hovering_stats_displayed = True
             draw_hovering_stats_window(self.screen, self.player)
         self.handle_menu_launch(self.cmd_menu)
         if self.cmd_menu.menu.is_enabled():
@@ -493,11 +495,6 @@ class Game:
         else:
             if not self.is_initial_dialog:
                 self.enable_movement = True
-
-    def drop_down_hovering_stats_window(self):
-        self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
-        create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, self.screen)
-        self.hovering_stats_displayed = True
 
     def handle_initial_dialog(self):
 
@@ -714,7 +711,7 @@ class Game:
         if menu_to_unlaunch.menu.get_id() == 'command':
             if self.cmd_menu.menu.is_enabled():
                 self.unpause_all_movement()
-                self.cmd_menu.window_drop_up_effect(x=6, y=1, width=8, height=5)
+                self.cmd_menu.window_drop_up_effect(6, 1, 8, 5)
                 self.cmd_menu.menu.disable()
         draw_all_tiles_in_current_map(self.current_map, self.background)
 
