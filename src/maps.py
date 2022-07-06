@@ -541,26 +541,26 @@ class Alefgard(MapWithoutNPCs):
         self.staircases = {
             # (row, column)
             # castles
-            (50, 49): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 18), 'direction': Direction.UP.value},
-            (55, 54): {'map': 'CharlockB1', 'destination_coordinates': (25, 17)},
+            (50, 51): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 18), 'direction': Direction.UP.value},
+            (55, 56): {'map': 'CharlockB1', 'destination_coordinates': (25, 17)},
             # villages
-            (48, 54): {'map': 'Brecconary', 'destination_coordinates': (23, 10)},
-            (9, 8): {'map': 'Garinham', 'destination_coordinates': (14, 9)},
-            (17, 110): {'map': 'Kol', 'destination_coordinates': (30, 29)},
+            (48, 56): {'map': 'Brecconary', 'destination_coordinates': (23, 10)},
+            (9, 10): {'map': 'Garinham', 'destination_coordinates': (14, 9)},
+            (17, 112): {'map': 'Kol', 'destination_coordinates': (30, 29)},
             # cave
-            (19, 34): {'map': 'ErdricksCaveB1', 'destination_coordinates': (1, 1)},
-            (51, 110): {'map': 'SwampCave', 'destination_coordinates': (6, 4)},
-            (56, 110): {'map': 'SwampCave', 'destination_coordinates': (36, 4)},
-            (64, 35): {'map': 'MountainCaveB1', 'destination_coordinates': (7, 1)},
-            (96, 31): {'map': 'Hauksness', 'destination_coordinates': (18, 9)},
-            (79, 108): {'map': 'Rimuldar', 'destination_coordinates': (22, 37)},
-            (109, 79): {'map': 'Cantlin', 'destination_coordinates': (8, 15)},
-            (116, 114): {'map': 'MagicTemple', 'destination_coordinates': (6, 2)},
-            (8, 87): {'map': 'StaffOfRainCave', 'destination_coordinates': (11, 6)},
+            (19, 36): {'map': 'ErdricksCaveB1', 'destination_coordinates': (1, 1)},
+            (51, 112): {'map': 'SwampCave', 'destination_coordinates': (6, 4)},
+            (56, 112): {'map': 'SwampCave', 'destination_coordinates': (36, 4)},
+            (64, 37): {'map': 'MountainCaveB1', 'destination_coordinates': (7, 1)},
+            (96, 33): {'map': 'Hauksness', 'destination_coordinates': (18, 9)},
+            (79, 110): {'map': 'Rimuldar', 'destination_coordinates': (22, 37)},
+            (109, 81): {'map': 'Cantlin', 'destination_coordinates': (8, 15)},
+            (116, 116): {'map': 'MagicTemple', 'destination_coordinates': (6, 2)},
+            (8, 89): {'map': 'StaffOfRainCave', 'destination_coordinates': (11, 6)},
         }
         for staircase_dict in self.staircases.values():
             staircase_dict['stair_direction'] = 'up'
-        self.initial_coordinates = (50, 49)
+        self.initial_coordinates = (50, 51)
 
     def hero_underlying_tile(self):
         return 'CASTLE'

@@ -317,7 +317,7 @@ class TestGame(TestCase):
 
     def test_travelers_inn(self):
         self.game.current_map = Alefgard()
-        self.game.player.row, self.game.player.column = 48, 54
+        self.game.player.row, self.game.player.column = 48, 56
         # organically switch maps to Brecconary, as though entering from Alefgard
         for staircase_location, staircase_dict in self.game.current_map.staircases.items():
             self.game.process_staircase_warps(staircase_location, staircase_dict)

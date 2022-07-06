@@ -1,6 +1,6 @@
 from typing import List
 
-from pygame import image, display, K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN, KEYDOWN, event
+from pygame import image, display, K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN, KEYDOWN, event, Rect
 from pygame.time import get_ticks
 from pygame.transform import scale
 
@@ -100,3 +100,9 @@ def alternate_blink(image_1, image_2, right_arrow_start, screen):
         screen.blit(unselected_image, (0, 0))
         # draw_text(" BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
         display.update(unselected_image.get_rect())
+
+
+def get_surrounding_rect(character):
+    left = character.rect.left - TILE_SIZE
+    top = character.rect.top - TILE_SIZE
+    return Rect(left, top, TILE_SIZE * 2.04, TILE_SIZE * 2.04)

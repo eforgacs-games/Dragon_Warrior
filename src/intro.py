@@ -39,11 +39,10 @@ def banner_sparkle(short: bool, screen: Surface) -> None:
 
 
 def draw_banner_text(screen: Surface):
-    draw_text("-PUSH START-", screen.get_width() / 2, screen.get_height() * 10 / 16, screen, ORANGE)
-    pink_banner_text = controls
+    draw_text("-PUSH START-", screen.get_width() / 2, screen.get_height() * 10 / 16, screen, ORANGE, alignment='center')
     for i in range(11, 15):
-        draw_text(pink_banner_text[i - 11], screen.get_width() / 2, screen.get_height() * i / 16, screen, PINK, text_wrap_length=23)
-    draw_text("(↑ ← ↓ →)", screen.get_width() / 2, screen.get_height() * 15 / 16, screen, PINK, font_name=SMB_FONT_PATH)
+        draw_text(controls[i - 11], screen.get_width() / 2, screen.get_height() * i / 16, screen, PINK, alignment='center', text_wrap_length=23)
+    draw_text("(↑ ← ↓ →)", screen.get_width() / 2, screen.get_height() * 15 / 16, screen, PINK, alignment='center', font_name=SMB_FONT_PATH)
 
 
 def repeated_sparkle(screen: Surface, clock_check, short) -> int | float:
