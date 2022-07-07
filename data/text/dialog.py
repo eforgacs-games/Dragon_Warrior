@@ -80,7 +80,3 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         finally_function()
 
 
-def get_inn_intro(inn_cost):
-    return "Welcome to the traveler's Inn.\n" \
-           f"Room and board is {inn_cost} GOLD per night.\n" \
-           "Dost thou want a room?"
