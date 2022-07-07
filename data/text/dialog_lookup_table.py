@@ -1,4 +1,6 @@
+import os
 from functools import partial
+import gettext
 
 from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, K_RETURN, K_j, Rect
 from pygame.event import get, pump
@@ -6,12 +8,24 @@ from pygame.time import get_ticks
 
 from data.text.dialog import confirmation_prompt, get_inn_intro
 from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, create_window, WHITE
-from src.config import MUSIC_ENABLED, TILE_SIZE
+from src.config import MUSIC_ENABLED, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_all_tiles_in_current_map, draw_hovering_stats_window
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
 from src.visual_effects import fade, flash_transparent_color
+
+
+# _ = gettext.gettext
+# TODO(ELF): Fix localedir paths.
+if LANGUAGE == 'en':
+    en = gettext.translation('base', localedir=os.path.join('C:\\Users\\eddie\\PycharmProjects\\DragonWarrior\\data\\text\\locales'), languages=['en'])
+    en.install()
+    _ = en.gettext
+elif LANGUAGE == 'ko':
+    ko = gettext.translation('base', localedir=os.path.join('C:\\Users\\eddie\\PycharmProjects\\DragonWarrior\\data\\text\\locales'), languages=['ko'])
+    ko.install()
+    _ = ko.gettext
 
 weapons_and_armor_intro = "We deal in weapons and armor.\n" \
                           "Dost thou wish to buy anything today?"
@@ -26,50 +40,49 @@ class DialogLookup:
         self.background = command_menu.background
         self.camera_position = command_menu.camera_position
 
-        where_is_princess_gwaelin = "Where oh where can I find Princess Gwaelin?"
-        welcome_to_tantegel = "Welcome to Tantegel Castle."
+        where_is_princess_gwaelin = _("Where oh where can I find Princess Gwaelin?")
+        welcome_to_tantegel = _("Welcome to Tantegel Castle.")
         brecconary_inn_cost = 6
         garinham_inn_cost = 25
-        tools_intro = "Welcome.\n" \
-                      "We deal in tools.\n" \
-                      "What can I do for thee?"
+        tools_intro = _("Welcome.\n"
+                        "We deal in tools.\n"
+                        "What can I do for thee?")
         self.lookup_table = {
             'TantegelThroneRoom': {
                 'KING_LORIK': {'dialog': (
-                    "Descendant of Erdrick, listen now to my words.",
-                    "It is told that in ages past Erdrick fought demons with a Ball of Light.",
-                    "Then came the Dragonlord who stole the precious globe and hid it in the darkness.",
-                    f"Now, {self.player.name}, thou must help us recover the Ball of Light and restore peace to our land.",
-                    "The Dragonlord must be defeated.",
-                    "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest.",
-                    "Then speak with the guards, for they have much knowledge that may aid thee.",
-                    f"May the light shine upon thee, {self.player.name}."
-                ), 'post_initial_dialog': "When thou art finished preparing for thy departure, please see me.\n"
-                                          "I shall wait.",
+                    _("Descendant of Erdrick, listen now to my words."),
+                    _("It is told that in ages past Erdrick fought demons with a Ball of Light."),
+                    _("Then came the Dragonlord who stole the precious globe and hid it in the darkness."),
+                    _(f"Now, {self.player.name}, thou must help us recover the Ball of Light and restore peace to our land."),
+                    _("The Dragonlord must be defeated."),
+                    _("Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."),
+                    _("Then speak with the guards, for they have much knowledge that may aid thee."),
+                    _(f"May the light shine upon thee, {self.player.name}.")
+                ), 'post_initial_dialog': _("When thou art finished preparing for thy departure, please see me."),
                     'returned_dialog': (
-                        f"I am greatly pleased that thou hast returned, {self.player.name}.",
-                        f"Before reaching thy next level of experience thou must gain {self.player.points_to_next_level} Points.",
-                        "Will thou tell me now of thy deeds so they won't be forgotten?",
+                        _(f"I am greatly pleased that thou hast returned, {self.player.name}."),
+                        _(f"Before reaching thy next level of experience thou must gain {self.player.points_to_next_level} Points."),
+                        _("Will thou tell me now of thy deeds so they won't be forgotten?"),
                         # if yes:
-                        "Thy deeds have been recorded on the Imperial Scrolls of Honor.",
-                        "Dost thou wish to continue thy quest?",
+                        _("Thy deeds have been recorded on the Imperial Scrolls of Honor."),
+                        _("Dost thou wish to continue thy quest?"),
                         # if yes:
-                        f"Goodbye now, {self.player.name}.\n'Take care and tempt not the Fates.",
+                        _(f"Goodbye now, {self.player.name}.\n'Take care and tempt not the Fates."),
                         # if no:
                         # "Rest then for awhile."
                     ),
-                    'post_death_dialog': (f"Death should not have taken thee, {self.player.name}.",
-                                          "I will give thee another chance.",
-                                          f"To reach the next level, thy Experience Points must increase by {self.player.points_to_next_level}.",
-                                          f"Now, go, {self.player.name}!")},
+                    'post_death_dialog': (_(f"Death should not have taken thee, {self.player.name}."),
+                                          _("I will give thee another chance."),
+                                          _(f"To reach the next level, thy Experience Points must increase by {self.player.points_to_next_level}."),
+                                          _(f"Now, go, {self.player.name}!"))},
                 'RIGHT_FACE_GUARD': {'dialog': (
-                    "East of this castle is a town where armor, weapons, and many other items may be purchased.",
-                    f"Return to the Inn for a rest if thou art wounded in battle, {self.player.name}.",
-                    "Sleep heals all."
+                    _("East of this castle is a town where armor, weapons, and many other items may be purchased."),
+                    _(f"Return to the Inn for a rest if thou art wounded in battle, {self.player.name}."),
+                    _("Sleep heals all.")
                 )},
                 'LEFT_FACE_GUARD': {'dialog': (
-                    "If thou hast collected all the Treasure Chests, a key will be found.",
-                    "Once used, the key will disappear, but the door will be open and thou may pass through."
+                    _("If thou hast collected all the Treasure Chests, a key will be found."),
+                    _("Once used, the key will disappear, but the door will be open and thou may pass through.")
                 )},
                 'ROAMING_GUARD': {'dialog': (
                     self.tantegel_throne_room_roaming_guard,
