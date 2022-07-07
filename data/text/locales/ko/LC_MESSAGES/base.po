@@ -1,0 +1,21 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2022-07-07 13:57+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Edward Forgacs <eddie.forgacs@gmail.com>\n"
+"Language-Team: Korean <eddie.forgacs@gmail.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: .\dialog_lookup_table.py:50
+msgid "When thou art finished preparing for thy departure, please see me."
+msgstr "여행 준비를 마치거든 다시 내게 오게나."
+
