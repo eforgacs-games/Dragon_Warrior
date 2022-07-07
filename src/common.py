@@ -262,6 +262,8 @@ DRAGON_QUEST_FONT = font.Font(DRAGON_QUEST_FONT_PATH, 15)
 SMB_FONT_PATH = join(FONTS_DIR, 'super_mario_bros__nes_font.ttf')
 SMB_FONT = font.Font(SMB_FONT_PATH, 15)
 
+UNIFONT_PATH = join(FONTS_DIR, 'unifont.ttf')
+
 
 # Characters
 

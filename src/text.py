@@ -2,7 +2,7 @@ import textwrap
 
 from pygame import font
 
-from src.common import BLACK, WHITE, DRAGON_QUEST_FONT_PATH
+from src.common import BLACK, WHITE, DRAGON_QUEST_FONT_PATH, UNIFONT_PATH
 
 
 class DialogBoxWrapper(textwrap.TextWrapper):
@@ -32,7 +32,11 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
         #             text_rect.midleft = (x, y_position)
         #         screen.blit(text_surface, text_rect)
         # else:
-        text_surface = font.Font(font_name, size).render(chunk, True, color, BLACK)
+        if chunk.strip('’').isascii():
+            current_font = font.Font(font_name, size)
+        else:
+            current_font = font.Font(UNIFONT_PATH, size)
+        text_surface = current_font.render(chunk, True, color, BLACK)
         text_rect = text_surface.get_rect()
         match alignment:
             case 'left':
