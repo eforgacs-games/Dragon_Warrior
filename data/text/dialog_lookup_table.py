@@ -6,7 +6,7 @@ from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, K
 from pygame.event import get, pump
 from pygame.time import get_ticks
 
-from data.text.dialog import confirmation_prompt, get_inn_intro
+from data.text.dialog import confirmation_prompt
 from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, create_window, WHITE
 from src.config import MUSIC_ENABLED, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_all_tiles_in_current_map, draw_hovering_stats_window
@@ -296,3 +296,9 @@ class DialogLookup:
         display.flip()
         self.command_menu.show_text_in_dialog_box((_("Good morning.\nThou seems to have spent a good night."),
                                                    _("I shall see thee again.")), skip_text=self.command_menu.skip_text, drop_up=False)
+
+
+def get_inn_intro(inn_cost):
+    return _("Welcome to the traveler's Inn.\n"
+             "Room and board is {} GOLD per night.\n"
+             "Dost thou want a room?").format(inn_cost)
