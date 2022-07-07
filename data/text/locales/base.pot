@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2022-07-07 20:30+0200\n"
+"POT-Creation-Date: 2022-07-07 21:14+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,270 +15,277 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: .\dialog_lookup_table.py:31
+#: .\dialog_lookup_table.py:30
 msgid ""
 "We deal in weapons and armor.\n"
 " Dost thou wish to buy anything today?"
 msgstr ""
 
-#: .\dialog_lookup_table.py:43
+#: .\dialog_lookup_table.py:42
 msgid "Where oh where can I find Princess Gwaelin?"
 msgstr ""
 
-#: .\dialog_lookup_table.py:44
+#: .\dialog_lookup_table.py:43
 msgid "Welcome to Tantegel Castle."
 msgstr ""
 
-#: .\dialog_lookup_table.py:47
+#: .\dialog_lookup_table.py:46
 msgid ""
 "Welcome.\n"
 "We deal in tools.\n"
 "What can I do for thee?"
 msgstr ""
 
-#: .\dialog_lookup_table.py:53
+#: .\dialog_lookup_table.py:52
 msgid "Descendant of Erdrick, listen now to my words."
 msgstr ""
 
-#: .\dialog_lookup_table.py:54
+#: .\dialog_lookup_table.py:53
 msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
 msgstr ""
 
-#: .\dialog_lookup_table.py:55
+#: .\dialog_lookup_table.py:54
 msgid "Then came the Dragonlord who stole the precious globe and hid it in the darkness."
 msgstr ""
 
-#: .\dialog_lookup_table.py:56
+#: .\dialog_lookup_table.py:55
 msgid "Now, {}, thou must help us recover the Ball of Light and restore peace to our land."
 msgstr ""
 
-#: .\dialog_lookup_table.py:57
+#: .\dialog_lookup_table.py:56
 msgid "The Dragonlord must be defeated."
 msgstr ""
 
-#: .\dialog_lookup_table.py:58
+#: .\dialog_lookup_table.py:57
 msgid "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."
 msgstr ""
 
-#: .\dialog_lookup_table.py:59
+#: .\dialog_lookup_table.py:58
 msgid "Then speak with the guards, for they have much knowledge that may aid thee."
 msgstr ""
 
-#: .\dialog_lookup_table.py:60
+#: .\dialog_lookup_table.py:59
 msgid "May the light shine upon thee, {}."
 msgstr ""
 
-#: .\dialog_lookup_table.py:61
+#: .\dialog_lookup_table.py:60
 msgid "When thou art finished preparing for thy departure, please see me."
 msgstr ""
 
-#: .\dialog_lookup_table.py:63
+#: .\dialog_lookup_table.py:62
 msgid "I am greatly pleased that thou hast returned, {}."
 msgstr ""
 
-#: .\dialog_lookup_table.py:64
+#: .\dialog_lookup_table.py:63
 msgid "Before reaching thy next level of experience thou must gain {} Points."
 msgstr ""
 
-#: .\dialog_lookup_table.py:65
+#: .\dialog_lookup_table.py:64
 msgid "Will thou tell me now of thy deeds so they won't be forgotten?"
 msgstr ""
 
-#: .\dialog_lookup_table.py:67
+#: .\dialog_lookup_table.py:66
 msgid "Thy deeds have been recorded on the Imperial Scrolls of Honor."
 msgstr ""
 
-#: .\dialog_lookup_table.py:68
+#: .\dialog_lookup_table.py:67
 msgid "Dost thou wish to continue thy quest?"
 msgstr ""
 
-#: .\dialog_lookup_table.py:70
+#: .\dialog_lookup_table.py:69
 msgid ""
 "Goodbye now, {}.\n"
 "'Take care and tempt not the Fates."
 msgstr ""
 
-#: .\dialog_lookup_table.py:74
+#: .\dialog_lookup_table.py:73
 msgid "Death should not have taken thee, {}."
 msgstr ""
 
-#: .\dialog_lookup_table.py:75
+#: .\dialog_lookup_table.py:74
 msgid "I will give thee another chance."
 msgstr ""
 
-#: .\dialog_lookup_table.py:76
+#: .\dialog_lookup_table.py:75
 msgid "To reach the next level, thy Experience Points must increase by {}."
 msgstr ""
 
-#: .\dialog_lookup_table.py:77
+#: .\dialog_lookup_table.py:76
 msgid "Now, go, {}!"
 msgstr ""
 
-#: .\dialog_lookup_table.py:79
+#: .\dialog_lookup_table.py:78
 msgid "East of this castle is a town where armor, weapons, and many other items may be purchased."
 msgstr ""
 
-#: .\dialog_lookup_table.py:80
+#: .\dialog_lookup_table.py:79
 msgid "Return to the Inn for a rest if thou art wounded in battle, {}."
 msgstr ""
 
-#: .\dialog_lookup_table.py:81
+#: .\dialog_lookup_table.py:80
 msgid "Sleep heals all."
 msgstr ""
 
-#: .\dialog_lookup_table.py:84
+#: .\dialog_lookup_table.py:83
 msgid "If thou hast collected all the Treasure Chests, a key will be found."
 msgstr ""
 
-#: .\dialog_lookup_table.py:85
+#: .\dialog_lookup_table.py:84
 msgid "Once used, the key will disappear, but the door will be open and thou may pass through."
 msgstr ""
 
-#: .\dialog_lookup_table.py:91
+#: .\dialog_lookup_table.py:90
 msgid ""
 "Magic keys! They will unlock any door.\n"
 "Dost thou wish to purchase one for {} GOLD?"
 msgstr ""
 
-#: .\dialog_lookup_table.py:92
+#: .\dialog_lookup_table.py:91
 msgid "We are merchants who have traveled much in this land. Many of our colleagues have been killed by servants of the Dragonlord."
 msgstr ""
 
-#: .\dialog_lookup_table.py:94
+#: .\dialog_lookup_table.py:93
 msgid "Rumor has it that entire towns have been destroyed by the Dragonlord's servants."
 msgstr ""
 
-#: .\dialog_lookup_table.py:95
+#: .\dialog_lookup_table.py:94
 msgid "To become strong enough to face future trials thou must first battle many foes."
 msgstr ""
 
-#: .\dialog_lookup_table.py:96
+#: .\dialog_lookup_table.py:95
 msgid ""
 "There was a time when Brecconary was a paradise.\n"
 "Then the Dragonlord's minions came."
 msgstr ""
 
-#: .\dialog_lookup_table.py:97
+#: .\dialog_lookup_table.py:96
 msgid "It's a legend."
 msgstr ""
 
-#: .\dialog_lookup_table.py:97
+#: .\dialog_lookup_table.py:96
 msgid "When the sun and rain meet, a Rainbow Bridge shall appear."
 msgstr ""
 
-#: .\dialog_lookup_table.py:102
+#: .\dialog_lookup_table.py:101
 msgid "King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."
 msgstr ""
 
-#: .\dialog_lookup_table.py:103
+#: .\dialog_lookup_table.py:102
 msgid "If thou art planning to take a rest, first see King Lorik."
 msgstr ""
 
-#: .\dialog_lookup_table.py:106
+#: .\dialog_lookup_table.py:105
 msgid "{}'s coming was foretold by legend. May the light shine upon this brave warrior."
 msgstr ""
 
-#: .\dialog_lookup_table.py:108
+#: .\dialog_lookup_table.py:107
 msgid "I have been waiting long for one such as thee."
 msgstr ""
 
-#: .\dialog_lookup_table.py:108
+#: .\dialog_lookup_table.py:107
 msgid "Take the Treasure Chest."
 msgstr ""
 
-#: .\dialog_lookup_table.py:110
+#: .\dialog_lookup_table.py:109
 msgid "There is a town where magic keys can be purchased."
 msgstr ""
 
-#: .\dialog_lookup_table.py:111
+#: .\dialog_lookup_table.py:110
 msgid "If thou art cursed, come again."
 msgstr ""
 
-#: .\dialog_lookup_table.py:114
+#: .\dialog_lookup_table.py:113
 msgid "Tell King Lorik that the search for his daughter hath failed."
 msgstr ""
 
-#: .\dialog_lookup_table.py:115
+#: .\dialog_lookup_table.py:114
 msgid "I am almost gone...."
 msgstr ""
 
-#: .\dialog_lookup_table.py:116
+#: .\dialog_lookup_table.py:115
 msgid ""
 "Welcome! \n"
 "Enter the shop and speak to its keeper across the desk."
 msgstr ""
 
-#: .\dialog_lookup_table.py:139
+#: .\dialog_lookup_table.py:138
 msgid "{}, please save the Princess."
 msgstr ""
 
-#: .\dialog_lookup_table.py:140
+#: .\dialog_lookup_table.py:139
 msgid "Dost thou know about Princess Gwaelin?"
 msgstr ""
 
-#: .\dialog_lookup_table.py:143
+#: .\dialog_lookup_table.py:142
 msgid "Half a year now hath passed since the Princess was kidnapped by the enemy."
 msgstr ""
 
-#: .\dialog_lookup_table.py:144
+#: .\dialog_lookup_table.py:143
 msgid "Never does the King speak of it, but he must be suffering much."
 msgstr ""
 
-#: .\dialog_lookup_table.py:176
+#: .\dialog_lookup_table.py:175
 msgid "What dost thou wish to buy?"
 msgstr ""
 
-#: .\dialog_lookup_table.py:207 .\dialog_lookup_table.py:239
+#: .\dialog_lookup_table.py:206 .\dialog_lookup_table.py:238
 msgid "Please, come again."
 msgstr ""
 
-#: .\dialog_lookup_table.py:231
+#: .\dialog_lookup_table.py:230
 msgid "Is that Okay.?"
 msgstr ""
 
-#: .\dialog_lookup_table.py:233
+#: .\dialog_lookup_table.py:232
 msgid "Oh, yes? That's too bad."
 msgstr ""
 
-#: .\dialog_lookup_table.py:235
+#: .\dialog_lookup_table.py:234
 msgid ""
 "Sorry.\n"
 "Thou hast not enough money."
 msgstr ""
 
-#: .\dialog_lookup_table.py:237
+#: .\dialog_lookup_table.py:236
 msgid "Dost thou wish to buy anything more?"
 msgstr ""
 
-#: .\dialog_lookup_table.py:245
+#: .\dialog_lookup_table.py:244
 msgid "Then I will buy thy {} for {} GOLD."
 msgstr ""
 
-#: .\dialog_lookup_table.py:261
+#: .\dialog_lookup_table.py:260
 msgid "I thank thee."
 msgstr ""
 
-#: .\dialog_lookup_table.py:267
+#: .\dialog_lookup_table.py:266
 msgid ""
 "Okay.\n"
 "Good-bye, traveler."
 msgstr ""
 
-#: .\dialog_lookup_table.py:275
+#: .\dialog_lookup_table.py:274
 msgid "Thou hast not enough money."
 msgstr ""
 
-#: .\dialog_lookup_table.py:278
+#: .\dialog_lookup_table.py:277
 msgid "Good night."
 msgstr ""
 
-#: .\dialog_lookup_table.py:298
+#: .\dialog_lookup_table.py:297
 msgid ""
 "Good morning.\n"
 "Thou seems to have spent a good night."
 msgstr ""
 
-#: .\dialog_lookup_table.py:299
+#: .\dialog_lookup_table.py:298
 msgid "I shall see thee again."
+msgstr ""
+
+#: .\dialog_lookup_table.py:302
+msgid ""
+"Welcome to the traveler's Inn.\n"
+"Room and board is {} GOLD per night.\n"
+"Dost thou want a room?"
 msgstr ""
 

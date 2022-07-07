@@ -12,7 +12,7 @@ from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
     STATUS_WINDOW_BACKGROUND_PATH
-from src.config import SCALE, TILE_SIZE
+from src.config import SCALE, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_hovering_stats_window
 from src.items import treasure
 from src.maps_functions import get_center_point
@@ -123,8 +123,10 @@ class CommandMenu(Menu):
             if type(line) == str:
                 current_time = None
                 display_current_line = True
-                if add_quotes:
+                if add_quotes and LANGUAGE == 'en':
                     line = f"`{line}’"
+                else:
+                    line = f"'{line}'"
                 while display_current_line:
                     if temp_text_start:
                         current_time = get_ticks()
