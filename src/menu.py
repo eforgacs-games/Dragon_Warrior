@@ -123,10 +123,14 @@ class CommandMenu(Menu):
             if type(line) == str:
                 current_time = None
                 display_current_line = True
-                if add_quotes and LANGUAGE == 'en':
-                    line = f"`{line}’"
-                else:
-                    line = f"'{line}'"
+                if add_quotes:
+                    if LANGUAGE == 'en':
+                        line = f"`{line}’"
+                    elif LANGUAGE == 'ko':
+                        if line.isascii():
+                            line = f"`{line}’"
+                        else:
+                            line = f"'{line}'"
                 while display_current_line:
                     if temp_text_start:
                         current_time = get_ticks()
@@ -239,8 +243,7 @@ class CommandMenu(Menu):
     def take_item(self, item_name: str):
         play_sound(open_treasure_sfx)
         self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-        found_item_text = f"Fortune smiles upon thee, {self.player.name}.\n" \
-                          f"Thou hast found the {item_name}."
+        found_item_text = f"Fortune smiles upon thee, {self.player.name}.\nThou hast found the {item_name}."
 
         if item_name == "Tablet":
             self.show_text_in_dialog_box((
