@@ -29,6 +29,12 @@ else:
 
 weapons_and_armor_intro = _("We deal in weapons and armor.\n Dost thou wish to buy anything today?")
 
+thou_art_dead = _("Thou art dead.")
+normal_speed_string = _("Game set to normal speed.\n(60 FPS)")
+double_speed_string = _("Game set to double speed.\n(120 FPS)")
+triple_speed_string = _("Game set to triple speed.\n(240 FPS)")
+quadruple_speed_string = _("Game set to quadruple speed.\n(480 FPS)")
+
 
 class DialogLookup:
     def __init__(self, command_menu):
