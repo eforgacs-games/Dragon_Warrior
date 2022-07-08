@@ -78,6 +78,9 @@ msgid ""
 "We deal in tools.\n"
 "What can I do for thee?"
 msgstr ""
+"어서 오세요!\n"
+"이곳은 도구점입니다.\n"
+"무슨 일로 오셨습니까?"
 
 #: .\dialog_lookup_table.py:58
 msgid "Descendant of Erdrick, listen now to my words."
@@ -237,11 +240,11 @@ msgstr ""
 
 #: .\dialog_lookup_table.py:115
 msgid "There is a town where magic keys can be purchased."
-msgstr ""
+msgstr "듣자 하니 어딘가에 마법의 열쇠를 파는 마을이 있다는군요."
 
 #: .\dialog_lookup_table.py:116
 msgid "If thou art cursed, come again."
-msgstr ""
+msgstr "나는 저주를 푸는 마법을 연구하고 있다네. 만약 그대가 저주에 걸리면 이곳으로 찾아오게. 힘이 되어 줄 터이니."
 
 #: .\dialog_lookup_table.py:119
 msgid "Tell King Lorik that the search for his daughter hath failed."
@@ -283,17 +286,18 @@ msgstr "또 들러 주게!"
 
 #: .\dialog_lookup_table.py:236
 msgid "Is that Okay.?"
-msgstr ""
+msgstr "괜찮아?"
 
 #: .\dialog_lookup_table.py:238
 msgid "Oh, yes? That's too bad."
-msgstr ""
+msgstr "아, 그래? 유감 이네."
+# not sure about "유감 이네." - used when player decides not to purchase an item.
 
 #: .\dialog_lookup_table.py:240
 msgid ""
 "Sorry.\n"
 "Thou hast not enough money."
-msgstr ""
+msgstr "하지만 이걸 사기에는 돈이 부족한 것 같군."
 
 #: .\dialog_lookup_table.py:242
 msgid "Dost thou wish to buy anything more?"
@@ -301,35 +305,40 @@ msgstr "그 밖에 다른 볼일이 있나?"
 
 #: .\dialog_lookup_table.py:250
 msgid "Then I will buy thy {} for {} GOLD."
-msgstr ""
+msgstr "그러면 내가 당신의 {} {}골드에 사겠습니다."
+# backwards
 
 #: .\dialog_lookup_table.py:266
 msgid "I thank thee."
-msgstr ""
+msgstr "감사합니다."
+# "자! 여기 있네, {}!"
 
 #: .\dialog_lookup_table.py:272
 msgid ""
 "Okay.\n"
 "Good-bye, traveler."
 msgstr ""
+"여행자여, 안녕히 가십시오.\n"
+"너무 무리는 하지 마시기를..."
 
 #: .\dialog_lookup_table.py:280
 msgid "Thou hast not enough money."
-msgstr ""
+msgstr "하지만 돈이 모자란 것 같군요."
 
 #: .\dialog_lookup_table.py:283
 msgid "Good night."
-msgstr ""
+msgstr "그럼 편히 쉬십시오."
 
 #: .\dialog_lookup_table.py:303
 msgid ""
 "Good morning.\n"
 "Thou seems to have spent a good night."
 msgstr ""
+"좋은 아침입니다.\n"
 
 #: .\dialog_lookup_table.py:304
 msgid "I shall see thee again."
-msgstr ""
+msgstr "그럼 안녕히 다녀오세요."
 
 #: .\dialog_lookup_table.py:308
 msgid ""
@@ -337,4 +346,6 @@ msgid ""
 "Room and board is {} GOLD per night.\n"
 "Dost thou want a room?"
 msgstr ""
-
+"여행자의 여관에 오신 것을 환영합니다.\n"
+"하룻밤에 {}골드입니다.\n"
+"묵고 가시겠습니까?"
