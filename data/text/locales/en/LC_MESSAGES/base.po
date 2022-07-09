@@ -16,6 +16,6 @@ msgstr ""
 
 
 #: .\dialog_lookup_table.py:50
-msgid "When thou art finished preparing for thy departure, please see me."
+msgid "When thou art finished preparing for thy departure, please see me.\nI shall wait."
 msgstr ""
 
