@@ -35,7 +35,7 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
         # else:
         if LANGUAGE == 'ko':
             if not text.strip('’(↑ ← ↓ →)').isascii():
-                current_font = font.Font(UNIFONT_PATH, size)
+                current_font = font.Font(UNIFONT_PATH, size + 1)
             else:
                 current_font = font.Font(font_name, size)
         else:

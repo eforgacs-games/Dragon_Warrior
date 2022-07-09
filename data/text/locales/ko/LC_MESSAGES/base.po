@@ -72,7 +72,7 @@ msgstr "아아, 로라 공주님...\n공주님은 도대체 어디 계신 걸까
 msgid "Welcome to Tantegel Castle."
 msgstr "라다톰 성에 오신 것을 환영합니다!"
 
-#: .\dialog_lookup_table.py:46
+#: .\dialog_lookup_table.py:52
 msgid ""
 "Welcome.\n"
 "We deal in tools.\n"
@@ -194,7 +194,7 @@ msgstr "어떤 문이든 척척 여는 마법의 열쇠 필요 없나?\n 하나�
 
 #: .\dialog_lookup_table.py:97
 msgid "We are merchants who have traveled much in this land. Many of our colleagues have been killed by servants of the Dragonlord."
-msgstr "저는 떠돌이 상인입니다. 지금까지도 수많은 동료들이 마물 때문에 목숨을 잃었죠. 그떄를 떠올리면 분하고 슬퍼서 견딜 수가 없습니다."
+msgstr "저는 떠돌이 상인입니다. 지금까지도 수많은 동료들이 마물 때문에 목숨을 잃었죠. 그때를 떠올리면 분하고 슬퍼서 견딜 수가 없습니다."
 
 #: .\dialog_lookup_table.py:99
 msgid "Rumor has it that entire towns have been destroyed by the Dragonlord's servants."
@@ -306,7 +306,6 @@ msgstr "그 밖에 다른 볼일이 있나?"
 #: .\dialog_lookup_table.py:250
 msgid "Then I will buy thy {} for {} GOLD."
 msgstr "그러면 내가 당신의 {} {}골드에 사겠습니다."
-# backwards
 
 #: .\dialog_lookup_table.py:266
 msgid "I thank thee."
