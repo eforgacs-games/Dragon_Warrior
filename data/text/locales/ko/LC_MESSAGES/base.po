@@ -115,7 +115,7 @@ msgid "May the light shine upon thee, {}."
 msgstr "그럼 또 보세! 용사 {}!"
 
 #: .\dialog_lookup_table.py:66
-msgid "When thou art finished preparing for thy departure, please see me."
+msgid "When thou art finished preparing for thy departure, please see me.\nI shall wait."
 msgstr "여행 준비를 마치거든 다시 내게 오게나."
 
 #: .\dialog_lookup_table.py:68

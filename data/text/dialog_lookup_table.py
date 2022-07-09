@@ -63,7 +63,7 @@ class DialogLookup:
                     _("Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."),
                     _("Then speak with the guards, for they have much knowledge that may aid thee."),
                     _("May the light shine upon thee, {}.").format(self.player.name)
-                ), 'post_initial_dialog': _("When thou art finished preparing for thy departure, please see me."),
+                ), 'post_initial_dialog': _("When thou art finished preparing for thy departure, please see me.\nI shall wait."),
                     'returned_dialog': (
                         _("I am greatly pleased that thou hast returned, {}.").format(self.player.name),
                         _("Before reaching thy next level of experience thou must gain {} Points.").format(self.player.points_to_next_level),
