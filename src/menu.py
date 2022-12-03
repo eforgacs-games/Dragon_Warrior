@@ -11,7 +11,7 @@ from data.text.dialog import blink_down_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
-    STATUS_WINDOW_BACKGROUND_PATH
+    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup
 from src.config import SCALE, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_hovering_stats_window
 from src.items import treasure
@@ -258,7 +258,7 @@ class CommandMenu(Menu):
         # could probably assign the new treasure box values by using this line:
         else:
             self.show_text_in_dialog_box(found_item_text, skip_text=self.skip_text)
-        self.player.inventory.append(item_name)
+        self.player.inventory.insert(0, item_name)
 
     def take_gold(self, treasure_info: dict):
         play_sound(open_treasure_sfx)
@@ -431,10 +431,19 @@ class CommandMenu(Menu):
             inventory_string = ""
             for item, item_amount in inventory_counter.items():
                 if item == "Magic Key":
-                    inventory_string += f"{item} {item_amount}\n"
+                    inventory_string += f"Magic   {item_amount}\n Key \n"
                 else:
                     inventory_string += f"{item}\n"
-            self.show_text_in_dialog_box(inventory_string, skip_text=self.skip_text)
+            # TODO(ELF): Actually implement the item menu.
+            display_item_menu = True
+            while display_item_menu:
+                create_window(x=9, y=3, width=6, height=len(inventory_counter) + 1, window_background=item_menu_background_lookup[len(inventory_counter)],
+                              screen=self.screen)
+                draw_text(inventory_string, TILE_SIZE * 10, TILE_SIZE * 3.75, self.screen)
+                display.update((9 * TILE_SIZE, 3 * TILE_SIZE, 6 * TILE_SIZE, (len(inventory_counter) + 1) * TILE_SIZE))
+                if any([current_event.type == KEYDOWN for current_event in event.get()]):
+                    display_item_menu = False
+            # self.show_text_in_dialog_box(inventory_string, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
