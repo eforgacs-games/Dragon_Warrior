@@ -1,20 +1,39 @@
+import gettext
+import os
 from functools import partial
 
 from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, K_RETURN, K_j, Rect
 from pygame.event import get, pump
 from pygame.time import get_ticks
 
-from data.text.dialog import confirmation_prompt, get_inn_intro
+from data.text.dialog import confirmation_prompt
 from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, create_window, WHITE
-from src.config import MUSIC_ENABLED, TILE_SIZE
+from src.config import MUSIC_ENABLED, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_all_tiles_in_current_map, draw_hovering_stats_window
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
 from src.visual_effects import fade, flash_transparent_color
 
-weapons_and_armor_intro = "We deal in weapons and armor.\n" \
-                          "Dost thou wish to buy anything today?"
+# TODO(ELF): Fix localedir paths.
+if LANGUAGE == 'en':
+    en = gettext.translation('base', localedir=os.path.join('C:\\Users\\eddie\\PycharmProjects\\DragonWarrior\\data\\text\\locales'), languages=['en'])
+    en.install()
+    _ = en.gettext
+elif LANGUAGE == 'ko':
+    ko = gettext.translation('base', localedir=os.path.join('C:\\Users\\eddie\\PycharmProjects\\DragonWarrior\\data\\text\\locales'), languages=['ko'])
+    ko.install()
+    _ = ko.gettext
+else:
+    _ = gettext.gettext
+
+weapons_and_armor_intro = _("We deal in weapons and armor.\n Dost thou wish to buy anything today?")
+
+thou_art_dead = _("Thou art dead.")
+normal_speed_string = _("Game set to normal speed.\n(60 FPS)")
+double_speed_string = _("Game set to double speed.\n(120 FPS)")
+triple_speed_string = _("Game set to triple speed.\n(240 FPS)")
+quadruple_speed_string = _("Game set to quadruple speed.\n(480 FPS)")
 
 
 class DialogLookup:
@@ -26,82 +45,81 @@ class DialogLookup:
         self.background = command_menu.background
         self.camera_position = command_menu.camera_position
 
-        where_is_princess_gwaelin = "Where oh where can I find Princess Gwaelin?"
-        welcome_to_tantegel = "Welcome to Tantegel Castle."
+        where_is_princess_gwaelin = _("Where oh where can I find Princess Gwaelin?")
+        welcome_to_tantegel = _("Welcome to Tantegel Castle.")
         brecconary_inn_cost = 6
         garinham_inn_cost = 25
-        tools_intro = "Welcome.\n" \
-                      "We deal in tools.\n" \
-                      "What can I do for thee?"
+        tools_intro = _("Welcome.\n"
+                        "We deal in tools.\n"
+                        "What can I do for thee?")
         self.lookup_table = {
             'TantegelThroneRoom': {
                 'KING_LORIK': {'dialog': (
-                    "Descendant of Erdrick, listen now to my words.",
-                    "It is told that in ages past Erdrick fought demons with a Ball of Light.",
-                    "Then came the Dragonlord who stole the precious globe and hid it in the darkness.",
-                    f"Now, {self.player.name}, thou must help us recover the Ball of Light and restore peace to our land.",
-                    "The Dragonlord must be defeated.",
-                    "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest.",
-                    "Then speak with the guards, for they have much knowledge that may aid thee.",
-                    f"May the light shine upon thee, {self.player.name}."
-                ), 'post_initial_dialog': "When thou art finished preparing for thy departure, please see me.\n"
-                                          "I shall wait.",
+                    _("Descendant of Erdrick, listen now to my words."),
+                    _("It is told that in ages past Erdrick fought demons with a Ball of Light."),
+                    _("Then came the Dragonlord who stole the precious globe and hid it in the darkness."),
+                    _("Now, {}, thou must help us recover the Ball of Light and restore peace to our land.").format(self.player.name),
+                    _("The Dragonlord must be defeated."),
+                    _("Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."),
+                    _("Then speak with the guards, for they have much knowledge that may aid thee."),
+                    _("May the light shine upon thee, {}.").format(self.player.name)
+                ), 'post_initial_dialog': _("When thou art finished preparing for thy departure, please see me.\nI shall wait."),
                     'returned_dialog': (
-                        f"I am greatly pleased that thou hast returned, {self.player.name}.",
-                        f"Before reaching thy next level of experience thou must gain {self.player.points_to_next_level} Points.",
-                        "Will thou tell me now of thy deeds so they won't be forgotten?",
+                        _("I am greatly pleased that thou hast returned, {}.").format(self.player.name),
+                        _("Before reaching thy next level of experience thou must gain {} Points.").format(self.player.points_to_next_level),
+                        _("Will thou tell me now of thy deeds so they won't be forgotten?"),
                         # if yes:
-                        "Thy deeds have been recorded on the Imperial Scrolls of Honor.",
-                        "Dost thou wish to continue thy quest?",
+                        _("Thy deeds have been recorded on the Imperial Scrolls of Honor."),
+                        _("Dost thou wish to continue thy quest?"),
                         # if yes:
-                        f"Goodbye now, {self.player.name}.\n'Take care and tempt not the Fates.",
+                        _("Goodbye now, {}.\n'Take care and tempt not the Fates.").format(self.player.name),
                         # if no:
                         # "Rest then for awhile."
                     ),
-                    'post_death_dialog': (f"Death should not have taken thee, {self.player.name}.",
-                                          "I will give thee another chance.",
-                                          f"To reach the next level, thy Experience Points must increase by {self.player.points_to_next_level}.",
-                                          f"Now, go, {self.player.name}!")},
+                    'post_death_dialog': (_("Death should not have taken thee, {}.").format(self.player.name),
+                                          _("I will give thee another chance."),
+                                          _("To reach the next level, thy Experience Points must increase by {}.").format(self.player.points_to_next_level),
+                                          _("Now, go, {}!").format(self.player.name))},
                 'RIGHT_FACE_GUARD': {'dialog': (
-                    "East of this castle is a town where armor, weapons, and many other items may be purchased.",
-                    f"Return to the Inn for a rest if thou art wounded in battle, {self.player.name}.",
-                    "Sleep heals all."
+                    _("East of this castle is a town where armor, weapons, and many other items may be purchased."),
+                    _("Return to the Inn for a rest if thou art wounded in battle, {}.").format(self.player.name),
+                    _("Sleep heals all.")
                 )},
                 'LEFT_FACE_GUARD': {'dialog': (
-                    "If thou hast collected all the Treasure Chests, a key will be found.",
-                    "Once used, the key will disappear, but the door will be open and thou may pass through."
+                    _("If thou hast collected all the Treasure Chests, a key will be found."),
+                    _("Once used, the key will disappear, but the door will be open and thou may pass through.")
                 )},
                 'ROAMING_GUARD': {'dialog': (
                     self.tantegel_throne_room_roaming_guard,
                 )}},
             'TantegelCourtyard': {
-                'MERCHANT': {'dialog': ("Magic keys! They will unlock any door. \nDost thou wish to purchase one for 85 GOLD?",)},
-                'MERCHANT_2': {'dialog': "We are merchants who have traveled much in this land. "
-                                         "Many of our colleagues have been killed by servants of the Dragonlord."},
-                'MERCHANT_3': {'dialog': "Rumor has it that entire towns have been destroyed by the Dragonlord's servants."},
-                'MAN': {'dialog': "To become strong enough to face future trials thou must first battle many foes."},
-                'MAN_2': {'dialog': "There was a time when Brecconary was a paradise.\n"
-                                    "Then the Dragonlord's minions came."},
-                'WOMAN': {'dialog': ("When the sun and rain meet, a Rainbow Bridge shall appear.", "It's a legend.")},
+                'MERCHANT': {'dialog': (_("Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?").format(85),)},
+                'MERCHANT_2': {'dialog': _(
+                    "We are merchants who have traveled much in this land. Many of our colleagues have been killed by servants of the Dragonlord.")},
+                'MERCHANT_3': {'dialog': _("Rumor has it that entire towns have been destroyed by the Dragonlord's servants.")},
+                'MAN': {'dialog': _("To become strong enough to face future trials thou must first battle many foes.")},
+                'MAN_2': {'dialog': _("There was a time when Brecconary was a paradise.\nThen the Dragonlord's minions came.")},
+                'WOMAN': {'dialog': (_("When the sun and rain meet, a Rainbow Bridge shall appear."), _("It's a legend."))},
                 'WOMAN_2': {'dialog': where_is_princess_gwaelin},
                 'RIGHT_FACE_GUARD': {'dialog': where_is_princess_gwaelin},
                 'LEFT_FACE_GUARD': {'dialog': welcome_to_tantegel},
                 'DOWN_FACE_GUARD': {'dialog': (
-                    "King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later.",)},
-                'UP_FACE_GUARD': {'dialog': "If thou art planning to take a rest, first see King Lorik."},
+                    _("King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."),)},
+                'UP_FACE_GUARD': {'dialog': _("If thou art planning to take a rest, first see King Lorik.")},
                 'RIGHT_FACE_GUARD_2': {'dialog': welcome_to_tantegel},
-                'WISE_MAN': {'dialog': (f"{self.player.name}'s coming was foretold by legend. "
-                                        f"May the light shine upon this brave warrior.", self.flash_and_restore_mp)}},
-            'TantegelCellar': {'WISE_MAN': {'dialog': ("I have been waiting long for one such as thee.", "Take the Treasure Chest.")}},
+                'WISE_MAN': {'dialog': (
+                    _("{}'s coming was foretold by legend. May the light shine upon this brave warrior.").format(self.player.name),
+                    self.flash_and_restore_mp)}},
+            'TantegelCellar': {'WISE_MAN': {'dialog': (_("I have been waiting long for one such as thee."), _("Take the Treasure Chest."))}},
             'Brecconary': {
-                'MAN': {'dialog': "There is a town where magic keys can be purchased."},
-                'WISE_MAN': {'dialog': "If thou art cursed, come again."},
+                'MAN': {'dialog': _("There is a town where magic keys can be purchased.")},
+                'WISE_MAN': {'dialog': _("If thou art cursed, come again.")},
                 'MERCHANT': {'dialog': (partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
-                'UP_FACE_GUARD': {'dialog': ("Tell King Lorik that the search for his daughter hath failed.",
-                                             "I am almost gone....")},
-                'WOMAN_2': {'dialog': "Welcome! \n"
-                                      "Enter the shop and speak to its keeper across the desk."},
+                'UP_FACE_GUARD': {'dialog': (_("Tell King Lorik that the search for his daughter hath failed."),
+                                             _("I am almost gone...."))},
+                'WOMAN_2': {'dialog': _("Welcome! \n"
+                                        "Enter the shop and speak to its keeper across the desk.")},
             },
             'Garinham': {
                 'MERCHANT': {'dialog': (tools_intro,)},
@@ -123,12 +141,12 @@ class DialogLookup:
                 character_dict['dialog_character'] = character_identifier
 
     def tantegel_throne_room_roaming_guard(self):
-        player_please_save_the_princess = f"{self.player.name}, please save the Princess."
-        confirmation_prompt(self.command_menu, "Dost thou know about Princess Gwaelin?",
+        player_please_save_the_princess = _("{}, please save the Princess.").format(self.player.name)
+        confirmation_prompt(self.command_menu, _("Dost thou know about Princess Gwaelin?"),
                             yes_path_function=partial(self.command_menu.show_line_in_dialog_box, player_please_save_the_princess, last_line=True),
                             no_path_function=partial(self.command_menu.show_text_in_dialog_box,
-                                                     ("Half a year now hath passed since the Princess was kidnapped by the enemy.",
-                                                      "Never does the King speak of it, but he must be suffering much.",
+                                                     (_("Half a year now hath passed since the Princess was kidnapped by the enemy."),
+                                                      _("Never does the King speak of it, but he must be suffering much."),
                                                       player_please_save_the_princess),
                                                      drop_down=False, drop_up=False,
                                                      skip_text=self.command_menu.skip_text))
@@ -160,7 +178,7 @@ class DialogLookup:
         #             display.flip()
 
     def open_store_inventory(self, current_store_inventory, static_store_image):
-        self.command_menu.show_line_in_dialog_box("What dost thou wish to buy?", skip_text=True)
+        self.command_menu.show_line_in_dialog_box(_("What dost thou wish to buy?"), skip_text=True)
         self.command_menu.window_drop_down_effect(6, 2, 9, 7)
         # store_inventory_window = create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
         # display.update(store_inventory_window.get_rect())
@@ -191,7 +209,7 @@ class DialogLookup:
                         current_item_index -= 1
                         start_time = get_ticks()
                     elif current_event.key == K_j:
-                        self.command_menu.show_line_in_dialog_box("Please, come again.", last_line=True)
+                        self.command_menu.show_line_in_dialog_box(_("Please, come again."), last_line=True)
                         selecting = False
                     elif current_event.key in (K_RETURN, K_k):
                         selected_item = current_item_name
@@ -215,21 +233,21 @@ class DialogLookup:
                 old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.armor, armor)
             elif selected_item_type == 'shield':
                 old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.shield, shields)
-            confirmation_prompt(self.command_menu, "Is that Okay.?",
+            confirmation_prompt(self.command_menu, _("Is that Okay.?"),
                                 yes_path_function=partial(self.complete_transaction, selected_item, current_store_inventory, old_item_cost),
-                                no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Oh, yes? That's too bad.", last_line=False))
+                                no_path_function=partial(self.command_menu.show_line_in_dialog_box, _("Oh, yes? That's too bad."), last_line=False))
         else:
-            self.command_menu.show_line_in_dialog_box("Sorry.\n"
-                                                      "Thou hast not enough money.", last_line=False)
-        confirmation_prompt(self.command_menu, "Dost thou wish to buy anything more?",
+            self.command_menu.show_line_in_dialog_box(_("Sorry.\n"
+                                                        "Thou hast not enough money."), last_line=False)
+        confirmation_prompt(self.command_menu, _("Dost thou wish to buy anything more?"),
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.", last_line=True))
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, _("Please, come again."), last_line=True))
 
     def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
         if old_item:
             if old_item_lookup_table[old_item].get('cost'):
                 old_item_cost = old_item_lookup_table[old_item]['cost'] // 2
-                self.command_menu.show_line_in_dialog_box(f"Then I will buy thy {old_item} for {old_item_cost} GOLD.", last_line=False)
+                self.command_menu.show_line_in_dialog_box(_("Then I will buy thy {} for {} GOLD.").format(old_item, old_item_cost), last_line=False)
         return old_item_cost
 
     def complete_transaction(self, item, current_store_inventory, old_item_cost):
@@ -245,24 +263,24 @@ class DialogLookup:
         elif item_type == 'shield':
             self.player.shield = item
         draw_hovering_stats_window(self.screen, self.player)
-        self.command_menu.show_line_in_dialog_box("I thank thee.")
+        self.command_menu.show_line_in_dialog_box(_("I thank thee."))
 
     def check_stay_at_inn(self, inn_cost):
         confirmation_prompt(self.command_menu, get_inn_intro(inn_cost),
                             yes_path_function=partial(self.check_money, inn_cost),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                     "Okay.\n"
-                                                     "Good-bye, traveler.",
+                                                     _("Okay.\n"
+                                                       "Good-bye, traveler."),
                                                      skip_text=self.command_menu.skip_text), skip_text=self.command_menu.skip_text)
 
     def check_money(self, inn_cost):
         if self.player.gold >= inn_cost:
             self.inn_sleep(inn_cost)
         else:
-            self.command_menu.show_line_in_dialog_box("Thou hast not enough money.", skip_text=self.command_menu.skip_text)
+            self.command_menu.show_line_in_dialog_box(_("Thou hast not enough money."), skip_text=self.command_menu.skip_text)
 
     def inn_sleep(self, inn_cost):
-        self.command_menu.show_line_in_dialog_box("Good night.", skip_text=self.command_menu.skip_text)
+        self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
         fade(fade_out=True, screen=self.screen)
         if MUSIC_ENABLED:
             mixer.music.stop()
@@ -282,6 +300,11 @@ class DialogLookup:
         self.screen.blit(self.background, self.camera_position)
         self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
         display.flip()
-        self.command_menu.show_text_in_dialog_box(("Good morning.\n" +
-                                                   "Thou seems to have spent a good night.",
-                                                   "I shall see thee again."), skip_text=self.command_menu.skip_text, drop_up=False)
+        self.command_menu.show_text_in_dialog_box((_("Good morning.\nThou seems to have spent a good night."),
+                                                   _("I shall see thee again.")), skip_text=self.command_menu.skip_text, drop_up=False)
+
+
+def get_inn_intro(inn_cost):
+    return _("Welcome to the traveler's Inn.\n"
+             "Room and board is {} GOLD per night.\n"
+             "Dost thou want a room?").format(inn_cost)

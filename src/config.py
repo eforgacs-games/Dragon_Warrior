@@ -21,6 +21,7 @@ SPLASH_SCREEN_ENABLED = False if DEV_MODE else True
 INITIAL_DIALOG_ENABLED = False if DEV_MODE else True
 ORCHESTRA_MUSIC_ENABLED = False
 SHOW_FPS = False
+LANGUAGE = 'en'
 # This prints out the current coordinates that the player is standing on.
 SHOW_COORDINATES = False
 COLOR_KEY = (0, 128, 128)
