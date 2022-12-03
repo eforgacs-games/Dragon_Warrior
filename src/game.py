@@ -10,6 +10,7 @@ from pygame.sprite import Group
 from pygame.time import Clock
 from pygame.time import get_ticks
 
+from data.text.dialog_lookup_table import thou_art_dead, normal_speed_string, double_speed_string, triple_speed_string, quadruple_speed_string
 from src import maps, menu_functions
 from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
@@ -270,7 +271,8 @@ class Game:
             while convert_to_frames_since_start_time(death_start_time) < 318:
                 time.wait(1)
             event.clear()
-            self.cmd_menu.show_text_in_dialog_box("Thou art dead.", disable_sound=True)
+
+            self.cmd_menu.show_text_in_dialog_box(thou_art_dead, disable_sound=True)
             self.set_post_death_attributes()
 
     def set_post_death_attributes(self):
@@ -357,16 +359,20 @@ class Game:
 
     def handle_fps_changes(self, current_key) -> None:
         if current_key[K_1]:
-            self.draw_temporary_text(("Game set to normal speed.\n(60 FPS)",))
+
+            self.draw_temporary_text(normal_speed_string)
             self.fps = 60
         if current_key[K_2]:
-            self.draw_temporary_text(("Game set to double speed.\n(120 FPS)",))
+
+            self.draw_temporary_text(double_speed_string)
             self.fps = 120
         if current_key[K_3]:
-            self.draw_temporary_text(("Game set to triple speed.\n(240 FPS)",))
+
+            self.draw_temporary_text(triple_speed_string)
             self.fps = 240
         if current_key[K_4]:
-            self.draw_temporary_text(("Game set to quadruple speed.\n(480 FPS)",))
+
+            self.draw_temporary_text(quadruple_speed_string)
             self.fps = 480
 
     def update_roaming_character_positions(self) -> None:
@@ -375,7 +381,7 @@ class Game:
                 if not character_dict['character'].is_moving:
                     set_character_position(character_dict['character'])
 
-    def draw_temporary_text(self, text: Tuple[str] | List[str], add_quotes=False) -> None:
+    def draw_temporary_text(self, text: Tuple[str] | List[str] | str, add_quotes=False) -> None:
         self.cmd_menu.show_text_in_dialog_box(text, add_quotes=add_quotes, temp_text_start=get_ticks(), skip_text=False)
 
     def process_staircase_warps(self, staircase_location: tuple, staircase_dict: dict) -> None:

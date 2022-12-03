@@ -12,7 +12,7 @@ from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
     STATUS_WINDOW_BACKGROUND_PATH
-from src.config import SCALE, TILE_SIZE
+from src.config import SCALE, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_hovering_stats_window
 from src.items import treasure
 from src.maps_functions import get_center_point
@@ -124,7 +124,13 @@ class CommandMenu(Menu):
                 current_time = None
                 display_current_line = True
                 if add_quotes:
-                    line = f"`{line}’"
+                    if LANGUAGE == 'en':
+                        line = f"`{line}’"
+                    elif LANGUAGE == 'ko':
+                        if line.isascii():
+                            line = f"`{line}’"
+                        else:
+                            line = f"'{line}'"
                 while display_current_line:
                     if temp_text_start:
                         current_time = get_ticks()
@@ -237,8 +243,7 @@ class CommandMenu(Menu):
     def take_item(self, item_name: str):
         play_sound(open_treasure_sfx)
         self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-        found_item_text = f"Fortune smiles upon thee, {self.player.name}.\n" \
-                          f"Thou hast found the {item_name}."
+        found_item_text = f"Fortune smiles upon thee, {self.player.name}.\nThou hast found the {item_name}."
 
         if item_name == "Tablet":
             self.show_text_in_dialog_box((
