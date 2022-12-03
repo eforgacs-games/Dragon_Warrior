@@ -1,3 +1,4 @@
+import locale
 from os.path import join, realpath, dirname
 
 FPS = 60
@@ -21,7 +22,7 @@ SPLASH_SCREEN_ENABLED = False if DEV_MODE else True
 INITIAL_DIALOG_ENABLED = False if DEV_MODE else True
 ORCHESTRA_MUSIC_ENABLED = False
 SHOW_FPS = False
-LANGUAGE = 'en'
+LANGUAGE = locale.getdefaultlocale()[0].split("_")[0]
 # This prints out the current coordinates that the player is standing on.
 SHOW_COORDINATES = False
 COLOR_KEY = (0, 128, 128)
