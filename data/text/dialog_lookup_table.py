@@ -15,13 +15,12 @@ from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
 from src.visual_effects import fade, flash_transparent_color
 
-# TODO(ELF): Fix localedir paths.
-if LANGUAGE == 'en':
-    en = gettext.translation('base', localedir=os.path.join('C:\\Users\\eddie\\PycharmProjects\\DragonWarrior\\data\\text\\locales'), languages=['en'])
-    en.install()
-    _ = en.gettext
-elif LANGUAGE == 'ko':
-    ko = gettext.translation('base', localedir=os.path.join('C:\\Users\\eddie\\PycharmProjects\\DragonWarrior\\data\\text\\locales'), languages=['ko'])
+# if LANGUAGE == 'en':
+#     en = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['en'])
+#     en.install()
+#     _ = en.gettext
+if LANGUAGE == 'ko':
+    ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
     ko.install()
     _ = ko.gettext
 else:
