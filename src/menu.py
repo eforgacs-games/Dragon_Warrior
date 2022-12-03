@@ -3,7 +3,7 @@ from collections import Counter
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN, Rect, event, K_ESCAPE, K_RETURN, K_k, K_j
+from pygame import Surface, display, KEYDOWN, Rect, event, K_ESCAPE, K_RETURN, K_k, K_j, K_UP, K_DOWN, K_w, K_s
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
@@ -293,6 +293,15 @@ class CommandMenu(Menu):
                          current_map.layout[self.player.row + box_start_row:self.player.row + box_end_row]]
         return set([item for sublist in row_tile_sets for item in sublist])
 
+    # Items
+    def torch(self):
+        if not self.current_map.is_dark:
+            self.show_text_in_dialog_box(("A torch can be used only in dark places.",), skip_text=self.skip_text)
+        else:
+            # TODO(ELF): The torch should only light a small 3 x 3 area around the player.
+            self.current_map.is_dark = False
+            self.player.inventory.remove("Torch")
+
     # Menu functions
 
     def talk(self):
@@ -437,14 +446,31 @@ class CommandMenu(Menu):
                     inventory_string += f"{item}\n"
             # TODO(ELF): Actually implement the item menu.
             display_item_menu = True
+            current_arrow_position = 0
+            currently_selected_item = list(inventory_counter.keys())[0]
             while display_item_menu:
                 create_window(x=9, y=3, width=6, height=len(inventory_counter) + 1, window_background=item_menu_background_lookup[len(inventory_counter)],
                               screen=self.screen)
                 draw_text(inventory_string, TILE_SIZE * 10, TILE_SIZE * 3.75, self.screen)
-                blink_arrow(TILE_SIZE * 9.5, TILE_SIZE * 3.75, "right", self.screen)
+                blink_arrow(TILE_SIZE * 9.5, (TILE_SIZE + (current_arrow_position * TILE_SIZE / 4)) * 3.75, "right", self.screen)
                 display.update((9 * TILE_SIZE, 3 * TILE_SIZE, 6 * TILE_SIZE, (len(inventory_counter) + 1) * TILE_SIZE))
-                if any([current_event.type == KEYDOWN for current_event in event.get()]):
-                    display_item_menu = False
+                for current_event in event.get():
+                    if any([current_event.type == KEYDOWN]):
+                        if current_event.key in (K_ESCAPE, K_j):
+                            display_item_menu = False
+                        elif current_event.key in (K_RETURN, K_k):
+                            if currently_selected_item == "Torch":
+                                self.torch()
+                            elif currently_selected_item == "Magic Key":
+                                self.door()
+                            display_item_menu = False
+                        elif len(self.player.inventory) > 1:
+                            if current_event.key in (K_UP, K_w) and current_arrow_position > 0:
+                                current_arrow_position -= 1
+                            elif current_event.key in (K_DOWN, K_s) and current_arrow_position < len(inventory_counter) - 1:
+                                current_arrow_position += 1
+                            currently_selected_item = list(inventory_counter.keys())[current_arrow_position]
+
             # self.show_text_in_dialog_box(inventory_string, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
