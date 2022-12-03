@@ -7,7 +7,7 @@ from pygame import Surface, display, KEYDOWN, Rect, event, K_ESCAPE, K_RETURN, K
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
-from data.text.dialog import blink_down_arrow
+from data.text.dialog import blink_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
@@ -150,7 +150,8 @@ class CommandMenu(Menu):
                     draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen)
                     display.update(Rect(2 * TILE_SIZE, 9 * TILE_SIZE, 12 * TILE_SIZE, 5 * TILE_SIZE))
                     if not last_line:
-                        blink_down_arrow(self.screen)
+                        end_of_dialog_box_location = self.screen.get_width() / 2, (self.screen.get_height() * 13 / 16) + TILE_SIZE // 1.5
+                        blink_arrow(end_of_dialog_box_location[0], end_of_dialog_box_location[1], "down", self.screen)
                     # playing with fire a bit here with the short-circuiting
                     if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
                             [current_event.type == KEYDOWN for current_event in event.get()]):
@@ -440,6 +441,7 @@ class CommandMenu(Menu):
                 create_window(x=9, y=3, width=6, height=len(inventory_counter) + 1, window_background=item_menu_background_lookup[len(inventory_counter)],
                               screen=self.screen)
                 draw_text(inventory_string, TILE_SIZE * 10, TILE_SIZE * 3.75, self.screen)
+                blink_arrow(TILE_SIZE * 9.5, TILE_SIZE * 3.75, "right", self.screen)
                 display.update((9 * TILE_SIZE, 3 * TILE_SIZE, 6 * TILE_SIZE, (len(inventory_counter) + 1) * TILE_SIZE))
                 if any([current_event.type == KEYDOWN for current_event in event.get()]):
                     display_item_menu = False

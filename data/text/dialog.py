@@ -8,16 +8,26 @@ from src.config import TILE_SIZE
 from src.text import draw_text
 
 
-def blink_down_arrow(screen):
+def blink_arrow(x, y, direction, screen):
+    if direction == 'up':
+        arrow_character = '^'
+    elif direction == "down":
+        arrow_character = "▼"
+    elif direction == "left":
+        arrow_character = "<"
+    elif direction == "right":
+        arrow_character = ">"
+    else:
+        arrow_character = ""
     down_arrow_start = get_ticks()
     if convert_to_frames_since_start_time(down_arrow_start) > 32:
         down_arrow_start = get_ticks()
-    arrow_screen_portion = Rect(screen.get_width() / 2 - (TILE_SIZE // 1.5), (screen.get_height() * 13 / 16) + (TILE_SIZE // 1.5), TILE_SIZE, TILE_SIZE)
+    arrow_screen_portion = Rect(x, y, TILE_SIZE, TILE_SIZE)
     while convert_to_frames_since_start_time(down_arrow_start) <= 16:
-        draw_text("▼", screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32, screen, WHITE)
+        draw_text(arrow_character, x, y, screen, WHITE)
         display.update(arrow_screen_portion)
     while 16 < convert_to_frames_since_start_time(down_arrow_start) <= 32:
-        draw_text("▼", screen.get_width() / 2, (screen.get_height() * 13 / 16) + 32, screen, BLACK)
+        draw_text(arrow_character, x, y, screen, BLACK)
         display.update(arrow_screen_portion)
 
 
