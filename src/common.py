@@ -129,6 +129,11 @@ CONFIRMATION_NO_BACKGROUND_PATH = join(IMAGES_DIR, 'confirmation_no.png')
 HOVERING_STATS_BACKGROUND_PATH = join(IMAGES_DIR, 'hovering_stats_window.png')
 STATUS_WINDOW_BACKGROUND_PATH = join(IMAGES_DIR, 'status_window_background.png')
 IMAGES_MENUS_DIR = join(IMAGES_DIR, 'menus')
+IMAGES_MENUS_ITEM_MENU_DIR = join(IMAGES_MENUS_DIR, 'item_menu')
+ITEM_MENU_1_BACKGROUND_PATH = join(IMAGES_MENUS_ITEM_MENU_DIR, 'item_menu_background_1.png')
+ITEM_MENU_2_BACKGROUND_PATH = join(IMAGES_MENUS_ITEM_MENU_DIR, 'item_menu_background_2.png')
+item_menu_background_lookup = {1: ITEM_MENU_1_BACKGROUND_PATH,
+                               2: ITEM_MENU_2_BACKGROUND_PATH}
 
 # main menu
 
