@@ -3,15 +3,15 @@ from collections import Counter
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN, Rect, event, K_ESCAPE, K_RETURN, K_k, K_j
+from pygame import Surface, display, KEYDOWN, Rect, event, K_ESCAPE, K_RETURN, K_k, K_j, K_UP, K_DOWN, K_w, K_s
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
-from data.text.dialog import blink_down_arrow
+from data.text.dialog import blink_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
-    STATUS_WINDOW_BACKGROUND_PATH
+    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup
 from src.config import SCALE, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_hovering_stats_window
 from src.items import treasure
@@ -150,7 +150,8 @@ class CommandMenu(Menu):
                     draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen)
                     display.update(Rect(2 * TILE_SIZE, 9 * TILE_SIZE, 12 * TILE_SIZE, 5 * TILE_SIZE))
                     if not last_line:
-                        blink_down_arrow(self.screen)
+                        end_of_dialog_box_location = self.screen.get_width() / 2, (self.screen.get_height() * 13 / 16) + TILE_SIZE // 1.5
+                        blink_arrow(end_of_dialog_box_location[0], end_of_dialog_box_location[1], "down", self.screen)
                     # playing with fire a bit here with the short-circuiting
                     if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
                             [current_event.type == KEYDOWN for current_event in event.get()]):
@@ -258,7 +259,7 @@ class CommandMenu(Menu):
         # could probably assign the new treasure box values by using this line:
         else:
             self.show_text_in_dialog_box(found_item_text, skip_text=self.skip_text)
-        self.player.inventory.append(item_name)
+        self.player.inventory.insert(0, item_name)
 
     def take_gold(self, treasure_info: dict):
         play_sound(open_treasure_sfx)
@@ -291,6 +292,15 @@ class CommandMenu(Menu):
         row_tile_sets = [set(row) for row in
                          current_map.layout[self.player.row + box_start_row:self.player.row + box_end_row]]
         return set([item for sublist in row_tile_sets for item in sublist])
+
+    # Items
+    def torch(self):
+        if not self.current_map.is_dark:
+            self.show_text_in_dialog_box(("A torch can be used only in dark places.",), skip_text=self.skip_text)
+        else:
+            # TODO(ELF): The torch should only light a small 3 x 3 area around the player.
+            self.current_map.is_dark = False
+            self.player.inventory.remove("Torch")
 
     # Menu functions
 
@@ -431,10 +441,37 @@ class CommandMenu(Menu):
             inventory_string = ""
             for item, item_amount in inventory_counter.items():
                 if item == "Magic Key":
-                    inventory_string += f"{item} {item_amount}\n"
+                    inventory_string += f"Magic   {item_amount}\n Key \n"
                 else:
                     inventory_string += f"{item}\n"
-            self.show_text_in_dialog_box(inventory_string, skip_text=self.skip_text)
+            # TODO(ELF): Actually implement the item menu.
+            display_item_menu = True
+            current_arrow_position = 0
+            currently_selected_item = list(inventory_counter.keys())[0]
+            while display_item_menu:
+                create_window(x=9, y=3, width=6, height=len(inventory_counter) + 1, window_background=item_menu_background_lookup[len(inventory_counter)],
+                              screen=self.screen)
+                draw_text(inventory_string, TILE_SIZE * 10, TILE_SIZE * 3.75, self.screen)
+                blink_arrow(TILE_SIZE * 9.5, (TILE_SIZE + (current_arrow_position * TILE_SIZE / 4)) * 3.75, "right", self.screen)
+                display.update((9 * TILE_SIZE, 3 * TILE_SIZE, 6 * TILE_SIZE, (len(inventory_counter) + 1) * TILE_SIZE))
+                for current_event in event.get():
+                    if any([current_event.type == KEYDOWN]):
+                        if current_event.key in (K_ESCAPE, K_j):
+                            display_item_menu = False
+                        elif current_event.key in (K_RETURN, K_k):
+                            if currently_selected_item == "Torch":
+                                self.torch()
+                            elif currently_selected_item == "Magic Key":
+                                self.door()
+                            display_item_menu = False
+                        elif len(self.player.inventory) > 1:
+                            if current_event.key in (K_UP, K_w) and current_arrow_position > 0:
+                                current_arrow_position -= 1
+                            elif current_event.key in (K_DOWN, K_s) and current_arrow_position < len(inventory_counter) - 1:
+                                current_arrow_position += 1
+                            currently_selected_item = list(inventory_counter.keys())[current_arrow_position]
+
+            # self.show_text_in_dialog_box(inventory_string, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
