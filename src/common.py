@@ -49,6 +49,10 @@ swamp_sfx = join(SFX_DIR, '31 Dragon Quest 1 - Swamp.mp3')
 menu_button_sfx = join(SFX_DIR, '32 Dragon Quest 1 - Menu Button.mp3')
 confirmation_sfx = join(SFX_DIR, '33 Dragon Quest 1 - Confirmation.mp3')
 
+# items
+
+torch_sfx = join(SFX_DIR, 'torch.wav')
+
 # movement
 
 bump_sfx = join(SFX_DIR, '42 Dragon Quest 1 - Bumping into Walls.mp3')
