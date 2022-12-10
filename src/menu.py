@@ -298,7 +298,6 @@ class CommandMenu(Menu):
         if not self.current_map.is_dark:
             self.show_text_in_dialog_box(("A torch can be used only in dark places.",), skip_text=self.skip_text)
         else:
-            # TODO(ELF): The torch should only light a small 3 x 3 area around the player.
             self.game.torch_active = True
             play_sound(torch_sfx)
             self.player.inventory.remove("Torch")
