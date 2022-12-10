@@ -11,7 +11,7 @@ from data.text.dialog import blink_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
-    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup
+    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx
 from src.config import SCALE, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_hovering_stats_window
 from src.items import treasure
@@ -300,6 +300,7 @@ class CommandMenu(Menu):
         else:
             # TODO(ELF): The torch should only light a small 3 x 3 area around the player.
             self.game.torch_active = True
+            play_sound(torch_sfx)
             self.player.inventory.remove("Torch")
 
     # Menu functions
