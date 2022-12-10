@@ -31,6 +31,8 @@ K: Open Command Menu
 
 J: Close Command Menu
 
+Enter: Select menu option
+
 I: Pause
 
 ## Demo video
