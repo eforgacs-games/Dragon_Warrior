@@ -19,7 +19,7 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, ARMED_HERO_WITH_SHIELD_PATH, \
     UNARMED_HERO_WITH_SHIELD_PATH, WHITE
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED
+from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, ENABLE_DARKNESS
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, replace_characters_with_underlying_tiles, \
     draw_hovering_stats_window, select_from_vertical_menu, get_surrounding_rect
@@ -478,7 +478,7 @@ class Game:
         self.screen.blit(self.background, self.camera.get_pos())
         self.handle_initial_dialog()
         self.handle_post_death_dialog()
-        if self.current_map.is_dark:
+        if self.current_map.is_dark and ENABLE_DARKNESS:
             darkness = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
             if not self.torch_active:
                 darkness_hole = darkness.subsurface((self.screen.get_width() / 2), (self.screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE, TILE_SIZE)
@@ -647,9 +647,9 @@ class Game:
                 self.reset_initial_hero_location_tile()
             self.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
             self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
-        if self.torch_active:
-            self.torch_active = False
         self.current_map.load_map(self.player, destination_coordinates)
+        if not self.current_map.is_dark and self.torch_active:
+            self.torch_active = False
         self.handle_player_direction_on_map_change(current_map_staircase_dict)
         #  this is probably what we need here:
 
