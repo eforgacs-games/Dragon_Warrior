@@ -647,6 +647,8 @@ class Game:
                 self.reset_initial_hero_location_tile()
             self.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
             self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
+        if self.torch_active:
+            self.torch_active = False
         self.current_map.load_map(self.player, destination_coordinates)
         self.handle_player_direction_on_map_change(current_map_staircase_dict)
         #  this is probably what we need here:
