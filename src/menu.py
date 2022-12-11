@@ -1,4 +1,5 @@
 import functools
+import random
 from collections import Counter
 from typing import Tuple, List
 
@@ -11,12 +12,12 @@ from data.text.dialog import blink_arrow
 from data.text.dialog_lookup_table import DialogLookup
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
-    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx
+    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx
 from src.config import SCALE, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_hovering_stats_window
 from src.items import treasure
 from src.maps_functions import get_center_point
-from src.menu_functions import get_opposite_direction, convert_list_to_newline_separated_string
+from src.menu_functions import get_opposite_direction
 from src.sound import play_sound
 from src.text import draw_text
 
@@ -294,6 +295,14 @@ class CommandMenu(Menu):
         return set([item for sublist in row_tile_sets for item in sublist])
 
     # Items
+
+    def herb(self):
+        self.show_text_in_dialog_box(f"{self.player.name} used the Herb.", skip_text=self.skip_text)
+        self.recover_health()
+
+    def wings(self):
+        self.show_text_in_dialog_box((f"{self.player.name}  threw The Wings of the Wyvern up into the sky.",))
+
     def torch(self):
         if not self.current_map.is_dark:
             self.show_text_in_dialog_box(("A torch can be used only in dark places.",), skip_text=self.skip_text)
@@ -301,6 +310,53 @@ class CommandMenu(Menu):
             self.game.torch_active = True
             play_sound(torch_sfx)
             self.player.inventory.remove("Torch")
+
+    def dragon_scale(self):
+        self.show_text_in_dialog_box(f"{self.player.name} used the Dragon Scale.", skip_text=self.skip_text)
+
+    def fairy_water(self):
+        self.show_text_in_dialog_box(f"{self.player.name} used the Fairy Water.", skip_text=self.skip_text)
+
+    # spells
+
+    def heal(self):
+        self.recover_health()
+
+    def recover_health(self):
+        health_addition = random.randrange(10, 17)
+        if self.player.current_hp + health_addition > self.player.max_hp:
+            health_addition = self.player.max_hp - self.player.current_hp
+        self.player.current_hp += health_addition
+
+    def hurt(self):
+        self.show_text_in_dialog_box(("But nothing happened.",), skip_text=self.skip_text)
+
+    def sleep(self):
+        pass
+
+    def radiant(self):
+        if self.current_map.is_dark:
+            self.game.radiant_active = True
+        else:
+            self.show_text_in_dialog_box(("But nothing happened.",), skip_text=self.skip_text)
+
+    def stopspell(self):
+        pass
+
+    def outside(self):
+        pass
+
+    def return_(self):
+        pass
+
+    def repel(self):
+        pass
+
+    def healmore(self):
+        pass
+
+    def hurtmore(self):
+        pass
 
     # Menu functions
 
@@ -423,7 +479,7 @@ class CommandMenu(Menu):
         if not self.player.spells:
             self.show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), skip_text=self.skip_text)
         else:
-            self.show_text_in_dialog_box(convert_list_to_newline_separated_string(self.player.spells), skip_text=self.skip_text)
+            self.display_item_menu('spells')
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
@@ -437,43 +493,86 @@ class CommandMenu(Menu):
         if not self.player.inventory:
             self.show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), skip_text=self.skip_text)
         else:
-            inventory_counter = Counter(self.player.inventory)
-            inventory_string = ""
-            for item, item_amount in inventory_counter.items():
-                if item == "Magic Key":
-                    inventory_string += f"Magic   {item_amount}\n Key \n"
-                else:
-                    inventory_string += f"{item}\n"
-            # TODO(ELF): Actually implement the item menu.
-            display_item_menu = True
-            current_arrow_position = 0
-            currently_selected_item = list(inventory_counter.keys())[0]
-            while display_item_menu:
-                create_window(x=9, y=3, width=6, height=len(inventory_counter) + 1, window_background=item_menu_background_lookup[len(inventory_counter)],
-                              screen=self.screen)
-                draw_text(inventory_string, TILE_SIZE * 10, TILE_SIZE * 3.75, self.screen)
-                blink_arrow(TILE_SIZE * 9.5, (TILE_SIZE + (current_arrow_position * TILE_SIZE / 4)) * 3.75, "right", self.screen)
-                display.update((9 * TILE_SIZE, 3 * TILE_SIZE, 6 * TILE_SIZE, (len(inventory_counter) + 1) * TILE_SIZE))
-                for current_event in event.get():
-                    if any([current_event.type == KEYDOWN]):
-                        if current_event.key in (K_ESCAPE, K_j):
-                            display_item_menu = False
-                        elif current_event.key in (K_RETURN, K_k):
-                            if currently_selected_item == "Torch":
-                                self.torch()
-                            elif currently_selected_item == "Magic Key":
-                                self.door()
-                            display_item_menu = False
-                        elif len(self.player.inventory) > 1:
-                            if current_event.key in (K_UP, K_w) and current_arrow_position > 0:
-                                current_arrow_position -= 1
-                            elif current_event.key in (K_DOWN, K_s) and current_arrow_position < len(inventory_counter) - 1:
-                                current_arrow_position += 1
-                            currently_selected_item = list(inventory_counter.keys())[current_arrow_position]
+            self.display_item_menu('inventory')
 
             # self.show_text_in_dialog_box(inventory_string, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
+
+    def display_item_menu(self, menu_name):
+        """Display a menu of selectable items.
+        :param menu_name: The name of the menu to display.)
+        """
+        if menu_name == 'inventory':
+            list_counter = Counter(self.player.inventory)
+            list_string = ""
+            for item, item_amount in list_counter.items():
+                if item == "Magic Key":
+                    list_string += f"Magic   {item_amount}\n Key \n"
+                else:
+                    list_string += f"{item}\n"
+            function_dict = {
+                # purchasable items
+                "Herb": self.herb,
+                "Wings": self.wings,
+                "Torch": self.torch,
+                "Dragon's Scale": self.dragon_scale,
+                "Fairy Water": self.fairy_water,
+                "Magic Key": self.door,
+            }
+        elif menu_name == 'spells':
+            list_counter = Counter(self.player.spells)
+            list_string = ""
+            for item, item_amount in list_counter.items():
+                list_string += f"{item}\n"
+            function_dict = {
+                # name, function, MP cost
+                "HEAL": (self.heal, 4),
+                "HURT": (self.hurt, 2),
+                "SLEEP": (self.sleep, 2),
+                "RADIANT": (self.radiant, 3),
+                "STOPSPELL": (self.stopspell, 2),
+                "OUTSIDE": (self.outside, 6),
+                "RETURN": (self.return_, 8),
+                "REPEL": (self.repel, 2),
+                "HEALMORE": (self.healmore, 10),
+                "HURTMORE": (self.hurtmore, 5)
+            }
+        else:
+            raise ValueError(f"Invalid menu name: {menu_name}")
+        item_menu_displayed = True
+        current_arrow_position = 0
+        currently_selected_item = list(list_counter.keys())[0]
+        while item_menu_displayed:
+            create_window(x=9, y=3, width=6, height=len(list_counter) + 1, window_background=item_menu_background_lookup[len(list_counter)],
+                          screen=self.screen)
+            draw_text(list_string, TILE_SIZE * 10, TILE_SIZE * 3.75, self.screen)
+            blink_arrow(TILE_SIZE * 9.5, (TILE_SIZE + (current_arrow_position * TILE_SIZE / 4)) * 3.75, "right", self.screen)
+            display.update((9 * TILE_SIZE, 3 * TILE_SIZE, 6 * TILE_SIZE, (len(list_counter) + 1) * TILE_SIZE))
+            for current_event in event.get():
+                if any([current_event.type == KEYDOWN]):
+                    if current_event.key in (K_ESCAPE, K_j):
+                        item_menu_displayed = False
+                    elif current_event.key in (K_RETURN, K_k):
+                        if menu_name == 'spells':
+                            spell_function, spell_mp_cost = function_dict[currently_selected_item]
+                            if self.player.current_mp < spell_mp_cost:
+                                self.show_text_in_dialog_box("Thy MP is too low.", skip_text=self.skip_text)
+                            else:
+                                self.show_text_in_dialog_box((f"{self.player.name} chanted the spell of {currently_selected_item}.",),
+                                                             skip_text=self.skip_text)
+                                play_sound(spell_sfx)
+                                self.player.current_mp -= spell_mp_cost
+                                spell_function()
+                        else:
+                            function_dict[currently_selected_item]()
+                        item_menu_displayed = False
+                    elif len(menu_name) > 1:
+                        if current_event.key in (K_UP, K_w) and current_arrow_position > 0:
+                            current_arrow_position -= 1
+                        elif current_event.key in (K_DOWN, K_s) and current_arrow_position < len(list_counter) - 1:
+                            current_arrow_position += 1
+                        currently_selected_item = list(list_counter.keys())[current_arrow_position]
 
     def door(self) -> None:
         """
