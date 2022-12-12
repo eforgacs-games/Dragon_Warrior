@@ -17,7 +17,7 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, UNARMED_HERO_PATH, \
     convert_to_frames_since_start_time, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, ARMED_HERO_WITH_SHIELD_PATH, \
-    UNARMED_HERO_WITH_SHIELD_PATH, WHITE
+    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, ENABLE_DARKNESS
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
@@ -57,12 +57,15 @@ class Game:
         self.fps = FPS
         self.last_map = None
         self.tiles_moved_since_spawn = 0
+        self.tiles_moved_total = 0
+        self.radiant_start = None
         self.loop_count = 1
         self.foreground_rects = []
         self.not_moving_time_start = None
         self.display_hovering_stats = False
         self.hovering_stats_displayed = False
         self.torch_active = False
+        self.radiant_active = False
         self.speed = 2
         # debugging
         self.show_coordinates = SHOW_COORDINATES
@@ -90,6 +93,7 @@ class Game:
         # self.current_map can be changed to other maps for development purposes
 
         self.current_map = maps.TantegelThroneRoom()
+        # self.current_map = maps.ErdricksCaveB1()
         # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
@@ -480,12 +484,47 @@ class Game:
         self.handle_post_death_dialog()
         if self.current_map.is_dark and ENABLE_DARKNESS:
             darkness = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
-            if not self.torch_active:
-                darkness_hole = darkness.subsurface((self.screen.get_width() / 2), (self.screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE, TILE_SIZE)
-            else:
+            if self.torch_active:
+                # Light with radius of 1
                 darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE, (self.screen.get_height() / 2) - (TILE_SIZE * 1.5),
                                                     TILE_SIZE * 3,
                                                     TILE_SIZE * 3)
+            elif self.radiant_active:
+                # Light with radius of 2, expanding to 3...
+
+                # darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 2, (self.screen.get_height() / 2) - (TILE_SIZE * 2.5),
+                #                                     TILE_SIZE * 5,
+                #                                     TILE_SIZE * 5)
+                # darkness.fill(BLACK)
+                # darkness_hole.fill(WHITE)
+                # darkness.set_colorkey(WHITE)
+                # self.screen.blit(darkness, (0, 0))
+                # Light with radius of 3
+                darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 3, (self.screen.get_height() / 2) - (TILE_SIZE * 5),
+                                                    TILE_SIZE * 7,
+                                                    TILE_SIZE * 8.5)
+
+                if self.radiant_start is None:
+                    self.radiant_start = self.tiles_moved_total
+                    play_sound(torch_sfx)
+                    play_sound(torch_sfx)
+                else:
+                    if self.tiles_moved_total - self.radiant_start >= 200:
+                        self.radiant_active = False
+                        self.radiant_start = None
+                    elif self.tiles_moved_total - self.radiant_start >= 140:
+                        # Light with radius of 1
+                        darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE, (self.screen.get_height() / 2) - (TILE_SIZE * 1.5),
+                                                            TILE_SIZE * 3,
+                                                            TILE_SIZE * 3)
+                    elif self.tiles_moved_total - self.radiant_start >= 80:
+                        # Light with radius of 2
+                        darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 2, (self.screen.get_height() / 2) - (TILE_SIZE * 2.5),
+                                                            TILE_SIZE * 5,
+                                                            TILE_SIZE * 5)
+
+            else:
+                darkness_hole = darkness.subsurface((self.screen.get_width() / 2), (self.screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE, TILE_SIZE)
             darkness.fill(BLACK)
             darkness_hole.fill(WHITE)
             darkness.set_colorkey(WHITE)
@@ -648,8 +687,9 @@ class Game:
             self.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
             self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
         self.current_map.load_map(self.player, destination_coordinates)
-        if not self.current_map.is_dark and self.torch_active:
+        if not self.current_map.is_dark:
             self.torch_active = False
+            self.radiant_active = False
         self.handle_player_direction_on_map_change(current_map_staircase_dict)
         #  this is probably what we need here:
 
@@ -767,6 +807,7 @@ class Game:
                     if not self.player.bumped:
                         # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning - should always be 0 when the map starts.
                         self.tiles_moved_since_spawn += 1
+                        self.tiles_moved_total += 1
                     else:
                         self.player.bumped = False
                     self.player.is_moving, self.player.next_tile_checked = False, False
@@ -775,6 +816,7 @@ class Game:
                 if curr_pos_x % TILE_SIZE == 0:
                     if not self.player.bumped:
                         self.tiles_moved_since_spawn += 1
+                        self.tiles_moved_total += 1
                     else:
                         self.player.bumped = False
                     self.player.is_moving, self.player.next_tile_checked = False, False

@@ -248,19 +248,22 @@ class CommandMenu(Menu):
         found_item_text = f"Fortune smiles upon thee, {self.player.name}.\nThou hast found the {item_name}."
 
         if item_name == "Tablet":
-            self.show_text_in_dialog_box((
-                found_item_text,
-                "The tablet reads as follows:",
-                "I am Erdrick and thou art my descendant.",
-                "Three items were needed to reach the Isle of Dragons, which is south of Brecconary.",
-                "I gathered these items, reached the island, and there defeated a creature of great evil.",
-                "Now I have entrusted the three items to three worthy keepers.",
-                "Their descendants will protect the items until thy quest leads thee to seek them out.",
-                "When a new evil arises, find the three items, then fight!"), drop_down=False)
+            self.tablet(found_item_text)
         # could probably assign the new treasure box values by using this line:
         else:
             self.show_text_in_dialog_box(found_item_text, skip_text=self.skip_text)
-        self.player.inventory.insert(0, item_name)
+            self.player.inventory.insert(0, item_name)
+
+    def tablet(self, found_item_text):
+        self.show_text_in_dialog_box((
+            found_item_text,
+            "The tablet reads as follows:",
+            "I am Erdrick and thou art my descendant.",
+            "Three items were needed to reach the Isle of Dragons, which is south of Brecconary.",
+            "I gathered these items, reached the island, and there defeated a creature of great evil.",
+            "Now I have entrusted the three items to three worthy keepers.",
+            "Their descendants will protect the items until thy quest leads thee to seek them out.",
+            "When a new evil arises, find the three items, then fight!"), drop_down=False)
 
     def take_gold(self, treasure_info: dict):
         play_sound(open_treasure_sfx)
@@ -307,6 +310,8 @@ class CommandMenu(Menu):
         if not self.current_map.is_dark:
             self.show_text_in_dialog_box(("A torch can be used only in dark places.",), skip_text=self.skip_text)
         else:
+            if self.game.radiant_active:
+                self.game.radiant_active = False
             self.game.torch_active = True
             play_sound(torch_sfx)
             self.player.inventory.remove("Torch")
@@ -336,6 +341,8 @@ class CommandMenu(Menu):
 
     def radiant(self):
         if self.current_map.is_dark:
+            if self.game.torch_active:
+                self.game.torch_active = False
             self.game.radiant_active = True
         else:
             self.show_text_in_dialog_box(("But nothing happened.",), skip_text=self.skip_text)
