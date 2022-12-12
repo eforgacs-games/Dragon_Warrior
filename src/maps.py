@@ -548,7 +548,7 @@ class Alefgard(MapWithoutNPCs):
             (9, 10): {'map': 'Garinham', 'destination_coordinates': (14, 9)},
             (17, 112): {'map': 'Kol', 'destination_coordinates': (30, 29)},
             # cave
-            (19, 36): {'map': 'ErdricksCaveB1', 'destination_coordinates': (1, 1)},
+            (19, 36): {'map': 'ErdricksCaveB1', 'destination_coordinates': (3, 3)},
             (51, 112): {'map': 'SwampCave', 'destination_coordinates': (6, 4)},
             (56, 112): {'map': 'SwampCave', 'destination_coordinates': (36, 4)},
             (64, 37): {'map': 'MountainCaveB1', 'destination_coordinates': (7, 1)},
@@ -703,8 +703,8 @@ class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
     def __init__(self):
         super().__init__(MapLayouts().erdricks_cave_b1)
         self.music_file_path = dungeon_floor_1_music
-        self.staircases = {(1, 1): {'map': 'Alefgard'},
-                           (10, 10): {'map': 'ErdricksCaveB2', 'destination_coordinates': (10, 9)}}
+        self.staircases = {(3, 3): {'map': 'Alefgard'},
+                           (12, 12): {'map': 'ErdricksCaveB2', 'destination_coordinates': (10, 9)}}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
         self.initial_coordinates = (1, 1)
@@ -720,7 +720,7 @@ class ErdricksCaveB2(MapWithoutNPCs, CaveMap):
     def __init__(self):
         super().__init__(MapLayouts().erdricks_cave_b2)
         self.music_file_path = dungeon_floor_2_music
-        self.staircases = {(10, 9): {'map': 'ErdricksCaveB1', 'destination_coordinates': (10, 10)}}
+        self.staircases = {(10, 9): {'map': 'ErdricksCaveB1', 'destination_coordinates': (12, 12)}}
         self.assign_stair_directions()
         self.initial_coordinates = (10, 9)
 
