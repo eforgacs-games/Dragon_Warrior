@@ -33,7 +33,7 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
         #             text_rect.midleft = (x, y_position)
         #         screen.blit(text_surface, text_rect)
         # else:
-        if LANGUAGE == 'ko':
+        if LANGUAGE == 'Korean':
             if not text.strip('’(↑ ← ↓ →)').isascii():
                 current_font = font.Font(UNIFONT_PATH, size + 1)
             else:

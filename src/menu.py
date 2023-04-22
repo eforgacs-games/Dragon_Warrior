@@ -125,9 +125,9 @@ class CommandMenu(Menu):
                 current_time = None
                 display_current_line = True
                 if add_quotes:
-                    if LANGUAGE == 'en':
+                    if LANGUAGE == 'English':
                         line = f"`{line}’"
-                    elif LANGUAGE == 'ko':
+                    elif LANGUAGE == 'Korean':
                         if line.isascii():
                             line = f"`{line}’"
                         else:
