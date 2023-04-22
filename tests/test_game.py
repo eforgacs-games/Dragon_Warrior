@@ -346,8 +346,7 @@ class TestGame(TestCase):
 
     def test_load_and_play_music(self):
         with patch.object(Game, 'load_and_play_music', return_value=None) as mock_load_and_play_music:
-            thing = Game()
-            thing.load_and_play_music(village_music)
+            Game().load_and_play_music(village_music)
         mock_load_and_play_music.assert_called_with(village_music)
 
     def test_unlaunch_menu(self):
@@ -363,8 +362,6 @@ class TestGame(TestCase):
 
     def test_handle_initial_dialog(self):
         self.game.skip_text = True
-        self.game.initial_dialog_enabled = True
-        self.game.is_initial_dialog = True
         self.game.current_map.identifier = 'TantegelThroneRoom'
         self.assertEqual(('Descendant of Erdrick, listen now to my words.',
                           'It is told that in ages past Erdrick fought demons with a Ball of Light.',

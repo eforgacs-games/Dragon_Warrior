@@ -476,8 +476,9 @@ class Game:
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation()
         self.screen.blit(self.background, self.camera.get_pos())
-        self.handle_initial_dialog()
-        self.handle_post_death_dialog()
+        if self.current_map.identifier == 'TantegelThroneRoom':
+            self.handle_initial_dialog()
+            self.handle_post_death_dialog()
         if self.current_map.is_dark and ENABLE_DARKNESS:
             darkness = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
             if not self.torch_active:
@@ -503,20 +504,18 @@ class Game:
                 self.enable_movement = True
 
     def handle_initial_dialog(self):
-
         if self.initial_dialog_enabled:
-            if self.current_map.identifier == 'TantegelThroneRoom':
-                if self.is_initial_dialog:
-                    display.flip()
-                    self.display_hovering_stats = False
-                    self.cmd_menu.launch_signaled = False
-                    self.run_automatic_initial_dialog()
-                    event.clear()
+            if self.is_initial_dialog:
+                display.flip()
+                self.display_hovering_stats = False
+                self.cmd_menu.launch_signaled = False
+                self.run_automatic_initial_dialog()
+                event.clear()
+            else:
+                if self.allow_save_prompt:
+                    self.set_to_save_prompt()
                 else:
-                    if self.allow_save_prompt:
-                        self.set_to_save_prompt()
-                    else:
-                        self.set_to_post_initial_dialog()
+                    self.set_to_post_initial_dialog()
 
         else:
             self.set_to_post_initial_dialog()
@@ -524,21 +523,20 @@ class Game:
                 self.enable_movement = True
 
     def handle_post_death_dialog(self):
-        if self.current_map.identifier == 'TantegelThroneRoom':
-            if self.is_post_death_dialog:
-                self.display_hovering_stats = False
-                self.cmd_menu.launch_signaled = False
-                self.run_automatic_post_death_dialog()
-                event.clear()
+        if self.is_post_death_dialog:
+            self.display_hovering_stats = False
+            self.cmd_menu.launch_signaled = False
+            self.run_automatic_post_death_dialog()
+            event.clear()
 
     def run_automatic_initial_dialog(self):
         self.enable_movement = False
-        for current_event in self.events:
-            if (current_event.type == KEYUP and not self.automatic_initial_dialog_run) or self.skip_text:
-                self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
-                                                      skip_text=self.skip_text)
-                self.set_to_post_initial_dialog()
-                self.automatic_initial_dialog_run = True
+        if self.skip_text or any([current_event.type == KEYUP and not self.automatic_initial_dialog_run for current_event in self.events]):
+            self.cmd_menu.show_text_in_dialog_box(
+                self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
+                skip_text=self.skip_text)
+            self.set_to_post_initial_dialog()
+            self.automatic_initial_dialog_run = True
 
     def run_automatic_post_death_dialog(self):
         self.enable_movement = False
