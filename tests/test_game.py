@@ -346,8 +346,7 @@ class TestGame(TestCase):
 
     def test_load_and_play_music(self):
         with patch.object(Game, 'load_and_play_music', return_value=None) as mock_load_and_play_music:
-            thing = Game()
-            thing.load_and_play_music(village_music)
+            Game().load_and_play_music(village_music)
         mock_load_and_play_music.assert_called_with(village_music)
 
     def test_unlaunch_menu(self):
@@ -363,8 +362,6 @@ class TestGame(TestCase):
 
     def test_handle_initial_dialog(self):
         self.game.skip_text = True
-        self.game.initial_dialog_enabled = True
-        self.game.is_initial_dialog = True
         self.game.current_map.identifier = 'TantegelThroneRoom'
         self.assertEqual(('Descendant of Erdrick, listen now to my words.',
                           'It is told that in ages past Erdrick fought demons with a Ball of Light.',
@@ -382,12 +379,12 @@ class TestGame(TestCase):
         self.assertFalse(self.game.display_hovering_stats)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
         self.assertFalse(self.game.enable_movement)
-        self.assertFalse(self.game.is_initial_dialog)
         self.assertTrue(self.game.automatic_initial_dialog_run)
         self.assertEqual('When thou art finished preparing for thy departure, please see me.\nI shall wait.',
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
         self.game.allow_save_prompt = True
         self.game.handle_initial_dialog()
+        self.assertFalse(self.game.is_initial_dialog)
         self.assertEqual(('I am greatly pleased that thou hast returned, Edward.',
                           'Before reaching thy next level of experience thou must gain 7 Points.',
                           "Will thou tell me now of thy deeds so they won't be forgotten?",
@@ -395,8 +392,7 @@ class TestGame(TestCase):
                           'Dost thou wish to continue thy quest?',
                           "Goodbye now, Edward.\n'Take care and tempt not the Fates."),
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
-        # self.game.handle_initial_dialog()
-        # self.assertFalse(self.game.is_initial_dialog)
+        self.assertFalse(self.game.is_initial_dialog)
 
     def test_drop_down_hovering_stats_window(self):
         with patch.object(CommandMenu, 'window_drop_down_effect', return_value=None) as mock_window_drop_down_effect:

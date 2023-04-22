@@ -19,7 +19,7 @@ from src.visual_effects import fade, flash_transparent_color
 #     en = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['en'])
 #     en.install()
 #     _ = en.gettext
-if LANGUAGE == 'ko':
+if LANGUAGE == 'Korean':
     ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
     ko.install()
     _ = ko.gettext
