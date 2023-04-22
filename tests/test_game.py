@@ -382,12 +382,12 @@ class TestGame(TestCase):
         self.assertFalse(self.game.display_hovering_stats)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
         self.assertFalse(self.game.enable_movement)
-        self.assertFalse(self.game.is_initial_dialog)
         self.assertTrue(self.game.automatic_initial_dialog_run)
         self.assertEqual('When thou art finished preparing for thy departure, please see me.\nI shall wait.',
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
         self.game.allow_save_prompt = True
         self.game.handle_initial_dialog()
+        self.assertFalse(self.game.is_initial_dialog)
         self.assertEqual(('I am greatly pleased that thou hast returned, Edward.',
                           'Before reaching thy next level of experience thou must gain 7 Points.',
                           "Will thou tell me now of thy deeds so they won't be forgotten?",
@@ -395,8 +395,7 @@ class TestGame(TestCase):
                           'Dost thou wish to continue thy quest?',
                           "Goodbye now, Edward.\n'Take care and tempt not the Fates."),
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
-        # self.game.handle_initial_dialog()
-        # self.assertFalse(self.game.is_initial_dialog)
+        self.assertFalse(self.game.is_initial_dialog)
 
     def test_drop_down_hovering_stats_window(self):
         with patch.object(CommandMenu, 'window_drop_down_effect', return_value=None) as mock_window_drop_down_effect:
