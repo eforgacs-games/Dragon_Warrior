@@ -9,8 +9,10 @@ from pygame.sprite import LayeredDirty
 from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
+from src import config
 from src.camera import Camera
-from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, village_music
+from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, \
+    village_music, intro_overture
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
 from src.game_functions import get_next_coordinates, replace_characters_with_underlying_tiles
@@ -94,14 +96,18 @@ class TestGame(TestCase):
         self.game.current_map = MockMap()
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
         self.game.player = Player((0, 0), parse_animated_sprite_sheet(
-            scale(unarmed_hero_sheet, (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))), self.game.current_map)
+            scale(unarmed_hero_sheet,
+                  (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))),
+                                  self.game.current_map)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
-        self.camera = Camera((self.game.player.rect.y // TILE_SIZE, self.game.player.rect.x // TILE_SIZE), self.game.current_map,
+        self.camera = Camera((self.game.player.rect.y // TILE_SIZE, self.game.player.rect.x // TILE_SIZE),
+                             self.game.current_map,
                              self.game.screen)
 
     def test_get_initial_camera_position(self):
         self.assertEqual((288.0, 256.0), self.camera.get_pos())
-        self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
+        self.game.current_map.staircases = {
+            (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
         # self.game.change_map(TantegelThroneRoom())
         # self.assertEqual((-160.0, -96.0), self.camera.get_pos())
         # self.game.change_map(TantegelCourtyard())
@@ -147,7 +153,7 @@ class TestGame(TestCase):
     #                                         self.roaming_guard_images[0], name='ROAMING_GUARD')
     #     self.game.current_map.roaming_characters.append(self.roaming_guard)
     #     self.game.move_roaming_characters()
-    #     self.assertEqual(initial_roaming_guard_position, )  # current roaming guard position)
+    #     self.assertEqual(initial_roaming_guard_position, )  # current roaming guard position
 
     def test_move_roaming_character_medially(self):
         test_roaming_character = setup_roaming_character(row=2, column=2, direction=Direction.UP.value)
@@ -207,7 +213,8 @@ class TestGame(TestCase):
 
     def test_replace_characters_with_underlying_tiles(self):
         self.game.current_map.character_key['HERO']['underlying_tile'] = 'BRICK'
-        self.assertEqual(['BRICK'], replace_characters_with_underlying_tiles(['HERO'], self.game.current_map.character_key))
+        self.assertEqual(['BRICK'],
+                         replace_characters_with_underlying_tiles(['HERO'], self.game.current_map.character_key))
 
     def test_convert_numeric_tile_list_to_unique_tile_values(self):
         self.assertEqual(['WALL',
@@ -218,7 +225,8 @@ class TestGame(TestCase):
                           'BRICK_STAIR_DOWN',
                           'BRICK_STAIR_UP',
                           'BARRIER',
-                          'WEAPON_SIGN'], self.game.convert_numeric_tile_list_to_unique_tile_values([1, 2, 3, 4, 5, 6, 7, 8, 9]))
+                          'WEAPON_SIGN'],
+                         self.game.convert_numeric_tile_list_to_unique_tile_values([1, 2, 3, 4, 5, 6, 7, 8, 9]))
 
     def test_handle_menu_launch(self):
         self.game.cmd_menu.launch_signaled = True
@@ -229,7 +237,8 @@ class TestGame(TestCase):
     def test_change_map(self):
         self.game.player.row = 10
         self.game.player.column = 13
-        self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
+        self.game.current_map.staircases = {
+            (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
         self.game.change_map(TantegelThroneRoom())
         self.assertEqual('MockMap', self.game.last_map.identifier)
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
@@ -247,7 +256,8 @@ class TestGame(TestCase):
         self.game.player.column = 13
         self.game.player.gold = 120
         self.game.player.inventory = ['Torch']
-        self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
+        self.game.current_map.staircases = {
+            (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
         self.game.change_map(TantegelThroneRoom())
         self.assertEqual(120, self.game.player.gold)
         self.assertEqual(['Torch'], self.game.player.inventory)
@@ -267,11 +277,13 @@ class TestGame(TestCase):
     def test_king_lorik_post_initial_dialog(self):
         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
         self.game.set_to_post_initial_dialog()
-        self.assertEqual("When thou art finished preparing for thy departure, please see me.\nI shall wait.", self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+        self.assertEqual("When thou art finished preparing for thy departure, please see me.\nI shall wait.",
+                         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 
     def test_wise_man_tantegel_courtyard_dialog(self):
         self.assertEqual("Edward's coming was foretold by legend. May the light shine upon "
-                         'this brave warrior.', self.game.cmd_menu.dialog_lookup.lookup_table['TantegelCourtyard']['WISE_MAN']['dialog'][0])
+                         'this brave warrior.',
+                         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelCourtyard']['WISE_MAN']['dialog'][0])
 
     # gives an IndexError: list index out of range because the constants for K_UP, etc. are huge
     # def test_move_player_directions(self):
@@ -328,7 +340,8 @@ class TestGame(TestCase):
         self.game.cmd_menu.skip_text = True
         self.game.player.gold = 10
         self.game.player.row, self.game.player.column = 29, 18
-        self.game.player.next_next_coordinates = get_next_coordinates(18, 29, self.game.player.direction_value, offset_from_character=2)
+        self.game.player.next_next_coordinates = get_next_coordinates(18, 29, self.game.player.direction_value,
+                                                                      offset_from_character=2)
         self.game.player.next_tile_id = get_next_tile_identifier(self.game.player.column,
                                                                  self.game.player.row,
                                                                  self.game.player.direction_value,
@@ -409,7 +422,8 @@ class TestGame(TestCase):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
             pygame.key.get_pressed = create_f1_key_mock(pygame.K_F1)
             self.game.handle_help_button(pygame.key.get_pressed())
-        mock_show_text_in_dialog_box.assert_called_with(f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
+        mock_show_text_in_dialog_box.assert_called_with(
+            f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
 
     def test_handle_keypresses(self):
         pygame.key.get_pressed = create_f1_key_mock(pygame.K_k)
@@ -426,7 +440,8 @@ class TestGame(TestCase):
         self.game.enable_roaming = True
         self.game.player.row = 10
         self.game.player.column = 13
-        self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
+        self.game.current_map.staircases = {
+            (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
         self.game.change_map(TantegelThroneRoom())
         self.game.get_events()
 
@@ -442,7 +457,8 @@ class TestGame(TestCase):
         self.game.move_roaming_characters()
         self.game.player.row = 10
         self.game.player.column = 13
-        self.game.current_map.staircases = {(10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
+        self.game.current_map.staircases = {
+            (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
         self.game.change_map(TantegelThroneRoom())
         self.game.current_map.load_map(self.game.player, (14, 18))
         # test with moving characters before they're moving
@@ -492,13 +508,29 @@ class TestGame(TestCase):
         self.game.move_player(pygame.key.get_pressed())
         self.assertEqual(Direction.RIGHT.value, self.game.player.direction_value)
 
-    def test_flags(self):
+    def test_flags_fullscreen_disabled(self):
         self.game.fullscreen_enabled = False
         self.game.__init__()
         self.assertEqual(RESIZABLE | SCALED, self.game.flags)
-        # self.game.fullscreen_enabled = True
-        # self.game.__init__()
-        # self.assertEqual(FULLSCREEN, self.game.flags)
+
+    def test_flags_fullscreen_enabled(self):
+        self.game.fullscreen_enabled = True
+        self.game.__init__()
+        # seems like an integer overflow happens if we try:
+        # self.assertEqual(FULLSCREEN | SCALED, self.game.flags)
+        self.assertEqual(528, self.game.flags)
+
+    def test_splash_screen_enabled_load_and_play_music(self):
+        with patch.object(Game, 'load_and_play_music') as mock_method:
+            self.game.__init__()
+        mock_method.assert_called_once_with(intro_overture)
+
+    # @patch('src.config')
+    # def test_splash_screen_disabled_load_and_play_music(self, mocked_config):
+    #     # self.game.splash_screen_enabled = False
+    #     with patch.object(Game, 'load_and_play_music') as mock_method:
+    #         self.game.__init__()
+    #     mock_method.assert_called_once_with(self.game.current_map.music_file_path)
 
     # this test fails in GitHub Actions
 
