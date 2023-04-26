@@ -10,9 +10,11 @@ from pygame.time import get_ticks
 
 from data.text.dialog import blink_arrow
 from data.text.dialog_lookup_table import DialogLookup
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
-    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, open_door_sfx, \
-    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx
+from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, \
+    open_treasure_sfx, \
+    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, \
+    open_door_sfx, \
+    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx, text_beep_sfx
 from src.config import SCALE, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_hovering_stats_window
 from src.items import treasure
@@ -110,8 +112,9 @@ class CommandMenu(Menu):
         # else:
         #     print(f"Character not in lookup table: {dialog_character}")
 
-    def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True, temp_text_start: int = None, skip_text: bool = False,
-                                last_line=False, disable_sound=False):
+    def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True,
+                                temp_text_start: int = None, skip_text: bool = False, last_line=False,
+                                disable_sound=False, letter_by_letter=True):
         """Shows a single line in a dialog box.
         :param last_line:
         :param line: The line of text to print.
@@ -119,6 +122,7 @@ class CommandMenu(Menu):
         :param add_quotes: Adds single quotes to be displayed on the screen.
         :param temp_text_start: The time at which temporary text started.
         :param disable_sound: Whether to disable the sound.
+        :param letter_by_letter: Whether to print the text letter by letter.
         """
         if line:
             if type(line) == str:
@@ -132,23 +136,20 @@ class CommandMenu(Menu):
                             line = f"`{line}’"
                         else:
                             line = f"'{line}'"
+                current_line = ""
                 while display_current_line:
                     if temp_text_start:
                         current_time = get_ticks()
                     create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH, screen=self.screen)
-                    # if print_by_character:
-                    #     for i in range(len(line)):
-                    #         for j in range(16):
-                    #             white_line = line[:i]
-                    #             black_line = line[i:]
-                    #             draw_text(white_line, 15, WHITE, self.screen.get_width() / 2, (self.screen.get_height() * 5 / 8),
-                    #                       DRAGON_QUEST_FONT_PATH,
-                    #                       self.screen)
-                    #             draw_text(black_line, 15, BLACK, self.screen.get_width() / 2, (self.screen.get_height() * 5 / 8),
-                    #                       DRAGON_QUEST_FONT_PATH,
-                    #                       self.screen)
-                    # else:
-                    draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen)
+                    if letter_by_letter:
+                        if not current_line:
+                            current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, letter_by_letter=True)
+                        else:
+                            current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen,
+                                                     letter_by_letter=False)
+                    else:
+                        current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen,
+                                                 letter_by_letter=False)
                     display.update(Rect(2 * TILE_SIZE, 9 * TILE_SIZE, 12 * TILE_SIZE, 5 * TILE_SIZE))
                     if not last_line:
                         end_of_dialog_box_location = self.screen.get_width() / 2, (self.screen.get_height() * 13 / 16) + TILE_SIZE // 1.5
@@ -163,8 +164,8 @@ class CommandMenu(Menu):
                 # if the line is a method
                 line()
 
-    def show_text_in_dialog_box(self, text: Tuple | List | str, add_quotes=False, temp_text_start=None, skip_text=False, drop_down=True, drop_up=True,
-                                disable_sound=False):
+    def show_text_in_dialog_box(self, text: Tuple | List | str, add_quotes=False, temp_text_start=None, skip_text=False,
+                                drop_down=True, drop_up=True, disable_sound=False, letter_by_letter=True):
         """Shows a passage of text in a dialog box.
 
         :param disable_sound:
@@ -174,17 +175,21 @@ class CommandMenu(Menu):
         :param temp_text_start: The time at which temporary text started.
         :param drop_down: Whether to display the drop-down effect.
         :param drop_up: Whether to display the drop-up effect.
+        :param letter_by_letter: Whether to print the text letter by letter.
         """
         if drop_down:
             self.window_drop_down_effect(2, 9, 12, 5)
         if type(text) == str:
-            self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, last_line=True, disable_sound=disable_sound)
+            self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, last_line=True,
+                                         disable_sound=disable_sound, letter_by_letter=letter_by_letter)
         else:
             for line_index, line in enumerate(text):
                 if line_index == len(text) - 1:
-                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text, last_line=True, disable_sound=disable_sound)
+                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text, last_line=True,
+                                                 disable_sound=disable_sound, letter_by_letter=letter_by_letter)
                 else:
-                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text, disable_sound=disable_sound)
+                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text,
+                                                 disable_sound=disable_sound, letter_by_letter=letter_by_letter)
                 # TODO(ELF): This commented out code just makes the sound for printing by letter.
                 #  Need to actually show the letters one by one.
                 #  (Better to leave it commented out until it's working)
@@ -408,16 +413,16 @@ class CommandMenu(Menu):
         show_status = True
         self.window_drop_down_effect(4, 3, 10, 11)
         create_window(4, 3, 10, 11, STATUS_WINDOW_BACKGROUND_PATH, self.screen)
-        draw_text(self.player.name, TILE_SIZE * 13, TILE_SIZE * 3.75, self.screen, alignment='right')
-        draw_text(str(self.player.strength), TILE_SIZE * 13, TILE_SIZE * 4.75, self.screen, alignment='right')
-        draw_text(str(self.player.agility), TILE_SIZE * 13, TILE_SIZE * 5.75, self.screen, alignment='right')
-        draw_text(str(self.player.max_hp), TILE_SIZE * 13, TILE_SIZE * 6.75, self.screen, alignment='right')
-        draw_text(str(self.player.max_mp), TILE_SIZE * 13, TILE_SIZE * 7.75, self.screen, alignment='right')
-        draw_text(str(self.player.attack_power), TILE_SIZE * 13, TILE_SIZE * 8.75, self.screen, alignment='right')
-        draw_text(str(self.player.defense_power), TILE_SIZE * 13, TILE_SIZE * 9.75, self.screen, alignment='right')
-        draw_text(self.player.weapon, TILE_SIZE * 11.75, TILE_SIZE * 10.75, self.screen, text_wrap_length=9, alignment='right')
-        draw_text(self.player.armor, TILE_SIZE * 11.55, TILE_SIZE * 11.75, self.screen, text_wrap_length=9, alignment='right')
-        draw_text(self.player.shield, TILE_SIZE * 11.75, TILE_SIZE * 12.75, self.screen, text_wrap_length=9, alignment='right')
+        draw_text(self.player.name, TILE_SIZE * 13, TILE_SIZE * 3.75, self.screen, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.strength), TILE_SIZE * 13, TILE_SIZE * 4.75, self.screen, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.agility), TILE_SIZE * 13, TILE_SIZE * 5.75, self.screen, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.max_hp), TILE_SIZE * 13, TILE_SIZE * 6.75, self.screen, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.max_mp), TILE_SIZE * 13, TILE_SIZE * 7.75, self.screen, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.attack_power), TILE_SIZE * 13, TILE_SIZE * 8.75, self.screen, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.defense_power), TILE_SIZE * 13, TILE_SIZE * 9.75, self.screen, alignment='right', letter_by_letter=False)
+        draw_text(self.player.weapon, TILE_SIZE * 11.75, TILE_SIZE * 10.75, self.screen, text_wrap_length=9, alignment='right', letter_by_letter=False)
+        draw_text(self.player.armor, TILE_SIZE * 11.55, TILE_SIZE * 11.75, self.screen, text_wrap_length=9, alignment='right', letter_by_letter=False)
+        draw_text(self.player.shield, TILE_SIZE * 11.75, TILE_SIZE * 12.75, self.screen, text_wrap_length=9, alignment='right', letter_by_letter=False)
         display.update((4 * TILE_SIZE, 3 * TILE_SIZE, 10 * TILE_SIZE, 11 * TILE_SIZE))
         while show_status:
             for current_event in event.get():
@@ -566,8 +571,9 @@ class CommandMenu(Menu):
                             if self.player.current_mp < spell_mp_cost:
                                 self.show_text_in_dialog_box("Thy MP is too low.", skip_text=self.skip_text)
                             else:
-                                self.show_text_in_dialog_box((f"{self.player.name} chanted the spell of {currently_selected_item}.",),
-                                                             skip_text=self.skip_text)
+                                self.show_text_in_dialog_box(
+                                    (f"{self.player.name} chanted the spell of {currently_selected_item}.",),
+                                    skip_text=self.skip_text)
                                 play_sound(spell_sfx)
                                 self.player.current_mp -= spell_mp_cost
                                 spell_function()
@@ -621,6 +627,7 @@ class CommandMenu(Menu):
         # elif there is a hidden item
         # take the hidden item
         else:
-            self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",), skip_text=self.skip_text)
+            self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",),
+                                         skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
