@@ -246,7 +246,8 @@ class DialogLookup:
         if old_item:
             if old_item_lookup_table[old_item].get('cost'):
                 old_item_cost = old_item_lookup_table[old_item]['cost'] // 2
-                self.command_menu.show_line_in_dialog_box(_("Then I will buy thy {} for {} GOLD.").format(old_item, old_item_cost), last_line=False)
+                self.command_menu.show_line_in_dialog_box(
+                    _("Then I will buy thy {} for {} GOLD.").format(old_item, old_item_cost), last_line=False)
         return old_item_cost
 
     def complete_transaction(self, item, current_store_inventory, old_item_cost):
@@ -276,7 +277,8 @@ class DialogLookup:
         if self.player.gold >= inn_cost:
             self.inn_sleep(inn_cost)
         else:
-            self.command_menu.show_line_in_dialog_box(_("Thou hast not enough money."), skip_text=self.command_menu.skip_text)
+            self.command_menu.show_line_in_dialog_box(_("Thou hast not enough money."),
+                                                      skip_text=self.command_menu.skip_text)
 
     def inn_sleep(self, inn_cost):
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
@@ -300,7 +302,8 @@ class DialogLookup:
         self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
         display.flip()
         self.command_menu.show_text_in_dialog_box((_("Good morning.\nThou seems to have spent a good night."),
-                                                   _("I shall see thee again.")), skip_text=self.command_menu.skip_text, drop_up=False)
+                                                   _("I shall see thee again.")), skip_text=self.command_menu.skip_text,
+                                                  drop_up=False)
 
 
 def get_inn_intro(inn_cost):
