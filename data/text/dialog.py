@@ -24,10 +24,10 @@ def blink_arrow(x, y, direction, screen):
         down_arrow_start = get_ticks()
     arrow_screen_portion = Rect(x, y, TILE_SIZE, TILE_SIZE)
     while convert_to_frames_since_start_time(down_arrow_start) <= 16:
-        draw_text(arrow_character, x, y, screen, WHITE)
+        draw_text(arrow_character, x, y, screen, WHITE, letter_by_letter=False)
         display.update(arrow_screen_portion)
     while 16 < convert_to_frames_since_start_time(down_arrow_start) <= 32:
-        draw_text(arrow_character, x, y, screen, BLACK)
+        draw_text(arrow_character, x, y, screen, BLACK, letter_by_letter=False)
         display.update(arrow_screen_portion)
 
 
@@ -45,7 +45,7 @@ def blink_switch(command_menu, image_1, image_2, x, y, width, height, start):
 
 
 def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, finally_function=None, skip_text=False):
-    command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, last_line=True)
+    command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, last_line=True, letter_by_letter=True)
     command_menu.window_drop_down_effect(5, 2, 4, 3)
     window_surface = create_window(5, 2, 4, 3, CONFIRMATION_BACKGROUND_PATH, command_menu.screen)
     display.update(window_surface.get_rect())
