@@ -32,24 +32,23 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
             string = ''
             for i in range(len(chunk)):
                 string += chunk[i]
-                text_surface = current_font.render(string, True, color, BLACK)
-                text_rect = set_text_rect_alignment(alignment, text_surface, x, y)
-                screen.blit(text_surface, text_rect)
+                blit_text_to_screen(alignment, color, current_font, screen, string, x, y)
                 display.update()
-                time.wait(4)
+                time.wait(16)
                 if not sound_off:
                     if i % 2 == 0:
                         play_sound(text_beep_sfx)
-            y += 17
-            if chunk == chunks[len(chunks) - 1]:
-                return chunk
         else:
-            text_surface = current_font.render(chunk, True, color, BLACK)
-            text_rect = set_text_rect_alignment(alignment, text_surface, x, y)
-            screen.blit(text_surface, text_rect)
-            y += 17
-            if chunk == chunks[len(chunks) - 1]:
-                return chunk
+            blit_text_to_screen(alignment, color, current_font, screen, chunk, x, y)
+        y += 17
+        if chunk == chunks[len(chunks) - 1]:
+            return chunk
+
+
+def blit_text_to_screen(alignment, color, current_font, screen, string, x, y):
+    text_surface = current_font.render(string, True, color, BLACK)
+    text_rect = set_text_rect_alignment(alignment, text_surface, x, y)
+    screen.blit(text_surface, text_rect)
 
 
 def set_text_rect_alignment(alignment, text_surface, x, y):
