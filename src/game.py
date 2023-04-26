@@ -581,9 +581,10 @@ class Game:
         self.enable_movement = False
         for current_event in self.events:
             if current_event.type == KEYDOWN or self.skip_text:
-                self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
-                                                      add_quotes=True,
-                                                      skip_text=self.skip_text)
+                self.cmd_menu.show_text_in_dialog_box(
+                    self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
+                    add_quotes=True,
+                    skip_text=self.skip_text)
                 self.is_post_death_dialog = False
                 self.set_to_save_prompt()
                 self.enable_movement = True
