@@ -131,7 +131,8 @@ def select_name(blink_start, screen, command_menu):
     screen.blit(unselected_image, (0, 0))
     display.update(unselected_image.get_rect())
     command_menu.show_text_in_dialog_box("Type your name using the keyboard.\n"
-                                         "If you are using a joystick, press the TAB key to switch to joystick input.", drop_down=False, drop_up=False)
+                                         "If you are using a joystick, press the TAB key to switch to joystick input.",
+                                         drop_down=False, drop_up=False, letter_by_letter=False)
     screen.blit(unselected_image, (0, 0))
     display.update(unselected_image.get_rect())
     selected_image_lookup = {
@@ -229,15 +230,14 @@ def truncate_name(name):
 
 
 def blink_with_name(blink_start, current_letter_image_path, name, screen, static_image):
-    while convert_to_frames_since_start_time(blink_start) <= 16:
+    if convert_to_frames_since_start_time(blink_start) <= 16:
         draw_image_with_name(current_letter_image_path, name, screen)
-        display.update(Rect(screen.get_rect().left, screen.get_rect().centerx // 1.7, screen.get_width(), screen.get_height() * .46))
-    while 16 < convert_to_frames_since_start_time(blink_start) <= 32:
+    elif 16 < convert_to_frames_since_start_time(blink_start) <= 32:
         draw_image_with_name(static_image, name, screen)
-        display.flip()
+    display.update(Rect(screen.get_rect().left, screen.get_rect().centerx // 1.7, screen.get_width(), screen.get_height() * .46))
 
 
 def draw_image_with_name(current_letter_image_path, name, screen):
     selected_image = scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height()))
     screen.blit(selected_image, (0, 0))
-    draw_text(name, TILE_SIZE * 6.01, TILE_SIZE * 4.3, screen, alignment='left')
+    draw_text(name, TILE_SIZE * 6.01, TILE_SIZE * 4.3, screen, alignment='left', letter_by_letter=False)
