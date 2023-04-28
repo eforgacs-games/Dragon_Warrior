@@ -36,7 +36,7 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
                 display.update()
                 time.wait(16)
                 if not sound_off:
-                    if i % 2 == 0:
+                    if i % 3 == 0:
                         play_sound(text_beep_sfx)
         else:
             blit_text_to_screen(alignment, color, current_font, screen, chunk, x, y)
