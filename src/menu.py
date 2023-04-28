@@ -190,13 +190,6 @@ class CommandMenu(Menu):
                 else:
                     self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text,
                                                  disable_sound=disable_sound, letter_by_letter=letter_by_letter)
-                # TODO(ELF): This commented out code just makes the sound for printing by letter.
-                #  Need to actually show the letters one by one.
-                #  (Better to leave it commented out until it's working)
-                # for letter_index, letter in enumerate(line):
-                #     time.sleep(0.01)
-                #     if letter_index % 2 == 0:
-                #         play_sound(text_beep_sfx)
         if drop_up:
             self.window_drop_up_effect(2, 9, 12, 5)
 
