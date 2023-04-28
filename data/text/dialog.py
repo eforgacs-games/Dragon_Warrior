@@ -1,4 +1,4 @@
-from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event, Rect
+from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event, Rect, time
 from pygame.event import get
 from pygame.time import get_ticks
 
@@ -49,6 +49,8 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     command_menu.window_drop_down_effect(5, 2, 4, 3)
     window_surface = create_window(5, 2, 4, 3, CONFIRMATION_BACKGROUND_PATH, command_menu.screen)
     display.update(window_surface.get_rect())
+    # for some reason it needs this wait() call to actually play the sound
+    time.wait(300)
     play_sound(confirmation_sfx)
     blinking = True
     blinking_yes = True
