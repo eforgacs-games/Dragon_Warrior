@@ -611,6 +611,8 @@ class Game:
         self.is_initial_dialog = False
         self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
             self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
+        self.enable_movement = True
+        self.unpause_all_movement()
 
     def set_to_save_prompt(self):
         self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
