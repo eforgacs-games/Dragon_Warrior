@@ -570,7 +570,7 @@ class Game:
 
     def run_automatic_initial_dialog(self):
         self.enable_movement = False
-        if self.skip_text or any([current_event.type == KEYUP and not self.automatic_initial_dialog_run for current_event in self.events]):
+        if self.skip_text or (any([current_event.type == KEYUP for current_event in self.events]) and not self.automatic_initial_dialog_run):
             self.cmd_menu.show_text_in_dialog_box(
                 self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
                 skip_text=self.skip_text)
