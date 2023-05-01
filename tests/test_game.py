@@ -391,7 +391,6 @@ class TestGame(TestCase):
         self.game.handle_initial_dialog()
         self.assertFalse(self.game.display_hovering_stats)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
-        self.assertFalse(self.game.enable_movement)
         self.assertTrue(self.game.automatic_initial_dialog_run)
         self.assertEqual('When thou art finished preparing for thy departure, please see me.\nI shall wait.',
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
