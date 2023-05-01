@@ -7,6 +7,7 @@ from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_i, K_k, K_j, K_DOWN
 from pygame.time import get_ticks
 from pygame.transform import scale
 
+from data.text.intro_lookup_table import input_name_prompt
 from src.common import NAME_SELECTION_UPPER_A, NAME_SELECTION_UPPER_B, NAME_SELECTION_UPPER_C, NAME_SELECTION_UPPER_D, NAME_SELECTION_UPPER_E, \
     NAME_SELECTION_UPPER_F, NAME_SELECTION_UPPER_G, NAME_SELECTION_UPPER_H, NAME_SELECTION_UPPER_I, NAME_SELECTION_UPPER_J, NAME_SELECTION_UPPER_K, \
     NAME_SELECTION_UPPER_L, NAME_SELECTION_UPPER_M, NAME_SELECTION_UPPER_N, NAME_SELECTION_UPPER_O, NAME_SELECTION_UPPER_P, NAME_SELECTION_UPPER_Q, \
@@ -130,9 +131,7 @@ def select_name(blink_start, screen, command_menu):
     unselected_image = scale(image.load(NAME_SELECTION_STATIC_IMAGE_LEN_0), (screen.get_width(), screen.get_height()))
     screen.blit(unselected_image, (0, 0))
     display.update(unselected_image.get_rect())
-    command_menu.show_text_in_dialog_box("Type your name using the keyboard.\n"
-                                         "If you are using a joystick, press the TAB key to switch to joystick input.",
-                                         drop_down=False, drop_up=False, letter_by_letter=False)
+    command_menu.show_text_in_dialog_box(input_name_prompt, drop_down=False, drop_up=False, letter_by_letter=False)
     screen.blit(unselected_image, (0, 0))
     display.update(unselected_image.get_rect())
     selected_image_lookup = {
