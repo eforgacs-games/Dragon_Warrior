@@ -1,11 +1,12 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR ORGANIZATION
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2022-07-07 13:57+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-05-01 09:19+0100\n"
 "PO-Revision-Date: 2022-07-07 21:09+0200\n"
 "Last-Translator: Edward Forgacs <eddie.forgacs@gmail.com>\n"
 "Language-Team: Korean <eddie.forgacs@gmail.com>\n"
@@ -15,7 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.1\n"
-
 
 #: .\dialog_lookup_table.py:30
 msgid ""
@@ -61,13 +61,14 @@ msgstr ""
 
 #: .\dialog_lookup_table.py:48
 msgid "Where oh where can I find Princess Gwaelin?"
-msgstr "아아, 로라 공주님...\n공주님은 도대체 어디 계신 걸까......"
+msgstr ""
+"아아, 로라 공주님...\n"
+"공주님은 도대체 어디 계신 걸까......"
 
 # extra lines:
 # \n설마 목숨까지 잃으신 건...\n
 # 어머나, 세상에! 나도 참 주책 맞게 무슨 이런 불길한 소릴...\n
 # {}님. 방금 제가 한 말은 부디 잊어 주세요.
-
 #: .\dialog_lookup_table.py:43
 msgid "Welcome to Tantegel Castle."
 msgstr "라다톰 성에 오신 것을 환영합니다!"
@@ -87,15 +88,24 @@ msgid "Descendant of Erdrick, listen now to my words."
 msgstr "용사 로토의 피를 이어받은 자여! 자네가 돌아오기를 기다리고 있었다네."
 
 #: .\dialog_lookup_table.py:59
-msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
-msgstr "먼 옛날, 전설의 용사 로토는 신으로부터 빛의 구슬을 부여받아 이 세상을 덮고 있던 마물들을 봉인했다고 하네."
+msgid ""
+"It is told that in ages past Erdrick fought demons with a Ball of Light."
+msgstr ""
+"먼 옛날, 전설의 용사 로토는 신으로부터 빛의 구슬을 부여받아 이 세상을 덮고 있"
+"던 마물들을 봉인했다고 하네."
 
 #: .\dialog_lookup_table.py:60
-msgid "Then came the Dragonlord who stole the precious globe and hid it in the darkness."
-msgstr "허나 어디선가 나타난 악의 화신 용왕이 그 구슬을 어둠 속에 가두고 말았지! 이대로 가다가는 이 세상은 어둠에 집어 삼켜져 이윽고 멸망에 이르고 말 게야."
+msgid ""
+"Then came the Dragonlord who stole the precious globe and hid it in the "
+"darkness."
+msgstr ""
+"허나 어디선가 나타난 악의 화신 용왕이 그 구슬을 어둠 속에 가두고 말았지! 이대"
+"로 가다가는 이 세상은 어둠에 집어 삼켜져 이윽고 멸망에 이르고 말 게야."
 
 #: .\dialog_lookup_table.py:61
-msgid "Now, {}, thou must help us recover the Ball of Light and restore peace to our land."
+msgid ""
+"Now, {}, thou must help us recover the Ball of Light and restore peace to "
+"our land."
 msgstr "용사 {}! 용왕을 쓰러트리고 그 손으로 빛의 구슬을 되찾아 와 주게!"
 
 #: .\dialog_lookup_table.py:62
@@ -103,11 +113,16 @@ msgid "The Dragonlord must be defeated."
 msgstr "용왕을 처치해야 합니다."
 
 #: .\dialog_lookup_table.py:63
-msgid "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."
-msgstr "자네에게 선물을 주지! 거기 있는 보물 상자를 열도록 하게. 자네의 여행에 도움이 될 물건이 들어 있을 걸세."
+msgid ""
+"Take now whatever thou may find in these Treasure Chests to aid thee in thy "
+"quest."
+msgstr ""
+"자네에게 선물을 주지! 거기 있는 보물 상자를 열도록 하게. 자네의 여행에 도움"
+"이 될 물건이 들어 있을 걸세."
 
 #: .\dialog_lookup_table.py:64
-msgid "Then speak with the guards, for they have much knowledge that may aid thee."
+msgid ""
+"Then speak with the guards, for they have much knowledge that may aid thee."
 msgstr "그리고 이 방에 있는 자에게 물어보면 모험 수칙을 알려 줄 걸세."
 
 #: .\dialog_lookup_table.py:65
@@ -115,7 +130,9 @@ msgid "May the light shine upon thee, {}."
 msgstr "그럼 또 보세! 용사 {}!"
 
 #: .\dialog_lookup_table.py:66
-msgid "When thou art finished preparing for thy departure, please see me.\nI shall wait."
+msgid ""
+"When thou art finished preparing for thy departure, please see me.\n"
+"I shall wait."
 msgstr "여행 준비를 마치거든 다시 내게 오게나."
 
 #: .\dialog_lookup_table.py:68
@@ -157,7 +174,6 @@ msgstr "어쩔 수 없군. 자네에게 다시 한 번 기회를 주겠네!"
 # 전투에서 상처를 입었을 때는 마을로 돌아가서 여관에 북으며 상처를 회복하게나.
 # 두 번 다시 이런 일이 일어나지 않도록 나는 기도하고 있겠네!
 # 자네가 다음 레벨이 되려면 앞으로 {}포인트의 경험치가 필요하군.
-
 #: .\dialog_lookup_table.py:81
 msgid "To reach the next level, thy Experience Points must increase by {}."
 msgstr "자네가 다음 레벨에 되려면 앞으로 {}포인트의 경험치가 필요하군."
@@ -167,12 +183,17 @@ msgid "Now, go, {}!"
 msgstr "이제 가게, {}!"
 
 #: .\dialog_lookup_table.py:84
-msgid "East of this castle is a town where armor, weapons, and many other items may be purchased."
-msgstr "이 성을 나서면 바로 옆에 마을이 보일 겁니다. 거기서 우선 무기와 방어구를 사서 갖추시면 좋을 겁니다."
+msgid ""
+"East of this castle is a town where armor, weapons, and many other items may "
+"be purchased."
+msgstr ""
+"이 성을 나서면 바로 옆에 마을이 보일 겁니다. 거기서 우선 무기와 방어구를 사"
+"서 갖추시면 좋을 겁니다."
 
 #: .\dialog_lookup_table.py:85
 msgid "Return to the Inn for a rest if thou art wounded in battle, {}."
-msgstr "전투에서 상처를 입었을 때는 마을로 돌아와서 여관에 묵으면 상처가 회복됩니다."
+msgstr ""
+"전투에서 상처를 입었을 때는 마을로 돌아와서 여관에 묵으면 상처가 회복됩니다."
 
 #: .\dialog_lookup_table.py:86
 msgid "Sleep heals all."
@@ -183,32 +204,51 @@ msgid "If thou hast collected all the Treasure Chests, a key will be found."
 msgstr "보물 상자를 모두 열었다면 그 안에는 마법의 열쇠가 들어 있었을 겁니다."
 
 #: .\dialog_lookup_table.py:90
-msgid "Once used, the key will disappear, but the door will be open and thou may pass through."
-msgstr "열쇠는 한번 사용하면 없어지지만, 그 열쇠로 문을 열면...당신의 여행이 시작될 것입니다."
+msgid ""
+"Once used, the key will disappear, but the door will be open and thou may "
+"pass through."
+msgstr ""
+"열쇠는 한번 사용하면 없어지지만, 그 열쇠로 문을 열면...당신의 여행이 시작될 "
+"것입니다."
 
 #: .\dialog_lookup_table.py:96
 msgid ""
 "Magic keys! They will unlock any door.\n"
 "Dost thou wish to purchase one for {} GOLD?"
-msgstr "어떤 문이든 척척 여는 마법의 열쇠 필요 없나?\n 하나에 {}골드네."
+msgstr ""
+"어떤 문이든 척척 여는 마법의 열쇠 필요 없나?\n"
+" 하나에 {}골드네."
 
 #: .\dialog_lookup_table.py:97
-msgid "We are merchants who have traveled much in this land. Many of our colleagues have been killed by servants of the Dragonlord."
-msgstr "저는 떠돌이 상인입니다. 지금까지도 수많은 동료들이 마물 때문에 목숨을 잃었죠. 그때를 떠올리면 분하고 슬퍼서 견딜 수가 없습니다."
+msgid ""
+"We are merchants who have traveled much in this land. Many of our colleagues "
+"have been killed by servants of the Dragonlord."
+msgstr ""
+"저는 떠돌이 상인입니다. 지금까지도 수많은 동료들이 마물 때문에 목숨을 잃었"
+"죠. 그때를 떠올리면 분하고 슬퍼서 견딜 수가 없습니다."
 
 #: .\dialog_lookup_table.py:99
-msgid "Rumor has it that entire towns have been destroyed by the Dragonlord's servants."
+msgid ""
+"Rumor has it that entire towns have been destroyed by the Dragonlord's "
+"servants."
 msgstr "드래곤의 추종자들이 모든 마을을 파괴했다고 전해졌습니다."
 
 #: .\dialog_lookup_table.py:100
-msgid "To become strong enough to face future trials thou must first battle many foes."
-msgstr "우선은 마물들과 싸워서 경험을 쌏는 것이 먼저다. 그러면 용사로서의 레벨이 서서히 올라 강해질 테니까."
+msgid ""
+"To become strong enough to face future trials thou must first battle many "
+"foes."
+msgstr ""
+"우선은 마물들과 싸워서 경험을 쌏는 것이 먼저다. 그러면 용사로서의 레벨이 서서"
+"히 올라 강해질 테니까."
 
 #: .\dialog_lookup_table.py:101
 msgid ""
 "There was a time when Brecconary was a paradise.\n"
 "Then the Dragonlord's minions came."
-msgstr "이곳 라다톰은 많은 사람들이 모이는 낙원이었어요.\n 그랬던 것을 마물들이...\n 으흑 으흑..."
+msgstr ""
+"이곳 라다톰은 많은 사람들이 모이는 낙원이었어요.\n"
+" 그랬던 것을 마물들이...\n"
+" 으흑 으흑..."
 
 #: .\dialog_lookup_table.py:102
 msgid "It's a legend."
@@ -219,16 +259,24 @@ msgid "When the sun and rain meet, a Rainbow Bridge shall appear."
 msgstr "비와 태양이 어우러질 떄 무지개 다리가 생기리라..."
 
 #: .\dialog_lookup_table.py:107
-msgid "King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."
-msgstr "모험의 서에 여행을 기록해 두면 언제든 기록한 곳부터 여행을 시작할 수 있지요."
+msgid ""
+"King Lorik will record thy deeds in his Imperial Scroll so thou may return "
+"to thy quest later."
+msgstr ""
+"모험의 서에 여행을 기록해 두면 언제든 기록한 곳부터 여행을 시작할 수 있지요."
 
 #: .\dialog_lookup_table.py:108
 msgid "If thou art planning to take a rest, first see King Lorik."
-msgstr "모험을 그만하고 싶을 때는 폐하를 뵙고 모험의 서에 기록을 부탁드리면 됩니다."
+msgstr ""
+"모험을 그만하고 싶을 때는 폐하를 뵙고 모험의 서에 기록을 부탁드리면 됩니다."
 
 #: .\dialog_lookup_table.py:111
-msgid "{}'s coming was foretold by legend. May the light shine upon this brave warrior."
-msgstr "어둠의 용이 날개를 펼칠 때 로토의 피를 이어받은 자 나타나 어둠을 비추는 빛이 될지니. 오오, 신이시여! 옛 전설의 용사 {}에게 광명이 있기를!!"
+msgid ""
+"{}'s coming was foretold by legend. May the light shine upon this brave "
+"warrior."
+msgstr ""
+"어둠의 용이 날개를 펼칠 때 로토의 피를 이어받은 자 나타나 어둠을 비추는 빛이 "
+"될지니. 오오, 신이시여! 옛 전설의 용사 {}에게 광명이 있기를!!"
 
 #: .\dialog_lookup_table.py:113
 msgid "I have been waiting long for one such as thee."
@@ -244,7 +292,9 @@ msgstr "듣자 하니 어딘가에 마법의 열쇠를 파는 마을이 있다�
 
 #: .\dialog_lookup_table.py:116
 msgid "If thou art cursed, come again."
-msgstr "나는 저주를 푸는 마법을 연구하고 있다네. 만약 그대가 저주에 걸리면 이곳으로 찾아오게. 힘이 되어 줄 터이니."
+msgstr ""
+"나는 저주를 푸는 마법을 연구하고 있다네. 만약 그대가 저주에 걸리면 이곳으로 "
+"찾아오게. 힘이 되어 줄 터이니."
 
 #: .\dialog_lookup_table.py:119
 msgid "Tell King Lorik that the search for his daughter hath failed."
@@ -258,7 +308,9 @@ msgstr ""
 msgid ""
 "Welcome! \n"
 "Enter the shop and speak to its keeper across the desk."
-msgstr "어서 오세요.\n 안으로 들어가서 카운터 너머로 말을 걸어 주세요."
+msgstr ""
+"어서 오세요.\n"
+" 안으로 들어가서 카운터 너머로 말을 걸어 주세요."
 
 #: .\dialog_lookup_table.py:144
 msgid "{}, please save the Princess."
@@ -269,8 +321,12 @@ msgid "Dost thou know about Princess Gwaelin?"
 msgstr "로라 공주님을 알고 계신가?"
 
 #: .\dialog_lookup_table.py:148
-msgid "Half a year now hath passed since the Princess was kidnapped by the enemy."
-msgstr "로라 공주님은 국왕 폐하의 소중한 외동딸이라오. 왕비님께서 돌아가시고부터는 로라 공주님이 폐하의 든든한 버팀목이 되어 주셨건만 그 공주님께서 마물들에게 납치당한 지가 벌써 반년이라오."
+msgid ""
+"Half a year now hath passed since the Princess was kidnapped by the enemy."
+msgstr ""
+"로라 공주님은 국왕 폐하의 소중한 외동딸이라오. 왕비님께서 돌아가시고부터는 로"
+"라 공주님이 폐하의 든든한 버팀목이 되어 주셨건만 그 공주님께서 마물들에게 납"
+"치당한 지가 벌써 반년이라오."
 
 #: .\dialog_lookup_table.py:149
 msgid "Never does the King speak of it, but he must be suffering much."
@@ -291,8 +347,8 @@ msgstr "괜찮아?"
 #: .\dialog_lookup_table.py:238
 msgid "Oh, yes? That's too bad."
 msgstr "아, 그래? 유감 이네."
-# not sure about "유감 이네." - used when player decides not to purchase an item.
 
+# not sure about "유감 이네." - used when player decides not to purchase an item.
 #: .\dialog_lookup_table.py:240
 msgid ""
 "Sorry.\n"
@@ -310,8 +366,8 @@ msgstr "그러면 내가 당신의 {} {}골드에 사겠습니다."
 #: .\dialog_lookup_table.py:266
 msgid "I thank thee."
 msgstr "감사합니다."
-# "자! 여기 있네, {}!"
 
+# "자! 여기 있네, {}!"
 #: .\dialog_lookup_table.py:272
 msgid ""
 "Okay.\n"
@@ -332,8 +388,7 @@ msgstr "그럼 편히 쉬십시오."
 msgid ""
 "Good morning.\n"
 "Thou seems to have spent a good night."
-msgstr ""
-"좋은 아침입니다.\n"
+msgstr "좋은 아침입니다."
 
 #: .\dialog_lookup_table.py:304
 msgid "I shall see thee again."
@@ -348,3 +403,29 @@ msgstr ""
 "여행자의 여관에 오신 것을 환영합니다.\n"
 "하룻밤에 {}골드입니다.\n"
 "묵고 가시겠습니까?"
+
+#: ..\intro_lookup_table.py:13
+msgid "-PUSH START-"
+msgstr "-스타트 버턴을 눌러 주세요-"
+
+#: ..\intro_lookup_table.py:14
+msgid "K key: A Button"
+msgstr "K키: A 버턴"
+
+#: ..\intro_lookup_table.py:15
+msgid "J key: B Button"
+msgstr "J키: B 버턴"
+
+#: ..\intro_lookup_table.py:16
+msgid "I key: Start"
+msgstr "I키: 스타트 버턴"
+
+#: ..\intro_lookup_table.py:17
+msgid "WASD / Arrow Keys: Move"
+msgstr "WASD / 화살표 키: 이동"
+
+#: ..\intro_lookup_table.py:19
+msgid "Type your name using the keyboard.\n"
+      "If you are using a joystick, press the TAB key to switch to joystick input."
+msgstr "키보드를 사용하여 이름을 입력합니다.\n"
+       "조이스틱을 사용하는 경우 TAB 키를 눌러 조이스틱 입력으로 전환합니다."

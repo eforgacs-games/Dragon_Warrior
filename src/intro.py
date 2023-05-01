@@ -6,13 +6,13 @@ from pygame import image, display, QUIT, quit, K_i, K_k, Rect, Surface, event, K
 from pygame.time import get_ticks
 from pygame.transform import scale
 
-from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, PINK, SMB_FONT_PATH, convert_to_milliseconds, BLACK, INTRO_BANNER_PATH, \
+from data.text.intro_lookup_table import push_start, controls
+from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, PINK, SMB_FONT_PATH, \
+    convert_to_milliseconds, BLACK, INTRO_BANNER_PATH, \
     convert_to_frames_since_start_time
 from src.config import IMAGES_DIR, FPS
 from src.text import draw_text
 from src.visual_effects import fade
-
-controls = "K key: A Button", "J key: B Button", "I key: Start", "WASD / Arrow Keys: Move"
 
 
 def show_intro_banner(intro_banner_path, screen) -> Rect:
@@ -39,7 +39,8 @@ def banner_sparkle(short: bool, screen: Surface) -> None:
 
 
 def draw_banner_text(screen: Surface):
-    draw_text("-PUSH START-", screen.get_width() / 2, screen.get_height() * 10 / 16, screen, ORANGE, alignment='center', letter_by_letter=False)
+    draw_text(push_start, screen.get_width() / 2, screen.get_height() * 10 / 16, screen, ORANGE, alignment='center',
+              letter_by_letter=False)
     for i in range(11, 15):
         draw_text(controls[i - 11], screen.get_width() / 2, screen.get_height() * i / 16, screen, PINK,
                   text_wrap_length=23, alignment='center', letter_by_letter=False)
@@ -117,14 +118,17 @@ class Intro:
     def handle_all_sparkles(self, start_time, screen):
         frames_since_banner_launch = convert_to_frames_since_start_time(start_time)
         if frames_since_banner_launch >= 32:
-            self.first_long_sparkle_done, self.last_long_sparkle_clock_check = handle_sparkles(screen, self.first_long_sparkle_done,
+            self.first_long_sparkle_done, self.last_long_sparkle_clock_check = handle_sparkles(screen,
+                                                                                               self.first_long_sparkle_done,
                                                                                                self.last_long_sparkle_clock_check,
                                                                                                short=False)
             if frames_since_banner_launch >= 160:  # 32 + 128
-                self.first_short_sparkle_done, self.last_first_short_sparkle_clock_check = handle_sparkles(screen, self.first_short_sparkle_done,
+                self.first_short_sparkle_done, self.last_first_short_sparkle_clock_check = handle_sparkles(screen,
+                                                                                                           self.first_short_sparkle_done,
                                                                                                            self.last_first_short_sparkle_clock_check,
                                                                                                            short=True)
                 if frames_since_banner_launch >= 192:  # 32 + 128 + 32
-                    self.second_short_sparkle_done, self.last_second_short_sparkle_clock_check = handle_sparkles(screen, self.second_short_sparkle_done,
+                    self.second_short_sparkle_done, self.last_second_short_sparkle_clock_check = handle_sparkles(screen,
+                                                                                                                 self.second_short_sparkle_done,
                                                                                                                  self.last_second_short_sparkle_clock_check,
                                                                                                                  short=True)
