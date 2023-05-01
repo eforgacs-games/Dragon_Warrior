@@ -1,0 +1,3017 @@
+
+
+/=============================================================================/
+|  ドラゴンクエスト                                                           |
+|  DRAGON QUEST Japanese Game Script and Mini Playing Guide v5.11             |
+|  (C) 2006-2010 Jason Kuntz (x_loto)                                         |
+|     x_loto@hotmail.com                                                      |
+|  Based on the Japanese release of "Dragon Quest"                            |
+|     (C) 1986 Enix (Famicom/MSX/MSX2/NEC PC-9801)                            |
+|     (C) 1986 Enix, (C) 1991, 1992 Mitsuru Kamiyama (X68000)                 |
+|  Also released in North America as "Dragon Warrior"                         |
+|     (C) 1986, 1989 Enix, Licenced to Nintendo (NES)                         |
+|  Start Date: 03/27/2006                                                     |
+|  Latest Submission Date: 07/09/2010                                         |
+/=============================================================================/
+
+NOTE: This file uses Japanese (Shift-JIS) encoding. It looks best when viewed
+in Word using a fixed-width Japanese font. If you are unable to use Word, don't
+worry, as the only minor problem in the browser (as long as you enable Shift-
+JIS) is with lining up columns in certain tables.
+
+「ドラゴンクエスト：１９８６年からパフパフして、名前を書き取っていく！」
+
+
+                   /=======================================/
+                   |           Table of Contents           |
+                   /=======================================/
+
+        1. Foreword/Mission Statement     .   .   .   .   .   .  [1FOR]
+        2. Transcription/Translation  .   .   .   .   .   .   .  [2TRA]
+
+           ACT I: ＰＲＩＮＣＥＳＳ　ＬＯＲＡ
+              A. INTRODUCTION     .   .   .   .   .   .   .   .  [AINT]
+              B. THE CENTRAL LANDS    .   .   .   .   .   .   .  [BCEN]
+                 i. Ladatorm Castle
+                ii. Ladatorm
+               iii. The Cave of Loto
+              C. THE NORTHWEST: GARAI     .   .   .   .   .   .  [CGAR]
+              D. THE EASTERN LANDS    .   .   .   .   .   .   .  [DEAS]
+                 i. Maira
+                ii. The Rain Shrine
+              E. THE SOUTHERN ISLAND  .   .   .   .   .   .   .  [ESOU]
+                 i. Rimuldar
+                ii. The Holy Shrine
+              F. BEHIND LOCKED DOORS  .   .   .   .   .   .   .  [FLOC]
+                 i. Ladatorm Castle Unlocked
+                ii. Ladatorm Unlocked
+               iii. Garai Unlocked
+                iv. Maira Unlocked
+              G. THE RESCUE OF PRINCESS LORA  .   .   .   .   .  [GRES]
+                 i. The Marsh Cave
+                ii. Ladatorm Castle Revisited
+               iii. Ladatorm Revisited
+
+           ACT II: ＴＨＥ　ＤＲＡＧＯＮ　ＫＩＮＧ
+              A. THE SOUTHERN LANDS: MELKIDO  .   .   .   .   .  [AMEL]
+              B. THE RAINBOW DROP     .   .   .   .   .   .   .  [BRAI]
+                 i. The Rain Shrine Revisited
+                ii. The Holy Shrine Revisited
+              C. DEMON'S ISLE: THE CASTLE OF THE DRAGON KING  .  [CCAS]
+              D. EPILOGUE     .   .   .   .   .   .   .   .   .  [DEPI]
+                 i. The Cheers of the People
+                ii. Ending Proper
+               iii. Credits
+
+           ACT 0: ＯＵＴＳＩＤＥ　ＴＨＥ　ＰＬＯＴ
+              A. CURSED!  .   .   .   .   .   .   .   .   .   .  [ACUR]
+              B. MAXIMUM LEVEL    .   .   .   .   .   .   .   .  [BMAX]
+              C. BONUS! BACK OF THE BOX   .   .   .   .   .   .  [CBOX]
+              D. DUMMIED TEXT     .   .   .   .   .   .   .   .  [DDUM]
+
+        3. Navigating the Game    .   .   .   .   .   .   .   .  [3NAV]
+           a. Starting Up     .   .   .   .   .   .   .   .   .  [3STA]
+           b. Basic Command Windows   .   .   .   .   .   .   .  [3BAS]
+           c. Battle Command Windows  .   .   .   .   .   .   .  [3BAT]
+           d. Shopping    .   .   .   .   .   .   .   .   .   .  [3SHO]
+        4. Item Lists     .   .   .   .   .   .   .   .   .   .  [4ITE]
+           a. Equipment   .   .   .   .   .   .   .   .   .   .  [4EQU]
+           b. Tools   .   .   .   .   .   .   .   .   .   .   .  [4TOO]
+        5. Magic List and Effects     .   .   .   .   .   .   .  [5MAG]
+        6. Monster List   .   .   .   .   .   .   .   .   .   .  [6MON]
+        7. Experience Points Chart    .   .   .   .   .   .   .  [7EXP]
+        8. Special Passwords  .   .   .   .   .   .   .   .   .  [8PAS]
+        9. Version History    .   .   .   .   .   .   .   .   .  [9VER]
+       10. Credits/Thanks/Legal   .   .   .   .   .   .   .   .  [10CR]
+
+
+                   /==1.===================================/
+                   |      Foreword/Mission Statement       |
+                   /===============================[1FOR]==/
+
+It has now been twenty-four years since the world was first introduced to
+"Dragon Quest." It is one of the most popular and persistent RPG series in
+existence, spawning a myriad of sequels, remakes, and spin-offs over the years.
+To me, all this attention is well-founded, as it is also (in my opinion) one of
+the best RPG series for a console system. Although the games after the initial
+trilogy have little to do with each other plotwise, they are extremely
+consistent--same style of monsters, same style of world, same style of
+storytelling. Some would say this makes them boring, but with the application
+of some imagination there is a lot that these games have to offer. The early
+games may not have aged terribly well, but they are still important, and they
+set the stage for a long line of whimsical creatures in memorable worlds.
+
+However, because of Nintendo of America's tight reign on the content of its
+games in the '80s and early '90s, much of what we saw in the U.S. was watered-
+down or otherwise altered. For example, have you ever heard of a Puff-puff?
+This mysterious massage technique is well-known to fans of recent "Dragon
+Quest" games, including "Dragon Quest VIII," but you may not know that it
+actually made its debut in the Japanese release of the very first game! (In the
+American release, the woman who offers the Puff-puff says instead that she has
+no tomatoes. For the record, Nintendo, there is a huge difference between a
+Puff-puff and a lack of tomatoes! :-P)
+
+This is where I enter the story. I have had a life-long interest in the
+languages of the Far East, Japanese in particular. The characters used in
+writing Japanese have always fascinated me, but the language itself, with its
+complex honorific grammar system, strange usage of particles, and yes, even
+those beautiful kanji characters, seemed all but impenetrable. But now, finally,
+I've decided to buckle down and learn Japanese, using video games as a tool--
+and sharing the fruits of my labors with you, O Lucky Readers! Therefore, I am
+providing my translation of the original Japanese version of "Dragon Quest" so
+that you can see along with me where it differs from the American version. (And
+it just seemed like a good idea, since no one else had done it yet!)
+
+But more than just that, I am also asking for your help, O Knowledgeable
+Readers. If you are reading this, and you know Japanese (or at the very least
+you know it better than I do), and you find a mistake, please do not hesitate
+to send me an email so I may correct it, and you will be credited in the next
+release.
+
+As one final note, let me point out that this is not a walkthrough. It is
+simply the script, plus a mini-guide to get you playing in Japanese if you wish.
+
+Just a little trivia:
+・The Japanese release used a password system of twenty characters to save
+progress. The battery-packed RAM method was added onto the American release,
+which was published a year after "Dragon Quest III" became the first Japanese
+game in the series to use it.
+・As the first game of the series, it introduced many recurring elements. Among
+these are: the Nameless Hero, the "Dragon Quest March," the ubiquitous Slime,
+the Puff-puff, and a peculiar absence of dragons throughout the majority of the
+game.
+・Among the elements that didn't see further use: dungeon music that plays in a
+lower key and tempo as you descend to lower levels, and the requirement of
+torches or magic to light the way.
+
+Well, that's enough for this long introduction, O Intrepid Readers. It is my
+sincere hope that you enjoy this guide, and perhaps even find it useful!
+
+
+                   /==2.===================================/
+                   |       Transcription/Translation       |
+                   /===============================[2TRA]==/
+
+In this section, I have transcribed the game text. First, the text is
+reproduced exactly as it appears in the game (there shouldn't be any typos at
+this point, but the possibility remains); then I present my translation of the
+original text into English. This translation is very literal, but it is as
+accurate as possible to the best of my knowledge, though some passages were
+altered to make better-sounding English. To make mistakes easier to spot, I
+have marked passages that I am unsure of with "(?)" although in all probability
+there are also other errors that I don't realize I have made. Also, even after
+two full playthroughs and a text dump, there is still the chance that I haven't
+seen 100% of the game text. If you know of anything that is missing, please let
+me know and I will try to fill in the empty spots sometime in the future.
+
+I have marked the beginning of each "Act," as well as each major and minor
+section, with a distinctive header to aid in browsing. Likewise, I have marked
+each separate event or conversation with "★" to make it stand out. Where the
+player's name appears in the text I have used the name えっくす (Ekkusu)--the
+Japanese pronunciation of the letter "X."
+
+The text in this file is from the Famicom version of the game, but the MSX and
+MSX2 versions *should* be exactly the same throughout. I have tried, as much as
+possible, to arrange the text in the order it would be seen in actual gameplay,
+but for organization's sake some of the ordering may have been changed.
+
+As a supplement to this file for those who actually want to play the game in
+Japanese, I have also made maps of the entire game with the Japanese names of
+items and locations (with translations, of course) available on GameFAQs.com.
+These can also be used with the U.S. version, as only the names will be
+significantly different.
+
+And now, without further ado, I present to you:
+
+
+                               ドラゴンクエスト
+                                 Dragon Quest
+
+
+________--------~~~~~~~~             ACT I             ~~~~~~~~--------________
+                          ＰＲＩＮＣＥＳＳ　ＬＯＲＡ
+~~~~~~~~--------________                               ________--------~~~~~~~~
+
+
+                       ==I.A.==========================
+             ----<<<<{{{{((((    INTRODUCTION    ))))}}}}>>>>----
+                       ========================[AINT]==
+
+★King
+＊「おお　えっくす！
+　　ゆうしゃロトの　ちをひくものよ！
+　　そなたのくるのをまっておったぞ。
+Oh, X! The Descendant of the Hero Loto! I have been waiting for thine arrival.
+
+＊「その　むかし　ゆうしゃロトが
+　　カミから　ひかりのたまをさずかり
+　　まものたちをふうじこめたという。
+It is said that long ago the Hero Loto was given a Ball of Light from God and
+sealed away monsters.
+
+＊「しかし　いずこともなくあらわれた
+　　あくまのけしん　りゅうおうが
+　　そのたまを　やみにとざしたのじゃ
+But the Dragon King, evil incarnate, appeared from nowhere and shut the Ball in
+darkness.
+
+＊「このちに　ふたたびへいわをっ！
+Peace on this Earth has been shattered once again!
+
+＊「ゆうしゃ　えっくすよ！
+　　りゅうおうをたおし　そのてから
+　　ひかりのたまをとりもどしてくれ！
+Hero X! Please defeat the Dragon King and take back the Ball of Light from his
+hand!
+
+＊「わしからの　おくりものじゃ！
+　　そなたのよこにある
+　　たからのはこを　とるがよい！
+These are gifts from me! Take the treasure chests at thy side!
+
+＊「そして　このへやにいる
+　　へいしにきけば　たびのちしきを
+　　おしえてくれよう。
+And if you ask the soldiers in this room they will teach you knowledge for your
+journey.
+
+＊「では　また　あおう！
+　　ゆうしゃ　えっくすよ！
+Well then, let us meet again! Hero X!
+
+
+                     ==I.B.===============================
+           ----<<<<{{{{((((    THE CENTRAL LANDS    ))))}}}}>>>>----
+                     =============================[BCEN]==
+
+
+                      --I.B.i.---------------------------
+                ----++++****    Ladatorm Castle    ****++++----
+                      -----------------------------------
+
+★King: Before Leaving the Throne Room
+＊「たびのしたくが　できたなら
+　　また　わしに　あいにくるがよい
+　　まっておるぞ　えっくすよ！
+If you are prepared for your journey, you should come to meet me again, and I
+shall be waiting, X!
+
+★Guard: Throne Door L (Before Leaving the Throne Room)
+＊「このおしろをでると　となりに
+　　まちが　ある。
+When you leave the castle, there is a town nearby.
+
+＊「そこで　まず　ぶきと　ぼうぐを
+　　かいそろえることだ。
+So first of all get your weapon and armor purchases in order.
+
+＊「たたかいで　きずついたときは
+　　まちにもどり　やどやにとまると
+　　きずが　かいふくするだろう。
+When you are injured in battle, the wounds will recover if you return to town
+and stay at the inn.
+
+★Guard: Throne Door R (Before Leaving the Throne Room)
+＊「たからのはこを　ぜんぶとったなら
+　　そのなかに　かぎが　はいっていた
+　　はずだ。
+If you took all the treasure boxes, there should have been a key inside.
+
+＊「かぎは　１どつかうと　なくなって
+　　しまうが　そのかぎで　とびらを
+　　あけたとき……
+When you use the key one time it will disappear, but when you open the door
+using the key...
+
+＊「おまえのたびが　はじまるだろう。
+your journey will begin.
+
+★Guard: Throne Room
+＊「ローラひめのことを　ごぞんじか？
+Do you know of Princess Lora?
+│
+├はい：Yes
+│＊「えっくす！
+│　　どうか　ひめを
+│　　たすけだして　ください！
+│X! Please rescue the princess!
+│
+├いいえ：No
+│＊「ひめさまが　まものたちに
+│　　さらわれて　はんとしになる…
+│It has been nearly half a year since the princess was kidnapped by monsters...
+│
+│＊「おうさまは　なにも
+│　　おっしゃらないが
+│　　とても　くるしんでいるはず。
+│The King says nothing, but he must be very worried.
+│
+│＊「えっくす！
+│　　どうか　ひめを
+│　　たすけだして　ください！
+└X! Please rescue the princess!
+
+★King: Giving a Password
+＊「おお　えっくす！
+　　よくぞ　ぶじで　もどってきた。
+　　わしは　とても　うれしいぞ。
+Oh, X! How good that thou hast returned safely. I am very pleased.
+
+＊「そなたが　つぎのレベルになるには
+　　あと　＿＿ポイントの
+　　けいけんが　ひつようじゃ。
+Thou needest __ experience points to reach the next level.
+
+＊「そなたに　ふっかつの　じゅもんを
+　　おしえよう！
+Let me teach to thee the Spell of Restoration!
+
+[Password]
+
+＊「これを　かきとめておくのだぞ。
+Thou shouldst write this down and keep it.
+
+＊「では　また　あおう！
+　　ゆうしゃ　えっくすよ！
+Well then, let us meet again! Hero X!
+
+★King: Returning to Game
+＊「おお　えっくす！
+　　よくぞ　もどってきてくれた！
+　　わしは　とても　うれしいぞ。
+Oh, X! How good that thou hast returned! I am very pleased.
+
+＊「そなたが　つぎのレベルになるには
+　　あと　＿＿ポイントの
+　　けいけんが　ひつようじゃ。
+Thou needest __ experience points to reach the next level.
+
+＊「レベルが　あがったときは
+　　わしに　あいにくるようにな。
+Thou shouldst come to meet with me when thy level has risen.
+
+＊「では　また　あおう！
+　　ゆうしゃ　えっくすよ！
+Well then, let us meet again! Hero X!
+
+★King: Returning from Death
+＊「おお　えっくす！
+　　しんでしまうとは　なにごとだ！
+Oh, X! You died on us!
+[NOTE: Thanks to CygnusZ for helping with this one!]
+
+＊「しかたのない　やつだな。
+　　おまえに　もう　いちど
+　　きかいを　あたえよう！
+It can't be helped. Let us give you one more chance!
+
+＊「たたかいで　キズついたときは
+　　まちにもどり　やどやに　とまって
+　　キズをかいふくさせるのだぞ。
+When you are hurt in battle, returning to town and staying at the inn will heal
+your wounds.
+
+＊「ふたたび　このようなことが
+　　おこらぬことを
+　　わしは　いのっている！
+I am praying that another experience like this does not happen!
+
+＊「おまえが　つぎのレベルになるには
+　　あと　＿＿ポイントの
+　　けいけんが　ひつようじゃ。
+You need __ experience points to reach the next level.
+
+＊「では　ゆけ！　えっくすよ！
+So go! X!
+
+★Guard: Throne Door L
+＊「おかねが　たまったら　ぶきや
+　　よろいを　たかいものに
+　　かいかえることだな。
+Once you save some money, replace your weapons and armor with more expensive
+ones.
+
+＊「そうすれば　もっと　つよく
+　　なるだろう。
+If you do so, you will become much stronger.
+
+★Guard: Throne Door R
+＊「ひとびとの　はなしに　みみを
+　　かたむけることだ。
+　　きっと　やくにたつだろう。
+Listen to the words of the people. Surely they will be useful.
+
+★Guard: Stairs Top
+＊「ふっかつのじゅもんが　あれば
+　　それをきいたときの　じょうたいで
+　　よみがえることが　できるだろう。
+If you have a Spell of Restoration, you can restore things to the conditions at
+the time that you heard it.
+
+★Guard: Stairs Bottom
+＊「たびをいちど　やめたいときは
+　　おうにあい　ふっかつのじゅもんを
+　　きいておくことだな。
+When you want to stop your journey for a time, first meet with the King to hear
+the Spell of Restoration.
+
+★Man: Main Hall
+＊「ここ　ラダトームは　そのむかし
+　　らくえん　でした。
+　　それを　まものたちが…
+In the old days, Ladatorm was a paradise. The monsters changed that....
+
+★Woman: Main Hall/Guard: Posted E of Hall
+＊「ああ　ローラひめは
+　　いったい　どこに…
+Ah, where on earth is Princess Lora...
+
+★Guard: Walking E of Hall
+＊「どうくつに　はいるときは
+　　たいまつを　もってゆけよ。
+When you enter a cave, take a torch.
+
+★Old Man: Healer
+＊「おお　カミよ！
+　　ふるい　いいつたえの　ゆうしゃ
+　　えっくすに　ひかり　あれ！
+O God! May the light be with the Hero X of the ancient legends!
+
+★Guard: Gate L/R
+＊「ラダトームの　おしろに
+　　ようこそ！
+Welcome to Ladatorm Castle!
+
+★Merchant: N
+＊「わたしたちは　たびの　しょうにん
+　　です。　おおくのなかまが
+　　まものたちに　ころされました。
+We are traveling merchants. Many of our colleagues have been killed by monsters.
+
+★Merchant: S
+＊「うわさでは　まものたちに
+　　ほろぼされた　まちも
+　　あるらしいです。
+According to the rumors, there are even whole towns that have been destroyed by
+the monsters.
+
+★Man: NW Room
+＊「まものたちと　たたかって
+　　けいけんを　つんでください。
+Please fight with monsters and build up experience.
+
+＊「そうすれば　ゆうしゃとしての
+　　レベルが　つぎつぎとあがり
+　　つよくなってゆくでしょう。
+If you do so your level as a hero will rise one by one, and you will become
+stronger.
+
+★Guard: NE Room
+＊「とびらを　あけるには
+　　カギが　ひつようだ。
+You need a key to open the door.
+
+
+                         --I.B.ii.-------------------
+                   ----++++****    Ladatorm    ****++++----
+                         ----------------------------
+
+★Man: Entrance
+＊「ラダトームのまちに　ようこそ。
+Welcome to the town of Ladatorm.
+
+★Woman: Arms Shop
+＊「いらっしゃいませ。
+　　なかにすすみ　つくえ　ごしに
+　　はなしかけてくださいな。
+Welcome. Please come inside and talk to the person across the desk.
+
+★Old Man: Near Arms Shop
+＊「どくのぬまちに　きをつけなされ。
+　　ぬまちを　あるくときは
+　　たいりょくに　きをつかうようにな
+Be careful in the poison marsh. When you walk through the marsh, pay attention
+to your strength.
+
+★Man: Center
+＊「このまちの　ずっと　きたにいき
+　　うみべを　にしにあるくと
+　　ガライのまちが　あるそうです。
+If you go all the way north from this town and walk west along the beach, there
+is the town of Garai.
+
+★Merchant: Center
+＊「どうか　まものたちを
+　　たおして　ください。
+Please defeat the monsters somehow.
+
+★Soldier: S Central
+＊「おおくのゆうしゃが
+　　まちから　とおくに　たびにでて
+　　そして　しんだ。
+Many heroes have left from this town to journey far away, only to die.
+
+＊「ゆうしゃ　えっくすよ
+　　おまえを　しなせたくないものだな
+Hero X, I do not want you to die.
+
+★Soldier: E Central
+＊「おまえが　ロトの　ちをひくもの？
+　　なにか　しょうこが　あるのか？
+You are the descendant of Loto? Have you any proof?
+
+★Guard: E
+＊「たたかいで　けいけんを　つみ
+　　レベルが　あがったときは
+　　おうさまに　あいに　いけよ。
+When you have gained experience through battle and your level has risen, go
+meet with the King.
+
+★Soldier: NE Corner
+＊「はしに　きをつけろ！
+Be careful of bridges!
+
+＊「はしをわたって　とおくにいくほど
+　　おそろしい　まものたちが
+　　あらわれるだろう。
+Terrible monsters appear when crossing faraway bridges.
+
+★Man: E, Left Room
+＊「うわさでは　どこかに　まほうの
+　　カギをうってる　まちが
+　　あるらしいですよ。
+Rumor says somewhere there is a town that is selling magic keys.
+
+★Old Man: E, Right Room
+＊「もし　そなたが　のろわれたなら
+　　ここに　くるがよい。
+If thou art cursed, thou shouldst come here.
+[NOTE: Interestingly, here (and apparently every place where the phrase がよい
+appears) the symbol used to end the sentence is the handakuten (゜) by mistake,
+rather than the full-stop (。). It's not easy to notice in-game, however. The
+handakuten is designed to be placed on the line above the kana, so it is drawn
+in the bottom region of the space and still looks basically the same as the
+full-stop.]
+
+★Woman: S
+＊「いーえ　わたしは
+　　ローラひめじゃないわ。
+No, I am not Princess Lora.
+
+★Guard: Inn
+＊「おうさまに　つたえてくれ
+　　ローラひめの　そうさくたいは
+　　ぜんめつしたと…
+Please tell the King that the search party for Princess Lora was annihilated...
+
+＊「わたしも　もう　だめだ…
+　　ぐぶっ…
+I too am done for... Cough...
+
+★Man: SE
+＊「ラダトームのおしろのみなみから
+　　うみのむこうに　おしろが
+　　みえるでしょう。
+A castle can be seen across the sea south of Ladatorm Castle.
+
+＊「りゅうおうは　そのしろに
+　　いるとか…。おお　こわい…。
+They say the Dragon King is in that castle.... Ooh, scary....
+
+★Man: Item Shop
+＊「そこの　へこんだところから
+　　なかへ　すすんでください。
+Please go inside through the indentation.
+
+
+                     --I.B.iii.--------------------------
+               ----++++****    The Cave of Loto    ****++++----
+                     ------------------------------------
+
+★Stone Slate
+えっくすは　せきばんを　みつけた。
+X discovered a stone slate.
+
+せきばんには　こう　かかれている。
+On the slate this is written.
+
+＊「わたしのなは　ロト。
+　　わたしの　ちをひきしものよ。
+My name is Loto. You are my descendant.
+
+＊「ラダトームからみえる　まのしまに
+　　わたるには　３つのものが
+　　ひつようだった。
+To cross over to Demon's Isle, which is visible from Ladatorm, three objects
+were necessary.
+
+＊「わたしは　それらを　あつめ
+　　まのしまに　わたり
+　　まおうを　たおした。
+I collected these objects, crossed to the Demon's Isle, and defeated the Devil.
+
+＊「そして　いま　その３つの
+　　しんぴなるものを　３にんの
+　　けんじゃに　たくす。
+And I now entrust these three mysterious objects to three sages.
+
+＊「かれらの　しそんが　それらを
+　　まもってゆくだろう。
+Their descendants will protect these items.
+
+＊「ふたたび　まのしまに
+　　あくが　よみがえったとき
+When once again evil is resurrected on Demon's Isle,
+
+＊「それらを　あつめ
+　　たたかうがよい。
+collect those items and fight.
+
+
+                   ==I.C.==================================
+         ----<<<<{{{{((((    THE NORTHWEST: GARAI    ))))}}}}>>>>----
+                   ================================[CGAR]==
+
+★Old Man: Item Shop
+＊「ふるい　いいつたえでは　いだいな
+　　ぎんゆう　しじん　ガライが
+　　このまちを　つくったそうじゃ。
+According to the old legends, the great minstrel Garai founded this town.
+
+★Old Man: SW Corner
+＊「うわさでは　ローラひめは
+　　どこかの　どうくつに　とじこめ
+　　られたそうじゃ。
+The rumors say Princess Lora was imprisoned in a cave somewhere.
+
+＊「もう　たすけだされたのかのお…
+Will she be rescued soon.... (?)
+
+★Soldier: Near Arms Shop
+＊「おれは　みやおうだ。
+　　キムこうを　さがしている。
+I am Miyaou. I am searching for Lord Kim.
+[NOTE: Thanks to CygnusZ for tipping me off on this! This seems to be an
+encounter with one of the game developers. It appears Miyaou is actually
+Hiroshi Miyaoka, who assisted in the scenario development.]
+
+★Woman: Center
+＊「むかしがたりのまち
+　　ガライに　ようこそ！
+Welcome to Garai, the Town of Reminiscence!
+
+★Man: East Side
+＊「わたしは　きいた！
+　　なんと　ひめを　さらったまものが
+　　ひがしのほうに　とびさったとか！
+I heard! They say the monsters that kidnapped the Princess fled to the east!
+
+
+                     ==I.D.===============================
+           ----<<<<{{{{((((    THE EASTERN LANDS    ))))}}}}>>>>----
+                     =============================[DEAS]==
+
+
+                           --I.D.i.-----------------
+                     ----++++****    Maira    ****++++----
+                           -------------------------
+
+★Old Man: SE Corner
+＊「ここは　マイラの　むらです。
+This is the village of Maira.
+
+★Man: Center
+＊「みなみのしまは　とても　こわい
+　　ところです。
+The Southern Island is an awfully dreadful place.
+
+＊「じゅうぶんに　ちからをつけてから
+　　いかないと　いきて
+　　もどれないでしょう。
+If you don't gain enough strength before you go, you won't return alive.
+
+★Woman: Center
+＊「どうか　まものたちを
+　　たおして　ください。
+Please defeat the monsters somehow.
+
+★Guard: Center
+＊「ゴーレムは　ふえのね　が
+　　にがてだときく。
+I hear the Golem doesn't like the sound of the Flute.
+
+★Soldier: Center
+＊「おれは　ゆうていだ。
+　　キムこうを　さがしている。
+I am Yuutei. I am searching for Lord Kim.
+[NOTE: Thanks again to CygnusZ for this info! It seems that Yuutei refers to
+Yuji Horii, who wrote the scenario for the game.]
+
+★Old Man: NE Corner
+＊「ふるい　いいつたえでは
+　　ようせいたちは　ゴーレムを
+　　ねむらせた　そうじゃ。
+In the old legends, they say the fairies made Golem sleep.
+
+★Soldier: Arms Shop
+＊「ドムドーラの　はるかひがしに
+　　すばらしいぶきを
+　　うっているまちが　あるらしい。
+Far to the east of Domdora is a town that is selling magnificent weapons.
+
+★Woman: Fountain
+＊「ここは　ろてんぶろで
+　　ございまーす。
+This is a bath.
+
+＊「こうようは　りゅうまちで
+　　ございまーす。
+It helps rheumatism.
+
+★Old Man: NW Corner
+＊「ロトの　ちをひく　ゆうしゃよ！
+　　しかし　そのぶきでは
+　　りゅうおうを　たおせまいぞ！
+Hero descended from Loto! But you cannot defeat the Dragon King with that
+weapon!
+
+＊「また　くるがよい！
+You should come again!
+
+★Old Man: NW Corner (With Sword of Loto)
+＊「ついに　てにいれたな。
+　　ゆうしゃ　えっくすよ！
+At last you have obtained it. Hero X!
+
+★Man: W Area
+＊「おまえが　ロトの　ちをひくもの？
+　　なにか　しょうこが　あるのか？
+You are the descendant of Loto? Have you any proof?
+
+★Guard: SW Corner
+＊「うわさでは　リムルダールに
+　　カギをうるみせが　あるらしい。
+According to rumor, there is a shop in Rimuldar that sells keys.
+
+★Merchant
+＊「みなみの　しまに　いきましたか？
+Have you gone to the Southern Island?
+│
+├はい：Yes
+│＊「なんと！　とても　つよい
+│　　まものたちが　いるとききましたが
+│What! Although very powerful monsters are there, you made it back!
+│
+├いいえ：No
+│＊「みなみには　リムルダールという
+│　　まちが　あるらしいです。
+└In the south there is a town called Rimuldar.
+
+
+                      --I.D.ii.--------------------------
+                ----++++****    The Rain Shrine    ****++++----
+                      -----------------------------------
+
+★Old Man
+＊「そなたが　まことの　ゆうしゃか
+　　どうか　ためさせてほしい。
+I want to test whether thou art the true hero.
+
+＊「このちの　どこかに　まものたちを
+　　よびよせる　ぎんのたてごとが
+　　あるときく。
+I hear that somewhere on this earth there is a Silver Harp that summons
+monsters.
+
+＊「それを　もちかえったとき
+　　そなたを　ゆうしゃと　みとめ
+　　あまぐものつえを　さずけよう。
+When thou hast brought that, I will recognize thee as a hero and grant thee the
+Staff of Clouds.
+
+
+                    ==I.E.=================================
+          ----<<<<{{{{((((    THE SOUTHERN ISLAND    ))))}}}}>>>>----
+                    ===============================[ESOU]==
+
+
+                         --I.E.i.--------------------
+                   ----++++****    Rimuldar    ****++++----
+                         ----------------------------
+
+★Woman: E Side
+＊「おいで　ぼうや。
+　　ぱふぱふしてほしいなら
+　　５０ゴールドよ。
+Hey there, boy. If you want a Puff-puff, it's 50 Gold.
+
+★Man: Center
+＊「リムルダールのまちに　ようこそ！
+Welcome to the town of Rimuldar!
+
+★Soldier: Inn
+＊「いよお　えっくす！
+　　えっくすじゃないか！
+　　ひさしぶりだなあ。
+Hey X! You're X, aren't you! It's been a long time, hasn't it.
+
+★Soldier: S Side
+＊「ゆびわは　せんしの　たしなみだ。
+A ring is a warrior's fashion.
+
+★Soldier: S Side (With Warrior's Ring)
+＊「ゆびわなどして
+　　おまえは　はずかしいやつだなあ。
+Isn't a guy like you embarrassed, wearing rings and such?
+
+★Guard: Near SW Building
+＊「うわさでは　ラダトームのおしろに
+　　たいようのいしが　あるらしい。
+　　もう　てにいれたか？
+According to rumor, the Sun Stone is in Ladatorm Castle. Have you obtained it
+yet?
+
+★Old Man: Small Island
+＊「ふるい　いいつたえでは　ロトは
+　　このしまの　にしのはずれに
+　　にじをかけたそうじゃ。
+The old legends say that Loto attached a rainbow to the western end of this
+island.
+
+＊「そして　まおうの　へやの
+　　かくされたる　いりぐちより
+　　やみにはいったときく。
+And I hear that he entered the darkness through an entrance that was concealed
+in the Devil's room.
+
+★Man: North Room L
+＊「おまえが　ロトの　ちをひくもの？
+　　なにか　しょうこが　あるのか？
+You are the descendant of Loto? Have you any proof?
+
+★Woman: North Room R
+＊「あなた　だれ？
+　　でてゆかないと　ひとをよぶわよ！
+Who are you? If you don't leave I'll call someone!
+
+★Soldier: Arms Shop
+＊「りゅうおうの　うろこは
+　　はがねのように　かたいらしいぜ。
+They say the Dragon King's scales are hard as steel.
+
+★Woman: SW Room
+＊「やがて　このまちも
+　　まものたちに……
+　　ああ　カミさま……
+Soon even this town will be...by the monsters.... Ah, God....
+
+★Soldier: SW Room
+＊「りゅうおうの　からだを
+　　つらぬける　つるぎが　このよに
+　　あるのだろうか……
+Is there a sword in this world that can pierce the Dragon King's body....
+
+★Man: SW Room
+＊「みなみに　いっては　いけません。
+　　もっともっと　つよいまものが
+　　すんでいる　そうです。
+You must not go to the south. They say that many, many strong monsters live
+there.
+
+★Old Man: SW Room
+＊「ここは　よげんじょ。
+　　せいなる　ほこらをみつけたか？
+This place gives predictions. Have you found the Holy Shrine?
+│
+├はい：Yes
+│＊「あめと　たいようが　あわさる
+│　　ほこらじゃ。
+│It is the shrine that unites the Rain and the Sun.
+│
+├いいえ：No
+│＊「みなみに　ゆくがよい。
+└You should go south.
+
+★Man: NE Corner
+＊「ちゅん　でーす。
+　　かのじょを　まっています。
+I am Chun. I am waiting for my girlfriend.
+[NOTE: Chun, of course, is a reference to ChunSoft, which was named after the
+hero of Koichi Nakamura's first game, "Door Door."]
+
+★Woman: SW Corner
+＊「もう　ちゅんさまったら
+　　おそいわねえ。　ぷんぷん。
+If Chun isn't already late meeting me! Grrr.
+
+★Merchant: Key Shop
+＊「いらっしゃいませ！
+Welcome!
+
+★Old Man: Inn
+＊「わたしは　よしりーん。
+　　マイラのおふろから　みなみに４つ
+　　あるき　しらべるがよい。
+I am Yoshiriin. You should investigate four steps south from the bath in Maira.
+[NOTE: Almost every proper name in the game refers to someone involved in its
+creation, so I would be surprised if Yoshiriin were an exception. However, I
+don't know who this could be.]
+
+
+                      --I.E.ii.---------------------------
+                ----++++****    The Holy Shrine    ****++++----
+                      -----------------------------------
+
+★Old Man
+＊「そなたが　ロトのちをひく
+　　まことの　ゆうしゃなら
+　　しるしが　あるはず
+If thou art the true hero descended from Loto, thou shouldst have the Mark.
+
+＊「おろかものよ！　たちされい！
+Fool!  Leave!
+
+
+                    ==I.F.=================================
+          ----<<<<{{{{((((    BEHIND LOCKED DOORS    ))))}}}}>>>>----
+                    ===============================[FLOC]==
+
+
+                 --I.F.i.------------------------------------
+           ----++++****    Ladatorm Castle Unlocked    ****++++----
+                 --------------------------------------------
+
+★Guard: Treasury
+＊「まことの　ゆうしゃなら
+　　ぬすみなど　せぬはずだ。
+If you are a true hero, you shouldn't steal.
+
+★Old Man: Church
+＊「ゆうしゃのため　いのりましょう。
+Let us pray for the Hero.
+
+＊「ひかりが　そなたと　ともに
+　　ありますように…
+May the light be with thee....
+
+★Soldier: Near Church
+＊「わたしは　ちかしつを
+　　さがしている。　おしろの
+　　どこかに　あるらしいが…
+I am searching for the cellar. They say there is one somewhere in the castle...
+
+★Guard: Before Barrier
+＊「たいりょくに　じしんが
+　　あるなら　はいるがよい。
+If you have confidence in your strength, enter.
+
+★Soldier: Behind Barrier
+＊「ガライのはかは　ガライのまちに。
+　　まちに　はいり　くらやみのかべを
+　　おすがよい。
+The Tomb of Garai is in the town of Garai. Enter the town and press on a wall
+of darkness.
+
+★Woman: Near Key Shop
+＊「あめと　たいようが　あわさるとき
+　　にじのはしが　できる。
+When the Rain and Sun unite, a Rainbow Bridge is formed.
+
+＊「ふるい　いいつたえ　ですわ。
+It's an old legend.
+
+★Old Man: Basement
+＊「わしは　まっておった。
+　　そなたのような　わかものが
+　　あらわれることを…
+I have been waiting. For the appearance of a young man like thou...
+
+＊「さあ　たからのはこを
+　　とるがよい。
+Come now, take the treasure box.
+
+★Old Man: Basement (After Obtaining Sun Stone)
+＊「ここには　もう　ようがないはず。
+　　いくがよい。
+Thou hast no more business here. Thou shouldst go.
+
+
+                     --I.F.ii.----------------------------
+               ----++++****    Ladatorm Unlocked    ****++++----
+                     -------------------------------------
+
+★Soldier: Inn
+＊「うわさでは　ガライのはかに
+　　ぎんのたてごとが　あるらしい…
+According to rumor, there is a Silver Harp in the Tomb of Garai....
+
+
+                      --I.F.iii.------------------------
+                ----++++****    Garai Unlocked    ****++++----
+                      ----------------------------------
+
+★Old Man: Inside Building
+＊「うわさでは　どこかに
+　　ゆうしゃ　ロトのきていた
+　　よろいが　あるらしい。
+According to rumor, somewhere exists the armor that the Hero Loto wore.
+
+★Man: Inside Building
+＊「はるか　みなみに　ドムドーラの
+　　まちが　ありました。
+　　いまも　あるのでしょうか……。
+Far to the south was the town of Domdora. Is it still there now....
+
+★Woman: Inside Building
+＊「おとこなんて　きらいよ。
+　　しっしっ。
+I hate the likes of men. *Glare*
+
+★Merchant: Inside Building
+＊「えーい　もってけ！　どろぼう！
+Hey, hold it! Thief! (?)
+
+★Guards: Inside Building, L/R
+＊「わたしは　いそがしい。
+　　となりのやつに　きいてくれ。
+I'm busy. Ask the next guy.
+
+★Old Man: Tomb Entrance
+＊「たてごとは　まものたちを
+　　よびよせる。
+　　ガライのはかに　ちかよるな！
+The harp summons monsters. Do not approach the Tomb of Garai!
+
+
+                      --I.F.iv.-------------------------
+                ----++++****    Maira Unlocked    ****++++----
+                      ----------------------------------
+
+★Old Man: W Room
+＊「ふえを　てにいれたか？
+Have you obtained the Flute?
+│
+├はい：Yes
+│＊「メルキドのまちに　ゆくがよい！
+│You should go to the town of Melkido!
+│
+├いいえ：No
+│＊「よしりーんが　もっていたが
+│　　リムルダールにいくといって
+│　　むらをでて　それっきりかえらぬ。
+└Yoshiriin had it, but he left the village saying he was going to Rimuldar,
+and he has not returned. (?)
+
+
+                ==I.G.=========================================
+      ----<<<<{{{{((((    THE RESCUE OF PRINCESS LORA    ))))}}}}>>>>----
+                =======================================[GRES]==
+
+
+                      --I.G.i.--------------------------
+                ----++++****    The Marsh Cave    ****++++----
+                      ----------------------------------
+
+★Princess Lora
+ローラ「ああ！　たすけだしてくださる
+　　　　かたが　ほんとうにいたなんて
+　　　　まだ　しんじられませんわ！
+Lora: Ah! I cannot believe that I have truly been rescued!
+
+ローラ「わたしは　ラルス１６せいの
+　　　　むすめ　ローラです。
+Lora: I am the daughter of Lars XVI, Lora.
+
+ローラ「わたしを　おしろまで
+　　　　つれてかえってくれますね？
+Lora: Could you please take me to the castle?
+│
+├いいえ：No
+│ローラ「そんな　ひどい……。
+│Lora: How cruel....
+│
+├はい：Yes
+│あなたは　ひめを　だきかかえた。
+│You embraced the princess.
+│
+│ローラ「うれしゅうございます。　ぽっ
+└Lora: I am happy. *Kiss*
+
+
+                 --I.G.ii.------------------------------------
+           ----++++****    Ladatorm Castle Revisited    ****++++----
+                 ---------------------------------------------
+
+★King
+＊「おお　えっくす！　よくぞ
+　　ひめを　たすけだしてくれた。
+　　こころから　れいをいうぞ！
+Oh, X! How good that you have rescued the princess. From my heart I thank you!
+
+＊「さあ　ローラ。
+　　わたしのとなりへ。
+Come, Lora. To my side.
+
+ローラ「まってください。　ローラは
+　　　　えっくすさまに　おくりものを
+　　　　しとうございます。
+Lora: Please wait. It is proper that I give a gift to X. (?)
+
+ローラ「えっくすさまを　あいする
+　　　　わたしの　こころ。　どうか
+　　　　うけとってくださいませ。
+Lora: It is the love for you in my heart. Please accept it.
+
+[If inventory is full]
+ローラ「そして　ローラにも
+　　　　あなたさまから
+　　　　なにか　ひとつ…
+Lora: And one thing from you to me as well....
+
+ローラ「えっくすを　ローラに
+　　　　くださいませね。
+Lora: Please, X.
+[NOTE: At this point, Lora takes one of your non-essential items. I have not
+yet seen this occur in the Japanese version, but I have confirmed it in the
+North American release. However, in the Japanese translation it doesn't seem
+apparent which item is being taken, although in the N.A. release the item is
+explicitly stated.]
+
+ローラ「ああ！　たとえ　はなれて
+　　　　いても　ローラは　いつも
+　　　　あなたと　ともに　あります。
+Lora: Ah! Although we are separated, I am always with you.
+
+ローラ「では　えっくすさま……
+Lora: Well then, X....
+
+＊「そなたに　ふっかつの　じゅもんを
+　　おしえよう！
+Let me teach to thee the Spell of Restoration!
+
+[Password]
+
+＊「これを　かきとめておくのだぞ。
+You should write this down and keep it.
+
+＊「では　また　あおう！
+　　ゆうしゃ　えっくすよ！
+Well then, let us meet again! Hero X!
+
+★Princess: Speech 1
+ローラ「ああ！　たとえ　はなれて
+　　　　いても　ローラは　いつも
+　　　　あなたと　ともに　あります。
+Lora: Ah! Although we are separated, I am always with you.
+
+★Princess: Speech 2
+ローラ「えっくすさまを　ローラは
+　　　　おしたい　もうしております。
+Lora: I miss you so much.
+
+★Princess: Speech 3
+ローラ「えっくすさまは　ローラのこと
+　　　　を　おもってくださいますか？
+Lora: Will you please think of me?
+│
+├いいえ：No
+│ローラ「そんな　ひどい……。
+│Lora: How cruel....
+│
+├はい：Yes
+│ローラ「うれしゅうございます。　ぽっ
+└Lora: I am so happy. *Kiss*
+
+★Guard: Throne Room
+＊「おお　えっくす！
+　　すばらしき　ゆうしゃよ！
+Oh X! Wonderful hero!
+
+★Woman: Main Hall
+＊「ひめを　たすけだしてくれて
+　　ありがとうございます。
+Thank you for rescuing the princess.
+
+★Guard: Posted Near Hall
+＊「ああ　いとしのローラひめ…
+　　わたしは　えっくすが　にくい。
+Ah, my lovely Princess Lora.... I despise you, X.
+
+★Using the Princess's Love
+ローラひめの　こえが　きこえる。
+Princess Lora's voice is heard.
+
+ローラ「あなたが　レベルをあげるには
+　　　　あと　＿＿ポイント
+　　　　けいけんが　ひつようです。
+Lora: For you to increase in level, you need __ more experience points.
+
+ローラ「わたしのいる　おしろは
+　　　　［きた／みなみ］に＿＿　［ひがし／にし］に＿＿
+　　　　の　ほうこう　です。
+Lora: My castle is in the direction of __ to the [north/south] and __ to the
+[east/west].
+
+ローラ「えっくすさまを　ローラは
+　　　　おしたい　もうしております。
+Lora: I miss so much.
+
+
+                    --I.G.iii.----------------------------
+              ----++++****    Ladatorm Revisited    ****++++----
+                    --------------------------------------
+
+★Guard: Inn (After Rescuing the Princess)
+＊「わたしに　さわるのは　だれだ？
+　　もう　なにも　みえぬ…
+　　もう　なにも　きこえぬ…
+Who touches me? I can see nothing more... I can hear nothing more...
+
+
+________--------~~~~~~~~            ACT II             ~~~~~~~~--------________
+                        ＴＨＥ　ＤＲＡＧＯＮ　ＫＩＮＧ
+~~~~~~~~--------________                               ________--------~~~~~~~~
+
+
+                ==II.A.========================================
+      ----<<<<{{{{((((    THE SOUTHERN LANDS: MELKIDO    ))))}}}}>>>>----
+                =======================================[AMEL]==
+
+★Guard: Near Entrance
+＊「じょうさいのまち
+　　メルキドに　ようこそ！
+Welcome to the fortress town, Melkido!
+
+★Man: E Side
+＊「えーん。　あてが　まいごの
+　　キムこう　だす。
+Yeah. I'm who you're looking for, the lost child Lord Kim. (?)
+[NOTE: Thanks to CygnusZ for helping with this one. It seems that Kimu-kou
+represents another scenario writer for this game, Hajime Kimura. However, this
+person is not listed in the game credits.... Perhaps that's why Yuutei and
+Miyaou were looking for him?]
+
+★Guard: E Side, Near Shops
+＊「うわさでは　ロトのよろいは
+　　ひとから　ひとへ。
+Rumor says that Loto's Armor has passed from person to person.
+
+＊「ゆきのふ　というおとこの　てに
+　　わたったそうだ。
+It seems it had passed into the hands of a man called Yukinofu.
+[NOTE: Considering all the other encounters with developers, and more than a
+passing resemblance in the names, I believe Yukinofu is actually Yukinobu Chida,
+the game's producer.]
+
+★Merchant: E Side
+＊「むかし　うちのじいさんが　よく
+　　いってました。
+In the old days, my grandfather often said this.
+
+＊「ともだちの　ゆきのふは
+　　じぶんのみせの　うらの　きに
+　　なにか　うめたらしいと…
+He said his friend Yukinofu buried something at a tree in the back of his
+shop....
+
+★Old Man: SE Corner
+＊「ふるい　いいつたえでは
+　　ゆうしゃロトのつかった　つるぎは
+　　はがねをも　くだいたそうじゃ。
+In the old legends, the sword used by the Hero Loto smashed even steel.
+
+★Guard: Near Inn
+＊「りゅうおうの　つめは　てつを
+　　ひきさき　そして　はく　ほのおは
+　　いわをも　とかすという。
+It is said that the Dragon King's claws split iron, and the flames he breathes
+melt even stone.
+
+＊「えっくすよ　それでも　ゆくか？
+X, will you go even so?
+│
+├はい：Yes
+│＊「おお！　あなたこそ
+│　　まことの　ゆうしゃだ！
+│Oh! You surely are a true hero!
+│
+├いいえ：No
+│＊「それが　いい。
+│　　だれも　おまえを　おくびょうとは
+│　　いわないだろう。
+└That is good. No one will say you are a coward.
+
+★Woman: Near W Shops
+＊「こんやの　おかずは
+　　なんに　しようかしら……
+I wonder what I shall make for a side dish tonight....
+
+★Merchant: W Side, L Shop
+＊「まいど！
+　　きょうは　だいこんが　やすいよ！
+Welcome! Radishes are cheap today!
+
+★Woman: W Side
+＊「ねえ　わたしの　ぽーとぴあと
+　　あなたの　ドラゴンくえすとを
+　　かえっこしてよ。
+Let's exchange my "Portopia" for your "Dragon Quest."
+[NOTE: "The Portopia Serial Murder Case" (Portopia Renzoku Satsujin Jiken) is a
+game released by Enix six months before "Dragon Quest," also written by Yuji
+Horii.]
+
+★Merchant: SW Corner
+＊「わたしの　いえは　そのむかし
+　　ドムドーラのまちで　みせやを
+　　していたとか。
+In the old days my family ran a shop in the town of Domdora.
+
+＊「みせは　まちのひがしに　あり
+　　ゆきのふじいさんのとき
+　　まちが　まものたちに　おそわれ…
+When Grandfather Yukinofu's shop was in the east of the town, the town was
+attacked by monsters... (?)
+
+＊「このまちまで　にげてきました。
+I escaped to this town.
+
+★Old Man: Under Roof
+＊「そなたが　しるしをもとめるなら
+　　このまちの　しんでんにすむ
+　　ちょうろうを　たずねるがよい。
+If thou seekest the Mark, thou shouldst ask the elder who resides in the temple
+of this town.
+
+★Old Man: Behind Barrier
+＊「ゆうしゃのため　いのりましょう。
+Let us pray for the hero.
+
+＊「ひかりが　そなたと　ともに
+　　ありますように…
+May the light be with thee...
+
+＊「ゆくがよい。
+　　そして　さがすがよい。
+You should go. And you should search.
+
+＊「ラダトームの　おしろまで
+　　きたに７０　にしに４０の
+　　そのばしょを！
+In the place where Ladatorm Castle is 70 to the north and 40 to the west!
+
+
+                     ==II.B.=============================
+           ----<<<<{{{{((((    THE RAINBOW DROP    ))))}}}}>>>>----
+                     ============================[BRAI]==
+
+
+                 --II.B.i.------------------------------------
+           ----++++****    The Rain Shrine Revisited    ****++++----
+                 ---------------------------------------------
+
+★Old Man: With Silver Harp
+＊「おお　えっくす！
+　　たてごとを　もってきたな！
+Oh, X! You have brought the harp!
+
+＊「わしは　まっておった。
+　　そなたのような　わかものが
+　　あらわれることを…
+I have been waiting. For the appearance of a young man like thou...
+
+＊「さあ　たからのはこを
+　　とるがよい。
+Come now, take the treasure box.
+
+
+                 --II.B.ii.-----------------------------------
+           ----++++****    The Holy Shrine Revisited    ****++++----
+                 ---------------------------------------------
+
+★Old Man: With Mark of Loto
+＊「ロトの　ちをひくものよ。
+　　いまこそ　あめと　たいようが
+　　あわさるときじゃ！
+Descendant of Loto. Now is the time that the Rain and Sun will unite!
+
+＊「そなたに　にじのしずくを
+　　あたえよう！
+To thee I give the Rainbow Drop!
+
+★Holy Shrine: After Obtaining Rainbow Drop
+＊「ここには　もう　ようがないはず。
+　　いくがよい。
+Thou hast no more business here. Thou shouldst go.
+
+
+                  ==II.C.====================================
+        ----<<<<{{{{((((          DEMON'S ISLE         ))))}}}}>>>>----
+     ----<<<<{{{{((((    THE CASTLE OF THE DRAGON KING    ))))}}}}>>>>----
+               =========================================[CCAS]==
+
+★Using the Rainbow Drop
+えっくすは　にじのしずくを
+てんに　かざした。
+X held the Rainbow Drop toward the sky.
+
+★Using the Rainbow Drop (Incorrect Location)
+しかし、　ここに　にじは
+かからなかった。
+But no rainbow appeared here.
+
+★Searching the Dragon King's Throne Room
+ぎょくざの　うしろから
+かぜを　かんじる。
+You feel a breeze from behind the throne.
+
+★Searching Behind the Throne
+なんと　かいだんを　みつけた。
+There you discovered stairs.
+
+★The Dragon King
+＊「よくきた　えっくすよ。
+　　わしが　おうのなかの　おう
+　　りゅうおうだ。
+You've done well to come here, X. I am the Dragon King, King among Kings.
+
+＊「わしは　まっておった。
+　　そなたのような　わかものが
+　　あらわれることを…
+I have been waiting. For the appearance of a young man like thou...
+
+＊「もし　わしの　みかたになれば
+　　せかいの　はんぶんを
+　　えっくすに　やろう。
+If you become my ally, I shall give half of the world to you.
+
+＊「どうじゃ？
+　　わしの　みかたに　なるか？
+What say you? Will you become my ally?
+│
+├はい：Yes
+│＊「ほんとうだな？
+│Is that true?
+││
+│├はい：Yes
+││＊「では　せかいの　はんぶん
+││　　やみのせかいを　あたえよう！
+││　　そして…
+││Then let me give you half of the world, the World of Darkness! And...
+││
+││＊「そなたに　ふっかつの　じゅもんを
+││　　おしえよう！
+││Let me teach to thee the Spell of Restoration!
+││
+││[Password]
+││
+││＊「これを　かきとめておくのだぞ。
+││You should write this down and keep it.
+││
+││＊「おまえの　たびは　おわった。
+││　　さあ　ゆっくり　やすむがよい！
+││　　わあっはっはっはっ
+││Your journey has ended. Come now, and rest easy! Wahahaha....
+││
+├┼いいえ：No
+││＊「おろかものめ！
+││　　おもいしるがよい！
+└┴Fool! You will realize!
+
+★The Dragon King's True Form
+りゅうおうが　しょうたいを
+あらわした！！
+The Dragon King revealed his true form!
+
+★The Fall of the Dragon King
+りゅうおうを　たおした！
+You have defeated the Dragon King!
+
+そして　ひかりのたまを
+りゅうおうのてから　とりもどした！
+Thus you took back the Ball of Light from the hand of the Dragon King!
+
+あなたが　ひかりのたまを　かざすと
+まばゆいばかりの　ひかりが
+あふれだす……
+When you hold the Ball of Light aloft, it overflows with a dazzling light....
+
+このくにに　へいわが　もどったのだ。
+Peace returns to the land.
+
+
+                         ==II.D.=====================
+               ----<<<<{{{{((((    EPILOGUE    ))))}}}}>>>>----
+                         ====================[DEPI]==
+
+
+                 --II.D.i.-----------------------------------
+           ----++++****    The Cheers of the People    ****++++----
+                 --------------------------------------------
+
+★Cheer 1
+＊「ゆうしゃロト　ばんざい！
+　　ゆうしゃえっくす　ばんざーい！
+Hurrah for the Hero Loto! Hurrah for the Hero X!
+
+★Cheer 2
+＊「あなたさまの　おかげで
+　　へいわが　もどりました！
+Thanks to you, peace has returned!
+
+＊「おうさまも　きっと
+　　およろこびでしょう！
+The King must surely be delighted as well!
+
+★Guard: Ladatorm Inn
+＊「……………
+
+[NOTE: Well, that *is* what he says! ^_^]
+
+★Everyone: Ladatorm Castle
+＊「さあ　はやく　おうさまのもとへ！
+Come now, quickly, to the foot of the King!
+
+
+                       --II.D.ii.-----------------------
+                 ----++++****    Ending Proper    ****++++----
+                       ---------------------------------
+
+★King
+＊「おお！　えっくす！
+　　すべては　ふるい　いいつたえの
+　　ままで　あった！
+Oh! X! All the old legends were true!
+
+＊「すなわち　そなたこそは
+　　ゆうしゃロトの　ちをひくもの！
+That is, thou surely art the descendant of the Hero Loto!
+
+＊「そなたこそ　このせかいを
+　　おさめるに　ふさわしい　おかた
+　　なのじゃ！
+Surely thou art the appropriate man to rule this world!
+
+＊「わしに　かわって
+　　このくにを　おさめてくれるな？
+Wilt thou take my place to govern this country?
+
+しかし　えっくすは　いいました。
+But X spoke.
+
+＊「いいえ。　わたしの　おさめる
+　　くにが　あるなら　それは
+　　わたしじしんで　さがしたいのです
+No. If there is to be a country that I rule, I want to search for it myself.
+
+ローラ「まってくださいませ！
+Lora: Please wait!
+
+ローラ「その　あなたの　たびに
+　　ローラも
+　　おともしとうございます。
+Lora: I ask that I may accompany you on your journey.
+
+ローラ「このローラも　つれてって
+　　　　くださいますわね？
+Lora: Will you please take me along also?
+│
+├いいえ：No
+│ローラ「そんな　ひどい……。
+│Lora: How cruel....
+│
+├はい：Yes
+│ローラ「うれしゅうございます。　ぽっ
+└Lora: I am so happy! *Kiss*
+
+　えっくすの
+　　　あらたなたびが　はじまる。
+X's new journey begins.
+
+　　　　　　　　　　　　　　　　ＧＲＥＡＴ　！！
+
+　　　　　　　　　　　ＹＯＵ　ＲＥＧＡＩＮＥＤ　ＰＥＡＣＥ
+　　　　　　　　　　　　　ＴＯ　ＴＨＥ　ＷＯＲＬＤ　！
+
+　　　　　　　　ＢＵＴ　ＹＯＵ　ＤＥＣＩＤＥＤ　ＴＯ　ＳＴＡＲＴ
+　　　　　　　　　　　ＯＮ　Ａ　ＮＥＷ　ＪＯＵＲＮＥＹ　．
+
+　　　　　　　　　　　ＭＡＹ　ＧＯＤ　ＢＥ　ＡＬＷＡＹＳ
+　　　　　　　　　　　　　　　ＷＩＴＨ　ＹＯＵ　！
+
+
+                          --II.D.iii.----------------
+                    ----++++****    Credits    ****++++----
+                          ---------------------------
+
+　　　　　　　　　　　　　ＤＲＡＧＯＮ　ＱＵＥＳＴ
+　　　　　　　　　　　　　　　　ＳＴＡＦＦ
+
+　　　　　　　　　　ＳＣＥＮＡＲＩＯ　ＷＲＩＴＴＥＮ　ＢＹ
+　　　　　　　　　　　　　　　ＹＵＪＩ　ＨＯＲＩＩ
+
+　　　　　　　　　ＣＨＡＲＡＣＴＥＲ　ＤＥＳＩＧＮＥＤ　ＢＹ
+　　　　　　　　　　　　　ＡＫＩＲＡ　ＴＯＲＩＹＡＭＡ
+
+　　　　　　　　　　　ＭＵＳＩＣ　ＣＯＭＰＯＳＥＤ　ＢＹ
+　　　　　　　　　　　　ＫＯＩＣＨＩ　ＳＵＧＩＹＡＭＡ
+
+　　　　　　　　　　　　　　ＰＲＯＧＲＡＭＥＤ　ＢＹ
+　　　　　　　　　　　　ＫＯＩＣＨＩ　ＮＡＫＡＭＵＲＡ
+　　　　　　　　　　　　　　ＫＯＪＩ　ＹＯＳＨＩＤＡ
+　　　　　　　　　　　ＴＡＫＥＮＯＲＩ　ＹＡＭＡＭＯＲＩ
+
+　　　　　　　　　　　　　ＣＧ　ＤＥＳＩＧＮＥＤ　ＢＹ
+　　　　　　　　　　　　　ＴＡＫＡＳＨＩ　ＹＡＳＵＮＯ
+
+　　　　　　　　　　ＳＣＥＮＡＲＩＯ　ＡＳＳＩＳＴＥＤ　ＢＹ
+　　　　　　　　　　　　ＨＩＲＯＳＨＩ　ＭＩＹＡＯＫＡ
+
+　　　　　　　　　　　　　　ＡＳＳＩＳＴＥＤ　ＢＹ
+　　　　　　　　　　　　　　ＲＩＫＡ　ＳＵＺＵＫＩ
+　　　　　　　　　　　　ＴＡＤＡＳＨＩ　ＦＵＫＵＺＡＷＡ
+
+　　　　　　　　　　　ＴＩＴＬＥ　ＤＥＳＩＧＮＥＤ　ＢＹ
+　　　　　　　　　　　　　ＫＡＺＵＯ　ＥＮＯＭＯＴＯ
+
+　　　　　　　　　ＭＡＮＵＡＬ　ＩＬＬＵＳＴＲＡＴＥＤ　ＢＹ
+　　　　　　　　　　　　　　ＴＡＫＡＹＵＫＩ　ＤＯＩ
+
+　　　　　　　　　　　ＳＰＥＣＩＡＬ　ＴＨＡＮＫＳ　ＴＯ
+　　　　　　　　　　　ＫＡＺＵＨＩＫＯ　ＴＯＲＩＳＨＩＭＡ
+
+　　　　　　　　　　　　　　ＤＩＲＥＣＴＥＤ　ＢＹ
+　　　　　　　　　　　　ＫＯＩＣＨＩ　ＮＡＫＡＭＵＲＡ
+
+　　　　　　　　　　　　　　ＰＲＯＤＵＣＥＤ　ＢＹ
+　　　　　　　　　　　　　ＹＵＫＩＮＯＢＵ　ＣＨＩＤＡ
+
+　　　　　　　　　　　　　　　ＣＯＰＹＲＩＧＨＴ
+　　　　　　　　　ＡＲＭＯＲ　ＰＲＯＪＥＣＴ　　　　１９８６
+　　　　　　　　　ＢＩＲＤ　ＳＴＵＤＩＯ　　　　　　１９８６
+　　　　　　　　　ＫＯＩＣＨＩ　ＳＵＧＩＹＡＭＡ　　１９８６
+　　　　　　　　　ＣＨＵＮ　ＳＯＦＴ　　　　　　　　１９８６
+　　　　　　　　　　　　　　　ＥＮＩＸ　　１９８６
+
+　　　　　　　　　　　　　　　　　　ＥＮＩＸ
+
+　　　　　　　　　　　　　　　　Ｔｈｅ　Ｅｎｄ
+
+
+________--------~~~~~~~~             ACT 0             ~~~~~~~~--------________
+                       ＯＵＴＳＩＤＥ　ＴＨＥ　ＰＬＯＴ
+~~~~~~~~--------________                               ________--------~~~~~~~~
+
+
+                          ==0.A.=====================
+                ----<<<<{{{{((((    CURSED!    ))))}}}}>>>>----
+                          ===================[ACUR]==
+
+★Attempting to Enter Ladatorm Castle
+＊「のろわれしものよ、でてゆけっ！
+Cursed one, be gone!
+
+★King: Dying While Cursed
+＊「おお　えっくすよ！
+　　しんでしまうとは　なにごとだ！
+Oh, X! You died on us!
+
+＊「しかも　のろわれているではないか
+　　のろわれしものよ、でてゆけっ！
+Furthermore, you are cursed. Cursed one, be gone!
+
+★Removing the Curse: Old Man at Ladatorm
+＊「のろいをといて　しんぜよう。
+I shall offer to dissolve the curse.
+
+＊「さあ　ゆくがよい。
+There now, go.
+
+
+                       ==0.B.===========================
+             ----<<<<{{{{((((    MAXIMUM LEVEL    ))))}}}}>>>>----
+                       =========================[BMAX]==
+
+★King
+＊「そなたは　もう　じゅうぶんに
+　　つよい！　なぜに　まだ
+　　りゅうおうを　たおせぬのか？
+Thou art already strong enough! Why canst thou not yet defeat the Dragon King?
+
+★Using the Princess's Love
+ローラひめの　こえが　きこえる。
+Princess Lora's voice is heard.
+
+ローラ「あなたのレベルは　もう
+　　　　さいこうで　ございます。
+Lora: You are already at the highest level.
+
+
+                  ==0.C.====================================
+        ----<<<<{{{{((((    BONUS! BACK OF THE BOX    ))))}}}}>>>>----
+                  ==================================[CBOX]==
+
+★Title Caption
+ドラゴン　クエスト
+ＤＲＡＧＯＮ　ＱＵＥＳＴ
+
+超本格大冒険ロールプレイングゲーム
+Ultra Large Scale Role Playing Adventure Game
+
+★Main Body
+邪悪な竜の化身が支配するアレフガルド。あなたは伝説の勇者ロトの生まれかわりとな
+って、広大なアレフガルドを大冒険！　あるときは怪物たちと戦い、またあるときは城
+や町で人々と話し、魔の竜を倒すため、旅を続けます。登場人物は、なんと１００人以
+上、そして、いろんな倆性を持つ多くの怪物たち。ドラゴンクエストの世界は、あなた
+をさっと魅了することでしょう。さあ、あなたの旅は、今、はじまったのです。
+Alefgard is ruled by the incarnation of a wicked dragon. You, becoming the
+Descendant of the Legendary Hero Loto, are on a grand adventure in the
+magnificent land of Alefgard! At times you will battle with monsters, speak
+with everyone in the castles and towns, defeat the Demon Dragon, and continue
+your journey. As for the characters, there are over 100, and many monsters that
+possess various characteristic skills. The world of Dragon Quest will probably
+fascinate you suddenly. Come, your journey now has begun.
+
+★Caption: Picture of Opening Scene in Throne Room
+主人公はあなた自身。ゲームスタート時にあなたの名前を入れると王様や町の人はその
+名前で話しかけてきます。
+The main character is you yourself. When you start the game and enter your name,
+the King and the townspeople will call you by that name.
+
+★Caption: Picture of a Battle Against a Ghost Knight
+怪物と戦うことで、あなたは成長し、どんどん強くなってゆくことでしょう。成長すれ
+ば１０？？の呪文がつかえるようになります。
+By battling with monsters, you grow, steadily becoming stronger. If you grow,
+you will become able to use 10 (?) spells.
+
+★Caption: Picture of the Hero Speaking to a Resident of Ladatorm Castle
+城や町に入り、人々の話に耳を傾けましょう。きっとあなたの旅に役立つはずです。
+Enter the castles and towns and lend an ear to the words of everyone. Surely it
+will be useful on your journey.
+[NOTE: The character name used in the two previous screenshots is こういち--as
+in Koichi Nakamura, the director and lead programmer.]
+
+★Caption: Picture of the Area near Rimuldar
+広大なアレフガルドには２つの城と６つの町や村が…。しかし、それらがどこにあるの
+かは自分で見付けるしかありません。
+In the magnificent land of Alefgard, there are two castles and six towns and
+villages.... However, you must discover where they are located yourself.
+
+★UPC Box
+株式会社　エニックス
+Enix Incorporated
+
+
+                       ==0.D.==========================
+             ----<<<<{{{{((((    DUMMIED TEXT    ))))}}}}>>>>----
+                       ========================[DDUM]==
+
+This extremely small section contains text which might not have been used in
+the game. If you know where it appears, please let me know! It was apparently
+translated for the North American release, since it appears in the text dump
+submitted by Blueberry Buttface, but I have no idea where it could come up.
+
+ここでは　はいれない。
+You cannot enter here.
+[NOTE: This one appears within the block of menu command results, but I can't
+think of anything to make it show up. Attempting to use stairs where there are
+none, using Keys where there is no door, trying to open a door where there is
+no door...I'm stumped.]
+
+
+________--------~~~~~~~~                               ~~~~~~~~--------________
+                                      FIN
+~~~~~~~~--------________                               ________--------~~~~~~~~
+
+
+                   /==3.===================================/
+                   |          Navigating the Game          |
+                   /===============================[3NAV]==/
+
+This section is provided for those who would like to play this game in Japanese,
+but are not familiar with the language.
+
+
+                   /--3.a.---------------------------------/
+                   |              Starting Up              |
+                   /-------------------------------[3STA]--/
+
+Starting the game is easy, as the title screen options are in English! :-D
+Simply use the Up/Down Directions to choose ＳＴＡＲＴ or ＣＯＮＴＩＮＵＥ, and
+use the Left/Right Directions to choose a ＭＥＳＳＡＧＥ　ＳＰＥＥＤ of
+ＳＬＯＷ, ＮＯＲＭＡＬ, or ＦＡＳＴ. Once you have made your choices, press the
+Start Button.
+
+If you choose to ＳＴＡＲＴ a new game, you will be confronted with the message
+なまえを　いれてください ("Please Enter a Name"). You may enter up to four
+characters, choosing from the forty-six hiragana, as well as the small versions
+of "tsu" (sokuon) and the "Y-row" (sutegana). You can also use the ゛ (nigori
+or dakuten) and ゜ (maru or handakuten) diacritic marks, which each takes up
+its own character rather than combining with kana. You cannot enter a space in
+your name. Two commands are available on the bottom row, もどる ("Back") and
+おわり ("End").
+
+If you choose to ＣＯＮＴＩＮＵＥ a previous game, you are presented with the
+message ふっかつの　じゅもんを　いれてください ("Please Enter Spell of
+Restoration"); this is the password system for the game. The Spell of
+Restoration consists of twenty hiragana, chosen from the sixty-four choices
+available on this screen. On the bottom row are three commands, もどる ("Back"),
+すすむ ("Advance"), and おわり ("End"). If you make a mistake, you will be
+given the message じゅもんを　ちがいます ("The Spell Is Wrong"), and you will
+have to correct any errors.
+
+
+                   /--3.b.---------------------------------/
+                   |         Basic Command Windows         |
+                   /-------------------------------[3BAS]--/
+
+When you press the A Button in walkabout mode, the following windows appear:
+
+　　　　　　　　　　　┌────コマンド────┐
+　┌─えっくす─┐　　│　はなす　　　じゅもん　│
+　│レベル　　１│　　│　つよさ　　　どうぐ　　│
+　│ＨＰ　　１５│　　│　かいだん　　しらべる　│
+　│ＭＰ　　　０│　　│　とびら　　　とる　　　│
+　│Ｇ　　　　０│　　└────────────┘
+　│Ｅ　　　　０│
+　└──────┘
+
+Translated, these windows look like this:
+
+　　　　　　　　　　　┌────Command ────┐
+　┌─Ｘ　　　─┐　　│　Speak 　　　Spell 　　│
+　│Level 　　１│　　│　Strength　　Tool　　　│
+　│ＨＰ　　１５│　　│　Stairs　　　Examine 　│
+　│ＭＰ　　　０│　　│　Door　　　　Take　　　│
+　│Ｇ　　　　０│　　└────────────┘
+　│Ｅ　　　　０│
+　└──────┘
+
+Of course, the caption of the window on the left is your character's name.
+
+When you select "Speak," another window appears:
+
+　┌───はなす──┐　　　　　┌───Speak ──┐
+　│　　　きた　　　│　　　　　│　　　North 　　│
+　│　にし　　ひがし│　　→　　│　West　　East　│
+　│　　　みなみ　　│　　　　　│　　　South 　　│
+　└────────┘　　　　　└────────┘
+
+Since your character graphic can only face one direction in the original
+Japanese release, this window allows you to choose a direction in which to
+speak.
+
+When you select "Strength," your status window is displayed:
+
+　┌───つよさ──────┐　　　　　┌───Strength─────┐
+　│　　　レベル：　　　１　│　　　　　│　　　 Level：　　　１　│
+　│　　　ちから：　　　５　│　　　　　│　　　 Power：　　　５　│
+　│　　すばやさ：　　　５　│　　　　　│　　 Agility：　　　５　│
+　│さいだいＨＰ：　　１５　│　　　　　│Maximum ＨＰ：　　１５　│
+　│さいだいＭＰ：　　　０　│　　→　　│Maximum ＭＰ：　　　０　│
+　│　こうげき力：　　　５　│　　　　　│Attack Power：　　　５　│
+　│　　しゅび力：　　　２　│　　　　　│　Def. Power：　　　２　│
+　│　　ぶき：　　　　なし　│　　　　　│　Weapon：　　　　None　│
+　│　よろい：　　　　なし　│　　　　　│　 Armor：　　　　None　│
+　│　　たて：　　　　なし　│　　　　　│　Shield：　　　　None　│
+　└────────────┘　　　　　└────────────┘
+
+The other six commands either perform their action immediately ("Stairs,"
+"Door," "Examine," "Take") or bring up a list of available choices ("Spell,"
+"Tool"). The various items that can appear under these commands are listed in
+sections 4 and 5 of this guide.
+
+There are several messages which can appear when you choose an action. These
+include:
+
+★Speak
+そのほうこうには　だれも　いない。
+There is no one in that direction.
+
+★Stairs
+ここには　かいだんが　ない。
+There are no stairs here.
+
+★Door
+ここには　とびらがない！
+There is no door here!
+
+カギを　もっていない！
+You don't have a Key!
+
+★Spell
+えっくすは　＿＿＿＿の
+じゅもんを　となえた！
+X casts the spell of ____!
+
+えっくすは　まだ　じゅもんを
+つかえない。
+X cannot yet use spells.
+
+ＭＰ　が　たりません。
+There is not enough MP.
+
+しかし　なにも　おきなかった。
+But nothing happened.
+
+トヘロスの　こうりょくが
+なくなった。
+The effect of Toheroth was lost.
+
+★Tool
+たいまつは　くらいところで
+つかうものです。
+A Torch is to be used in dark places.
+
+えっくすは　せいすいを　からだに
+ふりかけた。
+X sprinkles the Spring Water over his body.
+
+せいすいの　こうりょくが
+なくなった。
+The effect of the Spring Water was lost.
+
+ここでは　つばさを　つかえない。
+You cannot use the Wings here.
+
+えっくすは　つばさを　おおぞらに
+ほうりなげた。
+X flung the Wings into the heavens.
+
+えっくすは　りゅうのうろこを
+みにつけた。
+X put on the Dragon's Scale.
+
+りゅうのうろこは　すでに
+みにつけています。
+You are already wearing the Dragon's Scale.
+
+えっくすは　ふえをふいた。
+X played the Flute.
+
+つかえるものを　まだ
+もっていない。
+You do not have anything to use yet.
+
+えっくすは　せんしのゆびわを
+はめた。
+X put on the Warrior's Ring.
+
+えっくすは　せんしのゆびわを
+はめなおした。
+X adjusted the Warrior's Ring.
+
+えっくすは　＿＿＿＿を
+にぎりしめた。
+X grasped the ____ tightly.
+
+えっくすは　たてごとを　かなでた。
+X played the Harp.
+
+えっくすは　＿＿＿＿を
+みにつけた。
+X put on the ____.
+
+＿＿＿＿が　あなたの
+　　からだを　しめつける。
+　　あなたは　のろわれてしまった。
+The ____ tightens around your body. You have been cursed.
+
+＿＿＿＿が　あなたの
+からだを　しめつけている！
+The ____ is tightening around your body!
+
+★Examine
+えっくすは　じぶんのあしもとを
+しらべた。
+X searches around his feet.
+
+しかし　なにも　みつからなかった。
+But nothing was found.
+
+たからのはこが　ある！
+There is a treasure box!
+
+なんと　＿＿＿＿を　みつけた。
+There you discovered ____.
+
+★Take
+しかし　なにかをすてないと
+これいじょう　もてない。
+なにか　すてますか？
+But unless you throw something away you cannot hold more than this. Will you
+throw something away?
+
+なにを　すてますか？
+What will you throw away?
+
+＿＿＿＿を　あきらめた。
+You gave up the ____.
+
+＿＿＿＿をすて、
+＿＿＿＿を　てにいれた。
+You threw away the ____, and obtained the ____.
+
+それを　すてるなんて　とんでもない！
+No way, you can't throw that!
+
+ここでは　なにも　とれない。
+There is nothing to take here.
+
+えっくすは　＿＿ゴールドを
+てにいれた。
+X obtained __ Gold.
+
+えっくすは　＿＿＿＿を
+みつけた。
+X discovered ____.
+
+なかは　からっぽだった。
+It was empty inside.
+
+
+                   /--3.c.---------------------------------/
+                   |        Battle Command Windows         |
+                   /-------------------------------[3BAT]--/
+
+When you enter into a battle, you will see three windows. On the upper-left is
+your mini-status window, which contains your name and most important stats, and
+has already been covered in the previous section. On the bottom is the text
+window, and in the upper-right is the Battle Command Window. It looks like this:
+
+　┌────コマンド────┐　　　　　┌────Command ────┐
+　│　たたかう　　じゅもん　│　　→　　│　Fight 　　　Spell 　　│
+　│　にげる　　　どうぐ　　│　　　　　│　Escape　　　Tool　　　│
+　└────────────┘　　　　　└────────────┘
+
+Choosing "Fight" or "Escape" will execute the command immediately, while
+choosing "Spell" or "Tool" will bring up a list of options, as in walkabout
+mode.
+
+Here is a list of the text you can see in battle, and what just happened if you
+see it:
+
+★Beginning of Battle
+＿＿＿＿が　あらわれた！
+____ appeared!
+
+コマンド？
+Command?
+
+＿＿＿＿は　にげだした！
+____ runs away!
+
+えっくすが　みがまえるより　はやく
+＿＿＿＿は　おそいかかってきた
+Before X is ready the ____ quickly rushes him.
+
+★Player: Fight
+えっくすの　こうげき！
+X's attack!
+
+かいしんの　いちげき！！
+A rewarding blow!!
+
+＿＿＿＿に　＿＿ポイントの
+ダメージを　あたえた！
+Gave __ points of damage to the ____!
+
+ミス！
+ダメージを　あたえられない！
+Miss! Gave no damage!
+
+＿＿＿＿は　すばやく
+みをかわした！
+The ____ nimbly parries!
+
+★Player: Escape
+えっくすは　にげだした！
+X runs away!
+
+しかし　まわりこまれてしまった！
+But the space was blocked!
+
+★Player: Spell
+それは　たたかいに　つかえない！
+You cannot use that in battle!
+
+しかし　じゅもんは
+ふうじこまれている！
+But the spell is sealed!
+
+しかし　じゅもんは　きかなかった！
+But the spell is not effective!
+
+＿＿＿＿を　ねむらせた！
+Put the ____ to sleep!
+
+＿＿＿＿の　じゅもんを
+ふうじこめた！
+Sealed the ____'s spells!
+
+★Player: Tool
+えっくすは　やくそうを　つかった！
+X used an Herb!
+
+ゴーレムは　しずかに　めをとじる…
+ねむってしまった！
+The Golem peacefully closes its eyes.... Put to sleep!
+
+＿＿＿＿は　うれしそうだ！
+The ____ is delighted!
+[NOTE: I had a hard time placing this, but it is the text that appears if you
+use the Silver Harp in battle.]
+
+★Player: Asleep
+えっくすは　ねむっている……
+X is sleeping....
+
+えっくすは　めをさました！
+X awakens!
+
+★Enemy Attacks
+＿＿＿＿の　こうげき！
+____'s attack!
+
+えっくすは　＿＿ポイントの
+ダメージを　うけた！
+X takes __ points of damage!
+
+ミス！
+ダメージを　うけない！
+Miss! You take no damage!
+
+＿＿＿＿は　ほのおをはいた！
+The ____ is breathing flames!
+
+★Enemy Spells
+＿＿＿＿は　＿＿＿＿の
+じゅもんを　となえた！
+The ____ casts the spell of ____!
+
+＿＿＿＿は　きずが
+かいふくした！
+The ____'s wounds healed!
+
+えっくすは　ねむってしまった！
+X is put to sleep!
+
+えっくすの　じゅもんは
+ふうじこまれた！
+Sealed X's spells!
+
+★Enemy: Asleep
+＿＿＿＿は　ねむっている…
+The ____ is sleeping....
+
+＿＿＿＿は　めをさました
+The ____ woke up.
+
+★End of Battle
+あなたは　しにました
+You have died.
+
+＿＿＿＿を　たおした！
+Defeated the ____!
+
+けいけんち　＿＿ポイントかくとく
+Acquired __ points of Experience.
+
+＿＿ゴールドを　てにいれた！
+Obtained __ Gold!
+
+★Level Up
+えっくすは　レベルが　あがった！
+X's level rose!
+
+じゅもんを　１つ　おぼえた！
+Learned one spell!
+
+ちからが　＿＿ポイントあがった！
+Power rose __ points!
+
+すばやさが　＿＿ポイントあがった！
+Agility rose __ points!
+
+さいだいＨＰが　＿＿ポイントふえた！
+Maximum HP increased __ points!
+
+さいだいＭＰが　＿＿ポイントふえた！
+Maximum MP increased __ points!
+
+
+                   /--3.d.---------------------------------/
+                   |               Shopping                |
+                   /-------------------------------[3SHO]--/
+
+To help you navigate the various shops, this section shows what the shopkeeps
+will say. Due to the fact that the order is largely determined by user input,
+each block under each heading may appear in almost any order. I've put the
+welcome message first and one of the possible farewell messages last, but
+beyond that each block is basically its own entity. I apologize for the lack of
+order, but there's nothing I can do about it short of cluttering up the whole
+section with flow charts. ;-)
+
+Keep in mind that はい is "Yes" and いいえ is "No"; using the lists in the
+following sections you can see what is for sale. Good Luck! ;-)
+
+★The Inn
+＊「たびびとの　やどやへ　ようこそ。
+　　ひとばん　＿＿ゴールドですが
+　　おとまりに　なりますか？
+Welcome to the Traveler's Inn. One evening is __ Gold, but will you be staying?
+
+＊「さようなら　たびのひと。　あまり
+　　むりを　なさいませぬように。
+Good-bye, traveler. Don't overdo it.
+
+＊「では　おやすみなさいませ。
+Then, good night.
+
+＊「おはよう　ございます。
+　　ゆうべは　よく　おやすみ
+　　でしたね。
+Good morning. I see you rested well last night.
+
+＊「おはよう　ございます。
+　　ゆうべは　おたのしみでしたね。
+Good morning. I see you enjoyed last night.
+
+＊「では　また　どうぞ。
+Well, please come again.
+
+★Spring Water Shop　
+＊「まものよけの　せいすいは
+　　いかがでしょう？
+　　ひとびん　３８ゴールドですが。
+How about Spring Water to ward off monsters? One bottle is 38 Gold.
+
+＊「ありがとうございます。
+　　もう　ひとびん
+　　かわれますか？
+Thank you. Will you buy one more bottle?
+
+＊「あなたに　かみの　ごかごが
+　　ありますように。
+May the protection of God be with you.
+
+★Key Shop
+＊「どんなとびらも　あけてしまう
+　　まほうの　かぎは　いらんかな？
+　　ひとつ　＿＿ゴールドでどうじゃ？
+Don't you need a magic Key that will open any door? How about one for __ Gold?
+
+＊「ほれ。　かぎをひとつ　わたそう。
+　　まだ　かぎを　かうかな？
+Wonderful. I'll give you one Key. Will you buy another Key?
+
+＊「わるいが　これいじょう
+　　うるわけには　いかんな。
+It's too bad, but I can't sell any more than this.
+
+＊「おまえさまは　おかねが
+　　たらないようじゃな。
+You don't have enough money.
+
+＊「では　またな
+Well, till next time.
+
+★Tool Shop
+＊「いらっしゃいませ。
+　　ここは　どうぐや　です。
+　　どんな　ごようでしょうか？
+Welcome. This is the Tool Shop. How can I help you?
+
+　ものをかいにきた：I came to buy things.
+　ものをうりにきた：I came to sell things.
+
+＊「どれを　おもとめですか？
+What are you looking for?
+
+＊「＿＿＿＿で　ございますね。
+　　まいど　ありがとうございます。
+____ it is. I appreciate your business.
+
+＊「おかねが　たりませんが。
+This is not enough money.
+
+＊「それいじょう　もちものを
+　　もてませんが。
+You can't hold any more items than that.
+
+＊「それいじょう　やくそうを
+　　もてませんが。
+You can't hold any more Herbs than that.
+
+＊「ほかに　なにか　かわれますか？
+Will you be buying anything else?
+
+＊「どれを　おうりですか？
+Which will you sell?
+
+＊「＿＿＿＿で　ございますね。
+　　それなら　＿＿ゴールドで
+　　かいましょう。　いいですか？
+____ it is. If so, I will buy it for __ Gold. Is that okay?
+
+＊「それを　かうわけには
+　　まいりません。
+I can't buy that.
+
+＊「まだ　なにか　うってくれますか？
+Will you sell something else?
+
+＊「もちものが　ありません。
+You have no items.
+
+のろいで　からだから　はなれない！
+You can't remove it from your body because of the curse!
+
+＊「ざんねんです。
+That's too bad.
+
+＊「では　またの　おこしを
+　　おまち　しております。
+Then I will be waiting for your next visit.
+
+★Arms Shop
+＊「ここは　ぶきとよろいの　みせだ。
+　　なにか　かうかね？
+This is the Weapon and Armor Shop. Will you buy anything?
+
+＊「＿＿＿＿だね。
+____ is it.
+
+＊「すまないが　おかねが
+　　たりないようだ。
+I'm sorry, but this isn't enough money.
+
+＊「では　いまつかっている
+　　＿＿＿＿を
+　　＿＿ゴールドで　ひきとろう。
+Then let me take the ____ you're using now for __ Gold.
+
+＊「それで　いいかね？
+Is that okay?
+
+＊「ほかに　なにか　かうかね？
+Will you buy something else?
+
+＊「なにを　かうかね？
+What will you buy?
+
+＊「そうか　ざんねんだな。
+That's too bad.
+
+＊「どうも　ありがとう。
+Thank you.
+
+＊「また　きてくれよな。
+Come again.
+
+
+                   /==4.===================================/
+                   |              Item Lists               |
+                   /===============================[4ITE]==/
+
+This section contains the Japanese name and English translation of each item in
+the game, listed in the order they appear in the game's internal memory. The
+names as translated in the North American release are also provided.
+
+
+                   /--4.a.---------------------------------/
+                   |               Equipment               |
+                   /-------------------------------[4EQU]--/
+
+WEAPONS
+Japan             Translation       North America
+-------------------------------------------------
+たけざお　　　　　Bamboo Pole       Bamboo Pole
+こんぼう　　　　　Club              Club
+どうのつるぎ　　　Copper Sword      Copper Sword
+てつのおの　　　　Iron Axe          Hand Axe
+はがねのつるぎ　　Steel Sword       Broad Sword
+ほのおのつるぎ　　Flame Sword       Flame Sword
+ロトのつるぎ　　　Sword of Loto     Erdrick's Sword
+
+ARMOR
+Japan             Translation       North America
+-------------------------------------------------
+ぬののふく　　　　Linen Clothes     Clothes
+かわのふく　　　　Leather Clothes   Leather Armor
+くさりかたびら　　Chain Mail        Chain Mail
+てつのよろい　　　Iron Armor        Half Plate
+はがねのよろい　　Steel Armor       Full Plate
+まほうのよろい　　Magic Armor       Magic Armor
+ロトのよろい　　　Armor of Loto     Erdrick's Armor
+
+SHIELDS
+Japan             Translation       North America
+-------------------------------------------------
+かわのたて　　　　Leather Shield    Small Shield
+てつのたて　　　　Iron Shield       Large Shield
+みかがみのたて　　Mirror Shield     Silver Shield
+[NOTE: I've done some searching to try and see what the み at the beginning of
+this word could be, and I've come up with everything from "seeing" to
+"honorable" to "body"--even "water." There seems to be no agreement on what
+this word really is, so I'm leaving it like this until I can be sure, or at
+least until I come up with something that is actually a word!]
+
+
+                   /--4.b.---------------------------------/
+                   |                 Tools                 |
+                   /-------------------------------[4TOO]--/
+
+Japan             Translation       North America
+-------------------------------------------------
+やくそう　　　　　Medicinal Herb    Herb
+かぎ　　　　　　　Key               Magic Key
+たいまつ　　　　　Torch             Torch
+せいすい　　　　　Spring Water      Fairy Water
+キメラのつばさ　　Chimera Wing      Wings
+りゅうのうろこ　　Dragon's Scale    Dragon's Scale
+ようせいのふえ　　Fairy Flute       Fairy Flute
+せんしのゆびわ　　Warrior's Ring    Fighter's Ring
+ロトのしるし　　　Mark of Loto      Erdrick's Token
+おうじょのあい　　Princess's Love   Gwaelin's Love
+のろいのベルト　　Cursed Belt       Cursed Belt
+ぎんのたてごと　　Silver Harp       Silver Harp
+しのくびかざり　　Death Necklace    Cursed Necklace
+たいようのいし　　Sun Stone         Stones of Sunlight
+あまぐものつえ　　Staff of Clouds   Staff of Rain
+にじのしずく　　　Rainbow Drop      Rainbow Drop
+
+
+                   /==5.===================================/
+                   |        Magic List and Effects         |
+                   /===============================[5MAG]==/
+
+This is a list of all the magic spells in the game, listed in the order they
+appear in the game's internal memory (which in this game is also the order in
+which they are learned). Since the magic spells have nonsense names, my
+"translation" here is simply how I would expect the word to be pronounced if it
+were actually English. Also given is the corresponding spell name from the
+North American version. A translation is provided for spells which give in-game
+text, and a short description is given for all spells. If more than one spell
+uses the same text, I will only list it for the first occurrence.
+
+Japan         Translation   North America
+-----------------------------------------
+ホイミ　　　　Hoimi         HEAL
+Restores a small amount of HP: 4 MP
+Learned: LV 3
+
+ギラ　　　　　Gira          HURT
+＿＿＿＿に　＿＿ポイントの　ダメージ　あたえた！
+Gave __ points of damage to ____!
+Deals a small amount of damage: 2 MP
+Learned: LV 4
+
+ラリホー　　　Ralihoh       SLEEP
+＿＿＿＿を　ねむらせた！
+Put ____ to sleep!
+Causes Sleep status: 2 MP
+Learned: LV 7
+
+レミーラ　　　Remihra       RADIANT
+Lights a cave: 3 MP
+Learned: LV 9
+
+マホトーン　　Mahotohn      STOPSPELL
+＿＿＿＿の　じゅもんを　ふうじこめた！
+Sealed the ____'s spells!
+Seals spell usage: 2 MP
+Learned: LV 10
+
+リレミト　　　Liremito      OUTSIDE
+Transports to the exterior of a cave: 6 MP
+Learned: LV 12
+
+ルーラ　　　　Ruhla         RETURN
+Transports to Ladatorm Castle: 8 MP
+Learned: LV 13
+
+トヘロス　　　Toheroth      REPEL
+Wards off weaker foes: 2 MP
+Learned: LV 15
+
+ベホイミ　　　Behoimi       HEALMORE
+Restores a large amount of HP: 10 MP
+Learned: LV 17
+
+ベギラマ　　　Begirama      HURTMORE
+Deals a large amount of damage: 5 MP
+Learned: LV 19
+
+
+                   /==6.===================================/
+                   |             Monster List              |
+                   /===============================[6MON]==/
+
+This section gives the Japanese name and English translation of the monsters in
+the game, listed in the order they appear in the game's internal memory. For
+some names written in katakana it is difficult to tell exactly how the game
+designers intended the name to be pronounced, so I have put forth my best guess.
+The names as translated in the North American release are also provided.
+
+Japan             Translation       North America
+-------------------------------------------------
+スライム　　　　　Slime             Slime
+スライムベス　　　Slime Beth        Red Slime
+ドラキー　　　　　Drakee            Drakee
+ゴースト　　　　　Ghost             Ghost
+まほうつかい　　　Magician          Magician
+メイジドラキー　　Mage Drakee       Magidrakee
+おおさそり　　　　Big Scorpion      Scorpion
+メーダ　　　　　　Mehda             Druin
+メトロゴースト　　Metro Ghost       Poltergeist
+ドロル　　　　　　Droll             Droll
+ドラキーマ　　　　Drakeema          Drakeema
+がいこつ　　　　　Skeleton          Skeleton
+まどうし　　　　　Mage              Warlock
+てつのさそり　　　Iron Scorpion     Metal Scorpion
+リカント　　　　　Lycant            Wolf
+しりょう　　　　　Spirit            Wraith
+メタルスライム　　Metal Slime       Metal Slime
+ヘルゴースト　　　Hell Ghost        Specter
+リカントマムル　　Lycant Mammal     Wolflord
+メーダロード　　　Mehda Lord        Druinlord
+ドロルメイジ　　　Droll Mage        Drollmagi
+キメラ　　　　　　Chimera           Wyvern
+しのさそり　　　　Death Scorpion    Rogue Scorpion
+しりょうのきし　　Spirit Knight     Wraith Knight
+ゴーレム　　　　　Golem             Golem
+ゴールドマン　　　Goldman           Goldman
+よろいのきし　　　Armored Knight    Knight
+メイジキメラ　　　Mage Chimera      Magiwyvern
+かげのきし　　　　Shadow Knight     Demon Knight
+キラーリカント　　Killer Lycant     Werewolf
+ドラゴン　　　　　Dragon            Green Dragon
+スターキメラ　　　Star Chimera      Starwyvern
+だいまどう　　　　Great Mage        Wizard
+あくまのきし　　　Demon Knight      Axe Knight
+キースドラゴン　　Kith Dragon       Blue Dragon
+ストーンマン　　　Stoneman          Stoneman
+しにがみのきし　　Deathgod Knight   Armored Knight
+ダースドラゴン　　Darth Dragon      Red Dragon
+りゅうおう　　　　Dragon King       Dragonlord
+りゅうおう　　　　Dragon King       Dragonlord [Second Form]
+
+
+                   /==7.===================================/
+                   |        Experience Points Chart        |
+                   /===============================[7EXP]==/
+
+Because it doesn't relate to the game text, I normally wouldn't have included a
+chart of experience points for each level. I decided to add it for the sake of
+people using this as a guide to play the game since the numbers in the Japanese
+version are slightly different from those in the North American release from
+Level 17 onward.
+
+Level     EXP
+-----   -----
+    1       0
+    2       7
+    3      23
+    4      47
+    5     110
+    6     220
+    7     450
+    8     800
+    9    1300
+   10    2000
+   11    2900
+   12    4000
+   13    5500
+   14    7500
+   15   10000
+   16   13000
+   17   17000
+   18   21000
+   19   25000
+   20   29000
+   21   33000
+   22   37000
+   23   41000
+   24   45000
+   25   49000
+   26   53000
+   27   57000
+   28   61000
+   29   65000
+   30   65535
+
+
+                   /==8.===================================/
+                   |           Special Passwords           |
+                   /===============================[8PAS]==/
+
+This section concerns the "Spell of Restoration" system of the game. Being a
+game that uses a password save feature means that it is relatively easy to pick
+up the game from any point, and even to play under special circumstances using
+passwords that can be discovered through experimentation. Here are several
+interesting "urawaza," as they are called, that I have come across.
+
+・Starts at full strength, but with no quests completed.
+まむずいか　かるたとみぐじ
+ぞなのへみ　まよれ
+   Name: はにまる
+   Level: 30
+   HP/MP: 200/210
+   Str/Agi: 129/120
+   Gold: 65535
+   Equipment:
+      Weapon: None
+      Armor:  None
+      Shield: None
+   Items: Medicinal Herb--6
+   Princess: No
+
+・Starts at the ending, with everything completed.
+ぶぶちまこ　すぼとるてすた
+てめこそつ　すろた
+   Name: きすまみ
+   Level: 30
+   HP/MP: 190/181
+   Str/Agi: 140/130
+   Gold: 65535
+   Equipment:
+      Weapon: Sword of Loto
+      Armor:  Armor of Loto
+      Shield: Mirror Shield
+   Items: Medicinal Herb--2, Key--4, Fairy Flute, Princess's Love, Mark of
+      Loto, Rainbow Drop, Warrior's Ring, Torch, Cursed Belt
+   Princess: Yes
+
+・Start with absolutely nothing. Gives the lowest Str/Agi growth, presumably
+average HP/MP growth (since it's normally not possible to have the same growth
+rates for all stats at the same time).
+おけすちな　のへむゆるがご
+ぜづびあお　けすち
+   Name: ００００
+   Level: 1
+   HP/MP: 15/0
+   Str/Agi: 3/3
+   Gold: 0
+   Equipment:
+      Weapon: None
+      Armor:  None
+      Shield: None
+   Items: None
+   Princess: No
+
+・Has two Sun Stones and two Marks of Loto.
+くわたやま　くらしのずかな
+かはたはら　くろま
+   Name: にょ２ふ
+   Level: 17
+   HP/MP: 90/90
+   Str/Agi: 72/78
+   Gold: 11705
+   Equipment:
+      Weapon: Bamboo Pole
+      Armor:  Chain Mail
+      Shield: None
+   Items: Medicinal Herb--4, Key--2, Torch, Sun Stone, Mark of Loto, Mark of
+      Loto, Death Necklace, Torch, Cursed Belt, Sun Stone
+   Princess: No
+
+・Has two Death Necklaces.
+くわたきよ　はらしのずかな
+かはたはら　いしい
+   Name: ねるおふ
+   Level: 25
+   HP/MP: 157/161
+   Str/Agi: 102/100
+   Gold: 11676   Equipment:
+      Weapon: Bamboo Pole
+      Armor:  Chain Mail
+      Shield: None
+   Items: Medicinal Herb--4, Key--2, Princess's Love, Sun Stone, Death
+      Necklace, Torch, Death Necklace, Torch, Cursed Belt, Sun Stone
+   Princess: Yes
+
+・Has two Staffs of Clouds.
+いのきばば　つるたちようし
+ゆうりきふ　じなみ
+   Name: はる６さ
+   Level: 26
+   HP/MP: 165/154
+   Str/Agi: 117/105
+   Gold: 38196
+   Equipment:
+      Weapon: None
+      Armor:  Steel Armor
+      Shield: Leather Shield
+   Items: Medicinal Herb--6, Key--1, Staff of Clouds, Torch, Sun Stone, Death
+      Necklace, Rainbow Drop, Warrior's Ring, Staff of Clouds, Mark of Loto
+   Princess: No
+
+・This is a fairly normal password, except for the password itself, which
+literally reads "It's Yuji Horii and Enix's Dragon Quest!" with slight
+modifications to fit with the available kana. Has two Silver Harps.
+ほりいゆう　じえにつくすど
+らごくえす　とだよ
+   Name: おっ゜て (I'm not even sure how to pronounce this--"Otte," maybe?)
+   Level: 25
+   HP/MP: 157/161
+   Str/Agi: 102/100
+   Gold: 43227
+   Equipment:
+      Weapon: Steel Sword
+      Armor:  Leather Clothes
+      Shield: None
+   Items: Medicinal Herb--1, Key--3, Staff of Clouds, Silver Harp, Silver Harp,
+      Torch, Torch, Rainbow Drop, Princess's Love, Death Necklace
+   Princess: Yes
+
+・This password also appears to be a complete sentence, but I can't figure it
+all out. It appears to say something about Marukatsu Famicom, a Japanese
+magazine, calling it "the best in the world." Has two Princess's Loves and two
+Silver Harps.
+まるかつは　やつはりせかい
+いちだつた　のだよ
+   Name: ４きね８
+   Level: 20
+   HP/MP: 138/118
+   Str/Agi: 92/82
+   Gold: 64673
+   Equipment:
+      Weapon: Sword of Loto
+      Armor:  None
+      Shield: Mirror Shield
+   Items: Medicinal Herb--2, Key--2, Staff of Clouds, Silver Harp, Dragon
+      Scale, Princess's Love, Rainbow Drop, Fairy Flute, Silver Harp,
+      Princess's Love
+   Princess: Yes
+
+・Heheh.... This password reads, "Marukatsu's an idiot! Idiot! Idiot! Stupid!"
+まるかつの　ばかやろばかや
+ろばかやろ　まぬけ
+   Name: ちへねは
+   Level: 8
+   HP/MP: 46/29
+   Str/Agi: 20/19
+   Gold: 17255
+   Equipment:
+      Weapon: Copper Sword
+      Armor:  Leather Clothes
+      Shield: None
+   Items: Medicinal Herb--3, Key--6, Death Necklace, Death Necklace, Chimera
+      Wing, Sun Stone, Princess's Love, Warrior's Ring, Chimera Wing, Dragon
+      Scale (unequipped)
+   Princess: Yes
+
+・"Dragon King, you aren't dead yet! Don't you understand?! Idiot!"
+りゆうおう　おまえはもうし
+ぬわかつた　かばか
+   Name: ねすゃ１ (I'm not sure how to say this one either--perhaps
+      "Neswa Ichi"?)
+   Level: 24
+   HP/MP: 170/144
+   Str/Agi: 103/88
+   Gold: 18287
+   Equipment:
+      Weapon: None
+      Armor:  Steel Armor
+      Shield: Leather Shield
+   Items: Medicinal Herb--4, Key--6, Death Necklace, Torch, Silver Harp, Death
+      Necklace, Torch, Spring Water, Spring Water, Fairy Flute
+   Princess: No
+
+・This password appears to say something about something "ancient," "leaping,"
+and "the sound of water"--I have no idea what it all means, but apparently it's
+a well-known haiku. Has two Fairy Flutes.
+ふるいけや　かわずとびこむ
+みずのおと　ばしや
+   Name: ４ひえて
+   Level: 10
+   HP/MP: 51/40
+   Str/Agi: 34/31
+   Gold: 15143
+   Equipment:
+      Weapon: Club
+      Armor:  Chain Mail
+      Shield: None
+   Items: Medicinal Herb--4, Key--1, Fairy Flute, Mark of Loto, Cursed Belt,
+      Spring Water, Silver Harp, Sun Stone, Fairy Flute
+   Princess: No
+
+・"People say that Armor Knight and Demon Knight are pleasant." :-/ Has two Sun
+Stones.
+よろいのき　しやあくまのき
+しはうれし　そうだ
+   Name: た７えひ
+   Level: 26
+   HP/MP: 180/151
+   Str/Agi: 117/94
+   Gold: 33088
+   Equipment:
+      Weapon: Steel Sword
+      Armor:  Leather Clothes
+      Shield: Mirror Shield
+   Items: Medicinal Herb--2, Key--5, Chimera Wing, Sun Stone, Silver Harp,
+      Warrior's Ring, Rainbow Drop, Princess's Love, Chimera Wing, Sun Stone
+   Princess: Yes
+
+・This is a list of Japanese cities: "Toukyou, Nagoya, Oosaka, Kitakyuushuu."
+Has three Cursed Belts and two Warrior's Rings.
+とうきよう　なごやおおさか
+きたきゆう　しゆう
+   Name: よまもよ
+   Level: 18
+   HP/MP: 103/108
+   Str/Agi: 76/84
+   Gold: 32131
+   Equipment:
+      Weapon: Flame Sword
+      Armor:  Armor of Loto
+      Shield: Nothing
+   Items: Medicinal Herb--1, Key--3, Cursed Belt, Warrior's Ring, Cursed Belt,
+      Cursed Belt, Death Necklace, Warrior's Ring, Staff of Clouds, Torch
+   Princess: No
+
+・The name of the character in this password is Marukatsu. Yes, that's the same
+name as the magazine appeared in two of the previous passwords! Begins at Level
+1, but with pretty much everything, including all the best equipment.
+どべじでわ　ごぜむあずるわ
+げずりなの　がだた
+   Name: まるかつ
+   Level: 1
+   HP/MP: 15/0
+   Str/Agi: 4/4
+   Gold: 0
+   Equipment:
+      Weapon: Sword of Loto
+      Armor:  Armor of Loto
+      Shield: Mirror Shield
+   Items: Dragon Scale (unequipped), Fairy Flute, Rainbow Drop, Warrior's
+      Ring, Mark of Loto, Silver Harp, Sun Stone, Staff of Clouds
+   Princess: No
+
+
+                   /==9.===================================/
+                   |            Version History            |
+                   /===============================[9VER]==/
+
+v0.90
+・Initial release.
+Started playing 03/27/2006
+Finished game 05/08/2006
+Submitted 05/21/2006
+"Dragon Quest" maps by x_loto also available at GameFAQs.com!
+
+v2.00
+・Fixed a small error in the Table of Contents.
+・Changed the title to "Game Script," rather than "Translation Guide."
+・Corrected the grammar of the Japanese slogan at the top. ;-)
+・Played the game a second time, transcribing the original kana game text.
+・Retranslated EVERYTHING!
+・Added Magic List and the in-game credits.
+・Reworked all associated maps for increased legibility.
+Started playing 02/05/2007
+Finished game 02/27/2007
+Submitted 02/27/2007
+
+v2.50
+・Altered the layout for the Transcription section, which is now divided into
+"Acts."
+・Added a translation of the back of the box of the Japanese Famicom version.
+・Changed the item "Spring Water" to "Holy Water."
+・Corrected a couple more minor errors.
+・Added a little to the "Thanks" section.
+・Made one last tweak to some of the maps, adding the floor numbers.
+Submitted 03/20/2007
+
+v3.00
+・Broke up the intro a bit, placing pieces into other sections where
+appropriate.
+・Added information on Command Windows and some other text which is gameplay-
+related rather than plot-related.
+・Added the levels in which spells are acquired and translations of some spell
+effects.
+・Reorganized the "Transcription" section again, subdividing some of the main
+headings.
+Submitted 05/22/2007
+
+v4.00
+・Devised fancy new section headers, hopefully making the file easier to browse.
+・Changed the title to "Game Script and Mini Playing Guide," since this really
+is a little bit more than just the script.
+・Changed the search codes in the Table of Contents.
+・"Version History" section has grown up quite a bit--moved it to the end.
+・Added "Experience Chart" section.
+・Proofread and cleaned up translation.
+・Made other miscellaneous alterations in some sections.
+・Revised maps again (last time, I promise!), adding treasure data, attempting
+to increase legibility, and shrinking larger maps to fit on the screen with
+less scrolling, as well as adding a coordinate system to the "World" map.
+Submitted 01/07/2008
+
+v4.10
+・Moved "Command Windows" section to follow the "Transcription."
+・Added the new "Special Passwords" section!
+・Slight changes to "Castle of the Dragon King" and "World" maps--I think I'm
+*really* done with them now! ;-)
+Submitted 01/16/2008
+
+v4.11
+・Changed "Holy Water" back to "Spring Water." I ran a search with both
+readings in conjunction with the words "Dragon Quest," and I got nearly eight
+times as many hits with the latter.
+・Also did other itty-bitty teeny-tiny things.
+Submitted 01/22/2008 (I really need to try harder to make sure things are done
+before submitting so I don't end up with three updates in the same month
+again! ;-)
+
+v4.12
+・Had an issue with my Final Fantasy maps, so for consistency I relabelled
+these as well...and then revised them again. O_o
+・Added some extra release info to the file header.
+・Added a kind of flow chart to guide the reader through Yes/No questions in
+the dialogue (let me know how legible it is).
+・Added a bit of trivia about the game to the Foreword.
+Submitted 08/01/2008
+
+v5.00
+・Changed "Faerie" to "Fairy" (I made the decision that I will not change the
+spelling of terms when the official translation is already equivalent; updated
+the maps one final time to match.
+・Removed the kanji transcriptions. (I realized it was less than useful for a
+non-fluent speaker like myself to translate from Japanese *to* Japanese--it was
+redundant and silly, and served little purpose.)
+・Changed the format of the Magic List.
+・Reordered the Item, Magic, and Monster Lists to match the game's internal
+data.
+・Added a section for Shopping and expanded Battle Command Windows to include
+battle text.
+・Reformatted the text to include in-game line breaks. This makes it easier to
+compare this file to the game at a glance.
+・Filled in some more kanji from the back of the box.
+・Cleaned up the "Thanks" section. It was wordy.
+Submitted 03/16/2010
+
+v5.10
+・Made some style changes to several sections, including "Transcription" and
+"Starting Up," and added official North American data to the Item/Magic/Monster
+Lists.
+・Identified a piece of text whose usage had been unknown, and moved it to its
+correct location.
+Submitted 07/02/2010
+
+v5.11
+・Corrected some really stupid translation and grammatical errors. >_<
+Submitted 07/09/2010
+
+Plans for future versions:
+・Finishing the back of the box. Just one word left!
+・Correcting any obvious translation errors once I play the Super Famicom
+remake.
+...That's probably all! :-)
+
+
+                   /==10.==================================/
+                   |         Credits/Thanks/Legal          |
+                   /===============================[10CR]==/
+
+Credits:
+Translation and guide by Jason Kuntz (x_loto).
+
+Thanks:
+・Glenn Rosenthall, for JWPce
+・Jim Breen, for EDICT
+・Jack Halpern, for SKIP lookup
+・Quietust, for Nintendulator
+・All the makers of FCE Ultra
+・Genecyst East Software, for WindHex
+・MeteorStrike, for his ROM Hack Analysis FAQ (hosted on IGN.com)
+・CygnusZ, for translation help and cluing me in on some development team
+cameos
+・Andrew Church, for translation help
+・Blueberry Buttface, for the text dump of the North American version
+・DQShrine.com, oblivion from aoc, and Mikael_Fr, for box images
+・Google translate and Yahoo! Babel Fish, for...occasional help, and for making
+me laugh
+・GameFAQs.com, for hosting all this mess!
+・Enix, for creating this monster! :-D
+
+Legal:
+Translation, guide, and layout (C) 2006-2010 by Jason Kuntz. This translation
+is in no way authorized or otherwise endorsed by the game creators or
+publishers. Use this guide however you like for your own personal use, but
+please do not republish it in an altered form, and please do not take credit
+for it. If you use part of this guide in your own work, please send me an email
+and let me know; my address is at the top. I can't think of any reason I
+wouldn't let you, so just tell me. Seriously people, it took me ten days just
+to get out of Ladatorm Castle! This was hard work for me! I'm exhausted!
+
+An up-to-date version of this file may always be found at GameFAQs.com. And
+don't forget: JUST SAY NO TO PLAGIARISM!
+
+
+                   /=======================================/
+                   |                  EOF                  |
+                   /==============================[62pp.]==/
+
+...Stop reading now, please. You're embarrassing me.
+
+https://gamefaqs.gamespot.com/nes/563408-dragon-warrior/faqs/42955
