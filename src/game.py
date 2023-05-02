@@ -25,6 +25,7 @@ from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down,
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
     ENABLE_DARKNESS
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
+from src.enemy_lookup import enemy_territory_map
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, \
     replace_characters_with_underlying_tiles, \
     draw_hovering_stats_window, select_from_vertical_menu, get_surrounding_rect
@@ -45,7 +46,6 @@ class Game:
 
     def __init__(self):
         # map/graphics
-
         self.background = None
         self.big_map = None
         self.layouts = MapLayouts()
@@ -61,6 +61,7 @@ class Game:
         # engine
         self.fps = FPS
         self.last_map = None
+        self.last_zone = None
         self.tiles_moved_since_spawn = 0
         self.tiles_moved_total = 0
         self.radiant_start = None
@@ -187,6 +188,12 @@ class Game:
                 sys.exit()
         event.pump()
         current_key = key.get_pressed()
+        if self.current_map.identifier == 'Alefgard':
+            current_zone = self.player.column // 17, self.player.row // 17
+            monsters_in_current_zone = enemy_territory_map.get(current_zone)
+            if self.last_zone != current_zone:
+                print(f'Zone: {current_zone}\nMonsters: {monsters_in_current_zone}')
+            self.last_zone = current_zone
         if not self.player.is_moving:
             set_character_position(self.player)
         if self.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
