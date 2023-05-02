@@ -84,6 +84,7 @@ class CommandMenu(Menu):
             mouse_enabled=False,
             mouse_visible=False,
             menu_id='command',
+            verbose=False
         )
         # TODO: Allow for selection of options using the K ("A" button).
         #  Currently selection is only possible by use of the Enter button.
