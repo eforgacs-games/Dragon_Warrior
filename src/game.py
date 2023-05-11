@@ -62,6 +62,7 @@ class Game:
         self.fps = FPS
         self.last_map = None
         self.last_zone = None
+        self.last_amount_of_tiles_moved = 0
         self.tiles_moved_since_spawn = 0
         self.tiles_moved_total = 0
         self.radiant_start = None
@@ -188,12 +189,7 @@ class Game:
                 sys.exit()
         event.pump()
         current_key = key.get_pressed()
-        if self.current_map.identifier == 'Alefgard':
-            current_zone = self.player.column // 17, self.player.row // 17
-            monsters_in_current_zone = enemy_territory_map.get(current_zone)
-            if self.last_zone != current_zone:
-                print(f'Zone: {current_zone}\nMonsters: {monsters_in_current_zone}')
-            self.last_zone = current_zone
+        self.handle_battles()
         if not self.player.is_moving:
             set_character_position(self.player)
         if self.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
@@ -260,6 +256,65 @@ class Game:
         # print(f'{self.get_character_identifier_by_coordinates(self.player.next_next_coordinates)}')
 
         event.pump()
+
+    def handle_battles(self):
+        if self.tiles_moved_since_spawn > 0:
+            # TODO: Add other maps with monsters besides Alefgard.
+            if self.current_map.identifier == 'Alefgard':
+                if self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
+                    current_zone = self.player.column // 18, self.player.row // 18
+                    monsters_in_current_zone = enemy_territory_map.get(current_zone)
+                    # "Zone 0" in the original code is zone (3, 2)
+                    if current_zone == (3, 2):
+                        random_integer = self.handle_near_tantegel_fight_modifier()
+                    else:
+                        random_integer = self.get_random_integer_by_tile()
+                    if random_integer == 0:
+                        # choose a random monster from the list of monsters in the current zone
+                        random_monster = random.choice(monsters_in_current_zone)
+                        print(f'Random monster: {random_monster}')
+                    if self.last_zone != current_zone:
+                        print(f'Zone: {current_zone}\nMonsters: {monsters_in_current_zone}')
+                    self.last_zone = current_zone
+                self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
+
+    def handle_near_tantegel_fight_modifier(self):
+        if self.player.current_tile == 'HILLS':
+            sub_random_integer = random.randint(0, 3)
+        else:
+            sub_random_integer = random.randint(0, 1)
+        if sub_random_integer == 0:
+            random_integer = self.get_random_integer_by_tile()
+        else:
+            random_integer = 1
+        return random_integer
+
+    def get_random_integer_by_tile(self):
+        match self.player.current_tile:
+            case 'SWAMP':
+                random_integer = random.randint(0, 15)
+            case 'DESERT':
+                random_integer = random.randint(0, 7)
+            case 'HILLS':
+                random_integer = random.randint(0, 7)
+            case 'FOREST':
+                random_integer = random.randint(0, 15)
+            case 'BRICK':
+                random_integer = random.randint(0, 15)
+            case 'BARRIER':
+                random_integer = random.randint(0, 15)
+            case _:  # default
+                if self.player.column % 2 == 0:
+                    if self.player.row % 2 == 0:
+                        random_integer = random.randint(0, 31)
+                    else:
+                        random_integer = random.randint(0, 15)
+                else:
+                    if self.player.row % 2 == 0:
+                        random_integer = random.randint(0, 31)
+                    else:
+                        random_integer = random.randint(0, 15)
+        return random_integer
 
     def set_player_images_by_equipment(self):
         if self.player.weapon:
