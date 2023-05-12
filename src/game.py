@@ -3,7 +3,8 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, \
-    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect, SCALED
+    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect, \
+    SCALED, K_RETURN
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.sprite import Group
@@ -23,7 +24,8 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, \
     ARMED_HERO_WITH_SHIELD_PATH, \
     UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx, battle_music, victory_sfx, attack_sfx, hit_sfx, improvement_sfx, \
-    BATTLE_BACKGROUND_PATH, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH
+    BATTLE_BACKGROUND_PATH, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
+    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
     ENABLE_DARKNESS
@@ -102,10 +104,10 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom()
+        # self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.ErdricksCaveB1()
         # self.current_map = maps.TantegelCourtyard()
-        # self.current_map = maps.Alefgard()
+        self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.Hauksness()
@@ -280,45 +282,108 @@ class Game:
                         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
                                                         (7 * TILE_SIZE, 7 * TILE_SIZE))
                         self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
-                        vowel = 'AEIOU'
-                        for letter in vowel:
-                            if enemy_name.startswith(letter):
-                                self.cmd_menu.show_line_in_dialog_box(f'An {enemy_name} draws near!\n',
-                                                                      add_quotes=False,
-                                                                      disable_sound=True,
-                                                                      last_line=True)
-                                break
+                        enemy_draws_near_string = f'{enemy_name} draws near!\n' \
+                                                  f'Command?\n'
+                        vowels = 'AEIOU'
+
+                        if enemy_name[0] in vowels:
+                            enemy_draws_near_string = f'An {enemy_draws_near_string}'
                         else:
                             # show battle window (enemy sprite over background)
-                            self.cmd_menu.show_line_in_dialog_box(f'A {enemy_name} draws near!\n',
-                                                                  add_quotes=False,
-                                                                  disable_sound=True,
-                                                                  last_line=True)
-                            self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
+                            enemy_draws_near_string = f'A {enemy_draws_near_string}'
+                        self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string,
+                                                              add_quotes=False,
+                                                              disable_sound=True,
+                                                              last_line=True,
+                                                              skip_text=True)
+                        self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
 
-                            battle_command_menu_static_image = scale(image.load(BATTLE_MENU_STATIC_PATH),
-                                                                     (8 * TILE_SIZE, 3 * TILE_SIZE))
+                        battle_command_menu_fight_image = scale(image.load(BATTLE_MENU_FIGHT_PATH),
+                                                                 (8 * TILE_SIZE, 3 * TILE_SIZE))
 
-                            self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
-                            self.screen.blit(battle_command_menu_static_image, (6 * TILE_SIZE, 1 * TILE_SIZE))
-                            self.hovering_stats_displayed = True
-                            draw_hovering_stats_window(self.screen, self.player)
+                        self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
+                        self.screen.blit(battle_command_menu_fight_image, (6 * TILE_SIZE, 1 * TILE_SIZE))
+                        self.hovering_stats_displayed = True
+                        draw_hovering_stats_window(self.screen, self.player)
+
                         enemy = enemy_string_lookup[enemy_name]()
+
+                        battle_menu_options = [["Fight", "Spell"], ["Run", "Item"]]
+                        current_item_row = 0
+                        current_item_column = 0
+                        current_selection = battle_menu_options[current_item_row][current_item_column]
+                        run_away = False
                         blink_start = get_ticks()
-                        while enemy.hp > 0:
-                            self.cmd_menu.show_line_in_dialog_box('Command?\n',
-                                                                  add_quotes=False,
-                                                                  disable_sound=True,
-                                                                  last_line=True)
-                            blink_switch(self.cmd_menu, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, x=6, y=1, width=8, height=3, start=blink_start)
-                            player_input = input("Fight, Spell, Run, Item\n")
-                            if player_input == 'Fight' or player_input == 'f':
-                                self.fight(enemy)
-                            elif player_input == 'Spell' or player_input == 's':
-                                self.battle_spell()
-                            elif player_input == 'Run' or player_input == 'r':
-                                self.battle_run()
-                        self.enemy_defeated(enemy)
+                        while enemy.hp > 0 and not run_away:
+                            display.flip()
+                            selected_executed_option = None
+                            for current_event in event.get():
+                                if current_event.type == KEYDOWN:
+                                    if current_event.key in (K_RETURN, K_i, K_k):
+                                        play_sound(menu_button_sfx)
+                                        selected_executed_option = current_selection
+                                    elif current_event.key == K_j:
+                                        # back up cursor instead of deleting letters
+                                        break
+                                    elif current_event.key in (K_DOWN, K_s):
+                                        if current_item_row == 0:
+                                            current_item_row = 1
+                                        elif current_item_row == 1:
+                                            current_item_row = 0
+                                    elif current_event.key in (K_UP, K_w):
+                                        if current_item_row == 0:
+                                            current_item_row = 1
+                                        elif current_item_row == 1:
+                                            current_item_row = 0
+                                    elif current_event.key in (K_LEFT, K_a):
+                                        if current_item_column == 0:
+                                            current_item_column = 1
+                                        elif current_item_column == 1:
+                                            current_item_column = 0
+                                    elif current_event.key in (K_RIGHT, K_d):
+                                        if current_item_column == 0:
+                                            current_item_column = 1
+                                        elif current_item_column == 1:
+                                            current_item_column = 0
+                                    blink_start = get_ticks()
+                                    current_selection = battle_menu_options[current_item_row][current_item_column]
+                                    if current_selection == "Fight":
+                                        blink_switch(self.cmd_menu, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH,
+                                                     x=6,
+                                                     y=1,
+                                                     width=8, height=3, start=blink_start)
+                                    elif current_selection == "Spell":
+                                        blink_switch(self.cmd_menu, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_SPELL_PATH,
+                                                     x=6,
+                                                     y=1,
+                                                     width=8, height=3, start=blink_start)
+                                    elif current_selection == "Run":
+                                        blink_switch(self.cmd_menu, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_RUN_PATH, x=6,
+                                                     y=1,
+                                                     width=8, height=3, start=blink_start)
+                                    elif current_selection == "Item":
+                                        blink_switch(self.cmd_menu, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_ITEM_PATH, x=6,
+                                                     y=1,
+                                                     width=8, height=3, start=blink_start)
+                                    if selected_executed_option:
+                                        if selected_executed_option == 'Fight':
+                                            self.fight(enemy)
+                                        elif selected_executed_option == 'Spell':
+                                            self.battle_spell()
+                                        elif selected_executed_option == 'Run':
+                                            self.battle_run()
+                                            run_away = True
+                                        elif selected_executed_option == 'Item':
+                                            self.cmd_menu.show_line_in_dialog_box(
+                                                'Nothing of use has yet been given to thee.\n'
+                                                'Command?\n',
+                                                add_quotes=False,
+                                                disable_sound=True,
+                                                last_line=True)
+                                            break
+
+                        if enemy.hp < 0:
+                            self.enemy_defeated(enemy)
                         if self.music_enabled:
                             mixer.music.load(self.current_map.music_file_path)
                             mixer.music.play(-1)
@@ -327,6 +392,13 @@ class Game:
                         print(f'Zone: {current_zone}\nEnemies: {enemies_in_current_zone}')
                     self.last_zone = current_zone
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
+
+    def battle_run(self):
+        play_sound(stairs_down_sfx)
+        self.cmd_menu.show_line_in_dialog_box(
+            f"{self.player.name} started to run away.\n",
+            add_quotes=False,
+            disable_sound=True)
 
     def fight(self, enemy):
         play_sound(attack_sfx)
@@ -343,15 +415,11 @@ class Game:
         enemy.hp -= self.player.attack_power
 
     def battle_spell(self):
-        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n",
+        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n"
+                                              f"Command?\n",
                                               add_quotes=False,
-                                              disable_sound=True)
-
-    def battle_run(self):
-        play_sound(stairs_down_sfx)
-        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} started to run away.\n",
-                                              add_quotes=False,
-                                              disable_sound=True)
+                                              disable_sound=True,
+                                              last_line=True)
 
     def enemy_defeated(self, enemy):
         mixer.music.stop()
