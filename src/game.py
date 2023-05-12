@@ -345,14 +345,11 @@ class Game:
                                     if selected_executed_option:
                                         if selected_executed_option == 'Fight':
                                             self.fight(enemy)
-                                            selected_executed_option = None
                                         elif selected_executed_option == 'Spell':
                                             self.battle_spell()
-                                            selected_executed_option = None
                                         elif selected_executed_option == 'Run':
                                             self.battle_run()
                                             run_away = True
-                                            selected_executed_option = None
                                         elif selected_executed_option == 'Item':
                                             if not self.player.inventory:
                                                 self.cmd_menu.show_line_in_dialog_box(
@@ -361,7 +358,7 @@ class Game:
                                                     add_quotes=False,
                                                     disable_sound=True,
                                                     last_line=True)
-                                            selected_executed_option = None
+                                        selected_executed_option = None
 
                         if enemy.hp <= 0:
                             self.enemy_defeated(enemy)
