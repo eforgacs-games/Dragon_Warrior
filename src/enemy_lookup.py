@@ -1,4 +1,8 @@
 # using the colors from https://gamefaqs.gamespot.com/nes/563408-dragon-warrior/map/5948-enemy-territory-map
+from src.enemy import Slime, RedSlime, MetalSlime, Drakee, Magidrakee, Drakeema, Ghost, Poltergeist, Specter, Magician, \
+    Warlock, Wizard, Scorpion, MetalScorpion, RogueScorpion, Druin, Druinlord, Droll, Drollmagi, Skeleton, Wraith, \
+    WraithKnight, DemonKnight, Wolf, Wolflord, Werewolf, Goldman, Golem, Stoneman, Wyvern, Magiwyvern, Starwyvern, \
+    Knight, AxeKnight, ArmoredKnight, GreenDragon, BlueDragon, RedDragon, Dragonlord, Dragonlord2
 
 dark_brown = ['Red Slime', 'Drakee', 'Ghost', 'Magician']
 dark_yellow = ['Ghost', 'Magician', 'Magidrakee', 'Scorpion']
@@ -87,5 +91,49 @@ enemy_territory_map = {
     (7, 5): green,
     (7, 6): light_jade_green,
     (7, 7): green_cyan,
+
+}
+
+enemy_string_lookup = {
+    'Slime': Slime,
+    'Red Slime': RedSlime,
+    'Metal Slime': MetalSlime,
+    'Drakee': Drakee,
+    'Magidrakee': Magidrakee,
+    'Drakeema': Drakeema,
+    'Ghost': Ghost,
+    'Poltergeist': Poltergeist,
+    'Specter': Specter,
+    'Magician': Magician,
+    'Warlock': Warlock,
+    'Wizard': Wizard,
+    'Scorpion': Scorpion,
+    'Metal Scorpion': MetalScorpion,
+    'Rogue Scorpion': RogueScorpion,
+    'Druin': Druin,
+    'Druinlord': Druinlord,
+    'Droll': Droll,
+    'Drollmagi': Drollmagi,
+    'Skeleton': Skeleton,
+    'Wraith': Wraith,
+    'Wraith Knight': WraithKnight,
+    'Demon Knight': DemonKnight,
+    'Wolf': Wolf,
+    'Wolflord': Wolflord,
+    'Werewolf': Werewolf,
+    'Goldman': Goldman,
+    'Golem': Golem,
+    'Stoneman': Stoneman,
+    'Wyvern': Wyvern,
+    'Magiwyvern': Magiwyvern,
+    'Starwyvern': Starwyvern,
+    'Knight': Knight,
+    'Axe Knight': AxeKnight,
+    'Armored Knight': ArmoredKnight,
+    'Green Dragon': GreenDragon,
+    'Blue Dragon': BlueDragon,
+    'Red Dragon': RedDragon,
+    'Dragonlord': Dragonlord,
+    'Dragonlord 2': Dragonlord2,
 
 }

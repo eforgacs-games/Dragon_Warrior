@@ -9,7 +9,9 @@ from pygame.event import get
 from pygame.sprite import Group
 from pygame.time import Clock
 from pygame.time import get_ticks
+from pygame.transform import scale
 
+from data.text.dialog import blink_switch
 from data.text.dialog_lookup_table import thou_art_dead, \
     normal_speed_string, double_speed_string, triple_speed_string, quadruple_speed_string
 from src import maps, menu_functions
@@ -20,12 +22,13 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     convert_to_frames_since_start_time, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, \
     ARMED_HERO_WITH_SHIELD_PATH, \
-    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx
+    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx, battle_music, victory_sfx, attack_sfx, hit_sfx, improvement_sfx, \
+    BATTLE_BACKGROUND_PATH, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
     ENABLE_DARKNESS
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
-from src.enemy_lookup import enemy_territory_map
+from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, \
     replace_characters_with_underlying_tiles, \
     draw_hovering_stats_window, select_from_vertical_menu, get_surrounding_rect
@@ -259,24 +262,140 @@ class Game:
 
     def handle_battles(self):
         if self.tiles_moved_since_spawn > 0:
-            # TODO: Add other maps with monsters besides Alefgard.
+            # TODO: Add other maps with enemies besides Alefgard.
             if self.current_map.identifier == 'Alefgard':
                 if self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
                     current_zone = self.player.column // 18, self.player.row // 18
-                    monsters_in_current_zone = enemy_territory_map.get(current_zone)
+                    enemies_in_current_zone = enemy_territory_map.get(current_zone)
                     # "Zone 0" in the original code is zone (3, 2)
                     if current_zone == (3, 2):
                         random_integer = self.handle_near_tantegel_fight_modifier()
                     else:
                         random_integer = self.get_random_integer_by_tile()
                     if random_integer == 0:
-                        # choose a random monster from the list of monsters in the current zone
-                        random_monster = random.choice(monsters_in_current_zone)
-                        print(f'Random monster: {random_monster}')
+                        enemy_name = random.choice(enemies_in_current_zone)
+                        if self.music_enabled:
+                            mixer.music.load(battle_music)
+                            mixer.music.play(-1)
+                        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
+                                                        (7 * TILE_SIZE, 7 * TILE_SIZE))
+                        self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
+                        vowel = 'AEIOU'
+                        for letter in vowel:
+                            if enemy_name.startswith(letter):
+                                self.cmd_menu.show_line_in_dialog_box(f'An {enemy_name} draws near!\n',
+                                                                      add_quotes=False,
+                                                                      disable_sound=True,
+                                                                      last_line=True)
+                                break
+                        else:
+                            # show battle window (enemy sprite over background)
+                            self.cmd_menu.show_line_in_dialog_box(f'A {enemy_name} draws near!\n',
+                                                                  add_quotes=False,
+                                                                  disable_sound=True,
+                                                                  last_line=True)
+                            self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
+
+                            battle_command_menu_static_image = scale(image.load(BATTLE_MENU_STATIC_PATH),
+                                                                     (8 * TILE_SIZE, 3 * TILE_SIZE))
+
+                            self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
+                            self.screen.blit(battle_command_menu_static_image, (6 * TILE_SIZE, 1 * TILE_SIZE))
+                            self.hovering_stats_displayed = True
+                            draw_hovering_stats_window(self.screen, self.player)
+                        enemy = enemy_string_lookup[enemy_name]()
+                        blink_start = get_ticks()
+                        while enemy.hp > 0:
+                            self.cmd_menu.show_line_in_dialog_box('Command?\n',
+                                                                  add_quotes=False,
+                                                                  disable_sound=True,
+                                                                  last_line=True)
+                            blink_switch(self.cmd_menu, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, x=6, y=1, width=8, height=3, start=blink_start)
+                            player_input = input("Fight, Spell, Run, Item\n")
+                            if player_input == 'Fight' or player_input == 'f':
+                                self.fight(enemy)
+                            elif player_input == 'Spell' or player_input == 's':
+                                self.battle_spell()
+                            elif player_input == 'Run' or player_input == 'r':
+                                self.battle_run()
+                        self.enemy_defeated(enemy)
+                        if self.music_enabled:
+                            mixer.music.load(self.current_map.music_file_path)
+                            mixer.music.play(-1)
+
                     if self.last_zone != current_zone:
-                        print(f'Zone: {current_zone}\nMonsters: {monsters_in_current_zone}')
+                        print(f'Zone: {current_zone}\nEnemies: {enemies_in_current_zone}')
                     self.last_zone = current_zone
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
+
+    def fight(self, enemy):
+        play_sound(attack_sfx)
+        # TODO: Quick hack to set player attack power to 1 for now.
+        self.player.attack_power = 10
+        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n",
+                                              add_quotes=False,
+                                              disable_sound=True)
+        play_sound(hit_sfx)
+        self.cmd_menu.show_line_in_dialog_box(
+            f"The {enemy.name}'s Hit Points have been reduced by {self.player.attack_power}.\n",
+            add_quotes=False,
+            disable_sound=True)
+        enemy.hp -= self.player.attack_power
+
+    def battle_spell(self):
+        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n",
+                                              add_quotes=False,
+                                              disable_sound=True)
+
+    def battle_run(self):
+        play_sound(stairs_down_sfx)
+        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} started to run away.\n",
+                                              add_quotes=False,
+                                              disable_sound=True)
+
+    def enemy_defeated(self, enemy):
+        mixer.music.stop()
+        play_sound(victory_sfx)
+        self.cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n",
+                                              add_quotes=False,
+                                              disable_sound=True)
+        self.cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
+                                              f"Thy GOLD increases by {enemy.gold}.\n",
+                                              add_quotes=False,
+                                              disable_sound=True)
+        self.player.total_experience += enemy.xp
+        self.player.gold += enemy.gold
+        if self.player.total_experience >= self.player.points_to_next_level:
+            play_sound(improvement_sfx)
+            self.cmd_menu.show_line_in_dialog_box(f"Courage and wit have served thee well.\n"
+                                                  f"Thou hast been promoted to the next level.\n",
+                                                  add_quotes=False,
+                                                  disable_sound=True)
+            old_power = self.player.strength
+            old_agility = self.player.agility
+            old_max_hp = self.player.max_hp
+            old_max_mp = self.player.max_mp
+            old_attack_power = self.player.attack_power
+            old_defense_power = self.player.defense_power
+            old_spells = self.player.spells
+
+            self.player.level += 1
+            self.player.set_stats_by_level(self.player.level)
+
+            if self.player.strength > old_power:
+                self.cmd_menu.show_line_in_dialog_box(f"Thy power increases by {self.player.strength - old_power}.\n",
+                                                      add_quotes=False,
+                                                      disable_sound=True)
+            if self.player.agility > old_agility:
+                self.cmd_menu.show_line_in_dialog_box(
+                    f"Thy Response Speed increases by {self.player.agility - old_agility}.\n",
+                    add_quotes=False,
+                    disable_sound=True)
+            if self.player.max_hp > old_max_hp:
+                self.cmd_menu.show_line_in_dialog_box(
+                    f"Thy Maximum Hit Points increase by {self.player.max_hp - old_max_hp}.\n",
+                    add_quotes=False,
+                    disable_sound=True)
 
     def handle_near_tantegel_fight_modifier(self):
         if self.player.current_tile == 'HILLS':
