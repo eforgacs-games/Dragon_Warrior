@@ -43,11 +43,18 @@ _sound_library = {}
 text_beep_sfx = join(SFX_DIR, 'text_beep.wav')
 death_sfx = join(SFX_DIR, '20 Dragon Quest 1 - Thou Hast Died.mp3')
 special_item_sfx = join(SFX_DIR, '21 Dragon Quest 1 - Special Item.mp3')
+victory_sfx = join(SFX_DIR, '25 Dragon Quest 1 - Victory.mp3')
+improvement_sfx = join(SFX_DIR, '26 Dragon Quest 1 - Improvement.mp3')
 stairs_up_sfx = join(SFX_DIR, '29 Dragon Quest 1 - Stairs Up.mp3')
 stairs_down_sfx = join(SFX_DIR, '30 Dragon Quest 1 - Stairs Down.mp3')
 swamp_sfx = join(SFX_DIR, '31 Dragon Quest 1 - Swamp.mp3')
 menu_button_sfx = join(SFX_DIR, '32 Dragon Quest 1 - Menu Button.mp3')
 confirmation_sfx = join(SFX_DIR, '33 Dragon Quest 1 - Confirmation.mp3')
+hit_sfx = join(SFX_DIR, '34 Dragon Quest 1 - Hit.mp3')
+excellent_move_sfx = join(SFX_DIR, '35 Dragon Quest 1 - Excellent Move.mp3')
+attack_sfx = join(SFX_DIR, '36 Dragon Quest 1 - Attack.mp3')
+receive_damage_sfx = join(SFX_DIR, '37 Dragon Quest 1 - Receive Damage.mp3')
+receive_damage_2_sfx = join(SFX_DIR, '38 Dragon Quest 1 - Receive Damage (2).mp3')
 spell_sfx = join(SFX_DIR, '43 Dragon Quest 1 - Cast A Spell.mp3')
 
 # items
@@ -78,6 +85,7 @@ if ORCHESTRA_MUSIC_ENABLED:
     tantegel_castle_courtyard_music = join(MUSIC_DIR, 'orchestra', '02 Chateau Ladutorm.mp3')
     village_music = join(MUSIC_DIR, 'orchestra', '03 People.mp3')
     overworld_music = join(MUSIC_DIR, 'orchestra', '04 Unknown World.mp3')
+    battle_music = join(MUSIC_DIR, 'orchestra', '05 Fight.mp3')
     dungeon_floor_1_music = \
         dungeon_floor_2_music = \
         dungeon_floor_3_music = \
@@ -86,6 +94,7 @@ if ORCHESTRA_MUSIC_ENABLED:
         dungeon_floor_6_music = \
         dungeon_floor_7_music = \
         dungeon_floor_8_music = join(MUSIC_DIR, 'orchestra', '06 Dungeon.mp3')
+
 else:
     intro_overture = join(MUSIC_DIR, 'NES', '01 Dragon Quest 1 - Intro ~ Overture.mp3')
     tantegel_castle_throne_room_music = join(MUSIC_DIR, 'NES', '02 Dragon Quest 1 - Tantegel Castle.mp3')
@@ -100,6 +109,7 @@ else:
     dungeon_floor_6_music = join(MUSIC_DIR, 'NES', '11 Dragon Quest 1 - Dark Dungeon ~ Floor 6.mp3')
     dungeon_floor_7_music = join(MUSIC_DIR, 'NES', '12 Dragon Quest 1 - Dark Dungeon ~ Floor 7.mp3')
     dungeon_floor_8_music = join(MUSIC_DIR, 'NES', '13 Dragon Quest 1 - Dark Dungeon ~ Floor 8.mp3')
+    battle_music = join(MUSIC_DIR, 'NES', '14 Dragon Quest 1 - A Monster Draws Near.mp3')
 
 # Images
 
@@ -122,6 +132,7 @@ DRAGONLORD_PATH = join(IMAGES_DIR, 'dragonlord.png')
 INTRO_BANNER_PATH = join(IMAGES_DIR, 'intro_banner', 'intro_banner.png')
 INTRO_BANNER_WITH_DRAGON_PATH = join(IMAGES_DIR, 'intro_banner', 'intro_banner_with_dragon.png')
 ICON_PATH = join(IMAGES_DIR, 'walking_hero.gif')
+BATTLE_BACKGROUND_PATH = join(IMAGES_DIR, 'battle_background.png')
 
 # menus/windows
 
@@ -246,6 +257,15 @@ BRECCONARY_WEAPONS_SHOP_CLOTHES_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_DIR,
 BRECCONARY_WEAPONS_SHOP_LEATHER_ARMOR_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_DIR, 'brecconary_shop_leather_armor.png')
 BRECCONARY_WEAPONS_SHOP_SMALL_SHIELD_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_DIR, 'brecconary_shop_small_shield.png')
 
+
+# battle menu
+BATTLE_MENU_DIR = join(IMAGES_MENUS_DIR, 'battle_menu')
+
+BATTLE_MENU_FIGHT_PATH = join(BATTLE_MENU_DIR, 'battle_menu_fight.png')
+BATTLE_MENU_SPELL_PATH = join(BATTLE_MENU_DIR, 'battle_menu_spell.png')
+BATTLE_MENU_ITEM_PATH = join(BATTLE_MENU_DIR, 'battle_menu_item.png')
+BATTLE_MENU_RUN_PATH = join(BATTLE_MENU_DIR, 'battle_menu_run.png')
+BATTLE_MENU_STATIC_PATH = join(BATTLE_MENU_DIR, 'battle_menu_static.png')
 
 def get_image(path):
     global _image_library
