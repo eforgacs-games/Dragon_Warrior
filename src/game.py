@@ -299,7 +299,7 @@ class Game:
                         self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
 
                         battle_command_menu_fight_image = scale(image.load(BATTLE_MENU_FIGHT_PATH),
-                                                                 (8 * TILE_SIZE, 3 * TILE_SIZE))
+                                                                (8 * TILE_SIZE, 3 * TILE_SIZE))
 
                         self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
                         self.screen.blit(battle_command_menu_fight_image, (6 * TILE_SIZE, 1 * TILE_SIZE))
@@ -308,13 +308,14 @@ class Game:
 
                         enemy = enemy_string_lookup[enemy_name]()
 
-                        battle_menu_options = [["Fight", "Spell"], ["Run", "Item"]]
+                        battle_menu_options = {'Fight': BATTLE_MENU_FIGHT_PATH, 'Spell': BATTLE_MENU_SPELL_PATH}, \
+                            {'Run': BATTLE_MENU_RUN_PATH, 'Item': BATTLE_MENU_ITEM_PATH}
                         current_item_row = 0
                         current_item_column = 0
-                        current_selection = battle_menu_options[current_item_row][current_item_column]
                         run_away = False
                         blink_start = get_ticks()
                         while enemy.hp > 0 and not run_away:
+                            current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
                             display.flip()
                             selected_executed_option = None
                             for current_event in event.get():
@@ -325,64 +326,44 @@ class Game:
                                     elif current_event.key == K_j:
                                         # back up cursor instead of deleting letters
                                         break
-                                    elif current_event.key in (K_DOWN, K_s):
+                                    elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
                                         if current_item_row == 0:
                                             current_item_row = 1
                                         elif current_item_row == 1:
                                             current_item_row = 0
-                                    elif current_event.key in (K_UP, K_w):
-                                        if current_item_row == 0:
-                                            current_item_row = 1
-                                        elif current_item_row == 1:
-                                            current_item_row = 0
-                                    elif current_event.key in (K_LEFT, K_a):
+                                    elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
                                         if current_item_column == 0:
                                             current_item_column = 1
                                         elif current_item_column == 1:
                                             current_item_column = 0
-                                    elif current_event.key in (K_RIGHT, K_d):
-                                        if current_item_column == 0:
-                                            current_item_column = 1
-                                        elif current_item_column == 1:
-                                            current_item_column = 0
-                                    blink_start = get_ticks()
-                                    current_selection = battle_menu_options[current_item_row][current_item_column]
-                                    if current_selection == "Fight":
-                                        blink_switch(self.cmd_menu, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH,
-                                                     x=6,
-                                                     y=1,
-                                                     width=8, height=3, start=blink_start)
-                                    elif current_selection == "Spell":
-                                        blink_switch(self.cmd_menu, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_SPELL_PATH,
-                                                     x=6,
-                                                     y=1,
-                                                     width=8, height=3, start=blink_start)
-                                    elif current_selection == "Run":
-                                        blink_switch(self.cmd_menu, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_RUN_PATH, x=6,
-                                                     y=1,
-                                                     width=8, height=3, start=blink_start)
-                                    elif current_selection == "Item":
-                                        blink_switch(self.cmd_menu, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_ITEM_PATH, x=6,
-                                                     y=1,
-                                                     width=8, height=3, start=blink_start)
+                                    if convert_to_frames_since_start_time(blink_start) > 32:
+                                        blink_start = get_ticks()
+                                    blink_switch(self.screen, BATTLE_MENU_STATIC_PATH,
+                                                 list(battle_menu_options[current_item_row].values())[
+                                                     current_item_column],
+                                                 x=6, y=1, width=8, height=3, start=blink_start)
                                     if selected_executed_option:
                                         if selected_executed_option == 'Fight':
                                             self.fight(enemy)
+                                            selected_executed_option = None
                                         elif selected_executed_option == 'Spell':
                                             self.battle_spell()
+                                            selected_executed_option = None
                                         elif selected_executed_option == 'Run':
                                             self.battle_run()
                                             run_away = True
+                                            selected_executed_option = None
                                         elif selected_executed_option == 'Item':
-                                            self.cmd_menu.show_line_in_dialog_box(
-                                                'Nothing of use has yet been given to thee.\n'
-                                                'Command?\n',
-                                                add_quotes=False,
-                                                disable_sound=True,
-                                                last_line=True)
-                                            break
+                                            if not self.player.inventory:
+                                                self.cmd_menu.show_line_in_dialog_box(
+                                                    'Nothing of use has yet been given to thee.\n'
+                                                    'Command?\n',
+                                                    add_quotes=False,
+                                                    disable_sound=True,
+                                                    last_line=True)
+                                            selected_executed_option = None
 
-                        if enemy.hp < 0:
+                        if enemy.hp <= 0:
                             self.enemy_defeated(enemy)
                         if self.music_enabled:
                             mixer.music.load(self.current_map.music_file_path)
@@ -398,11 +379,12 @@ class Game:
         self.cmd_menu.show_line_in_dialog_box(
             f"{self.player.name} started to run away.\n",
             add_quotes=False,
-            disable_sound=True)
+            disable_sound=True,
+            last_line=True)
 
     def fight(self, enemy):
         play_sound(attack_sfx)
-        # TODO: Quick hack to set player attack power to 1 for now.
+        # TODO: Quick hack to set player attack power to 10 for now.
         self.player.attack_power = 10
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n",
                                               add_quotes=False,
