@@ -25,7 +25,7 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     ARMED_HERO_WITH_SHIELD_PATH, \
     UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx, battle_music, victory_sfx, attack_sfx, hit_sfx, improvement_sfx, \
     BATTLE_BACKGROUND_PATH, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
-    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH
+    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, IMAGES_ENEMIES_DIR
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
     ENABLE_DARKNESS
@@ -282,6 +282,9 @@ class Game:
                         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
                                                         (7 * TILE_SIZE, 7 * TILE_SIZE))
                         self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
+                        enemy_image = scale(image.load(f'{IMAGES_ENEMIES_DIR}/{enemy_name}.png'),
+                                            (TILE_SIZE * SCALE, TILE_SIZE * SCALE))
+                        self.screen.blit(enemy_image, (7.5 * TILE_SIZE, 7 * TILE_SIZE))
                         enemy_draws_near_string = f'{enemy_name} draws near!\n' \
                                                   f'Command?\n'
                         vowels = 'AEIOU'
@@ -319,7 +322,10 @@ class Game:
                             display.flip()
                             selected_executed_option = None
                             for current_event in event.get():
-                                if current_event.type == KEYDOWN:
+                                if current_event.type == QUIT:
+                                    quit()
+                                    sys.exit()
+                                elif current_event.type == KEYDOWN:
                                     if current_event.key in (K_RETURN, K_i, K_k):
                                         play_sound(menu_button_sfx)
                                         selected_executed_option = current_selection
