@@ -25,7 +25,7 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     ARMED_HERO_WITH_SHIELD_PATH, \
     UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx, battle_music, victory_sfx, attack_sfx, hit_sfx, improvement_sfx, \
     BATTLE_BACKGROUND_PATH, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
-    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, IMAGES_ENEMIES_DIR
+    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, IMAGES_ENEMIES_DIR, missed_sfx, missed_2_sfx
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
     ENABLE_DARKNESS, FORCE_BATTLE
@@ -429,17 +429,35 @@ class Game:
 
     def fight(self, enemy):
         play_sound(attack_sfx)
-        # TODO: Quick hack to set player attack power to 10 for now.
-        self.player.attack_power = 10
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n",
                                               add_quotes=False,
                                               disable_sound=True)
-        play_sound(hit_sfx)
-        self.cmd_menu.show_line_in_dialog_box(
-            f"The {enemy.name}'s Hit Points have been reduced by {self.player.attack_power}.\n",
-            add_quotes=False,
-            disable_sound=True)
-        enemy.hp -= self.player.attack_power
+        # (HeroAttack - EnemyAgility / 2) / 4,
+        #
+        # to:
+        #
+        # (HeroAttack - EnemyAgility / 2) / 2
+        lower_bound = self.player.attack_power - enemy.speed // 2
+        upper_bound = self.player.attack_power - enemy.speed // 4
+
+        attack_damage = random.randint(lower_bound, upper_bound)
+
+        if attack_damage <= 0:
+            missed_sfx_number = random.randint(1, 2)
+            if missed_sfx_number == 1:
+                play_sound(missed_sfx)
+            else:
+                play_sound(missed_2_sfx)
+            self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n",
+                                                  add_quotes=False,
+                                                  disable_sound=True)
+        else:
+            play_sound(hit_sfx)
+            self.cmd_menu.show_line_in_dialog_box(
+                f"The {enemy.name}'s Hit Points have been reduced by {attack_damage}.\n",
+                add_quotes=False,
+                disable_sound=True)
+            enemy.hp -= self.player.attack_power
 
     def battle_spell(self):
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n"
