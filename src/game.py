@@ -28,7 +28,7 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, IMAGES_ENEMIES_DIR
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
-    ENABLE_DARKNESS
+    ENABLE_DARKNESS, FORCE_BATTLE
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, \
@@ -41,6 +41,7 @@ from src.menu import CommandMenu, Menu
 from src.menu_functions import convert_list_to_newline_separated_string
 from src.movement import bump_and_reset
 from src.player.player import Player
+from src.player.player_stats import levels_list
 from src.sound import bump, play_sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
@@ -274,7 +275,7 @@ class Game:
                         random_integer = self.handle_near_tantegel_fight_modifier()
                     else:
                         random_integer = self.get_random_integer_by_tile()
-                    if random_integer == 0:
+                    if random_integer == 0 or FORCE_BATTLE:
                         enemy_name = random.choice(enemies_in_current_zone)
                         if self.music_enabled:
                             mixer.music.load(battle_music)
@@ -282,9 +283,42 @@ class Game:
                         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
                                                         (7 * TILE_SIZE, 7 * TILE_SIZE))
                         self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
-                        enemy_image = scale(image.load(f'{IMAGES_ENEMIES_DIR}/{enemy_name}.png'),
-                                            (TILE_SIZE * SCALE, TILE_SIZE * SCALE))
-                        self.screen.blit(enemy_image, (7.5 * TILE_SIZE, 7 * TILE_SIZE))
+                        display.update(battle_background_image.get_rect())
+                        enemy_name_without_spaces = enemy_name.replace(" ", "")
+
+                        enemy_image = image.load(
+                            f'{IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
+                        enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
+                                                          enemy_image.get_height() * SCALE))
+                        if enemy_name in ('Slime', 'Red Slime', 'Metal Slime'):
+                            self.screen.blit(enemy_image, (8 * TILE_SIZE, 7 * TILE_SIZE))
+                        elif enemy_name in ('Drakee', 'Magidrakee', 'Drakeema'):
+                            # might need work
+                            self.screen.blit(enemy_image, (7.75 * TILE_SIZE, 6.25 * TILE_SIZE))
+                        elif enemy_name in ('Ghost', 'Poltergeist', 'Specter'):
+                            self.screen.blit(enemy_image, (7.8 * TILE_SIZE, 5.9 * TILE_SIZE))
+                        elif enemy_name in ('Magician', 'Warlock', 'Wizard'):
+                            self.screen.blit(enemy_image, (7.3 * TILE_SIZE, 6 * TILE_SIZE))
+                        elif enemy_name in ('Scorpion', 'Metal Scorpion', 'Rogue Scorpion'):
+                            self.screen.blit(enemy_image, (7.4 * TILE_SIZE, 6.5 * TILE_SIZE))
+                        elif enemy_name in ('Druin', 'Druinlord'):
+                            self.screen.blit(enemy_image, (8 * TILE_SIZE, 6.5 * TILE_SIZE))
+                        elif enemy_name in ('Droll', 'Drollmagi'):
+                            self.screen.blit(enemy_image, (7.5 * TILE_SIZE, 6 * TILE_SIZE))
+                        elif enemy_name in ('Skeleton', 'Wraith', 'Wraith Knight', 'Demon Knight'):
+                            self.screen.blit(enemy_image, (7.46 * TILE_SIZE, 5.74 * TILE_SIZE))
+                        elif enemy_name in ('Wolf', 'Wolflord', 'Werewolf'):
+                            self.screen.blit(enemy_image, (7.11 * TILE_SIZE, 5.95 * TILE_SIZE))
+                        elif enemy_name in ('Goldman', 'Golem', 'Stoneman'):
+                            self.screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.6 * TILE_SIZE))
+                        elif enemy_name in ('Wyvern', 'Magiwyvern', 'Starwyvern'):
+                            self.screen.blit(enemy_image, (7.25 * TILE_SIZE, 5.5 * TILE_SIZE))
+                        elif enemy_name in ('Knight', 'Axe Knight', 'Armored Knight'):
+                            self.screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.75 * TILE_SIZE))
+                        elif enemy_name in ('Green Dragon', 'Blue Dragon', 'Red Dragon'):
+                            self.screen.blit(enemy_image, (6.5 * TILE_SIZE, 6.25 * TILE_SIZE))
+                        else:
+                            self.screen.blit(enemy_image, (7.544 * TILE_SIZE, 6.1414 * TILE_SIZE))
                         enemy_draws_near_string = f'{enemy_name} draws near!\n' \
                                                   f'Command?\n'
                         vowels = 'AEIOU'
@@ -412,13 +446,17 @@ class Game:
         self.cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n",
                                               add_quotes=False,
                                               disable_sound=True)
+        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
+                                        (7 * TILE_SIZE, 7 * TILE_SIZE))
+        self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
+        display.update(battle_background_image.get_rect())
         self.cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
                                               f"Thy GOLD increases by {enemy.gold}.\n",
                                               add_quotes=False,
                                               disable_sound=True)
         self.player.total_experience += enemy.xp
         self.player.gold += enemy.gold
-        if self.player.total_experience >= self.player.points_to_next_level:
+        if self.player.total_experience >= levels_list[self.player.level + 1]['total_exp']:
             play_sound(improvement_sfx)
             self.cmd_menu.show_line_in_dialog_box(f"Courage and wit have served thee well.\n"
                                                   f"Thou hast been promoted to the next level.\n",
@@ -434,6 +472,10 @@ class Game:
 
             self.player.level += 1
             self.player.set_stats_by_level(self.player.level)
+            self.player.points_to_next_level = self.player.get_points_to_next_level()
+            if self.music_enabled:
+                mixer.music.load(self.current_map.music_file_path)
+                mixer.music.play(-1)
 
             if self.player.strength > old_power:
                 self.cmd_menu.show_line_in_dialog_box(f"Thy power increases by {self.player.strength - old_power}.\n",
@@ -447,6 +489,17 @@ class Game:
             if self.player.max_hp > old_max_hp:
                 self.cmd_menu.show_line_in_dialog_box(
                     f"Thy Maximum Hit Points increase by {self.player.max_hp - old_max_hp}.\n",
+                    add_quotes=False,
+                    disable_sound=True)
+            if self.player.max_mp > old_max_mp:
+                # might not be the exact line
+                self.cmd_menu.show_line_in_dialog_box(
+                    f"Thy Maximum Magic Points increase by {self.player.max_mp - old_max_mp}.\n",
+                    add_quotes=False,
+                    disable_sound=True)
+            if len(self.player.spells) > len(old_spells):
+                self.cmd_menu.show_line_in_dialog_box(
+                    "Thou hast learned a new spell.\n",
                     add_quotes=False,
                     disable_sound=True)
 
