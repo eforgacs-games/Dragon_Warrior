@@ -317,6 +317,11 @@ class Game:
                             self.screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.75 * TILE_SIZE))
                         elif enemy_name in ('Green Dragon', 'Blue Dragon', 'Red Dragon'):
                             self.screen.blit(enemy_image, (6.5 * TILE_SIZE, 6.25 * TILE_SIZE))
+                        elif enemy_name == 'Dragonlord':
+                            self.screen.blit(enemy_image, (7.5 * TILE_SIZE, 6 * TILE_SIZE))
+                        elif enemy_name == 'Dragonlord 2':
+                            # need to have this blit over the text box on the bottom
+                            self.screen.blit(enemy_image, (5.1 * TILE_SIZE, 4 * TILE_SIZE))
                         else:
                             self.screen.blit(enemy_image, (7.544 * TILE_SIZE, 6.1414 * TILE_SIZE))
                         enemy_draws_near_string = f'{enemy_name} draws near!\n' \
@@ -326,8 +331,11 @@ class Game:
                         if enemy_name[0] in vowels:
                             enemy_draws_near_string = f'An {enemy_draws_near_string}'
                         else:
+                            if enemy_name == 'Dragonlord 2':
+                                enemy_draws_near_string = 'The Dragonlord revealed his true self!\n'
                             # show battle window (enemy sprite over background)
-                            enemy_draws_near_string = f'A {enemy_draws_near_string}'
+                            else:
+                                enemy_draws_near_string = f'A {enemy_draws_near_string}'
                         self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string,
                                                               add_quotes=False,
                                                               disable_sound=True,
