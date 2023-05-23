@@ -31,8 +31,6 @@ class Player(AnimatedSprite):
         self.agility = 0
         self.max_hp = 0
         self.max_mp = 0
-        self.attack_power = 0
-        self.defense_power = 0
         self.weapon = ""
         self.armor = ""
         self.shield = ""
@@ -40,6 +38,8 @@ class Player(AnimatedSprite):
         # set name-based initial stats and growth stats
 
         self.set_initial_stats()
+        self.attack_power = self.strength
+        self.defense_power = self.agility
 
         # set attack power based on weapon
 
