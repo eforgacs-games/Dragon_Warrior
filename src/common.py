@@ -55,6 +55,9 @@ excellent_move_sfx = join(SFX_DIR, '35 Dragon Quest 1 - Excellent Move.mp3')
 attack_sfx = join(SFX_DIR, '36 Dragon Quest 1 - Attack.mp3')
 receive_damage_sfx = join(SFX_DIR, '37 Dragon Quest 1 - Receive Damage.mp3')
 receive_damage_2_sfx = join(SFX_DIR, '38 Dragon Quest 1 - Receive Damage (2).mp3')
+prepare_attack_sfx = join(SFX_DIR, '39 Dragon Quest 1 - Prepare to Attack.mp3')
+missed_sfx = join(SFX_DIR, '40 Dragon Quest 1 - Missed!.mp3')
+missed_2_sfx = join(SFX_DIR, '41 Dragon Quest 1 - Missed! (2).mp3')
 spell_sfx = join(SFX_DIR, '43 Dragon Quest 1 - Cast A Spell.mp3')
 
 # items
