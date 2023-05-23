@@ -15,7 +15,7 @@ class DialogBoxWrapper(textwrap.TextWrapper):
 
 
 def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_FONT_PATH, text_wrap_length=21,
-              alignment='left', letter_by_letter=True):
+              alignment='left', letter_by_letter=True, disable_sound=False):
     # n = 34
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
@@ -23,10 +23,9 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
     current_font = set_font_by_language(font_name, size, text)
     dialog_box_wrapper = DialogBoxWrapper(width=text_wrap_length, break_long_words=False)
     chunks = dialog_box_wrapper.wrap(text)
-    sound_off = False
     item_gained_matches = ["thou hast gained", "Thou hast found"]
     if any([x in text for x in item_gained_matches]):
-        sound_off = True
+        disable_sound = True
     for chunk in chunks:
         if letter_by_letter:
             string = ''
@@ -35,7 +34,7 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
                 blit_text_to_screen(alignment, color, current_font, screen, string, x, y)
                 display.update()
                 time.wait(16)
-                if not sound_off:
+                if not disable_sound:
                     if i % 3 == 0:
                         play_sound(text_beep_sfx)
         else:
