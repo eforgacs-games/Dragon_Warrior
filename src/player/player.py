@@ -25,7 +25,7 @@ class Player(AnimatedSprite):
         self.adventure_log = 0
 
         # character attributes
-        self.name = ""
+        self.name = "Player"
         # status menu
         self.strength = 0
         self.agility = 0
