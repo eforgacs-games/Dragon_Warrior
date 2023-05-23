@@ -84,6 +84,7 @@ class CommandMenu(Menu):
             mouse_enabled=False,
             mouse_visible=False,
             menu_id='command',
+            verbose=False
         )
         # TODO: Allow for selection of options using the K ("A" button).
         #  Currently selection is only possible by use of the Enter button.
@@ -143,13 +144,14 @@ class CommandMenu(Menu):
                     create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH, screen=self.screen)
                     if letter_by_letter:
                         if not current_line:
-                            current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, letter_by_letter=True)
+                            current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen,
+                                                     letter_by_letter=True, disable_sound=disable_sound)
                         else:
                             current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen,
-                                                     letter_by_letter=False)
+                                                     letter_by_letter=False, disable_sound=disable_sound)
                     else:
                         current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen,
-                                                 letter_by_letter=False)
+                                                 letter_by_letter=False, disable_sound=disable_sound)
                     display.update(Rect(2 * TILE_SIZE, 9 * TILE_SIZE, 12 * TILE_SIZE, 5 * TILE_SIZE))
                     if not last_line:
                         end_of_dialog_box_location = self.screen.get_width() / 2, (self.screen.get_height() * 13 / 16) + TILE_SIZE // 1.5

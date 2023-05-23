@@ -3,13 +3,16 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, \
-    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect, SCALED
+    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect, \
+    SCALED, K_RETURN
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.sprite import Group
 from pygame.time import Clock
 from pygame.time import get_ticks
+from pygame.transform import scale
 
+from data.text.dialog import blink_switch
 from data.text.dialog_lookup_table import thou_art_dead, \
     normal_speed_string, double_speed_string, triple_speed_string, quadruple_speed_string
 from src import maps, menu_functions
@@ -20,11 +23,14 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     convert_to_frames_since_start_time, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, \
     ARMED_HERO_WITH_SHIELD_PATH, \
-    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx
+    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx, battle_music, victory_sfx, attack_sfx, hit_sfx, improvement_sfx, \
+    BATTLE_BACKGROUND_PATH, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
+    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, IMAGES_ENEMIES_DIR
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
-    ENABLE_DARKNESS
+    ENABLE_DARKNESS, FORCE_BATTLE
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
+from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, \
     replace_characters_with_underlying_tiles, \
     draw_hovering_stats_window, select_from_vertical_menu, get_surrounding_rect
@@ -35,6 +41,7 @@ from src.menu import CommandMenu, Menu
 from src.menu_functions import convert_list_to_newline_separated_string
 from src.movement import bump_and_reset
 from src.player.player import Player
+from src.player.player_stats import levels_list
 from src.sound import bump, play_sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
@@ -45,7 +52,6 @@ class Game:
 
     def __init__(self):
         # map/graphics
-
         self.background = None
         self.big_map = None
         self.layouts = MapLayouts()
@@ -61,6 +67,8 @@ class Game:
         # engine
         self.fps = FPS
         self.last_map = None
+        self.last_zone = None
+        self.last_amount_of_tiles_moved = 0
         self.tiles_moved_since_spawn = 0
         self.tiles_moved_total = 0
         self.radiant_start = None
@@ -187,6 +195,7 @@ class Game:
                 sys.exit()
         event.pump()
         current_key = key.get_pressed()
+        self.handle_battles()
         if not self.player.is_moving:
             set_character_position(self.player)
         if self.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
@@ -253,6 +262,284 @@ class Game:
         # print(f'{self.get_character_identifier_by_coordinates(self.player.next_next_coordinates)}')
 
         event.pump()
+
+    def handle_battles(self):
+        if self.tiles_moved_since_spawn > 0:
+            # TODO: Add other maps with enemies besides Alefgard.
+            if self.current_map.identifier == 'Alefgard':
+                if self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
+                    current_zone = self.player.column // 18, self.player.row // 18
+                    enemies_in_current_zone = enemy_territory_map.get(current_zone)
+                    # "Zone 0" in the original code is zone (3, 2)
+                    if current_zone == (3, 2):
+                        random_integer = self.handle_near_tantegel_fight_modifier()
+                    else:
+                        random_integer = self.get_random_integer_by_tile()
+                    if random_integer == 0 or FORCE_BATTLE:
+                        enemy_name = random.choice(enemies_in_current_zone)
+                        if self.music_enabled:
+                            mixer.music.load(battle_music)
+                            mixer.music.play(-1)
+                        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
+                                                        (7 * TILE_SIZE, 7 * TILE_SIZE))
+                        self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
+                        display.update(battle_background_image.get_rect())
+                        enemy_name_without_spaces = enemy_name.replace(" ", "")
+
+                        enemy_image = image.load(
+                            f'{IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
+                        enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
+                                                          enemy_image.get_height() * SCALE))
+                        if enemy_name in ('Slime', 'Red Slime', 'Metal Slime'):
+                            self.screen.blit(enemy_image, (8 * TILE_SIZE, 7 * TILE_SIZE))
+                        elif enemy_name in ('Drakee', 'Magidrakee', 'Drakeema'):
+                            # might need work
+                            self.screen.blit(enemy_image, (7.75 * TILE_SIZE, 6.25 * TILE_SIZE))
+                        elif enemy_name in ('Ghost', 'Poltergeist', 'Specter'):
+                            self.screen.blit(enemy_image, (7.8 * TILE_SIZE, 5.9 * TILE_SIZE))
+                        elif enemy_name in ('Magician', 'Warlock', 'Wizard'):
+                            self.screen.blit(enemy_image, (7.3 * TILE_SIZE, 6 * TILE_SIZE))
+                        elif enemy_name in ('Scorpion', 'Metal Scorpion', 'Rogue Scorpion'):
+                            self.screen.blit(enemy_image, (7.4 * TILE_SIZE, 6.5 * TILE_SIZE))
+                        elif enemy_name in ('Druin', 'Druinlord'):
+                            self.screen.blit(enemy_image, (8 * TILE_SIZE, 6.5 * TILE_SIZE))
+                        elif enemy_name in ('Droll', 'Drollmagi'):
+                            self.screen.blit(enemy_image, (7.5 * TILE_SIZE, 6 * TILE_SIZE))
+                        elif enemy_name in ('Skeleton', 'Wraith', 'Wraith Knight', 'Demon Knight'):
+                            self.screen.blit(enemy_image, (7.46 * TILE_SIZE, 5.74 * TILE_SIZE))
+                        elif enemy_name in ('Wolf', 'Wolflord', 'Werewolf'):
+                            self.screen.blit(enemy_image, (7.11 * TILE_SIZE, 5.95 * TILE_SIZE))
+                        elif enemy_name in ('Goldman', 'Golem', 'Stoneman'):
+                            self.screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.6 * TILE_SIZE))
+                        elif enemy_name in ('Wyvern', 'Magiwyvern', 'Starwyvern'):
+                            self.screen.blit(enemy_image, (7.25 * TILE_SIZE, 5.5 * TILE_SIZE))
+                        elif enemy_name in ('Knight', 'Axe Knight', 'Armored Knight'):
+                            self.screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.75 * TILE_SIZE))
+                        elif enemy_name in ('Green Dragon', 'Blue Dragon', 'Red Dragon'):
+                            self.screen.blit(enemy_image, (6.5 * TILE_SIZE, 6.25 * TILE_SIZE))
+                        else:
+                            self.screen.blit(enemy_image, (7.544 * TILE_SIZE, 6.1414 * TILE_SIZE))
+                        enemy_draws_near_string = f'{enemy_name} draws near!\n' \
+                                                  f'Command?\n'
+                        vowels = 'AEIOU'
+
+                        if enemy_name[0] in vowels:
+                            enemy_draws_near_string = f'An {enemy_draws_near_string}'
+                        else:
+                            # show battle window (enemy sprite over background)
+                            enemy_draws_near_string = f'A {enemy_draws_near_string}'
+                        self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string,
+                                                              add_quotes=False,
+                                                              disable_sound=True,
+                                                              last_line=True,
+                                                              skip_text=True)
+                        self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
+
+                        battle_command_menu_fight_image = scale(image.load(BATTLE_MENU_FIGHT_PATH),
+                                                                (8 * TILE_SIZE, 3 * TILE_SIZE))
+
+                        self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
+                        self.screen.blit(battle_command_menu_fight_image, (6 * TILE_SIZE, 1 * TILE_SIZE))
+                        self.hovering_stats_displayed = True
+                        draw_hovering_stats_window(self.screen, self.player)
+
+                        enemy = enemy_string_lookup[enemy_name]()
+
+                        battle_menu_options = {'Fight': BATTLE_MENU_FIGHT_PATH, 'Spell': BATTLE_MENU_SPELL_PATH}, \
+                            {'Run': BATTLE_MENU_RUN_PATH, 'Item': BATTLE_MENU_ITEM_PATH}
+                        current_item_row = 0
+                        current_item_column = 0
+                        run_away = False
+                        blink_start = get_ticks()
+                        while enemy.hp > 0 and not run_away:
+                            current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
+                            display.flip()
+                            selected_executed_option = None
+                            for current_event in event.get():
+                                if current_event.type == QUIT:
+                                    quit()
+                                    sys.exit()
+                                elif current_event.type == KEYDOWN:
+                                    if current_event.key in (K_RETURN, K_i, K_k):
+                                        play_sound(menu_button_sfx)
+                                        selected_executed_option = current_selection
+                                    elif current_event.key == K_j:
+                                        # back up cursor instead of deleting letters
+                                        break
+                                    elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
+                                        if current_item_row == 0:
+                                            current_item_row = 1
+                                        elif current_item_row == 1:
+                                            current_item_row = 0
+                                    elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
+                                        if current_item_column == 0:
+                                            current_item_column = 1
+                                        elif current_item_column == 1:
+                                            current_item_column = 0
+                                    if convert_to_frames_since_start_time(blink_start) > 32:
+                                        blink_start = get_ticks()
+                                    blink_switch(self.screen, BATTLE_MENU_STATIC_PATH,
+                                                 list(battle_menu_options[current_item_row].values())[
+                                                     current_item_column],
+                                                 x=6, y=1, width=8, height=3, start=blink_start)
+                                    if selected_executed_option:
+                                        if selected_executed_option == 'Fight':
+                                            self.fight(enemy)
+                                        elif selected_executed_option == 'Spell':
+                                            self.battle_spell()
+                                        elif selected_executed_option == 'Run':
+                                            self.battle_run()
+                                            run_away = True
+                                        elif selected_executed_option == 'Item':
+                                            if not self.player.inventory:
+                                                self.cmd_menu.show_line_in_dialog_box(
+                                                    'Nothing of use has yet been given to thee.\n'
+                                                    'Command?\n',
+                                                    add_quotes=False,
+                                                    disable_sound=True,
+                                                    last_line=True)
+                                        selected_executed_option = None
+
+                        if enemy.hp <= 0:
+                            self.enemy_defeated(enemy)
+                        if self.music_enabled:
+                            mixer.music.load(self.current_map.music_file_path)
+                            mixer.music.play(-1)
+
+                    if self.last_zone != current_zone:
+                        print(f'Zone: {current_zone}\nEnemies: {enemies_in_current_zone}')
+                    self.last_zone = current_zone
+                self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
+
+    def battle_run(self):
+        play_sound(stairs_down_sfx)
+        self.cmd_menu.show_line_in_dialog_box(
+            f"{self.player.name} started to run away.\n",
+            add_quotes=False,
+            disable_sound=True,
+            last_line=True)
+
+    def fight(self, enemy):
+        play_sound(attack_sfx)
+        # TODO: Quick hack to set player attack power to 10 for now.
+        self.player.attack_power = 10
+        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n",
+                                              add_quotes=False,
+                                              disable_sound=True)
+        play_sound(hit_sfx)
+        self.cmd_menu.show_line_in_dialog_box(
+            f"The {enemy.name}'s Hit Points have been reduced by {self.player.attack_power}.\n",
+            add_quotes=False,
+            disable_sound=True)
+        enemy.hp -= self.player.attack_power
+
+    def battle_spell(self):
+        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n"
+                                              f"Command?\n",
+                                              add_quotes=False,
+                                              disable_sound=True,
+                                              last_line=True)
+
+    def enemy_defeated(self, enemy):
+        mixer.music.stop()
+        play_sound(victory_sfx)
+        self.cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n",
+                                              add_quotes=False,
+                                              disable_sound=True)
+        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
+                                        (7 * TILE_SIZE, 7 * TILE_SIZE))
+        self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
+        display.update(battle_background_image.get_rect())
+        self.cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
+                                              f"Thy GOLD increases by {enemy.gold}.\n",
+                                              add_quotes=False,
+                                              disable_sound=True)
+        self.player.total_experience += enemy.xp
+        self.player.gold += enemy.gold
+        if self.player.total_experience >= levels_list[self.player.level + 1]['total_exp']:
+            play_sound(improvement_sfx)
+            self.cmd_menu.show_line_in_dialog_box(f"Courage and wit have served thee well.\n"
+                                                  f"Thou hast been promoted to the next level.\n",
+                                                  add_quotes=False,
+                                                  disable_sound=True)
+            old_power = self.player.strength
+            old_agility = self.player.agility
+            old_max_hp = self.player.max_hp
+            old_max_mp = self.player.max_mp
+            old_attack_power = self.player.attack_power
+            old_defense_power = self.player.defense_power
+            old_spells = self.player.spells
+
+            self.player.level += 1
+            self.player.set_stats_by_level(self.player.level)
+            self.player.points_to_next_level = self.player.get_points_to_next_level()
+            if self.music_enabled:
+                mixer.music.load(self.current_map.music_file_path)
+                mixer.music.play(-1)
+
+            if self.player.strength > old_power:
+                self.cmd_menu.show_line_in_dialog_box(f"Thy power increases by {self.player.strength - old_power}.\n",
+                                                      add_quotes=False,
+                                                      disable_sound=True)
+            if self.player.agility > old_agility:
+                self.cmd_menu.show_line_in_dialog_box(
+                    f"Thy Response Speed increases by {self.player.agility - old_agility}.\n",
+                    add_quotes=False,
+                    disable_sound=True)
+            if self.player.max_hp > old_max_hp:
+                self.cmd_menu.show_line_in_dialog_box(
+                    f"Thy Maximum Hit Points increase by {self.player.max_hp - old_max_hp}.\n",
+                    add_quotes=False,
+                    disable_sound=True)
+            if self.player.max_mp > old_max_mp:
+                # might not be the exact line
+                self.cmd_menu.show_line_in_dialog_box(
+                    f"Thy Maximum Magic Points increase by {self.player.max_mp - old_max_mp}.\n",
+                    add_quotes=False,
+                    disable_sound=True)
+            if len(self.player.spells) > len(old_spells):
+                self.cmd_menu.show_line_in_dialog_box(
+                    "Thou hast learned a new spell.\n",
+                    add_quotes=False,
+                    disable_sound=True)
+
+    def handle_near_tantegel_fight_modifier(self):
+        if self.player.current_tile == 'HILLS':
+            sub_random_integer = random.randint(0, 3)
+        else:
+            sub_random_integer = random.randint(0, 1)
+        if sub_random_integer == 0:
+            random_integer = self.get_random_integer_by_tile()
+        else:
+            random_integer = 1
+        return random_integer
+
+    def get_random_integer_by_tile(self):
+        match self.player.current_tile:
+            case 'SWAMP':
+                random_integer = random.randint(0, 15)
+            case 'DESERT':
+                random_integer = random.randint(0, 7)
+            case 'HILLS':
+                random_integer = random.randint(0, 7)
+            case 'FOREST':
+                random_integer = random.randint(0, 15)
+            case 'BRICK':
+                random_integer = random.randint(0, 15)
+            case 'BARRIER':
+                random_integer = random.randint(0, 15)
+            case _:  # default
+                if self.player.column % 2 == 0:
+                    if self.player.row % 2 == 0:
+                        random_integer = random.randint(0, 31)
+                    else:
+                        random_integer = random.randint(0, 15)
+                else:
+                    if self.player.row % 2 == 0:
+                        random_integer = random.randint(0, 31)
+                    else:
+                        random_integer = random.randint(0, 15)
+        return random_integer
 
     def set_player_images_by_equipment(self):
         if self.player.weapon:
