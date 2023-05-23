@@ -105,10 +105,10 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        # self.current_map = maps.TantegelThroneRoom()
+        self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.ErdricksCaveB1()
         # self.current_map = maps.TantegelCourtyard()
-        self.current_map = maps.Alefgard()
+        # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.Hauksness()
