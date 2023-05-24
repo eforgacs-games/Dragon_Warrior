@@ -29,7 +29,7 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     prepare_attack_sfx, receive_damage_2_sfx, excellent_move_sfx, create_window
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
-    ENABLE_DARKNESS, FORCE_BATTLE
+    ENABLE_DARKNESS, FORCE_BATTLE, NO_BATTLES
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, \
@@ -82,7 +82,7 @@ class Game:
         self.torch_active = False
         self.radiant_active = False
         self.speed = 2
-        self.in_battle = False
+        self.launch_battle = False
         # debugging
         self.show_coordinates = SHOW_COORDINATES
         init()
@@ -286,8 +286,8 @@ class Game:
                         random_integer = self.handle_near_tantegel_fight_modifier()
                     else:
                         random_integer = self.get_random_integer_by_tile()
-                    self.in_battle = random_integer == 0 or FORCE_BATTLE
-                    if self.in_battle:
+                    self.launch_battle = random_integer == 0 or FORCE_BATTLE
+                    if self.launch_battle and not NO_BATTLES:
                         enemy_name = random.choice(enemies_in_current_zone)
                         if self.music_enabled:
                             mixer.music.load(battle_music)
@@ -331,13 +331,12 @@ class Game:
                                              current_item_column], x=6, y=1, width=8, height=3,
                                          start=blink_start, color=self.color)
                             current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
-                            display.flip()
                             selected_executed_option = None
                             for current_event in event.get():
                                 if current_event.type == QUIT:
                                     quit()
                                     sys.exit()
-                                elif current_event.type == KEYDOWN:
+                                elif current_event.type == KEYDOWN and not self.player.is_dead:
                                     if current_event.key in (K_RETURN, K_i, K_k):
                                         play_sound(menu_button_sfx)
                                         selected_executed_option = current_selection
@@ -615,14 +614,14 @@ class Game:
         if self.player.current_hp <= 0:
             self.player.current_hp = 0
             self.player.is_dead = True
-        else:
-            self.player.is_dead = False
-        if self.player.is_dead:
             self.color = RED
-            if self.in_battle:
+            if self.launch_battle and not NO_BATTLES:
                 create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, RED)
-                self.in_battle = False
-            display.flip()
+                self.launch_battle = False
+                display.flip()
+            else:
+                draw_all_tiles_in_current_map(self.current_map, self.background)
+                display.flip()
             if self.music_enabled:
                 mixer.music.stop()
                 mixer.music.load(death_sfx)
@@ -635,6 +634,9 @@ class Game:
 
             self.cmd_menu.show_text_in_dialog_box(thou_art_dead, disable_sound=True)
             self.set_post_death_attributes()
+        else:
+            self.player.is_dead = False
+
 
     def set_post_death_attributes(self):
         next_map = map_lookup['TantegelThroneRoom']()
@@ -662,6 +664,8 @@ class Game:
         play_sound(swamp_sfx)
         self.player.received_environment_damage = True
         flash_transparent_color(RED, self.screen)
+        self.draw_all()
+        display.flip()
 
     def handle_warps(self):
         immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
