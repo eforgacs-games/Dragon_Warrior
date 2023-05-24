@@ -26,7 +26,7 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx, battle_music, victory_sfx, attack_sfx, hit_sfx, improvement_sfx, \
     BATTLE_BACKGROUND_PATH, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
     BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, IMAGES_ENEMIES_DIR, missed_sfx, missed_2_sfx, \
-    prepare_attack_sfx, receive_damage_2_sfx, excellent_move_sfx
+    prepare_attack_sfx, receive_damage_2_sfx, excellent_move_sfx, create_window
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
     ENABLE_DARKNESS, FORCE_BATTLE
@@ -62,7 +62,7 @@ class Game:
         self.is_initial_dialog = True
         self.is_post_death_dialog = False
         self.skip_text = False
-        self.color = WHITE
+
         # intro
         self.start_time = get_ticks()
         self.splash_screen_enabled = SPLASH_SCREEN_ENABLED
@@ -124,6 +124,7 @@ class Game:
         self.player = Player(center_point=None, images=self.current_map.scale_sprite_sheet(UNARMED_HERO_PATH),
                              current_map=self.current_map)
         self.current_map.load_map(self.player, None)
+        self.color = RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
 
         # Good for debugging,
         # and will be useful later when the player's level increases and the stats need to be increased to match
@@ -309,12 +310,8 @@ class Game:
                         self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string, add_quotes=False, skip_text=True,
                                                               last_line=True, disable_sound=True)
                         self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
-
-                        battle_command_menu_fight_image = scale(image.load(BATTLE_MENU_FIGHT_PATH),
-                                                                (8 * TILE_SIZE, 3 * TILE_SIZE))
-
                         self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
-                        self.screen.blit(battle_command_menu_fight_image, (6 * TILE_SIZE, 1 * TILE_SIZE))
+                        create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
                         self.hovering_stats_displayed = True
                         draw_hovering_stats_window(self.screen, self.player, self.color)
 
@@ -355,8 +352,8 @@ class Game:
                                         blink_start = get_ticks()
                                     blink_switch(self.screen, BATTLE_MENU_STATIC_PATH,
                                                  list(battle_menu_options[current_item_row].values())[
-                                                     current_item_column],
-                                                 x=6, y=1, width=8, height=3, start=blink_start)
+                                                     current_item_column], x=6, y=1, width=8, height=3,
+                                                 start=blink_start, color=self.color)
                                     if selected_executed_option:
                                         if selected_executed_option == 'Fight':
                                             self.fight(enemy)

@@ -55,7 +55,7 @@ def draw_stats_strings_with_alignments(stat_string, y_position, screen, color=WH
 
 
 def draw_hovering_stats_window(screen, player, color=WHITE):
-    create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, screen)
+    create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, screen, color)
     draw_text(player.name[:4], TILE_SIZE * 2.99, TILE_SIZE * 2, screen, color=color, alignment='center', letter_by_letter=False)
     draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)
     draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen, color=color)

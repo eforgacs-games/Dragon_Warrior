@@ -10,11 +10,10 @@ from pygame.time import get_ticks
 
 from data.text.dialog import blink_arrow
 from data.text.dialog_lookup_table import DialogLookup
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, \
-    open_treasure_sfx, \
+from src.common import DRAGON_QUEST_FONT_PATH, BLACK, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, \
     open_door_sfx, \
-    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx, text_beep_sfx, RED
+    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx
 from src.config import SCALE, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_hovering_stats_window
 from src.items import treasure
@@ -27,29 +26,6 @@ from src.text import draw_text
 class Menu:
     def __init__(self):
         self.menu = None
-        self.dragon_warrior_menu_theme = pygame_menu.themes.Theme(background_color=BLACK,
-                                                                  cursor_color=WHITE,
-                                                                  cursor_selection_color=WHITE,
-                                                                  title_background_color=BLACK,
-                                                                  title_font=DRAGON_QUEST_FONT_PATH,
-                                                                  title_font_size=8 * SCALE,
-                                                                  title_offset=(32 * SCALE, 0),
-                                                                  widget_font=DRAGON_QUEST_FONT_PATH,
-                                                                  widget_alignment=pygame_menu.locals.ALIGN_LEFT,
-                                                                  widget_background_color=BLACK,
-                                                                  widget_font_color=WHITE,
-                                                                  widget_font_size=8 * SCALE,
-                                                                  widget_selection_effect=pygame_menu.widgets.
-                                                                  LeftArrowSelection(
-                                                                      # TODO: Disabling blinking arrow for now,
-                                                                      #  because the arrow disappears between selections.
-                                                                      #  Might be a problem with pygame-menu.
-                                                                      #  Or a problem with the animation being shut off when the menu launches.
-                                                                      #  Investigation needed.
-                                                                      # blink_ms=500,
-                                                                      # TODO: Fix LeftArrowSelection size.
-                                                                  )
-                                                                  )
         self.launch_signaled = False
         self.skip_text = False
 
@@ -70,7 +46,10 @@ class CommandMenu(Menu):
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
 
-        self.command_menu_surface = create_window(x=5, y=1, width=8, height=5, window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH, screen=self.screen)
+        self.command_menu_surface = create_window(x=5, y=1, width=8, height=5,
+                                                  window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH,
+                                                  screen=self.screen,
+                                                  color=self.game.color)
         self.dialog_lookup = DialogLookup(self)
         self.menu = pygame_menu.Menu(
             title='COMMAND',
@@ -80,7 +59,30 @@ class CommandMenu(Menu):
             column_max_width=(TILE_SIZE * 4, TILE_SIZE * 3),
             columns=2,
             rows=4,
-            theme=self.dragon_warrior_menu_theme,
+            theme=pygame_menu.themes.Theme(background_color=BLACK,
+                                           cursor_color=self.game.color,
+                                           cursor_selection_color=self.game.color,
+                                           title_background_color=BLACK,
+                                           title_font=DRAGON_QUEST_FONT_PATH,
+                                           title_font_color=self.game.color,
+                                           title_font_size=8 * SCALE,
+                                           title_offset=(32 * SCALE, 0),
+                                           widget_font=DRAGON_QUEST_FONT_PATH,
+                                           widget_alignment=pygame_menu.locals.ALIGN_LEFT,
+                                           widget_background_color=BLACK,
+                                           widget_font_color=self.game.color,
+                                           widget_font_size=8 * SCALE,
+                                           widget_selection_effect=pygame_menu.widgets.
+                                           LeftArrowSelection(
+                                               # TODO: Disabling blinking arrow for now,
+                                               #  because the arrow disappears between selections.
+                                               #  Might be a problem with pygame-menu.
+                                               #  Or a problem with the animation being shut off when the menu launches.
+                                               #  Investigation needed.
+                                               # blink_ms=500,
+                                               # TODO: Fix LeftArrowSelection size.
+                                           )
+                                           ),
             mouse_enabled=False,
             mouse_visible=False,
             menu_id='command',
@@ -102,7 +104,7 @@ class CommandMenu(Menu):
         return self.player.next_tile_id == 'WOOD' and (
             character_dict['character'].row, character_dict['character'].column) == self.player.next_next_coordinates
 
-    def launch_dialog(self, dialog_character, current_map, color=WHITE):
+    def launch_dialog(self, dialog_character, current_map):
         character = self.dialog_lookup.lookup_table[current_map.identifier].get(dialog_character)
         if character:
             if character.get('dialog'):
@@ -141,7 +143,8 @@ class CommandMenu(Menu):
                 while display_current_line:
                     if temp_text_start:
                         current_time = get_ticks()
-                    create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH, screen=self.screen)
+                    create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH,
+                                  screen=self.screen, color=self.game.color)
                     if letter_by_letter:
                         if not current_line:
                             current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, color=self.game.color,
@@ -388,7 +391,7 @@ class CommandMenu(Menu):
                         character_dict['character'].direction_value = get_opposite_direction(self.player.direction_value)
                         character_dict['character'].animate()
                         character_dict['character'].pause()
-                    self.launch_dialog(character_identifier, self.current_map, self.game.color)
+                    self.launch_dialog(character_identifier, self.current_map)
                     break
         else:
             self.show_text_in_dialog_box("There is no one there.", add_quotes=True, skip_text=self.skip_text)
@@ -407,7 +410,7 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         show_status = True
         self.window_drop_down_effect(4, 3, 10, 11)
-        create_window(4, 3, 10, 11, STATUS_WINDOW_BACKGROUND_PATH, self.screen)
+        create_window(4, 3, 10, 11, STATUS_WINDOW_BACKGROUND_PATH, self.screen, color=self.game.color)
         draw_text(self.player.name, TILE_SIZE * 13, TILE_SIZE * 3.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
         draw_text(str(self.player.strength), TILE_SIZE * 13, TILE_SIZE * 4.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
         draw_text(str(self.player.agility), TILE_SIZE * 13, TILE_SIZE * 5.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
@@ -551,8 +554,9 @@ class CommandMenu(Menu):
         current_arrow_position = 0
         currently_selected_item = list(list_counter.keys())[0]
         while item_menu_displayed:
-            create_window(x=9, y=3, width=6, height=len(list_counter) + 1, window_background=item_menu_background_lookup[len(list_counter)],
-                          screen=self.screen)
+            create_window(x=9, y=3, width=6, height=len(list_counter) + 1,
+                          window_background=item_menu_background_lookup[len(list_counter)], screen=self.screen,
+                          color=self.game.color)
             draw_text(list_string, TILE_SIZE * 10, TILE_SIZE * 3.75, self.screen)
             blink_arrow(TILE_SIZE * 9.5, (TILE_SIZE + (current_arrow_position * TILE_SIZE / 4)) * 3.75, "right",
                         self.screen, self.game.color)
