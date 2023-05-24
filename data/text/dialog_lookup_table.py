@@ -262,6 +262,8 @@ class DialogLookup:
             self.player.armor = item
         elif item_type == 'shield':
             self.player.shield = item
+        self.player.update_attack_power()
+        self.player.update_defense_power()
         draw_hovering_stats_window(self.screen, self.player)
         self.command_menu.show_line_in_dialog_box(_("I thank thee."))
 

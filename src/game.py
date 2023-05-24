@@ -25,7 +25,8 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     ARMED_HERO_WITH_SHIELD_PATH, \
     UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx, battle_music, victory_sfx, attack_sfx, hit_sfx, improvement_sfx, \
     BATTLE_BACKGROUND_PATH, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
-    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, IMAGES_ENEMIES_DIR, missed_sfx, missed_2_sfx
+    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, IMAGES_ENEMIES_DIR, missed_sfx, missed_2_sfx, \
+    prepare_attack_sfx, receive_damage_2_sfx, excellent_move_sfx
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
     ENABLE_DARKNESS, FORCE_BATTLE
@@ -359,7 +360,7 @@ class Game:
                         current_item_column = 0
                         run_away = False
                         blink_start = get_ticks()
-                        while enemy.hp > 0 and not run_away:
+                        while enemy.hp > 0 and not run_away and not self.player.is_dead:
                             current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
                             display.flip()
                             selected_executed_option = None
@@ -410,7 +411,7 @@ class Game:
 
                         if enemy.hp <= 0:
                             self.enemy_defeated(enemy)
-                        if self.music_enabled:
+                        if self.music_enabled and not mixer.music.get_busy():
                             mixer.music.load(self.current_map.music_file_path)
                             mixer.music.play(-1)
 
@@ -437,10 +438,18 @@ class Game:
         # to:
         #
         # (HeroAttack - EnemyAgility / 2) / 2
-        lower_bound = self.player.attack_power - enemy.speed // 2
-        upper_bound = self.player.attack_power - enemy.speed // 4
 
-        attack_damage = random.randint(lower_bound, upper_bound)
+        excellent_move_probability = random.randint(0, 31)
+        if excellent_move_probability == 0 and enemy.name not in ('Dragonlord', 'Dragonlord 2'):
+            play_sound(excellent_move_sfx)
+            self.cmd_menu.show_line_in_dialog_box("Excellent move!\n",
+                                                  add_quotes=False,
+                                                  disable_sound=True)
+            attack_damage = random.randint(self.player.attack_power // 2,
+                                           self.player.attack_power)
+        else:
+            attack_damage = random.randint(self.player.attack_power - enemy.speed // 2,
+                                           self.player.attack_power - enemy.speed // 4)
 
         if attack_damage <= 0:
             missed_sfx_number = random.randint(1, 2)
@@ -457,7 +466,51 @@ class Game:
                 f"The {enemy.name}'s Hit Points have been reduced by {attack_damage}.\n",
                 add_quotes=False,
                 disable_sound=True)
-            enemy.hp -= self.player.attack_power
+            enemy.hp -= attack_damage
+        if enemy.hp <= 0:
+            return
+        else:
+            play_sound(prepare_attack_sfx)
+            self.cmd_menu.show_line_in_dialog_box(
+                f"The {enemy.name} attacks!\n",
+                add_quotes=False,
+                disable_sound=True)
+            # (EnemyAttack - HeroAgility / 2) / 4,
+            #
+            # to:
+            #
+            # (EnemyAttack - HeroAgility / 2) / 2
+            attack_damage_lower_bound = enemy.attack - self.player.agility // 2
+            upper_bound = enemy.attack - self.player.agility // 4
+
+            attack_damage = random.randint(attack_damage_lower_bound, upper_bound)
+
+            if attack_damage <= 0:
+                missed_sfx_number = random.randint(1, 2)
+                if missed_sfx_number == 1:
+                    play_sound(missed_sfx)
+                else:
+                    play_sound(missed_2_sfx)
+                self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n",
+                                                      add_quotes=False,
+                                                      disable_sound=True)
+            else:
+                play_sound(receive_damage_2_sfx)
+                self.player.current_hp -= attack_damage
+                if self.player.current_hp < 0:
+                    self.player.current_hp = 0
+                draw_hovering_stats_window(self.screen, self.player)
+                self.cmd_menu.show_line_in_dialog_box(
+                    f"Thy Hit Points decreased by {attack_damage}.\n",
+                    add_quotes=False,
+                    disable_sound=True)
+            if self.player.current_hp == 0:
+                draw_hovering_stats_window(self.screen, self.player)
+                self.player.is_dead = True
+            else:
+                self.cmd_menu.show_line_in_dialog_box(f"Command?\n",
+                                                      add_quotes=False,
+                                                      disable_sound=True)
 
     def battle_spell(self):
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n"
@@ -492,12 +545,12 @@ class Game:
             old_agility = self.player.agility
             old_max_hp = self.player.max_hp
             old_max_mp = self.player.max_mp
-            old_attack_power = self.player.attack_power
-            old_defense_power = self.player.defense_power
             old_spells = self.player.spells
 
             self.player.level += 1
             self.player.set_stats_by_level(self.player.level)
+            self.player.update_attack_power()
+            self.player.update_defense_power()
             self.player.points_to_next_level = self.player.get_points_to_next_level()
             if self.music_enabled:
                 mixer.music.load(self.current_map.music_file_path)
@@ -518,7 +571,6 @@ class Game:
                     add_quotes=False,
                     disable_sound=True)
             if self.player.max_mp > old_max_mp:
-                # might not be the exact line
                 self.cmd_menu.show_line_in_dialog_box(
                     f"Thy Maximum Magic Points increase by {self.player.max_mp - old_max_mp}.\n",
                     add_quotes=False,
