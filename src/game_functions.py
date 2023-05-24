@@ -4,7 +4,8 @@ from pygame import image, display, K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN, K
 from pygame.time import get_ticks
 from pygame.transform import scale
 
-from src.common import Direction, HOVERING_STATS_BACKGROUND_PATH, create_window, BLACK, convert_to_frames_since_start_time, play_sound, menu_button_sfx
+from src.common import Direction, HOVERING_STATS_BACKGROUND_PATH, create_window, BLACK, \
+    convert_to_frames_since_start_time, play_sound, menu_button_sfx, RED, WHITE
 from src.config import TILE_SIZE
 from src.text import draw_text
 
@@ -40,27 +41,27 @@ def replace_characters_with_underlying_tiles(tile_types_to_draw: List[str], curr
     return tile_types_to_draw
 
 
-def draw_stats_strings_with_alignments(stat_string, y_position, screen):
+def draw_stats_strings_with_alignments(stat_string, y_position, screen, color=WHITE):
     if len(stat_string) > 4:
-        draw_text(stat_string, TILE_SIZE * 3.2, TILE_SIZE * y_position, screen, alignment='center', letter_by_letter=False)
+        draw_text(stat_string, TILE_SIZE * 3.2, TILE_SIZE * y_position, screen, color=color, alignment='center', letter_by_letter=False)
     elif len(stat_string) > 3:
-        draw_text(stat_string, TILE_SIZE * 3.44, TILE_SIZE * y_position, screen, alignment='center', letter_by_letter=False)
+        draw_text(stat_string, TILE_SIZE * 3.44, TILE_SIZE * y_position, screen, color=color, alignment='center', letter_by_letter=False)
     elif len(stat_string) > 2:
-        draw_text(stat_string, TILE_SIZE * 3.67, TILE_SIZE * y_position, screen, alignment='center', letter_by_letter=False)
+        draw_text(stat_string, TILE_SIZE * 3.67, TILE_SIZE * y_position, screen, color=color, alignment='center', letter_by_letter=False)
     elif len(stat_string) > 1:
-        draw_text(stat_string, TILE_SIZE * 3.99, TILE_SIZE * y_position, screen, alignment='center', letter_by_letter=False)
+        draw_text(stat_string, TILE_SIZE * 3.99, TILE_SIZE * y_position, screen, color=color, alignment='center', letter_by_letter=False)
     else:
-        draw_text(stat_string, TILE_SIZE * 4.2, TILE_SIZE * y_position, screen, alignment='center', letter_by_letter=False)
+        draw_text(stat_string, TILE_SIZE * 4.2, TILE_SIZE * y_position, screen, color=color, alignment='center', letter_by_letter=False)
 
 
-def draw_hovering_stats_window(screen, player):
+def draw_hovering_stats_window(screen, player, color=WHITE):
     create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, screen)
-    draw_text(player.name[:4], TILE_SIZE * 2.99, TILE_SIZE * 2, screen, alignment='center', letter_by_letter=False)
-    draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen)
-    draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen)
-    draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen)
-    draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen)
-    draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen)
+    draw_text(player.name[:4], TILE_SIZE * 2.99, TILE_SIZE * 2, screen, color=color, alignment='center', letter_by_letter=False)
+    draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)
+    draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen, color=color)
+    draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen, color=color)
+    draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen, color=color)
+    draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen, color=color)
 
 
 def select_from_vertical_menu(blink_start, screen, unselected_image, selected_image, other_selected_images):

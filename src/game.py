@@ -62,6 +62,7 @@ class Game:
         self.is_initial_dialog = True
         self.is_post_death_dialog = False
         self.skip_text = False
+        self.color = WHITE
         # intro
         self.start_time = get_ticks()
         self.splash_screen_enabled = SPLASH_SCREEN_ENABLED
@@ -196,6 +197,7 @@ class Game:
                 sys.exit()
         event.pump()
         current_key = key.get_pressed()
+        self.set_text_color()
         self.handle_battles()
         if not self.player.is_moving:
             set_character_position(self.player)
@@ -264,6 +266,12 @@ class Game:
 
         event.pump()
 
+    def set_text_color(self):
+        if self.player.current_hp <= self.player.max_hp * 0.125:
+            self.cmd_menu.game.color, self.color = RED, RED
+        else:
+            self.cmd_menu.game.color, self.color = WHITE, WHITE
+
     def handle_battles(self):
         if self.tiles_moved_since_spawn > 0:
             # TODO: Add other maps with enemies besides Alefgard.
@@ -285,46 +293,7 @@ class Game:
                                                         (7 * TILE_SIZE, 7 * TILE_SIZE))
                         self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
                         display.update(battle_background_image.get_rect())
-                        enemy_name_without_spaces = enemy_name.replace(" ", "")
-
-                        enemy_image = image.load(
-                            f'{IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
-                        enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
-                                                          enemy_image.get_height() * SCALE))
-                        if enemy_name in ('Slime', 'Red Slime', 'Metal Slime'):
-                            self.screen.blit(enemy_image, (8 * TILE_SIZE, 7 * TILE_SIZE))
-                        elif enemy_name in ('Drakee', 'Magidrakee', 'Drakeema'):
-                            # might need work
-                            self.screen.blit(enemy_image, (7.75 * TILE_SIZE, 6.25 * TILE_SIZE))
-                        elif enemy_name in ('Ghost', 'Poltergeist', 'Specter'):
-                            self.screen.blit(enemy_image, (7.8 * TILE_SIZE, 5.9 * TILE_SIZE))
-                        elif enemy_name in ('Magician', 'Warlock', 'Wizard'):
-                            self.screen.blit(enemy_image, (7.3 * TILE_SIZE, 6 * TILE_SIZE))
-                        elif enemy_name in ('Scorpion', 'Metal Scorpion', 'Rogue Scorpion'):
-                            self.screen.blit(enemy_image, (7.4 * TILE_SIZE, 6.5 * TILE_SIZE))
-                        elif enemy_name in ('Druin', 'Druinlord'):
-                            self.screen.blit(enemy_image, (8 * TILE_SIZE, 6.5 * TILE_SIZE))
-                        elif enemy_name in ('Droll', 'Drollmagi'):
-                            self.screen.blit(enemy_image, (7.5 * TILE_SIZE, 6 * TILE_SIZE))
-                        elif enemy_name in ('Skeleton', 'Wraith', 'Wraith Knight', 'Demon Knight'):
-                            self.screen.blit(enemy_image, (7.46 * TILE_SIZE, 5.74 * TILE_SIZE))
-                        elif enemy_name in ('Wolf', 'Wolflord', 'Werewolf'):
-                            self.screen.blit(enemy_image, (7.11 * TILE_SIZE, 5.95 * TILE_SIZE))
-                        elif enemy_name in ('Goldman', 'Golem', 'Stoneman'):
-                            self.screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.6 * TILE_SIZE))
-                        elif enemy_name in ('Wyvern', 'Magiwyvern', 'Starwyvern'):
-                            self.screen.blit(enemy_image, (7.25 * TILE_SIZE, 5.5 * TILE_SIZE))
-                        elif enemy_name in ('Knight', 'Axe Knight', 'Armored Knight'):
-                            self.screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.75 * TILE_SIZE))
-                        elif enemy_name in ('Green Dragon', 'Blue Dragon', 'Red Dragon'):
-                            self.screen.blit(enemy_image, (6.5 * TILE_SIZE, 6.25 * TILE_SIZE))
-                        elif enemy_name == 'Dragonlord':
-                            self.screen.blit(enemy_image, (7.5 * TILE_SIZE, 6 * TILE_SIZE))
-                        elif enemy_name == 'Dragonlord 2':
-                            # need to have this blit over the text box on the bottom
-                            self.screen.blit(enemy_image, (5.1 * TILE_SIZE, 4 * TILE_SIZE))
-                        else:
-                            self.screen.blit(enemy_image, (7.544 * TILE_SIZE, 6.1414 * TILE_SIZE))
+                        self.show_enemy_image(enemy_name)
                         enemy_draws_near_string = f'{enemy_name} draws near!\n' \
                                                   f'Command?\n'
                         vowels = 'AEIOU'
@@ -337,11 +306,8 @@ class Game:
                             # show battle window (enemy sprite over background)
                             else:
                                 enemy_draws_near_string = f'A {enemy_draws_near_string}'
-                        self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string,
-                                                              add_quotes=False,
-                                                              disable_sound=True,
-                                                              last_line=True,
-                                                              skip_text=True)
+                        self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string, add_quotes=False, skip_text=True,
+                                                              last_line=True, disable_sound=True)
                         self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
 
                         battle_command_menu_fight_image = scale(image.load(BATTLE_MENU_FIGHT_PATH),
@@ -350,7 +316,7 @@ class Game:
                         self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
                         self.screen.blit(battle_command_menu_fight_image, (6 * TILE_SIZE, 1 * TILE_SIZE))
                         self.hovering_stats_displayed = True
-                        draw_hovering_stats_window(self.screen, self.player)
+                        draw_hovering_stats_window(self.screen, self.player, self.color)
 
                         enemy = enemy_string_lookup[enemy_name]()
 
@@ -403,10 +369,7 @@ class Game:
                                             if not self.player.inventory:
                                                 self.cmd_menu.show_line_in_dialog_box(
                                                     'Nothing of use has yet been given to thee.\n'
-                                                    'Command?\n',
-                                                    add_quotes=False,
-                                                    disable_sound=True,
-                                                    last_line=True)
+                                                    'Command?\n', add_quotes=False, last_line=True, disable_sound=True)
                                         selected_executed_option = None
 
                         if enemy.hp <= 0:
@@ -420,19 +383,58 @@ class Game:
                     self.last_zone = current_zone
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
 
+    def show_enemy_image(self, enemy_name):
+        enemy_name_without_spaces = enemy_name.replace(" ", "")
+        enemy_image = image.load(
+            f'{IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
+        enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
+                                          enemy_image.get_height() * SCALE))
+        self.position_enemy_image(enemy_image, enemy_name)
+
+    def position_enemy_image(self, enemy_image, enemy_name):
+        if enemy_name in ('Slime', 'Red Slime', 'Metal Slime'):
+            self.screen.blit(enemy_image, (8 * TILE_SIZE, 7 * TILE_SIZE))
+        elif enemy_name in ('Drakee', 'Magidrakee', 'Drakeema'):
+            # might need work
+            self.screen.blit(enemy_image, (7.75 * TILE_SIZE, 6.25 * TILE_SIZE))
+        elif enemy_name in ('Ghost', 'Poltergeist', 'Specter'):
+            self.screen.blit(enemy_image, (7.8 * TILE_SIZE, 5.9 * TILE_SIZE))
+        elif enemy_name in ('Magician', 'Warlock', 'Wizard'):
+            self.screen.blit(enemy_image, (7.3 * TILE_SIZE, 6 * TILE_SIZE))
+        elif enemy_name in ('Scorpion', 'Metal Scorpion', 'Rogue Scorpion'):
+            self.screen.blit(enemy_image, (7.4 * TILE_SIZE, 6.5 * TILE_SIZE))
+        elif enemy_name in ('Druin', 'Druinlord'):
+            self.screen.blit(enemy_image, (8 * TILE_SIZE, 6.5 * TILE_SIZE))
+        elif enemy_name in ('Droll', 'Drollmagi'):
+            self.screen.blit(enemy_image, (7.5 * TILE_SIZE, 6 * TILE_SIZE))
+        elif enemy_name in ('Skeleton', 'Wraith', 'Wraith Knight', 'Demon Knight'):
+            self.screen.blit(enemy_image, (7.46 * TILE_SIZE, 5.74 * TILE_SIZE))
+        elif enemy_name in ('Wolf', 'Wolflord', 'Werewolf'):
+            self.screen.blit(enemy_image, (7.11 * TILE_SIZE, 5.95 * TILE_SIZE))
+        elif enemy_name in ('Goldman', 'Golem', 'Stoneman'):
+            self.screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.6 * TILE_SIZE))
+        elif enemy_name in ('Wyvern', 'Magiwyvern', 'Starwyvern'):
+            self.screen.blit(enemy_image, (7.25 * TILE_SIZE, 5.5 * TILE_SIZE))
+        elif enemy_name in ('Knight', 'Axe Knight', 'Armored Knight'):
+            self.screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.75 * TILE_SIZE))
+        elif enemy_name in ('Green Dragon', 'Blue Dragon', 'Red Dragon'):
+            self.screen.blit(enemy_image, (6.5 * TILE_SIZE, 6.25 * TILE_SIZE))
+        elif enemy_name == 'Dragonlord':
+            self.screen.blit(enemy_image, (7.5 * TILE_SIZE, 6 * TILE_SIZE))
+        elif enemy_name == 'Dragonlord 2':
+            # need to have this blit over the text box on the bottom
+            self.screen.blit(enemy_image, (5.1 * TILE_SIZE, 4 * TILE_SIZE))
+        else:
+            self.screen.blit(enemy_image, (7.544 * TILE_SIZE, 6.1414 * TILE_SIZE))
+
     def battle_run(self):
         play_sound(stairs_down_sfx)
-        self.cmd_menu.show_line_in_dialog_box(
-            f"{self.player.name} started to run away.\n",
-            add_quotes=False,
-            disable_sound=True,
-            last_line=True)
+        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} started to run away.\n", add_quotes=False,
+                                              last_line=True, disable_sound=True)
 
     def fight(self, enemy):
         play_sound(attack_sfx)
-        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n",
-                                              add_quotes=False,
-                                              disable_sound=True)
+        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n", add_quotes=False, disable_sound=True)
         # (HeroAttack - EnemyAgility / 2) / 4,
         #
         # to:
@@ -442,9 +444,7 @@ class Game:
         excellent_move_probability = random.randint(0, 31)
         if excellent_move_probability == 0 and enemy.name not in ('Dragonlord', 'Dragonlord 2'):
             play_sound(excellent_move_sfx)
-            self.cmd_menu.show_line_in_dialog_box("Excellent move!\n",
-                                                  add_quotes=False,
-                                                  disable_sound=True)
+            self.cmd_menu.show_line_in_dialog_box("Excellent move!\n", add_quotes=False, disable_sound=True)
             attack_damage = random.randint(self.player.attack_power // 2,
                                            self.player.attack_power)
         else:
@@ -457,24 +457,19 @@ class Game:
                 play_sound(missed_sfx)
             else:
                 play_sound(missed_2_sfx)
-            self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n",
-                                                  add_quotes=False,
+            self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n", add_quotes=False,
                                                   disable_sound=True)
         else:
             play_sound(hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
-                f"The {enemy.name}'s Hit Points have been reduced by {attack_damage}.\n",
-                add_quotes=False,
+                f"The {enemy.name}'s Hit Points have been reduced by {attack_damage}.\n", add_quotes=False,
                 disable_sound=True)
             enemy.hp -= attack_damage
         if enemy.hp <= 0:
             return
         else:
             play_sound(prepare_attack_sfx)
-            self.cmd_menu.show_line_in_dialog_box(
-                f"The {enemy.name} attacks!\n",
-                add_quotes=False,
-                disable_sound=True)
+            self.cmd_menu.show_line_in_dialog_box(f"The {enemy.name} attacks!\n", add_quotes=False, disable_sound=True)
             # (EnemyAttack - HeroAgility / 2) / 4,
             #
             # to:
@@ -491,55 +486,44 @@ class Game:
                     play_sound(missed_sfx)
                 else:
                     play_sound(missed_2_sfx)
-                self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n",
-                                                      add_quotes=False,
+                self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n", add_quotes=False,
                                                       disable_sound=True)
             else:
                 play_sound(receive_damage_2_sfx)
                 self.player.current_hp -= attack_damage
                 if self.player.current_hp < 0:
                     self.player.current_hp = 0
-                draw_hovering_stats_window(self.screen, self.player)
-                self.cmd_menu.show_line_in_dialog_box(
-                    f"Thy Hit Points decreased by {attack_damage}.\n",
-                    add_quotes=False,
-                    disable_sound=True)
+                draw_hovering_stats_window(self.screen, self.player, self.color)
+                self.cmd_menu.show_line_in_dialog_box(f"Thy Hit Points decreased by {attack_damage}.\n",
+                                                      add_quotes=False, disable_sound=True)
             if self.player.current_hp == 0:
-                draw_hovering_stats_window(self.screen, self.player)
+                draw_hovering_stats_window(self.screen, self.player, RED)
                 self.player.is_dead = True
             else:
-                self.cmd_menu.show_line_in_dialog_box(f"Command?\n",
-                                                      add_quotes=False,
-                                                      disable_sound=True)
+                self.cmd_menu.show_line_in_dialog_box(f"Command?\n", add_quotes=False, disable_sound=True)
 
     def battle_spell(self):
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n"
-                                              f"Command?\n",
-                                              add_quotes=False,
-                                              disable_sound=True,
-                                              last_line=True)
+                                              f"Command?\n", add_quotes=False, last_line=True, disable_sound=True)
 
     def enemy_defeated(self, enemy):
         mixer.music.stop()
         play_sound(victory_sfx)
-        self.cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n",
-                                              add_quotes=False,
+        self.cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n", add_quotes=False,
                                               disable_sound=True)
         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
                                         (7 * TILE_SIZE, 7 * TILE_SIZE))
         self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
         display.update(battle_background_image.get_rect())
         self.cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
-                                              f"Thy GOLD increases by {enemy.gold}.\n",
-                                              add_quotes=False,
+                                              f"Thy GOLD increases by {enemy.gold}.\n", add_quotes=False,
                                               disable_sound=True)
         self.player.total_experience += enemy.xp
         self.player.gold += enemy.gold
         if self.player.total_experience >= levels_list[self.player.level + 1]['total_exp']:
             play_sound(improvement_sfx)
             self.cmd_menu.show_line_in_dialog_box(f"Courage and wit have served thee well.\n"
-                                                  f"Thou hast been promoted to the next level.\n",
-                                                  add_quotes=False,
+                                                  f"Thou hast been promoted to the next level.\n", add_quotes=False,
                                                   disable_sound=True)
             old_power = self.player.strength
             old_agility = self.player.agility
@@ -558,28 +542,22 @@ class Game:
 
             if self.player.strength > old_power:
                 self.cmd_menu.show_line_in_dialog_box(f"Thy power increases by {self.player.strength - old_power}.\n",
-                                                      add_quotes=False,
-                                                      disable_sound=True)
+                                                      add_quotes=False, disable_sound=True)
             if self.player.agility > old_agility:
                 self.cmd_menu.show_line_in_dialog_box(
-                    f"Thy Response Speed increases by {self.player.agility - old_agility}.\n",
-                    add_quotes=False,
+                    f"Thy Response Speed increases by {self.player.agility - old_agility}.\n", add_quotes=False,
                     disable_sound=True)
             if self.player.max_hp > old_max_hp:
                 self.cmd_menu.show_line_in_dialog_box(
-                    f"Thy Maximum Hit Points increase by {self.player.max_hp - old_max_hp}.\n",
-                    add_quotes=False,
+                    f"Thy Maximum Hit Points increase by {self.player.max_hp - old_max_hp}.\n", add_quotes=False,
                     disable_sound=True)
             if self.player.max_mp > old_max_mp:
                 self.cmd_menu.show_line_in_dialog_box(
-                    f"Thy Maximum Magic Points increase by {self.player.max_mp - old_max_mp}.\n",
-                    add_quotes=False,
+                    f"Thy Maximum Magic Points increase by {self.player.max_mp - old_max_mp}.\n", add_quotes=False,
                     disable_sound=True)
             if len(self.player.spells) > len(old_spells):
-                self.cmd_menu.show_line_in_dialog_box(
-                    "Thou hast learned a new spell.\n",
-                    add_quotes=False,
-                    disable_sound=True)
+                self.cmd_menu.show_line_in_dialog_box("Thou hast learned a new spell.\n", add_quotes=False,
+                                                      disable_sound=True)
 
     def handle_near_tantegel_fight_modifier(self):
         if self.player.current_tile == 'HILLS':
@@ -639,6 +617,7 @@ class Game:
         else:
             self.player.is_dead = False
         if self.player.is_dead:
+            self.color = RED
             display.flip()
             if self.music_enabled:
                 mixer.music.stop()
@@ -916,7 +895,7 @@ class Game:
             if not self.hovering_stats_displayed:
                 self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
                 self.hovering_stats_displayed = True
-            draw_hovering_stats_window(self.screen, self.player)
+            draw_hovering_stats_window(self.screen, self.player, self.color)
         self.handle_menu_launch(self.cmd_menu)
         if self.cmd_menu.menu.is_enabled():
             self.cmd_menu.menu.update(self.events)
@@ -966,8 +945,7 @@ class Game:
             if current_event.type == KEYDOWN or self.skip_text:
                 self.cmd_menu.show_text_in_dialog_box(
                     self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
-                    add_quotes=True,
-                    skip_text=self.skip_text)
+                    add_quotes=True, skip_text=self.skip_text)
                 self.is_post_death_dialog = False
                 self.set_to_save_prompt()
                 self.enable_movement = True
