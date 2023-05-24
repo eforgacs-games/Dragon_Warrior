@@ -91,7 +91,7 @@ class TestGameFunctions(TestCase):
         self.game.player.current_mp = 25
         self.game.player.gold = 8
         self.game.player.total_experience = 1984
-        draw_hovering_stats_window(self.game.screen, self.game.player)
+        draw_hovering_stats_window(self.game.screen, self.game.player, self.game.color)
         mock_draw_stats_strings_with_alignments.assert_any_call("7", 2.99, self.game.screen)
         mock_draw_stats_strings_with_alignments.assert_any_call("50", 3.99, self.game.screen)
         mock_draw_stats_strings_with_alignments.assert_any_call("25", 4.99, self.game.screen)

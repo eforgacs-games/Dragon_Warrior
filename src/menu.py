@@ -14,7 +14,7 @@ from src.common import DRAGON_QUEST_FONT_PATH, BLACK, WHITE, menu_button_sfx, DI
     open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, \
     open_door_sfx, \
-    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx, text_beep_sfx
+    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx, text_beep_sfx, RED
 from src.config import SCALE, TILE_SIZE, LANGUAGE
 from src.game_functions import draw_hovering_stats_window
 from src.items import treasure
@@ -102,7 +102,7 @@ class CommandMenu(Menu):
         return self.player.next_tile_id == 'WOOD' and (
             character_dict['character'].row, character_dict['character'].column) == self.player.next_next_coordinates
 
-    def launch_dialog(self, dialog_character, current_map):
+    def launch_dialog(self, dialog_character, current_map, color=WHITE):
         character = self.dialog_lookup.lookup_table[current_map.identifier].get(dialog_character)
         if character:
             if character.get('dialog'):
@@ -144,18 +144,18 @@ class CommandMenu(Menu):
                     create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH, screen=self.screen)
                     if letter_by_letter:
                         if not current_line:
-                            current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen,
+                            current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, color=self.game.color,
                                                      letter_by_letter=True, disable_sound=disable_sound)
                         else:
-                            current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen,
+                            current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, color=self.game.color,
                                                      letter_by_letter=False, disable_sound=disable_sound)
                     else:
-                        current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen,
+                        current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, color=self.game.color,
                                                  letter_by_letter=False, disable_sound=disable_sound)
                     display.update(Rect(2 * TILE_SIZE, 9 * TILE_SIZE, 12 * TILE_SIZE, 5 * TILE_SIZE))
                     if not last_line:
                         end_of_dialog_box_location = self.screen.get_width() / 2, (self.screen.get_height() * 13 / 16) + TILE_SIZE // 1.5
-                        blink_arrow(end_of_dialog_box_location[0], end_of_dialog_box_location[1], "down", self.screen)
+                        blink_arrow(end_of_dialog_box_location[0], end_of_dialog_box_location[1], "down", self.screen, self.game.color)
                     # playing with fire a bit here with the short-circuiting
                     if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
                             [current_event.type == KEYDOWN for current_event in event.get()]):
@@ -239,7 +239,7 @@ class CommandMenu(Menu):
                     if self.launch_signaled:
                         self.screen.blit(self.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
                     if self.game.display_hovering_stats:
-                        draw_hovering_stats_window(self.screen, self.player)
+                        draw_hovering_stats_window(self.screen, self.player, self.game.color)
                     display.update(self.screen.blit(black_box, (TILE_SIZE * left, TILE_SIZE * top)))
 
     def take_item(self, item_name: str):
@@ -388,7 +388,7 @@ class CommandMenu(Menu):
                         character_dict['character'].direction_value = get_opposite_direction(self.player.direction_value)
                         character_dict['character'].animate()
                         character_dict['character'].pause()
-                    self.launch_dialog(character_identifier, self.current_map)
+                    self.launch_dialog(character_identifier, self.current_map, self.game.color)
                     break
         else:
             self.show_text_in_dialog_box("There is no one there.", add_quotes=True, skip_text=self.skip_text)
@@ -408,16 +408,16 @@ class CommandMenu(Menu):
         show_status = True
         self.window_drop_down_effect(4, 3, 10, 11)
         create_window(4, 3, 10, 11, STATUS_WINDOW_BACKGROUND_PATH, self.screen)
-        draw_text(self.player.name, TILE_SIZE * 13, TILE_SIZE * 3.75, self.screen, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.strength), TILE_SIZE * 13, TILE_SIZE * 4.75, self.screen, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.agility), TILE_SIZE * 13, TILE_SIZE * 5.75, self.screen, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.max_hp), TILE_SIZE * 13, TILE_SIZE * 6.75, self.screen, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.max_mp), TILE_SIZE * 13, TILE_SIZE * 7.75, self.screen, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.attack_power), TILE_SIZE * 13, TILE_SIZE * 8.75, self.screen, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.defense_power), TILE_SIZE * 13, TILE_SIZE * 9.75, self.screen, alignment='right', letter_by_letter=False)
-        draw_text(self.player.weapon, TILE_SIZE * 11.75, TILE_SIZE * 10.75, self.screen, text_wrap_length=9, alignment='right', letter_by_letter=False)
-        draw_text(self.player.armor, TILE_SIZE * 11.55, TILE_SIZE * 11.75, self.screen, text_wrap_length=9, alignment='right', letter_by_letter=False)
-        draw_text(self.player.shield, TILE_SIZE * 11.75, TILE_SIZE * 12.75, self.screen, text_wrap_length=9, alignment='right', letter_by_letter=False)
+        draw_text(self.player.name, TILE_SIZE * 13, TILE_SIZE * 3.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.strength), TILE_SIZE * 13, TILE_SIZE * 4.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.agility), TILE_SIZE * 13, TILE_SIZE * 5.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.max_hp), TILE_SIZE * 13, TILE_SIZE * 6.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.max_mp), TILE_SIZE * 13, TILE_SIZE * 7.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.attack_power), TILE_SIZE * 13, TILE_SIZE * 8.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.defense_power), TILE_SIZE * 13, TILE_SIZE * 9.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(self.player.weapon, TILE_SIZE * 11.75, TILE_SIZE * 10.75, self.screen, color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
+        draw_text(self.player.armor, TILE_SIZE * 11.55, TILE_SIZE * 11.75, self.screen, color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
+        draw_text(self.player.shield, TILE_SIZE * 11.75, TILE_SIZE * 12.75, self.screen, color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
         display.update((4 * TILE_SIZE, 3 * TILE_SIZE, 10 * TILE_SIZE, 11 * TILE_SIZE))
         while show_status:
             for current_event in event.get():
@@ -453,7 +453,7 @@ class CommandMenu(Menu):
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
             # the original game has quotes in this dialog box
-            self.show_text_in_dialog_box(("There are no stairs here.",), add_quotes=True, skip_text=self.skip_text)
+            self.show_text_in_dialog_box("There are no stairs here.", add_quotes=True, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.unpause_all_movement()
 
@@ -554,7 +554,8 @@ class CommandMenu(Menu):
             create_window(x=9, y=3, width=6, height=len(list_counter) + 1, window_background=item_menu_background_lookup[len(list_counter)],
                           screen=self.screen)
             draw_text(list_string, TILE_SIZE * 10, TILE_SIZE * 3.75, self.screen)
-            blink_arrow(TILE_SIZE * 9.5, (TILE_SIZE + (current_arrow_position * TILE_SIZE / 4)) * 3.75, "right", self.screen)
+            blink_arrow(TILE_SIZE * 9.5, (TILE_SIZE + (current_arrow_position * TILE_SIZE / 4)) * 3.75, "right",
+                        self.screen, self.game.color)
             display.update((9 * TILE_SIZE, 3 * TILE_SIZE, 6 * TILE_SIZE, (len(list_counter) + 1) * TILE_SIZE))
             for current_event in event.get():
                 if any([current_event.type == KEYDOWN]):
