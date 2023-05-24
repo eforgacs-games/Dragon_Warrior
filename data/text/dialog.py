@@ -8,7 +8,7 @@ from src.config import TILE_SIZE
 from src.text import draw_text
 
 
-def blink_arrow(x, y, direction, screen):
+def blink_arrow(x, y, direction, screen, color=WHITE):
     if direction == 'up':
         arrow_character = '^'
     elif direction == "down":
@@ -24,7 +24,7 @@ def blink_arrow(x, y, direction, screen):
         down_arrow_start = get_ticks()
     arrow_screen_portion = Rect(x, y, TILE_SIZE, TILE_SIZE)
     while convert_to_frames_since_start_time(down_arrow_start) <= 16:
-        draw_text(arrow_character, x, y, screen, WHITE, letter_by_letter=False)
+        draw_text(arrow_character, x, y, screen, color, letter_by_letter=False)
         display.update(arrow_screen_portion)
     while 16 < convert_to_frames_since_start_time(down_arrow_start) <= 32:
         draw_text(arrow_character, x, y, screen, BLACK, letter_by_letter=False)
