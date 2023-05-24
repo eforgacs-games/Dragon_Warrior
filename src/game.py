@@ -108,10 +108,10 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom()
+        # self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.ErdricksCaveB1()
         # self.current_map = maps.TantegelCourtyard()
-        # self.current_map = maps.Alefgard()
+        self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.Hauksness()
@@ -326,6 +326,10 @@ class Game:
                         run_away = False
                         blink_start = get_ticks()
                         while enemy.hp > 0 and not run_away and not self.player.is_dead:
+                            blink_switch(self.screen, BATTLE_MENU_STATIC_PATH,
+                                         list(battle_menu_options[current_item_row].values())[
+                                             current_item_column], x=6, y=1, width=8, height=3,
+                                         start=blink_start, color=self.color)
                             current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
                             display.flip()
                             selected_executed_option = None
@@ -352,10 +356,6 @@ class Game:
                                             current_item_column = 0
                                     if convert_to_frames_since_start_time(blink_start) > 32:
                                         blink_start = get_ticks()
-                                    blink_switch(self.screen, BATTLE_MENU_STATIC_PATH,
-                                                 list(battle_menu_options[current_item_row].values())[
-                                                     current_item_column], x=6, y=1, width=8, height=3,
-                                                 start=blink_start, color=self.color)
                                     if selected_executed_option:
                                         if selected_executed_option == 'Fight':
                                             self.fight(enemy)
