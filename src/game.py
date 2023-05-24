@@ -82,6 +82,7 @@ class Game:
         self.torch_active = False
         self.radiant_active = False
         self.speed = 2
+        self.in_battle = False
         # debugging
         self.show_coordinates = SHOW_COORDINATES
         init()
@@ -285,7 +286,8 @@ class Game:
                         random_integer = self.handle_near_tantegel_fight_modifier()
                     else:
                         random_integer = self.get_random_integer_by_tile()
-                    if random_integer == 0 or FORCE_BATTLE:
+                    self.in_battle = random_integer == 0 or FORCE_BATTLE
+                    if self.in_battle:
                         enemy_name = random.choice(enemies_in_current_zone)
                         if self.music_enabled:
                             mixer.music.load(battle_music)
@@ -488,9 +490,11 @@ class Game:
             else:
                 play_sound(receive_damage_2_sfx)
                 self.player.current_hp -= attack_damage
+                self.color = RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
                 if self.player.current_hp < 0:
                     self.player.current_hp = 0
                 draw_hovering_stats_window(self.screen, self.player, self.color)
+                create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
                 self.cmd_menu.show_line_in_dialog_box(f"Thy Hit Points decreased by {attack_damage}.\n",
                                                       add_quotes=False, disable_sound=True)
             if self.player.current_hp == 0:
@@ -615,6 +619,9 @@ class Game:
             self.player.is_dead = False
         if self.player.is_dead:
             self.color = RED
+            if self.in_battle:
+                create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, RED)
+                self.in_battle = False
             display.flip()
             if self.music_enabled:
                 mixer.music.stop()
