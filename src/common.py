@@ -4,7 +4,7 @@ import os
 from enum import IntEnum
 from os.path import join, sep, exists
 
-from pygame import Surface, image, transform, mixer, font
+from pygame import Surface, image, transform, mixer, font, PixelArray
 from pygame.time import get_ticks
 
 from src.config import SFX_DIR, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, SOUND_ENABLED, FPS, TILE_SIZE
@@ -404,15 +404,19 @@ def convert_to_frames_since_start_time(start_time):
     return convert_to_frames(get_ticks() - start_time)
 
 
-def create_window(x, y, width, height, window_background, screen) -> Surface:
+def create_window(x, y, width, height, window_background, screen, color=WHITE) -> Surface:
     window_box = Surface((TILE_SIZE * width, TILE_SIZE * height))  # lgtm [py/call/wrong-arguments]
-    set_window_background(window_box, window_background)
+    set_window_background(window_box, window_background, color=color)
     screen.blit(window_box, (TILE_SIZE * x, TILE_SIZE * y))
     return window_box
 
 
-def set_window_background(black_box, background_path):
+def set_window_background(black_box, background_path, color=WHITE):
     black_box.fill(BLACK)
     background_image = image.load(background_path)
+    if color == RED:
+        transform.threshold(background_image, background_image, WHITE, (1, 1, 1), RED, 1, None, True)
+            # image_pixel_array = PixelArray(background_image)
+            # image_pixel_array.replace(WHITE, RED)
     background_image = transform.scale(background_image, black_box.get_size())
     black_box.blit(background_image, black_box.get_rect())
