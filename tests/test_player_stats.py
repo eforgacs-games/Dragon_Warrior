@@ -1,8 +1,11 @@
+import os
 from unittest import TestCase
 
-# from src.player.player_stats import apply_transformation_to_levels_list, levels_list, get_total_name_score, get_bonus
 from src.player import player_stats
 from src.player.player_stats import set_exp
+
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 """Names are from https://gamefaqs.gamespot.com/boards/563408-dragon-warrior/72498979"""
 high_12 = (

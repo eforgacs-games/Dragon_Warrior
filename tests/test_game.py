@@ -9,7 +9,6 @@ from pygame.sprite import LayeredDirty
 from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
-from src import config
 from src.camera import Camera
 from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, \
     village_music, intro_overture
