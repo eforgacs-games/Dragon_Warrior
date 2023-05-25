@@ -363,6 +363,8 @@ class Game:
                                         elif selected_executed_option == 'Run':
                                             self.battle_run()
                                             run_away = True
+                                            mixer.music.load(self.current_map.music_file_path)
+                                            mixer.music.play(-1)
                                         elif selected_executed_option == 'Item':
                                             if not self.player.inventory:
                                                 self.cmd_menu.show_line_in_dialog_box(
@@ -376,8 +378,8 @@ class Game:
                             mixer.music.load(self.current_map.music_file_path)
                             mixer.music.play(-1)
 
-                    if self.last_zone != current_zone:
-                        print(f'Zone: {current_zone}\nEnemies: {enemies_in_current_zone}')
+                    # if self.last_zone != current_zone:
+                    #     print(f'Zone: {current_zone}\nEnemies: {enemies_in_current_zone}')
                     self.last_zone = current_zone
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
 
@@ -433,30 +435,11 @@ class Game:
     def fight(self, enemy):
         play_sound(attack_sfx)
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n", add_quotes=False, disable_sound=True)
-        # (HeroAttack - EnemyAgility / 2) / 4,
-        #
-        # to:
-        #
-        # (HeroAttack - EnemyAgility / 2) / 2
 
-        excellent_move_probability = random.randint(0, 31)
-        if excellent_move_probability == 0 and enemy.name not in ('Dragonlord', 'Dragonlord 2'):
-            play_sound(excellent_move_sfx)
-            self.cmd_menu.show_line_in_dialog_box("Excellent move!\n", add_quotes=False, disable_sound=True)
-            attack_damage = random.randint(self.player.attack_power // 2,
-                                           self.player.attack_power)
-        else:
-            attack_damage = random.randint(self.player.attack_power - enemy.speed // 2,
-                                           self.player.attack_power - enemy.speed // 4)
+        attack_damage = self.calculate_attack_damage(enemy)
 
         if attack_damage <= 0:
-            missed_sfx_number = random.randint(1, 2)
-            if missed_sfx_number == 1:
-                play_sound(missed_sfx)
-            else:
-                play_sound(missed_2_sfx)
-            self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n", add_quotes=False,
-                                                  disable_sound=True)
+            self.missed_attack()
         else:
             play_sound(hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
@@ -473,34 +456,63 @@ class Game:
             # to:
             #
             # (EnemyAttack - HeroAgility / 2) / 2
-            attack_damage_lower_bound = enemy.attack - self.player.agility // 2
-            upper_bound = enemy.attack - self.player.agility // 4
 
-            attack_damage = random.randint(attack_damage_lower_bound, upper_bound)
+            attack_damage = self.calculate_enemy_attack_damage(enemy)
 
             if attack_damage <= 0:
-                missed_sfx_number = random.randint(1, 2)
-                if missed_sfx_number == 1:
-                    play_sound(missed_sfx)
-                else:
-                    play_sound(missed_2_sfx)
-                self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n", add_quotes=False,
-                                                      disable_sound=True)
+                self.missed_attack()
             else:
-                play_sound(receive_damage_2_sfx)
-                self.player.current_hp -= attack_damage
-                self.color = RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
-                if self.player.current_hp < 0:
-                    self.player.current_hp = 0
-                draw_hovering_stats_window(self.screen, self.player, self.color)
-                create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
-                self.cmd_menu.show_line_in_dialog_box(f"Thy Hit Points decreased by {attack_damage}.\n",
-                                                      add_quotes=False, disable_sound=True)
+                self.receive_damage(attack_damage)
             if self.player.current_hp == 0:
                 draw_hovering_stats_window(self.screen, self.player, RED)
                 self.player.is_dead = True
             else:
                 self.cmd_menu.show_line_in_dialog_box(f"Command?\n", add_quotes=False, disable_sound=True)
+
+    def receive_damage(self, attack_damage):
+        play_sound(receive_damage_2_sfx)
+        self.player.current_hp -= attack_damage
+        self.color = RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
+        if self.player.current_hp < 0:
+            self.player.current_hp = 0
+        draw_hovering_stats_window(self.screen, self.player, self.color)
+        create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
+        self.cmd_menu.show_line_in_dialog_box(f"Thy Hit Points decreased by {attack_damage}.\n",
+                                              add_quotes=False, disable_sound=True)
+
+    def calculate_enemy_attack_damage(self, enemy):
+        return random.randint((enemy.attack - self.player.agility / 2) // 4,
+                              (enemy.attack - self.player.agility / 2) // 2)
+
+    def missed_attack(self):
+        missed_sfx_number = random.randint(1, 2)
+        if missed_sfx_number == 1:
+            play_sound(missed_sfx)
+        else:
+            play_sound(missed_2_sfx)
+        self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n", add_quotes=False,
+                                              disable_sound=True)
+
+    def calculate_attack_damage(self, enemy):
+        excellent_move_probability = random.randint(0, 31)
+        if excellent_move_probability == 0 and enemy.name not in ('Dragonlord', 'Dragonlord 2'):
+            play_sound(excellent_move_sfx)
+            self.cmd_menu.show_line_in_dialog_box("Excellent move!\n", add_quotes=False, disable_sound=True)
+            attack_damage = random.randint(self.player.attack_power // 2,
+                                           self.player.attack_power)
+        else:
+            # (HeroAttack - EnemyAgility / 2) / 4,
+            #
+            # to:
+            #
+            # (HeroAttack - EnemyAgility / 2) / 2
+            lower_bound = (self.player.attack_power - enemy.speed / 2) // 4
+            upper_bound = (self.player.attack_power - enemy.speed / 2) // 2
+            if lower_bound >= upper_bound:
+                attack_damage = upper_bound
+            else:
+                attack_damage = random.randint(lower_bound, upper_bound)
+        return attack_damage
 
     def battle_spell(self):
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n"
@@ -636,7 +648,6 @@ class Game:
             self.set_post_death_attributes()
         else:
             self.player.is_dead = False
-
 
     def set_post_death_attributes(self):
         next_map = map_lookup['TantegelThroneRoom']()
