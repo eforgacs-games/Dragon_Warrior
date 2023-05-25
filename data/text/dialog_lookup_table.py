@@ -142,18 +142,22 @@ class DialogLookup:
     def tantegel_throne_room_roaming_guard(self):
         player_please_save_the_princess = _("{}, please save the Princess.").format(self.player.name)
         confirmation_prompt(self.command_menu, _("Dost thou know about Princess Gwaelin?"),
-                            yes_path_function=partial(self.command_menu.show_line_in_dialog_box, player_please_save_the_princess, last_line=True),
+                            yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                                      player_please_save_the_princess, last_line=True),
                             no_path_function=partial(self.command_menu.show_text_in_dialog_box,
-                                                     (_("Half a year now hath passed since the Princess was kidnapped by the enemy."),
-                                                      _("Never does the King speak of it, but he must be suffering much."),
-                                                      player_please_save_the_princess),
+                                                     (
+                                                     _("Half a year now hath passed since the Princess was kidnapped by the enemy."),
+                                                     _("Never does the King speak of it, but he must be suffering much."),
+                                                     player_please_save_the_princess),
                                                      drop_down=False, drop_up=False,
                                                      skip_text=self.command_menu.skip_text))
 
     def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
         confirmation_prompt(self.command_menu, weapons_and_armor_intro,
-                            yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.", last_line=True))
+                            yes_path_function=partial(self.open_store_inventory, current_store_inventory,
+                                                      static_store_image),
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.",
+                                                     last_line=True))
 
     def flash_and_restore_mp(self):
         self.player.restore_mp()
@@ -176,7 +180,7 @@ class DialogLookup:
         #             flash_transparent_color(WHITE, self.screen)
         #             display.flip()
 
-    def open_store_inventory(self, current_store_inventory, static_store_image):
+    def open_store_inventory(self, current_store_inventory, static_store_image, color=WHITE):
         self.command_menu.show_line_in_dialog_box(_("What dost thou wish to buy?"), skip_text=True)
         self.command_menu.window_drop_down_effect(6, 2, 9, 7)
         # store_inventory_window = create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
@@ -191,10 +195,10 @@ class DialogLookup:
             current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
             frames_elapsed = convert_to_frames_since_start_time(start_time)
             if frames_elapsed <= 16:
-                create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen)
+                create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
             elif frames_elapsed <= 32:
-                create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
+                create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
             else:
                 start_time = get_ticks()
@@ -213,7 +217,7 @@ class DialogLookup:
                     elif current_event.key in (K_RETURN, K_k):
                         selected_item = current_item_name
             if selected_item:
-                create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen)
+                create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
                 self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
                 selecting = False
@@ -233,14 +237,18 @@ class DialogLookup:
             elif selected_item_type == 'shield':
                 old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.shield, shields)
             confirmation_prompt(self.command_menu, _("Is that Okay.?"),
-                                yes_path_function=partial(self.complete_transaction, selected_item, current_store_inventory, old_item_cost),
-                                no_path_function=partial(self.command_menu.show_line_in_dialog_box, _("Oh, yes? That's too bad."), last_line=False))
+                                yes_path_function=partial(self.complete_transaction, selected_item,
+                                                          current_store_inventory, old_item_cost),
+                                no_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                                         _("Oh, yes? That's too bad."), last_line=False))
         else:
             self.command_menu.show_line_in_dialog_box(_("Sorry.\n"
                                                         "Thou hast not enough money."), last_line=False)
         confirmation_prompt(self.command_menu, _("Dost thou wish to buy anything more?"),
-                            yes_path_function=partial(self.open_store_inventory, current_store_inventory, static_store_image),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, _("Please, come again."), last_line=True))
+                            yes_path_function=partial(self.open_store_inventory, current_store_inventory,
+                                                      static_store_image),
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                                     _("Please, come again."), last_line=True))
 
     def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
         if old_item:
@@ -262,6 +270,8 @@ class DialogLookup:
             self.player.armor = item
         elif item_type == 'shield':
             self.player.shield = item
+        self.player.update_attack_power()
+        self.player.update_defense_power()
         draw_hovering_stats_window(self.screen, self.player)
         self.command_menu.show_line_in_dialog_box(_("I thank thee."))
 
@@ -271,7 +281,8 @@ class DialogLookup:
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                      _("Okay.\n"
                                                        "Good-bye, traveler."),
-                                                     skip_text=self.command_menu.skip_text), skip_text=self.command_menu.skip_text)
+                                                     skip_text=self.command_menu.skip_text),
+                            skip_text=self.command_menu.skip_text)
 
     def check_money(self, inn_cost):
         if self.player.gold >= inn_cost:

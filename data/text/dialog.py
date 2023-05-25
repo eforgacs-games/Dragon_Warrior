@@ -8,7 +8,7 @@ from src.config import TILE_SIZE
 from src.text import draw_text
 
 
-def blink_arrow(x, y, direction, screen):
+def blink_arrow(x, y, direction, screen, color=WHITE):
     if direction == 'up':
         arrow_character = '^'
     elif direction == "down":
@@ -24,30 +24,31 @@ def blink_arrow(x, y, direction, screen):
         down_arrow_start = get_ticks()
     arrow_screen_portion = Rect(x, y, TILE_SIZE, TILE_SIZE)
     while convert_to_frames_since_start_time(down_arrow_start) <= 16:
-        draw_text(arrow_character, x, y, screen, WHITE, letter_by_letter=False)
+        draw_text(arrow_character, x, y, screen, color, letter_by_letter=False)
         display.update(arrow_screen_portion)
     while 16 < convert_to_frames_since_start_time(down_arrow_start) <= 32:
         draw_text(arrow_character, x, y, screen, BLACK, letter_by_letter=False)
         display.update(arrow_screen_portion)
 
 
-def blink_switch(screen, image_1, image_2, x, y, width, height, start):
+def blink_switch(screen, image_1, image_2, x, y, width, height, start, color=WHITE):
     blink_start = start
     image_rect = Rect(x * TILE_SIZE, y * TILE_SIZE, width * TILE_SIZE, height * TILE_SIZE)
     if convert_to_frames_since_start_time(blink_start) > 32:
         blink_start = get_ticks()
     while convert_to_frames_since_start_time(blink_start) <= 16:
-        create_window(x, y, width, height, image_1, screen)
+        create_window(x, y, width, height, image_1, screen, color)
         display.update(image_rect)
     while 16 < convert_to_frames_since_start_time(blink_start) <= 32:
-        create_window(x, y, width, height, image_2, screen)
+        create_window(x, y, width, height, image_2, screen, color)
         display.update(image_rect)
 
 
-def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, finally_function=None, skip_text=False):
+def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, finally_function=None,
+                        skip_text=False, color=WHITE):
     command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, last_line=True, letter_by_letter=True)
     command_menu.window_drop_down_effect(5, 2, 4, 3)
-    window_surface = create_window(5, 2, 4, 3, CONFIRMATION_BACKGROUND_PATH, command_menu.screen)
+    window_surface = create_window(5, 2, 4, 3, CONFIRMATION_BACKGROUND_PATH, command_menu.screen, color)
     display.update(window_surface.get_rect())
     # for some reason it needs this wait() call to actually play the sound
     time.wait(300)
@@ -57,9 +58,11 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     blink_start = get_ticks()
     while blinking:
         if blinking_yes:
-            blink_switch(command_menu.screen, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2, width=4, height=3, start=blink_start)
+            blink_switch(command_menu.screen, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2,
+                         width=4, height=3, start=blink_start, color=color)
         else:
-            blink_switch(command_menu.screen, CONFIRMATION_NO_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2, width=4, height=3, start=blink_start)
+            blink_switch(command_menu.screen, CONFIRMATION_NO_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2,
+                         width=4, height=3, start=blink_start, color=color)
         if skip_text:
             play_sound(menu_button_sfx)
             yes_path_function()
@@ -69,19 +72,19 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
                 if current_event.key in (K_DOWN, K_UP, K_w, K_s):
                     blink_start = get_ticks()
                     if blinking_yes:
-                        create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH, command_menu.screen)
+                        create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH, command_menu.screen, color)
                         blinking_yes = False
                     else:
-                        create_window(5, 2, 4, 3, CONFIRMATION_YES_BACKGROUND_PATH, command_menu.screen)
+                        create_window(5, 2, 4, 3, CONFIRMATION_YES_BACKGROUND_PATH, command_menu.screen, color)
                         blinking_yes = True
                 elif (blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'y':
-                    create_window(5, 2, 4, 3, CONFIRMATION_YES_BACKGROUND_PATH, command_menu.screen)
+                    create_window(5, 2, 4, 3, CONFIRMATION_YES_BACKGROUND_PATH, command_menu.screen, color)
                     play_sound(menu_button_sfx)
                     event.pump()
                     yes_path_function()
                     blinking = False
                 elif (not blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode in ('n', 'j'):
-                    create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH, command_menu.screen)
+                    create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH, command_menu.screen, color)
                     play_sound(menu_button_sfx)
                     event.pump()
                     no_path_function()

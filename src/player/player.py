@@ -1,5 +1,5 @@
 from src.common import Direction, get_next_tile_identifier
-from src.items import weapons
+from src.items import weapons, armor, shields
 from src.player.player_stats import levels_list, apply_transformation_to_levels_list
 from src.sprites.animated_sprite import AnimatedSprite
 
@@ -31,8 +31,6 @@ class Player(AnimatedSprite):
         self.agility = 0
         self.max_hp = 0
         self.max_mp = 0
-        self.attack_power = 0
-        self.defense_power = 0
         self.weapon = ""
         self.armor = ""
         self.shield = ""
@@ -40,10 +38,12 @@ class Player(AnimatedSprite):
         # set name-based initial stats and growth stats
 
         self.set_initial_stats()
+        self.attack_power = self.strength
+        self.defense_power = self.agility
 
-        # set attack power based on weapon
-
+        # set power based on equipment
         self.update_attack_power()
+        self.update_defense_power()
 
         # hovering status window stats
         self.level = 0
@@ -62,7 +62,21 @@ class Player(AnimatedSprite):
 
     def update_attack_power(self):
         if weapons.get(self.weapon):
-            self.attack_power = weapons[self.weapon]['offense']
+            self.attack_power = self.strength + weapons[self.weapon]['offense']
+        else:
+            self.attack_power = self.strength
+
+    def update_defense_power(self):
+        if armor.get(self.armor):
+            if shields.get(self.shield):
+                self.defense_power = self.agility + armor[self.armor]['defense'] + shields[self.shield]['defense']
+            else:
+                self.defense_power = self.agility + armor[self.armor]['defense']
+        else:
+            if shields.get(self.shield):
+                self.defense_power = self.agility + shields[self.shield]['defense']
+            else:
+                self.defense_power = self.agility
 
     def get_points_to_next_level(self):
         if levels_list.get(self.level + 1):
