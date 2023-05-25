@@ -30,7 +30,7 @@ def fade(fade_out: bool, screen: Surface) -> None:
 
 
 def draw_transparent_color(color, screen, transparency):
-    color_flash_surface = Surface((screen.get_width(), screen.get_height()))  # lgtm [py/call/wrong-arguments]
+    color_flash_surface = Surface((screen.get_width(), screen.get_height()))
     color_flash_surface.set_alpha(transparency)
     color_flash_surface.fill(color)
     screen.blit(color_flash_surface, (0, 0))
