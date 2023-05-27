@@ -279,7 +279,7 @@ class TestGame(TestCase):
 
     def test_king_lorik_post_initial_dialog(self):
         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
-        self.game.set_to_post_initial_dialog()
+        self.game.drawer.set_to_post_initial_dialog()
         self.assertEqual("When thou art finished preparing for thy departure, please see me.\nI shall wait.",
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 
@@ -302,7 +302,7 @@ class TestGame(TestCase):
         self.assertFalse(self.game.game_state.enable_movement)
         # TODO(ELF): Need to enable the following checks:
         # self.assertFalse(self.game.is_initial_dialog)
-        # self.assertTrue(self.game.automatic_initial_dialog_run)
+        # self.assertTrue(self.game.game_state.automatic_initial_dialog_run)
 
     def test_set_to_save_prompt(self):
         self.game.player.name = "Edward"
@@ -395,7 +395,7 @@ class TestGame(TestCase):
         self.game.handle_initial_dialog()
         self.assertFalse(self.game.display_hovering_stats)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
-        self.assertTrue(self.game.automatic_initial_dialog_run)
+        self.assertTrue(self.game.game_state.automatic_initial_dialog_run)
         self.assertEqual('When thou art finished preparing for thy departure, please see me.\nI shall wait.',
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
         self.game.allow_save_prompt = True
