@@ -15,8 +15,8 @@ from src.common import Direction, UNARMED_HERO_PATH, NAME_SELECTION_UPPER_A, NAM
 from src.config import TILE_SIZE, SCALE
 from src.game import Game
 from src.game_functions import get_next_coordinates, set_character_position, draw_hovering_stats_window, \
-    draw_stats_strings_with_alignments, alternate_blink, \
-    select_from_vertical_menu
+    draw_stats_strings_with_alignments, select_from_vertical_menu
+from src.drawer import Drawer
 from src.maps import MapWithoutNPCs
 from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
@@ -117,7 +117,7 @@ class TestGameFunctions(TestCase):
         # TODO(ELF): Actually test something with test_alternate_blink().
         selected_image = NAME_SELECTION_UPPER_A
         unselected_image = NAME_SELECTION_STATIC_IMAGE_LEN_0
-        alternate_blink(selected_image, unselected_image, get_ticks(), self.game.screen)
+        Drawer.alternate_blink(selected_image, unselected_image, get_ticks(), self.game.screen)
 
     def test_select_from_vertical_menu(self):
         mocked_return = MagicMock()
