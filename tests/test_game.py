@@ -15,7 +15,8 @@ from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction,
     village_music, intro_overture
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
-from src.drawer import replace_characters_with_underlying_tiles
+from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
+    handle_menu_launch, set_to_save_prompt
 from src.game_functions import get_next_coordinates
 from src.intro import controls
 from src.maps import MapWithoutNPCs, TantegelThroneRoom, Alefgard, TantegelCourtyard
@@ -227,13 +228,14 @@ class TestGame(TestCase):
                           'BRICK_STAIR_UP',
                           'BARRIER',
                           'WEAPON_SIGN'],
-                         self.game.convert_numeric_tile_list_to_unique_tile_values([1, 2, 3, 4, 5, 6, 7, 8, 9]))
+                         convert_numeric_tile_list_to_unique_tile_values(self.game.current_map,
+                                                                         [1, 2, 3, 4, 5, 6, 7, 8, 9]))
 
     def test_handle_menu_launch(self):
         self.game.cmd_menu.launch_signaled = True
-        self.game.handle_menu_launch(self.game.cmd_menu)
+        handle_menu_launch(self.game.screen, self.game.cmd_menu, self.game.cmd_menu)
         self.assertTrue(self.game.cmd_menu.menu.is_enabled())
-        self.game.handle_menu_launch(self.game.cmd_menu)
+        handle_menu_launch(self.game.screen, self.game.cmd_menu, self.game.cmd_menu)
 
     def test_change_map(self):
         self.game.player.row = 10
@@ -314,7 +316,7 @@ class TestGame(TestCase):
             "Then speak with the guards, for they have much knowledge that may aid thee.",
             f"May the light shine upon thee, {self.game.player.name}."
         ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
-        self.game.set_to_save_prompt()
+        set_to_save_prompt(self.game.cmd_menu)
         self.assertEqual((
             f"I am greatly pleased that thou hast returned, {self.game.player.name}.",
             f"Before reaching thy next level of experience thou must gain {self.game.player.points_to_next_level} Points.",
