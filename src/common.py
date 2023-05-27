@@ -2,12 +2,12 @@
 import ntpath
 import os
 from enum import IntEnum
-from os.path import join, sep, exists
+from os.path import join, sep, exists, dirname, realpath
 
 from pygame import Surface, image, transform, mixer, font
 from pygame.time import get_ticks
 
-from src.config import SFX_DIR, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, SOUND_ENABLED, FPS, TILE_SIZE
+from src.config import ORCHESTRA_MUSIC_ENABLED, SOUND_ENABLED, FPS, TILE_SIZE
 
 
 class Direction(IntEnum):
@@ -40,6 +40,9 @@ def retrieve_audio_resource(_sound_library, path, sound):
 _sound_library = {}
 
 # menu
+DATA_DIR = join(dirname(dirname(realpath(__file__))), 'data')
+SOUND_DIR = join(DATA_DIR, 'sound')
+SFX_DIR = join(SOUND_DIR, 'sfx')
 text_beep_sfx = join(SFX_DIR, 'text_beep.wav')
 death_sfx = join(SFX_DIR, '20 Dragon Quest 1 - Thou Hast Died.mp3')
 special_item_sfx = join(SFX_DIR, '21 Dragon Quest 1 - Special Item.mp3')
@@ -82,6 +85,7 @@ def play_sound(path='data/sound/sfx'):
 # Music
 
 _music_library = {}
+MUSIC_DIR = join(SOUND_DIR, 'music')
 if ORCHESTRA_MUSIC_ENABLED:
     intro_overture = join(MUSIC_DIR, 'orchestra', '01 Overture March (London Philharmonic Orchestra Version).mp3')
     tantegel_castle_throne_room_music = join(MUSIC_DIR, 'orchestra', '02 Chateau Ladutorm.mp3')
@@ -118,6 +122,8 @@ else:
 
 BLACK, WHITE, RED, ORANGE, PINK = (0, 0, 0), (255, 255, 255), (255, 0, 0), (234, 158, 34), (243, 106, 255)
 _image_library = {}
+
+IMAGES_DIR = join(DATA_DIR, 'images')
 MAP_TILES_PATH = join(IMAGES_DIR, 'tileset.png')
 UNARMED_HERO_PATH = join(IMAGES_DIR, 'unarmed_hero.png')
 UNARMED_HERO_WITH_SHIELD_PATH = join(IMAGES_DIR, 'unarmed_hero_with_shield.png')
@@ -289,6 +295,8 @@ def get_image(path):
 
 font.init()
 
+
+FONTS_DIR = join(DATA_DIR, 'fonts')
 DRAGON_QUEST_FONT_PATH = join(FONTS_DIR, 'dragon-quest.ttf')
 
 DRAGON_QUEST_FONT = font.Font(DRAGON_QUEST_FONT_PATH, 15)

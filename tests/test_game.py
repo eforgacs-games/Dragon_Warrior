@@ -9,6 +9,7 @@ from pygame.sprite import LayeredDirty
 from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
+from src import config
 from src.camera import Camera
 from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, \
     village_music, intro_overture
@@ -520,10 +521,10 @@ class TestGame(TestCase):
         # self.assertEqual(FULLSCREEN | SCALED, self.game.flags)
         self.assertEqual(528, self.game.flags)
 
-    def test_splash_screen_enabled_load_and_play_music(self):
-        self.game.splash_screen_enabled = True
-        with patch.object(Game, 'load_and_play_music') as mock_method:
-            self.game.__init__()
+    @patch.object(Game, "load_and_play_music")
+    @patch.object(config, "SPLASH_SCREEN_ENABLED", return_value=True)
+    def test_splash_screen_enabled_load_and_play_music(self, mocked_config, mock_method):
+        self.game.__init__()
         mock_method.assert_called_once_with(intro_overture)
 
     # @patch('src.config')
