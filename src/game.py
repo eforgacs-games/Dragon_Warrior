@@ -506,13 +506,23 @@ class Game:
             # to:
             #
             # (HeroAttack - EnemyAgility / 2) / 2
-            lower_bound = (self.player.attack_power - enemy.speed / 2) // 4
-            upper_bound = (self.player.attack_power - enemy.speed / 2) // 2
+            lower_bound = round((self.player.attack_power - (enemy.defense / 2)) / 2)
+            upper_bound = round((self.player.attack_power - (enemy.defense / 2)) * 2)
+            print(f'lower_bound: {lower_bound}\n'
+                  f'upper_bound: {upper_bound}\n'
+                  f'player.attack_power: {self.player.attack_power}\n'
+                  f'enemy.speed: {enemy.defense}')
             if lower_bound >= upper_bound:
                 attack_damage = upper_bound
             else:
                 attack_damage = random.randint(lower_bound, upper_bound)
-        return attack_damage
+            if attack_damage < 1:
+                # fifty-fifty chance of doing 1 damage
+                if random.random() < .5:
+                    attack_damage = 1
+                else:
+                    attack_damage = 0
+        return round(attack_damage)
 
     def battle_spell(self):
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n"
@@ -950,8 +960,8 @@ class Game:
 
     def run_automatic_initial_dialog(self):
         self.enable_movement = False
-        if self.skip_text or (any([current_event.type == KEYUP for current_event in
-                                   self.events]) and not self.automatic_initial_dialog_run):
+        key_pressed = any([current_event.type == KEYUP for current_event in self.events])
+        if self.skip_text or (key_pressed and not self.automatic_initial_dialog_run):
             self.cmd_menu.show_text_in_dialog_box(
                 self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
                 skip_text=self.skip_text)
