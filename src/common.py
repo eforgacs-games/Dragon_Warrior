@@ -4,7 +4,7 @@ import os
 from enum import IntEnum
 from os.path import join, sep, exists
 
-from pygame import Surface, image, transform, mixer, font, PixelArray
+from pygame import Surface, image, transform, mixer, font
 from pygame.time import get_ticks
 
 from src.config import SFX_DIR, ORCHESTRA_MUSIC_ENABLED, MUSIC_DIR, IMAGES_DIR, FONTS_DIR, SOUND_ENABLED, FPS, TILE_SIZE
@@ -348,34 +348,6 @@ def convert_to_frames(time_to_convert):
 def convert_to_milliseconds(fps_to_convert):
     # TODO(ELF): change FPS to be self.fps (the actual FPS setting if it is changed to double/triple/quadruple etc. speed).
     return fps_to_convert / FPS * 1000
-
-
-def get_surrounding_tile_values(coordinates, map_layout):
-    x = coordinates[0]
-    y = coordinates[1]
-    try:
-        left = map_layout[x - 1][y] if x - 1 >= 0 else None
-    except IndexError:
-        left = None
-    try:
-        down = map_layout[x][y - 1] if y - 1 >= 0 else None
-    except IndexError:
-        down = None
-    try:
-        right = map_layout[x][y + 1]
-    except IndexError:
-        right = None
-    try:
-        up = map_layout[x + 1][y]
-    except IndexError:
-        up = None
-    neighbors = [x for x in [left, down, right, up] if x is not None]
-    current_tile = [map_layout[x][y]] if x < len(map_layout) and y < len(map_layout[0]) else None
-    if current_tile:
-        all_neighbors = set(neighbors + current_tile)
-    else:
-        all_neighbors = set(neighbors)
-    return all_neighbors
 
 
 def get_next_tile_identifier(character_column: int, character_row: int, direction_value: int, current_map, offset: int = 1) -> str:

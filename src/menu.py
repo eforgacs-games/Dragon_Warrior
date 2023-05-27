@@ -15,7 +15,7 @@ from src.common import DRAGON_QUEST_FONT_PATH, BLACK, menu_button_sfx, DIALOG_BO
     open_door_sfx, \
     STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx
 from src.config import SCALE, TILE_SIZE, LANGUAGE
-from src.game_functions import draw_hovering_stats_window
+from src.drawer import draw_hovering_stats_window
 from src.items import treasure
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
