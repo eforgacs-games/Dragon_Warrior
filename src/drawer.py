@@ -1,6 +1,6 @@
 from typing import List, Iterable
 
-from pygame import image, display
+from pygame import image, display, KEYDOWN
 from pygame.transform import scale
 
 from src.common import convert_to_frames_since_start_time, IMAGES_ENEMIES_DIR, WHITE, create_window, \
@@ -108,6 +108,17 @@ class Drawer:
         self.game_state.enable_movement = True
         self.game_state.unpause_all_movement()
 
+    def run_automatic_post_death_dialog(self, events, skip_text, command_menu):
+        self.game_state.enable_movement = False
+        for current_event in events:
+            if current_event.type == KEYDOWN or skip_text:
+                command_menu.show_text_in_dialog_box(
+                    command_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
+                    add_quotes=True, skip_text=skip_text)
+                self.game_state.is_post_death_dialog = False
+                set_to_save_prompt(command_menu)
+                self.game_state.enable_movement = True
+
 
 def draw_stats_strings_with_alignments(stat_string, y_position, screen, color=WHITE):
     if len(stat_string) > 4:
@@ -214,3 +225,5 @@ def handle_menu_launch(screen, cmd_menu, menu_to_launch: Menu) -> None:
 def set_to_save_prompt(cmd_menu):
     cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
         cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['returned_dialog']
+
+

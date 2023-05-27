@@ -51,11 +51,14 @@ from src.visual_effects import fade, flash_transparent_color
 
 
 class GameState:
+    # TODO: Add music_enabled
     def __init__(self):
         self.enable_movement = True
         self.enable_animate = True
         self.enable_roaming = True
         self.is_initial_dialog = True
+        self.is_post_death_dialog = False
+        self.automatic_initial_dialog_run = False
 
     def unpause_all_movement(self) -> None:
         """
@@ -83,7 +86,6 @@ class Game:
         self.fullscreen_enabled = FULLSCREEN_ENABLED
         # text
         self.initial_dialog_enabled = INITIAL_DIALOG_ENABLED
-        self.is_post_death_dialog = False
         self.skip_text = False
 
         # intro
@@ -131,10 +133,10 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom()
+        # self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.ErdricksCaveB1()
         # self.current_map = maps.TantegelCourtyard()
-        # self.current_map = maps.Alefgard()
+        self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.Hauksness()
@@ -175,7 +177,6 @@ class Game:
 
         display.set_icon(image.load(ICON_PATH))
         self.player.restore_hp()
-        self.automatic_initial_dialog_run = False
         self.allow_save_prompt = False
         # pg.event.set_allowed([pg.QUIT])
 
@@ -391,8 +392,9 @@ class Game:
                                         elif selected_executed_option == 'Run':
                                             self.battle_run()
                                             run_away = True
-                                            mixer.music.load(self.current_map.music_file_path)
-                                            mixer.music.play(-1)
+                                            if self.music_enabled:
+                                                mixer.music.load(self.current_map.music_file_path)
+                                                mixer.music.play(-1)
                                         elif selected_executed_option == 'Item':
                                             if not self.player.inventory:
                                                 self.cmd_menu.show_line_in_dialog_box(
@@ -652,7 +654,7 @@ class Game:
         # revive player
         self.player.current_hp = self.player.max_hp
         self.player.is_dead = False
-        self.is_post_death_dialog = True
+        self.game_state.is_post_death_dialog = True
 
     def handle_environment_damage(self):
         if not self.player.armor == "Erdrick's Armor":
@@ -1244,32 +1246,21 @@ class Game:
                 self.game_state.enable_movement = True
 
     def handle_post_death_dialog(self):
-        if self.is_post_death_dialog:
+        if self.game_state.is_post_death_dialog:
             self.display_hovering_stats = False
             self.cmd_menu.launch_signaled = False
-            self.run_automatic_post_death_dialog()
+            self.drawer.run_automatic_post_death_dialog(self.events, self.skip_text, self.cmd_menu)
             event.clear()
 
     def run_automatic_initial_dialog(self):
         self.game_state.enable_movement = False
         key_pressed = any([current_event.type == KEYUP for current_event in self.events])
-        if self.skip_text or (key_pressed and not self.automatic_initial_dialog_run):
+        if self.skip_text or (key_pressed and not self.game_state.automatic_initial_dialog_run):
             self.cmd_menu.show_text_in_dialog_box(
                 self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
                 skip_text=self.skip_text)
             self.drawer.set_to_post_initial_dialog(self.cmd_menu)
-            self.automatic_initial_dialog_run = True
-
-    def run_automatic_post_death_dialog(self):
-        self.game_state.enable_movement = False
-        for current_event in self.events:
-            if current_event.type == KEYDOWN or self.skip_text:
-                self.cmd_menu.show_text_in_dialog_box(
-                    self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
-                    add_quotes=True, skip_text=self.skip_text)
-                self.is_post_death_dialog = False
-                set_to_save_prompt(self.cmd_menu)
-                self.game_state.enable_movement = True
+            self.game_state.automatic_initial_dialog_run = True
 
 
 def run():
