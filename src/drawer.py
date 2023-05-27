@@ -1,8 +1,8 @@
 from pygame import image, display
 from pygame.transform import scale
 
-from src.common import convert_to_frames_since_start_time
-from src.config import TILE_SIZE
+from src.common import convert_to_frames_since_start_time, IMAGES_ENEMIES_DIR
+from src.config import TILE_SIZE, SCALE
 
 
 class Drawer:
@@ -57,4 +57,10 @@ class Drawer:
         else:
             screen.blit(enemy_image, (7.544 * TILE_SIZE, 6.1414 * TILE_SIZE))
 
-
+    def show_enemy_image(self, screen, enemy_name):
+        enemy_name_without_spaces = enemy_name.replace(" ", "")
+        enemy_image = image.load(
+            f'{IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
+        enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
+                                          enemy_image.get_height() * SCALE))
+        self.position_and_draw_enemy_image(screen, enemy_image, enemy_name)
