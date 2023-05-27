@@ -31,6 +31,7 @@ from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down,
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
     ENABLE_DARKNESS, FORCE_BATTLE, NO_BATTLES
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
+from src.drawer import Drawer
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, \
     replace_characters_with_underlying_tiles, \
@@ -52,6 +53,7 @@ from src.visual_effects import fade, flash_transparent_color
 class Game:
 
     def __init__(self):
+        self.drawer = Drawer()
         # map/graphics
         self.background = None
         self.big_map = None
