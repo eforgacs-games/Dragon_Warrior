@@ -25,7 +25,7 @@ from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values,
     ARMED_HERO_WITH_SHIELD_PATH, \
     UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx, battle_music, victory_sfx, attack_sfx, hit_sfx, improvement_sfx, \
     BATTLE_BACKGROUND_PATH, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
-    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, IMAGES_ENEMIES_DIR, missed_sfx, missed_2_sfx, \
+    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, missed_sfx, missed_2_sfx, \
     prepare_attack_sfx, receive_damage_2_sfx, excellent_move_sfx, create_window
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
@@ -298,7 +298,7 @@ class Game:
                                                         (7 * TILE_SIZE, 7 * TILE_SIZE))
                         self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
                         display.update(battle_background_image.get_rect())
-                        self.show_enemy_image(enemy_name)
+                        self.drawer.show_enemy_image(self.screen, enemy_name)
                         enemy_draws_near_string = f'{enemy_name} draws near!\n' \
                                                   f'Command?\n'
                         vowels = 'AEIOU'
@@ -384,14 +384,6 @@ class Game:
                     #     print(f'Zone: {current_zone}\nEnemies: {enemies_in_current_zone}')
                     self.last_zone = current_zone
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
-
-    def show_enemy_image(self, enemy_name):
-        enemy_name_without_spaces = enemy_name.replace(" ", "")
-        enemy_image = image.load(
-            f'{IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
-        enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
-                                          enemy_image.get_height() * SCALE))
-        self.drawer.position_and_draw_enemy_image(self.screen, enemy_image, enemy_name)
 
     def battle_run(self):
         play_sound(stairs_down_sfx)
