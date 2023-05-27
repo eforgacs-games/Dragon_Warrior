@@ -373,6 +373,7 @@ class TestGame(TestCase):
         mock_window_drop_up_effect.assert_called_with(6, 1, 8, 5)
 
     def test_handle_initial_dialog(self):
+        self.game.initial_dialog_enabled = True
         self.game.skip_text = True
         self.game.current_map.identifier = 'TantegelThroneRoom'
         self.assertEqual(('Descendant of Erdrick, listen now to my words.',
@@ -519,6 +520,7 @@ class TestGame(TestCase):
         self.assertEqual(528, self.game.flags)
 
     def test_splash_screen_enabled_load_and_play_music(self):
+        self.game.splash_screen_enabled = True
         with patch.object(Game, 'load_and_play_music') as mock_method:
             self.game.__init__()
         mock_method.assert_called_once_with(intro_overture)
