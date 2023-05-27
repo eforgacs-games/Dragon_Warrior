@@ -9,7 +9,8 @@ from pygame.time import get_ticks
 from data.text.dialog import confirmation_prompt
 from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, create_window, WHITE
 from src.config import MUSIC_ENABLED, TILE_SIZE, LANGUAGE
-from src.game_functions import draw_all_tiles_in_current_map, draw_hovering_stats_window
+from src.game_functions import draw_hovering_stats_window
+from src.drawer import Drawer
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
@@ -304,7 +305,7 @@ class DialogLookup:
         if MUSIC_ENABLED:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
-        draw_all_tiles_in_current_map(self.current_map, self.background)
+        Drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
         draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
         for character, character_dict in self.current_map.characters.items():
             if character != 'HERO':
