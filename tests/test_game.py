@@ -14,7 +14,8 @@ from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction,
     village_music, intro_overture
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
-from src.game_functions import get_next_coordinates, replace_characters_with_underlying_tiles
+from src.drawer import replace_characters_with_underlying_tiles
+from src.game_functions import get_next_coordinates
 from src.intro import controls
 from src.maps import MapWithoutNPCs, TantegelThroneRoom, Alefgard, TantegelCourtyard
 from src.maps_functions import parse_animated_sprite_sheet

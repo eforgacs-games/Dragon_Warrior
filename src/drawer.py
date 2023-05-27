@@ -1,8 +1,12 @@
+from typing import List
+
 from pygame import image, display
 from pygame.transform import scale
 
-from src.common import convert_to_frames_since_start_time, IMAGES_ENEMIES_DIR
+from src.common import convert_to_frames_since_start_time, IMAGES_ENEMIES_DIR, WHITE, create_window, \
+    HOVERING_STATS_BACKGROUND_PATH
 from src.config import TILE_SIZE, SCALE
+from src.text import draw_text
 
 
 class Drawer:
@@ -82,3 +86,69 @@ class Drawer:
         for tile, tile_dict in current_map.floor_tile_key.items():
             if tile in current_map.tile_types_in_current_map and tile_dict.get('group'):
                 tile_dict['group'].draw(background)
+
+
+def draw_hovering_stats_window(screen, player, color=WHITE):
+    create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, screen, color)
+    draw_text(player.name[:4], TILE_SIZE * 2.99, TILE_SIZE * 2, screen, color=color, alignment='center',
+              letter_by_letter=False)
+    draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)
+    draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen, color=color)
+    draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen, color=color)
+    draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen, color=color)
+    draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen, color=color)
+
+
+def draw_stats_strings_with_alignments(stat_string, y_position, screen, color=WHITE):
+    if len(stat_string) > 4:
+        draw_text(stat_string, TILE_SIZE * 3.2, TILE_SIZE * y_position, screen, color=color, alignment='center',
+                  letter_by_letter=False)
+    elif len(stat_string) > 3:
+        draw_text(stat_string, TILE_SIZE * 3.44, TILE_SIZE * y_position, screen, color=color, alignment='center',
+                  letter_by_letter=False)
+    elif len(stat_string) > 2:
+        draw_text(stat_string, TILE_SIZE * 3.67, TILE_SIZE * y_position, screen, color=color, alignment='center',
+                  letter_by_letter=False)
+    elif len(stat_string) > 1:
+        draw_text(stat_string, TILE_SIZE * 3.99, TILE_SIZE * y_position, screen, color=color, alignment='center',
+                  letter_by_letter=False)
+    else:
+        draw_text(stat_string, TILE_SIZE * 4.2, TILE_SIZE * y_position, screen, color=color, alignment='center',
+                  letter_by_letter=False)
+
+
+def replace_characters_with_underlying_tiles(tile_types_to_draw: List[str], current_map_character_key) -> List[str]:
+    for character in current_map_character_key.keys():
+        if character in tile_types_to_draw:
+            tile_types_to_draw = list(
+                map(lambda x: x.replace(character, current_map_character_key[character]['underlying_tile']),
+                    tile_types_to_draw))
+    return tile_types_to_draw
+
+
+def get_surrounding_tile_values(coordinates, map_layout):
+    x = coordinates[0]
+    y = coordinates[1]
+    try:
+        left = map_layout[x - 1][y] if x - 1 >= 0 else None
+    except IndexError:
+        left = None
+    try:
+        down = map_layout[x][y - 1] if y - 1 >= 0 else None
+    except IndexError:
+        down = None
+    try:
+        right = map_layout[x][y + 1]
+    except IndexError:
+        right = None
+    try:
+        up = map_layout[x + 1][y]
+    except IndexError:
+        up = None
+    neighbors = [x for x in [left, down, right, up] if x is not None]
+    current_tile = [map_layout[x][y]] if x < len(map_layout) and y < len(map_layout[0]) else None
+    if current_tile:
+        all_neighbors = set(neighbors + current_tile)
+    else:
+        all_neighbors = set(neighbors)
+    return all_neighbors
