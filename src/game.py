@@ -1,6 +1,6 @@
 import random
 import sys
-from typing import List, Tuple
+from typing import List, Tuple, Iterable
 
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, \
     K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect, \
@@ -13,11 +13,9 @@ from pygame.time import get_ticks
 from pygame.transform import scale
 
 from data.text.dialog import blink_switch
-from data.text.dialog_lookup_table import thou_art_dead, \
-    normal_speed_string, double_speed_string, triple_speed_string, quadruple_speed_string
 from src import maps, menu_functions
 from src.camera import Camera
-from src.common import BLACK, Direction, ICON_PATH, get_surrounding_tile_values, intro_overture, is_facing_laterally, \
+from src.common import BLACK, Direction, ICON_PATH, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, \
     UNARMED_HERO_PATH, \
     convert_to_frames_since_start_time, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
@@ -31,10 +29,11 @@ from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down,
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
     ENABLE_DARKNESS, FORCE_BATTLE, NO_BATTLES
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
-from src.drawer import Drawer
+from src.drawer import Drawer, draw_hovering_stats_window, replace_characters_with_underlying_tiles, \
+    get_surrounding_tile_values
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
-from src.game_functions import set_character_position, get_next_coordinates, replace_characters_with_underlying_tiles, \
-    draw_hovering_stats_window, select_from_vertical_menu, get_surrounding_rect
+from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu, \
+    get_surrounding_rect
 from src.intro import Intro, controls
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
@@ -140,7 +139,8 @@ class Game:
         self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen)
         self.cmd_menu = CommandMenu(self)
 
-        self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
+        self.enable_animate = True
+        self.enable_roaming, self.enable_movement = True, True
         self.clock = Clock()
         self.music_enabled = MUSIC_ENABLED
 
@@ -173,6 +173,10 @@ class Game:
             self.draw_all()
             display.flip()
             self.loop_count += 1
+
+    ####################################################################################################################
+    # game methods ^^^^^^^^
+    ####################################################################################################################
 
     def show_main_menu_screen(self, screen) -> None:
         select_from_vertical_menu(get_ticks(), screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [])
@@ -613,7 +617,7 @@ class Game:
                 time.wait(1)
             event.clear()
 
-            self.cmd_menu.show_text_in_dialog_box(thou_art_dead, disable_sound=True)
+            self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.thou_art_dead, disable_sound=True)
             self.set_post_death_attributes()
         else:
             self.player.is_dead = False
@@ -705,16 +709,16 @@ class Game:
 
     def handle_fps_changes(self, current_key) -> None:
         if current_key[K_1]:
-            self.draw_temporary_text(normal_speed_string)
+            self.draw_temporary_text(self.cmd_menu.dialog_lookup.normal_speed_string)
             self.fps = 60
         if current_key[K_2]:
-            self.draw_temporary_text(double_speed_string)
+            self.draw_temporary_text(self.cmd_menu.dialog_lookup.double_speed_string)
             self.fps = 120
         if current_key[K_3]:
-            self.draw_temporary_text(triple_speed_string)
+            self.draw_temporary_text(self.cmd_menu.dialog_lookup.triple_speed_string)
             self.fps = 240
         if current_key[K_4]:
-            self.draw_temporary_text(quadruple_speed_string)
+            self.draw_temporary_text(self.cmd_menu.dialog_lookup.quadruple_speed_string)
             self.fps = 480
 
     def update_roaming_character_positions(self) -> None:
@@ -736,262 +740,6 @@ class Game:
                     play_sound(stairs_up_sfx)
             next_map = map_lookup[staircase_dict['map']]()
             self.change_map(next_map)
-
-    def draw_all(self) -> None:
-        """
-        Draw map, sprites, background, menu and other surfaces.
-        :return: None
-        """
-        self.screen.fill(BLACK)
-        width_offset = 0
-        height_offset = 0
-        if self.loop_count == 1:
-            self.background = self.big_map.subsurface(0, 0, self.current_map.width - width_offset,
-                                                      self.current_map.height - height_offset).convert()
-            # draw everything once on the first go-around
-            self.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
-        try:
-            surrounding_tile_values = get_surrounding_tile_values(
-                (self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE), self.current_map.layout)
-            player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(surrounding_tile_values)
-            all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
-            all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
-            tile_types_to_draw = replace_characters_with_underlying_tiles([self.player.current_tile] +
-                                                                          all_roaming_character_surrounding_tiles +
-                                                                          all_fixed_character_underlying_tiles,
-                                                                          self.current_map.character_key)
-            if self.player.is_moving:
-                tile_types_to_draw += replace_characters_with_underlying_tiles(
-                    list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
-                self.not_moving_time_start = None
-                self.display_hovering_stats = False
-                if self.hovering_stats_displayed:
-                    self.cmd_menu.window_drop_up_effect(1, 2, 4, 6)
-                    self.hovering_stats_displayed = False
-            else:
-                if not self.not_moving_time_start:
-                    self.not_moving_time_start = get_ticks()
-                else:
-                    if convert_to_frames_since_start_time(self.not_moving_time_start) >= 51:
-                        self.display_hovering_stats = True
-        except IndexError:
-            all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
-            all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
-            tile_types_to_draw = replace_characters_with_underlying_tiles([self.player.current_tile] +
-                                                                          all_roaming_character_surrounding_tiles +
-                                                                          all_fixed_character_underlying_tiles,
-                                                                          self.current_map.character_key)
-
-            # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
-
-        group_to_draw = Group()
-        camera_screen_rect = Rect(self.player.rect.x - TILE_SIZE * 8, self.player.rect.y - TILE_SIZE * 7,
-                                  self.screen.get_width(), self.screen.get_height())
-        double_camera_screen_rect = camera_screen_rect.inflate(camera_screen_rect.width * 0.25,
-                                                               camera_screen_rect.height * 0.25)
-        fixed_character_rects = [fixed_character.rect for fixed_character in self.current_map.fixed_characters]
-        roaming_character_rects = [
-            roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character) for
-            roaming_character in
-            self.current_map.roaming_characters]
-        # tiles_drawn = []
-        for tile, tile_dict in self.current_map.floor_tile_key.items():
-            if tile_dict.get('group') and tile in set(tile_types_to_draw):
-                for tile_to_draw in tile_dict['group']:
-                    if camera_screen_rect.colliderect(tile_to_draw.rect):
-                        if self.player.is_moving:
-                            if get_surrounding_rect(self.player).colliderect(tile_to_draw.rect):
-                                group_to_draw.add(tile_to_draw)
-                                # tiles_drawn.append(tile)
-                        else:
-                            if self.player.rect.colliderect(tile_to_draw.rect):
-                                group_to_draw.add(tile_to_draw)
-                                # tiles_drawn.append(tile)
-                        for fixed_character_rect in fixed_character_rects:
-                            if fixed_character_rect.colliderect(tile_to_draw):
-                                group_to_draw.add(tile_to_draw)
-                                # tiles_drawn.append(tile)
-
-                    if double_camera_screen_rect.colliderect(tile_to_draw.rect):
-                        for roaming_character_rect in roaming_character_rects:
-                            if roaming_character_rect.colliderect(tile_to_draw):
-                                group_to_draw.add(tile_to_draw)
-                                # tiles_drawn.append(tile)
-        # print(f"{len(tiles_drawn)}: {tiles_drawn}")
-        group_to_draw.draw(self.background)
-        # to make this work in all maps: draw tile under hero, AND tiles under NPCs
-        # in addition to the trajectory of the NPCs
-        self.drawer.handle_sprite_drawing_and_animation(self.current_map, self.foreground_rects, self.background,
-                                                        self.enable_animate)
-        self.screen.blit(self.background, self.camera.get_pos())
-        if self.current_map.identifier == 'TantegelThroneRoom':
-            self.handle_initial_dialog()
-            self.handle_post_death_dialog()
-        if self.current_map.is_dark and ENABLE_DARKNESS:
-            darkness = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
-            if self.torch_active:
-                # Light with radius of 1
-                darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE,
-                                                    (self.screen.get_height() / 2) - (TILE_SIZE * 1.5),
-                                                    TILE_SIZE * 3,
-                                                    TILE_SIZE * 3)
-            elif self.radiant_active:
-                # Light with radius of 2, expanding to 3...
-
-                # darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 2, (self.screen.get_height() / 2) - (TILE_SIZE * 2.5),
-                #                                     TILE_SIZE * 5,
-                #                                     TILE_SIZE * 5)
-                # darkness.fill(BLACK)
-                # darkness_hole.fill(WHITE)
-                # darkness.set_colorkey(WHITE)
-                # self.screen.blit(darkness, (0, 0))
-                # Light with radius of 3
-                darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 3,
-                                                    (self.screen.get_height() / 2) - (TILE_SIZE * 5),
-                                                    TILE_SIZE * 7,
-                                                    TILE_SIZE * 8.5)
-
-                if self.radiant_start is None:
-                    self.radiant_start = self.tiles_moved_total
-                    play_sound(torch_sfx)
-                    play_sound(torch_sfx)
-                else:
-                    if self.tiles_moved_total - self.radiant_start >= 200:
-                        self.radiant_active = False
-                        self.radiant_start = None
-                    elif self.tiles_moved_total - self.radiant_start >= 140:
-                        # Light with radius of 1
-                        darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE,
-                                                            (self.screen.get_height() / 2) - (TILE_SIZE * 1.5),
-                                                            TILE_SIZE * 3,
-                                                            TILE_SIZE * 3)
-                    elif self.tiles_moved_total - self.radiant_start >= 80:
-                        # Light with radius of 2
-                        darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 2,
-                                                            (self.screen.get_height() / 2) - (TILE_SIZE * 2.5),
-                                                            TILE_SIZE * 5,
-                                                            TILE_SIZE * 5)
-
-            else:
-                darkness_hole = darkness.subsurface((self.screen.get_width() / 2),
-                                                    (self.screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE,
-                                                    TILE_SIZE)
-            darkness.fill(BLACK)
-            darkness_hole.fill(WHITE)
-            darkness.set_colorkey(WHITE)
-            self.screen.blit(darkness, (0, 0))
-        if self.display_hovering_stats:
-            if not self.hovering_stats_displayed:
-                self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
-                self.hovering_stats_displayed = True
-            draw_hovering_stats_window(self.screen, self.player, self.color)
-        self.handle_menu_launch(self.cmd_menu)
-        if self.cmd_menu.menu.is_enabled():
-            self.cmd_menu.menu.update(self.events)
-        else:
-            if not self.is_initial_dialog:
-                self.enable_movement = True
-
-    def handle_initial_dialog(self):
-        if self.initial_dialog_enabled:
-            if self.is_initial_dialog:
-                display.flip()
-                self.display_hovering_stats = False
-                self.cmd_menu.launch_signaled = False
-                self.run_automatic_initial_dialog()
-                event.clear()
-            else:
-                if self.allow_save_prompt:
-                    self.set_to_save_prompt()
-                else:
-                    self.set_to_post_initial_dialog()
-
-        else:
-            self.set_to_post_initial_dialog()
-            if not self.cmd_menu.menu.is_enabled():
-                self.enable_movement = True
-
-    def handle_post_death_dialog(self):
-        if self.is_post_death_dialog:
-            self.display_hovering_stats = False
-            self.cmd_menu.launch_signaled = False
-            self.run_automatic_post_death_dialog()
-            event.clear()
-
-    def run_automatic_initial_dialog(self):
-        self.enable_movement = False
-        key_pressed = any([current_event.type == KEYUP for current_event in self.events])
-        if self.skip_text or (key_pressed and not self.automatic_initial_dialog_run):
-            self.cmd_menu.show_text_in_dialog_box(
-                self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
-                skip_text=self.skip_text)
-            self.set_to_post_initial_dialog()
-            self.automatic_initial_dialog_run = True
-
-    def run_automatic_post_death_dialog(self):
-        self.enable_movement = False
-        for current_event in self.events:
-            if current_event.type == KEYDOWN or self.skip_text:
-                self.cmd_menu.show_text_in_dialog_box(
-                    self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
-                    add_quotes=True, skip_text=self.skip_text)
-                self.is_post_death_dialog = False
-                self.set_to_save_prompt()
-                self.enable_movement = True
-
-    def set_to_post_initial_dialog(self):
-        self.is_initial_dialog = False
-        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
-        self.enable_movement = True
-        self.unpause_all_movement()
-
-    def set_to_save_prompt(self):
-        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['returned_dialog']
-
-    def get_fixed_character_underlying_tiles(self) -> List[str]:
-        all_fixed_character_underlying_tiles = []
-        for fixed_character in self.current_map.fixed_characters:
-            fixed_character_coordinates = self.current_map.characters[fixed_character.identifier]['coordinates']
-            all_fixed_character_underlying_tiles.append(
-                self.current_map.get_tile_by_value(
-                    self.current_map.layout[fixed_character_coordinates[0]][fixed_character_coordinates[1]]))
-        return all_fixed_character_underlying_tiles
-
-    def get_all_roaming_character_surrounding_tiles(self) -> List[str]:
-        all_roaming_character_surrounding_tiles = []
-        for roaming_character in self.current_map.roaming_characters:
-            roaming_character_surrounding_tile_values = get_surrounding_tile_values(
-                (roaming_character.rect.y // TILE_SIZE, roaming_character.rect.x // TILE_SIZE), self.current_map.layout)
-            roaming_character_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(
-                roaming_character_surrounding_tile_values)
-            for tile in roaming_character_surrounding_tiles:
-                all_roaming_character_surrounding_tiles.append(tile)
-        return all_roaming_character_surrounding_tiles
-
-    def convert_numeric_tile_list_to_unique_tile_values(self, numeric_tile_list: List[int]) -> List[str]:
-        converted_tiles = []
-        for tile_value in set(numeric_tile_list):
-            converted_tiles.append(self.current_map.get_tile_by_value(tile_value))
-        return converted_tiles
-
-    def handle_menu_launch(self, menu_to_launch: Menu) -> None:
-        if menu_to_launch.launch_signaled:
-            if menu_to_launch.menu.get_id() == 'command':
-                command_menu_subsurface = self.screen.subsurface(
-                    (6 * TILE_SIZE,  # 11 (first empty square to the left of menu)
-                     TILE_SIZE),  # 4
-                    (8 * TILE_SIZE,
-                     5 * TILE_SIZE)
-                )
-                if not self.cmd_menu.menu.is_enabled():
-                    play_sound(menu_button_sfx)
-                    self.cmd_menu.window_drop_down_effect(6, 1, 8, 5)
-                    self.cmd_menu.menu.enable()
-                else:
-                    menu_to_launch.menu.draw(command_menu_subsurface)
-                    display.update(command_menu_subsurface.get_rect())
 
     def change_map(self, next_map: maps.DragonWarriorMap) -> None:
         """
@@ -1307,6 +1055,265 @@ class Game:
             elif is_facing_laterally(roaming_character):
                 self.move_laterally(roaming_character)
             # handle_roaming_character_sides_collision(self.current_map, roaming_character)
+
+    ####################################################################################################################
+    # draw methods vvvvvvvvvv
+    ####################################################################################################################
+    def draw_all(self) -> None:
+        """
+        Draw map, sprites, background, menu and other surfaces.
+        :return: None
+        """
+        self.screen.fill(BLACK)
+        width_offset = 0
+        height_offset = 0
+        if self.loop_count == 1:
+            self.background = self.big_map.subsurface(0, 0, self.current_map.width - width_offset,
+                                                      self.current_map.height - height_offset).convert()
+            # draw everything once on the first go-around
+            self.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
+        try:
+            surrounding_tile_values = get_surrounding_tile_values(
+                (self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE), self.current_map.layout)
+            player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(surrounding_tile_values)
+            all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
+            all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
+            tile_types_to_draw = replace_characters_with_underlying_tiles([self.player.current_tile] +
+                                                                          all_roaming_character_surrounding_tiles +
+                                                                          all_fixed_character_underlying_tiles,
+                                                                          self.current_map.character_key)
+            if self.player.is_moving:
+                tile_types_to_draw += replace_characters_with_underlying_tiles(
+                    list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
+                self.not_moving_time_start = None
+                self.display_hovering_stats = False
+                if self.hovering_stats_displayed:
+                    self.cmd_menu.window_drop_up_effect(1, 2, 4, 6)
+                    self.hovering_stats_displayed = False
+            else:
+                if not self.not_moving_time_start:
+                    self.not_moving_time_start = get_ticks()
+                else:
+                    if convert_to_frames_since_start_time(self.not_moving_time_start) >= 51:
+                        self.display_hovering_stats = True
+        except IndexError:
+            all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
+            all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
+            tile_types_to_draw = replace_characters_with_underlying_tiles([self.player.current_tile] +
+                                                                          all_roaming_character_surrounding_tiles +
+                                                                          all_fixed_character_underlying_tiles,
+                                                                          self.current_map.character_key)
+
+            # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
+
+        group_to_draw = Group()
+        camera_screen_rect = Rect(self.player.rect.x - TILE_SIZE * 8, self.player.rect.y - TILE_SIZE * 7,
+                                  self.screen.get_width(), self.screen.get_height())
+        double_camera_screen_rect = camera_screen_rect.inflate(camera_screen_rect.width * 0.25,
+                                                               camera_screen_rect.height * 0.25)
+        fixed_character_rects = [fixed_character.rect for fixed_character in self.current_map.fixed_characters]
+        roaming_character_rects = [
+            roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character) for
+            roaming_character in
+            self.current_map.roaming_characters]
+        # tiles_drawn = []
+        for tile, tile_dict in self.current_map.floor_tile_key.items():
+            if tile_dict.get('group') and tile in set(tile_types_to_draw):
+                for tile_to_draw in tile_dict['group']:
+                    if camera_screen_rect.colliderect(tile_to_draw.rect):
+                        if self.player.is_moving:
+                            if get_surrounding_rect(self.player).colliderect(tile_to_draw.rect):
+                                group_to_draw.add(tile_to_draw)
+                                # tiles_drawn.append(tile)
+                        else:
+                            if self.player.rect.colliderect(tile_to_draw.rect):
+                                group_to_draw.add(tile_to_draw)
+                                # tiles_drawn.append(tile)
+                        for fixed_character_rect in fixed_character_rects:
+                            if fixed_character_rect.colliderect(tile_to_draw):
+                                group_to_draw.add(tile_to_draw)
+                                # tiles_drawn.append(tile)
+
+                    if double_camera_screen_rect.colliderect(tile_to_draw.rect):
+                        for roaming_character_rect in roaming_character_rects:
+                            if roaming_character_rect.colliderect(tile_to_draw):
+                                group_to_draw.add(tile_to_draw)
+                                # tiles_drawn.append(tile)
+        # print(f"{len(tiles_drawn)}: {tiles_drawn}")
+        group_to_draw.draw(self.background)
+        # to make this work in all maps: draw tile under hero, AND tiles under NPCs
+        # in addition to the trajectory of the NPCs
+        self.drawer.handle_sprite_drawing_and_animation(self.current_map, self.foreground_rects, self.background,
+                                                        self.enable_animate)
+        self.screen.blit(self.background, self.camera.get_pos())
+        if self.current_map.identifier == 'TantegelThroneRoom':
+            self.handle_initial_dialog()
+            self.handle_post_death_dialog()
+        if self.current_map.is_dark and ENABLE_DARKNESS:
+            darkness = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
+            if self.torch_active:
+                # Light with radius of 1
+                darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE,
+                                                    (self.screen.get_height() / 2) - (TILE_SIZE * 1.5),
+                                                    TILE_SIZE * 3,
+                                                    TILE_SIZE * 3)
+            elif self.radiant_active:
+                # Light with radius of 2, expanding to 3...
+
+                # darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 2, (self.screen.get_height() / 2) - (TILE_SIZE * 2.5),
+                #                                     TILE_SIZE * 5,
+                #                                     TILE_SIZE * 5)
+                # darkness.fill(BLACK)
+                # darkness_hole.fill(WHITE)
+                # darkness.set_colorkey(WHITE)
+                # self.screen.blit(darkness, (0, 0))
+                # Light with radius of 3
+                darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 3,
+                                                    (self.screen.get_height() / 2) - (TILE_SIZE * 5),
+                                                    TILE_SIZE * 7,
+                                                    TILE_SIZE * 8.5)
+
+                if self.radiant_start is None:
+                    self.radiant_start = self.tiles_moved_total
+                    play_sound(torch_sfx)
+                    play_sound(torch_sfx)
+                else:
+                    if self.tiles_moved_total - self.radiant_start >= 200:
+                        self.radiant_active = False
+                        self.radiant_start = None
+                    elif self.tiles_moved_total - self.radiant_start >= 140:
+                        # Light with radius of 1
+                        darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE,
+                                                            (self.screen.get_height() / 2) - (TILE_SIZE * 1.5),
+                                                            TILE_SIZE * 3,
+                                                            TILE_SIZE * 3)
+                    elif self.tiles_moved_total - self.radiant_start >= 80:
+                        # Light with radius of 2
+                        darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 2,
+                                                            (self.screen.get_height() / 2) - (TILE_SIZE * 2.5),
+                                                            TILE_SIZE * 5,
+                                                            TILE_SIZE * 5)
+
+            else:
+                darkness_hole = darkness.subsurface((self.screen.get_width() / 2),
+                                                    (self.screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE,
+                                                    TILE_SIZE)
+            darkness.fill(BLACK)
+            darkness_hole.fill(WHITE)
+            darkness.set_colorkey(WHITE)
+            self.screen.blit(darkness, (0, 0))
+        if self.display_hovering_stats:
+            if not self.hovering_stats_displayed:
+                self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
+                self.hovering_stats_displayed = True
+            draw_hovering_stats_window(self.screen, self.player, self.color)
+        self.handle_menu_launch(self.cmd_menu)
+        if self.cmd_menu.menu.is_enabled():
+            self.cmd_menu.menu.update(self.events)
+        else:
+            if not self.is_initial_dialog:
+                self.enable_movement = True
+
+    def get_all_roaming_character_surrounding_tiles(self) -> List[str]:
+        all_roaming_character_surrounding_tiles = []
+        for roaming_character in self.current_map.roaming_characters:
+            roaming_character_surrounding_tile_values = get_surrounding_tile_values(
+                (roaming_character.rect.y // TILE_SIZE, roaming_character.rect.x // TILE_SIZE), self.current_map.layout)
+            roaming_character_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(
+                roaming_character_surrounding_tile_values)
+            for tile in roaming_character_surrounding_tiles:
+                all_roaming_character_surrounding_tiles.append(tile)
+        return all_roaming_character_surrounding_tiles
+
+    def convert_numeric_tile_list_to_unique_tile_values(self, numeric_tile_list: Iterable[int]) -> List[str]:
+        converted_tiles = []
+        for tile_value in set(numeric_tile_list):
+            converted_tiles.append(self.current_map.get_tile_by_value(tile_value))
+        return converted_tiles
+
+    def get_fixed_character_underlying_tiles(self) -> List[str]:
+        all_fixed_character_underlying_tiles = []
+        for fixed_character in self.current_map.fixed_characters:
+            fixed_character_coordinates = self.current_map.characters[fixed_character.identifier]['coordinates']
+            all_fixed_character_underlying_tiles.append(
+                self.current_map.get_tile_by_value(
+                    self.current_map.layout[fixed_character_coordinates[0]][fixed_character_coordinates[1]]))
+        return all_fixed_character_underlying_tiles
+
+    def handle_initial_dialog(self):
+        if self.initial_dialog_enabled:
+            if self.is_initial_dialog:
+                display.flip()
+                self.display_hovering_stats = False
+                self.cmd_menu.launch_signaled = False
+                self.run_automatic_initial_dialog()
+                event.clear()
+            else:
+                if self.allow_save_prompt:
+                    self.set_to_save_prompt()
+                else:
+                    self.set_to_post_initial_dialog()
+
+        else:
+            self.set_to_post_initial_dialog()
+            if not self.cmd_menu.menu.is_enabled():
+                self.enable_movement = True
+
+    def handle_post_death_dialog(self):
+        if self.is_post_death_dialog:
+            self.display_hovering_stats = False
+            self.cmd_menu.launch_signaled = False
+            self.run_automatic_post_death_dialog()
+            event.clear()
+
+    def handle_menu_launch(self, menu_to_launch: Menu) -> None:
+        if menu_to_launch.launch_signaled:
+            if menu_to_launch.menu.get_id() == 'command':
+                command_menu_subsurface = self.screen.subsurface(
+                    (6 * TILE_SIZE,  # 11 (first empty square to the left of menu)
+                     TILE_SIZE),  # 4
+                    (8 * TILE_SIZE,
+                     5 * TILE_SIZE)
+                )
+                if not self.cmd_menu.menu.is_enabled():
+                    play_sound(menu_button_sfx)
+                    self.cmd_menu.window_drop_down_effect(6, 1, 8, 5)
+                    self.cmd_menu.menu.enable()
+                else:
+                    menu_to_launch.menu.draw(command_menu_subsurface)
+                    display.update(command_menu_subsurface.get_rect())
+
+    def run_automatic_initial_dialog(self):
+        self.enable_movement = False
+        key_pressed = any([current_event.type == KEYUP for current_event in self.events])
+        if self.skip_text or (key_pressed and not self.automatic_initial_dialog_run):
+            self.cmd_menu.show_text_in_dialog_box(
+                self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
+                skip_text=self.skip_text)
+            self.set_to_post_initial_dialog()
+            self.automatic_initial_dialog_run = True
+
+    def set_to_save_prompt(self):
+        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['returned_dialog']
+
+    def set_to_post_initial_dialog(self):
+        self.is_initial_dialog = False
+        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
+        self.enable_movement = True
+        self.unpause_all_movement()
+
+    def run_automatic_post_death_dialog(self):
+        self.enable_movement = False
+        for current_event in self.events:
+            if current_event.type == KEYDOWN or self.skip_text:
+                self.cmd_menu.show_text_in_dialog_box(
+                    self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
+                    add_quotes=True, skip_text=self.skip_text)
+                self.is_post_death_dialog = False
+                self.set_to_save_prompt()
+                self.enable_movement = True
 
 
 def run():

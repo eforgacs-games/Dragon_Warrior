@@ -14,9 +14,8 @@ from src.common import Direction, UNARMED_HERO_PATH, NAME_SELECTION_UPPER_A, NAM
     ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH
 from src.config import TILE_SIZE, SCALE
 from src.game import Game
-from src.game_functions import get_next_coordinates, set_character_position, draw_hovering_stats_window, \
-    draw_stats_strings_with_alignments, select_from_vertical_menu
-from src.drawer import Drawer
+from src.game_functions import get_next_coordinates, set_character_position, select_from_vertical_menu
+from src.drawer import Drawer, draw_hovering_stats_window, draw_stats_strings_with_alignments
 from src.maps import MapWithoutNPCs
 from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
