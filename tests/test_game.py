@@ -451,7 +451,11 @@ class TestGame(TestCase):
         self.game.get_events()
 
     def test_draw_all(self):
-        self.game.draw_all()
+        self.game.drawer.draw_all(self.game.screen, self.game.loop_count, self.game.big_map, self.game.current_map,
+                                  self.game.player, self.game.cmd_menu, self.game.foreground_rects,
+                                  self.game.enable_animate, self.game.camera, self.game.initial_dialog_enabled,
+                                  self.game.events, self.game.skip_text, self.game.allow_save_prompt,
+                                  self.game.game_state, self.game.torch_active, self.game.color)
         self.assertTrue(self.game.drawer.not_moving_time_start)
 
     # def test_handle_sprite_drawing_and_animation(self):
