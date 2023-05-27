@@ -336,7 +336,7 @@ class Game:
                                 if current_event.type == QUIT:
                                     quit()
                                     sys.exit()
-                                elif current_event.type == KEYDOWN and not self.player.is_dead:
+                                elif current_event.type == KEYDOWN and not self.player.is_dead and not enemy.hp <= 0:
                                     if current_event.key in (K_RETURN, K_i, K_k):
                                         play_sound(menu_button_sfx)
                                         selected_executed_option = current_selection
@@ -446,6 +446,7 @@ class Game:
                 f"The {enemy.name}'s Hit Points have been reduced by {attack_damage}.\n", add_quotes=False,
                 disable_sound=True)
             enemy.hp -= attack_damage
+            # print(f"{enemy.name} HP: {enemy.hp}/{enemy_string_lookup[enemy.name]().hp}")
         if enemy.hp <= 0:
             return
         else:
@@ -479,6 +480,7 @@ class Game:
         create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
         self.cmd_menu.show_line_in_dialog_box(f"Thy Hit Points decreased by {attack_damage}.\n",
                                               add_quotes=False, disable_sound=True)
+        # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
 
     def calculate_enemy_attack_damage(self, enemy):
         return random.randint((enemy.attack - self.player.agility / 2) // 4,
