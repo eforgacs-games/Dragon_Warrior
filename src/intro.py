@@ -9,8 +9,8 @@ from pygame.transform import scale
 from data.text.intro_lookup_table import push_start, controls
 from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, PINK, SMB_FONT_PATH, \
     convert_to_milliseconds, BLACK, INTRO_BANNER_PATH, \
-    convert_to_frames_since_start_time
-from src.config import IMAGES_DIR, FPS
+    convert_to_frames_since_start_time, IMAGES_DIR
+from src.config import FPS
 from src.text import draw_text
 from src.visual_effects import fade
 
