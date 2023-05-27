@@ -392,14 +392,16 @@ class TestGame(TestCase):
                           'Then speak with the guards, for they have much knowledge that may aid thee.',
                           'May the light shine upon thee, Edward.'),
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
-        self.game.handle_initial_dialog()
+        self.game.drawer.handle_initial_dialog(self.game.initial_dialog_enabled, self.game.cmd_menu, self.game.events,
+                                               self.game.skip_text, self.game.allow_save_prompt)
         self.assertFalse(self.game.drawer.display_hovering_stats)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
         self.assertTrue(self.game.game_state.automatic_initial_dialog_run)
         self.assertEqual('When thou art finished preparing for thy departure, please see me.\nI shall wait.',
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
         self.game.allow_save_prompt = True
-        self.game.handle_initial_dialog()
+        self.game.drawer.handle_initial_dialog(self.game.initial_dialog_enabled, self.game.cmd_menu, self.game.events,
+                                               self.game.skip_text, self.game.allow_save_prompt)
         self.assertFalse(self.game.game_state.is_initial_dialog)
         self.assertEqual(('I am greatly pleased that thou hast returned, Edward.',
                           'Before reaching thy next level of experience thou must gain 7 Points.',
