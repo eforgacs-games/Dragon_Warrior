@@ -33,8 +33,7 @@ from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATE
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.drawer import Drawer
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
-from src.game_functions import set_character_position, get_next_coordinates, draw_all_tiles_in_current_map, \
-    replace_characters_with_underlying_tiles, \
+from src.game_functions import set_character_position, get_next_coordinates, replace_characters_with_underlying_tiles, \
     draw_hovering_stats_window, select_from_vertical_menu, get_surrounding_rect
 from src.intro import Intro, controls
 from src.map_layouts import MapLayouts
@@ -602,7 +601,7 @@ class Game:
                 self.launch_battle = False
                 display.flip()
             else:
-                draw_all_tiles_in_current_map(self.current_map, self.background)
+                self.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
                 display.flip()
             if self.music_enabled:
                 mixer.music.stop()
@@ -750,7 +749,7 @@ class Game:
             self.background = self.big_map.subsurface(0, 0, self.current_map.width - width_offset,
                                                       self.current_map.height - height_offset).convert()
             # draw everything once on the first go-around
-            draw_all_tiles_in_current_map(self.current_map, self.background)
+            self.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
         try:
             surrounding_tile_values = get_surrounding_tile_values(
                 (self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE), self.current_map.layout)
@@ -1103,7 +1102,7 @@ class Game:
                 self.unpause_all_movement()
                 self.cmd_menu.window_drop_up_effect(6, 1, 8, 5)
                 self.cmd_menu.menu.disable()
-        draw_all_tiles_in_current_map(self.current_map, self.background)
+        self.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
 
     def unpause_all_movement(self) -> None:
         """
