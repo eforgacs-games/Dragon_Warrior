@@ -2,7 +2,7 @@ import random
 import sys
 from typing import List, Tuple
 
-from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, \
+from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, \
     K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect, \
     SCALED, K_RETURN
 from pygame.display import set_mode, set_caption
@@ -133,10 +133,10 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        # self.current_map = maps.TantegelThroneRoom()
+        self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.ErdricksCaveB1()
         # self.current_map = maps.TantegelCourtyard()
-        self.current_map = maps.Alefgard()
+        # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
         # self.current_map = maps.Hauksness()
@@ -1232,7 +1232,7 @@ class Game:
                 display.flip()
                 self.display_hovering_stats = False
                 self.cmd_menu.launch_signaled = False
-                self.run_automatic_initial_dialog()
+                self.drawer.run_automatic_initial_dialog(self.events, self.skip_text, self.cmd_menu)
                 event.clear()
             else:
                 if self.allow_save_prompt:
@@ -1251,16 +1251,6 @@ class Game:
             self.cmd_menu.launch_signaled = False
             self.drawer.run_automatic_post_death_dialog(self.events, self.skip_text, self.cmd_menu)
             event.clear()
-
-    def run_automatic_initial_dialog(self):
-        self.game_state.enable_movement = False
-        key_pressed = any([current_event.type == KEYUP for current_event in self.events])
-        if self.skip_text or (key_pressed and not self.game_state.automatic_initial_dialog_run):
-            self.cmd_menu.show_text_in_dialog_box(
-                self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
-                skip_text=self.skip_text)
-            self.drawer.set_to_post_initial_dialog(self.cmd_menu)
-            self.game_state.automatic_initial_dialog_run = True
 
 
 def run():

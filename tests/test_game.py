@@ -279,7 +279,7 @@ class TestGame(TestCase):
 
     def test_king_lorik_post_initial_dialog(self):
         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
-        self.game.drawer.set_to_post_initial_dialog()
+        self.game.drawer.set_to_post_initial_dialog(self.game.cmd_menu)
         self.assertEqual("When thou art finished preparing for thy departure, please see me.\nI shall wait.",
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 
@@ -298,7 +298,7 @@ class TestGame(TestCase):
     def test_run_automatic_initial_dialog(self):
         self.assertTrue(self.game.game_state.is_initial_dialog)
         # pygame.key.get_pressed = create_key_mock(pygame.K_j)
-        self.game.run_automatic_initial_dialog()
+        self.game.drawer.run_automatic_initial_dialog(self.game.events, self.game.skip_text, self.game.cmd_menu)
         self.assertFalse(self.game.game_state.enable_movement)
         # TODO(ELF): Need to enable the following checks:
         # self.assertFalse(self.game.is_initial_dialog)
