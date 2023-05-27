@@ -1,10 +1,10 @@
 from typing import List, Iterable
 
-from pygame import image, display, KEYDOWN, KEYUP, event
+from pygame import image, display, KEYDOWN, KEYUP, event, Surface
 from pygame.transform import scale
 
 from src.common import convert_to_frames_since_start_time, IMAGES_ENEMIES_DIR, WHITE, create_window, \
-    HOVERING_STATS_BACKGROUND_PATH, play_sound, menu_button_sfx
+    HOVERING_STATS_BACKGROUND_PATH, play_sound, menu_button_sfx, torch_sfx, BLACK
 from src.config import TILE_SIZE, SCALE
 from src.menu import Menu, CommandMenu
 from src.text import draw_text
@@ -15,6 +15,9 @@ class Drawer:
     def __init__(self, game_state):
         self.game_state = game_state
         self.display_hovering_stats = False
+        self.background = None
+        self.not_moving_time_start = None
+        self.hovering_stats_displayed = False
 
     @staticmethod
     def alternate_blink(image_1, image_2, right_arrow_start, screen):
@@ -148,6 +151,60 @@ class Drawer:
             self.set_to_post_initial_dialog(cmd_menu)
             if not cmd_menu.menu.is_enabled():
                 self.game_state.enable_movement = True
+
+    def handle_darkness(self, screen, torch_active):
+        darkness = Surface((screen.get_width(), screen.get_height()))  # lgtm [py/call/wrong-arguments]
+        if torch_active:
+            # Light with radius of 1
+            darkness_hole = darkness.subsurface((screen.get_width() / 2) - TILE_SIZE,
+                                                (screen.get_height() / 2) - (TILE_SIZE * 1.5),
+                                                TILE_SIZE * 3,
+                                                TILE_SIZE * 3)
+        elif self.game_state.radiant_active:
+            # Light with radius of 2, expanding to 3...
+
+            # darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 2, (self.screen.get_height() / 2) - (TILE_SIZE * 2.5),
+            #                                     TILE_SIZE * 5,
+            #                                     TILE_SIZE * 5)
+            # darkness.fill(BLACK)
+            # darkness_hole.fill(WHITE)
+            # darkness.set_colorkey(WHITE)
+            # self.screen.blit(darkness, (0, 0))
+            # Light with radius of 3
+            darkness_hole = darkness.subsurface((screen.get_width() / 2) - TILE_SIZE * 3,
+                                                (screen.get_height() / 2) - (TILE_SIZE * 5),
+                                                TILE_SIZE * 7,
+                                                TILE_SIZE * 8.5)
+
+            if self.game_state.radiant_start is None:
+                self.game_state.radiant_start = self.game_state.tiles_moved_total
+                play_sound(torch_sfx)
+                play_sound(torch_sfx)
+            else:
+                if self.game_state.tiles_moved_total - self.game_state.radiant_start >= 200:
+                    self.game_state.radiant_active = False
+                    self.game_state.radiant_start = None
+                elif self.game_state.tiles_moved_total - self.game_state.radiant_start >= 140:
+                    # Light with radius of 1
+                    darkness_hole = darkness.subsurface((screen.get_width() / 2) - TILE_SIZE,
+                                                        (screen.get_height() / 2) - (TILE_SIZE * 1.5),
+                                                        TILE_SIZE * 3,
+                                                        TILE_SIZE * 3)
+                elif self.game_state.tiles_moved_total - self.game_state.radiant_start >= 80:
+                    # Light with radius of 2
+                    darkness_hole = darkness.subsurface((screen.get_width() / 2) - TILE_SIZE * 2,
+                                                        (screen.get_height() / 2) - (TILE_SIZE * 2.5),
+                                                        TILE_SIZE * 5,
+                                                        TILE_SIZE * 5)
+
+        else:
+            darkness_hole = darkness.subsurface((screen.get_width() / 2),
+                                                (screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE,
+                                                TILE_SIZE)
+        darkness.fill(BLACK)
+        darkness_hole.fill(WHITE)
+        darkness.set_colorkey(WHITE)
+        screen.blit(darkness, (0, 0))
 
 
 def draw_stats_strings_with_alignments(stat_string, y_position, screen, color=WHITE):
