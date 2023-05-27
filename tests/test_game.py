@@ -452,7 +452,7 @@ class TestGame(TestCase):
 
     def test_draw_all(self):
         self.game.draw_all()
-        self.assertTrue(self.game.not_moving_time_start)
+        self.assertTrue(self.game.drawer.not_moving_time_start)
 
     # def test_handle_sprite_drawing_and_animation(self):
     #     self.game.handle_sprite_drawing_and_animation()

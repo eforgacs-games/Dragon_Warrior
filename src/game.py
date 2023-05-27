@@ -1,6 +1,6 @@
 import random
 import sys
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, \
     K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect, \
@@ -21,7 +21,7 @@ from src.common import BLACK, Direction, ICON_PATH, intro_overture, is_facing_la
     convert_to_frames_since_start_time, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, \
     ARMED_HERO_WITH_SHIELD_PATH, \
-    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, torch_sfx, battle_music, victory_sfx, attack_sfx, hit_sfx, improvement_sfx, \
+    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, battle_music, victory_sfx, attack_sfx, hit_sfx, improvement_sfx, \
     BATTLE_BACKGROUND_PATH, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
     BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, missed_sfx, missed_2_sfx, \
     prepare_attack_sfx, receive_damage_2_sfx, excellent_move_sfx, create_window
@@ -59,6 +59,9 @@ class GameState:
         self.is_initial_dialog = True
         self.is_post_death_dialog = False
         self.automatic_initial_dialog_run = False
+        self.radiant_start: Optional[int] = None
+        self.tiles_moved_total = 0
+        self.radiant_active = False
 
     def unpause_all_movement(self) -> None:
         """
@@ -80,7 +83,6 @@ class Game:
         self.game_state = GameState()
         self.drawer = Drawer(self.game_state)
         # map/graphics
-        self.background = None
         self.big_map = None
         self.layouts = MapLayouts()
         self.fullscreen_enabled = FULLSCREEN_ENABLED
@@ -97,14 +99,10 @@ class Game:
         self.last_zone = None
         self.last_amount_of_tiles_moved = 0
         self.tiles_moved_since_spawn = 0
-        self.tiles_moved_total = 0
-        self.radiant_start = None
+
         self.loop_count = 1
         self.foreground_rects = []
-        self.not_moving_time_start = None
-        self.hovering_stats_displayed = False
         self.torch_active = False
-        self.radiant_active = False
         self.speed = 2
         self.launch_battle = False
         # debugging
@@ -342,7 +340,7 @@ class Game:
                         self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
                         self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
                         create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
-                        self.hovering_stats_displayed = True
+                        self.drawer.hovering_stats_displayed = True
                         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
 
                         enemy = enemy_string_lookup[enemy_name]()
@@ -629,7 +627,7 @@ class Game:
                 self.launch_battle = False
                 display.flip()
             else:
-                self.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
+                self.drawer.draw_all_tiles_in_current_map(self.current_map, self.drawer.background)
                 display.flip()
             if self.music_enabled:
                 mixer.music.stop()
@@ -801,7 +799,7 @@ class Game:
         self.current_map.load_map(self.player, destination_coordinates)
         if not self.current_map.is_dark:
             self.torch_active = False
-            self.radiant_active = False
+            self.game_state.radiant_active = False
         self.handle_player_direction_on_map_change(current_map_staircase_dict)
         #  this is probably what we need here:
 
@@ -842,7 +840,7 @@ class Game:
         self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
             (self.current_map.width, self.current_map.height)).convert()
         self.big_map.fill(BLACK)
-        self.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert_alpha()
+        self.drawer.background = self.big_map.subsurface(0, 0, self.current_map.width, self.current_map.height).convert_alpha()
 
     def handle_player_direction_on_map_change(self, current_map_staircase_dict):
         if not self.player.is_dead:
@@ -874,7 +872,7 @@ class Game:
                 self.game_state.unpause_all_movement()
                 self.cmd_menu.window_drop_up_effect(6, 1, 8, 5)
                 self.cmd_menu.menu.disable()
-        self.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
+        self.drawer.draw_all_tiles_in_current_map(self.current_map, self.drawer.background)
 
     def move_player(self, current_key) -> None:
         """
@@ -907,7 +905,7 @@ class Game:
                         # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning -
                         #  should always be 0 when the map starts.
                         self.tiles_moved_since_spawn += 1
-                        self.tiles_moved_total += 1
+                        self.game_state.tiles_moved_total += 1
                     else:
                         self.player.bumped = False
                     self.player.is_moving, self.player.next_tile_checked = False, False
@@ -916,7 +914,7 @@ class Game:
                 if curr_pos_x % TILE_SIZE == 0:
                     if not self.player.bumped:
                         self.tiles_moved_since_spawn += 1
-                        self.tiles_moved_total += 1
+                        self.game_state.tiles_moved_total += 1
                     else:
                         self.player.bumped = False
                     self.player.is_moving, self.player.next_tile_checked = False, False
@@ -1074,14 +1072,15 @@ class Game:
         Draw map, sprites, background, menu and other surfaces.
         :return: None
         """
+
         self.screen.fill(BLACK)
         width_offset = 0
         height_offset = 0
         if self.loop_count == 1:
-            self.background = self.big_map.subsurface(0, 0, self.current_map.width - width_offset,
-                                                      self.current_map.height - height_offset).convert()
+            self.drawer.background = self.big_map.subsurface(0, 0, self.current_map.width - width_offset,
+                                                             self.current_map.height - height_offset).convert()
             # draw everything once on the first go-around
-            self.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
+            self.drawer.draw_all_tiles_in_current_map(self.current_map, self.drawer.background)
         try:
             surrounding_tile_values = get_surrounding_tile_values(
                 (self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE), self.current_map.layout)
@@ -1096,16 +1095,16 @@ class Game:
             if self.player.is_moving:
                 tile_types_to_draw += replace_characters_with_underlying_tiles(
                     list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
-                self.not_moving_time_start = None
+                self.drawer.not_moving_time_start = None
                 self.drawer.display_hovering_stats = False
-                if self.hovering_stats_displayed:
+                if self.drawer.hovering_stats_displayed:
                     self.cmd_menu.window_drop_up_effect(1, 2, 4, 6)
-                    self.hovering_stats_displayed = False
+                    self.drawer.hovering_stats_displayed = False
             else:
-                if not self.not_moving_time_start:
-                    self.not_moving_time_start = get_ticks()
+                if not self.drawer.not_moving_time_start:
+                    self.drawer.not_moving_time_start = get_ticks()
                 else:
-                    if convert_to_frames_since_start_time(self.not_moving_time_start) >= 51:
+                    if convert_to_frames_since_start_time(self.drawer.not_moving_time_start) >= 51:
                         self.drawer.display_hovering_stats = True
         except IndexError:
             all_roaming_character_surrounding_tiles = get_all_roaming_character_surrounding_tiles(self.current_map)
@@ -1151,73 +1150,22 @@ class Game:
                                 group_to_draw.add(tile_to_draw)
                                 # tiles_drawn.append(tile)
         # print(f"{len(tiles_drawn)}: {tiles_drawn}")
-        group_to_draw.draw(self.background)
+        group_to_draw.draw(self.drawer.background)
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
-        self.drawer.handle_sprite_drawing_and_animation(self.current_map, self.foreground_rects, self.background,
+        self.drawer.handle_sprite_drawing_and_animation(self.current_map, self.foreground_rects, self.drawer.background,
                                                         self.enable_animate)
-        self.screen.blit(self.background, self.camera.get_pos())
+        self.screen.blit(self.drawer.background, self.camera.get_pos())
         if self.current_map.identifier == 'TantegelThroneRoom':
             self.drawer.handle_initial_dialog(self.initial_dialog_enabled, self.cmd_menu, self.events, self.skip_text,
                                               self.allow_save_prompt)
             handle_post_death_dialog(self.game_state, self.drawer, self.cmd_menu, self.events, self.skip_text)
         if self.current_map.is_dark and ENABLE_DARKNESS:
-            darkness = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
-            if self.torch_active:
-                # Light with radius of 1
-                darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE,
-                                                    (self.screen.get_height() / 2) - (TILE_SIZE * 1.5),
-                                                    TILE_SIZE * 3,
-                                                    TILE_SIZE * 3)
-            elif self.radiant_active:
-                # Light with radius of 2, expanding to 3...
-
-                # darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 2, (self.screen.get_height() / 2) - (TILE_SIZE * 2.5),
-                #                                     TILE_SIZE * 5,
-                #                                     TILE_SIZE * 5)
-                # darkness.fill(BLACK)
-                # darkness_hole.fill(WHITE)
-                # darkness.set_colorkey(WHITE)
-                # self.screen.blit(darkness, (0, 0))
-                # Light with radius of 3
-                darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 3,
-                                                    (self.screen.get_height() / 2) - (TILE_SIZE * 5),
-                                                    TILE_SIZE * 7,
-                                                    TILE_SIZE * 8.5)
-
-                if self.radiant_start is None:
-                    self.radiant_start = self.tiles_moved_total
-                    play_sound(torch_sfx)
-                    play_sound(torch_sfx)
-                else:
-                    if self.tiles_moved_total - self.radiant_start >= 200:
-                        self.radiant_active = False
-                        self.radiant_start = None
-                    elif self.tiles_moved_total - self.radiant_start >= 140:
-                        # Light with radius of 1
-                        darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE,
-                                                            (self.screen.get_height() / 2) - (TILE_SIZE * 1.5),
-                                                            TILE_SIZE * 3,
-                                                            TILE_SIZE * 3)
-                    elif self.tiles_moved_total - self.radiant_start >= 80:
-                        # Light with radius of 2
-                        darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 2,
-                                                            (self.screen.get_height() / 2) - (TILE_SIZE * 2.5),
-                                                            TILE_SIZE * 5,
-                                                            TILE_SIZE * 5)
-
-            else:
-                darkness_hole = darkness.subsurface((self.screen.get_width() / 2),
-                                                    (self.screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE,
-                                                    TILE_SIZE)
-            darkness.fill(BLACK)
-            darkness_hole.fill(WHITE)
-            darkness.set_colorkey(WHITE)
-            self.screen.blit(darkness, (0, 0))
+            self.drawer.handle_darkness(self.screen, self.torch_active)
         if self.drawer.display_hovering_stats:
-            if not self.hovering_stats_displayed:
+            if not self.drawer.hovering_stats_displayed:
                 self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
-                self.hovering_stats_displayed = True
+                self.drawer.hovering_stats_displayed = True
             self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
         handle_menu_launch(self.screen, self.cmd_menu, self.cmd_menu)
         if self.cmd_menu.menu.is_enabled():
