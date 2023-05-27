@@ -10,7 +10,6 @@ from data.text.dialog import confirmation_prompt
 from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, \
     create_window, WHITE
 from src.config import MUSIC_ENABLED, TILE_SIZE, LANGUAGE
-from src.drawer import Drawer, draw_hovering_stats_window
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
@@ -283,7 +282,7 @@ class DialogLookup:
             self.player.shield = item
         self.player.update_attack_power()
         self.player.update_defense_power()
-        draw_hovering_stats_window(self.screen, self.player)
+        self.command_menu.game.drawer.draw_hovering_stats_window(self.screen, self.player)
         self.command_menu.show_line_in_dialog_box(_("I thank thee."))
 
     def check_stay_at_inn(self, inn_cost):
@@ -315,7 +314,7 @@ class DialogLookup:
         if MUSIC_ENABLED:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
-        Drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
+        self.command_menu.game.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
         draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
         for character, character_dict in self.current_map.characters.items():
             if character != 'HERO':

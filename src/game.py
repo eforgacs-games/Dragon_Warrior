@@ -1,6 +1,6 @@
 import random
 import sys
-from typing import List, Tuple, Iterable
+from typing import List, Tuple
 
 from pygame import FULLSCREEN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, \
     K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, Rect, \
@@ -29,8 +29,10 @@ from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down,
 from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
     ENABLE_DARKNESS, FORCE_BATTLE, NO_BATTLES
 from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
-from src.drawer import Drawer, draw_hovering_stats_window, replace_characters_with_underlying_tiles, \
-    get_surrounding_tile_values
+from src.drawer import Drawer, replace_characters_with_underlying_tiles, \
+    get_surrounding_tile_values, convert_numeric_tile_list_to_unique_tile_values, \
+    get_all_roaming_character_surrounding_tiles, get_fixed_character_underlying_tiles, handle_menu_launch, \
+    set_to_save_prompt
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu, \
     get_surrounding_rect
@@ -320,7 +322,7 @@ class Game:
                         self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
                         create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
                         self.hovering_stats_displayed = True
-                        draw_hovering_stats_window(self.screen, self.player, self.color)
+                        self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
 
                         enemy = enemy_string_lookup[enemy_name]()
 
@@ -426,7 +428,7 @@ class Game:
             else:
                 self.receive_damage(attack_damage)
             if self.player.current_hp == 0:
-                draw_hovering_stats_window(self.screen, self.player, RED)
+                self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
                 self.player.is_dead = True
             else:
                 self.cmd_menu.show_line_in_dialog_box(f"Command?\n", add_quotes=False, disable_sound=True)
@@ -437,7 +439,7 @@ class Game:
         self.color = RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
         if self.player.current_hp < 0:
             self.player.current_hp = 0
-        draw_hovering_stats_window(self.screen, self.player, self.color)
+        self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
         create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
         self.cmd_menu.show_line_in_dialog_box(f"Thy Hit Points decreased by {attack_damage}.\n",
                                               add_quotes=False, disable_sound=True)
@@ -1075,9 +1077,10 @@ class Game:
         try:
             surrounding_tile_values = get_surrounding_tile_values(
                 (self.player.rect.y // TILE_SIZE, self.player.rect.x // TILE_SIZE), self.current_map.layout)
-            player_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(surrounding_tile_values)
-            all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
-            all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
+            player_surrounding_tiles = convert_numeric_tile_list_to_unique_tile_values(self.current_map,
+                                                                                       surrounding_tile_values)
+            all_roaming_character_surrounding_tiles = get_all_roaming_character_surrounding_tiles(self.current_map)
+            all_fixed_character_underlying_tiles = get_fixed_character_underlying_tiles(self.current_map)
             tile_types_to_draw = replace_characters_with_underlying_tiles([self.player.current_tile] +
                                                                           all_roaming_character_surrounding_tiles +
                                                                           all_fixed_character_underlying_tiles,
@@ -1097,8 +1100,8 @@ class Game:
                     if convert_to_frames_since_start_time(self.not_moving_time_start) >= 51:
                         self.display_hovering_stats = True
         except IndexError:
-            all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles()
-            all_fixed_character_underlying_tiles = self.get_fixed_character_underlying_tiles()
+            all_roaming_character_surrounding_tiles = get_all_roaming_character_surrounding_tiles(self.current_map)
+            all_fixed_character_underlying_tiles = get_fixed_character_underlying_tiles(self.current_map)
             tile_types_to_draw = replace_characters_with_underlying_tiles([self.player.current_tile] +
                                                                           all_roaming_character_surrounding_tiles +
                                                                           all_fixed_character_underlying_tiles,
@@ -1206,39 +1209,13 @@ class Game:
             if not self.hovering_stats_displayed:
                 self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
                 self.hovering_stats_displayed = True
-            draw_hovering_stats_window(self.screen, self.player, self.color)
-        self.handle_menu_launch(self.cmd_menu)
+            self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
+        handle_menu_launch(self.screen, self.cmd_menu, self.cmd_menu)
         if self.cmd_menu.menu.is_enabled():
             self.cmd_menu.menu.update(self.events)
         else:
             if not self.is_initial_dialog:
                 self.enable_movement = True
-
-    def get_all_roaming_character_surrounding_tiles(self) -> List[str]:
-        all_roaming_character_surrounding_tiles = []
-        for roaming_character in self.current_map.roaming_characters:
-            roaming_character_surrounding_tile_values = get_surrounding_tile_values(
-                (roaming_character.rect.y // TILE_SIZE, roaming_character.rect.x // TILE_SIZE), self.current_map.layout)
-            roaming_character_surrounding_tiles = self.convert_numeric_tile_list_to_unique_tile_values(
-                roaming_character_surrounding_tile_values)
-            for tile in roaming_character_surrounding_tiles:
-                all_roaming_character_surrounding_tiles.append(tile)
-        return all_roaming_character_surrounding_tiles
-
-    def convert_numeric_tile_list_to_unique_tile_values(self, numeric_tile_list: Iterable[int]) -> List[str]:
-        converted_tiles = []
-        for tile_value in set(numeric_tile_list):
-            converted_tiles.append(self.current_map.get_tile_by_value(tile_value))
-        return converted_tiles
-
-    def get_fixed_character_underlying_tiles(self) -> List[str]:
-        all_fixed_character_underlying_tiles = []
-        for fixed_character in self.current_map.fixed_characters:
-            fixed_character_coordinates = self.current_map.characters[fixed_character.identifier]['coordinates']
-            all_fixed_character_underlying_tiles.append(
-                self.current_map.get_tile_by_value(
-                    self.current_map.layout[fixed_character_coordinates[0]][fixed_character_coordinates[1]]))
-        return all_fixed_character_underlying_tiles
 
     def handle_initial_dialog(self):
         if self.initial_dialog_enabled:
@@ -1250,7 +1227,7 @@ class Game:
                 event.clear()
             else:
                 if self.allow_save_prompt:
-                    self.set_to_save_prompt()
+                    set_to_save_prompt(self.cmd_menu)
                 else:
                     self.set_to_post_initial_dialog()
 
@@ -1266,23 +1243,6 @@ class Game:
             self.run_automatic_post_death_dialog()
             event.clear()
 
-    def handle_menu_launch(self, menu_to_launch: Menu) -> None:
-        if menu_to_launch.launch_signaled:
-            if menu_to_launch.menu.get_id() == 'command':
-                command_menu_subsurface = self.screen.subsurface(
-                    (6 * TILE_SIZE,  # 11 (first empty square to the left of menu)
-                     TILE_SIZE),  # 4
-                    (8 * TILE_SIZE,
-                     5 * TILE_SIZE)
-                )
-                if not self.cmd_menu.menu.is_enabled():
-                    play_sound(menu_button_sfx)
-                    self.cmd_menu.window_drop_down_effect(6, 1, 8, 5)
-                    self.cmd_menu.menu.enable()
-                else:
-                    menu_to_launch.menu.draw(command_menu_subsurface)
-                    display.update(command_menu_subsurface.get_rect())
-
     def run_automatic_initial_dialog(self):
         self.enable_movement = False
         key_pressed = any([current_event.type == KEYUP for current_event in self.events])
@@ -1292,10 +1252,6 @@ class Game:
                 skip_text=self.skip_text)
             self.set_to_post_initial_dialog()
             self.automatic_initial_dialog_run = True
-
-    def set_to_save_prompt(self):
-        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['returned_dialog']
 
     def set_to_post_initial_dialog(self):
         self.is_initial_dialog = False
@@ -1312,7 +1268,7 @@ class Game:
                     self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
                     add_quotes=True, skip_text=self.skip_text)
                 self.is_post_death_dialog = False
-                self.set_to_save_prompt()
+                set_to_save_prompt(self.cmd_menu)
                 self.enable_movement = True
 
 

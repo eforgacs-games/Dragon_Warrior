@@ -15,7 +15,6 @@ from src.common import DRAGON_QUEST_FONT_PATH, BLACK, menu_button_sfx, DIALOG_BO
     open_door_sfx, \
     STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx
 from src.config import SCALE, TILE_SIZE, LANGUAGE
-from src.drawer import draw_hovering_stats_window
 from src.items import treasure
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
@@ -242,7 +241,7 @@ class CommandMenu(Menu):
                     if self.launch_signaled:
                         self.screen.blit(self.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
                     if self.game.display_hovering_stats:
-                        draw_hovering_stats_window(self.screen, self.player, self.game.color)
+                        self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.game.color)
                     display.update(self.screen.blit(black_box, (TILE_SIZE * left, TILE_SIZE * top)))
 
     def take_item(self, item_name: str):

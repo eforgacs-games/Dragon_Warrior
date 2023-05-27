@@ -1,11 +1,12 @@
-from typing import List
+from typing import List, Iterable
 
 from pygame import image, display
 from pygame.transform import scale
 
 from src.common import convert_to_frames_since_start_time, IMAGES_ENEMIES_DIR, WHITE, create_window, \
-    HOVERING_STATS_BACKGROUND_PATH
+    HOVERING_STATS_BACKGROUND_PATH, play_sound, menu_button_sfx
 from src.config import TILE_SIZE, SCALE
+from src.menu import Menu
 from src.text import draw_text
 
 
@@ -87,16 +88,16 @@ class Drawer:
             if tile in current_map.tile_types_in_current_map and tile_dict.get('group'):
                 tile_dict['group'].draw(background)
 
-
-def draw_hovering_stats_window(screen, player, color=WHITE):
-    create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, screen, color)
-    draw_text(player.name[:4], TILE_SIZE * 2.99, TILE_SIZE * 2, screen, color=color, alignment='center',
-              letter_by_letter=False)
-    draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)
-    draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen, color=color)
-    draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen, color=color)
-    draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen, color=color)
-    draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen, color=color)
+    @staticmethod
+    def draw_hovering_stats_window(screen, player, color=WHITE):
+        create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, screen, color)
+        draw_text(player.name[:4], TILE_SIZE * 2.99, TILE_SIZE * 2, screen, color=color, alignment='center',
+                  letter_by_letter=False)
+        draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)
+        draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen, color=color)
+        draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen, color=color)
+        draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen, color=color)
+        draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen, color=color)
 
 
 def draw_stats_strings_with_alignments(stat_string, y_position, screen, color=WHITE):
@@ -152,3 +153,55 @@ def get_surrounding_tile_values(coordinates, map_layout):
     else:
         all_neighbors = set(neighbors)
     return all_neighbors
+
+
+def convert_numeric_tile_list_to_unique_tile_values(current_map, numeric_tile_list: Iterable[int]) -> List[str]:
+    converted_tiles = []
+    for tile_value in set(numeric_tile_list):
+        converted_tiles.append(current_map.get_tile_by_value(tile_value))
+    return converted_tiles
+
+
+def get_all_roaming_character_surrounding_tiles(current_map) -> List[str]:
+    all_roaming_character_surrounding_tiles = []
+    for roaming_character in current_map.roaming_characters:
+        roaming_character_surrounding_tile_values = get_surrounding_tile_values(
+            (roaming_character.rect.y // TILE_SIZE, roaming_character.rect.x // TILE_SIZE), current_map.layout)
+        roaming_character_surrounding_tiles = convert_numeric_tile_list_to_unique_tile_values(current_map,
+                                                                                              roaming_character_surrounding_tile_values)
+        for tile in roaming_character_surrounding_tiles:
+            all_roaming_character_surrounding_tiles.append(tile)
+    return all_roaming_character_surrounding_tiles
+
+
+def get_fixed_character_underlying_tiles(current_map) -> List[str]:
+    all_fixed_character_underlying_tiles = []
+    for fixed_character in current_map.fixed_characters:
+        fixed_character_coordinates = current_map.characters[fixed_character.identifier]['coordinates']
+        all_fixed_character_underlying_tiles.append(
+            current_map.get_tile_by_value(
+                current_map.layout[fixed_character_coordinates[0]][fixed_character_coordinates[1]]))
+    return all_fixed_character_underlying_tiles
+
+
+def handle_menu_launch(screen, cmd_menu, menu_to_launch: Menu) -> None:
+    if menu_to_launch.launch_signaled:
+        if menu_to_launch.menu.get_id() == 'command':
+            command_menu_subsurface = screen.subsurface(
+                (6 * TILE_SIZE,  # 11 (first empty square to the left of menu)
+                 TILE_SIZE),  # 4
+                (8 * TILE_SIZE,
+                 5 * TILE_SIZE)
+            )
+            if not cmd_menu.menu.is_enabled():
+                play_sound(menu_button_sfx)
+                cmd_menu.window_drop_down_effect(6, 1, 8, 5)
+                cmd_menu.menu.enable()
+            else:
+                menu_to_launch.menu.draw(command_menu_subsurface)
+                display.update(command_menu_subsurface.get_rect())
+
+
+def set_to_save_prompt(cmd_menu):
+    cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+        cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['returned_dialog']
