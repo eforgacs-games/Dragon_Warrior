@@ -822,7 +822,8 @@ class Game:
         group_to_draw.draw(self.background)
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
-        self.handle_sprite_drawing_and_animation()
+        self.drawer.handle_sprite_drawing_and_animation(self.current_map, self.foreground_rects, self.background,
+                                                        self.enable_animate)
         self.screen.blit(self.background, self.camera.get_pos())
         if self.current_map.identifier == 'TantegelThroneRoom':
             self.handle_initial_dialog()
@@ -949,17 +950,6 @@ class Game:
     def set_to_save_prompt(self):
         self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
             self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['returned_dialog']
-
-    def handle_sprite_drawing_and_animation(self):
-        for character_dict in self.current_map.characters.values():
-            self.foreground_rects.append(character_dict['character_sprites'].draw(self.background)[0])
-            self.handle_sprite_animation(character_dict)
-
-    def handle_sprite_animation(self, character_dict):
-        if self.enable_animate:
-            character_dict['character'].animate()
-        else:
-            character_dict['character'].pause()
 
     def get_fixed_character_underlying_tiles(self) -> List[str]:
         all_fixed_character_underlying_tiles = []
