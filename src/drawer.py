@@ -130,6 +130,25 @@ class Drawer:
             self.set_to_post_initial_dialog(cmd_menu)
             self.game_state.automatic_initial_dialog_run = True
 
+    def handle_initial_dialog(self, initial_dialog_enabled, cmd_menu, events, skip_text, allow_save_prompt):
+        if initial_dialog_enabled:
+            if self.game_state.is_initial_dialog:
+                display.flip()
+                self.display_hovering_stats = False
+                cmd_menu.launch_signaled = False
+                self.run_automatic_initial_dialog(events, skip_text, cmd_menu)
+                event.clear()
+            else:
+                if allow_save_prompt:
+                    set_to_save_prompt(cmd_menu)
+                else:
+                    self.set_to_post_initial_dialog(cmd_menu)
+
+        else:
+            self.set_to_post_initial_dialog(cmd_menu)
+            if not cmd_menu.menu.is_enabled():
+                self.game_state.enable_movement = True
+
 
 def draw_stats_strings_with_alignments(stat_string, y_position, screen, color=WHITE):
     if len(stat_string) > 4:
