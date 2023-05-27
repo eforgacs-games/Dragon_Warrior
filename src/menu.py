@@ -99,6 +99,10 @@ class CommandMenu(Menu):
         self.menu.add.button('TAKE', self.take, padding=(4, 0, 8, 16))
         self.menu.disable()
 
+    def set_king_lorik_dialog(self):
+        self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+            self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
+
     def npc_is_across_counter(self, character_dict):
         return self.player.next_tile_id == 'WOOD' and (
             character_dict['character'].row, character_dict['character'].column) == self.player.next_next_coordinates
@@ -396,7 +400,7 @@ class CommandMenu(Menu):
             self.show_text_in_dialog_box("There is no one there.", add_quotes=True, skip_text=self.skip_text)
 
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def status(self) -> None:
         """
@@ -440,7 +444,7 @@ class CommandMenu(Menu):
         # SHIELD: {self.player.shield}
         # """)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def stairs(self) -> None:
         """
@@ -457,7 +461,7 @@ class CommandMenu(Menu):
             # the original game has quotes in this dialog box
             self.show_text_in_dialog_box("There are no stairs here.", add_quotes=True, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def search(self) -> None:
         """
@@ -476,7 +480,7 @@ class CommandMenu(Menu):
             text_to_print.append("But there found nothing.")
         self.show_text_in_dialog_box(text_to_print, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def spell(self):
         """
@@ -490,7 +494,7 @@ class CommandMenu(Menu):
         else:
             self.display_item_menu('spells')
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def item(self):
         """
@@ -506,7 +510,7 @@ class CommandMenu(Menu):
 
             # self.show_text_in_dialog_box(inventory_string, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def display_item_menu(self, menu_name):
         """Display a menu of selectable items.
@@ -603,7 +607,7 @@ class CommandMenu(Menu):
         else:
             self.show_text_in_dialog_box("There is no door here.", skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def take(self) -> None:
         """
@@ -629,4 +633,4 @@ class CommandMenu(Menu):
             self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",),
                                          skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
