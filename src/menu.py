@@ -244,7 +244,7 @@ class CommandMenu(Menu):
                     self.screen.blit(self.background, self.camera_position)
                     if self.launch_signaled:
                         self.screen.blit(self.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
-                    if self.game.display_hovering_stats:
+                    if self.game.drawer.display_hovering_stats:
                         self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.game.color)
                     display.update(self.screen.blit(black_box, (TILE_SIZE * left, TILE_SIZE * top)))
 
