@@ -6,13 +6,14 @@ from pygame.transform import scale
 from src.common import convert_to_frames_since_start_time, IMAGES_ENEMIES_DIR, WHITE, create_window, \
     HOVERING_STATS_BACKGROUND_PATH, play_sound, menu_button_sfx
 from src.config import TILE_SIZE, SCALE
-from src.menu import Menu
+from src.menu import Menu, CommandMenu
 from src.text import draw_text
 
 
 class Drawer:
-    def __init__(self):
-        self.is_initial_dialog = True
+
+    def __init__(self, game_state):
+        self.game_state = game_state
 
     @staticmethod
     def alternate_blink(image_1, image_2, right_arrow_start, screen):
@@ -101,11 +102,11 @@ class Drawer:
         draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen, color=color)
         draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen, color=color)
 
-    def set_to_post_initial_dialog(self, game_state, command_menu):
-        self.is_initial_dialog = False
+    def set_to_post_initial_dialog(self, command_menu: CommandMenu):
+        self.game_state.is_initial_dialog = False
         command_menu.set_king_lorik_dialog()
-        game_state.enable_movement = True
-        game_state.unpause_all_movement()
+        self.game_state.enable_movement = True
+        self.game_state.unpause_all_movement()
 
 
 def draw_stats_strings_with_alignments(stat_string, y_position, screen, color=WHITE):

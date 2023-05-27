@@ -279,7 +279,7 @@ class TestGame(TestCase):
 
     def test_king_lorik_post_initial_dialog(self):
         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
-        self.game.set_to_post_initial_dialog(self.game.game_state)
+        self.game.set_to_post_initial_dialog()
         self.assertEqual("When thou art finished preparing for thy departure, please see me.\nI shall wait.",
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 
@@ -296,10 +296,10 @@ class TestGame(TestCase):
     #     self.assertEqual(Direction.DOWN.value, self.game.player.direction_value)
 
     def test_run_automatic_initial_dialog(self):
-        self.assertTrue(self.game.is_initial_dialog)
+        self.assertTrue(self.game.game_state.is_initial_dialog)
         # pygame.key.get_pressed = create_key_mock(pygame.K_j)
         self.game.run_automatic_initial_dialog()
-        self.assertFalse(self.game.enable_movement)
+        self.assertFalse(self.game.game_state.enable_movement)
         # TODO(ELF): Need to enable the following checks:
         # self.assertFalse(self.game.is_initial_dialog)
         # self.assertTrue(self.game.automatic_initial_dialog_run)
@@ -372,7 +372,7 @@ class TestGame(TestCase):
             self.game.unlaunch_menu(self.game.cmd_menu)
             self.assertTrue(self.game.enable_animate)
             self.assertTrue(self.game.enable_roaming)
-            self.assertTrue(self.game.enable_movement)
+            self.assertTrue(self.game.game_state.enable_movement)
             self.assertFalse(self.game.cmd_menu.menu.is_enabled())
         mock_window_drop_up_effect.assert_called_with(6, 1, 8, 5)
 
@@ -400,7 +400,7 @@ class TestGame(TestCase):
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
         self.game.allow_save_prompt = True
         self.game.handle_initial_dialog()
-        self.assertFalse(self.game.is_initial_dialog)
+        self.assertFalse(self.game.game_state.is_initial_dialog)
         self.assertEqual(('I am greatly pleased that thou hast returned, Edward.',
                           'Before reaching thy next level of experience thou must gain 7 Points.',
                           "Will thou tell me now of thy deeds so they won't be forgotten?",
@@ -408,7 +408,7 @@ class TestGame(TestCase):
                           'Dost thou wish to continue thy quest?',
                           "Goodbye now, Edward.\n'Take care and tempt not the Fates."),
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
-        self.assertFalse(self.game.is_initial_dialog)
+        self.assertFalse(self.game.game_state.is_initial_dialog)
 
     def test_drop_down_hovering_stats_window(self):
         with patch.object(CommandMenu, 'window_drop_down_effect', return_value=None) as mock_window_drop_down_effect:
