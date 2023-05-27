@@ -37,7 +37,7 @@ class CommandMenu(Menu):
         self.game = game
         self.player = self.game.player
 
-        self.background = self.game.background
+        self.background = self.game.drawer.background
         self.screen = self.game.screen
         self.camera_position = self.game.camera.get_pos()
         self.current_map = self.game.current_map
@@ -349,7 +349,7 @@ class CommandMenu(Menu):
         if self.current_map.is_dark:
             if self.game.torch_active:
                 self.game.torch_active = False
-            self.game.radiant_active = True
+            self.game.game_state.radiant_active = True
         else:
             self.show_text_in_dialog_box(("But nothing happened.",), skip_text=self.skip_text)
 
