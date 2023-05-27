@@ -32,7 +32,7 @@ from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.drawer import Drawer, replace_characters_with_underlying_tiles, \
     get_surrounding_tile_values, convert_numeric_tile_list_to_unique_tile_values, \
     get_all_roaming_character_surrounding_tiles, get_fixed_character_underlying_tiles, handle_menu_launch, \
-    set_to_save_prompt, handle_post_death_dialog
+    handle_post_death_dialog
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu, \
     get_surrounding_rect
@@ -1158,7 +1158,8 @@ class Game:
                                                         self.enable_animate)
         self.screen.blit(self.background, self.camera.get_pos())
         if self.current_map.identifier == 'TantegelThroneRoom':
-            self.handle_initial_dialog()
+            self.drawer.handle_initial_dialog(self.initial_dialog_enabled, self.cmd_menu, self.events, self.skip_text,
+                                              self.allow_save_prompt)
             handle_post_death_dialog(self.game_state, self.drawer, self.cmd_menu, self.events, self.skip_text)
         if self.current_map.is_dark and ENABLE_DARKNESS:
             darkness = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
@@ -1223,25 +1224,6 @@ class Game:
             self.cmd_menu.menu.update(self.events)
         else:
             if not self.game_state.is_initial_dialog:
-                self.game_state.enable_movement = True
-
-    def handle_initial_dialog(self):
-        if self.initial_dialog_enabled:
-            if self.game_state.is_initial_dialog:
-                display.flip()
-                self.drawer.display_hovering_stats = False
-                self.cmd_menu.launch_signaled = False
-                self.drawer.run_automatic_initial_dialog(self.events, self.skip_text, self.cmd_menu)
-                event.clear()
-            else:
-                if self.allow_save_prompt:
-                    set_to_save_prompt(self.cmd_menu)
-                else:
-                    self.drawer.set_to_post_initial_dialog(self.cmd_menu)
-
-        else:
-            self.drawer.set_to_post_initial_dialog(self.cmd_menu)
-            if not self.cmd_menu.menu.is_enabled():
                 self.game_state.enable_movement = True
 
 
