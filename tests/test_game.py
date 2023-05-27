@@ -279,7 +279,7 @@ class TestGame(TestCase):
 
     def test_king_lorik_post_initial_dialog(self):
         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
-        self.game.set_to_post_initial_dialog()
+        self.game.set_to_post_initial_dialog(self.game.game_state)
         self.assertEqual("When thou art finished preparing for thy departure, please see me.\nI shall wait.",
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 

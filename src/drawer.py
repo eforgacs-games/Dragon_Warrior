@@ -11,6 +11,8 @@ from src.text import draw_text
 
 
 class Drawer:
+    def __init__(self):
+        self.is_initial_dialog = True
 
     @staticmethod
     def alternate_blink(image_1, image_2, right_arrow_start, screen):
@@ -98,6 +100,12 @@ class Drawer:
         draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen, color=color)
         draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen, color=color)
         draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen, color=color)
+
+    def set_to_post_initial_dialog(self, game_state, command_menu):
+        self.is_initial_dialog = False
+        command_menu.set_king_lorik_dialog()
+        game_state.enable_movement = True
+        game_state.unpause_all_movement()
 
 
 def draw_stats_strings_with_alignments(stat_string, y_position, screen, color=WHITE):

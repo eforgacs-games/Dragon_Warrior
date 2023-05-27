@@ -50,10 +50,32 @@ from src.sprites.roaming_character import RoamingCharacter
 from src.visual_effects import fade, flash_transparent_color
 
 
-class Game:
+class GameState:
+    def __init__(self):
+        self.enable_movement = True
+        self.enable_animate = True
+        self.enable_roaming = True
 
+    def unpause_all_movement(self) -> None:
+        """
+        Unpause movement of animation, roaming, and character.
+        :return: None
+        """
+        self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
+
+    def pause_all_movement(self) -> None:
+        """
+        Pause movement of animation, roaming, and character.
+        :return: None
+        """
+        self.enable_animate, self.enable_roaming, self.enable_movement = False, False, False
+
+
+class Game:
     def __init__(self):
         self.drawer = Drawer()
+
+        self.game_state = GameState()
         # map/graphics
         self.background = None
         self.big_map = None
@@ -61,7 +83,6 @@ class Game:
         self.fullscreen_enabled = FULLSCREEN_ENABLED
         # text
         self.initial_dialog_enabled = INITIAL_DIALOG_ENABLED
-        self.is_initial_dialog = True
         self.is_post_death_dialog = False
         self.skip_text = False
 
@@ -142,7 +163,7 @@ class Game:
         self.cmd_menu = CommandMenu(self)
 
         self.enable_animate = True
-        self.enable_roaming, self.enable_movement = True, True
+        self.enable_roaming = True
         self.clock = Clock()
         self.music_enabled = MUSIC_ENABLED
 
@@ -210,7 +231,7 @@ class Game:
         self.handle_battles()
         if not self.player.is_moving:
             set_character_position(self.player)
-        if self.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
+        if self.game_state.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
             self.move_player(current_key)
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
@@ -613,7 +634,7 @@ class Game:
                 mixer.music.stop()
                 mixer.music.load(death_sfx)
                 mixer.music.play(1)
-            self.enable_movement = False
+            self.game_state.enable_movement = False
             death_start_time = get_ticks()
             while convert_to_frames_since_start_time(death_start_time) < 318:
                 time.wait(1)
@@ -690,16 +711,16 @@ class Game:
                 # pause_all_movement may be temporarily commented out for dialog box debugging purposes.
                 self.display_hovering_stats = True
                 self.cmd_menu.launch_signaled = True
-                self.pause_all_movement()
+                self.game_state.pause_all_movement()
 
     def handle_start_button(self, current_key):
         if current_key[K_i]:
             # Start button
             if self.paused:
-                self.unpause_all_movement()
+                self.game_state.unpause_all_movement()
                 self.paused = False
             else:
-                self.pause_all_movement()
+                self.game_state.pause_all_movement()
                 self.paused = True
             print("I key pressed (Start button).")
 
@@ -749,7 +770,7 @@ class Game:
         :param next_map: The next map to be loaded.
         :return: None
         """
-        self.pause_all_movement()
+        self.game_state.pause_all_movement()
         self.last_map = self.current_map
         self.current_map = next_map
         if not self.allow_save_prompt:
@@ -789,7 +810,7 @@ class Game:
                              current_map=self.current_map, screen=self.screen)
         # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
         self.loop_count = 1
-        self.unpause_all_movement()
+        self.game_state.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
         self.cmd_menu = CommandMenu(self)
         self.load_and_play_music(self.current_map.music_file_path)
@@ -849,24 +870,10 @@ class Game:
         menu_to_unlaunch.launch_signaled = False
         if menu_to_unlaunch.menu.get_id() == 'command':
             if self.cmd_menu.menu.is_enabled():
-                self.unpause_all_movement()
+                self.game_state.unpause_all_movement()
                 self.cmd_menu.window_drop_up_effect(6, 1, 8, 5)
                 self.cmd_menu.menu.disable()
         self.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
-
-    def unpause_all_movement(self) -> None:
-        """
-        Unpause movement of animation, roaming, and character.
-        :return: None
-        """
-        self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
-
-    def pause_all_movement(self) -> None:
-        """
-        Pause movement of animation, roaming, and character.
-        :return: None
-        """
-        self.enable_animate, self.enable_roaming, self.enable_movement = False, False, False
 
     def move_player(self, current_key) -> None:
         """
@@ -961,7 +968,7 @@ class Game:
                 # this causes the fade out to happen a square before the player touches a staircase
                 next_cam_pos_y = curr_cam_pos_y + delta_y
                 # character.row += -delta_y // 2
-        if character.identifier == 'HERO' and self.enable_movement:
+        if character.identifier == 'HERO' and self.game_state.enable_movement:
             self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
 
     def check_next_tile(self, character: Player | RoamingCharacter) -> None:
@@ -1214,12 +1221,12 @@ class Game:
         if self.cmd_menu.menu.is_enabled():
             self.cmd_menu.menu.update(self.events)
         else:
-            if not self.is_initial_dialog:
-                self.enable_movement = True
+            if not self.drawer.is_initial_dialog:
+                self.game_state.enable_movement = True
 
     def handle_initial_dialog(self):
         if self.initial_dialog_enabled:
-            if self.is_initial_dialog:
+            if self.drawer.is_initial_dialog:
                 display.flip()
                 self.display_hovering_stats = False
                 self.cmd_menu.launch_signaled = False
@@ -1229,12 +1236,12 @@ class Game:
                 if self.allow_save_prompt:
                     set_to_save_prompt(self.cmd_menu)
                 else:
-                    self.set_to_post_initial_dialog()
+                    self.set_to_post_initial_dialog(self.game_state)
 
         else:
-            self.set_to_post_initial_dialog()
+            self.set_to_post_initial_dialog(self.game_state)
             if not self.cmd_menu.menu.is_enabled():
-                self.enable_movement = True
+                self.game_state.enable_movement = True
 
     def handle_post_death_dialog(self):
         if self.is_post_death_dialog:
@@ -1244,24 +1251,27 @@ class Game:
             event.clear()
 
     def run_automatic_initial_dialog(self):
-        self.enable_movement = False
+        self.game_state.enable_movement = False
         key_pressed = any([current_event.type == KEYUP for current_event in self.events])
         if self.skip_text or (key_pressed and not self.automatic_initial_dialog_run):
             self.cmd_menu.show_text_in_dialog_box(
                 self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
                 skip_text=self.skip_text)
-            self.set_to_post_initial_dialog()
+            self.set_to_post_initial_dialog(self.game_state)
             self.automatic_initial_dialog_run = True
 
-    def set_to_post_initial_dialog(self):
-        self.is_initial_dialog = False
-        self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-            self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
-        self.enable_movement = True
-        self.unpause_all_movement()
+    def set_to_post_initial_dialog(self, game_state):
+        self.drawer.is_initial_dialog = False
+        self.cmd_menu.set_king_lorik_dialog()
+        game_state.enable_movement = True
+        self.game_state.unpause_all_movement()
+
+    # def set_king_lorik_dialog(self):
+    #     self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+    #         self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
 
     def run_automatic_post_death_dialog(self):
-        self.enable_movement = False
+        self.game_state.enable_movement = False
         for current_event in self.events:
             if current_event.type == KEYDOWN or self.skip_text:
                 self.cmd_menu.show_text_in_dialog_box(
@@ -1269,7 +1279,7 @@ class Game:
                     add_quotes=True, skip_text=self.skip_text)
                 self.is_post_death_dialog = False
                 set_to_save_prompt(self.cmd_menu)
-                self.enable_movement = True
+                self.game_state.enable_movement = True
 
 
 def run():
