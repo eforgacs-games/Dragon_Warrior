@@ -391,43 +391,7 @@ class Game:
             f'{IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
         enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
                                           enemy_image.get_height() * SCALE))
-        self.position_enemy_image(enemy_image, enemy_name)
-
-    def position_enemy_image(self, enemy_image, enemy_name):
-        if enemy_name in ('Slime', 'Red Slime', 'Metal Slime'):
-            self.screen.blit(enemy_image, (8 * TILE_SIZE, 7 * TILE_SIZE))
-        elif enemy_name in ('Drakee', 'Magidrakee', 'Drakeema'):
-            # might need work
-            self.screen.blit(enemy_image, (7.75 * TILE_SIZE, 6.25 * TILE_SIZE))
-        elif enemy_name in ('Ghost', 'Poltergeist', 'Specter'):
-            self.screen.blit(enemy_image, (7.8 * TILE_SIZE, 5.9 * TILE_SIZE))
-        elif enemy_name in ('Magician', 'Warlock', 'Wizard'):
-            self.screen.blit(enemy_image, (7.3 * TILE_SIZE, 6 * TILE_SIZE))
-        elif enemy_name in ('Scorpion', 'Metal Scorpion', 'Rogue Scorpion'):
-            self.screen.blit(enemy_image, (7.4 * TILE_SIZE, 6.5 * TILE_SIZE))
-        elif enemy_name in ('Druin', 'Druinlord'):
-            self.screen.blit(enemy_image, (8 * TILE_SIZE, 6.5 * TILE_SIZE))
-        elif enemy_name in ('Droll', 'Drollmagi'):
-            self.screen.blit(enemy_image, (7.5 * TILE_SIZE, 6 * TILE_SIZE))
-        elif enemy_name in ('Skeleton', 'Wraith', 'Wraith Knight', 'Demon Knight'):
-            self.screen.blit(enemy_image, (7.46 * TILE_SIZE, 5.74 * TILE_SIZE))
-        elif enemy_name in ('Wolf', 'Wolflord', 'Werewolf'):
-            self.screen.blit(enemy_image, (7.11 * TILE_SIZE, 5.95 * TILE_SIZE))
-        elif enemy_name in ('Goldman', 'Golem', 'Stoneman'):
-            self.screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.6 * TILE_SIZE))
-        elif enemy_name in ('Wyvern', 'Magiwyvern', 'Starwyvern'):
-            self.screen.blit(enemy_image, (7.25 * TILE_SIZE, 5.5 * TILE_SIZE))
-        elif enemy_name in ('Knight', 'Axe Knight', 'Armored Knight'):
-            self.screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.75 * TILE_SIZE))
-        elif enemy_name in ('Green Dragon', 'Blue Dragon', 'Red Dragon'):
-            self.screen.blit(enemy_image, (6.5 * TILE_SIZE, 6.25 * TILE_SIZE))
-        elif enemy_name == 'Dragonlord':
-            self.screen.blit(enemy_image, (7.5 * TILE_SIZE, 6 * TILE_SIZE))
-        elif enemy_name == 'Dragonlord 2':
-            # need to have this blit over the text box on the bottom
-            self.screen.blit(enemy_image, (5.1 * TILE_SIZE, 4 * TILE_SIZE))
-        else:
-            self.screen.blit(enemy_image, (7.544 * TILE_SIZE, 6.1414 * TILE_SIZE))
+        self.drawer.position_and_draw_enemy_image(self.screen, enemy_image, enemy_name)
 
     def battle_run(self):
         play_sound(stairs_down_sfx)
