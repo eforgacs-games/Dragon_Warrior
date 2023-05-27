@@ -55,6 +55,7 @@ class GameState:
         self.enable_movement = True
         self.enable_animate = True
         self.enable_roaming = True
+        self.is_initial_dialog = True
 
     def unpause_all_movement(self) -> None:
         """
@@ -73,9 +74,8 @@ class GameState:
 
 class Game:
     def __init__(self):
-        self.drawer = Drawer()
-
         self.game_state = GameState()
+        self.drawer = Drawer(self.game_state)
         # map/graphics
         self.background = None
         self.big_map = None
@@ -1221,12 +1221,12 @@ class Game:
         if self.cmd_menu.menu.is_enabled():
             self.cmd_menu.menu.update(self.events)
         else:
-            if not self.drawer.is_initial_dialog:
+            if not self.game_state.is_initial_dialog:
                 self.game_state.enable_movement = True
 
     def handle_initial_dialog(self):
         if self.initial_dialog_enabled:
-            if self.drawer.is_initial_dialog:
+            if self.game_state.is_initial_dialog:
                 display.flip()
                 self.display_hovering_stats = False
                 self.cmd_menu.launch_signaled = False
@@ -1236,10 +1236,10 @@ class Game:
                 if self.allow_save_prompt:
                     set_to_save_prompt(self.cmd_menu)
                 else:
-                    self.set_to_post_initial_dialog(self.game_state)
+                    self.drawer.set_to_post_initial_dialog(self.cmd_menu)
 
         else:
-            self.set_to_post_initial_dialog(self.game_state)
+            self.drawer.set_to_post_initial_dialog(self.cmd_menu)
             if not self.cmd_menu.menu.is_enabled():
                 self.game_state.enable_movement = True
 
@@ -1257,18 +1257,8 @@ class Game:
             self.cmd_menu.show_text_in_dialog_box(
                 self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
                 skip_text=self.skip_text)
-            self.set_to_post_initial_dialog(self.game_state)
+            self.drawer.set_to_post_initial_dialog(self.cmd_menu)
             self.automatic_initial_dialog_run = True
-
-    def set_to_post_initial_dialog(self, game_state):
-        self.drawer.is_initial_dialog = False
-        self.cmd_menu.set_king_lorik_dialog()
-        game_state.enable_movement = True
-        self.game_state.unpause_all_movement()
-
-    # def set_king_lorik_dialog(self):
-    #     self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-    #         self.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
 
     def run_automatic_post_death_dialog(self):
         self.game_state.enable_movement = False
