@@ -32,7 +32,7 @@ from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
 from src.drawer import Drawer, replace_characters_with_underlying_tiles, \
     get_surrounding_tile_values, convert_numeric_tile_list_to_unique_tile_values, \
     get_all_roaming_character_surrounding_tiles, get_fixed_character_underlying_tiles, handle_menu_launch, \
-    set_to_save_prompt
+    set_to_save_prompt, handle_post_death_dialog
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu, \
     get_surrounding_rect
@@ -102,7 +102,6 @@ class Game:
         self.loop_count = 1
         self.foreground_rects = []
         self.not_moving_time_start = None
-        self.display_hovering_stats = False
         self.hovering_stats_displayed = False
         self.torch_active = False
         self.radiant_active = False
@@ -711,7 +710,7 @@ class Game:
             # print("K key pressed (A button).")
             if not self.player.is_moving:
                 # pause_all_movement may be temporarily commented out for dialog box debugging purposes.
-                self.display_hovering_stats = True
+                self.drawer.display_hovering_stats = True
                 self.cmd_menu.launch_signaled = True
                 self.game_state.pause_all_movement()
 
@@ -1098,7 +1097,7 @@ class Game:
                 tile_types_to_draw += replace_characters_with_underlying_tiles(
                     list(filter(None, player_surrounding_tiles)), self.current_map.character_key)
                 self.not_moving_time_start = None
-                self.display_hovering_stats = False
+                self.drawer.display_hovering_stats = False
                 if self.hovering_stats_displayed:
                     self.cmd_menu.window_drop_up_effect(1, 2, 4, 6)
                     self.hovering_stats_displayed = False
@@ -1107,7 +1106,7 @@ class Game:
                     self.not_moving_time_start = get_ticks()
                 else:
                     if convert_to_frames_since_start_time(self.not_moving_time_start) >= 51:
-                        self.display_hovering_stats = True
+                        self.drawer.display_hovering_stats = True
         except IndexError:
             all_roaming_character_surrounding_tiles = get_all_roaming_character_surrounding_tiles(self.current_map)
             all_fixed_character_underlying_tiles = get_fixed_character_underlying_tiles(self.current_map)
@@ -1160,7 +1159,7 @@ class Game:
         self.screen.blit(self.background, self.camera.get_pos())
         if self.current_map.identifier == 'TantegelThroneRoom':
             self.handle_initial_dialog()
-            self.handle_post_death_dialog()
+            handle_post_death_dialog(self.game_state, self.drawer, self.cmd_menu, self.events, self.skip_text)
         if self.current_map.is_dark and ENABLE_DARKNESS:
             darkness = Surface((self.screen.get_width(), self.screen.get_height()))  # lgtm [py/call/wrong-arguments]
             if self.torch_active:
@@ -1214,7 +1213,7 @@ class Game:
             darkness_hole.fill(WHITE)
             darkness.set_colorkey(WHITE)
             self.screen.blit(darkness, (0, 0))
-        if self.display_hovering_stats:
+        if self.drawer.display_hovering_stats:
             if not self.hovering_stats_displayed:
                 self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
                 self.hovering_stats_displayed = True
@@ -1230,7 +1229,7 @@ class Game:
         if self.initial_dialog_enabled:
             if self.game_state.is_initial_dialog:
                 display.flip()
-                self.display_hovering_stats = False
+                self.drawer.display_hovering_stats = False
                 self.cmd_menu.launch_signaled = False
                 self.drawer.run_automatic_initial_dialog(self.events, self.skip_text, self.cmd_menu)
                 event.clear()
@@ -1244,13 +1243,6 @@ class Game:
             self.drawer.set_to_post_initial_dialog(self.cmd_menu)
             if not self.cmd_menu.menu.is_enabled():
                 self.game_state.enable_movement = True
-
-    def handle_post_death_dialog(self):
-        if self.game_state.is_post_death_dialog:
-            self.display_hovering_stats = False
-            self.cmd_menu.launch_signaled = False
-            self.drawer.run_automatic_post_death_dialog(self.events, self.skip_text, self.cmd_menu)
-            event.clear()
 
 
 def run():

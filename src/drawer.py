@@ -1,6 +1,6 @@
 from typing import List, Iterable
 
-from pygame import image, display, KEYDOWN, KEYUP
+from pygame import image, display, KEYDOWN, KEYUP, event
 from pygame.transform import scale
 
 from src.common import convert_to_frames_since_start_time, IMAGES_ENEMIES_DIR, WHITE, create_window, \
@@ -14,6 +14,7 @@ class Drawer:
 
     def __init__(self, game_state):
         self.game_state = game_state
+        self.display_hovering_stats = False
 
     @staticmethod
     def alternate_blink(image_1, image_2, right_arrow_start, screen):
@@ -237,3 +238,9 @@ def set_to_save_prompt(cmd_menu):
         cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['returned_dialog']
 
 
+def handle_post_death_dialog(game_state, drawer, cmd_menu, events, skip_text):
+    if game_state.is_post_death_dialog:
+        drawer.display_hovering_stats = False
+        cmd_menu.launch_signaled = False
+        drawer.run_automatic_post_death_dialog(events, skip_text, cmd_menu)
+        event.clear()
