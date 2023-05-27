@@ -64,3 +64,15 @@ class Drawer:
         enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
                                           enemy_image.get_height() * SCALE))
         self.position_and_draw_enemy_image(screen, enemy_image, enemy_name)
+
+    @staticmethod
+    def handle_sprite_animation(enable_animate, character_dict):
+        if enable_animate:
+            character_dict['character'].animate()
+        else:
+            character_dict['character'].pause()
+
+    def handle_sprite_drawing_and_animation(self, current_map, foreground_rects, background, enable_animate):
+        for character_dict in current_map.characters.values():
+            foreground_rects.append(character_dict['character_sprites'].draw(background)[0])
+            self.handle_sprite_animation(enable_animate, character_dict)
