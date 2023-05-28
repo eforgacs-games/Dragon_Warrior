@@ -15,7 +15,6 @@ from src.common import DRAGON_QUEST_FONT_PATH, BLACK, menu_button_sfx, DIALOG_BO
     open_door_sfx, \
     STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx
 from src.config import SCALE, TILE_SIZE, LANGUAGE
-from src.game_functions import draw_hovering_stats_window
 from src.items import treasure
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
@@ -38,7 +37,7 @@ class CommandMenu(Menu):
         self.game = game
         self.player = self.game.player
 
-        self.background = self.game.background
+        self.background = self.game.drawer.background
         self.screen = self.game.screen
         self.camera_position = self.game.camera.get_pos()
         self.current_map = self.game.current_map
@@ -99,6 +98,10 @@ class CommandMenu(Menu):
         self.menu.add.button('DOOR', self.door, padding=(4, 0, 8, 16))
         self.menu.add.button('TAKE', self.take, padding=(4, 0, 8, 16))
         self.menu.disable()
+
+    def set_king_lorik_dialog(self):
+        self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+            self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
 
     def npc_is_across_counter(self, character_dict):
         return self.player.next_tile_id == 'WOOD' and (
@@ -241,8 +244,8 @@ class CommandMenu(Menu):
                     self.screen.blit(self.background, self.camera_position)
                     if self.launch_signaled:
                         self.screen.blit(self.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
-                    if self.game.display_hovering_stats:
-                        draw_hovering_stats_window(self.screen, self.player, self.game.color)
+                    if self.game.drawer.display_hovering_stats:
+                        self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.game.color)
                     display.update(self.screen.blit(black_box, (TILE_SIZE * left, TILE_SIZE * top)))
 
     def take_item(self, item_name: str):
@@ -346,7 +349,7 @@ class CommandMenu(Menu):
         if self.current_map.is_dark:
             if self.game.torch_active:
                 self.game.torch_active = False
-            self.game.radiant_active = True
+            self.game.game_state.radiant_active = True
         else:
             self.show_text_in_dialog_box(("But nothing happened.",), skip_text=self.skip_text)
 
@@ -397,7 +400,7 @@ class CommandMenu(Menu):
             self.show_text_in_dialog_box("There is no one there.", add_quotes=True, skip_text=self.skip_text)
 
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def status(self) -> None:
         """
@@ -441,7 +444,7 @@ class CommandMenu(Menu):
         # SHIELD: {self.player.shield}
         # """)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def stairs(self) -> None:
         """
@@ -458,7 +461,7 @@ class CommandMenu(Menu):
             # the original game has quotes in this dialog box
             self.show_text_in_dialog_box("There are no stairs here.", add_quotes=True, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def search(self) -> None:
         """
@@ -477,7 +480,7 @@ class CommandMenu(Menu):
             text_to_print.append("But there found nothing.")
         self.show_text_in_dialog_box(text_to_print, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def spell(self):
         """
@@ -491,7 +494,7 @@ class CommandMenu(Menu):
         else:
             self.display_item_menu('spells')
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def item(self):
         """
@@ -507,7 +510,7 @@ class CommandMenu(Menu):
 
             # self.show_text_in_dialog_box(inventory_string, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def display_item_menu(self, menu_name):
         """Display a menu of selectable items.
@@ -604,7 +607,7 @@ class CommandMenu(Menu):
         else:
             self.show_text_in_dialog_box("There is no door here.", skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
 
     def take(self) -> None:
         """
@@ -630,4 +633,4 @@ class CommandMenu(Menu):
             self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",),
                                          skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
-        self.game.unpause_all_movement()
+        self.game.game_state.unpause_all_movement()
