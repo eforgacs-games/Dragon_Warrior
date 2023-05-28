@@ -7,16 +7,15 @@ from pygame.image import load_extended
 from pygame.time import get_ticks
 from pygame.transform import scale
 
-from src import game_functions, text
+from src import text, drawer
 from src.camera import Camera
 from src.common import Direction, UNARMED_HERO_PATH, NAME_SELECTION_UPPER_A, NAME_SELECTION_STATIC_IMAGE_LEN_0, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_1_PATH, \
     ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH
 from src.config import TILE_SIZE, SCALE
+from src.drawer import Drawer, draw_stats_strings_with_alignments
 from src.game import Game
-from src.game_functions import get_next_coordinates, set_character_position, draw_hovering_stats_window, \
-    draw_stats_strings_with_alignments, alternate_blink, \
-    select_from_vertical_menu
+from src.game_functions import get_next_coordinates, set_character_position, select_from_vertical_menu, alternate_blink
 from src.maps import MapWithoutNPCs
 from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
@@ -86,14 +85,14 @@ class TestGameFunctions(TestCase):
                                                         self.game.player.rect.y // TILE_SIZE,
                                                         self.game.player.direction_value))
 
-    @mock.patch.object(game_functions, "draw_stats_strings_with_alignments")
+    @mock.patch.object(drawer, "draw_stats_strings_with_alignments")
     def test_draw_hovering_stats_window(self, mock_draw_stats_strings_with_alignments):
         self.game.player.level = 7
         self.game.player.current_hp = 50
         self.game.player.current_mp = 25
         self.game.player.gold = 8
         self.game.player.total_experience = 1984
-        draw_hovering_stats_window(self.game.screen, self.game.player, self.game.color)
+        Drawer.draw_hovering_stats_window(self.game.screen, self.game.player, self.game.color)
         mock_draw_stats_strings_with_alignments.assert_any_call("7", 2.99, self.game.screen, color=self.game.color)
         mock_draw_stats_strings_with_alignments.assert_any_call("50", 3.99, self.game.screen, color=self.game.color)
         mock_draw_stats_strings_with_alignments.assert_any_call("25", 4.99, self.game.screen, color=self.game.color)

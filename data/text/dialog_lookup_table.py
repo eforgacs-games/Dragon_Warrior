@@ -7,9 +7,9 @@ from pygame.event import get, pump
 from pygame.time import get_ticks
 
 from data.text.dialog import confirmation_prompt
-from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, create_window, WHITE
+from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, \
+    create_window, WHITE
 from src.config import MUSIC_ENABLED, TILE_SIZE, LANGUAGE
-from src.game_functions import draw_all_tiles_in_current_map, draw_hovering_stats_window
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
@@ -28,12 +28,6 @@ else:
 
 weapons_and_armor_intro = _("We deal in weapons and armor.\n Dost thou wish to buy anything today?")
 
-thou_art_dead = _("Thou art dead.")
-normal_speed_string = _("Game set to normal speed.\n(60 FPS)")
-double_speed_string = _("Game set to double speed.\n(120 FPS)")
-triple_speed_string = _("Game set to triple speed.\n(240 FPS)")
-quadruple_speed_string = _("Game set to quadruple speed.\n(480 FPS)")
-
 
 class DialogLookup:
     def __init__(self, command_menu):
@@ -43,6 +37,11 @@ class DialogLookup:
         self.current_map = command_menu.current_map
         self.background = command_menu.background
         self.camera_position = command_menu.camera_position
+        self.thou_art_dead = _("Thou art dead.")
+        self.normal_speed_string = _("Game set to normal speed.\n(60 FPS)")
+        self.double_speed_string = _("Game set to double speed.\n(120 FPS)")
+        self.triple_speed_string = _("Game set to triple speed.\n(240 FPS)")
+        self.quadruple_speed_string = _("Game set to quadruple speed.\n(480 FPS)")
 
         where_is_princess_gwaelin = _("Where oh where can I find Princess Gwaelin?")
         welcome_to_tantegel = _("Welcome to Tantegel Castle.")
@@ -57,15 +56,18 @@ class DialogLookup:
                     _("Descendant of Erdrick, listen now to my words."),
                     _("It is told that in ages past Erdrick fought demons with a Ball of Light."),
                     _("Then came the Dragonlord who stole the precious globe and hid it in the darkness."),
-                    _("Now, {}, thou must help us recover the Ball of Light and restore peace to our land.").format(self.player.name),
+                    _("Now, {}, thou must help us recover the Ball of Light and restore peace to our land.").format(
+                        self.player.name),
                     _("The Dragonlord must be defeated."),
                     _("Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."),
                     _("Then speak with the guards, for they have much knowledge that may aid thee."),
                     _("May the light shine upon thee, {}.").format(self.player.name)
-                ), 'post_initial_dialog': _("When thou art finished preparing for thy departure, please see me.\nI shall wait."),
+                ), 'post_initial_dialog': _(
+                    "When thou art finished preparing for thy departure, please see me.\nI shall wait."),
                     'returned_dialog': (
                         _("I am greatly pleased that thou hast returned, {}.").format(self.player.name),
-                        _("Before reaching thy next level of experience thou must gain {} Points.").format(self.player.points_to_next_level),
+                        _("Before reaching thy next level of experience thou must gain {} Points.").format(
+                            self.player.points_to_next_level),
                         _("Will thou tell me now of thy deeds so they won't be forgotten?"),
                         # if yes:
                         _("Thy deeds have been recorded on the Imperial Scrolls of Honor."),
@@ -77,7 +79,8 @@ class DialogLookup:
                     ),
                     'post_death_dialog': (_("Death should not have taken thee, {}.").format(self.player.name),
                                           _("I will give thee another chance."),
-                                          _("To reach the next level, thy Experience Points must increase by {}.").format(self.player.points_to_next_level),
+                                          _("To reach the next level, thy Experience Points must increase by {}.").format(
+                                              self.player.points_to_next_level),
                                           _("Now, go, {}!").format(self.player.name))},
                 'RIGHT_FACE_GUARD': {'dialog': (
                     _("East of this castle is a town where armor, weapons, and many other items may be purchased."),
@@ -92,13 +95,17 @@ class DialogLookup:
                     self.tantegel_throne_room_roaming_guard,
                 )}},
             'TantegelCourtyard': {
-                'MERCHANT': {'dialog': (_("Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?").format(85),)},
+                'MERCHANT': {'dialog': (
+                _("Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?").format(85),)},
                 'MERCHANT_2': {'dialog': _(
                     "We are merchants who have traveled much in this land. Many of our colleagues have been killed by servants of the Dragonlord.")},
-                'MERCHANT_3': {'dialog': _("Rumor has it that entire towns have been destroyed by the Dragonlord's servants.")},
+                'MERCHANT_3': {
+                    'dialog': _("Rumor has it that entire towns have been destroyed by the Dragonlord's servants.")},
                 'MAN': {'dialog': _("To become strong enough to face future trials thou must first battle many foes.")},
-                'MAN_2': {'dialog': _("There was a time when Brecconary was a paradise.\nThen the Dragonlord's minions came.")},
-                'WOMAN': {'dialog': (_("When the sun and rain meet, a Rainbow Bridge shall appear."), _("It's a legend."))},
+                'MAN_2': {'dialog': _(
+                    "There was a time when Brecconary was a paradise.\nThen the Dragonlord's minions came.")},
+                'WOMAN': {
+                    'dialog': (_("When the sun and rain meet, a Rainbow Bridge shall appear."), _("It's a legend."))},
                 'WOMAN_2': {'dialog': where_is_princess_gwaelin},
                 'RIGHT_FACE_GUARD': {'dialog': where_is_princess_gwaelin},
                 'LEFT_FACE_GUARD': {'dialog': welcome_to_tantegel},
@@ -107,13 +114,16 @@ class DialogLookup:
                 'UP_FACE_GUARD': {'dialog': _("If thou art planning to take a rest, first see King Lorik.")},
                 'RIGHT_FACE_GUARD_2': {'dialog': welcome_to_tantegel},
                 'WISE_MAN': {'dialog': (
-                    _("{}'s coming was foretold by legend. May the light shine upon this brave warrior.").format(self.player.name),
+                    _("{}'s coming was foretold by legend. May the light shine upon this brave warrior.").format(
+                        self.player.name),
                     self.flash_and_restore_mp)}},
-            'TantegelCellar': {'WISE_MAN': {'dialog': (_("I have been waiting long for one such as thee."), _("Take the Treasure Chest."))}},
+            'TantegelCellar': {'WISE_MAN': {
+                'dialog': (_("I have been waiting long for one such as thee."), _("Take the Treasure Chest."))}},
             'Brecconary': {
                 'MAN': {'dialog': _("There is a town where magic keys can be purchased.")},
                 'WISE_MAN': {'dialog': _("If thou art cursed, come again.")},
-                'MERCHANT': {'dialog': (partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
+                'MERCHANT': {'dialog': (
+                partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'UP_FACE_GUARD': {'dialog': (_("Tell King Lorik that the search for his daughter hath failed."),
                                              _("I am almost gone...."))},
@@ -146,9 +156,9 @@ class DialogLookup:
                                                       player_please_save_the_princess, last_line=True),
                             no_path_function=partial(self.command_menu.show_text_in_dialog_box,
                                                      (
-                                                     _("Half a year now hath passed since the Princess was kidnapped by the enemy."),
-                                                     _("Never does the King speak of it, but he must be suffering much."),
-                                                     player_please_save_the_princess),
+                                                         _("Half a year now hath passed since the Princess was kidnapped by the enemy."),
+                                                         _("Never does the King speak of it, but he must be suffering much."),
+                                                         player_please_save_the_princess),
                                                      drop_down=False, drop_up=False,
                                                      skip_text=self.command_menu.skip_text))
 
@@ -272,7 +282,7 @@ class DialogLookup:
             self.player.shield = item
         self.player.update_attack_power()
         self.player.update_defense_power()
-        draw_hovering_stats_window(self.screen, self.player)
+        self.command_menu.game.drawer.draw_hovering_stats_window(self.screen, self.player)
         self.command_menu.show_line_in_dialog_box(_("I thank thee."))
 
     def check_stay_at_inn(self, inn_cost):
@@ -304,11 +314,12 @@ class DialogLookup:
         if MUSIC_ENABLED:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
-        draw_all_tiles_in_current_map(self.current_map, self.background)
+        self.command_menu.game.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
         draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
         for character, character_dict in self.current_map.characters.items():
             if character != 'HERO':
-                draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1], character_dict['coordinates'][0], character)
+                draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1],
+                                       character_dict['coordinates'][0], character)
         self.screen.blit(self.background, self.camera_position)
         self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
         display.flip()
