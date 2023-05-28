@@ -9,17 +9,20 @@ from pygame.time import get_ticks
 from data.text.dialog import confirmation_prompt
 from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, \
     create_window, WHITE
-from src.config import MUSIC_ENABLED, TILE_SIZE, LANGUAGE
+from src.config import dev_config
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
 from src.visual_effects import fade, flash_transparent_color
 
+# TODO: Replace with game config
+config = dev_config
+
 # if LANGUAGE == 'en':
 #     en = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['en'])
 #     en.install()
 #     _ = en.gettext
-if LANGUAGE == 'Korean':
+if config['LANGUAGE'] == 'Korean':
     ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
     ko.install()
     _ = ko.gettext
@@ -96,7 +99,8 @@ class DialogLookup:
                 )}},
             'TantegelCourtyard': {
                 'MERCHANT': {'dialog': (
-                _("Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?").format(85),)},
+                    _("Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?").format(
+                        85),)},
                 'MERCHANT_2': {'dialog': _(
                     "We are merchants who have traveled much in this land. Many of our colleagues have been killed by servants of the Dragonlord.")},
                 'MERCHANT_3': {
@@ -123,7 +127,7 @@ class DialogLookup:
                 'MAN': {'dialog': _("There is a town where magic keys can be purchased.")},
                 'WISE_MAN': {'dialog': _("If thou art cursed, come again.")},
                 'MERCHANT': {'dialog': (
-                partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
+                    partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'UP_FACE_GUARD': {'dialog': (_("Tell King Lorik that the search for his daughter hath failed."),
                                              _("I am almost gone...."))},
@@ -160,14 +164,14 @@ class DialogLookup:
                                                          _("Never does the King speak of it, but he must be suffering much."),
                                                          player_please_save_the_princess),
                                                      drop_down=False, drop_up=False,
-                                                     skip_text=self.command_menu.skip_text))
+                                                     skip_text=self.command_menu.skip_text), config=None)
 
     def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
         confirmation_prompt(self.command_menu, weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.",
-                                                     last_line=True))
+                                                     last_line=True), config=None)
 
     def flash_and_restore_mp(self):
         self.player.restore_mp()
@@ -191,11 +195,12 @@ class DialogLookup:
         #             display.flip()
 
     def open_store_inventory(self, current_store_inventory, static_store_image, color=WHITE):
+        tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
         self.command_menu.show_line_in_dialog_box(_("What dost thou wish to buy?"), skip_text=True)
         self.command_menu.window_drop_down_effect(6, 2, 9, 7)
         # store_inventory_window = create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
         # display.update(store_inventory_window.get_rect())
-        store_inventory_window_rect = Rect(6 * TILE_SIZE, 2 * TILE_SIZE, 9 * TILE_SIZE, 7 * TILE_SIZE)
+        store_inventory_window_rect = Rect(6 * tile_size, 2 * tile_size, 9 * tile_size, 7 * tile_size)
         selecting = True
         current_item_index = 0
         start_time = get_ticks()
@@ -250,7 +255,7 @@ class DialogLookup:
                                 yes_path_function=partial(self.complete_transaction, selected_item,
                                                           current_store_inventory, old_item_cost),
                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                         _("Oh, yes? That's too bad."), last_line=False))
+                                                         _("Oh, yes? That's too bad."), last_line=False), config=None)
         else:
             self.command_menu.show_line_in_dialog_box(_("Sorry.\n"
                                                         "Thou hast not enough money."), last_line=False)
@@ -258,7 +263,7 @@ class DialogLookup:
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                     _("Please, come again."), last_line=True))
+                                                     _("Please, come again."), last_line=True), config=None)
 
     def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
         if old_item:
@@ -282,7 +287,7 @@ class DialogLookup:
             self.player.shield = item
         self.player.update_attack_power()
         self.player.update_defense_power()
-        self.command_menu.game.drawer.draw_hovering_stats_window(self.screen, self.player)
+        self.command_menu.game.drawer.draw_hovering_stats_window(None, self.screen, self.player)
         self.command_menu.show_line_in_dialog_box(_("I thank thee."))
 
     def check_stay_at_inn(self, inn_cost):
@@ -292,6 +297,7 @@ class DialogLookup:
                                                      _("Okay.\n"
                                                        "Good-bye, traveler."),
                                                      skip_text=self.command_menu.skip_text),
+                            config=self.command_menu.game.game_state.config,
                             skip_text=self.command_menu.skip_text)
 
     def check_money(self, inn_cost):
@@ -303,25 +309,28 @@ class DialogLookup:
 
     def inn_sleep(self, inn_cost):
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
-        fade(fade_out=True, screen=self.screen)
-        if MUSIC_ENABLED:
+        fade(fade_out=True, screen=self.screen, config=config)
+        music_enabled = self.command_menu.game.game_state.config['MUSIC_ENABLED']
+        tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
+        if music_enabled:
             mixer.music.stop()
         play_sound(special_item_sfx)
         self.player.restore_hp()
         self.player.restore_mp()
         self.player.gold -= inn_cost
-        time.wait(3000)
-        if MUSIC_ENABLED:
+        if not self.command_menu.game.game_state.config['NO_WAIT']:
+            time.wait(3000)
+        if music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
         self.command_menu.game.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
-        draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
+        draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row, config)
         for character, character_dict in self.current_map.characters.items():
             if character != 'HERO':
                 draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1],
-                                       character_dict['coordinates'][0], character)
+                                       character_dict['coordinates'][0], config, character)
         self.screen.blit(self.background, self.camera_position)
-        self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
+        self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
         display.flip()
         self.command_menu.show_text_in_dialog_box((_("Good morning.\nThou seems to have spent a good night."),
                                                    _("I shall see thee again.")), skip_text=self.command_menu.skip_text,

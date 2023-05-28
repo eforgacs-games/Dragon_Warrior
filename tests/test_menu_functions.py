@@ -6,6 +6,7 @@ from pygame import KEYDOWN, K_RETURN, event, K_e, K_d
 from pygame.time import get_ticks
 
 from src.common import NAME_SELECTION_UPPER_A
+from src.config import prod_config
 from src.game import Game
 from src.menu_functions import select_name, get_opposite_direction, truncate_name, toggle_joystick_input
 
@@ -15,8 +16,9 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 class TestMenuFunctions(TestCase):
     def setUp(self) -> None:
+        prod_config['NO_WAIT'] = True
         with patch('src.game.SCALED'):
-            self.game = Game()
+            self.game = Game(prod_config)
 
     def test_select_name(self):
         # mocked_k = MagicMock()
@@ -37,7 +39,7 @@ class TestMenuFunctions(TestCase):
         mocked_return.type = KEYDOWN
         mocked_return.key = K_RETURN
         with patch.object(event, 'get', return_value=[mocked_e, mocked_d, mocked_return]) as mock_method:
-            self.assertEqual('ed', select_name(get_ticks(), self.game.screen, self.game.cmd_menu))
+            self.assertEqual('ed', select_name(get_ticks(), self.game.screen, self.game.cmd_menu, self.game.game_state.config))
 
     def test_get_opposite_direction(self):
         self.assertEqual(0, get_opposite_direction(2))

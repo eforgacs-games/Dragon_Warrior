@@ -6,6 +6,7 @@ from pygame import Rect, event, KEYDOWN, K_i
 from pygame.time import get_ticks
 
 from src.common import INTRO_BANNER_PATH, convert_to_frames_since_start_time, convert_to_milliseconds
+from src.config import prod_config
 from src.game import Game
 from src.intro import show_intro_banner, repeated_sparkle, Intro, draw_banner_text
 
@@ -16,8 +17,9 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 class TestIntro(TestCase):
 
     def setUp(self) -> None:
+        prod_config['NO_WAIT'] = True
         with patch('src.game.SCALED'):
-            self.game = Game()
+            self.game = Game(prod_config)
         self.intro = Intro()
 
     def test_show_intro_banner(self):
@@ -43,14 +45,14 @@ class TestIntro(TestCase):
         self.assertTrue(self.intro.second_short_sparkle_done)
 
     def test_draw_banner_text(self):
-        draw_banner_text(self.game.screen)
+        draw_banner_text(self.game.screen, self.game.game_state.config)
 
     def test_show_start_screen(self):
         mocked_i = MagicMock()
         mocked_i.type = KEYDOWN
         mocked_i.key = K_i
         with patch.object(event, 'get', return_value=[mocked_i]) as mock_method:
-            self.intro.show_start_screen(self.game.screen, get_ticks(), self.game.clock)
+            self.intro.show_start_screen(self.game.screen, get_ticks(), self.game.clock, self.game.game_state.config)
 
     # def test_show_start_screen_quit(self):
     #     mocked_quit = MagicMock()

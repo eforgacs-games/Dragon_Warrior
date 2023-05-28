@@ -10,7 +10,7 @@ from data.text.intro_lookup_table import push_start, controls
 from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, PINK, SMB_FONT_PATH, \
     convert_to_milliseconds, BLACK, INTRO_BANNER_PATH, \
     convert_to_frames_since_start_time, IMAGES_DIR
-from src.config import FPS
+from src.config import dev_config
 from src.text import draw_text
 from src.visual_effects import fade
 
@@ -38,14 +38,14 @@ def banner_sparkle(short: bool, screen: Surface) -> None:
             display.update(intro_banner_rect)
 
 
-def draw_banner_text(screen: Surface):
-    draw_text(push_start, screen.get_width() / 2, screen.get_height() * 10 / 16, screen, ORANGE, alignment='center',
-              letter_by_letter=False)
-    for i in range(11, 15):
-        draw_text(controls[i - 11], screen.get_width() / 2, screen.get_height() * i / 16, screen, PINK,
-                  text_wrap_length=23, alignment='center', letter_by_letter=False)
-    draw_text("(↑ ← ↓ →)", screen.get_width() / 2, screen.get_height() * 15 / 16, screen, PINK, font_name=SMB_FONT_PATH,
+def draw_banner_text(screen: Surface, config):
+    draw_text(push_start, screen.get_width() / 2, screen.get_height() * 10 / 16, screen, config, ORANGE,
               alignment='center', letter_by_letter=False)
+    for i in range(11, 15):
+        draw_text(controls[i - 11], screen.get_width() / 2, screen.get_height() * i / 16, screen, config, PINK,
+                  text_wrap_length=23, alignment='center', letter_by_letter=False)
+    draw_text("(↑ ← ↓ →)", screen.get_width() / 2, screen.get_height() * 15 / 16, screen, config, PINK,
+              font_name=SMB_FONT_PATH, alignment='center', letter_by_letter=False)
 
 
 def repeated_sparkle(screen: Surface, clock_check, short) -> int | float:
@@ -75,13 +75,13 @@ class Intro:
         self.first_short_sparkle_done = False
         self.second_short_sparkle_done = False
 
-    def show_start_screen(self, screen, start_time, clock):
+    def show_start_screen(self, screen, start_time, clock, config):
         screen.fill(BLACK)
         intro_banner_rect = show_intro_banner(INTRO_BANNER_PATH, screen)
         display.update(intro_banner_rect)
         waiting = True
         while waiting:
-            clock.tick(FPS)
+            clock.tick(config['FPS'])
             for current_event in event.get():
                 if current_event.type == QUIT:
                     quit()
@@ -92,11 +92,11 @@ class Intro:
             if convert_to_frames_since_start_time(start_time) >= 620:  # intro banner with text displays 620 frames in
                 waiting = False
             display.update(intro_banner_rect)
-        self.show_intro_dragon_banner_with_text(screen, clock)
+        self.show_intro_dragon_banner_with_text(screen, clock, config)
 
-    def show_intro_dragon_banner_with_text(self, screen, clock):
+    def show_intro_dragon_banner_with_text(self, screen, clock, config):
         show_intro_banner(INTRO_BANNER_WITH_DRAGON_PATH, screen)
-        draw_banner_text(screen)
+        draw_banner_text(screen, config)
         # TODO: Might be good to add these control keys to an F1 help screen.
         display.flip()
         intro_banner_with_text_enabled = True
@@ -104,7 +104,7 @@ class Intro:
 
         while intro_banner_with_text_enabled:
             self.handle_all_sparkles(intro_banner_with_text_enabled_start_time, screen)
-            clock.tick(FPS)
+            clock.tick(config['FPS'])
             for current_event in event.get():
                 if current_event.type == QUIT:
                     quit()
@@ -113,7 +113,7 @@ class Intro:
                     if current_event.key in (K_i, K_k):
                         intro_banner_with_text_enabled = False
             display.flip()
-        fade(fade_out=True, screen=screen)
+        fade(fade_out=True, screen=screen, config=config)
 
     def handle_all_sparkles(self, start_time, screen):
         frames_since_banner_launch = convert_to_frames_since_start_time(start_time)
