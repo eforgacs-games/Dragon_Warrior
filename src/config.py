@@ -25,7 +25,8 @@ prod_config = {
     # This prints out the current coordinates that the player is standing on.,
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
-    "TEXT_SPEED": "Fast"
+    "TEXT_SPEED": "Fast",
+    "NO_WAIT": False
 }
 dev_config = {
     "FPS": 60,
@@ -49,5 +50,6 @@ dev_config = {
     # This prints out the current coordinates that the player is standing on.,
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
-    "TEXT_SPEED": "Fast"
+    "TEXT_SPEED": "Fast",
+    "NO_WAIT": False
 }
