@@ -10,9 +10,11 @@ from data.text.intro_lookup_table import push_start, controls
 from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, PINK, SMB_FONT_PATH, \
     convert_to_milliseconds, BLACK, INTRO_BANNER_PATH, \
     convert_to_frames_since_start_time, IMAGES_DIR
-from src.config import FPS
+from src.config import dev_config
 from src.text import draw_text
 from src.visual_effects import fade
+
+config = dev_config
 
 
 def show_intro_banner(intro_banner_path, screen) -> Rect:
@@ -81,7 +83,7 @@ class Intro:
         display.update(intro_banner_rect)
         waiting = True
         while waiting:
-            clock.tick(FPS)
+            clock.tick(config['FPS'])
             for current_event in event.get():
                 if current_event.type == QUIT:
                     quit()
@@ -104,7 +106,7 @@ class Intro:
 
         while intro_banner_with_text_enabled:
             self.handle_all_sparkles(intro_banner_with_text_enabled_start_time, screen)
-            clock.tick(FPS)
+            clock.tick(config['FPS'])
             for current_event in event.get():
                 if current_event.type == QUIT:
                     quit()

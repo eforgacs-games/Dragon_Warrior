@@ -3,9 +3,12 @@ from pygame.event import get
 from pygame.time import get_ticks
 
 from src.common import WHITE, BLACK, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, \
-    CONFIRMATION_NO_BACKGROUND_PATH, play_sound, confirmation_sfx, menu_button_sfx, create_window, convert_to_frames_since_start_time
-from src.config import TILE_SIZE
+    CONFIRMATION_NO_BACKGROUND_PATH, play_sound, confirmation_sfx, menu_button_sfx, create_window, \
+    convert_to_frames_since_start_time
+from src.config import dev_config
 from src.text import draw_text
+
+config = dev_config
 
 
 def blink_arrow(x, y, direction, screen, color=WHITE):
@@ -22,7 +25,7 @@ def blink_arrow(x, y, direction, screen, color=WHITE):
     down_arrow_start = get_ticks()
     if convert_to_frames_since_start_time(down_arrow_start) > 32:
         down_arrow_start = get_ticks()
-    arrow_screen_portion = Rect(x, y, TILE_SIZE, TILE_SIZE)
+    arrow_screen_portion = Rect(x, y, config["TILE_SIZE"], config["TILE_SIZE"])
     while convert_to_frames_since_start_time(down_arrow_start) <= 16:
         draw_text(arrow_character, x, y, screen, color, letter_by_letter=False)
         display.update(arrow_screen_portion)
@@ -33,7 +36,8 @@ def blink_arrow(x, y, direction, screen, color=WHITE):
 
 def blink_switch(screen, image_1, image_2, x, y, width, height, start, color=WHITE):
     blink_start = start
-    image_rect = Rect(x * TILE_SIZE, y * TILE_SIZE, width * TILE_SIZE, height * TILE_SIZE)
+    image_rect = Rect(x * config["TILE_SIZE"], y * config["TILE_SIZE"], width * config["TILE_SIZE"],
+                      height * config["TILE_SIZE"])
     if convert_to_frames_since_start_time(blink_start) > 32:
         blink_start = get_ticks()
     while convert_to_frames_since_start_time(blink_start) <= 16:
@@ -93,5 +97,3 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
 
     if finally_function is not None:
         finally_function()
-
-

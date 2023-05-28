@@ -10,13 +10,15 @@ from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_
     SOLDIER_PATH, MERCHANT_PATH, PRINCESS_GWAELIN_PATH, DRAGONLORD_PATH, UNARMED_HERO_PATH, MAP_TILES_PATH, \
     overworld_music, village_music, dungeon_floor_1_music, dungeon_floor_2_music, dungeon_floor_3_music, dungeon_floor_4_music, dungeon_floor_5_music, \
     dungeon_floor_6_music, dungeon_floor_7_music, dungeon_floor_8_music
-from src.config import TILE_SIZE, SCALE
+from src.config import SCALE, dev_config
 from src.map_layouts import MapLayouts
 from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
+
+config = dev_config
 
 all_impassable_tiles = (
     'ROOF', 'WALL', 'WOOD', 'DOOR', 'WEAPON_SIGN', 'INN_SIGN', 'MOUNTAINS', 'WATER', 'BOTTOM_COAST', 'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST',
@@ -52,8 +54,8 @@ class DragonWarriorMap:
         self.impassable_tiles = all_impassable_tiles
         self.tile_group_dict = {}
         self.staircases = {}
-        self.height = len(self.layout) * TILE_SIZE
-        self.width = len(self.layout[0]) * TILE_SIZE
+        self.height = len(self.layout) * config['TILE_SIZE']
+        self.width = len(self.layout[0]) * config['TILE_SIZE']
         self.last_map = last_map
 
         # Tile Key:

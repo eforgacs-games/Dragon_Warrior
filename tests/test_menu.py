@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 from pygame import KEYDOWN, K_RETURN, event
 
 from src.common import Direction
+from src.config import prod_config
 from src.game import Game
 from src.maps import MapWithoutNPCs
 
@@ -33,7 +34,7 @@ class TestCommandMenu(TestCase):
 
     def setUp(self) -> None:
         with patch('src.game.SCALED'):
-            self.game = Game()
+            self.game = Game(prod_config)
         self.game.current_map = MockMap()
         self.game.current_map.load_map(self.game.player, (0, 0))
 
