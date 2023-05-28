@@ -77,6 +77,7 @@ open_treasure_sfx = join(SFX_DIR, '44 Dragon Quest 1 - Open Treasure.mp3')
 open_door_sfx = join(SFX_DIR, '45 Dragon Quest 1 - Open Door.mp3')
 
 
+# TODO: allow for adjustment of volume for music/sfx
 def play_sound(path='data/sound/sfx'):
     if config["SOUND_ENABLED"]:
         global _sound_library

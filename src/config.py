@@ -27,7 +27,8 @@ prod_config = {
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
     "TEXT_SPEED": "Fast",
-    "NO_WAIT": False
+    "NO_WAIT": False,
+    "GOD_MODE": False
 }
 dev_config = {
     "FPS": 60,
@@ -35,15 +36,14 @@ dev_config = {
     "TILE_SIZE": 16 * SCALE,
     "NES_RES": (256, 240),
     "FULLSCREEN_ENABLED": False,
-    "DEV_MODE": False,
     "ENABLE_DARKNESS": True,
-    "MUSIC_ENABLED": False,
-    "SOUND_ENABLED": False,
+    "MUSIC_ENABLED": True,
+    "SOUND_ENABLED": True,
     "SPLASH_SCREEN_ENABLED": False,
     "INITIAL_DIALOG_ENABLED": False,
     "FORCE_BATTLE": False,
     "NO_BATTLES": False,
-    "ORCHESTRA_MUSIC_ENABLED": False,
+    "ORCHESTRA_MUSIC_ENABLED": True,
     "SHOW_FPS": False,
     "LOCALE, CHARACTER_ENCODING": locale.getlocale(),
     "LANGUAGE": LOCALE.split("_")[0],
@@ -52,5 +52,7 @@ dev_config = {
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
     "TEXT_SPEED": "Fast",
-    "NO_WAIT": False
+    "NO_WAIT": False,
+    "GOD_MODE": True
+
 }

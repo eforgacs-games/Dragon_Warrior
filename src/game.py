@@ -1,6 +1,6 @@
 import random
 import sys
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, \
     K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, SCALED, \
@@ -29,6 +29,7 @@ from src.config import dev_config
 from src.drawer import Drawer
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu
+from src.game_state import GameState
 from src.intro import Intro, controls
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
@@ -41,35 +42,6 @@ from src.sound import bump, play_sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 from src.visual_effects import fade, flash_transparent_color
-
-
-class GameState:
-    # TODO: Add music_enabled
-    def __init__(self, config):
-        self.enable_movement = True
-        self.enable_animate = True
-        self.enable_roaming = True
-        self.is_initial_dialog = True
-        self.is_post_death_dialog = False
-        self.automatic_initial_dialog_run = False
-        self.radiant_start: Optional[int] = None
-        self.tiles_moved_total = 0
-        self.radiant_active = False
-        self.config = config
-
-    def unpause_all_movement(self) -> None:
-        """
-        Unpause movement of animation, roaming, and character.
-        :return: None
-        """
-        self.enable_animate, self.enable_roaming, self.enable_movement = True, True, True
-
-    def pause_all_movement(self) -> None:
-        """
-        Pause movement of animation, roaming, and character.
-        :return: None
-        """
-        self.enable_animate, self.enable_roaming, self.enable_movement = False, False, False
 
 
 class Game:
@@ -139,7 +111,7 @@ class Game:
         self.set_roaming_character_positions()
 
         self.player = Player(center_point=None, images=self.current_map.scale_sprite_sheet(UNARMED_HERO_PATH),
-                             current_map=self.current_map)
+                             current_map=self.current_map, config=self.game_state.config)
         self.current_map.load_map(self.player, None)
         self.color = RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
 
@@ -352,7 +324,7 @@ class Game:
                             blink_switch(self.screen, BATTLE_MENU_STATIC_PATH,
                                          list(battle_menu_options[current_item_row].values())[
                                              current_item_column], x=6, y=1, width=8, height=3, start=blink_start,
-                                         config=None, color=self.color)
+                                         config=self.game_state.config, color=self.color)
                             current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
                             selected_executed_option = None
                             for current_event in event.get():
@@ -524,7 +496,8 @@ class Game:
                                               disable_sound=True)
         self.player.total_experience += enemy.xp
         self.player.gold += enemy.gold
-        if self.player.total_experience >= levels_list[self.player.level + 1]['total_exp']:
+
+        if self.player.level + 1 < 30 and self.player.total_experience >= levels_list[self.player.level + 1]['total_exp']:
             play_sound(improvement_sfx)
             self.cmd_menu.show_line_in_dialog_box(f"Courage and wit have served thee well.\n"
                                                   f"Thou hast been promoted to the next level.\n", add_quotes=False,
