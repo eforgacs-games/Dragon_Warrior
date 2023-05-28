@@ -5,6 +5,7 @@ from pygame.transform import scale
 from src.common import Direction, BLACK, convert_to_frames_since_start_time, play_sound, menu_button_sfx
 from src.config import dev_config
 
+# TODO: Replace with game config
 config = dev_config
 
 

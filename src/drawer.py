@@ -88,8 +88,8 @@ class Drawer:
     def draw_hovering_stats_window(self, screen, player, color=WHITE):
         tile_size = self.game_state.config["TILE_SIZE"]
         create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, screen, color)
-        draw_text(player.name[:4], tile_size * 2.99, tile_size * 2, screen, color=color, alignment='center',
-                  letter_by_letter=False)
+        draw_text(player.name[:4], tile_size * 2.99, tile_size * 2, screen, self.game_state.config, color=color,
+                  alignment='center', letter_by_letter=False)
         self.draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)
         self.draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen, color=color)
         self.draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen, color=color)
@@ -315,20 +315,20 @@ class Drawer:
     def draw_stats_strings_with_alignments(self, stat_string, y_position, screen, color=WHITE):
         tile_size = self.game_state.config["TILE_SIZE"]
         if len(stat_string) > 4:
-            draw_text(stat_string, tile_size * 3.2, tile_size * y_position, screen, color=color, alignment='center',
-                      letter_by_letter=False)
+            draw_text(stat_string, tile_size * 3.2, tile_size * y_position, screen, self.game_state.config, color=color,
+                      alignment='center', letter_by_letter=False)
         elif len(stat_string) > 3:
-            draw_text(stat_string, tile_size * 3.44, tile_size * y_position, screen, color=color, alignment='center',
-                      letter_by_letter=False)
+            draw_text(stat_string, tile_size * 3.44, tile_size * y_position, screen, self.game_state.config,
+                      color=color, alignment='center', letter_by_letter=False)
         elif len(stat_string) > 2:
-            draw_text(stat_string, tile_size * 3.67, tile_size * y_position, screen, color=color, alignment='center',
-                      letter_by_letter=False)
+            draw_text(stat_string, tile_size * 3.67, tile_size * y_position, screen, self.game_state.config,
+                      color=color, alignment='center', letter_by_letter=False)
         elif len(stat_string) > 1:
-            draw_text(stat_string, tile_size * 3.99, tile_size * y_position, screen, color=color, alignment='center',
-                      letter_by_letter=False)
+            draw_text(stat_string, tile_size * 3.99, tile_size * y_position, screen, self.game_state.config,
+                      color=color, alignment='center', letter_by_letter=False)
         else:
-            draw_text(stat_string, tile_size * 4.2, tile_size * y_position, screen, color=color, alignment='center',
-                      letter_by_letter=False)
+            draw_text(stat_string, tile_size * 4.2, tile_size * y_position, screen, self.game_state.config, color=color,
+                      alignment='center', letter_by_letter=False)
 
     def get_all_roaming_character_surrounding_tiles(self, current_map) -> List[str]:
         tile_size = self.game_state.config["TILE_SIZE"]

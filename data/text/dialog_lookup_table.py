@@ -16,7 +16,6 @@ from src.shops import brecconary_store_inventory
 from src.visual_effects import fade, flash_transparent_color
 
 # TODO: Replace with game config
-
 config = dev_config
 
 # if LANGUAGE == 'en':
@@ -165,14 +164,14 @@ class DialogLookup:
                                                          _("Never does the King speak of it, but he must be suffering much."),
                                                          player_please_save_the_princess),
                                                      drop_down=False, drop_up=False,
-                                                     skip_text=self.command_menu.skip_text))
+                                                     skip_text=self.command_menu.skip_text), config=None)
 
     def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
         confirmation_prompt(self.command_menu, weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.",
-                                                     last_line=True))
+                                                     last_line=True), config=None)
 
     def flash_and_restore_mp(self):
         self.player.restore_mp()
@@ -256,7 +255,7 @@ class DialogLookup:
                                 yes_path_function=partial(self.complete_transaction, selected_item,
                                                           current_store_inventory, old_item_cost),
                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                         _("Oh, yes? That's too bad."), last_line=False))
+                                                         _("Oh, yes? That's too bad."), last_line=False), config=None)
         else:
             self.command_menu.show_line_in_dialog_box(_("Sorry.\n"
                                                         "Thou hast not enough money."), last_line=False)
@@ -264,7 +263,7 @@ class DialogLookup:
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                     _("Please, come again."), last_line=True))
+                                                     _("Please, come again."), last_line=True), config=None)
 
     def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
         if old_item:
@@ -298,6 +297,7 @@ class DialogLookup:
                                                      _("Okay.\n"
                                                        "Good-bye, traveler."),
                                                      skip_text=self.command_menu.skip_text),
+                            config=self.command_menu.game.game_state.config,
                             skip_text=self.command_menu.skip_text)
 
     def check_money(self, inn_cost):
@@ -309,7 +309,7 @@ class DialogLookup:
 
     def inn_sleep(self, inn_cost):
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
-        fade(fade_out=True, screen=self.screen)
+        fade(fade_out=True, screen=self.screen, config=config)
         music_enabled = self.command_menu.game.game_state.config['MUSIC_ENABLED']
         tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
         if music_enabled:
@@ -324,11 +324,11 @@ class DialogLookup:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
         self.command_menu.game.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
-        draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
+        draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row, config)
         for character, character_dict in self.current_map.characters.items():
             if character != 'HERO':
                 draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1],
-                                       character_dict['coordinates'][0], character)
+                                       character_dict['coordinates'][0], config, character)
         self.screen.blit(self.background, self.camera_position)
         self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
         display.flip()

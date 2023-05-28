@@ -9,6 +9,7 @@ from pygame.time import get_ticks
 
 from src.config import dev_config
 
+# TODO: Replace with game config
 config = dev_config
 
 
