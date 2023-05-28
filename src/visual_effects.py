@@ -4,10 +4,11 @@ from pygame.time import get_ticks
 from src.common import BLACK, convert_to_frames_since_start_time
 
 
-def fade(fade_out: bool, screen: Surface) -> None:
+def fade(fade_out: bool, screen: Surface, config) -> None:
     """
     Fade to/from current scene to/from black.
     @param screen: The screen.
+    @param config: The game configuration.
     :return: None
     @type fade_out: bool
     If true, fades out. If false, fades in.
@@ -26,7 +27,8 @@ def fade(fade_out: bool, screen: Surface) -> None:
         fade_surface.set_alpha(opacity)
         screen.blit(fade_surface, (0, 0))
         display.update(fade_surface.get_rect())
-        time.delay(5)
+        if not config['NO_WAIT']:
+            time.delay(5)
 
 
 def draw_transparent_color(color, screen, transparency):

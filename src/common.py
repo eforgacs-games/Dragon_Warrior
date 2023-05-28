@@ -7,7 +7,10 @@ from os.path import join, sep, exists, dirname, realpath
 from pygame import Surface, image, transform, mixer, font
 from pygame.time import get_ticks
 
-from src.config import ORCHESTRA_MUSIC_ENABLED, SOUND_ENABLED, FPS, TILE_SIZE
+from src.config import dev_config
+
+# TODO: Replace with game config
+config = dev_config
 
 
 class Direction(IntEnum):
@@ -75,7 +78,7 @@ open_door_sfx = join(SFX_DIR, '45 Dragon Quest 1 - Open Door.mp3')
 
 
 def play_sound(path='data/sound/sfx'):
-    if SOUND_ENABLED:
+    if config["SOUND_ENABLED"]:
         global _sound_library
         sound = _sound_library.get(path)
         sound = retrieve_audio_resource(_sound_library, path, sound)
@@ -86,7 +89,7 @@ def play_sound(path='data/sound/sfx'):
 
 _music_library = {}
 MUSIC_DIR = join(SOUND_DIR, 'music')
-if ORCHESTRA_MUSIC_ENABLED:
+if config["ORCHESTRA_MUSIC_ENABLED"]:
     intro_overture = join(MUSIC_DIR, 'orchestra', '01 Overture March (London Philharmonic Orchestra Version).mp3')
     tantegel_castle_throne_room_music = join(MUSIC_DIR, 'orchestra', '02 Chateau Ladutorm.mp3')
     tantegel_castle_courtyard_music = join(MUSIC_DIR, 'orchestra', '02 Chateau Ladutorm.mp3')
@@ -350,12 +353,12 @@ def get_tile_id_by_coordinates(column: int, row: int, game_map) -> str:
 
 def convert_to_frames(time_to_convert):
     # TODO(ELF): change FPS to be self.fps (the actual FPS setting if it is changed to double/triple/quadruple etc. speed).
-    return FPS * time_to_convert / 1000
+    return config["FPS"] * time_to_convert / 1000
 
 
 def convert_to_milliseconds(fps_to_convert):
     # TODO(ELF): change FPS to be self.fps (the actual FPS setting if it is changed to double/triple/quadruple etc. speed).
-    return fps_to_convert / FPS * 1000
+    return fps_to_convert / config["FPS"] * 1000
 
 
 def get_next_tile_identifier(character_column: int, character_row: int, direction_value: int, current_map, offset: int = 1) -> str:
@@ -385,9 +388,9 @@ def convert_to_frames_since_start_time(start_time):
 
 
 def create_window(x, y, width, height, window_background, screen, color=WHITE) -> Surface:
-    window_box = Surface((TILE_SIZE * width, TILE_SIZE * height))  # lgtm [py/call/wrong-arguments]
+    window_box = Surface((config["TILE_SIZE"] * width, config["TILE_SIZE"] * height))  # lgtm [py/call/wrong-arguments]
     set_window_background(window_box, window_background, color=color)
-    screen.blit(window_box, (TILE_SIZE * x, TILE_SIZE * y))
+    screen.blit(window_box, (config["TILE_SIZE"] * x, config["TILE_SIZE"] * y))
     return window_box
 
 

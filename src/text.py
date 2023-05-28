@@ -3,7 +3,6 @@ import textwrap
 from pygame import font, time, display
 
 from src.common import BLACK, WHITE, DRAGON_QUEST_FONT_PATH, UNIFONT_PATH, play_sound, text_beep_sfx
-from src.config import LANGUAGE
 
 
 class DialogBoxWrapper(textwrap.TextWrapper):
@@ -14,13 +13,13 @@ class DialogBoxWrapper(textwrap.TextWrapper):
         return lines
 
 
-def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_FONT_PATH, text_wrap_length=21,
+def draw_text(text, x, y, screen, config, color=WHITE, size=16, font_name=DRAGON_QUEST_FONT_PATH, text_wrap_length=21,
               alignment='left', letter_by_letter=True, disable_sound=False):
     # n = 34
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
     # chunks = [text[i:i + n] for i in range(0, len(text), n)]
-    current_font = set_font_by_language(font_name, size, text)
+    current_font = set_font_by_language(font_name, size, text, config)
     dialog_box_wrapper = DialogBoxWrapper(width=text_wrap_length, break_long_words=False)
     chunks = dialog_box_wrapper.wrap(text)
     item_gained_matches = ["thou hast gained", "Thou hast found"]
@@ -33,7 +32,9 @@ def draw_text(text, x, y, screen, color=WHITE, size=16, font_name=DRAGON_QUEST_F
                 string += chunk[i]
                 blit_text_to_screen(alignment, color, current_font, screen, string, x, y)
                 display.update()
-                time.wait(16)
+                # TODO: reinstate wait call
+                if not config['NO_WAIT']:
+                    time.wait(16)
                 if not disable_sound:
                     if i % 3 == 0:
                         play_sound(text_beep_sfx)
@@ -62,8 +63,8 @@ def set_text_rect_alignment(alignment, text_surface, x, y):
     return text_rect
 
 
-def set_font_by_language(font_name, size, text):
-    if LANGUAGE == 'Korean':
+def set_font_by_language(font_name, size, text, config):
+    if config["LANGUAGE"] == 'Korean':
         if not text.strip('’(↑ ← ↓ →)').isascii():
             current_font = font.Font(UNIFONT_PATH, size + 1)
         else:

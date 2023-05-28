@@ -4,6 +4,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from src import maps
+from src.config import prod_config
 from src.game import Game
 from tests.test_game import MockMap
 
@@ -15,7 +16,7 @@ class TestDragonWarriorMap(TestCase):
 
     def setUp(self) -> None:
         with patch('src.game.SCALED'):
-            self.game = Game()
+            self.game = Game(prod_config)
         self.dragon_warrior_map = MockMap()
 
     def test_get_initial_character_location(self):
