@@ -139,7 +139,7 @@ class CommandMenu(Menu):
                 if add_quotes:
                     if self.game.game_state.config['LANGUAGE'] == 'English':
                         line = f"`{line}’"
-                    elif self.game.game_state['LANGUAGE'] == 'Korean':
+                    elif self.game.game_state.config['LANGUAGE'] == 'Korean':
                         if line.isascii():
                             line = f"`{line}’"
                         else:
