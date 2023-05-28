@@ -1,6 +1,7 @@
 from src.config import dev_config
 from src.sprites.animated_sprite import AnimatedSprite
 
+# TODO: Replace with game config
 config = dev_config
 
 

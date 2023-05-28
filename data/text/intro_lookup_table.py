@@ -3,6 +3,7 @@ import os
 
 from src.config import dev_config
 
+# TODO: Replace with game config
 config = dev_config
 
 if config['LANGUAGE'] == 'Korean':
