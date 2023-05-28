@@ -164,14 +164,14 @@ class DialogLookup:
                                                          _("Never does the King speak of it, but he must be suffering much."),
                                                          player_please_save_the_princess),
                                                      drop_down=False, drop_up=False,
-                                                     skip_text=self.command_menu.skip_text), config=None)
+                                                     skip_text=self.command_menu.skip_text), config=config)
 
     def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
         confirmation_prompt(self.command_menu, weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.",
-                                                     last_line=True), config=None)
+                                                     last_line=True), config=config)
 
     def flash_and_restore_mp(self):
         self.player.restore_mp()
@@ -255,7 +255,7 @@ class DialogLookup:
                                 yes_path_function=partial(self.complete_transaction, selected_item,
                                                           current_store_inventory, old_item_cost),
                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                         _("Oh, yes? That's too bad."), last_line=False), config=None)
+                                                         _("Oh, yes? That's too bad."), last_line=False), config=config)
         else:
             self.command_menu.show_line_in_dialog_box(_("Sorry.\n"
                                                         "Thou hast not enough money."), last_line=False)
@@ -263,7 +263,7 @@ class DialogLookup:
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                     _("Please, come again."), last_line=True), config=None)
+                                                     _("Please, come again."), last_line=True), config=config)
 
     def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
         if old_item:
@@ -287,7 +287,7 @@ class DialogLookup:
             self.player.shield = item
         self.player.update_attack_power()
         self.player.update_defense_power()
-        self.command_menu.game.drawer.draw_hovering_stats_window(None, self.screen, self.player)
+        self.command_menu.game.drawer.draw_hovering_stats_window(self.screen, self.player)
         self.command_menu.show_line_in_dialog_box(_("I thank thee."))
 
     def check_stay_at_inn(self, inn_cost):
