@@ -25,9 +25,7 @@ from src.common import BLACK, Direction, ICON_PATH, intro_overture, is_facing_la
     BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, missed_sfx, missed_2_sfx, \
     prepare_attack_sfx, receive_damage_2_sfx, excellent_move_sfx, create_window
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import NES_RES, SHOW_FPS, SPLASH_SCREEN_ENABLED, SHOW_COORDINATES, INITIAL_DIALOG_ENABLED, \
-    FORCE_BATTLE, NO_BATTLES
-from src.config import SCALE, TILE_SIZE, FULLSCREEN_ENABLED, MUSIC_ENABLED, FPS
+from src.config import dev_config
 from src.drawer import Drawer
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu
@@ -47,7 +45,7 @@ from src.visual_effects import fade, flash_transparent_color
 
 class GameState:
     # TODO: Add music_enabled
-    def __init__(self):
+    def __init__(self, config):
         self.enable_movement = True
         self.enable_animate = True
         self.enable_roaming = True
@@ -57,6 +55,7 @@ class GameState:
         self.radiant_start: Optional[int] = None
         self.tiles_moved_total = 0
         self.radiant_active = False
+        self.config = config
 
     def unpause_all_movement(self) -> None:
         """
@@ -74,22 +73,22 @@ class GameState:
 
 
 class Game:
-    def __init__(self):
-        self.game_state = GameState()
+    def __init__(self, config):
+        self.game_state = GameState(config=config)
         self.drawer = Drawer(self.game_state)
         # map/graphics
         self.big_map = None
         self.layouts = MapLayouts()
-        self.fullscreen_enabled = FULLSCREEN_ENABLED
+        self.fullscreen_enabled = self.game_state.config["FULLSCREEN_ENABLED"]
         # text
-        self.initial_dialog_enabled = INITIAL_DIALOG_ENABLED
+        self.initial_dialog_enabled = self.game_state.config["INITIAL_DIALOG_ENABLED"]
         self.skip_text = False
 
         # intro
         self.start_time = get_ticks()
-        self.splash_screen_enabled = SPLASH_SCREEN_ENABLED
+        self.splash_screen_enabled = self.game_state.config["SPLASH_SCREEN_ENABLED"]
         # engine
-        self.fps = FPS
+        self.fps = self.game_state.config["FPS"]
         self.last_map = None
         self.last_zone = None
         self.last_amount_of_tiles_moved = 0
@@ -101,7 +100,7 @@ class Game:
         self.speed = 2
         self.launch_battle = False
         # debugging
-        self.show_coordinates = SHOW_COORDINATES
+        self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
         init()
         self.paused = False
         # Create the game window.
@@ -115,10 +114,10 @@ class Game:
         # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
         # without SCALED, it will show more of the map, but will also not center the camera
         # it might be a nice comfort addition to add to center the camera, while also showing more of the map
-        self.scale = SCALE
+        self.scale = self.game_state.config["SCALE"]
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
-        win_width, win_height = NES_RES[0] * self.scale, NES_RES[1] * self.scale
+        win_width, win_height = self.game_state.config["NES_RES"][0] * self.scale, self.game_state.config["NES_RES"][1] * self.scale
         self.screen = set_mode((win_width, win_height), self.flags)
         # self.screen.set_alpha(None)
         set_caption("Dragon Warrior")
@@ -151,15 +150,15 @@ class Game:
         # self.player.level = self.player.get_level_by_experience()
         # self.player.update_stats_to_current_level()
 
-        self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE,
-                                                              self.player.rect.y // TILE_SIZE, self.current_map)
+        self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // self.game_state.config["TILE_SIZE"],
+                                                              self.player.rect.y // self.game_state.config["TILE_SIZE"], self.current_map)
         self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen)
         self.cmd_menu = CommandMenu(self)
 
         self.enable_animate = True
         self.enable_roaming = True
         self.clock = Clock()
-        self.music_enabled = MUSIC_ENABLED
+        self.music_enabled = self.game_state.config["MUSIC_ENABLED"]
 
         if self.splash_screen_enabled:
             self.load_and_play_music(intro_overture)
@@ -240,18 +239,18 @@ class Game:
 
         self.handle_keypresses(current_key)
 
-        self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // TILE_SIZE,
-                                                              self.player.rect.y // TILE_SIZE, self.current_map)
+        self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // self.game_state.config["TILE_SIZE"],
+                                                              self.player.rect.y // self.game_state.config["TILE_SIZE"], self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
 
         self.player.next_tile_id = get_next_tile_identifier(self.player.column, self.player.row,
                                                             self.player.direction_value, self.current_map)
 
-        self.player.next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
-                                                            self.player.rect.y // TILE_SIZE,
+        self.player.next_coordinates = get_next_coordinates(self.player.rect.x // self.game_state.config["TILE_SIZE"],
+                                                            self.player.rect.y // self.game_state.config["TILE_SIZE"],
                                                             self.player.direction_value)
-        self.player.next_next_coordinates = get_next_coordinates(self.player.rect.x // TILE_SIZE,
-                                                                 self.player.rect.y // TILE_SIZE,
+        self.player.next_next_coordinates = get_next_coordinates(self.player.rect.x // self.game_state.config["TILE_SIZE"],
+                                                                 self.player.rect.y // self.game_state.config["TILE_SIZE"],
                                                                  self.player.direction_value, offset_from_character=2)
 
         self.set_player_images_by_equipment()
@@ -280,7 +279,7 @@ class Game:
         # print(get_tile_id_by_coordinates(self.player.next_coordinates[1], self.player.next_coordinates[0], self.current_map))
 
         # This prints out the current FPS.
-        if SHOW_FPS:
+        if self.game_state.config["SHOW_FPS"]:
             print(self.clock.get_fps())
 
         # This prints out the next_tile, and the next_next_tile.
@@ -309,15 +308,15 @@ class Game:
                         random_integer = self.handle_near_tantegel_fight_modifier()
                     else:
                         random_integer = self.get_random_integer_by_tile()
-                    self.launch_battle = random_integer == 0 or FORCE_BATTLE
-                    if self.launch_battle and not NO_BATTLES:
+                    self.launch_battle = random_integer == 0 or self.game_state.config["FORCE_BATTLE"]
+                    if self.launch_battle and not self.game_state.config["NO_BATTLES"]:
                         enemy_name = random.choice(enemies_in_current_zone)
                         if self.music_enabled:
                             mixer.music.load(battle_music)
                             mixer.music.play(-1)
                         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
-                                                        (7 * TILE_SIZE, 7 * TILE_SIZE))
-                        self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
+                                                        (7 * self.game_state.config["TILE_SIZE"], 7 * self.game_state.config["TILE_SIZE"]))
+                        self.screen.blit(battle_background_image, (5 * self.game_state.config["TILE_SIZE"], 4 * self.game_state.config["TILE_SIZE"]))
                         display.update(battle_background_image.get_rect())
                         self.drawer.show_enemy_image(self.screen, enemy_name)
                         enemy_draws_near_string = f'{enemy_name} draws near!\n' \
@@ -516,8 +515,8 @@ class Game:
         self.cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n", add_quotes=False,
                                               disable_sound=True)
         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
-                                        (7 * TILE_SIZE, 7 * TILE_SIZE))
-        self.screen.blit(battle_background_image, (5 * TILE_SIZE, 4 * TILE_SIZE))
+                                        (7 * self.game_state.config["TILE_SIZE"], 7 * self.game_state.config["TILE_SIZE"]))
+        self.screen.blit(battle_background_image, (5 * self.game_state.config["TILE_SIZE"], 4 * self.game_state.config["TILE_SIZE"]))
         display.update(battle_background_image.get_rect())
         self.cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
                                               f"Thy GOLD increases by {enemy.gold}.\n", add_quotes=False,
@@ -619,7 +618,7 @@ class Game:
             self.player.current_hp = 0
             self.player.is_dead = True
             self.color = RED
-            if self.launch_battle and not NO_BATTLES:
+            if self.launch_battle and not self.game_state.config["NO_BATTLES"]:
                 create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, RED)
                 self.launch_battle = False
                 display.flip()
@@ -803,7 +802,7 @@ class Game:
         self.handle_player_direction_on_map_change(current_map_staircase_dict)
         #  this is probably what we need here:
 
-        #    self.camera = Camera((self.player.rect.x // TILE_SIZE, self.player.rect.y // TILE_SIZE),
+        #    self.camera = Camera((self.player.rect.x // self.game_state.config["TILE_SIZE"], self.player.rect.y // self.game_state.config["TILE_SIZE"]),
         #                              current_map=self.current_map, screen=self.screen)
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                              current_map=self.current_map, screen=self.screen)
@@ -901,7 +900,7 @@ class Game:
             # not sure if setting the player sprites to dirty makes a difference
             self.current_map.player_sprites.dirty = 1
             if is_facing_medially(self.player):
-                if curr_pos_y % TILE_SIZE == 0:
+                if curr_pos_y % self.game_state.config["TILE_SIZE"] == 0:
                     if not self.player.bumped:
                         # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning -
                         #  should always be 0 when the map starts.
@@ -912,7 +911,7 @@ class Game:
                     self.player.is_moving, self.player.next_tile_checked = False, False
                     return
             elif is_facing_laterally(self.player):
-                if curr_pos_x % TILE_SIZE == 0:
+                if curr_pos_x % self.game_state.config["TILE_SIZE"] == 0:
                     if not self.player.bumped:
                         self.tiles_moved_since_spawn += 1
                         self.game_state.tiles_moved_total += 1
@@ -1015,7 +1014,7 @@ class Game:
         :param next_pos_y: Next y position (in terms of tile size).
         :return: tuple: The x, y coordinates (in terms of tile size) of the next position of the player.
         """
-        max_x_bound, max_y_bound, min_bound = self.current_map.width - TILE_SIZE, self.current_map.height - TILE_SIZE, 0
+        max_x_bound, max_y_bound, min_bound = self.current_map.width - self.game_state.config["TILE_SIZE"], self.current_map.height - self.game_state.config["TILE_SIZE"], 0
         if self.player.rect.x < min_bound:
             self.player.rect.x = min_bound
             bump(self.player)
@@ -1052,11 +1051,11 @@ class Game:
                 roaming_character.is_moving = True
             else:  # determine if character has reached new tile
                 if is_facing_medially(roaming_character):
-                    if curr_pos_y % TILE_SIZE == 0:
+                    if curr_pos_y % self.game_state.config["TILE_SIZE"] == 0:
                         roaming_character.is_moving, roaming_character.next_tile_checked = False, False
                         return
                 elif is_facing_laterally(roaming_character):
-                    if curr_pos_x % TILE_SIZE == 0:
+                    if curr_pos_x % self.game_state.config["TILE_SIZE"] == 0:
                         roaming_character.is_moving, roaming_character.next_tile_checked = False, False
                         return
             if is_facing_medially(roaming_character):
@@ -1067,7 +1066,7 @@ class Game:
 
 
 def run():
-    game = Game()
+    game = Game(config=dev_config)
     game.main()
 
 

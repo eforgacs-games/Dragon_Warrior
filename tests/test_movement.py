@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from src.common import Direction
+from src.config import prod_config
 from src.game import Game
 from src.maps import MapWithoutNPCs
 from src.movement import bump_and_reset
@@ -32,7 +33,7 @@ class Test(TestCase):
 
     def setUp(self) -> None:
         with patch('src.game.SCALED'):
-            self.game = Game()
+            self.game = Game(prod_config)
         self.game.current_map = MockMap()
 
     def test_bump_and_reset(self):

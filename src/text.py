@@ -3,7 +3,9 @@ import textwrap
 from pygame import font, time, display
 
 from src.common import BLACK, WHITE, DRAGON_QUEST_FONT_PATH, UNIFONT_PATH, play_sound, text_beep_sfx
-from src.config import LANGUAGE
+from src.config import dev_config
+
+config = dev_config
 
 
 class DialogBoxWrapper(textwrap.TextWrapper):
@@ -63,7 +65,7 @@ def set_text_rect_alignment(alignment, text_surface, x, y):
 
 
 def set_font_by_language(font_name, size, text):
-    if LANGUAGE == 'Korean':
+    if config["LANGUAGE"] == 'Korean':
         if not text.strip('’(↑ ← ↓ →)').isascii():
             current_font = font.Font(UNIFONT_PATH, size + 1)
         else:
