@@ -1,4 +1,7 @@
-from src.config import TILE_SIZE
+from src.config import dev_config
+
+# TODO: Replace with game config
+config = dev_config
 
 
 class Camera:
@@ -17,11 +20,11 @@ class Camera:
         """
         column, row = hero_position
         if self.screen:
-            self.x = (-column + (self.screen.get_width() / TILE_SIZE / 2)) * TILE_SIZE
-            self.y = (-row + (self.screen.get_height() / TILE_SIZE // 2)) * TILE_SIZE
+            self.x = (-column + (self.screen.get_width() / config['TILE_SIZE'] / 2)) * config['TILE_SIZE']
+            self.y = (-row + (self.screen.get_height() / config['TILE_SIZE'] // 2)) * config['TILE_SIZE']
         else:
-            self.x = (-column + 8) * TILE_SIZE
-            self.y = (-row + 7) * TILE_SIZE
+            self.x = (-column + 8) * config['TILE_SIZE']
+            self.y = (-row + 7) * config['TILE_SIZE']
 
     def get_pos(self) -> tuple:
         """

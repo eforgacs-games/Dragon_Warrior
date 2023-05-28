@@ -3,11 +3,14 @@ from pygame.time import get_ticks
 from pygame.transform import scale
 
 from src.common import Direction, BLACK, convert_to_frames_since_start_time, play_sound, menu_button_sfx
-from src.config import TILE_SIZE
+from src.config import dev_config
+
+# TODO: Replace with game config
+config = dev_config
 
 
 def set_character_position(character):
-    character.column, character.row = character.rect.x // TILE_SIZE, character.rect.y // TILE_SIZE
+    character.column, character.row = character.rect.x // config['TILE_SIZE'], character.rect.y // config['TILE_SIZE']
 
 
 def get_next_coordinates(character_column, character_row, direction, offset_from_character=1):
@@ -62,6 +65,6 @@ def alternate_blink(image_1, image_2, right_arrow_start, screen):
 
 
 def get_surrounding_rect(character):
-    left = character.rect.left - TILE_SIZE
-    top = character.rect.top - TILE_SIZE
-    return Rect(left, top, TILE_SIZE * 2.04, TILE_SIZE * 2.04)
+    left = character.rect.left - config['TILE_SIZE']
+    top = character.rect.top - config['TILE_SIZE']
+    return Rect(left, top, config['TILE_SIZE'] * 2.04, config['TILE_SIZE'] * 2.04)

@@ -22,7 +22,6 @@ from src.common import NAME_SELECTION_UPPER_A, NAME_SELECTION_UPPER_B, NAME_SELE
     convert_to_frames_since_start_time, play_sound, menu_button_sfx, NAME_SELECTION_STATIC_IMAGE_LEN_0, NAME_SELECTION_STATIC_IMAGE_LEN_1, \
     NAME_SELECTION_STATIC_IMAGE_LEN_2, NAME_SELECTION_STATIC_IMAGE_LEN_3, NAME_SELECTION_STATIC_IMAGE_LEN_4, NAME_SELECTION_STATIC_IMAGE_LEN_5, \
     NAME_SELECTION_STATIC_IMAGE_LEN_6, NAME_SELECTION_STATIC_IMAGE_LEN_7, NAME_SELECTION_STATIC_IMAGE_LEN_8
-from src.config import TILE_SIZE
 from src.text import draw_text
 
 name_selection_array = (
@@ -113,16 +112,16 @@ def convert_list_to_newline_separated_string(list_to_convert: List[str]) -> str:
     return '\n \n'.join([item for item in list_to_convert])
 
 
-def draw_player_sprites(current_map, background, column, row):
-    draw_character_sprites(current_map, background, column, row)
+def draw_player_sprites(current_map, background, column, row, config):
+    draw_character_sprites(current_map, background, column, row, config)
 
 
-def draw_character_sprites(current_map, background, column, row, character_identifier='HERO'):
+def draw_character_sprites(current_map, background, column, row, config, character_identifier='HERO'):
     background.blit(current_map.characters[character_identifier]['character_sprites'].sprites()[0].image,
-                    (column * TILE_SIZE, row * TILE_SIZE))
+                    (column * config['TILE_SIZE'], row * config['TILE_SIZE']))
 
 
-def select_name(blink_start, screen, command_menu):
+def select_name(blink_start, screen, command_menu, config):
     current_item_row = 0
     current_item_column = 0
     blinking = True
@@ -152,7 +151,7 @@ def select_name(blink_start, screen, command_menu):
         unselected_image = selected_image_lookup[len(name)]
         # screen.fill(BLACK)
         blink_start = reset_blink_start(blink_start)
-        blink_with_name(blink_start, current_letter_image_path, name, screen, unselected_image)
+        blink_with_name(blink_start, current_letter_image_path, name, screen, unselected_image, config)
         for current_event in event.get():
             if current_event.type == QUIT:
                 quit()
@@ -188,7 +187,7 @@ def select_name(blink_start, screen, command_menu):
                         if name:
                             current_letter = name_selection_array[len(name_selection_array) - 1][len(name_selection_array[current_item_row]) - 1]
                             current_letter_image_path = name_selection_image_lookup[current_letter]
-                            draw_image_with_name(current_letter_image_path, name, screen)
+                            draw_image_with_name(current_letter_image_path, name, screen, config)
                             return name
                     elif any(current_event.unicode in sublist for sublist in name_selection_array) and current_event.unicode not in ("0", "1"):
                         play_sound(menu_button_sfx)
@@ -228,15 +227,16 @@ def truncate_name(name):
     return name
 
 
-def blink_with_name(blink_start, current_letter_image_path, name, screen, static_image):
+def blink_with_name(blink_start, current_letter_image_path, name, screen, static_image, config):
     if convert_to_frames_since_start_time(blink_start) <= 16:
-        draw_image_with_name(current_letter_image_path, name, screen)
+        draw_image_with_name(current_letter_image_path, name, screen, config)
     elif 16 < convert_to_frames_since_start_time(blink_start) <= 32:
-        draw_image_with_name(static_image, name, screen)
+        draw_image_with_name(static_image, name, screen, config)
     display.update(Rect(screen.get_rect().left, screen.get_rect().centerx // 1.7, screen.get_width(), screen.get_height() * .46))
 
 
-def draw_image_with_name(current_letter_image_path, name, screen):
+def draw_image_with_name(current_letter_image_path, name, screen, config):
     selected_image = scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height()))
     screen.blit(selected_image, (0, 0))
-    draw_text(name, TILE_SIZE * 6.01, TILE_SIZE * 4.3, screen, alignment='left', letter_by_letter=False)
+    draw_text(name, config['TILE_SIZE'] * 6.01, config['TILE_SIZE'] * 4.3, screen, config, alignment='left',
+              letter_by_letter=False)

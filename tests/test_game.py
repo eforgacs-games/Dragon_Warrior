@@ -9,14 +9,13 @@ from pygame.sprite import LayeredDirty
 from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
-from src import config
 from src.camera import Camera
 from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, \
     village_music, intro_overture
-from src.config import SCALE, TILE_SIZE
-from src.game import Game
+from src.config import SCALE, prod_config
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
-    handle_menu_launch, set_to_save_prompt
+    set_to_save_prompt
+from src.game import Game
 from src.game_functions import get_next_coordinates
 from src.intro import controls
 from src.maps import MapWithoutNPCs, TantegelThroneRoom, Alefgard, TantegelCourtyard
@@ -91,8 +90,9 @@ def setup_roaming_character(row, column, direction):
 class TestGame(TestCase):
 
     def setUp(self) -> None:
+        prod_config['NO_WAIT'] = True
         with patch('src.game.SCALED'):
-            self.game = Game()
+            self.game = Game(prod_config)
         self.game.player.name = "Edward"
         self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu)
         self.game.current_map = MockMap()
@@ -102,7 +102,8 @@ class TestGame(TestCase):
                   (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))),
                                   self.game.current_map)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
-        self.camera = Camera((self.game.player.rect.y // TILE_SIZE, self.game.player.rect.x // TILE_SIZE),
+        self.camera = Camera((self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
+                              self.game.player.rect.x // self.game.game_state.config['TILE_SIZE']),
                              self.game.current_map,
                              self.game.screen)
 
@@ -184,6 +185,8 @@ class TestGame(TestCase):
     # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
 
     def test_handle_fps_changes(self):
+        pygame.key.get_pressed = create_key_mock(pygame.K_1)
+        self.game.handle_fps_changes(pygame.key.get_pressed())
         self.assertEqual(60, self.game.fps)
         pygame.key.get_pressed = create_key_mock(pygame.K_2)
         self.game.handle_fps_changes(pygame.key.get_pressed())
@@ -233,9 +236,9 @@ class TestGame(TestCase):
 
     def test_handle_menu_launch(self):
         self.game.cmd_menu.launch_signaled = True
-        handle_menu_launch(self.game.screen, self.game.cmd_menu, self.game.cmd_menu)
+        self.game.drawer.handle_menu_launch(self.game.screen, self.game.cmd_menu, self.game.cmd_menu)
         self.assertTrue(self.game.cmd_menu.menu.is_enabled())
-        handle_menu_launch(self.game.screen, self.game.cmd_menu, self.game.cmd_menu)
+        self.game.drawer.handle_menu_launch(self.game.screen, self.game.cmd_menu, self.game.cmd_menu)
 
     def test_change_map(self):
         self.game.player.row = 10
@@ -362,7 +365,7 @@ class TestGame(TestCase):
 
     def test_load_and_play_music(self):
         with patch.object(Game, 'load_and_play_music', return_value=None) as mock_load_and_play_music:
-            Game().load_and_play_music(village_music)
+            Game(prod_config).load_and_play_music(village_music)
         mock_load_and_play_music.assert_called_with(village_music)
 
     def test_unlaunch_menu(self):
@@ -519,20 +522,19 @@ class TestGame(TestCase):
 
     def test_flags_fullscreen_disabled(self):
         self.game.fullscreen_enabled = False
-        self.game.__init__()
+        self.game.__init__(prod_config)
         self.assertEqual(RESIZABLE | SCALED, self.game.flags)
 
     def test_flags_fullscreen_enabled(self):
         self.game.fullscreen_enabled = True
-        self.game.__init__()
+        self.game.__init__(prod_config)
         # seems like an integer overflow happens if we try:
         # self.assertEqual(FULLSCREEN | SCALED, self.game.flags)
         self.assertEqual(528, self.game.flags)
 
     @patch.object(Game, "load_and_play_music")
-    @patch.object(config, "SPLASH_SCREEN_ENABLED", return_value=True)
-    def test_splash_screen_enabled_load_and_play_music(self, mocked_config, mock_method):
-        self.game.__init__()
+    def test_splash_screen_enabled_load_and_play_music(self, mock_method):
+        self.game.__init__(prod_config)
         mock_method.assert_called_once_with(intro_overture)
 
     # @patch('src.config')
