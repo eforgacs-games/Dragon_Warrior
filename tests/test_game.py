@@ -1,3 +1,4 @@
+import array
 import os
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -30,7 +31,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 def create_get_pressed_mock_array(max_key=K_z):
-    return [0] * (max_key + 1)
+    return array.array('i', (0,)) * (max_key + 1)
 
 
 def create_f1_key_mock(pressed_key):
@@ -100,7 +101,7 @@ class TestGame(TestCase):
         self.game.player = Player((0, 0), parse_animated_sprite_sheet(
             scale(unarmed_hero_sheet,
                   (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))),
-                                  self.game.current_map)
+                                  self.game.current_map, prod_config)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
         self.camera = Camera((self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
                               self.game.player.rect.x // self.game.game_state.config['TILE_SIZE']),
