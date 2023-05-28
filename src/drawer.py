@@ -91,10 +91,22 @@ class Drawer:
         draw_text(player.name[:4], tile_size * 2.99, tile_size * 2, screen, self.game_state.config, color=color,
                   alignment='center', letter_by_letter=False)
         self.draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)
-        self.draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen, color=color)
-        self.draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen, color=color)
-        self.draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen, color=color)
-        self.draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen, color=color)
+        if len(str(player.current_hp)) < 5:
+            self.draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen, color=color)
+        else:
+            self.draw_stats_strings_with_alignments("INF", 3.99, screen, color=color)
+        if len(str(player.current_mp)) < 5:
+            self.draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen, color=color)
+        else:
+            self.draw_stats_strings_with_alignments("INF", 4.99, screen, color=color)
+        if len(str(player.gold)) < 5:
+            self.draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen, color=color)
+        else:
+            self.draw_stats_strings_with_alignments("INF", 5.99, screen, color=color)
+        if len(str(player.total_experience)) < 5:
+            self.draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen, color=color)
+        else:
+            self.draw_stats_strings_with_alignments("INF", 6.99, screen, color=color)
 
     def set_to_post_initial_dialog(self, command_menu: CommandMenu):
         self.game_state.is_initial_dialog = False
