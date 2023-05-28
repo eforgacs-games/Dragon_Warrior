@@ -596,7 +596,7 @@ class CommandMenu(Menu):
             draw_text(list_string, tile_size * 10, tile_size * 3.75, self.screen, self.game.game_state.config,
                       letter_by_letter=False)
             blink_arrow(tile_size * 9.5, (tile_size + (current_arrow_position * tile_size / 4)) * 3.75, "right",
-                        self.screen, None, self.game.color)
+                        self.screen, self.game.game_state.config, self.game.color)
             display.update((9 * tile_size, 3 * tile_size, 6 * tile_size, (len(list_counter) + 1) * tile_size))
             for current_event in event.get():
                 if any([current_event.type == KEYDOWN]):
