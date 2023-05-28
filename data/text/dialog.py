@@ -5,13 +5,10 @@ from pygame.time import get_ticks
 from src.common import WHITE, BLACK, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, \
     CONFIRMATION_NO_BACKGROUND_PATH, play_sound, confirmation_sfx, menu_button_sfx, create_window, \
     convert_to_frames_since_start_time
-from src.config import dev_config
 from src.text import draw_text
 
-config = dev_config
 
-
-def blink_arrow(x, y, direction, screen, color=WHITE):
+def blink_arrow(x, y, direction, screen, config, color=WHITE):
     if direction == 'up':
         arrow_character = '^'
     elif direction == "down":
@@ -27,14 +24,14 @@ def blink_arrow(x, y, direction, screen, color=WHITE):
         down_arrow_start = get_ticks()
     arrow_screen_portion = Rect(x, y, config["TILE_SIZE"], config["TILE_SIZE"])
     while convert_to_frames_since_start_time(down_arrow_start) <= 16:
-        draw_text(arrow_character, x, y, screen, color, letter_by_letter=False)
+        draw_text(arrow_character, x, y, screen, config, color, letter_by_letter=False)
         display.update(arrow_screen_portion)
     while 16 < convert_to_frames_since_start_time(down_arrow_start) <= 32:
-        draw_text(arrow_character, x, y, screen, BLACK, letter_by_letter=False)
+        draw_text(arrow_character, x, y, screen, config, BLACK, letter_by_letter=False)
         display.update(arrow_screen_portion)
 
 
-def blink_switch(screen, image_1, image_2, x, y, width, height, start, color=WHITE):
+def blink_switch(screen, image_1, image_2, x, y, width, height, start, config, color=WHITE):
     blink_start = start
     image_rect = Rect(x * config["TILE_SIZE"], y * config["TILE_SIZE"], width * config["TILE_SIZE"],
                       height * config["TILE_SIZE"])
@@ -48,14 +45,15 @@ def blink_switch(screen, image_1, image_2, x, y, width, height, start, color=WHI
         display.update(image_rect)
 
 
-def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, finally_function=None,
+def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, finally_function=None,
                         skip_text=False, color=WHITE):
     command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, last_line=True, letter_by_letter=True)
     command_menu.window_drop_down_effect(5, 2, 4, 3)
     window_surface = create_window(5, 2, 4, 3, CONFIRMATION_BACKGROUND_PATH, command_menu.screen, color)
     display.update(window_surface.get_rect())
     # for some reason it needs this wait() call to actually play the sound
-    time.wait(300)
+    if not config['NO_WAIT']:
+        time.wait(300)
     play_sound(confirmation_sfx)
     blinking = True
     blinking_yes = True
@@ -63,10 +61,10 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     while blinking:
         if blinking_yes:
             blink_switch(command_menu.screen, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2,
-                         width=4, height=3, start=blink_start, color=color)
+                         width=4, height=3, start=blink_start, config=config, color=color)
         else:
             blink_switch(command_menu.screen, CONFIRMATION_NO_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2,
-                         width=4, height=3, start=blink_start, color=color)
+                         width=4, height=3, start=blink_start, config=config, color=color)
         if skip_text:
             play_sound(menu_button_sfx)
             yes_path_function()

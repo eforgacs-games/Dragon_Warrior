@@ -1,10 +1,11 @@
 import locale
+import sys
 
 SCALE = 2
 LOCALE, CHARACTER_ENCODING = locale.getlocale()
 
 prod_config = {
-    "FPS": 60,
+    "FPS": sys.maxsize,
     "REPLIT_DATA_DIR": '..\\data',
     "SCALE": 2,
     "TILE_SIZE": 16 * SCALE,

@@ -18,6 +18,7 @@ from src.sprites.base_sprite import BaseSprite
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 
+# TODO: Replace with game config
 config = dev_config
 
 all_impassable_tiles = (

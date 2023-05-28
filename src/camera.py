@@ -1,5 +1,6 @@
 from src.config import dev_config
 
+# TODO: Replace with game config
 config = dev_config
 
 

@@ -45,14 +45,14 @@ class TestIntro(TestCase):
         self.assertTrue(self.intro.second_short_sparkle_done)
 
     def test_draw_banner_text(self):
-        draw_banner_text(self.game.screen)
+        draw_banner_text(self.game.screen, self.game.game_state.config)
 
     def test_show_start_screen(self):
         mocked_i = MagicMock()
         mocked_i.type = KEYDOWN
         mocked_i.key = K_i
         with patch.object(event, 'get', return_value=[mocked_i]) as mock_method:
-            self.intro.show_start_screen(self.game.screen, get_ticks(), self.game.clock)
+            self.intro.show_start_screen(self.game.screen, get_ticks(), self.game.clock, self.game.game_state.config)
 
     # def test_show_start_screen_quit(self):
     #     mocked_quit = MagicMock()

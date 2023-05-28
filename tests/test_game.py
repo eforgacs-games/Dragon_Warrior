@@ -185,6 +185,8 @@ class TestGame(TestCase):
     # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
 
     def test_handle_fps_changes(self):
+        pygame.key.get_pressed = create_key_mock(pygame.K_1)
+        self.game.handle_fps_changes(pygame.key.get_pressed())
         self.assertEqual(60, self.game.fps)
         pygame.key.get_pressed = create_key_mock(pygame.K_2)
         self.game.handle_fps_changes(pygame.key.get_pressed())

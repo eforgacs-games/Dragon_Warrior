@@ -6,7 +6,9 @@ from pygame.transform import scale
 from src.common import get_image
 from src.config import SCALE,  dev_config
 
+# TODO: Replace with game config
 config = dev_config
+
 
 def parse_map_tiles(map_path):
     map_sheet = get_image(map_path).convert()

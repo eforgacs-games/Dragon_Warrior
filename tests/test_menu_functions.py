@@ -39,7 +39,7 @@ class TestMenuFunctions(TestCase):
         mocked_return.type = KEYDOWN
         mocked_return.key = K_RETURN
         with patch.object(event, 'get', return_value=[mocked_e, mocked_d, mocked_return]) as mock_method:
-            self.assertEqual('ed', select_name(get_ticks(), self.game.screen, self.game.cmd_menu))
+            self.assertEqual('ed', select_name(get_ticks(), self.game.screen, self.game.cmd_menu, self.game.game_state.config))
 
     def test_get_opposite_direction(self):
         self.assertEqual(0, get_opposite_direction(2))

@@ -178,7 +178,7 @@ class Game:
         """
         if self.splash_screen_enabled:
             intro = Intro()
-            intro.show_start_screen(self.screen, self.start_time, self.clock)
+            intro.show_start_screen(self.screen, self.start_time, self.clock, self.game_state.config)
             self.load_and_play_music(village_music)
             self.show_main_menu_screen(self.screen)
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
@@ -202,10 +202,10 @@ class Game:
         self.player.adventure_log = select_from_vertical_menu(get_ticks(), screen, ADVENTURE_LOG_PATH,
                                                               ADVENTURE_LOG_1_PATH,
                                                               [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]) + 1
-        self.player.name = menu_functions.select_name(get_ticks(), screen, self.cmd_menu)
+        self.player.name = menu_functions.select_name(get_ticks(), screen, self.cmd_menu, self.game_state.config)
         self.player.set_initial_stats()
         play_sound(menu_button_sfx)
-        fade(fade_out=True, screen=self.screen)
+        fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         self.load_and_play_music(self.current_map.music_file_path)
         self.cmd_menu = CommandMenu(self)
 
@@ -240,7 +240,8 @@ class Game:
         self.handle_keypresses(current_key)
 
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // self.game_state.config["TILE_SIZE"],
-                                                              self.player.rect.y // self.game_state.config["TILE_SIZE"], self.current_map)
+                                                              self.player.rect.y // self.game_state.config["TILE_SIZE"],
+                                                              self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
 
         self.player.next_tile_id = get_next_tile_identifier(self.player.column, self.player.row,
@@ -350,8 +351,8 @@ class Game:
                         while enemy.hp > 0 and not run_away and not self.player.is_dead:
                             blink_switch(self.screen, BATTLE_MENU_STATIC_PATH,
                                          list(battle_menu_options[current_item_row].values())[
-                                             current_item_column], x=6, y=1, width=8, height=3,
-                                         start=blink_start, color=self.color)
+                                             current_item_column], x=6, y=1, width=8, height=3, start=blink_start,
+                                         config=None, color=self.color)
                             current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
                             selected_executed_option = None
                             for current_event in event.get():
@@ -632,7 +633,8 @@ class Game:
             self.game_state.enable_movement = False
             death_start_time = get_ticks()
             while convert_to_frames_since_start_time(death_start_time) < 318:
-                time.wait(1)
+                if not self.game_state.config['NO_WAIT']:
+                    time.wait(1)
             event.clear()
 
             self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.thou_art_dead, disable_sound=True)
@@ -775,7 +777,7 @@ class Game:
             if self.last_map.identifier == 'TantegelThroneRoom':
                 self.allow_save_prompt = True
         self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
-        fade(fade_out=True, screen=self.screen)
+        fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         self.set_big_map()
         self.set_roaming_character_positions()
         if self.music_enabled:
