@@ -1,3 +1,4 @@
+import array
 import os
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -30,7 +31,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 def create_get_pressed_mock_array(max_key=K_z):
-    return [0] * (max_key + 1)
+    return array.array('i', (0,)) * (max_key + 1)
 
 
 def create_f1_key_mock(pressed_key):
