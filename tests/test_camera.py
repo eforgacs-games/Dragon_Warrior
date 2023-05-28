@@ -30,6 +30,7 @@ class MockMap(MapWithoutNPCs):
 
 class TestCamera(TestCase):
     def setUp(self) -> None:
+        prod_config['NO_WAIT'] = True
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
         self.game.camera_pos = 0, 0

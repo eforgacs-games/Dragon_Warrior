@@ -90,6 +90,7 @@ def setup_roaming_character(row, column, direction):
 class TestGame(TestCase):
 
     def setUp(self) -> None:
+        prod_config['NO_WAIT'] = True
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
         self.game.player.name = "Edward"
