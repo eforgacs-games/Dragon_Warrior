@@ -9,17 +9,19 @@ from pygame.time import get_ticks
 from data.text.dialog import confirmation_prompt
 from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, \
     create_window, WHITE
-from src.config import MUSIC_ENABLED, TILE_SIZE, LANGUAGE
+from src.config import dev_config
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
 from src.visual_effects import fade, flash_transparent_color
 
+config = dev_config
+
 # if LANGUAGE == 'en':
 #     en = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['en'])
 #     en.install()
 #     _ = en.gettext
-if LANGUAGE == 'Korean':
+if config['LANGUAGE'] == 'Korean':
     ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
     ko.install()
     _ = ko.gettext
@@ -191,11 +193,12 @@ class DialogLookup:
         #             display.flip()
 
     def open_store_inventory(self, current_store_inventory, static_store_image, color=WHITE):
+        tile_size = config['TILE_SIZE']
         self.command_menu.show_line_in_dialog_box(_("What dost thou wish to buy?"), skip_text=True)
         self.command_menu.window_drop_down_effect(6, 2, 9, 7)
         # store_inventory_window = create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
         # display.update(store_inventory_window.get_rect())
-        store_inventory_window_rect = Rect(6 * TILE_SIZE, 2 * TILE_SIZE, 9 * TILE_SIZE, 7 * TILE_SIZE)
+        store_inventory_window_rect = Rect(6 * tile_size, 2 * tile_size, 9 * tile_size, 7 * tile_size)
         selecting = True
         current_item_index = 0
         start_time = get_ticks()
@@ -282,7 +285,7 @@ class DialogLookup:
             self.player.shield = item
         self.player.update_attack_power()
         self.player.update_defense_power()
-        self.command_menu.game.drawer.draw_hovering_stats_window(self.screen, self.player)
+        self.command_menu.game.drawer.draw_hovering_stats_window(None, self.screen, self.player)
         self.command_menu.show_line_in_dialog_box(_("I thank thee."))
 
     def check_stay_at_inn(self, inn_cost):
@@ -304,14 +307,16 @@ class DialogLookup:
     def inn_sleep(self, inn_cost):
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
         fade(fade_out=True, screen=self.screen)
-        if MUSIC_ENABLED:
+        music_enabled = self.command_menu.game.game_state.config['MUSIC_ENABLED']
+        tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
+        if music_enabled:
             mixer.music.stop()
         play_sound(special_item_sfx)
         self.player.restore_hp()
         self.player.restore_mp()
         self.player.gold -= inn_cost
         time.wait(3000)
-        if MUSIC_ENABLED:
+        if music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
         self.command_menu.game.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
@@ -321,7 +326,7 @@ class DialogLookup:
                 draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1],
                                        character_dict['coordinates'][0], character)
         self.screen.blit(self.background, self.camera_position)
-        self.screen.blit(self.command_menu.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
+        self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
         display.flip()
         self.command_menu.show_text_in_dialog_box((_("Good morning.\nThou seems to have spent a good night."),
                                                    _("I shall see thee again.")), skip_text=self.command_menu.skip_text,

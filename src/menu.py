@@ -14,14 +14,14 @@ from src.common import DRAGON_QUEST_FONT_PATH, BLACK, menu_button_sfx, DIALOG_BO
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, \
     open_door_sfx, \
     STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx
-from src.config import SCALE, TILE_SIZE, LANGUAGE
+from src.config import SCALE, dev_config
 from src.items import treasure
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.sound import play_sound
 from src.text import draw_text
 
-
+config = dev_config
 class Menu:
     def __init__(self):
         self.menu = None
@@ -50,12 +50,13 @@ class CommandMenu(Menu):
                                                   screen=self.screen,
                                                   color=self.game.color)
         self.dialog_lookup = DialogLookup(self)
+        tile_size = self.game.game_state.config['TILE_SIZE']
         self.menu = pygame_menu.Menu(
             title='COMMAND',
             width=self.command_menu_surface.get_width() * 2,
             height=self.command_menu_surface.get_height() * 3,
             center_content=False,
-            column_max_width=(TILE_SIZE * 4, TILE_SIZE * 3),
+            column_max_width=(tile_size * 4, tile_size * 3),
             columns=2,
             rows=4,
             theme=pygame_menu.themes.Theme(background_color=BLACK,
@@ -130,14 +131,15 @@ class CommandMenu(Menu):
         :param disable_sound: Whether to disable the sound.
         :param letter_by_letter: Whether to print the text letter by letter.
         """
+        tile_size = self.game.game_state.config['TILE_SIZE']
         if line:
             if type(line) == str:
                 current_time = None
                 display_current_line = True
                 if add_quotes:
-                    if LANGUAGE == 'English':
+                    if self.game.game_state.config['LANGUAGE'] == 'English':
                         line = f"`{line}’"
-                    elif LANGUAGE == 'Korean':
+                    elif self.game.game_state['LANGUAGE'] == 'Korean':
                         if line.isascii():
                             line = f"`{line}’"
                         else:
@@ -150,17 +152,17 @@ class CommandMenu(Menu):
                                   screen=self.screen, color=self.game.color)
                     if letter_by_letter:
                         if not current_line:
-                            current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, color=self.game.color,
+                            current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen, color=self.game.color,
                                                      letter_by_letter=True, disable_sound=disable_sound)
                         else:
-                            current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, color=self.game.color,
+                            current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen, color=self.game.color,
                                                      letter_by_letter=False, disable_sound=disable_sound)
                     else:
-                        current_line = draw_text(line, TILE_SIZE * 3, TILE_SIZE * 9.75, self.screen, color=self.game.color,
+                        current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen, color=self.game.color,
                                                  letter_by_letter=False, disable_sound=disable_sound)
-                    display.update(Rect(2 * TILE_SIZE, 9 * TILE_SIZE, 12 * TILE_SIZE, 5 * TILE_SIZE))
+                    display.update(Rect(2 * tile_size, 9 * tile_size, 12 * tile_size, 5 * tile_size))
                     if not last_line:
-                        end_of_dialog_box_location = self.screen.get_width() / 2, (self.screen.get_height() * 13 / 16) + TILE_SIZE // 1.5
+                        end_of_dialog_box_location = self.screen.get_width() / 2, (self.screen.get_height() * 13 / 16) + tile_size // 1.5
                         blink_arrow(end_of_dialog_box_location[0], end_of_dialog_box_location[1], "down", self.screen, self.game.color)
                     # playing with fire a bit here with the short-circuiting
                     if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
@@ -203,21 +205,22 @@ class CommandMenu(Menu):
 
     def window_drop_down_effect(self, left, top, width, height) -> None:
         """Intro effect for menus."""
-        window_rect = Rect(left * TILE_SIZE, top * TILE_SIZE, width * TILE_SIZE, height * TILE_SIZE)
+        tile_size = self.game.game_state.config['TILE_SIZE']
+        window_rect = Rect(left * tile_size, top * tile_size, width * tile_size, height * tile_size)
         for i in range(height + 1):
-            black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
+            black_box = Surface((tile_size * width, tile_size * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
             drop_down_start = get_ticks()
             # each "bar" lasts 1 frame
             while convert_to_frames_since_start_time(drop_down_start) < 1:
-                self.screen.blit(black_box, (TILE_SIZE * left, TILE_SIZE * top))
+                self.screen.blit(black_box, (tile_size * left, tile_size * top))
                 display.update(window_rect)
 
     def window_drop_up_effect(self, left, top, width, height) -> None:
         """Outro effect for menus."""
         # draw all the tiles initially once
-
-        camera_screen_rect = Rect(self.player.rect.x - TILE_SIZE * 8, self.player.rect.y - TILE_SIZE * 7,
+        tile_size = self.game.game_state.config['TILE_SIZE']
+        camera_screen_rect = Rect(self.player.rect.x - tile_size * 8, self.player.rect.y - tile_size * 7,
                                   self.screen.get_width(), self.screen.get_height())
         if not self.current_map.is_dark:
             # if the map is dark, drawing all the tiles to the screen basically creates an exploit that shows the map tiles lit up,
@@ -232,7 +235,7 @@ class CommandMenu(Menu):
             group_to_draw.draw(self.background)
 
             for i in range(height - 1, -1, -1):
-                black_box = Surface((TILE_SIZE * width, TILE_SIZE * i))  # lgtm [py/call/wrong-arguments]
+                black_box = Surface((tile_size * width, tile_size * i))  # lgtm [py/call/wrong-arguments]
                 black_box.fill(BLACK)
                 drop_up_start = get_ticks()
                 while convert_to_frames_since_start_time(drop_up_start) < 1:
@@ -243,10 +246,10 @@ class CommandMenu(Menu):
                                                  (character_dict['character'].rect.x, character_dict['character'].rect.y))
                     self.screen.blit(self.background, self.camera_position)
                     if self.launch_signaled:
-                        self.screen.blit(self.command_menu_surface, (TILE_SIZE * 6, TILE_SIZE * 1))
+                        self.screen.blit(self.command_menu_surface, (tile_size * 6, tile_size * 1))
                     if self.game.drawer.display_hovering_stats:
                         self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.game.color)
-                    display.update(self.screen.blit(black_box, (TILE_SIZE * left, TILE_SIZE * top)))
+                    display.update(self.screen.blit(black_box, (tile_size * left, tile_size * top)))
 
     def take_item(self, item_name: str):
         play_sound(open_treasure_sfx)
@@ -410,21 +413,23 @@ class CommandMenu(Menu):
         # open another window (11 tall x 10 wide)
         # print the following attributes:
         # example below:
+
+        tile_size = self.game.game_state.config['tile_size']
         play_sound(menu_button_sfx)
         show_status = True
         self.window_drop_down_effect(4, 3, 10, 11)
         create_window(4, 3, 10, 11, STATUS_WINDOW_BACKGROUND_PATH, self.screen, color=self.game.color)
-        draw_text(self.player.name, TILE_SIZE * 13, TILE_SIZE * 3.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.strength), TILE_SIZE * 13, TILE_SIZE * 4.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.agility), TILE_SIZE * 13, TILE_SIZE * 5.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.max_hp), TILE_SIZE * 13, TILE_SIZE * 6.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.max_mp), TILE_SIZE * 13, TILE_SIZE * 7.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.attack_power), TILE_SIZE * 13, TILE_SIZE * 8.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.defense_power), TILE_SIZE * 13, TILE_SIZE * 9.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
-        draw_text(self.player.weapon, TILE_SIZE * 11.75, TILE_SIZE * 10.75, self.screen, color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
-        draw_text(self.player.armor, TILE_SIZE * 11.55, TILE_SIZE * 11.75, self.screen, color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
-        draw_text(self.player.shield, TILE_SIZE * 11.75, TILE_SIZE * 12.75, self.screen, color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
-        display.update((4 * TILE_SIZE, 3 * TILE_SIZE, 10 * TILE_SIZE, 11 * TILE_SIZE))
+        draw_text(self.player.name, tile_size * 13, tile_size * 3.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.strength), tile_size * 13, tile_size * 4.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.agility), tile_size * 13, tile_size * 5.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.max_hp), tile_size * 13, tile_size * 6.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.max_mp), tile_size * 13, tile_size * 7.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.attack_power), tile_size * 13, tile_size * 8.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.defense_power), tile_size * 13, tile_size * 9.75, self.screen, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(self.player.weapon, tile_size * 11.75, tile_size * 10.75, self.screen, color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
+        draw_text(self.player.armor, tile_size * 11.55, tile_size * 11.75, self.screen, color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
+        draw_text(self.player.shield, tile_size * 11.75, tile_size * 12.75, self.screen, color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
+        display.update((4 * tile_size, 3 * tile_size, 10 * tile_size, 11 * tile_size))
         while show_status:
             for current_event in event.get():
                 if current_event.type == KEYDOWN:
@@ -516,6 +521,7 @@ class CommandMenu(Menu):
         """Display a menu of selectable items.
         :param menu_name: The name of the menu to display.)
         """
+        tile_size = self.game.game_state.config['TILE_SIZE']
         if menu_name == 'inventory':
             list_counter = Counter(self.player.inventory)
             list_string = ""
@@ -560,10 +566,10 @@ class CommandMenu(Menu):
             create_window(x=9, y=3, width=6, height=len(list_counter) + 1,
                           window_background=item_menu_background_lookup[len(list_counter)], screen=self.screen,
                           color=self.game.color)
-            draw_text(list_string, TILE_SIZE * 10, TILE_SIZE * 3.75, self.screen)
-            blink_arrow(TILE_SIZE * 9.5, (TILE_SIZE + (current_arrow_position * TILE_SIZE / 4)) * 3.75, "right",
+            draw_text(list_string, tile_size * 10, tile_size * 3.75, self.screen)
+            blink_arrow(tile_size * 9.5, (tile_size + (current_arrow_position * tile_size / 4)) * 3.75, "right",
                         self.screen, self.game.color)
-            display.update((9 * TILE_SIZE, 3 * TILE_SIZE, 6 * TILE_SIZE, (len(list_counter) + 1) * TILE_SIZE))
+            display.update((9 * tile_size, 3 * tile_size, 6 * tile_size, (len(list_counter) + 1) * tile_size))
             for current_event in event.get():
                 if any([current_event.type == KEYDOWN]):
                     if current_event.key in (K_ESCAPE, K_j):

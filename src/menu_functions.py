@@ -22,8 +22,10 @@ from src.common import NAME_SELECTION_UPPER_A, NAME_SELECTION_UPPER_B, NAME_SELE
     convert_to_frames_since_start_time, play_sound, menu_button_sfx, NAME_SELECTION_STATIC_IMAGE_LEN_0, NAME_SELECTION_STATIC_IMAGE_LEN_1, \
     NAME_SELECTION_STATIC_IMAGE_LEN_2, NAME_SELECTION_STATIC_IMAGE_LEN_3, NAME_SELECTION_STATIC_IMAGE_LEN_4, NAME_SELECTION_STATIC_IMAGE_LEN_5, \
     NAME_SELECTION_STATIC_IMAGE_LEN_6, NAME_SELECTION_STATIC_IMAGE_LEN_7, NAME_SELECTION_STATIC_IMAGE_LEN_8
-from src.config import TILE_SIZE
+from src.config import dev_config
 from src.text import draw_text
+
+config = dev_config
 
 name_selection_array = (
     ("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"),
@@ -119,7 +121,7 @@ def draw_player_sprites(current_map, background, column, row):
 
 def draw_character_sprites(current_map, background, column, row, character_identifier='HERO'):
     background.blit(current_map.characters[character_identifier]['character_sprites'].sprites()[0].image,
-                    (column * TILE_SIZE, row * TILE_SIZE))
+                    (column * config['TILE_SIZE'], row * config['TILE_SIZE']))
 
 
 def select_name(blink_start, screen, command_menu):
@@ -239,4 +241,4 @@ def blink_with_name(blink_start, current_letter_image_path, name, screen, static
 def draw_image_with_name(current_letter_image_path, name, screen):
     selected_image = scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height()))
     screen.blit(selected_image, (0, 0))
-    draw_text(name, TILE_SIZE * 6.01, TILE_SIZE * 4.3, screen, alignment='left', letter_by_letter=False)
+    draw_text(name, config['TILE_SIZE'] * 6.01, config['TILE_SIZE'] * 4.3, screen, alignment='left', letter_by_letter=False)

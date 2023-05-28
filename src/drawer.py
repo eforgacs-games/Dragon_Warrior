@@ -7,7 +7,7 @@ from pygame.transform import scale
 
 from src.common import convert_to_frames_since_start_time, IMAGES_ENEMIES_DIR, WHITE, create_window, \
     HOVERING_STATS_BACKGROUND_PATH, play_sound, menu_button_sfx, torch_sfx, BLACK
-from src.config import TILE_SIZE, SCALE, ENABLE_DARKNESS
+from src.config import SCALE
 from src.game_functions import get_surrounding_rect
 from src.menu import Menu, CommandMenu
 from src.text import draw_text
@@ -22,42 +22,42 @@ class Drawer:
         self.not_moving_time_start = None
         self.hovering_stats_displayed = False
 
-    @staticmethod
-    def position_and_draw_enemy_image(screen, enemy_image, enemy_name):
+    def position_and_draw_enemy_image(self, screen, enemy_image, enemy_name):
+        tile_size = self.game_state.config["TILE_SIZE"]
         if enemy_name in ('Slime', 'Red Slime', 'Metal Slime'):
-            screen.blit(enemy_image, (8 * TILE_SIZE, 7 * TILE_SIZE))
+            screen.blit(enemy_image, (8 * tile_size, 7 * tile_size))
         elif enemy_name in ('Drakee', 'Magidrakee', 'Drakeema'):
             # might need work
-            screen.blit(enemy_image, (7.75 * TILE_SIZE, 6.25 * TILE_SIZE))
+            screen.blit(enemy_image, (7.75 * tile_size, 6.25 * tile_size))
         elif enemy_name in ('Ghost', 'Poltergeist', 'Specter'):
-            screen.blit(enemy_image, (7.8 * TILE_SIZE, 5.9 * TILE_SIZE))
+            screen.blit(enemy_image, (7.8 * tile_size, 5.9 * tile_size))
         elif enemy_name in ('Magician', 'Warlock', 'Wizard'):
-            screen.blit(enemy_image, (7.3 * TILE_SIZE, 6 * TILE_SIZE))
+            screen.blit(enemy_image, (7.3 * tile_size, 6 * tile_size))
         elif enemy_name in ('Scorpion', 'Metal Scorpion', 'Rogue Scorpion'):
-            screen.blit(enemy_image, (7.4 * TILE_SIZE, 6.5 * TILE_SIZE))
+            screen.blit(enemy_image, (7.4 * tile_size, 6.5 * tile_size))
         elif enemy_name in ('Druin', 'Druinlord'):
-            screen.blit(enemy_image, (8 * TILE_SIZE, 6.5 * TILE_SIZE))
+            screen.blit(enemy_image, (8 * tile_size, 6.5 * tile_size))
         elif enemy_name in ('Droll', 'Drollmagi'):
-            screen.blit(enemy_image, (7.5 * TILE_SIZE, 6 * TILE_SIZE))
+            screen.blit(enemy_image, (7.5 * tile_size, 6 * tile_size))
         elif enemy_name in ('Skeleton', 'Wraith', 'Wraith Knight', 'Demon Knight'):
-            screen.blit(enemy_image, (7.46 * TILE_SIZE, 5.74 * TILE_SIZE))
+            screen.blit(enemy_image, (7.46 * tile_size, 5.74 * tile_size))
         elif enemy_name in ('Wolf', 'Wolflord', 'Werewolf'):
-            screen.blit(enemy_image, (7.11 * TILE_SIZE, 5.95 * TILE_SIZE))
+            screen.blit(enemy_image, (7.11 * tile_size, 5.95 * tile_size))
         elif enemy_name in ('Goldman', 'Golem', 'Stoneman'):
-            screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.6 * TILE_SIZE))
+            screen.blit(enemy_image, (7.1 * tile_size, 5.6 * tile_size))
         elif enemy_name in ('Wyvern', 'Magiwyvern', 'Starwyvern'):
-            screen.blit(enemy_image, (7.25 * TILE_SIZE, 5.5 * TILE_SIZE))
+            screen.blit(enemy_image, (7.25 * tile_size, 5.5 * tile_size))
         elif enemy_name in ('Knight', 'Axe Knight', 'Armored Knight'):
-            screen.blit(enemy_image, (7.1 * TILE_SIZE, 5.75 * TILE_SIZE))
+            screen.blit(enemy_image, (7.1 * tile_size, 5.75 * tile_size))
         elif enemy_name in ('Green Dragon', 'Blue Dragon', 'Red Dragon'):
-            screen.blit(enemy_image, (6.5 * TILE_SIZE, 6.25 * TILE_SIZE))
+            screen.blit(enemy_image, (6.5 * tile_size, 6.25 * tile_size))
         elif enemy_name == 'Dragonlord':
-            screen.blit(enemy_image, (7.5 * TILE_SIZE, 6 * TILE_SIZE))
+            screen.blit(enemy_image, (7.5 * tile_size, 6 * tile_size))
         elif enemy_name == 'Dragonlord 2':
             # need to have this blit over the text box on the bottom
-            screen.blit(enemy_image, (5.1 * TILE_SIZE, 4 * TILE_SIZE))
+            screen.blit(enemy_image, (5.1 * tile_size, 4 * tile_size))
         else:
-            screen.blit(enemy_image, (7.544 * TILE_SIZE, 6.1414 * TILE_SIZE))
+            screen.blit(enemy_image, (7.544 * tile_size, 6.1414 * tile_size))
 
     def show_enemy_image(self, screen, enemy_name):
         enemy_name_without_spaces = enemy_name.replace(" ", "")
@@ -85,16 +85,16 @@ class Drawer:
             if tile in current_map.tile_types_in_current_map and tile_dict.get('group'):
                 tile_dict['group'].draw(background)
 
-    @staticmethod
-    def draw_hovering_stats_window(screen, player, color=WHITE):
+    def draw_hovering_stats_window(self, screen, player, color=WHITE):
+        tile_size = self.game_state.config["TILE_SIZE"]
         create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, screen, color)
-        draw_text(player.name[:4], TILE_SIZE * 2.99, TILE_SIZE * 2, screen, color=color, alignment='center',
+        draw_text(player.name[:4], tile_size * 2.99, tile_size * 2, screen, color=color, alignment='center',
                   letter_by_letter=False)
-        draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)
-        draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen, color=color)
-        draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen, color=color)
-        draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen, color=color)
-        draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen, color=color)
+        self.draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)
+        self.draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen, color=color)
+        self.draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen, color=color)
+        self.draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen, color=color)
+        self.draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen, color=color)
 
     def set_to_post_initial_dialog(self, command_menu: CommandMenu):
         self.game_state.is_initial_dialog = False
@@ -143,13 +143,14 @@ class Drawer:
                 self.game_state.enable_movement = True
 
     def handle_darkness(self, screen, torch_active):
+        tile_size = self.game_state.config["TILE_SIZE"]
         darkness = Surface((screen.get_width(), screen.get_height()))  # lgtm [py/call/wrong-arguments]
         if torch_active:
             # Light with radius of 1
-            darkness_hole = darkness.subsurface((screen.get_width() / 2) - TILE_SIZE,
-                                                (screen.get_height() / 2) - (TILE_SIZE * 1.5),
-                                                TILE_SIZE * 3,
-                                                TILE_SIZE * 3)
+            darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size,
+                                                (screen.get_height() / 2) - (tile_size * 1.5),
+                                                tile_size * 3,
+                                                tile_size * 3)
         elif self.game_state.radiant_active:
             # Light with radius of 2, expanding to 3...
 
@@ -161,10 +162,10 @@ class Drawer:
             # darkness.set_colorkey(WHITE)
             # self.screen.blit(darkness, (0, 0))
             # Light with radius of 3
-            darkness_hole = darkness.subsurface((screen.get_width() / 2) - TILE_SIZE * 3,
-                                                (screen.get_height() / 2) - (TILE_SIZE * 5),
-                                                TILE_SIZE * 7,
-                                                TILE_SIZE * 8.5)
+            darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * 3,
+                                                (screen.get_height() / 2) - (tile_size * 5),
+                                                tile_size * 7,
+                                                tile_size * 8.5)
 
             if self.game_state.radiant_start is None:
                 self.game_state.radiant_start = self.game_state.tiles_moved_total
@@ -176,21 +177,21 @@ class Drawer:
                     self.game_state.radiant_start = None
                 elif self.game_state.tiles_moved_total - self.game_state.radiant_start >= 140:
                     # Light with radius of 1
-                    darkness_hole = darkness.subsurface((screen.get_width() / 2) - TILE_SIZE,
-                                                        (screen.get_height() / 2) - (TILE_SIZE * 1.5),
-                                                        TILE_SIZE * 3,
-                                                        TILE_SIZE * 3)
+                    darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size,
+                                                        (screen.get_height() / 2) - (tile_size * 1.5),
+                                                        tile_size * 3,
+                                                        tile_size * 3)
                 elif self.game_state.tiles_moved_total - self.game_state.radiant_start >= 80:
                     # Light with radius of 2
-                    darkness_hole = darkness.subsurface((screen.get_width() / 2) - TILE_SIZE * 2,
-                                                        (screen.get_height() / 2) - (TILE_SIZE * 2.5),
-                                                        TILE_SIZE * 5,
-                                                        TILE_SIZE * 5)
+                    darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * 2,
+                                                        (screen.get_height() / 2) - (tile_size * 2.5),
+                                                        tile_size * 5,
+                                                        tile_size * 5)
 
         else:
             darkness_hole = darkness.subsurface((screen.get_width() / 2),
-                                                (screen.get_height() / 2) - (TILE_SIZE / 2), TILE_SIZE,
-                                                TILE_SIZE)
+                                                (screen.get_height() / 2) - (tile_size / 2), tile_size,
+                                                tile_size)
         darkness.fill(BLACK)
         darkness_hole.fill(WHITE)
         darkness.set_colorkey(WHITE)
@@ -207,6 +208,7 @@ class Drawer:
         screen.fill(BLACK)
         width_offset = 0
         height_offset = 0
+        tile_size = self.game_state.config["TILE_SIZE"]
         if loop_count == 1:
             self.background = big_map.subsurface(0, 0, current_map.width - width_offset,
                                                  current_map.height - height_offset).convert()
@@ -214,10 +216,10 @@ class Drawer:
             self.draw_all_tiles_in_current_map(current_map, self.background)
         try:
             surrounding_tile_values = get_surrounding_tile_values(
-                (player.rect.y // TILE_SIZE, player.rect.x // TILE_SIZE), current_map.layout)
+                (player.rect.y // tile_size, player.rect.x // tile_size), current_map.layout)
             player_surrounding_tiles = convert_numeric_tile_list_to_unique_tile_values(current_map,
                                                                                        surrounding_tile_values)
-            all_roaming_character_surrounding_tiles = get_all_roaming_character_surrounding_tiles(current_map)
+            all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles(current_map)
             all_fixed_character_underlying_tiles = get_fixed_character_underlying_tiles(current_map)
             tile_types_to_draw = replace_characters_with_underlying_tiles([player.current_tile] +
                                                                           all_roaming_character_surrounding_tiles +
@@ -238,7 +240,7 @@ class Drawer:
                     if convert_to_frames_since_start_time(self.not_moving_time_start) >= 51:
                         self.display_hovering_stats = True
         except IndexError:
-            all_roaming_character_surrounding_tiles = get_all_roaming_character_surrounding_tiles(current_map)
+            all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles(current_map)
             all_fixed_character_underlying_tiles = get_fixed_character_underlying_tiles(current_map)
             tile_types_to_draw = replace_characters_with_underlying_tiles([player.current_tile] +
                                                                           all_roaming_character_surrounding_tiles +
@@ -248,7 +250,7 @@ class Drawer:
             # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
 
         group_to_draw = Group()
-        camera_screen_rect = Rect(player.rect.x - TILE_SIZE * 8, player.rect.y - TILE_SIZE * 7,
+        camera_screen_rect = Rect(player.rect.x - tile_size * 8, player.rect.y - tile_size * 7,
                                   screen.get_width(), screen.get_height())
         double_camera_screen_rect = camera_screen_rect.inflate(camera_screen_rect.width * 0.25,
                                                                camera_screen_rect.height * 0.25)
@@ -289,14 +291,14 @@ class Drawer:
         if current_map.identifier == 'TantegelThroneRoom':
             self.handle_initial_dialog(initial_dialog_enabled, cmd_menu, events, skip_text, allow_save_prompt)
             self.handle_post_death_dialog(game_state, cmd_menu, events, skip_text)
-        if current_map.is_dark and ENABLE_DARKNESS:
+        if current_map.is_dark and self.game_state.config["ENABLE_DARKNESS"]:
             self.handle_darkness(screen, torch_active)
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
                 cmd_menu.window_drop_down_effect(1, 2, 4, 6)
                 self.hovering_stats_displayed = True
             self.draw_hovering_stats_window(screen, player, color)
-        handle_menu_launch(screen, cmd_menu, cmd_menu)
+        self.handle_menu_launch(screen, cmd_menu, cmd_menu)
         if cmd_menu.menu.is_enabled():
             cmd_menu.menu.update(events)
         else:
@@ -310,23 +312,53 @@ class Drawer:
             self.run_automatic_post_death_dialog(events, skip_text, cmd_menu)
             event.clear()
 
+    def draw_stats_strings_with_alignments(self, stat_string, y_position, screen, color=WHITE):
+        tile_size = self.game_state.config["TILE_SIZE"]
+        if len(stat_string) > 4:
+            draw_text(stat_string, tile_size * 3.2, tile_size * y_position, screen, color=color, alignment='center',
+                      letter_by_letter=False)
+        elif len(stat_string) > 3:
+            draw_text(stat_string, tile_size * 3.44, tile_size * y_position, screen, color=color, alignment='center',
+                      letter_by_letter=False)
+        elif len(stat_string) > 2:
+            draw_text(stat_string, tile_size * 3.67, tile_size * y_position, screen, color=color, alignment='center',
+                      letter_by_letter=False)
+        elif len(stat_string) > 1:
+            draw_text(stat_string, tile_size * 3.99, tile_size * y_position, screen, color=color, alignment='center',
+                      letter_by_letter=False)
+        else:
+            draw_text(stat_string, tile_size * 4.2, tile_size * y_position, screen, color=color, alignment='center',
+                      letter_by_letter=False)
 
-def draw_stats_strings_with_alignments(stat_string, y_position, screen, color=WHITE):
-    if len(stat_string) > 4:
-        draw_text(stat_string, TILE_SIZE * 3.2, TILE_SIZE * y_position, screen, color=color, alignment='center',
-                  letter_by_letter=False)
-    elif len(stat_string) > 3:
-        draw_text(stat_string, TILE_SIZE * 3.44, TILE_SIZE * y_position, screen, color=color, alignment='center',
-                  letter_by_letter=False)
-    elif len(stat_string) > 2:
-        draw_text(stat_string, TILE_SIZE * 3.67, TILE_SIZE * y_position, screen, color=color, alignment='center',
-                  letter_by_letter=False)
-    elif len(stat_string) > 1:
-        draw_text(stat_string, TILE_SIZE * 3.99, TILE_SIZE * y_position, screen, color=color, alignment='center',
-                  letter_by_letter=False)
-    else:
-        draw_text(stat_string, TILE_SIZE * 4.2, TILE_SIZE * y_position, screen, color=color, alignment='center',
-                  letter_by_letter=False)
+    def get_all_roaming_character_surrounding_tiles(self, current_map) -> List[str]:
+        tile_size = self.game_state.config["TILE_SIZE"]
+        all_roaming_character_surrounding_tiles = []
+        for roaming_character in current_map.roaming_characters:
+            roaming_character_surrounding_tile_values = get_surrounding_tile_values(
+                (roaming_character.rect.y // tile_size, roaming_character.rect.x // tile_size), current_map.layout)
+            roaming_character_surrounding_tiles = convert_numeric_tile_list_to_unique_tile_values(current_map,
+                                                                                                  roaming_character_surrounding_tile_values)
+            for tile in roaming_character_surrounding_tiles:
+                all_roaming_character_surrounding_tiles.append(tile)
+        return all_roaming_character_surrounding_tiles
+
+    def handle_menu_launch(self, screen, cmd_menu, menu_to_launch: Menu) -> None:
+        tile_size = self.game_state.config['TILE_SIZE']
+        if menu_to_launch.launch_signaled:
+            if menu_to_launch.menu.get_id() == 'command':
+                command_menu_subsurface = screen.subsurface(
+                    (6 * tile_size,  # 11 (first empty square to the left of menu)
+                     tile_size),  # 4
+                    (8 * tile_size,
+                     5 * tile_size)
+                )
+                if not cmd_menu.menu.is_enabled():
+                    play_sound(menu_button_sfx)
+                    cmd_menu.window_drop_down_effect(6, 1, 8, 5)
+                    cmd_menu.menu.enable()
+                else:
+                    menu_to_launch.menu.draw(command_menu_subsurface)
+                    display.update(command_menu_subsurface.get_rect())
 
 
 def replace_characters_with_underlying_tiles(tile_types_to_draw: List[str], current_map_character_key) -> List[str]:
@@ -373,18 +405,6 @@ def convert_numeric_tile_list_to_unique_tile_values(current_map, numeric_tile_li
     return converted_tiles
 
 
-def get_all_roaming_character_surrounding_tiles(current_map) -> List[str]:
-    all_roaming_character_surrounding_tiles = []
-    for roaming_character in current_map.roaming_characters:
-        roaming_character_surrounding_tile_values = get_surrounding_tile_values(
-            (roaming_character.rect.y // TILE_SIZE, roaming_character.rect.x // TILE_SIZE), current_map.layout)
-        roaming_character_surrounding_tiles = convert_numeric_tile_list_to_unique_tile_values(current_map,
-                                                                                              roaming_character_surrounding_tile_values)
-        for tile in roaming_character_surrounding_tiles:
-            all_roaming_character_surrounding_tiles.append(tile)
-    return all_roaming_character_surrounding_tiles
-
-
 def get_fixed_character_underlying_tiles(current_map) -> List[str]:
     all_fixed_character_underlying_tiles = []
     for fixed_character in current_map.fixed_characters:
@@ -393,24 +413,6 @@ def get_fixed_character_underlying_tiles(current_map) -> List[str]:
             current_map.get_tile_by_value(
                 current_map.layout[fixed_character_coordinates[0]][fixed_character_coordinates[1]]))
     return all_fixed_character_underlying_tiles
-
-
-def handle_menu_launch(screen, cmd_menu, menu_to_launch: Menu) -> None:
-    if menu_to_launch.launch_signaled:
-        if menu_to_launch.menu.get_id() == 'command':
-            command_menu_subsurface = screen.subsurface(
-                (6 * TILE_SIZE,  # 11 (first empty square to the left of menu)
-                 TILE_SIZE),  # 4
-                (8 * TILE_SIZE,
-                 5 * TILE_SIZE)
-            )
-            if not cmd_menu.menu.is_enabled():
-                play_sound(menu_button_sfx)
-                cmd_menu.window_drop_down_effect(6, 1, 8, 5)
-                cmd_menu.menu.enable()
-            else:
-                menu_to_launch.menu.draw(command_menu_subsurface)
-                display.update(command_menu_subsurface.get_rect())
 
 
 def set_to_save_prompt(cmd_menu):

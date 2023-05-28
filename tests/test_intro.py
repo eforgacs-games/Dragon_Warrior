@@ -6,6 +6,7 @@ from pygame import Rect, event, KEYDOWN, K_i
 from pygame.time import get_ticks
 
 from src.common import INTRO_BANNER_PATH, convert_to_frames_since_start_time, convert_to_milliseconds
+from src.config import prod_config
 from src.game import Game
 from src.intro import show_intro_banner, repeated_sparkle, Intro, draw_banner_text
 
@@ -17,7 +18,7 @@ class TestIntro(TestCase):
 
     def setUp(self) -> None:
         with patch('src.game.SCALED'):
-            self.game = Game()
+            self.game = Game(prod_config)
         self.intro = Intro()
 
     def test_show_intro_banner(self):
