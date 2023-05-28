@@ -15,6 +15,8 @@ from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
 from src.visual_effects import fade, flash_transparent_color
 
+# TODO: Replace with game config
+
 config = dev_config
 
 # if LANGUAGE == 'en':
@@ -98,7 +100,8 @@ class DialogLookup:
                 )}},
             'TantegelCourtyard': {
                 'MERCHANT': {'dialog': (
-                _("Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?").format(85),)},
+                    _("Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?").format(
+                        85),)},
                 'MERCHANT_2': {'dialog': _(
                     "We are merchants who have traveled much in this land. Many of our colleagues have been killed by servants of the Dragonlord.")},
                 'MERCHANT_3': {
@@ -125,7 +128,7 @@ class DialogLookup:
                 'MAN': {'dialog': _("There is a town where magic keys can be purchased.")},
                 'WISE_MAN': {'dialog': _("If thou art cursed, come again.")},
                 'MERCHANT': {'dialog': (
-                partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
+                    partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'UP_FACE_GUARD': {'dialog': (_("Tell King Lorik that the search for his daughter hath failed."),
                                              _("I am almost gone...."))},
@@ -193,7 +196,7 @@ class DialogLookup:
         #             display.flip()
 
     def open_store_inventory(self, current_store_inventory, static_store_image, color=WHITE):
-        tile_size = config['TILE_SIZE']
+        tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
         self.command_menu.show_line_in_dialog_box(_("What dost thou wish to buy?"), skip_text=True)
         self.command_menu.window_drop_down_effect(6, 2, 9, 7)
         # store_inventory_window = create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
@@ -315,7 +318,8 @@ class DialogLookup:
         self.player.restore_hp()
         self.player.restore_mp()
         self.player.gold -= inn_cost
-        time.wait(3000)
+        if not self.command_menu.game.game_state.config['NO_WAIT']:
+            time.wait(3000)
         if music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
