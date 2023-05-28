@@ -9,12 +9,15 @@ from pygame.sprite import LayeredDirty
 from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
+from src import config
 from src.camera import Camera
 from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, \
     village_music, intro_overture
 from src.config import SCALE, TILE_SIZE
 from src.game import Game
-from src.game_functions import get_next_coordinates, replace_characters_with_underlying_tiles
+from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
+    handle_menu_launch, set_to_save_prompt
+from src.game_functions import get_next_coordinates
 from src.intro import controls
 from src.maps import MapWithoutNPCs, TantegelThroneRoom, Alefgard, TantegelCourtyard
 from src.maps_functions import parse_animated_sprite_sheet
@@ -225,13 +228,14 @@ class TestGame(TestCase):
                           'BRICK_STAIR_UP',
                           'BARRIER',
                           'WEAPON_SIGN'],
-                         self.game.convert_numeric_tile_list_to_unique_tile_values([1, 2, 3, 4, 5, 6, 7, 8, 9]))
+                         convert_numeric_tile_list_to_unique_tile_values(self.game.current_map,
+                                                                         [1, 2, 3, 4, 5, 6, 7, 8, 9]))
 
     def test_handle_menu_launch(self):
         self.game.cmd_menu.launch_signaled = True
-        self.game.handle_menu_launch(self.game.cmd_menu)
+        handle_menu_launch(self.game.screen, self.game.cmd_menu, self.game.cmd_menu)
         self.assertTrue(self.game.cmd_menu.menu.is_enabled())
-        self.game.handle_menu_launch(self.game.cmd_menu)
+        handle_menu_launch(self.game.screen, self.game.cmd_menu, self.game.cmd_menu)
 
     def test_change_map(self):
         self.game.player.row = 10
@@ -275,7 +279,7 @@ class TestGame(TestCase):
 
     def test_king_lorik_post_initial_dialog(self):
         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['is_initial_dialog'] = False
-        self.game.set_to_post_initial_dialog()
+        self.game.drawer.set_to_post_initial_dialog(self.game.cmd_menu)
         self.assertEqual("When thou art finished preparing for thy departure, please see me.\nI shall wait.",
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 
@@ -292,13 +296,13 @@ class TestGame(TestCase):
     #     self.assertEqual(Direction.DOWN.value, self.game.player.direction_value)
 
     def test_run_automatic_initial_dialog(self):
-        self.assertTrue(self.game.is_initial_dialog)
+        self.assertTrue(self.game.game_state.is_initial_dialog)
         # pygame.key.get_pressed = create_key_mock(pygame.K_j)
-        self.game.run_automatic_initial_dialog()
-        self.assertFalse(self.game.enable_movement)
+        self.game.drawer.run_automatic_initial_dialog(self.game.events, self.game.skip_text, self.game.cmd_menu)
+        self.assertFalse(self.game.game_state.enable_movement)
         # TODO(ELF): Need to enable the following checks:
         # self.assertFalse(self.game.is_initial_dialog)
-        # self.assertTrue(self.game.automatic_initial_dialog_run)
+        # self.assertTrue(self.game.game_state.automatic_initial_dialog_run)
 
     def test_set_to_save_prompt(self):
         self.game.player.name = "Edward"
@@ -312,7 +316,7 @@ class TestGame(TestCase):
             "Then speak with the guards, for they have much knowledge that may aid thee.",
             f"May the light shine upon thee, {self.game.player.name}."
         ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
-        self.game.set_to_save_prompt()
+        set_to_save_prompt(self.game.cmd_menu)
         self.assertEqual((
             f"I am greatly pleased that thou hast returned, {self.game.player.name}.",
             f"Before reaching thy next level of experience thou must gain {self.game.player.points_to_next_level} Points.",
@@ -368,11 +372,12 @@ class TestGame(TestCase):
             self.game.unlaunch_menu(self.game.cmd_menu)
             self.assertTrue(self.game.enable_animate)
             self.assertTrue(self.game.enable_roaming)
-            self.assertTrue(self.game.enable_movement)
+            self.assertTrue(self.game.game_state.enable_movement)
             self.assertFalse(self.game.cmd_menu.menu.is_enabled())
         mock_window_drop_up_effect.assert_called_with(6, 1, 8, 5)
 
     def test_handle_initial_dialog(self):
+        self.game.initial_dialog_enabled = True
         self.game.skip_text = True
         self.game.current_map.identifier = 'TantegelThroneRoom'
         self.assertEqual(('Descendant of Erdrick, listen now to my words.',
@@ -387,15 +392,17 @@ class TestGame(TestCase):
                           'Then speak with the guards, for they have much knowledge that may aid thee.',
                           'May the light shine upon thee, Edward.'),
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
-        self.game.handle_initial_dialog()
-        self.assertFalse(self.game.display_hovering_stats)
+        self.game.drawer.handle_initial_dialog(self.game.initial_dialog_enabled, self.game.cmd_menu, self.game.events,
+                                               self.game.skip_text, self.game.allow_save_prompt)
+        self.assertFalse(self.game.drawer.display_hovering_stats)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
-        self.assertTrue(self.game.automatic_initial_dialog_run)
+        self.assertTrue(self.game.game_state.automatic_initial_dialog_run)
         self.assertEqual('When thou art finished preparing for thy departure, please see me.\nI shall wait.',
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
         self.game.allow_save_prompt = True
-        self.game.handle_initial_dialog()
-        self.assertFalse(self.game.is_initial_dialog)
+        self.game.drawer.handle_initial_dialog(self.game.initial_dialog_enabled, self.game.cmd_menu, self.game.events,
+                                               self.game.skip_text, self.game.allow_save_prompt)
+        self.assertFalse(self.game.game_state.is_initial_dialog)
         self.assertEqual(('I am greatly pleased that thou hast returned, Edward.',
                           'Before reaching thy next level of experience thou must gain 7 Points.',
                           "Will thou tell me now of thy deeds so they won't be forgotten?",
@@ -403,7 +410,7 @@ class TestGame(TestCase):
                           'Dost thou wish to continue thy quest?',
                           "Goodbye now, Edward.\n'Take care and tempt not the Fates."),
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
-        self.assertFalse(self.game.is_initial_dialog)
+        self.assertFalse(self.game.game_state.is_initial_dialog)
 
     def test_drop_down_hovering_stats_window(self):
         with patch.object(CommandMenu, 'window_drop_down_effect', return_value=None) as mock_window_drop_down_effect:
@@ -444,8 +451,12 @@ class TestGame(TestCase):
         self.game.get_events()
 
     def test_draw_all(self):
-        self.game.draw_all()
-        self.assertTrue(self.game.not_moving_time_start)
+        self.game.drawer.draw_all(self.game.screen, self.game.loop_count, self.game.big_map, self.game.current_map,
+                                  self.game.player, self.game.cmd_menu, self.game.foreground_rects,
+                                  self.game.enable_animate, self.game.camera, self.game.initial_dialog_enabled,
+                                  self.game.events, self.game.skip_text, self.game.allow_save_prompt,
+                                  self.game.game_state, self.game.torch_active, self.game.color)
+        self.assertTrue(self.game.drawer.not_moving_time_start)
 
     # def test_handle_sprite_drawing_and_animation(self):
     #     self.game.handle_sprite_drawing_and_animation()
@@ -518,9 +529,10 @@ class TestGame(TestCase):
         # self.assertEqual(FULLSCREEN | SCALED, self.game.flags)
         self.assertEqual(528, self.game.flags)
 
-    def test_splash_screen_enabled_load_and_play_music(self):
-        with patch.object(Game, 'load_and_play_music') as mock_method:
-            self.game.__init__()
+    @patch.object(Game, "load_and_play_music")
+    @patch.object(config, "SPLASH_SCREEN_ENABLED", return_value=True)
+    def test_splash_screen_enabled_load_and_play_music(self, mocked_config, mock_method):
+        self.game.__init__()
         mock_method.assert_called_once_with(intro_overture)
 
     # @patch('src.config')

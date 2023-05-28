@@ -1,6 +1,7 @@
 from unittest import TestCase
 
-from src.common import get_surrounding_tile_values, convert_to_frames
+from src.common import convert_to_frames
+from src.drawer import get_surrounding_tile_values
 
 layout = [[33, 0, 3],
           [1, 2, 3],
