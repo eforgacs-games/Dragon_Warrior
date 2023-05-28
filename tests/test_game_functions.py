@@ -51,7 +51,7 @@ class TestGameFunctions(TestCase):
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
         self.hero_images = parse_animated_sprite_sheet(
             scale(unarmed_hero_sheet, (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)))
-        self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map)
+        self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map, prod_config)
         self.camera = Camera((self.game.current_map.player.rect.y // self.game.game_state.config['TILE_SIZE'], self.game.current_map.player.rect.x // self.game.game_state.config['TILE_SIZE']), self.game.current_map,
                              None)
 
