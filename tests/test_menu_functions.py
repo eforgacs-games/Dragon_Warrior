@@ -16,6 +16,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 class TestMenuFunctions(TestCase):
     def setUp(self) -> None:
+        prod_config['NO_WAIT'] = True
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
 
