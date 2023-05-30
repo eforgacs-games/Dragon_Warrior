@@ -49,7 +49,7 @@ class CommandMenu(Menu):
                                                   window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH,
                                                   screen=self.screen,
                                                   color=self.game.color)
-        self.dialog_lookup = DialogLookup(self)
+        self.dialog_lookup = DialogLookup(self, self.game.game_state.config)
         tile_size = self.game.game_state.config['TILE_SIZE']
         self.menu = pygame_menu.Menu(
             title='COMMAND',

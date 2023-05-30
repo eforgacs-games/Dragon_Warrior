@@ -95,14 +95,14 @@ class TestGame(TestCase):
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
         self.game.player.name = "Edward"
-        self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu)
+        self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu, self.game.game_state.config)
         self.game.current_map = MockMap()
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
         self.game.player = Player((0, 0), parse_animated_sprite_sheet(scale(unarmed_hero_sheet,
                                                                             (unarmed_hero_sheet.get_width() * SCALE,
                                                                              unarmed_hero_sheet.get_height() * SCALE)),
-                                                                      prod_config),
-                                  self.game.current_map, prod_config)
+                                                                      self.game.game_state.config),
+                                  self.game.current_map, self.game.game_state.config)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
         tile_size = self.game.game_state.config['TILE_SIZE']
         self.camera = Camera((self.game.player.rect.y // tile_size,
@@ -357,7 +357,8 @@ class TestGame(TestCase):
                                                                  self.game.player.direction_value,
                                                                  self.game.current_map)
         self.assertEqual('WOOD', self.game.player.next_tile_id)
-        self.game.player.next_coordinates = get_next_coordinates(self.game.player.column, self.game.player.row, direction=self.game.player.direction_value)
+        self.game.player.next_coordinates = get_next_coordinates(self.game.player.column, self.game.player.row,
+                                                                 direction=self.game.player.direction_value)
         self.game.cmd_menu.talk()
         self.assertEqual(self.game.player.max_hp, self.game.player.current_hp)
         self.assertEqual(self.game.player.max_mp, self.game.player.current_mp)
