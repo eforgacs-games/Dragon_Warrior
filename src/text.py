@@ -1,4 +1,3 @@
-import os
 import textwrap
 
 from pygame import font, time, display
@@ -33,7 +32,6 @@ def draw_text(text, x, y, screen, config, color=WHITE, size=16, font_name=DRAGON
                 string += chunk[i]
                 blit_text_to_screen(alignment, color, current_font, screen, string, x, y)
                 display.update()
-                # TODO: reinstate wait call
                 if not config['NO_WAIT']:
                     time.wait(16)
                 if not disable_sound:
