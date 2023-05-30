@@ -8,7 +8,7 @@ from src.common import WHITE, BLACK, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMAT
 from src.text import draw_text
 
 
-def blink_arrow(x, y, direction, screen, config, color=WHITE):
+def blink_arrow(x, y, direction, screen, config: dict, color=WHITE):
     if direction == 'up':
         arrow_character = '^'
     elif direction == "down":

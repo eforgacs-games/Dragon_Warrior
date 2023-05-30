@@ -36,7 +36,7 @@ class TestCommandMenu(TestCase):
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
         self.game.current_map = MockMap()
-        self.game.current_map.load_map(self.game.player, (0, 0))
+        self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
 
     # def test_take(self):
     # pygame.key.get_pressed = create_key_mock(pygame.K_s)

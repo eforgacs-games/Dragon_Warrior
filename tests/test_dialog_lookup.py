@@ -8,6 +8,8 @@ from src.player.player import Player
 class TestDialogLookup(TestCase):
     def setUp(self):
         prod_config['NO_WAIT'] = True
-        player = Player(None, None, None, prod_config)
+        prod_config['RENDER_TEXT'] = False
+        prod_config['NO_BLIT'] = True
+        player = Player(None, None, None, god_mode=prod_config['GOD_MODE'])
         player.name = 'Edward'
-        self.dialog_lookup = DialogLookup(None)
+        self.dialog_lookup = DialogLookup(None, prod_config)

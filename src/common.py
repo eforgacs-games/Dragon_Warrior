@@ -391,7 +391,7 @@ def convert_to_frames_since_start_time(start_time):
 def create_window(x, y, width, height, window_background, screen, color=WHITE) -> Surface:
     window_box = Surface((config["TILE_SIZE"] * width, config["TILE_SIZE"] * height))  # lgtm [py/call/wrong-arguments]
     set_window_background(window_box, window_background, color=color)
-    screen.blit(window_box, (config["TILE_SIZE"] * x, config["TILE_SIZE"] * y))
+    screen.blit(window_box, (config["TILE_SIZE"] * x, config["TILE_SIZE"] * y)) if not config['NO_BLIT'] else None
     return window_box
 
 
@@ -403,4 +403,4 @@ def set_window_background(black_box, background_path, color=WHITE):
             # image_pixel_array = PixelArray(background_image)
             # image_pixel_array.replace(WHITE, RED)
     background_image = transform.scale(background_image, black_box.get_size())
-    black_box.blit(background_image, black_box.get_rect())
+    black_box.blit(background_image, black_box.get_rect()) if not config['NO_BLIT'] else None

@@ -9,31 +9,21 @@ from pygame.time import get_ticks
 from data.text.dialog import confirmation_prompt
 from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, \
     create_window, WHITE
-from src.config import dev_config
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_store_inventory
 from src.visual_effects import fade, flash_transparent_color
 
-# TODO: Replace with game config
-config = dev_config
-
-# if LANGUAGE == 'en':
-#     en = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['en'])
-#     en.install()
-#     _ = en.gettext
-if config['LANGUAGE'] == 'Korean':
-    ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
-    ko.install()
-    _ = ko.gettext
-else:
-    _ = gettext.gettext
-
-weapons_and_armor_intro = _("We deal in weapons and armor.\n Dost thou wish to buy anything today?")
-
 
 class DialogLookup:
-    def __init__(self, command_menu):
+    def __init__(self, command_menu, config):
+        self.config = config
+        self.language = self.config['LANGUAGE']
+
+        self._ = _ = self.set_gettext_language()
+
+        self.weapons_and_armor_intro = _("We deal in weapons and armor.\n Dost thou wish to buy anything today?")
+
         self.command_menu = command_menu
         self.player = command_menu.player
         self.screen = command_menu.screen
@@ -139,7 +129,7 @@ class DialogLookup:
                 'MERCHANT_2': {'dialog': (
                     (partial(self.check_stay_at_inn, garinham_inn_cost),),
                 )},
-                'MERCHANT_3': {'dialog': weapons_and_armor_intro},
+                'MERCHANT_3': {'dialog': self.weapons_and_armor_intro},
                 'WISE_MAN': {'dialog': "Many believe that Princess Gwaelin is hidden away in a cave."}
 
             },
@@ -153,7 +143,17 @@ class DialogLookup:
             for character_identifier, character_dict in map_dict.items():
                 character_dict['dialog_character'] = character_identifier
 
+    def set_gettext_language(self):
+        if self.language == 'Korean':
+            ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
+            ko.install()
+            _ = ko.gettext
+        else:
+            _ = gettext.gettext
+        return _
+
     def tantegel_throne_room_roaming_guard(self):
+        _ = self._
         player_please_save_the_princess = _("{}, please save the Princess.").format(self.player.name)
         confirmation_prompt(self.command_menu, _("Dost thou know about Princess Gwaelin?"),
                             yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
@@ -164,14 +164,20 @@ class DialogLookup:
                                                          _("Never does the King speak of it, but he must be suffering much."),
                                                          player_please_save_the_princess),
                                                      drop_down=False, drop_up=False,
-                                                     skip_text=self.command_menu.skip_text), config=config)
+                                                     skip_text=self.command_menu.skip_text), config=self.config)
 
     def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
-        confirmation_prompt(self.command_menu, weapons_and_armor_intro,
+        confirmation_prompt(self.command_menu, self.weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.",
-                                                     last_line=True), config=config)
+                                                     last_line=True), config=self.config)
+
+    def get_inn_intro(self, inn_cost):
+        _ = self._
+        return _("Welcome to the traveler's Inn.\n"
+                 "Room and board is {} GOLD per night.\n"
+                 "Dost thou want a room?").format(inn_cost)
 
     def flash_and_restore_mp(self):
         self.player.restore_mp()
@@ -195,6 +201,7 @@ class DialogLookup:
         #             display.flip()
 
     def open_store_inventory(self, current_store_inventory, static_store_image, color=WHITE):
+        _ = self._
         tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
         self.command_menu.show_line_in_dialog_box(_("What dost thou wish to buy?"), skip_text=True)
         self.command_menu.window_drop_down_effect(6, 2, 9, 7)
@@ -240,6 +247,7 @@ class DialogLookup:
             # print(f"Item index {current_item_index}: {current_item_name}")
 
     def buy_item_dialog(self, selected_item, current_store_inventory, static_store_image):
+        _ = self._
         self.command_menu.show_line_in_dialog_box(f"The {selected_item}?", last_line=False)
         selected_item_dict = current_store_inventory[selected_item]
         selected_item_type = selected_item_dict['type']
@@ -255,7 +263,7 @@ class DialogLookup:
                                 yes_path_function=partial(self.complete_transaction, selected_item,
                                                           current_store_inventory, old_item_cost),
                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                         _("Oh, yes? That's too bad."), last_line=False), config=config)
+                                                         _("Oh, yes? That's too bad."), last_line=False), config=self.config)
         else:
             self.command_menu.show_line_in_dialog_box(_("Sorry.\n"
                                                         "Thou hast not enough money."), last_line=False)
@@ -263,9 +271,10 @@ class DialogLookup:
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                     _("Please, come again."), last_line=True), config=config)
+                                                     _("Please, come again."), last_line=True), config=self.config)
 
     def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
+        _ = self._
         if old_item:
             if old_item_lookup_table[old_item].get('cost'):
                 old_item_cost = old_item_lookup_table[old_item]['cost'] // 2
@@ -274,6 +283,7 @@ class DialogLookup:
         return old_item_cost
 
     def complete_transaction(self, item, current_store_inventory, old_item_cost):
+        _ = self._
         item_dict = current_store_inventory[item]
         item_type = item_dict['type']
         self.player.gold -= item_dict['cost']
@@ -291,7 +301,8 @@ class DialogLookup:
         self.command_menu.show_line_in_dialog_box(_("I thank thee."))
 
     def check_stay_at_inn(self, inn_cost):
-        confirmation_prompt(self.command_menu, get_inn_intro(inn_cost),
+        _ = self._
+        confirmation_prompt(self.command_menu, self.get_inn_intro(inn_cost),
                             yes_path_function=partial(self.check_money, inn_cost),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                      _("Okay.\n"
@@ -301,6 +312,7 @@ class DialogLookup:
                             skip_text=self.command_menu.skip_text)
 
     def check_money(self, inn_cost):
+        _ = self._
         if self.player.gold >= inn_cost:
             self.inn_sleep(inn_cost)
         else:
@@ -308,8 +320,9 @@ class DialogLookup:
                                                       skip_text=self.command_menu.skip_text)
 
     def inn_sleep(self, inn_cost):
+        _ = self._
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
-        fade(fade_out=True, screen=self.screen, config=config)
+        fade(fade_out=True, screen=self.screen, config=self.config)
         music_enabled = self.command_menu.game.game_state.config['MUSIC_ENABLED']
         tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
         if music_enabled:
@@ -324,20 +337,20 @@ class DialogLookup:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
         self.command_menu.game.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
-        draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row, config)
+        draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row, self.config)
         for character, character_dict in self.current_map.characters.items():
             if character != 'HERO':
                 draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1],
-                                       character_dict['coordinates'][0], config, character)
-        self.screen.blit(self.background, self.camera_position)
-        self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
-        display.flip()
+                                       character_dict['coordinates'][0], self.config, character)
+        if not self.command_menu.game.game_state.config['NO_BLIT']:
+            self.screen.blit(self.background, self.camera_position)
+            self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
+            display.flip()
         self.command_menu.show_text_in_dialog_box((_("Good morning.\nThou seems to have spent a good night."),
                                                    _("I shall see thee again.")), skip_text=self.command_menu.skip_text,
                                                   drop_up=False)
 
 
-def get_inn_intro(inn_cost):
-    return _("Welcome to the traveler's Inn.\n"
-             "Room and board is {} GOLD per night.\n"
-             "Dost thou want a room?").format(inn_cost)
+
+
+

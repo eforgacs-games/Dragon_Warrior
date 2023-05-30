@@ -25,21 +25,22 @@ def fade(fade_out: bool, screen: Surface, config) -> None:
             #  https://stackoverflow.com/questions/58540537/how-to-fade-the-screen-out-and-back-in-using-pygame
             opacity -= 1
         fade_surface.set_alpha(opacity)
-        screen.blit(fade_surface, (0, 0))
+        screen.blit(fade_surface, (0, 0)) if not config['NO_BLIT'] else None
         display.update(fade_surface.get_rect())
         if not config['NO_WAIT']:
             time.delay(5)
 
 
-def draw_transparent_color(color, screen, transparency):
+def draw_transparent_color(color, screen, transparency, no_blit):
     color_flash_surface = Surface((screen.get_width(), screen.get_height()))
     color_flash_surface.set_alpha(transparency)
     color_flash_surface.fill(color)
-    screen.blit(color_flash_surface, (0, 0))
+    if not no_blit:
+        screen.blit(color_flash_surface, (0, 0))
 
 
-def flash_transparent_color(color, screen, transparency=192):
+def flash_transparent_color(color, screen, transparency=192, no_blit=False):
     start_time = get_ticks()
-    draw_transparent_color(color, screen, transparency)
+    draw_transparent_color(color, screen, transparency, no_blit)
     while convert_to_frames_since_start_time(start_time) < 3:
         display.flip()
