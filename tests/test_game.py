@@ -4,7 +4,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pygame
-from pygame import K_F1, K_z, K_UP, RESIZABLE, SCALED, K_4, K_i, K_k, K_u, K_j
+from pygame import K_z, K_UP, RESIZABLE, SCALED
 from pygame.imageext import load_extended
 from pygame.sprite import LayeredDirty
 from pygame.transform import scale
@@ -30,17 +30,8 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
-def create_get_pressed_mock_array(max_key=K_z):
+def create_get_pressed_mock_array(max_key):
     return array.array('i', (0,)) * (max_key + 1)
-
-
-def create_f1_key_mock(pressed_key):
-    def helper():
-        tmp = create_get_pressed_mock_array(K_F1)
-        tmp[pressed_key] = 1
-        return tmp
-
-    return helper
 
 
 def create_move_player_key_mock(pressed_key):
@@ -56,55 +47,6 @@ def create_key_mock(pressed_key):
     def helper():
         # increase this number as necessary to accommodate keys used
         tmp = create_get_pressed_mock_array(pressed_key)
-        tmp[pressed_key] = 1
-        return tmp
-
-    return helper
-
-
-def create_i_key_mock(pressed_key):
-    def helper():
-        # increase this number as necessary to accommodate keys used
-        tmp = create_get_pressed_mock_array(K_i)
-        tmp[pressed_key] = 1
-        return tmp
-
-    return helper
-
-
-def create_j_key_mock(pressed_key):
-    def helper():
-        # increase this number as necessary to accommodate keys used
-        tmp = create_get_pressed_mock_array(K_j)
-        tmp[pressed_key] = 1
-        return tmp
-
-    return helper
-
-
-def create_k_key_mock(pressed_key):
-    def helper():
-        # increase this number as necessary to accommodate keys used
-        tmp = create_get_pressed_mock_array(K_k)
-        tmp[pressed_key] = 1
-        return tmp
-
-    return helper
-
-
-def create_u_key_mock(pressed_key):
-    def helper():
-        # increase this number as necessary to accommodate keys used
-        tmp = create_get_pressed_mock_array(K_u)
-        tmp[pressed_key] = 1
-        return tmp
-
-    return helper
-
-
-def create_fps_key_mock(pressed_key):
-    def helper():
-        tmp = create_get_pressed_mock_array(K_4)
         tmp[pressed_key] = 1
         return tmp
 
