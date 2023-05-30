@@ -19,7 +19,7 @@ from src.drawer import replace_characters_with_underlying_tiles, convert_numeric
 from src.game import Game
 from src.game_functions import get_next_coordinates
 from src.intro import controls
-from src.maps import MapWithoutNPCs, TantegelThroneRoom, Alefgard, TantegelCourtyard
+from src.maps import MapWithoutNPCs, TantegelThroneRoom, TantegelCourtyard, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.menu import CommandMenu
 from src.menu_functions import convert_list_to_newline_separated_string
@@ -98,15 +98,17 @@ class TestGame(TestCase):
         self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu)
         self.game.current_map = MockMap()
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
-        self.game.player = Player((0, 0), parse_animated_sprite_sheet(
-            scale(unarmed_hero_sheet,
-                  (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE))),
+        self.game.player = Player((0, 0), parse_animated_sprite_sheet(scale(unarmed_hero_sheet,
+                                                                            (unarmed_hero_sheet.get_width() * SCALE,
+                                                                             unarmed_hero_sheet.get_height() * SCALE)),
+                                                                      prod_config),
                                   self.game.current_map, prod_config)
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
-        self.camera = Camera((self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
-                              self.game.player.rect.x // self.game.game_state.config['TILE_SIZE']),
+        tile_size = self.game.game_state.config['TILE_SIZE']
+        self.camera = Camera((self.game.player.rect.y // tile_size,
+                              self.game.player.rect.x // tile_size),
                              self.game.current_map,
-                             self.game.screen)
+                             self.game.screen, tile_size)
 
     def test_get_initial_camera_position(self):
         self.assertEqual((288.0, 256.0), self.camera.get_pos())
@@ -349,10 +351,13 @@ class TestGame(TestCase):
         self.game.player.row, self.game.player.column = 29, 18
         self.game.player.next_next_coordinates = get_next_coordinates(18, 29, self.game.player.direction_value,
                                                                       offset_from_character=2)
+        self.assertEqual((29, 20), self.game.player.next_next_coordinates)
         self.game.player.next_tile_id = get_next_tile_identifier(self.game.player.column,
                                                                  self.game.player.row,
                                                                  self.game.player.direction_value,
                                                                  self.game.current_map)
+        self.assertEqual('WOOD', self.game.player.next_tile_id)
+        self.game.player.next_coordinates = get_next_coordinates(self.game.player.column, self.game.player.row, direction=self.game.player.direction_value)
         self.game.cmd_menu.talk()
         self.assertEqual(self.game.player.max_hp, self.game.player.current_hp)
         self.assertEqual(self.game.player.max_mp, self.game.player.current_mp)
@@ -473,7 +478,7 @@ class TestGame(TestCase):
         self.game.current_map.staircases = {
             (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
         self.game.change_map(TantegelThroneRoom())
-        self.game.current_map.load_map(self.game.player, (14, 18))
+        self.game.current_map.load_map(self.game.player, (14, 18), self.game.game_state.config["TILE_SIZE"])
         # test with moving characters before they're moving
         for roaming_character in self.game.current_map.roaming_characters:
             self.assertFalse(roaming_character.is_moving)

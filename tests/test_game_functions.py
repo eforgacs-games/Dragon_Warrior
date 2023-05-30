@@ -7,7 +7,7 @@ from pygame.image import load_extended
 from pygame.time import get_ticks
 from pygame.transform import scale
 
-from src import text, drawer
+from src import text
 from src.camera import Camera
 from src.common import Direction, UNARMED_HERO_PATH, NAME_SELECTION_UPPER_A, NAME_SELECTION_STATIC_IMAGE_LEN_0, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_1_PATH, \
@@ -49,11 +49,12 @@ class TestGameFunctions(TestCase):
         self.game.current_map = MockMap()
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
-        self.hero_images = parse_animated_sprite_sheet(
-            scale(unarmed_hero_sheet, (unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)))
+        self.hero_images = parse_animated_sprite_sheet(scale(unarmed_hero_sheet, (
+        unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)), self.game.game_state.config)
         self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map, prod_config)
-        self.camera = Camera((self.game.current_map.player.rect.y // self.game.game_state.config['TILE_SIZE'], self.game.current_map.player.rect.x // self.game.game_state.config['TILE_SIZE']), self.game.current_map,
-                             None)
+        tile_size = self.game.game_state.config['TILE_SIZE']
+        self.camera = Camera((self.game.current_map.player.rect.y // tile_size, self.game.current_map.player.rect.x // tile_size), self.game.current_map,
+                             None, tile_size)
 
     def test_set_character_position(self):
         # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
@@ -61,10 +62,11 @@ class TestGameFunctions(TestCase):
         self.game.player.row = 10
         self.assertEqual(13, self.game.player.column)
         self.assertEqual(10, self.game.player.row)
-        self.assertEqual(13, self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'])
-        self.assertEqual(10, self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'])
-        set_character_position(self.game.player)
-        self.assertEqual((self.game.player.column, self.game.player.row), (self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'], self.game.player.rect.y // self.game.game_state.config['TILE_SIZE']))
+        tile_size = self.game.game_state.config['TILE_SIZE']
+        self.assertEqual(13, self.game.player.rect.x // tile_size)
+        self.assertEqual(10, self.game.player.rect.y // tile_size)
+        set_character_position(self.game.player, tile_size)
+        self.assertEqual((self.game.player.column, self.game.player.row), (self.game.player.rect.x // tile_size, self.game.player.rect.y // tile_size))
         self.assertEqual((self.game.player.column, self.game.player.row), (13, 10))
 
     def test_get_next_coordinates(self):
