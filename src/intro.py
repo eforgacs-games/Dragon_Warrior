@@ -47,9 +47,9 @@ def draw_banner_text(screen: Surface, config):
               font_name=SMB_FONT_PATH, alignment='center', letter_by_letter=False)
 
 
-def repeated_sparkle(screen: Surface, clock_check, short) -> int | float:
-    if get_ticks() - clock_check >= convert_to_milliseconds(256):
-        clock_check = get_ticks()
+def repeated_sparkle(screen: Surface, clock_check, short, ticks) -> int | float:
+    if ticks - clock_check >= convert_to_milliseconds(256):
+        clock_check = ticks
         banner_sparkle(short, screen)
     return clock_check
 
@@ -61,7 +61,7 @@ def handle_sparkles(screen, done, clock_check, short):
         # return sparkle_done, last_sparkle_clock_check
         return True, get_ticks()
     else:
-        return True, repeated_sparkle(screen, clock_check, short)
+        return True, repeated_sparkle(screen, clock_check, short, get_ticks())
 
 
 class Intro:

@@ -4,7 +4,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pygame
-from pygame import K_F1, K_z, K_UP, RESIZABLE, SCALED
+from pygame import K_F1, K_z, K_UP, RESIZABLE, SCALED, K_4, K_i, K_k, K_u, K_j
 from pygame.imageext import load_extended
 from pygame.sprite import LayeredDirty
 from pygame.transform import scale
@@ -55,7 +55,56 @@ def create_move_player_key_mock(pressed_key):
 def create_key_mock(pressed_key):
     def helper():
         # increase this number as necessary to accommodate keys used
-        tmp = create_get_pressed_mock_array()
+        tmp = create_get_pressed_mock_array(pressed_key)
+        tmp[pressed_key] = 1
+        return tmp
+
+    return helper
+
+
+def create_key_mock_i(pressed_key):
+    def helper():
+        # increase this number as necessary to accommodate keys used
+        tmp = create_get_pressed_mock_array(K_i)
+        tmp[pressed_key] = 1
+        return tmp
+
+    return helper
+
+
+def create_key_mock_j(pressed_key):
+    def helper():
+        # increase this number as necessary to accommodate keys used
+        tmp = create_get_pressed_mock_array(K_j)
+        tmp[pressed_key] = 1
+        return tmp
+
+    return helper
+
+
+def create_key_mock_k(pressed_key):
+    def helper():
+        # increase this number as necessary to accommodate keys used
+        tmp = create_get_pressed_mock_array(K_k)
+        tmp[pressed_key] = 1
+        return tmp
+
+    return helper
+
+
+def create_key_mock_u(pressed_key):
+    def helper():
+        # increase this number as necessary to accommodate keys used
+        tmp = create_get_pressed_mock_array(K_u)
+        tmp[pressed_key] = 1
+        return tmp
+
+    return helper
+
+
+def create_fps_key_mock(pressed_key):
+    def helper():
+        tmp = create_get_pressed_mock_array(K_4)
         tmp[pressed_key] = 1
         return tmp
 
@@ -187,35 +236,41 @@ class TestGame(TestCase):
 
     # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
 
-    def test_handle_fps_changes(self):
-        pygame.key.get_pressed = create_key_mock(pygame.K_1)
+    def test_handle_fps_change_60(self):
+        pygame.key.get_pressed = create_fps_key_mock(pygame.K_1)
         self.game.handle_fps_changes(pygame.key.get_pressed())
         self.assertEqual(60, self.game.fps)
-        pygame.key.get_pressed = create_key_mock(pygame.K_2)
+
+    def test_handle_fps_change_120(self):
+        pygame.key.get_pressed = create_fps_key_mock(pygame.K_2)
         self.game.handle_fps_changes(pygame.key.get_pressed())
         self.assertEqual(120, self.game.fps)
-        pygame.key.get_pressed = create_key_mock(pygame.K_3)
+
+    def test_handle_fps_change_240(self):
+        pygame.key.get_pressed = create_fps_key_mock(pygame.K_3)
         self.game.handle_fps_changes(pygame.key.get_pressed())
         self.assertEqual(240, self.game.fps)
-        pygame.key.get_pressed = create_key_mock(pygame.K_4)
+
+    def test_handle_fps_change_480(self):
+        pygame.key.get_pressed = create_fps_key_mock(pygame.K_4)
         self.game.handle_fps_changes(pygame.key.get_pressed())
         self.assertEqual(480, self.game.fps)
 
     def test_handle_start_button(self):
         self.assertFalse(self.game.paused)
-        pygame.key.get_pressed = create_key_mock(pygame.K_i)
+        pygame.key.get_pressed = create_key_mock_i(pygame.K_i)
         self.game.handle_start_button(pygame.key.get_pressed())
         self.assertTrue(self.game.paused)
-        pygame.key.get_pressed = create_key_mock(pygame.K_i)
+        pygame.key.get_pressed = create_key_mock_i(pygame.K_i)
         self.game.handle_start_button(pygame.key.get_pressed())
         self.assertFalse(self.game.paused)
 
     def test_handle_a_button_and_b_button(self):
         self.assertFalse(self.game.cmd_menu.launch_signaled)
-        pygame.key.get_pressed = create_key_mock(pygame.K_k)
+        pygame.key.get_pressed = create_key_mock_k(pygame.K_k)
         self.game.handle_a_button(pygame.key.get_pressed())
         self.assertTrue(self.game.cmd_menu.launch_signaled)
-        pygame.key.get_pressed = create_key_mock(pygame.K_j)
+        pygame.key.get_pressed = create_key_mock_j(pygame.K_j)
         self.game.handle_b_button(pygame.key.get_pressed())
         self.assertFalse(self.game.cmd_menu.launch_signaled)
 
@@ -430,7 +485,7 @@ class TestGame(TestCase):
         mock_window_drop_down_effect.assert_called_with(1, 2, 4, 6)
 
     def test_handle_select_button(self):
-        pygame.key.get_pressed = create_key_mock(pygame.K_u)
+        pygame.key.get_pressed = create_key_mock_u(pygame.K_u)
         self.game.handle_select_button(pygame.key.get_pressed())
 
     def test_handle_help_button(self):
