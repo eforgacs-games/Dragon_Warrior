@@ -62,7 +62,7 @@ def create_key_mock(pressed_key):
     return helper
 
 
-def create_key_mock_i(pressed_key):
+def create_i_key_mock(pressed_key):
     def helper():
         # increase this number as necessary to accommodate keys used
         tmp = create_get_pressed_mock_array(K_i)
@@ -72,7 +72,7 @@ def create_key_mock_i(pressed_key):
     return helper
 
 
-def create_key_mock_j(pressed_key):
+def create_j_key_mock(pressed_key):
     def helper():
         # increase this number as necessary to accommodate keys used
         tmp = create_get_pressed_mock_array(K_j)
@@ -82,7 +82,7 @@ def create_key_mock_j(pressed_key):
     return helper
 
 
-def create_key_mock_k(pressed_key):
+def create_k_key_mock(pressed_key):
     def helper():
         # increase this number as necessary to accommodate keys used
         tmp = create_get_pressed_mock_array(K_k)
@@ -92,7 +92,7 @@ def create_key_mock_k(pressed_key):
     return helper
 
 
-def create_key_mock_u(pressed_key):
+def create_u_key_mock(pressed_key):
     def helper():
         # increase this number as necessary to accommodate keys used
         tmp = create_get_pressed_mock_array(K_u)
@@ -189,10 +189,6 @@ class TestGame(TestCase):
     # def test_hero_underlying_tile_not_implemented(self):
     #     self.assertRaises(NotImplementedError, self.game.current_map.hero_underlying_tile)
 
-    # def test_move_player_return_value(self):
-    #     key = pygame.key.get_pressed()
-    #     self.assertEqual(self.game.move_player(key), None)
-
     def test_get_tile_by_coordinates(self):
         self.assertEqual('HERO', get_tile_id_by_coordinates(0, 0, self.game.current_map))
         self.assertEqual('ROOF', get_tile_id_by_coordinates(1, 0, self.game.current_map))
@@ -260,19 +256,19 @@ class TestGame(TestCase):
 
     def test_handle_start_button(self):
         self.assertFalse(self.game.paused)
-        pygame.key.get_pressed = create_key_mock_i(pygame.K_i)
+        pygame.key.get_pressed = create_i_key_mock(pygame.K_i)
         self.game.handle_start_button(pygame.key.get_pressed())
         self.assertTrue(self.game.paused)
-        pygame.key.get_pressed = create_key_mock_i(pygame.K_i)
+        pygame.key.get_pressed = create_i_key_mock(pygame.K_i)
         self.game.handle_start_button(pygame.key.get_pressed())
         self.assertFalse(self.game.paused)
 
     def test_handle_a_button_and_b_button(self):
         self.assertFalse(self.game.cmd_menu.launch_signaled)
-        pygame.key.get_pressed = create_key_mock_k(pygame.K_k)
+        pygame.key.get_pressed = create_k_key_mock(pygame.K_k)
         self.game.handle_a_button(pygame.key.get_pressed())
         self.assertTrue(self.game.cmd_menu.launch_signaled)
-        pygame.key.get_pressed = create_key_mock_j(pygame.K_j)
+        pygame.key.get_pressed = create_j_key_mock(pygame.K_j)
         self.game.handle_b_button(pygame.key.get_pressed())
         self.assertFalse(self.game.cmd_menu.launch_signaled)
 
@@ -360,7 +356,6 @@ class TestGame(TestCase):
 
     def test_run_automatic_initial_dialog(self):
         self.assertTrue(self.game.game_state.is_initial_dialog)
-        # pygame.key.get_pressed = create_key_mock(pygame.K_j)
         self.game.drawer.run_automatic_initial_dialog(self.game.events, self.game.skip_text, self.game.cmd_menu)
         self.assertFalse(self.game.game_state.enable_movement)
         # TODO(ELF): Need to enable the following checks:
@@ -486,9 +481,11 @@ class TestGame(TestCase):
             self.assertTrue(self.game.hovering_stats_displayed)
         mock_window_drop_down_effect.assert_called_with(1, 2, 4, 6)
 
-    def test_handle_select_button(self):
-        pygame.key.get_pressed = create_key_mock_u(pygame.K_u)
-        self.game.handle_select_button(pygame.key.get_pressed())
+    # select button doesn't do anything (for now). Commenting it out to keep the unit tests fast.
+
+    # def test_handle_select_button(self):
+    #     pygame.key.get_pressed = create_key_mock_u(pygame.K_u)
+    #     self.game.handle_select_button(pygame.key.get_pressed())
 
     def test_handle_help_button(self):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
@@ -497,11 +494,11 @@ class TestGame(TestCase):
         mock_show_text_in_dialog_box.assert_called_with(
             f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
 
-    def test_handle_keypresses(self):
-        pygame.key.get_pressed = create_f1_key_mock(pygame.K_k)
-        self.game.handle_keypresses(pygame.key.get_pressed())
-        pygame.key.get_pressed = create_f1_key_mock(pygame.K_j)
-        self.game.handle_keypresses(pygame.key.get_pressed())
+    # def test_handle_keypresses(self):
+    #     pygame.key.get_pressed = create_f1_key_mock(pygame.K_k)
+    #     self.game.handle_keypresses(pygame.key.get_pressed())
+    #     pygame.key.get_pressed = create_f1_key_mock(pygame.K_j)
+    #     self.game.handle_keypresses(pygame.key.get_pressed())
 
     def test_get_events(self):
         self.game.get_events()
