@@ -1,3 +1,4 @@
+import os
 import textwrap
 
 from pygame import font, time, display
@@ -65,10 +66,15 @@ def set_text_rect_alignment(alignment, text_surface, x, y):
 
 def set_font_by_language(font_name, size, text, config):
     if config["LANGUAGE"] == 'Korean':
-        if not text.strip('’(↑ ← ↓ →)').isascii():
-            current_font = font.Font(UNIFONT_PATH, size + 1)
-        else:
-            current_font = font.Font(font_name, size)
+        current_font = set_font_by_ascii_chars(font_name, size, text)
+    else:
+        current_font = font.Font(font_name, size)
+    return current_font
+
+
+def set_font_by_ascii_chars(font_name, size, text):
+    if not text.strip('’(↑ ← ↓ →)').isascii():
+        current_font = font.Font(UNIFONT_PATH, size + 1)
     else:
         current_font = font.Font(font_name, size)
     return current_font
