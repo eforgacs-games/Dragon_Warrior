@@ -78,7 +78,7 @@ def set_text_rect_alignment(alignment, text_surface, x, y):
 
 
 def set_font_by_ascii_chars(font_name, size, text):
-    if not text.strip('’(↑ ← ↓ →)').isascii():
+    if not text.strip('’(↑ ← ↓ →)▼').isascii():
         current_font = font.Font(UNIFONT_PATH, size + 1)
     else:
         current_font = font.Font(font_name, size)
