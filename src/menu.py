@@ -253,12 +253,14 @@ class CommandMenu(Menu):
                             self.background.blit(character_dict['character_sprites'].sprites()[0].image,
                                                  (character_dict['character'].rect.x,
                                                   character_dict['character'].rect.y))
-                    self.screen.blit(self.background, self.camera_position)
+                    if not self.game.game_state.config['NO_BLIT']:
+                        self.screen.blit(self.background, self.camera_position)
                     if self.launch_signaled:
                         self.screen.blit(self.command_menu_surface, (tile_size * 6, tile_size * 1))
                     if self.game.drawer.display_hovering_stats:
                         self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.game.color)
-                    display.update(self.screen.blit(black_box, (tile_size * left, tile_size * top)))
+                    if not self.game.game_state.config['NO_BLIT']:
+                        display.update(self.screen.blit(black_box, (tile_size * left, tile_size * top)))
 
     def take_item(self, item_name: str):
         play_sound(open_treasure_sfx)

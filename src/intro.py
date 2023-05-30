@@ -14,12 +14,12 @@ from src.text import draw_text
 from src.visual_effects import fade
 
 
-def show_intro_banner(intro_banner_path, screen) -> Rect:
+def show_intro_banner(intro_banner_path, screen, no_blit) -> Rect:
     intro_banner = image.load(intro_banner_path)
     intro_banner = scale(intro_banner, (screen.get_width(), intro_banner.get_height() * 2))
     intro_banner_rect = intro_banner.get_rect()
     intro_banner_rect.midtop = (screen.get_width() / 2, screen.get_height() * 1 / 6)
-    screen.blit(intro_banner, intro_banner_rect)
+    screen.blit(intro_banner, intro_banner_rect) if not no_blit else None
     return intro_banner_rect
 
 
@@ -33,11 +33,11 @@ def banner_sparkle(short: bool, screen: Surface) -> None:
         else:
             frames_per_slide = 3
         while convert_to_frames(get_ticks()) < before_frame + frames_per_slide:
-            intro_banner_rect = show_intro_banner(join(IMAGES_DIR, 'intro_banner', 'sparkle', banner), screen)
+            intro_banner_rect = show_intro_banner(join(IMAGES_DIR, 'intro_banner', 'sparkle', banner), screen, False)
             display.update(intro_banner_rect)
 
 
-def draw_banner_text(screen: Surface, config):
+def draw_banner_text(screen: Surface, config: dict):
     draw_text(push_start, screen.get_width() / 2, screen.get_height() * 10 / 16, screen, config, ORANGE,
               alignment='center', letter_by_letter=False)
     for i in range(11, 15):
@@ -76,7 +76,7 @@ class Intro:
 
     def show_start_screen(self, screen, start_time, clock, config):
         screen.fill(BLACK)
-        intro_banner_rect = show_intro_banner(INTRO_BANNER_PATH, screen)
+        intro_banner_rect = show_intro_banner(INTRO_BANNER_PATH, screen, config['NO_BLIT'])
         display.update(intro_banner_rect)
         waiting = True
         while waiting:
@@ -94,7 +94,7 @@ class Intro:
         self.show_intro_dragon_banner_with_text(screen, clock, config)
 
     def show_intro_dragon_banner_with_text(self, screen, clock, config):
-        show_intro_banner(INTRO_BANNER_WITH_DRAGON_PATH, screen)
+        show_intro_banner(INTRO_BANNER_WITH_DRAGON_PATH, screen, config['NO_BLIT'])
         draw_banner_text(screen, config)
         # TODO: Might be good to add these control keys to an F1 help screen.
         display.flip()

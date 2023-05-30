@@ -18,12 +18,14 @@ class TestIntro(TestCase):
 
     def setUp(self) -> None:
         prod_config['NO_WAIT'] = True
+        prod_config['RENDER_TEXT'] = False
+        prod_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
         self.intro = Intro()
 
     def test_show_intro_banner(self):
-        self.assertIsInstance(show_intro_banner(INTRO_BANNER_PATH, self.game.screen), Rect)
+        self.assertIsInstance(show_intro_banner(INTRO_BANNER_PATH, self.game.screen, no_blit=True), Rect)
 
     @patch('src.intro.banner_sparkle')
     # @patch(pygame.time, )

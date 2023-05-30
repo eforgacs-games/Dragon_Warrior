@@ -19,7 +19,6 @@ def draw_text(text, x, y, screen, config, color=WHITE, size=16, font_name=DRAGON
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
     # chunks = [text[i:i + n] for i in range(0, len(text), n)]
-    current_font = set_font_by_language(font_name, size, text, config)
     dialog_box_wrapper = DialogBoxWrapper(width=text_wrap_length, break_long_words=False)
     chunks = dialog_box_wrapper.wrap(text)
     item_gained_matches = ["thou hast gained", "Thou hast found"]
@@ -30,24 +29,29 @@ def draw_text(text, x, y, screen, config, color=WHITE, size=16, font_name=DRAGON
             string = ''
             for i in range(len(chunk)):
                 string += chunk[i]
-                blit_text_to_screen(alignment, color, current_font, screen, string, x, y)
-                display.update()
+                if not config['NO_BLIT']:
+                    current_font = set_font_by_ascii_chars(font_name, size, chunk)
+                    blit_text_to_screen(alignment, color, current_font, screen, string, x, y, config["RENDER_TEXT"])
+                    display.update()
                 if not config['NO_WAIT']:
                     time.wait(16)
                 if not disable_sound:
                     if i % 3 == 0:
                         play_sound(text_beep_sfx)
         else:
-            blit_text_to_screen(alignment, color, current_font, screen, chunk, x, y)
+            if not config['NO_BLIT']:
+                current_font = set_font_by_ascii_chars(font_name, size, chunk)
+                blit_text_to_screen(alignment, color, current_font, screen, chunk, x, y, config["RENDER_TEXT"])
         y += 17
         if chunk == chunks[len(chunks) - 1]:
             return chunk
 
 
-def blit_text_to_screen(alignment, color, current_font, screen, string, x, y):
-    text_surface = current_font.render(string, True, color, BLACK)
-    text_rect = set_text_rect_alignment(alignment, text_surface, x, y)
-    screen.blit(text_surface, text_rect)
+def blit_text_to_screen(alignment, color, current_font, screen, string, x, y, render_text=True):
+    if render_text:
+        text_surface = current_font.render(string, True, color, BLACK)
+        text_rect = set_text_rect_alignment(alignment, text_surface, x, y)
+        screen.blit(text_surface, text_rect)
 
 
 def set_text_rect_alignment(alignment, text_surface, x, y):
@@ -62,12 +66,15 @@ def set_text_rect_alignment(alignment, text_surface, x, y):
     return text_rect
 
 
-def set_font_by_language(font_name, size, text, config):
-    if config["LANGUAGE"] == 'Korean':
-        current_font = set_font_by_ascii_chars(font_name, size, text)
-    else:
-        current_font = font.Font(font_name, size)
-    return current_font
+# def set_font_by_language(font_name, size, text, language):
+#     if language == 'Korean':
+#         current_font = set_font_by_ascii_chars(font_name, size, text)
+#     else:
+#         if not text.strip('’(↑ ← ↓ →)').isascii():
+#             current_font = font.Font(UNIFONT_PATH, size + 5)
+#         else:
+#             current_font = font.Font(font_name, size)
+#     return current_font
 
 
 def set_font_by_ascii_chars(font_name, size, text):
