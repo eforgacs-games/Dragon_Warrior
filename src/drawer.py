@@ -207,7 +207,7 @@ class Drawer:
         darkness.fill(BLACK)
         darkness_hole.fill(WHITE)
         darkness.set_colorkey(WHITE)
-        screen.blit(darkness, (0, 0))
+        screen.blit(darkness, (0, 0)) if not self.game_state.config['NO_BLIT'] else None
 
     def draw_all(self, screen, loop_count, big_map, current_map, player, cmd_menu, foreground_rects, enable_animate,
                  camera, initial_dialog_enabled, events, skip_text, allow_save_prompt, game_state, torch_active,
