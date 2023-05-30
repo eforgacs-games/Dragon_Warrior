@@ -6,7 +6,7 @@ from src.sprites.animated_sprite import AnimatedSprite
 
 class Player(AnimatedSprite):
 
-    def __init__(self, center_point, images, current_map, config, direction_value=Direction.DOWN.value):
+    def __init__(self, center_point, images, current_map, direction_value=Direction.DOWN.value, god_mode=False):
         AnimatedSprite.__init__(self, center_point, direction_value, images, identifier='HERO')
 
         # map/collision-related attributes
@@ -59,8 +59,8 @@ class Player(AnimatedSprite):
 
         self.spells = []
         self.inventory = []
-
-        if config['GOD_MODE']:
+        self.god_mode = god_mode
+        if god_mode:
             self.total_experience = 65536
             self.level = self.get_level_by_experience()
             self.update_stats_to_current_level()

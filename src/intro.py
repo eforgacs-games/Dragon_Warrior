@@ -10,17 +10,16 @@ from data.text.intro_lookup_table import push_start, controls
 from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, PINK, SMB_FONT_PATH, \
     convert_to_milliseconds, BLACK, INTRO_BANNER_PATH, \
     convert_to_frames_since_start_time, IMAGES_DIR
-from src.config import dev_config
 from src.text import draw_text
 from src.visual_effects import fade
 
 
-def show_intro_banner(intro_banner_path, screen) -> Rect:
+def show_intro_banner(intro_banner_path, screen, no_blit) -> Rect:
     intro_banner = image.load(intro_banner_path)
     intro_banner = scale(intro_banner, (screen.get_width(), intro_banner.get_height() * 2))
     intro_banner_rect = intro_banner.get_rect()
     intro_banner_rect.midtop = (screen.get_width() / 2, screen.get_height() * 1 / 6)
-    screen.blit(intro_banner, intro_banner_rect)
+    screen.blit(intro_banner, intro_banner_rect) if not no_blit else None
     return intro_banner_rect
 
 
@@ -34,11 +33,11 @@ def banner_sparkle(short: bool, screen: Surface) -> None:
         else:
             frames_per_slide = 3
         while convert_to_frames(get_ticks()) < before_frame + frames_per_slide:
-            intro_banner_rect = show_intro_banner(join(IMAGES_DIR, 'intro_banner', 'sparkle', banner), screen)
+            intro_banner_rect = show_intro_banner(join(IMAGES_DIR, 'intro_banner', 'sparkle', banner), screen, False)
             display.update(intro_banner_rect)
 
 
-def draw_banner_text(screen: Surface, config):
+def draw_banner_text(screen: Surface, config: dict):
     draw_text(push_start, screen.get_width() / 2, screen.get_height() * 10 / 16, screen, config, ORANGE,
               alignment='center', letter_by_letter=False)
     for i in range(11, 15):
@@ -48,9 +47,9 @@ def draw_banner_text(screen: Surface, config):
               font_name=SMB_FONT_PATH, alignment='center', letter_by_letter=False)
 
 
-def repeated_sparkle(screen: Surface, clock_check, short) -> int | float:
-    if get_ticks() - clock_check >= convert_to_milliseconds(256):
-        clock_check = get_ticks()
+def repeated_sparkle(screen: Surface, clock_check, short, ticks) -> int | float:
+    if ticks - clock_check >= convert_to_milliseconds(256):
+        clock_check = ticks
         banner_sparkle(short, screen)
     return clock_check
 
@@ -62,7 +61,7 @@ def handle_sparkles(screen, done, clock_check, short):
         # return sparkle_done, last_sparkle_clock_check
         return True, get_ticks()
     else:
-        return True, repeated_sparkle(screen, clock_check, short)
+        return True, repeated_sparkle(screen, clock_check, short, get_ticks())
 
 
 class Intro:
@@ -77,7 +76,7 @@ class Intro:
 
     def show_start_screen(self, screen, start_time, clock, config):
         screen.fill(BLACK)
-        intro_banner_rect = show_intro_banner(INTRO_BANNER_PATH, screen)
+        intro_banner_rect = show_intro_banner(INTRO_BANNER_PATH, screen, config['NO_BLIT'])
         display.update(intro_banner_rect)
         waiting = True
         while waiting:
@@ -95,7 +94,7 @@ class Intro:
         self.show_intro_dragon_banner_with_text(screen, clock, config)
 
     def show_intro_dragon_banner_with_text(self, screen, clock, config):
-        show_intro_banner(INTRO_BANNER_WITH_DRAGON_PATH, screen)
+        show_intro_banner(INTRO_BANNER_WITH_DRAGON_PATH, screen, config['NO_BLIT'])
         draw_banner_text(screen, config)
         # TODO: Might be good to add these control keys to an F1 help screen.
         display.flip()

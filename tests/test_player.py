@@ -27,7 +27,9 @@ class TestPlayer(TestCase):
 
     def setUp(self):
         prod_config['NO_WAIT'] = True
-        self.player = Player(center_point=None, images=None, current_map=MockMap(), config=prod_config)
+        prod_config['RENDER_TEXT'] = False
+        prod_config['NO_BLIT'] = True
+        self.player = Player(center_point=None, images=None, current_map=MockMap(), god_mode=prod_config['GOD_MODE'])
 
     def test_get_level_by_experience(self):
         self.assertEqual(1, self.player.level)
