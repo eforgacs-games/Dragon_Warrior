@@ -235,41 +235,42 @@ class TestGame(TestCase):
     # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
 
     def test_handle_fps_change_60(self):
-        pygame.key.get_pressed = create_fps_key_mock(pygame.K_1)
-        self.game.handle_fps_changes(pygame.key.get_pressed())
+        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="1", key=pygame.K_1, mod=pygame.KMOD_NONE)
+        self.game.handle_fps_changes(keydown_event)
         self.assertEqual(60, self.game.fps)
 
     def test_handle_fps_change_120(self):
-        pygame.key.get_pressed = create_fps_key_mock(pygame.K_2)
-        self.game.handle_fps_changes(pygame.key.get_pressed())
+        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="2", key=pygame.K_2, mod=pygame.KMOD_NONE)
+        self.game.handle_fps_changes(keydown_event)
         self.assertEqual(120, self.game.fps)
 
     def test_handle_fps_change_240(self):
-        pygame.key.get_pressed = create_fps_key_mock(pygame.K_3)
-        self.game.handle_fps_changes(pygame.key.get_pressed())
+        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="3", key=pygame.K_3, mod=pygame.KMOD_NONE)
+        self.game.handle_fps_changes(keydown_event)
         self.assertEqual(240, self.game.fps)
 
     def test_handle_fps_change_480(self):
-        pygame.key.get_pressed = create_fps_key_mock(pygame.K_4)
-        self.game.handle_fps_changes(pygame.key.get_pressed())
+        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="4", key=pygame.K_4, mod=pygame.KMOD_NONE)
+        self.game.handle_fps_changes(keydown_event)
         self.assertEqual(480, self.game.fps)
 
     def test_handle_start_button(self):
         self.assertFalse(self.game.paused)
-        pygame.key.get_pressed = create_i_key_mock(pygame.K_i)
-        self.game.handle_start_button(pygame.key.get_pressed())
+        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="i", key=pygame.K_i, mod=pygame.KMOD_NONE)
+        self.game.handle_start_button(keydown_event)
         self.assertTrue(self.game.paused)
-        pygame.key.get_pressed = create_i_key_mock(pygame.K_i)
-        self.game.handle_start_button(pygame.key.get_pressed())
+        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="i", key=pygame.K_i, mod=pygame.KMOD_NONE)
+        self.game.handle_start_button(keydown_event)
         self.assertFalse(self.game.paused)
 
     def test_handle_a_button_and_b_button(self):
         self.assertFalse(self.game.cmd_menu.launch_signaled)
-        pygame.key.get_pressed = create_k_key_mock(pygame.K_k)
-        self.game.handle_a_button(pygame.key.get_pressed())
+        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="k", key=pygame.K_k, mod=pygame.KMOD_NONE)
+        # pygame.event.post(keydown_event)
+        self.game.handle_a_button(keydown_event)
         self.assertTrue(self.game.cmd_menu.launch_signaled)
-        pygame.key.get_pressed = create_j_key_mock(pygame.K_j)
-        self.game.handle_b_button(pygame.key.get_pressed())
+        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="j", key=pygame.K_j, mod=pygame.KMOD_NONE)
+        self.game.handle_b_button(keydown_event)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
 
     def test_replace_characters_with_underlying_tiles(self):
@@ -489,8 +490,8 @@ class TestGame(TestCase):
 
     def test_handle_help_button(self):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
-            pygame.key.get_pressed = create_f1_key_mock(pygame.K_F1)
-            self.game.handle_help_button(pygame.key.get_pressed())
+            keydown_event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F1, mod=pygame.KMOD_NONE)
+            self.game.handle_help_button(keydown_event)
         mock_show_text_in_dialog_box.assert_called_with(
             f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
 

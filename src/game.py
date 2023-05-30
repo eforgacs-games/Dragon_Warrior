@@ -193,14 +193,16 @@ class Game:
             if current_event.type == QUIT:
                 quit()
                 sys.exit()
+            elif current_event.type == KEYDOWN:
+                self.handle_keypresses(current_event)
+        if self.game_state.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
+            current_key = key.get_pressed()
+            self.move_player(current_key)
         event.pump()
-        current_key = key.get_pressed()
         self.set_text_color()
         self.handle_battles()
         if not self.player.is_moving:
             set_character_position(self.player, tile_size=self.tile_size)
-        if self.game_state.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
-            self.move_player(current_key)
         if self.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
             self.update_roaming_character_positions()
@@ -211,7 +213,6 @@ class Game:
         # as done with Cantlin and others below
         self.handle_warps()
 
-        self.handle_keypresses(current_key)
 
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // self.tile_size,
                                                               self.player.rect.y // self.tile_size,
@@ -666,29 +667,29 @@ class Game:
                     self.change_map(next_map)
                     break
 
-    def handle_keypresses(self, current_key):
-        self.handle_b_button(current_key)
-        self.handle_a_button(current_key)
-        self.handle_start_button(current_key)
-        self.handle_select_button(current_key)
+    def handle_keypresses(self, current_keydown_event):
+        self.handle_b_button(current_keydown_event)
+        self.handle_a_button(current_keydown_event)
+        self.handle_start_button(current_keydown_event)
+        self.handle_select_button(current_keydown_event)
         # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed (or scroll wheel is moved). (modernization)
         # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
         #     self.scale = self.scale + 1
-        self.handle_help_button(current_key)
-        self.handle_fps_changes(current_key)
+        self.handle_help_button(current_keydown_event)
+        self.handle_fps_changes(current_keydown_event)
 
-    def handle_help_button(self, current_key):
-        if current_key[K_F1]:
+    def handle_help_button(self, keydown_event):
+        if keydown_event.key == K_F1:
             self.cmd_menu.show_text_in_dialog_box(f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
 
-    def handle_b_button(self, current_key):
-        if current_key[K_j]:
+    def handle_b_button(self, keydown_event):
+        if keydown_event.key == K_j:
             # B button
             self.unlaunch_menu(self.cmd_menu)
             # print("J key pressed (B button).")
 
-    def handle_a_button(self, current_key):
-        if current_key[K_k]:
+    def handle_a_button(self, keydown_event):
+        if keydown_event.key == K_k:
             # A button
             # print("K key pressed (A button).")
             if not self.player.is_moving:
@@ -697,8 +698,8 @@ class Game:
                 self.cmd_menu.launch_signaled = True
                 self.game_state.pause_all_movement()
 
-    def handle_start_button(self, current_key):
-        if current_key[K_i]:
+    def handle_start_button(self, keydown_event):
+        if keydown_event.key == K_i:
             # Start button
             if self.paused:
                 self.game_state.unpause_all_movement()
@@ -709,22 +710,22 @@ class Game:
             print("I key pressed (Start button).")
 
     @staticmethod
-    def handle_select_button(current_key):
-        if current_key[K_u]:
+    def handle_select_button(keydown_event):
+        if keydown_event.key == K_u:
             # Select button
             pass
 
-    def handle_fps_changes(self, current_key) -> None:
-        if current_key[K_1]:
+    def handle_fps_changes(self, keydown_event) -> None:
+        if keydown_event.key == K_1:
             self.draw_temporary_text(self.cmd_menu.dialog_lookup.normal_speed_string)
             self.fps = 60
-        if current_key[K_2]:
+        if keydown_event.key == K_2:
             self.draw_temporary_text(self.cmd_menu.dialog_lookup.double_speed_string)
             self.fps = 120
-        if current_key[K_3]:
+        if keydown_event.key == K_3:
             self.draw_temporary_text(self.cmd_menu.dialog_lookup.triple_speed_string)
             self.fps = 240
-        if current_key[K_4]:
+        if keydown_event.key == K_4:
             self.draw_temporary_text(self.cmd_menu.dialog_lookup.quadruple_speed_string)
             self.fps = 480
 
