@@ -7,7 +7,8 @@ from src.player.player import Player
 
 class TestDialogLookup(TestCase):
     def setUp(self):
-        prod_config['NO_WAIT'] = True
-        player = Player(None, None, None, prod_config)
+        config = prod_config
+        config['NO_WAIT'] = True
+        player = Player(None, None, None, config)
         player.name = 'Edward'
-        self.dialog_lookup = DialogLookup(None)
+        self.dialog_lookup = DialogLookup(None, config)
