@@ -291,7 +291,7 @@ class Game:
                             mixer.music.play(-1)
                         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
                                                         (7 * self.tile_size, 7 * self.tile_size))
-                        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size))
+                        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size)) if not self.game_state.config['NO_BLIT'] else None
                         display.update(battle_background_image.get_rect())
                         self.drawer.show_enemy_image(self.screen, enemy_name)
                         enemy_draws_near_string = f'{enemy_name} draws near!\n' \
@@ -491,7 +491,7 @@ class Game:
                                               disable_sound=True)
         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
                                         (7 * self.tile_size, 7 * self.tile_size))
-        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size))
+        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size)) if not self.game_state.config['NO_BLIT'] else None
         display.update(battle_background_image.get_rect())
         self.cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
                                               f"Thy GOLD increases by {enemy.gold}.\n", add_quotes=False,
@@ -642,7 +642,7 @@ class Game:
         self.player.current_hp -= damage_amount
         play_sound(swamp_sfx)
         self.player.received_environment_damage = True
-        flash_transparent_color(RED, self.screen)
+        flash_transparent_color(RED, self.screen, no_blit=self.game_state.config['NO_BLIT'])
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
                              self.foreground_rects, self.enable_animate, self.camera, self.initial_dialog_enabled,
                              self.events, self.skip_text, self.allow_save_prompt, self.game_state, self.torch_active,

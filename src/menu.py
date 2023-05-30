@@ -221,8 +221,9 @@ class CommandMenu(Menu):
             drop_down_start = get_ticks()
             # each "bar" lasts 1 frame
             while convert_to_frames_since_start_time(drop_down_start) < 1:
-                self.screen.blit(black_box, (tile_size * left, tile_size * top))
-                display.update(window_rect)
+                if not self.game.game_state.config['NO_BLIT']:
+                    self.screen.blit(black_box, (tile_size * left, tile_size * top))
+                    display.update(window_rect)
 
     def window_drop_up_effect(self, left, top, width, height) -> None:
         """Outro effect for menus."""
@@ -248,15 +249,15 @@ class CommandMenu(Menu):
                 drop_up_start = get_ticks()
                 while convert_to_frames_since_start_time(drop_up_start) < 1:
                     # draw_player_sprites(self.current_map, self.background, self.player.rect.x, self.player.rect.y)
-                    for character, character_dict in self.current_map.characters.items():
-                        if camera_screen_rect.colliderect(character_dict['character'].rect):
-                            self.background.blit(character_dict['character_sprites'].sprites()[0].image,
-                                                 (character_dict['character'].rect.x,
-                                                  character_dict['character'].rect.y))
                     if not self.game.game_state.config['NO_BLIT']:
-                        self.screen.blit(self.background, self.camera_position)
+                        for character, character_dict in self.current_map.characters.items():
+                            if camera_screen_rect.colliderect(character_dict['character'].rect):
+                                self.background.blit(character_dict['character_sprites'].sprites()[0].image,
+                                                     (character_dict['character'].rect.x,
+                                                      character_dict['character'].rect.y))
+                            self.screen.blit(self.background, self.camera_position)
                     if self.launch_signaled:
-                        self.screen.blit(self.command_menu_surface, (tile_size * 6, tile_size * 1))
+                        self.screen.blit(self.command_menu_surface, (tile_size * 6, tile_size * 1)) if not self.game.game_state.config['NO_BLIT'] else None
                     if self.game.drawer.display_hovering_stats:
                         self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.game.color)
                     if not self.game.game_state.config['NO_BLIT']:
