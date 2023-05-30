@@ -298,12 +298,12 @@ class CommandMenu(Menu):
         self.current_map.layout[row][column] = \
         self.game.layouts.map_layout_lookup[self.current_map.__class__.__name__][row][column] = \
             self.current_map.floor_tile_key[new_tile_identifier]['val']
-        center_pt = get_center_point(column, row)
+        center_pt = get_center_point(column, row, tile_size=self.game.game_state.config['TILE_SIZE'])
         self.current_map.floor_tile_key[old_tile_identifier]['group'] = Group()
         self.current_map.add_tile(self.current_map.floor_tile_key[new_tile_identifier], center_pt)
         for row in range(len(self.current_map.layout)):
             for column in range(len(self.current_map.layout[row])):
-                self.current_map.center_pt = get_center_point(column, row)
+                self.current_map.center_pt = get_center_point(column, row, tile_size=self.game.game_state.config['TILE_SIZE'])
                 if self.current_map.layout[row][column] <= max(
                         self.current_map.floor_tile_key[old_tile_identifier]['val'],
                         self.current_map.floor_tile_key[new_tile_identifier]['val']):
@@ -485,8 +485,8 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # this might be something we could turn off as one of the "modernization" updates
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN'):
-            self.game.process_staircase_warps((self.game.player.row, self.game.player.column),
-                                              self.game.current_map.staircases[
+            self.game.process_staircase_warps(staircase_location=(self.game.player.row, self.game.player.column),
+                                              staircase_dict=self.game.current_map.staircases[
                                                   (self.game.player.row, self.game.player.column)])
             # TODO: activate the staircase warp to wherever the staircase leads
         else:

@@ -51,7 +51,7 @@ class DragonWarriorMap:
         self.tiles_in_current_loaded_map = None
         self.layout = layout
         self.center_pt = None
-        self.map_tiles = parse_map_tiles(map_path=MAP_TILES_PATH)
+        self.map_tiles = parse_map_tiles(map_path=MAP_TILES_PATH, tile_size=config['TILE_SIZE'])
         self.impassable_tiles = all_impassable_tiles
         self.tile_group_dict = {}
         self.staircases = {}
@@ -143,13 +143,13 @@ class DragonWarriorMap:
         if character_layout_position:
             return character_layout_position[0][0], character_layout_position[0][1]
 
-    def load_map(self, player, destination_coordinates) -> None:
+    def load_map(self, player, destination_coordinates, tile_size) -> None:
         self.destination_coordinates = destination_coordinates
         self.tile_types_in_current_map = self.get_tiles_in_current_map()
         self.impassable_tiles = tuple(self.tile_types_in_current_map & set(all_impassable_tiles))
         for row in range(len(self.layout)):
             for column in range(len(self.layout[row])):
-                self.center_pt = get_center_point(column, row)
+                self.center_pt = get_center_point(column, row, tile_size=tile_size)
                 if self.layout[row][column] <= 32:  # anything below 32 is a floor tile
                     self.map_floor_tiles(column, row)
                 else:
@@ -176,14 +176,14 @@ class DragonWarriorMap:
                          coordinates, character_dict['roaming'])
 
     def scale_sprite_sheet(self, image_path):
-        return parse_animated_sprite_sheet(
-            scale(get_image(image_path), (get_image(image_path).get_width() * self.scale, get_image(image_path).get_height() * self.scale)))
+        return parse_animated_sprite_sheet(scale(get_image(image_path), (
+        get_image(image_path).get_width() * self.scale, get_image(image_path).get_height() * self.scale)), config)
 
     def map_npc(self, identifier, direction, underlying_tile, image_path, four_sided, coordinates, is_roaming=False) -> None:
         sheet = get_image(image_path)
         character_sprites = LayeredDirty()
         sheet = scale(sheet, (sheet.get_width() * self.scale, sheet.get_height() * self.scale))
-        images = parse_animated_sprite_sheet(sheet)
+        images = parse_animated_sprite_sheet(sheet, config)
         if four_sided:
             if is_roaming:
                 character = RoamingCharacter(self.center_pt, direction, images, identifier)

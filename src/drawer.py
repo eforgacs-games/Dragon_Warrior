@@ -268,7 +268,7 @@ class Drawer:
                                                                camera_screen_rect.height * 0.25)
         fixed_character_rects = [fixed_character.rect for fixed_character in current_map.fixed_characters]
         roaming_character_rects = [
-            roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character) for
+            roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character, self.game_state.config["TILE_SIZE"]) for
             roaming_character in
             current_map.roaming_characters]
         for tile, tile_dict in current_map.floor_tile_key.items():
@@ -276,7 +276,7 @@ class Drawer:
                 for tile_to_draw in tile_dict['group']:
                     if camera_screen_rect.colliderect(tile_to_draw.rect):
                         if player.is_moving:
-                            if get_surrounding_rect(player).colliderect(tile_to_draw.rect):
+                            if get_surrounding_rect(player, tile_size).colliderect(tile_to_draw.rect):
                                 group_to_draw.add(tile_to_draw)
                                 # tiles_drawn.append(tile)
                         else:
