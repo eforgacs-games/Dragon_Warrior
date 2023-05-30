@@ -28,7 +28,9 @@ prod_config = {
     "COLOR_KEY": (0, 128, 128),
     "TEXT_SPEED": "Fast",
     "NO_WAIT": False,
-    "GOD_MODE": False
+    "GOD_MODE": False,
+    "RENDER_TEXT": True,
+    "NO_BLIT": False
 }
 dev_config = {
     "FPS": 60,
@@ -53,6 +55,8 @@ dev_config = {
     "COLOR_KEY": (0, 128, 128),
     "TEXT_SPEED": "Fast",
     "NO_WAIT": False,
-    "GOD_MODE": True
+    "GOD_MODE": True,
+    "RENDER_TEXT": True,
+    "NO_BLIT": False
 
 }

@@ -25,7 +25,7 @@ def fade(fade_out: bool, screen: Surface, config) -> None:
             #  https://stackoverflow.com/questions/58540537/how-to-fade-the-screen-out-and-back-in-using-pygame
             opacity -= 1
         fade_surface.set_alpha(opacity)
-        screen.blit(fade_surface, (0, 0))
+        screen.blit(fade_surface, (0, 0)) if not config['NO_BLIT'] else None
         display.update(fade_surface.get_rect())
         if not config['NO_WAIT']:
             time.delay(5)

@@ -42,6 +42,8 @@ class TestGameFunctions(TestCase):
 
     def setUp(self) -> None:
         prod_config['NO_WAIT'] = True
+        prod_config['RENDER_TEXT'] = False
+        prod_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
         self.game.camera_pos = 0, 0
@@ -51,7 +53,8 @@ class TestGameFunctions(TestCase):
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
         self.hero_images = parse_animated_sprite_sheet(scale(unarmed_hero_sheet, (
         unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)), self.game.game_state.config)
-        self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map, prod_config)
+        self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map,
+                                              god_mode=prod_config['GOD_MODE'])
         tile_size = self.game.game_state.config['TILE_SIZE']
         self.camera = Camera((self.game.current_map.player.rect.y // tile_size, self.game.current_map.player.rect.x // tile_size), self.game.current_map,
                              None, tile_size)
@@ -119,7 +122,7 @@ class TestGameFunctions(TestCase):
         # TODO(ELF): Actually test something with test_alternate_blink().
         selected_image = NAME_SELECTION_UPPER_A
         unselected_image = NAME_SELECTION_STATIC_IMAGE_LEN_0
-        alternate_blink(selected_image, unselected_image, get_ticks(), self.game.screen)
+        alternate_blink(selected_image, unselected_image, get_ticks(), self.game.screen, False)
 
     def test_select_from_vertical_menu(self):
         mocked_return = MagicMock()
@@ -128,14 +131,14 @@ class TestGameFunctions(TestCase):
         with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
             self.assertEqual(0, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
                                                           ADVENTURE_LOG_1_PATH,
-                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))
+                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH], no_blit=True))
         mocked_up = MagicMock()
         mocked_up.type = KEYDOWN
         mocked_up.key = K_w
         with patch.object(event, 'get', return_value=[mocked_up, mocked_return]) as mock_method:
             self.assertEqual(0, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
                                                           ADVENTURE_LOG_1_PATH,
-                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))
+                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH], no_blit=True))
 
         mocked_down = MagicMock()
         mocked_down.type = KEYDOWN
@@ -143,21 +146,23 @@ class TestGameFunctions(TestCase):
         with patch.object(event, 'get', return_value=[mocked_down, mocked_return]) as mock_method:
             self.assertEqual(1, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
                                                           ADVENTURE_LOG_1_PATH,
-                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))
+                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH], no_blit=True))
 
         with patch.object(event, 'get', return_value=[mocked_down, mocked_down, mocked_return]) as mock_method:
             self.assertEqual(2, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
                                                           ADVENTURE_LOG_1_PATH,
-                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))
+                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH], no_blit=True))
 
         with patch.object(event, 'get', return_value=[mocked_down, mocked_down, mocked_up, mocked_return]) as mock_method:
             self.assertEqual(1, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
                                                           ADVENTURE_LOG_1_PATH,
-                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]))
+                                                          [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH], no_blit=True))
         # test without other_selected_images
         with patch.object(event, 'get', return_value=[mocked_down, mocked_down, mocked_up, mocked_return]) as mock_method:
             start_time = get_ticks()
             while get_ticks() - start_time <= 64:
                 # just to hit the blink_start reset line
-                self.assertEqual(0, select_from_vertical_menu(start_time, self.game.screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, []))
-            self.assertEqual(0, select_from_vertical_menu(start_time, self.game.screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, []))
+                self.assertEqual(0, select_from_vertical_menu(start_time, self.game.screen, BEGIN_QUEST_PATH,
+                                                              BEGIN_QUEST_SELECTED_PATH, [], no_blit=True))
+            self.assertEqual(0, select_from_vertical_menu(start_time, self.game.screen, BEGIN_QUEST_PATH,
+                                                          BEGIN_QUEST_SELECTED_PATH, [], no_blit=True))

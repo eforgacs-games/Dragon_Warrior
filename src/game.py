@@ -111,7 +111,7 @@ class Game:
         self.set_roaming_character_positions()
 
         self.player = Player(center_point=None, images=self.current_map.scale_sprite_sheet(UNARMED_HERO_PATH),
-                             current_map=self.current_map, config=self.game_state.config)
+                             current_map=self.current_map, god_mode=self.game_state.config['GOD_MODE'])
         self.tile_size = self.game_state.config["TILE_SIZE"]
         self.current_map.load_map(self.player, None, self.tile_size)
         self.color = RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
@@ -170,7 +170,7 @@ class Game:
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
-        select_from_vertical_menu(get_ticks(), screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [])
+        select_from_vertical_menu(get_ticks(), screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [], no_blit=self.game_state.config['NO_BLIT'])
         # adventure_log_blinking = True
         # while adventure_log_blinking:
         self.player.adventure_log = select_from_vertical_menu(get_ticks(), screen, ADVENTURE_LOG_PATH,
