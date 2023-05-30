@@ -31,7 +31,7 @@ def vertical_warp_line(top_point, bottom_point) -> List[tuple]:
     return [(min(n, bottom_point[0]), bottom_point[1]) for n in range(top_point[0], bottom_point[0] + 1)]
 
 
-def parse_animated_sprite_sheet(sheet: surface.Surface, config) -> Tuple[list, list, list, list]:
+def parse_animated_sprite_sheet(sheet: surface.Surface, config: dict) -> Tuple[list, list, list, list]:
     """
     Parses sprite sheets and creates image lists. If is_roaming is True
     the sprite will have four lists of images, one for each direction. If

@@ -141,6 +141,8 @@ class TestGame(TestCase):
 
     def setUp(self) -> None:
         prod_config['NO_WAIT'] = True
+        prod_config['RENDER_TEXT'] = False
+        prod_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
         self.game.player.name = "Edward"
@@ -151,7 +153,7 @@ class TestGame(TestCase):
                                                                             (unarmed_hero_sheet.get_width() * SCALE,
                                                                              unarmed_hero_sheet.get_height() * SCALE)),
                                                                       self.game.game_state.config),
-                                  self.game.current_map, self.game.game_state.config)
+                                  self.game.current_map, god_mode=self.game.game_state.config['GOD_MODE'])
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
         tile_size = self.game.game_state.config['TILE_SIZE']
         self.camera = Camera((self.game.player.rect.y // tile_size,

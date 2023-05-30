@@ -22,42 +22,42 @@ class Drawer:
         self.not_moving_time_start = None
         self.hovering_stats_displayed = False
 
-    def position_and_draw_enemy_image(self, screen, enemy_image, enemy_name):
+    def position_and_draw_enemy_image(self, screen, enemy_image, enemy_name, no_blit):
         tile_size = self.game_state.config["TILE_SIZE"]
         if enemy_name in ('Slime', 'Red Slime', 'Metal Slime'):
-            screen.blit(enemy_image, (8 * tile_size, 7 * tile_size))
+            screen.blit(enemy_image, (8 * tile_size, 7 * tile_size)) if not no_blit else None
         elif enemy_name in ('Drakee', 'Magidrakee', 'Drakeema'):
             # might need work
-            screen.blit(enemy_image, (7.75 * tile_size, 6.25 * tile_size))
+            screen.blit(enemy_image, (7.75 * tile_size, 6.25 * tile_size)) if not no_blit else None
         elif enemy_name in ('Ghost', 'Poltergeist', 'Specter'):
-            screen.blit(enemy_image, (7.8 * tile_size, 5.9 * tile_size))
+            screen.blit(enemy_image, (7.8 * tile_size, 5.9 * tile_size)) if not no_blit else None
         elif enemy_name in ('Magician', 'Warlock', 'Wizard'):
-            screen.blit(enemy_image, (7.3 * tile_size, 6 * tile_size))
+            screen.blit(enemy_image, (7.3 * tile_size, 6 * tile_size)) if not no_blit else None
         elif enemy_name in ('Scorpion', 'Metal Scorpion', 'Rogue Scorpion'):
-            screen.blit(enemy_image, (7.4 * tile_size, 6.5 * tile_size))
+            screen.blit(enemy_image, (7.4 * tile_size, 6.5 * tile_size)) if not no_blit else None
         elif enemy_name in ('Druin', 'Druinlord'):
-            screen.blit(enemy_image, (8 * tile_size, 6.5 * tile_size))
+            screen.blit(enemy_image, (8 * tile_size, 6.5 * tile_size)) if not no_blit else None
         elif enemy_name in ('Droll', 'Drollmagi'):
-            screen.blit(enemy_image, (7.5 * tile_size, 6 * tile_size))
+            screen.blit(enemy_image, (7.5 * tile_size, 6 * tile_size)) if not no_blit else None
         elif enemy_name in ('Skeleton', 'Wraith', 'Wraith Knight', 'Demon Knight'):
-            screen.blit(enemy_image, (7.46 * tile_size, 5.74 * tile_size))
+            screen.blit(enemy_image, (7.46 * tile_size, 5.74 * tile_size)) if not no_blit else None
         elif enemy_name in ('Wolf', 'Wolflord', 'Werewolf'):
-            screen.blit(enemy_image, (7.11 * tile_size, 5.95 * tile_size))
+            screen.blit(enemy_image, (7.11 * tile_size, 5.95 * tile_size)) if not no_blit else None
         elif enemy_name in ('Goldman', 'Golem', 'Stoneman'):
-            screen.blit(enemy_image, (7.1 * tile_size, 5.6 * tile_size))
+            screen.blit(enemy_image, (7.1 * tile_size, 5.6 * tile_size)) if not no_blit else None
         elif enemy_name in ('Wyvern', 'Magiwyvern', 'Starwyvern'):
-            screen.blit(enemy_image, (7.25 * tile_size, 5.5 * tile_size))
+            screen.blit(enemy_image, (7.25 * tile_size, 5.5 * tile_size)) if not no_blit else None
         elif enemy_name in ('Knight', 'Axe Knight', 'Armored Knight'):
-            screen.blit(enemy_image, (7.1 * tile_size, 5.75 * tile_size))
+            screen.blit(enemy_image, (7.1 * tile_size, 5.75 * tile_size)) if not no_blit else None
         elif enemy_name in ('Green Dragon', 'Blue Dragon', 'Red Dragon'):
-            screen.blit(enemy_image, (6.5 * tile_size, 6.25 * tile_size))
+            screen.blit(enemy_image, (6.5 * tile_size, 6.25 * tile_size)) if not no_blit else None
         elif enemy_name == 'Dragonlord':
-            screen.blit(enemy_image, (7.5 * tile_size, 6 * tile_size))
+            screen.blit(enemy_image, (7.5 * tile_size, 6 * tile_size)) if not no_blit else None
         elif enemy_name == 'Dragonlord 2':
             # need to have this blit over the text box on the bottom
-            screen.blit(enemy_image, (5.1 * tile_size, 4 * tile_size))
+            screen.blit(enemy_image, (5.1 * tile_size, 4 * tile_size)) if not no_blit else None
         else:
-            screen.blit(enemy_image, (7.544 * tile_size, 6.1414 * tile_size))
+            screen.blit(enemy_image, (7.544 * tile_size, 6.1414 * tile_size)) if not no_blit else None
 
     def show_enemy_image(self, screen, enemy_name):
         enemy_name_without_spaces = enemy_name.replace(" ", "")
@@ -65,7 +65,7 @@ class Drawer:
             f'{IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
         enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
                                           enemy_image.get_height() * SCALE))
-        self.position_and_draw_enemy_image(screen, enemy_image, enemy_name)
+        self.position_and_draw_enemy_image(screen, enemy_image, enemy_name, self.game_state.config["NO_BLIT"])
 
     @staticmethod
     def handle_sprite_animation(enable_animate, character_dict):
@@ -94,19 +94,19 @@ class Drawer:
         if len(str(player.current_hp)) < 5:
             self.draw_stats_strings_with_alignments(f"{player.current_hp}", 3.99, screen, color=color)
         else:
-            self.draw_stats_strings_with_alignments("INF", 3.99, screen, color=color)
+            self.draw_stats_strings_with_alignments("∞", 3.99, screen, color=color)
         if len(str(player.current_mp)) < 5:
             self.draw_stats_strings_with_alignments(f"{player.current_mp}", 4.99, screen, color=color)
         else:
-            self.draw_stats_strings_with_alignments("INF", 4.99, screen, color=color)
+            self.draw_stats_strings_with_alignments("∞", 4.99, screen, color=color)
         if len(str(player.gold)) < 5:
             self.draw_stats_strings_with_alignments(f"{player.gold}", 5.99, screen, color=color)
         else:
-            self.draw_stats_strings_with_alignments("INF", 5.99, screen, color=color)
+            self.draw_stats_strings_with_alignments("∞", 5.99, screen, color=color)
         if len(str(player.total_experience)) < 5:
             self.draw_stats_strings_with_alignments(f"{player.total_experience}", 6.99, screen, color=color)
         else:
-            self.draw_stats_strings_with_alignments("INF", 6.99, screen, color=color)
+            self.draw_stats_strings_with_alignments("∞", 6.99, screen, color=color)
 
     def set_to_post_initial_dialog(self, command_menu: CommandMenu):
         self.game_state.is_initial_dialog = False
@@ -299,7 +299,7 @@ class Drawer:
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation(current_map, foreground_rects, self.background,
                                                  enable_animate)
-        screen.blit(self.background, camera.get_pos())
+        screen.blit(self.background, camera.get_pos()) if not self.game_state.config['NO_BLIT'] else None
         if current_map.identifier == 'TantegelThroneRoom':
             self.handle_initial_dialog(initial_dialog_enabled, cmd_menu, events, skip_text, allow_save_prompt)
             self.handle_post_death_dialog(game_state, cmd_menu, events, skip_text)

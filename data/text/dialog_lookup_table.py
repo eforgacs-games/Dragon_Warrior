@@ -342,9 +342,10 @@ class DialogLookup:
             if character != 'HERO':
                 draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1],
                                        character_dict['coordinates'][0], self.config, character)
-        self.screen.blit(self.background, self.camera_position)
-        self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
-        display.flip()
+        if not self.command_menu.game.game_state.config['NO_BLIT']:
+            self.screen.blit(self.background, self.camera_position)
+            self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
+            display.flip()
         self.command_menu.show_text_in_dialog_box((_("Good morning.\nThou seems to have spent a good night."),
                                                    _("I shall see thee again.")), skip_text=self.command_menu.skip_text,
                                                   drop_up=False)

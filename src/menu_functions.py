@@ -128,10 +128,10 @@ def select_name(blink_start, screen, command_menu, config):
     name = ""
     enable_joystick_input = False
     unselected_image = scale(image.load(NAME_SELECTION_STATIC_IMAGE_LEN_0), (screen.get_width(), screen.get_height()))
-    screen.blit(unselected_image, (0, 0))
+    screen.blit(unselected_image, (0, 0)) if not config['NO_BLIT'] else None
     display.update(unselected_image.get_rect())
     command_menu.show_text_in_dialog_box(input_name_prompt, drop_down=False, drop_up=False, letter_by_letter=False)
-    screen.blit(unselected_image, (0, 0))
+    screen.blit(unselected_image, (0, 0)) if not config['NO_BLIT'] else None
     display.update(unselected_image.get_rect())
     selected_image_lookup = {
         0: NAME_SELECTION_STATIC_IMAGE_LEN_0,
