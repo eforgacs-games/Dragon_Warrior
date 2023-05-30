@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 from pygame import Rect, event, KEYDOWN, K_i
 from pygame.time import get_ticks
 
-from src.common import INTRO_BANNER_PATH, convert_to_frames_since_start_time, convert_to_milliseconds
+from src.common import INTRO_BANNER_PATH, convert_to_frames_since_start_time
 from src.config import prod_config
 from src.game import Game
 from src.intro import show_intro_banner, repeated_sparkle, Intro, draw_banner_text
@@ -18,17 +18,23 @@ class TestIntro(TestCase):
 
     def setUp(self) -> None:
         prod_config['NO_WAIT'] = True
+        prod_config['RENDER_TEXT'] = False
+        prod_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
         self.intro = Intro()
 
     def test_show_intro_banner(self):
-        self.assertIsInstance(show_intro_banner(INTRO_BANNER_PATH, self.game.screen), Rect)
+        self.assertIsInstance(show_intro_banner(INTRO_BANNER_PATH, self.game.screen, no_blit=True), Rect)
 
-    def test_repeated_sparkle(self):
-        start_time = get_ticks()
-        while get_ticks() - start_time < convert_to_milliseconds(256):
-            self.assertIsInstance(repeated_sparkle(self.game.screen, start_time, False), (int, float))
+    @patch('src.intro.banner_sparkle')
+    # @patch(pygame.time, )
+    def test_repeated_sparkle(self, mock_banner_sparkle):
+        repeated_sparkle(self.game.screen, 0, False, 1)
+        mock_banner_sparkle.assert_not_called()
+        return_value = repeated_sparkle(self.game.screen, 0, False, 5000)
+        self.assertIsInstance(return_value, (int, float))
+        mock_banner_sparkle.assert_called_once()
 
     # def test_banner_sparkle(self):
     #     banner_sparkle(True, self.game.screen)
@@ -36,6 +42,8 @@ class TestIntro(TestCase):
     def test_handle_all_sparkles(self):
         start_time = get_ticks()
         self.assertFalse(self.intro.first_long_sparkle_done)
+        self.assertFalse(self.intro.first_short_sparkle_done)
+        self.assertFalse(self.intro.second_short_sparkle_done)
         while convert_to_frames_since_start_time(start_time) <= 193:
             self.intro.handle_all_sparkles(start_time, self.game.screen)
             if convert_to_frames_since_start_time(start_time) >= 33:
@@ -52,7 +60,7 @@ class TestIntro(TestCase):
         mocked_i.type = KEYDOWN
         mocked_i.key = K_i
         with patch.object(event, 'get', return_value=[mocked_i]) as mock_method:
-            self.intro.show_start_screen(self.game.screen, get_ticks(), self.game.clock, self.game.game_state.config)
+            self.intro.show_start_screen(self.game.screen, 0, self.game.clock, self.game.game_state.config)
 
     # def test_show_start_screen_quit(self):
     #     mocked_quit = MagicMock()

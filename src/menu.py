@@ -49,7 +49,7 @@ class CommandMenu(Menu):
                                                   window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH,
                                                   screen=self.screen,
                                                   color=self.game.color)
-        self.dialog_lookup = DialogLookup(self)
+        self.dialog_lookup = DialogLookup(self, self.game.game_state.config)
         tile_size = self.game.game_state.config['TILE_SIZE']
         self.menu = pygame_menu.Menu(
             title='COMMAND',
@@ -221,8 +221,9 @@ class CommandMenu(Menu):
             drop_down_start = get_ticks()
             # each "bar" lasts 1 frame
             while convert_to_frames_since_start_time(drop_down_start) < 1:
-                self.screen.blit(black_box, (tile_size * left, tile_size * top))
-                display.update(window_rect)
+                if not self.game.game_state.config['NO_BLIT']:
+                    self.screen.blit(black_box, (tile_size * left, tile_size * top))
+                    display.update(window_rect)
 
     def window_drop_up_effect(self, left, top, width, height) -> None:
         """Outro effect for menus."""
@@ -248,17 +249,19 @@ class CommandMenu(Menu):
                 drop_up_start = get_ticks()
                 while convert_to_frames_since_start_time(drop_up_start) < 1:
                     # draw_player_sprites(self.current_map, self.background, self.player.rect.x, self.player.rect.y)
-                    for character, character_dict in self.current_map.characters.items():
-                        if camera_screen_rect.colliderect(character_dict['character'].rect):
-                            self.background.blit(character_dict['character_sprites'].sprites()[0].image,
-                                                 (character_dict['character'].rect.x,
-                                                  character_dict['character'].rect.y))
-                    self.screen.blit(self.background, self.camera_position)
+                    if not self.game.game_state.config['NO_BLIT']:
+                        for character, character_dict in self.current_map.characters.items():
+                            if camera_screen_rect.colliderect(character_dict['character'].rect):
+                                self.background.blit(character_dict['character_sprites'].sprites()[0].image,
+                                                     (character_dict['character'].rect.x,
+                                                      character_dict['character'].rect.y))
+                            self.screen.blit(self.background, self.camera_position)
                     if self.launch_signaled:
-                        self.screen.blit(self.command_menu_surface, (tile_size * 6, tile_size * 1))
+                        self.screen.blit(self.command_menu_surface, (tile_size * 6, tile_size * 1)) if not self.game.game_state.config['NO_BLIT'] else None
                     if self.game.drawer.display_hovering_stats:
                         self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.game.color)
-                    display.update(self.screen.blit(black_box, (tile_size * left, tile_size * top)))
+                    if not self.game.game_state.config['NO_BLIT']:
+                        display.update(self.screen.blit(black_box, (tile_size * left, tile_size * top)))
 
     def take_item(self, item_name: str):
         play_sound(open_treasure_sfx)
@@ -298,12 +301,12 @@ class CommandMenu(Menu):
         self.current_map.layout[row][column] = \
         self.game.layouts.map_layout_lookup[self.current_map.__class__.__name__][row][column] = \
             self.current_map.floor_tile_key[new_tile_identifier]['val']
-        center_pt = get_center_point(column, row)
+        center_pt = get_center_point(column, row, tile_size=self.game.game_state.config['TILE_SIZE'])
         self.current_map.floor_tile_key[old_tile_identifier]['group'] = Group()
         self.current_map.add_tile(self.current_map.floor_tile_key[new_tile_identifier], center_pt)
         for row in range(len(self.current_map.layout)):
             for column in range(len(self.current_map.layout[row])):
-                self.current_map.center_pt = get_center_point(column, row)
+                self.current_map.center_pt = get_center_point(column, row, tile_size=self.game.game_state.config['TILE_SIZE'])
                 if self.current_map.layout[row][column] <= max(
                         self.current_map.floor_tile_key[old_tile_identifier]['val'],
                         self.current_map.floor_tile_key[new_tile_identifier]['val']):
@@ -485,8 +488,8 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # this might be something we could turn off as one of the "modernization" updates
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN'):
-            self.game.process_staircase_warps((self.game.player.row, self.game.player.column),
-                                              self.game.current_map.staircases[
+            self.game.process_staircase_warps(staircase_location=(self.game.player.row, self.game.player.column),
+                                              staircase_dict=self.game.current_map.staircases[
                                                   (self.game.player.row, self.game.player.column)])
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
