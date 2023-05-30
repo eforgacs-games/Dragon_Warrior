@@ -117,8 +117,9 @@ def draw_player_sprites(current_map, background, column, row, config):
 
 
 def draw_character_sprites(current_map, background, column, row, config, character_identifier='HERO'):
-    background.blit(current_map.characters[character_identifier]['character_sprites'].sprites()[0].image,
-                    (column * config['TILE_SIZE'], row * config['TILE_SIZE']))
+    if not config['NO_BLIT']:
+        background.blit(current_map.characters[character_identifier]['character_sprites'].sprites()[0].image,
+                        (column * config['TILE_SIZE'], row * config['TILE_SIZE']))
 
 
 def select_name(blink_start, screen, command_menu, config):
@@ -204,13 +205,15 @@ def toggle_joystick_input(command_menu, current_letter_image_path, enable_joysti
         # TODO(ELF): adding the drop-up effect here shows the Tantegel Throne Room while the effect happens -
         #  make it work with a black screen.
         command_menu.show_text_in_dialog_box("Joystick input disabled.", temp_text_start=get_ticks(), drop_up=False)
-        screen.blit(scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height())), (0, 0))
-        display.flip()
+        if not command_menu.game.game_state.config['NO_BLIT']:
+            screen.blit(scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height())), (0, 0))
+            display.flip()
     else:
         enable_joystick_input = True
         command_menu.show_text_in_dialog_box("Joystick input enabled.", temp_text_start=get_ticks(), drop_up=False)
-        screen.blit(scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height())), (0, 0))
-        display.flip()
+        if not command_menu.game.game_state.config['NO_BLIT']:
+            screen.blit(scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height())), (0, 0))
+            display.flip()
     return enable_joystick_input
 
 
@@ -237,6 +240,6 @@ def blink_with_name(blink_start, current_letter_image_path, name, screen, static
 
 def draw_image_with_name(current_letter_image_path, name, screen, config):
     selected_image = scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height()))
-    screen.blit(selected_image, (0, 0))
+    screen.blit(selected_image, (0, 0)) if not config['NO_BLIT'] else None
     draw_text(name, config['TILE_SIZE'] * 6.01, config['TILE_SIZE'] * 4.3, screen, config, alignment='left',
               letter_by_letter=False)
