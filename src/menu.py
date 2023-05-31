@@ -150,7 +150,7 @@ class CommandMenu(Menu):
                         current_time = get_ticks()
                     create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH,
                                   screen=self.screen, color=self.game.color)
-                    if letter_by_letter:
+                    if letter_by_letter and not self.game.game_state.config['NO_WAIT']:
                         if not current_line:
                             current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
                                                      self.game.game_state.config,
@@ -401,8 +401,6 @@ class CommandMenu(Menu):
         # for now, implementing using print statements. will be useful for debugging as well.
         character_coordinates = [(character_dict['character'].row, character_dict['character'].column) for
                                  character_dict in self.characters.values()]
-        # if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
-
         if any(c in character_coordinates for c in [self.player.next_coordinates]) or \
                 any(c in character_coordinates for c in
                     [self.player.next_next_coordinates]) and self.player.next_tile_id == 'WOOD':
