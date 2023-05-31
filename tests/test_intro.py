@@ -38,7 +38,8 @@ class TestIntro(TestCase):
     # def test_banner_sparkle(self):
     #     banner_sparkle(True, self.game.screen)
 
-    def test_handle_all_sparkles(self):
+    @patch('src.intro.banner_sparkle')
+    def test_handle_all_sparkles(self, mock_banner_sparkle):
         start_time = 1
         self.assertFalse(self.intro.first_long_sparkle_done)
         self.assertFalse(self.intro.first_short_sparkle_done)

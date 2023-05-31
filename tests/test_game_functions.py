@@ -2,7 +2,7 @@ import os
 from unittest import TestCase, mock
 from unittest.mock import MagicMock, patch
 
-from pygame import KEYDOWN, K_RETURN, event, K_s, K_w
+from pygame import KEYDOWN, K_RETURN, event, K_s, K_w, image
 from pygame.image import load_extended
 from pygame.time import get_ticks
 from pygame.transform import scale
@@ -40,7 +40,8 @@ class MockMap(MapWithoutNPCs):
 
 class TestGameFunctions(TestCase):
 
-    def setUp(self) -> None:
+    @patch('pygame.display.set_mode')
+    def setUp(self, mock_set_mode) -> None:
         prod_config['NO_WAIT'] = True
         prod_config['RENDER_TEXT'] = False
         prod_config['NO_BLIT'] = True
@@ -52,12 +53,15 @@ class TestGameFunctions(TestCase):
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
         unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
         self.hero_images = parse_animated_sprite_sheet(scale(unarmed_hero_sheet, (
-        unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)), self.game.game_state.config)
+            unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)),
+                                                       self.game.game_state.config)
         self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map,
                                               god_mode=prod_config['GOD_MODE'])
         tile_size = self.game.game_state.config['TILE_SIZE']
-        self.camera = Camera((self.game.current_map.player.rect.y // tile_size, self.game.current_map.player.rect.x // tile_size), self.game.current_map,
-                             None, tile_size)
+        self.camera = Camera(
+            (self.game.current_map.player.rect.y // tile_size, self.game.current_map.player.rect.x // tile_size),
+            self.game.current_map,
+            None, tile_size)
 
     def test_set_character_position(self):
         # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
@@ -69,27 +73,32 @@ class TestGameFunctions(TestCase):
         self.assertEqual(13, self.game.player.rect.x // tile_size)
         self.assertEqual(10, self.game.player.rect.y // tile_size)
         set_character_position(self.game.player, tile_size)
-        self.assertEqual((self.game.player.column, self.game.player.row), (self.game.player.rect.x // tile_size, self.game.player.rect.y // tile_size))
+        self.assertEqual((self.game.player.column, self.game.player.row),
+                         (self.game.player.rect.x // tile_size, self.game.player.rect.y // tile_size))
         self.assertEqual((self.game.player.column, self.game.player.row), (13, 10))
 
     def test_get_next_coordinates(self):
         # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
         self.game.player.direction_value = 0
-        self.assertEqual((11, 13), get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
-                                                        self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
-                                                        self.game.player.direction_value))
+        self.assertEqual((11, 13),
+                         get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
+                                              self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
+                                              self.game.player.direction_value))
         self.game.player.direction_value = 1
-        self.assertEqual((10, 12), get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
-                                                        self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
-                                                        self.game.player.direction_value))
+        self.assertEqual((10, 12),
+                         get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
+                                              self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
+                                              self.game.player.direction_value))
         self.game.player.direction_value = 2
-        self.assertEqual((9, 13), get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
-                                                       self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
-                                                       self.game.player.direction_value))
+        self.assertEqual((9, 13),
+                         get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
+                                              self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
+                                              self.game.player.direction_value))
         self.game.player.direction_value = 3
-        self.assertEqual((10, 14), get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
-                                                        self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
-                                                        self.game.player.direction_value))
+        self.assertEqual((10, 14),
+                         get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
+                                              self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
+                                              self.game.player.direction_value))
 
     @mock.patch.object(Drawer, "draw_stats_strings_with_alignments")
     def test_draw_hovering_stats_window(self, mock_draw_stats_strings_with_alignments):
@@ -103,7 +112,8 @@ class TestGameFunctions(TestCase):
         mock_draw_stats_strings_with_alignments.assert_any_call("50", 3.99, self.game.screen, color=self.game.color)
         mock_draw_stats_strings_with_alignments.assert_any_call("25", 4.99, self.game.screen, color=self.game.color)
         mock_draw_stats_strings_with_alignments.assert_any_call("8", 5.99, self.game.screen, color=self.game.color)
-        mock_draw_stats_strings_with_alignments.assert_called_with("1984", 6.99, self.game.screen, color=self.game.color)
+        mock_draw_stats_strings_with_alignments.assert_called_with("1984", 6.99, self.game.screen,
+                                                                   color=self.game.color)
 
     @mock.patch.object(text, "draw_text")
     def test_draw_stats_strings_with_alignments(self, mock_draw_text):
@@ -119,10 +129,16 @@ class TestGameFunctions(TestCase):
     # "1", 134.4, 32, self.game.screen
 
     def test_alternate_blink(self):
-        # TODO(ELF): Actually test something with test_alternate_blink().
-        selected_image = NAME_SELECTION_UPPER_A
-        unselected_image = NAME_SELECTION_STATIC_IMAGE_LEN_0
-        alternate_blink(selected_image, unselected_image, get_ticks(), self.game.screen, False)
+        selected_image_path = NAME_SELECTION_UPPER_A
+        unselected_image_path = NAME_SELECTION_STATIC_IMAGE_LEN_0
+        selected_image = scale(image.load(selected_image_path),
+                               (self.game.screen.get_width(), self.game.screen.get_height())).get_rect()
+        unselected_image = scale(image.load(unselected_image_path),
+                                 (self.game.screen.get_width(), self.game.screen.get_height())).get_rect()
+        with patch('pygame.display.update') as mock_update:
+            alternate_blink(selected_image_path, unselected_image_path, get_ticks(), self.game.screen, False)
+            mock_update.assert_called_with(selected_image)
+            mock_update.assert_called_with(unselected_image)
 
     def test_select_from_vertical_menu(self):
         mocked_return = MagicMock()
@@ -153,12 +169,14 @@ class TestGameFunctions(TestCase):
                                                           ADVENTURE_LOG_1_PATH,
                                                           [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH], no_blit=True))
 
-        with patch.object(event, 'get', return_value=[mocked_down, mocked_down, mocked_up, mocked_return]) as mock_method:
+        with patch.object(event, 'get',
+                          return_value=[mocked_down, mocked_down, mocked_up, mocked_return]) as mock_method:
             self.assertEqual(1, select_from_vertical_menu(get_ticks(), self.game.screen, ADVENTURE_LOG_PATH,
                                                           ADVENTURE_LOG_1_PATH,
                                                           [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH], no_blit=True))
         # test without other_selected_images
-        with patch.object(event, 'get', return_value=[mocked_down, mocked_down, mocked_up, mocked_return]) as mock_method:
+        with patch.object(event, 'get',
+                          return_value=[mocked_down, mocked_down, mocked_up, mocked_return]) as mock_method:
             start_time = get_ticks()
             while get_ticks() - start_time <= 64:
                 # just to hit the blink_start reset line

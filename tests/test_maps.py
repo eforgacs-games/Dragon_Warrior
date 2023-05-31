@@ -14,7 +14,8 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 class TestDragonWarriorMap(TestCase):
 
-    def setUp(self) -> None:
+    @patch('pygame.display.set_mode')
+    def setUp(self, mock_set_mode) -> None:
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
         self.dragon_warrior_map = MockMap()
