@@ -336,13 +336,13 @@ class DialogLookup:
         if music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
-        self.command_menu.game.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
-        draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row, self.config)
-        for character, character_dict in self.current_map.characters.items():
-            if character != 'HERO':
-                draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1],
-                                       character_dict['coordinates'][0], self.config, character)
         if not self.command_menu.game.game_state.config['NO_BLIT']:
+            self.command_menu.game.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
+            draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row, self.config)
+            for character, character_dict in self.current_map.characters.items():
+                if character != 'HERO':
+                    draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1],
+                                           character_dict['coordinates'][0], self.config, character)
             self.screen.blit(self.background, self.camera_position)
             self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
             display.flip()
