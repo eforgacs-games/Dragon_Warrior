@@ -4,7 +4,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pygame
-from pygame import K_z, K_UP, RESIZABLE, SCALED
+from pygame import K_UP, RESIZABLE, SCALED
 from pygame.imageext import load_extended
 from pygame.sprite import LayeredDirty
 from pygame.transform import scale
@@ -337,16 +337,24 @@ class TestGame(TestCase):
         # organically switch maps to Brecconary, as though entering from Alefgard
         for staircase_location, staircase_dict in self.game.current_map.staircases.items():
             self.game.process_staircase_warps(staircase_location, staircase_dict)
-        self.assertEqual('Brecconary', self.game.current_map.identifier)
         self.game.player.current_hp = 1
         self.game.player.current_mp = 1
         self.game.player.direction_value = Direction.RIGHT.value
+        self.game.current_map.load_map(self.game.player, (23, 10), self.game.tile_size)
+        self.assertEqual('Brecconary', self.game.current_map.identifier)
+        self.assertTrue('MERCHANT_2' in self.game.current_map.characters)
+        self.assertTrue(self.game.current_map.characters['MERCHANT_2']['coordinates'] == (29, 20))
+        self.assertEqual((23, 10), self.game.current_map.destination_coordinates)
+        self.assertEqual((23, 10), self.game.current_map.initial_coordinates)
         self.game.cmd_menu.skip_text = True
         self.game.player.gold = 10
         self.game.player.row, self.game.player.column = 29, 18
         self.game.player.next_next_coordinates = get_next_coordinates(18, 29, self.game.player.direction_value,
                                                                       offset_from_character=2)
         self.assertEqual((29, 20), self.game.player.next_next_coordinates)
+        self.assertEqual('MERCHANT', get_tile_id_by_coordinates(self.game.player.next_next_coordinates[1],
+                                                                self.game.player.next_next_coordinates[0],
+                                                                self.game.current_map))
         self.game.player.next_tile_id = get_next_tile_identifier(self.game.player.column,
                                                                  self.game.player.row,
                                                                  self.game.player.direction_value,
@@ -354,9 +362,11 @@ class TestGame(TestCase):
         self.assertEqual('WOOD', self.game.player.next_tile_id)
         self.game.player.next_coordinates = get_next_coordinates(self.game.player.column, self.game.player.row,
                                                                  direction=self.game.player.direction_value)
+        self.assertEqual((29, 19), self.game.player.next_coordinates)
         self.game.cmd_menu.talk()
         self.assertEqual(self.game.player.max_hp, self.game.player.current_hp)
         self.assertEqual(self.game.player.max_mp, self.game.player.current_mp)
+        # checking that it won't work if you don't have enough gold
         self.assertEqual(4, self.game.player.gold)
         self.game.player.current_hp = 2
         self.game.player.current_mp = 3

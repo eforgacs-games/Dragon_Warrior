@@ -59,7 +59,7 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     blinking_yes = True
     blink_start = get_ticks()
     while blinking:
-        if blinking_yes:
+        if blinking_yes and not config['NO_WAIT']:
             blink_switch(command_menu.screen, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2,
                          width=4, height=3, start=blink_start, config=config, color=color)
         else:
