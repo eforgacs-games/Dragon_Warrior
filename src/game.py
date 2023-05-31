@@ -107,7 +107,7 @@ class Game:
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
         win_width, win_height = self.game_state.config["NES_RES"][0] * self.scale, self.game_state.config["NES_RES"][
             1] * self.scale
-        self.screen = set_mode((win_width, win_height), self.flags)
+        self.screen = self.set_screen(win_height, win_width)
         # self.screen.set_alpha(None)
         set_caption("Dragon Warrior")
 
@@ -161,6 +161,10 @@ class Game:
         self.player.restore_hp()
         self.allow_save_prompt = False
         # pg.event.set_allowed([pg.QUIT])
+
+    def set_screen(self, win_height, win_width):
+        """Stub for setting the screen."""
+        return set_mode((win_width, win_height), self.flags)
 
     def main(self) -> None:
         """
