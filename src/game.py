@@ -44,6 +44,22 @@ from src.sprites.roaming_character import RoamingCharacter
 from src.visual_effects import fade, flash_transparent_color
 
 
+def select_random_attack_damage_value(lower_bound, upper_bound) -> int:
+    if lower_bound > upper_bound:
+        attack_damage = random.randint(upper_bound, lower_bound)
+    elif lower_bound == upper_bound:
+        attack_damage = lower_bound
+    else:
+        attack_damage = random.randint(lower_bound, upper_bound)
+    if attack_damage < 1:
+        # fifty-fifty chance of doing 1 damage
+        if random.random() < .5:
+            attack_damage = 1
+        else:
+            attack_damage = 0
+    return attack_damage
+
+
 class Game:
     def __init__(self, config):
         self.game_state = GameState(config=config)
@@ -89,7 +105,8 @@ class Game:
         self.scale = self.game_state.config["SCALE"]
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
-        win_width, win_height = self.game_state.config["NES_RES"][0] * self.scale, self.game_state.config["NES_RES"][1] * self.scale
+        win_width, win_height = self.game_state.config["NES_RES"][0] * self.scale, self.game_state.config["NES_RES"][
+            1] * self.scale
         self.screen = set_mode((win_width, win_height), self.flags)
         # self.screen.set_alpha(None)
         set_caption("Dragon Warrior")
@@ -123,10 +140,10 @@ class Game:
         # self.player.level = self.player.get_level_by_experience()
         # self.player.update_stats_to_current_level()
 
-
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // self.tile_size,
                                                               self.player.rect.y // self.tile_size, self.current_map)
-        self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen, self.tile_size)
+        self.camera = Camera((int(self.player.column), int(self.player.row)), self.current_map, self.screen,
+                             self.tile_size)
         self.cmd_menu = CommandMenu(self)
 
         self.enable_animate = True
@@ -170,7 +187,8 @@ class Game:
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
-        select_from_vertical_menu(get_ticks(), screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [], no_blit=self.game_state.config['NO_BLIT'])
+        select_from_vertical_menu(get_ticks(), screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [],
+                                  no_blit=self.game_state.config['NO_BLIT'])
         # adventure_log_blinking = True
         # while adventure_log_blinking:
         self.player.adventure_log = select_from_vertical_menu(get_ticks(), screen, ADVENTURE_LOG_PATH,
@@ -212,7 +230,6 @@ class Game:
         # the map where staircases right next to each other need to be enabled,
         # as done with Cantlin and others below
         self.handle_warps()
-
 
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // self.tile_size,
                                                               self.player.rect.y // self.tile_size,
@@ -292,7 +309,8 @@ class Game:
                             mixer.music.play(-1)
                         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
                                                         (7 * self.tile_size, 7 * self.tile_size))
-                        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size)) if not self.game_state.config['NO_BLIT'] else None
+                        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size)) if not \
+                        self.game_state.config['NO_BLIT'] else None
                         display.update(battle_background_image.get_rect())
                         self.drawer.show_enemy_image(self.screen, enemy_name)
                         enemy_draws_near_string = f'{enemy_name} draws near!\n' \
@@ -438,8 +456,9 @@ class Game:
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
 
     def calculate_enemy_attack_damage(self, enemy):
-        return random.randint((enemy.attack - self.player.agility / 2) // 4,
-                              (enemy.attack - self.player.agility / 2) // 2)
+        lower_bound = (enemy.attack - self.player.agility / 2) // 4
+        upper_bound = (enemy.attack - self.player.agility / 2) // 2
+        return select_random_attack_damage_value(lower_bound, upper_bound)
 
     def missed_attack(self):
         missed_sfx_number = random.randint(1, 2)
@@ -469,16 +488,7 @@ class Game:
                   f'upper_bound: {upper_bound}\n'
                   f'player.attack_power: {self.player.attack_power}\n'
                   f'enemy.speed: {enemy.defense}')
-            if lower_bound >= upper_bound:
-                attack_damage = upper_bound
-            else:
-                attack_damage = random.randint(lower_bound, upper_bound)
-            if attack_damage < 1:
-                # fifty-fifty chance of doing 1 damage
-                if random.random() < .5:
-                    attack_damage = 1
-                else:
-                    attack_damage = 0
+            attack_damage = select_random_attack_damage_value(lower_bound, upper_bound)
         return round(attack_damage)
 
     def battle_spell(self):
@@ -492,7 +502,8 @@ class Game:
                                               disable_sound=True)
         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
                                         (7 * self.tile_size, 7 * self.tile_size))
-        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size)) if not self.game_state.config['NO_BLIT'] else None
+        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size)) if not \
+        self.game_state.config['NO_BLIT'] else None
         display.update(battle_background_image.get_rect())
         self.cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
                                               f"Thy GOLD increases by {enemy.gold}.\n", add_quotes=False,
@@ -500,7 +511,8 @@ class Game:
         self.player.total_experience += enemy.xp
         self.player.gold += enemy.gold
 
-        if self.player.level + 1 < 30 and self.player.total_experience >= levels_list[self.player.level + 1]['total_exp']:
+        if self.player.level + 1 < 30 and self.player.total_experience >= levels_list[self.player.level + 1][
+            'total_exp']:
             play_sound(improvement_sfx)
             self.cmd_menu.show_line_in_dialog_box(f"Courage and wit have served thee well.\n"
                                                   f"Thou hast been promoted to the next level.\n", add_quotes=False,
@@ -748,6 +760,7 @@ class Game:
                     play_sound(stairs_up_sfx)
             next_map = map_lookup[staircase_dict['map']]()
             self.change_map(next_map)
+
     #         should break out of loop here
 
     def change_map(self, next_map: maps.DragonWarriorMap) -> None:
