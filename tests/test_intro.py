@@ -43,7 +43,8 @@ class TestIntro(TestCase):
         self.assertFalse(self.intro.first_long_sparkle_done)
         self.assertFalse(self.intro.first_short_sparkle_done)
         self.assertFalse(self.intro.second_short_sparkle_done)
-        with patch('src.common.get_ticks', side_effect=[535, 2668, 3201]):  # 32.04 frames_since_banner_launch
+        # 32.04, 160.02, 192.0 frames_since_banner_launch
+        with patch('src.common.get_ticks', side_effect=[535, 2668, 3201]):
             self.intro.handle_all_sparkles(start_time, self.game.screen)
             self.assertTrue(self.intro.first_long_sparkle_done)
             self.assertFalse(self.intro.first_short_sparkle_done)
