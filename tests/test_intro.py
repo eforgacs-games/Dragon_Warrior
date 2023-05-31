@@ -3,9 +3,8 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from pygame import Rect, event, KEYDOWN, K_i
-from pygame.time import get_ticks
 
-from src.common import INTRO_BANNER_PATH, convert_to_frames_since_start_time
+from src.common import INTRO_BANNER_PATH
 from src.config import prod_config
 from src.game import Game
 from src.intro import show_intro_banner, repeated_sparkle, Intro, draw_banner_text
@@ -40,17 +39,25 @@ class TestIntro(TestCase):
     #     banner_sparkle(True, self.game.screen)
 
     def test_handle_all_sparkles(self):
-        start_time = get_ticks()
+        start_time = 1
         self.assertFalse(self.intro.first_long_sparkle_done)
         self.assertFalse(self.intro.first_short_sparkle_done)
         self.assertFalse(self.intro.second_short_sparkle_done)
-        while convert_to_frames_since_start_time(start_time) <= 193:
+        with patch('src.common.get_ticks', return_value=535):  # 32.04 frames_since_banner_launch
             self.intro.handle_all_sparkles(start_time, self.game.screen)
-            if convert_to_frames_since_start_time(start_time) >= 33:
-                self.assertTrue(self.intro.first_long_sparkle_done)
-            if convert_to_frames_since_start_time(start_time) >= 161:
-                self.assertTrue(self.intro.first_short_sparkle_done)
-        self.assertTrue(self.intro.second_short_sparkle_done)
+            self.assertTrue(self.intro.first_long_sparkle_done)
+            self.assertFalse(self.intro.first_short_sparkle_done)
+            self.assertFalse(self.intro.second_short_sparkle_done)
+        with patch('src.common.get_ticks', return_value=2668):  # 160.02 frames_since_banner_launch
+            self.intro.handle_all_sparkles(start_time, self.game.screen)
+            self.assertTrue(self.intro.first_long_sparkle_done)
+            self.assertTrue(self.intro.first_short_sparkle_done)
+            self.assertFalse(self.intro.second_short_sparkle_done)
+        with patch('src.common.get_ticks', return_value=3201):  # 192.0 frames_since_banner_launch
+            self.intro.handle_all_sparkles(start_time, self.game.screen)
+            self.assertTrue(self.intro.first_long_sparkle_done)
+            self.assertTrue(self.intro.first_short_sparkle_done)
+            self.assertTrue(self.intro.second_short_sparkle_done)
 
     def test_draw_banner_text(self):
         draw_banner_text(self.game.screen, self.game.game_state.config)
