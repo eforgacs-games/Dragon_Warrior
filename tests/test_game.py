@@ -513,25 +513,35 @@ class TestGame(TestCase):
     def test_move_player_up(self):
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_w)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.assertEqual(self.game.player.rect.y, -16)
         self.game.move_player(pygame.key.get_pressed())
+        self.assertEqual(self.game.player.rect.y, -18)
         self.assertEqual(Direction.UP.value, self.game.player.direction_value)
+
 
     def test_move_player_left(self):
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_a)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.assertEqual(self.game.player.rect.x, -16)
         self.game.move_player(pygame.key.get_pressed())
+        self.assertEqual(self.game.player.rect.x, 0)
         self.assertEqual(Direction.LEFT.value, self.game.player.direction_value)
 
     def test_move_player_down(self):
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_s)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.assertEqual(self.game.player.rect.y, -16)
         self.game.move_player(pygame.key.get_pressed())
+        # impassable object in way of player
+        self.assertEqual(self.game.player.rect.y, -16)
         self.assertEqual(Direction.DOWN.value, self.game.player.direction_value)
 
     def test_move_player_right(self):
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_d)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.assertEqual(self.game.player.rect.x, -16)
         self.game.move_player(pygame.key.get_pressed())
+        self.assertEqual(self.game.player.rect.x, 0)
         self.assertEqual(Direction.RIGHT.value, self.game.player.direction_value)
 
     def test_flags_fullscreen_disabled(self):
