@@ -52,6 +52,7 @@ class TestMenuFunctions(TestCase):
     def test_truncate_name(self):
         self.assertEqual("12345679", truncate_name("123456789"))
 
-    def test_toggle_joystick_input(self):
+    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
+    def test_toggle_joystick_input(self, mock_show_text_in_dialog_box):
         self.assertEqual(True, toggle_joystick_input(self.game.cmd_menu, NAME_SELECTION_UPPER_A, False, self.game.screen))
         self.assertEqual(False, toggle_joystick_input(self.game.cmd_menu, NAME_SELECTION_UPPER_A, True, self.game.screen))

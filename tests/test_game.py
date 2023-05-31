@@ -81,7 +81,8 @@ def setup_roaming_character(row, column, direction):
 
 class TestGame(TestCase):
 
-    def setUp(self) -> None:
+    @patch('pygame.display.set_mode')
+    def setUp(self, mock_set_mode) -> None:
         prod_config['NO_WAIT'] = True
         prod_config['RENDER_TEXT'] = False
         prod_config['NO_BLIT'] = True
@@ -176,22 +177,26 @@ class TestGame(TestCase):
 
     # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
 
-    def test_handle_fps_change_60(self):
+    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
+    def test_handle_fps_change_60(self, mock_show_text_in_dialog_box):
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="1", key=pygame.K_1, mod=pygame.KMOD_NONE)
         self.game.handle_fps_changes(keydown_event)
         self.assertEqual(60, self.game.fps)
 
-    def test_handle_fps_change_120(self):
+    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
+    def test_handle_fps_change_120(self, mock_show_text_in_dialog_box):
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="2", key=pygame.K_2, mod=pygame.KMOD_NONE)
         self.game.handle_fps_changes(keydown_event)
         self.assertEqual(120, self.game.fps)
 
-    def test_handle_fps_change_240(self):
+    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
+    def test_handle_fps_change_240(self, mock_show_text_in_dialog_box):
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="3", key=pygame.K_3, mod=pygame.KMOD_NONE)
         self.game.handle_fps_changes(keydown_event)
         self.assertEqual(240, self.game.fps)
 
-    def test_handle_fps_change_480(self):
+    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
+    def test_handle_fps_change_480(self, mock_show_text_in_dialog_box):
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="4", key=pygame.K_4, mod=pygame.KMOD_NONE)
         self.game.handle_fps_changes(keydown_event)
         self.assertEqual(480, self.game.fps)
@@ -331,7 +336,11 @@ class TestGame(TestCase):
             # "Rest then for awhile."
         ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 
-    def test_travelers_inn(self):
+    @patch('src.menu.CommandMenu.show_text_line_in_dialog_box')
+    @patch('src.menu.CommandMenu.window_drop_up_effect')
+    @patch('src.menu.CommandMenu.window_drop_down_effect')
+    @patch('src.visual_effects.fade')
+    def test_travelers_inn(self, mock_show_text_line_in_dialog_box, mock_window_drop_up_effect, mock_window_drop_down_effect, mock_fade):
         self.game.current_map = Alefgard()
         self.game.player.row, self.game.player.column = 48, 56
         # organically switch maps to Brecconary, as though entering from Alefgard
@@ -391,7 +400,8 @@ class TestGame(TestCase):
             self.assertFalse(self.game.cmd_menu.menu.is_enabled())
         mock_window_drop_up_effect.assert_called_with(6, 1, 8, 5)
 
-    def test_handle_initial_dialog(self):
+    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
+    def test_handle_initial_dialog(self, mock_show_text_in_dialog_box):
         self.game.initial_dialog_enabled = True
         self.game.skip_text = True
         self.game.current_map.identifier = 'TantegelThroneRoom'
