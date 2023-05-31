@@ -43,16 +43,6 @@ def create_move_player_key_mock(pressed_key):
     return helper
 
 
-def create_key_mock(pressed_key):
-    def helper():
-        # increase this number as necessary to accommodate keys used
-        tmp = create_get_pressed_mock_array(pressed_key)
-        tmp[pressed_key] = 1
-        return tmp
-
-    return helper
-
-
 layout = [[33, 0, 3],
           [1, 2, 3],
           [3, 3, 39]]
@@ -339,7 +329,8 @@ class TestGame(TestCase):
     @patch('src.menu.CommandMenu.window_drop_up_effect')
     @patch('src.menu.CommandMenu.window_drop_down_effect')
     @patch('src.visual_effects.fade')
-    def test_travelers_inn(self, mock_show_text_line_in_dialog_box, mock_window_drop_up_effect, mock_window_drop_down_effect, mock_fade):
+    def test_travelers_inn(self, mock_show_text_line_in_dialog_box, mock_window_drop_up_effect,
+                           mock_window_drop_down_effect, mock_fade):
         self.game.current_map = Alefgard()
         self.game.player.row, self.game.player.column = 48, 56
         # organically switch maps to Brecconary, as though entering from Alefgard
