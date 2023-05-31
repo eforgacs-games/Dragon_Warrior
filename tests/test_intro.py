@@ -15,7 +15,8 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 class TestIntro(TestCase):
 
-    def setUp(self) -> None:
+    @patch('src.game.Game.set_screen')
+    def setUp(self, mock_set_screen) -> None:
         prod_config['NO_WAIT'] = True
         prod_config['RENDER_TEXT'] = False
         prod_config['NO_BLIT'] = True
