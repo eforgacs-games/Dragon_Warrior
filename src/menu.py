@@ -134,53 +134,59 @@ class CommandMenu(Menu):
         tile_size = self.game.game_state.config['TILE_SIZE']
         if line:
             if type(line) == str:
-                current_time = None
-                display_current_line = True
-                if add_quotes:
-                    if self.game.game_state.config['LANGUAGE'] == 'English':
-                        line = f"`{line}’"
-                    elif self.game.game_state.config['LANGUAGE'] == 'Korean':
-                        if line.isascii():
-                            line = f"`{line}’"
-                        else:
-                            line = f"'{line}'"
-                current_line = ""
-                while display_current_line:
-                    if temp_text_start:
-                        current_time = get_ticks()
-                    create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH,
-                                  screen=self.screen, color=self.game.color)
-                    if letter_by_letter:
-                        if not current_line:
-                            current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                                     self.game.game_state.config,
-                                                     color=self.game.color, letter_by_letter=True,
-                                                     disable_sound=disable_sound)
-                        else:
-                            current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                                     self.game.game_state.config,
-                                                     color=self.game.color, letter_by_letter=False,
-                                                     disable_sound=disable_sound)
-                    else:
-                        current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                                 self.game.game_state.config,
-                                                 color=self.game.color, letter_by_letter=False,
-                                                 disable_sound=disable_sound)
-                    display.update(Rect(2 * tile_size, 9 * tile_size, 12 * tile_size, 5 * tile_size))
-                    if not last_line:
-                        end_of_dialog_box_location = self.screen.get_width() / 2, (
-                                    self.screen.get_height() * 13 / 16) + tile_size // 1.5
-                        blink_arrow(end_of_dialog_box_location[0], end_of_dialog_box_location[1], "down", self.screen,
-                                    self.game.game_state.config, self.game.color)
-                    # playing with fire a bit here with the short-circuiting
-                    if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
-                            [current_event.type == KEYDOWN for current_event in event.get()]):
-                        if not skip_text and not disable_sound:
-                            play_sound(menu_button_sfx)
-                        display_current_line = False
+                self.show_text_line_in_dialog_box(add_quotes, disable_sound, last_line, letter_by_letter, line,
+                                                  skip_text, temp_text_start, tile_size)
             else:
                 # if the line is a method
                 line()
+
+    def show_text_line_in_dialog_box(self, add_quotes, disable_sound, last_line, letter_by_letter, line, skip_text,
+                                     temp_text_start, tile_size):
+        """Function for showing text in a dialog box (as opposed to executing a method)."""
+        current_time = None
+        display_current_line = True
+        if add_quotes:
+            if self.game.game_state.config['LANGUAGE'] == 'English':
+                line = f"`{line}’"
+            elif self.game.game_state.config['LANGUAGE'] == 'Korean':
+                if line.isascii():
+                    line = f"`{line}’"
+                else:
+                    line = f"'{line}'"
+        current_line = ""
+        while display_current_line:
+            if temp_text_start:
+                current_time = get_ticks()
+            create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH,
+                          screen=self.screen, color=self.game.color)
+            if letter_by_letter and not self.game.game_state.config['NO_WAIT']:
+                if not current_line:
+                    current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
+                                             self.game.game_state.config,
+                                             color=self.game.color, letter_by_letter=True,
+                                             disable_sound=disable_sound)
+                else:
+                    current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
+                                             self.game.game_state.config,
+                                             color=self.game.color, letter_by_letter=False,
+                                             disable_sound=disable_sound)
+            else:
+                current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
+                                         self.game.game_state.config,
+                                         color=self.game.color, letter_by_letter=False,
+                                         disable_sound=disable_sound)
+            display.update(Rect(2 * tile_size, 9 * tile_size, 12 * tile_size, 5 * tile_size))
+            if not last_line:
+                end_of_dialog_box_location = self.screen.get_width() / 2, (
+                        self.screen.get_height() * 13 / 16) + tile_size // 1.5
+                blink_arrow(end_of_dialog_box_location[0], end_of_dialog_box_location[1], "down", self.screen,
+                            self.game.game_state.config, self.game.color)
+            # playing with fire a bit here with the short-circuiting
+            if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
+                    [current_event.type == KEYDOWN for current_event in event.get()]):
+                if not skip_text and not disable_sound:
+                    play_sound(menu_button_sfx)
+                display_current_line = False
 
     def show_text_in_dialog_box(self, text: Tuple | List | str, add_quotes=False, temp_text_start=None, skip_text=False,
                                 drop_down=True, drop_up=True, disable_sound=False, letter_by_letter=True):
@@ -401,8 +407,6 @@ class CommandMenu(Menu):
         # for now, implementing using print statements. will be useful for debugging as well.
         character_coordinates = [(character_dict['character'].row, character_dict['character'].column) for
                                  character_dict in self.characters.values()]
-        # if self.player.next_tile_id not in self.characters.keys() and self.player.next_next_tile_id not in self.characters.keys():
-
         if any(c in character_coordinates for c in [self.player.next_coordinates]) or \
                 any(c in character_coordinates for c in
                     [self.player.next_next_coordinates]) and self.player.next_tile_id == 'WOOD':
