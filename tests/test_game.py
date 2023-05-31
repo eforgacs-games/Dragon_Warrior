@@ -4,7 +4,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pygame
-from pygame import K_z, K_UP, RESIZABLE, SCALED
+from pygame import K_UP, RESIZABLE, SCALED
 from pygame.imageext import load_extended
 from pygame.sprite import LayeredDirty
 from pygame.transform import scale
@@ -37,16 +37,6 @@ def create_get_pressed_mock_array(max_key):
 def create_move_player_key_mock(pressed_key):
     def helper():
         tmp = create_get_pressed_mock_array(K_UP)
-        tmp[pressed_key] = 1
-        return tmp
-
-    return helper
-
-
-def create_key_mock(pressed_key):
-    def helper():
-        # increase this number as necessary to accommodate keys used
-        tmp = create_get_pressed_mock_array(pressed_key)
         tmp[pressed_key] = 1
         return tmp
 
@@ -176,22 +166,26 @@ class TestGame(TestCase):
 
     # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
 
-    def test_handle_fps_change_60(self):
+    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
+    def test_handle_fps_change_60(self, mock_show_text_in_dialog_box):
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="1", key=pygame.K_1, mod=pygame.KMOD_NONE)
         self.game.handle_fps_changes(keydown_event)
         self.assertEqual(60, self.game.fps)
 
-    def test_handle_fps_change_120(self):
+    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
+    def test_handle_fps_change_120(self, mock_show_text_in_dialog_box):
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="2", key=pygame.K_2, mod=pygame.KMOD_NONE)
         self.game.handle_fps_changes(keydown_event)
         self.assertEqual(120, self.game.fps)
 
-    def test_handle_fps_change_240(self):
+    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
+    def test_handle_fps_change_240(self, mock_show_text_in_dialog_box):
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="3", key=pygame.K_3, mod=pygame.KMOD_NONE)
         self.game.handle_fps_changes(keydown_event)
         self.assertEqual(240, self.game.fps)
 
-    def test_handle_fps_change_480(self):
+    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
+    def test_handle_fps_change_480(self, mock_show_text_in_dialog_box):
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="4", key=pygame.K_4, mod=pygame.KMOD_NONE)
         self.game.handle_fps_changes(keydown_event)
         self.assertEqual(480, self.game.fps)
@@ -331,22 +325,35 @@ class TestGame(TestCase):
             # "Rest then for awhile."
         ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 
-    def test_travelers_inn(self):
+    @patch('src.menu.CommandMenu.show_text_line_in_dialog_box')
+    @patch('src.menu.CommandMenu.window_drop_up_effect')
+    @patch('src.menu.CommandMenu.window_drop_down_effect')
+    @patch('src.visual_effects.fade')
+    def test_travelers_inn(self, mock_show_text_line_in_dialog_box, mock_window_drop_up_effect,
+                           mock_window_drop_down_effect, mock_fade):
         self.game.current_map = Alefgard()
         self.game.player.row, self.game.player.column = 48, 56
         # organically switch maps to Brecconary, as though entering from Alefgard
         for staircase_location, staircase_dict in self.game.current_map.staircases.items():
             self.game.process_staircase_warps(staircase_location, staircase_dict)
-        self.assertEqual('Brecconary', self.game.current_map.identifier)
         self.game.player.current_hp = 1
         self.game.player.current_mp = 1
         self.game.player.direction_value = Direction.RIGHT.value
+        self.game.current_map.load_map(self.game.player, (23, 10), self.game.tile_size)
+        self.assertEqual('Brecconary', self.game.current_map.identifier)
+        self.assertTrue('MERCHANT_2' in self.game.current_map.characters)
+        self.assertTrue(self.game.current_map.characters['MERCHANT_2']['coordinates'] == (29, 20))
+        self.assertEqual((23, 10), self.game.current_map.destination_coordinates)
+        self.assertEqual((23, 10), self.game.current_map.initial_coordinates)
         self.game.cmd_menu.skip_text = True
         self.game.player.gold = 10
         self.game.player.row, self.game.player.column = 29, 18
         self.game.player.next_next_coordinates = get_next_coordinates(18, 29, self.game.player.direction_value,
                                                                       offset_from_character=2)
         self.assertEqual((29, 20), self.game.player.next_next_coordinates)
+        self.assertEqual('MERCHANT', get_tile_id_by_coordinates(self.game.player.next_next_coordinates[1],
+                                                                self.game.player.next_next_coordinates[0],
+                                                                self.game.current_map))
         self.game.player.next_tile_id = get_next_tile_identifier(self.game.player.column,
                                                                  self.game.player.row,
                                                                  self.game.player.direction_value,
@@ -354,9 +361,11 @@ class TestGame(TestCase):
         self.assertEqual('WOOD', self.game.player.next_tile_id)
         self.game.player.next_coordinates = get_next_coordinates(self.game.player.column, self.game.player.row,
                                                                  direction=self.game.player.direction_value)
+        self.assertEqual((29, 19), self.game.player.next_coordinates)
         self.game.cmd_menu.talk()
         self.assertEqual(self.game.player.max_hp, self.game.player.current_hp)
         self.assertEqual(self.game.player.max_mp, self.game.player.current_mp)
+        # checking that it won't work if you don't have enough gold
         self.assertEqual(4, self.game.player.gold)
         self.game.player.current_hp = 2
         self.game.player.current_mp = 3
@@ -381,7 +390,8 @@ class TestGame(TestCase):
             self.assertFalse(self.game.cmd_menu.menu.is_enabled())
         mock_window_drop_up_effect.assert_called_with(6, 1, 8, 5)
 
-    def test_handle_initial_dialog(self):
+    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
+    def test_handle_initial_dialog(self, mock_show_text_in_dialog_box):
         self.game.initial_dialog_enabled = True
         self.game.skip_text = True
         self.game.current_map.identifier = 'TantegelThroneRoom'
@@ -503,43 +513,55 @@ class TestGame(TestCase):
     def test_move_player_up(self):
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_w)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.assertEqual(self.game.player.rect.y, -16)
         self.game.move_player(pygame.key.get_pressed())
+        self.assertEqual(self.game.player.rect.y, -18)
         self.assertEqual(Direction.UP.value, self.game.player.direction_value)
 
     def test_move_player_left(self):
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_a)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.assertEqual(self.game.player.rect.x, -16)
         self.game.move_player(pygame.key.get_pressed())
+        self.assertEqual(self.game.player.rect.x, 0)
         self.assertEqual(Direction.LEFT.value, self.game.player.direction_value)
 
     def test_move_player_down(self):
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_s)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.assertEqual(self.game.player.rect.y, -16)
         self.game.move_player(pygame.key.get_pressed())
+        # impassable object in way of player
+        self.assertEqual(self.game.player.rect.y, -16)
         self.assertEqual(Direction.DOWN.value, self.game.player.direction_value)
 
     def test_move_player_right(self):
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_d)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
+        self.assertEqual(self.game.player.rect.x, -16)
         self.game.move_player(pygame.key.get_pressed())
+        self.assertEqual(self.game.player.rect.x, 0)
         self.assertEqual(Direction.RIGHT.value, self.game.player.direction_value)
 
-    def test_flags_fullscreen_disabled(self):
+    @patch('src.game.Game.set_screen')
+    def test_flags_fullscreen_disabled(self, mock_set_screen):
         self.game.fullscreen_enabled = False
         self.game.__init__(prod_config)
         self.assertEqual(RESIZABLE | SCALED, self.game.flags)
 
-    def test_flags_fullscreen_enabled(self):
+    @patch('src.game.Game.set_screen')
+    def test_flags_fullscreen_enabled(self, mock_set_screen):
         self.game.fullscreen_enabled = True
         self.game.__init__(prod_config)
         # seems like an integer overflow happens if we try:
         # self.assertEqual(FULLSCREEN | SCALED, self.game.flags)
         self.assertEqual(528, self.game.flags)
 
+    @patch('src.game.Game.set_screen')
     @patch.object(Game, "load_and_play_music")
-    def test_splash_screen_enabled_load_and_play_music(self, mock_method):
+    def test_splash_screen_enabled_load_and_play_music(self, mock_load_and_play_music, mock_set_screen):
         self.game.__init__(prod_config)
-        mock_method.assert_called_once_with(intro_overture)
+        mock_load_and_play_music.assert_called_once_with(intro_overture)
 
     # @patch('src.config')
     # def test_splash_screen_disabled_load_and_play_music(self, mocked_config):
