@@ -40,8 +40,7 @@ class MockMap(MapWithoutNPCs):
 
 class TestGameFunctions(TestCase):
 
-    @patch('pygame.display.set_mode')
-    def setUp(self, mock_set_mode) -> None:
+    def setUp(self) -> None:
         prod_config['NO_WAIT'] = True
         prod_config['RENDER_TEXT'] = False
         prod_config['NO_BLIT'] = True

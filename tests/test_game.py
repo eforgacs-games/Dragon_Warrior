@@ -81,8 +81,7 @@ def setup_roaming_character(row, column, direction):
 
 class TestGame(TestCase):
 
-    @patch('pygame.display.set_mode')
-    def setUp(self, mock_set_mode) -> None:
+    def setUp(self) -> None:
         prod_config['NO_WAIT'] = True
         prod_config['RENDER_TEXT'] = False
         prod_config['NO_BLIT'] = True
@@ -528,7 +527,6 @@ class TestGame(TestCase):
         self.assertEqual(self.game.player.rect.y, -18)
         self.assertEqual(Direction.UP.value, self.game.player.direction_value)
 
-
     def test_move_player_left(self):
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_a)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
@@ -554,22 +552,25 @@ class TestGame(TestCase):
         self.assertEqual(self.game.player.rect.x, 0)
         self.assertEqual(Direction.RIGHT.value, self.game.player.direction_value)
 
-    def test_flags_fullscreen_disabled(self):
+    @patch('src.game.Game.set_screen')
+    def test_flags_fullscreen_disabled(self, mock_set_screen):
         self.game.fullscreen_enabled = False
         self.game.__init__(prod_config)
         self.assertEqual(RESIZABLE | SCALED, self.game.flags)
 
-    def test_flags_fullscreen_enabled(self):
+    @patch('src.game.Game.set_screen')
+    def test_flags_fullscreen_enabled(self, mock_set_screen):
         self.game.fullscreen_enabled = True
         self.game.__init__(prod_config)
         # seems like an integer overflow happens if we try:
         # self.assertEqual(FULLSCREEN | SCALED, self.game.flags)
         self.assertEqual(528, self.game.flags)
 
+    @patch('src.game.Game.set_screen')
     @patch.object(Game, "load_and_play_music")
-    def test_splash_screen_enabled_load_and_play_music(self, mock_method):
+    def test_splash_screen_enabled_load_and_play_music(self, mock_load_and_play_music, mock_set_screen):
         self.game.__init__(prod_config)
-        mock_method.assert_called_once_with(intro_overture)
+        mock_load_and_play_music.assert_called_once_with(intro_overture)
 
     # @patch('src.config')
     # def test_splash_screen_disabled_load_and_play_music(self, mocked_config):
