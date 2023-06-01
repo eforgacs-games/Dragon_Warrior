@@ -326,7 +326,7 @@ class Game:
                             else:
                                 enemy_draws_near_string = f'A {enemy_draws_near_string}'
                         self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string, add_quotes=False, skip_text=True,
-                                                              last_line=True, disable_sound=True)
+                                                              show_arrow=True, disable_sound=True)
                         self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
                         self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
                         create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
@@ -386,7 +386,7 @@ class Game:
                                             if not self.player.inventory:
                                                 self.cmd_menu.show_line_in_dialog_box(
                                                     'Nothing of use has yet been given to thee.\n'
-                                                    'Command?\n', add_quotes=False, last_line=True, disable_sound=True)
+                                                    'Command?\n', add_quotes=False, show_arrow=True, disable_sound=True)
                                         selected_executed_option = None
 
                         if enemy.hp <= 0:
@@ -404,24 +404,26 @@ class Game:
         """Spiral effect to introduce battle background."""
         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
                                         (7 * self.tile_size, 7 * self.tile_size))
-        spiral_tile_coordinates = [(3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (4, 3), (4, 4), (4, 5),
+        spiral_tile_coordinates = ((3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (4, 3), (4, 4), (4, 5),
                                    (3, 5), (2, 5), (1, 5), (1, 4), (1, 3), (1, 2), (1, 1), (2, 1), (3, 1), (4, 1),
                                    (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (4, 6), (3, 6), (2, 6), (1, 6),
                                    (0, 6), (0, 5), (0, 4), (0, 3), (0, 2), (0, 1), (0, 0), (1, 0), (2, 0), (3, 0),
-                                   (4, 0), (5, 0), (6, 0), (6, 1), (6, 2), (6, 3), (6, 4), (6, 5), (6, 6)]
+                                   (4, 0), (5, 0), (6, 0), (6, 1), (6, 2), (6, 3), (6, 4), (6, 5), (6, 6))
         for tile in spiral_tile_coordinates:
-            self.screen.blit(battle_background_image.subsurface((tile[0] * self.tile_size, tile[1] * self.tile_size, self.tile_size, self.tile_size)), ((tile[0] + 5) * self.tile_size, (tile[1] + 4) * self.tile_size))
+            self.screen.blit(battle_background_image.subsurface(
+                (tile[0] * self.tile_size, tile[1] * self.tile_size, self.tile_size, self.tile_size)),
+                             ((tile[0] + 5) * self.tile_size, (tile[1] + 4) * self.tile_size))
             display.update()
             time.wait(20)
 
     def battle_run(self):
         play_sound(stairs_down_sfx)
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} started to run away.\n", add_quotes=False,
-                                              last_line=True, disable_sound=True)
+                                              show_arrow=True, disable_sound=True)
 
     def fight(self, enemy):
         play_sound(attack_sfx)
-        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n", add_quotes=False, disable_sound=True)
+        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n", add_quotes=False, disable_sound=True, show_arrow=True)
 
         attack_damage = self.calculate_attack_damage(enemy)
 
@@ -431,14 +433,14 @@ class Game:
             play_sound(hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
                 f"The {enemy.name}'s Hit Points have been reduced by {attack_damage}.\n", add_quotes=False,
-                disable_sound=True)
+                disable_sound=True, show_arrow=True)
             enemy.hp -= attack_damage
             # print(f"{enemy.name} HP: {enemy.hp}/{enemy_string_lookup[enemy.name]().hp}")
         if enemy.hp <= 0:
             return
         else:
             play_sound(prepare_attack_sfx)
-            self.cmd_menu.show_line_in_dialog_box(f"The {enemy.name} attacks!\n", add_quotes=False, disable_sound=True)
+            self.cmd_menu.show_line_in_dialog_box(f"The {enemy.name} attacks!\n", add_quotes=False, disable_sound=True, show_arrow=True)
             # (EnemyAttack - HeroAgility / 2) / 4,
             #
             # to:
@@ -466,7 +468,7 @@ class Game:
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
         create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
         self.cmd_menu.show_line_in_dialog_box(f"Thy Hit Points decreased by {attack_damage}.\n",
-                                              add_quotes=False, disable_sound=True)
+                                              add_quotes=False, disable_sound=True, show_arrow=True)
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
 
     def calculate_enemy_attack_damage(self, enemy):
@@ -481,7 +483,7 @@ class Game:
         else:
             play_sound(missed_2_sfx)
         self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n", add_quotes=False,
-                                              disable_sound=True)
+                                              disable_sound=True, show_arrow=True)
 
     def calculate_attack_damage(self, enemy):
         excellent_move_probability = random.randint(0, 31)
@@ -507,26 +509,25 @@ class Game:
 
     def battle_spell(self):
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n"
-                                              f"Command?\n", add_quotes=False, last_line=True, disable_sound=True)
+                                              f"Command?\n", add_quotes=False, show_arrow=True, disable_sound=True)
 
     def enemy_defeated(self, enemy):
+        self.cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n", add_quotes=False,
+                                              disable_sound=True, show_arrow=True)
         mixer.music.stop()
         play_sound(victory_sfx)
-        self.cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n", add_quotes=False,
-                                              disable_sound=True)
         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
                                         (7 * self.tile_size, 7 * self.tile_size))
-        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size)) if not \
-        self.game_state.config['NO_BLIT'] else None
+        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size))
         display.update(battle_background_image.get_rect())
         self.cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
                                               f"Thy GOLD increases by {enemy.gold}.\n", add_quotes=False,
-                                              disable_sound=True)
+                                              disable_sound=True, show_arrow=True)
         self.player.total_experience += enemy.xp
         self.player.gold += enemy.gold
 
-        if self.player.level + 1 < 30 and self.player.total_experience >= levels_list[self.player.level + 1][
-            'total_exp']:
+        if self.player.level + 1 < 30 and \
+                self.player.total_experience >= levels_list[self.player.level + 1]['total_exp']:
             play_sound(improvement_sfx)
             self.cmd_menu.show_line_in_dialog_box(f"Courage and wit have served thee well.\n"
                                                   f"Thou hast been promoted to the next level.\n", add_quotes=False,
