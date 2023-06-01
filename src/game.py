@@ -311,11 +311,7 @@ class Game:
                         if self.music_enabled:
                             mixer.music.load(battle_music)
                             mixer.music.play(-1)
-                        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
-                                                        (7 * self.tile_size, 7 * self.tile_size))
-                        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size)) if not \
-                        self.game_state.config['NO_BLIT'] else None
-                        display.update(battle_background_image.get_rect())
+                        self.battle_background_image_effect()
                         self.drawer.show_enemy_image(self.screen, enemy_name)
                         enemy_draws_near_string = f'{enemy_name} draws near!\n' \
                                                   f'Command?\n'
@@ -403,6 +399,20 @@ class Game:
                     #     print(f'Zone: {current_zone}\nEnemies: {enemies_in_current_zone}')
                     self.last_zone = current_zone
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
+
+    def battle_background_image_effect(self):
+        """Spiral effect to introduce battle background."""
+        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
+                                        (7 * self.tile_size, 7 * self.tile_size))
+        spiral_tile_coordinates = [(3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (4, 3), (4, 4), (4, 5),
+                                   (3, 5), (2, 5), (1, 5), (1, 4), (1, 3), (1, 2), (1, 1), (2, 1), (3, 1), (4, 1),
+                                   (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (4, 6), (3, 6), (2, 6), (1, 6),
+                                   (0, 6), (0, 5), (0, 4), (0, 3), (0, 2), (0, 1), (0, 0), (1, 0), (2, 0), (3, 0),
+                                   (4, 0), (5, 0), (6, 0), (6, 1), (6, 2), (6, 3), (6, 4), (6, 5), (6, 6)]
+        for tile in spiral_tile_coordinates:
+            self.screen.blit(battle_background_image.subsurface((tile[0] * self.tile_size, tile[1] * self.tile_size, self.tile_size, self.tile_size)), ((tile[0] + 5) * self.tile_size, (tile[1] + 4) * self.tile_size))
+            display.update()
+            time.wait(20)
 
     def battle_run(self):
         play_sound(stairs_down_sfx)
