@@ -135,5 +135,62 @@ enemy_string_lookup = {
     'Red Dragon': RedDragon,
     'Dragonlord': Dragonlord,
     'Dragonlord 2': Dragonlord2,
+}
+
+enemy_image_position_lookup = {
+    'Slime': (8, 7),
+    'Red Slime': (8, 7),
+    'Metal Slime': (8, 7),
+
+    'Drakee': (7.75, 6.25),
+    'Magidrakee': (7.75, 6.25),
+    'Drakeema': (7.75, 6.25),
+
+    'Ghost': (7.8, 5.9),
+    'Poltergeist': (7.8, 5.9),
+    'Specter': (7.8, 5.9),
+
+    'Magician': (7.3, 6),
+    'Warlock': (7.3, 6),
+    'Wizard': (7.3, 6),
+
+    'Scorpion': (7.4, 6.5),
+    'Metal Scorpion': (7.4, 6.5),
+    'Rogue Scorpion': (7.4, 6.5),
+
+    'Druin': (8, 6.5),
+    'Druinlord': (8, 6.5),
+
+    'Droll': (7.5, 6),
+    'Drollmagi': (7.5, 6),
+
+    'Skeleton': (7.46, 5.74),
+    'Wraith': (7.46, 5.74),
+    'Wraith Knight': (7.46, 5.74),
+    'Demon Knight': (7.46, 5.74),
+
+    'Wolf': (7.11, 5.95),
+    'Wolflord': (7.11, 5.95),
+    'Werewolf': (7.11, 5.95),
+
+    'Goldman': (7.1, 5.6),
+    'Golem': (7.1, 5.6),
+    'Stoneman': (7.1, 5.6),
+
+    'Wyvern': (7.25, 5.5),
+    'Magiwyvern': (7.25, 5.5),
+    'Starwyvern': (7.25, 5.5),
+
+    'Knight': (7.1, 5.75),
+    'Axe Knight': (7.1, 5.75),
+    'Armored Knight': (7.1, 5.75),
+
+    'Green Dragon': (6.5, 6.25),
+    'Blue Dragon': (6.5, 6.25),
+    'Red Dragon': (6.5, 6.25),
+
+    'Dragonlord': (7.5, 6),
+    'Dragonlord 2': (5.1, 4),
+
 
 }
