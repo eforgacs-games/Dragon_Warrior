@@ -120,10 +120,11 @@ class CommandMenu(Menu):
         #     print(f"Character not in lookup table: {dialog_character}")
 
     def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True,
-                                temp_text_start: int = None, skip_text: bool = False, last_line=False,
+                                temp_text_start: int = None, skip_text: bool = False, hide_arrow=False,
                                 disable_sound=False, letter_by_letter=True):
         """Shows a single line in a dialog box.
-        :param last_line:
+        :param hide_arrow: Whether to show the continuation arrow
+        (blinking down arrow at bottom of dialog box).
         :param line: The line of text to print.
         :param skip_text: Whether to automatically skip the text.
         :param add_quotes: Adds single quotes to be displayed on the screen.
@@ -134,13 +135,13 @@ class CommandMenu(Menu):
         tile_size = self.game.game_state.config['TILE_SIZE']
         if line:
             if type(line) == str:
-                self.show_text_line_in_dialog_box(add_quotes, disable_sound, last_line, letter_by_letter, line,
-                                                  skip_text, temp_text_start, tile_size)
+                self.show_text_line_in_dialog_box(add_quotes, disable_sound, hide_arrow, letter_by_letter,
+                                                  line, skip_text, temp_text_start, tile_size)
             else:
                 # if the line is a method
                 line()
 
-    def show_text_line_in_dialog_box(self, add_quotes, disable_sound, last_line, letter_by_letter, line, skip_text,
+    def show_text_line_in_dialog_box(self, add_quotes, disable_sound, hide_arrow, letter_by_letter, line, skip_text,
                                      temp_text_start, tile_size):
         """Function for showing text in a dialog box (as opposed to executing a method)."""
         current_time = None
@@ -176,7 +177,7 @@ class CommandMenu(Menu):
                                          color=self.game.color, letter_by_letter=False,
                                          disable_sound=disable_sound)
             display.update(Rect(2 * tile_size, 9 * tile_size, 12 * tile_size, 5 * tile_size))
-            if not last_line:
+            if not hide_arrow:
                 end_of_dialog_box_location = self.screen.get_width() / 2, (
                         self.screen.get_height() * 13 / 16) + tile_size // 1.5
                 blink_arrow(end_of_dialog_box_location[0], end_of_dialog_box_location[1], "down", self.screen,
@@ -204,12 +205,12 @@ class CommandMenu(Menu):
         if drop_down:
             self.window_drop_down_effect(2, 9, 12, 5)
         if type(text) == str:
-            self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, last_line=True,
+            self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, hide_arrow=True,
                                          disable_sound=disable_sound, letter_by_letter=letter_by_letter)
         else:
             for line_index, line in enumerate(text):
                 if line_index == len(text) - 1:
-                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text, last_line=True,
+                    self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text, hide_arrow=True,
                                                  disable_sound=disable_sound, letter_by_letter=letter_by_letter)
                 else:
                     self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text,
