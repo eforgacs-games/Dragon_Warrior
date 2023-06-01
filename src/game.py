@@ -386,7 +386,7 @@ class Game:
                                             if not self.player.inventory:
                                                 self.cmd_menu.show_line_in_dialog_box(
                                                     'Nothing of use has yet been given to thee.\n'
-                                                    'Command?\n', add_quotes=False, show_arrow=True, disable_sound=True)
+                                                    'Command?\n', add_quotes=False, show_arrow=False, disable_sound=True)
                                         selected_executed_option = None
 
                         if enemy.hp <= 0:
@@ -457,7 +457,7 @@ class Game:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
                 self.player.is_dead = True
             else:
-                self.cmd_menu.show_line_in_dialog_box(f"Command?\n", add_quotes=False, disable_sound=True)
+                self.cmd_menu.show_line_in_dialog_box(f"Command?\n", add_quotes=False, disable_sound=True, show_arrow=False)
 
     def receive_damage(self, attack_damage):
         play_sound(receive_damage_2_sfx)
@@ -513,7 +513,7 @@ class Game:
 
     def enemy_defeated(self, enemy):
         self.cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n", add_quotes=False,
-                                              disable_sound=True, show_arrow=True)
+                                              disable_sound=True, show_arrow=False)
         mixer.music.stop()
         play_sound(victory_sfx)
         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
