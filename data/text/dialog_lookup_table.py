@@ -234,7 +234,7 @@ class DialogLookup:
                         current_item_index -= 1
                         start_time = get_ticks()
                     elif current_event.key == K_j:
-                        self.command_menu.show_line_in_dialog_box(_("Please, come again."), show_arrow=True)
+                        self.command_menu.show_line_in_dialog_box(_("Please, come again."), hide_arrow=True)
                         selecting = False
                     elif current_event.key in (K_RETURN, K_k):
                         selected_item = current_item_name
@@ -248,7 +248,7 @@ class DialogLookup:
 
     def buy_item_dialog(self, selected_item, current_store_inventory, static_store_image):
         _ = self._
-        self.command_menu.show_line_in_dialog_box(f"The {selected_item}?", show_arrow=False)
+        self.command_menu.show_line_in_dialog_box(f"The {selected_item}?", hide_arrow=False)
         selected_item_dict = current_store_inventory[selected_item]
         selected_item_type = selected_item_dict['type']
         if self.player.gold > selected_item_dict['cost']:
@@ -266,7 +266,7 @@ class DialogLookup:
                                                          _("Oh, yes? That's too bad."), last_line=False), config=self.config)
         else:
             self.command_menu.show_line_in_dialog_box(_("Sorry.\n"
-                                                        "Thou hast not enough money."), show_arrow=False)
+                                                        "Thou hast not enough money."), hide_arrow=False)
         confirmation_prompt(self.command_menu, _("Dost thou wish to buy anything more?"),
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
@@ -279,7 +279,7 @@ class DialogLookup:
             if old_item_lookup_table[old_item].get('cost'):
                 old_item_cost = old_item_lookup_table[old_item]['cost'] // 2
                 self.command_menu.show_line_in_dialog_box(
-                    _("Then I will buy thy {} for {} GOLD.").format(old_item, old_item_cost), show_arrow=False)
+                    _("Then I will buy thy {} for {} GOLD.").format(old_item, old_item_cost), hide_arrow=False)
         return old_item_cost
 
     def complete_transaction(self, item, current_store_inventory, old_item_cost):

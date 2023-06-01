@@ -326,7 +326,7 @@ class Game:
                             else:
                                 enemy_draws_near_string = f'A {enemy_draws_near_string}'
                         self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string, add_quotes=False, skip_text=True,
-                                                              show_arrow=True, disable_sound=True)
+                                                              hide_arrow=True, disable_sound=True)
                         self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
                         self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
                         create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
@@ -349,10 +349,7 @@ class Game:
                             current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
                             selected_executed_option = None
                             for current_event in event.get():
-                                if current_event.type == QUIT:
-                                    quit()
-                                    sys.exit()
-                                elif current_event.type == KEYDOWN and not self.player.is_dead and not enemy.hp <= 0:
+                                if current_event.type == KEYDOWN and not enemy.hp <= 0:
                                     if current_event.key in (K_RETURN, K_i, K_k):
                                         play_sound(menu_button_sfx)
                                         selected_executed_option = current_selection
@@ -386,8 +383,11 @@ class Game:
                                             if not self.player.inventory:
                                                 self.cmd_menu.show_line_in_dialog_box(
                                                     'Nothing of use has yet been given to thee.\n'
-                                                    'Command?\n', add_quotes=False, show_arrow=False, disable_sound=True)
+                                                    'Command?\n', add_quotes=False, hide_arrow=False, disable_sound=True)
                                         selected_executed_option = None
+                                elif current_event.type == QUIT:
+                                    quit()
+                                    sys.exit()
 
                         if enemy.hp <= 0:
                             self.enemy_defeated(enemy)
@@ -419,11 +419,11 @@ class Game:
     def battle_run(self):
         play_sound(stairs_down_sfx)
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} started to run away.\n", add_quotes=False,
-                                              show_arrow=True, disable_sound=True)
+                                              hide_arrow=True, disable_sound=True)
 
     def fight(self, enemy):
         play_sound(attack_sfx)
-        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n", add_quotes=False, disable_sound=True, show_arrow=True)
+        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n", add_quotes=False, disable_sound=True, hide_arrow=True)
 
         attack_damage = self.calculate_attack_damage(enemy)
 
@@ -433,14 +433,14 @@ class Game:
             play_sound(hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
                 f"The {enemy.name}'s Hit Points have been reduced by {attack_damage}.\n", add_quotes=False,
-                disable_sound=True, show_arrow=True)
+                disable_sound=True, hide_arrow=True)
             enemy.hp -= attack_damage
             # print(f"{enemy.name} HP: {enemy.hp}/{enemy_string_lookup[enemy.name]().hp}")
         if enemy.hp <= 0:
             return
         else:
             play_sound(prepare_attack_sfx)
-            self.cmd_menu.show_line_in_dialog_box(f"The {enemy.name} attacks!\n", add_quotes=False, disable_sound=True, show_arrow=True)
+            self.cmd_menu.show_line_in_dialog_box(f"The {enemy.name} attacks!\n", add_quotes=False, disable_sound=True, hide_arrow=True)
             # (EnemyAttack - HeroAgility / 2) / 4,
             #
             # to:
@@ -457,7 +457,7 @@ class Game:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
                 self.player.is_dead = True
             else:
-                self.cmd_menu.show_line_in_dialog_box(f"Command?\n", add_quotes=False, disable_sound=True, show_arrow=False)
+                self.cmd_menu.show_line_in_dialog_box(f"Command?\n", add_quotes=False, disable_sound=True, hide_arrow=True)
 
     def receive_damage(self, attack_damage):
         play_sound(receive_damage_2_sfx)
@@ -468,7 +468,7 @@ class Game:
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
         create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
         self.cmd_menu.show_line_in_dialog_box(f"Thy Hit Points decreased by {attack_damage}.\n",
-                                              add_quotes=False, disable_sound=True, show_arrow=True)
+                                              add_quotes=False, disable_sound=True, hide_arrow=True)
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
 
     def calculate_enemy_attack_damage(self, enemy):
@@ -483,7 +483,7 @@ class Game:
         else:
             play_sound(missed_2_sfx)
         self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n", add_quotes=False,
-                                              disable_sound=True, show_arrow=True)
+                                              disable_sound=True, hide_arrow=True)
 
     def calculate_attack_damage(self, enemy):
         excellent_move_probability = random.randint(0, 31)
@@ -509,11 +509,11 @@ class Game:
 
     def battle_spell(self):
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n"
-                                              f"Command?\n", add_quotes=False, show_arrow=True, disable_sound=True)
+                                              f"Command?\n", add_quotes=False, hide_arrow=True, disable_sound=True)
 
     def enemy_defeated(self, enemy):
         self.cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n", add_quotes=False,
-                                              disable_sound=True, show_arrow=False)
+                                              disable_sound=True, hide_arrow=True)
         mixer.music.stop()
         play_sound(victory_sfx)
         battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
@@ -522,7 +522,7 @@ class Game:
         display.update(battle_background_image.get_rect())
         self.cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
                                               f"Thy GOLD increases by {enemy.gold}.\n", add_quotes=False,
-                                              disable_sound=True, show_arrow=True)
+                                              disable_sound=True, hide_arrow=True)
         self.player.total_experience += enemy.xp
         self.player.gold += enemy.gold
 

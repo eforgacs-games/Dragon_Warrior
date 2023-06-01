@@ -47,7 +47,7 @@ def blink_switch(screen, image_1, image_2, x, y, width, height, start, config, c
 
 def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, finally_function=None,
                         skip_text=False, color=WHITE):
-    command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, show_arrow=True, letter_by_letter=True)
+    command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, hide_arrow=True, letter_by_letter=True)
     command_menu.window_drop_down_effect(5, 2, 4, 3)
     window_surface = create_window(5, 2, 4, 3, CONFIRMATION_BACKGROUND_PATH, command_menu.screen, color)
     display.update(window_surface.get_rect())
