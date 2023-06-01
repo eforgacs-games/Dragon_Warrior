@@ -1,3 +1,4 @@
+from statistics import mean
 from typing import List, Iterable
 
 from pygame import image, display, KEYDOWN, KEYUP, event, Surface, Rect
@@ -8,6 +9,7 @@ from pygame.transform import scale
 from src.common import convert_to_frames_since_start_time, IMAGES_ENEMIES_DIR, WHITE, create_window, \
     HOVERING_STATS_BACKGROUND_PATH, play_sound, menu_button_sfx, torch_sfx, BLACK
 from src.config import SCALE
+from src.enemy_lookup import enemy_image_position_lookup
 from src.game_functions import get_surrounding_rect
 from src.menu import Menu, CommandMenu
 from src.text import draw_text
@@ -24,40 +26,13 @@ class Drawer:
 
     def position_and_draw_enemy_image(self, screen, enemy_image, enemy_name, no_blit):
         tile_size = self.game_state.config["TILE_SIZE"]
-        if enemy_name in ('Slime', 'Red Slime', 'Metal Slime'):
-            screen.blit(enemy_image, (8 * tile_size, 7 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Drakee', 'Magidrakee', 'Drakeema'):
-            # might need work
-            screen.blit(enemy_image, (7.75 * tile_size, 6.25 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Ghost', 'Poltergeist', 'Specter'):
-            screen.blit(enemy_image, (7.8 * tile_size, 5.9 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Magician', 'Warlock', 'Wizard'):
-            screen.blit(enemy_image, (7.3 * tile_size, 6 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Scorpion', 'Metal Scorpion', 'Rogue Scorpion'):
-            screen.blit(enemy_image, (7.4 * tile_size, 6.5 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Druin', 'Druinlord'):
-            screen.blit(enemy_image, (8 * tile_size, 6.5 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Droll', 'Drollmagi'):
-            screen.blit(enemy_image, (7.5 * tile_size, 6 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Skeleton', 'Wraith', 'Wraith Knight', 'Demon Knight'):
-            screen.blit(enemy_image, (7.46 * tile_size, 5.74 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Wolf', 'Wolflord', 'Werewolf'):
-            screen.blit(enemy_image, (7.11 * tile_size, 5.95 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Goldman', 'Golem', 'Stoneman'):
-            screen.blit(enemy_image, (7.1 * tile_size, 5.6 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Wyvern', 'Magiwyvern', 'Starwyvern'):
-            screen.blit(enemy_image, (7.25 * tile_size, 5.5 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Knight', 'Axe Knight', 'Armored Knight'):
-            screen.blit(enemy_image, (7.1 * tile_size, 5.75 * tile_size)) if not no_blit else None
-        elif enemy_name in ('Green Dragon', 'Blue Dragon', 'Red Dragon'):
-            screen.blit(enemy_image, (6.5 * tile_size, 6.25 * tile_size)) if not no_blit else None
-        elif enemy_name == 'Dragonlord':
-            screen.blit(enemy_image, (7.5 * tile_size, 6 * tile_size)) if not no_blit else None
-        elif enemy_name == 'Dragonlord 2':
-            # need to have this blit over the text box on the bottom
-            screen.blit(enemy_image, (5.1 * tile_size, 4 * tile_size)) if not no_blit else None
+        enemy_position = enemy_image_position_lookup.get(enemy_name)
+        if enemy_position:
+            screen.blit(enemy_image, (enemy_position[0] * tile_size, enemy_position[1] * tile_size))
         else:
-            screen.blit(enemy_image, (7.544 * tile_size, 6.1414 * tile_size)) if not no_blit else None
+            average_x = mean(value[0] for value in enemy_image_position_lookup.values())
+            average_y = mean(value[1] for value in enemy_image_position_lookup.values())
+            screen.blit(enemy_image, average_x, average_y)
 
     def show_enemy_image(self, screen, enemy_name):
         enemy_name_without_spaces = enemy_name.replace(" ", "")
