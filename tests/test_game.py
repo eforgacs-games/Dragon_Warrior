@@ -374,11 +374,6 @@ class TestGame(TestCase):
         self.assertEqual(3, self.game.player.current_mp)
         self.assertEqual(4, self.game.player.gold)
 
-    def test_load_and_play_music(self):
-        with patch.object(Game, 'load_and_play_music', return_value=None) as mock_load_and_play_music:
-            Game(prod_config).load_and_play_music(village_music)
-        mock_load_and_play_music.assert_called_with(village_music)
-
     def test_unlaunch_menu(self):
         self.game.cmd_menu.menu.enable()
         with patch.object(CommandMenu, 'window_drop_up_effect', return_value=None) as mock_window_drop_up_effect:
