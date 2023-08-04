@@ -1,5 +1,4 @@
 import random
-import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, \
@@ -9,10 +8,12 @@ from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
-from pygame.transform import scale
 
 from data.text.dialog import blink_switch
 from src import maps, menu_functions
+from src.battle import battle_background_image_effect, battle_run, \
+    calculate_enemy_attack_damage, missed_attack, calculate_attack_damage, battle_spell, enemy_defeated, \
+    get_enemy_draws_near_string
 from src.camera import Camera
 from src.common import BLACK, Direction, ICON_PATH, intro_overture, is_facing_laterally, \
     is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, \
@@ -20,10 +21,8 @@ from src.common import BLACK, Direction, ICON_PATH, intro_overture, is_facing_la
     convert_to_frames_since_start_time, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, \
     ARMED_HERO_WITH_SHIELD_PATH, \
-    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, battle_music, victory_sfx, attack_sfx, hit_sfx, improvement_sfx, \
-    BATTLE_BACKGROUND_PATH, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
-    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, missed_sfx, missed_2_sfx, \
-    prepare_attack_sfx, receive_damage_2_sfx, excellent_move_sfx, create_window
+    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, battle_music, attack_sfx, hit_sfx, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
+    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, prepare_attack_sfx, receive_damage_2_sfx, create_window
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import dev_config
 from src.drawer import Drawer
@@ -37,27 +36,10 @@ from src.menu import CommandMenu, Menu
 from src.menu_functions import convert_list_to_newline_separated_string
 from src.movement import bump_and_reset
 from src.player.player import Player
-from src.player.player_stats import levels_list
 from src.sound import bump, play_sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 from src.visual_effects import fade, flash_transparent_color
-
-
-def select_random_attack_damage_value(lower_bound, upper_bound) -> int:
-    if lower_bound > upper_bound:
-        attack_damage = random.randint(upper_bound, lower_bound)
-    elif lower_bound == upper_bound:
-        attack_damage = lower_bound
-    else:
-        attack_damage = random.randint(lower_bound, upper_bound)
-    if attack_damage < 1:
-        # fifty-fifty chance of doing 1 damage
-        if random.random() < .5:
-            attack_damage = 1
-        else:
-            attack_damage = 0
-    return attack_damage
 
 
 class Game:
@@ -114,7 +96,6 @@ class Game:
         # self.current_map can be changed to other maps for development purposes
 
         self.current_map = maps.TantegelThroneRoom()
-        # self.current_map = maps.ErdricksCaveB1()
         # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
         # self.current_map = maps.Brecconary()
@@ -214,7 +195,6 @@ class Game:
         for current_event in self.events:
             if current_event.type == QUIT:
                 quit()
-                sys.exit()
             elif current_event.type == KEYDOWN:
                 self.handle_keypresses(current_event)
         if self.game_state.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
@@ -280,8 +260,8 @@ class Game:
             print(self.clock.get_fps())
 
         # This prints out the next_tile, and the next_next_tile.
-        # print(f'Next tile: {self.player.next_tile}')
-        # print(f'Next next tile: {self.player.next_next_tile}')
+        # print(f'Next tile: {self.player.next_tile_id}')
+        # print(f'Next next tile: {self.player.next_next_tile_id}')
         # print(f'{self.get_character_identifier_by_coordinates(self.player.next_coordinates)}')
         # print(f'{self.get_character_identifier_by_coordinates(self.player.next_next_coordinates)}')
 
@@ -307,128 +287,102 @@ class Game:
                         random_integer = self.get_random_integer_by_tile()
                     self.launch_battle = random_integer == 0 or self.game_state.config["FORCE_BATTLE"]
                     if self.launch_battle and not self.game_state.config["NO_BATTLES"]:
-                        enemy_name = random.choice(enemies_in_current_zone)
-                        if self.music_enabled:
-                            mixer.music.load(battle_music)
-                            mixer.music.play(-1)
-                        self.battle_background_image_effect()
-                        self.drawer.show_enemy_image(self.screen, enemy_name)
-                        enemy_draws_near_string = f'{enemy_name} draws near!\n' \
-                                                  f'Command?\n'
-                        vowels = 'AEIOU'
-
-                        if enemy_name[0] in vowels:
-                            enemy_draws_near_string = f'An {enemy_draws_near_string}'
-                        else:
-                            if enemy_name == 'Dragonlord 2':
-                                enemy_draws_near_string = 'The Dragonlord revealed his true self!\n'
-                            # show battle window (enemy sprite over background)
-                            else:
-                                enemy_draws_near_string = f'A {enemy_draws_near_string}'
-                        self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string, add_quotes=False, skip_text=True,
-                                                              hide_arrow=True, disable_sound=True)
-                        self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
-                        self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
-                        create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
-                        self.drawer.hovering_stats_displayed = True
-                        self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
-
-                        enemy = enemy_string_lookup[enemy_name]()
-
-                        battle_menu_options = {'Fight': BATTLE_MENU_FIGHT_PATH, 'Spell': BATTLE_MENU_SPELL_PATH}, \
-                            {'Run': BATTLE_MENU_RUN_PATH, 'Item': BATTLE_MENU_ITEM_PATH}
-                        current_item_row = 0
-                        current_item_column = 0
-                        run_away = False
-                        blink_start = get_ticks()
-                        while enemy.hp > 0 and not run_away and not self.player.is_dead:
-                            blink_switch(self.screen, BATTLE_MENU_STATIC_PATH,
-                                         list(battle_menu_options[current_item_row].values())[
-                                             current_item_column], x=6, y=1, width=8, height=3, start=blink_start,
-                                         config=self.game_state.config, color=self.color)
-                            current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
-                            selected_executed_option = None
-                            for current_event in event.get():
-                                if current_event.type == KEYDOWN and not enemy.hp <= 0:
-                                    if current_event.key in (K_RETURN, K_i, K_k):
-                                        play_sound(menu_button_sfx)
-                                        selected_executed_option = current_selection
-                                    elif current_event.key == K_j:
-                                        # back up cursor instead of deleting letters
-                                        break
-                                    elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
-                                        if current_item_row == 0:
-                                            current_item_row = 1
-                                        elif current_item_row == 1:
-                                            current_item_row = 0
-                                    elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
-                                        if current_item_column == 0:
-                                            current_item_column = 1
-                                        elif current_item_column == 1:
-                                            current_item_column = 0
-                                    if convert_to_frames_since_start_time(blink_start) > 32:
-                                        blink_start = get_ticks()
-                                    if selected_executed_option:
-                                        if selected_executed_option == 'Fight':
-                                            self.fight(enemy)
-                                        elif selected_executed_option == 'Spell':
-                                            self.battle_spell()
-                                        elif selected_executed_option == 'Run':
-                                            self.battle_run()
-                                            run_away = True
-                                            if self.music_enabled:
-                                                mixer.music.load(self.current_map.music_file_path)
-                                                mixer.music.play(-1)
-                                        elif selected_executed_option == 'Item':
-                                            if not self.player.inventory:
-                                                self.cmd_menu.show_line_in_dialog_box(
-                                                    'Nothing of use has yet been given to thee.\n'
-                                                    'Command?\n', add_quotes=False, hide_arrow=False, disable_sound=True)
-                                        selected_executed_option = None
-                                elif current_event.type == QUIT:
-                                    quit()
-                                    sys.exit()
-
-                        if enemy.hp <= 0:
-                            self.enemy_defeated(enemy)
-                        if self.music_enabled and not mixer.music.get_busy():
-                            mixer.music.load(self.current_map.music_file_path)
-                            mixer.music.play(-1)
+                        self.battle(enemies_in_current_zone)
 
                     # if self.last_zone != current_zone:
                     #     print(f'Zone: {current_zone}\nEnemies: {enemies_in_current_zone}')
                     self.last_zone = current_zone
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
 
-    def battle_background_image_effect(self):
-        """Spiral effect to introduce battle background."""
-        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
-                                        (7 * self.tile_size, 7 * self.tile_size))
-        spiral_tile_coordinates = ((3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (4, 3), (4, 4), (4, 5),
-                                   (3, 5), (2, 5), (1, 5), (1, 4), (1, 3), (1, 2), (1, 1), (2, 1), (3, 1), (4, 1),
-                                   (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (4, 6), (3, 6), (2, 6), (1, 6),
-                                   (0, 6), (0, 5), (0, 4), (0, 3), (0, 2), (0, 1), (0, 0), (1, 0), (2, 0), (3, 0),
-                                   (4, 0), (5, 0), (6, 0), (6, 1), (6, 2), (6, 3), (6, 4), (6, 5), (6, 6))
-        for tile in spiral_tile_coordinates:
-            self.screen.blit(battle_background_image.subsurface(
-                (tile[0] * self.tile_size, tile[1] * self.tile_size, self.tile_size, self.tile_size)),
-                             ((tile[0] + 5) * self.tile_size, (tile[1] + 4) * self.tile_size))
-            display.update()
-            time.wait(20)
-
-    def battle_run(self):
-        play_sound(stairs_down_sfx)
-        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} started to run away.\n", add_quotes=False,
+    def battle(self, enemies_in_current_zone):
+        enemy_name = random.choice(enemies_in_current_zone)
+        if self.music_enabled:
+            mixer.music.load(battle_music)
+            mixer.music.play(-1)
+        battle_background_image_effect(self.tile_size, self.screen)
+        self.drawer.show_enemy_image(self.screen, enemy_name)
+        enemy_draws_near_string = get_enemy_draws_near_string(enemy_name)
+        self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string, add_quotes=False, skip_text=True,
                                               hide_arrow=True, disable_sound=True)
+        self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
+        self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
+        create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
+        self.drawer.hovering_stats_displayed = True
+        self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
+        enemy = enemy_string_lookup[enemy_name]()
+        battle_menu_options = {'Fight': BATTLE_MENU_FIGHT_PATH, 'Spell': BATTLE_MENU_SPELL_PATH}, \
+            {'Run': BATTLE_MENU_RUN_PATH, 'Item': BATTLE_MENU_ITEM_PATH}
+        current_item_row = 0
+        current_item_column = 0
+        run_away = False
+        blink_start = get_ticks()
+        while enemy.hp > 0 and not run_away and not self.player.is_dead:
+            run_away = self.handle_battle_prompts(battle_menu_options, blink_start, current_item_column,
+                                                  current_item_row, enemy, run_away)
+        if enemy.hp <= 0:
+            enemy_defeated(self.cmd_menu, self.tile_size, self.screen, self.player, self.music_enabled,
+                           self.current_map, enemy)
+        if self.music_enabled and not mixer.music.get_busy():
+            mixer.music.load(self.current_map.music_file_path)
+            mixer.music.play(-1)
+
+    def handle_battle_prompts(self, battle_menu_options, blink_start, current_item_column, current_item_row, enemy,
+                              run_away):
+        blink_switch(self.screen, BATTLE_MENU_STATIC_PATH,
+                     list(battle_menu_options[current_item_row].values())[
+                         current_item_column], x=6, y=1, width=8, height=3, start=blink_start,
+                     config=self.game_state.config, color=self.color)
+        current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
+        selected_executed_option = None
+        for current_event in event.get():
+            if current_event.type == KEYDOWN and not enemy.hp <= 0:
+                if current_event.key in (K_RETURN, K_i, K_k):
+                    play_sound(menu_button_sfx)
+                    selected_executed_option = current_selection
+                elif current_event.key == K_j:
+                    # back up cursor instead of deleting letters
+                    break
+                elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
+                    if current_item_row == 0:
+                        current_item_row = 1
+                    elif current_item_row == 1:
+                        current_item_row = 0
+                elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
+                    if current_item_column == 0:
+                        current_item_column = 1
+                    elif current_item_column == 1:
+                        current_item_column = 0
+                if convert_to_frames_since_start_time(blink_start) > 32:
+                    blink_start = get_ticks()
+                if selected_executed_option:
+                    if selected_executed_option == 'Fight':
+                        self.fight(enemy)
+                    elif selected_executed_option == 'Spell':
+                        battle_spell(self.cmd_menu, self.player)
+                    elif selected_executed_option == 'Run':
+                        battle_run(self.cmd_menu, self.player)
+                        run_away = True
+                        if self.music_enabled:
+                            mixer.music.load(self.current_map.music_file_path)
+                            mixer.music.play(-1)
+                    elif selected_executed_option == 'Item':
+                        if not self.player.inventory:
+                            self.cmd_menu.show_line_in_dialog_box(
+                                'Nothing of use has yet been given to thee.\n'
+                                'Command?\n', add_quotes=False, hide_arrow=False, disable_sound=True)
+                    selected_executed_option = None
+            elif current_event.type == QUIT:
+                quit()
+        return run_away
 
     def fight(self, enemy):
         play_sound(attack_sfx)
         self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n", add_quotes=False, disable_sound=True, hide_arrow=True)
 
-        attack_damage = self.calculate_attack_damage(enemy)
+        attack_damage = calculate_attack_damage(self.cmd_menu, self.player, enemy)
 
         if attack_damage <= 0:
-            self.missed_attack()
+            missed_attack(self.cmd_menu)
         else:
             play_sound(hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
@@ -447,10 +401,10 @@ class Game:
             #
             # (EnemyAttack - HeroAgility / 2) / 2
 
-            attack_damage = self.calculate_enemy_attack_damage(enemy)
+            attack_damage = calculate_enemy_attack_damage(self.player, enemy)
 
             if attack_damage <= 0:
-                self.missed_attack()
+                missed_attack(self.cmd_menu)
             else:
                 self.receive_damage(attack_damage)
             if self.player.current_hp == 0:
@@ -470,101 +424,6 @@ class Game:
         self.cmd_menu.show_line_in_dialog_box(f"Thy Hit Points decreased by {attack_damage}.\n",
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
-
-    def calculate_enemy_attack_damage(self, enemy):
-        lower_bound = (enemy.attack - self.player.agility / 2) // 4
-        upper_bound = (enemy.attack - self.player.agility / 2) // 2
-        return select_random_attack_damage_value(lower_bound, upper_bound)
-
-    def missed_attack(self):
-        missed_sfx_number = random.randint(1, 2)
-        if missed_sfx_number == 1:
-            play_sound(missed_sfx)
-        else:
-            play_sound(missed_2_sfx)
-        self.cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n", add_quotes=False,
-                                              disable_sound=True, hide_arrow=True)
-
-    def calculate_attack_damage(self, enemy):
-        excellent_move_probability = random.randint(0, 31)
-        if excellent_move_probability == 0 and enemy.name not in ('Dragonlord', 'Dragonlord 2'):
-            play_sound(excellent_move_sfx)
-            self.cmd_menu.show_line_in_dialog_box("Excellent move!\n", add_quotes=False, disable_sound=True)
-            attack_damage = random.randint(self.player.attack_power // 2,
-                                           self.player.attack_power)
-        else:
-            # (HeroAttack - EnemyAgility / 2) / 4,
-            #
-            # to:
-            #
-            # (HeroAttack - EnemyAgility / 2) / 2
-            lower_bound = round((self.player.attack_power - (enemy.defense / 2)) / 2)
-            upper_bound = round((self.player.attack_power - (enemy.defense / 2)) * 2)
-            print(f'lower_bound: {lower_bound}\n'
-                  f'upper_bound: {upper_bound}\n'
-                  f'player.attack_power: {self.player.attack_power}\n'
-                  f'enemy.speed: {enemy.defense}')
-            attack_damage = select_random_attack_damage_value(lower_bound, upper_bound)
-        return round(attack_damage)
-
-    def battle_spell(self):
-        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} cannot yet use the spell.\n"
-                                              f"Command?\n", add_quotes=False, hide_arrow=True, disable_sound=True)
-
-    def enemy_defeated(self, enemy):
-        self.cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n", add_quotes=False,
-                                              disable_sound=True, hide_arrow=True)
-        mixer.music.stop()
-        play_sound(victory_sfx)
-        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
-                                        (7 * self.tile_size, 7 * self.tile_size))
-        self.screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size))
-        display.update(battle_background_image.get_rect())
-        self.cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
-                                              f"Thy GOLD increases by {enemy.gold}.\n", add_quotes=False,
-                                              disable_sound=True, hide_arrow=True)
-        self.player.total_experience += enemy.xp
-        self.player.gold += enemy.gold
-
-        if self.player.level + 1 < 30 and \
-                self.player.total_experience >= levels_list[self.player.level + 1]['total_exp']:
-            play_sound(improvement_sfx)
-            self.cmd_menu.show_line_in_dialog_box(f"Courage and wit have served thee well.\n"
-                                                  f"Thou hast been promoted to the next level.\n", add_quotes=False,
-                                                  disable_sound=True)
-            old_power = self.player.strength
-            old_agility = self.player.agility
-            old_max_hp = self.player.max_hp
-            old_max_mp = self.player.max_mp
-            old_spells = self.player.spells
-
-            self.player.level += 1
-            self.player.set_stats_by_level(self.player.level)
-            self.player.update_attack_power()
-            self.player.update_defense_power()
-            self.player.points_to_next_level = self.player.get_points_to_next_level()
-            if self.music_enabled:
-                mixer.music.load(self.current_map.music_file_path)
-                mixer.music.play(-1)
-
-            if self.player.strength > old_power:
-                self.cmd_menu.show_line_in_dialog_box(f"Thy power increases by {self.player.strength - old_power}.\n",
-                                                      add_quotes=False, disable_sound=True)
-            if self.player.agility > old_agility:
-                self.cmd_menu.show_line_in_dialog_box(
-                    f"Thy Response Speed increases by {self.player.agility - old_agility}.\n", add_quotes=False,
-                    disable_sound=True)
-            if self.player.max_hp > old_max_hp:
-                self.cmd_menu.show_line_in_dialog_box(
-                    f"Thy Maximum Hit Points increase by {self.player.max_hp - old_max_hp}.\n", add_quotes=False,
-                    disable_sound=True)
-            if self.player.max_mp > old_max_mp:
-                self.cmd_menu.show_line_in_dialog_box(
-                    f"Thy Maximum Magic Points increase by {self.player.max_mp - old_max_mp}.\n", add_quotes=False,
-                    disable_sound=True)
-            if len(self.player.spells) > len(old_spells):
-                self.cmd_menu.show_line_in_dialog_box("Thou hast learned a new spell.\n", add_quotes=False,
-                                                      disable_sound=True)
 
     def handle_near_tantegel_fight_modifier(self):
         if self.player.current_tile == 'HILLS':
