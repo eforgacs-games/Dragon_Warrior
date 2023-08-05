@@ -8,7 +8,8 @@ from pygame.transform import scale
 from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_PATH, get_image, \
     GUARD_PATH, MAN_PATH, tantegel_castle_courtyard_music, WOMAN_PATH, WISE_MAN_PATH, \
     SOLDIER_PATH, MERCHANT_PATH, PRINCESS_GWAELIN_PATH, DRAGONLORD_PATH, UNARMED_HERO_PATH, MAP_TILES_PATH, \
-    overworld_music, village_music, dungeon_floor_1_music, dungeon_floor_2_music, dungeon_floor_3_music, dungeon_floor_4_music, dungeon_floor_5_music, \
+    overworld_music, village_music, dungeon_floor_1_music, dungeon_floor_2_music, dungeon_floor_3_music, \
+    dungeon_floor_4_music, dungeon_floor_5_music, \
     dungeon_floor_6_music, dungeon_floor_7_music, dungeon_floor_8_music
 from src.config import SCALE, dev_config
 from src.map_layouts import MapLayouts
@@ -22,9 +23,12 @@ from src.sprites.roaming_character import RoamingCharacter
 config = dev_config
 
 all_impassable_tiles = (
-    'ROOF', 'WALL', 'WOOD', 'DOOR', 'WEAPON_SIGN', 'INN_SIGN', 'MOUNTAINS', 'WATER', 'BOTTOM_COAST', 'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST',
-    'TOP_COAST', 'TOP_RIGHT_COAST', 'RIGHT_COAST', 'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST', 'BOTTOM_TOP_COAST', 'BOTTOM_TOP_RIGHT_COAST', 'KING_LORIK',
-    'DOWN_FACE_GUARD', 'LEFT_FACE_GUARD', 'UP_FACE_GUARD', 'RIGHT_FACE_GUARD', 'MAN', 'WOMAN', 'WISE_MAN', 'SOLDIER', 'MERCHANT')
+    'ROOF', 'WALL', 'WOOD', 'DOOR', 'WEAPON_SIGN', 'INN_SIGN', 'MOUNTAINS', 'WATER', 'BOTTOM_COAST',
+    'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST',
+    'TOP_COAST', 'TOP_RIGHT_COAST', 'RIGHT_COAST', 'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST', 'BOTTOM_TOP_COAST',
+    'BOTTOM_TOP_RIGHT_COAST', 'KING_LORIK',
+    'DOWN_FACE_GUARD', 'LEFT_FACE_GUARD', 'UP_FACE_GUARD', 'RIGHT_FACE_GUARD', 'MAN', 'WOMAN', 'WISE_MAN', 'SOLDIER',
+    'MERCHANT')
 
 
 class DragonWarriorMap:
@@ -53,6 +57,7 @@ class DragonWarriorMap:
         self.center_pt = None
         self.map_tiles = parse_map_tiles(map_path=MAP_TILES_PATH, tile_size=config['TILE_SIZE'])
         self.impassable_tiles = all_impassable_tiles
+        self.custom_underlying_tiles = {}
         self.tile_group_dict = {}
         self.staircases = {}
         self.height = len(self.layout) * config['TILE_SIZE']
@@ -157,7 +162,8 @@ class DragonWarriorMap:
         self.set_characters_initial_directions()
 
     def get_tiles_in_current_map(self) -> set:
-        return set([self.get_tile_by_value(tile) for row in self.layout for tile in row] + [self.tile_key['HERO']['underlying_tile']])
+        return set([self.get_tile_by_value(tile) for row in self.layout for tile in row] + [
+            self.tile_key['HERO']['underlying_tile']])
 
     # @timeit
     def map_character_tiles(self, column, row, player) -> None:
@@ -169,17 +175,20 @@ class DragonWarriorMap:
     def map_character(self, character, character_dict, current_tile, player, coordinates) -> None:
         if current_tile == self.character_key['HERO']['val']:
             # will this cause issues with the hero images (holding sword/shield)? time will tell...
-            AnimatedSprite.__init__(player, self.center_pt, player.direction_value, images=self.scale_sprite_sheet(UNARMED_HERO_PATH), identifier='HERO')
+            AnimatedSprite.__init__(player, self.center_pt, player.direction_value,
+                                    images=self.scale_sprite_sheet(UNARMED_HERO_PATH), identifier='HERO')
             self.map_player(character_dict['underlying_tile'], player, coordinates)
         else:
-            self.map_npc(character, character_dict.get('direction'), character_dict['underlying_tile'], character_dict['path'], character_dict['four_sided'],
+            self.map_npc(character, character_dict.get('direction'), character_dict['underlying_tile'],
+                         character_dict['path'], character_dict['four_sided'],
                          coordinates, character_dict['roaming'])
 
     def scale_sprite_sheet(self, image_path):
         return parse_animated_sprite_sheet(scale(get_image(image_path), (
-        get_image(image_path).get_width() * self.scale, get_image(image_path).get_height() * self.scale)), config)
+            get_image(image_path).get_width() * self.scale, get_image(image_path).get_height() * self.scale)), config)
 
-    def map_npc(self, identifier, direction, underlying_tile, image_path, four_sided, coordinates, is_roaming=False) -> None:
+    def map_npc(self, identifier, direction, underlying_tile, image_path, four_sided, coordinates,
+                is_roaming=False) -> None:
         sheet = get_image(image_path)
         character_sprites = LayeredDirty()
         sheet = scale(sheet, (sheet.get_width() * self.scale, sheet.get_height() * self.scale))
@@ -203,12 +212,20 @@ class DragonWarriorMap:
         self.characters[character.identifier] = {'character': character,
                                                  'character_sprites': character_sprites,
                                                  'tile_value': self.character_key[identifier]['val'],
-                                                 'coordinates': coordinates}
-        self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
+                                                 'coordinates': coordinates
+                                                 }
+        if self.custom_underlying_tiles:
+            if self.custom_underlying_tiles.get(character.identifier):
+                self.add_tile(self.floor_tile_key[self.custom_underlying_tiles[character.identifier]], self.center_pt)
+            else:
+                self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
+        else:
+            self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
         # self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
     def set_identifiers_for_duplicate_characters(self, character, identifier):
-        character_count = [character_dict['tile_value'] for character_dict in self.characters.values()].count(self.character_key[identifier]['val']) + 1
+        character_count = [character_dict['tile_value'] for character_dict in self.characters.values()].count(
+            self.character_key[identifier]['val']) + 1
         if character_count > 1:
             character.identifier = f'{identifier}_{character_count}'
 
@@ -267,7 +284,8 @@ class DragonWarriorMap:
                 alefgard_lookup_dict[alefgard_staircase_dict['map']] = alefgard_staircase_dict
                 alefgard_lookup_dict[alefgard_staircase_dict['map']]['alefgard_coordinates'] = alefgard_coordinates
             if staircase_dict['map'] == 'Alefgard':
-                staircase_dict['destination_coordinates'] = alefgard_lookup_dict[self.__class__.__name__]['alefgard_coordinates']
+                staircase_dict['destination_coordinates'] = alefgard_lookup_dict[self.__class__.__name__][
+                    'alefgard_coordinates']
 
     def create_town_gates(self, north_gate=None, east_gate=None, west_gate=None, south_gate=None) -> None:
         alefgard_up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
@@ -329,7 +347,8 @@ class TantegelThroneRoom(DragonWarriorMap):
         super().__init__(MapLayouts().tantegel_throne_room)
 
         self.staircases = {
-            (14, 18): {'map': 'TantegelCourtyard', 'destination_coordinates': (14, 14), 'direction': Direction.RIGHT.value}}
+            (14, 18): {'map': 'TantegelCourtyard', 'destination_coordinates': (14, 14),
+                       'direction': Direction.RIGHT.value}}
         self.music_file_path = tantegel_castle_throne_room_music
         self.assign_stair_directions()
         self.initial_coordinates = (10, 13)
@@ -356,7 +375,8 @@ class TantegelCourtyard(DragonWarriorMap):
             west_gate=warp_line((6, 6), (37, 6)),
             east_gate=warp_line((6, 37), (37, 37)),
             south_gate=warp_line((37, 9), (37, 26)))
-        self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18), 'direction': Direction.LEFT.value}
+        self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18),
+                                     'direction': Direction.LEFT.value}
         self.staircases[(36, 36)] = {'map': 'TantegelCellar', 'destination_coordinates': (4, 1)}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
@@ -544,7 +564,8 @@ class Alefgard(MapWithoutNPCs):
         self.staircases = {
             # (row, column)
             # castles
-            (50, 51): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 18), 'direction': Direction.UP.value},
+            (50, 51): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 18),
+                       'direction': Direction.UP.value},
             (55, 56): {'map': 'CharlockB1', 'destination_coordinates': (25, 17)},
             # villages
             (48, 56): {'map': 'Brecconary', 'destination_coordinates': (23, 10)},
@@ -569,7 +590,8 @@ class Alefgard(MapWithoutNPCs):
         return 'CASTLE'
 
     def hero_initial_direction(self):
-        return Direction.DOWN.value if self.character_key['HERO']['underlying_tile'] != 'GRASS_STAIR_DOWN' else Direction.LEFT.value
+        return Direction.DOWN.value if self.character_key['HERO'][
+                                           'underlying_tile'] != 'GRASS_STAIR_DOWN' else Direction.LEFT.value
 
 
 class Brecconary(DragonWarriorMap):
@@ -582,6 +604,9 @@ class Brecconary(DragonWarriorMap):
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
         self.initial_coordinates = (23, 10)
+        self.custom_underlying_tiles = {
+            'MAN_2': 'GRASS'
+        }
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -592,6 +617,7 @@ class Brecconary(DragonWarriorMap):
     def set_characters_initial_directions(self):
         self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
         self.set_character_initial_direction('WOMAN', Direction.LEFT)
+        self.set_character_initial_direction('MAN_2', Direction.UP)
 
 
 class Garinham(DragonWarriorMap):
