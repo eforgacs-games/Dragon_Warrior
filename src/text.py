@@ -24,13 +24,16 @@ def draw_text(text, x, y, screen, config, color=WHITE, size=16, font_name=DRAGON
     item_gained_matches = ["thou hast gained", "Thou hast found"]
     if any([x in text for x in item_gained_matches]):
         disable_sound = True
+    if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
+        current_font = font.Font(font_name, size)
+    else:
+        current_font = font.Font(UNIFONT_PATH, size + 1)
     for chunk in chunks:
         if letter_by_letter:
             string = ''
             for i in range(len(chunk)):
                 string += chunk[i]
                 if not config['NO_BLIT']:
-                    current_font = set_font_by_ascii_chars(font_name, size, chunk)
                     blit_text_to_screen(alignment, color, current_font, screen, string, x, y, config["RENDER_TEXT"])
                     display.update()
                 if not config['NO_WAIT']:
@@ -40,7 +43,10 @@ def draw_text(text, x, y, screen, config, color=WHITE, size=16, font_name=DRAGON
                         play_sound(text_beep_sfx)
         else:
             if not config['NO_BLIT']:
-                current_font = set_font_by_ascii_chars(font_name, size, chunk)
+                if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
+                    current_font = font.Font(font_name, size)
+                else:
+                    current_font = font.Font(UNIFONT_PATH, size + 1)
                 blit_text_to_screen(alignment, color, current_font, screen, chunk, x, y, config["RENDER_TEXT"])
         y += 17
         if chunk == chunks[len(chunks) - 1]:
