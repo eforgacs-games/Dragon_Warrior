@@ -36,6 +36,10 @@ class DialogLookup:
         self.triple_speed_string = _("Game set to triple speed.\n(240 FPS)")
         self.quadruple_speed_string = _("Game set to quadruple speed.\n(480 FPS)")
 
+        # menu
+        self.no_one_there = _("There is no one there.")
+        self.no_stairs_here = _("There are no stairs here.")
+
         where_is_princess_gwaelin = _("Where oh where can I find Princess Gwaelin?")
         welcome_to_tantegel = _("Welcome to Tantegel Castle.")
         brecconary_inn_cost = 6
@@ -115,10 +119,13 @@ class DialogLookup:
                 'dialog': (_("I have been waiting long for one such as thee."), _("Take the Treasure Chest."))}},
             'Brecconary': {
                 'MAN': {'dialog': _("There is a town where magic keys can be purchased.")},
+                'MAN_2': {'dialog': _("Thou art most welcome in Brecconary.")},
+                'MAN_3': {'dialog': _("Enter where thou can.")},
                 'WISE_MAN': {'dialog': _("If thou art cursed, come again.")},
                 'MERCHANT': {'dialog': (
                     partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
+                'MERCHANT_3': {'dialog': (tools_intro,)},
                 'UP_FACE_GUARD': {'dialog': (_("Tell King Lorik that the search for his daughter hath failed."),
                                              _("I am almost gone...."))},
                 'WOMAN_2': {'dialog': _("Welcome! \n"

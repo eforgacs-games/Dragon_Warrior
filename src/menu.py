@@ -114,10 +114,12 @@ class CommandMenu(Menu):
             if character.get('dialog'):
                 self.dialog_lookup.camera_position = self.camera_position
                 self.show_text_in_dialog_box(character['dialog'], add_quotes=True, skip_text=self.skip_text)
-        #     else:
-        #         print(f"Character has no dialog: {dialog_character}")
-        # else:
-        #     print(f"Character not in lookup table: {dialog_character}")
+            else:
+                print(f"Character has no dialog: {dialog_character}")
+                self.show_text_in_dialog_box("I have nothing to say.", add_quotes=True, skip_text=self.skip_text)
+        else:
+            print(f"Character not in lookup table: {dialog_character}")
+            self.show_text_in_dialog_box("I have nothing to say.", add_quotes=True, skip_text=self.skip_text)
 
     def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True,
                                 temp_text_start: int = None, skip_text: bool = False, hide_arrow=False,
@@ -424,7 +426,8 @@ class CommandMenu(Menu):
                     self.launch_dialog(character_identifier, self.current_map)
                     break
         else:
-            self.show_text_in_dialog_box("There is no one there.", add_quotes=True, skip_text=self.skip_text)
+
+            self.show_text_in_dialog_box(self.dialog_lookup.no_one_there, add_quotes=True, skip_text=self.skip_text)
 
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
@@ -438,7 +441,7 @@ class CommandMenu(Menu):
         # print the following attributes:
         # example below:
 
-        tile_size = self.game.game_state.config['tile_size']
+        tile_size = self.game.game_state.config['TILE_SIZE']
         play_sound(menu_button_sfx)
         show_status = True
         self.window_drop_down_effect(4, 3, 10, 11)
@@ -499,7 +502,7 @@ class CommandMenu(Menu):
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
             # the original game has quotes in this dialog box
-            self.show_text_in_dialog_box("There are no stairs here.", add_quotes=True, skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self.dialog_lookup.no_stairs_here, add_quotes=True, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
 
