@@ -21,7 +21,8 @@ from src.common import BLACK, Direction, ICON_PATH, intro_overture, is_facing_la
     convert_to_frames_since_start_time, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
     ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, \
     ARMED_HERO_WITH_SHIELD_PATH, \
-    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, battle_music, attack_sfx, hit_sfx, BATTLE_MENU_STATIC_PATH, BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
+    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, battle_music, attack_sfx, hit_sfx, BATTLE_MENU_STATIC_PATH, \
+    BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
     BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, prepare_attack_sfx, receive_damage_2_sfx, create_window
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import dev_config
@@ -262,8 +263,8 @@ class Game:
         # This prints out the next_tile, and the next_next_tile.
         # print(f'Next tile: {self.player.next_tile_id}')
         # print(f'Next next tile: {self.player.next_next_tile_id}')
-        # print(f'{self.get_character_identifier_by_coordinates(self.player.next_coordinates)}')
-        # print(f'{self.get_character_identifier_by_coordinates(self.player.next_next_coordinates)}')
+        # print(f'{get_tile_id_by_coordinates(self.player.next_coordinates[0], self.player.next_coordinates[1], self.current_map)}')
+        # print(f'{get_tile_id_by_coordinates(self.player.next_next_coordinates[0], self.player.next_next_coordinates[1], self.current_map)}')
 
         event.pump()
 
@@ -377,7 +378,8 @@ class Game:
 
     def fight(self, enemy):
         play_sound(attack_sfx)
-        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n", add_quotes=False, disable_sound=True, hide_arrow=True)
+        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n",
+                                              add_quotes=False, disable_sound=True, hide_arrow=True)
 
         attack_damage = calculate_attack_damage(self.cmd_menu, self.player, enemy)
 
@@ -394,7 +396,8 @@ class Game:
             return
         else:
             play_sound(prepare_attack_sfx)
-            self.cmd_menu.show_line_in_dialog_box(f"The {enemy.name} attacks!\n", add_quotes=False, disable_sound=True, hide_arrow=True)
+            self.cmd_menu.show_line_in_dialog_box(f"The {enemy.name} attacks!\n",
+                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
             # (EnemyAttack - HeroAgility / 2) / 4,
             #
             # to:
@@ -411,7 +414,8 @@ class Game:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
                 self.player.is_dead = True
             else:
-                self.cmd_menu.show_line_in_dialog_box(f"Command?\n", add_quotes=False, disable_sound=True, hide_arrow=True)
+                self.cmd_menu.show_line_in_dialog_box(f"Command?\n",
+                                                      add_quotes=False, disable_sound=True, hide_arrow=True)
 
     def receive_damage(self, attack_damage):
         play_sound(receive_damage_2_sfx)
@@ -889,7 +893,8 @@ class Game:
         :param next_pos_y: Next y position (in terms of tile size).
         :return: tuple: The x, y coordinates (in terms of tile size) of the next position of the player.
         """
-        max_x_bound, max_y_bound, min_bound = self.current_map.width - self.tile_size, self.current_map.height - self.tile_size, 0
+        max_x_bound, max_y_bound = self.current_map.width - self.tile_size, self.current_map.height - self.tile_size
+        min_bound = 0
         if self.player.rect.x < min_bound:
             self.player.rect.x = min_bound
             bump(self.player)
