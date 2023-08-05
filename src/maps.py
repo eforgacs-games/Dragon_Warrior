@@ -605,7 +605,8 @@ class Brecconary(DragonWarriorMap):
         self.music_file_path = village_music
         self.initial_coordinates = (23, 10)
         self.custom_underlying_tiles = {
-            'MAN_2': 'GRASS'
+            'MAN_2': 'TREES',
+            'MAN_3': 'GRASS',
         }
 
     def hero_underlying_tile(self):
@@ -617,7 +618,8 @@ class Brecconary(DragonWarriorMap):
     def set_characters_initial_directions(self):
         self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
         self.set_character_initial_direction('WOMAN', Direction.LEFT)
-        self.set_character_initial_direction('MAN_2', Direction.UP)
+        self.set_character_initial_direction('MAN_3', Direction.UP)
+        self.set_character_initial_direction('MERCHANT_3', Direction.LEFT)
 
 
 class Garinham(DragonWarriorMap):
