@@ -59,6 +59,14 @@ msgstr ""
 "게임이 4배속으로 설정되었습니다.\n"
 "(480 FPS)"
 
+#: .\dialog_lookup_table.py:40
+msgid "There is no one there."
+msgstr "아무도 없습니다."
+
+#: .\dialog_lookup_table.py:41
+msgid "There are no stairs here."
+msgstr "계단이 없습니다."
+
 #: .\dialog_lookup_table.py:48
 msgid "Where oh where can I find Princess Gwaelin?"
 msgstr ""
@@ -289,6 +297,15 @@ msgstr ""
 #: .\dialog_lookup_table.py:115
 msgid "There is a town where magic keys can be purchased."
 msgstr "듣자 하니 어딘가에 마법의 열쇠를 파는 마을이 있다는군요."
+
+#: .\dialog_lookup_table.py:118
+msgid "Thou art most welcome in Brecconary."
+msgstr "라다톰 마을에 오신 것을 환영합니다."
+
+#: .\dialog_lookup_table.py:119
+msgid "Enter where thou can."
+msgstr "오오, 어서 오십시오!\n"
+" 어서 안으로 들어가십시오."
 
 #: .\dialog_lookup_table.py:116
 msgid "If thou art cursed, come again."
