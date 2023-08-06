@@ -133,9 +133,7 @@ class DialogLookup:
             },
             'Garinham': {
                 'MERCHANT': {'dialog': (tools_intro,)},
-                'MERCHANT_2': {'dialog': (
-                    (partial(self.check_stay_at_inn, garinham_inn_cost),),
-                )},
+                'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
                 'MERCHANT_3': {'dialog': self.weapons_and_armor_intro},
                 'WISE_MAN': {'dialog': "Many believe that Princess Gwaelin is hidden away in a cave."}
 
