@@ -123,6 +123,7 @@ class DialogLookup:
                 'MAN': {'dialog': _("There is a town where magic keys can be purchased.")},
                 'MAN_2': {'dialog': _("Thou art most welcome in Brecconary.")},
                 'MAN_3': {'dialog': _("Enter where thou can.")},
+                'SOLDIER': {'dialog': (_("Beware the bridges!"), _("Danger grows when thou crosses."))},
                 'WISE_MAN': {'dialog': _("If thou art cursed, come again.")},
                 'MERCHANT': {'dialog': (
                     partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
@@ -134,10 +135,16 @@ class DialogLookup:
                                         "Enter the shop and speak to its keeper across the desk.")},
             },
             'Garinham': {
-                'MERCHANT': {'dialog': (tools_intro,)},
-                'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
-                'MERCHANT_3': {'dialog': self.weapons_and_armor_intro},
-                'WISE_MAN': {'dialog': "Many believe that Princess Gwaelin is hidden away in a cave."}
+                'MERCHANT': {'dialog': _("I suggest making a map if thy path leads into the darkness.")},
+                'MERCHANT_2': {'dialog': (tools_intro,)},
+                'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
+                'MERCHANT_4': {'dialog': self.weapons_and_armor_intro},
+                'GUARD': {'dialog': _("I'm too busy.\n"
+                                      "Ask the other guard."), },
+                'GUARD_2': {'dialog': _("I'm too busy.\n"
+                                        "Ask the other guard."), },
+                'WISE_MAN': {'dialog': _("The harp attracts enemies. Stay away from the grave in Garinham.")},
+                'WISE_MAN_2': {'dialog': _("Many believe that Princess Gwaelin is hidden away in a cave.")}
 
             },
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
@@ -177,7 +184,8 @@ class DialogLookup:
         confirmation_prompt(self.command_menu, self.weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."), config=self.config)
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."),
+                            config=self.config)
 
     def get_inn_intro(self, inn_cost):
         _ = self._
@@ -314,7 +322,7 @@ class DialogLookup:
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                      _("Okay.\n"
                                                        "Good-bye, traveler."),
-                                                     skip_text=self.command_menu.skip_text),
+                                                     skip_text=self.command_menu.skip_text, hide_arrow=True),
                             config=self.command_menu.game.game_state.config,
                             skip_text=self.command_menu.skip_text)
 
