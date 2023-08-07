@@ -136,7 +136,7 @@ class CommandMenu(Menu):
         """
         tile_size = self.game.game_state.config['TILE_SIZE']
         if line:
-            if type(line) == str:
+            if isinstance(line, str):
                 self.show_text_line_in_dialog_box(add_quotes, disable_sound, hide_arrow, letter_by_letter,
                                                   line, skip_text, temp_text_start, tile_size)
             else:
@@ -166,7 +166,7 @@ class CommandMenu(Menu):
                 if not current_line:
                     current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
                                              self.game.game_state.config,
-                                             color=self.game.color, letter_by_letter=True,
+                                             color=self.game.color, letter_by_letter=letter_by_letter,
                                              disable_sound=disable_sound)
                 else:
                     current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,

@@ -119,8 +119,8 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
     if player.level + 1 < 30 and \
             player.total_experience >= levels_list[player.level + 1]['total_exp']:
         play_sound(improvement_sfx)
-        cmd_menu.show_line_in_dialog_box(f"Courage and wit have served thee well.\n"
-                                         f"Thou hast been promoted to the next level.\n", add_quotes=False,
+        cmd_menu.show_line_in_dialog_box("Courage and wit have served thee well.\n"
+                                         "Thou hast been promoted to the next level.\n", add_quotes=False,
                                          disable_sound=True)
         old_power = player.strength
         old_agility = player.agility
