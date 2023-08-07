@@ -150,9 +150,9 @@ class Drawer:
             # self.screen.blit(darkness, (0, 0))
             # Light with radius of 3
             darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * 3,
-                                                (screen.get_height() / 2) - (tile_size * 5),
+                                                (screen.get_height() / 2) - tile_size * 3.5,
                                                 tile_size * 7,
-                                                tile_size * 8.5)
+                                                tile_size * 7)
 
             if self.game_state.radiant_start is None:
                 self.game_state.radiant_start = self.game_state.tiles_moved_total
