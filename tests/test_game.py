@@ -12,7 +12,7 @@ from pygame.transform import scale
 from data.text.dialog_lookup_table import DialogLookup
 from src.camera import Camera
 from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, \
-    village_music, intro_overture
+    intro_overture
 from src.config import SCALE, prod_config
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
     set_to_save_prompt
@@ -351,9 +351,9 @@ class TestGame(TestCase):
         self.game.player.next_next_coordinates = get_next_coordinates(18, 29, self.game.player.direction_value,
                                                                       offset_from_character=2)
         self.assertEqual((29, 20), self.game.player.next_next_coordinates)
-        self.assertEqual('MERCHANT', get_tile_id_by_coordinates(self.game.player.next_next_coordinates[1],
-                                                                self.game.player.next_next_coordinates[0],
-                                                                self.game.current_map))
+        self.assertEqual('BRICK', get_tile_id_by_coordinates(self.game.player.next_next_coordinates[1],
+                                                             self.game.player.next_next_coordinates[0],
+                                                             self.game.current_map))
         self.game.player.next_tile_id = get_next_tile_identifier(self.game.player.column,
                                                                  self.game.player.row,
                                                                  self.game.player.direction_value,
@@ -451,7 +451,7 @@ class TestGame(TestCase):
     def test_get_events(self):
         self.game.get_events()
         # this is a weird value for the player current tile
-        self.assertEqual('ROAMING_GUARD', self.game.player.current_tile)
+        self.assertEqual('SOLDIER', self.game.player.current_tile)
         self.assertEqual((0, -1), self.game.player.next_coordinates)
         self.assertEqual((1, -1), self.game.player.next_next_coordinates)
         self.game.enable_roaming = True
