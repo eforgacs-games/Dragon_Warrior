@@ -605,6 +605,7 @@ class Brecconary(DragonWarriorMap):
         self.music_file_path = village_music
         self.initial_coordinates = (23, 10)
         self.custom_underlying_tiles = {
+            'WOMAN': 'BRICK',
             'MAN_2': 'TREES',
             'MAN_3': 'GRASS',
         }
