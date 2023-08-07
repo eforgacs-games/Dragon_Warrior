@@ -104,6 +104,7 @@ class Game:
         # self.current_map = maps.Hauksness()
         # self.current_map = maps.Rimuldar()
         # self.current_map = maps.CharlockB1()
+        # self.current_map = maps.SwampCave()
 
         self.set_big_map()
 
