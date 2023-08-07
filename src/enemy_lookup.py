@@ -18,6 +18,7 @@ light_jade_green = ['Metal Scorpion', 'Wolflord', 'Wraith', 'Goldman']
 medium_blue = ['Knight', 'Demon Knight', 'Magiwyvern', 'Starwyvern', 'Werewolf']
 dark_blue = ['Starwyvern', 'Werewolf', 'Wizard', 'Green Dragon']
 grass_green = ['Magidrakee', 'Scorpion', 'Skeleton', 'Warlock', 'Wolf']
+swamp_cave = ['Druin', 'Ghost', 'Magician', 'Scorpion']
 
 enemy_territory_map = {
     (0, 0): dark_brown,
@@ -91,6 +92,9 @@ enemy_territory_map = {
     (7, 5): green,
     (7, 6): light_jade_green,
     (7, 7): green_cyan,
+
+    # special
+    (-1, -1): swamp_cave
 
 }
 
@@ -191,6 +195,5 @@ enemy_image_position_lookup = {
 
     'Dragonlord': (7.5, 6),
     'Dragonlord 2': (5.1, 4),
-
 
 }
