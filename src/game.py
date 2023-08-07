@@ -27,7 +27,7 @@ from src.common import BLACK, Direction, ICON_PATH, intro_overture, is_facing_la
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import dev_config
 from src.drawer import Drawer
-from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
+from src.enemy_lookup import enemy_territory_map, enemy_string_lookup, swamp_cave
 from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu
 from src.game_state import GameState
 from src.intro import Intro, controls
@@ -277,8 +277,8 @@ class Game:
     def handle_battles(self):
         maps_with_enemies = (
             'Alefgard', 'Hauksness',
-            'CharlockB2', 'CharlockB3', 'CharlockB4', 'CharlockB5', 'CharlockB6', 'CharlockB7Wide',
-            'CharlockB7Narrow', 'CharlockB8', 'SwampCave', 'MountainCaveB1')
+            'CharlockB2', 'CharlockB3', 'CharlockB4', 'CharlockB5', 'CharlockB6', 'CharlockB7Wide', 'CharlockB7Narrow',
+            'CharlockB8', 'SwampCave', 'MountainCaveB1')
         if self.current_map.identifier in maps_with_enemies:
             if self.tiles_moved_since_spawn > 0:
                 # TODO: Add other maps with enemies besides Alefgard/Hauksness.
@@ -287,6 +287,8 @@ class Game:
                         current_zone = self.player.column // 18, self.player.row // 18
                     elif self.current_map.identifier == 'Hauksness':
                         current_zone = (3, 7)  # force dark_blue zone
+                    elif self.current_map.identifier == 'SwampCave':
+                        current_zone = (-1, -1)
                     else:
                         current_zone = None
                     if current_zone:
