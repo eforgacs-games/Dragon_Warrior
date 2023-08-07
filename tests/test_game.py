@@ -351,9 +351,9 @@ class TestGame(TestCase):
         self.game.player.next_next_coordinates = get_next_coordinates(18, 29, self.game.player.direction_value,
                                                                       offset_from_character=2)
         self.assertEqual((29, 20), self.game.player.next_next_coordinates)
-        self.assertEqual('MERCHANT', get_tile_id_by_coordinates(self.game.player.next_next_coordinates[1],
-                                                                self.game.player.next_next_coordinates[0],
-                                                                self.game.current_map))
+        self.assertEqual('BRICK', get_tile_id_by_coordinates(self.game.player.next_next_coordinates[1],
+                                                             self.game.player.next_next_coordinates[0],
+                                                             self.game.current_map))
         self.game.player.next_tile_id = get_next_tile_identifier(self.game.player.column,
                                                                  self.game.player.row,
                                                                  self.game.player.direction_value,
