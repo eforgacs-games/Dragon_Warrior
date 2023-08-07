@@ -278,8 +278,7 @@ class Game:
         maps_with_enemies = (
             'Alefgard', 'Hauksness',
             'CharlockB2', 'CharlockB3', 'CharlockB4', 'CharlockB5', 'CharlockB6', 'CharlockB7Wide',
-            'CharlockB7Narrow', 'CharlockB8',
-            'ErdricksCaveB1', 'ErdricksCaveB2', 'SwampCave', 'MountainCaveB1')
+            'CharlockB7Narrow', 'CharlockB8', 'SwampCave', 'MountainCaveB1')
         if self.current_map.identifier in maps_with_enemies:
             if self.tiles_moved_since_spawn > 0:
                 # TODO: Add other maps with enemies besides Alefgard/Hauksness.
