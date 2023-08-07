@@ -104,14 +104,14 @@ class DragonWarriorMap:
         self.character_key = {
             'HERO': {'val': 33, 'path': UNARMED_HERO_PATH},
             'KING_LORIK': {'val': 34, 'path': KING_LORIK_PATH},
-            'GUARD': {'val': 35, 'path': GUARD_PATH, 'direction': Direction.DOWN.value},
-            'MAN': {'val': 36, 'path': MAN_PATH, 'direction': Direction.DOWN.value},
-            'WOMAN': {'val': 37, 'path': WOMAN_PATH, 'direction': Direction.DOWN.value, 'underlying_tile': 'GRASS'},
-            'WISE_MAN': {'val': 38, 'path': WISE_MAN_PATH, 'direction': Direction.DOWN.value},
-            'SOLDIER': {'val': 39, 'path': SOLDIER_PATH, 'direction': Direction.DOWN.value},
-            'MERCHANT': {'val': 40, 'path': MERCHANT_PATH, 'direction': Direction.DOWN.value},
-            'PRINCESS_GWAELIN': {'val': 41, 'path': PRINCESS_GWAELIN_PATH, 'direction': Direction.DOWN.value},
-            'DRAGONLORD': {'val': 42, 'path': DRAGONLORD_PATH, 'direction': Direction.DOWN.value}
+            'GUARD': {'val': 35, 'path': GUARD_PATH},
+            'MAN': {'val': 36, 'path': MAN_PATH},
+            'WOMAN': {'val': 37, 'path': WOMAN_PATH},
+            'WISE_MAN': {'val': 38, 'path': WISE_MAN_PATH},
+            'SOLDIER': {'val': 39, 'path': SOLDIER_PATH},
+            'MERCHANT': {'val': 40, 'path': MERCHANT_PATH},
+            'PRINCESS_GWAELIN': {'val': 41, 'path': PRINCESS_GWAELIN_PATH},
+            'DRAGONLORD': {'val': 42, 'path': DRAGONLORD_PATH}
         }
         for character, character_dict in self.character_key.items():
             if character in ('KING_LORIK', 'PRINCESS_GWAELIN'):
@@ -119,11 +119,9 @@ class DragonWarriorMap:
             else:
                 character_dict['four_sided'] = True
             character_dict['roaming'] = False
+            character_dict['direction'] = Direction.DOWN.value
             if character == 'HERO':
                 character_dict['underlying_tile'] = self.hero_underlying_tile()
-            # TODO(ELF): Pretty rough logic here. Need to make this more extensible.
-            elif character == 'WOMAN':
-                character_dict['underlying_tile'] = 'GRASS'
             else:
                 character_dict['underlying_tile'] = 'BRICK'
         self.tile_key = dict(list(self.floor_tile_key.items()) + list(self.character_key.items()))
@@ -379,6 +377,10 @@ class TantegelCourtyard(DragonWarriorMap):
         self.initial_coordinates = (14, 14)
         self.music_file_path = tantegel_castle_courtyard_music
         self.roaming_character_list = ['GUARD_3']
+        self.custom_underlying_tiles = {
+            'WOMAN': 'GRASS',
+            'WOMAN_2': 'GRASS'
+        }
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -607,6 +609,7 @@ class Brecconary(DragonWarriorMap):
         self.initial_coordinates = (23, 10)
         self.custom_underlying_tiles = {
             'WOMAN': 'BRICK',
+            'WOMAN_2': 'GRASS',
             'MAN_2': 'TREES',
             'MAN_3': 'GRASS',
         }
