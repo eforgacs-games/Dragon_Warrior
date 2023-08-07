@@ -166,7 +166,7 @@ class CommandMenu(Menu):
                 if not current_line:
                     current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
                                              self.game.game_state.config,
-                                             color=self.game.color, letter_by_letter=True,
+                                             color=self.game.color, letter_by_letter=letter_by_letter,
                                              disable_sound=disable_sound)
                 else:
                     current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
