@@ -216,10 +216,13 @@ class DragonWarriorMap:
         if self.custom_underlying_tiles:
             if self.custom_underlying_tiles.get(character.identifier):
                 self.add_tile(self.floor_tile_key[self.custom_underlying_tiles[character.identifier]], self.center_pt)
+                self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[self.custom_underlying_tiles[character.identifier]]['val']
             else:
                 self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
+                self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
         else:
             self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
+            self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
     def map_player(self, underlying_tile, player, coordinates) -> None:
         self.player_sprites = LayeredDirty(player)
@@ -376,7 +379,7 @@ class TantegelCourtyard(DragonWarriorMap):
         self.set_town_to_overworld_warps()
         self.initial_coordinates = (14, 14)
         self.music_file_path = tantegel_castle_courtyard_music
-        self.roaming_character_list = ['GUARD_3']
+        self.roaming_character_list = ['MAN_2', 'GUARD_3', 'WOMAN_2']
         self.custom_underlying_tiles = {
             'WOMAN': 'GRASS',
             'WOMAN_2': 'GRASS'
