@@ -426,7 +426,7 @@ class Game:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
                 self.player.is_dead = True
             else:
-                self.cmd_menu.show_line_in_dialog_box(f"Command?\n",
+                self.cmd_menu.show_line_in_dialog_box("Command?\n",
                                                       add_quotes=False, disable_sound=True, hide_arrow=True)
 
     def receive_damage(self, attack_damage):
