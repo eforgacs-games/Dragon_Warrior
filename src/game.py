@@ -104,6 +104,7 @@ class Game:
         # self.current_map = maps.Hauksness()
         # self.current_map = maps.Rimuldar()
         # self.current_map = maps.CharlockB1()
+        # self.current_map = maps.SwampCave()
 
         self.set_big_map()
 
@@ -275,21 +276,32 @@ class Game:
             self.cmd_menu.game.color, self.color = WHITE, WHITE
 
     def handle_battles(self):
-        if self.tiles_moved_since_spawn > 0:
-            # TODO: Add other maps with enemies besides Alefgard.
-            if self.current_map.identifier == 'Alefgard':
+        maps_with_enemies = (
+            'Alefgard', 'Hauksness',
+            'CharlockB2', 'CharlockB3', 'CharlockB4', 'CharlockB5', 'CharlockB6', 'CharlockB7Wide', 'CharlockB7Narrow',
+            'CharlockB8', 'SwampCave', 'MountainCaveB1')
+        if self.current_map.identifier in maps_with_enemies:
+            if self.tiles_moved_since_spawn > 0:
+                # TODO: Add other maps with enemies besides Alefgard/Hauksness.
                 if self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
-                    current_zone = self.player.column // 18, self.player.row // 18
-                    enemies_in_current_zone = enemy_territory_map.get(current_zone)
-                    # "Zone 0" in the original code is zone (3, 2)
-                    if current_zone == (3, 2):
-                        random_integer = self.handle_near_tantegel_fight_modifier()
+                    if self.current_map.identifier == 'Alefgard':
+                        current_zone = self.player.column // 18, self.player.row // 18
+                    elif self.current_map.identifier == 'Hauksness':
+                        current_zone = (3, 7)  # force dark_blue zone
+                    elif self.current_map.identifier == 'SwampCave':
+                        current_zone = (-1, -1)
                     else:
-                        random_integer = self.get_random_integer_by_tile()
-                    self.launch_battle = random_integer == 0 or self.game_state.config["FORCE_BATTLE"]
-                    if self.launch_battle and not self.game_state.config["NO_BATTLES"]:
-                        self.battle(enemies_in_current_zone)
-
+                        current_zone = None
+                    if current_zone:
+                        enemies_in_current_zone = enemy_territory_map.get(current_zone)
+                        # "Zone 0" in the original code is zone (3, 2)
+                        if current_zone == (3, 2):
+                            random_integer = self.handle_near_tantegel_fight_modifier()
+                        else:
+                            random_integer = self.get_random_integer_by_tile()
+                        self.launch_battle = random_integer == 0 or self.game_state.config["FORCE_BATTLE"]
+                        if self.launch_battle and not self.game_state.config["NO_BATTLES"]:
+                            self.battle(enemies_in_current_zone)
                     # if self.last_zone != current_zone:
                     #     print(f'Zone: {current_zone}\nEnemies: {enemies_in_current_zone}')
                     self.last_zone = current_zone
@@ -300,7 +312,7 @@ class Game:
         if self.music_enabled:
             mixer.music.load(battle_music)
             mixer.music.play(-1)
-        battle_background_image_effect(self.tile_size, self.screen)
+        battle_background_image_effect(self.tile_size, self.screen, self.current_map.is_dark)
         self.drawer.show_enemy_image(self.screen, enemy_name)
         enemy_draws_near_string = get_enemy_draws_near_string(enemy_name)
         self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string, add_quotes=False, skip_text=True,
