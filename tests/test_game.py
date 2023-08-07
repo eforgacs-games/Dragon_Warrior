@@ -12,7 +12,7 @@ from pygame.transform import scale
 from data.text.dialog_lookup_table import DialogLookup
 from src.camera import Camera
 from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, \
-    village_music, intro_overture
+    intro_overture
 from src.config import SCALE, prod_config
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
     set_to_save_prompt

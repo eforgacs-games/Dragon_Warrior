@@ -281,6 +281,7 @@ BATTLE_MENU_ITEM_PATH = join(BATTLE_MENU_DIR, 'battle_menu_item.png')
 BATTLE_MENU_RUN_PATH = join(BATTLE_MENU_DIR, 'battle_menu_run.png')
 BATTLE_MENU_STATIC_PATH = join(BATTLE_MENU_DIR, 'battle_menu_static.png')
 
+
 def get_image(path):
     global _image_library
     image_to_load = _image_library.get(path)

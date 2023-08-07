@@ -164,7 +164,7 @@ class DialogLookup:
         player_please_save_the_princess = _("{}, please save the Princess.").format(self.player.name)
         confirmation_prompt(self.command_menu, _("Dost thou know about Princess Gwaelin?"),
                             yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                      player_please_save_the_princess, last_line=True),
+                                                      player_please_save_the_princess),
                             no_path_function=partial(self.command_menu.show_text_in_dialog_box,
                                                      (
                                                          _("Half a year now hath passed since the Princess was kidnapped by the enemy."),
@@ -177,8 +177,7 @@ class DialogLookup:
         confirmation_prompt(self.command_menu, self.weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.",
-                                                     last_line=True), config=self.config)
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."), config=self.config)
 
     def get_inn_intro(self, inn_cost):
         _ = self._
@@ -270,7 +269,7 @@ class DialogLookup:
                                 yes_path_function=partial(self.complete_transaction, selected_item,
                                                           current_store_inventory, old_item_cost),
                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                         _("Oh, yes? That's too bad."), last_line=False),
+                                                         _("Oh, yes? That's too bad.")),
                                 config=self.config)
         else:
             self.command_menu.show_line_in_dialog_box(_("Sorry.\n"
@@ -279,7 +278,7 @@ class DialogLookup:
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                     _("Please, come again."), last_line=True), config=self.config)
+                                                     _("Please, come again.")), config=self.config)
 
     def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
         _ = self._
