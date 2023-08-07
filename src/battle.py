@@ -1,10 +1,10 @@
 import random
 
-from pygame import image, display, time, mixer
+from pygame import image, display, time, mixer, Surface
 from pygame.transform import scale
 
 from src.common import BATTLE_BACKGROUND_PATH, play_sound, stairs_down_sfx, missed_sfx, missed_2_sfx, \
-    excellent_move_sfx, victory_sfx, improvement_sfx
+    excellent_move_sfx, victory_sfx, improvement_sfx, BLACK
 from src.player.player_stats import levels_list
 
 
@@ -24,10 +24,15 @@ def select_random_attack_damage_value(lower_bound, upper_bound) -> int:
     return attack_damage
 
 
-def battle_background_image_effect(tile_size, screen):
+def battle_background_image_effect(tile_size, screen, is_dark):
     """Spiral effect to introduce battle background."""
-    battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
-                                    (7 * tile_size, 7 * tile_size))
+    if not is_dark:
+        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
+                                        (7 * tile_size, 7 * tile_size))
+    else:
+        black_surface = Surface((7 * tile_size, 7 * tile_size))
+        black_surface.fill(BLACK)
+        battle_background_image = black_surface
     spiral_tile_coordinates = ((3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (4, 3), (4, 4), (4, 5),
                                (3, 5), (2, 5), (1, 5), (1, 4), (1, 3), (1, 2), (1, 1), (2, 1), (3, 1), (4, 1),
                                (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (4, 6), (3, 6), (2, 6), (1, 6),
@@ -88,7 +93,7 @@ def calculate_attack_damage(cmd_menu, player, enemy):
 
 def battle_spell(cmd_menu, player):
     cmd_menu.show_line_in_dialog_box(f"{player.name} cannot yet use the spell.\n"
-                                          f"Command?\n", add_quotes=False, hide_arrow=True, disable_sound=True)
+                                     f"Command?\n", add_quotes=False, hide_arrow=True, disable_sound=True)
 
 
 def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_map, enemy):
@@ -96,12 +101,17 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
                                      disable_sound=True, hide_arrow=True)
     mixer.music.stop()
     play_sound(victory_sfx)
-    battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
-                                    (7 * tile_size, 7 * tile_size))
+    if current_map.is_dark:
+        black_surface = Surface((7 * tile_size, 7 * tile_size))
+        black_surface.fill(BLACK)
+        battle_background_image = black_surface
+    else:
+        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
+                                        (7 * tile_size, 7 * tile_size))
     screen.blit(battle_background_image, (5 * tile_size, 4 * tile_size))
     display.update(battle_background_image.get_rect())
     cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
-                                          f"Thy GOLD increases by {enemy.gold}.\n", add_quotes=False,
+                                     f"Thy GOLD increases by {enemy.gold}.\n", add_quotes=False,
                                      disable_sound=True, hide_arrow=True)
     player.total_experience += enemy.xp
     player.gold += enemy.gold
@@ -110,7 +120,7 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
             player.total_experience >= levels_list[player.level + 1]['total_exp']:
         play_sound(improvement_sfx)
         cmd_menu.show_line_in_dialog_box(f"Courage and wit have served thee well.\n"
-                                              f"Thou hast been promoted to the next level.\n", add_quotes=False,
+                                         f"Thou hast been promoted to the next level.\n", add_quotes=False,
                                          disable_sound=True)
         old_power = player.strength
         old_agility = player.agility
