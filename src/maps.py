@@ -611,6 +611,7 @@ class Brecconary(DragonWarriorMap):
         self.music_file_path = village_music
         self.initial_coordinates = (23, 10)
         self.custom_underlying_tiles = {
+            'SOLDIER': 'TREES',
             'WOMAN': 'BRICK',
             'WOMAN_2': 'GRASS',
             'MAN_2': 'TREES',
@@ -640,6 +641,9 @@ class Garinham(DragonWarriorMap):
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
         self.initial_coordinates = (14, 9)
+        self.custom_underlying_tiles = {
+            'WISE_MAN': 'SAND',
+        }
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -648,11 +652,12 @@ class Garinham(DragonWarriorMap):
         return Direction.RIGHT.value
 
     def set_characters_initial_directions(self):
-        self.set_character_initial_direction('MERCHANT', Direction.LEFT)
         self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
-        self.set_character_initial_direction('MERCHANT_3', Direction.UP)
-        self.set_character_initial_direction('WISE_MAN', Direction.RIGHT)
-
+        self.set_character_initial_direction('MERCHANT_3', Direction.LEFT)
+        self.set_character_initial_direction('MERCHANT_4', Direction.UP)
+        self.set_character_initial_direction('WISE_MAN_2', Direction.RIGHT)
+        self.set_character_initial_direction('GUARD', Direction.RIGHT)
+        self.set_character_initial_direction('GUARD_2', Direction.LEFT)
 
 class Kol(DragonWarriorMap):
 
