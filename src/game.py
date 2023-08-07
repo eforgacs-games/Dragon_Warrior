@@ -27,7 +27,7 @@ from src.common import BLACK, Direction, ICON_PATH, intro_overture, is_facing_la
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import dev_config
 from src.drawer import Drawer
-from src.enemy_lookup import enemy_territory_map, enemy_string_lookup, swamp_cave
+from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu
 from src.game_state import GameState
 from src.intro import Intro, controls
@@ -311,7 +311,7 @@ class Game:
         if self.music_enabled:
             mixer.music.load(battle_music)
             mixer.music.play(-1)
-        battle_background_image_effect(self.tile_size, self.screen)
+        battle_background_image_effect(self.tile_size, self.screen, self.current_map.is_dark)
         self.drawer.show_enemy_image(self.screen, enemy_name)
         enemy_draws_near_string = get_enemy_draws_near_string(enemy_name)
         self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string, add_quotes=False, skip_text=True,
