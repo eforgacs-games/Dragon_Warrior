@@ -164,7 +164,7 @@ class DialogLookup:
         player_please_save_the_princess = _("{}, please save the Princess.").format(self.player.name)
         confirmation_prompt(self.command_menu, _("Dost thou know about Princess Gwaelin?"),
                             yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                      player_please_save_the_princess),
+                                                      player_please_save_the_princess, hide_arrow=True),
                             no_path_function=partial(self.command_menu.show_text_in_dialog_box,
                                                      (
                                                          _("Half a year now hath passed since the Princess was kidnapped by the enemy."),
