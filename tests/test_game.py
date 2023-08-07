@@ -451,7 +451,7 @@ class TestGame(TestCase):
     def test_get_events(self):
         self.game.get_events()
         # this is a weird value for the player current tile
-        self.assertEqual('ROAMING_GUARD', self.game.player.current_tile)
+        self.assertEqual('SOLDIER', self.game.player.current_tile)
         self.assertEqual((0, -1), self.game.player.next_coordinates)
         self.assertEqual((1, -1), self.game.player.next_next_coordinates)
         self.game.enable_roaming = True

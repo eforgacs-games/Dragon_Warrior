@@ -79,18 +79,19 @@ class DialogLookup:
                                           _("To reach the next level, thy Experience Points must increase by {}.").format(
                                               self.player.points_to_next_level),
                                           _("Now, go, {}!").format(self.player.name))},
-                'RIGHT_FACE_GUARD': {'dialog': (
+                'GUARD': {'dialog': (
+                    self.tantegel_throne_room_roaming_guard,
+                )},
+                'GUARD_2': {'dialog': (
+                    _("If thou hast collected all the Treasure Chests, a key will be found."),
+                    _("Once used, the key will disappear, but the door will be open and thou may pass through.")
+                )},
+                'GUARD_3': {'dialog': (
                     _("East of this castle is a town where armor, weapons, and many other items may be purchased."),
                     _("Return to the Inn for a rest if thou art wounded in battle, {}.").format(self.player.name),
                     _("Sleep heals all.")
                 )},
-                'LEFT_FACE_GUARD': {'dialog': (
-                    _("If thou hast collected all the Treasure Chests, a key will be found."),
-                    _("Once used, the key will disappear, but the door will be open and thou may pass through.")
-                )},
-                'ROAMING_GUARD': {'dialog': (
-                    self.tantegel_throne_room_roaming_guard,
-                )}},
+            },
             'TantegelCourtyard': {
                 'MERCHANT': {'dialog': (
                     _("Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?").format(
@@ -105,12 +106,13 @@ class DialogLookup:
                 'WOMAN': {
                     'dialog': (_("When the sun and rain meet, a Rainbow Bridge shall appear."), _("It's a legend."))},
                 'WOMAN_2': {'dialog': where_is_princess_gwaelin},
-                'RIGHT_FACE_GUARD': {'dialog': where_is_princess_gwaelin},
-                'LEFT_FACE_GUARD': {'dialog': welcome_to_tantegel},
-                'DOWN_FACE_GUARD': {'dialog': (
+
+                'GUARD': {'dialog': (
                     _("King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."),)},
-                'UP_FACE_GUARD': {'dialog': _("If thou art planning to take a rest, first see King Lorik.")},
-                'RIGHT_FACE_GUARD_2': {'dialog': welcome_to_tantegel},
+                'GUARD_2': {'dialog': _("If thou art planning to take a rest, first see King Lorik.")},
+                'GUARD_3': {'dialog': where_is_princess_gwaelin},
+                'GUARD_4': {'dialog': welcome_to_tantegel},
+                'GUARD_5': {'dialog': welcome_to_tantegel},
                 'WISE_MAN': {'dialog': (
                     _("{}'s coming was foretold by legend. May the light shine upon this brave warrior.").format(
                         self.player.name),
@@ -126,8 +128,8 @@ class DialogLookup:
                     partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'MERCHANT_3': {'dialog': (tools_intro,)},
-                'UP_FACE_GUARD': {'dialog': (_("Tell King Lorik that the search for his daughter hath failed."),
-                                             _("I am almost gone...."))},
+                'GUARD': {'dialog': (_("Tell King Lorik that the search for his daughter hath failed."),
+                                     _("I am almost gone...."))},
                 'WOMAN_2': {'dialog': _("Welcome! \n"
                                         "Enter the shop and speak to its keeper across the desk.")},
             },
@@ -268,7 +270,8 @@ class DialogLookup:
                                 yes_path_function=partial(self.complete_transaction, selected_item,
                                                           current_store_inventory, old_item_cost),
                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                         _("Oh, yes? That's too bad."), last_line=False), config=self.config)
+                                                         _("Oh, yes? That's too bad."), last_line=False),
+                                config=self.config)
         else:
             self.command_menu.show_line_in_dialog_box(_("Sorry.\n"
                                                         "Thou hast not enough money."), hide_arrow=False)
@@ -354,8 +357,3 @@ class DialogLookup:
         self.command_menu.show_text_in_dialog_box((_("Good morning.\nThou seems to have spent a good night."),
                                                    _("I shall see thee again.")), skip_text=self.command_menu.skip_text,
                                                   drop_up=False)
-
-
-
-
-
