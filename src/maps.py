@@ -210,13 +210,16 @@ class DragonWarriorMap:
         character_sprites.add(character)
         self.characters[character.identifier] = {'character': character,
                                                  'character_sprites': character_sprites,
-                                                 'tile_value': self.character_key["_".join(identifier.split("_")[0:-1]) if identifier[-1].isdigit() else identifier]['val'],
+                                                 'tile_value': self.character_key[
+                                                     "_".join(identifier.split("_")[0:-1]) if identifier[
+                                                         -1].isdigit() else identifier]['val'],
                                                  'coordinates': coordinates
                                                  }
         if self.custom_underlying_tiles:
             if self.custom_underlying_tiles.get(character.identifier):
                 self.add_tile(self.floor_tile_key[self.custom_underlying_tiles[character.identifier]], self.center_pt)
-                self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[self.custom_underlying_tiles[character.identifier]]['val']
+                self.layout[coordinates[0]][coordinates[1]] = \
+                self.floor_tile_key[self.custom_underlying_tiles[character.identifier]]['val']
             else:
                 self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
                 self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
@@ -659,6 +662,7 @@ class Garinham(DragonWarriorMap):
         self.set_character_initial_direction('GUARD', Direction.RIGHT)
         self.set_character_initial_direction('GUARD_2', Direction.LEFT)
 
+
 class Kol(DragonWarriorMap):
 
     def __init__(self):
@@ -693,7 +697,8 @@ class Rimuldar(DragonWarriorMap):
         self.music_file_path = village_music
         self.initial_coordinates = (22, 37)
         self.custom_underlying_tiles = {
-        'WISE_MAN_2': 'GRASS'
+            'MERCHANT': 'GRASS',
+            'WISE_MAN_2': 'GRASS'
         }
 
     def hero_underlying_tile(self):
@@ -703,10 +708,12 @@ class Rimuldar(DragonWarriorMap):
         return Direction.LEFT.value
 
     def set_characters_initial_directions(self):
+
         self.set_character_initial_direction('WISE_MAN', Direction.UP)
         self.set_character_initial_direction('WISE_MAN_2', Direction.LEFT)
         self.set_character_initial_direction('WISE_MAN_3', Direction.RIGHT)
-        self.set_character_initial_direction('MERCHANT_2', Direction.RIGHT)
+        self.set_character_initial_direction('MERCHANT', Direction.UP)
+        self.set_character_initial_direction('MERCHANT_3', Direction.RIGHT)
         self.set_character_initial_direction('WOMAN', Direction.UP)
 
 
