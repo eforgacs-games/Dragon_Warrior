@@ -692,6 +692,9 @@ class Rimuldar(DragonWarriorMap):
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
         self.initial_coordinates = (22, 37)
+        self.custom_underlying_tiles = {
+        'WISE_MAN_2': 'GRASS'
+        }
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -700,7 +703,11 @@ class Rimuldar(DragonWarriorMap):
         return Direction.LEFT.value
 
     def set_characters_initial_directions(self):
-        pass
+        self.set_character_initial_direction('WISE_MAN', Direction.UP)
+        self.set_character_initial_direction('WISE_MAN_2', Direction.LEFT)
+        self.set_character_initial_direction('WISE_MAN_3', Direction.RIGHT)
+        self.set_character_initial_direction('MERCHANT_2', Direction.RIGHT)
+        self.set_character_initial_direction('WOMAN', Direction.UP)
 
 
 class Hauksness(MapWithoutNPCs):
