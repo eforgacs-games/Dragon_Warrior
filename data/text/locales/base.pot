@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-09 13:04+0200\n"
+"POT-Creation-Date: 2023-08-09 15:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -344,11 +344,11 @@ msgstr ""
 
 #: .\dialog_lookup_table.py:119
 msgid "Tell King Lorik that the search for his daughter hath failed."
-msgstr ""
+msgstr "로릭 왕에게 딸 찾기에 실패했다고 전하세요."
 
 #: .\dialog_lookup_table.py:120
 msgid "I am almost gone...."
-msgstr ""
+msgstr "나는 거의 죽었어...."
 
 #: .\dialog_lookup_table.py:121
 msgid ""
@@ -377,6 +377,18 @@ msgstr ""
 #: .\dialog_lookup_table.py:149
 msgid "Never does the King speak of it, but he must be suffering much."
 msgstr "페하께서는 아무 말씀 없어시지만 마음속으로는 얼마나 괴로워하실지..."
+
+#: .\dialog_lookup_table.py:150
+msgid "Welcome to Garinham. May thy stay be a peaceful one."
+msgstr "옛날이야기의 마을 가라이에 오신 것을 환영해요!"
+
+#: .\dialog_lookup_table.py:152
+msgid ""
+"Garin, a wandering minstrel of legendary fame, is said to have built this "
+"town."
+msgstr ""
+"먼옛날, 음유 시인 가라이는 긴 여행 끝에 이 땅에 도착하여 이 마을을 만들었다"
+"고 전해진다네. 그래서 이곳이 가라이 마을이라고 불리는 게야."
 
 #: .\dialog_lookup_table.py:181
 msgid "What dost thou wish to buy?"
