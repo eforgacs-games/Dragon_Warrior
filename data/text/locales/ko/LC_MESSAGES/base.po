@@ -23,6 +23,35 @@ msgid ""
 " Dost thou wish to buy anything today?"
 msgstr "여기는 무기와 방어구 상점이다. 무슨 일이지?"
 
+#: .\dialog_lookup_table.py:289
+msgid "The {}?"
+msgstr "{} 말이지?"
+
+#: .\dialog_lookup_table.py:289
+msgid "Bamboo Pole"
+msgstr "대나무 장대"
+
+#: .\dialog_lookup_table.py:289
+msgid "Club"
+msgstr "곤봉"
+
+
+#: .\dialog_lookup_table.py:289
+msgid "Copper Sword"
+msgstr "구리 검"
+
+#: .\dialog_lookup_table.py:289
+msgid "Clothes"
+msgstr "천 옷"
+
+#: .\dialog_lookup_table.py:289
+msgid "Leather Armor"
+msgstr "가죽 옷"
+
+#: .\dialog_lookup_table.py:289
+msgid "Small Shield"
+msgstr "가죽 방패"
+
 #: .\dialog_lookup_table.py:32
 msgid "Thou art dead."
 msgstr "당신은 죽었습니다."
@@ -49,7 +78,7 @@ msgid ""
 "(240 FPS)"
 msgstr ""
 "게임이 3배속으로 설정되었습니다.\n"
-"(240FPS)"
+"(240 FPS)"
 
 #: .\dialog_lookup_table.py:36
 msgid ""
