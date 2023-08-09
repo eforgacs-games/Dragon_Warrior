@@ -645,8 +645,10 @@ class Garinham(DragonWarriorMap):
         self.music_file_path = village_music
         self.initial_coordinates = (14, 9)
         self.custom_underlying_tiles = {
+            'WOMAN': 'TREES',
             'WISE_MAN': 'SAND',
         }
+        self.roaming_character_list = ['WOMAN', 'WISE_MAN_2']
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -659,6 +661,7 @@ class Garinham(DragonWarriorMap):
         self.set_character_initial_direction('MERCHANT_3', Direction.LEFT)
         self.set_character_initial_direction('MERCHANT_4', Direction.UP)
         self.set_character_initial_direction('WISE_MAN_2', Direction.RIGHT)
+        self.set_character_initial_direction('WISE_MAN_3', Direction.RIGHT)
         self.set_character_initial_direction('GUARD', Direction.RIGHT)
         self.set_character_initial_direction('GUARD_2', Direction.LEFT)
 

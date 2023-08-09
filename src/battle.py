@@ -97,7 +97,8 @@ def battle_spell(cmd_menu, player):
 
 
 def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_map, enemy):
-    cmd_menu.show_line_in_dialog_box(f"Thou hast done well in defeating the {enemy.name}.\n", add_quotes=False,
+    enemy_defeated_string = f"Thou hast done well in defeating the {enemy.name}.\n"
+    cmd_menu.show_line_in_dialog_box(enemy_defeated_string, add_quotes=False,
                                      disable_sound=True, hide_arrow=True)
     mixer.music.stop()
     play_sound(victory_sfx)
