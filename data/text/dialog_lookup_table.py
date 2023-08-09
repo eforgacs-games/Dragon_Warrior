@@ -11,7 +11,7 @@ from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PAT
     create_window, WHITE
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
-from src.shops import brecconary_store_inventory
+from src.shops import brecconary_weapons_store_inventory
 from src.visual_effects import fade, flash_transparent_color
 
 
@@ -129,7 +129,8 @@ class DialogLookup:
                 'SOLDIER': {'dialog': (_("Beware the bridges!"), _("Danger grows when thou crosses."))},
                 'WISE_MAN': {'dialog': _("If thou art cursed, come again.")},
                 'MERCHANT': {'dialog': (
-                    partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
+                    partial(self.check_buy_weapons_armor, brecconary_weapons_store_inventory,
+                            BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'MERCHANT_3': {'dialog': (tools_intro,)},
                 'GUARD': {'dialog': (_("Tell King Lorik that the search for his daughter hath failed."),
@@ -141,19 +142,22 @@ class DialogLookup:
                 'MERCHANT': {'dialog': _("I suggest making a map if thy path leads into the darkness.")},
                 'MERCHANT_2': {'dialog': (tools_intro,)},
                 'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
-                'MERCHANT_4': {'dialog': self.weapons_and_armor_intro},
+                'MERCHANT_4': {'dialog': _(self.weapons_and_armor_intro)},
                 'GUARD': {'dialog': _("I'm too busy.\n"
                                       "Ask the other guard."), },
                 'GUARD_2': {'dialog': _("I'm too busy.\n"
                                         "Ask the other guard."), },
+                'WOMAN': {'dialog': _("Welcome to Garinham. May thy stay be a peaceful one.")},
                 'WISE_MAN': {'dialog': _("The harp attracts enemies. Stay away from the grave in Garinham.")},
-                'WISE_MAN_2': {'dialog': _("Many believe that Princess Gwaelin is hidden away in a cave.")}
+                'WISE_MAN_2': {'dialog': _("Garin, a wandering minstrel of legendary fame, is said to have built this town.")},
+                'WISE_MAN_3': {'dialog': _("Many believe that Princess Gwaelin is hidden away in a cave.")}
 
             },
             'Kol': {'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
-                    'MERCHANT_2': {'dialog': (self.weapons_and_armor_intro,)},
+                    'MERCHANT_2': {'dialog': _(self.weapons_and_armor_intro)},
                     'WISE_MAN': {'dialog': (
-                        _("Though thou art as brave as thy ancestor, {}, thou cannot defeat the great Dragonlord with such weapons.").format(
+                        _("Though thou art as brave as thy ancestor, {}, "
+                          "thou cannot defeat the great Dragonlord with such weapons.").format(
                             self.player.name), _("Thou shouldst come here again."))},
                     'WISE_MAN_2': {'dialog': _("In legends it is said that fairies know how to put Golem to sleep.")},
                     'WISE_MAN_3': {'dialog': _("This is the village of Kol.")},
@@ -163,7 +167,7 @@ class DialogLookup:
                     'MAN': {'dialog': _("Art thou the descendant of Erdrick?\n"
                                         "Hast thou any proof?")},
                     'MAN_2': {'dialog': (_("Dreadful is the South Island."),
-                                       _("Great strength and skill and wit only will bring thee back from that place."))},
+                                         _("Great strength and skill and wit only will bring thee back from that place."))},
                     'SOLDIER': {'dialog': _("Hast thou seen Nester?\n"
                                             "I think he may need help.")},
                     'SOLDIER_2': {'dialog': _(
