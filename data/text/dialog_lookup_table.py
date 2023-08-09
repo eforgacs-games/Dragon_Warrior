@@ -43,7 +43,10 @@ class DialogLookup:
         where_is_princess_gwaelin = _("Where oh where can I find Princess Gwaelin?")
         welcome_to_tantegel = _("Welcome to Tantegel Castle.")
         brecconary_inn_cost = 6
+        kol_inn_cost = 20
         garinham_inn_cost = 25
+        rimuldar_inn_cost = 55
+        cantlin_inn_cost = 100
         tools_intro = _("Welcome.\n"
                         "We deal in tools.\n"
                         "What can I do for thee?")
@@ -147,6 +150,25 @@ class DialogLookup:
                 'WISE_MAN_2': {'dialog': _("Many believe that Princess Gwaelin is hidden away in a cave.")}
 
             },
+            'Kol': {'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
+                    'MERCHANT_2': {'dialog': (self.weapons_and_armor_intro,)},
+                    'WISE_MAN': {'dialog': (
+                        _("Though thou art as brave as thy ancestor, {}, thou cannot defeat the great Dragonlord with such weapons.").format(
+                            self.player.name), _("Thou shouldst come here again."))},
+                    'WISE_MAN_2': {'dialog': _("In legends it is said that fairies know how to put Golem to sleep.")},
+                    'WISE_MAN_3': {'dialog': _("This is the village of Kol.")},
+                    'GUARD': {'dialog': _("Golem is afraid of the music of the flute, so 'tis said.")},
+                    'WOMAN': {'dialog': _("This bath cures rheumatism.")},
+                    'WOMAN_2': {'dialog': _("Please,save us from the minions of the Dragonlord.")},
+                    'MAN': {'dialog': (_("Dreadful is the South Island."),
+                                       _("Great strength and skill and wit only will bring thee back from that place."))},
+                    'SOLDIER': {'dialog': _("Hast thou seen Nester?\n"
+                                            "I think he may need help.")},
+                    'SOLDIER_2': {'dialog': _(
+                        "East of Hauksness there is a town, 'tis said, where one may purchase weapons of extraordinary quality.")},
+                    },
+            'Rimuldar': {},
+            'Cantlin': {},
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
                                                         "Thus, I propose a test.",
                                                         "There is a Silver Harp that beckons to the creatures of the Dragonlord.",

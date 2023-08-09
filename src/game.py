@@ -99,10 +99,16 @@ class Game:
         self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
+
+        # towns
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
-        # self.current_map = maps.Hauksness()
+        # self.current_map = maps.Kol()
         # self.current_map = maps.Rimuldar()
+        # self.current_map = maps.Hauksness()
+        # self.current_map = maps.Cantlin()
+
+
         # self.current_map = maps.CharlockB1()
         # self.current_map = maps.SwampCave()
 
