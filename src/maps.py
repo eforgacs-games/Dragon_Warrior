@@ -677,13 +677,14 @@ class Kol(DragonWarriorMap):
         self.custom_underlying_tiles = {
             'WOMAN': 'TREES',
             'WOMAN_2': 'SAND',
-            'MAN': 'SAND',
+            'MAN': 'TREES',
+            'MAN_2': 'SAND',
             'SOLDIER': 'TREES',
             'GUARD': 'SAND',
             'WISE_MAN_2': 'GRASS',
             'WISE_MAN_3': 'SAND'
         }
-        self.roaming_character_list = ['WISE_MAN_2', 'WOMAN_2', 'MAN', 'SOLDIER', 'GUARD', 'WISE_MAN_2', 'WISE_MAN_3']
+        self.roaming_character_list = ['WISE_MAN_2', 'WOMAN_2', 'MAN', 'MAN_2', 'SOLDIER', 'GUARD', 'WISE_MAN_2', 'WISE_MAN_3']
 
     def hero_underlying_tile(self):
         return 'SAND'
