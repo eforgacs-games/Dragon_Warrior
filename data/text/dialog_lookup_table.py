@@ -160,7 +160,9 @@ class DialogLookup:
                     'GUARD': {'dialog': _("Golem is afraid of the music of the flute, so 'tis said.")},
                     'WOMAN': {'dialog': _("This bath cures rheumatism.")},
                     'WOMAN_2': {'dialog': _("Please,save us from the minions of the Dragonlord.")},
-                    'MAN': {'dialog': (_("Dreadful is the South Island."),
+                    'MAN': {'dialog': _("Art thou the descendant of Erdrick?\n"
+                                        "Hast thou any proof?")},
+                    'MAN_2': {'dialog': (_("Dreadful is the South Island."),
                                        _("Great strength and skill and wit only will bring thee back from that place."))},
                     'SOLDIER': {'dialog': _("Hast thou seen Nester?\n"
                                             "I think he may need help.")},
@@ -284,7 +286,7 @@ class DialogLookup:
 
     def buy_item_dialog(self, selected_item, current_store_inventory, static_store_image):
         _ = self._
-        self.command_menu.show_line_in_dialog_box(f"The {selected_item}?", hide_arrow=False)
+        self.command_menu.show_line_in_dialog_box(_("The {}?").format(_(selected_item)), hide_arrow=False)
         selected_item_dict = current_store_inventory[selected_item]
         selected_item_type = selected_item_dict['type']
         if self.player.gold > selected_item_dict['cost']:

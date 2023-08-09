@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-05 21:58+0200\n"
+"POT-Creation-Date: 2023-08-09 13:04+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,6 +22,34 @@ msgid ""
 "We deal in weapons and armor.\n"
 " Dost thou wish to buy anything today?"
 msgstr "여기는 무기와 방어구 상점이다. 무슨 일이지?"
+
+#: .\dialog_lookup_table.py:289
+msgid "The {}?"
+msgstr "{} 말이지?"
+
+#: .\dialog_lookup_table.py:289
+msgid "Bamboo Pole"
+msgstr "대나무 장대"
+
+#: .\dialog_lookup_table.py:289
+msgid "Club"
+msgstr "곤봉"
+
+#: .\dialog_lookup_table.py:289
+msgid "Copper Sword"
+msgstr "구리 검"
+
+#: .\dialog_lookup_table.py:289
+msgid "Clothes"
+msgstr "천 옷"
+
+#: .\dialog_lookup_table.py:289
+msgid "Leather Armor"
+msgstr "가죽 옷"
+
+#: .\dialog_lookup_table.py:289
+msgid "Small Shield"
+msgstr "가죽 방패"
 
 #: .\dialog_lookup_table.py:32
 msgid "Thou art dead."

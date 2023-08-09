@@ -88,8 +88,8 @@ class Game:
         self.scale = self.game_state.config["SCALE"]
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
-        win_width, win_height = self.game_state.config["NES_RES"][0] * self.scale, self.game_state.config["NES_RES"][
-            1] * self.scale
+        nes_res = self.game_state.config["NES_RES"]
+        win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
         self.screen = self.set_screen(win_height, win_width)
         # self.screen.set_alpha(None)
         set_caption("Dragon Warrior")
@@ -107,7 +107,6 @@ class Game:
         # self.current_map = maps.Rimuldar()
         # self.current_map = maps.Hauksness()
         # self.current_map = maps.Cantlin()
-
 
         # self.current_map = maps.CharlockB1()
         # self.current_map = maps.SwampCave()
