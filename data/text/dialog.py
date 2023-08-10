@@ -31,17 +31,17 @@ def blink_arrow(x, y, direction, screen, config: dict, color=WHITE):
         display.update(arrow_screen_portion)
 
 
-def blink_switch(screen, image_1, image_2, x, y, width, height, start, config, color=WHITE):
+def blink_switch(screen, image_1, image_2, x, y, width, height, start, tile_size, color=WHITE):
     # TODO(ELF): The input lag problem is in this method. Check to see if image_1 has been updated and stop updating it
     #  after the first time.
     blink_start = start
-    image_rect = Rect(x * config["TILE_SIZE"], y * config["TILE_SIZE"], width * config["TILE_SIZE"],
-                      height * config["TILE_SIZE"])
+    image_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
+    create_window(x, y, width, height, image_1, screen, color)
+    display.update(image_rect)
     if convert_to_frames_since_start_time(blink_start) > 32:
         blink_start = get_ticks()
     while convert_to_frames_since_start_time(blink_start) <= 16:
-        create_window(x, y, width, height, image_1, screen, color)
-        display.update(image_rect)
+        pass
     while 16 < convert_to_frames_since_start_time(blink_start) <= 32:
         create_window(x, y, width, height, image_2, screen, color)
         display.update(image_rect)
@@ -63,10 +63,10 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     while blinking:
         if blinking_yes and not config['NO_WAIT']:
             blink_switch(command_menu.screen, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2,
-                         width=4, height=3, start=blink_start, config=config, color=color)
+                         width=4, height=3, start=blink_start, tile_size=config["TILE_SIZE"], color=color)
         else:
             blink_switch(command_menu.screen, CONFIRMATION_NO_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2,
-                         width=4, height=3, start=blink_start, config=config, color=color)
+                         width=4, height=3, start=blink_start, tile_size=config["TILE_SIZE"], color=color)
         if skip_text:
             play_sound(menu_button_sfx)
             yes_path_function()

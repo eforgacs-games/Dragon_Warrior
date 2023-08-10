@@ -480,12 +480,18 @@ msgstr ""
 "키보드를 사용하여 이름을 입력합니다.\n"
 "조이스틱을 사용하는 경우 TAB 키를 눌러 조이스틱 입력으로 전환합니다."
 
+#: ..\battle.py:81
+msgid "Excellent move!\n"
+msgstr "회심의 일격!\n"
 
+#: ..\battle.py:184
 msgid ""
 "{} draws near!\n"
 
 msgstr ""
 "{} 나타났다!\n"
+
+
 
 #: ..\battle.py:175
 msgid ""
@@ -680,3 +686,5 @@ msgstr "{}포인트의 대미지를 입었다!\n"
 #: ..\menu.py:624
 msgid "{} chanted the spell of {}."
 msgstr "{}은 {}를 외쳤다!"
+
+
