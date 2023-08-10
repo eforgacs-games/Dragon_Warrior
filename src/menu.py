@@ -9,7 +9,7 @@ from pygame.sprite import Group
 from pygame.time import get_ticks
 
 from data.text.dialog import blink_arrow
-from data.text.dialog_lookup_table import DialogLookup
+from data.text.dialog_lookup_table import DialogLookup, set_gettext_language
 from src.common import DRAGON_QUEST_FONT_PATH, BLACK, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, \
     open_door_sfx, \
@@ -51,6 +51,7 @@ class CommandMenu(Menu):
                                                   color=self.game.color)
         self.dialog_lookup = DialogLookup(self, self.game.game_state.config)
         tile_size = self.game.game_state.config['TILE_SIZE']
+        self._ = _ = set_gettext_language(self.game.game_state.config['LANGUAGE'])
         self.menu = pygame_menu.Menu(
             title='COMMAND',
             width=self.command_menu_surface.get_width() * 2,
@@ -620,7 +621,7 @@ class CommandMenu(Menu):
                                 self.show_text_in_dialog_box("Thy MP is too low.", skip_text=self.skip_text)
                             else:
                                 self.show_text_in_dialog_box(
-                                    (f"{self.player.name} chanted the spell of {currently_selected_item}.",),
+                                    (self._("{} chanted the spell of {}.").format(self.player.name, currently_selected_item)),
                                     skip_text=self.skip_text)
                                 play_sound(spell_sfx)
                                 self.player.current_mp -= spell_mp_cost

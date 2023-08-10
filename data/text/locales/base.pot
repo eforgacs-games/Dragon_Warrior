@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-05 21:58+0200\n"
+"POT-Creation-Date: 2023-08-10 11:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,6 +22,34 @@ msgid ""
 "We deal in weapons and armor.\n"
 " Dost thou wish to buy anything today?"
 msgstr "여기는 무기와 방어구 상점이다. 무슨 일이지?"
+
+#: .\dialog_lookup_table.py:289
+msgid "The {}?"
+msgstr "{} 말이지?"
+
+#: .\dialog_lookup_table.py:289
+msgid "Bamboo Pole"
+msgstr "대나무 장대"
+
+#: .\dialog_lookup_table.py:289
+msgid "Club"
+msgstr "곤봉"
+
+#: .\dialog_lookup_table.py:289
+msgid "Copper Sword"
+msgstr "구리 검"
+
+#: .\dialog_lookup_table.py:289
+msgid "Clothes"
+msgstr "천 옷"
+
+#: .\dialog_lookup_table.py:289
+msgid "Leather Armor"
+msgstr "가죽 옷"
+
+#: .\dialog_lookup_table.py:289
+msgid "Small Shield"
+msgstr "가죽 방패"
 
 #: .\dialog_lookup_table.py:32
 msgid "Thou art dead."
@@ -316,11 +344,11 @@ msgstr ""
 
 #: .\dialog_lookup_table.py:119
 msgid "Tell King Lorik that the search for his daughter hath failed."
-msgstr ""
+msgstr "로릭 왕에게 딸 찾기에 실패했다고 전하세요."
 
 #: .\dialog_lookup_table.py:120
 msgid "I am almost gone...."
-msgstr ""
+msgstr "나는 거의 죽었어...."
 
 #: .\dialog_lookup_table.py:121
 msgid ""
@@ -349,6 +377,18 @@ msgstr ""
 #: .\dialog_lookup_table.py:149
 msgid "Never does the King speak of it, but he must be suffering much."
 msgstr "페하께서는 아무 말씀 없어시지만 마음속으로는 얼마나 괴로워하실지..."
+
+#: .\dialog_lookup_table.py:150
+msgid "Welcome to Garinham. May thy stay be a peaceful one."
+msgstr "옛날이야기의 마을 가라이에 오신 것을 환영해요!"
+
+#: .\dialog_lookup_table.py:152
+msgid ""
+"Garin, a wandering minstrel of legendary fame, is said to have built this "
+"town."
+msgstr ""
+"먼옛날, 음유 시인 가라이는 긴 여행 끝에 이 땅에 도착하여 이 마을을 만들었다"
+"고 전해진다네. 그래서 이곳이 가라이 마을이라고 불리는 게야."
 
 #: .\dialog_lookup_table.py:181
 msgid "What dost thou wish to buy?"
@@ -449,3 +489,198 @@ msgid ""
 msgstr ""
 "키보드를 사용하여 이름을 입력합니다.\n"
 "조이스틱을 사용하는 경우 TAB 키를 눌러 조이스틱 입력으로 전환합니다."
+
+msgid "{} draws near!\n"
+msgstr "{} 나타났다!\n"
+
+#: ..\battle.py:175
+msgid "Command?\n"
+msgstr "어떻게 하겠나?\n"
+
+#: ..\battle.py:103
+msgid "Thou hast done well in defeating the {}.\n"
+msgstr "{} 물리쳤다!\n"
+
+#: ..\battle.py:125
+msgid "Thy experience increases by {}.\n"
+msgstr "{}포인트의 경험치 획득!\n"
+
+#: ..\battle.py:126
+msgid "Thy GOLD increases by {}.\n"
+msgstr "{}골드를 획득했다!\n"
+
+#: ..\battle.py:164
+msgid "Slime"
+msgstr "슬라임"
+
+#: ..\battle.py:164
+msgid "Red Slime"
+msgstr "슬라임 베스"
+
+#: ..\battle.py:164
+msgid "Metal Slime"
+msgstr "메탈 슬라임"
+
+#: ..\battle.py:164
+msgid "Drakee"
+msgstr "드라키"
+
+#: ..\battle.py:164
+msgid "Magidrakee"
+msgstr "메이지 드라키"
+
+#: ..\battle.py:164
+msgid "Drakeema"
+msgstr "드라키마"
+
+#: ..\battle.py:164
+msgid "Ghost"
+msgstr "고스트"
+
+#: ..\battle.py:164
+msgid "Poltergeist"
+msgstr "메트로고스트"
+
+#: ..\battle.py:164
+msgid "Magician"
+msgstr "마법사"
+
+#: ..\battle.py:164
+msgid "Warlock"
+msgstr "마도사"
+
+#: ..\battle.py:164
+msgid "Wizard"
+msgstr "대마도사"
+
+#: ..\battle.py:164
+msgid "Specter"
+msgstr "헬고스트"
+
+#: ..\battle.py:164
+msgid "Scorpion"
+msgstr "거대 전갈"
+
+#: ..\battle.py:164
+msgid "Metal Scorpion"
+msgstr "강철 전갈"
+
+#: ..\battle.py:164
+msgid "Rogue Scorpion"
+msgstr "죽음의 전갈"
+
+#: ..\battle.py:164
+msgid "Druin"
+msgstr "메다"
+
+#: ..battle.py:164
+msgid "Druinlord"
+msgstr "메다 로드"
+
+#: ..battle.py:164
+msgid "Droll"
+msgstr "드롤"
+
+#: ..battle.py:164
+msgid "Drollmagi"
+msgstr "드롤 메이지"
+
+#: ..battle.py:164
+msgid "Skeleton"
+msgstr "해골"
+
+#: ..\battle.py:164
+msgid "Wraith"
+msgstr "사령"
+
+#: ..battle.py:164
+msgid "Wraith Knight"
+msgstr "사령의기사"
+
+#: ..battle.py:164
+msgid "Demon Knight"
+msgstr "그림자 기사"
+
+#: ..\battle.py:164
+msgid "Wolf"
+msgstr "리칸트"
+
+#: ..\battle.py:164
+msgid "Wolflord"
+msgstr "리칸트 마믈"
+
+#: ..\battle.py:164
+msgid "Werewolf"
+msgstr "킬러 리칸트"
+
+#: ..\battle.py:164
+msgid "Goldman"
+msgstr "골드맨"
+
+#: ..\battle.py:164
+msgid "Golem"
+msgstr "골렘"
+
+#: ..\battle.py:164
+msgid "Stoneman"
+msgstr "스톤맨"
+
+#: ..\battle.py:164
+msgid "Wyvern"
+msgstr "키메라"
+
+#: ..\battle.py:164
+msgid "Magiwyvern"
+msgstr "메이지키메라"
+
+#: ..\battle.py:164
+msgid "Starwyvern"
+msgstr "스타키메라"
+
+#: ..\battle.py:164
+msgid "Knight"
+msgstr "갑옷의 기사"
+
+#: ..\battle.py:164
+msgid "Axe Knight"
+msgstr "악마의기사"
+
+#: ..\battle.py:164
+msgid "Armored Knight"
+msgstr "죽음의기사"
+
+#: ..\battle.py:164
+msgid "Green Dragon"
+msgstr "드래곤"
+
+#: ..\battle.py:164
+msgid "Blue Dragon"
+msgstr "키스드래곤"
+
+#: ..\battle.py:164
+msgid "Red Dragon"
+msgstr "다스드래곤"
+
+#: ..\battle.py:164
+msgid "Dragonlord"
+msgstr "용왕"
+
+#: ..\game.py:401
+msgid "{} attacks!\n"
+msgstr "{}의 공격!\n"
+
+#: ..\game.py:411
+msgid "The {}'s Hit Points have been reduced by {}.\n"
+msgstr "{}에게 {}포인트의 대미지!\n"
+
+#: ..\game.py:419
+msgid "The {} attacks!\n"
+msgstr "{}의 공격!\n"
+
+#: ..\game.py:448
+msgid "Thy Hit Points decreased by {}.\n"
+msgstr "{}포인트의 대미지를 입었다!\n"
+
+#: ..\menu.py:624
+msgid "{} chanted the spell of {}."
+msgstr "{}은 {}를 외쳤다!"

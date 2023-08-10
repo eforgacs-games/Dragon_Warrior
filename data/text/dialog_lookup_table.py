@@ -11,16 +11,24 @@ from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PAT
     create_window, WHITE
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
-from src.shops import brecconary_store_inventory
+from src.shops import brecconary_weapons_store_inventory
 from src.visual_effects import fade, flash_transparent_color
+
+
+def set_gettext_language(language):
+    if language == 'Korean':
+        ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
+        ko.install()
+        _ = ko.gettext
+    else:
+        _ = gettext.gettext
+    return _
 
 
 class DialogLookup:
     def __init__(self, command_menu, config):
         self.config = config
-        self.language = self.config['LANGUAGE']
-
-        self._ = _ = self.set_gettext_language()
+        self._ = _ = set_gettext_language(self.config['LANGUAGE'])
 
         self.weapons_and_armor_intro = _("We deal in weapons and armor.\n Dost thou wish to buy anything today?")
 
@@ -43,7 +51,10 @@ class DialogLookup:
         where_is_princess_gwaelin = _("Where oh where can I find Princess Gwaelin?")
         welcome_to_tantegel = _("Welcome to Tantegel Castle.")
         brecconary_inn_cost = 6
+        kol_inn_cost = 20
         garinham_inn_cost = 25
+        rimuldar_inn_cost = 55
+        cantlin_inn_cost = 100
         tools_intro = _("Welcome.\n"
                         "We deal in tools.\n"
                         "What can I do for thee?")
@@ -123,9 +134,11 @@ class DialogLookup:
                 'MAN': {'dialog': _("There is a town where magic keys can be purchased.")},
                 'MAN_2': {'dialog': _("Thou art most welcome in Brecconary.")},
                 'MAN_3': {'dialog': _("Enter where thou can.")},
+                'SOLDIER': {'dialog': (_("Beware the bridges!"), _("Danger grows when thou crosses."))},
                 'WISE_MAN': {'dialog': _("If thou art cursed, come again.")},
                 'MERCHANT': {'dialog': (
-                    partial(self.check_buy_weapons_armor, brecconary_store_inventory, BRECCONARY_WEAPONS_SHOP_PATH),)},
+                    partial(self.check_buy_weapons_armor, brecconary_weapons_store_inventory,
+                            BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'MERCHANT_3': {'dialog': (tools_intro,)},
                 'GUARD': {'dialog': (_("Tell King Lorik that the search for his daughter hath failed."),
@@ -134,12 +147,42 @@ class DialogLookup:
                                         "Enter the shop and speak to its keeper across the desk.")},
             },
             'Garinham': {
-                'MERCHANT': {'dialog': (tools_intro,)},
-                'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
-                'MERCHANT_3': {'dialog': self.weapons_and_armor_intro},
-                'WISE_MAN': {'dialog': "Many believe that Princess Gwaelin is hidden away in a cave."}
+                'MERCHANT': {'dialog': _("I suggest making a map if thy path leads into the darkness.")},
+                'MERCHANT_2': {'dialog': (tools_intro,)},
+                'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
+                'MERCHANT_4': {'dialog': _(self.weapons_and_armor_intro)},
+                'GUARD': {'dialog': _("I'm too busy.\n"
+                                      "Ask the other guard."), },
+                'GUARD_2': {'dialog': _("I'm too busy.\n"
+                                        "Ask the other guard."), },
+                'WOMAN': {'dialog': _("Welcome to Garinham. May thy stay be a peaceful one.")},
+                'WISE_MAN': {'dialog': _("The harp attracts enemies. Stay away from the grave in Garinham.")},
+                'WISE_MAN_2': {'dialog': _("Garin, a wandering minstrel of legendary fame, is said to have built this town.")},
+                'WISE_MAN_3': {'dialog': _("Many believe that Princess Gwaelin is hidden away in a cave.")}
 
             },
+            'Kol': {'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
+                    'MERCHANT_2': {'dialog': _(self.weapons_and_armor_intro)},
+                    'WISE_MAN': {'dialog': (
+                        _("Though thou art as brave as thy ancestor, {}, "
+                          "thou cannot defeat the great Dragonlord with such weapons.").format(
+                            self.player.name), _("Thou shouldst come here again."))},
+                    'WISE_MAN_2': {'dialog': _("In legends it is said that fairies know how to put Golem to sleep.")},
+                    'WISE_MAN_3': {'dialog': _("This is the village of Kol.")},
+                    'GUARD': {'dialog': _("Golem is afraid of the music of the flute, so 'tis said.")},
+                    'WOMAN': {'dialog': _("This bath cures rheumatism.")},
+                    'WOMAN_2': {'dialog': _("Please,save us from the minions of the Dragonlord.")},
+                    'MAN': {'dialog': _("Art thou the descendant of Erdrick?\n"
+                                        "Hast thou any proof?")},
+                    'MAN_2': {'dialog': (_("Dreadful is the South Island."),
+                                         _("Great strength and skill and wit only will bring thee back from that place."))},
+                    'SOLDIER': {'dialog': _("Hast thou seen Nester?\n"
+                                            "I think he may need help.")},
+                    'SOLDIER_2': {'dialog': _(
+                        "East of Hauksness there is a town, 'tis said, where one may purchase weapons of extraordinary quality.")},
+                    },
+            'Rimuldar': {},
+            'Cantlin': {},
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
                                                         "Thus, I propose a test.",
                                                         "There is a Silver Harp that beckons to the creatures of the Dragonlord.",
@@ -149,15 +192,6 @@ class DialogLookup:
         for map_dict in self.lookup_table.values():
             for character_identifier, character_dict in map_dict.items():
                 character_dict['dialog_character'] = character_identifier
-
-    def set_gettext_language(self):
-        if self.language == 'Korean':
-            ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
-            ko.install()
-            _ = ko.gettext
-        else:
-            _ = gettext.gettext
-        return _
 
     def tantegel_throne_room_roaming_guard(self):
         _ = self._
@@ -177,7 +211,8 @@ class DialogLookup:
         confirmation_prompt(self.command_menu, self.weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."), config=self.config)
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."),
+                            config=self.config)
 
     def get_inn_intro(self, inn_cost):
         _ = self._
@@ -254,7 +289,7 @@ class DialogLookup:
 
     def buy_item_dialog(self, selected_item, current_store_inventory, static_store_image):
         _ = self._
-        self.command_menu.show_line_in_dialog_box(f"The {selected_item}?", hide_arrow=False)
+        self.command_menu.show_line_in_dialog_box(_("The {}?").format(_(selected_item)), hide_arrow=False)
         selected_item_dict = current_store_inventory[selected_item]
         selected_item_type = selected_item_dict['type']
         if self.player.gold > selected_item_dict['cost']:
@@ -314,7 +349,7 @@ class DialogLookup:
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                      _("Okay.\n"
                                                        "Good-bye, traveler."),
-                                                     skip_text=self.command_menu.skip_text),
+                                                     skip_text=self.command_menu.skip_text, hide_arrow=True),
                             config=self.command_menu.game.game_state.config,
                             skip_text=self.command_menu.skip_text)
 
