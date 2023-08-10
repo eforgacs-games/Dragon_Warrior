@@ -15,12 +15,20 @@ from src.shops import brecconary_weapons_store_inventory
 from src.visual_effects import fade, flash_transparent_color
 
 
+def set_gettext_language(language):
+    if language == 'Korean':
+        ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
+        ko.install()
+        _ = ko.gettext
+    else:
+        _ = gettext.gettext
+    return _
+
+
 class DialogLookup:
     def __init__(self, command_menu, config):
         self.config = config
-        self.language = self.config['LANGUAGE']
-
-        self._ = _ = self.set_gettext_language()
+        self._ = _ = set_gettext_language(self.config['LANGUAGE'])
 
         self.weapons_and_armor_intro = _("We deal in weapons and armor.\n Dost thou wish to buy anything today?")
 
@@ -184,15 +192,6 @@ class DialogLookup:
         for map_dict in self.lookup_table.values():
             for character_identifier, character_dict in map_dict.items():
                 character_dict['dialog_character'] = character_identifier
-
-    def set_gettext_language(self):
-        if self.language == 'Korean':
-            ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
-            ko.install()
-            _ = ko.gettext
-        else:
-            _ = gettext.gettext
-        return _
 
     def tantegel_throne_room_roaming_guard(self):
         _ = self._
