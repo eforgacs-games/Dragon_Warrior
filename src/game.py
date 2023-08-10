@@ -355,7 +355,7 @@ class Game:
         current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
         selected_executed_option = None
         for current_event in event.get():
-            if current_event.type == KEYDOWN and not enemy.hp <= 0:
+            if current_event.type == KEYDOWN:
                 if current_event.key in (K_RETURN, K_i, K_k):
                     play_sound(menu_button_sfx)
                     selected_executed_option = current_selection
