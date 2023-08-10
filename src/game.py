@@ -10,6 +10,7 @@ from pygame.time import Clock
 from pygame.time import get_ticks
 
 from data.text.dialog import blink_switch
+from data.text.dialog_lookup_table import set_gettext_language
 from src import maps, menu_functions
 from src.battle import battle_background_image_effect, battle_run, \
     calculate_enemy_attack_damage, missed_attack, calculate_attack_damage, battle_spell, enemy_defeated, \
@@ -46,6 +47,7 @@ from src.visual_effects import fade, flash_transparent_color
 class Game:
     def __init__(self, config):
         self.game_state = GameState(config=config)
+        self._ = _ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
         # map/graphics
         self.big_map = None
@@ -88,8 +90,8 @@ class Game:
         self.scale = self.game_state.config["SCALE"]
         # video_infos = display.Info()
         # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
-        win_width, win_height = self.game_state.config["NES_RES"][0] * self.scale, self.game_state.config["NES_RES"][
-            1] * self.scale
+        nes_res = self.game_state.config["NES_RES"]
+        win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
         self.screen = self.set_screen(win_height, win_width)
         # self.screen.set_alpha(None)
         set_caption("Dragon Warrior")
@@ -99,10 +101,15 @@ class Game:
         self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
+
+        # towns
         # self.current_map = maps.Brecconary()
         # self.current_map = maps.Garinham()
-        # self.current_map = maps.Hauksness()
+        # self.current_map = maps.Kol()
         # self.current_map = maps.Rimuldar()
+        # self.current_map = maps.Hauksness()
+        # self.current_map = maps.Cantlin()
+
         # self.current_map = maps.CharlockB1()
         # self.current_map = maps.SwampCave()
 
@@ -348,7 +355,7 @@ class Game:
         current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
         selected_executed_option = None
         for current_event in event.get():
-            if current_event.type == KEYDOWN and not enemy.hp <= 0:
+            if current_event.type == KEYDOWN:
                 if current_event.key in (K_RETURN, K_i, K_k):
                     play_sound(menu_button_sfx)
                     selected_executed_option = current_selection
@@ -390,7 +397,7 @@ class Game:
 
     def fight(self, enemy):
         play_sound(attack_sfx)
-        self.cmd_menu.show_line_in_dialog_box(f"{self.player.name} attacks!\n",
+        self.cmd_menu.show_line_in_dialog_box(self._("{} attacks!\n").format(self.player.name),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
 
         attack_damage = calculate_attack_damage(self.cmd_menu, self.player, enemy)
@@ -400,7 +407,8 @@ class Game:
         else:
             play_sound(hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
-                f"The {enemy.name}'s Hit Points have been reduced by {attack_damage}.\n", add_quotes=False,
+                self._("The {}'s Hit Points have been reduced by {}.\n").format(enemy.name, attack_damage),
+                add_quotes=False,
                 disable_sound=True, hide_arrow=True)
             enemy.hp -= attack_damage
             # print(f"{enemy.name} HP: {enemy.hp}/{enemy_string_lookup[enemy.name]().hp}")
@@ -408,7 +416,7 @@ class Game:
             return
         else:
             play_sound(prepare_attack_sfx)
-            self.cmd_menu.show_line_in_dialog_box(f"The {enemy.name} attacks!\n",
+            self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(enemy.name),
                                                   add_quotes=False, disable_sound=True, hide_arrow=True)
             # (EnemyAttack - HeroAgility / 2) / 4,
             #
@@ -426,7 +434,7 @@ class Game:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
                 self.player.is_dead = True
             else:
-                self.cmd_menu.show_line_in_dialog_box("Command?\n",
+                self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
                                                       add_quotes=False, disable_sound=True, hide_arrow=True)
 
     def receive_damage(self, attack_damage):
@@ -437,7 +445,7 @@ class Game:
             self.player.current_hp = 0
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
         create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
-        self.cmd_menu.show_line_in_dialog_box(f"Thy Hit Points decreased by {attack_damage}.\n",
+        self.cmd_menu.show_line_in_dialog_box(self._("Thy Hit Points decreased by {}.\n").format(attack_damage),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
 

@@ -32,6 +32,8 @@ def blink_arrow(x, y, direction, screen, config: dict, color=WHITE):
 
 
 def blink_switch(screen, image_1, image_2, x, y, width, height, start, config, color=WHITE):
+    # TODO(ELF): The input lag problem is in this method. Check to see if image_1 has been updated and stop updating it
+    #  after the first time.
     blink_start = start
     image_rect = Rect(x * config["TILE_SIZE"], y * config["TILE_SIZE"], width * config["TILE_SIZE"],
                       height * config["TILE_SIZE"])

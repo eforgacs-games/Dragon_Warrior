@@ -22,8 +22,8 @@ prod_config = {
     "SHOW_FPS": False,
     "LOCALE, CHARACTER_ENCODING": locale.getlocale(),
     "LANGUAGE": LOCALE.split("_")[0],
-    "# LANGUAGE": 'Korean',
-    # This prints out the current coordinates that the player is standing on.,
+    # "LANGUAGE": 'Korean',
+    # This prints out the current coordinates that the player is standing on.
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
     "TEXT_SPEED": "Fast",
@@ -49,8 +49,8 @@ dev_config = {
     "SHOW_FPS": False,
     "LOCALE, CHARACTER_ENCODING": locale.getlocale(),
     "LANGUAGE": LOCALE.split("_")[0],
-    "# LANGUAGE": 'Korean',
-    # This prints out the current coordinates that the player is standing on.,
+    # "LANGUAGE": 'Korean',
+    # This prints out the current coordinates that the player is standing on.
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
     "TEXT_SPEED": "Fast",

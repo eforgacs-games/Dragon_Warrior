@@ -1,13 +1,13 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR ORGANIZATION
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-# 
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-05-01 09:19+0100\n"
-"PO-Revision-Date: 2022-07-07 21:09+0200\n"
+"PO-Revision-Date: 2023-08-09 14:11+0200\n"
 "Last-Translator: Edward Forgacs <eddie.forgacs@gmail.com>\n"
 "Language-Team: Korean <eddie.forgacs@gmail.com>\n"
 "Language: ko\n"
@@ -15,13 +15,41 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
-"X-Generator: Poedit 3.1\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: .\dialog_lookup_table.py:30
 msgid ""
 "We deal in weapons and armor.\n"
 " Dost thou wish to buy anything today?"
 msgstr "여기는 무기와 방어구 상점이다. 무슨 일이지?"
+
+#: .\dialog_lookup_table.py:289
+msgid "The {}?"
+msgstr "{} 말이지?"
+
+#: .\dialog_lookup_table.py:289
+msgid "Bamboo Pole"
+msgstr "대나무 장대"
+
+#: .\dialog_lookup_table.py:289
+msgid "Club"
+msgstr "곤봉"
+
+#: .\dialog_lookup_table.py:289
+msgid "Copper Sword"
+msgstr "구리 검"
+
+#: .\dialog_lookup_table.py:289
+msgid "Clothes"
+msgstr "천 옷"
+
+#: .\dialog_lookup_table.py:289
+msgid "Leather Armor"
+msgstr "가죽 옷"
+
+#: .\dialog_lookup_table.py:289
+msgid "Small Shield"
+msgstr "가죽 방패"
 
 #: .\dialog_lookup_table.py:32
 msgid "Thou art dead."
@@ -49,7 +77,7 @@ msgid ""
 "(240 FPS)"
 msgstr ""
 "게임이 3배속으로 설정되었습니다.\n"
-"(240FPS)"
+"(240 FPS)"
 
 #: .\dialog_lookup_table.py:36
 msgid ""
@@ -96,24 +124,22 @@ msgid "Descendant of Erdrick, listen now to my words."
 msgstr "용사 로토의 피를 이어받은 자여! 자네가 돌아오기를 기다리고 있었다네."
 
 #: .\dialog_lookup_table.py:59
-msgid ""
-"It is told that in ages past Erdrick fought demons with a Ball of Light."
+msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
 msgstr ""
-"먼 옛날, 전설의 용사 로토는 신으로부터 빛의 구슬을 부여받아 이 세상을 덮고 있"
-"던 마물들을 봉인했다고 하네."
+"먼 옛날, 전설의 용사 로토는 신으로부터 빛의 구슬을 부여받아 이 세상을 덮고 있던 "
+"마물들을 봉인했다고 하네."
 
 #: .\dialog_lookup_table.py:60
 msgid ""
-"Then came the Dragonlord who stole the precious globe and hid it in the "
-"darkness."
+"Then came the Dragonlord who stole the precious globe and hid it in the darkness."
 msgstr ""
-"허나 어디선가 나타난 악의 화신 용왕이 그 구슬을 어둠 속에 가두고 말았지! 이대"
-"로 가다가는 이 세상은 어둠에 집어 삼켜져 이윽고 멸망에 이르고 말 게야."
+"허나 어디선가 나타난 악의 화신 용왕이 그 구슬을 어둠 속에 가두고 말았지! 이대로 "
+"가다가는 이 세상은 어둠에 집어 삼켜져 이윽고 멸망에 이르고 말 게야."
 
 #: .\dialog_lookup_table.py:61
 msgid ""
-"Now, {}, thou must help us recover the Ball of Light and restore peace to "
-"our land."
+"Now, {}, thou must help us recover the Ball of Light and restore peace to our "
+"land."
 msgstr "용사 {}! 용왕을 쓰러트리고 그 손으로 빛의 구슬을 되찾아 와 주게!"
 
 #: .\dialog_lookup_table.py:62
@@ -125,12 +151,11 @@ msgid ""
 "Take now whatever thou may find in these Treasure Chests to aid thee in thy "
 "quest."
 msgstr ""
-"자네에게 선물을 주지! 거기 있는 보물 상자를 열도록 하게. 자네의 여행에 도움"
-"이 될 물건이 들어 있을 걸세."
+"자네에게 선물을 주지! 거기 있는 보물 상자를 열도록 하게. 자네의 여행에 도움이 될 "
+"물건이 들어 있을 걸세."
 
 #: .\dialog_lookup_table.py:64
-msgid ""
-"Then speak with the guards, for they have much knowledge that may aid thee."
+msgid "Then speak with the guards, for they have much knowledge that may aid thee."
 msgstr "그리고 이 방에 있는 자에게 물어보면 모험 수칙을 알려 줄 걸세."
 
 #: .\dialog_lookup_table.py:65
@@ -192,11 +217,11 @@ msgstr "이제 가게, {}!"
 
 #: .\dialog_lookup_table.py:84
 msgid ""
-"East of this castle is a town where armor, weapons, and many other items may "
-"be purchased."
+"East of this castle is a town where armor, weapons, and many other items may be "
+"purchased."
 msgstr ""
-"이 성을 나서면 바로 옆에 마을이 보일 겁니다. 거기서 우선 무기와 방어구를 사"
-"서 갖추시면 좋을 겁니다."
+"이 성을 나서면 바로 옆에 마을이 보일 겁니다. 거기서 우선 무기와 방어구를 사서 갖"
+"추시면 좋을 겁니다."
 
 #: .\dialog_lookup_table.py:85
 msgid "Return to the Inn for a rest if thou art wounded in battle, {}."
@@ -213,11 +238,11 @@ msgstr "보물 상자를 모두 열었다면 그 안에는 마법의 열쇠가 �
 
 #: .\dialog_lookup_table.py:90
 msgid ""
-"Once used, the key will disappear, but the door will be open and thou may "
-"pass through."
+"Once used, the key will disappear, but the door will be open and thou may pass "
+"through."
 msgstr ""
-"열쇠는 한번 사용하면 없어지지만, 그 열쇠로 문을 열면...당신의 여행이 시작될 "
-"것입니다."
+"열쇠는 한번 사용하면 없어지지만, 그 열쇠로 문을 열면...당신의 여행이 시작될 것입"
+"니다."
 
 #: .\dialog_lookup_table.py:96
 msgid ""
@@ -232,22 +257,20 @@ msgid ""
 "We are merchants who have traveled much in this land. Many of our colleagues "
 "have been killed by servants of the Dragonlord."
 msgstr ""
-"저는 떠돌이 상인입니다. 지금까지도 수많은 동료들이 마물 때문에 목숨을 잃었"
-"죠. 그때를 떠올리면 분하고 슬퍼서 견딜 수가 없습니다."
+"저는 떠돌이 상인입니다. 지금까지도 수많은 동료들이 마물 때문에 목숨을 잃었죠. 그"
+"때를 떠올리면 분하고 슬퍼서 견딜 수가 없습니다."
 
 #: .\dialog_lookup_table.py:99
 msgid ""
-"Rumor has it that entire towns have been destroyed by the Dragonlord's "
-"servants."
+"Rumor has it that entire towns have been destroyed by the Dragonlord's servants."
 msgstr "드래곤의 추종자들이 모든 마을을 파괴했다고 전해졌습니다."
 
 #: .\dialog_lookup_table.py:100
 msgid ""
-"To become strong enough to face future trials thou must first battle many "
-"foes."
+"To become strong enough to face future trials thou must first battle many foes."
 msgstr ""
-"우선은 마물들과 싸워서 경험을 쌏는 것이 먼저다. 그러면 용사로서의 레벨이 서서"
-"히 올라 강해질 테니까."
+"우선은 마물들과 싸워서 경험을 쌏는 것이 먼저다. 그러면 용사로서의 레벨이 서서히 "
+"올라 강해질 테니까."
 
 #: .\dialog_lookup_table.py:101
 msgid ""
@@ -268,8 +291,8 @@ msgstr "비와 태양이 어우러질 떄 무지개 다리가 생기리라..."
 
 #: .\dialog_lookup_table.py:107
 msgid ""
-"King Lorik will record thy deeds in his Imperial Scroll so thou may return "
-"to thy quest later."
+"King Lorik will record thy deeds in his Imperial Scroll so thou may return to "
+"thy quest later."
 msgstr ""
 "모험의 서에 여행을 기록해 두면 언제든 기록한 곳부터 여행을 시작할 수 있지요."
 
@@ -280,11 +303,10 @@ msgstr ""
 
 #: .\dialog_lookup_table.py:111
 msgid ""
-"{}'s coming was foretold by legend. May the light shine upon this brave "
-"warrior."
+"{}'s coming was foretold by legend. May the light shine upon this brave warrior."
 msgstr ""
-"어둠의 용이 날개를 펼칠 때 로토의 피를 이어받은 자 나타나 어둠을 비추는 빛이 "
-"될지니. 오오, 신이시여! 옛 전설의 용사 {}에게 광명이 있기를!!"
+"어둠의 용이 날개를 펼칠 때 로토의 피를 이어받은 자 나타나 어둠을 비추는 빛이 될지"
+"니. 오오, 신이시여! 옛 전설의 용사 {}에게 광명이 있기를!!"
 
 #: .\dialog_lookup_table.py:113
 msgid "I have been waiting long for one such as thee."
@@ -304,22 +326,23 @@ msgstr "라다톰 마을에 오신 것을 환영합니다."
 
 #: .\dialog_lookup_table.py:119
 msgid "Enter where thou can."
-msgstr "오오, 어서 오십시오!\n"
+msgstr ""
+"오오, 어서 오십시오!\n"
 " 어서 안으로 들어가십시오."
 
 #: .\dialog_lookup_table.py:116
 msgid "If thou art cursed, come again."
 msgstr ""
-"나는 저주를 푸는 마법을 연구하고 있다네. 만약 그대가 저주에 걸리면 이곳으로 "
-"찾아오게. 힘이 되어 줄 터이니."
+"나는 저주를 푸는 마법을 연구하고 있다네. 만약 그대가 저주에 걸리면 이곳으로 찾아"
+"오게. 힘이 되어 줄 터이니."
 
 #: .\dialog_lookup_table.py:119
 msgid "Tell King Lorik that the search for his daughter hath failed."
-msgstr ""
+msgstr "로릭 왕에게 딸 찾기에 실패했다고 전하세요."
 
 #: .\dialog_lookup_table.py:120
 msgid "I am almost gone...."
-msgstr ""
+msgstr "나는 거의 죽었어...."
 
 #: .\dialog_lookup_table.py:121
 msgid ""
@@ -338,16 +361,24 @@ msgid "Dost thou know about Princess Gwaelin?"
 msgstr "로라 공주님을 알고 계신가?"
 
 #: .\dialog_lookup_table.py:148
-msgid ""
-"Half a year now hath passed since the Princess was kidnapped by the enemy."
+msgid "Half a year now hath passed since the Princess was kidnapped by the enemy."
 msgstr ""
-"로라 공주님은 국왕 폐하의 소중한 외동딸이라오. 왕비님께서 돌아가시고부터는 로"
-"라 공주님이 폐하의 든든한 버팀목이 되어 주셨건만 그 공주님께서 마물들에게 납"
-"치당한 지가 벌써 반년이라오."
+"로라 공주님은 국왕 폐하의 소중한 외동딸이라오. 왕비님께서 돌아가시고부터는 로라 "
+"공주님이 폐하의 든든한 버팀목이 되어 주셨건만 그 공주님께서 마물들에게 납치당한 "
+"지가 벌써 반년이라오."
 
 #: .\dialog_lookup_table.py:149
 msgid "Never does the King speak of it, but he must be suffering much."
 msgstr "페하께서는 아무 말씀 없어시지만 마음속으로는 얼마나 괴로워하실지..."
+
+#: .\dialog_lookup_table.py:150
+msgid "Welcome to Garinham. May thy stay be a peaceful one."
+msgstr "옛날이야기의 마을 가라이에 오신 것을 환영해요!"
+
+#: .\dialog_lookup_table.py:152
+msgid "Garin, a wandering minstrel of legendary fame, is said to have built this town."
+msgstr "먼옛날, 음유 시인 가라이는 긴 여행 끝에 이 땅에 도착하여 이 마을을 만들었다고 전해진다네. 그래서 이곳이 가라이 마을이라고 불리는 게야."
+
 
 #: .\dialog_lookup_table.py:181
 msgid "What dost thou wish to buy?"
@@ -442,7 +473,210 @@ msgid "WASD / Arrow Keys: Move"
 msgstr "WASD / 화살표 키: 이동"
 
 #: ..\intro_lookup_table.py:19
-msgid "Type your name using the keyboard.\n"
-      "If you are using a joystick, press the TAB key to switch to joystick input."
-msgstr "키보드를 사용하여 이름을 입력합니다.\n"
-       "조이스틱을 사용하는 경우 TAB 키를 눌러 조이스틱 입력으로 전환합니다."
+msgid ""
+"Type your name using the keyboard.\n"
+"If you are using a joystick, press the TAB key to switch to joystick input."
+msgstr ""
+"키보드를 사용하여 이름을 입력합니다.\n"
+"조이스틱을 사용하는 경우 TAB 키를 눌러 조이스틱 입력으로 전환합니다."
+
+
+msgid ""
+"{} draws near!\n"
+
+msgstr ""
+"{} 나타났다!\n"
+
+#: ..\battle.py:175
+msgid ""
+"Command?\n"
+msgstr ""
+"어떻게 하겠나?\n"
+
+#: ..\battle.py:103
+msgid "Thou hast done well in defeating the {}.\n"
+msgstr "{} 물리쳤다!\n"
+
+#: ..\battle.py:125
+msgid "Thy experience increases by {}.\n"
+msgstr "{}포인트의 경험치 획득!\n"
+
+#: ..\battle.py:126
+msgid "Thy GOLD increases by {}.\n"
+msgstr "{}골드를 획득했다!\n"
+
+#: ..\battle.py:164
+msgid "Slime"
+msgstr "슬라임"
+
+#: ..\battle.py:164
+msgid "Red Slime"
+msgstr "슬라임 베스"
+
+#: ..\battle.py:164
+msgid "Metal Slime"
+msgstr "메탈 슬라임"
+
+#: ..\battle.py:164
+msgid "Drakee"
+msgstr "드라키"
+
+#: ..\battle.py:164
+msgid "Magidrakee"
+msgstr "메이지 드라키"
+
+#: ..\battle.py:164
+msgid "Drakeema"
+msgstr "드라키마"
+
+#: ..\battle.py:164
+msgid "Ghost"
+msgstr "고스트"
+
+#: ..\battle.py:164
+msgid "Poltergeist"
+msgstr "메트로고스트"
+
+#: ..\battle.py:164
+msgid "Magician"
+msgstr "마법사"
+
+#: ..\battle.py:164
+msgid "Warlock"
+msgstr "마도사"
+
+#: ..\battle.py:164
+msgid "Wizard"
+msgstr "대마도사"
+
+#: ..\battle.py:164
+msgid "Specter"
+msgstr "헬고스트"
+
+#: ..\battle.py:164
+msgid "Scorpion"
+msgstr "거대 전갈"
+
+#: ..\battle.py:164
+msgid "Metal Scorpion"
+msgstr "강철 전갈"
+
+#: ..\battle.py:164
+msgid "Rogue Scorpion"
+msgstr "죽음의 전갈"
+
+#: ..\battle.py:164
+msgid "Druin"
+msgstr "메다"
+
+ #: ..battle.py:164
+msgid "Druinlord"
+msgstr "메다 로드"
+
+ #: ..battle.py:164
+msgid "Droll"
+msgstr "드롤"
+
+ #: ..battle.py:164
+msgid "Drollmagi"
+msgstr "드롤 메이지"
+
+ #: ..battle.py:164
+msgid "Skeleton"
+msgstr "해골"
+
+#: ..\battle.py:164
+msgid "Wraith"
+msgstr "사령"
+
+ #: ..battle.py:164
+msgid "Wraith Knight"
+msgstr "사령의기사"
+
+ #: ..battle.py:164
+msgid "Demon Knight"
+msgstr "그림자 기사"
+
+#: ..\battle.py:164
+msgid "Wolf"
+msgstr "리칸트"
+
+#: ..\battle.py:164
+msgid "Wolflord"
+msgstr "리칸트 마믈"
+
+#: ..\battle.py:164
+msgid "Werewolf"
+msgstr "킬러 리칸트"
+
+#: ..\battle.py:164
+msgid "Goldman"
+msgstr "골드맨"
+
+#: ..\battle.py:164
+msgid "Golem"
+msgstr "골렘"
+
+#: ..\battle.py:164
+msgid "Stoneman"
+msgstr "스톤맨"
+
+#: ..\battle.py:164
+msgid "Wyvern"
+msgstr "키메라"
+
+#: ..\battle.py:164
+msgid "Magiwyvern"
+msgstr "메이지키메라"
+
+#: ..\battle.py:164
+msgid "Starwyvern"
+msgstr "스타키메라"
+
+#: ..\battle.py:164
+msgid "Knight"
+msgstr "갑옷의 기사"
+
+#: ..\battle.py:164
+msgid "Axe Knight"
+msgstr "악마의기사"
+
+#: ..\battle.py:164
+msgid "Armored Knight"
+msgstr "죽음의기사"
+
+#: ..\battle.py:164
+msgid "Green Dragon"
+msgstr "드래곤"
+
+#: ..\battle.py:164
+msgid "Blue Dragon"
+msgstr "키스드래곤"
+
+#: ..\battle.py:164
+msgid "Red Dragon"
+msgstr "다스드래곤"
+
+#: ..\battle.py:164
+msgid "Dragonlord"
+msgstr "용왕"
+
+#: ..\game.py:401
+msgid "{} attacks!\n"
+msgstr "{}의 공격!\n"
+
+#: ..\game.py:411
+msgid "The {}'s Hit Points have been reduced by {}.\n"
+msgstr "{}에게 {}포인트의 대미지!\n"
+
+#: ..\game.py:419
+msgid "The {} attacks!\n"
+msgstr "{}의 공격!\n"
+
+#: ..\game.py:448
+msgid "Thy Hit Points decreased by {}.\n"
+msgstr "{}포인트의 대미지를 입었다!\n"
+
+#: ..\menu.py:624
+msgid "{} chanted the spell of {}."
+msgstr "{}은 {}를 외쳤다!"
