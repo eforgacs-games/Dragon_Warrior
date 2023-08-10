@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, \
     K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, SCALED, \
-    K_RETURN
+    K_RETURN, USEREVENT
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -43,11 +43,15 @@ from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 from src.visual_effects import fade, flash_transparent_color
 
+arrow_fade = USEREVENT + 1
+arrow_fade_event = event.Event(arrow_fade)
+
 
 class Game:
     def __init__(self, config):
         self.battle_menu_row = 0
         self.battle_menu_column = 0
+        self.show_arrow = True
         self.game_state = GameState(config=config)
         self._ = _ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
@@ -77,6 +81,7 @@ class Game:
         # debugging
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
         init()
+        time.set_timer(arrow_fade, 530)
         self.paused = False
         # Create the game window.
         if self.fullscreen_enabled:
@@ -208,6 +213,8 @@ class Game:
                 quit()
             elif current_event.type == KEYDOWN:
                 self.handle_keypresses(current_event)
+            elif current_event.type == arrow_fade:
+                self.show_arrow = not self.show_arrow
         if self.game_state.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
             current_key = key.get_pressed()
             self.move_player(current_key)
@@ -311,6 +318,8 @@ class Game:
                         self.launch_battle = random_integer == 0 or self.game_state.config["FORCE_BATTLE"]
                         if self.launch_battle and not self.game_state.config["NO_BATTLES"]:
                             self.battle(enemies_in_current_zone)
+                        self.battle_menu_row = 0
+                        self.battle_menu_column = 0
                     # if self.last_zone != current_zone:
                     #     print(f'Zone: {current_zone}\nEnemies: {enemies_in_current_zone}')
                     self.last_zone = current_zone
@@ -335,9 +344,8 @@ class Game:
         battle_menu_options = {'Fight': BATTLE_MENU_FIGHT_PATH, 'Spell': BATTLE_MENU_SPELL_PATH}, \
             {'Run': BATTLE_MENU_RUN_PATH, 'Item': BATTLE_MENU_ITEM_PATH}
         run_away = False
-        blink_start = get_ticks()
         while enemy.hp > 0 and not run_away and not self.player.is_dead:
-            run_away = self.handle_battle_prompts(battle_menu_options, blink_start, enemy, run_away)
+            run_away = self.handle_battle_prompts(battle_menu_options, enemy, run_away)
         if enemy.hp <= 0:
             enemy_defeated(self.cmd_menu, self.tile_size, self.screen, self.player, self.music_enabled,
                            self.current_map, enemy)
@@ -345,13 +353,14 @@ class Game:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
 
-    def handle_battle_prompts(self, battle_menu_options, blink_start, enemy, run_away):
-        blink_switch(self.screen,
-                     list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column],
-                     BATTLE_MENU_STATIC_PATH,
-                     x=6, y=1, width=8, height=3, start=blink_start,
-                     tile_size=self.game_state.config["TILE_SIZE"],
-                     color=self.color)
+    def handle_battle_prompts(self, battle_menu_options, enemy, run_away):
+        x = 6
+        y = 1
+        width = 8
+        height = 3
+        tile_size = self.game_state.config["TILE_SIZE"]
+        selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
+        battle_window_rect = blink_switch(self.screen, selected_image, BATTLE_MENU_STATIC_PATH, x, y, width, height, tile_size, self.show_arrow)
         current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
         selected_executed_option = None
         for current_event in event.get():
@@ -360,35 +369,35 @@ class Game:
                     play_sound(menu_button_sfx)
                     selected_executed_option = current_selection
                 elif current_event.key == K_j:
-                    # back up cursor instead of deleting letters
                     break
                 elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
-                    if self.battle_menu_row == 0:
-                        self.battle_menu_row = 1
-                    elif self.battle_menu_row == 1:
-                        self.battle_menu_row = 0
+                    self.battle_menu_row = 1 - self.battle_menu_row
                 elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
-                    if self.battle_menu_column == 0:
-                        self.battle_menu_column = 1
-                    elif self.battle_menu_column == 1:
-                        self.battle_menu_column = 0
-                if selected_executed_option:
-                    if selected_executed_option == 'Fight':
-                        self.fight(enemy)
-                    elif selected_executed_option == 'Spell':
-                        battle_spell(self.cmd_menu, self.player)
-                    elif selected_executed_option == 'Run':
-                        battle_run(self.cmd_menu, self.player)
-                        run_away = True
-                        if self.music_enabled:
-                            mixer.music.load(self.current_map.music_file_path)
-                            mixer.music.play(-1)
-                    elif selected_executed_option == 'Item':
-                        if not self.player.inventory:
-                            self.cmd_menu.show_line_in_dialog_box(
-                                'Nothing of use has yet been given to thee.\n'
-                                'Command?\n', add_quotes=False, hide_arrow=True, disable_sound=True, skip_text=True)
-                    selected_executed_option = None
+                    self.battle_menu_column = 1 - self.battle_menu_column
+                time.set_timer(arrow_fade, 530)
+            elif current_event.type == arrow_fade:
+                self.show_arrow = not self.show_arrow
+            if selected_executed_option:
+                create_window(x, y, width, height, selected_image, self.screen, self.color)
+                display.update(battle_window_rect)
+                time.set_timer(arrow_fade, 530)
+                if selected_executed_option == 'Fight':
+                    self.fight(enemy)
+                elif selected_executed_option == 'Spell':
+                    battle_spell(self.cmd_menu, self.player)
+                elif selected_executed_option == 'Run':
+                    battle_run(self.cmd_menu, self.player)
+                    run_away = True
+                    if self.music_enabled:
+                        mixer.music.load(self.current_map.music_file_path)
+                        mixer.music.play(-1)
+                elif selected_executed_option == 'Item':
+                    if not self.player.inventory:
+                        self.cmd_menu.show_line_in_dialog_box(
+                            'Nothing of use has yet been given to thee.\n'
+                            'Command?\n', add_quotes=False, hide_arrow=True, disable_sound=True, skip_text=True)
+                selected_executed_option = None
+                time.set_timer(arrow_fade, 530)
             elif current_event.type == QUIT:
                 quit()
         return run_away
@@ -433,7 +442,8 @@ class Game:
                 self.player.is_dead = True
             else:
                 self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
-                                                      add_quotes=False, disable_sound=True, hide_arrow=True)
+                                                      add_quotes=False, disable_sound=True, hide_arrow=True,
+                                                      skip_text=True)
 
     def receive_damage(self, attack_damage):
         play_sound(receive_damage_2_sfx)

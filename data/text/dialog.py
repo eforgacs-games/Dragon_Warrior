@@ -1,4 +1,4 @@
-from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event, Rect, time
+from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event, Rect, time, USEREVENT
 from pygame.event import get
 from pygame.time import get_ticks
 
@@ -31,24 +31,8 @@ def blink_arrow(x, y, direction, screen, config: dict, color=WHITE):
         display.update(arrow_screen_portion)
 
 
-def blink_switch(screen, image_1, image_2, x, y, width, height, start, tile_size, color=WHITE):
-    # TODO(ELF): The input lag problem is in this method. Check to see if image_1 has been updated and stop updating it
-    #  after the first time.
-    blink_start = start
-    image_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
-    create_window(x, y, width, height, image_1, screen, color)
-    display.update(image_rect)
-    if convert_to_frames_since_start_time(blink_start) > 32:
-        blink_start = get_ticks()
-    while convert_to_frames_since_start_time(blink_start) <= 16:
-        pass
-    while 16 < convert_to_frames_since_start_time(blink_start) <= 32:
-        create_window(x, y, width, height, image_2, screen, color)
-        display.update(image_rect)
-
-
-def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, finally_function=None,
-                        skip_text=False, color=WHITE):
+def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, show_arrow,
+                        finally_function=None, skip_text=False, color=WHITE):
     command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, hide_arrow=True, letter_by_letter=True)
     command_menu.window_drop_down_effect(5, 2, 4, 3)
     window_surface = create_window(5, 2, 4, 3, CONFIRMATION_BACKGROUND_PATH, command_menu.screen, color)
@@ -59,14 +43,16 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     play_sound(confirmation_sfx)
     blinking = True
     blinking_yes = True
-    blink_start = get_ticks()
+    arrow_fade = USEREVENT + 1
+    time.set_timer(arrow_fade, 530)
     while blinking:
         if blinking_yes and not config['NO_WAIT']:
-            blink_switch(command_menu.screen, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2,
-                         width=4, height=3, start=blink_start, tile_size=config["TILE_SIZE"], color=color)
+            blink_switch(command_menu.screen, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH,
+                         x=5, y=2, width=4, height=3, tile_size=config["TILE_SIZE"], show_arrow=show_arrow)
         else:
-            blink_switch(command_menu.screen, CONFIRMATION_NO_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, x=5, y=2,
-                         width=4, height=3, start=blink_start, tile_size=config["TILE_SIZE"], color=color)
+            blink_switch(command_menu.screen, CONFIRMATION_NO_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH,
+                         x=5, y=2,
+                         width=4, height=3, tile_size=config["TILE_SIZE"], color=color, show_arrow=show_arrow)
         if skip_text:
             play_sound(menu_button_sfx)
             yes_path_function()
@@ -74,7 +60,6 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         for current_event in get():
             if current_event.type == KEYDOWN:
                 if current_event.key in (K_DOWN, K_UP, K_w, K_s):
-                    blink_start = get_ticks()
                     if blinking_yes:
                         create_window(5, 2, 4, 3, CONFIRMATION_NO_BACKGROUND_PATH, command_menu.screen, color)
                         blinking_yes = False
@@ -93,7 +78,19 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
                     event.pump()
                     no_path_function()
                     blinking = False
+            elif current_event.type == arrow_fade:
+                show_arrow = not show_arrow
         event.pump()
 
     if finally_function is not None:
         finally_function()
+
+
+def blink_switch(screen, image_1, image_2, x, y, width, height, tile_size, show_arrow, color=WHITE):
+    battle_window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
+    if show_arrow:
+        create_window(x, y, width, height, image_1, screen, color)
+    else:
+        create_window(x, y, width, height, image_2, screen, color)
+    display.update(battle_window_rect)
+    return battle_window_rect

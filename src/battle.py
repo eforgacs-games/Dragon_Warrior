@@ -11,6 +11,8 @@ from src.player.player_stats import levels_list
 _ = set_gettext_language(config['LANGUAGE'])
 
 ko_consonant_ending_chars = ('임', '갈', '롤', '령', '믈', '맨', '렘', '곤', '왕')
+
+
 # ko_vowel_ending_chars = ('스', '키', '마', '트', '사', '다', '드', '지', '라')
 
 
@@ -98,7 +100,8 @@ def calculate_attack_damage(cmd_menu, player, enemy):
 
 
 def battle_spell(cmd_menu, player):
-    cmd_menu.show_line_in_dialog_box(f"{player.name} cannot yet use the spell.\nCommand?\n", add_quotes=False, hide_arrow=True,
+    cmd_menu.show_line_in_dialog_box(f"{player.name} cannot yet use the spell.\n" + _("Command?\n"), add_quotes=False,
+                                     hide_arrow=True,
                                      disable_sound=True, skip_text=True)
 
 
@@ -127,10 +130,12 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
                                         (7 * tile_size, 7 * tile_size))
     screen.blit(battle_background_image, (5 * tile_size, 4 * tile_size))
     display.update(battle_background_image.get_rect())
-    cmd_menu.show_line_in_dialog_box(_("Thy experience increases by {}.\n").format(enemy.xp), add_quotes=False,
-                                     disable_sound=True, hide_arrow=True)
-    cmd_menu.show_line_in_dialog_box(_("Thy GOLD increases by {}.\n").format(enemy.gold), add_quotes=False,
-                                     disable_sound=True, hide_arrow=True)
+    exp_and_gold = _("Thy experience increases by {}.\n").format(enemy.xp) + _("Thy GOLD increases by {}.\n").format(
+        enemy.gold)
+    cmd_menu.show_line_in_dialog_box(exp_and_gold,
+                                     add_quotes=False,
+                                     disable_sound=True,
+                                     hide_arrow=True)
     player.total_experience += enemy.xp
     player.gold += enemy.gold
 
