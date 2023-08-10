@@ -78,7 +78,7 @@ def calculate_attack_damage(cmd_menu, player, enemy):
     excellent_move_probability = random.randint(0, 31)
     if excellent_move_probability == 0 and enemy.name not in ('Dragonlord', 'Dragonlord 2'):
         play_sound(excellent_move_sfx)
-        cmd_menu.show_line_in_dialog_box("Excellent move!\n", add_quotes=False, disable_sound=True)
+        cmd_menu.show_line_in_dialog_box(_("Excellent move!\n"), add_quotes=False, disable_sound=True)
         attack_damage = random.randint(player.attack_power // 2,
                                        player.attack_power)
     else:
@@ -89,18 +89,17 @@ def calculate_attack_damage(cmd_menu, player, enemy):
         # (HeroAttack - EnemyAgility / 2) / 2
         lower_bound = round((player.attack_power - (enemy.defense / 2)) / 2)
         upper_bound = round((player.attack_power - (enemy.defense / 2)) * 2)
-        print(f'lower_bound: {lower_bound}\n'
-              f'upper_bound: {upper_bound}\n'
-              f'player.attack_power: {player.attack_power}\n'
-              f'enemy.speed: {enemy.defense}')
+        # print(f'lower_bound: {lower_bound}\n'
+        #       f'upper_bound: {upper_bound}\n'
+        #       f'player.attack_power: {player.attack_power}\n'
+        #       f'enemy.speed: {enemy.defense}')
         attack_damage = select_random_attack_damage_value(lower_bound, upper_bound)
     return round(attack_damage)
 
 
 def battle_spell(cmd_menu, player):
-    cmd_menu.show_line_in_dialog_box(f"{player.name} cannot yet use the spell.\n", add_quotes=False, hide_arrow=True,
-                                     disable_sound=True)
-    cmd_menu.show_line_in_dialog_box(_("Command?\n"), add_quotes=False, hide_arrow=True, disable_sound=True)
+    cmd_menu.show_line_in_dialog_box(f"{player.name} cannot yet use the spell.\nCommand?\n", add_quotes=False, hide_arrow=True,
+                                     disable_sound=True, skip_text=True)
 
 
 def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_map, enemy):

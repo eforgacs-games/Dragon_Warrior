@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-10 11:48+0200\n"
+"POT-Creation-Date: 2023-08-10 12:54+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -490,6 +490,11 @@ msgstr ""
 "키보드를 사용하여 이름을 입력합니다.\n"
 "조이스틱을 사용하는 경우 TAB 키를 눌러 조이스틱 입력으로 전환합니다."
 
+#: ..\battle.py:81
+msgid "Excellent move!\n"
+msgstr "회심의 일격!\n"
+
+#: ..\battle.py:184
 msgid "{} draws near!\n"
 msgstr "{} 나타났다!\n"
 

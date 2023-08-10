@@ -46,6 +46,8 @@ from src.visual_effects import fade, flash_transparent_color
 
 class Game:
     def __init__(self, config):
+        self.battle_menu_row = 0
+        self.battle_menu_column = 0
         self.game_state = GameState(config=config)
         self._ = _ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
@@ -332,13 +334,10 @@ class Game:
         enemy = enemy_string_lookup[enemy_name]()
         battle_menu_options = {'Fight': BATTLE_MENU_FIGHT_PATH, 'Spell': BATTLE_MENU_SPELL_PATH}, \
             {'Run': BATTLE_MENU_RUN_PATH, 'Item': BATTLE_MENU_ITEM_PATH}
-        current_item_row = 0
-        current_item_column = 0
         run_away = False
         blink_start = get_ticks()
         while enemy.hp > 0 and not run_away and not self.player.is_dead:
-            run_away = self.handle_battle_prompts(battle_menu_options, blink_start, current_item_column,
-                                                  current_item_row, enemy, run_away)
+            run_away = self.handle_battle_prompts(battle_menu_options, blink_start, enemy, run_away)
         if enemy.hp <= 0:
             enemy_defeated(self.cmd_menu, self.tile_size, self.screen, self.player, self.music_enabled,
                            self.current_map, enemy)
@@ -346,13 +345,14 @@ class Game:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
 
-    def handle_battle_prompts(self, battle_menu_options, blink_start, current_item_column, current_item_row, enemy,
-                              run_away):
-        blink_switch(self.screen, BATTLE_MENU_STATIC_PATH,
-                     list(battle_menu_options[current_item_row].values())[
-                         current_item_column], x=6, y=1, width=8, height=3, start=blink_start,
-                     config=self.game_state.config, color=self.color)
-        current_selection = list(battle_menu_options[current_item_row].keys())[current_item_column]
+    def handle_battle_prompts(self, battle_menu_options, blink_start, enemy, run_away):
+        blink_switch(self.screen,
+                     list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column],
+                     BATTLE_MENU_STATIC_PATH,
+                     x=6, y=1, width=8, height=3, start=blink_start,
+                     tile_size=self.game_state.config["TILE_SIZE"],
+                     color=self.color)
+        current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
         selected_executed_option = None
         for current_event in event.get():
             if current_event.type == KEYDOWN:
@@ -363,17 +363,15 @@ class Game:
                     # back up cursor instead of deleting letters
                     break
                 elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
-                    if current_item_row == 0:
-                        current_item_row = 1
-                    elif current_item_row == 1:
-                        current_item_row = 0
+                    if self.battle_menu_row == 0:
+                        self.battle_menu_row = 1
+                    elif self.battle_menu_row == 1:
+                        self.battle_menu_row = 0
                 elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
-                    if current_item_column == 0:
-                        current_item_column = 1
-                    elif current_item_column == 1:
-                        current_item_column = 0
-                if convert_to_frames_since_start_time(blink_start) > 32:
-                    blink_start = get_ticks()
+                    if self.battle_menu_column == 0:
+                        self.battle_menu_column = 1
+                    elif self.battle_menu_column == 1:
+                        self.battle_menu_column = 0
                 if selected_executed_option:
                     if selected_executed_option == 'Fight':
                         self.fight(enemy)
@@ -389,7 +387,7 @@ class Game:
                         if not self.player.inventory:
                             self.cmd_menu.show_line_in_dialog_box(
                                 'Nothing of use has yet been given to thee.\n'
-                                'Command?\n', add_quotes=False, hide_arrow=False, disable_sound=True)
+                                'Command?\n', add_quotes=False, hide_arrow=True, disable_sound=True, skip_text=True)
                     selected_executed_option = None
             elif current_event.type == QUIT:
                 quit()
