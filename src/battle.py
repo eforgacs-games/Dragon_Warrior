@@ -3,9 +3,15 @@ import random
 from pygame import image, display, time, mixer, Surface
 from pygame.transform import scale
 
+from data.text.dialog_lookup_table import set_gettext_language
 from src.common import BATTLE_BACKGROUND_PATH, play_sound, stairs_down_sfx, missed_sfx, missed_2_sfx, \
-    excellent_move_sfx, victory_sfx, improvement_sfx, BLACK
+    excellent_move_sfx, victory_sfx, improvement_sfx, BLACK, config
 from src.player.player_stats import levels_list
+
+_ = set_gettext_language(config['LANGUAGE'])
+
+ko_consonant_ending_chars = ('임', '갈', '롤', '령', '믈', '맨', '렘', '곤', '왕')
+# ko_vowel_ending_chars = ('스', '키', '마', '트', '사', '다', '드', '지', '라')
 
 
 def select_random_attack_damage_value(lower_bound, upper_bound) -> int:
@@ -92,12 +98,23 @@ def calculate_attack_damage(cmd_menu, player, enemy):
 
 
 def battle_spell(cmd_menu, player):
-    cmd_menu.show_line_in_dialog_box(f"{player.name} cannot yet use the spell.\n"
-                                     f"Command?\n", add_quotes=False, hide_arrow=True, disable_sound=True)
+    cmd_menu.show_line_in_dialog_box(f"{player.name} cannot yet use the spell.\n", add_quotes=False, hide_arrow=True,
+                                     disable_sound=True)
+    cmd_menu.show_line_in_dialog_box(_("Command?\n"), add_quotes=False, hide_arrow=True, disable_sound=True)
 
 
 def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_map, enemy):
-    enemy_defeated_string = f"Thou hast done well in defeating the {enemy.name}.\n"
+    if config['LANGUAGE'] == 'Korean':
+        ko_enemy_name = enemy.name
+        if ko_enemy_name.endswith(ko_consonant_ending_chars):
+            ko_enemy_name += "을"
+        else:
+            ko_enemy_name += "를"
+        enemy_defeated_string = f"{ko_enemy_name} 물리쳤다!\n"
+    elif config['LANGUAGE'] == 'English':
+        enemy_defeated_string = _("Thou hast done well in defeating the {}.\n").format(enemy.name)
+    else:
+        enemy_defeated_string = _("Thou hast done well in defeating the {}.\n").format(enemy.name)
     cmd_menu.show_line_in_dialog_box(enemy_defeated_string, add_quotes=False,
                                      disable_sound=True, hide_arrow=True)
     mixer.music.stop()
@@ -111,8 +128,9 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
                                         (7 * tile_size, 7 * tile_size))
     screen.blit(battle_background_image, (5 * tile_size, 4 * tile_size))
     display.update(battle_background_image.get_rect())
-    cmd_menu.show_line_in_dialog_box(f"Thy experience increases by {enemy.xp}.\n"
-                                     f"Thy GOLD increases by {enemy.gold}.\n", add_quotes=False,
+    cmd_menu.show_line_in_dialog_box(_("Thy experience increases by {}.\n").format(enemy.xp), add_quotes=False,
+                                     disable_sound=True, hide_arrow=True)
+    cmd_menu.show_line_in_dialog_box(_("Thy GOLD increases by {}.\n").format(enemy.gold), add_quotes=False,
                                      disable_sound=True, hide_arrow=True)
     player.total_experience += enemy.xp
     player.gold += enemy.gold
@@ -159,15 +177,24 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
 
 
 def get_enemy_draws_near_string(enemy_name):
-    enemy_draws_near_string = f'{enemy_name} draws near!\n' \
-                              f'Command?\n'
-    vowels = 'AEIOU'
-    if enemy_name[0] in vowels:
-        enemy_draws_near_string = f'An {enemy_draws_near_string}'
+    if enemy_name == 'Dragonlord 2':
+        enemy_draws_near_string = 'The Dragonlord revealed his true self!\n'
     else:
-        if enemy_name == 'Dragonlord 2':
-            enemy_draws_near_string = 'The Dragonlord revealed his true self!\n'
-        # show battle window (enemy sprite over background)
+        if config['LANGUAGE'] == 'English':
+            enemy_draws_near_string = _('{} draws near!\n').format(_(enemy_name))
+            vowels = 'AEIOU'
+            if enemy_name[0] in vowels:
+                enemy_draws_near_string = _('An {}').format(enemy_draws_near_string)
+            else:
+                enemy_draws_near_string = _('A {}').format(enemy_draws_near_string)
+        elif config['LANGUAGE'] == 'Korean':
+            ko_enemy_name = _(enemy_name)
+            if ko_enemy_name.endswith(ko_consonant_ending_chars):
+                ko_enemy_name += "이"
+            else:
+                ko_enemy_name += "가"
+            enemy_draws_near_string = _('{} draws near!\n').format(ko_enemy_name)
         else:
-            enemy_draws_near_string = f'A {enemy_draws_near_string}'
+            enemy_draws_near_string = _('{} draws near!\n')
+    enemy_draws_near_string += _("Command?\n")
     return enemy_draws_near_string
