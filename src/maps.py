@@ -210,13 +210,16 @@ class DragonWarriorMap:
         character_sprites.add(character)
         self.characters[character.identifier] = {'character': character,
                                                  'character_sprites': character_sprites,
-                                                 'tile_value': self.character_key["_".join(identifier.split("_")[0:-1]) if identifier[-1].isdigit() else identifier]['val'],
+                                                 'tile_value': self.character_key[
+                                                     "_".join(identifier.split("_")[0:-1]) if identifier[
+                                                         -1].isdigit() else identifier]['val'],
                                                  'coordinates': coordinates
                                                  }
         if self.custom_underlying_tiles:
             if self.custom_underlying_tiles.get(character.identifier):
                 self.add_tile(self.floor_tile_key[self.custom_underlying_tiles[character.identifier]], self.center_pt)
-                self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[self.custom_underlying_tiles[character.identifier]]['val']
+                self.layout[coordinates[0]][coordinates[1]] = \
+                    self.floor_tile_key[self.custom_underlying_tiles[character.identifier]]['val']
             else:
                 self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
                 self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
@@ -611,6 +614,7 @@ class Brecconary(DragonWarriorMap):
         self.music_file_path = village_music
         self.initial_coordinates = (23, 10)
         self.custom_underlying_tiles = {
+            'SOLDIER': 'TREES',
             'WOMAN': 'BRICK',
             'WOMAN_2': 'GRASS',
             'MAN_2': 'TREES',
@@ -640,6 +644,11 @@ class Garinham(DragonWarriorMap):
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
         self.initial_coordinates = (14, 9)
+        self.custom_underlying_tiles = {
+            'WOMAN': 'TREES',
+            'WISE_MAN': 'SAND',
+        }
+        self.roaming_character_list = ['WOMAN', 'WISE_MAN_2']
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -648,10 +657,13 @@ class Garinham(DragonWarriorMap):
         return Direction.RIGHT.value
 
     def set_characters_initial_directions(self):
-        self.set_character_initial_direction('MERCHANT', Direction.LEFT)
         self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
-        self.set_character_initial_direction('MERCHANT_3', Direction.UP)
-        self.set_character_initial_direction('WISE_MAN', Direction.RIGHT)
+        self.set_character_initial_direction('MERCHANT_3', Direction.LEFT)
+        self.set_character_initial_direction('MERCHANT_4', Direction.UP)
+        self.set_character_initial_direction('WISE_MAN_2', Direction.RIGHT)
+        self.set_character_initial_direction('WISE_MAN_3', Direction.RIGHT)
+        self.set_character_initial_direction('GUARD', Direction.RIGHT)
+        self.set_character_initial_direction('GUARD_2', Direction.LEFT)
 
 
 class Kol(DragonWarriorMap):
@@ -665,6 +677,17 @@ class Kol(DragonWarriorMap):
                                south_gate=warp_line((32, 8), (32, 33)))
         self.set_town_to_overworld_warps()
         self.initial_coordinates = (30, 29)
+        self.custom_underlying_tiles = {
+            'WOMAN': 'TREES',
+            'WOMAN_2': 'SAND',
+            'MAN': 'TREES',
+            'MAN_2': 'SAND',
+            'SOLDIER': 'TREES',
+            'GUARD': 'SAND',
+            'WISE_MAN_2': 'GRASS',
+            'WISE_MAN_3': 'SAND'
+        }
+        self.roaming_character_list = ['WISE_MAN_2', 'WOMAN_2', 'MAN', 'MAN_2', 'SOLDIER', 'GUARD', 'WISE_MAN_2', 'WISE_MAN_3']
 
     def hero_underlying_tile(self):
         return 'SAND'
@@ -673,7 +696,9 @@ class Kol(DragonWarriorMap):
         return Direction.UP.value
 
     def set_characters_initial_directions(self):
-        pass
+        self.set_character_initial_direction('MERCHANT', Direction.UP)
+        self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
+        self.set_character_initial_direction('MERCHANT_3', Direction.LEFT)
 
 
 class Rimuldar(DragonWarriorMap):
@@ -687,6 +712,10 @@ class Rimuldar(DragonWarriorMap):
         self.set_town_to_overworld_warps()
         self.music_file_path = village_music
         self.initial_coordinates = (22, 37)
+        self.custom_underlying_tiles = {
+            'MERCHANT': 'GRASS',
+            'WISE_MAN_2': 'GRASS'
+        }
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -695,7 +724,12 @@ class Rimuldar(DragonWarriorMap):
         return Direction.LEFT.value
 
     def set_characters_initial_directions(self):
-        pass
+        self.set_character_initial_direction('WISE_MAN', Direction.UP)
+        self.set_character_initial_direction('WISE_MAN_2', Direction.LEFT)
+        self.set_character_initial_direction('WISE_MAN_3', Direction.RIGHT)
+        self.set_character_initial_direction('MERCHANT', Direction.UP)
+        self.set_character_initial_direction('MERCHANT_3', Direction.RIGHT)
+        self.set_character_initial_direction('WOMAN', Direction.UP)
 
 
 class Hauksness(MapWithoutNPCs):
@@ -728,6 +762,9 @@ class Cantlin(DragonWarriorMap):
                                )
         self.set_town_to_overworld_warps()
         self.initial_coordinates = (8, 15)
+        self.custom_underlying_tiles = {
+            'WISE_MAN_2': 'GRASS'
+        }
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -736,7 +773,14 @@ class Cantlin(DragonWarriorMap):
         return Direction.DOWN.value
 
     def set_characters_initial_directions(self):
-        pass
+        self.set_character_initial_direction('MAN', Direction.RIGHT)
+        self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
+        self.set_character_initial_direction('MERCHANT_3', Direction.RIGHT)
+        self.set_character_initial_direction('MERCHANT_4', Direction.LEFT)
+        self.set_character_initial_direction('MERCHANT_5', Direction.RIGHT)
+        self.set_character_initial_direction('MERCHANT_6', Direction.LEFT)
+        self.set_character_initial_direction('WOMAN', Direction.LEFT)
+        self.set_character_initial_direction('GUARD', Direction.RIGHT)
 
 
 class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
