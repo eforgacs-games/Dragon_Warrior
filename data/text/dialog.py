@@ -87,6 +87,19 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
 
 
 def blink_switch(screen, image_1, image_2, x, y, width, height, tile_size, show_arrow, color=WHITE):
+    """Switches between two images, creating a blinking effect.
+    :param screen: the screen to draw on
+    :param image_1: the first image to draw (usually selection image)
+    :param image_2: the second image to draw (usually blank image)
+    :param x: the x coordinate of the window
+    :param y: the y coordinate of the window
+    :param width: the width of the window
+    :param height: the height of the window
+    :param tile_size: the size of the tiles
+    :param show_arrow: whether or not to show the arrow
+    :param color: the color of the window
+    :return: the rect of the window
+    """
     battle_window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
     if show_arrow:
         create_window(x, y, width, height, image_1, screen, color)
