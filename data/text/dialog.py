@@ -23,11 +23,12 @@ def blink_arrow(x: float, y: float, direction: str, screen: Surface, config: dic
     if convert_to_frames_since_start_time(down_arrow_start) > 32:
         down_arrow_start = get_ticks()
     arrow_screen_portion = Rect(x, y, config["TILE_SIZE"], config["TILE_SIZE"])
+    draw_text(arrow_character, x, y, screen, config, BLACK, letter_by_letter=False)
+    display.update(arrow_screen_portion)
     while convert_to_frames_since_start_time(down_arrow_start) <= 16:
-        draw_text(arrow_character, x, y, screen, config, color, letter_by_letter=False)
-        display.update(arrow_screen_portion)
+        pass
     while 16 < convert_to_frames_since_start_time(down_arrow_start) <= 32:
-        draw_text(arrow_character, x, y, screen, config, BLACK, letter_by_letter=False)
+        draw_text(arrow_character, x, y, screen, config, color, letter_by_letter=False)
         display.update(arrow_screen_portion)
 
 
