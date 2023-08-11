@@ -1,14 +1,12 @@
 from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event, Rect, time, USEREVENT, Surface
 from pygame.event import get
-from pygame.time import get_ticks
 
 from src.common import WHITE, BLACK, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH, \
-    CONFIRMATION_NO_BACKGROUND_PATH, play_sound, confirmation_sfx, menu_button_sfx, create_window, \
-    convert_to_frames_since_start_time
+    CONFIRMATION_NO_BACKGROUND_PATH, play_sound, confirmation_sfx, menu_button_sfx, create_window
 from src.text import draw_text
 
 
-def blink_arrow(x: float, y: float, direction: str, screen: Surface, config: dict, color: tuple = WHITE):
+def blink_arrow(screen: Surface, x: float, y: float, direction: str, config: dict, show_arrow, color: tuple = WHITE):
     # TODO(ELF): There is a lingering lag/input issue in this method that needs to be fixed.
     #  Make the arrow show or not based on the arrow_fade event/show_arrow boolean
     if direction == 'up':
@@ -21,17 +19,12 @@ def blink_arrow(x: float, y: float, direction: str, screen: Surface, config: dic
         arrow_character = ">"
     else:
         arrow_character = ""
-    down_arrow_start = get_ticks()
-    if convert_to_frames_since_start_time(down_arrow_start) > 32:
-        down_arrow_start = get_ticks()
     arrow_screen_portion = Rect(x, y, config["TILE_SIZE"], config["TILE_SIZE"])
-    draw_text(arrow_character, x, y, screen, config, BLACK, letter_by_letter=False)
-    display.update(arrow_screen_portion)
-    while convert_to_frames_since_start_time(down_arrow_start) <= 16:
-        pass
-    while 16 < convert_to_frames_since_start_time(down_arrow_start) <= 32:
+    if show_arrow:
         draw_text(arrow_character, x, y, screen, config, color, letter_by_letter=False)
-        display.update(arrow_screen_portion)
+    else:
+        draw_text(arrow_character, x, y, screen, config, BLACK, letter_by_letter=False)
+    display.update(arrow_screen_portion)
 
 
 def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, show_arrow,
