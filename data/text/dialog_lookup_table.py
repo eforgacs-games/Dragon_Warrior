@@ -212,7 +212,8 @@ class DialogLookup:
         confirmation_prompt(self.command_menu, self.weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again."),
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.",
+                                                     hide_arrow=True),
                             config=self.config, show_arrow=self.command_menu.game.show_arrow)
 
     def get_inn_intro(self, inn_cost):
@@ -314,7 +315,8 @@ class DialogLookup:
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                     _("Please, come again.")), config=self.config, show_arrow=self.command_menu.game.show_arrow)
+                                                     _("Please, come again."), hide_arrow=True), config=self.config,
+                            show_arrow=self.command_menu.game.show_arrow)
 
     def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
         _ = self._
