@@ -100,7 +100,8 @@ def calculate_attack_damage(cmd_menu, player, enemy):
 
 
 def battle_spell(cmd_menu, player):
-    cmd_menu.show_line_in_dialog_box(f"{player.name} cannot yet use the spell.\n" + _("Command?\n"), add_quotes=False,
+    cmd_menu.show_line_in_dialog_box(_("{} cannot yet use the spell.").format(player.name) + "\n" +
+                                     _("Command?\n"), add_quotes=False,
                                      hide_arrow=True,
                                      disable_sound=True, skip_text=True)
 
