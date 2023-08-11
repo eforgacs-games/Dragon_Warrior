@@ -11,6 +11,8 @@ from src.player.player_stats import levels_list
 _ = set_gettext_language(config['LANGUAGE'])
 
 ko_consonant_ending_chars = ('임', '갈', '롤', '령', '믈', '맨', '렘', '곤', '왕')
+
+
 # ko_vowel_ending_chars = ('스', '키', '마', '트', '사', '다', '드', '지', '라')
 
 
@@ -78,7 +80,7 @@ def calculate_attack_damage(cmd_menu, player, enemy):
     excellent_move_probability = random.randint(0, 31)
     if excellent_move_probability == 0 and enemy.name not in ('Dragonlord', 'Dragonlord 2'):
         play_sound(excellent_move_sfx)
-        cmd_menu.show_line_in_dialog_box("Excellent move!\n", add_quotes=False, disable_sound=True)
+        cmd_menu.show_line_in_dialog_box(_("Excellent move!\n"), add_quotes=False, disable_sound=True)
         attack_damage = random.randint(player.attack_power // 2,
                                        player.attack_power)
     else:
@@ -89,18 +91,19 @@ def calculate_attack_damage(cmd_menu, player, enemy):
         # (HeroAttack - EnemyAgility / 2) / 2
         lower_bound = round((player.attack_power - (enemy.defense / 2)) / 2)
         upper_bound = round((player.attack_power - (enemy.defense / 2)) * 2)
-        print(f'lower_bound: {lower_bound}\n'
-              f'upper_bound: {upper_bound}\n'
-              f'player.attack_power: {player.attack_power}\n'
-              f'enemy.speed: {enemy.defense}')
+        # print(f'lower_bound: {lower_bound}\n'
+        #       f'upper_bound: {upper_bound}\n'
+        #       f'player.attack_power: {player.attack_power}\n'
+        #       f'enemy.speed: {enemy.defense}')
         attack_damage = select_random_attack_damage_value(lower_bound, upper_bound)
     return round(attack_damage)
 
 
 def battle_spell(cmd_menu, player):
-    cmd_menu.show_line_in_dialog_box(f"{player.name} cannot yet use the spell.\n", add_quotes=False, hide_arrow=True,
-                                     disable_sound=True)
-    cmd_menu.show_line_in_dialog_box(_("Command?\n"), add_quotes=False, hide_arrow=True, disable_sound=True)
+    cmd_menu.show_line_in_dialog_box(_("{} cannot yet use the spell.").format(player.name) + "\n" +
+                                     _("Command?\n"), add_quotes=False,
+                                     hide_arrow=True,
+                                     disable_sound=True, skip_text=True)
 
 
 def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_map, enemy):
@@ -128,10 +131,12 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
                                         (7 * tile_size, 7 * tile_size))
     screen.blit(battle_background_image, (5 * tile_size, 4 * tile_size))
     display.update(battle_background_image.get_rect())
-    cmd_menu.show_line_in_dialog_box(_("Thy experience increases by {}.\n").format(enemy.xp), add_quotes=False,
-                                     disable_sound=True, hide_arrow=True)
-    cmd_menu.show_line_in_dialog_box(_("Thy GOLD increases by {}.\n").format(enemy.gold), add_quotes=False,
-                                     disable_sound=True, hide_arrow=True)
+    exp_and_gold = _("Thy experience increases by {}.\n").format(enemy.xp) + _("Thy GOLD increases by {}.\n").format(
+        enemy.gold)
+    cmd_menu.show_line_in_dialog_box(exp_and_gold,
+                                     add_quotes=False,
+                                     disable_sound=True,
+                                     hide_arrow=True)
     player.total_experience += enemy.xp
     player.gold += enemy.gold
 
