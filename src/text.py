@@ -35,8 +35,7 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
             for i in range(len(chunk)):
                 string += chunk[i]
                 if not config['NO_BLIT']:
-                    blit_text_to_screen(alignment, color, current_font, screen, string, x, y, config["RENDER_TEXT"])
-                    display.update()
+                    display.update(blit_text_to_screen(alignment, color, current_font, screen, string, x, y, config["RENDER_TEXT"]))
                 if not config['NO_WAIT']:
                     time.wait(16)
                 if not disable_sound:
@@ -58,7 +57,7 @@ def blit_text_to_screen(alignment, color, current_font, screen, string, x, y, re
     if render_text:
         text_surface = current_font.render(string, True, color, BLACK)
         text_rect = set_text_rect_alignment(alignment, text_surface, x, y)
-        screen.blit(text_surface, text_rect)
+        return screen.blit(text_surface, text_rect)
 
 
 def set_text_rect_alignment(alignment, text_surface, x, y):
