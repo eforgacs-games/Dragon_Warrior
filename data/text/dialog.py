@@ -47,13 +47,14 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     arrow_fade = USEREVENT + 1
     time.set_timer(arrow_fade, 530)
     while blinking:
+        tile_size = config["TILE_SIZE"]
         if blinking_yes and not config['NO_WAIT']:
             blink_switch(command_menu.screen, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH,
-                         x=5, y=2, width=4, height=3, tile_size=config["TILE_SIZE"], show_arrow=show_arrow)
+                         x=5, y=2, width=4, height=3, tile_size=tile_size, show_arrow=show_arrow)
         else:
             blink_switch(command_menu.screen, CONFIRMATION_NO_BACKGROUND_PATH, CONFIRMATION_BACKGROUND_PATH,
                          x=5, y=2,
-                         width=4, height=3, tile_size=config["TILE_SIZE"], color=color, show_arrow=show_arrow)
+                         width=4, height=3, tile_size=tile_size, color=color, show_arrow=show_arrow)
         if skip_text:
             play_sound(menu_button_sfx)
             yes_path_function()

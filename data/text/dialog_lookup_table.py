@@ -121,9 +121,10 @@ class DialogLookup:
                 'GUARD': {'dialog': (
                     _("King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."),)},
                 'GUARD_2': {'dialog': _("If thou art planning to take a rest, first see King Lorik.")},
-                'GUARD_3': {'dialog': where_is_princess_gwaelin},
-                'GUARD_4': {'dialog': welcome_to_tantegel},
+                'GUARD_3': {'dialog': _("Never does a brave person steal.")},
+                'GUARD_4': {'dialog': where_is_princess_gwaelin},
                 'GUARD_5': {'dialog': welcome_to_tantegel},
+                'GUARD_6': {'dialog': welcome_to_tantegel},
                 'WISE_MAN': {'dialog': (
                     _("{}'s coming was foretold by legend. May the light shine upon this brave warrior.").format(
                         self.player.name),
