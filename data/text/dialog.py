@@ -1,4 +1,4 @@
-from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event, Rect, time, USEREVENT
+from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event, Rect, time, USEREVENT, Surface
 from pygame.event import get
 from pygame.time import get_ticks
 
@@ -8,7 +8,7 @@ from src.common import WHITE, BLACK, CONFIRMATION_YES_BACKGROUND_PATH, CONFIRMAT
 from src.text import draw_text
 
 
-def blink_arrow(x, y, direction, screen, config: dict, color=WHITE):
+def blink_arrow(x: float, y: float, direction: str, screen: Surface, config: dict, color: tuple = WHITE):
     if direction == 'up':
         arrow_character = '^'
     elif direction == "down":
@@ -86,24 +86,25 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         finally_function()
 
 
-def blink_switch(screen, image_1, image_2, x, y, width, height, tile_size, show_arrow, color=WHITE):
+def blink_switch(screen: Surface, image_1: str, image_2: str, x: int, y: int, width: int, height: int, tile_size: int,
+                 show_arrow: bool, color: tuple = WHITE) -> Rect:
     """Switches between two images, creating a blinking effect.
     :param screen: the screen to draw on
-    :param image_1: the first image to draw (usually selection image)
-    :param image_2: the second image to draw (usually blank image)
+    :param image_1: the path of the first image to draw (usually the selection image)
+    :param image_2: the path of the second image to draw (usually a blank image)
     :param x: the x coordinate of the window
     :param y: the y coordinate of the window
     :param width: the width of the window
     :param height: the height of the window
     :param tile_size: the size of the tiles
-    :param show_arrow: whether or not to show the arrow
+    :param show_arrow: whether to show the arrow
     :param color: the color of the window
     :return: the rect of the window
     """
-    battle_window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
+    window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
     if show_arrow:
         create_window(x, y, width, height, image_1, screen, color)
     else:
         create_window(x, y, width, height, image_2, screen, color)
-    display.update(battle_window_rect)
-    return battle_window_rect
+    display.update(window_rect)
+    return window_rect
