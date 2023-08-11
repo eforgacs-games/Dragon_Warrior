@@ -683,8 +683,134 @@ msgstr "{}의 공격!\n"
 msgid "Thy Hit Points decreased by {}.\n"
 msgstr "{}포인트의 대미지를 입었다!\n"
 
+#: ..\menu.py:56
+msgid "COMMAND"
+msgstr "작전"
+
+#: ..\menu.py:98
+msgid "TALK"
+msgstr "대화"
+
+#: ..\menu.py:99
+msgid "STATUS"
+msgstr "능력치"
+
+#: ..\menu.py:100
+msgid "STAIRS"
+msgstr "계단"
+
+#: ..\menu.py:101
+msgid "SEARCH"
+msgstr "탐색"
+
+#: ..\menu.py:102
+msgid "SPELL"
+msgstr "주문"
+
+#: ..\menu.py:103
+msgid "ITEM"
+msgstr "도구"
+
+#: ..\menu.py:104
+msgid "DOOR"
+msgstr "문"
+
+#: ..\menu.py:105
+msgid "TAKE"
+msgstr "획득"
+
+#: ..\menu.py:279
+msgid "Fortune smiles upon thee, {}.\nThou hast found the {}."
+msgstr "{}는 보물 상자를 열었다. 놀랍게도! {}를 획득했다!"
+
+# need to handle 을/를 for treasure boxes
+
+#: ..\menu.py:279
+msgid "Torch"
+msgstr "횃불"
+
+#: ..\menu.py:279
+msgid "Magic Key"
+msgstr "열쇠"
+
+# the following entries were auto-suggested
+
+#: ..\menu.py:279
+msgid "Herb"
+msgstr "약초"
+
+#: ..\menu.py:279
+msgid "Fairy Water"
+msgstr "요정의 물"
+
+#: ..\menu.py:279
+msgid "Wings"
+msgstr "날개"
+
+#: ..\menu.py:279
+msgid "Dragon's Scale"
+msgstr "용의 비늘"
+
+#: ..\menu.py:279
+msgid "Fighter's Ring"
+msgstr "전사의 반지"
+
+#: ..\menu.py:279
+msgid "Erdrick's Tablet"
+msgstr "에르드릭의 태블릿"
+
+#: ..\menu.py:279
+msgid "Cursed Belt"
+msgstr "저주받은 벨트"
+
+#: ..\menu.py:279
+msgid "Silver Harp"
+msgstr "은색 하프"
+
+#: ..\menu.py:279
+msgid "Staff of Rain"
+msgstr "비의 지팡이"
+
+#: ..\menu.py:279
+msgid "Stones of Sunlight"
+msgstr "태양의 돌"
+
+#: ..\menu.py:279
+msgid "Rainbow Drop"
+msgstr "무지개의 물방울"
+
+#: ..\menu.py:279
+msgid "Gwaelin's Love"
+msgstr "그웨일린의 사랑"
+
+#: ..\menu.py:279
+msgid "Ball of Light"
+msgstr "빛의 구슬"
+
+# end auto-suggested entries
+
+#: ..\menu.py:303
+msgid "Of GOLD thou hast gained {}"
+msgstr "{}골드를 획득했다."
+
+#: ..\menu.py:538
+msgid "{} cannot yet use the spell."
+msgstr "{}는 아직 주문을 사용할 수 없다."
+
+#: ..\menu.py:557
+msgid "Nothing of use has yet been given to thee."
+msgstr "도구를 가지고 있지 않다."
+
 #: ..\menu.py:624
 msgid "{} chanted the spell of {}."
 msgstr "{}은 {}를 외쳤다!"
+
+#: ..\menu.py:662
+msgid "There is no door here."
+msgstr "문이 없다."
+
+#: ..\menu.py:689
+msgid "There is nothing to take here, {}."
+msgstr "여기서 가져갈 것이 없다, {}님."
 
 

@@ -10,7 +10,7 @@ from pygame.time import get_ticks
 
 from data.text.dialog import blink_arrow
 from data.text.dialog_lookup_table import DialogLookup, set_gettext_language
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
+from src.common import BLACK, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, \
     open_door_sfx, \
     STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx
@@ -19,7 +19,7 @@ from src.items import treasure
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.sound import play_sound
-from src.text import draw_text
+from src.text import draw_text, set_font_by_ascii_chars
 
 
 class Menu:
@@ -49,11 +49,17 @@ class CommandMenu(Menu):
                                                   window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH,
                                                   screen=self.screen,
                                                   color=self.game.color)
-        self.dialog_lookup = DialogLookup(self, self.game.game_state.config)
-        tile_size = self.game.game_state.config['TILE_SIZE']
-        self._ = _ = set_gettext_language(self.game.game_state.config['LANGUAGE'])
+        config = self.game.game_state.config
+        self.dialog_lookup = DialogLookup(self, config)
+        tile_size = config['TILE_SIZE']
+        language = config['LANGUAGE']
+        self._ = _ = set_gettext_language(language)
+        title = _('COMMAND')
+        font_size = 8 * SCALE
+        font = set_font_by_ascii_chars(title, font_size)
+
         self.menu = pygame_menu.Menu(
-            title='COMMAND',
+            title=title,
             width=self.command_menu_surface.get_width() * 2,
             height=self.command_menu_surface.get_height() * 3,
             center_content=False,
@@ -64,15 +70,15 @@ class CommandMenu(Menu):
                                            cursor_color=self.game.color,
                                            cursor_selection_color=self.game.color,
                                            title_background_color=BLACK,
-                                           title_font=DRAGON_QUEST_FONT_PATH,
+                                           title_font=font,
                                            title_font_color=self.game.color,
-                                           title_font_size=8 * SCALE,
-                                           title_offset=(32 * SCALE, 0),
-                                           widget_font=DRAGON_QUEST_FONT_PATH,
+                                           title_font_size=font_size,
+                                           title_offset=(32 * SCALE, 0) if language == 'English' else (50 * SCALE, 0),
+                                           widget_font=font,
                                            widget_alignment=pygame_menu.locals.ALIGN_LEFT,
                                            widget_background_color=BLACK,
                                            widget_font_color=self.game.color,
-                                           widget_font_size=8 * SCALE,
+                                           widget_font_size=font_size,
                                            widget_selection_effect=pygame_menu.widgets.
                                            LeftArrowSelection(
                                                # TODO: Disabling blinking arrow for now,
@@ -91,14 +97,14 @@ class CommandMenu(Menu):
         )
         # TODO: Allow for selection of options using the K ("A" button).
         #  Currently selection is only possible by use of the Enter button.
-        self.menu.add.button('TALK', self.talk, padding=(9, 5, 8, 16))
-        self.menu.add.button('STATUS', self.status, padding=(4, 5, 8, 16))
-        self.menu.add.button('STAIRS', self.stairs, padding=(4, 5, 8, 16))
-        self.menu.add.button('SEARCH', self.search, padding=(4, 5, 8, 16))
-        self.menu.add.button('SPELL', self.spell, padding=(9, 0, 8, 16))
-        self.menu.add.button('ITEM', self.item, padding=(4, 0, 8, 16))
-        self.menu.add.button('DOOR', self.door, padding=(4, 0, 8, 16))
-        self.menu.add.button('TAKE', self.take, padding=(4, 0, 8, 16))
+        self.menu.add.button(_("TALK"), self.talk, padding=(9, 5, 8, 16))
+        self.menu.add.button(_("STATUS"), self.status, padding=(4, 5, 8, 16))
+        self.menu.add.button(_("STAIRS"), self.stairs, padding=(4, 5, 8, 16))
+        self.menu.add.button(_("SEARCH"), self.search, padding=(4, 5, 8, 16))
+        self.menu.add.button(_("SPELL"), self.spell, padding=(9, 0, 8, 16))
+        self.menu.add.button(_("ITEM"), self.item, padding=(4, 0, 8, 16))
+        self.menu.add.button(_("DOOR"), self.door, padding=(4, 0, 8, 16))
+        self.menu.add.button(_("TAKE"), self.take, padding=(4, 0, 8, 16))
         self.menu.disable()
 
     def set_king_lorik_dialog(self):
@@ -276,7 +282,8 @@ class CommandMenu(Menu):
     def take_item(self, item_name: str):
         play_sound(open_treasure_sfx)
         self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-        found_item_text = f"Fortune smiles upon thee, {self.player.name}.\nThou hast found the {item_name}."
+        found_item_text = self._("Fortune smiles upon thee, {}.\nThou hast found the {}.").format(self.player.name,
+                                                                                                  self._(item_name))
 
         if item_name == "Tablet":
             self.tablet(found_item_text)
@@ -300,7 +307,7 @@ class CommandMenu(Menu):
         play_sound(open_treasure_sfx)
         gold_amount = treasure_info['amount']
         self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-        self.show_text_in_dialog_box(f"Of GOLD thou hast gained {gold_amount}", skip_text=self.skip_text)
+        self.show_text_in_dialog_box(self._("Of GOLD thou hast gained {}").format(gold_amount), skip_text=self.skip_text)
         self.player.gold += gold_amount
 
     def set_tile_by_coordinates(self, new_tile_identifier, column, row, player):
@@ -534,7 +541,8 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
         if not self.player.spells:
-            self.show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("{} cannot yet use the spell.").format(self.player.name),
+                                         skip_text=self.skip_text)
         else:
             self.display_item_menu('spells')
         self.game.unlaunch_menu(self)
@@ -548,7 +556,7 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which item is being used.
         if not self.player.inventory:
-            self.show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("Nothing of use has yet been given to thee."), skip_text=self.skip_text)
         else:
             self.display_item_menu('inventory')
 
@@ -621,7 +629,8 @@ class CommandMenu(Menu):
                                 self.show_text_in_dialog_box("Thy MP is too low.", skip_text=self.skip_text)
                             else:
                                 self.show_text_in_dialog_box(
-                                    (self._("{} chanted the spell of {}.").format(self.player.name, currently_selected_item)),
+                                    (self._("{} chanted the spell of {}.").format(self.player.name,
+                                                                                  currently_selected_item)),
                                     skip_text=self.skip_text)
                                 play_sound(spell_sfx)
                                 self.player.current_mp -= spell_mp_cost
@@ -652,7 +661,7 @@ class CommandMenu(Menu):
             else:
                 self.show_text_in_dialog_box("Thou hast not a key to use.", skip_text=self.skip_text)
         else:
-            self.show_text_in_dialog_box("There is no door here.", skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("There is no door here."), skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
 
@@ -677,7 +686,7 @@ class CommandMenu(Menu):
         # elif there is a hidden item
         # take the hidden item
         else:
-            self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",),
+            self.show_text_in_dialog_box(self._("There is nothing to take here, {}.").format(self.player.name),
                                          skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()

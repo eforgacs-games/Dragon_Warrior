@@ -17,7 +17,8 @@ class Player(AnimatedSprite):
         self.next_next_coordinates = None
         self.current_tile = None
         self.next_tile_id = get_next_tile_identifier(self.column, self.row, self.direction_value, current_map)
-        self.next_next_tile_id = get_next_tile_identifier(self.column, self.row, self.direction_value, current_map, offset=2)
+        self.next_next_tile_id = get_next_tile_identifier(self.column, self.row, self.direction_value, current_map,
+                                                          offset=2)
         self.bumped = False
         self.last_bump_time = None
         self.received_environment_damage = False
@@ -64,7 +65,7 @@ class Player(AnimatedSprite):
             self.total_experience = 65536
             self.level = self.get_level_by_experience()
             self.update_stats_to_current_level()
-            self.spells = ["HEAL", "RADIANT"]
+            self.spells = []
             self.max_hp = 99_999
             self.current_hp = self.max_hp
 

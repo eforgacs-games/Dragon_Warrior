@@ -22,13 +22,10 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
     # chunks = [text[i:i + n] for i in range(0, len(text), n)]
     dialog_box_wrapper = DialogBoxWrapper(width=text_wrap_length, break_long_words=False)
     chunks = dialog_box_wrapper.wrap(text)
-    item_gained_matches = ["thou hast gained", "Thou hast found"]
+    item_gained_matches = ("thou hast gained", "Thou hast found")
     if any([x in text for x in item_gained_matches]):
         disable_sound = True
-    if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
-        current_font = font.Font(font_name, size)
-    else:
-        current_font = font.Font(UNIFONT_PATH, size + 1)
+    current_font = set_font_by_ascii_chars(chunks, size)
     for chunk in chunks:
         if letter_by_letter:
             string = ''
@@ -39,18 +36,23 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
                 if not config['NO_WAIT']:
                     time.wait(16)
                 if not disable_sound:
-                    if i % 3 == 0:
+                    if i % 2 == 0:
                         play_sound(text_beep_sfx)
         else:
             if not config['NO_BLIT']:
-                if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
-                    current_font = font.Font(font_name, size)
-                else:
-                    current_font = font.Font(UNIFONT_PATH, size + 1)
+                current_font = set_font_by_ascii_chars(chunks, size)
                 blit_text_to_screen(alignment, color, current_font, screen, chunk, x, y, config["RENDER_TEXT"])
         y += 17
         if chunk == chunks[len(chunks) - 1]:
             return chunk
+
+
+def set_font_by_ascii_chars(chunks, size):
+    if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
+        current_font = font.Font(DRAGON_QUEST_FONT_PATH, size)
+    else:
+        current_font = font.Font(UNIFONT_PATH, size + 1)
+    return current_font
 
 
 def blit_text_to_screen(alignment, color, current_font, screen, string, x, y, render_text=True):
@@ -81,11 +83,3 @@ def set_text_rect_alignment(alignment, text_surface, x, y):
 #         else:
 #             current_font = font.Font(font_name, size)
 #     return current_font
-
-
-def set_font_by_ascii_chars(font_name, size, text):
-    if not text.strip('’(↑ ← ↓ →)▼').isascii():
-        current_font = font.Font(UNIFONT_PATH, size + 1)
-    else:
-        current_font = font.Font(font_name, size)
-    return current_font
