@@ -4,13 +4,14 @@ from collections import Counter
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN, Rect, event, K_ESCAPE, K_RETURN, K_k, K_j, K_UP, K_DOWN, K_w, K_s
+from pygame import Surface, display, KEYDOWN, Rect, event, K_ESCAPE, K_RETURN, K_k, K_j, K_UP, K_DOWN, K_w, K_s, \
+    USEREVENT, time
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
 from data.text.dialog import blink_arrow
 from data.text.dialog_lookup_table import DialogLookup, set_gettext_language
-from src.common import DRAGON_QUEST_FONT_PATH, BLACK, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
+from src.common import BLACK, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, \
     open_door_sfx, \
     STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx
@@ -19,7 +20,9 @@ from src.items import treasure
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.sound import play_sound
-from src.text import draw_text
+from src.text import draw_text, set_font_by_ascii_chars
+
+arrow_fade = USEREVENT + 1
 
 
 class Menu:
@@ -27,6 +30,7 @@ class Menu:
         self.menu = None
         self.launch_signaled = False
         self.skip_text = False
+        time.set_timer(arrow_fade, 530)
 
 
 class CommandMenu(Menu):
@@ -49,11 +53,17 @@ class CommandMenu(Menu):
                                                   window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH,
                                                   screen=self.screen,
                                                   color=self.game.color)
-        self.dialog_lookup = DialogLookup(self, self.game.game_state.config)
-        tile_size = self.game.game_state.config['TILE_SIZE']
-        self._ = _ = set_gettext_language(self.game.game_state.config['LANGUAGE'])
+        config = self.game.game_state.config
+        self.dialog_lookup = DialogLookup(self, config)
+        tile_size = config['TILE_SIZE']
+        language = config['LANGUAGE']
+        self._ = _ = set_gettext_language(language)
+        title = _('COMMAND')
+        font_size = 8 * SCALE
+        font = set_font_by_ascii_chars(title, font_size)
+
         self.menu = pygame_menu.Menu(
-            title='COMMAND',
+            title=title,
             width=self.command_menu_surface.get_width() * 2,
             height=self.command_menu_surface.get_height() * 3,
             center_content=False,
@@ -64,15 +74,15 @@ class CommandMenu(Menu):
                                            cursor_color=self.game.color,
                                            cursor_selection_color=self.game.color,
                                            title_background_color=BLACK,
-                                           title_font=DRAGON_QUEST_FONT_PATH,
+                                           title_font=font,
                                            title_font_color=self.game.color,
-                                           title_font_size=8 * SCALE,
-                                           title_offset=(32 * SCALE, 0),
-                                           widget_font=DRAGON_QUEST_FONT_PATH,
+                                           title_font_size=font_size,
+                                           title_offset=(32 * SCALE, 0) if language == 'English' else (55 * SCALE, 0),
+                                           widget_font=font,
                                            widget_alignment=pygame_menu.locals.ALIGN_LEFT,
                                            widget_background_color=BLACK,
                                            widget_font_color=self.game.color,
-                                           widget_font_size=8 * SCALE,
+                                           widget_font_size=font_size,
                                            widget_selection_effect=pygame_menu.widgets.
                                            LeftArrowSelection(
                                                # TODO: Disabling blinking arrow for now,
@@ -91,14 +101,14 @@ class CommandMenu(Menu):
         )
         # TODO: Allow for selection of options using the K ("A" button).
         #  Currently selection is only possible by use of the Enter button.
-        self.menu.add.button('TALK', self.talk, padding=(9, 5, 8, 16))
-        self.menu.add.button('STATUS', self.status, padding=(4, 5, 8, 16))
-        self.menu.add.button('STAIRS', self.stairs, padding=(4, 5, 8, 16))
-        self.menu.add.button('SEARCH', self.search, padding=(4, 5, 8, 16))
-        self.menu.add.button('SPELL', self.spell, padding=(9, 0, 8, 16))
-        self.menu.add.button('ITEM', self.item, padding=(4, 0, 8, 16))
-        self.menu.add.button('DOOR', self.door, padding=(4, 0, 8, 16))
-        self.menu.add.button('TAKE', self.take, padding=(4, 0, 8, 16))
+        self.menu.add.button(_("TALK"), self.talk, padding=(9, 5, 8, 16))
+        self.menu.add.button(_("STATUS"), self.status, padding=(4, 5, 8, 16))
+        self.menu.add.button(_("STAIRS"), self.stairs, padding=(4, 5, 8, 16))
+        self.menu.add.button(_("SEARCH"), self.search, padding=(4, 5, 8, 16))
+        self.menu.add.button(_("SPELL"), self.spell, padding=(9, 0, 8, 16))
+        self.menu.add.button(_("ITEM"), self.item, padding=(4, 0, 8, 16))
+        self.menu.add.button(_("DOOR"), self.door, padding=(4, 0, 8, 16))
+        self.menu.add.button(_("TAKE"), self.take, padding=(4, 0, 8, 16))
         self.menu.disable()
 
     def set_king_lorik_dialog(self):
@@ -117,10 +127,11 @@ class CommandMenu(Menu):
                 self.show_text_in_dialog_box(character['dialog'], add_quotes=True, skip_text=self.skip_text)
             else:
                 print(f"Character has no dialog: {dialog_character}")
-                self.show_text_in_dialog_box("I have nothing to say.", add_quotes=True, skip_text=self.skip_text)
+                self.show_text_in_dialog_box(self._("I have nothing to say."), add_quotes=True,
+                                             skip_text=self.skip_text)
         else:
             print(f"Character not in lookup table: {dialog_character}")
-            self.show_text_in_dialog_box("I have nothing to say.", add_quotes=True, skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("I have nothing to say."), add_quotes=True, skip_text=self.skip_text)
 
     def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True,
                                 temp_text_start: int = None, skip_text: bool = False, hide_arrow=False,
@@ -147,6 +158,7 @@ class CommandMenu(Menu):
     def show_text_line_in_dialog_box(self, add_quotes, disable_sound, hide_arrow, letter_by_letter, line, skip_text,
                                      temp_text_start, tile_size):
         """Function for showing text in a dialog box (as opposed to executing a method)."""
+
         current_time = None
         display_current_line = True
         if add_quotes:
@@ -166,31 +178,33 @@ class CommandMenu(Menu):
             if letter_by_letter and not self.game.game_state.config['NO_WAIT']:
                 if not current_line:
                     current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                             self.game.game_state.config,
-                                             color=self.game.color, letter_by_letter=letter_by_letter,
-                                             disable_sound=disable_sound)
+                                             self.game.game_state.config, color=self.game.color,
+                                             letter_by_letter=letter_by_letter, disable_sound=disable_sound)
                 else:
                     current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                             self.game.game_state.config,
-                                             color=self.game.color, letter_by_letter=False,
+                                             self.game.game_state.config, color=self.game.color, letter_by_letter=False,
                                              disable_sound=disable_sound)
             else:
                 current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                         self.game.game_state.config,
-                                         color=self.game.color, letter_by_letter=False,
+                                         self.game.game_state.config, color=self.game.color, letter_by_letter=False,
                                          disable_sound=disable_sound)
-            display.update(Rect(2 * tile_size, 9 * tile_size, 12 * tile_size, 5 * tile_size))
             if not hide_arrow:
                 end_of_dialog_box_location = self.screen.get_width() / 2, (
                         self.screen.get_height() * 13 / 16) + tile_size // 1.5
-                blink_arrow(end_of_dialog_box_location[0], end_of_dialog_box_location[1], "down", self.screen,
-                            self.game.game_state.config, self.game.color)
+                blink_arrow(self.screen, end_of_dialog_box_location[0], end_of_dialog_box_location[1], 'down',
+                            self.game.game_state.config, self.game.show_arrow, self.game.color)
             # playing with fire a bit here with the short-circuiting
-            if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
-                    [current_event.type == KEYDOWN for current_event in event.get()]):
+            if skip_text or (temp_text_start and current_time - temp_text_start >= 1000):
                 if not skip_text and not disable_sound:
                     play_sound(menu_button_sfx)
                 display_current_line = False
+            for current_event in event.get():
+                if current_event.type == KEYDOWN:
+                    if not skip_text and not disable_sound:
+                        play_sound(menu_button_sfx)
+                    display_current_line = False
+                elif current_event.type == arrow_fade:
+                    self.game.show_arrow = not self.game.show_arrow
 
     def show_text_in_dialog_box(self, text: Tuple | List | str, add_quotes=False, temp_text_start=None, skip_text=False,
                                 drop_down=True, drop_up=True, disable_sound=False, letter_by_letter=True):
@@ -267,7 +281,8 @@ class CommandMenu(Menu):
                                                       character_dict['character'].rect.y))
                             self.screen.blit(self.background, self.camera_position)
                     if self.launch_signaled:
-                        self.screen.blit(self.command_menu_surface, (tile_size * 6, tile_size * 1)) if not self.game.game_state.config['NO_BLIT'] else None
+                        self.screen.blit(self.command_menu_surface, (tile_size * 6, tile_size * 1)) if not \
+                            self.game.game_state.config['NO_BLIT'] else None
                     if self.game.drawer.display_hovering_stats:
                         self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.game.color)
                     if not self.game.game_state.config['NO_BLIT']:
@@ -276,7 +291,8 @@ class CommandMenu(Menu):
     def take_item(self, item_name: str):
         play_sound(open_treasure_sfx)
         self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-        found_item_text = f"Fortune smiles upon thee, {self.player.name}.\nThou hast found the {item_name}."
+        found_item_text = self._("Fortune smiles upon thee, {}.\nThou hast found the {}.").format(self.player.name,
+                                                                                                  self._(item_name))
 
         if item_name == "Tablet":
             self.tablet(found_item_text)
@@ -300,7 +316,8 @@ class CommandMenu(Menu):
         play_sound(open_treasure_sfx)
         gold_amount = treasure_info['amount']
         self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-        self.show_text_in_dialog_box(f"Of GOLD thou hast gained {gold_amount}", skip_text=self.skip_text)
+        self.show_text_in_dialog_box(self._("Of GOLD thou hast gained {}").format(gold_amount),
+                                     skip_text=self.skip_text)
         self.player.gold += gold_amount
 
     def set_tile_by_coordinates(self, new_tile_identifier, column, row, player):
@@ -309,14 +326,15 @@ class CommandMenu(Menu):
             self.current_tile = new_tile_identifier
             player.current_tile = new_tile_identifier
         self.current_map.layout[row][column] = \
-        self.game.layouts.map_layout_lookup[self.current_map.__class__.__name__][row][column] = \
+            self.game.layouts.map_layout_lookup[self.current_map.__class__.__name__][row][column] = \
             self.current_map.floor_tile_key[new_tile_identifier]['val']
         center_pt = get_center_point(column, row, tile_size=self.game.game_state.config['TILE_SIZE'])
         self.current_map.floor_tile_key[old_tile_identifier]['group'] = Group()
         self.current_map.add_tile(self.current_map.floor_tile_key[new_tile_identifier], center_pt)
         for row in range(len(self.current_map.layout)):
             for column in range(len(self.current_map.layout[row])):
-                self.current_map.center_pt = get_center_point(column, row, tile_size=self.game.game_state.config['TILE_SIZE'])
+                self.current_map.center_pt = get_center_point(column, row,
+                                                              tile_size=self.game.game_state.config['TILE_SIZE'])
                 if self.current_map.layout[row][column] <= max(
                         self.current_map.floor_tile_key[old_tile_identifier]['val'],
                         self.current_map.floor_tile_key[new_tile_identifier]['val']):
@@ -337,7 +355,8 @@ class CommandMenu(Menu):
         self.recover_health()
 
     def wings(self):
-        self.show_text_in_dialog_box((f"{self.player.name}  threw The Wings of the Wyvern up into the sky.",))
+        self.show_text_in_dialog_box(
+            self._("{} threw The Wings of the Wyvern up into the sky.").format(self.player.name))
 
     def torch(self):
         if not self.current_map.is_dark:
@@ -367,7 +386,7 @@ class CommandMenu(Menu):
         self.player.current_hp += health_addition
 
     def hurt(self):
-        self.show_text_in_dialog_box(("But nothing happened.",), skip_text=self.skip_text)
+        self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
 
     def sleep(self):
         pass
@@ -378,7 +397,7 @@ class CommandMenu(Menu):
                 self.game.torch_active = False
             self.game.game_state.radiant_active = True
         else:
-            self.show_text_in_dialog_box(("But nothing happened.",), skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
 
     def stopspell(self):
         pass
@@ -417,7 +436,7 @@ class CommandMenu(Menu):
             for character_identifier, character_dict in self.characters.items():
                 if (character_dict['character'].row,
                     character_dict['character'].column) == self.player.next_coordinates or self.npc_is_across_counter(
-                        character_dict):
+                    character_dict):
                     if character_dict['character'].direction_value != get_opposite_direction(
                             self.player.direction_value):
                         character_dict['character'].direction_value = get_opposite_direction(
@@ -447,26 +466,26 @@ class CommandMenu(Menu):
         show_status = True
         self.window_drop_down_effect(4, 3, 10, 11)
         create_window(4, 3, 10, 11, STATUS_WINDOW_BACKGROUND_PATH, self.screen, color=self.game.color)
-        draw_text(self.player.name, tile_size * 13, tile_size * 3.75, self.screen, self.game.game_state.config, color=self.game.color,
-                  alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.strength), tile_size * 13, tile_size * 4.75, self.screen, self.game.game_state.config, color=self.game.color,
-                  alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.agility), tile_size * 13, tile_size * 5.75, self.screen, self.game.game_state.config, color=self.game.color,
-                  alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.max_hp), tile_size * 13, tile_size * 6.75, self.screen, self.game.game_state.config, color=self.game.color,
-                  alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.max_mp), tile_size * 13, tile_size * 7.75, self.screen, self.game.game_state.config, color=self.game.color,
-                  alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.attack_power), tile_size * 13, tile_size * 8.75, self.screen, self.game.game_state.config,
+        draw_text(self.player.name, tile_size * 13, tile_size * 3.75, self.screen, self.game.game_state.config,
                   color=self.game.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.defense_power), tile_size * 13, tile_size * 9.75, self.screen, self.game.game_state.config,
+        draw_text(str(self.player.strength), tile_size * 13, tile_size * 4.75, self.screen, self.game.game_state.config,
                   color=self.game.color, alignment='right', letter_by_letter=False)
-        draw_text(self.player.weapon, tile_size * 11.75, tile_size * 10.75, self.screen, self.game.game_state.config, color=self.game.color,
-                  text_wrap_length=9, alignment='right', letter_by_letter=False)
-        draw_text(self.player.armor, tile_size * 11.55, tile_size * 11.75, self.screen, self.game.game_state.config, color=self.game.color,
-                  text_wrap_length=9, alignment='right', letter_by_letter=False)
-        draw_text(self.player.shield, tile_size * 11.75, tile_size * 12.75, self.screen, self.game.game_state.config, color=self.game.color,
-                  text_wrap_length=9, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.agility), tile_size * 13, tile_size * 5.75, self.screen, self.game.game_state.config,
+                  color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.max_hp), tile_size * 13, tile_size * 6.75, self.screen, self.game.game_state.config,
+                  color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.max_mp), tile_size * 13, tile_size * 7.75, self.screen, self.game.game_state.config,
+                  color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.attack_power), tile_size * 13, tile_size * 8.75, self.screen,
+                  self.game.game_state.config, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(str(self.player.defense_power), tile_size * 13, tile_size * 9.75, self.screen,
+                  self.game.game_state.config, color=self.game.color, alignment='right', letter_by_letter=False)
+        draw_text(self.player.weapon, tile_size * 11.75, tile_size * 10.75, self.screen, self.game.game_state.config,
+                  color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
+        draw_text(self.player.armor, tile_size * 11.55, tile_size * 11.75, self.screen, self.game.game_state.config,
+                  color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
+        draw_text(self.player.shield, tile_size * 11.75, tile_size * 12.75, self.screen, self.game.game_state.config,
+                  color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
         display.update((4 * tile_size, 3 * tile_size, 10 * tile_size, 11 * tile_size))
         while show_status:
             for current_event in event.get():
@@ -534,7 +553,8 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
         if not self.player.spells:
-            self.show_text_in_dialog_box((f"{self.player.name} cannot yet use the spell.",), skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("{} cannot yet use the spell.").format(self.player.name),
+                                         skip_text=self.skip_text)
         else:
             self.display_item_menu('spells')
         self.game.unlaunch_menu(self)
@@ -548,7 +568,7 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # the implementation of this will vary upon which item is being used.
         if not self.player.inventory:
-            self.show_text_in_dialog_box(("Nothing of use has yet been given to thee.",), skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("Nothing of use has yet been given to thee."), skip_text=self.skip_text)
         else:
             self.display_item_menu('inventory')
 
@@ -607,8 +627,8 @@ class CommandMenu(Menu):
                           color=self.game.color)
             draw_text(list_string, tile_size * 10, tile_size * 3.75, self.screen, self.game.game_state.config,
                       letter_by_letter=False)
-            blink_arrow(tile_size * 9.5, (tile_size + (current_arrow_position * tile_size / 4)) * 3.75, "right",
-                        self.screen, self.game.game_state.config, self.game.color)
+            blink_arrow(self.screen, tile_size * 9.5, (tile_size + (current_arrow_position * tile_size / 4)) * 3.75,
+                        "right", self.game.game_state.config, self.game.show_arrow, self.game.color)
             display.update((9 * tile_size, 3 * tile_size, 6 * tile_size, (len(list_counter) + 1) * tile_size))
             for current_event in event.get():
                 if any([current_event.type == KEYDOWN]):
@@ -621,7 +641,8 @@ class CommandMenu(Menu):
                                 self.show_text_in_dialog_box("Thy MP is too low.", skip_text=self.skip_text)
                             else:
                                 self.show_text_in_dialog_box(
-                                    (self._("{} chanted the spell of {}.").format(self.player.name, currently_selected_item)),
+                                    (self._("{} chanted the spell of {}.").format(self.player.name,
+                                                                                  currently_selected_item)),
                                     skip_text=self.skip_text)
                                 play_sound(spell_sfx)
                                 self.player.current_mp -= spell_mp_cost
@@ -650,9 +671,9 @@ class CommandMenu(Menu):
                                              self.player)
                 play_sound(open_door_sfx)
             else:
-                self.show_text_in_dialog_box("Thou hast not a key to use.", skip_text=self.skip_text)
+                self.show_text_in_dialog_box(self._("Thou hast not a key to use."), skip_text=self.skip_text)
         else:
-            self.show_text_in_dialog_box("There is no door here.", skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("There is no door here."), skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
 
@@ -677,7 +698,7 @@ class CommandMenu(Menu):
         # elif there is a hidden item
         # take the hidden item
         else:
-            self.show_text_in_dialog_box((f"There is nothing to take here, {self.player.name}.",),
+            self.show_text_in_dialog_box(self._("There is nothing to take here, {}.").format(self.player.name),
                                          skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
