@@ -44,7 +44,6 @@ from src.sprites.roaming_character import RoamingCharacter
 from src.visual_effects import fade, flash_transparent_color
 
 arrow_fade = USEREVENT + 1
-arrow_fade_event = event.Event(arrow_fade)
 
 
 class Game:
