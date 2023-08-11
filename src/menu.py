@@ -73,7 +73,7 @@ class CommandMenu(Menu):
                                            title_font=font,
                                            title_font_color=self.game.color,
                                            title_font_size=font_size,
-                                           title_offset=(32 * SCALE, 0) if language == 'English' else (50 * SCALE, 0),
+                                           title_offset=(32 * SCALE, 0) if language == 'English' else (55 * SCALE, 0),
                                            widget_font=font,
                                            widget_alignment=pygame_menu.locals.ALIGN_LEFT,
                                            widget_background_color=BLACK,
@@ -189,7 +189,7 @@ class CommandMenu(Menu):
             if not hide_arrow:
                 end_of_dialog_box_location = self.screen.get_width() / 2, (
                         self.screen.get_height() * 13 / 16) + tile_size // 1.5
-                blink_arrow(end_of_dialog_box_location[0], end_of_dialog_box_location[1], "down", self.screen,
+                blink_arrow(end_of_dialog_box_location[0], end_of_dialog_box_location[1], 'down', self.screen,
                             self.game.game_state.config, self.game.color)
             # playing with fire a bit here with the short-circuiting
             if skip_text or (temp_text_start and current_time - temp_text_start >= 1000) or any(
@@ -344,7 +344,7 @@ class CommandMenu(Menu):
         self.recover_health()
 
     def wings(self):
-        self.show_text_in_dialog_box((f"{self.player.name}  threw The Wings of the Wyvern up into the sky.",))
+        self.show_text_in_dialog_box(self._("{} threw The Wings of the Wyvern up into the sky.").format(self.player.name))
 
     def torch(self):
         if not self.current_map.is_dark:
@@ -374,7 +374,7 @@ class CommandMenu(Menu):
         self.player.current_hp += health_addition
 
     def hurt(self):
-        self.show_text_in_dialog_box(("But nothing happened.",), skip_text=self.skip_text)
+        self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
 
     def sleep(self):
         pass
@@ -385,7 +385,7 @@ class CommandMenu(Menu):
                 self.game.torch_active = False
             self.game.game_state.radiant_active = True
         else:
-            self.show_text_in_dialog_box(("But nothing happened.",), skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
 
     def stopspell(self):
         pass
