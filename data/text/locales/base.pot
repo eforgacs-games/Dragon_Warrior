@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-11 16:03+0200\n"
+"POT-Creation-Date: 2023-08-11 16:24+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -802,6 +802,10 @@ msgstr "빛의 구슬"
 #: ..\menu.py:303
 msgid "Of GOLD thou hast gained {}"
 msgstr "{}골드를 획득했다."
+
+#: ..\menu.py:388
+msgid "But nothing happened."
+msgstr "그러나 아무 일도 일어나지 않았다…!"
 
 #: ..\menu.py:538
 msgid "{} cannot yet use the spell."

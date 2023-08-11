@@ -801,6 +801,10 @@ msgstr "빛의 구슬"
 msgid "Of GOLD thou hast gained {}"
 msgstr "{}골드를 획득했다."
 
+#: ..\menu.py:388
+msgid "But nothing happened."
+msgstr "그러나 아무 일도 일어나지 않았다…!"
+
 #: ..\menu.py:538
 msgid "{} cannot yet use the spell."
 msgstr "{}는 아직 주문을 사용할 수 없다."

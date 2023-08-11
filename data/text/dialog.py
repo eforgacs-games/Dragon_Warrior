@@ -9,6 +9,8 @@ from src.text import draw_text
 
 
 def blink_arrow(x: float, y: float, direction: str, screen: Surface, config: dict, color: tuple = WHITE):
+    # TODO(ELF): There is a lingering lag/input issue in this method that needs to be fixed.
+    #  Make the arrow show or not based on the arrow_fade event/show_arrow boolean
     if direction == 'up':
         arrow_character = '^'
     elif direction == "down":
