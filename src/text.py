@@ -51,7 +51,8 @@ def set_font_by_ascii_chars(chunks, size):
     if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
         current_font = font.Font(DRAGON_QUEST_FONT_PATH, size)
     else:
-        current_font = font.Font(UNIFONT_PATH, size + 1)
+        current_font = font.Font(UNIFONT_PATH, size)
+        current_font.bold = True
     return current_font
 
 
