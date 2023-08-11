@@ -23,6 +23,10 @@ msgid ""
 " Dost thou wish to buy anything today?"
 msgstr "여기는 무기와 방어구 상점이다. 무슨 일이지?"
 
+#: .\dialog_lookup_table.py:124
+msgid "Never does a brave person steal."
+msgstr "진정한 용사라면 도둑질 따위 하지 않겠지."
+
 #: .\dialog_lookup_table.py:289
 msgid "The {}?"
 msgstr "{} 말이지?"
@@ -719,6 +723,10 @@ msgstr "문"
 msgid "TAKE"
 msgstr "획득"
 
+#: ..\menu.py:126
+msgid "I have nothing to say."
+msgstr "할 말이 없다."
+
 #: ..\menu.py:279
 msgid "Fortune smiles upon thee, {}.\nThou hast found the {}."
 msgstr "{}는 보물 상자를 열었다. 놀랍게도! {}를 획득했다!"
@@ -808,6 +816,10 @@ msgstr "{}은 {}를 외쳤다!"
 #: ..\menu.py:662
 msgid "There is no door here."
 msgstr "문이 없다."
+
+#: ..\menu.py:662
+msgid "Thou hast not a key to use."
+msgstr "열쇠를 가지고 있지 않다!"
 
 #: ..\menu.py:689
 msgid "There is nothing to take here, {}."

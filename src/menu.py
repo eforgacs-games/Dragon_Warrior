@@ -123,10 +123,10 @@ class CommandMenu(Menu):
                 self.show_text_in_dialog_box(character['dialog'], add_quotes=True, skip_text=self.skip_text)
             else:
                 print(f"Character has no dialog: {dialog_character}")
-                self.show_text_in_dialog_box("I have nothing to say.", add_quotes=True, skip_text=self.skip_text)
+                self.show_text_in_dialog_box(self._("I have nothing to say."), add_quotes=True, skip_text=self.skip_text)
         else:
             print(f"Character not in lookup table: {dialog_character}")
-            self.show_text_in_dialog_box("I have nothing to say.", add_quotes=True, skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("I have nothing to say."), add_quotes=True, skip_text=self.skip_text)
 
     def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True,
                                 temp_text_start: int = None, skip_text: bool = False, hide_arrow=False,
@@ -659,7 +659,7 @@ class CommandMenu(Menu):
                                              self.player)
                 play_sound(open_door_sfx)
             else:
-                self.show_text_in_dialog_box("Thou hast not a key to use.", skip_text=self.skip_text)
+                self.show_text_in_dialog_box(self._("Thou hast not a key to use."), skip_text=self.skip_text)
         else:
             self.show_text_in_dialog_box(self._("There is no door here."), skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
