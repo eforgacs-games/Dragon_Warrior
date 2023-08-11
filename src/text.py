@@ -14,8 +14,8 @@ class DialogBoxWrapper(textwrap.TextWrapper):
 
 
 def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, color: tuple = WHITE, size: int = 16,
-              font_name: str = DRAGON_QUEST_FONT_PATH, text_wrap_length: int = 21,
-              alignment: str = 'left', letter_by_letter: bool = True, disable_sound: bool = False) -> str:
+              text_wrap_length: int = 21, alignment: str = 'left', letter_by_letter: bool = True,
+              disable_sound: bool = False, font_name: str = None) -> str:
     # n = 34
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
@@ -32,7 +32,8 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
             for i in range(len(chunk)):
                 string += chunk[i]
                 if not config['NO_BLIT']:
-                    display.update(blit_text_to_screen(alignment, color, current_font, screen, string, x, y, config["RENDER_TEXT"]))
+                    display.update(blit_text_to_screen(alignment, color, current_font, screen, string, x, y,
+                                                       config["RENDER_TEXT"]))
                 if not config['NO_WAIT']:
                     time.wait(16)
                 if not disable_sound:
@@ -73,14 +74,3 @@ def set_text_rect_alignment(alignment, text_surface, x, y):
         case 'right':
             text_rect.midright = (x, y)
     return text_rect
-
-
-# def set_font_by_language(font_name, size, text, language):
-#     if language == 'Korean':
-#         current_font = set_font_by_ascii_chars(font_name, size, text)
-#     else:
-#         if not text.strip('’(↑ ← ↓ →)').isascii():
-#             current_font = font.Font(UNIFONT_PATH, size + 5)
-#         else:
-#             current_font = font.Font(font_name, size)
-#     return current_font
