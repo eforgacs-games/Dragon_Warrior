@@ -25,7 +25,7 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
     item_gained_matches = ("thou hast gained", "Thou hast found")
     if any([x in text for x in item_gained_matches]):
         disable_sound = True
-    current_font = set_font_by_ascii_chars(chunks, size)
+    current_font = set_font_by_ascii_chars(chunks, size, font_name)
     for chunk in chunks:
         if letter_by_letter:
             string = ''
@@ -41,20 +41,23 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
                         play_sound(text_beep_sfx)
         else:
             if not config['NO_BLIT']:
-                current_font = set_font_by_ascii_chars(chunks, size)
+                current_font = set_font_by_ascii_chars(chunks, size, font_name)
                 blit_text_to_screen(alignment, color, current_font, screen, chunk, x, y, config["RENDER_TEXT"])
         y += 17
         if chunk == chunks[len(chunks) - 1]:
             return chunk
 
 
-def set_font_by_ascii_chars(chunks, size):
-    if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
-        current_font = font.Font(DRAGON_QUEST_FONT_PATH, size)
+def set_font_by_ascii_chars(chunks, size, font_name):
+    if font_name is not None:
+        return font.Font(font_name, size)
     else:
-        current_font = font.Font(UNIFONT_PATH, size)
-        current_font.bold = True
-    return current_font
+        if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
+            current_font = font.Font(DRAGON_QUEST_FONT_PATH, size)
+        else:
+            current_font = font.Font(UNIFONT_PATH, size)
+            current_font.bold = True
+        return current_font
 
 
 def blit_text_to_screen(alignment, color, current_font, screen, string, x, y, render_text=True):

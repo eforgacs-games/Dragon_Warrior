@@ -60,7 +60,7 @@ class CommandMenu(Menu):
         self._ = _ = set_gettext_language(language)
         title = _('COMMAND')
         font_size = 8 * SCALE
-        font = set_font_by_ascii_chars(title, font_size)
+        font = set_font_by_ascii_chars(title, font_size, None)
 
         self.menu = pygame_menu.Menu(
             title=title,
