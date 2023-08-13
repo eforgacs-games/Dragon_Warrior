@@ -2,7 +2,7 @@ from pygame import K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN, KEYDOWN, event, R
 from pygame.time import get_ticks
 from pygame.transform import scale
 
-from src.common import Direction, BLACK, convert_to_frames_since_start_time, play_sound, menu_button_sfx
+from src.common import Direction, BLACK, convert_to_frames_since_start_time, play_sound, menu_button_sfx, accept_keys
 
 
 def set_character_position(character, tile_size):
@@ -37,7 +37,7 @@ def select_from_vertical_menu(blink_start, screen, unselected_image, selected_im
         alternate_blink(all_selected_images[current_item_index], unselected_image, blink_start, screen, no_blit=no_blit)
         for current_event in event.get():
             if current_event.type == KEYDOWN:
-                if current_event.key in (K_RETURN, K_i, K_k):
+                if current_event.key in accept_keys:
                     play_sound(menu_button_sfx)
                     return current_item_index
                 elif current_event.key in (K_DOWN, K_s) and current_item_index < len(all_selected_images) - 1:

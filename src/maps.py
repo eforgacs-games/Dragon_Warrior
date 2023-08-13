@@ -57,6 +57,7 @@ class DragonWarriorMap:
         self.map_tiles = parse_map_tiles(map_path=MAP_TILES_PATH, tile_size=config['TILE_SIZE'])
         self.impassable_tiles = all_impassable_tiles
         self.custom_underlying_tiles = {}
+        self.character_position_record = {}
         self.tile_group_dict = {}
         self.staircases = {}
         self.height = len(self.layout) * config['TILE_SIZE']
@@ -208,23 +209,26 @@ class DragonWarriorMap:
             character.row, character.column = coordinates
             self.fixed_characters.append(character)
         character_sprites.add(character)
+        tile_value = self.character_key["_".join(identifier.split("_")[0:-1]) if identifier[-1].isdigit() else identifier][
+            'val']
         self.characters[character.identifier] = {'character': character,
                                                  'character_sprites': character_sprites,
-                                                 'tile_value': self.character_key[
-                                                     "_".join(identifier.split("_")[0:-1]) if identifier[
-                                                         -1].isdigit() else identifier]['val'],
+                                                 'tile_value': tile_value,
                                                  'coordinates': coordinates
                                                  }
         if self.custom_underlying_tiles:
             if self.custom_underlying_tiles.get(character.identifier):
                 self.add_tile(self.floor_tile_key[self.custom_underlying_tiles[character.identifier]], self.center_pt)
+                self.character_position_record[coordinates[0], coordinates[1]] = tile_value
                 self.layout[coordinates[0]][coordinates[1]] = \
                     self.floor_tile_key[self.custom_underlying_tiles[character.identifier]]['val']
             else:
                 self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
+                self.character_position_record[coordinates[0], coordinates[1]] = tile_value
                 self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
         else:
             self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
+            self.character_position_record[coordinates[0], coordinates[1]] = tile_value
             self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
     def map_player(self, underlying_tile, player, coordinates) -> None:
@@ -236,6 +240,7 @@ class DragonWarriorMap:
                                    'tile_value': self.character_key['HERO']['val'],
                                    'coordinates': coordinates}
         self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
+
 
     # @timeit
     def map_floor_tiles(self, column, row) -> None:
@@ -371,7 +376,8 @@ class TantegelCourtyard(DragonWarriorMap):
     def __init__(self):
         super().__init__(MapLayouts().tantegel_courtyard)
         self.create_town_gates(
-            # north_gate=warp_line((6, 6), (6, 35)),
+            # does the north gate change later on?
+            north_gate=warp_line((6, 6), (6, 35)),
             west_gate=warp_line((6, 6), (37, 6)),
             east_gate=warp_line((6, 37), (37, 37)),
             south_gate=warp_line((37, 9), (37, 26)))
