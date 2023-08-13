@@ -6,6 +6,9 @@ from pygame.transform import scale
 from data.text.dialog_lookup_table import set_gettext_language
 from src.common import BATTLE_BACKGROUND_PATH, play_sound, stairs_down_sfx, missed_sfx, missed_2_sfx, \
     excellent_move_sfx, victory_sfx, improvement_sfx, BLACK, config
+from src.enemy import enemy_groups, Enemy
+from src.menu import CommandMenu
+from src.player.player import Player
 from src.player.player_stats import levels_list
 
 _ = set_gettext_language(config['LANGUAGE'])
@@ -54,10 +57,25 @@ def battle_background_image_effect(tile_size, screen, is_dark):
         time.wait(20)
 
 
-def battle_run(cmd_menu, player):
+def battle_run(cmd_menu: CommandMenu, player: Player, enemy: Enemy):
+    """Attempt to run from a battle. The formula is as follows:
+    If HeroAgility * Random # < EnemyAgility * Random # * GroupFactor, then the
+enemy will block you. (according to https://gamefaqs.gamespot.com/nes/563408-dragon-warrior/faqs/61640)"""
     play_sound(stairs_down_sfx)
     cmd_menu.show_line_in_dialog_box(_("{} started to run away.\n").format(player.name), add_quotes=False,
                                      hide_arrow=True, disable_sound=True)
+    random_number = random.randint(0, 255)
+    group_factor = 1
+    for group_number, group in enemy_groups.items():
+        if enemy.name in group:
+            group_factor = group_number
+    if player.agility * random_number < enemy.speed * random_number * group_factor:
+        cmd_menu.show_line_in_dialog_box(_("But was blocked in front.").format(enemy.name), add_quotes=False,
+                                         hide_arrow=True, disable_sound=True)
+        cmd_menu.game.enemy_attack(enemy)
+        return False
+    else:
+        return True
 
 
 def calculate_enemy_attack_damage(player, enemy):
@@ -108,16 +126,16 @@ def battle_spell(cmd_menu, player):
 
 def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_map, enemy):
     if config['LANGUAGE'] == 'Korean':
-        ko_enemy_name = enemy.name
+        ko_enemy_name = _(enemy.name)
         if ko_enemy_name.endswith(ko_consonant_ending_chars):
             ko_enemy_name += "을"
         else:
             ko_enemy_name += "를"
         enemy_defeated_string = f"{ko_enemy_name} 물리쳤다!\n"
     elif config['LANGUAGE'] == 'English':
-        enemy_defeated_string = _("Thou hast done well in defeating the {}.\n").format(enemy.name)
+        enemy_defeated_string = _("Thou hast done well in defeating the {}.\n").format(_(enemy.name))
     else:
-        enemy_defeated_string = _("Thou hast done well in defeating the {}.\n").format(enemy.name)
+        enemy_defeated_string = _("Thou hast done well in defeating the {}.\n").format(_(enemy.name))
     cmd_menu.show_line_in_dialog_box(enemy_defeated_string, add_quotes=False,
                                      disable_sound=True, hide_arrow=True)
     mixer.music.stop()
