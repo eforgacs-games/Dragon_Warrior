@@ -27,7 +27,7 @@ from src.common import BLACK, Direction, ICON_PATH, intro_overture, is_facing_la
     BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, prepare_attack_sfx, receive_damage_2_sfx, create_window, accept_keys, \
     reject_keys
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import dev_config
+from src.config import dev_config, prod_config
 from src.drawer import Drawer
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu
@@ -105,9 +105,9 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom()
+        # self.current_map = maps.TantegelThroneRoom()
         # self.current_map = maps.TantegelCourtyard()
-        # self.current_map = maps.Alefgard()
+        self.current_map = maps.Alefgard()
 
         # towns
         # self.current_map = maps.Brecconary()
@@ -387,9 +387,8 @@ class Game:
                 elif selected_executed_option == 'Spell':
                     battle_spell(self.cmd_menu, self.player)
                 elif selected_executed_option == 'Run':
-                    battle_run(self.cmd_menu, self.player)
-                    run_away = True
-                    if self.music_enabled:
+                    run_away = battle_run(self.cmd_menu, self.player, enemy)
+                    if run_away and self.music_enabled:
                         mixer.music.load(self.current_map.music_file_path)
                         mixer.music.play(-1)
                 elif selected_executed_option == 'Item':
@@ -404,12 +403,24 @@ class Game:
         return run_away
 
     def fight(self, enemy):
+        self.hero_attack(enemy)
+        if enemy.hp <= 0:
+            return
+        else:
+            self.enemy_attack(enemy)
+            if self.player.current_hp == 0:
+                self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
+                self.player.is_dead = True
+            else:
+                self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
+                                                      add_quotes=False, disable_sound=True, hide_arrow=True,
+                                                      skip_text=True)
+
+    def hero_attack(self, enemy):
         play_sound(attack_sfx)
         self.cmd_menu.show_line_in_dialog_box(self._("{} attacks!\n").format(self.player.name),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
-
         attack_damage = calculate_attack_damage(self.cmd_menu, self.player, enemy)
-
         if attack_damage <= 0:
             missed_attack(self.cmd_menu)
         else:
@@ -420,31 +431,21 @@ class Game:
                 disable_sound=True, hide_arrow=True)
             enemy.hp -= attack_damage
             # print(f"{enemy.name} HP: {enemy.hp}/{enemy_string_lookup[enemy.name]().hp}")
-        if enemy.hp <= 0:
-            return
+
+    def enemy_attack(self, enemy):
+        play_sound(prepare_attack_sfx)
+        self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(self._(enemy.name)),
+                                              add_quotes=False, disable_sound=True, hide_arrow=True)
+        # (EnemyAttack - HeroAgility / 2) / 4,
+        #
+        # to:
+        #
+        # (EnemyAttack - HeroAgility / 2) / 2
+        attack_damage = calculate_enemy_attack_damage(self.player, enemy)
+        if attack_damage <= 0:
+            missed_attack(self.cmd_menu)
         else:
-            play_sound(prepare_attack_sfx)
-            self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(self._(enemy.name)),
-                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
-            # (EnemyAttack - HeroAgility / 2) / 4,
-            #
-            # to:
-            #
-            # (EnemyAttack - HeroAgility / 2) / 2
-
-            attack_damage = calculate_enemy_attack_damage(self.player, enemy)
-
-            if attack_damage <= 0:
-                missed_attack(self.cmd_menu)
-            else:
-                self.receive_damage(attack_damage)
-            if self.player.current_hp == 0:
-                self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
-                self.player.is_dead = True
-            else:
-                self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
-                                                      add_quotes=False, disable_sound=True, hide_arrow=True,
-                                                      skip_text=True)
+            self.receive_damage(attack_damage)
 
     def receive_damage(self, attack_damage):
         play_sound(receive_damage_2_sfx)
@@ -453,7 +454,7 @@ class Game:
         if self.player.current_hp < 0:
             self.player.current_hp = 0
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
-        create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
+        # create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
         self.cmd_menu.show_line_in_dialog_box(self._("Thy Hit Points decreased by {}.\n").format(attack_damage),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
