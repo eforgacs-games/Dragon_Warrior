@@ -458,19 +458,19 @@ msgstr ""
 
 #: ..\intro_lookup_table.py:13
 msgid "-PUSH START-"
-msgstr "-스타트 버턴을 눌러 주세요-"
+msgstr "-스타트 버튼을 눌러 주세요-"
 
 #: ..\intro_lookup_table.py:14
 msgid "K key: A Button"
-msgstr "K키: A 버턴"
+msgstr "K키: A 버튼"
 
 #: ..\intro_lookup_table.py:15
 msgid "J key: B Button"
-msgstr "J키: B 버턴"
+msgstr "J키: B 버튼"
 
 #: ..\intro_lookup_table.py:16
 msgid "I key: Start"
-msgstr "I키: 스타트 버턴"
+msgstr "I키: 스타트 버튼"
 
 #: ..\intro_lookup_table.py:17
 msgid "WASD / Arrow Keys: Move"
@@ -686,6 +686,10 @@ msgstr "{}의 공격!\n"
 #: ..\game.py:448
 msgid "Thy Hit Points decreased by {}.\n"
 msgstr "{}포인트의 대미지를 입었다!\n"
+
+#: ..\game.py:600
+msgid "Controls:\n"
+msgstr "컨트롤:\n"
 
 #: ..\menu.py:56
 msgid "COMMAND"
