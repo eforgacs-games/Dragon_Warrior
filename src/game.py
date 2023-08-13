@@ -691,6 +691,8 @@ class Game:
         self.game_state.pause_all_movement()
         self.last_map = self.current_map
         self.current_map = next_map
+        for character_coordinates, tile_value in self.last_map.character_position_record.items():
+            self.last_map.layout[character_coordinates[0]][character_coordinates[1]] = tile_value
         if not self.allow_save_prompt:
             if self.last_map.identifier == 'TantegelThroneRoom':
                 self.allow_save_prompt = True
