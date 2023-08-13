@@ -73,6 +73,8 @@ enemy will block you. (according to https://gamefaqs.gamespot.com/nes/563408-dra
         cmd_menu.show_line_in_dialog_box(_("But was blocked in front.").format(enemy.name), add_quotes=False,
                                          hide_arrow=True, disable_sound=True)
         cmd_menu.game.enemy_attack(enemy)
+        if player.current_hp <= 0:
+            player.is_dead = True
         return False
     else:
         return True
@@ -161,9 +163,13 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
     if player.level + 1 < 30 and \
             player.total_experience >= levels_list[player.level + 1]['total_exp']:
         play_sound(improvement_sfx)
-        cmd_menu.show_line_in_dialog_box("Courage and wit have served thee well.\n"
-                                         "Thou hast been promoted to the next level.\n", add_quotes=False,
-                                         disable_sound=True)
+        time.wait(2000)
+        if config['LANGUAGE'] == 'English':
+            cmd_menu.show_line_in_dialog_box("Courage and wit have served thee well.\n"
+                                             "Thou hast been promoted to the next level.\n", add_quotes=False,
+                                             disable_sound=True)
+        elif config['LANGUAGE'] == 'Korean':
+            cmd_menu.show_line_in_dialog_box(f"{player.name}은 {player.level + 1}레벨로 올랐다!")
         old_power = player.strength
         old_agility = player.agility
         old_max_hp = player.max_hp
@@ -180,19 +186,19 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
             mixer.music.play(-1)
 
         if player.strength > old_power:
-            cmd_menu.show_line_in_dialog_box(f"Thy power increases by {player.strength - old_power}.\n",
+            cmd_menu.show_line_in_dialog_box(_("Thy power increases by {}.\n").format(player.strength - old_power),
                                              add_quotes=False, disable_sound=True)
         if player.agility > old_agility:
             cmd_menu.show_line_in_dialog_box(
-                f"Thy Response Speed increases by {player.agility - old_agility}.\n", add_quotes=False,
+                _("Thy Response Speed increases by {}.\n").format(player.agility - old_agility), add_quotes=False,
                 disable_sound=True)
         if player.max_hp > old_max_hp:
             cmd_menu.show_line_in_dialog_box(
-                f"Thy Maximum Hit Points increase by {player.max_hp - old_max_hp}.\n", add_quotes=False,
+                _("Thy Maximum Hit Points increase by {}.\n").format(player.max_hp - old_max_hp), add_quotes=False,
                 disable_sound=True)
         if player.max_mp > old_max_mp:
             cmd_menu.show_line_in_dialog_box(
-                f"Thy Maximum Magic Points increase by {player.max_mp - old_max_mp}.\n", add_quotes=False,
+                _("Thy Maximum Magic Points increase by {}.\n").format(player.max_mp - old_max_mp), add_quotes=False,
                 disable_sound=True)
         if len(player.spells) > len(old_spells):
             cmd_menu.show_line_in_dialog_box("Thou hast learned a new spell.\n", add_quotes=False,
