@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
     K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, SCALED, \
-    USEREVENT
+    USEREVENT, K_RETURN
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -595,6 +595,7 @@ class Game:
         # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
         #     self.scale = self.scale + 1
         self.handle_help_button(current_keydown_event)
+        self.handle_enter_key(current_keydown_event)
         self.handle_fps_changes(current_keydown_event)
 
     def handle_help_button(self, keydown_event):
@@ -629,6 +630,15 @@ class Game:
                 self.game_state.pause_all_movement()
                 self.paused = True
             print("I key pressed (Start button).")
+
+    def handle_enter_key(self, keydown_event):
+        if keydown_event.key == K_RETURN:
+            if self.player.current_tile == 'TREASURE_BOX':
+                self.cmd_menu.take()
+            elif self.player.next_tile_id == 'DOOR':
+                self.cmd_menu.door()
+            elif self.cmd_menu.check_across_from_npc():
+                self.cmd_menu.talk()
 
     @staticmethod
     def handle_select_button(keydown_event):

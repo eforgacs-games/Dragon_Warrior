@@ -4,7 +4,7 @@ from collections import Counter
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN, Rect, event, K_ESCAPE, K_RETURN, K_k, K_j, K_UP, K_DOWN, K_w, K_s, \
+from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, \
     USEREVENT, time
 from pygame.sprite import Group
 from pygame.time import get_ticks
@@ -428,11 +428,8 @@ class CommandMenu(Menu):
         # dialog = Dialog(player=self.player)
 
         # for now, implementing using print statements. will be useful for debugging as well.
-        character_coordinates = [(character_dict['character'].row, character_dict['character'].column) for
-                                 character_dict in self.characters.values()]
-        if any(c in character_coordinates for c in [self.player.next_coordinates]) or \
-                any(c in character_coordinates for c in
-                    [self.player.next_next_coordinates]) and self.player.next_tile_id == 'WOOD':
+        across_from_npc = self.check_across_from_npc()
+        if across_from_npc:
             for character_identifier, character_dict in self.characters.items():
                 if (character_dict['character'].row,
                     character_dict['character'].column) == self.player.next_coordinates or self.npc_is_across_counter(
@@ -451,6 +448,14 @@ class CommandMenu(Menu):
 
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
+
+    def check_across_from_npc(self):
+        character_coordinates = [(character_dict['character'].row, character_dict['character'].column) for
+                                 character_dict in self.characters.values()]
+        across_from_npc = any(c in character_coordinates for c in [self.player.next_coordinates]) or any(
+            c in character_coordinates for c in
+            [self.player.next_next_coordinates]) and self.player.next_tile_id == 'WOOD'
+        return across_from_npc
 
     def status(self) -> None:
         """
@@ -685,15 +690,19 @@ class CommandMenu(Menu):
         play_sound(menu_button_sfx)
         # open a window
         if self.player.current_tile == 'TREASURE_BOX':
-            treasure_info = treasure[self.map_name][(self.player.row, self.player.column)]
-            item_name = treasure_info['item']
-            if item_name:
-                if item_name == 'GOLD':
-                    self.take_gold(treasure_info)
+            treasure_info = treasure[self.map_name].get((self.player.row, self.player.column))
+            if treasure_info:
+                item_name = treasure_info['item']
+                if item_name:
+                    if item_name == 'GOLD':
+                        self.take_gold(treasure_info)
+                    else:
+                        self.take_item(item_name)
                 else:
-                    self.take_item(item_name)
+                    self.show_text_in_dialog_box("Unfortunately, it is empty.", skip_text=self.skip_text)
             else:
-                self.show_text_in_dialog_box("Unfortunately, it is empty.", skip_text=self.skip_text)
+                pass
+
         #     take it and update inventory accordingly
         # elif there is a hidden item
         # take the hidden item
