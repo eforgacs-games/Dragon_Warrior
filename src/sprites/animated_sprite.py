@@ -37,6 +37,7 @@ class AnimatedSprite(BaseSprite):
             if self.current_frame > max_frame:
                 self.current_frame = 0
         if self.direction_value in self.images_map.keys():
+            # have gotten an IndexError: list index out of range here
             self.image = self.images_map[self.direction_value][self.current_frame]
         self.dirty = 1
 
