@@ -289,3 +289,17 @@ class Dragonlord2(Enemy):
     def __init__(self):
         super().__init__(hp=130, attack=140, defense=200, speed=90, xp=0, gold=0, spells=("FIREBREATH",))
         self.name = "Dragonlord 2"
+
+
+# Group 1: #00 (Slime) - #19 (Druinlord)
+# Group 2: #20 (Drollmagi) - #29 (Werewolf)
+# Group 3: #30 (Green Dragon) - #34 (Blue Dragon)
+# Group 4: #35 (Stoneman) - #39 (Dragonlord second form)
+
+enemy_groups = {
+    1: ["Slime", "Red Slime", "Drakee", "Ghost", "Magician", "Magidrakee", "Scorpion", "Druin", "Poltergeist", "Droll", "Drakeema", "Skeleton",
+        "Warlock", "Metal Scorpion", "Wolf", "Wraith", "MetalSlime", "Specter", "Wolflord", "Druinlord"],
+    2: ["Drollmagi", "Wyvern", "Rogue Scorpion", "Wraith Knight", "Golem", "Goldman", "Knight", "Magiwyvern", "Demon Knight", "Werewolf"],
+    3: ["Green Dragon", "Starwyvern", "Wizard", "Axe Knight", "Blue Dragon"],
+    4: ["Stoneman", "Armored Knight", "Red Dragon", "Dragonlord", "Dragonlord2"]
+}
