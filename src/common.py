@@ -4,7 +4,7 @@ import os
 from enum import IntEnum
 from os.path import join, sep, exists, dirname, realpath
 
-from pygame import Surface, image, transform, mixer, font
+from pygame import Surface, image, transform, mixer, font, K_RETURN, K_i, K_k, K_ESCAPE, K_j
 from pygame.time import get_ticks
 
 from src.config import dev_config
@@ -406,3 +406,7 @@ def set_window_background(black_box, background_path, color=WHITE):
             # image_pixel_array.replace(WHITE, RED)
     background_image = transform.scale(background_image, black_box.get_size())
     black_box.blit(background_image, black_box.get_rect()) if not config['NO_BLIT'] else None
+
+
+accept_keys = (K_RETURN, K_i, K_k)
+reject_keys = (K_ESCAPE, K_j)

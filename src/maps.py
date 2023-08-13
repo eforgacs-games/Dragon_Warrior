@@ -371,7 +371,8 @@ class TantegelCourtyard(DragonWarriorMap):
     def __init__(self):
         super().__init__(MapLayouts().tantegel_courtyard)
         self.create_town_gates(
-            # north_gate=warp_line((6, 6), (6, 35)),
+            # does the north gate change later on?
+            north_gate=warp_line((6, 6), (6, 35)),
             west_gate=warp_line((6, 6), (37, 6)),
             east_gate=warp_line((6, 37), (37, 37)),
             south_gate=warp_line((37, 9), (37, 26)))

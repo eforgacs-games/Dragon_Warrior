@@ -14,7 +14,7 @@ from data.text.dialog_lookup_table import DialogLookup, set_gettext_language
 from src.common import BLACK, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
     get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, \
     open_door_sfx, \
-    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx
+    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx, accept_keys, reject_keys
 from src.config import SCALE
 from src.items import treasure
 from src.maps_functions import get_center_point
@@ -362,8 +362,8 @@ class CommandMenu(Menu):
         if not self.current_map.is_dark:
             self.show_text_in_dialog_box(("A torch can be used only in dark places.",), skip_text=self.skip_text)
         else:
-            if self.game.radiant_active:
-                self.game.radiant_active = False
+            if self.game.game_state.radiant_active:
+                self.game.game_state.radiant_active = False
             self.game.torch_active = True
             play_sound(torch_sfx)
             self.player.inventory.remove("Torch")
@@ -490,7 +490,7 @@ class CommandMenu(Menu):
         while show_status:
             for current_event in event.get():
                 if current_event.type == KEYDOWN:
-                    if current_event.key in (K_ESCAPE, K_RETURN, K_k, K_j):
+                    if current_event.key in accept_keys + reject_keys:
                         show_status = False
         self.window_drop_up_effect(4, 3, 10, 11)
         # print(f"""
@@ -632,9 +632,9 @@ class CommandMenu(Menu):
             display.update((9 * tile_size, 3 * tile_size, 6 * tile_size, (len(list_counter) + 1) * tile_size))
             for current_event in event.get():
                 if any([current_event.type == KEYDOWN]):
-                    if current_event.key in (K_ESCAPE, K_j):
+                    if current_event.key in reject_keys:
                         item_menu_displayed = False
-                    elif current_event.key in (K_RETURN, K_k):
+                    elif current_event.key in accept_keys:
                         if menu_name == 'spells':
                             spell_function, spell_mp_cost = function_dict[currently_selected_item]
                             if self.player.current_mp < spell_mp_cost:
