@@ -643,7 +643,7 @@ class CommandMenu(Menu):
                         if menu_name == 'spells':
                             spell_function, spell_mp_cost = function_dict[currently_selected_item]
                             if self.player.current_mp < spell_mp_cost:
-                                self.show_text_in_dialog_box("Thy MP is too low.", skip_text=self.skip_text)
+                                self.show_text_in_dialog_box(self._("Thy MP is too low."), skip_text=self.skip_text)
                             else:
                                 self.show_text_in_dialog_box(
                                     (self._("{} chanted the spell of {}.").format(self.player.name,
@@ -687,12 +687,12 @@ class CommandMenu(Menu):
         Take an item.
         :return: None
         """
-        play_sound(menu_button_sfx)
         # open a window
         if self.player.current_tile == 'TREASURE_BOX':
             treasure_info = treasure[self.map_name].get((self.player.row, self.player.column))
             if treasure_info:
                 item_name = treasure_info['item']
+                play_sound(menu_button_sfx)
                 if item_name:
                     if item_name == 'GOLD':
                         self.take_gold(treasure_info)
