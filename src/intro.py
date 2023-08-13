@@ -9,7 +9,7 @@ from pygame.transform import scale
 from data.text.intro_lookup_table import push_start, controls
 from src.common import convert_to_frames, INTRO_BANNER_WITH_DRAGON_PATH, ORANGE, PINK, SMB_FONT_PATH, \
     convert_to_milliseconds, BLACK, INTRO_BANNER_PATH, \
-    convert_to_frames_since_start_time, IMAGES_DIR
+    convert_to_frames_since_start_time, IMAGES_DIR, accept_keys
 from src.text import draw_text
 from src.visual_effects import fade
 
@@ -86,7 +86,7 @@ class Intro:
                     quit()
                     sys.exit()
                 elif current_event.type == KEYDOWN:
-                    if current_event.key in (K_i, K_k):
+                    if current_event.key in accept_keys:
                         waiting = False
             if convert_to_frames_since_start_time(start_time) >= 620:  # intro banner with text displays 620 frames in
                 waiting = False
@@ -109,7 +109,7 @@ class Intro:
                     quit()
                     sys.exit()
                 elif current_event.type == KEYDOWN:
-                    if current_event.key in (K_i, K_k):
+                    if current_event.key in accept_keys:
                         intro_banner_with_text_enabled = False
             display.flip()
         fade(fade_out=True, screen=screen, config=config)

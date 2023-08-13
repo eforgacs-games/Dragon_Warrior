@@ -2,13 +2,13 @@ import gettext
 import os
 from functools import partial
 
-from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, K_RETURN, K_j, Rect
+from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, K_RETURN, K_j, Rect, K_ESCAPE
 from pygame.event import get, pump
 from pygame.time import get_ticks
 
 from data.text.dialog import confirmation_prompt
 from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, \
-    create_window, WHITE
+    create_window, WHITE, reject_keys, accept_keys
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import brecconary_weapons_store_inventory
@@ -277,10 +277,10 @@ class DialogLookup:
                     elif current_event.key in (K_UP, K_w) and current_item_index > 0:
                         current_item_index -= 1
                         start_time = get_ticks()
-                    elif current_event.key == K_j:
+                    elif current_event.key in reject_keys:
                         self.command_menu.show_line_in_dialog_box(_("Please, come again."), hide_arrow=True)
                         selecting = False
-                    elif current_event.key in (K_RETURN, K_k):
+                    elif current_event.key in accept_keys:
                         selected_item = current_item_name
             if selected_item:
                 create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen, color)

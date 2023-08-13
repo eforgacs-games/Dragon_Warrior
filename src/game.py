@@ -1,9 +1,9 @@
 import random
 from typing import List, Tuple
 
-from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_j, K_k, K_s, \
+from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
     K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, SCALED, \
-    K_RETURN, USEREVENT
+    USEREVENT
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -24,7 +24,8 @@ from src.common import BLACK, Direction, ICON_PATH, intro_overture, is_facing_la
     ARMED_HERO_WITH_SHIELD_PATH, \
     UNARMED_HERO_WITH_SHIELD_PATH, WHITE, battle_music, attack_sfx, hit_sfx, BATTLE_MENU_STATIC_PATH, \
     BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
-    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, prepare_attack_sfx, receive_damage_2_sfx, create_window
+    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, prepare_attack_sfx, receive_damage_2_sfx, create_window, accept_keys, \
+    reject_keys
 from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config import dev_config
 from src.drawer import Drawer
@@ -359,15 +360,16 @@ class Game:
         height = 3
         tile_size = self.game_state.config["TILE_SIZE"]
         selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
-        battle_window_rect = blink_switch(self.screen, selected_image, BATTLE_MENU_STATIC_PATH, x, y, width, height, tile_size, self.show_arrow)
+        battle_window_rect = blink_switch(self.screen, selected_image, BATTLE_MENU_STATIC_PATH, x, y, width, height,
+                                          tile_size, self.show_arrow, color=self.color)
         current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
         selected_executed_option = None
         for current_event in event.get():
             if current_event.type == KEYDOWN:
-                if current_event.key in (K_RETURN, K_i, K_k):
+                if current_event.key in accept_keys:
                     play_sound(menu_button_sfx)
                     selected_executed_option = current_selection
-                elif current_event.key == K_j:
+                elif current_event.key in reject_keys:
                     break
                 elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
                     self.battle_menu_row = 1 - self.battle_menu_row
@@ -413,7 +415,7 @@ class Game:
         else:
             play_sound(hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
-                self._("The {}'s Hit Points have been reduced by {}.\n").format(enemy.name, attack_damage),
+                self._("The {}'s Hit Points have been reduced by {}.\n").format(self._(enemy.name), attack_damage),
                 add_quotes=False,
                 disable_sound=True, hide_arrow=True)
             enemy.hp -= attack_damage
@@ -422,7 +424,7 @@ class Game:
             return
         else:
             play_sound(prepare_attack_sfx)
-            self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(enemy.name),
+            self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(self._(enemy.name)),
                                                   add_quotes=False, disable_sound=True, hide_arrow=True)
             # (EnemyAttack - HeroAgility / 2) / 4,
             #
@@ -597,11 +599,13 @@ class Game:
 
     def handle_help_button(self, keydown_event):
         if keydown_event.key == K_F1:
-            self.cmd_menu.show_text_in_dialog_box(f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
+            self.cmd_menu.show_text_in_dialog_box(
+                self._("Controls:\n") + convert_list_to_newline_separated_string(controls))
 
     def handle_b_button(self, keydown_event):
-        if keydown_event.key == K_j:
+        if keydown_event.key in reject_keys:
             # B button
+            # using reject_keys adds ESC as an option to unlaunch the command menu
             self.unlaunch_menu(self.cmd_menu)
             # print("J key pressed (B button).")
 
