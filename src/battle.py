@@ -5,7 +5,7 @@ from pygame.transform import scale
 
 from data.text.dialog_lookup_table import set_gettext_language
 from src.common import BATTLE_BACKGROUND_PATH, play_sound, stairs_down_sfx, missed_sfx, missed_2_sfx, \
-    excellent_move_sfx, victory_sfx, improvement_sfx, BLACK, config
+    excellent_move_sfx, victory_sfx, improvement_sfx, BLACK, config, menu_button_sfx
 from src.enemy import enemy_groups, Enemy
 from src.menu import CommandMenu
 from src.player.player import Player
@@ -119,11 +119,18 @@ def calculate_attack_damage(cmd_menu, player, enemy):
     return round(attack_damage)
 
 
-def battle_spell(cmd_menu, player):
-    cmd_menu.show_line_in_dialog_box(_("{} cannot yet use the spell.").format(player.name) + "\n" +
-                                     _("Command?\n"), add_quotes=False,
-                                     hide_arrow=True,
-                                     disable_sound=True, skip_text=True)
+def battle_spell(cmd_menu: CommandMenu, player: Player):
+    play_sound(menu_button_sfx)
+    # the implementation of this will vary upon which spell is being cast.
+    if not player.spells:
+        cmd_menu.show_text_in_dialog_box(_("{} cannot yet use the spell.").format(player.name),
+                                         skip_text=cmd_menu.skip_text)
+    else:
+        cmd_menu.display_item_menu('spells')
+    # cmd_menu.show_line_in_dialog_box(_("{} cannot yet use the spell.").format(player.name) + "\n" +
+    #                                  _("Command?\n"), add_quotes=False,
+    #                                  hide_arrow=True,
+    #                                  disable_sound=True, skip_text=True)
 
 
 def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_map, enemy):
