@@ -388,7 +388,7 @@ class TantegelCourtyard(DragonWarriorMap):
         self.set_town_to_overworld_warps()
         self.initial_coordinates = (14, 14)
         self.music_file_path = tantegel_castle_courtyard_music
-        self.roaming_character_list = ['MAN_2', 'GUARD_3', 'WOMAN_2']
+        self.roaming_character_list = ['MAN_2', 'GUARD_3', 'WOMAN_2', 'MERCHANT_2', 'MERCHANT_3']
         self.custom_underlying_tiles = {
             'WOMAN': 'GRASS',
             'WOMAN_2': 'GRASS'

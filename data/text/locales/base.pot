@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-13 22:24+0200\n"
+"POT-Creation-Date: 2023-08-13 22:56+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -506,6 +506,25 @@ msgstr "{} 나타났다!\n"
 msgid "Command?\n"
 msgstr "어떻게 하겠나?\n"
 
+#: ..\battle.py:187
+msgid "Thy power increases by {}.\n"
+msgstr "힘이 {}포인트 올랐다!\n"
+
+# this is probably how "response speed" is translated, need to verify this
+# msgid "Thy agility increases by {}.\n"
+# msgstr "민첩성이 {}포인트 올랐다!\n"
+#: ..\battle.py:191
+msgid "Thy Response Speed increases by {}.\n"
+msgstr "반응 속도가 {}포인트 올랐다!\n"
+
+#: ..\battle.py:195
+msgid "Thy Maximum Hit Points increase by {}.\n"
+msgstr "최대 HP가 {}포인트 올랐다!\n"
+
+#: ..\battle.py:199
+msgid "Thy Maximum Magic Points increase by {}.\n"
+msgstr "최대 MP가 {}포인트 올랐다!\n"
+
 #: ..\battle.py:59
 msgid "{} started to run away.\n"
 msgstr "{}은 도망쳤다!\n"
@@ -826,6 +845,10 @@ msgstr "{}는 아직 주문을 사용할 수 없다."
 #: ..\menu.py:557
 msgid "Nothing of use has yet been given to thee."
 msgstr "도구를 가지고 있지 않다."
+
+#: ..\menu.py:646
+msgid "Thy MP is too low."
+msgstr "MP가 부족한 것 같다."
 
 #: ..\menu.py:624
 msgid "{} chanted the spell of {}."
