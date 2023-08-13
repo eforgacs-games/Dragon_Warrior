@@ -56,7 +56,7 @@ def battle_background_image_effect(tile_size, screen, is_dark):
 
 def battle_run(cmd_menu, player):
     play_sound(stairs_down_sfx)
-    cmd_menu.show_line_in_dialog_box(f"{player.name} started to run away.\n", add_quotes=False,
+    cmd_menu.show_line_in_dialog_box(_("{} started to run away.\n").format(player.name), add_quotes=False,
                                      hide_arrow=True, disable_sound=True)
 
 
