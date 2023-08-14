@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-13 22:56+0200\n"
+"POT-Creation-Date: 2023-08-14 21:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -54,6 +54,18 @@ msgstr "가죽 옷"
 #: .\dialog_lookup_table.py:289
 msgid "Small Shield"
 msgstr "가죽 방패"
+
+#: .\dialog_lookup_table.py:289
+msgid "Hand Axe"
+msgstr "쇠도끼"
+
+#: .\dialog_lookup_table.py:289
+msgid "Half Plate"
+msgstr "철 갑옷"
+
+#: .\dialog_lookup_table.py:289
+msgid "Full Plate"
+msgstr "강철 갑옷"
 
 #: .\dialog_lookup_table.py:32
 msgid "Thou art dead."

@@ -17,7 +17,7 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import prod_config
+from src.config import prod_config, dev_config
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
@@ -106,19 +106,19 @@ class Game:
         # self.current_map can be changed to other maps for development purposes
 
         self.current_map = maps.TantegelThroneRoom(config)
-        # self.current_map = maps.TantegelCourtyard()
-        # self.current_map = maps.Alefgard()
+        # self.current_map = maps.TantegelCourtyard(config)
+        # self.current_map = maps.Alefgard(config)
 
         # towns
-        # self.current_map = maps.Brecconary()
-        # self.current_map = maps.Garinham()
-        # self.current_map = maps.Kol()
-        # self.current_map = maps.Rimuldar()
-        # self.current_map = maps.Hauksness()
-        # self.current_map = maps.Cantlin()
+        # self.current_map = maps.Brecconary(config)
+        # self.current_map = maps.Garinham(config)
+        # self.current_map = maps.Kol(config)
+        # self.current_map = maps.Rimuldar(config)
+        # self.current_map = maps.Hauksness(config)
+        # self.current_map = maps.Cantlin(config)
 
-        # self.current_map = maps.CharlockB1()
-        # self.current_map = maps.SwampCave()
+        # self.current_map = maps.CharlockB1(config)
+        # self.current_map = maps.SwampCave(config)
 
         self.set_big_map()
 
@@ -127,9 +127,10 @@ class Game:
         self.player = Player(center_point=None,
                              images=self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
                              current_map=self.current_map, god_mode=self.game_state.config['GOD_MODE'])
+        self.player.restore_hp()
         self.tile_size = self.game_state.config["TILE_SIZE"]
         self.current_map.load_map(self.player, None, self.tile_size)
-        self.color = RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
+        self.color = self.get_current_color()
 
         # Good for debugging,
         # and will be useful later when the player's level increases and the stats need to be increased to match
@@ -156,7 +157,6 @@ class Game:
         self.events = get()
 
         display.set_icon(image.load(self.directories.ICON_PATH))
-        self.player.restore_hp()
         self.allow_save_prompt = False
         # pg.event.set_allowed([pg.QUIT])
 
@@ -463,7 +463,7 @@ class Game:
     def receive_damage(self, attack_damage):
         self.sound.play_sound(self.directories.receive_damage_2_sfx)
         self.player.current_hp -= attack_damage
-        self.color = RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
+        self.color = self.cmd_menu.color = self.get_current_color()
         if self.player.current_hp < 0:
             self.player.current_hp = 0
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
@@ -471,6 +471,9 @@ class Game:
         self.cmd_menu.show_line_in_dialog_box(self._("Thy Hit Points decreased by {}.\n").format(attack_damage),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
+
+    def get_current_color(self):
+        return RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
 
     def handle_near_tantegel_fight_modifier(self):
         if self.player.current_tile == 'HILLS':
@@ -649,10 +652,12 @@ class Game:
     def handle_enter_key(self, keydown_event):
         if keydown_event.key == K_RETURN:
             if self.player.current_tile == 'TREASURE_BOX':
+                self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
                 self.cmd_menu.take()
             elif self.player.next_tile_id == 'DOOR':
                 self.cmd_menu.door()
             elif self.cmd_menu.check_across_from_npc():
+                self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
                 self.cmd_menu.talk()
 
     @staticmethod
@@ -706,15 +711,15 @@ class Game:
         if self.last_map is not None:
             came_from_throne_room = self.last_map.identifier == 'TantegelThroneRoom'
             came_from_courtyard = self.last_map.identifier == 'TantegelCourtyard'
-            came_from_throne_room_to_courtyard = came_from_throne_room and self.current_map.identifier == 'TantegelCourtyard'
-            came_from_courtyard_to_throne_room = came_from_courtyard and self.current_map.identifier == 'TantegelThroneRoom'
-            moving_within_tantegel_castle = came_from_throne_room_to_courtyard or came_from_courtyard_to_throne_room
         else:
             came_from_throne_room = False
-            moving_within_tantegel_castle = False
+            came_from_courtyard = False
         self.game_state.pause_all_movement()
         self.last_map = self.current_map
         self.current_map = next_map
+        came_from_throne_room_to_courtyard = came_from_throne_room and self.current_map.identifier == 'TantegelCourtyard'
+        came_from_courtyard_to_throne_room = came_from_courtyard and self.current_map.identifier == 'TantegelThroneRoom'
+        moving_within_tantegel_castle = came_from_throne_room_to_courtyard or came_from_courtyard_to_throne_room
         for character_coordinates, tile_value in self.last_map.character_position_record.items():
             self.last_map.layout[character_coordinates[0]][character_coordinates[1]] = tile_value
         if not self.allow_save_prompt:
@@ -758,7 +763,7 @@ class Game:
         self.game_state.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
         self.cmd_menu = CommandMenu(self)
-        if not moving_within_tantegel_castle and not self.config['ORCHESTRA_MUSIC_ENABLED']:
+        if not (moving_within_tantegel_castle and self.config['ORCHESTRA_MUSIC_ENABLED']):
             self.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             # really not sure if the 1 and 0 here are supposed to be switched
@@ -1019,8 +1024,8 @@ class Game:
 
 
 def run():
-    game = Game(config=prod_config)
-    # game = Game(config=dev_config)
+    # game = Game(config=prod_config)
+    game = Game(config=dev_config)
     game.main()
 
 
