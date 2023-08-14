@@ -596,7 +596,7 @@ class Game:
                             self.sound.play_sound(self.directories.stairs_down_sfx)
                         case 'up':
                             self.sound.play_sound(self.directories.stairs_up_sfx)
-                    next_map = map_lookup[staircase_dict['map']]()
+                    next_map = map_lookup[staircase_dict['map']](self.config)
                     self.change_map(next_map)
                     break
 
@@ -703,20 +703,30 @@ class Game:
         :param next_map: The next map to be loaded.
         :return: None
         """
+        if self.last_map is not None:
+            came_from_throne_room = self.last_map.identifier == 'TantegelThroneRoom'
+            came_from_courtyard = self.last_map.identifier == 'TantegelCourtyard'
+            came_from_throne_room_to_courtyard = came_from_throne_room and self.current_map.identifier == 'TantegelCourtyard'
+            came_from_courtyard_to_throne_room = came_from_courtyard and self.current_map.identifier == 'TantegelThroneRoom'
+            moving_within_tantegel_castle = came_from_throne_room_to_courtyard or came_from_courtyard_to_throne_room
+        else:
+            came_from_throne_room = False
+            moving_within_tantegel_castle = False
         self.game_state.pause_all_movement()
         self.last_map = self.current_map
         self.current_map = next_map
         for character_coordinates, tile_value in self.last_map.character_position_record.items():
             self.last_map.layout[character_coordinates[0]][character_coordinates[1]] = tile_value
         if not self.allow_save_prompt:
-            if self.last_map.identifier == 'TantegelThroneRoom':
+            if came_from_throne_room:
                 self.allow_save_prompt = True
         self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         self.set_big_map()
         self.set_roaming_character_positions()
         if self.music_enabled:
-            mixer.music.stop()
+            if not moving_within_tantegel_castle and not self.config['ORCHESTRA_MUSIC_ENABLED']:
+                mixer.music.stop()
         if not self.player.is_dead:
             current_map_staircase_dict = self.last_map.staircases[(self.player.row, self.player.column)]
             destination_coordinates = current_map_staircase_dict.get('destination_coordinates')
@@ -748,7 +758,8 @@ class Game:
         self.game_state.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
         self.cmd_menu = CommandMenu(self)
-        self.load_and_play_music(self.current_map.music_file_path)
+        if not moving_within_tantegel_castle and not self.config['ORCHESTRA_MUSIC_ENABLED']:
+            self.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             # really not sure if the 1 and 0 here are supposed to be switched
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]), self.tile_size)
