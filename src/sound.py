@@ -1,6 +1,6 @@
 from os.path import sep
 
-from pygame import time, mixer
+from pygame import mixer
 
 from src.calculation import Calculation
 from src.directories import Directories
@@ -25,17 +25,6 @@ class Sound:
             sound = _sound_library.get(path)
             sound = retrieve_audio_resource(_sound_library, path, sound)
             sound.play()
-
-    def bump(self, character):
-        # this method might be better suited in movement.py
-        if character.identifier == 'HERO':
-            if not character.last_bump_time:
-                character.last_bump_time = time.get_ticks()
-            if time.get_ticks() - character.last_bump_time >= self.calculation.convert_to_milliseconds(15):
-                character.last_bump_time = time.get_ticks()
-                if character.current_tile not in ('BRICK_STAIR_UP', 'BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
-                    self.play_sound(self.directories.bump_sfx)
-        character.bumped = True
 
 
 def retrieve_audio_resource(_sound_library, path, sound):
