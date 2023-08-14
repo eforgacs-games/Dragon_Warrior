@@ -3,15 +3,14 @@ from typing import Tuple, List
 from pygame import surface
 from pygame.transform import scale
 
-from src.common import get_image
-from src.config import SCALE
 
-
-def parse_map_tiles(map_path, tile_size):
-    map_sheet = get_image(map_path).convert()
-    map_tile_sheet = scale(map_sheet, (map_sheet.get_width() * SCALE, map_sheet.get_height() * SCALE))
+def parse_map_tiles(map_path: str, tile_size: int, graphics, configured_scale):
+    map_sheet = graphics.get_image(map_path).convert()
+    map_tile_sheet = scale(map_sheet,
+                           (map_sheet.get_width() * configured_scale, map_sheet.get_height() * configured_scale))
     width, height = map_tile_sheet.get_size()
-    return [[map_tile_sheet.subsurface((x * tile_size, y * tile_size, tile_size, tile_size)) for y in range(0, height // tile_size)]
+    return [[map_tile_sheet.subsurface((x * tile_size, y * tile_size, tile_size, tile_size)) for y in
+             range(0, height // tile_size)]
             for x in range(0, width // tile_size)]
 
 

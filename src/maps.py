@@ -5,22 +5,16 @@ from abc import ABC
 from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
 
-from src.common import Direction, tantegel_castle_throne_room_music, KING_LORIK_PATH, get_image, \
-    GUARD_PATH, MAN_PATH, tantegel_castle_courtyard_music, WOMAN_PATH, WISE_MAN_PATH, \
-    SOLDIER_PATH, MERCHANT_PATH, PRINCESS_GWAELIN_PATH, DRAGONLORD_PATH, UNARMED_HERO_PATH, MAP_TILES_PATH, \
-    overworld_music, village_music, dungeon_floor_1_music, dungeon_floor_2_music, dungeon_floor_3_music, \
-    dungeon_floor_4_music, dungeon_floor_5_music, \
-    dungeon_floor_6_music, dungeon_floor_7_music, dungeon_floor_8_music
-from src.config import SCALE, dev_config
+from src.common import Graphics
+from src.config import SCALE
+from src.direction import Direction
+from src.directories import Directories
 from src.map_layouts import MapLayouts
 from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
-
-# TODO: Replace with game config
-config = dev_config
 
 all_impassable_tiles = (
     'ROOF', 'WALL', 'WOOD', 'DOOR', 'WEAPON_SIGN', 'INN_SIGN', 'MOUNTAINS', 'WATER', 'BOTTOM_COAST',
@@ -30,8 +24,10 @@ all_impassable_tiles = (
 
 
 class DragonWarriorMap:
-    def __init__(self, layout, last_map=None):
-
+    def __init__(self, layout, config, last_map=None):
+        self.config = config
+        self.directories = Directories(config)
+        self.graphics = Graphics(config)
         self.is_dark = None
         self.music_file_path = None
         self.destination_coordinates = None
@@ -54,7 +50,10 @@ class DragonWarriorMap:
         self.tiles_in_current_loaded_map = None
         self.layout = layout
         self.center_pt = None
-        self.map_tiles = parse_map_tiles(map_path=MAP_TILES_PATH, tile_size=config['TILE_SIZE'])
+        self.map_tiles = parse_map_tiles(map_path=self.directories.MAP_TILES_PATH,
+                                         tile_size=config['TILE_SIZE'],
+                                         graphics=self.graphics,
+                                         configured_scale=config['SCALE'])
         self.impassable_tiles = all_impassable_tiles
         self.custom_underlying_tiles = {}
         self.character_position_record = {}
@@ -103,16 +102,16 @@ class DragonWarriorMap:
             'BOTTOM_TOP_RIGHT_COAST': {'val': 32}
         }
         self.character_key = {
-            'HERO': {'val': 33, 'path': UNARMED_HERO_PATH},
-            'KING_LORIK': {'val': 34, 'path': KING_LORIK_PATH},
-            'GUARD': {'val': 35, 'path': GUARD_PATH},
-            'MAN': {'val': 36, 'path': MAN_PATH},
-            'WOMAN': {'val': 37, 'path': WOMAN_PATH},
-            'WISE_MAN': {'val': 38, 'path': WISE_MAN_PATH},
-            'SOLDIER': {'val': 39, 'path': SOLDIER_PATH},
-            'MERCHANT': {'val': 40, 'path': MERCHANT_PATH},
-            'PRINCESS_GWAELIN': {'val': 41, 'path': PRINCESS_GWAELIN_PATH},
-            'DRAGONLORD': {'val': 42, 'path': DRAGONLORD_PATH}
+            'HERO': {'val': 33, 'path': self.directories.UNARMED_HERO_PATH},
+            'KING_LORIK': {'val': 34, 'path': self.directories.KING_LORIK_PATH},
+            'GUARD': {'val': 35, 'path': self.directories.GUARD_PATH},
+            'MAN': {'val': 36, 'path': self.directories.MAN_PATH},
+            'WOMAN': {'val': 37, 'path': self.directories.WOMAN_PATH},
+            'WISE_MAN': {'val': 38, 'path': self.directories.WISE_MAN_PATH},
+            'SOLDIER': {'val': 39, 'path': self.directories.SOLDIER_PATH},
+            'MERCHANT': {'val': 40, 'path': self.directories.MERCHANT_PATH},
+            'PRINCESS_GWAELIN': {'val': 41, 'path': self.directories.PRINCESS_GWAELIN_PATH},
+            'DRAGONLORD': {'val': 42, 'path': self.directories.DRAGONLORD_PATH}
         }
         for character, character_dict in self.character_key.items():
             if character in ('KING_LORIK', 'PRINCESS_GWAELIN'):
@@ -170,7 +169,8 @@ class DragonWarriorMap:
         if current_tile == self.character_key['HERO']['val']:
             # will this cause issues with the hero images (holding sword/shield)? time will tell...
             AnimatedSprite.__init__(player, self.center_pt, player.direction_value,
-                                    images=self.scale_sprite_sheet(UNARMED_HERO_PATH), identifier='HERO')
+                                    images=self.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
+                                    identifier='HERO')
             self.map_player(character_dict['underlying_tile'], player, coordinates)
         else:
             character = self.set_identifiers_for_duplicate_characters(character)
@@ -186,15 +186,16 @@ class DragonWarriorMap:
         return character
 
     def scale_sprite_sheet(self, image_path):
-        return parse_animated_sprite_sheet(scale(get_image(image_path), (
-            get_image(image_path).get_width() * self.scale, get_image(image_path).get_height() * self.scale)), config)
+        return parse_animated_sprite_sheet(scale(self.graphics.get_image(image_path), (
+            self.graphics.get_image(image_path).get_width() * self.scale,
+            self.graphics.get_image(image_path).get_height() * self.scale)), self.config)
 
     def map_npc(self, identifier, direction, underlying_tile, image_path, four_sided, coordinates,
                 is_roaming) -> None:
-        sheet = get_image(image_path)
+        sheet = self.graphics.get_image(image_path)
         character_sprites = LayeredDirty()
         sheet = scale(sheet, (sheet.get_width() * self.scale, sheet.get_height() * self.scale))
-        images = parse_animated_sprite_sheet(sheet, config)
+        images = parse_animated_sprite_sheet(sheet, self.config)
         if four_sided:
             if is_roaming:
                 character = RoamingCharacter(self.center_pt, direction, images, identifier)
@@ -209,7 +210,8 @@ class DragonWarriorMap:
             character.row, character.column = coordinates
             self.fixed_characters.append(character)
         character_sprites.add(character)
-        tile_value = self.character_key["_".join(identifier.split("_")[0:-1]) if identifier[-1].isdigit() else identifier][
+        tile_value = \
+        self.character_key["_".join(identifier.split("_")[0:-1]) if identifier[-1].isdigit() else identifier][
             'val']
         self.characters[character.identifier] = {'character': character,
                                                  'character_sprites': character_sprites,
@@ -240,7 +242,6 @@ class DragonWarriorMap:
                                    'tile_value': self.character_key['HERO']['val'],
                                    'coordinates': coordinates}
         self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
-
 
     # @timeit
     def map_floor_tiles(self, column, row) -> None:
@@ -280,7 +281,7 @@ class DragonWarriorMap:
     def set_town_to_overworld_warps(self) -> None:
         """Sets the exit location to the overworld (Alefgard) from within a town"""
         for staircase_dict in self.staircases.values():
-            alefgard_staircases = Alefgard().staircases
+            alefgard_staircases = Alefgard(self.config).staircases
             # TODO(ELF): Probably don't need this extra alefgard_lookup_dict - maybe remove it later
             alefgard_lookup_dict = {}
             for alefgard_coordinates, alefgard_staircase_dict in alefgard_staircases.items():
@@ -336,8 +337,8 @@ class BasementWithoutNPCs(MapWithoutNPCs):
 
 
 class CaveMap(DragonWarriorMap, ABC):
-    def __init__(self, layout):
-        super().__init__(layout)
+    def __init__(self, layout, config):
+        super().__init__(layout, config)
         self.is_dark = True
 
 
@@ -346,13 +347,13 @@ class TantegelThroneRoom(DragonWarriorMap):
     This is the first map in the game, the Tantegel Castle throne room.
     """
 
-    def __init__(self):
-        super().__init__(MapLayouts().tantegel_throne_room)
+    def __init__(self, config):
+        super().__init__(MapLayouts().tantegel_throne_room, config)
 
         self.staircases = {
             (14, 18): {'map': 'TantegelCourtyard', 'destination_coordinates': (14, 14),
                        'direction': Direction.RIGHT.value}}
-        self.music_file_path = tantegel_castle_throne_room_music
+        self.music_file_path = self.directories.tantegel_castle_throne_room_music
         self.assign_stair_directions()
         self.initial_coordinates = (10, 13)
         self.roaming_character_list = ['GUARD']
@@ -373,8 +374,8 @@ class TantegelCourtyard(DragonWarriorMap):
     This is the courtyard of Tantegel Castle.
     """
 
-    def __init__(self):
-        super().__init__(MapLayouts().tantegel_courtyard)
+    def __init__(self, config):
+        super().__init__(MapLayouts().tantegel_courtyard, config)
         self.create_town_gates(
             # does the north gate change later on?
             north_gate=warp_line((6, 6), (6, 35)),
@@ -387,7 +388,7 @@ class TantegelCourtyard(DragonWarriorMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
         self.initial_coordinates = (14, 14)
-        self.music_file_path = tantegel_castle_courtyard_music
+        self.music_file_path = self.directories.tantegel_castle_courtyard_music
         self.roaming_character_list = ['MAN_2', 'GUARD_3', 'WOMAN_2', 'MERCHANT_2', 'MERCHANT_3']
         self.custom_underlying_tiles = {
             'WOMAN': 'GRASS',
@@ -409,9 +410,9 @@ class TantegelCourtyard(DragonWarriorMap):
 
 
 class TantegelCellar(BasementWithNPCs):
-    def __init__(self):
-        super().__init__(MapLayouts().tantegel_underground)
-        self.music_file_path = tantegel_castle_courtyard_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().tantegel_underground, config)
+        self.music_file_path = self.directories.tantegel_castle_courtyard_music
         self.staircases = {(4, 1): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 36)}}
         self.assign_stair_directions()
         self.initial_coordinates = (4, 1)
@@ -423,9 +424,9 @@ class TantegelCellar(BasementWithNPCs):
 class CharlockB1(MapWithoutNPCs):
     """Main entrance to Charlock Castle."""
 
-    def __init__(self):
-        super().__init__(MapLayouts().charlock_b1)
-        self.music_file_path = dungeon_floor_1_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().charlock_b1, config)
+        self.music_file_path = self.directories.dungeon_floor_1_music
         self.create_town_gates(south_gate=(warp_line((26, 15), (26, 18))))
         self.set_town_to_overworld_warps()
         self.staircases[(7, 17)] = {'map': 'CharlockB2', 'destination_coordinates': (3, 12)}  # A
@@ -444,9 +445,9 @@ class CharlockB1(MapWithoutNPCs):
 class CharlockB2(BasementWithoutNPCs, CaveMap):
     """First inner basement in Charlock Castle."""
 
-    def __init__(self):
-        super().__init__(MapLayouts().charlock_b2)
-        self.music_file_path = dungeon_floor_2_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().charlock_b2, config)
+        self.music_file_path = self.directories.dungeon_floor_2_music
         self.staircases = {(3, 12): {'map': 'CharlockB1', 'destination_coordinates': (7, 17)},  # A
                            (7, 5): {'map': 'CharlockB3', 'destination_coordinates': (3, 3)},  # D
                            (17, 5): {'map': 'CharlockB3', 'destination_coordinates': (4, 3)},  # E
@@ -458,9 +459,9 @@ class CharlockB2(BasementWithoutNPCs, CaveMap):
 
 
 class CharlockB3(BasementWithoutNPCs, CaveMap):
-    def __init__(self):
-        super().__init__(MapLayouts().charlock_b3)
-        self.music_file_path = dungeon_floor_3_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().charlock_b3, config)
+        self.music_file_path = self.directories.dungeon_floor_3_music
         self.staircases = {
             (1, 1): {'map': 'CharlockB2'},  # D
             (3, 11): {'map': 'CharlockB2', 'destination_coordinates': (4, 18)},  # F
@@ -476,9 +477,9 @@ class CharlockB3(BasementWithoutNPCs, CaveMap):
 
 
 class CharlockB4(BasementWithoutNPCs, CaveMap):
-    def __init__(self):
-        super().__init__(MapLayouts().charlock_b4)
-        self.music_file_path = dungeon_floor_4_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().charlock_b4, config)
+        self.music_file_path = self.directories.dungeon_floor_4_music
         self.staircases = {
             (3, 10): {'map': 'CharlockB3', 'destination_coordinates': (3, 6)},  # K
             (5, 5): {'map': 'CharlockB3', 'destination_coordinates': (4, 12)},  # L
@@ -493,9 +494,9 @@ class CharlockB4(BasementWithoutNPCs, CaveMap):
 
 
 class CharlockB5(BasementWithoutNPCs, CaveMap):
-    def __init__(self):
-        super().__init__(MapLayouts().charlock_b5)
-        self.music_file_path = dungeon_floor_5_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().charlock_b5, config)
+        self.music_file_path = self.directories.dungeon_floor_5_music
         self.staircases = {
             (4, 11): {'map': 'CharlockB6', 'destination_coordinates': (3, 7)},  # R
             (5, 5): {'map': 'CharlockB6', 'destination_coordinates': (3, 12)},  # Q
@@ -507,9 +508,9 @@ class CharlockB5(BasementWithoutNPCs, CaveMap):
 
 
 class CharlockB6(BasementWithoutNPCs, CaveMap):
-    def __init__(self):
-        super().__init__(MapLayouts().charlock_b6)
-        self.music_file_path = dungeon_floor_6_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().charlock_b6, config)
+        self.music_file_path = self.directories.dungeon_floor_6_music
         self.staircases = {
             (3, 12): {'map': 'CharlockB5', 'destination_coordinates': (5, 5)},  # Q
             (3, 7): {'map': 'CharlockB5', 'destination_coordinates': (4, 11)},  # R
@@ -524,9 +525,9 @@ class CharlockB6(BasementWithoutNPCs, CaveMap):
 class CharlockB7Wide(BasementWithoutNPCs, CaveMap):
     """A wide hallway right before the last level of Charlock Castle."""
 
-    def __init__(self):
-        super().__init__(MapLayouts().charlock_b7_wide)
-        self.music_file_path = dungeon_floor_7_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().charlock_b7_wide, config)
+        self.music_file_path = self.directories.dungeon_floor_7_music
         self.staircases = {
             (5, 3): {'map': 'CharlockB6', 'destination_coordinates': (3, 3)},  # T
             (5, 12): {'map': 'CharlockB8'}  # U
@@ -537,9 +538,9 @@ class CharlockB7Wide(BasementWithoutNPCs, CaveMap):
 class CharlockB7Narrow(BasementWithoutNPCs, CaveMap):
     """A dead end path in Charlock Castle that loops unto itself."""
 
-    def __init__(self):
-        super().__init__(MapLayouts().charlock_b7_narrow)
-        self.music_file_path = dungeon_floor_7_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().charlock_b7_narrow, config)
+        self.music_file_path = self.directories.dungeon_floor_7_music
         self.staircases = {
             (3, 3): {'map': 'CharlockB6', 'destination_coordinates': (8, 8)},
             (3, 12): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)}
@@ -551,9 +552,9 @@ class CharlockB7Narrow(BasementWithoutNPCs, CaveMap):
 class CharlockB8(DragonWarriorMap):
     """Deepest level of Charlock Castle, and location of the Dragonlord."""
 
-    def __init__(self):
-        super().__init__(MapLayouts().charlock_b8)
-        self.music_file_path = dungeon_floor_8_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().charlock_b8, config)
+        self.music_file_path = self.directories.dungeon_floor_8_music
         self.staircases = {(33, 16): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 12)}}
         self.assign_stair_directions()
         self.initial_coordinates = (33, 16)
@@ -573,9 +574,9 @@ class Alefgard(MapWithoutNPCs):
     This is Alefgard, the world by which the player travels between castles, villages, and dungeons.
     """
 
-    def __init__(self):
-        super().__init__(MapLayouts().alefgard)
-        self.music_file_path = overworld_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().alefgard, config)
+        self.music_file_path = self.directories.overworld_music
         self.staircases = {
             # (row, column)
             # castles
@@ -611,13 +612,13 @@ class Alefgard(MapWithoutNPCs):
 
 class Brecconary(DragonWarriorMap):
 
-    def __init__(self):
-        super().__init__(MapLayouts().brecconary)
+    def __init__(self, config):
+        super().__init__(MapLayouts().brecconary, config)
         self.create_town_gates(north_gate=warp_line((7, 23), (7, 26)),
                                east_gate=warp_line((21, 40), (25, 40)),
                                west_gate=warp_line((21, 9), (24, 9)))
         self.set_town_to_overworld_warps()
-        self.music_file_path = village_music
+        self.music_file_path = self.directories.village_music
         self.initial_coordinates = (23, 10)
         self.custom_underlying_tiles = {
             'SOLDIER': 'TREES',
@@ -643,12 +644,12 @@ class Brecconary(DragonWarriorMap):
 
 class Garinham(DragonWarriorMap):
 
-    def __init__(self):
-        super().__init__(MapLayouts().garinham)
+    def __init__(self, config):
+        super().__init__(MapLayouts().garinham, config)
         self.create_town_gates(west_gate=warp_line((13, 8), (15, 8)),
                                east_gate=warp_line((11, 29), (14, 29)))
         self.set_town_to_overworld_warps()
-        self.music_file_path = village_music
+        self.music_file_path = self.directories.village_music
         self.initial_coordinates = (14, 9)
         self.custom_underlying_tiles = {
             'WOMAN': 'TREES',
@@ -674,9 +675,9 @@ class Garinham(DragonWarriorMap):
 
 class Kol(DragonWarriorMap):
 
-    def __init__(self):
-        super().__init__(MapLayouts().kol)
-        self.music_file_path = village_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().kol, config)
+        self.music_file_path = self.directories.village_music
         self.create_town_gates(north_gate=warp_line((7, 8), (7, 33)),
                                east_gate=warp_line((7, 33), (32, 33)),
                                west_gate=warp_line((7, 8), (32, 8)),
@@ -693,7 +694,8 @@ class Kol(DragonWarriorMap):
             'WISE_MAN_2': 'GRASS',
             'WISE_MAN_3': 'SAND'
         }
-        self.roaming_character_list = ['WISE_MAN_2', 'WOMAN_2', 'MAN', 'MAN_2', 'SOLDIER', 'GUARD', 'WISE_MAN_2', 'WISE_MAN_3']
+        self.roaming_character_list = ['WISE_MAN_2', 'WOMAN_2', 'MAN', 'MAN_2', 'SOLDIER', 'GUARD', 'WISE_MAN_2',
+                                       'WISE_MAN_3']
 
     def hero_underlying_tile(self):
         return 'SAND'
@@ -709,14 +711,14 @@ class Kol(DragonWarriorMap):
 
 class Rimuldar(DragonWarriorMap):
 
-    def __init__(self):
-        super().__init__(MapLayouts().rimuldar)
+    def __init__(self, config):
+        super().__init__(MapLayouts().rimuldar, config)
         self.create_town_gates(north_gate=warp_line((6, 0), (6, len(self.layout[0]))),
                                east_gate=warp_line((0, 38), (len(self.layout), 38)),
                                west_gate=warp_line((0, 7), (len(self.layout), 7)),
                                south_gate=warp_line((36, 0), (36, len(self.layout[0]))))
         self.set_town_to_overworld_warps()
-        self.music_file_path = village_music
+        self.music_file_path = self.directories.village_music
         self.initial_coordinates = (22, 37)
         self.custom_underlying_tiles = {
             'MERCHANT': 'GRASS',
@@ -740,9 +742,9 @@ class Rimuldar(DragonWarriorMap):
 
 class Hauksness(MapWithoutNPCs):
 
-    def __init__(self):
-        super().__init__(MapLayouts().hauksness)
-        self.music_file_path = dungeon_floor_4_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().hauksness, config)
+        self.music_file_path = self.directories.dungeon_floor_4_music
         self.create_town_gates(north_gate=warp_line((7, 9), (7, 28)),
                                east_gate=warp_line((0, 29), (len(self.layout), 29)),
                                west_gate=warp_line((0, 8), (len(self.layout), 8)),
@@ -759,9 +761,9 @@ class Hauksness(MapWithoutNPCs):
 
 class Cantlin(DragonWarriorMap):
 
-    def __init__(self):
-        super().__init__(MapLayouts().cantlin)
-        self.music_file_path = village_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().cantlin, config)
+        self.music_file_path = self.directories.village_music
         self.create_town_gates(north_gate=warp_line((7, 0), (7, 29))
                                # west_gate = warp_line((21, 9), (24, 9))
                                # east_gate = warp_line((21, 40), (25, 40))
@@ -790,9 +792,9 @@ class Cantlin(DragonWarriorMap):
 
 
 class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
-    def __init__(self):
-        super().__init__(MapLayouts().erdricks_cave_b1)
-        self.music_file_path = dungeon_floor_1_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().erdricks_cave_b1, config)
+        self.music_file_path = self.directories.dungeon_floor_1_music
         self.staircases = {(3, 3): {'map': 'Alefgard'},
                            (12, 12): {'map': 'ErdricksCaveB2', 'destination_coordinates': (10, 9)}}
         self.assign_stair_directions()
@@ -807,9 +809,9 @@ class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
 
 
 class ErdricksCaveB2(MapWithoutNPCs, CaveMap):
-    def __init__(self):
-        super().__init__(MapLayouts().erdricks_cave_b2)
-        self.music_file_path = dungeon_floor_2_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().erdricks_cave_b2, config)
+        self.music_file_path = self.directories.dungeon_floor_2_music
         self.staircases = {(10, 9): {'map': 'ErdricksCaveB1', 'destination_coordinates': (12, 12)}}
         self.assign_stair_directions()
         self.initial_coordinates = (10, 9)
@@ -822,9 +824,9 @@ class ErdricksCaveB2(MapWithoutNPCs, CaveMap):
 
 
 class SwampCave(CaveMap):
-    def __init__(self):
-        super().__init__(MapLayouts().swamp_cave)
-        self.music_file_path = dungeon_floor_1_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().swamp_cave, config)
+        self.music_file_path = self.directories.dungeon_floor_1_music
         self.staircases = {(6, 4): {'map': 'Alefgard', 'destination_coordinates': (51, 110)},
                            (36, 4): {'map': 'Alefgard', 'destination_coordinates': (56, 110)}}
         self.assign_stair_directions()
@@ -841,9 +843,9 @@ class SwampCave(CaveMap):
 
 
 class MountainCaveB1(MapWithoutNPCs, CaveMap):
-    def __init__(self):
-        super().__init__(MapLayouts().mountain_cave_b1)
-        self.music_file_path = dungeon_floor_1_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().mountain_cave_b1, config)
+        self.music_file_path = self.directories.dungeon_floor_1_music
         self.staircases = {}
         self.set_town_to_overworld_warps()
         self.initial_coordinates = (7, 1)
@@ -856,9 +858,9 @@ class MountainCaveB1(MapWithoutNPCs, CaveMap):
 
 
 class StaffOfRainCave(DragonWarriorMap):
-    def __init__(self):
-        super().__init__(MapLayouts().staff_of_rain_cave)
-        self.music_file_path = tantegel_castle_courtyard_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().staff_of_rain_cave, config)
+        self.music_file_path = self.directories.tantegel_castle_courtyard_music
         self.staircases = {(11, 6): {'map': 'Alefgard'}}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
@@ -875,9 +877,9 @@ class StaffOfRainCave(DragonWarriorMap):
 
 
 class MagicTemple(DragonWarriorMap):
-    def __init__(self):
-        super().__init__(MapLayouts().magic_temple)
-        self.music_file_path = tantegel_castle_courtyard_music
+    def __init__(self, config):
+        super().__init__(MapLayouts().magic_temple, config)
+        self.music_file_path = self.directories.tantegel_castle_courtyard_music
         self.staircases = {(6, 2): {'map': 'Alefgard'}}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()

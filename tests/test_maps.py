@@ -18,7 +18,7 @@ class TestDragonWarriorMap(TestCase):
     def setUp(self, mock_set_screen) -> None:
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
-        self.dragon_warrior_map = MockMap()
+        self.dragon_warrior_map = MockMap(self.game.config)
 
     def test_get_initial_character_location(self):
         self.assertEqual(self.dragon_warrior_map.get_initial_character_location('HERO'), (0, 0))
@@ -27,7 +27,8 @@ class TestDragonWarriorMap(TestCase):
         for dw_map, map_class in inspect.getmembers(maps, inspect.isclass):
             # excluding non-map classes
             if dw_map not in (
-                    'ABC', 'AnimatedSprite', 'BaseSprite', 'BasementWithNPCs', 'BasementWithoutNPCs', 'CaveMap', 'Direction', 'DragonWarriorMap',
-                    'FixedCharacter', 'Group', 'LayeredDirty', 'MapLayouts', 'MapWithoutNPCs', 'Player', 'RoamingCharacter'):
-                initialized_map_class = map_class()
+                    'ABC', 'AnimatedSprite', 'BaseSprite', 'BasementWithNPCs', 'BasementWithoutNPCs', 'CaveMap',
+                    'Direction', 'Directories', 'DragonWarriorMap', 'FixedCharacter',
+                    'Graphics', 'Group', 'LayeredDirty', 'MapLayouts', 'MapWithoutNPCs', 'Player', 'RoamingCharacter'):
+                initialized_map_class = map_class(self.game.config)
                 self.assertTrue(hasattr(initialized_map_class, 'music_file_path'))

@@ -1,5 +1,4 @@
 import locale
-import sys
 
 SCALE = 2
 LOCALE, CHARACTER_ENCODING = locale.getlocale()
@@ -18,7 +17,7 @@ prod_config = {
     "INITIAL_DIALOG_ENABLED": True,
     "FORCE_BATTLE": False,
     "NO_BATTLES": False,
-    "ORCHESTRA_MUSIC_ENABLED": False,
+    "ORCHESTRA_MUSIC_ENABLED": True,
     "SHOW_FPS": False,
     "LOCALE, CHARACTER_ENCODING": locale.getlocale(),
     "LANGUAGE": LOCALE.split("_")[0],
