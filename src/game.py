@@ -11,9 +11,7 @@ from pygame.time import get_ticks
 
 from data.text.intro_lookup_table import ControlInfo
 from src import maps
-from src.battle import battle_background_image_effect, battle_run, \
-    calculate_enemy_attack_damage, missed_attack, calculate_attack_damage, battle_spell, enemy_defeated, \
-    get_enemy_draws_near_string
+from src.battle import calculate_enemy_attack_damage, Battle
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
@@ -31,7 +29,7 @@ from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu, Menu
 from src.menu_functions import convert_list_to_newline_separated_string, NameSelection
-from src.movement import bump_and_reset
+from src.movement import Movement
 from src.player.player import Player
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
@@ -48,6 +46,7 @@ class Game:
         self.graphics = Graphics(config)
         self.directories = Directories(config)
         self.calculation = Calculation(config)
+        self.movement = Movement(self.config)
         self.battle_menu_row = 0
         self.battle_menu_column = 0
         self.show_arrow = True
@@ -334,9 +333,10 @@ class Game:
         if self.music_enabled:
             mixer.music.load(self.directories.battle_music)
             mixer.music.play(-1)
-        battle_background_image_effect(self.tile_size, self.screen, self.current_map.is_dark)
+        current_battle = Battle(self.config)
+        current_battle.battle_background_image_effect(self.tile_size, self.screen, self.current_map.is_dark)
         self.drawer.show_enemy_image(self.screen, enemy_name)
-        enemy_draws_near_string = get_enemy_draws_near_string(enemy_name)
+        enemy_draws_near_string = current_battle.get_enemy_draws_near_string(enemy_name)
         self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string, add_quotes=False, skip_text=True,
                                               hide_arrow=True, disable_sound=True)
         self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
@@ -352,24 +352,25 @@ class Game:
              'Item': self.directories.BATTLE_MENU_ITEM_PATH}
         run_away = False
         while enemy.hp > 0 and not run_away and not self.player.is_dead:
-            run_away = self.handle_battle_prompts(battle_menu_options, enemy, run_away)
+            run_away = self.handle_battle_prompts(battle_menu_options, enemy, run_away, current_battle)
         if enemy.hp <= 0:
-            enemy_defeated(self.cmd_menu, self.tile_size, self.screen, self.player, self.music_enabled,
-                           self.current_map, enemy)
+            current_battle.enemy_defeated(self.cmd_menu, self.tile_size, self.screen, self.player, self.music_enabled,
+                                          self.current_map, enemy)
         if self.music_enabled and not mixer.music.get_busy():
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
 
-    def handle_battle_prompts(self, battle_menu_options, enemy, run_away):
+    def handle_battle_prompts(self, battle_menu_options, enemy, run_away, current_battle):
         x = 6
         y = 1
         width = 8
         height = 3
         tile_size = self.game_state.config["TILE_SIZE"]
         selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
-        battle_window_rect = self.graphics.blink_switch(self.screen, selected_image, self.directories.BATTLE_MENU_STATIC_PATH, x, y,
-                                          width, height,
-                                          tile_size, self.show_arrow, color=self.color)
+        battle_window_rect = self.graphics.blink_switch(self.screen, selected_image,
+                                                        self.directories.BATTLE_MENU_STATIC_PATH, x, y,
+                                                        width, height,
+                                                        tile_size, self.show_arrow, color=self.color)
         current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
         selected_executed_option = None
         for current_event in event.get():
@@ -391,11 +392,11 @@ class Game:
                 display.update(battle_window_rect)
                 time.set_timer(arrow_fade, 530)
                 if selected_executed_option == 'Fight':
-                    self.fight(enemy)
+                    self.fight(enemy, current_battle)
                 elif selected_executed_option == 'Spell':
-                    battle_spell(self.cmd_menu, self.player)
+                    current_battle.battle_spell(self.cmd_menu, self.player)
                 elif selected_executed_option == 'Run':
-                    run_away = battle_run(self.cmd_menu, self.player, enemy)
+                    run_away = current_battle.battle_run(self.cmd_menu, self.player, enemy)
                     if run_away and self.music_enabled:
                         mixer.music.load(self.current_map.music_file_path)
                         mixer.music.play(-1)
@@ -410,12 +411,12 @@ class Game:
                 quit()
         return run_away
 
-    def fight(self, enemy):
-        self.hero_attack(enemy)
+    def fight(self, enemy, current_battle):
+        self.hero_attack(enemy, current_battle)
         if enemy.hp <= 0:
             return
         else:
-            self.enemy_attack(enemy)
+            self.enemy_attack(enemy, current_battle)
             if self.player.current_hp == 0:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
                 self.player.is_dead = True
@@ -424,13 +425,13 @@ class Game:
                                                       add_quotes=False, disable_sound=True, hide_arrow=True,
                                                       skip_text=True)
 
-    def hero_attack(self, enemy):
+    def hero_attack(self, enemy, current_battle):
         self.sound.play_sound(self.directories.attack_sfx)
         self.cmd_menu.show_line_in_dialog_box(self._("{} attacks!\n").format(self.player.name),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
-        attack_damage = calculate_attack_damage(self.cmd_menu, self.player, enemy)
+        attack_damage = current_battle.calculate_attack_damage(self.cmd_menu, self.player, enemy)
         if attack_damage <= 0:
-            missed_attack(self.cmd_menu)
+            current_battle.missed_attack(self.cmd_menu)
         else:
             self.sound.play_sound(self.directories.hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
@@ -440,7 +441,7 @@ class Game:
             enemy.hp -= attack_damage
             # print(f"{enemy.name} HP: {enemy.hp}/{enemy_string_lookup[enemy.name]().hp}")
 
-    def enemy_attack(self, enemy):
+    def enemy_attack(self, enemy, current_battle):
         self.sound.play_sound(self.directories.prepare_attack_sfx)
         self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(self._(enemy.name)),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
@@ -451,7 +452,7 @@ class Game:
         # (EnemyAttack - HeroAgility / 2) / 2
         attack_damage = calculate_enemy_attack_damage(self.player, enemy)
         if attack_damage <= 0:
-            missed_attack(self.cmd_menu)
+            current_battle.missed_attack(self.cmd_menu)
         else:
             self.receive_damage(attack_damage)
 
@@ -887,9 +888,9 @@ class Game:
                                                                                 character.direction_value,
                                                                                 self.current_map, offset=2)
         if self.is_impassable(character.next_tile_id):
-            bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
+            self.movement.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
         elif self.character_in_path(character):
-            bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
+            self.movement.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
         else:
             if delta_x:
                 character.rect.x += delta_x
@@ -907,9 +908,11 @@ class Game:
     def check_next_tile(self, character: Player | RoamingCharacter) -> None:
         if not character.next_tile_checked or not character.next_tile_id:
             character.next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
-                                                              character.direction_value, self.current_map)
+                                                                               character.direction_value,
+                                                                               self.current_map)
         character.next_next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
-                                                               character.direction_value, self.current_map, offset=2)
+                                                                                character.direction_value,
+                                                                                self.current_map, offset=2)
 
     def character_in_path(self, character: RoamingCharacter | FixedCharacter) -> bool:
         fixed_character_locations = [(fixed_character.column, fixed_character.row) for fixed_character in
@@ -952,19 +955,19 @@ class Game:
         min_bound = 0
         if self.player.rect.x < min_bound:
             self.player.rect.x = min_bound
-            self.sound.bump(self.player)
+            self.movement.bump(self.player)
             next_pos_x += -self.speed
         elif self.player.rect.x > max_x_bound:
             self.player.rect.x = max_x_bound
-            self.sound.bump(self.player)
+            self.movement.bump(self.player)
             next_pos_x += self.speed
         elif self.player.rect.y < min_bound:
             self.player.rect.y = min_bound
-            self.sound.bump(self.player)
+            self.movement.bump(self.player)
             next_pos_y -= self.speed
         elif self.player.rect.y > max_y_bound:
             self.player.rect.y = max_y_bound
-            self.sound.bump(self.player)
+            self.movement.bump(self.player)
             next_pos_y += self.speed
         return next_pos_x, next_pos_y
 
