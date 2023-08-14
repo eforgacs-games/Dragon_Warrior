@@ -243,6 +243,7 @@ class TestGame(TestCase):
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
         self.game.player.row = 14
         self.game.player.column = 18
+        self.game.last_map = TantegelThroneRoom(self.game.config)
         self.game.change_map(TantegelCourtyard(self.game.config))
         self.assertTrue(self.game.allow_save_prompt)
         self.game.music_enabled = False
