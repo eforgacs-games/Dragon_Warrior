@@ -45,7 +45,7 @@ class Battle:
             display.update()
             time.wait(20)
 
-    def battle_run(self, cmd_menu: CommandMenu, player: Player, enemy: Enemy):
+    def battle_run(self, cmd_menu: CommandMenu, player: Player, enemy: Enemy, current_battle):
         """Attempt to run from a battle. The formula is as follows:
         If HeroAgility * Random # < EnemyAgility * Random # * GroupFactor, then the
     enemy will block you. (according to https://gamefaqs.gamespot.com/nes/563408-dragon-warrior/faqs/61640)"""
