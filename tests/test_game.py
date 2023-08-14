@@ -10,6 +10,7 @@ from pygame.sprite import LayeredDirty
 from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
+from data.text.intro_lookup_table import ControlInfo
 from src.camera import Camera
 from src.calculation import get_tile_id_by_coordinates
 from src.direction import Direction
@@ -18,7 +19,6 @@ from src.drawer import replace_characters_with_underlying_tiles, convert_numeric
     set_to_save_prompt
 from src.game import Game
 from src.game_functions import get_next_coordinates
-from src.intro import controls
 from src.maps import MapWithoutNPCs, TantegelThroneRoom, TantegelCourtyard, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.menu import CommandMenu
@@ -439,8 +439,9 @@ class TestGame(TestCase):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
             keydown_event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F1, mod=pygame.KMOD_NONE)
             self.game.handle_help_button(keydown_event)
+        control_info = ControlInfo(prod_config)
         mock_show_text_in_dialog_box.assert_called_with(
-            f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
+            f"Controls:\n{convert_list_to_newline_separated_string(control_info.controls)}")
 
     # def test_handle_keypresses(self):
     #     pygame.key.get_pressed = create_f1_key_mock(pygame.K_k)

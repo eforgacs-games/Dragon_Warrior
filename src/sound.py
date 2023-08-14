@@ -27,6 +27,7 @@ class Sound:
             sound.play()
 
     def bump(self, character):
+        # this method might be better suited in movement.py
         if character.identifier == 'HERO':
             if not character.last_bump_time:
                 character.last_bump_time = time.get_ticks()
