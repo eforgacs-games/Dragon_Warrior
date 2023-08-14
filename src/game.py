@@ -104,7 +104,7 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom()
+        self.current_map = maps.TantegelThroneRoom(config)
         # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
 
@@ -687,7 +687,7 @@ class Game:
                     self.sound.play_sound(self.directories.stairs_down_sfx)
                 case 'up':
                     self.sound.play_sound(self.directories.stairs_up_sfx)
-            next_map = map_lookup[staircase_dict['map']]()
+            next_map = map_lookup[staircase_dict['map']](self.config)
             self.change_map(next_map)
 
     #         should break out of loop here

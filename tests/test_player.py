@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from src.direction import Direction
 from src.config import prod_config
+from src.direction import Direction
 from src.maps import MapWithoutNPCs
 from src.player.player import Player
 
@@ -13,8 +13,8 @@ layout = [[33, 0, 3],
 class MockMap(MapWithoutNPCs):
     __test__ = False
 
-    def __init__(self):
-        super().__init__(layout)
+    def __init__(self, config):
+        super().__init__(layout, config)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -29,7 +29,8 @@ class TestPlayer(TestCase):
         prod_config['NO_WAIT'] = True
         prod_config['RENDER_TEXT'] = False
         prod_config['NO_BLIT'] = True
-        self.player = Player(center_point=None, images=None, current_map=MockMap(), god_mode=prod_config['GOD_MODE'])
+        self.player = Player(center_point=None, images=None, current_map=MockMap(prod_config),
+                             god_mode=prod_config['GOD_MODE'])
 
     def test_get_level_by_experience(self):
         self.assertEqual(1, self.player.level)

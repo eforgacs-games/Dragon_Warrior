@@ -51,8 +51,8 @@ layout = [[33, 0, 3],
 class MockMap(MapWithoutNPCs):
     __test__ = False
 
-    def __init__(self):
-        super().__init__(layout)
+    def __init__(self, config):
+        super().__init__(layout, config)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -79,7 +79,7 @@ class TestGame(TestCase):
             self.game = Game(prod_config)
         self.game.player.name = "Edward"
         self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu, self.game.game_state.config)
-        self.game.current_map = MockMap()
+        self.game.current_map = MockMap(self.game.config)
         unarmed_hero_sheet = load_extended(self.game.directories.UNARMED_HERO_PATH)
         self.game.player = Player((0, 0), parse_animated_sprite_sheet(scale(unarmed_hero_sheet,
                                                                             (unarmed_hero_sheet.get_width() * SCALE,
@@ -238,17 +238,17 @@ class TestGame(TestCase):
         self.game.player.column = 13
         self.game.current_map.staircases = {
             (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
-        self.game.change_map(TantegelThroneRoom())
+        self.game.change_map(TantegelThroneRoom(self.game.config))
         self.assertEqual('MockMap', self.game.last_map.identifier)
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
         self.game.player.row = 14
         self.game.player.column = 18
-        self.game.change_map(TantegelCourtyard())
+        self.game.change_map(TantegelCourtyard(self.game.config))
         self.assertTrue(self.game.allow_save_prompt)
         self.game.music_enabled = False
         self.game.player.row = 14
         self.game.player.column = 14
-        self.game.change_map(TantegelThroneRoom())
+        self.game.change_map(TantegelThroneRoom(self.game.config))
 
     def test_change_map_maintain_inventory_and_gold(self):
         self.game.player.row = 10
@@ -257,7 +257,7 @@ class TestGame(TestCase):
         self.game.player.inventory = ['Torch']
         self.game.current_map.staircases = {
             (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
-        self.game.change_map(TantegelThroneRoom())
+        self.game.change_map(TantegelThroneRoom(self.game.config))
         self.assertEqual(120, self.game.player.gold)
         self.assertEqual(['Torch'], self.game.player.inventory)
 
@@ -331,7 +331,7 @@ class TestGame(TestCase):
     @patch('src.visual_effects.fade')
     def test_travelers_inn(self, mock_show_text_line_in_dialog_box, mock_window_drop_up_effect,
                            mock_window_drop_down_effect, mock_fade):
-        self.game.current_map = Alefgard()
+        self.game.current_map = Alefgard(self.game.config)
         self.game.player.row, self.game.player.column = 48, 56
         # organically switch maps to Brecconary, as though entering from Alefgard
         for staircase_location, staircase_dict in self.game.current_map.staircases.items():
@@ -460,7 +460,7 @@ class TestGame(TestCase):
         self.game.player.column = 13
         self.game.current_map.staircases = {
             (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
-        self.game.change_map(TantegelThroneRoom())
+        self.game.change_map(TantegelThroneRoom(self.game.config))
         self.game.get_events()
 
     def test_draw_all(self):
@@ -481,7 +481,7 @@ class TestGame(TestCase):
         self.game.player.column = 13
         self.game.current_map.staircases = {
             (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
-        self.game.change_map(TantegelThroneRoom())
+        self.game.change_map(TantegelThroneRoom(self.game.config))
         self.game.current_map.load_map(self.game.player, (14, 18), self.game.game_state.config["TILE_SIZE"])
         # test with moving characters before they're moving
         for roaming_character in self.game.current_map.roaming_characters:

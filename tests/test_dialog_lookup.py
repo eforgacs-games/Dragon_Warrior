@@ -11,6 +11,6 @@ class TestDialogLookup(TestCase):
         prod_config['NO_WAIT'] = True
         prod_config['RENDER_TEXT'] = False
         prod_config['NO_BLIT'] = True
-        player = Player(None, None, TantegelThroneRoom(), god_mode=prod_config['GOD_MODE'])
+        player = Player(None, None, TantegelThroneRoom(config), god_mode=prod_config['GOD_MODE'])
         player.name = 'Edward'
         self.dialog_lookup = DialogLookup(None, prod_config)
