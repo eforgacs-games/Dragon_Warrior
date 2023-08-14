@@ -626,14 +626,20 @@ class CommandMenu(Menu):
         item_menu_displayed = True
         current_arrow_position = 0
         currently_selected_item = list(list_counter.keys())[0]
+        time.set_timer(arrow_fade, 530)
         while item_menu_displayed:
             create_window(x=9, y=3, width=6, height=len(list_counter) + 1,
                           window_background=item_menu_background_lookup[len(list_counter)], screen=self.screen,
                           color=self.game.color)
-            draw_text(list_string, tile_size * 10, tile_size * 3.75, self.screen, self.game.game_state.config,
+            draw_text(list_string, tile_size * 10, tile_size * 4, self.screen, self.game.game_state.config,
                       letter_by_letter=False)
-            blink_arrow(self.screen, tile_size * 9.5, (tile_size + (current_arrow_position * tile_size / 4)) * 3.75,
-                        "right", self.game.game_state.config, self.game.show_arrow, self.game.color)
+            blink_arrow(self.screen,
+                        x=tile_size * 9.5,
+                        y=(tile_size + (current_arrow_position * tile_size / 7.5)) * 4,
+                        direction="right",
+                        config=self.game.game_state.config,
+                        show_arrow=self.game.show_arrow,
+                        color=self.game.color)
             display.update((9 * tile_size, 3 * tile_size, 6 * tile_size, (len(list_counter) + 1) * tile_size))
             for current_event in event.get():
                 if any([current_event.type == KEYDOWN]):
@@ -643,7 +649,7 @@ class CommandMenu(Menu):
                         if menu_name == 'spells':
                             spell_function, spell_mp_cost = function_dict[currently_selected_item]
                             if self.player.current_mp < spell_mp_cost:
-                                self.show_text_in_dialog_box("Thy MP is too low.", skip_text=self.skip_text)
+                                self.show_text_in_dialog_box(self._("Thy MP is too low."), skip_text=self.skip_text)
                             else:
                                 self.show_text_in_dialog_box(
                                     (self._("{} chanted the spell of {}.").format(self.player.name,
@@ -661,6 +667,8 @@ class CommandMenu(Menu):
                         elif current_event.key in (K_DOWN, K_s) and current_arrow_position < len(list_counter) - 1:
                             current_arrow_position += 1
                         currently_selected_item = list(list_counter.keys())[current_arrow_position]
+                elif current_event.type == arrow_fade:
+                    self.game.show_arrow = not self.game.show_arrow
 
     def door(self) -> None:
         """
@@ -687,12 +695,12 @@ class CommandMenu(Menu):
         Take an item.
         :return: None
         """
-        play_sound(menu_button_sfx)
         # open a window
         if self.player.current_tile == 'TREASURE_BOX':
             treasure_info = treasure[self.map_name].get((self.player.row, self.player.column))
             if treasure_info:
                 item_name = treasure_info['item']
+                play_sound(menu_button_sfx)
                 if item_name:
                     if item_name == 'GOLD':
                         self.take_gold(treasure_info)

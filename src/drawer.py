@@ -102,7 +102,7 @@ class Drawer:
 
     def run_automatic_initial_dialog(self, events, skip_text, cmd_menu):
         self.game_state.enable_movement = False
-        key_pressed = any([current_event.type == KEYUP for current_event in events])
+        key_pressed = any([current_event.type == KEYDOWN for current_event in events])
         if skip_text or (key_pressed and not self.game_state.automatic_initial_dialog_run):
             cmd_menu.show_text_in_dialog_box(
                 cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
