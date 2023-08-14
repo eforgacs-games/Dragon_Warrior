@@ -30,7 +30,7 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
     item_gained_matches = ("thou hast gained", "Thou hast found")
     if any([x in text for x in item_gained_matches]):
         disable_sound = True
-    current_font = set_font_by_ascii_chars(chunks, size, font_name)
+    current_font = set_font_by_ascii_chars(chunks, size, font_name, directories)
     for chunk in chunks:
         if letter_by_letter:
             string = ''
@@ -46,18 +46,14 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
                         Sound(config).play_sound(directories.text_beep_sfx)
         else:
             if not config['NO_BLIT']:
-                current_font = set_font_by_ascii_chars(chunks, size, font_name)
+                current_font = set_font_by_ascii_chars(chunks, size, font_name, directories)
                 blit_text_to_screen(alignment, color, current_font, screen, chunk, x, y, config["RENDER_TEXT"])
         y += 17
         if chunk == chunks[len(chunks) - 1]:
             return chunk
 
 
-# TODO: remove dev_config
-directories = Directories(dev_config)
-
-
-def set_font_by_ascii_chars(chunks, size, font_name):
+def set_font_by_ascii_chars(chunks, size, font_name, directories):
     if font_name is not None:
         return font.Font(font_name, size)
     else:
