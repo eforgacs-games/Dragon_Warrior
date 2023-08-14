@@ -10,15 +10,15 @@ from pygame.sprite import LayeredDirty
 from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
+from data.text.intro_lookup_table import ControlInfo
 from src.camera import Camera
-from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, \
-    intro_overture
+from src.calculation import get_tile_id_by_coordinates
+from src.direction import Direction
 from src.config import SCALE, prod_config
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
     set_to_save_prompt
 from src.game import Game
 from src.game_functions import get_next_coordinates
-from src.intro import controls
 from src.maps import MapWithoutNPCs, TantegelThroneRoom, TantegelCourtyard, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.menu import CommandMenu
@@ -51,8 +51,8 @@ layout = [[33, 0, 3],
 class MockMap(MapWithoutNPCs):
     __test__ = False
 
-    def __init__(self):
-        super().__init__(layout)
+    def __init__(self, config):
+        super().__init__(layout, config)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -79,8 +79,8 @@ class TestGame(TestCase):
             self.game = Game(prod_config)
         self.game.player.name = "Edward"
         self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu, self.game.game_state.config)
-        self.game.current_map = MockMap()
-        unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
+        self.game.current_map = MockMap(self.game.config)
+        unarmed_hero_sheet = load_extended(self.game.directories.UNARMED_HERO_PATH)
         self.game.player = Player((0, 0), parse_animated_sprite_sheet(scale(unarmed_hero_sheet,
                                                                             (unarmed_hero_sheet.get_width() * SCALE,
                                                                              unarmed_hero_sheet.get_height() * SCALE)),
@@ -238,17 +238,17 @@ class TestGame(TestCase):
         self.game.player.column = 13
         self.game.current_map.staircases = {
             (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
-        self.game.change_map(TantegelThroneRoom())
+        self.game.change_map(TantegelThroneRoom(self.game.config))
         self.assertEqual('MockMap', self.game.last_map.identifier)
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
         self.game.player.row = 14
         self.game.player.column = 18
-        self.game.change_map(TantegelCourtyard())
+        self.game.change_map(TantegelCourtyard(self.game.config))
         self.assertTrue(self.game.allow_save_prompt)
         self.game.music_enabled = False
         self.game.player.row = 14
         self.game.player.column = 14
-        self.game.change_map(TantegelThroneRoom())
+        self.game.change_map(TantegelThroneRoom(self.game.config))
 
     def test_change_map_maintain_inventory_and_gold(self):
         self.game.player.row = 10
@@ -257,7 +257,7 @@ class TestGame(TestCase):
         self.game.player.inventory = ['Torch']
         self.game.current_map.staircases = {
             (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
-        self.game.change_map(TantegelThroneRoom())
+        self.game.change_map(TantegelThroneRoom(self.game.config))
         self.assertEqual(120, self.game.player.gold)
         self.assertEqual(['Torch'], self.game.player.inventory)
 
@@ -331,7 +331,7 @@ class TestGame(TestCase):
     @patch('src.visual_effects.fade')
     def test_travelers_inn(self, mock_show_text_line_in_dialog_box, mock_window_drop_up_effect,
                            mock_window_drop_down_effect, mock_fade):
-        self.game.current_map = Alefgard()
+        self.game.current_map = Alefgard(self.game.config)
         self.game.player.row, self.game.player.column = 48, 56
         # organically switch maps to Brecconary, as though entering from Alefgard
         for staircase_location, staircase_dict in self.game.current_map.staircases.items():
@@ -354,10 +354,10 @@ class TestGame(TestCase):
         self.assertEqual('BRICK', get_tile_id_by_coordinates(self.game.player.next_next_coordinates[1],
                                                              self.game.player.next_next_coordinates[0],
                                                              self.game.current_map))
-        self.game.player.next_tile_id = get_next_tile_identifier(self.game.player.column,
-                                                                 self.game.player.row,
-                                                                 self.game.player.direction_value,
-                                                                 self.game.current_map)
+        self.game.player.next_tile_id = self.game.calculation.get_next_tile_identifier(self.game.player.column,
+                                                                                       self.game.player.row,
+                                                                                       self.game.player.direction_value,
+                                                                                       self.game.current_map)
         self.assertEqual('WOOD', self.game.player.next_tile_id)
         self.game.player.next_coordinates = get_next_coordinates(self.game.player.column, self.game.player.row,
                                                                  direction=self.game.player.direction_value)
@@ -439,8 +439,9 @@ class TestGame(TestCase):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
             keydown_event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F1, mod=pygame.KMOD_NONE)
             self.game.handle_help_button(keydown_event)
+        control_info = ControlInfo(prod_config)
         mock_show_text_in_dialog_box.assert_called_with(
-            f"Controls:\n{convert_list_to_newline_separated_string(controls)}")
+            f"Controls:\n{convert_list_to_newline_separated_string(control_info.controls)}")
 
     # def test_handle_keypresses(self):
     #     pygame.key.get_pressed = create_f1_key_mock(pygame.K_k)
@@ -459,7 +460,7 @@ class TestGame(TestCase):
         self.game.player.column = 13
         self.game.current_map.staircases = {
             (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
-        self.game.change_map(TantegelThroneRoom())
+        self.game.change_map(TantegelThroneRoom(self.game.config))
         self.game.get_events()
 
     def test_draw_all(self):
@@ -480,7 +481,7 @@ class TestGame(TestCase):
         self.game.player.column = 13
         self.game.current_map.staircases = {
             (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
-        self.game.change_map(TantegelThroneRoom())
+        self.game.change_map(TantegelThroneRoom(self.game.config))
         self.game.current_map.load_map(self.game.player, (14, 18), self.game.game_state.config["TILE_SIZE"])
         # test with moving characters before they're moving
         for roaming_character in self.game.current_map.roaming_characters:
@@ -556,7 +557,7 @@ class TestGame(TestCase):
     @patch.object(Game, "load_and_play_music")
     def test_splash_screen_enabled_load_and_play_music(self, mock_load_and_play_music, mock_set_screen):
         self.game.__init__(prod_config)
-        mock_load_and_play_music.assert_called_once_with(intro_overture)
+        mock_load_and_play_music.assert_called_once_with(self.game.directories.intro_overture)
 
     # @patch('src.config')
     # def test_splash_screen_disabled_load_and_play_music(self, mocked_config):

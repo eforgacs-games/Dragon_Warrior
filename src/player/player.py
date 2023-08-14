@@ -1,12 +1,15 @@
-from src.common import Direction, get_next_tile_identifier
+from src.direction import Direction
+from src.calculation import Calculation
 from src.items import weapons, armor, shields
+from src.maps import DragonWarriorMap
 from src.player.player_stats import levels_list, apply_transformation_to_levels_list
 from src.sprites.animated_sprite import AnimatedSprite
 
 
 class Player(AnimatedSprite):
 
-    def __init__(self, center_point, images, current_map, direction_value=Direction.DOWN.value, god_mode=False):
+    def __init__(self, center_point, images, current_map: DragonWarriorMap, direction_value=Direction.DOWN.value,
+                 god_mode=False):
         AnimatedSprite.__init__(self, center_point, direction_value, images, identifier='HERO')
 
         # map/collision-related attributes
@@ -16,9 +19,12 @@ class Player(AnimatedSprite):
         self.next_coordinates = None
         self.next_next_coordinates = None
         self.current_tile = None
-        self.next_tile_id = get_next_tile_identifier(self.column, self.row, self.direction_value, current_map)
-        self.next_next_tile_id = get_next_tile_identifier(self.column, self.row, self.direction_value, current_map,
-                                                          offset=2)
+        self.calculation = Calculation(current_map.config)
+        self.next_tile_id = self.calculation.get_next_tile_identifier(self.column, self.row, self.direction_value,
+                                                                      current_map)
+        self.next_next_tile_id = self.calculation.get_next_tile_identifier(self.column, self.row, self.direction_value,
+                                                                           current_map,
+                                                                           offset=2)
         self.bumped = False
         self.last_bump_time = None
         self.received_environment_damage = False

@@ -1,34 +1,27 @@
-import gettext
-import os
 from functools import partial
 
-from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_k, K_RETURN, K_j, Rect, K_ESCAPE
+from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect
 from pygame.event import get, pump
 from pygame.time import get_ticks
 
 from data.text.dialog import confirmation_prompt
-from src.common import play_sound, special_item_sfx, BRECCONARY_WEAPONS_SHOP_PATH, convert_to_frames_since_start_time, \
-    create_window, WHITE, reject_keys, accept_keys
+from src.calculation import Calculation
+from src.common import WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
+from src.directories import Directories
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
-from src.shops import brecconary_weapons_store_inventory
+from src.shops import ShopInventories
+from src.sound import Sound
 from src.visual_effects import fade, flash_transparent_color
-
-
-def set_gettext_language(language):
-    if language == 'Korean':
-        ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
-        ko.install()
-        _ = ko.gettext
-    else:
-        _ = gettext.gettext
-    return _
 
 
 class DialogLookup:
     def __init__(self, command_menu, config):
         self.config = config
+        self.calculation = Calculation(config)
         self._ = _ = set_gettext_language(self.config['LANGUAGE'])
+
+        self.shop_inventories = ShopInventories(self.config)
 
         self.weapons_and_armor_intro = _("We deal in weapons and armor.\n Dost thou wish to buy anything today?")
 
@@ -58,6 +51,7 @@ class DialogLookup:
         tools_intro = _("Welcome.\n"
                         "We deal in tools.\n"
                         "What can I do for thee?")
+        self.directories = Directories(self.config)
         self.lookup_table = {
             'TantegelThroneRoom': {
                 'KING_LORIK': {'dialog': (
@@ -138,8 +132,8 @@ class DialogLookup:
                 'SOLDIER': {'dialog': (_("Beware the bridges!"), _("Danger grows when thou crosses."))},
                 'WISE_MAN': {'dialog': _("If thou art cursed, come again.")},
                 'MERCHANT': {'dialog': (
-                    partial(self.check_buy_weapons_armor, brecconary_weapons_store_inventory,
-                            BRECCONARY_WEAPONS_SHOP_PATH),)},
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.brecconary_weapons_store_inventory,
+                            self.directories.BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'MERCHANT_3': {'dialog': (tools_intro,)},
                 'GUARD': {'dialog': (_("Tell King Lorik that the search for his daughter hath failed."),
@@ -158,7 +152,8 @@ class DialogLookup:
                                         "Ask the other guard."), },
                 'WOMAN': {'dialog': _("Welcome to Garinham. May thy stay be a peaceful one.")},
                 'WISE_MAN': {'dialog': _("The harp attracts enemies. Stay away from the grave in Garinham.")},
-                'WISE_MAN_2': {'dialog': _("Garin, a wandering minstrel of legendary fame, is said to have built this town.")},
+                'WISE_MAN_2': {
+                    'dialog': _("Garin, a wandering minstrel of legendary fame, is said to have built this town.")},
                 'WISE_MAN_3': {'dialog': _("Many believe that Princess Gwaelin is hidden away in a cave.")}
 
             },
@@ -228,9 +223,9 @@ class DialogLookup:
         # flash for 3 frames on, 3 frames off
         # flash white 8 times
         # TODO(ELF): This flashes once, but needs to flash 8 times.
-        flash_transparent_color(WHITE, self.screen, transparency=128)
+        flash_transparent_color(WHITE, self.screen, self.calculation, transparency=128)
         display.flip()
-        flash_transparent_color(WHITE, self.screen, transparency=255)
+        flash_transparent_color(WHITE, self.screen, self.calculation, transparency=255)
         display.flip()
         # draw_all_tiles_in_current_map(self.current_map, self.background)
         # draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
@@ -256,15 +251,16 @@ class DialogLookup:
         current_item_index = 0
         start_time = get_ticks()
         # arrow stays on and off for 16 frames at a time
+        graphics = Graphics(self.config)
         while selecting:
             current_item_name = list(current_store_inventory)[current_item_index]
             current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
-            frames_elapsed = convert_to_frames_since_start_time(start_time)
+            frames_elapsed = self.calculation.convert_to_frames_since_start_time(start_time)
             if frames_elapsed <= 16:
-                create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen, color)
+                graphics.create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
             elif frames_elapsed <= 32:
-                create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen, color)
+                graphics.create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
             else:
                 start_time = get_ticks()
@@ -283,7 +279,7 @@ class DialogLookup:
                     elif current_event.key in accept_keys:
                         selected_item = current_item_name
             if selected_item:
-                create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen, color)
+                graphics.create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
                 self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
                 selecting = False
@@ -354,7 +350,8 @@ class DialogLookup:
                                                      _("Okay.\n"
                                                        "Good-bye, traveler."),
                                                      skip_text=self.command_menu.skip_text, hide_arrow=True),
-                            config=self.command_menu.game.game_state.config, show_arrow=self.command_menu.game.show_arrow,
+                            config=self.command_menu.game.game_state.config,
+                            show_arrow=self.command_menu.game.show_arrow,
                             skip_text=self.command_menu.skip_text)
 
     def check_money(self, inn_cost):
@@ -365,7 +362,7 @@ class DialogLookup:
             self.command_menu.show_line_in_dialog_box(_("Thou hast not enough money."),
                                                       skip_text=self.command_menu.skip_text)
 
-    def inn_sleep(self, inn_cost):
+    def inn_sleep(self, inn_cost: int):
         _ = self._
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
         fade(fade_out=True, screen=self.screen, config=self.config)
@@ -373,7 +370,8 @@ class DialogLookup:
         tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
         if music_enabled:
             mixer.music.stop()
-        play_sound(special_item_sfx)
+        sound = Sound(self.config)
+        sound.play_sound(self.directories.special_item_sfx)
         self.player.restore_hp()
         self.player.restore_mp()
         self.player.gold -= inn_cost

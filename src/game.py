@@ -9,37 +9,29 @@ from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
 
-from data.text.dialog import blink_switch
-from data.text.dialog_lookup_table import set_gettext_language
-from src import maps, menu_functions
-from src.battle import battle_background_image_effect, battle_run, \
-    calculate_enemy_attack_damage, missed_attack, calculate_attack_damage, battle_spell, enemy_defeated, \
-    get_enemy_draws_near_string
+from data.text.intro_lookup_table import ControlInfo
+from src import maps
+from src.battle import calculate_enemy_attack_damage, Battle
+from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
-from src.common import BLACK, Direction, ICON_PATH, intro_overture, is_facing_laterally, \
-    is_facing_medially, menu_button_sfx, stairs_down_sfx, stairs_up_sfx, village_music, get_next_tile_identifier, \
-    UNARMED_HERO_PATH, \
-    convert_to_frames_since_start_time, BEGIN_QUEST_SELECTED_PATH, BEGIN_QUEST_PATH, ADVENTURE_LOG_1_PATH, \
-    ADVENTURE_LOG_PATH, ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH, swamp_sfx, death_sfx, RED, ARMED_HERO_PATH, \
-    ARMED_HERO_WITH_SHIELD_PATH, \
-    UNARMED_HERO_WITH_SHIELD_PATH, WHITE, battle_music, attack_sfx, hit_sfx, BATTLE_MENU_STATIC_PATH, \
-    BATTLE_MENU_FIGHT_PATH, BATTLE_MENU_SPELL_PATH, \
-    BATTLE_MENU_RUN_PATH, BATTLE_MENU_ITEM_PATH, prepare_attack_sfx, receive_damage_2_sfx, create_window, accept_keys, \
-    reject_keys
-from src.common import get_tile_id_by_coordinates, is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import dev_config, prod_config
+from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
+    set_gettext_language
+from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
+from src.config import prod_config
+from src.direction import Direction
+from src.directories import Directories
 from src.drawer import Drawer
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
-from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu
+from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
-from src.intro import Intro, controls
+from src.intro import Intro
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu, Menu
-from src.menu_functions import convert_list_to_newline_separated_string
-from src.movement import bump_and_reset
+from src.menu_functions import convert_list_to_newline_separated_string, NameSelection
+from src.movement import Movement
 from src.player.player import Player
-from src.sound import bump, play_sound
+from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 from src.visual_effects import fade, flash_transparent_color
@@ -49,6 +41,14 @@ arrow_fade = USEREVENT + 1
 
 class Game:
     def __init__(self, config):
+
+        self.config = config
+        self.sound = Sound(config)
+        self.graphics = Graphics(config)
+        self.directories = Directories(config)
+        self.calculation = Calculation(config)
+        self.game_functions = GameFunctions(config)
+        self.movement = Movement(self.config)
         self.battle_menu_row = 0
         self.battle_menu_column = 0
         self.show_arrow = True
@@ -105,7 +105,7 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom()
+        self.current_map = maps.TantegelThroneRoom(config)
         # self.current_map = maps.TantegelCourtyard()
         # self.current_map = maps.Alefgard()
 
@@ -124,7 +124,8 @@ class Game:
 
         self.set_roaming_character_positions()
 
-        self.player = Player(center_point=None, images=self.current_map.scale_sprite_sheet(UNARMED_HERO_PATH),
+        self.player = Player(center_point=None,
+                             images=self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
                              current_map=self.current_map, god_mode=self.game_state.config['GOD_MODE'])
         self.tile_size = self.game_state.config["TILE_SIZE"]
         self.current_map.load_map(self.player, None, self.tile_size)
@@ -149,12 +150,12 @@ class Game:
         self.music_enabled = self.game_state.config["MUSIC_ENABLED"]
 
         if self.splash_screen_enabled:
-            self.load_and_play_music(intro_overture)
+            self.load_and_play_music(self.directories.intro_overture)
         else:
             self.load_and_play_music(self.current_map.music_file_path)
         self.events = get()
 
-        display.set_icon(image.load(ICON_PATH))
+        display.set_icon(image.load(self.directories.ICON_PATH))
         self.player.restore_hp()
         self.allow_save_prompt = False
         # pg.event.set_allowed([pg.QUIT])
@@ -169,9 +170,9 @@ class Game:
         :return: None
         """
         if self.splash_screen_enabled:
-            intro = Intro()
+            intro = Intro(self.config)
             intro.show_start_screen(self.screen, self.start_time, self.clock, self.game_state.config)
-            self.load_and_play_music(village_music)
+            self.load_and_play_music(self.directories.intermezzo)
             self.show_main_menu_screen(self.screen)
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
                              self.foreground_rects, self.enable_animate, self.camera, self.initial_dialog_enabled,
@@ -188,16 +189,21 @@ class Game:
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
-        select_from_vertical_menu(get_ticks(), screen, BEGIN_QUEST_PATH, BEGIN_QUEST_SELECTED_PATH, [],
-                                  no_blit=self.game_state.config['NO_BLIT'])
+        self.game_functions.select_from_vertical_menu(get_ticks(), screen, self.directories.BEGIN_QUEST_PATH,
+                                                      self.directories.BEGIN_QUEST_SELECTED_PATH, [],
+                                                      no_blit=self.game_state.config['NO_BLIT'])
         # adventure_log_blinking = True
         # while adventure_log_blinking:
-        self.player.adventure_log = select_from_vertical_menu(get_ticks(), screen, ADVENTURE_LOG_PATH,
-                                                              ADVENTURE_LOG_1_PATH,
-                                                              [ADVENTURE_LOG_2_PATH, ADVENTURE_LOG_3_PATH]) + 1
-        self.player.name = menu_functions.select_name(get_ticks(), screen, self.cmd_menu, self.game_state.config)
+        self.player.adventure_log = self.game_functions.select_from_vertical_menu(get_ticks(), screen,
+                                                                                  self.directories.ADVENTURE_LOG_PATH,
+                                                                                  self.directories.ADVENTURE_LOG_1_PATH,
+                                                                                  [
+                                                                                      self.directories.ADVENTURE_LOG_2_PATH,
+                                                                                      self.directories.ADVENTURE_LOG_3_PATH]) + 1
+        name_selection = NameSelection(self.config)
+        self.player.name = name_selection.select_name(get_ticks(), screen, self.cmd_menu)
         self.player.set_initial_stats()
-        play_sound(menu_button_sfx)
+        self.sound.play_sound(self.directories.menu_button_sfx)
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         self.load_and_play_music(self.current_map.music_file_path)
         self.cmd_menu = CommandMenu(self)
@@ -238,8 +244,9 @@ class Game:
                                                               self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
 
-        self.player.next_tile_id = get_next_tile_identifier(self.player.column, self.player.row,
-                                                            self.player.direction_value, self.current_map)
+        self.player.next_tile_id = self.calculation.get_next_tile_identifier(self.player.column, self.player.row,
+                                                                             self.player.direction_value,
+                                                                             self.current_map)
 
         self.player.next_coordinates = get_next_coordinates(self.player.rect.x // self.tile_size,
                                                             self.player.rect.y // self.tile_size,
@@ -328,46 +335,52 @@ class Game:
     def battle(self, enemies_in_current_zone):
         enemy_name = random.choice(enemies_in_current_zone)
         if self.music_enabled:
-            mixer.music.load(battle_music)
+            mixer.music.load(self.directories.battle_music)
             mixer.music.play(-1)
-        battle_background_image_effect(self.tile_size, self.screen, self.current_map.is_dark)
+        current_battle = Battle(self.config)
+        current_battle.battle_background_image_effect(self.tile_size, self.screen, self.current_map.is_dark)
         self.drawer.show_enemy_image(self.screen, enemy_name)
-        enemy_draws_near_string = get_enemy_draws_near_string(enemy_name)
+        enemy_draws_near_string = current_battle.get_enemy_draws_near_string(enemy_name)
         self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string, add_quotes=False, skip_text=True,
                                               hide_arrow=True, disable_sound=True)
         self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
         self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
-        create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
+        self.graphics.create_window(6, 1, 8, 3, self.directories.BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
         self.drawer.hovering_stats_displayed = True
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
         enemy = enemy_string_lookup[enemy_name]()
-        battle_menu_options = {'Fight': BATTLE_MENU_FIGHT_PATH, 'Spell': BATTLE_MENU_SPELL_PATH}, \
-            {'Run': BATTLE_MENU_RUN_PATH, 'Item': BATTLE_MENU_ITEM_PATH}
+        battle_menu_options = {
+            'Fight': self.directories.BATTLE_MENU_FIGHT_PATH,
+            'Spell': self.directories.BATTLE_MENU_SPELL_PATH}, \
+            {'Run': self.directories.BATTLE_MENU_RUN_PATH,
+             'Item': self.directories.BATTLE_MENU_ITEM_PATH}
         run_away = False
         while enemy.hp > 0 and not run_away and not self.player.is_dead:
-            run_away = self.handle_battle_prompts(battle_menu_options, enemy, run_away)
+            run_away = self.handle_battle_prompts(battle_menu_options, enemy, run_away, current_battle)
         if enemy.hp <= 0:
-            enemy_defeated(self.cmd_menu, self.tile_size, self.screen, self.player, self.music_enabled,
-                           self.current_map, enemy)
+            current_battle.enemy_defeated(self.cmd_menu, self.tile_size, self.screen, self.player, self.music_enabled,
+                                          self.current_map, enemy)
         if self.music_enabled and not mixer.music.get_busy():
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
 
-    def handle_battle_prompts(self, battle_menu_options, enemy, run_away):
+    def handle_battle_prompts(self, battle_menu_options, enemy, run_away, current_battle):
         x = 6
         y = 1
         width = 8
         height = 3
         tile_size = self.game_state.config["TILE_SIZE"]
         selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
-        battle_window_rect = blink_switch(self.screen, selected_image, BATTLE_MENU_STATIC_PATH, x, y, width, height,
-                                          tile_size, self.show_arrow, color=self.color)
+        battle_window_rect = self.graphics.blink_switch(self.screen, selected_image,
+                                                        self.directories.BATTLE_MENU_STATIC_PATH, x, y,
+                                                        width, height,
+                                                        tile_size, self.show_arrow, color=self.color)
         current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
         selected_executed_option = None
         for current_event in event.get():
             if current_event.type == KEYDOWN:
                 if current_event.key in accept_keys:
-                    play_sound(menu_button_sfx)
+                    self.sound.play_sound(self.directories.menu_button_sfx)
                     selected_executed_option = current_selection
                 elif current_event.key in reject_keys:
                     break
@@ -379,15 +392,15 @@ class Game:
             elif current_event.type == arrow_fade:
                 self.show_arrow = not self.show_arrow
             if selected_executed_option:
-                create_window(x, y, width, height, selected_image, self.screen, self.color)
+                self.graphics.create_window(x, y, width, height, selected_image, self.screen, self.color)
                 display.update(battle_window_rect)
                 time.set_timer(arrow_fade, 530)
                 if selected_executed_option == 'Fight':
-                    self.fight(enemy)
+                    self.fight(enemy, current_battle)
                 elif selected_executed_option == 'Spell':
-                    battle_spell(self.cmd_menu, self.player)
+                    current_battle.battle_spell(self.cmd_menu, self.player)
                 elif selected_executed_option == 'Run':
-                    run_away = battle_run(self.cmd_menu, self.player, enemy)
+                    run_away = current_battle.battle_run(self.cmd_menu, self.player, enemy, current_battle)
                     if run_away and self.music_enabled:
                         mixer.music.load(self.current_map.music_file_path)
                         mixer.music.play(-1)
@@ -402,12 +415,12 @@ class Game:
                 quit()
         return run_away
 
-    def fight(self, enemy):
-        self.hero_attack(enemy)
+    def fight(self, enemy, current_battle):
+        self.hero_attack(enemy, current_battle)
         if enemy.hp <= 0:
             return
         else:
-            self.enemy_attack(enemy)
+            self.enemy_attack(enemy, current_battle)
             if self.player.current_hp == 0:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
                 self.player.is_dead = True
@@ -416,15 +429,15 @@ class Game:
                                                       add_quotes=False, disable_sound=True, hide_arrow=True,
                                                       skip_text=True)
 
-    def hero_attack(self, enemy):
-        play_sound(attack_sfx)
+    def hero_attack(self, enemy, current_battle):
+        self.sound.play_sound(self.directories.attack_sfx)
         self.cmd_menu.show_line_in_dialog_box(self._("{} attacks!\n").format(self.player.name),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
-        attack_damage = calculate_attack_damage(self.cmd_menu, self.player, enemy)
+        attack_damage = current_battle.calculate_attack_damage(self.cmd_menu, self.player, enemy)
         if attack_damage <= 0:
-            missed_attack(self.cmd_menu)
+            current_battle.missed_attack(self.cmd_menu)
         else:
-            play_sound(hit_sfx)
+            self.sound.play_sound(self.directories.hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
                 self._("The {}'s Hit Points have been reduced by {}.\n").format(self._(enemy.name), attack_damage),
                 add_quotes=False,
@@ -432,8 +445,8 @@ class Game:
             enemy.hp -= attack_damage
             # print(f"{enemy.name} HP: {enemy.hp}/{enemy_string_lookup[enemy.name]().hp}")
 
-    def enemy_attack(self, enemy):
-        play_sound(prepare_attack_sfx)
+    def enemy_attack(self, enemy, current_battle):
+        self.sound.play_sound(self.directories.prepare_attack_sfx)
         self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(self._(enemy.name)),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
         # (EnemyAttack - HeroAgility / 2) / 4,
@@ -443,12 +456,12 @@ class Game:
         # (EnemyAttack - HeroAgility / 2) / 2
         attack_damage = calculate_enemy_attack_damage(self.player, enemy)
         if attack_damage <= 0:
-            missed_attack(self.cmd_menu)
+            current_battle.missed_attack(self.cmd_menu)
         else:
             self.receive_damage(attack_damage)
 
     def receive_damage(self, attack_damage):
-        play_sound(receive_damage_2_sfx)
+        self.sound.play_sound(self.directories.receive_damage_2_sfx)
         self.player.current_hp -= attack_damage
         self.color = RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
         if self.player.current_hp < 0:
@@ -500,14 +513,14 @@ class Game:
     def set_player_images_by_equipment(self):
         if self.player.weapon:
             if self.player.shield:
-                self.player.images = self.current_map.scale_sprite_sheet(ARMED_HERO_WITH_SHIELD_PATH)
+                self.player.images = self.current_map.scale_sprite_sheet(self.directories.ARMED_HERO_WITH_SHIELD_PATH)
                 self.player.set_images(self.player.images)
 
             else:
-                self.player.images = self.current_map.scale_sprite_sheet(ARMED_HERO_PATH)
+                self.player.images = self.current_map.scale_sprite_sheet(self.directories.ARMED_HERO_PATH)
                 self.player.set_images(self.player.images)
         elif self.player.shield:
-            self.player.images = self.current_map.scale_sprite_sheet(UNARMED_HERO_WITH_SHIELD_PATH)
+            self.player.images = self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_WITH_SHIELD_PATH)
             self.player.set_images(self.player.images)
 
     def handle_death(self):
@@ -516,7 +529,7 @@ class Game:
             self.player.is_dead = True
             self.color = RED
             if self.launch_battle and not self.game_state.config["NO_BATTLES"]:
-                create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, RED)
+                self.graphics.create_window(6, 1, 8, 3, self.directories.BATTLE_MENU_FIGHT_PATH, self.screen, RED)
                 self.launch_battle = False
                 display.flip()
             else:
@@ -524,11 +537,11 @@ class Game:
                 display.flip()
             if self.music_enabled:
                 mixer.music.stop()
-                mixer.music.load(death_sfx)
+                mixer.music.load(self.directories.death_sfx)
                 mixer.music.play(1)
             self.game_state.enable_movement = False
             death_start_time = get_ticks()
-            while convert_to_frames_since_start_time(death_start_time) < 318:
+            while self.calculation.convert_to_frames_since_start_time(death_start_time) < 318:
                 if not self.game_state.config['NO_WAIT']:
                     time.wait(1)
             event.clear()
@@ -561,9 +574,9 @@ class Game:
 
     def damage_step(self, damage_amount):
         self.player.current_hp -= damage_amount
-        play_sound(swamp_sfx)
+        self.sound.play_sound(self.directories.swamp_sfx)
         self.player.received_environment_damage = True
-        flash_transparent_color(RED, self.screen, no_blit=self.game_state.config['NO_BLIT'])
+        flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
                              self.foreground_rects, self.enable_animate, self.camera, self.initial_dialog_enabled,
                              self.events, self.skip_text, self.allow_save_prompt, self.game_state, self.torch_active,
@@ -580,9 +593,9 @@ class Game:
                     self.player.bumped = False
                     match staircase_dict['stair_direction']:
                         case 'down':
-                            play_sound(stairs_down_sfx)
+                            self.sound.play_sound(self.directories.stairs_down_sfx)
                         case 'up':
-                            play_sound(stairs_up_sfx)
+                            self.sound.play_sound(self.directories.stairs_up_sfx)
                     next_map = map_lookup[staircase_dict['map']]()
                     self.change_map(next_map)
                     break
@@ -600,9 +613,10 @@ class Game:
         self.handle_fps_changes(current_keydown_event)
 
     def handle_help_button(self, keydown_event):
+        control_info = ControlInfo(self.config)
         if keydown_event.key == K_F1:
             self.cmd_menu.show_text_in_dialog_box(
-                self._("Controls:\n") + convert_list_to_newline_separated_string(controls))
+                self._("Controls:\n") + convert_list_to_newline_separated_string(control_info.controls))
 
     def handle_b_button(self, keydown_event):
         if keydown_event.key in reject_keys:
@@ -675,10 +689,10 @@ class Game:
             self.player.bumped = False
             match staircase_dict['stair_direction']:
                 case 'down':
-                    play_sound(stairs_down_sfx)
+                    self.sound.play_sound(self.directories.stairs_down_sfx)
                 case 'up':
-                    play_sound(stairs_up_sfx)
-            next_map = map_lookup[staircase_dict['map']]()
+                    self.sound.play_sound(self.directories.stairs_up_sfx)
+            next_map = map_lookup[staircase_dict['map']](self.config)
             self.change_map(next_map)
 
     #         should break out of loop here
@@ -871,14 +885,16 @@ class Game:
         self.cmd_menu.camera_position = \
             curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.get_pos()
         self.check_next_tile(character)
-        character.next_tile_id = get_next_tile_identifier(character.column, character.row, character.direction_value,
-                                                          self.current_map)
-        character.next_next_tile_id = get_next_tile_identifier(character.column, character.row,
-                                                               character.direction_value, self.current_map, offset=2)
+        character.next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
+                                                                           character.direction_value,
+                                                                           self.current_map)
+        character.next_next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
+                                                                                character.direction_value,
+                                                                                self.current_map, offset=2)
         if self.is_impassable(character.next_tile_id):
-            bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
+            self.movement.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
         elif self.character_in_path(character):
-            bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
+            self.movement.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
         else:
             if delta_x:
                 character.rect.x += delta_x
@@ -895,10 +911,12 @@ class Game:
 
     def check_next_tile(self, character: Player | RoamingCharacter) -> None:
         if not character.next_tile_checked or not character.next_tile_id:
-            character.next_tile_id = get_next_tile_identifier(character.column, character.row,
-                                                              character.direction_value, self.current_map)
-        character.next_next_tile_id = get_next_tile_identifier(character.column, character.row,
-                                                               character.direction_value, self.current_map, offset=2)
+            character.next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
+                                                                               character.direction_value,
+                                                                               self.current_map)
+        character.next_next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
+                                                                                character.direction_value,
+                                                                                self.current_map, offset=2)
 
     def character_in_path(self, character: RoamingCharacter | FixedCharacter) -> bool:
         fixed_character_locations = [(fixed_character.column, fixed_character.row) for fixed_character in
@@ -941,19 +959,19 @@ class Game:
         min_bound = 0
         if self.player.rect.x < min_bound:
             self.player.rect.x = min_bound
-            bump(self.player)
+            self.movement.bump(self.player)
             next_pos_x += -self.speed
         elif self.player.rect.x > max_x_bound:
             self.player.rect.x = max_x_bound
-            bump(self.player)
+            self.movement.bump(self.player)
             next_pos_x += self.speed
         elif self.player.rect.y < min_bound:
             self.player.rect.y = min_bound
-            bump(self.player)
+            self.movement.bump(self.player)
             next_pos_y -= self.speed
         elif self.player.rect.y > max_y_bound:
             self.player.rect.y = max_y_bound
-            bump(self.player)
+            self.movement.bump(self.player)
             next_pos_y += self.speed
         return next_pos_x, next_pos_y
 
@@ -990,7 +1008,8 @@ class Game:
 
 
 def run():
-    game = Game(config=dev_config)
+    game = Game(config=prod_config)
+    # game = Game(config=dev_config)
     game.main()
 
 
