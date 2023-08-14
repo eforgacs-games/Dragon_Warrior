@@ -1,14 +1,9 @@
 from src.common import set_gettext_language
-from src.config import dev_config
-
-# TODO: remove dev_config and replace with game config
-config = dev_config
-
-_ = set_gettext_language(config['LANGUAGE'])
 
 
 class ControlInfo:
     def __init__(self, config):
+        _ = set_gettext_language(config['LANGUAGE'])
         self.config = config
         self.push_start = _("-PUSH START-")
         self.a_button = _("K key: A Button")

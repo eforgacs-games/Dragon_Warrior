@@ -26,8 +26,8 @@ layout = [[33, 0, 3],
 
 
 class MockMap(MapWithoutNPCs):
-    def __init__(self):
-        super().__init__(layout)
+    def __init__(self, config):
+        super().__init__(layout, config)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -46,7 +46,7 @@ class TestGameFunctions(TestCase):
             self.game = Game(prod_config)
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
-        self.game.current_map = MockMap()
+        self.game.current_map = MockMap(self.game.config)
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
         unarmed_hero_sheet = load_extended(self.game.directories.UNARMED_HERO_PATH)
         self.hero_images = parse_animated_sprite_sheet(scale(unarmed_hero_sheet, (
