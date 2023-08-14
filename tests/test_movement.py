@@ -19,8 +19,8 @@ layout = [[33, 0, 3],
 class MockMap(MapWithoutNPCs):
     __test__ = False
 
-    def __init__(self):
-        super().__init__(layout)
+    def __init__(self, config):
+        super().__init__(layout, config)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -37,7 +37,7 @@ class Test(TestCase):
         prod_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
-        self.game.current_map = MockMap()
+        self.game.current_map = MockMap(self.game.config)
 
     def test_bump_and_reset(self):
         self.assertEqual('BRICK', self.game.player.next_tile_id)
