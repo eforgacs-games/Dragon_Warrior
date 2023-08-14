@@ -22,7 +22,7 @@ from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
-from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu
+from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
 from src.intro import Intro
 from src.map_layouts import MapLayouts
@@ -41,11 +41,13 @@ arrow_fade = USEREVENT + 1
 
 class Game:
     def __init__(self, config):
+
         self.config = config
         self.sound = Sound(config)
         self.graphics = Graphics(config)
         self.directories = Directories(config)
         self.calculation = Calculation(config)
+        self.game_functions = GameFunctions(config)
         self.movement = Movement(self.config)
         self.battle_menu_row = 0
         self.battle_menu_column = 0
@@ -187,15 +189,17 @@ class Game:
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
-        select_from_vertical_menu(get_ticks(), screen, self.directories.BEGIN_QUEST_PATH,
-                                  self.directories.BEGIN_QUEST_SELECTED_PATH, [],
-                                  no_blit=self.game_state.config['NO_BLIT'])
+        self.game_functions.select_from_vertical_menu(get_ticks(), screen, self.directories.BEGIN_QUEST_PATH,
+                                                      self.directories.BEGIN_QUEST_SELECTED_PATH, [],
+                                                      no_blit=self.game_state.config['NO_BLIT'])
         # adventure_log_blinking = True
         # while adventure_log_blinking:
-        self.player.adventure_log = select_from_vertical_menu(get_ticks(), screen, self.directories.ADVENTURE_LOG_PATH,
-                                                              self.directories.ADVENTURE_LOG_1_PATH,
-                                                              [self.directories.ADVENTURE_LOG_2_PATH,
-                                                               self.directories.ADVENTURE_LOG_3_PATH]) + 1
+        self.player.adventure_log = self.game_functions.select_from_vertical_menu(get_ticks(), screen,
+                                                                                  self.directories.ADVENTURE_LOG_PATH,
+                                                                                  self.directories.ADVENTURE_LOG_1_PATH,
+                                                                                  [
+                                                                                      self.directories.ADVENTURE_LOG_2_PATH,
+                                                                                      self.directories.ADVENTURE_LOG_3_PATH]) + 1
         name_selection = NameSelection(self.config)
         self.player.name = name_selection.select_name(get_ticks(), screen, self.cmd_menu)
         self.player.set_initial_stats()
