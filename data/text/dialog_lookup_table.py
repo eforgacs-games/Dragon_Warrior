@@ -222,9 +222,9 @@ class DialogLookup:
         # flash for 3 frames on, 3 frames off
         # flash white 8 times
         # TODO(ELF): This flashes once, but needs to flash 8 times.
-        flash_transparent_color(WHITE, self.screen, transparency=128)
+        flash_transparent_color(WHITE, self.screen, Calculation(dev_config), transparency=128)
         display.flip()
-        flash_transparent_color(WHITE, self.screen, transparency=255)
+        flash_transparent_color(WHITE, self.screen, Calculation(dev_config), transparency=255)
         display.flip()
         # draw_all_tiles_in_current_map(self.current_map, self.background)
         # draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
