@@ -2,7 +2,7 @@ import os
 from unittest import TestCase
 from unittest.mock import patch
 
-from src.common import Direction
+from src.direction import Direction
 from src.config import prod_config
 from src.game import Game
 from src.maps import MapWithoutNPCs
@@ -19,7 +19,7 @@ class MockMap(MapWithoutNPCs):
     __test__ = False
 
     def __init__(self):
-        super().__init__(layout)
+        super().__init__(layout, None)
 
     def hero_underlying_tile(self):
         return 'BRICK'

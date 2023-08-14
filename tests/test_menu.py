@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from pygame import KEYDOWN, K_RETURN, event
 
-from src.common import Direction
+from src.direction import Direction
 from src.config import prod_config
 from src.game import Game
 from src.maps import MapWithoutNPCs
@@ -20,8 +20,8 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 class MockMap(MapWithoutNPCs):
     __test__ = False
 
-    def __init__(self):
-        super().__init__(layout)
+    def __init__(self, config):
+        super().__init__(layout, config)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -36,7 +36,7 @@ class TestCommandMenu(TestCase):
     def setUp(self, mock_set_screen) -> None:
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
-        self.game.current_map = MockMap()
+        self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
 
     # def test_take(self):

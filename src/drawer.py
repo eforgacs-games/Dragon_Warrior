@@ -1,30 +1,37 @@
 from statistics import mean
 from typing import List, Iterable
 
-from pygame import image, display, KEYDOWN, KEYUP, event, Surface, Rect
+from pygame import image, display, KEYDOWN, event, Surface, Rect
 from pygame.sprite import Group
 from pygame.time import get_ticks
 from pygame.transform import scale
 
-from src.common import convert_to_frames_since_start_time, IMAGES_ENEMIES_DIR, WHITE, create_window, \
-    HOVERING_STATS_BACKGROUND_PATH, play_sound, menu_button_sfx, torch_sfx, BLACK
+from src.calculation import Calculation
+from src.common import WHITE, BLACK, Graphics
 from src.config import SCALE
+from src.directories import Directories
 from src.enemy_lookup import enemy_image_position_lookup
 from src.game_functions import get_surrounding_rect
 from src.menu import Menu, CommandMenu
+from src.sound import Sound
 from src.text import draw_text
 
 
 class Drawer:
 
     def __init__(self, game_state):
+
         self.game_state = game_state
         self.display_hovering_stats = False
         self.background = None
         self.not_moving_time_start = None
         self.hovering_stats_displayed = False
+        self.graphics = Graphics(game_state.config)
+        self.directories = Directories(game_state.config)
+        self.sound = Sound(game_state.config)
+        self.calculation = Calculation(game_state.config)
 
-    def position_and_draw_enemy_image(self, screen, enemy_image, enemy_name, no_blit):
+    def position_and_draw_enemy_image(self, screen, enemy_image, enemy_name):
         tile_size = self.game_state.config["TILE_SIZE"]
         enemy_position = enemy_image_position_lookup.get(enemy_name)
         if enemy_position:
@@ -37,10 +44,10 @@ class Drawer:
     def show_enemy_image(self, screen, enemy_name):
         enemy_name_without_spaces = enemy_name.replace(" ", "")
         enemy_image = image.load(
-            f'{IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
+            f'{self.directories.IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
         enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
                                           enemy_image.get_height() * SCALE))
-        self.position_and_draw_enemy_image(screen, enemy_image, enemy_name, self.game_state.config["NO_BLIT"])
+        self.position_and_draw_enemy_image(screen, enemy_image, enemy_name)
 
     @staticmethod
     def handle_sprite_animation(enable_animate, character_dict):
@@ -62,7 +69,7 @@ class Drawer:
 
     def draw_hovering_stats_window(self, screen, player, color=WHITE):
         tile_size = self.game_state.config["TILE_SIZE"]
-        create_window(1, 2, 4, 6, HOVERING_STATS_BACKGROUND_PATH, screen, color)
+        self.graphics.create_window(1, 2, 4, 6, self.directories.HOVERING_STATS_BACKGROUND_PATH, screen, color)
         draw_text(player.name[:4], tile_size * 2.99, tile_size * 2, screen, self.game_state.config, color=color,
                   alignment='center', letter_by_letter=False)
         self.draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)
@@ -156,8 +163,8 @@ class Drawer:
 
             if self.game_state.radiant_start is None:
                 self.game_state.radiant_start = self.game_state.tiles_moved_total
-                play_sound(torch_sfx)
-                play_sound(torch_sfx)
+                self.sound.play_sound(self.directories.torch_sfx)
+                self.sound.play_sound(self.directories.torch_sfx)
             else:
                 if self.game_state.tiles_moved_total - self.game_state.radiant_start >= 200:
                     self.game_state.radiant_active = False
@@ -224,7 +231,7 @@ class Drawer:
                 if not self.not_moving_time_start:
                     self.not_moving_time_start = get_ticks()
                 else:
-                    if convert_to_frames_since_start_time(self.not_moving_time_start) >= 51:
+                    if self.calculation.convert_to_frames_since_start_time(self.not_moving_time_start) >= 51:
                         self.display_hovering_stats = True
         except IndexError:
             all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles(current_map)
@@ -243,7 +250,9 @@ class Drawer:
                                                                camera_screen_rect.height * 0.25)
         fixed_character_rects = [fixed_character.rect for fixed_character in current_map.fixed_characters]
         roaming_character_rects = [
-            roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character, self.game_state.config["TILE_SIZE"]) for
+            roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character,
+                                                                                            self.game_state.config[
+                                                                                                "TILE_SIZE"]) for
             roaming_character in
             current_map.roaming_characters]
         for tile, tile_dict in current_map.floor_tile_key.items():
@@ -340,7 +349,7 @@ class Drawer:
                      5 * tile_size)
                 )
                 if not cmd_menu.menu.is_enabled():
-                    play_sound(menu_button_sfx)
+                    self.sound.play_sound(self.directories.menu_button_sfx)
                     cmd_menu.window_drop_down_effect(6, 1, 8, 5)
                     cmd_menu.menu.enable()
                 else:
