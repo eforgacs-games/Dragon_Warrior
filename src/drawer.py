@@ -308,7 +308,7 @@ class Drawer:
             self.run_automatic_post_death_dialog(events, skip_text, cmd_menu)
             event.clear()
 
-    def draw_stats_strings_with_alignments(self, stat_string, y_position, screen, color=WHITE):
+    def draw_stats_strings_with_alignments(self, stat_string, y_position, screen, color):
         tile_size = self.game_state.config["TILE_SIZE"]
         if len(stat_string) > 4:
             draw_text(stat_string, tile_size * 3.2, tile_size * y_position, screen, self.game_state.config, color=color,

@@ -58,7 +58,7 @@ class Graphics:
         self.config = config
         self.directories = Directories(config)
 
-    def set_window_background(self, black_box, background_path, color=WHITE):
+    def set_window_background(self, black_box, background_path, color):
         black_box.fill(BLACK)
         background_image = image.load(background_path)
         if color == RED:
@@ -68,7 +68,7 @@ class Graphics:
         background_image = transform.scale(background_image, black_box.get_size())
         black_box.blit(background_image, black_box.get_rect()) if not self.config['NO_BLIT'] else None
 
-    def create_window(self, x, y, width, height, window_background, screen, color=WHITE) -> Surface:
+    def create_window(self, x, y, width, height, window_background, screen, color) -> Surface:
         tile_size = self.config["TILE_SIZE"]
         window_box = Surface((tile_size * width, tile_size * height))  # lgtm [py/call/wrong-arguments]
         self.set_window_background(window_box, window_background, color=color)
