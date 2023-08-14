@@ -2,7 +2,18 @@ from pygame import K_DOWN, K_s, K_UP, K_w, KEYDOWN, event, Rect, image, display
 from pygame.time import get_ticks
 from pygame.transform import scale
 
-from src.common import Direction, BLACK, convert_to_frames_since_start_time, play_sound, menu_button_sfx, accept_keys
+from src.calculation import Calculation
+from src.common import BLACK, accept_keys
+from src.config import dev_config
+from src.direction import Direction
+from src.directories import Directories
+from src.sound import Sound
+
+# TODO: remove dev_config
+config = dev_config
+calculation = Calculation(config)
+directories = Directories(config)
+sound = Sound(config)
 
 
 def set_character_position(character, tile_size):
@@ -32,13 +43,13 @@ def select_from_vertical_menu(blink_start, screen, unselected_image, selected_im
     blinking = True
     while blinking:
         screen.fill(BLACK)
-        if convert_to_frames_since_start_time(blink_start) > 32:
+        if calculation.convert_to_frames_since_start_time(blink_start) > 32:
             blink_start = get_ticks()
         alternate_blink(all_selected_images[current_item_index], unselected_image, blink_start, screen, no_blit=no_blit)
         for current_event in event.get():
             if current_event.type == KEYDOWN:
                 if current_event.key in accept_keys:
-                    play_sound(menu_button_sfx)
+                    sound.play_sound(directories.menu_button_sfx)
                     return current_item_index
                 elif current_event.key in (K_DOWN, K_s) and current_item_index < len(all_selected_images) - 1:
                     current_item_index += 1
@@ -50,12 +61,12 @@ def select_from_vertical_menu(blink_start, screen, unselected_image, selected_im
 
 def alternate_blink(image_1, image_2, right_arrow_start, screen, no_blit):
     if not no_blit:
-        while convert_to_frames_since_start_time(right_arrow_start) <= 16:
+        while calculation.convert_to_frames_since_start_time(right_arrow_start) <= 16:
             selected_image = scale(image.load(image_1), (screen.get_width(), screen.get_height()))
             screen.blit(selected_image, (0, 0))
             # draw_text(">BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)
             display.update(selected_image.get_rect())
-        while 16 < convert_to_frames_since_start_time(right_arrow_start) <= 32:
+        while 16 < calculation.convert_to_frames_since_start_time(right_arrow_start) <= 32:
             unselected_image = scale(image.load(image_2), (screen.get_width(), screen.get_height()))
             screen.blit(unselected_image, (0, 0))
             # draw_text(" BEGIN A NEW QUEST", screen.get_width() / 2, screen.get_height() / 3, self.screen)

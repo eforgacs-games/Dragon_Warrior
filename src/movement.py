@@ -1,4 +1,8 @@
-from src.sound import bump
+from src.config import dev_config
+from src.sound import Sound
+
+config = dev_config
+sound = Sound(config)
 
 
 def bump_and_reset(character, pre_bump_next_tile, pre_bump_next_next_tile):
@@ -6,4 +10,4 @@ def bump_and_reset(character, pre_bump_next_tile, pre_bump_next_next_tile):
         character.next_tile_id = pre_bump_next_tile
     if character.next_next_tile_id != pre_bump_next_next_tile:
         character.next_next_tile_id = pre_bump_next_next_tile
-    bump(character)
+    sound.bump(character)

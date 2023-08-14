@@ -1,11 +1,16 @@
 from unittest import TestCase
 
-from src.common import convert_to_frames
+from src.calculation import Calculation
+from src.config import prod_config
 from src.drawer import get_surrounding_tile_values
 
 layout = [[33, 0, 3],
           [1, 2, 3],
           [3, 3, 39]]
+
+config = prod_config
+
+calculation = Calculation(prod_config)
 
 
 class Test(TestCase):
@@ -21,4 +26,4 @@ class Test(TestCase):
         self.assertEqual({39}, get_surrounding_tile_values((3, 2), layout))
 
     def test_convert_to_frames(self):
-        self.assertEqual(0.6, convert_to_frames(10))
+        self.assertEqual(0.6, calculation.convert_to_frames(10))

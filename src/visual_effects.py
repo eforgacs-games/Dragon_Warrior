@@ -1,7 +1,9 @@
 from pygame import Surface, display, time
 from pygame.time import get_ticks
 
-from src.common import BLACK, convert_to_frames_since_start_time
+from src.calculation import Calculation
+from src.common import BLACK
+from src.config import dev_config
 
 
 def fade(fade_out: bool, screen: Surface, config) -> None:
@@ -42,5 +44,6 @@ def draw_transparent_color(color, screen, transparency, no_blit):
 def flash_transparent_color(color, screen, transparency=192, no_blit=False):
     start_time = get_ticks()
     draw_transparent_color(color, screen, transparency, no_blit)
-    while convert_to_frames_since_start_time(start_time) < 3:
+    # TODO: remove dev_config
+    while Calculation(dev_config).convert_to_frames_since_start_time(start_time) < 3:
         display.flip()
