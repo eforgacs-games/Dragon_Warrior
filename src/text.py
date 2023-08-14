@@ -1,6 +1,7 @@
 import textwrap
 
 from pygame import font, time, display, Surface
+from pygame.font import Font
 
 from src.common import BLACK, WHITE, DRAGON_QUEST_FONT_PATH, UNIFONT_PATH, play_sound, text_beep_sfx
 
@@ -60,7 +61,8 @@ def set_font_by_ascii_chars(chunks, size, font_name):
         return current_font
 
 
-def blit_text_to_screen(alignment, color, current_font, screen, string, x, y, render_text=True):
+def blit_text_to_screen(alignment: str, color: tuple, current_font: Font, screen: Surface, string: str, x: float,
+                        y: float, render_text=True):
     if render_text:
         text_surface = current_font.render(string, True, color, BLACK)
         text_rect = set_text_rect_alignment(alignment, text_surface, x, y)
