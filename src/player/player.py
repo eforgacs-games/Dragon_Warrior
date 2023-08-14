@@ -65,7 +65,6 @@ class Player(AnimatedSprite):
             self.total_experience = 65536
             self.level = self.get_level_by_experience()
             self.update_stats_to_current_level()
-            self.spells = []
             self.max_hp = 99_999
             self.current_hp = self.max_hp
 

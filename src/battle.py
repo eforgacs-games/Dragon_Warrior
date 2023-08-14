@@ -5,7 +5,10 @@ from pygame.transform import scale
 
 from data.text.dialog_lookup_table import set_gettext_language
 from src.common import BATTLE_BACKGROUND_PATH, play_sound, stairs_down_sfx, missed_sfx, missed_2_sfx, \
-    excellent_move_sfx, victory_sfx, improvement_sfx, BLACK, config
+    excellent_move_sfx, victory_sfx, improvement_sfx, BLACK, config, menu_button_sfx
+from src.enemy import enemy_groups, Enemy
+from src.menu import CommandMenu
+from src.player.player import Player
 from src.player.player_stats import levels_list
 
 _ = set_gettext_language(config['LANGUAGE'])
@@ -54,10 +57,28 @@ def battle_background_image_effect(tile_size, screen, is_dark):
         time.wait(20)
 
 
-def battle_run(cmd_menu, player):
+def battle_run(cmd_menu: CommandMenu, player: Player, enemy: Enemy):
+    """Attempt to run from a battle. The formula is as follows:
+    If HeroAgility * Random # < EnemyAgility * Random # * GroupFactor, then the
+enemy will block you. (according to https://gamefaqs.gamespot.com/nes/563408-dragon-warrior/faqs/61640)"""
     play_sound(stairs_down_sfx)
     cmd_menu.show_line_in_dialog_box(_("{} started to run away.\n").format(player.name), add_quotes=False,
                                      hide_arrow=True, disable_sound=True)
+    random_number = random.randint(0, 255)
+    group_factor = 1
+    for group_number, group in enemy_groups.items():
+        if enemy.name in group:
+            group_factor = group_number
+    if player.agility * random_number < enemy.speed * random_number * group_factor:
+        cmd_menu.show_line_in_dialog_box(_("But was blocked in front.").format(enemy.name), add_quotes=False,
+                                         hide_arrow=True, disable_sound=True)
+        cmd_menu.game.enemy_attack(enemy)
+        cmd_menu.show_line_in_dialog_box(_("Command?\n"), add_quotes=False, hide_arrow=True, disable_sound=True)
+        if player.current_hp <= 0:
+            player.is_dead = True
+        return False
+    else:
+        return True
 
 
 def calculate_enemy_attack_damage(player, enemy):
@@ -99,25 +120,32 @@ def calculate_attack_damage(cmd_menu, player, enemy):
     return round(attack_damage)
 
 
-def battle_spell(cmd_menu, player):
-    cmd_menu.show_line_in_dialog_box(_("{} cannot yet use the spell.").format(player.name) + "\n" +
-                                     _("Command?\n"), add_quotes=False,
-                                     hide_arrow=True,
-                                     disable_sound=True, skip_text=True)
+def battle_spell(cmd_menu: CommandMenu, player: Player):
+    play_sound(menu_button_sfx)
+    # the implementation of this will vary upon which spell is being cast.
+    if not player.spells:
+        cmd_menu.show_text_in_dialog_box(_("{} cannot yet use the spell.").format(player.name),
+                                         skip_text=cmd_menu.skip_text)
+    else:
+        cmd_menu.display_item_menu('spells')
+    # cmd_menu.show_line_in_dialog_box(_("{} cannot yet use the spell.").format(player.name) + "\n" +
+    #                                  _("Command?\n"), add_quotes=False,
+    #                                  hide_arrow=True,
+    #                                  disable_sound=True, skip_text=True)
 
 
 def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_map, enemy):
     if config['LANGUAGE'] == 'Korean':
-        ko_enemy_name = enemy.name
+        ko_enemy_name = _(enemy.name)
         if ko_enemy_name.endswith(ko_consonant_ending_chars):
             ko_enemy_name += "을"
         else:
             ko_enemy_name += "를"
         enemy_defeated_string = f"{ko_enemy_name} 물리쳤다!\n"
     elif config['LANGUAGE'] == 'English':
-        enemy_defeated_string = _("Thou hast done well in defeating the {}.\n").format(enemy.name)
+        enemy_defeated_string = _("Thou hast done well in defeating the {}.\n").format(_(enemy.name))
     else:
-        enemy_defeated_string = _("Thou hast done well in defeating the {}.\n").format(enemy.name)
+        enemy_defeated_string = _("Thou hast done well in defeating the {}.\n").format(_(enemy.name))
     cmd_menu.show_line_in_dialog_box(enemy_defeated_string, add_quotes=False,
                                      disable_sound=True, hide_arrow=True)
     mixer.music.stop()
@@ -143,9 +171,13 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
     if player.level + 1 < 30 and \
             player.total_experience >= levels_list[player.level + 1]['total_exp']:
         play_sound(improvement_sfx)
-        cmd_menu.show_line_in_dialog_box("Courage and wit have served thee well.\n"
-                                         "Thou hast been promoted to the next level.\n", add_quotes=False,
-                                         disable_sound=True)
+        time.wait(2000)
+        if config['LANGUAGE'] == 'English':
+            cmd_menu.show_line_in_dialog_box("Courage and wit have served thee well.\n"
+                                             "Thou hast been promoted to the next level.\n", add_quotes=False,
+                                             disable_sound=True)
+        elif config['LANGUAGE'] == 'Korean':
+            cmd_menu.show_line_in_dialog_box(f"{player.name}은 {player.level + 1}레벨로 올랐다!")
         old_power = player.strength
         old_agility = player.agility
         old_max_hp = player.max_hp
@@ -162,19 +194,19 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
             mixer.music.play(-1)
 
         if player.strength > old_power:
-            cmd_menu.show_line_in_dialog_box(f"Thy power increases by {player.strength - old_power}.\n",
+            cmd_menu.show_line_in_dialog_box(_("Thy power increases by {}.\n").format(player.strength - old_power),
                                              add_quotes=False, disable_sound=True)
         if player.agility > old_agility:
             cmd_menu.show_line_in_dialog_box(
-                f"Thy Response Speed increases by {player.agility - old_agility}.\n", add_quotes=False,
+                _("Thy Response Speed increases by {}.\n").format(player.agility - old_agility), add_quotes=False,
                 disable_sound=True)
         if player.max_hp > old_max_hp:
             cmd_menu.show_line_in_dialog_box(
-                f"Thy Maximum Hit Points increase by {player.max_hp - old_max_hp}.\n", add_quotes=False,
+                _("Thy Maximum Hit Points increase by {}.\n").format(player.max_hp - old_max_hp), add_quotes=False,
                 disable_sound=True)
         if player.max_mp > old_max_mp:
             cmd_menu.show_line_in_dialog_box(
-                f"Thy Maximum Magic Points increase by {player.max_mp - old_max_mp}.\n", add_quotes=False,
+                _("Thy Maximum Magic Points increase by {}.\n").format(player.max_mp - old_max_mp), add_quotes=False,
                 disable_sound=True)
         if len(player.spells) > len(old_spells):
             cmd_menu.show_line_in_dialog_box("Thou hast learned a new spell.\n", add_quotes=False,
