@@ -73,6 +73,7 @@ enemy will block you. (according to https://gamefaqs.gamespot.com/nes/563408-dra
         cmd_menu.show_line_in_dialog_box(_("But was blocked in front.").format(enemy.name), add_quotes=False,
                                          hide_arrow=True, disable_sound=True)
         cmd_menu.game.enemy_attack(enemy)
+        cmd_menu.show_line_in_dialog_box(_("Command?\n"), add_quotes=False, hide_arrow=True, disable_sound=True)
         if player.current_hp <= 0:
             player.is_dead = True
         return False
