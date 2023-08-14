@@ -2,11 +2,10 @@ import os
 from unittest import TestCase
 from unittest.mock import patch
 
-from src.direction import Direction
 from src.config import prod_config
+from src.direction import Direction
 from src.game import Game
 from src.maps import MapWithoutNPCs
-from src.movement import bump_and_reset
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -42,6 +41,6 @@ class Test(TestCase):
     def test_bump_and_reset(self):
         self.assertEqual('BRICK', self.game.player.next_tile_id)
         self.assertEqual('GUARD', self.game.player.next_next_tile_id)
-        bump_and_reset(self.game.player, 'TREES', 'GRASS')
+        self.game.movement.bump_and_reset(self.game.player, 'TREES', 'GRASS')
         self.assertEqual('TREES', self.game.player.next_tile_id)
         self.assertEqual('GRASS', self.game.player.next_next_tile_id)

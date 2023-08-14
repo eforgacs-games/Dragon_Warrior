@@ -5,7 +5,7 @@ from pygame import time
 from pygame.time import get_ticks
 
 from src.config import prod_config
-from src.sound import Sound
+from src.movement import Movement
 
 
 class TestSound(TestCase):
@@ -16,11 +16,11 @@ class TestSound(TestCase):
         character.identifier = 'HERO'
         character.last_bump_time = get_ticks()
         character.bumped = False
-        sound = Sound(prod_config)
+        movement = Movement(prod_config)
         for i in range(2):
-            sound.bump(character)
+            movement.bump(character)
             self.assertTrue(character.bumped)
             # will reset the character.last_bump_time
             character.last_bump_time = 10
-            sound.bump(character)
+            movement.bump(character)
             self.assertEqual(300, character.last_bump_time)
