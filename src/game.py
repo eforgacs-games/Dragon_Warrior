@@ -400,7 +400,7 @@ class Game:
                 elif selected_executed_option == 'Spell':
                     current_battle.battle_spell(self.cmd_menu, self.player)
                 elif selected_executed_option == 'Run':
-                    run_away = current_battle.battle_run(self.cmd_menu, self.player, enemy)
+                    run_away = current_battle.battle_run(self.cmd_menu, self.player, enemy, current_battle)
                     if run_away and self.music_enabled:
                         mixer.music.load(self.current_map.music_file_path)
                         mixer.music.play(-1)
