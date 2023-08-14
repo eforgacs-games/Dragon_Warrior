@@ -123,17 +123,18 @@ class Directories:
         IMAGES_MENUS_ITEM_MENU_DIR = join(IMAGES_MENUS_DIR, 'item_menu')
         ITEM_MENU_1_BACKGROUND_PATH = join(IMAGES_MENUS_ITEM_MENU_DIR, 'item_menu_background_1.png')
         ITEM_MENU_2_BACKGROUND_PATH = join(IMAGES_MENUS_ITEM_MENU_DIR, 'item_menu_background_2.png')
+        ITEM_MENU_5_BACKGROUND_PATH = join(IMAGES_MENUS_ITEM_MENU_DIR, 'item_menu_background_5.png')
         self.item_menu_background_lookup = {1: ITEM_MENU_1_BACKGROUND_PATH,
                                             2: ITEM_MENU_2_BACKGROUND_PATH,
-                                            # need to implement more backgrounds
+                                            # TODO: need to implement more backgrounds
                                             3: ITEM_MENU_2_BACKGROUND_PATH,
                                             4: ITEM_MENU_2_BACKGROUND_PATH,
-                                            5: ITEM_MENU_2_BACKGROUND_PATH,
-                                            6: ITEM_MENU_2_BACKGROUND_PATH,
-                                            7: ITEM_MENU_2_BACKGROUND_PATH,
-                                            8: ITEM_MENU_2_BACKGROUND_PATH,
-                                            9: ITEM_MENU_2_BACKGROUND_PATH,
-                                            10: ITEM_MENU_2_BACKGROUND_PATH,
+                                            5: ITEM_MENU_5_BACKGROUND_PATH,
+                                            6: ITEM_MENU_5_BACKGROUND_PATH,
+                                            7: ITEM_MENU_5_BACKGROUND_PATH,
+                                            8: ITEM_MENU_5_BACKGROUND_PATH,
+                                            9: ITEM_MENU_5_BACKGROUND_PATH,
+                                            10: ITEM_MENU_5_BACKGROUND_PATH,
                                             }
 
         # main menu
@@ -232,6 +233,7 @@ class Directories:
         # shops
 
         IMAGES_SHOPS_DIR = join(self.IMAGES_DIR, 'shops')
+
         IMAGES_SHOPS_BRECCONARY_DIR = join(IMAGES_SHOPS_DIR, 'brecconary')
         IMAGES_SHOPS_BRECCONARY_WEAPONS_DIR = join(IMAGES_SHOPS_BRECCONARY_DIR, 'weapons')
         self.BRECCONARY_WEAPONS_SHOP_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_DIR, 'brecconary_shop.png')
@@ -246,6 +248,15 @@ class Directories:
                                                                'brecconary_shop_leather_armor.png')
         self.BRECCONARY_WEAPONS_SHOP_SMALL_SHIELD_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_DIR,
                                                               'brecconary_shop_small_shield.png')
+
+        IMAGES_SHOPS_KOL_DIR = join(IMAGES_SHOPS_DIR, 'kol')
+        IMAGES_SHOPS_KOL_WEAPONS_DIR = join(IMAGES_SHOPS_KOL_DIR, 'weapons')
+        self.KOL_WEAPONS_SHOP_PATH = join(IMAGES_SHOPS_KOL_WEAPONS_DIR, 'kol_shop.png')
+        self.KOL_WEAPONS_SHOP_COPPER_SWORD_PATH = join(IMAGES_SHOPS_KOL_WEAPONS_DIR, 'kol_shop_copper_sword.png')
+        self.KOL_WEAPONS_SHOP_HAND_AXE_PATH = join(IMAGES_SHOPS_KOL_WEAPONS_DIR, 'kol_shop_hand_axe.png')
+        self.KOL_WEAPONS_SHOP_HALF_PLATE_PATH = join(IMAGES_SHOPS_KOL_WEAPONS_DIR, 'kol_shop_half_plate.png')
+        self.KOL_WEAPONS_SHOP_FULL_PLATE_PATH = join(IMAGES_SHOPS_KOL_WEAPONS_DIR, 'kol_shop_full_plate.png')
+        self.KOL_WEAPONS_SHOP_SMALL_SHIELD_PATH = join(IMAGES_SHOPS_KOL_WEAPONS_DIR, 'kol_shop_small_shield.png')
 
         # battle menu
         BATTLE_MENU_DIR = join(IMAGES_MENUS_DIR, 'battle_menu')

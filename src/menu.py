@@ -40,6 +40,7 @@ class CommandMenu(Menu):
         self.player = self.game.player
 
         self.background = self.game.drawer.background
+        self.color = self.game.get_current_color()
         self.screen = self.game.screen
         self.camera_position = self.game.camera.get_pos()
         self.current_map: DragonWarriorMap = self.game.current_map
@@ -54,7 +55,7 @@ class CommandMenu(Menu):
         self.command_menu_surface = self.graphics.create_window(x=5, y=1, width=8, height=5,
                                                                 window_background=self.directories.COMMAND_MENU_STATIC_BACKGROUND_PATH,
                                                                 screen=self.screen,
-                                                                color=self.game.color)
+                                                                color=self.color)
         config = self.game.game_state.config
         self.dialog_lookup = DialogLookup(self, config)
         tile_size = config['TILE_SIZE']
@@ -73,17 +74,17 @@ class CommandMenu(Menu):
             columns=2,
             rows=4,
             theme=pygame_menu.themes.Theme(background_color=BLACK,
-                                           cursor_color=self.game.color,
-                                           cursor_selection_color=self.game.color,
+                                           cursor_color=self.color,
+                                           cursor_selection_color=self.color,
                                            title_background_color=BLACK,
                                            title_font=font,
-                                           title_font_color=self.game.color,
+                                           title_font_color=self.color,
                                            title_font_size=font_size,
                                            title_offset=(32 * SCALE, 0) if language == 'English' else (55 * SCALE, 0),
                                            widget_font=font,
                                            widget_alignment=pygame_menu.locals.ALIGN_LEFT,
                                            widget_background_color=BLACK,
-                                           widget_font_color=self.game.color,
+                                           widget_font_color=self.color,
                                            widget_font_size=font_size,
                                            widget_selection_effect=pygame_menu.widgets.
                                            LeftArrowSelection(
@@ -176,25 +177,25 @@ class CommandMenu(Menu):
             if temp_text_start:
                 current_time = get_ticks()
             self.graphics.create_window(x=2, y=9, width=12, height=5, window_background=self.directories.DIALOG_BOX_BACKGROUND_PATH,
-                          screen=self.screen, color=self.game.color)
+                          screen=self.screen, color=self.color)
             if letter_by_letter and not self.game.game_state.config['NO_WAIT']:
                 if not current_line:
                     current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                             self.game.game_state.config, color=self.game.color,
+                                             self.game.game_state.config, color=self.color,
                                              letter_by_letter=letter_by_letter, disable_sound=disable_sound)
                 else:
                     current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                             self.game.game_state.config, color=self.game.color, letter_by_letter=False,
+                                             self.game.game_state.config, color=self.color, letter_by_letter=False,
                                              disable_sound=disable_sound)
             else:
                 current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                         self.game.game_state.config, color=self.game.color, letter_by_letter=False,
+                                         self.game.game_state.config, color=self.color, letter_by_letter=False,
                                          disable_sound=disable_sound)
             if not hide_arrow:
                 end_of_dialog_box_location = self.screen.get_width() / 2, (
                         self.screen.get_height() * 13 / 16) + tile_size // 1.5
                 self.graphics.blink_arrow(self.screen, end_of_dialog_box_location[0], end_of_dialog_box_location[1],
-                                          'down', self.game.show_arrow, color=self.game.color)
+                                          'down', self.game.show_arrow, color=self.color)
             # playing with fire a bit here with the short-circuiting
             if skip_text or (temp_text_start and current_time - temp_text_start >= 1000):
                 if not skip_text and not disable_sound:
@@ -286,7 +287,7 @@ class CommandMenu(Menu):
                         self.screen.blit(self.command_menu_surface, (tile_size * 6, tile_size * 1)) if not \
                             self.game.game_state.config['NO_BLIT'] else None
                     if self.game.drawer.display_hovering_stats:
-                        self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.game.color)
+                        self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
                     if not self.game.game_state.config['NO_BLIT']:
                         display.update(self.screen.blit(black_box, (tile_size * left, tile_size * top)))
 
@@ -472,27 +473,27 @@ class CommandMenu(Menu):
         self.sound.play_sound(self.directories.menu_button_sfx)
         show_status = True
         self.window_drop_down_effect(4, 3, 10, 11)
-        self.graphics.create_window(4, 3, 10, 11, self.directories.STATUS_WINDOW_BACKGROUND_PATH, self.screen, color=self.game.color)
+        self.graphics.create_window(4, 3, 10, 11, self.directories.STATUS_WINDOW_BACKGROUND_PATH, self.screen, color=self.color)
         draw_text(self.player.name, tile_size * 13, tile_size * 3.75, self.screen, self.game.game_state.config,
-                  color=self.game.color, alignment='right', letter_by_letter=False)
+                  color=self.color, alignment='right', letter_by_letter=False)
         draw_text(str(self.player.strength), tile_size * 13, tile_size * 4.75, self.screen, self.game.game_state.config,
-                  color=self.game.color, alignment='right', letter_by_letter=False)
+                  color=self.color, alignment='right', letter_by_letter=False)
         draw_text(str(self.player.agility), tile_size * 13, tile_size * 5.75, self.screen, self.game.game_state.config,
-                  color=self.game.color, alignment='right', letter_by_letter=False)
+                  color=self.color, alignment='right', letter_by_letter=False)
         draw_text(str(self.player.max_hp), tile_size * 13, tile_size * 6.75, self.screen, self.game.game_state.config,
-                  color=self.game.color, alignment='right', letter_by_letter=False)
+                  color=self.color, alignment='right', letter_by_letter=False)
         draw_text(str(self.player.max_mp), tile_size * 13, tile_size * 7.75, self.screen, self.game.game_state.config,
-                  color=self.game.color, alignment='right', letter_by_letter=False)
+                  color=self.color, alignment='right', letter_by_letter=False)
         draw_text(str(self.player.attack_power), tile_size * 13, tile_size * 8.75, self.screen,
-                  self.game.game_state.config, color=self.game.color, alignment='right', letter_by_letter=False)
+                  self.game.game_state.config, color=self.color, alignment='right', letter_by_letter=False)
         draw_text(str(self.player.defense_power), tile_size * 13, tile_size * 9.75, self.screen,
-                  self.game.game_state.config, color=self.game.color, alignment='right', letter_by_letter=False)
+                  self.game.game_state.config, color=self.color, alignment='right', letter_by_letter=False)
         draw_text(self.player.weapon, tile_size * 11.75, tile_size * 10.75, self.screen, self.game.game_state.config,
-                  color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
+                  color=self.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
         draw_text(self.player.armor, tile_size * 11.55, tile_size * 11.75, self.screen, self.game.game_state.config,
-                  color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
+                  color=self.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
         draw_text(self.player.shield, tile_size * 11.75, tile_size * 12.75, self.screen, self.game.game_state.config,
-                  color=self.game.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
+                  color=self.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
         display.update((4 * tile_size, 3 * tile_size, 10 * tile_size, 11 * tile_size))
         while show_status:
             for current_event in event.get():
@@ -632,12 +633,12 @@ class CommandMenu(Menu):
         while item_menu_displayed:
             self.graphics.create_window(x=9, y=3, width=6, height=len(list_counter) + 1,
                           window_background=self.directories.item_menu_background_lookup[len(list_counter)], screen=self.screen,
-                          color=self.game.color)
+                          color=self.color)
             draw_text(list_string, tile_size * 10, tile_size * 4, self.screen, self.game.game_state.config,
                       letter_by_letter=False)
             self.graphics.blink_arrow(self.screen, x=tile_size * 9.5,
                                       y=(tile_size + (current_arrow_position * tile_size / 7.5)) * 4, direction="right",
-                                      show_arrow=self.game.show_arrow, color=self.game.color)
+                                      show_arrow=self.game.show_arrow, color=self.color)
             display.update((9 * tile_size, 3 * tile_size, 6 * tile_size, (len(list_counter) + 1) * tile_size))
             for current_event in event.get():
                 if any([current_event.type == KEYDOWN]):
