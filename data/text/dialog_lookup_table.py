@@ -26,6 +26,7 @@ class DialogLookup:
         self.weapons_and_armor_intro = _("We deal in weapons and armor.\n Dost thou wish to buy anything today?")
 
         self.command_menu = command_menu
+        self.color = self.command_menu.game.color
         self.player = command_menu.player
         self.screen = command_menu.screen
         self.current_map = command_menu.current_map
@@ -158,7 +159,9 @@ class DialogLookup:
 
             },
             'Kol': {'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
-                    'MERCHANT_2': {'dialog': _(self.weapons_and_armor_intro)},
+                    'MERCHANT_2': {'dialog': (
+                        partial(self.check_buy_weapons_armor, self.shop_inventories.kol_weapons_store_inventory,
+                                self.directories.KOL_WEAPONS_SHOP_PATH),)},
                     'WISE_MAN': {'dialog': (
                         _("Though thou art as brave as thy ancestor, {}, "
                           "thou cannot defeat the great Dragonlord with such weapons.").format(
@@ -202,15 +205,15 @@ class DialogLookup:
                                                          player_please_save_the_princess),
                                                      drop_down=False, drop_up=False,
                                                      skip_text=self.command_menu.skip_text), config=self.config,
-                            show_arrow=self.command_menu.game.show_arrow)
+                            show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
     def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
         confirmation_prompt(self.command_menu, self.weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
-                                                      static_store_image),
+                                                      static_store_image, color=self.command_menu.color),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.",
-                                                     hide_arrow=True),
-                            config=self.config, show_arrow=self.command_menu.game.show_arrow)
+                                                     hide_arrow=True, color=self.command_menu.color),
+                            config=self.config, show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
     def get_inn_intro(self, inn_cost):
         _ = self._
@@ -239,7 +242,7 @@ class DialogLookup:
         #             flash_transparent_color(WHITE, self.screen)
         #             display.flip()
 
-    def open_store_inventory(self, current_store_inventory, static_store_image, color=WHITE):
+    def open_store_inventory(self, current_store_inventory, static_store_image, color):
         _ = self._
         tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
         self.command_menu.show_line_in_dialog_box(_("What dost thou wish to buy?"), skip_text=True)
@@ -253,6 +256,8 @@ class DialogLookup:
         # arrow stays on and off for 16 frames at a time
         graphics = Graphics(self.config)
         while selecting:
+            self.command_menu.game.drawer.display_hovering_stats = True
+            display.flip()
             current_item_name = list(current_store_inventory)[current_item_index]
             current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
             frames_elapsed = self.calculation.convert_to_frames_since_start_time(start_time)
@@ -304,7 +309,7 @@ class DialogLookup:
                                                           current_store_inventory, old_item_cost),
                                 no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                          _("Oh, yes? That's too bad.")), config=self.config,
-                                show_arrow=self.command_menu.game.show_arrow)
+                                show_arrow=self.command_menu.game.show_arrow, color=self.color)
         else:
             self.command_menu.show_line_in_dialog_box(_("Sorry.\n"
                                                         "Thou hast not enough money."), hide_arrow=False)
@@ -313,7 +318,7 @@ class DialogLookup:
                                                       static_store_image),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                      _("Please, come again."), hide_arrow=True), config=self.config,
-                            show_arrow=self.command_menu.game.show_arrow)
+                            show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
     def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
         _ = self._
@@ -351,7 +356,7 @@ class DialogLookup:
                                                        "Good-bye, traveler."),
                                                      skip_text=self.command_menu.skip_text, hide_arrow=True),
                             config=self.command_menu.game.game_state.config,
-                            show_arrow=self.command_menu.game.show_arrow,
+                            show_arrow=self.command_menu.game.show_arrow, color=self.color,
                             skip_text=self.command_menu.skip_text)
 
     def check_money(self, inn_cost):
@@ -390,6 +395,7 @@ class DialogLookup:
             self.screen.blit(self.background, self.camera_position)
             self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
             display.flip()
+        self.command_menu.game.color = self.color = WHITE
         self.command_menu.show_text_in_dialog_box((_("Good morning.\nThou seems to have spent a good night."),
                                                    _("I shall see thee again.")), skip_text=self.command_menu.skip_text,
                                                   drop_up=False)
