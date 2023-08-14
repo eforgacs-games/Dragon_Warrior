@@ -9,7 +9,8 @@ from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
 
-from src import maps, menu_functions
+from data.text.intro_lookup_table import ControlInfo
+from src import maps
 from src.battle import battle_background_image_effect, battle_run, \
     calculate_enemy_attack_damage, missed_attack, calculate_attack_damage, battle_spell, enemy_defeated, \
     get_enemy_draws_near_string
@@ -25,11 +26,11 @@ from src.drawer import Drawer
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
 from src.game_functions import set_character_position, get_next_coordinates, select_from_vertical_menu
 from src.game_state import GameState
-from src.intro import Intro, controls
+from src.intro import Intro
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu, Menu
-from src.menu_functions import convert_list_to_newline_separated_string
+from src.menu_functions import convert_list_to_newline_separated_string, NameSelection
 from src.movement import bump_and_reset
 from src.player.player import Player
 from src.sound import Sound
@@ -42,7 +43,7 @@ arrow_fade = USEREVENT + 1
 
 class Game:
     def __init__(self, config):
-
+        self.config = config
         self.sound = Sound(config)
         self.graphics = Graphics(config)
         self.directories = Directories(config)
@@ -168,7 +169,7 @@ class Game:
         :return: None
         """
         if self.splash_screen_enabled:
-            intro = Intro()
+            intro = Intro(self.config)
             intro.show_start_screen(self.screen, self.start_time, self.clock, self.game_state.config)
             self.load_and_play_music(self.directories.intermezzo)
             self.show_main_menu_screen(self.screen)
@@ -196,7 +197,8 @@ class Game:
                                                               self.directories.ADVENTURE_LOG_1_PATH,
                                                               [self.directories.ADVENTURE_LOG_2_PATH,
                                                                self.directories.ADVENTURE_LOG_3_PATH]) + 1
-        self.player.name = menu_functions.select_name(get_ticks(), screen, self.cmd_menu, self.game_state.config)
+        name_selection = NameSelection(self.config)
+        self.player.name = name_selection.select_name(get_ticks(), screen, self.cmd_menu)
         self.player.set_initial_stats()
         self.sound.play_sound(self.directories.menu_button_sfx)
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
@@ -606,9 +608,10 @@ class Game:
         self.handle_fps_changes(current_keydown_event)
 
     def handle_help_button(self, keydown_event):
+        control_info = ControlInfo(self.config)
         if keydown_event.key == K_F1:
             self.cmd_menu.show_text_in_dialog_box(
-                self._("Controls:\n") + convert_list_to_newline_separated_string(controls))
+                self._("Controls:\n") + convert_list_to_newline_separated_string(control_info.controls))
 
     def handle_b_button(self, keydown_event):
         if keydown_event.key in reject_keys:

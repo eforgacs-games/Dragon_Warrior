@@ -1,6 +1,7 @@
 from src.config import dev_config
 from src.sound import Sound
 
+# TODO: remove dev_config
 config = dev_config
 sound = Sound(config)
 

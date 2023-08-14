@@ -1,23 +1,20 @@
-import gettext
-import os
-
+from src.common import set_gettext_language
 from src.config import dev_config
 
-# TODO: Replace with game config
+# TODO: remove dev_config and replace with game config
 config = dev_config
 
-if config['LANGUAGE'] == 'Korean':
-    ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
-    ko.install()
-    _ = ko.gettext
-else:
-    _ = gettext.gettext
+_ = set_gettext_language(config['LANGUAGE'])
 
-push_start = _("-PUSH START-")
-a_button = _("K key: A Button")
-b_button = _("J key: B Button")
-start_button = _("I key: Start")
-arrow_keys_move_buttons = _("WASD / Arrow Keys: Move")
-controls = a_button, b_button, start_button, arrow_keys_move_buttons
-input_name_prompt = _("Type your name using the keyboard.\n"
-                      "If you are using a joystick, press the TAB key to switch to joystick input.")
+
+class ControlInfo:
+    def __init__(self, config):
+        self.config = config
+        self.push_start = _("-PUSH START-")
+        self.a_button = _("K key: A Button")
+        self.b_button = _("J key: B Button")
+        self.start_button = _("I key: Start")
+        self.arrow_keys_move_buttons = _("WASD / Arrow Keys: Move")
+        self.controls = self.a_button, self.b_button, self.start_button, self.arrow_keys_move_buttons
+        self.input_name_prompt = _("Type your name using the keyboard.\n"
+                                   "If you are using a joystick, press the TAB key to switch to joystick input.")

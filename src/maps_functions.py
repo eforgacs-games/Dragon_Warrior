@@ -3,18 +3,11 @@ from typing import Tuple, List
 from pygame import surface
 from pygame.transform import scale
 
-from src.common import Graphics
-from src.config import dev_config
 
-# TODO: remove dev_config
-config = dev_config
-graphics = Graphics(config)
-
-
-def parse_map_tiles(map_path: str, tile_size: int):
-    configured_scale = config['SCALE']
+def parse_map_tiles(map_path: str, tile_size: int, graphics, configured_scale):
     map_sheet = graphics.get_image(map_path).convert()
-    map_tile_sheet = scale(map_sheet, (map_sheet.get_width() * configured_scale, map_sheet.get_height() * configured_scale))
+    map_tile_sheet = scale(map_sheet,
+                           (map_sheet.get_width() * configured_scale, map_sheet.get_height() * configured_scale))
     width, height = map_tile_sheet.get_size()
     return [[map_tile_sheet.subsurface((x * tile_size, y * tile_size, tile_size, tile_size)) for y in
              range(0, height // tile_size)]
