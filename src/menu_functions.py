@@ -2,8 +2,8 @@ import re
 import sys
 from typing import List
 
-from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_i, K_k, K_j, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, image, K_TAB, K_BACKSPACE, Rect, \
-    event
+from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_j, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, \
+    image, K_TAB, K_BACKSPACE, Rect, event
 from pygame.time import get_ticks
 from pygame.transform import scale
 
