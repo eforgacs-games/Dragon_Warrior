@@ -1,7 +1,7 @@
 from statistics import mean
 from typing import List, Iterable
 
-from pygame import image, display, KEYDOWN, KEYUP, event, Surface, Rect
+from pygame import image, display, KEYDOWN, event, Surface, Rect
 from pygame.sprite import Group
 from pygame.time import get_ticks
 from pygame.transform import scale
@@ -24,7 +24,7 @@ class Drawer:
         self.not_moving_time_start = None
         self.hovering_stats_displayed = False
 
-    def position_and_draw_enemy_image(self, screen, enemy_image, enemy_name, no_blit):
+    def position_and_draw_enemy_image(self, screen, enemy_image, enemy_name):
         tile_size = self.game_state.config["TILE_SIZE"]
         enemy_position = enemy_image_position_lookup.get(enemy_name)
         if enemy_position:
@@ -40,7 +40,7 @@ class Drawer:
             f'{IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
         enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
                                           enemy_image.get_height() * SCALE))
-        self.position_and_draw_enemy_image(screen, enemy_image, enemy_name, self.game_state.config["NO_BLIT"])
+        self.position_and_draw_enemy_image(screen, enemy_image, enemy_name)
 
     @staticmethod
     def handle_sprite_animation(enable_animate, character_dict):

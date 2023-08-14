@@ -1,5 +1,4 @@
 import locale
-import sys
 
 SCALE = 2
 LOCALE, CHARACTER_ENCODING = locale.getlocale()

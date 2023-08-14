@@ -1,4 +1,4 @@
-from pygame import K_i, K_k, K_DOWN, K_s, K_UP, K_w, K_RETURN, KEYDOWN, event, Rect, image, display
+from pygame import K_DOWN, K_s, K_UP, K_w, KEYDOWN, event, Rect, image, display
 from pygame.time import get_ticks
 from pygame.transform import scale
 
