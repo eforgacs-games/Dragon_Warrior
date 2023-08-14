@@ -4,22 +4,21 @@ from collections import Counter
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, \
-    USEREVENT, time
+from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
-from data.text.dialog import blink_arrow
-from data.text.dialog_lookup_table import DialogLookup, set_gettext_language
-from src.common import BLACK, menu_button_sfx, DIALOG_BOX_BACKGROUND_PATH, open_treasure_sfx, \
-    get_tile_id_by_coordinates, COMMAND_MENU_STATIC_BACKGROUND_PATH, create_window, convert_to_frames_since_start_time, \
-    open_door_sfx, \
-    STATUS_WINDOW_BACKGROUND_PATH, item_menu_background_lookup, torch_sfx, spell_sfx, accept_keys, reject_keys
+from data.text.dialog_lookup_table import DialogLookup
+from src.calculation import Calculation, get_tile_id_by_coordinates
+from src.color import BLACK
+from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
 from src.config import SCALE
+from src.directories import Directories
 from src.items import treasure
+from src.maps import DragonWarriorMap
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
-from src.sound import play_sound
+from src.sound import Sound
 from src.text import draw_text, set_font_by_ascii_chars
 
 arrow_fade = USEREVENT + 1
@@ -37,22 +36,25 @@ class CommandMenu(Menu):
 
     def __init__(self, game):
         super().__init__()
-
         self.game = game
         self.player = self.game.player
 
         self.background = self.game.drawer.background
         self.screen = self.game.screen
         self.camera_position = self.game.camera.get_pos()
-        self.current_map = self.game.current_map
+        self.current_map: DragonWarriorMap = self.game.current_map
         self.current_tile = self.player.current_tile
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
 
-        self.command_menu_surface = create_window(x=5, y=1, width=8, height=5,
-                                                  window_background=COMMAND_MENU_STATIC_BACKGROUND_PATH,
-                                                  screen=self.screen,
-                                                  color=self.game.color)
+        self.graphics = Graphics(self.current_map.config)
+        self.directories = Directories(self.current_map.config)
+        self.sound = Sound(self.current_map.config)
+        self.calculation = Calculation(self.current_map.config)
+        self.command_menu_surface = self.graphics.create_window(x=5, y=1, width=8, height=5,
+                                                                window_background=self.directories.COMMAND_MENU_STATIC_BACKGROUND_PATH,
+                                                                screen=self.screen,
+                                                                color=self.game.color)
         config = self.game.game_state.config
         self.dialog_lookup = DialogLookup(self, config)
         tile_size = config['TILE_SIZE']
@@ -173,7 +175,7 @@ class CommandMenu(Menu):
         while display_current_line:
             if temp_text_start:
                 current_time = get_ticks()
-            create_window(x=2, y=9, width=12, height=5, window_background=DIALOG_BOX_BACKGROUND_PATH,
+            self.graphics.create_window(x=2, y=9, width=12, height=5, window_background=self.directories.DIALOG_BOX_BACKGROUND_PATH,
                           screen=self.screen, color=self.game.color)
             if letter_by_letter and not self.game.game_state.config['NO_WAIT']:
                 if not current_line:
@@ -191,17 +193,17 @@ class CommandMenu(Menu):
             if not hide_arrow:
                 end_of_dialog_box_location = self.screen.get_width() / 2, (
                         self.screen.get_height() * 13 / 16) + tile_size // 1.5
-                blink_arrow(self.screen, end_of_dialog_box_location[0], end_of_dialog_box_location[1], 'down',
-                            self.game.game_state.config, self.game.show_arrow, self.game.color)
+                self.graphics.blink_arrow(self.screen, end_of_dialog_box_location[0], end_of_dialog_box_location[1],
+                                          'down', self.game.show_arrow, color=self.game.color)
             # playing with fire a bit here with the short-circuiting
             if skip_text or (temp_text_start and current_time - temp_text_start >= 1000):
                 if not skip_text and not disable_sound:
-                    play_sound(menu_button_sfx)
+                    self.sound.play_sound(self.directories.menu_button_sfx)
                 display_current_line = False
             for current_event in event.get():
                 if current_event.type == KEYDOWN:
                     if not skip_text and not disable_sound:
-                        play_sound(menu_button_sfx)
+                        self.sound.play_sound(self.directories.menu_button_sfx)
                     display_current_line = False
                 elif current_event.type == arrow_fade:
                     self.game.show_arrow = not self.game.show_arrow
@@ -244,7 +246,7 @@ class CommandMenu(Menu):
             black_box.fill(BLACK)
             drop_down_start = get_ticks()
             # each "bar" lasts 1 frame
-            while convert_to_frames_since_start_time(drop_down_start) < 1:
+            while self.calculation.convert_to_frames_since_start_time(drop_down_start) < 1:
                 if not self.game.game_state.config['NO_BLIT']:
                     self.screen.blit(black_box, (tile_size * left, tile_size * top))
                     display.update(window_rect)
@@ -271,7 +273,7 @@ class CommandMenu(Menu):
                 black_box = Surface((tile_size * width, tile_size * i))  # lgtm [py/call/wrong-arguments]
                 black_box.fill(BLACK)
                 drop_up_start = get_ticks()
-                while convert_to_frames_since_start_time(drop_up_start) < 1:
+                while self.calculation.convert_to_frames_since_start_time(drop_up_start) < 1:
                     # draw_player_sprites(self.current_map, self.background, self.player.rect.x, self.player.rect.y)
                     if not self.game.game_state.config['NO_BLIT']:
                         for character, character_dict in self.current_map.characters.items():
@@ -289,7 +291,7 @@ class CommandMenu(Menu):
                         display.update(self.screen.blit(black_box, (tile_size * left, tile_size * top)))
 
     def take_item(self, item_name: str):
-        play_sound(open_treasure_sfx)
+        self.sound.play_sound(self.directories.open_treasure_sfx)
         self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
         found_item_text = self._("Fortune smiles upon thee, {}.\nThou hast found the {}.").format(self.player.name,
                                                                                                   self._(item_name))
@@ -313,7 +315,7 @@ class CommandMenu(Menu):
             "When a new evil arises, find the three items, then fight!"), drop_down=False)
 
     def take_gold(self, treasure_info: dict):
-        play_sound(open_treasure_sfx)
+        self.sound.play_sound(self.directories.open_treasure_sfx)
         gold_amount = treasure_info['amount']
         self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
         self.show_text_in_dialog_box(self._("Of GOLD thou hast gained {}").format(gold_amount),
@@ -365,7 +367,7 @@ class CommandMenu(Menu):
             if self.game.game_state.radiant_active:
                 self.game.game_state.radiant_active = False
             self.game.torch_active = True
-            play_sound(torch_sfx)
+            self.sound.play_sound(self.directories.torch_sfx)
             self.player.inventory.remove("Torch")
 
     def dragon_scale(self):
@@ -424,7 +426,7 @@ class CommandMenu(Menu):
         Talk to an NPC.
         :return: None
         """
-        play_sound(menu_button_sfx)
+        self.sound.play_sound(self.directories.menu_button_sfx)
         # dialog = Dialog(player=self.player)
 
         # for now, implementing using print statements. will be useful for debugging as well.
@@ -467,10 +469,10 @@ class CommandMenu(Menu):
         # example below:
 
         tile_size = self.game.game_state.config['TILE_SIZE']
-        play_sound(menu_button_sfx)
+        self.sound.play_sound(self.directories.menu_button_sfx)
         show_status = True
         self.window_drop_down_effect(4, 3, 10, 11)
-        create_window(4, 3, 10, 11, STATUS_WINDOW_BACKGROUND_PATH, self.screen, color=self.game.color)
+        self.graphics.create_window(4, 3, 10, 11, self.directories.STATUS_WINDOW_BACKGROUND_PATH, self.screen, color=self.game.color)
         draw_text(self.player.name, tile_size * 13, tile_size * 3.75, self.screen, self.game.game_state.config,
                   color=self.game.color, alignment='right', letter_by_letter=False)
         draw_text(str(self.player.strength), tile_size * 13, tile_size * 4.75, self.screen, self.game.game_state.config,
@@ -518,7 +520,7 @@ class CommandMenu(Menu):
         Go up or down a staircase.
         :return: None
         """
-        play_sound(menu_button_sfx)
+        self.sound.play_sound(self.directories.menu_button_sfx)
         # this might be something we could turn off as one of the "modernization" updates
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN'):
             self.game.process_staircase_warps(staircase_location=(self.game.player.row, self.game.player.column),
@@ -536,7 +538,7 @@ class CommandMenu(Menu):
         Search the ground for items.
         :return: None
         """
-        play_sound(menu_button_sfx)
+        self.sound.play_sound(self.directories.menu_button_sfx)
         # open a window
         text_to_print = [f"{self.player.name} searched the ground all about.", ]
         # wait for input...
@@ -555,7 +557,7 @@ class CommandMenu(Menu):
         Cast a magic spell. (Not yet implemented)
         :return: To be determined upon implementation
         """
-        play_sound(menu_button_sfx)
+        self.sound.play_sound(self.directories.menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
         if not self.player.spells:
             self.show_text_in_dialog_box(self._("{} cannot yet use the spell.").format(self.player.name),
@@ -570,7 +572,7 @@ class CommandMenu(Menu):
         View/use items. (Not yet implemented)
         :return: To be determined upon implementation
         """
-        play_sound(menu_button_sfx)
+        self.sound.play_sound(self.directories.menu_button_sfx)
         # the implementation of this will vary upon which item is being used.
         if not self.player.inventory:
             self.show_text_in_dialog_box(self._("Nothing of use has yet been given to thee."), skip_text=self.skip_text)
@@ -628,18 +630,14 @@ class CommandMenu(Menu):
         currently_selected_item = list(list_counter.keys())[0]
         time.set_timer(arrow_fade, 530)
         while item_menu_displayed:
-            create_window(x=9, y=3, width=6, height=len(list_counter) + 1,
-                          window_background=item_menu_background_lookup[len(list_counter)], screen=self.screen,
+            self.graphics.create_window(x=9, y=3, width=6, height=len(list_counter) + 1,
+                          window_background=self.directories.item_menu_background_lookup[len(list_counter)], screen=self.screen,
                           color=self.game.color)
             draw_text(list_string, tile_size * 10, tile_size * 4, self.screen, self.game.game_state.config,
                       letter_by_letter=False)
-            blink_arrow(self.screen,
-                        x=tile_size * 9.5,
-                        y=(tile_size + (current_arrow_position * tile_size / 7.5)) * 4,
-                        direction="right",
-                        config=self.game.game_state.config,
-                        show_arrow=self.game.show_arrow,
-                        color=self.game.color)
+            self.graphics.blink_arrow(self.screen, x=tile_size * 9.5,
+                                      y=(tile_size + (current_arrow_position * tile_size / 7.5)) * 4, direction="right",
+                                      show_arrow=self.game.show_arrow, color=self.game.color)
             display.update((9 * tile_size, 3 * tile_size, 6 * tile_size, (len(list_counter) + 1) * tile_size))
             for current_event in event.get():
                 if any([current_event.type == KEYDOWN]):
@@ -655,7 +653,7 @@ class CommandMenu(Menu):
                                     (self._("{} chanted the spell of {}.").format(self.player.name,
                                                                                   currently_selected_item)),
                                     skip_text=self.skip_text)
-                                play_sound(spell_sfx)
+                                self.sound.play_sound(self.directories.spell_sfx)
                                 self.player.current_mp -= spell_mp_cost
                                 spell_function()
                         else:
@@ -675,14 +673,14 @@ class CommandMenu(Menu):
         Open a door.
         :return: None
         """
-        play_sound(menu_button_sfx)
+        self.sound.play_sound(self.directories.menu_button_sfx)
         if self.player.next_tile_id == 'DOOR':
             if 'Magic Key' in self.player.inventory:
                 # actually open the door
                 self.player.inventory.remove('Magic Key')
                 self.set_tile_by_coordinates('BRICK', self.player.next_coordinates[1], self.player.next_coordinates[0],
                                              self.player)
-                play_sound(open_door_sfx)
+                self.sound.play_sound(self.directories.open_door_sfx)
             else:
                 self.show_text_in_dialog_box(self._("Thou hast not a key to use."), skip_text=self.skip_text)
         else:
@@ -700,7 +698,7 @@ class CommandMenu(Menu):
             treasure_info = treasure[self.map_name].get((self.player.row, self.player.column))
             if treasure_info:
                 item_name = treasure_info['item']
-                play_sound(menu_button_sfx)
+                self.sound.play_sound(self.directories.menu_button_sfx)
                 if item_name:
                     if item_name == 'GOLD':
                         self.take_gold(treasure_info)

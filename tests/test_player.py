@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from src.common import Direction
+from src.direction import Direction
 from src.config import prod_config
 from src.maps import MapWithoutNPCs
 from src.player.player import Player

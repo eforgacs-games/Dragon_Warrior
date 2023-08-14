@@ -3,7 +3,10 @@ import textwrap
 from pygame import font, time, display, Surface
 from pygame.font import Font
 
-from src.common import BLACK, WHITE, DRAGON_QUEST_FONT_PATH, UNIFONT_PATH, play_sound, text_beep_sfx
+from src.color import WHITE, BLACK
+from src.config import dev_config
+from src.directories import Directories
+from src.sound import Sound
 
 
 class DialogBoxWrapper(textwrap.TextWrapper):
@@ -21,6 +24,7 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
     # chunks = [text[i:i + n] for i in range(0, len(text), n)]
+    directories = Directories(config)
     dialog_box_wrapper = DialogBoxWrapper(width=text_wrap_length, break_long_words=False)
     chunks = dialog_box_wrapper.wrap(text)
     item_gained_matches = ("thou hast gained", "Thou hast found")
@@ -39,7 +43,7 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
                     time.wait(16)
                 if not disable_sound:
                     if i % 2 == 0:
-                        play_sound(text_beep_sfx)
+                        Sound(config).play_sound(directories.text_beep_sfx)
         else:
             if not config['NO_BLIT']:
                 current_font = set_font_by_ascii_chars(chunks, size, font_name)
@@ -49,14 +53,18 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
             return chunk
 
 
+# TODO: remove dev_config
+directories = Directories(dev_config)
+
+
 def set_font_by_ascii_chars(chunks, size, font_name):
     if font_name is not None:
         return font.Font(font_name, size)
     else:
         if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
-            current_font = font.Font(DRAGON_QUEST_FONT_PATH, size)
+            current_font = font.Font(directories.DRAGON_QUEST_FONT_PATH, size)
         else:
-            current_font = font.Font(UNIFONT_PATH, size)
+            current_font = font.Font(directories.UNIFONT_PATH, size)
             current_font.bold = True
         return current_font
 

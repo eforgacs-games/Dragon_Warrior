@@ -1,5 +1,4 @@
 import re
-import sys
 from typing import List
 
 from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_j, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, \
@@ -8,34 +7,16 @@ from pygame.time import get_ticks
 from pygame.transform import scale
 
 from data.text.intro_lookup_table import input_name_prompt
-from src.common import NAME_SELECTION_UPPER_A, NAME_SELECTION_UPPER_B, NAME_SELECTION_UPPER_C, NAME_SELECTION_UPPER_D, \
-    NAME_SELECTION_UPPER_E, \
-    NAME_SELECTION_UPPER_F, NAME_SELECTION_UPPER_G, NAME_SELECTION_UPPER_H, NAME_SELECTION_UPPER_I, \
-    NAME_SELECTION_UPPER_J, NAME_SELECTION_UPPER_K, \
-    NAME_SELECTION_UPPER_L, NAME_SELECTION_UPPER_M, NAME_SELECTION_UPPER_N, NAME_SELECTION_UPPER_O, \
-    NAME_SELECTION_UPPER_P, NAME_SELECTION_UPPER_Q, \
-    NAME_SELECTION_UPPER_R, NAME_SELECTION_UPPER_S, NAME_SELECTION_UPPER_T, NAME_SELECTION_UPPER_U, \
-    NAME_SELECTION_UPPER_V, NAME_SELECTION_UPPER_W, \
-    NAME_SELECTION_UPPER_X, NAME_SELECTION_UPPER_Y, NAME_SELECTION_UPPER_Z, NAME_SELECTION_HYPHEN, \
-    NAME_SELECTION_SINGLE_QUOTE, \
-    NAME_SELECTION_EXCLAMATION_POINT, NAME_SELECTION_QUESTION_MARK, NAME_SELECTION_OPEN_PARENTHESIS, \
-    NAME_SELECTION_CLOSE_PARENTHESIS, NAME_SELECTION_SPACE, \
-    NAME_SELECTION_LOWER_A, NAME_SELECTION_LOWER_B, NAME_SELECTION_LOWER_C, NAME_SELECTION_LOWER_D, \
-    NAME_SELECTION_LOWER_E, NAME_SELECTION_LOWER_F, \
-    NAME_SELECTION_LOWER_G, NAME_SELECTION_LOWER_H, NAME_SELECTION_LOWER_I, NAME_SELECTION_LOWER_J, \
-    NAME_SELECTION_LOWER_K, NAME_SELECTION_LOWER_L, \
-    NAME_SELECTION_LOWER_M, NAME_SELECTION_LOWER_N, NAME_SELECTION_LOWER_O, NAME_SELECTION_LOWER_P, \
-    NAME_SELECTION_LOWER_Q, NAME_SELECTION_LOWER_R, \
-    NAME_SELECTION_LOWER_S, NAME_SELECTION_LOWER_T, NAME_SELECTION_LOWER_U, NAME_SELECTION_LOWER_V, \
-    NAME_SELECTION_LOWER_W, NAME_SELECTION_LOWER_X, \
-    NAME_SELECTION_LOWER_Y, NAME_SELECTION_LOWER_Z, NAME_SELECTION_COMMA, NAME_SELECTION_PERIOD, NAME_SELECTION_BACK, \
-    NAME_SELECTION_END, \
-    convert_to_frames_since_start_time, play_sound, menu_button_sfx, NAME_SELECTION_STATIC_IMAGE_LEN_0, \
-    NAME_SELECTION_STATIC_IMAGE_LEN_1, \
-    NAME_SELECTION_STATIC_IMAGE_LEN_2, NAME_SELECTION_STATIC_IMAGE_LEN_3, NAME_SELECTION_STATIC_IMAGE_LEN_4, \
-    NAME_SELECTION_STATIC_IMAGE_LEN_5, \
-    NAME_SELECTION_STATIC_IMAGE_LEN_6, NAME_SELECTION_STATIC_IMAGE_LEN_7, NAME_SELECTION_STATIC_IMAGE_LEN_8, accept_keys
+from src.calculation import Calculation
+from src.common import accept_keys
+from src.config import dev_config
+from src.directories import Directories
+from src.sound import Sound
 from src.text import draw_text
+
+# TODO: make this a class and no longer import dev_config
+config = dev_config
+directories = Directories(config)
 
 name_selection_array = (
     ("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"),
@@ -47,69 +28,69 @@ name_selection_array = (
 )
 
 name_selection_image_lookup = {
-    "A": NAME_SELECTION_UPPER_A,
-    "B": NAME_SELECTION_UPPER_B,
-    "C": NAME_SELECTION_UPPER_C,
-    "D": NAME_SELECTION_UPPER_D,
-    "E": NAME_SELECTION_UPPER_E,
-    "F": NAME_SELECTION_UPPER_F,
-    "G": NAME_SELECTION_UPPER_G,
-    "H": NAME_SELECTION_UPPER_H,
-    "I": NAME_SELECTION_UPPER_I,
-    "J": NAME_SELECTION_UPPER_J,
-    "K": NAME_SELECTION_UPPER_K,
-    "L": NAME_SELECTION_UPPER_L,
-    "M": NAME_SELECTION_UPPER_M,
-    "N": NAME_SELECTION_UPPER_N,
-    "O": NAME_SELECTION_UPPER_O,
-    "P": NAME_SELECTION_UPPER_P,
-    "Q": NAME_SELECTION_UPPER_Q,
-    "R": NAME_SELECTION_UPPER_R,
-    "S": NAME_SELECTION_UPPER_S,
-    "T": NAME_SELECTION_UPPER_T,
-    "U": NAME_SELECTION_UPPER_U,
-    "V": NAME_SELECTION_UPPER_V,
-    "W": NAME_SELECTION_UPPER_W,
-    "X": NAME_SELECTION_UPPER_X,
-    "Y": NAME_SELECTION_UPPER_Y,
-    "Z": NAME_SELECTION_UPPER_Z,
-    "-": NAME_SELECTION_HYPHEN,
-    "'": NAME_SELECTION_SINGLE_QUOTE,
-    "!": NAME_SELECTION_EXCLAMATION_POINT,
-    "?": NAME_SELECTION_QUESTION_MARK,
-    "(": NAME_SELECTION_OPEN_PARENTHESIS,
-    ")": NAME_SELECTION_CLOSE_PARENTHESIS,
-    " ": NAME_SELECTION_SPACE,
-    "a": NAME_SELECTION_LOWER_A,
-    "b": NAME_SELECTION_LOWER_B,
-    "c": NAME_SELECTION_LOWER_C,
-    "d": NAME_SELECTION_LOWER_D,
-    "e": NAME_SELECTION_LOWER_E,
-    "f": NAME_SELECTION_LOWER_F,
-    "g": NAME_SELECTION_LOWER_G,
-    "h": NAME_SELECTION_LOWER_H,
-    "i": NAME_SELECTION_LOWER_I,
-    "j": NAME_SELECTION_LOWER_J,
-    "k": NAME_SELECTION_LOWER_K,
-    "l": NAME_SELECTION_LOWER_L,
-    "m": NAME_SELECTION_LOWER_M,
-    "n": NAME_SELECTION_LOWER_N,
-    "o": NAME_SELECTION_LOWER_O,
-    "p": NAME_SELECTION_LOWER_P,
-    "q": NAME_SELECTION_LOWER_Q,
-    "r": NAME_SELECTION_LOWER_R,
-    "s": NAME_SELECTION_LOWER_S,
-    "t": NAME_SELECTION_LOWER_T,
-    "u": NAME_SELECTION_LOWER_U,
-    "v": NAME_SELECTION_LOWER_V,
-    "w": NAME_SELECTION_LOWER_W,
-    "x": NAME_SELECTION_LOWER_X,
-    "y": NAME_SELECTION_LOWER_Y,
-    "z": NAME_SELECTION_LOWER_Z,
-    ",": NAME_SELECTION_COMMA,
-    ".": NAME_SELECTION_PERIOD,
-    "1": NAME_SELECTION_BACK,
-    "0": NAME_SELECTION_END,
+    "A": directories.NAME_SELECTION_UPPER_A,
+    "B": directories.NAME_SELECTION_UPPER_B,
+    "C": directories.NAME_SELECTION_UPPER_C,
+    "D": directories.NAME_SELECTION_UPPER_D,
+    "E": directories.NAME_SELECTION_UPPER_E,
+    "F": directories.NAME_SELECTION_UPPER_F,
+    "G": directories.NAME_SELECTION_UPPER_G,
+    "H": directories.NAME_SELECTION_UPPER_H,
+    "I": directories.NAME_SELECTION_UPPER_I,
+    "J": directories.NAME_SELECTION_UPPER_J,
+    "K": directories.NAME_SELECTION_UPPER_K,
+    "L": directories.NAME_SELECTION_UPPER_L,
+    "M": directories.NAME_SELECTION_UPPER_M,
+    "N": directories.NAME_SELECTION_UPPER_N,
+    "O": directories.NAME_SELECTION_UPPER_O,
+    "P": directories.NAME_SELECTION_UPPER_P,
+    "Q": directories.NAME_SELECTION_UPPER_Q,
+    "R": directories.NAME_SELECTION_UPPER_R,
+    "S": directories.NAME_SELECTION_UPPER_S,
+    "T": directories.NAME_SELECTION_UPPER_T,
+    "U": directories.NAME_SELECTION_UPPER_U,
+    "V": directories.NAME_SELECTION_UPPER_V,
+    "W": directories.NAME_SELECTION_UPPER_W,
+    "X": directories.NAME_SELECTION_UPPER_X,
+    "Y": directories.NAME_SELECTION_UPPER_Y,
+    "Z": directories.NAME_SELECTION_UPPER_Z,
+    "-": directories.NAME_SELECTION_HYPHEN,
+    "'": directories.NAME_SELECTION_SINGLE_QUOTE,
+    "!": directories.NAME_SELECTION_EXCLAMATION_POINT,
+    "?": directories.NAME_SELECTION_QUESTION_MARK,
+    "(": directories.NAME_SELECTION_OPEN_PARENTHESIS,
+    ")": directories.NAME_SELECTION_CLOSE_PARENTHESIS,
+    " ": directories.NAME_SELECTION_SPACE,
+    "a": directories.NAME_SELECTION_LOWER_A,
+    "b": directories.NAME_SELECTION_LOWER_B,
+    "c": directories.NAME_SELECTION_LOWER_C,
+    "d": directories.NAME_SELECTION_LOWER_D,
+    "e": directories.NAME_SELECTION_LOWER_E,
+    "f": directories.NAME_SELECTION_LOWER_F,
+    "g": directories.NAME_SELECTION_LOWER_G,
+    "h": directories.NAME_SELECTION_LOWER_H,
+    "i": directories.NAME_SELECTION_LOWER_I,
+    "j": directories.NAME_SELECTION_LOWER_J,
+    "k": directories.NAME_SELECTION_LOWER_K,
+    "l": directories.NAME_SELECTION_LOWER_L,
+    "m": directories.NAME_SELECTION_LOWER_M,
+    "n": directories.NAME_SELECTION_LOWER_N,
+    "o": directories.NAME_SELECTION_LOWER_O,
+    "p": directories.NAME_SELECTION_LOWER_P,
+    "q": directories.NAME_SELECTION_LOWER_Q,
+    "r": directories.NAME_SELECTION_LOWER_R,
+    "s": directories.NAME_SELECTION_LOWER_S,
+    "t": directories.NAME_SELECTION_LOWER_T,
+    "u": directories.NAME_SELECTION_LOWER_U,
+    "v": directories.NAME_SELECTION_LOWER_V,
+    "w": directories.NAME_SELECTION_LOWER_W,
+    "x": directories.NAME_SELECTION_LOWER_X,
+    "y": directories.NAME_SELECTION_LOWER_Y,
+    "z": directories.NAME_SELECTION_LOWER_Z,
+    ",": directories.NAME_SELECTION_COMMA,
+    ".": directories.NAME_SELECTION_PERIOD,
+    "1": directories.NAME_SELECTION_BACK,
+    "0": directories.NAME_SELECTION_END,
 
 }
 
@@ -141,22 +122,22 @@ def select_name(blink_start, screen, command_menu, config):
     blinking = True
     name = ""
     enable_joystick_input = False
-    unselected_image = scale(image.load(NAME_SELECTION_STATIC_IMAGE_LEN_0), (screen.get_width(), screen.get_height()))
+    unselected_image = scale(image.load(directories.NAME_SELECTION_STATIC_IMAGE_LEN_0), (screen.get_width(), screen.get_height()))
     screen.blit(unselected_image, (0, 0)) if not config['NO_BLIT'] else None
     display.update(unselected_image.get_rect())
     command_menu.show_text_in_dialog_box(input_name_prompt, drop_down=False, drop_up=False, letter_by_letter=False)
     screen.blit(unselected_image, (0, 0)) if not config['NO_BLIT'] else None
     display.update(unselected_image.get_rect())
     selected_image_lookup = {
-        0: NAME_SELECTION_STATIC_IMAGE_LEN_0,
-        1: NAME_SELECTION_STATIC_IMAGE_LEN_1,
-        2: NAME_SELECTION_STATIC_IMAGE_LEN_2,
-        3: NAME_SELECTION_STATIC_IMAGE_LEN_3,
-        4: NAME_SELECTION_STATIC_IMAGE_LEN_4,
-        5: NAME_SELECTION_STATIC_IMAGE_LEN_5,
-        6: NAME_SELECTION_STATIC_IMAGE_LEN_6,
-        7: NAME_SELECTION_STATIC_IMAGE_LEN_7,
-        8: NAME_SELECTION_STATIC_IMAGE_LEN_8,
+        0: directories.NAME_SELECTION_STATIC_IMAGE_LEN_0,
+        1: directories.NAME_SELECTION_STATIC_IMAGE_LEN_1,
+        2: directories.NAME_SELECTION_STATIC_IMAGE_LEN_2,
+        3: directories.NAME_SELECTION_STATIC_IMAGE_LEN_3,
+        4: directories.NAME_SELECTION_STATIC_IMAGE_LEN_4,
+        5: directories.NAME_SELECTION_STATIC_IMAGE_LEN_5,
+        6: directories.NAME_SELECTION_STATIC_IMAGE_LEN_6,
+        7: directories.NAME_SELECTION_STATIC_IMAGE_LEN_7,
+        8: directories.NAME_SELECTION_STATIC_IMAGE_LEN_8,
     }
     while blinking:
         name = truncate_name(name)
@@ -169,13 +150,13 @@ def select_name(blink_start, screen, command_menu, config):
         for current_event in event.get():
             if current_event.type == QUIT:
                 quit()
-                sys.exit()
             elif current_event.type == KEYDOWN:
+                sound = Sound(config)
                 if current_event.key == K_TAB:
                     enable_joystick_input = toggle_joystick_input(command_menu, current_letter_image_path, enable_joystick_input, screen)
                 if enable_joystick_input:
                     if current_event.key in accept_keys:
-                        play_sound(menu_button_sfx)
+                        sound.play_sound(directories.menu_button_sfx)
                         if current_letter == "0":
                             return name
                         elif current_letter == "1":
@@ -204,7 +185,7 @@ def select_name(blink_start, screen, command_menu, config):
                             draw_image_with_name(current_letter_image_path, name, screen, config)
                             return name
                     elif any(current_event.unicode in sublist for sublist in name_selection_array) and current_event.unicode not in ("0", "1"):
-                        play_sound(menu_button_sfx)
+                        sound.play_sound(directories.menu_button_sfx)
                         name += current_event.unicode
                         current_item_coordinates = [(ix, iy) for ix, row in enumerate(name_selection_array) for iy, i in enumerate(row) if
                                                     i == current_event.unicode]
@@ -231,7 +212,7 @@ def toggle_joystick_input(command_menu, current_letter_image_path, enable_joysti
 
 
 def reset_blink_start(blink_start):
-    if convert_to_frames_since_start_time(blink_start) > 32:
+    if Calculation(config).convert_to_frames_since_start_time(blink_start) > 32:
         blink_start = get_ticks()
     return blink_start
 
@@ -244,9 +225,10 @@ def truncate_name(name):
 
 
 def blink_with_name(blink_start, current_letter_image_path, name, screen, static_image, config):
-    if convert_to_frames_since_start_time(blink_start) <= 16:
+    calculation = Calculation(config)
+    if calculation.convert_to_frames_since_start_time(blink_start) <= 16:
         draw_image_with_name(current_letter_image_path, name, screen, config)
-    elif 16 < convert_to_frames_since_start_time(blink_start) <= 32:
+    elif 16 < calculation.convert_to_frames_since_start_time(blink_start) <= 32:
         draw_image_with_name(static_image, name, screen, config)
     display.update(Rect(screen.get_rect().left, screen.get_rect().centerx // 1.7, screen.get_width(), screen.get_height() * .46))
 
