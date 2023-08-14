@@ -576,7 +576,7 @@ class Game:
         self.player.current_hp -= damage_amount
         self.sound.play_sound(self.directories.swamp_sfx)
         self.player.received_environment_damage = True
-        flash_transparent_color(RED, self.screen, no_blit=self.game_state.config['NO_BLIT'])
+        flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
                              self.foreground_rects, self.enable_animate, self.camera, self.initial_dialog_enabled,
                              self.events, self.skip_text, self.allow_save_prompt, self.game_state, self.torch_active,

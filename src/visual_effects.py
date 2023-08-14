@@ -41,9 +41,8 @@ def draw_transparent_color(color, screen, transparency, no_blit):
         screen.blit(color_flash_surface, (0, 0))
 
 
-def flash_transparent_color(color, screen, transparency=192, no_blit=False):
+def flash_transparent_color(color, screen, calculation, transparency=192, no_blit=False):
     start_time = get_ticks()
     draw_transparent_color(color, screen, transparency, no_blit)
-    # TODO: remove dev_config
-    while Calculation(dev_config).convert_to_frames_since_start_time(start_time) < 3:
+    while calculation.convert_to_frames_since_start_time(start_time) < 3:
         display.flip()
