@@ -17,11 +17,13 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import prod_config, dev_config
+from src.config import dev_config, prod_config
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
+from src.enemy import Enemy
 from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
+from src.enemy_spells import enemy_spell_lookup
 from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
 from src.intro import Intro
@@ -78,6 +80,7 @@ class Game:
         self.torch_active = False
         self.speed = 2
         self.launch_battle = False
+        self.current_enemy_pattern_index = None
         # debugging
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
         init()
@@ -420,7 +423,7 @@ class Game:
         if enemy.hp <= 0:
             return
         else:
-            self.enemy_attack(enemy, current_battle)
+            self.enemy_move(enemy, current_battle)
             if self.player.current_hp == 0:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
                 self.player.is_dead = True
@@ -445,20 +448,70 @@ class Game:
             enemy.hp -= attack_damage
             # print(f"{enemy.name} HP: {enemy.hp}/{enemy_string_lookup[enemy.name]().hp}")
 
-    def enemy_attack(self, enemy, current_battle):
-        self.sound.play_sound(self.directories.prepare_attack_sfx)
-        self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(self._(enemy.name)),
-                                              add_quotes=False, disable_sound=True, hide_arrow=True)
-        # (EnemyAttack - HeroAgility / 2) / 4,
-        #
-        # to:
-        #
-        # (EnemyAttack - HeroAgility / 2) / 2
+    def enemy_move(self, enemy: Enemy, current_battle: Battle):
+        if not enemy.pattern:
+            self.enemy_attack(current_battle, enemy)
+        else:
+            current_index = 0
+            current_enemy_pattern = enemy.pattern[current_index]
+            self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+
+    def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
+        enemy.refresh_pattern()
+        if isinstance(current_enemy_pattern, tuple):
+            # (X% chance to do Y if Z)
+            x = current_enemy_pattern[0]
+            y = current_spell = current_enemy_pattern[1]
+            z = current_enemy_pattern[2]
+            if z:
+                if random.randint(0, 100) < x:
+                    self.cmd_menu.show_line_in_dialog_box(
+                        self._("{} chants the spell of {}.").format(self._(enemy.name),
+                                                                    self._(current_spell)), add_quotes=False,
+                        disable_sound=True)
+
+                    self.sound.play_sound(self.directories.spell_sfx)
+                    time.wait(1000)
+                    spell_effect_lower_bound, spell_effect_upper_bound = enemy_spell_lookup[current_spell]
+                    spell_effect = random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
+                    if current_spell in ("HEAL", "HEALMORE"):
+                        enemy.recover_hp(spell_effect)
+                    else:
+                        self.receive_damage(spell_effect)
+                else:
+                    current_index += 1
+                    current_enemy_pattern = enemy.pattern[current_index]
+                    self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+            else:
+                current_index += 1
+                current_enemy_pattern = enemy.pattern[current_index]
+                self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+        elif isinstance(current_enemy_pattern, str):
+            # (do X)
+            if current_enemy_pattern == "ATTACK":
+                self.enemy_attack(current_battle, enemy)
+
+            # (EnemyAttack - HeroAgility / 2) / 4,
+            #
+            # to:
+            #
+            # (EnemyAttack - HeroAgility / 2) / 2
+
+    def enemy_attack(self, current_battle, enemy):
+        self.enemy_attack_message(enemy)
+        self.execute_enemy_attack(current_battle, enemy)
+
+    def execute_enemy_attack(self, current_battle, enemy):
         attack_damage = calculate_enemy_attack_damage(self.player, enemy)
         if attack_damage <= 0:
             current_battle.missed_attack(self.cmd_menu)
         else:
             self.receive_damage(attack_damage)
+
+    def enemy_attack_message(self, enemy):
+        self.sound.play_sound(self.directories.prepare_attack_sfx)
+        self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(self._(enemy.name)),
+                                              add_quotes=False, disable_sound=True, hide_arrow=True)
 
     def receive_damage(self, attack_damage):
         self.sound.play_sound(self.directories.receive_damage_2_sfx)
@@ -469,7 +522,8 @@ class Game:
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
         # create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
         self.cmd_menu.show_line_in_dialog_box(self._("Thy Hit Points decreased by {}.\n").format(attack_damage),
-                                              add_quotes=False, disable_sound=True, hide_arrow=True)
+                                              add_quotes=False, disable_sound=True, hide_arrow=True, skip_text=True if
+            self.player.current_hp == 0 else False)
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
 
     def get_current_color(self):
@@ -555,13 +609,14 @@ class Game:
             self.player.is_dead = False
 
     def set_post_death_attributes(self):
-        next_map = map_lookup['TantegelThroneRoom']()
+        next_map = map_lookup['TantegelThroneRoom'](self.config)
         self.change_map(next_map)
         self.player.gold = self.player.gold // 2
         # revive player
         self.player.current_hp = self.player.max_hp
         self.player.is_dead = False
         self.game_state.is_post_death_dialog = True
+        self.color = self.cmd_menu.color = WHITE
 
     def handle_environment_damage(self):
         if not self.player.armor == "Erdrick's Armor":
@@ -1024,8 +1079,8 @@ class Game:
 
 
 def run():
-    # game = Game(config=prod_config)
-    game = Game(config=dev_config)
+    game = Game(config=prod_config)
+    # game = Game(config=dev_config)
     game.main()
 
 
