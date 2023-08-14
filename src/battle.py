@@ -157,7 +157,7 @@ class Battle:
                                                  "Thou hast been promoted to the next level.\n", add_quotes=False,
                                                  disable_sound=True)
             elif self.config['LANGUAGE'] == 'Korean':
-                cmd_menu.show_line_in_dialog_box(f"{player.name}은 {player.level + 1}레벨로 올랐다!")
+                cmd_menu.show_line_in_dialog_box(f"{player.name}은 {player.level + 1}레벨로 올랐다!", add_quotes=False)
             old_power = player.strength
             old_agility = player.agility
             old_max_hp = player.max_hp

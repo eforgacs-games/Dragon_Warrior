@@ -55,6 +55,18 @@ msgstr "가죽 옷"
 msgid "Small Shield"
 msgstr "가죽 방패"
 
+#: .\dialog_lookup_table.py:289
+msgid "Hand Axe"
+msgstr "쇠도끼"
+
+#: .\dialog_lookup_table.py:289
+msgid "Half Plate"
+msgstr "철 갑옷"
+
+#: .\dialog_lookup_table.py:289
+msgid "Full Plate"
+msgstr "강철 갑옷"
+
 #: .\dialog_lookup_table.py:32
 msgid "Thou art dead."
 msgstr "당신은 죽었습니다."

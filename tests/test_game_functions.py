@@ -114,19 +114,19 @@ class TestGameFunctions(TestCase):
 
     def test_draw_stats_strings_with_alignments(self):
         with patch.object(drawer, 'draw_text') as mocked_draw_text:
-            self.game.drawer.draw_stats_strings_with_alignments("12345", 1, self.game.screen)
+            self.game.drawer.draw_stats_strings_with_alignments("12345", 1, self.game.screen, self.game.color)
             mocked_draw_text.assert_called_once_with("12345", 102.4, 32, self.game.screen, self.game.game_state.config,
                                                      color=(255, 255, 255), alignment='center', letter_by_letter=False)
-            self.game.drawer.draw_stats_strings_with_alignments("1234", 1, self.game.screen)
+            self.game.drawer.draw_stats_strings_with_alignments("1234", 1, self.game.screen, self.game.color)
             mocked_draw_text.assert_called_with("1234", 110.08, 32, self.game.screen, self.game.game_state.config,
                                                 color=(255, 255, 255), alignment='center', letter_by_letter=False)
-            self.game.drawer.draw_stats_strings_with_alignments("123", 1, self.game.screen)
+            self.game.drawer.draw_stats_strings_with_alignments("123", 1, self.game.screen, self.game.color)
             mocked_draw_text.assert_called_with("123", 117.44, 32, self.game.screen, self.game.game_state.config,
                                                 color=(255, 255, 255), alignment='center', letter_by_letter=False)
-            self.game.drawer.draw_stats_strings_with_alignments("12", 1, self.game.screen)
+            self.game.drawer.draw_stats_strings_with_alignments("12", 1, self.game.screen, self.game.color)
             mocked_draw_text.assert_called_with("12", 127.68, 32, self.game.screen, self.game.game_state.config,
                                                 color=(255, 255, 255), alignment='center', letter_by_letter=False)
-            self.game.drawer.draw_stats_strings_with_alignments("1", 1, self.game.screen)
+            self.game.drawer.draw_stats_strings_with_alignments("1", 1, self.game.screen, self.game.color)
             mocked_draw_text.assert_called_with("1", 134.4, 32, self.game.screen, self.game.game_state.config,
                                                 color=(255, 255, 255), alignment='center', letter_by_letter=False)
 
