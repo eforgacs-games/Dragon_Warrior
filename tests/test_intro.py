@@ -6,7 +6,7 @@ from pygame import Rect, event, KEYDOWN, K_i
 
 from src.config import prod_config
 from src.game import Game
-from src.intro import show_intro_banner, repeated_sparkle, Intro, draw_banner_text
+from src.intro import show_intro_banner, Intro
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -21,24 +21,24 @@ class TestIntro(TestCase):
         prod_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
             self.game = Game(prod_config)
-        self.intro = Intro()
+        self.intro = Intro(prod_config)
 
     def test_show_intro_banner(self):
         self.assertIsInstance(show_intro_banner(self.game.directories.INTRO_BANNER_PATH, self.game.screen, no_blit=True), Rect)
 
-    @patch('src.intro.banner_sparkle')
+    @patch('src.intro.Intro.banner_sparkle')
     # @patch(pygame.time, )
     def test_repeated_sparkle(self, mock_banner_sparkle):
-        repeated_sparkle(self.game.screen, 0, False, 1)
+        self.intro.repeated_sparkle(self.game.screen, 0, False, 1)
         mock_banner_sparkle.assert_not_called()
-        return_value = repeated_sparkle(self.game.screen, 0, False, 5000)
+        return_value = self.intro.repeated_sparkle(self.game.screen, 0, False, 5000)
         self.assertIsInstance(return_value, (int, float))
         mock_banner_sparkle.assert_called_once()
 
     # def test_banner_sparkle(self):
     #     banner_sparkle(True, self.game.screen)
 
-    @patch('src.intro.banner_sparkle')
+    @patch('src.intro.Intro.banner_sparkle')
     def test_handle_all_sparkles(self, mock_banner_sparkle):
         start_time = 1
         self.assertFalse(self.intro.first_long_sparkle_done)
@@ -62,7 +62,7 @@ class TestIntro(TestCase):
             self.assertTrue(self.intro.second_short_sparkle_done)
 
     def test_draw_banner_text(self):
-        draw_banner_text(self.game.screen, self.game.game_state.config)
+        self.intro.draw_banner_text(self.game.screen)
 
     def test_show_start_screen(self):
         mocked_i = MagicMock()

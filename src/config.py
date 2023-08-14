@@ -20,8 +20,8 @@ prod_config = {
     "ORCHESTRA_MUSIC_ENABLED": True,
     "SHOW_FPS": False,
     "LOCALE, CHARACTER_ENCODING": locale.getlocale(),
-    # "LANGUAGE": LOCALE.split("_")[0],
-    "LANGUAGE": 'Korean',
+    "LANGUAGE": LOCALE.split("_")[0],
+    # "LANGUAGE": 'Korean',
     # This prints out the current coordinates that the player is standing on.
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
@@ -47,8 +47,8 @@ dev_config = {
     "ORCHESTRA_MUSIC_ENABLED": True,
     "SHOW_FPS": False,
     "LOCALE, CHARACTER_ENCODING": locale.getlocale(),
-    # "LANGUAGE": LOCALE.split("_")[0],
-    "LANGUAGE": 'Korean',
+    "LANGUAGE": LOCALE.split("_")[0],
+    # "LANGUAGE": 'Korean',
     # This prints out the current coordinates that the player is standing on.
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),

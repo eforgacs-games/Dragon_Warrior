@@ -10,7 +10,7 @@ from src.common import WHITE, reject_keys, accept_keys, Graphics, set_gettext_la
 from src.directories import Directories
 from src.items import weapons, armor, shields
 from src.menu_functions import draw_player_sprites, draw_character_sprites
-from src.shops import brecconary_weapons_store_inventory
+from src.shops import ShopInventories
 from src.sound import Sound
 from src.visual_effects import fade, flash_transparent_color
 
@@ -19,6 +19,8 @@ class DialogLookup:
     def __init__(self, command_menu, config):
         self.config = config
         self._ = _ = set_gettext_language(self.config['LANGUAGE'])
+
+        self.shop_inventories = ShopInventories(self.config)
 
         self.weapons_and_armor_intro = _("We deal in weapons and armor.\n Dost thou wish to buy anything today?")
 
@@ -129,7 +131,7 @@ class DialogLookup:
                 'SOLDIER': {'dialog': (_("Beware the bridges!"), _("Danger grows when thou crosses."))},
                 'WISE_MAN': {'dialog': _("If thou art cursed, come again.")},
                 'MERCHANT': {'dialog': (
-                    partial(self.check_buy_weapons_armor, brecconary_weapons_store_inventory,
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.brecconary_weapons_store_inventory,
                             self.directories.BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'MERCHANT_3': {'dialog': (tools_intro,)},

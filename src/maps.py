@@ -16,7 +16,7 @@ from src.sprites.base_sprite import BaseSprite
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 
-# TODO: Replace with game config
+# TODO: remove dev_config and replace with game config
 config = dev_config
 
 all_impassable_tiles = (
@@ -53,7 +53,10 @@ class DragonWarriorMap:
         self.tiles_in_current_loaded_map = None
         self.layout = layout
         self.center_pt = None
-        self.map_tiles = parse_map_tiles(map_path=self.directories.MAP_TILES_PATH, tile_size=config['TILE_SIZE'])
+        self.map_tiles = parse_map_tiles(map_path=self.directories.MAP_TILES_PATH,
+                                         tile_size=config['TILE_SIZE'],
+                                         graphics=self.graphics,
+                                         configured_scale=config['SCALE'])
         self.impassable_tiles = all_impassable_tiles
         self.custom_underlying_tiles = {}
         self.character_position_record = {}
@@ -169,7 +172,8 @@ class DragonWarriorMap:
         if current_tile == self.character_key['HERO']['val']:
             # will this cause issues with the hero images (holding sword/shield)? time will tell...
             AnimatedSprite.__init__(player, self.center_pt, player.direction_value,
-                                    images=self.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH), identifier='HERO')
+                                    images=self.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
+                                    identifier='HERO')
             self.map_player(character_dict['underlying_tile'], player, coordinates)
         else:
             character = self.set_identifiers_for_duplicate_characters(character)
@@ -186,7 +190,8 @@ class DragonWarriorMap:
 
     def scale_sprite_sheet(self, image_path):
         return parse_animated_sprite_sheet(scale(self.graphics.get_image(image_path), (
-            self.graphics.get_image(image_path).get_width() * self.scale, self.graphics.get_image(image_path).get_height() * self.scale)), config)
+            self.graphics.get_image(image_path).get_width() * self.scale,
+            self.graphics.get_image(image_path).get_height() * self.scale)), config)
 
     def map_npc(self, identifier, direction, underlying_tile, image_path, four_sided, coordinates,
                 is_roaming) -> None:
@@ -208,7 +213,8 @@ class DragonWarriorMap:
             character.row, character.column = coordinates
             self.fixed_characters.append(character)
         character_sprites.add(character)
-        tile_value = self.character_key["_".join(identifier.split("_")[0:-1]) if identifier[-1].isdigit() else identifier][
+        tile_value = \
+        self.character_key["_".join(identifier.split("_")[0:-1]) if identifier[-1].isdigit() else identifier][
             'val']
         self.characters[character.identifier] = {'character': character,
                                                  'character_sprites': character_sprites,
@@ -239,7 +245,6 @@ class DragonWarriorMap:
                                    'tile_value': self.character_key['HERO']['val'],
                                    'coordinates': coordinates}
         self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
-
 
     # @timeit
     def map_floor_tiles(self, column, row) -> None:
@@ -692,7 +697,8 @@ class Kol(DragonWarriorMap):
             'WISE_MAN_2': 'GRASS',
             'WISE_MAN_3': 'SAND'
         }
-        self.roaming_character_list = ['WISE_MAN_2', 'WOMAN_2', 'MAN', 'MAN_2', 'SOLDIER', 'GUARD', 'WISE_MAN_2', 'WISE_MAN_3']
+        self.roaming_character_list = ['WISE_MAN_2', 'WOMAN_2', 'MAN', 'MAN_2', 'SOLDIER', 'GUARD', 'WISE_MAN_2',
+                                       'WISE_MAN_3']
 
     def hero_underlying_tile(self):
         return 'SAND'
