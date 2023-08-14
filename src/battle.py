@@ -3,13 +3,19 @@ import random
 from pygame import image, display, time, mixer, Surface
 from pygame.transform import scale
 
-from data.text.dialog_lookup_table import set_gettext_language
-from src.common import BATTLE_BACKGROUND_PATH, play_sound, stairs_down_sfx, missed_sfx, missed_2_sfx, \
-    excellent_move_sfx, victory_sfx, improvement_sfx, BLACK, config, menu_button_sfx
+from src.common import BLACK, set_gettext_language
+from src.config import dev_config
+from src.directories import Directories
 from src.enemy import enemy_groups, Enemy
 from src.menu import CommandMenu
 from src.player.player import Player
 from src.player.player_stats import levels_list
+from src.sound import Sound
+
+# TODO: remove dev_config
+config = dev_config
+directories = Directories(config)
+sound = Sound(config)
 
 _ = set_gettext_language(config['LANGUAGE'])
 
@@ -38,7 +44,7 @@ def select_random_attack_damage_value(lower_bound, upper_bound) -> int:
 def battle_background_image_effect(tile_size, screen, is_dark):
     """Spiral effect to introduce battle background."""
     if not is_dark:
-        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
+        battle_background_image = scale(image.load(directories.BATTLE_BACKGROUND_PATH),
                                         (7 * tile_size, 7 * tile_size))
     else:
         black_surface = Surface((7 * tile_size, 7 * tile_size))
@@ -61,7 +67,7 @@ def battle_run(cmd_menu: CommandMenu, player: Player, enemy: Enemy):
     """Attempt to run from a battle. The formula is as follows:
     If HeroAgility * Random # < EnemyAgility * Random # * GroupFactor, then the
 enemy will block you. (according to https://gamefaqs.gamespot.com/nes/563408-dragon-warrior/faqs/61640)"""
-    play_sound(stairs_down_sfx)
+    sound.play_sound(directories.stairs_down_sfx)
     cmd_menu.show_line_in_dialog_box(_("{} started to run away.\n").format(player.name), add_quotes=False,
                                      hide_arrow=True, disable_sound=True)
     random_number = random.randint(0, 255)
@@ -90,9 +96,9 @@ def calculate_enemy_attack_damage(player, enemy):
 def missed_attack(cmd_menu):
     missed_sfx_number = random.randint(1, 2)
     if missed_sfx_number == 1:
-        play_sound(missed_sfx)
+        sound.play_sound(directories.missed_sfx)
     else:
-        play_sound(missed_2_sfx)
+        sound.play_sound(directories.missed_2_sfx)
     cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n", add_quotes=False,
                                      disable_sound=True, hide_arrow=True)
 
@@ -100,7 +106,7 @@ def missed_attack(cmd_menu):
 def calculate_attack_damage(cmd_menu, player, enemy):
     excellent_move_probability = random.randint(0, 31)
     if excellent_move_probability == 0 and enemy.name not in ('Dragonlord', 'Dragonlord 2'):
-        play_sound(excellent_move_sfx)
+        sound.play_sound(directories.excellent_move_sfx)
         cmd_menu.show_line_in_dialog_box(_("Excellent move!\n"), add_quotes=False, disable_sound=True)
         attack_damage = random.randint(player.attack_power // 2,
                                        player.attack_power)
@@ -121,7 +127,7 @@ def calculate_attack_damage(cmd_menu, player, enemy):
 
 
 def battle_spell(cmd_menu: CommandMenu, player: Player):
-    play_sound(menu_button_sfx)
+    sound.play_sound(directories.menu_button_sfx)
     # the implementation of this will vary upon which spell is being cast.
     if not player.spells:
         cmd_menu.show_text_in_dialog_box(_("{} cannot yet use the spell.").format(player.name),
@@ -149,13 +155,13 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
     cmd_menu.show_line_in_dialog_box(enemy_defeated_string, add_quotes=False,
                                      disable_sound=True, hide_arrow=True)
     mixer.music.stop()
-    play_sound(victory_sfx)
+    sound.play_sound(directories.victory_sfx)
     if current_map.is_dark:
         black_surface = Surface((7 * tile_size, 7 * tile_size))
         black_surface.fill(BLACK)
         battle_background_image = black_surface
     else:
-        battle_background_image = scale(image.load(BATTLE_BACKGROUND_PATH),
+        battle_background_image = scale(image.load(directories.BATTLE_BACKGROUND_PATH),
                                         (7 * tile_size, 7 * tile_size))
     screen.blit(battle_background_image, (5 * tile_size, 4 * tile_size))
     display.update(battle_background_image.get_rect())
@@ -170,7 +176,7 @@ def enemy_defeated(cmd_menu, tile_size, screen, player, music_enabled, current_m
 
     if player.level + 1 < 30 and \
             player.total_experience >= levels_list[player.level + 1]['total_exp']:
-        play_sound(improvement_sfx)
+        sound.play_sound(directories.improvement_sfx)
         time.wait(2000)
         if config['LANGUAGE'] == 'English':
             cmd_menu.show_line_in_dialog_box("Courage and wit have served thee well.\n"

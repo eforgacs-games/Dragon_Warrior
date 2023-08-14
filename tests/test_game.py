@@ -11,8 +11,8 @@ from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
 from src.camera import Camera
-from src.common import UNARMED_HERO_PATH, get_tile_id_by_coordinates, Direction, get_next_tile_identifier, \
-    intro_overture
+from src.calculation import get_tile_id_by_coordinates
+from src.direction import Direction
 from src.config import SCALE, prod_config
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
     set_to_save_prompt
@@ -80,7 +80,7 @@ class TestGame(TestCase):
         self.game.player.name = "Edward"
         self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu, self.game.game_state.config)
         self.game.current_map = MockMap()
-        unarmed_hero_sheet = load_extended(UNARMED_HERO_PATH)
+        unarmed_hero_sheet = load_extended(self.game.directories.UNARMED_HERO_PATH)
         self.game.player = Player((0, 0), parse_animated_sprite_sheet(scale(unarmed_hero_sheet,
                                                                             (unarmed_hero_sheet.get_width() * SCALE,
                                                                              unarmed_hero_sheet.get_height() * SCALE)),
@@ -354,10 +354,10 @@ class TestGame(TestCase):
         self.assertEqual('BRICK', get_tile_id_by_coordinates(self.game.player.next_next_coordinates[1],
                                                              self.game.player.next_next_coordinates[0],
                                                              self.game.current_map))
-        self.game.player.next_tile_id = get_next_tile_identifier(self.game.player.column,
-                                                                 self.game.player.row,
-                                                                 self.game.player.direction_value,
-                                                                 self.game.current_map)
+        self.game.player.next_tile_id = self.game.calculation.get_next_tile_identifier(self.game.player.column,
+                                                                                       self.game.player.row,
+                                                                                       self.game.player.direction_value,
+                                                                                       self.game.current_map)
         self.assertEqual('WOOD', self.game.player.next_tile_id)
         self.game.player.next_coordinates = get_next_coordinates(self.game.player.column, self.game.player.row,
                                                                  direction=self.game.player.direction_value)
@@ -556,7 +556,7 @@ class TestGame(TestCase):
     @patch.object(Game, "load_and_play_music")
     def test_splash_screen_enabled_load_and_play_music(self, mock_load_and_play_music, mock_set_screen):
         self.game.__init__(prod_config)
-        mock_load_and_play_music.assert_called_once_with(intro_overture)
+        mock_load_and_play_music.assert_called_once_with(self.game.directories.intro_overture)
 
     # @patch('src.config')
     # def test_splash_screen_disabled_load_and_play_music(self, mocked_config):

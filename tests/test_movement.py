@@ -2,7 +2,7 @@ import os
 from unittest import TestCase
 from unittest.mock import patch
 
-from src.common import Direction
+from src.direction import Direction
 from src.config import prod_config
 from src.game import Game
 from src.maps import MapWithoutNPCs

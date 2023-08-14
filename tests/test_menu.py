@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from pygame import KEYDOWN, K_RETURN, event
 
-from src.common import Direction
+from src.direction import Direction
 from src.config import prod_config
 from src.game import Game
 from src.maps import MapWithoutNPCs
