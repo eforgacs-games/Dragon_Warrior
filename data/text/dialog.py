@@ -1,11 +1,9 @@
 from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event, time, USEREVENT
 from pygame.event import get
 
-from src.common import WHITE
 
-
-def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, show_arrow,
-                        finally_function=None, skip_text=False, color=WHITE):
+def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, show_arrow, color,
+                        finally_function=None, skip_text=False):
     command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, hide_arrow=True, letter_by_letter=True)
     command_menu.window_drop_down_effect(5, 2, 4, 3)
     graphics = command_menu.graphics
@@ -28,7 +26,7 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         if blinking_yes and not config['NO_WAIT']:
             graphics.blink_switch(command_menu.screen, directories.CONFIRMATION_YES_BACKGROUND_PATH,
                                   directories.CONFIRMATION_BACKGROUND_PATH,
-                                  x=5, y=2, width=4, height=3, tile_size=tile_size, show_arrow=show_arrow)
+                                  x=5, y=2, width=4, height=3, tile_size=tile_size, color=color, show_arrow=show_arrow)
         else:
             graphics.blink_switch(command_menu.screen, directories.CONFIRMATION_NO_BACKGROUND_PATH,
                                   directories.CONFIRMATION_BACKGROUND_PATH,

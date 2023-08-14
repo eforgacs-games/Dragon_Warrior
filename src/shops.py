@@ -35,3 +35,12 @@ class ShopInventories:
             "Half Plate": {'cost': 1000, 'type': 'armor', 'menu_image': self.directories.BRECCONARY_WEAPONS_SHOP_CLOTHES_PATH},
             "Large Shield": {'cost': 800, 'type': 'shield', 'menu_image': self.directories.BRECCONARY_WEAPONS_SHOP_SMALL_SHIELD_PATH}
         }
+
+        self.kol_weapons_store_inventory = {
+            "Copper Sword": {'cost': 180, 'type': 'weapon', 'menu_image': self.directories.KOL_WEAPONS_SHOP_COPPER_SWORD_PATH},
+            "Hand Axe": {'cost': 560, 'type': 'weapon', 'menu_image': self.directories.KOL_WEAPONS_SHOP_HAND_AXE_PATH},
+            "Half Plate": {'cost': 1000, 'type': 'armor', 'menu_image': self.directories.KOL_WEAPONS_SHOP_HALF_PLATE_PATH},
+            "Full Plate": {'cost': 3000, 'type': 'armor',
+                           'menu_image': self.directories.KOL_WEAPONS_SHOP_FULL_PLATE_PATH},
+            "Small Shield": {'cost': 90, 'type': 'shield', 'menu_image': self.directories.KOL_WEAPONS_SHOP_SMALL_SHIELD_PATH}
+        }
