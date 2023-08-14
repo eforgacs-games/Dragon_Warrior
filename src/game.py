@@ -990,7 +990,8 @@ class Game:
 
 
 def run():
-    game = Game(config=dev_config)
+    game = Game(config=prod_config)
+    # game = Game(config=dev_config)
     game.main()
 
 
