@@ -123,17 +123,18 @@ class Directories:
         IMAGES_MENUS_ITEM_MENU_DIR = join(IMAGES_MENUS_DIR, 'item_menu')
         ITEM_MENU_1_BACKGROUND_PATH = join(IMAGES_MENUS_ITEM_MENU_DIR, 'item_menu_background_1.png')
         ITEM_MENU_2_BACKGROUND_PATH = join(IMAGES_MENUS_ITEM_MENU_DIR, 'item_menu_background_2.png')
+        ITEM_MENU_5_BACKGROUND_PATH = join(IMAGES_MENUS_ITEM_MENU_DIR, 'item_menu_background_5.png')
         self.item_menu_background_lookup = {1: ITEM_MENU_1_BACKGROUND_PATH,
                                             2: ITEM_MENU_2_BACKGROUND_PATH,
                                             # need to implement more backgrounds
                                             3: ITEM_MENU_2_BACKGROUND_PATH,
                                             4: ITEM_MENU_2_BACKGROUND_PATH,
-                                            5: ITEM_MENU_2_BACKGROUND_PATH,
-                                            6: ITEM_MENU_2_BACKGROUND_PATH,
-                                            7: ITEM_MENU_2_BACKGROUND_PATH,
-                                            8: ITEM_MENU_2_BACKGROUND_PATH,
-                                            9: ITEM_MENU_2_BACKGROUND_PATH,
-                                            10: ITEM_MENU_2_BACKGROUND_PATH,
+                                            5: ITEM_MENU_5_BACKGROUND_PATH,
+                                            6: ITEM_MENU_5_BACKGROUND_PATH,
+                                            7: ITEM_MENU_5_BACKGROUND_PATH,
+                                            8: ITEM_MENU_5_BACKGROUND_PATH,
+                                            9: ITEM_MENU_5_BACKGROUND_PATH,
+                                            10: ITEM_MENU_5_BACKGROUND_PATH,
                                             }
 
         # main menu
