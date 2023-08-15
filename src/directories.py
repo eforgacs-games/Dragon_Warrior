@@ -252,6 +252,17 @@ class Directories:
         self.BRECCONARY_WEAPONS_SHOP_SMALL_SHIELD_PATH = join(IMAGES_SHOPS_BRECCONARY_WEAPONS_DIR,
                                                               'brecconary_shop_small_shield.png')
 
+        IMAGES_SHOPS_GARINHAM_DIR = join(IMAGES_SHOPS_DIR, 'garinham')
+        IMAGES_SHOPS_GARINHAM_WEAPONS_DIR = join(IMAGES_SHOPS_GARINHAM_DIR, 'weapons')
+        self.GARINHAM_WEAPONS_SHOP_PATH = join(IMAGES_SHOPS_GARINHAM_WEAPONS_DIR, 'garinham_shop.png')
+        self.GARINHAM_WEAPONS_SHOP_CHAIN_MAIL_PATH = join(IMAGES_SHOPS_GARINHAM_WEAPONS_DIR, 'garinham_shop_chain_mail.png')
+        self.GARINHAM_WEAPONS_SHOP_CLUB_PATH = join(IMAGES_SHOPS_GARINHAM_WEAPONS_DIR, 'garinham_shop_club.png')
+        self.GARINHAM_WEAPONS_SHOP_COPPER_SWORD_PATH = join(IMAGES_SHOPS_GARINHAM_WEAPONS_DIR, 'garinham_shop_copper_sword.png')
+        self.GARINHAM_WEAPONS_SHOP_HALF_PLATE_PATH = join(IMAGES_SHOPS_GARINHAM_WEAPONS_DIR, 'garinham_shop_half_plate.png')
+        self.GARINHAM_WEAPONS_SHOP_HAND_AXE_PATH = join(IMAGES_SHOPS_GARINHAM_WEAPONS_DIR, 'garinham_shop_hand_axe.png')
+        self.GARINHAM_WEAPONS_SHOP_LARGE_SHIELD_PATH = join(IMAGES_SHOPS_GARINHAM_WEAPONS_DIR, 'garinham_shop_large_shield.png')
+        self.GARINHAM_WEAPONS_SHOP_LEATHER_ARMOR_PATH = join(IMAGES_SHOPS_GARINHAM_WEAPONS_DIR, 'garinham_shop_leather_armor.png')
+
         IMAGES_SHOPS_KOL_DIR = join(IMAGES_SHOPS_DIR, 'kol')
         IMAGES_SHOPS_KOL_WEAPONS_DIR = join(IMAGES_SHOPS_KOL_DIR, 'weapons')
         self.KOL_WEAPONS_SHOP_PATH = join(IMAGES_SHOPS_KOL_WEAPONS_DIR, 'kol_shop.png')

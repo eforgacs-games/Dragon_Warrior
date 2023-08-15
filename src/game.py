@@ -433,9 +433,10 @@ class Game:
                         if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
                             self.player.is_asleep = False
                             self.player.asleep_turns = 0
-                            self.cmd_menu.show_line_in_dialog_box(self._("{} awakes.\n").format(self.player.name) + "Command?\n",
-                                                                  add_quotes=False, disable_sound=True,
-                                                                  hide_arrow=True)
+                            self.cmd_menu.show_line_in_dialog_box(
+                                self._("{} awakes.\n").format(self.player.name) + "Command?\n",
+                                add_quotes=False, disable_sound=True,
+                                hide_arrow=True)
                         else:
                             self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
                                                                   add_quotes=False, disable_sound=True,
@@ -499,8 +500,9 @@ class Game:
                         self.sound.play_sound(self.directories.spell_sfx)
 
                     else:
-                        self.cmd_menu.show_line_in_dialog_box(self._("The {} is breathing fire.\n").format(self._(enemy.name)),
-                                                              add_quotes=False, disable_sound=True, hide_arrow=True)
+                        self.cmd_menu.show_line_in_dialog_box(
+                            self._("The {} is breathing fire.\n").format(self._(enemy.name)),
+                            add_quotes=False, disable_sound=True, hide_arrow=True)
                         self.sound.play_sound(self.directories.breathe_fire_sfx)
                     time.wait(1000)
                     spell_effect_lower_bound, spell_effect_upper_bound = enemy_spell_lookup[current_spell]
