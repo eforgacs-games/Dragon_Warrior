@@ -193,9 +193,10 @@ class DialogLookup:
                 'MERCHANT_2': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_north_inventory,
                             self.directories.CANTLIN_WEAPONS_SHOP_NORTH_PATH),)},
-                # 'MERCHANT_6': {'dialog': (
-                #     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
-                #             self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
+                'MERCHANT_3': {'dialog': self._("Come buy my radishes! They are fresh and cheap.\nBuy thy radishes today!")},
+                'MERCHANT_6': {'dialog': (
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
+                            self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
 
             },
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
