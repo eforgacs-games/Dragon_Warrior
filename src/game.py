@@ -458,6 +458,10 @@ class Game:
         attack_damage = current_battle.calculate_attack_damage(self.cmd_menu, self.player, enemy)
         if attack_damage <= 0:
             current_battle.missed_attack(self.cmd_menu)
+        elif random.random() < enemy.dodge:
+            self.sound.play_sound(self.directories.missed_sfx)
+            self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!\n").format(self._(enemy.name)),
+                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
         else:
             self.sound.play_sound(self.directories.hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
