@@ -368,10 +368,7 @@ class Game:
             mixer.music.play(-1)
 
     def handle_battle_prompts(self, battle_menu_options, enemy, run_away, current_battle):
-        x = 6
-        y = 1
-        width = 8
-        height = 3
+        x, y, width, height = 6, 1, 8, 3
         tile_size = self.game_state.config["TILE_SIZE"]
         selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
         battle_window_rect = self.graphics.blink_switch(self.screen, selected_image,
@@ -382,16 +379,19 @@ class Game:
         selected_executed_option = None
         for current_event in event.get():
             if current_event.type == KEYDOWN:
-                if current_event.key in accept_keys:
-                    self.sound.play_sound(self.directories.menu_button_sfx)
-                    selected_executed_option = current_selection
-                elif current_event.key in reject_keys:
-                    break
-                elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
-                    self.battle_menu_row = 1 - self.battle_menu_row
-                elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
-                    self.battle_menu_column = 1 - self.battle_menu_column
-                time.set_timer(arrow_fade, 530)
+                if not self.player.is_asleep:
+                    if current_event.key in accept_keys:
+                        self.sound.play_sound(self.directories.menu_button_sfx)
+                        selected_executed_option = current_selection
+                    elif current_event.key in reject_keys:
+                        break
+                    elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
+                        self.battle_menu_row = 1 - self.battle_menu_row
+                    elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
+                        self.battle_menu_column = 1 - self.battle_menu_column
+                    time.set_timer(arrow_fade, 530)
+                else:
+                    selected_executed_option = 'Sleep'
             elif current_event.type == arrow_fade:
                 self.show_arrow = not self.show_arrow
             if selected_executed_option:
@@ -407,30 +407,49 @@ class Game:
                     if run_away and self.music_enabled:
                         mixer.music.load(self.current_map.music_file_path)
                         mixer.music.play(-1)
+                        return run_away
                 elif selected_executed_option == 'Item':
                     if not self.player.inventory:
                         self.cmd_menu.show_line_in_dialog_box(
                             'Nothing of use has yet been given to thee.\n'
                             'Command?\n', add_quotes=False, hide_arrow=True, disable_sound=True, skip_text=True)
+                elif selected_executed_option == 'Sleep':
+                    self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
+                                                          add_quotes=False, disable_sound=True,
+                                                          hide_arrow=True, skip_text=True)
                 selected_executed_option = None
                 time.set_timer(arrow_fade, 530)
+                if enemy.hp <= 0:
+                    run_away = False
+                    return run_away
+                else:
+                    self.enemy_move(enemy, current_battle)
+                    if self.player.current_hp <= 0:
+                        self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
+                        self.player.is_dead = True
+
+                    elif self.player.is_asleep:
+                        self.player.asleep_turns += 1
+                        if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
+                            self.player.is_asleep = False
+                            self.player.asleep_turns = 0
+                            self.cmd_menu.show_line_in_dialog_box(self._("{} awakes.\n").format(self.player.name) + "Command?\n",
+                                                                  add_quotes=False, disable_sound=True,
+                                                                  hide_arrow=True)
+                        else:
+                            self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
+                                                                  add_quotes=False, disable_sound=True,
+                                                                  hide_arrow=True, skip_text=True)
+                    else:
+                        self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
+                                                              add_quotes=False, disable_sound=True, hide_arrow=True,
+                                                              skip_text=True)
             elif current_event.type == QUIT:
                 quit()
         return run_away
 
     def fight(self, enemy, current_battle):
         self.hero_attack(enemy, current_battle)
-        if enemy.hp <= 0:
-            return
-        else:
-            self.enemy_move(enemy, current_battle)
-            if self.player.current_hp == 0:
-                self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
-                self.player.is_dead = True
-            else:
-                self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
-                                                      add_quotes=False, disable_sound=True, hide_arrow=True,
-                                                      skip_text=True)
 
     def hero_attack(self, enemy, current_battle):
         self.sound.play_sound(self.directories.attack_sfx)
@@ -459,24 +478,46 @@ class Game:
     def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
         enemy.refresh_pattern()
         if isinstance(current_enemy_pattern, tuple):
-            # (X% chance to do Y if Z)
+            # (X% chance to do current_spell if Z)
             x = current_enemy_pattern[0]
-            y = current_spell = current_enemy_pattern[1]
+            current_spell = current_enemy_pattern[1]
             z = current_enemy_pattern[2]
+            if current_spell == "SLEEP" and self.player.is_asleep:
+                z = False
             if z:
                 if random.randint(0, 100) < x:
-                    self.cmd_menu.show_line_in_dialog_box(
-                        self._("{} chants the spell of {}.").format(self._(enemy.name),
-                                                                    self._(current_spell)), add_quotes=False,
-                        disable_sound=True)
+                    if current_spell not in ("FIREBREATH", "FIREBREATH2"):
+                        self.cmd_menu.show_line_in_dialog_box(
+                            self._("{} chants the spell of {}.").format(self._(enemy.name),
+                                                                        self._(current_spell)), add_quotes=False,
+                            disable_sound=True, hide_arrow=True)
 
-                    self.sound.play_sound(self.directories.spell_sfx)
+                        self.sound.play_sound(self.directories.spell_sfx)
+
+                    else:
+                        self.cmd_menu.show_line_in_dialog_box(self._("The {} is breathing fire.\n").format(self._(enemy.name)),
+                                                              add_quotes=False, disable_sound=True, hide_arrow=True)
+                        self.sound.play_sound(self.directories.breathe_fire_sfx)
                     time.wait(1000)
                     spell_effect_lower_bound, spell_effect_upper_bound = enemy_spell_lookup[current_spell]
                     spell_effect = random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
                     if current_spell in ("HEAL", "HEALMORE"):
                         enemy.recover_hp(spell_effect)
-                    else:
+                    elif current_spell == "SLEEP":
+                        self.player.is_asleep = True
+                        self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), add_quotes=False,
+                                                              disable_sound=True, hide_arrow=True)
+                    elif current_spell in ("HURT", "HURTMORE"):
+                        if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
+                            spell_effect *= 0.66
+                        self.receive_damage(spell_effect)
+                    elif current_spell == "STOPSPELL":
+                        if self.player.armor != "Erdrick's Armor":
+                            if random.randint(0, 1) == 1:
+                                self.player.is_stopspelled = True
+                    elif current_spell in ("FIREBREATH", "FIREBREATH2"):
+                        if self.player.armor == "Erdrick's Armor":
+                            spell_effect *= 0.66
                         self.receive_damage(spell_effect)
                 else:
                     current_index += 1
