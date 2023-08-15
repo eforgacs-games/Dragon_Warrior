@@ -188,7 +188,16 @@ class DialogLookup:
                                 self.directories.RIMULDAR_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
             },
-            'Cantlin': {},
+            'Cantlin': {
+                'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, cantlin_inn_cost),)},
+                'MERCHANT_2': {'dialog': (
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_north_inventory,
+                            self.directories.CANTLIN_WEAPONS_SHOP_NORTH_PATH),)},
+                # 'MERCHANT_6': {'dialog': (
+                #     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
+                #             self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
+
+            },
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
                                                         "Thus, I propose a test.",
                                                         "There is a Silver Harp that beckons to the creatures of the Dragonlord.",
