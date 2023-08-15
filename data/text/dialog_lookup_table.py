@@ -146,7 +146,9 @@ class DialogLookup:
                 'MERCHANT': {'dialog': _("I suggest making a map if thy path leads into the darkness.")},
                 'MERCHANT_2': {'dialog': (tools_intro,)},
                 'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
-                'MERCHANT_4': {'dialog': _(self.weapons_and_armor_intro)},
+                'MERCHANT_4': {'dialog': (
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.garinham_weapons_store_inventory,
+                            self.directories.GARINHAM_WEAPONS_SHOP_PATH),)},
                 'GUARD': {'dialog': _("I'm too busy.\n"
                                       "Ask the other guard."), },
                 'GUARD_2': {'dialog': _("I'm too busy.\n"
@@ -212,7 +214,7 @@ class DialogLookup:
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image, color=self.command_menu.color),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.",
-                                                     hide_arrow=True, color=self.command_menu.color),
+                                                     hide_arrow=True),
                             config=self.config, show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
     def get_inn_intro(self, inn_cost):
