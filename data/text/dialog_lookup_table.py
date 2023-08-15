@@ -296,7 +296,7 @@ class DialogLookup:
         self.command_menu.show_line_in_dialog_box(_("The {}?").format(_(selected_item)), hide_arrow=False)
         selected_item_dict = current_store_inventory[selected_item]
         selected_item_type = selected_item_dict['type']
-        if self.player.gold > selected_item_dict['cost']:
+        if self.player.gold >= selected_item_dict['cost']:
             old_item_cost = None
             if selected_item_type == 'weapon':
                 old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.weapon, weapons)
