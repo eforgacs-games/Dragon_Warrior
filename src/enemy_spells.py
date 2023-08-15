@@ -31,5 +31,7 @@ enemy_spell_lookup = {
     "SLEEP": (0, 0),
     "STOPSPELL": (0, 0),
     "HEAL": (20, 27),
-    "HEALMORE": (85, 100)
+    "HEALMORE": (85, 100),
+    "FIREBREATH": (16, 23),
+    "FIREBREATH2": (65, 72)
 }

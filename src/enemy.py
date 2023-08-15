@@ -10,7 +10,7 @@ class Enemy:
         self.spells = spells
         self.name = ''
         self.is_asleep = False
-        self.pattern = []
+        self.pattern = self.set_pattern()
 
     def get_current_hp(self):
         return self.hp
@@ -116,10 +116,7 @@ class Warlock(Enemy):
         self.name = "Warlock"
 
     def set_pattern(self):
-        return [
-            # TODO: pass in player object here
-            # (25, "SLEEP", not player.is_asleep),
-            (50, "HURT", True), "ATTACK"]
+        return [(25, "SLEEP", True), (50, "HURT", True), "ATTACK"]
 
 
 class Wizard(Enemy):
