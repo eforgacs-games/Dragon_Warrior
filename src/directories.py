@@ -32,6 +32,9 @@ class Directories:
         self.missed_sfx = join(SFX_DIR, '40 Dragon Quest 1 - Missed!.mp3')
         self.missed_2_sfx = join(SFX_DIR, '41 Dragon Quest 1 - Missed! (2).mp3')
         self.spell_sfx = join(SFX_DIR, '43 Dragon Quest 1 - Cast A Spell.mp3')
+        self.open_treasure_sfx = join(SFX_DIR, '44 Dragon Quest 1 - Open Treasure.mp3')
+        self.open_door_sfx = join(SFX_DIR, '45 Dragon Quest 1 - Open Door.mp3')
+        self.breathe_fire_sfx = join(SFX_DIR, '46 Dragon Quest 1 - Breathe Fire.mp3')
 
         # items
 
