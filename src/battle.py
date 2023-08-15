@@ -54,20 +54,31 @@ class Battle:
                                          hide_arrow=True, disable_sound=True)
         random_number = random.randint(0, 255)
         group_factor = 1
+        group_factor_lookup = {
+            1: 0.25,
+            2: 0.375,
+            3: 0.5,
+            4: 1.0,
+        }
         for group_number, group in enemy_groups.items():
             if enemy.name in group:
                 group_factor = group_number
-        if player.agility * random_number < enemy.speed * random_number * group_factor:
-            cmd_menu.show_line_in_dialog_box(self._("But was blocked in front.").format(enemy.name), add_quotes=False,
-                                             hide_arrow=True, disable_sound=True)
-            cmd_menu.game.enemy_attack(enemy, current_battle)
-            cmd_menu.show_line_in_dialog_box(self._("Command?\n"), add_quotes=False, hide_arrow=True,
-                                             disable_sound=True)
-            if player.current_hp <= 0:
-                player.is_dead = True
-            return False
-        else:
+        if enemy.is_asleep:
             return True
+        else:
+            if player.agility * random_number < enemy.speed * random_number * group_factor_lookup[group_factor]:
+                cmd_menu.show_line_in_dialog_box(self._("But was blocked in front.").format(enemy.name),
+                                                 add_quotes=False,
+                                                 hide_arrow=True, disable_sound=True)
+                cmd_menu.game.enemy_move(enemy, current_battle)
+                if player.current_hp <= 0:
+                    player.is_dead = True
+                else:
+                    cmd_menu.show_line_in_dialog_box(self._("Command?\n"), add_quotes=False, hide_arrow=True,
+                                                     disable_sound=True)
+                return False
+            else:
+                return True
 
     def missed_attack(self, cmd_menu):
         missed_sfx_number = random.randint(1, 2)

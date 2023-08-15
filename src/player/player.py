@@ -1,5 +1,5 @@
-from src.direction import Direction
 from src.calculation import Calculation
+from src.direction import Direction
 from src.items import weapons, armor, shields
 from src.maps import DragonWarriorMap
 from src.player.player_stats import levels_list, apply_transformation_to_levels_list
@@ -13,6 +13,7 @@ class Player(AnimatedSprite):
         AnimatedSprite.__init__(self, center_point, direction_value, images, identifier='HERO')
 
         # map/collision-related attributes
+
         self.row, self.column = current_map.get_initial_character_location('HERO')
         self.next_tile_checked = False
         self.is_moving = False
@@ -59,6 +60,9 @@ class Player(AnimatedSprite):
         self.gold = 0
         self.total_experience = 0
         self.is_dead = False
+
+        self.is_asleep = False
+        self.asleep_turns = 0
 
         self.level = self.get_level_by_experience()
 
