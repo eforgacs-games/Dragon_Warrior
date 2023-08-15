@@ -35,8 +35,8 @@ class Player(AnimatedSprite):
         # character attributes
         self.name = "Player"
         # status menu
-        self.strength = 0
-        self.agility = 0
+        self.strength = 0  # attack power
+        self.agility = 0  # defense power
         self.max_hp = 0
         self.max_mp = 0
         self.weapon = ""

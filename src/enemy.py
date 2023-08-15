@@ -3,8 +3,8 @@ class Enemy:
                  dodge):
         self.max_hp = hp
         self.hp = hp
-        self.attack = attack
-        self.defense = defense
+        self.attack = attack  # also known as strength
+        self.defense = defense  # also known as agility
         self.speed = speed
         self.xp = xp
         self.gold = gold

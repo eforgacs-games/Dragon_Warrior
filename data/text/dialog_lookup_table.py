@@ -1,6 +1,6 @@
 from functools import partial
 
-from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect
+from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect, QUIT
 from pygame.event import get, pump
 from pygame.time import get_ticks
 
@@ -146,7 +146,9 @@ class DialogLookup:
                 'MERCHANT': {'dialog': _("I suggest making a map if thy path leads into the darkness.")},
                 'MERCHANT_2': {'dialog': (tools_intro,)},
                 'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
-                'MERCHANT_4': {'dialog': _(self.weapons_and_armor_intro)},
+                'MERCHANT_4': {'dialog': (
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.garinham_weapons_store_inventory,
+                            self.directories.GARINHAM_WEAPONS_SHOP_PATH),)},
                 'GUARD': {'dialog': _("I'm too busy.\n"
                                       "Ask the other guard."), },
                 'GUARD_2': {'dialog': _("I'm too busy.\n"
@@ -180,8 +182,23 @@ class DialogLookup:
                     'SOLDIER_2': {'dialog': _(
                         "East of Hauksness there is a town, 'tis said, where one may purchase weapons of extraordinary quality.")},
                     },
-            'Rimuldar': {},
-            'Cantlin': {},
+            'Rimuldar': {
+                'MERCHANT_2': {'dialog': (
+                        partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory,
+                                self.directories.RIMULDAR_WEAPONS_SHOP_PATH),)},
+                'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
+            },
+            'Cantlin': {
+                'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, cantlin_inn_cost),)},
+                'MERCHANT_2': {'dialog': (
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_north_inventory,
+                            self.directories.CANTLIN_WEAPONS_SHOP_NORTH_PATH),)},
+                'MERCHANT_3': {'dialog': self._("Come buy my radishes! They are fresh and cheap.\nBuy thy radishes today!")},
+                'MERCHANT_6': {'dialog': (
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
+                            self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
+
+            },
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
                                                         "Thus, I propose a test.",
                                                         "There is a Silver Harp that beckons to the creatures of the Dragonlord.",
@@ -212,7 +229,7 @@ class DialogLookup:
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image, color=self.command_menu.color),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.",
-                                                     hide_arrow=True, color=self.command_menu.color),
+                                                     hide_arrow=True),
                             config=self.config, show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
     def get_inn_intro(self, inn_cost):
@@ -246,10 +263,9 @@ class DialogLookup:
         _ = self._
         tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
         self.command_menu.show_line_in_dialog_box(_("What dost thou wish to buy?"), skip_text=True)
-        self.command_menu.window_drop_down_effect(6, 2, 9, 7)
-        # store_inventory_window = create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
-        # display.update(store_inventory_window.get_rect())
-        store_inventory_window_rect = Rect(6 * tile_size, 2 * tile_size, 9 * tile_size, 7 * tile_size)
+        height = len(current_store_inventory) + 1
+        self.command_menu.window_drop_down_effect(6, 2, 9, height)
+        store_inventory_window_rect = Rect(6 * tile_size, 2 * tile_size, 9 * tile_size, height * tile_size)
         selecting = True
         current_item_index = 0
         start_time = get_ticks()
@@ -261,11 +277,12 @@ class DialogLookup:
             current_item_name = list(current_store_inventory)[current_item_index]
             current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
             frames_elapsed = self.calculation.convert_to_frames_since_start_time(start_time)
+
             if frames_elapsed <= 16:
-                graphics.create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen, color)
+                graphics.create_window(6, 2, 9, height, current_item_menu_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
             elif frames_elapsed <= 32:
-                graphics.create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen, color)
+                graphics.create_window(6, 2, 9, height, static_store_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
             else:
                 start_time = get_ticks()
@@ -283,8 +300,10 @@ class DialogLookup:
                         selecting = False
                     elif current_event.key in accept_keys:
                         selected_item = current_item_name
+                elif current_event.type == QUIT:
+                    quit()
             if selected_item:
-                graphics.create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen, color)
+                graphics.create_window(6, 2, 9, height, current_item_menu_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
                 self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
                 selecting = False
@@ -296,7 +315,7 @@ class DialogLookup:
         self.command_menu.show_line_in_dialog_box(_("The {}?").format(_(selected_item)), hide_arrow=False)
         selected_item_dict = current_store_inventory[selected_item]
         selected_item_type = selected_item_dict['type']
-        if self.player.gold > selected_item_dict['cost']:
+        if self.player.gold >= selected_item_dict['cost']:
             old_item_cost = None
             if selected_item_type == 'weapon':
                 old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.weapon, weapons)
@@ -315,7 +334,7 @@ class DialogLookup:
                                                         "Thou hast not enough money."), hide_arrow=False)
         confirmation_prompt(self.command_menu, _("Dost thou wish to buy anything more?"),
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
-                                                      static_store_image),
+                                                      static_store_image, self.color),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                      _("Please, come again."), hide_arrow=True), config=self.config,
                             show_arrow=self.command_menu.game.show_arrow, color=self.color)
