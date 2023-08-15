@@ -272,6 +272,17 @@ class Directories:
         self.KOL_WEAPONS_SHOP_FULL_PLATE_PATH = join(IMAGES_SHOPS_KOL_WEAPONS_DIR, 'kol_shop_full_plate.png')
         self.KOL_WEAPONS_SHOP_SMALL_SHIELD_PATH = join(IMAGES_SHOPS_KOL_WEAPONS_DIR, 'kol_shop_small_shield.png')
 
+        IMAGES_SHOPS_RIMULDAR_DIR = join(IMAGES_SHOPS_DIR, 'rimuldar')
+        IMAGES_SHOPS_RIMULDAR_WEAPONS_DIR = join(IMAGES_SHOPS_RIMULDAR_DIR, 'weapons')
+        self.RIMULDAR_WEAPONS_SHOP_PATH = join(IMAGES_SHOPS_RIMULDAR_WEAPONS_DIR, 'rimuldar_shop.png')
+        self.RIMULDAR_WEAPONS_SHOP_COPPER_SWORD_PATH = join(IMAGES_SHOPS_RIMULDAR_WEAPONS_DIR, 'rimuldar_shop_copper_sword.png')
+        self.RIMULDAR_WEAPONS_SHOP_HAND_AXE_PATH = join(IMAGES_SHOPS_RIMULDAR_WEAPONS_DIR, 'rimuldar_shop_hand_axe.png')
+        self.RIMULDAR_WEAPONS_SHOP_BROAD_SWORD_PATH = join(IMAGES_SHOPS_RIMULDAR_WEAPONS_DIR, 'rimuldar_shop_broad_sword.png')
+        self.RIMULDAR_WEAPONS_SHOP_HALF_PLATE_PATH = join(IMAGES_SHOPS_RIMULDAR_WEAPONS_DIR, 'rimuldar_shop_half_plate.png')
+        self.RIMULDAR_WEAPONS_SHOP_FULL_PLATE_PATH = join(IMAGES_SHOPS_RIMULDAR_WEAPONS_DIR, 'rimuldar_shop_full_plate.png')
+        self.RIMULDAR_WEAPONS_SHOP_MAGIC_ARMOR_PATH = join(IMAGES_SHOPS_RIMULDAR_WEAPONS_DIR, 'rimuldar_shop_magic_armor.png')
+
+
         # battle menu
         BATTLE_MENU_DIR = join(IMAGES_MENUS_DIR, 'battle_menu')
 
