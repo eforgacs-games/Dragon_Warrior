@@ -1,6 +1,6 @@
 from functools import partial
 
-from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect
+from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect, QUIT
 from pygame.event import get, pump
 from pygame.time import get_ticks
 
@@ -246,10 +246,9 @@ class DialogLookup:
         _ = self._
         tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
         self.command_menu.show_line_in_dialog_box(_("What dost thou wish to buy?"), skip_text=True)
-        self.command_menu.window_drop_down_effect(6, 2, 9, 7)
-        # store_inventory_window = create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen)
-        # display.update(store_inventory_window.get_rect())
-        store_inventory_window_rect = Rect(6 * tile_size, 2 * tile_size, 9 * tile_size, 7 * tile_size)
+        height = len(current_store_inventory) + 1
+        self.command_menu.window_drop_down_effect(6, 2, 9, height)
+        store_inventory_window_rect = Rect(6 * tile_size, 2 * tile_size, 9 * tile_size, height * tile_size)
         selecting = True
         current_item_index = 0
         start_time = get_ticks()
@@ -261,11 +260,12 @@ class DialogLookup:
             current_item_name = list(current_store_inventory)[current_item_index]
             current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
             frames_elapsed = self.calculation.convert_to_frames_since_start_time(start_time)
+
             if frames_elapsed <= 16:
-                graphics.create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen, color)
+                graphics.create_window(6, 2, 9, height, current_item_menu_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
             elif frames_elapsed <= 32:
-                graphics.create_window(6, 2, 9, 7, static_store_image, self.command_menu.screen, color)
+                graphics.create_window(6, 2, 9, height, static_store_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
             else:
                 start_time = get_ticks()
@@ -283,8 +283,10 @@ class DialogLookup:
                         selecting = False
                     elif current_event.key in accept_keys:
                         selected_item = current_item_name
+                elif current_event.type == QUIT:
+                    quit()
             if selected_item:
-                graphics.create_window(6, 2, 9, 7, current_item_menu_image, self.command_menu.screen, color)
+                graphics.create_window(6, 2, 9, height, current_item_menu_image, self.command_menu.screen, color)
                 display.update(store_inventory_window_rect)
                 self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
                 selecting = False
@@ -315,7 +317,7 @@ class DialogLookup:
                                                         "Thou hast not enough money."), hide_arrow=False)
         confirmation_prompt(self.command_menu, _("Dost thou wish to buy anything more?"),
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
-                                                      static_store_image),
+                                                      static_store_image, self.color),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
                                                      _("Please, come again."), hide_arrow=True), config=self.config,
                             show_arrow=self.command_menu.game.show_arrow, color=self.color)
