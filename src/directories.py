@@ -294,14 +294,11 @@ class Directories:
         self.CANTLIN_WEAPONS_SHOP_NORTH_LARGE_SHIELD_PATH = join(IMAGES_SHOPS_CANTLIN_WEAPONS_NORTH_DIR, 'cantlin_shop_north_large_shield.png')
 
         IMAGES_SHOPS_CANTLIN_WEAPONS_SOUTH_DIR = join(IMAGES_SHOPS_CANTLIN_WEAPONS_DIR, 'south')
-
-        # TODO: Add Cantlin south weapons shop images
-
-        # self.CANTLIN_WEAPONS_SHOP_SOUTH_PATH = join(IMAGES_SHOPS_CANTLIN_WEAPONS_SOUTH_DIR, 'cantlin_shop_south.png')
-        # self.CANTLIN_WEAPONS_SHOP_SOUTH_FULL_PLATE_PATH = join(IMAGES_SHOPS_CANTLIN_WEAPONS_SOUTH_DIR, 'cantlin_shop_south_full_plate.png')
-        # self.CANTLIN_WEAPONS_SHOP_SOUTH_MAGIC_ARMOR_PATH = join(IMAGES_SHOPS_CANTLIN_WEAPONS_SOUTH_DIR, 'cantlin_shop_south_magic_armor.png')
-        # self.CANTLIN_WEAPONS_SHOP_SOUTH_HAND_AXE_PATH = join(IMAGES_SHOPS_CANTLIN_WEAPONS_SOUTH_DIR, 'cantlin_shop_south_hand_axe.png')
-        # self.CANTLIN_WEAPONS_SHOP_SOUTH_BROAD_SWORD_PATH = join(IMAGES_SHOPS_CANTLIN_WEAPONS_SOUTH_DIR, 'cantlin_shop_south_broad_sword.png')
+        self.CANTLIN_WEAPONS_SHOP_SOUTH_PATH = join(IMAGES_SHOPS_CANTLIN_WEAPONS_SOUTH_DIR, 'cantlin_shop_south.png')
+        self.CANTLIN_WEAPONS_SHOP_SOUTH_FULL_PLATE_PATH = join(IMAGES_SHOPS_CANTLIN_WEAPONS_SOUTH_DIR, 'cantlin_shop_south_full_plate.png')
+        self.CANTLIN_WEAPONS_SHOP_SOUTH_MAGIC_ARMOR_PATH = join(IMAGES_SHOPS_CANTLIN_WEAPONS_SOUTH_DIR, 'cantlin_shop_south_magic_armor.png')
+        self.CANTLIN_WEAPONS_SHOP_SOUTH_HAND_AXE_PATH = join(IMAGES_SHOPS_CANTLIN_WEAPONS_SOUTH_DIR, 'cantlin_shop_south_hand_axe.png')
+        self.CANTLIN_WEAPONS_SHOP_SOUTH_BROAD_SWORD_PATH = join(IMAGES_SHOPS_CANTLIN_WEAPONS_SOUTH_DIR, 'cantlin_shop_south_broad_sword.png')
 
         # battle menu
         BATTLE_MENU_DIR = join(IMAGES_MENUS_DIR, 'battle_menu')

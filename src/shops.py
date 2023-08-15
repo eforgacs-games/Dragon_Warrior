@@ -52,9 +52,9 @@ class ShopInventories:
             "Copper Sword": {'cost': 180, 'type': 'weapon', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_NORTH_COPPER_SWORD_PATH},
         }
 
-        # self.cantlin_weapons_store_south_inventory = {
-        #     "Full Plate": {'cost': 3000, 'type': 'armor', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_FULL_PLATE_PATH},
-        #     "Magic Armor": {'cost': 7700, 'type': 'shield', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_MAGIC_ARMOR_PATH},
-        #     "Hand Axe": {'cost': 560, 'type': 'weapon', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_HAND_AXE_PATH},
-        #     "Broad Sword": {'cost': 1500, 'type': 'weapon', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_BROAD_SWORD_PATH},
-        # }
+        self.cantlin_weapons_store_south_inventory = {
+            "Hand Axe": {'cost': 560, 'type': 'weapon', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_HAND_AXE_PATH},
+            "Broad Sword": {'cost': 1500, 'type': 'weapon', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_BROAD_SWORD_PATH},
+            "Full Plate": {'cost': 3000, 'type': 'armor', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_FULL_PLATE_PATH},
+            "Magic Armor": {'cost': 7700, 'type': 'shield', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_MAGIC_ARMOR_PATH},
+        }
