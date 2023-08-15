@@ -182,7 +182,12 @@ class DialogLookup:
                     'SOLDIER_2': {'dialog': _(
                         "East of Hauksness there is a town, 'tis said, where one may purchase weapons of extraordinary quality.")},
                     },
-            'Rimuldar': {},
+            'Rimuldar': {
+                'MERCHANT_2': {'dialog': (
+                        partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory,
+                                self.directories.RIMULDAR_WEAPONS_SHOP_PATH),)},
+                'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
+            },
             'Cantlin': {},
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
                                                         "Thus, I propose a test.",
