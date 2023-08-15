@@ -367,7 +367,7 @@ class Game:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
 
-    def handle_battle_prompts(self, battle_menu_options, enemy, run_away, current_battle):
+    def handle_battle_prompts(self, battle_menu_options, enemy: Enemy, run_away, current_battle):
         x, y, width, height = 6, 1, 8, 3
         tile_size = self.game_state.config["TILE_SIZE"]
         selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
@@ -377,6 +377,13 @@ class Game:
                                                         tile_size, self.show_arrow, color=self.color)
         current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
         selected_executed_option = None
+        if self.player.strength >= (enemy.attack * 2) and random.random() < 0.25:
+            self.cmd_menu.show_line_in_dialog_box(self._("The {} is running away.").format(self._(enemy.name)),
+                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
+            run_away = True
+            mixer.music.load(self.current_map.music_file_path)
+            mixer.music.play(-1)
+            return run_away
         for current_event in event.get():
             if current_event.type == KEYDOWN:
                 if not self.player.is_asleep:
