@@ -342,8 +342,8 @@ class BasementWithoutNPCs(MapWithoutNPCs):
 
 
 class CaveMap(DragonWarriorMap, ABC):
-    def __init__(self, layout, config, staircases=None):
-        super().__init__(layout, config, staircases=staircases)
+    def __init__(self, layout, config, staircases=None, initial_coordinates=()):
+        super().__init__(layout, config, staircases=staircases, initial_coordinates=initial_coordinates)
         self.is_dark = True
 
 
@@ -456,72 +456,62 @@ class CharlockB2(BasementWithoutNPCs, CaveMap):
                                      (17, 5): {'map': 'CharlockB3', 'destination_coordinates': (4, 3)},  # E
                                      (4, 18): {'map': 'CharlockB3', 'destination_coordinates': (3, 11)},  # F
                                      (10, 16): {'map': 'CharlockB3', 'destination_coordinates': (7, 7)},  # G
-                                     (22, 11): {'map': 'CharlockB3', 'destination_coordinates': (3, 8)}},  # J
-                         initial_coordinates=(3, 12))
+                                     (22, 11): {'map': 'CharlockB3', 'destination_coordinates': (3, 8)}})
         self.music_file_path = self.directories.dungeon_floor_2_music
         self.assign_stair_directions()
 
 
 class CharlockB3(BasementWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().charlock_b3, config,
-                         staircases={
-                             (1, 1): {'map': 'CharlockB2'},  # D
-                             (3, 11): {'map': 'CharlockB2', 'destination_coordinates': (4, 18)},  # F
-                             (7, 7): {'map': 'CharlockB2', 'destination_coordinates': (10, 16)},  # G
-                             (3, 8): {'map': 'CharlockB2', 'destination_coordinates': (22, 11)},  # J
-                             (3, 6): {'map': 'CharlockB4', 'destination_coordinates': (3, 10)},  # K
-                             (4, 12): {'map': 'CharlockB4', 'destination_coordinates': (5, 5)},  # L
-                             (11, 3): {'map': 'CharlockB4', 'destination_coordinates': (7, 8)},  # M
-                             (12, 4): {'map': 'CharlockB4', 'destination_coordinates': (12, 3)},  # N
-                         },
-                         initial_coordinates=(3, 8))
+        super().__init__(MapLayouts().charlock_b3, config, staircases={
+            (1, 1): {'map': 'CharlockB2'},  # D
+            (3, 11): {'map': 'CharlockB2', 'destination_coordinates': (4, 18)},  # F
+            (7, 7): {'map': 'CharlockB2', 'destination_coordinates': (10, 16)},  # G
+            (3, 8): {'map': 'CharlockB2', 'destination_coordinates': (22, 11)},  # J
+            (3, 6): {'map': 'CharlockB4', 'destination_coordinates': (3, 10)},  # K
+            (4, 12): {'map': 'CharlockB4', 'destination_coordinates': (5, 5)},  # L
+            (11, 3): {'map': 'CharlockB4', 'destination_coordinates': (7, 8)},  # M
+            (12, 4): {'map': 'CharlockB4', 'destination_coordinates': (12, 3)},  # N
+        })
         self.music_file_path = self.directories.dungeon_floor_3_music
         self.assign_stair_directions()
 
 
 class CharlockB4(BasementWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().charlock_b4, config,
-                         staircases={
-                             (3, 10): {'map': 'CharlockB3', 'destination_coordinates': (3, 6)},  # K
-                             (5, 5): {'map': 'CharlockB3', 'destination_coordinates': (4, 12)},  # L
-                             (7, 8): {'map': 'CharlockB3', 'destination_coordinates': (11, 3)},  # M
-                             (12, 3): {'map': 'CharlockB3', 'destination_coordinates': (12, 4)},  # N
-                             (9, 4): {'map': 'CharlockB5', 'destination_coordinates': (12, 3)},  # O
-                             (10, 10): {'map': 'CharlockB5', 'destination_coordinates': (10, 10)},  # P
+        super().__init__(MapLayouts().charlock_b4, config, staircases={
+            (3, 10): {'map': 'CharlockB3', 'destination_coordinates': (3, 6)},  # K
+            (5, 5): {'map': 'CharlockB3', 'destination_coordinates': (4, 12)},  # L
+            (7, 8): {'map': 'CharlockB3', 'destination_coordinates': (11, 3)},  # M
+            (12, 3): {'map': 'CharlockB3', 'destination_coordinates': (12, 4)},  # N
+            (9, 4): {'map': 'CharlockB5', 'destination_coordinates': (12, 3)},  # O
+            (10, 10): {'map': 'CharlockB5', 'destination_coordinates': (10, 10)},  # P
 
-                         },
-                         initial_coordinates=(3, 10))
+        })
         self.music_file_path = self.directories.dungeon_floor_4_music
         self.assign_stair_directions()
 
 
 class CharlockB5(BasementWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().charlock_b5, config,
-                         staircases={
-                             (4, 11): {'map': 'CharlockB6', 'destination_coordinates': (3, 7)},  # R
-                             (5, 5): {'map': 'CharlockB6', 'destination_coordinates': (3, 12)},  # Q
-                             (10, 10): {'map': 'CharlockB4', 'destination_coordinates': (10, 10)},  # P
-                             (12, 3): {'map': 'CharlockB4', 'destination_coordinates': (9, 4)}  # O
-                         },
-                         initial_coordinates=(12, 3))
+        super().__init__(MapLayouts().charlock_b5, config, staircases={
+            (4, 11): {'map': 'CharlockB6', 'destination_coordinates': (3, 7)},  # R
+            (5, 5): {'map': 'CharlockB6', 'destination_coordinates': (3, 12)},  # Q
+            (10, 10): {'map': 'CharlockB4', 'destination_coordinates': (10, 10)},  # P
+            (12, 3): {'map': 'CharlockB4', 'destination_coordinates': (9, 4)}  # O
+        })
         self.music_file_path = self.directories.dungeon_floor_5_music
         self.assign_stair_directions()
 
 
 class CharlockB6(BasementWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().charlock_b6, config,
-                         staircases={
-                             (3, 12): {'map': 'CharlockB5', 'destination_coordinates': (5, 5)},  # Q
-                             (3, 7): {'map': 'CharlockB5', 'destination_coordinates': (4, 11)},  # R
-                             (3, 3): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 3)},  # T
-                             (8, 8): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)},  # S
-                         },
-                         initial_coordinates=(3, 12)
-                         )
+        super().__init__(MapLayouts().charlock_b6, config, staircases={
+            (3, 12): {'map': 'CharlockB5', 'destination_coordinates': (5, 5)},  # Q
+            (3, 7): {'map': 'CharlockB5', 'destination_coordinates': (4, 11)},  # R
+            (3, 3): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 3)},  # T
+            (8, 8): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)},  # S
+        })
         self.music_file_path = self.directories.dungeon_floor_6_music
         self.assign_stair_directions()
 
@@ -530,12 +520,10 @@ class CharlockB7Wide(BasementWithoutNPCs, CaveMap):
     """A wide hallway right before the last level of Charlock Castle."""
 
     def __init__(self, config):
-        super().__init__(MapLayouts().charlock_b7_wide, config,
-                         staircases={
-                             (5, 3): {'map': 'CharlockB6', 'destination_coordinates': (3, 3)},  # T
-                             (5, 12): {'map': 'CharlockB8'}  # U
-                         }
-                         )
+        super().__init__(MapLayouts().charlock_b7_wide, config, staircases={
+            (5, 3): {'map': 'CharlockB6', 'destination_coordinates': (3, 3)},  # T
+            (5, 12): {'map': 'CharlockB8'}  # U
+        })
         self.music_file_path = self.directories.dungeon_floor_7_music
         self.assign_stair_directions()
 
@@ -544,13 +532,10 @@ class CharlockB7Narrow(BasementWithoutNPCs, CaveMap):
     """A dead end path in Charlock Castle that loops unto itself."""
 
     def __init__(self, config):
-        super().__init__(MapLayouts().charlock_b7_narrow, config,
-                         staircases={
-                             (3, 3): {'map': 'CharlockB6', 'destination_coordinates': (8, 8)},
-                             (3, 12): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)}
-                         },
-                         initial_coordinates=(3, 3)
-                         )
+        super().__init__(MapLayouts().charlock_b7_narrow, config, staircases={
+            (3, 3): {'map': 'CharlockB6', 'destination_coordinates': (8, 8)},
+            (3, 12): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)}
+        })
         self.music_file_path = self.directories.dungeon_floor_7_music
         self.assign_stair_directions()
 
@@ -795,12 +780,10 @@ class Cantlin(DragonWarriorMap):
 
 class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().erdricks_cave_b1, config,
-                         staircases=
-                         {(3, 3): {'map': 'Alefgard'},
-                          (12, 12): {'map': 'ErdricksCaveB2', 'destination_coordinates': (10, 9)}},
-                         initial_coordinates=(1, 1)
-                         )
+        super().__init__(MapLayouts().erdricks_cave_b1, config, staircases={(3, 3): {'map': 'Alefgard'},
+                                                                            (12, 12): {'map': 'ErdricksCaveB2',
+                                                                                       'destination_coordinates': (
+                                                                                       10, 9)}})
         self.music_file_path = self.directories.dungeon_floor_1_music
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
@@ -815,8 +798,7 @@ class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
 class ErdricksCaveB2(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
         super().__init__(MapLayouts().erdricks_cave_b2, config,
-                         staircases={(10, 9): {'map': 'ErdricksCaveB1', 'destination_coordinates': (12, 12)}},
-                         initial_coordinates=(10, 9))
+                         staircases={(10, 9): {'map': 'ErdricksCaveB1', 'destination_coordinates': (12, 12)}})
         self.music_file_path = self.directories.dungeon_floor_2_music
         self.assign_stair_directions()
 
@@ -847,12 +829,10 @@ class SwampCave(CaveMap):
 
 class MountainCaveB1(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().mountain_cave_b1, config,
-                         staircases={
-                             (8, 1): {'map': 'Alefgard', 'destination_coordinates': (64, 37)},
-                             (1, 1): {'map': 'MountainCaveB2', 'destination_coordinates': (1, 1)}
-                         },
-                         initial_coordinates=(8, 1))
+        super().__init__(MapLayouts().mountain_cave_b1, config, staircases={
+            (8, 1): {'map': 'Alefgard', 'destination_coordinates': (64, 37)},
+            (1, 1): {'map': 'MountainCaveB2', 'destination_coordinates': (1, 1)}
+        })
         self.music_file_path = self.directories.dungeon_floor_1_music
         self.assign_stair_directions()
 
@@ -867,8 +847,7 @@ class MountainCaveB2(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
         super().__init__(MapLayouts().mountain_cave_b2, config, staircases={
             (1, 1): {'map': 'MountainCaveB1', 'destination_coordinates': (1, 1)},
-        },
-                         initial_coordinates=(1, 1))
+        })
         self.music_file_path = self.directories.dungeon_floor_1_music
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
