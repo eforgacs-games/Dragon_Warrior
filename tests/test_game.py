@@ -11,20 +11,21 @@ from pygame.transform import scale
 
 from data.text.dialog_lookup_table import DialogLookup
 from data.text.intro_lookup_table import ControlInfo
-from src.camera import Camera
 from src.calculation import get_tile_id_by_coordinates
-from src.direction import Direction
+from src.camera import Camera
 from src.config import SCALE, prod_config
+from src.direction import Direction
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
     set_to_save_prompt
 from src.game import Game
 from src.game_functions import get_next_coordinates
-from src.maps import MapWithoutNPCs, TantegelThroneRoom, TantegelCourtyard, Alefgard
+from src.maps import TantegelThroneRoom, TantegelCourtyard, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.menu import CommandMenu
 from src.menu_functions import convert_list_to_newline_separated_string
 from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
+from tests.mock_map import MockMap
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -41,24 +42,6 @@ def create_move_player_key_mock(pressed_key):
         return tmp
 
     return helper
-
-
-layout = [[33, 0, 3],
-          [1, 2, 3],
-          [3, 3, 39]]
-
-
-class MockMap(MapWithoutNPCs):
-    __test__ = False
-
-    def __init__(self, config):
-        super().__init__(layout, config)
-
-    def hero_underlying_tile(self):
-        return 'BRICK'
-
-    def hero_initial_direction(self):
-        return Direction.DOWN.value
 
 
 def setup_roaming_character(row, column, direction):

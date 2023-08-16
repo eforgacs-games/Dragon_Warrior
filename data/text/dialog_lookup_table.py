@@ -184,8 +184,8 @@ class DialogLookup:
                     },
             'Rimuldar': {
                 'MERCHANT_2': {'dialog': (
-                        partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory,
-                                self.directories.RIMULDAR_WEAPONS_SHOP_PATH),)},
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory,
+                            self.directories.RIMULDAR_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
             },
             'Cantlin': {
@@ -193,7 +193,8 @@ class DialogLookup:
                 'MERCHANT_2': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_north_inventory,
                             self.directories.CANTLIN_WEAPONS_SHOP_NORTH_PATH),)},
-                'MERCHANT_3': {'dialog': self._("Come buy my radishes! They are fresh and cheap.\nBuy thy radishes today!")},
+                'MERCHANT_3': {
+                    'dialog': self._("Come buy my radishes! They are fresh and cheap.\nBuy thy radishes today!")},
                 'MERCHANT_6': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
                             self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
@@ -202,7 +203,15 @@ class DialogLookup:
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
                                                         "Thus, I propose a test.",
                                                         "There is a Silver Harp that beckons to the creatures of the Dragonlord.",
-                                                        "Bring this to me and I will reward thee with the Staff of Rain.")}}
+                                                        "Bring this to me and I will reward thee with the Staff of Rain.")}},
+            'MagicTemple': {'WISE_MAN': {'dialog': (
+                "In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted would save us.",
+                "Go now!",
+                partial(flash_transparent_color, WHITE, self.screen, self.calculation),
+                partial(Sound(self.config).play_sound, self.directories.stairs_up_sfx),
+                # TODO: Kick player out of the Magic Temple and back to the overworld map on the staircase
+                # partial(self.command_menu.game.change_map, Alefgard)
+            )}}
         }
 
         for map_dict in self.lookup_table.values():

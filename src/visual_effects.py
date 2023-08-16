@@ -1,9 +1,7 @@
 from pygame import Surface, display, time
 from pygame.time import get_ticks
 
-from src.calculation import Calculation
 from src.common import BLACK
-from src.config import dev_config
 
 
 def fade(fade_out: bool, screen: Surface, config) -> None:

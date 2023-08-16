@@ -10,13 +10,12 @@ from pygame.transform import scale
 from src import drawer
 from src.camera import Camera
 from src.config import SCALE, prod_config
-from src.direction import Direction
 from src.drawer import Drawer
 from src.game import Game
 from src.game_functions import get_next_coordinates, set_character_position
-from src.maps import MapWithoutNPCs
 from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
+from tests.mock_map import MockMap
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -25,15 +24,7 @@ layout = [[33, 0, 3],
           [3, 3, 3]]
 
 
-class MockMap(MapWithoutNPCs):
-    def __init__(self, config):
-        super().__init__(layout, config)
 
-    def hero_underlying_tile(self):
-        return 'BRICK'
-
-    def hero_initial_direction(self):
-        return Direction.DOWN.value
 
 
 class TestGameFunctions(TestCase):
