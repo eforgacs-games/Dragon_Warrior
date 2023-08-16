@@ -848,6 +848,8 @@ class MountainCaveB1(MapWithoutNPCs, CaveMap):
         self.music_file_path = self.directories.dungeon_floor_1_music
         self.staircases = {
             (8, 1): {'map': 'Alefgard', 'destination_coordinates': (64, 37)},
+            (1, 1): {'map': 'MountainCaveB2', 'destination_coordinates': (1, 1)},
+
         }
         self.assign_stair_directions()
         self.initial_coordinates = (8, 1)
@@ -863,8 +865,12 @@ class MountainCaveB2(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
         super().__init__(MapLayouts().mountain_cave_b2, config)
         self.music_file_path = self.directories.dungeon_floor_1_music
-        self.staircases = {}
+        self.staircases = {
+            (1, 1): {'map': 'MountainCaveB1', 'destination_coordinates': (1, 1)},
+        }
+        self.assign_stair_directions()
         self.set_town_to_overworld_warps()
+        self.initial_coordinates = (1, 1)
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
