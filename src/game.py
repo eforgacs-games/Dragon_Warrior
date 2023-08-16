@@ -51,8 +51,6 @@ class Game:
         self.calculation = Calculation(config)
         self.game_functions = GameFunctions(config)
         self.movement = Movement(self.config)
-        self.battle_menu_row = 0
-        self.battle_menu_column = 0
         self.show_arrow = True
         self.game_state = GameState(config=config)
         self._ = _ = set_gettext_language(config['LANGUAGE'])
@@ -79,8 +77,15 @@ class Game:
         self.foreground_rects = []
         self.torch_active = False
         self.speed = 2
+
+        # battle
+        self.battle_menu_row = 0
+        self.battle_menu_column = 0
         self.launch_battle = False
         self.current_enemy_pattern_index = None
+        self.battle_turn = 0
+        self.last_battle_turn = 0
+        self.enemy_runaway_attempts = 0
         # debugging
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
         init()
@@ -336,6 +341,7 @@ class Game:
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
 
     def battle(self, enemies_in_current_zone):
+        self.battle_turn = 0
         enemy_name = random.choice(enemies_in_current_zone)
         if self.music_enabled:
             mixer.music.load(self.directories.battle_music)
@@ -377,13 +383,16 @@ class Game:
                                                         tile_size, self.show_arrow, color=self.color)
         current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
         selected_executed_option = None
-        if self.player.strength >= (enemy.attack * 2) and random.random() < 0.25:
-            self.cmd_menu.show_line_in_dialog_box(self._("The {} is running away.").format(self._(enemy.name)),
-                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
-            run_away = True
-            mixer.music.load(self.current_map.music_file_path)
-            mixer.music.play(-1)
-            return run_away
+        random_number = random.random()
+
+        if self.enemy_runaway_attempts == 0 or self.enemy_runaway_attempts == self.battle_turn:
+            if self.player.strength >= (enemy.attack * 2):
+                if random_number < 0.25:
+                    self.enemy_runaway_attempts = 0
+                    self.battle_turn = 0
+                    return self.enemy_run_away(current_battle, enemy)
+                else:
+                    self.enemy_runaway_attempts += 1
         for current_event in event.get():
             if current_event.type == KEYDOWN:
                 if not self.player.is_asleep:
@@ -424,6 +433,8 @@ class Game:
                     self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
                                                           add_quotes=False, disable_sound=True,
                                                           hide_arrow=True, skip_text=True)
+                self.last_battle_turn = self.battle_turn
+                self.battle_turn += 1
                 selected_executed_option = None
                 time.set_timer(arrow_fade, 530)
                 if enemy.hp <= 0:
@@ -455,6 +466,15 @@ class Game:
             elif current_event.type == QUIT:
                 quit()
         return run_away
+
+    def enemy_run_away(self, current_battle, enemy):
+        self.sound.play_sound(self.directories.stairs_down_sfx)
+        self.cmd_menu.show_line_in_dialog_box(self._("The {} is running away.").format(self._(enemy.name)),
+                                              add_quotes=False, disable_sound=True, hide_arrow=True)
+        current_battle.make_enemy_image_disappear(self.current_map, self.screen, self.tile_size)
+        mixer.music.load(self.current_map.music_file_path)
+        mixer.music.play(-1)
+        return True
 
     def fight(self, enemy, current_battle):
         self.hero_attack(enemy, current_battle)
