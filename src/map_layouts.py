@@ -960,14 +960,12 @@ class MapLayouts:
 
             # Towns
 
-
             'Brecconary': self.brecconary,
             'Garinham': self.garinham,
             'Kol': self.kol,
             'Rimuldar': self.rimuldar,
             'Hauksness': self.hauksness,
             'Cantlin': self.cantlin,
-
 
             # Caves
 
@@ -982,6 +980,5 @@ class MapLayouts:
             'GarinsGraveB4': self.garins_grave_b4,
             'StaffOfRainCave': self.staff_of_rain_cave,
             'MagicTemple': self.magic_temple
-
 
         }
