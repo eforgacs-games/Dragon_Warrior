@@ -104,7 +104,7 @@ class Game:
         win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
         self.screen = self.set_screen(win_height, win_width)
         # self.screen.set_alpha(None)
-        set_caption("Dragon Warrior")
+        set_caption(_("Dragon Warrior"))
 
         # self.current_map can be changed to other maps for development purposes
 
