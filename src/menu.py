@@ -176,8 +176,9 @@ class CommandMenu(Menu):
         while display_current_line:
             if temp_text_start:
                 current_time = get_ticks()
-            self.graphics.create_window(x=2, y=9, width=12, height=5, window_background=self.directories.DIALOG_BOX_BACKGROUND_PATH,
-                          screen=self.screen, color=self.color)
+            self.graphics.create_window(x=2, y=9, width=12, height=5,
+                                        window_background=self.directories.DIALOG_BOX_BACKGROUND_PATH,
+                                        screen=self.screen, color=self.color)
             if letter_by_letter and not self.game.game_state.config['NO_WAIT']:
                 if not current_line:
                     current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
@@ -363,7 +364,7 @@ class CommandMenu(Menu):
 
     def torch(self):
         if not self.current_map.is_dark:
-            self.show_text_in_dialog_box(("A torch can be used only in dark places.",), skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("A torch can be used only in dark places."), skip_text=self.skip_text)
         else:
             if self.game.game_state.radiant_active:
                 self.game.game_state.radiant_active = False
@@ -473,7 +474,8 @@ class CommandMenu(Menu):
         self.sound.play_sound(self.directories.menu_button_sfx)
         show_status = True
         self.window_drop_down_effect(4, 3, 10, 11)
-        self.graphics.create_window(4, 3, 10, 11, self.directories.STATUS_WINDOW_BACKGROUND_PATH, self.screen, color=self.color)
+        self.graphics.create_window(4, 3, 10, 11, self.directories.STATUS_WINDOW_BACKGROUND_PATH, self.screen,
+                                    color=self.color)
         draw_text(self.player.name, tile_size * 13, tile_size * 3.75, self.screen, self.game.game_state.config,
                   color=self.color, alignment='right', letter_by_letter=False)
         draw_text(str(self.player.strength), tile_size * 13, tile_size * 4.75, self.screen, self.game.game_state.config,
@@ -632,8 +634,9 @@ class CommandMenu(Menu):
         time.set_timer(arrow_fade, 530)
         while item_menu_displayed:
             self.graphics.create_window(x=9, y=3, width=6, height=len(list_counter) + 1,
-                          window_background=self.directories.item_menu_background_lookup[len(list_counter)], screen=self.screen,
-                          color=self.color)
+                                        window_background=self.directories.item_menu_background_lookup[
+                                            len(list_counter)], screen=self.screen,
+                                        color=self.color)
             draw_text(list_string, tile_size * 10, tile_size * 4, self.screen, self.game.game_state.config,
                       letter_by_letter=False)
             self.graphics.blink_arrow(self.screen, x=tile_size * 9.5,
@@ -659,6 +662,7 @@ class CommandMenu(Menu):
                                 spell_function()
                         else:
                             function_dict[currently_selected_item]()
+
                         item_menu_displayed = False
                     elif len(menu_name) > 1:
                         if current_event.key in (K_UP, K_w) and current_arrow_position > 0:

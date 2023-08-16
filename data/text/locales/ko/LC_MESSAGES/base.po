@@ -709,6 +709,10 @@ msgstr "다스드래곤"
 msgid "Dragonlord"
 msgstr "용왕"
 
+#: ..\game.py:107
+msgid "Dragon Warrior"
+msgstr "드래곤 퀘스트"
+
 #: ..\game.py:401
 msgid "{} attacks!\n"
 msgstr "{}의 공격!\n"

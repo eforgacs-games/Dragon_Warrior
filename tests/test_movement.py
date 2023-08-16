@@ -3,29 +3,11 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from src.config import prod_config
-from src.direction import Direction
 from src.game import Game
-from src.maps import MapWithoutNPCs
+from tests.mock_map import MockMap
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
-layout = [[33, 0, 3],
-          [1, 2, 3],
-          [3, 3, 39]]
-
-
-class MockMap(MapWithoutNPCs):
-    __test__ = False
-
-    def __init__(self, config):
-        super().__init__(layout, config)
-
-    def hero_underlying_tile(self):
-        return 'BRICK'
-
-    def hero_initial_direction(self):
-        return Direction.DOWN.value
 
 
 class Test(TestCase):

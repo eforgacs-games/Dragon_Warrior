@@ -1,5 +1,5 @@
-from src.sprites.base_sprite import BaseSprite
 from src.direction import Direction
+from src.sprites.base_sprite import BaseSprite
 
 
 class AnimatedSprite(BaseSprite):

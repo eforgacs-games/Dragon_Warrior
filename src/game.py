@@ -109,7 +109,7 @@ class Game:
         win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
         self.screen = self.set_screen(win_height, win_width)
         # self.screen.set_alpha(None)
-        set_caption("Dragon Warrior")
+        set_caption(_("Dragon Warrior"))
 
         # self.current_map can be changed to other maps for development purposes
 
@@ -125,8 +125,13 @@ class Game:
         # self.current_map = maps.Hauksness(config)
         # self.current_map = maps.Cantlin(config)
 
+        # caves
+
         # self.current_map = maps.CharlockB1(config)
         # self.current_map = maps.SwampCave(config)
+        # self.current_map = maps.MountainCaveB1(config)
+
+        # self.current_map = maps.MagicTemple(config)
 
         self.set_big_map()
 
@@ -716,21 +721,25 @@ class Game:
         display.flip()
 
     def handle_warps(self):
-        immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
+        immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1', 'MagicTemple',
+                               'Alefgard', 'MountainCaveB1', 'MountainCaveB2')
         # a quick fix to prevent buggy warping - set to > 2
         if self.tiles_moved_since_spawn > 2 or (
                 self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps):
             for staircase_location, staircase_dict in self.current_map.staircases.items():
                 if (self.player.row, self.player.column) == staircase_location:
-                    self.player.bumped = False
-                    match staircase_dict['stair_direction']:
-                        case 'down':
-                            self.sound.play_sound(self.directories.stairs_down_sfx)
-                        case 'up':
-                            self.sound.play_sound(self.directories.stairs_up_sfx)
-                    next_map = map_lookup[staircase_dict['map']](self.config)
-                    self.change_map(next_map)
+                    self.process_warp(staircase_dict)
                     break
+
+    def process_warp(self, staircase_dict):
+        self.player.bumped = False
+        match staircase_dict['stair_direction']:
+            case 'down':
+                self.sound.play_sound(self.directories.stairs_down_sfx)
+            case 'up':
+                self.sound.play_sound(self.directories.stairs_up_sfx)
+        next_map = map_lookup[staircase_dict['map']](self.config)
+        self.change_map(next_map)
 
     def handle_keypresses(self, current_keydown_event):
         self.handle_b_button(current_keydown_event)
@@ -820,16 +829,7 @@ class Game:
 
     def process_staircase_warps(self, staircase_location: tuple, staircase_dict: dict) -> None:
         if (self.player.row, self.player.column) == staircase_location:
-            self.player.bumped = False
-            match staircase_dict['stair_direction']:
-                case 'down':
-                    self.sound.play_sound(self.directories.stairs_down_sfx)
-                case 'up':
-                    self.sound.play_sound(self.directories.stairs_up_sfx)
-            next_map = map_lookup[staircase_dict['map']](self.config)
-            self.change_map(next_map)
-
-    #         should break out of loop here
+            self.process_warp(staircase_dict)
 
     def change_map(self, next_map: maps.DragonWarriorMap) -> None:
         """
