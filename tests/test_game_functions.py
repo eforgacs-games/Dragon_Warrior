@@ -27,7 +27,7 @@ layout = [[33, 0, 3],
 
 class MockMap(MapWithoutNPCs):
     def __init__(self, config):
-        super().__init__(layout, config)
+        super().__init__(layout, config, None, ())
 
     def hero_underlying_tile(self):
         return 'BRICK'

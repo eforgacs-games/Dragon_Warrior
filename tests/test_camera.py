@@ -19,7 +19,7 @@ class MockMap(MapWithoutNPCs):
     __test__ = False
 
     def __init__(self):
-        super().__init__(layout, None)
+        super().__init__(layout, None, None, ())
 
     def hero_underlying_tile(self):
         return 'BRICK'
