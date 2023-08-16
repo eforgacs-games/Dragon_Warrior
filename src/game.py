@@ -126,6 +126,8 @@ class Game:
         # self.current_map = maps.SwampCave(config)
         # self.current_map = maps.MountainCaveB1(config)
 
+        # self.current_map = maps.MagicTemple(config)
+
         self.set_big_map()
 
         self.set_roaming_character_positions()
@@ -699,7 +701,7 @@ class Game:
         display.flip()
 
     def handle_warps(self):
-        immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1')
+        immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1', 'MagicTemple', 'Alefgard')
         # a quick fix to prevent buggy warping - set to > 2
         if self.tiles_moved_since_spawn > 2 or (
                 self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps):
