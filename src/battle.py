@@ -140,15 +140,7 @@ class Battle:
                                          disable_sound=True, hide_arrow=True)
         mixer.music.stop()
         self.sound.play_sound(self.directories.victory_sfx)
-        if current_map.is_dark:
-            black_surface = Surface((7 * tile_size, 7 * tile_size))
-            black_surface.fill(BLACK)
-            battle_background_image = black_surface
-        else:
-            battle_background_image = scale(image.load(self.directories.BATTLE_BACKGROUND_PATH),
-                                            (7 * tile_size, 7 * tile_size))
-        screen.blit(battle_background_image, (5 * tile_size, 4 * tile_size))
-        display.update(battle_background_image.get_rect())
+        self.make_enemy_image_disappear(current_map, screen, tile_size)
         exp_and_gold = self._("Thy experience increases by {}.\n").format(enemy.xp) + self._(
             "Thy GOLD increases by {}.\n").format(
             enemy.gold)
@@ -206,6 +198,17 @@ class Battle:
             if len(player.spells) > len(old_spells):
                 cmd_menu.show_line_in_dialog_box("Thou hast learned a new spell.\n", add_quotes=False,
                                                  disable_sound=True)
+
+    def make_enemy_image_disappear(self, current_map, screen, tile_size):
+        if current_map.is_dark:
+            black_surface = Surface((7 * tile_size, 7 * tile_size))
+            black_surface.fill(BLACK)
+            battle_background_image = black_surface
+        else:
+            battle_background_image = scale(image.load(self.directories.BATTLE_BACKGROUND_PATH),
+                                            (7 * tile_size, 7 * tile_size))
+        screen.blit(battle_background_image, (5 * tile_size, 4 * tile_size))
+        display.update(battle_background_image.get_rect())
 
     def get_enemy_draws_near_string(self, enemy_name):
         if enemy_name == 'Dragonlord 2':
