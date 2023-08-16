@@ -827,7 +827,7 @@ class SwampCave(CaveMap):
     def __init__(self, config):
         super().__init__(MapLayouts().swamp_cave, config)
         self.music_file_path = self.directories.dungeon_floor_1_music
-        self.staircases = {(6, 4): {'map': 'Alefgard', 'destination_coordinates': (51, 110)},
+        self.staircases = {(6, 4): {'map': 'Alefgard', 'destination_coordinates': (51, 112)},
                            (36, 4): {'map': 'Alefgard', 'destination_coordinates': (56, 110)}}
         self.assign_stair_directions()
         self.initial_coordinates = (6, 4)
