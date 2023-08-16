@@ -120,8 +120,11 @@ class Game:
         # self.current_map = maps.Hauksness(config)
         # self.current_map = maps.Cantlin(config)
 
+        # caves
+
         # self.current_map = maps.CharlockB1(config)
         # self.current_map = maps.SwampCave(config)
+        # self.current_map = maps.MountainCaveB1(config)
 
         self.set_big_map()
 
