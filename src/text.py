@@ -4,7 +4,6 @@ from pygame import font, time, display, Surface
 from pygame.font import Font
 
 from src.color import WHITE, BLACK
-from src.config import dev_config
 from src.directories import Directories
 from src.sound import Sound
 
