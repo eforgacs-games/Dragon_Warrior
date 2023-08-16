@@ -889,9 +889,8 @@ class MountainCaveB2(MapWithoutNPCs, CaveMap):
 
 class StaffOfRainCave(DragonWarriorMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().staff_of_rain_cave, config)
+        super().__init__(MapLayouts().staff_of_rain_cave, config, staircases={(11, 6): {'map': 'Alefgard'}})
         self.music_file_path = self.directories.tantegel_castle_courtyard_music
-        self.staircases = {(11, 6): {'map': 'Alefgard'}}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
         self.initial_coordinates = (11, 6)
@@ -908,9 +907,8 @@ class StaffOfRainCave(DragonWarriorMap):
 
 class MagicTemple(DragonWarriorMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().magic_temple, config)
+        super().__init__(MapLayouts().magic_temple, config, staircases={(6, 2): {'map': 'Alefgard'}})
         self.music_file_path = self.directories.tantegel_castle_courtyard_music
-        self.staircases = {(6, 2): {'map': 'Alefgard'}}
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
         self.initial_coordinates = (6, 2)
