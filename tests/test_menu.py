@@ -4,30 +4,12 @@ from unittest.mock import MagicMock, patch
 
 from pygame import KEYDOWN, K_RETURN, event
 
-from src.direction import Direction
 from src.config import prod_config
 from src.game import Game
-from src.maps import MapWithoutNPCs
-
-layout = [[33, 0, 3],
-          [4, 2, 3],
-          [3, 3, 39]]
+from tests.mock_map import MockMap
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
-
-class MockMap(MapWithoutNPCs):
-    __test__ = False
-
-    def __init__(self, config):
-        super().__init__(layout, config)
-
-    def hero_underlying_tile(self):
-        return 'BRICK'
-
-    def hero_initial_direction(self):
-        return Direction.DOWN.value
 
 
 class TestCommandMenu(TestCase):
