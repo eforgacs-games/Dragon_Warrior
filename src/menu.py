@@ -364,7 +364,7 @@ class CommandMenu(Menu):
 
     def torch(self):
         if not self.current_map.is_dark:
-            self.show_text_in_dialog_box(("A torch can be used only in dark places.",), skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("A torch can be used only in dark places."), skip_text=self.skip_text)
         else:
             if self.game.game_state.radiant_active:
                 self.game.game_state.radiant_active = False
@@ -662,6 +662,7 @@ class CommandMenu(Menu):
                                 spell_function()
                         else:
                             function_dict[currently_selected_item]()
+
                         item_menu_displayed = False
                     elif len(menu_name) > 1:
                         if current_event.key in (K_UP, K_w) and current_arrow_position > 0:
