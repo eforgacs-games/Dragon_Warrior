@@ -71,14 +71,8 @@ class DialogLookup:
                         _("I am greatly pleased that thou hast returned, {}.").format(self.player.name),
                         _("Before reaching thy next level of experience thou must gain {} Points.").format(
                             self.player.points_to_next_level),
-                        _("Will thou tell me now of thy deeds so they won't be forgotten?"),
-                        # if yes:
-                        _("Thy deeds have been recorded on the Imperial Scrolls of Honor."),
-                        _("Dost thou wish to continue thy quest?"),
-                        # if yes:
-                        _("Goodbye now, {}.\n'Take care and tempt not the Fates.").format(self.player.name),
-                        # if no:
-                        # "Rest then for awhile."
+                        self.prompt_for_save,
+                        self.prompt_to_continue_quest,
                     ),
                     'post_death_dialog': (_("Death should not have taken thee, {}.").format(self.player.name),
                                           _("I will give thee another chance."),
@@ -217,6 +211,32 @@ class DialogLookup:
         for map_dict in self.lookup_table.values():
             for character_identifier, character_dict in map_dict.items():
                 character_dict['dialog_character'] = character_identifier
+
+    def prompt_for_save(self):
+        return confirmation_prompt(self.command_menu, self._("Will thou tell me now of thy deeds so they won't be forgotten?"),
+                                   yes_path_function=self.save_game,
+                                   no_path_function=self.prompt_to_continue_quest,
+                                   config=self.config,
+                                   show_arrow=self.command_menu.game.show_arrow, color=self.color)
+
+    def save_game(self):
+        self.command_menu.save()
+        self._("Thy deeds have been recorded on the Imperial Scrolls of Honor."),
+
+    def prompt_to_continue_quest(self):
+        return confirmation_prompt(self.command_menu, self._("Dost thou wish to continue thy quest?"),
+                                   yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                                             self._(
+                                                                 "Goodbye now, {}.\n'Take care and tempt not the Fates.").format(
+                                                                 self.player.name)),
+                                   no_path_function=self.rest_then_for_awhile,
+                                   config=self.config,
+                                   show_arrow=self.command_menu.game.show_arrow, color=self.color)
+
+    def rest_then_for_awhile(self):
+        self.command_menu.show_line_in_dialog_box(self._("Rest then for awhile."))
+        fade(fade_out=True, screen=self.screen, config=self.config)
+        quit()
 
     def tantegel_throne_room_roaming_guard(self):
         _ = self._
