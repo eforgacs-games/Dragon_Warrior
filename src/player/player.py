@@ -43,12 +43,6 @@ class Player(AnimatedSprite):
         self.armor = ""
         self.shield = ""
 
-        # set name-based initial stats and growth stats
-
-        self.set_initial_stats()
-        self.attack_power = self.strength
-        self.defense_power = self.agility
-
         # set power based on equipment
         self.update_attack_power()
         self.update_defense_power()
@@ -70,6 +64,9 @@ class Player(AnimatedSprite):
 
         self.spells = []
         self.inventory = []
+        self.set_initial_stats()
+        self.attack_power = self.strength
+        self.defense_power = self.agility
         self.god_mode = god_mode
         if god_mode:
             self.total_experience = 65536
@@ -113,8 +110,9 @@ class Player(AnimatedSprite):
                 return level
 
     def set_initial_stats(self):
+        # set name-based initial stats and growth stats
         apply_transformation_to_levels_list(self.name)
-        self.set_stats_by_level(1)
+        self.set_stats_by_level(self.level)
 
     def update_stats_to_current_level(self):
         self.set_stats_by_level(self.level)

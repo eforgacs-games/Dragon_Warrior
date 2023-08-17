@@ -149,6 +149,7 @@ class Game:
                              images=self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
                              current_map=self.current_map, god_mode=self.game_state.config['GOD_MODE'])
         self.player.restore_hp()
+        self.player.restore_mp()
         self.tile_size = self.game_state.config["TILE_SIZE"]
         self.current_map.load_map(self.player, None, self.tile_size)
         self.color = self.get_current_color()
