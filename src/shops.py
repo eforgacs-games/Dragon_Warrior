@@ -44,12 +44,12 @@ class ShopInventories:
         }
 
         self.cantlin_weapons_store_north_inventory = {
-            "Large Shield": {'cost': 800, 'type': 'shield', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_NORTH_LARGE_SHIELD_PATH},
-            "Leather Armor": {'cost': 70, 'type': 'armor', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_NORTH_LEATHER_ARMOR_PATH},
-            "Chain Mail": {'cost': 300, 'type': 'armor', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_NORTH_CHAIN_MAIL_PATH},
             "Bamboo Pole": {'cost': 10, 'type': 'weapon', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_NORTH_BAMBOO_POLE_PATH},
             "Club": {'cost': 60, 'type': 'weapon', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_NORTH_CLUB_PATH},
             "Copper Sword": {'cost': 180, 'type': 'weapon', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_NORTH_COPPER_SWORD_PATH},
+            "Leather Armor": {'cost': 70, 'type': 'armor', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_NORTH_LEATHER_ARMOR_PATH},
+            "Chain Mail": {'cost': 300, 'type': 'armor', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_NORTH_CHAIN_MAIL_PATH},
+            "Large Shield": {'cost': 800, 'type': 'shield', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_NORTH_LARGE_SHIELD_PATH},
         }
 
         self.cantlin_weapons_store_south_inventory = {

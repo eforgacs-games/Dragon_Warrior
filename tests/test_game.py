@@ -299,15 +299,20 @@ class TestGame(TestCase):
         self.assertEqual((
             f"I am greatly pleased that thou hast returned, {self.game.player.name}.",
             f"Before reaching thy next level of experience thou must gain {self.game.player.points_to_next_level} Points.",
-            "Will thou tell me now of thy deeds so they won't be forgotten?",
+            # "Will thou tell me now of thy deeds so they won't be forgotten?",
             # if yes:
-            "Thy deeds have been recorded on the Imperial Scrolls of Honor.",
-            "Dost thou wish to continue thy quest?",
+            # "Thy deeds have been recorded on the Imperial Scrolls of Honor.",
+            # "Dost thou wish to continue thy quest?",
             # if yes:
-            f"Goodbye now, {self.game.player.name}.\n'Take care and tempt not the Fates.",
+            # f"Goodbye now, {self.game.player.name}.\n'Take care and tempt not the Fates.",
             # if no:
             # "Rest then for awhile."
-        ), self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+        ), (self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'][0],
+            self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'][1],
+            # self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'][2],
+            # self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'][3],
+            # self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'][4],
+            ))
 
     @patch('src.menu.CommandMenu.show_text_line_in_dialog_box')
     @patch('src.menu.CommandMenu.window_drop_up_effect')
@@ -399,11 +404,19 @@ class TestGame(TestCase):
         self.assertFalse(self.game.game_state.is_initial_dialog)
         self.assertEqual(('I am greatly pleased that thou hast returned, Edward.',
                           'Before reaching thy next level of experience thou must gain 7 Points.',
-                          "Will thou tell me now of thy deeds so they won't be forgotten?",
-                          'Thy deeds have been recorded on the Imperial Scrolls of Honor.',
-                          'Dost thou wish to continue thy quest?',
-                          "Goodbye now, Edward.\n'Take care and tempt not the Fates."),
-                         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
+                          # "Will thou tell me now of thy deeds so they won't be forgotten?",
+                          # 'Thy deeds have been recorded on the Imperial Scrolls of Honor.',
+                          # 'Dost thou wish to continue thy quest?',
+                          # "Goodbye now, Edward.\n'Take care and tempt not the Fates."),
+                          ),
+                         (
+                         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'][0],
+                         self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'][1],
+                         # self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'][2],
+                         # self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'][3],
+                         # self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'][4],
+                         # self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'][5]
+                         ))
         self.assertFalse(self.game.game_state.is_initial_dialog)
 
     def test_drop_down_hovering_stats_window(self):

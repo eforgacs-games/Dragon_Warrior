@@ -1,6 +1,8 @@
 import functools
+import json
 import random
 from collections import Counter
+from os.path import join
 from typing import Tuple, List
 
 import pygame_menu
@@ -113,6 +115,18 @@ class CommandMenu(Menu):
         self.menu.add.button(_("DOOR"), self.door, padding=(4, 0, 8, 16))
         self.menu.add.button(_("TAKE"), self.take, padding=(4, 0, 8, 16))
         self.menu.disable()
+
+    def save(self):
+        # TODO: Add multiple save slots.
+        save_dict = {
+            'Name': self.player.name,
+            'Experience': self.player.total_experience,
+            'Gold': self.player.gold,
+            'Inventory': self.player.inventory
+        }
+        json_object = json.dumps(save_dict, indent=4)
+        with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'), 'w') as output_save_file:
+            output_save_file.write(json_object)
 
     def set_king_lorik_dialog(self):
         self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
