@@ -271,9 +271,9 @@ class Game:
                                                     self.directories.one_adventure_log_0,
                                                     [],
                                                     no_blit=self.game_state.config['NO_BLIT'])
-
-            loaded_save = json.load(open(os.path.join(self.directories.save_dir, self.save_dir_contents[0])))
-            self.load_game(loaded_save)
+            with open(os.path.join(self.directories.save_dir, self.save_dir_contents[0])) as save_file:
+                loaded_save = json.load(save_file)
+                self.load_game(loaded_save)
             self.game_state.game_loaded_from_save = True
 
         self.sound.play_sound(self.directories.menu_button_sfx)
