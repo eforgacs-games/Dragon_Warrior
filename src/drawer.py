@@ -111,9 +111,14 @@ class Drawer:
         self.game_state.enable_movement = False
         key_pressed = any([current_event.type == KEYDOWN for current_event in events])
         if skip_text or (key_pressed and not self.game_state.automatic_initial_dialog_run):
-            cmd_menu.show_text_in_dialog_box(
-                cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
-                skip_text=skip_text)
+            if self.game_state.game_loaded_from_save:
+                cmd_menu.show_text_in_dialog_box(
+                    cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['load_from_save_dialog'],
+                    add_quotes=True, skip_text=skip_text)
+            else:
+                cmd_menu.show_text_in_dialog_box(
+                    cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
+                    skip_text=skip_text)
             self.set_to_post_initial_dialog(cmd_menu)
             self.game_state.automatic_initial_dialog_run = True
 
