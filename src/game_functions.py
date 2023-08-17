@@ -3,7 +3,7 @@ from pygame.time import get_ticks
 from pygame.transform import scale
 
 from src.calculation import Calculation
-from src.common import BLACK, accept_keys
+from src.common import BLACK, accept_keys, reject_keys
 from src.direction import Direction
 from src.directories import Directories
 from src.sound import Sound
@@ -16,8 +16,8 @@ class GameFunctions:
         self.sound = Sound(config)
         self.directories = Directories(config)
 
-    def select_from_vertical_menu(self, blink_start, screen, unselected_image, selected_image, other_selected_images,
-                                  no_blit=False):
+    def main_menu_selection(self, blink_start, screen, unselected_image, selected_image, other_selected_images,
+                            no_blit=False):
         # TODO(ELF): very similar to open_store_inventory() - maybe try to merge them if you can
         current_item_index = 0
         if other_selected_images:
@@ -36,6 +36,8 @@ class GameFunctions:
                     if current_event.key in accept_keys:
                         self.sound.play_sound(self.directories.menu_button_sfx)
                         return current_item_index
+                    elif current_event.key in reject_keys:
+                        self.sound.play_sound(self.directories.menu_button_sfx)
                     elif current_event.key in (K_DOWN, K_s) and current_item_index < len(all_selected_images) - 1:
                         current_item_index += 1
                         blink_start = get_ticks()
