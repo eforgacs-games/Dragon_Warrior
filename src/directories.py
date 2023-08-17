@@ -10,9 +10,11 @@ class Directories:
         self.config = config
 
         # menu
+        src_dir = join(dirname(dirname(realpath(__file__))), 'src')
         data_dir = join(dirname(dirname(realpath(__file__))), 'data')
         sound_dir = join(data_dir, 'sound')
         sfx_dir = join(sound_dir, 'sfx')
+        self.save_dir = join(src_dir, 'saves')
         self.text_beep_sfx = join(sfx_dir, 'text_beep.wav')
         self.death_sfx = join(sfx_dir, '20 Dragon Quest 1 - Thou Hast Died.mp3')
         self.special_item_sfx = join(sfx_dir, '21 Dragon Quest 1 - Special Item.mp3')
