@@ -1,4 +1,5 @@
 import functools
+import json
 import random
 from collections import Counter
 from os.path import join
@@ -117,11 +118,15 @@ class CommandMenu(Menu):
 
     def save(self):
         # TODO: Add multiple save slots.
-        with open(join(self.directories.save_dir, 'save_slot_1.txt'), 'w') as f:
-            f.write(f"Name: {self.player.name}\n"
-                    f"Experience: {self.player.total_experience}\n"
-                    f"Gold: {self.player.gold}\n"
-                    f"Inventory: {self.player.inventory}\n")
+        save_dict = {
+            'Name': self.player.name,
+            'Experience': self.player.total_experience,
+            'Gold': self.player.gold,
+            'Inventory': self.player.inventory
+        }
+        json_object = json.dumps(save_dict, indent=4)
+        with open(join(self.directories.save_dir, 'save_slot_1.json'), 'w') as output_save_file:
+            output_save_file.write(json_object)
 
     def set_king_lorik_dialog(self):
         self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
