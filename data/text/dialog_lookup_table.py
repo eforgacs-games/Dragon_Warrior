@@ -192,6 +192,8 @@ class DialogLookup:
                 'MERCHANT_6': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
                             self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
+                'WISE_MAN_2': {'dialog': _("To learn how proof may be obtained that thy ancestor was the great Erdrick, "
+                                           "see a man in this very town.")},
 
             },
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
