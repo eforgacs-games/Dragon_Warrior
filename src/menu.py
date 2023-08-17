@@ -1,6 +1,7 @@
 import functools
 import random
 from collections import Counter
+from os.path import join
 from typing import Tuple, List
 
 import pygame_menu
@@ -113,6 +114,14 @@ class CommandMenu(Menu):
         self.menu.add.button(_("DOOR"), self.door, padding=(4, 0, 8, 16))
         self.menu.add.button(_("TAKE"), self.take, padding=(4, 0, 8, 16))
         self.menu.disable()
+
+    def save(self):
+        # TODO: Add multiple save slots.
+        with open(join(self.directories.save_dir, 'save_slot_1.txt'), 'w') as f:
+            f.write(f"Name: {self.player.name}\n"
+                    f"Experience: {self.player.total_experience}\n"
+                    f"Gold: {self.player.gold}\n"
+                    f"Inventory: {self.player.inventory}\n")
 
     def set_king_lorik_dialog(self):
         self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
