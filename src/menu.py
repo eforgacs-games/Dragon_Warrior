@@ -125,7 +125,7 @@ class CommandMenu(Menu):
             'Inventory': self.player.inventory
         }
         json_object = json.dumps(save_dict, indent=4)
-        with open(join(self.directories.save_dir, 'save_slot_1.json'), 'w') as output_save_file:
+        with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'), 'w') as output_save_file:
             output_save_file.write(json_object)
 
     def set_king_lorik_dialog(self):

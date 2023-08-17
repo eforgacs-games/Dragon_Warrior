@@ -14,6 +14,7 @@ class GameState:
         self.tiles_moved_total = 0
         self.radiant_active = False
         self.config = config
+        self.game_loaded_from_save = False
 
     def unpause_all_movement(self) -> None:
         """
