@@ -10,9 +10,11 @@ class Directories:
         self.config = config
 
         # menu
+        src_dir = join(dirname(dirname(realpath(__file__))), 'src')
         data_dir = join(dirname(dirname(realpath(__file__))), 'data')
         sound_dir = join(data_dir, 'sound')
         sfx_dir = join(sound_dir, 'sfx')
+        self.save_dir = join(src_dir, 'saves')
         self.text_beep_sfx = join(sfx_dir, 'text_beep.wav')
         self.death_sfx = join(sfx_dir, '20 Dragon Quest 1 - Thou Hast Died.mp3')
         self.special_item_sfx = join(sfx_dir, '21 Dragon Quest 1 - Special Item.mp3')
@@ -142,19 +144,47 @@ class Directories:
 
         # main menu
 
+        main_menu_dir = join(images_menus_dir, 'main_menu')
+
         # begin quest
 
-        begin_quest_dir = join(images_menus_dir, 'begin_quest')
-        self.BEGIN_QUEST_PATH = join(begin_quest_dir, 'begin_quest.png')
-        self.BEGIN_QUEST_SELECTED_PATH = join(begin_quest_dir, 'begin_quest_selected.png')
+        # empty logs
+
+        main_menu_empty_log_dir = join(main_menu_dir, 'empty_log')
+        self.main_menu_empty_log_0 = join(main_menu_empty_log_dir, '0_begin_quest.png')
+        self.main_menu_empty_log_unselected = join(main_menu_empty_log_dir, '-1_unselected.png')
 
         # adventure log
 
-        adventure_log_dir = join(images_menus_dir, 'adventure_log')
-        self.ADVENTURE_LOG_PATH = join(adventure_log_dir, 'adventure_log.png')
-        self.ADVENTURE_LOG_1_PATH = join(adventure_log_dir, 'adventure_log_1.png')
-        self.ADVENTURE_LOG_2_PATH = join(adventure_log_dir, 'adventure_log_2.png')
-        self.ADVENTURE_LOG_3_PATH = join(adventure_log_dir, 'adventure_log_3.png')
+        empty_log_adventure_log_dir = join(main_menu_empty_log_dir, 'adventure_log')
+        self.empty_log_adventure_log_path = join(empty_log_adventure_log_dir, '-1_unselected.png')
+        self.ADVENTURE_LOG_1_PATH = join(empty_log_adventure_log_dir, '0_adventure_log_1.png')
+        self.ADVENTURE_LOG_2_PATH = join(empty_log_adventure_log_dir, '1_adventure_log_2.png')
+        self.ADVENTURE_LOG_3_PATH = join(empty_log_adventure_log_dir, '2_adventure_log_3.png')
+
+        # partially full logs
+
+        main_menu_partially_full_log = join(main_menu_dir, 'partially_full_log')
+        self.main_menu_partially_full_log_0 = join(main_menu_partially_full_log, '0_continue_quest.png')
+        self.main_menu_partially_full_log_1 = join(main_menu_partially_full_log, '1_change_message_speed.png')
+        self.main_menu_partially_full_log_2 = join(main_menu_partially_full_log, '2_begin_new_quest.png')
+        self.main_menu_partially_full_log_3 = join(main_menu_partially_full_log, '3_copy_quest.png')
+        self.main_menu_partially_full_log_4 = join(main_menu_partially_full_log, '4_erase_quest.png')
+        self.main_menu_partially_full_log_unselected = join(main_menu_partially_full_log, '-1_unselected.png')
+
+        # one adventure log
+
+        one_adventure_log_dir = join(main_menu_partially_full_log, 'one_adventure_log')
+        self.one_adventure_log_0 = join(one_adventure_log_dir, '0_adventure_log_1.png')
+        self.one_adventure_log_unselected = join(one_adventure_log_dir, '-1_unselected.png')
+
+        # full logs
+
+        main_menu_full_log = join(main_menu_dir, 'full_log')
+        self.continue_quest_full_log_0 = join(main_menu_full_log, '0_continue_quest.png')
+        self.continue_quest_full_log_1 = join(main_menu_full_log, '1_change_message_speed.png')
+        self.continue_quest_full_log_2 = join(main_menu_full_log, '2_erase_quest.png')
+        self.continue_quest_full_log_unselected = join(main_menu_full_log, '-1_unselected.png')
 
         # name selection
 

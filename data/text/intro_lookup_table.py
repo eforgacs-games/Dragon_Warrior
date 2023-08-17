@@ -12,4 +12,4 @@ class ControlInfo:
         self.arrow_keys_move_buttons = _("WASD / Arrow Keys: Move")
         self.controls = self.a_button, self.b_button, self.start_button, self.arrow_keys_move_buttons
         self.input_name_prompt = _("Type your name using the keyboard.\n"
-                                   "If you are using a joystick, press the TAB key to switch to joystick input.")
+                                   "If you are using a joystick, press TAB to switch to joystick input.")

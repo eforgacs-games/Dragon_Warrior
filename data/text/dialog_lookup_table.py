@@ -6,6 +6,7 @@ from pygame.time import get_ticks
 
 from data.text.dialog import confirmation_prompt
 from src.calculation import Calculation
+from src.color import BLACK
 from src.common import WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
 from src.directories import Directories
 from src.items import weapons, armor, shields
@@ -42,6 +43,8 @@ class DialogLookup:
         self.no_one_there = _("There is no one there.")
         self.no_stairs_here = _("There are no stairs here.")
 
+        self.goodbye_tempt_not_the_fates = "Goodbye now, {}.\n'Take care and tempt not the Fates."
+
         where_is_princess_gwaelin = _("Where oh where can I find Princess Gwaelin?")
         welcome_to_tantegel = _("Welcome to Tantegel Castle.")
         brecconary_inn_cost = 6
@@ -53,6 +56,7 @@ class DialogLookup:
                         "We deal in tools.\n"
                         "What can I do for thee?")
         self.directories = Directories(self.config)
+        before_reaching_thy_next_level_of_experience = "Before reaching thy next level of experience thou must gain {} Points."
         self.lookup_table = {
             'TantegelThroneRoom': {
                 'KING_LORIK': {'dialog': (
@@ -69,17 +73,17 @@ class DialogLookup:
                     "When thou art finished preparing for thy departure, please see me.\nI shall wait."),
                     'returned_dialog': (
                         _("I am greatly pleased that thou hast returned, {}.").format(self.player.name),
-                        _("Before reaching thy next level of experience thou must gain {} Points.").format(
+                        _(before_reaching_thy_next_level_of_experience).format(
                             self.player.points_to_next_level),
-                        _("Will thou tell me now of thy deeds so they won't be forgotten?"),
-                        # if yes:
-                        _("Thy deeds have been recorded on the Imperial Scrolls of Honor."),
-                        _("Dost thou wish to continue thy quest?"),
-                        # if yes:
-                        _("Goodbye now, {}.\n'Take care and tempt not the Fates.").format(self.player.name),
-                        # if no:
-                        # "Rest then for awhile."
+                        self.prompt_for_save,
+                        self.prompt_to_continue_quest,
                     ),
+                    'load_from_save_dialog': (self._("I am glad thou hast returned.\n"
+                                              "All our hopes are riding on thee."),
+                                              before_reaching_thy_next_level_of_experience.format(self.player.points_to_next_level),
+                                              self._("See me again when thy level has increased."),
+                                              self.goodbye_tempt_not_the_fates.format(self.player.name)
+                                              ),
                     'post_death_dialog': (_("Death should not have taken thee, {}.").format(self.player.name),
                                           _("I will give thee another chance."),
                                           _("To reach the next level, thy Experience Points must increase by {}.").format(
@@ -198,6 +202,8 @@ class DialogLookup:
                 'MERCHANT_6': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
                             self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
+                'WISE_MAN_2': {'dialog': _("To learn how proof may be obtained that thy ancestor was the great Erdrick, "
+                                           "see a man in this very town.")},
 
             },
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
@@ -217,6 +223,37 @@ class DialogLookup:
         for map_dict in self.lookup_table.values():
             for character_identifier, character_dict in map_dict.items():
                 character_dict['dialog_character'] = character_identifier
+
+    def prompt_for_save(self):
+        return confirmation_prompt(self.command_menu, self._("Will thou tell me now of thy deeds so they won't be forgotten?"),
+                                   yes_path_function=self.save_game,
+                                   no_path_function=self.prompt_to_continue_quest,
+                                   config=self.config,
+                                   show_arrow=self.command_menu.game.show_arrow, color=self.color)
+
+    def save_game(self):
+        self.command_menu.save()
+        self._("Thy deeds have been recorded on the Imperial Scrolls of Honor."),
+
+    def prompt_to_continue_quest(self):
+        return confirmation_prompt(self.command_menu, self._("Dost thou wish to continue thy quest?"),
+                                   yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                                             self._(
+                                                                 self.goodbye_tempt_not_the_fates).format(
+                                                                 self.player.name)),
+                                   no_path_function=self.rest_then_for_awhile,
+                                   config=self.config,
+                                   show_arrow=self.command_menu.game.show_arrow, color=self.color)
+
+    def rest_then_for_awhile(self):
+        self.command_menu.show_line_in_dialog_box(self._("Rest then for awhile."))
+        fade(fade_out=True, screen=self.screen, config=self.config)
+        self.screen.fill(BLACK)
+        display.flip()
+        self.command_menu.show_text_in_dialog_box((self._("Please push RESET, hold it in, then turn off the POWER."),
+                                                   self._("If you turn the power off first, the Imperial Scroll of Honor containing your deeds may be lost."))
+                                                  )
+        quit()
 
     def tantegel_throne_room_roaming_guard(self):
         _ = self._
