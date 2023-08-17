@@ -106,8 +106,8 @@ class NameSelection:
                                  (screen.get_width(), screen.get_height()))
         screen.blit(unselected_image, (0, 0)) if not self.config['NO_BLIT'] else None
         display.update(unselected_image.get_rect())
-        command_menu.show_text_in_dialog_box(self.control_info.input_name_prompt, drop_down=False, drop_up=False,
-                                             letter_by_letter=False)
+        command_menu.show_line_in_dialog_box(self.control_info.input_name_prompt, letter_by_letter=False,
+                                             hide_arrow=False)
         screen.blit(unselected_image, (0, 0)) if not self.config['NO_BLIT'] else None
         display.update(unselected_image.get_rect())
         selected_image_lookup = {

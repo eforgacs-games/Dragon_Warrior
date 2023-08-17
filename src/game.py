@@ -1,3 +1,5 @@
+import json
+import os
 import random
 from typing import List, Tuple
 
@@ -17,7 +19,7 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import dev_config, prod_config
+from src.config import prod_config
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
@@ -44,6 +46,7 @@ arrow_fade = USEREVENT + 1
 class Game:
     def __init__(self, config):
 
+
         self.config = config
         self.sound = Sound(config)
         self.graphics = Graphics(config)
@@ -53,6 +56,11 @@ class Game:
         self.movement = Movement(self.config)
         self.show_arrow = True
         self.game_state = GameState(config=config)
+
+        # load/save
+
+        self.save_dir_contents = None
+
         self._ = _ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
         # map/graphics
@@ -202,24 +210,105 @@ class Game:
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
-        self.game_functions.select_from_vertical_menu(get_ticks(), screen, self.directories.BEGIN_QUEST_PATH,
-                                                      self.directories.BEGIN_QUEST_SELECTED_PATH, [],
-                                                      no_blit=self.game_state.config['NO_BLIT'])
-        # adventure_log_blinking = True
-        # while adventure_log_blinking:
-        self.player.adventure_log = self.game_functions.select_from_vertical_menu(get_ticks(), screen,
-                                                                                  self.directories.ADVENTURE_LOG_PATH,
-                                                                                  self.directories.ADVENTURE_LOG_1_PATH,
-                                                                                  [
-                                                                                      self.directories.ADVENTURE_LOG_2_PATH,
-                                                                                      self.directories.ADVENTURE_LOG_3_PATH]) + 1
+        self.save_dir_contents = os.listdir(self.directories.save_dir)
+        if len(self.save_dir_contents) == 0:
+            begin_quest_empty_log_function_lookup = {
+                0: self.begin_new_quest,
+            }
+            selection = self.game_functions.main_menu_selection(get_ticks(), screen,
+                                                                self.directories.main_menu_empty_log_unselected,
+                                                                self.directories.main_menu_empty_log_0, [],
+                                                                no_blit=self.game_state.config['NO_BLIT'])
+            begin_quest_empty_log_function_lookup[selection]()
+        else:
+            if len(self.save_dir_contents) < 3:
+                partially_full_log_function_lookup = {
+                    0: self.continue_quest,
+                    1: self.change_message_speed,
+                    2: self.begin_new_quest,
+                    3: self.copy_quest,
+                    4: self.erase_quest,
+                }
+                selection = self.game_functions.main_menu_selection(get_ticks(), screen,
+                                                                    self.directories.main_menu_partially_full_log_unselected,
+                                                                    self.directories.main_menu_partially_full_log_0,
+                                                                    [
+                                                                        self.directories.main_menu_partially_full_log_1,
+                                                                        self.directories.main_menu_partially_full_log_2,
+                                                                        self.directories.main_menu_partially_full_log_3,
+                                                                        self.directories.main_menu_partially_full_log_4],
+                                                                    no_blit=self.game_state.config['NO_BLIT'])
+                partially_full_log_function_lookup[selection]()
+            elif len(self.save_dir_contents) == 3:
+                selection = self.game_functions.main_menu_selection(get_ticks(), screen,
+                                                                    self.directories.continue_quest_full_log_unselected,
+                                                                    self.directories.continue_quest_full_log_0,
+                                                                    [self.directories.continue_quest_full_log_1,
+                                                                     self.directories.continue_quest_full_log_2],
+                                                                    no_blit=self.game_state.config['NO_BLIT'])
+            else:
+                print("Error: More than 3 save files detected. Exiting.")
+                exit(1)
+
+    def begin_new_quest(self):
+        self.select_adventure_log(self.screen)
         name_selection = NameSelection(self.config)
-        self.player.name = name_selection.select_name(get_ticks(), screen, self.cmd_menu)
+        self.player.name = name_selection.select_name(get_ticks(), self.screen, self.cmd_menu)
         self.player.set_initial_stats()
         self.sound.play_sound(self.directories.menu_button_sfx)
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         self.load_and_play_music(self.current_map.music_file_path)
         self.cmd_menu = CommandMenu(self)
+
+    def continue_quest(self):
+        # make the window the right size based on self.save_dir_contents
+        # populate the save file list with the player names
+        # allow the user to select a save file
+        # load the save file
+        if len(self.save_dir_contents) == 1:
+            self.game_functions.main_menu_selection(get_ticks(), self.screen,
+                                                    self.directories.one_adventure_log_unselected,
+                                                    self.directories.one_adventure_log_0,
+                                                    [],
+                                                    no_blit=self.game_state.config['NO_BLIT'])
+            with open(os.path.join(self.directories.save_dir, self.save_dir_contents[0])) as save_file:
+                loaded_save = json.load(save_file)
+                self.load_game(loaded_save)
+            self.game_state.game_loaded_from_save = True
+
+        self.sound.play_sound(self.directories.menu_button_sfx)
+        fade(fade_out=True, screen=self.screen, config=self.game_state.config)
+        self.load_and_play_music(self.current_map.music_file_path)
+        self.cmd_menu = CommandMenu(self)
+
+    def change_message_speed(self):
+        # make the window the right size based on self.save_dir_contents
+        # populate the save file list with the player names
+        # allow the user to select a save file
+        # pop up a menu to change the message speed
+
+        # "Which Message Speed Do You Want To Use?"
+        # >FAST
+        #  NORMAL
+        #  SLOW
+
+        pass
+
+    def copy_quest(self):
+        # copy the save file to a new save file
+        pass
+
+    def erase_quest(self):
+        # erase the save file
+        pass
+
+    def select_adventure_log(self, screen):
+        self.player.adventure_log = self.game_functions.main_menu_selection(get_ticks(), screen,
+                                                                            self.directories.empty_log_adventure_log_path,
+                                                                            self.directories.ADVENTURE_LOG_1_PATH,
+                                                                            [
+                                                                                self.directories.ADVENTURE_LOG_2_PATH,
+                                                                                self.directories.ADVENTURE_LOG_3_PATH]) + 1
 
     def get_events(self) -> None:
         """
@@ -794,7 +883,7 @@ class Game:
                 self.cmd_menu.take()
             elif self.player.next_tile_id == 'DOOR':
                 self.cmd_menu.door()
-            elif self.cmd_menu.check_across_from_npc():
+            elif self.cmd_menu.check_across_from_npc() and not self.game_state.is_initial_dialog:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
                 self.cmd_menu.talk()
 
@@ -1150,6 +1239,15 @@ class Game:
             elif is_facing_laterally(roaming_character):
                 self.move_laterally(roaming_character)
             # handle_roaming_character_sides_collision(self.current_map, roaming_character)
+
+    def load_game(self, save_file: dict) -> None:
+        """
+        Load a game from a save file.
+        """
+        self.player.name = save_file["Name"]
+        self.player.total_experience = save_file["Experience"]
+        self.player.gold = save_file["Gold"]
+        self.player.inventory = save_file["Inventory"]
 
 
 def run():

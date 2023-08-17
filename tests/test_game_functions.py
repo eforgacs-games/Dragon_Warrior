@@ -141,46 +141,46 @@ class TestGameFunctions(TestCase):
         mocked_return.type = KEYDOWN
         mocked_return.key = K_RETURN
         with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
-            self.assertEqual(0, self.game.game_functions.select_from_vertical_menu(get_ticks(), self.game.screen,
-                                                                                   self.game.directories.ADVENTURE_LOG_PATH,
-                                                                                   self.game.directories.ADVENTURE_LOG_1_PATH,
-                                                                                   [
+            self.assertEqual(0, self.game.game_functions.main_menu_selection(get_ticks(), self.game.screen,
+                                                                             self.game.directories.empty_log_adventure_log_path,
+                                                                             self.game.directories.ADVENTURE_LOG_1_PATH,
+                                                                             [
                                                                                        self.game.directories.ADVENTURE_LOG_2_PATH,
                                                                                        self.game.directories.ADVENTURE_LOG_3_PATH],
-                                                                                   no_blit=True))
+                                                                             no_blit=True))
         mocked_up = MagicMock()
         mocked_up.type = KEYDOWN
         mocked_up.key = K_w
         with patch.object(event, 'get', return_value=[mocked_up, mocked_return]) as mock_method:
-            self.assertEqual(0, self.game.game_functions.select_from_vertical_menu(get_ticks(), self.game.screen,
-                                                          self.game.directories.ADVENTURE_LOG_PATH,
-                                                          self.game.directories.ADVENTURE_LOG_1_PATH,
-                                                          [self.game.directories.ADVENTURE_LOG_2_PATH,
+            self.assertEqual(0, self.game.game_functions.main_menu_selection(get_ticks(), self.game.screen,
+                                                                             self.game.directories.empty_log_adventure_log_path,
+                                                                             self.game.directories.ADVENTURE_LOG_1_PATH,
+                                                                             [self.game.directories.ADVENTURE_LOG_2_PATH,
                                                            self.game.directories.ADVENTURE_LOG_3_PATH], no_blit=True))
 
         mocked_down = MagicMock()
         mocked_down.type = KEYDOWN
         mocked_down.key = K_s
         with patch.object(event, 'get', return_value=[mocked_down, mocked_return]) as mock_method:
-            self.assertEqual(1, self.game.game_functions.select_from_vertical_menu(get_ticks(), self.game.screen,
-                                                          self.game.directories.ADVENTURE_LOG_PATH,
-                                                          self.game.directories.ADVENTURE_LOG_1_PATH,
-                                                          [self.game.directories.ADVENTURE_LOG_2_PATH,
+            self.assertEqual(1, self.game.game_functions.main_menu_selection(get_ticks(), self.game.screen,
+                                                                             self.game.directories.empty_log_adventure_log_path,
+                                                                             self.game.directories.ADVENTURE_LOG_1_PATH,
+                                                                             [self.game.directories.ADVENTURE_LOG_2_PATH,
                                                            self.game.directories.ADVENTURE_LOG_3_PATH], no_blit=True))
 
         with patch.object(event, 'get', return_value=[mocked_down, mocked_down, mocked_return]) as mock_method:
-            self.assertEqual(2, self.game.game_functions.select_from_vertical_menu(get_ticks(), self.game.screen,
-                                                          self.game.directories.ADVENTURE_LOG_PATH,
-                                                          self.game.directories.ADVENTURE_LOG_1_PATH,
-                                                          [self.game.directories.ADVENTURE_LOG_2_PATH,
+            self.assertEqual(2, self.game.game_functions.main_menu_selection(get_ticks(), self.game.screen,
+                                                                             self.game.directories.empty_log_adventure_log_path,
+                                                                             self.game.directories.ADVENTURE_LOG_1_PATH,
+                                                                             [self.game.directories.ADVENTURE_LOG_2_PATH,
                                                            self.game.directories.ADVENTURE_LOG_3_PATH], no_blit=True))
 
         with patch.object(event, 'get',
                           return_value=[mocked_down, mocked_down, mocked_up, mocked_return]) as mock_method:
-            self.assertEqual(1, self.game.game_functions.select_from_vertical_menu(get_ticks(), self.game.screen,
-                                                          self.game.directories.ADVENTURE_LOG_PATH,
-                                                          self.game.directories.ADVENTURE_LOG_1_PATH,
-                                                          [self.game.directories.ADVENTURE_LOG_2_PATH,
+            self.assertEqual(1, self.game.game_functions.main_menu_selection(get_ticks(), self.game.screen,
+                                                                             self.game.directories.empty_log_adventure_log_path,
+                                                                             self.game.directories.ADVENTURE_LOG_1_PATH,
+                                                                             [self.game.directories.ADVENTURE_LOG_2_PATH,
                                                            self.game.directories.ADVENTURE_LOG_3_PATH], no_blit=True))
         # test without other_selected_images
         with patch.object(event, 'get',
@@ -188,11 +188,11 @@ class TestGameFunctions(TestCase):
             start_time = get_ticks()
             while get_ticks() - start_time <= 64:
                 # just to hit the blink_start reset line
-                self.assertEqual(0, self.game.game_functions.select_from_vertical_menu(start_time, self.game.screen,
-                                                              self.game.directories.BEGIN_QUEST_PATH,
-                                                              self.game.directories.BEGIN_QUEST_SELECTED_PATH, [],
-                                                              no_blit=True))
-            self.assertEqual(0, self.game.game_functions.select_from_vertical_menu(start_time, self.game.screen,
-                                                          self.game.directories.BEGIN_QUEST_PATH,
-                                                          self.game.directories.BEGIN_QUEST_SELECTED_PATH, [],
-                                                          no_blit=True))
+                self.assertEqual(0, self.game.game_functions.main_menu_selection(start_time, self.game.screen,
+                                                                                 self.game.directories.main_menu_empty_log_unselected,
+                                                                                 self.game.directories.main_menu_empty_log_0, [],
+                                                                                 no_blit=True))
+            self.assertEqual(0, self.game.game_functions.main_menu_selection(start_time, self.game.screen,
+                                                                             self.game.directories.main_menu_empty_log_unselected,
+                                                                             self.game.directories.main_menu_empty_log_0, [],
+                                                                             no_blit=True))
