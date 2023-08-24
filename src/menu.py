@@ -46,6 +46,7 @@ class CommandMenu(Menu):
         self.screen = self.game.screen
         self.camera_position = self.game.camera.get_pos()
         self.current_map: DragonWarriorMap = self.game.current_map
+        self.current_battle = None
         self.current_tile = self.player.current_tile
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
@@ -674,6 +675,7 @@ class CommandMenu(Menu):
                                                              disable_sound=True,
                                                              hide_arrow=True,
                                                              add_quotes=False)
+                                self.current_battle.no_op = True
                             else:
                                 self.show_line_in_dialog_box(
                                     (self._("{} chanted the spell of {}.").format(self.player.name,

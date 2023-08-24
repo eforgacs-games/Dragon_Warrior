@@ -436,7 +436,7 @@ class Game:
         if self.music_enabled:
             mixer.music.load(self.directories.battle_music)
             mixer.music.play(-1)
-        current_battle = Battle(self.config)
+        current_battle = self.cmd_menu.current_battle = Battle(self.config)
         current_battle.battle_background_image_effect(self.tile_size, self.screen, self.current_map.is_dark)
         self.drawer.show_enemy_image(self.screen, enemy_name)
         enemy_draws_near_string = current_battle.get_enemy_draws_near_string(enemy_name)
@@ -665,8 +665,8 @@ class Game:
 
     def increment_and_execute_enemy_pattern(self, current_battle, current_index, enemy):
         current_index += 1
-        print(f"{enemy.name} current_index: {current_index}")
-        print(f"{enemy.name} pattern: {enemy.pattern}")
+        # print(f"{enemy.name} current_index: {current_index}")
+        # print(f"{enemy.name} pattern: {enemy.pattern}")
         if enemy.pattern:
             current_enemy_pattern = enemy.pattern[current_index]
             self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
