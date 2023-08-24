@@ -125,7 +125,8 @@ class CommandMenu(Menu):
             'Inventory': self.player.inventory
         }
         json_object = json.dumps(save_dict, indent=4)
-        with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'), 'w') as output_save_file:
+        with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'),
+                  'w') as output_save_file:
             output_save_file.write(json_object)
 
     def set_king_lorik_dialog(self):
@@ -575,8 +576,7 @@ class CommandMenu(Menu):
 
     def spell(self):
         """
-        Cast a magic spell. (Not yet implemented)
-        :return: To be determined upon implementation
+        Cast a magic spell.
         """
         self.sound.play_sound(self.directories.menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
@@ -604,9 +604,9 @@ class CommandMenu(Menu):
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
 
-    def display_item_menu(self, menu_name):
+    def display_item_menu(self, menu_name: str):
         """Display a menu of selectable items.
-        :param menu_name: The name of the menu to display.)
+        :param menu_name: The name of the menu to display.
         """
         tile_size = self.game.game_state.config['TILE_SIZE']
         if menu_name == 'inventory':
@@ -669,7 +669,11 @@ class CommandMenu(Menu):
                         if menu_name == 'spells':
                             spell_function, spell_mp_cost = function_dict[currently_selected_item]
                             if self.player.current_mp < spell_mp_cost:
-                                self.show_text_in_dialog_box(self._("Thy MP is too low."), skip_text=self.skip_text)
+                                self.show_line_in_dialog_box(self._("Thy MP is too low."),
+                                                             skip_text=self.skip_text,
+                                                             disable_sound=True,
+                                                             hide_arrow=True,
+                                                             add_quotes=False)
                             else:
                                 self.show_line_in_dialog_box(
                                     (self._("{} chanted the spell of {}.").format(self.player.name,
@@ -683,7 +687,6 @@ class CommandMenu(Menu):
                                 spell_function()
                         else:
                             function_dict[currently_selected_item]()
-
                         item_menu_displayed = False
                     elif len(menu_name) > 1:
                         if current_event.key in (K_UP, K_w) and current_arrow_position > 0:
