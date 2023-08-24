@@ -24,7 +24,7 @@ from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
 from src.enemy import Enemy
-from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
+from src.enemy_lookup import enemy_string_lookup
 from src.enemy_spells import enemy_spell_lookup
 from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
@@ -45,7 +45,6 @@ arrow_fade = USEREVENT + 1
 
 class Game:
     def __init__(self, config):
-
 
         self.config = config
         self.sound = Sound(config)
@@ -517,8 +516,9 @@ class Game:
                 elif selected_executed_option == 'Item':
                     if not self.player.inventory:
                         self.cmd_menu.show_line_in_dialog_box(
-                            'Nothing of use has yet been given to thee.\n'
-                            'Command?\n', add_quotes=False, hide_arrow=True, disable_sound=True, skip_text=True)
+                            'Nothing of use has yet been given to thee.\n',
+                            add_quotes=False, hide_arrow=True, disable_sound=True)
+                        current_battle.no_op = True
                 elif selected_executed_option == 'Sleep':
                     self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
                                                           add_quotes=False, disable_sound=True,
@@ -530,26 +530,32 @@ class Game:
                 if enemy.hp <= 0:
                     run_away = False
                     return run_away
-                else:
-                    self.enemy_move(enemy, current_battle)
-                    if self.player.current_hp <= 0:
-                        self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
-                        self.player.is_dead = True
+                elif current_battle.last_battle_turn != current_battle.battle_turn:
+                    if not current_battle.no_op:
+                        self.enemy_move(enemy, current_battle)
+                        if self.player.current_hp <= 0:
+                            self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
+                            self.player.is_dead = True
 
-                    elif self.player.is_asleep:
-                        self.player.asleep_turns += 1
-                        if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
-                            self.player.is_asleep = False
-                            self.player.asleep_turns = 0
-                            self.cmd_menu.show_line_in_dialog_box(
-                                self._("{} awakes.\n").format(self.player.name) + "Command?\n",
-                                add_quotes=False, disable_sound=True,
-                                hide_arrow=True)
+                        elif self.player.is_asleep:
+                            self.player.asleep_turns += 1
+                            if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
+                                self.player.is_asleep = False
+                                self.player.asleep_turns = 0
+                                self.cmd_menu.show_line_in_dialog_box(
+                                    self._("{} awakes.\n").format(self.player.name) + "Command?\n",
+                                    add_quotes=False, disable_sound=True,
+                                    hide_arrow=True)
+                            else:
+                                self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
+                                                                      add_quotes=False, disable_sound=True,
+                                                                      hide_arrow=True, skip_text=True)
                         else:
-                            self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
-                                                                  add_quotes=False, disable_sound=True,
-                                                                  hide_arrow=True, skip_text=True)
+                            self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
+                                                                  add_quotes=False, disable_sound=True, hide_arrow=True,
+                                                                  skip_text=True)
                     else:
+                        current_battle.no_op = False
                         self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
                                                               add_quotes=False, disable_sound=True, hide_arrow=True,
                                                               skip_text=True)
