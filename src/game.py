@@ -19,7 +19,7 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import prod_config
+from src.config import prod_config, dev_config
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
@@ -91,8 +91,6 @@ class Game:
         self.battle_menu_column = 0
         self.launch_battle = False
         self.current_enemy_pattern_index = None
-        self.battle_turn = 0
-        self.last_battle_turn = 0
         self.enemy_runaway_attempts = 0
         # debugging
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
@@ -418,7 +416,7 @@ class Game:
                     else:
                         current_zone = None
                     if current_zone:
-                        enemies_in_current_zone = enemy_territory_map.get(current_zone)
+                        enemies_in_current_zone = ["Magidrakee"]
                         # "Zone 0" in the original code is zone (3, 2)
                         if current_zone == (3, 2):
                             random_integer = self.handle_near_tantegel_fight_modifier()
@@ -435,7 +433,6 @@ class Game:
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
 
     def battle(self, enemies_in_current_zone):
-        self.battle_turn = 0
         enemy_name = random.choice(enemies_in_current_zone)
         if self.music_enabled:
             mixer.music.load(self.directories.battle_music)
@@ -479,11 +476,10 @@ class Game:
         selected_executed_option = None
         random_number = random.random()
 
-        if self.enemy_runaway_attempts == 0 or self.enemy_runaway_attempts == self.battle_turn:
+        if self.enemy_runaway_attempts == 0 or self.enemy_runaway_attempts == current_battle.battle_turn:
             if self.player.strength >= (enemy.attack * 2):
                 if random_number < 0.25:
                     self.enemy_runaway_attempts = 0
-                    self.battle_turn = 0
                     return self.enemy_run_away(current_battle, enemy)
                 else:
                     self.enemy_runaway_attempts += 1
@@ -511,7 +507,7 @@ class Game:
                 if selected_executed_option == 'Fight':
                     self.fight(enemy, current_battle)
                 elif selected_executed_option == 'Spell':
-                    current_battle.battle_spell(self.cmd_menu, self.player)
+                    current_battle.battle_spell(self.cmd_menu, self.player, current_battle)
                 elif selected_executed_option == 'Run':
                     run_away = current_battle.battle_run(self.cmd_menu, self.player, enemy, current_battle)
                     if run_away and self.music_enabled:
@@ -527,8 +523,8 @@ class Game:
                     self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
                                                           add_quotes=False, disable_sound=True,
                                                           hide_arrow=True, skip_text=True)
-                self.last_battle_turn = self.battle_turn
-                self.battle_turn += 1
+                current_battle.last_battle_turn = current_battle.battle_turn
+                current_battle.battle_turn += 1
                 selected_executed_option = None
                 time.set_timer(arrow_fade, 530)
                 if enemy.hp <= 0:
@@ -647,13 +643,9 @@ class Game:
                             spell_effect *= 0.66
                         self.receive_damage(spell_effect)
                 else:
-                    current_index += 1
-                    current_enemy_pattern = enemy.pattern[current_index]
-                    self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+                    self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
             else:
-                current_index += 1
-                current_enemy_pattern = enemy.pattern[current_index]
-                self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+                self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
         elif isinstance(current_enemy_pattern, str):
             # (do X)
             if current_enemy_pattern == "ATTACK":
@@ -664,6 +656,16 @@ class Game:
             # to:
             #
             # (EnemyAttack - HeroAgility / 2) / 2
+
+    def increment_and_execute_enemy_pattern(self, current_battle, current_index, enemy):
+        current_index += 1
+        print(f"{enemy.name} current_index: {current_index}")
+        print(f"{enemy.name} pattern: {enemy.pattern}")
+        if enemy.pattern:
+            current_enemy_pattern = enemy.pattern[current_index]
+            self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+        else:
+            self.enemy_attack(current_battle, enemy)
 
     def enemy_attack(self, current_battle, enemy):
         self.enemy_attack_message(enemy)
