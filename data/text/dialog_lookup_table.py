@@ -391,7 +391,7 @@ class DialogLookup:
             if old_item_lookup_table[old_item].get('cost'):
                 old_item_cost = old_item_lookup_table[old_item]['cost'] // 2
                 self.command_menu.show_line_in_dialog_box(
-                    _("Then I will buy thy {} for {} GOLD.").format(old_item, old_item_cost), hide_arrow=False)
+                    _("Then I will buy thy {} for {} GOLD.").format(self._(old_item), old_item_cost), hide_arrow=False)
         return old_item_cost
 
     def complete_transaction(self, item, current_store_inventory, old_item_cost):
