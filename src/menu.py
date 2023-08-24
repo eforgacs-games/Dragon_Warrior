@@ -228,6 +228,10 @@ class CommandMenu(Menu):
                                 drop_down=True, drop_up=True, disable_sound=False, letter_by_letter=True):
         """Shows a passage of text in a dialog box.
 
+        An important distinction between this and show_line_in_dialog_box is that this function
+        will show multiple lines of text, whereas show_line_in_dialog_box will only show a single line.
+        Additionally, this function will do a drop down and drop up effect by default.
+
         :param disable_sound:
         :param text: The text to print.
         :param skip_text: Whether to automatically skip the text.
@@ -667,9 +671,12 @@ class CommandMenu(Menu):
                             if self.player.current_mp < spell_mp_cost:
                                 self.show_text_in_dialog_box(self._("Thy MP is too low."), skip_text=self.skip_text)
                             else:
-                                self.show_text_in_dialog_box(
+                                self.show_line_in_dialog_box(
                                     (self._("{} chanted the spell of {}.").format(self.player.name,
                                                                                   currently_selected_item)),
+                                    add_quotes=False,
+                                    disable_sound=True,
+                                    hide_arrow=True,
                                     skip_text=self.skip_text)
                                 self.sound.play_sound(self.directories.spell_sfx)
                                 self.player.current_mp -= spell_mp_cost
