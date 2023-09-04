@@ -24,7 +24,7 @@ from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
 from src.enemy import Enemy
-from src.enemy_lookup import enemy_string_lookup
+from src.enemy_lookup import enemy_string_lookup, enemy_territory_map
 from src.enemy_spells import enemy_spell_lookup
 from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
@@ -415,7 +415,7 @@ class Game:
                     else:
                         current_zone = None
                     if current_zone:
-                        enemies_in_current_zone = ["Magidrakee"]
+                        enemies_in_current_zone = enemy_territory_map.get(current_zone)
                         # "Zone 0" in the original code is zone (3, 2)
                         if current_zone == (3, 2):
                             random_integer = self.handle_near_tantegel_fight_modifier()
