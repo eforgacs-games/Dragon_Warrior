@@ -19,12 +19,12 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import prod_config
+from src.config import prod_config, dev_config
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
 from src.enemy import Enemy
-from src.enemy_lookup import enemy_territory_map, enemy_string_lookup
+from src.enemy_lookup import enemy_string_lookup, enemy_territory_map
 from src.enemy_spells import enemy_spell_lookup
 from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
@@ -45,7 +45,6 @@ arrow_fade = USEREVENT + 1
 
 class Game:
     def __init__(self, config):
-
 
         self.config = config
         self.sound = Sound(config)
@@ -91,8 +90,6 @@ class Game:
         self.battle_menu_column = 0
         self.launch_battle = False
         self.current_enemy_pattern_index = None
-        self.battle_turn = 0
-        self.last_battle_turn = 0
         self.enemy_runaway_attempts = 0
         # debugging
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
@@ -435,12 +432,11 @@ class Game:
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
 
     def battle(self, enemies_in_current_zone):
-        self.battle_turn = 0
         enemy_name = random.choice(enemies_in_current_zone)
         if self.music_enabled:
             mixer.music.load(self.directories.battle_music)
             mixer.music.play(-1)
-        current_battle = Battle(self.config)
+        current_battle = self.cmd_menu.current_battle = Battle(self.config)
         current_battle.battle_background_image_effect(self.tile_size, self.screen, self.current_map.is_dark)
         self.drawer.show_enemy_image(self.screen, enemy_name)
         enemy_draws_near_string = current_battle.get_enemy_draws_near_string(enemy_name)
@@ -479,11 +475,10 @@ class Game:
         selected_executed_option = None
         random_number = random.random()
 
-        if self.enemy_runaway_attempts == 0 or self.enemy_runaway_attempts == self.battle_turn:
+        if self.enemy_runaway_attempts == 0 or self.enemy_runaway_attempts == current_battle.battle_turn:
             if self.player.strength >= (enemy.attack * 2):
                 if random_number < 0.25:
                     self.enemy_runaway_attempts = 0
-                    self.battle_turn = 0
                     return self.enemy_run_away(current_battle, enemy)
                 else:
                     self.enemy_runaway_attempts += 1
@@ -511,7 +506,7 @@ class Game:
                 if selected_executed_option == 'Fight':
                     self.fight(enemy, current_battle)
                 elif selected_executed_option == 'Spell':
-                    current_battle.battle_spell(self.cmd_menu, self.player)
+                    current_battle.battle_spell(self.cmd_menu, self.player, current_battle)
                 elif selected_executed_option == 'Run':
                     run_away = current_battle.battle_run(self.cmd_menu, self.player, enemy, current_battle)
                     if run_away and self.music_enabled:
@@ -521,39 +516,46 @@ class Game:
                 elif selected_executed_option == 'Item':
                     if not self.player.inventory:
                         self.cmd_menu.show_line_in_dialog_box(
-                            'Nothing of use has yet been given to thee.\n'
-                            'Command?\n', add_quotes=False, hide_arrow=True, disable_sound=True, skip_text=True)
+                            'Nothing of use has yet been given to thee.\n',
+                            add_quotes=False, hide_arrow=True, disable_sound=True)
+                        current_battle.no_op = True
                 elif selected_executed_option == 'Sleep':
                     self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
                                                           add_quotes=False, disable_sound=True,
                                                           hide_arrow=True, skip_text=True)
-                self.last_battle_turn = self.battle_turn
-                self.battle_turn += 1
+                current_battle.last_battle_turn = current_battle.battle_turn
+                current_battle.battle_turn += 1
                 selected_executed_option = None
                 time.set_timer(arrow_fade, 530)
                 if enemy.hp <= 0:
                     run_away = False
                     return run_away
-                else:
-                    self.enemy_move(enemy, current_battle)
-                    if self.player.current_hp <= 0:
-                        self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
-                        self.player.is_dead = True
+                elif current_battle.last_battle_turn != current_battle.battle_turn:
+                    if not current_battle.no_op:
+                        self.enemy_move(enemy, current_battle)
+                        if self.player.current_hp <= 0:
+                            self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
+                            self.player.is_dead = True
 
-                    elif self.player.is_asleep:
-                        self.player.asleep_turns += 1
-                        if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
-                            self.player.is_asleep = False
-                            self.player.asleep_turns = 0
-                            self.cmd_menu.show_line_in_dialog_box(
-                                self._("{} awakes.\n").format(self.player.name) + "Command?\n",
-                                add_quotes=False, disable_sound=True,
-                                hide_arrow=True)
+                        elif self.player.is_asleep:
+                            self.player.asleep_turns += 1
+                            if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
+                                self.player.is_asleep = False
+                                self.player.asleep_turns = 0
+                                self.cmd_menu.show_line_in_dialog_box(
+                                    self._("{} awakes.\n").format(self.player.name) + "Command?\n",
+                                    add_quotes=False, disable_sound=True,
+                                    hide_arrow=True)
+                            else:
+                                self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
+                                                                      add_quotes=False, disable_sound=True,
+                                                                      hide_arrow=True, skip_text=True)
                         else:
-                            self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
-                                                                  add_quotes=False, disable_sound=True,
-                                                                  hide_arrow=True, skip_text=True)
+                            self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
+                                                                  add_quotes=False, disable_sound=True, hide_arrow=True,
+                                                                  skip_text=True)
                     else:
+                        current_battle.no_op = False
                         self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
                                                               add_quotes=False, disable_sound=True, hide_arrow=True,
                                                               skip_text=True)
@@ -647,13 +649,9 @@ class Game:
                             spell_effect *= 0.66
                         self.receive_damage(spell_effect)
                 else:
-                    current_index += 1
-                    current_enemy_pattern = enemy.pattern[current_index]
-                    self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+                    self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
             else:
-                current_index += 1
-                current_enemy_pattern = enemy.pattern[current_index]
-                self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+                self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
         elif isinstance(current_enemy_pattern, str):
             # (do X)
             if current_enemy_pattern == "ATTACK":
@@ -664,6 +662,16 @@ class Game:
             # to:
             #
             # (EnemyAttack - HeroAgility / 2) / 2
+
+    def increment_and_execute_enemy_pattern(self, current_battle, current_index, enemy):
+        current_index += 1
+        # print(f"{enemy.name} current_index: {current_index}")
+        # print(f"{enemy.name} pattern: {enemy.pattern}")
+        if enemy.pattern:
+            current_enemy_pattern = enemy.pattern[current_index]
+            self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+        else:
+            self.enemy_attack(current_battle, enemy)
 
     def enemy_attack(self, current_battle, enemy):
         self.enemy_attack_message(enemy)
