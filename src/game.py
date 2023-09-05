@@ -23,8 +23,7 @@ from src.config import prod_config, dev_config
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
-from src.enemy import Enemy
-from src.enemy_lookup import enemy_string_lookup, enemy_territory_map
+from src.enemy_lookup import enemy_territory_map
 from src.enemy_spells import enemy_spell_lookup
 from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
@@ -523,24 +522,24 @@ class Game:
                 if current_battle.enemy.hp <= 0:
                     run_away = False
                     return run_away
-                elif current_battle.last_battle_turn != current_battle.battle_turn:
+                elif current_battle.last_turn != current_battle.turn:
                     if not current_battle.no_op:
-                      self.enemy_move(current_battle)
-                      if self.player.current_hp <= 0:
-                          self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
-                          self.player.is_dead = True
+                        self.enemy_move(current_battle)
+                        if self.player.current_hp <= 0:
+                            self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
+                            self.player.is_dead = True
 
-                      elif self.player.is_asleep:
-                          self.player.asleep_turns += 1
-                          if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
-                              self.player.is_asleep = False
-                              self.player.asleep_turns = 0
-                              self.cmd_menu.show_line_in_dialog_box(
-                                  self._("{} awakes.\n").format(self.player.name) + "Command?\n",
-                                  add_quotes=False, disable_sound=True,
-                                  hide_arrow=True)
-                          else:
-                            self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
+                        elif self.player.is_asleep:
+                            self.player.asleep_turns += 1
+                            if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
+                                self.player.is_asleep = False
+                                self.player.asleep_turns = 0
+                                self.cmd_menu.show_line_in_dialog_box(
+                                    self._("{} awakes.\n").format(self.player.name) + "Command?\n",
+                                    add_quotes=False, disable_sound=True,
+                                    hide_arrow=True)
+                            else:
+                                self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
                                                                       add_quotes=False, disable_sound=True,
                                                                       hide_arrow=True, skip_text=True)
                         else:
@@ -583,7 +582,8 @@ class Game:
         else:
             self.sound.play_sound(self.directories.hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
-                self._("The {}'s Hit Points have been reduced by {}.\n").format(self._(current_battle.enemy.name), attack_damage),
+                self._("The {}'s Hit Points have been reduced by {}.\n").format(self._(current_battle.enemy.name),
+                                                                                attack_damage),
                 add_quotes=False,
                 disable_sound=True, hide_arrow=True)
             current_battle.enemy.hp -= attack_damage
@@ -656,7 +656,6 @@ class Game:
             # to:
             #
             # (EnemyAttack - HeroAgility / 2) / 2
-
 
     def increment_and_execute_enemy_pattern(self, current_battle, current_index, enemy):
         current_index += 1
