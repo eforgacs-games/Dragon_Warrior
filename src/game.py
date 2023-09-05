@@ -19,7 +19,7 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import prod_config
+from src.config import dev_config, prod_config
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
@@ -45,7 +45,6 @@ arrow_fade = USEREVENT + 1
 
 class Game:
     def __init__(self, config):
-
 
         self.config = config
         self.sound = Sound(config)
@@ -91,9 +90,8 @@ class Game:
         self.battle_menu_column = 0
         self.launch_battle = False
         self.current_enemy_pattern_index = None
-        self.battle_turn = 0
-        self.last_battle_turn = 0
         self.enemy_runaway_attempts = 0
+
         # debugging
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
         init()
@@ -435,39 +433,31 @@ class Game:
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
 
     def battle(self, enemies_in_current_zone):
-        self.battle_turn = 0
         enemy_name = random.choice(enemies_in_current_zone)
-        if self.music_enabled:
-            mixer.music.load(self.directories.battle_music)
-            mixer.music.play(-1)
-        current_battle = Battle(self.config)
-        current_battle.battle_background_image_effect(self.tile_size, self.screen, self.current_map.is_dark)
-        self.drawer.show_enemy_image(self.screen, enemy_name)
-        enemy_draws_near_string = current_battle.get_enemy_draws_near_string(enemy_name)
-        self.cmd_menu.show_line_in_dialog_box(enemy_draws_near_string, add_quotes=False, skip_text=True,
-                                              hide_arrow=True, disable_sound=True)
-        self.cmd_menu.window_drop_down_effect(1, 2, 4, 6)
-        self.cmd_menu.window_drop_down_effect(6, 1, 8, 3)
-        self.graphics.create_window(6, 1, 8, 3, self.directories.BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
-        self.drawer.hovering_stats_displayed = True
-        self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
-        enemy = enemy_string_lookup[enemy_name]()
-        battle_menu_options = {
-            'Fight': self.directories.BATTLE_MENU_FIGHT_PATH,
-            'Spell': self.directories.BATTLE_MENU_SPELL_PATH}, \
-            {'Run': self.directories.BATTLE_MENU_RUN_PATH,
-             'Item': self.directories.BATTLE_MENU_ITEM_PATH}
+        current_battle = Battle(self.config, enemy_name, self.current_map)
+        current_battle.play_battle_music()
+        # TODO: Group parameters into respective classes.
+        current_battle.display_battle_window(self.screen, self.drawer,
+                                             self.cmd_menu, self.graphics, self.directories,
+                                             self.color, self.player)
+
         run_away = False
-        while enemy.hp > 0 and not run_away and not self.player.is_dead:
-            run_away = self.handle_battle_prompts(battle_menu_options, enemy, run_away, current_battle)
-        if enemy.hp <= 0:
-            current_battle.enemy_defeated(self.cmd_menu, self.tile_size, self.screen, self.player, self.music_enabled,
-                                          self.current_map, enemy)
+        while current_battle.enemy.hp > 0 and not run_away and not self.player.is_dead:
+            # TODO: Figure out run away bug (when player attempts to run, enemy always gets one extra turn).
+            run_away = self.handle_battle_prompts(run_away, current_battle)
+        if current_battle.enemy.hp <= 0:
+            current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, self.music_enabled,
+                                          current_battle.enemy)
+        # TODO: Refactor to music player class with Swatjen.
         if self.music_enabled and not mixer.music.get_busy():
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
 
-    def handle_battle_prompts(self, battle_menu_options, enemy: Enemy, run_away, current_battle):
+    def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
+        battle_menu_options = ({'Fight': self.directories.BATTLE_MENU_FIGHT_PATH,
+                                'Spell': self.directories.BATTLE_MENU_SPELL_PATH},
+                               {'Run': self.directories.BATTLE_MENU_RUN_PATH,
+                                'Item': self.directories.BATTLE_MENU_ITEM_PATH})
         x, y, width, height = 6, 1, 8, 3
         tile_size = self.game_state.config["TILE_SIZE"]
         selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
@@ -478,13 +468,11 @@ class Game:
         current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
         selected_executed_option = None
         random_number = random.random()
-
-        if self.enemy_runaway_attempts == 0 or self.enemy_runaway_attempts == self.battle_turn:
-            if self.player.strength >= (enemy.attack * 2):
+        if self.enemy_runaway_attempts == 0 or self.enemy_runaway_attempts == current_battle.turn:
+            if self.player.strength >= (current_battle.enemy.attack * 2):
                 if random_number < 0.25:
                     self.enemy_runaway_attempts = 0
-                    self.battle_turn = 0
-                    return self.enemy_run_away(current_battle, enemy)
+                    return self.enemy_run_away(current_battle, current_battle.enemy)
                 else:
                     self.enemy_runaway_attempts += 1
         for current_event in event.get():
@@ -509,11 +497,11 @@ class Game:
                 display.update(battle_window_rect)
                 time.set_timer(arrow_fade, 530)
                 if selected_executed_option == 'Fight':
-                    self.fight(enemy, current_battle)
+                    self.fight(current_battle)
                 elif selected_executed_option == 'Spell':
                     current_battle.battle_spell(self.cmd_menu, self.player)
                 elif selected_executed_option == 'Run':
-                    run_away = current_battle.battle_run(self.cmd_menu, self.player, enemy, current_battle)
+                    run_away = current_battle.battle_run(self.cmd_menu, self.player, current_battle)
                     if run_away and self.music_enabled:
                         mixer.music.load(self.current_map.music_file_path)
                         mixer.music.play(-1)
@@ -527,15 +515,15 @@ class Game:
                     self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
                                                           add_quotes=False, disable_sound=True,
                                                           hide_arrow=True, skip_text=True)
-                self.last_battle_turn = self.battle_turn
-                self.battle_turn += 1
+                current_battle.last_turn = current_battle.turn
+                current_battle.turn += 1
                 selected_executed_option = None
                 time.set_timer(arrow_fade, 530)
-                if enemy.hp <= 0:
+                if current_battle.enemy.hp <= 0:
                     run_away = False
                     return run_away
                 else:
-                    self.enemy_move(enemy, current_battle)
+                    self.enemy_move(current_battle)
                     if self.player.current_hp <= 0:
                         self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
                         self.player.is_dead = True
@@ -565,41 +553,42 @@ class Game:
         self.sound.play_sound(self.directories.stairs_down_sfx)
         self.cmd_menu.show_line_in_dialog_box(self._("The {} is running away.").format(self._(enemy.name)),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
-        current_battle.make_enemy_image_disappear(self.current_map, self.screen, self.tile_size)
-        mixer.music.load(self.current_map.music_file_path)
-        mixer.music.play(-1)
+        current_battle.make_enemy_image_disappear(self.screen)
+        if self.config["MUSIC_ENABLED"]:
+            mixer.music.load(self.current_map.music_file_path)
+            mixer.music.play(-1)
         return True
 
-    def fight(self, enemy, current_battle):
-        self.hero_attack(enemy, current_battle)
+    def fight(self, current_battle):
+        self.hero_attack(current_battle)
 
-    def hero_attack(self, enemy, current_battle):
+    def hero_attack(self, current_battle):
         self.sound.play_sound(self.directories.attack_sfx)
         self.cmd_menu.show_line_in_dialog_box(self._("{} attacks!\n").format(self.player.name),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
-        attack_damage = current_battle.calculate_attack_damage(self.cmd_menu, self.player, enemy)
+        attack_damage = current_battle.calculate_attack_damage(self.cmd_menu, self.player, current_battle.enemy)
         if attack_damage <= 0:
             current_battle.missed_attack(self.cmd_menu)
-        elif random.random() < enemy.dodge:
+        elif random.random() < current_battle.enemy.dodge:
             self.sound.play_sound(self.directories.missed_sfx)
-            self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!\n").format(self._(enemy.name)),
+            self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!\n").format(self._(current_battle.enemy.name)),
                                                   add_quotes=False, disable_sound=True, hide_arrow=True)
         else:
             self.sound.play_sound(self.directories.hit_sfx)
             self.cmd_menu.show_line_in_dialog_box(
-                self._("The {}'s Hit Points have been reduced by {}.\n").format(self._(enemy.name), attack_damage),
+                self._("The {}'s Hit Points have been reduced by {}.\n").format(self._(current_battle.enemy.name), attack_damage),
                 add_quotes=False,
                 disable_sound=True, hide_arrow=True)
-            enemy.hp -= attack_damage
+            current_battle.enemy.hp -= attack_damage
             # print(f"{enemy.name} HP: {enemy.hp}/{enemy_string_lookup[enemy.name]().hp}")
 
-    def enemy_move(self, enemy: Enemy, current_battle: Battle):
-        if not enemy.pattern:
-            self.enemy_attack(current_battle, enemy)
+    def enemy_move(self, current_battle: Battle):
+        if not current_battle.enemy.pattern:
+            self.enemy_attack(current_battle)
         else:
             current_index = 0
-            current_enemy_pattern = enemy.pattern[current_index]
-            self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+            current_enemy_pattern = current_battle.enemy.pattern[current_index]
+            self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, current_battle.enemy)
 
     def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
         enemy.refresh_pattern()
@@ -657,7 +646,7 @@ class Game:
         elif isinstance(current_enemy_pattern, str):
             # (do X)
             if current_enemy_pattern == "ATTACK":
-                self.enemy_attack(current_battle, enemy)
+                self.enemy_attack(current_battle)
 
             # (EnemyAttack - HeroAgility / 2) / 4,
             #
@@ -665,12 +654,12 @@ class Game:
             #
             # (EnemyAttack - HeroAgility / 2) / 2
 
-    def enemy_attack(self, current_battle, enemy):
-        self.enemy_attack_message(enemy)
-        self.execute_enemy_attack(current_battle, enemy)
+    def enemy_attack(self, current_battle):
+        self.enemy_attack_message(current_battle.enemy)
+        self.execute_enemy_attack(current_battle)
 
-    def execute_enemy_attack(self, current_battle, enemy):
-        attack_damage = calculate_enemy_attack_damage(self.player, enemy)
+    def execute_enemy_attack(self, current_battle):
+        attack_damage = calculate_enemy_attack_damage(self.player, current_battle.enemy)
         if attack_damage <= 0:
             current_battle.missed_attack(self.cmd_menu)
         else:
