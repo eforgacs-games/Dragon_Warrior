@@ -152,6 +152,9 @@ class CommandMenu(Menu):
             print(f"Character not in lookup table: {dialog_character}")
             self.show_text_in_dialog_box(self._("I have nothing to say."), add_quotes=True, skip_text=self.skip_text)
 
+    def show_line_in_battle_dialog_box(self, line: str):
+        self.show_line_in_dialog_box(line, add_quotes=False, skip_text=True, hide_arrow=True, disable_sound=True)
+
     def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True,
                                 temp_text_start: int = None, skip_text: bool = False, hide_arrow=False,
                                 disable_sound=False, letter_by_letter=True):
