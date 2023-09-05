@@ -30,6 +30,7 @@ class Battle:
         self.enemy = enemy_string_lookup[enemy_name]()
         self.tile_size = config['TILE_SIZE']
         self.current_map = current_map
+        self.no_op = False
 
     def play_battle_music(self):
         if self.config["MUSIC_ENABLED"]:
@@ -123,12 +124,17 @@ class Battle:
             attack_damage = select_random_attack_damage_value(lower_bound, upper_bound)
         return round(attack_damage)
 
-    def battle_spell(self, cmd_menu: CommandMenu, player: Player):
+    def battle_spell(self, cmd_menu: CommandMenu, player: Player, current_battle):
         self.sound.play_sound(self.directories.menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
         if not player.spells:
-            cmd_menu.show_text_in_dialog_box(self._("{} cannot yet use the spell.").format(player.name),
-                                             skip_text=cmd_menu.skip_text)
+            cmd_menu.show_line_in_dialog_box(self._("{} cannot yet use the spell.").format(player.name),
+                                             skip_text=cmd_menu.skip_text,
+                                             add_quotes=False,
+                                             hide_arrow=True,
+                                             disable_sound=True)
+            current_battle.no_op = True
+
         else:
             cmd_menu.display_item_menu('spells')
         # cmd_menu.show_line_in_dialog_box(_("{} cannot yet use the spell.").format(player.name) + "\n" +
