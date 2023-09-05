@@ -125,7 +125,8 @@ class CommandMenu(Menu):
             'Inventory': self.player.inventory
         }
         json_object = json.dumps(save_dict, indent=4)
-        with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'), 'w') as output_save_file:
+        with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'),
+                  'w') as output_save_file:
             output_save_file.write(json_object)
 
     def set_king_lorik_dialog(self):
@@ -149,6 +150,9 @@ class CommandMenu(Menu):
         else:
             print(f"Character not in lookup table: {dialog_character}")
             self.show_text_in_dialog_box(self._("I have nothing to say."), add_quotes=True, skip_text=self.skip_text)
+
+    def show_line_in_battle_dialog_box(self, line: str):
+        self.show_line_in_dialog_box(line, add_quotes=False, skip_text=True, hide_arrow=True, disable_sound=True)
 
     def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True,
                                 temp_text_start: int = None, skip_text: bool = False, hide_arrow=False,

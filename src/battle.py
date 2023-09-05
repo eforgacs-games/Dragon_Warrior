@@ -6,6 +6,8 @@ from pygame.transform import scale
 from src.common import BLACK, set_gettext_language
 from src.directories import Directories
 from src.enemy import enemy_groups, Enemy
+from src.enemy_lookup import enemy_string_lookup
+from src.maps import DragonWarriorMap
 from src.menu import CommandMenu
 from src.player.player import Player
 from src.player.player_stats import levels_list
@@ -18,19 +20,29 @@ ko_consonant_ending_chars = ('임', '갈', '롤', '령', '믈', '맨', '렘', '�
 
 
 class Battle:
-    def __init__(self, config):
+    def __init__(self, config, enemy_name: str, current_map: DragonWarriorMap):
         self.config = config
         self.directories = Directories(config)
         self.sound = Sound(config)
         self._ = _ = set_gettext_language(config['LANGUAGE'])
+        self.turn = 0
+        self.last_turn = 0
+        self.enemy = enemy_string_lookup[enemy_name]()
+        self.tile_size = config['TILE_SIZE']
+        self.current_map = current_map
 
-    def battle_background_image_effect(self, tile_size, screen, is_dark):
+    def play_battle_music(self):
+        if self.config["MUSIC_ENABLED"]:
+            mixer.music.load(self.directories.battle_music)
+            mixer.music.play(-1)
+
+    def transition_battle_background_image_effect(self, screen):
         """Spiral effect to introduce battle background."""
-        if not is_dark:
+        if not self.current_map.is_dark:
             battle_background_image = scale(image.load(self.directories.BATTLE_BACKGROUND_PATH),
-                                            (7 * tile_size, 7 * tile_size))
+                                            (7 * self.tile_size, 7 * self.tile_size))
         else:
-            black_surface = Surface((7 * tile_size, 7 * tile_size))
+            black_surface = Surface((7 * self.tile_size, 7 * self.tile_size))
             black_surface.fill(BLACK)
             battle_background_image = black_surface
         spiral_tile_coordinates = ((3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (4, 3), (4, 4), (4, 5),
@@ -40,12 +52,12 @@ class Battle:
                                    (4, 0), (5, 0), (6, 0), (6, 1), (6, 2), (6, 3), (6, 4), (6, 5), (6, 6))
         for tile in spiral_tile_coordinates:
             screen.blit(battle_background_image.subsurface(
-                (tile[0] * tile_size, tile[1] * tile_size, tile_size, tile_size)),
-                ((tile[0] + 5) * tile_size, (tile[1] + 4) * tile_size))
+                (tile[0] * self.tile_size, tile[1] * self.tile_size, self.tile_size, self.tile_size)),
+                ((tile[0] + 5) * self.tile_size, (tile[1] + 4) * self.tile_size))
             display.update()
             time.wait(20)
 
-    def battle_run(self, cmd_menu: CommandMenu, player: Player, enemy: Enemy, current_battle):
+    def battle_run(self, cmd_menu: CommandMenu, player: Player, current_battle):
         """Attempt to run from a battle. The formula is as follows:
         If HeroAgility * Random # < EnemyAgility * Random # * GroupFactor, then the
     enemy will block you. (according to https://gamefaqs.gamespot.com/nes/563408-dragon-warrior/faqs/61640)"""
@@ -61,16 +73,16 @@ class Battle:
             4: 1.0,
         }
         for group_number, group in enemy_groups.items():
-            if enemy.name in group:
+            if current_battle.enemy.name in group:
                 group_factor = group_number
-        if enemy.is_asleep:
+        if current_battle.enemy.is_asleep:
             return True
         else:
-            if player.agility * random_number < enemy.speed * random_number * group_factor_lookup[group_factor]:
-                cmd_menu.show_line_in_dialog_box(self._("But was blocked in front.").format(enemy.name),
+            if player.agility * random_number < current_battle.enemy.speed * random_number * group_factor_lookup[group_factor]:
+                cmd_menu.show_line_in_dialog_box(self._("But was blocked in front.").format(current_battle.enemy.name),
                                                  add_quotes=False,
                                                  hide_arrow=True, disable_sound=True)
-                cmd_menu.game.enemy_move(enemy, current_battle)
+                cmd_menu.game.enemy_move(current_battle)
                 if player.current_hp <= 0:
                     player.is_dead = True
                 else:
@@ -124,7 +136,7 @@ class Battle:
         #                                  hide_arrow=True,
         #                                  disable_sound=True, skip_text=True)
 
-    def enemy_defeated(self, cmd_menu, tile_size, screen, player, music_enabled, current_map, enemy):
+    def enemy_defeated(self, cmd_menu, screen, player, music_enabled, enemy):
         if self.config['LANGUAGE'] == 'Korean':
             ko_enemy_name = self._(enemy.name)
             if ko_enemy_name.endswith(ko_consonant_ending_chars):
@@ -140,7 +152,7 @@ class Battle:
                                          disable_sound=True, hide_arrow=True)
         mixer.music.stop()
         self.sound.play_sound(self.directories.victory_sfx)
-        self.make_enemy_image_disappear(current_map, screen, tile_size)
+        self.make_enemy_image_disappear(screen)
         exp_and_gold = self._("Thy experience increases by {}.\n").format(enemy.xp) + self._(
             "Thy GOLD increases by {}.\n").format(
             enemy.gold)
@@ -173,7 +185,7 @@ class Battle:
             player.update_defense_power()
             player.points_to_next_level = player.get_points_to_next_level()
             if music_enabled:
-                mixer.music.load(current_map.music_file_path)
+                mixer.music.load(self.current_map.music_file_path)
                 mixer.music.play(-1)
 
             if player.strength > old_power:
@@ -199,30 +211,31 @@ class Battle:
                 cmd_menu.show_line_in_dialog_box("Thou hast learned a new spell.\n", add_quotes=False,
                                                  disable_sound=True)
 
-    def make_enemy_image_disappear(self, current_map, screen, tile_size):
-        if current_map.is_dark:
-            black_surface = Surface((7 * tile_size, 7 * tile_size))
+    def make_enemy_image_disappear(self, screen):
+        if self.current_map.is_dark:
+            black_surface = Surface((7 * self.tile_size, 7 * self.tile_size))
             black_surface.fill(BLACK)
             battle_background_image = black_surface
         else:
             battle_background_image = scale(image.load(self.directories.BATTLE_BACKGROUND_PATH),
-                                            (7 * tile_size, 7 * tile_size))
-        screen.blit(battle_background_image, (5 * tile_size, 4 * tile_size))
+                                            (7 * self.tile_size, 7 * self.tile_size))
+        screen.blit(battle_background_image, (5 * self.tile_size, 4 * self.tile_size))
         display.update(battle_background_image.get_rect())
 
-    def get_enemy_draws_near_string(self, enemy_name):
-        if enemy_name == 'Dragonlord 2':
+    def get_enemy_draws_near_string(self):
+        """Get string for when an enemy draws near (e.g. 'A Slime draws near!')"""
+        if self.enemy.name == 'Dragonlord 2':
             enemy_draws_near_string = 'The Dragonlord revealed his true self!\n'
         else:
             if self.config['LANGUAGE'] == 'English':
-                enemy_draws_near_string = self._('{} draws near!\n').format(self._(enemy_name))
+                enemy_draws_near_string = self._('{} draws near!\n').format(self._(self.enemy.name))
                 vowels = 'AEIOU'
-                if enemy_name[0] in vowels:
+                if self.enemy.name[0] in vowels:
                     enemy_draws_near_string = self._('An {}').format(enemy_draws_near_string)
                 else:
                     enemy_draws_near_string = self._('A {}').format(enemy_draws_near_string)
             elif self.config['LANGUAGE'] == 'Korean':
-                ko_enemy_name = self._(enemy_name)
+                ko_enemy_name = self._(self.enemy.name)
                 if ko_enemy_name.endswith(ko_consonant_ending_chars):
                     ko_enemy_name += "이"
                 else:
@@ -232,6 +245,18 @@ class Battle:
                 enemy_draws_near_string = self._('{} draws near!\n')
         enemy_draws_near_string += self._("Command?\n")
         return enemy_draws_near_string
+
+    def display_battle_window(self, screen, drawer, cmd_menu, graphics, directories, color, player):
+        self.transition_battle_background_image_effect(screen)
+        drawer.show_enemy_image(screen, self.enemy.name)
+        cmd_menu.show_line_in_battle_dialog_box(self.get_enemy_draws_near_string())
+        # drop down for the hovering stats window
+        cmd_menu.window_drop_down_effect(1, 2, 4, 6)
+        # drop down for the battle menu
+        cmd_menu.window_drop_down_effect(6, 1, 8, 3)
+        graphics.create_window(6, 1, 8, 3, directories.BATTLE_MENU_FIGHT_PATH, screen, color)
+        drawer.hovering_stats_displayed = True
+        drawer.draw_hovering_stats_window(screen, player, color)
 
 
 def select_random_attack_damage_value(lower_bound, upper_bound) -> int:
