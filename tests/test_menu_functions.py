@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 from pygame import KEYDOWN, K_RETURN, event, K_e, K_d
 from pygame.time import get_ticks
 
-from src.config import prod_config
+from src.config import test_config
 from src.game import Game
 from src.menu_functions import NameSelection, get_opposite_direction, truncate_name, toggle_joystick_input
 
@@ -15,11 +15,11 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 class TestMenuFunctions(TestCase):
     def setUp(self) -> None:
-        prod_config['NO_WAIT'] = True
-        prod_config['RENDER_TEXT'] = False
-        prod_config['NO_BLIT'] = True
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
-            self.game = Game(prod_config)
+            self.game = Game(test_config)
 
     def test_select_name(self):
         # mocked_k = MagicMock()
