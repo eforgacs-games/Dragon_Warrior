@@ -6,6 +6,7 @@ LOCALE, CHARACTER_ENCODING = locale.getlocale()
 # TODO: Put start map in config
 
 prod_config = {
+    "START_MAP": "TantegelThroneRoom",
     "FPS": 60,
     "REPLIT_DATA_DIR": '..\\data',
     "SCALE": 2,
@@ -35,6 +36,25 @@ prod_config = {
 }
 
 dev_config = {
+    "START_MAP": "TantegelThroneRoom",
+    # "START_MAP": "TantegelCourtyard"
+    # "START_MAP": "Alefgard"
+
+    # towns
+    # "START_MAP": "Brecconary"
+    # "START_MAP": "Garinham"
+    # "START_MAP": "Kol"
+    # "START_MAP": "Rimuldar"
+    # "START_MAP": "Hauksness"
+    # "START_MAP": "Cantlin"
+
+    # caves
+
+    # "START_MAP": "CharlockB1"
+    # "START_MAP": "SwampCave"
+    # "START_MAP": "MountainCaveB1"
+
+    # "START_MAP": "MagicTemple"
     "FPS": 60,
     "SCALE": 2,
     "TILE_SIZE": 16 * SCALE,
@@ -63,7 +83,9 @@ dev_config = {
 
 }
 
+# TODO: Put test_config into tests folder
 test_config = {
+    "START_MAP": "TantegelThroneRoom",
     "FPS": 60,
     "REPLIT_DATA_DIR": '..\\data',
     "SCALE": 2,
