@@ -23,6 +23,7 @@ from src.maps import TantegelThroneRoom, TantegelCourtyard, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.menu import CommandMenu
 from src.menu_functions import convert_list_to_newline_separated_string
+from src.music_player import MusicPlayer
 from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
 from tests.mock_map import MockMap
@@ -551,7 +552,7 @@ class TestGame(TestCase):
         self.assertEqual(528, self.game.flags)
 
     @patch('src.game.Game.set_screen')
-    @patch.object(Game, "load_and_play_music")
+    @patch.object(MusicPlayer, "load_and_play_music")
     def test_splash_screen_enabled_load_and_play_music(self, mock_load_and_play_music, mock_set_screen):
         self.game.__init__(prod_config)
         mock_load_and_play_music.assert_called_once_with(self.game.directories.intro_overture)
