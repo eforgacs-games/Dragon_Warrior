@@ -19,7 +19,7 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import prod_config, dev_config
+from src.config import dev_config
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
@@ -33,6 +33,7 @@ from src.maps import map_lookup
 from src.menu import CommandMenu, Menu
 from src.menu_functions import convert_list_to_newline_separated_string, NameSelection
 from src.movement import Movement
+from src.music_player import MusicPlayer
 from src.player.player import Player
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
@@ -54,6 +55,7 @@ class Game:
         self.movement = Movement(self.config)
         self.show_arrow = True
         self.game_state = GameState(config=config)
+        self.music_player = MusicPlayer(config)
 
         # load/save
 
@@ -169,9 +171,9 @@ class Game:
         self.music_enabled = self.game_state.config["MUSIC_ENABLED"]
 
         if self.splash_screen_enabled:
-            self.load_and_play_music(self.directories.intro_overture)
+            self.music_player.load_and_play_music(self.directories.intro_overture)
         else:
-            self.load_and_play_music(self.current_map.music_file_path)
+            self.music_player.load_and_play_music(self.current_map.music_file_path)
         self.events = get()
 
         display.set_icon(image.load(self.directories.ICON_PATH))
@@ -190,7 +192,7 @@ class Game:
         if self.splash_screen_enabled:
             intro = Intro(self.config)
             intro.show_start_screen(self.screen, self.start_time, self.clock, self.game_state.config)
-            self.load_and_play_music(self.directories.intermezzo)
+            self.music_player.load_and_play_music(self.directories.intermezzo)
             self.show_main_menu_screen(self.screen)
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
                              self.foreground_rects, self.enable_animate, self.camera, self.initial_dialog_enabled,
@@ -254,7 +256,7 @@ class Game:
         self.player.set_initial_stats()
         self.sound.play_sound(self.directories.menu_button_sfx)
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
-        self.load_and_play_music(self.current_map.music_file_path)
+        self.music_player.load_and_play_music(self.current_map.music_file_path)
         self.cmd_menu = CommandMenu(self)
 
     def continue_quest(self):
@@ -275,7 +277,7 @@ class Game:
 
         self.sound.play_sound(self.directories.menu_button_sfx)
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
-        self.load_and_play_music(self.current_map.music_file_path)
+        self.music_player.load_and_play_music(self.current_map.music_file_path)
         self.cmd_menu = CommandMenu(self)
 
     def change_message_speed(self):
@@ -448,9 +450,7 @@ class Game:
             current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, self.music_enabled,
                                           current_battle.enemy)
         # TODO: Refactor to music player class with Swatjen.
-        if self.music_enabled and not mixer.music.get_busy():
-            mixer.music.load(self.current_map.music_file_path)
-            mixer.music.play(-1)
+        self.music_player.load_and_play_music(self.current_map.music_file_path)
 
     def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
         battle_menu_options = ({'Fight': self.directories.BATTLE_MENU_FIGHT_PATH,
@@ -501,9 +501,8 @@ class Game:
                     current_battle.battle_spell(self.cmd_menu, self.player, current_battle)
                 elif selected_executed_option == 'Run':
                     run_away = current_battle.battle_run(self.cmd_menu, self.player, current_battle)
-                    if run_away and self.music_enabled:
-                        mixer.music.load(self.current_map.music_file_path)
-                        mixer.music.play(-1)
+                    if run_away:
+                        self.music_player.load_and_play_music(self.current_map.music_file_path)
                         return run_away
                 elif selected_executed_option == 'Item':
                     if not self.player.inventory:
@@ -762,10 +761,7 @@ class Game:
             else:
                 self.drawer.draw_all_tiles_in_current_map(self.current_map, self.drawer.background)
                 display.flip()
-            if self.music_enabled:
-                mixer.music.stop()
-                mixer.music.load(self.directories.death_sfx)
-                mixer.music.play(1)
+            self.music_player.load_and_play_music(self.directories.death_sfx, 1)
             self.game_state.enable_movement = False
             death_start_time = get_ticks()
             while self.calculation.convert_to_frames_since_start_time(death_start_time) < 318:
@@ -929,17 +925,15 @@ class Game:
         :return: None
         """
         if self.last_map is not None:
-            came_from_throne_room = self.last_map.identifier == 'TantegelThroneRoom'
-            came_from_courtyard = self.last_map.identifier == 'TantegelCourtyard'
+            came_from_throne_room = self.current_map.identifier == 'TantegelThroneRoom'
+            came_from_courtyard = self.current_map.identifier == 'TantegelCourtyard'
         else:
-            came_from_throne_room = False
+            came_from_throne_room = True
             came_from_courtyard = False
         self.game_state.pause_all_movement()
         self.last_map = self.current_map
         self.current_map = next_map
-        came_from_throne_room_to_courtyard = came_from_throne_room and self.current_map.identifier == 'TantegelCourtyard'
-        came_from_courtyard_to_throne_room = came_from_courtyard and self.current_map.identifier == 'TantegelThroneRoom'
-        moving_within_tantegel_castle = came_from_throne_room_to_courtyard or came_from_courtyard_to_throne_room
+        moving_within_tantegel_castle = came_from_throne_room or came_from_courtyard
         for character_coordinates, tile_value in self.last_map.character_position_record.items():
             self.last_map.layout[character_coordinates[0]][character_coordinates[1]] = tile_value
         if not self.allow_save_prompt:
@@ -983,8 +977,9 @@ class Game:
         self.game_state.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
         self.cmd_menu = CommandMenu(self)
-        if not (moving_within_tantegel_castle and self.config['ORCHESTRA_MUSIC_ENABLED']):
-            self.load_and_play_music(self.current_map.music_file_path)
+        # TODO: Allow music to continue playing when moving within Tantegel Castle.
+        # if not moving_within_tantegel_castle and self.config['ORCHESTRA_MUSIC_ENABLED']:
+        self.music_player.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             # really not sure if the 1 and 0 here are supposed to be switched
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]), self.tile_size)
@@ -1027,12 +1022,6 @@ class Game:
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
             set_character_position(roaming_character, self.tile_size)
-
-    def load_and_play_music(self, music_path):
-        """Loads and plays music on repeat."""
-        if self.music_enabled:
-            mixer.music.load(music_path)
-            mixer.music.play(-1)
 
     def unlaunch_menu(self, menu_to_unlaunch: Menu) -> None:
         """
@@ -1253,8 +1242,8 @@ class Game:
 
 
 def run():
-    game = Game(config=prod_config)
-    # game = Game(config=dev_config)
+    # game = Game(config=prod_config)
+    game = Game(config=dev_config)
     game.main()
 
 
