@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from src.config import prod_config
+from src.config import test_config
 from src.direction import Direction
 from src.maps import MapWithoutNPCs
 from src.player.player import Player
@@ -26,11 +26,11 @@ class MockMap(MapWithoutNPCs):
 class TestPlayer(TestCase):
 
     def setUp(self):
-        prod_config['NO_WAIT'] = True
-        prod_config['RENDER_TEXT'] = False
-        prod_config['NO_BLIT'] = True
-        self.player = Player(center_point=None, images=None, current_map=MockMap(prod_config),
-                             god_mode=prod_config['GOD_MODE'])
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
+        self.player = Player(center_point=None, images=None, current_map=MockMap(test_config),
+                             god_mode=test_config['GOD_MODE'])
 
     def test_get_level_by_experience(self):
         self.assertEqual(1, self.player.level)

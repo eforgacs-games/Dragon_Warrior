@@ -13,7 +13,7 @@ from data.text.dialog_lookup_table import DialogLookup
 from data.text.intro_lookup_table import ControlInfo
 from src.calculation import get_tile_id_by_coordinates
 from src.camera import Camera
-from src.config import SCALE, prod_config
+from src.config import SCALE, test_config
 from src.direction import Direction
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
     set_to_save_prompt
@@ -56,11 +56,11 @@ def setup_roaming_character(row, column, direction):
 class TestGame(TestCase):
 
     def setUp(self) -> None:
-        prod_config['NO_WAIT'] = True
-        prod_config['RENDER_TEXT'] = False
-        prod_config['NO_BLIT'] = True
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
-            self.game = Game(prod_config)
+            self.game = Game(test_config)
         self.game.player.name = "Edward"
         self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu, self.game.game_state.config)
         self.game.current_map = MockMap(self.game.config)
@@ -437,7 +437,7 @@ class TestGame(TestCase):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
             keydown_event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F1, mod=pygame.KMOD_NONE)
             self.game.handle_help_button(keydown_event)
-        control_info = ControlInfo(prod_config)
+        control_info = ControlInfo(test_config)
         mock_show_text_in_dialog_box.assert_called_with(
             f"Controls:\n{convert_list_to_newline_separated_string(control_info.controls)}")
 
@@ -540,13 +540,13 @@ class TestGame(TestCase):
     @patch('src.game.Game.set_screen')
     def test_flags_fullscreen_disabled(self, mock_set_screen):
         self.game.fullscreen_enabled = False
-        self.game.__init__(prod_config)
+        self.game.__init__(test_config)
         self.assertEqual(RESIZABLE | SCALED, self.game.flags)
 
     @patch('src.game.Game.set_screen')
     def test_flags_fullscreen_enabled(self, mock_set_screen):
         self.game.fullscreen_enabled = True
-        self.game.__init__(prod_config)
+        self.game.__init__(test_config)
         # seems like an integer overflow happens if we try:
         # self.assertEqual(FULLSCREEN | SCALED, self.game.flags)
         self.assertEqual(528, self.game.flags)
@@ -554,7 +554,7 @@ class TestGame(TestCase):
     @patch('src.game.Game.set_screen')
     @patch.object(MusicPlayer, "load_and_play_music")
     def test_splash_screen_enabled_load_and_play_music(self, mock_load_and_play_music, mock_set_screen):
-        self.game.__init__(prod_config)
+        self.game.__init__(test_config)
         mock_load_and_play_music.assert_called_once_with(self.game.directories.intro_overture)
 
     # @patch('src.config')
