@@ -19,7 +19,7 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import prod_config, dev_config
+from src.config import dev_config
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
@@ -171,9 +171,9 @@ class Game:
         self.music_enabled = self.game_state.config["MUSIC_ENABLED"]
 
         if self.splash_screen_enabled:
-            self.load_and_play_music(self.directories.intro_overture)
+            self.music_player.load_and_play_music(self.directories.intro_overture)
         else:
-            self.load_and_play_music(self.current_map.music_file_path)
+            self.music_player.load_and_play_music(self.current_map.music_file_path)
         self.events = get()
 
         display.set_icon(image.load(self.directories.ICON_PATH))
@@ -192,7 +192,7 @@ class Game:
         if self.splash_screen_enabled:
             intro = Intro(self.config)
             intro.show_start_screen(self.screen, self.start_time, self.clock, self.game_state.config)
-            self.load_and_play_music(self.directories.intermezzo)
+            self.music_player.load_and_play_music(self.directories.intermezzo)
             self.show_main_menu_screen(self.screen)
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
                              self.foreground_rects, self.enable_animate, self.camera, self.initial_dialog_enabled,
@@ -256,7 +256,7 @@ class Game:
         self.player.set_initial_stats()
         self.sound.play_sound(self.directories.menu_button_sfx)
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
-        self.load_and_play_music(self.current_map.music_file_path)
+        self.music_player.load_and_play_music(self.current_map.music_file_path)
         self.cmd_menu = CommandMenu(self)
 
     def continue_quest(self):
@@ -277,7 +277,7 @@ class Game:
 
         self.sound.play_sound(self.directories.menu_button_sfx)
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
-        self.load_and_play_music(self.current_map.music_file_path)
+        self.music_player.load_and_play_music(self.current_map.music_file_path)
         self.cmd_menu = CommandMenu(self)
 
     def change_message_speed(self):
@@ -977,8 +977,9 @@ class Game:
         self.game_state.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
         self.cmd_menu = CommandMenu(self)
-        if not (moving_within_tantegel_castle and self.config['ORCHESTRA_MUSIC_ENABLED']):
-            self.load_and_play_music(self.current_map.music_file_path)
+        # TODO: Allow music to continue playing when moving within Tantegel Castle.
+        # if not moving_within_tantegel_castle and self.config['ORCHESTRA_MUSIC_ENABLED']:
+        self.music_player.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             # really not sure if the 1 and 0 here are supposed to be switched
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]), self.tile_size)
@@ -1021,12 +1022,6 @@ class Game:
         for roaming_character in self.current_map.roaming_characters:
             roaming_character.last_roaming_clock_check = get_ticks()
             set_character_position(roaming_character, self.tile_size)
-
-    def load_and_play_music(self, music_path):
-        """Loads and plays music on repeat."""
-        if self.music_enabled:
-            mixer.music.load(music_path)
-            mixer.music.play(-1)
 
     def unlaunch_menu(self, menu_to_unlaunch: Menu) -> None:
         """
