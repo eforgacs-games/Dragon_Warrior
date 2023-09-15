@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from pygame import time
 from pygame.time import get_ticks
 
-from src.config import prod_config
+from src.config import test_config
 from src.movement import Movement
 
 
@@ -16,7 +16,7 @@ class TestSound(TestCase):
         character.identifier = 'HERO'
         character.last_bump_time = get_ticks()
         character.bumped = False
-        movement = Movement(prod_config)
+        movement = Movement(test_config)
         for i in range(2):
             movement.bump(character)
             self.assertTrue(character.bumped)
