@@ -2,7 +2,7 @@ import os
 from unittest import TestCase
 from unittest.mock import patch
 
-from src.config import prod_config
+from src.config import test_config
 from src.game import Game
 from tests.mock_map import MockMap
 
@@ -13,11 +13,11 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 class Test(TestCase):
 
     def setUp(self) -> None:
-        prod_config['NO_WAIT'] = True
-        prod_config['RENDER_TEXT'] = False
-        prod_config['NO_BLIT'] = True
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
-            self.game = Game(prod_config)
+            self.game = Game(test_config)
         self.game.current_map = MockMap(self.game.config)
 
     def test_bump_and_reset(self):

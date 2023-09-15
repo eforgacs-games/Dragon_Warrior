@@ -9,7 +9,7 @@ from pygame.transform import scale
 
 from src import drawer
 from src.camera import Camera
-from src.config import SCALE, prod_config
+from src.config import SCALE, test_config
 from src.drawer import Drawer
 from src.game import Game
 from src.game_functions import get_next_coordinates, set_character_position
@@ -30,11 +30,11 @@ layout = [[33, 0, 3],
 class TestGameFunctions(TestCase):
 
     def setUp(self) -> None:
-        prod_config['NO_WAIT'] = True
-        prod_config['RENDER_TEXT'] = False
-        prod_config['NO_BLIT'] = True
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
-            self.game = Game(prod_config)
+            self.game = Game(test_config)
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
         self.game.current_map = MockMap(self.game.config)
@@ -44,7 +44,7 @@ class TestGameFunctions(TestCase):
             unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)),
                                                        self.game.game_state.config)
         self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map,
-                                              god_mode=prod_config['GOD_MODE'])
+                                              god_mode=test_config['GOD_MODE'])
         tile_size = self.game.game_state.config['TILE_SIZE']
         self.camera = Camera(
             (self.game.current_map.player.rect.y // tile_size, self.game.current_map.player.rect.x // tile_size),

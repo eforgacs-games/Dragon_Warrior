@@ -19,7 +19,7 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import dev_config
+from src.config import dev_config, prod_config
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
@@ -1242,8 +1242,8 @@ class Game:
 
 
 def run():
-    # game = Game(config=prod_config)
-    game = Game(config=dev_config)
+    game = Game(config=prod_config)
+    # game = Game(config=dev_config)
     game.main()
 
 
