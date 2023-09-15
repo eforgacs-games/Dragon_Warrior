@@ -120,25 +120,8 @@ class Game:
 
         # self.current_map can be changed to other maps for development purposes
 
-        self.current_map = maps.TantegelThroneRoom(config)
-        # self.current_map = maps.TantegelCourtyard(config)
-        # self.current_map = maps.Alefgard(config)
+        self.current_map = maps.map_lookup[self.game_state.config["START_MAP"]](self.game_state.config)
 
-        # towns
-        # self.current_map = maps.Brecconary(config)
-        # self.current_map = maps.Garinham(config)
-        # self.current_map = maps.Kol(config)
-        # self.current_map = maps.Rimuldar(config)
-        # self.current_map = maps.Hauksness(config)
-        # self.current_map = maps.Cantlin(config)
-
-        # caves
-
-        # self.current_map = maps.CharlockB1(config)
-        # self.current_map = maps.SwampCave(config)
-        # self.current_map = maps.MountainCaveB1(config)
-
-        # self.current_map = maps.MagicTemple(config)
 
         self.set_big_map()
 
@@ -1242,8 +1225,8 @@ class Game:
 
 
 def run():
-    game = Game(config=prod_config)
-    # game = Game(config=dev_config)
+    # game = Game(config=prod_config)
+    game = Game(config=dev_config)
     game.main()
 
 
