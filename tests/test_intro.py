@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 
 from pygame import Rect, event, KEYDOWN, K_i
 
-from src.config import prod_config
+from src.config import test_config
 from src.game import Game
 from src.intro import show_intro_banner, Intro
 
@@ -16,12 +16,12 @@ class TestIntro(TestCase):
 
     @patch('src.game.Game.set_screen')
     def setUp(self, mock_set_screen) -> None:
-        prod_config['NO_WAIT'] = True
-        prod_config['RENDER_TEXT'] = False
-        prod_config['NO_BLIT'] = True
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
-            self.game = Game(prod_config)
-        self.intro = Intro(prod_config)
+            self.game = Game(test_config)
+        self.intro = Intro(test_config)
 
     def test_show_intro_banner(self):
         self.assertIsInstance(show_intro_banner(self.game.directories.INTRO_BANNER_PATH, self.game.screen, no_blit=True), Rect)

@@ -1,16 +1,14 @@
 from unittest import TestCase
 
 from src.calculation import Calculation
-from src.config import prod_config
+from src.config import test_config
 from src.drawer import get_surrounding_tile_values
 
 layout = [[33, 0, 3],
           [1, 2, 3],
           [3, 3, 39]]
 
-config = prod_config
-
-calculation = Calculation(prod_config)
+calculation = Calculation(test_config)
 
 
 class Test(TestCase):

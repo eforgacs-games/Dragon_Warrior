@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from src.direction import Direction
-from src.config import prod_config
+from src.config import test_config
 from src.maps_functions import parse_animated_sprite_sheet
 from src.sprites.animated_sprite import AnimatedSprite
 
@@ -11,7 +11,7 @@ class TestAnimatedSprite(TestCase):
     def setUp(self) -> None:
         mock = MagicMock()
         mock.get_size = MagicMock(return_value=(128, 0))
-        self.mock_images = parse_animated_sprite_sheet(mock, prod_config)
+        self.mock_images = parse_animated_sprite_sheet(mock, test_config)
         self.anim_sprite = AnimatedSprite(center_point=None, direction_value=None, images=self.mock_images, identifier='Mock')
 
     def test_initialized_values(self):

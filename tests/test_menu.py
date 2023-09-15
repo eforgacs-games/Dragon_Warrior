@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from pygame import KEYDOWN, K_RETURN, event
 
-from src.config import prod_config
+from src.config import test_config
 from src.game import Game
 from tests.mock_map import MockMap
 
@@ -17,7 +17,7 @@ class TestCommandMenu(TestCase):
     @patch('src.game.Game.set_screen')
     def setUp(self, mock_set_screen) -> None:
         with patch('src.game.SCALED'):
-            self.game = Game(prod_config)
+            self.game = Game(test_config)
         self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
 
