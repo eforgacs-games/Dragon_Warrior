@@ -52,11 +52,17 @@ class DialogLookup:
         garinham_inn_cost = 25
         rimuldar_inn_cost = 55
         cantlin_inn_cost = 100
+
+        tantegel_courtyard_magic_key_cost = 85
+        cantlin_magic_key_cost = 98
+
         tools_intro = _("Welcome.\n"
                         "We deal in tools.\n"
                         "What can I do for thee?")
         self.directories = Directories(self.config)
         before_reaching_thy_next_level_of_experience = "Before reaching thy next level of experience thou must gain {} Points."
+
+        magic_key_prompt = "Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?"
         self.lookup_table = {
             'TantegelThroneRoom': {
                 'KING_LORIK': {'dialog': (
@@ -103,9 +109,7 @@ class DialogLookup:
                 )},
             },
             'TantegelCourtyard': {
-                'MERCHANT': {'dialog': (
-                    _("Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?").format(
-                        85),)},
+                'MERCHANT': {'dialog': (_(magic_key_prompt).format(tantegel_courtyard_magic_key_cost),)},
                 'MERCHANT_2': {'dialog': _(
                     "We are merchants who have traveled much in this land. Many of our colleagues have been killed by servants of the Dragonlord.")},
                 'MERCHANT_3': {
@@ -202,6 +206,7 @@ class DialogLookup:
                 'MERCHANT_6': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
                             self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
+                'WISE_MAN': {'dialog': (_(magic_key_prompt).format(cantlin_magic_key_cost),)},
                 'WISE_MAN_2': {'dialog': _("To learn how proof may be obtained that thy ancestor was the great Erdrick, "
                                            "see a man in this very town.")},
 
