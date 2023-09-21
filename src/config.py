@@ -37,24 +37,25 @@ prod_config = {
 
 dev_config = {
     "START_MAP": "TantegelThroneRoom",
-    # "START_MAP": "TantegelCourtyard"
-    # "START_MAP": "Alefgard"
+    # "START_MAP": "TantegelCourtyard",
+    # "START_MAP": "TantegelCellar",
+    # "START_MAP": "Alefgard",
 
     # towns
-    # "START_MAP": "Brecconary"
-    # "START_MAP": "Garinham"
-    # "START_MAP": "Kol"
-    # "START_MAP": "Rimuldar"
-    # "START_MAP": "Hauksness"
-    # "START_MAP": "Cantlin"
+    # "START_MAP": "Brecconary",
+    # "START_MAP": "Garinham",
+    # "START_MAP": "Kol",
+    # "START_MAP": "Rimuldar",
+    # "START_MAP": "Hauksness",
+    # "START_MAP": "Cantlin",
 
     # caves
 
-    # "START_MAP": "CharlockB1"
-    # "START_MAP": "SwampCave"
-    # "START_MAP": "MountainCaveB1"
+    # "START_MAP": "CharlockB1",
+    # "START_MAP": "SwampCave",
+    # "START_MAP": "MountainCaveB1",
 
-    # "START_MAP": "MagicTemple"
+    # "START_MAP": "MagicTemple",
     "FPS": 60,
     "SCALE": 2,
     "TILE_SIZE": 16 * SCALE,
