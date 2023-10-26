@@ -192,6 +192,8 @@ class Game:
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
+        if not os.path.exists(self.directories.save_dir):
+            os.makedirs(self.directories.save_dir)
         self.save_dir_contents = os.listdir(self.directories.save_dir)
         if len(self.save_dir_contents) == 0:
             begin_quest_empty_log_function_lookup = {
@@ -1225,8 +1227,8 @@ class Game:
 
 
 def run():
-    # game = Game(config=prod_config)
-    game = Game(config=dev_config)
+    game = Game(config=prod_config)
+    # game = Game(config=dev_config)
     game.main()
 
 
