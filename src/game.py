@@ -649,7 +649,7 @@ class Game:
             current_enemy_pattern = enemy.pattern[current_index]
             self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
         else:
-            self.enemy_attack(current_battle, enemy)
+            self.enemy_attack(current_battle)
 
     def enemy_attack(self, current_battle):
         self.enemy_attack_message(current_battle.enemy)
