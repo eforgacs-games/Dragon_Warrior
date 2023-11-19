@@ -561,7 +561,7 @@ class Game:
             current_battle.missed_attack(self.cmd_menu)
         elif random.random() < current_battle.enemy.dodge:
             self.sound.play_sound(self.directories.missed_sfx)
-            self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!\n").format(self._(current_battle.enemy.name)),
+            self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!").format(self._(current_battle.enemy.name)),
                                                   add_quotes=False, disable_sound=True, hide_arrow=True)
         else:
             self.sound.play_sound(self.directories.hit_sfx)
