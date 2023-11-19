@@ -3,8 +3,6 @@ import locale
 SCALE = 2
 LOCALE, CHARACTER_ENCODING = locale.getlocale()
 
-# TODO: Put start map in config
-
 prod_config = {
     "START_MAP": "TantegelThroneRoom",
     "FPS": 60,
