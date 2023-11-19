@@ -541,6 +541,10 @@ msgstr "{}은 도망쳤다!\n"
 msgid "But was blocked in front."
 msgstr "그러나 저지되고 말았다!"
 
+#: ..\battle.py:102
+msgid "A miss! No damage hath been scored!"
+msgstr "공격이 빗나갔다!"
+
 #: ..\battle.py:103
 msgid "Thou hast done well in defeating the {}.\n"
 msgstr "{} 물리쳤다!\n"
@@ -709,6 +713,10 @@ msgstr "다스드래곤"
 msgid "Dragonlord"
 msgstr "용왕"
 
+#: ..\battle.py:564
+msgid "It is dodging!"
+msgstr "피하고 있다!"
+
 #: ..\game.py:107
 msgid "Dragon Warrior"
 msgstr "드래곤 퀘스트"
@@ -728,6 +736,10 @@ msgstr "{}의 공격!\n"
 #: ..\game.py:448
 msgid "Thy Hit Points decreased by {}.\n"
 msgstr "{}포인트의 대미지를 입었다!\n"
+
+#: ..\game.py:544
+msgid "The {} is running away."
+msgstr "{} 도망쳤다!"
 
 #: ..\game.py:600
 msgid "Controls:\n"

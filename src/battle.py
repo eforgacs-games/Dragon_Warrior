@@ -99,7 +99,7 @@ class Battle:
             self.sound.play_sound(self.directories.missed_sfx)
         else:
             self.sound.play_sound(self.directories.missed_2_sfx)
-        cmd_menu.show_line_in_dialog_box("A miss! No damage hath been scored!\n", add_quotes=False,
+        cmd_menu.show_line_in_dialog_box(self._("A miss! No damage hath been scored!"), add_quotes=False,
                                          disable_sound=True, hide_arrow=True)
 
     def calculate_attack_damage(self, cmd_menu, player, enemy):
@@ -265,7 +265,11 @@ class Battle:
         drawer.draw_hovering_stats_window(screen, player, color)
 
 
-def select_random_attack_damage_value(lower_bound, upper_bound) -> int:
+def select_random_attack_damage_value(lower_bound: int, upper_bound: int) -> int:
+    if not isinstance(lower_bound, int):
+        lower_bound = int(lower_bound)
+    if not isinstance(upper_bound, int):
+        upper_bound = int(upper_bound)
     if lower_bound > upper_bound:
         attack_damage = random.randint(upper_bound, lower_bound)
     elif lower_bound == upper_bound:
