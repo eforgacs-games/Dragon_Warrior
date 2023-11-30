@@ -62,7 +62,7 @@ class DialogLookup:
         self.directories = Directories(self.config)
         before_reaching_thy_next_level_of_experience = "Before reaching thy next level of experience thou must gain {} Points."
 
-        magic_key_prompt = "Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?"
+        self.magic_key_prompt = "Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?"
         self.lookup_table = {
             'TantegelThroneRoom': {
                 'KING_LORIK': {'dialog': (
@@ -85,8 +85,9 @@ class DialogLookup:
                         self.prompt_to_continue_quest,
                     ),
                     'load_from_save_dialog': (self._("I am glad thou hast returned.\n"
-                                              "All our hopes are riding on thee."),
-                                              before_reaching_thy_next_level_of_experience.format(self.player.points_to_next_level),
+                                                     "All our hopes are riding on thee."),
+                                              before_reaching_thy_next_level_of_experience.format(
+                                                  self.player.points_to_next_level),
                                               self._("See me again when thy level has increased."),
                                               self.goodbye_tempt_not_the_fates.format(self.player.name)
                                               ),
@@ -109,7 +110,7 @@ class DialogLookup:
                 )},
             },
             'TantegelCourtyard': {
-                'MERCHANT': {'dialog': (_(magic_key_prompt).format(tantegel_courtyard_magic_key_cost),)},
+                'MERCHANT': {'dialog': (partial(self.check_buy_magic_keys, tantegel_courtyard_magic_key_cost),)},
                 'MERCHANT_2': {'dialog': _(
                     "We are merchants who have traveled much in this land. Many of our colleagues have been killed by servants of the Dragonlord.")},
                 'MERCHANT_3': {
@@ -206,9 +207,10 @@ class DialogLookup:
                 'MERCHANT_6': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
                             self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
-                'WISE_MAN': {'dialog': (_(magic_key_prompt).format(cantlin_magic_key_cost),)},
-                'WISE_MAN_2': {'dialog': _("To learn how proof may be obtained that thy ancestor was the great Erdrick, "
-                                           "see a man in this very town.")},
+                'WISE_MAN': {'dialog': (partial(self.check_buy_magic_keys, cantlin_magic_key_cost),)},
+                'WISE_MAN_2': {
+                    'dialog': _("To learn how proof may be obtained that thy ancestor was the great Erdrick, "
+                                "see a man in this very town.")},
 
             },
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
@@ -230,7 +232,8 @@ class DialogLookup:
                 character_dict['dialog_character'] = character_identifier
 
     def prompt_for_save(self):
-        return confirmation_prompt(self.command_menu, self._("Will thou tell me now of thy deeds so they won't be forgotten?"),
+        return confirmation_prompt(self.command_menu,
+                                   self._("Will thou tell me now of thy deeds so they won't be forgotten?"),
                                    yes_path_function=self.save_game,
                                    no_path_function=self.prompt_to_continue_quest,
                                    config=self.config,
@@ -256,7 +259,8 @@ class DialogLookup:
         self.screen.fill(BLACK)
         display.flip()
         self.command_menu.show_text_in_dialog_box((self._("Please push RESET, hold it in, then turn off the POWER."),
-                                                   self._("If you turn the power off first, the Imperial Scroll of Honor containing your deeds may be lost."))
+                                                   self._(
+                                                       "If you turn the power off first, the Imperial Scroll of Honor containing your deeds may be lost."))
                                                   )
         quit()
 
@@ -279,9 +283,26 @@ class DialogLookup:
         confirmation_prompt(self.command_menu, self.weapons_and_armor_intro,
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image, color=self.command_menu.color),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box, "Please, come again.",
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                                     self._("Please, come again."),
                                                      hide_arrow=True),
                             config=self.config, show_arrow=self.command_menu.game.show_arrow, color=self.color)
+
+    def check_buy_magic_keys(self, magic_key_cost):
+        confirmation_prompt(self.command_menu, self.magic_key_prompt.format(magic_key_cost),
+                            yes_path_function=partial(self.buy_magic_key, magic_key_cost),
+                            no_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                                     self._("Please, come again."), hide_arrow=True),
+                            config=self.config, show_arrow=self.command_menu.game.show_arrow, color=self.color)
+
+    def buy_magic_key(self, magic_key_cost):
+        _ = self._
+        if self.player.gold >= magic_key_cost:
+            self.player.gold -= magic_key_cost
+            self.player.inventory.append('Magic Key')
+            self.command_menu.show_line_in_dialog_box(_("Thank you very much."))
+        else:
+            self.command_menu.show_line_in_dialog_box(_("Thou hast not enough money."))
 
     def get_inn_intro(self, inn_cost):
         _ = self._
