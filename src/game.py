@@ -122,7 +122,6 @@ class Game:
 
         self.current_map = maps.map_lookup[self.game_state.config["START_MAP"]](self.game_state.config)
 
-
         self.set_big_map()
 
         self.set_roaming_character_positions()
