@@ -630,7 +630,10 @@ class Brecconary(DragonWarriorMap):
 class Garinham(DragonWarriorMap):
 
     def __init__(self, config):
-        super().__init__(MapLayouts().garinham, config, Directories(config).village_music, (14, 9))
+        super().__init__(MapLayouts().garinham, config, Directories(config).village_music, (14, 9),
+                         staircases={
+                             (0, 28): {'map': 'GarinsGraveB1', 'destination_coordinates': (12, 7)}
+                         })
         self.create_town_gates(west_gate=warp_line((13, 8), (15, 8)),
                                east_gate=warp_line((11, 29), (14, 29)))
         self.set_town_to_overworld_warps()
@@ -814,6 +817,74 @@ class SwampCave(CaveMap):
 
     def set_characters_initial_directions(self):
         pass
+
+
+class GarinsGraveB1(MapWithoutNPCs, CaveMap):
+    def __init__(self, config):
+        super().__init__(MapLayouts().garins_grave_b1, config, Directories(config).dungeon_floor_1_music, (1, 1),
+                         staircases={
+                             (19, 2): {'map': 'GarinsGraveB2', 'destination_coordinates': (3, 12),
+                                       'stair_direction': 'down'},
+                             (12, 7): {'map': 'Garinham', 'destination_coordinates': (0, 28), 'stair_direction': 'up'},
+                         })
+        self.assign_stair_directions()
+        self.set_town_to_overworld_warps()
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+
+class GarinsGraveB2(MapWithoutNPCs, CaveMap):
+    def __init__(self, config):
+        super().__init__(MapLayouts().garins_grave_b2, config, Directories(config).dungeon_floor_1_music, (1, 1),
+                         staircases={
+                             (3, 12): {'map': 'GarinsGraveB1', 'destination_coordinates': (19, 2),
+                                       'stair_direction': 'up'},
+
+                         })
+        self.assign_stair_directions()
+        self.set_town_to_overworld_warps()
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+
+class GarinsGraveB3(MapWithoutNPCs, CaveMap):
+    def __init__(self, config):
+        super().__init__(MapLayouts().garins_grave_b3, config, Directories(config).dungeon_floor_1_music, (1, 1),
+                         staircases={
+                             (1, 1): {'map': 'GarinsGraveB2', 'destination_coordinates': (1, 1)},
+                         })
+        self.assign_stair_directions()
+        self.set_town_to_overworld_warps()
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
+
+
+class GarinsGraveB4(MapWithoutNPCs, CaveMap):
+    def __init__(self, config):
+        super().__init__(MapLayouts().garins_grave_b4, config, Directories(config).dungeon_floor_1_music, (1, 1),
+                         staircases={
+                             (1, 1): {'map': 'GarinsGraveB3', 'destination_coordinates': (1, 1)},
+                         })
+        self.assign_stair_directions()
+        self.set_town_to_overworld_warps()
+
+    def hero_underlying_tile(self):
+        return 'BRICK_STAIR_UP'
+
+    def hero_initial_direction(self):
+        return Direction.RIGHT.value
 
 
 class MountainCaveB1(MapWithoutNPCs, CaveMap):
