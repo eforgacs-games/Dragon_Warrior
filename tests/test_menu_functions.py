@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 from pygame import KEYDOWN, K_RETURN, event, K_e, K_d
 from pygame.time import get_ticks
 
-from src.config import test_config
+from src.config.test_config import test_config
 from src.game import Game
 from src.menu_functions import NameSelection, get_opposite_direction, truncate_name, toggle_joystick_input
 

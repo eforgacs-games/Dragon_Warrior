@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from pygame import time
 from pygame.time import get_ticks
 
-from src.config import test_config
+from src.config.test_config import test_config
 from src.movement import Movement
 
 
