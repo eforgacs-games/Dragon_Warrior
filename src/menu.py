@@ -6,7 +6,7 @@ from os.path import join
 from typing import Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time
+from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, mixer
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
@@ -401,6 +401,18 @@ class CommandMenu(Menu):
     def fairy_water(self):
         self.show_text_in_dialog_box(f"{self.player.name} used the Fairy Water.", skip_text=self.skip_text)
 
+    def silver_harp(self):
+        self.show_text_in_dialog_box(f"{self.player.name} played a sweet melody on the harp.", skip_text=self.skip_text)
+        mixer.music.stop()
+        # disable input
+        self.game.game_state.pause_all_movement()
+        # play harp sound
+        self.sound.play_sound(self.directories.harp_sfx)
+        self.game.game_state.unpause_all_movement()
+        mixer.music.play(-1)
+        self.show_text_in_dialog_box("But nothing happened.", skip_text=self.skip_text)
+
+
     # spells
 
     def heal(self):
@@ -628,6 +640,7 @@ class CommandMenu(Menu):
                 "Torch": self.torch,
                 "Dragon's Scale": self.dragon_scale,
                 "Fairy Water": self.fairy_water,
+                "Silver Harp": self.silver_harp,
                 "Magic Key": self.door,
             }
         elif menu_name == 'spells':
