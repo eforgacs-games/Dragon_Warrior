@@ -39,8 +39,13 @@ treasure = {
                            (10, 15): {'item': "Torch"}},
     'ErdricksCaveB2': {(4, 10): {'item': 'Tablet'}},
     'TantegelCellar': {(6, 5): {'item': 'Stones of Sunlight'}},
-    'GarinsGraveB1': {(1, 12): {'item': 'Herb'},
-                      (1, 13): {'item': "GOLD", 'amount': random.randint(6, 20)},
-                      (1, 14): {'item': "GOLD", 'amount': random.randint(7, 12)}
-                      }
+    'GarinsGraveB1': {
+        (1, 12): {'item': 'Herb'},
+        (1, 13): {'item': "GOLD", 'amount': random.randint(6, 20)},
+        (1, 14): {'item': "GOLD", 'amount': random.randint(7, 12)}
+    },
+    'GarinsGraveB3': {
+        (2, 2): {'item': 'Cursed Belt'},
+        (7, 14): {'item': 'Silver Harp'}
+    },
 }

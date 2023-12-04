@@ -636,7 +636,8 @@ class Garinham(DragonWarriorMap):
     def __init__(self, config):
         super().__init__(MapLayouts().garinham, config, Directories(config).village_music, (14, 9),
                          staircases={
-                             (0, 28): {'map': 'GarinsGraveB1', 'destination_coordinates': (12, 7), 'stair_direction': 'down'},
+                             (0, 28): {'map': 'GarinsGraveB1', 'destination_coordinates': (12, 7),
+                                       'stair_direction': 'down'},
                          })
         self.create_town_gates(west_gate=warp_line((13, 8), (15, 8)),
                                east_gate=warp_line((11, 29), (14, 29)))
@@ -825,7 +826,7 @@ class SwampCave(CaveMap):
 
 class GarinsGraveB1(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().garins_grave_b1, config, Directories(config).dungeon_floor_1_music, (1, 1),
+        super().__init__(MapLayouts().garins_grave_b1, config, Directories(config).dungeon_floor_1_music, (12, 7),
                          staircases={
                              (19, 2): {'map': 'GarinsGraveB2', 'destination_coordinates': (3, 12),
                                        'stair_direction': 'down'},
@@ -843,10 +844,15 @@ class GarinsGraveB1(MapWithoutNPCs, CaveMap):
 
 class GarinsGraveB2(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().garins_grave_b2, config, Directories(config).dungeon_floor_1_music, (1, 1),
+        super().__init__(MapLayouts().garins_grave_b2, config, Directories(config).dungeon_floor_1_music, (3, 12),
                          staircases={
                              (3, 12): {'map': 'GarinsGraveB1', 'destination_coordinates': (19, 2),
-                                       'stair_direction': 'up'},
+                                       'stair_direction': 'up'},  # A
+                             (2, 13): {'map': 'GarinsGraveB3', 'destination_coordinates': (2, 19)},  # B
+                             (2, 2): {'map': 'GarinsGraveB3', 'destination_coordinates': (2, 15)},  # C
+                             (7, 6): {'map': 'GarinsGraveB3', 'destination_coordinates': (12, 7)},  # D
+                             (11, 2): {'map': 'GarinsGraveB3', 'destination_coordinates': (18, 3)},  # E
+                             (11, 13): {'map': 'GarinsGraveB3', 'destination_coordinates': (14, 19)},  # F
 
                          })
         self.assign_stair_directions()
@@ -861,9 +867,22 @@ class GarinsGraveB2(MapWithoutNPCs, CaveMap):
 
 class GarinsGraveB3(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().garins_grave_b3, config, Directories(config).dungeon_floor_1_music, (1, 1),
+        super().__init__(MapLayouts().garins_grave_b3, config, Directories(config).dungeon_floor_1_music, (2, 19),
                          staircases={
-                             (1, 1): {'map': 'GarinsGraveB2', 'destination_coordinates': (1, 1)},
+                             (2, 19): {'map': 'GarinsGraveB2', 'destination_coordinates': (2, 13),
+                                       'stair_direction': 'up'},  # B
+                             (2, 15): {'map': 'GarinsGraveB2', 'destination_coordinates': (2, 2),
+                                       'stair_direction': 'up'},  # C
+                             (12, 7): {'map': 'GarinsGraveB2', 'destination_coordinates': (7, 6),
+                                       'stair_direction': 'up'},  # D
+                             (18, 3): {'map': 'GarinsGraveB2', 'destination_coordinates': (11, 2),
+                                       'stair_direction': 'up'},  # E
+                             (14, 19): {'map': 'GarinsGraveB2', 'destination_coordinates': (11, 13),
+                                        'stair_direction': 'up'},  # F
+                             (6, 10): {'map': 'GarinsGraveB4', 'destination_coordinates': (5, 1),
+                                       'stair_direction': 'down'},  # G
+                             (10, 11): {'map': 'GarinsGraveB4', 'destination_coordinates': (5, 6),
+                                        'stair_direction': 'down'},  # H
                          })
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
@@ -877,9 +896,10 @@ class GarinsGraveB3(MapWithoutNPCs, CaveMap):
 
 class GarinsGraveB4(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().garins_grave_b4, config, Directories(config).dungeon_floor_1_music, (1, 1),
+        super().__init__(MapLayouts().garins_grave_b4, config, Directories(config).dungeon_floor_1_music, (5, 1),
                          staircases={
-                             (1, 1): {'map': 'GarinsGraveB3', 'destination_coordinates': (1, 1)},
+                             (5, 1): {'map': 'GarinsGraveB3', 'destination_coordinates': (6, 10), 'stair_direction': 'up'},  # G
+                             (5, 6): {'map': 'GarinsGraveB3', 'destination_coordinates': (10, 11), 'stair_direction': 'up'},  # H
                          })
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
