@@ -8,7 +8,7 @@ from pygame.transform import scale
 
 from src.calculation import Calculation
 from src.common import WHITE, BLACK, Graphics
-from src.config import SCALE
+from src.config.config import SCALE
 from src.directories import Directories
 from src.enemy_lookup import enemy_image_position_lookup
 from src.game_functions import get_surrounding_rect
