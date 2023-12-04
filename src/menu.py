@@ -14,7 +14,7 @@ from data.text.dialog_lookup_table import DialogLookup
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
-from src.config import SCALE
+from src.config.config import SCALE
 from src.directories import Directories
 from src.items import treasure
 from src.maps import DragonWarriorMap

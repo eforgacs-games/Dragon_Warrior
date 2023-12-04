@@ -1,4 +1,4 @@
-from src.config import dev_config
+from src.config.dev_config import dev_config
 from src.directories import Directories
 
 

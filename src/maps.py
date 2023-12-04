@@ -6,7 +6,7 @@ from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
 
 from src.common import Graphics
-from src.config import SCALE
+from src.config.config import SCALE
 from src.direction import Direction
 from src.directories import Directories
 from src.map_layouts import MapLayouts
@@ -304,7 +304,11 @@ class DragonWarriorMap:
         staircases_keys += west_gate if west_gate is not None else []
         staircases_keys += south_gate if south_gate is not None else []
         staircases_values = [alefgard_up_staircase] * len(staircases_keys)
-        self.staircases = dict(zip(staircases_keys, staircases_values))
+        if not self.staircases:
+            self.staircases = {}
+            self.staircases = dict(zip(staircases_keys, staircases_values))
+        else:
+            self.staircases.update(dict(zip(staircases_keys, staircases_values)))
 
     def assign_stair_directions(self):
         for staircase_coordinates, staircase_dict in self.staircases.items():
@@ -632,7 +636,7 @@ class Garinham(DragonWarriorMap):
     def __init__(self, config):
         super().__init__(MapLayouts().garinham, config, Directories(config).village_music, (14, 9),
                          staircases={
-                             (0, 28): {'map': 'GarinsGraveB1', 'destination_coordinates': (12, 7)}
+                             (0, 28): {'map': 'GarinsGraveB1', 'destination_coordinates': (12, 7), 'stair_direction': 'down'},
                          })
         self.create_town_gates(west_gate=warp_line((13, 8), (15, 8)),
                                east_gate=warp_line((11, 29), (14, 29)))

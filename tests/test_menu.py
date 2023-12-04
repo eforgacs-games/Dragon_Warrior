@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from pygame import KEYDOWN, K_RETURN, event
 
-from src.config import test_config
+from src.config.test_config import test_config
 from src.game import Game
 from tests.mock_map import MockMap
 

@@ -9,7 +9,8 @@ from pygame.transform import scale
 
 from src import drawer
 from src.camera import Camera
-from src.config import SCALE, test_config
+from src.config.config import SCALE
+from src.config.test_config import test_config
 from src.drawer import Drawer
 from src.game import Game
 from src.game_functions import get_next_coordinates, set_character_position

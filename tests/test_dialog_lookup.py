@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from data.text.dialog_lookup_table import DialogLookup
-from src.config import prod_config
+from src.config.prod_config import prod_config
 from src.maps import TantegelThroneRoom
 from src.player.player import Player
 

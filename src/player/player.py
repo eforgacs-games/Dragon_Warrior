@@ -84,9 +84,12 @@ class Player(AnimatedSprite):
             self.gold = 99_999
 
     def update_attack_power(self):
-        if weapons.get(self.weapon):
+        if self.weapon == "":
+            self.attack_power = self.strength
+        elif weapons.get(self.weapon):
             self.attack_power = self.strength + weapons[self.weapon]['offense']
         else:
+            print(f"ERROR: {self.weapon} is not a valid weapon.")
             self.attack_power = self.strength
 
     def update_defense_power(self):

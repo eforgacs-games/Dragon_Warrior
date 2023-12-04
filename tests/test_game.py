@@ -13,7 +13,8 @@ from data.text.dialog_lookup_table import DialogLookup
 from data.text.intro_lookup_table import ControlInfo
 from src.calculation import get_tile_id_by_coordinates
 from src.camera import Camera
-from src.config import SCALE, test_config
+from src.config.config import SCALE
+from src.config.test_config import test_config
 from src.direction import Direction
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
     set_to_save_prompt

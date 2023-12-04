@@ -1,3 +1,5 @@
+import random
+
 weapons = {
     "Bamboo Pole": {'offense': 2, 'cost': 10, 'found': ("Brecconary", "Cantlin")},
     "Club": {'offense': 4, 'cost': 60, 'found': ("Brecconary", "Cantlin", "Garinham")},
@@ -5,7 +7,9 @@ weapons = {
     "Hand Axe": {'offense': 15, 'cost': 560, 'found': ("Garinham", "Rimuldar")},
     "Broad Sword": {'offense': 20, 'cost': 1500, 'found': ("Rimuldar", "Cantlin")},
     "Flame Sword": {'offense': 28, 'cost': 9800, 'found': ("Cantlin",)},
-    "Erdrick's Sword": {'offense': 40, 'cost': 2, 'found': "Dragonlord's Castle"}
+    "Erdrick's Sword": {'offense': 40, 'cost': 2, 'found': "Dragonlord's Castle"},
+    # adding Erdrick's Sword without the apostrophe
+    "Erdricks Sword": {'offense': 40, 'cost': 2, 'found': "Dragonlord's Castle"}
 }
 
 armor = {
@@ -35,5 +39,8 @@ treasure = {
                            (10, 15): {'item': "Torch"}},
     'ErdricksCaveB2': {(4, 10): {'item': 'Tablet'}},
     'TantegelCellar': {(6, 5): {'item': 'Stones of Sunlight'}},
-
+    'GarinsGraveB1': {(1, 12): {'item': 'Herb'},
+                      (1, 13): {'item': "GOLD", 'amount': random.randint(6, 20)},
+                      (1, 14): {'item': "GOLD", 'amount': random.randint(7, 12)}
+                      }
 }
