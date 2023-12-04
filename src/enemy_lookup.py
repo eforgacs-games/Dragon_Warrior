@@ -4,21 +4,24 @@ from src.enemy import Slime, RedSlime, MetalSlime, Drakee, Magidrakee, Drakeema,
     WraithKnight, DemonKnight, Wolf, Wolflord, Werewolf, Goldman, Golem, Stoneman, Wyvern, Magiwyvern, Starwyvern, \
     Knight, AxeKnight, ArmoredKnight, GreenDragon, BlueDragon, RedDragon, Dragonlord, Dragonlord2
 
-dark_brown = ['Red Slime', 'Drakee', 'Ghost', 'Magician']
-dark_yellow = ['Ghost', 'Magician', 'Magidrakee', 'Scorpion']
-light_yellow = ['Ghost', 'Magician', 'Magidrakee', 'Scorpion', 'Skeleton']
-dark_turquoise = ['Wyvern', 'Rogue Scorpion', 'Wraith Knight', 'Knight', 'Demon Knight']
-light_turquoise = ['Wraith Knight', 'Knight', 'Demon Knight', 'Metal Slime', 'Magiwyvern']
-light_brown = ['Slime', 'Red Slime', 'Drakee', 'Ghost']
-light_red = ['Slime', 'Red Slime', 'Drakee']
-green = ['Skeleton', 'Warlock', 'Wolf', 'Metal Scorpion']
-green_cyan = ['Wolflord', 'Wraith', 'Goldman', 'Wyvern']
-dark_red = ['Slime', 'Red Slime']
-light_jade_green = ['Metal Scorpion', 'Wolflord', 'Wraith', 'Goldman']
-medium_blue = ['Knight', 'Demon Knight', 'Magiwyvern', 'Starwyvern', 'Werewolf']
-dark_blue = ['Starwyvern', 'Werewolf', 'Wizard', 'Green Dragon']
-grass_green = ['Magidrakee', 'Scorpion', 'Skeleton', 'Warlock', 'Wolf']
-swamp_cave = ['Druin', 'Ghost', 'Magician', 'Scorpion']
+dark_brown = ('Red Slime', 'Drakee', 'Ghost', 'Magician')
+dark_yellow = ('Ghost', 'Magician', 'Magidrakee', 'Scorpion')
+light_yellow = ('Ghost', 'Magician', 'Magidrakee', 'Scorpion', 'Skeleton')
+dark_turquoise = ('Wyvern', 'Rogue Scorpion', 'Wraith Knight', 'Knight', 'Demon Knight')
+light_turquoise = ('Wraith Knight', 'Knight', 'Demon Knight', 'Metal Slime', 'Magiwyvern')
+light_brown = ('Slime', 'Red Slime', 'Drakee', 'Ghost')
+light_red = ('Slime', 'Red Slime', 'Drakee')
+green = ('Skeleton', 'Warlock', 'Wolf', 'Metal Scorpion')
+green_cyan = ('Wolflord', 'Wraith', 'Goldman', 'Wyvern')
+dark_red = ('Slime', 'Red Slime')
+light_jade_green = ('Metal Scorpion', 'Wolflord', 'Wraith', 'Goldman')
+medium_blue = ('Knight', 'Demon Knight', 'Magiwyvern', 'Starwyvern', 'Werewolf')
+dark_blue = ('Starwyvern', 'Werewolf', 'Wizard', 'Green Dragon')
+grass_green = ('Magidrakee', 'Scorpion', 'Skeleton', 'Warlock', 'Wolf')
+swamp_cave = ('Druin', 'Ghost', 'Magician', 'Scorpion')
+garins_grave_b1 = ('Drakeema', 'Droll', 'Poltergeist', 'Skeleton', 'Warlock')
+garins_grave_b2 = ('Metal Scorpion', 'Skeleton', 'Warlock', 'Wolf')
+garins_grave_b3 = garins_grave_b4 = ('Drollmagi', 'Druinlord', 'Specter', 'Wolflord', 'Wraith Knight')
 
 enemy_territory_map = {
     (0, 0): dark_brown,
@@ -94,7 +97,11 @@ enemy_territory_map = {
     (7, 7): green_cyan,
 
     # special
-    (-1, -1): swamp_cave
+    (-1, -1): swamp_cave,
+    (-2, -2): garins_grave_b1,
+    (-3, -3): garins_grave_b2,
+    (-4, -4): garins_grave_b3,
+    (-5, -5): garins_grave_b4,
 
 }
 

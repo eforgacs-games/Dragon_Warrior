@@ -19,7 +19,8 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config import dev_config, prod_config
+from src.config.dev_config import dev_config
+from src.config.prod_config import prod_config
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
@@ -385,22 +386,37 @@ class Game:
 
     def handle_battles(self):
         maps_with_enemies = (
-            'Alefgard', 'Hauksness',
+            'Alefgard',
+            'Hauksness',
             'CharlockB2', 'CharlockB3', 'CharlockB4', 'CharlockB5', 'CharlockB6', 'CharlockB7Wide', 'CharlockB7Narrow',
-            'CharlockB8', 'SwampCave', 'MountainCaveB1')
+            'CharlockB8',
+            'SwampCave', 'MountainCaveB1',
+            'GarinsGraveB1', 'GarinsGraveB2', 'GarinsGraveB3', 'GarinsGraveB4')
         if self.current_map.identifier in maps_with_enemies:
             if self.tiles_moved_since_spawn > 0:
                 # TODO: Add other maps with enemies besides Alefgard/Hauksness.
                 if self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
-                    if self.current_map.identifier == 'Alefgard':
-                        current_zone = self.player.column // 18, self.player.row // 18
-                    elif self.current_map.identifier == 'Hauksness':
-                        current_zone = (3, 7)  # force dark_blue zone
-                    elif self.current_map.identifier == 'SwampCave':
-                        current_zone = (-1, -1)
-                    else:
-                        current_zone = None
-                    if current_zone:
+                    dungeon_identifier_zone_map = {
+                        'Alefgard': (self.player.column // 18, self.player.row // 18),
+                        'Hauksness': (3, 7),  # force dark_blue zone
+                        'SwampCave': (-1, -1),
+                        'GarinsGraveB1': (-2, -2),
+                        'GarinsGraveB2': (-3, -3),
+                        'GarinsGraveB3': (-4, -4),
+                        'GarinsGraveB4': (-5, -5),
+                        'CharlockB1': (-6, -6),
+                        'CharlockB2': (-7, -7),
+                        'CharlockB3': (-8, -8),
+                        'CharlockB4': (-9, -9),
+                        'CharlockB5': (-10, -10),
+                        'CharlockB6': (-11, -11),
+                        'CharlockB7Wide': (-12, -12),
+                        'CharlockB7Narrow': (-13, -13),
+                        'CharlockB8': (-14, -14),
+                        'MountainCaveB1': (-15, -15),
+                    }
+                    current_zone = dungeon_identifier_zone_map.get(self.current_map.identifier)
+                    if current_zone is not None:
                         enemies_in_current_zone = enemy_territory_map.get(current_zone)
                         # "Zone 0" in the original code is zone (3, 2)
                         if current_zone == (3, 2):
