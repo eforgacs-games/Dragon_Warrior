@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 
 from pygame import Rect, event, KEYDOWN, K_i
 
-from src.config import test_config
+from src.config.test_config import test_config
 from src.game import Game
 from src.intro import show_intro_banner, Intro
 

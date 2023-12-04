@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from src.config import prod_config
+from src.config.prod_config import prod_config
 # This file is mainly here for the repl.it
 from src.game import Game
 
