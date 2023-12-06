@@ -598,14 +598,18 @@ class CommandMenu(Menu):
         """
         self.sound.play_sound(self.directories.menu_button_sfx)
         # open a window
-        text_to_print = [f"{self.player.name} searched the ground all about.", ]
+        text_to_print = [self._(f"{self.player.name} searched the ground all about."), ]
         # wait for input...
         if self.player.current_tile == 'TREASURE_BOX':
-            text_to_print.append(f"There is a {self.player.current_tile.lower().replace('_', ' ')}.")
+            text_to_print.append(self._(f"There is a {self.player.current_tile.lower().replace('_', ' ')}."))
         # elif there is a hidden item:
         # print(f"There is a {hidden_item}")
+        elif self.current_map.identifier == "Alefgard" and self.calculation.get_distance_from_tantegel(self.player.column, self.player.row) == (40, 70):
+            text_to_print.append(self._("{} discovers the Erdrick's Token.").format(self.player.name))
+            self.player.inventory.append("Erdrick's Token")
         else:
-            text_to_print.append("But there found nothing.")
+            text_to_print.append(self._("But there found nothing."))
+
         self.show_text_in_dialog_box(text_to_print, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()

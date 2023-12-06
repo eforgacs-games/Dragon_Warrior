@@ -1,7 +1,7 @@
 import locale
 
 SCALE = 2
-LOCALE, CHARACTER_ENCODING = locale.getlocale()
+LANGUAGE, ENCODING = locale.getlocale()
 
 dev_config = {
     "START_MAP": "TantegelThroneRoom",
@@ -39,11 +39,10 @@ dev_config = {
     "NO_BATTLES": True,
     "ORCHESTRA_MUSIC_ENABLED": True,
     "SHOW_FPS": False,
-    "LOCALE, CHARACTER_ENCODING": locale.getlocale(),
-    "LANGUAGE": LOCALE.split("_")[0],
+    "LANGUAGE": LANGUAGE.split("_")[0],
     # "LANGUAGE": 'Korean',
     # This prints out the current coordinates that the player is standing on.
-    "SHOW_COORDINATES": False,
+    "SHOW_COORDINATES": True,
     "COLOR_KEY": (0, 128, 128),
     "TEXT_SPEED": "Fast",
     "NO_WAIT": False,
