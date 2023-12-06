@@ -93,7 +93,21 @@ class DialogLookup:
                                           _("I will give thee another chance."),
                                           _("To reach the next level, thy Experience Points must increase by {}.").format(
                                               self.player.points_to_next_level),
-                                          _("Now, go, {}!").format(self.player.name))},
+                                          _("Now, go, {}!").format(self.player.name)),
+                    'carrying_princess_dialog': (
+                    _("Forever shall I be grateful for the gift of my daughter returned to her home, {}. "
+                      "Accept my thanks.").format(self.player.name),
+                    _("Now, Gwaelin, come to my side."),
+                    self.princess_whispers,
+                    self._("Please accept my love, {}.").format(self.player.name),
+                    self._("Even when we two are parted by great distances, I shall be with thee."),
+                    self._("Farewell, {}.").format(self.player.name),
+                    # TODO: Put Princess on her throne at this point, and reset character images
+                    self.prompt_for_save,
+                    self.prompt_to_continue_quest,
+                    ),
+                },
+
                 'GUARD': {'dialog': (
                     self.tantegel_throne_room_roaming_guard,
                 )},
@@ -240,7 +254,7 @@ class DialogLookup:
             self.command_menu,
             self._("Will thou take me to the castle?"),
             yes_path_function=self.embrace_princess_gwaelin,
-            no_path_function=self.but_thou_must,
+            no_path_function=partial(self.but_thou_must, self.take_to_castle_confirmation_prompt),
             config=self.config,
             show_arrow=self.command_menu.game.show_arrow,
             color=self.color)
@@ -260,10 +274,16 @@ class DialogLookup:
         self.player.images = self.current_map.scale_sprite_sheet(self.directories.HERO_CARRYING_PRINCESS_PATH)
         self.player.set_images(self.player.images)
         self.player.is_carrying_princess = True
+        self.command_menu.show_line_in_dialog_box(self._("I'm so happy!"))
 
-    def but_thou_must(self):
+    def but_thou_must(self, original_function):
         self.command_menu.show_line_in_dialog_box(self._("But thou must."))
-        self.take_to_castle_confirmation_prompt()
+        original_function()
+
+    def princess_whispers(self):
+        self.command_menu.show_line_in_dialog_box(self._("Gwaelin then whispers:\n"
+                                                         "'Wait a moment, please. "
+                                                         "I would give a present to {}.'").format(self.player.name))
 
     def prompt_for_save(self):
         return confirmation_prompt(self.command_menu,
