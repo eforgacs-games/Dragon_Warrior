@@ -412,6 +412,26 @@ class CommandMenu(Menu):
         mixer.music.play(-1)
         self.show_text_in_dialog_box("But nothing happened.", skip_text=self.skip_text)
 
+    def erdricks_token(self):
+        self.show_text_in_dialog_box(f"{self.player.name} held the Erdrick's Token tightly.\nBut nothing happened.")
+
+    def gwaelins_love(self):
+        self.show_text_in_dialog_box(f"Heed my voice, '{self.player.name}, for this is Gwaelin. "
+                                     f"To reach the next level thou must raise thy Experience Points by {self.player.points_to_next_level}. "
+                                     f"My hope is with thee.'")
+        distance_string = f"From where thou art now, my castle lies..\n"
+        east_west_distance, north_south_distance = self.calculation.get_distance_from_tantegel(self.player.column,
+                                                                                               self.player.row)
+        if north_south_distance < 0:
+            distance_string += f"{abs(north_south_distance)} to the south and.."
+        elif north_south_distance > 0:
+            distance_string += f"{abs(north_south_distance)} to the north and.."
+        if east_west_distance < 0:
+            distance_string += f"{abs(east_west_distance)} to the west."
+        elif east_west_distance > 0:
+            distance_string += f"{abs(east_west_distance)} to the east."
+        self.show_text_in_dialog_box(distance_string)
+        self.show_text_in_dialog_box(f"I love thee, {self.player.name}.")
 
     # spells
 
@@ -634,13 +654,15 @@ class CommandMenu(Menu):
                 else:
                     list_string += f"{item}\n"
             function_dict = {
-                # purchasable items
+                # item function map
                 "Herb": self.herb,
                 "Wings": self.wings,
                 "Torch": self.torch,
                 "Dragon's Scale": self.dragon_scale,
                 "Fairy Water": self.fairy_water,
                 "Silver Harp": self.silver_harp,
+                "Gwaelin's Love": self.gwaelins_love,
+                "Erdrick's Token": self.erdricks_token,
                 "Magic Key": self.door,
             }
         elif menu_name == 'spells':
