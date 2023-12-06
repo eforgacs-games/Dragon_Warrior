@@ -130,6 +130,7 @@ class Game:
         self.player = Player(center_point=None,
                              images=self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
                              current_map=self.current_map, god_mode=self.game_state.config['GOD_MODE'])
+        self.last_coordinates = None
         self.player.restore_hp()
         self.tile_size = self.game_state.config["TILE_SIZE"]
         self.current_map.load_map(self.player, None, self.tile_size)
@@ -352,8 +353,20 @@ class Game:
         # This prints out the current tile that the player is standing on.
         # print(f"self.player.current_tile: {self.player.current_tile}")
 
+
         if self.show_coordinates:
-            print(f"{self.player.row, self.player.column}")
+            if not self.last_coordinates:
+                self.last_coordinates = self.player.column, self.player.row
+                print(f"Current coordinates: {self.player.column, self.player.row}")
+                # print(f"Distance from Tantegel Castle: {self.calculation.get_distance_from_tantegel(self.player.column, self.player.row)}")
+            else:
+                if self.last_coordinates != (self.player.column, self.player.row):
+                    print(f"Current coordinates: {self.player.column, self.player.row}")
+                    # print(
+                    #     f"Distance from Tantegel Castle: {self.calculation.get_distance_from_tantegel(self.player.column, self.player.row)}")
+                    self.last_coordinates = self.player.column, self.player.row
+
+
 
         # print(self.camera.get_pos())
 

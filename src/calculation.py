@@ -39,6 +39,11 @@ class Calculation:
     def convert_to_frames_since_start_time(self, start_time):
         return self.convert_to_frames(get_ticks() - start_time)
 
+    @staticmethod
+    def get_distance_from_tantegel(column, row):
+        # Tantegel Castle is located at (51, 50)
+        return column - 51,  row - 50
+
 
 def get_tile_id_by_coordinates(column: int, row: int, game_map) -> str:
     """
