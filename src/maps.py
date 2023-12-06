@@ -6,7 +6,6 @@ from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
 
 from src.common import Graphics
-from src.config.config import SCALE
 from src.direction import Direction
 from src.directories import Directories
 from src.map_layouts import MapLayouts
@@ -37,7 +36,7 @@ class DragonWarriorMap:
         # Character variables
 
         self.tile_types_in_current_map = []
-        self.scale = SCALE
+        self.scale = self.config['SCALE']
         self.player = None
         self.player_sprites = None
         self.characters = {}

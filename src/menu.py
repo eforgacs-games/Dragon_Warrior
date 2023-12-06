@@ -14,7 +14,6 @@ from data.text.dialog_lookup_table import DialogLookup
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
-from src.config.config import SCALE
 from src.directories import Directories
 from src.items import treasure
 from src.maps import DragonWarriorMap
@@ -65,6 +64,7 @@ class CommandMenu(Menu):
         language = config['LANGUAGE']
         self._ = _ = set_gettext_language(language)
         title = _('COMMAND')
+        SCALE = config['SCALE']
         font_size = 8 * SCALE
         font = set_font_by_ascii_chars(title, font_size, None, self.directories)
 
@@ -248,7 +248,7 @@ class CommandMenu(Menu):
         """
         if drop_down:
             self.window_drop_down_effect(2, 9, 12, 5)
-        if type(text) == str:
+        if isinstance(text, str):
             self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, hide_arrow=True,
                                          disable_sound=disable_sound, letter_by_letter=letter_by_letter)
         else:

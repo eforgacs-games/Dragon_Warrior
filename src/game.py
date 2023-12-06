@@ -750,7 +750,10 @@ class Game:
         return random_integer
 
     def set_player_images_by_equipment(self):
-        if self.player.weapon:
+        if self.player.is_carrying_princess:
+            self.player.images = self.current_map.scale_sprite_sheet(self.directories.HERO_CARRYING_PRINCESS_PATH)
+            self.player.set_images(self.player.images)
+        elif self.player.weapon:
             if self.player.shield:
                 self.player.images = self.current_map.scale_sprite_sheet(self.directories.ARMED_HERO_WITH_SHIELD_PATH)
                 self.player.set_images(self.player.images)
@@ -906,17 +909,17 @@ class Game:
 
     def handle_fps_changes(self, keydown_event) -> None:
         if keydown_event.key == K_1:
-            self.draw_temporary_text(self.cmd_menu.dialog_lookup.normal_speed_string)
             self.fps = 60
+            self.draw_temporary_text(self._("Game set to normal speed.\n({} FPS)".format(self.fps)))
         if keydown_event.key == K_2:
-            self.draw_temporary_text(self.cmd_menu.dialog_lookup.double_speed_string)
             self.fps = 120
+            self.draw_temporary_text(self._("Game set to double speed.\n({} FPS)".format(self.fps)))
         if keydown_event.key == K_3:
-            self.draw_temporary_text(self.cmd_menu.dialog_lookup.triple_speed_string)
             self.fps = 240
+            self.draw_temporary_text(self._("Game set to triple speed.\n({} FPS)".format(self.fps)))
         if keydown_event.key == K_4:
-            self.draw_temporary_text(self.cmd_menu.dialog_lookup.quadruple_speed_string)
             self.fps = 480
+            self.draw_temporary_text(self._("Game set to quadruple speed.\n({} FPS)".format(self.fps)))
 
     def update_roaming_character_positions(self) -> None:
         for character, character_dict in self.current_map.characters.items():
