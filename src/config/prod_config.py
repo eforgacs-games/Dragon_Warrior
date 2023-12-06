@@ -1,12 +1,13 @@
 import locale
 
-from src.config.config import SCALE, LOCALE
+SCALE = 2
+LOCALE, CHARACTER_ENCODING = locale.getlocale()
 
 prod_config = {
     "START_MAP": "TantegelThroneRoom",
     "FPS": 60,
     "REPLIT_DATA_DIR": '..\\data',
-    "SCALE": 2,
+    "SCALE": SCALE,
     "TILE_SIZE": 16 * SCALE,
     "NES_RES": (256, 240),
     "FULLSCREEN_ENABLED": False,

@@ -10,6 +10,7 @@ from src.color import BLACK
 from src.common import WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
 from src.directories import Directories
 from src.items import weapons, armor, shields
+from src.maps import DragonWarriorMap
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories
 from src.sound import Sound
@@ -20,6 +21,7 @@ class DialogLookup:
     def __init__(self, command_menu, config):
         self.config = config
         self.calculation = Calculation(config)
+        self.sound = Sound(config)
         self._ = _ = set_gettext_language(self.config['LANGUAGE'])
 
         self.shop_inventories = ShopInventories(self.config)
@@ -30,15 +32,10 @@ class DialogLookup:
         self.color = self.command_menu.game.color
         self.player = command_menu.player
         self.screen = command_menu.screen
-        self.current_map = command_menu.current_map
+        self.current_map: DragonWarriorMap = command_menu.current_map
         self.background = command_menu.background
         self.camera_position = command_menu.camera_position
         self.thou_art_dead = _("Thou art dead.")
-        self.normal_speed_string = _("Game set to normal speed.\n(60 FPS)")
-        self.double_speed_string = _("Game set to double speed.\n(120 FPS)")
-        self.triple_speed_string = _("Game set to triple speed.\n(240 FPS)")
-        self.quadruple_speed_string = _("Game set to quadruple speed.\n(480 FPS)")
-
         # menu
         self.no_one_there = _("There is no one there.")
         self.no_stairs_here = _("There are no stairs here.")
@@ -63,6 +60,7 @@ class DialogLookup:
         before_reaching_thy_next_level_of_experience = "Before reaching thy next level of experience thou must gain {} Points."
 
         self.magic_key_prompt = "Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?"
+
         self.lookup_table = {
             'TantegelThroneRoom': {
                 'KING_LORIK': {'dialog': (
@@ -213,6 +211,12 @@ class DialogLookup:
                                 "see a man in this very town.")},
 
             },
+            'SwampCave': {
+                'PRINCESS_GWAELIN': {'dialog': (_("Thou art brave indeed to rescue me, {}.").format(self.player.name),
+                                                _("I am Gwaelin, daughter of Lorik."),
+                                                self.take_to_castle_confirmation_prompt
+                                                )}},
+
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
                                                         "Thus, I propose a test.",
                                                         "There is a Silver Harp that beckons to the creatures of the Dragonlord.",
@@ -221,7 +225,7 @@ class DialogLookup:
                 "In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted would save us.",
                 "Go now!",
                 partial(flash_transparent_color, WHITE, self.screen, self.calculation),
-                partial(Sound(self.config).play_sound, self.directories.stairs_up_sfx),
+                partial(self.sound.play_sound, self.directories.stairs_up_sfx),
                 # TODO: Kick player out of the Magic Temple and back to the overworld map on the staircase
                 # partial(self.command_menu.game.change_map, Alefgard)
             )}}
@@ -230,6 +234,38 @@ class DialogLookup:
         for map_dict in self.lookup_table.values():
             for character_identifier, character_dict in map_dict.items():
                 character_dict['dialog_character'] = character_identifier
+
+    def take_to_castle_confirmation_prompt(self):
+        return confirmation_prompt(
+            self.command_menu,
+            self._("Will thou take me to the castle?"),
+            yes_path_function=self.embrace_princess_gwaelin,
+            no_path_function=self.but_thou_must,
+            config=self.config,
+            show_arrow=self.command_menu.game.show_arrow,
+            color=self.color)
+
+    def embrace_princess_gwaelin(self):
+        self.command_menu.show_line_in_dialog_box(self._("Princess Gwaelin embraces thee.\n"),
+                                                  add_quotes=False)
+        mixer.music.stop()
+        time.wait(1000)
+        self.sound.play_sound(self.directories.princess_gwaelins_love_sfx)
+        time.wait(5000)
+        mixer.music.play(-1)
+
+        self.current_map.fixed_characters = []
+        del self.current_map.characters['PRINCESS_GWAELIN']
+
+        self.player.images = self.current_map.scale_sprite_sheet(self.directories.HERO_CARRYING_PRINCESS_PATH)
+        self.player.set_images(self.player.images)
+        self.player.is_carrying_princess = True
+
+    # TODO: Change sprites to be carrying Princess Gwaelin
+
+    def but_thou_must(self):
+        self.command_menu.show_line_in_dialog_box(self._("But thou must."))
+        self.take_to_castle_confirmation_prompt()
 
     def prompt_for_save(self):
         return confirmation_prompt(self.command_menu,
@@ -466,8 +502,7 @@ class DialogLookup:
         tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
         if music_enabled:
             mixer.music.stop()
-        sound = Sound(self.config)
-        sound.play_sound(self.directories.special_item_sfx)
+        self.sound.play_sound(self.directories.special_item_sfx)
         self.player.restore_hp()
         self.player.restore_mp()
         self.player.gold -= inn_cost
