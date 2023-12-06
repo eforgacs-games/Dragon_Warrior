@@ -261,8 +261,6 @@ class DialogLookup:
         self.player.set_images(self.player.images)
         self.player.is_carrying_princess = True
 
-    # TODO: Change sprites to be carrying Princess Gwaelin
-
     def but_thou_must(self):
         self.command_menu.show_line_in_dialog_box(self._("But thou must."))
         self.take_to_castle_confirmation_prompt()
