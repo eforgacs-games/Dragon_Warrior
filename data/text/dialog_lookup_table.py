@@ -95,16 +95,17 @@ class DialogLookup:
                                               self.player.points_to_next_level),
                                           _("Now, go, {}!").format(self.player.name)),
                     'carrying_princess_dialog': (
-                    _("Forever shall I be grateful for the gift of my daughter returned to her home, {}. "
-                      "Accept my thanks.").format(self.player.name),
-                    _("Now, Gwaelin, come to my side."),
-                    self.princess_whispers,
-                    self._("Please accept my love, {}.").format(self.player.name),
-                    self._("Even when we two are parted by great distances, I shall be with thee."),
-                    self._("Farewell, {}.").format(self.player.name),
-                    # TODO: Put Princess on her throne at this point, and reset character images
-                    self.prompt_for_save,
-                    self.prompt_to_continue_quest,
+                        _("Forever shall I be grateful for the gift of my daughter returned to her home, {}. "
+                          "Accept my thanks.").format(self.player.name),
+                        _("Now, Gwaelin, come to my side."),
+                        self.princess_whispers,
+                        self._("Please accept my love, {}.").format(self.player.name),
+                        self._("Even when we two are parted by great distances, I shall be with thee."),
+                        self._("Farewell, {}.").format(self.player.name),
+                        self.receive_gwaelins_love,
+                        # TODO: Put Princess on her throne at this point, and reset character images
+                        self.prompt_for_save,
+                        self.prompt_to_continue_quest,
                     ),
                 },
 
@@ -284,6 +285,9 @@ class DialogLookup:
         self.command_menu.show_line_in_dialog_box(self._("Gwaelin then whispers:\n"
                                                          "'Wait a moment, please. "
                                                          "I would give a present to {}.'").format(self.player.name))
+
+    def receive_gwaelins_love(self):
+        self.player.inventory.append("Gwaelin's Love")
 
     def prompt_for_save(self):
         return confirmation_prompt(self.command_menu,

@@ -362,8 +362,7 @@ class Game:
             else:
                 if self.last_coordinates != (self.player.column, self.player.row):
                     print(f"Current coordinates: {self.player.column, self.player.row}")
-                    # print(
-                    #     f"Distance from Tantegel Castle: {self.calculation.get_distance_from_tantegel(self.player.column, self.player.row)}")
+                    # print(f"Distance from Tantegel Castle: {self.calculation.get_distance_from_tantegel(self.player.column, self.player.row)}")
                     self.last_coordinates = self.player.column, self.player.row
 
 
