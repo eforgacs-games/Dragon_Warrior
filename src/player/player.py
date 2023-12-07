@@ -1,3 +1,7 @@
+from typing import Tuple
+
+from pygame import Surface
+
 from src.calculation import Calculation
 from src.direction import Direction
 from src.items import weapons, armor, shields
@@ -8,7 +12,7 @@ from src.sprites.animated_sprite import AnimatedSprite
 
 class Player(AnimatedSprite):
 
-    def __init__(self, center_point, images, current_map: DragonWarriorMap, direction_value=Direction.DOWN.value,
+    def __init__(self, center_point, images: Tuple[Surface, Surface, Surface, Surface], current_map: DragonWarriorMap, direction_value=Direction.DOWN.value,
                  god_mode=False):
         AnimatedSprite.__init__(self, center_point, direction_value, images, identifier='HERO')
 
@@ -17,6 +21,7 @@ class Player(AnimatedSprite):
         self.row, self.column = current_map.get_initial_character_location('HERO')
         self.next_tile_checked = False
         self.is_moving = False
+        self.is_carrying_princess = False
         self.next_coordinates = None
         self.next_next_coordinates = None
         self.current_tile = None
