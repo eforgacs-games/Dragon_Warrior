@@ -162,6 +162,7 @@ class Game:
 
         display.set_icon(image.load(self.directories.ICON_PATH))
         self.allow_save_prompt = False
+        self.princess_saved = False
         # pg.event.set_allowed([pg.QUIT])
 
     def set_screen(self, win_height, win_width):

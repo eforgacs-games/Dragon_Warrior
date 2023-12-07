@@ -103,6 +103,7 @@ class DialogLookup:
                         self._("Even when we two are parted by great distances, I shall be with thee."),
                         self._("Farewell, {}.").format(self.player.name),
                         self.receive_gwaelins_love,
+                        self.put_princess_on_throne,
                         # TODO: Put Princess on her throne at this point, and reset character images
                         self.prompt_for_save,
                         self.prompt_to_continue_quest,
@@ -282,12 +283,28 @@ class DialogLookup:
         original_function()
 
     def princess_whispers(self):
-        self.command_menu.show_line_in_dialog_box(self._("Gwaelin then whispers:\n"
-                                                         "'Wait a moment, please. "
-                                                         "I would give a present to {}.'").format(self.player.name))
+        self.command_menu.show_text_line_in_dialog_box(
+            line=self._("Gwaelin then whispers:\n"
+                        "'Wait a moment, please. "
+                        "I would give a present to {}.'").format(self.player.name),
+            add_quotes=False, disable_sound=False, hide_arrow=False, letter_by_letter=True, skip_text=False,
+            temp_text_start=None, tile_size=self.config['TILE_SIZE'])
 
     def receive_gwaelins_love(self):
         self.player.inventory.append("Gwaelin's Love")
+
+    def put_princess_on_throne(self):
+        # TODO: This put_princess_on_throne method doesn't quite work yet...
+        self.command_menu.game.set_player_images_by_equipment()
+        self.player.set_images(self.player.images)
+        self.player.is_carrying_princess = False
+        self.current_map.fixed_characters.append('PRINCESS_GWAELIN')
+        # this dialog is totally made up, fix later
+        # self.current_map.characters['PRINCESS_GWAELIN'] = {
+        #     'dialog': self._("I am Gwaelin, daughter of Lorik. I shall wait here for thy return."),
+        #     'dialog_character': 'PRINCESS_GWAELIN',
+        #     'images': self.current_map.scale_sprite_sheet(self.directories.PRINCESS_GWAELIN_PATH)[0]
+        # }
 
     def prompt_for_save(self):
         return confirmation_prompt(self.command_menu,
@@ -324,18 +341,21 @@ class DialogLookup:
 
     def tantegel_throne_room_roaming_guard(self):
         _ = self._
-        player_please_save_the_princess = _("{}, please save the Princess.").format(self.player.name)
-        confirmation_prompt(self.command_menu, _("Dost thou know about Princess Gwaelin?"),
-                            yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                      player_please_save_the_princess, hide_arrow=True),
-                            no_path_function=partial(self.command_menu.show_text_in_dialog_box,
-                                                     (
-                                                         _("Half a year now hath passed since the Princess was kidnapped by the enemy."),
-                                                         _("Never does the King speak of it, but he must be suffering much."),
-                                                         player_please_save_the_princess),
-                                                     drop_down=False, drop_up=False,
-                                                     skip_text=self.command_menu.skip_text), config=self.config,
-                            show_arrow=self.command_menu.game.show_arrow, color=self.color)
+        if self.command_menu.game.princess_saved:
+            self.command_menu.show_line_in_dialog_box(_("Oh, brave {}.").format(self.player.name))
+        else:
+            player_please_save_the_princess = _("{}, please save the Princess.").format(self.player.name)
+            confirmation_prompt(self.command_menu, _("Dost thou know about Princess Gwaelin?"),
+                                yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                                          player_please_save_the_princess, hide_arrow=True),
+                                no_path_function=partial(self.command_menu.show_text_in_dialog_box,
+                                                         (
+                                                             _("Half a year now hath passed since the Princess was kidnapped by the enemy."),
+                                                             _("Never does the King speak of it, but he must be suffering much."),
+                                                             player_please_save_the_princess),
+                                                         drop_down=False, drop_up=False,
+                                                         skip_text=self.command_menu.skip_text), config=self.config,
+                                show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
     def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
         confirmation_prompt(self.command_menu, self.weapons_and_armor_intro,
