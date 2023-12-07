@@ -14,7 +14,6 @@ from data.text.dialog_lookup_table import DialogLookup
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
-from src.config.config import SCALE
 from src.directories import Directories
 from src.items import treasure
 from src.maps import DragonWarriorMap
@@ -59,12 +58,13 @@ class CommandMenu(Menu):
                                                                 window_background=self.directories.COMMAND_MENU_STATIC_BACKGROUND_PATH,
                                                                 screen=self.screen,
                                                                 color=self.color)
-        config = self.game.game_state.config
+        config: dict = self.game.game_state.config
         self.dialog_lookup = DialogLookup(self, config)
         tile_size = config['TILE_SIZE']
         language = config['LANGUAGE']
         self._ = _ = set_gettext_language(language)
         title = _('COMMAND')
+        SCALE = config['SCALE']
         font_size = 8 * SCALE
         font = set_font_by_ascii_chars(title, font_size, None, self.directories)
 
@@ -131,8 +131,12 @@ class CommandMenu(Menu):
             output_save_file.write(json_object)
 
     def set_king_lorik_dialog(self):
-        self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-            self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
+        if self.game.player.is_carrying_princess:
+            self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+                self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['carrying_princess_dialog']
+        else:
+            self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+                self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
 
     def npc_is_across_counter(self, character_dict):
         return self.player.next_tile_id == 'WOOD' and (
@@ -171,13 +175,13 @@ class CommandMenu(Menu):
         tile_size = self.game.game_state.config['TILE_SIZE']
         if line:
             if isinstance(line, str):
-                self.show_text_line_in_dialog_box(add_quotes, disable_sound, hide_arrow, letter_by_letter,
-                                                  line, skip_text, temp_text_start, tile_size)
+                self.show_text_line_in_dialog_box(line, add_quotes, disable_sound, hide_arrow, letter_by_letter,
+                                                  skip_text, temp_text_start, tile_size)
             else:
                 # if the line is a method
                 line()
 
-    def show_text_line_in_dialog_box(self, add_quotes, disable_sound, hide_arrow, letter_by_letter, line, skip_text,
+    def show_text_line_in_dialog_box(self, line, add_quotes, disable_sound, hide_arrow, letter_by_letter, skip_text,
                                      temp_text_start, tile_size):
         """Function for showing text in a dialog box (as opposed to executing a method)."""
 
@@ -248,7 +252,7 @@ class CommandMenu(Menu):
         """
         if drop_down:
             self.window_drop_down_effect(2, 9, 12, 5)
-        if type(text) == str:
+        if isinstance(text, str):
             self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, hide_arrow=True,
                                          disable_sound=disable_sound, letter_by_letter=letter_by_letter)
         else:
@@ -412,6 +416,27 @@ class CommandMenu(Menu):
         mixer.music.play(-1)
         self.show_text_in_dialog_box("But nothing happened.", skip_text=self.skip_text)
 
+    def erdricks_token(self):
+        self.show_text_in_dialog_box(f"{self.player.name} held the Erdrick's Token tightly.\nBut nothing happened.")
+
+    def gwaelins_love(self):
+        self.show_text_in_dialog_box(f"Heed my voice, '{self.player.name}, for this is Gwaelin. "
+                                     f"To reach the next level thou must raise thy Experience Points by {self.player.points_to_next_level}. "
+                                     f"My hope is with thee.'")
+        if self.current_map.identifier == 'Alefgard':
+            distance_string = f"From where thou art now, my castle lies..\n"
+            east_west_distance, north_south_distance = self.calculation.get_distance_from_tantegel(self.player.column,
+                                                                                                   self.player.row)
+            if north_south_distance < 0:
+                distance_string += f"{abs(north_south_distance)} to the south and.."
+            elif north_south_distance > 0:
+                distance_string += f"{abs(north_south_distance)} to the north and.."
+            if east_west_distance < 0:
+                distance_string += f"{abs(east_west_distance)} to the west."
+            elif east_west_distance > 0:
+                distance_string += f"{abs(east_west_distance)} to the east."
+            self.show_text_in_dialog_box(distance_string)
+        self.show_text_in_dialog_box(f"I love thee, {self.player.name}.")
 
     # spells
 
@@ -578,14 +603,18 @@ class CommandMenu(Menu):
         """
         self.sound.play_sound(self.directories.menu_button_sfx)
         # open a window
-        text_to_print = [f"{self.player.name} searched the ground all about.", ]
+        text_to_print = [self._(f"{self.player.name} searched the ground all about."), ]
         # wait for input...
         if self.player.current_tile == 'TREASURE_BOX':
-            text_to_print.append(f"There is a {self.player.current_tile.lower().replace('_', ' ')}.")
+            text_to_print.append(self._(f"There is a {self.player.current_tile.lower().replace('_', ' ')}."))
         # elif there is a hidden item:
         # print(f"There is a {hidden_item}")
+        elif self.current_map.identifier == "Alefgard" and self.calculation.get_distance_from_tantegel(self.player.column, self.player.row) == (40, 70):
+            text_to_print.append(self._("{} discovers the Erdrick's Token.").format(self.player.name))
+            self.player.inventory.append("Erdrick's Token")
         else:
-            text_to_print.append("But there found nothing.")
+            text_to_print.append(self._("But there found nothing."))
+
         self.show_text_in_dialog_box(text_to_print, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
@@ -634,13 +663,15 @@ class CommandMenu(Menu):
                 else:
                     list_string += f"{item}\n"
             function_dict = {
-                # purchasable items
+                # item function map
                 "Herb": self.herb,
                 "Wings": self.wings,
                 "Torch": self.torch,
                 "Dragon's Scale": self.dragon_scale,
                 "Fairy Water": self.fairy_water,
                 "Silver Harp": self.silver_harp,
+                "Gwaelin's Love": self.gwaelins_love,
+                "Erdrick's Token": self.erdricks_token,
                 "Magic Key": self.door,
             }
         elif menu_name == 'spells':

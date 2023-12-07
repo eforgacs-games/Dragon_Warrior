@@ -8,7 +8,6 @@ from pygame.transform import scale
 
 from src.calculation import Calculation
 from src.common import WHITE, BLACK, Graphics
-from src.config.config import SCALE
 from src.directories import Directories
 from src.enemy_lookup import enemy_image_position_lookup
 from src.game_functions import get_surrounding_rect
@@ -22,6 +21,7 @@ class Drawer:
     def __init__(self, game_state):
 
         self.game_state = game_state
+        self.scale = self.game_state.config["SCALE"]
         self.display_hovering_stats = False
         self.background = None
         self.not_moving_time_start = None
@@ -45,8 +45,8 @@ class Drawer:
         enemy_name_without_spaces = enemy_name.replace(" ", "")
         enemy_image = image.load(
             f'{self.directories.IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
-        enemy_image = scale(enemy_image, (enemy_image.get_width() * SCALE,
-                                          enemy_image.get_height() * SCALE))
+        enemy_image = scale(enemy_image, (enemy_image.get_width() * self.scale,
+                                          enemy_image.get_height() * self.scale))
         self.position_and_draw_enemy_image(screen, enemy_image, enemy_name)
 
     @staticmethod

@@ -13,7 +13,6 @@ from data.text.dialog_lookup_table import DialogLookup
 from data.text.intro_lookup_table import ControlInfo
 from src.calculation import get_tile_id_by_coordinates
 from src.camera import Camera
-from src.config.config import SCALE
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
@@ -67,8 +66,8 @@ class TestGame(TestCase):
         self.game.current_map = MockMap(self.game.config)
         unarmed_hero_sheet = load_extended(self.game.directories.UNARMED_HERO_PATH)
         self.game.player = Player((0, 0), parse_animated_sprite_sheet(scale(unarmed_hero_sheet,
-                                                                            (unarmed_hero_sheet.get_width() * SCALE,
-                                                                             unarmed_hero_sheet.get_height() * SCALE)),
+                                                                            (unarmed_hero_sheet.get_width() * self.game.config['SCALE'],
+                                                                             unarmed_hero_sheet.get_height() * self.game.config['SCALE'])),
                                                                       self.game.game_state.config),
                                   self.game.current_map, god_mode=self.game.game_state.config['GOD_MODE'])
         # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
