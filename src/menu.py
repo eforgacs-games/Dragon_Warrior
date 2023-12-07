@@ -58,7 +58,7 @@ class CommandMenu(Menu):
                                                                 window_background=self.directories.COMMAND_MENU_STATIC_BACKGROUND_PATH,
                                                                 screen=self.screen,
                                                                 color=self.color)
-        config = self.game.game_state.config
+        config: dict = self.game.game_state.config
         self.dialog_lookup = DialogLookup(self, config)
         tile_size = config['TILE_SIZE']
         language = config['LANGUAGE']
@@ -131,8 +131,12 @@ class CommandMenu(Menu):
             output_save_file.write(json_object)
 
     def set_king_lorik_dialog(self):
-        self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-            self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
+        if self.game.player.is_carrying_princess:
+            self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+                self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['carrying_princess_dialog']
+        else:
+            self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
+                self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
 
     def npc_is_across_counter(self, character_dict):
         return self.player.next_tile_id == 'WOOD' and (
@@ -171,13 +175,13 @@ class CommandMenu(Menu):
         tile_size = self.game.game_state.config['TILE_SIZE']
         if line:
             if isinstance(line, str):
-                self.show_text_line_in_dialog_box(add_quotes, disable_sound, hide_arrow, letter_by_letter,
-                                                  line, skip_text, temp_text_start, tile_size)
+                self.show_text_line_in_dialog_box(line, add_quotes, disable_sound, hide_arrow, letter_by_letter,
+                                                  skip_text, temp_text_start, tile_size)
             else:
                 # if the line is a method
                 line()
 
-    def show_text_line_in_dialog_box(self, add_quotes, disable_sound, hide_arrow, letter_by_letter, line, skip_text,
+    def show_text_line_in_dialog_box(self, line, add_quotes, disable_sound, hide_arrow, letter_by_letter, skip_text,
                                      temp_text_start, tile_size):
         """Function for showing text in a dialog box (as opposed to executing a method)."""
 
