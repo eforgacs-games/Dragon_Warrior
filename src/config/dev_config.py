@@ -1,6 +1,7 @@
 import locale
 
-from src.config.config import SCALE, LOCALE
+SCALE = 2
+LANGUAGE, ENCODING = locale.getlocale()
 
 dev_config = {
     "START_MAP": "TantegelThroneRoom",
@@ -25,7 +26,7 @@ dev_config = {
 
     # "START_MAP": "MagicTemple",
     "FPS": 60,
-    "SCALE": 2,
+    "SCALE": SCALE,
     "TILE_SIZE": 16 * SCALE,
     "NES_RES": (256, 240),
     "FULLSCREEN_ENABLED": False,
@@ -38,8 +39,7 @@ dev_config = {
     "NO_BATTLES": True,
     "ORCHESTRA_MUSIC_ENABLED": True,
     "SHOW_FPS": False,
-    "LOCALE, CHARACTER_ENCODING": locale.getlocale(),
-    "LANGUAGE": LOCALE.split("_")[0],
+    "LANGUAGE": LANGUAGE.split("_")[0],
     # "LANGUAGE": 'Korean',
     # This prints out the current coordinates that the player is standing on.
     "SHOW_COORDINATES": True,
@@ -49,5 +49,4 @@ dev_config = {
     "GOD_MODE": True,
     "RENDER_TEXT": True,
     "NO_BLIT": False
-
 }

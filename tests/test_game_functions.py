@@ -9,7 +9,6 @@ from pygame.transform import scale
 
 from src import drawer
 from src.camera import Camera
-from src.config.config import SCALE
 from src.config.test_config import test_config
 from src.drawer import Drawer
 from src.game import Game
@@ -42,7 +41,7 @@ class TestGameFunctions(TestCase):
         self.initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
         unarmed_hero_sheet = load_extended(self.game.directories.UNARMED_HERO_PATH)
         self.hero_images = parse_animated_sprite_sheet(scale(unarmed_hero_sheet, (
-            unarmed_hero_sheet.get_width() * SCALE, unarmed_hero_sheet.get_height() * SCALE)),
+            unarmed_hero_sheet.get_width() * test_config['SCALE'], unarmed_hero_sheet.get_height() * test_config['SCALE'])),
                                                        self.game.game_state.config)
         self.game.current_map.player = Player(self.center_pt, self.hero_images, self.game.current_map,
                                               god_mode=test_config['GOD_MODE'])

@@ -1,12 +1,13 @@
 import locale
 
-from src.config.config import SCALE, LOCALE
+SCALE = 2
+LANGUAGE, ENCODING = locale.getlocale()
 
 test_config = {
     "START_MAP": "TantegelThroneRoom",
     "FPS": 60,
     "REPLIT_DATA_DIR": '..\\data',
-    "SCALE": 2,
+    "SCALE": SCALE,
     "TILE_SIZE": 16 * SCALE,
     "NES_RES": (256, 240),
     "FULLSCREEN_ENABLED": False,
@@ -19,8 +20,7 @@ test_config = {
     "NO_BATTLES": False,
     "ORCHESTRA_MUSIC_ENABLED": True,
     "SHOW_FPS": False,
-    "LOCALE, CHARACTER_ENCODING": locale.getlocale(),
-    "LANGUAGE": LOCALE.split("_")[0],
+    "LANGUAGE": LANGUAGE.split("_")[0],
     # "LANGUAGE": 'Korean',
     # This prints out the current coordinates that the player is standing on.
     "SHOW_COORDINATES": False,
