@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-11-19 10:22+0900\n"
+"POT-Creation-Date: 2023-12-31 15:01+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -748,6 +748,10 @@ msgstr "{} 도망쳤다!"
 #: ..\game.py:600
 msgid "Controls:\n"
 msgstr "컨트롤:\n"
+
+#: ..\game.py:625
+msgid "{} chants the spell of {}."
+msgstr "{}은/는 {}을/를 외쳤다!"
 
 #: ..\menu.py:56
 msgid "COMMAND"
