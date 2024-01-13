@@ -745,6 +745,10 @@ msgstr "{} 도망쳤다!"
 msgid "Controls:\n"
 msgstr "컨트롤:\n"
 
+#: ..\game.py:625
+msgid "{} chants the spell of {}."
+msgstr "{}은/는 {}을/를 외쳤다!"
+
 #: ..\menu.py:56
 msgid "COMMAND"
 msgstr "작전"
