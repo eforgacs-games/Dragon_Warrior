@@ -1,5 +1,8 @@
 import json
 import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import random
 from typing import List, Tuple
 
@@ -19,7 +22,6 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
-from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
 from src.direction import Direction
 from src.directories import Directories

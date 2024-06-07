@@ -137,8 +137,9 @@ reject_keys = (K_ESCAPE, K_j)
 
 
 def set_gettext_language(language):
+    localedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'text', 'locales'))
     if language == 'Korean':
-        ko = gettext.translation('base', localedir=os.path.join('../data/text/locales'), languages=['ko'])
+        ko = gettext.translation('base', localedir=localedir, languages=['ko'])
         ko.install()
         _ = ko.gettext
     else:
