@@ -17,17 +17,9 @@ def parse_map_tiles(map_path: str, tile_size: int, graphics, configured_scale):
 def warp_line(lower_bound, upper_bound) -> List[tuple]:
     assert lower_bound[0] == upper_bound[0] or lower_bound[1] == upper_bound[1]
     if lower_bound[0] != upper_bound[0]:
-        return vertical_warp_line(lower_bound, upper_bound)
-    elif lower_bound[1] != upper_bound[1]:
-        return horizontal_warp_line(lower_bound, upper_bound)
-
-
-def horizontal_warp_line(left_point, right_point) -> List[tuple]:
-    return [(right_point[0], min(n, right_point[1])) for n in range(left_point[1], right_point[1] + 1)]
-
-
-def vertical_warp_line(top_point, bottom_point) -> List[tuple]:
-    return [(min(n, bottom_point[0]), bottom_point[1]) for n in range(top_point[0], bottom_point[0] + 1)]
+        return [(min(n, upper_bound[0]), upper_bound[1]) for n in range(lower_bound[0], upper_bound[0] + 1)]
+    else:
+        return [(upper_bound[0], min(n, upper_bound[1])) for n in range(lower_bound[1], upper_bound[1] + 1)]
 
 
 def parse_animated_sprite_sheet(sheet: surface.Surface, config: dict) -> Tuple[list, list, list, list]:

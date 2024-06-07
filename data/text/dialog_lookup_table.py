@@ -18,16 +18,13 @@ from src.visual_effects import fade, flash_transparent_color
 
 
 class DialogLookup:
-    def __init__(self, command_menu, config):
+    def __init__(self, command_menu, config: dict):
         self.config = config
         self.calculation = Calculation(config)
         self.sound = Sound(config)
         self._ = _ = set_gettext_language(self.config['LANGUAGE'])
 
         self.shop_inventories = ShopInventories(self.config)
-
-        self.weapons_and_armor_intro = _("We deal in weapons and armor.\n Dost thou wish to buy anything today?")
-
         self.command_menu = command_menu
         self.color = self.command_menu.game.color
         self.player = command_menu.player
@@ -35,10 +32,7 @@ class DialogLookup:
         self.current_map: DragonWarriorMap = command_menu.current_map
         self.background = command_menu.background
         self.camera_position = command_menu.camera_position
-        self.thou_art_dead = _("Thou art dead.")
         # menu
-        self.no_one_there = _("There is no one there.")
-        self.no_stairs_here = _("There are no stairs here.")
 
         self.goodbye_tempt_not_the_fates = "Goodbye now, {}.\n'Take care and tempt not the Fates."
 
@@ -358,7 +352,8 @@ class DialogLookup:
                                 show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
     def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
-        confirmation_prompt(self.command_menu, self.weapons_and_armor_intro,
+        confirmation_prompt(self.command_menu,
+                            self._("We deal in weapons and armor.\n Dost thou wish to buy anything today?"),
                             yes_path_function=partial(self.open_store_inventory, current_store_inventory,
                                                       static_store_image, color=self.command_menu.color),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,

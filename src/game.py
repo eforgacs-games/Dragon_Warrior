@@ -784,7 +784,7 @@ class Game:
                     time.wait(1)
             event.clear()
 
-            self.cmd_menu.show_text_in_dialog_box(self.cmd_menu.dialog_lookup.thou_art_dead, disable_sound=True)
+            self.cmd_menu.show_text_in_dialog_box(self._("Thou art dead."), disable_sound=True)
             self.set_post_death_attributes()
         else:
             self.player.is_dead = False
