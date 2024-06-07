@@ -1,10 +1,18 @@
 class Camera:
     def __init__(self, hero_position, current_map, screen, tile_size):
-        self.current_map = current_map
         self.x = None
         self.y = None
+        self.current_map = current_map
         self.screen = screen
         self.set_camera_position(hero_position, tile_size)
+
+    @property
+    def pos(self):
+        return self.x, self.y
+
+    @pos.setter
+    def pos(self, coord):
+        self.x, self.y = coord
 
     def set_camera_position(self, hero_position: tuple, tile_size: int):
         """
@@ -21,19 +29,5 @@ class Camera:
         else:
             self.x = (-column + 8) * tile_size
             self.y = (-row + 7) * tile_size
-
-    def get_pos(self) -> tuple:
-        """
-        Gets the position of a particular rectangle.
-        """
-        return self.x, self.y
-
-    def set_pos(self, coord):
-        """
-        Sets the position of a particular rectangle.
-        """
-        self.x = coord[0]
-        self.y = coord[1]
-        # TODO: Investigate Python getters/setters (prop and props live templates?)
 
     # TODO: Migrate game move method here.
