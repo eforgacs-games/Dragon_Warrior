@@ -43,7 +43,7 @@ class CommandMenu(Menu):
         self.background = self.game.drawer.background
         self.color = self.game.get_current_color()
         self.screen = self.game.screen
-        self.camera_position = self.game.camera.get_pos()
+        self.camera_position = self.game.camera.pos
         self.current_map: DragonWarriorMap = self.game.current_map
         self.current_battle = None
         self.current_tile = self.player.current_tile
