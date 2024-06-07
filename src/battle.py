@@ -5,7 +5,7 @@ from pygame.transform import scale
 
 from src.common import BLACK, set_gettext_language
 from src.directories import Directories
-from src.enemy import enemy_groups, Enemy
+from src.enemy import enemy_groups
 from src.enemy_lookup import enemy_string_lookup
 from src.maps import DragonWarriorMap
 from src.menu import CommandMenu
@@ -13,10 +13,24 @@ from src.player.player import Player
 from src.player.player_stats import levels_list
 from src.sound import Sound
 
-ko_consonant_ending_chars = ('임', '갈', '롤', '령', '믈', '맨', '렘', '곤', '왕')
+
+def has_final_consonant(char: str) -> bool:
+    """Check if a Korean character has a final consonant."""
+    if len(char) != 1:
+        raise ValueError("Function expects a single character")
+    code = ord(char) - 0xAC00
+    return (code % 28) != 0
 
 
-# ko_vowel_ending_chars = ('스', '키', '마', '트', '사', '다', '드', '지', '라')
+def get_postposition(name: str, consonant_josa: str, vowel_josa: str) -> str:
+    """Get the correct postposition for a Korean character.
+    :param name: The name.
+    :param consonant_josa: The postposition for a consonant. e.g. "을"
+    :param vowel_josa: The postposition for a vowel. e.g. "를"
+    :return: The correct postposition.
+    """
+    last_char = name[-1]
+    return consonant_josa if has_final_consonant(last_char) else vowel_josa
 
 
 class Battle:
@@ -79,7 +93,8 @@ class Battle:
         if current_battle.enemy.is_asleep:
             return True
         else:
-            if player.agility * random_number < current_battle.enemy.speed * random_number * group_factor_lookup[group_factor]:
+            if (player.agility * random_number <
+                    current_battle.enemy.speed * random_number * group_factor_lookup[group_factor]):
                 cmd_menu.show_line_in_dialog_box(self._("But was blocked in front.").format(current_battle.enemy.name),
                                                  add_quotes=False,
                                                  hide_arrow=True, disable_sound=True)
@@ -145,10 +160,7 @@ class Battle:
     def enemy_defeated(self, cmd_menu, screen, player, music_enabled, enemy):
         if self.config['LANGUAGE'] == 'Korean':
             ko_enemy_name = self._(enemy.name)
-            if ko_enemy_name.endswith(ko_consonant_ending_chars):
-                ko_enemy_name += "을"
-            else:
-                ko_enemy_name += "를"
+            ko_enemy_name += get_postposition(ko_enemy_name, "을", "를")
             enemy_defeated_string = f"{ko_enemy_name} 물리쳤다!\n"
         elif self.config['LANGUAGE'] == 'English':
             enemy_defeated_string = self._("Thou hast done well in defeating the {}.\n").format(self._(enemy.name))
@@ -242,10 +254,7 @@ class Battle:
                     enemy_draws_near_string = self._('A {}').format(enemy_draws_near_string)
             elif self.config['LANGUAGE'] == 'Korean':
                 ko_enemy_name = self._(self.enemy.name)
-                if ko_enemy_name.endswith(ko_consonant_ending_chars):
-                    ko_enemy_name += "이"
-                else:
-                    ko_enemy_name += "가"
+                ko_enemy_name += get_postposition(ko_enemy_name, "이", "가")
                 enemy_draws_near_string = self._('{} draws near!\n').format(ko_enemy_name)
             else:
                 enemy_draws_near_string = self._('{} draws near!\n')

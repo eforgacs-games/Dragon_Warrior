@@ -508,7 +508,7 @@ class CommandMenu(Menu):
                     break
         else:
 
-            self.show_text_in_dialog_box(self.dialog_lookup.no_one_there, add_quotes=True, skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("There is no one there."), add_quotes=True, skip_text=self.skip_text)
 
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
@@ -592,7 +592,7 @@ class CommandMenu(Menu):
             # TODO: activate the staircase warp to wherever the staircase leads
         else:
             # the original game has quotes in this dialog box
-            self.show_text_in_dialog_box(self.dialog_lookup.no_stairs_here, add_quotes=True, skip_text=self.skip_text)
+            self.show_text_in_dialog_box(self._("There are no stairs here."), add_quotes=True, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
 
