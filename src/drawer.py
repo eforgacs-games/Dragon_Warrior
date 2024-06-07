@@ -288,7 +288,7 @@ class Drawer:
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation(current_map, foreground_rects, self.background,
                                                  enable_animate)
-        screen.blit(self.background, camera.get_pos()) if not self.game_state.config['NO_BLIT'] else None
+        screen.blit(self.background, camera.pos) if not self.game_state.config['NO_BLIT'] else None
         if current_map.identifier == 'TantegelThroneRoom':
             self.handle_initial_dialog(initial_dialog_enabled, cmd_menu, events, skip_text, allow_save_prompt)
             self.handle_post_death_dialog(game_state, cmd_menu, events, skip_text)
