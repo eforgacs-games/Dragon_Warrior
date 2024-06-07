@@ -1,9 +1,7 @@
 import json
 import os
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import random
+import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
@@ -13,6 +11,8 @@ from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data.text.intro_lookup_table import ControlInfo
 from src import maps
@@ -356,7 +356,6 @@ class Game:
         # This prints out the current tile that the player is standing on.
         # print(f"self.player.current_tile: {self.player.current_tile}")
 
-
         if self.show_coordinates:
             if not self.last_coordinates:
                 self.last_coordinates = self.player.column, self.player.row
@@ -368,9 +367,7 @@ class Game:
                     # print(f"Distance from Tantegel Castle: {self.calculation.get_distance_from_tantegel(self.player.column, self.player.row)}")
                     self.last_coordinates = self.player.column, self.player.row
 
-
-
-        # print(self.camera.get_pos())
+        # print(self.camera.pos)
 
         # print(f"Inventory: {self.player.inventory}, Gold: {self.player.gold}")
         # print(self.tiles_moved_since_spawn)
@@ -1062,7 +1059,7 @@ class Game:
         # TODO(ELF): Allow for key taps, to just face in a particular direction
         # block establishes direction if needed and whether to start or stop moving
         # TODO(ELF): separate dependency of camera pos and player pos
-        curr_pos_x, curr_pos_y = self.camera.get_pos()
+        curr_pos_x, curr_pos_y = self.camera.pos
 
         if not self.player.is_moving:
             if current_key[K_UP] or current_key[K_w]:
@@ -1126,7 +1123,7 @@ class Game:
         :return: None
         """
         self.cmd_menu.camera_position = \
-            curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.get_pos()
+            curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.pos
         self.check_next_tile(character)
         character.next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
                                                                            character.direction_value,
@@ -1150,7 +1147,7 @@ class Game:
                 next_cam_pos_y = curr_cam_pos_y + delta_y
                 # character.row += -delta_y // 2
         if character.identifier == 'HERO' and self.game_state.enable_movement:
-            self.camera.set_pos(self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y))
+            self.camera.pos = self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y)
 
     def check_next_tile(self, character: Player | RoamingCharacter) -> None:
         if not character.next_tile_checked or not character.next_tile_id:
