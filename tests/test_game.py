@@ -78,13 +78,13 @@ class TestGame(TestCase):
                              self.game.screen, tile_size)
 
     def test_get_initial_camera_position(self):
-        self.assertEqual((288.0, 256.0), self.camera.get_pos())
+        self.assertEqual((288.0, 256.0), self.camera.pos)
         self.game.current_map.staircases = {
             (10, 13): {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18)}}
         # self.game.change_map(TantegelThroneRoom())
-        # self.assertEqual((-160.0, -96.0), self.camera.get_pos())
+        # self.assertEqual((-160.0, -96.0), self.camera.pos)
         # self.game.change_map(TantegelCourtyard())
-        # self.assertEqual((-192.0, -224.0), self.camera.get_pos())
+        # self.assertEqual((-192.0, -224.0), self.camera.pos)
 
     #     self.game.current_map.layout = [[1, 0],
     #                                     [34, 2]]
