@@ -20,6 +20,6 @@ class TestCamera(TestCase):
         self.center_pt = 0, 0
 
     def test_set_pos(self):
-        self.game.camera.set_pos((1, 2))
+        self.game.camera.pos = (1, 2)
         self.assertEqual(1, self.game.camera.x)
         self.assertEqual(2, self.game.camera.y)
