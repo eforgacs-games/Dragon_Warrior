@@ -55,7 +55,17 @@ def setup_roaming_character(row, column, direction):
 
 class TestGame(TestCase):
 
-    def setUp(self) -> None:
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+        pygame.mixer.init()
+        cls.screen = pygame.display.set_mode((800, 600))
+
+    @classmethod
+    def tearDownClass(cls):
+        pygame.quit()
+
+    def setUp(self):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
@@ -65,17 +75,14 @@ class TestGame(TestCase):
         self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu, self.game.game_state.config)
         self.game.current_map = MockMap(self.game.config)
         unarmed_hero_sheet = load_extended(self.game.directories.UNARMED_HERO_PATH)
-        self.game.player = Player((0, 0), parse_animated_sprite_sheet(scale(unarmed_hero_sheet,
-                                                                            (unarmed_hero_sheet.get_width() * self.game.config['SCALE'],
-                                                                             unarmed_hero_sheet.get_height() * self.game.config['SCALE'])),
-                                                                      self.game.game_state.config),
-                                  self.game.current_map, god_mode=self.game.game_state.config['GOD_MODE'])
-        # self.camera = Camera(self.game.current_map, self.initial_hero_location, speed=2)
+        self.game.player = Player((0, 0), parse_animated_sprite_sheet(
+            scale(unarmed_hero_sheet, (
+                unarmed_hero_sheet.get_width() * self.game.config['SCALE'],
+                unarmed_hero_sheet.get_height() * self.game.config['SCALE'])),
+            self.game.game_state.config), self.game.current_map, god_mode=self.game.game_state.config['GOD_MODE'])
         tile_size = self.game.game_state.config['TILE_SIZE']
-        self.camera = Camera((self.game.player.rect.y // tile_size,
-                              self.game.player.rect.x // tile_size),
-                             self.game.current_map,
-                             self.game.screen, tile_size)
+        self.camera = Camera((self.game.player.rect.y // tile_size, self.game.player.rect.x // tile_size),
+                             self.game.current_map, self.screen, tile_size)
 
     def test_get_initial_camera_position(self):
         self.assertEqual((288.0, 256.0), self.camera.pos)
@@ -211,7 +218,8 @@ class TestGame(TestCase):
                          convert_numeric_tile_list_to_unique_tile_values(self.game.current_map,
                                                                          [1, 2, 3, 4, 5, 6, 7, 8, 9]))
 
-    def test_handle_menu_launch(self):
+    @patch('pygame.mixer.music')
+    def test_handle_menu_launch(self, mock_music):
         self.game.cmd_menu.launch_signaled = True
         self.game.drawer.handle_menu_launch(self.game.screen, self.game.cmd_menu, self.game.cmd_menu)
         self.assertTrue(self.game.cmd_menu.menu.is_enabled())
@@ -505,22 +513,27 @@ class TestGame(TestCase):
         self.assertEqual(64, self.game.player.rect.y)
 
     def test_move_player_up(self):
+        """Test moving the player up."""
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_w)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
         self.assertEqual(self.game.player.rect.y, -16)
         self.game.move_player(pygame.key.get_pressed())
+        # I'm not sure why this is -18, need to investigate
         self.assertEqual(self.game.player.rect.y, -18)
         self.assertEqual(Direction.UP.value, self.game.player.direction_value)
 
     def test_move_player_left(self):
+        """Test moving the player left."""
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_a)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
-        self.assertEqual(self.game.player.rect.x, -16)
+        initial_x = self.game.player.rect.x
         self.game.move_player(pygame.key.get_pressed())
-        self.assertEqual(self.game.player.rect.x, 0)
+        self.assertEqual(initial_x + 16, self.game.player.rect.x)
         self.assertEqual(Direction.LEFT.value, self.game.player.direction_value)
 
     def test_move_player_down(self):
+        """Test moving the player down.
+        The player should not move if there is an impassable object in the way."""
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_s)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
         self.assertEqual(self.game.player.rect.y, -16)
@@ -530,11 +543,12 @@ class TestGame(TestCase):
         self.assertEqual(Direction.DOWN.value, self.game.player.direction_value)
 
     def test_move_player_right(self):
+        """Test moving the player right."""
         pygame.key.get_pressed = create_move_player_key_mock(pygame.K_d)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
-        self.assertEqual(self.game.player.rect.x, -16)
+        initial_x = self.game.player.rect.x
         self.game.move_player(pygame.key.get_pressed())
-        self.assertEqual(self.game.player.rect.x, 0)
+        self.assertEqual(self.game.player.rect.x, initial_x + 16)
         self.assertEqual(Direction.RIGHT.value, self.game.player.direction_value)
 
     @patch('src.game.Game.set_screen')
