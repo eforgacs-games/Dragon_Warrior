@@ -7,10 +7,10 @@ class Calculation:
     def __init__(self, config):
         self.config = config
 
-    def convert_to_frames(self, time_to_convert):
+    def convert_to_frames(self, time_to_convert: int) -> int:
         return self.config["FPS"] * time_to_convert / 1000
 
-    def convert_to_milliseconds(self, fps_to_convert):
+    def convert_to_milliseconds(self, fps_to_convert: int) -> int:
         return fps_to_convert / self.config["FPS"] * 1000
 
     @staticmethod
