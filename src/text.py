@@ -7,6 +7,8 @@ from src.color import WHITE, BLACK
 from src.directories import Directories
 from src.sound import Sound
 
+WRAP_LENGTH = 21
+
 
 class DialogBoxWrapper(textwrap.TextWrapper):
 
@@ -17,9 +19,8 @@ class DialogBoxWrapper(textwrap.TextWrapper):
 
 
 def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, color: tuple = WHITE, size: int = 16,
-              text_wrap_length: int = 21, alignment: str = 'left', letter_by_letter: bool = True,
+              text_wrap_length: int = WRAP_LENGTH, alignment: str = 'left', letter_by_letter: bool = True,
               disable_sound: bool = False, font_name: str = None) -> str:
-    # n = 34
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
     # chunks = [text[i:i + n] for i in range(0, len(text), n)]

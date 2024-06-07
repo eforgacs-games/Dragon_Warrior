@@ -16,19 +16,27 @@ def fade(fade_out: bool, screen: Surface, config) -> None:
     width, height = screen.get_width(), screen.get_height()
     fade_surface = Surface((width, height))  # lgtm [py/call/wrong-arguments]
     fade_surface.fill(BLACK)
-    opacity = 0
-    for alpha in range(255):
-        if fade_out:
-            opacity += 1
-        else:
-            # TODO(ELF): Fix fade in. Maybe this link will help? https://stackoverflow.com/questions/54881269/pygame-fade-to-black-function
-            #  https://stackoverflow.com/questions/58540537/how-to-fade-the-screen-out-and-back-in-using-pygame
-            opacity -= 1
+    # TODO(ELF): Fix fade in. Maybe this link will help? https://stackoverflow.com/questions/54881269/pygame-fade-to-black-function
+    #  https://stackoverflow.com/questions/58540537/how-to-fade-the-screen-out-and-back-in-using-pygame
+
+    # Initialize opacity
+    opacity = 255 if not fade_out else 0
+
+    # Adjust the range based on fade direction
+    alpha_range = range(255, -1, -1) if not fade_out else range(256)
+
+    for alpha in alpha_range:
         fade_surface.set_alpha(opacity)
         screen.blit(fade_surface, (0, 0)) if not config['NO_BLIT'] else None
         display.update(fade_surface.get_rect())
         if not config['NO_WAIT']:
             time.delay(5)
+
+        # Update opacity based on fade direction
+        if fade_out:
+            opacity += 1
+        else:
+            opacity -= 1
 
 
 def draw_transparent_color(color, screen, transparency, no_blit):
