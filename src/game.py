@@ -300,95 +300,97 @@ class Game:
 
     def get_events(self) -> None:
         """
-        Handle all events in main loop.
-        :return: None
+        High-level event loop method that delegates to smaller helpers.
         """
         self.events = get()
-        for current_event in self.events:
-            if current_event.type == QUIT:
-                quit()
-            elif current_event.type == KEYDOWN:
-                self.handle_keypresses(current_event)
-            elif current_event.type == arrow_fade:
-                self.show_arrow = not self.show_arrow
-        if self.game_state.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
-            current_key = key.get_pressed()
-            self.move_player(current_key)
-        event.pump()
+        self._handle_pygame_events(self.events)
+        self._handle_player_movement()
         self.set_text_color()
         self.handle_battles()
         if not self.player.is_moving:
             set_character_position(self.player, tile_size=self.tile_size)
-        if self.enable_roaming and self.current_map.roaming_characters:
-            self.move_roaming_characters()
-            self.update_roaming_character_positions()
+        self._handle_map_updates()
+        self._handle_post_move_checks()
+        self._handle_debugging_info()
+        event.pump()
 
-        # currently can't process staircases right next to one another, need to fix
-        # a quick fix would be to add an exception in the conditional for
-        # the map where staircases right next to each other need to be enabled,
-        # as done with Cantlin and others below
-        self.handle_warps()
+    def _handle_debugging_info(self) -> None:
+        """
+        Prints debug data such as coordinates or FPS if debug/SHOW_FPS is enabled.
+        """
+        if self.show_coordinates:
+            self._debug_coordinates()
+        if self.game_state.config["SHOW_FPS"]:
+            print(self.clock.get_fps())
 
+    def _debug_coordinates(self) -> None:
+        """
+        Show coordinates and distance from a reference point, if desired.
+        """
+        if not self.last_coordinates:
+            self.last_coordinates = self.player.column, self.player.row
+            print(f"Current coordinates: {self.player.column, self.player.row}")
+            # print(f"Distance from Tantegel Castle: {self.calculation.get_distance_from_tantegel(self.player.column, self.player.row)}")
+        else:
+            if self.last_coordinates != (self.player.column, self.player.row):
+                print(f"Current coordinates: {self.player.column, self.player.row}")
+                # print(f"Distance from Tantegel Castle: {self.calculation.get_distance_from_tantegel(self.player.column, self.player.row)}")
+                self.last_coordinates = self.player.column, self.player.row
+
+    def _handle_post_move_checks(self) -> None:
+        """
+        Sets the player's next tile, updates images, environment damage, and death checks.
+        """
         self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // self.tile_size,
                                                               self.player.rect.y // self.tile_size,
                                                               self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
-
         self.player.next_tile_id = self.calculation.get_next_tile_identifier(self.player.column, self.player.row,
                                                                              self.player.direction_value,
                                                                              self.current_map)
-
         self.player.next_coordinates = get_next_coordinates(self.player.rect.x // self.tile_size,
                                                             self.player.rect.y // self.tile_size,
                                                             self.player.direction_value)
         self.player.next_next_coordinates = get_next_coordinates(self.player.rect.x // self.tile_size,
                                                                  self.player.rect.y // self.tile_size,
                                                                  self.player.direction_value, offset_from_character=2)
-
         self.set_player_images_by_equipment()
-
         self.handle_environment_damage()
-
         self.handle_death()
 
-        # Debugging area
+    def _handle_map_updates(self) -> None:
+        """
+        Updates character positions and handles warp logic.
+        """
+        if self.enable_roaming and self.current_map.roaming_characters:
+            self.move_roaming_characters()
+            self.update_roaming_character_positions()
+        # currently can't process staircases right next to one another, need to fix
+        # a quick fix would be to add an exception in the conditional for
+        # the map where staircases right next to each other need to be enabled,
+        # as done with Cantlin and others below
+        self.handle_warps()
 
-        # This prints out the current tile that the player is standing on.
-        # print(f"self.player.current_tile: {self.player.current_tile}")
+    def _handle_player_movement(self) -> None:
+        """
+        Checks if the game is paused or if movement is disabled; if not,
+        moves the player based on the current key state.
+        """
+        if self.game_state.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
+            current_key = key.get_pressed()
+            self.move_player(current_key)
 
-        if self.show_coordinates:
-            if not self.last_coordinates:
-                self.last_coordinates = self.player.column, self.player.row
-                print(f"Current coordinates: {self.player.column, self.player.row}")
-                # print(f"Distance from Tantegel Castle: {self.calculation.get_distance_from_tantegel(self.player.column, self.player.row)}")
-            else:
-                if self.last_coordinates != (self.player.column, self.player.row):
-                    print(f"Current coordinates: {self.player.column, self.player.row}")
-                    # print(f"Distance from Tantegel Castle: {self.calculation.get_distance_from_tantegel(self.player.column, self.player.row)}")
-                    self.last_coordinates = self.player.column, self.player.row
-
-        # print(self.camera.pos)
-
-        # print(f"Inventory: {self.player.inventory}, Gold: {self.player.gold}")
-        # print(self.tiles_moved_since_spawn)
-
-        # This prints out the next coordinates that the player will land on.
-        # print(self.player.next_coordinates)
-
-        # This prints out the next tile that the player will land on.
-        # print(get_tile_id_by_coordinates(self.player.next_coordinates[1], self.player.next_coordinates[0], self.current_map))
-
-        # This prints out the current FPS.
-        if self.game_state.config["SHOW_FPS"]:
-            print(self.clock.get_fps())
-
-        # This prints out the next_tile, and the next_next_tile.
-        # print(f'Next tile: {self.player.next_tile_id}')
-        # print(f'Next next tile: {self.player.next_next_tile_id}')
-        # print(f'{get_tile_id_by_coordinates(self.player.next_coordinates[0], self.player.next_coordinates[1], self.current_map)}')
-        # print(f'{get_tile_id_by_coordinates(self.player.next_next_coordinates[0], self.player.next_next_coordinates[1], self.current_map)}')
-
-        event.pump()
+    def _handle_pygame_events(self, events: List[event.Event]) -> None:
+        """
+        Handles low-level pygame events such as QUIT, KEYDOWN, arrow fade toggles.
+        """
+        for current_event in events:
+            if current_event.type == QUIT:
+                quit()
+            elif current_event.type == KEYDOWN:
+                self.handle_keypresses(current_event)
+            elif current_event.type == arrow_fade:
+                self.show_arrow = not self.show_arrow
 
     def set_text_color(self):
         if self.player.current_hp <= self.player.max_hp * 0.125:
