@@ -989,7 +989,6 @@ class Game:
         #                              current_map=self.current_map, screen=self.screen)
         self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                              current_map=self.current_map, screen=self.screen, tile_size=self.tile_size)
-        # self.fade(self.current_map.width, self.current_map.height, fade_out=False)
         self.loop_count = 1
         self.game_state.unpause_all_movement()
         self.tiles_moved_since_spawn = 0
@@ -1000,6 +999,15 @@ class Game:
         if destination_coordinates:
             # really not sure if the 1 and 0 here are supposed to be switched
             self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]), self.tile_size)
+
+        # Draw the new map to the screen buffer (don't flip yet - fade will handle display updates)
+        self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
+                             self.foreground_rects, self.enable_animate, self.camera, self.initial_dialog_enabled,
+                             self.events, self.skip_text, self.allow_save_prompt, self.game_state, self.torch_active,
+                             self.color)
+
+        # Fade in from black to reveal the new map
+        fade(fade_out=False, screen=self.screen, config=self.game_state.config)
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN', 'CAVE'):
