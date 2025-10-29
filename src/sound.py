@@ -21,7 +21,6 @@ class Sound:
 
     def play_sound(self, path='data/sound/sfx'):
         if self.config["SOUND_ENABLED"]:
-            global _sound_library
             sound = _sound_library.get(path)
             sound = retrieve_audio_resource(_sound_library, path, sound)
             sound.play()
