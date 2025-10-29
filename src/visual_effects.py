@@ -4,11 +4,13 @@ from pygame.time import get_ticks
 from src.common import BLACK
 
 
-def fade(fade_out: bool, screen: Surface, config) -> None:
+def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -> None:
     """
     Fade to/from current scene to/from black.
     @param screen: The screen.
     @param config: The game configuration.
+    @param draw_callback: Optional callback function to redraw game content (needed for fade_in).
+    @param speed: Speed multiplier for fade effect (higher = faster). Default is 3.
     :return: None
     @type fade_out: bool
     If true, fades out. If false, fades in.
@@ -16,27 +18,36 @@ def fade(fade_out: bool, screen: Surface, config) -> None:
     width, height = screen.get_width(), screen.get_height()
     fade_surface = Surface((width, height))  # lgtm [py/call/wrong-arguments]
     fade_surface.fill(BLACK)
-    # TODO(ELF): Fix fade in. Maybe this link will help? https://stackoverflow.com/questions/54881269/pygame-fade-to-black-function
-    #  https://stackoverflow.com/questions/58540537/how-to-fade-the-screen-out-and-back-in-using-pygame
+
+    # For fade in, capture the current screen state
+    if not fade_out:
+        background = screen.copy()
 
     # Initialize opacity
-    opacity = 255 if not fade_out else 0
+    opacity = 0 if fade_out else 255
 
-    # Adjust the range based on fade direction
-    alpha_range = range(255, -1, -1) if not fade_out else range(256)
+    # Adjust the range based on fade direction and speed
+    alpha_range = range(0, 256, speed) if fade_out else range(255, -1, -speed)
 
     for alpha in alpha_range:
+        # For fade in, restore the background before applying the fade
+        if not fade_out:
+            if draw_callback:
+                draw_callback()
+            else:
+                screen.blit(background, (0, 0))
+
         fade_surface.set_alpha(opacity)
         screen.blit(fade_surface, (0, 0)) if not config['NO_BLIT'] else None
-        display.update(fade_surface.get_rect())
+        display.update()
         if not config['NO_WAIT']:
             time.delay(5)
 
         # Update opacity based on fade direction
         if fade_out:
-            opacity += 1
+            opacity = min(255, opacity + speed)
         else:
-            opacity -= 1
+            opacity = max(0, opacity - speed)
 
 
 def draw_transparent_color(color, screen, transparency, no_blit):
