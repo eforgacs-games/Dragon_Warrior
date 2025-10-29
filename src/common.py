@@ -76,7 +76,6 @@ class Graphics:
         return window_box
 
     def get_image(self, path):
-        global _image_library
         image_to_load = _image_library.get(path)
         if image_to_load is None:
             canonicalized_path = path.replace('/', sep).replace('\\', sep)
