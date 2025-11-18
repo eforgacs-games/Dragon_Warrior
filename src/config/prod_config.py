@@ -28,6 +28,7 @@ prod_config = {
     "TEXT_SPEED": "Fast",
     "NO_WAIT": False,
     "GOD_MODE": False,
+    "INVULNERABLE": False,
     "AUTO_STAIRS": False,
     "AUTO_BATTLE": False,
     "RENDER_TEXT": True,
