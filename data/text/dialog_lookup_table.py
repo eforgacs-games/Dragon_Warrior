@@ -323,6 +323,10 @@ class DialogLookup:
             flash_transparent_color(WHITE, self.screen, self.calculation)
             self.sound.play_sound(self.directories.stairs_up_sfx)
             time.wait(500)  # Brief pause for effect
+            # Move player to the staircase position before changing maps
+            # MagicTemple staircase is at (6, 2)
+            self.player.row = 6
+            self.player.column = 2
             # Teleport player out of the Magic Temple back to the overworld
             # Magic Temple entrance is at (116, 116) on the Alefgard map
             alefgard_map = maps.map_lookup['Alefgard'](self.config)
