@@ -24,11 +24,6 @@ _image_library = {}
 _scaled_image_library = {}  # Cache for scaled images
 
 
-# Fonts
-
-_font_library = {}  # Cache for font objects
-
-
 # Characters
 
 
@@ -114,25 +109,6 @@ class Graphics:
             scaled_img = scale(base_image, size)
             _scaled_image_library[cache_key] = scaled_img
         return scaled_img
-
-    @staticmethod
-    def get_font(font_path, size):
-        """Get a cached font object.
-
-        Args:
-            font_path: Path to the font file (or None for default font)
-            size: Font size in pixels
-
-        Returns:
-            pygame.font.Font object
-        """
-        from pygame import font
-        cache_key = (font_path, size)
-        cached_font = _font_library.get(cache_key)
-        if cached_font is None:
-            cached_font = font.Font(font_path, size)
-            _font_library[cache_key] = cached_font
-        return cached_font
 
     def blink_switch(self, screen: Surface, image_1: str, image_2: str, x: int, y: int, width: int, height: int,
                      tile_size: int,
