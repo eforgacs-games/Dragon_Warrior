@@ -227,6 +227,12 @@ class Game:
         # Remove dead damage numbers
         self.damage_numbers = [dn for dn in self.damage_numbers if dn.is_alive]
 
+        # Debug output
+        if len(self.damage_numbers) > 0:
+            print(f"Drawing {len(self.damage_numbers)} damage numbers")
+            for dn in self.damage_numbers:
+                print(f"  Number {dn.damage} at ({dn.x}, {dn.y}), alive={dn.is_alive}")
+
         # Draw effects on top
         self.particle_system.draw(self.screen)
         for damage_num in self.damage_numbers:
@@ -504,6 +510,12 @@ class Game:
         current_battle.display_battle_window(self.screen, self.drawer,
                                              self.cmd_menu, self.graphics, self.directories,
                                              self.color, self.player)
+
+        # TEST: Add a test damage number to see if effects render at all
+        from src.visual_effects import DamageNumber
+        test_num = DamageNumber(999, 100, 100, color=(255, 0, 0))
+        self.damage_numbers.append(test_num)
+        print("TEST: Added test damage number at (100, 100)")
 
         run_away = False
         while current_battle.enemy.hp > 0 and not run_away and not self.player.is_dead:
