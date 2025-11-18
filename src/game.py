@@ -5,7 +5,7 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
-    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, K_F11, time, KEYDOWN, SCALED, \
+    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, K_F2, K_F11, time, KEYDOWN, SCALED, \
     USEREVENT, K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
@@ -70,6 +70,7 @@ class Game:
         self.big_map = None
         self.layouts = MapLayouts()
         self.fullscreen_enabled = self.game_state.config["FULLSCREEN_ENABLED"]
+        self.auto_stairs = self.game_state.config["AUTO_STAIRS"]
         # text
         self.initial_dialog_enabled = self.game_state.config["INITIAL_DIALOG_ENABLED"]
         self.skip_text = False
@@ -839,9 +840,17 @@ class Game:
     def handle_warps(self):
         immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1', 'MagicTemple',
                                'Alefgard', 'MountainCaveB1', 'MountainCaveB2')
-        # a quick fix to prevent buggy warping - set to > 2
-        if self.tiles_moved_since_spawn > 2 or (
-                self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps):
+
+        # Determine movement threshold based on auto_stairs setting
+        if self.auto_stairs:
+            # Auto-stairs mode: warp after moving just 1 tile from spawn
+            movement_threshold = self.tiles_moved_since_spawn > 0
+        else:
+            # Normal mode: require 2-3 tiles of movement to prevent buggy warping
+            movement_threshold = self.tiles_moved_since_spawn > 2 or (
+                self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps)
+
+        if movement_threshold:
             for staircase_location, staircase_dict in self.current_map.staircases.items():
                 if (self.player.row, self.player.column) == staircase_location:
                     self.process_warp(staircase_dict)
@@ -869,6 +878,7 @@ class Game:
         self.handle_enter_key(current_keydown_event)
         self.handle_fps_changes(current_keydown_event)
         self.handle_fullscreen_toggle(current_keydown_event)
+        self.handle_auto_stairs_toggle(current_keydown_event)
 
     def handle_help_button(self, keydown_event):
         control_info = ControlInfo(self.config)
@@ -953,6 +963,16 @@ class Game:
             set_caption(self._("Dragon Warrior"))
 
             # Show feedback to user
+            self.draw_temporary_text(mode_text)
+
+    def handle_auto_stairs_toggle(self, keydown_event) -> None:
+        """Toggle auto-stairs mode when F2 is pressed."""
+        if keydown_event.key == K_F2:
+            self.auto_stairs = not self.auto_stairs
+            if self.auto_stairs:
+                mode_text = self._("Auto-stairs enabled")
+            else:
+                mode_text = self._("Auto-stairs disabled")
             self.draw_temporary_text(mode_text)
 
     def update_roaming_character_positions(self) -> None:
