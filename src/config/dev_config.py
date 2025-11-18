@@ -47,6 +47,7 @@ dev_config = {
     "TEXT_SPEED": "Fast",
     "NO_WAIT": False,
     "GOD_MODE": True,
+    "AUTO_STAIRS": False,
     "RENDER_TEXT": True,
     "NO_BLIT": False
 }
