@@ -218,6 +218,20 @@ class Game:
             display.flip()
             self.loop_count += 1
 
+    def _update_and_draw_battle_effects(self):
+        """Update and draw visual effects during battles."""
+        # Update effects
+        self.particle_system.update()
+        for damage_num in self.damage_numbers:
+            damage_num.update()
+        # Remove dead damage numbers
+        self.damage_numbers = [dn for dn in self.damage_numbers if dn.is_alive]
+
+        # Draw effects on top
+        self.particle_system.draw(self.screen)
+        for damage_num in self.damage_numbers:
+            damage_num.draw(self.screen)
+
     def show_main_menu_screen(self, screen) -> None:
         if not os.path.exists(self.directories.save_dir):
             os.makedirs(self.directories.save_dir)
@@ -509,6 +523,10 @@ class Game:
         x, y, width, height = 6, 1, 8, 3
         tile_size = self.game_state.config["TILE_SIZE"]
         selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
+
+        # Update and draw visual effects before rendering battle menu
+        self._update_and_draw_battle_effects()
+
         battle_window_rect = self.graphics.blink_switch(self.screen, selected_image,
                                                         self.directories.BATTLE_MENU_STATIC_PATH, x, y,
                                                         width, height,
@@ -556,6 +574,10 @@ class Game:
                 self.last_battle_action = selected_executed_option
 
             self.graphics.create_window(x, y, width, height, selected_image, self.screen, self.color)
+
+            # Update and draw visual effects before display update
+            self._update_and_draw_battle_effects()
+
             display.update(battle_window_rect)
             time.set_timer(arrow_fade, 530)
             if selected_executed_option == 'Fight':
