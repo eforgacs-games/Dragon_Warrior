@@ -100,6 +100,11 @@ class Game:
         self.last_battle_action = "Fight"  # Default to Fight
         self.invulnerable = self.game_state.config["INVULNERABLE"]
 
+        # visual effects
+        self.damage_numbers = []
+        from src.visual_effects import ParticleSystem
+        self.particle_system = ParticleSystem()
+
         # debugging
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
         init()
@@ -192,10 +197,24 @@ class Game:
         while True:
             self.clock.tick(self.fps)
             self.get_events()
+
+            # Update visual effects
+            self.particle_system.update()
+            for damage_num in self.damage_numbers:
+                damage_num.update()
+            # Remove dead damage numbers
+            self.damage_numbers = [dn for dn in self.damage_numbers if dn.is_alive]
+
             self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player,
                                  self.cmd_menu, self.foreground_rects, self.enable_animate, self.camera,
                                  self.initial_dialog_enabled, self.events, self.skip_text, self.allow_save_prompt,
                                  self.game_state, self.torch_active, self.color)
+
+            # Draw visual effects on top
+            self.particle_system.draw(self.screen)
+            for damage_num in self.damage_numbers:
+                damage_num.draw(self.screen)
+
             display.flip()
             self.loop_count += 1
 
@@ -630,6 +649,17 @@ class Game:
                 add_quotes=False,
                 disable_sound=True, hide_arrow=True)
             current_battle.enemy.hp -= attack_damage
+
+            # Add damage number visual effect for enemy
+            from src.visual_effects import DamageNumber
+            damage_num = DamageNumber(
+                attack_damage,
+                self.screen.get_width() // 2 + 20,  # Center-right (opposite of player)
+                self.screen.get_height() // 2 - 40,  # Higher up (enemy position)
+                color=(255, 255, 100)  # Yellow
+            )
+            self.damage_numbers.append(damage_num)
+
             # print(f"{enemy.name} HP: {enemy.hp}/{enemy_string_lookup[enemy.name]().hp}")
 
     def enemy_move(self, current_battle: Battle):
@@ -669,22 +699,57 @@ class Game:
                     spell_effect = random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
                     if current_spell in ("HEAL", "HEALMORE"):
                         enemy.recover_hp(spell_effect)
+                        # Green particles for healing
+                        self.particle_system.add_burst(
+                            self.screen.get_width() // 2 + 20,
+                            self.screen.get_height() // 2 - 40,
+                            (100, 255, 100),  # Green
+                            count=15
+                        )
                     elif current_spell == "SLEEP":
                         self.player.is_asleep = True
                         self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), add_quotes=False,
                                                               disable_sound=True, hide_arrow=True)
+                        # Purple particles for sleep
+                        self.particle_system.add_burst(
+                            self.screen.get_width() // 2 - 20,
+                            self.screen.get_height() // 2,
+                            (180, 100, 255),  # Purple
+                            count=12
+                        )
                     elif current_spell in ("HURT", "HURTMORE"):
                         if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
                             spell_effect *= 0.66
                         self.receive_damage(spell_effect)
+                        # Red/Orange particles for damage spells
+                        self.particle_system.add_burst(
+                            self.screen.get_width() // 2 - 20,
+                            self.screen.get_height() // 2,
+                            (255, 100, 50),  # Orange-red
+                            count=15
+                        )
                     elif current_spell == "STOPSPELL":
                         if self.player.armor != "Erdrick's Armor":
                             if random.randint(0, 1) == 1:
                                 self.player.is_stopspelled = True
+                        # Blue particles for stopspell
+                        self.particle_system.add_burst(
+                            self.screen.get_width() // 2 - 20,
+                            self.screen.get_height() // 2,
+                            (100, 150, 255),  # Blue
+                            count=10
+                        )
                     elif current_spell in ("FIREBREATH", "FIREBREATH2"):
                         if self.player.armor == "Erdrick's Armor":
                             spell_effect *= 0.66
                         self.receive_damage(spell_effect)
+                        # Fire particles
+                        self.particle_system.add_burst(
+                            self.screen.get_width() // 2 - 20,
+                            self.screen.get_height() // 2,
+                            (255, 150, 0),  # Orange
+                            count=20
+                        )
                 else:
                     self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
             else:
@@ -736,6 +801,22 @@ class Game:
         self.color = self.cmd_menu.color = self.get_current_color()
         if self.player.current_hp < 0:
             self.player.current_hp = 0
+
+        # Add damage number visual effect
+        from src.visual_effects import DamageNumber
+        damage_num = DamageNumber(
+            attack_damage,
+            self.screen.get_width() // 2 - 20,  # Center-left
+            self.screen.get_height() // 2,
+            color=RED
+        )
+        self.damage_numbers.append(damage_num)
+
+        # Screen shake for heavy hits (>10 damage)
+        if attack_damage > 10:
+            from src.visual_effects import screen_shake
+            screen_shake(self.camera, intensity=attack_damage // 3, duration=150)
+
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
         # create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
         self.cmd_menu.show_line_in_dialog_box(self._("Thy Hit Points decreased by {}.\n").format(attack_damage),
