@@ -43,10 +43,12 @@ class Drawer:
 
     def show_enemy_image(self, screen, enemy_name):
         enemy_name_without_spaces = enemy_name.replace(" ", "")
-        enemy_image = image.load(
-            f'{self.directories.IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png').convert_alpha()
-        enemy_image = scale(enemy_image, (enemy_image.get_width() * self.scale,
-                                          enemy_image.get_height() * self.scale))
+        enemy_path = f'{self.directories.IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png'
+        # Load the base image through cache
+        enemy_image_base = self.graphics.get_image(enemy_path)
+        # Get scaled version through cache
+        scaled_size = (enemy_image_base.get_width() * self.scale, enemy_image_base.get_height() * self.scale)
+        enemy_image = self.graphics.get_scaled_image(enemy_path, scaled_size)
         self.position_and_draw_enemy_image(screen, enemy_image, enemy_name)
 
     @staticmethod

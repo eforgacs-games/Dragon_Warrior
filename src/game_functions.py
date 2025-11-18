@@ -5,14 +5,20 @@ from pygame.time import get_ticks
 from pygame.transform import scale
 
 from src.calculation import Calculation
-from src.common import BLACK, accept_keys, reject_keys
+from src.common import BLACK, accept_keys, reject_keys, Graphics
 from src.direction import Direction
 from src.directories import Directories
 from src.sound import Sound
 
 
-def blit_scaled_image(image_path: str, screen):
-    scaled_image = scale(image.load(image_path), (screen.get_width(), screen.get_height()))
+def blit_scaled_image(image_path: str, screen, graphics=None):
+    """Blit a scaled image to the screen. Uses cache if graphics object provided."""
+    if graphics:
+        # Use cached scaled image
+        scaled_image = graphics.get_scaled_image(image_path, (screen.get_width(), screen.get_height()))
+    else:
+        # Fallback to direct loading (not cached)
+        scaled_image = scale(image.load(image_path), (screen.get_width(), screen.get_height()))
     screen.blit(scaled_image, (0, 0))
     display.update(scaled_image.get_rect())
 
@@ -23,6 +29,7 @@ class GameFunctions:
         self.calculation = Calculation(config)
         self.sound = Sound(config)
         self.directories = Directories(config)
+        self.graphics = Graphics(config)  # Add graphics for caching
 
     def main_menu_selection(self, blink_start: int, screen, unselected_image: str, selected_image: str,
                             other_selected_images: List[str] = None, no_blit: bool = False) -> int:
@@ -53,9 +60,9 @@ class GameFunctions:
         if no_blit:
             return
         while self.calculation.convert_to_frames_since_start_time(right_arrow_start) <= 16:
-            blit_scaled_image(image_1, screen)
+            blit_scaled_image(image_1, screen, self.graphics)
         while 16 < self.calculation.convert_to_frames_since_start_time(right_arrow_start) <= 32:
-            blit_scaled_image(image_2, screen)
+            blit_scaled_image(image_2, screen, self.graphics)
 
 
 def set_character_position(character, tile_size: int):
