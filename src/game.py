@@ -227,12 +227,6 @@ class Game:
         # Remove dead damage numbers
         self.damage_numbers = [dn for dn in self.damage_numbers if dn.is_alive]
 
-        # Debug output
-        if len(self.damage_numbers) > 0:
-            print(f"Drawing {len(self.damage_numbers)} damage numbers")
-            for dn in self.damage_numbers:
-                print(f"  Number {dn.damage} at ({dn.x}, {dn.y}), alive={dn.is_alive}")
-
         # Draw effects on top
         self.particle_system.draw(self.screen)
         for damage_num in self.damage_numbers:
@@ -511,11 +505,6 @@ class Game:
                                              self.cmd_menu, self.graphics, self.directories,
                                              self.color, self.player)
 
-        # TEST: Add a test damage number to see if effects render at all
-        from src.visual_effects import DamageNumber
-        test_num = DamageNumber(999, 100, 100, color=(255, 0, 0))
-        self.damage_numbers.append(test_num)
-        print("TEST: Added test damage number at (100, 100)")
 
         run_away = False
         while current_battle.enemy.hp > 0 and not run_away and not self.player.is_dead:
@@ -700,10 +689,12 @@ class Game:
 
             # Add damage number visual effect for enemy
             from src.visual_effects import DamageNumber
+            tile_size = self.game_state.config["TILE_SIZE"]
+            # Position near enemy sprite (around tile position 8, 6.5)
             damage_num = DamageNumber(
                 attack_damage,
-                self.screen.get_width() // 2 + 20,  # Center-right (opposite of player)
-                self.screen.get_height() // 2 - 40,  # Higher up (enemy position)
+                tile_size * 8,  # Enemy position
+                tile_size * 6.5,
                 color=(255, 255, 100)  # Yellow
             )
             self.damage_numbers.append(damage_num)
@@ -719,6 +710,7 @@ class Game:
             self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, current_battle.enemy)
 
     def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
+        tile_size = self.game_state.config["TILE_SIZE"]
         enemy.refresh_pattern()
         if isinstance(current_enemy_pattern, tuple):
             # (X% chance to do current_spell if Z)
@@ -747,10 +739,10 @@ class Game:
                     spell_effect = random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
                     if current_spell in ("HEAL", "HEALMORE"):
                         enemy.recover_hp(spell_effect)
-                        # Green particles for healing
+                        # Green particles for healing (enemy position)
                         self.particle_system.add_burst(
-                            self.screen.get_width() // 2 + 20,
-                            self.screen.get_height() // 2 - 40,
+                            tile_size * 8,
+                            tile_size * 6.5,
                             (100, 255, 100),  # Green
                             count=15
                         )
@@ -758,10 +750,10 @@ class Game:
                         self.player.is_asleep = True
                         self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), add_quotes=False,
                                                               disable_sound=True, hide_arrow=True)
-                        # Purple particles for sleep
+                        # Purple particles for sleep (player position)
                         self.particle_system.add_burst(
-                            self.screen.get_width() // 2 - 20,
-                            self.screen.get_height() // 2,
+                            tile_size * 6.5,
+                            tile_size * 9,
                             (180, 100, 255),  # Purple
                             count=12
                         )
@@ -769,10 +761,10 @@ class Game:
                         if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
                             spell_effect *= 0.66
                         self.receive_damage(spell_effect)
-                        # Red/Orange particles for damage spells
+                        # Red/Orange particles for damage spells (player position)
                         self.particle_system.add_burst(
-                            self.screen.get_width() // 2 - 20,
-                            self.screen.get_height() // 2,
+                            tile_size * 6.5,
+                            tile_size * 9,
                             (255, 100, 50),  # Orange-red
                             count=15
                         )
@@ -780,10 +772,10 @@ class Game:
                         if self.player.armor != "Erdrick's Armor":
                             if random.randint(0, 1) == 1:
                                 self.player.is_stopspelled = True
-                        # Blue particles for stopspell
+                        # Blue particles for stopspell (player position)
                         self.particle_system.add_burst(
-                            self.screen.get_width() // 2 - 20,
-                            self.screen.get_height() // 2,
+                            tile_size * 6.5,
+                            tile_size * 9,
                             (100, 150, 255),  # Blue
                             count=10
                         )
@@ -791,10 +783,10 @@ class Game:
                         if self.player.armor == "Erdrick's Armor":
                             spell_effect *= 0.66
                         self.receive_damage(spell_effect)
-                        # Fire particles
+                        # Fire particles (player position)
                         self.particle_system.add_burst(
-                            self.screen.get_width() // 2 - 20,
-                            self.screen.get_height() // 2,
+                            tile_size * 6.5,
+                            tile_size * 9,
                             (255, 150, 0),  # Orange
                             count=20
                         )
@@ -850,12 +842,14 @@ class Game:
         if self.player.current_hp < 0:
             self.player.current_hp = 0
 
-        # Add damage number visual effect
+        # Add damage number visual effect for player
         from src.visual_effects import DamageNumber
+        tile_size = self.game_state.config["TILE_SIZE"]
+        # Position in lower-left of battle area (around tile position 6.5, 9)
         damage_num = DamageNumber(
             attack_damage,
-            self.screen.get_width() // 2 - 20,  # Center-left
-            self.screen.get_height() // 2,
+            tile_size * 6.5,  # Battle area lower-left
+            tile_size * 9,
             color=RED
         )
         self.damage_numbers.append(damage_num)
