@@ -57,7 +57,7 @@ def set_font_by_ascii_chars(chunks, size, font_name, directories):
     if font_name is not None:
         return font.Font(font_name, size)
     else:
-        if all(chunk.strip(''(↑ ← ↓ →)▼').isascii() for chunk in chunks):
+        if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
             current_font = font.Font(directories.DRAGON_QUEST_FONT_PATH, size)
         else:
             current_font = font.Font(directories.UNIFONT_PATH, size)
