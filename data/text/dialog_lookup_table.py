@@ -315,12 +315,14 @@ class DialogLookup:
             )
         else:
             # Player doesn't have both items, kick them out
+            # Show dialog with drop_up disabled since we're about to change maps
             self.command_menu.show_text_in_dialog_box((
                 self._("In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted would save us."),
                 self._("Go now!"),
-            ), skip_text=False)
+            ), skip_text=False, drop_up=False)
             flash_transparent_color(WHITE, self.screen, self.calculation)
             self.sound.play_sound(self.directories.stairs_up_sfx)
+            time.wait(500)  # Brief pause for effect
             # Teleport player out of the Magic Temple back to the overworld
             # Magic Temple entrance is at (116, 116) on the Alefgard map
             alefgard_map = maps.map_lookup['Alefgard'](self.config)
