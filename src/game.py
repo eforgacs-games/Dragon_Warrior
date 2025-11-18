@@ -158,7 +158,7 @@ class Game:
         self.enable_animate = True
         self.enable_roaming = True
         self.clock = Clock()
-        self.music_enabled = self.game_state.config["MUSIC_ENABLED"]
+        self.music_enabled = self.game_state.music_enabled
 
         if self.splash_screen_enabled:
             self.music_player.load_and_play_music(self.directories.intro_overture)
@@ -424,7 +424,6 @@ class Game:
             'GarinsGraveB1', 'GarinsGraveB2', 'GarinsGraveB3', 'GarinsGraveB4')
         if self.current_map.identifier in maps_with_enemies:
             if self.tiles_moved_since_spawn > 0:
-                # TODO: Add other maps with enemies besides Alefgard/Hauksness.
                 if self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
                     dungeon_identifier_zone_map = {
                         'Alefgard': (self.player.column // 18, self.player.row // 18),

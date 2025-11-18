@@ -285,15 +285,13 @@ class DragonWarriorMap:
     def set_town_to_overworld_warps(self) -> None:
         """Sets the exit location to the overworld (Alefgard) from within a town"""
         for staircase_dict in self.staircases.values():
-            alefgard_staircases = Alefgard(self.config).staircases
-            # TODO(ELF): Probably don't need this extra alefgard_lookup_dict - maybe remove it later
-            alefgard_lookup_dict = {}
-            for alefgard_coordinates, alefgard_staircase_dict in alefgard_staircases.items():
-                alefgard_lookup_dict[alefgard_staircase_dict['map']] = alefgard_staircase_dict
-                alefgard_lookup_dict[alefgard_staircase_dict['map']]['alefgard_coordinates'] = alefgard_coordinates
             if staircase_dict['map'] == 'Alefgard':
-                staircase_dict['destination_coordinates'] = alefgard_lookup_dict[self.__class__.__name__][
-                    'alefgard_coordinates']
+                alefgard_staircases = Alefgard(self.config).staircases
+                # Find the Alefgard staircase that leads to this town
+                for alefgard_coordinates, alefgard_staircase_dict in alefgard_staircases.items():
+                    if alefgard_staircase_dict['map'] == self.__class__.__name__:
+                        staircase_dict['destination_coordinates'] = alefgard_coordinates
+                        break
 
     def create_town_gates(self, north_gate=None, east_gate=None, west_gate=None, south_gate=None) -> None:
         alefgard_up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
