@@ -5,8 +5,8 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
-    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, time, KEYDOWN, SCALED, \
-    USEREVENT, K_RETURN
+    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, K_F11, time, KEYDOWN, SCALED, \
+    USEREVENT, K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -382,7 +382,7 @@ class Game:
 
     def _handle_pygame_events(self, events: List[event.Event]) -> None:
         """
-        Handles low-level pygame events such as QUIT, KEYDOWN, arrow fade toggles.
+        Handles low-level pygame events such as QUIT, KEYDOWN, arrow fade toggles, and window resize.
         """
         for current_event in events:
             if current_event.type == QUIT:
@@ -391,6 +391,18 @@ class Game:
                 self.handle_keypresses(current_event)
             elif current_event.type == arrow_fade:
                 self.show_arrow = not self.show_arrow
+            elif current_event.type == VIDEORESIZE:
+                self._handle_window_resize(current_event)
+
+    def _handle_window_resize(self, resize_event) -> None:
+        """
+        Handles window resize, maximize, and minimize events.
+        With SCALED flag, PyGame automatically scales the game surface to fit the new window size.
+        """
+        # The SCALED flag automatically handles scaling, but we can add visual feedback here
+        if self.config.get("SHOW_COORDINATES", False):
+            # Show window size info when coordinates are enabled (debug mode)
+            print(f"Window resized to: {resize_event.w}x{resize_event.h}")
 
     def set_text_color(self):
         if self.player.current_hp <= self.player.max_hp * 0.125:
@@ -856,6 +868,7 @@ class Game:
         self.handle_help_button(current_keydown_event)
         self.handle_enter_key(current_keydown_event)
         self.handle_fps_changes(current_keydown_event)
+        self.handle_fullscreen_toggle(current_keydown_event)
 
     def handle_help_button(self, keydown_event):
         control_info = ControlInfo(self.config)
@@ -921,6 +934,26 @@ class Game:
         if keydown_event.key == K_4:
             self.fps = 480
             self.draw_temporary_text(self._("Game set to quadruple speed.\n({} FPS)".format(self.fps)))
+
+    def handle_fullscreen_toggle(self, keydown_event) -> None:
+        """Toggle between fullscreen and windowed mode when F11 is pressed."""
+        if keydown_event.key == K_F11:
+            self.fullscreen_enabled = not self.fullscreen_enabled
+            if self.fullscreen_enabled:
+                self.flags = FULLSCREEN | SCALED
+                mode_text = self._("Fullscreen mode enabled")
+            else:
+                self.flags = RESIZABLE | SCALED
+                mode_text = self._("Windowed mode enabled")
+
+            # Recreate the window with new flags
+            nes_res = self.game_state.config["NES_RES"]
+            win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
+            self.screen = set_mode((win_width, win_height), self.flags)
+            set_caption(self._("Dragon Warrior"))
+
+            # Show feedback to user
+            self.draw_temporary_text(mode_text)
 
     def update_roaming_character_positions(self) -> None:
         for character, character_dict in self.current_map.characters.items():
