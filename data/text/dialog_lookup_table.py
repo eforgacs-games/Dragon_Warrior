@@ -10,6 +10,7 @@ from src.color import BLACK
 from src.common import WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
 from src.directories import Directories
 from src.items import weapons, armor, shields
+from src import maps
 from src.maps import DragonWarriorMap
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories
@@ -320,7 +321,11 @@ class DialogLookup:
             ), skip_text=False)
             flash_transparent_color(WHITE, self.screen, self.calculation)
             self.sound.play_sound(self.directories.stairs_up_sfx)
-            # TODO: Kick player out of the Magic Temple and back to the overworld map on the staircase
+            # Teleport player out of the Magic Temple back to the overworld
+            # Magic Temple entrance is at (116, 116) on the Alefgard map
+            alefgard_map = maps.map_lookup['Alefgard'](self.config)
+            alefgard_map.destination_coordinates = (116, 116)
+            self.command_menu.game.change_map(alefgard_map)
 
     def prompt_for_save(self):
         return confirmation_prompt(self.command_menu,
