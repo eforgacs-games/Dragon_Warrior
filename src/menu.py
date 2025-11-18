@@ -322,6 +322,10 @@ class CommandMenu(Menu):
     def take_item(self, item_name: str):
         self.sound.play_sound(self.directories.open_treasure_sfx)
         self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
+        # Remove treasure from dictionary to prevent double pickup exploit
+        if self.map_name in treasure and (self.player.row, self.player.column) in treasure[self.map_name]:
+            del treasure[self.map_name][(self.player.row, self.player.column)]
+
         found_item_text = self._("Fortune smiles upon thee, {}.\nThou hast found the {}.").format(self.player.name,
                                                                                                   self._(item_name))
 
@@ -347,6 +351,10 @@ class CommandMenu(Menu):
         self.sound.play_sound(self.directories.open_treasure_sfx)
         gold_amount = treasure_info['amount']
         self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
+        # Remove treasure from dictionary to prevent double pickup exploit
+        if self.map_name in treasure and (self.player.row, self.player.column) in treasure[self.map_name]:
+            del treasure[self.map_name][(self.player.row, self.player.column)]
+
         self.show_text_in_dialog_box(self._("Of GOLD thou hast gained {}").format(gold_amount),
                                      skip_text=self.skip_text)
         self.player.gold += gold_amount
@@ -418,6 +426,36 @@ class CommandMenu(Menu):
 
     def erdricks_token(self):
         self.show_text_in_dialog_box(f"{self.player.name} held the Erdrick's Token tightly.\nBut nothing happened.")
+
+    def rainbow_drop(self):
+        if self.current_map.identifier == 'Alefgard':
+            # Check if player is at the Rainbow Bridge location
+            # Original game: approximately (47, 40) on the world map
+            if 45 <= self.player.column <= 49 and 38 <= self.player.row <= 42:
+                self.show_text_in_dialog_box(f"{self.player.name} held the Rainbow Drop toward the sky.\n"
+                                           "The Rainbow Bridge appears!", skip_text=self.skip_text)
+                # TODO: Actually build the rainbow bridge by modifying map tiles
+                # Remove Rainbow Drop from inventory after use
+                if "Rainbow Drop" in self.player.inventory:
+                    self.player.inventory.remove("Rainbow Drop")
+            else:
+                self.show_text_in_dialog_box(f"{self.player.name} held the Rainbow Drop toward the sky.\n"
+                                           "But nothing happened.", skip_text=self.skip_text)
+        else:
+            self.show_text_in_dialog_box(f"{self.player.name} held the Rainbow Drop tightly.\n"
+                                       "But nothing happened.", skip_text=self.skip_text)
+
+    def staff_of_rain(self):
+        self.show_text_in_dialog_box(f"{self.player.name} held the Staff of Rain tightly.\n"
+                                    "But nothing happened.", skip_text=self.skip_text)
+
+    def stones_of_sunlight(self):
+        self.show_text_in_dialog_box(f"{self.player.name} held the Stones of Sunlight tightly.\n"
+                                    "But nothing happened.", skip_text=self.skip_text)
+
+    def fighters_ring(self):
+        self.show_text_in_dialog_box(f"{self.player.name} put on the Fighter's Ring.\n"
+                                    "Attack power increases slightly!", skip_text=self.skip_text)
 
     def gwaelins_love(self):
         self.show_text_in_dialog_box(f"Heed my voice, '{self.player.name}, for this is Gwaelin. "
@@ -672,6 +710,10 @@ class CommandMenu(Menu):
                 "Gwaelin's Love": self.gwaelins_love,
                 "Erdrick's Token": self.erdricks_token,
                 "Magic Key": self.door,
+                "Rainbow Drop": self.rainbow_drop,
+                "Staff of Rain": self.staff_of_rain,
+                "Stones of Sunlight": self.stones_of_sunlight,
+                "Fighter's Ring": self.fighters_ring,
             }
         elif menu_name == 'spells':
             list_counter = Counter(self.player.spells)
