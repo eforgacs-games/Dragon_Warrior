@@ -523,14 +523,6 @@ class Game:
         x, y, width, height = 6, 1, 8, 3
         tile_size = self.game_state.config["TILE_SIZE"]
         selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
-
-        # Update and draw visual effects before rendering battle menu
-        self._update_and_draw_battle_effects()
-
-        battle_window_rect = self.graphics.blink_switch(self.screen, selected_image,
-                                                        self.directories.BATTLE_MENU_STATIC_PATH, x, y,
-                                                        width, height,
-                                                        tile_size, self.show_arrow, color=self.color)
         current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
         selected_executed_option = None
         random_number = random.random()
@@ -548,24 +540,42 @@ class Game:
             # Small delay so battles don't run at full speed
             time.wait(200)  # 200ms delay between auto-battle actions
         else:
-            # Normal mode: wait for player input
-            for current_event in event.get():
-                if current_event.type == KEYDOWN:
-                    if not self.player.is_asleep:
-                        if current_event.key in accept_keys:
-                            self.sound.play_sound(self.directories.menu_button_sfx)
-                            selected_executed_option = current_selection
-                        elif current_event.key in reject_keys:
-                            break
-                        elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
-                            self.battle_menu_row = 1 - self.battle_menu_row
-                        elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
-                            self.battle_menu_column = 1 - self.battle_menu_column
-                        time.set_timer(arrow_fade, 530)
-                    else:
-                        selected_executed_option = 'Sleep'
-                elif current_event.type == arrow_fade:
-                    self.show_arrow = not self.show_arrow
+            # Normal mode: wait for player input with continuous animation
+            selected_executed_option = None
+            while selected_executed_option is None:
+                # Limit FPS during battle menu
+                self.clock.tick(60)
+
+                # Update and draw visual effects continuously
+                self._update_and_draw_battle_effects()
+
+                # Redraw battle menu
+                battle_window_rect = self.graphics.blink_switch(self.screen, selected_image,
+                                                                self.directories.BATTLE_MENU_STATIC_PATH, x, y,
+                                                                width, height,
+                                                                tile_size, self.show_arrow, color=self.color)
+
+                for current_event in event.get():
+                    if current_event.type == KEYDOWN:
+                        if not self.player.is_asleep:
+                            if current_event.key in accept_keys:
+                                self.sound.play_sound(self.directories.menu_button_sfx)
+                                selected_executed_option = current_selection
+                            elif current_event.key in reject_keys:
+                                return run_away
+                            elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
+                                self.battle_menu_row = 1 - self.battle_menu_row
+                                current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
+                                selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
+                            elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
+                                self.battle_menu_column = 1 - self.battle_menu_column
+                                current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
+                                selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
+                            time.set_timer(arrow_fade, 530)
+                        else:
+                            selected_executed_option = 'Sleep'
+                    elif current_event.type == arrow_fade:
+                        self.show_arrow = not self.show_arrow
 
         # Execute the selected option (manual or auto)
         if selected_executed_option:
@@ -578,7 +588,7 @@ class Game:
             # Update and draw visual effects before display update
             self._update_and_draw_battle_effects()
 
-            display.update(battle_window_rect)
+            display.flip()  # Use flip() to update entire screen including effects
             time.set_timer(arrow_fade, 530)
             if selected_executed_option == 'Fight':
                 self.fight(current_battle)
@@ -834,10 +844,11 @@ class Game:
         )
         self.damage_numbers.append(damage_num)
 
+        # TODO: Screen shake disabled for now - needs non-blocking implementation
         # Screen shake for heavy hits (>10 damage)
-        if attack_damage > 10:
-            from src.visual_effects import screen_shake
-            screen_shake(self.camera, intensity=attack_damage // 3, duration=150)
+        # if attack_damage > 10:
+        #     from src.visual_effects import screen_shake
+        #     screen_shake(self.camera, intensity=attack_damage // 3, duration=150)
 
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
         # create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
