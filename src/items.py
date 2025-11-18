@@ -48,4 +48,11 @@ treasure = {
         (2, 2): {'item': 'Cursed Belt'},
         (7, 14): {'item': 'Silver Harp'}
     },
+    'MountainCaveB2': {
+        (3, 3): {'item': "Fighter's Ring"},
+        (3, 4): {'item': "GOLD", 'amount': random.randint(5, 20)},
+    },
+    'StaffOfRainCave': {
+        (6, 5): {'item': 'Staff of Rain'}
+    },
 }

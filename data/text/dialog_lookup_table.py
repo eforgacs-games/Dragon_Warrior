@@ -8,8 +8,10 @@ from data.text.dialog import confirmation_prompt
 from src.calculation import Calculation
 from src.color import BLACK
 from src.common import WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
+from src.direction import Direction
 from src.directories import Directories
 from src.items import weapons, armor, shields
+from src import maps
 from src.maps import DragonWarriorMap
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories
@@ -231,14 +233,7 @@ class DialogLookup:
                                                         "Thus, I propose a test.",
                                                         "There is a Silver Harp that beckons to the creatures of the Dragonlord.",
                                                         "Bring this to me and I will reward thee with the Staff of Rain.")}},
-            'MagicTemple': {'WISE_MAN': {'dialog': (
-                "In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted would save us.",
-                "Go now!",
-                partial(flash_transparent_color, WHITE, self.screen, self.calculation),
-                partial(self.sound.play_sound, self.directories.stairs_up_sfx),
-                # TODO: Kick player out of the Magic Temple and back to the overworld map on the staircase
-                # partial(self.command_menu.game.change_map, Alefgard)
-            )}}
+            'MagicTemple': {'WISE_MAN': {'dialog': (self.magic_temple_rainbow_drop_exchange,)}}
         }
 
         for map_dict in self.lookup_table.values():
@@ -299,6 +294,47 @@ class DialogLookup:
         #     'dialog_character': 'PRINCESS_GWAELIN',
         #     'images': self.current_map.scale_sprite_sheet(self.directories.PRINCESS_GWAELIN_PATH)[0]
         # }
+
+    def magic_temple_rainbow_drop_exchange(self):
+        """Handle the Magic Temple Wise Man dialog for Rainbow Drop exchange"""
+        has_staff = "Staff of Rain" in self.player.inventory
+        has_stones = "Stones of Sunlight" in self.player.inventory
+
+        if has_staff and has_stones:
+            # Player has both items, give Rainbow Drop
+            self.command_menu.show_text_in_dialog_box((
+                self._("Thou hast done well in bringing the Stones of Sunlight and the Staff of Rain."),
+                self._("Now the sun and rain shall meet and the Rainbow Drop passes to thy keeping."),
+            ), skip_text=False)
+            # Remove the two items and add Rainbow Drop
+            self.player.inventory.remove("Staff of Rain")
+            self.player.inventory.remove("Stones of Sunlight")
+            self.player.inventory.insert(0, "Rainbow Drop")
+            self.command_menu.show_text_in_dialog_box(
+                self._("{} received the Rainbow Drop!").format(self.player.name),
+                skip_text=False
+            )
+        else:
+            # Player doesn't have both items, kick them out
+            # Show dialog with drop_up disabled since we're about to change maps
+            self.command_menu.show_text_in_dialog_box((
+                self._("In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted would save us."),
+                self._("Go now!"),
+            ), skip_text=False, drop_up=False)
+            flash_transparent_color(WHITE, self.screen, self.calculation)
+            self.sound.play_sound(self.directories.stairs_up_sfx)
+            time.wait(500)  # Brief pause for effect
+            # Move player to the staircase position before changing maps
+            # MagicTemple staircase is at (6, 2)
+            self.player.row = 6
+            self.player.column = 2
+            # Teleport player out of the Magic Temple back to the overworld
+            # Magic Temple entrance is at (116, 116) on the Alefgard map
+            alefgard_map = maps.map_lookup['Alefgard'](self.config)
+            alefgard_map.destination_coordinates = (116, 116)
+            self.command_menu.game.change_map(alefgard_map)
+            # Set player to face down after teleporting out
+            self.player.direction_value = Direction.DOWN.value
 
     def prompt_for_save(self):
         return confirmation_prompt(self.command_menu,
