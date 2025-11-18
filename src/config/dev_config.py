@@ -48,6 +48,7 @@ dev_config = {
     "NO_WAIT": False,
     "GOD_MODE": True,
     "AUTO_STAIRS": False,
+    "AUTO_BATTLE": False,
     "RENDER_TEXT": True,
     "NO_BLIT": False
 }

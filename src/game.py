@@ -5,7 +5,7 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
-    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, K_F2, K_F11, time, KEYDOWN, SCALED, \
+    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, K_F2, K_F3, K_F11, time, KEYDOWN, SCALED, \
     USEREVENT, K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
@@ -96,6 +96,8 @@ class Game:
         self.launch_battle = False
         self.current_enemy_pattern_index = None
         self.enemy_runaway_attempts = 0
+        self.auto_battle = self.game_state.config["AUTO_BATTLE"]
+        self.last_battle_action = "Fight"  # Default to Fight
 
         # debugging
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
@@ -501,82 +503,96 @@ class Game:
                     return self.enemy_run_away(current_battle, current_battle.enemy)
                 else:
                     self.enemy_runaway_attempts += 1
-        for current_event in event.get():
-            if current_event.type == KEYDOWN:
-                if not self.player.is_asleep:
-                    if current_event.key in accept_keys:
-                        self.sound.play_sound(self.directories.menu_button_sfx)
-                        selected_executed_option = current_selection
-                    elif current_event.key in reject_keys:
-                        break
-                    elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
-                        self.battle_menu_row = 1 - self.battle_menu_row
-                    elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
-                        self.battle_menu_column = 1 - self.battle_menu_column
-                    time.set_timer(arrow_fade, 530)
-                else:
-                    selected_executed_option = 'Sleep'
-            elif current_event.type == arrow_fade:
-                self.show_arrow = not self.show_arrow
-            if selected_executed_option:
-                self.graphics.create_window(x, y, width, height, selected_image, self.screen, self.color)
-                display.update(battle_window_rect)
-                time.set_timer(arrow_fade, 530)
-                if selected_executed_option == 'Fight':
-                    self.fight(current_battle)
-                elif selected_executed_option == 'Spell':
-                    current_battle.battle_spell(self.cmd_menu, self.player, current_battle)
-                elif selected_executed_option == 'Run':
-                    run_away = current_battle.battle_run(self.cmd_menu, self.player, current_battle)
-                    if run_away:
-                        self.music_player.load_and_play_music(self.current_map.music_file_path)
-                        return run_away
-                elif selected_executed_option == 'Item':
-                    if not self.player.inventory:
-                        self.cmd_menu.show_line_in_dialog_box(
-                            'Nothing of use has yet been given to thee.\n',
-                            add_quotes=False, hide_arrow=True, disable_sound=True)
-                        current_battle.no_op = True
-                elif selected_executed_option == 'Sleep':
-                    self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
-                                                          add_quotes=False, disable_sound=True,
-                                                          hide_arrow=True, skip_text=True)
-                current_battle.last_turn = current_battle.turn
-                current_battle.turn += 1
-                selected_executed_option = None
-                time.set_timer(arrow_fade, 530)
-                if current_battle.enemy.hp <= 0:
-                    run_away = False
-                    return run_away
-                elif current_battle.last_turn != current_battle.turn:
-                    if not current_battle.no_op:
-                        self.enemy_move(current_battle)
-                        if self.player.current_hp <= 0:
-                            self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
-                            self.player.is_dead = True
 
-                        elif self.player.is_asleep:
-                            self.player.asleep_turns += 1
-                            if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
-                                self.player.is_asleep = False
-                                self.player.asleep_turns = 0
-                                self.cmd_menu.show_line_in_dialog_box(
-                                    self._("{} awakes.\n").format(self.player.name) + "Command?\n",
-                                    add_quotes=False, disable_sound=True,
-                                    hide_arrow=True)
-                            else:
-                                self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
-                                                                      add_quotes=False, disable_sound=True,
-                                                                      hide_arrow=True, skip_text=True)
-                        else:
-                            self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
-                                                                  add_quotes=False, disable_sound=True, hide_arrow=True,
-                                                                  skip_text=True)
+        # Auto-battle mode: automatically execute last action
+        if self.auto_battle and not self.player.is_asleep:
+            selected_executed_option = self.last_battle_action
+            # Small delay so battles don't run at full speed
+            time.wait(200)  # 200ms delay between auto-battle actions
+        else:
+            # Normal mode: wait for player input
+            for current_event in event.get():
+                if current_event.type == KEYDOWN:
+                    if not self.player.is_asleep:
+                        if current_event.key in accept_keys:
+                            self.sound.play_sound(self.directories.menu_button_sfx)
+                            selected_executed_option = current_selection
+                        elif current_event.key in reject_keys:
+                            break
+                        elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
+                            self.battle_menu_row = 1 - self.battle_menu_row
+                        elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
+                            self.battle_menu_column = 1 - self.battle_menu_column
+                        time.set_timer(arrow_fade, 530)
                     else:
-                        current_battle.no_op = False
+                        selected_executed_option = 'Sleep'
+                elif current_event.type == arrow_fade:
+                    self.show_arrow = not self.show_arrow
+
+        # Execute the selected option (manual or auto)
+        if selected_executed_option:
+            # Track last action for auto-battle (but not Sleep, which is involuntary)
+            if selected_executed_option != 'Sleep':
+                self.last_battle_action = selected_executed_option
+
+            self.graphics.create_window(x, y, width, height, selected_image, self.screen, self.color)
+            display.update(battle_window_rect)
+            time.set_timer(arrow_fade, 530)
+            if selected_executed_option == 'Fight':
+                self.fight(current_battle)
+            elif selected_executed_option == 'Spell':
+                current_battle.battle_spell(self.cmd_menu, self.player, current_battle)
+            elif selected_executed_option == 'Run':
+                run_away = current_battle.battle_run(self.cmd_menu, self.player, current_battle)
+                if run_away:
+                    self.music_player.load_and_play_music(self.current_map.music_file_path)
+                    return run_away
+            elif selected_executed_option == 'Item':
+                if not self.player.inventory:
+                    self.cmd_menu.show_line_in_dialog_box(
+                        'Nothing of use has yet been given to thee.\n',
+                        add_quotes=False, hide_arrow=True, disable_sound=True)
+                    current_battle.no_op = True
+            elif selected_executed_option == 'Sleep':
+                self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
+                                                      add_quotes=False, disable_sound=True,
+                                                      hide_arrow=True, skip_text=True)
+            current_battle.last_turn = current_battle.turn
+            current_battle.turn += 1
+            selected_executed_option = None
+            time.set_timer(arrow_fade, 530)
+            if current_battle.enemy.hp <= 0:
+                run_away = False
+                return run_away
+            elif current_battle.last_turn != current_battle.turn:
+                if not current_battle.no_op:
+                    self.enemy_move(current_battle)
+                    if self.player.current_hp <= 0:
+                        self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
+                        self.player.is_dead = True
+
+                    elif self.player.is_asleep:
+                        self.player.asleep_turns += 1
+                        if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
+                            self.player.is_asleep = False
+                            self.player.asleep_turns = 0
+                            self.cmd_menu.show_line_in_dialog_box(
+                                self._("{} awakes.\n").format(self.player.name) + "Command?\n",
+                                add_quotes=False, disable_sound=True,
+                                hide_arrow=True)
+                        else:
+                            self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
+                                                                  add_quotes=False, disable_sound=True,
+                                                                  hide_arrow=True, skip_text=True)
+                    else:
                         self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
                                                               add_quotes=False, disable_sound=True, hide_arrow=True,
                                                               skip_text=True)
+                else:
+                    current_battle.no_op = False
+                    self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
+                                                          add_quotes=False, disable_sound=True, hide_arrow=True,
+                                                          skip_text=True)
             elif current_event.type == QUIT:
                 quit()
         return run_away
@@ -879,6 +895,7 @@ class Game:
         self.handle_fps_changes(current_keydown_event)
         self.handle_fullscreen_toggle(current_keydown_event)
         self.handle_auto_stairs_toggle(current_keydown_event)
+        self.handle_auto_battle_toggle(current_keydown_event)
 
     def handle_help_button(self, keydown_event):
         control_info = ControlInfo(self.config)
@@ -973,6 +990,16 @@ class Game:
                 mode_text = self._("Auto-stairs enabled")
             else:
                 mode_text = self._("Auto-stairs disabled")
+            self.draw_temporary_text(mode_text)
+
+    def handle_auto_battle_toggle(self, keydown_event) -> None:
+        """Toggle auto-battle mode when F3 is pressed."""
+        if keydown_event.key == K_F3:
+            self.auto_battle = not self.auto_battle
+            if self.auto_battle:
+                mode_text = self._("Auto-battle enabled\n(Repeats: {})").format(self.last_battle_action)
+            else:
+                mode_text = self._("Auto-battle disabled")
             self.draw_temporary_text(mode_text)
 
     def update_roaming_character_positions(self) -> None:
