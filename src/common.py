@@ -21,6 +21,7 @@ def find_file(name, path):
 # Images
 
 _image_library = {}
+_scaled_image_library = {}  # Cache for scaled images
 
 
 # Characters
@@ -87,6 +88,27 @@ class Graphics:
                     find_file(ntpath.basename(canonicalized_path), self.directories.root_project_path)).convert_alpha()
                 _image_library[path] = image_to_load
         return image_to_load
+
+    def get_scaled_image(self, path, size):
+        """Get a cached scaled image.
+
+        Args:
+            path: Path to the image file
+            size: Tuple of (width, height) for the scaled size
+
+        Returns:
+            Scaled pygame Surface
+        """
+        cache_key = (path, size)
+        scaled_img = _scaled_image_library.get(cache_key)
+        if scaled_img is None:
+            # Load the base image (cached)
+            base_image = self.get_image(path)
+            # Scale it and cache the result
+            from pygame.transform import scale
+            scaled_img = scale(base_image, size)
+            _scaled_image_library[cache_key] = scaled_img
+        return scaled_img
 
     def blink_switch(self, screen: Surface, image_1: str, image_2: str, x: int, y: int, width: int, height: int,
                      tile_size: int,
