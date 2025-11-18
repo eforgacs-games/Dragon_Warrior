@@ -546,14 +546,18 @@ class Game:
                 # Limit FPS during battle menu
                 self.clock.tick(60)
 
-                # Update and draw visual effects continuously
+                # Redraw battle menu (without display update)
+                if self.show_arrow:
+                    self.graphics.create_window(x, y, width, height, selected_image, self.screen, self.color)
+                else:
+                    self.graphics.create_window(x, y, width, height, self.directories.BATTLE_MENU_STATIC_PATH,
+                                              self.screen, self.color)
+
+                # Update and draw visual effects on top
                 self._update_and_draw_battle_effects()
 
-                # Redraw battle menu
-                battle_window_rect = self.graphics.blink_switch(self.screen, selected_image,
-                                                                self.directories.BATTLE_MENU_STATIC_PATH, x, y,
-                                                                width, height,
-                                                                tile_size, self.show_arrow, color=self.color)
+                # Update entire screen
+                display.flip()
 
                 for current_event in event.get():
                     if current_event.type == KEYDOWN:
