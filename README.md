@@ -15,9 +15,45 @@ This is a clone of Dragon Warrior for the Nintendo Entertainment System, done in
 # INSTRUCTIONS
 
 
-Run it from the command line using the interpreter. If you are in the 
+Run it from the command line using the interpreter. If you are in the
 DragonWarrior directory, type:
 python src/game.py
+
+## Running in VS Code
+
+If you're using Visual Studio Code:
+
+1. **Open the project folder** in VS Code (File > Open Folder > select the Dragon_Warrior directory)
+
+2. **Install dependencies**:
+   - Open the integrated terminal (View > Terminal or Ctrl+`)
+   - Create a virtual environment (optional but recommended):
+     ```bash
+     python -m venv venv
+     # On Windows:
+     venv\Scripts\activate
+     # On macOS/Linux:
+     source venv/bin/activate
+     ```
+   - Install required packages:
+     ```bash
+     pip install pygame pygame-menu
+     ```
+
+3. **Run the game**:
+   - **Option 1 - Using the terminal**: In the VS Code terminal, run:
+     ```bash
+     python src/game.py
+     ```
+   - **Option 2 - Using Run/Debug**:
+     - Press F5 or click Run > Start Debugging
+     - If prompted, select "Python File"
+     - Navigate to src/game.py and run it
+
+4. **Run tests** (optional):
+   ```bash
+   pytest
+   ```
 
 ## Default Keys
 
