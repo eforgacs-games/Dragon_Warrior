@@ -52,6 +52,9 @@ class Battle:
         self.tile_size = config['TILE_SIZE']
         self.current_map = current_map
         self.no_op = False
+        # Add graphics for image caching
+        from src.common import Graphics
+        self.graphics = Graphics(config)
 
     def play_battle_music(self):
         if self.config["MUSIC_ENABLED"]:
@@ -73,7 +76,9 @@ class Battle:
     def get_battle_background_image(self):
         """Get the appropriate battle background image."""
         if not self.current_map.is_dark:
-            return scale(image.load(self.directories.BATTLE_BACKGROUND_PATH), (7 * self.tile_size, 7 * self.tile_size))
+            # Use cached scaled image
+            scaled_size = (7 * self.tile_size, 7 * self.tile_size)
+            return self.graphics.get_scaled_image(self.directories.BATTLE_BACKGROUND_PATH, scaled_size)
         black_surface = Surface((7 * self.tile_size, 7 * self.tile_size))
         black_surface.fill(BLACK)
         return black_surface
