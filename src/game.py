@@ -5,7 +5,7 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
-    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, K_F2, K_F3, K_F11, time, KEYDOWN, SCALED, \
+    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, K_F2, K_F3, K_F4, K_F11, time, KEYDOWN, SCALED, \
     USEREVENT, K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
@@ -98,6 +98,7 @@ class Game:
         self.enemy_runaway_attempts = 0
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
         self.last_battle_action = "Fight"  # Default to Fight
+        self.invulnerable = self.game_state.config["INVULNERABLE"]
 
         # debugging
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
@@ -726,6 +727,10 @@ class Game:
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
 
     def receive_damage(self, attack_damage):
+        # God mode or invulnerable: take no damage
+        if self.player.god_mode or self.invulnerable:
+            return
+
         self.sound.play_sound(self.directories.receive_damage_2_sfx)
         self.player.current_hp -= attack_damage
         self.color = self.cmd_menu.color = self.get_current_color()
@@ -843,6 +848,10 @@ class Game:
                 self.player.received_environment_damage = False
 
     def damage_step(self, damage_amount):
+        # God mode or invulnerable: take no damage
+        if self.player.god_mode or self.invulnerable:
+            return
+
         self.player.current_hp -= damage_amount
         self.sound.play_sound(self.directories.swamp_sfx)
         self.player.received_environment_damage = True
@@ -896,6 +905,7 @@ class Game:
         self.handle_fullscreen_toggle(current_keydown_event)
         self.handle_auto_stairs_toggle(current_keydown_event)
         self.handle_auto_battle_toggle(current_keydown_event)
+        self.handle_invulnerability_toggle(current_keydown_event)
 
     def handle_help_button(self, keydown_event):
         control_info = ControlInfo(self.config)
@@ -1000,6 +1010,16 @@ class Game:
                 mode_text = self._("Auto-battle enabled\n(Repeats: {})").format(self.last_battle_action)
             else:
                 mode_text = self._("Auto-battle disabled")
+            self.draw_temporary_text(mode_text)
+
+    def handle_invulnerability_toggle(self, keydown_event) -> None:
+        """Toggle invulnerability mode when F4 is pressed."""
+        if keydown_event.key == K_F4:
+            self.invulnerable = not self.invulnerable
+            if self.invulnerable:
+                mode_text = self._("Invulnerability enabled")
+            else:
+                mode_text = self._("Invulnerability disabled")
             self.draw_temporary_text(mode_text)
 
     def update_roaming_character_positions(self) -> None:
