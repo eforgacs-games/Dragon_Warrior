@@ -589,7 +589,6 @@ class CommandMenu(Menu):
             self.game.process_staircase_warps(staircase_location=(self.game.player.row, self.game.player.column),
                                               staircase_dict=self.game.current_map.staircases[
                                                   (self.game.player.row, self.game.player.column)])
-            # TODO: activate the staircase warp to wherever the staircase leads
         else:
             # the original game has quotes in this dialog box
             self.show_text_in_dialog_box(self._("There are no stairs here."), add_quotes=True, skip_text=self.skip_text)
