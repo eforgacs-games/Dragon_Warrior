@@ -231,7 +231,7 @@ class DialogLookup:
                                                         "Thus, I propose a test.",
                                                         "There is a Silver Harp that beckons to the creatures of the Dragonlord.",
                                                         "Bring this to me and I will reward thee with the Staff of Rain.")}},
-            'MagicTemple': {'WISE_MAN': {'dialog': self.magic_temple_rainbow_drop_exchange}}
+            'MagicTemple': {'WISE_MAN': {'dialog': (self.magic_temple_rainbow_drop_exchange,)}}
         }
 
         for map_dict in self.lookup_table.values():
