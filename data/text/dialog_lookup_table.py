@@ -8,6 +8,7 @@ from data.text.dialog import confirmation_prompt
 from src.calculation import Calculation
 from src.color import BLACK
 from src.common import WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
+from src.direction import Direction
 from src.directories import Directories
 from src.items import weapons, armor, shields
 from src import maps
@@ -332,6 +333,8 @@ class DialogLookup:
             alefgard_map = maps.map_lookup['Alefgard'](self.config)
             alefgard_map.destination_coordinates = (116, 116)
             self.command_menu.game.change_map(alefgard_map)
+            # Set player to face down after teleporting out
+            self.player.direction_value = Direction.DOWN.value
 
     def prompt_for_save(self):
         return confirmation_prompt(self.command_menu,
