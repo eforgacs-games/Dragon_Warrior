@@ -28,6 +28,7 @@ prod_config = {
     "TEXT_SPEED": "Fast",
     "NO_WAIT": False,
     "GOD_MODE": False,
+    "AUTO_STAIRS": False,
     "RENDER_TEXT": True,
     "NO_BLIT": False
 }
