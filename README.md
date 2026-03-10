@@ -80,4 +80,4 @@ https://user-images.githubusercontent.com/23140027/165859033-1abe8a84-af2e-48c1-
 
 For quick demonstration purposes, you can run this in the browser on repl.it, but ideally this should be run normally through the command line as delineated above, since performance suffers greatly in the browser. Additionally, the version of the code currently on repl.it does not have the latest code improvements that this repository does.
 
-[![Run on Repl.it](https://repl.it/badge/github/eforgacs-games/DragonWarrior)](https://repl.it/@eforgacs/DW)
+[![Run on Repl.it](https://repl.it/badge/github/eforgacs-games/DragonWarrior)]([https://repl.it/@eforgacs/DW](https://replit.com/@eforgacs/DragonWarrior))
