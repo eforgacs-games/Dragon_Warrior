@@ -1,14 +1,28 @@
+import os
 from unittest import TestCase, mock
 from unittest.mock import MagicMock
 
+import pygame
 from pygame import time
 from pygame.time import get_ticks
 
 from src.config.test_config import test_config
 from src.movement import Movement
 
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
+
 
 class TestSound(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+        pygame.mixer.init()
+
+    @classmethod
+    def tearDownClass(cls):
+        pygame.quit()
 
     @mock.patch.object(time, "get_ticks", return_value=300)
     def test_bump(self, mock_get_ticks):
