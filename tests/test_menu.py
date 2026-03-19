@@ -2,6 +2,7 @@ import os
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+import pygame
 from pygame import KEYDOWN, K_RETURN, event
 
 from src.config.test_config import test_config
@@ -14,8 +15,20 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 class TestCommandMenu(TestCase):
 
-    @patch('src.game.Game.set_screen')
-    def setUp(self, mock_set_screen) -> None:
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+        pygame.mixer.init()
+        cls.screen = pygame.display.set_mode((800, 600))
+
+    @classmethod
+    def tearDownClass(cls):
+        pygame.quit()
+
+    def setUp(self) -> None:
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
         with patch('src.game.SCALED'):
             self.game = Game(test_config)
         self.game.current_map = MockMap(self.game.config)
