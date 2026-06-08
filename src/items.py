@@ -1,4 +1,5 @@
 import random
+from typing import Dict, Tuple
 
 weapons = {
     "Bamboo Pole": {'offense': 2, 'cost': 10, 'found': ("Brecconary", "Cantlin")},
@@ -33,7 +34,7 @@ shields = {
     "Silver Shield": {'defense': 20, 'cost': 14_800, 'sold': ("Cantlin",)},
 }
 
-treasure = {
+treasure: Dict[str, Dict[Tuple[int, int], Dict[str, object]]] = {
     'TantegelThroneRoom': {(7, 17): {'item': 'Magic Key'},
                            (10, 14): {'item': "GOLD", 'amount': 120},
                            (10, 15): {'item': "Torch"}},

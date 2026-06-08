@@ -176,9 +176,10 @@ class DragonWarriorMap:
     def map_npc(self, identifier, direction, underlying_tile, image_path, four_sided, coordinates,
                 is_roaming) -> None:
         sheet = self.graphics.get_image(image_path)
-        character_sprites = LayeredDirty()
+        character_sprites: LayeredDirty = LayeredDirty()
         sheet = scale(sheet, (sheet.get_width() * self.scale, sheet.get_height() * self.scale))
         images = parse_animated_sprite_sheet(sheet, self.config)
+        character: RoamingCharacter | FixedCharacter | AnimatedSprite
         if four_sided:
             if is_roaming:
                 character = RoamingCharacter(self.center_pt, direction, images, identifier)
@@ -190,7 +191,7 @@ class DragonWarriorMap:
                 self.fixed_characters.append(character)
         else:
             character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, identifier)
-            character.row, character.column = coordinates
+            character.row, character.column = coordinates  # type: ignore[attr-defined]
             self.fixed_characters.append(character)
         character_sprites.add(character)
         tile_value = \
@@ -265,7 +266,7 @@ class DragonWarriorMap:
 
     def create_town_gates(self, north_gate=None, east_gate=None, west_gate=None, south_gate=None) -> None:
         alefgard_up_staircase = {'map': 'Alefgard', 'stair_direction': 'up'}
-        staircases_keys = []
+        staircases_keys: list[tuple] = []
         staircases_keys += north_gate if north_gate is not None else []
         staircases_keys += east_gate if east_gate is not None else []
         staircases_keys += west_gate if west_gate is not None else []

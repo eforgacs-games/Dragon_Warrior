@@ -20,8 +20,8 @@ def find_file(name, path):
 
 # Images
 
-_image_library = {}
-_scaled_image_library = {}  # Cache for scaled images
+_image_library: dict[str, object] = {}
+_scaled_image_library: dict[tuple, object] = {}  # Cache for scaled images
 
 
 # Characters

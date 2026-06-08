@@ -256,7 +256,7 @@ class Drawer:
 
             # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
 
-        group_to_draw = Group()
+        group_to_draw: Group = Group()
         camera_screen_rect = Rect(player.rect.x - tile_size * 8, player.rect.y - tile_size * 7,
                                   screen.get_width(), screen.get_height())
         double_camera_screen_rect = camera_screen_rect.inflate(camera_screen_rect.width * 0.25,
