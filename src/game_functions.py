@@ -32,7 +32,7 @@ class GameFunctions:
         self.graphics = Graphics(config)  # Add graphics for caching
 
     def main_menu_selection(self, blink_start: int, screen, unselected_image: str, selected_image: str,
-                            other_selected_images: List[str] = None, no_blit: bool = False) -> int:
+                            other_selected_images: List[str] | None = None, no_blit: bool = False) -> int:
         # TODO: Merge with open_store_inventory() if possible
         current_item_index = 0
         all_selected_images = [selected_image] + (other_selected_images or [])
@@ -69,7 +69,7 @@ def set_character_position(character, tile_size: int):
     character.column, character.row = character.rect.x // tile_size, character.rect.y // tile_size
 
 
-def get_next_coordinates(character_column: int, character_row: int, direction: int, offset_from_character: int = 1) -> Tuple[int, int]:
+def get_next_coordinates(character_column: int, character_row: int, direction: int, offset_from_character: int = 1) -> Tuple[int, int] | None:
     match direction:
         case Direction.UP.value:
             return character_row - offset_from_character, character_column
@@ -79,6 +79,7 @@ def get_next_coordinates(character_column: int, character_row: int, direction: i
             return character_row, character_column - offset_from_character
         case Direction.RIGHT.value:
             return character_row, character_column + offset_from_character
+    return None
 
 
 def get_surrounding_rect(character, tile_size: int) -> Rect:

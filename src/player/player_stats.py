@@ -1,4 +1,5 @@
 from math import floor
+from typing import cast
 
 from src.spells import Spell
 
@@ -41,7 +42,7 @@ letter_calculations = {
     15: ("f", "v", "L", "("),
 }
 
-levels_list = {
+levels_list: dict[int, dict[str, int | Spell | None]] = {
     1: {'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
     2: {'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
     3: {'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': Spell.HEAL},
@@ -102,8 +103,8 @@ def get_bonus(name_score: int) -> int:
     return (name_score // 4) % 4
 
 
-def stat_calc(bonus: int, base: int) -> int:
-    return floor(base * .9) + bonus
+def stat_calc(bonus: int, base: int | None) -> int:
+    return floor((base or 0) * .9) + bonus
 
 
 def determine_penalized_stats(name_score: int) -> tuple[str, ...]:
@@ -126,4 +127,4 @@ def apply_transformation_to_levels_list(name: str) -> None:
         for stat in penalized_stats:
             if stat == 'max_mp' and i <= 2:
                 continue
-            levels_list[i][stat] = stat_calc(bonus, levels_list[i][stat])
+            levels_list[i][stat] = stat_calc(bonus, cast(int | None, levels_list[i][stat]))

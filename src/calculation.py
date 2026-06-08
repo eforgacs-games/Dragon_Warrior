@@ -15,7 +15,7 @@ class Calculation:
 
     @staticmethod
     def get_next_tile_identifier(character_column: int, character_row: int, direction_value: int, current_map,
-                                 offset: int = 1) -> str:
+                                 offset: int = 1) -> str | None:
         """
         Retrieve the identifier (human-readable name) of the next tile in front of a particular character.
         :type character_column: int
@@ -35,6 +35,7 @@ class Calculation:
             return get_tile_id_by_coordinates(character_column - offset, character_row, current_map)
         elif direction_value == Direction.RIGHT.value:
             return get_tile_id_by_coordinates(character_column + offset, character_row, current_map)
+        return None
 
     def convert_to_frames_since_start_time(self, start_time):
         return self.convert_to_frames(get_ticks() - start_time)
@@ -45,7 +46,7 @@ class Calculation:
         return column - 51,  row - 50
 
 
-def get_tile_id_by_coordinates(column: int, row: int, game_map) -> str:
+def get_tile_id_by_coordinates(column: int, row: int, game_map) -> str | None:
     """
     Retrieve the tile name from the coordinates of the tile on the map.
     :param column: The column of the tile.
@@ -54,3 +55,4 @@ def get_tile_id_by_coordinates(column: int, row: int, game_map) -> str:
     """
     if row < len(game_map.layout) and column < len(game_map.layout[0]):
         return game_map.get_tile_by_value(game_map.layout[row][column])
+    return None

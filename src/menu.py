@@ -5,7 +5,7 @@ from collections import Counter
 from os.path import join
 
 from src.spells import Spell
-from typing import Tuple, List
+from typing import Any, Callable, Tuple, List
 
 import pygame_menu
 from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, mixer
@@ -175,7 +175,7 @@ class CommandMenu(Menu):
         self.show_line_in_dialog_box(line, add_quotes=False, skip_text=True, hide_arrow=True, disable_sound=True)
 
     def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True,
-                                temp_text_start: int = None, skip_text: bool = False, hide_arrow=False,
+                                temp_text_start: int | None = None, skip_text: bool = False, hide_arrow=False,
                                 disable_sound=False, letter_by_letter=True):
         """Shows a single line in a dialog box.
         :param hide_arrow: Whether to show the continuation arrow
@@ -306,7 +306,7 @@ class CommandMenu(Menu):
             # if the map is dark, drawing all the tiles to the screen basically creates an exploit that shows the map tiles lit up,
             # even without a torch or radiant
             # might be good to revisit this later with just a black background?
-            group_to_draw = Group()
+            group_to_draw: Group = Group()
             for tile, tile_dict in self.current_map.floor_tile_key.items():
                 if tile in self.current_map.tile_types_in_current_map and tile_dict.get('group'):
                     for tile_sprite in tile_dict['group']:
@@ -707,6 +707,7 @@ class CommandMenu(Menu):
         :param menu_name: The name of the menu to display.
         """
         tile_size = self.game.game_state.config['TILE_SIZE']
+        function_dict: dict[Any, Any] = {}
         if menu_name == 'inventory':
             list_counter = Counter(self.player.inventory)
             list_string = ""
@@ -832,7 +833,7 @@ class CommandMenu(Menu):
         if self.player.current_tile == 'TREASURE_BOX':
             treasure_info = treasure[self.map_name].get((self.player.row, self.player.column))
             if treasure_info:
-                item_name = treasure_info['item']
+                item_name = str(treasure_info['item']) if treasure_info.get('item') is not None else None
                 self.sound.play_sound(self.directories.menu_button_sfx)
                 if item_name:
                     if item_name == 'GOLD':

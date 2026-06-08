@@ -20,7 +20,7 @@ class DialogBoxWrapper(textwrap.TextWrapper):
 
 def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, color: tuple = WHITE, size: int = 16,
               text_wrap_length: int = WRAP_LENGTH, alignment: str = 'left', letter_by_letter: bool = True,
-              disable_sound: bool = False, font_name: str = None) -> str:
+              disable_sound: bool = False, font_name: str | None = None) -> str | None:
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
     # chunks = [text[i:i + n] for i in range(0, len(text), n)]
@@ -51,6 +51,7 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
         y += 17
         if chunk == chunks[len(chunks) - 1]:
             return chunk
+    return None
 
 
 def set_font_by_ascii_chars(chunks, size, font_name, directories):

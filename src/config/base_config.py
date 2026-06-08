@@ -2,6 +2,7 @@ import locale
 
 SCALE = 2
 LANGUAGE, ENCODING = locale.getlocale()
+LANGUAGE = LANGUAGE or "en_US"
 
 base_config = {
     "START_MAP": "TantegelThroneRoom",
