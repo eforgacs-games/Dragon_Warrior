@@ -1,3 +1,4 @@
+from src.constants import ANIMATION_FRAME_DELAY, ANIMATION_CYCLE_TICKS, ANIMATION_MAX_FRAME
 from src.direction import Direction
 from src.sprites.base_sprite import BaseSprite
 
@@ -7,7 +8,7 @@ class AnimatedSprite(BaseSprite):
         self.identifier = identifier
         self.current_frame = 0
         self.frame_count = 0
-        self.frame_delay = 2
+        self.frame_delay = ANIMATION_FRAME_DELAY
         self.direction_value = direction_value
         self.images_map = {}
         self.set_images(images)
@@ -28,13 +29,12 @@ class AnimatedSprite(BaseSprite):
             }
 
     def animate(self):
-        max_frame = 1
         self.frame_count += 1
-        if self.frame_count % 15 == 0:
+        if self.frame_count % ANIMATION_CYCLE_TICKS == 0:
             if self.frame_count > self.frame_delay:
                 self.frame_count = 0
                 self.current_frame += 1
-            if self.current_frame > max_frame:
+            if self.current_frame > ANIMATION_MAX_FRAME:
                 self.current_frame = 0
         if self.direction_value in self.images_map.keys():
             # have gotten an IndexError: list index out of range here
