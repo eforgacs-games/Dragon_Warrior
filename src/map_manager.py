@@ -132,8 +132,6 @@ class MapManager:
         self.last_map = self.current_map
         self.current_map = next_map
         moving_within_tantegel_castle = came_from_throne_room or came_from_courtyard
-        for character_coordinates, tile_value in self.last_map.character_position_record.items():
-            self.last_map.layout[character_coordinates[0]][character_coordinates[1]] = tile_value
         if not self.game.allow_save_prompt:
             if came_from_throne_room:
                 self.game.allow_save_prompt = True
@@ -152,14 +150,8 @@ class MapManager:
             current_map_staircase_dict = None
             destination_coordinates = (10, 13)  # TantegelThroneRoom, in front of King Lorik
         self.current_map.destination_coordinates = destination_coordinates
-        initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        if not initial_hero_location:
-            initial_hero_location = self.player.row, self.player.column
         if destination_coordinates:
-            if self.current_map.initial_coordinates != destination_coordinates:
-                self.reset_initial_hero_location_tile()
-            self.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
-            self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
+            self.set_underlying_tiles_on_map_change(destination_coordinates)
         self.current_map.load_map(self.player, destination_coordinates, self.tile_size)
         if not self.current_map.is_dark:
             self.game.torch_active = False
@@ -183,24 +175,14 @@ class MapManager:
                              self.game.torch_active, self.game.color)
         fade(fade_out=False, screen=self.screen, config=self.game_state.config)
 
-    def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
+    def set_underlying_tiles_on_map_change(self, destination_coordinates):
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN', 'CAVE'):
             self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_UP'
         elif self.player.current_tile == 'BRICK_STAIR_UP' and self.current_map.identifier != 'Alefgard':
             self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_DOWN'
         else:
-            if destination_coordinates != initial_hero_location:
-                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
-                    self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
-            else:
-                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.hero_underlying_tile()
-
-    def reset_initial_hero_location_tile(self):
-        initial_coordinates = self.current_map.initial_coordinates
-        if self.current_map.layout[initial_coordinates[0]][initial_coordinates[1]] != \
-                self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']:
-            self.current_map.layout[initial_coordinates[0]][initial_coordinates[1]] = \
-                self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']
+            self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
+                self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
 
     def set_big_map(self):
         self.game.big_map = Surface(

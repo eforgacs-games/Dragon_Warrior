@@ -113,7 +113,7 @@ class TestGame(TestCase):
     #     self.assertRaises(NotImplementedError, self.game.current_map.hero_underlying_tile)
 
     def test_get_tile_by_coordinates(self):
-        self.assertEqual('HERO', get_tile_id_by_coordinates(0, 0, self.game.current_map))
+        self.assertEqual('BRICK', get_tile_id_by_coordinates(0, 0, self.game.current_map))
         self.assertEqual('ROOF', get_tile_id_by_coordinates(1, 0, self.game.current_map))
         self.assertEqual('WALL', get_tile_id_by_coordinates(0, 1, self.game.current_map))
         self.assertEqual('WOOD', get_tile_id_by_coordinates(1, 1, self.game.current_map))
@@ -457,8 +457,8 @@ class TestGame(TestCase):
 
     def test_get_events(self):
         self.game.get_events()
-        # this is a weird value for the player current tile
-        self.assertEqual('SOLDIER', self.game.player.current_tile)
+        # this is a weird value for the player current tile (wraps to layout[-1][-1])
+        self.assertEqual('BRICK', self.game.player.current_tile)
         self.assertEqual((0, -1), self.game.player.next_coordinates)
         self.assertEqual((1, -1), self.game.player.next_next_coordinates)
         self.game.enable_roaming = True
