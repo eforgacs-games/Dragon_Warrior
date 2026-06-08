@@ -169,7 +169,7 @@ class MapManager:
             self.game.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]),
                                                  self.tile_size)
         self.drawer.draw_all(self.screen, self.game.loop_count, self.game.big_map, self.current_map, self.player,
-                             self.game.cmd_menu, self.game.foreground_rects, self.game.enable_animate,
+                             self.game.cmd_menu, self.game.foreground_rects, self.game_state.enable_animate,
                              self.game.camera, self.game.initial_dialog_enabled, self.game.events,
                              self.game.skip_text, self.game.allow_save_prompt, self.game_state,
                              self.game.torch_active, self.game.color)

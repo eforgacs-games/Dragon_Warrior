@@ -129,7 +129,16 @@ class CommandMenu(Menu):
             'Name': self.player.name,
             'Experience': self.player.total_experience,
             'Gold': self.player.gold,
-            'Inventory': self.player.inventory
+            'CurrentHP': self.player.current_hp,
+            'CurrentMP': self.player.current_mp,
+            'Weapon': self.player.weapon,
+            'Armor': self.player.armor,
+            'Shield': self.player.shield,
+            'Inventory': self.player.inventory,
+            'Spells': self.player.spells,
+            'CurrentMap': self.game.current_map.identifier,
+            'PlayerRow': self.player.row,
+            'PlayerColumn': self.player.column,
         }
         json_object = json.dumps(save_dict, indent=4)
         with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'),
