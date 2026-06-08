@@ -6,9 +6,9 @@ from src.maps import MapWithoutNPCs
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
-layout = [[33, 0, 3],
+layout = [[3, 0, 3],
           [1, 2, 3],
-          [3, 3, 39]]
+          [3, 3, 3]]
 
 
 class MockMap(MapWithoutNPCs):

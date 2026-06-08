@@ -56,7 +56,7 @@ class DragonWarriorMap:
                                          configured_scale=config['SCALE'])
         self.impassable_tiles = all_impassable_tiles
         self.custom_underlying_tiles = {}
-        self.character_position_record = {}
+        self.npc_coordinates = {}
         self.tile_group_dict = {}
         if staircases is None:
             staircases = {}
@@ -132,17 +132,6 @@ class DragonWarriorMap:
         """Returns the tile name from the integer value associated with it."""
         return list(self.tile_key.keys())[position]
 
-    def get_initial_character_location(self, character_name: str):
-        """
-        Gets the initial location of any character specified.
-        :param character_name: Name of the character to find
-        :return:
-        """
-        character_layout_position = [(ix, iy) for ix, row in enumerate(self.layout) for iy, i in enumerate(row) if
-                                     i == self.character_key[character_name]['val']]
-        if character_layout_position:
-            return character_layout_position[0][0], character_layout_position[0][1]
-
     def load_map(self, player, destination_coordinates, tile_size) -> None:
         self.destination_coordinates = destination_coordinates
         self.tile_types_in_current_map = self.get_tiles_in_current_map()
@@ -150,35 +139,26 @@ class DragonWarriorMap:
         for row in range(len(self.layout)):
             for column in range(len(self.layout[row])):
                 self.center_pt = get_center_point(column, row, tile_size=tile_size)
-                if self.layout[row][column] <= 32:  # anything below 32 is a floor tile
-                    self.map_floor_tiles(column, row)
-                else:
-                    self.map_character_tiles(column, row, player)
-        self.set_characters_initial_directions()
-
-    def get_tiles_in_current_map(self) -> set:
-        return set([self.get_tile_by_value(tile) for row in self.layout for tile in row] + [
-            self.tile_key['HERO']['underlying_tile']])
-
-    # @timeit
-    def map_character_tiles(self, column, row, player) -> None:
-        current_tile = self.layout[row][column]
-        for character, character_dict in self.character_key.items():
-            if current_tile == character_dict['val']:
-                self.map_character(character, character_dict, current_tile, player, (row, column))
-
-    def map_character(self, character, character_dict, current_tile, player, coordinates) -> None:
-        if current_tile == self.character_key['HERO']['val']:
-            # will this cause issues with the hero images (holding sword/shield)? time will tell...
+                self.map_floor_tiles(column, row)
+        for (npc_row, npc_col), character_name in self.npc_coordinates.items():
+            self.center_pt = get_center_point(npc_col, npc_row, tile_size=tile_size)
+            char_dict = self.character_key[character_name]
+            identifier = self.set_identifiers_for_duplicate_characters(character_name)
+            self.map_npc(identifier, char_dict.get('direction'), char_dict['underlying_tile'],
+                         char_dict['path'], char_dict['four_sided'],
+                         (npc_row, npc_col), identifier in self.roaming_character_list)
+        hero_coords = destination_coordinates if destination_coordinates else self.initial_coordinates
+        if hero_coords:
+            hero_row, hero_col = hero_coords
+            self.center_pt = get_center_point(hero_col, hero_row, tile_size=tile_size)
             AnimatedSprite.__init__(player, self.center_pt, player.direction_value,
                                     images=self.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
                                     identifier='HERO')
-            self.map_player(character_dict['underlying_tile'], player, coordinates)
-        else:
-            character = self.set_identifiers_for_duplicate_characters(character)
-            self.map_npc(character, character_dict.get('direction'), character_dict['underlying_tile'],
-                         character_dict['path'], character_dict['four_sided'],
-                         coordinates, character in self.roaming_character_list)
+            self.map_player(self.character_key['HERO']['underlying_tile'], player, hero_coords)
+        self.set_characters_initial_directions()
+
+    def get_tiles_in_current_map(self) -> set:
+        return set(self.get_tile_by_value(tile) for row in self.layout for tile in row)
 
     def set_identifiers_for_duplicate_characters(self, character):
         character_count = [character_dict['tile_value'] for character_dict in self.characters.values()].count(
@@ -220,20 +200,10 @@ class DragonWarriorMap:
                                                  'tile_value': tile_value,
                                                  'coordinates': coordinates
                                                  }
-        if self.custom_underlying_tiles:
-            if self.custom_underlying_tiles.get(character.identifier):
-                self.add_tile(self.floor_tile_key[self.custom_underlying_tiles[character.identifier]], self.center_pt)
-                self.character_position_record[coordinates[0], coordinates[1]] = tile_value
-                self.layout[coordinates[0]][coordinates[1]] = \
-                    self.floor_tile_key[self.custom_underlying_tiles[character.identifier]]['val']
-            else:
-                self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
-                self.character_position_record[coordinates[0], coordinates[1]] = tile_value
-                self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
+        if self.custom_underlying_tiles and self.custom_underlying_tiles.get(character.identifier):
+            self.add_tile(self.floor_tile_key[self.custom_underlying_tiles[character.identifier]], self.center_pt)
         else:
             self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
-            self.character_position_record[coordinates[0], coordinates[1]] = tile_value
-            self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
     def map_player(self, underlying_tile, player, coordinates) -> None:
         self.player_sprites = LayeredDirty(player)
@@ -243,7 +213,6 @@ class DragonWarriorMap:
                                    'character_sprites': self.player_sprites,
                                    'tile_value': self.character_key['HERO']['val'],
                                    'coordinates': coordinates}
-        self.layout[coordinates[0]][coordinates[1]] = self.floor_tile_key[underlying_tile]['val']
 
     # @timeit
     def map_floor_tiles(self, column, row) -> None:
@@ -310,9 +279,7 @@ class DragonWarriorMap:
     def assign_stair_directions(self):
         for staircase_coordinates, staircase_dict in self.staircases.items():
             layout_staircase_coordinates = self.layout[staircase_coordinates[0]][staircase_coordinates[1]]
-            if layout_staircase_coordinates == 33:
-                staircase_dict['stair_direction'] = 'up' if self.hero_underlying_tile() == 'BRICK_STAIR_UP' else 'down'
-            elif layout_staircase_coordinates == 6:
+            if layout_staircase_coordinates == 6:
                 staircase_dict['stair_direction'] = 'down'
             elif layout_staircase_coordinates == 7:
                 staircase_dict['stair_direction'] = 'up'
@@ -360,6 +327,12 @@ class TantegelThroneRoom(DragonWarriorMap):
                          staircases={
                              (14, 18): {'map': 'TantegelCourtyard', 'destination_coordinates': (14, 14),
                                         'direction': Direction.RIGHT.value}})
+        self.npc_coordinates = {
+            (9, 13): 'KING_LORIK',
+            (11, 16): 'GUARD',
+            (12, 13): 'GUARD',
+            (12, 15): 'GUARD',
+        }
         self.assign_stair_directions()
         self.roaming_character_list = ['GUARD']
 
@@ -391,6 +364,23 @@ class TantegelCourtyard(DragonWarriorMap):
         self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18),
                                      'direction': Direction.LEFT.value}
         self.staircases[(36, 36)] = {'map': 'TantegelCellar', 'destination_coordinates': (4, 1)}
+        self.npc_coordinates = {
+            (8, 31): 'MERCHANT',
+            (12, 34): 'WOMAN',
+            (13, 15): 'GUARD',
+            (15, 9): 'MAN',
+            (15, 15): 'GUARD',
+            (18, 18): 'MAN',
+            (19, 9): 'GUARD',
+            (20, 15): 'WOMAN',
+            (27, 22): 'GUARD',
+            (28, 29): 'SOLDIER',
+            (31, 14): 'MERCHANT',
+            (32, 13): 'MERCHANT',
+            (33, 27): 'WISE_MAN',
+            (34, 16): 'GUARD',
+            (34, 19): 'GUARD',
+        }
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
         self.roaming_character_list = ['MAN_2', 'GUARD_3', 'WOMAN_2', 'MERCHANT_2', 'MERCHANT_3']
@@ -418,6 +408,9 @@ class TantegelCellar(BasementWithNPCs):
         super().__init__(MapLayouts().tantegel_underground, config, Directories(config).tantegel_castle_courtyard_music,
                          (4, 1), staircases={
                 (4, 1): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 36)}})
+        self.npc_coordinates = {
+            (7, 5): 'WISE_MAN',
+        }
         self.assign_stair_directions()
 
     def set_characters_initial_directions(self):
@@ -546,6 +539,9 @@ class CharlockB8(DragonWarriorMap):
         super().__init__(MapLayouts().charlock_b8, config, Directories(config).dungeon_floor_8_music,
                          (33, 16), staircases={
                 (33, 16): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 12)}})
+        self.npc_coordinates = {
+            (28, 22): 'DRAGONLORD',
+        }
         self.assign_stair_directions()
 
     def hero_underlying_tile(self):
@@ -606,6 +602,20 @@ class Brecconary(DragonWarriorMap):
                                east_gate=warp_line((21, 40), (25, 40)),
                                west_gate=warp_line((21, 9), (24, 9)))
         self.set_town_to_overworld_warps()
+        self.npc_coordinates = {
+            (9, 38): 'SOLDIER',
+            (12, 15): 'MERCHANT',
+            (12, 34): 'WOMAN',
+            (15, 14): 'WOMAN',
+            (18, 30): 'MAN',
+            (18, 34): 'WISE_MAN',
+            (21, 11): 'MAN',
+            (29, 20): 'MERCHANT',
+            (31, 30): 'MAN',
+            (33, 35): 'MERCHANT',
+            (34, 13): 'SOLDIER',
+            (34, 20): 'GUARD',
+        }
         self.custom_underlying_tiles = {
             'SOLDIER': 'TREES',
             'WOMAN': 'BRICK',
@@ -639,6 +649,18 @@ class Garinham(DragonWarriorMap):
         self.create_town_gates(west_gate=warp_line((13, 8), (15, 8)),
                                east_gate=warp_line((11, 29), (14, 29)))
         self.set_town_to_overworld_warps()
+        self.npc_coordinates = {
+            (1, 23): 'WISE_MAN',
+            (5, 12): 'GUARD',
+            (5, 14): 'GUARD',
+            (6, 18): 'MERCHANT',
+            (10, 11): 'WISE_MAN',
+            (11, 14): 'MERCHANT',
+            (12, 20): 'WOMAN',
+            (15, 26): 'MERCHANT',
+            (17, 11): 'WISE_MAN',
+            (18, 19): 'MERCHANT',
+        }
         self.custom_underlying_tiles = {
             'WOMAN': 'TREES',
             'WISE_MAN': 'SAND',
@@ -670,6 +692,22 @@ class Kol(DragonWarriorMap):
                                west_gate=warp_line((7, 8), (32, 8)),
                                south_gate=warp_line((32, 8), (32, 33)))
         self.set_town_to_overworld_warps()
+        self.npc_coordinates = {
+            (9, 11): 'WISE_MAN',
+            (9, 22): 'WOMAN',
+            (12, 29): 'MERCHANT',
+            (14, 16): 'SOLDIER',
+            (16, 29): 'WISE_MAN',
+            (17, 23): 'GUARD',
+            (20, 15): 'MAN',
+            (20, 32): 'MERCHANT',
+            (21, 30): 'SOLDIER',
+            (22, 24): 'MAN',
+            (23, 21): 'WOMAN',
+            (27, 30): 'WISE_MAN',
+            (29, 24): 'MERCHANT',
+            (31, 11): 'GUARD',
+        }
         self.custom_underlying_tiles = {
             'WOMAN': 'TREES',
             'WOMAN_2': 'SAND',
@@ -704,6 +742,16 @@ class Rimuldar(DragonWarriorMap):
                                west_gate=warp_line((0, 7), (len(self.layout), 7)),
                                south_gate=warp_line((36, 0), (36, len(self.layout[0]))))
         self.set_town_to_overworld_warps()
+        self.npc_coordinates = {
+            (12, 10): 'MERCHANT',
+            (15, 12): 'WISE_MAN',
+            (15, 31): 'MERCHANT',
+            (16, 23): 'WOMAN',
+            (21, 14): 'WISE_MAN',
+            (26, 24): 'MERCHANT',
+            (31, 11): 'WISE_MAN',
+            (31, 28): 'WISE_MAN',
+        }
         self.custom_underlying_tiles = {
             'MERCHANT': 'GRASS',
             'WISE_MAN_2': 'GRASS'
@@ -751,6 +799,20 @@ class Cantlin(DragonWarriorMap):
                                # east_gate = warp_line((21, 40), (25, 40))
                                )
         self.set_town_to_overworld_warps()
+        self.npc_coordinates = {
+            (11, 8): 'MERCHANT',
+            (13, 22): 'MERCHANT',
+            (14, 27): 'WISE_MAN',
+            (15, 2): 'MAN',
+            (20, 2): 'MERCHANT',
+            (20, 7): 'MERCHANT',
+            (20, 24): 'GUARD',
+            (21, 22): 'WOMAN',
+            (24, 15): 'WISE_MAN',
+            (30, 22): 'WISE_MAN',
+            (34, 4): 'MERCHANT',
+            (36, 14): 'WISE_MAN',
+        }
         self.custom_underlying_tiles = {
             'WISE_MAN_2': 'GRASS'
         }
@@ -809,6 +871,9 @@ class SwampCave(CaveMap):
                          staircases={(6, 4): {'map': 'Alefgard', 'destination_coordinates': (51, 112)},
                                      (36, 4): {'map': 'Alefgard', 'destination_coordinates': (56, 110)}},
                          initial_coordinates=(6, 4))
+        self.npc_coordinates = {
+            (24, 9): 'PRINCESS_GWAELIN',
+        }
         self.assign_stair_directions()
 
     def hero_underlying_tile(self):
@@ -944,6 +1009,9 @@ class StaffOfRainCave(DragonWarriorMap):
     def __init__(self, config):
         super().__init__(MapLayouts().staff_of_rain_cave, config, Directories(config).tantegel_castle_courtyard_music,
                          (11, 6), staircases={(11, 6): {'map': 'Alefgard'}})
+        self.npc_coordinates = {
+            (6, 6): 'WISE_MAN',
+        }
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
@@ -961,6 +1029,9 @@ class MagicTemple(DragonWarriorMap):
     def __init__(self, config):
         super().__init__(MapLayouts().magic_temple, config, Directories(config).tantegel_castle_courtyard_music,
                          (6, 2), staircases={(6, 2): {'map': 'Alefgard'}})
+        self.npc_coordinates = {
+            (7, 6): 'WISE_MAN',
+        }
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
