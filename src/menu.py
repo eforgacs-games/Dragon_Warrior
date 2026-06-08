@@ -69,7 +69,8 @@ class CommandMenu(Menu):
         font = set_font_by_ascii_chars(title, font_size, None, self.directories)
         menu_width = self.command_menu_surface.get_width() * 2
         title_text_width = font.render(title, True, self.color).get_width()
-        title_x_offset = (menu_width - title_text_width) // 2
+        subsurface_width = self.command_menu_surface.get_width()
+        title_x_offset = (subsurface_width - title_text_width) // 2
 
         self.menu = pygame_menu.Menu(
             title=title,
