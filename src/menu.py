@@ -67,10 +67,14 @@ class CommandMenu(Menu):
         SCALE = config['SCALE']
         font_size = 8 * SCALE
         font = set_font_by_ascii_chars(title, font_size, None, self.directories)
+        menu_width = self.command_menu_surface.get_width() * 2
+        title_text_width = font.render(title, True, self.color).get_width()
+        subsurface_width = self.command_menu_surface.get_width()
+        title_x_offset = (subsurface_width - title_text_width) // 2
 
         self.menu = pygame_menu.Menu(
             title=title,
-            width=self.command_menu_surface.get_width() * 2,
+            width=menu_width,
             height=self.command_menu_surface.get_height() * 3,
             center_content=False,
             column_max_width=(tile_size * 4, tile_size * 3),
@@ -83,7 +87,7 @@ class CommandMenu(Menu):
                                            title_font=font,
                                            title_font_color=self.color,
                                            title_font_size=font_size,
-                                           title_offset=(32 * SCALE, 0) if language == 'English' else (55 * SCALE, 0),
+                                           title_offset=(title_x_offset, 0),
                                            widget_font=font,
                                            widget_alignment=pygame_menu.locals.ALIGN_LEFT,
                                            widget_background_color=BLACK,

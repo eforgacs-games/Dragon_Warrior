@@ -23,6 +23,12 @@ from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config.prod_config import prod_config
+from src.constants import (
+    LOW_HP_THRESHOLD, ENEMY_FLEE_PROBABILITY,
+    AUTO_BATTLE_DELAY_MS, ARROW_BLINK_INTERVAL_MS,
+    BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT,
+    MAPS_WITH_ENEMIES, DUNGEON_ZONE_MAP, TANTEGEL_ZONE,
+)
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
@@ -103,7 +109,7 @@ class Game:
         # debugging
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
         init()
-        time.set_timer(arrow_fade, 530)
+        time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
         self.paused = False
         # Create the game window.
         if self.fullscreen_enabled:
@@ -409,46 +415,23 @@ class Game:
             print(f"Window resized to: {resize_event.w}x{resize_event.h}")
 
     def set_text_color(self):
-        if self.player.current_hp <= self.player.max_hp * 0.125:
+        if self.player.current_hp <= self.player.max_hp * LOW_HP_THRESHOLD:
             self.cmd_menu.game.color, self.color = RED, RED
         else:
             self.cmd_menu.game.color, self.color = WHITE, WHITE
 
     def handle_battles(self):
-        maps_with_enemies = (
-            'Alefgard',
-            'Hauksness',
-            'CharlockB2', 'CharlockB3', 'CharlockB4', 'CharlockB5', 'CharlockB6', 'CharlockB7Wide', 'CharlockB7Narrow',
-            'CharlockB8',
-            'SwampCave', 'MountainCaveB1',
-            'GarinsGraveB1', 'GarinsGraveB2', 'GarinsGraveB3', 'GarinsGraveB4')
-        if self.current_map.identifier in maps_with_enemies:
+        if self.current_map.identifier in MAPS_WITH_ENEMIES:
             if self.tiles_moved_since_spawn > 0:
                 if self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
-                    dungeon_identifier_zone_map = {
-                        'Alefgard': (self.player.column // 18, self.player.row // 18),
-                        'Hauksness': (3, 7),  # force dark_blue zone
-                        'SwampCave': (-1, -1),
-                        'GarinsGraveB1': (-2, -2),
-                        'GarinsGraveB2': (-3, -3),
-                        'GarinsGraveB3': (-4, -4),
-                        'GarinsGraveB4': (-5, -5),
-                        'CharlockB1': (-6, -6),
-                        'CharlockB2': (-7, -7),
-                        'CharlockB3': (-8, -8),
-                        'CharlockB4': (-9, -9),
-                        'CharlockB5': (-10, -10),
-                        'CharlockB6': (-11, -11),
-                        'CharlockB7Wide': (-12, -12),
-                        'CharlockB7Narrow': (-13, -13),
-                        'CharlockB8': (-14, -14),
-                        'MountainCaveB1': (-15, -15),
-                    }
-                    current_zone = dungeon_identifier_zone_map.get(self.current_map.identifier)
-                    if current_zone is not None:
-                        enemies_in_current_zone = enemy_territory_map.get(current_zone)
+                    if self.current_map.identifier == 'Alefgard':
+                        current_zone = (self.player.column // 18, self.player.row // 18)
+                    else:
+                        current_zone = DUNGEON_ZONE_MAP.get(self.current_map.identifier)
+                    enemies_in_current_zone = enemy_territory_map.get(current_zone)
+                    if enemies_in_current_zone is not None:
                         # "Zone 0" in the original code is zone (3, 2)
-                        if current_zone == (3, 2):
+                        if current_zone == TANTEGEL_ZONE:
                             random_integer = self.handle_near_tantegel_fight_modifier()
                         else:
                             random_integer = self.get_random_integer_by_tile()
@@ -457,8 +440,6 @@ class Game:
                             self.battle(enemies_in_current_zone)
                         self.battle_menu_row = 0
                         self.battle_menu_column = 0
-                    # if self.last_zone != current_zone:
-                    #     print(f'Zone: {current_zone}\nEnemies: {enemies_in_current_zone}')
                     self.last_zone = current_zone
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
 
@@ -486,7 +467,7 @@ class Game:
                                 'Spell': self.directories.BATTLE_MENU_SPELL_PATH},
                                {'Run': self.directories.BATTLE_MENU_RUN_PATH,
                                 'Item': self.directories.BATTLE_MENU_ITEM_PATH})
-        x, y, width, height = 6, 1, 8, 3
+        x, y, width, height = BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT
         tile_size = self.game_state.config["TILE_SIZE"]
         selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
         battle_window_rect = self.graphics.blink_switch(self.screen, selected_image,
@@ -498,7 +479,7 @@ class Game:
         random_number = random.random()
         if self.enemy_runaway_attempts == 0 or self.enemy_runaway_attempts == current_battle.turn:
             if self.player.strength >= (current_battle.enemy.attack * 2):
-                if random_number < 0.25:
+                if random_number < ENEMY_FLEE_PROBABILITY:
                     self.enemy_runaway_attempts = 0
                     return self.enemy_run_away(current_battle, current_battle.enemy)
                 else:
@@ -508,7 +489,7 @@ class Game:
         if self.auto_battle and not self.player.is_asleep:
             selected_executed_option = self.last_battle_action
             # Small delay so battles don't run at full speed
-            time.wait(200)  # 200ms delay between auto-battle actions
+            time.wait(AUTO_BATTLE_DELAY_MS)
         else:
             # Normal mode: wait for player input
             for current_event in event.get():
@@ -523,7 +504,7 @@ class Game:
                             self.battle_menu_row = 1 - self.battle_menu_row
                         elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
                             self.battle_menu_column = 1 - self.battle_menu_column
-                        time.set_timer(arrow_fade, 530)
+                        time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
                     else:
                         selected_executed_option = 'Sleep'
                 elif current_event.type == arrow_fade:
@@ -537,7 +518,7 @@ class Game:
 
             self.graphics.create_window(x, y, width, height, selected_image, self.screen, self.color)
             display.update(battle_window_rect)
-            time.set_timer(arrow_fade, 530)
+            time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
             if selected_executed_option == 'Fight':
                 self.fight(current_battle)
             elif selected_executed_option == 'Spell':
@@ -560,7 +541,7 @@ class Game:
             current_battle.last_turn = current_battle.turn
             current_battle.turn += 1
             selected_executed_option = None
-            time.set_timer(arrow_fade, 530)
+            time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
             if current_battle.enemy.hp <= 0:
                 run_away = False
                 return run_away
