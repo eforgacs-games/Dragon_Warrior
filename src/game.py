@@ -157,8 +157,6 @@ class Game:
                              self.tile_size)
         self.cmd_menu = CommandMenu(self)
 
-        self.enable_animate = True
-        self.enable_roaming = True
         self.clock = Clock()
         self.music_enabled = self.game_state.music_enabled
 
@@ -369,7 +367,7 @@ class Game:
         """
         Updates character positions and handles warp logic.
         """
-        if self.enable_roaming and self.current_map.roaming_characters:
+        if self.game_state.enable_roaming and self.current_map.roaming_characters:
             self.move_roaming_characters()
             self.update_roaming_character_positions()
         # currently can't process staircases right next to one another, need to fix
@@ -975,18 +973,19 @@ class Game:
                 if not roaming_character.is_moving:
                     roaming_character.direction_value = random.choice(list(map(int, Direction)))
                 else:  # character not moving and no input
-                    return
+                    continue
+                set_character_position(roaming_character, self.tile_size)
                 roaming_character.last_rect = roaming_character.rect.copy()
                 roaming_character.is_moving = True
             else:  # determine if character has reached new tile
                 if is_facing_medially(roaming_character):
                     if curr_pos_y % self.tile_size == 0:
                         roaming_character.is_moving, roaming_character.next_tile_checked = False, False
-                        return
+                        continue
                 elif is_facing_laterally(roaming_character):
                     if curr_pos_x % self.tile_size == 0:
                         roaming_character.is_moving, roaming_character.next_tile_checked = False, False
-                        return
+                        continue
             if is_facing_medially(roaming_character):
                 self.move_medially(roaming_character)
             elif is_facing_laterally(roaming_character):
@@ -999,8 +998,25 @@ class Game:
         """
         self.player.name = save_file["Name"]
         self.player.total_experience = save_file["Experience"]
+        self.player.level = self.player.get_level_by_experience()
+        self.player.update_stats_to_current_level()
         self.player.gold = save_file["Gold"]
+        self.player.current_hp = save_file.get("CurrentHP", self.player.max_hp)
+        self.player.current_mp = save_file.get("CurrentMP", self.player.max_mp)
+        self.player.weapon = save_file.get("Weapon", "")
+        self.player.armor = save_file.get("Armor", "")
+        self.player.shield = save_file.get("Shield", "")
+        self.player.update_attack_power()
+        self.player.update_defense_power()
         self.player.inventory = save_file["Inventory"]
+        self.player.spells = save_file.get("Spells", [])
+        saved_map = save_file.get("CurrentMap")
+        if saved_map and saved_map in map_lookup and saved_map != self.current_map.identifier:
+            next_map = map_lookup[saved_map](self.config)
+            destination = (save_file.get("PlayerRow"), save_file.get("PlayerColumn"))
+            if destination[0] is not None:
+                next_map.destination_coordinates = destination
+            self.map_mgr.change_map(next_map)
 
 
 def run():
