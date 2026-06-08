@@ -188,14 +188,15 @@ class Game:
             self.music_player.load_and_play_music(self.directories.intermezzo)
             self.show_main_menu_screen(self.screen)
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
-                             self.foreground_rects, self.enable_animate, self.camera, self.initial_dialog_enabled,
+                             self.foreground_rects, self.game_state.enable_animate, self.camera,
+                             self.initial_dialog_enabled,
                              self.events, self.skip_text, self.allow_save_prompt, self.game_state, self.torch_active,
                              self.color)
         while True:
             self.clock.tick(self.fps)
             self.get_events()
             self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player,
-                                 self.cmd_menu, self.foreground_rects, self.enable_animate, self.camera,
+                                 self.cmd_menu, self.foreground_rects, self.game_state.enable_animate, self.camera,
                                  self.initial_dialog_enabled, self.events, self.skip_text, self.allow_save_prompt,
                                  self.game_state, self.torch_active, self.color)
             display.flip()
@@ -609,7 +610,8 @@ class Game:
         self.player.received_environment_damage = True
         flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
-                             self.foreground_rects, self.enable_animate, self.camera, self.initial_dialog_enabled,
+                             self.foreground_rects, self.game_state.enable_animate, self.camera,
+                             self.initial_dialog_enabled,
                              self.events, self.skip_text, self.allow_save_prompt, self.game_state, self.torch_active,
                              self.color)
         display.flip()
@@ -667,6 +669,7 @@ class Game:
                 self.paused = False
             else:
                 self.game_state.pause_all_movement()
+                self.player.is_moving = False
                 self.paused = True
             print("I key pressed (Start button).")
 

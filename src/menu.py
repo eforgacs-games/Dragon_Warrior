@@ -236,6 +236,7 @@ class CommandMenu(Menu):
                     if not skip_text and not disable_sound:
                         self.sound.play_sound(self.directories.menu_button_sfx)
                     display_current_line = False
+                    event.clear(KEYDOWN)
                 elif current_event.type == arrow_fade:
                     self.game.show_arrow = not self.game.show_arrow
 
@@ -746,16 +747,16 @@ class CommandMenu(Menu):
         currently_selected_item = list(list_counter.keys())[0]
         time.set_timer(arrow_fade, 530)
         while item_menu_displayed:
-            self.graphics.create_window(x=9, y=3, width=6, height=len(list_counter) + 1,
+            self.graphics.create_window(x=8, y=3, width=7, height=len(list_counter) + 1,
                                         window_background=self.directories.item_menu_background_lookup[
                                             len(list_counter)], screen=self.screen,
                                         color=self.color)
-            draw_text(list_string, tile_size * 10, tile_size * 4, self.screen, self.game.game_state.config,
+            draw_text(list_string, tile_size * 9, tile_size * 4, self.screen, self.game.game_state.config,
                       letter_by_letter=False)
-            self.graphics.blink_arrow(self.screen, x=tile_size * 9.5,
-                                      y=(tile_size + (current_arrow_position * tile_size / 7.5)) * 4, direction="right",
+            self.graphics.blink_arrow(self.screen, x=tile_size * 8.5,
+                                      y=tile_size * 4 + current_arrow_position * 17, direction="right",
                                       show_arrow=self.game.show_arrow, color=self.color)
-            display.update((9 * tile_size, 3 * tile_size, 6 * tile_size, (len(list_counter) + 1) * tile_size))
+            display.update((8 * tile_size, 3 * tile_size, 7 * tile_size, (len(list_counter) + 1) * tile_size))
             for current_event in event.get():
                 if any([current_event.type == KEYDOWN]):
                     if current_event.key in reject_keys:
