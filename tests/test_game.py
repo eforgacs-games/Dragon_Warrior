@@ -568,7 +568,8 @@ class TestGame(TestCase):
     @patch('src.game.Game.set_screen')
     @patch.object(MusicPlayer, "load_and_play_music")
     def test_splash_screen_enabled_load_and_play_music(self, mock_load_and_play_music, mock_set_screen):
-        self.game.__init__(test_config)
+        splash_config = {**test_config, "SPLASH_SCREEN_ENABLED": True}
+        self.game.__init__(splash_config)
         mock_load_and_play_music.assert_called_once_with(self.game.directories.intro_overture)
 
     # @patch('src.config')
