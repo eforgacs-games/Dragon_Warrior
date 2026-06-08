@@ -73,8 +73,8 @@ class Player(AnimatedSprite):
 
         self.points_to_next_level = self.get_points_to_next_level()
 
-        self.spells = []
-        self.inventory = []
+        self.spells: list[str] = []
+        self.inventory: list[str] = []
         self.god_mode = god_mode
         if god_mode:
             self.total_experience = 65536
