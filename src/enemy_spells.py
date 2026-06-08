@@ -25,13 +25,15 @@
 #     HEAL recovers 20 - 27 HP
 # HEALMORE recovers 85 - 100 HP
 
+from src.spells import Spell
+
 enemy_spell_lookup = {
-    "HURT": (3, 10),
-    "HURTMORE": (30, 45),
-    "SLEEP": (0, 0),
-    "STOPSPELL": (0, 0),
-    "HEAL": (20, 27),
-    "HEALMORE": (85, 100),
-    "FIREBREATH": (16, 23),
-    "FIREBREATH2": (65, 72)
+    Spell.HURT: (3, 10),
+    Spell.HURTMORE: (30, 45),
+    Spell.SLEEP: (0, 0),
+    Spell.STOPSPELL: (0, 0),
+    Spell.HEAL: (20, 27),
+    Spell.HEALMORE: (85, 100),
+    Spell.FIREBREATH: (16, 23),
+    Spell.FIREBREATH2: (65, 72),
 }
