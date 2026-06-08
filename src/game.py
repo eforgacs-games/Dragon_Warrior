@@ -5,8 +5,8 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
-    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, mixer, quit, K_F1, K_F2, K_F3, K_F4, K_F11, time, KEYDOWN, SCALED, \
-    USEREVENT, K_RETURN, VIDEORESIZE
+    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, quit, K_F1, K_F2, K_F3, K_F4, K_F11, time, KEYDOWN, SCALED, \
+    K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -16,7 +16,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data.text.intro_lookup_table import ControlInfo
 from src import maps
-from src.battle import calculate_enemy_attack_damage, Battle
+from src.battle import Battle
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
@@ -24,17 +24,13 @@ from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config.prod_config import prod_config
 from src.constants import (
-    LOW_HP_THRESHOLD, ENEMY_FLEE_PROBABILITY,
-    AUTO_BATTLE_DELAY_MS, ARROW_BLINK_INTERVAL_MS,
-    BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT,
+    LOW_HP_THRESHOLD, ARROW_BLINK_INTERVAL_MS,
     MAPS_WITH_ENEMIES, DUNGEON_ZONE_MAP, TANTEGEL_ZONE,
 )
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
 from src.enemy_lookup import enemy_territory_map
-from src.enemy_spells import enemy_spell_lookup
-from src.spells import Spell
 from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
 from src.intro import Intro
@@ -48,9 +44,10 @@ from src.player.player import Player
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
+from src.battle_controller import BattleController
+from src.map_manager import MapManager
+from src.pygame_compat import arrow_fade
 from src.visual_effects import fade, flash_transparent_color
-
-arrow_fade = USEREVENT + 1
 
 
 class Game:
@@ -97,14 +94,7 @@ class Game:
         self.torch_active = False
         self.speed = 2
 
-        # battle
-        self.battle_menu_row = 0
-        self.battle_menu_column = 0
-        self.launch_battle = False
-        self.current_enemy_pattern_index = None
-        self.enemy_runaway_attempts = 0
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
-        self.last_battle_action = "Fight"  # Default to Fight
         self.invulnerable = self.game_state.config["INVULNERABLE"]
 
         # debugging
@@ -135,6 +125,9 @@ class Game:
         # self.current_map can be changed to other maps for development purposes
 
         self.current_map = maps.map_lookup[self.game_state.config["START_MAP"]](self.game_state.config)
+
+        self.battle_ctrl = BattleController(self)
+        self.map_mgr = MapManager(self)
 
         self.set_big_map()
 
@@ -433,279 +426,55 @@ class Game:
                     if enemies_in_current_zone is not None:
                         # "Zone 0" in the original code is zone (3, 2)
                         if current_zone == TANTEGEL_ZONE:
-                            random_integer = self.handle_near_tantegel_fight_modifier()
+                            random_integer = self.battle_ctrl.handle_near_tantegel_fight_modifier()
                         else:
-                            random_integer = self.get_random_integer_by_tile()
-                        self.launch_battle = random_integer == 0 or self.game_state.config["FORCE_BATTLE"]
-                        if self.launch_battle and not self.game_state.config["NO_BATTLES"]:
-                            self.battle(enemies_in_current_zone)
-                        self.battle_menu_row = 0
-                        self.battle_menu_column = 0
+                            random_integer = self.battle_ctrl.get_random_integer_by_tile()
+                        launch_battle = random_integer == 0 or self.game_state.config["FORCE_BATTLE"]
+                        if launch_battle and not self.game_state.config["NO_BATTLES"]:
+                            self.battle_ctrl.run_battle(enemies_in_current_zone)
+                        self.battle_ctrl.battle_menu_row = 0
+                        self.battle_ctrl.battle_menu_column = 0
                     self.last_zone = current_zone
                 self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
 
     def battle(self, enemies_in_current_zone):
-        enemy_name = random.choice(enemies_in_current_zone)
-        current_battle = Battle(self.config, enemy_name, self.current_map)
-        current_battle.play_battle_music()
-        # TODO: Group parameters into respective classes.
-        current_battle.display_battle_window(self.screen, self.drawer,
-                                             self.cmd_menu, self.graphics, self.directories,
-                                             self.color, self.player)
-
-        run_away = False
-        while current_battle.enemy.hp > 0 and not run_away and not self.player.is_dead:
-            # TODO: Figure out run away bug (when player attempts to run, enemy always gets one extra turn).
-            run_away = self.handle_battle_prompts(run_away, current_battle)
-        if current_battle.enemy.hp <= 0:
-            current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, self.music_enabled,
-                                          current_battle.enemy)
-        # TODO: Refactor to music player class with Swatjen.
-        self.music_player.load_and_play_music(self.current_map.music_file_path)
+        self.battle_ctrl.run_battle(enemies_in_current_zone)
 
     def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
-        battle_menu_options = ({'Fight': self.directories.BATTLE_MENU_FIGHT_PATH,
-                                'Spell': self.directories.BATTLE_MENU_SPELL_PATH},
-                               {'Run': self.directories.BATTLE_MENU_RUN_PATH,
-                                'Item': self.directories.BATTLE_MENU_ITEM_PATH})
-        x, y, width, height = BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT
-        tile_size = self.game_state.config["TILE_SIZE"]
-        selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
-        battle_window_rect = self.graphics.blink_switch(self.screen, selected_image,
-                                                        self.directories.BATTLE_MENU_STATIC_PATH, x, y,
-                                                        width, height,
-                                                        tile_size, self.show_arrow, color=self.color)
-        current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
-        selected_executed_option = None
-        random_number = random.random()
-        if self.enemy_runaway_attempts == 0 or self.enemy_runaway_attempts == current_battle.turn:
-            if self.player.strength >= (current_battle.enemy.attack * 2):
-                if random_number < ENEMY_FLEE_PROBABILITY:
-                    self.enemy_runaway_attempts = 0
-                    return self.enemy_run_away(current_battle, current_battle.enemy)
-                else:
-                    self.enemy_runaway_attempts += 1
-
-        # Auto-battle mode: automatically execute last action
-        if self.auto_battle and not self.player.is_asleep:
-            selected_executed_option = self.last_battle_action
-            # Small delay so battles don't run at full speed
-            time.wait(AUTO_BATTLE_DELAY_MS)
-        else:
-            # Normal mode: wait for player input
-            for current_event in event.get():
-                if current_event.type == KEYDOWN:
-                    if not self.player.is_asleep:
-                        if current_event.key in accept_keys:
-                            self.sound.play_sound(self.directories.menu_button_sfx)
-                            selected_executed_option = current_selection
-                        elif current_event.key in reject_keys:
-                            break
-                        elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
-                            self.battle_menu_row = 1 - self.battle_menu_row
-                        elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
-                            self.battle_menu_column = 1 - self.battle_menu_column
-                        time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
-                    else:
-                        selected_executed_option = 'Sleep'
-                elif current_event.type == arrow_fade:
-                    self.show_arrow = not self.show_arrow
-
-        # Execute the selected option (manual or auto)
-        if selected_executed_option:
-            # Track last action for auto-battle (but not Sleep, which is involuntary)
-            if selected_executed_option != 'Sleep':
-                self.last_battle_action = selected_executed_option
-
-            self.graphics.create_window(x, y, width, height, selected_image, self.screen, self.color)
-            display.update(battle_window_rect)
-            time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
-            if selected_executed_option == 'Fight':
-                self.fight(current_battle)
-            elif selected_executed_option == 'Spell':
-                current_battle.battle_spell(self.cmd_menu, self.player, current_battle)
-            elif selected_executed_option == 'Run':
-                run_away = current_battle.battle_run(self.cmd_menu, self.player, current_battle)
-                if run_away:
-                    self.music_player.load_and_play_music(self.current_map.music_file_path)
-                    return run_away
-            elif selected_executed_option == 'Item':
-                if not self.player.inventory:
-                    self.cmd_menu.show_line_in_dialog_box(
-                        'Nothing of use has yet been given to thee.\n',
-                        add_quotes=False, hide_arrow=True, disable_sound=True)
-                    current_battle.no_op = True
-            elif selected_executed_option == 'Sleep':
-                self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
-                                                      add_quotes=False, disable_sound=True,
-                                                      hide_arrow=True, skip_text=True)
-            current_battle.last_turn = current_battle.turn
-            current_battle.turn += 1
-            selected_executed_option = None
-            time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
-            if current_battle.enemy.hp <= 0:
-                run_away = False
-                return run_away
-            elif current_battle.last_turn != current_battle.turn:
-                if not current_battle.no_op:
-                    self.enemy_move(current_battle)
-                    if self.player.current_hp <= 0:
-                        self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
-                        self.player.is_dead = True
-
-                    elif self.player.is_asleep:
-                        self.player.asleep_turns += 1
-                        if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
-                            self.player.is_asleep = False
-                            self.player.asleep_turns = 0
-                            self.cmd_menu.show_line_in_dialog_box(
-                                self._("{} awakes.\n").format(self.player.name) + "Command?\n",
-                                add_quotes=False, disable_sound=True,
-                                hide_arrow=True)
-                        else:
-                            self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
-                                                                  add_quotes=False, disable_sound=True,
-                                                                  hide_arrow=True, skip_text=True)
-                    else:
-                        self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
-                                                              add_quotes=False, disable_sound=True, hide_arrow=True,
-                                                              skip_text=True)
-                else:
-                    current_battle.no_op = False
-                    self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"),
-                                                          add_quotes=False, disable_sound=True, hide_arrow=True,
-                                                          skip_text=True)
-            elif current_event.type == QUIT:
-                quit()
-        return run_away
+        return self.battle_ctrl.handle_battle_prompts(run_away, current_battle)
 
     def enemy_run_away(self, current_battle, enemy):
-        self.sound.play_sound(self.directories.stairs_down_sfx)
-        self.cmd_menu.show_line_in_dialog_box(self._("The {} is running away.").format(self._(enemy.name)),
-                                              add_quotes=False, disable_sound=True, hide_arrow=True)
-        current_battle.make_enemy_image_disappear(self.screen)
-        if self.config["MUSIC_ENABLED"]:
-            mixer.music.load(self.current_map.music_file_path)
-            mixer.music.play(-1)
-        return True
+        return self.battle_ctrl.enemy_run_away(current_battle, enemy)
 
     def fight(self, current_battle):
-        self.hero_attack(current_battle)
+        self.battle_ctrl.fight(current_battle)
 
     def hero_attack(self, current_battle):
-        self.sound.play_sound(self.directories.attack_sfx)
-        self.cmd_menu.show_line_in_dialog_box(self._("{} attacks!\n").format(self.player.name),
-                                              add_quotes=False, disable_sound=True, hide_arrow=True)
-        attack_damage = current_battle.calculate_attack_damage(self.cmd_menu, self.player, current_battle.enemy)
-        if attack_damage <= 0:
-            current_battle.missed_attack(self.cmd_menu)
-        elif random.random() < current_battle.enemy.dodge:
-            self.sound.play_sound(self.directories.missed_sfx)
-            self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!").format(self._(current_battle.enemy.name)),
-                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
-        else:
-            self.sound.play_sound(self.directories.hit_sfx)
-            self.cmd_menu.show_line_in_dialog_box(
-                self._("The {}'s Hit Points have been reduced by {}.\n").format(self._(current_battle.enemy.name),
-                                                                                attack_damage),
-                add_quotes=False,
-                disable_sound=True, hide_arrow=True)
-            current_battle.enemy.hp -= attack_damage
-            # print(f"{enemy.name} HP: {enemy.hp}/{enemy_string_lookup[enemy.name]().hp}")
+        self.battle_ctrl.hero_attack(current_battle)
 
     def enemy_move(self, current_battle: Battle):
-        if not current_battle.enemy.pattern:
-            self.enemy_attack(current_battle)
-        else:
-            current_index = 0
-            current_enemy_pattern = current_battle.enemy.pattern[current_index]
-            self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, current_battle.enemy)
+        self.battle_ctrl.enemy_move(current_battle)
 
     def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
-        enemy.refresh_pattern()
-        if isinstance(current_enemy_pattern, tuple):
-            # (X% chance to do current_spell if Z)
-            x = current_enemy_pattern[0]
-            current_spell = current_enemy_pattern[1]
-            z = current_enemy_pattern[2]
-            if current_spell == Spell.SLEEP and self.player.is_asleep:
-                z = False
-            if z:
-                if random.randint(0, 100) < x:
-                    if current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
-                        self.cmd_menu.show_line_in_dialog_box(
-                            self._("{} chants the spell of {}.").format(self._(enemy.name),
-                                                                        self._(current_spell)), add_quotes=False,
-                            disable_sound=True, hide_arrow=True)
-
-                        self.sound.play_sound(self.directories.spell_sfx)
-
-                    else:
-                        self.cmd_menu.show_line_in_dialog_box(
-                            self._("The {} is breathing fire.\n").format(self._(enemy.name)),
-                            add_quotes=False, disable_sound=True, hide_arrow=True)
-                        self.sound.play_sound(self.directories.breathe_fire_sfx)
-                    time.wait(1000)
-                    spell_effect_lower_bound, spell_effect_upper_bound = enemy_spell_lookup[current_spell]
-                    spell_effect = random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
-                    if current_spell in (Spell.HEAL, Spell.HEALMORE):
-                        enemy.recover_hp(spell_effect)
-                    elif current_spell == Spell.SLEEP:
-                        self.player.is_asleep = True
-                        self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), add_quotes=False,
-                                                              disable_sound=True, hide_arrow=True)
-                    elif current_spell in (Spell.HURT, Spell.HURTMORE):
-                        if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
-                            spell_effect *= 0.66
-                        self.receive_damage(spell_effect)
-                    elif current_spell == Spell.STOPSPELL:
-                        if self.player.armor != "Erdrick's Armor":
-                            if random.randint(0, 1) == 1:
-                                self.player.is_stopspelled = True
-                    elif current_spell in (Spell.FIREBREATH, Spell.FIREBREATH2):
-                        if self.player.armor == "Erdrick's Armor":
-                            spell_effect *= 0.66
-                        self.receive_damage(spell_effect)
-                else:
-                    self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
-            else:
-                self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
-        elif isinstance(current_enemy_pattern, str):
-            # (do X)
-            if current_enemy_pattern == Spell.ATTACK:
-                self.enemy_attack(current_battle)
-
-            # (EnemyAttack - HeroAgility / 2) / 4,
-            #
-            # to:
-            #
-            # (EnemyAttack - HeroAgility / 2) / 2
+        self.battle_ctrl.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
 
     def increment_and_execute_enemy_pattern(self, current_battle, current_index, enemy):
-        current_index += 1
-        # print(f"{enemy.name} current_index: {current_index}")
-        # print(f"{enemy.name} pattern: {enemy.pattern}")
-        if enemy.pattern:
-            current_enemy_pattern = enemy.pattern[current_index]
-            self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
-        else:
-            self.enemy_attack(current_battle)
+        self.battle_ctrl.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
 
     def enemy_attack(self, current_battle):
-        self.enemy_attack_message(current_battle.enemy)
-        self.execute_enemy_attack(current_battle)
+        self.battle_ctrl.enemy_attack(current_battle)
 
     def execute_enemy_attack(self, current_battle):
-        attack_damage = calculate_enemy_attack_damage(self.player, current_battle.enemy)
-        if attack_damage <= 0:
-            current_battle.missed_attack(self.cmd_menu)
-        else:
-            self.receive_damage(attack_damage)
+        self.battle_ctrl.execute_enemy_attack(current_battle)
 
     def enemy_attack_message(self, enemy):
-        self.sound.play_sound(self.directories.prepare_attack_sfx)
-        self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(self._(enemy.name)),
-                                              add_quotes=False, disable_sound=True, hide_arrow=True)
+        self.battle_ctrl.enemy_attack_message(enemy)
+
+    def handle_near_tantegel_fight_modifier(self):
+        return self.battle_ctrl.handle_near_tantegel_fight_modifier()
+
+    def get_random_integer_by_tile(self):
+        return self.battle_ctrl.get_random_integer_by_tile()
 
     def receive_damage(self, attack_damage):
         # God mode or invulnerable: take no damage
@@ -844,33 +613,10 @@ class Game:
         display.flip()
 
     def handle_warps(self):
-        immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1', 'MagicTemple',
-                               'Alefgard', 'MountainCaveB1', 'MountainCaveB2')
-
-        # Determine movement threshold based on auto_stairs setting
-        if self.auto_stairs:
-            # Auto-stairs mode: warp after moving just 1 tile from spawn
-            movement_threshold = self.tiles_moved_since_spawn > 0
-        else:
-            # Normal mode: require 2-3 tiles of movement to prevent buggy warping
-            movement_threshold = self.tiles_moved_since_spawn > 2 or (
-                self.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps)
-
-        if movement_threshold:
-            for staircase_location, staircase_dict in self.current_map.staircases.items():
-                if (self.player.row, self.player.column) == staircase_location:
-                    self.process_warp(staircase_dict)
-                    break
+        self.map_mgr.handle_warps()
 
     def process_warp(self, staircase_dict):
-        self.player.bumped = False
-        match staircase_dict['stair_direction']:
-            case 'down':
-                self.sound.play_sound(self.directories.stairs_down_sfx)
-            case 'up':
-                self.sound.play_sound(self.directories.stairs_up_sfx)
-        next_map = map_lookup[staircase_dict['map']](self.config)
-        self.change_map(next_map)
+        self.map_mgr.process_warp(staircase_dict)
 
     def handle_keypresses(self, current_keydown_event):
         self.handle_b_button(current_keydown_event)
@@ -988,7 +734,7 @@ class Game:
         if keydown_event.key == K_F3:
             self.auto_battle = not self.auto_battle
             if self.auto_battle:
-                mode_text = self._("Auto-battle enabled\n(Repeats: {})").format(self.last_battle_action)
+                mode_text = self._("Auto-battle enabled\n(Repeats: {})").format(self.battle_ctrl.last_battle_action)
             else:
                 mode_text = self._("Auto-battle disabled")
             self.draw_temporary_text(mode_text)
@@ -1017,117 +763,22 @@ class Game:
             self.process_warp(staircase_dict)
 
     def change_map(self, next_map: maps.DragonWarriorMap) -> None:
-        """
-        Change to a different map.
-        :param next_map: The next map to be loaded.
-        :return: None
-        """
-        if self.last_map is not None:
-            came_from_throne_room = self.current_map.identifier == 'TantegelThroneRoom'
-            came_from_courtyard = self.current_map.identifier == 'TantegelCourtyard'
-        else:
-            came_from_throne_room = True
-            came_from_courtyard = False
-        self.game_state.pause_all_movement()
-        self.last_map = self.current_map
-        self.current_map = next_map
-        moving_within_tantegel_castle = came_from_throne_room or came_from_courtyard
-        for character_coordinates, tile_value in self.last_map.character_position_record.items():
-            self.last_map.layout[character_coordinates[0]][character_coordinates[1]] = tile_value
-        if not self.allow_save_prompt:
-            if came_from_throne_room:
-                self.allow_save_prompt = True
-        self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
-        fade(fade_out=True, screen=self.screen, config=self.game_state.config)
-        self.set_big_map()
-        self.set_roaming_character_positions()
-        if self.music_enabled:
-            if not moving_within_tantegel_castle and not self.config['ORCHESTRA_MUSIC_ENABLED']:
-                mixer.music.stop()
-        if not self.player.is_dead:
-            current_map_staircase_dict = self.last_map.staircases[(self.player.row, self.player.column)]
-            destination_coordinates = current_map_staircase_dict.get('destination_coordinates')
-        else:
-            current_map_staircase_dict = None
-            destination_coordinates = (10, 13)  # TantegelThroneRoom, in front of King Lorik
-        self.current_map.destination_coordinates = destination_coordinates
-        initial_hero_location = self.current_map.get_initial_character_location('HERO')
-        if not initial_hero_location:
-            initial_hero_location = self.player.row, self.player.column
-        if destination_coordinates:
-            if self.current_map.initial_coordinates != destination_coordinates:
-                self.reset_initial_hero_location_tile()
-            self.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
-            self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]] = 33
-        self.current_map.load_map(self.player, destination_coordinates, self.tile_size)
-        if not self.current_map.is_dark:
-            self.torch_active = False
-            self.game_state.radiant_active = False
-        self.handle_player_direction_on_map_change(current_map_staircase_dict)
-        #  this is probably what we need here:
-
-        #    self.camera = Camera((self.player.rect.x // self.tile_size, self.player.rect.y // self.tile_size),
-        #                              current_map=self.current_map, screen=self.screen)
-        self.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
-                             current_map=self.current_map, screen=self.screen, tile_size=self.tile_size)
-        self.loop_count = 1
-        self.game_state.unpause_all_movement()
-        self.tiles_moved_since_spawn = 0
-        self.cmd_menu = CommandMenu(self)
-        # TODO: Allow music to continue playing when moving within Tantegel Castle.
-        # if not moving_within_tantegel_castle and self.config['ORCHESTRA_MUSIC_ENABLED']:
-        self.music_player.load_and_play_music(self.current_map.music_file_path)
-        if destination_coordinates:
-            # really not sure if the 1 and 0 here are supposed to be switched
-            self.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]), self.tile_size)
-
-        # Draw the new map to the screen buffer (don't flip yet - fade will handle display updates)
-        self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
-                             self.foreground_rects, self.enable_animate, self.camera, self.initial_dialog_enabled,
-                             self.events, self.skip_text, self.allow_save_prompt, self.game_state, self.torch_active,
-                             self.color)
-
-        # Fade in from black to reveal the new map
-        fade(fade_out=False, screen=self.screen, config=self.game_state.config)
+        self.map_mgr.change_map(next_map)
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
-        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN', 'CAVE'):
-            self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_UP'
-        elif self.player.current_tile == 'BRICK_STAIR_UP' and self.current_map.identifier != 'Alefgard':
-            self.current_map.character_key['HERO']['underlying_tile'] = 'BRICK_STAIR_DOWN'
-        else:
-            if destination_coordinates != initial_hero_location:
-                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
-                    self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
-            else:
-                self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.hero_underlying_tile()
+        self.map_mgr.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
 
     def reset_initial_hero_location_tile(self):
-        initial_coordinates = self.current_map.initial_coordinates
-        if self.current_map.layout[initial_coordinates[0]][initial_coordinates[1]] != \
-                self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']:
-            self.current_map.layout[initial_coordinates[0]][initial_coordinates[1]] = \
-                self.current_map.floor_tile_key[self.current_map.character_key['HERO']['underlying_tile']]['val']
+        self.map_mgr.reset_initial_hero_location_tile()
 
     def set_big_map(self):
-        self.big_map = Surface(  # lgtm [py/call/wrong-arguments]
-            (self.current_map.width, self.current_map.height)).convert()
-        self.big_map.fill(BLACK)
-        self.drawer.background = self.big_map.subsurface(0, 0, self.current_map.width,
-                                                         self.current_map.height).convert_alpha()
+        self.map_mgr.set_big_map()
 
     def handle_player_direction_on_map_change(self, current_map_staircase_dict):
-        if not self.player.is_dead:
-            destination_direction = current_map_staircase_dict.get('direction')
-            if destination_direction:
-                self.player.direction_value = destination_direction
-        else:
-            self.player.direction_value = Direction.UP.value
+        self.map_mgr.handle_player_direction_on_map_change(current_map_staircase_dict)
 
     def set_roaming_character_positions(self):
-        for roaming_character in self.current_map.roaming_characters:
-            roaming_character.last_roaming_clock_check = get_ticks()
-            set_character_position(roaming_character, self.tile_size)
+        self.map_mgr.set_roaming_character_positions()
 
     def unlaunch_menu(self, menu_to_unlaunch: Menu) -> None:
         """
