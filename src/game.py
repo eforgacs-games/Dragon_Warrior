@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import shutil
 import sys
 from typing import List, Tuple
 
@@ -275,25 +276,41 @@ class Game:
         self.cmd_menu = CommandMenu(self)
 
     def change_message_speed(self):
-        # make the window the right size based on self.save_dir_contents
-        # populate the save file list with the player names
-        # allow the user to select a save file
-        # pop up a menu to change the message speed
-
-        # "Which Message Speed Do You Want To Use?"
-        # >FAST
-        #  NORMAL
-        #  SLOW
-
-        pass
+        # Toggle between fast (no wait) and normal speed. No sub-menu images exist, so just flip the flag.
+        self.game_state.config['NO_WAIT'] = not self.game_state.config['NO_WAIT']
+        self.sound.play_sound(self.directories.menu_button_sfx)
 
     def copy_quest(self):
-        # copy the save file to a new save file
-        pass
+        src_slot = self.game_functions.main_menu_selection(
+            get_ticks(), self.screen,
+            self.directories.empty_log_adventure_log_path,
+            self.directories.ADVENTURE_LOG_1_PATH,
+            [self.directories.ADVENTURE_LOG_2_PATH, self.directories.ADVENTURE_LOG_3_PATH],
+            no_blit=self.game_state.config['NO_BLIT']) + 1
+        dst_slot = self.game_functions.main_menu_selection(
+            get_ticks(), self.screen,
+            self.directories.empty_log_adventure_log_path,
+            self.directories.ADVENTURE_LOG_1_PATH,
+            [self.directories.ADVENTURE_LOG_2_PATH, self.directories.ADVENTURE_LOG_3_PATH],
+            no_blit=self.game_state.config['NO_BLIT']) + 1
+        src_path = os.path.join(self.directories.save_dir, f'save_slot_{src_slot}.json')
+        dst_path = os.path.join(self.directories.save_dir, f'save_slot_{dst_slot}.json')
+        if os.path.exists(src_path) and src_slot != dst_slot:
+            shutil.copy2(src_path, dst_path)
+        self.sound.play_sound(self.directories.menu_button_sfx)
 
     def erase_quest(self):
-        # erase the save file
-        pass
+        slot = self.game_functions.main_menu_selection(
+            get_ticks(), self.screen,
+            self.directories.empty_log_adventure_log_path,
+            self.directories.ADVENTURE_LOG_1_PATH,
+            [self.directories.ADVENTURE_LOG_2_PATH, self.directories.ADVENTURE_LOG_3_PATH],
+            no_blit=self.game_state.config['NO_BLIT']) + 1
+        save_path = os.path.join(self.directories.save_dir, f'save_slot_{slot}.json')
+        if os.path.exists(save_path):
+            os.remove(save_path)
+            self.save_dir_contents = os.listdir(self.directories.save_dir)
+        self.sound.play_sound(self.directories.menu_button_sfx)
 
     def select_adventure_log(self, screen):
         self.player.adventure_log = self.game_functions.main_menu_selection(get_ticks(), screen,
