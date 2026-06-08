@@ -127,10 +127,11 @@ class DragonWarriorMap:
             else:
                 character_dict['underlying_tile'] = 'BRICK'
         self.tile_key = dict(list(self.floor_tile_key.items()) + list(self.character_key.items()))
+        self._tile_key_list = list(self.tile_key.keys())
 
     def get_tile_by_value(self, position: int) -> str:
         """Returns the tile name from the integer value associated with it."""
-        return list(self.tile_key.keys())[position]
+        return self._tile_key_list[position]
 
     def load_map(self, player, destination_coordinates, tile_size) -> None:
         self.destination_coordinates = destination_coordinates
