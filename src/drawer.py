@@ -153,41 +153,47 @@ class Drawer:
                                                 tile_size * 3,
                                                 tile_size * 3)
         elif self.game_state.radiant_active:
-            # Light with radius of 2, expanding to 3...
-
-            # darkness_hole = darkness.subsurface((self.screen.get_width() / 2) - TILE_SIZE * 2, (self.screen.get_height() / 2) - (TILE_SIZE * 2.5),
-            #                                     TILE_SIZE * 5,
-            #                                     TILE_SIZE * 5)
-            # darkness.fill(BLACK)
-            # darkness_hole.fill(WHITE)
-            # darkness.set_colorkey(WHITE)
-            # self.screen.blit(darkness, (0, 0))
-            # Light with radius of 3
-            darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * 3,
-                                                (screen.get_height() / 2) - tile_size * 3.5,
-                                                tile_size * 7,
-                                                tile_size * 7)
-
             if self.game_state.radiant_start is None:
                 self.game_state.radiant_start = self.game_state.tiles_moved_total
                 self.sound.play_sound(self.directories.torch_sfx)
                 self.sound.play_sound(self.directories.torch_sfx)
+            tiles_elapsed = self.game_state.tiles_moved_total - self.game_state.radiant_start
+            if tiles_elapsed >= 200:
+                self.game_state.radiant_active = False
+                self.game_state.radiant_start = None
+                darkness_hole = darkness.subsurface((screen.get_width() / 2),
+                                                    (screen.get_height() / 2) - (tile_size / 2),
+                                                    tile_size, tile_size)
+            elif tiles_elapsed >= 140:
+                # shrinking back to radius 1
+                darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size,
+                                                    (screen.get_height() / 2) - (tile_size * 1.5),
+                                                    tile_size * 3,
+                                                    tile_size * 3)
+            elif tiles_elapsed >= 80:
+                # shrinking to radius 2
+                darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * 2,
+                                                    (screen.get_height() / 2) - (tile_size * 2.5),
+                                                    tile_size * 5,
+                                                    tile_size * 5)
+            elif tiles_elapsed >= 40:
+                # full radius 3
+                darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * 3,
+                                                    (screen.get_height() / 2) - tile_size * 3.5,
+                                                    tile_size * 7,
+                                                    tile_size * 7)
+            elif tiles_elapsed >= 20:
+                # expanding to radius 2
+                darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * 2,
+                                                    (screen.get_height() / 2) - (tile_size * 2.5),
+                                                    tile_size * 5,
+                                                    tile_size * 5)
             else:
-                if self.game_state.tiles_moved_total - self.game_state.radiant_start >= 200:
-                    self.game_state.radiant_active = False
-                    self.game_state.radiant_start = None
-                elif self.game_state.tiles_moved_total - self.game_state.radiant_start >= 140:
-                    # Light with radius of 1
-                    darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size,
-                                                        (screen.get_height() / 2) - (tile_size * 1.5),
-                                                        tile_size * 3,
-                                                        tile_size * 3)
-                elif self.game_state.tiles_moved_total - self.game_state.radiant_start >= 80:
-                    # Light with radius of 2
-                    darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * 2,
-                                                        (screen.get_height() / 2) - (tile_size * 2.5),
-                                                        tile_size * 5,
-                                                        tile_size * 5)
+                # initial radius 1
+                darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size,
+                                                    (screen.get_height() / 2) - (tile_size * 1.5),
+                                                    tile_size * 3,
+                                                    tile_size * 3)
 
         else:
             darkness_hole = darkness.subsurface((screen.get_width() / 2),
