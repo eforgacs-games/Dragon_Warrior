@@ -262,29 +262,30 @@ class Drawer:
                                                                                                 "TILE_SIZE"]) for
             roaming_character in
             current_map.roaming_characters]
+        player_check_rect = get_surrounding_rect(player, tile_size) if player.is_moving else player.rect
+        roaming_last_rects = [rc.last_rect for rc in current_map.roaming_characters if rc.last_rect is not None]
+        all_roaming_rects = roaming_character_rects + roaming_last_rects
+        roaming_union_rect = all_roaming_rects[0].unionall(all_roaming_rects[1:]) \
+            if all_roaming_rects else None
+        tile_types_set = set(tile_types_to_draw)
         for tile, tile_dict in current_map.floor_tile_key.items():
-            if tile_dict.get('group') and tile in set(tile_types_to_draw):
+            if tile_dict.get('group') and tile in tile_types_set:
                 for tile_to_draw in tile_dict['group']:
-                    if camera_screen_rect.colliderect(tile_to_draw.rect):
-                        if player.is_moving:
-                            if get_surrounding_rect(player, tile_size).colliderect(tile_to_draw.rect):
-                                group_to_draw.add(tile_to_draw)
-                                # tiles_drawn.append(tile)
-                        else:
-                            if player.rect.colliderect(tile_to_draw.rect):
-                                group_to_draw.add(tile_to_draw)
-                                # tiles_drawn.append(tile)
+                    tile_rect = tile_to_draw.rect
+                    if camera_screen_rect.colliderect(tile_rect):
+                        if player_check_rect.colliderect(tile_rect):
+                            group_to_draw.add(tile_to_draw)
+                            continue
                         for fixed_character_rect in fixed_character_rects:
-                            if fixed_character_rect.colliderect(tile_to_draw):
+                            if fixed_character_rect.colliderect(tile_rect):
                                 group_to_draw.add(tile_to_draw)
-                                # tiles_drawn.append(tile)
-
-                    if double_camera_screen_rect.colliderect(tile_to_draw.rect):
-                        for roaming_character_rect in roaming_character_rects:
-                            if roaming_character_rect.colliderect(tile_to_draw):
-                                group_to_draw.add(tile_to_draw)
-                                # tiles_drawn.append(tile)
-        # print(f"{len(tiles_drawn)}: {tiles_drawn}")
+                                break
+                    if roaming_union_rect and double_camera_screen_rect.colliderect(tile_rect):
+                        if roaming_union_rect.colliderect(tile_rect):
+                            for r in all_roaming_rects:
+                                if r.colliderect(tile_rect):
+                                    group_to_draw.add(tile_to_draw)
+                                    break
         group_to_draw.draw(self.background)
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
@@ -339,10 +340,8 @@ class Drawer:
         for roaming_character in current_map.roaming_characters:
             roaming_character_surrounding_tile_values = get_surrounding_tile_values(
                 (roaming_character.rect.y // tile_size, roaming_character.rect.x // tile_size), current_map.layout)
-            roaming_character_surrounding_tiles = convert_numeric_tile_list_to_unique_tile_values(current_map,
-                                                                                                  roaming_character_surrounding_tile_values)
-            for tile in roaming_character_surrounding_tiles:
-                all_roaming_character_surrounding_tiles.append(tile)
+            all_roaming_character_surrounding_tiles.extend(
+                convert_numeric_tile_list_to_unique_tile_values(current_map, roaming_character_surrounding_tile_values))
         return all_roaming_character_surrounding_tiles
 
     def handle_menu_launch(self, screen, cmd_menu, menu_to_launch: Menu) -> None:
@@ -365,40 +364,27 @@ class Drawer:
 
 
 def replace_characters_with_underlying_tiles(tile_types_to_draw: List[str], current_map_character_key) -> List[str]:
-    for character in current_map_character_key.keys():
-        if character in tile_types_to_draw:
-            tile_types_to_draw = list(
-                map(lambda x: x.replace(character, current_map_character_key[character]['underlying_tile']),
-                    tile_types_to_draw))
-    return tile_types_to_draw
+    substitution = {k: v['underlying_tile'] for k, v in current_map_character_key.items()}
+    return [substitution.get(t, t) for t in tile_types_to_draw]
 
 
 def get_surrounding_tile_values(coordinates, map_layout):
     x = coordinates[0]
     y = coordinates[1]
-    try:
-        left = map_layout[x - 1][y] if x - 1 >= 0 else None
-    except IndexError:
-        left = None
-    try:
-        down = map_layout[x][y - 1] if y - 1 >= 0 else None
-    except IndexError:
-        down = None
-    try:
-        right = map_layout[x][y + 1]
-    except IndexError:
-        right = None
-    try:
-        up = map_layout[x + 1][y]
-    except IndexError:
-        up = None
-    neighbors = [x for x in [left, down, right, up] if x is not None]
-    current_tile = [map_layout[x][y]] if x < len(map_layout) and y < len(map_layout[0]) else None
-    if current_tile:
-        all_neighbors = set(neighbors + current_tile)
-    else:
-        all_neighbors = set(neighbors)
-    return all_neighbors
+    rows = len(map_layout)
+    cols = len(map_layout[0]) if rows else 0
+    neighbors = []
+    if x - 1 >= 0 and y < len(map_layout[x - 1]):
+        neighbors.append(map_layout[x - 1][y])
+    if y - 1 >= 0 and x < rows:
+        neighbors.append(map_layout[x][y - 1])
+    if x < rows and y + 1 < len(map_layout[x]):
+        neighbors.append(map_layout[x][y + 1])
+    if x + 1 < rows and y < len(map_layout[x + 1]):
+        neighbors.append(map_layout[x + 1][y])
+    if x < rows and y < cols:
+        neighbors.append(map_layout[x][y])
+    return set(neighbors)
 
 
 def convert_numeric_tile_list_to_unique_tile_values(current_map, numeric_tile_list: Iterable[int]) -> List[str]:

@@ -12,6 +12,8 @@ from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
 
+from src.config.dev_config import dev_config
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data.text.intro_lookup_table import ControlInfo
@@ -750,10 +752,9 @@ class Game:
             self.draw_temporary_text(mode_text)
 
     def update_roaming_character_positions(self) -> None:
-        for character, character_dict in self.current_map.characters.items():
-            if character_dict['character'].__class__.__name__ == 'RoamingCharacter':
-                if not character_dict['character'].is_moving:
-                    set_character_position(character_dict['character'], tile_size=self.tile_size)
+        for roaming_character in self.current_map.roaming_characters:
+            if not roaming_character.is_moving:
+                set_character_position(roaming_character, tile_size=self.tile_size)
 
     def draw_temporary_text(self, text: Tuple[str] | List[str] | str, add_quotes=False) -> None:
         self.cmd_menu.show_text_in_dialog_box(text, add_quotes=add_quotes, temp_text_start=get_ticks(), skip_text=False)
@@ -972,6 +973,7 @@ class Game:
                     roaming_character.direction_value = random.choice(list(map(int, Direction)))
                 else:  # character not moving and no input
                     return
+                roaming_character.last_rect = roaming_character.rect.copy()
                 roaming_character.is_moving = True
             else:  # determine if character has reached new tile
                 if is_facing_medially(roaming_character):
@@ -999,8 +1001,8 @@ class Game:
 
 
 def run():
-    game = Game(config=prod_config)
-    # game = Game(config=dev_config)
+    # game = Game(config=prod_config)
+    game = Game(config=dev_config)
     game.main()
 
 
