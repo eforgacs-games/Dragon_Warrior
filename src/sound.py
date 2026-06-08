@@ -7,7 +7,7 @@ from src.directories import Directories
 
 # Sound
 
-_sound_library = {}
+_sound_library: dict[str, object] = {}
 
 
 class Sound:

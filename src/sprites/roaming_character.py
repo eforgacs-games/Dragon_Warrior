@@ -12,5 +12,6 @@ class RoamingCharacter(AnimatedSprite):
         self.previous_tile = None
         self.current_tile = None
         self.next_tile_id = None
+        self.next_next_tile_id = None
         self.next_tile_checked = False
         self.last_rect = None

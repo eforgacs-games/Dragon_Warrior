@@ -237,7 +237,9 @@ class DialogLookup:
         }
 
         for map_dict in self.lookup_table.values():
+            assert isinstance(map_dict, dict)
             for character_identifier, character_dict in map_dict.items():
+                assert isinstance(character_dict, dict)
                 character_dict['dialog_character'] = character_identifier
 
     def take_to_castle_confirmation_prompt(self):
