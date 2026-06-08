@@ -1,5 +1,7 @@
 import array
+import json
 import os
+import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -587,6 +589,54 @@ class TestGame(TestCase):
     #     mocked_return.key = K_RETURN
     #     with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
     #         self.game.show_main_menu_screen(self.game.screen)
+
+    def test_change_message_speed_toggles_no_wait(self):
+        original = self.game.game_state.config['NO_WAIT']
+        self.game.change_message_speed()
+        self.assertNotEqual(original, self.game.game_state.config['NO_WAIT'])
+        self.game.change_message_speed()
+        self.assertEqual(original, self.game.game_state.config['NO_WAIT'])
+
+    def test_erase_quest_removes_save_file(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.game.directories.save_dir = tmp_dir
+            save_path = os.path.join(tmp_dir, 'save_slot_1.json')
+            with open(save_path, 'w') as f:
+                json.dump({'Name': 'Hero'}, f)
+            with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0):
+                self.game.erase_quest()
+            self.assertFalse(os.path.exists(save_path))
+
+    def test_erase_quest_missing_file_is_noop(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.game.directories.save_dir = tmp_dir
+            with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0):
+                self.game.erase_quest()  # should not raise
+
+    def test_copy_quest_copies_save_file(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.game.directories.save_dir = tmp_dir
+            src_path = os.path.join(tmp_dir, 'save_slot_1.json')
+            dst_path = os.path.join(tmp_dir, 'save_slot_2.json')
+            with open(src_path, 'w') as f:
+                json.dump({'Name': 'Hero'}, f)
+            # first call = pick src slot (0 → slot 1), second = pick dst slot (1 → slot 2)
+            with patch.object(self.game.game_functions, 'main_menu_selection', side_effect=[0, 1]):
+                self.game.copy_quest()
+            self.assertTrue(os.path.exists(dst_path))
+            with open(dst_path) as f:
+                self.assertEqual({'Name': 'Hero'}, json.load(f))
+
+    def test_copy_quest_same_slot_is_noop(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.game.directories.save_dir = tmp_dir
+            src_path = os.path.join(tmp_dir, 'save_slot_1.json')
+            with open(src_path, 'w') as f:
+                json.dump({'Name': 'Hero'}, f)
+            with patch.object(self.game.game_functions, 'main_menu_selection', side_effect=[0, 0]):
+                self.game.copy_quest()
+            # only one file should exist (no copy made to same slot)
+            self.assertEqual(['save_slot_1.json'], os.listdir(tmp_dir))
 
     # this test fails in GitHub Actions
 

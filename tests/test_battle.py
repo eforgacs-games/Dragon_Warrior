@@ -88,5 +88,39 @@ class TestBattleMethods(unittest.TestCase):
         self.assertTrue(expected_lower_bound <= damage <= expected_upper_bound)
 
 
+    def test_battle_run_failed_sets_no_op(self):
+        """Failed run attempt should not grant enemy a free extra turn via the outer loop."""
+        cmd_menu = Mock()
+        cmd_menu.game.enemy_move = Mock()
+        player = Mock()
+        player.agility = 1
+        player.current_hp = 10
+        player.is_dead = False
+        current_battle = Mock()
+        current_battle.enemy.is_asleep = False
+        current_battle.enemy.speed = 255
+        current_battle.no_op = False
+
+        with patch('src.battle.random.randint', return_value=255):
+            result = self.battle.battle_run(cmd_menu, player, current_battle)
+
+        self.assertFalse(result)
+        cmd_menu.game.enemy_move.assert_called_once_with(current_battle)
+
+    def test_battle_run_success_returns_true(self):
+        cmd_menu = Mock()
+        player = Mock()
+        player.agility = 255
+        player.current_hp = 10
+        current_battle = Mock()
+        current_battle.enemy.is_asleep = False
+        current_battle.enemy.speed = 1
+
+        with patch('src.battle.random.randint', return_value=1):
+            result = self.battle.battle_run(cmd_menu, player, current_battle)
+
+        self.assertTrue(result)
+
+
 if __name__ == '__main__':
     unittest.main()

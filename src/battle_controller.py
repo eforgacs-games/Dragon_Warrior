@@ -114,7 +114,6 @@ class BattleController:
                                              self.game.color, self.player)
         run_away = False
         while current_battle.enemy.hp > 0 and not run_away and not self.player.is_dead:
-            # TODO: Figure out run away bug (when player attempts to run, enemy always gets one extra turn).
             run_away = self.handle_battle_prompts(run_away, current_battle)
         if current_battle.enemy.hp <= 0:
             current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, self.music_enabled,
@@ -187,6 +186,9 @@ class BattleController:
                 if run_away:
                     self.music_player.load_and_play_music(self.current_map.music_file_path)
                     return run_away
+                else:
+                    # enemy already attacked inside battle_run; skip the outer enemy turn
+                    current_battle.no_op = True
             elif selected_executed_option == 'Item':
                 if not self.player.inventory:
                     self.cmd_menu.show_line_in_dialog_box(
