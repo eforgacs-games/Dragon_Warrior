@@ -34,6 +34,7 @@ from src.directories import Directories
 from src.drawer import Drawer
 from src.enemy_lookup import enemy_territory_map
 from src.enemy_spells import enemy_spell_lookup
+from src.spells import Spell
 from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
 from src.intro import Intro
@@ -627,11 +628,11 @@ class Game:
             x = current_enemy_pattern[0]
             current_spell = current_enemy_pattern[1]
             z = current_enemy_pattern[2]
-            if current_spell == "SLEEP" and self.player.is_asleep:
+            if current_spell == Spell.SLEEP and self.player.is_asleep:
                 z = False
             if z:
                 if random.randint(0, 100) < x:
-                    if current_spell not in ("FIREBREATH", "FIREBREATH2"):
+                    if current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         self.cmd_menu.show_line_in_dialog_box(
                             self._("{} chants the spell of {}.").format(self._(enemy.name),
                                                                         self._(current_spell)), add_quotes=False,
@@ -647,21 +648,21 @@ class Game:
                     time.wait(1000)
                     spell_effect_lower_bound, spell_effect_upper_bound = enemy_spell_lookup[current_spell]
                     spell_effect = random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
-                    if current_spell in ("HEAL", "HEALMORE"):
+                    if current_spell in (Spell.HEAL, Spell.HEALMORE):
                         enemy.recover_hp(spell_effect)
-                    elif current_spell == "SLEEP":
+                    elif current_spell == Spell.SLEEP:
                         self.player.is_asleep = True
                         self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), add_quotes=False,
                                                               disable_sound=True, hide_arrow=True)
-                    elif current_spell in ("HURT", "HURTMORE"):
+                    elif current_spell in (Spell.HURT, Spell.HURTMORE):
                         if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
                             spell_effect *= 0.66
                         self.receive_damage(spell_effect)
-                    elif current_spell == "STOPSPELL":
+                    elif current_spell == Spell.STOPSPELL:
                         if self.player.armor != "Erdrick's Armor":
                             if random.randint(0, 1) == 1:
                                 self.player.is_stopspelled = True
-                    elif current_spell in ("FIREBREATH", "FIREBREATH2"):
+                    elif current_spell in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         if self.player.armor == "Erdrick's Armor":
                             spell_effect *= 0.66
                         self.receive_damage(spell_effect)
@@ -671,7 +672,7 @@ class Game:
                 self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
         elif isinstance(current_enemy_pattern, str):
             # (do X)
-            if current_enemy_pattern == "ATTACK":
+            if current_enemy_pattern == Spell.ATTACK:
                 self.enemy_attack(current_battle)
 
             # (EnemyAttack - HeroAgility / 2) / 4,
