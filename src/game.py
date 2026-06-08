@@ -471,12 +471,6 @@ class Game:
     def enemy_attack_message(self, enemy):
         self.battle_ctrl.enemy_attack_message(enemy)
 
-    def handle_near_tantegel_fight_modifier(self):
-        return self.battle_ctrl.handle_near_tantegel_fight_modifier()
-
-    def get_random_integer_by_tile(self):
-        return self.battle_ctrl.get_random_integer_by_tile()
-
     def receive_damage(self, attack_damage):
         # God mode or invulnerable: take no damage
         if self.player.god_mode or self.invulnerable:
@@ -902,7 +896,7 @@ class Game:
                                                                                 character.direction_value,
                                                                                 self.current_map, offset=2)
 
-    def character_in_path(self, character: RoamingCharacter | FixedCharacter) -> bool:
+    def character_in_path(self, character: Player | RoamingCharacter | FixedCharacter) -> bool:
         fixed_character_locations = [(fixed_character.column, fixed_character.row) for fixed_character in
                                      self.current_map.fixed_characters]
         roaming_character_locations = [(roaming_character.column, roaming_character.row) for roaming_character in
@@ -911,16 +905,17 @@ class Game:
         return next_coordinates in fixed_character_locations + roaming_character_locations + [
             (self.player.column, self.player.row)]
 
-    def get_next_coordinates(self, character_column: int, character_row: int, direction: int) -> tuple:
+    def get_next_coordinates(self, character_column: int, character_row: int, direction: int) -> tuple | None:
         if character_row < len(self.current_map.layout) and character_column < len(self.current_map.layout[0]):
             if direction == Direction.UP.value:
                 return character_column, character_row - 1
             elif direction == Direction.DOWN.value:
-                return character_column, character_row + 1,
+                return character_column, character_row + 1
             elif direction == Direction.LEFT.value:
                 return character_column - 1, character_row
             elif direction == Direction.RIGHT.value:
                 return character_column + 1, character_row
+        return None
 
     def is_impassable(self, tile: str) -> bool:
         """
