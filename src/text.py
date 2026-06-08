@@ -42,7 +42,7 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
                 if not config['NO_WAIT']:
                     time.wait(16)
                 if not disable_sound:
-                    if i % 2 == 0:
+                    if i % 3 == 0:
                         Sound(config).play_sound(directories.text_beep_sfx)
         else:
             if not config['NO_BLIT']:
