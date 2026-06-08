@@ -22,7 +22,7 @@ class Test(TestCase):
 
     def test_bump_and_reset(self):
         self.assertEqual('BRICK', self.game.player.next_tile_id)
-        self.assertEqual('GUARD', self.game.player.next_next_tile_id)
+        self.assertEqual('BRICK', self.game.player.next_next_tile_id)
         self.game.movement.bump_and_reset(self.game.player, 'TREES', 'GRASS')
         self.assertEqual('TREES', self.game.player.next_tile_id)
         self.assertEqual('GRASS', self.game.player.next_next_tile_id)

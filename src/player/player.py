@@ -18,7 +18,7 @@ class Player(AnimatedSprite):
 
         # map/collision-related attributes
 
-        self.row, self.column = current_map.get_initial_character_location('HERO')
+        self.row, self.column = current_map.initial_coordinates
         self.next_tile_checked = False
         self.is_moving = False
         self.is_carrying_princess = False
