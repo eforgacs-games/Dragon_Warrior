@@ -377,8 +377,8 @@ class TestGame(TestCase):
         with patch.object(CommandMenu, 'window_drop_up_effect', return_value=None) as mock_window_drop_up_effect:
             self.assertFalse(self.game.cmd_menu.launch_signaled)
             self.game.unlaunch_menu(self.game.cmd_menu)
-            self.assertTrue(self.game.enable_animate)
-            self.assertTrue(self.game.enable_roaming)
+            self.assertTrue(self.game.game_state.enable_animate)
+            self.assertTrue(self.game.game_state.enable_roaming)
             self.assertTrue(self.game.game_state.enable_movement)
             self.assertFalse(self.game.cmd_menu.menu.is_enabled())
         mock_window_drop_up_effect.assert_called_with(6, 1, 8, 5)
@@ -461,7 +461,7 @@ class TestGame(TestCase):
         self.assertEqual('BRICK', self.game.player.current_tile)
         self.assertEqual((0, -1), self.game.player.next_coordinates)
         self.assertEqual((1, -1), self.game.player.next_next_coordinates)
-        self.game.enable_roaming = True
+        self.game.game_state.enable_roaming = True
         self.game.player.row = 10
         self.game.player.column = 13
         self.game.current_map.staircases = {
@@ -472,7 +472,7 @@ class TestGame(TestCase):
     def test_draw_all(self):
         self.game.drawer.draw_all(self.game.screen, self.game.loop_count, self.game.big_map, self.game.current_map,
                                   self.game.player, self.game.cmd_menu, self.game.foreground_rects,
-                                  self.game.enable_animate, self.game.camera, self.game.initial_dialog_enabled,
+                                  self.game.game_state.enable_animate, self.game.camera, self.game.initial_dialog_enabled,
                                   self.game.events, self.game.skip_text, self.game.allow_save_prompt,
                                   self.game.game_state, self.game.torch_active, self.game.color)
         self.assertTrue(self.game.drawer.not_moving_time_start)
