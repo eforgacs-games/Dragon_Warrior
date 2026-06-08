@@ -3,6 +3,8 @@ import json
 import random
 from collections import Counter
 from os.path import join
+
+from src.spells import Spell
 from typing import Tuple, List
 
 import pygame_menu
@@ -726,16 +728,16 @@ class CommandMenu(Menu):
                 list_string += f"{item}\n"
             function_dict = {
                 # name, function, MP cost
-                "HEAL": (self.heal, 4),
-                "HURT": (self.hurt, 2),
-                "SLEEP": (self.sleep, 2),
-                "RADIANT": (self.radiant, 3),
-                "STOPSPELL": (self.stopspell, 2),
-                "OUTSIDE": (self.outside, 6),
-                "RETURN": (self.return_, 8),
-                "REPEL": (self.repel, 2),
-                "HEALMORE": (self.healmore, 10),
-                "HURTMORE": (self.hurtmore, 5)
+                Spell.HEAL: (self.heal, 4),
+                Spell.HURT: (self.hurt, 2),
+                Spell.SLEEP: (self.sleep, 2),
+                Spell.RADIANT: (self.radiant, 3),
+                Spell.STOPSPELL: (self.stopspell, 2),
+                Spell.OUTSIDE: (self.outside, 6),
+                Spell.RETURN: (self.return_, 8),
+                Spell.REPEL: (self.repel, 2),
+                Spell.HEALMORE: (self.healmore, 10),
+                Spell.HURTMORE: (self.hurtmore, 5)
             }
         else:
             raise ValueError(f"Invalid menu name: {menu_name}")

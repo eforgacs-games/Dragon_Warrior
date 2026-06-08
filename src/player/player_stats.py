@@ -1,5 +1,7 @@
 from math import floor
 
+from src.spells import Spell
+
 # probably best to use https://www.woodus.com/den/games/web/dwsim/calc.htm to calculate initial stats for each name on the side
 # example names:
 # 0: "ma", "Steve"
@@ -42,23 +44,23 @@ letter_calculations = {
 levels_list = {
     1: {'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
     2: {'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-    3: {'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
-    4: {'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31, 'max_mp': 16, 'spell': "HURT"},
+    3: {'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': Spell.HEAL},
+    4: {'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31, 'max_mp': 16, 'spell': Spell.HURT},
     5: {'total_exp': 110, 'strength': 12, 'agility': 10, 'max_hp': 35, 'max_mp': 20, 'spell': None},
     6: {'total_exp': 220, 'strength': 16, 'agility': 10, 'max_hp': 38, 'max_mp': 24, 'spell': None},
-    7: {'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40, 'max_mp': 26, 'spell': "SLEEP"},
+    7: {'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40, 'max_mp': 26, 'spell': Spell.SLEEP},
     8: {'total_exp': 800, 'strength': 22, 'agility': 20, 'max_hp': 46, 'max_mp': 29, 'spell': None},
-    9: {'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50, 'max_mp': 36, 'spell': "RADIANT"},
-    10: {'total_exp': 2000, 'strength': 35, 'agility': 31, 'max_hp': 54, 'max_mp': 40, 'spell': "STOPSPELL"},
+    9: {'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50, 'max_mp': 36, 'spell': Spell.RADIANT},
+    10: {'total_exp': 2000, 'strength': 35, 'agility': 31, 'max_hp': 54, 'max_mp': 40, 'spell': Spell.STOPSPELL},
     11: {'total_exp': 2900, 'strength': 40, 'agility': 35, 'max_hp': 62, 'max_mp': 50, 'spell': None},
-    12: {'total_exp': 4000, 'strength': 48, 'agility': 40, 'max_hp': 63, 'max_mp': 58, 'spell': "OUTSIDE"},
-    13: {'total_exp': 5500, 'strength': 52, 'agility': 48, 'max_hp': 70, 'max_mp': 64, 'spell': "RETURN"},
+    12: {'total_exp': 4000, 'strength': 48, 'agility': 40, 'max_hp': 63, 'max_mp': 58, 'spell': Spell.OUTSIDE},
+    13: {'total_exp': 5500, 'strength': 52, 'agility': 48, 'max_hp': 70, 'max_mp': 64, 'spell': Spell.RETURN},
     14: {'total_exp': 7500, 'strength': 60, 'agility': 55, 'max_hp': 78, 'max_mp': 70, 'spell': None},
-    15: {'total_exp': 10000, 'strength': 68, 'agility': 64, 'max_hp': 86, 'max_mp': 72, 'spell': "REPEL"},
+    15: {'total_exp': 10000, 'strength': 68, 'agility': 64, 'max_hp': 86, 'max_mp': 72, 'spell': Spell.REPEL},
     16: {'total_exp': 13000, 'strength': 72, 'agility': 70, 'max_hp': 92, 'max_mp': 95, 'spell': None},
-    17: {'total_exp': 16000, 'strength': 72, 'agility': 78, 'max_hp': 100, 'max_mp': 100, 'spell': "HEALMORE"},
+    17: {'total_exp': 16000, 'strength': 72, 'agility': 78, 'max_hp': 100, 'max_mp': 100, 'spell': Spell.HEALMORE},
     18: {'total_exp': 19000, 'strength': 85, 'agility': 84, 'max_hp': 115, 'max_mp': 108, 'spell': None},
-    19: {'total_exp': 22000, 'strength': 87, 'agility': 86, 'max_hp': 130, 'max_mp': 115, 'spell': "HURTMORE"},
+    19: {'total_exp': 22000, 'strength': 87, 'agility': 86, 'max_hp': 130, 'max_mp': 115, 'spell': Spell.HURTMORE},
     20: {'total_exp': 26000, 'strength': 92, 'agility': 88, 'max_hp': 138, 'max_mp': 128, 'spell': None},
     21: {'total_exp': 30000, 'strength': 95, 'agility': 90, 'max_hp': 149, 'max_mp': 135, 'spell': None},
     22: {'total_exp': 34000, 'strength': 97, 'agility': 90, 'max_hp': 158, 'max_mp': 146, 'spell': None},
