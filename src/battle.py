@@ -1,9 +1,14 @@
 import random
 
-from pygame import image, display, time, mixer, Surface
+from pygame import display, time, mixer, Surface
 from pygame.transform import scale
 
 from src.common import BLACK, set_gettext_language
+from src.constants import (
+    EXCELLENT_MOVE_PROBABILITY, EXCELLENT_MOVE_THRESHOLD,
+    MISS_SFX_PROBABILITY, MIN_DAMAGE,
+    BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT,
+)
 from src.directories import Directories
 from src.enemy import enemy_groups
 from src.enemy_lookup import enemy_string_lookup
@@ -13,12 +18,7 @@ from src.player.player import Player
 from src.player.player_stats import levels_list
 from src.sound import Sound
 
-# Constants for probabilities and thresholds
-EXCELLENT_MOVE_PROBABILITY = 0
-EXCELLENT_MOVE_THRESHOLD = 31
 GROUP_FACTOR_LOOKUP = {1: 0.25, 2: 0.375, 3: 0.5, 4: 1.0}
-MISS_SFX_PROBABILITY = 0.5
-MIN_DAMAGE = 1
 
 
 def has_final_consonant(char: str) -> bool:
@@ -270,8 +270,9 @@ class Battle:
         # drop down for the hovering stats window
         cmd_menu.window_drop_down_effect(1, 2, 4, 6)
         # drop down for the battle menu
-        cmd_menu.window_drop_down_effect(6, 1, 8, 3)
-        graphics.create_window(6, 1, 8, 3, directories.BATTLE_MENU_FIGHT_PATH, screen, color)
+        cmd_menu.window_drop_down_effect(BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT)
+        graphics.create_window(BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT,
+                                directories.BATTLE_MENU_FIGHT_PATH, screen, color)
         drawer.hovering_stats_displayed = True
         drawer.draw_hovering_stats_window(screen, player, color)
 
