@@ -34,8 +34,8 @@ class TestDragonWarriorMap(TestCase):
             self.game = Game(test_config)
         self.dragon_warrior_map = MockMap(self.game.config)
 
-    def test_get_initial_character_location(self):
-        self.assertEqual(self.dragon_warrior_map.get_initial_character_location('HERO'), (0, 0))
+    def test_initial_coordinates(self):
+        self.assertEqual(self.dragon_warrior_map.initial_coordinates, (0, 0))
 
     def test_music_path_in_every_map(self):
         for dw_map, map_class in inspect.getmembers(maps, inspect.isclass):

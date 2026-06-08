@@ -5,16 +5,16 @@ from src.direction import Direction
 from src.maps import MapWithoutNPCs
 from src.player.player import Player
 
-layout = [[33, 0, 3],
+layout = [[3, 0, 3],
           [1, 2, 3],
-          [3, 3, 39]]
+          [3, 3, 3]]
 
 
 class MockMap(MapWithoutNPCs):
     __test__ = False
 
     def __init__(self, config):
-        super().__init__(layout, config, None, ())
+        super().__init__(layout, config, None, (0, 0))
 
     def hero_underlying_tile(self):
         return 'BRICK'
