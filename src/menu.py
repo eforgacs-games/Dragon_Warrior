@@ -1470,7 +1470,7 @@ class CommandMenu(Menu):
 
     def window_text_position(self, window_x: int, window_y: int, column: int, row: int) -> tuple[float, float]:
         """
-        Where draw_text or blink_arrow should draw a character in a window's tile (8x8 NES pixels).
+        Where draw_text should draw a character in a window's tile (8x8 NES pixels).
         :param window_x: The window's left edge, in blocks.
         :param window_y: The window's top edge, in blocks.
         :param column: The tile column in the window, from 0 (the left border).
