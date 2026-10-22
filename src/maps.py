@@ -689,6 +689,9 @@ class CharlockB8(DragonWarriorMap):
                          (33, 16), staircases={
                 # NES MapTargetTbl/MapEntryTbl: DL castle BF(10,29) -> DL castle SL6(9,6)
                 (33, 16): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 12)}})
+        # NES DLBFStatTbl (Bank00): the Dragonlord (wizard graphic) at 16,24, facing down, dialog byte $70
+        # (DgrnLrdDialog). DLBFMobTbl is empty. Charlock's other floors (MAP_DLCSTL_GF and the sublevels) have no NPC
+        # tables at all.
         self.npc_coordinates = {
             (28, 22): 'DRAGONLORD',
         }
@@ -986,6 +989,9 @@ class Rimuldar(DragonWarriorMap):
 
 
 class Hauksness(MapWithoutNPCs):
+    """Hauksness (NES MAP_HAUKSNESS, $03). It has no NPCs: the NES LoadMap code (ChkMapDungeon, Bank00) only
+    loads NPCs for maps MAP_TANTCSTL_GF to MAP_RAINBOW, and there's no Hauksness entry in NPCMobPtrTbl or
+    NPCStatPtrTbl."""
 
     def __init__(self, config):
         super().__init__(MapLayouts().hauksness, config, Directories(config).dungeon_floor_4_music,
@@ -1107,6 +1113,9 @@ class SwampCave(CaveMap):
                          staircases={(6, 4): {'map': 'Alefgard', 'destination_coordinates': (51, 112)},
                                      (35, 4): {'map': 'Alefgard', 'destination_coordinates': (56, 112)}},
                          initial_coordinates=(6, 4))
+        # On the NES Gwaelin isn't an NPC: she's block $6 (BLK_PRINCESS) of SwampCaveDat (Bank00), at 5,18, and
+        # DoTalkResults (Bank03) starts her rescue when the player talks to that block. GetBlockID turns her into
+        # brick once F_DONE_GWAELIN is set. She never moves or turns.
         self.npc_coordinates = {
             (24, 9): 'PRINCESS_GWAELIN',
         }
@@ -1255,9 +1264,13 @@ class MountainCaveB2(MapWithoutNPCs, CaveMap):
 
 
 class StaffOfRainCave(DragonWarriorMap):
+    """The Staff of Rain shrine (NES MAP_RAIN). Layout coordinates are the NES ones + (2, 2)."""
+
     def __init__(self, config):
         super().__init__(MapLayouts().staff_of_rain_cave, config, Directories(config).tantegel_castle_courtyard_music,
                          (11, 6), staircases={(11, 6): {'map': 'Alefgard'}})
+        # NES RainStatTbl (Bank00): the wizard at 4,4, facing right, dialog byte $6C (RainStaffDialog). RainMobTbl
+        # is empty.
         self.npc_coordinates = {
             (6, 6): 'WISE_MAN',
         }
@@ -1275,9 +1288,13 @@ class StaffOfRainCave(DragonWarriorMap):
 
 
 class MagicTemple(DragonWarriorMap):
+    """The Rainbow Drop shrine (NES MAP_RAINBOW). Layout coordinates are the NES ones + (2, 2)."""
+
     def __init__(self, config):
         super().__init__(MapLayouts().magic_temple, config, Directories(config).tantegel_castle_courtyard_music,
                          (6, 2), staircases={(6, 2): {'map': 'Alefgard'}})
+        # NES RnbwStatTbl (Bank00): the wizard at 4,5, facing left, dialog byte $6D (RnbwDrpDialog). RnbwMobTbl
+        # is empty.
         self.npc_coordinates = {
             (7, 6): 'WISE_MAN',
         }
