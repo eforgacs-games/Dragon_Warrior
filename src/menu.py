@@ -1,7 +1,6 @@
 import functools
 import json
 import random
-from collections import Counter
 from os.path import join
 
 from src.spells import Spell
@@ -18,7 +17,7 @@ from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
-    NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, roll_treasure_gold, treasure
+    NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, RAINBOW_BRIDGE_COORDINATES, \
     RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES
 from src.direction import Direction
@@ -28,76 +27,16 @@ from src.menu_functions import get_opposite_direction
 from src.sound import Sound
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.text import draw_text, set_font_by_ascii_chars
+from src.windows import COMMAND_TITLE_TILE_COLUMN, COMMAND_WINDOW, COUNTED_ITEMS, ITEM_COUNT_TILE_COLUMN, \
+    ITEM_MENU_BORDER, ITEM_MENU_CURSOR_TILE_COLUMN, ITEM_MENU_TEXT_TILE_COLUMN, \
+    ITEM_MENU_X, ITEM_MENU_Y, ITEM_NAME_HALVES, SPELL_MENU_TITLE_TILE_COLUMN, \
+    STATUS_EQUIPMENT_TILE_COLUMN, STATUS_EQUIPMENT_TILE_ROWS, STATUS_NAME_TILE_COLUMN, STATUS_NAME_TILE_ROW, \
+    STATUS_VALUE_RIGHT_TILE_COLUMN, STATUS_VALUE_TILE_ROWS, STATUS_WINDOW, item_menu_entry_tile_row, item_menu_window, \
+    name_halves
 
 arrow_fade = USEREVENT + 1
-
-# The SPELL and ITEM windows (NES Bank01 SpellDat and PlayerInvDat; the discard window is PlayerInvDat too).
-# Positions and sizes are in blocks of 2x2 NES tiles (16 NES pixels, TILE_SIZE screen pixels), as in the window data.
-# Both windows are 12 tiles (6 blocks) wide at block column 9; the SPELL window is at block row 2, the ITEM window at
-# row 3. Both are variable height (WndVariableHeight, WndBuildVariable, WndBuildEnd): one block per entry plus one
-# for the borders, so 2 to 11 blocks for 1 to 10 spells or items. The cursor moves 2 tile rows (one block) per entry
-# (WndDownCont3).
-ITEM_MENU_X = 9
-ITEM_MENU_WIDTH = 6
-ITEM_MENU_Y = {'spells': 2, 'inventory': 3, 'discard': 3}
-# Tile row of the first entry, from the cursor home position: SpellDat is double spaced, so the title row is followed
-# by a blank row; PlayerInvDat is single spaced, its first item's name starts on the row after the top border.
-ITEM_MENU_FIRST_TILE_ROW = {'spells': 2, 'inventory': 1, 'discard': 1}
-# The window corners are one NES tile (8 NES pixels)
-ITEM_MENU_BORDER = 8
-# Tile column of the SPELL window's title, after the corner and 3 border tiles (SpellDat: $8B, "SPELL")
-SPELL_MENU_TITLE_TILE_COLUMN = 4
-# NES ItemNames11TbL/ItemNames12TbL/ItemNames21TbL/ItemNames22TbL (Bank01): an item's name is shown in two halves,
-# the second one on the next tile row, indented by one tile (PlayerInvDat: $81, first half, $82, second half).
-ITEM_NAME_HALVES = {
-    "Herb": ("Herb", ""),
-    "Torch": ("Torch", ""),
-    "Dragon's Scale": ("Dragon's", "Scale"),
-    "Wings": ("Wings", ""),
-    "Magic Key": ("Magic", "Key"),
-    "Fairy Water": ("Fairy", "Water"),
-    "Ball of Light": ("Ball of", "Light"),
-    "Tablet": ("Tablet", ""),
-    "Fairy Flute": ("Fairy", "Flute"),
-    "Silver Harp": ("Silver", "Harp"),
-    "Staff of Rain": ("Staff of", "Rain"),
-    "Stones of Sunlight": ("Stones of", "Sunlight"),
-    "Gwaelin's Love": ("Gwaelin's", "Love"),
-    "Rainbow Drop": ("Rainbow", "Drop"),
-    "Cursed Belt": ("Cursed", "Belt"),
-    "Death Necklace": ("Death", "Necklace"),
-    "Fighter's Ring": ("Fighter's", "Ring"),
-    "Erdrick's Token": ("Erdrick's", "Token"),
-}
-# NES WndItemDesc: herbs and keys show how many the hero has, in the tile column after an 8 tile name
-COUNTED_ITEMS = ("Herb", "Magic Key")
-ITEM_COUNT_TILE_COLUMN = 10
-
-
-def item_menu_window(menu_name: str, number_of_entries: int) -> tuple[int, int, int, int]:
-    """
-    The SPELL or ITEM window's position and size for a number of entries.
-    :param menu_name: 'spells', 'inventory' or 'discard'.
-    :param number_of_entries: How many spells or (different) items are listed.
-    :return: (x, y, width, height), in blocks.
-    """
-    return ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_WIDTH, number_of_entries + 1
-
-
-# Tile column of an entry's text (after the left border and the cursor column) and of the cursor (cursor home X = 1)
-ITEM_MENU_TEXT_TILE_COLUMN = 2
-ITEM_MENU_CURSOR_TILE_COLUMN = 1
-
-
-def item_menu_entry_tile_row(menu_name: str, index: int) -> int:
-    """
-    The tile row of an entry in the SPELL or ITEM window, counted from the window's top border. Entries are 2 tile rows
-    (one block) apart; the cursor is drawn on the same row.
-    :param menu_name: 'spells', 'inventory' or 'discard'.
-    :param index: The entry's index in the window, from 0.
-    :return: The tile row.
-    """
-    return ITEM_MENU_FIRST_TILE_ROW[menu_name] + 2 * index
+# How far right the COMMAND window's buttons are moved, in NES pixels (see CommandMenu.__init__)
+COMMAND_BUTTON_SHIFT = 8
 
 
 class Menu:
@@ -129,11 +68,20 @@ class CommandMenu(Menu):
         self.directories = Directories(self.current_map.config)
         self.sound = Sound(self.current_map.config)
         self.calculation = Calculation(self.current_map.config)
-        self.command_menu_surface = self.graphics.create_window(x=5, y=1, width=8, height=5,
-                                                                window_background=self.directories.COMMAND_MENU_STATIC_BACKGROUND_PATH,
-                                                                screen=self.screen,
-                                                                color=self.color)
         config: dict = self.game.game_state.config
+        # The COMMAND window (NES CmdNonCmbtDat), as it looks with nothing selected: drawn back over the map while
+        # a window opened from it closes (window_drop_up_effect)
+        _, _, command_window_width, command_window_height = COMMAND_WINDOW
+        self.command_menu_surface = Surface((command_window_width * config['TILE_SIZE'],
+                                             command_window_height * config['TILE_SIZE']))
+        self.graphics.set_window_background(self.command_menu_surface,
+                                            self.directories.COMMAND_MENU_STATIC_BACKGROUND_PATH, self.color)
+        # The window's border, drawn over the menu; the title goes in the border (draw_command_window_frame), so the
+        # menu's own title is drawn in black
+        self.command_window_frame = Surface(self.command_menu_surface.get_size())
+        self.graphics.set_window_background(self.command_window_frame, self.directories.ITEM_MENU_BACKGROUND_PATH,
+                                            self.color, border=ITEM_MENU_BORDER)
+        self.command_window_frame.set_colorkey(BLACK)
         self.dialog_lookup = DialogLookup(self, config)
         tile_size = config['TILE_SIZE']
         language = config['LANGUAGE']
@@ -160,7 +108,7 @@ class CommandMenu(Menu):
                                            cursor_selection_color=self.color,
                                            title_background_color=BLACK,
                                            title_font=font,
-                                           title_font_color=self.color,
+                                           title_font_color=BLACK,
                                            title_font_size=font_size,
                                            title_offset=(title_x_offset, 0),
                                            widget_font=font,
@@ -177,6 +125,7 @@ class CommandMenu(Menu):
                                                #  Investigation needed.
                                                # blink_ms=500,
                                                # TODO: Fix LeftArrowSelection size.
+                                               arrow_right_margin=0,
                                            )
                                            ),
             mouse_enabled=False,
@@ -186,14 +135,18 @@ class CommandMenu(Menu):
         )
         # TODO: Allow for selection of options using the K ("A" button).
         #  Currently selection is only possible by use of the Enter button.
-        self.menu.add.button(_("TALK"), self.talk, padding=(9, 5, 8, 16))
-        self.menu.add.button(_("STATUS"), self.status, padding=(4, 5, 8, 16))
-        self.menu.add.button(_("STAIRS"), self.stairs, padding=(4, 5, 8, 16))
-        self.menu.add.button(_("SEARCH"), self.search, padding=(4, 5, 8, 16))
-        self.menu.add.button(_("SPELL"), self.spell, padding=(9, 0, 8, 16))
-        self.menu.add.button(_("ITEM"), self.item, padding=(4, 0, 8, 16))
-        self.menu.add.button(_("DOOR"), self.door, padding=(4, 0, 8, 16))
-        self.menu.add.button(_("TAKE"), self.take, padding=(4, 0, 8, 16))
+        # NES CmdNonCmbtDat: two columns 8 tiles apart, the entries at tile columns 2 and 10 of tile rows 2, 4, 6 and 8,
+        # and the cursor in the tile before each (cursor home X = 1). The buttons are moved right (translate) so that
+        # the arrow, drawn just left of a button, lands in that tile instead of on the window's left border.
+        for label, function, padding in ((_("TALK"), self.talk, (9, 5, 8, 6)),
+                                         (_("STATUS"), self.status, (4, 5, 8, 6)),
+                                         (_("STAIRS"), self.stairs, (4, 5, 8, 6)),
+                                         (_("SEARCH"), self.search, (4, 5, 8, 6)),
+                                         (_("SPELL"), self.spell, (9, 0, 8, 6)),
+                                         (_("ITEM"), self.item, (4, 0, 8, 6)),
+                                         (_("DOOR"), self.door, (4, 0, 8, 6)),
+                                         (_("TAKE"), self.take, (4, 0, 8, 6))):
+            self.menu.add.button(label, function, padding=padding).translate(COMMAND_BUTTON_SHIFT * SCALE, 0)
         self.menu.disable()
 
     def save(self):
@@ -419,7 +372,8 @@ class CommandMenu(Menu):
                                                       character_dict['character'].rect.y))
                             self.screen.blit(self.background, self.camera_position)
                     if self.launch_signaled:
-                        self.screen.blit(self.command_menu_surface, (tile_size * 6, tile_size * 1)) if not \
+                        self.screen.blit(self.command_menu_surface, (tile_size * COMMAND_WINDOW.x,
+                                                                     tile_size * COMMAND_WINDOW.y)) if not \
                             self.game.game_state.config['NO_BLIT'] else None
                     if self.game.drawer.display_hovering_stats:
                         self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
@@ -944,43 +898,18 @@ class CommandMenu(Menu):
         Display the current player's status.
         :return: None
         """
-        # open another window (11 tall x 10 wide)
-        # print the following attributes:
-        # example below:
-
-        tile_size = self.game.game_state.config['TILE_SIZE']
         self.sound.play_sound(self.directories.menu_button_sfx)
         show_status = True
-        self.window_drop_down_effect(4, 3, 10, 11)
-        self.graphics.create_window(4, 3, 10, 11, self.directories.STATUS_WINDOW_BACKGROUND_PATH, self.screen,
-                                    color=self.color)
-        draw_text(self.player.name, tile_size * 13, tile_size * 3.75, self.screen, self.game.game_state.config,
-                  color=self.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.strength), tile_size * 13, tile_size * 4.75, self.screen, self.game.game_state.config,
-                  color=self.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.agility), tile_size * 13, tile_size * 5.75, self.screen, self.game.game_state.config,
-                  color=self.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.max_hp), tile_size * 13, tile_size * 6.75, self.screen, self.game.game_state.config,
-                  color=self.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.max_mp), tile_size * 13, tile_size * 7.75, self.screen, self.game.game_state.config,
-                  color=self.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.attack_power), tile_size * 13, tile_size * 8.75, self.screen,
-                  self.game.game_state.config, color=self.color, alignment='right', letter_by_letter=False)
-        draw_text(str(self.player.defense_power), tile_size * 13, tile_size * 9.75, self.screen,
-                  self.game.game_state.config, color=self.color, alignment='right', letter_by_letter=False)
-        draw_text(self.player.weapon, tile_size * 11.75, tile_size * 10.75, self.screen, self.game.game_state.config,
-                  color=self.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
-        draw_text(self.player.armor, tile_size * 11.55, tile_size * 11.75, self.screen, self.game.game_state.config,
-                  color=self.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
-        draw_text(self.player.shield, tile_size * 11.75, tile_size * 12.75, self.screen, self.game.game_state.config,
-                  color=self.color, text_wrap_length=9, alignment='right', letter_by_letter=False)
-        display.update((4 * tile_size, 3 * tile_size, 10 * tile_size, 11 * tile_size))
+        x, y, width, height = STATUS_WINDOW
+        self.window_drop_down_effect(x, y, width, height)
+        window_rect = self.draw_status_window()
+        display.update(window_rect)
         while show_status:
             for current_event in event.get():
                 if current_event.type == KEYDOWN:
                     if current_event.key in accept_keys + reject_keys:
                         show_status = False
-        self.window_drop_up_effect(4, 3, 10, 11)
+        self.window_drop_up_effect(x, y, width, height)
         # print(f"""
         # NAME: {self.player.name}
         # STRENGTH: {self.player.strength}
@@ -995,6 +924,39 @@ class CommandMenu(Menu):
         # """)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
+
+    def draw_status_window(self) -> Rect:
+        """
+        Draw the status window (NES StatusDat). The labels are in the background image; the values go where StatusDat
+        puts them: the name after "NAME:" at tile column 11 of tile row 1, the numbers right-aligned to tile column 18
+        on every other row from row 3, and the weapon, armor and shield in two halves (first half at column 10, second
+        half at column 11 on the next row) from row 15.
+        :return: The window's rect on the screen.
+        """
+        config = self.game.game_state.config
+        tile_size = config['TILE_SIZE']
+        x, y, width, height = STATUS_WINDOW
+        self.graphics.create_window(x, y, width, height, self.directories.STATUS_WINDOW_BACKGROUND_PATH, self.screen,
+                                    color=self.color)
+
+        def draw_in_window(text: str, column: int, row: int, alignment: str = 'left') -> None:
+            draw_text(text, *self.window_text_position(x, y, column, row), self.screen, config, color=self.color,
+                      alignment=alignment, letter_by_letter=False)
+
+        draw_in_window(self.player.name, STATUS_NAME_TILE_COLUMN, STATUS_NAME_TILE_ROW)
+        values = (self.player.strength, self.player.agility, self.player.max_hp, self.player.max_mp,
+                  self.player.attack_power, self.player.defense_power)
+        for row, value in zip(STATUS_VALUE_TILE_ROWS, values):
+            draw_in_window(str(value), STATUS_VALUE_RIGHT_TILE_COLUMN, row, alignment='right')
+        for row, equipment in zip(STATUS_EQUIPMENT_TILE_ROWS, (self.player.weapon, self.player.armor,
+                                                               self.player.shield)):
+            if not equipment:
+                continue
+            first_half, second_half = name_halves(equipment)
+            draw_in_window(first_half, STATUS_EQUIPMENT_TILE_COLUMN, row)
+            if second_half:
+                draw_in_window(second_half, STATUS_EQUIPMENT_TILE_COLUMN + 1, row + 1)
+        return Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
 
     def stairs(self) -> None:
         """
@@ -1117,7 +1079,8 @@ class CommandMenu(Menu):
         function_dict: dict[Any, Any] = {}
         chosen_item = None
         if menu_name in ('inventory', 'discard'):
-            list_counter = Counter(self.player.inventory)
+            # NES CreateInvList: Herbs, then Magic Keys, then each inventory slot in order
+            entries = inventory_list(self.player.inventory)
             function_dict = {
                 # item function map
                 "Herb": self.herb,
@@ -1138,7 +1101,7 @@ class CommandMenu(Menu):
                 "Death Necklace": self.death_necklace,
             }
         elif menu_name == 'spells':
-            list_counter = Counter(self.player.spells)
+            entries = list(self.player.spells)
             function_dict = {
                 # name, function, MP cost
                 Spell.HEAL: (self.heal, 4),
@@ -1158,12 +1121,12 @@ class CommandMenu(Menu):
         current_arrow_position = 0
         drawn_arrow_position = None
         window_rect = Rect(0, 0, 0, 0)
-        currently_selected_item = list(list_counter.keys())[0]
+        currently_selected_item = entries[0]
         time.set_timer(arrow_fade, 530)
         while item_menu_displayed:
             if current_arrow_position != drawn_arrow_position:
                 # Redraw the window to erase the cursor from the entry it left
-                window_rect = self.draw_item_menu(menu_name, list_counter)
+                window_rect = self.draw_item_menu(menu_name, entries)
                 drawn_arrow_position = current_arrow_position
             cursor_x, cursor_y = self.window_text_position(
                 ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_CURSOR_TILE_COLUMN,
@@ -1219,23 +1182,33 @@ class CommandMenu(Menu):
                     elif len(menu_name) > 1:
                         if current_event.key in (K_UP, K_w) and current_arrow_position > 0:
                             current_arrow_position -= 1
-                        elif current_event.key in (K_DOWN, K_s) and current_arrow_position < len(list_counter) - 1:
+                        elif current_event.key in (K_DOWN, K_s) and current_arrow_position < len(entries) - 1:
                             current_arrow_position += 1
-                        currently_selected_item = list(list_counter.keys())[current_arrow_position]
+                        currently_selected_item = entries[current_arrow_position]
                 elif current_event.type == arrow_fade:
                     self.game.show_arrow = not self.game.show_arrow
         return chosen_item
 
-    def draw_item_menu(self, menu_name: str, list_counter: Counter) -> Rect:
+    def draw_command_window_frame(self, surface: Surface) -> None:
+        """
+        Draw the COMMAND window's border and title over the menu drawn on surface (the window's part of the screen):
+        "COMMAND" goes in the top border at tile column 4 (CmdNonCmbtDat: $8B, "COMMAND").
+        """
+        if self.game.game_state.config['NO_BLIT']:
+            return
+        surface.blit(self.command_window_frame, (0, 0))
+        self.draw_window_title(self._('COMMAND'), COMMAND_WINDOW.x, COMMAND_WINDOW.y, COMMAND_TITLE_TILE_COLUMN)
+
+    def draw_item_menu(self, menu_name: str, entries: list) -> Rect:
         """
         Draw the SPELL or ITEM window and its entries, without the cursor (NES SpellDat, PlayerInvDat).
         :param menu_name: 'spells', 'inventory' or 'discard'.
-        :param list_counter: The spells or items to list, with how many of each the hero has.
+        :param entries: The spells or items to list, in order (for items, inventory_list).
         :return: The window's rect on the screen.
         """
         config = self.game.game_state.config
         tile_size = config['TILE_SIZE']
-        x, y, width, height = item_menu_window(menu_name, len(list_counter))
+        x, y, width, height = item_menu_window(menu_name, len(entries))
         self.graphics.create_window(x, y, width, height, self.directories.ITEM_MENU_BACKGROUND_PATH, self.screen,
                                     self.color, border=ITEM_MENU_BORDER)
         if menu_name == 'spells':
@@ -1245,7 +1218,7 @@ class CommandMenu(Menu):
             draw_text(text, *self.window_text_position(x, y, column, row), self.screen, config, color=self.color,
                       letter_by_letter=False)
 
-        for index, (entry, amount) in enumerate(list_counter.items()):
+        for index, entry in enumerate(entries):
             row = item_menu_entry_tile_row(menu_name, index)
             if menu_name == 'spells':
                 draw_in_window(str(entry), ITEM_MENU_TEXT_TILE_COLUMN, row)
@@ -1253,7 +1226,7 @@ class CommandMenu(Menu):
             first_half, second_half = ITEM_NAME_HALVES.get(entry, (entry, ""))
             draw_in_window(first_half, ITEM_MENU_TEXT_TILE_COLUMN, row)
             if entry in COUNTED_ITEMS:
-                draw_in_window(str(amount), ITEM_COUNT_TILE_COLUMN, row)
+                draw_in_window(str(self.player.inventory.count(entry)), ITEM_COUNT_TILE_COLUMN, row)
             if second_half:
                 draw_in_window(second_half, ITEM_MENU_TEXT_TILE_COLUMN + 1, row + 1)
         return Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
