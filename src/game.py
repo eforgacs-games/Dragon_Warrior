@@ -813,7 +813,6 @@ class Game:
         self.battle_ctrl.player_hit_effect()  # NES PlayerHit: screen shake, red flash on a deathblow
         self.load_window_palette()  # NES PlayerHit: LoadRegBGPal, after the screen shake (red if HP is now low)
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
-        # create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
         self.cmd_menu.show_line_in_dialog_box(self._("Thy Hit Points decreased by {}.\n").format(attack_damage),
                                               add_quotes=False, disable_sound=True, hide_arrow=True, skip_text=True if
             self.player.current_hp == 0 else False)
@@ -844,7 +843,8 @@ class Game:
             self.player.is_dead = True
             self.load_window_palette()  # 0 HP is always low
             if self.battle_ctrl.launch_battle and not self.game_state.config["NO_BATTLES"]:
-                self.graphics.create_window(6, 1, 8, 3, self.directories.BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
+                # The command window, red now, with the arrow on the command that was chosen (WndAPressed)
+                self.battle_ctrl.draw_command_window(True)
                 self.battle_ctrl.launch_battle = False
                 display.flip()
             else:
