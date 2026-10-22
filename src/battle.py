@@ -109,7 +109,8 @@ class Battle:
             group_factor]:
             cmd_menu.show_line_in_dialog_box(self._("But was blocked in front.").format(current_battle.enemy.name),
                                              add_quotes=False, hide_arrow=True, disable_sound=True)
-            cmd_menu.game.enemy_move(current_battle)
+            if cmd_menu.game.enemy_move(current_battle):
+                return True
             if player.current_hp <= 0:
                 player.is_dead = True
             else:

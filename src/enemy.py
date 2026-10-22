@@ -89,7 +89,7 @@ class Drakeema(Enemy):
         self.pattern = self.set_pattern()
 
     def set_pattern(self):
-        return [(25, "HEAL", self.get_current_hp() < self.max_hp / 4), (50, "HURT", True), "ATTACK"]
+        return [(25, "HEAL", self.get_current_hp() <= self.max_hp // 4), (50, "HURT", True), "ATTACK"]
 
 
 class Ghost(Enemy):
@@ -196,7 +196,7 @@ class Druinlord(Enemy):
         self.name = "Druinlord"
 
     def set_pattern(self):
-        return [(75, "HEAL", self.get_current_hp() < self.max_hp / 4), (25, "HURT", True), "ATTACK"]
+        return [(75, "HEAL", self.get_current_hp() <= self.max_hp // 4), (25, "HURT", True), "ATTACK"]
 
 
 class Droll(Enemy):
@@ -234,7 +234,7 @@ class Wraith(Enemy):
         self.name = "Wraith"
 
     def set_pattern(self):
-        return [(25, "HEAL", self.get_current_hp() < self.max_hp / 4), "ATTACK"]
+        return [(25, "HEAL", self.get_current_hp() <= self.max_hp // 4), "ATTACK"]
 
 
 class WraithKnight(Enemy):
@@ -245,7 +245,7 @@ class WraithKnight(Enemy):
         self.name = "Wraith Knight"
 
     def set_pattern(self):
-        return [(75, "HEAL", self.get_current_hp() < self.max_hp / 4), "ATTACK"]
+        return [(75, "HEAL", self.get_current_hp() <= self.max_hp // 4), "ATTACK"]
 
 
 class DemonKnight(Enemy):
@@ -334,7 +334,7 @@ class Starwyvern(Enemy):
         self.name = "Starwyvern"
 
     def set_pattern(self):
-        return [(75, "HEALMORE", self.get_current_hp() < self.max_hp / 4), (25, "FIREBREATH", True), "ATTACK"]
+        return [(75, "HEALMORE", self.get_current_hp() <= self.max_hp // 4), (25, "FIREBREATH", True), "ATTACK"]
 
 
 class Knight(Enemy):
@@ -367,7 +367,7 @@ class ArmoredKnight(Enemy):
         self.name = "Armored Knight"
 
     def set_pattern(self):
-        return [(75, "HEALMORE", self.get_current_hp() < self.max_hp / 4), (25, "HURTMORE", True), "ATTACK"]
+        return [(75, "HEALMORE", self.get_current_hp() <= self.max_hp // 4), (25, "HURTMORE", True), "ATTACK"]
 
 
 class GreenDragon(Enemy):
