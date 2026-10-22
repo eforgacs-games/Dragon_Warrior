@@ -314,6 +314,6 @@ class TestPrincessGwaelin(TestCase):
                 self.game.story_flags.carrying_gwaelin = carrying
                 with patch.object(self.game.cmd_menu, 'show_line_in_dialog_box'), \
                         patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text, \
-                        patch('data.text.dialog_lookup_table.fade'):
+                        patch('data.text.dialog_lookup_table.screen_fade'):
                     self.dialog_lookup.inn_sleep(6)
                 self.assertEqual(show_text.call_args.args[0], (greeting, "I shall see thee again."))

@@ -47,7 +47,7 @@ class TestContinueQuest(TestCase):
         game = self.new_game()
         game.save_dir_contents = game.save_files()
         with patch.object(game.game_functions, 'main_menu_selection', return_value=0), \
-                patch('src.game.fade'), patch.object(game.music_player, 'load_and_play_music'):
+                patch('src.map_manager.screen_fade'), patch.object(game.music_player, 'load_and_play_music'):
             game.continue_quest()
         return game
 
