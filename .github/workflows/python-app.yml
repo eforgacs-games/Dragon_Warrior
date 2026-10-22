@@ -33,6 +33,10 @@ jobs:
     - name: Install dependencies
       # --locked fails if uv.lock is out of date with pyproject.toml
       run: uv sync --locked
+    - name: Check requirements.txt matches uv.lock
+      run: |
+        diff <(grep -v '^#' requirements.txt) <(uv export --locked --no-dev --no-hashes --no-annotate --no-header) \
+          || { echo "requirements.txt is out of date; regenerate it with the command in its header"; exit 1; }
     - name: Lint with ruff
       run: uv run ruff check . --output-format=github
     - name: Type check with mypy
