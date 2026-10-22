@@ -11,6 +11,7 @@ class Enemy:
         self.spells = spells
         self.name = ''
         self.is_asleep = False
+        self.is_stopspelled = False
         self.pattern = self.set_pattern()
 
         # spell resistance
