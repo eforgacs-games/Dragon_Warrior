@@ -99,7 +99,6 @@ class Game:
 
         self.loop_count = 1
         self.foreground_rects = []
-        self.torch_active = False
         self.repel_timer = 0  # NES RepelTimer, set by REPEL or Fairy Water
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
@@ -201,14 +200,14 @@ class Game:
                              self.foreground_rects, self.game_state.enable_animate, self.camera,
                              self.initial_dialog_enabled,
                              self.events, self.skip_text, self.story_flags.left_throne_room, self.game_state,
-                             self.torch_active, self.color)
+                             self.color)
         while True:
             self.clock.tick(self.fps)
             self.get_events()
             self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player,
                                  self.cmd_menu, self.foreground_rects, self.game_state.enable_animate, self.camera,
                                  self.initial_dialog_enabled, self.events, self.skip_text, self.story_flags.left_throne_room,
-                                 self.game_state, self.torch_active, self.color)
+                                 self.game_state, self.color)
             display.flip()
             self.loop_count += 1
 
@@ -448,6 +447,7 @@ class Game:
     def count_step(self):
         self.tiles_moved_since_spawn += 1
         self.game_state.tiles_moved_total += 1
+        self.game_state.tick_radiant_timer()
         self.tick_repel_timer()
         self.check_tantegel_cursed()
 
@@ -695,7 +695,7 @@ class Game:
                              self.foreground_rects, self.game_state.enable_animate, self.camera,
                              self.initial_dialog_enabled,
                              self.events, self.skip_text, self.story_flags.left_throne_room, self.game_state,
-                             self.torch_active, self.color)
+                             self.color)
         display.flip()
 
     def handle_warps(self):
