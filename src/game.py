@@ -916,7 +916,7 @@ class Game:
                         self.count_step()
                     else:
                         self.player.bumped = False
-                    self.player.is_moving, self.player.next_tile_checked = False, False
+                    self.finish_step(self.player)
                     return
             elif is_facing_laterally(self.player):
                 if curr_pos_x % self.tile_size == 0:
@@ -924,7 +924,7 @@ class Game:
                         self.count_step()
                     else:
                         self.player.bumped = False
-                    self.player.is_moving, self.player.next_tile_checked = False, False
+                    self.finish_step(self.player)
                     return
         if is_facing_medially(self.player):
             self.move_medially(self.player)
@@ -961,11 +961,16 @@ class Game:
         character.next_next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
                                                                                 character.direction_value,
                                                                                 self.current_map, offset=2)
-        if self.is_impassable(character.next_tile_id):
-            self.movement.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
-        elif self.character_in_path(character):
-            self.movement.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
-        else:
+        if character.step_destination is None:
+            # Start of a step: check it once, then reserve the destination until the character arrives
+            if self.is_impassable(character.next_tile_id) or self.character_in_path(character):
+                self.movement.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
+                delta_x = delta_y = 0
+            else:
+                character.step_origin = (character.column, character.row)
+                character.step_destination = self.get_next_coordinates(character.column, character.row,
+                                                                      character.direction_value)
+        if delta_x or delta_y:
             if delta_x:
                 character.rect.x += delta_x
                 # this causes the fade out to happen a square before the player touches a staircase
@@ -989,13 +994,22 @@ class Game:
                                                                                 self.current_map, offset=2)
 
     def character_in_path(self, character: Player | RoamingCharacter | FixedCharacter) -> bool:
-        fixed_character_locations = [(fixed_character.column, fixed_character.row) for fixed_character in
-                                     self.current_map.fixed_characters]
-        roaming_character_locations = [(roaming_character.column, roaming_character.row) for roaming_character in
-                                       self.current_map.roaming_characters]
+        """Whether the tile in front of a character is taken by someone else: where they stand, or the origin and
+        destination of a step they're taking (NES: an NPC can't move onto the player's position or next position, or
+        onto another NPC's)."""
         next_coordinates = self.get_next_coordinates(character.column, character.row, character.direction_value)
-        return next_coordinates in fixed_character_locations + roaming_character_locations + [
-            (self.player.column, self.player.row)]
+        others = [*self.current_map.fixed_characters, *self.current_map.roaming_characters, self.player]
+        for other in others:
+            if other is character:
+                continue
+            if next_coordinates in ((other.column, other.row), other.step_origin, other.step_destination):
+                return True
+        return False
+
+    @staticmethod
+    def finish_step(character: Player | RoamingCharacter) -> None:
+        character.is_moving, character.next_tile_checked = False, False
+        character.step_origin = character.step_destination = None
 
     def get_next_coordinates(self, character_column: int, character_row: int, direction: int) -> tuple | None:
         if character_row < len(self.current_map.layout) and character_column < len(self.current_map.layout[0]):
@@ -1067,11 +1081,11 @@ class Game:
             else:  # determine if character has reached new tile
                 if is_facing_medially(roaming_character):
                     if curr_pos_y % self.tile_size == 0:
-                        roaming_character.is_moving, roaming_character.next_tile_checked = False, False
+                        self.finish_step(roaming_character)
                         continue
                 elif is_facing_laterally(roaming_character):
                     if curr_pos_x % self.tile_size == 0:
-                        roaming_character.is_moving, roaming_character.next_tile_checked = False, False
+                        self.finish_step(roaming_character)
                         continue
             if is_facing_medially(roaming_character):
                 self.move_medially(roaming_character)
