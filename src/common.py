@@ -51,6 +51,35 @@ def is_facing_laterally(character):
     return is_facing_left(character) or is_facing_right(character)
 
 
+# Windows
+
+
+def nine_slice(source: Surface, size: tuple[int, int], border: int) -> Surface:
+    """Stretch a window background to any size without distorting its border.
+    The corners (border x border pixels) are copied as they are; the edges and the middle are stretched. This is how
+    the NES builds a window of any size out of fixed corner, edge and blank tiles (Bank01 WndUpdateWrkTile).
+    :param source: The window background image.
+    :param size: The (width, height) of the window to make.
+    :param border: The size of a corner, in pixels of the source image.
+    :return: The stretched window background.
+    """
+    source_width, source_height = source.get_size()
+    width, height = size
+    result = Surface(size)
+    # (source start, source length, destination start, destination length) for the 3 columns and the 3 rows
+    columns = ((0, border, 0, border),
+               (border, source_width - 2 * border, border, width - 2 * border),
+               (source_width - border, border, width - border, border))
+    rows = ((0, border, 0, border),
+            (border, source_height - 2 * border, border, height - 2 * border),
+            (source_height - border, border, height - border, border))
+    for source_x, source_w, x, w in columns:
+        for source_y, source_h, y, h in rows:
+            piece = source.subsurface((source_x, source_y, source_w, source_h))
+            result.blit(transform.scale(piece, (w, h)), (x, y))
+    return result
+
+
 # Maps
 
 
@@ -59,20 +88,37 @@ class Graphics:
         self.config = config
         self.directories = Directories(config)
 
-    def set_window_background(self, black_box, background_path, color):
+    def set_window_background(self, black_box, background_path, color, border: int | None = None):
+        """Draw a window background image onto a window.
+        :param black_box: The window surface.
+        :param background_path: The window background image, in NES pixels.
+        :param color: The window color (red when the hero is nearly dead).
+        :param border: If given, the size of the image's corners in NES pixels: the image is stretched without
+        distorting its border (see nine_slice), so one image serves windows of any size. Otherwise the whole image is
+        scaled to the window.
+        """
         black_box.fill(BLACK)
         background_image = image.load(background_path)
         if color == RED:
             transform.threshold(background_image, background_image, WHITE, (1, 1, 1), RED, 1, None, True)
             # image_pixel_array = PixelArray(background_image)
             # image_pixel_array.replace(WHITE, RED)
-        background_image = transform.scale(background_image, black_box.get_size())
+        if border is None:
+            background_image = transform.scale(background_image, black_box.get_size())
+        else:
+            scale = self.config['SCALE']
+            background_image = transform.scale_by(background_image, scale)
+            background_image = nine_slice(background_image, black_box.get_size(), border * scale)
         black_box.blit(background_image, black_box.get_rect()) if not self.config['NO_BLIT'] else None
 
-    def create_window(self, x, y, width, height, window_background, screen, color) -> Surface:
+    def create_window(self, x, y, width, height, window_background, screen, color,
+                      border: int | None = None) -> Surface:
+        """Draw a window on the screen. Position and size are in blocks (16 NES pixels; TILE_SIZE screen pixels).
+        :param border: See set_window_background.
+        """
         tile_size = self.config["TILE_SIZE"]
         window_box = Surface((tile_size * width, tile_size * height))  # lgtm [py/call/wrong-arguments]
-        self.set_window_background(window_box, window_background, color=color)
+        self.set_window_background(window_box, window_background, color=color, border=border)
         screen.blit(window_box, (tile_size * x, tile_size * y)) if not self.config['NO_BLIT'] else None
         return window_box
 
