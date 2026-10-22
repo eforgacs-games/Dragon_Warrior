@@ -39,7 +39,7 @@ from src.windows import COMMAND_TITLE_TILE_COLUMN, COMMAND_WINDOW, COUNTED_ITEMS
     ITEM_MENU_X, ITEM_MENU_Y, ITEM_NAME_HALVES, POPUP_WINDOW, SPELL_MENU_TITLE_TILE_COLUMN, \
     STATUS_EQUIPMENT_TILE_COLUMN, STATUS_EQUIPMENT_TILE_ROWS, STATUS_NAME_TILE_COLUMN, STATUS_NAME_TILE_ROW, \
     STATUS_VALUE_RIGHT_TILE_COLUMN, STATUS_VALUE_TILE_ROWS, STATUS_WINDOW, YES_NO_WINDOW, item_menu_entry_tile_row, \
-    item_menu_window, name_halves
+    item_menu_window, Window, name_halves
 
 arrow_fade = USEREVENT + 1
 # How far right the COMMAND window's buttons are moved, in NES pixels (see CommandMenu.__init__)
@@ -236,6 +236,56 @@ class CommandMenu(Menu):
             tile_size = self.game.game_state.config['TILE_SIZE']
             left, top, width, height = POPUP_WINDOW
             display.update(Rect(left * tile_size, top * tile_size, width * tile_size, height * tile_size))
+
+    def redraw_command_window(self, clip: Rect | None = None) -> None:
+        """Redraw the COMMAND window as it is (entries, cursor and frame; see Drawer.handle_menu_launch), if it's open,
+        or only its part inside ``clip``."""
+        config = self.game.game_state.config
+        if config['NO_BLIT'] or not self.menu.is_enabled():
+            return
+        tile_size = config['TILE_SIZE']
+        command_rect = Rect(COMMAND_WINDOW.x * tile_size, COMMAND_WINDOW.y * tile_size,
+                            COMMAND_WINDOW.width * tile_size, COMMAND_WINDOW.height * tile_size)
+        if clip is not None and not clip.colliderect(command_rect):
+            return
+        command_surface = self.screen.subsurface(command_rect)
+        if clip is not None:
+            command_surface.set_clip(clip.clip(command_rect).move(-command_rect.x, -command_rect.y))
+        self.menu.draw(command_surface)
+        self.draw_command_window_frame(command_surface)
+        command_surface.set_clip(None)
+
+    def remove_window(self, window: Window | tuple[int, int, int, int]) -> None:
+        """NES RemoveWindow (Bank00, LA7A2) for a foreground window: WindowSequence (Bank01) calls it as soon as a
+        selection window (spells, inventories, YES/NO, BUY/SELL) has been answered. Each of its blocks goes back to
+        what it covered: the background windows that are open (ClearWndBuf -> UncoverWindow), or else the map
+        (ModWindowBlock). Only that area is redrawn; the windows that are still open stay as they are.
+
+        Here the background windows are the pop-up, the COMMAND window and the dialog window, drawn over the map as
+        it is now, at the camera's current position."""
+        config = self.game.game_state.config
+        if config['NO_BLIT']:
+            return
+        tile_size = config['TILE_SIZE']
+        rect = Rect(window[0] * tile_size, window[1] * tile_size, window[2] * tile_size, window[3] * tile_size)
+        screen = self.screen
+        previous_clip = screen.get_clip()
+        screen.set_clip(rect)
+        drawer = self.game.drawer
+        screen.fill(BLACK)
+        if drawer.background is not None:
+            screen.blit(drawer.background, self.game.camera.pos)
+        if self.current_map.is_dark and config['ENABLE_DARKNESS']:
+            drawer.draw_darkness(screen)
+        self.redraw_command_window(rect)
+        if drawer.display_hovering_stats:
+            drawer.draw_hovering_stats_window(screen, self.player, self.color)
+        dialog_rect = Rect(DIALOG_WINDOW[0] * tile_size, DIALOG_WINDOW[1] * tile_size, DIALOG_WINDOW[2] * tile_size,
+                           DIALOG_WINDOW[3] * tile_size)
+        if rect.colliderect(dialog_rect):
+            self.draw_dialog_window()
+        screen.set_clip(previous_clip)
+        display.update(rect)
 
     def save(self):
         """NES SaveData (Bank03): the hero's experience, gold, items, equipment, name, HP and MP, plus the ModsnSpells,
@@ -684,6 +734,7 @@ class CommandMenu(Menu):
                 if current_event.key in accept_keys or current_event.key in reject_keys:
                     # WndAPressed/WndBPressed: the arrow is drawn once more and stays on
                     self.draw_yes_no_window(yes_selected, True)
+                    self.remove_window(YES_NO_WINDOW)  # then NES WindowSequence: RemoveWindow
                     return yes_selected and current_event.key in accept_keys
                 if current_event.key in (K_UP, K_w, K_DOWN, K_s):
                     if yes_selected != (current_event.key in (K_UP, K_w)):
