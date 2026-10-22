@@ -13,6 +13,8 @@ from src.game_functions import get_surrounding_rect
 from src.menu import Menu, CommandMenu
 from src.sound import Sound
 from src.text import draw_text
+from src.visual_effects import NES_FPS, enemy_fade_in, enemy_hit_flash
+from src.waiting import wait
 from src.windows import COMMAND_WINDOW, POPUP_WINDOW
 
 
@@ -50,6 +52,35 @@ class Drawer:
         scaled_size = (enemy_image_base.get_width() * self.scale, enemy_image_base.get_height() * self.scale)
         enemy_image = self.graphics.get_scaled_image(enemy_path, scaled_size)
         self.position_and_draw_enemy_image(screen, enemy_image, enemy_name)
+
+    def get_enemy_image(self, enemy_name):
+        """The enemy's scaled image and its top-left position on the screen."""
+        enemy_path = f'{self.directories.IMAGES_ENEMIES_DIR}/{enemy_name.replace(" ", "")}.png'
+        enemy_image_base = self.graphics.get_image(enemy_path)
+        scaled_size = (enemy_image_base.get_width() * self.scale, enemy_image_base.get_height() * self.scale)
+        enemy_image = self.graphics.get_scaled_image(enemy_path, scaled_size)
+        tile_size = self.game_state.config["TILE_SIZE"]
+        enemy_position = enemy_image_position_lookup.get(enemy_name)
+        if not enemy_position:
+            enemy_position = (mean(value[0] for value in enemy_image_position_lookup.values()),
+                              mean(value[1] for value in enemy_image_position_lookup.values()))
+        return enemy_image, (enemy_position[0] * tile_size, enemy_position[1] * tile_size)
+
+    def fade_in_enemy(self, screen, enemy_name):
+        """Show the enemy fading in from a black shadow (NES LoadEnemyGFX -> PalFadeIn twice). The final form's
+        DoEndFight (Bank00 LoadEndBossGFX) fades in four times, then waits 41 frames."""
+        enemy_image, enemy_position = self.get_enemy_image(enemy_name)
+        if enemy_name == 'Dragonlord 2':
+            enemy_fade_in(screen, enemy_image, enemy_position, self.game_state.config, repeats=4)
+            wait(round(41 * 1000 / NES_FPS), self.game_state.config)
+        else:
+            enemy_fade_in(screen, enemy_image, enemy_position, self.game_state.config)
+
+    def flash_enemy(self, screen, enemy_name):
+        """Flash the enemy red when the hero hits it (NES PlyrHitEn -> PaletteFlash)."""
+        enemy_image, enemy_position = self.get_enemy_image(enemy_name)
+        enemy_hit_flash(screen, enemy_image, enemy_position, self.game_state.config,
+                        keep_black=enemy_name == 'Dragonlord 2')
 
     @staticmethod
     def handle_sprite_animation(enable_animate, character_dict):

@@ -27,6 +27,7 @@ from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
 from src.pygame_compat import arrow_fade
 from src.spells import Spell
+from src.visual_effects import player_hit_shake
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w
 
@@ -355,6 +356,8 @@ class BattleController:
                                                   add_quotes=False, disable_sound=True, hide_arrow=True)
         else:
             self.sound.play_sound(self.directories.hit_sfx)
+            # NES PlyrHitEn: the enemy flashes red (PaletteFlash) before the damage text
+            self.drawer.flash_enemy(self.screen, current_battle.enemy.name)
             self.cmd_menu.show_line_in_dialog_box(
                 self._("The {}'s Hit Points have been reduced by {}.\n").format(
                     self._(current_battle.enemy.name), attack_damage),
@@ -467,6 +470,21 @@ class BattleController:
             current_battle.missed_attack(self.cmd_menu)
         else:
             self.game.receive_damage(attack_damage)
+
+    def player_hit_effect(self):
+        """NES PlayerHit ($ED20): after the hero's HP drops, the screen shakes, and on a deathblow it also flashes
+        red. Against the Dragonlord's final form there is no shake and no red flash."""
+        current_battle = self.cmd_menu.current_battle
+        if current_battle is None:
+            return
+        enemy_name = current_battle.enemy.name
+        is_final_form = enemy_name == 'Dragonlord 2'
+        tile_size = self.config["TILE_SIZE"]
+        background = None if is_final_form else (current_battle.get_battle_background_image(),
+                                                 (5 * tile_size, 4 * tile_size))
+        player_hit_shake(self.screen, self.config, deathblow=self.player.current_hp <= 0,
+                         enemy=self.drawer.get_enemy_image(enemy_name), background=background,
+                         shake=not is_final_form)
 
     def enemy_attack_message(self, enemy):
         self.sound.play_sound(self.directories.prepare_attack_sfx)
