@@ -89,6 +89,34 @@ def selection_cursor_tiles(home_column: int, home_row: int, columns: int, column
                  for row in range(rows) for column in range(columns))
 
 
+# CmdNonCmbtDat ($B054): a selection window (options $80) with 2 columns 8 tiles apart ($08) and the cursor home at
+# Y = 2 tiles, X = 1 tile ($21). The top border has 3 border tiles ($8B), "COMMAND", and border to the end ($88);
+# then four double spaced rows ($80 ends each row, a blank row follows), each 1 blank tile ($81), the left entry,
+# blank tiles up to tile column 10 ($84, $82, $82, $82), the right entry: TALK SPELL, STATUS ITEM, STAIRS DOOR,
+# SEARCH TAKE.
+# The entries in WndSelResults order (NCC_TALK $00 to NCC_TAKE $07): WndCalcSelResult numbers them column by column,
+# WndCol * 4 rows + WndRow.
+COMMAND_ENTRIES = ("TALK", "STATUS", "STAIRS", "SEARCH", "SPELL", "ITEM", "DOOR", "TAKE")
+COMMAND_COLUMNS = 2
+COMMAND_ROWS = 4
+COMMAND_CURSOR_HOME = (1, 2)  # tile column, tile row
+COMMAND_COLUMN_SPACING = 8
+# The cursor's tile for each entry, in WndSelResults order; the entry's text starts in the tile after it
+COMMAND_CURSOR_TILES = tuple(
+    (COMMAND_CURSOR_HOME[0] + column * COMMAND_COLUMN_SPACING, COMMAND_CURSOR_HOME[1] + 2 * row)
+    for column in range(COMMAND_COLUMNS) for row in range(COMMAND_ROWS))
+COMMAND_TITLE = WindowText("COMMAND", COMMAND_TITLE_TILE_COLUMN, 0)
+COMMAND_LAYOUT = WindowLayout(
+    window=COMMAND_WINDOW,
+    title=COMMAND_TITLE,
+    texts=tuple(WindowText(entry, column + 1, row) for entry, (column, row) in zip(COMMAND_ENTRIES, COMMAND_CURSOR_TILES)),
+    cursor_tiles=COMMAND_CURSOR_TILES,
+)
+# The same window with no text at all: its border only, for a translation, whose title and entries are drawn as text
+# over it (the NES font has no Korean)
+COMMAND_BORDER_LAYOUT = WindowLayout(window=COMMAND_WINDOW, cursor_tiles=COMMAND_CURSOR_TILES)
+
+
 # CmdCmbtDat ($B095): a selection window (options $80) with 2 columns 8 tiles apart ($08) and the cursor home at
 # Y = 2 tiles, X = 1 tile ($21). The top border has 3 border tiles ($8B), "COMMAND", and border to the end ($88);
 # then, on the cursor home's row, 1 blank tile ($81), FIGHT, 3 blank tiles ($83), SPELL, and on the next one 1 blank

@@ -13,7 +13,10 @@ from pygame import K_LEFT, K_RETURN, K_RIGHT, K_i, K_j, K_k
 
 from src.config.test_config import test_config
 from src.direction import Direction
+from src.command_window import held_buttons
 from src.game import Game
+from src.menu import COMMAND_METHODS
+from src.waiting import NES_FPS
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -51,15 +54,28 @@ class FreezeTestCase(TestCase):
         # TantegelThroneRoom's one roaming guard
         self.guard = self.game.current_map.roaming_characters[0]
         pygame.event.clear()
+        # One NES frame per pass of the main loop, for the COMMAND window's cursor and joypad reading
+        self.frame_number = 0
+        clock = patch('src.cursor.get_ticks', side_effect=lambda: -(-self.frame_number * 1000 // NES_FPS))
+        clock.start()
+        self.addCleanup(clock.stop)
 
     def frame(self, *events, held=()):
-        """Run one pass of the main loop's update, with these key presses and these keys held down."""
+        """Run one pass of the main loop's update, with these key presses and these keys held down, and what
+        Drawer.draw_all does with the COMMAND window: open it once signaled (handle_menu_launch), then let it read
+        the joypad (CommandMenu.select_command)."""
+        self.frame_number += 1
         for current_event in events:
             pygame.event.post(current_event)
-        # Replaces only src.game's name for pygame.key, never pygame.key.get_pressed itself
-        with patch('src.game.key') as mock_key:
-            mock_key.get_pressed.return_value = keys_held(*held)
+        # Replaces only src.game's (and the window's) name for pygame.key, never pygame.key.get_pressed itself
+        with patch('src.game.key') as mock_key, patch('src.command_window.key') as window_key:
+            mock_key.get_pressed.return_value = window_key.get_pressed.return_value = keys_held(*held)
             self.game.get_events()
+            cmd_menu = self.game.cmd_menu
+            if cmd_menu.launch_signaled and not cmd_menu.menu.is_enabled():
+                cmd_menu.menu.enable(held_buttons())
+            if cmd_menu.menu.is_enabled():
+                cmd_menu.select_command(self.game.events)
 
     def frames(self, count, held=()):
         for _ in range(count):
@@ -87,8 +103,12 @@ class FreezeTestCase(TestCase):
     def open_command_menu(self):
         self.frame(keydown(K_k))
         self.assertTrue(self.game.cmd_menu.launch_signaled)
-        # Drawer.handle_menu_launch does this on the next draw
-        self.game.cmd_menu.menu.enable()
+        self.assertTrue(self.game.cmd_menu.menu.is_enabled())
+
+    def close_command_menu(self):
+        """B, read by the COMMAND window once nothing has been held for a frame (WndGetButtons)."""
+        self.frames(2)
+        self.frame(keydown(K_j))
 
 
 class TestFreezeMovement(FreezeTestCase):
@@ -177,10 +197,11 @@ class TestFreezeMovement(FreezeTestCase):
         self.open_command_menu()
         self.game.npc_schedule.give_turn_to(0)  # due a step as soon as it may move
         with patch('src.game.random.choice', return_value=Direction.LEFT.value):
-            self.frame(keydown(K_j))
-        self.assertFalse(self.game.world_frozen)
-        before = self.guard_position()
-        self.frames(3)
+            self.close_command_menu()
+            self.assertFalse(self.game.cmd_menu.menu.is_enabled())
+            self.assertFalse(self.game.world_frozen)
+            before = self.guard_position()
+            self.frames(3)
         self.assertNotEqual(before, self.guard_position())
 
     def test_a_pressed_mid_step_opens_the_command_window_after_the_step(self):
@@ -294,7 +315,6 @@ class TestCommandsOnlyBetweenSteps(FreezeTestCase):
     """
 
     COMMANDS = ('talk', 'search', 'stairs', 'door', 'take')
-    TITLES = ('TALK', 'SEARCH', 'STAIRS', 'DOOR', 'TAKE')
 
     def setUp(self):
         super().setUp()
@@ -309,38 +329,20 @@ class TestCommandsOnlyBetweenSteps(FreezeTestCase):
                 return real_command(*args, **kwargs)
 
             setattr(cmd_menu, name, record)
-            # pygame-menu keeps its own reference to each button's command
-            for widget in cmd_menu.menu.get_widgets():
-                if widget.get_title() == self.TITLES[self.COMMANDS.index(name)]:
-                    widget.update_callback(record)
         for blocking in ('show_text_in_dialog_box', 'window_drop_down_effect', 'window_drop_up_effect'):
             patcher = patch.object(cmd_menu, blocking)
             patcher.start()
             self.addCleanup(patcher.stop)
 
-    def frame(self, *events, held=()):
-        super().frame(*events, held=held)
-        # What Drawer.draw_all does with the command menu each frame
-        cmd_menu = self.game.cmd_menu
-        if cmd_menu.launch_signaled and not cmd_menu.menu.is_enabled():
-            cmd_menu.menu.enable()
-        if cmd_menu.menu.is_enabled():
-            cmd_menu.menu.update(self.game.events)
+    def select(self, name):
+        self.game.cmd_menu.menu.selected = COMMAND_METHODS.index(name)
 
-    def select(self, title):
-        menu = self.game.cmd_menu.menu
-        for widget in menu.get_widgets():
-            if widget.get_title() == title:
-                menu.select_widget(widget)
-                return
-        self.fail(f"No {title} button")
-
-    def spam_command(self, title, count, first_events=()):
+    def spam_command(self, name, count, first_events=()):
         """Press A, pick the command and press Enter, over and over, while holding RIGHT."""
         for press in range(count):
             self.frame(*(first_events if press == 0 else ()), keydown(K_k), held=(K_RIGHT,))
             if self.game.cmd_menu.menu.is_enabled():
-                self.select(title)
+                self.select(name)
             self.frame(keydown(K_RETURN), held=(K_RIGHT,))
 
     def start_a_step(self):
@@ -351,21 +353,21 @@ class TestCommandsOnlyBetweenSteps(FreezeTestCase):
         return start_x
 
     def test_commands_cannot_be_used_after_pausing_mid_step(self):
-        for title in self.TITLES:
-            with self.subTest(title):
+        for name in self.COMMANDS:
+            with self.subTest(name):
                 self.setUp()
                 start_x = self.start_a_step()
-                self.spam_command(title, self.tile_size // self.game.speed, first_events=(keydown(K_i),))
+                self.spam_command(name, self.tile_size // self.game.speed, first_events=(keydown(K_i),))
                 self.assertTrue(self.game.paused)
                 self.assertEqual([], self.commands_used)
                 self.assertEqual(start_x + self.tile_size, self.game.player.rect.x)
 
     def test_commands_chosen_mid_step_wait_for_the_step_to_finish(self):
-        for title in self.TITLES:
-            with self.subTest(title):
+        for name in self.COMMANDS:
+            with self.subTest(name):
                 self.setUp()
                 start_x = self.start_a_step()
-                self.spam_command(title, self.tile_size)
+                self.spam_command(name, self.tile_size)
                 self.assertTrue(self.commands_used)
                 for name, x, y, is_moving in self.commands_used:
                     self.assertFalse(is_moving, name)

@@ -8,6 +8,7 @@ from pygame import KEYDOWN, K_RETURN, event
 
 from src.common import set_gettext_language
 from src.config.test_config import test_config
+from src.menu import COMMAND_METHODS
 from src.game import Game
 from tests.mock_map import MockMap
 
@@ -37,26 +38,35 @@ class TestCommandMenu(TestCase):
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
 
     def command_menu_keys(self, *keys):
-        """Feed key presses to the COMMAND window the way Drawer.draw_all does, recording which command runs."""
-        menu = self.game.cmd_menu.menu
-        menu.enable()
+        """Press keys in the open COMMAND window, a few NES frames apart (Drawer.draw_all calls select_command once a
+        frame), recording which command runs."""
+        cmd_menu = self.game.cmd_menu
+        frame = [0]
         chosen = []
-        for widget in menu.get_widgets():
-            widget.update_callback(lambda title=widget.get_title(): chosen.append(title))
-        for key in keys:
-            menu.update([event.Event(KEYDOWN, key=key, unicode='', mod=0)])
-        return menu.get_selected_widget().get_title(), chosen
+        with patch('src.cursor.get_ticks', side_effect=lambda: frame[0] * 17), \
+                patch('src.command_window.held_buttons', return_value=0):
+            cmd_menu.menu.enable()
+            for name in COMMAND_METHODS:
+                setattr(cmd_menu, name, lambda name=name: chosen.append(name))
+            for pressed_key in keys:
+                for events in ([], [], [event.Event(KEYDOWN, key=pressed_key, unicode='', mod=0)]):
+                    frame[0] += 1
+                    cmd_menu.select_command(events)
+        return COMMAND_METHODS[cmd_menu.menu.selected], chosen
 
     def test_k_chooses_a_command_like_enter(self):
-        # K is the A button: it has to choose in the COMMAND window, not only Enter (pygame-menu's default)
+        # K is the A button; Enter chooses too
         for key in (pygame.K_k, K_RETURN):
             with self.subTest(key=pygame.key.name(key)):
-                selected, chosen = self.command_menu_keys(key)
+                selected, chosen = self.command_menu_keys(pygame.K_DOWN, key)
                 self.assertEqual(chosen, [selected])
+                self.assertEqual('status', selected)
 
     def test_j_does_not_choose_a_command(self):
-        _, chosen = self.command_menu_keys(pygame.K_j)
+        with patch.object(self.game, 'unlaunch_menu') as unlaunch_menu:
+            _, chosen = self.command_menu_keys(pygame.K_j)
         self.assertEqual(chosen, [])
+        unlaunch_menu.assert_called_once_with(self.game.cmd_menu)  # B closes the window (WND_ABORT)
 
     # def test_take(self):
     # pygame.key.get_pressed = create_key_mock(pygame.K_s)

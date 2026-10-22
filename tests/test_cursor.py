@@ -114,7 +114,7 @@ class TestCursorTile(TestCase):
 
 
 class TestCommandWindowCursor(TestCase):
-    """The COMMAND window (CmdNonCmbtDat) draws the NES cursor itself instead of pygame-menu's arrow."""
+    """The COMMAND window (CmdNonCmbtDat) draws the NES cursor in the tile before the selected entry."""
 
     @classmethod
     def setUpClass(cls):
@@ -137,22 +137,21 @@ class TestCommandWindowCursor(TestCase):
 
     def test_cursor_is_in_the_tile_before_the_selected_entry(self):
         from unittest.mock import patch
-        widgets = self.cmd_menu.menu.get_widgets()
+        config = self.game.game_state.config
+        nes_tile = config['TILE_SIZE'] // 2
+        scale = config['SCALE']
+        self.cmd_menu.menu.enable()
         # TALK, STATUS, STAIRS, SEARCH at tile column 2, SPELL, ITEM, DOOR, TAKE at 10, on rows 2, 4, 6 and 8
-        for index, tile in enumerate(((1, 2), (1, 4), (1, 6), (1, 8), (9, 2), (9, 4), (9, 6), (9, 8))):
-            with self.subTest(entry=widgets[index].get_title()):
-                self.cmd_menu.menu.select_widget(widgets[index])
-                with patch.object(self.cmd_menu, 'draw_window_cursor') as draw_cursor:
-                    self.cmd_menu.draw_command_cursor()
-                self.assertEqual((6, 1) + tile, draw_cursor.call_args.args[:4])
-                # Moving the cursor restarts its blink visible (WndUpdateCrsrPos)
-                self.assertTrue(draw_cursor.call_args.args[4])
+        for entry, (column, row) in enumerate(((1, 2), (1, 4), (1, 6), (1, 8), (9, 2), (9, 4), (9, 6), (9, 8))):
+            with self.subTest(entry=entry), patch.dict(config, NO_BLIT=False):
+                self.cmd_menu.menu.selected = entry
+                self.cmd_menu.draw_command_window()
+                x, y = (6 * 2 + column) * nes_tile, (1 * 2 + row) * nes_tile
+                self.assertEqual(CURSOR_TILE, tile_pixels(self.game.screen, x, y, scale))
 
     def test_opening_the_window_restarts_the_blink(self):
-        self.cmd_menu.draw_command_cursor()
         self.cmd_menu.cursor.start_ticks -= 1000
-        self.cmd_menu.reset_command_cursor()
-        self.cmd_menu.draw_command_cursor()
+        self.cmd_menu.menu.enable()
         self.assertTrue(self.cmd_menu.cursor.visible())
         self.assertLess(self.cmd_menu.cursor.frame_counter(), 0x10)
 
