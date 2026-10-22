@@ -4,12 +4,6 @@ Game-wide named constants. All magic numbers that appear in game logic live here
 
 # ── Battle ────────────────────────────────────────────────────────────────────
 
-# Probability index used with randint(0, EXCELLENT_MOVE_THRESHOLD)
-EXCELLENT_MOVE_PROBABILITY = 0
-EXCELLENT_MOVE_THRESHOLD = 31
-
-# Probability that a dominant enemy attempts to flee
-ENEMY_FLEE_PROBABILITY = 0.25
 
 # Auto-battle delay between actions (ms)
 AUTO_BATTLE_DELAY_MS = 200

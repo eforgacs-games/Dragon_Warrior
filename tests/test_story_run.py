@@ -381,7 +381,9 @@ class TestStoryRun(TestCase):
             self.assertEqual(game.battle_ctrl.pending_scripted_battle, 'Dragonlord')
 
         with self.step("13 (defeat both of the Dragonlord's forms)"):
-            with patch.object(game.battle_ctrl, 'handle_battle_prompts', side_effect=self.fight_to_the_end):
+            # The hero always gets the first turn (no CheckEnRun / CalcWhoIsNext ambush), so the fight can't go wrong
+            with patch.object(game.battle_ctrl, 'handle_battle_prompts', side_effect=self.fight_to_the_end), \
+                    patch.object(game.battle_ctrl, 'start_fight', return_value=False):
                 game.handle_battles()  # the next frame starts the queued fight
             self.settle()
             self.assertEqual(self.enemies_fought, ['Dragonlord', 'Dragonlord 2'])

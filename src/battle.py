@@ -3,10 +3,7 @@ import random
 from pygame import display, mixer, Surface
 
 from src.common import BLACK, set_gettext_language
-from src.constants import (
-    EXCELLENT_MOVE_PROBABILITY, EXCELLENT_MOVE_THRESHOLD,
-    BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT,
-)
+from src.constants import BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT
 from src.directories import Directories
 from src.enemy import enemy_groups
 from src.enemy_lookup import enemy_string_lookup
@@ -19,6 +16,8 @@ from src.player.player_stats import get_level_by_experience
 from src.sound import Sound
 from src.waiting import check_for_quit, wait_frames
 
+MAX_EXPERIENCE = 0xFFFF  # NES RegEnDefeated: ExpLB/ExpUB max out at $FFFF
+MAX_GOLD = 0xFFFF  # NES RegEnDefeated: GoldLB/GoldUB max out at $FFFF
 DRAGONLORD_TRANSFORM_WAIT_FRAMES = 80  # NES EnemyDefeated: 80 frames between the two Dragonlord fights
 SPIRAL_LEAD_IN_FRAMES = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E40A, before the first block
 SPIRAL_FRAMES_PER_BLOCK = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E43D, once per block
@@ -168,29 +167,27 @@ class Battle:
         return 1
 
     def missed_attack(self, cmd_menu):
-        """Handle a missed attack."""
-        missed_sfx_number = random.randint(1, 2)
-        missed_sound = self.directories.missed_sfx if missed_sfx_number == 1 else self.directories.missed_2_sfx
-        self.sound.play_sound(missed_sound)
+        """NES ChkPlyrMiss: the hero's hit did no damage. SFX_MISSED1 and "The attack failed and there was no loss
+        of Hit Points!" (TextBlock15, entry 7)."""
+        self.sound.play_sound(self.directories.missed_sfx)
+        cmd_menu.show_line_in_dialog_box(self._("The attack failed and there was no loss of Hit Points!"),
+                                         add_quotes=False, disable_sound=True, hide_arrow=True)
+
+    def enemy_missed_attack(self, cmd_menu):
+        """NES EnPhysAttack: the enemy's hit did no damage. SFX_MISSED2 and "A miss! No damage hath been scored!"
+        (TextBlock16, entry 11)."""
+        self.sound.play_sound(self.directories.missed_2_sfx)
         cmd_menu.show_line_in_dialog_box(self._("A miss! No damage hath been scored!"), add_quotes=False,
                                          disable_sound=True, hide_arrow=True)
 
     def calculate_attack_damage(self, cmd_menu, player, enemy):
-        """Calculate the damage of an attack."""
-        # NES: 1 in 32 chance of an excellent move, except against either form of the Dragonlord
-        if random.randint(0, EXCELLENT_MOVE_THRESHOLD) == EXCELLENT_MOVE_PROBABILITY and enemy.name not in (
-                'Dragonlord', 'Dragonlord 2'):
+        """The hero's FIGHT damage, per NES PlyrFight ($E5FE)."""
+        # NES PlyrFight: no excellent moves against either form of the Dragonlord (EN_DRAGONLORD1/2)
+        if enemy.name not in ('Dragonlord', 'Dragonlord 2') and is_excellent_move(random.randint(0, 255)):
             self.sound.play_sound(self.directories.excellent_move_sfx)
             cmd_menu.show_line_in_dialog_box(self._("Excellent move!\n"), add_quotes=False, disable_sound=True)
-            # Damage = attack - (attack / 2 * rand(255)) / 256, i.e. about half to all of attack power
-            return player.attack_power - (player.attack_power // 2) * random.randint(0, 255) // 256
-
-        # NES PlyrCalcHitDmg
-        base_attack = player.attack_power - enemy.defense // 2
-        if base_attack < 2:
-            # Weak attack: the enemy's defense is too high, so 0 or 1 damage, 50/50.
-            return random.randint(0, 1)
-        return normal_attack_damage(base_attack, random.randint(0, 255))
+            return excellent_move_damage(player.attack_power, random.randint(0, 255))
+        return player_hit_damage(player.attack_power, enemy.defense)
 
     def battle_spell(self, cmd_menu: CommandMenu, player: Player, current_battle):
         """Handle casting a spell in battle."""
@@ -210,12 +207,14 @@ class Battle:
             # NES NotDL1Defeated: the final boss gives no experience or gold; the ending takes over from here
             cmd_menu.game.ending.final_boss_defeated()
             return
+        # NES RegEnDefeated: the experience is the enemy's exact base value; the gold is varied (CalcPlyrGold).
+        # Both totals stop at 65535.
         gold = randomize_enemy_gold(enemy.gold)
         exp_and_gold = self._("Thy experience increases by {}.\n").format(enemy.xp) + self._(
             "Thy GOLD increases by {}.\n").format(gold)
         cmd_menu.show_line_in_dialog_box(exp_and_gold, add_quotes=False, disable_sound=True, hide_arrow=True)
-        player.total_experience += enemy.xp
-        player.gold += gold
+        player.total_experience = min(player.total_experience + enemy.xp, MAX_EXPERIENCE)
+        player.gold = min(player.gold + gold, MAX_GOLD)
         self.check_player_level_up(cmd_menu, player, music_enabled)
 
     def dragonlord_first_form_defeated(self, cmd_menu, screen):
@@ -388,15 +387,59 @@ def can_run_away(player_agility: int, enemy_defense: int, enemy_group: int) -> b
 
 
 def normal_attack_damage(base_attack: int, random_number: int) -> int:
-    """NES NormalAttack, shared by player and enemy hits: base_attack / 4 to base_attack / 2."""
+    """NES NormalAttack, shared by player and enemy hits: ((base_attack + 1) * rand(0-255) / 256 + base_attack) / 4,
+    i.e. base_attack / 4 to base_attack / 2."""
     return ((base_attack + 1) * random_number // 256 + base_attack) // 4
 
 
+def is_excellent_move(random_number: int) -> bool:
+    """NES PlyrFight: an excellent move happens when the low 5 bits of a random byte are all 0 (1 in 32)."""
+    return random_number & 0x1F == 0
+
+
+def excellent_move_damage(attack_power: int, random_number: int) -> int:
+    """NES PlyrFight: attack - (attack / 2 * rand(0-255)) / 256, i.e. half to all of the hero's attack power. The
+    enemy's defense isn't used."""
+    return attack_power - (attack_power // 2) * random_number // 256
+
+
+def player_hit_damage(attack_power: int, enemy_defense: int) -> int:
+    """NES PlyrCalcHitDmg: base = attack - enemy defense / 2. Below 2 (or negative) it's PlyrWeakAttack, 0 or 1
+    damage at 50/50; otherwise NormalAttack."""
+    base_attack = attack_power - enemy_defense // 2
+    if base_attack < 2:
+        return random.randint(0, 255) & 0x01
+    return normal_attack_damage(base_attack, random.randint(0, 255))
+
+
 def calculate_enemy_attack_damage(player, enemy):
-    """Calculate the damage of an enemy's physical attack, following the NES EnCalcHitDmg routine."""
+    """The damage of an enemy's physical attack, following the NES EnCalcHitDmg routine: base = attack - the hero's
+    defense / 2. When the base is below attack / 2 + 1 (or negative) it's EnWeakAttack,
+    ((attack / 2 + 1) * rand(0-255) / 256 + 2) / 3, otherwise NormalAttack. The hero can't dodge (EnPhysAttack has no
+    dodge check)."""
     base_attack = enemy.attack - player.defense_power // 2
     random_number = random.randint(0, 255)
     if base_attack < enemy.attack // 2 + 1:
         # Weak attack: the player's defense is high compared to the enemy's attack.
         return ((enemy.attack // 2 + 1) * random_number // 256 + 2) // 3
     return normal_attack_damage(base_attack, random_number)
+
+
+def enemy_dodges(dodge: float, random_number: int) -> bool:
+    """NES SetEnDmg1: the enemy dodges when (the low nibble of its magic defense) - 1 is at least a 0-63 roll, so
+    a dodge value of n/64 dodges n times in 64, and 0 never does. (A sleeping enemy never gets this roll.)"""
+    dodge_nibble = round(dodge * 64)
+    return dodge_nibble != 0 and dodge_nibble - 1 >= random_number & 0x3F
+
+
+def enemy_flees(player_strength: int, enemy_attack: int, random_number: int) -> bool:
+    """NES CheckEnRun: when the hero's strength / 2 is at least the enemy's attack, the enemy runs away when the
+    low 2 bits of a random byte are 0 (1 in 4)."""
+    return player_strength // 2 >= enemy_attack and random_number & 0x03 == 0
+
+
+def player_acts_first(player_agility: int, enemy_defense: int, enemy_random: int, player_random: int) -> bool:
+    """NES CalcWhoIsNext/CalcNextOdds at the start of a fight: the hero acts first when rand(0-255) * agility is at
+    least rand(0-63) * the enemy's defense; otherwise the enemy attacks before the hero is ready."""
+    return player_random * player_agility >= (enemy_random & 0x3F) * enemy_defense
+
