@@ -1,11 +1,30 @@
 class Enemy:
+    """One row of the NES enemy stat table (Bank01 EnStatTbl, loaded into $0100-$0107 by LoadEnemyStats).
+
+    Each row's first 8 bytes are Att, Def, HP, Spel, Agi, Mdef, Exp, Gld. Our fields map onto them like this:
+
+    - ``hp`` (``max_hp``): the base HP byte (EnBaseHP). The fight setup (Bank03 ModEnHitPoints) starts the
+      enemy on 75%-100% of it (``battle.randomize_enemy_hp``); HEAL, HEALMORE and the 1/4 HP heal check all
+      use the unrandomized base value.
+    - ``attack`` (EnBaseAtt) and ``defense`` (EnBaseDef). Defense is also what the run check uses
+      (TryRun/CalcNextOdds).
+    - ``speed``: the raw Agi byte (EnBaseAgi). Despite the name, the NES uses it only for resistances: the
+      upper nibble is ``sleep_resist`` and the lower nibble is ``stopspell_resist``, each as n/16.
+    - The Mdef byte (EnBaseMDef): the upper nibble is ``hurt_resist`` (n/16, for HURT and HURTMORE) and the
+      lower nibble is ``dodge`` (n/64).
+    - ``xp`` (EnBaseExp) is given as-is. ``gold`` is the base gold byte (EnBaseGld); the drop is
+      gold * (192 + rand(0-63)) / 256 (Bank03 CalcPlyrGold, ``battle.randomize_enemy_gold``).
+    - ``spells`` lists the spells in the Spel byte (EnSpell), upper spell first, and ``set_pattern`` turns the
+      byte's chances into the order DoEnemyAttack tries them in. See ``tests/test_enemy_stat_table.py``.
+    """
+
     def __init__(self, hp, attack, defense, speed, xp, gold, spells, sleep_resist, stopspell_resist, hurt_resist,
                  dodge):
         self.max_hp = hp
         self.hp = hp
-        self.attack = attack  # also known as strength
-        self.defense = defense  # also known as agility
-        self.speed = speed
+        self.attack = attack
+        self.defense = defense
+        self.speed = speed  # raw Agi byte: sleep resistance in the upper nibble, STOPSPELL in the lower
         self.xp = xp
         self.gold = gold
         self.spells = spells
@@ -34,19 +53,19 @@ class Enemy:
         self.hp = min(self.hp + amount, self.max_hp)
 
 
-# stats from http://www.thealmightyguru.com/Reviews/DragonWarrior/DW-Enemies.html
+# Stats from Bank01 EnStatTbl (enemy numbers $00-$27); tests/test_enemy_stat_table.py checks every row.
 
 
 class Slime(Enemy):
     def __init__(self):
-        super().__init__(hp=3, attack=5, defense=3, speed=15, xp=1, gold=1, spells=None, sleep_resist=0 / 16,
+        super().__init__(hp=3, attack=5, defense=3, speed=15, xp=1, gold=2, spells=None, sleep_resist=0 / 16,
                          stopspell_resist=15 / 16, hurt_resist=0 / 16, dodge=1 / 64)
         self.name = "Slime"
 
 
 class RedSlime(Enemy):
     def __init__(self):
-        super().__init__(hp=4, attack=7, defense=3, speed=15, xp=1, gold=2, spells=None, sleep_resist=0 / 16,
+        super().__init__(hp=4, attack=7, defense=3, speed=15, xp=1, gold=3, spells=None, sleep_resist=0 / 16,
                          stopspell_resist=15 / 16, hurt_resist=0 / 16, dodge=1 / 64)
         self.name = "Red Slime"
 
@@ -54,7 +73,7 @@ class RedSlime(Enemy):
 class MetalSlime(Enemy):
 
     def __init__(self):
-        super().__init__(hp=4, attack=10, defense=225, speed=255, xp=115, gold=6, spells=["HURT"], sleep_resist=15 / 16,
+        super().__init__(hp=4, attack=10, defense=255, speed=255, xp=115, gold=6, spells=("HURT",), sleep_resist=15 / 16,
                          stopspell_resist=15 / 16, hurt_resist=15 / 16, dodge=1 / 64)
         self.name = "Metal Slime"
 
@@ -65,7 +84,7 @@ class MetalSlime(Enemy):
 class Drakee(Enemy):
 
     def __init__(self):
-        super().__init__(hp=6, attack=9, defense=6, speed=15, xp=2, gold=2, spells=None, sleep_resist=0 / 16,
+        super().__init__(hp=6, attack=9, defense=6, speed=15, xp=2, gold=3, spells=None, sleep_resist=0 / 16,
                          stopspell_resist=15 / 16, hurt_resist=0 / 16, dodge=1 / 64)
         self.name = "Drakee"
 
@@ -73,7 +92,7 @@ class Drakee(Enemy):
 class Magidrakee(Enemy):
 
     def __init__(self):
-        super().__init__(hp=15, attack=14, defense=14, speed=0, xp=5, gold=12, spells=["HURT"], sleep_resist=0 / 16,
+        super().__init__(hp=15, attack=14, defense=14, speed=0, xp=5, gold=12, spells=("HURT",), sleep_resist=0 / 16,
                          stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=1 / 64)
         self.name = "Magidrakee"
 
@@ -84,7 +103,7 @@ class Magidrakee(Enemy):
 class Drakeema(Enemy):
 
     def __init__(self):
-        super().__init__(hp=20, attack=22, defense=26, speed=32, xp=11, gold=20, spells=["HEAL", "HURT"],
+        super().__init__(hp=20, attack=22, defense=26, speed=32, xp=11, gold=20, spells=("HEAL", "HURT"),
                          sleep_resist=2 / 16, stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=6 / 64)
         self.name = "Drakeema"
         self.pattern = self.set_pattern()
@@ -96,7 +115,7 @@ class Drakeema(Enemy):
 class Ghost(Enemy):
 
     def __init__(self):
-        super().__init__(hp=7, attack=11, defense=8, speed=15, xp=3, gold=4, spells=None, sleep_resist=0 / 16,
+        super().__init__(hp=7, attack=11, defense=8, speed=15, xp=3, gold=5, spells=None, sleep_resist=0 / 16,
                          stopspell_resist=15 / 16, hurt_resist=0 / 16, dodge=4 / 64)
         self.name = "Ghost"
 
@@ -104,7 +123,7 @@ class Ghost(Enemy):
 class Poltergeist(Enemy):
 
     def __init__(self):
-        super().__init__(hp=23, attack=18, defense=20, speed=0, xp=7, gold=18, spells=("HURT",), sleep_resist=0 / 16,
+        super().__init__(hp=23, attack=18, defense=20, speed=0, xp=8, gold=18, spells=("HURT",), sleep_resist=0 / 16,
                          stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=6 / 64)
         self.name = "Poltergeist"
 
@@ -115,7 +134,7 @@ class Poltergeist(Enemy):
 class Specter(Enemy):
 
     def __init__(self):
-        super().__init__(hp=36, attack=40, defense=38, speed=None, xp=18, gold=70, spells=("HURT", "SLEEP"),
+        super().__init__(hp=36, attack=40, defense=38, speed=49, xp=18, gold=70, spells=("SLEEP", "HURT"),
                          sleep_resist=3 / 16, stopspell_resist=1 / 16, hurt_resist=0 / 16, dodge=4 / 64)
         self.name = "Specter"
 
@@ -126,7 +145,7 @@ class Specter(Enemy):
 class Magician(Enemy):
 
     def __init__(self):
-        super().__init__(hp=12, attack=11, defense=12, speed=0, xp=4, gold=12, spells=("HURT",), sleep_resist=0 / 16,
+        super().__init__(hp=13, attack=11, defense=12, speed=0, xp=4, gold=12, spells=("HURT",), sleep_resist=0 / 16,
                          stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=1 / 64)
         self.name = "Magician"
         self.pattern = self.set_pattern()
@@ -138,7 +157,7 @@ class Magician(Enemy):
 class Warlock(Enemy):
 
     def __init__(self):
-        super().__init__(hp=30, attack=28, defense=22, speed=49, xp=14, gold=35, spells=("HURT", "SLEEP"),
+        super().__init__(hp=30, attack=28, defense=22, speed=49, xp=13, gold=35, spells=("SLEEP", "HURT"),
                          sleep_resist=3 / 16, stopspell_resist=1 / 16, hurt_resist=0 / 16, dodge=2 / 64)
         self.name = "Warlock"
 
@@ -149,7 +168,7 @@ class Warlock(Enemy):
 class Wizard(Enemy):
 
     def __init__(self):
-        super().__init__(hp=65, attack=80, defense=70, speed=247, xp=50, gold=65, spells=("HURTMORE", "SLEEP"),
+        super().__init__(hp=65, attack=80, defense=70, speed=247, xp=50, gold=165, spells=("HURTMORE",),
                          sleep_resist=15 / 16, stopspell_resist=7 / 16, hurt_resist=15 / 16, dodge=2 / 64)
         self.name = "Wizard"
 
@@ -184,7 +203,7 @@ class RogueScorpion(Enemy):
 class Druin(Enemy):
 
     def __init__(self):
-        super().__init__(hp=22, attack=22, defense=18, speed=15, xp=7, gold=16, spells=None, sleep_resist=0 / 16,
+        super().__init__(hp=22, attack=20, defense=18, speed=15, xp=7, gold=16, spells=None, sleep_resist=0 / 16,
                          stopspell_resist=15 / 16, hurt_resist=0 / 16, dodge=2 / 64)
         self.name = "Druin"
 
@@ -192,8 +211,8 @@ class Druin(Enemy):
 class Druinlord(Enemy):
 
     def __init__(self):
-        super().__init__(hp=35, attack=47, defense=40, speed=240, xp=20, gold=85, spells=["HURT"], sleep_resist=15 / 16,
-                         stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=4 / 64)
+        super().__init__(hp=35, attack=47, defense=40, speed=240, xp=20, gold=85, spells=("HEAL", "HURT"),
+                         sleep_resist=15 / 16, stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=4 / 64)
         self.name = "Druinlord"
 
     def set_pattern(self):
@@ -211,7 +230,7 @@ class Droll(Enemy):
 class Drollmagi(Enemy):
 
     def __init__(self):
-        super().__init__(hp=38, attack=52, defense=50, speed=34, xp=22, gold=90, spells=("HEAL", "HURT", "STOPSPELL"),
+        super().__init__(hp=38, attack=52, defense=50, speed=34, xp=22, gold=90, spells=("STOPSPELL",),
                          sleep_resist=2 / 16, stopspell_resist=2 / 16, hurt_resist=0 / 16, dodge=1 / 64)
         self.name = "Drollmagi"
 
@@ -252,7 +271,7 @@ class WraithKnight(Enemy):
 class DemonKnight(Enemy):
 
     def __init__(self):
-        super().__init__(hp=50, attack=79, defense=64, speed=255, xp=37, gold=150, spells=("HURT", "SLEEP"),
+        super().__init__(hp=50, attack=79, defense=64, speed=255, xp=37, gold=150, spells=None,
                          sleep_resist=15 / 16, stopspell_resist=15 / 16, hurt_resist=15 / 16, dodge=15 / 64)
         self.name = "Demon Knight"
 
@@ -260,7 +279,7 @@ class DemonKnight(Enemy):
 class Wolf(Enemy):
 
     def __init__(self):
-        super().__init__(hp=34, attack=40, defense=30, speed=31, xp=16, gold=45, spells=None, sleep_resist=1 / 16,
+        super().__init__(hp=34, attack=40, defense=30, speed=31, xp=16, gold=50, spells=None, sleep_resist=1 / 16,
                          stopspell_resist=15 / 16, hurt_resist=0 / 16, dodge=2 / 64)
         self.name = "Wolf"
 
@@ -319,7 +338,7 @@ class Wyvern(Enemy):
 class Magiwyvern(Enemy):
 
     def __init__(self):
-        super().__init__(hp=58, attack=78, defense=68, speed=32, xp=34, gold=140, spells=("SLEEP", "FIREBREATH"),
+        super().__init__(hp=58, attack=78, defense=68, speed=32, xp=34, gold=140, spells=("SLEEP",),
                          sleep_resist=2 / 16, stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=2 / 64)
         self.name = "Magiwyvern"
 
@@ -341,7 +360,7 @@ class Starwyvern(Enemy):
 class Knight(Enemy):
 
     def __init__(self):
-        super().__init__(hp=55, attack=76, defense=78, speed=103, xp=33, gold=150, spells=("STOPSPELL",),
+        super().__init__(hp=55, attack=76, defense=78, speed=103, xp=33, gold=130, spells=("STOPSPELL",),
                          sleep_resist=6 / 16, stopspell_resist=7 / 16, hurt_resist=0 / 16, dodge=1 / 64)
         self.name = "Knight"
 
@@ -352,7 +371,7 @@ class Knight(Enemy):
 class AxeKnight(Enemy):
 
     def __init__(self):
-        super().__init__(hp=70, attack=94, defense=82, speed=243, xp=54, gold=165, spells=("SLEEP", "STOPSPELL",),
+        super().__init__(hp=70, attack=94, defense=82, speed=243, xp=54, gold=165, spells=("SLEEP",),
                          sleep_resist=15 / 16, stopspell_resist=3 / 16, hurt_resist=1 / 16, dodge=1 / 64)
         self.name = "Axe Knight"
 
@@ -363,7 +382,7 @@ class AxeKnight(Enemy):
 class ArmoredKnight(Enemy):
 
     def __init__(self):
-        super().__init__(hp=90, attack=105, defense=86, speed=147, xp=70, gold=140, spells=("HEALMORE", "HURTMORE"),
+        super().__init__(hp=90, attack=105, defense=86, speed=247, xp=70, gold=140, spells=("HEALMORE", "HURTMORE"),
                          sleep_resist=15 / 16, stopspell_resist=7 / 16, hurt_resist=1 / 16, dodge=2 / 64)
         self.name = "Armored Knight"
 
@@ -374,7 +393,7 @@ class ArmoredKnight(Enemy):
 class GreenDragon(Enemy):
 
     def __init__(self):
-        super().__init__(hp=65, attack=88, defense=74, speed=127, xp=45, gold=110, spells=("FIREBREATH",),
+        super().__init__(hp=65, attack=88, defense=74, speed=127, xp=45, gold=160, spells=("FIREBREATH",),
                          sleep_resist=7 / 16, stopspell_resist=15 / 16, hurt_resist=2 / 16, dodge=2 / 64)
         self.name = "Green Dragon"
 
@@ -407,7 +426,7 @@ class RedDragon(Enemy):
 class Dragonlord(Enemy):
 
     def __init__(self):
-        super().__init__(hp=100, attack=90, defense=75, speed=55, xp=0, gold=0, spells=("STOPSPELL", "HURTMORE"),
+        super().__init__(hp=100, attack=90, defense=75, speed=255, xp=0, gold=0, spells=("STOPSPELL", "HURTMORE"),
                          sleep_resist=15 / 16, stopspell_resist=15 / 16, hurt_resist=15 / 16, dodge=0 / 64)
         self.name = "Dragonlord"
 
@@ -418,7 +437,7 @@ class Dragonlord(Enemy):
 class Dragonlord2(Enemy):
 
     def __init__(self):
-        super().__init__(hp=130, attack=140, defense=200, speed=90, xp=0, gold=0, spells=("FIREBREATH2",),
+        super().__init__(hp=130, attack=140, defense=200, speed=255, xp=0, gold=0, spells=("FIREBREATH2",),
                          sleep_resist=15 / 16, stopspell_resist=15 / 16, hurt_resist=15 / 16, dodge=0 / 64)
         self.name = "Dragonlord 2"
 
@@ -426,6 +445,8 @@ class Dragonlord2(Enemy):
         return [(50, "FIREBREATH2", True), "ATTACK"]
 
 
+# Run groups, from the enemy-number boundaries in Bank03 TryRun (EN_DROLLMAGI, EN_GDRAGON, EN_STONEMAN).
+# The enemy numbers below are decimal.
 # Group 1: #00 (Slime) - #19 (Druinlord)
 # Group 2: #20 (Drollmagi) - #29 (Werewolf)
 # Group 3: #30 (Green Dragon) - #34 (Blue Dragon)
@@ -434,7 +455,7 @@ class Dragonlord2(Enemy):
 enemy_groups = {
     1: ["Slime", "Red Slime", "Drakee", "Ghost", "Magician", "Magidrakee", "Scorpion", "Druin", "Poltergeist", "Droll",
         "Drakeema", "Skeleton",
-        "Warlock", "Metal Scorpion", "Wolf", "Wraith", "MetalSlime", "Specter", "Wolflord", "Druinlord"],
+        "Warlock", "Metal Scorpion", "Wolf", "Wraith", "Metal Slime", "Specter", "Wolflord", "Druinlord"],
     2: ["Drollmagi", "Wyvern", "Rogue Scorpion", "Wraith Knight", "Golem", "Goldman", "Knight", "Magiwyvern",
         "Demon Knight", "Werewolf"],
     3: ["Green Dragon", "Starwyvern", "Wizard", "Axe Knight", "Blue Dragon"],
