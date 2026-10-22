@@ -3,6 +3,7 @@ import sys
 from abc import ABC
 from typing import Callable, Dict
 
+from pygame import surface
 from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
 
@@ -11,7 +12,7 @@ from src.direction import Direction
 from src.directories import Directories
 from src.map_layouts import MapLayouts
 from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point, \
-    covered_cells
+    covered_cells, low_hp_tile_image
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
 from src.sprites.fixed_character import FixedCharacter
@@ -22,6 +23,15 @@ all_impassable_tiles = (
     'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST', 'TOP_COAST', 'TOP_RIGHT_COAST', 'RIGHT_COAST',
     'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST', 'BOTTOM_TOP_COAST', 'BOTTOM_TOP_RIGHT_COAST',
     'KING_LORIK', 'GUARD', 'MAN', 'WOMAN', 'WISE_MAN', 'SOLDIER', 'MERCHANT')
+
+# The tiles drawn with background palette 0, whose color 1 ($3F01) turns red while HP is low (AddPalByte/ChkLowHPPal,
+# Bank03). The fifth byte of each block in GFXTilesTbl (Bank03, $F5B5) is its palette, and only these blocks use
+# palette 0: Town ($07), Castle ($09), Bridge ($0A), Water ($0F) and the water blocks with shores ($18-$26). Every
+# other block uses palette 1, 2 or 3, none of which contains $30 white in OverworldPal, TownPal or DungeonPal (Bank00).
+LOW_HP_PALETTE_TILES = frozenset((
+    'CASTLE', 'TOWN', 'BRIDGE', 'WATER', 'BOTTOM_COAST', 'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST',
+    'TOP_COAST', 'TOP_RIGHT_COAST', 'RIGHT_COAST', 'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST',
+    'BOTTOM_TOP_RIGHT_COAST'))
 
 
 class DragonWarriorMap:
@@ -71,6 +81,10 @@ class DragonWarriorMap:
         self.covered_area: frozenset[tuple[int, int]] = frozenset()
         # NES CoverStatus: whether the hero is standing on a covered block.
         self.player_under_cover = False
+        # Whether background palette 0's color 1 is the low HP red (set_low_hp_palette), and the red tiles, made the
+        # first time they're needed.
+        self.low_hp_palette = False
+        self._low_hp_tile_images: Dict[str, surface.Surface] = {}
 
         # Tile Key:
         # Index values for the map tiles corresponding to location on tile sheet.
@@ -260,15 +274,36 @@ class DragonWarriorMap:
         tile_group = tile_dict.get('group')
         if tile_group is None:
             self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'] = Group()
-        if tile_value <= 10:
-            tile = BaseSprite(center_pt, self.map_tiles[tile_value][0])
-        elif tile_value <= 21:
-            tile = BaseSprite(center_pt, self.map_tiles[tile_value - 11][1])
-        elif tile_value < 33:
-            tile = BaseSprite(center_pt, self.map_tiles[tile_value - 22][2])
-        else:
-            tile = None
+        tile = BaseSprite(center_pt, self.floor_tile_image(tile_value)) if tile_value < 33 else None
         self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'].add(tile)
+
+    def normal_tile_image(self, tile_value: int) -> surface.Surface:
+        """The tileset image for a floor tile: tileset.png has 11 tiles to a row."""
+        return self.map_tiles[tile_value % 11][tile_value // 11]
+
+    def floor_tile_image(self, tile_value: int) -> surface.Surface:
+        """The image for a floor tile in the current background palette: palette 0 tiles are red while HP is low."""
+        tile_name = self.get_tile_by_value(tile_value)
+        if not self.low_hp_palette or tile_name not in LOW_HP_PALETTE_TILES:
+            return self.normal_tile_image(tile_value)
+        if tile_name not in self._low_hp_tile_images:
+            self._low_hp_tile_images[tile_name] = low_hp_tile_image(self.normal_tile_image(tile_value))
+        return self._low_hp_tile_images[tile_name]
+
+    def set_low_hp_palette(self, low_hp: bool) -> bool:
+        """Load background palette 0's color 1 as red (low HP) or white, the way AddPalByte's ChkLowHPPal (Bank03) does
+        for the map as well as the windows: every palette 0 tile on the map swaps its image. Returns whether anything
+        changed, so the caller only redraws the map when it did."""
+        if low_hp == self.low_hp_palette:
+            return False
+        self.low_hp_palette = low_hp
+        for tile_name in LOW_HP_PALETTE_TILES:
+            tile_dict = self.floor_tile_key[tile_name]
+            if tile_dict.get('group'):
+                image = self.floor_tile_image(tile_dict['val'])
+                for tile in tile_dict['group']:
+                    tile.image = image
+        return True
 
     @property
     def hero_underlying_tile(self):
