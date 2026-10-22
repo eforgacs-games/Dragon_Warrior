@@ -741,27 +741,44 @@ class Brecconary(DragonWarriorMap):
                                east_gate=warp_line((21, 40), (25, 40)),
                                west_gate=warp_line((21, 9), (24, 9)))
         self.set_town_to_overworld_warps()
+        # NES BrecMobTbl and BrecStatTbl (Bank00). An NPC at NES X,Y is at (Y + 8, X + 10) here. The NPCs that were
+        # already here come first so they keep their identifiers; the rest follow in map order.
         self.npc_coordinates = {
-            (9, 38): 'SOLDIER',
-            (12, 15): 'MERCHANT',
-            (12, 34): 'WOMAN',
-            (15, 14): 'WOMAN',
-            (18, 30): 'MAN',
-            (18, 34): 'WISE_MAN',
-            (21, 11): 'MAN',
-            (29, 20): 'MERCHANT',
-            (31, 30): 'MAN',
-            (33, 35): 'MERCHANT',
-            (34, 13): 'SOLDIER',
-            (34, 20): 'GUARD',
+            (9, 38): 'SOLDIER',  # static fighter at 28,1 (dialog byte $25)
+            (12, 15): 'MERCHANT',  # static shopkeeper at 5,4: weapons and armor shop ($01)
+            (12, 34): 'WOMAN',  # mobile female villager at 24,4: Fairy Water ($0F)
+            (15, 14): 'WOMAN',  # static female villager at 4,7 ($29)
+            (18, 30): 'MAN',  # static male villager at 20,10 ($26)
+            (18, 34): 'WISE_MAN',  # static wizard at 24,10: removes curses ($67)
+            (21, 11): 'MAN',  # static male villager at 1,13 ($2A)
+            (29, 20): 'MERCHANT',  # static shopkeeper at 10,21: the inn ($12)
+            (31, 30): 'MAN',  # static male villager at 20,23 ($28)
+            (33, 35): 'MERCHANT',  # static shopkeeper at 25,25: item shop ($08)
+            (34, 13): 'SOLDIER',  # mobile fighter at 3,26 ($27)
+            (34, 20): 'GUARD',  # static guard at 10,26: searching for Gwaelin ($64)
+            (12, 19): 'WISE_MAN',  # mobile wizard at 9,4 ($2B)
+            (17, 25): 'MERCHANT',  # mobile shopkeeper at 15,9 ($2E)
+            (22, 20): 'MAN',  # mobile male villager at 10,14 ($2C)
+            (23, 36): 'GUARD',  # mobile guard at 26,15 ($2F)
+            (26, 29): 'SOLDIER',  # mobile fighter at 19,18 ($30)
+            (27, 22): 'SOLDIER',  # mobile fighter at 12,19 ($5D)
+            (30, 35): 'MAN',  # mobile male villager at 25,22 ($31)
+            (32, 25): 'WOMAN',  # mobile female villager at 15,24 ($2D)
         }
         self.custom_underlying_tiles = {
             'SOLDIER': 'TREES',
-            'WOMAN': 'BRICK',
             'WOMAN_2': 'GRASS',
             'MAN_2': 'TREES',
             'MAN_3': 'GRASS',
+            'WISE_MAN_2': 'GRASS',
+            'SOLDIER_3': 'GRASS',
+            'SOLDIER_4': 'GRASS',
+            'MAN_5': 'GRASS',
+            'WOMAN_3': 'GRASS',
         }
+        # The NPCs from BrecMobTbl
+        self.roaming_character_list = ['WOMAN', 'SOLDIER_2', 'WISE_MAN_2', 'MERCHANT_4', 'MAN_4', 'GUARD_2',
+                                       'SOLDIER_3', 'SOLDIER_4', 'MAN_5', 'WOMAN_3']
         # NES BrecCvrdDatPtr -> TantSLDat ($8D24): the upper right building (fairy water) and the lower right one
         # (item shop). NES X,Y is at (Y + 8, X + 10) here.
         self.covered_area = covered_cells({
@@ -778,8 +795,8 @@ class Brecconary(DragonWarriorMap):
         return Direction.RIGHT.value
 
     def set_characters_initial_directions(self):
+        # The DD bits of each NES table entry; every NPC not listed here faces down
         self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
-        self.set_character_initial_direction('WOMAN', Direction.LEFT)
         self.set_character_initial_direction('MAN_3', Direction.UP)
         self.set_character_initial_direction('MERCHANT_3', Direction.LEFT)
         self.set_character_initial_direction('GUARD', Direction.UP)
