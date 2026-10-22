@@ -7,6 +7,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 import pygame
 
 from src.config.test_config import test_config
+from src.items import armor, shields, weapons
 from src.shops import ShopInventories
 
 VALID_ITEM_TYPES = {'weapon', 'armor', 'shield'}
@@ -49,6 +50,15 @@ class TestShopInventories(unittest.TestCase):
             for item_name, item_data in inventory.items():
                 with self.subTest(item=item_name):
                     self.assertIn(item_data['type'], VALID_ITEM_TYPES)
+
+    def test_item_types_and_costs_match_equipment_tables(self):
+        tables = {'weapon': weapons, 'armor': armor, 'shield': shields}
+        for inventory in self._all_inventories():
+            for item_name, item_data in inventory.items():
+                with self.subTest(item=item_name):
+                    table = tables[item_data['type']]
+                    self.assertIn(item_name, table)
+                    self.assertEqual(item_data['cost'], table[item_name]['cost'])
 
     def test_costs_are_positive_integers(self):
         for inventory in self._all_inventories():
@@ -95,11 +105,13 @@ class TestShopInventories(unittest.TestCase):
         self.assertEqual(item['cost'], 1500)
         self.assertEqual(item['type'], 'weapon')
 
-    def test_magic_armor_is_shield_type(self):
-        # Despite its name, Magic Armor is categorised as 'shield' in the data
-        item = self.shops.rimuldar_weapons_store_inventory['Magic Armor']
-        self.assertEqual(item['cost'], 7700)
-        self.assertEqual(item['type'], 'shield')
+    def test_magic_armor_is_armor_type(self):
+        # Buying it as a 'shield' used to replace the player's shield instead of their armor
+        for inventory in (self.shops.rimuldar_weapons_store_inventory,
+                          self.shops.cantlin_weapons_store_south_inventory):
+            item = inventory['Magic Armor']
+            self.assertEqual(item['cost'], 7700)
+            self.assertEqual(item['type'], 'armor')
 
     def test_large_shield_in_garinham(self):
         item = self.shops.garinham_weapons_store_inventory['Large Shield']
