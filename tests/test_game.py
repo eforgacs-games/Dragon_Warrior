@@ -108,6 +108,14 @@ class TestGame(TestCase):
     #     initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
     #     self.assertEqual(self.camera.set_camera_position(initial_hero_location), (-16, -7))
 
+    def test_load_game_restores_worn_items(self):
+        save = {"Name": "Erdrick", "Experience": 0, "Gold": 0, "Inventory": ["Dragon's Scale"],
+                "Armor": "Clothes", "WearingDragonScale": True, "WearingFightersRing": True}
+        self.game.load_game(save)
+        self.assertTrue(self.game.player.wearing_dragon_scale)
+        self.assertTrue(self.game.player.wearing_fighters_ring)
+        self.assertEqual(self.game.player.defense_power, self.game.player.agility // 2 + 2 + 2)
+
     def test_hero_underlying_tile(self):
         self.assertEqual('BRICK', self.game.current_map.hero_underlying_tile())
 

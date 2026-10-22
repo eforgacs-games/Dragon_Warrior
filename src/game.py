@@ -138,7 +138,8 @@ class Game:
 
         self.player = Player(center_point=None,
                              images=self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
-                             current_map=self.current_map, god_mode=self.game_state.config['GOD_MODE'])
+                             current_map=self.current_map, god_mode=self.game_state.config['GOD_MODE'],
+                             fighters_ring_attack_bonus=self.game_state.config['FIGHTERS_RING_ATTACK_BONUS'])
         self.last_coordinates = None
         self.player.restore_hp()
         self.tile_size = self.game_state.config["TILE_SIZE"]
@@ -1018,6 +1019,8 @@ class Game:
         self.player.weapon = save_file.get("Weapon", "")
         self.player.armor = save_file.get("Armor", "")
         self.player.shield = save_file.get("Shield", "")
+        self.player.wearing_dragon_scale = save_file.get("WearingDragonScale", False)
+        self.player.wearing_fighters_ring = save_file.get("WearingFightersRing", False)
         self.player.update_attack_power()
         self.player.update_defense_power()
         self.player.inventory = save_file["Inventory"]

@@ -13,7 +13,7 @@ from src.sprites.animated_sprite import AnimatedSprite
 class Player(AnimatedSprite):
 
     def __init__(self, center_point, images: Tuple[Surface, Surface, Surface, Surface], current_map: DragonWarriorMap, direction_value=Direction.DOWN.value,
-                 god_mode=False):
+                 god_mode=False, fighters_ring_attack_bonus=0):
         AnimatedSprite.__init__(self, center_point, direction_value, images, identifier='HERO')
 
         # map/collision-related attributes
@@ -47,6 +47,9 @@ class Player(AnimatedSprite):
         self.weapon = ""
         self.armor = ""
         self.shield = ""
+        self.wearing_dragon_scale = False
+        self.wearing_fighters_ring = False  # no stat effect on the NES; only changes NPC dialog
+        self.fighters_ring_attack_bonus = fighters_ring_attack_bonus
 
         # set name-based initial stats and growth stats
 
@@ -96,6 +99,8 @@ class Player(AnimatedSprite):
         else:
             print(f"ERROR: {self.weapon} is not a valid weapon.")
             self.attack_power = self.strength
+        if self.wearing_fighters_ring:
+            self.attack_power += self.fighters_ring_attack_bonus
 
     def update_defense_power(self):
         # NES: defense = agility / 2 + armor bonus + shield bonus
@@ -104,6 +109,8 @@ class Player(AnimatedSprite):
             self.defense_power += armor[self.armor]['defense']
         if shields.get(self.shield):
             self.defense_power += shields[self.shield]['defense']
+        if self.wearing_dragon_scale:
+            self.defense_power += 2
 
     def get_points_to_next_level(self):
         if levels_list.get(self.level + 1):
