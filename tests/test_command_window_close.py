@@ -14,6 +14,7 @@ from pygame import K_DOWN, K_j, K_k
 
 from src.config.test_config import test_config
 from src.game import Game
+from src.waiting import NES_FPS
 from src.windows import COMMAND_WINDOW, POPUP_WINDOW
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
@@ -93,7 +94,9 @@ class TestCommandWindowClose(TestCase):
 
         game.get_events = get_events  # type: ignore[method-assign]
         game.clock = MagicMock()  # don't wait for the frame rate
-        with patch('pygame.display.flip', flip), patch('pygame.display.update', update):
+        # One NES frame per pass of the main loop, for the window's joypad reading (src/command_window.py)
+        with patch('pygame.display.flip', flip), patch('pygame.display.update', update), \
+                patch('src.cursor.get_ticks', side_effect=lambda: -(-loop * 1000 // NES_FPS)):
             try:
                 game.main()
             except StopMainLoop:

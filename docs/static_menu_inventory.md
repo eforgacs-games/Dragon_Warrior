@@ -77,13 +77,13 @@ The game now draws ShopInvDat with `shop_inventory_layout` for **every** shop (`
 | File(s) | Used at | NES window | Status |
 |---|---|---|---|
 | `dialog_box_background.png` (192x80) | test reference only | DialogDat ($B04B) | **generated**: `DIALOG_LAYOUT`, drawn by `CommandMenu.draw_dialog_window` |
-| `command_menu_static.png` (128x80) | `refresh_window_color` (`menu.py` ~188), redrawn during the drop-up | CmdNonCmbtDat ($B054) | not converted: the COMMAND window is being fixed separately |
-| `command_menu_background.png` | **unused** | CmdNonCmbtDat border | not converted (COMMAND window) |
+| `command_menu_static.png` (128x80) | test reference only (`tests/test_generated_command_window.py`) | CmdNonCmbtDat ($B054) | **generated**: `COMMAND_LAYOUT` (every cursor position, hidden, none; scales 1-3; white and red), drawn by `CommandMenu.draw_command_window` |
+| `command_menu_background.png` | test reference only (border and title) | CmdNonCmbtDat border | **generated**: `COMMAND_LAYOUT` without its entries |
 | `confirmation.png` (64x48) | test reference only | YesNo1Dat ($B0EB); YesNo2Dat ($B50D) is the same window elsewhere | **generated**: `YES_NO_LAYOUT` with no cursor (`data/text/dialog.py` `confirmation_prompt`), or with the cursor hidden |
 | `confirmation_yes.png`, `confirmation_no.png` | test reference only | YesNo1Dat ($B0EB) | **generated**: `YES_NO_LAYOUT`, cursor 0 / 1, drawn by `CommandMenu.draw_yes_no_window` |
 | `hovering_stats_window.png` (64x96) | test reference only | PopupDat ($AFB0) | **generated**: `POPUP_LAYOUT` (the labels, and TL_TOP2 before the name), drawn by `Drawer.draw_hovering_stats_window`; the name and the values are still drawn over it with `draw_text` |
 | `status_window_background.png` (160x176) | test reference only | StatusDat ($AFC7) | **generated**: `STATUS_LAYOUT` (the labels), drawn by `CommandMenu.draw_status_window`; the values are still drawn over it with `draw_text` |
-| `menus/item_menu/item_menu_background_5.png` | nine-sliced: the COMMAND frame (`refresh_window_color`) and `DialogLookup.draw_window_background` (BuySellDat, item shops) | border of SpellDat ($B0BA), PlayerInvDat ($B0CC), ShopInvDat, BuySellDat ($B0FB)… | **generated** for the SPELL and ITEM windows: `item_menu_layout`, drawn by `CommandMenu.draw_item_menu` (the SPELL title and the entries are still drawn over it). The two other uses are left to the COMMAND window fix and the shop conversion |
+| `menus/item_menu/item_menu_background_5.png` | nine-sliced: `DialogLookup.draw_window_background` (BuySellDat, item shops) | border of SpellDat ($B0BA), PlayerInvDat ($B0CC), ShopInvDat, BuySellDat ($B0FB)… | **generated** for the SPELL and ITEM windows: `item_menu_layout`, drawn by `CommandMenu.draw_item_menu` (the SPELL title and the entries are still drawn over it). The COMMAND window no longer uses it; the shops are left to the shop conversion |
 | `menus/item_menu/item_menu_background_{1,2}.png` | test reference only | SpellDat / PlayerInvDat at 1 and 2 entries | **generated**: `item_menu_layout` |
 | `intro_banner/intro_banner.png`, `intro_banner_with_dragon.png` (248x92) | `Intro.show_start_screen`, `show_intro_dragon_banner_with_text` (`src/intro.py:42`, `:60`) | title screen art, not a window | hard |
 | `intro_banner/sparkle/*_{1..8}.png` (8) | `Intro.banner_sparkle` (`intro.py` ~100) | title screen art | hard |
@@ -93,6 +93,10 @@ The game now draws ShopInvDat with `shop_inventory_layout` for **every** shop (`
 `tests/test_generated_windows.py` checks every generated window above against its screenshot: 0 differing pixels at scales 1, 2 and 3, white and low HP red, and again as the game draws it on its screen (with the dynamic text off).
 
 The SPELL/ITEM border is verified at 1, 2 and 5 entries (the heights there are screenshots of); the other heights are the same tiles, but have no screenshot.
+
+### The field COMMAND window: done
+
+`CommandMenu.draw_command_window` draws CmdNonCmbtDat with `COMMAND_LAYOUT` (`src/windows.py`), and the window reads the joypad like the NES (`src/command_window.py`: WndDoSelect, WndGetButtons, WndProcessInput, through `SelectionButtons`). This replaced pygame-menu, which is no longer a dependency. Translated (Korean), the border is generated with `COMMAND_BORDER_LAYOUT` and the title and entries are drawn as text at the NES tile positions.
 
 ## Counts
 
@@ -107,7 +111,7 @@ The SPELL/ITEM border is verified at 1, 2 and 5 entries (the heights there are s
 
 ## Phase 2 plan
 
-1. **Miscellaneous windows: done**, except the COMMAND window (see the table above).
+1. **Miscellaneous windows: done**, the COMMAND window included (see the table above).
    - Dialog, YES/NO, popup stats, status and the SPELL/ITEM border are generated.
    - Their dynamic text (the name, the values, the dialog text, the SPELL title and the entries) is still drawn over them with `draw_text`, so it can be translated. Drawing it with NES tiles too is a possible next step.
 2. **Shops: medium.**

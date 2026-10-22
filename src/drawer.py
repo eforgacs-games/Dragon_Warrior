@@ -10,7 +10,8 @@ from src.common import ANY_BUTTON_KEYS, WHITE, BLACK, Graphics
 from src.directories import Directories
 from src.enemy_lookup import enemy_image_position_lookup
 from src.game_functions import get_surrounding_rect
-from src.menu import Menu, CommandMenu
+from src.command_window import held_buttons
+from src.menu import CommandMenu
 from src.sound import Sound
 from src.text import draw_text
 from src.visual_effects import NES_FPS, enemy_fade_in, enemy_hit_flash
@@ -328,13 +329,11 @@ class Drawer:
                 cmd_menu.window_drop_down_effect(*POPUP_WINDOW)
                 self.hovering_stats_displayed = True
             self.draw_hovering_stats_window(screen, player, color)
-        command_window_opened = self.handle_menu_launch(screen, cmd_menu, cmd_menu)
+        self.handle_menu_launch(screen, cmd_menu, cmd_menu)
         if cmd_menu.menu.is_enabled():
-            # Not on the frame the window opens: this frame's events hold the A (K) press that opened it, which would
-            # otherwise choose TALK at once (CommandMenuController), before the window was even drawn, leaving it
-            # black. The NES window only reads a new press once it is up (WndDoSelect).
-            if not command_window_opened:
-                cmd_menu.menu.update(events)
+            # The A press that opened the window is still held, or in this frame's events: WndDoSelect ignores it until
+            # it is let go (or for 11 frames), so it doesn't also choose TALK (src/command_window.py)
+            cmd_menu.select_command(events)
         else:
             if not game_state.is_initial_dialog:
                 game_state.enable_movement = True
@@ -374,28 +373,17 @@ class Drawer:
                 convert_numeric_tile_list_to_unique_tile_values(current_map, roaming_character_surrounding_tile_values))
         return all_roaming_character_surrounding_tiles
 
-    def handle_menu_launch(self, screen, cmd_menu, menu_to_launch: Menu) -> bool:
-        """Draw the COMMAND window if it has been signaled, opening it first (drop down) if it isn't open yet.
-        :return: Whether the window opened on this frame."""
-        tile_size = self.game_state.config['TILE_SIZE']
-        opened = False
+    def handle_menu_launch(self, screen, cmd_menu: CommandMenu, menu_to_launch: CommandMenu) -> None:
+        """Draw the COMMAND window (CmdNonCmbtDat) if it has been signaled, opening it first (drop down) if it isn't
+        open yet: WndDoSelect then reads the joypad from scratch, the buttons held now included (held_buttons)."""
         if menu_to_launch.launch_signaled:
-            if menu_to_launch.menu.get_id() == 'command':
-                # NES CmdNonCmbtDat
-                x, y, width, height = COMMAND_WINDOW
-                command_menu_subsurface = screen.subsurface((x * tile_size, y * tile_size),
-                                                            (width * tile_size, height * tile_size))
-                if not cmd_menu.menu.is_enabled():
-                    self.sound.play_sound(self.directories.menu_button_sfx)
-                    cmd_menu.window_drop_down_effect(x, y, width, height)
-                    cmd_menu.menu.enable()
-                    cmd_menu.reset_command_cursor()
-                    opened = True
-                menu_to_launch.menu.draw(command_menu_subsurface)
-                cmd_menu.draw_command_window_frame(command_menu_subsurface)
-                display.update(command_menu_subsurface.get_abs_offset() + command_menu_subsurface.get_size())
-        return opened
-
+            if not cmd_menu.menu.is_enabled():
+                self.sound.play_sound(self.directories.menu_button_sfx)
+                cmd_menu.window_drop_down_effect(*COMMAND_WINDOW)
+                cmd_menu.menu.enable(held_buttons())
+            window_rect = cmd_menu.draw_command_window()
+            if not self.game_state.config['NO_BLIT']:
+                display.update(window_rect)
 
 def replace_characters_with_underlying_tiles(tile_types_to_draw: List[str], current_map_character_key) -> List[str]:
     substitution = {k: v['underlying_tile'] for k, v in current_map_character_key.items()}
