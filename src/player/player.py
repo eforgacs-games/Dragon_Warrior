@@ -52,7 +52,7 @@ class Player(AnimatedSprite):
 
         self.set_initial_stats()
         self.attack_power = self.strength
-        self.defense_power = self.agility
+        self.defense_power = self.agility // 2
 
         # set power based on equipment
         self.update_attack_power()
@@ -98,16 +98,12 @@ class Player(AnimatedSprite):
             self.attack_power = self.strength
 
     def update_defense_power(self):
+        # NES: defense = agility / 2 + armor bonus + shield bonus
+        self.defense_power = self.agility // 2
         if armor.get(self.armor):
-            if shields.get(self.shield):
-                self.defense_power = self.agility + armor[self.armor]['defense'] + shields[self.shield]['defense']
-            else:
-                self.defense_power = self.agility + armor[self.armor]['defense']
-        else:
-            if shields.get(self.shield):
-                self.defense_power = self.agility + shields[self.shield]['defense']
-            else:
-                self.defense_power = self.agility
+            self.defense_power += armor[self.armor]['defense']
+        if shields.get(self.shield):
+            self.defense_power += shields[self.shield]['defense']
 
     def get_points_to_next_level(self):
         if levels_list.get(self.level + 1):
