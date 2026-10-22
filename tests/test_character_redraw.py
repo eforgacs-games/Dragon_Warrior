@@ -199,9 +199,11 @@ class TestCharacterRedraw(TestCase):
         self.assertEqual({}, residue)
 
     def test_residue_is_detected_when_the_tile_under_a_character_is_not_redrawn(self):
-        # The bug in #98: the tile under the MAN wasn't among the tiles redrawn each frame
+        # The bug in #98: the tile under the MAN wasn't among the tiles redrawn each frame. Brecconary's roaming NPCs
+        # (#223) stand on every other tile type, so the tiles around them are left out too.
         game = make_game('Brecconary')
-        with patch('src.drawer.get_fixed_character_underlying_tiles', return_value=[]):
+        with patch('src.drawer.get_fixed_character_underlying_tiles', return_value=[]), \
+                patch('src.drawer.Drawer.get_all_roaming_character_surrounding_tiles', return_value=[]):
             residue = find_residue(game)
         self.assertIn('MAN_2', residue)
 

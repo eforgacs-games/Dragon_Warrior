@@ -168,26 +168,61 @@ class DialogLookup:
                         self.player.name),
                     self.flash_and_restore_mp)}},
             'TantegelCellar': {'WISE_MAN': {'dialog': (self.tantegel_cellar_stones_of_sunlight_guardian,)}},
+            # NES BrecMobTbl and BrecStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte
+            # + $2F (DoVariousDialog2, Bank03), so $25 is TextBlock6 entry 4 and so on.
             'Brecconary': {
-                'MAN': {'dialog': _("There is a town where magic keys can be purchased.")},
-                'MAN_2': {'dialog': _("Thou art most welcome in Brecconary.")},
-                'MAN_3': {'dialog': _("Enter where thou can.")},
+                # Static fighter at 28,1 ($25, TextBlock6 entry 4)
                 'SOLDIER': {'dialog': (_("Beware the bridges!"), _("Danger grows when thou crosses."))},
-                'WISE_MAN': {'dialog': (self.remove_curse,)},
+                # Static shopkeeper at 5,4 ($01, WeaponsDialog: Brecconary weapons and armor shop)
                 'MERCHANT': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.brecconary_weapons_store_inventory),)},
+                # Mobile female villager at 24,4 ($0F, FairyDialog)
+                'WOMAN': {'dialog': (self.fairy_water_shop,)},
+                # Static female villager at 4,7 ($29, TextBlock6 entry 8). The space before the line break isn't in
+                # the NES text, but it doesn't show and the translations are keyed on it.
+                'WOMAN_2': {'dialog': _("Welcome! \n"
+                                        "Enter the shop and speak to its keeper across the desk.")},
+                # Static male villager at 20,10 ($26, TextBlock6 entry 5)
+                'MAN': {'dialog': _("There is a town where magic keys can be purchased.")},
+                # Static wizard at 24,10 ($67, ChkCursedDialog)
+                'WISE_MAN': {'dialog': (self.remove_curse,)},
+                # Static male villager at 1,13 ($2A, TextBlock6 entry 9)
+                'MAN_2': {'dialog': _("Thou art most welcome in Brecconary.")},
+                # Static shopkeeper at 10,21 ($12, InnDialog: InnCostTbl entry 1)
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
+                # Static male villager at 20,23 ($28, TextBlock6 entry 7)
+                'MAN_3': {'dialog': _("Enter where thou can.")},
+                # Static shopkeeper at 25,25 ($08, ToolsDialog: Brecconary item shop)
                 'MERCHANT_3': {'dialog': (
                     partial(self.tool_shop, self.shop_inventories.brecconary_item_store_inventory),)},
-                # NES BrecMobTbl: the female villager at 24,4 sells Fairy Water
-                'WOMAN': {'dialog': (self.fairy_water_shop,)},
-                # NES ChkPrncsDialog3 (dialog byte $64)
+                # Mobile fighter at 3,26 ($27, TextBlock6 entry 6)
+                'SOLDIER_2': {'dialog': _("Some say that Garin's grave is home to a Silver Harp.")},
+                # Static guard at 10,26 ($64, ChkPrncsDialog3): TextBlock10 entry 14, or entry 15 once
+                # F_DONE_GWAELIN is set
                 'GUARD': {'dialog': (partial(self.dialog_once_gwaelin_rescued,
                                              (_("Tell King Lorik that the search for his daughter hath failed."),
                                               _("I am almost gone....")),
                                              _("Who touches me?’\n`I see nothing, nor can I hear.")),)},
-                'WOMAN_2': {'dialog': _("Welcome! \n"
-                                        "Enter the shop and speak to its keeper across the desk.")},
+                # Mobile wizard at 9,4 ($2B, TextBlock6 entry 10)
+                'WISE_MAN_2': {'dialog': _("Watch thy Hit Points when in the Poisonous Marsh.")},
+                # Mobile shopkeeper at 15,9 ($2E, TextBlock6 entry 13)
+                'MERCHANT_4': {'dialog': _("Please,save us from the minions of the Dragonlord.")},
+                # Mobile male villager at 10,14 ($2C, TextBlock6 entry 11)
+                'MAN_4': {'dialog': _("Go north to the seashore, then follow the coastline west until thou hath "
+                                      "reached Garinham.")},
+                # Mobile guard at 26,15 ($2F, TextBlock6 entry 14)
+                'GUARD_2': {'dialog': _("See King Lorik when thy experience levels are raised.")},
+                # Mobile fighter at 19,18 ($30, TextBlock6 entry 15)
+                'SOLDIER_3': {'dialog': _("Art thou the descendant of Erdrick?\n"
+                                          "Hast thou any proof?")},
+                # Mobile fighter at 12,19 ($5D, TextBlock9 entry 12)
+                'SOLDIER_4': {'dialog': (_("Many have been the warriors who have perished on this quest."),
+                                         _("But for thee I wish success, {}.").format(self.player.name))},
+                # Mobile male villager at 25,22 ($31, TextBlock7 entry 0)
+                'MAN_5': {'dialog': (_("Within sight of Tantegel Castle to the south is Charlock,"),
+                                     _("The fortress of the Dragonlord."))},
+                # Mobile female villager at 15,24 ($2D, TextBlock6 entry 12)
+                'WOMAN_3': {'dialog': _("No,I am not Princess Gwaelin.")},
             },
             # NES GarMobTbl and GarStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte
             # + $2F (DoVariousDialog2, Bank03), so $3A is TextBlock7 entry 9 and $41 is TextBlock8 entry 0.
