@@ -39,14 +39,15 @@ class StoryFlags:
     # throne room chests are gone from then on, and King Lorik greets the hero as returning and offers to save.
     left_throne_room: bool = False
 
-    # StoryFlags bit 1, NES F_GOLEM_DEAD: the Golem guarding Cantlin was defeated. Nothing sets it yet (the guardian
-    # fights aren't implemented); it's kept so saves already carry it.
+    # StoryFlags bit 1, NES F_GOLEM_DEAD: the Golem guarding Cantlin was defeated (EnemyDefeated), so CheckGolem no
+    # longer starts his fight. See src/guardians.py.
     golem_defeated: bool = False
     # StoryFlags bit 2, NES F_DGNLRD_DEAD: set as the Ball of Light is found after beating the Dragonlord's final form.
     # From then on there are no random fights or swamp/barrier damage, every NPC has victory dialog, and Tantegel waits
     # for the hero.
     dragonlord_defeated: bool = False
-    # StoryFlags bit 6, NES F_GDRG_DEAD: the Green Dragon guarding Gwaelin was defeated. Nothing sets it yet either.
+    # StoryFlags bit 6, NES F_GDRG_DEAD: the Green Dragon guarding Gwaelin was defeated (EnemyDefeated), so
+    # CheckGrnDragon no longer starts its fight. The Axe Knight has no flag: he fights every time.
     green_dragon_defeated: bool = False
 
     @property
