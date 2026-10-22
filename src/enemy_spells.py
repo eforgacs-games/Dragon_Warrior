@@ -27,6 +27,8 @@
 
 from src.spells import Spell
 
+# Ranges checked against Bank03 EnCastHurt, EnCastHurtmore, EnCastHeal, EnCastHealmore, EnCastFire1 and
+# EnCastFire2 (tests/test_enemy_stat_table.py).
 enemy_spell_lookup = {
     Spell.HURT: (3, 10),
     Spell.HURTMORE: (30, 45),
