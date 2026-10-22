@@ -28,38 +28,7 @@ BATTLE_MENU_HEIGHT = 3
 
 # ── Maps ──────────────────────────────────────────────────────────────────────
 
-# Maps that contain random enemy encounters
-MAPS_WITH_ENEMIES = (
-    'Alefgard',
-    'Hauksness',
-    'CharlockB2', 'CharlockB3', 'CharlockB4', 'CharlockB5',
-    'CharlockB6', 'CharlockB7Wide', 'CharlockB7Narrow', 'CharlockB8',
-    'SwampCave', 'MountainCaveB1',
-    'GarinsGraveB1', 'GarinsGraveB2', 'GarinsGraveB3', 'GarinsGraveB4',
-)
-
-# Fixed zone keys for dungeons (negative tuples avoid collision with Alefgard grid zones)
-DUNGEON_ZONE_MAP = {
-    'Hauksness':       (3, 7),    # forced dark_blue zone
-    'SwampCave':       (-1, -1),
-    'GarinsGraveB1':   (-2, -2),
-    'GarinsGraveB2':   (-3, -3),
-    'GarinsGraveB3':   (-4, -4),
-    'GarinsGraveB4':   (-5, -5),
-    'CharlockB1':      (-6, -6),
-    'CharlockB2':      (-7, -7),
-    'CharlockB3':      (-8, -8),
-    'CharlockB4':      (-9, -9),
-    'CharlockB5':      (-10, -10),
-    'CharlockB6':      (-11, -11),
-    'CharlockB7Wide':  (-12, -12),
-    'CharlockB7Narrow':(-13, -13),
-    'CharlockB8':      (-14, -14),
-    'MountainCaveB1':  (-15, -15),
-}
-
-# Zone that uses the near-Tantegel fight-rate modifier
-TANTEGEL_ZONE = (3, 2)
+# Random encounters (which maps have them, and the zone and enemy tables) are in src/encounters.py.
 
 # NES map numbers $0F and up are "dungeons": the Dragonlord's castle sublevels and the caves.
 # RETURN and the Wings of the Wyvern don't work in them (or on the castle's bottom floor, CharlockB8).
