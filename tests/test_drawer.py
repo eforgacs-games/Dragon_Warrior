@@ -294,6 +294,49 @@ class TestHandleSpriteAnimation(unittest.TestCase):
         character.pause.assert_not_called()
 
 
+# ---------------------------------------------------------------------------
+# Drawer enemy effects
+# ---------------------------------------------------------------------------
+
+class TestDrawerEnemyEffects(unittest.TestCase):
+
+    def setUp(self):
+        self.drawer = _make_drawer()
+        self.image = MagicMock()
+        patch.object(self.drawer, 'get_enemy_image', return_value=(self.image, (256, 224))).start()
+        self.addCleanup(patch.stopall)
+
+    @patch('src.drawer.wait')
+    @patch('src.drawer.enemy_fade_in')
+    def test_regular_enemy_fades_in_twice(self, mock_fade, mock_wait):
+        screen = MagicMock()
+        self.drawer.fade_in_enemy(screen, 'Slime')
+        mock_fade.assert_called_once_with(screen, self.image, (256, 224), self.drawer.game_state.config)
+        mock_wait.assert_not_called()
+
+    @patch('src.drawer.wait')
+    @patch('src.drawer.enemy_fade_in')
+    def test_final_form_fades_in_four_times_then_waits_41_frames(self, mock_fade, mock_wait):
+        # Bank00 LoadEndBossGFX: PalFadeIn x4, then WaitForNMI + 40 more frames
+        self.drawer.game_state.config['NO_WAIT'] = False
+        self.drawer.fade_in_enemy(MagicMock(), 'Dragonlord 2')
+        self.assertEqual(mock_fade.call_args.kwargs['repeats'], 4)
+        mock_wait.assert_called_once_with(683, self.drawer.game_state.config)
+
+    @patch('src.drawer.enemy_hit_flash')
+    def test_flash_enemy(self, mock_flash):
+        screen = MagicMock()
+        self.drawer.flash_enemy(screen, 'Slime')
+        mock_flash.assert_called_once_with(screen, self.image, (256, 224), self.drawer.game_state.config,
+                                           keep_black=False)
+
+    @patch('src.drawer.enemy_hit_flash')
+    def test_final_form_flash_keeps_black(self, mock_flash):
+        # PaletteFlash loads FinalRedBGPal for the end boss, which leaves the universal black alone
+        self.drawer.flash_enemy(MagicMock(), 'Dragonlord 2')
+        self.assertTrue(mock_flash.call_args.kwargs['keep_black'])
+
+
 if __name__ == '__main__':
     unittest.main()
 
