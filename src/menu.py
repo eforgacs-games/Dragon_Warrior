@@ -36,7 +36,7 @@ from src.text import draw_text, set_font_by_ascii_chars
 from src.waiting import handle_speed_key
 from src.windows import COMMAND_TITLE_TILE_COLUMN, COMMAND_WINDOW, COUNTED_ITEMS, ITEM_COUNT_TILE_COLUMN, \
     ITEM_MENU_BORDER, ITEM_MENU_CURSOR_TILE_COLUMN, ITEM_MENU_TEXT_TILE_COLUMN, \
-    ITEM_MENU_X, ITEM_MENU_Y, ITEM_NAME_HALVES, SPELL_MENU_TITLE_TILE_COLUMN, \
+    ITEM_MENU_X, ITEM_MENU_Y, ITEM_NAME_HALVES, POPUP_WINDOW, SPELL_MENU_TITLE_TILE_COLUMN, \
     STATUS_EQUIPMENT_TILE_COLUMN, STATUS_EQUIPMENT_TILE_ROWS, STATUS_NAME_TILE_COLUMN, STATUS_NAME_TILE_ROW, \
     STATUS_VALUE_RIGHT_TILE_COLUMN, STATUS_VALUE_TILE_ROWS, STATUS_WINDOW, YES_NO_WINDOW, item_menu_entry_tile_row, \
     item_menu_window, name_halves
@@ -220,6 +220,22 @@ class CommandMenu(Menu):
                                             color, border=ITEM_MENU_BORDER)
         for widget in self.menu.get_widgets():
             widget.update_font({'color': color, 'selected_color': color})
+
+    def show_popup_window(self) -> None:
+        """NES Dowindow WND_POPUP (Bank03): (re)draw the pop-up status window with the hero's current name, level, HP,
+        MP, gold and experience, in the window color. The NES does this right after an event changes them while a
+        dialog is open: buying at a shop (BuyInnStay, PurchaseTool, BuyKey, BuyFairyWater, CompWeapPurchase,
+        DoneSellingTool), the inn's heal (BuyInnStay, while the screen is faded out), HEAL and HEALMORE (PlyrAddHP),
+        an herb (HerbHeal), spending MP on a spell (PlyrCastSpell), the MP wizard (LD2DE) and a chest of gold
+        (GainGoldDialog). The window then stays up until the hero moves, like the one the COMMAND window opens."""
+        drawer = self.game.drawer
+        drawer.display_hovering_stats = True
+        drawer.hovering_stats_displayed = True
+        drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
+        if not self.game.game_state.config['NO_BLIT']:
+            tile_size = self.game.game_state.config['TILE_SIZE']
+            left, top, width, height = POPUP_WINDOW
+            display.update(Rect(left * tile_size, top * tile_size, width * tile_size, height * tile_size))
 
     def save(self):
         """NES SaveData (Bank03): the hero's experience, gold, items, equipment, name, HP and MP, plus the ModsnSpells,
@@ -733,8 +749,12 @@ class CommandMenu(Menu):
         gold_amount = roll_treasure_gold(treasure_info['gold'])
         self.open_chest()
         self.player.gold = min(self.player.gold + gold_amount, MAX_GOLD)
+        # NES GainGoldDialog: the message, then Dowindow WND_POPUP with the new gold, then ResumeGamePlay closes the
+        # dialog window
         self.show_text_in_dialog_box(self._("Of GOLD thou hast gained {}").format(gold_amount),
-                                     skip_text=self.skip_text)
+                                     skip_text=self.skip_text, drop_up=False)
+        self.show_popup_window()
+        self.window_drop_up_effect(*DIALOG_WINDOW)
 
     def set_tile_by_coordinates(self, new_tile_identifier, column, row, player):
         old_tile_identifier = get_tile_id_by_coordinates(column, row, self.current_map)
@@ -970,8 +990,9 @@ class CommandMenu(Menu):
             health_addition = self.player.max_hp - self.player.current_hp
         self.player.current_hp += health_addition
         # NES PlyrAddHP (HEAL, HEALMORE) and HerbHeal: LoadRegBGPal right after the new HP is stored, so the windows
-        # turn white at once if HP is no longer low
+        # turn white at once if HP is no longer low. Then they show the new HP: Dowindow WND_POPUP.
         self.game.load_window_palette()
+        self.show_popup_window()
 
     def show_battle_line(self, text: str):
         self.show_line_in_dialog_box(text, add_quotes=False, disable_sound=True, hide_arrow=True)
@@ -1398,6 +1419,8 @@ class CommandMenu(Menu):
                                     skip_text=self.skip_text)
                                 self.sound.play_sound(self.directories.spell_sfx)
                                 self.player.current_mp -= spell_mp_cost
+                                # NES PlyrCastSpell (LDBB2): the pop-up is redrawn with the MP that is left
+                                self.show_popup_window()
                                 if self.current_battle is not None and self.player.is_stopspelled:
                                     # NES: the MP is spent, but a stopspelled player's spell is blocked
                                     self.show_battle_line(self._("But that spell hath been blocked."))
