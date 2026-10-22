@@ -5,7 +5,6 @@ from pygame import display, time, mixer, Surface
 from src.common import BLACK, set_gettext_language
 from src.constants import (
     EXCELLENT_MOVE_PROBABILITY, EXCELLENT_MOVE_THRESHOLD,
-    MISS_SFX_PROBABILITY, MIN_DAMAGE,
     BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT,
 )
 from src.directories import Directories
@@ -48,6 +47,7 @@ class Battle:
         self.turn = 0
         self.last_turn = 0
         self.enemy = enemy_string_lookup[enemy_name]()
+        self.enemy.hp = randomize_enemy_hp(self.enemy)
         self.tile_size = config['TILE_SIZE']
         self.current_map = current_map
         self.no_op = False
@@ -136,15 +136,20 @@ class Battle:
 
     def calculate_attack_damage(self, cmd_menu, player, enemy):
         """Calculate the damage of an attack."""
+        # NES: 1 in 32 chance of an excellent move, except against either form of the Dragonlord
         if random.randint(0, EXCELLENT_MOVE_THRESHOLD) == EXCELLENT_MOVE_PROBABILITY and enemy.name not in (
                 'Dragonlord', 'Dragonlord 2'):
             self.sound.play_sound(self.directories.excellent_move_sfx)
             cmd_menu.show_line_in_dialog_box(self._("Excellent move!\n"), add_quotes=False, disable_sound=True)
-            return round(random.randint(player.attack_power // 2, player.attack_power))
+            # Damage = attack - (attack / 2 * rand(255)) / 256, i.e. about half to all of attack power
+            return player.attack_power - (player.attack_power // 2) * random.randint(0, 255) // 256
 
-        lower_bound = round((player.attack_power - (enemy.defense / 2)) / 2)
-        upper_bound = round((player.attack_power - (enemy.defense / 2)) * 2)
-        return round(select_random_attack_damage_value(lower_bound, upper_bound))
+        # NES PlyrCalcHitDmg
+        base_attack = player.attack_power - enemy.defense // 2
+        if base_attack < 2:
+            # Weak attack: the enemy's defense is too high, so 0 or 1 damage, 50/50.
+            return random.randint(0, 1)
+        return normal_attack_damage(base_attack, random.randint(0, 255))
 
     def battle_spell(self, cmd_menu: CommandMenu, player: Player, current_battle):
         """Handle casting a spell in battle."""
@@ -277,18 +282,17 @@ class Battle:
         drawer.draw_hovering_stats_window(screen, player, color)
 
 
-def select_random_attack_damage_value(lower_bound: int, upper_bound: int) -> int:
-    """Select a random attack damage value within the given bounds."""
-    lower_bound, upper_bound = int(lower_bound), int(upper_bound)
-    if lower_bound > upper_bound:
-        attack_damage = random.randint(upper_bound, lower_bound)
-    elif lower_bound == upper_bound:
-        attack_damage = lower_bound
-    else:
-        attack_damage = random.randint(lower_bound, upper_bound)
-    if attack_damage < MIN_DAMAGE:
-        return MIN_DAMAGE if random.random() < MISS_SFX_PROBABILITY else 0
-    return attack_damage
+def randomize_enemy_hp(enemy) -> int:
+    """Starting HP for a battle, per the NES ModEnHitPoints routine: 75% to 100% of the enemy's listed HP.
+    The Dragonlord's final form always starts at full HP."""
+    if enemy.name == 'Dragonlord 2':
+        return enemy.max_hp
+    return enemy.max_hp - (enemy.max_hp * random.randint(0, 255) // 256) // 4
+
+
+def normal_attack_damage(base_attack: int, random_number: int) -> int:
+    """NES NormalAttack, shared by player and enemy hits: base_attack / 4 to base_attack / 2."""
+    return ((base_attack + 1) * random_number // 256 + base_attack) // 4
 
 
 def calculate_enemy_attack_damage(player, enemy):
@@ -298,4 +302,4 @@ def calculate_enemy_attack_damage(player, enemy):
     if base_attack < enemy.attack // 2 + 1:
         # Weak attack: the player's defense is high compared to the enemy's attack.
         return ((enemy.attack // 2 + 1) * random_number // 256 + 2) // 3
-    return ((base_attack + 1) * random_number // 256 + base_attack) // 4
+    return normal_attack_damage(base_attack, random_number)
