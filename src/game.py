@@ -24,14 +24,15 @@ from src.battle import Battle
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, read_checkpoint
-from src.common import reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
+from src.color import WHITE, is_low_hp, window_color
+from src.common import reject_keys, Graphics, RED, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
 from src.debug_tools import DebugTools
 from src.constants import (
-    LOW_HP_THRESHOLD, ARROW_BLINK_INTERVAL_MS,
+    ARROW_BLINK_INTERVAL_MS,
     TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT,
 )
 from src.direction import Direction
@@ -173,7 +174,7 @@ class Game:
         self.player.restore_hp()
         self.tile_size = self.game_state.config["TILE_SIZE"]
         self.current_map.load_map(self.player, None, self.tile_size)
-        self.color = self.get_current_color()
+        self.load_window_palette()
 
         # Good for debugging,
         # and will be useful later when the player's level increases and the stats need to be increased to match
@@ -387,7 +388,6 @@ class Game:
         self.events = get()
         self._handle_pygame_events(self.events)
         self._handle_player_movement()
-        self.set_text_color()
         self.handle_battles()
         if not self.player.is_moving:
             set_character_position(self.player, tile_size=self.tile_size)
@@ -552,17 +552,34 @@ class Game:
             # Show window size info when coordinates are enabled (debug mode)
             print(f"Window resized to: {resize_event.w}x{resize_event.h}")
 
-    def set_text_color(self):
-        if self.player.current_hp <= self.player.max_hp * LOW_HP_THRESHOLD:
-            self.cmd_menu.game.color, self.color = RED, RED
-        else:
-            self.cmd_menu.game.color, self.color = WHITE, WHITE
+    def set_window_color(self, color: tuple[int, int, int]) -> None:
+        """Set the color of every window (their borders, text and cursors; NES background palette 0's color 1) and
+        redraw the windows that are kept drawn (the COMMAND window), so nothing lags behind."""
+        self.color = color
+        cmd_menu = getattr(self, 'cmd_menu', None)
+        if cmd_menu is not None:
+            cmd_menu.refresh_window_color()
+
+    def load_window_palette(self) -> None:
+        """NES PrepBGPalLoad (Bank03): whenever the background palettes are loaded, AddPalByte's ChkLowHPPal makes the
+        window color red if HP is low and white otherwise. They are loaded by every fade in or out (PalFadeIn and
+        PalFadeOut: changing maps, the inn), by LoadRegBGPal right after HP changes (PlayerHit, swamp and force field
+        damage, HEAL/HEALMORE's PlyrAddHP, HerbHeal) and by StartAtThroneRoom. Nothing else turns the windows red,
+        so a level up, which raises the max HP but not HP, changes nothing until the next load."""
+        self.set_window_color(window_color(self.player.current_hp, self.player.max_hp))
+
+    def clear_low_hp_palette(self) -> None:
+        """NES ChkLowHP (MovementUpdates, after every step): if HP isn't low, the window color is set back to white
+        ($30 to $3F01). It never turns the windows red."""
+        if not is_low_hp(self.player.current_hp, self.player.max_hp):
+            self.set_window_color(WHITE)
 
     def count_step(self):
         self.tiles_moved_since_spawn += 1
         self.game_state.tiles_moved_total += 1
         self.game_state.tick_radiant_timer()
         self.tick_repel_timer()
+        self.clear_low_hp_palette()  # NES MovementUpdates: ChkLowHP comes just before CheckTantCursed
         self.check_tantegel_cursed()
         self.check_guardian_fight()
 
@@ -672,7 +689,7 @@ class Game:
 
         self.sound.play_sound(self.directories.receive_damage_2_sfx)
         self.player.current_hp -= attack_damage
-        self.color = self.cmd_menu.color = self.get_current_color()
+        self.load_window_palette()  # NES PlayerHit: LoadRegBGPal, after the screen shake (red if HP is now low)
         if self.player.current_hp < 0:
             self.player.current_hp = 0
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
@@ -681,9 +698,6 @@ class Game:
                                               add_quotes=False, disable_sound=True, hide_arrow=True, skip_text=True if
             self.player.current_hp == 0 else False)
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
-
-    def get_current_color(self):
-        return RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
 
     def set_player_images_by_equipment(self):
         if self.story_flags.carrying_gwaelin:
@@ -708,9 +722,9 @@ class Game:
         if self.player.current_hp <= 0:
             self.player.current_hp = 0
             self.player.is_dead = True
-            self.color = RED
+            self.load_window_palette()  # 0 HP is always low
             if self.battle_ctrl.launch_battle and not self.game_state.config["NO_BATTLES"]:
-                self.graphics.create_window(6, 1, 8, 3, self.directories.BATTLE_MENU_FIGHT_PATH, self.screen, RED)
+                self.graphics.create_window(6, 1, 8, 3, self.directories.BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
                 self.battle_ctrl.launch_battle = False
                 display.flip()
             else:
@@ -730,24 +744,24 @@ class Game:
         # NES DeathText: dying clears F_GOT_GWAELIN, so Gwaelin is back in the Swamp Cave (F_RTN_GWAELIN is untouched)
         self.story_flags.carrying_gwaelin = False
         self.repel_timer = 0  # NES StartAtThroneRoom (SetStartPos) clears RepelTimer
+        self.player.gold = self.player.gold // 2
+        # NES StartAtThroneRoom sets HP before MapChngNoSound fades the throne room in, so the fade's palette load
+        # (ChkLowHPPal) sees the new HP: a cursed hero comes back with 1 HP, which is always low, so the king's words
+        # are in red windows; anyone else comes back with full HP and white windows.
+        self.player.current_hp = 1 if self.player.is_cursed else self.player.max_hp
+        self.load_window_palette()
         next_map = map_lookup['TantegelThroneRoom'](self.config)
         self.change_map(next_map)
-        self.player.gold = self.player.gold // 2
         self.player.is_dead = False
         if self.player.is_cursed:
-            # NES StartAtThroneRoom: a cursed player comes back with 1 HP, not full HP. The king then says
-            # "Thou hast failed and thou art cursed." and ChangeMaps puts the player outside the castle, facing down.
-            self.player.current_hp = 1
-            self.color = self.cmd_menu.color = WHITE
+            # NES DeathText: the king then says "Thou hast failed and thou art cursed." and ChangeMaps puts the player
+            # outside the castle, facing down.
             self.cmd_menu.show_text_in_dialog_box(
                 (self._("Thou hast failed and thou art cursed."), self._("Leave at once!")), add_quotes=True,
                 skip_text=self.skip_text)
             self.leave_tantegel(direction=Direction.DOWN.value)
             return
-        # revive player
-        self.player.current_hp = self.player.max_hp
         self.game_state.is_post_death_dialog = True
-        self.color = self.cmd_menu.color = WHITE
 
     def handle_environment_damage(self):
         # NES ChkOtherBlocks: once the Dragonlord is dead, swamps and barriers no longer hurt
@@ -773,6 +787,8 @@ class Game:
         self.sound.play_sound(self.directories.swamp_sfx)
         self.player.received_environment_damage = True
         flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
+        # NES DoSwampDamage and the force field damage: RedFlashScreen, then LoadRegBGPal with the new HP
+        self.load_window_palette()
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
                              self.foreground_rects, self.game_state.enable_animate, self.camera,
                              self.initial_dialog_enabled,
@@ -1225,6 +1241,8 @@ class Game:
         if self.player.is_cursed:
             # NES StartAtThroneRoom (LCB6B): a cursed hero always starts with 1 HP
             self.player.current_hp = 1
+        # NES StartAtThroneRoom: the fade in after loading sets the window color for the loaded HP (ChkLowHPPal)
+        self.load_window_palette()
         # Reload the starting map even if it's the one already shown, so the loaded flags apply to it
         saved_map = save_file.get("CurrentMap")
         if saved_map in map_lookup:
