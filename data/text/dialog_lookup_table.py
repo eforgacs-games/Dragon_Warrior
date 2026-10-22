@@ -353,7 +353,7 @@ class DialogLookup:
         self.player.weapon = self.player.armor = self.player.shield = ""
         self.player.spells = []
         self.player.is_carrying_princess = False
-        game.princess_saved = False
+        game.gwaelin_returned = False
         self.player.update_attack_power()
         self.player.update_defense_power()
 
