@@ -21,7 +21,7 @@ from src.items import treasure
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, RAINBOW_BRIDGE_COORDINATES, \
     RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION
 from src.direction import Direction
-from src.maps import DragonWarriorMap, map_lookup
+from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.sound import Sound
@@ -145,6 +145,7 @@ class CommandMenu(Menu):
             'PlayerRow': self.player.row,
             'PlayerColumn': self.player.column,
             'RainbowBridgeBuilt': self.game.rainbow_bridge_built,
+            'CharlockStairsRevealed': self.game.charlock_stairs_revealed,
         }
         json_object = json.dumps(save_dict, indent=4)
         with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'),
@@ -761,12 +762,36 @@ class CommandMenu(Menu):
               and self.calculation.get_distance_from_tantegel(self.player.column, self.player.row) == (40, 70)):
             text_to_print.append(self._("{} discovers the Erdrick's Token.").format(self.player.name))
             self.player.inventory.append("Erdrick's Token")
-        else:
+        elif not (self.current_map.identifier == 'CharlockB1' and self.search_for_secret_passage(text_to_print)):
             text_to_print.append(self._("But there found nothing."))
 
         self.show_text_in_dialog_box(text_to_print, skip_text=self.skip_text)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
+
+    def search_for_secret_passage(self, text_to_print: list) -> bool:
+        """
+        NES DoSearch (SrchPassage): on Charlock's ground floor, searching on the throne hints at the passage, and
+        searching on the force field behind it (once) turns that block into stairs down.
+        :param text_to_print: The search dialog so far, appended to if something is found.
+        :return: True if the search found something here, False to fall through to "But there found nothing."
+        """
+        charlock_ground_floor = self.current_map
+        if not isinstance(charlock_ground_floor, CharlockB1):
+            return False
+        player_coordinates = (self.player.row, self.player.column)
+        if player_coordinates == charlock_ground_floor.THRONE_COORDINATES:
+            text_to_print.append(self._("Feel the wind blowing from behind the throne."))
+            return True
+        if player_coordinates != charlock_ground_floor.HIDDEN_STAIRCASE_COORDINATES or self.game.charlock_stairs_revealed:
+            return False
+        self.game.charlock_stairs_revealed = True
+        text_to_print.append(self._("{} discovers the Secret Passage.").format(self.player.name))
+        self.set_tile_by_coordinates('BRICK_STAIR_DOWN', self.player.column, self.player.row, self.player)
+        charlock_ground_floor.reveal_hidden_staircase()
+        # Like arriving on a map: don't auto-take the new stairs until the player steps off and back on (or uses STAIRS)
+        self.game.tiles_moved_since_spawn = 0
+        return True
 
     def spell(self):
         """
