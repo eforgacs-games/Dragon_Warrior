@@ -48,7 +48,7 @@ class TestPrincessGwaelin(TestCase):
         return self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']
 
     def carry_princess(self):
-        self.player.is_carrying_princess = True
+        self.game.story_flags.carrying_gwaelin = True
 
     def spoken_lines(self, function, *args):
         """Run a dialog function and return every line it showed, in order."""
@@ -148,7 +148,7 @@ class TestPrincessGwaelin(TestCase):
         with patch.object(self.game.current_map, 'scale_sprite_sheet',
                           wraps=self.game.current_map.scale_sprite_sheet) as scale_sprite_sheet:
             self.dialog_lookup.put_princess_on_throne()
-        self.assertFalse(self.player.is_carrying_princess)
+        self.assertFalse(self.game.story_flags.carrying_gwaelin)
         self.assertTrue(self.game.story_flags.gwaelin_returned)
         # The hero goes back to the normal (here unarmed) sprite
         self.assertIn(self.game.directories.UNARMED_HERO_PATH,
@@ -184,7 +184,7 @@ class TestPrincessGwaelin(TestCase):
                          GWAELIN_SWAMP_CAVE_COORDINATES)
         for carrying, returned in ((True, False), (False, True)):
             with self.subTest(carrying=carrying, returned=returned):
-                self.player.is_carrying_princess = carrying
+                self.game.story_flags.carrying_gwaelin = carrying
                 self.game.story_flags.gwaelin_returned = returned
                 self.go_to('SwampCave', (6, 4))
                 self.assertNotIn('PRINCESS_GWAELIN', self.game.current_map.characters)
@@ -245,13 +245,13 @@ class TestPrincessGwaelin(TestCase):
         )
         for map_name, coordinates, character, not_saved, saved in cases:
             with self.subTest(character=f'{map_name} {character}'):
-                self.player.is_carrying_princess = False
+                self.game.story_flags.carrying_gwaelin = False
                 self.game.story_flags.gwaelin_returned = False
                 self.assertEqual(self.npc_lines(map_name, coordinates, character), not_saved)
                 # NES F_DONE_GWAELIN: carrying her is already enough
-                self.player.is_carrying_princess = True
+                self.game.story_flags.carrying_gwaelin = True
                 self.assertEqual(self.npc_lines(map_name, coordinates, character), saved)
-                self.player.is_carrying_princess = False
+                self.game.story_flags.carrying_gwaelin = False
                 self.game.story_flags.gwaelin_returned = True
                 self.assertEqual(self.npc_lines(map_name, coordinates, character), saved)
 
@@ -262,12 +262,12 @@ class TestPrincessGwaelin(TestCase):
                          ["Oh, brave Edward."])
 
     def test_gwaelin_rescued_flag(self):
-        self.assertFalse(self.game.gwaelin_rescued)
+        self.assertFalse(self.game.story_flags.gwaelin_rescued)
         self.carry_princess()
-        self.assertTrue(self.game.gwaelin_rescued)
-        self.player.is_carrying_princess = False
+        self.assertTrue(self.game.story_flags.gwaelin_rescued)
+        self.game.story_flags.carrying_gwaelin = False
         self.game.story_flags.gwaelin_returned = True
-        self.assertTrue(self.game.gwaelin_rescued)
+        self.assertTrue(self.game.story_flags.gwaelin_rescued)
 
     # Edge cases
 
@@ -277,9 +277,9 @@ class TestPrincessGwaelin(TestCase):
         self.carry_princess()
         self.player.is_dead = True
         self.game.set_post_death_attributes()
-        self.assertFalse(self.player.is_carrying_princess)
+        self.assertFalse(self.game.story_flags.carrying_gwaelin)
         self.assertFalse(self.game.story_flags.gwaelin_returned)
-        self.assertFalse(self.game.gwaelin_rescued)
+        self.assertFalse(self.game.story_flags.gwaelin_rescued)
         self.go_to('SwampCave', (6, 4))
         self.assertIn('PRINCESS_GWAELIN', self.game.current_map.characters)
 
@@ -303,7 +303,7 @@ class TestPrincessGwaelin(TestCase):
                 with patch('src.menu.CommandMenu.show_text_in_dialog_box'):
                     getattr(self.game.cmd_menu, warp)()
                 self.assertEqual(self.game.current_map.identifier, 'Alefgard')
-                self.assertTrue(self.player.is_carrying_princess)
+                self.assertTrue(self.game.story_flags.carrying_gwaelin)
 
     def test_inn_greeting_while_carrying_princess(self):
         self.go_to('Brecconary', (23, 10))
@@ -311,7 +311,7 @@ class TestPrincessGwaelin(TestCase):
         for carrying, greeting in ((False, "Good morning.\nThou seems to have spent a good night."),
                                    (True, "Good morning.\nThou hast had a good night's sleep I hope.")):
             with self.subTest(carrying=carrying):
-                self.player.is_carrying_princess = carrying
+                self.game.story_flags.carrying_gwaelin = carrying
                 with patch.object(self.game.cmd_menu, 'show_line_in_dialog_box'), \
                         patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text, \
                         patch('data.text.dialog_lookup_table.fade'):
