@@ -61,3 +61,47 @@ class TestCommandMenu(TestCase):
         with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
             self.game.cmd_menu.take_gold({'item': 'GOLD', 'amount': 120})
         self.assertEqual(120, self.game.player.gold)
+
+    def cast_sleep(self, enemy, roll):
+        battle = MagicMock(no_op=False)
+        battle.enemy = enemy
+        self.game.cmd_menu.current_battle = battle
+        with patch('src.menu.random.randint', return_value=roll), \
+                patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
+            self.game.cmd_menu.sleep()
+        return battle, [c.args[0] for c in show_line.call_args_list]
+
+    def test_sleep_puts_enemy_to_sleep(self):
+        from src.enemy import Slime
+        slime = Slime()
+        battle, messages = self.cast_sleep(slime, roll=0)
+        self.assertTrue(slime.is_asleep)
+        self.assertTrue(battle.no_op)
+        self.assertEqual(messages, ['Thou hast put the Slime to sleep.', 'The Slime is asleep.'])
+
+    def test_sleep_fails_against_resistance(self):
+        # Metal Slime resists sleep 15/16: only a roll of 15 succeeds
+        from src.enemy import MetalSlime
+        metal_slime = MetalSlime()
+        battle, messages = self.cast_sleep(metal_slime, roll=14)
+        self.assertFalse(metal_slime.is_asleep)
+        self.assertFalse(battle.no_op)
+        self.assertEqual(messages, ['The spell will not work.'])
+        self.cast_sleep(metal_slime, roll=15)
+        self.assertTrue(metal_slime.is_asleep)
+
+    def test_sleep_outside_battle(self):
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.sleep()
+        self.assertEqual(show_text.call_args.args[0], 'But nothing happened.')
+
+    def test_casting_with_low_mp_outside_battle_does_not_crash(self):
+        self.game.player.spells = ["HEAL"]
+        self.game.player.current_mp = 0
+        mocked_return = MagicMock()
+        mocked_return.type = KEYDOWN
+        mocked_return.key = K_RETURN
+        with patch.object(event, 'get', return_value=[mocked_return]), \
+                patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
+            self.game.cmd_menu.display_item_menu('spells')
+        self.assertEqual(show_line.call_args.args[0], 'Thy MP is too low.')
