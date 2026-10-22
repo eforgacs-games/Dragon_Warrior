@@ -27,6 +27,7 @@ from src.maps import map_lookup
 from src.maps_functions import get_center_point
 from src.text import draw_text
 from src.visual_effects import fade
+from src.waiting import wait_frames
 
 NES_FPS = 60
 
@@ -95,8 +96,7 @@ class Ending:
         return self.game._
 
     def wait_frames(self, frames: int) -> None:
-        if not self.config['NO_WAIT']:
-            time.wait(round(frames * 1000 / NES_FPS))
+        wait_frames(frames, self.config, NES_FPS)
 
     def quote(self, text: str) -> str:
         """Quote marks the way CommandMenu adds them, for lines that are only partly quoted."""

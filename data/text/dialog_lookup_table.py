@@ -26,6 +26,7 @@ from src.text import draw_text
 from src.windows import BUY_SELL_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, SHOP_COST_RIGHT_TILE_COLUMN, \
     SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
 from src.visual_effects import fade, flash_transparent_color, greyscale_screen
+from src.waiting import wait, wait_frames
 
 
 class DialogLookup:
@@ -335,9 +336,9 @@ class DialogLookup:
         self.command_menu.show_line_in_dialog_box(self._("Princess Gwaelin embraces thee.\n"),
                                                   add_quotes=False)
         mixer.music.stop()
-        time.wait(1000)
+        wait(1000)
         self.sound.play_sound(self.directories.princess_gwaelins_love_sfx)
-        time.wait(5000)
+        wait(5000)
         mixer.music.play(-1)
 
         self.current_map.fixed_characters = []
@@ -378,8 +379,7 @@ class DialogLookup:
         """NES RefuseDglrdDialog: "Thou art a fool!", a 40-frame pause, then the dialog, command and pop-up
         windows close and the fight with the Dragonlord's first form (EN_DRAGONLORD1) starts."""
         self.command_menu.show_line_in_dialog_box(self._("Thou art a fool!"), hide_arrow=True, skip_text=True)
-        if not self.config['NO_WAIT']:
-            time.wait(40 * 1000 // 60)
+        wait_frames(40, self.config)
         self.command_menu.game.battle_ctrl.queue_scripted_battle('Dragonlord')
 
     def join_dragonlord(self):
@@ -520,8 +520,7 @@ class DialogLookup:
     def play_gwaelins_love_music(self):
         mixer.music.stop()
         self.sound.play_sound(self.directories.princess_gwaelins_love_sfx)
-        if not self.config['NO_WAIT']:
-            time.wait(5000)
+        wait(5000, self.config)
         if self.config['MUSIC_ENABLED']:
             mixer.music.play(-1)
 
@@ -602,7 +601,7 @@ class DialogLookup:
                      self._("Go now!"))
             flash_transparent_color(WHITE, self.screen, self.calculation, no_blit=self.config['NO_BLIT'])
             self.sound.play_sound(self.directories.stairs_up_sfx)
-            time.wait(500)
+            wait(500)
             # Move the player onto the temple's staircase (6, 2), then out to the overworld in front of the entrance
             self.player.row = 6
             self.player.column = 2
@@ -1097,8 +1096,7 @@ class DialogLookup:
         self.player.restore_hp()
         self.player.restore_mp()
         self.player.gold -= inn_cost
-        if not self.command_menu.game.game_state.config['NO_WAIT']:
-            time.wait(3000)
+        wait(3000, self.command_menu.game.game_state.config)
         if music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)

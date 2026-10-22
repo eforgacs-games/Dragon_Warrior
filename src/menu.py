@@ -15,6 +15,7 @@ from data.text.dialog_lookup_table import DialogLookup
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
+from src.waiting import quit_if_requested
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
@@ -285,6 +286,7 @@ class CommandMenu(Menu):
                     self.sound.play_sound(self.directories.menu_button_sfx)
                 display_current_line = False
             for current_event in event.get():
+                quit_if_requested(current_event)
                 if current_event.type == KEYDOWN:
                     if not skip_text and not disable_sound:
                         self.sound.play_sound(self.directories.menu_button_sfx)
@@ -464,6 +466,7 @@ class CommandMenu(Menu):
             if not self.game.game_state.config['NO_BLIT']:
                 display.update((5 * tile_size, 2 * tile_size, 4 * tile_size, 3 * tile_size))
             for current_event in event.get():
+                quit_if_requested(current_event)
                 if current_event.type != KEYDOWN:
                     continue
                 if current_event.key in reject_keys:
@@ -906,6 +909,7 @@ class CommandMenu(Menu):
         display.update(window_rect)
         while show_status:
             for current_event in event.get():
+                quit_if_requested(current_event)
                 if current_event.type == KEYDOWN:
                     if current_event.key in accept_keys + reject_keys:
                         show_status = False
@@ -1135,6 +1139,7 @@ class CommandMenu(Menu):
                                       show_arrow=self.game.show_arrow, color=self.color)
             display.update(window_rect)
             for current_event in event.get():
+                quit_if_requested(current_event)
                 if any([current_event.type == KEYDOWN]):
                     if current_event.key in reject_keys:
                         item_menu_displayed = False
