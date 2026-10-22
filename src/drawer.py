@@ -410,5 +410,4 @@ def get_fixed_character_underlying_tiles(current_map) -> List[str]:
 
 
 def set_to_save_prompt(cmd_menu):
-    cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-        cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['returned_dialog']
+    cmd_menu.set_king_lorik_dialog(left_throne_room=True)

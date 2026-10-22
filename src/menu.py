@@ -153,13 +153,15 @@ class CommandMenu(Menu):
                   'w') as output_save_file:
             output_save_file.write(json_object)
 
-    def set_king_lorik_dialog(self):
+    def set_king_lorik_dialog(self, left_throne_room: bool = False):
+        # NES DoKingDialog: carrying Gwaelin comes first, then whether the hero has left the throne room yet
+        king_lorik = self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']
         if self.game.player.is_carrying_princess:
-            self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-                self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['carrying_princess_dialog']
+            king_lorik['dialog'] = king_lorik['carrying_princess_dialog']
+        elif left_throne_room:
+            king_lorik['dialog'] = king_lorik['returned_dialog']
         else:
-            self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'] = \
-                self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_initial_dialog']
+            king_lorik['dialog'] = king_lorik['post_initial_dialog']
 
     def npc_is_across_counter(self, character_dict):
         return self.player.next_tile_id == 'WOOD' and (
