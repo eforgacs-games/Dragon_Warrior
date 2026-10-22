@@ -124,7 +124,7 @@ class TestGuardianFights(TestCase):
             self.lines.append(text)
         for target in ('show_line_in_dialog_box', 'show_text_in_dialog_box'):
             patch.object(CommandMenu, target, autospec=True, side_effect=record).start()
-        patch('src.menu.mixer').start()
+        patch('src.music_player.mixer').start()
         patch('src.battle_controller.time').start()
         patch('src.waiting.time.wait').start()  # the battle transition and the level-up pause
         # No random fights: the guardians' tiles are in enemy zones, and a random fight would wait for battle input

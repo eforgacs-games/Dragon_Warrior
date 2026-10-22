@@ -123,16 +123,19 @@ class TestQuitDuringGameWaits(TestCase):
     def test_quit_during_gwaelins_love_jingle(self):
         dialog_lookup = self.game.cmd_menu.dialog_lookup
         self.post_quit()
-        with patch.object(dialog_lookup.sound, 'play_sound'), self.assertRaises(SystemExit):
+        with patch.object(self.game.music_player, 'load_and_play_music') as load_and_play_music, \
+                self.assertRaises(SystemExit):
             dialog_lookup.play_gwaelins_love_music()
+        load_and_play_music.assert_not_called()  # quit while waiting for the clip to end (WaitForMusicEnd)
 
     def test_quit_while_gwaelin_embraces_the_hero(self):
         dialog_lookup = self.game.cmd_menu.dialog_lookup
         self.post_quit()
         with patch.object(self.game.cmd_menu, 'show_line_in_dialog_box'), \
-                patch.object(dialog_lookup.sound, 'play_sound') as play_sound, self.assertRaises(SystemExit):
+                patch.object(self.game.music_player, 'load_and_play_music') as load_and_play_music, \
+                self.assertRaises(SystemExit):
             dialog_lookup.embrace_princess_gwaelin()
-        play_sound.assert_not_called()  # quit during the 1-second pause before the jingle
+        load_and_play_music.assert_not_called()  # quit during the Gwaelin's Love clip, before the map music
 
     def test_quit_during_credits(self):
         self.post_quit()
