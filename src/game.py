@@ -49,6 +49,8 @@ from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 from src.battle_controller import BattleController
+from src.ending import Ending
+from src.story_flags import StoryFlags
 from src.map_manager import MapManager
 from src.pygame_compat import arrow_fade
 from src.visual_effects import fade, flash_transparent_color
@@ -101,10 +103,7 @@ class Game:
         self.repel_timer = 0  # NES RepelTimer, set by REPEL or Fairy Water
         self.rainbow_bridge_built = False  # NES F_RNBW_BRDG flag in ModsnSpells
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
-        # NES F_RTN_GWAELIN flag in PlayerFlags: Princess Gwaelin has been brought back to King Lorik. Same name as
-        # StoryFlags.gwaelin_returned in PR #200, so it can move there.
-        # (Carrying her is F_GOT_GWAELIN, which is player.is_carrying_princess.) Not saved yet.
-        self.gwaelin_returned = False
+        self.story_flags = StoryFlags()
         self.speed = 2
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
@@ -140,6 +139,7 @@ class Game:
         self.current_map = maps.map_lookup[self.game_state.config["START_MAP"]](self.game_state.config)
 
         self.battle_ctrl = BattleController(self)
+        self.ending = Ending(self)
         self.map_mgr = MapManager(self)
 
         self.set_big_map()
@@ -181,6 +181,12 @@ class Game:
         display.set_icon(image.load(self.directories.ICON_PATH))
         self.allow_save_prompt = False
         # pg.event.set_allowed([pg.QUIT])
+
+    @property
+    def princess_saved(self) -> bool:
+        """NES F_RTN_GWAELIN. Story flags aren't saved yet, so after loading a game this falls back on Gwaelin's Love,
+        which only King Lorik's thanks for returning her gives."""
+        return self.story_flags.gwaelin_returned or "Gwaelin's Love" in self.player.inventory
 
     def set_screen(self, win_height, win_width):
         """Stub for setting the screen."""
@@ -343,6 +349,7 @@ class Game:
             set_character_position(self.player, tile_size=self.tile_size)
         self._handle_map_updates()
         self._handle_post_move_checks()
+        self.ending.check_for_end_game_trigger()
         self._handle_debugging_info()
         event.pump()
 
@@ -483,6 +490,9 @@ class Game:
             # A fixed fight (e.g. the Dragonlord) asked for by a dialog that has now closed.
             self.battle_ctrl.run_pending_scripted_battle()
             return
+        # NES ChkOtherBlocks: once the Dragonlord is dead, no more random fights
+        if self.story_flags.dragonlord_defeated:
+            return
         if self.current_map.identifier in MAPS_WITH_ENEMIES:
             if self.tiles_moved_since_spawn > 0:
                 if self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
@@ -600,7 +610,7 @@ class Game:
     def gwaelin_rescued(self) -> bool:
         """NES F_DONE_GWAELIN: Gwaelin is being carried or has been returned. NPC dialog that changes once she's
         rescued checks this, not just whether she's been returned."""
-        return self.player.is_carrying_princess or self.gwaelin_returned
+        return self.player.is_carrying_princess or self.story_flags.gwaelin_returned
 
     def set_player_images_by_equipment(self):
         if self.player.is_carrying_princess:
@@ -669,6 +679,9 @@ class Game:
         self.color = self.cmd_menu.color = WHITE
 
     def handle_environment_damage(self):
+        # NES ChkOtherBlocks: once the Dragonlord is dead, swamps and barriers no longer hurt
+        if self.story_flags.dragonlord_defeated:
+            return
         if not self.player.armor == "Erdrick's Armor":
             if not self.player.is_moving:
                 if self.player.current_tile == 'MARSH':

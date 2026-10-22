@@ -147,6 +147,8 @@ class MapManager:
             self.current_map.reveal_hidden_staircase()
         self.apply_chest_history()
         self.place_princess_gwaelin()
+        if self.game.story_flags.dragonlord_defeated:
+            self.current_map.apply_dragonlord_defeated()
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         self.set_big_map()
         self.set_roaming_character_positions()
@@ -210,7 +212,7 @@ class MapManager:
         self.game.chest_history.apply_to_layout(map_name, self.current_map.layout, TREASURE_BOX, BRICK)
     def place_princess_gwaelin(self):
         """Put Gwaelin where the NES story flags say she is before the map's NPCs are loaded."""
-        if self.current_map.identifier == 'TantegelThroneRoom' and self.game.gwaelin_returned:
+        if self.current_map.identifier == 'TantegelThroneRoom' and self.game.story_flags.gwaelin_returned:
             # NES ChkGwaelinNPC: she's in the throne room's static NPC table, and only removed while F_RTN_GWAELIN
             # is clear
             self.current_map.npc_coordinates[GWAELIN_THRONE_ROOM_COORDINATES] = 'PRINCESS_GWAELIN'

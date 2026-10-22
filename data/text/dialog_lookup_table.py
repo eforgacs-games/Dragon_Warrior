@@ -353,7 +353,7 @@ class DialogLookup:
         self.player.weapon = self.player.armor = self.player.shield = ""
         self.player.spells = []
         self.player.is_carrying_princess = False
-        game.gwaelin_returned = False
+        game.story_flags.gwaelin_returned = False
         self.player.update_attack_power()
         self.player.update_defense_power()
 
@@ -419,7 +419,7 @@ class DialogLookup:
         """NES DoKingDialog: clear F_GOT_GWAELIN, set F_RTN_GWAELIN and place Gwaelin's NPC beside the king."""
         game = self.command_menu.game
         self.player.is_carrying_princess = False
-        game.gwaelin_returned = True
+        game.story_flags.gwaelin_returned = True
         game.set_player_images_by_equipment()
         current_map = game.current_map
         if current_map.identifier == 'TantegelThroneRoom' and 'PRINCESS_GWAELIN' not in current_map.characters:
