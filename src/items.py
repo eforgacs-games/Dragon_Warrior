@@ -47,6 +47,14 @@ MAX_HERBS = 6
 MAX_KEYS = 6
 MAX_GOLD = 65535
 
+
+def inventory_list(inventory: list[str]) -> list[str]:
+    """The items as the NES lists them in the ITEM, discard and sell windows (Bank03 CreateInvList): Herbs, then Magic
+    Keys (one entry each, however many there are), then each inventory slot in order, so two Torches are two
+    entries."""
+    return [item for item in UNSLOTTED_ITEMS if item in inventory] + \
+        [item for item in inventory if item not in UNSLOTTED_ITEMS]
+
 GOLD = "GOLD"
 
 
