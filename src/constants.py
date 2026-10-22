@@ -89,6 +89,11 @@ OUTSIDE_DESTINATIONS = {
 # RETURN and the Wings of the Wyvern: NES overworld (42, 43), just west of Tantegel Castle
 RETURN_DESTINATION = ('Alefgard', (50, 50))
 
+# NES ChkDrop: the Rainbow Drop only works with the hero standing on overworld (65, 49), and ModMapBlock puts the
+# bridge one block to the west, on the water at (64, 49) (ChkRnbwBrdg reads that block as BLK_BRIDGE from then on).
+RAINBOW_DROP_COORDINATES = (56, 73)
+RAINBOW_BRIDGE_COORDINATES = (56, 72)
+
 # NES RepelTimer: REPEL sets it to 255 and Fairy Water to 254; it drops by 2 per step (127 steps either way)
 REPEL_SPELL_TIMER = 255
 FAIRY_WATER_TIMER = 254

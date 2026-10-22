@@ -12,6 +12,7 @@ from pygame.time import get_ticks
 from src import maps
 from src.camera import Camera
 from src.common import BLACK
+from src.constants import RAINBOW_BRIDGE_COORDINATES
 from src.direction import Direction
 from src.game_functions import set_character_position
 from src.maps import map_lookup
@@ -138,6 +139,7 @@ class MapManager:
             if came_from_throne_room:
                 self.game.allow_save_prompt = True
         self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
+        self.apply_rainbow_bridge()
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         self.set_big_map()
         self.set_roaming_character_positions()
@@ -187,6 +189,12 @@ class MapManager:
                              self.game.skip_text, self.game.allow_save_prompt, self.game_state,
                              self.game.torch_active, self.game.color)
         fade(fade_out=False, screen=self.screen, config=self.game_state.config)
+
+    def apply_rainbow_bridge(self):
+        # NES ChkRnbwBrdg: once F_RNBW_BRDG is set, the overworld block at (64, 49) is always read as BLK_BRIDGE
+        if self.current_map.identifier == 'Alefgard' and self.game.rainbow_bridge_built:
+            row, column = RAINBOW_BRIDGE_COORDINATES
+            self.current_map.layout[row][column] = self.current_map.floor_tile_key['BRIDGE']['val']
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates):
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN', 'CAVE'):

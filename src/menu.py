@@ -18,7 +18,8 @@ from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
 from src.directories import Directories
 from src.items import treasure
-from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, REPEL_SPELL_TIMER, RETURN_DESTINATION
+from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, RAINBOW_BRIDGE_COORDINATES, \
+    RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION
 from src.direction import Direction
 from src.maps import DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
@@ -143,6 +144,7 @@ class CommandMenu(Menu):
             'CurrentMap': self.game.current_map.identifier,
             'PlayerRow': self.player.row,
             'PlayerColumn': self.player.column,
+            'RainbowBridgeBuilt': self.game.rainbow_bridge_built,
         }
         json_object = json.dumps(save_dict, indent=4)
         with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'),
@@ -467,22 +469,18 @@ class CommandMenu(Menu):
         self.show_text_in_dialog_box(f"{self.player.name} held the Erdrick's Token tightly.\nBut nothing happened.")
 
     def rainbow_drop(self):
-        if self.current_map.identifier == 'Alefgard':
-            # Check if player is at the Rainbow Bridge location
-            # Original game: approximately (47, 40) on the world map
-            if 45 <= self.player.column <= 49 and 38 <= self.player.row <= 42:
-                self.show_text_in_dialog_box(f"{self.player.name} held the Rainbow Drop toward the sky.\n"
-                                           "The Rainbow Bridge appears!", skip_text=self.skip_text)
-                # TODO: Actually build the rainbow bridge by modifying map tiles
-                # Remove Rainbow Drop from inventory after use
-                if "Rainbow Drop" in self.player.inventory:
-                    self.player.inventory.remove("Rainbow Drop")
-            else:
-                self.show_text_in_dialog_box(f"{self.player.name} held the Rainbow Drop toward the sky.\n"
-                                           "But nothing happened.", skip_text=self.skip_text)
-        else:
-            self.show_text_in_dialog_box(f"{self.player.name} held the Rainbow Drop tightly.\n"
-                                       "But nothing happened.", skip_text=self.skip_text)
+        # NES ChkDrop: the bridge appears only on the overworld, with the hero on the one tile east of it, and only
+        # once (F_RNBW_BRDG). The hero's facing doesn't matter, and the Rainbow Drop is kept either way.
+        self.show_text_in_dialog_box(self._("{} held the Rainbow Drop toward the sky.").format(self.player.name),
+                                     skip_text=self.skip_text)
+        if self.current_map.identifier != 'Alefgard' or self.game.rainbow_bridge_built or \
+                (self.player.row, self.player.column) != RAINBOW_DROP_COORDINATES:
+            # NES RainbowFail
+            self.show_text_in_dialog_box(self._("But no rainbow appeared here."), skip_text=self.skip_text)
+            return
+        self.game.rainbow_bridge_built = True
+        bridge_row, bridge_column = RAINBOW_BRIDGE_COORDINATES
+        self.set_tile_by_coordinates('BRIDGE', bridge_column, bridge_row, self.player)
 
     def staff_of_rain(self):
         self.show_text_in_dialog_box(f"{self.player.name} held the Staff of Rain tightly.\n"
