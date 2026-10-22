@@ -1,4 +1,5 @@
 import os
+from contextlib import ExitStack
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -92,8 +93,146 @@ class TestCommandMenu(TestCase):
         mocked_return.type = KEYDOWN
         mocked_return.key = K_RETURN
         with patch.object(event, 'get', return_value=[mocked_return]):
-            self.game.cmd_menu.take_gold({'item': 'GOLD', 'amount': 120})
+            self.game.cmd_menu.take_gold({'item': 'GOLD', 'gold': (120, 0)})
         self.assertEqual(120, self.game.player.gold)
+
+    def open_chest_at(self, map_name, coordinates, roll=None):
+        """Stand on a chest and TAKE it. Returns the text shown."""
+        cmd_menu = self.game.cmd_menu
+        cmd_menu.map_name = map_name
+        self.game.player.row, self.game.player.column = coordinates
+        self.game.player.current_tile = 'TREASURE_BOX'
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(cmd_menu, 'set_tile_by_coordinates'))
+            show_text = stack.enter_context(patch.object(cmd_menu, 'show_text_in_dialog_box'))
+            if roll is not None:
+                stack.enter_context(patch('src.menu.random.randint', return_value=roll))
+                stack.enter_context(patch('src.items.random.randint', return_value=roll))
+            cmd_menu.take()
+        return [call.args[0] for call in show_text.call_args_list]
+
+    def test_take_rolls_gold_when_opened(self):
+        # NES TRSR_GLD4: 500 + (random AND $FF)
+        self.open_chest_at('CharlockB8', (16, 17), roll=0x2A)
+        self.assertEqual(self.game.player.gold, 542)
+        self.assertTrue(self.game.chest_history.is_opened('CharlockB8', (16, 17)))
+
+    def test_take_gold_caps_at_65535(self):
+        self.game.player.gold = 65500
+        self.open_chest_at('CharlockB8', (16, 17), roll=0)
+        self.assertEqual(self.game.player.gold, 65535)
+
+    def test_opened_chest_is_not_taken_twice(self):
+        self.open_chest_at('TantegelThroneRoom', (10, 15))
+        self.assertEqual(self.game.player.inventory, ['Torch'])
+        # the chest becomes brick, so a second TAKE finds nothing
+        self.game.player.current_tile = 'BRICK'
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.take()
+        self.assertEqual(show_text.call_args.args[0], f"There is nothing to take here, {self.game.player.name}.")
+        self.assertEqual(self.game.player.inventory, ['Torch'])
+
+    def test_full_history_leaves_chest_in_place(self):
+        for column in range(8):
+            self.game.chest_history.record('Elsewhere', (0, column))
+        with patch.object(self.game.cmd_menu, 'set_tile_by_coordinates') as set_tile:
+            self.game.cmd_menu.map_name = 'Garinham'
+            self.game.player.row, self.game.player.column = (5, 18)
+            self.game.player.current_tile = 'TREASURE_BOX'
+            with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
+                self.game.cmd_menu.take()
+        set_tile.assert_not_called()
+        self.assertEqual(self.game.player.inventory, ['Torch'])
+
+    def test_seventh_key_chest_is_empty(self):
+        self.game.player.inventory = ['Magic Key'] * 6
+        messages = self.open_chest_at('TantegelThroneRoom', (7, 16))
+        self.assertEqual(messages, ['Unfortunately, it is empty.'])
+        self.assertEqual(self.game.player.inventory.count('Magic Key'), 6)
+        self.assertTrue(self.game.chest_history.is_opened('TantegelThroneRoom', (7, 16)))
+
+    def test_herb_chest(self):
+        self.open_chest_at('MountainCaveB1', (6, 14))
+        self.assertEqual(self.game.player.inventory, ['Herb'])
+
+    def test_death_necklace_one_in_32(self):
+        self.open_chest_at('MountainCaveB2', (7, 2), roll=0x20)  # low 5 bits zero
+        self.assertIn('Death Necklace', self.game.player.inventory)
+        self.assertTrue(self.game.chest_history.death_necklace_found)
+        # once found, the chest only ever holds 100-131 gold
+        self.game.chest_history = type(self.game.chest_history)()
+        self.game.chest_history.death_necklace_found = True
+        self.open_chest_at('MountainCaveB2', (7, 2), roll=0x20)
+        self.assertEqual(self.game.player.gold, 100)
+        self.assertEqual(self.game.player.inventory.count('Death Necklace'), 1)
+
+    def test_death_necklace_chest_gives_gold_otherwise(self):
+        self.open_chest_at('MountainCaveB2', (7, 2), roll=0x01)
+        self.assertNotIn('Death Necklace', self.game.player.inventory)
+        self.assertEqual(self.game.player.gold, 101)
+        self.assertFalse(self.game.chest_history.death_necklace_found)
+
+    def test_erdricks_sword_is_equipped(self):
+        self.open_chest_at('CharlockB3', (8, 8))
+        self.assertEqual(self.game.player.weapon, "Erdrick's Sword")
+        self.assertNotIn("Erdrick's Sword", self.game.player.inventory)
+        self.game.chest_history = type(self.game.chest_history)()
+        messages = self.open_chest_at('CharlockB3', (8, 8))
+        self.assertEqual(messages, ['Unfortunately, it is empty.'])
+
+    def test_silver_harp_chest_empty_once_traded(self):
+        self.game.player.inventory = ['Staff of Rain']
+        messages = self.open_chest_at('GarinsGraveB3', (7, 14))
+        self.assertEqual(messages, ['Unfortunately, it is empty.'])
+        self.assertNotIn('Silver Harp', self.game.player.inventory)
+
+    def test_stones_of_sunlight_chest_empty_with_rainbow_drop(self):
+        self.game.player.inventory = ['Rainbow Drop']
+        self.assertEqual(self.open_chest_at('TantegelCellar', (6, 5)), ['Unfortunately, it is empty.'])
+
+    def test_staff_of_rain_chest_always_gives(self):
+        # NES ChkTrsrNonGold: no check for an existing Staff of Rain
+        self.game.player.inventory = ['Staff of Rain']
+        self.open_chest_at('StaffOfRainCave', (6, 5))
+        self.assertEqual(self.game.player.inventory.count('Staff of Rain'), 2)
+
+    def test_tablet_is_read_not_kept(self):
+        with patch.object(self.game.cmd_menu, 'tablet') as tablet:
+            self.open_chest_at('ErdricksCaveB2', (4, 10))
+        tablet.assert_called_once()
+        self.assertEqual(self.game.player.inventory, [])
+
+    def test_full_inventory_give_up_item(self):
+        self.game.player.inventory = ['Torch'] * 8 + ['Herb']
+        with patch.object(self.game.cmd_menu, 'prompt_yes_no', return_value=False):
+            messages = self.open_chest_at('Rimuldar', (31, 32))
+        self.assertEqual(messages[-1], 'Thou hast given up thy Wings.')
+        self.assertNotIn('Wings', self.game.player.inventory)
+        self.assertTrue(self.game.chest_history.is_opened('Rimuldar', (31, 32)))
+
+    def test_full_inventory_discard_item(self):
+        self.game.player.inventory = ['Silver Harp'] + ['Torch'] * 7
+        with patch.object(self.game.cmd_menu, 'prompt_yes_no', return_value=True), \
+                patch.object(self.game.cmd_menu, 'display_item_menu', side_effect=['Silver Harp', 'Torch']):
+            messages = self.open_chest_at('Rimuldar', (31, 32))
+        self.assertIn('That is much too important to throw away.', messages)
+        self.assertEqual(messages[-1], ('Thou hast dropped thy Torch.', 'And obtained the Wings.'))
+        self.assertEqual(self.game.player.inventory.count('Torch'), 6)
+        self.assertIn('Wings', self.game.player.inventory)
+        self.assertIn('Silver Harp', self.game.player.inventory)
+
+    def test_chest_not_in_nes_table(self):
+        self.game.cmd_menu.map_name = 'Kol'
+        self.game.player.current_tile = 'TREASURE_BOX'
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.take()
+        self.assertEqual(show_text.call_args.args[0], f"There is nothing to take here, {self.game.player.name}.")
+
+    def test_cursed_items_can_be_used(self):
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.put_on_cursed_item('Death Necklace')
+        self.assertEqual(show_text.call_args.args[0],
+                         f"{self.game.player.name} put on the Death Necklace and was cursed!")
 
     def cast_sleep(self, enemy, roll):
         battle = MagicMock(no_op=False)
