@@ -21,6 +21,7 @@ from src.drawer import replace_characters_with_underlying_tiles, convert_numeric
     set_to_save_prompt
 from src.game import Game
 from src.game_functions import get_next_coordinates
+from src.map_layouts import MapLayouts
 from src.maps import TantegelThroneRoom, TantegelCourtyard, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.menu import CommandMenu
@@ -216,6 +217,86 @@ class TestGame(TestCase):
                 "CurrentMap": "Brecconary", "PlayerRow": 10, "PlayerColumn": 10}
         self.game.load_game(save)
         self.assertEqual(self.where(), ('Brecconary', (10, 10)))
+
+    def stand_on(self, map_name, coordinates):
+        self.go_to(map_name, coordinates)
+        # The game loop syncs row and column with the hero's rect on the next frame
+        self.game.player.row, self.game.player.column = coordinates
+
+    def use_rainbow_drop(self):
+        with patch('src.menu.CommandMenu.show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.rainbow_drop()
+        return [c.args[0] for c in show_text.call_args_list]
+
+    def bridge_tile(self):
+        # NES overworld (64, 49)
+        return get_tile_id_by_coordinates(72, 56, self.game.current_map)
+
+    def test_rainbow_drop_builds_the_rainbow_bridge(self):
+        self.game.player.inventory = ['Rainbow Drop']
+        self.stand_on('Alefgard', (56, 73))  # NES overworld (65, 49), the tile east of the bridge
+        self.assertEqual(self.bridge_tile(), 'WATER')
+        self.assertEqual(self.use_rainbow_drop(), [f'{self.game.player.name} held the Rainbow Drop toward the sky.'])
+        self.assertTrue(self.game.rainbow_bridge_built)
+        self.assertEqual(self.bridge_tile(), 'BRIDGE')
+        self.assertFalse(self.game.is_impassable(self.bridge_tile()))
+        # NES ChkDrop never removes the Rainbow Drop
+        self.assertEqual(self.game.player.inventory, ['Rainbow Drop'])
+
+    def test_rainbow_drop_does_nothing_elsewhere(self):
+        self.game.player.inventory = ['Rainbow Drop']
+        for map_name, coordinates in (('Alefgard', (56, 74)), ('Alefgard', (50, 50)), ('Brecconary', (7, 23))):
+            with self.subTest(map=map_name, coordinates=coordinates):
+                self.stand_on(map_name, coordinates)
+                self.assertEqual(self.use_rainbow_drop()[-1], 'But no rainbow appeared here.')
+                self.assertFalse(self.game.rainbow_bridge_built)
+                self.assertEqual(self.game.player.inventory, ['Rainbow Drop'])
+        self.go_to('Alefgard', (56, 74))
+        self.assertEqual(self.bridge_tile(), 'WATER')
+
+    def test_rainbow_drop_only_builds_the_bridge_once(self):
+        self.stand_on('Alefgard', (56, 73))
+        self.use_rainbow_drop()
+        self.assertEqual(self.use_rainbow_drop()[-1], 'But no rainbow appeared here.')
+        self.assertEqual(self.bridge_tile(), 'BRIDGE')
+
+    def test_rainbow_bridge_survives_leaving_the_overworld(self):
+        self.stand_on('Alefgard', (56, 73))
+        self.use_rainbow_drop()
+        self.go_to('Brecconary', (7, 23))
+        self.go_to('Alefgard', (50, 50))
+        self.assertEqual(self.bridge_tile(), 'BRIDGE')
+        # The flag alone rebuilds it, even from freshly decoded map layouts
+        self.game.layouts = MapLayouts()
+        self.go_to('Brecconary', (7, 23))
+        self.go_to('Alefgard', (50, 50))
+        self.assertEqual(self.bridge_tile(), 'BRIDGE')
+
+    def test_rainbow_bridge_save_round_trip(self):
+        self.stand_on('Alefgard', (56, 73))
+        self.use_rainbow_drop()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.game.cmd_menu.directories.save_dir = tmp_dir
+            self.game.player.adventure_log = 1
+            self.game.cmd_menu.save()
+            with open(os.path.join(tmp_dir, 'save_slot_1.json')) as save_file:
+                save = json.load(save_file)
+        self.assertTrue(save['RainbowBridgeBuilt'])
+
+        with patch('src.game.SCALED'):
+            self.game = Game(test_config)
+        self.assertFalse(self.game.rainbow_bridge_built)
+        self.game.load_game(save)
+        self.assertTrue(self.game.rainbow_bridge_built)
+        self.assertEqual(self.where(), ('Alefgard', (56, 73)))
+        self.assertEqual(self.bridge_tile(), 'BRIDGE')
+
+    def test_load_game_without_rainbow_bridge_key(self):
+        save = {"Name": "Erdrick", "Experience": 0, "Gold": 0, "Inventory": [],
+                "CurrentMap": "Alefgard", "PlayerRow": 56, "PlayerColumn": 73}
+        self.game.rainbow_bridge_built = True
+        self.game.load_game(save)
+        self.assertFalse(self.game.rainbow_bridge_built)
 
     def walk(self, steps):
         with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
