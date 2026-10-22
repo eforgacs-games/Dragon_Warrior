@@ -15,10 +15,9 @@ loop ends, so nothing redraws that tile any more: the chosen entry's arrow stays
 window stays on the screen (behind the windows the selection opens, for example).
 """
 from pygame import Rect, Surface
-from pygame.time import get_ticks
 
 from src.color import BLACK
-from src.waiting import NES_FPS
+from src.waiting import NES_FPS, game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 # TL_RIGHT_ARROW ($42), as the NES draws it: 8x8 pixels, its point 2 pixels in from the tile's left edge and one row
 # lower than the letters (which use rows 0 to 6), so it lines up with the middle of the entry's text.
