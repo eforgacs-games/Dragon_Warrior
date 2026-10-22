@@ -169,11 +169,7 @@ class Battle:
 
     def enemy_defeated(self, cmd_menu, screen, player, music_enabled, enemy):
         """Handle an enemy being defeated."""
-        enemy_defeated_string = self.get_enemy_defeated_string(enemy)
-        cmd_menu.show_line_in_dialog_box(enemy_defeated_string, add_quotes=False, disable_sound=True, hide_arrow=True)
-        mixer.music.stop()
-        self.sound.play_sound(self.directories.victory_sfx)
-        self.make_enemy_image_disappear(screen)
+        self.announce_enemy_defeated(cmd_menu, screen, enemy)
         if enemy.name == 'Dragonlord 2':
             # NES NotDL1Defeated: the final boss gives no experience or gold; the ending takes over from here
             cmd_menu.game.ending.final_boss_defeated()
@@ -190,12 +186,18 @@ class Battle:
         """NES EnemyDefeated for EN_DRAGONLORD1: "Thou hast done well in defeating the Dragonlord.", the victory
         music, then an 80-frame wait. No experience or gold is given: the routine jumps straight to InitFight
         with EN_DRAGONLORD2 instead of RegEnDefeated."""
-        cmd_menu.show_line_in_dialog_box(self.get_enemy_defeated_string(self.enemy), add_quotes=False,
-                                         disable_sound=True, hide_arrow=True)
+        self.announce_enemy_defeated(cmd_menu, screen, self.enemy)
+        wait_frames(DRAGONLORD_TRANSFORM_WAIT_FRAMES, self.config)
+
+    def announce_enemy_defeated(self, cmd_menu, screen, enemy):
+        """NES EnemyDefeated (ContEnDefeated): TextBlock15 entry 14, "Thou hast done well in defeating the ENMY.", ends
+        with no WAIT, so as soon as it has printed the enemy is erased (ClearSpriteRAM) and the victory music starts
+        (MSC_VICTORY), without a button press."""
+        cmd_menu.show_line_in_dialog_box(self.get_enemy_defeated_string(enemy), add_quotes=False, disable_sound=True,
+                                         hide_arrow=True, skip_text=True)
+        self.make_enemy_image_disappear(screen)
         mixer.music.stop()
         self.sound.play_sound(self.directories.victory_sfx)
-        self.make_enemy_image_disappear(screen)
-        wait_frames(DRAGONLORD_TRANSFORM_WAIT_FRAMES, self.config)
 
     def get_enemy_defeated_string(self, enemy):
         """Get the enemy defeated string based on language."""
