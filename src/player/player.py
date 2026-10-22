@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, cast
 
 from pygame import Surface
 
@@ -6,7 +6,7 @@ from src.calculation import Calculation
 from src.direction import Direction
 from src.items import weapons, armor, shields
 from src.maps import DragonWarriorMap
-from src.player.player_stats import levels_list, apply_transformation_to_levels_list
+from src.player.player_stats import get_level_by_experience, get_stats_for_level, levels_list
 from src.sprites.animated_sprite import AnimatedSprite
 
 
@@ -78,8 +78,6 @@ class Player(AnimatedSprite):
 
         self.level = self.get_level_by_experience()
 
-        self.points_to_next_level = self.get_points_to_next_level()
-
         self.spells: list[str] = []
         self.inventory: list[str] = []
         self.god_mode = god_mode
@@ -137,39 +135,41 @@ class Player(AnimatedSprite):
         self.wearing_cursed_belt = False
         self.wearing_death_necklace = False
 
-    def get_points_to_next_level(self):
+    def get_points_to_next_level(self) -> int:
+        """GetExpRemaining (LF134): the next level's LevelUpTbl entry minus the experience. 0 at level 30."""
         if levels_list.get(self.level + 1):
-            return levels_list[self.level + 1]['exp'] - self.total_experience
-        else:
-            return 0
+            return max(0, cast(int, levels_list[self.level + 1]['total_exp']) - self.total_experience)
+        return 0
 
-    def get_level_by_experience(self):
-        for level in reversed(levels_list):
-            if self.total_experience >= levels_list[level]['total_exp']:
-                return level
+    @property
+    def points_to_next_level(self) -> int:
+        return self.get_points_to_next_level()
+
+    def get_level_by_experience(self) -> int:
+        return get_level_by_experience(self.total_experience)
 
     def set_initial_stats(self):
-        apply_transformation_to_levels_list(self.name)
+        """Stats for a new hero: level 1, with the name applied (LoadStats)."""
         self.set_stats_by_level(1)
 
     def update_stats_to_current_level(self):
         self.set_stats_by_level(self.level)
 
     def set_stats_by_level(self, level):
-        self.strength = levels_list[level]['strength']
-        self.agility = levels_list[level]['agility']
-        self.max_hp = levels_list[level]['max_hp']
-        self.max_mp = levels_list[level]['max_mp']
+        """NES LoadStats (LF050): the stats come from BaseStatsTbl for the level and the first four letters of the
+        name, worked out afresh each time, so a saved game only needs the name and the experience."""
+        self.update_stats_by_level(level)
         for i in range(1, level + 1):
             if levels_list[i].get('spell'):
                 if levels_list[i]['spell'] not in self.spells:
                     self.spells.append(levels_list[i]['spell'])
 
-    def update_stats_by_level(self):
-        self.strength = levels_list[self.level]['strength']
-        self.agility = levels_list[self.level]['agility']
-        self.max_hp = levels_list[self.level]['max_hp']
-        self.max_mp = levels_list[self.level]['max_mp']
+    def update_stats_by_level(self, level: int | None = None):
+        stats = get_stats_for_level(self.name, self.level if level is None else level)
+        self.strength = stats['strength']
+        self.agility = stats['agility']
+        self.max_hp = stats['max_hp']
+        self.max_mp = stats['max_mp']
 
     def restore_hp(self):
         self.current_hp = self.max_hp

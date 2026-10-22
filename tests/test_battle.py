@@ -86,6 +86,39 @@ class TestBattleMethods(unittest.TestCase):
         self.assertEqual(events[:3], [(done_well, True), 'erase', 'victory'])
         self.assertEqual(len(events), 4)  # then the experience and gold
 
+    def level_up(self, name, experience_before, experience_gained):
+        from src.config.test_config import test_config
+        from src.player.player import Player
+        from tests.mock_map import MockMap
+        player = Player(center_point=None, images=None, current_map=MockMap(test_config))
+        player.name, player.total_experience = name, experience_before
+        player.level = player.get_level_by_experience()
+        player.update_stats_to_current_level()
+        player.total_experience += experience_gained
+        cmd_menu = Mock()
+        battle = Battle({**self.battle.config, 'LANGUAGE': 'English'}, self.enemy_name, self.current_map)
+        with patch('src.battle.time.wait'), patch('pygame.mixer.music'):
+            battle.check_player_level_up(cmd_menu, player, music_enabled=False)
+        return player, [call.args[0] for call in cmd_menu.show_line_in_dialog_box.call_args_list]
+
+    def test_level_up_uses_the_name_based_stats(self):
+        """NES ChkLevelUp: LoadStats again, then each stat that went up. Deez cuts strength and max HP, bonus 1
+        (tests/test_player_stats.py): level 3 (7, 6, 22, 5) -> level 4 (7, 8, 28, 16)."""
+        player, lines = self.level_up('Deez', 23, 24)
+        self.assertEqual(4, player.level)
+        self.assertEqual((7, 8, 28, 16), (player.strength, player.agility, player.max_hp, player.max_mp))
+        self.assertEqual(["Courage and wit have served thee well.\nThou hast been promoted to the next level.\n",
+                          "Thy Response Speed increases by 2.\n", "Thy Maximum Hit Points increase by 6.\n",
+                          "Thy Maximum Magic Points increase by 11.\n"], lines[:4])
+
+    def test_level_up_can_jump_several_levels_and_reach_30(self):
+        player, _ = self.level_up('Erdrick', 47, 220 - 47)
+        self.assertEqual(6, player.level)
+        self.assertEqual((16, 10, 36, 23), (player.strength, player.agility, player.max_hp, player.max_mp))
+        player, _ = self.level_up('Erdrick', 62000, 3535)
+        self.assertEqual(30, player.level)
+        self.assertEqual((140, 130, 191, 182), (player.strength, player.agility, player.max_hp, player.max_mp))
+
     def test_get_enemy_draws_near_string(self):
         self.battle.enemy.name = 'Slime'
         expected_string = '슬라임이 나타났다!\n어떻게 하겠나?\n'
