@@ -507,7 +507,23 @@ class CommandMenu(Menu):
         self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
 
     def sleep(self):
-        pass
+        if self.current_battle is None:
+            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+            return
+        enemy = self.current_battle.enemy
+        enemy_name = self._(enemy.name)
+        # NES (ChkSpellFail): the spell fails if a 0-15 roll is below the enemy's sleep resistance (n/16).
+        if random.randint(0, 15) < round(enemy.sleep_resist * 16):
+            self.show_line_in_dialog_box(self._("The spell will not work."), add_quotes=False,
+                                         disable_sound=True, hide_arrow=True)
+            return
+        enemy.is_asleep = True
+        self.show_line_in_dialog_box(self._("Thou hast put the {} to sleep.").format(enemy_name), add_quotes=False,
+                                     disable_sound=True, hide_arrow=True)
+        # The enemy loses the turn it was put to sleep (NES jumps straight to EnStillAsleep).
+        self.show_line_in_dialog_box(self._("The {} is asleep.").format(enemy_name), add_quotes=False,
+                                     disable_sound=True, hide_arrow=True)
+        self.current_battle.no_op = True
 
     def radiant(self):
         if self.current_map.is_dark:
@@ -780,7 +796,8 @@ class CommandMenu(Menu):
                                                              disable_sound=True,
                                                              hide_arrow=True,
                                                              add_quotes=False)
-                                self.current_battle.no_op = True
+                                if self.current_battle is not None:
+                                    self.current_battle.no_op = True
                             else:
                                 self.show_line_in_dialog_box(
                                     (self._("{} chanted the spell of {}.").format(self.player.name,
