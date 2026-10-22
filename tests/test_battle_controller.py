@@ -33,7 +33,7 @@ def make_game():
 def make_battle(enemy=None):
     battle = Mock()
     if enemy is None:
-        enemy = Mock(hp=3, attack=5, pattern=[], dodge=0, is_asleep=False)
+        enemy = Mock(hp=3, attack=5, pattern=[], dodge=0, is_asleep=False, is_stopspelled=False)
         enemy.name = "Slime"
     battle.enemy = enemy
     battle.turn = 0
@@ -47,7 +47,8 @@ def key(k):
 
 
 def patterned_enemy(pattern):
-    enemy = Mock(hp=10, max_hp=10, attack=5, dodge=0, pattern=list(pattern), is_asleep=False)
+    enemy = Mock(hp=10, max_hp=10, attack=5, dodge=0, pattern=list(pattern), is_asleep=False,
+                 is_stopspelled=False)
     enemy.name = "Magician"
     return enemy
 
@@ -253,6 +254,19 @@ class TestRunBattle(unittest.TestCase):
             self.controller.run_battle(['Slime'])
         self.assertEqual(seen, [battle])
         self.assertIsNone(self.game.cmd_menu.current_battle)
+
+    def test_player_status_cleared_at_battle_start(self, mock_battle_class):
+        mock_battle_class.return_value.enemy.hp = 3
+        player = self.game.player
+        player.is_asleep, player.asleep_turns, player.is_stopspelled = True, 3, True
+        seen = []
+
+        def record(run_away, current_battle):
+            seen.append((player.is_asleep, player.asleep_turns, player.is_stopspelled))
+            return True
+        with patch.object(self.controller, 'handle_battle_prompts', side_effect=record):
+            self.controller.run_battle(['Slime'])
+        self.assertEqual(seen, [(False, 0, False)])
 
     def test_running_away_skips_victory(self, mock_battle_class):
         battle = mock_battle_class.return_value
@@ -484,6 +498,20 @@ class TestEnemyMove(unittest.TestCase):
                 patch.object(self.controller, 'enemy_run_away') as run_away:
             self.assertFalse(self.controller.enemy_move(make_battle(slime)))
         run_away.assert_not_called()
+
+    def test_stopspelled_enemy_chants_but_spell_is_blocked(self, mock_time):
+        enemy = patterned_enemy([(100, Spell.HURT, True), Spell.ATTACK])
+        enemy.is_stopspelled = True
+        self.move(enemy, effect=7)
+        self.game.receive_damage.assert_not_called()
+        messages = [c.args[0] for c in self.game.cmd_menu.show_line_in_dialog_box.call_args_list]
+        self.assertEqual(messages, ['Magician chants the spell of HURT.', 'But that spell hath been blocked.'])
+
+    def test_stopspell_does_not_block_fire_breath(self, mock_time):
+        enemy = patterned_enemy([(100, Spell.FIREBREATH, True), Spell.ATTACK])
+        enemy.is_stopspelled = True
+        self.move(enemy, effect=20)
+        self.game.receive_damage.assert_called_once_with(20)
 
     def test_enemy_flees_from_strong_player(self, mock_time):
         self.game.player.strength = 10

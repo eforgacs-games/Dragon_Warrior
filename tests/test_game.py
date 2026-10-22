@@ -122,6 +122,29 @@ class TestGame(TestCase):
     # def test_hero_underlying_tile_not_implemented(self):
     #     self.assertRaises(NotImplementedError, self.game.current_map.hero_underlying_tile)
 
+    def test_every_enemy_turn_with_real_player(self):
+        # Mocked players hide missing attributes (e.g. is_stopspelled), so run every enemy's turn against the
+        # real Player: first exactly as the game creates it, then asleep and stopspelled.
+        from src.battle import Battle
+        from src.enemy_lookup import enemy_string_lookup
+
+        def take_turns(roll):
+            for name in enemy_string_lookup:
+                with self.subTest(enemy=name, roll=roll):
+                    self.game.player.current_hp = self.game.player.max_hp
+                    battle = Battle(self.game.config, name, self.game.current_map)
+                    with patch('src.battle_controller.random.randint', side_effect=lambda a, b: roll if b == 99 else a), \
+                            patch('src.battle_controller.random.random', return_value=0.99), \
+                            patch('src.battle_controller.time'), patch.object(self.game, 'drawer'), \
+                            patch.object(self.game.cmd_menu, 'show_line_in_dialog_box'):
+                        self.game.battle_ctrl.enemy_move(battle)
+
+        for roll in (0, 99):
+            take_turns(roll)
+        self.game.player.is_asleep = True
+        self.game.player.is_stopspelled = True
+        take_turns(0)
+
     def die(self, in_battle):
         self.game.battle_ctrl.launch_battle = in_battle
         self.game.player.current_hp = 0
