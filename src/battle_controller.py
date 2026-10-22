@@ -18,6 +18,7 @@ from src.constants import (
     BATTLE_MENU_HEIGHT, BATTLE_MENU_WIDTH, BATTLE_MENU_X, BATTLE_MENU_Y,
     ENEMY_FLEE_PROBABILITY,
 )
+from src.enemy_lookup import enemy_repel_lookup
 from src.enemy_spells import enemy_spell_lookup
 from src.pygame_compat import arrow_fade
 from src.spells import Spell
@@ -103,8 +104,18 @@ class BattleController:
     #  Battle entry point                                                  #
     # ------------------------------------------------------------------ #
 
+    def is_repelled(self, enemy_name: str) -> bool:
+        """NES ChkFightRepel: with REPEL or Fairy Water active on the overworld, an enemy is avoided when
+        its repel value minus half the player's defense is at most half its repel value."""
+        if not self.game.repel_timer or self.current_map.identifier != 'Alefgard':
+            return False
+        repel = enemy_repel_lookup[enemy_name]
+        return repel - self.player.defense_power // 2 <= repel // 2
+
     def run_battle(self, enemies_in_current_zone):
         enemy_name = self.config.get("FORCE_ENEMY") or random.choice(enemies_in_current_zone)
+        if self.is_repelled(enemy_name):
+            return
         current_battle = Battle(self.config, enemy_name, self.current_map)
         self.cmd_menu.current_battle = current_battle
         # NES clears all combat status flags when a fight starts
