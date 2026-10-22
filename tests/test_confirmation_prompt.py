@@ -21,7 +21,7 @@ class TestConfirmationPrompt(unittest.TestCase):
 
     def prompt(self, events):
         yes, no = MagicMock(), MagicMock()
-        with patch('data.text.dialog.get', side_effect=[events]), patch('data.text.dialog.time'), \
+        with patch('data.text.dialog.get', side_effect=[events]), \
                 patch('data.text.dialog.display'), patch('data.text.dialog.event'):
             confirmation_prompt(MagicMock(), "Dost thou want a room?", yes, no, CONFIG, show_arrow=True,
                                 color=(255, 255, 255))
