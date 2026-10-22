@@ -11,7 +11,7 @@ from pygame_menu import controls as menu_controls
 from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, mixer, transform, \
     K_RETURN, K_k
 from pygame.sprite import Group
-from pygame.time import get_ticks
+from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from data.text.dialog_lookup_table import DialogLookup
 from src.calculation import Calculation, get_tile_id_by_coordinates
@@ -33,6 +33,7 @@ from src.menu_functions import get_opposite_direction
 from src.sound import Sound
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.text import draw_text, set_font_by_ascii_chars
+from src.waiting import handle_speed_key
 from src.windows import COMMAND_TITLE_TILE_COLUMN, COMMAND_WINDOW, COUNTED_ITEMS, ITEM_COUNT_TILE_COLUMN, \
     ITEM_MENU_BORDER, ITEM_MENU_CURSOR_TILE_COLUMN, ITEM_MENU_TEXT_TILE_COLUMN, \
     ITEM_MENU_X, ITEM_MENU_Y, ITEM_NAME_HALVES, SPELL_MENU_TITLE_TILE_COLUMN, \
@@ -348,6 +349,8 @@ class CommandMenu(Menu):
                 return
             for current_event in event.get():
                 quit_if_requested(current_event)
+                if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
+                    continue
                 if current_event.type == KEYDOWN:
                     if not skip_text and not disable_sound:
                         self.sound.play_sound(self.directories.menu_button_sfx)
@@ -639,6 +642,8 @@ class CommandMenu(Menu):
             self.draw_yes_no_window(yes_selected, cursor.visible())
             for current_event in event.get():
                 quit_if_requested(current_event)
+                if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
+                    continue
                 if current_event.type != KEYDOWN:
                     continue
                 if current_event.key in accept_keys or current_event.key in reject_keys:
@@ -1101,6 +1106,8 @@ class CommandMenu(Menu):
         while show_status:
             for current_event in event.get():
                 quit_if_requested(current_event)
+                if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
+                    continue
                 if current_event.type == KEYDOWN:
                     if current_event.key in accept_keys + reject_keys:
                         show_status = False
@@ -1333,6 +1340,8 @@ class CommandMenu(Menu):
             display.update(window_rect)
             for current_event in event.get():
                 quit_if_requested(current_event)
+                if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
+                    continue
                 if any([current_event.type == KEYDOWN]):
                     if current_event.key in accept_keys or current_event.key in reject_keys:
                         # WndAPressed/WndBPressed: the arrow is drawn once more and stays on

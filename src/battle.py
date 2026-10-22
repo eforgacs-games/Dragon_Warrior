@@ -15,7 +15,7 @@ from src.menu import CommandMenu
 from src.player.player import Player
 from src.player.player_stats import levels_list
 from src.sound import Sound
-from src.waiting import check_for_quit, wait, wait_frames
+from src.waiting import check_for_quit, scaled_ms, wait, wait_frames
 
 DRAGONLORD_TRANSFORM_WAIT_FRAMES = 80  # NES EnemyDefeated: 80 frames between the two Dragonlord fights
 
@@ -76,7 +76,7 @@ class Battle:
                 ((tile[0] + 5) * self.tile_size, (tile[1] + 4) * self.tile_size))
             display.update()
             check_for_quit()
-            time.wait(20)
+            time.wait(scaled_ms(20))
 
     def get_battle_background_image(self):
         """Get the appropriate battle background image."""
