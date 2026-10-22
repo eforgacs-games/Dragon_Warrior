@@ -1148,8 +1148,7 @@ class Game:
         :param delta_y: Change in y position.
         :return: None
         """
-        self.cmd_menu.camera_position = \
-            curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.pos
+        curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.pos
         self.check_next_tile(character)
         character.next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
                                                                            character.direction_value,

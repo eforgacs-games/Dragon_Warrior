@@ -87,9 +87,7 @@ class CommandMenu(Menu):
         self.game = game
         self.player = self.game.player
 
-        self.background = self.game.drawer.background
         self.screen = self.game.screen
-        self.camera_position = self.game.camera.pos
         self.current_map: DragonWarriorMap = self.game.current_map
         self.current_battle = None
         self.current_tile = self.player.current_tile
@@ -184,6 +182,22 @@ class CommandMenu(Menu):
         self.cursor_index: int | None = None
         self.menu.disable()
         self.refresh_window_color()
+
+    @property
+    def camera_position(self) -> tuple[float, float]:
+        """Where the map is drawn on the screen: always the game's camera as it is now. NES RemoveWindow (Bank00, $A7A2)
+        redraws the blocks under a closing window at their offsets from the hero (StartSignedXPos, from the window
+        position relative to the screen's center), so they line up with the map around them and nothing else moves.
+        This used to be a copy, taken when the menu was made (before the first step on a map, so the old map's camera)
+        and then in Game.move before the camera moved for the frame (one step increment behind); closing the COMMAND
+        window then drew the whole map 2 pixels off, or somewhere else on the map entirely, until the next frame."""
+        return self.game.camera.pos
+
+    @property
+    def background(self) -> Surface:
+        """The surface the map is drawn on, the game's own: Drawer.draw_all replaces it on a map's first frame, after
+        the new map's CommandMenu is made, so a copy taken here would be the previous one."""
+        return self.game.drawer.background
 
     @property
     def color(self) -> tuple[int, int, int]:
@@ -536,7 +550,9 @@ class CommandMenu(Menu):
             for tile, tile_dict in self.current_map.floor_tile_key.items():
                 if tile in self.current_map.tile_types_in_current_map and tile_dict.get('group'):
                     for tile_sprite in tile_dict['group']:
-                        if camera_screen_rect.colliderect(tile_sprite.rect):
+                        # Blocks on the other side of a roof (#90) keep the roof or blank draw_all gave them
+                        if camera_screen_rect.colliderect(tile_sprite.rect) and not self.current_map.is_hidden_by_cover(
+                                tile_sprite.rect.y // tile_size, tile_sprite.rect.x // tile_size):
                             group_to_draw.add(tile_sprite)
             group_to_draw.draw(self.background)
 
@@ -547,8 +563,11 @@ class CommandMenu(Menu):
                 while self.calculation.convert_to_frames_since_start_time(drop_up_start) < 1:
                     # draw_player_sprites(self.current_map, self.background, self.player.rect.x, self.player.rect.y)
                     if not self.game.game_state.config['NO_BLIT']:
-                        for character, character_dict in self.current_map.characters.items():
-                            if camera_screen_rect.colliderect(character_dict['character'].rect):
+                        for character_dict in self.current_map.characters.values():
+                            character = character_dict['character']
+                            if camera_screen_rect.colliderect(character.rect) and (
+                                    character is self.player or
+                                    not self.current_map.is_hidden_by_cover(character.row, character.column)):
                                 self.background.blit(character_dict['character_sprites'].sprites()[0].image,
                                                      (character_dict['character'].rect.x,
                                                       character_dict['character'].rect.y))
