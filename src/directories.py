@@ -18,7 +18,10 @@ class Directories:
         self.save_dir = config.get('SAVE_DIR') or join(src_dir, 'saves')
         self.text_beep_sfx = join(sfx_dir, 'text_beep.wav')
         self.death_sfx = join(sfx_dir, '20 Dragon Quest 1 - Thou Hast Died.mp3')
-        self.special_item_sfx = join(sfx_dir, '21 Dragon Quest 1 - Special Item.mp3')
+        # NES MSC_INN ($15), the inn's jingle (BuyInnStay). The soundtrack calls it "Special Item"; it is the track
+        # between Thou Hast Died (MSC_DEATH, $14) and Princess Gwaelin's Love (MSC_PRNCS_LOVE, $16), and the only place
+        # the game plays it is the inn. There is no orchestral version, so it is used with either music setting.
+        self.inn_music = join(sfx_dir, '21 Dragon Quest 1 - Special Item.mp3')
         self.princess_gwaelins_love_sfx = join(sfx_dir, "22 Dragon Quest 1 - Princess Gwaelin's Love.mp3")
         self.victory_sfx = join(sfx_dir, '25 Dragon Quest 1 - Victory.mp3')
         self.improvement_sfx = join(sfx_dir, '26 Dragon Quest 1 - Improvement.mp3')
