@@ -1018,6 +1018,8 @@ class Game:
         self.player.weapon = save_file.get("Weapon", "")
         self.player.armor = save_file.get("Armor", "")
         self.player.shield = save_file.get("Shield", "")
+        self.player.wearing_dragon_scale = save_file.get("WearingDragonScale", False)
+        self.player.wearing_fighters_ring = save_file.get("WearingFightersRing", False)
         self.player.update_attack_power()
         self.player.update_defense_power()
         self.player.inventory = save_file["Inventory"]

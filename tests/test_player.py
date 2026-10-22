@@ -47,6 +47,12 @@ class TestPlayer(TestCase):
         self.player.update_defense_power()
         self.assertEqual(self.player.defense_power, 54)
 
+    def test_dragon_scale_adds_two_defense(self):
+        self.player.agility = 21
+        self.player.wearing_dragon_scale = True
+        self.player.update_defense_power()
+        self.assertEqual(self.player.defense_power, 12)
+
     def test_get_level_by_experience(self):
         self.assertEqual(1, self.player.level)
 

@@ -47,6 +47,8 @@ class Player(AnimatedSprite):
         self.weapon = ""
         self.armor = ""
         self.shield = ""
+        self.wearing_dragon_scale = False
+        self.wearing_fighters_ring = False  # no stat effect on the NES; only changes NPC dialog
 
         # set name-based initial stats and growth stats
 
@@ -104,6 +106,8 @@ class Player(AnimatedSprite):
             self.defense_power += armor[self.armor]['defense']
         if shields.get(self.shield):
             self.defense_power += shields[self.shield]['defense']
+        if self.wearing_dragon_scale:
+            self.defense_power += 2
 
     def get_points_to_next_level(self):
         if levels_list.get(self.level + 1):
