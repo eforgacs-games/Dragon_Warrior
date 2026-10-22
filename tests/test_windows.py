@@ -141,9 +141,9 @@ class TestStatusWindow(WindowTestCase):
         self.player.name = 'ERDRICK'
         self.player.weapon, self.player.armor, self.player.shield = 'Copper Sword', 'Clothes', 'Small Shield'
         with patch('src.menu.draw_text') as draw_text, \
-                patch.object(self.cmd_menu.graphics, 'create_window') as create_window:
+                patch('src.menu.draw_window') as draw_window:
             self.cmd_menu.draw_status_window()
-        self.assertEqual((5, 3, 10, 11), create_window.call_args.args[:4])
+        self.assertEqual((5, 3, 10, 11), draw_window.call_args.args[1].window)
         drawn = [(call.args[0], call.kwargs['alignment'], *self.tile(*call.args[1:3]))
                  for call in draw_text.call_args_list]
         # The window is at tile (10, 6). The name follows "NAME:" at tile column 11 of row 1.
@@ -176,19 +176,19 @@ class TestItemWindowOrder(WindowTestCase):
         events = [[MagicMock(type=KEYDOWN, key=key)] for key in keys]
         with patch.object(event, 'get', side_effect=events), \
                 patch('src.menu.draw_text') as draw_text, \
-                patch.object(self.cmd_menu.graphics, 'create_window') as create_window, \
+                patch('src.menu.draw_window') as draw_window, \
                 patch.object(self.cmd_menu, 'draw_window_cursor'):
             chosen = self.cmd_menu.display_item_menu(menu_name)
-        return chosen, draw_text, create_window
+        return chosen, draw_text, draw_window
 
     def test_items_are_listed_herbs_then_keys_then_slots(self):
         self.player.inventory = ['Torch', 'Herb', 'Wings', 'Magic Key', 'Herb', 'Torch']
-        _, draw_text, create_window = self.open_item_menu('inventory', [K_ESCAPE])
+        _, draw_text, draw_window = self.open_item_menu('inventory', [K_ESCAPE])
         first_halves = [call.args[0] for call in draw_text.call_args_list
                         if call.args[1] == 20 * self.nes_tile]
         self.assertEqual(['Herb', 'Magic', 'Torch', 'Wings', 'Torch'], first_halves)
         # Each Torch has its own slot and its own entry
-        self.assertEqual((9, 3, 6, 6), create_window.call_args.args[:4])
+        self.assertEqual((9, 3, 6, 6), draw_window.call_args.args[1].window)
 
     def test_the_chosen_item_is_the_one_shown(self):
         self.player.inventory = ['Torch', 'Wings', 'Herb']
@@ -276,14 +276,15 @@ class TestShopWindows(WindowTestCase):
         with patch('data.text.dialog_lookup_table.confirmation_prompt',
                    side_effect=lambda command_menu, prompt, yes_path_function, no_path_function, **kwargs:
                    yes_path_function() if 'buy' in prompt else no_path_function()) as confirm, \
-                patch.object(self.dialog_lookup, 'tool_shop_goodbye'):
+                patch.object(self.dialog_lookup, 'tool_shop_goodbye'), \
+                patch('src.menu.draw_window') as draw_window:
             # Herb, Wings, Torch: the third entry is the Torch
-            _, _, item_draw_text, create_window, drop_down = self.run_window(
+            _, _, item_draw_text, _, drop_down = self.run_window(
                 lambda: self.dialog_lookup.sell_tool(self.dialog_lookup.shop_inventories.kol_item_store_inventory),
                 K_DOWN, K_DOWN, K_RETURN)
         self.assertIn('Torch', confirm.call_args_list[0].args[1])
         self.assertEqual(['Wings', 'Herb'], self.player.inventory)
         # NES DoToolSell shows WND_INVTRY1 (PlayerInvDat), as the ITEM command does
         drop_down.assert_called_once_with(9, 3, 6, 4)
-        self.assertEqual((9, 3, 6, 4), create_window.call_args_list[0].args[:4])
+        self.assertEqual((9, 3, 6, 4), draw_window.call_args_list[0].args[1].window)
         self.assertEqual(['Herb', '1', 'Wings', 'Torch'], [call.args[0] for call in item_draw_text.call_args_list[:4]])

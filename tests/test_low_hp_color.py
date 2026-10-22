@@ -162,12 +162,12 @@ class TestLowHPWindowColor(TestCase):
     def item_list_colors(self, menu_name):
         pygame.event.post(pygame.event.Event(KEYDOWN, key=K_ESCAPE))
         with patch('src.menu.draw_cursor_tile') as draw_cursor_tile, \
-                patch.object(self.cmd_menu.graphics, 'create_window') as create_window, \
+                patch('src.menu.draw_window') as draw_window, \
                 patch('src.menu.draw_text') as draw_text, patch('src.menu.display'), \
                 patch.dict(self.game.game_state.config, NO_BLIT=False):
             self.cmd_menu.display_item_menu(menu_name)
         return ({c.args[4] for c in draw_cursor_tile.call_args_list},
-                {c.args[6] for c in create_window.call_args_list},
+                {c.args[2] for c in draw_window.call_args_list},
                 {c.kwargs['color'] for c in draw_text.call_args_list})
 
     def test_spell_and_item_lists(self):
@@ -186,12 +186,11 @@ class TestLowHPWindowColor(TestCase):
         for hp, color in ((15, WHITE), (4, LOW_HP_RED)):
             self.set_hp(hp)
             pygame.event.post(pygame.event.Event(KEYDOWN, key=K_RETURN))
-            with patch.object(self.cmd_menu.graphics, 'create_window') as create_window, \
-                    patch('src.menu.draw_cursor_tile') as draw_cursor_tile, patch('src.menu.display'), \
+            with patch('src.menu.draw_window') as draw_window, patch('src.menu.display'), \
                     patch.dict(self.game.game_state.config, NO_BLIT=False):
                 self.cmd_menu.prompt_yes_no()
-            self.assertEqual({c.kwargs['color'] for c in create_window.call_args_list}, {color})
-            self.assertEqual({c.args[4] for c in draw_cursor_tile.call_args_list}, {color})
+            # The border, the text and the cursor are all in the window color (see tests/test_generated_windows.py)
+            self.assertEqual({c.args[2] for c in draw_window.call_args_list}, {color})
 
     def test_shop_cursor(self):
         dialog_lookup = self.cmd_menu.dialog_lookup
