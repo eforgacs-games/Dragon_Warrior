@@ -21,11 +21,13 @@ from src import maps
 from src.battle import Battle
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
+from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, read_checkpoint
 from src.common import reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
+from src.debug_tools import DebugTools
 from src.constants import (
     LOW_HP_THRESHOLD, ARROW_BLINK_INTERVAL_MS,
     MAPS_WITH_ENEMIES, DUNGEON_ZONE_MAP, TANTEGEL_ZONE, TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT,
@@ -138,6 +140,7 @@ class Game:
         self.battle_ctrl = BattleController(self)
         self.ending = Ending(self)
         self.map_mgr = MapManager(self)
+        self.debug_tools = DebugTools(self) if config.get('DEBUG_KEYS') else None
 
         self.set_big_map()
 
@@ -192,6 +195,8 @@ class Game:
             intro.show_start_screen(self.screen, self.start_time, self.clock, self.game_state.config)
             self.music_player.load_and_play_music(self.directories.intermezzo)
             self.show_main_menu_screen(self.screen)
+        if self.config.get('CHECKPOINT'):
+            self.load_checkpoint(self.config['CHECKPOINT'])
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
                              self.foreground_rects, self.game_state.enable_animate, self.camera,
                              self.initial_dialog_enabled,
@@ -714,6 +719,9 @@ class Game:
         self.handle_auto_stairs_toggle(current_keydown_event)
         self.handle_auto_battle_toggle(current_keydown_event)
         self.handle_invulnerability_toggle(current_keydown_event)
+        if self.debug_tools is not None:
+            # Dev config only (DEBUG_KEYS): F5 warp, F6 give, F7 load a checkpoint
+            self.debug_tools.handle_keydown(current_keydown_event)
 
     def handle_help_button(self, keydown_event):
         control_info = ControlInfo(self.config)
@@ -1117,12 +1125,34 @@ class Game:
             return
         self.map_mgr.change_map(next_map, destination_coordinates=destination)
 
+    def load_checkpoint(self, name: str) -> None:
+        """Start from a playtest checkpoint (src/checkpoints.py): a save file in data/checkpoints/, loaded the same
+        way as a saved game. The one thing saves don't keep, the hero's facing, is applied afterwards. Saving with King
+        Lorik from then on writes to CHECKPOINT_SAVE_DIR, not to the real save slots."""
+        checkpoint = read_checkpoint(name)
+        if not self.config.get('SAVE_DIR'):
+            os.makedirs(CHECKPOINT_SAVE_DIR, exist_ok=True)
+            self.config['SAVE_DIR'] = CHECKPOINT_SAVE_DIR  # before load_game makes the new CommandMenu
+        self.load_game(checkpoint)
+        facing = checkpoint.get(FACING_KEY)
+        if facing:
+            self.player.direction_value = Direction[facing].value
+        # King Lorik's automatic greeting belongs to the throne room
+        self.initial_dialog_enabled = self.initial_dialog_enabled and self.current_map.identifier == 'TantegelThroneRoom'
+
+
 def run():
     parser = argparse.ArgumentParser(description="Dragon Warrior")
     parser.add_argument("--dev", action="store_true",
-                        help="run with dev_config (god mode, no battles, coordinates visible)")
+                        help="run with dev_config (god mode, no battles, coordinates visible, debug keys)")
+    parser.add_argument("--checkpoint", choices=CHECKPOINT_NAMES,
+                        help="start from a playtest checkpoint in data/checkpoints/ (see PLAYTEST.md); saves go to "
+                             f"{CHECKPOINT_SAVE_DIR} instead of src/saves")
     args = parser.parse_args()
-    game = Game(config=dev_config if args.dev else prod_config)
+    config = dev_config if args.dev else prod_config
+    if args.checkpoint:
+        config = {**config, 'CHECKPOINT': args.checkpoint, 'SPLASH_SCREEN_ENABLED': False}
+    game = Game(config=config)
     game.main()
 
 
