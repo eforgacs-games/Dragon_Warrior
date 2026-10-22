@@ -1,7 +1,7 @@
 from statistics import mean
 from typing import List, Iterable
 
-from pygame import display, KEYDOWN, event, Surface, Rect, time
+from pygame import display, KEYDOWN, event, Surface, Rect
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
@@ -14,6 +14,7 @@ from src.menu import Menu, CommandMenu
 from src.sound import Sound
 from src.text import draw_text
 from src.visual_effects import NES_FPS, enemy_fade_in, enemy_hit_flash
+from src.waiting import wait
 from src.windows import COMMAND_WINDOW, POPUP_WINDOW
 
 
@@ -71,8 +72,7 @@ class Drawer:
         enemy_image, enemy_position = self.get_enemy_image(enemy_name)
         if enemy_name == 'Dragonlord 2':
             enemy_fade_in(screen, enemy_image, enemy_position, self.game_state.config, repeats=4)
-            if not self.game_state.config.get('NO_WAIT'):
-                time.wait(round(41 * 1000 / NES_FPS))
+            wait(round(41 * 1000 / NES_FPS), self.game_state.config)
         else:
             enemy_fade_in(screen, enemy_image, enemy_position, self.game_state.config)
 
