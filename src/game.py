@@ -19,6 +19,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data.text.intro_lookup_table import ControlInfo
 from src import maps
+from src.adventure_log import AdventureLogOverlay, adventure_log_overlay_texts
 from src.battle import Battle
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
@@ -302,11 +303,13 @@ class Game:
         # allow the user to select a save file
         # load the save file
         if len(self.save_dir_contents) == 1:
+            save_path = os.path.join(self.directories.save_dir, self.save_dir_contents[0])
             self.game_functions.main_menu_selection(get_ticks(), self.screen,
                                                     self.directories.one_adventure_log_unselected,
                                                     self.directories.one_adventure_log_0,
                                                     [],
-                                                    no_blit=self.game_state.config['NO_BLIT'])
+                                                    no_blit=self.game_state.config['NO_BLIT'],
+                                                    overlay=self.adventure_log_overlay(save_path))
         if self.save_dir_contents:
             # TODO(#234): let the player pick the log when there are several. Until then, continue the most recently
             # saved one rather than silently starting a new game.
@@ -326,6 +329,11 @@ class Game:
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         self.music_player.load_and_play_music(self.current_map.music_file_path)
         self.cmd_menu = CommandMenu(self)
+
+    def adventure_log_overlay(self, save_path: str) -> AdventureLogOverlay:
+        """The name of the hero in save_path, to draw on the one_adventure_log screenshot's "ADVENTURE LOG 1:" line
+        (Bank01 LogList1Dat2; see src/adventure_log.py)."""
+        return AdventureLogOverlay(adventure_log_overlay_texts(save_path), self.game_state.config)
 
     def change_message_speed(self):
         # Toggle between fast (no wait) and normal speed. No sub-menu images exist, so just flip the flag.
