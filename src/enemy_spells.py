@@ -16,6 +16,10 @@
 # SLEEP always puts you to sleep, and there is no resisting it.  Waking up from
 # sleep is a 50/50 chance, but because of the limitations of the game programming
 # it's not possible for it to last for more than 6 turns.
+# (Bank03 EnCastSleep/StartPlayerTurn have no turn limit: the wake roll is bit 0 of
+# a random byte, and the enemy always moves again right after casting SLEEP. The
+# 6-turn cap would be an artifact of the NES random number generator, which isn't
+# emulated, so BattleController follows the routine.)
 #
 #
 # STOPSPELL has a 50/50 chance of working against you.  If you have Erdrick's
