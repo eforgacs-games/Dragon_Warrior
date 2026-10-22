@@ -8,11 +8,12 @@ reach shared resources (player, cmd_menu, screen, sound, drawer, …).
 """
 
 import random
+from enum import Enum
 
 from pygame import KEYDOWN, display, event, mixer, time
 
 from src.battle import Battle, calculate_enemy_attack_damage
-from src.common import RED, accept_keys, reject_keys
+from src.common import BLACK, RED, accept_keys, reject_keys
 from src.constants import (
     ARROW_BLINK_INTERVAL_MS, AUTO_BATTLE_DELAY_MS,
     BATTLE_MENU_HEIGHT, BATTLE_MENU_WIDTH, BATTLE_MENU_X, BATTLE_MENU_Y,
@@ -26,6 +27,14 @@ from src.spells import Spell
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w
 
 
+class BattleOutcome(Enum):
+    """How a fight ended."""
+    VICTORY = 'victory'  # the enemy's HP reached 0
+    DEFEAT = 'defeat'  # the player died
+    ESCAPED = 'escaped'  # the player ran away or the enemy fled
+    REPELLED = 'repelled'  # REPEL / Fairy Water kept the enemy away; no fight happened
+
+
 class BattleController:
     def __init__(self, game):
         self.game = game
@@ -35,6 +44,8 @@ class BattleController:
         self.battle_menu_column = 0
         self.launch_battle = False
         self.last_battle_action = "Fight"
+        # A scripted fight requested from inside a dialog; it starts once the dialog and menu windows are gone.
+        self.pending_scripted_battle: str | None = None
 
     # ------------------------------------------------------------------ #
     #  Properties that forward to game for brevity inside this class       #
@@ -112,10 +123,41 @@ class BattleController:
         repel = enemy_repel_lookup[enemy_name]
         return repel - self.player.defense_power // 2 <= repel // 2
 
-    def run_battle(self, enemies_in_current_zone):
+    def run_battle(self, enemies_in_current_zone) -> BattleOutcome:
+        """Random encounter: pick an enemy for the current zone and fight it."""
         enemy_name = self.config.get("FORCE_ENEMY") or random.choice(enemies_in_current_zone)
         if self.is_repelled(enemy_name):
-            return
+            return BattleOutcome.REPELLED
+        return self.fight_enemy(enemy_name)
+
+    def start_scripted_battle(self, enemy_name: str) -> BattleOutcome:
+        """Start a fixed, story-driven fight right now, the way the NES jumps straight to InitFight with a set
+        enemy number (the Dragonlord, and the Golem, Green Dragon and Axe Knight guardians). Unlike a random
+        encounter it can't be repelled. Running away and dying work exactly as in a random fight."""
+        self.battle_menu_row = 0
+        self.battle_menu_column = 0
+        self.launch_battle = True
+        outcome = self.fight_enemy(enemy_name)
+        if outcome != BattleOutcome.DEFEAT:
+            # Keep launch_battle set on a defeat so Game.handle_death draws the in-battle death screen.
+            self.launch_battle = False
+        self.battle_menu_row = 0
+        self.battle_menu_column = 0
+        return outcome
+
+    def queue_scripted_battle(self, enemy_name: str) -> None:
+        """Ask for a scripted fight to start as soon as the current dialog has closed (the NES removes the dialog,
+        command and pop-up windows before InitFight). Game.handle_battles picks it up on the next frame."""
+        self.pending_scripted_battle = enemy_name
+
+    def run_pending_scripted_battle(self) -> BattleOutcome | None:
+        enemy_name, self.pending_scripted_battle = self.pending_scripted_battle, None
+        if enemy_name is None:
+            return None
+        return self.start_scripted_battle(enemy_name)
+
+    def fight_enemy(self, enemy_name: str) -> BattleOutcome:
+        """Fight one enemy to the end, then return to the map."""
         current_battle = Battle(self.config, enemy_name, self.current_map)
         self.cmd_menu.current_battle = current_battle
         # NES clears all combat status flags when a fight starts
@@ -131,11 +173,28 @@ class BattleController:
         while current_battle.enemy.hp > 0 and not run_away and not self.player.is_dead:
             run_away = self.handle_battle_prompts(run_away, current_battle)
         if current_battle.enemy.hp <= 0:
+            if current_battle.enemy.name == 'Dragonlord':
+                # NES EnemyDefeated: beating the Dragonlord's first form goes straight into the final fight
+                # (InitFight with EN_DRAGONLORD2) instead of returning to the map.
+                current_battle.dragonlord_first_form_defeated(self.cmd_menu, self.screen)
+                self.cmd_menu.current_battle = None
+                return self.fight_enemy('Dragonlord 2')
             current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, self.music_enabled,
                                           current_battle.enemy)
+            outcome = BattleOutcome.VICTORY
+        elif self.player.is_dead:
+            outcome = BattleOutcome.DEFEAT
+        else:
+            outcome = BattleOutcome.ESCAPED
+            if current_battle.enemy.name == 'Dragonlord 2':
+                # NES RunSuccessful: running from the final form blacks out the screen and reloads the map
+                # (MapChngNoSound). The Dragonlord is still alive, so he is back on his throne.
+                self.screen.fill(BLACK)
+                display.flip()
         self.cmd_menu.current_battle = None
         # TODO: Refactor to music player class.
         self.music_player.load_and_play_music(self.current_map.music_file_path)
+        return outcome
 
     # ------------------------------------------------------------------ #
     #  Battle prompts / menu                                               #
