@@ -94,7 +94,7 @@ class TestSlime(unittest.TestCase):
         self.assertEqual(self.enemy.xp, 1)
 
     def test_gold(self):
-        self.assertEqual(self.enemy.gold, 1)
+        self.assertEqual(self.enemy.gold, 2)
 
     def test_no_spells(self):
         self.assertIsNone(self.enemy.spells)
@@ -129,7 +129,7 @@ class TestMetalSlime(unittest.TestCase):
         self.assertEqual(self.enemy.name, 'Metal Slime')
 
     def test_very_high_defense(self):
-        self.assertEqual(self.enemy.defense, 225)
+        self.assertEqual(self.enemy.defense, 255)
 
     def test_very_high_speed(self):
         self.assertEqual(self.enemy.speed, 255)
@@ -424,9 +424,9 @@ class TestAxeKnight(unittest.TestCase):
     def test_name(self):
         self.assertEqual(self.enemy.name, 'Axe Knight')
 
-    def test_has_sleep_and_stopspell(self):
-        self.assertIn("SLEEP", self.enemy.spells)
-        self.assertIn("STOPSPELL", self.enemy.spells)
+    def test_has_only_sleep(self):
+        # EnStatTbl Spel byte $10: SLEEP 25% of the time, no lower spell, no STOPSPELL
+        self.assertEqual(self.enemy.spells, ("SLEEP",))
 
 
 class TestArmoredKnight(unittest.TestCase):
@@ -543,7 +543,7 @@ class TestEnemyGroups(unittest.TestCase):
         self.assertIn('Slime', enemy_groups[1])
 
     def test_group_1_contains_metal_slime(self):
-        self.assertIn('MetalSlime', enemy_groups[1])
+        self.assertIn('Metal Slime', enemy_groups[1])
 
     def test_group_4_contains_dragonlord(self):
         self.assertIn('Dragonlord', enemy_groups[4])
