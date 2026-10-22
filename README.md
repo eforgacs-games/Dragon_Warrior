@@ -25,6 +25,24 @@ python src/game.py
 To run with the development config (god mode, no battles, coordinates visible), add `--dev`:
 python src/game.py --dev
 
+## Playtesting
+
+To start from a point in the story, add `--checkpoint <name>`. A checkpoint is a save file in
+`data/checkpoints/`: `throne_room`, `garins_grave`, `swamp_cave`, `rainbow_drop_shrine`, `rainbow_bridge`,
+`charlock_throne`, `dragonlord`, `ending_gwaelin_returned` or `ending_carrying_gwaelin`. For example:
+python src/game.py --dev --checkpoint rainbow_bridge
+
+Saves made in a game started this way go to a temp folder, not to `src/saves/`.
+
+With `--dev`, these debug keys are also on:
+- F5 warps to any map.
+- F6 gives an item or gold, sets your level, equips Erdrick's gear, or refills HP and MP.
+- F7 loads another checkpoint.
+
+Each one opens a list: type to filter, press Enter to pick, Esc to close.
+
+[PLAYTEST.md](PLAYTEST.md) is a checklist for a pass through the whole game in about 40 minutes.
+
 ## Running in VS Code
 
 If you're using Visual Studio Code:
