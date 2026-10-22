@@ -549,7 +549,7 @@ class TestEnemyGroups(unittest.TestCase):
         self.assertIn('Dragonlord', enemy_groups[4])
 
     def test_group_4_contains_dragonlord2(self):
-        self.assertIn('Dragonlord2', enemy_groups[4])
+        self.assertIn('Dragonlord 2', enemy_groups[4])
 
     def test_groups_non_empty(self):
         for group_id, group in enemy_groups.items():

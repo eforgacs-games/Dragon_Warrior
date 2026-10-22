@@ -458,6 +458,10 @@ class Game:
             self.cmd_menu.show_text_in_dialog_box(message, skip_text=self.skip_text)
 
     def handle_battles(self):
+        if self.battle_ctrl.pending_scripted_battle:
+            # A fixed fight (e.g. the Dragonlord) asked for by a dialog that has now closed.
+            self.battle_ctrl.run_pending_scripted_battle()
+            return
         if self.current_map.identifier in MAPS_WITH_ENEMIES:
             if self.tiles_moved_since_spawn > 0:
                 if self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:

@@ -16,7 +16,7 @@ from src.player.player import Player
 from src.player.player_stats import levels_list
 from src.sound import Sound
 
-GROUP_FACTOR_LOOKUP = {1: 0.25, 2: 0.375, 3: 0.5, 4: 1.0}
+DRAGONLORD_TRANSFORM_WAIT_FRAMES = 80  # NES EnemyDefeated: 80 frames between the two Dragonlord fights
 
 
 def has_final_consonant(char: str) -> bool:
@@ -57,7 +57,11 @@ class Battle:
 
     def play_battle_music(self):
         if self.config["MUSIC_ENABLED"]:
-            mixer.music.load(self.directories.battle_music)
+            # NES InitFight: the Dragonlord's final form gets the end boss music (MSC_END_BOSS); every other
+            # fight, including his first form, gets the regular fight music (MSC_ENTR_FGHT).
+            music = self.directories.end_boss_music if self.enemy.name == 'Dragonlord 2' else \
+                self.directories.battle_music
+            mixer.music.load(music)
             mixer.music.play(-1)
 
     def transition_battle_background_image_effect(self, screen):
@@ -94,18 +98,17 @@ class Battle:
         )
 
     def battle_run(self, cmd_menu: CommandMenu, player: Player, current_battle):
-        """Attempt to run from a battle."""
+        """Attempt to run from a battle (NES PlyrRun)."""
         self.sound.play_sound(self.directories.stairs_down_sfx)
         cmd_menu.show_line_in_dialog_box(self._("{} started to run away.\n").format(player.name), add_quotes=False,
                                          hide_arrow=True, disable_sound=True)
-        random_number = random.randint(0, 255)
-        group_factor = self.get_group_factor(current_battle.enemy.name)
 
+        # NES PlyrRun: running from a sleeping enemy always works.
         if current_battle.enemy.is_asleep:
             return True
 
-        if player.agility * random_number < current_battle.enemy.speed * random_number * GROUP_FACTOR_LOOKUP[
-            group_factor]:
+        if not can_run_away(player.agility, current_battle.enemy.defense,
+                            self.get_group_factor(current_battle.enemy.name)):
             cmd_menu.show_line_in_dialog_box(self._("But was blocked in front.").format(current_battle.enemy.name),
                                              add_quotes=False, hide_arrow=True, disable_sound=True)
             if cmd_menu.game.enemy_move(current_battle):
@@ -175,6 +178,18 @@ class Battle:
         player.total_experience += enemy.xp
         player.gold += enemy.gold
         self.check_player_level_up(cmd_menu, player, music_enabled)
+
+    def dragonlord_first_form_defeated(self, cmd_menu, screen):
+        """NES EnemyDefeated for EN_DRAGONLORD1: "Thou hast done well in defeating the Dragonlord.", the victory
+        music, then an 80-frame wait. No experience or gold is given: the routine jumps straight to InitFight
+        with EN_DRAGONLORD2 instead of RegEnDefeated."""
+        cmd_menu.show_line_in_dialog_box(self.get_enemy_defeated_string(self.enemy), add_quotes=False,
+                                         disable_sound=True, hide_arrow=True)
+        mixer.music.stop()
+        self.sound.play_sound(self.directories.victory_sfx)
+        self.make_enemy_image_disappear(screen)
+        if not self.config.get('NO_WAIT'):
+            time.wait(DRAGONLORD_TRANSFORM_WAIT_FRAMES * 1000 // 60)
 
     def get_enemy_defeated_string(self, enemy):
         """Get the enemy defeated string based on language."""
@@ -269,7 +284,9 @@ class Battle:
 
     def display_battle_window(self, screen, drawer, cmd_menu, graphics, directories, color, player):
         """Display the battle window."""
-        self.transition_battle_background_image_effect(screen)
+        # NES LoadCombatBckgrnd: no battle background is drawn for the Dragonlord's final form.
+        if self.enemy.name != 'Dragonlord 2':
+            self.transition_battle_background_image_effect(screen)
         drawer.show_enemy_image(screen, self.enemy.name)
         cmd_menu.show_line_in_battle_dialog_box(self.get_enemy_draws_near_string())
         # drop down for the hovering stats window
@@ -288,6 +305,23 @@ def randomize_enemy_hp(enemy) -> int:
     if enemy.name == 'Dragonlord 2':
         return enemy.max_hp
     return enemy.max_hp - (enemy.max_hp * random.randint(0, 255) // 256) // 4
+
+
+def can_run_away(player_agility: int, enemy_defense: int, enemy_group: int) -> bool:
+    """NES TryRun: the run works when rand(0-255) * the player's agility is at least the enemy's roll times its
+    defense. The enemy's roll gets bigger the further down the enemy list it is: 0-63 for the first group,
+    0-94 for Drollmagi to Werewolf, 0-127 for Green Dragon to Blue Dragon, and the full 0-255 for Stoneman,
+    Armored Knight, Red Dragon and both forms of the Dragonlord (CalcNextOdds)."""
+    if enemy_group == 4:
+        enemy_roll = random.randint(0, 255)
+    elif enemy_group == 3:
+        enemy_roll = random.randint(0, 255) & 0x7F
+    elif enemy_group == 2:
+        enemy_roll = (random.randint(0, 255) & 0x3F) + (random.randint(0, 255) & 0x1F)
+    else:
+        enemy_roll = random.randint(0, 255) & 0x3F
+    player_roll = random.randint(0, 255)
+    return player_roll * player_agility >= enemy_roll * enemy_defense
 
 
 def normal_attack_damage(base_attack: int, random_number: int) -> int:
