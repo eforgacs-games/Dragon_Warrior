@@ -314,9 +314,13 @@ class Game:
                                  key=lambda name: os.path.getmtime(os.path.join(self.directories.save_dir, name)))
             with open(os.path.join(self.directories.save_dir, save_file_name)) as save_file:
                 loaded_save = json.load(save_file)
-                self.load_game(loaded_save)
+            self.sound.play_sound(self.directories.menu_button_sfx)
+            # load_game has already cut to black, faded the starting map in, started its music and made a new
+            # CommandMenu, as NES StartAtThroneRoom does; fading out again here would show the map twice
+            self.load_game(loaded_save)
             # Save back to the same log, so continuing and saving doesn't create another save file
             self.player.adventure_log = save_slot_number(save_file_name)
+            return
 
         self.sound.play_sound(self.directories.menu_button_sfx)
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
@@ -1176,14 +1180,19 @@ class Game:
                 self.move_laterally(roaming_character)
             # handle_roaming_character_sides_collision(self.current_map, roaming_character)
 
-    def load_game(self, save_file: dict) -> None:
+    def load_game(self, save_file: dict, direction: int | None = None) -> None:
         """Continue a saved game (see CommandMenu.save for what is kept).
 
         NES LoadSavedData (Bank03) restores the hero and the ModsnSpells, PlayerFlags and StoryFlags bytes as they
         were saved. MainGameEngine then clears the treasure chest history, and StartAtThroneRoom clears the repel
         timer, gives a cursed hero 1 HP and loads the starting map, whose InitMapData applies the story flags (the
         throne room chests are gone once F_LEFT_THROOM is set). The NES always starts in the throne room; this game
-        starts where the save was made, which is always beside King Lorik."""
+        starts where the save was made, which is always beside King Lorik.
+
+        Everything loaded, including the facing (direction, or the map's own: up, toward King Lorik, in the throne
+        room, as NES ContinueReset clears CharDirection to 0), is in place before the map's first frame is drawn.
+        StartAtThroneRoom loads BlackPalPtr straight away and changes maps with MapChngNoSound, which skips the fade
+        out, so the screen cuts to black and the map appears with a single PalFadeIn."""
         self.player.name = save_file["Name"]
         self.player.total_experience = save_file["Experience"]
         self.player.level = self.player.get_level_by_experience()
@@ -1220,20 +1229,20 @@ class Game:
             destination = (self.player.row, self.player.column)
         else:
             return
-        self.map_mgr.change_map(next_map, destination_coordinates=destination)
+        self.map_mgr.change_map(next_map, destination_coordinates=destination, direction=direction,
+                                fade_out_first=False)
 
     def load_checkpoint(self, name: str) -> None:
         """Start from a playtest checkpoint (src/checkpoints.py): a save file in data/checkpoints/, loaded the same
-        way as a saved game. The one thing saves don't keep, the hero's facing, is applied afterwards. Saving with King
-        Lorik from then on writes to CHECKPOINT_SAVE_DIR, not to the real save slots."""
+        way as a saved game. The one thing saves don't keep, the hero's facing, is passed to load_game so it's in place
+        before the first frame. Saving with King Lorik from then on writes to CHECKPOINT_SAVE_DIR, not to the real save
+        slots."""
         checkpoint = read_checkpoint(name)
         if not self.config.get('SAVE_DIR'):
             os.makedirs(CHECKPOINT_SAVE_DIR, exist_ok=True)
             self.config['SAVE_DIR'] = CHECKPOINT_SAVE_DIR  # before load_game makes the new CommandMenu
-        self.load_game(checkpoint)
         facing = checkpoint.get(FACING_KEY)
-        if facing:
-            self.player.direction_value = Direction[facing].value
+        self.load_game(checkpoint, direction=Direction[facing].value if facing else None)
         # King Lorik's automatic greeting belongs to the throne room
         self.initial_dialog_enabled = self.initial_dialog_enabled and self.current_map.identifier == 'TantegelThroneRoom'
 

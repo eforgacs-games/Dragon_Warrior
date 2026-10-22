@@ -113,6 +113,9 @@ class Drawer:
         self.game_state.enable_movement = False
         key_pressed = any([current_event.type == KEYDOWN for current_event in events])
         if skip_text or (key_pressed and not self.game_state.automatic_initial_dialog_run):
+            # show the map as it is before the dialog window opens over it. Only now: draw_all also runs for the frame
+            # a map change fades in from, and flipping that would flash the map at full brightness before the fade.
+            display.flip()
             # NES MainGameEngine: the king greets a hero who has already been beyond the throne room (F_LEFT_THROOM,
             # kept in the save) as returning, and gives everyone else the opening speech
             if cmd_menu.game.story_flags.left_throne_room:
@@ -129,7 +132,6 @@ class Drawer:
     def handle_initial_dialog(self, initial_dialog_enabled, cmd_menu, events, skip_text, left_throne_room):
         if initial_dialog_enabled:
             if self.game_state.is_initial_dialog:
-                display.flip()
                 self.display_hovering_stats = False
                 cmd_menu.launch_signaled = False
                 self.run_automatic_initial_dialog(events, skip_text, cmd_menu)

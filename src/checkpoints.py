@@ -6,7 +6,7 @@ follows the real load path. Two things differ from a save made in the game:
 - The position isn't always beside King Lorik. load_game already starts wherever the save says (CurrentMap, PlayerRow
   and PlayerColumn), unlike the NES, which always starts in the throne room.
 - The optional "Facing" key ("UP", "DOWN", "LEFT" or "RIGHT") turns the hero to face an NPC. Saves don't keep the
-  direction, so Game.load_checkpoint applies it after load_game.
+  direction, so Game.load_checkpoint passes it to load_game.
 
 Load one with `python src/game.py --dev --checkpoint rainbow_bridge` (or set "CHECKPOINT" in a config). Saving with
 King Lorik in a game started from a checkpoint writes to CHECKPOINT_SAVE_DIR instead of the real slots in src/saves/.
