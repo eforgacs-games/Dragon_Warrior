@@ -807,34 +807,39 @@ class Kol(DragonWarriorMap):
                                west_gate=warp_line((7, 8), (32, 8)),
                                south_gate=warp_line((32, 8), (32, 33)))
         self.set_town_to_overworld_warps()
+        # NES KolMobTbl and KolStatTbl (Bank00). An NPC at NES X,Y is at (Y + 8, X + 10) here.
         self.npc_coordinates = {
-            (9, 11): 'WISE_MAN',
-            (9, 22): 'WOMAN',
-            (12, 29): 'MERCHANT',
-            (14, 16): 'SOLDIER',
-            (16, 29): 'WISE_MAN',
-            (17, 23): 'GUARD',
-            (20, 15): 'MAN',
-            (20, 32): 'MERCHANT',
-            (21, 30): 'SOLDIER',
-            (22, 24): 'MAN',
-            (23, 21): 'WOMAN',
-            (27, 30): 'WISE_MAN',
-            (29, 24): 'MERCHANT',
-            (31, 11): 'GUARD',
+            (9, 11): 'WISE_MAN',  # static wizard at 1,1: Erdrick's Sword ($68)
+            (9, 22): 'WOMAN',  # static female villager at 12,1 ($32)
+            (12, 29): 'MERCHANT',  # static shopkeeper at 19,4: the inn ($11)
+            (15, 16): 'SOLDIER',  # mobile fighter at 6,7 ($35)
+            (16, 30): 'WISE_MAN',  # mobile wizard at 20,8 ($39)
+            (18, 22): 'GUARD',  # mobile guard at 12,10 ($37)
+            (20, 12): 'WISE_MAN',  # mobile wizard at 2,12 ($5E)
+            (20, 15): 'MAN',  # mobile male villager at 5,12 ($30)
+            (20, 32): 'MERCHANT',  # static shopkeeper at 22,12: weapons and armor shop ($00)
+            (21, 24): 'MAN',  # mobile male villager at 14,13 ($36)
+            (21, 30): 'SOLDIER',  # static fighter at 20,13 ($33)
+            (22, 21): 'WOMAN',  # mobile female villager at 11,14 ($2E)
+            (27, 17): 'MERCHANT',  # mobile shopkeeper at 7,19 ($5F)
+            (27, 30): 'WISE_MAN',  # mobile wizard at 20,19 ($38)
+            (29, 24): 'MERCHANT',  # static shopkeeper at 14,21: item shop ($07)
+            (31, 11): 'GUARD',  # static guard at 1,23 ($34)
         }
+        # The KolDat tile under each NPC that isn't on brick
         self.custom_underlying_tiles = {
             'WOMAN': 'TREES',
-            'WOMAN_2': 'SAND',
-            'MAN': 'TREES',
-            'MAN_2': 'SAND',
             'SOLDIER': 'TREES',
-            'GUARD': 'SAND',
             'WISE_MAN_2': 'GRASS',
-            'WISE_MAN_3': 'SAND'
+            'GUARD': 'SAND',
+            'MAN_2': 'SAND',
+            'WOMAN_2': 'SAND',
+            'WISE_MAN_4': 'SAND',
+            'GUARD_2': 'GRASS',
         }
-        self.roaming_character_list = ['WISE_MAN_2', 'WOMAN_2', 'MAN', 'MAN_2', 'SOLDIER', 'GUARD', 'WISE_MAN_2',
-                                       'WISE_MAN_3']
+        # The NPCs from KolMobTbl
+        self.roaming_character_list = ['SOLDIER', 'WISE_MAN_2', 'GUARD', 'WISE_MAN_3', 'MAN', 'MAN_2', 'WOMAN_2',
+                                       'MERCHANT_3', 'WISE_MAN_4']
 
     def hero_underlying_tile(self):
         return 'SAND'
@@ -843,9 +848,10 @@ class Kol(DragonWarriorMap):
         return Direction.UP.value
 
     def set_characters_initial_directions(self):
+        # The DD bits of each NES table entry; every NPC not listed here faces down
         self.set_character_initial_direction('MERCHANT', Direction.UP)
         self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
-        self.set_character_initial_direction('MERCHANT_3', Direction.LEFT)
+        self.set_character_initial_direction('MERCHANT_4', Direction.LEFT)
 
 
 class Rimuldar(DragonWarriorMap):
