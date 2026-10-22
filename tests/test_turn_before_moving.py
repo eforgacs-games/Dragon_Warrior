@@ -15,6 +15,7 @@ from pygame import K_DOWN, K_LEFT, K_UP, K_i
 
 from src.direction import Direction
 from src.game import STEP_SYNC_FRAMES
+from src.waiting import set_game_speed
 from tests.test_freeze_movement import FreezeTestCase, keydown
 
 
@@ -111,10 +112,13 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.assertEqual(4, self.frames_until_moved((K_LEFT,)))  # 61, 62, 63, then 64
 
     def test_the_delay_is_counted_in_frames_at_any_game_speed(self):
-        for fps in (60, 120, 240, 480):
-            with self.subTest(fps=fps):
+        # The speed keys (src/waiting.py's game speed) run the main loop at 60, 120, 240 or 480 frames per second
+        self.addCleanup(set_game_speed, 1)
+        for speed in (1, 2, 3, 4):
+            with self.subTest(speed=speed):
                 self.setUp()
-                self.game.fps = fps
+                set_game_speed(speed)
+                self.assertEqual(60 * speed, self.game.fps)
                 self.stand_still(5)
                 self.assertEqual(STEP_SYNC_FRAMES - 5 + 1, self.frames_until_moved((K_LEFT,)))
 
