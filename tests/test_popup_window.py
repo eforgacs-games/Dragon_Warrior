@@ -86,7 +86,7 @@ class TestInnStay(PopupWindowTestCase):
         def fade(fade_out, **_kwargs):
             self.events.append(('fade out' if fade_out else 'fade in',))
 
-        patch('data.text.dialog_lookup_table.fade', side_effect=fade).start()
+        patch('data.text.dialog_lookup_table.screen_fade', side_effect=fade).start()
         self.dialog_lookup.inn_sleep(INN_COST)
 
     def test_popup_shows_the_paid_gold_then_the_restored_hp_and_mp_before_good_morning(self):
@@ -142,7 +142,7 @@ class TestInnStay(PopupWindowTestCase):
                 seen['popup'] = digest(screen.subsurface(popup_rect))
                 seen['dialog'] = [''.join(row).strip() for row in self.cmd_menu.dialog_buffer.rows if ''.join(row).strip()]
 
-        patch('data.text.dialog_lookup_table.fade', side_effect=fade).start()
+        patch('data.text.dialog_lookup_table.screen_fade', side_effect=fade).start()
         self.dialog_lookup.inn_sleep(INN_COST)
 
         self.assertEqual((self.player.current_hp, self.player.current_mp, self.player.gold), (15, 10, 100 - INN_COST))

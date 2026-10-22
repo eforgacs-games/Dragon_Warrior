@@ -6,7 +6,7 @@ delegates to it; MapManager holds a back-reference to Game so it can reach
 shared resources (player, camera, screen, music_player, …).
 """
 
-from pygame import Surface, display
+from pygame import Surface
 
 from src import maps
 from src.camera import Camera
@@ -18,7 +18,7 @@ from src.game_functions import set_character_position
 from src.map_layouts import BRICK, TREASURE_BOX
 from src.maps import map_lookup
 from src.menu import CommandMenu
-from src.visual_effects import fade
+from src.visual_effects import cut_to_black, screen_fade
 
 
 class MapManager:
@@ -149,10 +149,10 @@ class MapManager:
         if self.game.story_flags.dragonlord_defeated:
             self.current_map.apply_dragonlord_defeated()
         if fade_out_first:
-            fade(fade_out=True, screen=self.screen, config=self.game_state.config)
+            # NES ScreenFadeOut ($A743) -> PalFadeOut, for MapChngWithSound and MapChngFadeNoSound
+            screen_fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         else:
-            self.screen.fill(BLACK)
-            display.flip()
+            cut_to_black(self.screen, self.game_state.config)
         self.set_big_map()
         self.set_roaming_character_positions()
         if self.music_enabled:
@@ -206,7 +206,8 @@ class MapManager:
                              self.game.camera, self.game.initial_dialog_enabled, self.game.events,
                              self.game.skip_text, self.game.story_flags.left_throne_room, self.game_state,
                              self.game.color)
-        fade(fade_out=False, screen=self.screen, config=self.game_state.config)
+        # NES MapChngNoSound/MapChngWithSound (LB133): the map's music starts (ResumeMusicTbl), then PalFadeIn
+        screen_fade(fade_out=False, screen=self.screen, config=self.game_state.config)
 
     def apply_rainbow_bridge(self):
         # NES ChkRnbwBrdg: once F_RNBW_BRDG is set, the overworld block at (64, 49) is always read as BLK_BRIDGE

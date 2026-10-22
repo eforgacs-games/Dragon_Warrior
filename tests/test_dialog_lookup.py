@@ -102,6 +102,6 @@ class TestDialogLookup(TestCase):
                 patch.object(self.dialog_lookup.command_menu, 'show_line_in_dialog_box'), \
                 patch.object(self.dialog_lookup.command_menu, 'show_text_in_dialog_box'), \
                 patch.object(self.dialog_lookup.command_menu, 'window_drop_down_effect'), \
-                patch('data.text.dialog_lookup_table.fade'):
+                patch('data.text.dialog_lookup_table.screen_fade'):
             self.dialog_lookup.check_stay_at_inn(6)
         self.assertEqual(player.gold, 94)

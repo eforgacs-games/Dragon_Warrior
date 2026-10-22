@@ -19,7 +19,7 @@ from src.checkpoints import read_checkpoint
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.game import Game
-from src.visual_effects import fade
+from src.visual_effects import screen_fade
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -86,10 +86,10 @@ class TestLoadSaveFrames(TestCase):
 
         def counted_fade(*args, **kwargs):
             self.fades.append(kwargs['fade_out'])
-            return fade(*args, **kwargs)
+            return screen_fade(*args, **kwargs)
 
         for target, replacement in (('pygame.display.flip', flip), ('pygame.display.update', update),
-                                    ('src.map_manager.fade', counted_fade), ('src.game.fade', counted_fade)):
+                                    ('src.map_manager.screen_fade', counted_fade)):
             patcher = patch(target, replacement)
             patcher.start()
             self.addCleanup(patcher.stop)
@@ -150,3 +150,18 @@ class TestLoadSaveFrames(TestCase):
         game.load_checkpoint(name)
         sheet = ('ARMED' if game.player.weapon else 'UNARMED') + ('_WITH_SHIELD' if game.player.shield else '')
         self.assert_every_frame_shows('Alefgard', facing, sheet)
+
+    def test_begin_a_new_quest(self):
+        """NES MainGameEngine runs StartAtThroneRoom for a new quest too: after the name and the message speed window
+        the menu cuts to black (no fade out) and the throne room fades in once."""
+        game = new_game()
+        facing = Direction(game.player.direction_value)
+        self.record_frames(game)
+        with patch.object(game, 'select_adventure_log'), patch('src.game.NameSelection') as name_selection, \
+                patch.object(game, 'choose_new_quest_options'), \
+                patch.object(game.cmd_menu.__class__, 'show_text_in_dialog_box'):
+            name_selection.return_value.select_name.return_value = "Erdrick"
+            game.begin_new_quest()
+            self.run_main_loop(game, frames=3)
+        self.assert_every_frame_shows('TantegelThroneRoom', facing, 'UNARMED')
+        self.assertEqual(game.player.name, "Erdrick")

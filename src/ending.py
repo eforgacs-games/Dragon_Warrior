@@ -26,7 +26,7 @@ from src.direction import Direction
 from src.maps import map_lookup
 from src.maps_functions import get_center_point
 from src.text import draw_text
-from src.visual_effects import fade
+from src.visual_effects import screen_fade
 from src.waiting import wait_frames
 
 NES_FPS = 60
@@ -307,7 +307,7 @@ class Ending:
                 self.wait_frames(160)  # NES FinishCredits
                 return
             self.wait_frames(credit_screen_music_events(screen_index) * CREDITS_MUSIC_EVENT_FRAMES)
-            fade(fade_out=True, screen=self.game.screen, config=self.config)
+            screen_fade(fade_out=True, screen=self.game.screen, config=self.config)  # DoPalFadeOut ($AA43)
 
     def show_credit_screen(self, credit_screen) -> None:
         screen = self.game.screen
@@ -316,7 +316,7 @@ class Ending:
         for row, column, text in credit_screen:
             draw_text(text, column * nes_tile, (row + 0.5) * nes_tile, screen, self.config, color=WHITE,
                       text_wrap_length=32, letter_by_letter=False, disable_sound=True)
-        fade(fade_out=False, screen=screen, config=self.config)
+        screen_fade(fade_out=False, screen=screen, config=self.config)  # DoPalFadeIn ($AA3D)
 
     def wait_for_reset(self) -> None:
         """NES Spinlock1: after the credits the game does nothing more until it's reset; here, until it's closed."""
