@@ -114,7 +114,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
     def test_the_delay_is_counted_in_frames_at_any_game_speed(self):
         # The speed keys (src/waiting.py's game speed) run the main loop at 60, 120, 240 or 480 frames per second
         self.addCleanup(set_game_speed, 1)
-        for speed in (1, 2, 3, 4):
+        for speed in (1, 2, 4, 8):
             with self.subTest(speed=speed):
                 self.setUp()
                 set_game_speed(speed)
