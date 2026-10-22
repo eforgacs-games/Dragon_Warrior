@@ -1,8 +1,8 @@
 from pygame import Surface, display, mask, time, transform
-from pygame.time import get_ticks
+from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src.common import BLACK
-from src.waiting import check_for_quit, wait
+from src.waiting import check_for_quit, scaled_ms, wait
 
 
 def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -> None:
@@ -43,7 +43,7 @@ def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -
         display.update()
         check_for_quit()
         if not config['NO_WAIT']:
-            time.delay(5)
+            time.delay(scaled_ms(5))
 
         # Update opacity based on fade direction
         if fade_out:
