@@ -218,6 +218,6 @@ class TreasureChestHistory:
 hidden_items: Dict[str, Dict[Tuple[int, int], str]] = {
     'Alefgard': {(120, 91): "Erdrick's Token"},  # NES overworld (X 83, Y 113)
     'Kol': {(14, 19): 'Fairy Flute'},  # NES Kol (X 9, Y 6)
-    # TODO: the NES starts the fixed Axe Knight fight on this tile (ChkMapHauksness); needs the scripted-battle API.
+    # Stepping onto this tile starts the fixed Axe Knight fight first (NES CheckAxeKnight, see src/guardians.py)
     'Hauksness': {(20, 27): "Erdrick's Armor"},  # NES Hauksness (X 18, Y 12)
 }

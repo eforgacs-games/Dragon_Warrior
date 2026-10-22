@@ -21,6 +21,8 @@ from src.constants import (
 )
 from src.enemy_lookup import enemy_repel_lookup
 from src.enemy_spells import enemy_spell_lookup
+from src.guardians import escape_coordinates, record_victory
+from src.maps import map_lookup
 from src.pygame_compat import arrow_fade
 from src.spells import Spell
 
@@ -46,6 +48,9 @@ class BattleController:
         self.last_battle_action = "Fight"
         # A scripted fight requested from inside a dialog; it starts once the dialog and menu windows are gone.
         self.pending_scripted_battle: str | None = None
+        # Whether the current fight ended with the player's RUN succeeding (NES RunSuccessful), as opposed to the
+        # enemy running away (CheckEnRun), which goes straight to ExitFight.
+        self.player_ran_away = False
 
     # ------------------------------------------------------------------ #
     #  Properties that forward to game for brevity inside this class       #
@@ -164,6 +169,7 @@ class BattleController:
         self.player.is_asleep = False
         self.player.asleep_turns = 0
         self.player.is_stopspelled = False
+        self.player_ran_away = False
         current_battle.play_battle_music()
         # TODO: Group parameters into respective classes.
         current_battle.display_battle_window(self.screen, self.drawer,
@@ -179,6 +185,8 @@ class BattleController:
                 current_battle.dragonlord_first_form_defeated(self.cmd_menu, self.screen)
                 self.cmd_menu.current_battle = None
                 return self.fight_enemy('Dragonlord 2')
+            # NES EnemyDefeated: the Green Dragon and Golem guardians' story flags
+            record_victory(current_battle.enemy.name, self.current_map.identifier, self.game.story_flags)
             current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, self.music_enabled,
                                           current_battle.enemy)
             outcome = BattleOutcome.VICTORY
@@ -194,7 +202,23 @@ class BattleController:
         self.cmd_menu.current_battle = None
         # TODO: Refactor to music player class.
         self.music_player.load_and_play_music(self.current_map.music_file_path)
+        if outcome == BattleOutcome.ESCAPED and self.player_ran_away:
+            self.step_back_after_running()
         return outcome
+
+    def step_back_after_running(self) -> None:
+        """NES RunSuccessful (ChkMapHauksness, ChkMapSwampCave, ChkMapOverworld): after running from a guardian, the
+        hero is moved one block back off its tile and the map is reloaded with the stairs sound (MapChngWithSound),
+        so the guardian can't be slipped past and Erdrick's Armor can't be searched for."""
+        tile_size = self.game.tile_size  # the fight may have started before row and column caught up with the rect
+        coordinates = escape_coordinates(self.current_map.identifier,
+                                         (self.player.rect.y // tile_size, self.player.rect.x // tile_size),
+                                         self.game.story_flags)
+        if coordinates is None:
+            return
+        self.sound.play_sound(self.directories.stairs_down_sfx)
+        self.game.change_map(map_lookup[self.current_map.identifier](self.config),
+                             destination_coordinates=coordinates, direction=self.player.direction_value)
 
     # ------------------------------------------------------------------ #
     #  Battle prompts / menu                                               #
@@ -251,6 +275,7 @@ class BattleController:
             elif selected_executed_option == 'Run':
                 run_away = current_battle.battle_run(self.cmd_menu, self.player, current_battle)
                 if run_away:
+                    self.player_ran_away = True
                     self.music_player.load_and_play_music(self.current_map.music_file_path)
                     return run_away
                 else:
