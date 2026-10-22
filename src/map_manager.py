@@ -12,7 +12,8 @@ from pygame.time import get_ticks
 from src import maps
 from src.camera import Camera
 from src.common import BLACK
-from src.constants import RAINBOW_BRIDGE_COORDINATES
+from src.constants import GWAELIN_SWAMP_CAVE_COORDINATES, GWAELIN_THRONE_ROOM_COORDINATES, \
+    RAINBOW_BRIDGE_COORDINATES
 from src.direction import Direction
 from src.game_functions import set_character_position
 from src.map_layouts import BRICK, TREASURE_BOX
@@ -145,6 +146,7 @@ class MapManager:
             # NES GetBlockID: once F_PSG_FOUND is set, the block behind the throne reads as stairs down for good
             self.current_map.reveal_hidden_staircase()
         self.apply_chest_history()
+        self.place_princess_gwaelin()
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         self.set_big_map()
         self.set_roaming_character_positions()
@@ -206,6 +208,15 @@ class MapManager:
         map_name = self.current_map.identifier
         self.game.chest_history.enter_map(map_name)
         self.game.chest_history.apply_to_layout(map_name, self.current_map.layout, TREASURE_BOX, BRICK)
+    def place_princess_gwaelin(self):
+        """Put Gwaelin where the NES story flags say she is before the map's NPCs are loaded."""
+        if self.current_map.identifier == 'TantegelThroneRoom' and self.game.gwaelin_returned:
+            # NES ChkGwaelinNPC: she's in the throne room's static NPC table, and only removed while F_RTN_GWAELIN
+            # is clear
+            self.current_map.npc_coordinates[GWAELIN_THRONE_ROOM_COORDINATES] = 'PRINCESS_GWAELIN'
+        elif self.current_map.identifier == 'SwampCave' and self.game.gwaelin_rescued:
+            # NES GetBaseBlockID: once F_DONE_GWAELIN is set, her block in the Swamp Cave is read as brick floor
+            self.current_map.npc_coordinates.pop(GWAELIN_SWAMP_CAVE_COORDINATES, None)
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates):
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN', 'CAVE'):

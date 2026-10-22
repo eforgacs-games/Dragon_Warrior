@@ -101,6 +101,10 @@ class Game:
         self.repel_timer = 0  # NES RepelTimer, set by REPEL or Fairy Water
         self.rainbow_bridge_built = False  # NES F_RNBW_BRDG flag in ModsnSpells
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
+        # NES F_RTN_GWAELIN flag in PlayerFlags: Princess Gwaelin has been brought back to King Lorik. Same name as
+        # StoryFlags.gwaelin_returned in PR #200, so it can move there.
+        # (Carrying her is F_GOT_GWAELIN, which is player.is_carrying_princess.) Not saved yet.
+        self.gwaelin_returned = False
         self.speed = 2
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
@@ -176,7 +180,6 @@ class Game:
 
         display.set_icon(image.load(self.directories.ICON_PATH))
         self.allow_save_prompt = False
-        self.princess_saved = False
         # pg.event.set_allowed([pg.QUIT])
 
     def set_screen(self, win_height, win_width):
@@ -593,6 +596,12 @@ class Game:
                         random_integer = random.randint(0, 15)
         return random_integer
 
+    @property
+    def gwaelin_rescued(self) -> bool:
+        """NES F_DONE_GWAELIN: Gwaelin is being carried or has been returned. NPC dialog that changes once she's
+        rescued checks this, not just whether she's been returned."""
+        return self.player.is_carrying_princess or self.gwaelin_returned
+
     def set_player_images_by_equipment(self):
         if self.player.is_carrying_princess:
             self.player.images = self.current_map.scale_sprite_sheet(self.directories.HERO_CARRYING_PRINCESS_PATH)
@@ -607,6 +616,9 @@ class Game:
                 self.player.set_images(self.player.images)
         elif self.player.shield:
             self.player.images = self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_WITH_SHIELD_PATH)
+            self.player.set_images(self.player.images)
+        else:
+            self.player.images = self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH)
             self.player.set_images(self.player.images)
 
     def handle_death(self):
@@ -635,6 +647,8 @@ class Game:
             self.player.is_dead = False
 
     def set_post_death_attributes(self):
+        # NES DeathText: dying clears F_GOT_GWAELIN, so Gwaelin is back in the Swamp Cave (F_RTN_GWAELIN is untouched)
+        self.player.is_carrying_princess = False
         next_map = map_lookup['TantegelThroneRoom'](self.config)
         self.change_map(next_map)
         self.player.gold = self.player.gold // 2
