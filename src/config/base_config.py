@@ -17,6 +17,7 @@ base_config = {
     "SPLASH_SCREEN_ENABLED": True,
     "INITIAL_DIALOG_ENABLED": True,
     "FORCE_BATTLE": False,
+    "FIGHTERS_RING_ATTACK_BONUS": 0,  # 0 = NES (no effect); any other value is added to attack while worn
     "FORCE_ENEMY": None,  # e.g. "Metal Slime"; overrides the random enemy for the zone
     "NO_BATTLES": False,
     "ORCHESTRA_MUSIC_ENABLED": True,

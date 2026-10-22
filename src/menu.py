@@ -485,6 +485,7 @@ class CommandMenu(Menu):
                 skip_text=self.skip_text)
             return
         self.player.wearing_fighters_ring = True
+        self.player.update_attack_power()
         self.show_text_in_dialog_box(self._("{} put on the Fighter's Ring.").format(self.player.name),
                                      skip_text=self.skip_text)
 
