@@ -91,7 +91,7 @@ Enter: Select menu option
 
 I: Pause
 
-1 / 2 / 3 / 4: Game speed (normal, double, triple, quadruple). This works anywhere, including battles, dialogs and
+1 / 2 / 3 / 4: Game speed (normal, 2x, 4x, 8x). This works anywhere, including battles, dialogs and
 menus, and speeds up everything: walking, text, battle effects and pauses. Only timing changes, not what happens in
 the game. Music and sound effects play at normal speed. The speed lasts until you close the game and isn't saved.
 
