@@ -28,6 +28,7 @@ from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
 from src.spells import Spell
 from src.visual_effects import player_hit_shake
+from src.waiting import handle_speed_key, scaled_ms
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w
 
@@ -248,10 +249,12 @@ class BattleController:
 
         if self.auto_battle and not self.player.is_asleep:
             selected_executed_option = self.last_battle_action
-            time.wait(AUTO_BATTLE_DELAY_MS)
+            time.wait(scaled_ms(AUTO_BATTLE_DELAY_MS))
         else:
             for current_event in event.get():
                 quit_if_requested(current_event)
+                if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
+                    continue
                 if current_event.type == KEYDOWN:
                     if not self.player.is_asleep:
                         if current_event.key in accept_keys:
