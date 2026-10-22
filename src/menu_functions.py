@@ -1,191 +1,98 @@
-import re
-from typing import List
+from functools import partial
+from typing import Callable, List
 
-from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_j, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, \
-    image, K_TAB, K_BACKSPACE, Rect, event
+from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, \
+    K_TAB, K_BACKSPACE, event
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
-from pygame.transform import scale
 
 from data.text.intro_lookup_table import ControlInfo
 from src.calculation import Calculation
-from src.common import accept_keys
+from src.color import WHITE
+from src.common import accept_keys, reject_keys
 from src.cursor import BlinkingCursor
 from src.directories import Directories
+from src.name_entry import NameEntry, render_name_entry_screen
 from src.sound import Sound
-from src.text import draw_text
+
+# The alphabet window's cursor keys, with joystick input (WndUpPressed, WndDownPressed, WndDoLeftPressed,
+# WndRightPressed)
+DIRECTION_KEYS: dict[int, Callable[[NameEntry], bool]] = {
+    K_UP: NameEntry.move_up, K_w: NameEntry.move_up,
+    K_DOWN: NameEntry.move_down, K_s: NameEntry.move_down,
+    K_LEFT: NameEntry.move_left, K_a: NameEntry.move_left,
+    K_RIGHT: NameEntry.move_right, K_d: NameEntry.move_right,
+}
 
 
 class NameSelection:
+    """The name entry screen (src/name_entry.py), drawn from the NES window data and run like WndEnterName.
+
+    With joystick input (Tab turns it on and off), the keys are the NES buttons: the arrows move the cursor, A enters
+    the selected character, BACK or END, and B is BACK. Without it, typing a character of the alphabet enters it (and
+    moves the cursor to it), Backspace removes the last one and Return ends the name."""
+
     def __init__(self, config):
         self.config = config
         self.calculation = Calculation(config)
         self.directories = Directories(config)
         self.control_info = ControlInfo(config)
         self.sound = Sound(self.config)
-        self.name_selection_grid = (
-            ("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"),
-            ("L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V"),
-            ("W", "X", "Y", "Z", "-", "'", "!", "?", "(", ")", " "),
-            ("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"),
-            ("l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v"),
-            ("w", "x", "y", "z", ",", ".", "1", "1", "0", "0", "0")
-        )
-        self.name_selection_image_lookup = {
-            "A": self.directories.NAME_SELECTION_UPPER_A,
-            "B": self.directories.NAME_SELECTION_UPPER_B,
-            "C": self.directories.NAME_SELECTION_UPPER_C,
-            "D": self.directories.NAME_SELECTION_UPPER_D,
-            "E": self.directories.NAME_SELECTION_UPPER_E,
-            "F": self.directories.NAME_SELECTION_UPPER_F,
-            "G": self.directories.NAME_SELECTION_UPPER_G,
-            "H": self.directories.NAME_SELECTION_UPPER_H,
-            "I": self.directories.NAME_SELECTION_UPPER_I,
-            "J": self.directories.NAME_SELECTION_UPPER_J,
-            "K": self.directories.NAME_SELECTION_UPPER_K,
-            "L": self.directories.NAME_SELECTION_UPPER_L,
-            "M": self.directories.NAME_SELECTION_UPPER_M,
-            "N": self.directories.NAME_SELECTION_UPPER_N,
-            "O": self.directories.NAME_SELECTION_UPPER_O,
-            "P": self.directories.NAME_SELECTION_UPPER_P,
-            "Q": self.directories.NAME_SELECTION_UPPER_Q,
-            "R": self.directories.NAME_SELECTION_UPPER_R,
-            "S": self.directories.NAME_SELECTION_UPPER_S,
-            "T": self.directories.NAME_SELECTION_UPPER_T,
-            "U": self.directories.NAME_SELECTION_UPPER_U,
-            "V": self.directories.NAME_SELECTION_UPPER_V,
-            "W": self.directories.NAME_SELECTION_UPPER_W,
-            "X": self.directories.NAME_SELECTION_UPPER_X,
-            "Y": self.directories.NAME_SELECTION_UPPER_Y,
-            "Z": self.directories.NAME_SELECTION_UPPER_Z,
-            "-": self.directories.NAME_SELECTION_HYPHEN,
-            "'": self.directories.NAME_SELECTION_SINGLE_QUOTE,
-            "!": self.directories.NAME_SELECTION_EXCLAMATION_POINT,
-            "?": self.directories.NAME_SELECTION_QUESTION_MARK,
-            "(": self.directories.NAME_SELECTION_OPEN_PARENTHESIS,
-            ")": self.directories.NAME_SELECTION_CLOSE_PARENTHESIS,
-            " ": self.directories.NAME_SELECTION_SPACE,
-            "a": self.directories.NAME_SELECTION_LOWER_A,
-            "b": self.directories.NAME_SELECTION_LOWER_B,
-            "c": self.directories.NAME_SELECTION_LOWER_C,
-            "d": self.directories.NAME_SELECTION_LOWER_D,
-            "e": self.directories.NAME_SELECTION_LOWER_E,
-            "f": self.directories.NAME_SELECTION_LOWER_F,
-            "g": self.directories.NAME_SELECTION_LOWER_G,
-            "h": self.directories.NAME_SELECTION_LOWER_H,
-            "i": self.directories.NAME_SELECTION_LOWER_I,
-            "j": self.directories.NAME_SELECTION_LOWER_J,
-            "k": self.directories.NAME_SELECTION_LOWER_K,
-            "l": self.directories.NAME_SELECTION_LOWER_L,
-            "m": self.directories.NAME_SELECTION_LOWER_M,
-            "n": self.directories.NAME_SELECTION_LOWER_N,
-            "o": self.directories.NAME_SELECTION_LOWER_O,
-            "p": self.directories.NAME_SELECTION_LOWER_P,
-            "q": self.directories.NAME_SELECTION_LOWER_Q,
-            "r": self.directories.NAME_SELECTION_LOWER_R,
-            "s": self.directories.NAME_SELECTION_LOWER_S,
-            "t": self.directories.NAME_SELECTION_LOWER_T,
-            "u": self.directories.NAME_SELECTION_LOWER_U,
-            "v": self.directories.NAME_SELECTION_LOWER_V,
-            "w": self.directories.NAME_SELECTION_LOWER_W,
-            "x": self.directories.NAME_SELECTION_LOWER_X,
-            "y": self.directories.NAME_SELECTION_LOWER_Y,
-            "z": self.directories.NAME_SELECTION_LOWER_Z,
-            ",": self.directories.NAME_SELECTION_COMMA,
-            ".": self.directories.NAME_SELECTION_PERIOD,
-            "1": self.directories.NAME_SELECTION_BACK,
-            "0": self.directories.NAME_SELECTION_END,
 
-        }
+    def draw(self, screen, entry: NameEntry, cursor_visible: bool | None = True) -> None:
+        """Draw the whole screen (see render_name_entry_screen), in the title screen's white."""
+        if not self.config['NO_BLIT']:
+            screen.blit(render_name_entry_screen(entry, WHITE, self.config['TILE_SIZE'] // 16, cursor_visible), (0, 0))
+        display.update(screen.get_rect())
 
-    def select_name(self, blink_start, screen, command_menu):
-        current_item_row = 0
-        current_item_column = 0
-        blinking = True
-        name = ""
+    def select_name(self, blink_start, screen, command_menu) -> str:
+        entry = NameEntry()
         enable_joystick_input = False
-        unselected_image = scale(image.load(self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_0),
-                                 (screen.get_width(), screen.get_height()))
-        screen.blit(unselected_image, (0, 0)) if not self.config['NO_BLIT'] else None
-        display.update(unselected_image.get_rect())
+        # No cursor until the alphabet window's selection starts (WndDoSelect)
+        self.draw(screen, entry, cursor_visible=None)
         command_menu.show_line_in_dialog_box(self.control_info.input_name_prompt, letter_by_letter=False,
                                              hide_arrow=False)
-        screen.blit(unselected_image, (0, 0)) if not self.config['NO_BLIT'] else None
-        display.update(unselected_image.get_rect())
-        selected_image_lookup = {
-            0: self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_0,
-            1: self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_1,
-            2: self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_2,
-            3: self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_3,
-            4: self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_4,
-            5: self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_5,
-            6: self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_6,
-            7: self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_7,
-            8: self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_8,
-        }
-        # The alphabet window's cursor (AlphabetDat), the NES arrow in the screenshots: it blinks like every NES window
-        # cursor (src/cursor.py), restarting whenever it moves (WndUpdateCrsrPos)
+        self.draw(screen, entry, cursor_visible=None)
+        # The alphabet window's cursor blinks like every NES window cursor (src/cursor.py), restarting whenever it
+        # moves or A or B is pressed (WndUpdateCrsrPos)
         cursor = BlinkingCursor(blink_start)
-        while blinking:
-            name = truncate_name(name)
-            letter_position = (current_item_row, current_item_column)
-            current_letter = self.name_selection_grid[current_item_row][current_item_column]
-            current_letter_image_path = self.name_selection_image_lookup[current_letter]
-            unselected_image = selected_image_lookup[len(name)]
-            # screen.fill(BLACK)
-            blink_with_name(cursor.visible(), current_letter_image_path, name, screen, unselected_image, self.config)
+        while True:
+            self.draw(screen, entry, cursor.visible())
             for current_event in event.get():
                 if current_event.type == QUIT:
                     quit()
                 elif current_event.type == KEYDOWN:
                     if current_event.key == K_TAB:
-                        enable_joystick_input = toggle_joystick_input(command_menu, current_letter_image_path,
-                                                                      enable_joystick_input, screen)
+                        enable_joystick_input = toggle_joystick_input(
+                            command_menu, partial(self.draw, screen, entry, cursor.visible()), enable_joystick_input,
+                            screen)
                     if enable_joystick_input:
                         if current_event.key in accept_keys:
+                            # WndAPressed: the menu button sound, and the selection is processed (WndProcessChar)
                             self.sound.play_sound(self.directories.menu_button_sfx)
-                            if current_letter == "0":
-                                return name
-                            elif current_letter == "1":
-                                # back up cursor instead of deleting letters
-                                name = name[:-1]
-                            else:
-                                name += current_letter
-                        elif current_event.key == K_j:
-                            # back up cursor instead of deleting letters
-                            name = name[:-1]
-                        elif current_event.key in (K_DOWN, K_s) and current_item_row + 1 < len(
-                                self.name_selection_grid):
-                            current_item_row += 1
-                        elif current_event.key in (K_UP, K_w) and current_item_row > 0:
-                            current_item_row -= 1
-                        elif current_event.key in (K_LEFT, K_a) and current_item_column > 0:
-                            current_item_column -= 1
-                        elif current_event.key in (K_RIGHT, K_d) and current_item_column < len(
-                                self.name_selection_grid[current_item_row]) - 1:
-                            current_item_column += 1
+                            entry.select()
+                            cursor.restart()
+                        elif current_event.key in reject_keys:
+                            # WndBPressed: back one character, without a sound
+                            entry.back()
+                            cursor.restart()
+                        elif current_event.key in DIRECTION_KEYS and DIRECTION_KEYS[current_event.key](entry):
+                            cursor.restart()
                     else:
                         if current_event.key == K_BACKSPACE:
-                            name = name[:-1]
+                            entry.erase()
                         elif current_event.key == K_RETURN:
-                            if name:
-                                current_letter = self.name_selection_grid[len(self.name_selection_grid) - 1][
-                                    len(self.name_selection_grid[current_item_row]) - 1]
-                                current_letter_image_path = self.name_selection_image_lookup[current_letter]
-                                draw_image_with_name(current_letter_image_path, name, screen, self.config)
-                                return name
-                        elif any(current_event.unicode in sublist for sublist in
-                                 self.name_selection_grid) and current_event.unicode not in ("0", "1"):
+                            if entry.name:
+                                entry.move_to_end()
+                                entry.end()
+                        elif entry.move_to(current_event.unicode):
                             self.sound.play_sound(self.directories.menu_button_sfx)
-                            name += current_event.unicode
-                            current_item_coordinates = [(ix, iy) for ix, row in enumerate(self.name_selection_grid) for
-                                                        iy, i in
-                                                        enumerate(row) if
-                                                        i == current_event.unicode]
-                            current_item_row = current_item_coordinates[0][0]
-                            current_item_column = current_item_coordinates[0][1]
-            if (current_item_row, current_item_column) != letter_position:
-                cursor.restart()
-
+                            entry.enter(current_event.unicode)
+                            cursor.restart()
+                    if entry.finished:
+                        # END or the 8th character (WndMaxNameLength): the name is done, with the arrow on (held)
+                        cursor.hold()
+                        self.draw(screen, entry, cursor.visible())
+                        return entry.name
 
 
 def get_opposite_direction(direction: int) -> int:
@@ -209,44 +116,20 @@ def draw_character_sprites(current_map, background, column, row, config, charact
                         (column * config['TILE_SIZE'], row * config['TILE_SIZE']))
 
 
-def toggle_joystick_input(command_menu, current_letter_image_path, enable_joystick_input, screen):
+def toggle_joystick_input(command_menu, redraw: Callable[[], None], enable_joystick_input, screen):
+    """Turn joystick input on or off, saying so in a dialog box, then redraw the name entry screen over it."""
     if enable_joystick_input:
         enable_joystick_input = False
         # TODO(ELF): adding the drop-up effect here shows the Tantegel Throne Room while the effect happens -
         #  make it work with a black screen.
         command_menu.show_text_in_dialog_box("Joystick input disabled.", temp_text_start=get_ticks(), drop_up=False)
         if not command_menu.game.game_state.config['NO_BLIT']:
-            screen.blit(scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height())), (0, 0))
+            redraw()
             display.flip()
     else:
         enable_joystick_input = True
         command_menu.show_text_in_dialog_box("Joystick input enabled.", temp_text_start=get_ticks(), drop_up=False)
         if not command_menu.game.game_state.config['NO_BLIT']:
-            screen.blit(scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height())), (0, 0))
+            redraw()
             display.flip()
     return enable_joystick_input
-
-
-def truncate_name(name):
-    if len(name) > 8:
-        last_char = name[-1]
-        name = re.sub(r".$", last_char, name[:8])
-    return name
-
-
-def blink_with_name(cursor_visible, current_letter_image_path, name, screen, static_image, config):
-    """The alphabet window with the arrow at the current letter while the cursor is visible, without it while it
-    isn't (UpdateCursorGFX), and the name entered so far."""
-    if cursor_visible:
-        draw_image_with_name(current_letter_image_path, name, screen, config)
-    else:
-        draw_image_with_name(static_image, name, screen, config)
-    display.update(
-        Rect(screen.get_rect().left, screen.get_rect().centerx // 1.7, screen.get_width(), screen.get_height() * .46))
-
-
-def draw_image_with_name(current_letter_image_path, name, screen, config):
-    selected_image = scale(image.load(current_letter_image_path), (screen.get_width(), screen.get_height()))
-    screen.blit(selected_image, (0, 0)) if not config['NO_BLIT'] else None
-    draw_text(name, config['TILE_SIZE'] * 6.01, config['TILE_SIZE'] * 4.3, screen, config, alignment='left',
-              letter_by_letter=False)
