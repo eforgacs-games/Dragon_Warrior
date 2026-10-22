@@ -28,6 +28,7 @@ from src.direction import Direction
 from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
+from src.options_screen import DEFAULT_DIALOG_STYLE, DIALOG_STYLE_SAVE_KEY, MESSAGE_SPEED_SAVE_KEY, MODERN
 from src.sound import Sound
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.text import draw_text, set_font_by_ascii_chars
@@ -198,6 +199,9 @@ class CommandMenu(Menu):
             'PlayerRow': self.player.row,
             'PlayerColumn': self.player.column,
             STORY_FLAGS_SAVE_KEY: self.game.story_flags.to_save(),
+            # NES SaveData (LFA7D): the message speed is saved with each log (offset $16); so is the dialog style
+            MESSAGE_SPEED_SAVE_KEY: self.game.game_state.config['TEXT_SPEED'],
+            DIALOG_STYLE_SAVE_KEY: self.game.game_state.config.get('DIALOG_STYLE', DEFAULT_DIALOG_STYLE),
         }
         json_object = json.dumps(save_dict, indent=4)
         with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'),
@@ -290,6 +294,9 @@ class CommandMenu(Menu):
         frames = frames_per_character(config['TEXT_SPEED'])
         self._dialog_frame_deadline = float(get_ticks())
 
+        if self.modern_dialog:
+            # Modern dialog style: every message starts on a fresh window, replacing the one before it
+            self.dialog_buffer.clear()
         self.draw_dialog_window()
         self.run_dialog_steps(self.dialog_buffer.print_message(line, quoted=line.startswith(OPEN_QUOTES)),
                               animate, frames, disable_sound)
@@ -304,7 +311,16 @@ class CommandMenu(Menu):
 
         if shows_arrow:
             self.draw_dialog_arrow(False)  # DoWait: TxtClearArrow
-            self.run_dialog_steps(self.dialog_buffer.finish_wait(), animate, frames, disable_sound)
+            if not self.modern_dialog:  # (the next modern message clears the window anyway, so it needn't scroll)
+                self.run_dialog_steps(self.dialog_buffer.finish_wait(), animate, frames, disable_sound)
+
+    @property
+    def modern_dialog(self) -> bool:
+        """The Modern dialog style (src/options_screen.py): each message replaces the last one, as this game drew dialog
+        before it copied the NES window (src/menu.py and src/text.py before PR #245). Otherwise the text scrolls on below
+        what the window shows, like the NES (Classic, the default). Both print letter by letter at the message speed,
+        with the NES text beep."""
+        return self.game.game_state.config.get('DIALOG_STYLE') == MODERN
 
     def wait_for_dialog_key(self, shows_arrow: bool, skip_text: bool, temp_text_start: int | None,
                             disable_sound: bool, advance_keys: Collection[int] | None = None) -> None:
@@ -433,9 +449,10 @@ class CommandMenu(Menu):
             display.update(self.dialog_cell_rect(row))
 
     def draw_dialog_arrow(self, visible: bool) -> None:
-        """NES TxtWaitAnim: the down arrow blinks in the middle of the row the cursor is on."""
-        self.draw_dialog_text('▼' if visible else '', self.dialog_cell_rect(self.dialog_buffer.row, ARROW_COLUMN, 1),
-                              update=True)
+        """NES TxtWaitAnim: the down arrow blinks in the middle of the row the cursor is on. In the Modern dialog
+        style it's at the bottom of the window, where this game drew it before PR #245."""
+        row = DIALOG_ROWS - 1 if self.modern_dialog else self.dialog_buffer.row
+        self.draw_dialog_text('▼' if visible else '', self.dialog_cell_rect(row, ARROW_COLUMN, 1), update=True)
 
     def draw_dialog_text(self, text: str, cells: Rect, update: bool, squeeze: bool = False) -> None:
         """Draws text left-aligned in the given dialog cells. ``squeeze`` narrows it to fit them (two characters that
