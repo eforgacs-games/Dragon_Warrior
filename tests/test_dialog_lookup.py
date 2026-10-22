@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 import pygame
+from pygame import KEYDOWN, K_DOWN, QUIT
 
 from src.config.test_config import test_config
 from src.game import Game
@@ -42,12 +43,35 @@ class TestDialogLookup(TestCase):
         events = []
         menu = self.dialog_lookup.command_menu
         with patch.object(menu, 'show_line_in_dialog_box', side_effect=lambda line, **_: events.append(line)), \
-                patch.object(menu, 'show_text_in_dialog_box', side_effect=lambda text, **_: events.append(text[0])), \
                 patch('data.text.dialog_lookup_table.mixer.music.stop', side_effect=lambda: events.append('stop')), \
-                patch('data.text.dialog_lookup_table.quit'):
+                patch.object(self.dialog_lookup, 'wait_for_reset', side_effect=lambda: events.append('hang')):
             self.dialog_lookup.rest_then_for_awhile()
         self.assertEqual(events, ["Rest then for awhile.", 'stop',
-                                  "Please push RESET, hold it in, then turn off the POWER."])
+                                  "Please push RESET, hold it in, then turn off the POWER.",
+                                  "If you turn the power off first, the Imperial Scroll of Honor containing your deeds "
+                                  "may be lost.", 'hang'])
+
+    def test_reset_message_waits_only_after_the_first_sentence(self):
+        # NES TextBlock19 entry 8: WAIT after "...turn off the POWER.", then the second sentence ends with no wait
+        menu = self.dialog_lookup.command_menu
+        with patch.object(menu, 'show_line_in_dialog_box') as show_line, \
+                patch('data.text.dialog_lookup_table.mixer.music.stop'), \
+                patch.object(self.dialog_lookup, 'wait_for_reset'):
+            self.dialog_lookup.rest_then_for_awhile()
+        first, second = show_line.call_args_list[1:]
+        self.assertFalse(first.kwargs.get('skip_text', False))
+        self.assertTrue(second.kwargs['skip_text'])
+
+    def test_after_the_reset_message_only_closing_the_window_does_anything(self):
+        # NES Spinlock2: every button is ignored; closing the window stands in for reset
+        from pygame import K_j, K_k, K_RETURN
+        from pygame.event import Event
+        key_presses = [[Event(KEYDOWN, key=key, unicode='', mod=0)] for key in (K_k, K_j, K_RETURN, K_DOWN)]
+        with patch('data.text.dialog_lookup_table.get', side_effect=key_presses + [[Event(QUIT)]]) as get_events, \
+                patch('data.text.dialog_lookup_table.time.wait'), patch('src.waiting.pygame_quit'):
+            with self.assertRaises(SystemExit):
+                self.dialog_lookup.wait_for_reset()
+        self.assertEqual(get_events.call_count, len(key_presses) + 1)
 
     def test_mashing_accept_at_the_inn_stays_and_pays_once(self):
         # Issue #97: mashing the accept key restarted the stay and charged for it again
