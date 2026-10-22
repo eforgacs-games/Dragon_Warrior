@@ -49,6 +49,7 @@ from src.menu import CommandMenu, Menu
 from src.menu_functions import NameSelection
 from src.movement import Movement
 from src.music_player import MusicPlayer
+from src.npc_schedule import NPCSchedule, POP_UP_FRAME
 from src.player.player import Player
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
@@ -138,9 +139,13 @@ class Game:
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
         self.speed = 2
-        # NES FrameCounter (Bank03): counts the frames the hero has stood still since the last step, bump or command.
-        # A held direction only starts a step when it's a multiple of 16 (see move_player).
-        self.frame_counter = 0
+        # NES FrameCounter, NPCUpdateCntr and CharLeftRight (src/npc_schedule.py): when the hero may start a step, which
+        # NPCs may move on each frame, and the walking frame
+        self.npc_schedule = NPCSchedule()
+        # Whether this frame is an IdleUpdate frame (the hero standing, see idle_frame), and whether the hero's step
+        # ends on it
+        self.idle_update = False
+        self.step_ends = False
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
         self.invulnerable = self.game_state.config["INVULNERABLE"]
@@ -470,30 +475,68 @@ class Game:
         """
         Updates character positions and handles warp logic.
         """
-        if self.game_state.enable_roaming and not self.world_frozen and self.current_map.roaming_characters:
-            # NES UpdateNPCs1: no NPC starts a new step once a pause or the command window has been asked for
-            self.move_roaming_characters(start_new_steps=not self.freeze_pending)
-            self.update_roaming_character_positions()
+        if not self.world_frozen:
+            self.do_sprites()
         # currently can't process staircases right next to one another, need to fix
         # a quick fix would be to add an exception in the conditional for
         # the map where staircases right next to each other need to be enabled,
         # as done with Cantlin and others below
         self.handle_warps()
 
+    @property
+    def frame_counter(self) -> int:
+        """NES FrameCounter: a held direction only starts a step when it's a multiple of 16 (see move_player), and
+        it decides which NPCs move (src/npc_schedule.py)."""
+        return self.npc_schedule.frame_counter
+
+    @frame_counter.setter
+    def frame_counter(self, value: int) -> None:
+        self.npc_schedule.frame_counter = value
+
+    def do_sprites(self) -> None:
+        """One frame on the map, after the hero's part: NMI counts it (INC FrameCounter), then NES DoSprites (Bank00)
+        moves the walking animation and the roaming NPCs on (src/npc_schedule.py). Like DoSprites, it runs on every
+        frame the map is up, whether the hero is walking or standing.
+        On the frame the hero has stood still for $31 frames, IdleUpdate (Bank03) opens the pop-up window, whose
+        drawing calls DoSprites (WndCalcBufAddr, Bank01), then sets FrameCounter to $32 and calls DoSprites again, so
+        that frame has two."""
+        self.npc_schedule.count_frame()
+        if self.idle_update and self.frame_counter == POP_UP_FRAME:
+            self.run_sprites()
+            self.frame_counter = POP_UP_FRAME + 1
+        self.idle_update = False
+        self.run_sprites()
+        if self.step_ends:
+            # NES: DoJoyUp etc. return through ChkSpecialLoc to GameEngineLoop -> JoypadCheckLoop
+            self.step_ends = False
+            self.frame_counter = 0
+
+    def run_sprites(self) -> None:
+        """NES DoSprites: the walking animation and the roaming NPCs."""
+        self.npc_schedule.start_sprites()
+        if self.game_state.enable_roaming and self.current_map.roaming_characters:
+            # NES UpdateNPCs1: no NPC starts a new step once a pause or the command window has been asked for
+            self.move_roaming_characters(start_new_steps=not self.freeze_pending)
+            self.update_roaming_character_positions()
+        self.npc_schedule.end_sprites()
+
     def _handle_player_movement(self) -> None:
         """
         Checks if the game is paused or if movement is disabled; if not,
         moves the player based on the current key state.
         """
-        if not self.game_state.enable_movement or self.world_frozen:
+        if self.world_frozen:
             # NES: every command, the pause and the windows they open end with JMP JoypadCheckLoop, which resets
-            # FrameCounter, so a direction held as they close starts a step at once
+            # FrameCounter, so a direction held as they close starts a step at once. They open between NPC turns
+            # (resolve_pending_freezes), when FrameCounter & $0F is 0 already, so the NPCs carry on where they were.
             self.frame_counter = 0
+            return
+        if not self.game_state.enable_movement:
             return
         if self.freeze_pending and not self.player.is_moving:
             # NES GameEngineLoop only reads START and A between steps (DoJoyUp etc. move a whole tile before
-            # returning), so a step already under way is finished, but no new one is started.
-            self.frame_counter = 0
+            # returning), so a step already under way is finished, but no new one is started. PausePrepLoop and
+            # DoNCCmdWindow keep counting frames until the end of the NPCs' turn.
             return
         self.move_player(key.get_pressed())
 
@@ -534,7 +577,8 @@ class Game:
         """
         Pause, or open the command window, once the hero and the NPCs have finished their steps.
         NES PausePrepLoop (START) and DoNCCmdWindow (A) keep calling DoSprites until FrameCounter & $0F == 1, the
-        frame on which every NPC is lined up on a tile, and only then pause or set StopNPCMove. START is checked
+        frame on which every NPC is lined up on a tile, and only then (before that frame's DoSprites, so before any NPC
+        starts a step) pause or set StopNPCMove. START is checked
         before A (CheckInputs), so a pause wins.
         """
         if not self.freeze_pending:
@@ -543,6 +587,9 @@ class Game:
         if not self.everyone_on_a_tile():
             if not self.player.is_moving:
                 self.freeze_wait_frames += 1
+            return
+        if not self.npc_schedule.between_turns:
+            # The next frame would be an NPC turn's decision frame only once this one is the last of a turn
             return
         self.freeze_wait_frames = 0
         if self.pause_requested:
@@ -1116,17 +1163,16 @@ class Game:
             # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning -
             #  should always be 0 when the map starts.
             self.count_step()
-            # NES: DoJoyUp etc. return through ChkSpecialLoc to GameEngineLoop -> JoypadCheckLoop
-            self.frame_counter = 0
+            # FrameCounter goes back to 0 once this frame's DoSprites has run (see do_sprites)
+            self.step_ends = True
         self.finish_step(self.player)
 
     def idle_frame(self) -> None:
-        """NES IdleUpdate (Bank03): wait for the next frame, which counts it in FrameCounter (NMI: INC FrameCounter).
-        On the 49th ($31) frame of standing still, the pop-up status window is shown and FrameCounter is set to $32,
-        skipping a count, so the steps after a long wait line up a frame earlier. FrameCounter is one byte."""
-        self.frame_counter = (self.frame_counter + 1) & 0xFF
-        if self.frame_counter == 0x31:
-            self.frame_counter = 0x32
+        """NES IdleUpdate (Bank03): wait for the next frame, which counts it in FrameCounter (NMI: INC FrameCounter,
+        which do_sprites does on every frame on the map). On the 49th ($31) frame of standing still, the pop-up status
+        window is shown and FrameCounter is set to $32, skipping a count, so the steps after a long wait line up a
+        frame earlier. FrameCounter is one byte."""
+        self.idle_update = True
 
     def move_laterally(self, character: Player | RoamingCharacter) -> None:
         if is_facing_left(character):
@@ -1266,39 +1312,48 @@ class Game:
 
     def move_roaming_characters(self, start_new_steps: bool = True) -> None:
         """
-        Move all roaming characters in the current map.
-        :param start_new_steps: False lets characters partway through a step finish it, but none start a new one.
-        :return: None
+        One frame of the roaming characters, NES UpdateNPCs1 (Bank00, $B76F): on the first frame of its 16-frame turn
+        (src/npc_schedule.py), each NPC of the pair whose turn it is turns to a random direction (SetNPCDir) and starts
+        a step that way, unless something is in the way (HaltNPCMoveCalcs: it stays put, facing that way). An NPC that
+        is stepping moves 1 NES pixel a frame (NPCProcessCont), so it arrives on the last frame of its turn.
+        :param start_new_steps: False lets characters partway through a step finish it, but none start a new one
+            (NES StopNPCMove).
         """
-        for roaming_character in self.current_map.roaming_characters:
-            curr_pos_x, curr_pos_y = roaming_character.rect.x, roaming_character.rect.y
-            # set_character_position(roaming_character)
-            if roaming_character.last_roaming_clock_check is None or \
-                    get_ticks() - roaming_character.last_roaming_clock_check >= 1000:
-                roaming_character.last_roaming_clock_check = get_ticks()
-                if not roaming_character.is_moving:
-                    if not start_new_steps:
-                        continue
-                    roaming_character.direction_value = random.choice(list(map(int, Direction)))
-                else:  # character not moving and no input
-                    continue
-                set_character_position(roaming_character, self.tile_size)
-                roaming_character.last_rect = roaming_character.rect.copy()
-                roaming_character.is_moving = True
-            else:  # determine if character has reached new tile
-                if is_facing_medially(roaming_character):
-                    if curr_pos_y % self.tile_size == 0:
-                        self.finish_step(roaming_character)
-                        continue
-                elif is_facing_laterally(roaming_character):
-                    if curr_pos_x % self.tile_size == 0:
-                        self.finish_step(roaming_character)
-                        continue
-            if is_facing_medially(roaming_character):
-                self.move_medially(roaming_character)
-            elif is_facing_laterally(roaming_character):
-                self.move_laterally(roaming_character)
-            # handle_roaming_character_sides_collision(self.current_map, roaming_character)
+        roaming_characters = self.current_map.roaming_characters
+        deciding = []
+        if self.npc_schedule.is_decision_frame and start_new_steps:
+            # Slots past the end are empty (NES: X and Y 0); they keep their place in the turns
+            deciding = [roaming_characters[slot] for slot in self.npc_schedule.slots_on_turn()
+                        if slot < len(roaming_characters) and not roaming_characters[slot].is_moving]
+        for roaming_character in roaming_characters:
+            if roaming_character in deciding:
+                self.start_npc_step(roaming_character)
+            elif roaming_character.is_moving:
+                self.continue_npc_step(roaming_character)
+
+    def start_npc_step(self, roaming_character: RoamingCharacter) -> None:
+        """NES SetNPCDir and the checks after it: turn to a random direction, and take the first pixel of a step that
+        way if nothing is in the way (Game.move checks it)."""
+        roaming_character.direction_value = random.choice(list(map(int, Direction)))
+        set_character_position(roaming_character, self.tile_size)
+        start = roaming_character.rect.copy()
+        self.continue_npc_step(roaming_character)
+        # A blocked step reserves nothing (Game.move), and the NPC stays where it is
+        roaming_character.is_moving = roaming_character.step_destination is not None
+        if roaming_character.is_moving:
+            roaming_character.last_rect = start
+
+    def continue_npc_step(self, roaming_character: RoamingCharacter) -> None:
+        """NES NPCProcessCont: move 1 NES pixel, and finish the step on arriving."""
+        if is_facing_medially(roaming_character):
+            self.move_medially(roaming_character)
+            arrived = roaming_character.rect.y % self.tile_size == 0
+        else:
+            self.move_laterally(roaming_character)
+            arrived = roaming_character.rect.x % self.tile_size == 0
+        if arrived and roaming_character.step_destination is not None:
+            self.finish_step(roaming_character)
+            set_character_position(roaming_character, self.tile_size)
 
     def load_game(self, save_file: dict, direction: int | None = None) -> None:
         """Continue a saved game (see CommandMenu.save for what is kept).
