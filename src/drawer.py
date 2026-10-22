@@ -1,5 +1,5 @@
 from statistics import mean
-from typing import List, Iterable
+from typing import Iterable, List, Tuple
 
 from pygame import display, KEYDOWN, event, Surface, Rect
 from pygame.sprite import Group
@@ -90,8 +90,11 @@ class Drawer:
             character_dict['character'].pause()
 
     def handle_sprite_drawing_and_animation(self, current_map, foreground_rects, background, enable_animate):
-        for character_dict in current_map.characters.values():
-            foreground_rects.append(character_dict['character_sprites'].draw(background)[0])
+        for identifier, character_dict in current_map.characters.items():
+            character = character_dict['character']
+            # NES $B957: an NPC on the other side of the cover from the hero isn't drawn
+            if identifier == 'HERO' or not current_map.is_hidden_by_cover(character.row, character.column):
+                foreground_rects.append(character_dict['character_sprites'].draw(background)[0])
             self.handle_sprite_animation(enable_animate, character_dict)
 
     @staticmethod
@@ -99,6 +102,9 @@ class Drawer:
         for tile, tile_dict in current_map.floor_tile_key.items():
             if tile in current_map.tile_types_in_current_map and tile_dict.get('group'):
                 tile_dict['group'].draw(background)
+        if current_map.covered_area:
+            draw_cover(current_map, background, ((row, column) for row in range(len(current_map.layout))
+                                                 for column in range(len(current_map.layout[row]))))
 
     def draw_hovering_stats_window(self, screen, player, color=WHITE):
         tile_size = self.game_state.config["TILE_SIZE"]
@@ -207,6 +213,13 @@ class Drawer:
         width_offset = 0
         height_offset = 0
         tile_size = self.game_state.config["TILE_SIZE"]
+        # NES DoCoveredArea ($B5FA): once the hero finishes a step onto a block whose cover status differs from
+        # CoverStatus, the whole screen is redrawn with the roof (or the outside) swapped
+        player_under_cover = current_map.is_covered(*get_player_block(player, tile_size))
+        if player_under_cover != current_map.player_under_cover:
+            current_map.player_under_cover = player_under_cover
+            if loop_count != 1 and self.background is not None:
+                self.draw_all_tiles_in_current_map(current_map, self.background)
         if loop_count == 1:
             self.background = big_map.subsurface(0, 0, current_map.width - width_offset,
                                                  current_map.height - height_offset).convert()
@@ -265,10 +278,18 @@ class Drawer:
         roaming_union_rect = all_roaming_rects[0].unionall(all_roaming_rects[1:]) \
             if all_roaming_rects else None
         tile_types_set = set(tile_types_to_draw)
+        cover_cells_to_draw = set()
         for tile, tile_dict in current_map.floor_tile_key.items():
             if tile_dict.get('group') and tile in tile_types_set:
                 for tile_to_draw in tile_dict['group']:
                     tile_rect = tile_to_draw.rect
+                    if current_map.covered_area:
+                        cell = (tile_rect.y // tile_size, tile_rect.x // tile_size)
+                        if current_map.is_hidden_by_cover(*cell):
+                            # the hero walking past it: redraw the roof/blank there, not the block itself
+                            if player_check_rect.colliderect(tile_rect):
+                                cover_cells_to_draw.add(cell)
+                            continue
                     if camera_screen_rect.colliderect(tile_rect):
                         if player_check_rect.colliderect(tile_rect):
                             group_to_draw.add(tile_to_draw)
@@ -284,6 +305,8 @@ class Drawer:
                                     group_to_draw.add(tile_to_draw)
                                     break
         group_to_draw.draw(self.background)
+        if cover_cells_to_draw:
+            draw_cover(current_map, self.background, cover_cells_to_draw)
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation(current_map, foreground_rects, self.background,
@@ -402,3 +425,27 @@ def get_fixed_character_underlying_tiles(current_map) -> List[str]:
 
 def set_to_save_prompt(cmd_menu):
     cmd_menu.set_king_lorik_dialog(left_throne_room=True)
+
+
+def get_player_block(player, tile_size: int) -> Tuple[int, int]:
+    """The (row, column) of the block the hero stands on. While moving, that's still the block the step began on, as
+    the NES only updates CharXPos/CharYPos once the step is done."""
+    if player.is_moving:
+        return player.row, player.column
+    return player.rect.y // tile_size, player.rect.x // tile_size
+
+
+def draw_cover(current_map, background, cells: Iterable[Tuple[int, int]]) -> None:
+    """
+    Draws over the given cells that are on the other side of the cover from the hero. NES ChkCoveredArea ($A9CD):
+    covered blocks become BLK_SML_TILES (this project's ROOF tile) while the hero is outside, and uncovered blocks
+    become BLK_BLANK while he's inside.
+    """
+    tile_size = current_map.config['TILE_SIZE']
+    roof_image = current_map.map_tiles[current_map.floor_tile_key['ROOF']['val']][0]
+    for row, column in cells:
+        if current_map.is_hidden_by_cover(row, column):
+            if current_map.player_under_cover:
+                background.fill(BLACK, Rect(column * tile_size, row * tile_size, tile_size, tile_size))
+            else:
+                background.blit(roof_image, (column * tile_size, row * tile_size))

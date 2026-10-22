@@ -1111,7 +1111,8 @@ class Game:
                                                                                 self.current_map, offset=2)
         if character.step_destination is None:
             # Start of a step: check it once, then reserve the destination until the character arrives
-            if self.is_impassable(character.next_tile_id) or self.character_in_path(character):
+            if self.is_impassable(character.next_tile_id) or self.character_in_path(character) or (
+                    character is not self.player and self.npc_crosses_cover_boundary(character)):
                 self.movement.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
                 delta_x = delta_y = 0
             else:
@@ -1158,6 +1159,14 @@ class Game:
     def finish_step(character: Player | RoamingCharacter) -> None:
         character.is_moving, character.next_tile_checked = False, False
         character.step_origin = character.step_destination = None
+
+    def npc_crosses_cover_boundary(self, character: Player | RoamingCharacter) -> bool:
+        """NES $B839-$B84F: an NPC can't step into or out of a covered area."""
+        next_coordinates = self.get_next_coordinates(character.column, character.row, character.direction_value)
+        if next_coordinates is None:
+            return False
+        next_column, next_row = next_coordinates
+        return self.current_map.crosses_cover_boundary(character.row, character.column, next_row, next_column)
 
     def get_next_coordinates(self, character_column: int, character_row: int, direction: int) -> tuple | None:
         if character_row < len(self.current_map.layout) and character_column < len(self.current_map.layout[0]):
