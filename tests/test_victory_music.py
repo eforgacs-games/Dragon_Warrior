@@ -102,6 +102,8 @@ class TestVictoryMusic(TestCase):
             self.events.append(('line', text))
         for target in ('show_line_in_dialog_box', 'show_text_in_dialog_box'):
             patch.object(CommandMenu, target, autospec=True, side_effect=record_line).start()
+        patch.object(CommandMenu, 'wait_for_button', autospec=True,
+                     side_effect=lambda _menu, shows_arrow: self.events.append(('button', shows_arrow))).start()
 
         real_play_sound, real_wait_for_music_end = Sound.play_sound, MusicPlayer.wait_for_music_end
 
@@ -160,8 +162,8 @@ class TestVictoryMusic(TestCase):
     # What happened to the music
 
     def music_after(self, events, index):
-        """The music events after events[index], leaving out the text."""
-        return [event for event in events[index + 1:] if event[0] != 'line']
+        """The music events after events[index], leaving out the text and the waits for a button."""
+        return [event for event in events[index + 1:] if event[0] not in ('line', 'button')]
 
     def assert_fanfares_like_the_nes(self, events, levelled_up, enemy_name):
         map_music = basename(self.game.current_map.music_file_path)
@@ -180,11 +182,19 @@ class TestVictoryMusic(TestCase):
                                                  ('load', map_music)], events)
             promoted = next(i for i, event in enumerate(events) if event[0] == 'line' and 'promoted' in event[1])
             self.assertLess(events.index(('load', map_music)), promoted)
+            # TB16E1's leading WAIT: the arrow, after the music and before "Courage and wit"
+            self.assertLess(events.index(('load', map_music)), events.index(('button', True)))
+            self.assertLess(events.index(('button', True)), promoted)
+            self.assertNotIn(('button', False), events)
         else:
             # WaitForMusicEnd, then ResumeMusicTbl: nothing touches the victory music before it has ended
             self.assertEqual(after_victory[:3], [('wait for music end',), ('stop', VICTORY), ('load', map_music)],
                              events)
             self.assertNotIn(('play', LEVEL_UP), events)
+            # The gold line has no WAIT, so it prints while the music plays; ExitFight's button wait comes after
+            gold = next(i for i, event in enumerate(events) if event[0] == 'line' and 'GOLD' in event[1])
+            self.assertLess(gold, events.index(('wait for music end',)))
+            self.assertEqual(events[-1], ('button', False), events)
         # the map music starts once, after the fanfares, and keeps playing
         self.assertEqual(events.count(('load', map_music)), 1, events)
         self.assertEqual(self.music_after(events, -1 - len(events))[-1], ('play', map_music), f"{enemy_name}: {events}")

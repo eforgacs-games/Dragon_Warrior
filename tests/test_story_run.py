@@ -96,6 +96,7 @@ class TestStoryRun(TestCase):
         for target, kwargs in (
                 # The text and yes/no windows wait for a key press
                 ((CommandMenu, 'show_text_line_in_dialog_box'), {'autospec': True, 'side_effect': self.read_text}),
+                ((CommandMenu, 'wait_for_button'), {}),
                 (('data.text.dialog_lookup_table.confirmation_prompt',), {'side_effect': self.answer}),
                 (('src.ending.confirmation_prompt',), {'side_effect': self.answer}),
                 # Drawing, music and pauses
