@@ -35,6 +35,12 @@ LOW_HP_PALETTE_TILES = frozenset((
 
 
 class DragonWarriorMap:
+    # Where the NES map (MapDatTbl, Bank00) is in this layout, which pads it: the layout (row, column) of NES (0, 0)
+    # and the NES map's size in blocks, (columns, rows), i.e. (MapWidth + 1, MapHeight + 1). None if not recorded, in
+    # which case the whole layout counts as the NES map.
+    nes_origin: tuple[int, int] | None = None
+    nes_size: tuple[int, int] | None = None
+
     def __init__(self, layout, config, music_file_path, initial_coordinates, last_map=None, staircases=None):
 
         self.config = config
@@ -149,6 +155,14 @@ class DragonWarriorMap:
                 character_dict['underlying_tile'] = 'BRICK'
         self.tile_key = dict(list(self.floor_tile_key.items()) + list(self.character_key.items()))
         self._tile_key_list = list(self.tile_key.keys())
+
+    def in_nes_map(self, row: int, column: int) -> bool:
+        """Whether a layout (row, column) is inside the NES map (NES ChkNPCMapLimit: 0 <= x <= MapWidth and
+        0 <= y <= MapHeight)."""
+        if self.nes_origin is None or self.nes_size is None:
+            return 0 <= row < len(self.layout) and 0 <= column < len(self.layout[0])
+        (origin_row, origin_column), (columns, rows) = self.nes_origin, self.nes_size
+        return 0 <= column - origin_column < columns and 0 <= row - origin_row < rows
 
     def get_tile_by_value(self, position: int) -> str:
         """Returns the tile name from the integer value associated with it."""
@@ -394,6 +408,9 @@ class TantegelThroneRoom(DragonWarriorMap):
     This is the first map in the game, the Tantegel Castle throne room.
     """
 
+    # NES MAP_THRONEROOM (ThrnRoomDat): NES (x, y) is layout (y + 6, x + 10) here
+    nes_origin, nes_size = (6, 10), (10, 10)
+
     def __init__(self, config):
         super().__init__(MapLayouts().tantegel_throne_room, config,
                          Directories(config).tantegel_castle_throne_room_music, (10, 13),
@@ -427,6 +444,9 @@ class TantegelCourtyard(DragonWarriorMap):
     """
     This is the courtyard of Tantegel Castle.
     """
+
+    # NES MAP_TANTCSTL_GF (TantGFDat): NES (x, y) is layout (y + 7, x + 7) here
+    nes_origin, nes_size = (7, 7), (30, 30)
 
     def __init__(self, config):
         super().__init__(MapLayouts().tantegel_courtyard, config, Directories(config).tantegel_castle_courtyard_music,
@@ -753,6 +773,9 @@ class Alefgard(MapWithoutNPCs):
 
 class Brecconary(DragonWarriorMap):
 
+    # NES MAP_BRECCONARY (BrecconaryDat): NES (x, y) is layout (y + 8, x + 10) here
+    nes_origin, nes_size = (8, 10), (30, 30)
+
     def __init__(self, config):
         super().__init__(MapLayouts().brecconary, config, Directories(config).village_music,
                          (23, 10))
@@ -823,6 +846,9 @@ class Brecconary(DragonWarriorMap):
 
 class Garinham(DragonWarriorMap):
 
+    # NES MAP_GARINHAM (GarinhamDat): NES (x, y) is layout (y + 0, x + 9) here
+    nes_origin, nes_size = (0, 9), (20, 20)
+
     def __init__(self, config):
         super().__init__(MapLayouts().garinham, config, Directories(config).village_music, (14, 9),
                          staircases={
@@ -881,6 +907,9 @@ class Garinham(DragonWarriorMap):
 class Kol(DragonWarriorMap):
     """Kol (NES MAP_KOL). Layout coordinates are the NES ones offset by (row + 8, column + 10)."""
 
+    # NES MAP_KOL (KolDat): NES (x, y) is layout (y + 8, x + 10) here
+    nes_origin, nes_size = (8, 10), (24, 24)
+
     def __init__(self, config):
         super().__init__(MapLayouts().kol, config, Directories(config).village_music, (31, 29))
         # The NES leaves the town from the tiles just outside KolDat's 24 x 24 blocks
@@ -938,6 +967,9 @@ class Kol(DragonWarriorMap):
 
 
 class Rimuldar(DragonWarriorMap):
+
+    # NES MAP_RIMULDAR (RimuldarDat): NES (x, y) is layout (y + 8, x + 8) here
+    nes_origin, nes_size = (8, 8), (30, 30)
 
     def __init__(self, config):
         super().__init__(MapLayouts().rimuldar, config, Directories(config).village_music, (14, 9))
@@ -1015,6 +1047,9 @@ class Hauksness(MapWithoutNPCs):
     loads NPCs for maps MAP_TANTCSTL_GF to MAP_RAINBOW, and there's no Hauksness entry in NPCMobPtrTbl or
     NPCStatPtrTbl."""
 
+    # NES MAP_HAUKSNESS (HauksnessDat): NES (x, y) is layout (y + 8, x + 9) here
+    nes_origin, nes_size = (8, 9), (20, 20)
+
     def __init__(self, config):
         super().__init__(MapLayouts().hauksness, config, Directories(config).dungeon_floor_4_music,
                          (18, 9))
@@ -1032,6 +1067,9 @@ class Hauksness(MapWithoutNPCs):
 
 
 class Cantlin(DragonWarriorMap):
+
+    # NES MAP_CANTLIN (CantlinDat): NES (x, y) is layout (y + 8, x + 0) here
+    nes_origin, nes_size = (8, 0), (30, 30)
 
     def __init__(self, config):
         super().__init__(MapLayouts().cantlin, config, Directories(config).village_music, (8, 15))
