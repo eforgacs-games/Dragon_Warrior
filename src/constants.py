@@ -113,6 +113,15 @@ GWAELIN_SWAMP_CAVE_COORDINATES = (24, 9)
 GWAELINS_LOVE_REPLACEABLE_ITEMS = (
     'Torch', "Dragon's Scale", "Fighter's Ring", 'Fairy Water', 'Wings', 'Cursed Belt', 'Staff of Rain')
 
+# NES ChangeMaps with X = $12 after the final boss falls: the overworld at the Dragonlord's castle entrance
+DRAGONLORD_DEFEATED_DESTINATION = _CHARLOCK_EXIT
+
+# NES CheckForTriggers: after the Dragonlord's defeat, stepping on Tantegel ground floor (10, 8) or (11, 8), just below
+# King Lorik, starts the ending. NES (x, y) on the ground floor is (y + 7, x + 7) here.
+ENDING_TRIGGER_COORDINATES = ((15, 17), (15, 18))
+ENDING_GWAELIN_STAIRS = (14, 14)  # NES GwaelinXPos $C7 / GwaelinYPos $27: (7, 7), the throne room stairs
+ENDING_GWAELIN_BESIDE_KING = (14, 17)  # NES $CA / $47: (10, 7), next to King Lorik at (11, 7)
+
 # NES RepelTimer: REPEL sets it to 255 and Fairy Water to 254; it drops by 2 per step (127 steps either way)
 REPEL_SPELL_TIMER = 255
 FAIRY_WATER_TIMER = 254

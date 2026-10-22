@@ -172,6 +172,10 @@ class Battle:
         mixer.music.stop()
         self.sound.play_sound(self.directories.victory_sfx)
         self.make_enemy_image_disappear(screen)
+        if enemy.name == 'Dragonlord 2':
+            # NES NotDL1Defeated: the final boss gives no experience or gold; the ending takes over from here
+            cmd_menu.game.ending.final_boss_defeated()
+            return
         exp_and_gold = self._("Thy experience increases by {}.\n").format(enemy.xp) + self._(
             "Thy GOLD increases by {}.\n").format(enemy.gold)
         cmd_menu.show_line_in_dialog_box(exp_and_gold, add_quotes=False, disable_sound=True, hide_arrow=True)
@@ -193,11 +197,13 @@ class Battle:
 
     def get_enemy_defeated_string(self, enemy):
         """Get the enemy defeated string based on language."""
+        # NES: both of the Dragonlord's forms are named "Dragonlord"
+        enemy_name = 'Dragonlord' if enemy.name == 'Dragonlord 2' else enemy.name
         if self.config['LANGUAGE'] == 'Korean':
-            ko_enemy_name = self._(enemy.name)
+            ko_enemy_name = self._(enemy_name)
             ko_enemy_name += get_postposition(ko_enemy_name, "을", "를")
             return f"{ko_enemy_name} 물리쳤다!\n"
-        return self._("Thou hast done well in defeating the {}.\n").format(self._(enemy.name))
+        return self._("Thou hast done well in defeating the {}.\n").format(self._(enemy_name))
 
     def check_player_level_up(self, cmd_menu, player, music_enabled):
         """Check if the player levels up."""
