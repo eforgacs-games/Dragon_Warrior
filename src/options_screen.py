@@ -16,25 +16,33 @@ NES flow (Bank03):
 
 What this game adds: a DIALOG STYLE window above the speed window, drawn the same way. CLASSIC is the NES dialog
 window, whose text scrolls up a row at a time (src/dialog_box.py); MODERN is how this game drew dialog before it
-copied the NES: each message on a fresh window, replacing the one before. After the speed is chosen the cursor moves
-to it; B there goes back to the speed.
+copied the NES: each message on a fresh window, replacing the one before. Above that, an NPCS MAKE WAY window:
+ON lets a roaming NPC the hero walks into step aside (Game.ask_npc_to_make_way), OFF (the NES) leaves it in the way.
+After the speed is chosen the cursor moves to the dialog style, then to NPCS MAKE WAY; B goes back a window.
+
+The windows read the joypad like every NES selection window (src/cursor.py SelectionButtons, WndProcessInput): one
+button per press, up and down in a one-column window, left and right in a one-row window, stopping at the edges.
 """
+from dataclasses import dataclass
 from typing import Callable, Iterable, List, Sequence, Tuple
 
-from pygame import K_DOWN, K_UP, K_s, K_w, KEYDOWN, Rect, Surface, display, event
+from pygame import Rect, Surface, display, event
 
 from src.color import BLACK, WHITE
-from src.common import Graphics, accept_keys, reject_keys
+from src.command_window import held_buttons, tapped_buttons
+from src.common import Graphics
 from src.directories import Directories
-from src.cursor import BlinkingCursor, draw_cursor_tile
+from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, BlinkingCursor, SelectionButtons, \
+    draw_cursor_tile, first_button
 from src.sound import Sound
 from src.text import draw_text
-from src.waiting import quit_if_requested
+from src.waiting import quit_if_requested, wait_frames
 from src.windows import ADVENTURE_LOG_WINDOW_2, ITEM_MENU_BORDER, MESSAGE_SPEED_WINDOW, Window, variable_height_window
 
 # The save file keys (CommandMenu.save, Game.load_game): one per adventure log, like the NES MessageSpeed byte
 MESSAGE_SPEED_SAVE_KEY = 'MessageSpeed'
 DIALOG_STYLE_SAVE_KEY = 'DialogStyle'
+NPCS_MAKE_WAY_SAVE_KEY = 'NpcsMakeWay'
 
 # MessageSpeed: #$00-fast, #$01-normal, #$02-slow; the window lists them in that order (WndRow = MessageSpeed)
 MESSAGE_SPEED_NAMES = ('Fast', 'Normal', 'Slow')
@@ -45,6 +53,22 @@ CLASSIC = 'Classic'  # the NES dialog window (src/dialog_box.py), the default
 MODERN = 'Modern'  # each message replaces the last one, as this game drew dialog before it matched the NES
 DIALOG_STYLES = (CLASSIC, MODERN)
 DEFAULT_DIALOG_STYLE = CLASSIC
+
+# NPCS_MAKE_WAY (base_config, #297): on by default; a save without the setting loads as ON
+DEFAULT_NPCS_MAKE_WAY = True
+NPCS_MAKE_WAY_CHOICES = (True, False)  # the window's entries, left to right
+
+
+@dataclass(frozen=True)
+class Options:
+    """The settings kept per adventure log."""
+    message_speed: str = DEFAULT_MESSAGE_SPEED
+    dialog_style: str = DEFAULT_DIALOG_STYLE
+    npcs_make_way: bool = DEFAULT_NPCS_MAKE_WAY
+
+
+# A new quest's settings when none are chosen: NewQuest's MSG_NORMAL, the NES dialog window, and base_config's default
+DEFAULT_OPTIONS = Options()
 
 # MsgSpeedDat ($B194): single spaced, 18 tiles wide. " Which Message", " Speed Do You" and " Want To Use?" on tile rows
 # 1, 3 and 5 (a blank tile, then the text from column 2); FAST, NORMAL and SLOW on rows 8, 10 and 12 after 6 blank
@@ -63,6 +87,14 @@ DIALOG_STYLE_LABELS = ('CLASSIC (NES)', 'MODERN')
 DIALOG_STYLE_FIRST_ROW = 3
 DIALOG_STYLE_TEXT_COLUMN = 3
 DIALOG_STYLE_CURSOR_COLUMN = 2
+
+# The NPCS MAKE WAY window: not on the NES either. Directly above the dialog style window (block rows 0 to 2), the
+# same width; the prompt on row 1 and the two entries side by side on row 3, each with the cursor in the tile before.
+NPCS_MAKE_WAY_WINDOW = Window(MESSAGE_SPEED_WINDOW.x, DIALOG_STYLE_WINDOW.y - 3, MESSAGE_SPEED_WINDOW.width, 3)
+NPCS_MAKE_WAY_PROMPT = ((2, 1, 'NPCs Make Way'),)
+NPCS_MAKE_WAY_LABELS = ('ON', 'OFF (NES)')
+NPCS_MAKE_WAY_ROW = 3
+NPCS_MAKE_WAY_TEXT_COLUMNS = (3, 8)
 
 # LogList1Dat2 ... LogList123Dat2 (see src/adventure_log.py): " ADVENTURE LOG n:" and the first 4 letters of the
 # name; the first line on tile row 2 of the window, one block apart; the cursor in column 1, the text from column 2
@@ -86,32 +118,82 @@ def dialog_style_from_save(save: dict) -> str:
     return style if style in DIALOG_STYLES else DEFAULT_DIALOG_STYLE
 
 
-def apply_options(config: dict, message_speed: str, dialog_style: str) -> None:
-    """Use these settings from now on: the dialog code reads TEXT_SPEED and DIALOG_STYLE for every message."""
-    config['TEXT_SPEED'] = message_speed
-    config['DIALOG_STYLE'] = dialog_style
+def npcs_make_way_from_save(save: dict) -> bool:
+    """The log's NPCS MAKE WAY; a save from before it was kept loads as ON (the default)."""
+    make_way = save.get(NPCS_MAKE_WAY_SAVE_KEY)
+    return make_way if isinstance(make_way, bool) else DEFAULT_NPCS_MAKE_WAY
+
+
+def options_from_save(save: dict) -> Options:
+    return Options(message_speed_from_save(save), dialog_style_from_save(save), npcs_make_way_from_save(save))
+
+
+def options_to_save(options: Options) -> dict:
+    """The save file entries for these settings (CommandMenu.save, Game.change_message_speed)."""
+    return {MESSAGE_SPEED_SAVE_KEY: options.message_speed, DIALOG_STYLE_SAVE_KEY: options.dialog_style,
+            NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way}
+
+
+def options_from_config(config: dict) -> Options:
+    """The settings the running game uses."""
+    return Options(config.get('TEXT_SPEED', DEFAULT_MESSAGE_SPEED), config.get('DIALOG_STYLE', DEFAULT_DIALOG_STYLE),
+                   bool(config.get('NPCS_MAKE_WAY', DEFAULT_NPCS_MAKE_WAY)))
+
+
+def apply_options(config: dict, options: Options) -> None:
+    """Use these settings from now on: the dialog code reads TEXT_SPEED and DIALOG_STYLE for every message, and
+    Game.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump."""
+    config['TEXT_SPEED'] = options.message_speed
+    config['DIALOG_STYLE'] = options.dialog_style
+    config['NPCS_MAKE_WAY'] = options.npcs_make_way
 
 
 class OptionWindow:
     """One selection window: its place, fixed text, entries and where its cursor goes."""
 
     def __init__(self, window: Window, prompt: Iterable[Tuple[int, int, str]], labels: Sequence[str], first_row: int,
-                 text_column: int, cursor_column: int):
+                 text_column: int, cursor_column: int, text_columns: Sequence[int] = ()):
+        """``text_columns``, if given, puts the entries side by side on first_row, starting at these columns (a one-row
+        window, moved through with left and right); otherwise they go down from first_row at text_column."""
         self.window = window
         self.prompt = tuple(prompt)
         self.labels = tuple(labels)
         self.first_row = first_row
         self.text_column = text_column
         self.cursor_column = cursor_column
+        self.text_columns = tuple(text_columns)
+
+    @property
+    def horizontal(self) -> bool:
+        return bool(self.text_columns)
 
     def entry_row(self, index: int) -> int:
-        return self.first_row + ENTRY_SPACING * index
+        return self.first_row if self.horizontal else self.first_row + ENTRY_SPACING * index
+
+    def entry_text_column(self, index: int) -> int:
+        return self.text_columns[index] if self.horizontal else self.text_column
+
+    def entry_cursor_column(self, index: int) -> int:
+        return self.text_columns[index] - 1 if self.horizontal else self.cursor_column
+
+    def move(self, index: int, button: int) -> int:
+        """WndUpPressed, WndDownPressed, WndDoLeftPressed, WndRightPressed: the entry the cursor moves to, which
+        stops at the window's edges (and doesn't move across a one-column window, or up and down a one-row one)."""
+        back, forward = (IN_LEFT, IN_RIGHT) if self.horizontal else (IN_UP, IN_DOWN)
+        if button == back:
+            return max(0, index - 1)
+        if button == forward:
+            return min(len(self.labels) - 1, index + 1)
+        return index
 
 
 MESSAGE_SPEED_OPTIONS = OptionWindow(MESSAGE_SPEED_WINDOW, MESSAGE_SPEED_PROMPT, MESSAGE_SPEED_LABELS,
                                      MESSAGE_SPEED_FIRST_ROW, MESSAGE_SPEED_TEXT_COLUMN, MESSAGE_SPEED_CURSOR_COLUMN)
 DIALOG_STYLE_OPTIONS = OptionWindow(DIALOG_STYLE_WINDOW, DIALOG_STYLE_PROMPT, DIALOG_STYLE_LABELS,
                                     DIALOG_STYLE_FIRST_ROW, DIALOG_STYLE_TEXT_COLUMN, DIALOG_STYLE_CURSOR_COLUMN)
+NPCS_MAKE_WAY_OPTIONS = OptionWindow(NPCS_MAKE_WAY_WINDOW, NPCS_MAKE_WAY_PROMPT, NPCS_MAKE_WAY_LABELS,
+                                     NPCS_MAKE_WAY_ROW, NPCS_MAKE_WAY_TEXT_COLUMNS[0], NPCS_MAKE_WAY_TEXT_COLUMNS[0] - 1,
+                                     text_columns=NPCS_MAKE_WAY_TEXT_COLUMNS)
 
 
 def adventure_log_options(logs: Sequence[Tuple[int, str]]) -> OptionWindow:
@@ -144,28 +226,36 @@ class OptionsScreen:
         index = self.select(0)
         return None if index is None else logs[index][0]
 
-    def choose_options(self, message_speed: str, dialog_style: str) -> Tuple[str, str] | None:
-        """WND_MSG_SPEED, then the dialog style: the chosen (message speed, dialog style), or None if B was pressed in
-        the speed window (WndBackToMain). The cursors start on the current settings (LA93E: WndRow = MessageSpeed)."""
-        speed_index = MESSAGE_SPEED_NAMES.index(message_speed)
-        style_index = DIALOG_STYLES.index(dialog_style)
+    def choose_options(self, current: Options) -> Options | None:
+        """WND_MSG_SPEED, then the dialog style, then NPCS MAKE WAY: the chosen settings, or None if B was pressed in
+        the speed window (WndBackToMain). B in a later window goes back to the one before. The cursors start on the
+        current settings (LA93E: WndRow = MessageSpeed)."""
+        choices = [MESSAGE_SPEED_NAMES.index(current.message_speed), DIALOG_STYLES.index(current.dialog_style),
+                   NPCS_MAKE_WAY_CHOICES.index(current.npcs_make_way)]
+        # chosen in this order; drawn bottom to top in the reverse order, so the speed window is on top
+        steps = (MESSAGE_SPEED_OPTIONS, DIALOG_STYLE_OPTIONS, NPCS_MAKE_WAY_OPTIONS)
         base = list(self.windows)
-        while True:
-            self.windows = base + [(DIALOG_STYLE_OPTIONS, style_index), (MESSAGE_SPEED_OPTIONS, speed_index)]
-            chosen_speed = self.select(len(self.windows) - 1)
-            if chosen_speed is None:
-                self.windows = base
-                return None
-            speed_index = chosen_speed
-            chosen_style = self.select(len(self.windows) - 2)
-            if chosen_style is not None:
-                return MESSAGE_SPEED_NAMES[speed_index], DIALOG_STYLES[chosen_style]
+        step = 0
+        while step < len(steps):
+            self.windows = base + [(steps[i], choices[i]) for i in reversed(range(len(steps)))]
+            chosen = self.select(len(self.windows) - 1 - step)
+            if chosen is None:
+                if step == 0:
+                    self.windows = base
+                    return None
+                step -= 1
+                continue
+            choices[step] = chosen
+            step += 1
+        return Options(MESSAGE_SPEED_NAMES[choices[0]], DIALOG_STYLES[choices[1]], NPCS_MAKE_WAY_CHOICES[choices[2]])
 
     def select(self, active: int) -> int | None:
-        """Moves the cursor of self.windows[active] until A (the entry's index) or B (None), like the NES selection
-        windows (WndDoSelect): up and down stop at the first and last entry."""
+        """WndDoSelect for self.windows[active]: once a frame, read the joypad (SelectionButtons) and handle the
+        first button pressed (WndProcessInput) until A (the entry's index) or B (None)."""
         options, index = self.windows[active]
-        cursor = BlinkingCursor()  # WndInitSelect
+        cursor = BlinkingCursor()
+        buttons = SelectionButtons(cursor)
+        buttons.open(held_buttons())  # WndInitSelect, and the joypad read from scratch
         drawn = None
         while True:
             visible = cursor.visible()
@@ -173,25 +263,24 @@ class OptionsScreen:
                 self.windows[active] = (options, index)
                 self.draw(active, visible)
                 drawn = (index, visible)
-            for current_event in event.get():
+            wait_frames(1)  # WaitForNMI
+            events = event.get()
+            for current_event in events:
                 quit_if_requested(current_event)
-                if current_event.type != KEYDOWN:
-                    continue
-                if current_event.key in accept_keys:
-                    # WndAPressed: the chosen entry's arrow is drawn once more and stays on
-                    cursor.hold()
-                    self.draw(active, True)
-                    self.sound.play_sound(self.directories.menu_button_sfx)
-                    return index
-                if current_event.key in reject_keys:
-                    self.sound.play_sound(self.directories.menu_button_sfx)
-                    return None
-                if current_event.key in (K_UP, K_w) and index > 0:
-                    index -= 1
-                    cursor.restart()  # WndUpdateCrsrPos
-                elif current_event.key in (K_DOWN, K_s) and index < len(options.labels) - 1:
-                    index += 1
-                    cursor.restart()
+            button = first_button(buttons.read(held_buttons(), tapped_buttons(events)))
+            if not button:
+                continue
+            buttons.handled(button)  # STA WndBtnRetrig
+            if button in (IN_A, IN_B):
+                # WndAPressed, WndBPressed: the arrow is drawn once more and stays on
+                cursor.hold()
+                self.draw(active, True)
+                self.sound.play_sound(self.directories.menu_button_sfx)
+                return index if button == IN_A else None
+            moved_to = options.move(index, button)
+            if moved_to != index:
+                index = moved_to
+                buttons.moved()  # WndUpdateCrsrPos
 
     def draw(self, active: int, cursor_visible: bool) -> None:
         """The background, then each window with its text and cursor; only the active window's cursor blinks."""
@@ -214,10 +303,10 @@ class OptionsScreen:
         for column, row, text in options.prompt:
             draw(text, column, row)
         for entry, label in enumerate(options.labels):
-            draw(label, options.text_column, options.entry_row(entry))
+            draw(label, options.entry_text_column(entry), options.entry_row(entry))
         if show_cursor:
             nes_tile = self.config['TILE_SIZE'] // 2
-            draw_cursor_tile(self.screen, (x * 2 + options.cursor_column) * nes_tile,
+            draw_cursor_tile(self.screen, (x * 2 + options.entry_cursor_column(index)) * nes_tile,
                              (y * 2 + options.entry_row(index)) * nes_tile, self.config['TILE_SIZE'] // 16, WHITE)
 
     def text_drawer(self, window: Window) -> Callable[[str, int, int], None]:
