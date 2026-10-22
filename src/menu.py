@@ -6,7 +6,7 @@ from os.path import join
 from src.spells import Spell
 from typing import Any, Callable, Collection, Iterable, Tuple, List
 
-from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, mixer, transform
+from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, transform
 from pygame.sprite import Group
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
@@ -829,41 +829,49 @@ class CommandMenu(Menu):
         self.player.inventory.remove("Fairy Water")
         self.game.repel_timer = FAIRY_WATER_TIMER
 
+    def resume_music(self):
+        """After a music clip: in a fight, the fight's music again (the end boss music against the Dragonlord's final
+        form, ChkUseFlute and ChkUseHarp); on the map, the map's music (ResumeMusicTbl). Both start from the
+        beginning."""
+        if self.current_battle is not None:
+            self.current_battle.play_battle_music()
+        else:
+            self.game.music_player.load_and_play_music(self.current_map.music_file_path)
+
     def silver_harp(self):
         # NES ChkHarp: the harp tune plays to the end, then on the overworld a fight starts (InitFight, so REPEL and
         # Fairy Water don't stop it, and it still works after the Dragonlord is dead). Anywhere else the map music
         # resumes and nothing happens. The harp is never used up.
         self.show_text_in_dialog_box(self._("{} played a sweet melody on the harp.").format(self.player.name),
                                      skip_text=self.skip_text)
-        mixer.music.stop()
         self.game.game_state.pause_all_movement()
-        self.sound.play_sound(self.directories.harp_sfx)
+        self.game.music_player.play_until_end(self.directories.harp_music, self.game.game_state.config)
         self.game.game_state.unpause_all_movement()
         if self.current_map.identifier == 'Alefgard':
             self.game.battle_ctrl.queue_scripted_battle(random.choice(SILVER_HARP_ENEMIES))
             return
-        mixer.music.play(-1)
+        self.resume_music()  # HarpFail: ResumeMusicTbl
         self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
 
     def silver_harp_in_battle(self):
-        # NES ChkUseHarp: the harp tune plays, the fight music comes back, and the enemy only looks happy
+        # NES ChkUseHarp: the harp tune plays to the end (WaitForMusicEnd), the fight music comes back, and the enemy
+        # only looks happy
         self.show_battle_line(self._("{} played a sweet melody on the harp.").format(self.player.name))
-        mixer.music.stop()
-        self.sound.play_sound(self.directories.harp_sfx)
-        mixer.music.play(-1)
+        self.game.music_player.play_until_end(self.directories.harp_music, self.game.game_state.config)
+        self.resume_music()
         self.show_battle_line(self._("The {} looks happy.").format(self._(self.current_battle.enemy.name)))
 
     def fairy_flute(self):
-        # NES ChkFryFlt (field) / ChkUseFlute (battle): play the flute tune, then resume the map or battle music
+        # NES ChkFryFlt (field) / ChkUseFlute (battle): play the flute tune to the end (WaitForMusicEnd), then resume
+        # the map or battle music
         in_battle = self.current_battle is not None
         say = self.show_battle_line if in_battle else functools.partial(self.show_text_in_dialog_box,
                                                                         skip_text=self.skip_text)
         say(self._("{} blew the Fairies' Flute.").format(self.player.name))
-        mixer.music.stop()
         self.game.game_state.pause_all_movement()
-        self.sound.play_sound(self.directories.flute_sfx)
+        self.game.music_player.play_until_end(self.directories.flute_music, self.game.game_state.config)
         self.game.game_state.unpause_all_movement()
-        mixer.music.play(-1)
+        self.resume_music()
         if in_battle and self.current_battle.enemy.name == 'Golem':
             # NES ChkUseFlute: the Golem always falls asleep and loses its turn (jumps to EnStillAsleep)
             enemy = self.current_battle.enemy
@@ -933,8 +941,14 @@ class CommandMenu(Menu):
             text = self._("{} put on the {} and was cursed!\nThy body is being squeezed.").format(
                 self.player.name, self._(item_name))
         self.item_message(text)
-        # NES PlayCursedMusic: MSC_CURSED plays either way
-        self.sound.play_sound(self.directories.cursed_sfx)
+        # NES PlayCursedMusic: MSC_CURSED plays to the end either way (WaitForMusicEnd). Then ChkBelt and ChkNecklace
+        # resume the map's music (ResumeMusicTbl), and in a fight ChkUseBelt and ChkUseNecklace start MSC_REG_FGHT,
+        # the regular fight music even against the Dragonlord's final form.
+        self.game.music_player.play_until_end(self.directories.cursed_music, self.game.game_state.config)
+        if self.current_battle is not None:
+            self.game.music_player.load_and_play_music(self.directories.battle_music)
+        else:
+            self.resume_music()
 
     def gwaelins_love(self):
         self.show_text_in_dialog_box(f"Heed my voice, '{self.player.name}, for this is Gwaelin. "

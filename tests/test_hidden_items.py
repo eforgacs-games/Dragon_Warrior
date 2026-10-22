@@ -105,7 +105,7 @@ class TestHiddenItems(TestCase):
         fairy_flute.assert_called_once()
 
     def play_flute(self):
-        with patch('src.menu.mixer'), \
+        with patch('src.music_player.mixer'), \
                 patch.object(self.cmd_menu, 'show_line_in_dialog_box') as show_line, \
                 patch.object(self.cmd_menu, 'show_text_in_dialog_box') as show_text:
             self.cmd_menu.fairy_flute()

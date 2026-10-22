@@ -40,9 +40,9 @@ class TestCurses(TestCase):
 
     def use(self, item_function):
         with patch('src.menu.CommandMenu.show_text_in_dialog_box') as show_text, \
-                patch.object(self.game.cmd_menu.sound, 'play_sound') as play_sound:
+                patch.object(self.game.music_player, 'play_until_end') as play_until_end:
             getattr(self.game.cmd_menu, item_function)()
-        return [c.args[0] for c in show_text.call_args_list], [c.args[0] for c in play_sound.call_args_list]
+        return [c.args[0] for c in show_text.call_args_list], [c.args[0] for c in play_until_end.call_args_list]
 
     def go_to(self, map_name, coordinates):
         self.game.change_map(map_lookup[map_name](self.game.config), destination_coordinates=coordinates)
@@ -78,7 +78,7 @@ class TestCurses(TestCase):
         self.player.inventory = ["Cursed Belt"]
         lines, sounds = self.use('cursed_belt')
         self.assertEqual(lines, ["Edward put on the Cursed Belt and was cursed!\nThy body is being squeezed."])
-        self.assertIn(self.game.directories.cursed_sfx, sounds)
+        self.assertIn(self.game.directories.cursed_music, sounds)
         self.assertTrue(self.player.wearing_cursed_belt)
         self.assertTrue(self.player.is_cursed)
         # NES WearCursedItem doesn't use the item up
@@ -86,7 +86,7 @@ class TestCurses(TestCase):
 
         lines, sounds = self.use('cursed_belt')
         self.assertEqual(lines, ["The Cursed Belt is squeezing thy body."])
-        self.assertIn(self.game.directories.cursed_sfx, sounds)
+        self.assertIn(self.game.directories.cursed_music, sounds)
 
     def test_death_necklace_puts_it_on_and_curses(self):
         self.player.inventory = ["Death Necklace"]

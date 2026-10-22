@@ -78,8 +78,9 @@ class TestBattleMethods(unittest.TestCase):
         enemy = Mock(xp=1, gold=2)
         enemy.name = 'Slime'
         with patch.object(self.battle, 'make_enemy_image_disappear', side_effect=lambda screen: events.append('erase')), \
-                patch.object(self.battle.sound, 'play_sound', side_effect=lambda sound: events.append('victory')), \
-                patch('src.battle.mixer'), patch.object(self.battle, 'check_player_level_up'):
+                patch.object(self.battle, 'check_player_level_up'):
+            cmd_menu.game.music_player.play_clip.side_effect = lambda path: events.append(
+                'victory' if path == self.battle.directories.victory_music else path)
             self.battle.enemy_defeated(cmd_menu, Mock(), player, True, enemy)
         done_well = self.battle.get_enemy_defeated_string(enemy).split('\n')[0]
         self.assertEqual(events[:3], [(done_well, True), 'erase', 'victory'])
