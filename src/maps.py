@@ -566,13 +566,16 @@ class CharlockB6(BasementWithoutNPCs, CaveMap):
 
 
 class CharlockB7Wide(BasementWithoutNPCs, CaveMap):
-    """A wide hallway right before the last level of Charlock Castle."""
+    """A wide hallway right before the last level of Charlock Castle.
+
+    The lower corridor of NES MAP_DLCSTL_SL6: layout coordinates are the NES ones + (-1, 3)."""
 
     def __init__(self, config):
         super().__init__(MapLayouts().charlock_b7_wide, config, Directories(config).dungeon_floor_7_music, (5, 3),
                          staircases={
                              (5, 3): {'map': 'CharlockB6', 'destination_coordinates': (3, 3)},  # T
-                             (5, 12): {'map': 'CharlockB8'}  # U
+                             # NES MapEntryTbl/MapTargetTbl: DL castle SL6(9,6) -> DL castle BF(10,29)
+                             (5, 12): {'map': 'CharlockB8', 'destination_coordinates': (33, 16)}  # U
                          })
         self.assign_stair_directions()
 
@@ -584,17 +587,22 @@ class CharlockB7Narrow(BasementWithoutNPCs, CaveMap):
         super().__init__(MapLayouts().charlock_b7_narrow, config, Directories(config).dungeon_floor_7_music, (3, 3),
                          staircases={
                              (3, 3): {'map': 'CharlockB6', 'destination_coordinates': (8, 8)},
+                             # NES MapEntryTbl: DL castle SL6(9,0) -> DL castle SL6(0,0), a one-way loop (going up
+                             # from SL6(0,0) finds its earlier MapTargetTbl entry, back to SL5(5,5))
                              (3, 12): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)}
                          })
         self.assign_stair_directions()
 
 
 class CharlockB8(DragonWarriorMap):
-    """Deepest level of Charlock Castle, and location of the Dragonlord."""
+    """Deepest level of Charlock Castle, and location of the Dragonlord (NES MAP_DLCSTL_BF).
+
+    Layout coordinates are the NES ones offset by (row + 4, column + 6)."""
 
     def __init__(self, config):
         super().__init__(MapLayouts().charlock_b8, config, Directories(config).dungeon_floor_8_music,
                          (33, 16), staircases={
+                # NES MapTargetTbl/MapEntryTbl: DL castle BF(10,29) -> DL castle SL6(9,6)
                 (33, 16): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 12)}})
         self.npc_coordinates = {
             (28, 22): 'DRAGONLORD',
