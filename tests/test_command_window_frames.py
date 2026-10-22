@@ -7,7 +7,7 @@ stayed black behind the dialog.
 """
 import os
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pygame
 from pygame import KEYDOWN, KEYUP, K_k
@@ -78,8 +78,11 @@ class TestCommandWindowFrames(TestCase):
     def open_command_window(self) -> None:
         for _ in range(3):
             self.frame()
-        # Everyone is already on a tile, so the window opens on the very frame K is pressed (resolve_pending_freezes)
-        with patch.object(self.game, 'everyone_on_a_tile', return_value=True):
+        # Everyone is already on a tile, between two NPC turns (#289), so the window opens on the very frame K is
+        # pressed (resolve_pending_freezes)
+        with patch.object(self.game, 'everyone_on_a_tile', return_value=True), \
+                patch.object(type(self.game.npc_schedule), 'between_turns', new_callable=PropertyMock,
+                             return_value=True):
             self.press_k()
             self.assertTrue(self.game.cmd_menu.menu.is_enabled())
             for _ in range(3):

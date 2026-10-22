@@ -220,8 +220,14 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.stand_still(5)
         before = self.hero_xy()
         self.frames(3, held=(K_LEFT,))
-        self.frame(keydown(K_i), held=(K_LEFT,))
+        self.frame(keydown(K_i), held=(K_LEFT,))  # FrameCounter 9
+        # NES PausePrepLoop keeps calling DoSprites until FrameCounter & $0F is 1, the start of the NPCs' next turn,
+        # and the hero doesn't step in the meantime
+        for _ in range(STEP_SYNC_FRAMES - 9):
+            self.assertFalse(self.game.paused)
+            self.frame(held=(K_LEFT,))
         self.assertTrue(self.game.paused)
+        self.assertEqual(before, self.hero_xy())
         self.frames(STEP_SYNC_FRAMES * 2, held=(K_LEFT,))
         self.assertEqual(before, self.hero_xy())
         # NES: unpausing ends with JMP JoypadCheckLoop, so FrameCounter is 0 and a held direction steps at once
