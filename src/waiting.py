@@ -5,11 +5,11 @@ window's X does nothing until the wait is over, and code that clears the queue a
 These helpers only look for a ``QUIT`` event while they wait: every other event stays queued, exactly as it would
 during ``time.wait``, so a caller that used to drop them (``event.clear()``) still has to do that itself.
 
-It also keeps the game speed (keys 1 to 4, a modern convenience, not NES behavior). At speed N the game runs N times
-as fast: ``wait`` waits 1/N of the time, and ``game_ticks`` (the clock every timer in the game reads) runs N times as
-fast as ``pygame.time.get_ticks``. Only timing changes: nothing that decides an outcome reads the speed. Sounds and music
-play at their normal pitch and length, so a wait that lets a sound finish (the death music, the level-up fanfare) is
-shortened too, and the sound just carries on over whatever comes next.
+It also keeps the game speed (keys 1 to 4: 1x, 2x, 4x or 8x, a modern convenience, not NES behavior). At speed N the
+game runs N times as fast: ``wait`` waits 1/N of the time, and ``game_ticks`` (the clock every timer in the game
+reads) runs N times as fast as ``pygame.time.get_ticks``. Only timing changes: nothing that decides an outcome reads
+the speed. Sounds and music play at their normal pitch and length, so a wait that lets a sound finish (the death
+music, the level-up fanfare) is shortened too, and the sound just carries on over whatever comes next.
 
 This module imports nothing from ``src``, so any module can use it without an import cycle.
 """
@@ -21,17 +21,18 @@ from pygame import K_1, K_2, K_3, K_4, KEYDOWN, QUIT, display, event, key, quit 
 
 NES_FPS = 60
 POLL_INTERVAL_MS = 16  # about one frame: how often the queue is checked for QUIT during a wait
-SPEED_KEYS = {K_1: 1, K_2: 2, K_3: 3, K_4: 4}  # the speed each key sets: 1x to 4x
+SPEED_KEYS = {K_1: 1, K_2: 2, K_3: 4, K_4: 8}  # the speed each key sets: 1x, 2x, 4x, 8x
 
 _speed = 1
 # game_ticks() == _game_anchor + (get_ticks() - _real_anchor) * _speed, re-anchored on every speed change, so the game
 # clock never jumps: it only starts running faster or slower from that moment on.
 _real_anchor = 0
 _game_anchor = 0
+_rounding_carry = 0.0  # real milliseconds that rounding waits to whole milliseconds has left over (see _whole_real_ms)
 
 
 def game_speed() -> int:
-    """The current game speed: 1 (normal) to 4 (four times as fast)."""
+    """The current game speed: 1 (normal), 2, 4 or 8 (eight times as fast)."""
     return _speed
 
 
@@ -43,7 +44,7 @@ def game_ticks() -> int:
 
 
 def set_game_speed(speed: int) -> bool:
-    """Set the game speed (1 to 4). Returns whether it changed."""
+    """Set the game speed (a factor: 1, 2, 4 or 8). Returns whether it changed."""
     global _speed, _real_anchor, _game_anchor
     if speed == _speed:
         return False
@@ -56,16 +57,27 @@ def set_game_speed(speed: int) -> bool:
 
 def reset_game_speed() -> None:
     """Back to speed 1 with ``game_ticks() == get_ticks()`` (a new game, or a test): the game clock may jump."""
-    global _speed, _real_anchor, _game_anchor
-    _speed, _real_anchor, _game_anchor = 1, 0, 0
+    global _speed, _real_anchor, _game_anchor, _rounding_carry
+    _speed, _real_anchor, _game_anchor, _rounding_carry = 1, 0, 0, 0.0
+
+
+def _whole_real_ms(real_milliseconds: float) -> int:
+    """Round to the whole milliseconds pygame can sleep, carrying the rounding error over to the next call. At 8x a
+    frame is 2.08 ms and a fade step 0.625 ms, so rounding each one on its own would make a battle about 20% too slow
+    (or too fast); with the carry, many short waits add up to the right total (0.625 ms: 1, 0, 1, 1, 0, ...)."""
+    global _rounding_carry
+    exact = real_milliseconds + _rounding_carry
+    whole = max(0, round(exact))
+    _rounding_carry = exact - whole
+    return whole
 
 
 def scaled_ms(milliseconds: float) -> int:
-    """How many real milliseconds ``milliseconds`` of game time take at the current speed (at least 1 if positive),
-    for the few places that call ``pygame.time`` directly."""
+    """How many real milliseconds ``milliseconds`` of game time take at the current speed, for the few places that
+    call ``pygame.time`` directly. Rounded with a carry (``_whole_real_ms``), so a short one may be 0."""
     if milliseconds <= 0:
         return 0
-    return max(1, round(milliseconds / _speed))
+    return _whole_real_ms(milliseconds / _speed)
 
 
 def handle_speed_key(current_event: event.Event) -> bool:
@@ -83,7 +95,7 @@ def get_events(*args, **kwargs) -> list[event.Event]:
 
 
 def poll_speed_keys() -> None:
-    """Set the game speed from 1 to 4 while it's held. Reads the key state, not the queue, so nothing is taken off
+    """Set the game speed while one of the keys 1 to 4 is held. Reads the key state, not the queue, so nothing is taken off
     it: used during waits, which leave the queue alone."""
     pressed = key.get_pressed()
     for speed_key, speed in SPEED_KEYS.items():
@@ -133,9 +145,11 @@ def wait(milliseconds: float, config: dict | None = None) -> None:
         if remaining <= 0:
             return
         speed = _speed
-        slice_ms = max(1, int(min(remaining / speed, POLL_INTERVAL_MS)))
-        time.wait(slice_ms)
-        slept += slice_ms * speed
+        real_slice = min(remaining / speed, POLL_INTERVAL_MS)
+        slice_ms = _whole_real_ms(real_slice)  # what rounding leaves over is carried to the next slice or wait
+        if slice_ms:
+            time.wait(slice_ms)
+        slept += real_slice * speed
 
 
 def wait_frames(frames: float, config: dict | None = None, fps: float = NES_FPS) -> None:
