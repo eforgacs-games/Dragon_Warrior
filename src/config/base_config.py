@@ -17,6 +17,7 @@ base_config = {
     "SPLASH_SCREEN_ENABLED": True,
     "INITIAL_DIALOG_ENABLED": True,
     "FORCE_BATTLE": False,
+    "FORCE_ENEMY": None,  # e.g. "Metal Slime"; overrides the random enemy for the zone
     "NO_BATTLES": False,
     "ORCHESTRA_MUSIC_ENABLED": True,
     "SHOW_FPS": False,
