@@ -140,6 +140,9 @@ class MapManager:
                 self.game.allow_save_prompt = True
         self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
         self.apply_rainbow_bridge()
+        if isinstance(self.current_map, maps.CharlockB1) and self.game.charlock_stairs_revealed:
+            # NES GetBlockID: once F_PSG_FOUND is set, the block behind the throne reads as stairs down for good
+            self.current_map.reveal_hidden_staircase()
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         self.set_big_map()
         self.set_roaming_character_positions()
