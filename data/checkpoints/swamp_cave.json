@@ -1,0 +1,47 @@
+{
+    "Name": "Erdrick",
+    "Experience": 4000,
+    "Gold": 900,
+    "Weapon": "Hand Axe",
+    "Armor": "Half Plate",
+    "Shield": "Large Shield",
+    "WearingDragonScale": false,
+    "WearingFightersRing": false,
+    "WearingCursedBelt": false,
+    "WearingDeathNecklace": false,
+    "Inventory": [
+        "Magic Key",
+        "Magic Key",
+        "Herb",
+        "Herb",
+        "Herb",
+        "Herb",
+        "Torch",
+        "Wings",
+        "Stones of Sunlight",
+        "Silver Harp"
+    ],
+    "Spells": [
+        "HEAL",
+        "HURT",
+        "SLEEP",
+        "RADIANT",
+        "STOPSPELL",
+        "OUTSIDE"
+    ],
+    "CurrentMap": "Alefgard",
+    "PlayerRow": 56,
+    "PlayerColumn": 110,
+    "StoryFlags": {
+        "charlock_stairs_revealed": false,
+        "rainbow_bridge_built": false,
+        "carrying_gwaelin": false,
+        "gwaelin_returned": false,
+        "death_necklace_found": false,
+        "left_throne_room": true,
+        "golem_defeated": false,
+        "dragonlord_defeated": false,
+        "green_dragon_defeated": false
+    },
+    "Facing": "RIGHT"
+}

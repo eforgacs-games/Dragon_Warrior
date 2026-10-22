@@ -1,0 +1,41 @@
+{
+    "Name": "Erdrick",
+    "Experience": 800,
+    "Gold": 350,
+    "Weapon": "Copper Sword",
+    "Armor": "Leather Armor",
+    "Shield": "Small Shield",
+    "WearingDragonScale": false,
+    "WearingFightersRing": false,
+    "WearingCursedBelt": false,
+    "WearingDeathNecklace": false,
+    "Inventory": [
+        "Magic Key",
+        "Magic Key",
+        "Herb",
+        "Herb",
+        "Herb",
+        "Torch",
+        "Stones of Sunlight"
+    ],
+    "Spells": [
+        "HEAL",
+        "HURT",
+        "SLEEP"
+    ],
+    "CurrentMap": "Garinham",
+    "PlayerRow": 1,
+    "PlayerColumn": 28,
+    "StoryFlags": {
+        "charlock_stairs_revealed": false,
+        "rainbow_bridge_built": false,
+        "carrying_gwaelin": false,
+        "gwaelin_returned": false,
+        "death_necklace_found": false,
+        "left_throne_room": true,
+        "golem_defeated": false,
+        "dragonlord_defeated": false,
+        "green_dragon_defeated": false
+    },
+    "Facing": "UP"
+}

@@ -1,0 +1,51 @@
+{
+    "Name": "Erdrick",
+    "Experience": 13000,
+    "Gold": 2500,
+    "Weapon": "Broad Sword",
+    "Armor": "Full Plate",
+    "Shield": "Large Shield",
+    "WearingDragonScale": false,
+    "WearingFightersRing": false,
+    "WearingCursedBelt": false,
+    "WearingDeathNecklace": false,
+    "Inventory": [
+        "Magic Key",
+        "Magic Key",
+        "Herb",
+        "Herb",
+        "Herb",
+        "Herb",
+        "Herb",
+        "Wings",
+        "Gwaelin's Love",
+        "Stones of Sunlight",
+        "Staff of Rain",
+        "Erdrick's Token"
+    ],
+    "Spells": [
+        "HEAL",
+        "HURT",
+        "SLEEP",
+        "RADIANT",
+        "STOPSPELL",
+        "OUTSIDE",
+        "RETURN",
+        "REPEL"
+    ],
+    "CurrentMap": "MagicTemple",
+    "PlayerRow": 7,
+    "PlayerColumn": 5,
+    "StoryFlags": {
+        "charlock_stairs_revealed": false,
+        "rainbow_bridge_built": false,
+        "carrying_gwaelin": false,
+        "gwaelin_returned": true,
+        "death_necklace_found": false,
+        "left_throne_room": true,
+        "golem_defeated": false,
+        "dragonlord_defeated": false,
+        "green_dragon_defeated": true
+    },
+    "Facing": "RIGHT"
+}
