@@ -268,6 +268,26 @@ class TestRunBattle(unittest.TestCase):
             self.controller.run_battle(['Slime'])
         self.assertEqual(seen, [(False, 0, False)])
 
+    def test_repel_avoids_weak_enemies_on_the_overworld(self, mock_battle_class):
+        # Slime repel value 5: repelled when 5 - defense // 2 <= 5 // 2, i.e. defense >= 6
+        self.game.repel_timer = 255
+        self.game.current_map.identifier = 'Alefgard'
+        for defense, repelled in ((5, False), (6, True)):
+            with self.subTest(defense=defense):
+                self.game.player.defense_power = defense
+                self.assertEqual(self.controller.is_repelled('Slime'), repelled)
+        self.controller.run_battle(['Slime'])
+        mock_battle_class.assert_not_called()
+
+    def test_repel_only_works_on_the_overworld_while_active(self, mock_battle_class):
+        self.game.player.defense_power = 100
+        self.game.current_map.identifier = 'SwampCave'
+        self.game.repel_timer = 255
+        self.assertFalse(self.controller.is_repelled('Slime'))
+        self.game.current_map.identifier = 'Alefgard'
+        self.game.repel_timer = 0
+        self.assertFalse(self.controller.is_repelled('Slime'))
+
     def test_running_away_skips_victory(self, mock_battle_class):
         battle = mock_battle_class.return_value
         battle.enemy.hp = 3
