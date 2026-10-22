@@ -23,8 +23,8 @@ from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_pric
 from src.sound import Sound
 from src.story_flags import StoryFlags
 from src.text import draw_text
-from src.windows import BUY_SELL_WINDOW, COMMAND_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, \
-    SHOP_COST_RIGHT_TILE_COLUMN, SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
+from src.windows import BUY_SELL_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, SHOP_COST_RIGHT_TILE_COLUMN, \
+    SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
 from src.visual_effects import fade, flash_transparent_color, greyscale_screen
 from src.waiting import wait, wait_frames
 
@@ -836,11 +836,14 @@ class DialogLookup:
                     elif current_event.key in reject_keys:
                         # WndBPressed: the arrow is drawn once more and stays on
                         draw(True)
+                        # NES WindowSequence (Bank01): a selection window is removed once it's answered or cancelled
+                        self.command_menu.remove_window(window)
                         return None
                     elif current_event.key in accept_keys:
                         # WndAPressed: the chosen entry's arrow is drawn once more and stays on
                         draw(True)
                         self.sound.play_sound(self.directories.menu_button_sfx)
+                        self.command_menu.remove_window(window)
                         return current_index
                 elif current_event.type == QUIT:
                     quit()
@@ -1193,16 +1196,15 @@ class DialogLookup:
             mixer.music.play(-1)
         game.load_window_palette()
         if not config['NO_BLIT']:
-            tile_size = config['TILE_SIZE']
-            game.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
-            draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row, self.config)
+            background = game.drawer.background
+            game.drawer.draw_all_tiles_in_current_map(self.current_map, background)
+            draw_player_sprites(self.current_map, background, self.player.column, self.player.row, self.config)
             for character, character_dict in self.current_map.characters.items():
                 if character != 'HERO':
-                    draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1],
+                    draw_character_sprites(self.current_map, background, character_dict['coordinates'][1],
                                            character_dict['coordinates'][0], self.config, character)
-            self.screen.blit(self.background, game.camera.pos)
-            self.screen.blit(self.command_menu.command_menu_surface, (tile_size * COMMAND_WINDOW.x,
-                                                                      tile_size * COMMAND_WINDOW.y))
+            self.screen.blit(background, game.camera.pos)
+            self.command_menu.redraw_command_window()
         self.command_menu.draw_dialog_window()
         self.command_menu.show_popup_window()
         fade(fade_out=False, screen=self.screen, config=self.config)

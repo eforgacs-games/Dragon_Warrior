@@ -1,5 +1,6 @@
 """The pop-up status window (name, level, HP, MP, gold, experience) is redrawn when the NES redraws it: Dowindow WND_POPUP
 right after a dialog event changes what it shows (Bank03)."""
+import hashlib
 import os
 from unittest import TestCase
 from unittest.mock import patch
@@ -18,6 +19,11 @@ from src.maps import Brecconary  # noqa: E402
 from src.windows import POPUP_WINDOW  # noqa: E402
 
 INN_COST = 6
+
+
+def digest(surface) -> str:
+    """A short stand-in for a surface's pixels, so a failed comparison doesn't diff megabytes."""
+    return hashlib.sha1(pygame.image.tobytes(surface, 'RGB')).hexdigest()
 
 
 class PopupWindowTestCase(TestCase):
@@ -99,7 +105,6 @@ class TestInnStay(PopupWindowTestCase):
         ])
         self.assertTrue(self.game.drawer.display_hovering_stats)
 
-
     def test_fade_in_shows_the_restored_popup_and_the_open_dialog_window(self):
         """Draw the stay for real and look at the screen PalFadeIn starts from: the pop-up must be exactly the white
         pop-up with the full HP and MP, and the dialog window must still hold "Good night."."""
@@ -115,7 +120,7 @@ class TestInnStay(PopupWindowTestCase):
 
         def fade(fade_out, **_kwargs):
             if not fade_out:
-                seen['popup'] = pygame.image.tobytes(screen.subsurface(popup_rect), 'RGB')
+                seen['popup'] = digest(screen.subsurface(popup_rect))
                 seen['dialog'] = [''.join(row).strip() for row in self.cmd_menu.dialog_buffer.rows if ''.join(row).strip()]
 
         patch('data.text.dialog_lookup_table.fade', side_effect=fade).start()
@@ -124,7 +129,7 @@ class TestInnStay(PopupWindowTestCase):
         self.assertEqual((self.player.current_hp, self.player.current_mp, self.player.gold), (15, 10, 100 - INN_COST))
         expected = pygame.Surface(screen.get_size())
         Drawer.draw_hovering_stats_window(self.game.drawer, expected, self.player, WHITE)
-        self.assertEqual(seen['popup'], pygame.image.tobytes(expected.subsurface(popup_rect), 'RGB'))
+        self.assertEqual(seen['popup'], digest(expected.subsurface(popup_rect)))
         self.assertIn("`Good night.’", seen['dialog'])
 
 
