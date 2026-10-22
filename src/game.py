@@ -7,7 +7,7 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
-    K_u, K_w, QUIT, RESIZABLE, Surface, display, event, image, init, key, quit, K_F1, K_F2, K_F3, K_F4, K_F11, time, KEYDOWN, SCALED, \
+    K_u, K_w, QUIT, RESIZABLE, display, event, image, init, key, quit, K_F1, K_F2, K_F3, K_F4, K_F11, time, KEYDOWN, SCALED, \
     K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
@@ -21,7 +21,7 @@ from src import maps
 from src.battle import Battle
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
-from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
+from src.common import reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config.dev_config import dev_config
@@ -353,11 +353,13 @@ class Game:
         if not self.last_coordinates:
             self.last_coordinates = self.player.column, self.player.row
             print(f"Current coordinates: {self.player.column, self.player.row}")
-            # print(f"Distance from Tantegel Castle: {self.calculation.get_distance_from_tantegel(self.player.column, self.player.row)}")
+            # print("Distance from Tantegel Castle:",
+            #       self.calculation.get_distance_from_tantegel(self.player.column, self.player.row))
         else:
             if self.last_coordinates != (self.player.column, self.player.row):
                 print(f"Current coordinates: {self.player.column, self.player.row}")
-                # print(f"Distance from Tantegel Castle: {self.calculation.get_distance_from_tantegel(self.player.column, self.player.row)}")
+                # print("Distance from Tantegel Castle:",
+                #       self.calculation.get_distance_from_tantegel(self.player.column, self.player.row))
                 self.last_coordinates = self.player.column, self.player.row
 
     def _handle_post_move_checks(self) -> None:

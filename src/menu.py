@@ -5,7 +5,7 @@ from collections import Counter
 from os.path import join
 
 from src.spells import Spell
-from typing import Any, Callable, Tuple, List
+from typing import Any, Tuple, List
 
 import pygame_menu
 from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, mixer
@@ -305,8 +305,8 @@ class CommandMenu(Menu):
         camera_screen_rect = Rect(self.player.rect.x - tile_size * 8, self.player.rect.y - tile_size * 7,
                                   self.screen.get_width(), self.screen.get_height())
         if not self.current_map.is_dark:
-            # if the map is dark, drawing all the tiles to the screen basically creates an exploit that shows the map tiles lit up,
-            # even without a torch or radiant
+            # if the map is dark, drawing all the tiles to the screen basically creates an exploit that shows the map
+            # tiles lit up, even without a torch or radiant
             # might be good to revisit this later with just a black background?
             group_to_draw: Group = Group()
             for tile, tile_dict in self.current_map.floor_tile_key.items():
@@ -491,10 +491,11 @@ class CommandMenu(Menu):
 
     def gwaelins_love(self):
         self.show_text_in_dialog_box(f"Heed my voice, '{self.player.name}, for this is Gwaelin. "
-                                     f"To reach the next level thou must raise thy Experience Points by {self.player.points_to_next_level}. "
+                                     "To reach the next level thou must raise thy Experience Points by "
+                                     f"{self.player.points_to_next_level}. "
                                      f"My hope is with thee.'")
         if self.current_map.identifier == 'Alefgard':
-            distance_string = f"From where thou art now, my castle lies..\n"
+            distance_string = "From where thou art now, my castle lies..\n"
             east_west_distance, north_south_distance = self.calculation.get_distance_from_tantegel(self.player.column,
                                                                                                    self.player.row)
             if north_south_distance < 0:
@@ -694,7 +695,8 @@ class CommandMenu(Menu):
             text_to_print.append(self._(f"There is a {self.player.current_tile.lower().replace('_', ' ')}."))
         # elif there is a hidden item:
         # print(f"There is a {hidden_item}")
-        elif self.current_map.identifier == "Alefgard" and self.calculation.get_distance_from_tantegel(self.player.column, self.player.row) == (40, 70):
+        elif (self.current_map.identifier == "Alefgard"
+              and self.calculation.get_distance_from_tantegel(self.player.column, self.player.row) == (40, 70)):
             text_to_print.append(self._("{} discovers the Erdrick's Token.").format(self.player.name))
             self.player.inventory.append("Erdrick's Token")
         else:
