@@ -127,10 +127,9 @@ class TestHandleBattlePrompts(unittest.TestCase):
             self.press(K_RETURN)
         enemy_move.assert_not_called()
 
-    @unittest.expectedFailure
     def test_enemy_attacks_again_after_skipped_turn(self, mock_time, mock_display):
-        # BUG: no_op is only reset inside the `if not no_op` branch, so once a turn is skipped
-        # (failed run, empty item menu, failed spell) the enemy never attacks again that battle.
+        # no_op must be cleared after a skipped turn (failed run, empty item menu, failed spell),
+        # or the enemy never attacks again that battle.
         self.controller.battle_menu_row = 1
         self.battle.battle_run.return_value = False
         with patch.object(self.controller, 'fight'), patch.object(self.controller, 'enemy_move') as enemy_move:
@@ -249,10 +248,8 @@ class TestRunBattle(unittest.TestCase):
         battle.enemy_defeated.assert_not_called()
         self.game.music_player.load_and_play_music.assert_called_once()
 
-    @unittest.expectedFailure
     def test_enemy_runaway_attempts_reset_each_battle(self, mock_battle_class):
-        # BUG: the counter carries over from the previous battle, so a later enemy
-        # can't flee until the turn number catches up with it.
+        # A counter left over from the previous battle would delay when the next enemy can flee.
         mock_battle_class.return_value.enemy.hp = 3
         self.controller.enemy_runaway_attempts = 5
         attempts_seen = []
@@ -360,7 +357,7 @@ class TestEnemyMove(unittest.TestCase):
     def test_magic_armor_reduces_hurt(self, mock_time):
         self.game.player.armor = "Magic Armor"
         self.move(enemies.Magician(), roll=0, effect=10)
-        self.assertAlmostEqual(self.game.receive_damage.call_args.args[0], 6.6)
+        self.assertEqual(self.game.receive_damage.call_args.args[0], 6)
 
     def test_sleep_puts_player_to_sleep(self, mock_time):
         self.move(patterned_enemy([(100, Spell.SLEEP, True), Spell.ATTACK]))
@@ -391,36 +388,39 @@ class TestEnemyMove(unittest.TestCase):
     def test_erdricks_armor_reduces_firebreath(self, mock_time):
         self.game.player.armor = "Erdrick's Armor"
         self.move(patterned_enemy([(100, Spell.FIREBREATH, True), Spell.ATTACK]), effect=20)
-        self.assertAlmostEqual(self.game.receive_damage.call_args.args[0], 13.2)
+        self.assertEqual(self.game.receive_damage.call_args.args[0], 13)
 
     def test_heal_condition_false_skips_to_next_entry(self, mock_time):
         self.move(enemies.Drakeema(), roll=0, effect=5)
         # HEAL is skipped at full HP, so HURT is cast instead
         self.game.receive_damage.assert_called_once_with(5)
 
-    @unittest.expectedFailure
     def test_heal_recovers_enemy_hp(self, mock_time):
-        # BUG: Enemy has no recover_hp method, so any HEAL/HEALMORE cast raises AttributeError.
         drakeema = enemies.Drakeema()
         drakeema.hp = 1
         drakeema.refresh_pattern()
-        self.move(drakeema, roll=0, effect=20)
-        self.assertEqual(drakeema.hp, 21)
+        self.move(drakeema, roll=0, effect=5)
+        self.assertEqual(drakeema.hp, 6)
+        self.game.receive_damage.assert_not_called()
 
-    @unittest.expectedFailure
+    def test_heal_does_not_exceed_max_hp(self, mock_time):
+        drakeema = enemies.Drakeema()
+        drakeema.hp = 1
+        drakeema.refresh_pattern()
+        self.move(drakeema, roll=0, effect=25)
+        self.assertEqual(drakeema.hp, drakeema.max_hp)
+
     def test_every_enemy_can_take_a_turn(self, mock_time):
-        # BUG: Metal Slime, Poltergeist and Specter use 2-tuple pattern entries, but
-        # execute_enemy_pattern reads entry[2], so their turn raises IndexError.
+        # Every pattern entry must be ATTACK or a (chance, spell, condition) 3-tuple;
+        # Metal Slime, Poltergeist and Specter used to crash with 2-tuples.
         for name, enemy_class in enemy_string_lookup.items():
             for roll in (0, 99):
                 with self.subTest(enemy=name, roll=roll):
                     self.game.reset_mock()
                     self.move(enemy_class(), roll=roll)
 
-    @unittest.expectedFailure
     def test_pattern_survives_refresh(self, mock_time):
-        # BUG: Magidrakee and Poltergeist assign self.pattern in __init__ instead of overriding
-        # set_pattern(), so refresh_pattern() wipes it after their first turn.
+        # Patterns assigned in __init__ instead of set_pattern() were wiped after the first turn.
         for enemy_class in (enemies.Magidrakee, enemies.Poltergeist):
             with self.subTest(enemy=enemy_class.__name__):
                 enemy = enemy_class()
@@ -428,16 +428,12 @@ class TestEnemyMove(unittest.TestCase):
                 enemy.refresh_pattern()
                 self.assertEqual(enemy.pattern, original)
 
-    @unittest.expectedFailure
     def test_starwyvern_acts_at_full_hp(self, mock_time):
-        # BUG: Starwyvern's pattern has a bare "FIREBREATH" string; only "ATTACK" is handled as a
-        # bare string, so whenever HEALMORE is skipped the Starwyvern does nothing.
+        # A bare "FIREBREATH" in Starwyvern's pattern used to make it skip its turn.
         self.move(enemies.Starwyvern(), roll=99)
         self.game.receive_damage.assert_called_once()
 
-    @unittest.expectedFailure
     def test_armor_reduced_damage_is_whole_number(self, mock_time):
-        # BUG: armor multiplies damage by 0.66, so the player can lose fractional HP (e.g. 6.6).
         self.game.player.armor = "Magic Armor"
         self.move(enemies.Magician(), roll=0, effect=10)
         self.assertIsInstance(self.game.receive_damage.call_args.args[0], int)
