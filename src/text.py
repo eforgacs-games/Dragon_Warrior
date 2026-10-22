@@ -1,4 +1,5 @@
 import textwrap
+from os.path import realpath
 
 from pygame import font, display, Surface
 from pygame.font import Font
@@ -7,6 +8,7 @@ from src.color import WHITE, BLACK
 from src.directories import Directories
 from src.sound import Sound
 from src.waiting import wait
+from src.window_renderer import DRAGON_QUEST_FONT_PATH, NES_GLYPHS, NES_TILE
 
 WRAP_LENGTH = 21
 
@@ -54,12 +56,56 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
     return None
 
 
+class NESFont(Font):
+    """dragon-quest.ttf, drawing every character as its NES font tile.
+
+    Rendered at a multiple of 8 pixels, the font is the NES tile scaled up for every character but j, k, p, t and the
+    apostrophe (src/window_renderer.py). render draws those with the NES tiles instead: the letters from NES_GLYPHS,
+    and the apostrophe as the font's ’ (its ' is a straight one), in the text color and at the font's scale (size / 8
+    screen pixels per NES pixel), so text everywhere matches the NES windows."""
+
+    def __init__(self, path: str, size: int):
+        super().__init__(path, size)
+        self.font_size = size
+
+    def render(self, text, antialias, color, bgcolor=None) -> Surface:  # type: ignore[override]
+        if not isinstance(text, str):
+            return super().render(text, antialias, color, bgcolor)
+        text = text.replace("'", '’')
+        # Render the NES_GLYPHS letters as spaces (the font is monospaced), then draw their NES tiles in those cells
+        surface = super().render(''.join(' ' if character in NES_GLYPHS else character for character in text),
+                                 antialias, color, bgcolor)
+        # The font's line: size / 8 blank rows, the tile's 8 rows (size pixels), size / 8 blank rows
+        nes_pixel = self.font_size / NES_TILE
+        top = nes_pixel
+        for index, character in enumerate(text):
+            if character not in NES_GLYPHS:
+                continue
+            left = self.size(text[:index])[0]
+            cell_pixel = (self.size(text[:index + 1])[0] - left) / NES_TILE
+            for row, line in enumerate(NES_GLYPHS[character]):
+                y = round(top + row * nes_pixel)
+                height = round(top + (row + 1) * nes_pixel) - y
+                for column, pixel in enumerate(line):
+                    if pixel == '#':
+                        x = left + round(column * cell_pixel)
+                        surface.fill(color, (x, y, left + round((column + 1) * cell_pixel) - x, height))
+        return surface
+
+
+def nes_font(path: str, size: int) -> Font:
+    """The font at path; dragon-quest.ttf as an NESFont."""
+    if realpath(path) == realpath(DRAGON_QUEST_FONT_PATH):
+        return NESFont(path, size)
+    return font.Font(path, size)
+
+
 def set_font_by_ascii_chars(chunks, size, font_name, directories):
     if font_name is not None:
-        return font.Font(font_name, size)
+        return nes_font(font_name, size)
     else:
         if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
-            current_font = font.Font(directories.DRAGON_QUEST_FONT_PATH, size)
+            current_font = NESFont(directories.DRAGON_QUEST_FONT_PATH, size)
         else:
             current_font = font.Font(directories.UNIFONT_PATH, size)
             current_font.bold = True
