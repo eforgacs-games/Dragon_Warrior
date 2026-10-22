@@ -7,13 +7,17 @@ headless and compare the background around each on-screen character with a clean
 """
 import inspect
 import os
+from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import patch
 
 import pygame
+from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP
 
 from src.config.test_config import test_config
+from src.direction import Direction
 from src.game import Game
+from src.game_functions import set_character_position
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -21,8 +25,9 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 FRAMES = 60  # characters change animation frame every ANIMATION_CYCLE_TICKS (15) frames
 
 
-def make_game(start_map: str) -> Game:
-    config = dict(test_config, START_MAP=start_map, NO_BLIT=False, NO_WAIT=True, RENDER_TEXT=False)
+def make_game(start_map: str, scale: int = test_config['SCALE']) -> Game:
+    config = dict(test_config, START_MAP=start_map, NO_BLIT=False, NO_WAIT=True, RENDER_TEXT=False, SCALE=scale,
+                  TILE_SIZE=16 * scale)
     with patch('src.game.SCALED', 0):
         game = Game(config)
     game.game_state.enable_animate = True
@@ -71,6 +76,91 @@ def find_residue(game: Game, before_drawing=None) -> dict:
     return residue
 
 
+def characters_to_draw(game: Game) -> list:
+    """(image, rect) of each character draw_all is about to draw: all but the NPCs hidden by a roof (#90)."""
+    current_map = game.current_map
+    return [(character_dict['character'].image, character_dict['character'].rect.copy())
+            for identifier, character_dict in current_map.characters.items()
+            if identifier == 'HERO' or not current_map.is_hidden_by_cover(character_dict['character'].row,
+                                                                           character_dict['character'].column)]
+
+
+def visible_area_matches_a_clean_redraw(game: Game, drawn) -> bool:
+    """Whether everything on screen (the part of the background the camera shows) is what a clean redraw of the map
+    and the characters, as drawn, would show."""
+    background = game.drawer.background
+    clean = background.copy()
+    game.drawer.draw_all_tiles_in_current_map(game.current_map, clean)
+    for image, rect in drawn:
+        clean.blit(image, rect)
+    on_screen = pygame.Rect(-game.camera.pos[0], -game.camera.pos[1], game.screen.get_width(),
+                            game.screen.get_height()).clip(background.get_rect())
+    return pygame.image.tobytes(background.subsurface(on_screen), 'RGB') == \
+        pygame.image.tobytes(clean.subsurface(on_screen), 'RGB')
+
+
+def walk_and_find_ghosts(game: Game, npc_identifier: str, npc_direction: Direction, npc_steps: int, hero_waits: int,
+                         hero_steps: int) -> list:
+    """Have the roaming NPCs take npc_steps steps in npc_direction, one after another, and walk the hero right (the
+    camera scrolling with him) for hero_steps blocks, starting hero_waits frames in. Returns the frames on which
+    anything on screen differed from a clean redraw."""
+    npc = game.current_map.characters[npc_identifier]['character']
+    held_keys = defaultdict(int)
+    clock = [0]
+    steps_started = 0
+    ghost_frames = []
+    hero_start_x = game.player.rect.x
+    frame = 0
+    with patch('src.game.get_ticks', lambda: clock[0]), patch('src.drawer.get_ticks', lambda: clock[0]), \
+            patch('src.game.random.choice', return_value=npc_direction.value), \
+            patch('src.game.key.get_pressed', return_value=held_keys):
+        while frame < 300 and (steps_started < npc_steps or npc.is_moving or game.player.is_moving or
+                               game.player.rect.x < hero_start_x + hero_steps * game.tile_size):
+            frame += 1
+            held_keys[K_RIGHT] = int(hero_waits < frame and
+                                     game.player.rect.x <= hero_start_x + (hero_steps - 1) * game.tile_size)
+            game._handle_player_movement()
+            if not game.player.is_moving:
+                set_character_position(game.player, game.tile_size)
+            if not npc.is_moving and steps_started < npc_steps:
+                clock[0] += 1000  # roaming NPCs start a new step once a second
+                steps_started += 1
+            game.move_roaming_characters()
+            game.update_roaming_character_positions()
+            drawn = characters_to_draw(game)
+            draw_frame(game)
+            if not visible_area_matches_a_clean_redraw(game, drawn):
+                ghost_frames.append(frame)
+    assert game.player.rect.x == hero_start_x + hero_steps * game.tile_size, 'the hero should have walked'
+    assert npc.last_rect is not None and npc.rect != npc.last_rect, 'the NPC should have walked'
+    return ghost_frames
+
+
+def walk_hero_and_find_ghosts(game: Game, walk: list) -> list:
+    """Walk the hero (the camera scrolling with him) the given (key, blocks) legs, with the NPCs standing still. Returns
+    the frames on which anything on screen differed from a clean redraw."""
+    held_keys = defaultdict(int)
+    ghost_frames = []
+    frame = 0
+    with patch('src.game.get_ticks', return_value=0), patch('src.drawer.get_ticks', return_value=0), \
+            patch('src.game.key.get_pressed', return_value=held_keys):
+        for walk_key, blocks in walk:
+            held_keys.clear()
+            held_keys[walk_key] = 1
+            for _ in range(blocks * game.tile_size // game.speed + 1):
+                frame += 1
+                game._handle_player_movement()
+                drawn = characters_to_draw(game)
+                draw_frame(game)
+                if not visible_area_matches_a_clean_redraw(game, drawn):
+                    ghost_frames.append(frame)
+            held_keys.clear()
+            while game.player.is_moving:
+                game._handle_player_movement()
+            set_character_position(game.player, game.tile_size)
+    return ghost_frames
+
+
 class TestCharacterRedraw(TestCase):
 
     @classmethod
@@ -117,3 +207,47 @@ class TestCharacterRedraw(TestCase):
         with patch('src.drawer.get_fixed_character_underlying_tiles', return_value=[]):
             residue = find_residue(game)
         self.assertIn('MAN_2', residue)
+
+    def test_npcs_off_screen_leave_no_ghosts_when_the_camera_scrolls_to_them(self):
+        # Garinham's WOMAN_2 starts five blocks right of the screen. Steps she took off screen used to leave her old
+        # frames on the background: the tiles under roaming NPCs were only redrawn within two blocks of the screen,
+        # so the hero walking right then scrolled ghosts of her into view at the right edge. She (and the other
+        # roaming NPCs) walk down before the hero sets off, or left (toward him) while he walks right.
+        for scale in (1, 2):
+            for npc_direction, hero_waits in ((Direction.DOWN, 50), (Direction.LEFT, 0)):
+                with self.subTest(scale=scale, npc_direction=npc_direction.name, hero_waits=hero_waits):
+                    game = make_game('Garinham', scale)
+                    self.assertEqual(16 * scale, game.tile_size)
+                    woman = game.current_map.characters['WOMAN_2']['character']
+                    self.assertEqual(((14, 9), (12, 21)), ((game.player.row, game.player.column),
+                                                           (woman.row, woman.column)))
+                    self.assertEqual([], walk_and_find_ghosts(game, 'WOMAN_2', npc_direction, 2, hero_waits,
+                                                              hero_steps=6))
+
+    def test_the_hero_leaves_no_trail_in_any_direction(self):
+        # The blocks redrawn around the walking hero were 2.04 blocks square from a block up and left of him, which
+        # Rect cut to 2 at SCALE 1, so walking up or left left the bottom or right edge of his last frame behind.
+        for scale in (1, 2):
+            with self.subTest(scale=scale):
+                game = make_game('Garinham', scale)
+                start = (game.player.row, game.player.column)
+                self.assertEqual([], walk_hero_and_find_ghosts(game, [(K_RIGHT, 3), (K_UP, 1), (K_DOWN, 1),
+                                                                      (K_LEFT, 3)]))
+                self.assertEqual(start, (game.player.row, game.player.column))
+
+    def test_every_block_has_only_the_map_tile(self):
+        # Each NPC also got its "underlying" tile (BRICK, or one from custom_underlying_tiles) on top of the map's own
+        # tile there, e.g. Brecconary's MAN_3 got GRASS on brick. The block (or a roaming NPC's starting block, once
+        # it walked away) then showed one or the other, depending on which tile types were being redrawn.
+        for start_map in ('Brecconary', 'Garinham', 'Kol', 'Cantlin', 'Rimuldar', 'TantegelCourtyard',
+                          'TantegelThroneRoom'):
+            with self.subTest(start_map=start_map):
+                game = make_game(start_map)
+                tile_size = game.tile_size
+                layout = game.current_map.layout
+                wrong_tiles = [(tile, sprite.rect.y // tile_size, sprite.rect.x // tile_size)
+                               for tile, tile_dict in game.current_map.floor_tile_key.items() if tile_dict.get('group')
+                               for sprite in tile_dict['group']
+                               if game.current_map.get_tile_by_value(layout[sprite.rect.y // tile_size][
+                                   sprite.rect.x // tile_size]) != tile]
+                self.assertEqual([], wrong_tiles)
