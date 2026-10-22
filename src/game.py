@@ -28,7 +28,7 @@ from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
 from src.constants import (
     LOW_HP_THRESHOLD, ARROW_BLINK_INTERVAL_MS,
-    MAPS_WITH_ENEMIES, DUNGEON_ZONE_MAP, TANTEGEL_ZONE,
+    MAPS_WITH_ENEMIES, DUNGEON_ZONE_MAP, TANTEGEL_ZONE, TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT,
 )
 from src.direction import Direction
 from src.directories import Directories
@@ -443,6 +443,22 @@ class Game:
         self.tiles_moved_since_spawn += 1
         self.game_state.tiles_moved_total += 1
         self.tick_repel_timer()
+        self.check_tantegel_cursed()
+
+    def check_tantegel_cursed(self):
+        """NES CheckTantCursed (part of MovementUpdates, run every step): a cursed player who reaches Y=27 of
+        Tantegel's ground floor is told "Cursed one, be gone!" and CheckMapExit forces them out of the castle."""
+        if self.current_map.identifier != 'TantegelCourtyard' or not self.player.is_cursed:
+            return
+        if self.player.rect.y // self.tile_size != TANTEGEL_CURSED_ROW:
+            return
+        self.cmd_menu.show_text_in_dialog_box(self._("Cursed one, be gone!"), add_quotes=True,
+                                              skip_text=self.skip_text)
+        self.leave_tantegel()
+
+    def leave_tantegel(self, direction: int | None = None):
+        map_name, coordinates = TANTEGEL_OVERWORLD_EXIT
+        self.change_map(map_lookup[map_name](self.config), destination_coordinates=coordinates, direction=direction)
 
     def tick_repel_timer(self):
         """NES CheckRepelTimer: the timer drops by 2 per step. REPEL (odd start) ends at 1, Fairy Water (even) at 0."""
@@ -620,9 +636,19 @@ class Game:
         next_map = map_lookup['TantegelThroneRoom'](self.config)
         self.change_map(next_map)
         self.player.gold = self.player.gold // 2
+        self.player.is_dead = False
+        if self.player.is_cursed:
+            # NES StartAtThroneRoom: a cursed player comes back with 1 HP, not full HP. The king then says
+            # "Thou hast failed and thou art cursed." and ChangeMaps puts the player outside the castle, facing down.
+            self.player.current_hp = 1
+            self.color = self.cmd_menu.color = WHITE
+            self.cmd_menu.show_text_in_dialog_box(
+                (self._("Thou hast failed and thou art cursed."), self._("Leave at once!")), add_quotes=True,
+                skip_text=self.skip_text)
+            self.leave_tantegel(direction=Direction.DOWN.value)
+            return
         # revive player
         self.player.current_hp = self.player.max_hp
-        self.player.is_dead = False
         self.game_state.is_post_death_dialog = True
         self.color = self.cmd_menu.color = WHITE
 
