@@ -63,6 +63,16 @@ class OptionsTestCase(TestCase):
     def setUp(self):
         self.game = new_game()
         self.config = self.game.game_state.config
+        # One NES frame of game time per pass of the selection loop (its WaitForNMI), whatever the machine's speed:
+        # the cursor and SelectionButtons count frames from the game clock, so on a slow or fast run the scripted
+        # presses (presses(), one event.get per frame) would otherwise land on different frames
+        clock = [0]
+
+        def next_frame(frames=1, *_args, **_kwargs):
+            clock[0] += round(frames * 1000 / 60)
+        patch('src.cursor.get_ticks', lambda: clock[0]).start()
+        patch('src.options_screen.wait_frames', side_effect=next_frame).start()
+        self.addCleanup(patch.stopall)
 
 
 class TestMessageSpeedRules(TestCase):

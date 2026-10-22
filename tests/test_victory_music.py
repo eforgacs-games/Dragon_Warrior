@@ -93,6 +93,8 @@ class TestVictoryMusic(TestCase):
         patch('pygame.mixer.music', MusicTrack(self.events)).start()
         # Real sounds on the real mixer, not ones another test's mocks may have left in the cache
         patch.dict('src.sound._sound_library', clear=True).start()
+        # The hero always gets the first turn (no opening flee or ambush roll, #232), so the fights go as scripted
+        patch('src.battle_controller.BattleController.start_fight', return_value=False).start()
         pygame.mixer.stop()
         sfx_channel()  # channel 0 kept for the text beep, as after any dialog that beeped
 
