@@ -1,11 +1,13 @@
 import random
 from typing import Dict, Tuple
 
+# Equipment and tool prices are the NES ItemCostTbl (Bank00); the towns are from ShopItemsTbl.
+
 weapons = {
     "Bamboo Pole": {'offense': 2, 'cost': 10, 'found': ("Brecconary", "Cantlin")},
     "Club": {'offense': 4, 'cost': 60, 'found': ("Brecconary", "Cantlin", "Garinham")},
     "Copper Sword": {'offense': 10, 'cost': 180, 'found': ("Brecconary", "Cantlin", "Garinham", "Kol", "Rimuldar")},
-    "Hand Axe": {'offense': 15, 'cost': 560, 'found': ("Garinham", "Rimuldar")},
+    "Hand Axe": {'offense': 15, 'cost': 560, 'found': ("Garinham", "Kol", "Rimuldar", "Cantlin")},
     "Broad Sword": {'offense': 20, 'cost': 1500, 'found': ("Rimuldar", "Cantlin")},
     "Flame Sword": {'offense': 28, 'cost': 9800, 'found': ("Cantlin",)},
     "Erdrick's Sword": {'offense': 40, 'cost': 2, 'found': "Dragonlord's Castle"},
@@ -15,9 +17,9 @@ weapons = {
 
 armor = {
     "Clothes": {'defense': 2, 'cost': 20, 'sold': ("Brecconary",)},
-    "Leather Armor": {'defense': 4, 'cost': 70, 'sold': ("Brecconary", "Garinham")},
+    "Leather Armor": {'defense': 4, 'cost': 70, 'sold': ("Brecconary", "Garinham", "Cantlin")},
     "Chain Mail": {'defense': 10, 'cost': 300, 'sold': ("Garinham", "Cantlin")},
-    "Half Plate": {'defense': 16, 'cost': 1000, 'sold': ("Garinham", "Kol", "Rimuldar", "Cantlin")},
+    "Half Plate": {'defense': 16, 'cost': 1000, 'sold': ("Garinham", "Kol", "Rimuldar")},
     "Full Plate": {'defense': 24, 'cost': 3000, 'sold': ("Kol", "Rimuldar", "Cantlin")},
     "Magic Armor": {'defense': 24, 'cost': 7700, 'sold': ("Rimuldar", "Cantlin")},
     "Erdrick's Armor": {'defense': 28, 'cost': 2, 'found': ("Hauksness",)}
@@ -56,6 +58,28 @@ def _gold(base: int, random_bits: int) -> Dict[str, object]:
 # NES TreasureTbl (Bank01): every treasure chest in the game, keyed by map and then by (row, column) in this game's
 # layouts. Each map's layout is padded, so the NES (x, y) of each chest is noted next to it, with the map's offset.
 # Chests on other maps (Kol, Cantlin, the Rainbow Drop cave...) aren't in the NES table, and TAKE finds nothing in them.
+
+# NES ItemCostTbl (Bank00), tool entries. Shops buy a tool back for half this (DoToolSell), and refuse
+# anything that costs 0 ("I cannot buy it.").
+tools = {
+    "Herb": {'cost': 24},
+    "Magic Key": {'cost': 53},
+    "Torch": {'cost': 8},
+    "Fairy Water": {'cost': 38},
+    "Wings": {'cost': 70},
+    "Dragon's Scale": {'cost': 20},
+    "Fairy Flute": {'cost': 0},
+    "Fighter's Ring": {'cost': 30},
+    "Erdrick's Token": {'cost': 0},
+    "Gwaelin's Love": {'cost': 0},
+    "Cursed Belt": {'cost': 360},
+    "Silver Harp": {'cost': 0},
+    "Death Necklace": {'cost': 2400},
+    "Stones of Sunlight": {'cost': 0},
+    "Staff of Rain": {'cost': 0},
+    "Rainbow Drop": {'cost': 0},
+}
+
 treasure: Dict[str, Dict[Tuple[int, int], Dict[str, object]]] = {
     # MAP_TANTCSTL_GF: row = y + 7, column = x + 7
     'TantegelCourtyard': {
