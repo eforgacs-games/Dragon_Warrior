@@ -1,4 +1,43 @@
 from src.directories import Directories
+# The inventory limits (NES AddInvItem, ChkToolPurchase/ChkBuyKey) and the 65535 gold cap (GetSellGold) are
+# shared with treasure chests
+from src.items import INVENTORY_SLOTS, MAX_GOLD, UNSLOTTED_ITEMS, armor, shields, tools, weapons
+
+# NES KeyCostTbl (Bank00)
+KEY_COSTS = {'Cantlin': 98, 'Rimuldar': 53, 'TantegelCourtyard': 85}
+# NES FairyDialog: LDA #$26
+FAIRY_WATER_COST = 38
+
+
+def inventory_slots_used(inventory: list[str]) -> int:
+    return sum(1 for item in inventory if item not in UNSLOTTED_ITEMS)
+
+
+def inventory_is_full(inventory: list[str]) -> bool:
+    return inventory_slots_used(inventory) >= INVENTORY_SLOTS
+
+
+def pay_player(gold: int, amount: int) -> int:
+    return min(gold + amount, MAX_GOLD)
+
+
+def sell_price(item: str) -> int:
+    """NES DoToolSell (SellableTool): half of the ItemCostTbl price, rounded down (LSR/ROR). 0 means unsellable."""
+    return tools[item]['cost'] // 2 if item in tools else 0
+
+
+def buyback_price(equipped_item: str, item_type: str) -> int:
+    """NES GetBuybackPrice: when buying equipment, the shop buys the equipped piece of that type for half its price."""
+    table = {'weapon': weapons, 'armor': armor, 'shield': shields}[item_type]
+    if not equipped_item or equipped_item not in table:
+        return 0
+    return table[equipped_item]['cost'] // 2
+
+
+def sell_list(inventory: list[str]) -> list[str]:
+    """NES CreateInvList: Herbs and Magic Keys first (one entry each), then each inventory slot in order."""
+    return [item for item in UNSLOTTED_ITEMS if item in inventory] + \
+        [item for item in inventory if item not in UNSLOTTED_ITEMS]
 
 
 class ShopInventories:
@@ -68,6 +107,25 @@ class ShopInventories:
             "Large Shield": {'cost': 800, 'type': 'shield',
                              'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_NORTH_LARGE_SHIELD_PATH},
         }
+
+        # NES ShopItemsTbl "Cantlin weapons and armor shop 3" (the guard behind the counter). There are no
+        # pre-rendered menu images for this shop, so its window is drawn as text.
+        self.cantlin_weapons_store_3_inventory = {
+            "Flame Sword": {'cost': weapons['Flame Sword']['cost'], 'type': 'weapon'},
+            "Silver Shield": {'cost': shields['Silver Shield']['cost'], 'type': 'shield'},
+        }
+
+        # NES ShopItemsTbl item shops (ToolsDialog), in table order
+        herb = {'cost': tools['Herb']['cost'], 'type': 'tool'}
+        torch = {'cost': tools['Torch']['cost'], 'type': 'tool'}
+        dragons_scale = {'cost': tools["Dragon's Scale"]['cost'], 'type': 'tool'}
+        wings = {'cost': tools['Wings']['cost'], 'type': 'tool'}
+        self.kol_item_store_inventory = {"Herb": herb, "Torch": torch, "Dragon's Scale": dragons_scale,
+                                         "Wings": wings}
+        self.brecconary_item_store_inventory = {"Herb": herb, "Torch": torch, "Dragon's Scale": dragons_scale}
+        self.garinham_item_store_inventory = {"Herb": herb, "Torch": torch, "Dragon's Scale": dragons_scale}
+        self.cantlin_item_store_1_inventory = {"Herb": herb, "Torch": torch}
+        self.cantlin_item_store_2_inventory = {"Dragon's Scale": dragons_scale, "Wings": wings}
 
         self.cantlin_weapons_store_south_inventory = {
             "Hand Axe": {'cost': 560, 'type': 'weapon',
