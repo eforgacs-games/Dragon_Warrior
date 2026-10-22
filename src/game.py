@@ -50,8 +50,7 @@ from src.menu_functions import NameSelection
 from src.movement import Movement
 from src.music_player import MusicPlayer
 from src.npc_schedule import NPCSchedule, POP_UP_FRAME
-from src.options_screen import DEFAULT_DIALOG_STYLE, DEFAULT_MESSAGE_SPEED, DIALOG_STYLE_SAVE_KEY, \
-    MESSAGE_SPEED_SAVE_KEY, OptionsScreen, apply_options, dialog_style_from_save, message_speed_from_save
+from src.options_screen import DEFAULT_OPTIONS, OptionsScreen, apply_options, options_from_save, options_to_save
 from src.player.player import Player
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
@@ -383,7 +382,7 @@ class Game:
 
     def change_message_speed(self) -> object:
         """NES DoChngMsgSpeed (Bank03): choose a used adventure log (ShowUsedLogs), then its message speed in the NES
-        window (WND_MSG_SPEED) and, after it, this game's dialog style; ChngMsgSpeed saves them to that log
+        window (WND_MSG_SPEED) and, after it, this game's dialog style and NPCS MAKE WAY; ChngMsgSpeed saves them to that log
         (SaveCurrentGame). B in the log or speed window saves nothing. Either way it's back to the title menu
         (WndBackToMain). See src/options_screen.py."""
         logs = []
@@ -399,20 +398,20 @@ class Game:
             return BACK_TO_TITLE_MENU
         save_path = os.path.join(self.directories.save_dir, f'save_slot_{slot}.json')
         save = self.read_save(os.path.basename(save_path)) or {}
-        chosen = options_screen.choose_options(message_speed_from_save(save), dialog_style_from_save(save))
+        chosen = options_screen.choose_options(options_from_save(save))
         if chosen is not None:
-            save[MESSAGE_SPEED_SAVE_KEY], save[DIALOG_STYLE_SAVE_KEY] = chosen
+            save.update(options_to_save(chosen))
             with open(save_path, 'w') as save_file:
                 json.dump(save, save_file, indent=4)
         return BACK_TO_TITLE_MENU
 
     def choose_new_quest_options(self) -> None:
         """NES NewQuest (LF8D4): after the name, the message speed window with the cursor on NORMAL, then this game's
-        dialog style with the cursor on CLASSIC. The choice is used from now on and saved with the log
-        (CommandMenu.save). B keeps those defaults (the NES goes back to the title menu instead)."""
+        dialog style with the cursor on CLASSIC and NPCS MAKE WAY on ON. The choice is used from now on and saved with
+        the log (CommandMenu.save). B keeps those defaults (the NES goes back to the title menu instead)."""
         options_screen = OptionsScreen(self.screen, self.game_state.config)
-        chosen = options_screen.choose_options(DEFAULT_MESSAGE_SPEED, DEFAULT_DIALOG_STYLE)
-        apply_options(self.game_state.config, *(chosen or (DEFAULT_MESSAGE_SPEED, DEFAULT_DIALOG_STYLE)))
+        chosen = options_screen.choose_options(DEFAULT_OPTIONS)
+        apply_options(self.game_state.config, chosen or DEFAULT_OPTIONS)
 
     def read_save(self, save_file_name: str) -> dict | None:
         """The save in the save folder with this name, or None if it can't be read."""
@@ -1500,8 +1499,9 @@ class Game:
         self.player.inventory = save_file["Inventory"]
         self.player.spells = save_file.get("Spells", [])
         self.story_flags = StoryFlags.from_save(save_file)
-        # NES LoadSavedData (LFBC8): the log's message speed; and this game's dialog style. Older saves: NORMAL, CLASSIC
-        apply_options(self.game_state.config, message_speed_from_save(save_file), dialog_style_from_save(save_file))
+        # NES LoadSavedData (LFBC8): the log's message speed; and this game's dialog style and NPCS MAKE WAY. Older
+        # saves: NORMAL, CLASSIC, ON
+        apply_options(self.game_state.config, options_from_save(save_file))
         self.chest_history = TreasureChestHistory()
         self.repel_timer = 0
         if self.player.is_cursed:
