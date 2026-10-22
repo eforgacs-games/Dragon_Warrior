@@ -132,6 +132,53 @@ class TestEnding(TestCase):
         with patch('src.ending.random.randint', return_value=0):
             self.assertEqual(self.game.ending.npc_dialog('MAN', brecconary), 'Thou hast brought us peace, again.')
 
+    def talk_after_the_dragonlord(self, map_name, character):
+        self.game.story_flags.dragonlord_defeated = True
+        new_map = map_lookup[map_name](self.game.config)
+        self.game.change_map(new_map, destination_coordinates=next(iter(new_map.staircases)))
+        self.lines.clear()
+        with patch('src.ending.random.randint', return_value=0):
+            self.game.cmd_menu.launch_dialog(character, self.game.current_map)
+
+    def test_npcs_with_their_own_dialog_only_cheer_after_the_dragonlord(self):
+        # NES LD134 overrides every NPC on maps 4 to 14 (ValidateNPC), shops, inns and quest NPCs included
+        player = self.game.player
+        player.gold = 1000
+        player.inventory.append('Silver Harp')
+        for map_name, character in (('TantegelThroneRoom', 'KING_LORIK'),  # saving
+                                    ('Brecconary', 'WISE_MAN'),  # curse remover
+                                    ('Brecconary', 'MERCHANT'),  # weapon and armor shop
+                                    ('Brecconary', 'MERCHANT_2'),  # inn
+                                    ('Brecconary', 'WOMAN'),  # Fairy Water
+                                    ('StaffOfRainCave', 'WISE_MAN'),
+                                    ('MagicTemple', 'WISE_MAN')):
+            with self.subTest(map_name=map_name, character=character):
+                self.assertTrue(self.game.ending.has_victory_dialog(character, map_lookup[map_name](self.game.config)))
+                self.talk_after_the_dragonlord(map_name, character)
+                self.assertEqual(self.lines, ['Thou hast brought us peace, again.'])
+        self.assertEqual(player.gold, 1000)
+        self.assertIn('Silver Harp', player.inventory)
+
+    def test_gwaelin_can_still_be_rescued_after_the_dragonlord(self):
+        # NES DoTalkResults: she's a map block (BLK_PRINCESS), checked before the NPCs and LD134
+        self.assertFalse(self.game.ending.has_victory_dialog('PRINCESS_GWAELIN',
+                                                             map_lookup['SwampCave'](self.game.config)))
+        prompts = []
+
+        def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, **kwargs):
+            prompts.append(prompt_line)
+            yes_path_function()
+
+        with patch('data.text.dialog_lookup_table.confirmation_prompt', side_effect=confirmation_prompt), \
+                patch('data.text.dialog_lookup_table.mixer'), patch('data.text.dialog_lookup_table.time.wait'):
+            self.talk_after_the_dragonlord('SwampCave', 'PRINCESS_GWAELIN')
+        self.assertEqual(self.lines[:2],
+                         ['Thou art brave indeed to rescue me, Edward.', 'I am Gwaelin, daughter of Lorik.'])
+        self.assertEqual(prompts, ['Will thou take me to the castle?'])
+        self.assertIn("I'm so happy!", self.lines)
+        self.assertTrue(self.game.story_flags.carrying_gwaelin)
+        self.assertNotIn('PRINCESS_GWAELIN', self.game.current_map.characters)
+
     def test_dragonlord_is_gone_from_charlock(self):
         self.game.story_flags.dragonlord_defeated = True
         self.game.change_map(map_lookup['CharlockB8'](self.game.config), destination_coordinates=(33, 16))
