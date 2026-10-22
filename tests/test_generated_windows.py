@@ -215,7 +215,8 @@ class TestMiscellaneousWindowsDrawnByTheGame(TestCase):
         from data.text.dialog import confirmation_prompt
         with patch.object(self.cmd_menu, 'show_line_in_dialog_box'), \
                 patch.object(self.cmd_menu, 'window_drop_down_effect'), \
-                patch.object(self.cmd_menu, 'draw_yes_no_window'), patch('data.text.dialog.display'):
+                patch.object(self.cmd_menu, 'draw_yes_no_window'), patch('data.text.dialog.display'), \
+                patch.object(self.cmd_menu, 'remove_window'):  # the answered window is taken off afterwards (#283)
             self.assert_drawn(lambda: confirmation_prompt(self.cmd_menu, "", MagicMock(), MagicMock(), self.config,
                                                           self.game.color, skip_text=True),
                               YES_NO_LAYOUT.window, 'confirmation.png', 'confirmation_prompt')
