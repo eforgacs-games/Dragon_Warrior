@@ -1,4 +1,4 @@
-from pygame import Surface, display, time
+from pygame import Surface, display, time, transform
 from pygame.time import get_ticks
 
 from src.common import BLACK
@@ -63,3 +63,17 @@ def flash_transparent_color(color, screen, calculation, transparency=192, no_bli
     draw_transparent_color(color, screen, transparency, no_blit)
     while calculation.convert_to_frames_since_start_time(start_time) < 3:
         display.flip()
+
+
+def greyscale_screen(screen, calculation, frames=30, no_blit=False):
+    """Show the screen in greyscale for the given number of frames, then restore it
+    (the NES does this by setting the greyscale bit of PPUControl1)."""
+    if no_blit:
+        return
+    original = screen.copy()
+    screen.blit(transform.grayscale(original), (0, 0))
+    start_time = get_ticks()
+    while calculation.convert_to_frames_since_start_time(start_time) < frames:
+        display.flip()
+    screen.blit(original, (0, 0))
+    display.flip()

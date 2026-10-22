@@ -94,6 +94,10 @@ RETURN_DESTINATION = ('Alefgard', (50, 50))
 RAINBOW_DROP_COORDINATES = (56, 73)
 RAINBOW_BRIDGE_COORDINATES = (56, 72)
 
+# NES ChkHarp/HarpRNGLoop: on the overworld the Silver Harp starts a fight with enemy #0-4 or #6 (RandNumUB AND 7,
+# rerolling 5 and 7), i.e. each of these six with equal chance
+SILVER_HARP_ENEMIES = ('Slime', 'Red Slime', 'Drakee', 'Ghost', 'Magician', 'Scorpion')
+
 # NES RepelTimer: REPEL sets it to 255 and Fairy Water to 254; it drops by 2 per step (127 steps either way)
 REPEL_SPELL_TIMER = 255
 FAIRY_WATER_TIMER = 254
