@@ -23,8 +23,8 @@ from src.battle import Battle
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, read_checkpoint
-from src.color import WHITE, is_low_hp, window_color
-from src.common import A_OR_START_KEYS, reject_keys, Graphics, RED, is_facing_medially, is_facing_laterally, \
+from src.color import LOW_HP_RED, RED, WHITE, is_low_hp, window_color
+from src.common import A_OR_START_KEYS, reject_keys, Graphics, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config.dev_config import dev_config
@@ -637,7 +637,7 @@ class Game:
         if cmd_menu is not None:
             cmd_menu.refresh_window_color()
         current_map = getattr(self, 'current_map', None)
-        if current_map is not None and current_map.set_low_hp_palette(color != WHITE):
+        if current_map is not None and current_map.set_low_hp_palette(color == LOW_HP_RED):
             drawer = getattr(self, 'drawer', None)
             if drawer is not None and drawer.background is not None and self.loop_count != 1:
                 drawer.draw_all_tiles_in_current_map(current_map, drawer.background)

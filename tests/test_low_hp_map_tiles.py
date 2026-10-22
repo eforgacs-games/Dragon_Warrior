@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pygame
 
-from src.color import RED, WHITE
+from src.color import LOW_HP_RED, WHITE
 from src.config.test_config import test_config
 from src.game import Game
 from src.maps import LOW_HP_PALETTE_TILES, map_lookup
@@ -142,7 +142,7 @@ class TestLowHPMapSwitching(LowHPMapTestCase):
 
     def test_palette_load_at_low_hp_turns_map_red_and_back(self):
         self.set_hp(4)
-        self.assertEqual(self.game.color, RED)
+        self.assertEqual(self.game.color, LOW_HP_RED)
         self.assert_map_red(True)
         self.set_hp(15)
         self.assert_map_red(False)
@@ -204,7 +204,7 @@ class TestLowHPMapSwitching(LowHPMapTestCase):
         # NES PalFadeIn: the new map fades in with the low HP palette
         self.player.current_hp = 2
         self.go_to('Rimuldar')
-        self.assertEqual(self.game.color, RED)
+        self.assertEqual(self.game.color, LOW_HP_RED)
         self.assert_map_red(True)
 
     def test_tile_added_at_low_hp_is_red(self):
@@ -228,5 +228,5 @@ class TestLowHPMapSwitching(LowHPMapTestCase):
                 patch('data.text.dialog_lookup_table.fade'):
             cmd_menu.dialog_lookup.inn_sleep(6)
         # "Good night." comes before the fade out, at the old HP; the map wakes up white with the windows
-        self.assertEqual(reds, [(RED, True), (WHITE, False)])
+        self.assertEqual(reds, [(LOW_HP_RED, True), (WHITE, False)])
         self.assert_map_red(False)
