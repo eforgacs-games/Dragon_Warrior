@@ -238,7 +238,8 @@ class TestDrawnByTheShop(TestCase):
         events = [[MagicMock(type=KEYDOWN, key=key)] for key in keys]
         with patch('data.text.dialog_lookup_table.get', side_effect=events), \
                 patch('data.text.dialog_lookup_table.display'), \
-                patch.object(self.game.cmd_menu, 'window_drop_down_effect'):
+                patch.object(self.game.cmd_menu, 'window_drop_down_effect'), \
+                patch.object(self.game.cmd_menu, 'remove_window'):  # the answered window is taken off afterwards (#283)
             return self.dialog_lookup.open_store_inventory(inventory)
 
     def test_every_cursor_position(self):
@@ -265,7 +266,8 @@ class TestDrawnByTheShop(TestCase):
         events = [[MagicMock(type=KEYDOWN, key=K_DOWN)], [MagicMock(type=KEYDOWN, key=K_RETURN)]]
         with patch('data.text.dialog_lookup_table.get', side_effect=events), \
                 patch('data.text.dialog_lookup_table.display'), \
-                patch.object(self.game.cmd_menu, 'window_drop_down_effect'):
+                patch.object(self.game.cmd_menu, 'window_drop_down_effect'), \
+                patch.object(self.game.cmd_menu, 'remove_window'):  # the answered window is taken off afterwards (#283)
             self.assertEqual(1, self.dialog_lookup.select_in_generated_window(BUY_SELL_LAYOUT))
         nes_pixel = test_config['SCALE']
         expected = render_window(BUY_SELL_LAYOUT, self.dialog_lookup.color, nes_pixel, cursor_index=1)
