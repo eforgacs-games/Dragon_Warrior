@@ -1,6 +1,6 @@
 import random
 
-from pygame import display, time, mixer, Surface
+from pygame import display, mixer, Surface
 
 from src.common import BLACK, set_gettext_language
 from src.constants import (
@@ -15,9 +15,12 @@ from src.menu import CommandMenu
 from src.player.player import Player
 from src.player.player_stats import levels_list
 from src.sound import Sound
-from src.waiting import check_for_quit, scaled_ms, wait, wait_frames
+from src.waiting import check_for_quit, wait, wait_frames
 
 DRAGONLORD_TRANSFORM_WAIT_FRAMES = 80  # NES EnemyDefeated: 80 frames between the two Dragonlord fights
+SPIRAL_LEAD_IN_FRAMES = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E40A, before the first block
+SPIRAL_FRAMES_PER_BLOCK = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E43D, once per block
+HERO_SCREEN_BLOCK = (8, 7)  # NES DoSprites: the hero's sprites are at x $80, y $6F, the middle of the screen
 
 
 def has_final_consonant(char: str) -> bool:
@@ -65,22 +68,52 @@ class Battle:
             mixer.music.load(music)
             mixer.music.play(-1)
 
-    def transition_battle_background_image_effect(self, screen):
-        """Spiral effect to introduce battle background."""
+    def transition_battle_background_image_effect(self, screen, player):
+        """Spiral effect to introduce battle background (NES LoadCombatBckgrnd, $E3CD).
+
+        The NES waits for one vblank (WaitForNMI at $E40A) before the loop, then waits for one vblank before each
+        block ($E43D), so the 49 blocks land on 49 consecutive frames: one block per frame, about 0.83 s in all.
+
+        The hero disappears one frame before the first (centre) block, and stays hidden for the whole spiral. Right
+        after $E40A, LoadCombatBckgrnd calls DoSprites ($E40D). The background is already in the window buffer by then,
+        so DoSprites sees WinBufRAM+$1D0 (the hero's spot) covered and moves the hero's sprites off screen ($F0). The
+        NMI at $E43D copies sprite RAM to the PPU (SetSprtRAM), so he's gone from that frame, and the centre block
+        that this NMI's wait queues only reaches the screen at the next one. Nothing calls DoSprites again until the
+        fight is over: LoadEnemyGFX only writes the sprites after the hero's ($10 onward).
+        """
         battle_background_image = self.get_battle_background_image()
         spiral_tile_coordinates = self.get_spiral_tile_coordinates()
 
+        wait_frames(SPIRAL_LEAD_IN_FRAMES)
+        self.hide_hero(screen, player)
+        display.update()
         for tile in spiral_tile_coordinates:
+            wait_frames(SPIRAL_FRAMES_PER_BLOCK)
             screen.blit(battle_background_image.subsurface(
                 (tile[0] * self.tile_size, tile[1] * self.tile_size, self.tile_size, self.tile_size)),
                 ((tile[0] + 5) * self.tile_size, (tile[1] + 4) * self.tile_size))
             display.update()
             check_for_quit()
-            time.wait(scaled_ms(20))
+
+    def hide_hero(self, screen, player):
+        """Draw the map block under the hero over him, as NES DoSprites does when a window covers his spot. He's always
+        on screen block (8, 7) (DoSprites: x $80, y $6F), the centre of the spiral."""
+        tile_size = self.tile_size
+        hero_block = (player.rect.x // tile_size * tile_size, player.rect.y // tile_size * tile_size)
+        for tile_dict in self.current_map.floor_tile_key.values():
+            for tile in tile_dict.get('group') or ():
+                if tile.rect.topleft == hero_block:
+                    screen.blit(tile.image, (HERO_SCREEN_BLOCK[0] * tile_size, HERO_SCREEN_BLOCK[1] * tile_size))
+                    return
 
     def get_battle_background_image(self):
-        """Get the appropriate battle background image."""
-        if not self.current_map.is_dark:
+        """Get the appropriate battle background image.
+
+        NES LoadCombatBckgrnd ($E3E4): the background graphic (CombatBckgndGFX) is only used on the overworld map
+        (MAP_OVERWORLD). On every other map (caves, but also Hauksness and the Dragonlord's castle, which aren't dark)
+        the 14x14 tiles are all TL_BLANK_TILE1, so the spiral draws black.
+        """
+        if self.current_map.identifier == 'Alefgard':
             # Use cached scaled image
             scaled_size = (7 * self.tile_size, 7 * self.tile_size)
             return self.graphics.get_scaled_image(self.directories.BATTLE_BACKGROUND_PATH, scaled_size)
@@ -90,7 +123,8 @@ class Battle:
 
     @staticmethod
     def get_spiral_tile_coordinates():
-        """Return the coordinates for the spiral effect."""
+        """Return the coordinates for the spiral effect: NES CmbtBGPlcmntTbl ($F397), one (x, y) per 2x2-tile block,
+        starting at the centre and turning clockwise (down, left, up, right) outward."""
         return (
             (3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (4, 3), (4, 4), (4, 5),
             (3, 5), (2, 5), (1, 5), (1, 4), (1, 3), (1, 2), (1, 1), (2, 1), (3, 1), (4, 1),
@@ -296,7 +330,7 @@ class Battle:
         """Display the battle window."""
         # NES LoadCombatBckgrnd: no battle background is drawn for the Dragonlord's final form.
         if self.enemy.name != 'Dragonlord 2':
-            self.transition_battle_background_image_effect(screen)
+            self.transition_battle_background_image_effect(screen, player)
         # NES LoadEnemyGFX: the enemy fades in from a black shadow, twice.
         drawer.fade_in_enemy(screen, self.enemy.name)
         cmd_menu.show_line_in_battle_dialog_box(self.get_enemy_draws_near_string())
