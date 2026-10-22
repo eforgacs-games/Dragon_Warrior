@@ -1,4 +1,5 @@
 # Installs the locked dependencies with uv, then lints, type checks and tests on each supported Python version.
+# One matrix entry also publishes a coverage summary to the job summary and, on PRs, a sticky comment.
 # For more information see: https://docs.astral.sh/uv/guides/integration/github/
 
 name: Python application
@@ -21,6 +22,13 @@ jobs:
       matrix:
         # pygame 2.6.1 has no wheels for 3.14 yet
         python-version: ["3.10", "3.13"]
+        include:
+          # Only one matrix entry publishes the coverage summary, so a PR gets a single comment
+          - python-version: "3.13"
+            publish-coverage: true
+    permissions:
+      contents: read
+      pull-requests: write  # for the sticky coverage comment
 
     steps:
     - uses: actions/checkout@v7
@@ -43,4 +51,25 @@ jobs:
       # Settings live in pyproject.toml
       run: uv run mypy
     - name: Test with pytest
-      run: uv run pytest --cov=src --cov-report=term
+      run: uv run pytest --cov=src --cov-report=term --cov-report=xml
+    - name: Build coverage summary
+      if: matrix.publish-coverage
+      # Report only for now; add thresholds (e.g. "60 80") and fail_below_min to enforce a minimum
+      uses: irongut/CodeCoverageSummary@v1.3.0
+      with:
+        filename: coverage.xml
+        badge: true
+        format: markdown
+        output: both
+    - name: Write coverage summary to the job summary
+      if: matrix.publish-coverage
+      run: cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY"
+    - name: Post coverage summary as a PR comment
+      # Fork PRs get a read-only token, so only comment on PRs from this repository
+      if: >-
+        matrix.publish-coverage && github.event_name == 'pull_request'
+        && github.event.pull_request.head.repo.full_name == github.repository
+      uses: marocchino/sticky-pull-request-comment@v3.0.5
+      with:
+        header: coverage
+        path: code-coverage-results.md
