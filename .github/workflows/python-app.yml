@@ -61,6 +61,7 @@ jobs:
         badge: true
         format: markdown
         output: both
+        hide_complexity: true  # coverage.py does not report complexity
     - name: Write coverage summary to the job summary
       if: matrix.publish-coverage
       run: cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY"
