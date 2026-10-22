@@ -209,14 +209,13 @@ class TestLowHPWindowColor(TestCase):
         battle_ctrl = self.game.battle_ctrl
         for hp, color in ((15, WHITE), (4, LOW_HP_RED)):
             self.set_hp(hp)
-            with patch.object(battle_ctrl.graphics, 'create_window') as create_window, \
-                    patch('src.menu.draw_cursor_tile') as draw_cursor_tile, \
+            with patch('src.battle_controller.draw_window') as draw_window, \
                     patch('src.battle_controller.display'), \
                     patch('src.battle_controller.event.get', return_value=[]), \
                     patch.dict(self.game.game_state.config, NO_BLIT=False):
                 battle_ctrl.handle_battle_prompts(False, MagicMock())
-            self.assertEqual(create_window.call_args.args[6], color)
-            self.assertEqual({c.args[4] for c in draw_cursor_tile.call_args_list}, {color})
+            # The border, the text and the cursor are all in the window color (see tests/test_generated_windows.py)
+            self.assertEqual(draw_window.call_args.args[2], color)
 
     # When the color changes (NES: when the background palettes are loaded, and ChkLowHP after a step)
 

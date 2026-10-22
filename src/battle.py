@@ -11,6 +11,8 @@ from src.directories import Directories
 from src.enemy import enemy_groups
 from src.enemy_lookup import enemy_string_lookup
 from src.maps import DragonWarriorMap
+from src.window_renderer import draw_window
+from src.windows import COMBAT_COMMAND_LAYOUT
 from src.menu import CommandMenu
 from src.player.player import Player
 from src.player.player_stats import levels_list
@@ -338,8 +340,8 @@ class Battle:
         cmd_menu.window_drop_down_effect(1, 2, 4, 6)
         # drop down for the battle menu
         cmd_menu.window_drop_down_effect(BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT)
-        graphics.create_window(BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT,
-                                directories.BATTLE_MENU_FIGHT_PATH, screen, color)
+        # The command window (CmdCmbtDat) opens with the cursor on FIGHT
+        draw_window(screen, COMBAT_COMMAND_LAYOUT, color, graphics.config, cursor_index=0)
         drawer.hovering_stats_displayed = True
         drawer.draw_hovering_stats_window(screen, player, color)
 
