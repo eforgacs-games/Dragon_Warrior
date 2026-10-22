@@ -131,6 +131,9 @@ class TestScriptedBattle(unittest.TestCase):
     def setUp(self):
         self.game = make_game()
         self.controller = BattleController(self.game)
+        # The opening CheckEnRun / CalcWhoIsNext rolls are tested in test_battle_controller.TestStartFight
+        patch.object(self.controller, 'start_fight', return_value=False).start()
+        self.addCleanup(patch.stopall)
 
     def test_dragonlord_transforms_into_second_form_and_victory_is_normal(self, mock_battle_class, _):
         first, second = fake_battle('Dragonlord', 100), fake_battle('Dragonlord 2', 130)
