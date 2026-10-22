@@ -12,13 +12,15 @@ from src.common import RED, WHITE, reject_keys, accept_keys, Graphics, set_gette
 from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACEABLE_ITEMS
 from src.direction import Direction
 from src.directories import Directories
-from src.items import INVENTORY_SLOTS, UNSLOTTED_ITEMS, weapons, armor, shields
+from src.items import INVENTORY_SLOTS, MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS
 from src import maps
 from src.maps import DragonWarriorMap
 from src.maps_functions import get_center_point
 from src.menu_functions import draw_player_sprites, draw_character_sprites
-from src.shops import ShopInventories
+from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_price, \
+    inventory_is_full, pay_player, sell_list, sell_price
 from src.sound import Sound
+from src.text import draw_text
 from src.visual_effects import fade, flash_transparent_color, greyscale_screen
 
 
@@ -49,16 +51,14 @@ class DialogLookup:
         rimuldar_inn_cost = 55
         cantlin_inn_cost = 100
 
-        tantegel_courtyard_magic_key_cost = 85
-        cantlin_magic_key_cost = 98
-
-        tools_intro = _("Welcome.\n"
-                        "We deal in tools.\n"
-                        "What can I do for thee?")
+        self.tools_intro = _("Welcome.\n"
+                             "We deal in tools.\n"
+                             "What can I do for thee?")
         self.directories = Directories(self.config)
         before_reaching_thy_next_level_of_experience = "Before reaching thy next level of experience thou must gain {} Points."
 
-        self.magic_key_prompt = "Magic keys! They will unlock any door.\nDost thou wish to purchase one for {} GOLD?"
+        self.magic_key_prompt = _("Magic keys! They will unlock any door.\n"
+                                  "Dost thou wish to purchase one for {} GOLD?")
 
         self.lookup_table = {
             'TantegelThroneRoom': {
@@ -127,7 +127,7 @@ class DialogLookup:
                 )},
             },
             'TantegelCourtyard': {
-                'MERCHANT': {'dialog': (partial(self.check_buy_magic_keys, tantegel_courtyard_magic_key_cost),)},
+                'MERCHANT': {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['TantegelCourtyard']),)},
                 'MERCHANT_2': {'dialog': _(
                     "We are merchants who have traveled much in this land. Many of our colleagues have been "
                     "killed by servants of the Dragonlord.")},
@@ -167,7 +167,10 @@ class DialogLookup:
                     partial(self.check_buy_weapons_armor, self.shop_inventories.brecconary_weapons_store_inventory,
                             self.directories.BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
-                'MERCHANT_3': {'dialog': (tools_intro,)},
+                'MERCHANT_3': {'dialog': (
+                    partial(self.tool_shop, self.shop_inventories.brecconary_item_store_inventory),)},
+                # NES BrecMobTbl: the female villager at 24,4 sells Fairy Water
+                'WOMAN': {'dialog': (self.fairy_water_shop,)},
                 # NES ChkPrncsDialog3 (dialog byte $64)
                 'GUARD': {'dialog': (partial(self.dialog_once_gwaelin_rescued,
                                              (_("Tell King Lorik that the search for his daughter hath failed."),
@@ -178,7 +181,8 @@ class DialogLookup:
             },
             'Garinham': {
                 'MERCHANT': {'dialog': _("I suggest making a map if thy path leads into the darkness.")},
-                'MERCHANT_2': {'dialog': (tools_intro,)},
+                'MERCHANT_2': {'dialog': (
+                    partial(self.tool_shop, self.shop_inventories.garinham_item_store_inventory),)},
                 'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
                 'MERCHANT_4': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.garinham_weapons_store_inventory,
@@ -198,6 +202,8 @@ class DialogLookup:
                     'MERCHANT_2': {'dialog': (
                         partial(self.check_buy_weapons_armor, self.shop_inventories.kol_weapons_store_inventory,
                                 self.directories.KOL_WEAPONS_SHOP_PATH),)},
+                    'MERCHANT_3': {'dialog': (
+                        partial(self.tool_shop, self.shop_inventories.kol_item_store_inventory),)},
                     'WISE_MAN': {'dialog': (
                         _("Though thou art as brave as thy ancestor, {}, "
                           "thou cannot defeat the great Dragonlord with such weapons.").format(
@@ -222,6 +228,7 @@ class DialogLookup:
                     partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory,
                             self.directories.RIMULDAR_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, rimuldar_inn_cost),)},
+                'WISE_MAN': {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['Rimuldar']),)},
             },
             'Cantlin': {
                 'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, cantlin_inn_cost),)},
@@ -233,7 +240,15 @@ class DialogLookup:
                 'MERCHANT_6': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
                             self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
-                'WISE_MAN': {'dialog': (partial(self.check_buy_magic_keys, cantlin_magic_key_cost),)},
+                'WISE_MAN': {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['Cantlin']),)},
+                # NES CantStatTbl: the male villager at 2,7 and the shopkeeper at 7,12 run the item shops, the
+                # guard at 24,12 sells the Flame Sword and Silver Shield, and the woman at 22,13 sells Fairy Water
+                'MAN': {'dialog': (partial(self.tool_shop, self.shop_inventories.cantlin_item_store_1_inventory),)},
+                'MERCHANT_4': {'dialog': (
+                    partial(self.tool_shop, self.shop_inventories.cantlin_item_store_2_inventory),)},
+                'GUARD': {'dialog': (
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_3_inventory),)},
+                'WOMAN': {'dialog': (self.fairy_water_shop,)},
                 'WISE_MAN_2': {
                     'dialog': _("To learn how proof may be obtained that thy ancestor was the great Erdrick, "
                                 "see a man in this very town.")},
@@ -473,10 +488,10 @@ class DialogLookup:
         self.command_menu.show_text_in_dialog_box(dialog, add_quotes=True, skip_text=self.command_menu.skip_text,
                                                   drop_down=False, drop_up=False)
 
-    def say(self, *lines):
+    def say(self, *lines, hide_arrow=False):
         """Show NPC lines in the dialog box that is already open."""
         for line in lines:
-            self.command_menu.show_line_in_dialog_box(line, skip_text=self.command_menu.skip_text)
+            self.command_menu.show_line_in_dialog_box(line, hide_arrow=hide_arrow, skip_text=self.command_menu.skip_text)
 
     def remove_curse(self):
         """NES ChkCursedDialog: the Brecconary wizard (dialog $67, NES (24, 10)) lifts any curse, free of charge."""
@@ -622,32 +637,6 @@ class DialogLookup:
                                                          skip_text=self.command_menu.skip_text), config=self.config,
                                 show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
-    def check_buy_weapons_armor(self, current_store_inventory, static_store_image):
-        confirmation_prompt(self.command_menu,
-                            self._("We deal in weapons and armor.\n Dost thou wish to buy anything today?"),
-                            yes_path_function=partial(self.open_store_inventory, current_store_inventory,
-                                                      static_store_image, color=self.command_menu.color),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                     self._("Please, come again."),
-                                                     hide_arrow=True),
-                            config=self.config, show_arrow=self.command_menu.game.show_arrow, color=self.color)
-
-    def check_buy_magic_keys(self, magic_key_cost):
-        confirmation_prompt(self.command_menu, self.magic_key_prompt.format(magic_key_cost),
-                            yes_path_function=partial(self.buy_magic_key, magic_key_cost),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                     self._("Please, come again."), hide_arrow=True),
-                            config=self.config, show_arrow=self.command_menu.game.show_arrow, color=self.color)
-
-    def buy_magic_key(self, magic_key_cost):
-        _ = self._
-        if self.player.gold >= magic_key_cost:
-            self.player.gold -= magic_key_cost
-            self.player.inventory.append('Magic Key')
-            self.command_menu.show_line_in_dialog_box(_("Thank you very much."))
-        else:
-            self.command_menu.show_line_in_dialog_box(_("Thou hast not enough money."))
-
     def get_inn_intro(self, inn_cost):
         _ = self._
         return _("Welcome to the traveler's Inn.\n"
@@ -675,102 +664,158 @@ class DialogLookup:
         #             flash_transparent_color(WHITE, self.screen)
         #             display.flip()
 
-    def open_store_inventory(self, current_store_inventory, static_store_image, color):
-        _ = self._
-        tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
-        self.command_menu.show_line_in_dialog_box(_("What dost thou wish to buy?"), skip_text=True)
+    # Shops. Each NES shop routine (Bank03) is a chain of dialogs and yes/no windows; here every "loop back" in the
+    # NES routine is a call to the method for that step.
+
+    def confirm(self, prompt, yes_path_function, no_path_function):
+        confirmation_prompt(self.command_menu, prompt, yes_path_function=yes_path_function,
+                            no_path_function=no_path_function, config=self.config,
+                            show_arrow=self.command_menu.game.show_arrow, color=self.color)
+
+    def select_from_text_menu(self, lines, x, y, width, right_column=None, initial_index=0):
+        """Show a window listing lines with a blinking arrow. Returns the chosen index, or None if cancelled."""
+        tile_size = self.config['TILE_SIZE']
+        height = len(lines) + 1
+        self.command_menu.window_drop_down_effect(x, y, width, height)
+        window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
+        graphics = Graphics(self.config)
+        background = self.directories.item_menu_background_lookup[5]
+        current_index = initial_index
+        start_time = get_ticks()
+        while True:
+            # arrow stays on and off for 16 frames at a time
+            frames_elapsed = self.calculation.convert_to_frames_since_start_time(start_time)
+            if frames_elapsed > 32:
+                start_time = get_ticks()
+            graphics.create_window(x, y, width, height, background, self.screen, self.color)
+            for i, line in enumerate(lines):
+                line_y = (y + i + 1) * tile_size
+                draw_text(line, (x + 1) * tile_size, line_y, self.screen, self.config, self.color,
+                          letter_by_letter=False)
+                if right_column:
+                    draw_text(right_column[i], (x + width - 0.5) * tile_size, line_y, self.screen, self.config,
+                              self.color, alignment='right', letter_by_letter=False)
+            draw_text('>', (x + 0.4) * tile_size, (y + current_index + 1) * tile_size, self.screen, self.config,
+                      self.color if frames_elapsed <= 16 else BLACK, letter_by_letter=False)
+            if not self.config['NO_BLIT']:
+                display.update(window_rect)
+            for current_event in get():
+                if current_event.type == KEYDOWN:
+                    if current_event.key in (K_DOWN, K_s) and current_index < len(lines) - 1:
+                        current_index += 1
+                        start_time = get_ticks()
+                    elif current_event.key in (K_UP, K_w) and current_index > 0:
+                        current_index -= 1
+                        start_time = get_ticks()
+                    elif current_event.key in reject_keys:
+                        return None
+                    elif current_event.key in accept_keys:
+                        self.sound.play_sound(self.directories.menu_button_sfx)
+                        return current_index
+                elif current_event.type == QUIT:
+                    quit()
+            pump()
+
+    def open_store_inventory(self, current_store_inventory, static_store_image=None):
+        """NES GetShopItems: show the shop's stock and return the name of the item chosen, or None if cancelled.
+
+        Shops with pre-rendered menu images blink between them; the others are drawn as text."""
+        item_names = list(current_store_inventory)
+        if static_store_image is None or not all('menu_image' in item for item in current_store_inventory.values()):
+            selected_index = self.select_from_text_menu([self._(name) for name in item_names], 6, 2, 9,
+                                                        right_column=[str(current_store_inventory[name]['cost'])
+                                                                      for name in item_names])
+            return None if selected_index is None else item_names[selected_index]
+        tile_size = self.config['TILE_SIZE']
         height = len(current_store_inventory) + 1
         self.command_menu.window_drop_down_effect(6, 2, 9, height)
         store_inventory_window_rect = Rect(6 * tile_size, 2 * tile_size, 9 * tile_size, height * tile_size)
-        selecting = True
         current_item_index = 0
         start_time = get_ticks()
         # arrow stays on and off for 16 frames at a time
         graphics = Graphics(self.config)
-        while selecting:
+        while True:
             self.command_menu.game.drawer.display_hovering_stats = True
             display.flip()
-            current_item_name = list(current_store_inventory)[current_item_index]
+            current_item_name = item_names[current_item_index]
             current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
             frames_elapsed = self.calculation.convert_to_frames_since_start_time(start_time)
-
             if frames_elapsed <= 16:
-                graphics.create_window(6, 2, 9, height, current_item_menu_image, self.command_menu.screen, color)
+                graphics.create_window(6, 2, 9, height, current_item_menu_image, self.screen, self.color)
                 display.update(store_inventory_window_rect)
             elif frames_elapsed <= 32:
-                graphics.create_window(6, 2, 9, height, static_store_image, self.command_menu.screen, color)
+                graphics.create_window(6, 2, 9, height, static_store_image, self.screen, self.color)
                 display.update(store_inventory_window_rect)
             else:
                 start_time = get_ticks()
-            selected_item = None
             for current_event in get():
                 if current_event.type == KEYDOWN:
-                    if current_event.key in (K_DOWN, K_s) and current_item_index < len(current_store_inventory) - 1:
+                    if current_event.key in (K_DOWN, K_s) and current_item_index < len(item_names) - 1:
                         current_item_index += 1
                         start_time = get_ticks()
                     elif current_event.key in (K_UP, K_w) and current_item_index > 0:
                         current_item_index -= 1
                         start_time = get_ticks()
                     elif current_event.key in reject_keys:
-                        self.command_menu.show_line_in_dialog_box(_("Please, come again."), hide_arrow=True)
-                        selecting = False
+                        return None
                     elif current_event.key in accept_keys:
-                        selected_item = current_item_name
+                        graphics.create_window(6, 2, 9, height, current_item_menu_image, self.screen, self.color)
+                        display.update(store_inventory_window_rect)
+                        return current_item_name
                 elif current_event.type == QUIT:
                     quit()
-            if selected_item:
-                graphics.create_window(6, 2, 9, height, current_item_menu_image, self.command_menu.screen, color)
-                display.update(store_inventory_window_rect)
-                self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
-                selecting = False
             pump()
-            # print(f"Item index {current_item_index}: {current_item_name}")
+
+    def please_come_again(self):
+        self.say(self._("Please, come again."), hide_arrow=True)
+
+    # Weapon and armor shops (NES WeaponsDialog). They only sell; the only way to sell equipment is the buyback
+    # offered when buying a replacement.
+
+    def check_buy_weapons_armor(self, current_store_inventory, static_store_image=None):
+        self.confirm(self._("We deal in weapons and armor.\n Dost thou wish to buy anything today?"),
+                     yes_path_function=partial(self.choose_weapon_or_armor, current_store_inventory,
+                                               static_store_image),
+                     no_path_function=self.please_come_again)
+
+    def choose_weapon_or_armor(self, current_store_inventory, static_store_image):
+        self.command_menu.show_line_in_dialog_box(self._("What dost thou wish to buy?"), skip_text=True)
+        selected_item = self.open_store_inventory(current_store_inventory, static_store_image)
+        if selected_item is None:
+            self.please_come_again()
+        else:
+            self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
 
     def buy_item_dialog(self, selected_item, current_store_inventory, static_store_image):
         _ = self._
-        self.command_menu.show_line_in_dialog_box(_("The {}?").format(_(selected_item)), hide_arrow=False)
+        self.say(_("The {}?").format(_(selected_item)))
         selected_item_dict = current_store_inventory[selected_item]
-        selected_item_type = selected_item_dict['type']
+        # NES CheckBuyWeapon: only the price of the new item is compared with the player's gold
         if self.player.gold >= selected_item_dict['cost']:
-            old_item_cost = None
-            if selected_item_type == 'weapon':
-                old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.weapon, weapons)
-            elif selected_item_type == 'armor':
-                old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.armor, armor)
-            elif selected_item_type == 'shield':
-                old_item_cost = self.shopkeeper_buy_old_item(old_item_cost, self.player.shield, shields)
-            confirmation_prompt(self.command_menu, _("Is that Okay.?"),
-                                yes_path_function=partial(self.complete_transaction, selected_item,
-                                                          current_store_inventory, old_item_cost),
-                                no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                         _("Oh, yes? That's too bad.")), config=self.config,
-                                show_arrow=self.command_menu.game.show_arrow, color=self.color)
+            old_item = self.equipped_item(selected_item_dict['type'])
+            old_item_cost = buyback_price(old_item, selected_item_dict['type'])
+            if old_item:
+                # NES GetBuybackPrice: offered whenever something of the same type is equipped
+                self.say(_("Then I will buy thy {} for {} GOLD.").format(_(old_item), old_item_cost))
+            self.confirm(_("Is that Okay.?"),
+                         yes_path_function=partial(self.complete_transaction, selected_item,
+                                                   current_store_inventory, old_item_cost),
+                         no_path_function=partial(self.say, _("Oh, yes? That's too bad.")))
         else:
-            self.command_menu.show_line_in_dialog_box(_("Sorry.\n"
-                                                        "Thou hast not enough money."), hide_arrow=False)
-        confirmation_prompt(self.command_menu, _("Dost thou wish to buy anything more?"),
-                            yes_path_function=partial(self.open_store_inventory, current_store_inventory,
-                                                      static_store_image, self.color),
-                            no_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                     _("Please, come again."), hide_arrow=True), config=self.config,
-                            show_arrow=self.command_menu.game.show_arrow, color=self.color)
+            self.say(_("Sorry.\nThou hast not enough money."))
+        self.confirm(_("Dost thou wish to buy anything more?"),
+                     yes_path_function=partial(self.choose_weapon_or_armor, current_store_inventory,
+                                               static_store_image),
+                     no_path_function=self.please_come_again)
 
-    def shopkeeper_buy_old_item(self, old_item_cost, old_item, old_item_lookup_table):
-        _ = self._
-        if old_item:
-            if old_item_lookup_table[old_item].get('cost'):
-                old_item_cost = old_item_lookup_table[old_item]['cost'] // 2
-                self.command_menu.show_line_in_dialog_box(
-                    _("Then I will buy thy {} for {} GOLD.").format(self._(old_item), old_item_cost), hide_arrow=False)
-        return old_item_cost
+    def equipped_item(self, item_type):
+        return {'weapon': self.player.weapon, 'armor': self.player.armor, 'shield': self.player.shield}[item_type]
 
     def complete_transaction(self, item, current_store_inventory, old_item_cost):
-        _ = self._
+        # NES ComitWeapPurchase: pay for the new item, then receive the buyback price (gold capped at 65535)
         item_dict = current_store_inventory[item]
         item_type = item_dict['type']
-        self.player.gold -= item_dict['cost']
-        if old_item_cost:
-            self.player.gold += old_item_cost
+        self.player.gold = pay_player(self.player.gold - item_dict['cost'], old_item_cost or 0)
         if item_type == 'weapon':
             self.player.weapon = item
         elif item_type == 'armor':
@@ -780,7 +825,141 @@ class DialogLookup:
         self.player.update_attack_power()
         self.player.update_defense_power()
         self.command_menu.game.drawer.draw_hovering_stats_window(self.screen, self.player)
-        self.command_menu.show_line_in_dialog_box(_("I thank thee."))
+        self.say(self._("I thank thee."))
+
+    # Item shops (NES ToolsDialog)
+
+    def tool_shop(self, current_store_inventory):
+        self.say(self.tools_intro)
+        # NES WND_BUY_SELL
+        choice = self.select_from_text_menu([self._("BUY"), self._("SELL")], 5, 2, 4)
+        if choice == 0:
+            self.buy_tool(current_store_inventory)
+        elif choice == 1:
+            self.sell_tool(current_store_inventory)
+        else:
+            self.tool_shop_goodbye()
+
+    def tool_shop_goodbye(self):
+        self.say(self._("I will be waiting for thy next visit."), hide_arrow=True)
+
+    def buy_tool(self, current_store_inventory):
+        _ = self._
+        self.say(_("What dost thou want?"))
+        selected_item = self.open_store_inventory(current_store_inventory)
+        if selected_item is None:
+            self.tool_shop_goodbye()
+            return
+        cost = current_store_inventory[selected_item]['cost']
+        if self.player.gold < cost:
+            self.say(_("Thou hast not enough money."))
+        elif selected_item == 'Herb' and self.player.inventory.count('Herb') >= MAX_HERBS:
+            # NES ChkToolPurchase
+            self.say(_("Thou cannot hold more Herbs."))
+        elif selected_item != 'Herb' and inventory_is_full(self.player.inventory):
+            # NES DoOthrToolPurchase: AddInvItem returns INV_FULL. Nothing stops buying a second Dragon's Scale.
+            self.say(_("Thou cannot carry anymore."))
+        else:
+            self.player.gold -= cost
+            self.player.inventory.append(selected_item)
+            self.say(_("The {}?\nThank you very much.").format(_(selected_item)))
+        # NES NextToolDialog
+        self.confirm(_("Dost thou want anything else?"),
+                     yes_path_function=partial(self.buy_tool, current_store_inventory),
+                     no_path_function=self.tool_shop_goodbye)
+
+    def sell_tool(self, current_store_inventory):
+        """NES DoToolSell."""
+        _ = self._
+        items = sell_list(self.player.inventory)
+        if not items:
+            self.say(_("Thou hast no possessions."))
+            self.tool_shop_goodbye()
+            return
+        self.say(_("What art thou selling?"))
+        counts = [str(self.player.inventory.count(item)) if item in ('Herb', 'Magic Key') else ''
+                  for item in items]
+        selected_index = self.select_from_text_menu([_(item) for item in items], 6, 2, 9, right_column=counts)
+        if selected_index is None:
+            self.tool_shop_goodbye()
+            return
+        item = items[selected_index]
+        price = sell_price(item)
+        if not price:
+            self.say(_("I cannot buy it."))
+            self.sell_more(current_store_inventory)
+            return
+        self.confirm(_("Thou said the {}.\nI will buy thy {} for {} GOLD.\nIs that all right?").format(
+            _(item), _(item), price),
+            yes_path_function=partial(self.complete_sale, item, price, current_store_inventory),
+            no_path_function=partial(self.sell_more, current_store_inventory))
+
+    def complete_sale(self, item, price, current_store_inventory):
+        if self.player.is_wearing_cursed_item(item):
+            # NES ChkSellBelt / ChkSellNecklace / CantSellCrsdItm
+            self.say(self._("A curse is upon thy body."))
+            self.say(self._("I am sorry."))
+        else:
+            # NES DoSellTool only removes the item; a sold Dragon's Scale or Fighter's Ring stays "worn"
+            self.player.inventory.remove(item)
+            self.player.gold = pay_player(self.player.gold, price)
+            self.command_menu.game.drawer.draw_hovering_stats_window(self.screen, self.player)
+        self.sell_more(current_store_inventory)
+
+    def sell_more(self, current_store_inventory):
+        # NES ItemSellLoop
+        self.confirm(self._("Wilt thou sell anything else?"),
+                     yes_path_function=partial(self.sell_tool, current_store_inventory),
+                     no_path_function=self.tool_shop_goodbye)
+
+    # Fairy Water shops (NES FairyDialog)
+
+    def fairy_water_shop(self):
+        self.confirm(self._("Will thou buy some Fairy Water for {} GOLD to keep the Dragonlord's minions away?").format(
+            FAIRY_WATER_COST),
+            yes_path_function=self.buy_fairy_water, no_path_function=self.fairy_water_goodbye)
+
+    def fairy_water_goodbye(self):
+        self.say(self._("All the best to thee."), hide_arrow=True)
+
+    def buy_fairy_water(self):
+        _ = self._
+        if self.player.gold < FAIRY_WATER_COST:
+            self.say(_("Thou hast not enough money."))
+            self.fairy_water_goodbye()
+        elif inventory_is_full(self.player.inventory):
+            self.say(_("Thou cannot carry anymore."))
+            self.fairy_water_goodbye()
+        else:
+            self.player.gold -= FAIRY_WATER_COST
+            self.player.inventory.append('Fairy Water')
+            self.confirm(_("I thank thee.\nWon't thou buy one more bottle?"),
+                         yes_path_function=self.buy_fairy_water, no_path_function=self.fairy_water_goodbye)
+
+    # Magic Key shops (NES KeysDialog)
+
+    def check_buy_magic_keys(self, magic_key_cost):
+        self.confirm(self.magic_key_prompt.format(magic_key_cost),
+                     yes_path_function=partial(self.buy_magic_key, magic_key_cost),
+                     no_path_function=self.magic_key_goodbye)
+
+    def magic_key_goodbye(self):
+        self.say(self._("I will see thee later."), hide_arrow=True)
+
+    def buy_magic_key(self, magic_key_cost):
+        _ = self._
+        if self.player.inventory.count('Magic Key') >= MAX_KEYS:
+            self.say(_("I am sorry, but I cannot sell thee anymore."))
+            self.magic_key_goodbye()
+        elif self.player.gold < magic_key_cost:
+            self.say(_("Thou hast not enough money."))
+            self.magic_key_goodbye()
+        else:
+            self.player.gold -= magic_key_cost
+            self.player.inventory.append('Magic Key')
+            self.confirm(_("Here, take this key.\nDost thou wish to purchase more?"),
+                         yes_path_function=partial(self.buy_magic_key, magic_key_cost),
+                         no_path_function=self.magic_key_goodbye)
 
     def check_stay_at_inn(self, inn_cost):
         _ = self._
