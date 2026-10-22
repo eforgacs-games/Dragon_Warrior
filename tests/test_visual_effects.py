@@ -1,6 +1,6 @@
 import os
 import unittest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -64,7 +64,7 @@ class TestFade(unittest.TestCase):
         mock_screen = MagicMock()
         mock_screen.get_width.return_value = 100
         mock_screen.get_height.return_value = 100
-        with patch('src.visual_effects.display') as mock_display:
+        with patch('src.visual_effects.display'):
             # Should not raise
             fade(fade_out=True, screen=mock_screen, config=config)
 
@@ -75,7 +75,7 @@ class TestFade(unittest.TestCase):
         mock_screen.get_width.return_value = 100
         mock_screen.get_height.return_value = 100
         mock_screen.copy.return_value = MagicMock()
-        with patch('src.visual_effects.display') as mock_display:
+        with patch('src.visual_effects.display'):
             fade(fade_out=False, screen=mock_screen, config=config)
 
     def test_fade_in_with_draw_callback(self):
@@ -85,7 +85,7 @@ class TestFade(unittest.TestCase):
         mock_screen.get_width.return_value = 100
         mock_screen.get_height.return_value = 100
         mock_callback = MagicMock()
-        with patch('src.visual_effects.display') as mock_display:
+        with patch('src.visual_effects.display'):
             fade(fade_out=False, screen=mock_screen, config=config, draw_callback=mock_callback)
         # Callback should have been called at least once
         self.assertGreater(mock_callback.call_count, 0)
@@ -98,7 +98,7 @@ class TestFade(unittest.TestCase):
         mock_screen.get_height.return_value = 100
         mock_background = MagicMock()
         mock_screen.copy.return_value = mock_background
-        with patch('src.visual_effects.display') as mock_display:
+        with patch('src.visual_effects.display'):
             fade(fade_out=False, screen=mock_screen, config=config)
         # Background should be blitted since NO_BLIT is True but we're checking screen.blit
         # The blit call with background happens regardless of NO_BLIT
@@ -124,7 +124,7 @@ class TestFlashTransparentColor(unittest.TestCase):
         # Make the while loop exit immediately (frames >= 3 from the start)
         mock_calc.convert_to_frames_since_start_time.return_value = 10
 
-        with patch('src.visual_effects.display') as mock_display:
+        with patch('src.visual_effects.display'):
             flash_transparent_color((255, 0, 0), mock_screen, mock_calc, no_blit=True)
 
         # draw_transparent_color should have been called once

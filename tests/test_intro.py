@@ -68,7 +68,7 @@ class TestIntro(TestCase):
         mocked_i = MagicMock()
         mocked_i.type = KEYDOWN
         mocked_i.key = K_i
-        with patch.object(event, 'get', return_value=[mocked_i]) as mock_method:
+        with patch.object(event, 'get', return_value=[mocked_i]):
             self.intro.show_start_screen(self.game.screen, 0, self.game.clock, self.game.game_state.config)
 
     # def test_show_start_screen_quit(self):

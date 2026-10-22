@@ -1,10 +1,9 @@
 from statistics import mean
 from typing import List, Iterable
 
-from pygame import image, display, KEYDOWN, event, Surface, Rect
+from pygame import display, KEYDOWN, event, Surface, Rect
 from pygame.sprite import Group
 from pygame.time import get_ticks
-from pygame.transform import scale
 
 from src.calculation import Calculation
 from src.common import WHITE, BLACK, Graphics

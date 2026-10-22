@@ -82,7 +82,7 @@ class TestCommandMenu(TestCase):
         mocked_return = MagicMock()
         mocked_return.type = KEYDOWN
         mocked_return.key = K_RETURN
-        with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
+        with patch.object(event, 'get', return_value=[mocked_return]):
             self.game.cmd_menu.take_item("test_item")
         self.assertIn("test_item", self.game.player.inventory)
 
@@ -91,7 +91,7 @@ class TestCommandMenu(TestCase):
         mocked_return = MagicMock()
         mocked_return.type = KEYDOWN
         mocked_return.key = K_RETURN
-        with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
+        with patch.object(event, 'get', return_value=[mocked_return]):
             self.game.cmd_menu.take_gold({'item': 'GOLD', 'amount': 120})
         self.assertEqual(120, self.game.player.gold)
 

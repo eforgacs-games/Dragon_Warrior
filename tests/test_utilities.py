@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import MagicMock
 
 from src.utilities import timeit
 
