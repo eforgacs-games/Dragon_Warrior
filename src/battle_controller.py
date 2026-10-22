@@ -13,14 +13,13 @@ from enum import Enum
 
 from pygame import KEYDOWN, display, event, key, mixer, time
 
-from src.battle import Battle, calculate_enemy_attack_damage
+from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
 from src.common import ANY_BUTTON_KEYS, BLACK, accept_keys, reject_keys
 from src.cursor import BlinkingCursor
 from src.waiting import quit_if_requested, wait
 from src.constants import (
     AUTO_BATTLE_DELAY_MS,
-    ENEMY_FLEE_PROBABILITY,
 )
 from src.encounters import pick_enemy
 from src.enemy_lookup import enemy_repel_lookup
@@ -98,6 +97,8 @@ class BattleController:
         self.command_buttons = SelectionButtons(self.command_cursor)
         # Whether the command window is selecting (WndDoSelect). It is opened again at the start of each player turn.
         self.command_window_open = False
+        # Set when the enemy has just cast SLEEP on the hero, so it takes another turn straight away.
+        self.player_fell_asleep = False
 
     # ------------------------------------------------------------------ #
     #  Properties that forward to game for brevity inside this class       #
@@ -204,7 +205,6 @@ class BattleController:
         self.cmd_menu.current_battle = current_battle
         # NES clears all combat status flags when a fight starts
         self.player.is_asleep = False
-        self.player.asleep_turns = 0
         self.player.is_stopspelled = False
         self.player_ran_away = False
         current_battle.play_battle_music()
@@ -212,8 +212,8 @@ class BattleController:
         current_battle.display_battle_window(self.screen, self.drawer,
                                              self.cmd_menu, self.graphics, self.directories,
                                              self.game.color, self.player)
-        run_away = False
         self.command_window_open = False  # the first player turn opens the command window (StartPlayerTurn)
+        run_away = self.start_fight(current_battle)
         while current_battle.enemy.hp > 0 and not run_away and not self.player.is_dead:
             run_away = self.handle_battle_prompts(run_away, current_battle)
         if current_battle.enemy.hp <= 0:
@@ -259,6 +259,26 @@ class BattleController:
         self.sound.play_sound(self.directories.stairs_down_sfx)
         self.game.change_map(map_lookup[self.current_map.identifier](self.config),
                              destination_coordinates=coordinates, direction=self.player.direction_value)
+
+    def start_fight(self, current_battle: Battle) -> bool:
+        """NES InitFight, after the enemy appears (SetEnHP): CheckEnRun gives a much weaker enemy its chance to run
+        away, then CalcWhoIsNext decides whether the enemy attacks before the hero is ready (StartEnemyTurn) or the
+        hero gets the first turn. Returns True if the enemy ran away."""
+        enemy = current_battle.enemy
+        if enemy_flees(self.player.strength, enemy.attack, random.randint(0, 255)):
+            return self.enemy_run_away(current_battle, enemy)
+        if player_acts_first(self.player.agility, enemy.defense, random.randint(0, 255), random.randint(0, 255)):
+            return False
+        self.cmd_menu.show_line_in_dialog_box(
+            self._("The {} attacked before {} was ready.").format(self._(enemy.name), self.player.name),
+            add_quotes=False, disable_sound=True, hide_arrow=True)
+        if self.enemy_move(current_battle):
+            return True
+        if self.player.current_hp <= 0:
+            # 0 HP is always low: NES ChkLowHPPal's $26
+            self.drawer.draw_hovering_stats_window(self.screen, self.player, LOW_HP_RED)
+            self.player.is_dead = True
+        return False
 
     # ------------------------------------------------------------------ #
     #  Battle prompts / menu                                               #
@@ -326,9 +346,7 @@ class BattleController:
                 else:
                     self.cmd_menu.display_item_menu('inventory')
             elif selected_executed_option == 'Sleep':
-                self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
-                                                      add_quotes=False, disable_sound=True,
-                                                      hide_arrow=True, skip_text=True)
+                self.sleeping_player_turn(current_battle)
             current_battle.last_turn = current_battle.turn
             current_battle.turn += 1
             selected_executed_option = None
@@ -344,18 +362,6 @@ class BattleController:
                         # 0 HP is always low: NES ChkLowHPPal's $26
                         self.drawer.draw_hovering_stats_window(self.screen, self.player, LOW_HP_RED)
                         self.player.is_dead = True
-                    elif self.player.is_asleep:
-                        self.player.asleep_turns += 1
-                        if self.player.asleep_turns >= 6 or random.randint(0, 1) == 1:
-                            self.player.is_asleep = False
-                            self.player.asleep_turns = 0
-                            self.cmd_menu.show_line_in_dialog_box(
-                                self._("{} awakes.\n").format(self.player.name) + "Command?\n",
-                                add_quotes=False, disable_sound=True, hide_arrow=True)
-                        else:
-                            self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
-                                                                  add_quotes=False, disable_sound=True,
-                                                                  hide_arrow=True, skip_text=True)
                 current_battle.no_op = False
         return run_away
 
@@ -409,6 +415,22 @@ class BattleController:
             self.command_buttons.moved()  # WndUpdateCrsrPos
         return None
 
+    def sleeping_player_turn(self, current_battle: Battle) -> None:
+        """NES StartPlayerTurn: a sleeping hero wakes when bit 0 of a random byte is set (50%), with no limit on how
+        long the sleep can last. On waking, "<player> awakes." then "Command?": the hero takes this turn as usual.
+        Otherwise "Thou art still asleep." (PlayerAsleepDialog) and the enemy takes its turn."""
+        if random.randint(0, 255) & 0x01:
+            self.player.is_asleep = False
+            self.cmd_menu.show_line_in_dialog_box(
+                self._("{} awakes.\n").format(self.player.name) + self._("Command?\n"),
+                add_quotes=False, disable_sound=True, hide_arrow=True)
+            # The hero chooses a command next, so the enemy doesn't move this time round.
+            current_battle.no_op = True
+        else:
+            self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
+                                                  add_quotes=False, disable_sound=True,
+                                                  hide_arrow=True, skip_text=True)
+
     def enemy_run_away(self, current_battle, enemy):
         self.sound.play_sound(self.directories.stairs_down_sfx)
         self.cmd_menu.show_line_in_dialog_box(self._("The {} is running away.").format(self._(enemy.name)),
@@ -433,8 +455,8 @@ class BattleController:
         attack_damage = current_battle.calculate_attack_damage(self.cmd_menu, self.player, current_battle.enemy)
         if attack_damage <= 0:
             current_battle.missed_attack(self.cmd_menu)
-        elif not current_battle.enemy.is_asleep and random.random() < current_battle.enemy.dodge:
-            # NES: a sleeping enemy can't dodge
+        elif not current_battle.enemy.is_asleep and enemy_dodges(current_battle.enemy.dodge, random.randint(0, 255)):
+            # NES SetEnDmg1: a sleeping enemy can't dodge (excellent moves can be dodged too)
             self.sound.play_sound(self.directories.missed_sfx)
             self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!").format(self._(current_battle.enemy.name)),
                                                   add_quotes=False, disable_sound=True, hide_arrow=True)
@@ -453,7 +475,20 @@ class BattleController:
     # ------------------------------------------------------------------ #
 
     def enemy_move(self, current_battle: Battle) -> bool:
-        """Take the enemy's turn. Returns True if the enemy ran away, which ends the battle."""
+        """Take the enemy's turn. Returns True if the enemy ran away, which ends the battle.
+        NES EnCastSleep jumps to PlayerAsleepDialog: once the enemy puts the hero to sleep, "Thou art still asleep."
+        is shown and the enemy takes another turn at once, before the hero gets any chance to wake up."""
+        while True:
+            self.player_fell_asleep = False
+            if self.enemy_turn(current_battle):
+                return True
+            if not self.player_fell_asleep or self.player.current_hp <= 0:
+                return False
+            self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"), add_quotes=False,
+                                                  disable_sound=True, hide_arrow=True, skip_text=True)
+
+    def enemy_turn(self, current_battle: Battle) -> bool:
+        """One enemy turn (NES StartEnemyTurn). Returns True if the enemy ran away."""
         enemy = current_battle.enemy
         # NES (StartEnemyTurn): a sleeping enemy wakes 1 time in 3 (the 2-bit roll is redone on 0) and
         # acts immediately; otherwise it stays asleep and the player gets another turn.
@@ -465,9 +500,9 @@ class BattleController:
             enemy.is_asleep = False
             self.cmd_menu.show_line_in_dialog_box(self._("{} hath woken up.").format(self._(enemy.name)),
                                                   add_quotes=False, disable_sound=True, hide_arrow=True)
-        # NES (CheckEnRun): at the start of the enemy's turn, an enemy facing a player with at least
-        # double its attack in strength has a 25% chance to run away.
-        if self.player.strength >= enemy.attack * 2 and random.random() < ENEMY_FLEE_PROBABILITY:
+        # NES DoEnemyAttack calls CheckEnRun first: an enemy facing a hero with at least double its attack in
+        # strength has a 1 in 4 chance to run away.
+        if enemy_flees(self.player.strength, enemy.attack, random.randint(0, 255)):
             return self.enemy_run_away(current_battle, enemy)
         # Rebuild the pattern so HP-based conditions (e.g. HEAL) reflect damage taken this turn.
         enemy.refresh_pattern()
@@ -511,9 +546,15 @@ class BattleController:
                     spell_effect_lower_bound, spell_effect_upper_bound = enemy_spell_lookup[current_spell]
                     spell_effect = random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
                     if current_spell in (Spell.HEAL, Spell.HEALMORE):
+                        # NES EnemyAddHP: capped at the enemy's base HP
                         enemy.recover_hp(spell_effect)
+                        self.cmd_menu.show_line_in_dialog_box(
+                            self._("The {} hath recovered.").format(self._(enemy.name)), add_quotes=False,
+                            disable_sound=True, hide_arrow=True)
                     elif current_spell == Spell.SLEEP:
+                        # NES EnCastSleep: always works; the enemy moves again straight away (see enemy_move)
                         self.player.is_asleep = True
+                        self.player_fell_asleep = True
                         self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), add_quotes=False,
                                                               disable_sound=True, hide_arrow=True)
                     elif current_spell in (Spell.HURT, Spell.HURTMORE):
@@ -521,9 +562,15 @@ class BattleController:
                             spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
                         self.game.receive_damage(spell_effect)
                     elif current_spell == Spell.STOPSPELL:
-                        if self.player.armor != "Erdrick's Armor":
-                            if random.randint(0, 1) == 1:
-                                self.player.is_stopspelled = True
+                        # NES EnCastStopspell: Erdrick's Armor always blocks it; otherwise it works when bit 0 of a
+                        # random byte is set (50%). It lasts for the rest of the fight.
+                        if self.player.armor != "Erdrick's Armor" and random.randint(0, 255) & 0x01:
+                            self.player.is_stopspelled = True
+                            message = self._("{}'s spell is blocked.").format(self.player.name)
+                        else:
+                            message = self._("The spell will not work.")
+                        self.cmd_menu.show_line_in_dialog_box(message, add_quotes=False, disable_sound=True,
+                                                              hide_arrow=True)
                     elif current_spell in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         if self.player.armor == "Erdrick's Armor":
                             spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
@@ -551,7 +598,7 @@ class BattleController:
     def execute_enemy_attack(self, current_battle):
         attack_damage = calculate_enemy_attack_damage(self.player, current_battle.enemy)
         if attack_damage <= 0:
-            current_battle.missed_attack(self.cmd_menu)
+            current_battle.enemy_missed_attack(self.cmd_menu)
         else:
             self.game.receive_damage(attack_damage)
 
