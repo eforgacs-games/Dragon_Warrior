@@ -146,6 +146,6 @@ class TestQuitDuringGameWaits(TestCase):
         dialog_lookup = self.game.cmd_menu.dialog_lookup
         self.post_quit()
         with patch.object(self.game.cmd_menu, 'show_line_in_dialog_box'), \
-                patch('data.text.dialog_lookup_table.fade'), patch.object(dialog_lookup.sound, 'play_sound'), \
+                patch('data.text.dialog_lookup_table.screen_fade'), patch.object(dialog_lookup.sound, 'play_sound'), \
                 self.assertRaises(SystemExit):
             dialog_lookup.inn_sleep(6)

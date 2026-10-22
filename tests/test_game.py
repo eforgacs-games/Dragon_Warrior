@@ -853,7 +853,7 @@ class TestGame(TestCase):
             self.game.save_dir_contents = os.listdir(tmp_dir)
             with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0) as mock_selection, \
                     patch.object(self.game, 'load_game'), patch.object(self.game, 'music_player'), \
-                    patch('src.game.fade'), patch('src.game.CommandMenu'):
+                    patch('src.map_manager.screen_fade'), patch('src.game.CommandMenu'):
                 self.game.continue_quest()
             overlay = mock_selection.call_args.kwargs['overlay']
             self.assertEqual('Ed  ', overlay.texts[0].text)

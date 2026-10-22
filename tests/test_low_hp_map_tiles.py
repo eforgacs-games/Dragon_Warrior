@@ -225,7 +225,7 @@ class TestLowHPMapSwitching(LowHPMapTestCase):
 
         with patch.object(cmd_menu, 'show_line_in_dialog_box', side_effect=record), \
                 patch.object(cmd_menu, 'show_text_in_dialog_box', side_effect=record), \
-                patch('data.text.dialog_lookup_table.fade'):
+                patch('data.text.dialog_lookup_table.screen_fade'):
             cmd_menu.dialog_lookup.inn_sleep(6)
         # "Good night." comes before the fade out, at the old HP; the map wakes up white with the windows
         self.assertEqual(reds, [(LOW_HP_RED, True), (WHITE, False)])
