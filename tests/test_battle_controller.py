@@ -64,6 +64,9 @@ class TestHandleBattlePrompts(unittest.TestCase):
         self.random = patch('src.battle_controller.random.random', return_value=0.99).start()
         self.addCleanup(patch.stopall)
 
+    def patch_enemy_move(self, fled=False):
+        return patch.object(self.controller, 'enemy_move', return_value=fled)
+
     def press(self, *keys):
         self.events.return_value = [key(k) for k in keys]
         return self.controller.handle_battle_prompts(False, self.battle)
@@ -91,7 +94,7 @@ class TestHandleBattlePrompts(unittest.TestCase):
         self.assertFalse(self.game.show_arrow)
 
     def test_fight_attacks_then_enemy_moves(self, mock_time, mock_display):
-        with patch.object(self.controller, 'fight') as fight, patch.object(self.controller, 'enemy_move') as enemy_move:
+        with patch.object(self.controller, 'fight') as fight, self.patch_enemy_move() as enemy_move:
             self.assertFalse(self.press(K_RETURN))
         fight.assert_called_once_with(self.battle)
         enemy_move.assert_called_once_with(self.battle)
@@ -102,7 +105,7 @@ class TestHandleBattlePrompts(unittest.TestCase):
         def kill(battle):
             battle.enemy.hp = 0
         with patch.object(self.controller, 'fight', side_effect=kill), \
-                patch.object(self.controller, 'enemy_move') as enemy_move:
+                self.patch_enemy_move() as enemy_move:
             self.assertFalse(self.press(K_RETURN))
         enemy_move.assert_not_called()
 
@@ -115,7 +118,7 @@ class TestHandleBattlePrompts(unittest.TestCase):
 
     def test_spell_selection_casts_spell(self, mock_time, mock_display):
         self.controller.battle_menu_column = 1
-        with patch.object(self.controller, 'enemy_move'):
+        with self.patch_enemy_move():
             self.press(K_RETURN)
         self.battle.battle_spell.assert_called_once_with(self.game.cmd_menu, self.game.player, self.battle)
         self.assertEqual(self.controller.last_battle_action, 'Spell')
@@ -123,7 +126,7 @@ class TestHandleBattlePrompts(unittest.TestCase):
     def test_spell_no_op_skips_enemy_turn(self, mock_time, mock_display):
         self.controller.battle_menu_column = 1
         self.battle.battle_spell.side_effect = lambda *args: setattr(self.battle, 'no_op', True)
-        with patch.object(self.controller, 'enemy_move') as enemy_move:
+        with self.patch_enemy_move() as enemy_move:
             self.press(K_RETURN)
         enemy_move.assert_not_called()
 
@@ -132,7 +135,7 @@ class TestHandleBattlePrompts(unittest.TestCase):
         # or the enemy never attacks again that battle.
         self.controller.battle_menu_row = 1
         self.battle.battle_run.return_value = False
-        with patch.object(self.controller, 'fight'), patch.object(self.controller, 'enemy_move') as enemy_move:
+        with patch.object(self.controller, 'fight'), self.patch_enemy_move() as enemy_move:
             self.press(K_RETURN)
             self.controller.battle_menu_row = 0
             self.press(K_RETURN)
@@ -141,7 +144,7 @@ class TestHandleBattlePrompts(unittest.TestCase):
     def test_successful_run_ends_battle(self, mock_time, mock_display):
         self.controller.battle_menu_row = 1
         self.battle.battle_run.return_value = True
-        with patch.object(self.controller, 'enemy_move') as enemy_move:
+        with self.patch_enemy_move() as enemy_move:
             self.assertTrue(self.press(K_RETURN))
         enemy_move.assert_not_called()
         self.game.music_player.load_and_play_music.assert_called_once_with(self.game.current_map.music_file_path)
@@ -150,7 +153,7 @@ class TestHandleBattlePrompts(unittest.TestCase):
         # battle_run already lets the enemy attack when the run fails (regression test for #179)
         self.controller.battle_menu_row = 1
         self.battle.battle_run.return_value = False
-        with patch.object(self.controller, 'enemy_move') as enemy_move:
+        with self.patch_enemy_move() as enemy_move:
             self.assertFalse(self.press(K_RETURN))
         enemy_move.assert_not_called()
         self.assertEqual(self.battle.turn, 1)
@@ -158,7 +161,7 @@ class TestHandleBattlePrompts(unittest.TestCase):
     def test_item_with_empty_inventory_skips_enemy_turn(self, mock_time, mock_display):
         self.controller.battle_menu_row = 1
         self.controller.battle_menu_column = 1
-        with patch.object(self.controller, 'enemy_move') as enemy_move:
+        with self.patch_enemy_move() as enemy_move:
             self.press(K_RETURN)
         self.assertIn('Nothing of use', self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0])
         enemy_move.assert_not_called()
@@ -166,7 +169,7 @@ class TestHandleBattlePrompts(unittest.TestCase):
     def test_auto_battle_repeats_last_action_without_input(self, mock_time, mock_display):
         self.game.auto_battle = True
         self.controller.last_battle_action = 'Fight'
-        with patch.object(self.controller, 'fight') as fight, patch.object(self.controller, 'enemy_move'):
+        with patch.object(self.controller, 'fight') as fight, self.patch_enemy_move():
             self.controller.handle_battle_prompts(False, self.battle)
         fight.assert_called_once()
         self.events.assert_not_called()
@@ -174,7 +177,7 @@ class TestHandleBattlePrompts(unittest.TestCase):
     def test_asleep_player_loses_turn_on_any_key(self, mock_time, mock_display):
         self.game.player.is_asleep = True
         with patch.object(self.controller, 'fight') as fight, \
-                patch.object(self.controller, 'enemy_move') as enemy_move, \
+                self.patch_enemy_move() as enemy_move, \
                 patch('src.battle_controller.random.randint', return_value=0):
             self.press(K_DOWN)
         fight.assert_not_called()
@@ -185,7 +188,7 @@ class TestHandleBattlePrompts(unittest.TestCase):
 
     def test_asleep_player_can_wake_up(self, mock_time, mock_display):
         self.game.player.is_asleep = True
-        with patch.object(self.controller, 'enemy_move'), patch('src.battle_controller.random.randint', return_value=1):
+        with self.patch_enemy_move(), patch('src.battle_controller.random.randint', return_value=1):
             self.press(K_RETURN)
         self.assertFalse(self.game.player.is_asleep)
         self.assertEqual(self.game.player.asleep_turns, 0)
@@ -194,31 +197,22 @@ class TestHandleBattlePrompts(unittest.TestCase):
     def test_asleep_player_always_wakes_after_six_turns(self, mock_time, mock_display):
         self.game.player.is_asleep = True
         self.game.player.asleep_turns = 5
-        with patch.object(self.controller, 'enemy_move'), patch('src.battle_controller.random.randint', return_value=0):
+        with self.patch_enemy_move(), patch('src.battle_controller.random.randint', return_value=0):
             self.press(K_RETURN)
         self.assertFalse(self.game.player.is_asleep)
 
-    def test_enemy_flees_from_strong_player(self, mock_time, mock_display):
+    def test_enemy_does_not_flee_before_player_acts(self, mock_time, mock_display):
+        # NES checks for fleeing at the start of the enemy's turn, not while waiting for the player.
         self.game.player.strength = 10
         self.random.return_value = 0
-        with patch.object(self.controller, 'enemy_run_away', return_value=True) as run_away:
-            self.assertTrue(self.controller.handle_battle_prompts(False, self.battle))
-        run_away.assert_called_once_with(self.battle, self.battle.enemy)
-        self.assertEqual(self.controller.enemy_runaway_attempts, 0)
-
-    def test_enemy_flee_roll_failure_counts_attempt(self, mock_time, mock_display):
-        self.game.player.strength = 10
         with patch.object(self.controller, 'enemy_run_away') as run_away:
-            self.controller.handle_battle_prompts(False, self.battle)
+            self.assertFalse(self.controller.handle_battle_prompts(False, self.battle))
         run_away.assert_not_called()
-        self.assertEqual(self.controller.enemy_runaway_attempts, 1)
 
-    def test_enemy_does_not_flee_from_weak_player(self, mock_time, mock_display):
-        self.random.return_value = 0
-        with patch.object(self.controller, 'enemy_run_away') as run_away:
-            self.controller.handle_battle_prompts(False, self.battle)
-        run_away.assert_not_called()
-        self.assertEqual(self.controller.enemy_runaway_attempts, 0)
+    def test_enemy_fleeing_on_its_turn_ends_battle(self, mock_time, mock_display):
+        with patch.object(self.controller, 'fight'), self.patch_enemy_move(fled=True):
+            self.assertTrue(self.press(K_RETURN))
+        self.assertFalse(self.game.player.is_dead)
 
 
 @patch('src.battle_controller.Battle')
@@ -240,6 +234,13 @@ class TestRunBattle(unittest.TestCase):
         battle.enemy_defeated.assert_called_once()
         self.game.music_player.load_and_play_music.assert_called_once_with(self.game.current_map.music_file_path)
 
+    def test_force_enemy_overrides_zone_enemies(self, mock_battle_class):
+        self.game.config["FORCE_ENEMY"] = "Poltergeist"
+        mock_battle_class.return_value.enemy.hp = 3
+        with patch.object(self.controller, 'handle_battle_prompts', return_value=True):
+            self.controller.run_battle(['Slime'])
+        self.assertEqual(mock_battle_class.call_args.args[1], "Poltergeist")
+
     def test_running_away_skips_victory(self, mock_battle_class):
         battle = mock_battle_class.return_value
         battle.enemy.hp = 3
@@ -247,19 +248,6 @@ class TestRunBattle(unittest.TestCase):
             self.controller.run_battle(['Slime'])
         battle.enemy_defeated.assert_not_called()
         self.game.music_player.load_and_play_music.assert_called_once()
-
-    def test_enemy_runaway_attempts_reset_each_battle(self, mock_battle_class):
-        # A counter left over from the previous battle would delay when the next enemy can flee.
-        mock_battle_class.return_value.enemy.hp = 3
-        self.controller.enemy_runaway_attempts = 5
-        attempts_seen = []
-
-        def record(run_away, current_battle):
-            attempts_seen.append(self.controller.enemy_runaway_attempts)
-            return True
-        with patch.object(self.controller, 'handle_battle_prompts', side_effect=record):
-            self.controller.run_battle(['Slime'])
-        self.assertEqual(attempts_seen, [0])
 
 
 @patch('src.battle_controller.mixer')
@@ -323,7 +311,7 @@ class TestEnemyMove(unittest.TestCase):
 
     def move(self, enemy, roll=0, effect=None):
         battle = make_battle(enemy)
-        randint = Mock(side_effect=lambda a, b: roll if (a, b) == (0, 100) else (effect if effect is not None else a))
+        randint = Mock(side_effect=lambda a, b: roll if (a, b) == (0, 99) else (effect if effect is not None else a))
         with patch('src.battle_controller.random.randint', randint), \
                 patch('src.battle_controller.calculate_enemy_attack_damage', return_value=2):
             self.controller.enemy_move(battle)
@@ -396,9 +384,9 @@ class TestEnemyMove(unittest.TestCase):
         self.game.receive_damage.assert_called_once_with(5)
 
     def test_heal_recovers_enemy_hp(self, mock_time):
+        # HP drops after the pattern was last built; the heal check must still see the new HP.
         drakeema = enemies.Drakeema()
         drakeema.hp = 1
-        drakeema.refresh_pattern()
         self.move(drakeema, roll=0, effect=5)
         self.assertEqual(drakeema.hp, 6)
         self.game.receive_damage.assert_not_called()
@@ -406,9 +394,60 @@ class TestEnemyMove(unittest.TestCase):
     def test_heal_does_not_exceed_max_hp(self, mock_time):
         drakeema = enemies.Drakeema()
         drakeema.hp = 1
-        drakeema.refresh_pattern()
         self.move(drakeema, roll=0, effect=25)
         self.assertEqual(drakeema.hp, drakeema.max_hp)
+
+    def test_heal_at_exactly_one_quarter_hp(self, mock_time):
+        # NES casts heal when current HP <= max HP // 4 (Drakeema: 20 // 4 = 5).
+        drakeema = enemies.Drakeema()
+        drakeema.hp = 5
+        self.move(drakeema, roll=0, effect=5)
+        self.assertEqual(drakeema.hp, 10)
+
+    def test_no_heal_above_one_quarter_hp(self, mock_time):
+        drakeema = enemies.Drakeema()
+        drakeema.hp = 6
+        self.move(drakeema, roll=0, effect=5)
+        self.assertEqual(drakeema.hp, 6)
+
+    def test_spell_chance_is_exact_percentage(self, mock_time):
+        # A 75% spell casts on rolls 0-74 of 0-99.
+        self.move(patterned_enemy([(75, Spell.HURT, True), Spell.ATTACK]), roll=74, effect=7)
+        self.game.receive_damage.assert_called_once_with(7)
+        self.game.reset_mock()
+        self.move(patterned_enemy([(75, Spell.HURT, True), Spell.ATTACK]), roll=75, effect=7)
+        self.game.receive_damage.assert_called_once_with(2)
+
+    def test_stopspell_skipped_when_already_stopspelled(self, mock_time):
+        self.game.player.is_stopspelled = True
+        self.move(patterned_enemy([(100, Spell.STOPSPELL, True), Spell.ATTACK]), effect=1)
+        self.game.receive_damage.assert_called_once_with(2)
+        self.assertEqual(self.last_message(), 'The Magician attacks!\n')
+
+    def test_enemy_flees_from_strong_player(self, mock_time):
+        self.game.player.strength = 10
+        battle = make_battle(enemies.Slime())
+        with patch('src.battle_controller.random.random', return_value=0), \
+                patch.object(self.controller, 'enemy_run_away', return_value=True) as run_away:
+            self.assertTrue(self.controller.enemy_move(battle))
+        run_away.assert_called_once_with(battle, battle.enemy)
+        self.game.receive_damage.assert_not_called()
+
+    def test_enemy_attacks_when_flee_roll_fails(self, mock_time):
+        self.game.player.strength = 10
+        battle = make_battle(enemies.Slime())
+        with patch('src.battle_controller.random.random', return_value=0.25), \
+                patch('src.battle_controller.calculate_enemy_attack_damage', return_value=2):
+            self.assertFalse(self.controller.enemy_move(battle))
+        self.game.receive_damage.assert_called_once_with(2)
+
+    def test_enemy_does_not_flee_from_weak_player(self, mock_time):
+        self.game.player.strength = 9
+        battle = make_battle(enemies.Slime())
+        with patch('src.battle_controller.random.random', return_value=0), \
+                patch('src.battle_controller.calculate_enemy_attack_damage', return_value=2):
+            self.assertFalse(self.controller.enemy_move(battle))
+        self.game.receive_damage.assert_called_once_with(2)
 
     def test_every_enemy_can_take_a_turn(self, mock_time):
         # Every pattern entry must be ATTACK or a (chance, spell, condition) 3-tuple;
