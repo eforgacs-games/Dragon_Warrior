@@ -1184,16 +1184,13 @@ class DialogLookup:
         self.command_menu.show_popup_window()
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
         fade(fade_out=True, screen=self.screen, config=self.config)
-        music_enabled = config['MUSIC_ENABLED']
-        if music_enabled:
-            mixer.music.stop()
-        self.sound.play_sound(self.directories.special_item_sfx)
+        # LD8DF-LD8FB, with the screen black: MSC_INN starts and HP and MP are restored,
+        # WaitForMusicEnd lets the jingle finish, then MSC_VILLAGE starts, and only then PalFadeIn
         self.player.restore_hp()
         self.player.restore_mp()
-        wait(3000, config)
-        if music_enabled:
-            mixer.music.load(self.current_map.music_file_path)
-            mixer.music.play(-1)
+        game.music_player.play_until_end(self.directories.inn_music, config)
+        if game.music_player.music_enabled:
+            game.music_player.load_and_play_music(self.directories.village_music)
         game.load_window_palette()
         if not config['NO_BLIT']:
             background = game.drawer.background

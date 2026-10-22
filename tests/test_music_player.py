@@ -5,7 +5,12 @@ from unittest.mock import patch
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
-from src.music_player import MusicPlayer
+from pygame import mixer  # noqa: E402
+
+from src.config.test_config import test_config  # noqa: E402
+from src.directories import Directories  # noqa: E402
+from src.music_player import MusicPlayer, clip_length_ms  # noqa: E402
+from src.waiting import reset_game_speed, set_game_speed  # noqa: E402
 
 
 class TestMusicPlayerInitialization(unittest.TestCase):
@@ -113,6 +118,57 @@ class TestMusicPlayerControls(unittest.TestCase):
         self.player.load_and_play_music('track1.mp3')
         self.player.load_and_play_music('track2.mp3')
         self.assertEqual(mock_mixer.music.stop.call_count, 2)
+
+
+class TestPlayUntilEnd(unittest.TestCase):
+    """NES InitMusicSFX with a music clip, then WaitForMusicEnd (the inn's MSC_INN)."""
+
+    CONFIG = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'ORCHESTRA_MUSIC_ENABLED': False, 'NO_WAIT': False}
+
+    def test_plays_once_and_waits_until_the_clip_ends(self):
+        player = MusicPlayer(self.CONFIG)
+        with patch('src.music_player.mixer') as mock_mixer, patch('src.music_player.wait') as mock_wait:
+            mock_mixer.music.get_busy.side_effect = [True, True, True, False]
+            player.play_until_end('inn.mp3', self.CONFIG)
+        mock_mixer.music.stop.assert_called_once()
+        mock_mixer.music.load.assert_called_once_with('inn.mp3')
+        mock_mixer.music.play.assert_called_once_with()  # once, not looped
+        self.assertEqual(mock_wait.call_count, 3)  # quit-safe waits until the music is no longer busy
+
+    def test_wait_ends_with_the_music_at_any_game_speed(self):
+        set_game_speed(4)
+        self.addCleanup(reset_game_speed)
+        player = MusicPlayer(self.CONFIG)
+        with patch('src.music_player.mixer') as mock_mixer, patch('src.music_player.wait') as mock_wait:
+            mock_mixer.music.get_busy.side_effect = [True] * 10 + [False]
+            player.play_until_end('inn.mp3', self.CONFIG)
+        self.assertEqual(mock_wait.call_count, 10)
+        self.assertEqual(mock_mixer.music.get_busy.call_count, 11)
+
+    def test_no_wait(self):
+        player = MusicPlayer(self.CONFIG)
+        with patch('src.music_player.mixer') as mock_mixer, patch('src.music_player.wait') as mock_wait:
+            player.play_until_end('inn.mp3', {**self.CONFIG, 'NO_WAIT': True})
+        mock_mixer.music.play.assert_called_once_with()
+        mock_wait.assert_not_called()
+
+    def test_music_off_still_waits_as_long_as_the_clip(self):
+        config = {**self.CONFIG, 'MUSIC_ENABLED': False}
+        player = MusicPlayer(config)
+        with patch('src.music_player.mixer') as mock_mixer, patch('src.music_player.wait') as mock_wait, \
+                patch('src.music_player.clip_length_ms', return_value=2391.0):
+            player.play_until_end('inn.mp3', config)
+        mock_mixer.music.load.assert_not_called()
+        mock_wait.assert_called_once_with(2391.0, config)
+
+    def test_inn_jingle_is_the_nes_track(self):
+        # MSC_INN ($15) is the soundtrack's track 21, between MSC_DEATH ($14, track 20) and MSC_PRNCS_LOVE ($16)
+        directories = Directories(test_config)
+        self.assertTrue(directories.inn_music.endswith('21 Dragon Quest 1 - Special Item.mp3'))
+        self.assertTrue(os.path.exists(directories.inn_music))
+        mixer.init()
+        self.addCleanup(mixer.quit)
+        self.assertTrue(2000 < clip_length_ms(directories.inn_music) < 3000)
 
 
 if __name__ == '__main__':
