@@ -2,6 +2,7 @@ from pygame import Surface, display, time, transform
 from pygame.time import get_ticks
 
 from src.common import BLACK
+from src.waiting import check_for_quit
 
 
 def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -> None:
@@ -40,6 +41,7 @@ def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -
         fade_surface.set_alpha(opacity)
         screen.blit(fade_surface, (0, 0)) if not config['NO_BLIT'] else None
         display.update()
+        check_for_quit()
         if not config['NO_WAIT']:
             time.delay(5)
 
@@ -74,6 +76,7 @@ def greyscale_screen(screen, calculation, frames=30, no_blit=False):
     screen.blit(transform.grayscale(original), (0, 0))
     start_time = get_ticks()
     while calculation.convert_to_frames_since_start_time(start_time) < frames:
+        check_for_quit()
         display.flip()
     screen.blit(original, (0, 0))
     display.flip()

@@ -9,6 +9,7 @@ from src.common import BLACK, accept_keys, reject_keys, Graphics
 from src.direction import Direction
 from src.directories import Directories
 from src.sound import Sound
+from src.waiting import quit_if_requested
 
 
 def blit_scaled_image(image_path: str, screen, graphics=None):
@@ -43,6 +44,7 @@ class GameFunctions:
             self.alternate_blink(all_selected_images[current_item_index], unselected_image, blink_start, screen,
                                  no_blit)
             for current_event in event.get():
+                quit_if_requested(current_event)
                 if current_event.type == KEYDOWN:
                     if current_event.key in accept_keys:
                         self.sound.play_sound(self.directories.menu_button_sfx)

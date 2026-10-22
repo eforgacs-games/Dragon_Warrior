@@ -1,11 +1,12 @@
 import textwrap
 
-from pygame import font, time, display, Surface
+from pygame import font, display, Surface
 from pygame.font import Font
 
 from src.color import WHITE, BLACK
 from src.directories import Directories
 from src.sound import Sound
+from src.waiting import wait
 
 WRAP_LENGTH = 21
 
@@ -39,8 +40,7 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
                 if not config['NO_BLIT']:
                     display.update(blit_text_to_screen(alignment, color, current_font, screen, string, x, y,
                                                        config["RENDER_TEXT"]))
-                if not config['NO_WAIT']:
-                    time.wait(16)
+                wait(16, config)
                 if not disable_sound:
                     if i % 3 == 0:
                         Sound(config).play_sound(directories.text_beep_sfx)
