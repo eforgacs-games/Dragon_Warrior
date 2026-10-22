@@ -62,7 +62,7 @@ class GameSpeedTestCase(TestCase):
 class TestWait(GameSpeedTestCase):
 
     def test_wait_takes_one_nth_of_the_time_at_speed_n(self):
-        for speed in (1, 2, 3, 4):
+        for speed in (1, 2, 4, 8):
             with self.subTest(speed=speed):
                 set_game_speed(speed)
                 start = self.clock.now
@@ -92,19 +92,27 @@ class TestWait(GameSpeedTestCase):
     def test_game_ticks_run_n_times_as_fast_and_never_jump(self):
         self.clock.now = 1000
         self.assertEqual(1000, game_ticks())  # at speed 1 it is get_ticks
-        set_game_speed(3)
+        set_game_speed(8)
         self.assertEqual(1000, game_ticks())  # changing the speed doesn't move the clock
         self.clock.now += 100
-        self.assertEqual(1300, game_ticks())
+        self.assertEqual(1800, game_ticks())
         set_game_speed(1)
         self.clock.now += 100
-        self.assertEqual(1400, game_ticks())
+        self.assertEqual(1900, game_ticks())
 
     def test_scaled_ms(self):
         set_game_speed(4)
         self.assertEqual(5, waiting.scaled_ms(20))
-        self.assertEqual(1, waiting.scaled_ms(1))
         self.assertEqual(0, waiting.scaled_ms(0))
+
+    def test_short_waits_add_up_to_the_right_total_at_8x(self):
+        """At 8x a fade step (5 ms) is 0.625 real ms and a frame 2.08 ms: rounding carries over, so they don't
+        each round up (or down) to a whole millisecond."""
+        set_game_speed(8)
+        self.assertEqual(round(85 * 5 / 8), sum(waiting.scaled_ms(5) for _ in range(85)))
+        for _ in range(60):
+            wait_frames(1)
+        self.assertAlmostEqual(1000 / 8, self.clock.now, delta=1)
 
 
 class TestSpeedKeys(GameSpeedTestCase):
@@ -113,15 +121,15 @@ class TestSpeedKeys(GameSpeedTestCase):
         other = keydown(K_k)
         with patch('pygame.event.get', return_value=[keydown(K_3), other]):
             self.assertEqual([other], get_events())
-        self.assertEqual(3, game_speed())
+        self.assertEqual(4, game_speed())
 
     def test_keys_held_during_a_wait_set_the_speed(self):
         with patch('src.waiting.display.get_init', return_value=True), \
                 patch('src.waiting.event.peek', return_value=False), \
                 patch('src.waiting.key.get_pressed', return_value=defaultdict(int, {K_4: 1})):
             wait(400)
-        self.assertEqual(4, game_speed())
-        self.assertLess(self.clock.now, 400 / 4 + 20)  # and the rest of the wait ran at the new speed
+        self.assertEqual(8, game_speed())
+        self.assertLess(self.clock.now, 400 / 8 + 20)  # and the rest of the wait ran at the new speed
 
     @patch('src.battle_controller.key.get_pressed', new=lambda: defaultdict(int))  # no key held
     @patch('src.battle_controller.display')
@@ -132,7 +140,7 @@ class TestSpeedKeys(GameSpeedTestCase):
         game.player.is_asleep = False
         controller = BattleController(game)
         battle = MagicMock(turn=0, last_turn=0)
-        for key_code, speed in ((K_2, 2), (K_4, 4), (K_1, 1), (K_3, 3)):
+        for key_code, speed in ((K_2, 2), (K_4, 8), (K_1, 1), (K_3, 4)):
             with self.subTest(speed=speed), patch('pygame.event.get', return_value=[keydown(key_code)]):
                 self.assertFalse(controller.handle_battle_prompts(False, battle))
                 self.assertEqual(speed, game_speed())
@@ -202,7 +210,7 @@ class TestBattleTiming(GameSpeedTestCase):
     def test_a_battle_turn_takes_one_nth_of_the_time_and_comes_out_the_same(self):
         normal_time, normal_outcome = self.battle_turn(1)
         self.assertGreater(normal_time, 1000)  # sanity check: the effects and messages really waited
-        for speed in (2, 3, 4):
+        for speed in (2, 4, 8):
             with self.subTest(speed=speed):
                 elapsed, outcome = self.battle_turn(speed)
                 self.assertAlmostEqual(normal_time / speed, elapsed, delta=normal_time / speed * 0.1)

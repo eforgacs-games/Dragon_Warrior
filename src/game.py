@@ -1008,21 +1008,21 @@ class Game:
     @property
     def fps(self) -> int:
         """Main loop frames per second: the NES's 60 times the game speed (src/waiting.py), so walking, NPC steps and
-        light changes, which all count main loop frames, speed up with everything else."""
+        light changes, which all count main loop frames (frame_counter too), speed up with everything else."""
         return self.game_state.config["FPS"] * game_speed()
 
     def handle_fps_changes(self, keydown_event) -> None:
-        """Keys 1 to 4: normal, double, triple or quadruple game speed. It applies everywhere: the map, battles,
+        """Keys 1 to 4: normal, 2x, 4x or 8x game speed (60, 120, 240 or 480 FPS). It applies everywhere: the map, battles,
         dialogs, menus and effects (src/waiting.py reads these keys in their loops and waits too, without this text)."""
         speed = SPEED_KEYS.get(keydown_event.key)
         if speed is None:
             return
         set_game_speed(speed)
-        speed_text = {1: self._("Game set to normal speed.\n({} FPS)"),
-                      2: self._("Game set to double speed.\n({} FPS)"),
-                      3: self._("Game set to triple speed.\n({} FPS)"),
-                      4: self._("Game set to quadruple speed.\n({} FPS)")}[speed]
-        self.draw_temporary_text(speed_text.format(self.fps))
+        if speed == 1:
+            speed_text = self._("Game set to normal speed.\n({} FPS)").format(self.fps)
+        else:
+            speed_text = self._("Game set to {}x speed.\n({} FPS)").format(speed, self.fps)
+        self.draw_temporary_text(speed_text)
 
     def handle_fullscreen_toggle(self, keydown_event) -> None:
         """Toggle between fullscreen and windowed mode when F11 is pressed."""

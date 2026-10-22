@@ -386,7 +386,7 @@ class TestCommandWindowInput(BattlePromptFrames):
         self.post(K_DOWN, K_3)
         self.addCleanup(reset_game_speed)
         self.frame()
-        self.assertEqual(3, game_speed())
+        self.assertEqual(4, game_speed())  # key 3 is 4x
         self.assertEqual(FIGHT, self.selection)
 
     def test_speed_keys_do_nothing_in_the_window(self):
