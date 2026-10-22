@@ -578,11 +578,9 @@ class CommandMenu(Menu):
         if not self.current_map.is_dark:
             self.show_text_in_dialog_box(self._("A torch can be used only in dark places."), skip_text=self.skip_text)
         else:
-            if self.game.game_state.radiant_active:
-                self.game.game_state.radiant_active = False
-            self.game.torch_active = True
-            self.sound.play_sound(self.directories.torch_sfx)
             self.player.inventory.remove("Torch")
+            # NES UseTorch: SFX_RADIANT plays when the light is redrawn (Drawer.handle_darkness)
+            self.game.game_state.use_torch()
 
     def dragon_scale(self):
         if self.player.wearing_dragon_scale:
@@ -785,9 +783,8 @@ class CommandMenu(Menu):
 
     def radiant(self):
         if self.current_map.is_dark:
-            if self.game.torch_active:
-                self.game.torch_active = False
-            self.game.game_state.radiant_active = True
+            # NES DoSpell: SFX_RADIANT plays for each 2 blocks the light grows (Drawer.handle_darkness)
+            self.game.game_state.cast_radiant()
         else:
             self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
 

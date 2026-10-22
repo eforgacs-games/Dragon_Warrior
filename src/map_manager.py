@@ -172,8 +172,7 @@ class MapManager:
             self.set_underlying_tiles_on_map_change(destination_coordinates)
         self.current_map.load_map(self.player, destination_coordinates, self.tile_size)
         if not self.current_map.is_dark:
-            self.game.torch_active = False
-            self.game_state.radiant_active = False
+            self.game_state.reset_light()
         if direction is not None:
             self.player.direction_value = direction
         elif current_map_staircase_dict is not None or self.player.is_dead:
@@ -193,7 +192,7 @@ class MapManager:
                              self.game.cmd_menu, self.game.foreground_rects, self.game_state.enable_animate,
                              self.game.camera, self.game.initial_dialog_enabled, self.game.events,
                              self.game.skip_text, self.game.story_flags.left_throne_room, self.game_state,
-                             self.game.torch_active, self.game.color)
+                             self.game.color)
         fade(fade_out=False, screen=self.screen, config=self.game_state.config)
 
     def apply_rainbow_bridge(self):
