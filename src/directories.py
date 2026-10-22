@@ -43,6 +43,7 @@ class Directories:
 
         self.torch_sfx = join(sfx_dir, 'torch.wav')
         self.harp_sfx = join(sfx_dir, '17 Dragon Quest 1 - Silver Harp.mp3')
+        self.flute_sfx = join(sfx_dir, '18 Dragon Quest 1 - Fairy Flute.mp3')
 
 
         # movement
