@@ -93,6 +93,8 @@ def get_next_coordinates(character_column: int, character_row: int, direction: i
 
 
 def get_surrounding_rect(character, tile_size: int) -> Rect:
-    left = character.rect.left - tile_size
-    top = character.rect.top - tile_size
-    return Rect(left, top, tile_size * 2.04, tile_size * 2.04)
+    """The character's rect, grown by a block on every side. While a character steps, this covers where its sprite
+    was drawn on the frame before. (It used to be 2.04 blocks square from a block up and left, which, as Rect drops
+    the fraction, didn't reach below or right of the sprite at SCALE 1: the hero walking up or left left the bottom
+    or right edge of his last frame behind.)"""
+    return character.rect.inflate(tile_size * 2, tile_size * 2)
