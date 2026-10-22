@@ -2,3 +2,8 @@
 *.pyc
 /.idea/
 venv/
+
+# Coverage output (pytest-cov and the CI coverage summary)
+.coverage
+coverage.xml
+code-coverage-results.md
