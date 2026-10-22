@@ -948,20 +948,41 @@ class Rimuldar(DragonWarriorMap):
                                west_gate=warp_line((0, 7), (len(self.layout), 7)),
                                south_gate=warp_line((38, 0), (38, len(self.layout[0]))))
         self.set_town_to_overworld_warps()
+        # NES RimMobTbl and RimStatTbl (Bank00). An NPC at NES X,Y is at (Y + 8, X + 8) here.
         self.npc_coordinates = {
-            (12, 10): 'MERCHANT',
-            (15, 12): 'WISE_MAN',
-            (15, 31): 'MERCHANT',
-            (16, 23): 'WOMAN',
-            (21, 14): 'WISE_MAN',
-            (26, 24): 'MERCHANT',
-            (31, 11): 'WISE_MAN',
-            (31, 28): 'WISE_MAN',
+            (8, 35): 'MAN',  # static male villager at 27,0: Orwick (dialog byte $51)
+            (12, 10): 'MERCHANT',  # static shopkeeper at 2,4 ($4F)
+            (15, 12): 'WISE_MAN',  # static wizard at 4,7: magic keys ($0D)
+            (15, 31): 'MERCHANT',  # static shopkeeper at 23,7: weapons and armor shop ($06)
+            (16, 19): 'MAN',  # mobile male villager at 11,8 ($30)
+            (16, 23): 'WOMAN',  # static female villager at 15,8 ($50)
+            (19, 22): 'MAN',  # mobile male villager at 14,11 ($55)
+            (19, 31): 'SOLDIER',  # mobile fighter at 23,11 ($52)
+            (21, 14): 'WISE_MAN',  # static wizard at 6,13 ($53)
+            (22, 30): 'WOMAN',  # mobile female villager at 22,14 ($56)
+            (24, 16): 'GUARD',  # mobile guard at 8,16 ($54)
+            (26, 24): 'MERCHANT',  # static shopkeeper at 16,18: the inn ($15)
+            (27, 32): 'SOLDIER',  # mobile fighter at 24,19 ($57)
+            (29, 14): 'WOMAN',  # mobile female villager at 6,21 ($59)
+            (31, 11): 'WISE_MAN',  # static wizard at 3,23: the magic temple question ($61)
+            (31, 14): 'MAN',  # mobile male villager at 6,23 ($5A)
+            (31, 28): 'WISE_MAN',  # static wizard at 20,23 ($58)
+            (33, 13): 'SOLDIER',  # mobile fighter at 5,25 ($5B)
+            (34, 8): 'WOMAN',  # static female villager at 0,26: Orwick's girlfriend ($5C)
+            (34, 24): 'SOLDIER',  # mobile fighter at 16,26: the Fighter's Ring ($69)
         }
+        # The NPCs that don't stand on brick
         self.custom_underlying_tiles = {
+            'MAN': 'GRASS',
             'MERCHANT': 'GRASS',
-            'WISE_MAN_2': 'GRASS'
+            'WISE_MAN_2': 'TREES',
+            'GUARD': 'GRASS',
+            'WOMAN_4': 'GRASS',
+            'SOLDIER_4': 'GRASS',
         }
+        # The NPCs from RimMobTbl
+        self.roaming_character_list = ['MAN_2', 'MAN_3', 'SOLDIER', 'WOMAN_2', 'GUARD', 'SOLDIER_2', 'WOMAN_3', 'MAN_4',
+                                       'SOLDIER_3', 'SOLDIER_4']
         # NES RimCvrdDatPtr -> GarinCaveB3Dat+$E ($9170): the upper left building and the lower left one.
         # NES X,Y is at (Y + 8, X + 8) here.
         self.covered_area = covered_cells({
@@ -980,6 +1001,7 @@ class Rimuldar(DragonWarriorMap):
         return Direction.LEFT.value
 
     def set_characters_initial_directions(self):
+        # The DD bits of each RimStatTbl entry; every NPC not listed here faces down
         self.set_character_initial_direction('WISE_MAN', Direction.UP)
         self.set_character_initial_direction('WISE_MAN_2', Direction.LEFT)
         self.set_character_initial_direction('WISE_MAN_3', Direction.RIGHT)

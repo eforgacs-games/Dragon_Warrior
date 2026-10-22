@@ -353,10 +353,56 @@ class DialogLookup:
                 'GUARD_2': {'dialog': _("Rimuldar is the place to buy keys.")},
             },
             'Rimuldar': {
+                # NES RimMobTbl and RimStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte
+                # + $2F (DoVariousDialog2, Bank03), so $51 is TextBlock9 entry 0 and so on.
+                # Static shopkeeper at 23,7 ($06, WeaponsDialog: Rimuldar weapons and armor shop)
                 'MERCHANT_2': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory),)},
+                # Static shopkeeper at 16,18 ($15, InnDialog)
                 'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, rimuldar_inn_cost),)},
+                # Static wizard at 4,7 ($0D, KeysDialog)
                 'WISE_MAN': {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['Rimuldar']),)},
+                # Static male villager at 27,0 ($51, TextBlock9 entry 0)
+                'MAN': {'dialog': _("I am Orwick, and I am waiting for my girl friend.")},
+                # Static shopkeeper at 2,4 ($4F, TextBlock8 entry 14)
+                'MERCHANT': {'dialog': _("Welcome!")},
+                # Mobile male villager at 11,8 ($30, TextBlock6 entry 15)
+                'MAN_2': {'dialog': _("Art thou the descendant of Erdrick?\nHast thou any proof?")},
+                # Static female villager at 15,8 ($50, TextBlock8 entry 15)
+                'WOMAN': {'dialog': _("Who art thou?\nLeave at once or I will call my friends.")},
+                # Mobile male villager at 14,11 ($55, TextBlock9 entry 4)
+                'MAN_3': {'dialog': _("Welcome to the town of Rimuldar.")},
+                # Mobile fighter at 23,11 ($52, TextBlock9 entry 1)
+                'SOLDIER': {'dialog': _("The scales of the Dragonlord are as hard as steel.")},
+                # Static wizard at 6,13 ($53, TextBlock9 entry 2)
+                'WISE_MAN_2': {'dialog': (_("Over the western part of this island Erdrick created a rainbow."),
+                                          _("'Tis also said that he entered the darkness from a hidden entrance in "
+                                            "the room of the Dragonlord."))},
+                # Mobile female villager at 22,14 ($56, TextBlock9 entry 5)
+                'WOMAN_2': {'dialog': _("No, I have no tomatoes.\nI have no tomatoes today.")},
+                # Mobile guard at 8,16 ($54, TextBlock9 entry 3)
+                'GUARD': {'dialog': _("Thou shalt find the Stones of Sunlight in Tantegel Castle,\nif thou has not "
+                                      "found them yet.")},
+                # Mobile fighter at 24,19 ($57, TextBlock9 entry 6)
+                'SOLDIER_2': {'dialog': _("You are {}?\nIt has been long since last we met.").format(
+                    self.player.name)},
+                # Mobile female villager at 6,21 ($59, TextBlock9 entry 8)
+                'WOMAN_3': {'dialog': _("Before long the enemy will arrive.")},
+                # Static wizard at 3,23 ($61, CheckYesNoDialog): TextBlock10 entry 0, then a yes/no window
+                'WISE_MAN_3': {'dialog': (_("This is a magic place."), self.rimuldar_hast_thou_found_a_magic_temple)},
+                # Mobile male villager at 6,23 ($5A, TextBlock9 entry 9)
+                'MAN_4': {'dialog': _("Heed my warning! Travel not to the south for there the monsters are fierce "
+                                      "and terrible.")},
+                # Static wizard at 20,23 ($58, TextBlock9 entry 7)
+                'WISE_MAN_4': {'dialog': _("Good day,I am Howard. Four steps south of the bath in Kol thou shalt "
+                                           "find a magic item.")},
+                # Mobile fighter at 5,25 ($5B, TextBlock9 entry 10)
+                'SOLDIER_3': {'dialog': _("In this world is there any sword that can pierce the scales of the "
+                                          "Dragonlord?")},
+                # Static female villager at 0,26 ($5C, TextBlock9 entry 11)
+                'WOMAN_4': {'dialog': _("Orwick is late again. I'm starving.")},
+                # Mobile fighter at 16,26 ($69, ChkRingDialog)
+                'SOLDIER_4': {'dialog': (self.rimuldar_fighters_ring_dialog,)},
             },
             # NES CantMobTbl and CantStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte
             # + $2F (DoVariousDialog2, Bank03), so $45 is TextBlock8 entry 4 and so on.
@@ -795,6 +841,29 @@ class DialogLookup:
             if not self.config['NO_WAIT']:
                 time.wait(2 * 1000 // 60)
             greyscale_screen(self.screen, self.calculation, frames=3)
+
+    def rimuldar_hast_thou_found_a_magic_temple(self):
+        """NES CheckYesNoDialog, dialog byte $61 (the Rimuldar wizard at NES 3,23): after the first line of TextBlock10
+        entry 0, the yes/no window. Yes shows TextBlock10 entry 5 ($61 + $2F + $05) and no shows entry 10
+        ($61 + $2F + $0A)."""
+        _ = self._
+        self.confirm(_("Hast thou found a magic temple?"),
+                     yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                               _("In this temple do the sun and rain meet."), hide_arrow=True),
+                     no_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                              _("Go to the south."), hide_arrow=True))
+
+    def rimuldar_fighters_ring_dialog(self):
+        """NES ChkRingDialog, dialog byte $69 (the Rimuldar fighter at NES 16,26). Without a Fighter's Ring in the
+        inventory the ring's worn flag is cleared first. Wearing it shows TextBlock11 entry 11, otherwise entry 12."""
+        _ = self._
+        if "Fighter's Ring" not in self.player.inventory and self.player.wearing_fighters_ring:
+            self.player.wearing_fighters_ring = False
+            self.player.update_attack_power()
+        if self.player.wearing_fighters_ring:
+            self.say(_("Is that a wedding ring?’\n`Thou seems too young to be married."))
+        else:
+            self.say(_("All true warriors wear a ring."))
 
     def prompt_for_save(self):
         return confirmation_prompt(self.command_menu,
