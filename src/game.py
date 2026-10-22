@@ -22,7 +22,7 @@ from src.adventure_log import AdventureLogOverlay, adventure_log_overlay_texts
 from src.battle import Battle
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
-from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, read_checkpoint
+from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
 from src.color import LOW_HP_RED, RED, WHITE, is_low_hp, window_color
 from src.common import A_OR_START_KEYS, Graphics, is_facing_medially, is_facing_laterally, \
     set_gettext_language
@@ -1527,9 +1527,10 @@ class Game:
     def load_checkpoint(self, name: str) -> None:
         """Start from a playtest checkpoint (src/checkpoints.py): a save file in data/checkpoints/, loaded the same
         way as a saved game. The one thing saves don't keep, the hero's facing, is passed to load_game so it's in place
-        before the first frame. Saving with King Lorik from then on writes to CHECKPOINT_SAVE_DIR, not to the real save
-        slots."""
+        before the first frame. The checkpoint's hero name, "Arthur", is given in the game's language (검객 in
+        Korean). Saving with King Lorik from then on writes to CHECKPOINT_SAVE_DIR, not to the real save slots."""
         checkpoint = read_checkpoint(name)
+        checkpoint['Name'] = checkpoint_hero_name(checkpoint['Name'], self.config['LANGUAGE'])
         if not self.config.get('SAVE_DIR'):
             os.makedirs(CHECKPOINT_SAVE_DIR, exist_ok=True)
             self.config['SAVE_DIR'] = CHECKPOINT_SAVE_DIR  # before load_game makes the new CommandMenu
