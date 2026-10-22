@@ -15,6 +15,7 @@ from src.windows import ADVENTURE_LOG_WINDOW_1, ADVENTURE_LOG_WINDOW_2, ALPHABET
     FULL_MENU_WINDOW, INPUT_NAME_WINDOW, MESSAGE_SPEED_WINDOW, NAME_ENTRY_WINDOW, NEW_QUEST_WINDOW, POPUP_WINDOW, \
     SHOP_INVENTORY_WINDOW, STATUS_WINDOW, YES_NO_2_WINDOW, YES_NO_WINDOW, Window, name_halves, \
     variable_height_window
+from src.windows import BUY_SELL_LAYOUT, WindowText
 
 # NES Bank01 window data: (height in blocks, width in tiles, position byte (Y << 4 | X, in blocks))
 NES_WINDOW_DATA = {
@@ -224,48 +225,90 @@ class TestShopWindows(WindowTestCase):
     def positions(self, draw_text):
         return [(call.args[0], *self.tile(*call.args[1:3])) for call in draw_text.call_args_list]
 
+    def run_generated_window(self, function, *keys):
+        """Like run_window, for a window generated from its window data: the layout it was drawn with."""
+        with patch('data.text.dialog_lookup_table.generated_window') as generated_window:
+            result, draw_text, _, create_window, drop_down = self.run_window(function, *keys)
+        draw_text.assert_not_called()
+        create_window.assert_not_called()
+        layouts = {call.args[1] for call in generated_window.call_args_list}
+        self.assertEqual(1, len(layouts))
+        return result, layouts.pop(), drop_down
+
     def test_buy_sell_window(self):
-        result, draw_text, _, create_window, drop_down = self.run_window(
-            lambda: self.dialog_lookup.select_from_text_menu(['BUY', 'SELL'], BUY_SELL_WINDOW), K_DOWN, K_RETURN)
+        result, layout, drop_down = self.run_generated_window(
+            lambda: self.dialog_lookup.select_in_generated_window(BUY_SELL_LAYOUT), K_DOWN, K_RETURN)
         self.assertEqual(1, result)
         drop_down.assert_called_once_with(5, 2, 4, 3)
-        self.assertEqual((5, 2, 4, 3), create_window.call_args.args[:4])
-        # Window at tile (10, 4): BUY on tile row 2 and SELL on row 4, at column 2; the cursor in column 1
-        positions = self.positions(draw_text)
-        self.assertIn(('BUY', 12, 6.5), positions)
-        self.assertIn(('SELL', 12, 8.5), positions)
+        self.assertEqual(BUY_SELL_LAYOUT, layout)
         # The cursor ends on SELL, in column 1 of row 4, held on after the choice (WndAPressed)
         self.assertEqual((5, 2, 1, 4, True), self.draw_cursor.call_args.args)
 
+    def test_tool_shop_opens_the_buy_sell_window(self):
+        with patch.object(self.dialog_lookup, 'say'), \
+                patch.object(self.dialog_lookup, 'select_in_generated_window', return_value=None) as select, \
+                patch.object(self.dialog_lookup, 'tool_shop_goodbye'):
+            self.dialog_lookup.tool_shop(self.dialog_lookup.shop_inventories.kol_item_store_inventory)
+        select.assert_called_once_with(BUY_SELL_LAYOUT)
+
+    def test_translated_buy_sell_window_is_text(self):
+        # A translation can't be drawn in the NES font: the window is drawn as text, as before
+        translations = {'BUY': 'B', 'SELL': 'S'}
+        with patch.object(self.dialog_lookup, 'say'), \
+                patch.object(self.dialog_lookup, '_', side_effect=lambda text: translations.get(text, text)), \
+                patch.object(self.dialog_lookup, 'sell_tool') as sell_tool:
+            _, draw_text, _, create_window, drop_down = self.run_window(
+                lambda: self.dialog_lookup.tool_shop(self.dialog_lookup.shop_inventories.kol_item_store_inventory),
+                K_DOWN, K_RETURN)
+        sell_tool.assert_called_once()
+        drop_down.assert_called_once_with(5, 2, 4, 3)
+        self.assertEqual((5, 2, 4, 3), create_window.call_args.args[:4])
+        positions = self.positions(draw_text)
+        self.assertIn(('B', 12, 6.5), positions)
+        self.assertIn(('S', 12, 8.5), positions)
+
     def test_shop_inventory_window(self):
         shop = self.dialog_lookup.shop_inventories.kol_item_store_inventory
-        result, draw_text, _, create_window, drop_down = self.run_window(
+        result, layout, drop_down = self.run_generated_window(
             lambda: self.dialog_lookup.open_store_inventory(shop), K_DOWN, K_DOWN, K_RETURN)
         self.assertEqual("Dragon's Scale", result)
         drop_down.assert_called_once_with(5, 2, 9, len(shop) + 1)
-        self.assertEqual((5, 2, 9, len(shop) + 1), create_window.call_args.args[:4])
-        # Window at tile (10, 4). Each item is one block: the first half of its name at column 2, the cost ending at
-        # column 16 (draw_text's right edge at column 17), the second half on the next row at column 3.
-        positions = self.positions(draw_text)
-        self.assertIn(('Herb', 12, 5.5), positions)
-        self.assertIn(('24', 27, 5.5), positions)
-        self.assertIn(('Torch', 12, 7.5), positions)
-        self.assertIn(("Dragon's", 12, 9.5), positions)
-        self.assertIn(('20', 27, 9.5), positions)
-        self.assertIn(('Scale', 13, 10.5), positions)
-        right_aligned = [call.args[0] for call in draw_text.call_args_list if call.kwargs.get('alignment') == 'right']
-        self.assertEqual(['24', '8', '20', '70'], right_aligned[:4])
+        self.assertEqual(Window(5, 2, 9, len(shop) + 1), layout.window)
+        # Each item is one block: the first half of its name at column 2, the cost ending at column 16, the second
+        # half on the next row at column 3.
+        self.assertIn(WindowText('Herb', 2, 1), layout.texts)
+        self.assertIn(WindowText('24', 15, 1), layout.texts)
+        self.assertIn(WindowText('Torch', 2, 3), layout.texts)
+        self.assertIn(WindowText('8', 16, 3), layout.texts)
+        self.assertIn(WindowText("Dragon's", 2, 5), layout.texts)
+        self.assertIn(WindowText('20', 15, 5), layout.texts)
+        self.assertIn(WindowText('Scale', 3, 6), layout.texts)
         # The cursor is on the third item, at column 1, held on after the choice (WndAPressed)
         self.assertEqual((5, 2, 1, 5, True), self.draw_cursor.call_args.args)
+        self.assertTrue(self.game.drawer.display_hovering_stats)
 
     def test_weapon_shop_window_position(self):
         shop = self.dialog_lookup.shop_inventories.brecconary_weapons_store_inventory
-        result, _, _, create_window, drop_down = self.run_window(
-            lambda: self.dialog_lookup.open_store_inventory(shop, self.dialog_lookup.directories.
-                                                            BRECCONARY_WEAPONS_SHOP_PATH), K_RETURN)
+        result, layout, drop_down = self.run_generated_window(
+            lambda: self.dialog_lookup.open_store_inventory(shop), K_RETURN)
         self.assertEqual('Bamboo Pole', result)
         drop_down.assert_called_once_with(5, 2, 9, len(shop) + 1)
+        self.assertEqual(Window(5, 2, 9, len(shop) + 1), layout.window)
+
+    def test_translated_shop_inventory_window_is_text(self):
+        # Korean names can't be drawn in the NES font: the window is drawn as text, each name on one line
+        shop = self.dialog_lookup.shop_inventories.kol_item_store_inventory
+        translations = {"Dragon's Scale": "\uc6a9\uc758 \ube44\ub298"}
+        with patch.object(self.dialog_lookup, '_', side_effect=lambda text: translations.get(text, text)):
+            result, draw_text, _, create_window, drop_down = self.run_window(
+                lambda: self.dialog_lookup.open_store_inventory(shop), K_DOWN, K_DOWN, K_RETURN)
+        self.assertEqual("Dragon's Scale", result)
         self.assertEqual((5, 2, 9, len(shop) + 1), create_window.call_args.args[:4])
+        positions = self.positions(draw_text)
+        self.assertIn(('Herb', 12, 5.5), positions)
+        self.assertIn(('24', 27, 5.5), positions)
+        self.assertIn((translations["Dragon's Scale"], 12, 9.5), positions)
+        self.assertEqual((5, 2, 1, 5, True), self.draw_cursor.call_args.args)
 
     def test_sell_window_is_the_item_window_in_nes_order(self):
         self.player.inventory = ['Wings', 'Torch', 'Herb']

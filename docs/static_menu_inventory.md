@@ -60,14 +60,16 @@ Notes:
 - The windows behind are always the "3 free logs" variant.
 - The NES alphabet uses the NES j, k, p, t and apostrophe. The TTF font doesn't have them, so they are in `NES_GLYPHS` (see below).
 
-## Shops (40 files)
+## Shops (40 files): done in phase 2
 
-| File(s) | Used at | NES window | Variants | Difficulty |
-|---|---|---|---|---|
-| `shops/<town>/weapons/<town>_shop.png` (6: Brecconary, Garinham, Kol, Rimuldar, Cantlin north and south) | `data/text/dialog_lookup_table.py` `check_buy_weapons_armor` → `open_store_inventory` (`create_window` ~870, with the NES cursor drawn over it) | ShopInvDat ($B0DA), variable height | one per shop, 4-7 items | medium (item names in two halves, right-aligned prices; must match `src/shops.py`) |
-| `shops/<town>/weapons/<town>_shop_<item>.png` (34) | **never drawn**: `'menu_image'` in `src/shops.py:44-134`, only checked for presence (`dialog_lookup_table.py` ~853) | ShopInvDat ($B0DA) | arrow at each item | medium |
+| File(s) | Used at | Shows | NES window | Variants | Status |
+|---|---|---|---|---|---|
+| `shops/<town>/weapons/<town>_shop.png` (6: Brecconary, Garinham, Kol, Rimuldar, Cantlin north and south) | test reference only | the shop's stock, no cursor | ShopInvDat ($B0DA), variable height | one per shop, 4-7 items | **generated**: `shop_inventory_layout` |
+| `shops/<town>/weapons/<town>_shop_<item>.png` (34) | test reference only (they were never drawn) | the same window, with the arrow at each item | ShopInvDat ($B0DA) | arrow at each item | **generated** |
 
-The item shops already draw ShopInvDat as text on a nine-sliced background (`select_shop_item`), so only the weapon/armor shops still use screenshots.
+`tests/test_generated_shop_windows.py` checks all 40 screenshots: every cursor position, the cursor blinked off and no cursor, at scales 1-3, in white and in red, plus what `open_store_inventory` draws on the game's screen. The screenshots' paths are no longer in `src/shops.py` (`'menu_image'`); the 6 shop screenshots stay in `Directories`, and each per-item one is found next to its shop's.
+
+The game now draws ShopInvDat with `shop_inventory_layout` for **every** shop (`ShopItemsTbl`): the 7 weapon and armor shops, including Cantlin's guard (no screenshot; a 5-digit cost), and the 5 item shops, which drew it as text before. BuySellDat ($B0FB) is generated too (`BUY_SELL_LAYOUT`). It has no screenshot, but with YES and NO in place of BUY and SELL it is pixel-identical to `confirmation.png` and `confirmation_yes.png` (YesNo1Dat, the same window). In a translation (Korean) both are still drawn as text on a nine-sliced background, since the NES font has no Korean. The sell list is PlayerInvDat, the ITEM command's window (see Miscellaneous).
 
 ## Miscellaneous (23 files): windows done in phase 2
 
