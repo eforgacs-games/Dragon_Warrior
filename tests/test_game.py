@@ -111,6 +111,52 @@ class TestGame(TestCase):
         self.assertTrue(self.game.player.wearing_fighters_ring)
         self.assertEqual(self.game.player.defense_power, self.game.player.agility // 2 + 2 + 2)
 
+    def stats(self):
+        player = self.game.player
+        return player.strength, player.agility, player.max_hp, player.max_mp
+
+    def test_load_game_works_the_stats_out_from_the_name_and_experience(self):
+        """NES LoadStats runs after LoadSavedData: only the name and experience are needed. Erdrick at level 20 cuts
+        max HP and max MP and adds 2 (tests/test_player_stats.py)."""
+        self.game.load_game({"Name": "Erdrick", "Experience": 26000, "Gold": 0, "Inventory": []})
+        self.assertEqual(20, self.game.player.level)
+        self.assertEqual((92, 88, 126, 117), self.stats())
+        # a second load with another name doesn't keep anything from the first one
+        self.game.load_game({"Name": "Steve", "Experience": 26000, "Gold": 0, "Inventory": []})
+        self.assertEqual((82, 79, 138, 128), self.stats())
+        self.game.load_game({"Name": "Erdrick", "Experience": 26000, "Gold": 0, "Inventory": []})
+        self.assertEqual((92, 88, 126, 117), self.stats())
+
+    def test_save_and_load_keep_the_name_based_stats(self):
+        player = self.game.cmd_menu.player = self.game.player
+        player.name, player.total_experience = "Gina", 2000
+        player.level = player.get_level_by_experience()
+        player.update_stats_to_current_level()
+        self.assertEqual((35, 30, 54, 39), self.stats())
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.game.directories.save_dir = tmp_dir
+            self.game.cmd_menu.directories.save_dir = tmp_dir
+            player.adventure_log = 1
+            self.game.cmd_menu.save()
+            with open(os.path.join(tmp_dir, 'save_slot_1.json')) as save_file:
+                saved = json.load(save_file)
+        player.name, player.total_experience = "Steve", 0
+        player.level = player.get_level_by_experience()
+        player.update_stats_to_current_level()
+        self.game.load_game(saved)
+        self.assertEqual(("Gina", 10), (player.name, player.level))
+        self.assertEqual((35, 30, 54, 39), self.stats())
+
+    def test_points_to_next_level(self):
+        """GetExpRemaining: the next level's LevelUpTbl entry minus the experience."""
+        player = self.game.player
+        player.total_experience = 30
+        player.level = player.get_level_by_experience()
+        self.assertEqual(47 - 30, player.points_to_next_level)
+        player.total_experience = 65535
+        player.level = player.get_level_by_experience()
+        self.assertEqual(0, player.points_to_next_level)
+
     def test_hero_underlying_tile(self):
         self.assertEqual('BRICK', self.game.current_map.hero_underlying_tile())
 

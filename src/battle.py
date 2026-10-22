@@ -15,7 +15,7 @@ from src.window_renderer import draw_window
 from src.windows import COMBAT_COMMAND_LAYOUT
 from src.menu import CommandMenu
 from src.player.player import Player
-from src.player.player_stats import levels_list
+from src.player.player_stats import get_level_by_experience
 from src.sound import Sound
 from src.waiting import check_for_quit, wait_frames
 
@@ -245,21 +245,22 @@ class Battle:
         return self._("Thou hast done well in defeating the {}.\n").format(self._(enemy_name))
 
     def check_player_level_up(self, cmd_menu, player, music_enabled):
-        """NES ChkLevelUp (RegEnDefeated). Without a level up, WaitForMusicEnd lets the victory music finish and the
-        map's music resumes (ResumeMusicTbl) before ExitFight. With one, DoLevelUp starts MSC_LEVEL_UP, which cuts the
-        victory music off, waits for it to end (WaitForMusicEnd), resumes the map's music, and only then says "Thou
-        hast been promoted to the next level." and the stat increases."""
+        """NES ChkLevelUp (RegEnDefeated). LoadStats works the level out from the experience again, so the level can
+        jump by more than one, and level 30 can be reached. Without a level up, WaitForMusicEnd lets the victory music
+        finish and the map's music resumes (ResumeMusicTbl) before ExitFight. With one, DoLevelUp starts MSC_LEVEL_UP,
+        which cuts the victory music off, waits for it to end (WaitForMusicEnd), resumes the map's music, and only then
+        says "Thou hast been promoted to the next level." and the stat increases (ChkStrengthUp-ChkMPUp)."""
         music_player = cmd_menu.game.music_player
-        if player.level + 1 < 30 and player.total_experience >= levels_list[player.level + 1]['total_exp']:
+        new_level = get_level_by_experience(player.total_experience)
+        if new_level > player.level:
             music_player.play_until_end(self.directories.level_up_music, self.config)
             self.resume_map_music(music_player, music_enabled)
-            self.display_level_up_message(cmd_menu, player)
+            self.display_level_up_message(cmd_menu, player, new_level)
             old_stats = self.get_player_stats(player)
-            player.level += 1
+            player.level = new_level
             player.set_stats_by_level(player.level)
             player.update_attack_power()
             player.update_defense_power()
-            player.points_to_next_level = player.get_points_to_next_level()
             self.display_stat_increases(cmd_menu, player, old_stats)
         else:
             music_player.wait_for_music_end(self.config)
@@ -270,14 +271,15 @@ class Battle:
         if music_enabled:
             music_player.load_and_play_music(self.current_map.music_file_path)
 
-    def display_level_up_message(self, cmd_menu, player):
+    def display_level_up_message(self, cmd_menu, player, new_level=None):
         """Display the level up message."""
         if self.config['LANGUAGE'] == 'English':
             cmd_menu.show_line_in_dialog_box(
                 "Courage and wit have served thee well.\nThou hast been promoted to the next level.\n",
                 add_quotes=False, disable_sound=True)
         elif self.config['LANGUAGE'] == 'Korean':
-            cmd_menu.show_line_in_dialog_box(f"{player.name}은 {player.level + 1}레벨로 올랐다!", add_quotes=False)
+            new_level = player.level + 1 if new_level is None else new_level
+            cmd_menu.show_line_in_dialog_box(f"{player.name}은 {new_level}레벨로 올랐다!", add_quotes=False)
 
     @staticmethod
     def get_player_stats(player):
