@@ -33,7 +33,7 @@ def make_game():
 def make_battle(enemy=None):
     battle = Mock()
     if enemy is None:
-        enemy = Mock(hp=3, attack=5, pattern=[], dodge=0)
+        enemy = Mock(hp=3, attack=5, pattern=[], dodge=0, is_asleep=False)
         enemy.name = "Slime"
     battle.enemy = enemy
     battle.turn = 0
@@ -47,7 +47,7 @@ def key(k):
 
 
 def patterned_enemy(pattern):
-    enemy = Mock(hp=10, max_hp=10, attack=5, dodge=0, pattern=list(pattern))
+    enemy = Mock(hp=10, max_hp=10, attack=5, dodge=0, pattern=list(pattern), is_asleep=False)
     enemy.name = "Magician"
     return enemy
 
@@ -241,6 +241,19 @@ class TestRunBattle(unittest.TestCase):
             self.controller.run_battle(['Slime'])
         self.assertEqual(mock_battle_class.call_args.args[1], "Poltergeist")
 
+    def test_command_menu_sees_current_battle_only_during_battle(self, mock_battle_class):
+        battle = mock_battle_class.return_value
+        battle.enemy.hp = 3
+        seen = []
+
+        def record(run_away, current_battle):
+            seen.append(self.game.cmd_menu.current_battle)
+            return True
+        with patch.object(self.controller, 'handle_battle_prompts', side_effect=record):
+            self.controller.run_battle(['Slime'])
+        self.assertEqual(seen, [battle])
+        self.assertIsNone(self.game.cmd_menu.current_battle)
+
     def test_running_away_skips_victory(self, mock_battle_class):
         battle = mock_battle_class.return_value
         battle.enemy.hp = 3
@@ -293,6 +306,13 @@ class TestHeroAttack(unittest.TestCase):
         self.controller.hero_attack(self.battle)
         self.battle.missed_attack.assert_called_once_with(self.game.cmd_menu)
         self.assertEqual(self.battle.enemy.hp, 10)
+
+    def test_sleeping_enemy_cannot_dodge(self):
+        self.battle.enemy.is_asleep = True
+        self.battle.calculate_attack_damage.return_value = 4
+        with patch('src.battle_controller.random.random', return_value=0):
+            self.controller.hero_attack(self.battle)
+        self.assertEqual(self.battle.enemy.hp, 6)
 
     def test_enemy_can_dodge(self):
         self.battle.calculate_attack_damage.return_value = 4
@@ -423,6 +443,47 @@ class TestEnemyMove(unittest.TestCase):
         self.move(patterned_enemy([(100, Spell.STOPSPELL, True), Spell.ATTACK]), effect=1)
         self.game.receive_damage.assert_called_once_with(2)
         self.assertEqual(self.last_message(), 'The Magician attacks!\n')
+
+    def test_sleeping_enemy_stays_asleep(self, mock_time):
+        slime = enemies.Slime()
+        slime.is_asleep = True
+        battle = make_battle(slime)
+        with patch('src.battle_controller.random.randint', return_value=2), \
+                patch('src.battle_controller.calculate_enemy_attack_damage', return_value=2):
+            self.assertFalse(self.controller.enemy_move(battle))
+        self.assertTrue(slime.is_asleep)
+        self.game.receive_damage.assert_not_called()
+        self.assertEqual(self.last_message(), 'The Slime is asleep.')
+
+    def test_sleeping_enemy_wakes_and_attacks(self, mock_time):
+        slime = enemies.Slime()
+        slime.is_asleep = True
+        battle = make_battle(slime)
+        with patch('src.battle_controller.random.randint', return_value=1), \
+                patch('src.battle_controller.calculate_enemy_attack_damage', return_value=2):
+            self.controller.enemy_move(battle)
+        self.assertFalse(slime.is_asleep)
+        messages = [c.args[0] for c in self.game.cmd_menu.show_line_in_dialog_box.call_args_list]
+        self.assertEqual(messages[0], 'Slime hath woken up.')
+        self.game.receive_damage.assert_called_once_with(2)
+
+    def test_sleeping_enemy_wakes_one_time_in_three(self, mock_time):
+        slime = enemies.Slime()
+        slime.is_asleep = True
+        with patch('src.battle_controller.random.randint', return_value=1) as randint, \
+                patch('src.battle_controller.calculate_enemy_attack_damage', return_value=2):
+            self.controller.enemy_move(make_battle(slime))
+        self.assertEqual(randint.call_args_list[0].args, (1, 3))
+
+    def test_sleeping_enemy_does_not_flee(self, mock_time):
+        self.game.player.strength = 10
+        slime = enemies.Slime()
+        slime.is_asleep = True
+        with patch('src.battle_controller.random.random', return_value=0), \
+                patch('src.battle_controller.random.randint', return_value=2), \
+                patch.object(self.controller, 'enemy_run_away') as run_away:
+            self.assertFalse(self.controller.enemy_move(make_battle(slime)))
+        run_away.assert_not_called()
 
     def test_enemy_flees_from_strong_player(self, mock_time):
         self.game.player.strength = 10

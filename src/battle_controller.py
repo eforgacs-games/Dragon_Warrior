@@ -106,6 +106,7 @@ class BattleController:
     def run_battle(self, enemies_in_current_zone):
         enemy_name = self.config.get("FORCE_ENEMY") or random.choice(enemies_in_current_zone)
         current_battle = Battle(self.config, enemy_name, self.current_map)
+        self.cmd_menu.current_battle = current_battle
         current_battle.play_battle_music()
         # TODO: Group parameters into respective classes.
         current_battle.display_battle_window(self.screen, self.drawer,
@@ -117,6 +118,7 @@ class BattleController:
         if current_battle.enemy.hp <= 0:
             current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, self.music_enabled,
                                           current_battle.enemy)
+        self.cmd_menu.current_battle = None
         # TODO: Refactor to music player class.
         self.music_player.load_and_play_music(self.current_map.music_file_path)
 
@@ -242,7 +244,8 @@ class BattleController:
         attack_damage = current_battle.calculate_attack_damage(self.cmd_menu, self.player, current_battle.enemy)
         if attack_damage <= 0:
             current_battle.missed_attack(self.cmd_menu)
-        elif random.random() < current_battle.enemy.dodge:
+        elif not current_battle.enemy.is_asleep and random.random() < current_battle.enemy.dodge:
+            # NES: a sleeping enemy can't dodge
             self.sound.play_sound(self.directories.missed_sfx)
             self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!").format(self._(current_battle.enemy.name)),
                                                   add_quotes=False, disable_sound=True, hide_arrow=True)
@@ -261,6 +264,16 @@ class BattleController:
     def enemy_move(self, current_battle: Battle) -> bool:
         """Take the enemy's turn. Returns True if the enemy ran away, which ends the battle."""
         enemy = current_battle.enemy
+        # NES (StartEnemyTurn): a sleeping enemy wakes 1 time in 3 (the 2-bit roll is redone on 0) and
+        # acts immediately; otherwise it stays asleep and the player gets another turn.
+        if enemy.is_asleep:
+            if random.randint(1, 3) != 1:
+                self.cmd_menu.show_line_in_dialog_box(self._("The {} is asleep.").format(self._(enemy.name)),
+                                                      add_quotes=False, disable_sound=True, hide_arrow=True)
+                return False
+            enemy.is_asleep = False
+            self.cmd_menu.show_line_in_dialog_box(self._("{} hath woken up.").format(self._(enemy.name)),
+                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
         # NES (CheckEnRun): at the start of the enemy's turn, an enemy facing a player with at least
         # double its attack in strength has a 25% chance to run away.
         if self.player.strength >= enemy.attack * 2 and random.random() < ENEMY_FLEE_PROBABILITY:
