@@ -37,6 +37,7 @@ from src.enemy_lookup import enemy_territory_map
 from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
 from src.intro import Intro
+from src.items import TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu, Menu
@@ -99,6 +100,7 @@ class Game:
         self.torch_active = False
         self.repel_timer = 0  # NES RepelTimer, set by REPEL or Fairy Water
         self.rainbow_bridge_built = False  # NES F_RNBW_BRDG flag in ModsnSpells
+        self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.speed = 2
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
