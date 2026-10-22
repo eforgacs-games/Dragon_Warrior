@@ -15,6 +15,8 @@ Everything here follows the dialog engine in Bank01 of the disassembly (DoDialog
 - Each character waits MessageSpeed + 1 frames (TextToPPU: "LDX MessageSpeed / WaitForNMI / DEX / BPL").
 - The text sound plays only for indented (quoted) text, only for printable characters (not blanks), and only in
   odd columns, so every other column (TextToPPU: "Only play text SFX every other printable character").
+- A period followed by the closing quote is one tile, TXT_PRD_QUOTE ($52), so it takes one column, one character's
+  wait and at most one beep.
 - A wait (the down arrow) first moves to a new row, shows the arrow there, and after the button press the text
   continues on that row if indented, or one row further down if not (WaitFound, DoWait). The end of a message
   moves to a new row and back to column 0 (DialogEndFound).
@@ -35,6 +37,12 @@ SCROLL_FRAMES = 1 + DIALOG_ROWS // SCROLL_ROWS_PER_FRAME
 
 OPEN_QUOTES = ('`', "'", '‘', '“')
 BLANK = ' '
+PERIOD_END_QUOTE = '.’'  # TXT_PRD_QUOTE ($52): one tile, '.'' in the disassembly's text comments
+
+
+def tiles(word: str) -> List[str]:
+    """Splits text into the tiles it takes on screen: one per character, except a period and closing quote together."""
+    return re.findall(re.escape(PERIOD_END_QUOTE) + '|.', word)
 
 
 def frames_per_character(text_speed: str) -> int:
@@ -54,7 +62,7 @@ class CharacterStep:
     """One character written to the window (one TextToPPU call that reaches the PPU)."""
     row: int
     column: int
-    char: str
+    char: str  # the tile's text: one character, or two for PERIOD_END_QUOTE
     beep: bool
 
 
@@ -110,10 +118,11 @@ class DialogBuffer:
                     yield from self._put_blank()
                     first_char = False
                     continue
+                word = tiles(token)
                 # CalcWordCoord / CheckForNewLine: the whole word moves down if its last character would pass the edge
-                if self.column + len(token) > DIALOG_COLUMNS and self.column > self.indent:
+                if self.column + len(word) > DIALOG_COLUMNS and self.column > self.indent:
                     yield from self.move_to_next_line()
-                for char in token:
+                for char in word:
                     if first_char and quoted and char in OPEN_QUOTES and self.column == 1:
                         # TextToPPU: an open quote at the indent moves back a column, so the text lines up after it
                         self.column = 0
