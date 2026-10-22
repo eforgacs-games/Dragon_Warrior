@@ -14,6 +14,7 @@ from pygame import KEYDOWN, display, event, mixer, time
 
 from src.battle import Battle, calculate_enemy_attack_damage
 from src.common import BLACK, RED, accept_keys, reject_keys
+from src.waiting import quit_if_requested, wait
 from src.constants import (
     ARROW_BLINK_INTERVAL_MS, AUTO_BATTLE_DELAY_MS,
     BATTLE_MENU_HEIGHT, BATTLE_MENU_WIDTH, BATTLE_MENU_X, BATTLE_MENU_Y,
@@ -245,6 +246,7 @@ class BattleController:
             time.wait(AUTO_BATTLE_DELAY_MS)
         else:
             for current_event in event.get():
+                quit_if_requested(current_event)
                 if current_event.type == KEYDOWN:
                     if not self.player.is_asleep:
                         if current_event.key in accept_keys:
@@ -413,7 +415,7 @@ class BattleController:
                             self._("The {} is breathing fire.\n").format(self._(enemy.name)),
                             add_quotes=False, disable_sound=True, hide_arrow=True)
                         self.sound.play_sound(self.directories.breathe_fire_sfx)
-                    time.wait(1000)
+                    wait(1000)
                     if enemy.is_stopspelled and current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         # NES: a stopspelled enemy still chants, but the spell is blocked (fire breath isn't a spell)
                         self.cmd_menu.show_line_in_dialog_box(self._("But that spell hath been blocked."),

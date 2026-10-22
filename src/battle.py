@@ -15,6 +15,7 @@ from src.menu import CommandMenu
 from src.player.player import Player
 from src.player.player_stats import levels_list
 from src.sound import Sound
+from src.waiting import check_for_quit, wait, wait_frames
 
 DRAGONLORD_TRANSFORM_WAIT_FRAMES = 80  # NES EnemyDefeated: 80 frames between the two Dragonlord fights
 
@@ -74,6 +75,7 @@ class Battle:
                 (tile[0] * self.tile_size, tile[1] * self.tile_size, self.tile_size, self.tile_size)),
                 ((tile[0] + 5) * self.tile_size, (tile[1] + 4) * self.tile_size))
             display.update()
+            check_for_quit()
             time.wait(20)
 
     def get_battle_background_image(self):
@@ -192,8 +194,7 @@ class Battle:
         mixer.music.stop()
         self.sound.play_sound(self.directories.victory_sfx)
         self.make_enemy_image_disappear(screen)
-        if not self.config.get('NO_WAIT'):
-            time.wait(DRAGONLORD_TRANSFORM_WAIT_FRAMES * 1000 // 60)
+        wait_frames(DRAGONLORD_TRANSFORM_WAIT_FRAMES, self.config)
 
     def get_enemy_defeated_string(self, enemy):
         """Get the enemy defeated string based on language."""
@@ -209,7 +210,7 @@ class Battle:
         """Check if the player levels up."""
         if player.level + 1 < 30 and player.total_experience >= levels_list[player.level + 1]['total_exp']:
             self.sound.play_sound(self.directories.improvement_sfx)
-            time.wait(2000)
+            wait(2000)
             self.display_level_up_message(cmd_menu, player)
             old_stats = self.get_player_stats(player)
             player.level += 1

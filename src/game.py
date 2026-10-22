@@ -57,6 +57,7 @@ from src.story_flags import StoryFlags
 from src.map_manager import MapManager
 from src.pygame_compat import arrow_fade
 from src.visual_effects import fade, flash_transparent_color
+from src.waiting import wait
 
 
 class Game:
@@ -673,11 +674,8 @@ class Game:
                 display.flip()
             self.music_player.load_and_play_music(self.directories.death_sfx, 1)
             self.game_state.enable_movement = False
-            death_start_time = get_ticks()
-            while self.calculation.convert_to_frames_since_start_time(death_start_time) < 318:
-                if not self.game_state.config['NO_WAIT']:
-                    time.wait(1)
-            event.clear()
+            wait(self.calculation.convert_to_milliseconds(318), self.game_state.config)
+            event.clear()  # keys pressed during the death music are dropped
 
             self.cmd_menu.show_text_in_dialog_box(self._("Thou art dead."), disable_sound=True)
             self.set_post_death_attributes()
