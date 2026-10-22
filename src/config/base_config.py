@@ -33,7 +33,11 @@ base_config = {
     "LANGUAGE": language_from_locale(LOCALE),
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
-    "TEXT_SPEED": "Fast",  # "Fast", "Normal" or "Slow": NES MessageSpeed, 1, 2 or 3 frames per character
+    # "Fast", "Normal" or "Slow": NES MessageSpeed, 1, 2 or 3 frames per character. Normal, as a new NES quest starts
+    # with (NewQuest); a game started or loaded from the title menu sets it per adventure log (src/options_screen.py)
+    "TEXT_SPEED": "Normal",
+    # "Classic": the NES dialog window, whose text scrolls; "Modern": each message replaces the last (not NES)
+    "DIALOG_STYLE": "Classic",
     "NO_WAIT": False,
     "GOD_MODE": False,
     "INVULNERABLE": False,
