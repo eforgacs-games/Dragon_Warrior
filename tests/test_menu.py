@@ -591,9 +591,10 @@ class TestCommandMenu(TestCase):
                      for call in draw_text.call_args_list]
         # Window at tile (18, 6). Each item is one block: the first half of its name on the first tile row at
         # column 2, the second half on the next row at column 3; herbs and keys show how many at column 10.
+        # NES CreateInvList: herbs first, then keys, then the other items in inventory order
         self.assertEqual([("Herb", 20, 7.5), ("2", 28, 7.5),
-                          ("Fairy", 20, 9.5), ("Water", 21, 10.5),
-                          ("Magic", 20, 11.5), ("1", 28, 11.5), ("Key", 21, 12.5)], positions)
+                          ("Magic", 20, 9.5), ("1", 28, 9.5), ("Key", 21, 10.5),
+                          ("Fairy", 20, 11.5), ("Water", 21, 12.5)], positions)
         self.assertEqual((19 * nes_tile, 7.5 * nes_tile),
                          (blink_arrow.call_args.kwargs['x'], blink_arrow.call_args.kwargs['y']))
 

@@ -12,6 +12,7 @@ from src.config.test_config import test_config
 from src.game import Game
 from src.maps import Brecconary, Cantlin, Garinham, Kol, Rimuldar
 from src.shops import KEY_COSTS
+from src.windows import BUY_SELL_WINDOW
 
 
 def npc_identifiers(game_map):
@@ -60,7 +61,7 @@ class ShopDialogTestCase(TestCase):
     def run_shop(self, function, answers, menu_choices):
         """Run a shop dialog, answering the yes/no windows with answers and the list windows with menu_choices."""
         self.answers = list(answers)
-        with patch.object(self.dialog_lookup, 'select_from_text_menu', side_effect=list(menu_choices)):
+        with patch.object(self.dialog_lookup, 'select_in_window', side_effect=list(menu_choices)):
             function()
         self.assertEqual(self.answers, [], 'not every scripted answer was used')
 
@@ -340,12 +341,12 @@ class TestTextMenu(ShopDialogTestCase):
         pygame.event.clear()
         pygame.event.post(pygame.event.Event(KEYDOWN, key=K_DOWN, unicode=''))
         pygame.event.post(pygame.event.Event(KEYDOWN, key=K_RETURN, unicode='\r'))
-        self.assertEqual(self.dialog_lookup.select_from_text_menu(['BUY', 'SELL'], 5, 2, 4), 1)
+        self.assertEqual(self.dialog_lookup.select_from_text_menu(['BUY', 'SELL'], BUY_SELL_WINDOW), 1)
 
     def test_cancel(self):
         pygame.event.clear()
         pygame.event.post(pygame.event.Event(KEYDOWN, key=K_ESCAPE, unicode=''))
-        self.assertIsNone(self.dialog_lookup.select_from_text_menu(['Herb', 'Torch'], 6, 2, 9, ['24', '8']))
+        self.assertIsNone(self.dialog_lookup.select_shop_item(['Herb', 'Torch'], [24, 8]))
 
     def test_text_store_returns_item_name(self):
         pygame.event.clear()

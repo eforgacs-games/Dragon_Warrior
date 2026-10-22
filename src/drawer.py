@@ -13,6 +13,7 @@ from src.game_functions import get_surrounding_rect
 from src.menu import Menu, CommandMenu
 from src.sound import Sound
 from src.text import draw_text
+from src.windows import COMMAND_WINDOW, POPUP_WINDOW
 
 
 class Drawer:
@@ -70,7 +71,7 @@ class Drawer:
 
     def draw_hovering_stats_window(self, screen, player, color=WHITE):
         tile_size = self.game_state.config["TILE_SIZE"]
-        self.graphics.create_window(1, 2, 4, 6, self.directories.HOVERING_STATS_BACKGROUND_PATH, screen, color)
+        self.graphics.create_window(*POPUP_WINDOW, self.directories.HOVERING_STATS_BACKGROUND_PATH, screen, color)
         draw_text(player.name[:4], tile_size * 2.99, tile_size * 2, screen, self.game_state.config, color=color,
                   alignment='center', letter_by_letter=False)
         self.draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)
@@ -262,7 +263,7 @@ class Drawer:
             self.handle_darkness(screen, player)
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
-                cmd_menu.window_drop_down_effect(1, 2, 4, 6)
+                cmd_menu.window_drop_down_effect(*POPUP_WINDOW)
                 self.hovering_stats_displayed = True
             self.draw_hovering_stats_window(screen, player, color)
         self.handle_menu_launch(screen, cmd_menu, cmd_menu)
@@ -311,19 +312,18 @@ class Drawer:
         tile_size = self.game_state.config['TILE_SIZE']
         if menu_to_launch.launch_signaled:
             if menu_to_launch.menu.get_id() == 'command':
-                command_menu_subsurface = screen.subsurface(
-                    (6 * tile_size,  # 11 (first empty square to the left of menu)
-                     tile_size),  # 4
-                    (8 * tile_size,
-                     5 * tile_size)
-                )
+                # NES CmdNonCmbtDat
+                x, y, width, height = COMMAND_WINDOW
+                command_menu_subsurface = screen.subsurface((x * tile_size, y * tile_size),
+                                                            (width * tile_size, height * tile_size))
                 if not cmd_menu.menu.is_enabled():
                     self.sound.play_sound(self.directories.menu_button_sfx)
-                    cmd_menu.window_drop_down_effect(6, 1, 8, 5)
+                    cmd_menu.window_drop_down_effect(x, y, width, height)
                     cmd_menu.menu.enable()
                 else:
                     menu_to_launch.menu.draw(command_menu_subsurface)
-                    display.update(command_menu_subsurface.get_rect())
+                    cmd_menu.draw_command_window_frame(command_menu_subsurface)
+                    display.update(command_menu_subsurface.get_abs_offset() + command_menu_subsurface.get_size())
 
 
 def replace_characters_with_underlying_tiles(tile_types_to_draw: List[str], current_map_character_key) -> List[str]:
