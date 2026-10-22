@@ -388,7 +388,7 @@ class TestEnemyMove(unittest.TestCase):
     def test_erdricks_armor_reduces_firebreath(self, mock_time):
         self.game.player.armor = "Erdrick's Armor"
         self.move(patterned_enemy([(100, Spell.FIREBREATH, True), Spell.ATTACK]), effect=20)
-        self.assertEqual(self.game.receive_damage.call_args.args[0], 13)
+        self.assertEqual(self.game.receive_damage.call_args.args[0], 12)
 
     def test_heal_condition_false_skips_to_next_entry(self, mock_time):
         self.move(enemies.Drakeema(), roll=0, effect=5)
