@@ -69,6 +69,14 @@ class TestCommandMenu(TestCase):
                              f"{self.game.player.name} adjusted the position of the Fighter's Ring.")
         self.assertEqual(self.game.player.attack_power, attack_before)
 
+    def test_fighters_ring_with_attack_bonus_option(self):
+        self.game.player.fighters_ring_attack_bonus = 2
+        attack_before = self.game.player.attack_power
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
+            self.game.cmd_menu.fighters_ring()
+            self.game.cmd_menu.fighters_ring()
+        self.assertEqual(self.game.player.attack_power, attack_before + 2)
+
     def test_take_item(self):
         self.assertEqual([], self.game.player.inventory)
         mocked_return = MagicMock()
