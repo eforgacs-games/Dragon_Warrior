@@ -4,7 +4,8 @@ Ending — everything that happens after the Dragonlord's final form is defeated
 1. Battle.enemy_defeated hands over to final_boss_defeated (NES NotDL1Defeated): the Ball of Light is found, the
    F_DGNLRD_DEAD story flag is set and the hero is put on the overworld outside the Dragonlord's castle.
 2. The hero walks (or flies) back to Tantegel. With the flag set there are no random fights or tile damage, every NPC
-   has victory dialog (npc_dialog) and King Lorik waits on the castle's ground floor (TantegelCourtyard).
+   has victory dialog (npc_dialog) and King Lorik waits on the castle's ground floor (TantegelCourtyard). Gwaelin, if
+   she's still in the Swamp Cave, can be rescued and carried to him (has_victory_dialog).
 3. Stepping in front of him starts the ending (check_for_end_game_trigger, NES CheckForTriggers / EndGameTriggered),
    which plays out differently depending on Princess Gwaelin, then rolls the credits (NES DoEndCredits) and hangs on
    THE END until the game is closed, as the NES does until it's reset.
@@ -139,8 +140,20 @@ class Ending:
     #  2. The world after the Dragonlord                                   #
     # ------------------------------------------------------------------ #
 
+    @staticmethod
+    def has_victory_dialog(dialog_character: str, current_map) -> bool:
+        """Whether npc_dialog replaces this character's dialog once the Dragonlord is dead.
+
+        NES CheckTalk: LD134 runs only for the NPC tables of maps 4 to 14 (ValidateNPC), which hold every NPC with
+        dialog (shops, inns, the King, the old men and so on). Gwaelin in the Swamp Cave (MAP_SWAMPCAVE, $15) isn't an
+        NPC there but a map block: DoTalkResults checks for BLK_PRINCESS before any NPC (and before LD134) and goes
+        straight to DoGwaelinRescue, and GetBaseBlockID only turns that block into brick once F_DONE_GWAELIN is set,
+        whatever F_DGNLRD_DEAD says. So she can still be rescued after the Dragonlord's defeat, and then carried to
+        King Lorik for the ending (ChkCarryGwaelin)."""
+        return not (current_map.identifier == 'SwampCave' and dialog_character == 'PRINCESS_GWAELIN')
+
     def npc_dialog(self, dialog_character: str, current_map) -> str:
-        """NES LD134: every NPC's dialog once the Dragonlord is dead."""
+        """NES LD134: every NPC's dialog once the Dragonlord is dead (see has_victory_dialog for who's exempt)."""
         _ = self._
         if current_map.identifier == 'TantegelCourtyard':
             return _("Come now, King Lorik awaits.")
