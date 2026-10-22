@@ -7,7 +7,7 @@ from pygame.time import get_ticks
 from data.text.dialog import confirmation_prompt
 from src.calculation import Calculation
 from src.color import BLACK
-from src.common import WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
+from src.common import RED, WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
 from src.direction import Direction
 from src.directories import Directories
 from src.items import weapons, armor, shields
@@ -236,7 +236,16 @@ class DialogLookup:
                                                         "There is a Silver Harp that beckons to the creatures "
                                                         "of the Dragonlord.",
                                                         "Bring this to me and I will reward thee with the Staff of Rain.")}},
-            'MagicTemple': {'WISE_MAN': {'dialog': (self.magic_temple_rainbow_drop_exchange,)}}
+            'MagicTemple': {'WISE_MAN': {'dialog': (self.magic_temple_rainbow_drop_exchange,)}},
+            # NES DoDrgnLrdDialog (Bank03): TextBlock13 entries 7 and 8 around TextBlock11 entry 4, then the
+            # yes/no window.
+            'CharlockB8': {'DRAGONLORD': {'dialog': (
+                _("Welcome, {}.\nI am the Dragonlord--King of Kings.").format(self.player.name),
+                _("I have been waiting long for one such as thee."),
+                _("I give thee now a chance to share this world and to rule half of it if thou will now stand "
+                  "beside me."),
+                self.dragonlord_offer_prompt,
+            )}},
         }
 
         for map_dict in self.lookup_table.values():
@@ -275,6 +284,89 @@ class DialogLookup:
     def but_thou_must(self, original_function):
         self.command_menu.show_line_in_dialog_box(self._("But thou must."))
         original_function()
+
+    def dragonlord_offer_prompt(self):
+        """NES DoDrgnLrdDialog: answering no goes straight to the fight, answering yes gets a second chance
+        ("Really?", TextBlock18 entry 6) before the bad ending."""
+        return confirmation_prompt(
+            self.command_menu,
+            self._("What sayest thou?\nWill the great warrior stand with me?"),
+            yes_path_function=self.dragonlord_really_prompt,
+            no_path_function=self.refuse_dragonlord,
+            config=self.config,
+            show_arrow=self.command_menu.game.show_arrow,
+            color=self.color)
+
+    def dragonlord_really_prompt(self):
+        return confirmation_prompt(
+            self.command_menu,
+            self._("Really?"),
+            yes_path_function=self.join_dragonlord,
+            no_path_function=self.refuse_dragonlord,
+            config=self.config,
+            show_arrow=self.command_menu.game.show_arrow,
+            color=self.color)
+
+    def refuse_dragonlord(self):
+        """NES RefuseDglrdDialog: "Thou art a fool!", a 40-frame pause, then the dialog, command and pop-up
+        windows close and the fight with the Dragonlord's first form (EN_DRAGONLORD1) starts."""
+        self.command_menu.show_line_in_dialog_box(self._("Thou art a fool!"), hide_arrow=True, skip_text=True)
+        if not self.config['NO_WAIT']:
+            time.wait(40 * 1000 // 60)
+        self.command_menu.game.battle_ctrl.queue_scripted_battle('Dragonlord')
+
+    def join_dragonlord(self):
+        """NES ChooseDrgnLrd / ZeroStats: the bad ending. The Dragonlord answers (TextBlock13 entries 10 and 2),
+        the player's experience, gold, items, equipment, spells and flags are all zeroed, "Thy journey is over"
+        (entry 11) is shown, the background palette switches to BadEndBGPal (everything black except the window
+        color, which turns red), the pop-up status window opens, and the game spinlocks (Spinlock3) until the
+        console is reset."""
+        _ = self._
+        self.command_menu.show_line_in_dialog_box(
+            _("Then half of this world is thine, half of the darkness, and...."))
+        self.command_menu.show_line_in_dialog_box(
+            _("If thou dies I can bring thee back for another attempt without loss of thy deeds to date."))
+        self.zero_stats_for_bad_ending()
+        journey_is_over = _("Thy journey is over.\nTake now a long, long rest.\nHahahaha....")
+        self.command_menu.show_line_in_dialog_box(journey_is_over, add_quotes=False, hide_arrow=True,
+                                                  skip_text=True)
+        self.show_bad_ending_palette(journey_is_over)
+        self.bad_ending_spinlock()
+
+    def zero_stats_for_bad_ending(self):
+        """NES ZeroStats: experience, gold, inventory (items, keys and herbs), equipment, spells and the player
+        and story flags are cleared. HP, MP and the displayed level are left alone."""
+        game = self.command_menu.game
+        self.player.total_experience = 0
+        self.player.gold = 0
+        self.player.inventory = []
+        self.player.weapon = self.player.armor = self.player.shield = ""
+        self.player.spells = []
+        self.player.is_carrying_princess = False
+        game.princess_saved = False
+        self.player.update_attack_power()
+        self.player.update_defense_power()
+
+    def show_bad_ending_palette(self, final_line):
+        """Approximates NES BadEndBGPal ($16 red as the window color, every other background color black):
+        the map goes black, the dialog window and the pop-up status window are redrawn in red."""
+        game = self.command_menu.game
+        game.color = self.command_menu.color = self.color = RED
+        self.screen.fill(BLACK)
+        self.command_menu.show_line_in_dialog_box(final_line, add_quotes=False, hide_arrow=True, skip_text=True,
+                                                  letter_by_letter=False)
+        game.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
+        display.flip()
+
+    def bad_ending_spinlock(self):
+        """NES Spinlock3: the game hangs here, and only a reset gets out. Closing the window is the
+        equivalent."""
+        while True:
+            for current_event in get():
+                if current_event.type == QUIT:
+                    quit()
+            pump()
+            time.wait(16)
 
     def princess_whispers(self):
         self.command_menu.show_text_line_in_dialog_box(

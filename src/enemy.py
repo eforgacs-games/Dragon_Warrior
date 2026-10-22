@@ -438,5 +438,5 @@ enemy_groups = {
     2: ["Drollmagi", "Wyvern", "Rogue Scorpion", "Wraith Knight", "Golem", "Goldman", "Knight", "Magiwyvern",
         "Demon Knight", "Werewolf"],
     3: ["Green Dragon", "Starwyvern", "Wizard", "Axe Knight", "Blue Dragon"],
-    4: ["Stoneman", "Armored Knight", "Red Dragon", "Dragonlord", "Dragonlord2"]
+    4: ["Stoneman", "Armored Knight", "Red Dragon", "Dragonlord", "Dragonlord 2"]
 }
