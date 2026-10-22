@@ -192,6 +192,10 @@ class Drawer:
         hero_is_stepping = player.is_moving and not player.bumped
         if self.game_state.update_lit_diameter(hero_is_stepping):
             self.sound.play_sound(self.directories.torch_sfx)  # SFX_RADIANT
+        self.draw_darkness(screen)
+
+    def draw_darkness(self, screen) -> None:
+        """Black out everything outside the current light diameter (see handle_darkness), without updating it."""
         tile_size = self.game_state.config["TILE_SIZE"]
         radius = (self.game_state.lit_diameter - 1) // 2
         darkness = Surface((screen.get_width(), screen.get_height()))  # lgtm [py/call/wrong-arguments]
