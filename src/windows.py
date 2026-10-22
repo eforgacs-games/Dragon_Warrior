@@ -316,3 +316,48 @@ def item_menu_entry_tile_row(menu_name: str, index: int) -> int:
     :return: The tile row.
     """
     return ITEM_MENU_FIRST_TILE_ROW[menu_name] + 2 * index
+
+
+# The name entry screen (NES DoNewQuest and WndEnterName, Bank03 and Bank01): the title menu's NewQuestDat and the open
+# log list LogList123Dat1 stay on the screen, and InitNameWindow draws NameEntryDat and then AlphabetDat over them.
+# Windows without the single spaced option ($20) are double spaced: each line of their data is followed by a blank
+# row, so the first line of text is on tile row 2.
+
+# NewQuestDat ($B2A8): border ($88), then 1 blank tile ($81) and BEGIN A NEW QUEST
+NEW_QUEST_LAYOUT = WindowLayout(window=NEW_QUEST_WINDOW, texts=(WindowText("BEGIN A NEW QUEST", 2, 2),))
+# LogList123Dat1 ($B385): border ($88), then each line 1 blank tile ($81) and ADVENTURE LOG 1, 2 and 3
+ADVENTURE_LOG_123_LAYOUT = WindowLayout(window=ADVENTURE_LOG_WINDOW_1, texts=tuple(
+    WindowText(f"ADVENTURE LOG {log}", 2, 2 * log) for log in (1, 2, 3)))
+# NameEntryDat ($B1F7): 3 border tiles ($8B), NAME, border to the end ($88); then 1 blank tile ($81) and the 8 name
+# placeholders (tile $41, TL_NAME_PLACEHOLDER in src/window_renderer.py, drawn by src/name_entry.py)
+NAME_ENTRY_LAYOUT = WindowLayout(window=NAME_ENTRY_WINDOW, title=WindowText("NAME", 4, 0))
+# The name's first character: tile column 2 of NameEntryDat (WndShowNameChar: screen X = WndNameIndex + $0C, the
+# window's X being 5 blocks, 10 tiles), on tile row 2 (WndNameCharYPos: screen Y = 8); the underscore under the next
+# character is a TL_TOP1 tile on the row below (WndUndrscrYPos: screen Y = 9)
+NAME_FIRST_TILE_COLUMN = 2
+NAME_TILE_ROW = 2
+NAME_UNDERSCORE_TILE_ROW = 3
+NAME_LENGTH = 8
+# AlphabetDat ($B10D): each character after 1 blank tile ($81), 11 to a line (22 tiles, the window's inside), and on
+# the last line BACK after , and . then 2 blank tiles ($82) and END. Rows in the order of the selection results
+# (WndCalcAlphaResult: row * 11 + column); BACK is column 6 and END column 9 of the last row (WndSpclMoveCrsr).
+ALPHABET_ROWS = (
+    "ABCDEFGHIJK",
+    "LMNOPQRSTUV",
+    "WXYZ-'!?() ",
+    "abcdefghijk",
+    "lmnopqrstuv",
+    "wxyz,.",
+)
+ALPHABET_COLUMNS = 11
+ALPHABET_BACK = (5, 6)
+ALPHABET_END = (5, 9)
+ALPHABET_LAYOUT = WindowLayout(
+    window=ALPHABET_WINDOW,
+    texts=tuple(WindowText(" ".join(row), 2, 2 + 2 * index) for index, row in enumerate(ALPHABET_ROWS))
+    + (WindowText("BACK", 14, 12), WindowText("END", 20, 12)),
+    # InitNameWindow: cursor home Y = 2, X = 1 ($21) and 2 tiles per column (WndColumns = $12); one entry per row and
+    # column, indexed by the selection result (BACK at X = $0D and END at X = $13 are the 7th and 10th columns)
+    cursor_tiles=selection_cursor_tiles(home_column=1, home_row=2, columns=ALPHABET_COLUMNS, column_spacing=2,
+                                        rows=len(ALPHABET_ROWS)),
+)
