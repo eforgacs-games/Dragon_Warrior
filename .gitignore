@@ -7,3 +7,6 @@ venv/
 .coverage
 coverage.xml
 code-coverage-results.md
+
+# Claude Code per-session folder (worktrees, etc.)
+.claude/

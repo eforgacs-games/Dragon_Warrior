@@ -1,9 +1,15 @@
+import os
 from unittest import TestCase
+
+import pygame
 
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.maps import MapWithoutNPCs
 from src.player.player import Player
+
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 layout = [[3, 0, 3],
           [1, 2, 3],
@@ -24,6 +30,13 @@ class MockMap(MapWithoutNPCs):
 
 
 class TestPlayer(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        # MockMap converts tile images, which needs a video mode; don't rely on one left over from an earlier
+        # test file, since that file may have called pygame.quit()
+        pygame.init()
+        pygame.display.set_mode((800, 600))
 
     def setUp(self):
         test_config['NO_WAIT'] = True
