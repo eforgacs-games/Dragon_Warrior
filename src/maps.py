@@ -975,7 +975,7 @@ class Rimuldar(DragonWarriorMap):
         self.custom_underlying_tiles = {
             'MAN': 'GRASS',
             'MERCHANT': 'GRASS',
-            'WISE_MAN_2': 'TREES',
+            'WISE_MAN_2': 'GRASS',  # RimuldarDat (#259) has grass under the wizard at 6,13
             'GUARD': 'GRASS',
             'WOMAN_4': 'GRASS',
             'SOLDIER_4': 'GRASS',
