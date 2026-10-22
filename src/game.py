@@ -24,7 +24,7 @@ from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, read_checkpoint
 from src.color import WHITE, is_low_hp, window_color
-from src.common import reject_keys, Graphics, RED, is_facing_medially, is_facing_laterally, \
+from src.common import A_OR_START_KEYS, reject_keys, Graphics, RED, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config.dev_config import dev_config
@@ -846,7 +846,9 @@ class Game:
             wait(self.calculation.convert_to_milliseconds(318), self.game_state.config)
             event.clear()  # keys pressed during the death music are dropped
 
-            self.cmd_menu.show_text_in_dialog_box(self._("Thou art dead."), disable_sound=True)
+            # NES DeathText: the game then loops until JoypadBtns AND #$09, A or START (held or not)
+            self.cmd_menu.show_text_in_dialog_box(self._("Thou art dead."), disable_sound=True,
+                                                  advance_keys=A_OR_START_KEYS)
             self.set_post_death_attributes()
         else:
             self.player.is_dead = False

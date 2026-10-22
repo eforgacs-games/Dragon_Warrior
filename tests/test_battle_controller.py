@@ -4,7 +4,7 @@ from collections import defaultdict
 from unittest.mock import MagicMock, Mock, patch
 
 import pygame
-from pygame import KEYDOWN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_ESCAPE, K_LEFT, K_RETURN, K_RIGHT, K_UP
+from pygame import KEYDOWN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_ESCAPE, K_LEFT, K_RETURN, K_RIGHT, K_SPACE, K_UP, K_x
 from pygame.event import Event
 from src.waiting import NES_FPS, game_speed, reset_game_speed
 
@@ -259,6 +259,13 @@ class TestHandleBattlePrompts(BattlePromptFrames):
         self.assertEqual(self.controller.last_battle_action, 'Fight')
         self.assertTrue(self.game.player.is_asleep)
         self.assertEqual(self.game.player.asleep_turns, 1)
+
+    def test_asleep_player_ignores_keys_that_are_not_buttons(self, mock_time, mock_display):
+        self.game.player.is_asleep = True
+        with self.patch_enemy_move() as enemy_move:
+            self.press(K_x, K_SPACE)
+        enemy_move.assert_not_called()
+        self.assertEqual(self.battle.turn, 0)
 
     def test_asleep_player_can_wake_up(self, mock_time, mock_display):
         self.game.player.is_asleep = True

@@ -141,8 +141,10 @@ class TestSpeedKeys(GameSpeedTestCase):
     def test_keys_work_during_a_dialog_without_closing_it(self):
         menu = MagicMock()
         menu.game.show_arrow = True
+        menu.read_dialog_events = lambda advance_keys: CommandMenu.read_dialog_events(menu, advance_keys)
         pressed = [[keydown(K_2)], [keydown(K_RETURN)]]
-        with patch('pygame.event.get', side_effect=pressed) as get, patch('pygame.event.clear'):
+        with patch('pygame.event.get', side_effect=pressed) as get, patch('pygame.event.clear'), \
+                patch('src.menu.is_any_key_held', return_value=False):
             CommandMenu.wait_for_dialog_key(menu, shows_arrow=True, skip_text=False, temp_text_start=None,
                                             disable_sound=True)
         self.assertEqual(2, game_speed())

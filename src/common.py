@@ -4,7 +4,8 @@ import ntpath
 import os
 from os.path import sep, exists
 
-from pygame import Surface, image, transform, K_RETURN, K_i, K_k, K_ESCAPE, K_j
+from pygame import Surface, image, transform, K_RETURN, K_i, K_k, K_ESCAPE, K_j, K_u, K_UP, K_DOWN, K_LEFT, K_RIGHT, \
+    K_w, K_a, K_s, K_d
 
 from src.color import WHITE, BLACK, RED
 from src.direction import Direction
@@ -158,6 +159,20 @@ class Graphics:
 
 accept_keys = (K_RETURN, K_i, K_k)
 reject_keys = (K_ESCAPE, K_j)
+
+# The NES joypad on the keyboard. Enter is an extra A (it also picks menu items and is the TAKE/DOOR/TALK shortcut) and
+# Escape an extra B (it closes the command window), like accept_keys and reject_keys.
+A_BUTTON_KEYS = (K_k, K_RETURN)
+B_BUTTON_KEYS = (K_j, K_ESCAPE)
+START_BUTTON_KEYS = (K_i,)
+SELECT_BUTTON_KEYS = (K_u,)
+D_PAD_KEYS = (K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d)
+# Bank01 TxtCheckInput (DoWait, the dialog's blinking down arrow): JoypadBtns AND #IN_A_OR_B
+A_OR_B_KEYS = A_BUTTON_KEYS + B_BUTTON_KEYS
+# Bank03 WaitForBtnPress (after WaitForBtnRelease, ending a conversation): any joypad button, D-pad, START and SELECT too
+ANY_BUTTON_KEYS = A_BUTTON_KEYS + B_BUTTON_KEYS + START_BUTTON_KEYS + SELECT_BUTTON_KEYS + D_PAD_KEYS
+# Bank03 DeathText (after "Thou art dead."): JoypadBtns AND #$09, IN_A or IN_START
+A_OR_START_KEYS = A_BUTTON_KEYS + START_BUTTON_KEYS
 
 
 def set_gettext_language(language):
