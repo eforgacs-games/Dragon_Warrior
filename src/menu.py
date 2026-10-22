@@ -31,6 +31,74 @@ from src.text import draw_text, set_font_by_ascii_chars
 
 arrow_fade = USEREVENT + 1
 
+# The SPELL and ITEM windows (NES Bank01 SpellDat and PlayerInvDat; the discard window is PlayerInvDat too).
+# Positions and sizes are in blocks of 2x2 NES tiles (16 NES pixels, TILE_SIZE screen pixels), as in the window data.
+# Both windows are 12 tiles (6 blocks) wide at block column 9; the SPELL window is at block row 2, the ITEM window at
+# row 3. Both are variable height (WndVariableHeight, WndBuildVariable, WndBuildEnd): one block per entry plus one
+# for the borders, so 2 to 11 blocks for 1 to 10 spells or items. The cursor moves 2 tile rows (one block) per entry
+# (WndDownCont3).
+ITEM_MENU_X = 9
+ITEM_MENU_WIDTH = 6
+ITEM_MENU_Y = {'spells': 2, 'inventory': 3, 'discard': 3}
+# Tile row of the first entry, from the cursor home position: SpellDat is double spaced, so the title row is followed
+# by a blank row; PlayerInvDat is single spaced, its first item's name starts on the row after the top border.
+ITEM_MENU_FIRST_TILE_ROW = {'spells': 2, 'inventory': 1, 'discard': 1}
+# The window corners are one NES tile (8 NES pixels)
+ITEM_MENU_BORDER = 8
+# Tile column of the SPELL window's title, after the corner and 3 border tiles (SpellDat: $8B, "SPELL")
+SPELL_MENU_TITLE_TILE_COLUMN = 4
+# NES ItemNames11TbL/ItemNames12TbL/ItemNames21TbL/ItemNames22TbL (Bank01): an item's name is shown in two halves,
+# the second one on the next tile row, indented by one tile (PlayerInvDat: $81, first half, $82, second half).
+ITEM_NAME_HALVES = {
+    "Herb": ("Herb", ""),
+    "Torch": ("Torch", ""),
+    "Dragon's Scale": ("Dragon's", "Scale"),
+    "Wings": ("Wings", ""),
+    "Magic Key": ("Magic", "Key"),
+    "Fairy Water": ("Fairy", "Water"),
+    "Ball of Light": ("Ball of", "Light"),
+    "Tablet": ("Tablet", ""),
+    "Fairy Flute": ("Fairy", "Flute"),
+    "Silver Harp": ("Silver", "Harp"),
+    "Staff of Rain": ("Staff of", "Rain"),
+    "Stones of Sunlight": ("Stones of", "Sunlight"),
+    "Gwaelin's Love": ("Gwaelin's", "Love"),
+    "Rainbow Drop": ("Rainbow", "Drop"),
+    "Cursed Belt": ("Cursed", "Belt"),
+    "Death Necklace": ("Death", "Necklace"),
+    "Fighter's Ring": ("Fighter's", "Ring"),
+    "Erdrick's Token": ("Erdrick's", "Token"),
+}
+# NES WndItemDesc: herbs and keys show how many the hero has, in the tile column after an 8 tile name
+COUNTED_ITEMS = ("Herb", "Magic Key")
+ITEM_COUNT_TILE_COLUMN = 10
+
+
+def item_menu_window(menu_name: str, number_of_entries: int) -> tuple[int, int, int, int]:
+    """
+    The SPELL or ITEM window's position and size for a number of entries.
+    :param menu_name: 'spells', 'inventory' or 'discard'.
+    :param number_of_entries: How many spells or (different) items are listed.
+    :return: (x, y, width, height), in blocks.
+    """
+    return ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_WIDTH, number_of_entries + 1
+
+
+# Tile column of an entry's text (after the left border and the cursor column) and of the cursor (cursor home X = 1)
+ITEM_MENU_TEXT_TILE_COLUMN = 2
+ITEM_MENU_CURSOR_TILE_COLUMN = 1
+
+
+def item_menu_entry_tile_row(menu_name: str, index: int) -> int:
+    """
+    The tile row of an entry in the SPELL or ITEM window, counted from the window's top border. Entries are 2 tile rows
+    (one block) apart; the cursor is drawn on the same row.
+    :param menu_name: 'spells', 'inventory' or 'discard'.
+    :param index: The entry's index in the window, from 0.
+    :return: The tile row.
+    """
+    return ITEM_MENU_FIRST_TILE_ROW[menu_name] + 2 * index
+
 
 class Menu:
     def __init__(self):
@@ -1046,17 +1114,10 @@ class CommandMenu(Menu):
         item without using it).
         :return: The item chosen, or None if the menu was closed without choosing.
         """
-        tile_size = self.game.game_state.config['TILE_SIZE']
         function_dict: dict[Any, Any] = {}
         chosen_item = None
         if menu_name in ('inventory', 'discard'):
             list_counter = Counter(self.player.inventory)
-            list_string = ""
-            for item, item_amount in list_counter.items():
-                if item == "Magic Key":
-                    list_string += f"Magic   {item_amount}\n Key \n"
-                else:
-                    list_string += f"{item}\n"
             function_dict = {
                 # item function map
                 "Herb": self.herb,
@@ -1078,9 +1139,6 @@ class CommandMenu(Menu):
             }
         elif menu_name == 'spells':
             list_counter = Counter(self.player.spells)
-            list_string = ""
-            for item, item_amount in list_counter.items():
-                list_string += f"{item}\n"
             function_dict = {
                 # name, function, MP cost
                 Spell.HEAL: (self.heal, 4),
@@ -1098,19 +1156,21 @@ class CommandMenu(Menu):
             raise ValueError(f"Invalid menu name: {menu_name}")
         item_menu_displayed = True
         current_arrow_position = 0
+        drawn_arrow_position = None
+        window_rect = Rect(0, 0, 0, 0)
         currently_selected_item = list(list_counter.keys())[0]
         time.set_timer(arrow_fade, 530)
         while item_menu_displayed:
-            self.graphics.create_window(x=8, y=3, width=7, height=len(list_counter) + 1,
-                                        window_background=self.directories.item_menu_background_lookup[
-                                            len(list_counter)], screen=self.screen,
-                                        color=self.color)
-            draw_text(list_string, tile_size * 9, tile_size * 4, self.screen, self.game.game_state.config,
-                      letter_by_letter=False)
-            self.graphics.blink_arrow(self.screen, x=tile_size * 8.5,
-                                      y=tile_size * 4 + current_arrow_position * 17, direction="right",
+            if current_arrow_position != drawn_arrow_position:
+                # Redraw the window to erase the cursor from the entry it left
+                window_rect = self.draw_item_menu(menu_name, list_counter)
+                drawn_arrow_position = current_arrow_position
+            cursor_x, cursor_y = self.window_text_position(
+                ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_CURSOR_TILE_COLUMN,
+                item_menu_entry_tile_row(menu_name, current_arrow_position))
+            self.graphics.blink_arrow(self.screen, x=cursor_x, y=cursor_y, direction="right",
                                       show_arrow=self.game.show_arrow, color=self.color)
-            display.update((8 * tile_size, 3 * tile_size, 7 * tile_size, (len(list_counter) + 1) * tile_size))
+            display.update(window_rect)
             for current_event in event.get():
                 if any([current_event.type == KEYDOWN]):
                     if current_event.key in reject_keys:
@@ -1165,6 +1225,68 @@ class CommandMenu(Menu):
                 elif current_event.type == arrow_fade:
                     self.game.show_arrow = not self.game.show_arrow
         return chosen_item
+
+    def draw_item_menu(self, menu_name: str, list_counter: Counter) -> Rect:
+        """
+        Draw the SPELL or ITEM window and its entries, without the cursor (NES SpellDat, PlayerInvDat).
+        :param menu_name: 'spells', 'inventory' or 'discard'.
+        :param list_counter: The spells or items to list, with how many of each the hero has.
+        :return: The window's rect on the screen.
+        """
+        config = self.game.game_state.config
+        tile_size = config['TILE_SIZE']
+        x, y, width, height = item_menu_window(menu_name, len(list_counter))
+        self.graphics.create_window(x, y, width, height, self.directories.ITEM_MENU_BACKGROUND_PATH, self.screen,
+                                    self.color, border=ITEM_MENU_BORDER)
+        if menu_name == 'spells':
+            self.draw_window_title(self._('SPELL'), x, y, SPELL_MENU_TITLE_TILE_COLUMN)
+
+        def draw_in_window(text: str, column: int, row: int) -> None:
+            draw_text(text, *self.window_text_position(x, y, column, row), self.screen, config, color=self.color,
+                      letter_by_letter=False)
+
+        for index, (entry, amount) in enumerate(list_counter.items()):
+            row = item_menu_entry_tile_row(menu_name, index)
+            if menu_name == 'spells':
+                draw_in_window(str(entry), ITEM_MENU_TEXT_TILE_COLUMN, row)
+                continue
+            first_half, second_half = ITEM_NAME_HALVES.get(entry, (entry, ""))
+            draw_in_window(first_half, ITEM_MENU_TEXT_TILE_COLUMN, row)
+            if entry in COUNTED_ITEMS:
+                draw_in_window(str(amount), ITEM_COUNT_TILE_COLUMN, row)
+            if second_half:
+                draw_in_window(second_half, ITEM_MENU_TEXT_TILE_COLUMN + 1, row + 1)
+        return Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
+
+    def window_text_position(self, window_x: int, window_y: int, column: int, row: int) -> tuple[float, float]:
+        """
+        Where draw_text or blink_arrow should draw a character in a window's tile (8x8 NES pixels).
+        :param window_x: The window's left edge, in blocks.
+        :param window_y: The window's top edge, in blocks.
+        :param column: The tile column in the window, from 0 (the left border).
+        :param row: The tile row in the window, from 0 (the top border).
+        :return: (x, y) in screen pixels: the tile's left edge and its vertical middle (draw_text centers text on y).
+        """
+        nes_tile = self.game.game_state.config['TILE_SIZE'] / 2
+        return (window_x * 2 + column) * nes_tile, (window_y * 2 + row + 0.5) * nes_tile
+
+    def draw_window_title(self, title: str, window_x: int, window_y: int, column: int) -> None:
+        """
+        Draw a title in a window's top border, the way the NES puts text in a border row: the border stops one pixel
+        short of the text on each side (TL_TOP2).
+        :param title: The title.
+        :param window_x: The window's left edge, in blocks.
+        :param window_y: The window's top edge, in blocks.
+        :param column: The tile column the title starts at.
+        """
+        config = self.game.game_state.config
+        scale = config['SCALE']
+        x, y = self.window_text_position(window_x, window_y, column, 0)
+        if not config['NO_BLIT']:
+            title_width = set_font_by_ascii_chars([title], 16, None, self.directories).size(title)[0]
+            self.screen.fill(BLACK, (x - scale, window_y * config['TILE_SIZE'], title_width + 2 * scale,
+                                     config['TILE_SIZE'] / 2))
+        draw_text(title, x, y, self.screen, config, color=self.color, letter_by_letter=False)
 
     def door(self) -> None:
         """
