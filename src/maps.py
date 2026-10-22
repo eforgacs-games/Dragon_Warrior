@@ -226,19 +226,27 @@ class DragonWarriorMap:
                                                  'tile_value': tile_value,
                                                  'coordinates': coordinates
                                                  }
-        if self.custom_underlying_tiles and self.custom_underlying_tiles.get(character.identifier):
-            self.add_tile(self.floor_tile_key[self.custom_underlying_tiles[character.identifier]], self.center_pt)
-        else:
+        if not self.has_floor_tile(*coordinates):
+            if self.custom_underlying_tiles and self.custom_underlying_tiles.get(character.identifier):
+                underlying_tile = self.custom_underlying_tiles[character.identifier]
             self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
 
     def map_player(self, underlying_tile, player, coordinates) -> None:
         self.player_sprites = LayeredDirty(player)
         player.direction_value = self.hero_initial_direction()
-        self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
+        if not self.has_floor_tile(*coordinates):
+            self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
         self.characters['HERO'] = {'character': player,
                                    'character_sprites': self.player_sprites,
                                    'tile_value': self.character_key['HERO']['val'],
                                    'coordinates': coordinates}
+
+    def has_floor_tile(self, row: int, column: int) -> bool:
+        """Whether the layout already has a floor tile at (row, column), i.e. not a character's tile value.
+        A character standing on such a block mustn't get a second tile there: with two tiles in one block, the one
+        that shows depends on which tile types are being redrawn, so the block flips between them as characters move
+        around (e.g. Brecconary's MAN_3 stands on brick, but also got a GRASS tile)."""
+        return self.layout[row][column] < len(self.floor_tile_key)
 
     # @timeit
     def map_floor_tiles(self, column, row) -> None:

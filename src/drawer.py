@@ -1,5 +1,5 @@
 from statistics import mean
-from typing import Iterable, List, Tuple
+from typing import Iterable, List, Set, Tuple
 
 from pygame import display, KEYDOWN, event, Surface, Rect
 from pygame.sprite import Group
@@ -261,10 +261,6 @@ class Drawer:
             # tile_types_to_draw = list(filter(lambda x: not self.is_impassable(x), tile_types_to_draw))
 
         group_to_draw: Group = Group()
-        camera_screen_rect = Rect(player.rect.x - tile_size * 8, player.rect.y - tile_size * 7,
-                                  screen.get_width(), screen.get_height())
-        double_camera_screen_rect = camera_screen_rect.inflate(camera_screen_rect.width * 0.25,
-                                                               camera_screen_rect.height * 0.25)
         fixed_character_rects = [fixed_character.rect for fixed_character in current_map.fixed_characters]
         roaming_character_rects = [
             roaming_character.rect if roaming_character.is_moving else get_surrounding_rect(roaming_character,
@@ -275,14 +271,19 @@ class Drawer:
         player_check_rect = get_surrounding_rect(player, tile_size) if player.is_moving else player.rect
         roaming_last_rects = [rc.last_rect for rc in current_map.roaming_characters if rc.last_rect is not None]
         all_roaming_rects = roaming_character_rects + roaming_last_rects
-        roaming_union_rect = all_roaming_rects[0].unionall(all_roaming_rects[1:]) \
-            if all_roaming_rects else None
+        # Every character is drawn onto the background each frame, on screen or not, so the tiles under every character
+        # are redrawn each frame too, on screen or not. Otherwise a character off screen leaves its old frames on the
+        # background, and they show up as a ghost once the camera scrolls over them (#98).
+        cells_to_draw = get_cells_under_rects([player_check_rect] + fixed_character_rects + all_roaming_rects,
+                                              tile_size)
         tile_types_set = set(tile_types_to_draw)
         cover_cells_to_draw = set()
         for tile, tile_dict in current_map.floor_tile_key.items():
             if tile_dict.get('group') and tile in tile_types_set:
                 for tile_to_draw in tile_dict['group']:
                     tile_rect = tile_to_draw.rect
+                    if tile_rect.topleft not in cells_to_draw:
+                        continue
                     if current_map.covered_area:
                         cell = (tile_rect.y // tile_size, tile_rect.x // tile_size)
                         if current_map.is_hidden_by_cover(*cell):
@@ -290,20 +291,7 @@ class Drawer:
                             if player_check_rect.colliderect(tile_rect):
                                 cover_cells_to_draw.add(cell)
                             continue
-                    if camera_screen_rect.colliderect(tile_rect):
-                        if player_check_rect.colliderect(tile_rect):
-                            group_to_draw.add(tile_to_draw)
-                            continue
-                        for fixed_character_rect in fixed_character_rects:
-                            if fixed_character_rect.colliderect(tile_rect):
-                                group_to_draw.add(tile_to_draw)
-                                break
-                    if roaming_union_rect and double_camera_screen_rect.colliderect(tile_rect):
-                        if roaming_union_rect.colliderect(tile_rect):
-                            for r in all_roaming_rects:
-                                if r.colliderect(tile_rect):
-                                    group_to_draw.add(tile_to_draw)
-                                    break
+                    group_to_draw.add(tile_to_draw)
         group_to_draw.draw(self.background)
         if cover_cells_to_draw:
             draw_cover(current_map, self.background, cover_cells_to_draw)
@@ -385,6 +373,16 @@ class Drawer:
 def replace_characters_with_underlying_tiles(tile_types_to_draw: List[str], current_map_character_key) -> List[str]:
     substitution = {k: v['underlying_tile'] for k, v in current_map_character_key.items()}
     return [substitution.get(t, t) for t in tile_types_to_draw]
+
+
+def get_cells_under_rects(rects: Iterable[Rect], tile_size: int) -> Set[Tuple[int, int]]:
+    """The top left corners of the blocks that the given rects overlap."""
+    cells = set()
+    for rect in rects:
+        for x in range(rect.left // tile_size * tile_size, rect.right, tile_size):
+            for y in range(rect.top // tile_size * tile_size, rect.bottom, tile_size):
+                cells.add((x, y))
+    return cells
 
 
 def get_surrounding_tile_values(coordinates, map_layout):
