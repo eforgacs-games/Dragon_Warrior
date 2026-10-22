@@ -8,10 +8,11 @@ from unittest.mock import patch
 import pygame
 
 from src.config.test_config import test_config
-from src.constants import GWAELIN_SWAMP_CAVE_COORDINATES, GWAELIN_THRONE_ROOM_COORDINATES
+from src.constants import GWAELIN_SWAMP_CAVE_COORDINATES, GWAELIN_THRONE_ROOM_COORDINATES, \
+    THRONE_ROOM_DOOR_COORDINATES
 from src.game import Game
 from src.items import treasure
-from src.map_layouts import BRICK, TREASURE_BOX
+from src.map_layouts import BRICK, DOOR, TREASURE_BOX
 from src.maps import map_lookup
 from src.story_flags import StoryFlags
 
@@ -135,6 +136,19 @@ class TestSaveStoryProgress(TestCase):
     def test_throne_room_chests_stay_before_leaving(self):
         loaded_game = self.load(self.save())
         self.assertEqual(self.throne_room_chest_tiles(loaded_game), [TREASURE_BOX] * 3)
+
+    def test_throne_room_door_is_open_on_continue_after_leaving(self):
+        # NES InitMapData (ChkLeftThRoom): F_LEFT_THROOM removes the throne room door with its chests, so a continued
+        # game doesn't start behind a locked door with no key
+        self.game.story_flags.left_throne_room = True
+        loaded_game = self.load(self.save())
+        row, column = THRONE_ROOM_DOOR_COORDINATES
+        self.assertEqual(loaded_game.current_map.layout[row][column], BRICK)
+
+    def test_throne_room_door_stays_before_leaving(self):
+        loaded_game = self.load(self.save())
+        row, column = THRONE_ROOM_DOOR_COORDINATES
+        self.assertEqual(loaded_game.current_map.layout[row][column], DOOR)
 
     def test_cursed_hero_continues_with_1_hp(self):
         # NES StartAtThroneRoom (LCB6B): ModsnSpells AND IS_CURSED sets HitPoints to 1; MP is left alone

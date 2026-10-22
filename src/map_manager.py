@@ -13,7 +13,7 @@ from src import maps
 from src.camera import Camera
 from src.common import BLACK
 from src.constants import GWAELIN_SWAMP_CAVE_COORDINATES, GWAELIN_THRONE_ROOM_COORDINATES, \
-    RAINBOW_BRIDGE_COORDINATES
+    RAINBOW_BRIDGE_COORDINATES, THRONE_ROOM_DOOR_COORDINATES
 from src.direction import Direction
 from src.game_functions import set_character_position
 from src.map_layouts import BRICK, TREASURE_BOX
@@ -208,6 +208,11 @@ class MapManager:
             self.game.story_flags.left_throne_room = True  # NES ChkThRoomMap sets F_LEFT_THROOM
         self.game.chest_history.enter_map(map_name, self.game.story_flags.left_throne_room)
         self.game.chest_history.apply_to_layout(map_name, self.current_map.layout, TREASURE_BOX, BRICK)
+        if map_name == 'TantegelThroneRoom' and self.game.story_flags.left_throne_room:
+            # NES ChkLeftThRoom: the throne room door is removed with the chests, so a continued game never finds
+            # it locked again
+            row, column = THRONE_ROOM_DOOR_COORDINATES
+            self.current_map.layout[row][column] = BRICK
     def place_princess_gwaelin(self):
         """Put Gwaelin where the NES story flags say she is before the map's NPCs are loaded."""
         if self.current_map.identifier == 'TantegelThroneRoom' and self.game.story_flags.gwaelin_returned:
