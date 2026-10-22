@@ -293,7 +293,10 @@ def select_random_attack_damage_value(lower_bound: int, upper_bound: int) -> int
 
 
 def calculate_enemy_attack_damage(player, enemy):
-    """Calculate the damage of an enemy's attack."""
-    lower_bound = (enemy.attack - player.agility / 2) // 4
-    upper_bound = (enemy.attack - player.agility / 2) // 2
-    return select_random_attack_damage_value(lower_bound, upper_bound)
+    """Calculate the damage of an enemy's physical attack, following the NES EnCalcHitDmg routine."""
+    base_attack = enemy.attack - player.defense_power // 2
+    random_number = random.randint(0, 255)
+    if base_attack < enemy.attack // 2 + 1:
+        # Weak attack: the player's defense is high compared to the enemy's attack.
+        return ((enemy.attack // 2 + 1) * random_number // 256 + 2) // 3
+    return ((base_attack + 1) * random_number // 256 + base_attack) // 4
