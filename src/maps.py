@@ -872,6 +872,8 @@ class Cantlin(DragonWarriorMap):
             (24, 15): 'WISE_MAN',
             (30, 22): 'WISE_MAN',
             (34, 4): 'MERCHANT',
+            # NES CantStatTbl: weapons and armor shop 2's keeper at 27,26 (becomes MERCHANT_6)
+            (34, 27): 'MERCHANT',
             (36, 14): 'WISE_MAN',
         }
         self.custom_underlying_tiles = {
