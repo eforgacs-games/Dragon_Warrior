@@ -3,12 +3,13 @@ from typing import Dict, FrozenSet, Iterable, List, Tuple
 from pygame import PixelArray, surface
 from pygame.transform import scale
 
+from src.color import LOW_HP_RED
 from src.visual_effects import NES_PALETTE
 
 # NES AddPalByte/ChkLowHPPal (Bank03, $C661): while HP is low, background palette 0's color 1 ($3F01) is loaded as $26
 # instead of the $30 that OverworldPal, TownPal and DungeonPal (Bank00) all give it.
 PAL0_COLOR1_NORMAL = NES_PALETTE[0x30]
-PAL0_COLOR1_LOW_HP = NES_PALETTE[0x26]
+PAL0_COLOR1_LOW_HP = LOW_HP_RED  # $26, the windows' low HP color too
 
 
 def parse_map_tiles(map_path: str, tile_size: int, graphics, configured_scale):

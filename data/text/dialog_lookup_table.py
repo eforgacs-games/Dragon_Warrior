@@ -7,8 +7,8 @@ from pygame.event import get, pump
 
 from data.text.dialog import confirmation_prompt
 from src.calculation import Calculation
-from src.color import BLACK
-from src.common import RED, WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
+from src.color import BLACK, window_color
+from src.common import WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
 from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACEABLE_ITEMS
 from src.cursor import BlinkingCursor
 from src.direction import Direction
@@ -25,7 +25,7 @@ from src.story_flags import StoryFlags
 from src.text import draw_text
 from src.windows import BUY_SELL_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, SHOP_COST_RIGHT_TILE_COLUMN, \
     SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
-from src.visual_effects import fade, flash_transparent_color, greyscale_screen
+from src.visual_effects import NES_RED, fade, flash_transparent_color, greyscale_screen
 from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait, wait_frames
 
 
@@ -457,13 +457,17 @@ class DialogLookup:
 
     def show_bad_ending_palette(self, final_line):
         """Approximates NES BadEndBGPal ($16 red as the window color, every other background color black):
-        the map goes black, the dialog window and the pop-up status window are redrawn in red."""
+        the map goes black, the dialog window and the pop-up status window are redrawn in red. BadEndBGPal is loaded
+        with PrepBGPalLoad, so AddPalByte's ChkLowHPPal still applies: ZeroStats doesn't touch HitPoints, and if HP is
+        low the window color is the low HP red ($26) instead of $16."""
         game = self.command_menu.game
-        game.set_window_color(RED)
+        color = window_color(self.player.current_hp, self.player.max_hp)
+        color = NES_RED if color == WHITE else color
+        game.set_window_color(color)
         self.screen.fill(BLACK)
         self.command_menu.show_line_in_dialog_box(final_line, add_quotes=False, hide_arrow=True, skip_text=True,
                                                   letter_by_letter=False)
-        game.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
+        game.drawer.draw_hovering_stats_window(self.screen, self.player, color)
         display.flip()
 
     def bad_ending_spinlock(self):
