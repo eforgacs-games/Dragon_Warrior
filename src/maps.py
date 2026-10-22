@@ -400,13 +400,16 @@ class TantegelThroneRoom(DragonWarriorMap):
                          staircases={
                              (14, 18): {'map': 'TantegelCourtyard', 'destination_coordinates': (14, 14),
                                         'direction': Direction.RIGHT.value}})
+        # NES ThRmMobTbl and ThRmStatTbl (Bank00). An NPC at NES X,Y is at (Y + 6, X + 10) here. The table's
+        # Princess Gwaelin at 6,3 ($6F) is added by MapManager.place_princess_gwaelin once she's been returned.
         self.npc_coordinates = {
-            (9, 13): 'KING_LORIK',
-            (11, 16): 'GUARD',
-            (12, 13): 'GUARD',
-            (12, 15): 'GUARD',
+            (9, 13): 'KING_LORIK',  # static King Lorik at 3,3 (dialog byte $6E)
+            (11, 17): 'GUARD',  # mobile guard at 7,5 ($65)
+            (12, 13): 'GUARD',  # static guard at 3,6, facing right ($23)
+            (12, 15): 'GUARD',  # static guard at 5,6, facing left ($24)
         }
         self.assign_stair_directions()
+        # The NPC from ThRmMobTbl
         self.roaming_character_list = ['GUARD']
 
     def hero_underlying_tile(self):
@@ -438,26 +441,35 @@ class TantegelCourtyard(DragonWarriorMap):
                                      'direction': Direction.LEFT.value}
         # NES MapEntryTbl/MapTargetTbl: Tant castle GF(29,29) -> Tant castle SL(0,4)
         self.staircases[(36, 36)] = {'map': 'TantegelCellar', 'destination_coordinates': (5, 1)}
+        # NES TantMobTbl and TantStatTbl (Bank00). An NPC at NES X,Y is at (Y + 7, X + 7) here. The NPCs that were
+        # already here come first so they keep their identifiers; the ones added from the tables follow.
         self.npc_coordinates = {
-            (8, 31): 'MERCHANT',
-            (12, 34): 'WOMAN',
-            (13, 15): 'GUARD',
-            (15, 9): 'MAN',
-            (15, 15): 'GUARD',
-            (18, 18): 'MAN',
-            (19, 9): 'GUARD',
-            (20, 15): 'WOMAN',
-            (27, 22): 'GUARD',
-            (28, 29): 'SOLDIER',
-            (31, 14): 'MERCHANT',
-            (32, 13): 'MERCHANT',
-            (33, 27): 'WISE_MAN',
-            (34, 16): 'GUARD',
-            (34, 19): 'GUARD',
+            (8, 31): 'MERCHANT',  # static shopkeeper at 24,1: magic keys (dialog byte $0E)
+            (12, 34): 'WOMAN',  # static female villager at 27,5 ($1A)
+            (13, 15): 'GUARD',  # static guard at 8,6 ($19)
+            (15, 9): 'MAN',  # static male villager at 2,8 ($18)
+            (15, 15): 'GUARD',  # static guard at 8,8, facing up ($71)
+            (18, 18): 'MAN',  # mobile male villager at 11,11 ($1C)
+            (19, 9): 'GUARD',  # mobile guard at 2,12 ($1B)
+            (20, 15): 'WOMAN',  # mobile female villager at 8,13 ($62)
+            (27, 22): 'GUARD',  # static guard at 15,20, facing right ($63)
+            (28, 31): 'SOLDIER',  # mobile fighter at 24,21 ($22)
+            (28, 11): 'MERCHANT',  # mobile shopkeeper at 4,21 ($1F)
+            (32, 13): 'MERCHANT',  # mobile shopkeeper at 6,25 ($20)
+            (33, 27): 'WISE_MAN',  # static wizard at 20,26, facing left: restores MP ($6A)
+            (34, 16): 'GUARD',  # static guard at 9,27, facing right ($21)
+            (34, 19): 'GUARD',  # static guard at 12,27, facing left ($21)
+            (9, 26): 'GUARD',  # mobile guard at 19,2 ($17)
+            (22, 33): 'GUARD',  # static guard at 26,15, facing up ($1E)
+            (25, 25): 'GUARD',  # mobile guard at 18,18 ($72)
+            (18, 24): 'WISE_MAN',  # mobile wizard at 17,11 ($1D)
+            (18, 32): 'SOLDIER',  # mobile fighter at 25,11 ($16)
         }
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
-        self.roaming_character_list = ['MAN_2', 'GUARD_3', 'WOMAN_2', 'MERCHANT_2', 'MERCHANT_3']
+        # The NPCs from TantMobTbl
+        self.roaming_character_list = ['MAN_2', 'GUARD_3', 'WOMAN_2', 'MERCHANT_2', 'MERCHANT_3', 'SOLDIER',
+                                       'GUARD_7', 'GUARD_9', 'WISE_MAN_2', 'SOLDIER_2']
         self.custom_underlying_tiles = {
             'WOMAN': 'GRASS',
             'WOMAN_2': 'GRASS'
@@ -495,10 +507,12 @@ class TantegelCourtyard(DragonWarriorMap):
             self.set_character_initial_direction('GUARD_7', Direction.RIGHT)
             self.set_character_initial_direction('GUARD_8', Direction.LEFT)
             return
+        # The DD bits of each TantStatTbl entry; every NPC not listed here faces down
         self.set_character_initial_direction('GUARD_2', Direction.UP)
         self.set_character_initial_direction('GUARD_4', Direction.RIGHT)
         self.set_character_initial_direction('GUARD_5', Direction.RIGHT)
         self.set_character_initial_direction('GUARD_6', Direction.LEFT)
+        self.set_character_initial_direction('GUARD_8', Direction.UP)
         self.set_character_initial_direction('WISE_MAN', Direction.LEFT)
 
 
@@ -510,8 +524,9 @@ class TantegelCellar(BasementWithNPCs):
                          (5, 1), staircases={
                 # NES MapTargetTbl: Tant castle SL(0,4) -> Tant castle GF(29,29)
                 (5, 1): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 36)}})
+        # NES TaSLStatTbl (Bank00); TaSLMobTbl is empty
         self.npc_coordinates = {
-            (7, 5): 'WISE_MAN',
+            (7, 5): 'WISE_MAN',  # static wizard at 4,6, guarding the Stones of Sunlight ($66)
         }
         self.assign_stair_directions()
 
