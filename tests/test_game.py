@@ -1,12 +1,12 @@
-import array
 import json
+from collections import defaultdict
 import os
 import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pygame
-from pygame import K_UP, RESIZABLE, SCALED
+from pygame import RESIZABLE, SCALED
 from pygame.imageext import load_extended
 from pygame.sprite import LayeredDirty
 from pygame.transform import scale
@@ -35,17 +35,10 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
-def create_get_pressed_mock_array(max_key):
-    return array.array('i', (0,)) * (max_key + 1)
-
-
-def create_move_player_key_mock(pressed_key):
-    def helper():
-        tmp = create_get_pressed_mock_array(K_UP)
-        tmp[pressed_key] = 1
-        return tmp
-
-    return helper
+def pressed_keys(pressed_key):
+    """A stand-in for pygame.key.get_pressed() with one key held. pygame 2 key codes like K_UP are over a billion,
+    so this maps codes to states instead of allocating an array that large (4 GB per call)."""
+    return defaultdict(int, {pressed_key: 1})
 
 
 def setup_roaming_character(row, column, direction):
@@ -746,40 +739,40 @@ class TestGame(TestCase):
 
     def test_move_player_up(self):
         """Test moving the player up."""
-        pygame.key.get_pressed = create_move_player_key_mock(pygame.K_w)
+        keys = pressed_keys(pygame.K_w)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
         self.assertEqual(self.game.player.rect.y, -16)
-        self.game.move_player(pygame.key.get_pressed())
+        self.game.move_player(keys)
         # I'm not sure why this is -18, need to investigate
         self.assertEqual(self.game.player.rect.y, -18)
         self.assertEqual(Direction.UP.value, self.game.player.direction_value)
 
     def test_move_player_left(self):
         """Test moving the player left."""
-        pygame.key.get_pressed = create_move_player_key_mock(pygame.K_a)
+        keys = pressed_keys(pygame.K_a)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
         initial_x = self.game.player.rect.x
-        self.game.move_player(pygame.key.get_pressed())
+        self.game.move_player(keys)
         self.assertEqual(initial_x + 16, self.game.player.rect.x)
         self.assertEqual(Direction.LEFT.value, self.game.player.direction_value)
 
     def test_move_player_down(self):
         """Test moving the player down.
         The player should not move if there is an impassable object in the way."""
-        pygame.key.get_pressed = create_move_player_key_mock(pygame.K_s)
+        keys = pressed_keys(pygame.K_s)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
         self.assertEqual(self.game.player.rect.y, -16)
-        self.game.move_player(pygame.key.get_pressed())
+        self.game.move_player(keys)
         # impassable object in way of player
         self.assertEqual(self.game.player.rect.y, -16)
         self.assertEqual(Direction.DOWN.value, self.game.player.direction_value)
 
     def test_move_player_right(self):
         """Test moving the player right."""
-        pygame.key.get_pressed = create_move_player_key_mock(pygame.K_d)
+        keys = pressed_keys(pygame.K_d)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
         initial_x = self.game.player.rect.x
-        self.game.move_player(pygame.key.get_pressed())
+        self.game.move_player(keys)
         self.assertEqual(self.game.player.rect.x, initial_x + 16)
         self.assertEqual(Direction.RIGHT.value, self.game.player.direction_value)
 
