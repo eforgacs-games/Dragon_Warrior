@@ -232,8 +232,7 @@ class TestTantegelDialog(TestCase):
                          (self.dialog_lookup.tantegel_cellar_stones_of_sunlight_guardian,))
 
     def king_lorik(self, level):
-        self.game.player.level = level
-        self.game.player.points_to_next_level = self.game.player.get_points_to_next_level()
+        self.game.player.level = level  # points_to_next_level follows (a property since #256)
         return DialogLookup(self.game.cmd_menu, test_config).lookup_table['TantegelThroneRoom']['KING_LORIK']
 
     def test_king_below_level_30(self):
