@@ -122,13 +122,15 @@ def toggle_joystick_input(command_menu, redraw: Callable[[], None], enable_joyst
         enable_joystick_input = False
         # TODO(ELF): adding the drop-up effect here shows the Tantegel Throne Room while the effect happens -
         #  make it work with a black screen.
-        command_menu.show_text_in_dialog_box("Joystick input disabled.", temp_text_start=get_ticks(), drop_up=False)
+        command_menu.show_text_in_dialog_box(command_menu._("Joystick input disabled."), temp_text_start=get_ticks(),
+                                             drop_up=False)
         if not command_menu.game.game_state.config['NO_BLIT']:
             redraw()
             display.flip()
     else:
         enable_joystick_input = True
-        command_menu.show_text_in_dialog_box("Joystick input enabled.", temp_text_start=get_ticks(), drop_up=False)
+        command_menu.show_text_in_dialog_box(command_menu._("Joystick input enabled."), temp_text_start=get_ticks(),
+                                             drop_up=False)
         if not command_menu.game.game_state.config['NO_BLIT']:
             redraw()
             display.flip()

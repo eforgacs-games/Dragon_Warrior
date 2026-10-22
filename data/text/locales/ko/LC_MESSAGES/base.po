@@ -74,34 +74,10 @@ msgstr "당신은 죽었습니다."
 #: .\dialog_lookup_table.py:33
 msgid ""
 "Game set to normal speed.\n"
-"(60 FPS)"
+"({} FPS)"
 msgstr ""
 "게임이 정상 속도로 설정되었습니다.\n"
-"(60 FPS)"
-
-#: .\dialog_lookup_table.py:34
-msgid ""
-"Game set to double speed.\n"
-"(120 FPS)"
-msgstr ""
-"게임이 2배속으로 설정되었습니다.\n"
-"(120 FPS)"
-
-#: .\dialog_lookup_table.py:35
-msgid ""
-"Game set to triple speed.\n"
-"(240 FPS)"
-msgstr ""
-"게임이 3배속으로 설정되었습니다.\n"
-"(240 FPS)"
-
-#: .\dialog_lookup_table.py:36
-msgid ""
-"Game set to quadruple speed.\n"
-"(480 FPS)"
-msgstr ""
-"게임이 4배속으로 설정되었습니다.\n"
-"(480 FPS)"
+"({} FPS)"
 
 #: .\dialog_lookup_table.py:40
 msgid "There is no one there."
@@ -326,11 +302,11 @@ msgstr ""
 
 #: .\dialog_lookup_table.py:113
 msgid "I have been waiting long for one such as thee."
-msgstr ""
+msgstr "그대 같은 자를 오랫동안 기다려 왔다."
 
 #: .\dialog_lookup_table.py:113
 msgid "Take the Treasure Chest."
-msgstr ""
+msgstr "보물 상자를 가져가거라."
 
 #: .\dialog_lookup_table.py:115
 msgid "There is a town where magic keys can be purchased."
@@ -927,4 +903,1329 @@ msgstr "열쇠를 가지고 있지 않다!"
 msgid "There is nothing to take here, {}."
 msgstr "여기서 가져갈 것이 없다, {}님."
 
+#: src/battle.py:229
+msgid ""
+"Courage and wit have served thee well.\n"
+"Thou hast been promoted to the next level.\n"
+msgstr ""
+"용기와 지혜가 그대를 잘 이끌었다.\n"
+"레벨이 올랐다!\n"
 
+#: src/battle.py:264
+msgid "Thou hast learned a new spell.\n"
+msgstr "새로운 주문을 익혔다!\n"
+
+#: src/battle.py:275
+msgid "The Dragonlord revealed his true self!\n"
+msgstr "용왕이 정체를 드러냈다!\n"
+
+#: src/battle.py:282
+msgid "A {}"
+msgstr "{}"
+
+#: src/battle.py:281
+msgid "An {}"
+msgstr "{}"
+
+#: src/battle_controller.py:351
+msgid "{} hath woken up."
+msgstr "{}은/는 잠에서 깨어났다!"
+
+#: src/battle_controller.py:347
+#: src/menu.py:782
+#: src/menu.py:641
+msgid "The {} is asleep."
+msgstr "{}은/는 잠들어 있다."
+
+#: src/battle_controller.py:393
+#: src/menu.py:1152
+msgid "But that spell hath been blocked."
+msgstr "그러나 주문은 봉인되어 있었다!"
+
+#: src/battle_controller.py:402
+msgid "Thou art asleep.\n"
+msgstr "잠들어 버렸다!\n"
+
+#: src/battle_controller.py:262
+msgid "Nothing of use has yet been given to thee.\n"
+msgstr "도구를 가지고 있지 않다.\n"
+
+#: src/battle_controller.py:268
+#: src/battle_controller.py:293
+msgid "Thou art still asleep.\n"
+msgstr "아직 잠들어 있다.\n"
+
+#: src/battle_controller.py:387
+msgid "The {} is breathing fire.\n"
+msgstr "{}은/는 불꽃을 내뿜었다!\n"
+
+#: src/battle_controller.py:290
+msgid "{} awakes.\n"
+msgstr "{}은/는 잠에서 깨어났다!\n"
+
+#: src/ending.py:166
+msgid "Thou hast brought us peace, again."
+msgstr "덕분에 다시 평화가 찾아왔어요."
+
+#: src/ending.py:128
+msgid "Thou hast found the Ball of Light."
+msgstr "빛의 구슬을 찾았다!"
+
+#: src/ending.py:129
+msgid "Radiance streams forth as thy hands touch the object and hold it aloft."
+msgstr "구슬을 손에 들어 높이 치켜들자 눈부신 빛이 흘러넘쳤다."
+
+#: src/ending.py:130
+msgid "Across the land spreads the brilliance until all shadows are banished and peace is restored."
+msgstr "빛은 온 땅으로 퍼져 나가 모든 어둠을 몰아내고 평화를 되찾았다."
+
+#: src/ending.py:159
+msgid "Come now, King Lorik awaits."
+msgstr "어서 가 보세요. 로릭 왕께서 기다리고 계십니다."
+
+#: src/ending.py:195
+msgid "The legends have proven true."
+msgstr "전설은 진실이었네."
+
+#: src/ending.py:196
+msgid "Thou art indeed of the line of Erdrick."
+msgstr "자네야말로 진정한 로토의 자손일세."
+
+#: src/ending.py:197
+msgid "It is thy right to rule over this land."
+msgstr "이 나라를 다스릴 자격은 자네에게 있네."
+
+#: src/ending.py:198
+msgid "Will thou take my place?"
+msgstr "내 뒤를 이어 이 나라의 왕이 되어 주겠나?"
+
+#: src/ending.py:201
+msgid "If ever I am to rule a country, it must be a land that I myself find."
+msgstr "만약 제가 다스릴 나라가 있다면, 그것은 제 힘으로 찾아낸 땅이어야 합니다."
+
+#: src/ending.py:247
+msgid "I wish to go with thee on thy journey."
+msgstr "저도 당신의 여행에 함께 가고 싶어요."
+
+#: src/ending.py:252
+msgid "May I travel as thy companion?"
+msgstr "당신과 함께 여행해도 될까요?"
+
+#: src/ending.py:258
+#: data/text/dialog_lookup_table.py:350
+msgid "But thou must."
+msgstr "하지만 꼭 그래 주셔야 해요."
+
+#: src/ending.py:263
+#: data/text/dialog_lookup_table.py:347
+#: data/text/dialog_lookup_table.py:515
+msgid "I'm so happy!"
+msgstr "정말 기뻐요!"
+
+#: src/ending.py:281
+msgid "unless the dragons return again."
+msgstr "용이 다시 돌아오지 않는 한은."
+
+#: src/ending.py:165
+msgid ""
+"Hurrah!\n"
+"Hurrah!\n"
+"Long live {}!"
+msgstr ""
+"만세!\n"
+"만세!\n"
+"{} 만세!"
+
+#: src/ending.py:199
+msgid "{} thought carefully before answering."
+msgstr "{}은/는 곰곰이 생각한 뒤 대답했다."
+
+#: src/ending.py:221
+msgid "Gwaelin said:"
+msgstr "로라 공주가 말했다:"
+
+#: src/ending.py:221
+msgid "Please, wait."
+msgstr "잠깐만 기다려 주세요."
+
+#: src/ending.py:280
+msgid "And thus the tale comes to an end...."
+msgstr "이렇게 이야기는 끝을 맺는다...."
+
+#: src/ending.py:200
+msgid "I cannot,"
+msgstr "저는 그럴 수 없습니다."
+
+#: src/ending.py:200
+msgid "said {}."
+msgstr "{}은/는 말했다."
+
+#: src/game.py:461
+msgid "Cursed one, be gone!"
+msgstr "저주받은 자여, 썩 물러가라!"
+
+#: src/game.py:476
+msgid "REPEL has lost its effect."
+msgstr "토헤로스의 효과가 사라졌다."
+
+#: src/game.py:478
+msgid "The Fairy Water has lost its effect."
+msgstr "요정의 물의 효과가 사라졌다."
+
+#: src/game.py:798
+msgid "Fullscreen mode enabled"
+msgstr "전체 화면 모드로 전환되었습니다"
+
+#: src/game.py:801
+msgid "Windowed mode enabled"
+msgstr "창 모드로 전환되었습니다"
+
+#: src/game.py:817
+msgid "Auto-stairs enabled"
+msgstr "자동 계단 켜짐"
+
+#: src/game.py:819
+msgid "Auto-stairs disabled"
+msgstr "자동 계단 꺼짐"
+
+#: src/game.py:829
+msgid "Auto-battle disabled"
+msgstr "자동 전투 꺼짐"
+
+#: src/game.py:837
+msgid "Invulnerability enabled"
+msgstr "무적 모드 켜짐"
+
+#: src/game.py:839
+msgid "Invulnerability disabled"
+msgstr "무적 모드 꺼짐"
+
+#: src/game.py:661
+msgid "Thou hast failed and thou art cursed."
+msgstr "자네는 실패한 데다 저주까지 받았군."
+
+#: src/game.py:661
+msgid "Leave at once!"
+msgstr "당장 떠나게!"
+
+#: src/game.py:827
+msgid ""
+"Auto-battle enabled\n"
+"(Repeats: {})"
+msgstr ""
+"자동 전투 켜짐\n"
+"(반복: {})"
+
+#: src/menu.py:381
+msgid "Unfortunately, it is empty."
+msgstr "안타깝게도 비어 있었다."
+
+#: src/menu.py:714
+msgid "From where thou art now, my castle lies..\n"
+msgstr "지금 계신 곳에서 저희 성까지는..\n"
+
+#: src/menu.py:555
+#: src/menu.py:1130
+msgid "That cannot be used in battle."
+msgstr "그것은 전투 중에 사용할 수 없다."
+
+#: src/menu.py:569
+msgid "The Wings of the Wyvern cannot be used here."
+msgstr "여기서는 날개를 사용할 수 없다."
+
+#: src/menu.py:579
+msgid "A torch can be used only in dark places."
+msgstr "횃불은 어두운 곳에서만 사용할 수 있다."
+
+#: src/menu.py:589
+msgid "Thou art already wearing the scale of the dragon."
+msgstr "이미 용의 비늘을 몸에 걸치고 있다."
+
+#: src/menu.py:640
+msgid "Quietly Golem closes his eyes and settles into sleep."
+msgstr "골렘은 조용히 눈을 감고 잠들었다."
+
+#: src/menu.py:648
+#: src/items.py
+msgid "Erdrick's Token"
+msgstr "로토의 증표"
+
+#: src/menu.py:658
+msgid "But no rainbow appeared here."
+msgstr "그러나 여기에는 무지개가 생기지 않았다."
+
+#: src/menu.py:746
+#: src/menu.py:775
+msgid "The spell will not work."
+msgstr "주문이 통하지 않았다!"
+
+#: src/menu.py:961
+msgid "There is a treasure box."
+msgstr "보물 상자가 있다."
+
+#: src/menu.py:983
+msgid "Feel the wind blowing from behind the throne."
+msgstr "옥좌 뒤에서 바람이 불어오는 것이 느껴진다."
+
+#: src/menu.py:1006
+#: src/menu.py:1012
+#: src/menu.py:965
+msgid "But there found nothing."
+msgstr "그러나 아무것도 찾지 못했다."
+
+#: src/menu.py:1014
+msgid "{} discovers the {}."
+msgstr "{}은/는 {}을/를 발견했다!"
+
+#: src/menu.py:408
+msgid "If thou would take the {}, thou must now discard some other item."
+msgstr "{}을/를 가지려면 다른 도구를 하나 버려야 한다."
+
+#: src/menu.py:412
+msgid "What shall thou drop?"
+msgstr "무엇을 버리겠습니까?"
+
+#: src/menu.py:430
+msgid "Thou hast given up thy {}."
+msgstr "{}을/를 포기했다."
+
+#: src/menu.py:561
+msgid "{} used the Herb."
+msgstr "{}은/는 약초를 사용했다!"
+
+#: src/menu.py:574
+msgid "{} threw The Wings of the Wyvern up into the sky."
+msgstr "{}은/는 날개를 하늘 높이 던졌다!"
+
+#: src/menu.py:593
+msgid "{} donned the scale of the dragon."
+msgstr "{}은/는 용의 비늘을 몸에 걸쳤다."
+
+#: src/menu.py:597
+msgid "{} sprinkled the Fairy Water over his body."
+msgstr "{}은/는 요정의 물을 몸에 뿌렸다."
+
+#: src/menu.py:605
+#: src/menu.py:619
+msgid "{} played a sweet melody on the harp."
+msgstr "{}은/는 하프로 아름다운 곡을 연주했다."
+
+#: src/menu.py:623
+msgid "The {} looks happy."
+msgstr "{}은/는 기분이 좋아 보인다."
+
+#: src/menu.py:630
+msgid "{} blew the Fairies' Flute."
+msgstr "{}은/는 요정의 피리를 불었다."
+
+#: src/menu.py:647
+#: src/menu.py:666
+msgid ""
+"{} held the {} tightly.\n"
+"But nothing happened."
+msgstr ""
+"{}은/는 {}을/를 꼭 쥐었다.\n"
+"그러나 아무 일도 일어나지 않았다."
+
+#: src/menu.py:653
+msgid "{} held the Rainbow Drop toward the sky."
+msgstr "{}은/는 무지개의 물방울을 하늘 높이 치켜들었다."
+
+#: src/menu.py:683
+msgid "{} put on the Fighter's Ring."
+msgstr "{}은/는 전사의 반지를 꼈다."
+
+#: src/menu.py:700
+msgid "The {} is squeezing thy body."
+msgstr "{}이/가 몸을 조이고 있다."
+
+#: src/menu.py:703
+msgid ""
+"{} put on the {} and was cursed!\n"
+"Thy body is being squeezed."
+msgstr ""
+"{}은/는 {}을/를 몸에 걸쳤다가 저주를 받았다!\n"
+"몸이 조여 온다."
+
+#: src/menu.py:710
+msgid "Heed my voice, '{}, for this is Gwaelin. To reach the next level thou must raise thy Experience Points by {}. My hope is with thee.'"
+msgstr "'{}님, 제 목소리를 들어 주세요. 로라예요. 다음 레벨이 되려면 앞으로 {}포인트의 경험치가 필요해요. 당신을 믿고 있어요.'"
+
+#: src/menu.py:726
+#: data/text/dialog_lookup_table.py:498
+msgid "I love thee, {}."
+msgstr "사랑해요, {}님."
+
+#: src/menu.py:779
+msgid "Thou hast put the {} to sleep."
+msgstr "{}을/를 잠들게 했다!"
+
+#: src/menu.py:802
+msgid "The {}'s spell hath been blocked."
+msgstr "{}의 주문을 봉인했다!"
+
+#: src/menu.py:958
+msgid "{} searched the ground all about."
+msgstr "{}은/는 발밑을 샅샅이 조사했다."
+
+#: src/menu.py:989
+msgid "{} discovers the Secret Passage."
+msgstr "{}은/는 비밀 통로를 발견했다!"
+
+#: src/menu.py:417
+msgid "That is much too important to throw away."
+msgstr "그것은 너무 소중해서 버릴 수 없다."
+
+#: src/menu.py:422
+#: data/text/dialog_lookup_table.py:952
+msgid "A curse is upon thy body."
+msgstr "몸에 저주가 걸려 있다."
+
+#: src/menu.py:679
+msgid "{} adjusted the position of the Fighter's Ring."
+msgstr "{}은/는 전사의 반지를 고쳐 꼈다."
+
+#: src/menu.py:718
+msgid "{} to the south and.."
+msgstr "남쪽으로 {}, 그리고.."
+
+#: src/menu.py:722
+msgid "{} to the west."
+msgstr "서쪽으로 {}."
+
+#: src/menu.py:720
+msgid "{} to the north and.."
+msgstr "북쪽으로 {}, 그리고.."
+
+#: src/menu.py:724
+msgid "{} to the east."
+msgstr "동쪽으로 {}."
+
+#: src/menu.py:426
+msgid "Thou hast dropped thy {}."
+msgstr "{}을/를 버렸다."
+
+#: src/menu.py:427
+msgid "And obtained the {}."
+msgstr "그리고 {}을/를 손에 넣었다!"
+
+#: src/menu_functions.py:215
+msgid "Joystick input disabled."
+msgstr "조이스틱 입력이 꺼졌습니다."
+
+#: src/menu_functions.py:221
+msgid "Joystick input enabled."
+msgstr "조이스틱 입력이 켜졌습니다."
+
+#: data/text/dialog_lookup_table.py:395
+msgid ""
+"Thy journey is over.\n"
+"Take now a long, long rest.\n"
+"Hahahaha...."
+msgstr ""
+"너의 여행은 끝났다.\n"
+"이제 영원히 쉬도록 해라.\n"
+"으하하하...."
+
+#: data/text/dialog_lookup_table.py:325
+msgid "Will thou take me to the castle?"
+msgstr "저를 성까지 데려다 주시겠어요?"
+
+#: data/text/dialog_lookup_table.py:333
+msgid "Princess Gwaelin embraces thee.\n"
+msgstr "로라 공주가 당신을 껴안았다.\n"
+
+#: data/text/dialog_lookup_table.py:358
+msgid ""
+"What sayest thou?\n"
+"Will the great warrior stand with me?"
+msgstr ""
+"어떠냐?\n"
+"위대한 용사여, 나의 편이 되겠느냐?"
+
+#: data/text/dialog_lookup_table.py:368
+msgid "Really?"
+msgstr "정말이냐?"
+
+#: data/text/dialog_lookup_table.py:378
+msgid "Thou art a fool!"
+msgstr "어리석은 놈!"
+
+#: data/text/dialog_lookup_table.py:391
+msgid "Then half of this world is thine, half of the darkness, and...."
+msgstr "그렇다면 세계의 절반을 너에게 주마. 어둠의 세계 절반을...."
+
+#: data/text/dialog_lookup_table.py:393
+msgid "If thou dies I can bring thee back for another attempt without loss of thy deeds to date."
+msgstr "네가 죽더라도 지금까지의 모험을 잃지 않고 다시 살려 주마."
+
+#: data/text/dialog_lookup_table.py:473
+msgid "Even when we two are parted by great distances, I shall be with thee."
+msgstr "우리 둘이 멀리 떨어져 있어도 저는 늘 당신 곁에 있을게요."
+
+#: data/text/dialog_lookup_table.py:549
+msgid ""
+"Thou hast no business here.\n"
+"Go away."
+msgstr ""
+"여기에 볼일은 없을 텐데.\n"
+"돌아가거라."
+
+#: data/text/dialog_lookup_table.py:573
+msgid "Thou hast brought the harp. Good."
+msgstr "하프를 가져왔구나. 좋다."
+
+#: data/text/dialog_lookup_table.py:619
+msgid "Now the sun and rain shall meet and the Rainbow Drop passes to thy keeping."
+msgstr "이제 비와 태양이 어우러지니, 무지개의 물방울을 그대에게 맡기겠다."
+
+#: data/text/dialog_lookup_table.py:650
+msgid "Rest then for awhile."
+msgstr "그럼 잠시 쉬도록 하게."
+
+#: data/text/dialog_lookup_table.py:665
+msgid "Dost thou still wish to go on?"
+msgstr "그래도 가겠다는 건가?"
+
+#: data/text/dialog_lookup_table.py:896
+msgid "I will be waiting for thy next visit."
+msgstr "다음에 또 오시기를 기다리겠습니다."
+
+#: data/text/dialog_lookup_table.py:900
+msgid "What dost thou want?"
+msgstr "무엇을 드릴까요?"
+
+#: data/text/dialog_lookup_table.py:919
+msgid "Dost thou want anything else?"
+msgstr "그 밖에 필요한 것은 없으세요?"
+
+#: data/text/dialog_lookup_table.py:931
+msgid "What art thou selling?"
+msgstr "무엇을 파시겠습니까?"
+
+#: data/text/dialog_lookup_table.py:963
+msgid "Wilt thou sell anything else?"
+msgstr "그 밖에 파실 것은 없으세요?"
+
+#: data/text/dialog_lookup_table.py:975
+msgid "All the best to thee."
+msgstr "그럼 몸조심하세요."
+
+#: data/text/dialog_lookup_table.py:999
+msgid "I will see thee later."
+msgstr "그럼 또 보세."
+
+#: data/text/dialog_lookup_table.py:1066
+msgid ""
+"Good morning.\n"
+"Thou hast had a good night's sleep I hope."
+msgstr ""
+"좋은 아침입니다.\n"
+"편히 쉬셨는지요."
+
+#: data/text/dialog_lookup_table.py:466
+msgid "And I would like to have something of thine--a token."
+msgstr "그리고 당신의 물건을 하나 갖고 싶어요--정표로요."
+
+#: data/text/dialog_lookup_table.py:543
+msgid "I will free thee from thy curse."
+msgstr "내가 그대의 저주를 풀어 주겠네."
+
+#: data/text/dialog_lookup_table.py:543
+msgid "Now, go."
+msgstr "자, 가 보게."
+
+#: data/text/dialog_lookup_table.py:567
+msgid "Thy bravery must be proven."
+msgstr "그대의 용기를 증명해야 한다."
+
+#: data/text/dialog_lookup_table.py:568
+msgid "Thus, I propose a test."
+msgstr "그러니 시험을 하나 내겠다."
+
+#: data/text/dialog_lookup_table.py:569
+msgid "There is a Silver Harp that beckons to the creatures of the Dragonlord."
+msgstr "용왕의 마물들을 불러들이는 은색 하프가 있다."
+
+#: data/text/dialog_lookup_table.py:570
+msgid "Bring this to me and I will reward thee with the Staff of Rain."
+msgstr "그것을 가져오면 그 보답으로 비의 지팡이를 주겠다."
+
+#: data/text/dialog_lookup_table.py:598
+msgid "In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted would save us."
+msgstr "그대는 시험에 실패했다. 아아, 그대는 로토가 예언한 구원자가 아닌 듯하구나."
+
+#: data/text/dialog_lookup_table.py:600
+msgid "Go now!"
+msgstr "이만 가거라!"
+
+#: data/text/dialog_lookup_table.py:615
+#: data/text/dialog_lookup_table.py:293
+msgid "Thou may go and search."
+msgstr "가서 찾아보거라."
+
+#: data/text/dialog_lookup_table.py:654
+msgid "Please push RESET, hold it in, then turn off the POWER."
+msgstr "RESET 버튼을 누른 채로 전원을 꺼 주십시오."
+
+#: data/text/dialog_lookup_table.py:655
+msgid "If you turn the power off first, the Imperial Scroll of Honor containing your deeds may be lost."
+msgstr "전원을 먼저 끄면 모험의 서에 기록된 내용이 사라질 수 있습니다."
+
+#: data/text/dialog_lookup_table.py:887
+msgid "BUY"
+msgstr "사기"
+
+#: data/text/dialog_lookup_table.py:887
+msgid "SELL"
+msgstr "팔기"
+
+#: data/text/dialog_lookup_table.py:928
+msgid "Thou hast no possessions."
+msgstr "가진 물건이 없으시군요."
+
+#: data/text/dialog_lookup_table.py:941
+msgid "I cannot buy it."
+msgstr "그것은 사들일 수 없습니다."
+
+#: data/text/dialog_lookup_table.py:953
+msgid "I am sorry."
+msgstr "죄송합니다."
+
+#: data/text/dialog_lookup_table.py:1004
+msgid "I am sorry, but I cannot sell thee anymore."
+msgstr "미안하지만 더 이상은 팔 수 없네."
+
+#: data/text/dialog_lookup_table.py:185
+msgid "I suggest making a map if thy path leads into the darkness."
+msgstr "어둠 속으로 들어갈 생각이라면 지도를 만들어 두는 게 좋을 거요."
+
+#: data/text/dialog_lookup_table.py:192
+#: data/text/dialog_lookup_table.py:194
+msgid ""
+"I'm too busy.\n"
+"Ask the other guard."
+msgstr ""
+"나는 너무 바쁘네.\n"
+"다른 병사에게 물어보게."
+
+#: data/text/dialog_lookup_table.py:197
+msgid "The harp attracts enemies. Stay away from the grave in Garinham."
+msgstr "하프는 마물을 불러들인다네. 가라이의 무덤에는 가까이 가지 말게."
+
+#: data/text/dialog_lookup_table.py:200
+msgid "Many believe that Princess Gwaelin is hidden away in a cave."
+msgstr "로라 공주님이 어느 동굴에 갇혀 계신다고 믿는 사람이 많다네."
+
+#: data/text/dialog_lookup_table.py:213
+msgid "In legends it is said that fairies know how to put Golem to sleep."
+msgstr "전설에 따르면 요정은 골렘을 잠재우는 방법을 알고 있다고 하네."
+
+#: data/text/dialog_lookup_table.py:214
+msgid "This is the village of Kol."
+msgstr "여기는 마이라 마을입니다."
+
+#: data/text/dialog_lookup_table.py:215
+msgid "Golem is afraid of the music of the flute, so 'tis said."
+msgstr "골렘은 피리 소리를 무서워한다고 하더군."
+
+#: data/text/dialog_lookup_table.py:216
+msgid "This bath cures rheumatism."
+msgstr "이 온천은 류머티즘에 잘 들어요."
+
+#: data/text/dialog_lookup_table.py:217
+msgid "Please,save us from the minions of the Dragonlord."
+msgstr "제발 용왕의 부하들로부터 저희를 구해 주세요."
+
+#: data/text/dialog_lookup_table.py:218
+msgid ""
+"Art thou the descendant of Erdrick?\n"
+"Hast thou any proof?"
+msgstr ""
+"당신이 로토의 자손이라고?\n"
+"무슨 증거라도 있나?"
+
+#: data/text/dialog_lookup_table.py:222
+msgid ""
+"Hast thou seen Nester?\n"
+"I think he may need help."
+msgstr ""
+"네스터를 보지 못했나?\n"
+"도움이 필요할 것 같은데."
+
+#: data/text/dialog_lookup_table.py:224
+msgid "East of Hauksness there is a town, 'tis said, where one may purchase weapons of extraordinary quality."
+msgstr "도무도라 동쪽에 아주 뛰어난 무기를 살 수 있는 마을이 있다고 하더군."
+
+#: data/text/dialog_lookup_table.py:249
+msgid "Welcome to Cantlin, the castle town."
+msgstr "성채 도시 메르키드에 오신 것을 환영합니다."
+
+#: data/text/dialog_lookup_table.py:259
+msgid ""
+"Come buy my radishes! They are fresh and cheap.\n"
+"Buy thy radishes today!"
+msgstr ""
+"무 사세요! 싱싱하고 싸요.\n"
+"오늘 무를 사 가세요!"
+
+#: data/text/dialog_lookup_table.py:269
+msgid "What shall I get for thy dinner?"
+msgstr "저녁으로 뭘 해 드릴까요?"
+
+#: data/text/dialog_lookup_table.py:271
+msgid ""
+"I'm Nester.\n"
+"Hey, where am I? No, don't tell me!"
+msgstr ""
+"나는 네스터라네.\n"
+"어라, 여긴 어디지? 아니, 말하지 말게!"
+
+#: data/text/dialog_lookup_table.py:273
+msgid "I know nothing."
+msgstr "저는 아무것도 몰라요."
+
+#: data/text/dialog_lookup_table.py:276
+msgid "To learn how proof may be obtained that thy ancestor was the great Erdrick, see a man in this very town."
+msgstr "그대의 조상이 위대한 로토라는 증거를 얻는 방법을 알고 싶다면 바로 이 마을에 있는 남자를 찾아가게."
+
+#: data/text/dialog_lookup_table.py:279
+msgid "Grandfather used to say that his friend, Wynn, had buried something of great value at the foot of a tree behind his shop."
+msgstr "할아버지께서는 친구 윈이 자기 가게 뒤 나무 밑에 아주 귀한 물건을 묻었다고 말씀하시곤 했어요."
+
+#: data/text/dialog_lookup_table.py:282
+msgid "'Tis said that Erdrick's sword could cleave steel."
+msgstr "로토의 검은 강철도 벨 수 있었다고 하네."
+
+#: data/text/dialog_lookup_table.py:284
+msgid "My Grandfather Wynn once had a shop on the east side of Hauksness."
+msgstr "우리 할아버지 윈은 예전에 도무도라 동쪽에서 가게를 하셨어요."
+
+#: data/text/dialog_lookup_table.py:506
+msgid "Dost thou love me, {}?"
+msgstr "{}님, 저를 사랑하시나요?"
+
+#: data/text/dialog_lookup_table.py:667
+msgid "Thou art truly brave."
+msgstr "정말 용감하군."
+
+#: data/text/dialog_lookup_table.py:669
+msgid ""
+"That is good.’\n"
+"`No one will say thou art afraid."
+msgstr ""
+"그게 좋겠군.'\n"
+"'그렇다고 그대를 겁쟁이라 할 사람은 없을 걸세."
+
+#: data/text/dialog_lookup_table.py:910
+msgid "Thou cannot hold more Herbs."
+msgstr "약초는 더 이상 가질 수 없어요."
+
+#: data/text/dialog_lookup_table.py:944
+msgid ""
+"Thou said the {}.\n"
+"I will buy thy {} for {} GOLD.\n"
+"Is that all right?"
+msgstr ""
+"{} 말씀이시군요.\n"
+"그 {}을/를 {}골드에 사겠습니다.\n"
+"괜찮으시겠어요?"
+
+#: data/text/dialog_lookup_table.py:970
+msgid "Will thou buy some Fairy Water for {} GOLD to keep the Dragonlord's minions away?"
+msgstr "용왕의 부하들을 막아 주는 요정의 물을 {}골드에 사지 않겠어요?"
+
+#: data/text/dialog_lookup_table.py:983
+#: data/text/dialog_lookup_table.py:913
+msgid "Thou cannot carry anymore."
+msgstr "더 이상 가질 수 없으시군요."
+
+#: data/text/dialog_lookup_table.py:988
+msgid ""
+"I thank thee.\n"
+"Won't thou buy one more bottle?"
+msgstr ""
+"감사합니다.\n"
+"한 병 더 사지 않으시겠어요?"
+
+#: data/text/dialog_lookup_table.py:1012
+msgid ""
+"Here, take this key.\n"
+"Dost thou wish to purchase more?"
+msgstr ""
+"자, 여기 열쇠일세.\n"
+"더 사겠나?"
+
+#: data/text/dialog_lookup_table.py:86
+msgid ""
+"I am glad thou hast returned.\n"
+"All our hopes are riding on thee."
+msgstr ""
+"잘 돌아와 주었네.\n"
+"우리 모두의 희망이 자네에게 달려 있다네."
+
+#: data/text/dialog_lookup_table.py:90
+msgid "See me again when thy level has increased."
+msgstr "레벨이 오르면 다시 찾아오게."
+
+#: data/text/dialog_lookup_table.py:104
+msgid "Now, Gwaelin, come to my side."
+msgstr "자, 로라야, 이리 오너라."
+
+#: data/text/dialog_lookup_table.py:166
+msgid "Beware the bridges!"
+msgstr "다리를 조심하세요!"
+
+#: data/text/dialog_lookup_table.py:166
+msgid "Danger grows when thou crosses."
+msgstr "다리를 건너면 위험이 커집니다."
+
+#: data/text/dialog_lookup_table.py:212
+msgid "Thou shouldst come here again."
+msgstr "나중에 다시 오게."
+
+#: data/text/dialog_lookup_table.py:220
+msgid "Dreadful is the South Island."
+msgstr "남쪽 섬은 무시무시한 곳이라네."
+
+#: data/text/dialog_lookup_table.py:221
+msgid "Great strength and skill and wit only will bring thee back from that place."
+msgstr "강한 힘과 기술과 지혜가 있어야만 그곳에서 살아 돌아올 수 있지."
+
+#: data/text/dialog_lookup_table.py:245
+msgid "'Tis said that the Dragonlord hath claws that can cleave iron and fiery breath that can melt stone."
+msgstr "용왕은 쇠도 찢는 발톱과 돌도 녹이는 불꽃 숨결을 지녔다고 하오."
+
+#: data/text/dialog_lookup_table.py:255
+msgid "It is said that many have held Erdrick's armor."
+msgstr "로토의 갑옷을 가졌던 자는 많다고 하네."
+
+#: data/text/dialog_lookup_table.py:256
+msgid "The last to have it was a fellow named Wynn."
+msgstr "마지막으로 가지고 있던 자는 윈이라는 사내였지."
+
+#: data/text/dialog_lookup_table.py:291
+msgid "Let us wish the warrior well!"
+msgstr "용사의 무운을 빕시다!"
+
+#: data/text/dialog_lookup_table.py:292
+msgid "May the light be thy strength!"
+msgstr "빛이 그대의 힘이 되기를!"
+
+#: data/text/dialog_lookup_table.py:294
+msgid "From Tantegel Castle travel 70 leagues to the south and 40 to the east."
+msgstr "라다톰 성에서 남쪽으로 70, 동쪽으로 40만큼 가 보게."
+
+#: data/text/dialog_lookup_table.py:299
+msgid "I am Gwaelin, daughter of Lorik."
+msgstr "저는 로릭 왕의 딸 로라입니다."
+
+#: data/text/dialog_lookup_table.py:310
+msgid "I give thee now a chance to share this world and to rule half of it if thou will now stand beside me."
+msgstr "만약 나의 편이 된다면 이 세계의 절반을 너에게 주겠다."
+
+#: data/text/dialog_lookup_table.py:441
+msgid ""
+"Gwaelin then whispers:\n"
+"`Wait a moment,please.\n"
+"I would give a present to {}.’"
+msgstr ""
+"로라 공주가 속삭였다:\n"
+"'잠시만요.\n"
+"{}님께 드릴 선물이 있어요.'"
+
+#: data/text/dialog_lookup_table.py:467
+msgid "Please give me thy {}."
+msgstr "당신의 {}을/를 저에게 주세요."
+
+#: data/text/dialog_lookup_table.py:675
+msgid "Oh, brave {}."
+msgstr "오오, 용사 {} 공!"
+
+#: data/text/dialog_lookup_table.py:145
+msgid "Thank you for saving the Princess."
+msgstr "공주님을 구해 주셔서 감사합니다."
+
+#: data/text/dialog_lookup_table.py:180
+msgid ""
+"Who touches me?’\n"
+"`I see nothing, nor can I hear."
+msgstr ""
+"누가 나를 건드리는 거지?'\n"
+"'아무것도 보이지 않고 들리지도 않아."
+
+#: data/text/dialog_lookup_table.py:102
+msgid ""
+"Forever shall I be grateful for the gift of my daughter returned to her home, {}.\n"
+"Accept my thanks."
+msgstr ""
+"{}! 내 딸을 무사히 데려와 주었으니 이 은혜는 평생 잊지 않겠네.\n"
+"고맙네."
+
+#: data/text/dialog_lookup_table.py:106
+msgid "Please accept my love, {}."
+msgstr "{}님, 제 사랑을 받아 주세요."
+
+#: data/text/dialog_lookup_table.py:109
+msgid "Farewell, {}."
+msgstr "안녕히 가세요, {}님."
+
+#: data/text/dialog_lookup_table.py:210
+msgid "Though thou art as brave as thy ancestor, {}, thou cannot defeat the great Dragonlord with such weapons."
+msgstr "{}, 그대가 조상만큼 용감하다 해도 그런 무기로는 용왕을 쓰러뜨릴 수 없네."
+
+#: data/text/dialog_lookup_table.py:298
+msgid "Thou art brave indeed to rescue me, {}."
+msgstr "{}님, 저를 구하러 와 주시다니 정말 용감하시군요."
+
+#: data/text/dialog_lookup_table.py:308
+msgid ""
+"Welcome, {}.\n"
+"I am the Dragonlord--King of Kings."
+msgstr ""
+"잘 왔다, {}.\n"
+"나는 왕 중의 왕, 용왕이다."
+
+#: data/text/dialog_lookup_table.py:917
+msgid ""
+"The {}?\n"
+"Thank you very much."
+msgstr ""
+"{} 말씀이시군요?\n"
+"정말 감사합니다."
+
+#: data/text/dialog_lookup_table.py:153
+msgid ""
+"Oh, my dearest Gwaelin!’\n"
+"`I hate thee, {}."
+msgstr ""
+"오오, 사랑하는 로라 공주님!'\n"
+"'{}, 자네가 미워!"
+
+#: data/text/intro_lookup_table.py:13
+msgid "F1: Show Controls"
+msgstr "F1: 조작 방법 보기"
+
+#: data/text/intro_lookup_table.py:14
+msgid "F2: Toggle Auto-Stairs"
+msgstr "F2: 자동 계단 켜기/끄기"
+
+#: data/text/intro_lookup_table.py:15
+msgid "F3: Toggle Auto-Battle"
+msgstr "F3: 자동 전투 켜기/끄기"
+
+#: data/text/intro_lookup_table.py:16
+msgid "F4: Toggle Invulnerability"
+msgstr "F4: 무적 모드 켜기/끄기"
+
+#: data/text/intro_lookup_table.py:17
+msgid "F11: Toggle Fullscreen"
+msgstr "F11: 전체 화면 켜기/끄기"
+
+#: data/text/intro_lookup_table.py:18
+msgid "1-4: Adjust Game Speed"
+msgstr "1-4: 게임 속도 조절"
+
+#: src/items.py
+msgid "Broad Sword"
+msgstr "강철 검"
+
+#: src/items.py
+msgid "Flame Sword"
+msgstr "불꽃의 검"
+
+#: src/items.py
+msgid "Erdrick's Sword"
+msgstr "로토의 검"
+
+#: src/items.py
+msgid "Erdricks Sword"
+msgstr "로토의 검"
+
+#: src/items.py
+msgid "Chain Mail"
+msgstr "사슬 갑옷"
+
+#: src/items.py
+msgid "Magic Armor"
+msgstr "마법의 갑옷"
+
+#: src/items.py
+msgid "Erdrick's Armor"
+msgstr "로토의 갑옷"
+
+#: src/items.py
+msgid "Large Shield"
+msgstr "철 방패"
+
+#: src/items.py
+msgid "Silver Shield"
+msgstr "은색 방패"
+
+#: src/items.py
+msgid "Fairy Flute"
+msgstr "요정의 피리"
+
+#: src/items.py
+msgid "Death Necklace"
+msgstr "죽음의 목걸이"
+
+#: src/enemy_lookup.py
+msgid "Dragonlord 2"
+msgstr "용왕"
+
+#: src/spells.py
+msgid "HEAL"
+msgstr "호이미"
+
+#: src/spells.py
+msgid "HEALMORE"
+msgstr "베호이미"
+
+#: src/spells.py
+msgid "HURT"
+msgstr "기라"
+
+#: src/spells.py
+msgid "HURTMORE"
+msgstr "베기라마"
+
+#: src/spells.py
+msgid "SLEEP"
+msgstr "라리호"
+
+#: src/spells.py
+msgid "RADIANT"
+msgstr "레미라"
+
+#: src/spells.py
+msgid "STOPSPELL"
+msgstr "마호톤"
+
+#: src/spells.py
+msgid "OUTSIDE"
+msgstr "리레미트"
+
+#: src/spells.py
+msgid "RETURN"
+msgstr "루라"
+
+#: src/spells.py
+msgid "REPEL"
+msgstr "토헤로스"
+
+#: src/battle.py:173
+msgid "The attack failed and there was no loss of Hit Points!"
+msgstr "공격은 실패했다! HP는 줄지 않았다!"
+
+#: src/battle_controller.py:273
+msgid "The {} attacked before {} was ready."
+msgstr "{}은/는 {}의 준비가 되기 전에 덤벼들었다!"
+
+#: src/battle_controller.py:552
+msgid "The {} hath recovered."
+msgstr "{}의 상처가 회복되었다!"
+
+#: src/battle_controller.py:569
+msgid "{}'s spell is blocked."
+msgstr "{}의 주문이 봉인되었다!"
+
+#: src/game.py:1085
+msgid ""
+"Game set to {}x speed.\n"
+"({} FPS)"
+msgstr ""
+"게임이 {}배속으로 설정되었습니다.\n"
+"({} FPS)"
+
+#: data/text/dialog_lookup_table.py:74
+msgid ""
+"Thou art strong enough!\n"
+"Why can thou not defeat the Dragonlord?"
+msgstr ""
+"자네는 이미 충분히 강하네!\n"
+"어째서 용왕을 쓰러뜨리지 못하는가?"
+
+#: data/text/dialog_lookup_table.py:740
+msgid "Hast thou found the flute?"
+msgstr "피리는 찾았는가?"
+
+#: data/text/dialog_lookup_table.py:751
+msgid "Hast thou been to the southern island?"
+msgstr "남쪽 섬에는 가 보았나?"
+
+#: data/text/dialog_lookup_table.py:851
+msgid "Hast thou found a magic temple?"
+msgstr "마법의 신전은 찾았는가?"
+
+#: data/text/dialog_lookup_table.py:865
+msgid ""
+"Is that a wedding ring?’\n"
+"`Thou seems too young to be married."
+msgstr ""
+"그건 결혼반지인가?’\n"
+"`결혼하기에는 너무 젊어 보이는데."
+
+#: data/text/dialog_lookup_table.py:867
+msgid "All true warriors wear a ring."
+msgstr "진정한 전사라면 반지를 끼는 법이지."
+
+#: data/text/dialog_lookup_table.py:203
+msgid "Thou must have a key to open a door."
+msgstr "문을 열려면 열쇠가 있어야 해요."
+
+#: data/text/dialog_lookup_table.py:205
+msgid "If thy Hit Points are high enough, by all means, enter."
+msgstr "HP가 충분하다면 부디 들어가 보게."
+
+#: data/text/dialog_lookup_table.py:207
+msgid "When entering the cave, take with thee a torch."
+msgstr "동굴에 들어갈 때는 횃불을 가지고 가세요."
+
+#: data/text/dialog_lookup_table.py:216
+msgid ""
+"In Garinham,look for the grave of Garin.\n"
+"Thou must push on a wall of darkness there."
+msgstr ""
+"가라이 마을에서 가라이의 무덤을 찾게.\n"
+"그곳의 어둠의 벽을 밀어야 하네."
+
+#: data/text/dialog_lookup_table.py:219
+msgid ""
+"I am looking for the castle cellar.\n"
+"I heard it is not easily found."
+msgstr ""
+"성의 지하실을 찾고 있어요.\n"
+"쉽게 찾을 수 없다고 들었어요."
+
+#: data/text/dialog_lookup_table.py:251
+msgid "Some say that Garin's grave is home to a Silver Harp."
+msgstr "가라이의 무덤에 은색 하프가 있다고들 하더군."
+
+#: data/text/dialog_lookup_table.py:259
+msgid "Watch thy Hit Points when in the Poisonous Marsh."
+msgstr "독의 늪지대에서는 HP를 조심하게."
+
+#: data/text/dialog_lookup_table.py:263
+msgid "Go north to the seashore, then follow the coastline west until thou hath reached Garinham."
+msgstr "북쪽 바닷가로 가서 해안을 따라 서쪽으로 가면 가라이 마을이 나온다네."
+
+#: data/text/dialog_lookup_table.py:266
+msgid "See King Lorik when thy experience levels are raised."
+msgstr "레벨이 오르면 로릭 왕을 찾아뵙게."
+
+#: data/text/dialog_lookup_table.py:277
+msgid "No,I am not Princess Gwaelin."
+msgstr "아니요, 저는 로라 공주가 아니에요."
+
+#: data/text/dialog_lookup_table.py:283
+msgid ""
+"The harp attracts enemies.\n"
+"Stay away from the grave in Garinham."
+msgstr ""
+"하프는 마물을 불러들인다네.\n"
+"가라이의 무덤에는 가까이 가지 말게."
+
+#: data/text/dialog_lookup_table.py:285
+msgid ""
+"I hate people!\n"
+"Go! Leave me!"
+msgstr ""
+"사람이 싫어!\n"
+"저리 가! 날 내버려 둬!"
+
+#: data/text/dialog_lookup_table.py:292
+msgid "Once there was a town called Hauksness far to the south,but I do not know if it still exists."
+msgstr "옛날 저 멀리 남쪽에 도무도라라는 마을이 있었다는데, 아직 남아 있는지는 모르겠네."
+
+#: data/text/dialog_lookup_table.py:295
+msgid "They say that Erdrick's armor was hidden long ago."
+msgstr "로토의 갑옷은 오래전에 숨겨졌다고 하네."
+
+#: data/text/dialog_lookup_table.py:303
+msgid ""
+"Welcome to Garinham.\n"
+"May thy stay be a peaceful one."
+msgstr ""
+"가라이 마을에 오신 것을 환영해요.\n"
+"편히 쉬다 가세요."
+
+#: data/text/dialog_lookup_table.py:305
+msgid "It is said that the Princess was kidnapped and taken eastward."
+msgstr "공주님은 납치되어 동쪽으로 끌려가셨다고 해요."
+
+#: data/text/dialog_lookup_table.py:311
+msgid ""
+"I have heard of one named Nester.\n"
+"Dost thou know such a one?"
+msgstr ""
+"네스터라는 자의 이야기를 들었네.\n"
+"자네는 그런 자를 아는가?"
+
+#: data/text/dialog_lookup_table.py:354
+msgid "Rimuldar is the place to buy keys."
+msgstr "열쇠를 사려면 리무르다로 가게."
+
+#: data/text/dialog_lookup_table.py:367
+msgid "I am Orwick, and I am waiting for my girl friend."
+msgstr "나는 오윅. 여자 친구를 기다리는 중이야."
+
+#: data/text/dialog_lookup_table.py:369
+msgid "Welcome!"
+msgstr "어서 오세요!"
+
+#: data/text/dialog_lookup_table.py:373
+msgid ""
+"Who art thou?\n"
+"Leave at once or I will call my friends."
+msgstr ""
+"당신은 누구죠?\n"
+"당장 나가지 않으면 친구들을 부를 거예요."
+
+#: data/text/dialog_lookup_table.py:375
+msgid "Welcome to the town of Rimuldar."
+msgstr "리무르다 마을에 오신 것을 환영합니다."
+
+#: data/text/dialog_lookup_table.py:377
+msgid "The scales of the Dragonlord are as hard as steel."
+msgstr "용왕의 비늘은 강철처럼 단단하다고 하더군."
+
+#: data/text/dialog_lookup_table.py:383
+msgid ""
+"No, I have no tomatoes.\n"
+"I have no tomatoes today."
+msgstr ""
+"아니요, 토마토는 없어요.\n"
+"오늘은 토마토가 없어요."
+
+#: data/text/dialog_lookup_table.py:385
+msgid ""
+"Thou shalt find the Stones of Sunlight in Tantegel Castle,\n"
+"if thou has not found them yet."
+msgstr ""
+"태양의 돌은 라다톰 성에 있을 걸세.\n"
+"아직 찾지 못했다면 말이야."
+
+#: data/text/dialog_lookup_table.py:391
+msgid "Before long the enemy will arrive."
+msgstr "머지않아 적이 쳐들어올 거예요."
+
+#: data/text/dialog_lookup_table.py:395
+msgid "Heed my warning! Travel not to the south for there the monsters are fierce and terrible."
+msgstr "내 경고를 듣게! 남쪽으로는 가지 말게. 그곳의 마물들은 사납고 무시무시하다네."
+
+#: data/text/dialog_lookup_table.py:398
+msgid "Good day,I am Howard. Four steps south of the bath in Kol thou shalt find a magic item."
+msgstr "안녕하신가, 나는 하워드라네. 마이라의 온천에서 남쪽으로 네 걸음 가면 신비한 물건을 찾을 수 있을 걸세."
+
+#: data/text/dialog_lookup_table.py:401
+msgid "In this world is there any sword that can pierce the scales of the Dragonlord?"
+msgstr "이 세상에 용왕의 비늘을 꿰뚫을 수 있는 검이 있을까?"
+
+#: data/text/dialog_lookup_table.py:404
+msgid "Orwick is late again. I'm starving."
+msgstr "오윅이 또 늦네. 배고파 죽겠어."
+
+#: data/text/dialog_lookup_table.py:742
+msgid "Go to the town of Cantlin."
+msgstr "메르키드 마을로 가 보세요."
+
+#: data/text/dialog_lookup_table.py:744
+msgid "Howard had it, but he went to Rimuldar and never returned."
+msgstr "하워드가 가지고 있었는데, 리무르다에 간 뒤로 돌아오지 않았어요."
+
+#: data/text/dialog_lookup_table.py:753
+msgid "I have heard that powerful enemies live there."
+msgstr "그곳에는 강한 적들이 산다고 들었네."
+
+#: data/text/dialog_lookup_table.py:755
+msgid "To the south, I believe, there is a town called Rimuldar."
+msgstr "남쪽에 리무르다라는 마을이 있을 걸세."
+
+#: data/text/dialog_lookup_table.py:853
+msgid "In this temple do the sun and rain meet."
+msgstr "이 신전에서 태양과 비가 만난다네."
+
+#: data/text/dialog_lookup_table.py:855
+msgid "Go to the south."
+msgstr "남쪽으로 가게."
+
+#: data/text/dialog_lookup_table.py:271
+msgid "Many have been the warriors who have perished on this quest."
+msgstr "이 여행에서 목숨을 잃은 전사는 수없이 많지."
+
+#: data/text/dialog_lookup_table.py:274
+msgid "Within sight of Tantegel Castle to the south is Charlock,"
+msgstr "라다톰 성 남쪽으로 보이는 곳에 용왕의 성이 있어요."
+
+#: data/text/dialog_lookup_table.py:275
+msgid "The fortress of the Dragonlord."
+msgstr "용왕의 요새지요."
+
+#: data/text/dialog_lookup_table.py:379
+msgid "Over the western part of this island Erdrick created a rainbow."
+msgstr "로토는 이 섬의 서쪽에 무지개를 만들었다고 하네."
+
+#: data/text/dialog_lookup_table.py:380
+msgid "'Tis also said that he entered the darkness from a hidden entrance in the room of the Dragonlord."
+msgstr "또 용왕의 방에 숨겨진 입구에서 어둠 속으로 들어갔다고도 하지."
+
+#: data/text/dialog_lookup_table.py:393
+msgid "This is a magic place."
+msgstr "여기는 신비한 곳이라네."
+
+#: data/text/dialog_lookup_table.py:731
+msgid "Finally thou hast obtained it, {}."
+msgstr "드디어 손에 넣었구나, {}."
+
+#: data/text/dialog_lookup_table.py:388
+msgid ""
+"You are {}?\n"
+"It has been long since last we met."
+msgstr ""
+"자네가 {}인가?\n"
+"마지막으로 만난 지 오래되었군."
+
+#: data/text/dialog_lookup_table.py:156
+msgid "A word of advice."
+msgstr "한마디 충고하지."
+
+#: data/text/dialog_lookup_table.py:156
+msgid "Save thy money for more expensive armor."
+msgstr "돈은 아껴 두었다가 더 비싼 갑옷을 사게."
+
+#: data/text/dialog_lookup_table.py:162
+msgid ""
+"Listen to what people say.\n"
+"It can be of great help."
+msgstr ""
+"사람들의 말에 귀를 기울이게.\n"
+"큰 도움이 될 걸세."
+
+#: data/text/dialog_lookup_table.py:272
+msgid "But for thee I wish success, {}."
+msgstr "하지만 자네의 성공을 비네, {}."
+
+#: data/text/intro_lookup_table.py:15
+msgid "F2: Auto-Stairs"
+msgstr "F2: 자동 계단"
+
+#: data/text/intro_lookup_table.py:16
+msgid "F3: Auto-Battle"
+msgstr "F3: 자동 전투"
+
+#: data/text/intro_lookup_table.py:17
+msgid "F4: Invulnerability"
+msgstr "F4: 무적 모드"
+
+#: data/text/intro_lookup_table.py:18
+msgid "F11: Fullscreen"
+msgstr "F11: 전체 화면"
+
+#: data/text/intro_lookup_table.py:19
+msgid "1-4: Game Speed"
+msgstr "1-4: 게임 속도 조절"
+
+#: data/text/intro_lookup_table.py:30
+msgid "Toggle on/off:"
+msgstr "켜기/끄기:"

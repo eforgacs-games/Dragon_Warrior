@@ -54,7 +54,7 @@ class DialogLookup:
         self.camera_position = command_menu.camera_position
         # menu
 
-        self.goodbye_tempt_not_the_fates = "Goodbye now, {}.\n'Take care and tempt not the Fates."
+        self.goodbye_tempt_not_the_fates = _("Goodbye now, {}.\n'Take care and tempt not the Fates.")
 
         where_is_princess_gwaelin = _("Where oh where can I find Princess Gwaelin?")
         welcome_to_tantegel = _("Welcome to Tantegel Castle.")
@@ -68,7 +68,8 @@ class DialogLookup:
                              "We deal in tools.\n"
                              "What can I do for thee?")
         self.directories = Directories(self.config)
-        before_reaching_thy_next_level_of_experience = "Before reaching thy next level of experience thou must gain {} Points."
+        before_reaching_thy_next_level_of_experience = _(
+            "Before reaching thy next level of experience thou must gain {} Points.")
         # NES TextBlock1 entry 2: King Lorik says this instead of the experience line once DisplayedLevel is LVL_30
         thou_art_strong_enough = _("Thou art strong enough!\nWhy can thou not defeat the Dragonlord?")
         at_max_level = self.player.level == NES_MAX_LEVEL
@@ -97,8 +98,8 @@ class DialogLookup:
                     # level 30 (LVL_30) or TextBlock13 entry 1 (GetExpRemaining) below it, then SaveDialog
                     'returned_dialog': (
                         _("I am greatly pleased that thou hast returned, {}.").format(self.player.name),
-                        thou_art_strong_enough if at_max_level else _(
-                            before_reaching_thy_next_level_of_experience).format(self.player.points_to_next_level),
+                        thou_art_strong_enough if at_max_level else before_reaching_thy_next_level_of_experience.format(
+                            self.player.points_to_next_level),
                         self.prompt_for_save,
                         self.prompt_to_continue_quest,
                     ),
@@ -883,8 +884,7 @@ class DialogLookup:
     def prompt_to_continue_quest(self):
         return confirmation_prompt(self.command_menu, self._("Dost thou wish to continue thy quest?"),
                                    yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
-                                                             self._(
-                                                                 self.goodbye_tempt_not_the_fates).format(
+                                                             self.goodbye_tempt_not_the_fates.format(
                                                                  self.player.name)),
                                    no_path_function=self.rest_then_for_awhile,
                                    config=self.config,
