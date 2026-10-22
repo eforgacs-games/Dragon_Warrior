@@ -122,7 +122,8 @@ class DialogLookup:
             'TantegelCourtyard': {
                 'MERCHANT': {'dialog': (partial(self.check_buy_magic_keys, tantegel_courtyard_magic_key_cost),)},
                 'MERCHANT_2': {'dialog': _(
-                    "We are merchants who have traveled much in this land. Many of our colleagues have been killed by servants of the Dragonlord.")},
+                    "We are merchants who have traveled much in this land. Many of our colleagues have been "
+                    "killed by servants of the Dragonlord.")},
                 'MERCHANT_3': {
                     'dialog': _("Rumor has it that entire towns have been destroyed by the Dragonlord's servants.")},
                 'MAN': {'dialog': _("To become strong enough to face future trials thou must first battle many foes.")},
@@ -199,13 +200,14 @@ class DialogLookup:
                     'SOLDIER': {'dialog': _("Hast thou seen Nester?\n"
                                             "I think he may need help.")},
                     'SOLDIER_2': {'dialog': _(
-                        "East of Hauksness there is a town, 'tis said, where one may purchase weapons of extraordinary quality.")},
+                        "East of Hauksness there is a town, 'tis said, where one may purchase weapons of "
+                        "extraordinary quality.")},
                     },
             'Rimuldar': {
                 'MERCHANT_2': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory,
                             self.directories.RIMULDAR_WEAPONS_SHOP_PATH),)},
-                'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
+                'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, rimuldar_inn_cost),)},
             },
             'Cantlin': {
                 'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, cantlin_inn_cost),)},
@@ -231,7 +233,8 @@ class DialogLookup:
 
             'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
                                                         "Thus, I propose a test.",
-                                                        "There is a Silver Harp that beckons to the creatures of the Dragonlord.",
+                                                        "There is a Silver Harp that beckons to the creatures "
+                                                        "of the Dragonlord.",
                                                         "Bring this to me and I will reward thee with the Staff of Rain.")}},
             'MagicTemple': {'WISE_MAN': {'dialog': (self.magic_temple_rainbow_drop_exchange,)}}
         }
@@ -367,7 +370,8 @@ class DialogLookup:
         display.flip()
         self.command_menu.show_text_in_dialog_box((self._("Please push RESET, hold it in, then turn off the POWER."),
                                                    self._(
-                                                       "If you turn the power off first, the Imperial Scroll of Honor containing your deeds may be lost."))
+                                                       "If you turn the power off first, the Imperial Scroll "
+                                                       "of Honor containing your deeds may be lost."))
                                                   )
         quit()
 
@@ -382,8 +386,10 @@ class DialogLookup:
                                                           player_please_save_the_princess, hide_arrow=True),
                                 no_path_function=partial(self.command_menu.show_text_in_dialog_box,
                                                          (
-                                                             _("Half a year now hath passed since the Princess was kidnapped by the enemy."),
-                                                             _("Never does the King speak of it, but he must be suffering much."),
+                                                             _("Half a year now hath passed since the "
+                                                               "Princess was kidnapped by the enemy."),
+                                                             _("Never does the King speak of it, but he must "
+                                                               "be suffering much."),
                                                              player_please_save_the_princess),
                                                          drop_down=False, drop_up=False,
                                                          skip_text=self.command_menu.skip_text), config=self.config,

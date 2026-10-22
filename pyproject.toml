@@ -1,0 +1,13 @@
+[tool.ruff]
+line-length = 127
+extend-exclude = [
+    "reference",  # offline utility scripts and generated data, not part of the game
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+# Data tables: map tile grids and per-level stat tables
+"src/map_layouts.py" = ["E501"]
+"tests/test_player_stats.py" = ["E501"]

@@ -69,7 +69,8 @@ def set_character_position(character, tile_size: int):
     character.column, character.row = character.rect.x // tile_size, character.rect.y // tile_size
 
 
-def get_next_coordinates(character_column: int, character_row: int, direction: int, offset_from_character: int = 1) -> Tuple[int, int] | None:
+def get_next_coordinates(character_column: int, character_row: int, direction: int,
+                         offset_from_character: int = 1) -> Tuple[int, int] | None:
     match direction:
         case Direction.UP.value:
             return character_row - offset_from_character, character_column
