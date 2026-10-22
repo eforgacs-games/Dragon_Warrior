@@ -709,7 +709,8 @@ class Alefgard(MapWithoutNPCs):
                 # villages
                 (48, 56): {'map': 'Brecconary', 'destination_coordinates': (23, 10)},
                 (9, 10): {'map': 'Garinham', 'destination_coordinates': (14, 9)},
-                (17, 112): {'map': 'Kol', 'destination_coordinates': (30, 29)},
+                # NES MapEntryTbl/MapTargetTbl: Overworld(104,10) -> Kol(19,23)
+                (17, 112): {'map': 'Kol', 'destination_coordinates': (31, 29)},
                 # cave
                 (19, 36): {'map': 'ErdricksCaveB1', 'destination_coordinates': (3, 3)},
                 (51, 112): {'map': 'SwampCave', 'destination_coordinates': (6, 4)},
@@ -832,6 +833,7 @@ class Garinham(DragonWarriorMap):
             (18, 19): 'MERCHANT',  # static shopkeeper at 10,18: weapons and armor ($02, WeaponsDialog)
         }
         self.custom_underlying_tiles = {
+            'WISE_MAN': 'SAND',  # GarinhamDat has sand under the wizard at 14,1
             'SOLDIER': 'SAND',
         }
         # The NPCs from GarMobTbl
@@ -859,13 +861,15 @@ class Garinham(DragonWarriorMap):
 
 
 class Kol(DragonWarriorMap):
+    """Kol (NES MAP_KOL). Layout coordinates are the NES ones offset by (row + 8, column + 10)."""
 
     def __init__(self, config):
-        super().__init__(MapLayouts().kol, config, Directories(config).village_music, (30, 29))
-        self.create_town_gates(north_gate=warp_line((7, 8), (7, 33)),
-                               east_gate=warp_line((7, 33), (32, 33)),
-                               west_gate=warp_line((7, 8), (32, 8)),
-                               south_gate=warp_line((32, 8), (32, 33)))
+        super().__init__(MapLayouts().kol, config, Directories(config).village_music, (31, 29))
+        # The NES leaves the town from the tiles just outside KolDat's 24 x 24 blocks
+        self.create_town_gates(north_gate=warp_line((7, 9), (7, 34)),
+                               east_gate=warp_line((7, 34), (32, 34)),
+                               west_gate=warp_line((7, 9), (32, 9)),
+                               south_gate=warp_line((32, 9), (32, 34)))
         self.set_town_to_overworld_warps()
         # NES KolMobTbl and KolStatTbl (Bank00). An NPC at NES X,Y is at (Y + 8, X + 10) here.
         self.npc_coordinates = {
@@ -891,11 +895,12 @@ class Kol(DragonWarriorMap):
             'WOMAN': 'TREES',
             'SOLDIER': 'TREES',
             'WISE_MAN_2': 'GRASS',
+            'MAN': 'TREES',  # KolDat has trees under the male villager at 5,12
             'GUARD': 'SAND',
             'MAN_2': 'SAND',
             'WOMAN_2': 'SAND',
             'WISE_MAN_4': 'SAND',
-            'GUARD_2': 'GRASS',
+            'GUARD_2': 'TREES',  # KolDat has trees under the guard at 1,23
         }
         # The NPCs from KolMobTbl
         self.roaming_character_list = ['SOLDIER', 'WISE_MAN_2', 'GUARD', 'WISE_MAN_3', 'MAN', 'MAN_2', 'WOMAN_2',
@@ -918,10 +923,12 @@ class Rimuldar(DragonWarriorMap):
 
     def __init__(self, config):
         super().__init__(MapLayouts().rimuldar, config, Directories(config).village_music, (14, 9))
-        self.create_town_gates(north_gate=warp_line((6, 0), (6, len(self.layout[0]))),
+        # Layout coordinates are the NES ones offset by (row + 8, column + 8). The NES leaves the town from the tiles
+        # just outside RimuldarDat's 30 x 30 blocks.
+        self.create_town_gates(north_gate=warp_line((7, 0), (7, len(self.layout[0]))),
                                east_gate=warp_line((0, 38), (len(self.layout), 38)),
                                west_gate=warp_line((0, 7), (len(self.layout), 7)),
-                               south_gate=warp_line((36, 0), (36, len(self.layout[0]))))
+                               south_gate=warp_line((38, 0), (38, len(self.layout[0]))))
         self.set_town_to_overworld_warps()
         self.npc_coordinates = {
             (12, 10): 'MERCHANT',
