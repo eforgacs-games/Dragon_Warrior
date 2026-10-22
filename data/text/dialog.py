@@ -44,6 +44,9 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         for current_event in get():
             if current_event.type == KEYDOWN:
                 blinking_yes = handle_keydown_event(current_event, blinking_yes)
+                if not blinking:
+                    # A choice was made: drop the rest of this batch so extra presses don't choose again (#97)
+                    break
             elif current_event.type == arrow_fade:
                 show_arrow = not show_arrow
         event.pump()
