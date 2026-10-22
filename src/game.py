@@ -7,13 +7,12 @@ import shutil
 import sys
 from typing import List, Tuple
 
-from pygame import FULLSCREEN, K_1, K_2, K_3, K_4, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
+from pygame import FULLSCREEN, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
     K_u, K_w, QUIT, RESIZABLE, display, event, image, init, key, quit, K_F1, K_F2, K_F3, K_F4, K_F11, time, KEYDOWN, SCALED, \
     K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
-from pygame.time import get_ticks
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -57,6 +56,8 @@ from src.sprites.roaming_character import RoamingCharacter
 from src.battle_controller import BattleController
 from src.ending import Ending
 from src.story_flags import StoryFlags
+from src.waiting import SPEED_KEYS, game_speed, reset_game_speed, set_game_speed
+from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.pygame_compat import arrow_fade
 from src.visual_effects import fade, flash_transparent_color
@@ -119,11 +120,11 @@ class Game:
         self.initial_dialog_enabled = self.game_state.config["INITIAL_DIALOG_ENABLED"]
         self.skip_text = False
 
+        # engine: keys 1 to 4 change the game speed (self.fps); it lasts until the game is closed, and isn't saved
+        reset_game_speed()
         # intro
         self.start_time = get_ticks()
         self.splash_screen_enabled = self.game_state.config["SPLASH_SCREEN_ENABLED"]
-        # engine
-        self.fps = self.game_state.config["FPS"]
         self.last_map = None
         self.last_zone = None
         self.last_amount_of_tiles_moved = 0
@@ -946,19 +947,24 @@ class Game:
             # Select button
             pass
 
+    @property
+    def fps(self) -> int:
+        """Main loop frames per second: the NES's 60 times the game speed (src/waiting.py), so walking, NPC steps and
+        light changes, which all count main loop frames, speed up with everything else."""
+        return self.game_state.config["FPS"] * game_speed()
+
     def handle_fps_changes(self, keydown_event) -> None:
-        if keydown_event.key == K_1:
-            self.fps = 60
-            self.draw_temporary_text(self._("Game set to normal speed.\n({} FPS)".format(self.fps)))
-        if keydown_event.key == K_2:
-            self.fps = 120
-            self.draw_temporary_text(self._("Game set to double speed.\n({} FPS)".format(self.fps)))
-        if keydown_event.key == K_3:
-            self.fps = 240
-            self.draw_temporary_text(self._("Game set to triple speed.\n({} FPS)".format(self.fps)))
-        if keydown_event.key == K_4:
-            self.fps = 480
-            self.draw_temporary_text(self._("Game set to quadruple speed.\n({} FPS)".format(self.fps)))
+        """Keys 1 to 4: normal, double, triple or quadruple game speed. It applies everywhere: the map, battles,
+        dialogs, menus and effects (src/waiting.py reads these keys in their loops and waits too, without this text)."""
+        speed = SPEED_KEYS.get(keydown_event.key)
+        if speed is None:
+            return
+        set_game_speed(speed)
+        speed_text = {1: self._("Game set to normal speed.\n({} FPS)"),
+                      2: self._("Game set to double speed.\n({} FPS)"),
+                      3: self._("Game set to triple speed.\n({} FPS)"),
+                      4: self._("Game set to quadruple speed.\n({} FPS)")}[speed]
+        self.draw_temporary_text(speed_text.format(self.fps))
 
     def handle_fullscreen_toggle(self, keydown_event) -> None:
         """Toggle between fullscreen and windowed mode when F11 is pressed."""
@@ -1016,7 +1022,12 @@ class Game:
                 set_character_position(roaming_character, tile_size=self.tile_size)
 
     def draw_temporary_text(self, text: Tuple[str] | List[str] | str, add_quotes=False) -> None:
-        self.cmd_menu.show_text_in_dialog_box(text, add_quotes=add_quotes, temp_text_start=get_ticks(), skip_text=False)
+        """Show a settings message (F2, keys 1 to 4, ...) for a second. It's not part of the game, so it stays up for a
+        real second at any game speed: the dialog closes 1000 game milliseconds after temp_text_start, so start it
+        that much later at higher speeds."""
+        temp_text_start = get_ticks() + 1000 * (game_speed() - 1)
+        self.cmd_menu.show_text_in_dialog_box(text, add_quotes=add_quotes, temp_text_start=temp_text_start,
+                                              skip_text=False)
 
     def process_staircase_warps(self, staircase_location: tuple, staircase_dict: dict) -> None:
         if (self.player.row, self.player.column) == staircase_location:

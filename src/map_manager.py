@@ -7,7 +7,7 @@ shared resources (player, camera, screen, music_player, …).
 """
 
 from pygame import Surface, display
-from pygame.time import get_ticks
+from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src import maps
 from src.camera import Camera
