@@ -550,7 +550,9 @@ class CommandMenu(Menu):
             for tile, tile_dict in self.current_map.floor_tile_key.items():
                 if tile in self.current_map.tile_types_in_current_map and tile_dict.get('group'):
                     for tile_sprite in tile_dict['group']:
-                        if camera_screen_rect.colliderect(tile_sprite.rect):
+                        # Blocks on the other side of a roof (#90) keep the roof or blank draw_all gave them
+                        if camera_screen_rect.colliderect(tile_sprite.rect) and not self.current_map.is_hidden_by_cover(
+                                tile_sprite.rect.y // tile_size, tile_sprite.rect.x // tile_size):
                             group_to_draw.add(tile_sprite)
             group_to_draw.draw(self.background)
 
@@ -561,8 +563,11 @@ class CommandMenu(Menu):
                 while self.calculation.convert_to_frames_since_start_time(drop_up_start) < 1:
                     # draw_player_sprites(self.current_map, self.background, self.player.rect.x, self.player.rect.y)
                     if not self.game.game_state.config['NO_BLIT']:
-                        for character, character_dict in self.current_map.characters.items():
-                            if camera_screen_rect.colliderect(character_dict['character'].rect):
+                        for character_dict in self.current_map.characters.values():
+                            character = character_dict['character']
+                            if camera_screen_rect.colliderect(character.rect) and (
+                                    character is self.player or
+                                    not self.current_map.is_hidden_by_cover(character.row, character.column)):
                                 self.background.blit(character_dict['character_sprites'].sprites()[0].image,
                                                      (character_dict['character'].rect.x,
                                                       character_dict['character'].rect.y))
