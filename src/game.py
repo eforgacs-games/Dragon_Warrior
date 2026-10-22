@@ -138,7 +138,8 @@ class Game:
 
         self.player = Player(center_point=None,
                              images=self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
-                             current_map=self.current_map, god_mode=self.game_state.config['GOD_MODE'])
+                             current_map=self.current_map, god_mode=self.game_state.config['GOD_MODE'],
+                             fighters_ring_attack_bonus=self.game_state.config['FIGHTERS_RING_ATTACK_BONUS'])
         self.last_coordinates = None
         self.player.restore_hp()
         self.tile_size = self.game_state.config["TILE_SIZE"]
