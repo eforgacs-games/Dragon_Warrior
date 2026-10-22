@@ -16,7 +16,8 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         sound.play_sound(directories.confirmation_sfx)
 
     def update_blinking_graphics(blinking_yes, show_arrow):
-        background_path = directories.CONFIRMATION_YES_BACKGROUND_PATH if blinking_yes else directories.CONFIRMATION_NO_BACKGROUND_PATH
+        background_path = (directories.CONFIRMATION_YES_BACKGROUND_PATH if blinking_yes
+                           else directories.CONFIRMATION_NO_BACKGROUND_PATH)
         graphics.blink_switch(command_menu.screen, background_path, directories.CONFIRMATION_BACKGROUND_PATH,
                               x=5, y=2, width=4, height=3, tile_size=tile_size, color=color, show_arrow=show_arrow)
 

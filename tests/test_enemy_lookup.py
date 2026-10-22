@@ -1,13 +1,7 @@
 import unittest
 
 from src.enemy import (
-    Slime, RedSlime, MetalSlime, Drakee, Magidrakee, Drakeema,
-    Ghost, Poltergeist, Specter, Magician, Warlock, Wizard,
-    Scorpion, MetalScorpion, RogueScorpion, Druin, Druinlord,
-    Droll, Drollmagi, Skeleton, Wraith, WraithKnight, DemonKnight,
-    Wolf, Wolflord, Werewolf, Goldman, Golem, Stoneman,
-    Wyvern, Magiwyvern, Starwyvern, Knight, AxeKnight, ArmoredKnight,
-    GreenDragon, BlueDragon, RedDragon, Dragonlord, Dragonlord2
+    Slime, RedSlime, MetalSlime, Dragonlord, Dragonlord2
 )
 from src.enemy_lookup import (
     enemy_string_lookup, enemy_image_position_lookup, enemy_territory_map
