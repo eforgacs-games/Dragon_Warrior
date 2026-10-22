@@ -130,10 +130,11 @@ class TestCommandWindow(WindowTestCase):
         self.assertIn(window_left + 10 * self.nes_tile, columns)
         self.assertNotIn(window_left + 10 * self.nes_tile - 1, columns)
 
-    def test_command_window_surface_is_the_window_size(self):
+    def test_command_window_is_drawn_at_its_place_and_size(self):
         tile_size = test_config['TILE_SIZE']
-        self.assertEqual((8 * tile_size, 5 * tile_size), self.cmd_menu.command_menu_surface.get_size())
-        self.assertEqual((8 * tile_size, 5 * tile_size), self.cmd_menu.command_window_frame.get_size())
+        self.cmd_menu.menu.enable()
+        self.assertEqual(pygame.Rect(6 * tile_size, 1 * tile_size, 8 * tile_size, 5 * tile_size),
+                         self.cmd_menu.draw_command_window())
 
 
 class TestStatusWindow(WindowTestCase):

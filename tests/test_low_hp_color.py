@@ -5,8 +5,9 @@ from unittest.mock import MagicMock, patch
 import pygame
 from pygame import KEYDOWN, K_ESCAPE, K_RETURN
 
-from src.color import LOW_HP_RED, WHITE, is_low_hp, window_color
+from src.color import BLACK, LOW_HP_RED, WHITE, is_low_hp, window_color
 from src.config.test_config import test_config
+from src.cursor import IN_DOWN
 from src.game import Game
 from src.maps_functions import PAL0_COLOR1_LOW_HP
 from src.visual_effects import NES_PALETTE, NES_RED
@@ -73,23 +74,15 @@ class TestLowHPWindowColor(TestCase):
         self.game.load_window_palette()
 
     def assert_command_window_color(self, color):
-        """Every COMMAND entry, selected or not, and the cursor are in the window color."""
-        self.assertEqual(self.cmd_menu.rendered_color, color)
-        widgets = self.cmd_menu.menu.get_widgets()
-        self.assertEqual(len(widgets), 8)
-        for widget in widgets:
-            font = widget.get_font_info()
-            self.assertEqual(tuple(font['color'])[:3], color)
-            self.assertEqual(tuple(font['selected_color'])[:3], color)
-        selected = self.cmd_menu.menu.get_selected_widget()
-        self.assertEqual(tuple(selected.get_font_color_status())[:3], color)
-        # The NES cursor (TL_RIGHT_ARROW) is a background tile in palette 0 too
-        with patch('src.menu.draw_cursor_tile') as draw_cursor_tile, \
-                patch.dict(self.game.game_state.config, NO_BLIT=False):
-            self.cmd_menu.draw_command_cursor()
-        self.assertEqual(draw_cursor_tile.call_args.args[4], color)
+        """The whole COMMAND window, its border, title, every entry and the cursor, is in the window color: drawn, it
+        has no other color but black (on the NES they are all tiles in background palette 0, AddPalByte)."""
+        with patch.dict(self.game.game_state.config, NO_BLIT=False):
+            rect = self.cmd_menu.draw_command_window()
+        window = pygame.image.tobytes(self.game.screen.subsurface(rect), 'RGB')
+        colors = {tuple(window[i:i + 3]) for i in range(0, len(window), 3)}
+        self.assertEqual(colors, {BLACK, color})
 
-    # The COMMAND window (pygame-menu)
+    # The COMMAND window
 
     def test_command_window_white_at_normal_hp(self):
         self.assertEqual(self.game.color, WHITE)
@@ -101,7 +94,8 @@ class TestLowHPWindowColor(TestCase):
         self.assert_command_window_color(LOW_HP_RED)
         # moving the cursor keeps it red
         self.cmd_menu.menu.enable()
-        self.cmd_menu.menu.update([pygame.event.Event(KEYDOWN, key=pygame.K_DOWN)])
+        self.cmd_menu.menu.process_input(IN_DOWN)
+        self.assertEqual(1, self.cmd_menu.menu.selected)
         self.assert_command_window_color(LOW_HP_RED)
         self.set_hp(15)
         self.assert_command_window_color(WHITE)
@@ -113,13 +107,14 @@ class TestLowHPWindowColor(TestCase):
         self.assertEqual(self.game.color, LOW_HP_RED)
         self.assert_command_window_color(LOW_HP_RED)
 
-    def test_command_window_background_and_border_redrawn(self):
-        with patch.object(self.cmd_menu.graphics, 'set_window_background') as set_window_background:
-            self.set_hp(3)
-        self.assertEqual([c.args[2] for c in set_window_background.call_args_list], [LOW_HP_RED, LOW_HP_RED])
-        with patch.object(self.cmd_menu.graphics, 'set_window_background') as set_window_background:
-            self.set_hp(3)
-        set_window_background.assert_not_called()  # nothing changed, nothing redrawn
+    def test_open_command_window_changes_color_with_hp(self):
+        # Nothing is kept drawn in an old color: the next time the open window is drawn, it is in the new one
+        self.cmd_menu.menu.enable()
+        self.assert_command_window_color(WHITE)
+        self.set_hp(3)
+        self.assert_command_window_color(LOW_HP_RED)
+        self.set_hp(15)
+        self.assert_command_window_color(WHITE)
 
     def test_window_background_white_turns_low_hp_red(self):
         graphics = self.cmd_menu.graphics

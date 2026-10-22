@@ -430,15 +430,12 @@ class TestGame(TestCase):
         self.game.handle_start_button(keydown_event)
         self.assertFalse(self.game.paused)
 
-    def test_handle_a_button_and_b_button(self):
+    def test_handle_a_button(self):
+        # B closes the COMMAND window from inside it (CommandMenu.select_command; see tests/test_command_window.py)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="k", key=pygame.K_k, mod=pygame.KMOD_NONE)
-        # pygame.event.post(keydown_event)
         self.game.handle_a_button(keydown_event)
         self.assertTrue(self.game.cmd_menu.launch_signaled)
-        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="j", key=pygame.K_j, mod=pygame.KMOD_NONE)
-        self.game.handle_b_button(keydown_event)
-        self.assertFalse(self.game.cmd_menu.launch_signaled)
 
     def test_replace_characters_with_underlying_tiles(self):
         self.game.current_map.character_key['HERO']['underlying_tile'] = 'BRICK'
