@@ -1,12 +1,12 @@
 import os
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pygame
 
 from src.config.test_config import test_config
 from src.dialog_box import DIALOG_COLUMNS, DIALOG_ROWS, SCROLL_FRAMES, CharacterStep, DialogBuffer, ScrollStep, \
-    frames_per_character, plays_text_beep
+    frames_per_character, plays_text_beep, tiles
 from src.game import Game
 from tests.mock_map import MockMap
 
@@ -114,8 +114,11 @@ class TestTextBeep(TestCase):
 
     def test_beep_on_odd_columns_of_quoted_text(self):
         steps = print_lines(DialogBuffer(), "`Hello.’", quoted=True)
-        # ` H e l l o . ’ in columns 0-7: H(1), l(3), o(5), ’(7)
-        self.assertEqual('Hlo’', beeps(steps))
+        # ` H e l l o .’ in columns 0-6 (.’ is one tile, TXT_PRD_QUOTE): H(1), l(3), o(5)
+        self.assertEqual('Hlo', beeps(steps))
+        # ? and ’ are two tiles: ` H i ? ’ puts ’ in column 4
+        self.assertEqual('H?', beeps(print_lines(DialogBuffer(), "`Hi?’", quoted=True)))
+        self.assertEqual('H.’', beeps(print_lines(DialogBuffer(), "`Hi.’", quoted=True)))
 
     def test_blanks_do_not_beep_and_do_not_shift_the_cadence(self):
         steps = print_lines(DialogBuffer(), "`a b c d’", quoted=True)
@@ -132,15 +135,29 @@ class TestTextBeep(TestCase):
     def test_wrapped_rows_keep_the_column_parity(self):
         steps = print_lines(DialogBuffer(), "`Welcome to Tantegel Castle.’", quoted=True)
         second_row = [step for step in steps if isinstance(step, CharacterStep) and step.row == 1]
-        # ' Castle.’' starts in column 1, so C, s, l, . beep
-        self.assertEqual('Csl.', ''.join(step.char for step in second_row if step.beep))
+        # ' Castle.’' starts in column 1, so C, s, l, .’ beep
+        self.assertEqual('Csl.’', ''.join(step.char for step in second_row if step.beep))
 
     def test_beep_count_for_a_message(self):
         text = "`Welcome to Tantegel Castle.’"
         steps = print_lines(DialogBuffer(), text, quoted=True)
         printed = [step for step in steps if isinstance(step, CharacterStep)]
-        self.assertEqual(sum(1 for step in printed if step.char != ' ' and step.column % 2 == 1), len(beeps(steps)))
-        self.assertEqual(13, len(beeps(steps)))
+        beeping = [step for step in printed if step.beep]
+        self.assertEqual(sum(1 for step in printed if step.char != ' ' and step.column % 2 == 1), len(beeping))
+        self.assertEqual(13, len(beeping))
+
+    def test_period_and_end_quote_are_one_tile(self):
+        self.assertEqual(['`', 'H', 'i', '.’'], tiles('`Hi.’'))
+        self.assertEqual(['.', '.', '?', '’'], tiles('..?’'))
+        self.assertEqual(['.', '.’'], tiles('..’'))
+        buffer = DialogBuffer()
+        steps = print_lines(buffer, "`Hello.’", quoted=True)
+        self.assertEqual(7, sum(1 for step in steps if isinstance(step, CharacterStep)))
+        self.assertEqual(['`Hello.’'], buffer.visible_lines)
+        # 21 letters and .’ fill all 22 columns of a narration row
+        buffer = DialogBuffer()
+        list(buffer.print_message('a' * 21 + '.’', quoted=False))
+        self.assertEqual((0, 22), (buffer.row, buffer.column))
 
     def test_plays_text_beep(self):
         self.assertTrue(plays_text_beep('a', 1, indented=True))
@@ -227,15 +244,53 @@ class TestCommandMenuDialog(TestCase):
         self.assertEqual(['Erdrick attacks!'] * 7, self.cmd_menu.dialog_buffer.visible_lines)
 
     def text_beeps(self, text, **kwargs):
-        with patch.object(self.cmd_menu.sound, 'play_sound') as play_sound:
+        with patch.object(self.cmd_menu.sound, 'play_sfx') as play_sfx:
             self.cmd_menu.show_line_in_dialog_box(text, skip_text=True, hide_arrow=True, **kwargs)
-        return [call for call in play_sound.call_args_list
+        return [call for call in play_sfx.call_args_list
                 if call.args[0] == self.cmd_menu.directories.text_beep_sfx]
 
     def test_beep_cadence_in_dialog(self):
-        # `Welcome to Tantegel Castle.’ beeps in every odd column that isn't blank
+        # `Welcome to Tantegel Castle.’ beeps in every odd column that isn't blank: W l o e t a t g l / C s l .’
         self.assertEqual(13, len(self.text_beeps("Welcome to Tantegel Castle.")))
-        self.assertEqual(4, len(self.text_beeps("Hello.")))
+        # `Hello.’ is 7 tiles, since .’ is one (TXT_PRD_QUOTE): H, l and o are in odd columns, .’ in column 6
+        self.assertEqual(3, len(self.text_beeps("Hello.")))
+
+    def test_beep_cuts_off_the_last_one_a_frame_early(self):
+        # TextToPPU -> DoSFX silences the playing beep at once; the next NMI draws the character and starts the new
+        # beep (UpdateSound), and the rest of the MessageSpeed + 1 frames follow
+        self.game.game_state.config['NO_WAIT'] = False
+        self.game.game_state.config['TEXT_SPEED'] = 'Normal'
+        events = []
+        try:
+            with patch.object(self.cmd_menu.sound, 'stop_sfx', side_effect=lambda: events.append('stop')), \
+                    patch.object(self.cmd_menu.sound, 'play_sfx', side_effect=lambda path: events.append('beep')), \
+                    patch.object(self.cmd_menu, 'wait_dialog_frames', side_effect=lambda n: events.append(n)), \
+                    patch.object(self.cmd_menu, 'draw_dialog_window'), \
+                    patch.object(self.cmd_menu, 'draw_dialog_row',
+                                 side_effect=lambda row, up_to_column: events.append(f'draw {up_to_column}')):
+                self.cmd_menu.show_line_in_dialog_box("Hi.", skip_text=True, hide_arrow=True)
+        finally:
+            self.game.game_state.config['NO_WAIT'] = True
+            self.game.game_state.config['TEXT_SPEED'] = 'Fast'
+        # `Hi.’: ` (column 0), H (1, beeps), i (2), .’ (3, beeps)
+        self.assertEqual([1, 'draw 1', 1,
+                          'stop', 1, 'beep', 'draw 2', 1,
+                          1, 'draw 3', 1,
+                          'stop', 1, 'beep', 'draw 4', 1], events)
+
+    def test_play_sfx_restarts_on_its_own_channel(self):
+        channel = MagicMock()
+        self.cmd_menu.sound.config['SOUND_ENABLED'] = True
+        try:
+            with patch('src.sound.sfx_channel', return_value=channel):
+                self.cmd_menu.sound.play_sfx(self.cmd_menu.directories.text_beep_sfx)
+                self.cmd_menu.sound.play_sfx(self.cmd_menu.directories.text_beep_sfx)
+                self.cmd_menu.sound.stop_sfx()
+        finally:
+            self.cmd_menu.sound.config['SOUND_ENABLED'] = test_config['SOUND_ENABLED']
+        # Channel.play replaces whatever the channel was playing, like DoSFX taking over the SFX slot
+        self.assertEqual(2, channel.play.call_count)
+        channel.stop.assert_called_once()
 
     def test_no_beep_for_narration_or_disabled_sound(self):
         self.assertEqual([], self.text_beeps("Thou hast found the Tablet.", add_quotes=False))
@@ -248,8 +303,10 @@ class TestCommandMenuDialog(TestCase):
                 self.game.game_state.config['TEXT_SPEED'] = speed
                 with patch.object(self.cmd_menu, 'wait_dialog_frames') as wait_frames:
                     self.cmd_menu.show_line_in_dialog_box("Hi there.", skip_text=True, hide_arrow=True)
-                # `Hi there.’ is 11 characters; the blank goes through TextToPPU's wait too
-                self.assertEqual([frames] * 11, [call.args[0] for call in wait_frames.call_args_list])
+                # `Hi there.’ is 10 tiles (.’ is one); the blank goes through TextToPPU's wait too. Each tile shows up
+                # at the first of its frames (the NMI after TextToPPU), then waits out the rest
+                per_tile = [1] if frames == 1 else [1, frames - 1]
+                self.assertEqual(per_tile * 10, [call.args[0] for call in wait_frames.call_args_list])
                 self.cmd_menu.dialog_buffer.clear()
         finally:
             self.game.game_state.config['NO_WAIT'] = True

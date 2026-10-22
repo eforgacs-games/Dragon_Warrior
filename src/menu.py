@@ -7,7 +7,7 @@ from src.spells import Spell
 from typing import Any, Iterable, Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, mixer
+from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, mixer, transform
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
@@ -335,17 +335,28 @@ class CommandMenu(Menu):
     def run_dialog_steps(self, steps: Iterable[DialogStep], animate: bool, frames_per_char: int,
                          disable_sound: bool) -> None:
         """Shows each step of DialogBuffer's printing: a character (with the text beep, when it gets one) and its
-        MessageSpeed + 1 frame wait (TextToPPU), or a scroll of the whole window (ScrollDialog)."""
+        MessageSpeed + 1 frame wait (TextToPPU), or a scroll of the whole window (ScrollDialog).
+
+        TextToPPU starts the text SFX (InitMusicSFX -> DoSFX, which silences any SFX still playing right away), puts the
+        tile in the PPU buffer and then waits for the NMI. That first NMI draws the tile and, in UpdateSound, writes the
+        new beep to the APU. So the character and its beep appear one frame after the old beep was cut off: with beeps
+        two columns apart, each one plays for 2 * (MessageSpeed + 1) - 1 frames, then there is one silent frame."""
         for step in steps:
             if isinstance(step, ScrollStep):
                 if animate:
                     self.animate_dialog_scroll()
                 continue
-            if step.beep and not disable_sound:
-                self.sound.play_sound(self.directories.text_beep_sfx)
+            beep = step.beep and not disable_sound
+            if beep:
+                self.sound.stop_sfx()
+            if animate:
+                self.wait_dialog_frames(1)
+            if beep:
+                self.sound.play_sfx(self.directories.text_beep_sfx)
             if animate:
                 self.draw_dialog_row(step.row, up_to_column=step.column + 1)
-                self.wait_dialog_frames(frames_per_char)
+                if frames_per_char > 1:
+                    self.wait_dialog_frames(frames_per_char - 1)
 
     def animate_dialog_scroll(self) -> None:
         """NES ScrollUpdate: one frame, then the 8 rows are redrawn two per frame, top to bottom (5 frames)."""
@@ -387,15 +398,32 @@ class CommandMenu(Menu):
 
     def draw_dialog_row(self, row: int, up_to_column: int = DIALOG_COLUMNS, update: bool = True) -> None:
         """Draws one row of the dialog buffer, or its first up_to_column characters while it is being printed."""
-        self.draw_dialog_text(''.join(self.dialog_buffer.rows[row][:up_to_column]).rstrip(),
-                              self.dialog_cell_rect(row), update)
+        cells = self.dialog_buffer.rows[row][:up_to_column]
+        if all(len(cell) == 1 for cell in cells):
+            self.draw_dialog_text(''.join(cells).rstrip(), self.dialog_cell_rect(row), update)
+            return
+        # A two-character tile (TXT_PRD_QUOTE, '.’') fills one cell, so draw the row in runs around it
+        self.draw_dialog_text('', self.dialog_cell_rect(row), update=False)
+        start = 0
+        for column, cell in enumerate(cells + ['']):
+            if len(cell) != 1:
+                if column > start:
+                    self.draw_dialog_text(''.join(cells[start:column]), self.dialog_cell_rect(row, start, column - start),
+                                          update=False)
+                if cell:
+                    self.draw_dialog_text(cell, self.dialog_cell_rect(row, column, 1), update=False, squeeze=True)
+                start = column + 1
+        if update:
+            display.update(self.dialog_cell_rect(row))
 
     def draw_dialog_arrow(self, visible: bool) -> None:
         """NES TxtWaitAnim: the down arrow blinks in the middle of the row the cursor is on."""
         self.draw_dialog_text('▼' if visible else '', self.dialog_cell_rect(self.dialog_buffer.row, ARROW_COLUMN, 1),
                               update=True)
 
-    def draw_dialog_text(self, text: str, cells: Rect, update: bool) -> None:
+    def draw_dialog_text(self, text: str, cells: Rect, update: bool, squeeze: bool = False) -> None:
+        """Draws text left-aligned in the given dialog cells. ``squeeze`` narrows it to fit them (two characters that
+        are one NES tile)."""
         config = self.game.game_state.config
         if config['NO_BLIT']:
             return
@@ -405,6 +433,8 @@ class CommandMenu(Menu):
             if is_ascii not in self._dialog_fonts:
                 self._dialog_fonts[is_ascii] = set_font_by_ascii_chars([text], cells.height, None, self.directories)
             text_surface = self._dialog_fonts[is_ascii].render(text, True, self.color)
+            if squeeze and text_surface.get_width() > cells.width:
+                text_surface = transform.scale(text_surface, (cells.width, text_surface.get_height()))
             previous_clip = self.screen.get_clip()
             self.screen.set_clip(cells)
             self.screen.blit(text_surface, text_surface.get_rect(midleft=cells.midleft))
