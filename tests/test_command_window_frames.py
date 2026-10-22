@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 import pygame
 from pygame import KEYDOWN, KEYUP, K_k
 
-from src.color import RED, WHITE
+from src.color import LOW_HP_RED, WHITE
 from src.config.test_config import test_config
 from src.game import Game
 from src.menu import CommandMenu
@@ -103,4 +103,4 @@ class TestCommandWindowFrames(TestCase):
     def test_command_window_is_drawn_when_opened_with_k_at_low_hp(self):
         self.game.player.current_hp = 1
         self.game.load_window_palette()
-        self.check_opens_drawn(RED)
+        self.check_opens_drawn(LOW_HP_RED)
