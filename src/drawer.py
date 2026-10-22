@@ -15,7 +15,8 @@ from src.sound import Sound
 from src.text import draw_text
 from src.visual_effects import NES_FPS, enemy_fade_in, enemy_hit_flash
 from src.waiting import is_any_key_held, wait
-from src.windows import COMMAND_WINDOW, POPUP_WINDOW
+from src.window_renderer import draw_window
+from src.windows import COMMAND_WINDOW, POPUP_LAYOUT, POPUP_WINDOW
 
 
 class Drawer:
@@ -109,8 +110,10 @@ class Drawer:
                                                  for column in range(len(current_map.layout[row]))))
 
     def draw_hovering_stats_window(self, screen, player, color=WHITE):
+        """The pop-up stats window (PopupDat): the window and its labels generated (POPUP_LAYOUT,
+        src/window_renderer.py), then the name and the values over it."""
         tile_size = self.game_state.config["TILE_SIZE"]
-        self.graphics.create_window(*POPUP_WINDOW, self.directories.HOVERING_STATS_BACKGROUND_PATH, screen, color)
+        draw_window(screen, POPUP_LAYOUT, color, self.game_state.config)
         draw_text(player.name[:4], tile_size * 2.99, tile_size * 2, screen, self.game_state.config, color=color,
                   alignment='center', letter_by_letter=False)
         self.draw_stats_strings_with_alignments(f"{player.level}", 2.99, screen, color=color)

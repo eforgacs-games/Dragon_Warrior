@@ -595,10 +595,10 @@ class TestCommandMenu(TestCase):
         escape = MagicMock(type=KEYDOWN, key=K_ESCAPE)
         with patch.object(event, 'get', return_value=[escape]), \
                 patch('src.menu.draw_text') as draw_text, \
-                patch.object(self.game.cmd_menu.graphics, 'create_window') as create_window, \
+                patch('src.menu.draw_window') as draw_window, \
                 patch.object(self.game.cmd_menu, 'draw_window_cursor') as draw_cursor:
             self.game.cmd_menu.display_item_menu(menu_name)
-        return draw_text, create_window, draw_cursor
+        return draw_text, draw_window, draw_cursor
 
     def test_item_menu_window_size_per_number_of_entries(self):
         from src.menu import item_menu_window
@@ -609,21 +609,19 @@ class TestCommandMenu(TestCase):
             self.assertEqual((9, 3, 6, entries + 1), item_menu_window('discard', entries))
 
     def test_spell_menu_window_is_sized_to_the_spells(self):
-        from src.menu import ITEM_MENU_BORDER
         from src.spells import Spell
         all_spells = [Spell.HEAL, Spell.HURT, Spell.SLEEP, Spell.RADIANT, Spell.STOPSPELL, Spell.OUTSIDE,
                       Spell.RETURN, Spell.REPEL, Spell.HEALMORE, Spell.HURTMORE]
         for number_of_spells in range(1, 11):
             self.game.player.spells = all_spells[:number_of_spells]
-            _, create_window, _ = self.open_item_menu('spells')
-            self.assertEqual((9, 2, 6, number_of_spells + 1), create_window.call_args.args[:4])
-            self.assertEqual(ITEM_MENU_BORDER, create_window.call_args.kwargs['border'])
+            _, draw_window, _ = self.open_item_menu('spells')
+            self.assertEqual((9, 2, 6, number_of_spells + 1), draw_window.call_args.args[1].window)
 
     def test_item_menu_window_is_sized_to_the_items(self):
         # Herbs and keys take one entry each, however many there are
         self.game.player.inventory = ["Herb", "Herb", "Magic Key", "Torch", "Wings"]
-        _, create_window, _ = self.open_item_menu('inventory')
-        self.assertEqual((9, 3, 6, 5), create_window.call_args.args[:4])
+        _, draw_window, _ = self.open_item_menu('inventory')
+        self.assertEqual((9, 3, 6, 5), draw_window.call_args.args[1].window)
 
     def test_spell_menu_spacing(self):
         from src.spells import Spell
@@ -661,7 +659,7 @@ class TestCommandMenu(TestCase):
                   [MagicMock(type=KEYDOWN, key=K_ESCAPE)]]
         with patch.object(event, 'get', side_effect=events), \
                 patch('src.menu.draw_text'), \
-                patch.object(self.game.cmd_menu.graphics, 'create_window'), \
+                patch('src.menu.draw_window'), \
                 patch.object(self.game.cmd_menu, 'draw_window_cursor') as draw_cursor:
             self.game.cmd_menu.display_item_menu('inventory')
         # One block (2 tile rows) per entry; the last row drawn twice: once blinking, once held on B (WndBPressed)
