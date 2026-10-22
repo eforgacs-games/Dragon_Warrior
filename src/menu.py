@@ -17,7 +17,8 @@ from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
 from src.directories import Directories
-from src.items import armor, hidden_items, treasure
+from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
+    NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, roll_treasure_gold, treasure
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, RAINBOW_BRIDGE_COORDINATES, \
     RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES
 from src.direction import Direction
@@ -342,22 +343,124 @@ class CommandMenu(Menu):
                     if not self.game.game_state.config['NO_BLIT']:
                         display.update(self.screen.blit(black_box, (tile_size * left, tile_size * top)))
 
+    # Treasure chests
+
+    @property
+    def chest_history(self):
+        return self.game.chest_history
+
+    def open_chest(self) -> None:
+        """NES GetTreasure: record the chest as taken, then play the chest sound and turn the chest into brick.
+        With all 8 history slots in use the NES records nothing and leaves the chest where it is."""
+        if self.chest_history.record(self.map_name, (self.player.row, self.player.column)):
+            self.sound.play_sound(self.directories.open_treasure_sfx)
+            self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
+
+    def found_item_text(self, item_name: str) -> str:
+        return self._("Fortune smiles upon thee, {}.\nThou hast found the {}.").format(self.player.name,
+                                                                                     self._(item_name))
+
+    def take_empty_chest(self) -> None:
+        # NES GetTreasureChest1: the chest is used up even though nothing is in it
+        self.open_chest()
+        self.show_text_in_dialog_box(self._("Unfortunately, it is empty."), skip_text=self.skip_text)
+
+    def take_counted_item(self, item_name: str, maximum: int) -> None:
+        """NES ChkTrsrKey/ChkTrsrHerb: Herbs and Magic Keys stop at 6. With 6 already, the chest is empty."""
+        if self.player.inventory.count(item_name) >= maximum:
+            self.take_empty_chest()
+            return
+        self.player.inventory.insert(0, item_name)
+        self.open_chest()
+        self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
+
+    def inventory_is_full(self) -> bool:
+        return len([item for item in self.player.inventory if item not in UNSLOTTED_ITEMS]) >= INVENTORY_SLOTS
+
     def take_item(self, item_name: str):
-        self.sound.play_sound(self.directories.open_treasure_sfx)
-        self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-        # Remove treasure from dictionary to prevent double pickup exploit
-        if self.map_name in treasure and (self.player.row, self.player.column) in treasure[self.map_name]:
-            del treasure[self.map_name][(self.player.row, self.player.column)]
-
-        found_item_text = self._("Fortune smiles upon thee, {}.\nThou hast found the {}.").format(self.player.name,
-                                                                                                  self._(item_name))
-
-        if item_name == "Tablet":
-            self.tablet(found_item_text)
-        # could probably assign the new treasure box values by using this line:
-        else:
-            self.show_text_in_dialog_box(found_item_text, skip_text=self.skip_text)
+        """NES SetTrsrDescByte: tell the player what was found, then add it to the inventory."""
+        self.open_chest()
+        self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
+        if item_name in UNSLOTTED_ITEMS or not self.inventory_is_full():
             self.player.inventory.insert(0, item_name)
+        else:
+            self.discard_for_item(item_name)
+
+    def discard_for_item(self, item_name: str) -> None:
+        """NES DiscardItem: with a full inventory, the player may drop something to make room.
+        The chest has already been opened, so an item given up here is gone until the chest refills."""
+        self.show_text_in_dialog_box(
+            self._("If thou would take the {}, thou must now discard some other item.").format(self._(item_name)),
+            skip_text=self.skip_text)
+        if self.prompt_yes_no():
+            while True:
+                self.show_text_in_dialog_box(self._("What shall thou drop?"), skip_text=self.skip_text)
+                item_to_drop = self.display_item_menu('discard')
+                if item_to_drop is None:
+                    break
+                if item_to_drop in NON_DISCARDABLE_ITEMS:
+                    self.show_text_in_dialog_box(self._("That is much too important to throw away."),
+                                                 skip_text=self.skip_text)
+                    continue
+                if self.player.is_wearing_cursed_item(item_to_drop):
+                    # NES LE0B9: a worn Cursed Belt or Death Necklace can't be dropped
+                    self.show_text_in_dialog_box(self._("A curse is upon thy body."), skip_text=self.skip_text)
+                    continue
+                self.player.inventory.remove(item_to_drop)
+                self.player.inventory.insert(0, item_name)
+                self.show_text_in_dialog_box((self._("Thou hast dropped thy {}.").format(self._(item_to_drop)),
+                                              self._("And obtained the {}.").format(self._(item_name))),
+                                             skip_text=self.skip_text)
+                return
+        self.show_text_in_dialog_box(self._("Thou hast given up thy {}.").format(self._(item_name)),
+                                     skip_text=self.skip_text)
+
+    def prompt_yes_no(self) -> bool:
+        """A YES/NO window. Returns True for YES; NO or backing out returns False."""
+        tile_size = self.game.game_state.config['TILE_SIZE']
+        yes_selected = True
+        while True:
+            background = self.directories.CONFIRMATION_YES_BACKGROUND_PATH if yes_selected else \
+                self.directories.CONFIRMATION_NO_BACKGROUND_PATH
+            self.graphics.create_window(x=5, y=2, width=4, height=3, window_background=background,
+                                        screen=self.screen, color=self.color)
+            if not self.game.game_state.config['NO_BLIT']:
+                display.update((5 * tile_size, 2 * tile_size, 4 * tile_size, 3 * tile_size))
+            for current_event in event.get():
+                if current_event.type != KEYDOWN:
+                    continue
+                if current_event.key in reject_keys:
+                    return False
+                if current_event.key in accept_keys:
+                    return yes_selected
+                if current_event.key in (K_UP, K_w, K_DOWN, K_s):
+                    yes_selected = current_event.key in (K_UP, K_w)
+
+    def take_erdricks_sword(self) -> None:
+        """NES ChkTrsrErdSword: the sword is equipped at once. If it already is, the chest is empty."""
+        if self.player.weapon == "Erdrick's Sword":
+            self.take_empty_chest()
+            return
+        self.player.weapon = "Erdrick's Sword"
+        self.player.update_attack_power()
+        self.open_chest()
+        self.show_text_in_dialog_box(self.found_item_text("Erdrick's Sword"), skip_text=self.skip_text)
+
+    def take_unique_item(self, item_name: str, blocking_items: Tuple[str, ...]) -> None:
+        """NES ChkTrsrHarp/ChkTrsrStones: the chest is empty while the player has the item, or what it becomes."""
+        if any(item in self.player.inventory for item in blocking_items):
+            self.take_empty_chest()
+        else:
+            self.take_item(item_name)
+
+    def take_death_necklace(self) -> None:
+        """NES ChkTrsrNecklace: the first time, there is a 1 in 32 chance of the Death Necklace (the low 5 bits of a
+        random byte all zero). Otherwise, and always once it has been found, the chest holds 100-131 gold."""
+        if not self.chest_history.death_necklace_found and random.randint(0, 255) & 0x1F == 0:
+            self.chest_history.death_necklace_found = True
+            self.take_item('Death Necklace')
+        else:
+            self.take_gold({'item': GOLD, 'gold': DEATH_NECKLACE_GOLD})
 
     def tablet(self, found_item_text):
         self.show_text_in_dialog_box((
@@ -370,17 +473,18 @@ class CommandMenu(Menu):
                    "Their descendants will protect the items until thy quest leads thee to seek them out.",
                    "When a new evil arises, find the three items, then fight!")), drop_down=False)
 
-    def take_gold(self, treasure_info: dict):
-        self.sound.play_sound(self.directories.open_treasure_sfx)
-        gold_amount = treasure_info['amount']
-        self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
-        # Remove treasure from dictionary to prevent double pickup exploit
-        if self.map_name in treasure and (self.player.row, self.player.column) in treasure[self.map_name]:
-            del treasure[self.map_name][(self.player.row, self.player.column)]
+    def take_tablet(self) -> None:
+        # NES ChkTrsrErdTablet: the tablet is read, not kept
+        self.open_chest()
+        self.tablet(self.found_item_text('Tablet'))
 
+    def take_gold(self, treasure_info: dict):
+        """NES GetTrsrGold: the amount is rolled when the chest is opened, and gold stops at 65535."""
+        gold_amount = roll_treasure_gold(treasure_info['gold'])
+        self.open_chest()
+        self.player.gold = min(self.player.gold + gold_amount, MAX_GOLD)
         self.show_text_in_dialog_box(self._("Of GOLD thou hast gained {}").format(gold_amount),
                                      skip_text=self.skip_text)
-        self.player.gold += gold_amount
 
     def set_tile_by_coordinates(self, new_tile_identifier, column, row, player):
         old_tile_identifier = get_tile_id_by_coordinates(column, row, self.current_map)
@@ -896,11 +1000,14 @@ class CommandMenu(Menu):
 
     def display_item_menu(self, menu_name: str):
         """Display a menu of selectable items.
-        :param menu_name: The name of the menu to display.
+        :param menu_name: The name of the menu to display: 'inventory', 'spells', or 'discard' (pick an inventory
+        item without using it).
+        :return: The item chosen, or None if the menu was closed without choosing.
         """
         tile_size = self.game.game_state.config['TILE_SIZE']
         function_dict: dict[Any, Any] = {}
-        if menu_name == 'inventory':
+        chosen_item = None
+        if menu_name in ('inventory', 'discard'):
             list_counter = Counter(self.player.inventory)
             list_string = ""
             for item, item_amount in list_counter.items():
@@ -997,8 +1104,9 @@ class CommandMenu(Menu):
                                     self.show_battle_line(self._("But that spell hath been blocked."))
                                 else:
                                     spell_function()
-                        else:
+                        elif menu_name == 'inventory':
                             function_dict[currently_selected_item]()
+                        chosen_item = currently_selected_item
                         item_menu_displayed = False
                     elif len(menu_name) > 1:
                         if current_event.key in (K_UP, K_w) and current_arrow_position > 0:
@@ -1008,6 +1116,7 @@ class CommandMenu(Menu):
                         currently_selected_item = list(list_counter.keys())[current_arrow_position]
                 elif current_event.type == arrow_fade:
                     self.game.show_arrow = not self.game.show_arrow
+        return chosen_item
 
     def door(self) -> None:
         """
@@ -1031,30 +1140,38 @@ class CommandMenu(Menu):
 
     def take(self) -> None:
         """
-        Take an item.
+        NES DoTake: take what is in the treasure chest the hero is standing on.
         :return: None
         """
-        # open a window
-        if self.player.current_tile == 'TREASURE_BOX':
-            treasure_info = treasure[self.map_name].get((self.player.row, self.player.column))
-            if treasure_info:
-                item_name = str(treasure_info['item']) if treasure_info.get('item') is not None else None
-                self.sound.play_sound(self.directories.menu_button_sfx)
-                if item_name:
-                    if item_name == 'GOLD':
-                        self.take_gold(treasure_info)
-                    else:
-                        self.take_item(item_name)
-                else:
-                    self.show_text_in_dialog_box("Unfortunately, it is empty.", skip_text=self.skip_text)
-            else:
-                pass
-
-        #     take it and update inventory accordingly
-        # elif there is a hidden item
-        # take the hidden item
-        else:
+        chest = treasure.get(self.map_name, {}).get((self.player.row, self.player.column))
+        if self.player.current_tile != 'TREASURE_BOX' or chest is None:
+            # NES NoTrsrChest: also for a chest that isn't in the NES treasure table
             self.show_text_in_dialog_box(self._("There is nothing to take here, {}.").format(self.player.name),
                                          skip_text=self.skip_text)
+        else:
+            self.sound.play_sound(self.directories.menu_button_sfx)
+            self.take_chest_contents(str(chest['item']), chest)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
+
+    def take_chest_contents(self, item_name: str, chest: dict) -> None:
+        match item_name:
+            case 'GOLD':
+                self.take_gold(chest)
+            case 'Magic Key':
+                self.take_counted_item(item_name, MAX_KEYS)
+            case 'Herb':
+                self.take_counted_item(item_name, MAX_HERBS)
+            case 'Death Necklace':
+                self.take_death_necklace()
+            case "Erdrick's Sword":
+                self.take_erdricks_sword()
+            case 'Silver Harp':
+                self.take_unique_item(item_name, ('Silver Harp', 'Staff of Rain', 'Rainbow Drop'))
+            case 'Stones of Sunlight':
+                self.take_unique_item(item_name, ('Stones of Sunlight', 'Rainbow Drop'))
+            case 'Tablet':
+                self.take_tablet()
+            case _:
+                # NES ChkTrsrNonGold: everything else, the Staff of Rain included, is always there to take
+                self.take_item(item_name)

@@ -1,6 +1,10 @@
 import unittest
 
-from src.items import weapons, armor, shields, treasure
+from unittest.mock import patch
+
+from src.items import weapons, armor, shields, treasure, roll_treasure_gold, TreasureChestHistory
+from src.map_layouts import MapLayouts, TREASURE_BOX, BRICK
+from src.maps import map_lookup
 
 
 class TestWeapons(unittest.TestCase):
@@ -190,7 +194,7 @@ class TestTreasure(unittest.TestCase):
                     self.assertIn('item', data)
 
     def test_tantegel_magic_key(self):
-        self.assertEqual(treasure['TantegelThroneRoom'][(7, 17)]['item'], 'Magic Key')
+        self.assertEqual(treasure['TantegelThroneRoom'][(7, 16)]['item'], 'Magic Key')
 
     def test_tantegel_torch(self):
         self.assertEqual(treasure['TantegelThroneRoom'][(10, 15)]['item'], 'Torch')
@@ -198,7 +202,7 @@ class TestTreasure(unittest.TestCase):
     def test_tantegel_gold_amount(self):
         gold_chest = treasure['TantegelThroneRoom'][(10, 14)]
         self.assertEqual(gold_chest['item'], 'GOLD')
-        self.assertEqual(gold_chest['amount'], 120)
+        self.assertEqual(gold_chest['gold'], (120, 0))
 
     def test_tantegel_cellar_stones_of_sunlight(self):
         self.assertEqual(treasure['TantegelCellar'][(6, 5)]['item'], 'Stones of Sunlight')
@@ -219,10 +223,78 @@ class TestTreasure(unittest.TestCase):
         self.assertEqual(treasure['StaffOfRainCave'][(6, 5)]['item'], 'Staff of Rain')
 
     def test_garins_grave_random_gold_in_range(self):
+        # NES TRSR_GLD1: 5 + (random AND $0F), rolled when the chest is opened
         gold_chest = treasure['GarinsGraveB1'][(1, 13)]
         self.assertEqual(gold_chest['item'], 'GOLD')
-        self.assertGreaterEqual(gold_chest['amount'], 6)
-        self.assertLessEqual(gold_chest['amount'], 20)
+        with patch('src.items.random.randint', return_value=0):
+            self.assertEqual(roll_treasure_gold(gold_chest['gold']), 5)
+        with patch('src.items.random.randint', return_value=255):
+            self.assertEqual(roll_treasure_gold(gold_chest['gold']), 20)
+
+    def test_gold_ranges_match_nes(self):
+        # NES GetTrsrGold ranges: GLD1 5-20, GLD2 6-13, GLD3 10-17, GLD4 500-755, GLD5 120
+        ranges = set()
+        for chests in treasure.values():
+            for data in chests.values():
+                if data['item'] == 'GOLD':
+                    base, bits = data['gold']
+                    ranges.add((base, base + bits))
+        self.assertEqual(ranges, {(5, 20), (6, 13), (10, 17), (500, 755), (120, 120)})
+
+    def test_every_nes_chest_is_listed(self):
+        # NES TreasureTbl has 31 entries ($7C bytes / 4)
+        self.assertEqual(sum(len(chests) for chests in treasure.values()), 31)
+
+    def test_charlock_has_erdricks_sword(self):
+        self.assertEqual(treasure['CharlockB3'][(8, 8)]['item'], "Erdrick's Sword")
+
+    def test_every_chest_is_on_a_treasure_box_tile(self):
+        layouts = MapLayouts()
+        for map_name, chests in treasure.items():
+            self.assertIn(map_name, map_lookup)
+            for (row, column) in chests:
+                with self.subTest(map_name=map_name, coordinates=(row, column)):
+                    self.assertEqual(layouts.map_layout_lookup[map_name][row][column], TREASURE_BOX)
+
+
+class TestTreasureChestHistory(unittest.TestCase):
+
+    def test_record_and_clear_on_overworld(self):
+        history = TreasureChestHistory()
+        self.assertTrue(history.record('GarinsGraveB1', (1, 12)))
+        self.assertTrue(history.is_opened('GarinsGraveB1', (1, 12)))
+        history.enter_map('GarinsGraveB2')
+        self.assertTrue(history.is_opened('GarinsGraveB1', (1, 12)))
+        # NES InitMapData: entering the overworld clears the history, so chests refill
+        history.enter_map('Alefgard')
+        self.assertFalse(history.is_opened('GarinsGraveB1', (1, 12)))
+
+    def test_only_eight_slots(self):
+        history = TreasureChestHistory()
+        for column in range(8):
+            self.assertTrue(history.record('CharlockB8', (0, column)))
+        self.assertFalse(history.record('CharlockB8', (1, 0)))
+        self.assertFalse(history.is_opened('CharlockB8', (1, 0)))
+
+    def test_throne_room_chests_gone_after_leaving(self):
+        history = TreasureChestHistory()
+        history.enter_map('TantegelThroneRoom')
+        self.assertFalse(history.is_opened('TantegelThroneRoom', (10, 14)))
+        history.enter_map('TantegelCourtyard')
+        history.enter_map('Alefgard')
+        history.enter_map('TantegelCourtyard')
+        history.enter_map('TantegelThroneRoom')
+        for coordinates in treasure['TantegelThroneRoom']:
+            self.assertTrue(history.is_opened('TantegelThroneRoom', coordinates))
+
+    def test_apply_to_layout(self):
+        history = TreasureChestHistory()
+        layout = MapLayouts().map_layout_lookup['GarinsGraveB1']
+        history.record('GarinsGraveB1', (1, 13))
+        layout[1][12] = BRICK
+        history.apply_to_layout('GarinsGraveB1', layout, TREASURE_BOX, BRICK)
+        self.assertEqual(layout[1][12], TREASURE_BOX)
+        self.assertEqual(layout[1][13], BRICK)
 
     def test_treasure_positions_are_tuples(self):
         for location, chests in treasure.items():
