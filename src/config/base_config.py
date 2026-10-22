@@ -28,6 +28,7 @@ base_config = {
     "FIGHTERS_RING_ATTACK_BONUS": 0,  # 0 = NES (no effect); any other value is added to attack while worn
     "FORCE_ENEMY": None,  # e.g. "Metal Slime"; overrides the random enemy for the zone
     "NO_BATTLES": False,
+    "NPCS_MAKE_WAY": True,  # not NES: a roaming NPC the hero walks into steps aside (Game.ask_npc_to_make_way)
     "ORCHESTRA_MUSIC_ENABLED": True,
     "SHOW_FPS": False,
     "LANGUAGE": language_from_locale(LOCALE),
