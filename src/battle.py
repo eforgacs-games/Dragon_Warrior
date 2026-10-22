@@ -274,7 +274,7 @@ class Battle:
         """Display the level up message."""
         if self.config['LANGUAGE'] == 'English':
             cmd_menu.show_line_in_dialog_box(
-                "Courage and wit have served thee well.\nThou hast been promoted to the next level.\n",
+                self._("Courage and wit have served thee well.\nThou hast been promoted to the next level.\n"),
                 add_quotes=False, disable_sound=True)
         elif self.config['LANGUAGE'] == 'Korean':
             new_level = player.level + 1 if new_level is None else new_level
@@ -310,7 +310,7 @@ class Battle:
                 self._("Thy Maximum Magic Points increase by {}.\n").format(player.max_mp - old_stats["max_mp"]),
                 add_quotes=False, disable_sound=True)
         if len(player.spells) > len(old_stats["spells"]):
-            cmd_menu.show_line_in_dialog_box("Thou hast learned a new spell.\n", add_quotes=False, disable_sound=True)
+            cmd_menu.show_line_in_dialog_box(self._("Thou hast learned a new spell.\n"), add_quotes=False, disable_sound=True)
 
     def make_enemy_image_disappear(self, screen):
         """Make the enemy image disappear from the screen."""
@@ -321,7 +321,7 @@ class Battle:
     def get_enemy_draws_near_string(self):
         """Get string for when an enemy draws near."""
         if self.enemy.name == 'Dragonlord 2':
-            return 'The Dragonlord revealed his true self!\n' + self._("Command?\n")
+            return self._('The Dragonlord revealed his true self!\n') + self._("Command?\n")
 
         if self.config['LANGUAGE'] == 'English':
             enemy_draws_near_string = self._('{} draws near!\n').format(self._(self.enemy.name))

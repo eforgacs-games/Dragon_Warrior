@@ -883,7 +883,8 @@ class CommandMenu(Menu):
         say(self._("But nothing happened."))
 
     def erdricks_token(self):
-        self.show_text_in_dialog_box(f"{self.player.name} held the Erdrick's Token tightly.\nBut nothing happened.")
+        self.show_text_in_dialog_box(self._("{} held the {} tightly.\nBut nothing happened.").format(
+            self.player.name, self._("Erdrick's Token")))
 
     def rainbow_drop(self):
         # NES ChkDrop: the bridge appears only on the overworld, with the hero on the one tile east of it, and only
@@ -951,24 +952,23 @@ class CommandMenu(Menu):
             self.resume_music()
 
     def gwaelins_love(self):
-        self.show_text_in_dialog_box(f"Heed my voice, '{self.player.name}, for this is Gwaelin. "
-                                     "To reach the next level thou must raise thy Experience Points by "
-                                     f"{self.player.points_to_next_level}. "
-                                     f"My hope is with thee.'")
+        self.show_text_in_dialog_box(self._("Heed my voice, '{}, for this is Gwaelin. To reach the next level thou "
+                                            "must raise thy Experience Points by {}. My hope is with thee.'").format(
+            self.player.name, self.player.points_to_next_level))
         if self.current_map.identifier == 'Alefgard':
-            distance_string = "From where thou art now, my castle lies..\n"
+            distance_string = self._("From where thou art now, my castle lies..\n")
             east_west_distance, north_south_distance = self.calculation.get_distance_from_tantegel(self.player.column,
                                                                                                    self.player.row)
             if north_south_distance < 0:
-                distance_string += f"{abs(north_south_distance)} to the south and.."
+                distance_string += self._("{} to the south and..").format(abs(north_south_distance))
             elif north_south_distance > 0:
-                distance_string += f"{abs(north_south_distance)} to the north and.."
+                distance_string += self._("{} to the north and..").format(abs(north_south_distance))
             if east_west_distance < 0:
-                distance_string += f"{abs(east_west_distance)} to the west."
+                distance_string += self._("{} to the west.").format(abs(east_west_distance))
             elif east_west_distance > 0:
-                distance_string += f"{abs(east_west_distance)} to the east."
+                distance_string += self._("{} to the east.").format(abs(east_west_distance))
             self.show_text_in_dialog_box(distance_string)
-        self.show_text_in_dialog_box(f"I love thee, {self.player.name}.")
+        self.show_text_in_dialog_box(self._("I love thee, {}.").format(self.player.name))
 
     # spells
 
@@ -1215,10 +1215,10 @@ class CommandMenu(Menu):
         """
         self.sound.play_sound(self.directories.menu_button_sfx)
         # open a window
-        text_to_print = [self._(f"{self.player.name} searched the ground all about."), ]
+        text_to_print = [self._("{} searched the ground all about.").format(self.player.name), ]
         # wait for input...
         if self.player.current_tile == 'TREASURE_BOX':
-            text_to_print.append(self._(f"There is a {self.player.current_tile.lower().replace('_', ' ')}."))
+            text_to_print.append(self._("There is a treasure box."))
         elif hidden_item := hidden_items.get(self.current_map.identifier, {}).get((self.player.row, self.player.column)):
             text_to_print.append(self.find_hidden_item(hidden_item))
         elif not (self.current_map.identifier == 'CharlockB1' and self.search_for_secret_passage(text_to_print)):
@@ -1403,7 +1403,7 @@ class CommandMenu(Menu):
                             else:
                                 self.show_line_in_dialog_box(
                                     (self._("{} chanted the spell of {}.").format(self.player.name,
-                                                                                  currently_selected_item)),
+                                                                                  self._(currently_selected_item))),
                                     add_quotes=False,
                                     disable_sound=True,
                                     hide_arrow=True,
