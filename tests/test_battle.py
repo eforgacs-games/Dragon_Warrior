@@ -58,7 +58,6 @@ class TestBattleMethods(unittest.TestCase):
         enemy.name = 'Slime'
         enemy.xp = 10
         enemy.gold = 5
-        levels_list = [{'total_exp': 0}, {'total_exp': 10}]
 
         self.battle.enemy_defeated(cmd_menu, screen, player, music_enabled, enemy)
         self.assertEqual(player.total_experience, 10)

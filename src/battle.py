@@ -1,7 +1,6 @@
 import random
 
 from pygame import display, time, mixer, Surface
-from pygame.transform import scale
 
 from src.common import BLACK, set_gettext_language
 from src.constants import (

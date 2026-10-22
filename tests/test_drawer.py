@@ -1,11 +1,10 @@
 import os
 import unittest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
-import pygame
 
 from src.config.test_config import test_config
 from src.drawer import (
@@ -245,7 +244,6 @@ class TestDrawerDrawStatsStrings(unittest.TestCase):
     def test_x_position_decreases_as_string_grows(self, mock_draw_text):
         """Longer strings are positioned further left (smaller x multiplier)."""
         screen = MagicMock()
-        tile_size = test_config['TILE_SIZE']
 
         self.drawer.draw_stats_strings_with_alignments('1', 3.0, screen, color=(255, 255, 255))
         x_1digit = mock_draw_text.call_args[0][1]
