@@ -533,6 +533,30 @@ class CommandMenu(Menu):
         self.show_text_in_dialog_box(self._("{} put on the Fighter's Ring.").format(self.player.name),
                                      skip_text=self.skip_text)
 
+    def cursed_belt(self):
+        # NES WearCursedItem: using the belt puts it on (it stays in the inventory) and sets F_CRSD_BELT
+        already_worn = self.player.wearing_cursed_belt
+        self.player.wearing_cursed_belt = True
+        self.put_on_cursed_item("Cursed Belt", already_worn)
+
+    def death_necklace(self):
+        # NES ChkDeathNecklace: same as the belt, but sets F_DTH_NECKLACE. No stat or HP change on the NES.
+        already_worn = self.player.wearing_death_necklace
+        self.player.wearing_death_necklace = True
+        self.put_on_cursed_item("Death Necklace", already_worn)
+
+    def put_on_cursed_item(self, item_name: str, already_worn: bool):
+        if already_worn:
+            # NES DoCursedDialog
+            text = self._("The {} is squeezing thy body.").format(self._(item_name))
+        else:
+            # NES PlayerCursed
+            text = self._("{} put on the {} and was cursed!\nThy body is being squeezed.").format(
+                self.player.name, self._(item_name))
+        self.show_text_in_dialog_box(text, skip_text=self.skip_text)
+        # NES PlayCursedMusic: MSC_CURSED plays either way
+        self.sound.play_sound(self.directories.cursed_sfx)
+
     def gwaelins_love(self):
         self.show_text_in_dialog_box(f"Heed my voice, '{self.player.name}, for this is Gwaelin. "
                                      "To reach the next level thou must raise thy Experience Points by "
@@ -900,6 +924,8 @@ class CommandMenu(Menu):
                 "Stones of Sunlight": self.stones_of_sunlight,
                 "Fighter's Ring": self.fighters_ring,
                 "Fairy Flute": self.fairy_flute,
+                "Cursed Belt": self.cursed_belt,
+                "Death Necklace": self.death_necklace,
             }
         elif menu_name == 'spells':
             list_counter = Counter(self.player.spells)

@@ -150,7 +150,7 @@ class DialogLookup:
                 'MAN_2': {'dialog': _("Thou art most welcome in Brecconary.")},
                 'MAN_3': {'dialog': _("Enter where thou can.")},
                 'SOLDIER': {'dialog': (_("Beware the bridges!"), _("Danger grows when thou crosses."))},
-                'WISE_MAN': {'dialog': _("If thou art cursed, come again.")},
+                'WISE_MAN': {'dialog': (self.remove_curse,)},
                 'MERCHANT': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.brecconary_weapons_store_inventory,
                             self.directories.BRECCONARY_WEAPONS_SHOP_PATH),)},
@@ -391,6 +391,15 @@ class DialogLookup:
         """Show NPC lines in the dialog box that is already open."""
         for line in lines:
             self.command_menu.show_line_in_dialog_box(line, skip_text=self.command_menu.skip_text)
+
+    def remove_curse(self):
+        """NES ChkCursedDialog: the Brecconary wizard (dialog $67, NES (24, 10)) lifts any curse, free of charge."""
+        if not self.player.is_cursed:
+            lines = (self._("If thou art cursed, come again."),)
+        else:
+            lines = (self._("I will free thee from thy curse."), self.player.remove_curse, self._("Now, go."))
+        for line in lines:
+            self.command_menu.show_line_in_dialog_box(line, add_quotes=True, skip_text=self.command_menu.skip_text)
 
     def thou_hast_no_business_here(self):
         # NES HaveUniqueItem/HaveItemDialog: TextBlock11, entry 5
