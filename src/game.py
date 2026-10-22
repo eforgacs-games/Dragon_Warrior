@@ -24,7 +24,7 @@ from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, read_checkpoint
 from src.color import LOW_HP_RED, RED, WHITE, is_low_hp, window_color
-from src.common import A_OR_START_KEYS, reject_keys, Graphics, is_facing_medially, is_facing_laterally, \
+from src.common import A_OR_START_KEYS, Graphics, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
 from src.config.dev_config import dev_config
@@ -45,7 +45,7 @@ from src.intro import Intro
 from src.items import TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
-from src.menu import CommandMenu, Menu
+from src.menu import CommandMenu
 from src.menu_functions import NameSelection
 from src.movement import Movement
 from src.music_player import MusicPlayer
@@ -63,6 +63,7 @@ from src.map_manager import MapManager
 from src.pygame_compat import arrow_fade
 from src.visual_effects import fade, flash_transparent_color
 from src.waiting import wait
+from src.windows import COMMAND_WINDOW
 
 
 SAVE_FILE_PATTERN = re.compile(r'save_slot_(\d+)\.json')
@@ -626,16 +627,14 @@ class Game:
             print(f"Window resized to: {resize_event.w}x{resize_event.h}")
 
     def set_window_color(self, color: tuple[int, int, int]) -> None:
-        """Set the color of every window (their borders, text and cursors; NES background palette 0's color 1) and
-        redraw the windows that are kept drawn (the COMMAND window), so nothing lags behind.
+        """Set the color of every window (their borders, text and cursors; NES background palette 0's color 1). Every
+        window is generated in this color each time it is drawn (src/window_renderer.py), the COMMAND window included,
+        so there is no window to redraw ahead of time.
 
         The map's palette 0 tiles (towns, castles, bridges and water) use that same color, so they change with the
         windows. When they do, the whole map is redrawn, as when the hero steps under a roof; a map that hasn't been
         drawn yet (loop_count 1) is drawn in full on its first frame anyway."""
         self.color = color
-        cmd_menu = getattr(self, 'cmd_menu', None)
-        if cmd_menu is not None:
-            cmd_menu.refresh_window_color()
         current_map = getattr(self, 'current_map', None)
         if current_map is not None and current_map.set_low_hp_palette(color == LOW_HP_RED):
             drawer = getattr(self, 'drawer', None)
@@ -930,7 +929,7 @@ class Game:
             self.handle_start_button(current_keydown_event)
             self.handle_fullscreen_toggle(current_keydown_event)
             return
-        self.handle_b_button(current_keydown_event)
+        # B does nothing on the map: in the COMMAND window it is read with the other buttons (CommandMenu.select_command)
         self.handle_a_button(current_keydown_event)
         self.handle_start_button(current_keydown_event)
         self.handle_select_button(current_keydown_event)
@@ -953,13 +952,6 @@ class Game:
             control_info = ControlInfo(self.config)
             # one page per group of keys, so nothing runs past the bottom of the dialog box
             self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
-
-    def handle_b_button(self, keydown_event):
-        if keydown_event.key in reject_keys:
-            # B button
-            # using reject_keys adds ESC as an option to unlaunch the command menu
-            self.unlaunch_menu(self.cmd_menu)
-            # print("J key pressed (B button).")
 
     def handle_a_button(self, keydown_event):
         if keydown_event.key == K_k:
@@ -1110,17 +1102,16 @@ class Game:
     def set_roaming_character_positions(self):
         self.map_mgr.set_roaming_character_positions()
 
-    def unlaunch_menu(self, menu_to_unlaunch: Menu) -> None:
+    def unlaunch_menu(self, menu_to_unlaunch: CommandMenu) -> None:
         """
-        Un-launch a menu.
+        Close the COMMAND window (Bank03 ClrNCCmdWnd: RemoveWindow, and the NPCs move again).
         :return: None
         """
         menu_to_unlaunch.launch_signaled = False
-        if menu_to_unlaunch.menu.get_id() == 'command':
-            if self.cmd_menu.menu.is_enabled():
-                self.game_state.unpause_all_movement()
-                self.cmd_menu.window_drop_up_effect(6, 1, 8, 5)
-                self.cmd_menu.menu.disable()
+        if menu_to_unlaunch.menu.is_enabled():
+            self.game_state.unpause_all_movement()
+            menu_to_unlaunch.window_drop_up_effect(*COMMAND_WINDOW)
+            menu_to_unlaunch.menu.disable()
         self.drawer.draw_all_tiles_in_current_map(self.current_map, self.drawer.background)
 
     def move_player(self, current_key) -> None:
