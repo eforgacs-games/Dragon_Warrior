@@ -11,7 +11,8 @@ from unittest.mock import patch
 import pygame
 
 import tests.test_story_run as story_run  # imported as a module so pytest doesn't collect TestStoryRun twice
-from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, CHECKPOINTS_DIR, read_checkpoint
+from src.checkpoints import CHECKPOINT_HERO_NAME, CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, CHECKPOINTS_DIR, \
+    LOCALIZED_HERO_NAMES, checkpoint_hero_name, read_checkpoint
 from src.config.test_config import test_config
 from src.constants import ENDING_TRIGGER_COORDINATES, GWAELIN_SWAMP_CAVE_COORDINATES, \
     GWAELIN_THRONE_ROOM_COORDINATES, RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES, RETURN_DESTINATION
@@ -19,7 +20,7 @@ from src.debug_tools import ADD_GOLD, EQUIP_ERDRICK, REFILL, DebugTools
 from src.ending import CREDITS
 from src.items import INVENTORY_SLOTS, UNSLOTTED_ITEMS, armor, shields, weapons
 from src.maps import CharlockB1
-from src.player.player_stats import levels_list
+from src.player.player_stats import get_total_name_score, levels_list
 from src.story_flags import StoryFlags
 
 UP, DOWN, LEFT, RIGHT = story_run.UP, story_run.DOWN, story_run.LEFT, story_run.RIGHT
@@ -110,6 +111,46 @@ class TestCheckpoints(story_run.TestStoryRun):
                 'WearingDragonScale', 'WearingFightersRing', 'WearingCursedBelt', 'WearingDeathNecklace', 'Inventory',
                 'Spells', 'CurrentMap', 'PlayerRow', 'PlayerColumn', 'StoryFlags'}, name)
             self.assertEqual(set(save['StoryFlags']), {flag.name for flag in fields(StoryFlags)}, name)
+
+    def test_every_checkpoint_names_the_hero_arthur(self):
+        # Not Erdrick: that's the hero's ancestor (로토 in Korean)
+        for name in CHECKPOINT_NAMES:
+            self.assertEqual(read_checkpoint(name)['Name'], CHECKPOINT_HERO_NAME, name)
+        self.assertEqual(CHECKPOINT_HERO_NAME, 'Arthur')
+
+    def test_the_checkpoint_names_give_the_strongest_name_stats(self):
+        # NES LoadStats: a first-four-tile sum ending in $D keeps full strength and HP and adds the +3 bonus
+        self.assertEqual(get_total_name_score(CHECKPOINT_HERO_NAME) & 0x0F, 0x0D)
+        # Korean names count each character as the low byte of its code point, padded to four with blank tiles ($60)
+        korean_name = LOCALIZED_HERO_NAMES['Korean']
+        korean_tiles = [ord(character) & 0xFF for character in korean_name[:4]] + [0x60] * (4 - len(korean_name))
+        self.assertEqual(sum(korean_tiles) & 0x0F, 0x0D)
+
+    def test_the_hero_is_named_arthur_in_english(self):
+        with patch.dict(self.game.config, {'LANGUAGE': 'English'}):
+            for name in CHECKPOINT_NAMES:
+                with self.subTest(name):
+                    self.game.load_checkpoint(name)
+                    self.assertEqual(self.player.name, 'Arthur')
+
+    def test_the_hero_is_named_geomgaek_in_korean(self):
+        with patch.dict(self.game.config, {'LANGUAGE': 'Korean'}):
+            for name in CHECKPOINT_NAMES:
+                with self.subTest(name):
+                    self.game.load_checkpoint(name)
+                    self.assertEqual(self.player.name, '검객')
+
+    def test_a_real_save_keeps_its_name_in_korean(self):
+        # Only checkpoints are renamed: a name the player typed is never translated, even if it is "Arthur"
+        for typed_name in ('Arthur', 'Erdrick', '용사'):
+            with self.subTest(typed_name), patch.dict(self.game.config, {'LANGUAGE': 'Korean'}):
+                self.game.load_game({**read_checkpoint('throne_room'), 'Name': typed_name})
+                self.assertEqual(self.player.name, typed_name)
+
+    def test_checkpoint_hero_name(self):
+        self.assertEqual(checkpoint_hero_name('Arthur', 'English'), 'Arthur')
+        self.assertEqual(checkpoint_hero_name('Arthur', 'Korean'), '검객')
+        self.assertEqual(checkpoint_hero_name('Eddie', 'Korean'), 'Eddie')
 
     def test_saving_from_a_checkpoint_goes_to_the_checkpoint_save_folder(self):
         self.load('throne_room')
