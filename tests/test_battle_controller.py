@@ -370,6 +370,8 @@ class TestEnemyMove(unittest.TestCase):
     def setUp(self):
         self.game = make_game()
         self.controller = BattleController(self.game)
+        patch('src.battle_controller.wait').start()  # the 1-second pause after an enemy's spell
+        self.addCleanup(patch.stopall)
 
     def move(self, enemy, roll=0, effect=None):
         battle = make_battle(enemy)
