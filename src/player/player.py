@@ -32,7 +32,6 @@ class Player(AnimatedSprite):
                                                                            current_map,
                                                                            offset=2)
         self.bumped = False
-        self.last_bump_time = None
         self.received_environment_damage = False
 
         self.adventure_log = 0
