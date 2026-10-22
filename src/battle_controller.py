@@ -105,6 +105,7 @@ class BattleController:
     # ------------------------------------------------------------------ #
 
     def run_battle(self, enemies_in_current_zone):
+        self.enemy_runaway_attempts = 0
         enemy_name = random.choice(enemies_in_current_zone)
         current_battle = Battle(self.config, enemy_name, self.current_map)
         current_battle.play_battle_music()
@@ -223,7 +224,7 @@ class BattleController:
                             self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
                                                                   add_quotes=False, disable_sound=True,
                                                                   hide_arrow=True, skip_text=True)
-                    current_battle.no_op = False
+                current_battle.no_op = False
         return run_away
 
     def enemy_run_away(self, current_battle, enemy):
@@ -306,7 +307,7 @@ class BattleController:
                                                               disable_sound=True, hide_arrow=True)
                     elif current_spell in (Spell.HURT, Spell.HURTMORE):
                         if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
-                            spell_effect *= 0.66
+                            spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
                         self.game.receive_damage(spell_effect)
                     elif current_spell == Spell.STOPSPELL:
                         if self.player.armor != "Erdrick's Armor":
@@ -314,7 +315,7 @@ class BattleController:
                                 self.player.is_stopspelled = True
                     elif current_spell in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         if self.player.armor == "Erdrick's Armor":
-                            spell_effect *= 0.66
+                            spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
                         self.game.receive_damage(spell_effect)
                 else:
                     self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
