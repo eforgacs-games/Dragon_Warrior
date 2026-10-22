@@ -26,7 +26,7 @@ from src.text import draw_text
 from src.windows import BUY_SELL_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, SHOP_COST_RIGHT_TILE_COLUMN, \
     SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
 from src.visual_effects import fade, flash_transparent_color, greyscale_screen
-from src.waiting import wait, wait_frames
+from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait, wait_frames
 
 
 class DialogLookup:
@@ -726,12 +726,23 @@ class DialogLookup:
         fade(fade_out=True, screen=self.screen, config=self.config)
         self.screen.fill(BLACK)
         display.flip()
-        self.command_menu.show_text_in_dialog_box((self._("Please push RESET, hold it in, then turn off the POWER."),
-                                                   self._(
-                                                       "If you turn the power off first, the Imperial Scroll "
-                                                       "of Honor containing your deeds may be lost."))
-                                                  )
-        quit()
+        # NES TextBlock19 entry 8: a WAIT for a button after the first sentence, then the second sentence and END with
+        # no wait. ExitGame returns, MMCShutdown runs and Spinlock2 hangs: no button does anything after this.
+        self.command_menu.show_line_in_dialog_box(
+            self._("Please push RESET, hold it in, then turn off the POWER."), add_quotes=False)
+        self.command_menu.show_line_in_dialog_box(
+            self._("If you turn the power off first, the Imperial Scroll of Honor containing your deeds may be lost."),
+            add_quotes=False, skip_text=True, hide_arrow=True)
+        self.wait_for_reset()
+
+    @staticmethod
+    def wait_for_reset():
+        """NES Spinlock2: the game hangs until the console is reset or switched off. Every button is ignored; closing
+        the window is the only way out."""
+        while True:
+            for current_event in get():
+                quit_if_requested(current_event)
+            time.wait(POLL_INTERVAL_MS)
 
     def cantlin_still_wish_to_go_on(self):
         """NES CheckYesNoDialog, dialog byte $60 (the Cantlin guard at NES 5,6): after TextBlock9 entry 15, the
