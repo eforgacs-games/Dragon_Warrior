@@ -15,6 +15,8 @@ This module imports nothing from ``src``, so any module can use it without an im
 """
 import sys
 
+from typing import Collection
+
 from pygame import K_1, K_2, K_3, K_4, KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
 
 NES_FPS = 60
@@ -139,3 +141,10 @@ def wait(milliseconds: float, config: dict | None = None) -> None:
 def wait_frames(frames: float, config: dict | None = None, fps: float = NES_FPS) -> None:
     """``wait`` for a number of frames (NES frames, 60 per second, unless ``fps`` says otherwise)."""
     wait(frames * 1000 / fps, config)
+
+
+def is_any_key_held(keys: Collection[int]) -> bool:
+    """Whether one of ``keys`` is down right now, for the NES waits that read JoypadBtns as it is (so a button held
+    since before the wait counts) rather than waiting for a new press."""
+    pressed = key.get_pressed()
+    return any(pressed[pressed_key] for pressed_key in keys)

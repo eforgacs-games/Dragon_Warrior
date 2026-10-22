@@ -14,7 +14,7 @@ from enum import Enum
 from pygame import KEYDOWN, display, event, key, mixer, time
 
 from src.battle import Battle, calculate_enemy_attack_damage
-from src.common import BLACK, RED, accept_keys, reject_keys
+from src.common import ANY_BUTTON_KEYS, BLACK, RED, accept_keys, reject_keys
 from src.cursor import BlinkingCursor
 from src.waiting import quit_if_requested, wait
 from src.constants import (
@@ -296,7 +296,8 @@ class BattleController:
                 if current_event.type == KEYDOWN:
                     if not self.player.is_asleep:
                         tapped |= key_joypad_buttons(current_event.key)
-                    else:
+                    elif current_event.key in ANY_BUTTON_KEYS:
+                        # Asleep, a joypad button (any of them) moves the fight on; other keys do nothing
                         selected_executed_option = 'Sleep'
             if not self.player.is_asleep:
                 presses = self.command_buttons.read(held_joypad_buttons(), tapped)  # WndGetButtons
