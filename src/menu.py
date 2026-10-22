@@ -528,13 +528,13 @@ class CommandMenu(Menu):
     def tablet(self, found_item_text):
         self.show_text_in_dialog_box((
             found_item_text,
-            self._("The tablet reads as follows:",
-                   "I am Erdrick and thou art my descendant.",
-                   "Three items were needed to reach the Isle of Dragons, which is south of Brecconary.",
-                   "I gathered these items, reached the island, and there defeated a creature of great evil.",
-                   "Now I have entrusted the three items to three worthy keepers.",
-                   "Their descendants will protect the items until thy quest leads thee to seek them out.",
-                   "When a new evil arises, find the three items, then fight!")), drop_down=False)
+            self._("The tablet reads as follows:"),
+            self._("I am Erdrick and thou art my descendant."),
+            self._("Three items were needed to reach the Isle of Dragons, which is south of Brecconary."),
+            self._("I gathered these items, reached the island, and there defeated a creature of great evil."),
+            self._("Now I have entrusted the three items to three worthy keepers."),
+            self._("Their descendants will protect the items until thy quest leads thee to seek them out."),
+            self._("When a new evil arises, find the three items, then fight!")), drop_down=False)
 
     def take_tablet(self) -> None:
         # NES ChkTrsrErdTablet: the tablet is read, not kept
