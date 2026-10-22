@@ -1,4 +1,4 @@
-from pygame import Surface, display, time, transform
+from pygame import Surface, display, mask, time, transform
 from pygame.time import get_ticks
 
 from src.common import BLACK
@@ -79,4 +79,193 @@ def greyscale_screen(screen, calculation, frames=30, no_blit=False):
         check_for_quit()
         display.flip()
     screen.blit(original, (0, 0))
+    display.flip()
+
+
+# ---------------------------------------------------------------------------------------------------- #
+#  NES palette effects used in battle (issue #96)                                                       #
+# ---------------------------------------------------------------------------------------------------- #
+
+NES_FPS = 60
+
+# The NES master palette, indexed by NES color number ($00-$3F). These are the RGB values the game's images use.
+NES_PALETTE: tuple[tuple[int, int, int], ...] = (
+    (116, 116, 116), (36, 24, 140), (0, 0, 168), (68, 0, 156), (140, 0, 116), (168, 0, 16), (164, 0, 0),
+    (124, 8, 0), (64, 44, 0), (0, 68, 0), (0, 80, 0), (0, 60, 20), (24, 60, 92), (0, 0, 0), (0, 0, 0), (0, 0, 0),
+    (188, 188, 188), (0, 112, 236), (32, 56, 236), (128, 0, 240), (188, 0, 188), (228, 0, 88), (216, 40, 0),
+    (200, 76, 12), (136, 112, 0), (0, 148, 0), (0, 168, 0), (0, 144, 56), (0, 128, 136), (0, 0, 0), (0, 0, 0),
+    (0, 0, 0),
+    (252, 252, 252), (60, 188, 252), (92, 148, 252), (204, 136, 252), (244, 120, 252), (252, 116, 180),
+    (252, 116, 96), (252, 152, 56), (240, 188, 60), (128, 208, 16), (76, 220, 72), (88, 248, 152), (0, 232, 216),
+    (120, 120, 120), (0, 0, 0), (0, 0, 0),
+    (252, 252, 252), (168, 228, 252), (196, 212, 252), (212, 200, 252), (252, 196, 252), (252, 196, 216),
+    (252, 188, 176), (252, 216, 168), (252, 228, 160), (224, 252, 160), (168, 240, 188), (176, 252, 204),
+    (156, 252, 240), (196, 196, 196), (0, 0, 0), (0, 0, 0),
+)
+PAL_BLACK = 0x0F
+NES_RED = NES_PALETTE[0x16]  # RedFlashPal (Bank00): every color is $16
+
+# NES PalFadeIn (Bank03, $C529) walks PalModByte through $30, $20, $10, $00, waiting 4 frames before each step.
+# AddPalByte subtracts PalModByte from every palette color, and a color that drops below $00 becomes black.
+FADE_IN_STEPS = (0x30, 0x20, 0x10, 0x00)
+FADE_STEP_FRAMES = 4
+FADE_FULL_BLACK = 0x40  # anything $40 or more turns every color black
+
+
+def _build_color_lookup() -> dict[tuple[int, int, int], int]:
+    lookup: dict[tuple[int, int, int], int] = {}
+    for index, rgb in enumerate(NES_PALETTE):
+        lookup.setdefault(rgb, index)
+    # White is both $20 and $30; the enemy palettes use $30 (EnSPPals, RegSPPal).
+    lookup[NES_PALETTE[0x30]] = 0x30
+    lookup[NES_PALETTE[PAL_BLACK]] = PAL_BLACK
+    return lookup
+
+
+_NES_COLOR_LOOKUP = _build_color_lookup()
+
+
+def nes_color_index(rgb) -> int:
+    """The NES color number for an RGB color, picking the nearest palette entry for colors not in the palette."""
+    rgb = tuple(rgb[:3])
+    if rgb in _NES_COLOR_LOOKUP:
+        return _NES_COLOR_LOOKUP[rgb]
+    return min(_NES_COLOR_LOOKUP.items(),
+               key=lambda item: sum((a - b) ** 2 for a, b in zip(item[0], rgb)))[1]
+
+
+def nes_faded_color(rgb, pal_mod: int) -> tuple[int, int, int]:
+    """NES AddPalByte/ChkPalFade ($C680): subtract the fade offset from the color number; below $00 is black."""
+    index = nes_color_index(rgb) - pal_mod
+    return NES_PALETTE[PAL_BLACK] if index < 0 else NES_PALETTE[index]
+
+
+def fade_surface(surface: Surface, pal_mod: int) -> Surface:
+    """A copy of a sprite with every opaque pixel's NES color darkened by pal_mod ($10 per brightness row)."""
+    faded = surface.copy()
+    if pal_mod == 0:
+        return faded
+    colors: dict[tuple[int, int, int], tuple[int, int, int]] = {}
+    for x in range(faded.get_width()):
+        for y in range(faded.get_height()):
+            r, g, b, a = faded.get_at((x, y))
+            if a:
+                rgb = (r, g, b)
+                if rgb not in colors:
+                    colors[rgb] = nes_faded_color(rgb, pal_mod)
+                faded.set_at((x, y), (*colors[rgb], a))
+    return faded
+
+
+def silhouette_surface(surface: Surface, color, keep_black: bool = False) -> Surface:
+    """A copy of a sprite with every opaque pixel set to one color (NES RedFlashPal sets all 12 colors to $16).
+    With keep_black, black pixels stay black, the way palette color 0 does when a background palette is swapped."""
+    shape = mask.from_surface(surface)
+    if keep_black:
+        shape.erase(mask.from_threshold(surface, (0, 0, 0, 255), (1, 1, 1, 255)), (0, 0))
+    result = surface.copy()
+    result.blit(shape.to_surface(setcolor=color, unsetcolor=(0, 0, 0, 0)), (0, 0))
+    return result
+
+
+def red_flash_overlay(screen: Surface) -> Surface:
+    """NES RedFlashScreen ($EE14) loads RedFlashPal into the background palettes: colors 1-3 of every background
+    palette become red ($16) and color 0, the universal black, stays black. Returns that overlay for the screen."""
+    not_black = mask.from_threshold(screen, (0, 0, 0, 255), (1, 1, 1, 255))
+    not_black.invert()
+    return not_black.to_surface(setcolor=NES_RED, unsetcolor=(0, 0, 0, 0))
+
+
+def show_frames(frames: int, config) -> None:
+    """Show the current screen for a number of NES frames (60 per second)."""
+    display.flip()
+    if not config.get('NO_WAIT'):
+        time.wait(round(frames * 1000 / NES_FPS))
+
+
+def enemy_fade_in(screen: Surface, image: Surface, position, config, repeats: int = 2) -> None:
+    """The enemy appearing: NES LoadEnemyGFX ($E44F) loads the enemy's sprite palette, then calls PalFadeIn twice.
+    Only the sprite palettes fade (LoadBGPal shares RAM with EnSprtXPos, which is cleared to 0, PAL_SKIP_BG, just
+    before), so the enemy alone goes from a black shadow through $30/$20/$10/$00 darker palettes, then does it
+    again: 4 frames per step, 36 frames in all. The first load uses the PalModByte left by the last fade in
+    ($F0, all black). The final form's DoEndFight runs PalFadeIn four times (repeats=4)."""
+    if config.get('NO_BLIT'):
+        return
+    steps = [(FADE_FULL_BLACK, FADE_STEP_FRAMES)] + [(step, FADE_STEP_FRAMES) for step in FADE_IN_STEPS] * repeats
+    faded: dict[int, Surface] = {}
+    for pal_mod, frames in steps:
+        if pal_mod not in faded:
+            faded[pal_mod] = fade_surface(image, pal_mod)
+        screen.blit(faded[pal_mod], position)
+        show_frames(frames, config)
+    screen.blit(image, position)
+    display.flip()
+
+
+# NES PaletteFlash ($EF38): 5 times, wait 3 frames, load the red flash sprite palette, wait 2 frames, reload the
+# enemy palette (LoadEnPalette). Palette writes land on the next NMI, so the enemy is red 2 frames out of every 5.
+ENEMY_FLASH_COUNT = 5
+ENEMY_FLASH_NORMAL_FRAMES = 3
+ENEMY_FLASH_RED_FRAMES = 2
+
+
+def enemy_hit_flash(screen: Surface, image: Surface, position, config, keep_black: bool = False) -> None:
+    """The enemy flashing red when the hero hits it (NES PlyrHitEn -> PaletteFlash with RedFlashPalPtr).
+    For the final form, which is drawn with background tiles, PaletteFlash swaps in FinalRedBGPal instead, which
+    leaves the universal black alone (keep_black=True)."""
+    if config.get('NO_BLIT'):
+        return
+    red = silhouette_surface(image, NES_RED, keep_black=keep_black)
+    for _ in range(ENEMY_FLASH_COUNT):
+        screen.blit(image, position)
+        show_frames(ENEMY_FLASH_NORMAL_FRAMES, config)
+        screen.blit(red, position)
+        show_frames(ENEMY_FLASH_RED_FRAMES, config)
+    screen.blit(image, position)
+    display.flip()
+
+
+# NES PlayerHit ($ED20): ShakeCounter starts at 8. Each pass waits a frame (two if the hero is still alive),
+# moves ScrollX (even counter) or ScrollY (odd counter) 2 pixels, waits a frame, reloads the background palette
+# (LoadRegBGPal waits another frame) and puts the scroll back. So the screen is moved 2 frames out of 4.
+SHAKE_COUNT = 8
+SHAKE_PIXELS = 2
+SHAKE_STILL_FRAMES = 2
+SHAKE_MOVED_FRAMES = 2
+
+
+def player_hit_shake(screen: Surface, config, deathblow: bool = False, enemy=None, background=None,
+                     shake: bool = True) -> None:
+    """The screen shake when an enemy hurts the hero, with the red background flash (RedFlashScreen) on the
+    blow that kills him. Sprites don't scroll on the NES, so the enemy stays put and isn't tinted red:
+    enemy is (image, position) and background is (battle background image, position), used to draw what is
+    behind the enemy. The final form doesn't shake or flash (shake=False), but the frames still pass: 4 a pass,
+    or 3 on the deathblow, which skips the extra wait."""
+    scale = config.get('SCALE', 1)
+    if config.get('NO_BLIT') or not shake:
+        # On the final form's deathblow, the second wait and RedFlashScreen's wait are both skipped.
+        still_frames = SHAKE_STILL_FRAMES - 1 if deathblow and not shake else SHAKE_STILL_FRAMES
+        if not config.get('NO_WAIT'):
+            time.wait(round(SHAKE_COUNT * (still_frames + SHAKE_MOVED_FRAMES) * 1000 / NES_FPS))
+        return
+    original = screen.copy()
+    without_enemy = original.copy()
+    if enemy is not None and background is not None:
+        enemy_image, enemy_position = enemy
+        background_image, background_position = background
+        enemy_rect = enemy_image.get_rect(topleft=enemy_position)
+        area = enemy_rect.move(-background_position[0], -background_position[1])
+        without_enemy.blit(background_image, enemy_rect.topleft, area=area)
+    for shake_counter in range(SHAKE_COUNT, 0, -1):
+        show_frames(SHAKE_STILL_FRAMES, config)
+        offset = SHAKE_PIXELS * scale
+        # Scrolling right/down moves the picture left/up.
+        shift = (-offset, 0) if shake_counter % 2 == 0 else (0, -offset)
+        screen.blit(without_enemy, shift)
+        if deathblow:
+            screen.blit(red_flash_overlay(screen), (0, 0))
+        if enemy is not None:
+            screen.blit(enemy[0], enemy[1])
+        show_frames(SHAKE_MOVED_FRAMES, config)
+        screen.blit(original, (0, 0))
     display.flip()
