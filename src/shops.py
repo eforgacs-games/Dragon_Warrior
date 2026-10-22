@@ -36,12 +36,6 @@ def buyback_price(equipped_item: str, item_type: str) -> int:
     return table[equipped_item]['cost'] // 2
 
 
-def sell_list(inventory: list[str]) -> list[str]:
-    """NES CreateInvList: Herbs and Magic Keys first (one entry each), then each inventory slot in order."""
-    return [item for item in UNSLOTTED_ITEMS if item in inventory] + \
-        [item for item in inventory if item not in UNSLOTTED_ITEMS]
-
-
 class ShopInventories:
     def __init__(self, config):
         self.config = config

@@ -7,9 +7,9 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 import pygame
 
 from src.config.test_config import test_config
-from src.items import armor, shields, tools, weapons
+from src.items import armor, inventory_list, shields, tools, weapons
 from src.shops import INVENTORY_SLOTS, MAX_GOLD, ShopInventories, buyback_price, inventory_is_full, \
-    inventory_slots_used, pay_player, sell_list, sell_price
+    inventory_slots_used, pay_player, sell_price
 
 VALID_ITEM_TYPES = {'weapon', 'armor', 'shield'}
 EXPECTED_KEYS = {'cost', 'type', 'menu_image'}
@@ -218,10 +218,10 @@ class TestShopRules(unittest.TestCase):
         self.assertEqual(pay_player(65000, 1200), 65535)
         self.assertEqual(pay_player(100, 12), 112)
 
-    def test_sell_list_puts_herbs_and_keys_first_once(self):
+    def test_inventory_list_puts_herbs_and_keys_first_once(self):
         inventory = ['Torch', 'Herb', 'Magic Key', 'Herb', 'Torch', 'Wings']
-        self.assertEqual(sell_list(inventory), ['Herb', 'Magic Key', 'Torch', 'Torch', 'Wings'])
-        self.assertEqual(sell_list([]), [])
+        self.assertEqual(inventory_list(inventory), ['Herb', 'Magic Key', 'Torch', 'Torch', 'Wings'])
+        self.assertEqual(inventory_list([]), [])
 
 
 if __name__ == '__main__':
