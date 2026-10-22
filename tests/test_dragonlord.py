@@ -230,8 +230,8 @@ class TestDragonlordBattle(unittest.TestCase):
         self.assertTrue(battle.get_enemy_draws_near_string().startswith('The Dragonlord revealed his true self!'))
 
     @patch('src.battle.mixer')
-    @patch('src.battle.time')
-    def test_first_form_defeat_gives_no_experience(self, mock_time, mock_mixer):
+    @patch('src.battle.wait_frames')
+    def test_first_form_defeat_gives_no_experience(self, mock_wait_frames, mock_mixer):
         battle = Battle(self.config, 'Dragonlord', Mock())
         cmd_menu, screen = Mock(), Mock()
         with patch.object(battle, 'make_enemy_image_disappear'):
