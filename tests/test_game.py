@@ -237,7 +237,7 @@ class TestGame(TestCase):
         self.stand_on('Alefgard', (56, 73))  # NES overworld (65, 49), the tile east of the bridge
         self.assertEqual(self.bridge_tile(), 'WATER')
         self.assertEqual(self.use_rainbow_drop(), [f'{self.game.player.name} held the Rainbow Drop toward the sky.'])
-        self.assertTrue(self.game.rainbow_bridge_built)
+        self.assertTrue(self.game.story_flags.rainbow_bridge_built)
         self.assertEqual(self.bridge_tile(), 'BRIDGE')
         self.assertFalse(self.game.is_impassable(self.bridge_tile()))
         # NES ChkDrop never removes the Rainbow Drop
@@ -249,7 +249,7 @@ class TestGame(TestCase):
             with self.subTest(map=map_name, coordinates=coordinates):
                 self.stand_on(map_name, coordinates)
                 self.assertEqual(self.use_rainbow_drop()[-1], 'But no rainbow appeared here.')
-                self.assertFalse(self.game.rainbow_bridge_built)
+                self.assertFalse(self.game.story_flags.rainbow_bridge_built)
                 self.assertEqual(self.game.player.inventory, ['Rainbow Drop'])
         self.go_to('Alefgard', (56, 74))
         self.assertEqual(self.bridge_tile(), 'WATER')
@@ -281,22 +281,22 @@ class TestGame(TestCase):
             self.game.cmd_menu.save()
             with open(os.path.join(tmp_dir, 'save_slot_1.json')) as save_file:
                 save = json.load(save_file)
-        self.assertTrue(save['RainbowBridgeBuilt'])
+        self.assertTrue(save['StoryFlags']['rainbow_bridge_built'])
 
         with patch('src.game.SCALED'):
             self.game = Game(test_config)
-        self.assertFalse(self.game.rainbow_bridge_built)
+        self.assertFalse(self.game.story_flags.rainbow_bridge_built)
         self.game.load_game(save)
-        self.assertTrue(self.game.rainbow_bridge_built)
+        self.assertTrue(self.game.story_flags.rainbow_bridge_built)
         self.assertEqual(self.where(), ('Alefgard', (56, 73)))
         self.assertEqual(self.bridge_tile(), 'BRIDGE')
 
     def test_load_game_without_rainbow_bridge_key(self):
         save = {"Name": "Erdrick", "Experience": 0, "Gold": 0, "Inventory": [],
                 "CurrentMap": "Alefgard", "PlayerRow": 56, "PlayerColumn": 73}
-        self.game.rainbow_bridge_built = True
+        self.game.story_flags.rainbow_bridge_built = True
         self.game.load_game(save)
-        self.assertFalse(self.game.rainbow_bridge_built)
+        self.assertFalse(self.game.story_flags.rainbow_bridge_built)
 
     def walk(self, steps):
         with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
@@ -469,7 +469,7 @@ class TestGame(TestCase):
         self.game.player.column = 18
         self.game.last_map = TantegelThroneRoom(self.game.config)
         self.game.change_map(TantegelCourtyard(self.game.config))
-        self.assertTrue(self.game.allow_save_prompt)
+        self.assertTrue(self.game.story_flags.left_throne_room)
         self.game.music_enabled = False
         self.game.player.row = 14
         self.game.player.column = 14
@@ -633,15 +633,15 @@ class TestGame(TestCase):
                           'May the light shine upon thee, Edward.'),
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
         self.game.drawer.handle_initial_dialog(self.game.initial_dialog_enabled, self.game.cmd_menu, self.game.events,
-                                               self.game.skip_text, self.game.allow_save_prompt)
+                                               self.game.skip_text, self.game.story_flags.left_throne_room)
         self.assertFalse(self.game.drawer.display_hovering_stats)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
         self.assertTrue(self.game.game_state.automatic_initial_dialog_run)
         self.assertEqual('When thou art finished preparing for thy departure, please see me.\nI shall wait.',
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
-        self.game.allow_save_prompt = True
+        self.game.story_flags.left_throne_room = True
         self.game.drawer.handle_initial_dialog(self.game.initial_dialog_enabled, self.game.cmd_menu, self.game.events,
-                                               self.game.skip_text, self.game.allow_save_prompt)
+                                               self.game.skip_text, self.game.story_flags.left_throne_room)
         self.assertFalse(self.game.game_state.is_initial_dialog)
         self.assertEqual(('I am greatly pleased that thou hast returned, Edward.',
                           'Before reaching thy next level of experience thou must gain 7 Points.',
@@ -705,7 +705,7 @@ class TestGame(TestCase):
         self.game.drawer.draw_all(self.game.screen, self.game.loop_count, self.game.big_map, self.game.current_map,
                                   self.game.player, self.game.cmd_menu, self.game.foreground_rects,
                                   self.game.game_state.enable_animate, self.game.camera, self.game.initial_dialog_enabled,
-                                  self.game.events, self.game.skip_text, self.game.allow_save_prompt,
+                                  self.game.events, self.game.skip_text, self.game.story_flags.left_throne_room,
                                   self.game.game_state, self.game.torch_active, self.game.color)
         self.assertTrue(self.game.drawer.not_moving_time_start)
 

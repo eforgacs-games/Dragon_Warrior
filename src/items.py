@@ -178,13 +178,11 @@ class TreasureChestHistory:
     is entered (so chests refill), and GetTreasure doesn't record a chest at all when all 8 slots are in use.
     The NES keeps only (x, y), not the map; no two chests share a position on maps reachable from each other
     without going outside, so keeping the map name here behaves the same.
-    The flags below are NES PlayerFlags bits, which the NES keeps in the save file (not saved here yet).
+    Like the NES, the history isn't saved: MainGameEngine clears it whenever a game is started or continued.
     """
 
     def __init__(self):
         self.slots: list[Tuple[str, Tuple[int, int]] | None] = [None] * 8
-        self.left_throne_room = False  # NES F_LEFT_THROOM
-        self.death_necklace_found = False  # NES F_DTH_NCK_FOUND
 
     def is_opened(self, map_name: str, coordinates: Tuple[int, int]) -> bool:
         return (map_name, tuple(coordinates)) in self.slots
@@ -198,13 +196,12 @@ class TreasureChestHistory:
                 return True
         return False
 
-    def enter_map(self, map_name: str) -> None:
-        """NES InitMapData, run whenever a map is loaded."""
-        if map_name != 'TantegelThroneRoom':
-            self.left_throne_room = True
+    def enter_map(self, map_name: str, left_throne_room: bool) -> None:
+        """NES InitMapData, run whenever a map is loaded. left_throne_room is the F_LEFT_THROOM story flag: once the
+        hero has been beyond the throne room, its chests are always shown as opened."""
         if map_name == 'Alefgard':
             self.slots = [None] * 8
-        if self.left_throne_room and map_name == 'TantegelThroneRoom':
+        if left_throne_room and map_name == 'TantegelThroneRoom':
             for index, coordinates in THRONE_ROOM_CHEST_SLOTS.items():
                 self.slots[index] = ('TantegelThroneRoom', coordinates)
 

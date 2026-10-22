@@ -263,10 +263,10 @@ class TestTreasureChestHistory(unittest.TestCase):
         history = TreasureChestHistory()
         self.assertTrue(history.record('GarinsGraveB1', (1, 12)))
         self.assertTrue(history.is_opened('GarinsGraveB1', (1, 12)))
-        history.enter_map('GarinsGraveB2')
+        history.enter_map('GarinsGraveB2', left_throne_room=True)
         self.assertTrue(history.is_opened('GarinsGraveB1', (1, 12)))
         # NES InitMapData: entering the overworld clears the history, so chests refill
-        history.enter_map('Alefgard')
+        history.enter_map('Alefgard', left_throne_room=True)
         self.assertFalse(history.is_opened('GarinsGraveB1', (1, 12)))
 
     def test_only_eight_slots(self):
@@ -278,12 +278,10 @@ class TestTreasureChestHistory(unittest.TestCase):
 
     def test_throne_room_chests_gone_after_leaving(self):
         history = TreasureChestHistory()
-        history.enter_map('TantegelThroneRoom')
+        history.enter_map('TantegelThroneRoom', left_throne_room=False)
         self.assertFalse(history.is_opened('TantegelThroneRoom', (10, 14)))
-        history.enter_map('TantegelCourtyard')
-        history.enter_map('Alefgard')
-        history.enter_map('TantegelCourtyard')
-        history.enter_map('TantegelThroneRoom')
+        history.enter_map('Alefgard', left_throne_room=True)
+        history.enter_map('TantegelThroneRoom', left_throne_room=True)
         for coordinates in treasure['TantegelThroneRoom']:
             self.assertTrue(history.is_opened('TantegelThroneRoom', coordinates))
 

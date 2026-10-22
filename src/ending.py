@@ -110,7 +110,7 @@ class Ending:
         game = self.game
         game.drawer.draw_all(game.screen, game.loop_count, game.big_map, game.current_map, game.player, game.cmd_menu,
                              game.foreground_rects, game.game_state.enable_animate, game.camera,
-                             game.initial_dialog_enabled, game.events, game.skip_text, game.allow_save_prompt,
+                             game.initial_dialog_enabled, game.events, game.skip_text, game.story_flags.left_throne_room,
                              game.game_state, game.torch_active, game.color)
         display.flip()
 
@@ -187,15 +187,15 @@ class Ending:
         self.say(self.quote(_("I cannot,")) + "\n" + _("said {}.").format(name), quoted=False)
         self.say(_("If ever I am to rule a country, it must be a land that I myself find."))
 
-        if self.game.princess_saved:
+        if self.game.story_flags.gwaelin_returned:
             # NES: Gwaelin, already returned (F_RTN_GWAELIN), comes down the throne room stairs and walks to the king
             gwaelin = self.place_gwaelin(*ENDING_GWAELIN_STAIRS)
             self.gwaelin_says_wait()
             self.walk_gwaelin_to_king(gwaelin)
             self.gwaelin_joins()
-        elif self.player.is_carrying_princess:
+        elif self.game.story_flags.carrying_gwaelin:
             # NES ChkCarryGwaelin: the hero sets her down beside the king
-            self.player.is_carrying_princess = False
+            self.game.story_flags.carrying_gwaelin = False
             self.reset_hero_images()
             self.place_gwaelin(*ENDING_GWAELIN_BESIDE_KING)
             self.gwaelin_says_wait()
@@ -252,7 +252,7 @@ class Ending:
         gwaelin = current_map.characters.pop('PRINCESS_GWAELIN')['character']
         if gwaelin in current_map.fixed_characters:
             current_map.fixed_characters.remove(gwaelin)
-        self.player.is_carrying_princess = True
+        self.game.story_flags.carrying_gwaelin = True
         self.game.set_player_images_by_equipment()
         self.redraw()
 

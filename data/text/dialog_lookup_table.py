@@ -20,6 +20,7 @@ from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_price, \
     inventory_is_full, pay_player, sell_list, sell_price
 from src.sound import Sound
+from src.story_flags import StoryFlags
 from src.text import draw_text
 from src.visual_effects import fade, flash_transparent_color, greyscale_screen
 
@@ -303,7 +304,7 @@ class DialogLookup:
 
         self.player.images = self.current_map.scale_sprite_sheet(self.directories.HERO_CARRYING_PRINCESS_PATH)
         self.player.set_images(self.player.images)
-        self.player.is_carrying_princess = True
+        self.command_menu.game.story_flags.carrying_gwaelin = True
         self.command_menu.show_line_in_dialog_box(self._("I'm so happy!"))
 
     def but_thou_must(self, original_function):
@@ -367,8 +368,10 @@ class DialogLookup:
         self.player.inventory = []
         self.player.weapon = self.player.armor = self.player.shield = ""
         self.player.spells = []
-        self.player.is_carrying_princess = False
-        game.story_flags.gwaelin_returned = False
+        # ModsnSpells is zeroed too: the worn-item bits as well as the Rainbow Bridge and Charlock passage flags
+        self.player.wearing_dragon_scale = self.player.wearing_fighters_ring = False
+        self.player.wearing_cursed_belt = self.player.wearing_death_necklace = False
+        game.story_flags = StoryFlags()
         self.player.update_attack_power()
         self.player.update_defense_power()
 
@@ -433,7 +436,7 @@ class DialogLookup:
     def put_princess_on_throne(self):
         """NES DoKingDialog: clear F_GOT_GWAELIN, set F_RTN_GWAELIN and place Gwaelin's NPC beside the king."""
         game = self.command_menu.game
-        self.player.is_carrying_princess = False
+        game.story_flags.carrying_gwaelin = False
         game.story_flags.gwaelin_returned = True
         game.set_player_images_by_equipment()
         current_map = game.current_map
@@ -484,7 +487,7 @@ class DialogLookup:
     def dialog_once_gwaelin_rescued(self, not_saved_dialog, saved_dialog):
         """NES ChkPrncsDialog1-4: these NPCs change what they say once F_DONE_GWAELIN is set, which is as soon as
         the hero is carrying Gwaelin, not just once she's been returned."""
-        dialog = saved_dialog if self.command_menu.game.gwaelin_rescued else not_saved_dialog
+        dialog = saved_dialog if self.command_menu.game.story_flags.gwaelin_rescued else not_saved_dialog
         self.command_menu.show_text_in_dialog_box(dialog, add_quotes=True, skip_text=self.command_menu.skip_text,
                                                   drop_down=False, drop_up=False)
 
@@ -619,7 +622,7 @@ class DialogLookup:
 
     def tantegel_throne_room_roaming_guard(self):
         _ = self._
-        if self.command_menu.game.gwaelin_rescued:
+        if self.command_menu.game.story_flags.gwaelin_rescued:
             self.command_menu.show_line_in_dialog_box(_("Oh, brave {}.").format(self.player.name))
         else:
             player_please_save_the_princess = _("{}, please save the Princess.").format(self.player.name)
@@ -1010,7 +1013,7 @@ class DialogLookup:
             display.flip()
         self.command_menu.game.color = self.color = WHITE
         # NES Inn (Bank03, after PalFadeIn): TextBlock1 entry 6 if the hero is carrying Gwaelin, otherwise entry 8
-        if self.player.is_carrying_princess:
+        if self.command_menu.game.story_flags.carrying_gwaelin:
             good_morning = _("Good morning.\nThou hast had a good night's sleep I hope.")
         else:
             good_morning = _("Good morning.\nThou seems to have spent a good night.")
