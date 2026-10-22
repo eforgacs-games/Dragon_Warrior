@@ -202,6 +202,50 @@ class TestBattleMethods(unittest.TestCase):
         self.assertEqual(order, ['fade', 'text'])
 
 
+class TestBattleSpiral(unittest.TestCase):
+    """The battle-start spiral, per NES LoadCombatBckgrnd ($E3CD) and CmbtBGPlcmntTbl ($F397)."""
+
+    # Bank03 CmbtBGPlcmntTbl, byte for byte: high nibble = x, low nibble = y, in tiles of the 14x14 background
+    NES_CMBT_BG_PLCMNT_TBL = (
+        0x66, 0x68, 0x48, 0x46, 0x44, 0x64, 0x84, 0x86, 0x88, 0x8A, 0x6A, 0x4A, 0x2A, 0x28, 0x26, 0x24,
+        0x22, 0x42, 0x62, 0x82, 0xA2, 0xA4, 0xA6, 0xA8, 0xAA, 0xAC, 0x8C, 0x6C, 0x4C, 0x2C, 0x0C, 0x0A,
+        0x08, 0x06, 0x04, 0x02, 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xC2, 0xC4, 0xC6, 0xC8, 0xCA,
+        0xCC)
+
+    def test_order_is_the_nes_table(self):
+        # Each 2x2-tile NES block is one 16x16 tile here, so the NES tile coordinates are halved
+        nes_blocks = tuple(((byte >> 4) // 2, (byte & 0xF) // 2) for byte in self.NES_CMBT_BG_PLCMNT_TBL)
+        self.assertEqual(Battle.get_spiral_tile_coordinates(), nes_blocks)
+
+    def test_one_block_per_frame_after_one_lead_in_frame(self):
+        battle = Battle({**test_config, 'TILE_SIZE': 2}, 'Slime', Mock(identifier='Alefgard'))
+        battle.get_battle_background_image = Mock()  # type: ignore[method-assign]
+        screen, events = Mock(), []
+        screen.blit.side_effect = lambda _image, position: events.append(position)
+        with patch('src.battle.wait_frames', side_effect=lambda frames: events.append(('wait', frames))), \
+                patch('src.battle.display'):
+            battle.transition_battle_background_image_effect(screen)
+        # WaitForNMI ($E40A), then for each of the 49 blocks: WaitForNMI ($E43D) and the block
+        expected: list = [('wait', 1)]
+        for x, y in Battle.get_spiral_tile_coordinates():
+            expected += [('wait', 1), ((x + 5) * 2, (y + 4) * 2)]
+        self.assertEqual(events, expected)
+
+    def test_background_only_on_the_overworld(self):
+        # NES LoadCombatBckgrnd draws CombatBckgndGFX on MAP_OVERWORLD only; everywhere else it is TL_BLANK_TILE1
+        for map_identifier, is_dark in (('Hauksness', False), ('CharlockB1', False), ('CharlockB8', False),
+                                        ('SwampCave', True)):
+            with self.subTest(map_identifier):
+                battle = Battle(dict(test_config), 'Slime', Mock(identifier=map_identifier, is_dark=is_dark))
+                with patch.object(battle.graphics, 'get_scaled_image') as get_scaled_image:
+                    image = battle.get_battle_background_image()
+                get_scaled_image.assert_not_called()
+                self.assertEqual(tuple(image.get_at((0, 0)))[:3], (0, 0, 0))
+        battle = Battle(dict(test_config), 'Slime', Mock(identifier='Alefgard', is_dark=False))
+        with patch.object(battle.graphics, 'get_scaled_image') as get_scaled_image:
+            self.assertIs(battle.get_battle_background_image(), get_scaled_image.return_value)
+
+
 if __name__ == '__main__':
     unittest.main()
 
