@@ -11,7 +11,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 import pygame  # noqa: E402
 from pygame import Rect  # noqa: E402
 
-from src.color import RED, WHITE  # noqa: E402
+from src.color import LOW_HP_RED, WHITE  # noqa: E402
 from src.config.test_config import test_config  # noqa: E402
 from src.drawer import Drawer  # noqa: E402
 from src.game import Game  # noqa: E402
@@ -94,7 +94,7 @@ class TestInnStay(PopupWindowTestCase):
         self.run_inn_stay()
         self.assertEqual(self.events, [
             # gold paid, Dowindow WND_POPUP, "Good night." (still at the old HP: red)
-            ('popup', 2, 1, 100 - INN_COST, RED),
+            ('popup', 2, 1, 100 - INN_COST, LOW_HP_RED),
             ('line', "Good night."),
             ('fade out',),
             # HP and MP restored, Dowindow WND_POPUP while the screen is black; PalFadeIn shows it, now white
@@ -185,7 +185,7 @@ class TestOtherPopupRedraws(PopupWindowTestCase):
         self.game.load_window_palette()
         shop = self.dialog_lookup.shop_inventories.brecconary_weapons_store_inventory
         self.dialog_lookup.complete_transaction('Bamboo Pole', shop, None)
-        self.assertEqual(self.events, [('line', "I thank thee."), ('popup', 2, 1, 90, RED)])
+        self.assertEqual(self.events, [('line', "I thank thee."), ('popup', 2, 1, 90, LOW_HP_RED)])
 
     def test_chest_gold(self):
         # NES GainGoldDialog: the message, then Dowindow WND_POPUP
