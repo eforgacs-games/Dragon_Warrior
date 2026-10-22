@@ -3,6 +3,7 @@ from pygame.event import get
 
 from src.cursor import BlinkingCursor
 from src.waiting import quit_if_requested, wait
+from src.windows import YES_NO_WINDOW
 
 
 def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, color,
@@ -39,6 +40,8 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         command_menu.draw_yes_no_window(yes_chosen, True)
         sound.play_sound(directories.menu_button_sfx)
         event.pump()
+        # NES WindowSequence (Bank01): the answered YES/NO window is removed (RemoveWindow) before the answer is acted on
+        command_menu.remove_window(YES_NO_WINDOW)
         path_function()
 
     def handle_events(blinking_yes):
@@ -66,6 +69,7 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     while blinking:
         if skip_text:
             sound.play_sound(directories.menu_button_sfx)
+            command_menu.remove_window(YES_NO_WINDOW)
             yes_path_function()
             blinking = False
         else:
