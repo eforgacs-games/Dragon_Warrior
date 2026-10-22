@@ -121,7 +121,8 @@ class TestSetFontByAsciiChars(unittest.TestCase):
         mock_dirs = MagicMock()
         mock_dirs.DRAGON_QUEST_FONT_PATH = 'some/dq/font.ttf'
         mock_font_instance = MagicMock()
-        with patch('src.text.font.Font', return_value=mock_font_instance) as mock_font_class:
+        # dragon-quest.ttf is an NESFont, which draws j, k, p, t and ' as their NES tiles (tests/test_nes_text_glyphs.py)
+        with patch('src.text.NESFont', return_value=mock_font_instance) as mock_font_class:
             result = set_font_by_ascii_chars(['Hello World'], 16, None, mock_dirs)
             mock_font_class.assert_called_with('some/dq/font.ttf', 16)
             self.assertEqual(result, mock_font_instance)
