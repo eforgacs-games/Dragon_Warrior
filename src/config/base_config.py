@@ -39,6 +39,9 @@ base_config = {
     "TEXT_SPEED": "Normal",
     # "Classic": the NES dialog window, whose text scrolls; "Modern": each message replaces the last (not NES)
     "DIALOG_STYLE": "Classic",
+    # "NES": screen fades step through the NES palette (PalFadeOut/PalFadeIn); "Smooth": a black overlay alpha fade
+    # (not NES). See src/visual_effects.py screen_fade.
+    "FADE_STYLE": "NES",
     "NO_WAIT": False,
     "GOD_MODE": False,
     "INVULNERABLE": False,
