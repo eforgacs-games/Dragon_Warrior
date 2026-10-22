@@ -30,6 +30,8 @@ from src.windows import BUY_SELL_WINDOW, DIALOG_WINDOW, ITEM_MENU_BORDER, ITEM_M
 from src.visual_effects import NES_RED, flash_transparent_color, greyscale_screen, screen_fade
 from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait, wait_frames
 
+NES_MAX_LEVEL = 30  # LVL_30
+
 
 class DialogLookup:
     @property
@@ -67,12 +69,18 @@ class DialogLookup:
                              "What can I do for thee?")
         self.directories = Directories(self.config)
         before_reaching_thy_next_level_of_experience = "Before reaching thy next level of experience thou must gain {} Points."
+        # NES TextBlock1 entry 2: King Lorik says this instead of the experience line once DisplayedLevel is LVL_30
+        thou_art_strong_enough = _("Thou art strong enough!\nWhy can thou not defeat the Dragonlord?")
+        at_max_level = self.player.level == NES_MAX_LEVEL
 
         self.magic_key_prompt = _("Magic keys! They will unlock any door.\n"
                                   "Dost thou wish to purchase one for {} GOLD?")
 
         self.lookup_table = {
+            # NES ThRmMobTbl and ThRmStatTbl (Bank00)
             'TantegelThroneRoom': {
+                # Static King Lorik at 3,3 ($6E, DoKingDialog). 'dialog' starts as the opening speech (MainGameEngine,
+                # TextBlock17 entry 2) and CommandMenu.set_king_lorik_dialog switches it as the story goes on.
                 'KING_LORIK': {'dialog': (
                     _("Descendant of Erdrick, listen now to my words."),
                     _("It is told that in ages past Erdrick fought demons with a Ball of Light."),
@@ -85,24 +93,32 @@ class DialogLookup:
                     _("May the light shine upon thee, {}.").format(self.player.name)
                 ), 'post_initial_dialog': _(
                     "When thou art finished preparing for thy departure, please see me.\nI shall wait."),
+                    # NES DoKingDialog, KingDialog2/LeftThRoom: TextBlock13 entry 0, then TextBlock1 entry 2 at
+                    # level 30 (LVL_30) or TextBlock13 entry 1 (GetExpRemaining) below it, then SaveDialog
                     'returned_dialog': (
                         _("I am greatly pleased that thou hast returned, {}.").format(self.player.name),
-                        _(before_reaching_thy_next_level_of_experience).format(
-                            self.player.points_to_next_level),
+                        thou_art_strong_enough if at_max_level else _(
+                            before_reaching_thy_next_level_of_experience).format(self.player.points_to_next_level),
                         self.prompt_for_save,
                         self.prompt_to_continue_quest,
                     ),
+                    # NES MainGameEngine (LCA23): TextBlock18 entry 7, then at level 30 TextBlock1 entry 2 and
+                    # straight on to EndKingDialog; below it TextBlock13 entry 1 and TextBlock18 entry 8
                     'load_from_save_dialog': (self._("I am glad thou hast returned.\n"
                                                      "All our hopes are riding on thee."),
-                                              before_reaching_thy_next_level_of_experience.format(
-                                                  self.player.points_to_next_level),
-                                              self._("See me again when thy level has increased."),
+                                              *((thou_art_strong_enough,) if at_max_level else (
+                                                  before_reaching_thy_next_level_of_experience.format(
+                                                      self.player.points_to_next_level),
+                                                  self._("See me again when thy level has increased."))),
                                               self.goodbye_tempt_not_the_fates.format(self.player.name)
                                               ),
+                    # NES KingDeathDialog (LEDF2): TextBlock17 entry 13, TextBlock18 entry 2 unless the hero is
+                    # level 30 (NowGoText skips it), then entry 3
                     'post_death_dialog': (_("Death should not have taken thee, {}.").format(self.player.name),
                                           _("I will give thee another chance."),
-                                          _("To reach the next level, thy Experience Points must increase by {}.").format(
-                                              self.player.points_to_next_level),
+                                          *(() if at_max_level else (
+                                              _("To reach the next level, thy Experience Points must increase by "
+                                                "{}.").format(self.player.points_to_next_level),)),
                                           _("Now, go, {}!").format(self.player.name)),
                     # NES DoKingDialog (Bank03), when F_GOT_GWAELIN is set: TextBlock12 entry 9, AddInvItem
                     # (Gwaelin's Love), entries 11 and 12, then Gwaelin is put on the throne and it goes straight
@@ -122,51 +138,86 @@ class DialogLookup:
                     ),
                 },
 
+                # Mobile guard at NES 7,5 (ThRmMobTbl, dialog byte $65, ChkPrncsDialog4)
                 'GUARD': {'dialog': (
                     self.tantegel_throne_room_roaming_guard,
                 )},
-                # Only on the map once she's been returned (NES ChkGwaelinNPC)
+                # Static Princess Gwaelin at 6,3 ($6F, PrincessDialog). Only on the map once she's been returned
+                # (NES ChkGwaelinNPC)
                 'PRINCESS_GWAELIN': {'dialog': (self.princess_gwaelin_throne_room,)},
-                'GUARD_2': {'dialog': (
-                    _("If thou hast collected all the Treasure Chests, a key will be found."),
-                    _("Once used, the key will disappear, but the door will be open and thou may pass through.")
-                )},
-                'GUARD_3': {'dialog': (
-                    _("East of this castle is a town where armor, weapons, and many other items may be purchased."),
-                    _("Return to the Inn for a rest if thou art wounded in battle, {}.").format(self.player.name),
-                    _("Sleep heals all.")
-                )},
+                # Static guard at 3,6 ($23). NES RegularDialog: until F_LEFT_THROOM is set it's TextBlock17 entry 1,
+                # then DoVariousDialog1 shows the byte + $2F, TextBlock6 entry 2
+                'GUARD_2': {'dialog': (partial(
+                    self.dialog_once_left_throne_room,
+                    (_("East of this castle is a town where armor, weapons, and many other items may be purchased."),
+                     _("Return to the Inn for a rest if thou art wounded in battle, {}.").format(self.player.name),
+                     _("Sleep heals all.")),
+                    (_("A word of advice."), _("Save thy money for more expensive armor."))),)},
+                # Static guard at 5,6 ($24, ThrnRmDialog2): TextBlock17 entry 0, then TextBlock6 entry 3
+                'GUARD_3': {'dialog': (partial(
+                    self.dialog_once_left_throne_room,
+                    (_("If thou hast collected all the Treasure Chests, a key will be found."),
+                     _("Once used, the key will disappear, but the door will be open and thou may pass through.")),
+                    (_("Listen to what people say.\nIt can be of great help."),)),)},
             },
+            # NES TantMobTbl and TantStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte + $2F
+            # (DoVariousDialog2, Bank03), so $16 is TextBlock5 entry 5 and so on. Once the Dragonlord is dead, every
+            # NPC here says "Come now, King Lorik awaits." instead (NES LD134, Ending.npc_dialog).
             'TantegelCourtyard': {
+                # Static shopkeeper at 24,1 ($0E, KeysDialog: KeyCostTbl entry 2)
                 'MERCHANT': {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['TantegelCourtyard']),)},
+                # Mobile shopkeeper at 4,21 ($1F, TextBlock5 entry 14)
                 'MERCHANT_2': {'dialog': _(
                     "We are merchants who have traveled much in this land. Many of our colleagues have been "
                     "killed by servants of the Dragonlord.")},
+                # Mobile shopkeeper at 6,25 ($20, TextBlock5 entry 15)
                 'MERCHANT_3': {
                     'dialog': _("Rumor has it that entire towns have been destroyed by the Dragonlord's servants.")},
+                # Static male villager at 2,8 ($18, TextBlock5 entry 7)
                 'MAN': {'dialog': _("To become strong enough to face future trials thou must first battle many foes.")},
+                # Mobile male villager at 11,11 ($1C, TextBlock5 entry 11)
                 'MAN_2': {'dialog': _(
                     "There was a time when Brecconary was a paradise.\nThen the Dragonlord's minions came.")},
+                # Static female villager at 27,5 ($1A, TextBlock5 entry 9, then TextBlock12 entry 0)
                 'WOMAN': {
                     'dialog': (_("When the sun and rain meet, a Rainbow Bridge shall appear."), _("It's a legend."))},
-                # NES ChkPrncsDialog1 (dialog byte $62)
+                # Mobile female villager at 8,13 ($62, ChkPrncsDialog1)
                 'WOMAN_2': {'dialog': (partial(self.dialog_once_gwaelin_rescued, where_is_princess_gwaelin,
                                                _("Thank you for saving the Princess.")),)},
-
+                # Static guard at 8,6 ($19, TextBlock5 entry 8)
                 'GUARD': {'dialog': (
                     _("King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."),)},
+                # Static guard at 8,8 ($71, GuardDialog1: TextBlock1 entry 3)
                 'GUARD_2': {'dialog': _("If thou art planning to take a rest, first see King Lorik.")},
+                # Mobile guard at 2,12 ($1B, TextBlock5 entry 10)
                 'GUARD_3': {'dialog': _("Never does a brave person steal.")},
-                # NES ChkPrncsDialog2 (dialog byte $63)
+                # Static guard at 15,20 ($63, ChkPrncsDialog2)
                 'GUARD_4': {'dialog': (partial(self.dialog_once_gwaelin_rescued, where_is_princess_gwaelin,
                                                _("Oh, my dearest Gwaelin!’\n`I hate thee, {}.").format(
                                                    self.player.name)),)},
+                # Static gate guards at 9,27 and 12,27 ($21, TextBlock6 entry 0)
                 'GUARD_5': {'dialog': welcome_to_tantegel},
                 'GUARD_6': {'dialog': welcome_to_tantegel},
+                # Mobile guard at 19,2 ($17, TextBlock5 entry 6)
+                'GUARD_7': {'dialog': _("Thou must have a key to open a door.")},
+                # Static guard at 26,15 ($1E, TextBlock5 entry 13)
+                'GUARD_8': {'dialog': _("If thy Hit Points are high enough, by all means, enter.")},
+                # Mobile guard at 18,18 ($72, GuardDialog2: TextBlock10 entry 1)
+                'GUARD_9': {'dialog': _("When entering the cave, take with thee a torch.")},
+                # Static wizard at 20,26 ($6A, ChkMagicDialog): TextBlock11 entry 13, BWScreenFlash, MP to the max
                 'WISE_MAN': {'dialog': (
                     _("{}'s coming was foretold by legend. May the light shine upon this brave warrior.").format(
                         self.player.name),
-                    self.flash_and_restore_mp)}},
+                    self.flash_and_restore_mp)},
+                # Mobile wizard at 17,11 ($1D, TextBlock5 entry 12)
+                'WISE_MAN_2': {'dialog': (_("Let us wish the warrior well!"), _("May the light be thy strength!"))},
+                # Mobile fighter at 24,21 ($22, TextBlock6 entry 1; the ROM has no space in "Garinham,look")
+                'SOLDIER': {'dialog': _("In Garinham,look for the grave of Garin.\n"
+                                        "Thou must push on a wall of darkness there.")},
+                # Mobile fighter at 25,11 ($16, TextBlock5 entry 5)
+                'SOLDIER_2': {'dialog': _("I am looking for the castle cellar.\nI heard it is not easily found.")},
+            },
+            # NES TaSLStatTbl: the static wizard at 4,6 ($66, WzdGuardDialog). TaSLMobTbl is empty.
             'TantegelCellar': {'WISE_MAN': {'dialog': (self.tantegel_cellar_stones_of_sunlight_guardian,)}},
             # NES BrecMobTbl and BrecStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte
             # + $2F (DoVariousDialog2, Bank03), so $25 is TextBlock6 entry 4 and so on.
@@ -601,6 +652,11 @@ class DialogLookup:
         dialog = saved_dialog if self.command_menu.game.story_flags.gwaelin_rescued else not_saved_dialog
         self.command_menu.show_text_in_dialog_box(dialog, add_quotes=True, skip_text=self.command_menu.skip_text,
                                                   drop_down=False, drop_up=False)
+
+    def dialog_once_left_throne_room(self, first_visit_dialog, later_dialog):
+        """NES RegularDialog: the throne room's static guards (dialog bytes $23 and $24) say TextBlock17 entries 1 and 0
+        until F_LEFT_THROOM is set, then the byte + $2F like any other NPC (DoVariousDialog1)."""
+        self.say(*(later_dialog if self.command_menu.game.story_flags.left_throne_room else first_visit_dialog))
 
     def say(self, *lines, hide_arrow=False):
         """Show NPC lines in the dialog box that is already open."""
