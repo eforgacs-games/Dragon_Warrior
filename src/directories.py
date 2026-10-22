@@ -281,90 +281,18 @@ class Directories:
 
         # shops
 
+        # The weapon and armor shops' inventory windows (ShopInvDat), NES screenshots: the game generates the window
+        # (src/windows.py shop_inventory_layout), and tests compare it with these, pixel for pixel. Next to each one,
+        # <name>_<item>.png is the same window with the cursor at that item.
         images_shops_dir = join(self.IMAGES_DIR, 'shops')
-
-        images_shops_brecconary_dir = join(images_shops_dir, 'brecconary')
-        images_shops_brecconary_weapons_dir = join(images_shops_brecconary_dir, 'weapons')
-        self.BRECCONARY_WEAPONS_SHOP_PATH = join(images_shops_brecconary_weapons_dir, 'brecconary_shop.png')
-        self.BRECCONARY_WEAPONS_SHOP_BAMBOO_POLE_PATH = join(images_shops_brecconary_weapons_dir,
-                                                             'brecconary_shop_bamboo_pole.png')
-        self.BRECCONARY_WEAPONS_SHOP_CLUB_PATH = join(images_shops_brecconary_weapons_dir, 'brecconary_shop_club.png')
-        self.BRECCONARY_WEAPONS_SHOP_COPPER_SWORD_PATH = join(images_shops_brecconary_weapons_dir,
-                                                              'brecconary_shop_copper_sword.png')
-        self.BRECCONARY_WEAPONS_SHOP_CLOTHES_PATH = join(images_shops_brecconary_weapons_dir,
-                                                         'brecconary_shop_clothes.png')
-        self.BRECCONARY_WEAPONS_SHOP_LEATHER_ARMOR_PATH = join(images_shops_brecconary_weapons_dir,
-                                                               'brecconary_shop_leather_armor.png')
-        self.BRECCONARY_WEAPONS_SHOP_SMALL_SHIELD_PATH = join(images_shops_brecconary_weapons_dir,
-                                                              'brecconary_shop_small_shield.png')
-
-        images_shops_garinham_dir = join(images_shops_dir, 'garinham')
-        images_shops_garinham_weapons_dir = join(images_shops_garinham_dir, 'weapons')
-        self.GARINHAM_WEAPONS_SHOP_PATH = join(images_shops_garinham_weapons_dir, 'garinham_shop.png')
-        self.GARINHAM_WEAPONS_SHOP_CHAIN_MAIL_PATH = join(images_shops_garinham_weapons_dir,
-                                                          'garinham_shop_chain_mail.png')
-        self.GARINHAM_WEAPONS_SHOP_CLUB_PATH = join(images_shops_garinham_weapons_dir, 'garinham_shop_club.png')
-        self.GARINHAM_WEAPONS_SHOP_COPPER_SWORD_PATH = join(images_shops_garinham_weapons_dir,
-                                                            'garinham_shop_copper_sword.png')
-        self.GARINHAM_WEAPONS_SHOP_HALF_PLATE_PATH = join(images_shops_garinham_weapons_dir,
-                                                          'garinham_shop_half_plate.png')
-        self.GARINHAM_WEAPONS_SHOP_HAND_AXE_PATH = join(images_shops_garinham_weapons_dir, 'garinham_shop_hand_axe.png')
-        self.GARINHAM_WEAPONS_SHOP_LARGE_SHIELD_PATH = join(images_shops_garinham_weapons_dir,
-                                                            'garinham_shop_large_shield.png')
-        self.GARINHAM_WEAPONS_SHOP_LEATHER_ARMOR_PATH = join(images_shops_garinham_weapons_dir,
-                                                             'garinham_shop_leather_armor.png')
-
-        images_shops_kol_dir = join(images_shops_dir, 'kol')
-        images_shops_kol_weapons_dir = join(images_shops_kol_dir, 'weapons')
-        self.KOL_WEAPONS_SHOP_PATH = join(images_shops_kol_weapons_dir, 'kol_shop.png')
-        self.KOL_WEAPONS_SHOP_COPPER_SWORD_PATH = join(images_shops_kol_weapons_dir, 'kol_shop_copper_sword.png')
-        self.KOL_WEAPONS_SHOP_HAND_AXE_PATH = join(images_shops_kol_weapons_dir, 'kol_shop_hand_axe.png')
-        self.KOL_WEAPONS_SHOP_HALF_PLATE_PATH = join(images_shops_kol_weapons_dir, 'kol_shop_half_plate.png')
-        self.KOL_WEAPONS_SHOP_FULL_PLATE_PATH = join(images_shops_kol_weapons_dir, 'kol_shop_full_plate.png')
-        self.KOL_WEAPONS_SHOP_SMALL_SHIELD_PATH = join(images_shops_kol_weapons_dir, 'kol_shop_small_shield.png')
-
-        images_shops_rimuldar_dir = join(images_shops_dir, 'rimuldar')
-        images_shops_rimuldar_weapons_dir = join(images_shops_rimuldar_dir, 'weapons')
-        self.RIMULDAR_WEAPONS_SHOP_PATH = join(images_shops_rimuldar_weapons_dir, 'rimuldar_shop.png')
-        self.RIMULDAR_WEAPONS_SHOP_COPPER_SWORD_PATH = join(images_shops_rimuldar_weapons_dir,
-                                                            'rimuldar_shop_copper_sword.png')
-        self.RIMULDAR_WEAPONS_SHOP_HAND_AXE_PATH = join(images_shops_rimuldar_weapons_dir, 'rimuldar_shop_hand_axe.png')
-        self.RIMULDAR_WEAPONS_SHOP_BROAD_SWORD_PATH = join(images_shops_rimuldar_weapons_dir,
-                                                           'rimuldar_shop_broad_sword.png')
-        self.RIMULDAR_WEAPONS_SHOP_HALF_PLATE_PATH = join(images_shops_rimuldar_weapons_dir,
-                                                          'rimuldar_shop_half_plate.png')
-        self.RIMULDAR_WEAPONS_SHOP_FULL_PLATE_PATH = join(images_shops_rimuldar_weapons_dir,
-                                                          'rimuldar_shop_full_plate.png')
-        self.RIMULDAR_WEAPONS_SHOP_MAGIC_ARMOR_PATH = join(images_shops_rimuldar_weapons_dir,
-                                                           'rimuldar_shop_magic_armor.png')
-
-        images_shops_cantlin_dir = join(images_shops_dir, 'cantlin')
-        images_shops_cantlin_weapons_dir = join(images_shops_cantlin_dir, 'weapons')
-        images_shops_cantlin_weapons_north_dir = join(images_shops_cantlin_weapons_dir, 'north')
-        self.CANTLIN_WEAPONS_SHOP_NORTH_PATH = join(images_shops_cantlin_weapons_north_dir, 'cantlin_shop_north.png')
-        self.CANTLIN_WEAPONS_SHOP_NORTH_BAMBOO_POLE_PATH = join(images_shops_cantlin_weapons_north_dir,
-                                                                'cantlin_shop_north_bamboo_pole.png')
-        self.CANTLIN_WEAPONS_SHOP_NORTH_CLUB_PATH = join(images_shops_cantlin_weapons_north_dir,
-                                                         'cantlin_shop_north_club.png')
-        self.CANTLIN_WEAPONS_SHOP_NORTH_COPPER_SWORD_PATH = join(images_shops_cantlin_weapons_north_dir,
-                                                                 'cantlin_shop_north_copper_sword.png')
-        self.CANTLIN_WEAPONS_SHOP_NORTH_LEATHER_ARMOR_PATH = join(images_shops_cantlin_weapons_north_dir,
-                                                                  'cantlin_shop_north_leather_armor.png')
-        self.CANTLIN_WEAPONS_SHOP_NORTH_CHAIN_MAIL_PATH = join(images_shops_cantlin_weapons_north_dir,
-                                                               'cantlin_shop_north_chain_mail.png')
-        self.CANTLIN_WEAPONS_SHOP_NORTH_LARGE_SHIELD_PATH = join(images_shops_cantlin_weapons_north_dir,
-                                                                 'cantlin_shop_north_large_shield.png')
-
-        images_shops_cantlin_weapons_south_dir = join(images_shops_cantlin_weapons_dir, 'south')
-        self.CANTLIN_WEAPONS_SHOP_SOUTH_PATH = join(images_shops_cantlin_weapons_south_dir, 'cantlin_shop_south.png')
-        self.CANTLIN_WEAPONS_SHOP_SOUTH_FULL_PLATE_PATH = join(images_shops_cantlin_weapons_south_dir,
-                                                               'cantlin_shop_south_full_plate.png')
-        self.CANTLIN_WEAPONS_SHOP_SOUTH_MAGIC_ARMOR_PATH = join(images_shops_cantlin_weapons_south_dir,
-                                                                'cantlin_shop_south_magic_armor.png')
-        self.CANTLIN_WEAPONS_SHOP_SOUTH_HAND_AXE_PATH = join(images_shops_cantlin_weapons_south_dir,
-                                                             'cantlin_shop_south_hand_axe.png')
-        self.CANTLIN_WEAPONS_SHOP_SOUTH_BROAD_SWORD_PATH = join(images_shops_cantlin_weapons_south_dir,
-                                                                'cantlin_shop_south_broad_sword.png')
+        self.BRECCONARY_WEAPONS_SHOP_PATH = join(images_shops_dir, 'brecconary', 'weapons', 'brecconary_shop.png')
+        self.GARINHAM_WEAPONS_SHOP_PATH = join(images_shops_dir, 'garinham', 'weapons', 'garinham_shop.png')
+        self.KOL_WEAPONS_SHOP_PATH = join(images_shops_dir, 'kol', 'weapons', 'kol_shop.png')
+        self.RIMULDAR_WEAPONS_SHOP_PATH = join(images_shops_dir, 'rimuldar', 'weapons', 'rimuldar_shop.png')
+        self.CANTLIN_WEAPONS_SHOP_NORTH_PATH = join(images_shops_dir, 'cantlin', 'weapons', 'north',
+                                                    'cantlin_shop_north.png')
+        self.CANTLIN_WEAPONS_SHOP_SOUTH_PATH = join(images_shops_dir, 'cantlin', 'weapons', 'south',
+                                                    'cantlin_shop_south.png')
 
         # battle menu
         battle_menu_dir = join(images_menus_dir, 'battle_menu')
