@@ -51,6 +51,24 @@ class TestDialogLookup(TestCase):
                                   "If you turn the power off first, the Imperial Scroll of Honor containing your deeds "
                                   "may be lost.", 'hang'])
 
+    def test_reset_message_is_in_its_own_new_dialog_window(self):
+        # NES ExitGame: EndGameClearPPU, then Dowindow WND_DIALOG, a new empty window, before the reset message.
+        # The King's "Rest then for awhile." must not still be in the window above it.
+        menu = self.dialog_lookup.command_menu
+        text_before_reset_message = []
+
+        def show(line, **_):
+            if line.startswith("Please push RESET"):
+                text_before_reset_message.extend(row for row in menu.dialog_buffer.visible_lines if row.strip())
+            else:
+                list(menu.dialog_buffer.print_message(line, quoted=False))
+
+        with patch.object(menu, 'show_line_in_dialog_box', side_effect=show), \
+                patch('data.text.dialog_lookup_table.mixer.music.stop'), \
+                patch.object(self.dialog_lookup, 'wait_for_reset'):
+            self.dialog_lookup.rest_then_for_awhile()
+        self.assertEqual(text_before_reset_message, [])
+
     def test_reset_message_waits_only_after_the_first_sentence(self):
         # NES TextBlock19 entry 8: WAIT after "...turn off the POWER.", then the second sentence ends with no wait
         menu = self.dialog_lookup.command_menu
