@@ -4,7 +4,7 @@ import random
 from os.path import join
 
 from src.spells import Spell
-from typing import Any, Callable, Iterable, Tuple, List
+from typing import Any, Callable, Collection, Iterable, Tuple, List
 
 import pygame_menu
 from pygame_menu import controls as menu_controls
@@ -16,9 +16,9 @@ from src.waiting import game_ticks as get_ticks  # game time: runs N times as fa
 from data.text.dialog_lookup_table import DialogLookup
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
-from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
+from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, accept_keys, reject_keys, Graphics, set_gettext_language
 from src.cursor import BlinkingCursor, draw_cursor_tile
-from src.waiting import quit_if_requested, wait
+from src.waiting import is_any_key_held, quit_if_requested, wait
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
@@ -361,7 +361,8 @@ class CommandMenu(Menu):
 
     def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True,
                                 temp_text_start: int | None = None, skip_text: bool = False, hide_arrow=False,
-                                disable_sound=False, letter_by_letter=True):
+                                disable_sound=False, letter_by_letter=True,
+                                advance_keys: Collection[int] | None = None):
         """Shows a single line in a dialog box.
         :param hide_arrow: Whether to show the continuation arrow
         (blinking down arrow at bottom of dialog box).
@@ -371,12 +372,14 @@ class CommandMenu(Menu):
         :param temp_text_start: The time at which temporary text started.
         :param disable_sound: Whether to disable the sound.
         :param letter_by_letter: Whether to print the text letter by letter.
+        :param advance_keys: The keys that end the wait for a key, and whether holding one does (see
+            wait_for_dialog_key); by default, the NES rule for a wait with or without the arrow.
         """
         tile_size = self.game.game_state.config['TILE_SIZE']
         if line:
             if isinstance(line, str):
                 self.show_text_line_in_dialog_box(line, add_quotes, disable_sound, hide_arrow, letter_by_letter,
-                                                  skip_text, temp_text_start, tile_size)
+                                                  skip_text, temp_text_start, tile_size, advance_keys=advance_keys)
             else:
                 # if the line is a method
                 line()
@@ -387,7 +390,7 @@ class CommandMenu(Menu):
         return f"`{line}’"
 
     def show_text_line_in_dialog_box(self, line, add_quotes, disable_sound, hide_arrow, letter_by_letter, skip_text,
-                                     temp_text_start, tile_size):
+                                     temp_text_start, tile_size, advance_keys: Collection[int] | None = None):
         """Prints one message into the dialog window the way the NES does (Bank01 DoDialog, see src/dialog_box.py):
         it goes below whatever the window already shows, letter by letter, scrolling the window up when it reaches
         the bottom. Then it waits for a key, with the blinking down arrow unless hide_arrow is set (DoWait)."""
@@ -411,33 +414,56 @@ class CommandMenu(Menu):
         if not animate:
             self.draw_dialog_window()
 
-        self.wait_for_dialog_key(shows_arrow, skip_text, temp_text_start, disable_sound)
+        self.wait_for_dialog_key(shows_arrow, skip_text, temp_text_start, disable_sound, advance_keys)
 
         if shows_arrow:
             self.draw_dialog_arrow(False)  # DoWait: TxtClearArrow
             self.run_dialog_steps(self.dialog_buffer.finish_wait(), animate, frames, disable_sound)
 
     def wait_for_dialog_key(self, shows_arrow: bool, skip_text: bool, temp_text_start: int | None,
-                            disable_sound: bool) -> None:
-        """Waits for a key press (or not at all with skip_text, or for one second with temp_text_start)."""
+                            disable_sound: bool, advance_keys: Collection[int] | None = None) -> None:
+        """Waits for one of the NES buttons that end this wait (or not at all with skip_text, or for one second with
+        temp_text_start). Other keys are ignored, as the NES ignores the other buttons.
+
+        - With the arrow, NES DoWait (Bank01, reached from WaitFound for TXT_WAIT): TxtCheckInput masks JoypadBtns with
+          IN_A_OR_B, so only A or B goes on, and since it reads the buttons as they are, one still held from before
+          goes on at once (DoWait checks before it even draws the arrow).
+        - Without it, the end of the text, where the NES waits in WaitForBtnRelease / WaitForBtnPress (Bank03, from
+          ResumeGamePlay, PlayerInitControl, ExitFight and the like): any button, D-pad, START and SELECT included, but
+          only a new press, since a held button has to be let go first.
+
+        :param advance_keys: Other keys to wait for instead (DeathText's A or START, say); holding one of them counts,
+            as these waits read JoypadBtns directly too.
+        """
+        held_counts = shows_arrow or advance_keys is not None
+        if advance_keys is None:
+            advance_keys = A_OR_B_KEYS if shows_arrow else ANY_BUTTON_KEYS
         while True:
-            if shows_arrow:
-                self.draw_dialog_arrow(self.game.show_arrow)
             if skip_text or (temp_text_start and get_ticks() - temp_text_start >= 1000):
                 if not skip_text and not disable_sound:
                     self.sound.play_sound(self.directories.menu_button_sfx)
                 return
-            for current_event in event.get():
-                quit_if_requested(current_event)
-                if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
-                    continue
-                if current_event.type == KEYDOWN:
-                    if not skip_text and not disable_sound:
-                        self.sound.play_sound(self.directories.menu_button_sfx)
-                    event.clear(KEYDOWN)
-                    return
-                elif current_event.type == arrow_fade:
-                    self.game.show_arrow = not self.game.show_arrow
+            if held_counts and is_any_key_held(advance_keys):
+                break
+            if shows_arrow:
+                self.draw_dialog_arrow(self.game.show_arrow)
+            if self.read_dialog_events(advance_keys):
+                break
+        if not disable_sound:
+            self.sound.play_sound(self.directories.menu_button_sfx)
+        event.clear(KEYDOWN)
+
+    def read_dialog_events(self, advance_keys: Collection[int]) -> bool:
+        """Takes the queued events, keeping the arrow blinking; returns whether one was a press of advance_keys."""
+        for current_event in event.get():
+            quit_if_requested(current_event)
+            if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
+                continue
+            if current_event.type == KEYDOWN and current_event.key in advance_keys:
+                return True
+            if current_event.type == arrow_fade:
+                self.game.show_arrow = not self.game.show_arrow
+        return False
 
     def run_dialog_steps(self, steps: Iterable[DialogStep], animate: bool, frames_per_char: int,
                          disable_sound: bool) -> None:
@@ -550,7 +576,8 @@ class CommandMenu(Menu):
             display.update(cells)
 
     def show_text_in_dialog_box(self, text: Tuple | List | str, add_quotes=False, temp_text_start=None, skip_text=False,
-                                drop_down=True, drop_up=True, disable_sound=False, letter_by_letter=True):
+                                drop_down=True, drop_up=True, disable_sound=False, letter_by_letter=True,
+                                advance_keys: Collection[int] | None = None):
         """Shows a passage of text in a dialog box.
 
         An important distinction between this and show_line_in_dialog_box is that this function
@@ -567,17 +594,21 @@ class CommandMenu(Menu):
         :param drop_down: Whether to display the drop-down effect.
         :param drop_up: Whether to display the drop-up effect.
         :param letter_by_letter: Whether to print the text letter by letter.
+        :param advance_keys: The keys that end the wait after the last line, when it isn't the usual any button
+            (see wait_for_dialog_key).
         """
         if drop_down:
             self.window_drop_down_effect(*DIALOG_WINDOW)
         if isinstance(text, str):
             self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, hide_arrow=True,
-                                         disable_sound=disable_sound, letter_by_letter=letter_by_letter)
+                                         disable_sound=disable_sound, letter_by_letter=letter_by_letter,
+                                         advance_keys=advance_keys)
         else:
             for line_index, line in enumerate(text):
                 if line_index == len(text) - 1:
                     self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text, hide_arrow=True,
-                                                 disable_sound=disable_sound, letter_by_letter=letter_by_letter)
+                                                 disable_sound=disable_sound, letter_by_letter=letter_by_letter,
+                                                 advance_keys=advance_keys)
                 else:
                     self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text,
                                                  disable_sound=disable_sound, letter_by_letter=letter_by_letter)
@@ -1199,9 +1230,9 @@ class CommandMenu(Menu):
                 quit_if_requested(current_event)
                 if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
                     continue
-                if current_event.type == KEYDOWN:
-                    if current_event.key in accept_keys + reject_keys:
-                        show_status = False
+                # NES LCFA4: the status window waits in WaitForBtnRelease, so any button closes it
+                if current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS:
+                    show_status = False
         self.window_drop_up_effect(x, y, width, height)
         # print(f"""
         # NAME: {self.player.name}
