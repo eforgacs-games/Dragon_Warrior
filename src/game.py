@@ -50,6 +50,8 @@ from src.menu_functions import NameSelection
 from src.movement import Movement
 from src.music_player import MusicPlayer
 from src.npc_schedule import NPCSchedule, POP_UP_FRAME
+from src.options_screen import DEFAULT_DIALOG_STYLE, DEFAULT_MESSAGE_SPEED, DIALOG_STYLE_SAVE_KEY, \
+    MESSAGE_SPEED_SAVE_KEY, OptionsScreen, apply_options, dialog_style_from_save, message_speed_from_save
 from src.player.player import Player
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
@@ -67,6 +69,8 @@ from src.windows import COMMAND_WINDOW
 
 
 SAVE_FILE_PATTERN = re.compile(r'save_slot_(\d+)\.json')
+# Returned by a title menu entry that goes back to the title menu when it's done (NES WndBackToMain)
+BACK_TO_TITLE_MENU = object()
 
 
 def save_slot_number(save_file_name: str) -> int:
@@ -261,6 +265,13 @@ class Game:
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
+        """The title menu. Choosing CHANGE MESSAGE SPEED comes back to it afterwards (NES WndBackToMain)."""
+        while self.show_title_menu(screen) is BACK_TO_TITLE_MENU:
+            pass
+
+    def show_title_menu(self, screen) -> object:
+        """Shows the title menu once and runs the chosen entry; returns what it returns (BACK_TO_TITLE_MENU to show the
+        menu again)."""
         if not os.path.exists(self.directories.save_dir):
             os.makedirs(self.directories.save_dir)
         self.save_dir_contents = self.save_files()
@@ -272,7 +283,7 @@ class Game:
                                                                 self.directories.main_menu_empty_log_unselected,
                                                                 self.directories.main_menu_empty_log_0, [],
                                                                 no_blit=self.game_state.config['NO_BLIT'])
-            begin_quest_empty_log_function_lookup[selection]()
+            return begin_quest_empty_log_function_lookup[selection]()
         else:
             if len(self.save_dir_contents) < 3:
                 partially_full_log_function_lookup = {
@@ -291,7 +302,7 @@ class Game:
                                                                         self.directories.main_menu_partially_full_log_3,
                                                                         self.directories.main_menu_partially_full_log_4],
                                                                     no_blit=self.game_state.config['NO_BLIT'])
-                partially_full_log_function_lookup[selection]()
+                return partially_full_log_function_lookup[selection]()
             elif len(self.save_dir_contents) == 3:
                 # NES with every log used: CONTINUE A QUEST, CHANGE MESSAGE SPEED, ERASE AN ADVENTURE LOG
                 full_log_function_lookup = {
@@ -305,15 +316,17 @@ class Game:
                                                                     [self.directories.continue_quest_full_log_1,
                                                                      self.directories.continue_quest_full_log_2],
                                                                     no_blit=self.game_state.config['NO_BLIT'])
-                full_log_function_lookup[selection]()
+                return full_log_function_lookup[selection]()
             else:
                 print("Error: More than 3 save files detected. Exiting.")
                 exit(1)
+        return None
 
     def begin_new_quest(self):
         self.select_adventure_log(self.screen)
         name_selection = NameSelection(self.config)
         self.player.name = name_selection.select_name(get_ticks(), self.screen, self.cmd_menu)
+        self.choose_new_quest_options()
         self.player.set_initial_stats()
         self.sound.play_sound(self.directories.menu_button_sfx)
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
@@ -364,10 +377,53 @@ class Game:
         (Bank01 LogList1Dat2; see src/adventure_log.py)."""
         return AdventureLogOverlay(adventure_log_overlay_texts(save_path), self.game_state.config)
 
-    def change_message_speed(self):
-        # Toggle between fast (no wait) and normal speed. No sub-menu images exist, so just flip the flag.
-        self.game_state.config['NO_WAIT'] = not self.game_state.config['NO_WAIT']
-        self.sound.play_sound(self.directories.menu_button_sfx)
+    def change_message_speed(self) -> object:
+        """NES DoChngMsgSpeed (Bank03): choose a used adventure log (ShowUsedLogs), then its message speed in the NES
+        window (WND_MSG_SPEED) and, after it, this game's dialog style; ChngMsgSpeed saves them to that log
+        (SaveCurrentGame). B in the log or speed window saves nothing. Either way it's back to the title menu
+        (WndBackToMain). See src/options_screen.py."""
+        logs = []
+        for save_file_name in self.save_dir_contents or self.save_files():
+            save = self.read_save(save_file_name)
+            if save is not None:
+                logs.append((save_slot_number(save_file_name), str(save.get('Name', ''))))
+        if not logs:
+            return BACK_TO_TITLE_MENU
+        options_screen = OptionsScreen(self.screen, self.game_state.config, self.title_menu_background())
+        slot = options_screen.choose_log(logs)
+        if slot is None:
+            return BACK_TO_TITLE_MENU
+        save_path = os.path.join(self.directories.save_dir, f'save_slot_{slot}.json')
+        save = self.read_save(os.path.basename(save_path)) or {}
+        chosen = options_screen.choose_options(message_speed_from_save(save), dialog_style_from_save(save))
+        if chosen is not None:
+            save[MESSAGE_SPEED_SAVE_KEY], save[DIALOG_STYLE_SAVE_KEY] = chosen
+            with open(save_path, 'w') as save_file:
+                json.dump(save, save_file, indent=4)
+        return BACK_TO_TITLE_MENU
+
+    def choose_new_quest_options(self) -> None:
+        """NES NewQuest (LF8D4): after the name, the message speed window with the cursor on NORMAL, then this game's
+        dialog style with the cursor on CLASSIC. The choice is used from now on and saved with the log
+        (CommandMenu.save). B keeps those defaults (the NES goes back to the title menu instead)."""
+        options_screen = OptionsScreen(self.screen, self.game_state.config)
+        chosen = options_screen.choose_options(DEFAULT_MESSAGE_SPEED, DEFAULT_DIALOG_STYLE)
+        apply_options(self.game_state.config, *(chosen or (DEFAULT_MESSAGE_SPEED, DEFAULT_DIALOG_STYLE)))
+
+    def read_save(self, save_file_name: str) -> dict | None:
+        """The save in the save folder with this name, or None if it can't be read."""
+        try:
+            with open(os.path.join(self.directories.save_dir, save_file_name)) as save_file:
+                save = json.load(save_file)
+        except (OSError, ValueError):
+            return None
+        return save if isinstance(save, dict) else None
+
+    def title_menu_background(self) -> str:
+        """The title menu screenshot with CHANGE MESSAGE SPEED chosen, for the windows to open over."""
+        if len(self.save_dir_contents or []) >= 3:
+            return self.directories.continue_quest_full_log_1
+        return self.directories.main_menu_partially_full_log_1
 
     def copy_quest(self):
         src_slot = self.game_functions.main_menu_selection(
@@ -1389,6 +1445,8 @@ class Game:
         self.player.inventory = save_file["Inventory"]
         self.player.spells = save_file.get("Spells", [])
         self.story_flags = StoryFlags.from_save(save_file)
+        # NES LoadSavedData (LFBC8): the log's message speed; and this game's dialog style. Older saves: NORMAL, CLASSIC
+        apply_options(self.game_state.config, message_speed_from_save(save_file), dialog_style_from_save(save_file))
         self.chest_history = TreasureChestHistory()
         self.repel_timer = 0
         if self.player.is_cursed:

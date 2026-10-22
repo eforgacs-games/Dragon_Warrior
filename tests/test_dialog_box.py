@@ -194,6 +194,9 @@ class TestCommandMenuDialog(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
+        # a loaded save sets these in the shared test config (Game.load_game)
+        test_config['TEXT_SPEED'] = 'Fast'
+        test_config['DIALOG_STYLE'] = 'Classic'
         with patch('src.game.SCALED'):
             self.game = Game(test_config)
         self.game.current_map = MockMap(self.game.config)
