@@ -430,3 +430,69 @@ class TestCommandMenu(TestCase):
                 self.assertEqual(self.game.player.current_mp, 10)
                 self.assertTrue(battle.no_op)
                 self.assertEqual([c.args[0] for c in show_line.call_args_list], ['That cannot be used in battle.'])
+
+    def use_in_battle(self, item_name, rolls=()):
+        with patch('src.menu.random.randint', side_effect=list(rolls)), \
+                patch('src.menu.mixer'), \
+                patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line, \
+                patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.use_item_in_battle(item_name)
+        show_text.assert_not_called()  # battle text goes in battle lines, not the field dialog box
+        return [c.args[0] for c in show_line.call_args_list]
+
+    def test_herb_in_battle(self):
+        from src.enemy import Slime
+        battle = self.in_battle_with(Slime())
+        self.game.player.inventory = ["Herb", "Torch"]
+        self.game.player.max_hp = 100
+        self.game.player.current_hp = 10
+        lines = self.use_in_battle("Herb", rolls=[25])
+        self.assertEqual(lines, [f"{self.game.player.name} used the Herb."])
+        self.assertEqual(self.game.player.current_hp, 35)
+        self.assertEqual(self.game.player.inventory, ["Torch"])
+        self.assertFalse(battle.no_op)  # the enemy takes its turn
+
+    def test_items_that_cannot_be_used_in_battle(self):
+        from src.enemy import Slime
+        for item in ("Torch", "Wings", "Fairy Water", "Magic Key", "Rainbow Drop", "Erdrick's Token"):
+            with self.subTest(item=item):
+                battle = self.in_battle_with(Slime())
+                self.game.player.inventory = [item]
+                lines = self.use_in_battle(item)
+                self.assertEqual(lines, ["That cannot be used in battle."])
+                self.assertEqual(self.game.player.inventory, [item])
+                self.assertTrue(battle.no_op)  # the player acts again
+
+    def test_silver_harp_in_battle(self):
+        from src.enemy import Slime
+        battle = self.in_battle_with(Slime())
+        self.game.player.inventory = ["Silver Harp"]
+        with patch.object(self.game.battle_ctrl, 'queue_scripted_battle') as queue_battle:
+            lines = self.use_in_battle("Silver Harp")
+        self.assertEqual(lines, [f"{self.game.player.name} played a sweet melody on the harp.",
+                                 "The Slime looks happy."])
+        queue_battle.assert_not_called()
+        self.assertEqual(self.game.player.inventory, ["Silver Harp"])
+        self.assertFalse(battle.no_op)
+
+    def test_dragon_scale_in_battle(self):
+        from src.enemy import Slime
+        self.in_battle_with(Slime())
+        self.game.player.inventory = ["Dragon's Scale"]
+        defense = self.game.player.defense_power
+        lines = self.use_in_battle("Dragon's Scale")
+        self.assertEqual(lines, [f"{self.game.player.name} donned the scale of the dragon."])
+        self.assertEqual(self.game.player.defense_power, defense + 2)
+
+    def test_closing_item_menu_in_battle_returns_turn(self):
+        from pygame import K_ESCAPE
+        from src.enemy import Slime
+        battle = self.in_battle_with(Slime())
+        self.game.player.inventory = ["Herb"]
+        escape = MagicMock()
+        escape.type = KEYDOWN
+        escape.key = K_ESCAPE
+        with patch.object(event, 'get', return_value=[escape]):
+            self.game.cmd_menu.display_item_menu('inventory')
+        self.assertTrue(battle.no_op)
+        self.assertEqual(self.game.player.inventory, ["Herb"])
