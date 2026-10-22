@@ -829,6 +829,38 @@ msgstr "전사의 반지"
 msgid "Erdrick's Tablet"
 msgstr "에르드릭의 태블릿"
 
+#: ..\menu.py:479
+msgid "Tablet"
+msgstr "석판"
+
+#: ..\menu.py:479
+msgid "The tablet reads as follows:"
+msgstr "석판에는 이렇게 쓰여 있다."
+
+#: ..\menu.py:479
+msgid "I am Erdrick and thou art my descendant."
+msgstr "나의 이름은 로토.\n나의 피를 이어받은 자여."
+
+#: ..\menu.py:479
+msgid "Three items were needed to reach the Isle of Dragons, which is south of Brecconary."
+msgstr "라다톰 남쪽에 있는 마의 섬으로 건너가려면 세 가지 물건이 필요했다."
+
+#: ..\menu.py:479
+msgid "I gathered these items, reached the island, and there defeated a creature of great evil."
+msgstr "나는 그것들을 모아 마의 섬으로 건너가 그곳에서 마왕을 쓰러뜨렸다."
+
+#: ..\menu.py:479
+msgid "Now I have entrusted the three items to three worthy keepers."
+msgstr "그리고 이제 그 세 가지 신비한 물건을 세 명의 현자에게 맡긴다."
+
+#: ..\menu.py:479
+msgid "Their descendants will protect the items until thy quest leads thee to seek them out."
+msgstr "그대가 그것들을 찾아 나설 때까지 현자의 자손들이 지켜 줄 것이다."
+
+#: ..\menu.py:479
+msgid "When a new evil arises, find the three items, then fight!"
+msgstr "다시 악이 되살아나거든\n세 가지 물건을 모아 싸우거라!"
+
 #: ..\menu.py:279
 msgid "Cursed Belt"
 msgstr "저주받은 벨트"
