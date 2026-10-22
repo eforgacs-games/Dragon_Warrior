@@ -2,6 +2,7 @@ import os
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
+import pygame
 from pygame import Rect, event, KEYDOWN, K_i
 
 from src.config.test_config import test_config
@@ -13,6 +14,13 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestIntro(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        # set_screen is patched below, so set a video mode here; images can't be converted without one, and an
+        # earlier test file may already have called pygame.quit()
+        pygame.init()
+        pygame.display.set_mode((800, 600))
 
     @patch('src.game.Game.set_screen')
     def setUp(self, mock_set_screen) -> None:

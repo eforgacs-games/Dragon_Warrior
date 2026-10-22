@@ -17,7 +17,7 @@ from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
 from src.directories import Directories
-from src.items import treasure
+from src.items import armor, hidden_items, treasure
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, RAINBOW_BRIDGE_COORDINATES, \
     RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION
 from src.direction import Direction
@@ -466,6 +466,27 @@ class CommandMenu(Menu):
         mixer.music.play(-1)
         self.show_text_in_dialog_box("But nothing happened.", skip_text=self.skip_text)
 
+    def fairy_flute(self):
+        # NES ChkFryFlt (field) / ChkUseFlute (battle): play the flute tune, then resume the map or battle music
+        in_battle = self.current_battle is not None
+        say = self.show_battle_line if in_battle else functools.partial(self.show_text_in_dialog_box,
+                                                                        skip_text=self.skip_text)
+        say(self._("{} blew the Fairies' Flute.").format(self.player.name))
+        mixer.music.stop()
+        self.game.game_state.pause_all_movement()
+        self.sound.play_sound(self.directories.flute_sfx)
+        self.game.game_state.unpause_all_movement()
+        mixer.music.play(-1)
+        if in_battle and self.current_battle.enemy.name == 'Golem':
+            # NES ChkUseFlute: the Golem always falls asleep and loses its turn (jumps to EnStillAsleep)
+            enemy = self.current_battle.enemy
+            enemy.is_asleep = True
+            say(self._("Quietly Golem closes his eyes and settles into sleep."))
+            say(self._("The {} is asleep.").format(self._(enemy.name)))
+            self.current_battle.no_op = True
+            return
+        say(self._("But nothing happened."))
+
     def erdricks_token(self):
         self.show_text_in_dialog_box(f"{self.player.name} held the Erdrick's Token tightly.\nBut nothing happened.")
 
@@ -756,12 +777,8 @@ class CommandMenu(Menu):
         # wait for input...
         if self.player.current_tile == 'TREASURE_BOX':
             text_to_print.append(self._(f"There is a {self.player.current_tile.lower().replace('_', ' ')}."))
-        # elif there is a hidden item:
-        # print(f"There is a {hidden_item}")
-        elif (self.current_map.identifier == "Alefgard"
-              and self.calculation.get_distance_from_tantegel(self.player.column, self.player.row) == (40, 70)):
-            text_to_print.append(self._("{} discovers the Erdrick's Token.").format(self.player.name))
-            self.player.inventory.append("Erdrick's Token")
+        elif hidden_item := hidden_items.get(self.current_map.identifier, {}).get((self.player.row, self.player.column)):
+            text_to_print.append(self.find_hidden_item(hidden_item))
         elif not (self.current_map.identifier == 'CharlockB1' and self.search_for_secret_passage(text_to_print)):
             text_to_print.append(self._("But there found nothing."))
 
@@ -792,6 +809,26 @@ class CommandMenu(Menu):
         # Like arriving on a map: don't auto-take the new stairs until the player steps off and back on (or uses STAIRS)
         self.game.tiles_moved_since_spawn = 0
         return True
+
+    def find_hidden_item(self, item_name: str) -> str:
+        """
+        NES DoSearch: pick up (or, for Erdrick's Armor, put on) a hidden item, unless the player already has it.
+        :param item_name: The item hidden on the player's tile.
+        :return: The line to show after "searched the ground all about."
+        """
+        if item_name in armor:
+            # NES SrchEdrckArmor: found only if not already worn; it's equipped directly (replacing the old armor,
+            # which is not kept) instead of going into the inventory
+            if self.player.armor == item_name:
+                return self._("But there found nothing.")
+            self.player.armor = item_name
+            self.player.update_defense_power()
+        else:
+            # NES FoundItem/ItemAlreadyFound: found only if it isn't already in the inventory
+            if item_name in self.player.inventory:
+                return self._("But there found nothing.")
+            self.player.inventory.append(item_name)
+        return self._("{} discovers the {}.").format(self.player.name, self._(item_name))
 
     def spell(self):
         """
@@ -852,6 +889,7 @@ class CommandMenu(Menu):
                 "Staff of Rain": self.staff_of_rain,
                 "Stones of Sunlight": self.stones_of_sunlight,
                 "Fighter's Ring": self.fighters_ring,
+                "Fairy Flute": self.fairy_flute,
             }
         elif menu_name == 'spells':
             list_counter = Counter(self.player.spells)
