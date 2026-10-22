@@ -130,8 +130,8 @@ def nes_location(nes_map: str, x: int, y: int) -> tuple:
 
 def set_story_flags(game, rainbow_bridge_built: bool, charlock_stairs_revealed: bool) -> None:
     """NES F_RNBW_BRDG and F_PSG_FOUND."""
-    game.rainbow_bridge_built = rainbow_bridge_built
-    game.charlock_stairs_revealed = charlock_stairs_revealed
+    game.story_flags.rainbow_bridge_built = rainbow_bridge_built
+    game.story_flags.charlock_stairs_revealed = charlock_stairs_revealed
 
 
 def build_world(rainbow_bridge_built: bool, charlock_stairs_revealed: bool) -> dict:
