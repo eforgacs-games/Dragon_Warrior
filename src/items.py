@@ -39,6 +39,9 @@ treasure: Dict[str, Dict[Tuple[int, int], Dict[str, object]]] = {
                            (10, 14): {'item': "GOLD", 'amount': 120},
                            (10, 15): {'item': "Torch"}},
     'ErdricksCaveB2': {(4, 10): {'item': 'Tablet'}},
+    # NES TreasureTbl (Bank01): MAP_TANTCSTL_SL at 4,5, TRSR_SUN. The cellar's stairs are in the far south-east
+    # corner of the castle grounds (TantGFDat 29,29), and the only way there is through the locked door at 18,6
+    # (courtyard (13, 25)), so a Magic Key is needed.
     'TantegelCellar': {(6, 5): {'item': 'Stones of Sunlight'}},
     'GarinsGraveB1': {
         (1, 12): {'item': 'Herb'},
@@ -53,6 +56,8 @@ treasure: Dict[str, Dict[Tuple[int, int], Dict[str, object]]] = {
         (3, 3): {'item': "Fighter's Ring"},
         (3, 4): {'item': "GOLD", 'amount': random.randint(5, 20)},
     },
+    # NES TreasureTbl (Bank01): MAP_RAIN at 3,4, TRSR_RAIN. The old man (RainStaffDialog) blocks the only way in
+    # until he is given the Silver Harp.
     'StaffOfRainCave': {
         (6, 5): {'item': 'Staff of Rain'}
     },
