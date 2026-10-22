@@ -4,7 +4,7 @@ import random
 from os.path import join
 
 from src.spells import Spell
-from typing import Any, Tuple, List
+from typing import Any, Iterable, Tuple, List
 
 import pygame_menu
 from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, mixer
@@ -15,12 +15,14 @@ from data.text.dialog_lookup_table import DialogLookup
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
-from src.waiting import quit_if_requested
+from src.waiting import quit_if_requested, wait
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, RAINBOW_BRIDGE_COORDINATES, \
     RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES
+from src.dialog_box import ARROW_COLUMN, DIALOG_COLUMNS, DIALOG_ROWS, OPEN_QUOTES, SCROLL_ROWS_PER_FRAME, \
+    DialogBuffer, DialogStep, ScrollStep, frames_per_character
 from src.direction import Direction
 from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
@@ -38,6 +40,10 @@ from src.windows import COMMAND_TITLE_TILE_COLUMN, COMMAND_WINDOW, COUNTED_ITEMS
 arrow_fade = USEREVENT + 1
 # How far right the COMMAND window's buttons are moved, in NES pixels (see CommandMenu.__init__)
 COMMAND_BUTTON_SHIFT = 8
+
+# The dialog window: x, y, width, height in 16x16 blocks (NES WND_DIALOG, screen tiles 4-27 x 18-27)
+DIALOG_WINDOW = (2, 9, 12, 5)
+DIALOG_FPS = 60
 
 
 class Menu:
@@ -65,6 +71,9 @@ class CommandMenu(Menu):
         self.map_name = self.current_map.__class__.__name__
 
         self.graphics = Graphics(self.current_map.config)
+        self.dialog_buffer = DialogBuffer()
+        self._dialog_frame_deadline = 0.0
+        self._dialog_fonts = {}
         self.directories = Directories(self.current_map.config)
         self.sound = Sound(self.current_map.config)
         self.calculation = Calculation(self.current_map.config)
@@ -240,6 +249,9 @@ class CommandMenu(Menu):
             self.show_text_in_dialog_box(self._("I have nothing to say."), add_quotes=True, skip_text=self.skip_text)
 
     def show_line_in_battle_dialog_box(self, line: str):
+        """The encounter line. A fight opens a fresh dialog window (NES InitFight: ShowWindow WND_DIALOG, which runs
+        ClearDialogOutBuf), so earlier text is gone; the fight's later messages scroll on below this one."""
+        self.dialog_buffer.clear()
         self.show_line_in_dialog_box(line, add_quotes=False, skip_text=True, hide_arrow=True, disable_sound=True)
 
     def show_line_in_dialog_box(self, line: str | functools.partial, add_quotes: bool = True,
@@ -264,59 +276,141 @@ class CommandMenu(Menu):
                 # if the line is a method
                 line()
 
+    def add_dialog_quotes(self, line: str) -> str:
+        if self.game.game_state.config['LANGUAGE'] == 'Korean' and not line.isascii():
+            return f"'{line}'"
+        return f"`{line}’"
+
     def show_text_line_in_dialog_box(self, line, add_quotes, disable_sound, hide_arrow, letter_by_letter, skip_text,
                                      temp_text_start, tile_size):
-        """Function for showing text in a dialog box (as opposed to executing a method)."""
-
-        current_time = None
-        display_current_line = True
+        """Prints one message into the dialog window the way the NES does (Bank01 DoDialog, see src/dialog_box.py):
+        it goes below whatever the window already shows, letter by letter, scrolling the window up when it reaches
+        the bottom. Then it waits for a key, with the blinking down arrow unless hide_arrow is set (DoWait)."""
+        config = self.game.game_state.config
         if add_quotes:
-            if self.game.game_state.config['LANGUAGE'] == 'English':
-                line = f"`{line}’"
-            elif self.game.game_state.config['LANGUAGE'] == 'Korean':
-                if line.isascii():
-                    line = f"`{line}’"
-                else:
-                    line = f"'{line}'"
-        current_line = ""
-        while display_current_line:
-            if temp_text_start:
-                current_time = get_ticks()
-            self.graphics.create_window(x=2, y=9, width=12, height=5,
-                                        window_background=self.directories.DIALOG_BOX_BACKGROUND_PATH,
-                                        screen=self.screen, color=self.color)
-            if letter_by_letter and not self.game.game_state.config['NO_WAIT']:
-                if not current_line:
-                    current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                             self.game.game_state.config, color=self.color,
-                                             letter_by_letter=letter_by_letter, disable_sound=disable_sound)
-                else:
-                    current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                             self.game.game_state.config, color=self.color, letter_by_letter=False,
-                                             disable_sound=disable_sound)
-            else:
-                current_line = draw_text(line, tile_size * 3, tile_size * 9.75, self.screen,
-                                         self.game.game_state.config, color=self.color, letter_by_letter=False,
-                                         disable_sound=disable_sound)
-            if not hide_arrow:
-                end_of_dialog_box_location = self.screen.get_width() / 2, (
-                        self.screen.get_height() * 13 / 16) + tile_size // 1.5
-                self.graphics.blink_arrow(self.screen, end_of_dialog_box_location[0], end_of_dialog_box_location[1],
-                                          'down', self.game.show_arrow, color=self.color)
-            # playing with fire a bit here with the short-circuiting
-            if skip_text or (temp_text_start and current_time - temp_text_start >= 1000):
+            line = self.add_dialog_quotes(line)
+        animate = letter_by_letter and not config['NO_WAIT']
+        waits_for_key = not skip_text and not temp_text_start
+        # NES TXT_WAIT (arrow) vs TXT_END1 (no arrow): they move the cursor differently afterwards
+        shows_arrow = waits_for_key and not hide_arrow
+        frames = frames_per_character(config['TEXT_SPEED'])
+        self._dialog_frame_deadline = float(get_ticks())
+
+        self.draw_dialog_window()
+        self.run_dialog_steps(self.dialog_buffer.print_message(line, quoted=line.startswith(OPEN_QUOTES)),
+                              animate, frames, disable_sound)
+        if shows_arrow:
+            self.run_dialog_steps(self.dialog_buffer.start_wait(), animate, frames, disable_sound)
+        else:
+            self.run_dialog_steps(self.dialog_buffer.end_message(), animate, frames, disable_sound)
+        if not animate:
+            self.draw_dialog_window()
+
+        self.wait_for_dialog_key(shows_arrow, skip_text, temp_text_start, disable_sound)
+
+        if shows_arrow:
+            self.draw_dialog_arrow(False)  # DoWait: TxtClearArrow
+            self.run_dialog_steps(self.dialog_buffer.finish_wait(), animate, frames, disable_sound)
+
+    def wait_for_dialog_key(self, shows_arrow: bool, skip_text: bool, temp_text_start: int | None,
+                            disable_sound: bool) -> None:
+        """Waits for a key press (or not at all with skip_text, or for one second with temp_text_start)."""
+        while True:
+            if shows_arrow:
+                self.draw_dialog_arrow(self.game.show_arrow)
+            if skip_text or (temp_text_start and get_ticks() - temp_text_start >= 1000):
                 if not skip_text and not disable_sound:
                     self.sound.play_sound(self.directories.menu_button_sfx)
-                display_current_line = False
+                return
             for current_event in event.get():
                 quit_if_requested(current_event)
                 if current_event.type == KEYDOWN:
                     if not skip_text and not disable_sound:
                         self.sound.play_sound(self.directories.menu_button_sfx)
-                    display_current_line = False
                     event.clear(KEYDOWN)
+                    return
                 elif current_event.type == arrow_fade:
                     self.game.show_arrow = not self.game.show_arrow
+
+    def run_dialog_steps(self, steps: Iterable[DialogStep], animate: bool, frames_per_char: int,
+                         disable_sound: bool) -> None:
+        """Shows each step of DialogBuffer's printing: a character (with the text beep, when it gets one) and its
+        MessageSpeed + 1 frame wait (TextToPPU), or a scroll of the whole window (ScrollDialog)."""
+        for step in steps:
+            if isinstance(step, ScrollStep):
+                if animate:
+                    self.animate_dialog_scroll()
+                continue
+            if step.beep and not disable_sound:
+                self.sound.play_sound(self.directories.text_beep_sfx)
+            if animate:
+                self.draw_dialog_row(step.row, up_to_column=step.column + 1)
+                self.wait_dialog_frames(frames_per_char)
+
+    def animate_dialog_scroll(self) -> None:
+        """NES ScrollUpdate: one frame, then the 8 rows are redrawn two per frame, top to bottom (5 frames)."""
+        self.wait_dialog_frames(1)
+        for first_row in range(0, DIALOG_ROWS, SCROLL_ROWS_PER_FRAME):
+            for row in range(first_row, first_row + SCROLL_ROWS_PER_FRAME):
+                self.draw_dialog_row(row)
+            self.wait_dialog_frames(1)
+
+    def wait_dialog_frames(self, frames: int) -> None:
+        """Waits whole NES frames, against a running deadline so that the per-character waits don't drift."""
+        if self.game.game_state.config['NO_WAIT']:
+            return
+        now = get_ticks()
+        self._dialog_frame_deadline = max(self._dialog_frame_deadline, now) + frames * 1000 / DIALOG_FPS
+        delay = int(self._dialog_frame_deadline - now)
+        if delay > 0:
+            wait(delay)
+
+    def dialog_cell_rect(self, row: int, column: int = 0, columns: int = DIALOG_COLUMNS) -> Rect:
+        """Screen rect of dialog text cells. The text starts one NES tile inside the window's border (screen tile
+        column 5, row 19), and each character is one NES tile."""
+        tile_size = self.game.game_state.config['TILE_SIZE']
+        nes_tile = tile_size // 2
+        return Rect((DIALOG_WINDOW[0] * 2 + 1 + column) * nes_tile, (DIALOG_WINDOW[1] * 2 + 1 + row) * nes_tile,
+                    columns * nes_tile, nes_tile)
+
+    def draw_dialog_window(self) -> None:
+        """Draws the dialog window and all 8 rows of its text buffer."""
+        left, top, width, height = DIALOG_WINDOW
+        self.graphics.create_window(x=left, y=top, width=width, height=height,
+                                    window_background=self.directories.DIALOG_BOX_BACKGROUND_PATH,
+                                    screen=self.screen, color=self.color)
+        for row in range(DIALOG_ROWS):
+            self.draw_dialog_row(row, update=False)
+        if not self.game.game_state.config['NO_BLIT']:
+            tile_size = self.game.game_state.config['TILE_SIZE']
+            display.update(Rect(left * tile_size, top * tile_size, width * tile_size, height * tile_size))
+
+    def draw_dialog_row(self, row: int, up_to_column: int = DIALOG_COLUMNS, update: bool = True) -> None:
+        """Draws one row of the dialog buffer, or its first up_to_column characters while it is being printed."""
+        self.draw_dialog_text(''.join(self.dialog_buffer.rows[row][:up_to_column]).rstrip(),
+                              self.dialog_cell_rect(row), update)
+
+    def draw_dialog_arrow(self, visible: bool) -> None:
+        """NES TxtWaitAnim: the down arrow blinks in the middle of the row the cursor is on."""
+        self.draw_dialog_text('▼' if visible else '', self.dialog_cell_rect(self.dialog_buffer.row, ARROW_COLUMN, 1),
+                              update=True)
+
+    def draw_dialog_text(self, text: str, cells: Rect, update: bool) -> None:
+        config = self.game.game_state.config
+        if config['NO_BLIT']:
+            return
+        self.screen.fill(BLACK, cells)
+        if text and config['RENDER_TEXT']:
+            is_ascii = text.strip('’(↑ ← ↓ →)▼').isascii()
+            if is_ascii not in self._dialog_fonts:
+                self._dialog_fonts[is_ascii] = set_font_by_ascii_chars([text], cells.height, None, self.directories)
+            text_surface = self._dialog_fonts[is_ascii].render(text, True, self.color)
+            previous_clip = self.screen.get_clip()
+            self.screen.set_clip(cells)
+            self.screen.blit(text_surface, text_surface.get_rect(midleft=cells.midleft))
+            self.screen.set_clip(previous_clip)
+        if update:
+            display.update(cells)
 
     def show_text_in_dialog_box(self, text: Tuple | List | str, add_quotes=False, temp_text_start=None, skip_text=False,
                                 drop_down=True, drop_up=True, disable_sound=False, letter_by_letter=True):
@@ -324,7 +418,9 @@ class CommandMenu(Menu):
 
         An important distinction between this and show_line_in_dialog_box is that this function
         will show multiple lines of text, whereas show_line_in_dialog_box will only show a single line.
-        Additionally, this function will do a drop down and drop up effect by default.
+        Additionally, this function will do a drop down and drop up effect by default. Opening the window
+        (drop_down) starts it empty and closing it (drop_up) empties it; without them, the text carries on below
+        what the window already shows.
 
         :param disable_sound:
         :param text: The text to print.
@@ -336,7 +432,7 @@ class CommandMenu(Menu):
         :param letter_by_letter: Whether to print the text letter by letter.
         """
         if drop_down:
-            self.window_drop_down_effect(2, 9, 12, 5)
+            self.window_drop_down_effect(*DIALOG_WINDOW)
         if isinstance(text, str):
             self.show_line_in_dialog_box(text, add_quotes, temp_text_start, skip_text, hide_arrow=True,
                                          disable_sound=disable_sound, letter_by_letter=letter_by_letter)
@@ -349,10 +445,12 @@ class CommandMenu(Menu):
                     self.show_line_in_dialog_box(line, add_quotes, temp_text_start, skip_text,
                                                  disable_sound=disable_sound, letter_by_letter=letter_by_letter)
         if drop_up:
-            self.window_drop_up_effect(2, 9, 12, 5)
+            self.window_drop_up_effect(*DIALOG_WINDOW)
 
     def window_drop_down_effect(self, left, top, width, height) -> None:
-        """Intro effect for menus."""
+        """Intro effect for menus. A dialog window always opens empty (NES ShowWindow, WND_DIALOG: ClearDialogOutBuf)."""
+        if (left, top, width, height) == DIALOG_WINDOW:
+            self.dialog_buffer.clear()
         tile_size = self.game.game_state.config['TILE_SIZE']
         window_rect = Rect(left * tile_size, top * tile_size, width * tile_size, height * tile_size)
         for i in range(height + 1):
@@ -366,7 +464,9 @@ class CommandMenu(Menu):
                     display.update(window_rect)
 
     def window_drop_up_effect(self, left, top, width, height) -> None:
-        """Outro effect for menus."""
+        """Outro effect for menus. Closing the dialog window throws its text away."""
+        if (left, top, width, height) == DIALOG_WINDOW:
+            self.dialog_buffer.clear()
         # draw all the tiles initially once
         tile_size = self.game.game_state.config['TILE_SIZE']
         camera_screen_rect = Rect(self.player.rect.x - tile_size * 8, self.player.rect.y - tile_size * 7,
