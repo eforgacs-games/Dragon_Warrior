@@ -721,6 +721,8 @@ class DialogLookup:
 
     def rest_then_for_awhile(self):
         self.command_menu.show_line_in_dialog_box(self._("Rest then for awhile."))
+        # NES ExitGame (Bank01): the music is silenced (MSC_NOSOUND) before the screen goes black for the reset message
+        mixer.music.stop()
         fade(fade_out=True, screen=self.screen, config=self.config)
         self.screen.fill(BLACK)
         display.flip()
