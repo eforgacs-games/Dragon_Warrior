@@ -1,7 +1,15 @@
 from typing import Dict, FrozenSet, Iterable, List, Tuple
 
-from pygame import surface
+from pygame import PixelArray, surface
 from pygame.transform import scale
+
+from src.color import LOW_HP_RED
+from src.visual_effects import NES_PALETTE
+
+# NES AddPalByte/ChkLowHPPal (Bank03, $C661): while HP is low, background palette 0's color 1 ($3F01) is loaded as $26
+# instead of the $30 that OverworldPal, TownPal and DungeonPal (Bank00) all give it.
+PAL0_COLOR1_NORMAL = NES_PALETTE[0x30]
+PAL0_COLOR1_LOW_HP = LOW_HP_RED  # $26, the windows' low HP color too
 
 
 def parse_map_tiles(map_path: str, tile_size: int, graphics, configured_scale):
@@ -12,6 +20,18 @@ def parse_map_tiles(map_path: str, tile_size: int, graphics, configured_scale):
     return [[map_tile_sheet.subsurface((x * tile_size, y * tile_size, tile_size, tile_size)) for y in
              range(0, height // tile_size)]
             for x in range(0, width // tile_size)]
+
+
+def low_hp_tile_image(tile: surface.Surface) -> surface.Surface:
+    """A copy of a background palette 0 tile with its color 1 pixels ($30 white) turned the low HP red ($26).
+
+    Only call this for palette 0 blocks (LOW_HP_PALETTE_TILES in maps.py). In those blocks white can only be color 1:
+    palette 0 is $30, $10, $11 (grey and blue are colors 2 and 3), and no other background palette in OverworldPal,
+    TownPal or DungeonPal contains $30, so every white pixel in tileset.png is a palette 0 color 1 pixel."""
+    red = tile.copy()
+    with PixelArray(red) as pixels:
+        pixels.replace(PAL0_COLOR1_NORMAL, PAL0_COLOR1_LOW_HP)
+    return red
 
 
 def warp_line(lower_bound, upper_bound) -> List[tuple]:

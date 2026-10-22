@@ -264,8 +264,10 @@ class TestHeroAndNpcsShareTheFrameCounter(FreezeTestCase):
     def test_the_pop_up_window_frame_runs_two_npc_frames(self):
         # NES IdleUpdate on FrameCounter $31: the pop-up window's drawing calls DoSprites (WndCalcBufAddr), then
         # FrameCounter is set to $32 and DoSprites runs again
+        self.game.game_state.enable_roaming = False  # the guard stays where he starts until his turn below
         self.frames(POP_UP_FRAME - 1)
         self.assertEqual(POP_UP_FRAME - 1, self.game.frame_counter)
+        self.game.game_state.enable_roaming = True
         self.game.npc_schedule.update_counter = 0  # the guard's turn is next
         offsets = []
         with patch('src.game.random.choice', return_value=Direction.LEFT.value):
