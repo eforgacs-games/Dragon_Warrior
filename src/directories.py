@@ -140,6 +140,8 @@ class Directories:
         item_menu_1_background_path = join(images_menus_item_menu_dir, 'item_menu_background_1.png')
         item_menu_2_background_path = join(images_menus_item_menu_dir, 'item_menu_background_2.png')
         item_menu_5_background_path = join(images_menus_item_menu_dir, 'item_menu_background_5.png')
+        # The SPELL and ITEM windows: one background stretched to the number of entries (Graphics.create_window border)
+        self.ITEM_MENU_BACKGROUND_PATH = item_menu_5_background_path
         self.item_menu_background_lookup = {1: item_menu_1_background_path,
                                             2: item_menu_2_background_path,
                                             # TODO: need to implement more backgrounds
