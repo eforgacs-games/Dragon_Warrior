@@ -15,7 +15,7 @@ from src.menu import CommandMenu
 from src.player.player import Player
 from src.player.player_stats import levels_list
 from src.sound import Sound
-from src.waiting import check_for_quit, scaled_ms, wait, wait_frames
+from src.waiting import check_for_quit, wait, wait_frames
 
 DRAGONLORD_TRANSFORM_WAIT_FRAMES = 80  # NES EnemyDefeated: 80 frames between the two Dragonlord fights
 SPIRAL_LEAD_IN_FRAMES = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E40A, before the first block
