@@ -1,5 +1,6 @@
 # Installs the locked dependencies with uv, then lints, type checks and tests on each supported Python version.
 # One matrix entry also publishes a coverage summary to the job summary and, on PRs, a sticky comment.
+# On Dependabot's uv PRs, sync-requirements first regenerates requirements.txt from uv.lock and commits it.
 # For more information see: https://docs.astral.sh/uv/guides/integration/github/
 
 name: Python application
@@ -9,13 +10,62 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  # sync-requirements dispatches this to test the commit it pushes: pushes made with GITHUB_TOKEN start no runs
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  # Dependabot updates uv.lock but not requirements.txt, so regenerate it on Dependabot's uv PRs.
+  # Uses pull_request, not pull_request_target, so a fork PR never gets a write token here. The PR's
+  # author and head repository are checked instead of github.actor, which changes with who pushed last.
+  # The job only runs `uv export`, which reads pyproject.toml and uv.lock and builds or runs nothing.
+  sync-requirements:
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.user.login == 'dependabot[bot]'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && startsWith(github.head_ref, 'dependabot/uv/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # push the regenerated requirements.txt to the Dependabot branch
+      actions: write   # dispatch this workflow for that commit
+    outputs:
+      pushed: ${{ steps.commit.outputs.pushed }}
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        ref: ${{ github.head_ref }}  # the branch itself rather than the merge commit, so the result can be pushed
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v10.2.0
+      with:
+        version: "0.11.26"
+        python-version: "3.13"
+    - name: Regenerate requirements.txt
+      # The command in requirements.txt's header
+      run: uv export --locked --no-dev --no-hashes --no-annotate -o requirements.txt
+    - name: Commit, push and dispatch CI if it changed
+      id: commit
+      env:
+        HEAD_REF: ${{ github.head_ref }}
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        if git diff --quiet -- requirements.txt; then
+          echo "requirements.txt already matches uv.lock"
+          exit 0
+        fi
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git commit -m "Regenerate requirements.txt from uv.lock" -- requirements.txt
+        git push origin "HEAD:refs/heads/$HEAD_REF"
+        gh workflow run python-app.yml --repo "$GITHUB_REPOSITORY" --ref "$HEAD_REF"
+        echo "pushed=true" >> "$GITHUB_OUTPUT"
 
+  build:
+    needs: sync-requirements
+    # Runs when sync-requirements is skipped or changes nothing. After a push, the dispatched run tests the new commit
+    if: ${{ !cancelled() && needs.sync-requirements.outputs.pushed != 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
