@@ -67,6 +67,24 @@ class TestBattleMethods(unittest.TestCase):
         self.assertEqual(player.total_experience, 10)
         self.assertEqual(player.gold, 4)
 
+    def test_enemy_vanishes_and_victory_music_starts_right_after_the_done_well_line(self):
+        # NES EnemyDefeated: "Thou hast done well in defeating the ENMY." has no WAIT, then ClearSpriteRAM erases the
+        # enemy and MSC_VICTORY starts, all before the experience and gold lines
+        events = []
+        cmd_menu = Mock()
+        cmd_menu.show_line_in_dialog_box.side_effect = lambda line, **kwargs: events.append(
+            (line.split('\n')[0], kwargs.get('skip_text', False)))
+        player = Mock(total_experience=0, gold=0, level=1, spells=[])
+        enemy = Mock(xp=1, gold=2)
+        enemy.name = 'Slime'
+        with patch.object(self.battle, 'make_enemy_image_disappear', side_effect=lambda screen: events.append('erase')), \
+                patch.object(self.battle.sound, 'play_sound', side_effect=lambda sound: events.append('victory')), \
+                patch('src.battle.mixer'), patch.object(self.battle, 'check_player_level_up'):
+            self.battle.enemy_defeated(cmd_menu, Mock(), player, True, enemy)
+        done_well = self.battle.get_enemy_defeated_string(enemy).split('\n')[0]
+        self.assertEqual(events[:3], [(done_well, True), 'erase', 'victory'])
+        self.assertEqual(len(events), 4)  # then the experience and gold
+
     def test_get_enemy_draws_near_string(self):
         self.battle.enemy.name = 'Slime'
         expected_string = '슬라임이 나타났다!\n어떻게 하겠나?\n'
