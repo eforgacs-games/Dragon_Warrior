@@ -844,6 +844,20 @@ class TestGame(TestCase):
         self.game.change_message_speed()
         self.assertEqual(original, self.game.game_state.config['NO_WAIT'])
 
+    def test_continue_quest_shows_the_saved_name_on_the_log(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.game.directories.save_dir = tmp_dir
+            with open(os.path.join(tmp_dir, 'save_slot_1.json'), 'w') as f:
+                json.dump({'Name': 'Ed'}, f)
+            self.game.save_dir_contents = os.listdir(tmp_dir)
+            with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0) as mock_selection, \
+                    patch.object(self.game, 'load_game'), patch.object(self.game, 'music_player'), \
+                    patch('src.game.fade'), patch('src.game.CommandMenu'):
+                self.game.continue_quest()
+            overlay = mock_selection.call_args.kwargs['overlay']
+            self.assertEqual('Ed  ', overlay.texts[0].text)
+            self.assertEqual((24, 14), (overlay.texts[0].column, overlay.texts[0].row))
+
     def test_erase_quest_removes_save_file(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.game.directories.save_dir = tmp_dir
