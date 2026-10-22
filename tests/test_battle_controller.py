@@ -234,6 +234,13 @@ class TestRunBattle(unittest.TestCase):
         battle.enemy_defeated.assert_called_once()
         self.game.music_player.load_and_play_music.assert_called_once_with(self.game.current_map.music_file_path)
 
+    def test_force_enemy_overrides_zone_enemies(self, mock_battle_class):
+        self.game.config["FORCE_ENEMY"] = "Poltergeist"
+        mock_battle_class.return_value.enemy.hp = 3
+        with patch.object(self.controller, 'handle_battle_prompts', return_value=True):
+            self.controller.run_battle(['Slime'])
+        self.assertEqual(mock_battle_class.call_args.args[1], "Poltergeist")
+
     def test_running_away_skips_victory(self, mock_battle_class):
         battle = mock_battle_class.return_value
         battle.enemy.hp = 3
