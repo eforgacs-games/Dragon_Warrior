@@ -872,25 +872,35 @@ class Cantlin(DragonWarriorMap):
                                # east_gate = warp_line((21, 40), (25, 40))
                                )
         self.set_town_to_overworld_warps()
+        # NES CantMobTbl and CantStatTbl (Bank00). An NPC at NES X,Y is at (Y + 8, X) here.
         self.npc_coordinates = {
-            (11, 8): 'MERCHANT',
-            (13, 22): 'MERCHANT',
-            (14, 27): 'WISE_MAN',
-            (15, 2): 'MAN',
-            (20, 2): 'MERCHANT',
-            (20, 7): 'MERCHANT',
-            (20, 24): 'GUARD',
-            (21, 22): 'WOMAN',
-            (24, 15): 'WISE_MAN',
-            (30, 22): 'WISE_MAN',
-            (34, 4): 'MERCHANT',
-            # NES CantStatTbl: weapons and armor shop 2's keeper at 27,26 (becomes MERCHANT_6)
-            (34, 27): 'MERCHANT',
-            (36, 14): 'WISE_MAN',
+            (11, 8): 'MERCHANT',  # static shopkeeper at 8,3: the inn (dialog byte $14)
+            (13, 22): 'MERCHANT',  # mobile shopkeeper at 22,5: weapons and armor shop 1 ($03)
+            (14, 5): 'GUARD',  # mobile guard at 5,6 ($60)
+            (14, 15): 'GUARD',  # mobile guard at 15,6 ($48)
+            (14, 27): 'WISE_MAN',  # static wizard at 27,6: magic keys ($0C)
+            (15, 2): 'MAN',  # static male villager at 2,7: item shop 1 ($0A)
+            (17, 22): 'GUARD',  # mobile guard at 22,9 ($4D)
+            (20, 2): 'MERCHANT',  # static shopkeeper at 2,12 ($45)
+            (20, 7): 'MERCHANT',  # static shopkeeper at 7,12: item shop 2 ($0B)
+            (20, 24): 'GUARD',  # static guard at 24,12: weapons and armor shop 3 ($05)
+            (21, 22): 'WOMAN',  # static female villager at 22,13: Fairy Water ($10)
+            (22, 4): 'WOMAN',  # mobile female villager at 4,14 ($49)
+            (23, 20): 'MAN',  # mobile male villager at 20,15 ($4B)
+            (24, 9): 'WOMAN',  # mobile female villager at 9,16 ($4A)
+            (24, 15): 'WISE_MAN',  # static wizard at 15,16 ($46)
+            (25, 25): 'MERCHANT',  # mobile shopkeeper at 25,17 ($4C)
+            (30, 22): 'WISE_MAN',  # static wizard at 22,22 ($47)
+            (34, 3): 'MERCHANT',  # mobile shopkeeper at 3,26 ($4E)
+            (34, 27): 'MERCHANT',  # static shopkeeper at 27,26: weapons and armor shop 2 ($04)
+            (36, 14): 'WISE_MAN',  # mobile wizard at 14,28 ($6B)
         }
         self.custom_underlying_tiles = {
             'WISE_MAN_2': 'GRASS'
         }
+        # The NPCs from CantMobTbl
+        self.roaming_character_list = ['MERCHANT_2', 'GUARD', 'GUARD_2', 'GUARD_3', 'WOMAN_2', 'MAN_2', 'WOMAN_3',
+                                       'MERCHANT_5', 'MERCHANT_6', 'WISE_MAN_4']
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -899,14 +909,13 @@ class Cantlin(DragonWarriorMap):
         return Direction.DOWN.value
 
     def set_characters_initial_directions(self):
+        # The DD bits of each NES table entry; every NPC not listed here faces down
         self.set_character_initial_direction('MAN', Direction.RIGHT)
-        self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
         self.set_character_initial_direction('MERCHANT_3', Direction.RIGHT)
         self.set_character_initial_direction('MERCHANT_4', Direction.LEFT)
-        self.set_character_initial_direction('MERCHANT_5', Direction.RIGHT)
-        self.set_character_initial_direction('MERCHANT_6', Direction.LEFT)
+        self.set_character_initial_direction('MERCHANT_7', Direction.LEFT)
         self.set_character_initial_direction('WOMAN', Direction.LEFT)
-        self.set_character_initial_direction('GUARD', Direction.RIGHT)
+        self.set_character_initial_direction('GUARD_4', Direction.RIGHT)
 
 
 class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
