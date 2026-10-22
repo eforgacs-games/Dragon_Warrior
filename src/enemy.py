@@ -29,6 +29,9 @@ class Enemy:
     def refresh_pattern(self):
         self.pattern = self.set_pattern()
 
+    def recover_hp(self, amount):
+        self.hp = min(self.hp + amount, self.max_hp)
+
 
 # stats from http://www.thealmightyguru.com/Reviews/DragonWarrior/DW-Enemies.html
 
@@ -55,7 +58,7 @@ class MetalSlime(Enemy):
         self.name = "Metal Slime"
 
     def set_pattern(self):
-        return [(75, "HURT"), "ATTACK"]
+        return [(75, "HURT", True), "ATTACK"]
 
 
 class Drakee(Enemy):
@@ -72,7 +75,9 @@ class Magidrakee(Enemy):
         super().__init__(hp=15, attack=14, defense=14, speed=0, xp=5, gold=12, spells=["HURT"], sleep_resist=0 / 16,
                          stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=1 / 64)
         self.name = "Magidrakee"
-        self.pattern = [(50, "HURT", True), "ATTACK"]
+
+    def set_pattern(self):
+        return [(50, "HURT", True), "ATTACK"]
 
 
 class Drakeema(Enemy):
@@ -101,7 +106,9 @@ class Poltergeist(Enemy):
         super().__init__(hp=23, attack=18, defense=20, speed=0, xp=7, gold=18, spells=("HURT",), sleep_resist=0 / 16,
                          stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=6 / 64)
         self.name = "Poltergeist"
-        self.pattern = [(75, "HURT"), "ATTACK"]
+
+    def set_pattern(self):
+        return [(75, "HURT", True), "ATTACK"]
 
 
 class Specter(Enemy):
@@ -112,7 +119,7 @@ class Specter(Enemy):
         self.name = "Specter"
 
     def set_pattern(self):
-        return [(25, "SLEEP"), (75, "HURT"), "ATTACK"]
+        return [(25, "SLEEP", True), (75, "HURT", True), "ATTACK"]
 
 
 class Magician(Enemy):
@@ -327,7 +334,7 @@ class Starwyvern(Enemy):
         self.name = "Starwyvern"
 
     def set_pattern(self):
-        return [(75, "HEALMORE", self.get_current_hp() < self.max_hp / 4), "FIREBREATH", "ATTACK"]
+        return [(75, "HEALMORE", self.get_current_hp() < self.max_hp / 4), (25, "FIREBREATH", True), "ATTACK"]
 
 
 class Knight(Enemy):
