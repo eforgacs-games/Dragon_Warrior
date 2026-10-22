@@ -76,7 +76,7 @@ class TestPrincessGwaelin(TestCase):
 
     def test_king_lorik_dialog_after_gwaelin_returned(self):
         self.go_to('TantegelThroneRoom', (10, 13))
-        self.game.gwaelin_returned = True
+        self.game.story_flags.gwaelin_returned = True
         set_to_save_prompt(self.game.cmd_menu)
         self.assertIs(self.king_lorik['dialog'], self.king_lorik['returned_dialog'])
         self.game.cmd_menu.set_king_lorik_dialog()
@@ -149,7 +149,7 @@ class TestPrincessGwaelin(TestCase):
                           wraps=self.game.current_map.scale_sprite_sheet) as scale_sprite_sheet:
             self.dialog_lookup.put_princess_on_throne()
         self.assertFalse(self.player.is_carrying_princess)
-        self.assertTrue(self.game.gwaelin_returned)
+        self.assertTrue(self.game.story_flags.gwaelin_returned)
         # The hero goes back to the normal (here unarmed) sprite
         self.assertIn(self.game.directories.UNARMED_HERO_PATH,
                       [call.args[0] for call in scale_sprite_sheet.call_args_list])
@@ -172,7 +172,7 @@ class TestPrincessGwaelin(TestCase):
     def test_gwaelin_only_in_throne_room_once_returned(self):
         self.go_to('TantegelThroneRoom', (10, 13))
         self.assertNotIn('PRINCESS_GWAELIN', self.game.current_map.characters)
-        self.game.gwaelin_returned = True
+        self.game.story_flags.gwaelin_returned = True
         self.go_to('TantegelCourtyard', (14, 14))
         self.go_to('TantegelThroneRoom', (10, 13))
         self.assertEqual(self.game.current_map.characters['PRINCESS_GWAELIN']['coordinates'],
@@ -185,13 +185,13 @@ class TestPrincessGwaelin(TestCase):
         for carrying, returned in ((True, False), (False, True)):
             with self.subTest(carrying=carrying, returned=returned):
                 self.player.is_carrying_princess = carrying
-                self.game.gwaelin_returned = returned
+                self.game.story_flags.gwaelin_returned = returned
                 self.go_to('SwampCave', (6, 4))
                 self.assertNotIn('PRINCESS_GWAELIN', self.game.current_map.characters)
 
     def test_princess_gwaelin_throne_room_dialog(self):
         self.go_to('TantegelThroneRoom', (10, 13))
-        self.game.gwaelin_returned = True
+        self.game.story_flags.gwaelin_returned = True
         gwaelin_dialog = self.dialog_lookup.lookup_table['TantegelThroneRoom']['PRINCESS_GWAELIN']['dialog']
         self.assertEqual(gwaelin_dialog, (self.dialog_lookup.princess_gwaelin_throne_room,))
         with patch('data.text.dialog_lookup_table.random.randint', return_value=0):
@@ -246,13 +246,13 @@ class TestPrincessGwaelin(TestCase):
         for map_name, coordinates, character, not_saved, saved in cases:
             with self.subTest(character=f'{map_name} {character}'):
                 self.player.is_carrying_princess = False
-                self.game.gwaelin_returned = False
+                self.game.story_flags.gwaelin_returned = False
                 self.assertEqual(self.npc_lines(map_name, coordinates, character), not_saved)
                 # NES F_DONE_GWAELIN: carrying her is already enough
                 self.player.is_carrying_princess = True
                 self.assertEqual(self.npc_lines(map_name, coordinates, character), saved)
                 self.player.is_carrying_princess = False
-                self.game.gwaelin_returned = True
+                self.game.story_flags.gwaelin_returned = True
                 self.assertEqual(self.npc_lines(map_name, coordinates, character), saved)
 
     def test_throne_room_guard_once_gwaelin_rescued(self):
@@ -266,7 +266,7 @@ class TestPrincessGwaelin(TestCase):
         self.carry_princess()
         self.assertTrue(self.game.gwaelin_rescued)
         self.player.is_carrying_princess = False
-        self.game.gwaelin_returned = True
+        self.game.story_flags.gwaelin_returned = True
         self.assertTrue(self.game.gwaelin_rescued)
 
     # Edge cases
@@ -278,17 +278,17 @@ class TestPrincessGwaelin(TestCase):
         self.player.is_dead = True
         self.game.set_post_death_attributes()
         self.assertFalse(self.player.is_carrying_princess)
-        self.assertFalse(self.game.gwaelin_returned)
+        self.assertFalse(self.game.story_flags.gwaelin_returned)
         self.assertFalse(self.game.gwaelin_rescued)
         self.go_to('SwampCave', (6, 4))
         self.assertIn('PRINCESS_GWAELIN', self.game.current_map.characters)
 
     def test_dying_after_returning_princess(self):
         self.go_to('Alefgard', (50, 50))
-        self.game.gwaelin_returned = True
+        self.game.story_flags.gwaelin_returned = True
         self.player.is_dead = True
         self.game.set_post_death_attributes()
-        self.assertTrue(self.game.gwaelin_returned)
+        self.assertTrue(self.game.story_flags.gwaelin_returned)
         self.assertIn('PRINCESS_GWAELIN', self.game.current_map.characters)
 
     def test_warping_keeps_carrying_princess(self):
