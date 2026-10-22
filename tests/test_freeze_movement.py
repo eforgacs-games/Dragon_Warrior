@@ -67,7 +67,7 @@ class FreezeTestCase(TestCase):
 
     def let_guard_start_a_step(self, direction=Direction.LEFT.value):
         """Make the roaming guard pick a direction and take its first pixels of a step."""
-        self.guard.last_roaming_clock_check = None
+        self.game.npc_schedule.give_turn_to(0)
         with patch('src.game.random.choice', return_value=direction):
             self.frame()
         self.frame()
@@ -100,7 +100,7 @@ class TestFreezeMovement(FreezeTestCase):
         self.open_command_menu()
         before = self.guard_position()
         for _ in range(5):
-            self.guard.last_roaming_clock_check = None  # the guard would pick a new step every frame
+            self.game.npc_schedule.give_turn_to(0)  # the guard would start a step on the next frame
             with patch('src.game.random.choice', return_value=Direction.LEFT.value):
                 self.frames(20)
         self.assertEqual(before, self.guard_position())
@@ -114,7 +114,7 @@ class TestFreezeMovement(FreezeTestCase):
         for _ in range(30):
             self.game.drawer.set_to_post_initial_dialog(self.game.cmd_menu)
             self.game.game_state.enable_movement = True
-            self.guard.last_roaming_clock_check = None
+            self.game.npc_schedule.give_turn_to(0)
             with patch('src.game.random.choice', return_value=Direction.LEFT.value):
                 self.frame()
         self.assertEqual(before, self.guard_position())
@@ -141,11 +141,33 @@ class TestFreezeMovement(FreezeTestCase):
         self.frames(30)
         self.assertEqual(before, self.guard_position())
 
+    def test_command_window_waits_for_the_end_of_an_npc_turn(self):
+        # NES DoNCCmdWindow calls DoSprites until FrameCounter & $0F is 1, so the window opens between two NPC turns
+        # even when nobody is walking, and the next pair's turn starts as soon as it closes
+        self.game.npc_schedule.give_turn_to(2)  # an empty pair: the throne room has one roaming NPC
+        self.frames(5)  # FrameCounter & $0F 1 to 5
+        self.frame(keydown(K_k))  # 6
+        frames_waited = 0
+        while not self.game.cmd_menu.launch_signaled:
+            self.frame()
+            frames_waited += 1
+            self.assertLess(frames_waited, self.tile_size)
+        self.assertEqual(10, frames_waited)  # 7 to 15, then 0
+        self.assertTrue(self.game.npc_schedule.between_turns)
+        self.game.cmd_menu.menu.enable()
+        self.frames(30)
+        self.assertEqual(0, self.game.npc_schedule.phase)
+        self.game.cmd_menu.menu.disable()
+        self.game.cmd_menu.launch_signaled = False
+        with patch('src.game.random.choice', return_value=Direction.LEFT.value):
+            self.frame()
+        self.assertTrue(self.game.npc_schedule.is_decision_frame)
+
     def test_npc_does_not_start_a_new_step_while_the_command_window_is_pending(self):
         self.game.player.is_moving = True  # the window can't open until the hero's step is done
         self.frame(keydown(K_k))
         before = self.guard_position()
-        self.guard.last_roaming_clock_check = None
+        self.game.npc_schedule.give_turn_to(0)
         with patch('src.game.random.choice', return_value=Direction.LEFT.value), \
                 patch.object(self.game, 'move_player'):
             self.frames(10)
@@ -153,7 +175,7 @@ class TestFreezeMovement(FreezeTestCase):
 
     def test_npcs_move_again_once_the_command_menu_closes(self):
         self.open_command_menu()
-        self.guard.last_roaming_clock_check = None  # due a step as soon as it may move
+        self.game.npc_schedule.give_turn_to(0)  # due a step as soon as it may move
         with patch('src.game.random.choice', return_value=Direction.LEFT.value):
             self.frame(keydown(K_j))
         self.assertFalse(self.game.world_frozen)
@@ -203,7 +225,7 @@ class TestFreezeMovement(FreezeTestCase):
         self.assertFalse(self.game.sprites_animate)
         before = self.guard_position()
         for _ in range(5):
-            self.guard.last_roaming_clock_check = None
+            self.game.npc_schedule.give_turn_to(0)
             with patch('src.game.random.choice', return_value=Direction.LEFT.value):
                 self.frames(20)
         self.assertEqual(before, self.guard_position())
@@ -241,7 +263,7 @@ class TestFreezeMovement(FreezeTestCase):
         # every command ends with unpause_all_movement
         self.game.game_state.unpause_all_movement()
         before = self.guard_position()
-        self.guard.last_roaming_clock_check = None
+        self.game.npc_schedule.give_turn_to(0)
         with patch('src.game.random.choice', return_value=Direction.LEFT.value):
             self.frames(20)
         self.assertEqual(before, self.guard_position())
