@@ -19,6 +19,9 @@ Run it from the command line using the interpreter. If you are in the
 DragonWarrior directory, type:
 python src/game.py
 
+To run with the development config (god mode, no battles, coordinates visible), add `--dev`:
+python src/game.py --dev
+
 ## Running in VS Code
 
 If you're using Visual Studio Code:
