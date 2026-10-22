@@ -108,6 +108,33 @@ class TestGame(TestCase):
     #     initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
     #     self.assertEqual(self.camera.set_camera_position(initial_hero_location), (-16, -7))
 
+    def die(self, in_battle):
+        self.game.battle_ctrl.launch_battle = in_battle
+        self.game.player.current_hp = 0
+        self.game.player.gold = 101
+        with patch.object(self.game, 'graphics') as graphics, patch.object(self.game, 'drawer') as drawer, \
+                patch.object(self.game, 'music_player'), patch('src.game.display'), \
+                patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.handle_death()
+        return graphics, drawer, show_text
+
+    def test_death_in_battle(self):
+        graphics, drawer, show_text = self.die(in_battle=True)
+        graphics.create_window.assert_called_once()
+        drawer.draw_all_tiles_in_current_map.assert_not_called()
+        self.assertFalse(self.game.battle_ctrl.launch_battle)
+        show_text.assert_called_once_with("Thou art dead.", disable_sound=True)
+        self.assertEqual(self.game.current_map.identifier, 'TantegelThroneRoom')
+        self.assertEqual(self.game.player.current_hp, self.game.player.max_hp)
+        self.assertEqual(self.game.player.gold, 50)
+
+    def test_death_outside_battle(self):
+        # e.g. from swamp or barrier damage
+        graphics, drawer, show_text = self.die(in_battle=False)
+        graphics.create_window.assert_not_called()
+        drawer.draw_all_tiles_in_current_map.assert_called_once()
+        show_text.assert_called_once_with("Thou art dead.", disable_sound=True)
+
     def test_hero_underlying_tile(self):
         self.assertEqual('BRICK', self.game.current_map.hero_underlying_tile())
 
