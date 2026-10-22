@@ -39,7 +39,7 @@ class TestMenuFunctions(TestCase):
         mocked_return = MagicMock()
         mocked_return.type = KEYDOWN
         mocked_return.key = K_RETURN
-        with patch.object(event, 'get', return_value=[mocked_e, mocked_d, mocked_return]) as mock_method:
+        with patch.object(event, 'get', return_value=[mocked_e, mocked_d, mocked_return]):
             self.assertEqual('ed', NameSelection(self.game.game_state.config).select_name(get_ticks(), self.game.screen,
                                                                                           self.game.cmd_menu))
 

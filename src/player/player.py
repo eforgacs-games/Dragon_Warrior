@@ -12,7 +12,8 @@ from src.sprites.animated_sprite import AnimatedSprite
 
 class Player(AnimatedSprite):
 
-    def __init__(self, center_point, images: Tuple[Surface, Surface, Surface, Surface], current_map: DragonWarriorMap, direction_value=Direction.DOWN.value,
+    def __init__(self, center_point, images: Tuple[Surface, Surface, Surface, Surface], current_map: DragonWarriorMap,
+                 direction_value=Direction.DOWN.value,
                  god_mode=False, fighters_ring_attack_bonus=0):
         AnimatedSprite.__init__(self, center_point, direction_value, images, identifier='HERO')
 

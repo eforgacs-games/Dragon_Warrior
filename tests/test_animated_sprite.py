@@ -49,14 +49,17 @@ class TestAnimatedSprite(TestCase):
     def test_animate_left_direction(self):
         self.anim_sprite.direction_value = Direction.LEFT.value
         self.anim_sprite.animate()
-        self.assertEqual(self.anim_sprite.image, self.anim_sprite.images_map[self.anim_sprite.direction_value][self.anim_sprite.current_frame])
+        sprite = self.anim_sprite
+        self.assertEqual(sprite.image, sprite.images_map[sprite.direction_value][sprite.current_frame])
 
     def test_animate_up_direction(self):
         self.anim_sprite.direction_value = Direction.UP.value
         self.anim_sprite.animate()
-        self.assertEqual(self.anim_sprite.image, self.anim_sprite.images_map[self.anim_sprite.direction_value][self.anim_sprite.current_frame])
+        sprite = self.anim_sprite
+        self.assertEqual(sprite.image, sprite.images_map[sprite.direction_value][sprite.current_frame])
 
     def test_animate_right_direction(self):
         self.anim_sprite.direction_value = Direction.RIGHT.value
         self.anim_sprite.animate()
-        self.assertEqual(self.anim_sprite.image, self.anim_sprite.images_map[self.anim_sprite.direction_value][self.anim_sprite.current_frame])
+        sprite = self.anim_sprite
+        self.assertEqual(sprite.image, sprite.images_map[sprite.direction_value][sprite.current_frame])
