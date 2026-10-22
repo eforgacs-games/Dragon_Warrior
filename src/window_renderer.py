@@ -11,7 +11,8 @@ data/fonts/dragon-quest.ttf: rendered at 8 pixels without antialiasing, every ch
 pixels wide, its 8 rows from the second row of the rendered line), so a tile is that render scaled up, never the
 font rendered at a bigger size. Except for four letters: the font's j, k, p and t are not the NES ones, so their NES
 tiles are in NES_GLYPHS, copied from the screenshots (the name entry alphabet, and the shop windows' "Copper" and
-"Plate", agree pixel for pixel); and the NES apostrophe is the font's ’, not its '.
+"Plate", agree pixel for pixel); and the NES apostrophe is the font's ’, not its '. src/text.py's NESFont draws them
+the same way in all other text (dialog, draw_text).
 """
 from functools import lru_cache
 from os.path import dirname, join, realpath
