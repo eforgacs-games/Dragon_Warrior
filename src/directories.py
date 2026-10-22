@@ -68,6 +68,7 @@ class Directories:
             self.village_music = join(music_dir, 'orchestra', '03 People.mp3')
             self.overworld_music = join(music_dir, 'orchestra', '04 Unknown World.mp3')
             self.battle_music = join(music_dir, 'orchestra', '05 Fight.mp3')
+            self.end_boss_music = join(music_dir, 'orchestra', '07 King Dragon.mp3')
             self.dungeon_floor_1_music = \
                 self.dungeon_floor_2_music = \
                 self.dungeon_floor_3_music = \
@@ -94,6 +95,7 @@ class Directories:
             self.dungeon_floor_7_music = join(music_dir, 'NES', '12 Dragon Quest 1 - Dark Dungeon ~ Floor 7.mp3')
             self.dungeon_floor_8_music = join(music_dir, 'NES', '13 Dragon Quest 1 - Dark Dungeon ~ Floor 8.mp3')
             self.battle_music = join(music_dir, 'NES', '14 Dragon Quest 1 - A Monster Draws Near.mp3')
+            self.end_boss_music = join(music_dir, 'NES', '15 Dragon Quest 1 - The Dragon Lord.mp3')
 
         self.IMAGES_DIR = join(data_dir, 'images')
         self.MAP_TILES_PATH = join(self.IMAGES_DIR, 'tileset.png')

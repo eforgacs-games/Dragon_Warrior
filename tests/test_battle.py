@@ -118,7 +118,7 @@ class TestBattleMethods(unittest.TestCase):
         player.is_dead = False
         current_battle = Mock()
         current_battle.enemy.is_asleep = False
-        current_battle.enemy.speed = 255
+        current_battle.enemy.defense = 255
         current_battle.no_op = False
 
         with patch('src.battle.random.randint', return_value=255):
@@ -134,7 +134,7 @@ class TestBattleMethods(unittest.TestCase):
         player.agility = 1
         current_battle = Mock()
         current_battle.enemy.is_asleep = False
-        current_battle.enemy.speed = 255
+        current_battle.enemy.defense = 255
 
         with patch('src.battle.random.randint', return_value=255):
             result = self.battle.battle_run(cmd_menu, player, current_battle)
@@ -150,7 +150,7 @@ class TestBattleMethods(unittest.TestCase):
         player.current_hp = 10
         current_battle = Mock()
         current_battle.enemy.is_asleep = False
-        current_battle.enemy.speed = 1
+        current_battle.enemy.defense = 1
 
         with patch('src.battle.random.randint', return_value=1):
             result = self.battle.battle_run(cmd_menu, player, current_battle)
