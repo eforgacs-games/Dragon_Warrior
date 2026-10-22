@@ -836,11 +836,13 @@ class TestGame(TestCase):
     #     with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
     #         self.game.show_main_menu_screen(self.game.screen)
 
-    def test_change_message_speed_toggles_no_wait(self):
+    def test_change_message_speed_leaves_no_wait_alone(self):
+        # it used to flip NO_WAIT; now it picks a log and its speed (tests/test_options_screen.py)
         original = self.game.game_state.config['NO_WAIT']
-        self.game.change_message_speed()
-        self.assertNotEqual(original, self.game.game_state.config['NO_WAIT'])
-        self.game.change_message_speed()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.game.directories.save_dir = tmp_dir
+            self.game.save_dir_contents = []
+            self.game.change_message_speed()
         self.assertEqual(original, self.game.game_state.config['NO_WAIT'])
 
     def test_continue_quest_shows_the_saved_name_on_the_log(self):
