@@ -470,8 +470,8 @@ class Game:
     def hero_attack(self, current_battle):
         self.battle_ctrl.hero_attack(current_battle)
 
-    def enemy_move(self, current_battle: Battle):
-        self.battle_ctrl.enemy_move(current_battle)
+    def enemy_move(self, current_battle: Battle) -> bool:
+        return self.battle_ctrl.enemy_move(current_battle)
 
     def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
         self.battle_ctrl.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
