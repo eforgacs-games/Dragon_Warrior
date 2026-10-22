@@ -263,7 +263,8 @@ class TestBattleSpiral(unittest.TestCase):
     def test_dragonlord_final_form_has_no_spiral_and_no_hidden_hero(self):
         # NES LoadCombatBckgrnd returns at once for EN_DRAGONLORD2, before the DoSprites call; DoSprites also exits
         battle = Battle(dict(test_config), 'Dragonlord 2', Mock())
-        with patch.object(battle, 'hide_hero') as hide_hero, patch('src.battle.wait_frames') as wait_frames:
+        with patch.object(battle, 'hide_hero') as hide_hero, patch('src.battle.wait_frames') as wait_frames, \
+                patch('src.battle.draw_window'):
             battle.display_battle_window(Mock(), Mock(), Mock(), Mock(), Mock(), (255, 255, 255), Mock())
         hide_hero.assert_not_called()
         wait_frames.assert_not_called()
