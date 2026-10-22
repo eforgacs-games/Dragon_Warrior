@@ -50,6 +50,7 @@ from src.menu_functions import NameSelection
 from src.movement import Movement
 from src.music_player import MusicPlayer
 from src.npc_schedule import NPCSchedule, POP_UP_FRAME
+from src.npc_movement import npc_may_step_onto, step
 from src.options_screen import DEFAULT_OPTIONS, OptionsScreen, apply_options, options_from_save, options_to_save
 from src.player.player import Player
 from src.sound import Sound
@@ -1288,7 +1289,13 @@ class Game:
                                                                                 self.current_map, offset=2)
         if character.step_destination is None:
             # Start of a step: check it once, then reserve the destination until the character arrives
-            if self.is_impassable(character.next_tile_id) or self.character_in_path(character) or (
+            if isinstance(character, RoamingCharacter):
+                # NES UpdateNPCs1: NPCs keep to the NES map and walk on fewer tiles, see src/npc_movement.py
+                blocked = not npc_may_step_onto(self.current_map,
+                                                step(character.row, character.column, character.direction_value))
+            else:
+                blocked = self.is_impassable(character.next_tile_id)
+            if blocked or self.character_in_path(character) or (
                     character is not self.player and self.npc_crosses_cover_boundary(character)):
                 self.movement.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
                 delta_x = delta_y = 0
