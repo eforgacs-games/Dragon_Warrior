@@ -12,7 +12,7 @@ from src.shops import INVENTORY_SLOTS, MAX_GOLD, ShopInventories, buyback_price,
     inventory_slots_used, pay_player, sell_price
 
 VALID_ITEM_TYPES = {'weapon', 'armor', 'shield'}
-EXPECTED_KEYS = {'cost', 'type', 'menu_image'}
+EXPECTED_KEYS = {'cost', 'type'}
 
 
 class TestShopInventories(unittest.TestCase):
@@ -114,12 +114,6 @@ class TestShopInventories(unittest.TestCase):
                 with self.subTest(item=item_name):
                     self.assertIsInstance(item_data['cost'], int)
                     self.assertGreater(item_data['cost'], 0)
-
-    def test_menu_image_paths_are_strings(self):
-        for inventory in self._all_inventories():
-            for item_name, item_data in inventory.items():
-                with self.subTest(item=item_name):
-                    self.assertIsInstance(item_data['menu_image'], str)
 
     # --- Specific item assertions ---
 

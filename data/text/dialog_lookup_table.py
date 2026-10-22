@@ -17,6 +17,8 @@ from src.items import INVENTORY_SLOTS, MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS, inv
 from src import maps
 from src.maps import DragonWarriorMap
 from src.maps_functions import get_center_point
+from src.window_renderer import draw_window as generated_window
+from src.windows import BUY_SELL_LAYOUT, WindowLayout, shop_inventory_layout
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_price, \
     inventory_is_full, pay_player, sell_price
@@ -173,8 +175,7 @@ class DialogLookup:
                 'SOLDIER': {'dialog': (_("Beware the bridges!"), _("Danger grows when thou crosses."))},
                 'WISE_MAN': {'dialog': (self.remove_curse,)},
                 'MERCHANT': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.brecconary_weapons_store_inventory,
-                            self.directories.BRECCONARY_WEAPONS_SHOP_PATH),)},
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.brecconary_weapons_store_inventory),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'MERCHANT_3': {'dialog': (
                     partial(self.tool_shop, self.shop_inventories.brecconary_item_store_inventory),)},
@@ -223,8 +224,7 @@ class DialogLookup:
                 'SOLDIER': {'dialog': _("I have heard of one named Nester.\nDost thou know such a one?")},
                 # Static shopkeeper at 10,18 ($02, WeaponsDialog: Garinham weapons and armor shop)
                 'MERCHANT_4': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.garinham_weapons_store_inventory,
-                            self.directories.GARINHAM_WEAPONS_SHOP_PATH),)},
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.garinham_weapons_store_inventory),)},
             },
             # NES KolMobTbl and KolStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte + $2F
             # (DoVariousDialog2, Bank03), so $2E is TextBlock6 entry 13 and so on.
@@ -247,8 +247,7 @@ class DialogLookup:
                 'MAN': {'dialog': _("Art thou the descendant of Erdrick?\nHast thou any proof?")},
                 # Static shopkeeper at 22,12 ($00, WeaponsDialog: Kol weapons and armor shop)
                 'MERCHANT_2': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.kol_weapons_store_inventory,
-                            self.directories.KOL_WEAPONS_SHOP_PATH),)},
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.kol_weapons_store_inventory),)},
                 # Mobile male villager at 14,13 ($36, TextBlock7 entry 5)
                 'MAN_2': {'dialog': (_("Dreadful is the South Island."),
                                      _("Great strength and skill and wit only will bring thee back from that place."))},
@@ -269,8 +268,7 @@ class DialogLookup:
             },
             'Rimuldar': {
                 'MERCHANT_2': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory,
-                            self.directories.RIMULDAR_WEAPONS_SHOP_PATH),)},
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory),)},
                 'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, rimuldar_inn_cost),)},
                 'WISE_MAN': {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['Rimuldar']),)},
             },
@@ -281,8 +279,7 @@ class DialogLookup:
                 'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, cantlin_inn_cost),)},
                 # Mobile shopkeeper at 22,5 ($03, WeaponsDialog: Cantlin weapons and armor shop 1)
                 'MERCHANT_2': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_north_inventory,
-                            self.directories.CANTLIN_WEAPONS_SHOP_NORTH_PATH),)},
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_north_inventory),)},
                 # Mobile guard at 5,6 ($60, CheckYesNoDialog): TextBlock9 entry 15, then a yes/no window
                 'GUARD': {'dialog': (_("'Tis said that the Dragonlord hath claws that can cleave iron and fiery "
                                        "breath that can melt stone."),
@@ -326,8 +323,7 @@ class DialogLookup:
                 'MERCHANT_6': {'dialog': _("My Grandfather Wynn once had a shop on the east side of Hauksness.")},
                 # Static shopkeeper at 27,26 ($04, WeaponsDialog: Cantlin weapons and armor shop 2)
                 'MERCHANT_7': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
-                            self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory),)},
                 # Mobile wizard at 14,28 ($6B, ErdTknDialog): TextBlock5 entry 12, then TextBlock11 entries 14
                 # and 15. He only gives the hint; the token itself is found on the overworld.
                 'WISE_MAN_4': {'dialog': (_("Let us wish the warrior well!"),
@@ -891,11 +887,29 @@ class DialogLookup:
 
         return self.select_in_window(window, len(lines), draw_window, 2, initial_index)
 
+    def select_in_generated_window(self, layout: WindowLayout, initial_index: int = 0) -> int | None:
+        """A selection window generated from its NES window data (src/window_renderer.py), with the blinking NES
+        cursor at each entry's cursor tile (select_in_window). Returns the chosen entry's index, or None if cancelled."""
+        first_row = layout.cursor_tiles[0][1]
+        # select_in_window puts the cursor in tile column 1, one block (2 tile rows) per entry
+        if layout.cursor_tiles != tuple((1, first_row + 2 * index) for index in range(len(layout.cursor_tiles))):
+            raise ValueError(f"{layout.cursor_tiles} is not a single column of entries")
+        return self.select_in_window(layout.window, len(layout.cursor_tiles),
+                                     lambda: generated_window(self.screen, layout, self.color, self.config),
+                                     first_row, initial_index)
+
+    def is_nes_text(self, *texts: str) -> bool:
+        """Whether the texts are shown untranslated, so in the NES font a generated window can draw (Korean is drawn
+        as text on a window background instead)."""
+        return all(self._(text) == text for text in texts)
+
     def select_shop_item(self, item_names: list[str], costs: list[int]) -> int | None:
         """The shop inventory window (NES ShopInvDat): single spaced and as high as the shop's stock
         (WndVariableHeight). Each item takes 2 tile rows: the first half of its name at tile column 2 and its cost,
         5 tiles wide, ending at column 16 (WndItemCost); the second half on the next row at column 3 (cursor home
-        Y = 1)."""
+        Y = 1). In English it is generated tile by tile (shop_inventory_layout); a translation is drawn as text."""
+        if self.is_nes_text(*item_names):
+            return self.select_in_generated_window(shop_inventory_layout(tuple(item_names), tuple(costs)))
         window = variable_height_window(SHOP_INVENTORY_WINDOW, len(item_names))
 
         def draw_window() -> None:
@@ -918,55 +932,14 @@ class DialogLookup:
                                      lambda: self.command_menu.draw_item_menu('inventory', items),
                                      ITEM_MENU_FIRST_TILE_ROW['inventory'])
 
-    def open_store_inventory(self, current_store_inventory, static_store_image=None):
-        """NES GetShopItems: show the shop's stock and return the name of the item chosen, or None if cancelled.
-
-        Shops with pre-rendered menu images blink between them; the others are drawn as text."""
+    def open_store_inventory(self, current_store_inventory):
+        """NES GetShopItems: show the shop's stock (ShopInvDat, select_shop_item) and return the name of the item
+        chosen, or None if cancelled. The pop-up status window stays up with it."""
+        self.command_menu.game.drawer.display_hovering_stats = True
         item_names = list(current_store_inventory)
-        if static_store_image is None or not all('menu_image' in item for item in current_store_inventory.values()):
-            selected_index = self.select_shop_item(item_names,
-                                                   [current_store_inventory[name]['cost'] for name in item_names])
-            return None if selected_index is None else item_names[selected_index]
-        tile_size = self.config['TILE_SIZE']
-        # NES ShopInvDat
-        window = variable_height_window(SHOP_INVENTORY_WINDOW, len(current_store_inventory))
-        self.command_menu.window_drop_down_effect(*window)
-        store_inventory_window_rect = Rect(window.x * tile_size, window.y * tile_size, window.width * tile_size,
-                                           window.height * tile_size)
-        current_item_index = 0
-        # The NES cursor (src/cursor.py), drawn over the shop's screenshot without one (ShopInvDat: cursor home X = 1,
-        # Y = 1, one block per item)
-        cursor = BlinkingCursor()  # WndInitSelect
-        graphics = Graphics(self.config)
-
-        def draw(cursor_visible: bool) -> None:
-            graphics.create_window(*window, static_store_image, self.screen, self.color)
-            self.command_menu.draw_window_cursor(window.x, window.y, 1, 1 + 2 * current_item_index, cursor_visible)
-            if not self.config['NO_BLIT']:
-                display.update(store_inventory_window_rect)
-
-        while True:
-            self.command_menu.game.drawer.display_hovering_stats = True
-            display.flip()
-            current_item_name = item_names[current_item_index]
-            draw(cursor.visible())
-            for current_event in get():
-                if current_event.type == KEYDOWN:
-                    if current_event.key in (K_DOWN, K_s) and current_item_index < len(item_names) - 1:
-                        current_item_index += 1
-                        cursor.restart()  # WndUpdateCrsrPos
-                    elif current_event.key in (K_UP, K_w) and current_item_index > 0:
-                        current_item_index -= 1
-                        cursor.restart()
-                    elif current_event.key in reject_keys:
-                        draw(True)  # WndBPressed
-                        return None
-                    elif current_event.key in accept_keys:
-                        draw(True)  # WndAPressed: the arrow stays on
-                        return current_item_name
-                elif current_event.type == QUIT:
-                    quit()
-            pump()
+        selected_index = self.select_shop_item(item_names,
+                                               [current_store_inventory[name]['cost'] for name in item_names])
+        return None if selected_index is None else item_names[selected_index]
 
     def please_come_again(self):
         self.say(self._("Please, come again."), hide_arrow=True)
@@ -974,21 +947,20 @@ class DialogLookup:
     # Weapon and armor shops (NES WeaponsDialog). They only sell; the only way to sell equipment is the buyback
     # offered when buying a replacement.
 
-    def check_buy_weapons_armor(self, current_store_inventory, static_store_image=None):
+    def check_buy_weapons_armor(self, current_store_inventory):
         self.confirm(self._("We deal in weapons and armor.\n Dost thou wish to buy anything today?"),
-                     yes_path_function=partial(self.choose_weapon_or_armor, current_store_inventory,
-                                               static_store_image),
+                     yes_path_function=partial(self.choose_weapon_or_armor, current_store_inventory),
                      no_path_function=self.please_come_again)
 
-    def choose_weapon_or_armor(self, current_store_inventory, static_store_image):
+    def choose_weapon_or_armor(self, current_store_inventory):
         self.command_menu.show_line_in_dialog_box(self._("What dost thou wish to buy?"), skip_text=True)
-        selected_item = self.open_store_inventory(current_store_inventory, static_store_image)
+        selected_item = self.open_store_inventory(current_store_inventory)
         if selected_item is None:
             self.please_come_again()
         else:
-            self.buy_item_dialog(selected_item, current_store_inventory, static_store_image)
+            self.buy_item_dialog(selected_item, current_store_inventory)
 
-    def buy_item_dialog(self, selected_item, current_store_inventory, static_store_image):
+    def buy_item_dialog(self, selected_item, current_store_inventory):
         _ = self._
         self.say(_("The {}?").format(_(selected_item)))
         selected_item_dict = current_store_inventory[selected_item]
@@ -1006,8 +978,7 @@ class DialogLookup:
         else:
             self.say(_("Sorry.\nThou hast not enough money."))
         self.confirm(_("Dost thou wish to buy anything more?"),
-                     yes_path_function=partial(self.choose_weapon_or_armor, current_store_inventory,
-                                               static_store_image),
+                     yes_path_function=partial(self.choose_weapon_or_armor, current_store_inventory),
                      no_path_function=self.please_come_again)
 
     def equipped_item(self, item_type):
@@ -1034,8 +1005,11 @@ class DialogLookup:
 
     def tool_shop(self, current_store_inventory):
         self.say(self.tools_intro)
-        # NES WND_BUY_SELL
-        choice = self.select_from_text_menu([self._("BUY"), self._("SELL")], BUY_SELL_WINDOW)
+        # NES WND_BUY_SELL (BuySellDat): generated in English, drawn as text when translated
+        if self.is_nes_text("BUY", "SELL"):
+            choice = self.select_in_generated_window(BUY_SELL_LAYOUT)
+        else:
+            choice = self.select_from_text_menu([self._("BUY"), self._("SELL")], BUY_SELL_WINDOW)
         if choice == 0:
             self.buy_tool(current_store_inventory)
         elif choice == 1:
