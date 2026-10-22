@@ -61,9 +61,11 @@ class TestBattleMethods(unittest.TestCase):
         enemy.xp = 10
         enemy.gold = 5
 
-        self.battle.enemy_defeated(cmd_menu, screen, player, music_enabled, enemy)
+        # NES CalcPlyrGold: 5 * (192 + 63) // 256 = 4 on the highest roll
+        with patch('src.battle.random.randint', return_value=63):
+            self.battle.enemy_defeated(cmd_menu, screen, player, music_enabled, enemy)
         self.assertEqual(player.total_experience, 10)
-        self.assertEqual(player.gold, 5)
+        self.assertEqual(player.gold, 4)
 
     def test_get_enemy_draws_near_string(self):
         self.battle.enemy.name = 'Slime'
