@@ -189,6 +189,9 @@ class MapManager:
         self.game.loop_count = 1
         self.game_state.unpause_all_movement()
         self.game.tiles_moved_since_spawn = 0
+        # NES PalFadeIn: fading the new map in loads the palettes, so the windows turn red or white for the current HP
+        # (ChkLowHPPal). This is where a level up's new max HP first changes the window color.
+        self.game.load_window_palette()
         self.game.cmd_menu = CommandMenu(self.game)
         # TODO: Allow music to continue playing when moving within Tantegel Castle.
         self.music_player.load_and_play_music(self.current_map.music_file_path)

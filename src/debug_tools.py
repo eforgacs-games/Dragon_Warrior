@@ -137,6 +137,7 @@ class DebugTools:
             message = self.set_level(int(level))
         else:
             message = self.give(option)
+        self.game.load_window_palette()  # refilling HP or setting the level can change whether HP is low
         self.game.draw_temporary_text(message)
 
     # Checkpoints

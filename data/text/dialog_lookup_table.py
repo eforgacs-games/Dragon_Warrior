@@ -30,6 +30,11 @@ from src.waiting import wait, wait_frames
 
 
 class DialogLookup:
+    @property
+    def color(self) -> tuple[int, int, int]:
+        """The window color, red when HP is low (Game.load_window_palette)."""
+        return self.command_menu.color
+
     def __init__(self, command_menu, config: dict):
         self.config = config
         self.calculation = Calculation(config)
@@ -38,7 +43,6 @@ class DialogLookup:
 
         self.shop_inventories = ShopInventories(self.config)
         self.command_menu = command_menu
-        self.color = self.command_menu.game.color
         self.player = command_menu.player
         self.screen = command_menu.screen
         self.current_map: DragonWarriorMap = command_menu.current_map
@@ -420,7 +424,7 @@ class DialogLookup:
         """Approximates NES BadEndBGPal ($16 red as the window color, every other background color black):
         the map goes black, the dialog window and the pop-up status window are redrawn in red."""
         game = self.command_menu.game
-        game.color = self.command_menu.color = self.color = RED
+        game.set_window_color(RED)
         self.screen.fill(BLACK)
         self.command_menu.show_line_in_dialog_box(final_line, add_quotes=False, hide_arrow=True, skip_text=True,
                                                   letter_by_letter=False)
@@ -1100,6 +1104,9 @@ class DialogLookup:
         if music_enabled:
             mixer.music.load(self.current_map.music_file_path)
             mixer.music.play(-1)
+        # NES Inn: HP is restored while the screen is faded out, so PalFadeIn's palette loads (ChkLowHPPal) bring the
+        # windows back white, before the innkeeper says good morning
+        self.command_menu.game.load_window_palette()
         if not self.command_menu.game.game_state.config['NO_BLIT']:
             self.command_menu.game.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
             draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row, self.config)
@@ -1110,7 +1117,6 @@ class DialogLookup:
             self.screen.blit(self.background, self.camera_position)
             self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
             display.flip()
-        self.command_menu.game.color = self.color = WHITE
         # NES Inn (Bank03, after PalFadeIn): TextBlock1 entry 6 if the hero is carrying Gwaelin, otherwise entry 8
         if self.command_menu.game.story_flags.carrying_gwaelin:
             good_morning = _("Good morning.\nThou hast had a good night's sleep I hope.")
