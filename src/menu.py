@@ -15,7 +15,7 @@ from data.text.dialog_lookup_table import DialogLookup
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
-from src.waiting import quit_if_requested
+from src.waiting import quit_if_requested, wait
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
@@ -363,7 +363,7 @@ class CommandMenu(Menu):
         self._dialog_frame_deadline = max(self._dialog_frame_deadline, now) + frames * 1000 / DIALOG_FPS
         delay = int(self._dialog_frame_deadline - now)
         if delay > 0:
-            time.wait(delay)
+            wait(delay)
 
     def dialog_cell_rect(self, row: int, column: int = 0, columns: int = DIALOG_COLUMNS) -> Rect:
         """Screen rect of dialog text cells. The text starts one NES tile inside the window's border (screen tile
