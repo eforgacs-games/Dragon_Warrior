@@ -44,18 +44,18 @@ STORY_ANSWERS = {
 }
 
 
-# Story flags, read in one place (the save-story-progress work moves them all onto game.story_flags)
+# Story flags, read in one place
 
 def rainbow_bridge_built(game) -> bool:
-    return game.rainbow_bridge_built
+    return game.story_flags.rainbow_bridge_built
 
 
 def charlock_stairs_revealed(game) -> bool:
-    return game.charlock_stairs_revealed
+    return game.story_flags.charlock_stairs_revealed
 
 
 def carrying_gwaelin(game) -> bool:
-    return game.player.is_carrying_princess
+    return game.story_flags.carrying_gwaelin
 
 
 def gwaelin_returned(game) -> bool:
