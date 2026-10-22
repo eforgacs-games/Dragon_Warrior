@@ -317,6 +317,30 @@ class TestGame(TestCase):
         self.assertEqual(self.walk(126), [])
         self.assertEqual(self.walk(1), ['The Fairy Water has lost its effect.'])
 
+    def test_radiant_light_shrinks_as_the_hero_walks(self):
+        # NES GameEngineLoop counts RadiantTimer down once per step
+        self.go_to('ErdricksCaveB1', (0, 0))
+        self.game.game_state.cast_radiant()
+        light = []
+        for _ in range(201):
+            self.walk(1)
+            light.append(self.game.game_state.light_diameter)
+        self.assertEqual(light, [7] * 79 + [5] * 60 + [3] * 60 + [1] * 2)
+
+    def test_light_lasts_between_dungeon_floors_but_not_outside(self):
+        # NES InitMapData only resets LightDiameter and RadiantTimer on maps that aren't dungeons
+        self.go_to('ErdricksCaveB1', (0, 0))
+        self.game.game_state.cast_radiant()
+        self.walk(10)
+        self.go_to('ErdricksCaveB2', (10, 9))
+        self.assertEqual(self.game.game_state.light_diameter, 7)
+        self.assertEqual(self.game.game_state.radiant_timer, 0x50 - 10)
+        self.game.cmd_menu.outside()
+        self.assertEqual(self.game.current_map.identifier, 'Alefgard')
+        self.assertEqual(self.game.game_state.light_diameter, 1)
+        self.assertEqual(self.game.game_state.lit_diameter, 1)
+        self.assertEqual(self.game.game_state.radiant_timer, 0)
+
     def die(self, in_battle):
         self.game.battle_ctrl.launch_battle = in_battle
         self.game.player.current_hp = 0
@@ -706,7 +730,7 @@ class TestGame(TestCase):
                                   self.game.player, self.game.cmd_menu, self.game.foreground_rects,
                                   self.game.game_state.enable_animate, self.game.camera, self.game.initial_dialog_enabled,
                                   self.game.events, self.game.skip_text, self.game.story_flags.left_throne_room,
-                                  self.game.game_state, self.game.torch_active, self.game.color)
+                                  self.game.game_state, self.game.color)
         self.assertTrue(self.game.drawer.not_moving_time_start)
 
     # def test_handle_sprite_drawing_and_animation(self):
