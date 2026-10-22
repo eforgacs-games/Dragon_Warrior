@@ -25,7 +25,6 @@ from src.map_layouts import MapLayouts
 from src.maps import TantegelThroneRoom, TantegelCourtyard, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.menu import CommandMenu
-from src.menu_functions import convert_list_to_newline_separated_string
 from src.music_player import MusicPlayer
 from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
@@ -694,9 +693,13 @@ class TestGame(TestCase):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
             keydown_event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F1, mod=pygame.KMOD_NONE)
             self.game.handle_help_button(keydown_event)
-        control_info = ControlInfo(test_config)
-        mock_show_text_in_dialog_box.assert_called_with(
-            f"Controls:\n{convert_list_to_newline_separated_string(control_info.controls)}")
+        # a tuple, so the dialog box shows one page at a time and waits for the A button between them
+        mock_show_text_in_dialog_box.assert_called_once_with(ControlInfo(test_config).help_pages)
+
+    def test_handle_help_button_ignores_other_keys(self):
+        with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
+            self.game.handle_help_button(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F2, mod=pygame.KMOD_NONE))
+        mock_show_text_in_dialog_box.assert_not_called()
 
     # def test_handle_keypresses(self):
     #     pygame.key.get_pressed = create_f1_key_mock(pygame.K_k)
