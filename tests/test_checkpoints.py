@@ -212,7 +212,7 @@ class TestCheckpoints(story_run.TestStoryRun):
         self.stand_at(ENDING_TRIGGER_COORDINATES[0], UP)
         credit_screens: list = []
         with patch.object(self.game.ending, 'show_credit_screen', side_effect=credit_screens.append), \
-                patch('src.ending.fade'), \
+                patch('src.ending.screen_fade'), \
                 patch('src.ending.event.get', return_value=[pygame.event.Event(pygame.QUIT)]), \
                 patch('src.ending.pygame_quit'), \
                 self.assertRaises(SystemExit):

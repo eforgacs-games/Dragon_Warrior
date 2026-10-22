@@ -273,7 +273,7 @@ class TestLowHPWindowColor(TestCase):
 
         with patch.object(cmd_menu, 'show_line_in_dialog_box', side_effect=record), \
                 patch.object(cmd_menu, 'show_text_in_dialog_box', side_effect=record), \
-                patch('data.text.dialog_lookup_table.fade'):
+                patch('data.text.dialog_lookup_table.screen_fade'):
             cmd_menu.dialog_lookup.inn_sleep(6)
         # "Good night." is said before the fade out, at the old HP; the innkeeper's next lines come after the fade in
         self.assertEqual(colors, [(LOW_HP_RED, LOW_HP_RED, LOW_HP_RED), (WHITE, WHITE, WHITE)])

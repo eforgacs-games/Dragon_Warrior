@@ -404,7 +404,7 @@ class TestStoryRun(TestCase):
                     patch.object(game.ending, 'place_gwaelin', wraps=game.ending.place_gwaelin) as place_gwaelin, \
                     patch.object(game.ending, 'walk_gwaelin_to_king',
                                  wraps=game.ending.walk_gwaelin_to_king) as walk_gwaelin_to_king, \
-                    patch('src.ending.fade'), \
+                    patch('src.ending.screen_fade'), \
                     patch('src.ending.event.get', return_value=[pygame.event.Event(pygame.QUIT)]), \
                     patch('src.ending.pygame_quit'), \
                     self.assertRaises(SystemExit):  # the game waits on THE END until it's closed

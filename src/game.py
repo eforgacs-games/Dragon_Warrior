@@ -62,7 +62,7 @@ from src.waiting import SPEED_KEYS, game_speed, reset_game_speed, set_game_speed
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.pygame_compat import arrow_fade
-from src.visual_effects import fade, flash_transparent_color
+from src.visual_effects import flash_transparent_color
 from src.waiting import wait
 from src.windows import COMMAND_WINDOW
 
@@ -332,9 +332,17 @@ class Game:
         self.choose_new_quest_options()
         self.player.set_initial_stats()
         self.sound.play_sound(self.directories.menu_button_sfx)
-        fade(fade_out=True, screen=self.screen, config=self.game_state.config)
-        self.music_player.load_and_play_music(self.current_map.music_file_path)
-        self.cmd_menu = CommandMenu(self)
+        self.start_at_throne_room()
+
+    def start_at_throne_room(self) -> None:
+        """Start a new quest in the throne room the way NES MainGameEngine does for every start: StartAtThroneRoom
+        (Bank03, LCB47) loads BlackPalPtr at once, so the title menu's windows cut to black with no fade out, and
+        MapChngNoSound (Bank00, LB091) draws the throne room while the palettes are black, starts its music in place
+        of the menu's (ResumeMusicTbl) and fades it in with one PalFadeIn. change_map does all of that and makes the
+        new CommandMenu."""
+        throne_room = map_lookup['TantegelThroneRoom'](self.config)
+        self.map_mgr.change_map(throne_room, destination_coordinates=throne_room.initial_coordinates,
+                                direction=self.player.direction_value, fade_out_first=False)
 
     def save_files(self) -> list[str]:
         """The adventure log save files in the save folder, ignoring anything else that might be there."""
@@ -371,9 +379,7 @@ class Game:
             return
 
         self.sound.play_sound(self.directories.menu_button_sfx)
-        fade(fade_out=True, screen=self.screen, config=self.game_state.config)
-        self.music_player.load_and_play_music(self.current_map.music_file_path)
-        self.cmd_menu = CommandMenu(self)
+        self.start_at_throne_room()
 
     def adventure_log_overlay(self, save_path: str) -> AdventureLogOverlay:
         """The name of the hero in save_path, to draw on the one_adventure_log screenshot's "ADVENTURE LOG 1:" line
@@ -932,8 +938,9 @@ class Game:
         # are in red windows; anyone else comes back with full HP and white windows.
         self.player.current_hp = 1 if self.player.is_cursed else self.player.max_hp
         self.load_window_palette()
+        # NES DeathText -> StartAtThroneRoom (LEDDE): the screen cuts to black and the throne room fades in once
         next_map = map_lookup['TantegelThroneRoom'](self.config)
-        self.change_map(next_map)
+        self.change_map(next_map, fade_out_first=False)
         self.player.is_dead = False
         if self.player.is_cursed:
             # NES DeathText: the king then says "Thou hast failed and thou art cursed." and ChangeMaps puts the player
@@ -1145,8 +1152,8 @@ class Game:
             self.process_warp(staircase_dict)
 
     def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: tuple | None = None,
-                   direction: int | None = None) -> None:
-        self.map_mgr.change_map(next_map, destination_coordinates, direction)
+                   direction: int | None = None, fade_out_first: bool = True) -> None:
+        self.map_mgr.change_map(next_map, destination_coordinates, direction, fade_out_first=fade_out_first)
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
         self.map_mgr.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
