@@ -33,7 +33,6 @@ class BattleController:
         self.battle_menu_row = 0
         self.battle_menu_column = 0
         self.launch_battle = False
-        self.enemy_runaway_attempts = 0
         self.last_battle_action = "Fight"
 
     # ------------------------------------------------------------------ #
@@ -105,8 +104,7 @@ class BattleController:
     # ------------------------------------------------------------------ #
 
     def run_battle(self, enemies_in_current_zone):
-        self.enemy_runaway_attempts = 0
-        enemy_name = random.choice(enemies_in_current_zone)
+        enemy_name = self.config.get("FORCE_ENEMY") or random.choice(enemies_in_current_zone)
         current_battle = Battle(self.config, enemy_name, self.current_map)
         current_battle.play_battle_music()
         # TODO: Group parameters into respective classes.
@@ -140,14 +138,6 @@ class BattleController:
                                                         tile_size, self.show_arrow, color=self.game.color)
         current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
         selected_executed_option = None
-        random_number = random.random()
-        if self.enemy_runaway_attempts == 0 or self.enemy_runaway_attempts == current_battle.turn:
-            if self.player.strength >= (current_battle.enemy.attack * 2):
-                if random_number < ENEMY_FLEE_PROBABILITY:
-                    self.enemy_runaway_attempts = 0
-                    return self.enemy_run_away(current_battle, current_battle.enemy)
-                else:
-                    self.enemy_runaway_attempts += 1
 
         if self.auto_battle and not self.player.is_asleep:
             selected_executed_option = self.last_battle_action
@@ -208,7 +198,8 @@ class BattleController:
                 return False
             elif current_battle.last_turn != current_battle.turn:
                 if not current_battle.no_op:
-                    self.enemy_move(current_battle)
+                    if self.enemy_move(current_battle):
+                        return True
                     if self.player.current_hp <= 0:
                         self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
                         self.player.is_dead = True
@@ -267,13 +258,22 @@ class BattleController:
     #  Enemy turn                                                          #
     # ------------------------------------------------------------------ #
 
-    def enemy_move(self, current_battle: Battle):
-        if not current_battle.enemy.pattern:
+    def enemy_move(self, current_battle: Battle) -> bool:
+        """Take the enemy's turn. Returns True if the enemy ran away, which ends the battle."""
+        enemy = current_battle.enemy
+        # NES (CheckEnRun): at the start of the enemy's turn, an enemy facing a player with at least
+        # double its attack in strength has a 25% chance to run away.
+        if self.player.strength >= enemy.attack * 2 and random.random() < ENEMY_FLEE_PROBABILITY:
+            return self.enemy_run_away(current_battle, enemy)
+        # Rebuild the pattern so HP-based conditions (e.g. HEAL) reflect damage taken this turn.
+        enemy.refresh_pattern()
+        if not enemy.pattern:
             self.enemy_attack(current_battle)
         else:
             current_index = 0
-            current_enemy_pattern = current_battle.enemy.pattern[current_index]
-            self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, current_battle.enemy)
+            current_enemy_pattern = enemy.pattern[current_index]
+            self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+        return False
 
     def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
         enemy.refresh_pattern()
@@ -283,8 +283,10 @@ class BattleController:
             z = current_enemy_pattern[2]
             if current_spell == Spell.SLEEP and self.player.is_asleep:
                 z = False
+            elif current_spell == Spell.STOPSPELL and self.player.is_stopspelled:
+                z = False
             if z:
-                if random.randint(0, 100) < x:
+                if random.randint(0, 99) < x:
                     if current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         self.cmd_menu.show_line_in_dialog_box(
                             self._("{} chants the spell of {}.").format(self._(enemy.name),

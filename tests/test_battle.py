@@ -91,7 +91,7 @@ class TestBattleMethods(unittest.TestCase):
     def test_battle_run_failed_sets_no_op(self):
         """Failed run attempt should not grant enemy a free extra turn via the outer loop."""
         cmd_menu = Mock()
-        cmd_menu.game.enemy_move = Mock()
+        cmd_menu.game.enemy_move = Mock(return_value=False)
         player = Mock()
         player.agility = 1
         player.current_hp = 10
@@ -106,6 +106,22 @@ class TestBattleMethods(unittest.TestCase):
 
         self.assertFalse(result)
         cmd_menu.game.enemy_move.assert_called_once_with(current_battle)
+
+    def test_battle_run_blocked_but_enemy_flees_ends_battle(self):
+        cmd_menu = Mock()
+        cmd_menu.game.enemy_move = Mock(return_value=True)
+        player = Mock()
+        player.agility = 1
+        current_battle = Mock()
+        current_battle.enemy.is_asleep = False
+        current_battle.enemy.speed = 255
+
+        with patch('src.battle.random.randint', return_value=255):
+            result = self.battle.battle_run(cmd_menu, player, current_battle)
+
+        self.assertTrue(result)
+        shown = [c.args[0] for c in cmd_menu.show_line_in_dialog_box.call_args_list]
+        self.assertFalse(any("Command?" in line for line in shown))
 
     def test_battle_run_success_returns_true(self):
         cmd_menu = Mock()
