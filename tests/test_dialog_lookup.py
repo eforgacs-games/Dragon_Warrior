@@ -36,6 +36,19 @@ class TestDialogLookup(TestCase):
                         found.setdefault(town, set()).add(entry.args[0])
         self.assertEqual(found, {town: {cost} for town, cost in expected.items()})
 
+    def test_not_continuing_the_quest_silences_the_music(self):
+        # NES ContQuestDialog -> ExitGame (Bank01): "Rest then for awhile." is shown with the music still playing,
+        # then MSC_NOSOUND silences it before the black screen and the reset message
+        events = []
+        menu = self.dialog_lookup.command_menu
+        with patch.object(menu, 'show_line_in_dialog_box', side_effect=lambda line, **_: events.append(line)), \
+                patch.object(menu, 'show_text_in_dialog_box', side_effect=lambda text, **_: events.append(text[0])), \
+                patch('data.text.dialog_lookup_table.mixer.music.stop', side_effect=lambda: events.append('stop')), \
+                patch('data.text.dialog_lookup_table.quit'):
+            self.dialog_lookup.rest_then_for_awhile()
+        self.assertEqual(events, ["Rest then for awhile.", 'stop',
+                                  "Please push RESET, hold it in, then turn off the POWER."])
+
     def test_mashing_accept_at_the_inn_stays_and_pays_once(self):
         # Issue #97: mashing the accept key restarted the stay and charged for it again
         from pygame import KEYDOWN, K_RETURN
