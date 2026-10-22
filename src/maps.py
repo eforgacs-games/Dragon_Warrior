@@ -643,7 +643,7 @@ class Alefgard(MapWithoutNPCs):
                 # cave
                 (19, 36): {'map': 'ErdricksCaveB1', 'destination_coordinates': (3, 3)},
                 (51, 112): {'map': 'SwampCave', 'destination_coordinates': (6, 4)},
-                (56, 112): {'map': 'SwampCave', 'destination_coordinates': (36, 4)},
+                (56, 112): {'map': 'SwampCave', 'destination_coordinates': (35, 4)},
                 (64, 37): {'map': 'MountainCaveB1', 'destination_coordinates': (8, 1)},
                 (96, 33): {'map': 'Hauksness', 'destination_coordinates': (18, 9)},
                 (79, 110): {'map': 'Rimuldar', 'destination_coordinates': (22, 37)},
@@ -937,10 +937,14 @@ class ErdricksCaveB2(MapWithoutNPCs, CaveMap):
 
 
 class SwampCave(CaveMap):
+    """The Swamp Cave (NES MAP_SWAMPCAVE). Layout coordinates are the NES ones + (6, 4)."""
+
     def __init__(self, config):
         super().__init__(MapLayouts().swamp_cave, config, Directories(config).dungeon_floor_1_music,
+                         # NES MapTargetTbl/MapEntryTbl: Swamp cave(0,0) -> Overworld(104,44) and
+                         # Swamp cave(0,29) -> Overworld(104,49), the two cave tiles
                          staircases={(6, 4): {'map': 'Alefgard', 'destination_coordinates': (51, 112)},
-                                     (36, 4): {'map': 'Alefgard', 'destination_coordinates': (56, 110)}},
+                                     (35, 4): {'map': 'Alefgard', 'destination_coordinates': (56, 112)}},
                          initial_coordinates=(6, 4))
         self.npc_coordinates = {
             (24, 9): 'PRINCESS_GWAELIN',
