@@ -188,24 +188,43 @@ class DialogLookup:
                 'WOMAN_2': {'dialog': _("Welcome! \n"
                                         "Enter the shop and speak to its keeper across the desk.")},
             },
+            # NES GarMobTbl and GarStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte
+            # + $2F (DoVariousDialog2, Bank03), so $3A is TextBlock7 entry 9 and $41 is TextBlock8 entry 0.
             'Garinham': {
+                # Static wizard at 14,1 ($3A, TextBlock7 entry 9)
+                'WISE_MAN': {'dialog': _("The harp attracts enemies.\nStay away from the grave in Garinham.")},
+                # Mobile female villager at 12,4 ($3E, TextBlock7 entry 13)
+                'WOMAN': {'dialog': _("I hate people!\nGo! Leave me!")},
+                # Static guards at 3,5 and 5,5 (both $3B, TextBlock7 entry 10)
+                'GUARD': {'dialog': _("I'm too busy.\nAsk the other guard.")},
+                'GUARD_2': {'dialog': _("I'm too busy.\nAsk the other guard.")},
+                # Static shopkeeper at 9,6 ($3C, TextBlock7 entry 11)
                 'MERCHANT': {'dialog': _("I suggest making a map if thy path leads into the darkness.")},
+                # Mobile male villager at 11,7 ($3D, TextBlock7 entry 12)
+                'MAN': {'dialog': _("Once there was a town called Hauksness far to the south,but I do not know if "
+                                    "it still exists.")},
+                # Mobile wizard at 12,8 ($3F, TextBlock7 entry 14)
+                'WISE_MAN_2': {'dialog': _("They say that Erdrick's armor was hidden long ago.")},
+                # Mobile wizard at 2,10 ($42, TextBlock8 entry 1)
+                'WISE_MAN_3': {
+                    'dialog': _("Garin, a wandering minstrel of legendary fame, is said to have built this town.")},
+                # Static shopkeeper at 5,11 ($09, ToolsDialog: Garinham item shop)
                 'MERCHANT_2': {'dialog': (
                     partial(self.tool_shop, self.shop_inventories.garinham_item_store_inventory),)},
+                # Mobile female villager at 12,12 ($43, TextBlock8 entry 2)
+                'WOMAN_2': {'dialog': _("Welcome to Garinham.\nMay thy stay be a peaceful one.")},
+                # Mobile male villager at 18,12 ($44, TextBlock8 entry 3)
+                'MAN_2': {'dialog': _("It is said that the Princess was kidnapped and taken eastward.")},
+                # Static shopkeeper at 17,15 ($13, InnDialog: the Garinham inn)
                 'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
+                # Static wizard at 2,17 ($40, TextBlock7 entry 15)
+                'WISE_MAN_4': {'dialog': _("Many believe that Princess Gwaelin is hidden away in a cave.")},
+                # Mobile fighter at 7,17 ($41, TextBlock8 entry 0)
+                'SOLDIER': {'dialog': _("I have heard of one named Nester.\nDost thou know such a one?")},
+                # Static shopkeeper at 10,18 ($02, WeaponsDialog: Garinham weapons and armor shop)
                 'MERCHANT_4': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.garinham_weapons_store_inventory,
                             self.directories.GARINHAM_WEAPONS_SHOP_PATH),)},
-                'GUARD': {'dialog': _("I'm too busy.\n"
-                                      "Ask the other guard."), },
-                'GUARD_2': {'dialog': _("I'm too busy.\n"
-                                        "Ask the other guard."), },
-                'WOMAN': {'dialog': _("Welcome to Garinham. May thy stay be a peaceful one.")},
-                'WISE_MAN': {'dialog': _("The harp attracts enemies. Stay away from the grave in Garinham.")},
-                'WISE_MAN_2': {
-                    'dialog': _("Garin, a wandering minstrel of legendary fame, is said to have built this town.")},
-                'WISE_MAN_3': {'dialog': _("Many believe that Princess Gwaelin is hidden away in a cave.")}
-
             },
             'Kol': {'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
                     'MERCHANT_2': {'dialog': (
