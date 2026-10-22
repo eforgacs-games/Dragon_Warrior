@@ -833,6 +833,7 @@ class Garinham(DragonWarriorMap):
             (18, 19): 'MERCHANT',  # static shopkeeper at 10,18: weapons and armor ($02, WeaponsDialog)
         }
         self.custom_underlying_tiles = {
+            'WISE_MAN': 'SAND',  # GarinhamDat has sand under the wizard at 14,1
             'SOLDIER': 'SAND',
         }
         # The NPCs from GarMobTbl
@@ -894,11 +895,12 @@ class Kol(DragonWarriorMap):
             'WOMAN': 'TREES',
             'SOLDIER': 'TREES',
             'WISE_MAN_2': 'GRASS',
+            'MAN': 'TREES',  # KolDat has trees under the male villager at 5,12
             'GUARD': 'SAND',
             'MAN_2': 'SAND',
             'WOMAN_2': 'SAND',
             'WISE_MAN_4': 'SAND',
-            'GUARD_2': 'GRASS',
+            'GUARD_2': 'TREES',  # KolDat has trees under the guard at 1,23
         }
         # The NPCs from KolMobTbl
         self.roaming_character_list = ['SOLDIER', 'WISE_MAN_2', 'GUARD', 'WISE_MAN_3', 'MAN', 'MAN_2', 'WOMAN_2',
