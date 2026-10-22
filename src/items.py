@@ -169,7 +169,8 @@ class TreasureChestHistory:
         """NES GetTreasure: store the chest in the first free slot. Returns False when every slot is taken."""
         for index, slot in enumerate(self.slots):
             if slot is None:
-                self.slots[index] = (map_name, tuple(coordinates))
+                row, column = coordinates
+                self.slots[index] = (map_name, (row, column))
                 return True
         return False
 
