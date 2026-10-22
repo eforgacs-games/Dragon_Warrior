@@ -219,6 +219,51 @@ def name_halves(name: str) -> tuple[str, str]:
     return ITEM_NAME_HALVES.get(name) or EQUIPMENT_NAME_HALVES.get(name) or (name, "")
 
 
+# ShopInvDat ($B0DA): a selection window (options $A0: single spaced), 1 column, cursor home Y = 1 tile, X = 1 tile
+# ($11). After the top border ($88), each item (one block, $D5 then $E8 repeat the item lines for the shop's
+# ShopItemsTbl entries) is: 1 blank tile ($81), the first half of its name ($BC, ItemNames11TbL/ItemNames21TbL, at
+# most 9 tiles), 1 blank tile ($81), its cost ($C8, WndItemCost: 5 tiles, right-aligned, no leading zeros); and on the
+# next tile row 2 blank tiles ($82), the second half of its name ($BC, ItemNames12TbL/ItemNames22TbL).
+SHOP_ITEM_NAME_TILE_COLUMN = 2
+SHOP_ITEM_SECOND_HALF_TILE_COLUMN = 3
+SHOP_ITEM_COST_TILES = 5
+
+
+def shop_inventory_layout(item_names: tuple[str, ...], costs: tuple[int, ...]) -> WindowLayout:
+    """
+    The shop inventory window (ShopInvDat) for a shop's stock, as the NES builds it: as high as the stock
+    (WndVariableHeight), each item's name in its two halves (name_halves) and its cost right-aligned, ending in the
+    tile column before SHOP_COST_RIGHT_TILE_COLUMN.
+    :param item_names: The shop's items, in ShopItemsTbl order (src/shops.py).
+    :param costs: Their costs (ItemCostTbl), in the same order.
+    """
+    texts: list[WindowText] = []
+    for index, (name, cost) in enumerate(zip(item_names, costs)):
+        row = 1 + 2 * index
+        first_half, second_half = name_halves(name)
+        cost_text = str(cost)
+        if len(cost_text) > SHOP_ITEM_COST_TILES:
+            raise ValueError(f"{name} costs {cost}: WndItemCost shows at most {SHOP_ITEM_COST_TILES} digits")
+        texts.append(WindowText(first_half, SHOP_ITEM_NAME_TILE_COLUMN, row))
+        texts.append(WindowText(cost_text, SHOP_COST_RIGHT_TILE_COLUMN - len(cost_text), row))
+        if second_half:
+            texts.append(WindowText(second_half, SHOP_ITEM_SECOND_HALF_TILE_COLUMN, row + 1))
+    return WindowLayout(window=variable_height_window(SHOP_INVENTORY_WINDOW, len(item_names)), texts=tuple(texts),
+                        cursor_tiles=selection_cursor_tiles(home_column=1, home_row=1, columns=1, column_spacing=0,
+                                                            rows=len(item_names)))
+
+
+# BuySellDat ($B0FB): a selection window (options $80: double spaced), 1 column, cursor home Y = 2 tiles, X = 1 tile
+# ($21). After the top border ($88), a blank row, then 1 blank tile ($81) and BUY, a blank row, 1 blank tile ($81) and
+# SELL.
+BUY_SELL_LAYOUT = WindowLayout(
+    window=BUY_SELL_WINDOW,
+    texts=(WindowText("BUY", 2, 2), WindowText("SELL", 2, 4)),
+    # BUY, SELL
+    cursor_tiles=selection_cursor_tiles(home_column=1, home_row=2, columns=1, column_spacing=0, rows=2),
+)
+
+
 # NES WndItemDesc: herbs and keys show how many the hero has, in the tile column after an 8 tile name
 COUNTED_ITEMS = ("Herb", "Magic Key")
 ITEM_COUNT_TILE_COLUMN = 10
