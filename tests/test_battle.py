@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pygame
 
-from src.battle import has_final_consonant, get_postposition, Battle
+from src.battle import has_final_consonant, get_postposition, Battle, calculate_enemy_attack_damage
 
 
 class TestBattleMethods(unittest.TestCase):
@@ -140,3 +140,37 @@ class TestBattleMethods(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestCalculateEnemyAttackDamage(unittest.TestCase):
+    """Enemy physical attack damage, per the NES EnCalcHitDmg routine."""
+
+    def damage(self, attack, defense_power, random_number):
+        player = Mock(defense_power=defense_power)
+        enemy = Mock(attack=attack)
+        with patch('src.battle.random.randint', return_value=random_number):
+            return calculate_enemy_attack_damage(player, enemy)
+
+    def test_normal_attack_range(self):
+        # Poltergeist (attack 18) vs. defense 4: base 16, damage 4 to 8
+        self.assertEqual(self.damage(18, 4, 0), 4)
+        self.assertEqual(self.damage(18, 4, 255), 8)
+
+    def test_normal_attack_always_within_quarter_to_half_of_base(self):
+        for random_number in range(256):
+            self.assertTrue(4 <= self.damage(18, 4, random_number) <= 8)
+
+    def test_armor_reduces_damage(self):
+        # Attack 100: no gear with 20 agility (defense 10) vs. Magic Armor + Silver Shield (defense 54)
+        self.assertEqual(self.damage(100, 10, 255), 47)
+        self.assertEqual(self.damage(100, 54, 255), 36)
+
+    def test_weak_attack_when_defense_is_high(self):
+        # Attack 18 vs. defense 54: weak attack, damage 0 to 3
+        self.assertEqual(self.damage(18, 54, 0), 0)
+        self.assertEqual(self.damage(18, 54, 255), 3)
+
+    def test_weak_attack_threshold(self):
+        # Attack 18: base 10 (defense 16) is a normal attack; base 9 (defense 18) is weak
+        self.assertEqual(self.damage(18, 16, 0), 2)
+        self.assertEqual(self.damage(18, 18, 0), 0)

@@ -32,6 +32,21 @@ class TestPlayer(TestCase):
         self.player = Player(center_point=None, images=None, current_map=MockMap(test_config),
                              god_mode=test_config['GOD_MODE'])
 
+    def test_defense_power_is_half_agility_plus_gear(self):
+        self.player.agility = 21
+        self.player.armor = ""
+        self.player.shield = ""
+        self.player.update_defense_power()
+        self.assertEqual(self.player.defense_power, 10)
+
+        self.player.armor = "Magic Armor"
+        self.player.update_defense_power()
+        self.assertEqual(self.player.defense_power, 34)
+
+        self.player.shield = "Silver Shield"
+        self.player.update_defense_power()
+        self.assertEqual(self.player.defense_power, 54)
+
     def test_get_level_by_experience(self):
         self.assertEqual(1, self.player.level)
 
