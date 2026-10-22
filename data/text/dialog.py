@@ -1,6 +1,8 @@
 from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event, time, USEREVENT
 from pygame.event import get
 
+from src.waiting import quit_if_requested, wait
+
 
 def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, show_arrow, color,
                         finally_function=None, skip_text=False):
@@ -11,8 +13,7 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
                                                 command_menu.screen, color)
         display.update(window_surface.get_rect())
         # for some reason it needs this wait() call to actually play the sound
-        if not config['NO_WAIT']:
-            time.wait(300)
+        wait(300, config)
         sound.play_sound(directories.confirmation_sfx)
 
     def update_blinking_graphics(blinking_yes, show_arrow):
@@ -42,6 +43,7 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     def handle_events(blinking_yes):
         nonlocal show_arrow
         for current_event in get():
+            quit_if_requested(current_event)
             if current_event.type == KEYDOWN:
                 blinking_yes = handle_keydown_event(current_event, blinking_yes)
                 if not blinking:
