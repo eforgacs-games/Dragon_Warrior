@@ -19,6 +19,7 @@ from src.constants import (
     BATTLE_MENU_HEIGHT, BATTLE_MENU_WIDTH, BATTLE_MENU_X, BATTLE_MENU_Y,
     ENEMY_FLEE_PROBABILITY,
 )
+from src.encounters import pick_enemy
 from src.enemy_lookup import enemy_repel_lookup
 from src.enemy_spells import enemy_spell_lookup
 from src.guardians import escape_coordinates, record_victory
@@ -129,8 +130,8 @@ class BattleController:
         return repel - self.player.defense_power // 2 <= repel // 2
 
     def run_battle(self, enemies_in_current_zone) -> BattleOutcome:
-        """Random encounter: pick an enemy for the current zone and fight it."""
-        enemy_name = self.config.get("FORCE_ENEMY") or random.choice(enemies_in_current_zone)
+        """Random encounter: pick an enemy from the current zone's EnemyGroupsTbl row and fight it."""
+        enemy_name = self.config.get("FORCE_ENEMY") or pick_enemy(enemies_in_current_zone)
         if self.is_repelled(enemy_name):
             return BattleOutcome.REPELLED
         return self.fight_enemy(enemy_name)
@@ -469,45 +470,3 @@ class BattleController:
         self.sound.play_sound(self.directories.prepare_attack_sfx)
         self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(self._(enemy.name)),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
-
-    # ------------------------------------------------------------------ #
-    #  Battle spawn checks                                                 #
-    # ------------------------------------------------------------------ #
-
-    def handle_near_tantegel_fight_modifier(self):
-        if self.player.current_tile == 'HILLS':
-            sub_random_integer = random.randint(0, 3)
-        else:
-            sub_random_integer = random.randint(0, 1)
-        if sub_random_integer == 0:
-            random_integer = self.get_random_integer_by_tile()
-        else:
-            random_integer = 1
-        return random_integer
-
-    def get_random_integer_by_tile(self):
-        match self.player.current_tile:
-            case 'SWAMP':
-                random_integer = random.randint(0, 15)
-            case 'DESERT':
-                random_integer = random.randint(0, 7)
-            case 'HILLS':
-                random_integer = random.randint(0, 7)
-            case 'FOREST':
-                random_integer = random.randint(0, 15)
-            case 'BRICK':
-                random_integer = random.randint(0, 15)
-            case 'BARRIER':
-                random_integer = random.randint(0, 15)
-            case _:
-                if self.player.column % 2 == 0:
-                    if self.player.row % 2 == 0:
-                        random_integer = random.randint(0, 31)
-                    else:
-                        random_integer = random.randint(0, 15)
-                else:
-                    if self.player.row % 2 == 0:
-                        random_integer = random.randint(0, 31)
-                    else:
-                        random_integer = random.randint(0, 15)
-        return random_integer
