@@ -5,6 +5,7 @@ import pygame
 
 from src.battle import has_final_consonant, get_postposition, Battle, calculate_enemy_attack_damage, \
     randomize_enemy_hp
+from src.config.test_config import test_config
 
 
 class TestBattleMethods(unittest.TestCase):
@@ -74,6 +75,17 @@ class TestBattleMethods(unittest.TestCase):
         self.battle = Battle(self.battle.config, self.enemy_name, self.current_map)
         expected_string = 'A Slime draws near!\nCommand?\n'
         self.assertEqual(expected_string, self.battle.get_enemy_draws_near_string())
+
+    def test_draws_near_uses_a_or_an_with_the_default_language(self):
+        # NES TextBlock "A ENM2 draws near!": DoENM2 -> CheckAToAn adds 'n' before a vowel. The default config's
+        # language must be the 'English' name for this rule to apply (it used to be the locale code 'en').
+        config = {**self.battle.config, 'LANGUAGE': test_config['LANGUAGE']}
+        self.assertEqual(test_config['LANGUAGE'], 'English')
+        for enemy_name, expected in (('Slime', 'A Slime draws near!\nCommand?\n'),
+                                     ('Axe Knight', 'An Axe Knight draws near!\nCommand?\n')):
+            with self.subTest(enemy_name=enemy_name):
+                battle = Battle(config, enemy_name, self.current_map)
+                self.assertEqual(battle.get_enemy_draws_near_string(), expected)
 
     def player_damage(self, attack_power, enemy_defense, rolls, enemy_name='Slime'):
         player = Mock(attack_power=attack_power)
