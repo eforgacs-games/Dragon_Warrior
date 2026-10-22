@@ -134,6 +134,8 @@ class CommandMenu(Menu):
             'Weapon': self.player.weapon,
             'Armor': self.player.armor,
             'Shield': self.player.shield,
+            'WearingDragonScale': self.player.wearing_dragon_scale,
+            'WearingFightersRing': self.player.wearing_fighters_ring,
             'Inventory': self.player.inventory,
             'Spells': self.player.spells,
             'CurrentMap': self.game.current_map.identifier,
@@ -424,7 +426,14 @@ class CommandMenu(Menu):
             self.player.inventory.remove("Torch")
 
     def dragon_scale(self):
-        self.show_text_in_dialog_box(f"{self.player.name} used the Dragon Scale.", skip_text=self.skip_text)
+        if self.player.wearing_dragon_scale:
+            self.show_text_in_dialog_box(self._("Thou art already wearing the scale of the dragon."),
+                                         skip_text=self.skip_text)
+            return
+        self.player.wearing_dragon_scale = True
+        self.player.update_defense_power()
+        self.show_text_in_dialog_box(self._("{} donned the scale of the dragon.").format(self.player.name),
+                                     skip_text=self.skip_text)
 
     def fairy_water(self):
         self.show_text_in_dialog_box(f"{self.player.name} used the Fairy Water.", skip_text=self.skip_text)
@@ -470,8 +479,15 @@ class CommandMenu(Menu):
                                     "But nothing happened.", skip_text=self.skip_text)
 
     def fighters_ring(self):
-        self.show_text_in_dialog_box(f"{self.player.name} put on the Fighter's Ring.\n"
-                                    "Attack power increases slightly!", skip_text=self.skip_text)
+        if self.player.wearing_fighters_ring:
+            self.show_text_in_dialog_box(
+                self._("{} adjusted the position of the Fighter's Ring.").format(self.player.name),
+                skip_text=self.skip_text)
+            return
+        self.player.wearing_fighters_ring = True
+        self.player.update_attack_power()
+        self.show_text_in_dialog_box(self._("{} put on the Fighter's Ring.").format(self.player.name),
+                                     skip_text=self.skip_text)
 
     def gwaelins_love(self):
         self.show_text_in_dialog_box(f"Heed my voice, '{self.player.name}, for this is Gwaelin. "

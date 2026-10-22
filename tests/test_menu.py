@@ -44,6 +44,39 @@ class TestCommandMenu(TestCase):
     def test_npc_is_across_counter(self):
         self.assertFalse(self.game.cmd_menu.npc_is_across_counter(self.game.current_map.characters['HERO']))
 
+    def test_dragon_scale(self):
+        defense_before = self.game.player.defense_power
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.dragon_scale()
+            self.assertTrue(self.game.player.wearing_dragon_scale)
+            self.assertEqual(self.game.player.defense_power, defense_before + 2)
+            self.assertEqual(show_text.call_args.args[0],
+                             f"{self.game.player.name} donned the scale of the dragon.")
+
+            self.game.cmd_menu.dragon_scale()
+            self.assertEqual(self.game.player.defense_power, defense_before + 2)
+            self.assertEqual(show_text.call_args.args[0], "Thou art already wearing the scale of the dragon.")
+
+    def test_fighters_ring_has_no_stat_effect(self):
+        attack_before = self.game.player.attack_power
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.fighters_ring()
+            self.assertTrue(self.game.player.wearing_fighters_ring)
+            self.assertEqual(show_text.call_args.args[0], f"{self.game.player.name} put on the Fighter's Ring.")
+
+            self.game.cmd_menu.fighters_ring()
+            self.assertEqual(show_text.call_args.args[0],
+                             f"{self.game.player.name} adjusted the position of the Fighter's Ring.")
+        self.assertEqual(self.game.player.attack_power, attack_before)
+
+    def test_fighters_ring_with_attack_bonus_option(self):
+        self.game.player.fighters_ring_attack_bonus = 2
+        attack_before = self.game.player.attack_power
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
+            self.game.cmd_menu.fighters_ring()
+            self.game.cmd_menu.fighters_ring()
+        self.assertEqual(self.game.player.attack_power, attack_before + 2)
+
     def test_take_item(self):
         self.assertEqual([], self.game.player.inventory)
         mocked_return = MagicMock()
