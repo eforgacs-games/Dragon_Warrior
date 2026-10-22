@@ -1,8 +1,11 @@
-from pygame import Surface, display, mask, time, transform
+import sys
+from array import array
+
+from pygame import Surface, display, image, mask, time, transform
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src.common import BLACK
-from src.waiting import check_for_quit, scaled_ms, wait
+from src.waiting import check_for_quit, scaled_ms, wait, wait_frames
 
 
 def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -> None:
@@ -174,6 +177,111 @@ def red_flash_overlay(screen: Surface) -> Surface:
     not_black = mask.from_threshold(screen, (0, 0, 0, 255), (1, 1, 1, 255))
     not_black.invert()
     return not_black.to_surface(setcolor=NES_RED, unsetcolor=(0, 0, 0, 0))
+
+
+# ---------------------------------------------------------------------------------------------------- #
+#  Full-screen NES palette fades (PalFadeOut / PalFadeIn)                                               #
+# ---------------------------------------------------------------------------------------------------- #
+
+# NES PalFadeOut (Bank03, $C212) starts PalModByte at $00 and adds $10 until it reaches $50: it waits 4 frames, then
+# loads both palettes darkened by PalModByte, five times ($00, $10, $20, $30, $40), 20 frames in all. The first load
+# ($00) changes nothing, and the last ($40) turns every color black.
+FADE_OUT_STEPS = (0x00, 0x10, 0x20, 0x30, FADE_FULL_BLACK)
+
+FADE_STYLE_NES = 'NES'
+FADE_STYLE_SMOOTH = 'Smooth'  # the black overlay alpha fade (fade()): a modern option, not NES behavior
+FADE_STYLES = (FADE_STYLE_NES, FADE_STYLE_SMOOTH)
+
+_NEAREST_NES_COLOR: dict[tuple[int, int, int], int] = {}
+
+
+def nearest_nes_color_index(rgb) -> int:
+    """nes_color_index, cached: a screen has few colors, but a fade looks each one up for every step."""
+    rgb = tuple(rgb[:3])
+    if rgb not in _NEAREST_NES_COLOR:
+        _NEAREST_NES_COLOR[rgb] = nes_color_index(rgb)
+    return _NEAREST_NES_COLOR[rgb]
+
+
+def nes_fade_palette(pal_mod: int) -> list[tuple[int, int, int]]:
+    """The 64 NES colors after AddPalByte/ChkPalFade ($C680) subtracts pal_mod from each color number: entry n is
+    the color n becomes, black if n - pal_mod is below $00."""
+    return [NES_PALETTE[index - pal_mod] if index >= pal_mod else NES_PALETTE[PAL_BLACK]
+            for index in range(len(NES_PALETTE))]
+
+
+def nes_indexed_surface(surface: Surface) -> Surface:
+    """An 8-bit copy of surface whose pixel values are NES color numbers ($00-$3F), so that a fade step is only a
+    set_palette (nes_fade_palette) and one blit. Every color the game draws comes from the NES palette (white is $30,
+    as in every NES palette the fades load, and black is $0F); any other color, such as one in a screenshot or an
+    anti-aliased font, gets the nearest NES color, so it fades like that color."""
+    width, height = surface.get_size()
+    pixels = array('I')
+    pixels.frombytes(image.tobytes(surface, 'RGBX'))
+    color_numbers = {value: nearest_nes_color_index(value.to_bytes(4, sys.byteorder)) for value in set(pixels)}
+    indexed = image.frombytes(bytes(map(color_numbers.__getitem__, pixels)), (width, height), 'P')
+    indexed.set_palette(nes_fade_palette(0))
+    return indexed
+
+
+def fade_style(config) -> str:
+    """The configured fade (FADE_STYLE): 'NES', the default, or 'Smooth'."""
+    return FADE_STYLE_SMOOTH if config.get('FADE_STYLE') == FADE_STYLE_SMOOTH else FADE_STYLE_NES
+
+
+def nes_palette_fade(fade_out: bool, screen: Surface, config) -> None:
+    """Fade the whole screen the NES way, background and sprites together (both palettes are loaded at each step).
+
+    Fading out (PalFadeOut, $C212), the screen as it is now goes through PalModByte $00, $10, $20, $30 and $40 (all
+    black), 4 frames before each: 20 frames. Fading in (PalFadeIn, $C529), the screen as it is now is the picture to
+    fade in to: it starts black (the palettes are black, from BlackPal or the last fade out) and goes through $30,
+    $20, $10 and $00, 4 frames before each: 16 frames. Each color number has PalModByte subtracted from it, so a
+    color drops one brightness row ($10) per step, white ($30) through $20 and light grey ($10) to dark grey ($00),
+    and anything that goes below $00 is black; black ($0F) stays black.
+
+    The waits go through src.waiting, so they follow the game speed and NO_WAIT. Building the color number surface
+    takes about 15 ms at scale 2 and is done during the first 4-frame wait; each step after that is a set_palette and
+    one blit (well under 1 ms)."""
+    steps = FADE_OUT_STEPS if fade_out else FADE_IN_STEPS
+    if config.get('NO_BLIT'):
+        for _ in steps:
+            wait_frames(FADE_STEP_FRAMES, config)
+        return
+    picture = screen.copy()
+    if not fade_out:
+        screen.fill(BLACK)
+        display.flip()
+    started = get_ticks()
+    indexed = nes_indexed_surface(picture)
+    first_wait = max(0.0, FADE_STEP_FRAMES * 1000 / NES_FPS - (get_ticks() - started))
+    for step, pal_mod in enumerate(steps):
+        if step == 0:
+            wait(first_wait, config)
+        else:
+            wait_frames(FADE_STEP_FRAMES, config)
+        if pal_mod == 0:
+            screen.blit(picture, (0, 0))  # the colors exactly as they were, even ones that aren't NES colors
+        else:
+            indexed.set_palette(nes_fade_palette(pal_mod))
+            screen.blit(indexed, (0, 0))
+        display.flip()
+
+
+def screen_fade(fade_out: bool, screen: Surface, config, draw_callback=None) -> None:
+    """Fade the screen to black (fade_out) or from black to what is on it now, the way FADE_STYLE says: 'NES' (the
+    default) is the NES palette fade (nes_palette_fade), 'Smooth' the black overlay alpha fade (fade). Every
+    transition that the NES does with PalFadeOut or PalFadeIn calls this, so they all follow the option."""
+    if fade_style(config) == FADE_STYLE_SMOOTH:
+        fade(fade_out=fade_out, screen=screen, config=config, draw_callback=draw_callback)
+    else:
+        nes_palette_fade(fade_out, screen, config)
+
+
+def cut_to_black(screen: Surface, config) -> None:
+    """The screen going black at once, as when the NES loads BlackPal without fading (StartAtThroneRoom, LCB47)."""
+    if not config.get('NO_BLIT'):
+        screen.fill(BLACK)
+        display.flip()
 
 
 def show_frames(frames: int, config) -> None:

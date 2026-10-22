@@ -261,7 +261,7 @@ class TestEnding(TestCase):
     def test_credits(self):
         shown = []
         with patch.object(self.game.ending, 'show_credit_screen', side_effect=shown.append), \
-                patch('src.ending.fade'):
+                patch('src.ending.screen_fade'):
             self.game.ending.roll_credits()
         self.assertEqual(len(shown), 19)
         self.assertEqual(shown[0][0], (7, 8, 'CONGRATULATIONS'))

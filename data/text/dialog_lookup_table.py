@@ -27,7 +27,7 @@ from src.story_flags import StoryFlags
 from src.text import draw_text
 from src.windows import BUY_SELL_WINDOW, DIALOG_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, \
     SHOP_COST_RIGHT_TILE_COLUMN, SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
-from src.visual_effects import NES_RED, fade, flash_transparent_color, greyscale_screen
+from src.visual_effects import NES_RED, flash_transparent_color, greyscale_screen, screen_fade
 from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait, wait_frames
 
 
@@ -755,9 +755,12 @@ class DialogLookup:
         self.command_menu.show_line_in_dialog_box(self._("Rest then for awhile."))
         # NES ExitGame (Bank01): the music is silenced (MSC_NOSOUND) before the screen goes black for the reset message
         mixer.music.stop()
-        fade(fade_out=True, screen=self.screen, config=self.config)
+        # NES LoadCreditsPals (Bank00, LAA62): PalFadeOut. Then EndGameClearPPU clears the screen and LoadStartPals
+        # (LAA7E) does a PalFadeIn over the empty screen before the window opens.
+        screen_fade(fade_out=True, screen=self.screen, config=self.config)
         self.screen.fill(BLACK)
         display.flip()
+        screen_fade(fade_out=False, screen=self.screen, config=self.config)
         # NES ExitGame: EndGameClearPPU clears the whole screen, then Dowindow WND_DIALOG opens a new, empty dialog
         # window for the reset message, so it isn't a continuation of King Lorik's dialog
         self.command_menu.window_drop_down_effect(*DIALOG_WINDOW)
@@ -1209,7 +1212,7 @@ class DialogLookup:
         self.player.gold -= inn_cost
         self.command_menu.show_popup_window()
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
-        fade(fade_out=True, screen=self.screen, config=self.config)
+        screen_fade(fade_out=True, screen=self.screen, config=self.config)  # PalFadeOut (LD8DC)
         # LD8DF-LD8FB, with the screen black: MSC_INN starts and HP and MP are restored,
         # WaitForMusicEnd lets the jingle finish, then MSC_VILLAGE starts, and only then PalFadeIn
         self.player.restore_hp()
@@ -1230,7 +1233,7 @@ class DialogLookup:
             self.command_menu.redraw_command_window()
         self.command_menu.draw_dialog_window()
         self.command_menu.show_popup_window()
-        fade(fade_out=False, screen=self.screen, config=self.config)
+        screen_fade(fade_out=False, screen=self.screen, config=self.config)  # PalFadeIn (LD8FB)
         # NES (after PalFadeIn): TextBlock1 entry 6 if the hero is carrying Gwaelin, otherwise entry 8
         if game.story_flags.carrying_gwaelin:
             good_morning = _("Good morning.\nThou hast had a good night's sleep I hope.")

@@ -248,7 +248,7 @@ class TestNewQuestOptions(OptionsTestCase):
         with patch.object(self.game, 'select_adventure_log', side_effect=lambda screen: calls.append('log')), \
                 patch('src.game.NameSelection') as name_selection, \
                 patch.object(self.game, 'choose_new_quest_options', side_effect=lambda: calls.append('options')), \
-                patch('src.game.fade'), patch.object(self.game, 'music_player'), patch('src.game.CommandMenu'):
+                patch('src.map_manager.screen_fade'), patch.object(self.game, 'music_player'), patch('src.game.CommandMenu'):
             name_selection.return_value.select_name.side_effect = lambda *args: calls.append('name') or 'Ed'
             self.game.begin_new_quest()
         self.assertEqual(['log', 'name', 'options'], calls)
