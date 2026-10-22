@@ -102,6 +102,51 @@ COMBAT_COMMAND_LAYOUT = WindowLayout(
 )
 
 
+# PopupDat ($AFB0): the top border has 1 border tile ($89), the name, 4 tiles ($B0), and border to the end ($88), so
+# the border tile before the name is TL_TOP2 whatever the name is. The labels follow, double spaced (a blank row after
+# each), each in the tile after the left border: LV ($2F, $39), HP ($2B, $33), MP ($30, $33), G ($2A) and E ($28).
+# The name and the values ($A0, $90, $94, $98, $A8) are drawn over the window (Drawer.draw_hovering_stats_window).
+POPUP_NAME_TILE_COLUMN = 2
+POPUP_NAME_LENGTH = 4
+POPUP_LAYOUT = WindowLayout(
+    window=POPUP_WINDOW,
+    title=WindowText(" " * POPUP_NAME_LENGTH, POPUP_NAME_TILE_COLUMN, 0),
+    texts=tuple(WindowText(label, 1, row) for label, row in (("LV", 2), ("HP", 4), ("MP", 6), ("G", 8), ("E", 10))),
+)
+
+# StatusDat ($AFC7): single spaced, but every line but the equipment is followed by a blank row ($80). Each label is
+# after a run of blank tiles ($85 NAME:, $86 STRENGTH:, $87 AGILITY:, $84 MAXIMUM HP:, $84 MAXIMUM MP:, $82 ATTACK
+# POWER:, $81 DEFENSE POWER:, $82 WEAPON:, $83 ARMOR:, $82 SHIELD:), counted from the tile after the left border.
+# The name, the numbers and the equipment are drawn over the window (CommandMenu.draw_status_window).
+STATUS_LAYOUT = WindowLayout(
+    window=STATUS_WINDOW,
+    texts=(
+        WindowText("NAME:", 6, 1),
+        WindowText("STRENGTH:", 7, 3),
+        WindowText("AGILITY:", 8, 5),
+        WindowText("MAXIMUM HP:", 5, 7),
+        WindowText("MAXIMUM MP:", 5, 9),
+        WindowText("ATTACK POWER:", 3, 11),
+        WindowText("DEFENSE POWER:", 2, 13),
+        WindowText("WEAPON:", 3, 15),
+        WindowText("ARMOR:", 4, 17),
+        WindowText("SHIELD:", 3, 19),
+    ),
+)
+
+# DialogDat ($B04B): the border ($88) and 4 rows of blank tiles ($80); the text is drawn over it (src/dialog_box.py)
+DIALOG_LAYOUT = WindowLayout(DIALOG_WINDOW)
+
+# YesNo1Dat ($B0EB): a selection window (options $80) of 1 column with the cursor home at Y = 2 tiles, X = 1 tile
+# ($21); after the top border ($88), 1 blank tile ($81) and YES ($3C, $28, $36), then 1 blank tile ($81) and NO ($31,
+# $32), double spaced. The cursor tiles are YES, then NO.
+YES_NO_LAYOUT = WindowLayout(
+    window=YES_NO_WINDOW,
+    texts=(WindowText("YES", 2, 2), WindowText("NO", 2, 4)),
+    cursor_tiles=selection_cursor_tiles(home_column=1, home_row=2, columns=1, column_spacing=0, rows=2),
+)
+
+
 def variable_height_window(window: Window, number_of_entries: int) -> Window:
     """A variable height window (WndVariableHeight, WndBuildVariable, WndBuildEnd) sized to its entries: one block
     per entry plus one block for the top and bottom borders."""
@@ -200,6 +245,16 @@ def item_menu_window(menu_name: str, number_of_entries: int) -> tuple[int, int, 
     :return: (x, y, width, height), in blocks.
     """
     return ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_WIDTH, number_of_entries + 1
+
+
+def item_menu_layout(menu_name: str, number_of_entries: int) -> WindowLayout:
+    """
+    The SPELL or ITEM window's border (SpellDat, PlayerInvDat), sized to its entries (see item_menu_window). The
+    title and the entries are drawn over it (CommandMenu.draw_item_menu), so that they can be translated.
+    :param menu_name: 'spells', 'inventory' or 'discard'.
+    :param number_of_entries: How many spells or items are listed.
+    """
+    return WindowLayout(Window(*item_menu_window(menu_name, number_of_entries)))
 
 
 # Tile column of an entry's text (after the left border and the cursor column) and of the cursor (cursor home X = 1)
