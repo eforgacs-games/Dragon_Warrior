@@ -7,7 +7,7 @@ from pygame.time import get_ticks
 
 from src.config.test_config import test_config
 from src.game import Game
-from src.menu_functions import NameSelection, get_opposite_direction, truncate_name, toggle_joystick_input
+from src.menu_functions import NameSelection, get_opposite_direction, toggle_joystick_input
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -49,14 +49,11 @@ class TestMenuFunctions(TestCase):
         self.assertEqual(2, get_opposite_direction(0))
         self.assertEqual(3, get_opposite_direction(1))
 
-    def test_truncate_name(self):
-        self.assertEqual("12345679", truncate_name("123456789"))
-
     @patch('src.menu.CommandMenu.show_text_in_dialog_box')
     def test_toggle_joystick_input(self, mock_show_text_in_dialog_box):
         self.assertEqual(True,
-                         toggle_joystick_input(self.game.cmd_menu, self.game.directories.NAME_SELECTION_UPPER_A, False,
+                         toggle_joystick_input(self.game.cmd_menu, MagicMock(), False,
                                                self.game.screen))
         self.assertEqual(False,
-                         toggle_joystick_input(self.game.cmd_menu, self.game.directories.NAME_SELECTION_UPPER_A, True,
+                         toggle_joystick_input(self.game.cmd_menu, MagicMock(), True,
                                                self.game.screen))

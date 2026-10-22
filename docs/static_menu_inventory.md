@@ -48,17 +48,18 @@ Things the NES does differently from these screens:
 
 Generating these screens will fix all of that, because any LogList variant can be built from its data.
 
-## Name entry (72 files)
+## Name entry (72 files): done in phase 2
 
-| File(s) | Used at | NES window(s) | Variants | Difficulty |
-|---|---|---|---|---|
-| `menus/name_selection/0_upper_A.png` … `62_END.png` (63) | `NameSelection` lookup (`src/menu_functions.py:34-96`), `blink_with_name`, `draw_image_with_name`, `toggle_joystick_input` | NewQuestDat + LogList123Dat1 behind, AlphabetDat ($B10D) + NameEntryDat ($B1F7), composed full screen | 63 cursor positions | medium |
-| `menus/name_selection/63_static_image_len_0.png` … `71_static_image_len_8.png` (9) | `select_name` (`menu_functions.py:106`, `:114-124`) | same | name length 0-8 (placeholders `TL_NAME_PLACEHOLDER` $41, the underline is TL_TOP1) | medium |
+| File(s) | Used at | Shows | NES window(s) | Variants | Status |
+|---|---|---|---|---|---|
+| `menus/name_selection/0_upper_A.png` … `62_END.png` (63) | test reference only | the screen with the arrow at each entry, empty name | NewQuestDat ($B2A8) + LogList123Dat1 ($B385) behind, NameEntryDat ($B1F7) + AlphabetDat ($B10D), composed full screen | 63 cursor positions | **generated**: `render_name_entry_screen` |
+| `menus/name_selection/63_static_image_len_0.png` … `71_static_image_len_8.png` (9) | test reference only | no cursor; 0-8 characters entered (their slots blank) | same | name length 0-8 | **generated** |
 
-Notes:
-- The cursor images always show an empty name. The typed name is drawn over them, off the tile grid (`TILE_SIZE*6.01, TILE_SIZE*4.3`, `menu_functions.py:251`).
-- The windows behind are always the "3 free logs" variant.
-- The NES alphabet uses the NES j, k, p, t and apostrophe. The TTF font doesn't have them, so they are in `NES_GLYPHS` (see below).
+`src/name_entry.py`:
+- `render_name_entry_screen(entry, color, nes_pixel, cursor_visible)` composes the 4 windows in NES order (`NAME_ENTRY_SCREEN_LAYOUTS`), then draws the name (the placeholder $41 or the character entered, `WndNameCharYPos`), the underscore (TL_TOP1 under the next character, `WndShowUnderscore`, gone once 8 are entered) and the alphabet cursor.
+- `NameEntry` is the NES state and input: `WndEnterName`, `WndProcessChar`, `WndDoBackspace`, `WndMaxNameLength`, and the alphabet window's cursor moves with BACK and END (`WndSpclMoveCrsr`).
+- `NameSelection.select_name` (`src/menu_functions.py`) draws it every frame, with the blinking cursor of `src/cursor.py`.
+- `tests/test_name_entry.py` checks **0 differing pixels** for all 72 screenshots at scales 1, 2 and 3, the hidden cursor at all 63 entries, and the screen as `NameSelection` draws it.
 
 ## Shops (40 files): done in phase 2
 
@@ -99,7 +100,7 @@ The SPELL/ITEM border is verified at 1, 2 and 5 entries (the heights there are s
 |---|---|---|---|
 | Battle | 5 | 2 (now 0) | 3, now 5 |
 | Title, main menu and adventure logs | 18 | 18 | 0 |
-| Name entry | 72 | 72 | 0 |
+| Name entry | 72 | 72 (now 0) | 0, now 72 |
 | Shops | 40 | 6 | 34 |
 | Miscellaneous | 23 | 15 (now 11) | 8 (now 12) |
 | **Total** | **158** | **113** (now 109) | **45** (now 49) |
@@ -112,10 +113,7 @@ The SPELL/ITEM border is verified at 1, 2 and 5 entries (the heights there are s
 2. **Shops: medium.**
    - Write a ShopInvDat layout builder: the variable height, two-half item names (`name_halves`) and costs right-aligned at `SHOP_COST_RIGHT_TILE_COLUMN`.
    - Diff it against the 6 shop screenshots, and against the per-item arrow images.
-3. **Name entry: medium.**
-   - This is a composite of 4 windows: NewQuestDat, LogList123Dat1, AlphabetDat and NameEntryDat, drawn in NES order on black.
-   - AlphabetDat's layout (a 3-tile column spacing) and the name underline (TL_TOP1 under the selected slot, LAEB8) are new.
-   - Every tile it needs is already known.
+3. **Name entry: done in phase 2** (see above).
 4. **Title, main menu and adventure logs: easy to medium, but blocked** until the options screen and #234 land.
    - These are 1-2 windows each. The log list windows have 7 variants each.
 5. **Intro banner: hard. Leave it as an image.**
