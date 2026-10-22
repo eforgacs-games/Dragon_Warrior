@@ -33,7 +33,7 @@ base_config = {
     "LANGUAGE": language_from_locale(LOCALE),
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
-    "TEXT_SPEED": "Fast",
+    "TEXT_SPEED": "Fast",  # "Fast", "Normal" or "Slow": NES MessageSpeed, 1, 2 or 3 frames per character
     "NO_WAIT": False,
     "GOD_MODE": False,
     "INVULNERABLE": False,
