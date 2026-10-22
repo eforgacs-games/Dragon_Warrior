@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import random
@@ -13,8 +14,6 @@ from pygame.event import get
 from pygame.time import Clock
 from pygame.time import get_ticks
 
-from src.config.dev_config import dev_config
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data.text.intro_lookup_table import ControlInfo
@@ -25,6 +24,7 @@ from src.camera import Camera
 from src.common import BLACK, accept_keys, reject_keys, Graphics, RED, WHITE, is_facing_medially, is_facing_laterally, \
     set_gettext_language
 from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
+from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
 from src.constants import (
     LOW_HP_THRESHOLD, ARROW_BLINK_INTERVAL_MS,
@@ -1032,8 +1032,11 @@ class Game:
 
 
 def run():
-    # game = Game(config=prod_config)
-    game = Game(config=dev_config)
+    parser = argparse.ArgumentParser(description="Dragon Warrior")
+    parser.add_argument("--dev", action="store_true",
+                        help="run with dev_config (god mode, no battles, coordinates visible)")
+    args = parser.parse_args()
+    game = Game(config=dev_config if args.dev else prod_config)
     game.main()
 
 
