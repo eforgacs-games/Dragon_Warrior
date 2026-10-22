@@ -11,6 +11,10 @@ class AnimatedSprite(BaseSprite):
         self.frame_delay = ANIMATION_FRAME_DELAY
         self.direction_value = direction_value
         self.images_map = {}
+        # (column, row) tiles a character holds while taking a step, so nobody else can move onto either. The NES
+        # checks a move once, when it starts, against everyone's position and the tile they're moving to.
+        self.step_origin: tuple | None = None
+        self.step_destination: tuple | None = None
         self.set_images(images)
         if center_point is not None and images is not None:
             super().__init__(center_point, images[0][0])
