@@ -14,6 +14,7 @@ from src.direction import Direction
 from src.game import Game
 from src.maps import map_lookup
 from src.npc_movement import npc_may_step_onto, step
+from src.npc_schedule import FRAMES_PER_TURN, TURNS_PER_CYCLE
 
 # NES block IDs (Dragon_Warrior_Defines.asm BLK_*, converted from map data by GenBlkConvTbl in Bank00) of this game's
 # floor tiles. GetBlockID's result must be below BLK_FFIELD for an NPC to step there. ROOF isn't an NES block.
@@ -211,26 +212,23 @@ class TestRoamingNPCMovement(TestCase):
     # Simulation
 
     def simulate(self, current_map, seed: int) -> int:
-        """Run the game's own NPC movement for ROUNDS turns, checking every step against the NES rules. Returns the
-        number of steps taken."""
+        """Run the game's own NPC movement for ROUNDS cycles of the NPC schedule, a turn at a time, checking every step
+        against the NES rules. Returns the number of steps taken."""
         rng = random.Random(seed)
-        ticks = [0]
         npcs = current_map.roaming_characters
-        for npc in npcs:
-            npc.last_roaming_clock_check = 0
         player = self.game.player
         # The game loop keeps the player's row and column up to date; the player stands still here
         self.place(player, player.rect.y // self.tile_size, player.rect.x // self.tile_size)
         player_tile = (player.row, player.column)
         steps = 0
-        with patch('src.game.get_ticks', lambda: ticks[0]), patch('src.game.random', rng):
-            for _ in range(ROUNDS):
+        with patch('src.game.random', rng):
+            for _ in range(ROUNDS * TURNS_PER_CYCLE):
                 before = {npc: (npc.row, npc.column) for npc in npcs}
                 taken = set(before.values()) | {(npc.row, npc.column) for npc in current_map.fixed_characters}
-                ticks[0] += 1000
-                for _ in range(self.tile_size // self.game.speed + 2):
-                    self.game.move_roaming_characters()
-                    self.game.update_roaming_character_positions()
+                # One turn of the NPC schedule (#289): one pair steps at once, and ends the turn back on a tile.
+                # ROUNDS cycles of turns give each NPC ROUNDS chances to step.
+                for _ in range(FRAMES_PER_TURN):
+                    self.game.do_sprites()
                 for npc in npcs:
                     position = (npc.row, npc.column)
                     self.assertFalse(npc.is_moving, npc.identifier)
