@@ -121,7 +121,7 @@ class TestKoreanText(TestCase):
         self.assertEqual("Edward은/는 비밀 통로를 발견했다!", _("{} discovers the Secret Passage.").format("Edward"))
         self.assertEqual("남쪽으로 3, 그리고..", _("{} to the south and..").format(3))
         self.assertEqual("게임이 2배속으로 설정되었습니다.\n(120 FPS)",
-                         _("Game set to double speed.\n({} FPS)").format(120))
+                         _("Game set to {}x speed.\n({} FPS)").format(2, 120))
 
     def test_names_used_through_variables_are_translated(self):
         _ = self._
