@@ -113,6 +113,11 @@ class Game:
         init()
         time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
         self.paused = False
+        # START or A pressed while the hero or an NPC is between tiles: the pause or command window waits until everyone
+        # has finished their step (NES PausePrepLoop / DoNCCmdWindow), see resolve_pending_freezes
+        self.pause_requested = False
+        self.cmd_menu_requested = False
+        self.freeze_wait_frames = 0
         # Create the game window.
         if self.fullscreen_enabled:
             # according to pygame docs: "SCALED is considered an experimental API and may change in future releases."
@@ -206,7 +211,7 @@ class Game:
             self.clock.tick(self.fps)
             self.get_events()
             self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player,
-                                 self.cmd_menu, self.foreground_rects, self.game_state.enable_animate, self.camera,
+                                 self.cmd_menu, self.foreground_rects, self.sprites_animate, self.camera,
                                  self.initial_dialog_enabled, self.events, self.skip_text, self.story_flags.left_throne_room,
                                  self.game_state, self.color)
             display.flip()
@@ -342,6 +347,7 @@ class Game:
         if not self.player.is_moving:
             set_character_position(self.player, tile_size=self.tile_size)
         self._handle_map_updates()
+        self.resolve_pending_freezes()
         self._handle_post_move_checks()
         self.ending.check_for_end_game_trigger()
         self._handle_debugging_info()
@@ -397,8 +403,9 @@ class Game:
         """
         Updates character positions and handles warp logic.
         """
-        if self.game_state.enable_roaming and self.current_map.roaming_characters:
-            self.move_roaming_characters()
+        if self.game_state.enable_roaming and not self.world_frozen and self.current_map.roaming_characters:
+            # NES UpdateNPCs1: no NPC starts a new step once a pause or the command window has been asked for
+            self.move_roaming_characters(start_new_steps=not self.freeze_pending)
             self.update_roaming_character_positions()
         # currently can't process staircases right next to one another, need to fix
         # a quick fix would be to add an exception in the conditional for
@@ -411,9 +418,70 @@ class Game:
         Checks if the game is paused or if movement is disabled; if not,
         moves the player based on the current key state.
         """
-        if self.game_state.enable_movement and not self.paused and not self.cmd_menu.menu.is_enabled():
-            current_key = key.get_pressed()
-            self.move_player(current_key)
+        if not self.game_state.enable_movement or self.world_frozen:
+            return
+        if self.freeze_pending and not self.player.is_moving:
+            # NES GameEngineLoop only reads START and A between steps (DoJoyUp etc. move a whole tile before
+            # returning), so a step already under way is finished, but no new one is started.
+            return
+        self.move_player(key.get_pressed())
+
+    @property
+    def world_frozen(self) -> bool:
+        """
+        Whether everything on the map is stopped: the hero and NPCs don't move and sprites don't animate.
+        NES: StopNPCMove is set while the command window is up (ShowNCCmdWindow), and nothing calls DoSprites while
+        the game is paused (GamePaused) or a window waits for a button (WaitForBtnPress), so walking animation stops
+        too. Dialogs, shops and YES/NO prompts run in their own loops inside a command, so the main loop (and
+        everything that moves) doesn't run at all until they close.
+        This is the one place movement is gated, rather than relying on the GameState flags alone, because those
+        are turned back on in many places (e.g. every menu command ends with unpause_all_movement).
+        """
+        return self.paused or self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled()
+
+    @property
+    def freeze_pending(self) -> bool:
+        return self.pause_requested or self.cmd_menu_requested
+
+    @property
+    def sprites_animate(self) -> bool:
+        return self.game_state.enable_animate and not self.world_frozen
+
+    def everyone_on_a_tile(self) -> bool:
+        """Whether the hero and every roaming NPC are standing exactly on a tile, not partway through a step."""
+        if self.player.is_moving:
+            return False
+        if self.freeze_wait_frames > self.tile_size // self.speed:
+            # Every NPC step finishes within this many frames; one that hasn't is stuck (e.g. the hero stepped
+            # into the tile it was walking to), so don't wait on it forever.
+            return True
+        return all(not roaming_character.is_moving or (roaming_character.rect.x % self.tile_size == 0 and
+                                                       roaming_character.rect.y % self.tile_size == 0)
+                   for roaming_character in self.current_map.roaming_characters)
+
+    def resolve_pending_freezes(self) -> None:
+        """
+        Pause, or open the command window, once the hero and the NPCs have finished their steps.
+        NES PausePrepLoop (START) and DoNCCmdWindow (A) keep calling DoSprites until FrameCounter & $0F == 1, the
+        frame on which every NPC is lined up on a tile, and only then pause or set StopNPCMove. START is checked
+        before A (CheckInputs), so a pause wins.
+        """
+        if not self.freeze_pending:
+            self.freeze_wait_frames = 0
+            return
+        if not self.everyone_on_a_tile():
+            if not self.player.is_moving:
+                self.freeze_wait_frames += 1
+            return
+        self.freeze_wait_frames = 0
+        if self.pause_requested:
+            self.pause_requested = False
+            self.paused = True
+            return
+        self.cmd_menu_requested = False
+        self.drawer.display_hovering_stats = True
+        self.cmd_menu.launch_signaled = True
+        self.game_state.pause_all_movement()
 
     def _handle_pygame_events(self, events: List[event.Event]) -> None:
         """
@@ -719,6 +787,11 @@ class Game:
         self.map_mgr.process_warp(staircase_dict)
 
     def handle_keypresses(self, current_keydown_event):
+        if self.paused:
+            # NES GamePaused only reads START until the game is unpaused
+            self.handle_start_button(current_keydown_event)
+            self.handle_fullscreen_toggle(current_keydown_event)
+            return
         self.handle_b_button(current_keydown_event)
         self.handle_a_button(current_keydown_event)
         self.handle_start_button(current_keydown_event)
@@ -754,23 +827,23 @@ class Game:
         if keydown_event.key == K_k:
             # A button
             # print("K key pressed (A button).")
-            if not self.player.is_moving:
-                # pause_all_movement may be temporarily commented out for dialog box debugging purposes.
-                self.drawer.display_hovering_stats = True
-                self.cmd_menu.launch_signaled = True
-                self.game_state.pause_all_movement()
+            if self.world_frozen or self.pause_requested:
+                return
+            # The window opens once the hero and the NPCs have finished their steps (resolve_pending_freezes)
+            self.cmd_menu_requested = True
+            self.resolve_pending_freezes()
 
     def handle_start_button(self, keydown_event):
         if keydown_event.key == K_i:
             # Start button
             if self.paused:
-                self.game_state.unpause_all_movement()
                 self.paused = False
-            else:
-                self.game_state.pause_all_movement()
-                self.player.is_moving = False
-                self.paused = True
-            print("I key pressed (Start button).")
+            elif not (self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled()):
+                # NES CheckInputs: START only pauses from the map, not while a window is up. The hero finishes the
+                # step under way first (resolve_pending_freezes).
+                self.pause_requested = True
+                self.cmd_menu_requested = False
+                self.resolve_pending_freezes()
 
     def handle_enter_key(self, keydown_event):
         if keydown_event.key == K_RETURN:
@@ -1074,9 +1147,10 @@ class Game:
             next_pos_y += self.speed
         return next_pos_x, next_pos_y
 
-    def move_roaming_characters(self) -> None:
+    def move_roaming_characters(self, start_new_steps: bool = True) -> None:
         """
         Move all roaming characters in the current map.
+        :param start_new_steps: False lets characters partway through a step finish it, but none start a new one.
         :return: None
         """
         for roaming_character in self.current_map.roaming_characters:
@@ -1086,6 +1160,8 @@ class Game:
                     get_ticks() - roaming_character.last_roaming_clock_check >= 1000:
                 roaming_character.last_roaming_clock_check = get_ticks()
                 if not roaming_character.is_moving:
+                    if not start_new_steps:
+                        continue
                     roaming_character.direction_value = random.choice(list(map(int, Direction)))
                 else:  # character not moving and no input
                     continue
