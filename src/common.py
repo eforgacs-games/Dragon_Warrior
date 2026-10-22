@@ -4,12 +4,11 @@ import ntpath
 import os
 from os.path import sep, exists
 
-from pygame import Surface, image, transform, K_RETURN, K_i, K_k, K_ESCAPE, K_j, Rect, display
+from pygame import Surface, image, transform, K_RETURN, K_i, K_k, K_ESCAPE, K_j
 
 from src.color import WHITE, BLACK, RED
 from src.direction import Direction
 from src.directories import Directories
-from src.text import draw_text
 
 
 def find_file(name, path):
@@ -155,24 +154,6 @@ class Graphics:
             scaled_img = scale(base_image, size)
             _scaled_image_library[cache_key] = scaled_img
         return scaled_img
-
-    def blink_arrow(self, screen: Surface, x: float, y: float, direction: str, show_arrow, color: tuple = WHITE):
-        if direction == 'up':
-            arrow_character = '^'
-        elif direction == "down":
-            arrow_character = "▼"
-        elif direction == "left":
-            arrow_character = "<"
-        elif direction == "right":
-            arrow_character = ">"
-        else:
-            arrow_character = ""
-        arrow_screen_portion = Rect(x, y, self.config["TILE_SIZE"], self.config["TILE_SIZE"])
-        if show_arrow:
-            draw_text(arrow_character, x, y, screen, self.config, color, letter_by_letter=False)
-        else:
-            draw_text(arrow_character, x, y, screen, self.config, BLACK, letter_by_letter=False)
-        display.update(arrow_screen_portion)
 
 
 accept_keys = (K_RETURN, K_i, K_k)
