@@ -339,15 +339,16 @@ class TestGame(TestCase):
         self.game.battle_ctrl.launch_battle = in_battle
         self.game.player.current_hp = 0
         self.game.player.gold = 101
-        with patch.object(self.game, 'graphics') as graphics, patch.object(self.game, 'drawer') as drawer, \
+        with patch.object(self.game.battle_ctrl, 'draw_command_window') as command_window, \
+                patch.object(self.game, 'drawer') as drawer, \
                 patch.object(self.game, 'music_player'), patch('src.game.display'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
             self.game.handle_death()
-        return graphics, drawer, show_text
+        return command_window, drawer, show_text
 
     def test_death_in_battle(self):
-        graphics, drawer, show_text = self.die(in_battle=True)
-        graphics.create_window.assert_called_once()
+        command_window, drawer, show_text = self.die(in_battle=True)
+        command_window.assert_called_once_with(True)
         drawer.draw_all_tiles_in_current_map.assert_not_called()
         self.assertFalse(self.game.battle_ctrl.launch_battle)
         show_text.assert_called_once_with("Thou art dead.", disable_sound=True, advance_keys=A_OR_START_KEYS)
@@ -357,8 +358,8 @@ class TestGame(TestCase):
 
     def test_death_outside_battle(self):
         # e.g. from swamp or barrier damage
-        graphics, drawer, show_text = self.die(in_battle=False)
-        graphics.create_window.assert_not_called()
+        command_window, drawer, show_text = self.die(in_battle=False)
+        command_window.assert_not_called()
         drawer.draw_all_tiles_in_current_map.assert_called_once()
         show_text.assert_called_once_with("Thou art dead.", disable_sound=True, advance_keys=A_OR_START_KEYS)
 

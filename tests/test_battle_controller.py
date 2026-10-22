@@ -9,15 +9,18 @@ from pygame.event import Event
 from src.waiting import NES_FPS, game_speed, reset_game_speed
 
 from src import enemy as enemies
+from src.color import WHITE
 from src.battle_controller import BattleController
 from src.enemy_lookup import enemy_string_lookup
 from src.spells import Spell
+from src.windows import COMBAT_COMMAND_LAYOUT
 
 
 def make_game():
     game = MagicMock()
     game._ = lambda s: s
     game.auto_battle = False
+    game.color = WHITE
     game.config = {"MUSIC_ENABLED": False}
     game.game_state.config = {"TILE_SIZE": 32}
     player = game.player
@@ -142,21 +145,22 @@ class TestHandleBattlePrompts(BattlePromptFrames):
     def test_cursor_is_at_the_selected_command(self, mock_time, mock_display):
         # CmdCmbtDat: FIGHT (1, 2), SPELL (9, 2), RUN (1, 4), ITEM (9, 4)
         for row, column, tile in ((0, 0, (1, 2)), (0, 1, (9, 2)), (1, 0, (1, 4)), (1, 1, (9, 4))):
-            with self.subTest(row=row, column=column):
+            with self.subTest(row=row, column=column), patch('src.battle_controller.draw_window') as draw_window:
                 self.controller.battle_menu_row, self.controller.battle_menu_column = row, column
-                self.game.cmd_menu.draw_window_cursor.reset_mock()
                 self.controller.handle_battle_prompts(False, self.battle)
-                self.assertEqual((6, 1) + tile, self.game.cmd_menu.draw_window_cursor.call_args.args[:4])
+                self.assertIs(COMBAT_COMMAND_LAYOUT, draw_window.call_args.args[1])
+                self.assertEqual(tile, COMBAT_COMMAND_LAYOUT.cursor_tiles[draw_window.call_args.kwargs['cursor_index']])
 
     def test_chosen_command_keeps_its_cursor_on(self, mock_time, mock_display):
         # WndAPressed: the arrow is drawn once more, visible, and stays on while the command runs
         visible_during_fight = []
         with patch.object(self.controller, 'fight',
                           side_effect=lambda battle: visible_during_fight.append(
-                              self.controller.command_cursor.visible())), self.patch_enemy_move():
+                              self.controller.command_cursor.visible())), self.patch_enemy_move(), \
+                patch('src.battle_controller.draw_window') as draw_window:
             self.press(K_RETURN)
         self.assertEqual([True], visible_during_fight)
-        self.assertIs(self.game.cmd_menu.draw_window_cursor.call_args_list[-1].args[4], True)
+        self.assertIs(draw_window.call_args_list[-1].kwargs['cursor_visible'], True)
 
     def test_fight_attacks_then_enemy_moves(self, mock_time, mock_display):
         with patch.object(self.controller, 'fight') as fight, self.patch_enemy_move() as enemy_move:
