@@ -4,12 +4,11 @@ import ntpath
 import os
 from os.path import sep, exists
 
-from pygame import Surface, image, transform, K_RETURN, K_i, K_k, K_ESCAPE, K_j, Rect, display
+from pygame import Surface, image, transform, K_RETURN, K_i, K_k, K_ESCAPE, K_j
 
 from src.color import WHITE, BLACK, RED
 from src.direction import Direction
 from src.directories import Directories
-from src.text import draw_text
 
 
 def find_file(name, path):
@@ -155,48 +154,6 @@ class Graphics:
             scaled_img = scale(base_image, size)
             _scaled_image_library[cache_key] = scaled_img
         return scaled_img
-
-    def blink_switch(self, screen: Surface, image_1: str, image_2: str, x: int, y: int, width: int, height: int,
-                     tile_size: int,
-                     show_arrow: bool, color: tuple = WHITE) -> Rect:
-        """Switches between two images, creating a blinking effect.
-        :param screen: the screen to draw on
-        :param image_1: the path of the first image to draw (usually the selection image)
-        :param image_2: the path of the second image to draw (usually a blank image)
-        :param x: the x coordinate of the window
-        :param y: the y coordinate of the window
-        :param width: the width of the window
-        :param height: the height of the window
-        :param tile_size: the size of the tiles
-        :param show_arrow: whether to show the arrow
-        :param color: the color of the window
-        :return: the rect of the window
-        """
-        window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
-        if show_arrow:
-            self.create_window(x, y, width, height, image_1, screen, color)
-        else:
-            self.create_window(x, y, width, height, image_2, screen, color)
-        display.update(window_rect)
-        return window_rect
-
-    def blink_arrow(self, screen: Surface, x: float, y: float, direction: str, show_arrow, color: tuple = WHITE):
-        if direction == 'up':
-            arrow_character = '^'
-        elif direction == "down":
-            arrow_character = "▼"
-        elif direction == "left":
-            arrow_character = "<"
-        elif direction == "right":
-            arrow_character = ">"
-        else:
-            arrow_character = ""
-        arrow_screen_portion = Rect(x, y, self.config["TILE_SIZE"], self.config["TILE_SIZE"])
-        if show_arrow:
-            draw_text(arrow_character, x, y, screen, self.config, color, letter_by_letter=False)
-        else:
-            draw_text(arrow_character, x, y, screen, self.config, BLACK, letter_by_letter=False)
-        display.update(arrow_screen_portion)
 
 
 accept_keys = (K_RETURN, K_i, K_k)

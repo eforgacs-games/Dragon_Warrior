@@ -4,13 +4,13 @@ from typing import Callable
 
 from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect, QUIT
 from pygame.event import get, pump
-from pygame.time import get_ticks
 
 from data.text.dialog import confirmation_prompt
 from src.calculation import Calculation
 from src.color import BLACK
 from src.common import RED, WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
 from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACEABLE_ITEMS
+from src.cursor import BlinkingCursor
 from src.direction import Direction
 from src.directories import Directories
 from src.items import INVENTORY_SLOTS, MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS, inventory_list
@@ -811,30 +811,33 @@ class DialogLookup:
         self.command_menu.window_drop_down_effect(x, y, width, height)
         window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
         current_index = initial_index
-        start_time = get_ticks()
-        while True:
-            # arrow stays on and off for 16 frames at a time
-            frames_elapsed = self.calculation.convert_to_frames_since_start_time(start_time)
-            if frames_elapsed > 32:
-                start_time = get_ticks()
+        # The NES cursor (src/cursor.py): visible when the window opens (WndInitSelect)
+        cursor = BlinkingCursor()
+
+        def draw(cursor_visible: bool) -> None:
             draw_window()
             # The cursor goes in tile column 1, between the left border and the entry (cursor home X = 1)
-            cursor_x, cursor_y = self.command_menu.window_text_position(x, y, 1, first_tile_row + 2 * current_index)
-            draw_text('>', cursor_x, cursor_y, self.screen, self.config,
-                      self.color if frames_elapsed <= 16 else BLACK, letter_by_letter=False)
+            self.command_menu.draw_window_cursor(x, y, 1, first_tile_row + 2 * current_index, cursor_visible)
             if not self.config['NO_BLIT']:
                 display.update(window_rect)
+
+        while True:
+            draw(cursor.visible())
             for current_event in get():
                 if current_event.type == KEYDOWN:
                     if current_event.key in (K_DOWN, K_s) and current_index < number_of_entries - 1:
                         current_index += 1
-                        start_time = get_ticks()
+                        cursor.restart()  # WndUpdateCrsrPos
                     elif current_event.key in (K_UP, K_w) and current_index > 0:
                         current_index -= 1
-                        start_time = get_ticks()
+                        cursor.restart()
                     elif current_event.key in reject_keys:
+                        # WndBPressed: the arrow is drawn once more and stays on
+                        draw(True)
                         return None
                     elif current_event.key in accept_keys:
+                        # WndAPressed: the chosen entry's arrow is drawn once more and stays on
+                        draw(True)
                         self.sound.play_sound(self.directories.menu_button_sfx)
                         return current_index
                 elif current_event.type == QUIT:
@@ -906,36 +909,35 @@ class DialogLookup:
         store_inventory_window_rect = Rect(window.x * tile_size, window.y * tile_size, window.width * tile_size,
                                            window.height * tile_size)
         current_item_index = 0
-        start_time = get_ticks()
-        # arrow stays on and off for 16 frames at a time
+        # The NES cursor (src/cursor.py), drawn over the shop's screenshot without one (ShopInvDat: cursor home X = 1,
+        # Y = 1, one block per item)
+        cursor = BlinkingCursor()  # WndInitSelect
         graphics = Graphics(self.config)
+
+        def draw(cursor_visible: bool) -> None:
+            graphics.create_window(*window, static_store_image, self.screen, self.color)
+            self.command_menu.draw_window_cursor(window.x, window.y, 1, 1 + 2 * current_item_index, cursor_visible)
+            if not self.config['NO_BLIT']:
+                display.update(store_inventory_window_rect)
+
         while True:
             self.command_menu.game.drawer.display_hovering_stats = True
             display.flip()
             current_item_name = item_names[current_item_index]
-            current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
-            frames_elapsed = self.calculation.convert_to_frames_since_start_time(start_time)
-            if frames_elapsed <= 16:
-                graphics.create_window(*window, current_item_menu_image, self.screen, self.color)
-                display.update(store_inventory_window_rect)
-            elif frames_elapsed <= 32:
-                graphics.create_window(*window, static_store_image, self.screen, self.color)
-                display.update(store_inventory_window_rect)
-            else:
-                start_time = get_ticks()
+            draw(cursor.visible())
             for current_event in get():
                 if current_event.type == KEYDOWN:
                     if current_event.key in (K_DOWN, K_s) and current_item_index < len(item_names) - 1:
                         current_item_index += 1
-                        start_time = get_ticks()
+                        cursor.restart()  # WndUpdateCrsrPos
                     elif current_event.key in (K_UP, K_w) and current_item_index > 0:
                         current_item_index -= 1
-                        start_time = get_ticks()
+                        cursor.restart()
                     elif current_event.key in reject_keys:
+                        draw(True)  # WndBPressed
                         return None
                     elif current_event.key in accept_keys:
-                        graphics.create_window(*window, current_item_menu_image, self.screen, self.color)
-                        display.update(store_inventory_window_rect)
+                        draw(True)  # WndAPressed: the arrow stays on
                         return current_item_name
                 elif current_event.type == QUIT:
                     quit()
