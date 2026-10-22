@@ -753,23 +753,29 @@ class Garinham(DragonWarriorMap):
         self.create_town_gates(west_gate=warp_line((13, 8), (15, 8)),
                                east_gate=warp_line((11, 29), (14, 29)))
         self.set_town_to_overworld_warps()
+        # NES GarMobTbl and GarStatTbl (Bank00). An NPC at NES X,Y is at (Y, X + 9) here.
         self.npc_coordinates = {
-            (1, 23): 'WISE_MAN',
-            (5, 12): 'GUARD',
-            (5, 14): 'GUARD',
-            (6, 18): 'MERCHANT',
-            (10, 11): 'WISE_MAN',
-            (11, 14): 'MERCHANT',
-            (12, 20): 'WOMAN',
-            (15, 26): 'MERCHANT',
-            (17, 11): 'WISE_MAN',
-            (18, 19): 'MERCHANT',
+            (1, 23): 'WISE_MAN',  # static wizard at 14,1 (dialog byte $3A)
+            (4, 21): 'WOMAN',  # mobile female villager at 12,4 ($3E)
+            (5, 12): 'GUARD',  # static guard at 3,5 ($3B)
+            (5, 14): 'GUARD',  # static guard at 5,5 ($3B)
+            (6, 18): 'MERCHANT',  # static shopkeeper at 9,6 ($3C)
+            (7, 20): 'MAN',  # mobile male villager at 11,7 ($3D)
+            (8, 21): 'WISE_MAN',  # mobile wizard at 12,8 ($3F)
+            (10, 11): 'WISE_MAN',  # mobile wizard at 2,10 ($42)
+            (11, 14): 'MERCHANT',  # static shopkeeper at 5,11: the item shop ($09, ToolsDialog)
+            (12, 21): 'WOMAN',  # mobile female villager at 12,12 ($43)
+            (12, 27): 'MAN',  # mobile male villager at 18,12 ($44)
+            (15, 26): 'MERCHANT',  # static shopkeeper at 17,15: the inn ($13, InnDialog)
+            (17, 11): 'WISE_MAN',  # static wizard at 2,17 ($40)
+            (17, 16): 'SOLDIER',  # mobile fighter at 7,17 ($41)
+            (18, 19): 'MERCHANT',  # static shopkeeper at 10,18: weapons and armor ($02, WeaponsDialog)
         }
         self.custom_underlying_tiles = {
-            'WOMAN': 'TREES',
-            'WISE_MAN': 'SAND',
+            'SOLDIER': 'SAND',
         }
-        self.roaming_character_list = ['WOMAN', 'WISE_MAN_2']
+        # The NPCs from GarMobTbl
+        self.roaming_character_list = ['WOMAN', 'MAN', 'WISE_MAN_2', 'WISE_MAN_3', 'WOMAN_2', 'MAN_2', 'SOLDIER']
         # NES GarinCvrdDatPtr -> DgnLrdSL4Dat ($8EE6): the whole top of town. NES X,Y is at (Y, X + 9) here.
         self.covered_area = covered_cells({
             **{y: range(20) for y in range(3, 10)},
@@ -783,13 +789,13 @@ class Garinham(DragonWarriorMap):
         return Direction.RIGHT.value
 
     def set_characters_initial_directions(self):
-        self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
-        self.set_character_initial_direction('MERCHANT_3', Direction.LEFT)
-        self.set_character_initial_direction('MERCHANT_4', Direction.UP)
-        self.set_character_initial_direction('WISE_MAN_2', Direction.RIGHT)
-        self.set_character_initial_direction('WISE_MAN_3', Direction.RIGHT)
+        # The DD bits of each NES table entry; every NPC not listed here faces down
         self.set_character_initial_direction('GUARD', Direction.RIGHT)
         self.set_character_initial_direction('GUARD_2', Direction.LEFT)
+        self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
+        self.set_character_initial_direction('MERCHANT_3', Direction.LEFT)
+        self.set_character_initial_direction('WISE_MAN_4', Direction.RIGHT)
+        self.set_character_initial_direction('MERCHANT_4', Direction.UP)
 
 
 class Kol(DragonWarriorMap):
