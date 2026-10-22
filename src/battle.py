@@ -17,7 +17,7 @@ from src.menu import CommandMenu
 from src.player.player import Player
 from src.player.player_stats import levels_list
 from src.sound import Sound
-from src.waiting import check_for_quit, wait, wait_frames
+from src.waiting import check_for_quit, wait_frames
 
 DRAGONLORD_TRANSFORM_WAIT_FRAMES = 80  # NES EnemyDefeated: 80 frames between the two Dragonlord fights
 SPIRAL_LEAD_IN_FRAMES = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E40A, before the first block
@@ -232,8 +232,7 @@ class Battle:
         cmd_menu.show_line_in_dialog_box(self.get_enemy_defeated_string(enemy), add_quotes=False, disable_sound=True,
                                          hide_arrow=True, skip_text=True)
         self.make_enemy_image_disappear(screen)
-        mixer.music.stop()
-        self.sound.play_sound(self.directories.victory_sfx)
+        cmd_menu.game.music_player.play_clip(self.directories.victory_music)
 
     def get_enemy_defeated_string(self, enemy):
         """Get the enemy defeated string based on language."""
@@ -246,10 +245,14 @@ class Battle:
         return self._("Thou hast done well in defeating the {}.\n").format(self._(enemy_name))
 
     def check_player_level_up(self, cmd_menu, player, music_enabled):
-        """Check if the player levels up."""
+        """NES ChkLevelUp (RegEnDefeated). Without a level up, WaitForMusicEnd lets the victory music finish and the
+        map's music resumes (ResumeMusicTbl) before ExitFight. With one, DoLevelUp starts MSC_LEVEL_UP, which cuts the
+        victory music off, waits for it to end (WaitForMusicEnd), resumes the map's music, and only then says "Thou
+        hast been promoted to the next level." and the stat increases."""
+        music_player = cmd_menu.game.music_player
         if player.level + 1 < 30 and player.total_experience >= levels_list[player.level + 1]['total_exp']:
-            self.sound.play_sound(self.directories.improvement_sfx)
-            wait(2000)
+            music_player.play_until_end(self.directories.level_up_music, self.config)
+            self.resume_map_music(music_player, music_enabled)
             self.display_level_up_message(cmd_menu, player)
             old_stats = self.get_player_stats(player)
             player.level += 1
@@ -257,10 +260,15 @@ class Battle:
             player.update_attack_power()
             player.update_defense_power()
             player.points_to_next_level = player.get_points_to_next_level()
-            if music_enabled:
-                mixer.music.load(self.current_map.music_file_path)
-                mixer.music.play(-1)
             self.display_stat_increases(cmd_menu, player, old_stats)
+        else:
+            music_player.wait_for_music_end(self.config)
+            self.resume_map_music(music_player, music_enabled)
+
+    def resume_map_music(self, music_player, music_enabled):
+        """NES ResumeMusicTbl: the current map's music, from the start."""
+        if music_enabled:
+            music_player.load_and_play_music(self.current_map.music_file_path)
 
     def display_level_up_message(self, cmd_menu, player):
         """Display the level up message."""
