@@ -145,6 +145,97 @@ class TestGame(TestCase):
         self.game.player.is_stopspelled = True
         take_turns(0)
 
+    def go_to(self, map_name, coordinates):
+        from src.maps import map_lookup
+        self.game.change_map(map_lookup[map_name](self.game.config), destination_coordinates=coordinates)
+
+    def where(self):
+        # The hero's row and column follow its rect on the next frame, so read the rect directly
+        tile_size = self.game.tile_size
+        rect = self.game.player.rect
+        return self.game.current_map.identifier, (rect.y // tile_size, rect.x // tile_size)
+
+    def test_outside_leaves_caves(self):
+        for map_name, start, expected in (
+                ('ErdricksCaveB2', (10, 9), ('Alefgard', (19, 36))),
+                ('SwampCave', (6, 4), ('Alefgard', (51, 112))),
+                ('MountainCaveB2', (1, 1), ('Alefgard', (64, 37))),
+                ('CharlockB8', (33, 16), ('Alefgard', (55, 56))),
+                ('GarinsGraveB3', (2, 19), ('Garinham', (0, 28)))):
+            with self.subTest(map=map_name):
+                self.go_to(map_name, start)
+                self.game.cmd_menu.outside()
+                self.assertEqual(self.where(), expected)
+                self.assertEqual(self.game.player.direction_value, Direction.DOWN.value)
+                # the hero stands on the destination's own tile (e.g. the cave entrance), not a staircase
+                row, column = expected[1]
+                self.assertEqual(self.game.current_map.character_key['HERO']['underlying_tile'],
+                                 self.game.current_map.get_tile_by_value(self.game.current_map.layout[row][column]))
+
+    def test_outside_does_nothing_outside_caves(self):
+        self.go_to('Brecconary', (7, 23))
+        with patch('src.menu.CommandMenu.show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.outside()
+        self.assertEqual(self.where(), ('Brecconary', (7, 23)))
+        self.assertEqual(show_text.call_args.args[0], 'But nothing happened.')
+
+    def test_return_warps_next_to_tantegel(self):
+        self.go_to('Brecconary', (7, 23))
+        self.game.cmd_menu.return_()
+        self.assertEqual(self.where(), ('Alefgard', (50, 50)))
+
+    def test_return_fails_in_dungeons(self):
+        for map_name, start in (('SwampCave', (6, 4)), ('CharlockB8', (33, 16))):
+            with self.subTest(map=map_name):
+                self.go_to(map_name, start)
+                with patch('src.menu.CommandMenu.show_text_in_dialog_box') as show_text:
+                    self.game.cmd_menu.return_()
+                self.assertEqual(self.where(), (map_name, start))
+                self.assertEqual(show_text.call_args.args[0], 'But nothing happened.')
+
+    def test_wings_are_used_up(self):
+        self.game.player.inventory = ['Wings', 'Wings']
+        self.go_to('Garinham', (11, 29))
+        with patch('src.menu.CommandMenu.show_text_in_dialog_box'):
+            self.game.cmd_menu.wings()
+        self.assertEqual(self.where(), ('Alefgard', (50, 50)))
+        self.assertEqual(self.game.player.inventory, ['Wings'])
+
+    def test_wings_cannot_be_used_in_dungeons(self):
+        self.game.player.inventory = ['Wings']
+        self.go_to('ErdricksCaveB1', (3, 3))
+        with patch('src.menu.CommandMenu.show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.wings()
+        self.assertEqual(self.where(), ('ErdricksCaveB1', (3, 3)))
+        self.assertEqual(self.game.player.inventory, ['Wings'])
+        self.assertEqual(show_text.call_args.args[0], 'The Wings of the Wyvern cannot be used here.')
+
+    def test_load_game_on_another_map(self):
+        # Used to raise KeyError: change_map looked up a staircase at the player's position
+        save = {"Name": "Erdrick", "Experience": 100, "Gold": 50, "Inventory": [],
+                "CurrentMap": "Brecconary", "PlayerRow": 10, "PlayerColumn": 10}
+        self.game.load_game(save)
+        self.assertEqual(self.where(), ('Brecconary', (10, 10)))
+
+    def walk(self, steps):
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            for _ in range(steps):
+                self.game.count_step()
+        return [c.args[0] for c in show_text.call_args_list]
+
+    def test_repel_lasts_127_steps(self):
+        self.game.repel_timer = 255
+        self.assertEqual(self.walk(126), [])
+        self.assertTrue(self.game.repel_timer)
+        self.assertEqual(self.walk(1), ['REPEL has lost its effect.'])
+        self.assertEqual(self.game.repel_timer, 0)
+        self.assertEqual(self.walk(5), [])
+
+    def test_fairy_water_lasts_127_steps(self):
+        self.game.repel_timer = 254
+        self.assertEqual(self.walk(126), [])
+        self.assertEqual(self.walk(1), ['The Fairy Water has lost its effect.'])
+
     def die(self, in_battle):
         self.game.battle_ctrl.launch_battle = in_battle
         self.game.player.current_hp = 0
