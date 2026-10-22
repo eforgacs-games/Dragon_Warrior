@@ -98,6 +98,8 @@ def held_direction(current_key) -> int | None:
 
 
 class Game:
+    npc_asked_to_make_way: tuple[RoamingCharacter, int] | None
+
     def __init__(self, config):
 
         self.config = config
@@ -151,6 +153,8 @@ class Game:
         # ends on it
         self.idle_update = False
         self.step_ends = False
+        # NPCS_MAKE_WAY: the roaming NPC the hero just bumped into, and the hero's direction (see ask_npc_to_make_way)
+        self.npc_asked_to_make_way = None
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
         self.invulnerable = self.game_state.config["INVULNERABLE"]
@@ -575,6 +579,8 @@ class Game:
             # NES UpdateNPCs1: no NPC starts a new step once a pause or the command window has been asked for
             self.move_roaming_characters(start_new_steps=not self.freeze_pending)
             self.update_roaming_character_positions()
+        # A request to make way is only for the frame right after the bump
+        self.npc_asked_to_make_way = None
         self.npc_schedule.end_sprites()
 
     def _handle_player_movement(self) -> None:
@@ -1217,6 +1223,7 @@ class Game:
             self.player.bumped = False
             self.frame_counter = 0
             self.idle_frame()
+            self.ask_npc_to_make_way()
         else:
             # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning -
             #  should always be 0 when the map starts.
@@ -1224,6 +1231,19 @@ class Game:
             # FrameCounter goes back to 0 once this frame's DoSprites has run (see do_sprites)
             self.step_ends = True
         self.finish_step(self.player)
+
+    def ask_npc_to_make_way(self) -> None:
+        """Quality of life, not NES (NPCS_MAKE_WAY, on by default): when the hero bumps into a roaming NPC, that NPC
+        steps out of the way on the next frame (see make_way). On the NES it stays put and only moves when its own
+        random turn comes. NPCs that never move (shopkeepers, guards at their posts, King Lorik: everyone not in the
+        map's roaming list) never make way."""
+        if not self.config.get('NPCS_MAKE_WAY'):
+            return
+        blocked_at = self.get_next_coordinates(self.player.column, self.player.row, self.player.direction_value)
+        for roaming_character in self.current_map.roaming_characters:
+            if not roaming_character.is_moving and (roaming_character.column, roaming_character.row) == blocked_at:
+                self.npc_asked_to_make_way = roaming_character, self.player.direction_value
+                return
 
     def idle_frame(self) -> None:
         """NES IdleUpdate (Bank03): wait for the next frame, which counts it in FrameCounter (NMI: INC FrameCounter,
@@ -1379,20 +1399,36 @@ class Game:
         """
         roaming_characters = self.current_map.roaming_characters
         deciding = []
+        making_way = None
         if self.npc_schedule.is_decision_frame and start_new_steps:
+            if self.npc_asked_to_make_way is not None:
+                # A bump resets FrameCounter, so the frame after it is always a decision frame: the step aside starts
+                # with every NPC on a tile, and ends on the turn's last frame like any other step
+                npc, hero_direction = self.npc_asked_to_make_way
+                if npc in roaming_characters and not npc.is_moving and self.make_way(npc, hero_direction):
+                    making_way = npc
             # Slots past the end are empty (NES: X and Y 0); they keep their place in the turns
             deciding = [roaming_characters[slot] for slot in self.npc_schedule.slots_on_turn()
                         if slot < len(roaming_characters) and not roaming_characters[slot].is_moving]
         for roaming_character in roaming_characters:
             if roaming_character in deciding:
-                self.start_npc_step(roaming_character)
-            elif roaming_character.is_moving:
+                if roaming_character.turns_to_rest:
+                    # Just made way: it stays where it is for this turn, so it doesn't walk straight back
+                    roaming_character.turns_to_rest -= 1
+                else:
+                    self.start_npc_step(roaming_character)
+            elif roaming_character.is_moving and roaming_character is not making_way:
                 self.continue_npc_step(roaming_character)
 
     def start_npc_step(self, roaming_character: RoamingCharacter) -> None:
         """NES SetNPCDir and the checks after it: turn to a random direction, and take the first pixel of a step that
         way if nothing is in the way (Game.move checks it)."""
         roaming_character.direction_value = random.choice(list(map(int, Direction)))
+        self.begin_npc_step(roaming_character)
+
+    def begin_npc_step(self, roaming_character: RoamingCharacter) -> bool:
+        """Take the first pixel of a step the way the NPC faces, if nothing is in the way (Game.move checks it).
+        Returns whether the step started."""
         set_character_position(roaming_character, self.tile_size)
         start = roaming_character.rect.copy()
         self.continue_npc_step(roaming_character)
@@ -1400,6 +1436,25 @@ class Game:
         roaming_character.is_moving = roaming_character.step_destination is not None
         if roaming_character.is_moving:
             roaming_character.last_rect = start
+        return roaming_character.is_moving
+
+    def make_way(self, roaming_character: RoamingCharacter, hero_direction: int) -> bool:
+        """NPCS_MAKE_WAY (not NES): step out of the hero's way, to one side (either, picked at random) if it can, or
+        else one tile further along the hero's direction, away from the hero. Each step is the ordinary NPC step
+        (begin_npc_step), so every rule a random step obeys holds: walkable tiles and the map, the roof cover boundary,
+        other characters and their reserved steps, and the hero's tile; it just starts at once instead of on the NPC's
+        turn. If no way is free it stays put, facing the way it was. Returns whether it moved.
+        After making way it rests through its next turn (turns_to_rest), so it doesn't step straight back into the
+        hero's path: it stands still for at least 64 frames (about a second) after arriving."""
+        sideways = [direction for direction in map(int, Direction) if direction % 2 != hero_direction % 2]
+        facing = roaming_character.direction_value
+        for direction in [*random.sample(sideways, len(sideways)), hero_direction]:
+            roaming_character.direction_value = direction
+            if self.begin_npc_step(roaming_character):
+                roaming_character.turns_to_rest = 1
+                return True
+        roaming_character.direction_value = facing
+        return False
 
     def continue_npc_step(self, roaming_character: RoamingCharacter) -> None:
         """NES NPCProcessCont: move 1 NES pixel, and finish the step on arriving."""
