@@ -57,3 +57,14 @@ treasure: Dict[str, Dict[Tuple[int, int], Dict[str, object]]] = {
         (6, 5): {'item': 'Staff of Rain'}
     },
 }
+
+# NES DoSearch: the hidden items found with SEARCH, by map and then (row, column) in this codebase's coordinates.
+# Nothing here is tracked with a "found" flag: like the NES, an item is found again only if the player doesn't
+# already have it (Erdrick's Token, Fairy Flute) or isn't wearing it (Erdrick's Armor), so the inventory and
+# equipment (already saved) are the only state.
+hidden_items: Dict[str, Dict[Tuple[int, int], str]] = {
+    'Alefgard': {(120, 91): "Erdrick's Token"},  # NES overworld (X 83, Y 113)
+    'Kol': {(14, 19): 'Fairy Flute'},  # NES Kol (X 9, Y 6)
+    # TODO: the NES starts the fixed Axe Knight fight on this tile (ChkMapHauksness); needs the scripted-battle API.
+    'Hauksness': {(20, 27): "Erdrick's Armor"},  # NES Hauksness (X 18, Y 12)
+}
