@@ -178,11 +178,12 @@ class Battle:
             # NES NotDL1Defeated: the final boss gives no experience or gold; the ending takes over from here
             cmd_menu.game.ending.final_boss_defeated()
             return
+        gold = randomize_enemy_gold(enemy.gold)
         exp_and_gold = self._("Thy experience increases by {}.\n").format(enemy.xp) + self._(
-            "Thy GOLD increases by {}.\n").format(enemy.gold)
+            "Thy GOLD increases by {}.\n").format(gold)
         cmd_menu.show_line_in_dialog_box(exp_and_gold, add_quotes=False, disable_sound=True, hide_arrow=True)
         player.total_experience += enemy.xp
-        player.gold += enemy.gold
+        player.gold += gold
         self.check_player_level_up(cmd_menu, player, music_enabled)
 
     def dragonlord_first_form_defeated(self, cmd_menu, screen):
@@ -313,6 +314,12 @@ def randomize_enemy_hp(enemy) -> int:
     if enemy.name == 'Dragonlord 2':
         return enemy.max_hp
     return enemy.max_hp - (enemy.max_hp * random.randint(0, 255) // 256) // 4
+
+
+def randomize_enemy_gold(base_gold: int) -> int:
+    """Gold dropped by a defeated enemy, per the NES CalcPlyrGold routine (Bank03 RegEnDefeated): the base gold
+    byte times (192 + rand(0-63)) / 256, i.e. 75% to just under 100% of the base value, rounded down."""
+    return base_gold * (192 + random.randint(0, 63)) // 256
 
 
 def can_run_away(player_agility: int, enemy_defense: int, enemy_group: int) -> bool:
