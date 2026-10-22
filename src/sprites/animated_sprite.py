@@ -1,14 +1,15 @@
-from src.constants import ANIMATION_FRAME_DELAY, ANIMATION_CYCLE_TICKS, ANIMATION_MAX_FRAME
 from src.direction import Direction
 from src.sprites.base_sprite import BaseSprite
 
 
 class AnimatedSprite(BaseSprite):
+    # NES CharLeftRight bit 3 (DoSprites, Bank00): the walking frame (which leg is forward), one for every character
+    # on the map, hero and NPCs alike. NPCSchedule.start_frame swaps it every 16 frames.
+    walk_frame = 0
+
     def __init__(self, center_point, direction_value, images, identifier):
         self.identifier = identifier
-        self.current_frame = 0
-        self.frame_count = 0
-        self.frame_delay = ANIMATION_FRAME_DELAY
+        self.current_frame = AnimatedSprite.walk_frame
         self.direction_value = direction_value
         self.images_map = {}
         # (column, row) tiles a character holds while taking a step, so nobody else can move onto either. The NES
@@ -40,15 +41,10 @@ class AnimatedSprite(BaseSprite):
             self.dirty = 1
 
     def animate(self):
-        self.frame_count += 1
-        if self.frame_count % ANIMATION_CYCLE_TICKS == 0:
-            if self.frame_count > self.frame_delay:
-                self.frame_count = 0
-                self.current_frame += 1
-            if self.current_frame > ANIMATION_MAX_FRAME:
-                self.current_frame = 0
+        """Show the shared walking frame (NES GetPlayerAnim and the NPC sprite code both read CharLeftRight), so every
+        character swaps legs on the same frame."""
+        self.current_frame = AnimatedSprite.walk_frame
         if self.direction_value in self.images_map.keys():
-            # have gotten an IndexError: list index out of range here
             self.image = self.images_map[self.direction_value][self.current_frame]
         self.dirty = 1
 

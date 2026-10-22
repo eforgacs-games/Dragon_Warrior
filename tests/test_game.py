@@ -734,11 +734,18 @@ class TestGame(TestCase):
         # test with moving characters before they're moving
         for roaming_character in self.game.current_map.roaming_characters:
             self.assertFalse(roaming_character.is_moving)
-        self.game.move_roaming_characters()
-        for roaming_character in self.game.current_map.roaming_characters:
-            self.assertTrue(roaming_character.is_moving)
-        # test with moving characters once they're moving
-        self.game.move_roaming_characters()
+        # The first frame on a map is the first pair's decision frame (NES InitMapData: NPCUpdateCntr = 0)
+        guard = self.game.current_map.roaming_characters[0]
+        start = guard.rect.topleft
+        with patch('src.game.random.choice', return_value=Direction.DOWN.value):
+            self.game.do_sprites()
+        self.assertTrue(guard.is_moving)
+        self.assertEqual(Direction.DOWN.value, guard.direction_value)
+        # test with moving characters once they're moving: 1 NES pixel a frame, 16 frames a step
+        for _ in range(15):
+            self.game.do_sprites()
+        self.assertFalse(guard.is_moving)
+        self.assertEqual((start[0], start[1] + self.game.tile_size), guard.rect.topleft)
 
     def test_move_and_handle_sides_collision(self):
         self.game.player.rect.x = -1

@@ -22,7 +22,7 @@ from src.game_functions import set_character_position
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
-FRAMES = 60  # characters change animation frame every ANIMATION_CYCLE_TICKS (15) frames
+FRAMES = 60  # characters change animation frame every 16 frames (NES CharLeftRight)
 
 
 def make_game(start_map: str, scale: int = test_config['SCALE']) -> Game:
@@ -55,6 +55,9 @@ def find_residue(game: Game, before_drawing=None) -> dict:
     for frame in range(1, FRAMES + 1):
         if before_drawing:
             before_drawing(frame)
+        else:
+            game.npc_schedule.count_frame()  # the walking animation moves on every 16 frames
+            game.npc_schedule.start_sprites()
         # draw_all draws each character, then moves its animation on to the next image
         drawn = {identifier: (character_dict['character'].image, character_dict['character'].rect.copy())
                  for identifier, character_dict in game.current_map.characters.items()}
@@ -106,13 +109,12 @@ def walk_and_find_ghosts(game: Game, npc_identifier: str, npc_direction: Directi
     anything on screen differed from a clean redraw."""
     npc = game.current_map.characters[npc_identifier]['character']
     held_keys = defaultdict(int)
-    clock = [0]
+    npc_slot = game.current_map.roaming_characters.index(npc)
     steps_started = 0
     ghost_frames = []
     hero_start_x = game.player.rect.x
     frame = 0
-    with patch('src.game.get_ticks', lambda: clock[0]), patch('src.drawer.get_ticks', lambda: clock[0]), \
-            patch('src.game.random.choice', return_value=npc_direction.value), \
+    with patch('src.game.random.choice', return_value=npc_direction.value), \
             patch('src.game.key.get_pressed', return_value=held_keys):
         while frame < 300 and (steps_started < npc_steps or npc.is_moving or game.player.is_moving or
                                game.player.rect.x < hero_start_x + hero_steps * game.tile_size):
@@ -123,10 +125,9 @@ def walk_and_find_ghosts(game: Game, npc_identifier: str, npc_direction: Directi
             if not game.player.is_moving:
                 set_character_position(game.player, game.tile_size)
             if not npc.is_moving and steps_started < npc_steps:
-                clock[0] += 1000  # roaming NPCs start a new step once a second
+                game.npc_schedule.give_turn_to(npc_slot)  # her next step starts now
                 steps_started += 1
-            game.move_roaming_characters()
-            game.update_roaming_character_positions()
+            game.do_sprites()
             drawn = characters_to_draw(game)
             draw_frame(game)
             if not visible_area_matches_a_clean_redraw(game, drawn):
@@ -189,15 +190,11 @@ class TestCharacterRedraw(TestCase):
         roaming_characters = game.current_map.roaming_characters
         self.assertTrue(roaming_characters)
         start_positions = [character.rect.topleft for character in roaming_characters]
-        clock = [0]
 
         def roam(_frame):
-            clock[0] += 100  # roaming characters pick a new step every second
-            game.move_roaming_characters()
-            game.update_roaming_character_positions()
+            game.do_sprites()
 
-        with patch('src.game.get_ticks', lambda: clock[0]):
-            residue = find_residue(game, before_drawing=roam)
+        residue = find_residue(game, before_drawing=roam)
         self.assertNotEqual(start_positions, [character.rect.topleft for character in roaming_characters])
         self.assertEqual({}, residue)
 
