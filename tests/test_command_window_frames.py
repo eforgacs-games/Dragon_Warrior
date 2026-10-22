@@ -1,9 +1,10 @@
 """
 The COMMAND window, opened with K (the A button) and drawn through real game frames, the way Game.main runs them.
 
-The K press that opens the window must not also choose an entry: since K chooses in the window
-(CommandMenuController), passing that same press on to the menu ran TALK at once, before the window was drawn, so it
-stayed black behind the dialog.
+The K press that opens the window must not also choose an entry: since K chooses in the window, passing that same
+press on to it ran TALK at once, before the window was drawn, so it stayed black behind the dialog. The window now
+reads the joypad like the NES (WndDoSelect, src/command_window.py): the press that opened it is ignored until it has
+been let go.
 """
 import os
 from unittest import TestCase
@@ -16,6 +17,7 @@ from src.color import LOW_HP_RED, WHITE
 from src.config.test_config import test_config
 from src.game import Game
 from src.menu import CommandMenu
+from src.waiting import NES_FPS
 from src.windows import COMMAND_TITLE_TILE_COLUMN, COMMAND_WINDOW
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
@@ -36,8 +38,16 @@ class TestCommandWindowFrames(TestCase):
         config = dict(test_config, NO_BLIT=False, NO_WAIT=True, RENDER_TEXT=True)
         # A chosen TALK would wait for a key in its dialog; record it instead
         self.talk = MagicMock()
-        with patch('src.game.SCALED', 0), patch.object(CommandMenu, 'talk', self.talk):
+        talk = patch.object(CommandMenu, 'talk', self.talk)
+        talk.start()
+        self.addCleanup(talk.stop)
+        with patch('src.game.SCALED', 0):
             self.game = Game(config)
+        # One NES frame per pass of the main loop, for the window's cursor and joypad reading
+        self.frame_number = 0
+        clock = patch('src.cursor.get_ticks', side_effect=lambda: -(-self.frame_number * 1000 // NES_FPS))
+        clock.start()
+        self.addCleanup(clock.stop)
         self.tile_size = config['TILE_SIZE']
         self.nes_tile = self.tile_size // 2
 
@@ -46,6 +56,7 @@ class TestCommandWindowFrames(TestCase):
 
     def frame(self) -> None:
         """One iteration of Game.main."""
+        self.frame_number += 1
         game = self.game
         game.get_events()
         game.drawer.draw_all(game.screen, game.loop_count, game.big_map, game.current_map, game.player,
@@ -64,7 +75,6 @@ class TestCommandWindowFrames(TestCase):
         x = COMMAND_WINDOW.x * self.tile_size + column * self.nes_tile
         y = COMMAND_WINDOW.y * self.tile_size + row * self.nes_tile
         screen = self.game.screen
-        # Near enough: the border image's white is (255, 254, 255)
         return any(all(abs(a - b) <= 2 for a, b in zip(screen.get_at((x + i, y + j))[:3], color))
                    for i in range(self.nes_tile) for j in range(self.nes_tile))
 
@@ -94,6 +104,7 @@ class TestCommandWindowFrames(TestCase):
         self.talk.assert_not_called()
         self.assert_command_window_drawn(color)
         # A new K press, once the window is up, still chooses (here TALK)
+        self.frame()
         self.press_k()
         self.talk.assert_called_once()
 
