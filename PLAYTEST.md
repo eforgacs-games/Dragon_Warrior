@@ -18,6 +18,9 @@ python src/game.py --dev --checkpoint <name>
 - A checkpoint is a save file in `data/checkpoints/`, loaded the same way as a saved game. The game opens straight on
   the map, with no title screen. If you save with King Lorik, the save goes to the system temp folder
   (`dragon_warrior_checkpoint_saves`), so your real save slots in `src/saves/` aren't touched.
+- The hero is called **Arthur** in every checkpoint, or **검객** when the game is in Korean. Both names give the
+  strongest name stats (full strength and HP, +3 to agility and MP after the cut), so fights go quickly. Erdrick (로토)
+  is the hero's ancestor, not the hero.
 - Keys: arrows/WASD move, **K** opens the command menu (TALK, SEARCH, STAIRS, ITEM...), **J** closes it, **Enter**
   talks, opens a door or takes a chest in front of you, **F1** lists the controls, **1-4** change the game speed (handy for
   long walks).
