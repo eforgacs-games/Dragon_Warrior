@@ -96,6 +96,7 @@ class Game:
         self.foreground_rects = []
         self.torch_active = False
         self.repel_timer = 0  # NES RepelTimer, set by REPEL or Fairy Water
+        self.rainbow_bridge_built = False  # NES F_RNBW_BRDG flag in ModsnSpells
         self.speed = 2
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
@@ -1045,6 +1046,7 @@ class Game:
         self.player.update_defense_power()
         self.player.inventory = save_file["Inventory"]
         self.player.spells = save_file.get("Spells", [])
+        self.rainbow_bridge_built = save_file.get("RainbowBridgeBuilt", False)
         saved_map = save_file.get("CurrentMap")
         if saved_map and saved_map in map_lookup and saved_map != self.current_map.identifier:
             next_map = map_lookup[saved_map](self.config)
