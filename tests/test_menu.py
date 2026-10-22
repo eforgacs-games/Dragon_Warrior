@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pygame
 from pygame import KEYDOWN, K_RETURN, event
 
+from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.game import Game
 from tests.mock_map import MockMap
@@ -201,6 +202,32 @@ class TestCommandMenu(TestCase):
             self.open_chest_at('ErdricksCaveB2', (4, 10))
         tablet.assert_called_once()
         self.assertEqual(self.game.player.inventory, [])
+
+    def read_tablet(self) -> tuple:
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.tablet(self.game.cmd_menu.found_item_text('Tablet'))
+        return show_text.call_args.args[0]
+
+    def test_tablet_text(self):
+        lines = self.read_tablet()
+        self.assertEqual(len(lines), 8)
+        self.assertEqual(lines[1], "The tablet reads as follows:")
+        self.assertEqual(lines[2], "I am Erdrick and thou art my descendant.")
+        self.assertEqual(lines[-1], "When a new evil arises, find the three items, then fight!")
+
+    def test_tablet_text_korean(self):
+        self.game.cmd_menu._ = set_gettext_language('Korean')
+        lines = self.read_tablet()
+        self.assertIn("석판", lines[0])
+        self.assertEqual(lines[1:], (
+            "석판에는 이렇게 쓰여 있다.",
+            "나의 이름은 로토.\n나의 피를 이어받은 자여.",
+            "라다톰 남쪽에 있는 마의 섬으로 건너가려면 세 가지 물건이 필요했다.",
+            "나는 그것들을 모아 마의 섬으로 건너가 그곳에서 마왕을 쓰러뜨렸다.",
+            "그리고 이제 그 세 가지 신비한 물건을 세 명의 현자에게 맡긴다.",
+            "그대가 그것들을 찾아 나설 때까지 현자의 자손들이 지켜 줄 것이다.",
+            "다시 악이 되살아나거든\n세 가지 물건을 모아 싸우거라!",
+        ))
 
     def test_full_inventory_give_up_item(self):
         self.game.player.inventory = ['Torch'] * 8 + ['Herb']
