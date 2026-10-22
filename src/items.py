@@ -34,34 +34,161 @@ shields = {
     "Silver Shield": {'defense': 20, 'cost': 14_800, 'sold': ("Cantlin",)},
 }
 
+# Every item that can sit in the inventory. NES NonDiscardTbl: these can't be dropped to make room for a new item.
+# Herbs and Magic Keys are counted separately on the NES (InventoryHerbs/InventoryKeys, up to 6 each), so they don't
+# use any of the 8 inventory slots.
+NON_DISCARDABLE_ITEMS = ("Herb", "Magic Key", "Fairy Flute", "Erdrick's Token", "Gwaelin's Love", "Silver Harp",
+                         "Stones of Sunlight", "Staff of Rain", "Rainbow Drop")
+UNSLOTTED_ITEMS = ("Herb", "Magic Key")
+INVENTORY_SLOTS = 8  # NES AddInvItem: 4 bytes of 2 items each
+MAX_HERBS = 6
+MAX_KEYS = 6
+MAX_GOLD = 65535
+
+GOLD = "GOLD"
+
+
+def _gold(base: int, random_bits: int) -> Dict[str, object]:
+    """NES GetTrsrGold: the chest holds base + (random byte AND random_bits) gold, rolled when it is opened."""
+    return {'item': GOLD, 'gold': (base, random_bits)}
+
+
+# NES TreasureTbl (Bank01): every treasure chest in the game, keyed by map and then by (row, column) in this game's
+# layouts. Each map's layout is padded, so the NES (x, y) of each chest is noted next to it, with the map's offset.
+# Chests on other maps (Kol, Cantlin, the Rainbow Drop cave...) aren't in the NES table, and TAKE finds nothing in them.
 treasure: Dict[str, Dict[Tuple[int, int], Dict[str, object]]] = {
-    'TantegelThroneRoom': {(7, 17): {'item': 'Magic Key'},
-                           (10, 14): {'item': "GOLD", 'amount': 120},
-                           (10, 15): {'item': "Torch"}},
-    'ErdricksCaveB2': {(4, 10): {'item': 'Tablet'}},
-    # NES TreasureTbl (Bank01): MAP_TANTCSTL_SL at 4,5, TRSR_SUN. The cellar's stairs are in the far south-east
-    # corner of the castle grounds (TantGFDat 29,29), and the only way there is through the locked door at 18,6
-    # (courtyard (13, 25)), so a Magic Key is needed.
-    'TantegelCellar': {(6, 5): {'item': 'Stones of Sunlight'}},
-    'GarinsGraveB1': {
-        (1, 12): {'item': 'Herb'},
-        (1, 13): {'item': "GOLD", 'amount': random.randint(6, 20)},
-        (1, 14): {'item': "GOLD", 'amount': random.randint(7, 12)}
+    # MAP_TANTCSTL_GF: row = y + 7, column = x + 7
+    'TantegelCourtyard': {
+        (20, 8): _gold(6, 0x07),  # (1, 13): 6-13 gold
+        (22, 8): _gold(6, 0x07),  # (1, 15): 6-13 gold
+        (21, 9): _gold(6, 0x07),  # (2, 14): 6-13 gold
+        (22, 10): _gold(6, 0x07),  # (3, 15): 6-13 gold
     },
-    'GarinsGraveB3': {
-        (2, 2): {'item': 'Cursed Belt'},
-        (7, 14): {'item': 'Silver Harp'}
+    # MAP_THRONEROOM: row = y + 6, column = x + 10
+    'TantegelThroneRoom': {
+        (10, 14): _gold(120, 0x00),  # (4, 4): 120 gold
+        (10, 15): {'item': 'Torch'},  # (5, 4)
+        (7, 16): {'item': 'Magic Key'},  # (6, 1)
     },
-    'MountainCaveB2': {
-        (3, 3): {'item': "Fighter's Ring"},
-        (3, 4): {'item': "GOLD", 'amount': random.randint(5, 20)},
+    # MAP_RIMULDAR: row = y + 8, column = x + 8
+    'Rimuldar': {
+        (31, 32): {'item': 'Wings'},  # (24, 23)
     },
-    # NES TreasureTbl (Bank01): MAP_RAIN at 3,4, TRSR_RAIN. The old man (RainStaffDialog) blocks the only way in
-    # until he is given the Silver Harp.
+    # MAP_GARINHAM: row = y, column = x + 9
+    'Garinham': {
+        (5, 17): _gold(10, 0x07),  # (8, 5): 10-17 gold
+        (6, 17): {'item': 'Herb'},  # (8, 6)
+        (5, 18): {'item': 'Torch'},  # (9, 5)
+    },
+    # MAP_DLCSTL_BF (the Dragonlord's floor): row = y + 4, column = x + 6
+    'CharlockB8': {
+        (15, 17): {'item': 'Herb'},  # (11, 11)
+        (16, 17): _gold(500, 0xFF),  # (11, 12): 500-755 gold
+        (17, 17): {'item': 'Wings'},  # (11, 13)
+        (16, 18): {'item': 'Magic Key'},  # (12, 12)
+        (17, 18): {'item': 'Cursed Belt'},  # (12, 13)
+        (17, 19): {'item': 'Herb'},  # (13, 13)
+    },
+    # MAP_TANTCSTL_SL: row = y + 1, column = x + 1
+    'TantegelCellar': {
+        # The cellar's stairs are in the far south-east corner of the castle grounds (TantGFDat 29,29), and the only way
+        # there is through the locked door at 18,6 (courtyard (13, 25)), so a Magic Key is needed.
+        (6, 5): {'item': 'Stones of Sunlight'},  # (4, 5)
+    },
+    # MAP_RAIN: row = y + 2, column = x + 2
     'StaffOfRainCave': {
-        (6, 5): {'item': 'Staff of Rain'}
+        # The old man (RainStaffDialog) blocks the only way in until he is given the Silver Harp.
+        (6, 5): {'item': 'Staff of Rain'},  # (3, 4)
+    },
+    # MAP_CVGAR_B1: row = y + 1, column = x + 1
+    'GarinsGraveB1': {
+        (1, 12): {'item': 'Herb'},  # (11, 0)
+        (1, 13): _gold(5, 0x0F),  # (12, 0): 5-20 gold
+        (1, 14): _gold(6, 0x07),  # (13, 0): 6-13 gold
+    },
+    # MAP_CVGAR_B3: row = y + 1, column = x + 1
+    'GarinsGraveB3': {
+        (2, 2): {'item': 'Cursed Belt'},  # (1, 1)
+        (7, 14): {'item': 'Silver Harp'},  # (13, 6)
+    },
+    # MAP_DLCSTL_SL2: row = y + 3, column = x + 3
+    'CharlockB3': {
+        (8, 8): {'item': "Erdrick's Sword"},  # (5, 5)
+    },
+    # MAP_RCKMTN_B2: row = y + 1, column = x + 1
+    'MountainCaveB2': {
+        (7, 2): {'item': 'Death Necklace'},  # (1, 6): the Death Necklace 1 time in 32, otherwise 100-131 gold
+        (3, 4): {'item': 'Torch'},  # (3, 2)
+        (3, 3): {'item': "Fighter's Ring"},  # (2, 2)
+        (10, 11): _gold(10, 0x07),  # (10, 9): 10-17 gold
+    },
+    # MAP_RCKMTN_B1: row = y + 1, column = x + 1
+    'MountainCaveB1': {
+        (6, 14): {'item': 'Herb'},  # (13, 5)
+    },
+    # MAP_ERDRCK_B2: row = y + 1, column = x + 1
+    'ErdricksCaveB2': {
+        (4, 10): {'item': 'Tablet'},  # (9, 3)
     },
 }
+
+# NES GetDthNeckGold: once the Death Necklace has been found (or the 1-in-32 roll fails), its chest holds this instead
+DEATH_NECKLACE_GOLD = (100, 0x1F)
+
+# NES InitMapData: once the hero has left the throne room, its three chests are written into history slots 5-7
+# every time the throne room is entered, so they never come back.
+THRONE_ROOM_CHEST_SLOTS = {5: (7, 16), 6: (10, 15), 7: (10, 14)}
+
+
+def roll_treasure_gold(gold: Tuple[int, int]) -> int:
+    """NES GetTrsrGold: base gold plus a random byte masked with the chest's random bits."""
+    base, random_bits = gold
+    return base + (random.randint(0, 255) & random_bits)
+
+
+class TreasureChestHistory:
+    """Which chests have been opened: the one place this game keeps that state.
+
+    NES TrsrXPos/TrsrYPos: 8 slots holding the position of each chest taken since the hero was last on the
+    overworld. GetBlockID reads a chest in this list as plain brick, InitMapData clears the list when the overworld
+    is entered (so chests refill), and GetTreasure doesn't record a chest at all when all 8 slots are in use.
+    The NES keeps only (x, y), not the map; no two chests share a position on maps reachable from each other
+    without going outside, so keeping the map name here behaves the same.
+    The flags below are NES PlayerFlags bits, which the NES keeps in the save file (not saved here yet).
+    """
+
+    def __init__(self):
+        self.slots: list[Tuple[str, Tuple[int, int]] | None] = [None] * 8
+        self.left_throne_room = False  # NES F_LEFT_THROOM
+        self.death_necklace_found = False  # NES F_DTH_NCK_FOUND
+
+    def is_opened(self, map_name: str, coordinates: Tuple[int, int]) -> bool:
+        return (map_name, tuple(coordinates)) in self.slots
+
+    def record(self, map_name: str, coordinates: Tuple[int, int]) -> bool:
+        """NES GetTreasure: store the chest in the first free slot. Returns False when every slot is taken."""
+        for index, slot in enumerate(self.slots):
+            if slot is None:
+                row, column = coordinates
+                self.slots[index] = (map_name, (row, column))
+                return True
+        return False
+
+    def enter_map(self, map_name: str) -> None:
+        """NES InitMapData, run whenever a map is loaded."""
+        if map_name != 'TantegelThroneRoom':
+            self.left_throne_room = True
+        if map_name == 'Alefgard':
+            self.slots = [None] * 8
+        if self.left_throne_room and map_name == 'TantegelThroneRoom':
+            for index, coordinates in THRONE_ROOM_CHEST_SLOTS.items():
+                self.slots[index] = ('TantegelThroneRoom', coordinates)
+
+    def apply_to_layout(self, map_name: str, layout: list[list[int]], chest_value: int, opened_value: int) -> None:
+        """Show each of the map's chests as closed or opened, according to the history."""
+        for (row, column) in treasure.get(map_name, {}):
+            layout[row][column] = opened_value if self.is_opened(map_name, (row, column)) else chest_value
+
 
 # NES DoSearch: the hidden items found with SEARCH, by map and then (row, column) in this codebase's coordinates.
 # Nothing here is tracked with a "found" flag: like the NES, an item is found again only if the player doesn't
