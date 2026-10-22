@@ -26,6 +26,7 @@ from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.sound import Sound
+from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.text import draw_text, set_font_by_ascii_chars
 
 arrow_fade = USEREVENT + 1
@@ -128,6 +129,10 @@ class CommandMenu(Menu):
         self.menu.disable()
 
     def save(self):
+        """NES SaveData (Bank03): the hero's experience, gold, items, equipment, name, HP and MP, plus the ModsnSpells,
+        PlayerFlags and StoryFlags bytes whole (game slot offsets $00-$18 in reference/sram-doc.txt). The worn items
+        are saved with the hero and the story bits as one StoryFlags entry. Like the NES, the treasure chest history
+        and the repel timer aren't saved (Game.load_game)."""
         # TODO: Add multiple save slots.
         save_dict = {
             'Name': self.player.name,
@@ -140,13 +145,14 @@ class CommandMenu(Menu):
             'Shield': self.player.shield,
             'WearingDragonScale': self.player.wearing_dragon_scale,
             'WearingFightersRing': self.player.wearing_fighters_ring,
+            'WearingCursedBelt': self.player.wearing_cursed_belt,
+            'WearingDeathNecklace': self.player.wearing_death_necklace,
             'Inventory': self.player.inventory,
             'Spells': self.player.spells,
             'CurrentMap': self.game.current_map.identifier,
             'PlayerRow': self.player.row,
             'PlayerColumn': self.player.column,
-            'RainbowBridgeBuilt': self.game.rainbow_bridge_built,
-            'CharlockStairsRevealed': self.game.charlock_stairs_revealed,
+            STORY_FLAGS_SAVE_KEY: self.game.story_flags.to_save(),
         }
         json_object = json.dumps(save_dict, indent=4)
         with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'),
@@ -156,7 +162,7 @@ class CommandMenu(Menu):
     def set_king_lorik_dialog(self, left_throne_room: bool = False):
         # NES DoKingDialog: carrying Gwaelin comes first, then whether the hero has left the throne room yet
         king_lorik = self.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']
-        if self.game.player.is_carrying_princess:
+        if self.game.story_flags.carrying_gwaelin:
             king_lorik['dialog'] = king_lorik['carrying_princess_dialog']
         elif left_throne_room:
             king_lorik['dialog'] = king_lorik['returned_dialog']
@@ -463,8 +469,8 @@ class CommandMenu(Menu):
     def take_death_necklace(self) -> None:
         """NES ChkTrsrNecklace: the first time, there is a 1 in 32 chance of the Death Necklace (the low 5 bits of a
         random byte all zero). Otherwise, and always once it has been found, the chest holds 100-131 gold."""
-        if not self.chest_history.death_necklace_found and random.randint(0, 255) & 0x1F == 0:
-            self.chest_history.death_necklace_found = True
+        if not self.game.story_flags.death_necklace_found and random.randint(0, 255) & 0x1F == 0:
+            self.game.story_flags.death_necklace_found = True
             self.take_item('Death Necklace')
         else:
             self.take_gold({'item': GOLD, 'gold': DEATH_NECKLACE_GOLD})
@@ -643,12 +649,12 @@ class CommandMenu(Menu):
         # once (F_RNBW_BRDG). The hero's facing doesn't matter, and the Rainbow Drop is kept either way.
         self.show_text_in_dialog_box(self._("{} held the Rainbow Drop toward the sky.").format(self.player.name),
                                      skip_text=self.skip_text)
-        if self.current_map.identifier != 'Alefgard' or self.game.rainbow_bridge_built or \
+        if self.current_map.identifier != 'Alefgard' or self.game.story_flags.rainbow_bridge_built or \
                 (self.player.row, self.player.column) != RAINBOW_DROP_COORDINATES:
             # NES RainbowFail
             self.show_text_in_dialog_box(self._("But no rainbow appeared here."), skip_text=self.skip_text)
             return
-        self.game.rainbow_bridge_built = True
+        self.game.story_flags.rainbow_bridge_built = True
         bridge_row, bridge_column = RAINBOW_BRIDGE_COORDINATES
         self.set_tile_by_coordinates('BRIDGE', bridge_column, bridge_row, self.player)
 
@@ -974,9 +980,10 @@ class CommandMenu(Menu):
         if player_coordinates == charlock_ground_floor.THRONE_COORDINATES:
             text_to_print.append(self._("Feel the wind blowing from behind the throne."))
             return True
-        if player_coordinates != charlock_ground_floor.HIDDEN_STAIRCASE_COORDINATES or self.game.charlock_stairs_revealed:
+        if player_coordinates != charlock_ground_floor.HIDDEN_STAIRCASE_COORDINATES or \
+                self.game.story_flags.charlock_stairs_revealed:
             return False
-        self.game.charlock_stairs_revealed = True
+        self.game.story_flags.charlock_stairs_revealed = True
         text_to_print.append(self._("{} discovers the Secret Passage.").format(self.player.name))
         self.set_tile_by_coordinates('BRICK_STAIR_DOWN', self.player.column, self.player.row, self.player)
         charlock_ground_floor.reveal_hidden_staircase()

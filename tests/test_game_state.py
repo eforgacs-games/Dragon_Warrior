@@ -36,9 +36,6 @@ class TestGameStateInitialization(unittest.TestCase):
     def test_radiant_active_defaults_false(self):
         self.assertFalse(self.game_state.radiant_active)
 
-    def test_game_loaded_from_save_defaults_false(self):
-        self.assertFalse(self.game_state.game_loaded_from_save)
-
     def test_music_enabled_from_config_true(self):
         self.assertTrue(self.game_state.music_enabled)
 

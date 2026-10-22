@@ -137,12 +137,9 @@ class MapManager:
         self.last_map = self.current_map
         self.current_map = next_map
         moving_within_tantegel_castle = came_from_throne_room or came_from_courtyard
-        if not self.game.allow_save_prompt:
-            if came_from_throne_room:
-                self.game.allow_save_prompt = True
         self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
         self.apply_rainbow_bridge()
-        if isinstance(self.current_map, maps.CharlockB1) and self.game.charlock_stairs_revealed:
+        if isinstance(self.current_map, maps.CharlockB1) and self.game.story_flags.charlock_stairs_revealed:
             # NES GetBlockID: once F_PSG_FOUND is set, the block behind the throne reads as stairs down for good
             self.current_map.reveal_hidden_staircase()
         self.apply_chest_history()
@@ -195,20 +192,22 @@ class MapManager:
         self.drawer.draw_all(self.screen, self.game.loop_count, self.game.big_map, self.current_map, self.player,
                              self.game.cmd_menu, self.game.foreground_rects, self.game_state.enable_animate,
                              self.game.camera, self.game.initial_dialog_enabled, self.game.events,
-                             self.game.skip_text, self.game.allow_save_prompt, self.game_state,
+                             self.game.skip_text, self.game.story_flags.left_throne_room, self.game_state,
                              self.game.torch_active, self.game.color)
         fade(fade_out=False, screen=self.screen, config=self.game_state.config)
 
     def apply_rainbow_bridge(self):
         # NES ChkRnbwBrdg: once F_RNBW_BRDG is set, the overworld block at (64, 49) is always read as BLK_BRIDGE
-        if self.current_map.identifier == 'Alefgard' and self.game.rainbow_bridge_built:
+        if self.current_map.identifier == 'Alefgard' and self.game.story_flags.rainbow_bridge_built:
             row, column = RAINBOW_BRIDGE_COORDINATES
             self.current_map.layout[row][column] = self.current_map.floor_tile_key['BRIDGE']['val']
 
     def apply_chest_history(self):
         # NES InitMapData and GetBlockID: update the chest history for the new map, then show opened chests as brick
         map_name = self.current_map.identifier
-        self.game.chest_history.enter_map(map_name)
+        if map_name != 'TantegelThroneRoom':
+            self.game.story_flags.left_throne_room = True  # NES ChkThRoomMap sets F_LEFT_THROOM
+        self.game.chest_history.enter_map(map_name, self.game.story_flags.left_throne_room)
         self.game.chest_history.apply_to_layout(map_name, self.current_map.layout, TREASURE_BOX, BRICK)
     def place_princess_gwaelin(self):
         """Put Gwaelin where the NES story flags say she is before the map's NPCs are loaded."""
@@ -216,7 +215,7 @@ class MapManager:
             # NES ChkGwaelinNPC: she's in the throne room's static NPC table, and only removed while F_RTN_GWAELIN
             # is clear
             self.current_map.npc_coordinates[GWAELIN_THRONE_ROOM_COORDINATES] = 'PRINCESS_GWAELIN'
-        elif self.current_map.identifier == 'SwampCave' and self.game.gwaelin_rescued:
+        elif self.current_map.identifier == 'SwampCave' and self.game.story_flags.gwaelin_rescued:
             # NES GetBaseBlockID: once F_DONE_GWAELIN is set, her block in the Swamp Cave is read as brick floor
             self.current_map.npc_coordinates.pop(GWAELIN_SWAMP_CAVE_COORDINATES, None)
 

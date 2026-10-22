@@ -67,7 +67,7 @@ class TestCharlockHiddenStairs(TestCase):
         self.go_to('CharlockB1', HIDDEN_STAIRS)
         self.assertEqual(self.search(), ["Edward searched the ground all about.",
                                          "Edward discovers the Secret Passage."])
-        self.assertTrue(self.game.charlock_stairs_revealed)
+        self.assertTrue(self.game.story_flags.charlock_stairs_revealed)
         self.assertEqual(self.tile_at(HIDDEN_STAIRS), STAIR_DOWN_VALUE)
         self.assertEqual(self.game.player.current_tile, 'BRICK_STAIR_DOWN')
         self.assertEqual(self.game.current_map.staircases[HIDDEN_STAIRS]['map'], 'CharlockB2')
@@ -78,7 +78,7 @@ class TestCharlockHiddenStairs(TestCase):
         self.go_to('CharlockB1', THRONE)
         self.assertEqual(self.search(), ["Edward searched the ground all about.",
                                          "Feel the wind blowing from behind the throne."])
-        self.assertFalse(self.game.charlock_stairs_revealed)
+        self.assertFalse(self.game.story_flags.charlock_stairs_revealed)
         self.assertEqual(self.tile_at(HIDDEN_STAIRS), BARRIER_VALUE)
 
     def test_searching_elsewhere_finds_nothing(self):
@@ -88,14 +88,14 @@ class TestCharlockHiddenStairs(TestCase):
                 self.go_to('CharlockB1', coordinates)
                 self.assertEqual(self.search(), ["Edward searched the ground all about.",
                                                  "But there found nothing."])
-                self.assertFalse(self.game.charlock_stairs_revealed)
+                self.assertFalse(self.game.story_flags.charlock_stairs_revealed)
                 self.assertEqual(self.tile_at(HIDDEN_STAIRS), BARRIER_VALUE)
                 self.assertNotIn(HIDDEN_STAIRS, self.game.current_map.staircases)
 
     def test_same_tile_on_another_map_finds_nothing(self):
         self.go_to('CharlockB2', HIDDEN_STAIRS)
         self.assertEqual(self.search(), ["Edward searched the ground all about.", "But there found nothing."])
-        self.assertFalse(self.game.charlock_stairs_revealed)
+        self.assertFalse(self.game.story_flags.charlock_stairs_revealed)
 
     def test_revealed_stairs_lead_to_charlock_b2(self):
         self.go_to('CharlockB1', HIDDEN_STAIRS)
@@ -138,28 +138,37 @@ class TestCharlockHiddenStairs(TestCase):
             self.game.directories.save_dir = tmp_dir
             self.game.cmd_menu.directories.save_dir = tmp_dir
             self.game.player.adventure_log = 1
-            self.game.charlock_stairs_revealed = True
+            self.game.story_flags.charlock_stairs_revealed = True
             self.game.cmd_menu.save()
             with open(os.path.join(tmp_dir, 'save_slot_1.json')) as save_file:
                 saved = json.load(save_file)
-        self.assertTrue(saved['CharlockStairsRevealed'])
+        self.assertTrue(saved['StoryFlags']['charlock_stairs_revealed'])
 
         with patch('src.game.SCALED'):
             loaded_game = Game(test_config)
         saved['CurrentMap'], saved['PlayerRow'], saved['PlayerColumn'] = 'CharlockB1', 25, 17
         loaded_game.load_game(saved)
-        self.assertTrue(loaded_game.charlock_stairs_revealed)
+        self.assertTrue(loaded_game.story_flags.charlock_stairs_revealed)
         self.assertEqual(loaded_game.current_map.layout[HIDDEN_STAIRS[0]][HIDDEN_STAIRS[1]], STAIR_DOWN_VALUE)
         self.assertIn(HIDDEN_STAIRS, loaded_game.current_map.staircases)
 
     def test_old_save_without_the_flag_still_loads(self):
-        self.game.charlock_stairs_revealed = True
+        self.game.story_flags.charlock_stairs_revealed = True
         save = {"Name": "Erdrick", "Experience": 0, "Gold": 0, "Inventory": [],
                 "CurrentMap": "CharlockB1", "PlayerRow": 25, "PlayerColumn": 17}
         self.game.load_game(save)
-        self.assertFalse(self.game.charlock_stairs_revealed)
+        self.assertFalse(self.game.story_flags.charlock_stairs_revealed)
         self.assertEqual(self.tile_at(HIDDEN_STAIRS), BARRIER_VALUE)
         self.assertNotIn(HIDDEN_STAIRS, self.game.current_map.staircases)
+
+    def test_old_save_with_the_flat_flag_still_loads(self):
+        save = {"Name": "Erdrick", "Experience": 0, "Gold": 0, "Inventory": [], "CharlockStairsRevealed": True,
+                "CurrentMap": "CharlockB1", "PlayerRow": 25, "PlayerColumn": 17}
+        with patch('src.game.SCALED'):
+            loaded_game = Game(test_config)
+        loaded_game.load_game(save)
+        self.assertTrue(loaded_game.story_flags.charlock_stairs_revealed)
+        self.assertEqual(loaded_game.current_map.layout[HIDDEN_STAIRS[0]][HIDDEN_STAIRS[1]], STAIR_DOWN_VALUE)
 
     def test_staircase_links_are_symmetric_and_land_on_stairs(self):
         # The staircases between Charlock's ground floor and first two basements follow NES MapEntryTbl/MapTargetTbl,
