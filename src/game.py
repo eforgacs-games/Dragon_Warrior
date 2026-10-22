@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import random
+import re
 import shutil
 import sys
 from typing import List, Tuple
@@ -58,6 +59,17 @@ from src.map_manager import MapManager
 from src.pygame_compat import arrow_fade
 from src.visual_effects import fade, flash_transparent_color
 from src.waiting import wait
+
+
+SAVE_FILE_PATTERN = re.compile(r'save_slot_(\d+)\.json')
+
+
+def save_slot_number(save_file_name: str) -> int:
+    """The adventure log number in a save file's name, e.g. 2 for save_slot_2.json."""
+    match = SAVE_FILE_PATTERN.fullmatch(save_file_name)
+    if match is None:
+        raise ValueError(f"Not a save file name: {save_file_name}")
+    return int(match.group(1))
 
 
 class Game:
@@ -221,7 +233,7 @@ class Game:
     def show_main_menu_screen(self, screen) -> None:
         if not os.path.exists(self.directories.save_dir):
             os.makedirs(self.directories.save_dir)
-        self.save_dir_contents = os.listdir(self.directories.save_dir)
+        self.save_dir_contents = self.save_files()
         if len(self.save_dir_contents) == 0:
             begin_quest_empty_log_function_lookup = {
                 0: self.begin_new_quest,
@@ -251,12 +263,19 @@ class Game:
                                                                     no_blit=self.game_state.config['NO_BLIT'])
                 partially_full_log_function_lookup[selection]()
             elif len(self.save_dir_contents) == 3:
+                # NES with every log used: CONTINUE A QUEST, CHANGE MESSAGE SPEED, ERASE AN ADVENTURE LOG
+                full_log_function_lookup = {
+                    0: self.continue_quest,
+                    1: self.change_message_speed,
+                    2: self.erase_quest,
+                }
                 selection = self.game_functions.main_menu_selection(get_ticks(), screen,
                                                                     self.directories.continue_quest_full_log_unselected,
                                                                     self.directories.continue_quest_full_log_0,
                                                                     [self.directories.continue_quest_full_log_1,
                                                                      self.directories.continue_quest_full_log_2],
                                                                     no_blit=self.game_state.config['NO_BLIT'])
+                full_log_function_lookup[selection]()
             else:
                 print("Error: More than 3 save files detected. Exiting.")
                 exit(1)
@@ -271,6 +290,12 @@ class Game:
         self.music_player.load_and_play_music(self.current_map.music_file_path)
         self.cmd_menu = CommandMenu(self)
 
+    def save_files(self) -> list[str]:
+        """The adventure log save files in the save folder, ignoring anything else that might be there."""
+        if not os.path.isdir(self.directories.save_dir):
+            return []
+        return sorted(name for name in os.listdir(self.directories.save_dir) if SAVE_FILE_PATTERN.fullmatch(name))
+
     def continue_quest(self):
         # make the window the right size based on self.save_dir_contents
         # populate the save file list with the player names
@@ -282,9 +307,16 @@ class Game:
                                                     self.directories.one_adventure_log_0,
                                                     [],
                                                     no_blit=self.game_state.config['NO_BLIT'])
-            with open(os.path.join(self.directories.save_dir, self.save_dir_contents[0])) as save_file:
+        if self.save_dir_contents:
+            # TODO(#234): let the player pick the log when there are several. Until then, continue the most recently
+            # saved one rather than silently starting a new game.
+            save_file_name = max(self.save_dir_contents,
+                                 key=lambda name: os.path.getmtime(os.path.join(self.directories.save_dir, name)))
+            with open(os.path.join(self.directories.save_dir, save_file_name)) as save_file:
                 loaded_save = json.load(save_file)
                 self.load_game(loaded_save)
+            # Save back to the same log, so continuing and saving doesn't create another save file
+            self.player.adventure_log = save_slot_number(save_file_name)
 
         self.sound.play_sound(self.directories.menu_button_sfx)
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
@@ -325,7 +357,7 @@ class Game:
         save_path = os.path.join(self.directories.save_dir, f'save_slot_{slot}.json')
         if os.path.exists(save_path):
             os.remove(save_path)
-            self.save_dir_contents = os.listdir(self.directories.save_dir)
+            self.save_dir_contents = self.save_files()
         self.sound.play_sound(self.directories.menu_button_sfx)
 
     def select_adventure_log(self, screen):
