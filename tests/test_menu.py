@@ -36,6 +36,28 @@ class TestCommandMenu(TestCase):
         self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
 
+    def command_menu_keys(self, *keys):
+        """Feed key presses to the COMMAND window the way Drawer.draw_all does, recording which command runs."""
+        menu = self.game.cmd_menu.menu
+        menu.enable()
+        chosen = []
+        for widget in menu.get_widgets():
+            widget.update_callback(lambda title=widget.get_title(): chosen.append(title))
+        for key in keys:
+            menu.update([event.Event(KEYDOWN, key=key, unicode='', mod=0)])
+        return menu.get_selected_widget().get_title(), chosen
+
+    def test_k_chooses_a_command_like_enter(self):
+        # K is the A button: it has to choose in the COMMAND window, not only Enter (pygame-menu's default)
+        for key in (pygame.K_k, K_RETURN):
+            with self.subTest(key=pygame.key.name(key)):
+                selected, chosen = self.command_menu_keys(key)
+                self.assertEqual(chosen, [selected])
+
+    def test_j_does_not_choose_a_command(self):
+        _, chosen = self.command_menu_keys(pygame.K_j)
+        self.assertEqual(chosen, [])
+
     # def test_take(self):
     # pygame.key.get_pressed = create_key_mock(pygame.K_s)
     # self.game.cmd_menu.take()
