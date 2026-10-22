@@ -78,6 +78,8 @@ class Game:
         self.layouts = MapLayouts()
         self.fullscreen_enabled = self.game_state.config["FULLSCREEN_ENABLED"]
         self.auto_stairs = self.game_state.config["AUTO_STAIRS"]
+        # NES F_PSG_FOUND: whether the secret passage behind the Dragonlord's throne has been found
+        self.charlock_stairs_revealed = False
         # text
         self.initial_dialog_enabled = self.game_state.config["INITIAL_DIALOG_ENABLED"]
         self.skip_text = False
@@ -1047,6 +1049,8 @@ class Game:
         self.player.inventory = save_file["Inventory"]
         self.player.spells = save_file.get("Spells", [])
         self.rainbow_bridge_built = save_file.get("RainbowBridgeBuilt", False)
+        # Set before changing maps so a save on CharlockB1 loads with the stairs already revealed
+        self.charlock_stairs_revealed = save_file.get("CharlockStairsRevealed", False)
         saved_map = save_file.get("CurrentMap")
         if saved_map and saved_map in map_lookup and saved_map != self.current_map.identifier:
             next_map = map_lookup[saved_map](self.config)
