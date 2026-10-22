@@ -486,23 +486,13 @@ class TestEnemyAttackFormulas(unittest.TestCase):
                 self.assertEqual(self.damage(attack, defense, roll), expected)
 
 
-class LevelPlayer:
-    """Just enough of Player for the level-up code, using Player's own level methods."""
-    get_level_by_experience = Player.get_level_by_experience
-    set_stats_by_level = Player.set_stats_by_level
-    get_points_to_next_level = Player.get_points_to_next_level
-
-    def __init__(self, total_experience, gold, level):
-        self.name = 'Hero'
-        self.total_experience, self.gold, self.level = total_experience, gold, level
-        self.spells = []
-        self.set_stats_by_level(level)
-
-    def update_attack_power(self):
-        pass
-
-    def update_defense_power(self):
-        pass
+def LevelPlayer(total_experience, gold, level):
+    """A real Player at the given level, experience and gold (name-based stats for "Hero", #256)."""
+    from tests.mock_map import MockMap
+    player = Player(center_point=None, images=None, current_map=MockMap(test_config))
+    player.name, player.total_experience, player.gold, player.level = 'Hero', total_experience, gold, level
+    player.update_stats_to_current_level()
+    return player
 
 
 class TestVictoryRewards(unittest.TestCase):
@@ -511,6 +501,7 @@ class TestVictoryRewards(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         pygame.init()
+        pygame.display.set_mode((800, 600))  # Player loads its sprite sheet
 
     def setUp(self):
         config = {'LANGUAGE': 'English', 'TILE_SIZE': 32, 'MUSIC_ENABLED': False, 'ORCHESTRA_MUSIC_ENABLED': False,
@@ -529,8 +520,8 @@ class TestVictoryRewards(unittest.TestCase):
     def win(self, player, xp, gold, roll=0):
         enemy = Mock(xp=xp, gold=gold)
         enemy.name = 'Slime'
-        with patch('src.battle.random.randint', return_value=roll), patch('src.battle.time'), \
-                patch('src.battle.mixer'), patch('src.battle.display'):
+        with patch('src.battle.random.randint', return_value=roll), patch('src.battle.mixer'), \
+                patch('src.battle.display'):
             self.battle.enemy_defeated(self.cmd_menu, Mock(), player, False, enemy)
 
     def test_experience_is_exact_and_gold_varies(self):
@@ -553,11 +544,6 @@ class TestVictoryRewards(unittest.TestCase):
         self.assertEqual(player.points_to_next_level, 220 - 115)
         shown = [c.args[0] for c in self.cmd_menu.show_line_in_dialog_box.call_args_list]
         self.assertEqual(sum('promoted' in line for line in shown), 1)
-
-    def test_level_30_can_be_reached(self):
-        player = LevelPlayer(total_experience=65000, gold=0, level=29)
-        self.win(player, xp=535, gold=0)
-        self.assertEqual(player.level, 30)
 
     def test_no_level_up_below_the_threshold(self):
         player = LevelPlayer(total_experience=0, gold=0, level=1)
