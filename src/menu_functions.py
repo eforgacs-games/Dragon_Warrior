@@ -9,6 +9,7 @@ from pygame.transform import scale
 from data.text.intro_lookup_table import ControlInfo
 from src.calculation import Calculation
 from src.common import accept_keys
+from src.cursor import BlinkingCursor
 from src.directories import Directories
 from src.sound import Sound
 from src.text import draw_text
@@ -121,14 +122,17 @@ class NameSelection:
             7: self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_7,
             8: self.directories.NAME_SELECTION_STATIC_IMAGE_LEN_8,
         }
+        # The alphabet window's cursor (AlphabetDat), the NES arrow in the screenshots: it blinks like every NES window
+        # cursor (src/cursor.py), restarting whenever it moves (WndUpdateCrsrPos)
+        cursor = BlinkingCursor(blink_start)
         while blinking:
             name = truncate_name(name)
+            letter_position = (current_item_row, current_item_column)
             current_letter = self.name_selection_grid[current_item_row][current_item_column]
             current_letter_image_path = self.name_selection_image_lookup[current_letter]
             unselected_image = selected_image_lookup[len(name)]
             # screen.fill(BLACK)
-            blink_start = self.reset_blink_start(blink_start)
-            blink_with_name(blink_start, current_letter_image_path, name, screen, unselected_image, self.config)
+            blink_with_name(cursor.visible(), current_letter_image_path, name, screen, unselected_image, self.config)
             for current_event in event.get():
                 if current_event.type == QUIT:
                     quit()
@@ -179,11 +183,9 @@ class NameSelection:
                                                         i == current_event.unicode]
                             current_item_row = current_item_coordinates[0][0]
                             current_item_column = current_item_coordinates[0][1]
+            if (current_item_row, current_item_column) != letter_position:
+                cursor.restart()
 
-    def reset_blink_start(self, blink_start):
-        if self.calculation.convert_to_frames_since_start_time(blink_start) > 32:
-            blink_start = get_ticks()
-        return blink_start
 
 
 def get_opposite_direction(direction: int) -> int:
@@ -232,11 +234,12 @@ def truncate_name(name):
     return name
 
 
-def blink_with_name(blink_start, current_letter_image_path, name, screen, static_image, config):
-    calculation = Calculation(config)
-    if calculation.convert_to_frames_since_start_time(blink_start) <= 16:
+def blink_with_name(cursor_visible, current_letter_image_path, name, screen, static_image, config):
+    """The alphabet window with the arrow at the current letter while the cursor is visible, without it while it
+    isn't (UpdateCursorGFX), and the name entered so far."""
+    if cursor_visible:
         draw_image_with_name(current_letter_image_path, name, screen, config)
-    elif 16 < calculation.convert_to_frames_since_start_time(blink_start) <= 32:
+    else:
         draw_image_with_name(static_image, name, screen, config)
     display.update(
         Rect(screen.get_rect().left, screen.get_rect().centerx // 1.7, screen.get_width(), screen.get_height() * .46))

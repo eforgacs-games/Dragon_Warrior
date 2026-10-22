@@ -156,30 +156,6 @@ class Graphics:
             _scaled_image_library[cache_key] = scaled_img
         return scaled_img
 
-    def blink_switch(self, screen: Surface, image_1: str, image_2: str, x: int, y: int, width: int, height: int,
-                     tile_size: int,
-                     show_arrow: bool, color: tuple = WHITE) -> Rect:
-        """Switches between two images, creating a blinking effect.
-        :param screen: the screen to draw on
-        :param image_1: the path of the first image to draw (usually the selection image)
-        :param image_2: the path of the second image to draw (usually a blank image)
-        :param x: the x coordinate of the window
-        :param y: the y coordinate of the window
-        :param width: the width of the window
-        :param height: the height of the window
-        :param tile_size: the size of the tiles
-        :param show_arrow: whether to show the arrow
-        :param color: the color of the window
-        :return: the rect of the window
-        """
-        window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
-        if show_arrow:
-            self.create_window(x, y, width, height, image_1, screen, color)
-        else:
-            self.create_window(x, y, width, height, image_2, screen, color)
-        display.update(window_rect)
-        return window_rect
-
     def blink_arrow(self, screen: Surface, x: float, y: float, direction: str, show_arrow, color: tuple = WHITE):
         if direction == 'up':
             arrow_character = '^'

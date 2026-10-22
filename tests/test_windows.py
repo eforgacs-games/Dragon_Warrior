@@ -117,12 +117,13 @@ class TestCommandWindow(WindowTestCase):
         self.assertLess(min(border_columns), 6 * tile_size + self.nes_tile)
         self.assertLess(max(border_columns), 14 * tile_size)
         self.assertGreaterEqual(max(border_columns), 14 * tile_size - self.nes_tile)
-        # Tile row 2 holds the cursor in tile column 1, TALK from column 2 and SPELL from column 10
+        # Tile row 2 holds the cursor in tile column 1, TALK from column 2 and SPELL from column 10. The cursor is
+        # the NES arrow tile (TL_RIGHT_ARROW), whose point is 2 NES pixels in from the tile's left edge.
         row_top = int((2 + 2) * self.nes_tile)
         columns = self.white_columns(row_top, row_top + int(self.nes_tile), int(6 * tile_size + self.nes_tile),
                                      int(14 * tile_size - self.nes_tile))
         window_left = 12 * self.nes_tile
-        self.assertEqual(window_left + 1 * self.nes_tile, min(columns))
+        self.assertEqual(window_left + 1 * self.nes_tile + 2 * test_config['SCALE'], min(columns))
         self.assertIn(window_left + 2 * self.nes_tile, columns)
         self.assertNotIn(window_left + 2 * self.nes_tile - 1, columns)
         self.assertIn(window_left + 10 * self.nes_tile, columns)
@@ -176,7 +177,7 @@ class TestItemWindowOrder(WindowTestCase):
         with patch.object(event, 'get', side_effect=events), \
                 patch('src.menu.draw_text') as draw_text, \
                 patch.object(self.cmd_menu.graphics, 'create_window') as create_window, \
-                patch.object(self.cmd_menu.graphics, 'blink_arrow'):
+                patch.object(self.cmd_menu, 'draw_window_cursor'):
             chosen = self.cmd_menu.display_item_menu(menu_name)
         return chosen, draw_text, create_window
 
@@ -215,7 +216,8 @@ class TestShopWindows(WindowTestCase):
                 patch('data.text.dialog_lookup_table.draw_text') as draw_text, \
                 patch('src.menu.draw_text') as item_draw_text, \
                 patch('src.common.Graphics.create_window') as create_window, \
-                patch.object(self.cmd_menu, 'window_drop_down_effect') as drop_down:
+                patch.object(self.cmd_menu, 'window_drop_down_effect') as drop_down, \
+                patch.object(self.cmd_menu, 'draw_window_cursor') as self.draw_cursor:
             result = function()
         return result, draw_text, item_draw_text, create_window, drop_down
 
@@ -232,7 +234,8 @@ class TestShopWindows(WindowTestCase):
         positions = self.positions(draw_text)
         self.assertIn(('BUY', 12, 6.5), positions)
         self.assertIn(('SELL', 12, 8.5), positions)
-        self.assertEqual(('>', 11, 8.5), positions[-1])
+        # The cursor ends on SELL, in column 1 of row 4, held on after the choice (WndAPressed)
+        self.assertEqual((5, 2, 1, 4, True), self.draw_cursor.call_args.args)
 
     def test_shop_inventory_window(self):
         shop = self.dialog_lookup.shop_inventories.kol_item_store_inventory
@@ -252,8 +255,8 @@ class TestShopWindows(WindowTestCase):
         self.assertIn(('Scale', 13, 10.5), positions)
         right_aligned = [call.args[0] for call in draw_text.call_args_list if call.kwargs.get('alignment') == 'right']
         self.assertEqual(['24', '8', '20', '70'], right_aligned[:4])
-        # The cursor is on the third item, at column 1
-        self.assertEqual(('>', 11, 9.5), positions[-1])
+        # The cursor is on the third item, at column 1, held on after the choice (WndAPressed)
+        self.assertEqual((5, 2, 1, 5, True), self.draw_cursor.call_args.args)
 
     def test_weapon_shop_window_position(self):
         shop = self.dialog_lookup.shop_inventories.brecconary_weapons_store_inventory
