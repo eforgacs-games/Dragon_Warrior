@@ -497,7 +497,8 @@ class TestRunBattle(unittest.TestCase):
         with patch.object(self.controller, 'handle_battle_prompts', side_effect=kill):
             self.controller.run_battle(['Slime'])
         battle.enemy_defeated.assert_called_once()
-        self.game.music_player.load_and_play_music.assert_called_once_with(self.game.current_map.music_file_path)
+        # enemy_defeated has already resumed the map music after the victory music (ChkLevelUp, ResumeMusicTbl)
+        self.game.music_player.load_and_play_music.assert_not_called()
 
     def test_force_enemy_overrides_zone_enemies(self, mock_battle_class):
         self.game.config["FORCE_ENEMY"] = "Poltergeist"

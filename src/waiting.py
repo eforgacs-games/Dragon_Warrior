@@ -8,8 +8,10 @@ during ``time.wait``, so a caller that used to drop them (``event.clear()``) sti
 It also keeps the game speed (keys 1 to 4: 1x, 2x, 4x or 8x, a modern convenience, not NES behavior). At speed N the
 game runs N times as fast: ``wait`` waits 1/N of the time, and ``game_ticks`` (the clock every timer in the game
 reads) runs N times as fast as ``pygame.time.get_ticks``. Only timing changes: nothing that decides an outcome reads
-the speed. Sounds and music play at their normal pitch and length, so a wait that lets a sound finish (the death
-music, the level-up fanfare) is shortened too, and the sound just carries on over whatever comes next.
+the speed. Sounds and music play at their normal pitch and length, so a timed wait that lets a sound finish (the death
+music) is shortened too, and the sound just carries on over whatever comes next. The music clips the NES waits for
+with WaitForMusicEnd (the victory and level-up fanfares, the inn, the harp, ...) are waited for until they end
+(MusicPlayer.wait_for_music_end).
 
 This module imports nothing from ``src``, so any module can use it without an import cycle.
 """

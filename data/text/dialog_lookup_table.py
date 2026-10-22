@@ -405,11 +405,8 @@ class DialogLookup:
     def embrace_princess_gwaelin(self):
         self.command_menu.show_line_in_dialog_box(self._("Princess Gwaelin embraces thee.\n"),
                                                   add_quotes=False)
-        mixer.music.stop()
-        wait(1000)
-        self.sound.play_sound(self.directories.princess_gwaelins_love_sfx)
-        wait(5000)
-        mixer.music.play(-1)
+        # NES DoGwaelinRescue: MSC_PRNCS_LOVE right after the line, WaitForMusicEnd, then MSC_DUNGEON1 (the map's music)
+        self.play_gwaelins_love_music()
 
         self.current_map.fixed_characters = []
         del self.current_map.characters['PRINCESS_GWAELIN']
@@ -592,11 +589,11 @@ class DialogLookup:
         self.play_gwaelins_love_music()
 
     def play_gwaelins_love_music(self):
-        mixer.music.stop()
-        self.sound.play_sound(self.directories.princess_gwaelins_love_sfx)
-        wait(5000, self.config)
-        if self.config['MUSIC_ENABLED']:
-            mixer.music.play(-1)
+        """NES MSC_PRNCS_LOVE, then WaitForMusicEnd, then the map's music again from the start (MSC_DUNGEON1 in the
+        Swamp Cave, LD09F; MSC_THRN_ROOM in the throne room, LD49C)."""
+        music_player = self.command_menu.game.music_player
+        music_player.play_until_end(self.directories.princess_gwaelins_love_music, self.config)
+        music_player.load_and_play_music(self.command_menu.game.current_map.music_file_path)
 
     def dialog_once_gwaelin_rescued(self, not_saved_dialog, saved_dialog):
         """NES ChkPrncsDialog1-4: these NPCs change what they say once F_DONE_GWAELIN is set, which is as soon as
