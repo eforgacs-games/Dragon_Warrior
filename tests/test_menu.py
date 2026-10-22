@@ -531,3 +531,82 @@ class TestCommandMenu(TestCase):
             self.game.cmd_menu.display_item_menu('inventory')
         self.assertTrue(battle.no_op)
         self.assertEqual(self.game.player.inventory, ["Herb"])
+
+    def open_item_menu(self, menu_name):
+        """Open the SPELL or ITEM window and close it right away; return the draw_text calls and the cursor calls."""
+        from pygame import K_ESCAPE
+        escape = MagicMock(type=KEYDOWN, key=K_ESCAPE)
+        with patch.object(event, 'get', return_value=[escape]), \
+                patch('src.menu.draw_text') as draw_text, \
+                patch.object(self.game.cmd_menu.graphics, 'create_window') as create_window, \
+                patch.object(self.game.cmd_menu.graphics, 'blink_arrow') as blink_arrow:
+            self.game.cmd_menu.display_item_menu(menu_name)
+        return draw_text, create_window, blink_arrow
+
+    def test_item_menu_window_size_per_number_of_entries(self):
+        from src.menu import item_menu_window
+        # NES SpellDat/PlayerInvDat: 12 tiles (6 blocks) wide at block column 9, one block per entry plus one
+        for entries in range(1, 11):
+            self.assertEqual((9, 2, 6, entries + 1), item_menu_window('spells', entries))
+            self.assertEqual((9, 3, 6, entries + 1), item_menu_window('inventory', entries))
+            self.assertEqual((9, 3, 6, entries + 1), item_menu_window('discard', entries))
+
+    def test_spell_menu_window_is_sized_to_the_spells(self):
+        from src.menu import ITEM_MENU_BORDER
+        from src.spells import Spell
+        all_spells = [Spell.HEAL, Spell.HURT, Spell.SLEEP, Spell.RADIANT, Spell.STOPSPELL, Spell.OUTSIDE,
+                      Spell.RETURN, Spell.REPEL, Spell.HEALMORE, Spell.HURTMORE]
+        for number_of_spells in range(1, 11):
+            self.game.player.spells = all_spells[:number_of_spells]
+            _, create_window, _ = self.open_item_menu('spells')
+            self.assertEqual((9, 2, 6, number_of_spells + 1), create_window.call_args.args[:4])
+            self.assertEqual(ITEM_MENU_BORDER, create_window.call_args.kwargs['border'])
+
+    def test_item_menu_window_is_sized_to_the_items(self):
+        # Herbs and keys take one entry each, however many there are
+        self.game.player.inventory = ["Herb", "Herb", "Magic Key", "Torch", "Wings"]
+        _, create_window, _ = self.open_item_menu('inventory')
+        self.assertEqual((9, 3, 6, 5), create_window.call_args.args[:4])
+
+    def test_spell_menu_spacing(self):
+        from src.spells import Spell
+        self.game.player.spells = [Spell.HEAL, Spell.HURT, Spell.SLEEP]
+        draw_text, _, blink_arrow = self.open_item_menu('spells')
+        nes_tile = self.game.game_state.config['TILE_SIZE'] / 2
+        positions = {call.args[0]: call.args[1:3] for call in draw_text.call_args_list}
+        # The title is in the top border at tile column 4; draw_text takes the middle of the tile row
+        self.assertEqual(((18 + 4) * nes_tile, (4 + 0.5) * nes_tile), positions['SPELL'])
+        # Spells start at tile column 2 on tile row 2 (after the title and a blank row), 2 tile rows (one block) apart
+        for index, spell in enumerate(('HEAL', 'HURT', 'SLEEP')):
+            self.assertEqual(((18 + 2) * nes_tile, (4 + 2 + 2 * index + 0.5) * nes_tile), positions[spell])
+        # The cursor is at tile column 1, on the first spell
+        self.assertEqual(((18 + 1) * nes_tile, (4 + 2 + 0.5) * nes_tile),
+                         (blink_arrow.call_args.kwargs['x'], blink_arrow.call_args.kwargs['y']))
+
+    def test_item_menu_spacing(self):
+        self.game.player.inventory = ["Herb", "Herb", "Fairy Water", "Magic Key"]
+        draw_text, _, blink_arrow = self.open_item_menu('inventory')
+        nes_tile = self.game.game_state.config['TILE_SIZE'] / 2
+        positions = [(call.args[0], call.args[1] / nes_tile, call.args[2] / nes_tile)
+                     for call in draw_text.call_args_list]
+        # Window at tile (18, 6). Each item is one block: the first half of its name on the first tile row at
+        # column 2, the second half on the next row at column 3; herbs and keys show how many at column 10.
+        self.assertEqual([("Herb", 20, 7.5), ("2", 28, 7.5),
+                          ("Fairy", 20, 9.5), ("Water", 21, 10.5),
+                          ("Magic", 20, 11.5), ("1", 28, 11.5), ("Key", 21, 12.5)], positions)
+        self.assertEqual((19 * nes_tile, 7.5 * nes_tile),
+                         (blink_arrow.call_args.kwargs['x'], blink_arrow.call_args.kwargs['y']))
+
+    def test_item_menu_cursor_moves_one_block_per_entry(self):
+        from pygame import K_DOWN, K_ESCAPE
+        self.game.player.inventory = ["Torch", "Wings", "Fairy Water"]
+        events = [[MagicMock(type=KEYDOWN, key=K_DOWN)], [MagicMock(type=KEYDOWN, key=K_DOWN)],
+                  [MagicMock(type=KEYDOWN, key=K_ESCAPE)]]
+        with patch.object(event, 'get', side_effect=events), \
+                patch('src.menu.draw_text'), \
+                patch.object(self.game.cmd_menu.graphics, 'create_window'), \
+                patch.object(self.game.cmd_menu.graphics, 'blink_arrow') as blink_arrow:
+            self.game.cmd_menu.display_item_menu('inventory')
+        tile_size = self.game.game_state.config['TILE_SIZE']
+        cursor_rows = [call.kwargs['y'] for call in blink_arrow.call_args_list]
+        self.assertEqual([cursor_rows[0], cursor_rows[0] + tile_size, cursor_rows[0] + 2 * tile_size], cursor_rows)
