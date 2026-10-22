@@ -4,8 +4,8 @@
 
 version: 2
 updates:
-  # pyproject.toml and uv.lock. If a game dependency changes, regenerate requirements.txt with the
-  # uv export command in its header; CI fails until it matches uv.lock.
+  # pyproject.toml and uv.lock. Dependabot can't update requirements.txt (exported from uv.lock), so
+  # the sync-requirements job in python-app.yml regenerates and commits it on these PRs.
   - package-ecosystem: "uv"
     directory: "/"
     schedule:
