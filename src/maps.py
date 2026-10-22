@@ -421,18 +421,33 @@ class TantegelCellar(BasementWithNPCs):
 
 
 class CharlockB1(MapWithoutNPCs):
-    """Main entrance to Charlock Castle."""
+    """Ground floor of Charlock Castle (NES MAP_DLCSTL_GF), with the Dragonlord's empty throne.
+
+    Layout coordinates are the NES ones offset by (row + 6, column + 7)."""
+
+    # NES DoSearch (SrchPassage): searching on the throne at GF(10,3) only hints at the wind; the secret passage is
+    # behind it at GF(10,1).
+    THRONE_COORDINATES = (9, 17)
+    HIDDEN_STAIRCASE_COORDINATES = (7, 17)
+    # NES MapEntryTbl/MapTargetTbl: DL castle GF(10,1) -> DL castle SL1(9,0).
+    HIDDEN_STAIRCASE = {'map': 'CharlockB2', 'destination_coordinates': (3, 12)}  # A
 
     def __init__(self, config):
+        # The hidden staircase (A) is only added by reveal_hidden_staircase(), so it can't be taken before it's found.
         super().__init__(MapLayouts().charlock_b1, config, Directories(config).dungeon_floor_1_music,
                          (25, 17), staircases={
-                (7, 17): {'map': 'CharlockB2', 'destination_coordinates': (3, 12)},  # A
-                (21, 11): {'map': 'CharlockB2', 'destination_coordinates': ()},  # B
-                (21, 22): {'map': 'CharlockB2', 'destination_coordinates': ()}  # C
+                (20, 11): {'map': 'CharlockB2', 'destination_coordinates': (16, 11)},  # B: GF(4,14) -> SL1(8,13)
+                (20, 22): {'map': 'CharlockB2', 'destination_coordinates': (18, 20)}  # C: GF(15,14) -> SL1(17,15)
             })
         self.create_town_gates(south_gate=(warp_line((26, 15), (26, 18))))
         self.set_town_to_overworld_warps()
         self.assign_stair_directions()
+
+    def reveal_hidden_staircase(self):
+        """Turn the force field behind the throne into the stairs down to CharlockB2 (NES DoSearch, F_PSG_FOUND)."""
+        row, column = self.HIDDEN_STAIRCASE_COORDINATES
+        self.layout[row][column] = self.floor_tile_key['BRICK_STAIR_DOWN']['val']
+        self.staircases[self.HIDDEN_STAIRCASE_COORDINATES] = {**self.HIDDEN_STAIRCASE, 'stair_direction': 'down'}
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -442,17 +457,23 @@ class CharlockB1(MapWithoutNPCs):
 
 
 class CharlockB2(BasementWithoutNPCs, CaveMap):
-    """First inner basement in Charlock Castle."""
+    """First basement of Charlock Castle (NES MAP_DLCSTL_SL1). Layout coordinates are the NES ones + (3, 3)."""
 
     def __init__(self, config):
         super().__init__(MapLayouts().charlock_b2, config, Directories(config).dungeon_floor_2_music, (3, 12),
                          staircases={
+                             # Up to CharlockB1 (NES MapTargetTbl: DL castle SL1 -> DL castle GF)
                              (3, 12): {'map': 'CharlockB1', 'destination_coordinates': (7, 17)},  # A
+                             (16, 11): {'map': 'CharlockB1', 'destination_coordinates': (20, 11)},  # B
+                             (18, 20): {'map': 'CharlockB1', 'destination_coordinates': (20, 22)},  # C
+                             # Down to CharlockB3 (NES MapEntryTbl: DL castle SL1 -> DL castle SL2)
                              (7, 5): {'map': 'CharlockB3', 'destination_coordinates': (3, 3)},  # D
                              (17, 5): {'map': 'CharlockB3', 'destination_coordinates': (4, 3)},  # E
                              (4, 18): {'map': 'CharlockB3', 'destination_coordinates': (3, 11)},  # F
                              (10, 16): {'map': 'CharlockB3', 'destination_coordinates': (7, 7)},  # G
-                             (22, 11): {'map': 'CharlockB3', 'destination_coordinates': (3, 8)}})
+                             (10, 22): {'map': 'CharlockB3', 'destination_coordinates': (11, 12)},  # H
+                             (12, 17): {'map': 'CharlockB3', 'destination_coordinates': (12, 11)},  # I
+                             (22, 11): {'map': 'CharlockB3', 'destination_coordinates': (3, 8)}})  # J
         self.assign_stair_directions()
 
 
@@ -460,9 +481,13 @@ class CharlockB3(BasementWithoutNPCs, CaveMap):
     def __init__(self, config):
         super().__init__(MapLayouts().charlock_b3, config, Directories(config).dungeon_floor_3_music, (3, 8),
                          staircases={
-                             (1, 1): {'map': 'CharlockB2'},  # D
+                             # Up to CharlockB2 (NES MapTargetTbl: DL castle SL2 -> DL castle SL1)
+                             (3, 3): {'map': 'CharlockB2', 'destination_coordinates': (7, 5)},  # D
+                             (4, 3): {'map': 'CharlockB2', 'destination_coordinates': (17, 5)},  # E
                              (3, 11): {'map': 'CharlockB2', 'destination_coordinates': (4, 18)},  # F
                              (7, 7): {'map': 'CharlockB2', 'destination_coordinates': (10, 16)},  # G
+                             (11, 12): {'map': 'CharlockB2', 'destination_coordinates': (10, 22)},  # H
+                             (12, 11): {'map': 'CharlockB2', 'destination_coordinates': (12, 17)},  # I
                              (3, 8): {'map': 'CharlockB2', 'destination_coordinates': (22, 11)},  # J
                              (3, 6): {'map': 'CharlockB4', 'destination_coordinates': (3, 10)},  # K
                              (4, 12): {'map': 'CharlockB4', 'destination_coordinates': (5, 5)},  # L
