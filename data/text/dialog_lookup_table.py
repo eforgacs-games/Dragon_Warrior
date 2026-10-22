@@ -23,8 +23,8 @@ from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_pric
 from src.sound import Sound
 from src.story_flags import StoryFlags
 from src.text import draw_text
-from src.windows import BUY_SELL_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, SHOP_COST_RIGHT_TILE_COLUMN, \
-    SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
+from src.windows import BUY_SELL_WINDOW, DIALOG_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, \
+    SHOP_COST_RIGHT_TILE_COLUMN, SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
 from src.visual_effects import NES_RED, fade, flash_transparent_color, greyscale_screen
 from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait, wait_frames
 
@@ -730,6 +730,9 @@ class DialogLookup:
         fade(fade_out=True, screen=self.screen, config=self.config)
         self.screen.fill(BLACK)
         display.flip()
+        # NES ExitGame: EndGameClearPPU clears the whole screen, then Dowindow WND_DIALOG opens a new, empty dialog
+        # window for the reset message, so it isn't a continuation of King Lorik's dialog
+        self.command_menu.window_drop_down_effect(*DIALOG_WINDOW)
         # NES TextBlock19 entry 8: a WAIT for a button after the first sentence, then the second sentence and END with
         # no wait. ExitGame returns, MMCShutdown runs and Spinlock2 hangs: no button does anything after this.
         self.command_menu.show_line_in_dialog_box(
