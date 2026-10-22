@@ -28,7 +28,7 @@ from src.direction import Direction
 from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
-from src.options_screen import DEFAULT_DIALOG_STYLE, DIALOG_STYLE_SAVE_KEY, MESSAGE_SPEED_SAVE_KEY, MODERN
+from src.options_screen import MODERN, options_from_config, options_to_save
 from src.sound import Sound
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.text import draw_text, set_font_by_ascii_chars
@@ -199,9 +199,9 @@ class CommandMenu(Menu):
             'PlayerRow': self.player.row,
             'PlayerColumn': self.player.column,
             STORY_FLAGS_SAVE_KEY: self.game.story_flags.to_save(),
-            # NES SaveData (LFA7D): the message speed is saved with each log (offset $16); so is the dialog style
-            MESSAGE_SPEED_SAVE_KEY: self.game.game_state.config['TEXT_SPEED'],
-            DIALOG_STYLE_SAVE_KEY: self.game.game_state.config.get('DIALOG_STYLE', DEFAULT_DIALOG_STYLE),
+            # NES SaveData (LFA7D): the message speed is saved with each log (offset $16); so are the dialog style
+            # and NPCS MAKE WAY (src/options_screen.py)
+            **options_to_save(options_from_config(self.game.game_state.config)),
         }
         json_object = json.dumps(save_dict, indent=4)
         with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'),
