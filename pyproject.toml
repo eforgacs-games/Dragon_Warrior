@@ -1,3 +1,31 @@
+[project]
+name = "dragon-warrior"
+version = "0.1.0"
+description = "A Python remake of Dragon Warrior for the NES, built with Pygame"
+readme = "README.md"
+# pygame 2.6.1 has no wheels for Python 3.14 yet
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "pygame~=2.6.1",
+    "pygame-menu~=4.5.2",
+]
+
+[dependency-groups]
+dev = [
+    "mypy~=2.4",
+    "pytest~=9.1",
+    "pytest-cov~=7.1",
+    "ruff==0.14.0",  # exact: new ruff releases can add lint rules
+]
+
+[tool.uv]
+package = false  # a game run from source, not an installable package
+
+[tool.mypy]
+files = ["src"]
+exclude = ["src/map_layouts.py"]
+ignore_missing_imports = true
+
 [tool.ruff]
 line-length = 127
 extend-exclude = [

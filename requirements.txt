@@ -1,2 +1,5 @@
-pygame
-pygame-menu
+# Generated from uv.lock. To regenerate: uv export --no-dev --no-hashes --no-annotate --no-header -o requirements.txt
+pygame==2.6.1
+pygame-menu==4.5.2
+pyperclip==1.11.0
+typing-extensions==4.16.0
