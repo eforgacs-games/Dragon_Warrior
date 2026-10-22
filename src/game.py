@@ -74,6 +74,22 @@ def save_slot_number(save_file_name: str) -> int:
     return int(match.group(1))
 
 
+# NES DoJoyUp etc. (Bank00) only start a step when FrameCounter & $0F is 0. A step is 16 frames long too.
+STEP_SYNC_FRAMES = 16
+
+# NES CheckInputs (Bank03) checks up, then down, then left, then right
+DIRECTION_KEYS = ((Direction.UP.value, (K_UP, K_w)), (Direction.DOWN.value, (K_DOWN, K_s)),
+                  (Direction.LEFT.value, (K_LEFT, K_a)), (Direction.RIGHT.value, (K_RIGHT, K_d)))
+
+
+def held_direction(current_key) -> int | None:
+    """The direction the held keys point the hero in, or None if no direction key is held."""
+    for direction, keys in DIRECTION_KEYS:
+        if any(current_key[direction_key] for direction_key in keys):
+            return direction
+    return None
+
+
 class Game:
     def __init__(self, config):
 
@@ -121,6 +137,9 @@ class Game:
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
         self.speed = 2
+        # NES FrameCounter (Bank03): counts the frames the hero has stood still since the last step, bump or command.
+        # A held direction only starts a step when it's a multiple of 16 (see move_player).
+        self.frame_counter = 0
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
         self.invulnerable = self.game_state.config["INVULNERABLE"]
@@ -466,10 +485,14 @@ class Game:
         moves the player based on the current key state.
         """
         if not self.game_state.enable_movement or self.world_frozen:
+            # NES: every command, the pause and the windows they open end with JMP JoypadCheckLoop, which resets
+            # FrameCounter, so a direction held as they close starts a step at once
+            self.frame_counter = 0
             return
         if self.freeze_pending and not self.player.is_moving:
             # NES GameEngineLoop only reads START and A between steps (DoJoyUp etc. move a whole tile before
             # returning), so a step already under way is finished, but no new one is started.
+            self.frame_counter = 0
             return
         self.move_player(key.get_pressed())
 
@@ -1033,52 +1056,66 @@ class Game:
 
     def move_player(self, current_key) -> None:
         """
-        Move the player in a specified direction.
+        One frame of the hero's walking, the way NES CheckInputs (Bank03) and DoJoyUp/DoJoyDown/DoJoyLeft/DoJoyRight
+        (Bank00) handle the D-pad:
+        - Between steps, CheckJoyUp etc. point the hero in the held direction (STA CharDirection) on the frame it's
+          read, before anything else. Up wins over down, down over left, left over right.
+        - DoJoyUp etc. only start a step when FrameCounter & $0F is 0 (UpSynced...). Otherwise they drop their return
+          address and JMP IdleUpdate, which waits a frame (WaitForNMI, where NMI does INC FrameCounter) and reads the
+          pad again. So a tap that's let go before then only turns the hero.
+        - A step takes 16 frames, then GameEngineLoop's JoypadCheckLoop resets FrameCounter to 0, so a direction held
+          (the same one or a new one) starts the next step on the very next frame: no pause between steps.
+        - From standing still, FrameCounter has been counting since the last step, so the first step starts on the
+          next frame that is a multiple of 16: 0 to 15 frames after the press.
+        - A wall or an NPC in the way (CheckCollision -> DirectionBlocked) plays SFX_WALL_BUMP, resets FrameCounter
+          and goes to IdleUpdate, so holding into it bumps every 16 frames. The overworld, towns and dungeons all use
+          the same check.
         :param current_key: The key currently being pressed by the user.
         """
-        # TODO(ELF): Allow for key taps, to just face in a particular direction
-        # block establishes direction if needed and whether to start or stop moving
         # TODO(ELF): separate dependency of camera pos and player pos
-        curr_pos_x, curr_pos_y = self.camera.pos
-
         if not self.player.is_moving:
-            if current_key[K_UP] or current_key[K_w]:
-                self.player.direction_value = Direction.UP.value
-            elif current_key[K_DOWN] or current_key[K_s]:
-                self.player.direction_value = Direction.DOWN.value
-            elif current_key[K_LEFT] or current_key[K_a]:
-                self.player.direction_value = Direction.LEFT.value
-            elif current_key[K_RIGHT] or current_key[K_d]:
-                self.player.direction_value = Direction.RIGHT.value
-            else:  # player not moving and no moving key pressed
+            direction = held_direction(current_key)
+            if direction is None:
+                self.idle_frame()
+                return
+            self.player.direction_value = direction
+            if self.frame_counter % STEP_SYNC_FRAMES:
+                self.idle_frame()
                 return
             self.player.is_moving = True
-        else:  # determine if player has reached new tile
-            # not sure if setting the player sprites to dirty makes a difference
-            self.current_map.player_sprites.dirty = 1
-            if is_facing_medially(self.player):
-                if curr_pos_y % self.tile_size == 0:
-                    if not self.player.bumped:
-                        # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning -
-                        #  should always be 0 when the map starts.
-                        self.count_step()
-                    else:
-                        self.player.bumped = False
-                    self.finish_step(self.player)
-                    return
-            elif is_facing_laterally(self.player):
-                if curr_pos_x % self.tile_size == 0:
-                    if not self.player.bumped:
-                        self.count_step()
-                    else:
-                        self.player.bumped = False
-                    self.finish_step(self.player)
-                    return
+        # not sure if setting the player sprites to dirty makes a difference
+        self.current_map.player_sprites.dirty = 1
         if is_facing_medially(self.player):
             self.move_medially(self.player)
+            on_a_tile = self.camera.pos[1] % self.tile_size == 0
         elif is_facing_laterally(self.player):
             self.move_laterally(self.player)
+            on_a_tile = self.camera.pos[0] % self.tile_size == 0
+        else:
+            on_a_tile = True
         self.current_map.player_sprites.dirty = 1
+        if not on_a_tile:
+            return
+        if self.player.bumped:
+            # NES DirectionBlocked: no step is taken; FrameCounter is reset, then IdleUpdate waits a frame
+            self.player.bumped = False
+            self.frame_counter = 0
+            self.idle_frame()
+        else:
+            # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning -
+            #  should always be 0 when the map starts.
+            self.count_step()
+            # NES: DoJoyUp etc. return through ChkSpecialLoc to GameEngineLoop -> JoypadCheckLoop
+            self.frame_counter = 0
+        self.finish_step(self.player)
+
+    def idle_frame(self) -> None:
+        """NES IdleUpdate (Bank03): wait for the next frame, which counts it in FrameCounter (NMI: INC FrameCounter).
+        On the 49th ($31) frame of standing still, the pop-up status window is shown and FrameCounter is set to $32,
+        skipping a count, so the steps after a long wait line up a frame earlier. FrameCounter is one byte."""
+        self.frame_counter = (self.frame_counter + 1) & 0xFF
+        if self.frame_counter == 0x31:
+            self.frame_counter = 0x32
 
     def move_laterally(self, character: Player | RoamingCharacter) -> None:
         if is_facing_left(character):

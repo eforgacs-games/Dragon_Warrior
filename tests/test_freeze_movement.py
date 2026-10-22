@@ -228,11 +228,12 @@ class TestFreezeMovement(FreezeTestCase):
 
     def test_unpause_lets_everything_move_again(self):
         self.frame(keydown(K_i))
-        self.frame(keydown(K_i))
+        start_x = self.game.player.rect.x
+        # NES: unpausing ends with JMP JoypadCheckLoop (FrameCounter = 0), so a direction held then steps at once
+        self.frame(keydown(K_i), held=(K_LEFT,))
         self.assertFalse(self.game.paused)
         self.assertTrue(self.game.sprites_animate)
-        start_x = self.game.player.rect.x
-        self.frames(3, held=(K_LEFT,))
+        self.frames(2, held=(K_LEFT,))
         self.assertLess(self.game.player.rect.x, start_x)
 
     def test_menu_closing_does_not_unfreeze_a_paused_game(self):
