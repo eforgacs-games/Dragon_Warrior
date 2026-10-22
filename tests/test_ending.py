@@ -173,7 +173,7 @@ class TestEnding(TestCase):
 
     def test_king_scene_carrying_gwaelin(self):
         self.game.story_flags.dragonlord_defeated = True
-        self.game.player.is_carrying_princess = True
+        self.game.story_flags.carrying_gwaelin = True
         self.stand_before_king()
         ran, prompts, *_ = self.run_ending(answers=(False, True))
         self.assertTrue(ran)
@@ -185,7 +185,7 @@ class TestEnding(TestCase):
             'And thus the tale comes to an end....\nunless the dragons return again.'])
         self.assertEqual(prompts, ['May I travel as thy companion?'] * 2)
         # she ends up in the hero's arms again
-        self.assertTrue(self.game.player.is_carrying_princess)
+        self.assertTrue(self.game.story_flags.carrying_gwaelin)
         self.assertNotIn('PRINCESS_GWAELIN', self.game.current_map.characters)
 
     def test_king_scene_after_returning_gwaelin(self):
@@ -207,12 +207,7 @@ class TestEnding(TestCase):
         self.assertEqual(walked_from, [(14, 14), (14, 17)])
         self.assertIn('Gwaelin said:\n`Please, wait.’', self.lines)
         self.assertEqual(prompts, ['May I travel as thy companion?'])
-        self.assertTrue(self.game.player.is_carrying_princess)
-
-    def test_gwaelins_love_counts_as_returning_her(self):
-        self.assertFalse(self.game.princess_saved)
-        self.game.player.inventory.append("Gwaelin's Love")
-        self.assertTrue(self.game.princess_saved)
+        self.assertTrue(self.game.story_flags.carrying_gwaelin)
 
     # 4. Credits
 

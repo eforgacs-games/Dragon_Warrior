@@ -112,7 +112,9 @@ class Drawer:
         self.game_state.enable_movement = False
         key_pressed = any([current_event.type == KEYDOWN for current_event in events])
         if skip_text or (key_pressed and not self.game_state.automatic_initial_dialog_run):
-            if self.game_state.game_loaded_from_save:
+            # NES MainGameEngine: the king greets a hero who has already been beyond the throne room (F_LEFT_THROOM,
+            # kept in the save) as returning, and gives everyone else the opening speech
+            if cmd_menu.game.story_flags.left_throne_room:
                 cmd_menu.show_text_in_dialog_box(
                     cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['load_from_save_dialog'],
                     add_quotes=True, skip_text=skip_text)
@@ -123,7 +125,7 @@ class Drawer:
             self.set_to_post_initial_dialog(cmd_menu)
             self.game_state.automatic_initial_dialog_run = True
 
-    def handle_initial_dialog(self, initial_dialog_enabled, cmd_menu, events, skip_text, allow_save_prompt):
+    def handle_initial_dialog(self, initial_dialog_enabled, cmd_menu, events, skip_text, left_throne_room):
         if initial_dialog_enabled:
             if self.game_state.is_initial_dialog:
                 display.flip()
@@ -132,7 +134,7 @@ class Drawer:
                 self.run_automatic_initial_dialog(events, skip_text, cmd_menu)
                 event.clear()
             else:
-                if allow_save_prompt:
+                if left_throne_room:
                     set_to_save_prompt(cmd_menu)
                 else:
                     self.set_to_post_initial_dialog(cmd_menu)
@@ -204,7 +206,7 @@ class Drawer:
         screen.blit(darkness, (0, 0)) if not self.game_state.config['NO_BLIT'] else None
 
     def draw_all(self, screen, loop_count, big_map, current_map, player, cmd_menu, foreground_rects, enable_animate,
-                 camera, initial_dialog_enabled, events, skip_text, allow_save_prompt, game_state, torch_active,
+                 camera, initial_dialog_enabled, events, skip_text, left_throne_room, game_state, torch_active,
                  color) -> None:
         """
         Draw map, sprites, background, menu and other surfaces.
@@ -298,7 +300,7 @@ class Drawer:
                                                  enable_animate)
         screen.blit(self.background, camera.pos) if not self.game_state.config['NO_BLIT'] else None
         if current_map.identifier == 'TantegelThroneRoom':
-            self.handle_initial_dialog(initial_dialog_enabled, cmd_menu, events, skip_text, allow_save_prompt)
+            self.handle_initial_dialog(initial_dialog_enabled, cmd_menu, events, skip_text, left_throne_room)
             self.handle_post_death_dialog(game_state, cmd_menu, events, skip_text)
         if current_map.is_dark and self.game_state.config["ENABLE_DARKNESS"]:
             self.handle_darkness(screen, torch_active)
