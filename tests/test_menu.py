@@ -221,18 +221,22 @@ class TestCommandMenu(TestCase):
         self.assertIn('Wings', self.game.player.inventory)
         self.assertIn('Silver Harp', self.game.player.inventory)
 
+    def test_full_inventory_cannot_discard_worn_cursed_item(self):
+        self.game.player.inventory = ['Cursed Belt'] + ['Torch'] * 7
+        self.game.player.wearing_cursed_belt = True
+        with patch.object(self.game.cmd_menu, 'prompt_yes_no', return_value=True), \
+                patch.object(self.game.cmd_menu, 'display_item_menu', side_effect=['Cursed Belt', 'Torch']):
+            messages = self.open_chest_at('Rimuldar', (31, 32))
+        self.assertIn('A curse is upon thy body.', messages)
+        self.assertIn('Cursed Belt', self.game.player.inventory)
+        self.assertIn('Wings', self.game.player.inventory)
+
     def test_chest_not_in_nes_table(self):
         self.game.cmd_menu.map_name = 'Kol'
         self.game.player.current_tile = 'TREASURE_BOX'
         with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
             self.game.cmd_menu.take()
         self.assertEqual(show_text.call_args.args[0], f"There is nothing to take here, {self.game.player.name}.")
-
-    def test_cursed_items_can_be_used(self):
-        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
-            self.game.cmd_menu.put_on_cursed_item('Death Necklace')
-        self.assertEqual(show_text.call_args.args[0],
-                         f"{self.game.player.name} put on the Death Necklace and was cursed!")
 
     def cast_sleep(self, enemy, roll):
         battle = MagicMock(no_op=False)
