@@ -3,7 +3,8 @@ from unittest.mock import Mock, patch
 
 import pygame
 
-from src.battle import has_final_consonant, get_postposition, Battle, calculate_enemy_attack_damage
+from src.battle import has_final_consonant, get_postposition, Battle, calculate_enemy_attack_damage, \
+    randomize_enemy_hp
 
 
 class TestBattleMethods(unittest.TestCase):
@@ -74,18 +75,38 @@ class TestBattleMethods(unittest.TestCase):
         expected_string = 'A Slime draws near!\nCommand?\n'
         self.assertEqual(expected_string, self.battle.get_enemy_draws_near_string())
 
-    def test_calculate_attack_damage(self):
-        cmd_menu = Mock()
-        player = Mock()
-        player.attack_power = 20
-        enemy = Mock()
-        enemy.defense = 10
+    def player_damage(self, attack_power, enemy_defense, rolls, enemy_name='Slime'):
+        player = Mock(attack_power=attack_power)
+        enemy = Mock(defense=enemy_defense)
+        enemy.name = enemy_name
+        with patch('src.battle.random.randint', side_effect=rolls):
+            return self.battle.calculate_attack_damage(Mock(), player, enemy)
 
-        damage = self.battle.calculate_attack_damage(cmd_menu, player, enemy)
-        expected_lower_bound = round((player.attack_power - (enemy.defense / 2)) / 2)
-        expected_upper_bound = round((player.attack_power - (enemy.defense / 2)) * 2)
-        self.assertTrue(expected_lower_bound <= damage <= expected_upper_bound)
+    def test_player_normal_attack_range(self):
+        # Attack 20 vs. defense 10: base 15, damage 3 to 7 (base / 4 to base / 2)
+        self.assertEqual(self.player_damage(20, 10, [1, 0]), 3)
+        self.assertEqual(self.player_damage(20, 10, [1, 255]), 7)
+        for roll in range(256):
+            self.assertTrue(3 <= self.player_damage(20, 10, [1, roll]) <= 7)
 
+    def test_player_weak_attack_against_high_defense(self):
+        # Attack 10 vs. Metal Slime defense 255: base < 2, so 0 or 1 damage
+        self.assertEqual(self.player_damage(10, 255, [1, 0]), 0)
+        self.assertEqual(self.player_damage(10, 255, [1, 1]), 1)
+        # base exactly 2 is a normal attack
+        self.assertEqual(self.player_damage(7, 10, [1, 0]), 0)
+        self.assertEqual(self.player_damage(7, 10, [1, 255]), 1)
+
+    def test_excellent_move(self):
+        # 1 in 32 (roll of 0): attack - (attack // 2 * rand) // 256
+        self.assertEqual(self.player_damage(40, 10, [0, 0]), 40)
+        self.assertEqual(self.player_damage(40, 10, [0, 255]), 21)
+
+    def test_no_excellent_move_against_dragonlord(self):
+        for name in ('Dragonlord', 'Dragonlord 2'):
+            with self.subTest(enemy=name):
+                # The excellent-move roll of 0 is ignored; a normal attack is used instead
+                self.assertEqual(self.player_damage(40, 10, [0, 0], enemy_name=name), 8)
 
     def test_battle_run_failed_sets_no_op(self):
         """Failed run attempt should not grant enemy a free extra turn via the outer loop."""
@@ -173,3 +194,29 @@ class TestCalculateEnemyAttackDamage(unittest.TestCase):
         # Attack 18: base 10 (defense 16) is a normal attack; base 9 (defense 18) is weak
         self.assertEqual(self.damage(18, 16, 0), 2)
         self.assertEqual(self.damage(18, 18, 0), 0)
+
+
+class TestRandomizeEnemyHp(unittest.TestCase):
+    """Starting enemy HP, per the NES ModEnHitPoints routine."""
+
+    def hp(self, enemy_class, roll):
+        with patch('src.battle.random.randint', return_value=roll):
+            return randomize_enemy_hp(enemy_class())
+
+    def test_hp_is_75_to_100_percent_of_listed(self):
+        from src.enemy import Golem
+        # Golem: 70 HP -> 70 - (70 * rand // 256) // 4
+        self.assertEqual(self.hp(Golem, 0), 70)
+        self.assertEqual(self.hp(Golem, 255), 53)
+
+    def test_dragonlord_final_form_always_full_hp(self):
+        from src.enemy import Dragonlord2
+        self.assertEqual(self.hp(Dragonlord2, 255), Dragonlord2().max_hp)
+
+    def test_battle_uses_randomized_hp(self):
+        config = {'LANGUAGE': 'English', 'TILE_SIZE': 32, 'MUSIC_ENABLED': False,
+                  'ORCHESTRA_MUSIC_ENABLED': False, 'SOUND_ENABLED': False}
+        with patch('src.battle.random.randint', return_value=255):
+            battle = Battle(config, 'Golem', Mock())
+        self.assertEqual(battle.enemy.hp, 53)
+        self.assertEqual(battle.enemy.max_hp, 70)
