@@ -370,7 +370,8 @@ class TantegelCourtyard(DragonWarriorMap):
             south_gate=warp_line((37, 9), (37, 26)))
         self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18),
                                      'direction': Direction.LEFT.value}
-        self.staircases[(36, 36)] = {'map': 'TantegelCellar', 'destination_coordinates': (4, 1)}
+        # NES MapEntryTbl/MapTargetTbl: Tant castle GF(29,29) -> Tant castle SL(0,4)
+        self.staircases[(36, 36)] = {'map': 'TantegelCellar', 'destination_coordinates': (5, 1)}
         self.npc_coordinates = {
             (8, 31): 'MERCHANT',
             (12, 34): 'WOMAN',
@@ -436,10 +437,13 @@ class TantegelCourtyard(DragonWarriorMap):
 
 
 class TantegelCellar(BasementWithNPCs):
+    """Tantegel Castle's sublevel (NES MAP_TANTCSTL_SL). Layout coordinates are the NES ones + (1, 1)."""
+
     def __init__(self, config):
         super().__init__(MapLayouts().tantegel_underground, config, Directories(config).tantegel_castle_courtyard_music,
-                         (4, 1), staircases={
-                (4, 1): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 36)}})
+                         (5, 1), staircases={
+                # NES MapTargetTbl: Tant castle SL(0,4) -> Tant castle GF(29,29)
+                (5, 1): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 36)}})
         self.npc_coordinates = {
             (7, 5): 'WISE_MAN',
         }
