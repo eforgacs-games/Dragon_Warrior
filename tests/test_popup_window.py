@@ -105,6 +105,25 @@ class TestInnStay(PopupWindowTestCase):
         ])
         self.assertTrue(self.game.drawer.display_hovering_stats)
 
+    def test_inn_music_plays_to_the_end_while_the_screen_is_black(self):
+        # LD8DF-LD8FB: MSC_INN, WaitForMusicEnd, then MSC_VILLAGE, all between PalFadeOut and PalFadeIn
+        music_player = self.game.music_player
+        music_player.music_enabled = True
+        directories = self.dialog_lookup.directories
+
+        def play_until_end(path, _config):
+            self.events.append(('play until end', path, self.player.current_hp))
+
+        patch.object(music_player, 'play_until_end', side_effect=play_until_end).start()
+        patch.object(music_player, 'load_and_play_music',
+                     side_effect=lambda path: self.events.append(('play', path))).start()
+        self.record_lines()
+        self.run_inn_stay()
+        steps = [event[:2] for event in self.events if event[0] in ('fade out', 'fade in', 'play until end', 'play')]
+        self.assertEqual(steps, [('fade out',), ('play until end', directories.inn_music),
+                                 ('play', directories.village_music), ('fade in',)])
+        self.assertIn(('play until end', directories.inn_music, 15), self.events)  # HP restored by then
+
     def test_fade_in_shows_the_restored_popup_and_the_open_dialog_window(self):
         """Draw the stay for real and look at the screen PalFadeIn starts from: the pop-up must be exactly the white
         pop-up with the full HP and MP, and the dialog window must still hold "Good night."."""
