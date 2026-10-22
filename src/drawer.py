@@ -3,7 +3,7 @@ from typing import Iterable, List, Set, Tuple
 
 from pygame import display, KEYDOWN, event, Surface, Rect
 from pygame.sprite import Group
-from pygame.time import get_ticks
+from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src.calculation import Calculation
 from src.common import WHITE, BLACK, Graphics
