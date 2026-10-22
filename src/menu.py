@@ -4,7 +4,7 @@ import random
 from os.path import join
 
 from src.spells import Spell
-from typing import Any, Iterable, Tuple, List
+from typing import Any, Callable, Iterable, Tuple, List
 
 import pygame_menu
 from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, mixer, transform
@@ -15,6 +15,7 @@ from data.text.dialog_lookup_table import DialogLookup
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
+from src.cursor import BlinkingCursor, draw_cursor_tile
 from src.waiting import quit_if_requested, wait
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
@@ -34,12 +35,25 @@ from src.windows import COMMAND_TITLE_TILE_COLUMN, COMMAND_WINDOW, COUNTED_ITEMS
     ITEM_MENU_BORDER, ITEM_MENU_CURSOR_TILE_COLUMN, ITEM_MENU_TEXT_TILE_COLUMN, \
     ITEM_MENU_X, ITEM_MENU_Y, ITEM_NAME_HALVES, SPELL_MENU_TITLE_TILE_COLUMN, \
     STATUS_EQUIPMENT_TILE_COLUMN, STATUS_EQUIPMENT_TILE_ROWS, STATUS_NAME_TILE_COLUMN, STATUS_NAME_TILE_ROW, \
-    STATUS_VALUE_RIGHT_TILE_COLUMN, STATUS_VALUE_TILE_ROWS, STATUS_WINDOW, item_menu_entry_tile_row, item_menu_window, \
-    name_halves
+    STATUS_VALUE_RIGHT_TILE_COLUMN, STATUS_VALUE_TILE_ROWS, STATUS_WINDOW, YES_NO_WINDOW, item_menu_entry_tile_row, \
+    item_menu_window, name_halves
 
 arrow_fade = USEREVENT + 1
 # How far right the COMMAND window's buttons are moved, in NES pixels (see CommandMenu.__init__)
 COMMAND_BUTTON_SHIFT = 8
+# CmdNonCmbtDat: the cursor's tile, relative to the window: column 1 (cursor home X) for the first column of entries
+# and 8 tiles further right for the second; rows 2, 4, 6 and 8
+COMMAND_CURSOR_TILE_COLUMNS = (1, 9)
+COMMAND_CURSOR_FIRST_TILE_ROW = 2
+COMMAND_ROWS = 4
+
+
+class HiddenSelection(pygame_menu.widgets.LeftArrowSelection):
+    """pygame-menu's left arrow selection, with its margins (so the entries are laid out exactly as with the arrow)
+    but drawing nothing: CommandMenu draws the NES cursor itself (src/cursor.py)."""
+
+    def draw(self, surface: Surface, widget: Any) -> 'HiddenSelection':
+        return self
 
 # The dialog window: x, y, width, height in 16x16 blocks (NES WND_DIALOG, screen tiles 4-27 x 18-27)
 DIALOG_WINDOW = (2, 9, 12, 5)
@@ -126,17 +140,9 @@ class CommandMenu(Menu):
                                            widget_background_color=BLACK,
                                            widget_font_color=self.color,
                                            widget_font_size=font_size,
-                                           widget_selection_effect=pygame_menu.widgets.
-                                           LeftArrowSelection(
-                                               # TODO: Disabling blinking arrow for now,
-                                               #  because the arrow disappears between selections.
-                                               #  Might be a problem with pygame-menu.
-                                               #  Or a problem with the animation being shut off when the menu launches.
-                                               #  Investigation needed.
-                                               # blink_ms=500,
-                                               # TODO: Fix LeftArrowSelection size.
-                                               arrow_right_margin=0,
-                                           )
+                                           # pygame-menu's own arrow isn't the NES one and doesn't blink like it;
+                                           # the NES cursor is drawn over the menu (draw_command_window_frame)
+                                           widget_selection_effect=HiddenSelection(arrow_right_margin=0)
                                            ),
             mouse_enabled=False,
             mouse_visible=False,
@@ -156,7 +162,11 @@ class CommandMenu(Menu):
                                          (_("ITEM"), self.item, (4, 0, 8, 6)),
                                          (_("DOOR"), self.door, (4, 0, 8, 6)),
                                          (_("TAKE"), self.take, (4, 0, 8, 6))):
-            self.menu.add.button(label, function, padding=padding).translate(COMMAND_BUTTON_SHIFT * SCALE, 0)
+            self.menu.add.button(label, functools.partial(self.choose_command, function),
+                                 padding=padding).translate(COMMAND_BUTTON_SHIFT * SCALE, 0)
+        # The NES cursor (src/cursor.py), and the entry it was last drawn on (draw_command_window_frame)
+        self.cursor = BlinkingCursor()
+        self.cursor_index: int | None = None
         self.menu.disable()
         self.refresh_window_color()
 
@@ -168,7 +178,8 @@ class CommandMenu(Menu):
 
     def refresh_window_color(self) -> None:
         """Redraw what this menu keeps drawn in the window color, if the color has changed since: the COMMAND window's
-        background and border, and its entries, the selected entry and the selection arrow. On the NES these are all
+        background and border, and its entries, the selected one included (the cursor is drawn in self.color each frame,
+        draw_command_cursor). On the NES these are all
         tiles in background palette 0, whose color 1 is the window color (AddPalByte), so they all change at once."""
         color = self.color
         if color == self.rendered_color:
@@ -180,7 +191,6 @@ class CommandMenu(Menu):
                                             color, border=ITEM_MENU_BORDER)
         for widget in self.menu.get_widgets():
             widget.update_font({'color': color, 'selected_color': color})
-            widget.get_selection_effect().set_color(color)
 
     def save(self):
         """NES SaveData (Bank03): the hero's experience, gold, items, equipment, name, HP and MP, plus the ModsnSpells,
@@ -609,25 +619,34 @@ class CommandMenu(Menu):
 
     def prompt_yes_no(self) -> bool:
         """A YES/NO window. Returns True for YES; NO or backing out returns False."""
-        tile_size = self.game.game_state.config['TILE_SIZE']
         yes_selected = True
+        cursor = BlinkingCursor()  # WndInitSelect
         while True:
-            background = self.directories.CONFIRMATION_YES_BACKGROUND_PATH if yes_selected else \
-                self.directories.CONFIRMATION_NO_BACKGROUND_PATH
-            self.graphics.create_window(x=5, y=2, width=4, height=3, window_background=background,
-                                        screen=self.screen, color=self.color)
-            if not self.game.game_state.config['NO_BLIT']:
-                display.update((5 * tile_size, 2 * tile_size, 4 * tile_size, 3 * tile_size))
+            self.draw_yes_no_window(yes_selected, cursor.visible())
             for current_event in event.get():
                 quit_if_requested(current_event)
                 if current_event.type != KEYDOWN:
                     continue
-                if current_event.key in reject_keys:
-                    return False
-                if current_event.key in accept_keys:
-                    return yes_selected
+                if current_event.key in accept_keys or current_event.key in reject_keys:
+                    # WndAPressed/WndBPressed: the arrow is drawn once more and stays on
+                    self.draw_yes_no_window(yes_selected, True)
+                    return yes_selected and current_event.key in accept_keys
                 if current_event.key in (K_UP, K_w, K_DOWN, K_s):
-                    yes_selected = current_event.key in (K_UP, K_w)
+                    if yes_selected != (current_event.key in (K_UP, K_w)):
+                        yes_selected = not yes_selected
+                        cursor.restart()  # WndUpdateCrsrPos
+
+    def draw_yes_no_window(self, yes_selected: bool, cursor_visible: bool) -> None:
+        """The YES/NO window (YesNo1Dat): YES and NO at tile column 2 of rows 2 and 4, and the cursor in the tile
+        before the selected one (cursor home X = 1, Y = 2)."""
+        tile_size = self.game.game_state.config['TILE_SIZE']
+        x, y, width, height = YES_NO_WINDOW
+        self.graphics.create_window(x=x, y=y, width=width, height=height,
+                                    window_background=self.directories.CONFIRMATION_BACKGROUND_PATH,
+                                    screen=self.screen, color=self.color)
+        self.draw_window_cursor(x, y, 1, 2 if yes_selected else 4, cursor_visible)
+        if not self.game.game_state.config['NO_BLIT']:
+            display.update((x * tile_size, y * tile_size, width * tile_size, height * tile_size))
 
     def take_erdricks_sword(self) -> None:
         """NES ChkTrsrErdSword: the sword is equipped at once. If it already is, the chest is empty."""
@@ -1284,21 +1303,28 @@ class CommandMenu(Menu):
         drawn_arrow_position = None
         window_rect = Rect(0, 0, 0, 0)
         currently_selected_item = entries[0]
-        time.set_timer(arrow_fade, 530)
+        # The NES cursor (src/cursor.py): visible when the window opens (WndInitSelect)
+        cursor = BlinkingCursor()
+
+        def draw_cursor() -> None:
+            self.draw_window_cursor(ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_CURSOR_TILE_COLUMN,
+                                    item_menu_entry_tile_row(menu_name, current_arrow_position), cursor.visible())
+
         while item_menu_displayed:
             if current_arrow_position != drawn_arrow_position:
                 # Redraw the window to erase the cursor from the entry it left
                 window_rect = self.draw_item_menu(menu_name, entries)
                 drawn_arrow_position = current_arrow_position
-            cursor_x, cursor_y = self.window_text_position(
-                ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_CURSOR_TILE_COLUMN,
-                item_menu_entry_tile_row(menu_name, current_arrow_position))
-            self.graphics.blink_arrow(self.screen, x=cursor_x, y=cursor_y, direction="right",
-                                      show_arrow=self.game.show_arrow, color=self.color)
+            draw_cursor()
             display.update(window_rect)
             for current_event in event.get():
                 quit_if_requested(current_event)
                 if any([current_event.type == KEYDOWN]):
+                    if current_event.key in accept_keys or current_event.key in reject_keys:
+                        # WndAPressed/WndBPressed: the arrow is drawn once more and stays on
+                        cursor.hold()
+                        draw_cursor()
+                        display.update(window_rect)
                     if current_event.key in reject_keys:
                         item_menu_displayed = False
                         if self.current_battle is not None:
@@ -1345,22 +1371,70 @@ class CommandMenu(Menu):
                     elif len(menu_name) > 1:
                         if current_event.key in (K_UP, K_w) and current_arrow_position > 0:
                             current_arrow_position -= 1
+                            cursor.restart()  # WndUpdateCrsrPos
                         elif current_event.key in (K_DOWN, K_s) and current_arrow_position < len(entries) - 1:
                             current_arrow_position += 1
+                            cursor.restart()
                         currently_selected_item = entries[current_arrow_position]
-                elif current_event.type == arrow_fade:
-                    self.game.show_arrow = not self.game.show_arrow
         return chosen_item
 
     def draw_command_window_frame(self, surface: Surface) -> None:
         """
         Draw the COMMAND window's border and title over the menu drawn on surface (the window's part of the screen):
-        "COMMAND" goes in the top border at tile column 4 (CmdNonCmbtDat: $8B, "COMMAND").
+        "COMMAND" goes in the top border at tile column 4 (CmdNonCmbtDat: $8B, "COMMAND"). Then the cursor.
         """
         if self.game.game_state.config['NO_BLIT']:
             return
         surface.blit(self.command_window_frame, (0, 0))
         self.draw_window_title(self._('COMMAND'), COMMAND_WINDOW.x, COMMAND_WINDOW.y, COMMAND_TITLE_TILE_COLUMN)
+        self.draw_command_cursor()
+
+    def reset_command_cursor(self) -> None:
+        """The COMMAND window was opened (WndInitSelect): the cursor starts over, visible."""
+        self.cursor_index = None
+
+    def draw_command_cursor(self) -> Rect:
+        """Draw the NES cursor (src/cursor.py) at the selected COMMAND entry: in the tile before it (CmdNonCmbtDat,
+        cursor home X = 1), blinking. Moving to another entry restarts the blink, as WndUpdateCrsrPos does."""
+        widgets = self.menu.get_widgets()
+        index = widgets.index(self.menu.get_selected_widget()) if widgets else 0
+        if index != self.cursor_index:
+            self.cursor_index = index
+            self.cursor.restart()
+        column, row = divmod(index, COMMAND_ROWS)
+        return self.draw_window_cursor(COMMAND_WINDOW.x, COMMAND_WINDOW.y, COMMAND_CURSOR_TILE_COLUMNS[column],
+                                       COMMAND_CURSOR_FIRST_TILE_ROW + 2 * row, self.cursor.visible())
+
+    def choose_command(self, command: Callable[[], Any]) -> None:
+        """A COMMAND entry was chosen (WndAPressed): its arrow is drawn and stays on, not blinking, while the
+        command runs and the windows it opens are in front of the COMMAND window."""
+        self.cursor.hold()
+        tile_rect = self.draw_command_cursor()
+        if not self.game.game_state.config['NO_BLIT']:
+            display.update(tile_rect)
+        try:
+            command()
+        finally:
+            # If the COMMAND window is still open, it is selecting again
+            self.cursor.restart()
+
+    def draw_window_cursor(self, window_x: int, window_y: int, column: int, row: int, visible: bool = True) -> Rect:
+        """
+        Draw the NES cursor (src/cursor.py) in a window's tile, in the window color, or blank that tile when the
+        cursor is in the "off" half of its blink (UpdateCursorGFX).
+        :param window_x: The window's left edge, in blocks.
+        :param window_y: The window's top edge, in blocks.
+        :param column: The tile column in the window, from 0 (the left border).
+        :param row: The tile row in the window, from 0 (the top border).
+        :param visible: Whether the arrow is shown.
+        :return: The tile's rect on the screen, for display.update.
+        """
+        config = self.game.game_state.config
+        nes_tile = config['TILE_SIZE'] // 2
+        x, y = (window_x * 2 + column) * nes_tile, (window_y * 2 + row) * nes_tile
+        if config['NO_BLIT']:
+            return Rect(x, y, nes_tile, nes_tile)
+        return draw_cursor_tile(self.screen, x, y, config['TILE_SIZE'] // 16, self.color, visible)
 
     def draw_item_menu(self, menu_name: str, entries: list) -> Rect:
         """
@@ -1396,7 +1470,7 @@ class CommandMenu(Menu):
 
     def window_text_position(self, window_x: int, window_y: int, column: int, row: int) -> tuple[float, float]:
         """
-        Where draw_text or blink_arrow should draw a character in a window's tile (8x8 NES pixels).
+        Where draw_text should draw a character in a window's tile (8x8 NES pixels).
         :param window_x: The window's left edge, in blocks.
         :param window_y: The window's top edge, in blocks.
         :param column: The tile column in the window, from 0 (the left border).

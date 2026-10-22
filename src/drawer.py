@@ -373,6 +373,7 @@ class Drawer:
                     self.sound.play_sound(self.directories.menu_button_sfx)
                     cmd_menu.window_drop_down_effect(x, y, width, height)
                     cmd_menu.menu.enable()
+                    cmd_menu.reset_command_cursor()
                 else:
                     menu_to_launch.menu.draw(command_menu_subsurface)
                     cmd_menu.draw_command_window_frame(command_menu_subsurface)

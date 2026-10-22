@@ -574,9 +574,9 @@ class TestCommandMenu(TestCase):
         with patch.object(event, 'get', return_value=[escape]), \
                 patch('src.menu.draw_text') as draw_text, \
                 patch.object(self.game.cmd_menu.graphics, 'create_window') as create_window, \
-                patch.object(self.game.cmd_menu.graphics, 'blink_arrow') as blink_arrow:
+                patch.object(self.game.cmd_menu, 'draw_window_cursor') as draw_cursor:
             self.game.cmd_menu.display_item_menu(menu_name)
-        return draw_text, create_window, blink_arrow
+        return draw_text, create_window, draw_cursor
 
     def test_item_menu_window_size_per_number_of_entries(self):
         from src.menu import item_menu_window
@@ -606,7 +606,7 @@ class TestCommandMenu(TestCase):
     def test_spell_menu_spacing(self):
         from src.spells import Spell
         self.game.player.spells = [Spell.HEAL, Spell.HURT, Spell.SLEEP]
-        draw_text, _, blink_arrow = self.open_item_menu('spells')
+        draw_text, _, draw_cursor = self.open_item_menu('spells')
         nes_tile = self.game.game_state.config['TILE_SIZE'] / 2
         positions = {call.args[0]: call.args[1:3] for call in draw_text.call_args_list}
         # The title is in the top border at tile column 4; draw_text takes the middle of the tile row
@@ -614,13 +614,12 @@ class TestCommandMenu(TestCase):
         # Spells start at tile column 2 on tile row 2 (after the title and a blank row), 2 tile rows (one block) apart
         for index, spell in enumerate(('HEAL', 'HURT', 'SLEEP')):
             self.assertEqual(((18 + 2) * nes_tile, (4 + 2 + 2 * index + 0.5) * nes_tile), positions[spell])
-        # The cursor is at tile column 1, on the first spell
-        self.assertEqual(((18 + 1) * nes_tile, (4 + 2 + 0.5) * nes_tile),
-                         (blink_arrow.call_args.kwargs['x'], blink_arrow.call_args.kwargs['y']))
+        # The cursor is at tile column 1, on the first spell's tile row
+        self.assertEqual((9, 2, 1, 2), draw_cursor.call_args.args[:4])
 
     def test_item_menu_spacing(self):
         self.game.player.inventory = ["Herb", "Herb", "Fairy Water", "Magic Key"]
-        draw_text, _, blink_arrow = self.open_item_menu('inventory')
+        draw_text, _, draw_cursor = self.open_item_menu('inventory')
         nes_tile = self.game.game_state.config['TILE_SIZE'] / 2
         positions = [(call.args[0], call.args[1] / nes_tile, call.args[2] / nes_tile)
                      for call in draw_text.call_args_list]
@@ -630,8 +629,8 @@ class TestCommandMenu(TestCase):
         self.assertEqual([("Herb", 20, 7.5), ("2", 28, 7.5),
                           ("Magic", 20, 9.5), ("1", 28, 9.5), ("Key", 21, 10.5),
                           ("Fairy", 20, 11.5), ("Water", 21, 12.5)], positions)
-        self.assertEqual((19 * nes_tile, 7.5 * nes_tile),
-                         (blink_arrow.call_args.kwargs['x'], blink_arrow.call_args.kwargs['y']))
+        # The cursor is at tile column 1 of the first item's tile row (window tile row 1)
+        self.assertEqual((9, 3, 1, 1), draw_cursor.call_args.args[:4])
 
     def test_item_menu_cursor_moves_one_block_per_entry(self):
         from pygame import K_DOWN, K_ESCAPE
@@ -641,8 +640,9 @@ class TestCommandMenu(TestCase):
         with patch.object(event, 'get', side_effect=events), \
                 patch('src.menu.draw_text'), \
                 patch.object(self.game.cmd_menu.graphics, 'create_window'), \
-                patch.object(self.game.cmd_menu.graphics, 'blink_arrow') as blink_arrow:
+                patch.object(self.game.cmd_menu, 'draw_window_cursor') as draw_cursor:
             self.game.cmd_menu.display_item_menu('inventory')
-        tile_size = self.game.game_state.config['TILE_SIZE']
-        cursor_rows = [call.kwargs['y'] for call in blink_arrow.call_args_list]
-        self.assertEqual([cursor_rows[0], cursor_rows[0] + tile_size, cursor_rows[0] + 2 * tile_size], cursor_rows)
+        # One block (2 tile rows) per entry; the last row drawn twice: once blinking, once held on B (WndBPressed)
+        cursor_rows = [call.args[3] for call in draw_cursor.call_args_list]
+        self.assertEqual([1, 3, 5, 5], cursor_rows)
+        self.assertTrue(draw_cursor.call_args.args[4])

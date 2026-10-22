@@ -64,7 +64,7 @@ class TestLowHPWindowColor(TestCase):
         self.game.load_window_palette()
 
     def assert_command_window_color(self, color):
-        """Every COMMAND entry, selected or not, and the selection arrow are in the window color."""
+        """Every COMMAND entry, selected or not, and the cursor are in the window color."""
         self.assertEqual(self.cmd_menu.rendered_color, color)
         widgets = self.cmd_menu.menu.get_widgets()
         self.assertEqual(len(widgets), 8)
@@ -72,9 +72,13 @@ class TestLowHPWindowColor(TestCase):
             font = widget.get_font_info()
             self.assertEqual(tuple(font['color'])[:3], color)
             self.assertEqual(tuple(font['selected_color'])[:3], color)
-            self.assertEqual(tuple(widget.get_selection_effect().color)[:3], color)
         selected = self.cmd_menu.menu.get_selected_widget()
         self.assertEqual(tuple(selected.get_font_color_status())[:3], color)
+        # The NES cursor (TL_RIGHT_ARROW) is a background tile in palette 0 too
+        with patch('src.menu.draw_cursor_tile') as draw_cursor_tile, \
+                patch.dict(self.game.game_state.config, NO_BLIT=False):
+            self.cmd_menu.draw_command_cursor()
+        self.assertEqual(draw_cursor_tile.call_args.args[4], color)
 
     # The COMMAND window (pygame-menu)
 
@@ -120,11 +124,12 @@ class TestLowHPWindowColor(TestCase):
 
     def item_list_colors(self, menu_name):
         pygame.event.post(pygame.event.Event(KEYDOWN, key=K_ESCAPE))
-        with patch.object(self.cmd_menu.graphics, 'blink_arrow') as blink_arrow, \
+        with patch('src.menu.draw_cursor_tile') as draw_cursor_tile, \
                 patch.object(self.cmd_menu.graphics, 'create_window') as create_window, \
-                patch('src.menu.draw_text') as draw_text, patch('src.menu.display'):
+                patch('src.menu.draw_text') as draw_text, patch('src.menu.display'), \
+                patch.dict(self.game.game_state.config, NO_BLIT=False):
             self.cmd_menu.display_item_menu(menu_name)
-        return ({c.kwargs['color'] for c in blink_arrow.call_args_list},
+        return ({c.args[4] for c in draw_cursor_tile.call_args_list},
                 {c.args[6] for c in create_window.call_args_list},
                 {c.kwargs['color'] for c in draw_text.call_args_list})
 
@@ -144,9 +149,12 @@ class TestLowHPWindowColor(TestCase):
         for hp, color in ((15, WHITE), (4, RED)):
             self.set_hp(hp)
             pygame.event.post(pygame.event.Event(KEYDOWN, key=K_RETURN))
-            with patch.object(self.cmd_menu.graphics, 'create_window') as create_window:
+            with patch.object(self.cmd_menu.graphics, 'create_window') as create_window, \
+                    patch('src.menu.draw_cursor_tile') as draw_cursor_tile, patch('src.menu.display'), \
+                    patch.dict(self.game.game_state.config, NO_BLIT=False):
                 self.cmd_menu.prompt_yes_no()
             self.assertEqual({c.kwargs['color'] for c in create_window.call_args_list}, {color})
+            self.assertEqual({c.args[4] for c in draw_cursor_tile.call_args_list}, {color})
 
     def test_shop_cursor(self):
         dialog_lookup = self.cmd_menu.dialog_lookup
@@ -154,18 +162,24 @@ class TestLowHPWindowColor(TestCase):
             self.set_hp(hp)
             pygame.event.post(pygame.event.Event(KEYDOWN, key=K_ESCAPE))
             with patch.object(self.cmd_menu, 'window_drop_down_effect'), \
-                    patch('data.text.dialog_lookup_table.draw_text') as draw_text:
+                    patch('src.menu.draw_cursor_tile') as draw_cursor_tile, \
+                    patch('data.text.dialog_lookup_table.display'), \
+                    patch.dict(self.game.game_state.config, NO_BLIT=False):
                 dialog_lookup.select_in_window(SHOP_INVENTORY_WINDOW, 2, lambda: None, 2)
-            self.assertEqual(draw_text.call_args.args[5], color)
+            self.assertEqual({c.args[4] for c in draw_cursor_tile.call_args_list}, {color})
 
     def test_battle_command_window(self):
         battle_ctrl = self.game.battle_ctrl
         for hp, color in ((15, WHITE), (4, RED)):
             self.set_hp(hp)
-            with patch.object(battle_ctrl.graphics, 'blink_switch') as blink_switch, \
-                    patch('src.battle_controller.event.get', return_value=[]):
+            with patch.object(battle_ctrl.graphics, 'create_window') as create_window, \
+                    patch('src.menu.draw_cursor_tile') as draw_cursor_tile, \
+                    patch('src.battle_controller.display'), \
+                    patch('src.battle_controller.event.get', return_value=[]), \
+                    patch.dict(self.game.game_state.config, NO_BLIT=False):
                 battle_ctrl.handle_battle_prompts(False, MagicMock())
-            self.assertEqual(blink_switch.call_args.kwargs['color'], color)
+            self.assertEqual(create_window.call_args.args[6], color)
+            self.assertEqual({c.args[4] for c in draw_cursor_tile.call_args_list}, {color})
 
     # When the color changes (NES: when the background palettes are loaded, and ChkLowHP after a step)
 
