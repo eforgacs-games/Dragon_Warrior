@@ -370,7 +370,8 @@ class TantegelCourtyard(DragonWarriorMap):
             south_gate=warp_line((37, 9), (37, 26)))
         self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18),
                                      'direction': Direction.LEFT.value}
-        self.staircases[(36, 36)] = {'map': 'TantegelCellar', 'destination_coordinates': (4, 1)}
+        # NES MapEntryTbl/MapTargetTbl: Tant castle GF(29,29) -> Tant castle SL(0,4)
+        self.staircases[(36, 36)] = {'map': 'TantegelCellar', 'destination_coordinates': (5, 1)}
         self.npc_coordinates = {
             (8, 31): 'MERCHANT',
             (12, 34): 'WOMAN',
@@ -436,10 +437,13 @@ class TantegelCourtyard(DragonWarriorMap):
 
 
 class TantegelCellar(BasementWithNPCs):
+    """Tantegel Castle's sublevel (NES MAP_TANTCSTL_SL). Layout coordinates are the NES ones + (1, 1)."""
+
     def __init__(self, config):
         super().__init__(MapLayouts().tantegel_underground, config, Directories(config).tantegel_castle_courtyard_music,
-                         (4, 1), staircases={
-                (4, 1): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 36)}})
+                         (5, 1), staircases={
+                # NES MapTargetTbl: Tant castle SL(0,4) -> Tant castle GF(29,29)
+                (5, 1): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 36)}})
         self.npc_coordinates = {
             (7, 5): 'WISE_MAN',
         }
@@ -566,13 +570,16 @@ class CharlockB6(BasementWithoutNPCs, CaveMap):
 
 
 class CharlockB7Wide(BasementWithoutNPCs, CaveMap):
-    """A wide hallway right before the last level of Charlock Castle."""
+    """A wide hallway right before the last level of Charlock Castle.
+
+    The lower corridor of NES MAP_DLCSTL_SL6: layout coordinates are the NES ones + (-1, 3)."""
 
     def __init__(self, config):
         super().__init__(MapLayouts().charlock_b7_wide, config, Directories(config).dungeon_floor_7_music, (5, 3),
                          staircases={
                              (5, 3): {'map': 'CharlockB6', 'destination_coordinates': (3, 3)},  # T
-                             (5, 12): {'map': 'CharlockB8'}  # U
+                             # NES MapEntryTbl/MapTargetTbl: DL castle SL6(9,6) -> DL castle BF(10,29)
+                             (5, 12): {'map': 'CharlockB8', 'destination_coordinates': (33, 16)}  # U
                          })
         self.assign_stair_directions()
 
@@ -584,17 +591,22 @@ class CharlockB7Narrow(BasementWithoutNPCs, CaveMap):
         super().__init__(MapLayouts().charlock_b7_narrow, config, Directories(config).dungeon_floor_7_music, (3, 3),
                          staircases={
                              (3, 3): {'map': 'CharlockB6', 'destination_coordinates': (8, 8)},
+                             # NES MapEntryTbl: DL castle SL6(9,0) -> DL castle SL6(0,0), a one-way loop (going up
+                             # from SL6(0,0) finds its earlier MapTargetTbl entry, back to SL5(5,5))
                              (3, 12): {'map': 'CharlockB7Narrow', 'destination_coordinates': (3, 3)}
                          })
         self.assign_stair_directions()
 
 
 class CharlockB8(DragonWarriorMap):
-    """Deepest level of Charlock Castle, and location of the Dragonlord."""
+    """Deepest level of Charlock Castle, and location of the Dragonlord (NES MAP_DLCSTL_BF).
+
+    Layout coordinates are the NES ones offset by (row + 4, column + 6)."""
 
     def __init__(self, config):
         super().__init__(MapLayouts().charlock_b8, config, Directories(config).dungeon_floor_8_music,
                          (33, 16), staircases={
+                # NES MapTargetTbl/MapEntryTbl: DL castle BF(10,29) -> DL castle SL6(9,6)
                 (33, 16): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 12)}})
         self.npc_coordinates = {
             (28, 22): 'DRAGONLORD',
@@ -635,7 +647,7 @@ class Alefgard(MapWithoutNPCs):
                 # cave
                 (19, 36): {'map': 'ErdricksCaveB1', 'destination_coordinates': (3, 3)},
                 (51, 112): {'map': 'SwampCave', 'destination_coordinates': (6, 4)},
-                (56, 112): {'map': 'SwampCave', 'destination_coordinates': (36, 4)},
+                (56, 112): {'map': 'SwampCave', 'destination_coordinates': (35, 4)},
                 (64, 37): {'map': 'MountainCaveB1', 'destination_coordinates': (8, 1)},
                 (96, 33): {'map': 'Hauksness', 'destination_coordinates': (18, 9)},
                 (79, 110): {'map': 'Rimuldar', 'destination_coordinates': (22, 37)},
@@ -929,10 +941,14 @@ class ErdricksCaveB2(MapWithoutNPCs, CaveMap):
 
 
 class SwampCave(CaveMap):
+    """The Swamp Cave (NES MAP_SWAMPCAVE). Layout coordinates are the NES ones + (6, 4)."""
+
     def __init__(self, config):
         super().__init__(MapLayouts().swamp_cave, config, Directories(config).dungeon_floor_1_music,
+                         # NES MapTargetTbl/MapEntryTbl: Swamp cave(0,0) -> Overworld(104,44) and
+                         # Swamp cave(0,29) -> Overworld(104,49), the two cave tiles
                          staircases={(6, 4): {'map': 'Alefgard', 'destination_coordinates': (51, 112)},
-                                     (36, 4): {'map': 'Alefgard', 'destination_coordinates': (56, 110)}},
+                                     (35, 4): {'map': 'Alefgard', 'destination_coordinates': (56, 112)}},
                          initial_coordinates=(6, 4))
         self.npc_coordinates = {
             (24, 9): 'PRINCESS_GWAELIN',
@@ -1039,11 +1055,17 @@ class GarinsGraveB4(MapWithoutNPCs, CaveMap):
 
 
 class MountainCaveB1(MapWithoutNPCs, CaveMap):
+    """Rock Mountain Cave B1 (NES MAP_RCKMTN_B1). Layout coordinates are the NES ones + (1, 1)."""
+
     def __init__(self, config):
         super().__init__(MapLayouts().mountain_cave_b1, config, Directories(config).dungeon_floor_1_music, (7, 1),
                          staircases={
                              (8, 1): {'map': 'Alefgard', 'destination_coordinates': (64, 37)},
-                             (1, 1): {'map': 'MountainCaveB2', 'destination_coordinates': (1, 1)}
+                             # NES MapEntryTbl/MapTargetTbl: Rock mtn B1(0,0), (6,5) and (12,12) -> Rock mtn B2, same
+                             # coordinates
+                             (1, 1): {'map': 'MountainCaveB2', 'destination_coordinates': (1, 1)},
+                             (6, 7): {'map': 'MountainCaveB2', 'destination_coordinates': (6, 7)},
+                             (13, 13): {'map': 'MountainCaveB2', 'destination_coordinates': (13, 13)},
                          })
         self.assign_stair_directions()
 
@@ -1055,10 +1077,15 @@ class MountainCaveB1(MapWithoutNPCs, CaveMap):
 
 
 class MountainCaveB2(MapWithoutNPCs, CaveMap):
+    """Rock Mountain Cave B2 (NES MAP_RCKMTN_B2). Layout coordinates are the NES ones + (1, 1)."""
+
     def __init__(self, config):
         super().__init__(MapLayouts().mountain_cave_b2, config, Directories(config).dungeon_floor_1_music, (1, 1),
                          staircases={
+                             # NES MapTargetTbl: Rock mtn B2(0,0), (6,5) and (12,12) -> Rock mtn B1, same coordinates
                              (1, 1): {'map': 'MountainCaveB1', 'destination_coordinates': (1, 1)},
+                             (6, 7): {'map': 'MountainCaveB1', 'destination_coordinates': (6, 7)},
+                             (13, 13): {'map': 'MountainCaveB1', 'destination_coordinates': (13, 13)},
                          })
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
