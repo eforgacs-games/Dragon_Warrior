@@ -362,6 +362,60 @@ class TestHeroAttack(unittest.TestCase):
             self.controller.hero_attack(self.battle)
         self.assertEqual(self.battle.enemy.hp, 10)
         self.game.sound.play_sound.assert_called_with(self.game.directories.missed_sfx)
+        self.game.drawer.flash_enemy.assert_not_called()
+
+    def test_hit_flashes_enemy_red_before_the_damage_text(self):
+        # NES PlyrHitEn: SFX, PaletteFlash, then "The enemy's Hit Points have been reduced"
+        self.battle.calculate_attack_damage.return_value = 4
+        order = []
+        self.game.drawer.flash_enemy.side_effect = lambda *a: order.append('flash')
+        self.game.cmd_menu.show_line_in_dialog_box.side_effect = lambda line, **k: order.append(line)
+        with patch('src.battle_controller.random.random', return_value=0.5):
+            self.controller.hero_attack(self.battle)
+        self.game.drawer.flash_enemy.assert_called_once_with(self.game.screen, 'Slime')
+        self.assertEqual(order[-2:], ['flash', "The Slime's Hit Points have been reduced by 4.\n"])
+
+    def test_miss_does_not_flash_enemy(self):
+        self.battle.calculate_attack_damage.return_value = 0
+        self.controller.hero_attack(self.battle)
+        self.game.drawer.flash_enemy.assert_not_called()
+
+
+@patch('src.battle_controller.player_hit_shake')
+class TestPlayerHitEffect(unittest.TestCase):
+
+    def setUp(self):
+        self.game = make_game()
+        self.game.config = {"TILE_SIZE": 32}
+        self.controller = BattleController(self.game)
+        self.battle = make_battle()
+        self.game.cmd_menu.current_battle = self.battle
+
+    def test_hit_shakes_without_red_flash(self, mock_shake):
+        self.controller.player_hit_effect()
+        mock_shake.assert_called_once_with(
+            self.game.screen, self.game.config, deathblow=False,
+            enemy=self.game.drawer.get_enemy_image.return_value,
+            background=(self.battle.get_battle_background_image.return_value, (160, 128)), shake=True)
+        self.game.drawer.get_enemy_image.assert_called_once_with('Slime')
+
+    def test_deathblow_flashes_red(self, mock_shake):
+        self.game.player.current_hp = 0
+        self.controller.player_hit_effect()
+        self.assertTrue(mock_shake.call_args.kwargs['deathblow'])
+
+    def test_final_form_does_not_shake(self, mock_shake):
+        # NES PlayerHit/DoShake: no shake and no red flash against EN_DRAGONLORD2
+        self.battle.enemy.name = 'Dragonlord 2'
+        self.game.player.current_hp = 0
+        self.controller.player_hit_effect()
+        self.assertFalse(mock_shake.call_args.kwargs['shake'])
+        self.assertIsNone(mock_shake.call_args.kwargs['background'])
+
+    def test_no_battle_no_effect(self, mock_shake):
+        self.game.cmd_menu.current_battle = None
+        self.controller.player_hit_effect()
+        mock_shake.assert_not_called()
 
 
 @patch('src.battle_controller.time')

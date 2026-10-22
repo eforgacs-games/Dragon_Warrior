@@ -333,6 +333,14 @@ class TestCommandMenu(TestCase):
         self.assertEqual(slime.hp, 11)
         self.assertEqual(lines, ["The Slime's Hit Points have been reduced by 9.\n"])
 
+    def test_hurt_flashes_enemy_red(self):
+        # NES SetSpellDmg falls through to PlyrHitEn, which runs PaletteFlash
+        from src.enemy import Slime
+        self.in_battle_with(Slime())
+        with patch.object(self.game.drawer, 'flash_enemy') as flash_enemy:
+            self.cast('hurt', [0, 9])
+        flash_enemy.assert_called_once_with(self.game.cmd_menu.screen, 'Slime')
+
     def test_hurtmore_damage_range(self):
         from src.enemy import Slime
         slime = Slime()
