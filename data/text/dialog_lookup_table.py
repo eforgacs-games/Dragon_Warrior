@@ -1,5 +1,6 @@
 import random
 from functools import partial
+from typing import Callable
 
 from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect, QUIT
 from pygame.event import get, pump
@@ -12,16 +13,18 @@ from src.common import RED, WHITE, reject_keys, accept_keys, Graphics, set_gette
 from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACEABLE_ITEMS
 from src.direction import Direction
 from src.directories import Directories
-from src.items import INVENTORY_SLOTS, MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS
+from src.items import INVENTORY_SLOTS, MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS, inventory_list
 from src import maps
 from src.maps import DragonWarriorMap
 from src.maps_functions import get_center_point
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_price, \
-    inventory_is_full, pay_player, sell_list, sell_price
+    inventory_is_full, pay_player, sell_price
 from src.sound import Sound
 from src.story_flags import StoryFlags
 from src.text import draw_text
+from src.windows import BUY_SELL_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, SHOP_COST_RIGHT_TILE_COLUMN, \
+    SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
 from src.visual_effects import fade, flash_transparent_color, greyscale_screen
 
 
@@ -724,14 +727,19 @@ class DialogLookup:
                             no_path_function=no_path_function, config=self.config,
                             show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
-    def select_from_text_menu(self, lines, x, y, width, right_column=None, initial_index=0):
-        """Show a window listing lines with a blinking arrow. Returns the chosen index, or None if cancelled."""
+    def select_in_window(self, window: Window, number_of_entries: int, draw_window: Callable[[], object],
+                         first_tile_row: int, initial_index: int = 0) -> int | None:
+        """Show a selection window with a blinking cursor. Returns the chosen entry's index, or None if cancelled.
+        :param window: Where the window goes and how big it is, in blocks.
+        :param number_of_entries: How many entries the window lists.
+        :param draw_window: Draws the window and its entries, without the cursor.
+        :param first_tile_row: The tile row of the first entry and the cursor (the window data's cursor home Y).
+        Entries are 2 tile rows (one block) apart, in single and double spaced windows alike.
+        """
         tile_size = self.config['TILE_SIZE']
-        height = len(lines) + 1
+        x, y, width, height = window
         self.command_menu.window_drop_down_effect(x, y, width, height)
         window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
-        graphics = Graphics(self.config)
-        background = self.directories.item_menu_background_lookup[5]
         current_index = initial_index
         start_time = get_ticks()
         while True:
@@ -739,21 +747,16 @@ class DialogLookup:
             frames_elapsed = self.calculation.convert_to_frames_since_start_time(start_time)
             if frames_elapsed > 32:
                 start_time = get_ticks()
-            graphics.create_window(x, y, width, height, background, self.screen, self.color)
-            for i, line in enumerate(lines):
-                line_y = (y + i + 1) * tile_size
-                draw_text(line, (x + 1) * tile_size, line_y, self.screen, self.config, self.color,
-                          letter_by_letter=False)
-                if right_column:
-                    draw_text(right_column[i], (x + width - 0.5) * tile_size, line_y, self.screen, self.config,
-                              self.color, alignment='right', letter_by_letter=False)
-            draw_text('>', (x + 0.4) * tile_size, (y + current_index + 1) * tile_size, self.screen, self.config,
+            draw_window()
+            # The cursor goes in tile column 1, between the left border and the entry (cursor home X = 1)
+            cursor_x, cursor_y = self.command_menu.window_text_position(x, y, 1, first_tile_row + 2 * current_index)
+            draw_text('>', cursor_x, cursor_y, self.screen, self.config,
                       self.color if frames_elapsed <= 16 else BLACK, letter_by_letter=False)
             if not self.config['NO_BLIT']:
                 display.update(window_rect)
             for current_event in get():
                 if current_event.type == KEYDOWN:
-                    if current_event.key in (K_DOWN, K_s) and current_index < len(lines) - 1:
+                    if current_event.key in (K_DOWN, K_s) and current_index < number_of_entries - 1:
                         current_index += 1
                         start_time = get_ticks()
                     elif current_event.key in (K_UP, K_w) and current_index > 0:
@@ -768,20 +771,70 @@ class DialogLookup:
                     quit()
             pump()
 
+    def draw_window_background(self, window: Window) -> None:
+        """A blank window with a border, stretched to its size (Graphics.create_window border)."""
+        Graphics(self.config).create_window(*window, self.directories.ITEM_MENU_BACKGROUND_PATH, self.screen,
+                                            self.color, border=ITEM_MENU_BORDER)
+
+    def draw_in_window(self, window: Window, text: str, column: int, row: int, alignment: str = 'left') -> None:
+        """Draw text in a window's tile (see CommandMenu.window_text_position)."""
+        text_x, text_y = self.command_menu.window_text_position(window.x, window.y, column, row)
+        draw_text(text, text_x, text_y, self.screen, self.config, self.color, alignment=alignment,
+                  letter_by_letter=False)
+
+    def select_from_text_menu(self, lines: list[str], window: Window, initial_index: int = 0) -> int | None:
+        """A double spaced selection window of one column, like BuySellDat or YesNo1Dat: after the top border and a
+        blank row, each line is at tile column 2 with a blank row after it (cursor home Y = 2)."""
+
+        def draw_window() -> None:
+            self.draw_window_background(window)
+            for index, line in enumerate(lines):
+                self.draw_in_window(window, line, 2, 2 + 2 * index)
+
+        return self.select_in_window(window, len(lines), draw_window, 2, initial_index)
+
+    def select_shop_item(self, item_names: list[str], costs: list[int]) -> int | None:
+        """The shop inventory window (NES ShopInvDat): single spaced and as high as the shop's stock
+        (WndVariableHeight). Each item takes 2 tile rows: the first half of its name at tile column 2 and its cost,
+        5 tiles wide, ending at column 16 (WndItemCost); the second half on the next row at column 3 (cursor home
+        Y = 1)."""
+        window = variable_height_window(SHOP_INVENTORY_WINDOW, len(item_names))
+
+        def draw_window() -> None:
+            self.draw_window_background(window)
+            for index, (name, cost) in enumerate(zip(item_names, costs)):
+                row = 1 + 2 * index
+                translated_name = self._(name)
+                first_half, second_half = name_halves(name) if translated_name == name else (translated_name, '')
+                self.draw_in_window(window, first_half, 2, row)
+                self.draw_in_window(window, str(cost), SHOP_COST_RIGHT_TILE_COLUMN, row, alignment='right')
+                if second_half:
+                    self.draw_in_window(window, second_half, 3, row + 1)
+
+        return self.select_in_window(window, len(item_names), draw_window, 1)
+
+    def select_from_inventory(self, items: list[str]) -> int | None:
+        """The player inventory window (NES PlayerInvDat), as the ITEM command shows it."""
+        window = Window(*item_menu_window('inventory', len(items)))
+        return self.select_in_window(window, len(items),
+                                     lambda: self.command_menu.draw_item_menu('inventory', items),
+                                     ITEM_MENU_FIRST_TILE_ROW['inventory'])
+
     def open_store_inventory(self, current_store_inventory, static_store_image=None):
         """NES GetShopItems: show the shop's stock and return the name of the item chosen, or None if cancelled.
 
         Shops with pre-rendered menu images blink between them; the others are drawn as text."""
         item_names = list(current_store_inventory)
         if static_store_image is None or not all('menu_image' in item for item in current_store_inventory.values()):
-            selected_index = self.select_from_text_menu([self._(name) for name in item_names], 6, 2, 9,
-                                                        right_column=[str(current_store_inventory[name]['cost'])
-                                                                      for name in item_names])
+            selected_index = self.select_shop_item(item_names,
+                                                   [current_store_inventory[name]['cost'] for name in item_names])
             return None if selected_index is None else item_names[selected_index]
         tile_size = self.config['TILE_SIZE']
-        height = len(current_store_inventory) + 1
-        self.command_menu.window_drop_down_effect(6, 2, 9, height)
-        store_inventory_window_rect = Rect(6 * tile_size, 2 * tile_size, 9 * tile_size, height * tile_size)
+        # NES ShopInvDat
+        window = variable_height_window(SHOP_INVENTORY_WINDOW, len(current_store_inventory))
+        self.command_menu.window_drop_down_effect(*window)
+        store_inventory_window_rect = Rect(window.x * tile_size, window.y * tile_size, window.width * tile_size,
+                                           window.height * tile_size)
         current_item_index = 0
         start_time = get_ticks()
         # arrow stays on and off for 16 frames at a time
@@ -793,10 +846,10 @@ class DialogLookup:
             current_item_menu_image = current_store_inventory[current_item_name]['menu_image']
             frames_elapsed = self.calculation.convert_to_frames_since_start_time(start_time)
             if frames_elapsed <= 16:
-                graphics.create_window(6, 2, 9, height, current_item_menu_image, self.screen, self.color)
+                graphics.create_window(*window, current_item_menu_image, self.screen, self.color)
                 display.update(store_inventory_window_rect)
             elif frames_elapsed <= 32:
-                graphics.create_window(6, 2, 9, height, static_store_image, self.screen, self.color)
+                graphics.create_window(*window, static_store_image, self.screen, self.color)
                 display.update(store_inventory_window_rect)
             else:
                 start_time = get_ticks()
@@ -811,7 +864,7 @@ class DialogLookup:
                     elif current_event.key in reject_keys:
                         return None
                     elif current_event.key in accept_keys:
-                        graphics.create_window(6, 2, 9, height, current_item_menu_image, self.screen, self.color)
+                        graphics.create_window(*window, current_item_menu_image, self.screen, self.color)
                         display.update(store_inventory_window_rect)
                         return current_item_name
                 elif current_event.type == QUIT:
@@ -884,7 +937,7 @@ class DialogLookup:
     def tool_shop(self, current_store_inventory):
         self.say(self.tools_intro)
         # NES WND_BUY_SELL
-        choice = self.select_from_text_menu([self._("BUY"), self._("SELL")], 5, 2, 4)
+        choice = self.select_from_text_menu([self._("BUY"), self._("SELL")], BUY_SELL_WINDOW)
         if choice == 0:
             self.buy_tool(current_store_inventory)
         elif choice == 1:
@@ -923,15 +976,14 @@ class DialogLookup:
     def sell_tool(self, current_store_inventory):
         """NES DoToolSell."""
         _ = self._
-        items = sell_list(self.player.inventory)
+        items = inventory_list(self.player.inventory)
         if not items:
             self.say(_("Thou hast no possessions."))
             self.tool_shop_goodbye()
             return
         self.say(_("What art thou selling?"))
-        counts = [str(self.player.inventory.count(item)) if item in ('Herb', 'Magic Key') else ''
-                  for item in items]
-        selected_index = self.select_from_text_menu([_(item) for item in items], 6, 2, 9, right_column=counts)
+        # NES DoToolSell: WND_INVTRY1, the window the ITEM command uses
+        selected_index = self.select_from_inventory(items)
         if selected_index is None:
             self.tool_shop_goodbye()
             return
