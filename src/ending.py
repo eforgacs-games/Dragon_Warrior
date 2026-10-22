@@ -104,8 +104,11 @@ class Ending:
             return f"'{text}'"
         return f"`{text}’"
 
-    def say(self, line: str, quoted: bool = True, wait_for_key: bool = True) -> None:
-        self.game.cmd_menu.show_line_in_dialog_box(line, add_quotes=quoted, skip_text=not wait_for_key)
+    def say(self, line: str, quoted: bool = True, wait_for_key: bool = True, hide_arrow: bool = False) -> None:
+        """One message. It waits with the arrow for A or B (TXT_WAIT, DoWait), or with hide_arrow for any button, the
+        way the NES waits once a message ends (TXT_END1, then WaitForBtnRelease)."""
+        self.game.cmd_menu.show_line_in_dialog_box(line, add_quotes=quoted, skip_text=not wait_for_key,
+                                                   hide_arrow=hide_arrow)
 
     def redraw(self) -> None:
         game = self.game
@@ -125,10 +128,12 @@ class Ending:
         it) and F_DGNLRD_DEAD is set. HP and MP are maxed out and ChangeMaps puts the hero outside the Dragonlord's
         castle facing down. No experience or gold is given."""
         _ = self._
-        for line in (_("Thou hast found the Ball of Light."),
-                     _("Radiance streams forth as thy hands touch the object and hold it aloft."),
-                     _("Across the land spreads the brilliance until all shadows are banished and peace is restored.")):
-            self.say(line, quoted=False)
+        # TextBlock18, entry 10: TXT_WAIT after the first two lines (A or B), TXT_END1 after the last, and then LE9F8
+        # WaitForBtnRelease (any button)
+        self.say(_("Thou hast found the Ball of Light."), quoted=False)
+        self.say(_("Radiance streams forth as thy hands touch the object and hold it aloft."), quoted=False)
+        self.say(_("Across the land spreads the brilliance until all shadows are banished and peace is restored."),
+                 quoted=False, hide_arrow=True)
         self.game.story_flags.dragonlord_defeated = True
         self.player.restore_hp()
         self.player.restore_mp()
