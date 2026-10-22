@@ -296,3 +296,70 @@ class TestHandleSpriteAnimation(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# handle_darkness
+# ---------------------------------------------------------------------------
+
+class TestHandleDarkness(unittest.TestCase):
+    """The dungeon light (NES LightDiameter, ChkLightDiameterX/ChkLightDiameterY in Bank00)."""
+
+    def setUp(self):
+        from src.game_state import GameState
+        config = dict(test_config)
+        config['NO_BLIT'] = False
+        self.game_state = GameState(config)
+        with patch('src.drawer.Graphics'), patch('src.drawer.Directories'), patch('src.drawer.Sound'), \
+                patch('src.drawer.Calculation'):
+            self.drawer = Drawer(self.game_state)
+        self.tile_size = config['TILE_SIZE']
+        self.player = MagicMock(is_moving=False, bumped=False)
+
+    def lit_area(self, frames=1):
+        """Draw some frames of darkness over a white screen and return the size, in tiles, of the part left lit."""
+        from pygame import Surface
+        screen = Surface((self.tile_size * 16, self.tile_size * 15))
+        for _ in range(frames):
+            screen.fill((255, 255, 255))
+            self.drawer.handle_darkness(screen, self.player)
+        screen.set_colorkey((0, 0, 0))  # so that the bounding rect leaves out the darkness
+        lit = screen.get_bounding_rect()
+        center = (screen.get_width() // 2 + self.tile_size // 2, screen.get_height() // 2)
+        self.assertTrue(lit.collidepoint(center), 'the light is centered on the hero')
+        return lit.width / self.tile_size, lit.height / self.tile_size
+
+    def test_without_a_light_only_the_hero_is_lit(self):
+        self.assertEqual(self.lit_area(), (1, 1))
+
+    def test_radiant_expands_the_light_one_block_at_a_time(self):
+        from src.game_state import LIGHT_REDRAW_FRAMES
+        self.game_state.cast_radiant()
+        self.assertEqual(self.lit_area(LIGHT_REDRAW_FRAMES - 1), (1, 1))
+        self.assertEqual(self.lit_area(1), (3, 3))
+        self.assertEqual(self.lit_area(LIGHT_REDRAW_FRAMES), (5, 5))
+        self.assertEqual(self.lit_area(LIGHT_REDRAW_FRAMES), (7, 7))
+        self.assertEqual(self.lit_area(LIGHT_REDRAW_FRAMES), (7, 7))
+        self.assertEqual(self.drawer.sound.play_sound.call_count, 3)
+
+    def test_torch_lights_3_blocks(self):
+        from src.game_state import LIGHT_REDRAW_FRAMES
+        self.game_state.use_torch()
+        self.assertEqual(self.lit_area(LIGHT_REDRAW_FRAMES), (3, 3))
+        self.assertEqual(self.drawer.sound.play_sound.call_count, 1)
+
+    def test_shrinking_light_is_shown_once_the_hero_steps(self):
+        from src.game_state import LIGHT_REDRAW_FRAMES
+        self.game_state.cast_radiant()
+        self.lit_area(LIGHT_REDRAW_FRAMES * 3)
+        for _ in range(80):
+            self.game_state.tick_radiant_timer()
+        self.assertEqual(self.lit_area(), (7, 7))
+        self.player.is_moving = True
+        self.assertEqual(self.lit_area(), (5, 5))
+
+    def test_bumping_into_a_wall_does_not_redraw_the_light(self):
+        self.game_state.light_diameter = 5
+        self.game_state.lit_diameter = 7
+        self.player.is_moving, self.player.bumped = True, True
+        self.assertEqual(self.lit_area(), (7, 7))

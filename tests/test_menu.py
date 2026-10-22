@@ -413,6 +413,41 @@ class TestCommandMenu(TestCase):
         self.assertEqual(show_text.call_args.args[0],
                          f"{self.game.player.name} sprinkled the Fairy Water over his body.")
 
+    def test_radiant_lights_up_a_dark_place(self):
+        self.game.cmd_menu.current_map.is_dark = True
+        self.game.cmd_menu.radiant()
+        self.assertEqual(self.game.game_state.light_diameter, 7)
+        self.assertEqual(self.game.game_state.radiant_timer, 0x50)
+        self.assertEqual(self.game.game_state.pending_light_redraws, [3, 5, 7])
+
+    def test_radiant_does_nothing_in_a_lit_place(self):
+        self.game.cmd_menu.current_map.is_dark = False
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.radiant()
+        self.assertEqual(show_text.call_args.args[0], "But nothing happened.")
+        self.assertEqual(self.game.game_state.light_diameter, 1)
+        self.assertEqual(self.game.game_state.radiant_timer, 0)
+
+    def test_torch_lights_up_a_dark_place(self):
+        self.game.cmd_menu.current_map.is_dark = True
+        self.game.player.inventory = ["Torch", "Herb"]
+        self.game.cmd_menu.radiant()
+        self.game.cmd_menu.torch()
+        self.assertEqual(self.game.player.inventory, ["Herb"])
+        # NES UseTorch clears the radiant timer and sets the light to 3 blocks
+        self.assertEqual(self.game.game_state.light_diameter, 3)
+        self.assertEqual(self.game.game_state.radiant_timer, 0)
+        self.assertEqual(self.game.game_state.pending_light_redraws, [3])
+
+    def test_torch_can_only_be_used_in_dark_places(self):
+        self.game.cmd_menu.current_map.is_dark = False
+        self.game.player.inventory = ["Torch"]
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.torch()
+        self.assertEqual(show_text.call_args.args[0], "A torch can be used only in dark places.")
+        self.assertEqual(self.game.player.inventory, ["Torch"])
+        self.assertEqual(self.game.game_state.light_diameter, 1)
+
     def test_field_spells_cannot_be_used_in_battle(self):
         from src.enemy import Slime
         from src.spells import Spell

@@ -144,70 +144,26 @@ class Drawer:
             if not cmd_menu.menu.is_enabled():
                 self.game_state.enable_movement = True
 
-    def handle_darkness(self, screen, torch_active):
+    def handle_darkness(self, screen, player) -> None:
+        """Black out everything but the light around the hero in a dungeon (NES ChkLightDiameterX/ChkLightDiameterY,
+        Bank00): a LightDiameter of 1, 3, 5 or 7 shows a square of that many blocks, centered on the hero."""
+        hero_is_stepping = player.is_moving and not player.bumped
+        if self.game_state.update_lit_diameter(hero_is_stepping):
+            self.sound.play_sound(self.directories.torch_sfx)  # SFX_RADIANT
         tile_size = self.game_state.config["TILE_SIZE"]
+        radius = (self.game_state.lit_diameter - 1) // 2
         darkness = Surface((screen.get_width(), screen.get_height()))  # lgtm [py/call/wrong-arguments]
-        if torch_active:
-            # Light with radius of 1
-            darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size,
-                                                (screen.get_height() / 2) - (tile_size * 1.5),
-                                                tile_size * 3,
-                                                tile_size * 3)
-        elif self.game_state.radiant_active:
-            if self.game_state.radiant_start is None:
-                self.game_state.radiant_start = self.game_state.tiles_moved_total
-                self.sound.play_sound(self.directories.torch_sfx)
-                self.sound.play_sound(self.directories.torch_sfx)
-            tiles_elapsed = self.game_state.tiles_moved_total - self.game_state.radiant_start
-            if tiles_elapsed >= 200:
-                self.game_state.radiant_active = False
-                self.game_state.radiant_start = None
-                darkness_hole = darkness.subsurface((screen.get_width() / 2),
-                                                    (screen.get_height() / 2) - (tile_size / 2),
-                                                    tile_size, tile_size)
-            elif tiles_elapsed >= 140:
-                # shrinking back to radius 1
-                darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size,
-                                                    (screen.get_height() / 2) - (tile_size * 1.5),
-                                                    tile_size * 3,
-                                                    tile_size * 3)
-            elif tiles_elapsed >= 80:
-                # shrinking to radius 2
-                darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * 2,
-                                                    (screen.get_height() / 2) - (tile_size * 2.5),
-                                                    tile_size * 5,
-                                                    tile_size * 5)
-            elif tiles_elapsed >= 40:
-                # full radius 3
-                darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * 3,
-                                                    (screen.get_height() / 2) - tile_size * 3.5,
-                                                    tile_size * 7,
-                                                    tile_size * 7)
-            elif tiles_elapsed >= 20:
-                # expanding to radius 2
-                darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * 2,
-                                                    (screen.get_height() / 2) - (tile_size * 2.5),
-                                                    tile_size * 5,
-                                                    tile_size * 5)
-            else:
-                # initial radius 1
-                darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size,
-                                                    (screen.get_height() / 2) - (tile_size * 1.5),
-                                                    tile_size * 3,
-                                                    tile_size * 3)
-
-        else:
-            darkness_hole = darkness.subsurface((screen.get_width() / 2),
-                                                (screen.get_height() / 2) - (tile_size / 2), tile_size,
-                                                tile_size)
+        darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * radius,
+                                            (screen.get_height() / 2) - tile_size * (radius + 0.5),
+                                            tile_size * self.game_state.lit_diameter,
+                                            tile_size * self.game_state.lit_diameter)
         darkness.fill(BLACK)
         darkness_hole.fill(WHITE)
         darkness.set_colorkey(WHITE)
         screen.blit(darkness, (0, 0)) if not self.game_state.config['NO_BLIT'] else None
 
     def draw_all(self, screen, loop_count, big_map, current_map, player, cmd_menu, foreground_rects, enable_animate,
-                 camera, initial_dialog_enabled, events, skip_text, left_throne_room, game_state, torch_active,
-                 color) -> None:
+                 camera, initial_dialog_enabled, events, skip_text, left_throne_room, game_state, color) -> None:
         """
         Draw map, sprites, background, menu and other surfaces.
         :return: None
@@ -303,7 +259,7 @@ class Drawer:
             self.handle_initial_dialog(initial_dialog_enabled, cmd_menu, events, skip_text, left_throne_room)
             self.handle_post_death_dialog(game_state, cmd_menu, events, skip_text)
         if current_map.is_dark and self.game_state.config["ENABLE_DARKNESS"]:
-            self.handle_darkness(screen, torch_active)
+            self.handle_darkness(screen, player)
         if self.display_hovering_stats:
             if not self.hovering_stats_displayed:
                 cmd_menu.window_drop_down_effect(1, 2, 4, 6)
