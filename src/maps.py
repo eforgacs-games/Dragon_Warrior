@@ -1,6 +1,7 @@
 import inspect
 import sys
 from abc import ABC
+from typing import Callable, Dict
 
 from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
@@ -1048,4 +1049,6 @@ class MagicTemple(DragonWarriorMap):
 
 
 # Lookup of all map names with their associated class
-map_lookup = {map_name: map_class for map_name, map_class in inspect.getmembers(sys.modules[__name__], inspect.isclass)}
+map_lookup: Dict[str, Callable[..., DragonWarriorMap]] = {
+    map_name: map_class for map_name, map_class in inspect.getmembers(sys.modules[__name__], inspect.isclass)
+    if issubclass(map_class, DragonWarriorMap)}
