@@ -38,6 +38,7 @@ from src.drawer import Drawer
 from src.enemy_lookup import enemy_territory_map
 from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
+from src.guardians import guardian_at
 from src.intro import Intro
 from src.items import TreasureChestHistory
 from src.map_layouts import MapLayouts
@@ -450,6 +451,7 @@ class Game:
         self.game_state.tick_radiant_timer()
         self.tick_repel_timer()
         self.check_tantegel_cursed()
+        self.check_guardian_fight()
 
     def check_tantegel_cursed(self):
         """NES CheckTantCursed (part of MovementUpdates, run every step): a cursed player who reaches Y=27 of
@@ -461,6 +463,15 @@ class Game:
         self.cmd_menu.show_text_in_dialog_box(self._("Cursed one, be gone!"), add_quotes=True,
                                               skip_text=self.skip_text)
         self.leave_tantegel()
+
+    def check_guardian_fight(self):
+        """NES MovementUpdates (CheckAxeKnight, CheckGrnDragon, CheckGolem): stepping onto a guardian's tile starts
+        its fixed fight (InitFight). It's queued so handle_battles starts it this same frame."""
+        # The step has only just finished, so the hero's row and column haven't caught up with its rect yet
+        coordinates = self.player.rect.y // self.tile_size, self.player.rect.x // self.tile_size
+        guardian = guardian_at(self.current_map.identifier, coordinates, self.story_flags)
+        if guardian is not None:
+            self.battle_ctrl.queue_scripted_battle(guardian.enemy_name)
 
     def leave_tantegel(self, direction: int | None = None):
         map_name, coordinates = TANTEGEL_OVERWORLD_EXIT
@@ -481,8 +492,11 @@ class Game:
 
     def handle_battles(self):
         if self.battle_ctrl.pending_scripted_battle:
-            # A fixed fight (e.g. the Dragonlord) asked for by a dialog that has now closed.
+            # A fixed fight: the Dragonlord or the Silver Harp, asked for by a dialog that has now closed, or a guardian
+            # the hero has just stepped up to.
             self.battle_ctrl.run_pending_scripted_battle()
+            # NES: InitFight takes the place of CheckBlockDmg, so this step can't also bring a random fight
+            self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
             return
         # NES ChkOtherBlocks: once the Dragonlord is dead, no more random fights
         if self.story_flags.dragonlord_defeated:

@@ -26,6 +26,7 @@ from src.direction import Direction
 from src.ending import CREDITS
 from src.game import Game
 from src.game_functions import set_character_position
+from src.guardians import AXE_KNIGHT, GOLEM, GREEN_DRAGON
 from src.maps import CharlockB1, map_lookup
 from src.maps_functions import get_center_point
 from src.menu import CommandMenu
@@ -186,6 +187,23 @@ class TestStoryRun(TestCase):
         self.cmd_menu.search()
         self.settle()
 
+    def fight_guardian(self, guardian):
+        """Step onto a guardian's tile from the tile before it, which starts its fixed fight (NES MovementUpdates),
+        and win it. Returns the enemies fought."""
+        fought = []
+
+        def win(run_away, current_battle):
+            fought.append(current_battle.enemy.name)
+            return self.fight_to_the_end(run_away, current_battle)
+        self.stand_at(guardian.escape_coordinates)
+        self.stand_at(guardian.coordinates)
+        self.game.count_step()  # the end of the step, as move_player counts it
+        with patch.object(self.game.battle_ctrl, 'handle_battle_prompts', side_effect=win):
+            self.game.handle_battles()  # the queued fight starts this same frame
+        self.settle()
+        self.enemies_fought.clear()  # only the Dragonlord's fight is checked against this list
+        return fought
+
     def tile(self, coordinates):
         row, column = coordinates
         current_map = self.game.current_map
@@ -283,12 +301,27 @@ class TestStoryRun(TestCase):
             self.assertNotIn('Staff of Rain', player.inventory)
             self.assertIn("Erdrick's Token", player.inventory)
 
+    def beat_the_golem(self):
+        game = self.game
+        with self.step("8a (beat the Golem guarding Cantlin)"):
+            self.travel_to('Alefgard', GOLEM.escape_coordinates)
+            self.assertEqual(self.fight_guardian(GOLEM), ['Golem'])
+            self.assertTrue(game.story_flags.golem_defeated)
+            self.walk_onto((109, 81))  # Cantlin's gate, just past him
+            self.assertEqual(self.where, ('Cantlin', (8, 15)))
+
     def rescue_gwaelin(self, name):
         game = self.game
         with self.step(f"{name} (rescue Princess Gwaelin from the Swamp Cave)"):
             self.travel_to('Alefgard', (51, 111))
             self.walk_onto((51, 112))
             self.assertEqual(self.where, ('SwampCave', (6, 4)))
+            if game.story_flags.dragonlord_defeated:
+                # NES CheckForTriggers: with the Dragonlord dead, no guardian fights any more
+                self.assertEqual(self.fight_guardian(GREEN_DRAGON), [])
+            else:
+                self.assertEqual(self.fight_guardian(GREEN_DRAGON), ['Green Dragon'])
+                self.assertTrue(game.story_flags.green_dragon_defeated)
             self.open_door((27, 9), UP)
             self.assertEqual(self.tile((26, 9)), 'BRICK')
             self.talk((25, 9), UP)
@@ -390,6 +423,7 @@ class TestStoryRun(TestCase):
         self.take_the_throne_room_chests()
         self.get_keys_and_the_stones_of_sunlight()
         self.get_the_rainbow_drop()
+        self.beat_the_golem()
         self.rescue_gwaelin("9a")
         self.bring_gwaelin_home()
         self.defeat_the_dragonlord()
@@ -404,6 +438,7 @@ class TestStoryRun(TestCase):
         self.take_the_throne_room_chests()
         self.get_keys_and_the_stones_of_sunlight()
         self.get_the_rainbow_drop()
+        self.beat_the_golem()
         self.defeat_the_dragonlord()
         self.rescue_gwaelin("13b")
         self.assertNotIn("Thou hast brought us peace, again.", self.shown_text)
@@ -412,3 +447,13 @@ class TestStoryRun(TestCase):
         self.assertFalse(gwaelin_returned(self.game))
         self.assertEqual(gwaelin_put_down_at, [ENDING_GWAELIN_BESIDE_KING])
         self.assertFalse(gwaelin_walked)
+
+    def test_erdricks_armor_is_guarded_by_the_axe_knight(self):
+        """Erdrick's Armor isn't needed to finish the game, so it isn't part of the run above."""
+        self.travel_to('Hauksness', AXE_KNIGHT.escape_coordinates)
+        self.assertEqual(self.fight_guardian(AXE_KNIGHT), ['Axe Knight'])
+        self.search(AXE_KNIGHT.coordinates)
+        self.assertEqual(self.player.armor, "Erdrick's Armor")
+        self.assertIn("Erdrick discovers the Erdrick's Armor.", self.shown_text)
+        # NES CheckAxeKnight has no story flag: he's back on every step onto the tile
+        self.assertEqual(self.fight_guardian(AXE_KNIGHT), ['Axe Knight'])
