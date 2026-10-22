@@ -1,3 +1,4 @@
+import random
 from functools import partial
 
 from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect, QUIT
@@ -8,11 +9,13 @@ from data.text.dialog import confirmation_prompt
 from src.calculation import Calculation
 from src.color import BLACK
 from src.common import RED, WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
+from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACEABLE_ITEMS
 from src.direction import Direction
 from src.directories import Directories
-from src.items import weapons, armor, shields
+from src.items import INVENTORY_SLOTS, UNSLOTTED_ITEMS, weapons, armor, shields
 from src import maps
 from src.maps import DragonWarriorMap
+from src.maps_functions import get_center_point
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories
 from src.sound import Sound
@@ -90,17 +93,19 @@ class DialogLookup:
                                           _("To reach the next level, thy Experience Points must increase by {}.").format(
                                               self.player.points_to_next_level),
                                           _("Now, go, {}!").format(self.player.name)),
+                    # NES DoKingDialog (Bank03), when F_GOT_GWAELIN is set: TextBlock12 entry 9, AddInvItem
+                    # (Gwaelin's Love), entries 11 and 12, then Gwaelin is put on the throne and it goes straight
+                    # to SaveDialog. No experience or gold is given.
                     'carrying_princess_dialog': (
-                        _("Forever shall I be grateful for the gift of my daughter returned to her home, {}. "
+                        _("Forever shall I be grateful for the gift of my daughter returned to her home, {}.\n"
                           "Accept my thanks.").format(self.player.name),
                         _("Now, Gwaelin, come to my side."),
                         self.princess_whispers,
-                        self._("Please accept my love, {}.").format(self.player.name),
-                        self._("Even when we two are parted by great distances, I shall be with thee."),
-                        self._("Farewell, {}.").format(self.player.name),
+                        _("Please accept my love, {}.").format(self.player.name),
                         self.receive_gwaelins_love,
+                        self.even_when_we_two_are_parted,
+                        _("Farewell, {}.").format(self.player.name),
                         self.put_princess_on_throne,
-                        # TODO: Put Princess on her throne at this point, and reset character images
                         self.prompt_for_save,
                         self.prompt_to_continue_quest,
                     ),
@@ -109,6 +114,8 @@ class DialogLookup:
                 'GUARD': {'dialog': (
                     self.tantegel_throne_room_roaming_guard,
                 )},
+                # Only on the map once she's been returned (NES ChkGwaelinNPC)
+                'PRINCESS_GWAELIN': {'dialog': (self.princess_gwaelin_throne_room,)},
                 'GUARD_2': {'dialog': (
                     _("If thou hast collected all the Treasure Chests, a key will be found."),
                     _("Once used, the key will disappear, but the door will be open and thou may pass through.")
@@ -131,13 +138,18 @@ class DialogLookup:
                     "There was a time when Brecconary was a paradise.\nThen the Dragonlord's minions came.")},
                 'WOMAN': {
                     'dialog': (_("When the sun and rain meet, a Rainbow Bridge shall appear."), _("It's a legend."))},
-                'WOMAN_2': {'dialog': where_is_princess_gwaelin},
+                # NES ChkPrncsDialog1 (dialog byte $62)
+                'WOMAN_2': {'dialog': (partial(self.dialog_once_gwaelin_rescued, where_is_princess_gwaelin,
+                                               _("Thank you for saving the Princess.")),)},
 
                 'GUARD': {'dialog': (
                     _("King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."),)},
                 'GUARD_2': {'dialog': _("If thou art planning to take a rest, first see King Lorik.")},
                 'GUARD_3': {'dialog': _("Never does a brave person steal.")},
-                'GUARD_4': {'dialog': where_is_princess_gwaelin},
+                # NES ChkPrncsDialog2 (dialog byte $63)
+                'GUARD_4': {'dialog': (partial(self.dialog_once_gwaelin_rescued, where_is_princess_gwaelin,
+                                               _("Oh, my dearest Gwaelin!’\n`I hate thee, {}.").format(
+                                                   self.player.name)),)},
                 'GUARD_5': {'dialog': welcome_to_tantegel},
                 'GUARD_6': {'dialog': welcome_to_tantegel},
                 'WISE_MAN': {'dialog': (
@@ -156,8 +168,11 @@ class DialogLookup:
                             self.directories.BRECCONARY_WEAPONS_SHOP_PATH),)},
                 'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
                 'MERCHANT_3': {'dialog': (tools_intro,)},
-                'GUARD': {'dialog': (_("Tell King Lorik that the search for his daughter hath failed."),
-                                     _("I am almost gone...."))},
+                # NES ChkPrncsDialog3 (dialog byte $64)
+                'GUARD': {'dialog': (partial(self.dialog_once_gwaelin_rescued,
+                                             (_("Tell King Lorik that the search for his daughter hath failed."),
+                                              _("I am almost gone....")),
+                                             _("Who touches me?’\n`I see nothing, nor can I hear.")),)},
                 'WOMAN_2': {'dialog': _("Welcome! \n"
                                         "Enter the shop and speak to its keeper across the desk.")},
             },
@@ -364,28 +379,99 @@ class DialogLookup:
             time.wait(16)
 
     def princess_whispers(self):
+        # NES TextBlock12 entry 9 (the ROM really has no space in "moment,please")
         self.command_menu.show_text_line_in_dialog_box(
             line=self._("Gwaelin then whispers:\n"
-                        "'Wait a moment, please. "
-                        "I would give a present to {}.'").format(self.player.name),
+                        "`Wait a moment,please.\n"
+                        "I would give a present to {}.’").format(self.player.name),
             add_quotes=False, disable_sound=False, hide_arrow=False, letter_by_letter=True, skip_text=False,
             temp_text_start=None, tile_size=self.config['TILE_SIZE'])
 
     def receive_gwaelins_love(self):
+        """NES DoKingDialog: AddInvItem gives Gwaelin's Love. If the inventory is full, TakeItemLoop takes the first
+        item from InvListTbl that the hero has to make room, and TextBlock12 entry 10 asks for it. If none of those
+        items is there, Gwaelin's Love isn't given at all."""
+        _ = self._
+        used_slots = [item for item in self.player.inventory if item not in UNSLOTTED_ITEMS]
+        if len(used_slots) >= INVENTORY_SLOTS:
+            taken_item = next((item for item in GWAELINS_LOVE_REPLACEABLE_ITEMS if item in self.player.inventory),
+                              None)
+            if taken_item is None:
+                return
+            self.player.inventory.remove(taken_item)
+            if taken_item == "Dragon's Scale":
+                self.player.wearing_dragon_scale = False
+                self.player.update_defense_power()
+            elif taken_item == "Fighter's Ring":
+                self.player.wearing_fighters_ring = False
+            self.player.inventory.append("Gwaelin's Love")
+            self.command_menu.show_line_in_dialog_box(
+                _("And I would like to have something of thine--a token."))
+            self.command_menu.show_line_in_dialog_box(_("Please give me thy {}.").format(_(taken_item)))
+            return
         self.player.inventory.append("Gwaelin's Love")
 
+    def even_when_we_two_are_parted(self):
+        self.command_menu.show_line_in_dialog_box(
+            self._("Even when we two are parted by great distances, I shall be with thee."))
+
     def put_princess_on_throne(self):
-        # TODO: This put_princess_on_throne method doesn't quite work yet...
-        self.command_menu.game.set_player_images_by_equipment()
-        self.player.set_images(self.player.images)
+        """NES DoKingDialog: clear F_GOT_GWAELIN, set F_RTN_GWAELIN and place Gwaelin's NPC beside the king."""
+        game = self.command_menu.game
         self.player.is_carrying_princess = False
-        self.current_map.fixed_characters.append('PRINCESS_GWAELIN')
-        # this dialog is totally made up, fix later
-        # self.current_map.characters['PRINCESS_GWAELIN'] = {
-        #     'dialog': self._("I am Gwaelin, daughter of Lorik. I shall wait here for thy return."),
-        #     'dialog_character': 'PRINCESS_GWAELIN',
-        #     'images': self.current_map.scale_sprite_sheet(self.directories.PRINCESS_GWAELIN_PATH)[0]
-        # }
+        game.gwaelin_returned = True
+        game.set_player_images_by_equipment()
+        current_map = game.current_map
+        if current_map.identifier == 'TantegelThroneRoom' and 'PRINCESS_GWAELIN' not in current_map.characters:
+            row, column = GWAELIN_THRONE_ROOM_COORDINATES
+            current_map.npc_coordinates[GWAELIN_THRONE_ROOM_COORDINATES] = 'PRINCESS_GWAELIN'
+            current_map.center_pt = get_center_point(column, row, tile_size=self.config['TILE_SIZE'])
+            princess = current_map.character_key['PRINCESS_GWAELIN']
+            current_map.map_npc('PRINCESS_GWAELIN', Direction.DOWN.value, princess['underlying_tile'],
+                                princess['path'], princess['four_sided'], GWAELIN_THRONE_ROOM_COORDINATES,
+                                is_roaming=False)
+
+    def princess_gwaelin_throne_room(self):
+        """NES PrincessDialog: two random bits pick what Gwaelin says when spoken to in the throne room."""
+        _ = self._
+        random_bits = random.randint(0, 3)
+        if random_bits == 0:
+            self.even_when_we_two_are_parted()
+        elif random_bits == 3:
+            self.command_menu.show_line_in_dialog_box(_("I love thee, {}.").format(self.player.name))
+        else:
+            self.dost_thou_love_me()
+
+    def dost_thou_love_me(self):
+        # NES PrncsRndDialog2: she asks until the answer is yes
+        return confirmation_prompt(
+            self.command_menu,
+            self._("Dost thou love me, {}?").format(self.player.name),
+            yes_path_function=self.im_so_happy,
+            no_path_function=partial(self.but_thou_must, self.dost_thou_love_me),
+            config=self.config,
+            show_arrow=self.command_menu.game.show_arrow,
+            color=self.color)
+
+    def im_so_happy(self):
+        # NES PrncsLoveDialog: "I'm so happy!", then the Gwaelin's Love clip, then the throne room music again
+        self.command_menu.show_line_in_dialog_box(self._("I'm so happy!"))
+        self.play_gwaelins_love_music()
+
+    def play_gwaelins_love_music(self):
+        mixer.music.stop()
+        self.sound.play_sound(self.directories.princess_gwaelins_love_sfx)
+        if not self.config['NO_WAIT']:
+            time.wait(5000)
+        if self.config['MUSIC_ENABLED']:
+            mixer.music.play(-1)
+
+    def dialog_once_gwaelin_rescued(self, not_saved_dialog, saved_dialog):
+        """NES ChkPrncsDialog1-4: these NPCs change what they say once F_DONE_GWAELIN is set, which is as soon as
+        the hero is carrying Gwaelin, not just once she's been returned."""
+        dialog = saved_dialog if self.command_menu.game.gwaelin_rescued else not_saved_dialog
+        self.command_menu.show_text_in_dialog_box(dialog, add_quotes=True, skip_text=self.command_menu.skip_text,
+                                                  drop_down=False, drop_up=False)
 
     def say(self, *lines):
         """Show NPC lines in the dialog box that is already open."""
@@ -483,13 +569,16 @@ class DialogLookup:
         return confirmation_prompt(self.command_menu,
                                    self._("Will thou tell me now of thy deeds so they won't be forgotten?"),
                                    yes_path_function=self.save_game,
-                                   no_path_function=self.prompt_to_continue_quest,
+                                   # NES SaveDialog: either way it goes on to "Dost thou wish to continue thy quest?",
+                                   # which is the next entry in the king's dialog
+                                   no_path_function=lambda: None,
                                    config=self.config,
                                    show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
     def save_game(self):
         self.command_menu.save()
-        self._("Thy deeds have been recorded on the Imperial Scrolls of Honor."),
+        self.command_menu.show_line_in_dialog_box(
+            self._("Thy deeds have been recorded on the Imperial Scrolls of Honor."))
 
     def prompt_to_continue_quest(self):
         return confirmation_prompt(self.command_menu, self._("Dost thou wish to continue thy quest?"),
@@ -515,7 +604,7 @@ class DialogLookup:
 
     def tantegel_throne_room_roaming_guard(self):
         _ = self._
-        if self.command_menu.game.princess_saved:
+        if self.command_menu.game.gwaelin_rescued:
             self.command_menu.show_line_in_dialog_box(_("Oh, brave {}.").format(self.player.name))
         else:
             player_please_save_the_princess = _("{}, please save the Princess.").format(self.player.name)
@@ -741,6 +830,10 @@ class DialogLookup:
             self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
             display.flip()
         self.command_menu.game.color = self.color = WHITE
-        self.command_menu.show_text_in_dialog_box((_("Good morning.\nThou seems to have spent a good night."),
-                                                   _("I shall see thee again.")), skip_text=self.command_menu.skip_text,
-                                                  drop_up=False)
+        # NES Inn (Bank03, after PalFadeIn): TextBlock1 entry 6 if the hero is carrying Gwaelin, otherwise entry 8
+        if self.player.is_carrying_princess:
+            good_morning = _("Good morning.\nThou hast had a good night's sleep I hope.")
+        else:
+            good_morning = _("Good morning.\nThou seems to have spent a good night.")
+        self.command_menu.show_text_in_dialog_box((good_morning, _("I shall see thee again.")),
+                                                  skip_text=self.command_menu.skip_text, drop_up=False)

@@ -102,6 +102,16 @@ SILVER_HARP_ENEMIES = ('Slime', 'Red Slime', 'Drakee', 'Ghost', 'Magician', 'Sco
 TANTEGEL_CURSED_ROW = 27 + 7
 # Where the cursed player lands: the castle tile on the overworld, NES (43, 43) (MapEntryTbl entry 4, X = $0C)
 TANTEGEL_OVERWORLD_EXIT = ('Alefgard', (50, 51))
+# NES ThRmStatTbl: Princess Gwaelin's throne room NPC sits at (6, 3), facing down, next to King Lorik at (3, 3).
+# The throne room here is offset by (+6 rows, +10 columns), so King Lorik is at (9, 13) and Gwaelin at (9, 16).
+GWAELIN_THRONE_ROOM_COORDINATES = (9, 16)
+# Where she waits in the Swamp Cave until she's rescued
+GWAELIN_SWAMP_CAVE_COORDINATES = (24, 9)
+
+# NES InvListTbl: if the inventory is full when King Lorik gives Gwaelin's Love, the first of these the hero has is
+# taken to make room. If none of them is there, Gwaelin's Love isn't given.
+GWAELINS_LOVE_REPLACEABLE_ITEMS = (
+    'Torch', "Dragon's Scale", "Fighter's Ring", 'Fairy Water', 'Wings', 'Cursed Belt', 'Staff of Rain')
 
 # NES RepelTimer: REPEL sets it to 255 and Fairy Water to 254; it drops by 2 per step (127 steps either way)
 REPEL_SPELL_TIMER = 255
