@@ -340,7 +340,7 @@ class BattleController:
             elif selected_executed_option == 'Item':
                 if not self.player.inventory:
                     self.cmd_menu.show_line_in_dialog_box(
-                        'Nothing of use has yet been given to thee.\n',
+                        self._('Nothing of use has yet been given to thee.\n'),
                         add_quotes=False, hide_arrow=True, disable_sound=True)
                     current_battle.no_op = True
                 else:
