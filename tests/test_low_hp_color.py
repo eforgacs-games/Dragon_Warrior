@@ -5,9 +5,11 @@ from unittest.mock import MagicMock, patch
 import pygame
 from pygame import KEYDOWN, K_ESCAPE, K_RETURN
 
-from src.color import RED, WHITE, is_low_hp, window_color
+from src.color import LOW_HP_RED, WHITE, is_low_hp, window_color
 from src.config.test_config import test_config
 from src.game import Game
+from src.maps_functions import PAL0_COLOR1_LOW_HP
+from src.visual_effects import NES_PALETTE, NES_RED
 from src.maps import map_lookup
 from src.windows import SHOP_INVENTORY_WINDOW
 
@@ -27,8 +29,15 @@ class TestLowHPThreshold(TestCase):
                 self.assertFalse(is_low_hp(max_hp, max_hp))
 
     def test_window_color(self):
-        self.assertEqual(window_color(4, 15), RED)
+        self.assertEqual(window_color(4, 15), LOW_HP_RED)
         self.assertEqual(window_color(5, 15), WHITE)
+
+    def test_low_hp_red_is_nes_26(self):
+        # AddPalByte's ChkLowHPPal: LDA #$26, the same red for the windows and the map's palette 0 tiles
+        self.assertEqual(LOW_HP_RED, NES_PALETTE[0x26])
+        self.assertEqual(LOW_HP_RED, PAL0_COLOR1_LOW_HP)
+        # not RedFlashPal's $16, the damage flash
+        self.assertNotEqual(LOW_HP_RED, NES_RED)
 
 
 class TestLowHPWindowColor(TestCase):
@@ -88,12 +97,12 @@ class TestLowHPWindowColor(TestCase):
 
     def test_command_window_selected_entry_red_at_low_hp(self):
         self.set_hp(4)
-        self.assertEqual(self.game.color, RED)
-        self.assert_command_window_color(RED)
+        self.assertEqual(self.game.color, LOW_HP_RED)
+        self.assert_command_window_color(LOW_HP_RED)
         # moving the cursor keeps it red
         self.cmd_menu.menu.enable()
         self.cmd_menu.menu.update([pygame.event.Event(KEYDOWN, key=pygame.K_DOWN)])
-        self.assert_command_window_color(RED)
+        self.assert_command_window_color(LOW_HP_RED)
         self.set_hp(15)
         self.assert_command_window_color(WHITE)
 
@@ -101,23 +110,51 @@ class TestLowHPWindowColor(TestCase):
         # changing maps builds a new COMMAND window, in the color for the current HP
         self.player.current_hp = 2
         self.game.change_map(map_lookup['Brecconary'](self.game.config), destination_coordinates=(23, 10))
-        self.assertEqual(self.game.color, RED)
-        self.assert_command_window_color(RED)
+        self.assertEqual(self.game.color, LOW_HP_RED)
+        self.assert_command_window_color(LOW_HP_RED)
 
     def test_command_window_background_and_border_redrawn(self):
         with patch.object(self.cmd_menu.graphics, 'set_window_background') as set_window_background:
             self.set_hp(3)
-        self.assertEqual([c.args[2] for c in set_window_background.call_args_list], [RED, RED])
+        self.assertEqual([c.args[2] for c in set_window_background.call_args_list], [LOW_HP_RED, LOW_HP_RED])
         with patch.object(self.cmd_menu.graphics, 'set_window_background') as set_window_background:
             self.set_hp(3)
         set_window_background.assert_not_called()  # nothing changed, nothing redrawn
+
+    def test_window_background_white_turns_low_hp_red(self):
+        graphics = self.cmd_menu.graphics
+        path = self.game.directories.COMMAND_MENU_BACKGROUND_PATH
+        colors = {}
+        for color in (WHITE, LOW_HP_RED):
+            window = pygame.Surface((64, 64))
+            with patch.dict(graphics.config, NO_BLIT=False):
+                graphics.set_window_background(window, path, color)
+            colors[color] = {tuple(window.get_at((x, y)))[:3] for x in range(64) for y in range(64)}
+        # the image's border is near white, (255, 254, 255), which set_window_background matches as white
+        self.assertEqual(colors[WHITE], {(0, 0, 0), (255, 254, 255)})
+        self.assertEqual(colors[LOW_HP_RED], {(0, 0, 0), LOW_HP_RED})
+
+    def test_bad_ending_window_color(self):
+        # NES ChooseDrgnLrd loads BadEndBGPal ($16 at $3F01) with PrepBGPalLoad, so ChkLowHPPal still makes it $26
+        # when HP is low (ZeroStats leaves HitPoints alone)
+        dialog_lookup = self.cmd_menu.dialog_lookup
+        for hp, color in ((15, NES_RED), (4, LOW_HP_RED)):
+            with self.subTest(hp=hp):
+                self.player.current_hp = hp
+                with patch.object(self.cmd_menu, 'show_line_in_dialog_box'), \
+                        patch.object(self.game.drawer, 'draw_hovering_stats_window') as stats_window, \
+                        patch('data.text.dialog_lookup_table.display'):
+                    dialog_lookup.show_bad_ending_palette('')
+                self.assertEqual(self.game.color, color)
+                self.assertEqual(stats_window.call_args.args[2], color)
+                self.assertEqual(self.game.current_map.low_hp_palette, color == LOW_HP_RED)
 
     # The other windows read the same color when they're drawn
 
     def test_windows_opened_from_the_command_window_follow_the_color(self):
         self.set_hp(1)
-        self.assertEqual(self.cmd_menu.color, RED)
-        self.assertEqual(self.cmd_menu.dialog_lookup.color, RED)
+        self.assertEqual(self.cmd_menu.color, LOW_HP_RED)
+        self.assertEqual(self.cmd_menu.dialog_lookup.color, LOW_HP_RED)
         self.set_hp(15)
         self.assertEqual(self.cmd_menu.color, WHITE)
         self.assertEqual(self.cmd_menu.dialog_lookup.color, WHITE)
@@ -136,7 +173,7 @@ class TestLowHPWindowColor(TestCase):
     def test_spell_and_item_lists(self):
         self.player.spells = ['HEAL', 'HURT']
         self.player.inventory = ['Herb', 'Torch']
-        for hp, color in ((15, WHITE), (4, RED)):
+        for hp, color in ((15, WHITE), (4, LOW_HP_RED)):
             self.set_hp(hp)
             for menu_name in ('spells', 'inventory'):
                 with self.subTest(hp=hp, menu=menu_name):
@@ -146,7 +183,7 @@ class TestLowHPWindowColor(TestCase):
                     self.assertEqual(text, {color})
 
     def test_yes_no_prompt(self):
-        for hp, color in ((15, WHITE), (4, RED)):
+        for hp, color in ((15, WHITE), (4, LOW_HP_RED)):
             self.set_hp(hp)
             pygame.event.post(pygame.event.Event(KEYDOWN, key=K_RETURN))
             with patch.object(self.cmd_menu.graphics, 'create_window') as create_window, \
@@ -158,7 +195,7 @@ class TestLowHPWindowColor(TestCase):
 
     def test_shop_cursor(self):
         dialog_lookup = self.cmd_menu.dialog_lookup
-        for hp, color in ((15, WHITE), (4, RED)):
+        for hp, color in ((15, WHITE), (4, LOW_HP_RED)):
             self.set_hp(hp)
             pygame.event.post(pygame.event.Event(KEYDOWN, key=K_ESCAPE))
             with patch.object(self.cmd_menu, 'window_drop_down_effect'), \
@@ -170,7 +207,7 @@ class TestLowHPWindowColor(TestCase):
 
     def test_battle_command_window(self):
         battle_ctrl = self.game.battle_ctrl
-        for hp, color in ((15, WHITE), (4, RED)):
+        for hp, color in ((15, WHITE), (4, LOW_HP_RED)):
             self.set_hp(hp)
             with patch.object(battle_ctrl.graphics, 'create_window') as create_window, \
                     patch('src.menu.draw_cursor_tile') as draw_cursor_tile, \
@@ -190,20 +227,20 @@ class TestLowHPWindowColor(TestCase):
         self.assertEqual(self.game.color, WHITE)
         with patch.object(self.cmd_menu, 'show_line_in_dialog_box'):
             self.game.receive_damage(1)
-        self.assertEqual(self.game.color, RED)
-        self.assert_command_window_color(RED)
+        self.assertEqual(self.game.color, LOW_HP_RED)
+        self.assert_command_window_color(LOW_HP_RED)
 
     def test_swamp_damage_turns_windows_red(self):
         self.player.current_hp = 6
         with patch('src.game.flash_transparent_color'), patch.object(self.game.drawer, 'draw_all'):
             self.game.damage_step(damage_amount=2)
-        self.assertEqual(self.game.color, RED)
+        self.assertEqual(self.game.color, LOW_HP_RED)
 
     def test_healing_turns_windows_white(self):
         for heal in ('heal', 'herb', 'healmore'):
             with self.subTest(heal=heal):
                 self.set_hp(1)
-                self.assertEqual(self.game.color, RED)
+                self.assertEqual(self.game.color, LOW_HP_RED)
                 self.player.inventory = ['Herb']
                 with patch.object(self.cmd_menu, 'show_text_in_dialog_box'), \
                         patch.object(self.cmd_menu, 'show_line_in_dialog_box'):
@@ -229,7 +266,7 @@ class TestLowHPWindowColor(TestCase):
         self.game.get_events()
         self.assertEqual(self.game.color, WHITE)
         self.game.change_map(map_lookup['Brecconary'](self.game.config), destination_coordinates=(23, 10))
-        self.assertEqual(self.game.color, RED)
+        self.assertEqual(self.game.color, LOW_HP_RED)
 
     def test_inn_wakes_up_to_white_windows(self):
         self.game.change_map(map_lookup['Brecconary'](self.game.config), destination_coordinates=(23, 10))
@@ -246,13 +283,13 @@ class TestLowHPWindowColor(TestCase):
                 patch('data.text.dialog_lookup_table.fade'):
             cmd_menu.dialog_lookup.inn_sleep(6)
         # "Good night." is said before the fade out, at the old HP; the innkeeper's next lines come after the fade in
-        self.assertEqual(colors, [(RED, RED, RED), (WHITE, WHITE, WHITE)])
+        self.assertEqual(colors, [(LOW_HP_RED, LOW_HP_RED, LOW_HP_RED), (WHITE, WHITE, WHITE)])
         self.assert_command_window_color(WHITE)
 
     def test_death_and_revival(self):
         with patch.object(self.cmd_menu, 'show_line_in_dialog_box'):
             self.game.receive_damage(15)
-        self.assertEqual(self.game.color, RED)
+        self.assertEqual(self.game.color, LOW_HP_RED)
         self.player.is_dead = True
         self.game.set_post_death_attributes()
         self.assertEqual(self.player.current_hp, self.player.max_hp)
@@ -270,5 +307,5 @@ class TestLowHPWindowColor(TestCase):
                 patch.object(self.game, 'leave_tantegel'):
             self.game.set_post_death_attributes()
         self.assertEqual(self.player.current_hp, 1)
-        self.assertEqual(colors, [RED])
-        self.assert_command_window_color(RED)
+        self.assertEqual(colors, [LOW_HP_RED])
+        self.assert_command_window_color(LOW_HP_RED)

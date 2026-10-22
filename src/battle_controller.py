@@ -14,7 +14,8 @@ from enum import Enum
 from pygame import KEYDOWN, display, event, key, mixer, time
 
 from src.battle import Battle, calculate_enemy_attack_damage
-from src.common import ANY_BUTTON_KEYS, BLACK, RED, accept_keys, reject_keys
+from src.color import LOW_HP_RED
+from src.common import ANY_BUTTON_KEYS, BLACK, accept_keys, reject_keys
 from src.cursor import BlinkingCursor
 from src.waiting import quit_if_requested, wait
 from src.constants import (
@@ -347,7 +348,8 @@ class BattleController:
                     if self.enemy_move(current_battle):
                         return True
                     if self.player.current_hp <= 0:
-                        self.drawer.draw_hovering_stats_window(self.screen, self.player, RED)
+                        # 0 HP is always low: NES ChkLowHPPal's $26
+                        self.drawer.draw_hovering_stats_window(self.screen, self.player, LOW_HP_RED)
                         self.player.is_dead = True
                     elif self.player.is_asleep:
                         self.player.asleep_turns += 1

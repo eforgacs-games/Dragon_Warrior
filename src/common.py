@@ -7,7 +7,7 @@ from os.path import sep, exists
 from pygame import Surface, image, transform, K_RETURN, K_i, K_k, K_ESCAPE, K_j, K_u, K_UP, K_DOWN, K_LEFT, K_RIGHT, \
     K_w, K_a, K_s, K_d
 
-from src.color import WHITE, BLACK, RED
+from src.color import WHITE, BLACK
 from src.direction import Direction
 from src.directories import Directories
 
@@ -92,17 +92,15 @@ class Graphics:
         """Draw a window background image onto a window.
         :param black_box: The window surface.
         :param background_path: The window background image, in NES pixels.
-        :param color: The window color (red when the hero is nearly dead).
+        :param color: The window color: white, or another color for its white pixels (the low HP red, $26).
         :param border: If given, the size of the image's corners in NES pixels: the image is stretched without
         distorting its border (see nine_slice), so one image serves windows of any size. Otherwise the whole image is
         scaled to the window.
         """
         black_box.fill(BLACK)
         background_image = image.load(background_path)
-        if color == RED:
-            transform.threshold(background_image, background_image, WHITE, (1, 1, 1), RED, 1, None, True)
-            # image_pixel_array = PixelArray(background_image)
-            # image_pixel_array.replace(WHITE, RED)
+        if color != WHITE:
+            transform.threshold(background_image, background_image, WHITE, (1, 1, 1), color, 1, None, True)
         if border is None:
             background_image = transform.scale(background_image, black_box.get_size())
         else:
