@@ -22,7 +22,7 @@ class ShopInventories:
             "Broad Sword": {'cost': 1500, 'type': 'weapon', 'menu_image': self.directories.RIMULDAR_WEAPONS_SHOP_BROAD_SWORD_PATH},
             "Half Plate": {'cost': 1000, 'type': 'armor', 'menu_image': self.directories.RIMULDAR_WEAPONS_SHOP_HALF_PLATE_PATH},
             "Full Plate": {'cost': 3000, 'type': 'armor', 'menu_image': self.directories.RIMULDAR_WEAPONS_SHOP_FULL_PLATE_PATH},
-            "Magic Armor": {'cost': 7700, 'type': 'shield', 'menu_image': self.directories.RIMULDAR_WEAPONS_SHOP_MAGIC_ARMOR_PATH}
+            "Magic Armor": {'cost': 7700, 'type': 'armor', 'menu_image': self.directories.RIMULDAR_WEAPONS_SHOP_MAGIC_ARMOR_PATH}
         }
 
         self.garinham_weapons_store_inventory = {
@@ -56,5 +56,5 @@ class ShopInventories:
             "Hand Axe": {'cost': 560, 'type': 'weapon', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_HAND_AXE_PATH},
             "Broad Sword": {'cost': 1500, 'type': 'weapon', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_BROAD_SWORD_PATH},
             "Full Plate": {'cost': 3000, 'type': 'armor', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_FULL_PLATE_PATH},
-            "Magic Armor": {'cost': 7700, 'type': 'shield', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_MAGIC_ARMOR_PATH},
+            "Magic Armor": {'cost': 7700, 'type': 'armor', 'menu_image': self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_MAGIC_ARMOR_PATH},
         }
