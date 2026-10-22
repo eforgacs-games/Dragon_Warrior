@@ -212,7 +212,9 @@ class Battle:
         gold = randomize_enemy_gold(enemy.gold)
         exp_and_gold = self._("Thy experience increases by {}.\n").format(enemy.xp) + self._(
             "Thy GOLD increases by {}.\n").format(gold)
-        cmd_menu.show_line_in_dialog_box(exp_and_gold, add_quotes=False, disable_sound=True, hide_arrow=True)
+        # TB15E15 and TB16E0 end with no WAIT: the victory music goes on playing while they print
+        cmd_menu.show_line_in_dialog_box(exp_and_gold, add_quotes=False, disable_sound=True, hide_arrow=True,
+                                         skip_text=True)
         player.total_experience = min(player.total_experience + enemy.xp, MAX_EXPERIENCE)
         player.gold = min(player.gold + gold, MAX_GOLD)
         self.check_player_level_up(cmd_menu, player, music_enabled)
@@ -246,14 +248,17 @@ class Battle:
     def check_player_level_up(self, cmd_menu, player, music_enabled):
         """NES ChkLevelUp (RegEnDefeated). LoadStats works the level out from the experience again, so the level can
         jump by more than one, and level 30 can be reached. Without a level up, WaitForMusicEnd lets the victory music
-        finish and the map's music resumes (ResumeMusicTbl) before ExitFight. With one, DoLevelUp starts MSC_LEVEL_UP,
-        which cuts the victory music off, waits for it to end (WaitForMusicEnd), resumes the map's music, and only then
-        says "Thou hast been promoted to the next level." and the stat increases (ChkStrengthUp-ChkMPUp)."""
+        finish and the map's music resumes (ResumeMusicTbl), then ExitFight waits for a new button press. With one,
+        DoLevelUp starts MSC_LEVEL_UP, which cuts the victory music off, waits for it to end (WaitForMusicEnd), resumes
+        the map's music, and only then says "Thou hast been promoted to the next level." and the stat increases
+        (ChkStrengthUp-ChkMPUp)."""
         music_player = cmd_menu.game.music_player
         new_level = get_level_by_experience(player.total_experience)
         if new_level > player.level:
             music_player.play_until_end(self.directories.level_up_music, self.config)
             self.resume_map_music(music_player, music_enabled)
+            # TB16E1 starts with a WAIT: the experience and gold lines stay up, with the arrow, until A or B
+            cmd_menu.wait_for_button(shows_arrow=True)
             self.display_level_up_message(cmd_menu, player, new_level)
             old_stats = self.get_player_stats(player)
             player.level = new_level
@@ -264,6 +269,9 @@ class Battle:
         else:
             music_player.wait_for_music_end(self.config)
             self.resume_map_music(music_player, music_enabled)
+            # ExitFight: WaitForBtnRelease, so a button pressed during the music doesn't count; a new press returns
+            # to the map
+            cmd_menu.wait_for_button(shows_arrow=False)
 
     def resume_map_music(self, music_player, music_enabled):
         """NES ResumeMusicTbl: the current map's music, from the start."""
