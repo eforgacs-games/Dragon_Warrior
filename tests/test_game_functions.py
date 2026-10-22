@@ -123,18 +123,22 @@ class TestGameFunctions(TestCase):
 
     # "1", 134.4, 32, self.game.screen
 
-    def test_alternate_blink(self):
+    def test_draw_menu_frame(self):
         selected_image_path = self.game.directories.NAME_SELECTION_UPPER_A
         unselected_image_path = self.game.directories.NAME_SELECTION_STATIC_IMAGE_LEN_0
         selected_image = scale(image.load(selected_image_path),
                                (self.game.screen.get_width(), self.game.screen.get_height())).get_rect()
         unselected_image = scale(image.load(unselected_image_path),
                                  (self.game.screen.get_width(), self.game.screen.get_height())).get_rect()
-        with patch('pygame.display.update') as mock_update:
-            self.game.game_functions.alternate_blink(selected_image_path, unselected_image_path, get_ticks(),
+        # The screenshot with the arrow while the cursor is visible, the one without it while it isn't
+        with patch('src.game_functions.blit_scaled_image') as blit:
+            self.game.game_functions.draw_menu_frame(selected_image_path, unselected_image_path, True,
                                                      self.game.screen, False)
-            mock_update.assert_called_with(selected_image)
-            mock_update.assert_called_with(unselected_image)
+            self.assertEqual(selected_image_path, blit.call_args.args[0])
+            self.game.game_functions.draw_menu_frame(selected_image_path, unselected_image_path, False,
+                                                     self.game.screen, False)
+            self.assertEqual(unselected_image_path, blit.call_args.args[0])
+        self.assertEqual(selected_image.size, unselected_image.size)
 
     def test_select_from_vertical_menu(self):
         mocked_return = MagicMock()

@@ -14,9 +14,10 @@ from pygame import KEYDOWN, display, event, mixer, time
 
 from src.battle import Battle, calculate_enemy_attack_damage
 from src.common import BLACK, RED, accept_keys, reject_keys
+from src.cursor import BlinkingCursor
 from src.waiting import quit_if_requested, wait
 from src.constants import (
-    ARROW_BLINK_INTERVAL_MS, AUTO_BATTLE_DELAY_MS,
+    AUTO_BATTLE_DELAY_MS,
     BATTLE_MENU_HEIGHT, BATTLE_MENU_WIDTH, BATTLE_MENU_X, BATTLE_MENU_Y,
     ENEMY_FLEE_PROBABILITY,
 )
@@ -25,11 +26,16 @@ from src.enemy_lookup import enemy_repel_lookup
 from src.enemy_spells import enemy_spell_lookup
 from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
-from src.pygame_compat import arrow_fade
 from src.spells import Spell
 from src.visual_effects import player_hit_shake
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w
+
+
+# CmdCmbtDat: the cursor's tile in the battle command window: column 1 (cursor home X) for FIGHT and RUN, 8 tiles
+# further right for SPELL and ITEM; row 2 for FIGHT and SPELL, row 4 for RUN and ITEM
+COMBAT_COMMAND_CURSOR_TILE_COLUMNS = (1, 9)
+COMBAT_COMMAND_CURSOR_FIRST_TILE_ROW = 2
 
 
 class BattleOutcome(Enum):
@@ -54,6 +60,8 @@ class BattleController:
         # Whether the current fight ended with the player's RUN succeeding (NES RunSuccessful), as opposed to the
         # enemy running away (CheckEnRun), which goes straight to ExitFight.
         self.player_ran_away = False
+        # The battle command window's NES cursor (src/cursor.py)
+        self.command_cursor = BlinkingCursor()
 
     # ------------------------------------------------------------------ #
     #  Properties that forward to game for brevity inside this class       #
@@ -94,14 +102,6 @@ class BattleController:
     @property
     def _(self):
         return self.game._
-
-    @property
-    def show_arrow(self):
-        return self.game.show_arrow
-
-    @show_arrow.setter
-    def show_arrow(self, value):
-        self.game.show_arrow = value
 
     @property
     def auto_battle(self):
@@ -179,6 +179,7 @@ class BattleController:
                                              self.cmd_menu, self.graphics, self.directories,
                                              self.game.color, self.player)
         run_away = False
+        self.command_cursor.restart()  # WndInitSelect: the command window opens with the cursor on
         while current_battle.enemy.hp > 0 and not run_away and not self.player.is_dead:
             run_away = self.handle_battle_prompts(run_away, current_battle)
         if current_battle.enemy.hp <= 0:
@@ -227,19 +228,22 @@ class BattleController:
     #  Battle prompts / menu                                               #
     # ------------------------------------------------------------------ #
 
-    def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
-        battle_menu_options = ({'Fight': self.directories.BATTLE_MENU_FIGHT_PATH,
-                                'Spell': self.directories.BATTLE_MENU_SPELL_PATH},
-                               {'Run': self.directories.BATTLE_MENU_RUN_PATH,
-                                'Item': self.directories.BATTLE_MENU_ITEM_PATH})
+    def draw_command_window(self, cursor_visible: bool) -> None:
+        """The battle command window (CmdCmbtDat), from the screenshot without a cursor, and the NES cursor at the
+        selected command (src/cursor.py), in the window color."""
         x, y, width, height = BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT
         tile_size = self.game.game_state.config["TILE_SIZE"]
-        selected_image = list(battle_menu_options[self.battle_menu_row].values())[self.battle_menu_column]
-        battle_window_rect = self.graphics.blink_switch(self.screen, selected_image,
-                                                        self.directories.BATTLE_MENU_STATIC_PATH, x, y,
-                                                        width, height,
-                                                        tile_size, self.show_arrow, color=self.game.color)
-        current_selection = list(battle_menu_options[self.battle_menu_row].keys())[self.battle_menu_column]
+        self.graphics.create_window(x, y, width, height, self.directories.BATTLE_MENU_STATIC_PATH, self.screen,
+                                    self.game.color)
+        self.cmd_menu.draw_window_cursor(x, y, COMBAT_COMMAND_CURSOR_TILE_COLUMNS[self.battle_menu_column],
+                                         COMBAT_COMMAND_CURSOR_FIRST_TILE_ROW + 2 * self.battle_menu_row,
+                                         cursor_visible)
+        display.update((x * tile_size, y * tile_size, width * tile_size, height * tile_size))
+
+    def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
+        battle_menu_options = (('Fight', 'Spell'), ('Run', 'Item'))
+        self.draw_command_window(self.command_cursor.visible())
+        current_selection = battle_menu_options[self.battle_menu_row][self.battle_menu_column]
         selected_executed_option = None
 
         if self.auto_battle and not self.player.is_asleep:
@@ -259,19 +263,17 @@ class BattleController:
                             self.battle_menu_row = 1 - self.battle_menu_row
                         elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
                             self.battle_menu_column = 1 - self.battle_menu_column
-                        time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
+                        self.command_cursor.restart()  # WndUpdateCrsrPos
                     else:
                         selected_executed_option = 'Sleep'
-                elif current_event.type == arrow_fade:
-                    self.show_arrow = not self.show_arrow
 
         if selected_executed_option:
             if selected_executed_option != 'Sleep':
                 self.last_battle_action = selected_executed_option
 
-            self.graphics.create_window(x, y, width, height, selected_image, self.screen, self.game.color)
-            display.update(battle_window_rect)
-            time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
+            # WndAPressed: the chosen command's arrow is drawn once more and stays on while it runs
+            self.command_cursor.hold()
+            self.draw_command_window(True)
             if selected_executed_option == 'Fight':
                 self.fight(current_battle)
             elif selected_executed_option == 'Spell':
@@ -300,7 +302,8 @@ class BattleController:
             current_battle.last_turn = current_battle.turn
             current_battle.turn += 1
             selected_executed_option = None
-            time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
+            # The command window selects again next turn (WndInitSelect)
+            self.command_cursor.restart()
             if current_battle.enemy.hp <= 0:
                 return False
             elif current_battle.last_turn != current_battle.turn:
