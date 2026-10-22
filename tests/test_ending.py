@@ -35,6 +35,7 @@ class TestEnding(TestCase):
         self.game.player.name = "Edward"
         self.lines = []
         show_line = patch('src.menu.CommandMenu.show_line_in_dialog_box', side_effect=self.record_line).start()
+        patch('src.menu.CommandMenu.wait_for_button').start()
         self.addCleanup(patch.stopall)
         self.show_line = show_line
 
