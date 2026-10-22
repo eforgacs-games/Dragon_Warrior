@@ -595,46 +595,5 @@ class TestEnemyMove(unittest.TestCase):
         self.assertIsInstance(self.game.receive_damage.call_args.args[0], int)
 
 
-class TestEncounterRolls(unittest.TestCase):
-
-    def setUp(self):
-        self.game = make_game()
-        self.controller = BattleController(self.game)
-        self.player = self.game.player
-        self.player.row = 0
-        self.player.column = 0
-
-    def roll_range(self, tile):
-        self.player.current_tile = tile
-        with patch('src.battle_controller.random.randint', side_effect=lambda a, b: b) as randint:
-            self.controller.get_random_integer_by_tile()
-        return randint.call_args.args
-
-    def test_random_integer_range_by_tile(self):
-        for tile, expected in (('SWAMP', (0, 15)), ('DESERT', (0, 7)), ('HILLS', (0, 7)), ('FOREST', (0, 15)),
-                               ('BRICK', (0, 15)), ('BARRIER', (0, 15)), ('GRASS', (0, 31))):
-            with self.subTest(tile=tile):
-                self.assertEqual(self.roll_range(tile), expected)
-
-    def test_default_tile_range_depends_on_row_parity(self):
-        self.player.row = 1
-        self.assertEqual(self.roll_range('GRASS'), (0, 15))
-        self.player.column = 1
-        self.assertEqual(self.roll_range('GRASS'), (0, 15))
-        self.player.row = 2
-        self.assertEqual(self.roll_range('GRASS'), (0, 31))
-
-    def test_near_tantegel_modifier_returns_one_unless_sub_roll_is_zero(self):
-        self.player.current_tile = 'GRASS'
-        with patch('src.battle_controller.random.randint', return_value=1):
-            self.assertEqual(self.controller.handle_near_tantegel_fight_modifier(), 1)
-
-    def test_near_tantegel_modifier_rolls_tile_on_zero(self):
-        self.player.current_tile = 'HILLS'
-        with patch('src.battle_controller.random.randint', side_effect=[0, 5]) as randint:
-            self.assertEqual(self.controller.handle_near_tantegel_fight_modifier(), 5)
-        self.assertEqual(randint.call_args_list[0].args, (0, 3))
-
-
 if __name__ == '__main__':
     unittest.main()

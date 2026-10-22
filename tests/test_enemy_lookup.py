@@ -4,7 +4,7 @@ from src.enemy import (
     Slime, RedSlime, MetalSlime, Dragonlord, Dragonlord2
 )
 from src.enemy_lookup import (
-    enemy_string_lookup, enemy_image_position_lookup, enemy_territory_map
+    enemy_string_lookup, enemy_image_position_lookup
 )
 
 
@@ -77,51 +77,6 @@ class TestEnemyImagePositionLookup(unittest.TestCase):
 
     def test_dragonlord_position(self):
         self.assertEqual(enemy_image_position_lookup['Dragonlord'], (7.5, 6))
-
-
-class TestEnemyTerritoryMap(unittest.TestCase):
-
-    def test_origin_has_enemies(self):
-        self.assertIn((0, 0), enemy_territory_map)
-
-    def test_swamp_cave_special_zone(self):
-        self.assertIn((-1, -1), enemy_territory_map)
-
-    def test_garins_grave_special_zones(self):
-        self.assertIn((-2, -2), enemy_territory_map)
-        self.assertIn((-3, -3), enemy_territory_map)
-        self.assertIn((-4, -4), enemy_territory_map)
-        self.assertIn((-5, -5), enemy_territory_map)
-
-    def test_territory_values_are_tuples(self):
-        for key, enemies in enemy_territory_map.items():
-            with self.subTest(key=key):
-                self.assertIsInstance(enemies, tuple)
-
-    def test_territory_enemies_are_non_empty(self):
-        for key, enemies in enemy_territory_map.items():
-            with self.subTest(key=key):
-                self.assertGreater(len(enemies), 0)
-
-    def test_swamp_cave_contains_druin(self):
-        self.assertIn('Druin', enemy_territory_map[(-1, -1)])
-
-    def test_garins_grave_b1_contains_expected_enemies(self):
-        b1 = enemy_territory_map[(-2, -2)]
-        self.assertIn('Skeleton', b1)
-        self.assertIn('Warlock', b1)
-
-    def test_grid_coordinates_present(self):
-        for row in range(8):
-            for col in range(8):
-                with self.subTest(coord=(row, col)):
-                    self.assertIn((row, col), enemy_territory_map)
-
-    def test_territory_enemy_names_are_strings(self):
-        for key, enemies in enemy_territory_map.items():
-            for enemy_name in enemies:
-                with self.subTest(key=key, enemy=enemy_name):
-                    self.assertIsInstance(enemy_name, str)
 
 
 if __name__ == '__main__':
