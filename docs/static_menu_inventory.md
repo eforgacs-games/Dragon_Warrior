@@ -69,23 +69,27 @@ Notes:
 
 The item shops already draw ShopInvDat as text on a nine-sliced background (`select_shop_item`), so only the weapon/armor shops still use screenshots.
 
-## Miscellaneous (23 files)
+## Miscellaneous (23 files): windows done in phase 2
 
-| File(s) | Used at | NES window | Difficulty |
+| File(s) | Used at | NES window | Status |
 |---|---|---|---|
-| `dialog_box_background.png` (192x80) | `CommandMenu.draw_dialog_window` (`src/menu.py` ~401) | DialogDat ($B04B) | easy (border only) |
-| `command_menu_static.png` (128x80) | `refresh_window_color` (`menu.py` ~188), redrawn during the drop-up | CmdNonCmbtDat ($B054) | easy |
-| `command_menu_background.png` | **unused** | CmdNonCmbtDat border | easy |
-| `confirmation.png` (64x48) | `data/text/dialog.py:17`, `CommandMenu.draw_yes_no_window` (`menu.py` ~645) | YesNo1Dat ($B0EB); YesNo2Dat ($B50D) is the same window elsewhere | easy |
-| `confirmation_yes.png`, `confirmation_no.png` | test reference (`tests/test_cursor.py`) / **unused** | YesNo1Dat ($B0EB) | easy |
-| `hovering_stats_window.png` (64x96) | `Drawer.draw_hovering_stats_window` (`src/drawer.py:111`) | PopupDat ($AFB0) | easy (name in the top border; values) |
-| `status_window_background.png` (160x176) | `CommandMenu.draw_status_window` (`menu.py` ~1120) | StatusDat ($AFC7) | easy |
-| `menus/item_menu/item_menu_background_5.png` | nine-sliced: `draw_item_menu`, the COMMAND frame, `draw_window_background` | border of SpellDat ($B0BA), PlayerInvDat ($B0CC), ShopInvDat, BuySellDat ($B0FB)… | easy (border only) |
-| `menus/item_menu/item_menu_background_{1,2}.png` | **unused** (`item_menu_background_lookup` is never read) | SpellDat / PlayerInvDat | easy |
+| `dialog_box_background.png` (192x80) | test reference only | DialogDat ($B04B) | **generated**: `DIALOG_LAYOUT`, drawn by `CommandMenu.draw_dialog_window` |
+| `command_menu_static.png` (128x80) | `refresh_window_color` (`menu.py` ~188), redrawn during the drop-up | CmdNonCmbtDat ($B054) | not converted: the COMMAND window is being fixed separately |
+| `command_menu_background.png` | **unused** | CmdNonCmbtDat border | not converted (COMMAND window) |
+| `confirmation.png` (64x48) | test reference only | YesNo1Dat ($B0EB); YesNo2Dat ($B50D) is the same window elsewhere | **generated**: `YES_NO_LAYOUT` with no cursor (`data/text/dialog.py` `confirmation_prompt`), or with the cursor hidden |
+| `confirmation_yes.png`, `confirmation_no.png` | test reference only | YesNo1Dat ($B0EB) | **generated**: `YES_NO_LAYOUT`, cursor 0 / 1, drawn by `CommandMenu.draw_yes_no_window` |
+| `hovering_stats_window.png` (64x96) | test reference only | PopupDat ($AFB0) | **generated**: `POPUP_LAYOUT` (the labels, and TL_TOP2 before the name), drawn by `Drawer.draw_hovering_stats_window`; the name and the values are still drawn over it with `draw_text` |
+| `status_window_background.png` (160x176) | test reference only | StatusDat ($AFC7) | **generated**: `STATUS_LAYOUT` (the labels), drawn by `CommandMenu.draw_status_window`; the values are still drawn over it with `draw_text` |
+| `menus/item_menu/item_menu_background_5.png` | nine-sliced: the COMMAND frame (`refresh_window_color`) and `DialogLookup.draw_window_background` (BuySellDat, item shops) | border of SpellDat ($B0BA), PlayerInvDat ($B0CC), ShopInvDat, BuySellDat ($B0FB)… | **generated** for the SPELL and ITEM windows: `item_menu_layout`, drawn by `CommandMenu.draw_item_menu` (the SPELL title and the entries are still drawn over it). The two other uses are left to the COMMAND window fix and the shop conversion |
+| `menus/item_menu/item_menu_background_{1,2}.png` | test reference only | SpellDat / PlayerInvDat at 1 and 2 entries | **generated**: `item_menu_layout` |
 | `intro_banner/intro_banner.png`, `intro_banner_with_dragon.png` (248x92) | `Intro.show_start_screen`, `show_intro_dragon_banner_with_text` (`src/intro.py:42`, `:60`) | title screen art, not a window | hard |
 | `intro_banner/sparkle/*_{1..8}.png` (8) | `Intro.banner_sparkle` (`intro.py` ~100) | title screen art | hard |
 | `title_menu.png` (504x142) | **unused** | not NES resolution | n/a |
 | `nes-font.png` (464x8) | **unused** | an uppercase font strip | n/a |
+
+`tests/test_generated_windows.py` checks every generated window above against its screenshot: 0 differing pixels at scales 1, 2 and 3, white and low HP red, and again as the game draws it on its screen (with the dynamic text off).
+
+The SPELL/ITEM border is verified at 1, 2 and 5 entries (the heights there are screenshots of); the other heights are the same tiles, but have no screenshot.
 
 ## Counts
 
@@ -95,15 +99,14 @@ The item shops already draw ShopInvDat as text on a nine-sliced background (`sel
 | Title, main menu and adventure logs | 18 | 18 | 0 |
 | Name entry | 72 | 72 | 0 |
 | Shops | 40 | 6 | 34 |
-| Miscellaneous | 23 | 15 | 8 |
-| **Total** | **158** | **113** | **45** |
+| Miscellaneous | 23 | 15 (now 11) | 8 (now 12) |
+| **Total** | **158** | **113** (now 109) | **45** (now 49) |
 
 ## Phase 2 plan
 
-1. **Miscellaneous windows: easy.**
-   - These are single fixed windows: dialog, COMMAND, YES/NO, popup stats, status and the SPELL/ITEM border.
-   - Each needs a `WindowLayout` from its window data, plus its dynamic text (values, name).
-   - Any window whose border is now nine-sliced from `item_menu_background_5.png` can use `render_window` with no text.
+1. **Miscellaneous windows: done**, except the COMMAND window (see the table above).
+   - Dialog, YES/NO, popup stats, status and the SPELL/ITEM border are generated.
+   - Their dynamic text (the name, the values, the dialog text, the SPELL title and the entries) is still drawn over them with `draw_text`, so it can be translated. Drawing it with NES tiles too is a possible next step.
 2. **Shops: medium.**
    - Write a ShopInvDat layout builder: the variable height, two-half item names (`name_halves`) and costs right-aligned at `SHOP_COST_RIGHT_TILE_COLUMN`.
    - Diff it against the 6 shop screenshots, and against the per-item arrow images.

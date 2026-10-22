@@ -16,7 +16,8 @@ from src.directories import Directories  # noqa: E402
 from src.cursor import CURSOR_TILE  # noqa: E402
 from src import window_renderer  # noqa: E402
 from src.window_renderer import (TL_TOP1, TL_TOP2, glyph_tile, render_window, window_tiles)  # noqa: E402
-from src.windows import COMBAT_COMMAND_LAYOUT, Window, WindowLayout, WindowText  # noqa: E402
+from src.windows import (COMBAT_COMMAND_LAYOUT, DIALOG_LAYOUT, POPUP_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT, Window,  # noqa: E402
+                         WindowLayout, WindowText, item_menu_layout)
 from tests.nes_screen_diff import compare_with_screenshot, count_differing_pixels, load_screenshot  # noqa: E402
 
 SCALES = (1, 2, 3)
@@ -87,6 +88,137 @@ class TestBattleCommandWindow(TestCase):
                     result = compare_with_screenshot(game.screen, screenshot, config['SCALE'], window_color=color,
                                                      area=area, diff_dir=DIFF_DIR, name=f'battle_game_{index}')
                     self.assertEqual(0, result.differing_pixels, str(result))
+
+
+def screenshot_path(name: str) -> str:
+    return os.path.join(Directories(test_config).IMAGES_DIR, name)
+
+
+# The miscellaneous windows: (name, layout, screenshot, render_window's cursor arguments). Each screenshot is one
+# pixel per NES pixel, white on black, and stays in data/images as the reference.
+MISCELLANEOUS_WINDOWS = (
+    ('dialog', DIALOG_LAYOUT, 'dialog_box_background.png', {}),
+    ('yes_no_no_cursor', YES_NO_LAYOUT, 'confirmation.png', {}),
+    ('yes_no_yes', YES_NO_LAYOUT, 'confirmation_yes.png', {'cursor_index': 0}),
+    ('yes_no_no', YES_NO_LAYOUT, 'confirmation_no.png', {'cursor_index': 1}),
+    # The "off" half of the blink blanks the cursor's tile: the screenshot without a cursor, wherever it is
+    ('yes_no_yes_hidden', YES_NO_LAYOUT, 'confirmation.png', {'cursor_index': 0, 'cursor_visible': False}),
+    ('yes_no_no_hidden', YES_NO_LAYOUT, 'confirmation.png', {'cursor_index': 1, 'cursor_visible': False}),
+    ('popup', POPUP_LAYOUT, 'hovering_stats_window.png', {}),
+    ('status', STATUS_LAYOUT, 'status_window_background.png', {}),
+    # The SPELL and ITEM windows' border, at the three heights there are screenshots of
+    ('item_1', item_menu_layout('inventory', 1), 'menus/item_menu/item_menu_background_1.png', {}),
+    ('item_2', item_menu_layout('inventory', 2), 'menus/item_menu/item_menu_background_2.png', {}),
+    ('spell_5', item_menu_layout('spells', 5), 'menus/item_menu/item_menu_background_5.png', {}),
+)
+
+
+class TestMiscellaneousWindows(TestCase):
+    """DialogDat, YesNo1Dat, PopupDat, StatusDat and the SpellDat/PlayerInvDat border, against their screenshots."""
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+
+    @classmethod
+    def tearDownClass(cls):
+        pygame.quit()
+
+    def test_every_window_and_variant(self):
+        for name, layout, screenshot, cursor in MISCELLANEOUS_WINDOWS:
+            for scale in SCALES:
+                for color in (WHITE, RED):
+                    with self.subTest(window=name, scale=scale, color=color):
+                        generated = render_window(layout, color, scale, **cursor)
+                        result = compare_with_screenshot(generated, screenshot_path(screenshot), scale,
+                                                         window_color=color, diff_dir=DIFF_DIR,
+                                                         name=f'{name}_{scale}_{color}')
+                        self.assertEqual(0, result.differing_pixels, str(result))
+
+    def test_yes_no_cursor_tiles(self):
+        # YesNo1Dat: cursor home X = 1, Y = 2; one column, double spaced
+        self.assertEqual(((1, 2), (1, 4)), YES_NO_LAYOUT.cursor_tiles)
+
+    def test_item_window_is_sized_to_its_entries(self):
+        for entries in range(1, 11):
+            self.assertEqual(Window(9, 3, 6, entries + 1), item_menu_layout('inventory', entries).window)
+            self.assertEqual(Window(9, 2, 6, entries + 1), item_menu_layout('spells', entries).window)
+
+
+class TestMiscellaneousWindowsDrawnByTheGame(TestCase):
+    """What the game draws on its screen, at its own scale and window positions, with the dynamic text (the name,
+    the values, the dialog text, the SPELL title) off (RENDER_TEXT): the screenshots are of the windows without it."""
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+        pygame.display.set_mode((1, 1))
+
+    @classmethod
+    def tearDownClass(cls):
+        pygame.quit()
+
+    def setUp(self):
+        from src.game import Game
+        config = dict(test_config, NO_WAIT=True, RENDER_TEXT=False, NO_BLIT=True)
+        with patch('src.game.SCALED'):
+            self.game = Game(config)
+        self.config = self.game.game_state.config
+        self.cmd_menu = self.game.cmd_menu
+        self.tile_size = self.config['TILE_SIZE']
+
+    def assert_drawn(self, draw, window, screenshot, name):
+        area = pygame.Rect(window.x * self.tile_size, window.y * self.tile_size, window.width * self.tile_size,
+                           window.height * self.tile_size)
+        for color in (WHITE, RED):
+            self.game.color = color
+            with self.subTest(window=name, color=color), patch.dict(self.config, NO_BLIT=False), \
+                    patch('src.menu.display'):
+                self.game.screen.fill((0, 0, 255))  # anything the window doesn't cover would show
+                draw()
+                result = compare_with_screenshot(self.game.screen, screenshot_path(screenshot), self.config['SCALE'],
+                                                 window_color=color, area=area, diff_dir=DIFF_DIR,
+                                                 name=f'game_{name}_{color}')
+                self.assertEqual(0, result.differing_pixels, str(result))
+
+    def test_dialog_window(self):
+        self.assert_drawn(self.cmd_menu.draw_dialog_window, DIALOG_LAYOUT.window, 'dialog_box_background.png',
+                          'dialog')
+
+    def test_yes_no_window(self):
+        for yes_selected, screenshot in ((True, 'confirmation_yes.png'), (False, 'confirmation_no.png')):
+            self.assert_drawn(lambda: self.cmd_menu.draw_yes_no_window(yes_selected, True), YES_NO_LAYOUT.window,
+                              screenshot, f'yes_no_{yes_selected}')
+            self.assert_drawn(lambda: self.cmd_menu.draw_yes_no_window(yes_selected, False), YES_NO_LAYOUT.window,
+                              'confirmation.png', f'yes_no_{yes_selected}_hidden')
+
+    def test_popup_window(self):
+        self.assert_drawn(lambda: self.game.drawer.draw_hovering_stats_window(self.game.screen, self.game.player,
+                                                                              self.game.color),
+                          POPUP_LAYOUT.window, 'hovering_stats_window.png', 'popup')
+
+    def test_status_window(self):
+        self.assert_drawn(self.cmd_menu.draw_status_window, STATUS_LAYOUT.window, 'status_window_background.png',
+                          'status')
+
+    def test_item_window(self):
+        for entries, screenshot in ((["Herb"], 'item_menu_background_1.png'),
+                                    (["Herb", "Torch"], 'item_menu_background_2.png'),
+                                    (["Herb", "Torch", "Wings", "Magic Key", "Fairy Water"],
+                                     'item_menu_background_5.png')):
+            self.assert_drawn(lambda: self.cmd_menu.draw_item_menu('inventory', entries),
+                              item_menu_layout('inventory', len(entries)).window,
+                              f'menus/item_menu/{screenshot}', f'item_{len(entries)}')
+
+    def test_confirmation_prompt_opens_without_a_cursor(self):
+        # data/text/dialog.py draws YesNo1Dat without its cursor first, as confirmation.png shows it
+        from data.text.dialog import confirmation_prompt
+        with patch.object(self.cmd_menu, 'show_line_in_dialog_box'), \
+                patch.object(self.cmd_menu, 'window_drop_down_effect'), \
+                patch.object(self.cmd_menu, 'draw_yes_no_window'), patch('data.text.dialog.display'):
+            self.assert_drawn(lambda: confirmation_prompt(self.cmd_menu, "", MagicMock(), MagicMock(), self.config,
+                                                          self.game.color, skip_text=True),
+                              YES_NO_LAYOUT.window, 'confirmation.png', 'confirmation_prompt')
 
 
 class TestWindowTiles(TestCase):
