@@ -6,7 +6,7 @@ from pygame.sprite import Group
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src.calculation import Calculation
-from src.common import WHITE, BLACK, Graphics
+from src.common import ANY_BUTTON_KEYS, WHITE, BLACK, Graphics
 from src.directories import Directories
 from src.enemy_lookup import enemy_image_position_lookup
 from src.game_functions import get_surrounding_rect
@@ -14,7 +14,7 @@ from src.menu import Menu, CommandMenu
 from src.sound import Sound
 from src.text import draw_text
 from src.visual_effects import NES_FPS, enemy_fade_in, enemy_hit_flash
-from src.waiting import wait
+from src.waiting import is_any_key_held, wait
 from src.windows import COMMAND_WINDOW, POPUP_WINDOW
 
 
@@ -139,18 +139,20 @@ class Drawer:
 
     def run_automatic_post_death_dialog(self, events, skip_text, command_menu):
         self.game_state.enable_movement = False
-        for current_event in events:
-            if current_event.type == KEYDOWN or skip_text:
-                command_menu.show_text_in_dialog_box(
-                    command_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
-                    add_quotes=True, skip_text=skip_text)
-                self.game_state.is_post_death_dialog = False
-                set_to_save_prompt(command_menu)
-                self.game_state.enable_movement = True
+        # Only a joypad button starts the king's words (other keys are ignored, as in run_automatic_initial_dialog).
+        if skip_text or nes_button_pressed(events):
+            command_menu.show_text_in_dialog_box(
+                command_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['post_death_dialog'],
+                add_quotes=True, skip_text=skip_text)
+            self.game_state.is_post_death_dialog = False
+            set_to_save_prompt(command_menu)
+            self.game_state.enable_movement = True
 
     def run_automatic_initial_dialog(self, events, skip_text, cmd_menu):
         self.game_state.enable_movement = False
-        key_pressed = any([current_event.type == KEYDOWN for current_event in events])
+        # NES FirstInputLoop (Bank03 LCBCD): the throne room waits until JoypadBtns isn't 0, so any button starts the
+        # king's speech, D-pad, START and SELECT included, and so does one that's still held. Other keys don't.
+        key_pressed = nes_button_pressed(events) or is_any_key_held(ANY_BUTTON_KEYS)
         if skip_text or (key_pressed and not self.game_state.automatic_initial_dialog_run):
             # show the map as it is before the dialog window opens over it. Only now: draw_all also runs for the frame
             # a map change fades in from, and flipping that would flash the map at full brightness before the fade.
@@ -469,3 +471,8 @@ def draw_cover(current_map, background, cells: Iterable[Tuple[int, int]]) -> Non
                 background.fill(BLACK, Rect(column * tile_size, row * tile_size, tile_size, tile_size))
             else:
                 background.blit(roof_image, (column * tile_size, row * tile_size))
+
+
+def nes_button_pressed(events: Iterable[event.Event]) -> bool:
+    """Whether ``events`` has a press of a key that stands for a joypad button (see src.common.ANY_BUTTON_KEYS)."""
+    return any(current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS for current_event in events)

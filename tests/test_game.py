@@ -15,6 +15,7 @@ from data.text.dialog_lookup_table import DialogLookup
 from data.text.intro_lookup_table import ControlInfo
 from src.calculation import get_tile_id_by_coordinates
 from src.camera import Camera
+from src.common import A_OR_START_KEYS
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
@@ -349,7 +350,7 @@ class TestGame(TestCase):
         graphics.create_window.assert_called_once()
         drawer.draw_all_tiles_in_current_map.assert_not_called()
         self.assertFalse(self.game.battle_ctrl.launch_battle)
-        show_text.assert_called_once_with("Thou art dead.", disable_sound=True)
+        show_text.assert_called_once_with("Thou art dead.", disable_sound=True, advance_keys=A_OR_START_KEYS)
         self.assertEqual(self.game.current_map.identifier, 'TantegelThroneRoom')
         self.assertEqual(self.game.player.current_hp, self.game.player.max_hp)
         self.assertEqual(self.game.player.gold, 50)
@@ -359,7 +360,7 @@ class TestGame(TestCase):
         graphics, drawer, show_text = self.die(in_battle=False)
         graphics.create_window.assert_not_called()
         drawer.draw_all_tiles_in_current_map.assert_called_once()
-        show_text.assert_called_once_with("Thou art dead.", disable_sound=True)
+        show_text.assert_called_once_with("Thou art dead.", disable_sound=True, advance_keys=A_OR_START_KEYS)
 
     def test_get_tile_by_coordinates(self):
         self.assertEqual('BRICK', get_tile_id_by_coordinates(0, 0, self.game.current_map))
