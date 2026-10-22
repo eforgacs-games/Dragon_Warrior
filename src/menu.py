@@ -19,7 +19,7 @@ from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
 from src.directories import Directories
 from src.items import armor, hidden_items, treasure
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, RAINBOW_BRIDGE_COORDINATES, \
-    RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION
+    RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES
 from src.direction import Direction
 from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
@@ -456,15 +456,20 @@ class CommandMenu(Menu):
         self.game.repel_timer = FAIRY_WATER_TIMER
 
     def silver_harp(self):
-        self.show_text_in_dialog_box(f"{self.player.name} played a sweet melody on the harp.", skip_text=self.skip_text)
+        # NES ChkHarp: the harp tune plays to the end, then on the overworld a fight starts (InitFight, so REPEL and
+        # Fairy Water don't stop it, and it still works after the Dragonlord is dead). Anywhere else the map music
+        # resumes and nothing happens. The harp is never used up.
+        self.show_text_in_dialog_box(self._("{} played a sweet melody on the harp.").format(self.player.name),
+                                     skip_text=self.skip_text)
         mixer.music.stop()
-        # disable input
         self.game.game_state.pause_all_movement()
-        # play harp sound
         self.sound.play_sound(self.directories.harp_sfx)
         self.game.game_state.unpause_all_movement()
+        if self.current_map.identifier == 'Alefgard':
+            self.game.battle_ctrl.queue_scripted_battle(random.choice(SILVER_HARP_ENEMIES))
+            return
         mixer.music.play(-1)
-        self.show_text_in_dialog_box("But nothing happened.", skip_text=self.skip_text)
+        self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
 
     def fairy_flute(self):
         # NES ChkFryFlt (field) / ChkUseFlute (battle): play the flute tune, then resume the map or battle music
@@ -504,13 +509,18 @@ class CommandMenu(Menu):
         bridge_row, bridge_column = RAINBOW_BRIDGE_COORDINATES
         self.set_tile_by_coordinates('BRIDGE', bridge_column, bridge_row, self.player)
 
+    def hold_item_tightly(self, item_name: str):
+        # NES DoItemDescription: TextBlock5 entry 0 ("<name> held the <item> tightly.") then "But nothing happened."
+        self.show_text_in_dialog_box(self._("{} held the {} tightly.\nBut nothing happened.").format(
+            self.player.name, self._(item_name)), skip_text=self.skip_text)
+
     def staff_of_rain(self):
-        self.show_text_in_dialog_box(f"{self.player.name} held the Staff of Rain tightly.\n"
-                                    "But nothing happened.", skip_text=self.skip_text)
+        # NES ChkStaff: the Staff of Rain has no effect when used; it only matters at the Rainbow Drop shrine
+        self.hold_item_tightly("Staff of Rain")
 
     def stones_of_sunlight(self):
-        self.show_text_in_dialog_box(f"{self.player.name} held the Stones of Sunlight tightly.\n"
-                                    "But nothing happened.", skip_text=self.skip_text)
+        # NES ChkStones: the Stones of Sunlight have no effect when used; they only matter at the Rainbow Drop shrine
+        self.hold_item_tightly("Stones of Sunlight")
 
     def fighters_ring(self):
         if self.player.wearing_fighters_ring:
