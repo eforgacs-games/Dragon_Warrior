@@ -402,8 +402,10 @@ class CommandMenu(Menu):
                     self.show_text_in_dialog_box(self._("That is much too important to throw away."),
                                                  skip_text=self.skip_text)
                     continue
-                # TODO: a worn Cursed Belt or Death Necklace can't be dropped ("A curse is upon thy body."),
-                #  once curses are implemented
+                if self.player.is_wearing_cursed_item(item_to_drop):
+                    # NES LE0B9: a worn Cursed Belt or Death Necklace can't be dropped
+                    self.show_text_in_dialog_box(self._("A curse is upon thy body."), skip_text=self.skip_text)
+                    continue
                 self.player.inventory.remove(item_to_drop)
                 self.player.inventory.insert(0, item_name)
                 self.show_text_in_dialog_box((self._("Thou hast dropped thy {}.").format(self._(item_to_drop)),
