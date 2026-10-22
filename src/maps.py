@@ -1047,11 +1047,17 @@ class GarinsGraveB4(MapWithoutNPCs, CaveMap):
 
 
 class MountainCaveB1(MapWithoutNPCs, CaveMap):
+    """Rock Mountain Cave B1 (NES MAP_RCKMTN_B1). Layout coordinates are the NES ones + (1, 1)."""
+
     def __init__(self, config):
         super().__init__(MapLayouts().mountain_cave_b1, config, Directories(config).dungeon_floor_1_music, (7, 1),
                          staircases={
                              (8, 1): {'map': 'Alefgard', 'destination_coordinates': (64, 37)},
-                             (1, 1): {'map': 'MountainCaveB2', 'destination_coordinates': (1, 1)}
+                             # NES MapEntryTbl/MapTargetTbl: Rock mtn B1(0,0), (6,5) and (12,12) -> Rock mtn B2, same
+                             # coordinates
+                             (1, 1): {'map': 'MountainCaveB2', 'destination_coordinates': (1, 1)},
+                             (6, 7): {'map': 'MountainCaveB2', 'destination_coordinates': (6, 7)},
+                             (13, 13): {'map': 'MountainCaveB2', 'destination_coordinates': (13, 13)},
                          })
         self.assign_stair_directions()
 
@@ -1063,10 +1069,15 @@ class MountainCaveB1(MapWithoutNPCs, CaveMap):
 
 
 class MountainCaveB2(MapWithoutNPCs, CaveMap):
+    """Rock Mountain Cave B2 (NES MAP_RCKMTN_B2). Layout coordinates are the NES ones + (1, 1)."""
+
     def __init__(self, config):
         super().__init__(MapLayouts().mountain_cave_b2, config, Directories(config).dungeon_floor_1_music, (1, 1),
                          staircases={
+                             # NES MapTargetTbl: Rock mtn B2(0,0), (6,5) and (12,12) -> Rock mtn B1, same coordinates
                              (1, 1): {'map': 'MountainCaveB1', 'destination_coordinates': (1, 1)},
+                             (6, 7): {'map': 'MountainCaveB1', 'destination_coordinates': (6, 7)},
+                             (13, 13): {'map': 'MountainCaveB1', 'destination_coordinates': (13, 13)},
                          })
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
