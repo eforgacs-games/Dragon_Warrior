@@ -61,6 +61,38 @@ DUNGEON_ZONE_MAP = {
 # Zone that uses the near-Tantegel fight-rate modifier
 TANTEGEL_ZONE = (3, 2)
 
+# NES map numbers $0F and up are "dungeons": the Dragonlord's castle sublevels and the caves.
+# RETURN and the Wings of the Wyvern don't work in them (or on the castle's bottom floor, CharlockB8).
+DUNGEON_MAPS = (
+    'CharlockB2', 'CharlockB3', 'CharlockB4', 'CharlockB5', 'CharlockB6', 'CharlockB7Wide', 'CharlockB7Narrow',
+    'SwampCave', 'MountainCaveB1', 'MountainCaveB2',
+    'GarinsGraveB1', 'GarinsGraveB2', 'GarinsGraveB3', 'GarinsGraveB4',
+    'ErdricksCaveB1', 'ErdricksCaveB2',
+)
+
+# OUTSIDE destinations from the NES MapEntryTbl, as (map, (row, column)). NES overworld (x, y) is (y + 7, x + 8) here.
+_ERDRICKS_CAVE_EXIT = ('Alefgard', (19, 36))
+_GARINS_GRAVE_EXIT = ('Garinham', (0, 28))  # OUTSIDE from Garin's Grave leads into Garinham, not the overworld
+_MOUNTAIN_CAVE_EXIT = ('Alefgard', (64, 37))
+_CHARLOCK_EXIT = ('Alefgard', (55, 56))
+OUTSIDE_DESTINATIONS = {
+    'ErdricksCaveB1': _ERDRICKS_CAVE_EXIT, 'ErdricksCaveB2': _ERDRICKS_CAVE_EXIT,
+    'GarinsGraveB1': _GARINS_GRAVE_EXIT, 'GarinsGraveB2': _GARINS_GRAVE_EXIT,
+    'GarinsGraveB3': _GARINS_GRAVE_EXIT, 'GarinsGraveB4': _GARINS_GRAVE_EXIT,
+    'MountainCaveB1': _MOUNTAIN_CAVE_EXIT, 'MountainCaveB2': _MOUNTAIN_CAVE_EXIT,
+    'SwampCave': ('Alefgard', (51, 112)),  # north entrance
+    'CharlockB2': _CHARLOCK_EXIT, 'CharlockB3': _CHARLOCK_EXIT, 'CharlockB4': _CHARLOCK_EXIT,
+    'CharlockB5': _CHARLOCK_EXIT, 'CharlockB6': _CHARLOCK_EXIT, 'CharlockB7Wide': _CHARLOCK_EXIT,
+    'CharlockB7Narrow': _CHARLOCK_EXIT, 'CharlockB8': _CHARLOCK_EXIT,
+}
+
+# RETURN and the Wings of the Wyvern: NES overworld (42, 43), just west of Tantegel Castle
+RETURN_DESTINATION = ('Alefgard', (50, 50))
+
+# NES RepelTimer: REPEL sets it to 255 and Fairy Water to 254; it drops by 2 per step (127 steps either way)
+REPEL_SPELL_TIMER = 255
+FAIRY_WATER_TIMER = 254
+
 # ── Sprites ───────────────────────────────────────────────────────────────────
 
 # How many frames to wait before advancing the animation frame

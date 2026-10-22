@@ -258,3 +258,32 @@ class TestCommandMenu(TestCase):
                 patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
             self.game.cmd_menu.display_item_menu('spells')
         self.assertEqual(show_line.call_args_list[0].args[0], f"{self.game.player.name} chanted the spell of HEAL.")
+
+    def test_repel_and_fairy_water_set_the_repel_timer(self):
+        self.game.cmd_menu.repel()
+        self.assertEqual(self.game.repel_timer, 255)
+        self.game.player.inventory = ["Fairy Water"]
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.fairy_water()
+        self.assertEqual(self.game.repel_timer, 254)
+        self.assertEqual(self.game.player.inventory, [])
+        self.assertEqual(show_text.call_args.args[0],
+                         f"{self.game.player.name} sprinkled the Fairy Water over his body.")
+
+    def test_field_spells_cannot_be_used_in_battle(self):
+        from src.enemy import Slime
+        from src.spells import Spell
+        mocked_return = MagicMock()
+        mocked_return.type = KEYDOWN
+        mocked_return.key = K_RETURN
+        for spell in (Spell.RADIANT, Spell.REPEL, Spell.OUTSIDE, Spell.RETURN):
+            with self.subTest(spell=spell):
+                battle = self.in_battle_with(Slime())
+                self.game.player.spells = [spell]
+                self.game.player.current_mp = 10
+                with patch.object(event, 'get', return_value=[mocked_return]), \
+                        patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
+                    self.game.cmd_menu.display_item_menu('spells')
+                self.assertEqual(self.game.player.current_mp, 10)
+                self.assertTrue(battle.no_op)
+                self.assertEqual([c.args[0] for c in show_line.call_args_list], ['That cannot be used in battle.'])

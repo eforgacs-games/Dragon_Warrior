@@ -95,6 +95,7 @@ class Game:
         self.loop_count = 1
         self.foreground_rects = []
         self.torch_active = False
+        self.repel_timer = 0  # NES RepelTimer, set by REPEL or Fairy Water
         self.speed = 2
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
@@ -434,6 +435,24 @@ class Game:
             self.cmd_menu.game.color, self.color = RED, RED
         else:
             self.cmd_menu.game.color, self.color = WHITE, WHITE
+
+    def count_step(self):
+        self.tiles_moved_since_spawn += 1
+        self.game_state.tiles_moved_total += 1
+        self.tick_repel_timer()
+
+    def tick_repel_timer(self):
+        """NES CheckRepelTimer: the timer drops by 2 per step. REPEL (odd start) ends at 1, Fairy Water (even) at 0."""
+        if not self.repel_timer:
+            return
+        self.repel_timer -= 2
+        if self.repel_timer in (0, 1):
+            if self.repel_timer:
+                message = self._("REPEL has lost its effect.")
+            else:
+                message = self._("The Fairy Water has lost its effect.")
+            self.repel_timer = 0
+            self.cmd_menu.show_text_in_dialog_box(message, skip_text=self.skip_text)
 
     def handle_battles(self):
         if self.current_map.identifier in MAPS_WITH_ENEMIES:
@@ -778,8 +797,9 @@ class Game:
         if (self.player.row, self.player.column) == staircase_location:
             self.process_warp(staircase_dict)
 
-    def change_map(self, next_map: maps.DragonWarriorMap) -> None:
-        self.map_mgr.change_map(next_map)
+    def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: tuple | None = None,
+                   direction: int | None = None) -> None:
+        self.map_mgr.change_map(next_map, destination_coordinates, direction)
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
         self.map_mgr.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
@@ -839,8 +859,7 @@ class Game:
                     if not self.player.bumped:
                         # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning -
                         #  should always be 0 when the map starts.
-                        self.tiles_moved_since_spawn += 1
-                        self.game_state.tiles_moved_total += 1
+                        self.count_step()
                     else:
                         self.player.bumped = False
                     self.player.is_moving, self.player.next_tile_checked = False, False
@@ -848,8 +867,7 @@ class Game:
             elif is_facing_laterally(self.player):
                 if curr_pos_x % self.tile_size == 0:
                     if not self.player.bumped:
-                        self.tiles_moved_since_spawn += 1
-                        self.game_state.tiles_moved_total += 1
+                        self.count_step()
                     else:
                         self.player.bumped = False
                     self.player.is_moving, self.player.next_tile_checked = False, False
@@ -1031,9 +1049,9 @@ class Game:
         if saved_map and saved_map in map_lookup and saved_map != self.current_map.identifier:
             next_map = map_lookup[saved_map](self.config)
             destination = (save_file.get("PlayerRow"), save_file.get("PlayerColumn"))
-            if destination[0] is not None:
-                next_map.destination_coordinates = destination
-            self.map_mgr.change_map(next_map)
+            if destination[0] is None:
+                destination = next_map.initial_coordinates
+            self.map_mgr.change_map(next_map, destination_coordinates=destination)
 
 
 def run():
