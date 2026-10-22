@@ -120,8 +120,10 @@ class MapManager:
     #  Map change                                                          #
     # ------------------------------------------------------------------ #
 
-    def change_map(self, next_map: maps.DragonWarriorMap) -> None:
-        """Change to a different map."""
+    def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: tuple | None = None,
+                   direction: int | None = None) -> None:
+        """Change to a different map. Pass destination_coordinates (and optionally direction) to warp somewhere other
+        than where the staircase the player is standing on leads, e.g. for RETURN or when loading a save."""
         if self.last_map is not None:
             came_from_throne_room = self.current_map.identifier == 'TantegelThroneRoom'
             came_from_courtyard = self.current_map.identifier == 'TantegelCourtyard'
@@ -143,20 +145,31 @@ class MapManager:
             if not moving_within_tantegel_castle and not self.config['ORCHESTRA_MUSIC_ENABLED']:
                 from pygame import mixer
                 mixer.music.stop()
-        if not self.player.is_dead:
+        is_warp = destination_coordinates is not None
+        if is_warp:
+            current_map_staircase_dict = None
+        elif not self.player.is_dead:
             current_map_staircase_dict = self.last_map.staircases[(self.player.row, self.player.column)]
             destination_coordinates = current_map_staircase_dict.get('destination_coordinates')
         else:
             current_map_staircase_dict = None
             destination_coordinates = (10, 13)  # TantegelThroneRoom, in front of King Lorik
         self.current_map.destination_coordinates = destination_coordinates
-        if destination_coordinates:
+        if is_warp and destination_coordinates is not None:
+            # Not arriving by stairs, so the hero stands on whatever tile is at the destination
+            row, column = destination_coordinates
+            self.current_map.character_key['HERO']['underlying_tile'] = self.current_map.get_tile_by_value(
+                self.current_map.layout[row][column])
+        elif destination_coordinates:
             self.set_underlying_tiles_on_map_change(destination_coordinates)
         self.current_map.load_map(self.player, destination_coordinates, self.tile_size)
         if not self.current_map.is_dark:
             self.game.torch_active = False
             self.game_state.radiant_active = False
-        self.handle_player_direction_on_map_change(current_map_staircase_dict)
+        if direction is not None:
+            self.player.direction_value = direction
+        elif current_map_staircase_dict is not None or self.player.is_dead:
+            self.handle_player_direction_on_map_change(current_map_staircase_dict)
         self.game.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                                   current_map=self.current_map, screen=self.screen, tile_size=self.tile_size)
         self.game.loop_count = 1

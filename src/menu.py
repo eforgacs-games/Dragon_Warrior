@@ -18,7 +18,9 @@ from src.color import BLACK
 from src.common import accept_keys, reject_keys, Graphics, set_gettext_language
 from src.directories import Directories
 from src.items import treasure
-from src.maps import DragonWarriorMap
+from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, REPEL_SPELL_TIMER, RETURN_DESTINATION
+from src.direction import Direction
+from src.maps import DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.sound import Sound
@@ -414,8 +416,15 @@ class CommandMenu(Menu):
         self.recover_health(23, 30)
 
     def wings(self):
+        # NES: same destination as RETURN, and the same places it can't be used
+        if not self.can_return():
+            self.show_text_in_dialog_box(self._("The Wings of the Wyvern cannot be used here."),
+                                         skip_text=self.skip_text)
+            return
+        self.player.inventory.remove("Wings")
         self.show_text_in_dialog_box(
             self._("{} threw The Wings of the Wyvern up into the sky.").format(self.player.name))
+        self.warp(*RETURN_DESTINATION)
 
     def torch(self):
         if not self.current_map.is_dark:
@@ -438,7 +447,10 @@ class CommandMenu(Menu):
                                      skip_text=self.skip_text)
 
     def fairy_water(self):
-        self.show_text_in_dialog_box(f"{self.player.name} used the Fairy Water.", skip_text=self.skip_text)
+        self.show_text_in_dialog_box(
+            self._("{} sprinkled the Fairy Water over his body.").format(self.player.name), skip_text=self.skip_text)
+        self.player.inventory.remove("Fairy Water")
+        self.game.repel_timer = FAIRY_WATER_TIMER
 
     def silver_harp(self):
         self.show_text_in_dialog_box(f"{self.player.name} played a sweet melody on the harp.", skip_text=self.skip_text)
@@ -587,14 +599,30 @@ class CommandMenu(Menu):
         enemy.is_stopspelled = True
         self.show_battle_line(self._("The {}'s spell hath been blocked.").format(self._(enemy.name)))
 
+    def warp(self, map_name: str, coordinates: tuple):
+        """Move the player to another map without using stairs (OUTSIDE, RETURN, Wings of the Wyvern)."""
+        self.game.change_map(map_lookup[map_name](self.game.config), destination_coordinates=coordinates,
+                             direction=Direction.DOWN.value)
+
+    def can_return(self) -> bool:
+        return self.current_map.identifier not in DUNGEON_MAPS and self.current_map.identifier != 'CharlockB8'
+
     def outside(self):
-        pass
+        # NES: only works in the caves and below the Dragonlord's castle's ground floor
+        destination = OUTSIDE_DESTINATIONS.get(self.current_map.identifier)
+        if destination is None:
+            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+            return
+        self.warp(*destination)
 
     def return_(self):
-        pass
+        if not self.can_return():
+            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+            return
+        self.warp(*RETURN_DESTINATION)
 
     def repel(self):
-        pass
+        self.game.repel_timer = REPEL_SPELL_TIMER
 
     def healmore(self):
         # NES DoHealmore: 85 to 100 HP
@@ -844,7 +872,12 @@ class CommandMenu(Menu):
                     elif current_event.key in accept_keys:
                         if menu_name == 'spells':
                             spell_function, spell_mp_cost = function_dict[currently_selected_item]
-                            if self.player.current_mp < spell_mp_cost:
+                            if self.current_battle is not None and currently_selected_item in (
+                                    Spell.RADIANT, Spell.REPEL, Spell.OUTSIDE, Spell.RETURN):
+                                # NES: rejected before any MP is spent, and the player acts again
+                                self.show_battle_line(self._("That cannot be used in battle."))
+                                self.current_battle.no_op = True
+                            elif self.player.current_mp < spell_mp_cost:
                                 self.show_line_in_dialog_box(self._("Thy MP is too low."),
                                                              skip_text=self.skip_text,
                                                              disable_sound=True,
