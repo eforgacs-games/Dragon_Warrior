@@ -777,6 +777,8 @@ class DialogLookup:
         display.flip()
         flash_transparent_color(WHITE, self.screen, self.calculation, transparency=255)
         display.flip()
+        # NES LD2DE: after BWScreenFlash, Dowindow WND_POPUP shows the restored MP
+        self.command_menu.show_popup_window()
         # draw_all_tiles_in_current_map(self.current_map, self.background)
         # draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
         # display.flip()
@@ -834,11 +836,14 @@ class DialogLookup:
                     elif current_event.key in reject_keys:
                         # WndBPressed: the arrow is drawn once more and stays on
                         draw(True)
+                        # NES WindowSequence (Bank01): a selection window is removed once it's answered or cancelled
+                        self.command_menu.remove_window(window)
                         return None
                     elif current_event.key in accept_keys:
                         # WndAPressed: the chosen entry's arrow is drawn once more and stays on
                         draw(True)
                         self.sound.play_sound(self.directories.menu_button_sfx)
+                        self.command_menu.remove_window(window)
                         return current_index
                 elif current_event.type == QUIT:
                     quit()
@@ -1001,8 +1006,9 @@ class DialogLookup:
             self.player.shield = item
         self.player.update_attack_power()
         self.player.update_defense_power()
-        self.command_menu.game.drawer.draw_hovering_stats_window(self.screen, self.player)
+        # NES CompWeapPurchase: "I thank thee.", then Dowindow WND_POPUP with the new gold
         self.say(self._("I thank thee."))
+        self.command_menu.show_popup_window()
 
     # Item shops (NES ToolsDialog)
 
@@ -1040,6 +1046,7 @@ class DialogLookup:
             self.player.gold -= cost
             self.player.inventory.append(selected_item)
             self.say(_("The {}?\nThank you very much.").format(_(selected_item)))
+            self.command_menu.show_popup_window()  # NES PurchaseTool: the thanks, then Dowindow WND_POPUP
         # NES NextToolDialog
         self.confirm(_("Dost thou want anything else?"),
                      yes_path_function=partial(self.buy_tool, current_store_inventory),
@@ -1079,7 +1086,7 @@ class DialogLookup:
             # NES DoSellTool only removes the item; a sold Dragon's Scale or Fighter's Ring stays "worn"
             self.player.inventory.remove(item)
             self.player.gold = pay_player(self.player.gold, price)
-            self.command_menu.game.drawer.draw_hovering_stats_window(self.screen, self.player)
+            self.command_menu.show_popup_window()  # NES DoneSellingTool: Dowindow WND_POPUP
         self.sell_more(current_store_inventory)
 
     def sell_more(self, current_store_inventory):
@@ -1109,6 +1116,7 @@ class DialogLookup:
         else:
             self.player.gold -= FAIRY_WATER_COST
             self.player.inventory.append('Fairy Water')
+            self.command_menu.show_popup_window()  # NES BuyFairyWater: Dowindow WND_POPUP, then the thanks
             self.confirm(_("I thank thee.\nWon't thou buy one more bottle?"),
                          yes_path_function=self.buy_fairy_water, no_path_function=self.fairy_water_goodbye)
 
@@ -1133,6 +1141,7 @@ class DialogLookup:
         else:
             self.player.gold -= magic_key_cost
             self.player.inventory.append('Magic Key')
+            self.command_menu.show_popup_window()  # NES BuyKey: Dowindow WND_POPUP, then "Here, take this key."
             self.confirm(_("Here, take this key.\nDost thou wish to purchase more?"),
                          yes_path_function=partial(self.buy_magic_key, magic_key_cost),
                          no_path_function=self.magic_key_goodbye)
@@ -1158,38 +1167,49 @@ class DialogLookup:
                                                       skip_text=self.command_menu.skip_text)
 
     def inn_sleep(self, inn_cost: int):
+        """NES BuyInnStay (Bank03, LD8C9). The pop-up status window (opened with the COMMAND window, ShowNCCmdWindow)
+        and the dialog window stay up through the whole stay; only the palettes fade:
+
+        1. the gold is paid and Dowindow WND_POPUP shows what is left, then the innkeeper says "Good night."
+        2. PalFadeOut fades everything, windows included, to black
+        3. HP and MP are restored and Dowindow WND_POPUP redraws the pop-up with them, while the screen is black
+        4. PalFadeIn brings it all back: the map, the COMMAND window, the pop-up with the full HP and MP, and the
+           dialog window still showing "Good night.", all in the white of the restored HP (its palette loads run
+           ChkLowHPPal)
+        5. "Good morning." is printed below "Good night." in the same dialog window."""
         _ = self._
+        game = self.command_menu.game
+        config = game.game_state.config
+        self.player.gold -= inn_cost
+        self.command_menu.show_popup_window()
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
         fade(fade_out=True, screen=self.screen, config=self.config)
-        music_enabled = self.command_menu.game.game_state.config['MUSIC_ENABLED']
-        tile_size = self.command_menu.game.game_state.config['TILE_SIZE']
-        if music_enabled:
-            mixer.music.stop()
-        self.sound.play_sound(self.directories.special_item_sfx)
+        # LD8DF-LD8FB, with the screen black: MSC_INN starts and HP and MP are restored,
+        # WaitForMusicEnd lets the jingle finish, then MSC_VILLAGE starts, and only then PalFadeIn
         self.player.restore_hp()
         self.player.restore_mp()
-        self.player.gold -= inn_cost
-        wait(3000, self.command_menu.game.game_state.config)
-        if music_enabled:
-            mixer.music.load(self.current_map.music_file_path)
-            mixer.music.play(-1)
-        # NES Inn: HP is restored while the screen is faded out, so PalFadeIn's palette loads (ChkLowHPPal) bring the
-        # windows back white, before the innkeeper says good morning
-        self.command_menu.game.load_window_palette()
-        if not self.command_menu.game.game_state.config['NO_BLIT']:
-            self.command_menu.game.drawer.draw_all_tiles_in_current_map(self.current_map, self.background)
-            draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row, self.config)
+        game.music_player.play_until_end(self.directories.inn_music, config)
+        if game.music_player.music_enabled:
+            game.music_player.load_and_play_music(self.directories.village_music)
+        game.load_window_palette()
+        if not config['NO_BLIT']:
+            background = game.drawer.background
+            game.drawer.draw_all_tiles_in_current_map(self.current_map, background)
+            draw_player_sprites(self.current_map, background, self.player.column, self.player.row, self.config)
             for character, character_dict in self.current_map.characters.items():
                 if character != 'HERO':
-                    draw_character_sprites(self.current_map, self.background, character_dict['coordinates'][1],
+                    draw_character_sprites(self.current_map, background, character_dict['coordinates'][1],
                                            character_dict['coordinates'][0], self.config, character)
-            self.screen.blit(self.background, self.camera_position)
-            self.screen.blit(self.command_menu.command_menu_surface, (tile_size * 6, tile_size * 1))
-            display.flip()
-        # NES Inn (Bank03, after PalFadeIn): TextBlock1 entry 6 if the hero is carrying Gwaelin, otherwise entry 8
-        if self.command_menu.game.story_flags.carrying_gwaelin:
+            self.screen.blit(background, game.camera.pos)
+            self.command_menu.redraw_command_window()
+        self.command_menu.draw_dialog_window()
+        self.command_menu.show_popup_window()
+        fade(fade_out=False, screen=self.screen, config=self.config)
+        # NES (after PalFadeIn): TextBlock1 entry 6 if the hero is carrying Gwaelin, otherwise entry 8
+        if game.story_flags.carrying_gwaelin:
             good_morning = _("Good morning.\nThou hast had a good night's sleep I hope.")
         else:
             good_morning = _("Good morning.\nThou seems to have spent a good night.")
         self.command_menu.show_text_in_dialog_box((good_morning, _("I shall see thee again.")),
-                                                  skip_text=self.command_menu.skip_text, drop_up=False)
+                                                  skip_text=self.command_menu.skip_text, drop_down=False,
+                                                  drop_up=False)
