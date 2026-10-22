@@ -22,9 +22,12 @@ class Directories:
         # between Thou Hast Died (MSC_DEATH, $14) and Princess Gwaelin's Love (MSC_PRNCS_LOVE, $16), and the only place
         # the game plays it is the inn. There is no orchestral version, so it is used with either music setting.
         self.inn_music = join(sfx_dir, '21 Dragon Quest 1 - Special Item.mp3')
-        self.princess_gwaelins_love_sfx = join(sfx_dir, "22 Dragon Quest 1 - Princess Gwaelin's Love.mp3")
-        self.victory_sfx = join(sfx_dir, '25 Dragon Quest 1 - Victory.mp3')
-        self.improvement_sfx = join(sfx_dir, '26 Dragon Quest 1 - Improvement.mp3')
+        # The NES plays these clips as music, not as sound effects (InitMusicSFX with an MSC_ number, then usually
+        # WaitForMusicEnd), so they go through MusicPlayer.play_clip / play_until_end, never Sound.play_sound.
+        # MSC_PRNCS_LOVE
+        self.princess_gwaelins_love_music = join(sfx_dir, "22 Dragon Quest 1 - Princess Gwaelin's Love.mp3")
+        self.victory_music = join(sfx_dir, '25 Dragon Quest 1 - Victory.mp3')  # MSC_VICTORY
+        self.level_up_music = join(sfx_dir, '26 Dragon Quest 1 - Improvement.mp3')  # MSC_LEVEL_UP
         self.stairs_up_sfx = join(sfx_dir, '29 Dragon Quest 1 - Stairs Up.mp3')
         self.stairs_down_sfx = join(sfx_dir, '30 Dragon Quest 1 - Stairs Down.mp3')
         self.swamp_sfx = join(sfx_dir, '31 Dragon Quest 1 - Swamp.mp3')
@@ -46,9 +49,10 @@ class Directories:
         # items
 
         self.torch_sfx = join(sfx_dir, 'torch.wav')
-        self.harp_sfx = join(sfx_dir, '17 Dragon Quest 1 - Silver Harp.mp3')
-        self.flute_sfx = join(sfx_dir, '18 Dragon Quest 1 - Fairy Flute.mp3')
-        self.cursed_sfx = join(sfx_dir, '23 Dragon Quest 1 - Cursed!.mp3')
+        # music clips too (see victory_music)
+        self.harp_music = join(sfx_dir, '17 Dragon Quest 1 - Silver Harp.mp3')  # MSC_SILV_HARP
+        self.flute_music = join(sfx_dir, '18 Dragon Quest 1 - Fairy Flute.mp3')  # MSC_FRY_FLUTE
+        self.cursed_music = join(sfx_dir, '23 Dragon Quest 1 - Cursed!.mp3')  # MSC_CURSED
 
 
         # movement

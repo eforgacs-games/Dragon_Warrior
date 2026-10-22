@@ -238,8 +238,10 @@ class BattleController:
                 self.screen.fill(BLACK)
                 display.flip()
         self.cmd_menu.current_battle = None
-        # TODO: Refactor to music player class.
-        self.music_player.load_and_play_music(self.current_map.music_file_path)
+        if outcome != BattleOutcome.VICTORY or current_battle.enemy.name == 'Dragonlord 2':
+            # After a win, Battle.check_player_level_up has already let the victory (or level-up) music end and
+            # resumed the map's music, the way the NES does before ExitFight; starting it again would restart it.
+            self.music_player.load_and_play_music(self.current_map.music_file_path)
         if outcome == BattleOutcome.ESCAPED and self.player_ran_away:
             self.step_back_after_running()
         return outcome
