@@ -418,16 +418,20 @@ class DialogLookup:
                                           _("From Tantegel Castle travel 70 leagues to the south and 40 to the "
                                             "east."))},
             },
+            # NES DoTalkResults / DoGwaelinRescue (Bank03): TextBlock12 entry 5, then PrincessRescueLoop (TextBlock13
+            # entry 5 and a yes/no window, "But thou must." (TextBlock12 entry 6) until the answer is yes)
             'SwampCave': {
                 'PRINCESS_GWAELIN': {'dialog': (_("Thou art brave indeed to rescue me, {}.").format(self.player.name),
                                                 _("I am Gwaelin, daughter of Lorik."),
                                                 self.take_to_castle_confirmation_prompt
                                                 )}},
 
+            # NES RainStatTbl wizard at 4,4, dialog byte $6C (RainStaffDialog)
             'StaffOfRainCave': {'WISE_MAN': {'dialog': (self.staff_of_rain_guardian,)}},
+            # NES RnbwStatTbl wizard at 4,5, dialog byte $6D (RnbwDrpDialog)
             'MagicTemple': {'WISE_MAN': {'dialog': (self.magic_temple_rainbow_drop_exchange,)}},
-            # NES DoDrgnLrdDialog (Bank03): TextBlock13 entries 7 and 8 around TextBlock11 entry 4, then the
-            # yes/no window.
+            # NES DLBFStatTbl Dragonlord at 16,24, dialog byte $70. DoDrgnLrdDialog (Bank03): TextBlock13 entries 7
+            # and 8 around TextBlock11 entry 4, then the yes/no window.
             'CharlockB8': {'DRAGONLORD': {'dialog': (
                 _("Welcome, {}.\nI am the Dragonlord--King of Kings.").format(self.player.name),
                 _("I have been waiting long for one such as thee."),
@@ -754,11 +758,12 @@ class DialogLookup:
             return
         if "Erdrick's Token" not in self.player.inventory:
             # Without Erdrick's Token the player isn't proven to be Erdrick's descendant: TextBlock12 entry 3, then
-            # BWScreenFlash and CheckMapExit force the player out to the overworld
+            # BWScreenFlash and CheckMapExit force the player out to the overworld (ChangeMaps -> SetPlyrPixelLoc ->
+            # MapChngWithSound, which plays the stairs sound)
             self.say(self._("In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted "
                             "would save us."),
                      self._("Go now!"))
-            flash_transparent_color(WHITE, self.screen, self.calculation, no_blit=self.config['NO_BLIT'])
+            self.bw_screen_flash()
             self.sound.play_sound(self.directories.stairs_up_sfx)
             wait(500)
             # Move the player onto the temple's staircase (6, 2), then out to the overworld in front of the entrance
@@ -781,6 +786,15 @@ class DialogLookup:
         self.player.inventory.remove("Staff of Rain")
         self.player.inventory.insert(0, "Rainbow Drop")
         greyscale_screen(self.screen, self.calculation, frames=30, no_blit=self.config['NO_BLIT'])
+
+    def bw_screen_flash(self):
+        """NES BWScreenFlash (Bank03): eight times, 2 frames in color and then 3 frames in greyscale."""
+        if self.config['NO_BLIT']:
+            return
+        for _ in range(8):
+            if not self.config['NO_WAIT']:
+                time.wait(2 * 1000 // 60)
+            greyscale_screen(self.screen, self.calculation, frames=3)
 
     def prompt_for_save(self):
         return confirmation_prompt(self.command_menu,
