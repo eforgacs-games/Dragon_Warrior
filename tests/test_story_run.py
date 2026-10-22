@@ -104,6 +104,9 @@ class TestStoryRun(TestCase):
                 (('data.text.dialog_lookup_table.time.wait',), {}),
                 (('data.text.dialog_lookup_table.mixer',), {}),
                 (('src.music_player.mixer',), {}),
+                # The hero always gets the first turn (no CheckEnRun / CalcWhoIsNext roll, #232), so the scripted
+                # fights can't go wrong
+                (('src.battle_controller.BattleController.start_fight',), {'return_value': False}),
         ):
             (patch.object(*target, **kwargs) if len(target) == 2 else patch(*target, **kwargs)).start()
         self.addCleanup(patch.stopall)
