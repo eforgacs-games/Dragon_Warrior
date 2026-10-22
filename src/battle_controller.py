@@ -20,7 +20,6 @@ from src.cursor import BlinkingCursor
 from src.waiting import quit_if_requested, wait
 from src.constants import (
     AUTO_BATTLE_DELAY_MS,
-    BATTLE_MENU_HEIGHT, BATTLE_MENU_WIDTH, BATTLE_MENU_X, BATTLE_MENU_Y,
     ENEMY_FLEE_PROBABILITY,
 )
 from src.encounters import pick_enemy
@@ -29,17 +28,13 @@ from src.enemy_spells import enemy_spell_lookup
 from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
 from src.spells import Spell
+from src.window_renderer import draw_window
+from src.windows import COMBAT_COMMAND_LAYOUT
 from src.visual_effects import player_hit_shake
 from src.waiting import handle_speed_key, scaled_ms
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, SelectionButtons, first_button
-
-
-# CmdCmbtDat: the cursor's tile in the battle command window: column 1 (cursor home X) for FIGHT and RUN, 8 tiles
-# further right for SPELL and ITEM; row 2 for FIGHT and SPELL, row 4 for RUN and ITEM
-COMBAT_COMMAND_CURSOR_TILE_COLUMNS = (1, 9)
-COMBAT_COMMAND_CURSOR_FIRST_TILE_ROW = 2
 
 
 class BattleOutcome(Enum):
@@ -268,16 +263,12 @@ class BattleController:
     # ------------------------------------------------------------------ #
 
     def draw_command_window(self, cursor_visible: bool) -> None:
-        """The battle command window (CmdCmbtDat), from the screenshot without a cursor, and the NES cursor at the
-        selected command (src/cursor.py), in the window color."""
-        x, y, width, height = BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT
-        tile_size = self.game.game_state.config["TILE_SIZE"]
-        self.graphics.create_window(x, y, width, height, self.directories.BATTLE_MENU_STATIC_PATH, self.screen,
-                                    self.game.color)
-        self.cmd_menu.draw_window_cursor(x, y, COMBAT_COMMAND_CURSOR_TILE_COLUMNS[self.battle_menu_column],
-                                         COMBAT_COMMAND_CURSOR_FIRST_TILE_ROW + 2 * self.battle_menu_row,
-                                         cursor_visible)
-        display.update((x * tile_size, y * tile_size, width * tile_size, height * tile_size))
+        """The battle command window (CmdCmbtDat), generated like the NES draws it (src/window_renderer.py), with the
+        NES cursor at the selected command (src/cursor.py), in the window color."""
+        rect = draw_window(self.screen, COMBAT_COMMAND_LAYOUT, self.game.color, self.game.game_state.config,
+                           cursor_index=self.battle_menu_row * 2 + self.battle_menu_column,
+                           cursor_visible=cursor_visible)
+        display.update(rect)
 
     def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
         if not self.command_window_open:
