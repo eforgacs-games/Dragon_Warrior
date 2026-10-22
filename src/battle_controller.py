@@ -104,7 +104,7 @@ class BattleController:
     # ------------------------------------------------------------------ #
 
     def run_battle(self, enemies_in_current_zone):
-        enemy_name = random.choice(enemies_in_current_zone)
+        enemy_name = self.config.get("FORCE_ENEMY") or random.choice(enemies_in_current_zone)
         current_battle = Battle(self.config, enemy_name, self.current_map)
         current_battle.play_battle_music()
         # TODO: Group parameters into respective classes.
