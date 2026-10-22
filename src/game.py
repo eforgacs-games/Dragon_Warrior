@@ -47,7 +47,7 @@ from src.items import TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu, Menu
-from src.menu_functions import convert_list_to_newline_separated_string, NameSelection
+from src.menu_functions import NameSelection
 from src.movement import Movement
 from src.music_player import MusicPlayer
 from src.player.player import Player
@@ -828,10 +828,10 @@ class Game:
             self.debug_tools.handle_keydown(current_keydown_event)
 
     def handle_help_button(self, keydown_event):
-        control_info = ControlInfo(self.config)
         if keydown_event.key == K_F1:
-            self.cmd_menu.show_text_in_dialog_box(
-                self._("Controls:\n") + convert_list_to_newline_separated_string(control_info.controls))
+            control_info = ControlInfo(self.config)
+            # one page per group of keys, so nothing runs past the bottom of the dialog box
+            self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
 
     def handle_b_button(self, keydown_event):
         if keydown_event.key in reject_keys:
