@@ -6,7 +6,7 @@ delegates to it; MapManager holds a back-reference to Game so it can reach
 shared resources (player, camera, screen, music_player, …).
 """
 
-from pygame import Surface
+from pygame import Surface, display
 from pygame.time import get_ticks
 
 from src import maps
@@ -124,9 +124,12 @@ class MapManager:
     # ------------------------------------------------------------------ #
 
     def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: tuple | None = None,
-                   direction: int | None = None) -> None:
+                   direction: int | None = None, fade_out_first: bool = True) -> None:
         """Change to a different map. Pass destination_coordinates (and optionally direction) to warp somewhere other
-        than where the staircase the player is standing on leads, e.g. for RETURN or when loading a save."""
+        than where the staircase the player is standing on leads, e.g. for RETURN or when loading a save.
+        fade_out_first=False cuts straight to black instead of fading the old screen out, as NES StartAtThroneRoom
+        (Bank03, LCB47) does: it loads BlackPalPtr at once and changes maps with MapChngNoSound (Bank00, LB091),
+        which skips ScreenFadeOut, so the only fade is MapChngNoSound's PalFadeIn."""
         if self.last_map is not None:
             came_from_throne_room = self.current_map.identifier == 'TantegelThroneRoom'
             came_from_courtyard = self.current_map.identifier == 'TantegelCourtyard'
@@ -146,7 +149,11 @@ class MapManager:
         self.place_princess_gwaelin()
         if self.game.story_flags.dragonlord_defeated:
             self.current_map.apply_dragonlord_defeated()
-        fade(fade_out=True, screen=self.screen, config=self.game_state.config)
+        if fade_out_first:
+            fade(fade_out=True, screen=self.screen, config=self.game_state.config)
+        else:
+            self.screen.fill(BLACK)
+            display.flip()
         self.set_big_map()
         self.set_roaming_character_positions()
         if self.music_enabled:
@@ -188,6 +195,10 @@ class MapManager:
         if destination_coordinates:
             self.game.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]),
                                                  self.tile_size)
+        # load_map gave the hero the unarmed sprite sheet on its first image (facing down); show the right sheet and
+        # facing in the frame the fade-in starts from, not only once the main loop has animated the hero
+        self.game.set_player_images_by_equipment()
+        self.player.show_facing()
         self.drawer.draw_all(self.screen, self.game.loop_count, self.game.big_map, self.current_map, self.player,
                              self.game.cmd_menu, self.game.foreground_rects, self.game_state.enable_animate,
                              self.game.camera, self.game.initial_dialog_enabled, self.game.events,
