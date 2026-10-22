@@ -22,7 +22,6 @@ class Player(AnimatedSprite):
         self.row, self.column = current_map.initial_coordinates
         self.next_tile_checked = False
         self.is_moving = False
-        self.is_carrying_princess = False
         self.next_coordinates = None
         self.next_next_coordinates = None
         self.current_tile = None
@@ -52,7 +51,7 @@ class Player(AnimatedSprite):
         self.wearing_fighters_ring = False  # no stat effect on the NES; only changes NPC dialog
         self.fighters_ring_attack_bonus = fighters_ring_attack_bonus
         # Curse state, NES ModsnSpells bit 6 (F_CRSD_BELT) and bit 7 (F_DTH_NECKLACE). Neither changes any stat:
-        # LoadStats never reads them. Not saved yet.
+        # LoadStats never reads them. Like the other worn items (bits 4 and 5) they're saved with the hero.
         self.wearing_cursed_belt = False
         self.wearing_death_necklace = False
 

@@ -158,10 +158,10 @@ class TestCommandMenu(TestCase):
     def test_death_necklace_one_in_32(self):
         self.open_chest_at('MountainCaveB2', (7, 2), roll=0x20)  # low 5 bits zero
         self.assertIn('Death Necklace', self.game.player.inventory)
-        self.assertTrue(self.game.chest_history.death_necklace_found)
+        self.assertTrue(self.game.story_flags.death_necklace_found)
         # once found, the chest only ever holds 100-131 gold
         self.game.chest_history = type(self.game.chest_history)()
-        self.game.chest_history.death_necklace_found = True
+        self.game.story_flags.death_necklace_found = True
         self.open_chest_at('MountainCaveB2', (7, 2), roll=0x20)
         self.assertEqual(self.game.player.gold, 100)
         self.assertEqual(self.game.player.inventory.count('Death Necklace'), 1)
@@ -170,7 +170,7 @@ class TestCommandMenu(TestCase):
         self.open_chest_at('MountainCaveB2', (7, 2), roll=0x01)
         self.assertNotIn('Death Necklace', self.game.player.inventory)
         self.assertEqual(self.game.player.gold, 101)
-        self.assertFalse(self.game.chest_history.death_necklace_found)
+        self.assertFalse(self.game.story_flags.death_necklace_found)
 
     def test_erdricks_sword_is_equipped(self):
         self.open_chest_at('CharlockB3', (8, 8))

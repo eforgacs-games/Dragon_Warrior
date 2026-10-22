@@ -81,8 +81,6 @@ class Game:
         self.layouts = MapLayouts()
         self.fullscreen_enabled = self.game_state.config["FULLSCREEN_ENABLED"]
         self.auto_stairs = self.game_state.config["AUTO_STAIRS"]
-        # NES F_PSG_FOUND: whether the secret passage behind the Dragonlord's throne has been found
-        self.charlock_stairs_revealed = False
         # text
         self.initial_dialog_enabled = self.game_state.config["INITIAL_DIALOG_ENABLED"]
         self.skip_text = False
@@ -101,9 +99,8 @@ class Game:
         self.foreground_rects = []
         self.torch_active = False
         self.repel_timer = 0  # NES RepelTimer, set by REPEL or Fairy Water
-        self.rainbow_bridge_built = False  # NES F_RNBW_BRDG flag in ModsnSpells
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
-        self.story_flags = StoryFlags()
+        self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
         self.speed = 2
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
@@ -179,14 +176,7 @@ class Game:
         self.events = get()
 
         display.set_icon(image.load(self.directories.ICON_PATH))
-        self.allow_save_prompt = False
         # pg.event.set_allowed([pg.QUIT])
-
-    @property
-    def princess_saved(self) -> bool:
-        """NES F_RTN_GWAELIN. Story flags aren't saved yet, so after loading a game this falls back on Gwaelin's Love,
-        which only King Lorik's thanks for returning her gives."""
-        return self.story_flags.gwaelin_returned or "Gwaelin's Love" in self.player.inventory
 
     def set_screen(self, win_height, win_width):
         """Stub for setting the screen."""
@@ -205,14 +195,14 @@ class Game:
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
                              self.foreground_rects, self.game_state.enable_animate, self.camera,
                              self.initial_dialog_enabled,
-                             self.events, self.skip_text, self.allow_save_prompt, self.game_state, self.torch_active,
-                             self.color)
+                             self.events, self.skip_text, self.story_flags.left_throne_room, self.game_state,
+                             self.torch_active, self.color)
         while True:
             self.clock.tick(self.fps)
             self.get_events()
             self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player,
                                  self.cmd_menu, self.foreground_rects, self.game_state.enable_animate, self.camera,
-                                 self.initial_dialog_enabled, self.events, self.skip_text, self.allow_save_prompt,
+                                 self.initial_dialog_enabled, self.events, self.skip_text, self.story_flags.left_throne_room,
                                  self.game_state, self.torch_active, self.color)
             display.flip()
             self.loop_count += 1
@@ -284,7 +274,6 @@ class Game:
             with open(os.path.join(self.directories.save_dir, self.save_dir_contents[0])) as save_file:
                 loaded_save = json.load(save_file)
                 self.load_game(loaded_save)
-            self.game_state.game_loaded_from_save = True
 
         self.sound.play_sound(self.directories.menu_button_sfx)
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
@@ -606,14 +595,8 @@ class Game:
                         random_integer = random.randint(0, 15)
         return random_integer
 
-    @property
-    def gwaelin_rescued(self) -> bool:
-        """NES F_DONE_GWAELIN: Gwaelin is being carried or has been returned. NPC dialog that changes once she's
-        rescued checks this, not just whether she's been returned."""
-        return self.player.is_carrying_princess or self.story_flags.gwaelin_returned
-
     def set_player_images_by_equipment(self):
-        if self.player.is_carrying_princess:
+        if self.story_flags.carrying_gwaelin:
             self.player.images = self.current_map.scale_sprite_sheet(self.directories.HERO_CARRYING_PRINCESS_PATH)
             self.player.set_images(self.player.images)
         elif self.player.weapon:
@@ -658,7 +641,8 @@ class Game:
 
     def set_post_death_attributes(self):
         # NES DeathText: dying clears F_GOT_GWAELIN, so Gwaelin is back in the Swamp Cave (F_RTN_GWAELIN is untouched)
-        self.player.is_carrying_princess = False
+        self.story_flags.carrying_gwaelin = False
+        self.repel_timer = 0  # NES StartAtThroneRoom (SetStartPos) clears RepelTimer
         next_map = map_lookup['TantegelThroneRoom'](self.config)
         self.change_map(next_map)
         self.player.gold = self.player.gold // 2
@@ -705,8 +689,8 @@ class Game:
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
                              self.foreground_rects, self.game_state.enable_animate, self.camera,
                              self.initial_dialog_enabled,
-                             self.events, self.skip_text, self.allow_save_prompt, self.game_state, self.torch_active,
-                             self.color)
+                             self.events, self.skip_text, self.story_flags.left_throne_room, self.game_state,
+                             self.torch_active, self.color)
         display.flip()
 
     def handle_warps(self):
@@ -1088,9 +1072,13 @@ class Game:
             # handle_roaming_character_sides_collision(self.current_map, roaming_character)
 
     def load_game(self, save_file: dict) -> None:
-        """
-        Load a game from a save file.
-        """
+        """Continue a saved game (see CommandMenu.save for what is kept).
+
+        NES LoadSavedData (Bank03) restores the hero and the ModsnSpells, PlayerFlags and StoryFlags bytes as they
+        were saved. MainGameEngine then clears the treasure chest history, and StartAtThroneRoom clears the repel
+        timer, gives a cursed hero 1 HP and loads the starting map, whose InitMapData applies the story flags (the
+        throne room chests are gone once F_LEFT_THROOM is set). The NES always starts in the throne room; this game
+        starts where the save was made, which is always beside King Lorik."""
         self.player.name = save_file["Name"]
         self.player.total_experience = save_file["Experience"]
         self.player.level = self.player.get_level_by_experience()
@@ -1103,21 +1091,31 @@ class Game:
         self.player.shield = save_file.get("Shield", "")
         self.player.wearing_dragon_scale = save_file.get("WearingDragonScale", False)
         self.player.wearing_fighters_ring = save_file.get("WearingFightersRing", False)
+        self.player.wearing_cursed_belt = save_file.get("WearingCursedBelt", False)
+        self.player.wearing_death_necklace = save_file.get("WearingDeathNecklace", False)
         self.player.update_attack_power()
         self.player.update_defense_power()
         self.player.inventory = save_file["Inventory"]
         self.player.spells = save_file.get("Spells", [])
-        self.rainbow_bridge_built = save_file.get("RainbowBridgeBuilt", False)
-        # Set before changing maps so a save on CharlockB1 loads with the stairs already revealed
-        self.charlock_stairs_revealed = save_file.get("CharlockStairsRevealed", False)
+        self.story_flags = StoryFlags.from_save(save_file)
+        self.chest_history = TreasureChestHistory()
+        self.repel_timer = 0
+        if self.player.is_cursed:
+            # NES StartAtThroneRoom (LCB6B): a cursed hero always starts with 1 HP
+            self.player.current_hp = 1
+        # Reload the starting map even if it's the one already shown, so the loaded flags apply to it
         saved_map = save_file.get("CurrentMap")
-        if saved_map and saved_map in map_lookup and saved_map != self.current_map.identifier:
+        if saved_map in map_lookup:
             next_map = map_lookup[saved_map](self.config)
             destination = (save_file.get("PlayerRow"), save_file.get("PlayerColumn"))
             if destination[0] is None:
                 destination = next_map.initial_coordinates
-            self.map_mgr.change_map(next_map, destination_coordinates=destination)
-
+        elif self.current_map.identifier in map_lookup:
+            next_map = map_lookup[self.current_map.identifier](self.config)
+            destination = (self.player.row, self.player.column)
+        else:
+            return
+        self.map_mgr.change_map(next_map, destination_coordinates=destination)
 
 def run():
     parser = argparse.ArgumentParser(description="Dragon Warrior")
