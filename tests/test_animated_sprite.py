@@ -20,9 +20,7 @@ class TestAnimatedSprite(TestCase):
         self.assertEqual(self.mock_images[Direction.LEFT.value], self.anim_sprite.images_map[Direction.LEFT.value])
         self.assertEqual(self.mock_images[Direction.UP.value], self.anim_sprite.images_map[Direction.UP.value])
         self.assertEqual(self.mock_images[Direction.RIGHT.value], self.anim_sprite.images_map[Direction.RIGHT.value])
-        self.assertEqual(self.anim_sprite.current_frame, 0)
-        self.assertEqual(self.anim_sprite.frame_count, 0)
-        self.assertEqual(self.anim_sprite.frame_delay, 2)
+        self.assertEqual(self.anim_sprite.current_frame, AnimatedSprite.walk_frame)
         self.assertIsNone(self.anim_sprite.direction_value)
 
     def test_directional_values(self):
@@ -31,15 +29,19 @@ class TestAnimatedSprite(TestCase):
         self.assertEqual(self.mock_images[2], self.mock_images[Direction.UP.value])
         self.assertEqual(self.mock_images[3], self.mock_images[Direction.RIGHT.value])
 
-    def test_animate_increment_frame_count(self):
-        self.anim_sprite.frame_count = 0
-        self.anim_sprite.animate()
-        self.assertEqual(self.anim_sprite.frame_count, 1)
-
-    def test_animate_current_frame(self):
-        self.anim_sprite.frame_count = 14
-        self.anim_sprite.animate()
-        self.assertEqual(self.anim_sprite.current_frame, 1)
+    def test_animate_shows_the_shared_walking_frame(self):
+        # NES CharLeftRight: one walking frame for every character
+        self.addCleanup(setattr, AnimatedSprite, 'walk_frame', AnimatedSprite.walk_frame)
+        self.anim_sprite.direction_value = Direction.LEFT.value
+        other = AnimatedSprite(center_point=None, direction_value=Direction.UP.value, images=self.mock_images,
+                               identifier='Other')
+        for walk_frame in (1, 0, 1):
+            AnimatedSprite.walk_frame = walk_frame
+            self.anim_sprite.animate()
+            other.animate()
+            self.assertEqual(walk_frame, self.anim_sprite.current_frame)
+            self.assertEqual(walk_frame, other.current_frame)
+            self.assertEqual(self.anim_sprite.images_map[Direction.LEFT.value][walk_frame], self.anim_sprite.image)
 
     def test_animate_down_direction(self):
         self.anim_sprite.direction_value = Direction.DOWN.value

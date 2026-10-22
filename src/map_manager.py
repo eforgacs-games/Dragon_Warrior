@@ -7,7 +7,6 @@ shared resources (player, camera, screen, music_player, …).
 """
 
 from pygame import Surface, display
-from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src import maps
 from src.camera import Camera
@@ -262,6 +261,7 @@ class MapManager:
             self.player.direction_value = Direction.UP.value
 
     def set_roaming_character_positions(self):
+        # NES InitMapData: NPCUpdateCntr starts at 0 on every map, so pair 0 (the first two roaming NPCs) moves first
+        self.game.npc_schedule.new_map()
         for roaming_character in self.current_map.roaming_characters:
-            roaming_character.last_roaming_clock_check = get_ticks()
             set_character_position(roaming_character, self.tile_size)

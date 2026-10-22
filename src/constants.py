@@ -94,15 +94,6 @@ FAIRY_WATER_TIMER = 254
 
 # ── Sprites ───────────────────────────────────────────────────────────────────
 
-# How many frames to wait before advancing the animation frame
-ANIMATION_FRAME_DELAY = 2
-
-# Number of update ticks per animation cycle check
-ANIMATION_CYCLE_TICKS = 15
-
-# Maximum animation frame index (0-based, so 2 frames total)
-ANIMATION_MAX_FRAME = 1
-
 # NES InitMapData (ChkLeftThRoom, Bank00): once F_LEFT_THROOM is set, entering the throne room removes its door
 # (DoorXPos+14 = 4, DoorYPos+14 = 7) along with its 3 treasure chests. NES throne room (x, y) is (y + 6, x + 10) here.
 THRONE_ROOM_DOOR_COORDINATES = (7 + 6, 4 + 10)
