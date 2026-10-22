@@ -97,7 +97,8 @@ class TestBattleMethods(unittest.TestCase):
         player.total_experience += experience_gained
         cmd_menu = Mock()
         battle = Battle({**self.battle.config, 'LANGUAGE': 'English'}, self.enemy_name, self.current_map)
-        with patch('src.battle.time.wait'), patch('pygame.mixer.music'):
+        # cmd_menu.game.music_player (the level-up music, #300) is a Mock too
+        with patch('pygame.mixer.music'):
             battle.check_player_level_up(cmd_menu, player, music_enabled=False)
         return player, [call.args[0] for call in cmd_menu.show_line_in_dialog_box.call_args_list]
 
