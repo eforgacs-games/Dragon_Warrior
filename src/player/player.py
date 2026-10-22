@@ -51,6 +51,10 @@ class Player(AnimatedSprite):
         self.wearing_dragon_scale = False
         self.wearing_fighters_ring = False  # no stat effect on the NES; only changes NPC dialog
         self.fighters_ring_attack_bonus = fighters_ring_attack_bonus
+        # Curse state, NES ModsnSpells bit 6 (F_CRSD_BELT) and bit 7 (F_DTH_NECKLACE). Neither changes any stat:
+        # LoadStats never reads them. Not saved yet.
+        self.wearing_cursed_belt = False
+        self.wearing_death_necklace = False
 
         # set name-based initial stats and growth stats
 
@@ -113,6 +117,27 @@ class Player(AnimatedSprite):
             self.defense_power += shields[self.shield]['defense']
         if self.wearing_dragon_scale:
             self.defense_power += 2
+
+    @property
+    def is_cursed(self) -> bool:
+        """NES: ModsnSpells AND #$C0, i.e. wearing the Cursed Belt or the Death Necklace."""
+        return self.wearing_cursed_belt or self.wearing_death_necklace
+
+    def is_wearing_cursed_item(self, item_name: str) -> bool:
+        """Whether item_name is a cursed item the player has put on. NES ChkSellBelt/ChkSellNecklace and the
+        discard checks (LE0B9) refuse to part with a worn cursed item ("A curse is upon thy body."); an unworn one can
+        be sold or dropped like any other item."""
+        return (item_name == "Cursed Belt" and self.wearing_cursed_belt) or \
+            (item_name == "Death Necklace" and self.wearing_death_necklace)
+
+    def remove_curse(self) -> None:
+        """NES CursedDialog: the worn cursed items are taken from the inventory and both curse flags cleared."""
+        if self.wearing_death_necklace and "Death Necklace" in self.inventory:
+            self.inventory.remove("Death Necklace")
+        if self.wearing_cursed_belt and "Cursed Belt" in self.inventory:
+            self.inventory.remove("Cursed Belt")
+        self.wearing_cursed_belt = False
+        self.wearing_death_necklace = False
 
     def get_points_to_next_level(self):
         if levels_list.get(self.level + 1):
