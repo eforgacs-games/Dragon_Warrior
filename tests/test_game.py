@@ -369,21 +369,19 @@ class TestGame(TestCase):
         self.assertEqual('WALL', get_tile_id_by_coordinates(0, 1, self.game.current_map))
         self.assertEqual('WOOD', get_tile_id_by_coordinates(1, 1, self.game.current_map))
 
-    # TODO: implement test_handle_roaming_character_map_edge_side_collision.
-
-    # def test_handle_roaming_character_map_edge_side_collision(self):
-    #     initial_roaming_guard_position = self.game.current_map.get_initial_character_location('ROAMING_GUARD')
-    #     self.game.current_map.layout = [[3, 1, 3],
-    #                                     [1, 38, 1],
-    #                                     [34, 1, 3]]
-    #     self.roaming_guard = AnimatedSprite(self.center_pt, 0,
-    #                                         self.roaming_guard_images[0], name='ROAMING_GUARD')
-    #     self.game.current_map.roaming_characters.append(self.roaming_guard)
-    #     self.game.move_roaming_characters()
-    #     self.assertEqual(initial_roaming_guard_position, )  # current roaming guard position
+    def test_roaming_character_stays_on_the_map(self):
+        # NES ChkNPCMapLimit (Bank00): an NPC on the map's edge can't step off it
+        test_roaming_character = setup_roaming_character(row=2, column=2, direction=Direction.DOWN.value)
+        test_roaming_character.rect.y = 0
+        self.game.move_medially(test_roaming_character)
+        self.assertEqual(0, test_roaming_character.rect.y)
+        test_roaming_character.direction_value = Direction.RIGHT.value
+        test_roaming_character.rect.x = 0
+        self.game.move_laterally(test_roaming_character)
+        self.assertEqual(0, test_roaming_character.rect.x)
 
     def test_move_roaming_character_medially(self):
-        test_roaming_character = setup_roaming_character(row=2, column=2, direction=Direction.UP.value)
+        test_roaming_character = setup_roaming_character(row=1, column=2, direction=Direction.UP.value)
         test_roaming_character.rect.y = 0
         self.game.move_medially(test_roaming_character)
         self.assertEqual(-2, test_roaming_character.rect.y)
@@ -392,7 +390,7 @@ class TestGame(TestCase):
         self.assertEqual(0, test_roaming_character.rect.y)
 
     def test_move_roaming_character_laterally(self):
-        test_roaming_character = setup_roaming_character(row=2, column=2, direction=Direction.LEFT.value)
+        test_roaming_character = setup_roaming_character(row=2, column=1, direction=Direction.LEFT.value)
         test_roaming_character.rect.x = 0
         self.game.move_laterally(test_roaming_character)
         self.assertEqual(-2, test_roaming_character.rect.x)
