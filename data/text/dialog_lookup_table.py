@@ -16,7 +16,7 @@ from src.maps import DragonWarriorMap
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories
 from src.sound import Sound
-from src.visual_effects import fade, flash_transparent_color
+from src.visual_effects import fade, flash_transparent_color, greyscale_screen
 
 
 class DialogLookup:
@@ -144,8 +144,7 @@ class DialogLookup:
                     _("{}'s coming was foretold by legend. May the light shine upon this brave warrior.").format(
                         self.player.name),
                     self.flash_and_restore_mp)}},
-            'TantegelCellar': {'WISE_MAN': {
-                'dialog': (_("I have been waiting long for one such as thee."), _("Take the Treasure Chest."))}},
+            'TantegelCellar': {'WISE_MAN': {'dialog': (self.tantegel_cellar_stones_of_sunlight_guardian,)}},
             'Brecconary': {
                 'MAN': {'dialog': _("There is a town where magic keys can be purchased.")},
                 'MAN_2': {'dialog': _("Thou art most welcome in Brecconary.")},
@@ -231,11 +230,7 @@ class DialogLookup:
                                                 self.take_to_castle_confirmation_prompt
                                                 )}},
 
-            'StaffOfRainCave': {'WISE_MAN': {'dialog': ("Thy bravery must be proven.",
-                                                        "Thus, I propose a test.",
-                                                        "There is a Silver Harp that beckons to the creatures "
-                                                        "of the Dragonlord.",
-                                                        "Bring this to me and I will reward thee with the Staff of Rain.")}},
+            'StaffOfRainCave': {'WISE_MAN': {'dialog': (self.staff_of_rain_guardian,)}},
             'MagicTemple': {'WISE_MAN': {'dialog': (self.magic_temple_rainbow_drop_exchange,)}},
             # NES DoDrgnLrdDialog (Bank03): TextBlock13 entries 7 and 8 around TextBlock11 entry 4, then the
             # yes/no window.
@@ -392,46 +387,88 @@ class DialogLookup:
         #     'images': self.current_map.scale_sprite_sheet(self.directories.PRINCESS_GWAELIN_PATH)[0]
         # }
 
-    def magic_temple_rainbow_drop_exchange(self):
-        """Handle the Magic Temple Wise Man dialog for Rainbow Drop exchange"""
-        has_staff = "Staff of Rain" in self.player.inventory
-        has_stones = "Stones of Sunlight" in self.player.inventory
+    def say(self, *lines):
+        """Show NPC lines in the dialog box that is already open."""
+        for line in lines:
+            self.command_menu.show_line_in_dialog_box(line, skip_text=self.command_menu.skip_text)
 
-        if has_staff and has_stones:
-            # Player has both items, give Rainbow Drop
-            self.command_menu.show_text_in_dialog_box((
-                self._("Thou hast done well in bringing the Stones of Sunlight and the Staff of Rain."),
-                self._("Now the sun and rain shall meet and the Rainbow Drop passes to thy keeping."),
-            ), skip_text=False)
-            # Remove the two items and add Rainbow Drop
-            self.player.inventory.remove("Staff of Rain")
-            self.player.inventory.remove("Stones of Sunlight")
-            self.player.inventory.insert(0, "Rainbow Drop")
-            self.command_menu.show_text_in_dialog_box(
-                self._("{} received the Rainbow Drop!").format(self.player.name),
-                skip_text=False
-            )
-        else:
-            # Player doesn't have both items, kick them out
-            # Show dialog with drop_up disabled since we're about to change maps
-            self.command_menu.show_text_in_dialog_box((
-                self._("In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted would save us."),
-                self._("Go now!"),
-            ), skip_text=False, drop_up=False)
-            flash_transparent_color(WHITE, self.screen, self.calculation)
+    def thou_hast_no_business_here(self):
+        # NES HaveUniqueItem/HaveItemDialog: TextBlock11, entry 5
+        self.say(self._("Thou hast no business here.\nGo away."))
+
+    def tantegel_cellar_stones_of_sunlight_guardian(self):
+        # NES WzdGuardDialog: the wizard guarding the Stones of Sunlight chest sends the player away once they have
+        # the Stones or the Rainbow Drop. Taking the chest is up to the player; he doesn't give anything himself.
+        if "Stones of Sunlight" in self.player.inventory or "Rainbow Drop" in self.player.inventory:
+            self.thou_hast_no_business_here()
+            return
+        self.say(self._("I have been waiting long for one such as thee."), self._("Take the Treasure Chest."))
+
+    def staff_of_rain_guardian(self):
+        # NES RainStaffDialog: the old man stands in the only way to the Staff of Rain chest. Once he has the Silver
+        # Harp he takes it and leaves, freeing the chest (he is back whenever the map is entered again).
+        if "Rainbow Drop" in self.player.inventory or "Staff of Rain" in self.player.inventory:
+            self.thou_hast_no_business_here()
+            return
+        if "Silver Harp" not in self.player.inventory:
+            # NES HarpNotFound: TextBlock12, entry 1
+            self.say(self._("Thy bravery must be proven."),
+                     self._("Thus, I propose a test."),
+                     self._("There is a Silver Harp that beckons to the creatures of the Dragonlord."),
+                     self._("Bring this to me and I will reward thee with the Staff of Rain."))
+            return
+        # NES ChkSlvrHarp: TextBlock12 entry 2, TextBlock11 entry 4, TextBlock13 entry 6
+        self.say(self._("Thou hast brought the harp. Good."),
+                 self._("I have been waiting long for one such as thee."),
+                 self._("Take the Treasure Chest."))
+        self.player.inventory.remove("Silver Harp")
+        self.remove_npc('WISE_MAN')
+
+    def remove_npc(self, identifier: str):
+        """NES: an NPC is removed from the screen by zeroing its position (until the map is loaded again)."""
+        character_dict = self.current_map.characters.pop(identifier, None)
+        if character_dict is None:
+            return
+        character = character_dict['character']
+        if character in self.current_map.fixed_characters:
+            self.current_map.fixed_characters.remove(character)
+        if character in self.current_map.roaming_characters:
+            self.current_map.roaming_characters.remove(character)
+
+    def magic_temple_rainbow_drop_exchange(self):
+        # NES RnbwDrpDialog: the old man at the shrine south of Rimuldar
+        if "Rainbow Drop" in self.player.inventory:
+            self.thou_hast_no_business_here()
+            return
+        if "Erdrick's Token" not in self.player.inventory:
+            # Without Erdrick's Token the player isn't proven to be Erdrick's descendant: TextBlock12 entry 3, then
+            # BWScreenFlash and CheckMapExit force the player out to the overworld
+            self.say(self._("In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted "
+                            "would save us."),
+                     self._("Go now!"))
+            flash_transparent_color(WHITE, self.screen, self.calculation, no_blit=self.config['NO_BLIT'])
             self.sound.play_sound(self.directories.stairs_up_sfx)
-            time.wait(500)  # Brief pause for effect
-            # Move player to the staircase position before changing maps
-            # MagicTemple staircase is at (6, 2)
+            time.wait(500)
+            # Move the player onto the temple's staircase (6, 2), then out to the overworld in front of the entrance
             self.player.row = 6
             self.player.column = 2
-            # Teleport player out of the Magic Temple back to the overworld
-            # Magic Temple entrance is at (116, 116) on the Alefgard map
             alefgard_map = maps.map_lookup['Alefgard'](self.config)
             alefgard_map.destination_coordinates = (116, 116)
             self.command_menu.game.change_map(alefgard_map)
-            # Set player to face down after teleporting out
             self.player.direction_value = Direction.DOWN.value
+            return
+        if "Stones of Sunlight" not in self.player.inventory or "Staff of Rain" not in self.player.inventory:
+            # NES NoRnbwDrpDialog: TextBlock5 entry 9, then TextBlock11 entry 14
+            self.say(self._("When the sun and rain meet, a Rainbow Bridge shall appear."),
+                     self._("Thou may go and search."))
+            return
+        # NES HaveErdToken: TextBlock12 entry 4; the Stones and the Staff are taken, the Rainbow Drop is given and the
+        # screen turns greyscale for 30 frames. Erdrick's Token is kept.
+        self.say(self._("Now the sun and rain shall meet and the Rainbow Drop passes to thy keeping."))
+        self.player.inventory.remove("Stones of Sunlight")
+        self.player.inventory.remove("Staff of Rain")
+        self.player.inventory.insert(0, "Rainbow Drop")
+        greyscale_screen(self.screen, self.calculation, frames=30, no_blit=self.config['NO_BLIT'])
 
     def prompt_for_save(self):
         return confirmation_prompt(self.command_menu,
