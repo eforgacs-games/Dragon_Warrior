@@ -2,7 +2,7 @@ from pygame import Surface, display, mask, time, transform
 from pygame.time import get_ticks
 
 from src.common import BLACK
-from src.waiting import check_for_quit
+from src.waiting import check_for_quit, wait
 
 
 def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -> None:
@@ -179,8 +179,7 @@ def red_flash_overlay(screen: Surface) -> Surface:
 def show_frames(frames: int, config) -> None:
     """Show the current screen for a number of NES frames (60 per second)."""
     display.flip()
-    if not config.get('NO_WAIT'):
-        time.wait(round(frames * 1000 / NES_FPS))
+    wait(round(frames * 1000 / NES_FPS), config)
 
 
 def enemy_fade_in(screen: Surface, image: Surface, position, config, repeats: int = 2) -> None:
@@ -245,8 +244,7 @@ def player_hit_shake(screen: Surface, config, deathblow: bool = False, enemy=Non
     if config.get('NO_BLIT') or not shake:
         # On the final form's deathblow, the second wait and RedFlashScreen's wait are both skipped.
         still_frames = SHAKE_STILL_FRAMES - 1 if deathblow and not shake else SHAKE_STILL_FRAMES
-        if not config.get('NO_WAIT'):
-            time.wait(round(SHAKE_COUNT * (still_frames + SHAKE_MOVED_FRAMES) * 1000 / NES_FPS))
+        wait(round(SHAKE_COUNT * (still_frames + SHAKE_MOVED_FRAMES) * 1000 / NES_FPS), config)
         return
     original = screen.copy()
     without_enemy = original.copy()

@@ -239,12 +239,12 @@ class TestEnemyFadeIn(NesPaletteTestCase):
             enemy_fade_in(screen, self.sprite(NES_PALETTE[0x30]), (0, 0), self.config, repeats=4)
         self.assertEqual(len(shown), 1 + 4 * 4 + 1)
 
-    @patch('src.visual_effects.time')
-    def test_each_step_lasts_four_frames(self, mock_time):
+    @patch('src.visual_effects.wait')
+    def test_each_step_lasts_four_frames(self, mock_wait):
         with patch('src.visual_effects.display'):
             enemy_fade_in(pygame.Surface((10, 10)), self.sprite(NES_PALETTE[0x30]), (0, 0),
                           {'NO_WAIT': False, 'NO_BLIT': False})
-        self.assertEqual([c.args[0] for c in mock_time.wait.call_args_list], [67] * 9)  # 4 frames at 60 FPS
+        self.assertEqual([c.args[0] for c in mock_wait.call_args_list], [67] * 9)  # 4 frames at 60 FPS
 
     def test_no_blit_draws_nothing(self):
         screen = MagicMock()
@@ -262,12 +262,12 @@ class TestEnemyHitFlash(NesPaletteTestCase):
             enemy_hit_flash(screen, self.sprite(NES_PALETTE[0x30]), (0, 0), {'NO_WAIT': True, 'NO_BLIT': False})
         self.assertEqual([color for (color,) in shown], [NES_PALETTE[0x30], NES_RED] * 5 + [NES_PALETTE[0x30]])
 
-    @patch('src.visual_effects.time')
-    def test_three_frames_normal_two_frames_red(self, mock_time):
+    @patch('src.visual_effects.wait')
+    def test_three_frames_normal_two_frames_red(self, mock_wait):
         with patch('src.visual_effects.display'):
             enemy_hit_flash(pygame.Surface((10, 10)), self.sprite(NES_PALETTE[0x30]), (0, 0),
                             {'NO_WAIT': False, 'NO_BLIT': False})
-        self.assertEqual([c.args[0] for c in mock_time.wait.call_args_list], [50, 33] * 5)
+        self.assertEqual([c.args[0] for c in mock_wait.call_args_list], [50, 33] * 5)
 
 
 class TestPlayerHitShake(NesPaletteTestCase):
@@ -317,21 +317,21 @@ class TestPlayerHitShake(NesPaletteTestCase):
             player_hit_shake(screen, self.config)
         self.assertNotIn((NES_RED,), shown)
 
-    @patch('src.visual_effects.time')
-    def test_final_form_does_not_shake_but_takes_the_same_time(self, mock_time):
+    @patch('src.visual_effects.wait')
+    def test_final_form_does_not_shake_but_takes_the_same_time(self, mock_wait):
         screen = MagicMock()
         with patch('src.visual_effects.display') as mock_display:
             player_hit_shake(screen, {'NO_WAIT': False, 'NO_BLIT': False}, shake=False)
             player_hit_shake(screen, {'NO_WAIT': False, 'NO_BLIT': False}, deathblow=True, shake=False)
         screen.blit.assert_not_called()
         mock_display.flip.assert_not_called()
-        self.assertEqual([c.args[0] for c in mock_time.wait.call_args_list], [533, 400])  # 32 and 24 frames
+        self.assertEqual([c.args[0] for c in mock_wait.call_args_list], [533, 400])  # 32 and 24 frames
 
-    @patch('src.visual_effects.time')
-    def test_shake_timing(self, mock_time):
+    @patch('src.visual_effects.wait')
+    def test_shake_timing(self, mock_wait):
         with patch('src.visual_effects.display'):
             player_hit_shake(self.make_screen(), {'NO_WAIT': False, 'NO_BLIT': False, 'SCALE': 2})
-        self.assertEqual([c.args[0] for c in mock_time.wait.call_args_list], [33] * 16)
+        self.assertEqual([c.args[0] for c in mock_wait.call_args_list], [33] * 16)
 
 
 if __name__ == '__main__':
