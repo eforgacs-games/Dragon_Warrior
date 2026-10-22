@@ -17,3 +17,7 @@ class Spell(str, Enum):
     FIREBREATH = "FIREBREATH"
     FIREBREATH2 = "FIREBREATH2"
     ATTACK = "ATTACK"
+
+    def __str__(self) -> str:
+        # Python 3.11+ formats str-mixin enums as "Spell.HEAL"; spell names appear in dialog and menus
+        return self.value

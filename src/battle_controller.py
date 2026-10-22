@@ -107,6 +107,10 @@ class BattleController:
         enemy_name = self.config.get("FORCE_ENEMY") or random.choice(enemies_in_current_zone)
         current_battle = Battle(self.config, enemy_name, self.current_map)
         self.cmd_menu.current_battle = current_battle
+        # NES clears all combat status flags when a fight starts
+        self.player.is_asleep = False
+        self.player.asleep_turns = 0
+        self.player.is_stopspelled = False
         current_battle.play_battle_music()
         # TODO: Group parameters into respective classes.
         current_battle.display_battle_window(self.screen, self.drawer,
@@ -312,6 +316,11 @@ class BattleController:
                             add_quotes=False, disable_sound=True, hide_arrow=True)
                         self.sound.play_sound(self.directories.breathe_fire_sfx)
                     time.wait(1000)
+                    if enemy.is_stopspelled and current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
+                        # NES: a stopspelled enemy still chants, but the spell is blocked (fire breath isn't a spell)
+                        self.cmd_menu.show_line_in_dialog_box(self._("But that spell hath been blocked."),
+                                                              add_quotes=False, disable_sound=True, hide_arrow=True)
+                        return
                     spell_effect_lower_bound, spell_effect_upper_bound = enemy_spell_lookup[current_spell]
                     spell_effect = random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
                     if current_spell in (Spell.HEAL, Spell.HEALMORE):

@@ -138,3 +138,123 @@ class TestCommandMenu(TestCase):
                 patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
             self.game.cmd_menu.display_item_menu('spells')
         self.assertEqual(show_line.call_args.args[0], 'Thy MP is too low.')
+
+    def in_battle_with(self, enemy):
+        battle = MagicMock(no_op=False)
+        battle.enemy = enemy
+        self.game.cmd_menu.current_battle = battle
+        return battle
+
+    def cast(self, spell, rolls):
+        with patch('src.menu.random.randint', side_effect=rolls) as randint, \
+                patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line, \
+                patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            getattr(self.game.cmd_menu, spell)()
+        lines = [c.args[0] for c in show_line.call_args_list + show_text.call_args_list]
+        return randint, lines
+
+    def test_hurt_damages_enemy(self):
+        from src.enemy import Slime
+        slime = Slime()
+        slime.hp = 20
+        self.in_battle_with(slime)
+        randint, lines = self.cast('hurt', [0, 9])
+        self.assertEqual(randint.call_args_list[1].args, (5, 12))
+        self.assertEqual(slime.hp, 11)
+        self.assertEqual(lines, ["The Slime's Hit Points have been reduced by 9.\n"])
+
+    def test_hurtmore_damage_range(self):
+        from src.enemy import Slime
+        slime = Slime()
+        slime.hp = 100
+        self.in_battle_with(slime)
+        randint, _ = self.cast('hurtmore', [0, 60])
+        self.assertEqual(randint.call_args_list[1].args, (58, 65))
+        self.assertEqual(slime.hp, 40)
+
+    def test_hurt_resisted(self):
+        # Metal Slime resists HURT 15/16: only a roll of 15 succeeds
+        from src.enemy import MetalSlime
+        metal_slime = MetalSlime()
+        self.in_battle_with(metal_slime)
+        _, lines = self.cast('hurt', [14])
+        self.assertEqual(metal_slime.hp, metal_slime.max_hp)
+        self.assertEqual(lines, ['The spell will not work.'])
+
+    def test_stopspell_blocks_enemy_spells(self):
+        from src.enemy import Magician
+        magician = Magician()
+        self.in_battle_with(magician)
+        _, lines = self.cast('stopspell', [0])
+        self.assertTrue(magician.is_stopspelled)
+        self.assertEqual(lines, ["The Magician's spell hath been blocked."])
+
+    def test_stopspell_resisted(self):
+        # Slime resists STOPSPELL 15/16
+        from src.enemy import Slime
+        slime = Slime()
+        self.in_battle_with(slime)
+        _, lines = self.cast('stopspell', [14])
+        self.assertFalse(slime.is_stopspelled)
+        self.assertEqual(lines, ['The spell will not work.'])
+
+    def test_battle_spells_outside_battle(self):
+        for spell in ('hurt', 'hurtmore', 'stopspell'):
+            with self.subTest(spell=spell):
+                _, lines = self.cast(spell, [])
+                self.assertEqual(lines, ['But nothing happened.'])
+
+    def test_heal_and_healmore_ranges(self):
+        for spell, expected_range in (('heal', (10, 17)), ('healmore', (85, 100))):
+            with self.subTest(spell=spell):
+                self.game.player.max_hp = 200
+                self.game.player.current_hp = 50
+                randint, _ = self.cast(spell, [expected_range[1]])
+                self.assertEqual(randint.call_args.args, expected_range)
+                self.assertEqual(self.game.player.current_hp, 50 + expected_range[1])
+
+    def test_healmore_does_not_exceed_max_hp(self):
+        self.game.player.max_hp = 60
+        self.game.player.current_hp = 10
+        self.cast('healmore', [100])
+        self.assertEqual(self.game.player.current_hp, 60)
+
+    def test_herb_heals_and_is_used_up(self):
+        self.game.player.inventory = ["Herb", "Herb"]
+        self.game.player.max_hp = 100
+        self.game.player.current_hp = 10
+        randint, _ = self.cast('herb', [30])
+        self.assertEqual(randint.call_args.args, (23, 30))
+        self.assertEqual(self.game.player.current_hp, 40)
+        self.assertEqual(self.game.player.inventory, ["Herb"])
+
+    def test_stopspelled_player_spends_mp_but_spell_is_blocked(self):
+        from src.enemy import Slime
+        slime = Slime()
+        slime.hp = 20
+        self.in_battle_with(slime)
+        self.game.player.is_stopspelled = True
+        self.game.player.spells = ["HURT"]
+        self.game.player.current_mp = 10
+        mocked_return = MagicMock()
+        mocked_return.type = KEYDOWN
+        mocked_return.key = K_RETURN
+        with patch.object(event, 'get', return_value=[mocked_return]), \
+                patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
+            self.game.cmd_menu.display_item_menu('spells')
+        self.assertEqual(self.game.player.current_mp, 8)
+        self.assertEqual(slime.hp, 20)
+        self.assertEqual(show_line.call_args.args[0], 'But that spell hath been blocked.')
+
+    def test_learned_spell_name_in_dialog(self):
+        # Learned spells are Spell enum members; on Python 3.11+ they used to format as "Spell.HEAL"
+        from src.spells import Spell
+        self.game.player.spells = [Spell.HEAL]
+        self.game.player.current_mp = 10
+        mocked_return = MagicMock()
+        mocked_return.type = KEYDOWN
+        mocked_return.key = K_RETURN
+        with patch.object(event, 'get', return_value=[mocked_return]), \
+                patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
+            self.game.cmd_menu.display_item_menu('spells')
+        self.assertEqual(show_line.call_args_list[0].args[0], f"{self.game.player.name} chanted the spell of HEAL.")
