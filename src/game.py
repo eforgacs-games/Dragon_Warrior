@@ -30,12 +30,12 @@ from src.config.prod_config import prod_config
 from src.debug_tools import DebugTools
 from src.constants import (
     LOW_HP_THRESHOLD, ARROW_BLINK_INTERVAL_MS,
-    MAPS_WITH_ENEMIES, DUNGEON_ZONE_MAP, TANTEGEL_ZONE, TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT,
+    TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT,
 )
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
-from src.enemy_lookup import enemy_territory_map
+from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
 from src.game_state import GameState
 from src.guardians import guardian_at
@@ -569,27 +569,23 @@ class Game:
         # NES ChkOtherBlocks: once the Dragonlord is dead, no more random fights
         if self.story_flags.dragonlord_defeated:
             return
-        if self.current_map.identifier in MAPS_WITH_ENEMIES:
-            if self.tiles_moved_since_spawn > 0:
-                if self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
-                    if self.current_map.identifier == 'Alefgard':
-                        current_zone = (self.player.column // 18, self.player.row // 18)
-                    else:
-                        current_zone = DUNGEON_ZONE_MAP.get(self.current_map.identifier)
-                    enemies_in_current_zone = enemy_territory_map.get(current_zone)
-                    if enemies_in_current_zone is not None:
-                        # "Zone 0" in the original code is zone (3, 2)
-                        if current_zone == TANTEGEL_ZONE:
-                            random_integer = self.battle_ctrl.handle_near_tantegel_fight_modifier()
-                        else:
-                            random_integer = self.battle_ctrl.get_random_integer_by_tile()
-                        self.battle_ctrl.launch_battle = random_integer == 0 or self.game_state.config["FORCE_BATTLE"]
-                        if self.battle_ctrl.launch_battle and not self.game_state.config["NO_BATTLES"]:
-                            self.battle_ctrl.run_battle(enemies_in_current_zone)
-                        self.battle_ctrl.battle_menu_row = 0
-                        self.battle_ctrl.battle_menu_column = 0
-                    self.last_zone = current_zone
-                self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
+        if self.tiles_moved_since_spawn > 0 and self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
+            self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
+            # NES CheckBlockDmg runs once per step, on the block the player has just stepped onto. The player's
+            # column/row and current_tile aren't updated until later in the frame, so read them from the sprite.
+            column, row = self.player.rect.x // self.tile_size, self.player.rect.y // self.tile_size
+            group = encounter_group(self.current_map.identifier, column, row)
+            if group is None:
+                return
+            self.last_zone = group
+            tile = get_tile_id_by_coordinates(column, row, self.current_map)
+            enemies_in_current_zone = ENEMY_GROUPS[group] if self.game_state.config["FORCE_BATTLE"] else \
+                roll_encounter(self.current_map.identifier, tile, column, row)
+            self.battle_ctrl.launch_battle = enemies_in_current_zone is not None
+            if enemies_in_current_zone is not None and not self.game_state.config["NO_BATTLES"]:
+                self.battle_ctrl.run_battle(enemies_in_current_zone)
+            self.battle_ctrl.battle_menu_row = 0
+            self.battle_ctrl.battle_menu_column = 0
 
     def battle(self, enemies_in_current_zone):
         self.battle_ctrl.run_battle(enemies_in_current_zone)
@@ -643,44 +639,6 @@ class Game:
 
     def get_current_color(self):
         return RED if self.player.current_hp <= self.player.max_hp * 0.125 else WHITE
-
-    def handle_near_tantegel_fight_modifier(self):
-        if self.player.current_tile == 'HILLS':
-            sub_random_integer = random.randint(0, 3)
-        else:
-            sub_random_integer = random.randint(0, 1)
-        if sub_random_integer == 0:
-            random_integer = self.get_random_integer_by_tile()
-        else:
-            random_integer = 1
-        return random_integer
-
-    def get_random_integer_by_tile(self):
-        match self.player.current_tile:
-            case 'SWAMP':
-                random_integer = random.randint(0, 15)
-            case 'DESERT':
-                random_integer = random.randint(0, 7)
-            case 'HILLS':
-                random_integer = random.randint(0, 7)
-            case 'FOREST':
-                random_integer = random.randint(0, 15)
-            case 'BRICK':
-                random_integer = random.randint(0, 15)
-            case 'BARRIER':
-                random_integer = random.randint(0, 15)
-            case _:  # default
-                if self.player.column % 2 == 0:
-                    if self.player.row % 2 == 0:
-                        random_integer = random.randint(0, 31)
-                    else:
-                        random_integer = random.randint(0, 15)
-                else:
-                    if self.player.row % 2 == 0:
-                        random_integer = random.randint(0, 31)
-                    else:
-                        random_integer = random.randint(0, 15)
-        return random_integer
 
     def set_player_images_by_equipment(self):
         if self.story_flags.carrying_gwaelin:
