@@ -294,7 +294,8 @@ class Battle:
         # NES LoadCombatBckgrnd: no battle background is drawn for the Dragonlord's final form.
         if self.enemy.name != 'Dragonlord 2':
             self.transition_battle_background_image_effect(screen)
-        drawer.show_enemy_image(screen, self.enemy.name)
+        # NES LoadEnemyGFX: the enemy fades in from a black shadow, twice.
+        drawer.fade_in_enemy(screen, self.enemy.name)
         cmd_menu.show_line_in_battle_dialog_box(self.get_enemy_draws_near_string())
         # drop down for the hovering stats window
         cmd_menu.window_drop_down_effect(1, 2, 4, 6)

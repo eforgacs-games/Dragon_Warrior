@@ -806,6 +806,8 @@ class CommandMenu(Menu):
         # Spell damage can't be dodged
         damage = random.randint(lowest, highest)
         self.sound.play_sound(self.directories.hit_sfx)
+        # NES SetSpellDmg falls through to PlyrHitEn, so a damage spell flashes the enemy red too
+        self.game.drawer.flash_enemy(self.screen, enemy.name)
         self.show_battle_line(self._("The {}'s Hit Points have been reduced by {}.\n").format(self._(enemy.name), damage))
         enemy.hp -= damage
 
