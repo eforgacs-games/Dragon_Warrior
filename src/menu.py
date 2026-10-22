@@ -7,7 +7,9 @@ from src.spells import Spell
 from typing import Any, Callable, Iterable, Tuple, List
 
 import pygame_menu
-from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, mixer, transform
+from pygame_menu import controls as menu_controls
+from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, mixer, transform, \
+    K_RETURN, K_k
 from pygame.sprite import Group
 from pygame.time import get_ticks
 
@@ -68,6 +70,15 @@ class Menu:
         time.set_timer(arrow_fade, 530)
 
 
+class CommandMenuController(menu_controls.Controller):
+    """The game's A button for the pygame-menu COMMAND window: K chooses, as well as Enter. pygame-menu only knows
+    Enter by default, so pressing K (the A button) did nothing."""
+
+    @staticmethod
+    def apply(event, widget) -> bool:
+        return event.key in (K_RETURN, K_k)
+
+
 class CommandMenu(Menu):
 
     def __init__(self, game):
@@ -116,6 +127,7 @@ class CommandMenu(Menu):
         subsurface_width = self.command_menu_surface.get_width()
         title_x_offset = (subsurface_width - title_text_width) // 2
 
+        self.controller = CommandMenuController()
         self.menu = pygame_menu.Menu(
             title=title,
             width=menu_width,
@@ -162,8 +174,10 @@ class CommandMenu(Menu):
                                          (_("ITEM"), self.item, (4, 0, 8, 6)),
                                          (_("DOOR"), self.door, (4, 0, 8, 6)),
                                          (_("TAKE"), self.take, (4, 0, 8, 6))):
-            self.menu.add.button(label, functools.partial(self.choose_command, function),
-                                 padding=padding).translate(COMMAND_BUTTON_SHIFT * SCALE, 0)
+            button = self.menu.add.button(label, functools.partial(self.choose_command, function), padding=padding)
+            button.translate(COMMAND_BUTTON_SHIFT * SCALE, 0)
+            button.set_controller(self.controller)
+        self.menu.set_controller(self.controller)
         # The NES cursor (src/cursor.py), and the entry it was last drawn on (draw_command_window_frame)
         self.cursor = BlinkingCursor()
         self.cursor_index: int | None = None
