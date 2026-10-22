@@ -262,6 +262,8 @@ class BattleController:
                         'Nothing of use has yet been given to thee.\n',
                         add_quotes=False, hide_arrow=True, disable_sound=True)
                     current_battle.no_op = True
+                else:
+                    self.cmd_menu.display_item_menu('inventory')
             elif selected_executed_option == 'Sleep':
                 self.cmd_menu.show_line_in_dialog_box(self._("Thou art still asleep.\n"),
                                                       add_quotes=False, disable_sound=True,

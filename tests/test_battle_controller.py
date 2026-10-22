@@ -167,6 +167,14 @@ class TestHandleBattlePrompts(unittest.TestCase):
         self.assertIn('Nothing of use', self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0])
         enemy_move.assert_not_called()
 
+    def test_item_with_inventory_opens_item_menu(self, mock_time, mock_display):
+        self.controller.battle_menu_row = 1
+        self.controller.battle_menu_column = 1
+        self.game.player.inventory = ["Herb"]
+        with self.patch_enemy_move():
+            self.press(K_RETURN)
+        self.game.cmd_menu.display_item_menu.assert_called_once_with('inventory')
+
     def test_auto_battle_repeats_last_action_without_input(self, mock_time, mock_display):
         self.game.auto_battle = True
         self.controller.last_battle_action = 'Fight'
