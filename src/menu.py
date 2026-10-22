@@ -523,8 +523,34 @@ class CommandMenu(Menu):
 
     # Items
 
+    def item_message(self, text: str):
+        """Show an item's text as a battle line during a fight, or in the dialog box in the field."""
+        if self.current_battle is not None:
+            self.show_battle_line(text)
+        else:
+            self.show_text_in_dialog_box(text, skip_text=self.skip_text)
+
+    def use_item_in_battle(self, item_name: str):
+        """NES PlyrItem: only these items work in battle; the enemy then takes its turn. Anything else is refused
+        (InvalidCombatSpell) and the player acts again."""
+        battle_items = {
+            "Herb": self.herb,
+            "Fairy Flute": self.fairy_flute,
+            "Silver Harp": self.silver_harp_in_battle,
+            "Dragon's Scale": self.dragon_scale,
+            "Fighter's Ring": self.fighters_ring,
+            "Cursed Belt": self.cursed_belt,
+            "Death Necklace": self.death_necklace,
+        }
+        item_function = battle_items.get(item_name)
+        if item_function is None:
+            self.show_battle_line(self._("That cannot be used in battle."))
+            self.current_battle.no_op = True
+            return
+        item_function()
+
     def herb(self):
-        self.show_text_in_dialog_box(f"{self.player.name} used the Herb.", skip_text=self.skip_text)
+        self.item_message(self._("{} used the Herb.").format(self.player.name))
         # NES HerbHeal: 23 to 30 HP, and the herb is used up
         self.player.inventory.remove("Herb")
         self.recover_health(23, 30)
@@ -552,13 +578,11 @@ class CommandMenu(Menu):
 
     def dragon_scale(self):
         if self.player.wearing_dragon_scale:
-            self.show_text_in_dialog_box(self._("Thou art already wearing the scale of the dragon."),
-                                         skip_text=self.skip_text)
+            self.item_message(self._("Thou art already wearing the scale of the dragon."))
             return
         self.player.wearing_dragon_scale = True
         self.player.update_defense_power()
-        self.show_text_in_dialog_box(self._("{} donned the scale of the dragon.").format(self.player.name),
-                                     skip_text=self.skip_text)
+        self.item_message(self._("{} donned the scale of the dragon.").format(self.player.name))
 
     def fairy_water(self):
         self.show_text_in_dialog_box(
@@ -581,6 +605,14 @@ class CommandMenu(Menu):
             return
         mixer.music.play(-1)
         self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+
+    def silver_harp_in_battle(self):
+        # NES ChkUseHarp: the harp tune plays, the fight music comes back, and the enemy only looks happy
+        self.show_battle_line(self._("{} played a sweet melody on the harp.").format(self.player.name))
+        mixer.music.stop()
+        self.sound.play_sound(self.directories.harp_sfx)
+        mixer.music.play(-1)
+        self.show_battle_line(self._("The {} looks happy.").format(self._(self.current_battle.enemy.name)))
 
     def fairy_flute(self):
         # NES ChkFryFlt (field) / ChkUseFlute (battle): play the flute tune, then resume the map or battle music
@@ -635,14 +667,11 @@ class CommandMenu(Menu):
 
     def fighters_ring(self):
         if self.player.wearing_fighters_ring:
-            self.show_text_in_dialog_box(
-                self._("{} adjusted the position of the Fighter's Ring.").format(self.player.name),
-                skip_text=self.skip_text)
+            self.item_message(self._("{} adjusted the position of the Fighter's Ring.").format(self.player.name))
             return
         self.player.wearing_fighters_ring = True
         self.player.update_attack_power()
-        self.show_text_in_dialog_box(self._("{} put on the Fighter's Ring.").format(self.player.name),
-                                     skip_text=self.skip_text)
+        self.item_message(self._("{} put on the Fighter's Ring.").format(self.player.name))
 
     def cursed_belt(self):
         # NES WearCursedItem: using the belt puts it on (it stays in the inventory) and sets F_CRSD_BELT
@@ -664,7 +693,7 @@ class CommandMenu(Menu):
             # NES PlayerCursed
             text = self._("{} put on the {} and was cursed!\nThy body is being squeezed.").format(
                 self.player.name, self._(item_name))
-        self.show_text_in_dialog_box(text, skip_text=self.skip_text)
+        self.item_message(text)
         # NES PlayCursedMusic: MSC_CURSED plays either way
         self.sound.play_sound(self.directories.cursed_sfx)
 
@@ -1080,6 +1109,9 @@ class CommandMenu(Menu):
                 if any([current_event.type == KEYDOWN]):
                     if current_event.key in reject_keys:
                         item_menu_displayed = False
+                        if self.current_battle is not None:
+                            # NES: closing the spell or item window in battle returns to the command window
+                            self.current_battle.no_op = True
                     elif current_event.key in accept_keys:
                         if menu_name == 'spells':
                             spell_function, spell_mp_cost = function_dict[currently_selected_item]
@@ -1112,7 +1144,10 @@ class CommandMenu(Menu):
                                 else:
                                     spell_function()
                         elif menu_name == 'inventory':
-                            function_dict[currently_selected_item]()
+                            if self.current_battle is not None:
+                                self.use_item_in_battle(currently_selected_item)
+                            else:
+                                function_dict[currently_selected_item]()
                         chosen_item = currently_selected_item
                         item_menu_displayed = False
                     elif len(menu_name) > 1:
