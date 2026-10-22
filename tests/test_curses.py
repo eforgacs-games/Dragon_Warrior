@@ -172,6 +172,13 @@ class TestCurses(TestCase):
         self.assertEqual(self.walk_onto('TantegelCourtyard', (TANTEGEL_CURSED_ROW, 18)), ["Cursed one, be gone!"])
         self.assertEqual(self.where(), ('Alefgard', (50, 51)))
 
+    def test_cursed_player_is_not_thrown_out_after_the_dragonlord_is_dead(self):
+        # NES CheckForTriggers skips MovementUpdates (and so CheckTantCursed) once F_DGNLRD_DEAD is set
+        self.player.wearing_cursed_belt = True
+        self.game.story_flags.dragonlord_defeated = True
+        self.assertEqual(self.walk_onto('TantegelCourtyard', (TANTEGEL_CURSED_ROW, 18)), [])
+        self.assertEqual(self.where(), ('TantegelCourtyard', (TANTEGEL_CURSED_ROW, 18)))
+
     def test_cursed_player_can_stand_in_the_gateway(self):
         self.player.wearing_death_necklace = True
         self.assertEqual(self.walk_onto('TantegelCourtyard', (TANTEGEL_CURSED_ROW + 1, 18)), [])

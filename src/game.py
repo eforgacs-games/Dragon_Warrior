@@ -116,6 +116,8 @@ class Game:
         self.loop_count = 1
         self.foreground_rects = []
         self.repel_timer = 0  # NES RepelTimer, set by REPEL or Fairy Water
+        # NES MjArmrHP: counts steps taken in Magic Armor; every 4th one heals 1 HP (see armor_step_heal)
+        self.magic_armor_steps = 0
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
         self.speed = 2
@@ -577,15 +579,52 @@ class Game:
     def count_step(self):
         self.tiles_moved_since_spawn += 1
         self.game_state.tiles_moved_total += 1
+        # NES GameEngineLoop: the radiant timer (#216) and CheckRepelTimer are outside CheckForTriggers, so they keep
+        # ticking (and wear off) after the Dragonlord's defeat
         self.game_state.tick_radiant_timer()
         self.tick_repel_timer()
+        self.check_for_triggers()
+
+    def check_for_triggers(self):
+        """NES CheckForTriggers (Bank03, reached from ChkSpecialLoc after every completed step): MovementUpdates only
+        runs while F_DGNLRD_DEAD is clear. Once the Dragonlord is dead it branches to ChkCstlEnd instead, which only
+        checks for the end-game trigger in front of King Lorik (Ending.check_for_end_game_trigger) and then falls into
+        CheckBlockDmg like before.
+
+        CheckBlockDmg isn't here: it's split between handle_warps (map-changing tiles, still checked after the
+        Dragonlord), handle_environment_damage and handle_battles, which each stop at ChkOtherBlocks' own
+        F_DGNLRD_DEAD check, as the NES does."""
+        if self.story_flags.dragonlord_defeated:
+            return
+        self.movement_updates()
+
+    def movement_updates(self):
+        """NES MovementUpdates, in order: the armor's HP regeneration (MovmtIncHP), ChkLowHP (clear_low_hp_palette),
+        CheckTantCursed, then the guardian checks (CheckAxeKnight, CheckGrnDragon, CheckGolem). Only runs while the
+        Dragonlord is alive (check_for_triggers)."""
+        self.armor_step_heal()
         self.clear_low_hp_palette()  # NES MovementUpdates: ChkLowHP comes just before CheckTantCursed
         self.check_tantegel_cursed()
         self.check_guardian_fight()
 
+    def armor_step_heal(self):
+        """NES MovementUpdates/MovmtIncHP: Erdrick's Armor heals 1 HP every step. Magic Armor increments MjArmrHP every
+        step and heals 1 HP when its low 2 bits wrap to 0, i.e. every 4th step in it. HP is capped at the maximum.
+        (ChkLowHP, which comes next, is clear_low_hp_palette.)"""
+        if self.player.armor == "Erdrick's Armor":
+            heal = True
+        elif self.player.armor == "Magic Armor":
+            self.magic_armor_steps = (self.magic_armor_steps + 1) & 0xFF
+            heal = self.magic_armor_steps & 0x03 == 0
+        else:
+            heal = False
+        if heal:
+            self.player.current_hp = min(self.player.current_hp + 1, self.player.max_hp)
+
     def check_tantegel_cursed(self):
-        """NES CheckTantCursed (part of MovementUpdates, run every step): a cursed player who reaches Y=27 of
-        Tantegel's ground floor is told "Cursed one, be gone!" and CheckMapExit forces them out of the castle."""
+        """NES CheckTantCursed (part of MovementUpdates, run every step while the Dragonlord is alive): a cursed player
+        who reaches Y=27 of Tantegel's ground floor is told "Cursed one, be gone!" and CheckMapExit forces them out of
+        the castle."""
         if self.current_map.identifier != 'TantegelCourtyard' or not self.player.is_cursed:
             return
         if self.player.rect.y // self.tile_size != TANTEGEL_CURSED_ROW:
