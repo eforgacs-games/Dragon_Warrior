@@ -8,12 +8,6 @@ Game-wide named constants. All magic numbers that appear in game logic live here
 EXCELLENT_MOVE_PROBABILITY = 0
 EXCELLENT_MOVE_THRESHOLD = 31
 
-# Probability that a near-miss attack plays the "miss" sound instead of dealing 0 damage
-MISS_SFX_PROBABILITY = 0.5
-
-# Minimum damage dealt before the miss-sound check applies
-MIN_DAMAGE = 1
-
 # Fraction of player max HP below which the text color turns red
 LOW_HP_THRESHOLD = 0.125
 
