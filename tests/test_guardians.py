@@ -129,6 +129,8 @@ class TestGuardianFights(TestCase):
         patch('src.waiting.time.wait').start()  # the battle transition and the level-up pause
         # No random fights: the guardians' tiles are in enemy zones, and a random fight would wait for battle input
         patch('src.game.roll_encounter', return_value=None).start()
+        # Nor the opening flee and ambush rolls (#232): the hero always gets the first turn
+        patch('src.battle_controller.BattleController.start_fight', return_value=False).start()
         self.addCleanup(patch.stopall)
         self.enemies_fought: list = []
 

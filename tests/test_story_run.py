@@ -104,6 +104,9 @@ class TestStoryRun(TestCase):
                 (('data.text.dialog_lookup_table.time.wait',), {}),
                 (('data.text.dialog_lookup_table.mixer',), {}),
                 (('src.music_player.mixer',), {}),
+                # The hero always gets the first turn (no CheckEnRun / CalcWhoIsNext roll, #232), so the scripted
+                # fights can't go wrong
+                (('src.battle_controller.BattleController.start_fight',), {'return_value': False}),
         ):
             (patch.object(*target, **kwargs) if len(target) == 2 else patch(*target, **kwargs)).start()
         self.addCleanup(patch.stopall)
@@ -381,7 +384,9 @@ class TestStoryRun(TestCase):
             self.assertEqual(game.battle_ctrl.pending_scripted_battle, 'Dragonlord')
 
         with self.step("13 (defeat both of the Dragonlord's forms)"):
-            with patch.object(game.battle_ctrl, 'handle_battle_prompts', side_effect=self.fight_to_the_end):
+            # The hero always gets the first turn (no CheckEnRun / CalcWhoIsNext ambush), so the fight can't go wrong
+            with patch.object(game.battle_ctrl, 'handle_battle_prompts', side_effect=self.fight_to_the_end), \
+                    patch.object(game.battle_ctrl, 'start_fight', return_value=False):
                 game.handle_battles()  # the next frame starts the queued fight
             self.settle()
             self.assertEqual(self.enemies_fought, ['Dragonlord', 'Dragonlord 2'])

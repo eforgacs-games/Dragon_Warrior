@@ -4,8 +4,10 @@ from unittest.mock import Mock, patch
 import pygame
 
 from src.battle import has_final_consonant, get_postposition, Battle, calculate_enemy_attack_damage, \
-    randomize_enemy_hp
+    randomize_enemy_hp, randomize_enemy_gold, is_excellent_move, excellent_move_damage, player_hit_damage, \
+    normal_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.config.test_config import test_config
+from src.player.player import Player
 
 
 class TestBattleMethods(unittest.TestCase):
@@ -55,6 +57,7 @@ class TestBattleMethods(unittest.TestCase):
         player.max_hp = 100
         player.max_mp = 10
         player.spells = []
+        player.get_level_by_experience.return_value = 1
         music_enabled = True
         enemy = Mock()
         enemy.name = 'Slime'
@@ -381,3 +384,169 @@ class TestRandomizeEnemyHp(unittest.TestCase):
             battle = Battle(config, 'Golem', Mock())
         self.assertEqual(battle.enemy.hp, 53)
         self.assertEqual(battle.enemy.max_hp, 70)
+
+
+class TestHeroAttackFormulas(unittest.TestCase):
+    """NES PlyrFight, PlyrCalcHitDmg, PlyrWeakAttack and NormalAttack."""
+
+    def test_excellent_move_is_one_in_32(self):
+        # PlyrFight: RandNumUB AND #$1F, BEQ = excellent
+        hits = [roll for roll in range(256) if is_excellent_move(roll)]
+        self.assertEqual(hits, [0, 32, 64, 96, 128, 160, 192, 224])
+
+    def test_excellent_move_damage_table(self):
+        # attack - (attack / 2 * rand) / 256; the enemy's defense isn't used
+        for attack, roll, expected in ((40, 0, 40), (40, 128, 30), (40, 255, 21), (1, 255, 1), (141, 255, 72)):
+            with self.subTest(attack=attack, roll=roll):
+                self.assertEqual(excellent_move_damage(attack, roll), expected)
+
+    def test_weak_attack_is_bit_zero_of_a_random_byte(self):
+        # base = 10 - 18 // 2 = 1 (< 2): 0 or 1 damage
+        for roll in range(256):
+            with patch('src.battle.random.randint', return_value=roll):
+                self.assertEqual(player_hit_damage(10, 18), roll & 1)
+
+    def test_negative_base_is_a_weak_attack(self):
+        with patch('src.battle.random.randint', return_value=1):
+            self.assertEqual(player_hit_damage(10, 255), 1)
+
+    def test_normal_attack_table(self):
+        # NormalAttack: ((base + 1) * rand / 256 + base) / 4
+        for base, roll, expected in ((2, 0, 0), (2, 255, 1), (3, 0, 0), (4, 0, 1), (15, 0, 3), (15, 255, 7),
+                                     (100, 128, 37), (100, 255, 50)):
+            with self.subTest(base=base, roll=roll):
+                self.assertEqual(normal_attack_damage(base, roll), expected)
+
+    def test_low_normal_attack_can_do_zero_damage(self):
+        # base 2 and 3 can round down to 0, which is a miss ("The attack failed...")
+        with patch('src.battle.random.randint', return_value=0):
+            self.assertEqual(player_hit_damage(7, 10), 0)
+
+
+class TestDodge(unittest.TestCase):
+    """NES SetEnDmg1: (EnBaseMDef AND #$0F) - 1 >= rand AND #$3F means the enemy dodges."""
+
+    def test_dodge_counts(self):
+        for nibble in (0, 1, 2, 4, 15):
+            with self.subTest(nibble=nibble):
+                dodges = sum(enemy_dodges(nibble / 64, roll) for roll in range(256))
+                self.assertEqual(dodges, nibble * 4)  # n of every 64 rolls
+
+    def test_dodge_rolls(self):
+        self.assertTrue(enemy_dodges(15 / 64, 14))
+        self.assertFalse(enemy_dodges(15 / 64, 15))
+        self.assertTrue(enemy_dodges(1 / 64, 64))  # 64 & 0x3F == 0
+        self.assertFalse(enemy_dodges(0, 0))
+
+
+class TestEnemyFleesAndFirstTurn(unittest.TestCase):
+
+    def test_check_en_run(self):
+        # CheckEnRun: strength / 2 >= enemy attack, then rand AND #$03 == 0
+        self.assertTrue(enemy_flees(10, 5, 0))
+        self.assertTrue(enemy_flees(11, 5, 4))
+        self.assertFalse(enemy_flees(10, 5, 1))
+        self.assertFalse(enemy_flees(9, 5, 0))
+        self.assertEqual(sum(enemy_flees(10, 5, roll) for roll in range(256)), 64)
+
+    def test_calc_who_is_next(self):
+        # rand(0-255) * agility >= (rand AND #$3F) * enemy defense
+        self.assertTrue(player_acts_first(10, 3, 63, 19))
+        self.assertFalse(player_acts_first(10, 3, 63, 18))
+        self.assertTrue(player_acts_first(10, 3, 255, 19))  # 255 & 0x3F = 63
+        self.assertTrue(player_acts_first(3, 3, 63, 63))  # a tie goes to the hero
+        self.assertTrue(player_acts_first(0, 200, 0, 0))
+
+    def test_every_enemy_has_its_try_run_group(self):
+        # TryRun's groups split at EN_DROLLMAGI ($14), EN_GDRAGON ($1E) and EN_STONEMAN ($23)
+        from src.enemy import enemy_groups
+        from src.enemy_lookup import enemy_string_lookup
+        grouped = [name for group in enemy_groups.values() for name in group]
+        self.assertCountEqual(grouped, list(enemy_string_lookup))
+        self.assertEqual([Battle.get_group_factor(name) for name in (
+            'Metal Slime', 'Druinlord', 'Drollmagi', 'Werewolf', 'Green Dragon', 'Blue Dragon', 'Stoneman')],
+            [1, 1, 2, 2, 3, 3, 4])
+
+
+class TestEnemyAttackFormulas(unittest.TestCase):
+    """NES EnCalcHitDmg: the defense halving happens first, then attack / 2 + 1 decides weak or normal."""
+
+    def damage(self, attack, defense_power, roll):
+        with patch('src.battle.random.randint', return_value=roll):
+            return calculate_enemy_attack_damage(Mock(defense_power=defense_power), Mock(attack=attack))
+
+    def test_table(self):
+        for attack, defense, roll, expected in (
+                (5, 2, 0, 1), (5, 2, 255, 2),  # Slime vs. a new hero: base 4 >= 3, normal
+                (5, 6, 0, 0), (5, 6, 255, 1),  # base 2 < 3: weak, ((3 * rand) / 256 + 2) / 3
+                (5, 11, 255, 1),  # odd defense: 11 // 2 = 5, base 0, weak
+                (5, 100, 255, 1),  # base negative: weak
+                (140, 40, 255, 60), (140, 40, 0, 30)):  # Dragonlord's final form
+            with self.subTest(attack=attack, defense=defense, roll=roll):
+                self.assertEqual(self.damage(attack, defense, roll), expected)
+
+
+def LevelPlayer(total_experience, gold, level):
+    """A real Player at the given level, experience and gold (name-based stats for "Hero", #256)."""
+    from tests.mock_map import MockMap
+    player = Player(center_point=None, images=None, current_map=MockMap(test_config))
+    player.name, player.total_experience, player.gold, player.level = 'Hero', total_experience, gold, level
+    player.update_stats_to_current_level()
+    return player
+
+
+class TestVictoryRewards(unittest.TestCase):
+    """NES RegEnDefeated, CalcPlyrGold and ChkLevelUp."""
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+        pygame.display.set_mode((800, 600))  # Player loads its sprite sheet
+
+    def setUp(self):
+        config = {'LANGUAGE': 'English', 'TILE_SIZE': 32, 'MUSIC_ENABLED': False, 'ORCHESTRA_MUSIC_ENABLED': False,
+                  'SOUND_ENABLED': False}
+        self.battle = Battle(config, 'Slime', Mock())
+        self.cmd_menu = Mock()
+
+    def test_gold_table(self):
+        # base * (192 + rand AND #$3F) / 256, rounded down
+        for base, roll, expected in ((1, 0, 0), (1, 63, 0), (2, 0, 1), (5, 0, 3), (5, 255, 4), (120, 0, 90),
+                                     (120, 63, 119), (255, 64, 191)):
+            with self.subTest(base=base, roll=roll):
+                with patch('src.battle.random.randint', return_value=roll & 0x3F):
+                    self.assertEqual(randomize_enemy_gold(base), expected)
+
+    def win(self, player, xp, gold, roll=0):
+        enemy = Mock(xp=xp, gold=gold)
+        enemy.name = 'Slime'
+        with patch('src.battle.random.randint', return_value=roll), patch('src.battle.mixer'), \
+                patch('src.battle.display'):
+            self.battle.enemy_defeated(self.cmd_menu, Mock(), player, False, enemy)
+
+    def test_experience_is_exact_and_gold_varies(self):
+        player = LevelPlayer(total_experience=0, gold=0, level=1)
+        self.win(player, xp=1, gold=2, roll=0)
+        self.assertEqual((player.total_experience, player.gold), (1, 1))
+
+    def test_experience_and_gold_stop_at_65535(self):
+        player = LevelPlayer(total_experience=65530, gold=65530, level=30)
+        self.win(player, xp=115, gold=200, roll=63)
+        self.assertEqual(player.total_experience, 65535)
+        self.assertEqual(player.gold, 65535)
+        self.assertEqual(player.level, 30)
+
+    def test_big_win_can_raise_several_levels(self):
+        # LoadStats works the level out from the total experience: 0 + 115 exp is level 5 (110)
+        player = LevelPlayer(total_experience=0, gold=0, level=1)
+        self.win(player, xp=115, gold=6)
+        self.assertEqual(player.level, 5)
+        self.assertEqual(player.points_to_next_level, 220 - 115)
+        shown = [c.args[0] for c in self.cmd_menu.show_line_in_dialog_box.call_args_list]
+        self.assertEqual(sum('promoted' in line for line in shown), 1)
+
+    def test_no_level_up_below_the_threshold(self):
+        player = LevelPlayer(total_experience=0, gold=0, level=1)
+        self.win(player, xp=6, gold=0)
+        self.assertEqual(player.level, 1)
+        self.assertEqual(player.points_to_next_level, 1)
