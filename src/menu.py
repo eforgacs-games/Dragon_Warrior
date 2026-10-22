@@ -409,7 +409,9 @@ class CommandMenu(Menu):
 
     def herb(self):
         self.show_text_in_dialog_box(f"{self.player.name} used the Herb.", skip_text=self.skip_text)
-        self.recover_health()
+        # NES HerbHeal: 23 to 30 HP, and the herb is used up
+        self.player.inventory.remove("Herb")
+        self.recover_health(23, 30)
 
     def wings(self):
         self.show_text_in_dialog_box(
@@ -512,16 +514,41 @@ class CommandMenu(Menu):
     # spells
 
     def heal(self):
-        self.recover_health()
+        # NES DoHeal: 10 to 17 HP
+        self.recover_health(10, 17)
 
-    def recover_health(self):
-        health_addition = random.randrange(10, 17)
+    def recover_health(self, lowest: int, highest: int):
+        health_addition = random.randint(lowest, highest)
         if self.player.current_hp + health_addition > self.player.max_hp:
             health_addition = self.player.max_hp - self.player.current_hp
         self.player.current_hp += health_addition
 
+    def show_battle_line(self, text: str):
+        self.show_line_in_dialog_box(text, add_quotes=False, disable_sound=True, hide_arrow=True)
+
+    def battle_spell_resisted(self, resistance: float) -> bool:
+        """NES ChkSpellFail: the spell fails if a 0-15 roll is below the enemy's resistance (n/16)."""
+        if random.randint(0, 15) < round(resistance * 16):
+            self.show_battle_line(self._("The spell will not work."))
+            return True
+        return False
+
+    def cast_damage_spell(self, lowest: int, highest: int):
+        if self.current_battle is None:
+            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+            return
+        enemy = self.current_battle.enemy
+        if self.battle_spell_resisted(enemy.hurt_resist):
+            return
+        # Spell damage can't be dodged
+        damage = random.randint(lowest, highest)
+        self.sound.play_sound(self.directories.hit_sfx)
+        self.show_battle_line(self._("The {}'s Hit Points have been reduced by {}.\n").format(self._(enemy.name), damage))
+        enemy.hp -= damage
+
     def hurt(self):
-        self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+        # NES: 5 to 12 damage
+        self.cast_damage_spell(5, 12)
 
     def sleep(self):
         if self.current_battle is None:
@@ -551,7 +578,14 @@ class CommandMenu(Menu):
             self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
 
     def stopspell(self):
-        pass
+        if self.current_battle is None:
+            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+            return
+        enemy = self.current_battle.enemy
+        if self.battle_spell_resisted(enemy.stopspell_resist):
+            return
+        enemy.is_stopspelled = True
+        self.show_battle_line(self._("The {}'s spell hath been blocked.").format(self._(enemy.name)))
 
     def outside(self):
         pass
@@ -563,10 +597,12 @@ class CommandMenu(Menu):
         pass
 
     def healmore(self):
-        pass
+        # NES DoHealmore: 85 to 100 HP
+        self.recover_health(85, 100)
 
     def hurtmore(self):
-        pass
+        # NES: 58 to 65 damage
+        self.cast_damage_spell(58, 65)
 
     # Menu functions
 
@@ -826,7 +862,11 @@ class CommandMenu(Menu):
                                     skip_text=self.skip_text)
                                 self.sound.play_sound(self.directories.spell_sfx)
                                 self.player.current_mp -= spell_mp_cost
-                                spell_function()
+                                if self.current_battle is not None and self.player.is_stopspelled:
+                                    # NES: the MP is spent, but a stopspelled player's spell is blocked
+                                    self.show_battle_line(self._("But that spell hath been blocked."))
+                                else:
+                                    spell_function()
                         else:
                             function_dict[currently_selected_item]()
                         item_menu_displayed = False

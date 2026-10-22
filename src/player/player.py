@@ -72,6 +72,7 @@ class Player(AnimatedSprite):
 
         self.is_asleep = False
         self.asleep_turns = 0
+        self.is_stopspelled = False
 
         self.level = self.get_level_by_experience()
 
