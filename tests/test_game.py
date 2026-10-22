@@ -28,6 +28,7 @@ from src.menu import CommandMenu
 from src.music_player import MusicPlayer
 from src.player.player import Player
 from src.sprites.roaming_character import RoamingCharacter
+from src.waiting import game_speed, reset_game_speed
 from tests.mock_map import MockMap
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
@@ -406,28 +407,17 @@ class TestGame(TestCase):
     # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
 
     @patch('src.menu.CommandMenu.show_text_in_dialog_box')
-    def test_handle_fps_change_60(self, mock_show_text_in_dialog_box):
-        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="1", key=pygame.K_1, mod=pygame.KMOD_NONE)
-        self.game.handle_fps_changes(keydown_event)
-        self.assertEqual(60, self.game.fps)
-
-    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
-    def test_handle_fps_change_120(self, mock_show_text_in_dialog_box):
-        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="2", key=pygame.K_2, mod=pygame.KMOD_NONE)
-        self.game.handle_fps_changes(keydown_event)
-        self.assertEqual(120, self.game.fps)
-
-    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
-    def test_handle_fps_change_240(self, mock_show_text_in_dialog_box):
-        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="3", key=pygame.K_3, mod=pygame.KMOD_NONE)
-        self.game.handle_fps_changes(keydown_event)
-        self.assertEqual(240, self.game.fps)
-
-    @patch('src.menu.CommandMenu.show_text_in_dialog_box')
-    def test_handle_fps_change_480(self, mock_show_text_in_dialog_box):
-        keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="4", key=pygame.K_4, mod=pygame.KMOD_NONE)
-        self.game.handle_fps_changes(keydown_event)
-        self.assertEqual(480, self.game.fps)
+    def test_handle_fps_changes(self, mock_show_text_in_dialog_box):
+        """Keys 1 to 4 set the game speed to 1x to 4x: the main loop runs at 60 FPS times the speed."""
+        self.addCleanup(reset_game_speed)
+        for key_code, speed, label in ((pygame.K_2, 2, 'double'), (pygame.K_3, 3, 'triple'),
+                                       (pygame.K_4, 4, 'quadruple'), (pygame.K_1, 1, 'normal')):
+            with self.subTest(speed=speed):
+                self.game.handle_fps_changes(pygame.event.Event(pygame.KEYDOWN, key=key_code))
+                self.assertEqual(speed, game_speed())
+                self.assertEqual(60 * speed, self.game.fps)
+                self.assertEqual(f"Game set to {label} speed.\n({60 * speed} FPS)",
+                                 mock_show_text_in_dialog_box.call_args.args[0])
 
     def test_handle_start_button(self):
         self.assertFalse(self.game.paused)

@@ -3,7 +3,7 @@ from typing import List
 
 from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_j, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, \
     image, K_TAB, K_BACKSPACE, Rect, event
-from pygame.time import get_ticks
+from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from pygame.transform import scale
 
 from data.text.intro_lookup_table import ControlInfo
