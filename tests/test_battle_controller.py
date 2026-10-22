@@ -1,8 +1,12 @@
+import os
 import unittest
+from collections import defaultdict
 from unittest.mock import MagicMock, Mock, patch
 
-from pygame import KEYDOWN, K_DOWN, K_LEFT, K_RETURN
+import pygame
+from pygame import KEYDOWN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_ESCAPE, K_LEFT, K_RETURN, K_RIGHT, K_UP
 from pygame.event import Event
+from src.waiting import NES_FPS, game_speed, reset_game_speed
 
 from src import enemy as enemies
 from src.battle_controller import BattleController
@@ -41,10 +45,6 @@ def make_battle(enemy=None):
     return battle
 
 
-def key(k):
-    return Event(KEYDOWN, key=k)
-
-
 def patterned_enemy(pattern):
     enemy = Mock(hp=10, max_hp=10, attack=5, dodge=0, pattern=list(pattern), is_asleep=False,
                  is_stopspelled=False)
@@ -52,46 +52,92 @@ def patterned_enemy(pattern):
     return enemy
 
 
-@patch('src.battle_controller.display')
-@patch('src.battle_controller.time')
-class TestHandleBattlePrompts(unittest.TestCase):
+def ticks_at_frame(frame: int) -> int:
+    """The first millisecond of an NES frame, counted from 0."""
+    return -(-frame * 1000 // NES_FPS)
+
+
+class BattlePromptFrames(unittest.TestCase):
+    """Runs handle_battle_prompts one NES frame at a time, with a fake clock, the keyboard state from
+    key.get_pressed and key presses posted to the real pygame event queue."""
 
     def setUp(self):
+        os.environ['SDL_VIDEODRIVER'] = 'dummy'
+        os.environ['SDL_AUDIODRIVER'] = 'dummy'
+        pygame.init()
+        pygame.event.clear()
         self.game = make_game()
+        self.frame_number = 0
+        patch('src.battle_controller.display').start()
+        patch('src.battle_controller.time').start()
+        patch('src.cursor.get_ticks', side_effect=lambda: ticks_at_frame(self.frame_number)).start()
+        self.held = defaultdict(int)
+        patch('src.battle_controller.key.get_pressed', side_effect=lambda: self.held).start()
         self.controller = BattleController(self.game)
         self.battle = make_battle()
-        self.events = patch('src.battle_controller.event.get', return_value=[]).start()
         self.random = patch('src.battle_controller.random.random', return_value=0.99).start()
         self.addCleanup(patch.stopall)
+        self.frame()  # the first player turn opens the command window
 
     def patch_enemy_move(self, fled=False):
         return patch.object(self.controller, 'enemy_move', return_value=fled)
 
-    def press(self, *keys):
-        self.events.return_value = [key(k) for k in keys]
+    def frame(self, *held_keys):
+        """One NES frame later, with held_keys down: one pass of the battle prompt loop."""
+        self.frame_number += 1
+        self.held = defaultdict(int, {held_key: 1 for held_key in held_keys})
         return self.controller.handle_battle_prompts(False, self.battle)
+
+    def frames(self, count, *held_keys):
+        for _ in range(count):
+            self.frame(*held_keys)
+
+    def post(self, *keys):
+        for pressed_key in keys:
+            pygame.event.post(Event(KEYDOWN, key=pressed_key))
+
+    def press(self, *keys):
+        """Two frames with nothing held (so the window reads the next press), then the keys pressed and held for a
+        frame; they are let go on the next frame."""
+        self.frames(2)
+        self.post(*keys)
+        return self.frame(*keys)
+
+    @property
+    def selection(self):
+        return self.controller.battle_menu_row, self.controller.battle_menu_column
+
+
+FIGHT, SPELL, RUN, ITEM = (0, 0), (0, 1), (1, 0), (1, 1)
+
+
+@patch('src.battle_controller.display')
+@patch('src.battle_controller.time')
+class TestHandleBattlePrompts(BattlePromptFrames):
 
     def test_no_input_does_nothing(self, mock_time, mock_display):
         self.assertFalse(self.controller.handle_battle_prompts(False, self.battle))
         self.assertEqual(self.battle.turn, 0)
         self.game.receive_damage.assert_not_called()
 
-    def test_down_toggles_menu_row_without_taking_turn(self, mock_time, mock_display):
+    def test_down_moves_to_run_without_taking_turn(self, mock_time, mock_display):
         self.press(K_DOWN)
-        self.assertEqual(self.controller.battle_menu_row, 1)
-        self.press(K_DOWN)
-        self.assertEqual(self.controller.battle_menu_row, 0)
+        self.assertEqual(RUN, self.selection)
+        self.press(K_UP)
+        self.assertEqual(FIGHT, self.selection)
         self.assertEqual(self.battle.turn, 0)
 
-    def test_left_toggles_menu_column(self, mock_time, mock_display):
+    def test_right_and_left_move_between_columns(self, mock_time, mock_display):
+        self.press(K_RIGHT)
+        self.assertEqual(SPELL, self.selection)
         self.press(K_LEFT)
-        self.assertEqual(self.controller.battle_menu_column, 1)
+        self.assertEqual(FIGHT, self.selection)
 
     def test_moving_the_cursor_restarts_its_blink(self, mock_time, mock_display):
         # WndUpdateCrsrPos: the moved cursor is visible again right away
         with patch.object(self.controller.command_cursor, 'restart') as restart:
             self.press(K_DOWN)
-        restart.assert_called_once_with()
+        restart.assert_called_once_with(None)
 
     def test_cursor_is_at_the_selected_command(self, mock_time, mock_display):
         # CmdCmbtDat: FIGHT (1, 2), SPELL (9, 2), RUN (1, 4), ITEM (9, 4)
@@ -196,10 +242,11 @@ class TestHandleBattlePrompts(unittest.TestCase):
     def test_auto_battle_repeats_last_action_without_input(self, mock_time, mock_display):
         self.game.auto_battle = True
         self.controller.last_battle_action = 'Fight'
+        self.post(K_DOWN)
         with patch.object(self.controller, 'fight') as fight, self.patch_enemy_move():
             self.controller.handle_battle_prompts(False, self.battle)
         fight.assert_called_once()
-        self.events.assert_not_called()
+        self.assertTrue(pygame.event.peek(KEYDOWN))  # the keyboard isn't read
 
     def test_asleep_player_loses_turn_on_any_key(self, mock_time, mock_display):
         self.game.player.is_asleep = True
@@ -240,6 +287,186 @@ class TestHandleBattlePrompts(unittest.TestCase):
         with patch.object(self.controller, 'fight'), self.patch_enemy_move(fled=True):
             self.assertTrue(self.press(K_RETURN))
         self.assertFalse(self.game.player.is_dead)
+
+
+class TestCommandWindowInput(BattlePromptFrames):
+    """Bank01 WndDoSelect, WndGetButtons and WndProcessInput, as the battle command window uses them (Bank03
+    StartPlayerTurn: Dowindow WND_CMD_CMB)."""
+
+    def choose(self, *keys):
+        """Move with keys, then press A."""
+        for pressed_key in keys:
+            self.press(pressed_key)
+        return self.press(K_RETURN)
+
+    # Where the cursor starts
+
+    def test_every_turn_starts_on_fight(self):
+        # WndInitSelect clears WndCol and WndRow every time the window opens, whatever was chosen last turn
+        self.game.player.inventory = ['Herb']
+        self.battle.battle_run.return_value = False
+        for keys in ((K_RIGHT,), (K_DOWN,), (K_DOWN, K_RIGHT)):
+            with self.subTest(keys=keys), self.patch_enemy_move():
+                turn = self.battle.turn
+                self.choose(*keys)
+                self.assertEqual(turn + 1, self.battle.turn)
+                self.frame()  # the next player turn
+                self.assertEqual(FIGHT, self.selection)
+        self.battle.battle_spell.assert_called_once()
+        self.battle.battle_run.assert_called_once()
+        self.game.cmd_menu.display_item_menu.assert_called_once_with('inventory')
+
+    def test_every_fight_starts_on_fight(self):
+        self.press(K_DOWN)
+        self.controller.command_window_open = False  # fight_enemy: a new fight's first player turn
+        self.frame()
+        self.assertEqual(FIGHT, self.selection)
+
+    def test_b_says_command_again_and_starts_over_on_fight(self):
+        # WndBPressed: WND_ABORT matches no command, so ChkPlyrRun jumps to ShowCmbtCmd
+        self.press(K_RIGHT)
+        self.press(K_ESCAPE)
+        self.assertEqual('Command?\n', self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0])
+        self.frame()
+        self.assertEqual(FIGHT, self.selection)
+        self.assertEqual(0, self.battle.turn)
+
+    # Held keys
+
+    def test_holding_a_direction_moves_the_cursor_once(self):
+        with patch.object(self.controller.command_buttons, 'moved',
+                          wraps=self.controller.command_buttons.moved) as moved:
+            self.frames(2)
+            self.post(K_DOWN)
+            self.frames(120, K_DOWN)  # two seconds: the retrigger lets it be read again every 16 frames
+        self.assertEqual(RUN, self.selection)
+        moved.assert_called_once()
+
+    def test_another_press_waits_for_the_retrigger_while_a_direction_is_held(self):
+        # While WndBtnRetrig is set no button is read; it is cleared 11 frames after a move (FrameCounter 5 to 16)
+        self.frames(2)
+        self.post(K_DOWN)
+        self.frame(K_DOWN)
+        self.assertEqual(RUN, self.selection)
+        self.post(K_RIGHT)
+        self.frames(10, K_DOWN, K_RIGHT)
+        self.assertEqual(RUN, self.selection)
+        self.frame(K_DOWN, K_RIGHT)  # FrameCounter 16: DOWN is tested first and does nothing on the bottom row
+        self.assertEqual(RUN, self.selection)
+        self.frames(16, K_DOWN, K_RIGHT)  # and it wins again 16 frames later while it's held
+        self.assertEqual(RUN, self.selection)
+        self.frames(15, K_RIGHT)  # DOWN let go, but RIGHT still waits for the retrigger to time out
+        self.assertEqual(RUN, self.selection)
+        self.frame(K_RIGHT)
+        self.assertEqual(ITEM, self.selection)
+
+    # Keys from before the window opened
+
+    def test_keys_pressed_before_the_window_opened_are_dropped(self):
+        # The NES has no event queue: a key pressed and let go during the walk into the fight, the enemy's
+        # fade-in, "draws near" or the enemy's turn is gone by the time the window reads the joypad
+        self.controller.command_window_open = False
+        self.post(K_DOWN, K_RIGHT, K_RETURN)
+        pygame.event.post(Event(KEYUP, key=K_DOWN))
+        with self.patch_enemy_move() as enemy_move:
+            self.frames(30)
+        self.assertEqual(FIGHT, self.selection)
+        enemy_move.assert_not_called()
+        self.assertEqual(0, self.battle.turn)
+
+    def test_speed_keys_pressed_before_the_window_opened_still_count(self):
+        self.controller.command_window_open = False
+        self.post(K_DOWN, K_3)
+        self.addCleanup(reset_game_speed)
+        self.frame()
+        self.assertEqual(3, game_speed())
+        self.assertEqual(FIGHT, self.selection)
+
+    def test_speed_keys_do_nothing_in_the_window(self):
+        self.addCleanup(reset_game_speed)
+        for speed_key in (K_1, K_2, K_3, K_4):
+            self.press(speed_key)
+            self.assertEqual(FIGHT, self.selection)
+            self.assertEqual(0, self.battle.turn)
+
+    def test_a_direction_held_into_the_fight_is_ignored_if_let_go_in_time(self):
+        # WndDoSelect sets WndBtnRetrig = JoypadBtns = IN_RIGHT: nothing is read until every button is let go, or
+        # until FrameCounter AND #$0F is 0 (11 frames, as WndInitSelect sets it to 5)
+        self.controller.command_window_open = False
+        self.held = defaultdict(int, {K_DOWN: 1})
+        self.frame(K_DOWN)  # opens the window with DOWN held
+        self.frames(10, K_DOWN)
+        self.frames(30)
+        self.assertEqual(FIGHT, self.selection)
+
+    def test_a_direction_held_into_the_fight_moves_after_11_frames(self):
+        self.controller.command_window_open = False
+        self.held = defaultdict(int, {K_DOWN: 1})
+        self.frame(K_DOWN)
+        self.frames(10, K_DOWN)
+        self.assertEqual(FIGHT, self.selection)
+        self.frame(K_DOWN)
+        self.assertEqual(RUN, self.selection)
+
+    def test_a_held_into_the_next_turn_fights_again_after_11_frames(self):
+        with patch.object(self.controller, 'fight') as fight, self.patch_enemy_move():
+            self.press(K_RETURN)
+            self.frame(K_RETURN)  # the next turn's window opens with A still held
+            self.frames(10, K_RETURN)
+            fight.assert_called_once()
+            self.frame(K_RETURN)
+        self.assertEqual(2, fight.call_count)
+
+    def test_after_letting_go_the_next_press_is_read_at_once(self):
+        self.controller.command_window_open = False
+        self.frame(K_DOWN)
+        self.frame()  # let go: the retrigger is cleared on the next frame
+        self.post(K_RIGHT)
+        self.frame(K_RIGHT)
+        self.assertEqual(SPELL, self.selection)
+
+    # Edges
+
+    def test_the_cursor_stops_at_the_edges(self):
+        for start, pressed_key in ((FIGHT, K_UP), (FIGHT, K_LEFT), (SPELL, K_UP), (SPELL, K_RIGHT),
+                                   (RUN, K_DOWN), (RUN, K_LEFT), (ITEM, K_DOWN), (ITEM, K_RIGHT)):
+            with self.subTest(start=start, key=pygame.key.name(pressed_key)):
+                self.controller.battle_menu_row, self.controller.battle_menu_column = start
+                with patch.object(self.controller.command_cursor, 'restart') as restart:
+                    self.press(pressed_key)
+                self.assertEqual(start, self.selection)
+                restart.assert_not_called()  # no WndUpdateCrsrPos: the blink isn't restarted
+
+    def test_each_direction_moves_one_step(self):
+        for start, pressed_key, end in ((FIGHT, K_DOWN, RUN), (FIGHT, K_RIGHT, SPELL), (ITEM, K_UP, SPELL),
+                                        (ITEM, K_LEFT, RUN)):
+            with self.subTest(start=start, key=pygame.key.name(pressed_key)):
+                self.controller.battle_menu_row, self.controller.battle_menu_column = start
+                self.press(pressed_key)
+                self.assertEqual(end, self.selection)
+
+    # A
+
+    def test_a_chooses_the_highlighted_command(self):
+        for keys, chosen in (((), 'Fight'), ((K_RIGHT,), 'Spell'), ((K_DOWN,), 'Run'), ((K_DOWN, K_RIGHT), 'Item')):
+            with self.subTest(chosen=chosen), self.patch_enemy_move(), patch.object(self.controller, 'fight'):
+                self.battle.battle_run.return_value = False
+                self.frame()  # the next turn's window
+                self.choose(*keys)
+                self.assertEqual(chosen, self.controller.last_battle_action)
+
+    def test_a_and_a_direction_on_the_same_frame_choose_without_moving(self):
+        # WndProcessInput tests A first and handles only that one button
+        with patch.object(self.controller, 'fight') as fight, self.patch_enemy_move():
+            self.press(K_DOWN, K_RETURN)
+        fight.assert_called_once_with(self.battle)
+
+    def test_a_tap_shorter_than_a_frame_still_counts(self):
+        self.frames(2)
+        self.post(K_DOWN)
+        pygame.event.post(Event(KEYUP, key=K_DOWN))
+        self.frame()  # already let go when the frame reads the keyboard
+        self.assertEqual(RUN, self.selection)
 
 
 @patch('src.battle_controller.Battle')

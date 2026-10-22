@@ -123,6 +123,7 @@ class TestSpeedKeys(GameSpeedTestCase):
         self.assertEqual(4, game_speed())
         self.assertLess(self.clock.now, 400 / 4 + 20)  # and the rest of the wait ran at the new speed
 
+    @patch('src.battle_controller.key.get_pressed', new=lambda: defaultdict(int))  # no key held
     @patch('src.battle_controller.display')
     def test_keys_work_during_a_battle(self, mock_display):
         game = MagicMock()
