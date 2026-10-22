@@ -9,7 +9,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 import pygame
-from pygame import K_LEFT, K_RETURN, K_i, K_j, K_k
+from pygame import K_LEFT, K_RETURN, K_RIGHT, K_i, K_j, K_k
 
 from src.config.test_config import test_config
 from src.direction import Direction
@@ -28,7 +28,8 @@ def keydown(key):
     return pygame.event.Event(pygame.KEYDOWN, key=key, mod=pygame.KMOD_NONE, unicode='')
 
 
-class TestFreezeMovement(TestCase):
+class FreezeTestCase(TestCase):
+    """The throne room, run a frame at a time. No tests of its own."""
 
     @classmethod
     def setUpClass(cls):
@@ -89,6 +90,8 @@ class TestFreezeMovement(TestCase):
         # Drawer.handle_menu_launch does this on the next draw
         self.game.cmd_menu.menu.enable()
 
+
+class TestFreezeMovement(FreezeTestCase):
     # ------------------------------------------------------------------ #
     #  #99: the command menu                                              #
     # ------------------------------------------------------------------ #
@@ -256,3 +259,119 @@ class TestFreezeMovement(TestCase):
             self.frame(keydown(K_i))
             self.frames(self.tile_size)
         self.assertTrue(self.game.paused)
+
+
+class TestCommandsOnlyBetweenSteps(FreezeTestCase):
+    """
+    A command can't be used partway through a step (NES GameEngineLoop: A is only read between steps, since DoJoyUp
+    etc. move a whole tile before returning to CheckInputs).
+    Before #217, START mid-step stopped the hero between two tiles, and the command menu could still be opened while
+    paused, so SEARCH (or any other command) could be used over and over with the hero stuck halfway between tiles.
+    The Enter shortcut (TAKE/DOOR/TALK) had no movement check at all.
+    """
+
+    COMMANDS = ('talk', 'search', 'stairs', 'door', 'take')
+    TITLES = ('TALK', 'SEARCH', 'STAIRS', 'DOOR', 'TAKE')
+
+    def setUp(self):
+        super().setUp()
+        self.commands_used = []
+        cmd_menu = self.game.cmd_menu
+        for name in self.COMMANDS:
+            real_command = getattr(cmd_menu, name)
+
+            def record(*args, name=name, real_command=real_command, **kwargs):
+                player = self.game.player
+                self.commands_used.append((name, player.rect.x, player.rect.y, player.is_moving))
+                return real_command(*args, **kwargs)
+
+            setattr(cmd_menu, name, record)
+            # pygame-menu keeps its own reference to each button's command
+            for widget in cmd_menu.menu.get_widgets():
+                if widget.get_title() == self.TITLES[self.COMMANDS.index(name)]:
+                    widget.update_callback(record)
+        for blocking in ('show_text_in_dialog_box', 'window_drop_down_effect', 'window_drop_up_effect'):
+            patcher = patch.object(cmd_menu, blocking)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def frame(self, *events, held=()):
+        super().frame(*events, held=held)
+        # What Drawer.draw_all does with the command menu each frame
+        cmd_menu = self.game.cmd_menu
+        if cmd_menu.launch_signaled and not cmd_menu.menu.is_enabled():
+            cmd_menu.menu.enable()
+        if cmd_menu.menu.is_enabled():
+            cmd_menu.menu.update(self.game.events)
+
+    def select(self, title):
+        menu = self.game.cmd_menu.menu
+        for widget in menu.get_widgets():
+            if widget.get_title() == title:
+                menu.select_widget(widget)
+                return
+        self.fail(f"No {title} button")
+
+    def spam_command(self, title, count, first_events=()):
+        """Press A, pick the command and press Enter, over and over, while holding RIGHT."""
+        for press in range(count):
+            self.frame(*(first_events if press == 0 else ()), keydown(K_k), held=(K_RIGHT,))
+            if self.game.cmd_menu.menu.is_enabled():
+                self.select(title)
+            self.frame(keydown(K_RETURN), held=(K_RIGHT,))
+
+    def start_a_step(self):
+        start_x = self.game.player.rect.x
+        self.frames(3, held=(K_RIGHT,))
+        self.assertTrue(self.game.player.is_moving)
+        self.assertNotEqual(0, self.game.player.rect.x % self.tile_size)
+        return start_x
+
+    def test_commands_cannot_be_used_after_pausing_mid_step(self):
+        for title in self.TITLES:
+            with self.subTest(title):
+                self.setUp()
+                start_x = self.start_a_step()
+                self.spam_command(title, self.tile_size // self.game.speed, first_events=(keydown(K_i),))
+                self.assertTrue(self.game.paused)
+                self.assertEqual([], self.commands_used)
+                self.assertEqual(start_x + self.tile_size, self.game.player.rect.x)
+
+    def test_commands_chosen_mid_step_wait_for_the_step_to_finish(self):
+        for title in self.TITLES:
+            with self.subTest(title):
+                self.setUp()
+                start_x = self.start_a_step()
+                self.spam_command(title, self.tile_size)
+                self.assertTrue(self.commands_used)
+                for name, x, y, is_moving in self.commands_used:
+                    self.assertFalse(is_moving, name)
+                    self.assertEqual((0, 0), (x % self.tile_size, y % self.tile_size), name)
+                # The first one waited for the hero to reach the next tile
+                self.assertEqual(start_x + self.tile_size, self.commands_used[0][1])
+
+    def test_enter_shortcut_does_nothing_mid_step(self):
+        self.start_a_step()
+        self.game.player.current_tile = 'TREASURE_BOX'
+        self.game.handle_enter_key(keydown(K_RETURN))
+        self.assertEqual([], self.commands_used)
+
+    def test_enter_shortcut_still_works_standing_still(self):
+        self.game.player.current_tile = 'TREASURE_BOX'
+        self.game.handle_enter_key(keydown(K_RETURN))
+        self.assertEqual(['take'], [name for name, *_ in self.commands_used])
+
+    def test_enter_shortcut_does_nothing_while_the_command_menu_is_pending_or_open(self):
+        self.game.player.current_tile = 'TREASURE_BOX'
+        self.game.cmd_menu_requested = True
+        self.game.handle_enter_key(keydown(K_RETURN))
+        self.game.cmd_menu_requested = False
+        self.game.cmd_menu.launch_signaled = True
+        self.game.handle_enter_key(keydown(K_RETURN))
+        self.assertEqual([], self.commands_used)
+
+    def test_enter_shortcut_does_nothing_while_paused(self):
+        self.frame(keydown(K_i))
+        self.game.player.current_tile = 'TREASURE_BOX'
+        self.frame(keydown(K_RETURN))
+        self.assertEqual([], self.commands_used)

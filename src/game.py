@@ -803,6 +803,11 @@ class Game:
 
     def handle_enter_key(self, keydown_event):
         if keydown_event.key == K_RETURN:
+            # A shortcut for TAKE/DOOR/TALK, so it follows the same rule as the A button: NES GameEngineLoop only reads
+            # commands between steps (DoJoyUp etc. move a whole tile before returning to CheckInputs). Mid-step, or
+            # while a pause or the command window is pending or open (where Enter picks a menu item), it does nothing.
+            if self.player.is_moving or self.world_frozen or self.freeze_pending:
+                return
             if self.player.current_tile == 'TREASURE_BOX':
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
                 self.cmd_menu.take()
