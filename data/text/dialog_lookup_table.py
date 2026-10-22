@@ -226,31 +226,47 @@ class DialogLookup:
                     partial(self.check_buy_weapons_armor, self.shop_inventories.garinham_weapons_store_inventory,
                             self.directories.GARINHAM_WEAPONS_SHOP_PATH),)},
             },
-            'Kol': {'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
-                    'MERCHANT_2': {'dialog': (
-                        partial(self.check_buy_weapons_armor, self.shop_inventories.kol_weapons_store_inventory,
-                                self.directories.KOL_WEAPONS_SHOP_PATH),)},
-                    'MERCHANT_3': {'dialog': (
-                        partial(self.tool_shop, self.shop_inventories.kol_item_store_inventory),)},
-                    'WISE_MAN': {'dialog': (
-                        _("Though thou art as brave as thy ancestor, {}, "
-                          "thou cannot defeat the great Dragonlord with such weapons.").format(
-                            self.player.name), _("Thou shouldst come here again."))},
-                    'WISE_MAN_2': {'dialog': _("In legends it is said that fairies know how to put Golem to sleep.")},
-                    'WISE_MAN_3': {'dialog': _("This is the village of Kol.")},
-                    'GUARD': {'dialog': _("Golem is afraid of the music of the flute, so 'tis said.")},
-                    'WOMAN': {'dialog': _("This bath cures rheumatism.")},
-                    'WOMAN_2': {'dialog': _("Please,save us from the minions of the Dragonlord.")},
-                    'MAN': {'dialog': _("Art thou the descendant of Erdrick?\n"
-                                        "Hast thou any proof?")},
-                    'MAN_2': {'dialog': (_("Dreadful is the South Island."),
-                                         _("Great strength and skill and wit only will bring thee back from that place."))},
-                    'SOLDIER': {'dialog': _("Hast thou seen Nester?\n"
-                                            "I think he may need help.")},
-                    'SOLDIER_2': {'dialog': _(
-                        "East of Hauksness there is a town, 'tis said, where one may purchase weapons of "
-                        "extraordinary quality.")},
-                    },
+            # NES KolMobTbl and KolStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte + $2F
+            # (DoVariousDialog2, Bank03), so $2E is TextBlock6 entry 13 and so on.
+            'Kol': {
+                # Static wizard at 1,1 ($68, ChkWeaponDialog): TextBlock11 entry 9, or entry 10 with Erdrick's Sword
+                'WISE_MAN': {'dialog': (self.kol_erdricks_sword_wizard,)},
+                # Static female villager at 12,1 ($32, TextBlock7 entry 1)
+                'WOMAN': {'dialog': _("This bath cures rheumatism.")},
+                # Static shopkeeper at 19,4 ($11, InnDialog: InnCostTbl entry 0)
+                'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
+                # Mobile fighter at 6,7 ($35, TextBlock7 entry 4)
+                'SOLDIER': {'dialog': _("Hast thou seen Nester?\nI think he may need help.")},
+                # Mobile wizard at 20,8 ($39, TextBlock7 entry 8)
+                'WISE_MAN_2': {'dialog': _("In legends it is said that fairies know how to put Golem to sleep.")},
+                # Mobile guard at 12,10 ($37, TextBlock7 entry 6)
+                'GUARD': {'dialog': _("Golem is afraid of the music of the flute, so 'tis said.")},
+                # Mobile wizard at 2,12 ($5E, CheckYesNoDialog): TextBlock9 entry 13, then a yes/no window
+                'WISE_MAN_3': {'dialog': (self.kol_hast_thou_found_the_flute,)},
+                # Mobile male villager at 5,12 ($30, TextBlock6 entry 15)
+                'MAN': {'dialog': _("Art thou the descendant of Erdrick?\nHast thou any proof?")},
+                # Static shopkeeper at 22,12 ($00, WeaponsDialog: Kol weapons and armor shop)
+                'MERCHANT_2': {'dialog': (
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.kol_weapons_store_inventory,
+                            self.directories.KOL_WEAPONS_SHOP_PATH),)},
+                # Mobile male villager at 14,13 ($36, TextBlock7 entry 5)
+                'MAN_2': {'dialog': (_("Dreadful is the South Island."),
+                                     _("Great strength and skill and wit only will bring thee back from that place."))},
+                # Static fighter at 20,13 ($33, TextBlock7 entry 2)
+                'SOLDIER_2': {'dialog': _("East of Hauksness there is a town, 'tis said, where one may purchase "
+                                          "weapons of extraordinary quality.")},
+                # Mobile female villager at 11,14 ($2E, TextBlock6 entry 13)
+                'WOMAN_2': {'dialog': _("Please,save us from the minions of the Dragonlord.")},
+                # Mobile shopkeeper at 7,19 ($5F, CheckYesNoDialog): TextBlock9 entry 14, then a yes/no window
+                'MERCHANT_3': {'dialog': (self.kol_hast_thou_been_to_the_southern_island,)},
+                # Mobile wizard at 20,19 ($38, TextBlock7 entry 7)
+                'WISE_MAN_4': {'dialog': _("This is the village of Kol.")},
+                # Static shopkeeper at 14,21 ($07, ToolsDialog: Kol item shop)
+                'MERCHANT_4': {'dialog': (
+                    partial(self.tool_shop, self.shop_inventories.kol_item_store_inventory),)},
+                # Static guard at 1,23 ($34, TextBlock7 entry 3)
+                'GUARD_2': {'dialog': _("Rimuldar is the place to buy keys.")},
+            },
             'Rimuldar': {
                 'MERCHANT_2': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory,
@@ -567,6 +583,38 @@ class DialogLookup:
             lines = (self._("I will free thee from thy curse."), self.player.remove_curse, self._("Now, go."))
         for line in lines:
             self.command_menu.show_line_in_dialog_box(line, add_quotes=True, skip_text=self.command_menu.skip_text)
+
+    def kol_erdricks_sword_wizard(self):
+        """NES ChkWeaponDialog, dialog byte $68 (the Kol wizard at NES 1,1): TextBlock11 entry 10 if Erdrick's Sword
+        is equipped, otherwise entry 9."""
+        _ = self._
+        if self.player.weapon == "Erdrick's Sword":
+            self.say(_("Finally thou hast obtained it, {}.").format(self.player.name))
+        else:
+            self.say(_("Though thou art as brave as thy ancestor, {}, thou cannot defeat the great Dragonlord with "
+                       "such weapons.").format(self.player.name), _("Thou shouldst come here again."))
+
+    def kol_hast_thou_found_the_flute(self):
+        """NES CheckYesNoDialog, dialog byte $5E (the Kol wizard at NES 2,12): TextBlock9 entry 13 ($5E + $2F) and the
+        yes/no window. Yes shows TextBlock10 entry 2 ($8D + $05) and no shows entry 7 ($8D + $0A)."""
+        _ = self._
+        self.confirm(_("Hast thou found the flute?"),
+                     yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                               _("Go to the town of Cantlin."), hide_arrow=True),
+                     no_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                              _("Howard had it, but he went to Rimuldar and never returned."),
+                                              hide_arrow=True))
+
+    def kol_hast_thou_been_to_the_southern_island(self):
+        """NES CheckYesNoDialog, dialog byte $5F (the Kol shopkeeper at NES 7,19): TextBlock9 entry 14 ($5F + $2F) and
+        the yes/no window. Yes shows TextBlock10 entry 3 ($8E + $05) and no shows entry 8 ($8E + $0A)."""
+        _ = self._
+        self.confirm(_("Hast thou been to the southern island?"),
+                     yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                               _("I have heard that powerful enemies live there."), hide_arrow=True),
+                     no_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                              _("To the south, I believe, there is a town called Rimuldar."),
+                                              hide_arrow=True))
 
     def thou_hast_no_business_here(self):
         # NES HaveUniqueItem/HaveItemDialog: TextBlock11, entry 5
