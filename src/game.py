@@ -447,8 +447,8 @@ class Game:
                             random_integer = self.battle_ctrl.handle_near_tantegel_fight_modifier()
                         else:
                             random_integer = self.battle_ctrl.get_random_integer_by_tile()
-                        launch_battle = random_integer == 0 or self.game_state.config["FORCE_BATTLE"]
-                        if launch_battle and not self.game_state.config["NO_BATTLES"]:
+                        self.battle_ctrl.launch_battle = random_integer == 0 or self.game_state.config["FORCE_BATTLE"]
+                        if self.battle_ctrl.launch_battle and not self.game_state.config["NO_BATTLES"]:
                             self.battle_ctrl.run_battle(enemies_in_current_zone)
                         self.battle_ctrl.battle_menu_row = 0
                         self.battle_ctrl.battle_menu_column = 0
@@ -567,9 +567,9 @@ class Game:
             self.player.current_hp = 0
             self.player.is_dead = True
             self.color = RED
-            if self.launch_battle and not self.game_state.config["NO_BATTLES"]:
+            if self.battle_ctrl.launch_battle and not self.game_state.config["NO_BATTLES"]:
                 self.graphics.create_window(6, 1, 8, 3, self.directories.BATTLE_MENU_FIGHT_PATH, self.screen, RED)
-                self.launch_battle = False
+                self.battle_ctrl.launch_battle = False
                 display.flip()
             else:
                 self.drawer.draw_all_tiles_in_current_map(self.current_map, self.drawer.background)
