@@ -108,6 +108,12 @@ class TestGame(TestCase):
     #     initial_hero_location = self.game.current_map.get_initial_character_location('HERO')
     #     self.assertEqual(self.camera.set_camera_position(initial_hero_location), (-16, -7))
 
+    def test_hero_underlying_tile(self):
+        self.assertEqual('BRICK', self.game.current_map.hero_underlying_tile())
+
+    # def test_hero_underlying_tile_not_implemented(self):
+    #     self.assertRaises(NotImplementedError, self.game.current_map.hero_underlying_tile)
+
     def die(self, in_battle):
         self.game.battle_ctrl.launch_battle = in_battle
         self.game.player.current_hp = 0
@@ -134,12 +140,6 @@ class TestGame(TestCase):
         graphics.create_window.assert_not_called()
         drawer.draw_all_tiles_in_current_map.assert_called_once()
         show_text.assert_called_once_with("Thou art dead.", disable_sound=True)
-
-    def test_hero_underlying_tile(self):
-        self.assertEqual('BRICK', self.game.current_map.hero_underlying_tile())
-
-    # def test_hero_underlying_tile_not_implemented(self):
-    #     self.assertRaises(NotImplementedError, self.game.current_map.hero_underlying_tile)
 
     def test_get_tile_by_coordinates(self):
         self.assertEqual('BRICK', get_tile_id_by_coordinates(0, 0, self.game.current_map))
