@@ -87,9 +87,7 @@ class CommandMenu(Menu):
         self.game = game
         self.player = self.game.player
 
-        self.background = self.game.drawer.background
         self.screen = self.game.screen
-        self.camera_position = self.game.camera.pos
         self.current_map: DragonWarriorMap = self.game.current_map
         self.current_battle = None
         self.current_tile = self.player.current_tile
@@ -184,6 +182,22 @@ class CommandMenu(Menu):
         self.cursor_index: int | None = None
         self.menu.disable()
         self.refresh_window_color()
+
+    @property
+    def camera_position(self) -> tuple[float, float]:
+        """Where the map is drawn on the screen: always the game's camera as it is now. NES RemoveWindow (Bank00, $A7A2)
+        redraws the blocks under a closing window at their offsets from the hero (StartSignedXPos, from the window
+        position relative to the screen's center), so they line up with the map around them and nothing else moves.
+        This used to be a copy, taken when the menu was made (before the first step on a map, so the old map's camera)
+        and then in Game.move before the camera moved for the frame (one step increment behind); closing the COMMAND
+        window then drew the whole map 2 pixels off, or somewhere else on the map entirely, until the next frame."""
+        return self.game.camera.pos
+
+    @property
+    def background(self) -> Surface:
+        """The surface the map is drawn on, the game's own: Drawer.draw_all replaces it on a map's first frame, after
+        the new map's CommandMenu is made, so a copy taken here would be the previous one."""
+        return self.game.drawer.background
 
     @property
     def color(self) -> tuple[int, int, int]:
