@@ -1,828 +1,336 @@
+"""Name-based stats, checked against the NES algorithm (LoadStats, Bank03 $F050; see src/player/player_stats.py).
+
+How the expected numbers were worked out by hand from the disassembly:
+
+1. Add up the NES tile values of the first four name characters in 8 bits (NameAddLoop). Upper case is $24 (A)
+   to $3D (Z), lower case $0A (a) to $23 (z). The blank, $60, pads names shorter than four.
+2. Bits 0-1 of the sum: bit 0 clear cuts strength, set cuts max MP; bit 1 clear cuts agility, set cuts max HP.
+   Bits 2-3 are the bonus, 0-3.
+3. Each cut stat is BaseStatsTbl * 9 // 10 + bonus (ReduceStat). A max MP of 0 (levels 1-2) is left alone.
+
+The four names below cover the four growth patterns, each with a different bonus:
+
+  Steve   = S $36 + t $1D + e $0E + v $1F = $80 -> %00: strength, agility cut; bonus 0
+  Deez    = D $27 + e $0E + e $0E + z $23 = $66 -> %10: strength, max HP cut;  bonus 1 (the disassembly's example)
+  Erdrick = E $28 + r $1B + d $0D + r $1B = $6B -> %11: max HP, max MP cut;    bonus 2
+  Gina    = G $2A + i $12 + n $17 + a $0A = $5D -> %01: agility, max MP cut;   bonus 3
+
+For example, Erdrick at level 30: BaseStatsTbl has 140, 130, 210, 200, so max HP = 210 * 9 // 10 + 2 = 191 and
+max MP = 200 * 9 // 10 + 2 = 182, giving (140, 130, 191, 182).
+The same rules also reproduce, at every level, the 16 tables from https://guides.gamercorner.net/dw/name-stats/
+that an older version of this file held (Steve, Eva, Im, Va, Eddie, Ed, Walter, Uno, gooo, Sejin, Stephen, James,
+Gao, Jacquie, Wall, Edward).
+"""
 import os
 from unittest import TestCase
 
 from src.player import player_stats
-from src.player.player_stats import set_exp
+from src.player.player_stats import (BLANK_TILE, determine_penalized_stats, get_base_stats, get_bonus,
+                                     get_level_by_experience, get_name_tiles, get_stats_for_level,
+                                     get_total_name_score, levels_list, name_character_value, reduce_stat)
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
-"""Names are from https://gamefaqs.gamespot.com/boards/563408-dragon-warrior/72498979"""
-high_12 = (
-    "!",
+# (strength, agility, max HP, max MP) for levels 1-30
+STEVE = (
+    (3, 3, 15, 0),  # 1
+    (4, 3, 22, 0),  # 2
+    (6, 5, 24, 5),  # 3
+    (6, 7, 31, 16),  # 4
+    (10, 9, 35, 20),  # 5
+    (14, 9, 38, 24),  # 6
+    (16, 15, 40, 26),  # 7
+    (19, 18, 46, 29),  # 8
+    (27, 19, 50, 36),  # 9
+    (31, 27, 54, 40),  # 10
+    (36, 31, 62, 50),  # 11
+    (43, 36, 63, 58),  # 12
+    (46, 43, 70, 64),  # 13
+    (54, 49, 78, 70),  # 14
+    (61, 57, 86, 72),  # 15
+    (64, 63, 92, 95),  # 16
+    (64, 70, 100, 100),  # 17
+    (76, 75, 115, 108),  # 18
+    (78, 77, 130, 115),  # 19
+    (82, 79, 138, 128),  # 20
+    (85, 81, 149, 135),  # 21
+    (87, 81, 158, 146),  # 22
+    (89, 84, 165, 153),  # 23
+    (92, 88, 170, 161),  # 24
+    (101, 90, 174, 161),  # 25
+    (105, 94, 180, 168),  # 26
+    (112, 96, 189, 175),  # 27
+    (117, 103, 195, 180),  # 28
+    (121, 108, 200, 190),  # 29
+    (126, 117, 210, 200),  # 30
 )
-high_strength_hp_13 = (
-    "Jacquie",
-    "Gina",
-
-    "J",
-    "NAME",
-    "LUIGI",
-    "Zelda",
-    "KEFKA",
-    "EDGAR",
-    "Rocky",
-    "Sabin",
-    "Arthus",
-    "Ceres",
-    "Edea",
-    "Kane",
-    "Yang",
-    "Hassan",
-    "Rocky"
+DEEZ = (
+    (4, 4, 14, 0),  # 1
+    (5, 4, 20, 0),  # 2
+    (7, 6, 22, 5),  # 3
+    (7, 8, 28, 16),  # 4
+    (11, 10, 32, 20),  # 5
+    (15, 10, 35, 24),  # 6
+    (17, 17, 37, 26),  # 7
+    (20, 20, 42, 29),  # 8
+    (28, 22, 46, 36),  # 9
+    (32, 31, 49, 40),  # 10
+    (37, 35, 56, 50),  # 11
+    (44, 40, 57, 58),  # 12
+    (47, 48, 64, 64),  # 13
+    (55, 55, 71, 70),  # 14
+    (62, 64, 78, 72),  # 15
+    (65, 70, 83, 95),  # 16
+    (65, 78, 91, 100),  # 17
+    (77, 84, 104, 108),  # 18
+    (79, 86, 118, 115),  # 19
+    (83, 88, 125, 128),  # 20
+    (86, 90, 135, 135),  # 21
+    (88, 90, 143, 146),  # 22
+    (90, 94, 149, 153),  # 23
+    (93, 98, 154, 161),  # 24
+    (102, 100, 157, 161),  # 25
+    (106, 105, 163, 168),  # 26
+    (113, 107, 171, 175),  # 27
+    (118, 115, 176, 180),  # 28
+    (122, 120, 181, 190),  # 29
+    (127, 130, 190, 200),  # 30
 )
-high_strength_agility_15 = (
-    "Edward",
-    "ED",
-    "Larry",
-    "Joseph",
-
-    "L",
-    "Name",
-    "Luigi",
-    "Mara",
-    "Cristo",
-    "Esturk",
-    "CLOUD",
-    "Kefka",
-    "Edgar",
-    "Gwen",
-    "Aeris",
-    "Aramis",
-    "Milon",
-    "Pacman",
-    "Zemus"
+ERDRICK = (
+    (4, 4, 15, 0),  # 1
+    (5, 4, 21, 0),  # 2
+    (7, 6, 23, 6),  # 3
+    (7, 8, 29, 16),  # 4
+    (12, 10, 33, 20),  # 5
+    (16, 10, 36, 23),  # 6
+    (18, 17, 38, 25),  # 7
+    (22, 20, 43, 28),  # 8
+    (30, 22, 47, 34),  # 9
+    (35, 31, 50, 38),  # 10
+    (40, 35, 57, 47),  # 11
+    (48, 40, 58, 54),  # 12
+    (52, 48, 65, 59),  # 13
+    (60, 55, 72, 65),  # 14
+    (68, 64, 79, 66),  # 15
+    (72, 70, 84, 87),  # 16
+    (72, 78, 92, 92),  # 17
+    (85, 84, 105, 99),  # 18
+    (87, 86, 119, 105),  # 19
+    (92, 88, 126, 117),  # 20
+    (95, 90, 136, 123),  # 21
+    (97, 90, 144, 133),  # 22
+    (99, 94, 150, 139),  # 23
+    (103, 98, 155, 146),  # 24
+    (113, 100, 158, 146),  # 25
+    (117, 105, 164, 153),  # 26
+    (125, 107, 172, 159),  # 27
+    (130, 115, 177, 164),  # 28
+    (135, 120, 182, 173),  # 29
+    (140, 130, 191, 182),  # 30
 )
+GINA = (
+    (4, 6, 15, 0),  # 1
+    (5, 6, 22, 0),  # 2
+    (7, 8, 24, 7),  # 3
+    (7, 10, 31, 17),  # 4
+    (12, 12, 35, 21),  # 5
+    (16, 12, 38, 24),  # 6
+    (18, 18, 40, 26),  # 7
+    (22, 21, 46, 29),  # 8
+    (30, 22, 50, 35),  # 9
+    (35, 30, 54, 39),  # 10
+    (40, 34, 62, 48),  # 11
+    (48, 39, 63, 55),  # 12
+    (52, 46, 70, 60),  # 13
+    (60, 52, 78, 66),  # 14
+    (68, 60, 86, 67),  # 15
+    (72, 66, 92, 88),  # 16
+    (72, 73, 100, 93),  # 17
+    (85, 78, 115, 100),  # 18
+    (87, 80, 130, 106),  # 19
+    (92, 82, 138, 118),  # 20
+    (95, 84, 149, 124),  # 21
+    (97, 84, 158, 134),  # 22
+    (99, 87, 165, 140),  # 23
+    (103, 91, 170, 147),  # 24
+    (113, 93, 174, 147),  # 25
+    (117, 97, 180, 154),  # 26
+    (125, 99, 189, 160),  # 27
+    (130, 106, 195, 165),  # 28
+    (135, 111, 200, 174),  # 29
+    (140, 120, 210, 183),  # 30
+)
+EXPECTED = {'Steve': STEVE, 'Deez': DEEZ, 'Erdrick': ERDRICK, 'Gina': GINA}
+
+# BaseStatsTbl (Bank01, $A0CD): strength, agility, max HP, max MP, copied from its .byte rows
+BASE_STATS_TBL = (
+    (0x04, 0x04, 0x0F, 0x00), (0x05, 0x04, 0x16, 0x00), (0x07, 0x06, 0x18, 0x05), (0x07, 0x08, 0x1F, 0x10),
+    (0x0C, 0x0A, 0x23, 0x14), (0x10, 0x0A, 0x26, 0x18), (0x12, 0x11, 0x28, 0x1A), (0x16, 0x14, 0x2E, 0x1D),
+    (0x1E, 0x16, 0x32, 0x24), (0x23, 0x1F, 0x36, 0x28), (0x28, 0x23, 0x3E, 0x32), (0x30, 0x28, 0x3F, 0x3A),
+    (0x34, 0x30, 0x46, 0x40), (0x3C, 0x37, 0x4E, 0x46), (0x44, 0x40, 0x56, 0x48), (0x48, 0x46, 0x5C, 0x5F),
+    (0x48, 0x4E, 0x64, 0x64), (0x55, 0x54, 0x73, 0x6C), (0x57, 0x56, 0x82, 0x73), (0x5C, 0x58, 0x8A, 0x80),
+    (0x5F, 0x5A, 0x95, 0x87), (0x61, 0x5A, 0x9E, 0x92), (0x63, 0x5E, 0xA5, 0x99), (0x67, 0x62, 0xAA, 0xA1),
+    (0x71, 0x64, 0xAE, 0xA1), (0x75, 0x69, 0xB4, 0xA8), (0x7D, 0x6B, 0xBD, 0xAF), (0x82, 0x73, 0xC3, 0xB4),
+    (0x87, 0x78, 0xC8, 0xBE), (0x8C, 0x82, 0xD2, 0xC8),
+)
+# LevelUpTbl (Bank03, $F35B)
+LEVEL_UP_TBL = (0, 7, 23, 47, 110, 220, 450, 800, 1300, 2000, 2900, 4000, 5500, 7500, 10000, 13000, 16000, 19000,
+                22000, 26000, 30000, 34000, 38000, 42000, 46000, 50000, 54000, 58000, 62000, 65535)
 
 
-class Test(TestCase):
+def as_tuple(stats):
+    return stats['strength'], stats['agility'], stats['max_hp'], stats['max_mp']
 
-    def setUp(self) -> None:
-        player_stats.levels_list = {
-            1: {'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31, 'max_mp': 16, 'spell': "HURT"},
-            5: {'total_exp': 110, 'strength': 12, 'agility': 10, 'max_hp': 35, 'max_mp': 20, 'spell': None},
-            6: {'total_exp': 220, 'strength': 16, 'agility': 10, 'max_hp': 38, 'max_mp': 24, 'spell': None},
-            7: {'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'total_exp': 800, 'strength': 22, 'agility': 20, 'max_hp': 46, 'max_mp': 29, 'spell': None},
-            9: {'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50, 'max_mp': 36, 'spell': "RADIANT"},
-            10: {'total_exp': 2000, 'strength': 35, 'agility': 31, 'max_hp': 54, 'max_mp': 40, 'spell': "STOPSPELL"},
-            11: {'total_exp': 2900, 'strength': 40, 'agility': 35, 'max_hp': 62, 'max_mp': 50, 'spell': None},
-            12: {'total_exp': 4000, 'strength': 48, 'agility': 40, 'max_hp': 63, 'max_mp': 58, 'spell': "OUTSIDE"},
-            13: {'total_exp': 5500, 'strength': 52, 'agility': 48, 'max_hp': 70, 'max_mp': 64, 'spell': "RETURN"},
-            14: {'total_exp': 7500, 'strength': 60, 'agility': 55, 'max_hp': 78, 'max_mp': 70, 'spell': None},
-            15: {'total_exp': 10000, 'strength': 68, 'agility': 64, 'max_hp': 86, 'max_mp': 72, 'spell': "REPEL"},
-            16: {'total_exp': 13000, 'strength': 72, 'agility': 70, 'max_hp': 92, 'max_mp': 95, 'spell': None},
-            17: {'total_exp': 16000, 'strength': 72, 'agility': 78, 'max_hp': 100, 'max_mp': 100, 'spell': "HEALMORE"},
-            18: {'total_exp': 19000, 'strength': 85, 'agility': 84, 'max_hp': 115, 'max_mp': 108, 'spell': None},
-            19: {'total_exp': 22000, 'strength': 87, 'agility': 86, 'max_hp': 130, 'max_mp': 115, 'spell': "HURTMORE"},
-            20: {'total_exp': 26000, 'strength': 92, 'agility': 88, 'max_hp': 138, 'max_mp': 128, 'spell': None},
-            21: {'total_exp': 30000, 'strength': 95, 'agility': 90, 'max_hp': 149, 'max_mp': 135, 'spell': None},
-            22: {'total_exp': 34000, 'strength': 97, 'agility': 90, 'max_hp': 158, 'max_mp': 146, 'spell': None},
-            23: {'total_exp': 38000, 'strength': 99, 'agility': 94, 'max_hp': 165, 'max_mp': 153, 'spell': None},
-            24: {'total_exp': 42000, 'strength': 103, 'agility': 98, 'max_hp': 170, 'max_mp': 161, 'spell': None},
-            25: {'total_exp': 46000, 'strength': 113, 'agility': 100, 'max_hp': 174, 'max_mp': 161, 'spell': None},
-            26: {'total_exp': 50000, 'strength': 117, 'agility': 105, 'max_hp': 180, 'max_mp': 168, 'spell': None},
-            27: {'total_exp': 54000, 'strength': 125, 'agility': 107, 'max_hp': 189, 'max_mp': 175, 'spell': None},
-            28: {'total_exp': 58000, 'strength': 130, 'agility': 115, 'max_hp': 195, 'max_mp': 180, 'spell': None},
-            29: {'total_exp': 62000, 'strength': 135, 'agility': 120, 'max_hp': 200, 'max_mp': 190, 'spell': None},
-            30: {'total_exp': 65535, 'strength': 140, 'agility': 130, 'max_hp': 210, 'max_mp': 200, 'spell': None},
-        }
-        player_stats.set_exp()
-        self.mock_levels_list_0 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4 - 1, 'agility': 4 - 1, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5 - 1, 'agility': 4 - 1, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7 - 1, 'agility': 6 - 1, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7 - 1, 'agility': 8 - 1, 'max_hp': 31, 'max_mp': 16, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12 - 2, 'agility': 10 - 1, 'max_hp': 35, 'max_mp': 20, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16 - 2, 'agility': 10 - 1, 'max_hp': 38, 'max_mp': 24, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18 - 2, 'agility': 17 - 2, 'max_hp': 40, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22 - 3, 'agility': 20 - 2, 'max_hp': 46, 'max_mp': 29, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30 - 3, 'agility': 22 - 3, 'max_hp': 50, 'max_mp': 36, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35 - 4, 'agility': 31 - 4, 'max_hp': 54, 'max_mp': 40, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40 - 4, 'agility': 35 - 4, 'max_hp': 62, 'max_mp': 50, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48 - 5, 'agility': 40 - 4, 'max_hp': 63, 'max_mp': 58, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52 - 6, 'agility': 48 - 5, 'max_hp': 70, 'max_mp': 64, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60 - 6, 'agility': 55 - 6, 'max_hp': 78, 'max_mp': 70, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68 - 7, 'agility': 64 - 7, 'max_hp': 86, 'max_mp': 72, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72 - 8, 'agility': 70 - 7, 'max_hp': 92, 'max_mp': 95, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72 - 8, 'agility': 78 - 8, 'max_hp': 100, 'max_mp': 100, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85 - 9, 'agility': 84 - 9, 'max_hp': 115, 'max_mp': 108, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87 - 9, 'agility': 86 - 9, 'max_hp': 130, 'max_mp': 115, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92 - 10, 'agility': 88 - 9, 'max_hp': 138, 'max_mp': 128, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95 - 10, 'agility': 90 - 9, 'max_hp': 149, 'max_mp': 135, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97 - 10, 'agility': 90 - 9, 'max_hp': 158, 'max_mp': 146, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99 - 10, 'agility': 94 - 10, 'max_hp': 165, 'max_mp': 153, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103 - 11, 'agility': 98 - 10, 'max_hp': 170, 'max_mp': 161, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113 - 12, 'agility': 100 - 10, 'max_hp': 174, 'max_mp': 161, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117 - 12, 'agility': 105 - 11, 'max_hp': 180, 'max_mp': 168, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125 - 13, 'agility': 107 - 11, 'max_hp': 189, 'max_mp': 175, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130 - 13, 'agility': 115 - 12, 'max_hp': 195, 'max_mp': 180, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135 - 14, 'agility': 120 - 12, 'max_hp': 200, 'max_mp': 190, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140 - 14, 'agility': 130 - 13, 'max_hp': 210, 'max_mp': 200, 'spell': None},
-        }
-        self.mock_levels_list_1 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4 - 1, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4 - 1, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6 - 1, 'max_hp': 24, 'max_mp': 5 - 1, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7, 'agility': 8 - 1, 'max_hp': 31, 'max_mp': 16 - 2, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12, 'agility': 10 - 1, 'max_hp': 35, 'max_mp': 20 - 2, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16, 'agility': 10 - 1, 'max_hp': 38, 'max_mp': 24 - 3, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18, 'agility': 17 - 2, 'max_hp': 40, 'max_mp': 26 - 3, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22, 'agility': 20 - 2, 'max_hp': 46, 'max_mp': 29 - 3, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30, 'agility': 22 - 3, 'max_hp': 50, 'max_mp': 36 - 4, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35, 'agility': 31 - 4, 'max_hp': 54, 'max_mp': 40 - 4, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40, 'agility': 35 - 4, 'max_hp': 62, 'max_mp': 50 - 5, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48, 'agility': 40 - 4, 'max_hp': 63, 'max_mp': 58 - 6, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52, 'agility': 48 - 5, 'max_hp': 70, 'max_mp': 64 - 7, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60, 'agility': 55 - 6, 'max_hp': 78, 'max_mp': 70 - 7, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68, 'agility': 64 - 7, 'max_hp': 86, 'max_mp': 72 - 8, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72, 'agility': 70 - 7, 'max_hp': 92, 'max_mp': 95 - 10, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72, 'agility': 78 - 8, 'max_hp': 100, 'max_mp': 100 - 10, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85, 'agility': 84 - 9, 'max_hp': 115, 'max_mp': 108 - 11, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87, 'agility': 86 - 9, 'max_hp': 130, 'max_mp': 115 - 12, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92, 'agility': 88 - 9, 'max_hp': 138, 'max_mp': 128 - 13, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95, 'agility': 90 - 9, 'max_hp': 149, 'max_mp': 135 - 14, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97, 'agility': 90 - 9, 'max_hp': 158, 'max_mp': 146 - 15, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99, 'agility': 94 - 10, 'max_hp': 165, 'max_mp': 153 - 16, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103, 'agility': 98 - 10, 'max_hp': 170, 'max_mp': 161 - 17, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113, 'agility': 100 - 10, 'max_hp': 174, 'max_mp': 161 - 17, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117, 'agility': 105 - 11, 'max_hp': 180, 'max_mp': 168 - 17, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125, 'agility': 107 - 11, 'max_hp': 189, 'max_mp': 175 - 18, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130, 'agility': 115 - 12, 'max_hp': 195, 'max_mp': 180 - 18, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135, 'agility': 120 - 12, 'max_hp': 200, 'max_mp': 190 - 19, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130 - 13, 'max_hp': 210, 'max_mp': 200 - 20, 'spell': None},
-        }
-        self.mock_levels_list_2 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4 - 1, 'agility': 4, 'max_hp': 15 - 2, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5 - 1, 'agility': 4, 'max_hp': 22 - 3, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7 - 1, 'agility': 6, 'max_hp': 24 - 3, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7 - 1, 'agility': 8, 'max_hp': 31 - 4, 'max_mp': 16, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12 - 2, 'agility': 10, 'max_hp': 35 - 4, 'max_mp': 20, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16 - 2, 'agility': 10, 'max_hp': 38 - 4, 'max_mp': 24, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18 - 2, 'agility': 17, 'max_hp': 40 - 4, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22 - 3, 'agility': 20, 'max_hp': 46 - 5, 'max_mp': 29, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30 - 3, 'agility': 22, 'max_hp': 50 - 5, 'max_mp': 36, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35 - 4, 'agility': 31, 'max_hp': 54 - 6, 'max_mp': 40, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40 - 4, 'agility': 35, 'max_hp': 62 - 7, 'max_mp': 50, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48 - 5, 'agility': 40, 'max_hp': 63 - 7, 'max_mp': 58, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52 - 6, 'agility': 48, 'max_hp': 70 - 7, 'max_mp': 64, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60 - 6, 'agility': 55, 'max_hp': 78 - 8, 'max_mp': 70, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68 - 7, 'agility': 64, 'max_hp': 86 - 9, 'max_mp': 72, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72 - 8, 'agility': 70, 'max_hp': 92 - 10, 'max_mp': 95, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72 - 8, 'agility': 78, 'max_hp': 100 - 10, 'max_mp': 100, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85 - 9, 'agility': 84, 'max_hp': 115 - 12, 'max_mp': 108, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87 - 9, 'agility': 86, 'max_hp': 130 - 13, 'max_mp': 115, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92 - 10, 'agility': 88, 'max_hp': 138 - 14, 'max_mp': 128, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95 - 10, 'agility': 90, 'max_hp': 149 - 15, 'max_mp': 135, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97 - 10, 'agility': 90, 'max_hp': 158 - 16, 'max_mp': 146, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99 - 10, 'agility': 94, 'max_hp': 165 - 17, 'max_mp': 153, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103 - 11, 'agility': 98, 'max_hp': 170 - 17, 'max_mp': 161, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113 - 12, 'agility': 100, 'max_hp': 174 - 18, 'max_mp': 161, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117 - 12, 'agility': 105, 'max_hp': 180 - 18, 'max_mp': 168, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125 - 13, 'agility': 107, 'max_hp': 189 - 19, 'max_mp': 175, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130 - 13, 'agility': 115, 'max_hp': 195 - 20, 'max_mp': 180, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135 - 14, 'agility': 120, 'max_hp': 200 - 20, 'max_mp': 190, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140 - 14, 'agility': 130, 'max_hp': 210 - 21, 'max_mp': 200, 'spell': None},
 
-        }
-        self.mock_levels_list_3 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15 - 2, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22 - 3, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24 - 3, 'max_mp': 5 - 1, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31 - 4, 'max_mp': 16 - 2, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12, 'agility': 10, 'max_hp': 35 - 4, 'max_mp': 20 - 2, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16, 'agility': 10, 'max_hp': 38 - 4, 'max_mp': 24 - 3, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40 - 4, 'max_mp': 26 - 3, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22, 'agility': 20, 'max_hp': 46 - 5, 'max_mp': 29 - 3, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50 - 5, 'max_mp': 36 - 4, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35, 'agility': 31, 'max_hp': 54 - 6, 'max_mp': 40 - 4, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40, 'agility': 35, 'max_hp': 62 - 7, 'max_mp': 50 - 5, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48, 'agility': 40, 'max_hp': 63 - 7, 'max_mp': 58 - 6, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52, 'agility': 48, 'max_hp': 70 - 7, 'max_mp': 64 - 7, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60, 'agility': 55, 'max_hp': 78 - 8, 'max_mp': 70 - 7, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68, 'agility': 64, 'max_hp': 86 - 9, 'max_mp': 72 - 8, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72, 'agility': 70, 'max_hp': 92 - 10, 'max_mp': 95 - 10, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72, 'agility': 78, 'max_hp': 100 - 10, 'max_mp': 100 - 10, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85, 'agility': 84, 'max_hp': 115 - 12, 'max_mp': 108 - 11, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87, 'agility': 86, 'max_hp': 130 - 13, 'max_mp': 115 - 12, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92, 'agility': 88, 'max_hp': 138 - 14, 'max_mp': 128 - 13, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95, 'agility': 90, 'max_hp': 149 - 15, 'max_mp': 135 - 14, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97, 'agility': 90, 'max_hp': 158 - 16, 'max_mp': 146 - 15, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99, 'agility': 94, 'max_hp': 165 - 17, 'max_mp': 153 - 16, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103, 'agility': 98, 'max_hp': 170 - 17, 'max_mp': 161 - 17, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113, 'agility': 100, 'max_hp': 174 - 18, 'max_mp': 161 - 17, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117, 'agility': 105, 'max_hp': 180 - 18, 'max_mp': 168 - 17, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125, 'agility': 107, 'max_hp': 189 - 19, 'max_mp': 175 - 18, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130, 'agility': 115, 'max_hp': 195 - 20, 'max_mp': 180 - 18, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135, 'agility': 120, 'max_hp': 200 - 20, 'max_mp': 190 - 19, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130, 'max_hp': 210 - 21, 'max_mp': 200 - 20, 'spell': None},
+class TestTables(TestCase):
 
-        }
-        self.mock_levels_list_4 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31, 'max_mp': 16, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12 - 1, 'agility': 10, 'max_hp': 35, 'max_mp': 20, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16 - 1, 'agility': 10, 'max_hp': 38, 'max_mp': 24, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18 - 1, 'agility': 17 - 1, 'max_hp': 40, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22 - 2, 'agility': 20 - 1, 'max_hp': 46, 'max_mp': 29, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30 - 2, 'agility': 22 - 2, 'max_hp': 50, 'max_mp': 36, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35 - 3, 'agility': 31 - 3, 'max_hp': 54, 'max_mp': 40, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40 - 3, 'agility': 35 - 3, 'max_hp': 62, 'max_mp': 50, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48 - 4, 'agility': 40 - 3, 'max_hp': 63, 'max_mp': 58, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52 - 5, 'agility': 48 - 4, 'max_hp': 70, 'max_mp': 64, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60 - 5, 'agility': 55 - 5, 'max_hp': 78, 'max_mp': 70, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68 - 6, 'agility': 64 - 6, 'max_hp': 86, 'max_mp': 72, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72 - 7, 'agility': 70 - 6, 'max_hp': 92, 'max_mp': 95, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72 - 7, 'agility': 78 - 7, 'max_hp': 100, 'max_mp': 100, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85 - 8, 'agility': 84 - 8, 'max_hp': 115, 'max_mp': 108, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87 - 8, 'agility': 86 - 8, 'max_hp': 130, 'max_mp': 115, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92 - 9, 'agility': 88 - 8, 'max_hp': 138, 'max_mp': 128, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95 - 9, 'agility': 90 - 8, 'max_hp': 149, 'max_mp': 135, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97 - 9, 'agility': 90 - 8, 'max_hp': 158, 'max_mp': 146, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99 - 9, 'agility': 94 - 9, 'max_hp': 165, 'max_mp': 153, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103 - 10, 'agility': 98 - 9, 'max_hp': 170, 'max_mp': 161, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113 - 11, 'agility': 100 - 9, 'max_hp': 174, 'max_mp': 161, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117 - 11, 'agility': 105 - 10, 'max_hp': 180, 'max_mp': 168, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125 - 12, 'agility': 107 - 10, 'max_hp': 189, 'max_mp': 175, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130 - 12, 'agility': 115 - 11, 'max_hp': 195, 'max_mp': 180, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135 - 13, 'agility': 120 - 11, 'max_hp': 200, 'max_mp': 190, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140 - 13, 'agility': 130 - 12, 'max_hp': 210, 'max_mp': 200, 'spell': None},
+    def test_base_stats_match_base_stats_tbl(self):
+        for level in range(1, 31):
+            self.assertEqual(BASE_STATS_TBL[level - 1], as_tuple(get_base_stats(level)), level)
 
-        }
-        self.mock_levels_list_5 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31, 'max_mp': 16 - 1, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12, 'agility': 10, 'max_hp': 35, 'max_mp': 20 - 1, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16, 'agility': 10, 'max_hp': 38, 'max_mp': 24 - 2, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18, 'agility': 17 - 1, 'max_hp': 40, 'max_mp': 26 - 2, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22, 'agility': 20 - 1, 'max_hp': 46, 'max_mp': 29 - 2, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30, 'agility': 22 - 2, 'max_hp': 50, 'max_mp': 36 - 3, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35, 'agility': 31 - 3, 'max_hp': 54, 'max_mp': 40 - 3, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40, 'agility': 35 - 3, 'max_hp': 62, 'max_mp': 50 - 4, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48, 'agility': 40 - 3, 'max_hp': 63, 'max_mp': 58 - 5, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52, 'agility': 48 - 4, 'max_hp': 70, 'max_mp': 64 - 6, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60, 'agility': 55 - 5, 'max_hp': 78, 'max_mp': 70 - 6, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68, 'agility': 64 - 6, 'max_hp': 86, 'max_mp': 72 - 7, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72, 'agility': 70 - 6, 'max_hp': 92, 'max_mp': 95 - 9, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72, 'agility': 78 - 7, 'max_hp': 100, 'max_mp': 100 - 9, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85, 'agility': 84 - 8, 'max_hp': 115, 'max_mp': 108 - 10, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87, 'agility': 86 - 8, 'max_hp': 130, 'max_mp': 115 - 11, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92, 'agility': 88 - 8, 'max_hp': 138, 'max_mp': 128 - 12, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95, 'agility': 90 - 8, 'max_hp': 149, 'max_mp': 135 - 13, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97, 'agility': 90 - 8, 'max_hp': 158, 'max_mp': 146 - 14, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99, 'agility': 94 - 9, 'max_hp': 165, 'max_mp': 153 - 15, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103, 'agility': 98 - 9, 'max_hp': 170, 'max_mp': 161 - 16, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113, 'agility': 100 - 9, 'max_hp': 174, 'max_mp': 161 - 16, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117, 'agility': 105 - 10, 'max_hp': 180, 'max_mp': 168 - 16, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125, 'agility': 107 - 10, 'max_hp': 189, 'max_mp': 175 - 17, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130, 'agility': 115 - 11, 'max_hp': 195, 'max_mp': 180 - 17, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135, 'agility': 120 - 11, 'max_hp': 200, 'max_mp': 190 - 18, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130 - 12, 'max_hp': 210, 'max_mp': 200 - 19, 'spell': None},
+    def test_level_thresholds_match_level_up_tbl(self):
+        for level in range(1, 31):
+            self.assertEqual(LEVEL_UP_TBL[level - 1], levels_list[level]['total_exp'], level)
 
-        }
-        self.mock_levels_list_6 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15 - 1, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22 - 2, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24 - 2, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31 - 3, 'max_mp': 16, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12 - 1, 'agility': 10, 'max_hp': 35 - 3, 'max_mp': 20, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16 - 1, 'agility': 10, 'max_hp': 38 - 3, 'max_mp': 24, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18 - 1, 'agility': 17, 'max_hp': 40 - 3, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22 - 2, 'agility': 20, 'max_hp': 46 - 4, 'max_mp': 29, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30 - 2, 'agility': 22, 'max_hp': 50 - 4, 'max_mp': 36, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35 - 3, 'agility': 31, 'max_hp': 54 - 5, 'max_mp': 40, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40 - 3, 'agility': 35, 'max_hp': 62 - 6, 'max_mp': 50, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48 - 4, 'agility': 40, 'max_hp': 63 - 6, 'max_mp': 58, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52 - 5, 'agility': 48, 'max_hp': 70 - 6, 'max_mp': 64, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60 - 5, 'agility': 55, 'max_hp': 78 - 7, 'max_mp': 70, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68 - 6, 'agility': 64, 'max_hp': 86 - 8, 'max_mp': 72, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72 - 7, 'agility': 70, 'max_hp': 92 - 9, 'max_mp': 95, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72 - 7, 'agility': 78, 'max_hp': 100 - 9, 'max_mp': 100, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85 - 8, 'agility': 84, 'max_hp': 115 - 11, 'max_mp': 108, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87 - 8, 'agility': 86, 'max_hp': 130 - 12, 'max_mp': 115, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92 - 9, 'agility': 88, 'max_hp': 138 - 13, 'max_mp': 128, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95 - 9, 'agility': 90, 'max_hp': 149 - 14, 'max_mp': 135, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97 - 9, 'agility': 90, 'max_hp': 158 - 15, 'max_mp': 146, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99 - 9, 'agility': 94, 'max_hp': 165 - 16, 'max_mp': 153, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103 - 10, 'agility': 98, 'max_hp': 170 - 16, 'max_mp': 161, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113 - 11, 'agility': 100, 'max_hp': 174 - 17, 'max_mp': 161, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117 - 11, 'agility': 105, 'max_hp': 180 - 17, 'max_mp': 168, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125 - 12, 'agility': 107, 'max_hp': 189 - 18, 'max_mp': 175, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130 - 12, 'agility': 115, 'max_hp': 195 - 19, 'max_mp': 180, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135 - 13, 'agility': 120, 'max_hp': 200 - 19, 'max_mp': 190, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140 - 13, 'agility': 130, 'max_hp': 210 - 20, 'max_mp': 200, 'spell': None},
+    def test_set_exp_is_the_gap_to_the_previous_level(self):
+        self.assertEqual(0, levels_list[1]['exp'])
+        self.assertEqual(16, levels_list[3]['exp'])
+        self.assertEqual(3535, levels_list[30]['exp'])
 
-        }
-        self.mock_levels_list_7 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15 - 1, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22 - 2, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24 - 2, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31 - 3, 'max_mp': 16 - 1, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12, 'agility': 10, 'max_hp': 35 - 3, 'max_mp': 20 - 1, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16, 'agility': 10, 'max_hp': 38 - 3, 'max_mp': 24 - 2, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40 - 3, 'max_mp': 26 - 2, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22, 'agility': 20, 'max_hp': 46 - 4, 'max_mp': 29 - 2, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50 - 4, 'max_mp': 36 - 3, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35, 'agility': 31, 'max_hp': 54 - 5, 'max_mp': 40 - 3, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40, 'agility': 35, 'max_hp': 62 - 6, 'max_mp': 50 - 4, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48, 'agility': 40, 'max_hp': 63 - 6, 'max_mp': 58 - 5, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52, 'agility': 48, 'max_hp': 70 - 6, 'max_mp': 64 - 6, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60, 'agility': 55, 'max_hp': 78 - 7, 'max_mp': 70 - 6, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68, 'agility': 64, 'max_hp': 86 - 8, 'max_mp': 72 - 7, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72, 'agility': 70, 'max_hp': 92 - 9, 'max_mp': 95 - 9, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72, 'agility': 78, 'max_hp': 100 - 9, 'max_mp': 100 - 9, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85, 'agility': 84, 'max_hp': 115 - 11, 'max_mp': 108 - 10, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87, 'agility': 86, 'max_hp': 130 - 12, 'max_mp': 115 - 11, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92, 'agility': 88, 'max_hp': 138 - 13, 'max_mp': 128 - 12, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95, 'agility': 90, 'max_hp': 149 - 14, 'max_mp': 135 - 13, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97, 'agility': 90, 'max_hp': 158 - 15, 'max_mp': 146 - 14, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99, 'agility': 94, 'max_hp': 165 - 16, 'max_mp': 153 - 15, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103, 'agility': 98, 'max_hp': 170 - 16, 'max_mp': 161 - 16, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113, 'agility': 100, 'max_hp': 174 - 17, 'max_mp': 161 - 16, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117, 'agility': 105, 'max_hp': 180 - 17, 'max_mp': 168 - 16, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125, 'agility': 107, 'max_hp': 189 - 18, 'max_mp': 175 - 17, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130, 'agility': 115, 'max_hp': 195 - 19, 'max_mp': 180 - 17, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135, 'agility': 120, 'max_hp': 200 - 19, 'max_mp': 190 - 18, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130, 'max_hp': 210 - 20, 'max_mp': 200 - 19, 'spell': None},
+    def test_get_level_by_experience(self):
+        """GetLevelLoop: the highest LevelUpTbl entry the experience reaches."""
+        self.assertEqual(1, get_level_by_experience(0))
+        self.assertEqual(1, get_level_by_experience(6))
+        self.assertEqual(2, get_level_by_experience(7))
+        self.assertEqual(9, get_level_by_experience(1999))
+        self.assertEqual(29, get_level_by_experience(65534))
+        self.assertEqual(30, get_level_by_experience(65535))
 
-        }
-        self.mock_levels_list_8 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4 + 1, 'agility': 4 + 1, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5 + 1, 'agility': 4 + 1, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7 + 1, 'agility': 6 + 1, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7 + 1, 'agility': 8 + 1, 'max_hp': 31, 'max_mp': 16, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12, 'agility': 10 + 1, 'max_hp': 35, 'max_mp': 20, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16, 'agility': 10 + 1, 'max_hp': 38, 'max_mp': 24, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22 - 1, 'agility': 20, 'max_hp': 46, 'max_mp': 29, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30 - 1, 'agility': 22 - 1, 'max_hp': 50, 'max_mp': 36, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35 - 2, 'agility': 31 - 2, 'max_hp': 54, 'max_mp': 40, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40 - 2, 'agility': 35 - 2, 'max_hp': 62, 'max_mp': 50, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48 - 3, 'agility': 40 - 2, 'max_hp': 63, 'max_mp': 58, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52 - 4, 'agility': 48 - 3, 'max_hp': 70, 'max_mp': 64, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60 - 4, 'agility': 55 - 4, 'max_hp': 78, 'max_mp': 70, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68 - 5, 'agility': 64 - 5, 'max_hp': 86, 'max_mp': 72, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72 - 6, 'agility': 70 - 5, 'max_hp': 92, 'max_mp': 95, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72 - 6, 'agility': 78 - 6, 'max_hp': 100, 'max_mp': 100, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85 - 7, 'agility': 84 - 7, 'max_hp': 115, 'max_mp': 108, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87 - 7, 'agility': 86 - 7, 'max_hp': 130, 'max_mp': 115, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92 - 8, 'agility': 88 - 7, 'max_hp': 138, 'max_mp': 128, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95 - 8, 'agility': 90 - 7, 'max_hp': 149, 'max_mp': 135, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97 - 8, 'agility': 90 - 7, 'max_hp': 158, 'max_mp': 146, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99 - 8, 'agility': 94 - 8, 'max_hp': 165, 'max_mp': 153, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103 - 9, 'agility': 98 - 8, 'max_hp': 170, 'max_mp': 161, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113 - 10, 'agility': 100 - 8, 'max_hp': 174, 'max_mp': 161, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117 - 10, 'agility': 105 - 9, 'max_hp': 180, 'max_mp': 168, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125 - 11, 'agility': 107 - 9, 'max_hp': 189, 'max_mp': 175, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130 - 11, 'agility': 115 - 10, 'max_hp': 195, 'max_mp': 180, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135 - 12, 'agility': 120 - 10, 'max_hp': 200, 'max_mp': 190, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140 - 12, 'agility': 130 - 11, 'max_hp': 210, 'max_mp': 200, 'spell': None},
 
-        }
-        self.mock_levels_list_9 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4 + 1, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4 + 1, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6 + 1, 'max_hp': 24, 'max_mp': 5 + 1, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7, 'agility': 8 + 1, 'max_hp': 31, 'max_mp': 16, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12, 'agility': 10 + 1, 'max_hp': 35, 'max_mp': 20, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16, 'agility': 10 + 1, 'max_hp': 38, 'max_mp': 24 - 1, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40, 'max_mp': 26 - 1, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22, 'agility': 20, 'max_hp': 46, 'max_mp': 29 - 1, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30, 'agility': 22 - 1, 'max_hp': 50, 'max_mp': 36 - 2, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35, 'agility': 31 - 2, 'max_hp': 54, 'max_mp': 40 - 2, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40, 'agility': 35 - 2, 'max_hp': 62, 'max_mp': 50 - 3, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48, 'agility': 40 - 2, 'max_hp': 63, 'max_mp': 58 - 4, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52, 'agility': 48 - 3, 'max_hp': 70, 'max_mp': 64 - 5, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60, 'agility': 55 - 4, 'max_hp': 78, 'max_mp': 70 - 5, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68, 'agility': 64 - 5, 'max_hp': 86, 'max_mp': 72 - 6, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72, 'agility': 70 - 5, 'max_hp': 92, 'max_mp': 95 - 8, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72, 'agility': 78 - 6, 'max_hp': 100, 'max_mp': 100 - 8, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85, 'agility': 84 - 7, 'max_hp': 115, 'max_mp': 108 - 9, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87, 'agility': 86 - 7, 'max_hp': 130, 'max_mp': 115 - 10, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92, 'agility': 88 - 7, 'max_hp': 138, 'max_mp': 128 - 11, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95, 'agility': 90 - 7, 'max_hp': 149, 'max_mp': 135 - 12, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97, 'agility': 90 - 7, 'max_hp': 158, 'max_mp': 146 - 13, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99, 'agility': 94 - 8, 'max_hp': 165, 'max_mp': 153 - 14, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103, 'agility': 98 - 8, 'max_hp': 170, 'max_mp': 161 - 15, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113, 'agility': 100 - 8, 'max_hp': 174, 'max_mp': 161 - 15, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117, 'agility': 105 - 9, 'max_hp': 180, 'max_mp': 168 - 15, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125, 'agility': 107 - 9, 'max_hp': 189, 'max_mp': 175 - 16, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130, 'agility': 115 - 10, 'max_hp': 195, 'max_mp': 180 - 16, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135, 'agility': 120 - 10, 'max_hp': 200, 'max_mp': 190 - 17, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130 - 11, 'max_hp': 210, 'max_mp': 200 - 18, 'spell': None},
+class TestNameValues(TestCase):
 
-        }
-        self.mock_levels_list_10 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4 + 1, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5 + 1, 'agility': 4, 'max_hp': 22 - 1, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7 + 1, 'agility': 6, 'max_hp': 24 - 1, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7 + 1, 'agility': 8, 'max_hp': 31 - 2, 'max_mp': 16, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12, 'agility': 10, 'max_hp': 35 - 2, 'max_mp': 20, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16, 'agility': 10, 'max_hp': 38 - 2, 'max_mp': 24, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40 - 2, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22 - 1, 'agility': 20, 'max_hp': 46 - 3, 'max_mp': 29, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30 - 1, 'agility': 22, 'max_hp': 50 - 3, 'max_mp': 36, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35 - 2, 'agility': 31, 'max_hp': 54 - 4, 'max_mp': 40, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40 - 2, 'agility': 35, 'max_hp': 62 - 5, 'max_mp': 50, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48 - 3, 'agility': 40, 'max_hp': 63 - 5, 'max_mp': 58, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52 - 4, 'agility': 48, 'max_hp': 70 - 5, 'max_mp': 64, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60 - 4, 'agility': 55, 'max_hp': 78 - 6, 'max_mp': 70, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68 - 5, 'agility': 64, 'max_hp': 86 - 7, 'max_mp': 72, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72 - 6, 'agility': 70, 'max_hp': 92 - 8, 'max_mp': 95, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72 - 6, 'agility': 78, 'max_hp': 100 - 8, 'max_mp': 100, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85 - 7, 'agility': 84, 'max_hp': 115 - 10, 'max_mp': 108, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87 - 7, 'agility': 86, 'max_hp': 130 - 11, 'max_mp': 115, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92 - 8, 'agility': 88, 'max_hp': 138 - 12, 'max_mp': 128, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95 - 8, 'agility': 90, 'max_hp': 149 - 13, 'max_mp': 135, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97 - 8, 'agility': 90, 'max_hp': 158 - 14, 'max_mp': 146, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99 - 8, 'agility': 94, 'max_hp': 165 - 15, 'max_mp': 153, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103 - 9, 'agility': 98, 'max_hp': 170 - 15, 'max_mp': 161, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113 - 10, 'agility': 100, 'max_hp': 174 - 16, 'max_mp': 161, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117 - 10, 'agility': 105, 'max_hp': 180 - 16, 'max_mp': 168, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125 - 11, 'agility': 107, 'max_hp': 189 - 17, 'max_mp': 175, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130 - 11, 'agility': 115, 'max_hp': 195 - 18, 'max_mp': 180, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135 - 12, 'agility': 120, 'max_hp': 200 - 18, 'max_mp': 190, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140 - 12, 'agility': 130, 'max_hp': 210 - 19, 'max_mp': 200, 'spell': None},
+    def test_nes_name_entry_alphabet(self):
+        """WndProcessChar: A-Z are index + TXT_UPR_A, a-z are index - $17, the rest come from SymbolConvTbl.
+        The values match the list in the comment above ReduceStat."""
+        self.assertEqual(0x24, name_character_value('A'))
+        self.assertEqual(0x3D, name_character_value('Z'))
+        self.assertEqual(0x0A, name_character_value('a'))
+        self.assertEqual(0x23, name_character_value('z'))
+        for character, value in (('-', 0x49), ("'", 0x40), ('!', 0x4C), ('?', 0x4B), ('(', 0x4F), (')', 0x4E),
+                                 (' ', 0x60), (',', 0x48), ('.', 0x47)):
+            self.assertEqual(value, name_character_value(character), character)
 
-        }
-        self.mock_levels_list_11 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22 - 1, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24 - 1, 'max_mp': 5 + 1, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31 - 2, 'max_mp': 16, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12, 'agility': 10, 'max_hp': 35 - 2, 'max_mp': 20, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16, 'agility': 10, 'max_hp': 38 - 2, 'max_mp': 24 - 1, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40 - 2, 'max_mp': 26 - 1, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22, 'agility': 20, 'max_hp': 46 - 3, 'max_mp': 29 - 1, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50 - 3, 'max_mp': 36 - 2, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35, 'agility': 31, 'max_hp': 54 - 4, 'max_mp': 40 - 2, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40, 'agility': 35, 'max_hp': 62 - 5, 'max_mp': 50 - 3, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48, 'agility': 40, 'max_hp': 63 - 5, 'max_mp': 58 - 4, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52, 'agility': 48, 'max_hp': 70 - 5, 'max_mp': 64 - 5, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60, 'agility': 55, 'max_hp': 78 - 6, 'max_mp': 70 - 5, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68, 'agility': 64, 'max_hp': 86 - 7, 'max_mp': 72 - 6, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72, 'agility': 70, 'max_hp': 92 - 8, 'max_mp': 95 - 8, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72, 'agility': 78, 'max_hp': 100 - 8, 'max_mp': 100 - 8, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85, 'agility': 84, 'max_hp': 115 - 10, 'max_mp': 108 - 9, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87, 'agility': 86, 'max_hp': 130 - 11, 'max_mp': 115 - 10, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92, 'agility': 88, 'max_hp': 138 - 12, 'max_mp': 128 - 11, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95, 'agility': 90, 'max_hp': 149 - 13, 'max_mp': 135 - 12, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97, 'agility': 90, 'max_hp': 158 - 14, 'max_mp': 146 - 13, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99, 'agility': 94, 'max_hp': 165 - 15, 'max_mp': 153 - 14, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103, 'agility': 98, 'max_hp': 170 - 15, 'max_mp': 161 - 15, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113, 'agility': 100, 'max_hp': 174 - 16, 'max_mp': 161 - 15, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117, 'agility': 105, 'max_hp': 180 - 16, 'max_mp': 168 - 15, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125, 'agility': 107, 'max_hp': 189 - 17, 'max_mp': 175 - 16, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130, 'agility': 115, 'max_hp': 195 - 18, 'max_mp': 180 - 16, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135, 'agility': 120, 'max_hp': 200 - 18, 'max_mp': 190 - 17, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130, 'max_hp': 210 - 19, 'max_mp': 200 - 18, 'spell': None},
+    def test_digits_are_their_font_tiles(self):
+        self.assertEqual(0, name_character_value('0'))
+        self.assertEqual(9, name_character_value('9'))
 
-        }
-        self.mock_levels_list_12 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4 + 2, 'agility': 4 + 2, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5 + 2, 'agility': 4 + 2, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7 + 2, 'agility': 6 + 2, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7 + 2, 'agility': 8 + 2, 'max_hp': 31, 'max_mp': 16, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12 + 1, 'agility': 10 + 2, 'max_hp': 35, 'max_mp': 20, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16 + 1, 'agility': 10 + 2, 'max_hp': 38, 'max_mp': 24, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18 + 1, 'agility': 17 + 1, 'max_hp': 40, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22, 'agility': 20 + 1, 'max_hp': 46, 'max_mp': 29, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50, 'max_mp': 36, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35 - 1, 'agility': 31 - 1, 'max_hp': 54, 'max_mp': 40, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40 - 1, 'agility': 35 - 1, 'max_hp': 62, 'max_mp': 50, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48 - 2, 'agility': 40 - 1, 'max_hp': 63, 'max_mp': 58, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52 - 3, 'agility': 48 - 2, 'max_hp': 70, 'max_mp': 64, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60 - 3, 'agility': 55 - 3, 'max_hp': 78, 'max_mp': 70, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68 - 4, 'agility': 64 - 4, 'max_hp': 86, 'max_mp': 72, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72 - 5, 'agility': 70 - 4, 'max_hp': 92, 'max_mp': 95, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72 - 5, 'agility': 78 - 5, 'max_hp': 100, 'max_mp': 100, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85 - 6, 'agility': 84 - 6, 'max_hp': 115, 'max_mp': 108, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87 - 6, 'agility': 86 - 6, 'max_hp': 130, 'max_mp': 115, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92 - 7, 'agility': 88 - 6, 'max_hp': 138, 'max_mp': 128, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95 - 7, 'agility': 90 - 6, 'max_hp': 149, 'max_mp': 135, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97 - 7, 'agility': 90 - 6, 'max_hp': 158, 'max_mp': 146, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99 - 7, 'agility': 94 - 7, 'max_hp': 165, 'max_mp': 153, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103 - 8, 'agility': 98 - 7, 'max_hp': 170, 'max_mp': 161, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113 - 9, 'agility': 100 - 7, 'max_hp': 174, 'max_mp': 161, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117 - 9, 'agility': 105 - 8, 'max_hp': 180, 'max_mp': 168, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125 - 10, 'agility': 107 - 8, 'max_hp': 189, 'max_mp': 175, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130 - 10, 'agility': 115 - 9, 'max_hp': 195, 'max_mp': 180, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135 - 11, 'agility': 120 - 9, 'max_hp': 200, 'max_mp': 190, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140 - 11, 'agility': 130 - 10, 'max_hp': 210, 'max_mp': 200, 'spell': None},
+    def test_accented_letters_count_as_the_plain_letter(self):
+        self.assertEqual(name_character_value('E'), name_character_value('É'))
+        self.assertEqual(name_character_value('n'), name_character_value('ñ'))
+        self.assertEqual(get_stats_for_level('Eva', 20), get_stats_for_level('Éva', 20))
 
-        }
-        self.mock_levels_list_13 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4 + 2, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4 + 2, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6 + 2, 'max_hp': 24, 'max_mp': 5 + 2, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7, 'agility': 8 + 2, 'max_hp': 31, 'max_mp': 16 + 1, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12, 'agility': 10 + 2, 'max_hp': 35, 'max_mp': 20 + 1, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16, 'agility': 10 + 2, 'max_hp': 38, 'max_mp': 24, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18, 'agility': 17 + 1, 'max_hp': 40, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22, 'agility': 20 + 1, 'max_hp': 46, 'max_mp': 29, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50, 'max_mp': 36 - 1, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35, 'agility': 31 - 1, 'max_hp': 54, 'max_mp': 40 - 1, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40, 'agility': 35 - 1, 'max_hp': 62, 'max_mp': 50 - 2, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48, 'agility': 40 - 1, 'max_hp': 63, 'max_mp': 58 - 3, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52, 'agility': 48 - 2, 'max_hp': 70, 'max_mp': 64 - 4, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60, 'agility': 55 - 3, 'max_hp': 78, 'max_mp': 70 - 4, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68, 'agility': 64 - 4, 'max_hp': 86, 'max_mp': 72 - 5, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72, 'agility': 70 - 4, 'max_hp': 92, 'max_mp': 95 - 7, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72, 'agility': 78 - 5, 'max_hp': 100, 'max_mp': 100 - 7, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85, 'agility': 84 - 6, 'max_hp': 115, 'max_mp': 108 - 8, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87, 'agility': 86 - 6, 'max_hp': 130, 'max_mp': 115 - 9, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92, 'agility': 88 - 6, 'max_hp': 138, 'max_mp': 128 - 10, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95, 'agility': 90 - 6, 'max_hp': 149, 'max_mp': 135 - 11, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97, 'agility': 90 - 6, 'max_hp': 158, 'max_mp': 146 - 12, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99, 'agility': 94 - 7, 'max_hp': 165, 'max_mp': 153 - 13, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103, 'agility': 98 - 7, 'max_hp': 170, 'max_mp': 161 - 14, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113, 'agility': 100 - 7, 'max_hp': 174, 'max_mp': 161 - 14, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117, 'agility': 105 - 8, 'max_hp': 180, 'max_mp': 168 - 14, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125, 'agility': 107 - 8, 'max_hp': 189, 'max_mp': 175 - 15, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130, 'agility': 115 - 9, 'max_hp': 195, 'max_mp': 180 - 15, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135, 'agility': 120 - 9, 'max_hp': 200, 'max_mp': 190 - 16, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130 - 10, 'max_hp': 210, 'max_mp': 200 - 17, 'spell': None},
+    def test_other_characters_use_the_low_byte_of_the_code_point(self):
+        self.assertEqual(0xA9, name_character_value('용'))  # U+C6A9
+        self.assertEqual(0xAC, name_character_value('사'))  # U+C0AC
+        # 용사 = $A9 + $AC + $60 + $60 = $215 -> $15 = %0101: agility and max MP cut, bonus 1
+        self.assertEqual(0x15, get_total_name_score('용사'))
+        self.assertEqual((140, 118, 210, 181), as_tuple(get_stats_for_level('용사', 30)))
 
-        }
-        self.mock_levels_list_14 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4 + 2, 'agility': 4, 'max_hp': 15 + 1, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5 + 2, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7 + 2, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7 + 2, 'agility': 8, 'max_hp': 31 - 1, 'max_mp': 16, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12 + 1, 'agility': 10, 'max_hp': 35 - 1, 'max_mp': 20, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16 + 1, 'agility': 10, 'max_hp': 38 - 1, 'max_mp': 24, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18 + 1, 'agility': 17, 'max_hp': 40 - 1, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22, 'agility': 20, 'max_hp': 46 - 2, 'max_mp': 29, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50 - 2, 'max_mp': 36, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35 - 1, 'agility': 31, 'max_hp': 54 - 3, 'max_mp': 40, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40 - 1, 'agility': 35, 'max_hp': 62 - 4, 'max_mp': 50, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48 - 2, 'agility': 40, 'max_hp': 63 - 4, 'max_mp': 58, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52 - 3, 'agility': 48, 'max_hp': 70 - 4, 'max_mp': 64, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60 - 3, 'agility': 55, 'max_hp': 78 - 5, 'max_mp': 70, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68 - 4, 'agility': 64, 'max_hp': 86 - 6, 'max_mp': 72, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72 - 5, 'agility': 70, 'max_hp': 92 - 7, 'max_mp': 95, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72 - 5, 'agility': 78, 'max_hp': 100 - 7, 'max_mp': 100, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85 - 6, 'agility': 84, 'max_hp': 115 - 9, 'max_mp': 108, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87 - 6, 'agility': 86, 'max_hp': 130 - 10, 'max_mp': 115, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92 - 7, 'agility': 88, 'max_hp': 138 - 11, 'max_mp': 128, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95 - 7, 'agility': 90, 'max_hp': 149 - 12, 'max_mp': 135, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97 - 7, 'agility': 90, 'max_hp': 158 - 13, 'max_mp': 146, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99 - 7, 'agility': 94, 'max_hp': 165 - 14, 'max_mp': 153, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103 - 8, 'agility': 98, 'max_hp': 170 - 14, 'max_mp': 161, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113 - 9, 'agility': 100, 'max_hp': 174 - 15, 'max_mp': 161, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117 - 9, 'agility': 105, 'max_hp': 180 - 15, 'max_mp': 168, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125 - 10, 'agility': 107, 'max_hp': 189 - 16, 'max_mp': 175, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130 - 10, 'agility': 115, 'max_hp': 195 - 17, 'max_mp': 180, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135 - 11, 'agility': 120, 'max_hp': 200 - 17, 'max_mp': 190, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140 - 11, 'agility': 130, 'max_hp': 210 - 18, 'max_mp': 200, 'spell': None},
+    def test_only_the_first_four_characters_count(self):
+        self.assertEqual(get_name_tiles('Erdrick'), get_name_tiles('Erdr'))
+        self.assertEqual(get_stats_for_level('Erdrick', 30), get_stats_for_level('Erdr', 30))
 
-        }
-        self.mock_levels_list_15 = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15 + 1, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5 + 2, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31 - 1, 'max_mp': 16 + 1, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12, 'agility': 10, 'max_hp': 35 - 1, 'max_mp': 20 + 1, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16, 'agility': 10, 'max_hp': 38 - 1, 'max_mp': 24, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40 - 1, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22, 'agility': 20, 'max_hp': 46 - 2, 'max_mp': 29, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50 - 2, 'max_mp': 36 - 1, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35, 'agility': 31, 'max_hp': 54 - 3, 'max_mp': 40 - 1, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40, 'agility': 35, 'max_hp': 62 - 4, 'max_mp': 50 - 2, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48, 'agility': 40, 'max_hp': 63 - 4, 'max_mp': 58 - 3, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52, 'agility': 48, 'max_hp': 70 - 4, 'max_mp': 64 - 4, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60, 'agility': 55, 'max_hp': 78 - 5, 'max_mp': 70 - 4, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68, 'agility': 64, 'max_hp': 86 - 6, 'max_mp': 72 - 5, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72, 'agility': 70, 'max_hp': 92 - 7, 'max_mp': 95 - 7, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72, 'agility': 78, 'max_hp': 100 - 7, 'max_mp': 100 - 7, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85, 'agility': 84, 'max_hp': 115 - 9, 'max_mp': 108 - 8, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87, 'agility': 86, 'max_hp': 130 - 10, 'max_mp': 115 - 9, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92, 'agility': 88, 'max_hp': 138 - 11, 'max_mp': 128 - 10, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95, 'agility': 90, 'max_hp': 149 - 12, 'max_mp': 135 - 11, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97, 'agility': 90, 'max_hp': 158 - 13, 'max_mp': 146 - 12, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99, 'agility': 94, 'max_hp': 165 - 14, 'max_mp': 153 - 13, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103, 'agility': 98, 'max_hp': 170 - 14, 'max_mp': 161 - 14, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113, 'agility': 100, 'max_hp': 174 - 15, 'max_mp': 161 - 14, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117, 'agility': 105, 'max_hp': 180 - 15, 'max_mp': 168 - 14, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125, 'agility': 107, 'max_hp': 189 - 16, 'max_mp': 175 - 15, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130, 'agility': 115, 'max_hp': 195 - 17, 'max_mp': 180 - 15, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135, 'agility': 120, 'max_hp': 200 - 17, 'max_mp': 190 - 16, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130, 'max_hp': 210 - 18, 'max_mp': 200 - 17, 'spell': None},
+    def test_short_names_are_padded_with_blanks(self):
+        """InitNameWindow fills the name buffer with TL_BLANK_TILE2 ($60)."""
+        self.assertEqual((0x24, BLANK_TILE, BLANK_TILE, BLANK_TILE), get_name_tiles('A'))
+        self.assertEqual(get_name_tiles('A   '), get_name_tiles('A'))
+        self.assertEqual(0x80, get_total_name_score(''))
 
-        }
+    def test_name_sum_is_eight_bits(self):
+        """NameAddLoop adds with ADC, so the carry out of bit 7 is lost."""
+        self.assertEqual(0xA7, get_total_name_score('JAKE'))  # $2D+$24+$2E+$28, the disassembly's example
+        self.assertEqual(0x66, get_total_name_score('Deez'))  # the disassembly's other example
+        self.assertEqual(0x5F, get_total_name_score('Edward'))
+        self.assertEqual(0x03, get_total_name_score('Va'))  # $39 + $0A + $60 + $60 = $103
 
-    def test_get_total_name_score(self):
-        self.assertEqual(31, player_stats.get_total_name_score("Edward"))
-        self.assertEqual(36, player_stats.get_total_name_score("Eddie"))
-        self.assertEqual(43, player_stats.get_total_name_score("James"))
+
+class TestNameStats(TestCase):
 
     def test_get_bonus(self):
-        self.assertEqual(0, player_stats.get_bonus(33))
-        self.assertEqual(1, player_stats.get_bonus(52))
-        self.assertEqual(2, player_stats.get_bonus(43))
-        self.assertEqual(3, player_stats.get_bonus(31))
-
-    def test_apply_transformation_to_levels_list_0(self):
-        """Strength and Agility penalized.
-        Example name: Steve
-        """
-        player_stats.apply_transformation_to_levels_list("Steve")
-        self.assertEqual(self.mock_levels_list_0, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_1(self):
-        """Agility and Maximum MP penalized.
-        Example name: Eva
-        """
-        player_stats.apply_transformation_to_levels_list("Eva")
-        self.assertEqual(self.mock_levels_list_1, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_2(self):
-        """Strength and Maximum HP penalized.
-        Example name: Im
-        """
-        player_stats.apply_transformation_to_levels_list("Im")
-        self.assertEqual(self.mock_levels_list_2, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_3(self):
-        """Strength and Maximum HP penalized.
-        Example name: Va
-        """
-        player_stats.apply_transformation_to_levels_list("Va")
-        self.assertEqual(self.mock_levels_list_3, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_4(self):
-        """Strength and Agility penalized.
-        Example name: Eddie
-        """
-        player_stats.apply_transformation_to_levels_list("Eddie")
-        self.assertEqual(self.mock_levels_list_4, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_5(self):
-        """Agility and Maximum MP penalized.
-        Example name: Ed
-        """
-        player_stats.apply_transformation_to_levels_list("Ed")
-        self.assertEqual(self.mock_levels_list_5, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_6(self):
-        """Strength and Maximum HP penalized.
-        Example name: Walter
-        """
-        player_stats.apply_transformation_to_levels_list("Walter")
-        self.assertEqual(self.mock_levels_list_6, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_7(self):
-        """Maximum HP and Maximum MP penalized.
-        Example name: Uno
-        """
-        player_stats.apply_transformation_to_levels_list("Uno")
-        self.assertEqual(self.mock_levels_list_7, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_8(self):
-        """Maximum HP and Maximum MP penalized.
-        Example name: gooo
-        """
-        player_stats.apply_transformation_to_levels_list("gooo")
-        self.assertEqual(self.mock_levels_list_8, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_9(self):
-        """Strength and Agility penalized.
-        Example name: Sejin
-        """
-        player_stats.apply_transformation_to_levels_list("Sejin")
-        self.assertEqual(self.mock_levels_list_9, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_10(self):
-        """Strength and Maximum HP penalized.
-        Example name: Stephen
-        """
-        player_stats.apply_transformation_to_levels_list("Stephen")
-        self.assertEqual(self.mock_levels_list_10, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_11(self):
-        """Maximum HP and Maximum MP penalized.
-        Example name: James
-        """
-        player_stats.apply_transformation_to_levels_list("James")
-        self.assertEqual(self.mock_levels_list_11, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_12(self):
-        """Strength and Agility penalized.
-        Example name: Gao
-        """
-        player_stats.apply_transformation_to_levels_list("Gao")
-        self.assertEqual(self.mock_levels_list_12, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_13(self):
-        """Agility and Maximum MP penalized.
-        Example name: Jacquie / Gina
-        """
-        player_stats.apply_transformation_to_levels_list("Jacquie")
-        self.assertEqual(self.mock_levels_list_13, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_14(self):
-        """Strength and Maximum HP penalized.
-        Example name: Wall
-        """
-        player_stats.apply_transformation_to_levels_list("Wall")
-        self.assertEqual(self.mock_levels_list_14, player_stats.levels_list)
-
-    def test_apply_transformation_to_levels_list_15(self):
-        """Maximum HP and Maximum MP penalized.
-        Example name: Edward / Larry / Joseph
-        """
-        player_stats.apply_transformation_to_levels_list("Edward")
-        self.assertEqual(self.mock_levels_list_15, player_stats.levels_list)
+        self.assertEqual(0, get_bonus(0x80))
+        self.assertEqual(1, get_bonus(0x66))
+        self.assertEqual(2, get_bonus(0x6B))
+        self.assertEqual(3, get_bonus(0x5D))
+        self.assertEqual(3, get_bonus(0xFF))
 
     def test_determine_penalized_stats(self):
-        self.assertIn('agility', player_stats.determine_penalized_stats(0))
-        self.assertIn('strength', player_stats.determine_penalized_stats(0))
+        self.assertEqual(('agility', 'strength'), determine_penalized_stats(0b00))
+        self.assertEqual(('agility', 'max_mp'), determine_penalized_stats(0b01))
+        self.assertEqual(('max_hp', 'strength'), determine_penalized_stats(0b10))
+        self.assertEqual(('max_hp', 'max_mp'), determine_penalized_stats(0b11))
+        self.assertEqual(('agility', 'strength'), determine_penalized_stats(0b100))
 
-        self.assertIn('agility', player_stats.determine_penalized_stats(1))
-        self.assertIn('max_mp', player_stats.determine_penalized_stats(1))
+    def test_reduce_stat_rounds_down(self):
+        self.assertEqual(4, reduce_stat(5, 0))  # 45 / 10
+        self.assertEqual(7, reduce_stat(8, 0))  # 72 / 10
+        self.assertEqual(192, reduce_stat(210, 3))
 
-        self.assertIn('max_hp', player_stats.determine_penalized_stats(2))
-        self.assertIn('strength', player_stats.determine_penalized_stats(2))
+    def test_four_growth_patterns_every_level(self):
+        for name, expected in EXPECTED.items():
+            for level in range(1, 31):
+                self.assertEqual(expected[level - 1], as_tuple(get_stats_for_level(name, level)), f'{name} {level}')
 
-        self.assertIn('max_hp', player_stats.determine_penalized_stats(3))
-        self.assertIn('max_mp', player_stats.determine_penalized_stats(3))
+    def test_full_rate_stats_are_the_base_table(self):
+        """The two stats the name doesn't cut are exactly BaseStatsTbl."""
+        for level in range(1, 31):
+            strength, agility, max_hp, max_mp = BASE_STATS_TBL[level - 1]
+            self.assertEqual((max_hp, max_mp), STEVE[level - 1][2:])
+            self.assertEqual((agility, max_mp), DEEZ[level - 1][1::2])
+            self.assertEqual((strength, agility), ERDRICK[level - 1][:2])
+            self.assertEqual((strength, max_hp), GINA[level - 1][::2])
 
-        self.assertIn('agility', player_stats.determine_penalized_stats(4))
-        self.assertIn('strength', player_stats.determine_penalized_stats(4))
+    def test_no_mp_means_no_cut_and_no_bonus(self):
+        """LF0AF: with max MP 0 (levels 1 and 2) the MP cut and its bonus are skipped."""
+        self.assertEqual(0, get_stats_for_level('Gina', 1)['max_mp'])
+        self.assertEqual(0, get_stats_for_level('Gina', 2)['max_mp'])
+        self.assertEqual(5 * 9 // 10 + 3, get_stats_for_level('Gina', 3)['max_mp'])
 
-    def test_set_exp(self):
-        player_stats.levels_list = {
-            1: {'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31, 'max_mp': 16, 'spell': "HURT"},
-            5: {'total_exp': 110, 'strength': 12, 'agility': 10, 'max_hp': 35, 'max_mp': 20, 'spell': None},
-            6: {'total_exp': 220, 'strength': 16, 'agility': 10, 'max_hp': 38, 'max_mp': 24, 'spell': None},
-            7: {'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'total_exp': 800, 'strength': 22, 'agility': 20, 'max_hp': 46, 'max_mp': 29, 'spell': None},
-            9: {'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50, 'max_mp': 36, 'spell': "RADIANT"},
-            10: {'total_exp': 2000, 'strength': 35, 'agility': 31, 'max_hp': 54, 'max_mp': 40, 'spell': "STOPSPELL"},
-            11: {'total_exp': 2900, 'strength': 40, 'agility': 35, 'max_hp': 62, 'max_mp': 50, 'spell': None},
-            12: {'total_exp': 4000, 'strength': 48, 'agility': 40, 'max_hp': 63, 'max_mp': 58, 'spell': "OUTSIDE"},
-            13: {'total_exp': 5500, 'strength': 52, 'agility': 48, 'max_hp': 70, 'max_mp': 64, 'spell': "RETURN"},
-            14: {'total_exp': 7500, 'strength': 60, 'agility': 55, 'max_hp': 78, 'max_mp': 70, 'spell': None},
-            15: {'total_exp': 10000, 'strength': 68, 'agility': 64, 'max_hp': 86, 'max_mp': 72, 'spell': "REPEL"},
-            16: {'total_exp': 13000, 'strength': 72, 'agility': 70, 'max_hp': 92, 'max_mp': 95, 'spell': None},
-            17: {'total_exp': 16000, 'strength': 72, 'agility': 78, 'max_hp': 100, 'max_mp': 100, 'spell': "HEALMORE"},
-            18: {'total_exp': 19000, 'strength': 85, 'agility': 84, 'max_hp': 115, 'max_mp': 108, 'spell': None},
-            19: {'total_exp': 22000, 'strength': 87, 'agility': 86, 'max_hp': 130, 'max_mp': 115, 'spell': "HURTMORE"},
-            20: {'total_exp': 26000, 'strength': 92, 'agility': 88, 'max_hp': 138, 'max_mp': 128, 'spell': None},
-            21: {'total_exp': 30000, 'strength': 95, 'agility': 90, 'max_hp': 149, 'max_mp': 135, 'spell': None},
-            22: {'total_exp': 34000, 'strength': 97, 'agility': 90, 'max_hp': 158, 'max_mp': 146, 'spell': None},
-            23: {'total_exp': 38000, 'strength': 99, 'agility': 94, 'max_hp': 165, 'max_mp': 153, 'spell': None},
-            24: {'total_exp': 42000, 'strength': 103, 'agility': 98, 'max_hp': 170, 'max_mp': 161, 'spell': None},
-            25: {'total_exp': 46000, 'strength': 113, 'agility': 100, 'max_hp': 174, 'max_mp': 161, 'spell': None},
-            26: {'total_exp': 50000, 'strength': 117, 'agility': 105, 'max_hp': 180, 'max_mp': 168, 'spell': None},
-            27: {'total_exp': 54000, 'strength': 125, 'agility': 107, 'max_hp': 189, 'max_mp': 175, 'spell': None},
-            28: {'total_exp': 58000, 'strength': 130, 'agility': 115, 'max_hp': 195, 'max_mp': 180, 'spell': None},
-            29: {'total_exp': 62000, 'strength': 135, 'agility': 120, 'max_hp': 200, 'max_mp': 190, 'spell': None},
-            30: {'total_exp': 65535, 'strength': 140, 'agility': 130, 'max_hp': 210, 'max_mp': 200, 'spell': None},
-        }
-        test_levels_list = {
-            1: {'exp': 0, 'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
-            2: {'exp': 7, 'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
-            3: {'exp': 16, 'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': "HEAL"},
-            4: {'exp': 24, 'total_exp': 47, 'strength': 7, 'agility': 8, 'max_hp': 31, 'max_mp': 16, 'spell': "HURT"},
-            5: {'exp': 63, 'total_exp': 110, 'strength': 12, 'agility': 10, 'max_hp': 35, 'max_mp': 20, 'spell': None},
-            6: {'exp': 110, 'total_exp': 220, 'strength': 16, 'agility': 10, 'max_hp': 38, 'max_mp': 24, 'spell': None},
-            7: {'exp': 230, 'total_exp': 450, 'strength': 18, 'agility': 17, 'max_hp': 40, 'max_mp': 26, 'spell': "SLEEP"},
-            8: {'exp': 350, 'total_exp': 800, 'strength': 22, 'agility': 20, 'max_hp': 46, 'max_mp': 29, 'spell': None},
-            9: {'exp': 500, 'total_exp': 1300, 'strength': 30, 'agility': 22, 'max_hp': 50, 'max_mp': 36, 'spell': "RADIANT"},
-            10: {'exp': 700, 'total_exp': 2000, 'strength': 35, 'agility': 31, 'max_hp': 54, 'max_mp': 40, 'spell': "STOPSPELL"},
-            11: {'exp': 900, 'total_exp': 2900, 'strength': 40, 'agility': 35, 'max_hp': 62, 'max_mp': 50, 'spell': None},
-            12: {'exp': 1100, 'total_exp': 4000, 'strength': 48, 'agility': 40, 'max_hp': 63, 'max_mp': 58, 'spell': "OUTSIDE"},
-            13: {'exp': 1500, 'total_exp': 5500, 'strength': 52, 'agility': 48, 'max_hp': 70, 'max_mp': 64, 'spell': "RETURN"},
-            14: {'exp': 2000, 'total_exp': 7500, 'strength': 60, 'agility': 55, 'max_hp': 78, 'max_mp': 70, 'spell': None},
-            15: {'exp': 2500, 'total_exp': 10000, 'strength': 68, 'agility': 64, 'max_hp': 86, 'max_mp': 72, 'spell': "REPEL"},
-            16: {'exp': 3000, 'total_exp': 13000, 'strength': 72, 'agility': 70, 'max_hp': 92, 'max_mp': 95, 'spell': None},
-            17: {'exp': 3000, 'total_exp': 16000, 'strength': 72, 'agility': 78, 'max_hp': 100, 'max_mp': 100, 'spell': "HEALMORE"},
-            18: {'exp': 3000, 'total_exp': 19000, 'strength': 85, 'agility': 84, 'max_hp': 115, 'max_mp': 108, 'spell': None},
-            19: {'exp': 3000, 'total_exp': 22000, 'strength': 87, 'agility': 86, 'max_hp': 130, 'max_mp': 115, 'spell': "HURTMORE"},
-            20: {'exp': 4000, 'total_exp': 26000, 'strength': 92, 'agility': 88, 'max_hp': 138, 'max_mp': 128, 'spell': None},
-            21: {'exp': 4000, 'total_exp': 30000, 'strength': 95, 'agility': 90, 'max_hp': 149, 'max_mp': 135, 'spell': None},
-            22: {'exp': 4000, 'total_exp': 34000, 'strength': 97, 'agility': 90, 'max_hp': 158, 'max_mp': 146, 'spell': None},
-            23: {'exp': 4000, 'total_exp': 38000, 'strength': 99, 'agility': 94, 'max_hp': 165, 'max_mp': 153, 'spell': None},
-            24: {'exp': 4000, 'total_exp': 42000, 'strength': 103, 'agility': 98, 'max_hp': 170, 'max_mp': 161, 'spell': None},
-            25: {'exp': 4000, 'total_exp': 46000, 'strength': 113, 'agility': 100, 'max_hp': 174, 'max_mp': 161, 'spell': None},
-            26: {'exp': 4000, 'total_exp': 50000, 'strength': 117, 'agility': 105, 'max_hp': 180, 'max_mp': 168, 'spell': None},
-            27: {'exp': 4000, 'total_exp': 54000, 'strength': 125, 'agility': 107, 'max_hp': 189, 'max_mp': 175, 'spell': None},
-            28: {'exp': 4000, 'total_exp': 58000, 'strength': 130, 'agility': 115, 'max_hp': 195, 'max_mp': 180, 'spell': None},
-            29: {'exp': 4000, 'total_exp': 62000, 'strength': 135, 'agility': 120, 'max_hp': 200, 'max_mp': 190, 'spell': None},
-            30: {'exp': 3535, 'total_exp': 65535, 'strength': 140, 'agility': 130, 'max_hp': 210, 'max_mp': 200, 'spell': None},
-        }
-        set_exp()
-        for level_dict in player_stats.levels_list.values():
-            sorted(level_dict)
-        self.assertEqual(test_levels_list, player_stats.levels_list)
+    def test_all_sixteen_groups_at_level_30(self):
+        """One name for each value of the low four bits of the sum."""
+        for name, expected in (
+                ('Steve', (126, 117, 210, 200)),  # $80
+                ('Eva', (140, 117, 210, 180)),  # $B1
+                ('Im', (126, 130, 189, 200)),  # $02
+                ('Va', (140, 130, 189, 180)),  # $03
+                ('Eddie', (127, 118, 210, 200)),  # $54
+                ('Ed', (140, 118, 210, 181)),  # $F5
+                ('Walter', (127, 130, 190, 200)),  # $76
+                ('Uno', (140, 130, 190, 181)),  # $C7
+                ('gooo', (128, 119, 210, 200)),  # $58
+                ('Sejin', (140, 119, 210, 182)),  # $69
+                ('Stephen', (128, 130, 191, 200)),  # $7A
+                ('James', (140, 130, 191, 182)),  # $5B
+                ('Gao', (129, 120, 210, 200)),  # $AC
+                ('Gina', (140, 120, 210, 183)),  # $5D
+                ('Wall', (129, 130, 192, 200)),  # $6E
+                ('Edward', (140, 130, 192, 183)),  # $5F
+        ):
+            self.assertEqual(expected, as_tuple(get_stats_for_level(name, 30)), name)
+
+    def test_level_up_stat_changes(self):
+        """ChkStrengthUp-ChkMPUp report the new stats minus the old ones."""
+        def gains(name, old_level, new_level):
+            old, new = as_tuple(get_stats_for_level(name, old_level)), as_tuple(get_stats_for_level(name, new_level))
+            return tuple(after - before for before, after in zip(old, new))
+        self.assertEqual((1, 0, 7, 0), gains('Steve', 1, 2))  # strength 4 * 9 // 10 = 3 -> 5 * 9 // 10 = 4
+        self.assertEqual((2, 2, 2, 7), gains('Gina', 2, 3))  # MP 0 -> 5 * 9 // 10 + 3 = 7
+        self.assertEqual((0, 2, 6, 11), gains('Deez', 3, 4))  # HP 24 * 9 // 10 + 1 = 22 -> 31 * 9 // 10 + 1 = 28
+        self.assertEqual((9, 2, 7, 7), gains('Erdrick', 4, 6))  # two levels at once
+
+    def test_base_table_is_never_changed(self):
+        before = {level: dict(row) for level, row in levels_list.items()}
+        for name in EXPECTED:
+            for level in range(1, 31):
+                get_stats_for_level(name, level)
+        self.assertEqual(before, player_stats.levels_list)
