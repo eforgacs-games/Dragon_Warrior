@@ -627,11 +627,20 @@ class Game:
 
     def set_window_color(self, color: tuple[int, int, int]) -> None:
         """Set the color of every window (their borders, text and cursors; NES background palette 0's color 1) and
-        redraw the windows that are kept drawn (the COMMAND window), so nothing lags behind."""
+        redraw the windows that are kept drawn (the COMMAND window), so nothing lags behind.
+
+        The map's palette 0 tiles (towns, castles, bridges and water) use that same color, so they change with the
+        windows. When they do, the whole map is redrawn, as when the hero steps under a roof; a map that hasn't been
+        drawn yet (loop_count 1) is drawn in full on its first frame anyway."""
         self.color = color
         cmd_menu = getattr(self, 'cmd_menu', None)
         if cmd_menu is not None:
             cmd_menu.refresh_window_color()
+        current_map = getattr(self, 'current_map', None)
+        if current_map is not None and current_map.set_low_hp_palette(color != WHITE):
+            drawer = getattr(self, 'drawer', None)
+            if drawer is not None and drawer.background is not None and self.loop_count != 1:
+                drawer.draw_all_tiles_in_current_map(current_map, drawer.background)
 
     def load_window_palette(self) -> None:
         """NES PrepBGPalLoad (Bank03): whenever the background palettes are loaded, AddPalByte's ChkLowHPPal makes the
