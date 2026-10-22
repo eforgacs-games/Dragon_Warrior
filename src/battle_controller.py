@@ -8,9 +8,10 @@ reach shared resources (player, cmd_menu, screen, sound, drawer, …).
 """
 
 import random
+from collections.abc import Callable
 from enum import Enum
 
-from pygame import KEYDOWN, display, event, mixer, time
+from pygame import KEYDOWN, display, event, key, mixer, time
 
 from src.battle import Battle, calculate_enemy_attack_damage
 from src.common import BLACK, RED, accept_keys, reject_keys
@@ -31,6 +32,7 @@ from src.visual_effects import player_hit_shake
 from src.waiting import handle_speed_key, scaled_ms
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w
+from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, SelectionButtons, first_button
 
 
 # CmdCmbtDat: the cursor's tile in the battle command window: column 1 (cursor home X) for FIGHT and RUN, 8 tiles
@@ -47,6 +49,40 @@ class BattleOutcome(Enum):
     REPELLED = 'repelled'  # REPEL / Fairy Water kept the enemy away; no fight happened
 
 
+# CmdCmbtDat: the commands, by row and column (WndCalcSelResult: CC_FIGHT, CC_SPELL, CC_RUN, CC_ITEM)
+BATTLE_MENU_OPTIONS = (('Fight', 'Spell'), ('Run', 'Item'))
+
+# The joypad on the keyboard, for the command window's SelectionButtons
+COMMAND_WINDOW_BUTTON_KEYS = (
+    (IN_A, accept_keys),
+    (IN_B, reject_keys),
+    (IN_UP, (K_UP, K_w)),
+    (IN_DOWN, (K_DOWN, K_s)),
+    (IN_LEFT, (K_LEFT, K_a)),
+    (IN_RIGHT, (K_RIGHT, K_d)),
+)
+
+
+def joypad_buttons(is_down: Callable[[int], object]) -> int:
+    """The NES buttons (JoypadBtns bits) whose keys ``is_down(key)`` says are down."""
+    buttons = 0
+    for button, keys in COMMAND_WINDOW_BUTTON_KEYS:
+        if any(is_down(button_key) for button_key in keys):
+            buttons |= button
+    return buttons
+
+
+def key_joypad_buttons(pressed_key: int) -> int:
+    """The NES button(s) a key stands for (0 for none)."""
+    return joypad_buttons(lambda button_key: button_key == pressed_key)
+
+
+def held_joypad_buttons() -> int:
+    """The NES buttons held right now (GetJoypadStatus), from the keyboard state."""
+    pressed = key.get_pressed()
+    return joypad_buttons(lambda button_key: pressed[button_key])
+
+
 class BattleController:
     def __init__(self, game):
         self.game = game
@@ -61,8 +97,11 @@ class BattleController:
         # Whether the current fight ended with the player's RUN succeeding (NES RunSuccessful), as opposed to the
         # enemy running away (CheckEnRun), which goes straight to ExitFight.
         self.player_ran_away = False
-        # The battle command window's NES cursor (src/cursor.py)
+        # The battle command window's NES cursor and joypad reading (src/cursor.py)
         self.command_cursor = BlinkingCursor()
+        self.command_buttons = SelectionButtons(self.command_cursor)
+        # Whether the command window is selecting (WndDoSelect). It is opened again at the start of each player turn.
+        self.command_window_open = False
 
     # ------------------------------------------------------------------ #
     #  Properties that forward to game for brevity inside this class       #
@@ -143,8 +182,6 @@ class BattleController:
         """Start a fixed, story-driven fight right now, the way the NES jumps straight to InitFight with a set
         enemy number (the Dragonlord, and the Golem, Green Dragon and Axe Knight guardians). Unlike a random
         encounter it can't be repelled. Running away and dying work exactly as in a random fight."""
-        self.battle_menu_row = 0
-        self.battle_menu_column = 0
         self.launch_battle = True
         outcome = self.fight_enemy(enemy_name)
         if outcome != BattleOutcome.DEFEAT:
@@ -180,7 +217,7 @@ class BattleController:
                                              self.cmd_menu, self.graphics, self.directories,
                                              self.game.color, self.player)
         run_away = False
-        self.command_cursor.restart()  # WndInitSelect: the command window opens with the cursor on
+        self.command_window_open = False  # the first player turn opens the command window (StartPlayerTurn)
         while current_battle.enemy.hp > 0 and not run_away and not self.player.is_dead:
             run_away = self.handle_battle_prompts(run_away, current_battle)
         if current_battle.enemy.hp <= 0:
@@ -242,33 +279,28 @@ class BattleController:
         display.update((x * tile_size, y * tile_size, width * tile_size, height * tile_size))
 
     def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
-        battle_menu_options = (('Fight', 'Spell'), ('Run', 'Item'))
+        if not self.command_window_open:
+            self.open_command_window()
         self.draw_command_window(self.command_cursor.visible())
-        current_selection = battle_menu_options[self.battle_menu_row][self.battle_menu_column]
         selected_executed_option = None
 
         if self.auto_battle and not self.player.is_asleep:
             selected_executed_option = self.last_battle_action
             time.wait(scaled_ms(AUTO_BATTLE_DELAY_MS))
         else:
+            tapped = 0  # keys pressed since the last call, which may have been let go already
             for current_event in event.get():
                 quit_if_requested(current_event)
                 if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
                     continue
                 if current_event.type == KEYDOWN:
                     if not self.player.is_asleep:
-                        if current_event.key in accept_keys:
-                            self.sound.play_sound(self.directories.menu_button_sfx)
-                            selected_executed_option = current_selection
-                        elif current_event.key in reject_keys:
-                            break
-                        elif current_event.key in (K_DOWN, K_s, K_UP, K_w):
-                            self.battle_menu_row = 1 - self.battle_menu_row
-                        elif current_event.key in (K_LEFT, K_a, K_RIGHT, K_d):
-                            self.battle_menu_column = 1 - self.battle_menu_column
-                        self.command_cursor.restart()  # WndUpdateCrsrPos
+                        tapped |= key_joypad_buttons(current_event.key)
                     else:
                         selected_executed_option = 'Sleep'
+            if not self.player.is_asleep:
+                presses = self.command_buttons.read(held_joypad_buttons(), tapped)  # WndGetButtons
+                selected_executed_option = self.process_command_input(presses)
 
         if selected_executed_option:
             if selected_executed_option != 'Sleep':
@@ -305,8 +337,8 @@ class BattleController:
             current_battle.last_turn = current_battle.turn
             current_battle.turn += 1
             selected_executed_option = None
-            # The command window selects again next turn (WndInitSelect)
-            self.command_cursor.restart()
+            # The next player turn opens the command window again, from FIGHT (StartPlayerTurn, WndInitSelect)
+            self.command_window_open = False
             if current_battle.enemy.hp <= 0:
                 return False
             elif current_battle.last_turn != current_battle.turn:
@@ -330,6 +362,56 @@ class BattleController:
                                                                   hide_arrow=True, skip_text=True)
                 current_battle.no_op = False
         return run_away
+
+    def open_command_window(self) -> None:
+        """StartPlayerTurn and ShowCmbtCmd: Dowindow WND_CMD_CMB, whose WndDoSelect starts selecting afresh every
+        turn. WndInitSelect puts the cursor back on FIGHT (WndCol = WndRow = 0), whatever was chosen last turn, and
+        the joypad is read from scratch (SelectionButtons.open): the NES has no event queue, so keys pressed before
+        the window was up (during the walk into the fight, the enemy's fade-in, "draws near", the enemy's turn)
+        are dropped, and keys still held are ignored until they are let go or 11 frames have gone by."""
+        self.battle_menu_row = 0
+        self.battle_menu_column = 0
+        for queued_event in event.get(KEYDOWN):
+            handle_speed_key(queued_event)  # the speed keys (1 to 4) still count; every other key is dropped
+        self.command_buttons.open(held_joypad_buttons())
+        self.command_window_open = True
+
+    def process_command_input(self, presses: int) -> str | None:
+        """WndProcessInput for the command window (CmdCmbtDat: 2 columns of 2 rows): only the first of A, B, up,
+        down, left and right that is pressed is handled. Returns the command chosen with A, if any.
+
+        The cursor stops at the edges, it doesn't wrap: WndUpPressed does nothing on the top row, WndDownPressed on
+        the bottom row (WndHeight - 3) / 2, WndDoLeftPressed in column 0 and WndRightPressed in the last column
+        (WndSelNumCols - 1). Only a real move calls WndUpdateCrsrPos, which restarts the cursor's blink."""
+        button = first_button(presses)
+        if not button:
+            return None
+        self.command_buttons.handled(button)
+        if button == IN_A:  # WndAPressed: the command under the cursor
+            self.sound.play_sound(self.directories.menu_button_sfx)
+            return BATTLE_MENU_OPTIONS[self.battle_menu_row][self.battle_menu_column]
+        if button == IN_B:
+            # WndBPressed returns WND_ABORT, which none of StartPlayerTurn's checks matches, so ChkPlyrRun ends in
+            # JMP ShowCmbtCmd: "Command?" again and a new selection, from FIGHT.
+            self.command_cursor.hold()
+            self.draw_command_window(True)
+            self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"), add_quotes=False, hide_arrow=True,
+                                                  disable_sound=True)
+            self.command_window_open = False
+            return None
+        row, column = self.battle_menu_row, self.battle_menu_column
+        if button == IN_UP:
+            row = max(0, row - 1)
+        elif button == IN_DOWN:
+            row = min(len(BATTLE_MENU_OPTIONS) - 1, row + 1)
+        elif button == IN_LEFT:
+            column = max(0, column - 1)
+        elif button == IN_RIGHT:
+            column = min(len(BATTLE_MENU_OPTIONS[0]) - 1, column + 1)
+        if (row, column) != (self.battle_menu_row, self.battle_menu_column):
+            self.battle_menu_row, self.battle_menu_column = row, column
+            self.command_buttons.moved()  # WndUpdateCrsrPos
+        return None
 
     def enemy_run_away(self, current_battle, enemy):
         self.sound.play_sound(self.directories.stairs_down_sfx)

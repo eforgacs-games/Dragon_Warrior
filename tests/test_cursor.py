@@ -8,7 +8,8 @@ import pygame  # noqa: E402
 
 from src.color import BLACK, RED, WHITE  # noqa: E402
 from src.config.test_config import test_config  # noqa: E402
-from src.cursor import CURSOR_TILE, BlinkingCursor, cursor_visible_on_frame, draw_cursor_tile  # noqa: E402
+from src.cursor import (CURSOR_TILE, IN_A, IN_DOWN, IN_START, IN_UP, BlinkingCursor,  # noqa: E402
+                        SelectionButtons, cursor_visible_on_frame, draw_cursor_tile, first_button)
 from src.directories import Directories  # noqa: E402
 from src.waiting import NES_FPS  # noqa: E402
 
@@ -162,3 +163,60 @@ class TestCommandWindowCursor(TestCase):
         self.cmd_menu.choose_command(lambda: seen.append(self.cmd_menu.cursor.visible()))
         self.assertEqual([True], seen)
         self.assertFalse(self.cmd_menu.cursor.held)
+
+
+class TestSelectionButtons(TestCase):
+    """Bank01 WndGetButtons: the joypad read once a frame, gated by WndBtnRetrig."""
+
+    def setUp(self):
+        self.cursor = BlinkingCursor(ticks=0)
+        self.buttons = SelectionButtons(self.cursor)
+        self.buttons.open(ticks=0)
+        self.frame = 0
+
+    def frames(self, count: int, held: int = 0) -> list[int]:
+        """What the window reads on each of the next count frames."""
+        presses = []
+        for _ in range(count):
+            self.frame += 1
+            presses.append(self.buttons.read(held, ticks=ticks_at_frame(self.frame)))
+        return presses
+
+    def test_the_first_frame_after_opening_reads_nothing(self):
+        # WndDoSelect sets JoypadBtns to IN_RIGHT, so the retrigger can't be cleared on the first frame
+        self.assertEqual([0, IN_DOWN], self.frames(1) + self.frames(1, IN_DOWN))
+
+    def test_a_button_held_as_the_window_opens_is_read_when_frame_counter_reaches_16(self):
+        self.buttons.open(IN_DOWN, ticks=0)
+        self.assertEqual([0] * 10 + [IN_DOWN], self.frames(11, IN_DOWN))
+
+    def test_a_held_button_is_read_again_11_frames_after_a_move(self):
+        self.frames(1)
+        self.assertEqual([IN_DOWN], self.frames(1, IN_DOWN))
+        self.buttons.handled(IN_DOWN)
+        self.buttons.moved(ticks=ticks_at_frame(self.frame))  # FrameCounter = 5, then one frame not read
+        self.assertEqual([0] * 10 + [IN_DOWN], self.frames(11, IN_DOWN))
+
+    def test_a_held_button_that_did_nothing_is_read_every_16_frames(self):
+        self.frames(1)
+        self.frames(1, IN_UP)  # FrameCounter 7
+        self.buttons.handled(IN_UP)  # on the top row: no move, so FrameCounter runs on
+        self.assertEqual([0] * 8 + [IN_UP], self.frames(9, IN_UP))  # FrameCounter 16
+        self.buttons.handled(IN_UP)
+        self.assertEqual([0] * 15 + [IN_UP], self.frames(16, IN_UP))  # FrameCounter 32
+
+    def test_letting_go_clears_the_retrigger(self):
+        self.frames(1)
+        self.frames(1, IN_DOWN)
+        self.buttons.handled(IN_DOWN)
+        self.assertEqual([0, IN_A], self.frames(1) + self.frames(1, IN_A))
+
+    def test_a_tap_between_frames_is_read_on_the_next_frame(self):
+        self.frames(1)
+        self.assertEqual(0, self.buttons.read(0, taps=IN_DOWN, ticks=ticks_at_frame(self.frame)))  # same frame
+        self.assertEqual([IN_DOWN], self.frames(1))
+
+    def test_one_button_at_a_time_in_wnd_process_input_order(self):
+        self.assertEqual(IN_A, first_button(IN_A | IN_UP | IN_DOWN))
+        self.assertEqual(IN_UP, first_button(IN_UP | IN_DOWN))
+        self.assertEqual(0, first_button(IN_START))  # SELECT and START are skipped
