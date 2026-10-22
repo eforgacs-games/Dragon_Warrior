@@ -1,5 +1,3 @@
-from pygame import time
-
 from src.calculation import Calculation
 from src.directories import Directories
 from src.sound import Sound
@@ -21,10 +19,8 @@ class Movement:
 
     def bump(self, character):
         if character.identifier == 'HERO':
-            if not character.last_bump_time:
-                character.last_bump_time = time.get_ticks()
-            if time.get_ticks() - character.last_bump_time >= self.calculation.convert_to_milliseconds(15):
-                character.last_bump_time = time.get_ticks()
-                if character.current_tile not in ('BRICK_STAIR_UP', 'BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
-                    self.sound.play_sound(self.directories.bump_sfx)
+            # NES CheckCollision (DirectionBlocked) plays SFX_WALL_BUMP on every blocked step. Game.move_player only
+            # tries a step every 16 frames while the hero is held against something, so that's how often it plays.
+            if character.current_tile not in ('BRICK_STAIR_UP', 'BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
+                self.sound.play_sound(self.directories.bump_sfx)
         character.bumped = True

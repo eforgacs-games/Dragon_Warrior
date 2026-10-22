@@ -26,6 +26,8 @@ class Drawer:
         self.scale = self.game_state.config["SCALE"]
         self.display_hovering_stats = False
         self.background = None
+        # Where the hero was drawn on the last frame, so the frame a step ends on also redraws it (see draw_all)
+        self.last_player_rect: Rect | None = None
         self.not_moving_time_start = None
         self.hovering_stats_displayed = False
         self.graphics = Graphics(game_state.config)
@@ -269,6 +271,13 @@ class Drawer:
             roaming_character in
             current_map.roaming_characters]
         player_check_rect = get_surrounding_rect(player, tile_size) if player.is_moving else player.rect
+        last_player_rect = self.last_player_rect
+        if last_player_rect is not None and last_player_rect != player.rect and \
+                abs(last_player_rect.x - player.rect.x) <= tile_size and abs(last_player_rect.y - player.rect.y) <= tile_size:
+            # The hero arrives on a step's last moving frame (#237), so he's no longer moving on the frame that moved
+            # him off where he was drawn last: redraw there too, or the edge of his last frame stays behind.
+            player_check_rect = player_check_rect.union(last_player_rect)
+        self.last_player_rect = player.rect.copy()
         roaming_last_rects = [rc.last_rect for rc in current_map.roaming_characters if rc.last_rect is not None]
         all_roaming_rects = roaming_character_rects + roaming_last_rects
         # Every character is drawn onto the background each frame, on screen or not, so the tiles under every character
