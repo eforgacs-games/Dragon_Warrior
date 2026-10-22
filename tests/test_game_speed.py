@@ -13,6 +13,7 @@ from pygame.event import Event
 from src import waiting
 from src.battle import Battle
 from src.battle_controller import BattleController
+from src.color import WHITE
 from src.config.test_config import test_config
 from src.game import Game
 from src.menu import CommandMenu
@@ -136,6 +137,7 @@ class TestSpeedKeys(GameSpeedTestCase):
     def test_keys_work_during_a_battle(self, mock_display):
         game = MagicMock()
         game.auto_battle = False
+        game.color = WHITE
         game.game_state.config = {"TILE_SIZE": 32}
         game.player.is_asleep = False
         controller = BattleController(game)

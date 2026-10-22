@@ -63,6 +63,45 @@ ERASE_LOG_WINDOW = Window(3, 7, 10, 6)
 YES_NO_2_WINDOW = Window(10, 3, 4, 3)
 
 
+class WindowText(NamedTuple):
+    """Text in a window, at a tile position counted from the window's top left corner tile (column 0 is the left
+    border, row 0 the top border; text in row 0 is a title in the top border)."""
+    text: str
+    column: int
+    row: int
+
+
+class WindowLayout(NamedTuple):
+    """What a window's data draws (src/window_renderer.py draws it): its position and size, its title in the top
+    border, its text, and the cursor's tile for each selectable entry, in selection order. Text and cursor positions
+    are tiles counted from the window's top left corner tile."""
+    window: Window
+    title: WindowText | None = None
+    texts: tuple[WindowText, ...] = ()
+    cursor_tiles: tuple[tuple[int, int], ...] = ()
+
+
+def selection_cursor_tiles(home_column: int, home_row: int, columns: int, column_spacing: int, rows: int,
+                           row_spacing: int = 2) -> tuple[tuple[int, int], ...]:
+    """The cursor's tile for each entry of a selection window, row by row (the order the NES numbers the entries):
+    the window data's cursor home (its first entry) and its columns' spacing. Rows are one block (2 tiles) apart."""
+    return tuple((home_column + column * column_spacing, home_row + row * row_spacing)
+                 for row in range(rows) for column in range(columns))
+
+
+# CmdCmbtDat ($B095): a selection window (options $80) with 2 columns 8 tiles apart ($08) and the cursor home at
+# Y = 2 tiles, X = 1 tile ($21). The top border has 3 border tiles ($8B), "COMMAND", and border to the end ($88);
+# then, on the cursor home's row, 1 blank tile ($81), FIGHT, 3 blank tiles ($83), SPELL, and on the next one 1 blank
+# tile ($81), RUN, 5 blank tiles ($85), ITEM.
+COMBAT_COMMAND_LAYOUT = WindowLayout(
+    window=COMBAT_COMMAND_WINDOW,
+    title=WindowText("COMMAND", COMMAND_TITLE_TILE_COLUMN, 0),
+    texts=(WindowText("FIGHT", 2, 2), WindowText("SPELL", 10, 2), WindowText("RUN", 2, 4), WindowText("ITEM", 10, 4)),
+    # FIGHT, SPELL, RUN, ITEM
+    cursor_tiles=selection_cursor_tiles(home_column=1, home_row=2, columns=2, column_spacing=8, rows=2),
+)
+
+
 def variable_height_window(window: Window, number_of_entries: int) -> Window:
     """A variable height window (WndVariableHeight, WndBuildVariable, WndBuildEnd) sized to its entries: one block
     per entry plus one block for the top and bottom borders."""

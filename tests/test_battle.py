@@ -195,8 +195,11 @@ class TestBattleMethods(unittest.TestCase):
         order = []
         drawer.fade_in_enemy.side_effect = lambda *a: order.append('fade')
         cmd_menu.show_line_in_battle_dialog_box.side_effect = lambda *a: order.append('text')
-        with patch.object(self.battle, 'transition_battle_background_image_effect'):
+        with patch.object(self.battle, 'transition_battle_background_image_effect'), \
+                patch('src.battle.draw_window') as draw_window:
             self.battle.display_battle_window(Mock(), drawer, cmd_menu, Mock(), Mock(), (255, 255, 255), Mock())
+        # The command window opens with the cursor on FIGHT
+        self.assertEqual(0, draw_window.call_args.kwargs['cursor_index'])
         drawer.fade_in_enemy.assert_called_once()
         self.assertEqual(drawer.fade_in_enemy.call_args.args[1], 'Slime')
         self.assertEqual(order, ['fade', 'text'])
@@ -260,7 +263,8 @@ class TestBattleSpiral(unittest.TestCase):
     def test_dragonlord_final_form_has_no_spiral_and_no_hidden_hero(self):
         # NES LoadCombatBckgrnd returns at once for EN_DRAGONLORD2, before the DoSprites call; DoSprites also exits
         battle = Battle(dict(test_config), 'Dragonlord 2', Mock())
-        with patch.object(battle, 'hide_hero') as hide_hero, patch('src.battle.wait_frames') as wait_frames:
+        with patch.object(battle, 'hide_hero') as hide_hero, patch('src.battle.wait_frames') as wait_frames, \
+                patch('src.battle.draw_window'):
             battle.display_battle_window(Mock(), Mock(), Mock(), Mock(), Mock(), (255, 255, 255), Mock())
         hide_hero.assert_not_called()
         wait_frames.assert_not_called()
