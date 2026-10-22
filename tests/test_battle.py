@@ -169,6 +169,18 @@ class TestBattleMethods(unittest.TestCase):
 
         self.assertTrue(result)
 
+    def test_display_battle_window_fades_the_enemy_in(self):
+        # NES LoadEnemyGFX fades the enemy in before "draws near" is shown
+        drawer, cmd_menu = Mock(), Mock()
+        order = []
+        drawer.fade_in_enemy.side_effect = lambda *a: order.append('fade')
+        cmd_menu.show_line_in_battle_dialog_box.side_effect = lambda *a: order.append('text')
+        with patch.object(self.battle, 'transition_battle_background_image_effect'):
+            self.battle.display_battle_window(Mock(), drawer, cmd_menu, Mock(), Mock(), (255, 255, 255), Mock())
+        drawer.fade_in_enemy.assert_called_once()
+        self.assertEqual(drawer.fade_in_enemy.call_args.args[1], 'Slime')
+        self.assertEqual(order, ['fade', 'text'])
+
 
 if __name__ == '__main__':
     unittest.main()

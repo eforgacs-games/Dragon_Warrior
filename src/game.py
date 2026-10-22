@@ -692,6 +692,7 @@ class Game:
         self.load_window_palette()  # NES PlayerHit: LoadRegBGPal, after the screen shake (red if HP is now low)
         if self.player.current_hp < 0:
             self.player.current_hp = 0
+        self.battle_ctrl.player_hit_effect()  # NES PlayerHit: screen shake, red flash on a deathblow
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
         # create_window(6, 1, 8, 3, BATTLE_MENU_FIGHT_PATH, self.screen, self.color)
         self.cmd_menu.show_line_in_dialog_box(self._("Thy Hit Points decreased by {}.\n").format(attack_damage),
