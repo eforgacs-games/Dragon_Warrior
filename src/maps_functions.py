@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Dict, FrozenSet, Iterable, List, Tuple
 
 from pygame import surface
 from pygame.transform import scale
@@ -57,3 +57,13 @@ def parse_animated_sprite_sheet(sheet: surface.Surface, config: dict) -> Tuple[l
 def get_center_point(x, y, tile_size):
     offset = tile_size // 2
     return (x * tile_size) + offset, (y * tile_size) + offset
+
+
+def covered_cells(nes_rows: Dict[int, Iterable[int]], row_offset: int, column_offset: int) -> FrozenSet[Tuple[int, int]]:
+    """
+    Converts a town's NES covered-area data into the (row, column) cells of this project's layout.
+    :param nes_rows: NES map Y -> the NES map X positions whose covered-area nibble has bit 3 set.
+    :param row_offset: Layout row of NES map Y 0.
+    :param column_offset: Layout column of NES map X 0.
+    """
+    return frozenset((y + row_offset, x + column_offset) for y, xs in nes_rows.items() for x in xs)
