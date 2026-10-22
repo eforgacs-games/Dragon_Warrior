@@ -322,11 +322,16 @@ class TestGuardianFights(TestCase):
     def test_the_fairy_flute_puts_the_golem_to_sleep_in_a_real_fight(self):
         """The whole battle menu, driven by key presses: ITEM, the Fairy Flute, then RUN, which a sleeping enemy
         can't block (NES ChkUseFlute, EnStillAsleep, PlyrRun). Running still moves the hero back off the tile, so
-        the Golem has to be beaten to reach Cantlin."""
+        the Golem has to be beaten to reach Cantlin.
+
+        Each read of the event queue is one NES frame (the battle command window reads the joypad once a frame,
+        Bank01 WndGetButtons), and each key is tapped after a few frames with nothing pressed."""
         self.player.inventory = ['Fairy Flute']
-        presses = [[K_DOWN], [K_RIGHT], [K_RETURN],  # ITEM
-                   [K_RETURN],  # the Fairy Flute, the only item
-                   [K_LEFT], [K_RETURN]]  # RUN
+        presses = []
+        for pressed_key in (K_DOWN, K_RIGHT, K_RETURN,  # ITEM
+                            K_RETURN,  # the Fairy Flute, the only item
+                            K_DOWN, K_RETURN):  # RUN: the next turn's window starts on FIGHT again
+            presses += [[], [], [], [pressed_key]]
         calls = {'count': 0}
         golem_asleep = []
 
@@ -344,6 +349,7 @@ class TestGuardianFights(TestCase):
         self.go_to('Alefgard', (row, column), Direction.DOWN.value)
         hp = self.player.current_hp
         with patch.object(pygame.event, 'get', side_effect=get_events), \
+                patch('src.cursor.get_ticks', side_effect=lambda: -(-calls['count'] * 1000 // 60)), \
                 patch.object(self.game.battle_ctrl, 'fight_enemy',
                              wraps=self.game.battle_ctrl.fight_enemy) as fight_enemy:
             self.step(Direction.DOWN.value)
