@@ -400,7 +400,8 @@ class TestStarwyvern(unittest.TestCase):
         self.assertIn("FIREBREATH", self.enemy.spells)
 
     def test_pattern_has_firebreath(self):
-        self.assertIn("FIREBREATH", self.enemy.pattern)
+        pattern_spells = [p[1] for p in self.enemy.pattern if isinstance(p, tuple)]
+        self.assertIn("FIREBREATH", pattern_spells)
 
 
 class TestKnight(unittest.TestCase):
