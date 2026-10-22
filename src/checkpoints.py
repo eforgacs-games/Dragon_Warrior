@@ -5,6 +5,8 @@ Each checkpoint is an ordinary save file (the format CommandMenu.save writes) an
 follows the real load path. Two things differ from a save made in the game:
 - The position isn't always beside King Lorik. load_game already starts wherever the save says (CurrentMap, PlayerRow
   and PlayerColumn), unlike the NES, which always starts in the throne room.
+- Every checkpoint names the hero CHECKPOINT_HERO_NAME, and Game.load_checkpoint swaps in LOCALIZED_HERO_NAMES for
+  the game's language. Real saves keep the name the player typed. See CHECKPOINT_HERO_NAME for why these names.
 - The optional "Facing" key ("UP", "DOWN", "LEFT" or "RIGHT") turns the hero to face an NPC. Saves don't keep the
   direction, so Game.load_checkpoint passes it to load_game.
 
@@ -32,6 +34,14 @@ CHECKPOINT_NAMES = (
 
 FACING_KEY = 'Facing'
 
+# The hero's name in every checkpoint, and what it becomes in each other language (config LANGUAGE). Not Erdrick:
+# that's the hero's ancestor (로토 in Korean). The names are picked for the strongest stats, so playtests go quickly:
+# NES LoadStats sums the first four name tiles, and a sum ending in $D cuts agility and MP but keeps full strength and
+# HP, with the largest bonus (+3). "Arthur" sums to $6D. 검객 (swordsman) sums to $5D with this game's Korean mapping
+# (low byte of each code point); 용사 would sum to $15, which cuts agility and MP for only +1.
+CHECKPOINT_HERO_NAME = 'Arthur'
+LOCALIZED_HERO_NAMES = {'Korean': '검객'}
+
 # Where saves made in a game started from a checkpoint go, so the real save slots stay as they are
 CHECKPOINT_SAVE_DIR = join(tempfile.gettempdir(), 'dragon_warrior_checkpoint_saves')
 
@@ -45,3 +55,10 @@ def checkpoint_path(name: str) -> str:
 def read_checkpoint(name: str) -> dict:
     with open(checkpoint_path(name)) as checkpoint_file:
         return json.load(checkpoint_file)
+
+
+def checkpoint_hero_name(name: str, language: str) -> str:
+    """The checkpoint's hero name in the game's language. Only the generic CHECKPOINT_HERO_NAME is translated."""
+    if name != CHECKPOINT_HERO_NAME:
+        return name
+    return LOCALIZED_HERO_NAMES.get(language, name)
