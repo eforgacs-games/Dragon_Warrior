@@ -250,6 +250,10 @@ class DragonWarriorMap:
     def set_characters_initial_directions(self) -> None:
         raise NotImplementedError("Method not implemented")
 
+    def apply_dragonlord_defeated(self) -> None:
+        """Change the map for after the Dragonlord's defeat (NES F_DGNLRD_DEAD), before it's loaded. Most maps don't
+        change."""
+
     def set_character_initial_direction(self, character_identifier, direction) -> None:
         if self.characters.get(character_identifier):
             self.characters[character_identifier]['character'].direction_value = direction.value
@@ -391,6 +395,7 @@ class TantegelCourtyard(DragonWarriorMap):
             'WOMAN': 'GRASS',
             'WOMAN_2': 'GRASS'
         }
+        self.dragonlord_defeated = False
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -398,7 +403,31 @@ class TantegelCourtyard(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
+    def apply_dragonlord_defeated(self):
+        """NES GetNPCDataPointer: after the Dragonlord's defeat, the ground floor loads TaDLMobTbl and TaDLStatTbl.
+        King Lorik waits in front of the throne room stairs between two rows of guards (with trumpets in the NES's
+        last frame; there's no sprite for those, so they're plain guards). NES (x, y) is (y + 7, x + 7) here."""
+        self.dragonlord_defeated = True
+        self.npc_coordinates = {
+            # TaDLStatTbl
+            (14, 18): 'KING_LORIK',
+            (16, 16): 'GUARD', (18, 16): 'GUARD', (20, 16): 'GUARD',  # trumpet guards, GUARD to GUARD_3
+            (16, 19): 'GUARD', (18, 19): 'GUARD', (20, 19): 'GUARD',  # trumpet guards, GUARD_4 to GUARD_6
+            (34, 16): 'GUARD', (34, 19): 'GUARD',  # gate guards, GUARD_7 and GUARD_8
+            # TaDLMobTbl
+            (9, 26): 'GUARD', (25, 25): 'GUARD', (19, 9): 'GUARD',  # GUARD_9 to GUARD_11
+            (30, 21): 'MAN',
+            (18, 32): 'SOLDIER', (28, 31): 'SOLDIER',
+            (32, 13): 'MERCHANT',
+        }
+        self.roaming_character_list = ['GUARD_9', 'GUARD_10', 'GUARD_11', 'MAN', 'SOLDIER', 'SOLDIER_2', 'MERCHANT']
+        self.custom_underlying_tiles = {}
+
     def set_characters_initial_directions(self):
+        if self.dragonlord_defeated:
+            self.set_character_initial_direction('GUARD_7', Direction.RIGHT)
+            self.set_character_initial_direction('GUARD_8', Direction.LEFT)
+            return
         self.set_character_initial_direction('GUARD_2', Direction.UP)
         self.set_character_initial_direction('GUARD_4', Direction.RIGHT)
         self.set_character_initial_direction('GUARD_5', Direction.RIGHT)
@@ -577,6 +606,10 @@ class CharlockB8(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
+
+    def apply_dragonlord_defeated(self):
+        # NES LoadMobNPCDataLoop: the Dragonlord NPC isn't loaded once he's been defeated
+        self.npc_coordinates = {}
 
     def set_characters_initial_directions(self):
         self.set_character_initial_direction('DRAGONLORD', Direction.DOWN)

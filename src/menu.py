@@ -168,6 +168,11 @@ class CommandMenu(Menu):
             character_dict['character'].row, character_dict['character'].column) == self.player.next_next_coordinates
 
     def launch_dialog(self, dialog_character, current_map):
+        if self.game.story_flags.dragonlord_defeated:
+            # NES LD134: once the Dragonlord is dead, every NPC says one of the victory lines instead
+            self.show_text_in_dialog_box(self.game.ending.npc_dialog(dialog_character, current_map), add_quotes=True,
+                                         skip_text=self.skip_text)
+            return
         character = self.dialog_lookup.lookup_table[current_map.identifier].get(dialog_character)
         if character:
             if character.get('dialog'):
