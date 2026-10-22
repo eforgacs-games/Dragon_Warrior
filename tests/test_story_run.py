@@ -8,6 +8,9 @@ the blocking text and yes/no windows (each prompt is answered by STORY_ANSWERS),
 where every enemy simply loses all its HP so the real victory and ending code runs.
 
 If a step breaks, the failure names it, e.g. "Story step 10 (use the Rainbow Drop to build the bridge) failed".
+
+A second run leaves Gwaelin in the Swamp Cave until the Dragonlord is dead, then carries her to King Lorik, which the
+NES allows: she's a map block there, not an NPC, so the victory dialog doesn't replace her rescue (DoTalkResults).
 """
 import os
 from contextlib import contextmanager
@@ -17,8 +20,8 @@ from unittest.mock import patch
 import pygame
 
 from src.config.test_config import test_config
-from src.constants import ENDING_TRIGGER_COORDINATES, GWAELIN_THRONE_ROOM_COORDINATES, RAINBOW_BRIDGE_COORDINATES, \
-    RAINBOW_DROP_COORDINATES
+from src.constants import ENDING_GWAELIN_BESIDE_KING, ENDING_GWAELIN_STAIRS, ENDING_TRIGGER_COORDINATES, \
+    GWAELIN_THRONE_ROOM_COORDINATES, RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES
 from src.direction import Direction
 from src.ending import CREDITS
 from src.game import Game
@@ -195,11 +198,10 @@ class TestStoryRun(TestCase):
         except AssertionError as error:
             raise AssertionError(f"Story step {name} failed: {error}") from error
 
-    # The story
+    # The story, a few steps at a time
 
-    def test_the_game_can_be_finished(self):
-        game, player = self.game, self.player
-
+    def take_the_throne_room_chests(self):
+        player = self.player
         with self.step("1 (take the throne room chests)"):
             self.assertEqual(self.where, ('TantegelThroneRoom', (10, 13)))
             gold = player.gold
@@ -218,6 +220,8 @@ class TestStoryRun(TestCase):
             self.take_stairs((14, 18))
             self.assertEqual(self.where, ('TantegelCourtyard', (14, 14)))
 
+    def get_keys_and_the_stones_of_sunlight(self):
+        player = self.player
         with self.step("3 (buy Magic Keys from the courtyard's key shop)"):
             player.gold = 1000  # stands in for the gold won in fights along the way
             self.talk((10, 31), UP)  # across the shop counter
@@ -236,6 +240,8 @@ class TestStoryRun(TestCase):
             self.walk_onto((37, 17))  # the south gate
             self.assertEqual(self.where, ('Alefgard', (50, 51)))
 
+    def get_the_rainbow_drop(self):
+        game, player = self.game, self.player
         with self.step("5 (get the Silver Harp in Garin's Grave)"):
             self.walk_onto((9, 10))
             self.assertEqual(self.where, ('Garinham', (14, 9)))
@@ -277,16 +283,22 @@ class TestStoryRun(TestCase):
             self.assertNotIn('Staff of Rain', player.inventory)
             self.assertIn("Erdrick's Token", player.inventory)
 
-        with self.step("9 (rescue Princess Gwaelin and bring her home; done before the Dragonlord, as afterwards "
-                       "every NPC only cheers)"):
+    def rescue_gwaelin(self, name):
+        game = self.game
+        with self.step(f"{name} (rescue Princess Gwaelin from the Swamp Cave)"):
             self.travel_to('Alefgard', (51, 111))
             self.walk_onto((51, 112))
             self.assertEqual(self.where, ('SwampCave', (6, 4)))
             self.open_door((27, 9), UP)
             self.assertEqual(self.tile((26, 9)), 'BRICK')
             self.talk((25, 9), UP)
+            self.assertIn("Will thou take me to the castle?", self.prompts)
             self.assertTrue(carrying_gwaelin(game))
             self.assertNotIn('PRINCESS_GWAELIN', game.current_map.characters)
+
+    def bring_gwaelin_home(self):
+        game, player = self.game, self.player
+        with self.step("9b (bring Princess Gwaelin home to King Lorik)"):
             self.travel_to('TantegelThroneRoom', (10, 13), facing=UP)
             self.cmd_menu.set_king_lorik_dialog(left_throne_room=True)  # as the throne room does every frame
             self.talk((10, 13), UP)
@@ -296,6 +308,8 @@ class TestStoryRun(TestCase):
             self.assertEqual(game.current_map.characters['PRINCESS_GWAELIN']['coordinates'],
                              GWAELIN_THRONE_ROOM_COORDINATES)
 
+    def defeat_the_dragonlord(self):
+        game = self.game
         with self.step("10 (use the Rainbow Drop to build the bridge)"):
             self.travel_to('Alefgard', RAINBOW_DROP_COORDINATES)
             self.assertEqual(self.tile(RAINBOW_BRIDGE_COORDINATES), 'WATER')
@@ -342,20 +356,59 @@ class TestStoryRun(TestCase):
             self.assertIn("Thou hast found the Ball of Light.", self.shown_text)
             self.assertEqual(self.where, ('Alefgard', (55, 56)))
 
+    def roll_the_credits(self):
+        """Walk back to King Lorik and run the ending. Returns where the ending put Gwaelin down (place_gwaelin) and
+        whether she walked over to the king."""
+        game = self.game
         with self.step("14 (walk back to King Lorik and roll the credits)"):
+            self.travel_to('Alefgard', (50, 52))
             self.walk_onto((50, 51))
             self.assertEqual(self.where, ('TantegelCourtyard', (36, 18)))
             self.assertEqual(game.current_map.characters['KING_LORIK']['coordinates'], (14, 18))
             self.stand_at(ENDING_TRIGGER_COORDINATES[0], UP)
             credit_screens = []
             with patch.object(game.ending, 'show_credit_screen', side_effect=credit_screens.append), \
+                    patch.object(game.ending, 'place_gwaelin', wraps=game.ending.place_gwaelin) as place_gwaelin, \
+                    patch.object(game.ending, 'walk_gwaelin_to_king',
+                                 wraps=game.ending.walk_gwaelin_to_king) as walk_gwaelin_to_king, \
                     patch('src.ending.fade'), \
                     patch('src.ending.event.get', return_value=[pygame.event.Event(pygame.QUIT)]), \
                     patch('src.ending.pygame_quit'), \
                     self.assertRaises(SystemExit):  # the game waits on THE END until it's closed
                 game.ending.check_for_end_game_trigger()
             self.assertIn("The legends have proven true.", ''.join(self.shown_text))
+            self.assertIn("Please, wait.", ''.join(self.shown_text))
             self.assertIn("May I travel as thy companion?", self.prompts)
             self.assertTrue(carrying_gwaelin(game))
             self.assertEqual(credit_screens, list(CREDITS))
             self.assertEqual(credit_screens[-1], ((13, 12, "THE END"),))
+        return [call.args for call in place_gwaelin.call_args_list], walk_gwaelin_to_king.called
+
+    # The story runs
+
+    def test_the_game_can_be_finished(self):
+        self.take_the_throne_room_chests()
+        self.get_keys_and_the_stones_of_sunlight()
+        self.get_the_rainbow_drop()
+        self.rescue_gwaelin("9a")
+        self.bring_gwaelin_home()
+        self.defeat_the_dragonlord()
+        gwaelin_put_down_at, gwaelin_walked = self.roll_the_credits()
+        # NES EndGameTriggered: the returned Gwaelin comes down the throne room stairs and walks to the king
+        self.assertEqual(gwaelin_put_down_at, [ENDING_GWAELIN_STAIRS])
+        self.assertTrue(gwaelin_walked)
+
+    def test_the_game_can_be_finished_rescuing_gwaelin_after_the_dragonlord(self):
+        """NES DoTalkResults: Gwaelin is a map block, not an NPC, so the victory dialog (LD134) doesn't replace her
+        rescue, and the hero can carry her to King Lorik for the ending (ChkCarryGwaelin)."""
+        self.take_the_throne_room_chests()
+        self.get_keys_and_the_stones_of_sunlight()
+        self.get_the_rainbow_drop()
+        self.defeat_the_dragonlord()
+        self.rescue_gwaelin("13b")
+        self.assertNotIn("Thou hast brought us peace, again.", self.shown_text)
+        gwaelin_put_down_at, gwaelin_walked = self.roll_the_credits()
+        # NES ChkCarryGwaelin: the hero sets her down beside the king
+        self.assertFalse(gwaelin_returned(self.game))
+        self.assertEqual(gwaelin_put_down_at, [ENDING_GWAELIN_BESIDE_KING])
+        self.assertFalse(gwaelin_walked)
