@@ -217,19 +217,53 @@ class TestBattleSpiral(unittest.TestCase):
         nes_blocks = tuple(((byte >> 4) // 2, (byte & 0xF) // 2) for byte in self.NES_CMBT_BG_PLCMNT_TBL)
         self.assertEqual(Battle.get_spiral_tile_coordinates(), nes_blocks)
 
-    def test_one_block_per_frame_after_one_lead_in_frame(self):
-        battle = Battle({**test_config, 'TILE_SIZE': 2}, 'Slime', Mock(identifier='Alefgard'))
+    @staticmethod
+    def map_with_hero_on(hero_tile_image, hero_block_topleft):
+        """A map whose floor tiles are a decoy block and the block the hero stands on."""
+        decoy = Mock(image='decoy tile', rect=pygame.Rect(0, 0, 2, 2))
+        under_hero = Mock(image=hero_tile_image, rect=pygame.Rect(*hero_block_topleft, 2, 2))
+        return Mock(identifier='Alefgard', floor_tile_key={'GRASS': {'group': [decoy]},
+                                                           'CASTLE': {'group': [under_hero]},
+                                                           'HERO': {}})
+
+    def run_spiral(self, current_map, hero_topleft):
+        battle = Battle({**test_config, 'TILE_SIZE': 2}, 'Slime', current_map)
         battle.get_battle_background_image = Mock()  # type: ignore[method-assign]
         screen, events = Mock(), []
-        screen.blit.side_effect = lambda _image, position: events.append(position)
+        screen.blit.side_effect = lambda image, position: events.append(('blit', position, image))
         with patch('src.battle.wait_frames', side_effect=lambda frames: events.append(('wait', frames))), \
-                patch('src.battle.display'):
-            battle.transition_battle_background_image_effect(screen)
-        # WaitForNMI ($E40A), then for each of the 49 blocks: WaitForNMI ($E43D) and the block
-        expected: list = [('wait', 1)]
+                patch('src.battle.display') as display:
+            display.update.side_effect = lambda *_: events.append(('frame',))
+            battle.transition_battle_background_image_effect(screen, Mock(rect=pygame.Rect(*hero_topleft, 2, 2)))
+        return events
+
+    def test_one_block_per_frame_after_one_lead_in_frame(self):
+        events = self.run_spiral(self.map_with_hero_on('castle tile', (40, 60)), (40, 60))
+        blocks = [event for event in events if event[0] != 'blit' or event[2] != 'castle tile']
+        # WaitForNMI ($E40A), the frame the hero vanishes on, then for each of the 49 blocks: WaitForNMI ($E43D) and
+        # the block
+        expected: list = [('wait', 1), ('frame',)]
         for x, y in Battle.get_spiral_tile_coordinates():
-            expected += [('wait', 1), ((x + 5) * 2, (y + 4) * 2)]
-        self.assertEqual(events, expected)
+            expected += [('wait', 1), ('blit', ((x + 5) * 2, (y + 4) * 2)), ('frame',)]
+        self.assertEqual([event[:2] for event in blocks], expected)
+
+    def test_hero_vanishes_one_frame_before_the_centre_block(self):
+        # NES: DoSprites ($E40D) hides the hero right after the first WaitForNMI ($E40A); the sprite DMA at the next
+        # NMI ($E43D's) shows it, one frame before the centre block reaches the screen
+        events = self.run_spiral(self.map_with_hero_on('castle tile', (40, 60)), (40, 60))
+        self.assertEqual(events[:3], [('wait', 1), ('blit', (8 * 2, 7 * 2), 'castle tile'), ('frame',)])
+        self.assertEqual(events[3:5], [('wait', 1), ('blit', ((3 + 5) * 2, (3 + 4) * 2), events[4][2])])
+        # and he isn't drawn again during the spiral: the hero's block is only ever blitted those two times
+        hero_spot_blits = [event for event in events if event[0] == 'blit' and event[1] == (16, 14)]
+        self.assertEqual(len(hero_spot_blits), 2)
+
+    def test_dragonlord_final_form_has_no_spiral_and_no_hidden_hero(self):
+        # NES LoadCombatBckgrnd returns at once for EN_DRAGONLORD2, before the DoSprites call; DoSprites also exits
+        battle = Battle(dict(test_config), 'Dragonlord 2', Mock())
+        with patch.object(battle, 'hide_hero') as hide_hero, patch('src.battle.wait_frames') as wait_frames:
+            battle.display_battle_window(Mock(), Mock(), Mock(), Mock(), Mock(), (255, 255, 255), Mock())
+        hide_hero.assert_not_called()
+        wait_frames.assert_not_called()
 
     def test_background_only_on_the_overworld(self):
         # NES LoadCombatBckgrnd draws CombatBckgndGFX on MAP_OVERWORLD only; everywhere else it is TL_BLANK_TILE1
