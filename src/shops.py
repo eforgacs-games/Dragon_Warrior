@@ -1,3 +1,5 @@
+from typing import Any
+
 from src.directories import Directories
 # The inventory limits (NES AddInvItem, ChkToolPurchase/ChkBuyKey) and the 65535 gold cap (GetSellGold) are
 # shared with treasure chests
@@ -28,7 +30,7 @@ def sell_price(item: str) -> int:
 
 def buyback_price(equipped_item: str, item_type: str) -> int:
     """NES GetBuybackPrice: when buying equipment, the shop buys the equipped piece of that type for half its price."""
-    table = {'weapon': weapons, 'armor': armor, 'shield': shields}[item_type]
+    table: dict[str, dict[str, Any]] = {'weapon': weapons, 'armor': armor, 'shield': shields}[item_type]
     if not equipped_item or equipped_item not in table:
         return 0
     return table[equipped_item]['cost'] // 2

@@ -12,7 +12,7 @@ from src.common import RED, WHITE, reject_keys, accept_keys, Graphics, set_gette
 from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACEABLE_ITEMS
 from src.direction import Direction
 from src.directories import Directories
-from src.items import INVENTORY_SLOTS, MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS, weapons, armor, shields
+from src.items import INVENTORY_SLOTS, MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS
 from src import maps
 from src.maps import DragonWarriorMap
 from src.maps_functions import get_center_point
@@ -488,10 +488,10 @@ class DialogLookup:
         self.command_menu.show_text_in_dialog_box(dialog, add_quotes=True, skip_text=self.command_menu.skip_text,
                                                   drop_down=False, drop_up=False)
 
-    def say(self, *lines):
+    def say(self, *lines, hide_arrow=False):
         """Show NPC lines in the dialog box that is already open."""
         for line in lines:
-            self.command_menu.show_line_in_dialog_box(line, skip_text=self.command_menu.skip_text)
+            self.command_menu.show_line_in_dialog_box(line, hide_arrow=hide_arrow, skip_text=self.command_menu.skip_text)
 
     def remove_curse(self):
         """NES ChkCursedDialog: the Brecconary wizard (dialog $67, NES (24, 10)) lifts any curse, free of charge."""
@@ -666,9 +666,6 @@ class DialogLookup:
 
     # Shops. Each NES shop routine (Bank03) is a chain of dialogs and yes/no windows; here every "loop back" in the
     # NES routine is a call to the method for that step.
-
-    def say(self, line, hide_arrow=False):
-        self.command_menu.show_line_in_dialog_box(line, hide_arrow=hide_arrow)
 
     def confirm(self, prompt, yes_path_function, no_path_function):
         confirmation_prompt(self.command_menu, prompt, yes_path_function=yes_path_function,
