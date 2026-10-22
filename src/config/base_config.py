@@ -1,8 +1,16 @@
 import locale
 
 SCALE = 2
-LANGUAGE, ENCODING = locale.getlocale()
-LANGUAGE = LANGUAGE or "en_US"
+LOCALE, ENCODING = locale.getlocale()
+
+
+def language_from_locale(locale_name: str | None) -> str:
+    """The game compares LANGUAGE against language names ('English', 'Korean'), not locale codes like 'en_US' or
+    'ko_KR', so map the system locale to one of those names. Anything that isn't Korean plays in English."""
+    if locale_name and locale_name.lower().startswith('ko'):
+        return 'Korean'
+    return 'English'
+
 
 base_config = {
     "START_MAP": "TantegelThroneRoom",
@@ -22,7 +30,7 @@ base_config = {
     "NO_BATTLES": False,
     "ORCHESTRA_MUSIC_ENABLED": True,
     "SHOW_FPS": False,
-    "LANGUAGE": LANGUAGE.split("_")[0],
+    "LANGUAGE": language_from_locale(LOCALE),
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
     "TEXT_SPEED": "Fast",
