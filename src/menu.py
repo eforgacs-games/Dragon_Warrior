@@ -355,6 +355,13 @@ class CommandMenu(Menu):
             self.sound.play_sound(self.directories.menu_button_sfx)
         event.clear(KEYDOWN)
 
+    def wait_for_button(self, shows_arrow: bool) -> None:
+        """A wait for a button with no text of its own, silent: a TXT_WAIT (DoWait) with the arrow, or, without it,
+        WaitForBtnRelease then WaitForBtnPress, where a button pressed earlier doesn't count (see wait_for_dialog_key)."""
+        if not shows_arrow:
+            event.clear(KEYDOWN)
+        self.wait_for_dialog_key(shows_arrow=shows_arrow, skip_text=False, temp_text_start=None, disable_sound=True)
+
     def read_dialog_events(self, advance_keys: Collection[int]) -> bool:
         """Takes the queued events, keeping the arrow blinking; returns whether one was a press of advance_keys."""
         for current_event in event.get():
