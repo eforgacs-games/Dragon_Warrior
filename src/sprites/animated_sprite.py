@@ -32,6 +32,13 @@ class AnimatedSprite(BaseSprite):
                 Direction.RIGHT.value: right_images
             }
 
+    def show_facing(self):
+        """Show the current animation frame for the way the character faces now. __init__ always starts on the
+        first image (facing down), and the frame drawn before animate() runs would otherwise show that."""
+        if self.direction_value in self.images_map:
+            self.image = self.images_map[self.direction_value][self.current_frame]
+            self.dirty = 1
+
     def animate(self):
         self.frame_count += 1
         if self.frame_count % ANIMATION_CYCLE_TICKS == 0:
