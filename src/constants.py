@@ -8,9 +8,6 @@ Game-wide named constants. All magic numbers that appear in game logic live here
 EXCELLENT_MOVE_PROBABILITY = 0
 EXCELLENT_MOVE_THRESHOLD = 31
 
-# Fraction of player max HP below which the text color turns red
-LOW_HP_THRESHOLD = 0.125
-
 # Probability that a dominant enemy attempts to flee
 ENEMY_FLEE_PROBABILITY = 0.25
 

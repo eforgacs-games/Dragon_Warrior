@@ -56,7 +56,6 @@ class CommandMenu(Menu):
         self.player = self.game.player
 
         self.background = self.game.drawer.background
-        self.color = self.game.get_current_color()
         self.screen = self.game.screen
         self.camera_position = self.game.camera.pos
         self.current_map: DragonWarriorMap = self.game.current_map
@@ -75,14 +74,12 @@ class CommandMenu(Menu):
         _, _, command_window_width, command_window_height = COMMAND_WINDOW
         self.command_menu_surface = Surface((command_window_width * config['TILE_SIZE'],
                                              command_window_height * config['TILE_SIZE']))
-        self.graphics.set_window_background(self.command_menu_surface,
-                                            self.directories.COMMAND_MENU_STATIC_BACKGROUND_PATH, self.color)
         # The window's border, drawn over the menu; the title goes in the border (draw_command_window_frame), so the
         # menu's own title is drawn in black
         self.command_window_frame = Surface(self.command_menu_surface.get_size())
-        self.graphics.set_window_background(self.command_window_frame, self.directories.ITEM_MENU_BACKGROUND_PATH,
-                                            self.color, border=ITEM_MENU_BORDER)
         self.command_window_frame.set_colorkey(BLACK)
+        # The window color these and the menu's entries were last drawn in (refresh_window_color)
+        self.rendered_color: tuple[int, int, int] | None = None
         self.dialog_lookup = DialogLookup(self, config)
         tile_size = config['TILE_SIZE']
         language = config['LANGUAGE']
@@ -92,7 +89,7 @@ class CommandMenu(Menu):
         font_size = 8 * SCALE
         font = set_font_by_ascii_chars(title, font_size, None, self.directories)
         menu_width = self.command_menu_surface.get_width() * 2
-        title_text_width = font.render(title, True, self.color).get_width()
+        title_text_width = font.render(title, True, BLACK).get_width()
         subsurface_width = self.command_menu_surface.get_width()
         title_x_offset = (subsurface_width - title_text_width) // 2
 
@@ -104,9 +101,12 @@ class CommandMenu(Menu):
             column_max_width=(tile_size * 4, tile_size * 3),
             columns=2,
             rows=4,
+            # The entries, the selected entry and its arrow are all in the window color (refresh_window_color);
+            # pygame-menu would otherwise draw the selected entry in its default selection_color, white
             theme=pygame_menu.themes.Theme(background_color=BLACK,
                                            cursor_color=self.color,
                                            cursor_selection_color=self.color,
+                                           selection_color=self.color,
                                            title_background_color=BLACK,
                                            title_font=font,
                                            title_font_color=BLACK,
@@ -149,6 +149,29 @@ class CommandMenu(Menu):
                                          (_("TAKE"), self.take, (4, 0, 8, 6))):
             self.menu.add.button(label, function, padding=padding).translate(COMMAND_BUTTON_SHIFT * SCALE, 0)
         self.menu.disable()
+        self.refresh_window_color()
+
+    @property
+    def color(self) -> tuple[int, int, int]:
+        """The window color: Game.color, which Game.set_window_color sets red or white (see Game.load_window_palette).
+        Every window this menu opens (dialogs, the SPELL and ITEM lists, YES/NO, shops) reads it when it's drawn."""
+        return self.game.color
+
+    def refresh_window_color(self) -> None:
+        """Redraw what this menu keeps drawn in the window color, if the color has changed since: the COMMAND window's
+        background and border, and its entries, the selected entry and the selection arrow. On the NES these are all
+        tiles in background palette 0, whose color 1 is the window color (AddPalByte), so they all change at once."""
+        color = self.color
+        if color == self.rendered_color:
+            return
+        self.rendered_color = color
+        self.graphics.set_window_background(self.command_menu_surface,
+                                            self.directories.COMMAND_MENU_STATIC_BACKGROUND_PATH, color)
+        self.graphics.set_window_background(self.command_window_frame, self.directories.ITEM_MENU_BACKGROUND_PATH,
+                                            color, border=ITEM_MENU_BORDER)
+        for widget in self.menu.get_widgets():
+            widget.update_font({'color': color, 'selected_color': color})
+            widget.get_selection_effect().set_color(color)
 
     def save(self):
         """NES SaveData (Bank03): the hero's experience, gold, items, equipment, name, HP and MP, plus the ModsnSpells,
@@ -759,6 +782,9 @@ class CommandMenu(Menu):
         if self.player.current_hp + health_addition > self.player.max_hp:
             health_addition = self.player.max_hp - self.player.current_hp
         self.player.current_hp += health_addition
+        # NES PlyrAddHP (HEAL, HEALMORE) and HerbHeal: LoadRegBGPal right after the new HP is stored, so the windows
+        # turn white at once if HP is no longer low
+        self.game.load_window_palette()
 
     def show_battle_line(self, text: str):
         self.show_line_in_dialog_box(text, add_quotes=False, disable_sound=True, hide_arrow=True)
