@@ -62,7 +62,7 @@ class TestQuestItems(TestCase):
         return lines
 
     def use_item(self, item_function):
-        with patch('src.menu.CommandMenu.show_text_in_dialog_box') as show_text, patch('src.menu.mixer'), \
+        with patch('src.menu.CommandMenu.show_text_in_dialog_box') as show_text, patch('src.music_player.mixer'), \
                 patch.object(self.game.battle_ctrl, 'queue_scripted_battle') as start_battle:
             item_function()
         return [c.args[0] for c in show_text.call_args_list], start_battle

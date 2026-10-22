@@ -535,7 +535,7 @@ class TestCommandMenu(TestCase):
 
     def use_in_battle(self, item_name, rolls=()):
         with patch('src.menu.random.randint', side_effect=list(rolls)), \
-                patch('src.menu.mixer'), \
+                patch('src.music_player.mixer'), \
                 patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line, \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
             self.game.cmd_menu.use_item_in_battle(item_name)

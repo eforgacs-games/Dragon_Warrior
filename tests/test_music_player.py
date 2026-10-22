@@ -156,10 +156,50 @@ class TestPlayUntilEnd(unittest.TestCase):
         config = {**self.CONFIG, 'MUSIC_ENABLED': False}
         player = MusicPlayer(config)
         with patch('src.music_player.mixer') as mock_mixer, patch('src.music_player.wait') as mock_wait, \
-                patch('src.music_player.clip_length_ms', return_value=2391.0):
+                patch('src.music_player.clip_length_ms', return_value=2391.0), \
+                patch('src.music_player.game_ticks', return_value=1000):
             player.play_until_end('inn.mp3', config)
         mock_mixer.music.load.assert_not_called()
         mock_wait.assert_called_once_with(2391.0, config)
+
+    def test_play_clip_returns_at_once_and_the_wait_comes_later(self):
+        # NES EnemyDefeated: InitMusicSFX MSC_VICTORY, the experience and gold lines while it plays, then ChkLevelUp's
+        # WaitForMusicEnd
+        player = MusicPlayer(self.CONFIG)
+        with patch('src.music_player.mixer') as mock_mixer, patch('src.music_player.wait') as mock_wait:
+            mock_mixer.music.get_busy.side_effect = [True, True, False]
+            player.play_clip('victory.mp3')
+            mock_mixer.music.load.assert_called_once_with('victory.mp3')
+            mock_mixer.music.play.assert_called_once_with()
+            mock_wait.assert_not_called()
+            player.wait_for_music_end(self.CONFIG)
+        self.assertEqual(mock_wait.call_count, 2)
+
+    def test_a_new_clip_replaces_the_one_playing(self):
+        # NES DoLevelUp: MSC_LEVEL_UP cuts the victory music off, there is one music track
+        player = MusicPlayer(self.CONFIG)
+        with patch('src.music_player.mixer') as mock_mixer:
+            player.play_clip('victory.mp3')
+            player.play_clip('level_up.mp3')
+        self.assertEqual(mock_mixer.music.stop.call_count, 2)
+        self.assertEqual([c.args for c in mock_mixer.music.load.call_args_list], [('victory.mp3',), ('level_up.mp3',)])
+
+    def test_music_off_waits_out_the_rest_of_the_clip(self):
+        config = {**self.CONFIG, 'MUSIC_ENABLED': False}
+        player = MusicPlayer(config)
+        with patch('src.music_player.mixer') as mock_mixer, patch('src.music_player.wait') as mock_wait, \
+                patch('src.music_player.clip_length_ms', return_value=5000.0), \
+                patch('src.music_player.game_ticks', side_effect=[1000, 4000]):
+            player.play_clip('victory.mp3')
+            player.wait_for_music_end(config)
+        mock_mixer.music.load.assert_not_called()
+        mock_wait.assert_called_once_with(2000.0, config)  # 3000 of the 5000 ms have already gone by
+
+    def test_wait_for_music_end_without_a_clip_does_nothing_with_the_music_off(self):
+        config = {**self.CONFIG, 'MUSIC_ENABLED': False}
+        with patch('src.music_player.wait') as mock_wait:
+            MusicPlayer(config).wait_for_music_end(config)
+        mock_wait.assert_not_called()
 
     def test_inn_jingle_is_the_nes_track(self):
         # MSC_INN ($15) is the soundtrack's track 21, between MSC_DEATH ($14, track 20) and MSC_PRNCS_LOVE ($16)
