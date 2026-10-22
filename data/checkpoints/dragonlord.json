@@ -1,0 +1,52 @@
+{
+    "Name": "Erdrick",
+    "Experience": 34000,
+    "Gold": 5000,
+    "Weapon": "Erdrick's Sword",
+    "Armor": "Erdrick's Armor",
+    "Shield": "Silver Shield",
+    "WearingDragonScale": false,
+    "WearingFightersRing": false,
+    "WearingCursedBelt": false,
+    "WearingDeathNecklace": false,
+    "Inventory": [
+        "Magic Key",
+        "Herb",
+        "Herb",
+        "Herb",
+        "Herb",
+        "Herb",
+        "Herb",
+        "Wings",
+        "Gwaelin's Love",
+        "Erdrick's Token",
+        "Rainbow Drop"
+    ],
+    "Spells": [
+        "HEAL",
+        "HURT",
+        "SLEEP",
+        "RADIANT",
+        "STOPSPELL",
+        "OUTSIDE",
+        "RETURN",
+        "REPEL",
+        "HEALMORE",
+        "HURTMORE"
+    ],
+    "CurrentMap": "CharlockB8",
+    "PlayerRow": 28,
+    "PlayerColumn": 23,
+    "StoryFlags": {
+        "charlock_stairs_revealed": true,
+        "rainbow_bridge_built": true,
+        "carrying_gwaelin": false,
+        "gwaelin_returned": true,
+        "death_necklace_found": false,
+        "left_throne_room": true,
+        "golem_defeated": true,
+        "dragonlord_defeated": false,
+        "green_dragon_defeated": true
+    },
+    "Facing": "LEFT"
+}

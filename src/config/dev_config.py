@@ -25,5 +25,6 @@ dev_config = {
     "NO_BATTLES": True,
     "SHOW_COORDINATES": True,
     "GOD_MODE": True,
+    "DEBUG_KEYS": True,
     # "LANGUAGE": 'Korean',
 }

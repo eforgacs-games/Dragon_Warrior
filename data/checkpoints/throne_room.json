@@ -1,0 +1,28 @@
+{
+    "Name": "Erdrick",
+    "Experience": 0,
+    "Gold": 0,
+    "Weapon": "",
+    "Armor": "",
+    "Shield": "",
+    "WearingDragonScale": false,
+    "WearingFightersRing": false,
+    "WearingCursedBelt": false,
+    "WearingDeathNecklace": false,
+    "Inventory": [],
+    "Spells": [],
+    "CurrentMap": "TantegelThroneRoom",
+    "PlayerRow": 10,
+    "PlayerColumn": 13,
+    "StoryFlags": {
+        "charlock_stairs_revealed": false,
+        "rainbow_bridge_built": false,
+        "carrying_gwaelin": false,
+        "gwaelin_returned": false,
+        "death_necklace_found": false,
+        "left_throne_room": false,
+        "golem_defeated": false,
+        "dragonlord_defeated": false,
+        "green_dragon_defeated": false
+    }
+}

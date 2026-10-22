@@ -33,4 +33,7 @@ base_config = {
     "AUTO_BATTLE": False,
     "RENDER_TEXT": True,
     "NO_BLIT": False,
+    "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on
+    "CHECKPOINT": None,  # e.g. "rainbow_bridge": start from data/checkpoints/<name>.json (also --checkpoint)
+    "SAVE_DIR": None,  # None saves to src/saves
 }
