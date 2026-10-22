@@ -10,7 +10,8 @@ from src.common import Graphics
 from src.direction import Direction
 from src.directories import Directories
 from src.map_layouts import MapLayouts
-from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point
+from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point, \
+    covered_cells
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
 from src.sprites.fixed_character import FixedCharacter
@@ -65,6 +66,11 @@ class DragonWarriorMap:
         self.height = len(self.layout) * config['TILE_SIZE']
         self.width = len(self.layout[0]) * config['TILE_SIZE']
         self.last_map = last_map
+        # NES covered areas (CoverDatPtr): the blocks of a town that sit under a roof. Only Brecconary, Garinham,
+        # Cantlin and Rimuldar have any (Bank00 InitMapData, ChkMapBrecconary..ChkMapRimuldar).
+        self.covered_area: frozenset[tuple[int, int]] = frozenset()
+        # NES CoverStatus: whether the hero is standing on a covered block.
+        self.player_under_cover = False
 
         # Tile Key:
         # Index values for the map tiles corresponding to location on tile sheet.
@@ -158,6 +164,23 @@ class DragonWarriorMap:
                                     identifier='HERO')
             self.map_player(self.character_key['HERO']['underlying_tile'], player, hero_coords)
         self.set_characters_initial_directions()
+
+    def is_covered(self, row: int, column: int) -> bool:
+        """NES CheckCoveredArea/HasCoverData: bit 3 of the block's covered-area nibble. Blocks off the map are never
+        covered."""
+        return (row, column) in self.covered_area
+
+    def is_hidden_by_cover(self, row: int, column: int) -> bool:
+        """
+        NES ChkCoveredArea ($A9CD): a block whose cover status differs from the hero's (CoverStatus) isn't drawn as
+        itself. From outside, covered blocks are drawn as roof (BLK_SML_TILES); from inside, every uncovered block is
+        drawn blank (BLK_BLANK). NPCs on such blocks aren't drawn either (Bank00 $B957).
+        """
+        return bool(self.covered_area) and self.is_covered(row, column) != self.player_under_cover
+
+    def crosses_cover_boundary(self, row: int, column: int, next_row: int, next_column: int) -> bool:
+        """NES NPC movement ($B839-$B84F): an NPC can't step between a covered and an uncovered block."""
+        return self.is_covered(row, column) != self.is_covered(next_row, next_column)
 
     def get_tiles_in_current_map(self) -> set:
         return set(self.get_tile_by_value(tile) for row in self.layout for tile in row)
@@ -696,6 +719,14 @@ class Brecconary(DragonWarriorMap):
             'MAN_2': 'TREES',
             'MAN_3': 'GRASS',
         }
+        # NES BrecCvrdDatPtr -> TantSLDat ($8D24): the upper right building (fairy water) and the lower right one
+        # (item shop). NES X,Y is at (Y + 8, X + 10) here.
+        self.covered_area = covered_cells({
+            **{y: range(20, 28) for y in range(2, 6)},
+            6: (20, *range(22, 28)),  # 21,6 is the door
+            23: (21, *range(23, 27)),  # 22,23 is the way in
+            **{y: range(21, 27) for y in range(24, 28)},
+        }, row_offset=8, column_offset=10)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -739,6 +770,11 @@ class Garinham(DragonWarriorMap):
             'WISE_MAN': 'SAND',
         }
         self.roaming_character_list = ['WOMAN', 'WISE_MAN_2']
+        # NES GarinCvrdDatPtr -> DgnLrdSL4Dat ($8EE6): the whole top of town. NES X,Y is at (Y, X + 9) here.
+        self.covered_area = covered_cells({
+            **{y: range(20) for y in range(3, 10)},
+            10: (15, 16, 18, 19),  # 17,10 is the door
+        }, row_offset=0, column_offset=9)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -829,6 +865,16 @@ class Rimuldar(DragonWarriorMap):
             'MERCHANT': 'GRASS',
             'WISE_MAN_2': 'GRASS'
         }
+        # NES RimCvrdDatPtr -> GarinCaveB3Dat+$E ($9170): the upper left building and the lower left one.
+        # NES X,Y is at (Y + 8, X + 8) here.
+        self.covered_area = covered_cells({
+            2: range(4, 7),
+            3: range(5, 7),
+            4: range(4, 7),
+            **{y: range(2, 7) for y in range(5, 9)},
+            19: (*range(2, 10), 12),
+            **{y: range(2, 13) for y in range(20, 28)},
+        }, row_offset=8, column_offset=8)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -901,6 +947,14 @@ class Cantlin(DragonWarriorMap):
         # The NPCs from CantMobTbl
         self.roaming_character_list = ['MERCHANT_2', 'GUARD', 'GUARD_2', 'GUARD_3', 'WOMAN_2', 'MAN_2', 'WOMAN_3',
                                        'MERCHANT_5', 'MERCHANT_6', 'WISE_MAN_4']
+        # NES CantCvrdDatPtr -> SwampCaveDat+$32 ($8FAE): two small rooms at the top and the middle of town.
+        # NES X,Y is at (Y + 8, X) here.
+        self.covered_area = covered_cells({
+            1: (1, 2, 3, 26, 27, 28),
+            2: (1, 2, 26, 27, 28),
+            3: (1, 2, 3, 26, 28),
+            **{y: range(11, 19) for y in range(11, 24)},
+        }, row_offset=8, column_offset=0)
 
     def hero_underlying_tile(self):
         return 'BRICK'
