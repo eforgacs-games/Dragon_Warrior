@@ -231,29 +231,67 @@ class DialogLookup:
                 'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, rimuldar_inn_cost),)},
                 'WISE_MAN': {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['Rimuldar']),)},
             },
+            # NES CantMobTbl and CantStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte
+            # + $2F (DoVariousDialog2, Bank03), so $45 is TextBlock8 entry 4 and so on.
             'Cantlin': {
+                # Static shopkeeper at 8,3 (dialog byte $14, InnDialog)
                 'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, cantlin_inn_cost),)},
+                # Mobile shopkeeper at 22,5 ($03, WeaponsDialog: Cantlin weapons and armor shop 1)
                 'MERCHANT_2': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_north_inventory,
                             self.directories.CANTLIN_WEAPONS_SHOP_NORTH_PATH),)},
-                'MERCHANT_3': {
-                    'dialog': self._("Come buy my radishes! They are fresh and cheap.\nBuy thy radishes today!")},
-                'MERCHANT_6': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
-                            self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
+                # Mobile guard at 5,6 ($60, CheckYesNoDialog): TextBlock9 entry 15, then a yes/no window
+                'GUARD': {'dialog': (_("'Tis said that the Dragonlord hath claws that can cleave iron and fiery "
+                                       "breath that can melt stone."),
+                                     self.cantlin_still_wish_to_go_on)},
+                # Mobile guard at 15,6 ($48, TextBlock8 entry 7)
+                'GUARD_2': {'dialog': _("Welcome to Cantlin, the castle town.")},
+                # Static wizard at 27,6 ($0C, KeysDialog)
                 'WISE_MAN': {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['Cantlin']),)},
-                # NES CantStatTbl: the male villager at 2,7 and the shopkeeper at 7,12 run the item shops, the
-                # guard at 24,12 sells the Flame Sword and Silver Shield, and the woman at 22,13 sells Fairy Water
+                # Static male villager at 2,7 ($0A, ToolsDialog: Cantlin item shop 1)
                 'MAN': {'dialog': (partial(self.tool_shop, self.shop_inventories.cantlin_item_store_1_inventory),)},
+                # Mobile guard at 22,9 ($4D, TextBlock8 entry 12)
+                'GUARD_3': {'dialog': (_("It is said that many have held Erdrick's armor."),
+                                       _("The last to have it was a fellow named Wynn."))},
+                # Static shopkeeper at 2,12 ($45, TextBlock8 entry 4)
+                'MERCHANT_3': {
+                    'dialog': _("Come buy my radishes! They are fresh and cheap.\nBuy thy radishes today!")},
+                # Static shopkeeper at 7,12 ($0B, ToolsDialog: Cantlin item shop 2)
                 'MERCHANT_4': {'dialog': (
                     partial(self.tool_shop, self.shop_inventories.cantlin_item_store_2_inventory),)},
-                'GUARD': {'dialog': (
+                # Static guard at 24,12 ($05, WeaponsDialog: Cantlin weapons and armor shop 3)
+                'GUARD_4': {'dialog': (
                     partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_3_inventory),)},
+                # Static female villager at 22,13 ($10, FairyDialog)
                 'WOMAN': {'dialog': (self.fairy_water_shop,)},
+                # Mobile female villager at 4,14 ($49, TextBlock8 entry 8)
+                'WOMAN_2': {'dialog': _("What shall I get for thy dinner?")},
+                # Mobile male villager at 20,15 ($4B, TextBlock8 entry 10)
+                'MAN_2': {'dialog': _("I'm Nester.\nHey, where am I? No, don't tell me!")},
+                # Mobile female villager at 9,16 ($4A, TextBlock8 entry 9)
+                'WOMAN_3': {'dialog': _("I know nothing.")},
+                # Static wizard at 15,16 ($46, TextBlock8 entry 5)
                 'WISE_MAN_2': {
                     'dialog': _("To learn how proof may be obtained that thy ancestor was the great Erdrick, "
                                 "see a man in this very town.")},
-
+                # Mobile shopkeeper at 25,17 ($4C, TextBlock8 entry 11)
+                'MERCHANT_5': {'dialog': _("Grandfather used to say that his friend, Wynn, had buried something of "
+                                           "great value at the foot of a tree behind his shop.")},
+                # Static wizard at 22,22 ($47, TextBlock8 entry 6)
+                'WISE_MAN_3': {'dialog': _("'Tis said that Erdrick's sword could cleave steel.")},
+                # Mobile shopkeeper at 3,26 ($4E, TextBlock8 entry 13)
+                'MERCHANT_6': {'dialog': _("My Grandfather Wynn once had a shop on the east side of Hauksness.")},
+                # Static shopkeeper at 27,26 ($04, WeaponsDialog: Cantlin weapons and armor shop 2)
+                'MERCHANT_7': {'dialog': (
+                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory,
+                            self.directories.CANTLIN_WEAPONS_SHOP_SOUTH_PATH),)},
+                # Mobile wizard at 14,28 ($6B, ErdTknDialog): TextBlock5 entry 12, then TextBlock11 entries 14
+                # and 15. He only gives the hint; the token itself is found on the overworld.
+                'WISE_MAN_4': {'dialog': (_("Let us wish the warrior well!"),
+                                          _("May the light be thy strength!"),
+                                          _("Thou may go and search."),
+                                          _("From Tantegel Castle travel 70 leagues to the south and 40 to the "
+                                            "east."))},
             },
             'SwampCave': {
                 'PRINCESS_GWAELIN': {'dialog': (_("Thou art brave indeed to rescue me, {}.").format(self.player.name),
@@ -619,6 +657,17 @@ class DialogLookup:
                                                        "of Honor containing your deeds may be lost."))
                                                   )
         quit()
+
+    def cantlin_still_wish_to_go_on(self):
+        """NES CheckYesNoDialog, dialog byte $60 (the Cantlin guard at NES 5,6): after TextBlock9 entry 15, the
+        yes/no window. Yes shows TextBlock10 entry 4 ($60 + $2F + $05) and no shows entry 9 ($60 + $2F + $0A)."""
+        _ = self._
+        self.confirm(_("Dost thou still wish to go on?"),
+                     yes_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                               _("Thou art truly brave."), hide_arrow=True),
+                     no_path_function=partial(self.command_menu.show_line_in_dialog_box,
+                                              _("That is good.’\n`No one will say thou art afraid."),
+                                              hide_arrow=True))
 
     def tantegel_throne_room_roaming_guard(self):
         _ = self._
