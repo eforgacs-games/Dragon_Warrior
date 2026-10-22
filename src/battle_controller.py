@@ -307,7 +307,7 @@ class BattleController:
                                                               disable_sound=True, hide_arrow=True)
                     elif current_spell in (Spell.HURT, Spell.HURTMORE):
                         if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
-                            spell_effect = spell_effect * 2 // 3
+                            spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
                         self.game.receive_damage(spell_effect)
                     elif current_spell == Spell.STOPSPELL:
                         if self.player.armor != "Erdrick's Armor":
@@ -315,7 +315,7 @@ class BattleController:
                                 self.player.is_stopspelled = True
                     elif current_spell in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         if self.player.armor == "Erdrick's Armor":
-                            spell_effect = spell_effect * 2 // 3
+                            spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
                         self.game.receive_damage(spell_effect)
                 else:
                     self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
