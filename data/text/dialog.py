@@ -1,11 +1,16 @@
-from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event, time, USEREVENT
+from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event
 from pygame.event import get
 
+from src.cursor import BlinkingCursor
 from src.waiting import quit_if_requested, wait
 
 
-def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, show_arrow, color,
-                        finally_function=None, skip_text=False):
+def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, color,
+                        show_arrow=True, finally_function=None, skip_text=False):
+    """A line of dialog, then the YES/NO window (YesNo1Dat), with the NES cursor (src/cursor.py).
+
+    show_arrow is no longer used: the cursor's blink is timed by the window itself (BlinkingCursor), as the NES
+    times it off the frame counter. It is still accepted so callers that pass it keep working."""
     def display_prompt():
         command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, hide_arrow=True, letter_by_letter=True)
         command_menu.window_drop_down_effect(5, 2, 4, 3)
@@ -16,32 +21,27 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         wait(300, config)
         sound.play_sound(directories.confirmation_sfx)
 
-    def update_blinking_graphics(blinking_yes, show_arrow):
-        background_path = (directories.CONFIRMATION_YES_BACKGROUND_PATH if blinking_yes
-                           else directories.CONFIRMATION_NO_BACKGROUND_PATH)
-        graphics.blink_switch(command_menu.screen, background_path, directories.CONFIRMATION_BACKGROUND_PATH,
-                              x=5, y=2, width=4, height=3, tile_size=tile_size, color=color, show_arrow=show_arrow)
-
     def handle_keydown_event(current_event, blinking_yes):
         nonlocal blinking
         if current_event.key in (K_DOWN, K_UP, K_w, K_s):
+            cursor.restart()  # WndUpdateCrsrPos
             return not blinking_yes
         elif (blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'y':
-            finalize_choice(directories.CONFIRMATION_YES_BACKGROUND_PATH, yes_path_function)
+            finalize_choice(True, yes_path_function)
             blinking = False
         elif (not blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode in ('n', 'j'):
-            finalize_choice(directories.CONFIRMATION_NO_BACKGROUND_PATH, no_path_function)
+            finalize_choice(False, no_path_function)
             blinking = False
         return blinking_yes
 
-    def finalize_choice(background_path, path_function):
-        graphics.create_window(5, 2, 4, 3, background_path, command_menu.screen, color)
+    def finalize_choice(yes_chosen, path_function):
+        # WndAPressed: the chosen entry's arrow is drawn once more and stays on
+        command_menu.draw_yes_no_window(yes_chosen, True)
         sound.play_sound(directories.menu_button_sfx)
         event.pump()
         path_function()
 
     def handle_events(blinking_yes):
-        nonlocal show_arrow
         for current_event in get():
             quit_if_requested(current_event)
             if current_event.type == KEYDOWN:
@@ -49,8 +49,6 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
                 if not blinking:
                     # A choice was made: drop the rest of this batch so extra presses don't choose again (#97)
                     break
-            elif current_event.type == arrow_fade:
-                show_arrow = not show_arrow
         event.pump()
         return blinking_yes
 
@@ -58,14 +56,12 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     graphics = command_menu.graphics
     directories = command_menu.directories
     sound = command_menu.sound
-    tile_size = config["TILE_SIZE"]
 
     display_prompt()
 
     blinking = True
     blinking_yes = True
-    arrow_fade = USEREVENT + 1
-    time.set_timer(arrow_fade, 530)
+    cursor = BlinkingCursor()  # WndInitSelect
 
     while blinking:
         if skip_text:
@@ -73,7 +69,7 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
             yes_path_function()
             blinking = False
         else:
-            update_blinking_graphics(blinking_yes, show_arrow)
+            command_menu.draw_yes_no_window(blinking_yes, cursor.visible())
             blinking_yes = handle_events(blinking_yes)
 
     if finally_function is not None:
