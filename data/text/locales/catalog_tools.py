@@ -30,8 +30,7 @@ ENGLISH_ONLY = {
     "F5: Warp": "debug key",
     "F6: Give item/gold/level": "debug key",
     "F7: Load checkpoint": "debug key",
-    # Erdrick's Tablet text is being reworked on the issue-152-korean-tablet branch, which owns its translation
-    "The tablet reads as follows:": "owned by issue #152",
+    "Debug keys:": "debug key",  # the title of the F1 help page that lists them
 }
 
 
