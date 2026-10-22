@@ -15,6 +15,7 @@ from src.common import BLACK
 from src.constants import RAINBOW_BRIDGE_COORDINATES
 from src.direction import Direction
 from src.game_functions import set_character_position
+from src.map_layouts import BRICK, TREASURE_BOX
 from src.maps import map_lookup
 from src.menu import CommandMenu
 from src.visual_effects import fade
@@ -143,6 +144,7 @@ class MapManager:
         if isinstance(self.current_map, maps.CharlockB1) and self.game.charlock_stairs_revealed:
             # NES GetBlockID: once F_PSG_FOUND is set, the block behind the throne reads as stairs down for good
             self.current_map.reveal_hidden_staircase()
+        self.apply_chest_history()
         fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         self.set_big_map()
         self.set_roaming_character_positions()
@@ -198,6 +200,12 @@ class MapManager:
         if self.current_map.identifier == 'Alefgard' and self.game.rainbow_bridge_built:
             row, column = RAINBOW_BRIDGE_COORDINATES
             self.current_map.layout[row][column] = self.current_map.floor_tile_key['BRIDGE']['val']
+
+    def apply_chest_history(self):
+        # NES InitMapData and GetBlockID: update the chest history for the new map, then show opened chests as brick
+        map_name = self.current_map.identifier
+        self.game.chest_history.enter_map(map_name)
+        self.game.chest_history.apply_to_layout(map_name, self.current_map.layout, TREASURE_BOX, BRICK)
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates):
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN', 'CAVE'):
