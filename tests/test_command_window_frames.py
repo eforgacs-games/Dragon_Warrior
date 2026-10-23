@@ -55,10 +55,7 @@ class TestCommandWindowFrames(TestCase):
         self.frame_number += 1
         game = self.game
         game.get_events()
-        game.drawer.draw_all(game.screen, game.loop_count, game.big_map, game.current_map, game.player,
-                             game.cmd_menu, game.foreground_rects, game.movement.sprites_animate, game.camera,
-                             game.initial_dialog_enabled, game.events, game.skip_text,
-                             game.story_flags.left_throne_room, game.game_state, game.color)
+        game.drawer.draw_all(game, game.movement.sprites_animate)
         pygame.display.flip()
         game.loop_count += 1
 

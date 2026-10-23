@@ -803,11 +803,7 @@ class TestGame(TestCase):
         self.game.get_events()
 
     def test_draw_all(self):
-        self.game.drawer.draw_all(self.game.screen, self.game.loop_count, self.game.big_map, self.game.current_map,
-                                  self.game.player, self.game.cmd_menu, self.game.foreground_rects,
-                                  self.game.game_state.enable_animate, self.game.camera, self.game.initial_dialog_enabled,
-                                  self.game.events, self.game.skip_text, self.game.story_flags.left_throne_room,
-                                  self.game.game_state, self.game.color)
+        self.game.drawer.draw_all(self.game, self.game.game_state.enable_animate)
         # The hero isn't moving: the pop-up window isn't closed (it opens on the POP_UP_FRAME, see
         # MovementController.sprites_frame)
         self.assertFalse(self.game.player.is_moving)
