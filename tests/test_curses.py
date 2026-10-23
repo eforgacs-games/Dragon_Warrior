@@ -72,7 +72,7 @@ class TestCurses(TestCase):
     def test_cursed_belt_puts_it_on_and_curses(self):
         self.player.inventory = ["Cursed Belt"]
         lines, sounds = self.use('cursed_belt')
-        self.assertEqual(lines, ["Edward put on the Cursed Belt and was cursed!\nThy body is being squeezed."])
+        self.assertEqual(lines, [("Edward put on the Cursed Belt and was cursed!.", "Thy body is being squeezed.")])
         self.assertIn(self.game.directories.cursed_music, sounds)
         self.assertTrue(self.player.wearing_cursed_belt)
         self.assertTrue(self.player.is_cursed)
@@ -86,12 +86,29 @@ class TestCurses(TestCase):
     def test_death_necklace_puts_it_on_and_curses(self):
         self.player.inventory = ["Death Necklace"]
         lines, _ = self.use('death_necklace')
-        self.assertEqual(lines, ["Edward put on the Death Necklace and was cursed!\nThy body is being squeezed."])
+        self.assertEqual(lines, [("Edward put on the Death Necklace and was cursed!.", "Thy body is being squeezed.")])
         self.assertTrue(self.player.wearing_death_necklace)
         self.assertFalse(self.player.wearing_cursed_belt)
         self.assertEqual(self.player.inventory, ["Death Necklace"])
         lines, _ = self.use('death_necklace')
         self.assertEqual(lines, ["The Death Necklace is squeezing thy body."])
+
+    def test_putting_on_a_cursed_item_in_battle(self):
+        # NES TB5E2: the first line ends in a TXT_WAIT (the arrow), then the second; MSC_CURSED after both
+        from src.battle import Battle
+        self.player.inventory = ["Cursed Belt"]
+        cmd_menu = self.game.cmd_menu
+        cmd_menu.current_battle = Battle(self.game.config, 'Slime', self.game.current_map)
+        events = []
+        with patch.object(cmd_menu, 'show_line_in_dialog_box',
+                          side_effect=lambda line, **kwargs: events.append((line, kwargs.get('hide_arrow', False)))), \
+                patch.object(self.game.music_player, 'play_until_end',
+                             side_effect=lambda path, config: events.append(path)), \
+                patch.object(self.game.music_player, 'load_and_play_music'):
+            cmd_menu.cursed_belt()
+        self.assertEqual(events, [("Edward put on the Cursed Belt and was cursed!.", False),
+                                  ("Thy body is being squeezed.", True),
+                                  self.game.directories.cursed_music])
 
     def test_death_necklace_changes_no_stats(self):
         # NES LoadStats never reads the curse flags
@@ -164,7 +181,7 @@ class TestCurses(TestCase):
 
     def test_cursed_player_is_thrown_out_of_tantegel(self):
         self.player.wearing_cursed_belt = True
-        self.assertEqual(self.walk_onto('TantegelCourtyard', (TANTEGEL_CURSED_ROW, 18)), ["Cursed one, be gone!"])
+        self.assertEqual(self.walk_onto('TantegelCourtyard', (TANTEGEL_CURSED_ROW, 18)), ["Cursed one,be gone!"])
         self.assertEqual(self.where(), ('Alefgard', (50, 51)))
 
     def test_cursed_player_is_not_thrown_out_after_the_dragonlord_is_dead(self):

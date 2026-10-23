@@ -7,7 +7,7 @@ from tests.town_dialog import TownDialogMixin
 CANTLIN_TEXT = {
     0x45: "Come buy my radishes! They are fresh and cheap.\nBuy thy radishes today!",
     0x46: "To learn how proof may be obtained that thy ancestor was the great Erdrick, see a man in this very town.",
-    0x47: "'Tis said that Erdrick's sword could cleave steel.",
+    0x47: "ʼTis said that Erdrick's sword could cleave steel.",
     0x48: "Welcome to Cantlin, the castle town.",
     0x49: "What shall I get for thy dinner?",
     0x4A: "I know nothing.",
@@ -51,7 +51,7 @@ class TestCantlinDialog(TownDialogMixin, TestCase):
 
     def test_dragonlord_claws_guard(self):
         first_line, prompt = self.dialog_at(5, 6)
-        self.assertEqual(first_line, "'Tis said that the Dragonlord hath claws that can cleave iron and fiery breath "
+        self.assertEqual(first_line, "ʼTis said that the Dragonlord hath claws that can cleave iron and fiery breath "
                                      "that can melt stone.")
         self.assertEqual(prompt, self.dialog_lookup.cantlin_still_wish_to_go_on)
 

@@ -146,7 +146,7 @@ class Battle:
 
     def battle_run(self, cmd_menu: CommandMenu, player: Player, current_battle):
         """Attempt to run from a battle (NES PlyrRun)."""
-        self.sound.play_sound(self.directories.stairs_down_sfx)
+        self.sound.play_sound(self.directories.run_away_sfx)  # SFX_RUN
         cmd_menu.show_line_in_dialog_box(self._("{} started to run away.\n").format(player.name), add_quotes=False,
                                          hide_arrow=True, disable_sound=True)
 
