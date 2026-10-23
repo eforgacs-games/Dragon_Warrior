@@ -3,18 +3,24 @@ Debug keys for playtesting, only on with the dev config (DEBUG_KEYS):
 - F5: warp to the entrance of any map.
 - F6: give an item, gold, Erdrick's gear or a level, or refill HP and MP.
 - F7: load a playtest checkpoint (src/checkpoints.py).
+- F8: start recording every frame the game presents; F8 again stops and saves the frames as PNGs, with a report of
+  what changed and what flickered, to a new folder in FRAME_RECORDINGS_DIR (src/frame_recorder.py).
 
-Each opens a small list: type to filter it, ↑/↓ to choose, Enter to pick, Esc to close.
+F5 to F7 each open a small list: type to filter it, ↑/↓ to choose, Enter to pick, Esc to close.
 """
+import os
+import time
 from typing import Callable, Sequence
 
-from pygame import KEYDOWN, K_BACKSPACE, K_DOWN, K_ESCAPE, K_F5, K_F6, K_F7, K_KP_ENTER, K_RETURN, K_UP, QUIT, \
+from pygame import KEYDOWN, K_BACKSPACE, K_DOWN, K_ESCAPE, K_F5, K_F6, K_F7, K_F8, K_KP_ENTER, K_RETURN, K_UP, QUIT, \
     Rect, display, draw, event
 from pygame.time import Clock
 
 from src.checkpoints import CHECKPOINT_NAMES
 from src.color import BLACK, WHITE
 from src.constants import RETURN_DESTINATION
+from src.frame_recorder import FRAME_RECORDINGS_DIR, REAL_TIME_FLICKER_MS, FrameRecorder, find_flickers, \
+    save_recording
 from src.items import MAX_GOLD, MAX_HERBS, MAX_KEYS
 from src.maps import map_lookup
 from src.player.player_stats import levels_list
@@ -38,13 +44,19 @@ EQUIP_ERDRICK = "Equip Erdrick's gear"
 VISIBLE_ROWS = 16
 LINE_HEIGHT = 22
 
+RECORDING_CAPTION = " - recording frames (F8 to stop)"
+
 
 class DebugTools:
     def __init__(self, game) -> None:
         self.game = game
         self._entrances: dict[str, tuple[int, int]] | None = None
+        self.frame_recorder: FrameRecorder | None = None
 
     def handle_keydown(self, keydown_event) -> None:
+        if keydown_event.key == K_F8:
+            self.toggle_frame_recording()
+            return
         actions: dict[int, Callable[[], None]] = {K_F5: self.warp_menu, K_F6: self.give_menu, K_F7: self.checkpoint_menu}
         action = actions.get(keydown_event.key)
         if action is None or self.game.cmd_menu.menu.is_enabled():
@@ -146,6 +158,26 @@ class DebugTools:
         name = self.pick("Load checkpoint", list(CHECKPOINT_NAMES))
         if name:
             self.game.load_checkpoint(name)
+
+    # Frame recording
+
+    def toggle_frame_recording(self, out_dir: str | None = None) -> str | None:
+        """Start recording frames, or stop and save them (to ``out_dir``, by default a new folder in
+        FRAME_RECORDINGS_DIR named after the time). Returns the folder it saved to, once it stops. The window's
+        caption says while it records; nothing is drawn on the screen, so the frames show only the game."""
+        caption = display.get_caption()[0]
+        if self.frame_recorder is None:
+            self.frame_recorder = FrameRecorder(max_frames=100_000).start()
+            display.set_caption(caption + RECORDING_CAPTION)
+            return None
+        recorder, self.frame_recorder = self.frame_recorder, None
+        recorder.stop()
+        display.set_caption(caption.removesuffix(RECORDING_CAPTION))
+        out_dir = out_dir or os.path.join(FRAME_RECORDINGS_DIR, time.strftime('%Y%m%d-%H%M%S'))
+        save_recording(recorder, out_dir)
+        flickers = find_flickers(recorder, max_ms=REAL_TIME_FLICKER_MS)
+        print(f"Saved {len(recorder)} frames ({len(flickers)} one-frame flickers) to {out_dir}")
+        return out_dir
 
     # The list window
 

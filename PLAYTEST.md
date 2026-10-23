@@ -28,8 +28,10 @@ python src/game.py --dev --checkpoint <name>
   - **F5** warps to any map's entrance.
   - **F6** gives an item, adds gold, sets your level, equips Erdrick's gear, or refills HP and MP.
   - **F7** loads another checkpoint.
+  - **F8** starts recording every frame; **F8** again saves them, with a report of any flickers (see "Finding visual
+    glitches" in CONTRIBUTING.md).
 
-  Each one opens a list: type to filter it, use ↑/↓ to move, press Enter to pick, and press Esc to close.
+  F5 to F7 each open a list: type to filter it, use ↑/↓ to move, press Enter to pick, and press Esc to close.
 
 Positions below are `(row, column)`, the same order as the checkpoint files.
 
