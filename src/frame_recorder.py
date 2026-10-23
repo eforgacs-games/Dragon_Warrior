@@ -15,7 +15,7 @@ presented (game time), the function that presented it (``caller``, e.g. ``menu.C
 and the recorder's ``label`` at the time, which a script or test can set to say what it was doing.
 
 A "frame" here is one flip or update. The game draws most frames once each, but holds some pictures with a wait (a
-fade step, a blinking cursor) rather than drawing them again, so a frame can stay on screen for longer than 1/60 s.
+fade step, a blinking cursor) rather than drawing them again, so a frame can stay on screen for longer than one NES frame.
 In a recording made in real time, each frame's time tells them apart (``find_flickers(max_ms=...)``).
 
 Frames are kept compressed in memory (a frame that repeats the one before shares its data), so recording a long scene

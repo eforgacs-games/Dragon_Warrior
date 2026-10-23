@@ -376,7 +376,7 @@ class TestPlayerHitShake(NesPaletteTestCase):
             player_hit_shake(screen, {'NO_WAIT': False, 'NO_BLIT': False}, deathblow=True, shake=False)
         screen.blit.assert_not_called()
         mock_display.flip.assert_not_called()
-        self.assertEqual([c.args[0] for c in mock_wait.call_args_list], [533, 400])  # 32 and 24 frames
+        self.assertEqual([c.args[0] for c in mock_wait.call_args_list], [532, 399])  # 32 and 24 frames
 
     @patch('src.visual_effects.wait')
     def test_shake_timing(self, mock_wait):

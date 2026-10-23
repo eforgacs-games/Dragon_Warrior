@@ -15,6 +15,7 @@ from src.directories import Directories
 from src.maps import map_lookup
 from src.music_player import MusicPlayer
 from src.sound import SFX_CHANNEL, Sound
+from src.waiting import NES_FPS
 from tests.helpers import new_game
 from tests.mock_map import MockMap
 
@@ -349,8 +350,8 @@ class TestWaitForSoundEffectEnd(unittest.TestCase):
         with patch('src.sound.game_ticks', return_value=1000):
             sound.play_sound('spell.mp3')
         with patch('src.sound.game_ticks', return_value=1300), patch('src.sound.wait') as wait:
-            sound.wait_for_sfx_end(42, config)  # 700 ms
-        wait.assert_called_once_with(400, config)
+            sound.wait_for_sfx_end(42, config)  # 698.8 ms
+        wait.assert_called_once_with(1000 + 42 * 1000 / NES_FPS - 1300, config)
         with patch('src.sound.game_ticks', return_value=2000), patch('src.sound.wait') as wait:
             sound.wait_for_sfx_end(42, config)  # already over
         wait.assert_called_once_with(0, config)

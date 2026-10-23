@@ -327,7 +327,7 @@ def cut_to_black(screen: Surface, config) -> None:
 
 
 def show_frames(frames: int, config) -> None:
-    """Show the current screen for a number of NES frames (60 per second)."""
+    """Show the current screen for a number of NES frames (NES_FPS, 60.0988 a second)."""
     display.flip()
     wait(round(frames * 1000 / NES_FPS), config)
 

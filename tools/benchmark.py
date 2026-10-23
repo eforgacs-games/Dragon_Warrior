@@ -16,7 +16,7 @@ Per scene and game speed it reports:
 - the logic and draw times of a pass (mean / median / p95 / max, in ms). A pass that took longer than OWN_LOOP_MS ran
   a loop of its own (a battle, a dialog, a menu, a map change) and is counted under "Own loops" instead;
 - Map FPS, the map frames run per real second, and Shown FPS, the frames presented per real second (at most one per
-  frame of game time), each with its share of 60 x the speed;
+  frame of game time), each with its share of NES_FPS (60.0988) x the speed;
 - wall and CPU time (time.process_time): a CPU share near 100% while the game only waits is a busy loop;
 - how many times display.flip and display.update were called.
 """
@@ -44,7 +44,7 @@ import pygame  # noqa: E402 (the SDL drivers are chosen before pygame starts)
 
 from src.checkpoints import read_checkpoint  # noqa: E402
 from src.config.prod_config import prod_config  # noqa: E402
-from src.waiting import NES_FPS, game_ticks, reset_game_speed, set_game_speed  # noqa: E402
+from src.waiting import frame_at, game_ticks, reset_game_speed, set_game_speed  # noqa: E402
 from tools.benchmark_results import NOT_AVAILABLE, SceneResult, TimeStats, format_comparison, format_report, \
     results_from_json, results_to_json  # noqa: E402
 from tools.scripted_input import SceneOver, ScriptedInput, parse_script  # noqa: E402
@@ -126,7 +126,7 @@ class SceneMeter:
 
     def count_present(self) -> None:
         """A display.flip or display.update: it shows a new frame if it's the first in this frame of game time."""
-        frame = game_ticks() * NES_FPS // 1000
+        frame = frame_at(game_ticks())
         if frame != self.last_shown_frame:
             self.shown_frames += 1
             self.last_shown_frame = frame
@@ -228,7 +228,7 @@ def main_loop(game, meter: SceneMeter, scripted: ScriptedInput) -> None:
     draw(game, game.game_state.enable_animate)
     pygame.display.flip()
     while True:
-        game.clock.tick(game.fps)
+        tick(game)
         scripted.poll()
         started = time.perf_counter()
         try:
@@ -242,6 +242,14 @@ def main_loop(game, meter: SceneMeter, scripted: ScriptedInput) -> None:
         drawn = time.perf_counter()
         game.loop_count += 1
         meter.add_pass((logic_done - started) * 1000, (drawn - logic_done) * 1000)
+
+
+def tick(game) -> None:
+    """Wait for the main loop's next pass: FrameClock (#315), or before it Clock.tick at 60 x the speed."""
+    if hasattr(game, 'frame_clock'):
+        game.frame_clock.tick()
+    else:
+        game.clock.tick(game.fps)
 
 
 def scene_length(scene: Scene, frames: int) -> tuple[list, int]:

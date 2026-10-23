@@ -17,7 +17,7 @@ window stays on the screen (behind the windows the selection opens, for example)
 from pygame import Rect, Surface
 
 from src.color import BLACK
-from src.waiting import NES_FPS, game_ticks as get_ticks  # game time: runs N times as fast at speed N
+from src.waiting import frame_at, game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 # TL_RIGHT_ARROW ($42), as the NES draws it: 8x8 pixels, its point 2 pixels in from the tile's left edge and one row
 # lower than the letters (which use rows 0 to 6), so it lines up with the middle of the entry's text.
@@ -73,7 +73,7 @@ class DialogArrowBlink:
     def frame_counter(self, ticks: int | None = None) -> int:
         """FrameCounter: #$10 when the wait started, plus one per NES frame since (counted as BlinkingCursor does)."""
         now = get_ticks() if ticks is None else ticks
-        frames = max(0, now * NES_FPS // 1000 - self.start_ticks * NES_FPS // 1000)
+        frames = max(0, frame_at(now) - frame_at(self.start_ticks))
         return (TXT_WAIT_START_FRAME + frames) & 0xFF
 
     def visible(self, ticks: int | None = None) -> bool:
@@ -107,10 +107,10 @@ class BlinkingCursor:
 
     def frames_since_restart(self, ticks: int | None = None) -> int:
         """How many NES frames (WaitForNMI) have gone by since the cursor was restarted: how many frame boundaries
-        (every 1/60 s, counted from tick 0, like the NES's VBlanks) have been crossed, so consecutive frames are
+        (every 1/NES_FPS s, counted from tick 0, like the NES's VBlanks) have been crossed, so consecutive frames are
         counted exactly, however the milliseconds round."""
         now = get_ticks() if ticks is None else ticks
-        return max(0, now * NES_FPS // 1000 - self.start_ticks * NES_FPS // 1000)
+        return max(0, frame_at(now) - frame_at(self.start_ticks))
 
     def frame_counter(self, ticks: int | None = None) -> int:
         """The NES FrameCounter: 5 when the cursor was restarted, plus one per NES frame since (it is one byte)."""

@@ -26,14 +26,18 @@ without an import cycle.
 """
 import sys
 
-from collections.abc import Collection
+from collections.abc import Callable, Collection
+from time import perf_counter, sleep
 from typing import Any, Protocol
 
 from pygame import K_1, K_2, K_3, K_4, K_5, KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
 
 from src.zoom import handle_zoom_event
 
-NES_FPS = 60
+# The NTSC NES's frame rate, 60.0988 Hz: the PPU draws 341 x 262 dots a frame, one fewer every other frame (89,341.5 on
+# average), at a quarter of the 236.25 / 11 MHz master clock. Every timing in the game is a number of these frames
+# (frame_at, frames_to_ms), and the main loop is paced at this rate times the game speed (FrameClock).
+NES_FPS = 236.25e6 / 11 / 4 / 89341.5
 POLL_INTERVAL_MS = 16  # about one frame: how often the queue is checked for QUIT during a wait
 SPEED_KEYS = {K_1: 1, K_2: 2, K_3: 4, K_4: 8, K_5: 16}  # the speed each key sets: 1x, 2x, 4x, 8x, 16x
 
@@ -243,8 +247,19 @@ def wait_until(deadline: float, config: dict | None = None) -> None:
     wait(max(0.0, deadline - game_ticks()), config)
 
 
+def frame_at(milliseconds: float) -> int:
+    """The NES frame, counted from 0, that a time in milliseconds (a ``game_ticks`` value, or a time since something
+    started) falls in."""
+    return int(milliseconds * NES_FPS // 1000)
+
+
+def frames_to_ms(frames: float) -> float:
+    """How many milliseconds a number of NES frames last."""
+    return frames * 1000 / NES_FPS
+
+
 def wait_frames(frames: float, config: dict | None = None, fps: float = NES_FPS) -> None:
-    """``wait`` for a number of frames (NES frames, 60 per second, unless ``fps`` says otherwise)."""
+    """``wait`` for a number of frames (NES frames, NES_FPS a second, unless ``fps`` says otherwise)."""
     wait(frames * 1000 / fps, config)
 
 
@@ -252,12 +267,11 @@ class FramePacer:
     """How many frames the map loop runs before it draws the map again (Game.run_due_frames).
 
     The map counts frames, as the NES does: a step takes 16 of them, and so does each NPC turn (src/npc_schedule.py).
-    Running one frame per draw at 60 * N FPS only keeps up with the game clock (``game_ticks``, which the dialogs,
-    effects and blinking read) while drawing a frame takes under 1/(60 N) of a second, about 2 ms at 8x; and
-    ``Clock.tick`` rounds the frame time down to whole milliseconds (16 ms, 62.5 FPS, at 1x). So the map runs the frames
-    the game clock has gone through since it last drew: N frames for every 1/60 of a real second, however long a draw
-    takes. Every frame still runs, in order, so steps and NPC turns are exactly as many frames as before; only the
-    drawing of some of them is skipped when drawing is slow."""
+    Running one frame per draw at NES_FPS * N only keeps up with the game clock (``game_ticks``, which the dialogs,
+    effects and blinking read) while drawing a frame takes under 1/(NES_FPS N) of a second, about 2 ms at 8x. So the
+    map runs the frames the game clock has gone through since it last drew: N frames for every 1/NES_FPS of a real
+    second, however long a draw takes. Every frame still runs, in order, so steps and NPC turns are exactly as many
+    frames as before; only the drawing of some of them is skipped when drawing is slow."""
 
     def __init__(self, max_frames: int, stall_ms: int = 100):
         """
@@ -274,7 +288,7 @@ class FramePacer:
 
     def frames_due(self) -> int:
         """How many frames to run now, before the next draw (0 if the last draw came before a frame was due)."""
-        frame = game_ticks() * NES_FPS // 1000
+        frame = frame_at(game_ticks())
         real = time.get_ticks()
         if self._last_frame is None or self.stalled(real):
             due = 1
@@ -286,6 +300,41 @@ class FramePacer:
     def stalled(self, now: int | None = None) -> bool:
         """Whether more than ``stall_ms`` real milliseconds have gone by since ``frames_due``."""
         return (time.get_ticks() if now is None else now) - self._last_real > self.stall_ms
+
+
+class FrameClock:
+    """Paces the main loop (Game.main): each pass waits until a new NES frame has begun on the game clock, so the map
+    is drawn once for each frame FramePacer runs, NES_FPS times a second at normal speed (N times that at speed N).
+
+    ``pygame.time.Clock.tick`` can't do that: it takes whole milliseconds, so ``tick(60)`` waited 16 ms, about 62.5
+    passes a second, and one pass in about 25 had no new frame to show. Here the frame boundaries come from the game
+    clock itself, so the passes keep in step with the frames however long each sleep or draw really takes, and never
+    drift from them. A pass that comes after its frame has already begun (slow drawing, or a loop of its own such as a
+    battle) doesn't wait at all, and the passes it missed aren't run one after another: FramePacer runs the map frames
+    they would have."""
+
+    def __init__(self, sleep: Callable[[float], None] = sleep, now: Callable[[], float] = perf_counter):
+        """
+        :param sleep: Sleeps a number of seconds (``time.sleep``).
+        :param now: Real seconds (``time.perf_counter``): a wait never lasts more than two frames of real time, even if
+            the game clock stands still (as tests can make it).
+        """
+        self.sleep = sleep
+        self.now = now
+        self._last_frame: int | None = None
+
+    def tick(self) -> None:
+        """Wait until a frame begins that the last pass didn't start in, unless one already has."""
+        frame = frame_at(game_ticks())
+        if self._last_frame is not None and frame <= self._last_frame:
+            next_frame = self._last_frame + 1
+            give_up = self.now() + 2 / (NES_FPS * _speed)
+            while frame < next_frame and self.now() < give_up:
+                # game milliseconds until the frame begins, in real seconds; at least a fifth of a millisecond, as the
+                # game clock only counts whole milliseconds
+                self.sleep(max(frames_to_ms(next_frame) - game_ticks(), 0.2) / _speed / 1000)
+                frame = frame_at(game_ticks())
+        self._last_frame = frame
 
 
 def is_any_key_held(keys: Collection[int]) -> bool:

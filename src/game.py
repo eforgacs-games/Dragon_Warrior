@@ -51,7 +51,8 @@ from src.battle_controller import BattleController, BattleOutcome
 from src.ending import Ending
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
-from src.waiting import SPEED_KEYS, FramePacer, clear_events_keeping_quit, game_speed, reset_game_speed, set_game_speed
+from src.waiting import NES_FPS, SPEED_KEYS, FrameClock, FramePacer, clear_events_keeping_quit, game_speed, \
+    reset_game_speed, set_game_speed
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.visual_effects import flash_transparent_color, force_field_flash
@@ -192,6 +193,7 @@ class Game:
         self.title_menu = TitleMenu(self)
 
         self.clock = Clock()
+        self.frame_clock = FrameClock()
         # Half a step at most between two draws: every step is drawn at least once while it's under way, so the drawer
         # sees the hero moving (which closes the pop-up window), and he never moves more than a tile between two draws
         self.frame_pacer = FramePacer(max_frames=STEP_SYNC_FRAMES // 2)
@@ -234,7 +236,8 @@ class Game:
             self.load_checkpoint(self.config['CHECKPOINT'])
         self.drawer.draw_all(self, self.game_state.enable_animate)
         while True:
-            self.clock.tick(self.fps)
+            self.frame_clock.tick()  # NES_FPS x the game speed (src/waiting.py)
+            self.clock.tick()  # only measures, for SHOW_FPS
             self.run_due_frames()
             self.drawer.draw_all(self, self.movement.sprites_animate)
             display.flip()
@@ -254,7 +257,7 @@ class Game:
 
     def run_due_frames(self) -> None:
         """Read the events, then run the frames on the map that are due before the next draw (FramePacer): one at a
-        time while drawing keeps up with 60 * N FPS, more when it doesn't, so walking and the NPCs keep pace with the
+        time while drawing keeps up with NES_FPS * N, more when it doesn't, so walking and the NPCs keep pace with the
         game speed and the game clock everything else reads. A frame that changes the map, or opens something with a
         loop of its own (a battle, a dialog), ends the run: the next one starts after the next draw."""
         frames = self.frame_pacer.frames_due()
@@ -802,24 +805,25 @@ class Game:
                 self.cmd_menu.talk()
 
     @property
-    def fps(self) -> int:
-        """The most frames per second the main loop draws: the NES's 60 times the game speed (src/waiting.py). Walking,
-        NPC steps and light changes count map frames (frame_counter too), which run at that rate even when drawing
-        can't keep up with it (run_due_frames), so they speed up with everything else."""
-        return self.game_state.config["FPS"] * game_speed()
+    def fps(self) -> float:
+        """The most frames per second the main loop draws: the NES's 60.0988 (NES_FPS) times the game speed
+        (src/waiting.py FrameClock). Walking, NPC steps and light changes count map frames (frame_counter too), which
+        run at that rate even when drawing can't keep up with it (run_due_frames), so they speed up with everything
+        else."""
+        return NES_FPS * game_speed()
 
     def handle_fps_changes(self, keydown_event) -> None:
-        """Keys 1 to 5: normal, 2x, 4x, 8x or 16x game speed (60, 120, 240, 480 or 960 FPS). It applies everywhere: the
-        map, battles, dialogs, menus and effects (src/waiting.py reads these keys in their loops and waits too, without
-        this text)."""
+        """Keys 1 to 5: normal, 2x, 4x, 8x or 16x game speed (60.1, 120.2, 240.4, 480.8 or 961.6 FPS). It applies
+        everywhere: the map, battles, dialogs, menus and effects (src/waiting.py reads these keys in their loops and
+        waits too, without this text)."""
         speed = SPEED_KEYS.get(keydown_event.key)
         if speed is None:
             return
         set_game_speed(speed)
         if speed == 1:
-            speed_text = self._("Game set to normal speed.\n({} FPS)").format(self.fps)
+            speed_text = self._("Game set to normal speed.\n({} FPS)").format(f'{self.fps:.1f}')
         else:
-            speed_text = self._("Game set to {}x speed.\n({} FPS)").format(speed, self.fps)
+            speed_text = self._("Game set to {}x speed.\n({} FPS)").format(speed, f'{self.fps:.1f}')
         self.draw_temporary_text(speed_text)
 
     def handle_fullscreen_toggle(self, keydown_event) -> None:
