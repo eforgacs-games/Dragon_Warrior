@@ -494,9 +494,8 @@ class DialogLookup:
     def join_dragonlord(self):
         """NES ChooseDrgnLrd / ZeroStats: the bad ending. The Dragonlord answers (TextBlock13 entries 10 and 2),
         the player's experience, gold, items, equipment, spells and flags are all zeroed, "Thy journey is over"
-        (entry 11) is shown, the background palette switches to BadEndBGPal (everything black except the window
-        color, which turns red), the pop-up status window opens, and the game spinlocks (Spinlock3) until the
-        console is reset."""
+        (entry 11) is shown, the background palettes switch to BadEndBGPal (show_bad_ending_palette), the pop-up
+        status window opens, and the game spinlocks (Spinlock3) until the console is reset."""
         _ = self._
         self.command_menu.show_line_in_dialog_box(
             _("Then half of this world is thine, half of the darkness, and...."))
@@ -506,7 +505,7 @@ class DialogLookup:
         journey_is_over = _("Thy journey is over.\nTake now a long, long rest.\nHahahaha....")
         self.command_menu.show_line_in_dialog_box(journey_is_over, add_quotes=False, hide_arrow=True,
                                                   skip_text=True)
-        self.show_bad_ending_palette(journey_is_over)
+        self.show_bad_ending_palette()
         self.bad_ending_spinlock()
 
     def zero_stats_for_bad_ending(self):
@@ -525,19 +524,28 @@ class DialogLookup:
         self.player.update_attack_power()
         self.player.update_defense_power()
 
-    def show_bad_ending_palette(self, final_line):
-        """Approximates NES BadEndBGPal ($16 red as the window color, every other background color black):
-        the map goes black, the dialog window and the pop-up status window are redrawn in red. BadEndBGPal is loaded
-        with PrepBGPalLoad, so AddPalByte's ChkLowHPPal still applies: ZeroStats doesn't touch HitPoints, and if HP is
-        low the window color is the low HP red ($26) instead of $16."""
+    def show_bad_ending_palette(self):
+        """NES ChooseDrgnLrd (Bank03, LD515-LD52D): BadEndBGPal is loaded into the background palettes (PrepBGPalLoad),
+        then the pop-up window is shown again (Dowindow WND_POPUP). BadEndBGPal is $16 (red) for background palette 0's
+        color 1 and black for every other background color, so the windows (the COMMAND, dialog and pop-up windows)
+        turn red on black, the map goes black but for the palette 0 blocks' color 1 pixels, which turn red too
+        (DragonWarriorMap.load_bad_ending_palette), and the hero and the Dragonlord, which are sprites, keep their
+        colors. PrepBGPalLoad's AddPalByte still runs ChkLowHPPal on that color: ZeroStats doesn't touch HitPoints, so
+        if HP is low it is the low HP red ($26) instead of $16."""
         game = self.command_menu.game
         color = window_color(self.player.current_hp, self.player.max_hp)
         color = NES_RED if color == WHITE else color
         game.set_window_color(color)
-        self.screen.fill(BLACK)
-        self.command_menu.show_line_in_dialog_box(final_line, add_quotes=False, hide_arrow=True, skip_text=True,
-                                                  letter_by_letter=False)
-        game.drawer.draw_hovering_stats_window(self.screen, self.player, color)
+        current_map = game.current_map
+        current_map.load_bad_ending_palette(color)
+        drawer = game.drawer
+        if not self.config['NO_BLIT'] and drawer.background is not None:
+            drawer.draw_all_tiles_in_current_map(current_map, drawer.background)
+            drawer.handle_sprite_drawing_and_animation(current_map, game.foreground_rects, drawer.background, False)
+            self.screen.blit(drawer.background, game.camera.pos)
+            self.command_menu.redraw_command_window()
+            self.command_menu.draw_dialog_window()
+        drawer.draw_hovering_stats_window(self.screen, self.player, color)
         display.flip()
 
     def bad_ending_spinlock(self):
