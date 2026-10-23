@@ -125,5 +125,7 @@ class TestFrameClockRealTime(TestCase):
         started = time.perf_counter()
         for _ in range(60):
             clock.tick()
-        # 60 frames are 0.998 s; a loaded machine can oversleep the last one
-        self.assertAlmostEqual(60 / NES_FPS, time.perf_counter() - started, delta=0.1)
+        # 60 frames are 0.998 s, and the passes never take less: they wait for the real clock. A loaded machine can
+        # oversleep any of them by any amount, so there is no upper bound here (the fake-clock tests above pin the
+        # pacing exactly, and a pass that never ends is the test timeout's)
+        self.assertGreaterEqual(time.perf_counter() - started, 59 / NES_FPS)
