@@ -657,6 +657,12 @@ class TestMapMusicAfterAFight(unittest.TestCase):
         mixer_music.play.assert_not_called()  # never around MusicPlayer
         return [c.args for c in self.game.music_player.load_and_play_music.call_args_list]
 
+    def test_battle_music_goes_through_music_player(self, mock_battle_class, mixer_music):
+        battle = self.battle(mock_battle_class)
+        battle.battle_run.return_value = True
+        self.controller.run_battle(['Slime'])
+        battle.play_battle_music.assert_called_once_with(self.game.music_player)
+
     def test_running_away(self, mock_battle_class, mixer_music):
         self.battle(mock_battle_class).battle_run.return_value = True
         self.assertEqual(self.controller.run_battle(['Slime']).value, 'escaped')

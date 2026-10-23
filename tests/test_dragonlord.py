@@ -213,14 +213,14 @@ class TestDragonlordBattle(unittest.TestCase):
             self.assertFalse(battle.battle_run(cmd_menu, player, battle))
         cmd_menu.game.enemy_move.assert_called_once_with(battle)
 
-    @patch('src.battle.mixer')
-    def test_end_boss_music_only_for_final_form(self, mock_mixer):
+    def test_end_boss_music_only_for_final_form(self):
+        music_player = Mock()
         first = Battle(self.config, 'Dragonlord', Mock())
-        first.play_battle_music()
-        mock_mixer.music.load.assert_called_with(first.directories.battle_music)
+        first.play_battle_music(music_player)
+        music_player.load_and_play_music.assert_called_with(first.directories.battle_music)
         second = Battle(self.config, 'Dragonlord 2', Mock())
-        second.play_battle_music()
-        mock_mixer.music.load.assert_called_with(second.directories.end_boss_music)
+        second.play_battle_music(music_player)
+        music_player.load_and_play_music.assert_called_with(second.directories.end_boss_music)
         self.assertTrue(os.path.exists(second.directories.end_boss_music))
 
     def test_final_form_has_full_hp_and_reveal_text(self):
@@ -228,9 +228,8 @@ class TestDragonlordBattle(unittest.TestCase):
         self.assertEqual(battle.enemy.hp, battle.enemy.max_hp)
         self.assertTrue(battle.get_enemy_draws_near_string().startswith('The Dragonlord revealed his true self!'))
 
-    @patch('src.battle.mixer')
     @patch('src.battle.wait_frames')
-    def test_first_form_defeat_gives_no_experience(self, mock_wait_frames, mock_mixer):
+    def test_first_form_defeat_gives_no_experience(self, mock_wait_frames):
         battle = Battle(self.config, 'Dragonlord', Mock())
         cmd_menu, screen = Mock(), Mock()
         with patch.object(battle, 'make_enemy_image_disappear'):

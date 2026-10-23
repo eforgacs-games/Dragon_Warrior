@@ -145,10 +145,6 @@ class BattleController:
         return self.game.auto_battle
 
     @property
-    def music_enabled(self):
-        return self.game.music_enabled
-
-    @property
     def current_map(self):
         return self.game.current_map
 
@@ -212,7 +208,7 @@ class BattleController:
         self.player.is_asleep = False
         self.player.is_stopspelled = False
         self.player_ran_away = False
-        current_battle.play_battle_music()
+        current_battle.play_battle_music(self.music_player)
         # TODO: Group parameters into respective classes.
         current_battle.display_battle_window(self.screen, self.drawer,
                                              self.cmd_menu, self.graphics, self.directories,
@@ -230,8 +226,7 @@ class BattleController:
                 return self.fight_enemy('Dragonlord 2')
             # NES EnemyDefeated: the Green Dragon and Golem guardians' story flags
             record_victory(current_battle.enemy.name, self.current_map.identifier, self.game.story_flags)
-            current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, self.music_enabled,
-                                          current_battle.enemy)
+            current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, current_battle.enemy)
             outcome = BattleOutcome.VICTORY
         elif self.player.is_dead:
             outcome = BattleOutcome.DEFEAT
