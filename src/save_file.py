@@ -10,19 +10,38 @@ the treasure chest history and the repel timer aren't saved.
 
 Saves and the playtest checkpoints in data/checkpoints/ (src/checkpoints.py) are read with SaveFile.from_save, which
 gives a key a save doesn't have the value Game.load_game always gave it, so older saves load as they always have.
+
+Format versions: from 1.0 on, an adventure log saved by any 1.x build loads in every later one. Each save says which
+format it is in (VERSION_KEY, SAVE_FORMAT_VERSION); from_save first brings an older one up to date with
+``migrate_save``, one MIGRATIONS step per version. A change to what a save holds that from_save's defaults can't read
+from the older saves needs a new version, a migration to it and a sample save of the old format in
+tests/sample_saves/ (tests/test_save_compatibility.py loads every one).
+- Version 0, no VERSION_KEY: every save from before 1.0. The keys were added over time (Name, Experience, Gold and
+  Inventory at first; then HP, MP, the equipment, spells and position; the worn Dragon's Scale and Fighter's Ring; the
+  Rainbow Bridge and Charlock stairs as flat keys, later the StoryFlags entry; the options), and up to #390 the
+  inventory was the items alone, packed, rather than the slots with None for an emptied one.
+- Version 1: the same keys as the last version 0 saves, with VERSION_KEY, the story flags always as the StoryFlags
+  entry and the inventory always as slots.
 """
 import json
 import os
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 from src.dungeon_map import SAVE_KEY as DUNGEON_MAP_SAVE_KEY
 from src.options_screen import Options, options_from_save, options_to_save
+from src.story_flags import LEGACY_SAVE_KEYS as LEGACY_STORY_FLAG_KEYS
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.story_flags import StoryFlags
 
-# The save file keys, in the order CommandMenu.save writes them; the StoryFlags entry and the options keys follow
+# The format of the saves this build writes (see the module docstring), the first key of every save from 1.0 on
+SAVE_FORMAT_VERSION = 1
+VERSION_KEY = 'SaveVersion'
+
+# The save file keys, in the order CommandMenu.save writes them (after VERSION_KEY); the StoryFlags entry and the
+# options keys follow
 NAME_KEY = 'Name'
 EXPERIENCE_KEY = 'Experience'
 GOLD_KEY = 'Gold'
@@ -97,6 +116,7 @@ class SaveFile:
     def to_save(self) -> dict[str, Any]:
         """The save file's JSON object, key for key as CommandMenu.save has always written it."""
         return {
+            VERSION_KEY: SAVE_FORMAT_VERSION,
             NAME_KEY: self.name,
             EXPERIENCE_KEY: self.experience,
             GOLD_KEY: self.gold,
@@ -126,7 +146,9 @@ class SaveFile:
     def from_save(cls, save: dict[str, Any]) -> 'SaveFile':
         """Read a save file's JSON object. Name, Experience, Gold and Inventory must be there (KeyError if not); the
         rest falls back to the defaults above, the story flags to StoryFlags.from_save's (which also reads older
-        saves' flat keys) and the options to NORMAL, CLASSIC and ON."""
+        saves' flat keys) and the options to NORMAL, CLASSIC and ON. A save in an older format is brought up to date
+        first (migrate_save)."""
+        save = migrate_save(save)
         return cls(name=save[NAME_KEY], experience=save[EXPERIENCE_KEY], gold=save[GOLD_KEY],
                    inventory=save[INVENTORY_KEY], current_hp=save.get(CURRENT_HP_KEY),
                    current_mp=save.get(CURRENT_MP_KEY), weapon=save.get(WEAPON_KEY, ''),
@@ -161,6 +183,51 @@ class SaveFile:
         player.update_defense_power()
         player.inventory = self.inventory
         player.spells = self.spells
+
+
+def save_format_version(save: dict[str, Any]) -> int:
+    """The format a save's JSON object is in: VERSION_KEY, or 0 for a save from before 1.0, which has none."""
+    version = save.get(VERSION_KEY, 0)
+    return version if isinstance(version, int) and not isinstance(version, bool) and version >= 0 else 0
+
+
+def _from_version_0(save: dict[str, Any]) -> dict[str, Any]:
+    """Version 0 to 1: the story flags as the StoryFlags entry, and the inventory as slots.
+
+    A save from before the StoryFlags entry has the Rainbow Bridge and Charlock flags as flat keys, or none at all:
+    StoryFlags.from_save works the flags out from them (and from the inventory) and they are saved as the entry. A
+    save from before #390 has only the items, packed together, which are the slots with none of them empty: the slot
+    order is the order they were listed in."""
+    migrated = {key: value for key, value in save.items() if key not in LEGACY_STORY_FLAG_KEYS}
+    migrated[STORY_FLAGS_SAVE_KEY] = StoryFlags.from_save(save).to_save()
+    if INVENTORY_KEY in save:
+        inventory = save[INVENTORY_KEY]
+        if not isinstance(inventory, list):
+            raise ValueError(f"Not an inventory: {inventory!r}")
+        migrated[INVENTORY_KEY] = [item if isinstance(item, str) else None for item in inventory]
+    return migrated
+
+
+# MIGRATIONS[n] turns a save in format n into format n + 1; there is one for every version before SAVE_FORMAT_VERSION
+MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {
+    0: _from_version_0,
+}
+
+
+def migrate_save(save: dict[str, Any]) -> dict[str, Any]:
+    """A save's JSON object in the current format (SAVE_FORMAT_VERSION), as a new dict: the MIGRATIONS from its own
+    format on, in order. A save from a newer build than this one is read as it is, as far as this build can: the keys
+    it knows read as they always have, and the rest is ignored."""
+    version = save_format_version(save)
+    if version > SAVE_FORMAT_VERSION:
+        print(f"This adventure log was saved by a newer version of the game (save format {version}); "
+              f"loading what this version knows of it.")
+        return dict(save)
+    migrated = dict(save)
+    for from_version in range(version, SAVE_FORMAT_VERSION):
+        migrated = MIGRATIONS[from_version](migrated)
+    migrated[VERSION_KEY] = SAVE_FORMAT_VERSION
+    return migrated
 
 
 def save_file_name(log: int) -> str:
