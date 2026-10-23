@@ -59,7 +59,7 @@ from src.waiting import SPEED_KEYS, FramePacer, clear_events_keeping_quit, game_
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.visual_effects import flash_transparent_color, force_field_flash
-from src.waiting import quit_if_requested, wait
+from src.waiting import quit_if_requested
 from src.windows import COMMAND_WINDOW
 
 
@@ -733,9 +733,10 @@ class Game:
             else:
                 self.drawer.draw_all_tiles_in_current_map(self.current_map, self.drawer.background)
                 display.flip()
-            self.music_player.load_and_play_music(self.directories.death_sfx, 1)
             self.game_state.enable_movement = False
-            wait(self.calculation.convert_to_milliseconds(318), self.game_state.config)
+            # NES PlayerHasDied / InitDeathSequence: MSC_DEATH, then WaitForMusicEnd. It plays once, and "Thou art
+            # dead." only comes once it has finished.
+            self.music_player.play_until_end(self.directories.death_music, self.game_state.config)
             clear_events_keeping_quit()  # keys pressed during the death music are dropped (a window close isn't)
 
             # NES DeathText: the game then loops until JoypadBtns AND #$09, A or START (held or not)
@@ -794,7 +795,8 @@ class Game:
             return
 
         self.player.current_hp = max(self.player.current_hp - damage_amount, 0)
-        self.sound.play_sound(self.directories.swamp_sfx)
+        # NES ChkOtherBlocks: SFX_FFDAMAGE on a force field (LCE2B), SFX_SWMP_DMG on a swamp (LCDD4)
+        self.sound.play_sound(self.directories.barrier_sfx if force_field else self.directories.swamp_sfx)
         self.player.received_environment_damage = True
         if force_field:
             # NES force field damage (LCE30): the screen flashes red three times
