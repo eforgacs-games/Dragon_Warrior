@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pygame
 
 from src import encounters
+from src.battle_controller import BattleOutcome
 from src.config.test_config import test_config
 from src.encounters import (
     DUNGEON_ENEMY_GROUPS, ENEMY_GROUPS, NES_COORDINATE_OFFSETS, OVERWORLD_ZONE_GRID, encounter_group, fight_mask,
@@ -383,6 +384,48 @@ class TestHandleBattles(unittest.TestCase):
         with patch.object(self.game.battle_ctrl, 'is_repelled', return_value=True):
             self.game.handle_battles()
         self.assertFalse(self.game.battle_ctrl.launch_battle)
+
+    def step_onto_stairs_and_fight(self, outcome):
+        """Step onto Garin's Grave B2's stairs up (layout row 3, column 12) with a fight rolled there, which ends with
+        outcome, then run the rest of the frame's warp check. Returns process_warp's mock."""
+        self.step_onto('GarinsGraveB2', 3, 12)
+        self.assertIn((3, 12), self.game.current_map.staircases)
+        self.game.tiles_moved_since_spawn = self.game.last_amount_of_tiles_moved + 5  # past a new map's wait for stairs
+        with patch('src.encounters.random.randint', return_value=0), \
+                patch.object(self.game.battle_ctrl, 'run_battle', return_value=outcome) as run_battle:
+            self.game.handle_battles()
+        run_battle.assert_called_once()
+        self.game.player.row, self.game.player.column = 3, 12  # set_character_position, later in the frame
+        with patch.object(self.game.map_mgr, 'process_warp') as process_warp:
+            self.game.handle_warps()
+        return process_warp
+
+    def test_a_fight_on_stairs_leaves_the_hero_on_them(self):
+        # NES: only the STAIRS command takes stairs, so after a fight started on them the hero is still there (#312)
+        for outcome in (BattleOutcome.VICTORY, BattleOutcome.ESCAPED):
+            with self.subTest(outcome=outcome):
+                process_warp = self.step_onto_stairs_and_fight(outcome)
+                process_warp.assert_not_called()
+                # standing there, frame after frame
+                with patch.object(self.game.map_mgr, 'process_warp') as process_warp:
+                    self.game.handle_warps()
+                    self.game.handle_warps()
+                process_warp.assert_not_called()
+
+    def test_stairs_fought_on_are_taken_after_stepping_off_and_back(self):
+        self.step_onto_stairs_and_fight(BattleOutcome.VICTORY)
+        player = self.game.player
+        with patch.object(self.game.map_mgr, 'process_warp') as process_warp:
+            player.row, player.column = 3, 11
+            self.game.handle_warps()
+            player.row, player.column = 3, 12
+            self.game.handle_warps()
+        process_warp.assert_called_once_with(self.game.current_map.staircases[(3, 12)])
+
+    def test_stairs_are_taken_when_no_fight_happened(self):
+        # REPEL kept the enemy away: no fight, so the step onto the stairs takes them as usual
+        process_warp = self.step_onto_stairs_and_fight(BattleOutcome.REPELLED)
+        process_warp.assert_called_once_with(self.game.current_map.staircases[(3, 12)])
 
     def test_no_fights_in_erdricks_cave_or_towns(self):
         for map_name, row, column in (('ErdricksCaveB1', 3, 3), ('Brecconary', 23, 10)):

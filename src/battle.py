@@ -63,9 +63,21 @@ class Battle:
 
     def play_battle_music(self, music_player):
         """NES InitFight: the Dragonlord's final form gets the end boss music (MSC_END_BOSS); every other fight,
-        including his first form, gets the regular fight music (MSC_ENTR_FGHT)."""
-        music = self.directories.end_boss_music if self.enemy.name == 'Dragonlord 2' else self.directories.battle_music
-        music_player.load_and_play_music(music)
+        including his first form, gets the enter fight music (MSC_ENTR_FGHT), whose opening runs into the fight loop
+        (SQ1EntFight falls through into SQ1Fight), so the opening plays once and the fight loop (MSC_REG_FGHT) repeats."""
+        if self.enemy.name == 'Dragonlord 2':
+            music_player.load_and_play_music(self.directories.end_boss_music)
+        else:
+            music_player.load_and_play_music(self.directories.battle_music,
+                                             then_loop=self.directories.regular_fight_music)
+
+    def resume_battle_music(self, music_player):
+        """NES ChkUseFlute and ChkUseHarp, after the clip: the fight music again from the start, without the enter fight
+        opening: MSC_END_BOSS against the Dragonlord's final form, MSC_REG_FGHT against anything else."""
+        if self.enemy.name == 'Dragonlord 2':
+            music_player.load_and_play_music(self.directories.end_boss_music)
+        else:
+            music_player.load_and_play_music(self.directories.regular_fight_music)
 
     def transition_battle_background_image_effect(self, screen, player):
         """Spiral effect to introduce battle background (NES LoadCombatBckgrnd, $E3CD).

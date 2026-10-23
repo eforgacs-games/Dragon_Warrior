@@ -10,6 +10,7 @@ from pygame import Surface, image, transform, K_RETURN, K_i, K_k, K_ESCAPE, K_j,
 from src.color import WHITE, BLACK
 from src.direction import Direction
 from src.directories import Directories
+from src.paths import data_path
 
 
 def find_file(name, path):
@@ -178,7 +179,7 @@ A_OR_START_KEYS = A_BUTTON_KEYS + START_BUTTON_KEYS
 
 
 def set_gettext_language(language):
-    localedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'text', 'locales'))
+    localedir = data_path('text', 'locales')
     if language == 'Korean':
         ko = gettext.translation('base', localedir=localedir, languages=['ko'])
         ko.install()

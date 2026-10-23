@@ -1142,7 +1142,7 @@ class GarinsGraveB1(MapWithoutNPCs, CaveMap):
 
 class GarinsGraveB2(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().garins_grave_b2, config, Directories(config).dungeon_floor_1_music, (3, 12),
+        super().__init__(MapLayouts().garins_grave_b2, config, Directories(config).dungeon_floor_2_music, (3, 12),
                          staircases={
                              (3, 12): {'map': 'GarinsGraveB1', 'destination_coordinates': (19, 2),
                                        'stair_direction': 'up'},  # A
@@ -1165,7 +1165,7 @@ class GarinsGraveB2(MapWithoutNPCs, CaveMap):
 
 class GarinsGraveB3(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().garins_grave_b3, config, Directories(config).dungeon_floor_1_music, (2, 19),
+        super().__init__(MapLayouts().garins_grave_b3, config, Directories(config).dungeon_floor_3_music, (2, 19),
                          staircases={
                              (2, 19): {'map': 'GarinsGraveB2', 'destination_coordinates': (2, 13),
                                        'stair_direction': 'up'},  # B
@@ -1194,7 +1194,7 @@ class GarinsGraveB3(MapWithoutNPCs, CaveMap):
 
 class GarinsGraveB4(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().garins_grave_b4, config, Directories(config).dungeon_floor_1_music, (5, 1),
+        super().__init__(MapLayouts().garins_grave_b4, config, Directories(config).dungeon_floor_4_music, (5, 1),
                          staircases={
                              (5, 1): {'map': 'GarinsGraveB3', 'destination_coordinates': (6, 10),
                                       'stair_direction': 'up'},  # G
@@ -1237,7 +1237,7 @@ class MountainCaveB2(MapWithoutNPCs, CaveMap):
     """Rock Mountain Cave B2 (NES MAP_RCKMTN_B2). Layout coordinates are the NES ones + (1, 1)."""
 
     def __init__(self, config):
-        super().__init__(MapLayouts().mountain_cave_b2, config, Directories(config).dungeon_floor_1_music, (1, 1),
+        super().__init__(MapLayouts().mountain_cave_b2, config, Directories(config).dungeon_floor_2_music, (1, 1),
                          staircases={
                              # NES MapTargetTbl: Rock mtn B2(0,0), (6,5) and (12,12) -> Rock mtn B1, same coordinates
                              (1, 1): {'map': 'MountainCaveB1', 'destination_coordinates': (1, 1)},
