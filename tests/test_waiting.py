@@ -20,6 +20,9 @@ class TestWait(TestCase):
     def setUp(self):
         reset_game_speed()  # these waits are timed in real milliseconds, at normal speed
         pygame.event.clear()
+        # A QUIT a wait only peeked at stays queued: don't leave it for the next test in this process (pytest-xdist
+        # runs other files' tests after these)
+        self.addCleanup(pygame.event.clear)
         quit_patch = patch('src.waiting.pygame_quit')
         self.pygame_quit = quit_patch.start()
         self.addCleanup(quit_patch.stop)
@@ -87,6 +90,7 @@ class TestQuitDuringGameWaits(TestCase):
         self.game = new_game(config)
         self.game.player.name = "Edward"
         pygame.event.clear()
+        self.addCleanup(pygame.event.clear)  # nor a QUIT these tests post
         patcher = patch('src.waiting.pygame_quit')
         patcher.start()
         self.addCleanup(patcher.stop)
