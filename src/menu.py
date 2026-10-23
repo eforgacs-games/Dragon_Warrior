@@ -6,7 +6,7 @@ from os.path import join
 from src.spells import Spell
 from typing import Any, Callable, Collection, Iterable, Tuple, List
 
-from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, USEREVENT, time, transform
+from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, transform
 from pygame.sprite import Group
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
@@ -33,6 +33,7 @@ from src.options_screen import MODERN, options_from_config, options_to_save
 from src.sound import Sound
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.text import draw_text, set_font_by_ascii_chars
+from src.pygame_compat import arrow_fade
 from src.waiting import handle_speed_key
 from src.window_renderer import draw_window
 from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENTRIES, COMMAND_LAYOUT, COMMAND_TITLE, \
@@ -43,7 +44,6 @@ from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENT
     STATUS_NAME_TILE_ROW, STATUS_VALUE_RIGHT_TILE_COLUMN, STATUS_VALUE_TILE_ROWS, STATUS_WINDOW, YES_NO_LAYOUT, \
     YES_NO_WINDOW, item_menu_entry_tile_row, item_menu_layout, item_menu_window, Window, name_halves
 
-arrow_fade = USEREVENT + 1
 # The COMMAND window's commands, in WndSelResults order (NCC_TALK $00 to NCC_TAKE $07; src/windows.py COMMAND_ENTRIES):
 # the CommandMenu methods Bank03 NCCmdSelected and CheckCmdWndResults run for each
 COMMAND_METHODS = ('talk', 'status', 'stairs', 'search', 'spell', 'item', 'door', 'take')
@@ -53,17 +53,11 @@ DIALOG_WINDOW = (2, 9, 12, 5)
 DIALOG_FPS = 60
 
 
-class Menu:
-    def __init__(self):
-        self.launch_signaled = False
-        self.skip_text = False
-        time.set_timer(arrow_fade, 530)
-
-
-class CommandMenu(Menu):
+class CommandMenu:
 
     def __init__(self, game):
-        super().__init__()
+        self.launch_signaled = False
+        self.skip_text = False
         self.game = game
         self.player = self.game.player
 
@@ -1461,7 +1455,7 @@ class CommandMenu(Menu):
                                 function_dict[currently_selected_item]()
                         chosen_item = currently_selected_item
                         item_menu_displayed = False
-                    elif len(menu_name) > 1:
+                    else:
                         if current_event.key in (K_UP, K_w) and current_arrow_position > 0:
                             current_arrow_position -= 1
                             cursor.restart()  # WndUpdateCrsrPos
