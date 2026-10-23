@@ -154,6 +154,15 @@ while it runs.
 
 F4 / F9 / F11: Turn auto-battle, invulnerability or fullscreen on or off
 
+Shift + F1 / F2 / F3: Save state 1, 2 or 3, and F1 / F2 / F3: load it. Not on the NES: a save state is like an
+emulator's, a complete snapshot of the game that loading puts back exactly (the map and where everyone stands, the
+hero, every story flag, the opened doors and chests, the timers, the NPCs' movement and the random number generator,
+so the same keys play out the same way again). It works on the map whenever START would pause the game, once the hero
+has finished his step; not in a fight, a dialog or a menu. States are kept in the save folder as `state_1.json` to
+`state_3.json`, apart from the adventure logs, which save as the NES does. A state saved by an older version of the
+game, after its format has changed, is refused with a message. The game speed, auto-battle, invulnerability and
+fullscreen aren't part of a state.
+
 1 / 2 / 3 / 4 / 5: Game speed (normal, 2x, 4x, 8x, 16x). This works anywhere, including battles, dialogs and
 menus, and speeds up everything: walking, text, battle effects and pauses. On the map the higher speeds go as fast as
 the computer can draw it, up to the speed you chose. Only timing changes, not what happens in
