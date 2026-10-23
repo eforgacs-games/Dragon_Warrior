@@ -59,7 +59,7 @@ class TestCopyAndErase(OptionsTestCase):
         has to come back (WndBackToMain)."""
         with patch.object(self.game.game_functions, 'main_menu_selection', side_effect=[entry, CONTINUE]) \
                 as title_menu, patch.object(self.game.title_menu, 'continue_quest') as continue_quest, \
-                patch('src.options_screen.event.get', side_effect=presses(*events)):
+                patch('src.selection.event.get', side_effect=presses(*events)):
             self.game.title_menu.show_main_menu_screen(self.game.screen)
         self.assertEqual(2, title_menu.call_count)
         continue_quest.assert_called_once()
@@ -175,7 +175,7 @@ class TestLogWindows(OptionsTestCase):
 
     def test_open_logs_window_opens_over_the_used_logs_window(self):
         screen = OptionsScreen(self.game.screen, self.config)
-        with patch('src.options_screen.event.get', side_effect=presses(DOWN, ENTER, DOWN, ENTER)):
+        with patch('src.selection.event.get', side_effect=presses(DOWN, ENTER, DOWN, ENTER)):
             self.assertEqual(2, screen.choose_log([(1, 'Erdrick'), (2, 'Lotoroto')]))
             self.assertEqual(3, screen.choose_open_log([1, 3]))
         self.assertEqual([1, 1], [index for _, index in screen.windows])
@@ -192,7 +192,7 @@ class TestContinueWithOneLog(OptionsTestCase):
             json.dump({'Name': 'Erdrick', 'Experience': 0}, save_file)
         self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
         # B, then A (which would continue the quest if B were ignored)
-        with patch('src.game_functions.event.get', side_effect=[[B], [ENTER]]), \
+        with patch('src.selection.event.get', side_effect=[[B], [ENTER]]), \
                 patch.object(self.game, 'load_game') as load_game:
             self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.continue_quest())
         load_game.assert_not_called()
@@ -204,7 +204,7 @@ class TestContinueWithOneLog(OptionsTestCase):
         with open(os.path.join(tmp_dir.name, 'save_slot_1.json'), 'w') as save_file:
             json.dump({'Name': 'Erdrick', 'Experience': 0}, save_file)
         self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
-        with patch('src.game_functions.event.get', side_effect=[[ENTER]]), \
+        with patch('src.selection.event.get', side_effect=[[ENTER]]), \
                 patch.object(self.game, 'load_game') as load_game:
             self.game.title_menu.continue_quest()
         load_game.assert_called_once()
@@ -221,7 +221,7 @@ class TestNewQuestLog(OptionsTestCase):
 
     def new_quest(self, keys):
         """The real title menu with no logs, played key by key (one key per frame), up to the name entry."""
-        with patch('src.game_functions.event.get', side_effect=[[key] for key in keys]), \
+        with patch('src.selection.event.get', side_effect=[[key] for key in keys]), \
                 patch('src.title_menu.NameSelection') as name_selection, \
                 patch.object(self.game.title_menu, 'choose_new_quest_options'), \
                 patch.object(self.game, 'start_at_throne_room'):
@@ -241,7 +241,7 @@ class TestNewQuestLog(OptionsTestCase):
         self.assertEqual(3, self.game.player.adventure_log)
 
     def test_b_goes_back_before_the_name_entry(self):
-        with patch('src.game_functions.event.get', side_effect=[[B]]), \
+        with patch('src.selection.event.get', side_effect=[[B]]), \
                 patch('src.title_menu.NameSelection') as name_selection:
             self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.begin_new_quest())
         name_selection.assert_not_called()

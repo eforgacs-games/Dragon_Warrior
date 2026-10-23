@@ -4,17 +4,17 @@ import random
 from src.spells import Spell
 from typing import Any, Callable, Collection, Iterable, Tuple, List
 
-from pygame import Surface, display, KEYDOWN, Rect, event, K_UP, K_DOWN, K_w, K_s, transform
+from pygame import Surface, display, KEYDOWN, Rect, event, transform
 from pygame.sprite import Group
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from data.text.dialog_lookup_table import DialogLookup
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
-from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, accept_keys, reject_keys, Graphics, set_gettext_language
+from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, Graphics, set_gettext_language
 from src.command_window import WND_ABORT, CommandWindow
-from src.cursor import BlinkingCursor, DialogArrowBlink, draw_cursor_tile
-from src.waiting import is_any_key_held, quit_if_requested, wait
+from src.cursor import DialogArrowBlink, draw_cursor_tile
+from src.waiting import is_any_key_held, wait
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
@@ -28,10 +28,10 @@ from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.options_screen import MODERN, options_from_config
 from src.save_file import ADVENTURE_LOGS, SaveFile, log_for_unchosen_save, save_path, write_save
+from src.selection import YES, frame_events, next_frame, run_selection, stop_at_edges
 from src.sound import Sound
 from src.text import draw_text, set_font_by_ascii_chars
 from src.translated_window import draw_translated_window
-from src.waiting import handle_speed_key
 from src.window_renderer import draw_window
 from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENTRIES, COMMAND_LAYOUT, COMMAND_TITLE, \
     COMMAND_WINDOW, COUNTED_ITEMS, DIALOG_LAYOUT, ITEM_COUNT_TILE_COLUMN, ITEM_MENU_CURSOR_TILE_COLUMN, \
@@ -314,6 +314,7 @@ class CommandMenu:
         if advance_keys is None:
             advance_keys = A_OR_B_KEYS if shows_arrow else ANY_BUTTON_KEYS
         arrow_blink = DialogArrowBlink()  # DoWait: the arrow starts on, then blinks on the frame count
+        drawn_arrow: bool | None = None
         while True:
             if skip_text or (temp_text_start and get_ticks() - temp_text_start >= 1000):
                 if not skip_text and not disable_sound:
@@ -321,8 +322,10 @@ class CommandMenu:
                 return
             if held_counts and is_any_key_held(advance_keys):
                 break
-            if shows_arrow:
-                self.draw_dialog_arrow(arrow_blink.visible())
+            if shows_arrow and arrow_blink.visible() != drawn_arrow:  # drawn only when the blink changes
+                drawn_arrow = arrow_blink.visible()
+                self.draw_dialog_arrow(drawn_arrow)
+            next_frame()  # one pass per NES frame (src/selection.py)
             if self.read_dialog_events(advance_keys):
                 break
         if not disable_sound:
@@ -337,14 +340,10 @@ class CommandMenu:
         self.wait_for_dialog_key(shows_arrow=shows_arrow, skip_text=False, temp_text_start=None, disable_sound=True)
 
     def read_dialog_events(self, advance_keys: Collection[int]) -> bool:
-        """Takes the queued events; returns whether one was a press of advance_keys."""
-        for current_event in event.get():
-            quit_if_requested(current_event)
-            if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
-                continue
-            if current_event.type == KEYDOWN and current_event.key in advance_keys:
-                return True
-        return False
+        """Takes the queued events; returns whether one was a press of advance_keys. Closing the window quits and the
+        keys 1 to 4 only set the game speed (src/selection.py frame_events)."""
+        return any(current_event.type == KEYDOWN and current_event.key in advance_keys
+                   for current_event in frame_events())
 
     def run_dialog_steps(self, steps: Iterable[DialogStep], animate: bool, frames_per_char: int,
                          disable_sound: bool) -> None:
@@ -637,25 +636,11 @@ class CommandMenu:
 
     def prompt_yes_no(self) -> bool:
         """A YES/NO window. Returns True for YES; NO or backing out returns False."""
-        yes_selected = True
-        cursor = BlinkingCursor()  # WndInitSelect
-        while True:
-            self.draw_yes_no_window(yes_selected, cursor.visible())
-            for current_event in event.get():
-                quit_if_requested(current_event)
-                if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
-                    continue
-                if current_event.type != KEYDOWN:
-                    continue
-                if current_event.key in accept_keys or current_event.key in reject_keys:
-                    # WndAPressed/WndBPressed: the arrow is drawn once more and stays on
-                    self.draw_yes_no_window(yes_selected, True)
-                    self.remove_window(YES_NO_WINDOW)  # then NES WindowSequence: RemoveWindow
-                    return yes_selected and current_event.key in accept_keys
-                if current_event.key in (K_UP, K_w, K_DOWN, K_s):
-                    if yes_selected != (current_event.key in (K_UP, K_w)):
-                        yes_selected = not yes_selected
-                        cursor.restart()  # WndUpdateCrsrPos
+        # Up goes to YES and down to NO; A answers with the entry under the cursor, and B is NO (src/selection.py)
+        answer = run_selection(lambda index, visible: self.draw_yes_no_window(index == YES, visible), YES,
+                               move=stop_at_edges(2))
+        self.remove_window(YES_NO_WINDOW)  # then NES WindowSequence: RemoveWindow
+        return answer.accepted and answer.entry == YES
 
     def draw_yes_no_window(self, yes_selected: bool, cursor_visible: bool) -> None:
         """The YES/NO window (YesNo1Dat, generated by src/window_renderer.py): YES and NO at tile column 2 of rows 2
@@ -1122,13 +1107,10 @@ class CommandMenu:
         window_rect = self.draw_status_window()
         display.update(window_rect)
         while show_status:
-            for current_event in event.get():
-                quit_if_requested(current_event)
-                if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
-                    continue
-                # NES LCFA4: the status window waits in WaitForBtnRelease, so any button closes it
-                if current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS:
-                    show_status = False
+            next_frame()  # one pass per NES frame (src/selection.py)
+            # NES LCFA4: the status window waits in WaitForBtnRelease, so any button closes it
+            show_status = not any(current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS
+                                  for current_event in frame_events())
         self.window_drop_up_effect(x, y, width, height)
         # print(f"""
         # NAME: {self.player.name}
@@ -1298,7 +1280,6 @@ class CommandMenu:
         :return: The item chosen, or None if the menu was closed without choosing.
         """
         function_dict: dict[Any, Any] = {}
-        chosen_item = None
         if menu_name in ('inventory', 'discard'):
             # NES CreateInvList: Herbs, then Magic Keys, then each inventory slot in order
             entries = inventory_list(self.player.inventory)
@@ -1338,89 +1319,66 @@ class CommandMenu:
             }
         else:
             raise ValueError(f"Invalid menu name: {menu_name}")
-        item_menu_displayed = True
-        current_arrow_position = 0
-        drawn_arrow_position = None
+        drawn_index: int | None = None
         window_rect = Rect(0, 0, 0, 0)
-        currently_selected_item = entries[0]
-        # The NES cursor (src/cursor.py): visible when the window opens (WndInitSelect)
-        cursor = BlinkingCursor()
 
-        def draw_cursor() -> None:
-            self.draw_window_cursor(ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_CURSOR_TILE_COLUMN,
-                                    item_menu_entry_tile_row(menu_name, current_arrow_position), cursor.visible())
-
-        while item_menu_displayed:
-            if current_arrow_position != drawn_arrow_position:
+        def draw(index: int, cursor_visible: bool) -> None:
+            nonlocal drawn_index, window_rect
+            if index != drawn_index:
                 # Redraw the window to erase the cursor from the entry it left
                 window_rect = self.draw_item_menu(menu_name, entries)
-                drawn_arrow_position = current_arrow_position
-            draw_cursor()
+                drawn_index = index
+            # The NES cursor (src/cursor.py): visible when the window opens (WndInitSelect)
+            self.draw_window_cursor(ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_CURSOR_TILE_COLUMN,
+                                    item_menu_entry_tile_row(menu_name, index), cursor_visible)
             display.update(window_rect)
-            for current_event in event.get():
-                quit_if_requested(current_event)
-                if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
-                    continue
-                if any([current_event.type == KEYDOWN]):
-                    if current_event.key in accept_keys or current_event.key in reject_keys:
-                        # WndAPressed/WndBPressed: the arrow is drawn once more and stays on
-                        cursor.hold()
-                        draw_cursor()
-                        display.update(window_rect)
-                    if current_event.key in reject_keys:
-                        item_menu_displayed = False
-                        if self.current_battle is not None:
-                            # NES: closing the spell or item window in battle returns to the command window
-                            self.current_battle.no_op = True
-                    elif current_event.key in accept_keys:
-                        if menu_name == 'spells':
-                            spell_function, spell_mp_cost = function_dict[currently_selected_item]
-                            if self.current_battle is not None and currently_selected_item in (
-                                    Spell.RADIANT, Spell.REPEL, Spell.OUTSIDE, Spell.RETURN):
-                                # NES: rejected before any MP is spent, and the player acts again
-                                self.show_battle_line(self._("That cannot be used in battle."))
-                                self.current_battle.no_op = True
-                            elif self.player.current_mp < spell_mp_cost:
-                                self.show_line_in_dialog_box(self._("Thy MP is too low."),
-                                                             skip_text=self.skip_text,
-                                                             disable_sound=True,
-                                                             hide_arrow=True,
-                                                             add_quotes=False)
-                                if self.current_battle is not None:
-                                    self.current_battle.no_op = True
-                            else:
-                                self.show_line_in_dialog_box(
-                                    (self._("{} chanted the spell of {}.").format(self.player.name,
-                                                                                  self._(currently_selected_item))),
-                                    add_quotes=False,
-                                    disable_sound=True,
-                                    hide_arrow=True,
-                                    skip_text=self.skip_text)
-                                self.sound.play_sound(self.directories.spell_sfx)
-                                self.player.current_mp -= spell_mp_cost
-                                # NES PlyrCastSpell (LDBB2): the pop-up is redrawn with the MP that is left
-                                self.show_popup_window()
-                                if self.current_battle is not None and self.player.is_stopspelled:
-                                    # NES: the MP is spent, but a stopspelled player's spell is blocked
-                                    self.show_battle_line(self._("But that spell hath been blocked."))
-                                else:
-                                    spell_function()
-                        elif menu_name == 'inventory':
-                            if self.current_battle is not None:
-                                self.use_item_in_battle(currently_selected_item)
-                            else:
-                                function_dict[currently_selected_item]()
-                        chosen_item = currently_selected_item
-                        item_menu_displayed = False
-                    else:
-                        if current_event.key in (K_UP, K_w) and current_arrow_position > 0:
-                            current_arrow_position -= 1
-                            cursor.restart()  # WndUpdateCrsrPos
-                        elif current_event.key in (K_DOWN, K_s) and current_arrow_position < len(entries) - 1:
-                            current_arrow_position += 1
-                            cursor.restart()
-                        currently_selected_item = entries[current_arrow_position]
-        return chosen_item
+
+        # Up and down stop at the first and last entries; A chooses, B closes the window (src/selection.py)
+        answer = run_selection(draw, 0, move=stop_at_edges(len(entries)))
+        currently_selected_item = entries[answer.entry]
+        if not answer.accepted:
+            if self.current_battle is not None:
+                # NES: closing the spell or item window in battle returns to the command window
+                self.current_battle.no_op = True
+            return None
+        if menu_name == 'spells':
+            spell_function, spell_mp_cost = function_dict[currently_selected_item]
+            if self.current_battle is not None and currently_selected_item in (
+                    Spell.RADIANT, Spell.REPEL, Spell.OUTSIDE, Spell.RETURN):
+                # NES: rejected before any MP is spent, and the player acts again
+                self.show_battle_line(self._("That cannot be used in battle."))
+                self.current_battle.no_op = True
+            elif self.player.current_mp < spell_mp_cost:
+                self.show_line_in_dialog_box(self._("Thy MP is too low."),
+                                             skip_text=self.skip_text,
+                                             disable_sound=True,
+                                             hide_arrow=True,
+                                             add_quotes=False)
+                if self.current_battle is not None:
+                    self.current_battle.no_op = True
+            else:
+                self.show_line_in_dialog_box(
+                    (self._("{} chanted the spell of {}.").format(self.player.name,
+                                                                  self._(currently_selected_item))),
+                    add_quotes=False,
+                    disable_sound=True,
+                    hide_arrow=True,
+                    skip_text=self.skip_text)
+                self.sound.play_sound(self.directories.spell_sfx)
+                self.player.current_mp -= spell_mp_cost
+                # NES PlyrCastSpell (LDBB2): the pop-up is redrawn with the MP that is left
+                self.show_popup_window()
+                if self.current_battle is not None and self.player.is_stopspelled:
+                    # NES: the MP is spent, but a stopspelled player's spell is blocked
+                    self.show_battle_line(self._("But that spell hath been blocked."))
+                else:
+                    spell_function()
+        elif menu_name == 'inventory':
+            if self.current_battle is not None:
+                self.use_item_in_battle(currently_selected_item)
+            else:
+                function_dict[currently_selected_item]()
+        return currently_selected_item
 
     def command_window_in_nes_font(self) -> bool:
         """Whether the COMMAND window's title and entries are shown untranslated, in the NES font, so the whole window is

@@ -12,13 +12,8 @@ from tests.helpers import new_game
 
 
 def npc_identifiers(game_map):
-    """The identifiers load_map gives each NPC: the second MERCHANT is MERCHANT_2, and so on."""
-    counts = {}
-    identifiers = {}
-    for coordinates, name in game_map.npc_coordinates.items():
-        counts[name] = counts.get(name, 0) + 1
-        identifiers[coordinates] = name if counts[name] == 1 else f'{name}_{counts[name]}'
-    return identifiers
+    """Layout (row, column) -> the identifier load_map gives the NPC there (its NPC table name)."""
+    return {game_map.npc_position(npc): npc.name for npc in game_map.npcs}
 
 
 class ShopDialogTestCase(TestCase):
