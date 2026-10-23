@@ -20,7 +20,8 @@ from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, RAINBOW_BRIDGE_COORDINATES, \
-    RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES
+    RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES, \
+    TEMP_TEXT_MS
 from src.dialog_box import ARROW_COLUMN, DIALOG_COLUMNS, DIALOG_ROWS, OPEN_QUOTES, SCROLL_ROWS_PER_FRAME, \
     DialogBuffer, DialogStep, ScrollStep, frames_per_character
 from src.direction import Direction
@@ -340,7 +341,7 @@ class CommandMenu:
         arrow_blink = DialogArrowBlink()  # DoWait: the arrow starts on, then blinks on the frame count
         drawn_arrow: bool | None = None
         while True:
-            if skip_text or (temp_text_start and get_ticks() - temp_text_start >= 1000):
+            if skip_text or (temp_text_start and get_ticks() - temp_text_start >= TEMP_TEXT_MS):
                 if not skip_text and not disable_sound:
                     self.sound.play_sound(self.directories.menu_button_sfx)
                 return
@@ -1030,10 +1031,7 @@ class CommandMenu:
             return
         enemy = self.current_battle.enemy
         enemy_name = self._(enemy.name)
-        # NES (ChkSpellFail): the spell fails if a 0-15 roll is below the enemy's sleep resistance (n/16).
-        if random.randint(0, 15) < round(enemy.sleep_resist * 16):
-            self.show_line_in_dialog_box(self._("The spell will not work."), add_quotes=False,
-                                         disable_sound=True, hide_arrow=True)
+        if self.battle_spell_resisted(enemy.sleep_resist):  # NES ChkSpellFail
             return
         enemy.is_asleep = True
         self.show_line_in_dialog_box(self._("Thou hast put the {} to sleep.").format(enemy_name), add_quotes=False,

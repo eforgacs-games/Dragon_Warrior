@@ -23,7 +23,7 @@ from src.config.prod_config import prod_config
 from src.coordinates import Cell
 from src.debug_tools import DebugTools
 from src.constants import (
-    TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT,
+    TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT, TEMP_TEXT_MS,
 )
 from src.direction import Direction
 from src.directories import Directories
@@ -777,9 +777,9 @@ class Game:
 
     def draw_temporary_text(self, text: tuple[str] | list[str] | str, add_quotes=False) -> None:
         """Show a settings message (F2, keys 1 to 4, ...) for a second. It's not part of the game, so it stays up for a
-        real second at any game speed: the dialog closes 1000 game milliseconds after temp_text_start, so start it
+        real second at any game speed: the dialog closes TEMP_TEXT_MS game milliseconds after temp_text_start, so start it
         that much later at higher speeds."""
-        temp_text_start = get_ticks() + 1000 * (game_speed() - 1)
+        temp_text_start = get_ticks() + TEMP_TEXT_MS * (game_speed() - 1)
         self.cmd_menu.show_text_in_dialog_box(text, add_quotes=add_quotes, temp_text_start=temp_text_start,
                                               skip_text=False)
 

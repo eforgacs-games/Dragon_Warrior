@@ -111,10 +111,8 @@ class NameSelection:
 
 
 def get_opposite_direction(direction: int) -> int:
-    if direction >= 2:
-        return direction - 2
-    else:
-        return direction + 2
+    """DOWN <-> UP and LEFT <-> RIGHT (the directions are numbered 0-3 around, so the opposite is 2 along)."""
+    return (direction + 2) % 4
 
 
 def convert_list_to_newline_separated_string(list_to_convert: list[str]) -> str:
