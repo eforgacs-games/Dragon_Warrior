@@ -61,7 +61,7 @@ from src.story_flags import StoryFlags
 from src.waiting import SPEED_KEYS, FramePacer, clear_events_keeping_quit, game_speed, reset_game_speed, set_game_speed
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
-from src.visual_effects import flash_transparent_color
+from src.visual_effects import flash_transparent_color, force_field_flash
 from src.waiting import quit_if_requested, wait
 from src.windows import COMMAND_WINDOW
 
@@ -1034,11 +1034,11 @@ class Game:
                         self.damage_step(damage_amount=2)
                 elif tile == 'BARRIER':
                     if not self.player.received_environment_damage:
-                        self.damage_step(damage_amount=15)
+                        self.damage_step(damage_amount=15, force_field=True)
             else:
                 self.player.received_environment_damage = False
 
-    def damage_step(self, damage_amount):
+    def damage_step(self, damage_amount, force_field=False):
         # God mode or invulnerable: take no damage
         if self.player.god_mode or self.invulnerable:
             return
@@ -1046,7 +1046,12 @@ class Game:
         self.player.current_hp = max(self.player.current_hp - damage_amount, 0)
         self.sound.play_sound(self.directories.swamp_sfx)
         self.player.received_environment_damage = True
-        flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
+        if force_field:
+            # NES force field damage (LCE30): the screen flashes red three times
+            force_field_flash(RED, self.screen, self.game_state.config)
+        else:
+            # NES DoSwampDamage: one red flash
+            flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
         # NES DoSwampDamage and the force field damage: RedFlashScreen, then LoadRegBGPal with the new HP
         self.load_window_palette()
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
