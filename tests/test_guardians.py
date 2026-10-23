@@ -279,7 +279,7 @@ class TestGuardianFights(TestCase):
                 with patch.object(self.game.sound, 'play_sound') as play_sound:
                     self.step_onto(guardian, self.run_away)
                 self.assertEqual(self.where, (guardian.map_identifier, guardian.escape_coordinates))
-                play_sound.assert_any_call(self.game.directories.stairs_down_sfx)  # MapChngWithSound
+                play_sound.assert_any_call(self.game.directories.stairs_sfx)  # MapChngWithSound
                 if guardian.defeated_flag is not None:
                     self.assertFalse(getattr(self.game.story_flags, guardian.defeated_flag))
                 # Still there: the next step onto the tile is another fight
