@@ -185,6 +185,16 @@ class TestGame(TestCase):
         player.level = player.get_level_by_experience()
         self.assertEqual(0, player.points_to_next_level)
 
+    def test_damage_line_says_hit_for_one_point(self):
+        # NES TextBlock16 entry 10: "Thy Hit" + PLRL, which adds an "s" unless the damage is 1 (Bank01 DoPLRL)
+        self.game.player.current_hp = self.game.player.max_hp = 50
+        with patch.object(self.game.battle_ctrl, 'player_hit_effect'), \
+                patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
+            self.game.receive_damage(1)
+            self.game.receive_damage(3)
+        self.assertEqual([c.args[0] for c in show_line.call_args_list],
+                         ["Thy Hit decreased by 1.\n", "Thy Hits decreased by 3.\n"])
+
     def test_hero_underlying_tile(self):
         self.assertEqual('BRICK', self.game.current_map.hero_underlying_tile())
 
@@ -608,7 +618,7 @@ class TestGame(TestCase):
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 
     def test_wise_man_tantegel_courtyard_dialog(self):
-        self.assertEqual("Edward's coming was foretold by legend. May the light shine upon "
+        self.assertEqual("Edward's coming was foretold by legend.\nMay the light shine upon "
                          'this brave warrior.',
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelCourtyard']['WISE_MAN']['dialog'][0])
 
@@ -948,9 +958,10 @@ class TestGame(TestCase):
                     patch.object(self.game, 'load_game'), patch.object(self.game, 'music_player'), \
                     patch('src.map_manager.screen_fade'), patch('src.game.CommandMenu'):
                 self.game.title_menu.continue_quest()
-            overlay = mock_selection.call_args.kwargs['overlay']
-            self.assertEqual('Ed  ', overlay.texts[0].text)
-            self.assertEqual((24, 14), (overlay.texts[0].column, overlay.texts[0].row))
+            # LogList1Dat2: " ADVENTURE LOG 1:" and the name, padded to 4 tiles (WndLwr4Saved)
+            log_window = mock_selection.call_args.args[2]
+            self.assertEqual('ADVENTURE LOG 1:Ed  ', log_window.texts[0].text)
+            self.assertEqual((2, 2), (log_window.texts[0].column, log_window.texts[0].row))
 
     def test_erase_quest_removes_save_file(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
