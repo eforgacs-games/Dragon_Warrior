@@ -17,7 +17,7 @@ from src.game import Game
 from src.directories import Directories
 from src.options_overlay import OPTIONS_WINDOW, VALUE_COLUMN, options_layout
 from src.options_screen import MESSAGE_SPEED_OPTIONS, OptionsScreen, adventure_log_options
-from src.text import set_font_by_ascii_chars
+from src.text import NESFont, set_font_by_ascii_chars
 from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT
 
@@ -196,15 +196,28 @@ class TestKoreanOptionsScreen(KoreanTestCase):
         self.assertEqual(['설정', '대화 방식', '모던', 'NPC가 길 비키기', '끄기 (NES)', '페이드 방식', '스무스', '계단',
                           'NES'], [text for text, _, _ in self.overlay_texts(config)])
 
+    def test_a_translated_window_draws_every_line_in_one_font(self):
+        # "NES" stays in English. Picked by its own characters it was drawn in the NES font, bigger than the Korean
+        # (Unifont) on the other rows.
+        config = {**self.game.game_state.config, 'DIALOG_STYLE': 'Classic', 'NPCS_MAKE_WAY': True,
+                  'FADE_STYLE': 'NES', 'AUTO_STAIRS': False}
+        with patch('src.translated_window.draw_text') as draw_text:
+            draw_translated_window(self.game.screen, options_layout(config), (255, 255, 255), config, self.korean)
+        fonts = {call.kwargs['text_font'] for call in draw_text.call_args_list}
+        self.assertIn('NES', [call.args[0] for call in draw_text.call_args_list])
+        self.assertEqual(1, len(fonts))
+        self.assertNotIsInstance(fonts.pop(), NESFont)
+
     def test_options_overlay_text_fits(self):
-        # Each label ends before its value starts, and each value inside the window's right border
+        # Each label ends before its value starts, and each value inside the window's right border, in the window's
+        # one font (Unifont)
         directories = Directories(test_config)
         right_border = (OPTIONS_WINDOW.x + OPTIONS_WINDOW.width) * 2 - 1
         for overrides in ({'NPCS_MAKE_WAY': True, 'AUTO_STAIRS': True}, {'NPCS_MAKE_WAY': False,
                                                                           'AUTO_STAIRS': False}):
             config = {**self.game.game_state.config, 'DIALOG_STYLE': 'Classic', 'FADE_STYLE': 'Smooth', **overrides}
             for text, column, row in self.overlay_texts(config)[1:]:
-                width = set_font_by_ascii_chars([text], 16, None, directories).size(text)[0] / self.nes_tile
+                width = set_font_by_ascii_chars(['설정'], 16, None, directories).size(text)[0] / self.nes_tile
                 end = OPTIONS_WINDOW.x * 2 + (VALUE_COLUMN - 1 if column < VALUE_COLUMN else right_border)
                 with self.subTest(text=text):
                     self.assertLessEqual(column + width, end)
