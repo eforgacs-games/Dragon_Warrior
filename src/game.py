@@ -385,7 +385,15 @@ class Game:
         # ticking (and wear off) after the Dragonlord's defeat
         self.game_state.tick_radiant_timer()
         self.tick_repel_timer()
-        self.check_for_triggers()
+        # NES ChkSpecialLoc: a step off the map's edge goes to CheckMapExit instead of CheckForTriggers, so it doesn't
+        # heal (MovmtIncHP) or count a Magic Armor step, and gets no damage or fight roll (see handle_battles)
+        if not self.stepped_off_the_map():
+            self.check_for_triggers()
+
+    def stepped_off_the_map(self) -> bool:
+        """NES ChkSpecialLoc: whether the step that has just finished took the hero off the map's edge (a town gate).
+        The step has only just finished, so the hero's row and column haven't caught up with its rect yet."""
+        return self.current_map.is_map_exit(self.player.rect.y // self.tile_size, self.player.rect.x // self.tile_size)
 
     def check_for_triggers(self):
         """NES CheckForTriggers (Bank03, reached from ChkSpecialLoc after every completed step): MovementUpdates only
@@ -474,6 +482,8 @@ class Game:
             return
         if self.tiles_moved_since_spawn > 0 and self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
             self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
+            if self.stepped_off_the_map():
+                return  # NES ChkSpecialLoc -> CheckMapExit: handle_warps leaves the map, with no damage or fight
             # NES CheckBlockDmg runs once per step, on the block the player has just stepped onto. The player's
             # column/row and current_tile aren't updated until later in the frame, so read them from the sprite.
             column, row = self.player.rect.x // self.tile_size, self.player.rect.y // self.tile_size
@@ -616,18 +626,23 @@ class Game:
         if self.player.god_mode or self.invulnerable:
             return
 
-        self.player.current_hp = max(self.player.current_hp - damage_amount, 0)
         # NES ChkOtherBlocks: SFX_FFDAMAGE on a force field (LCE2B), SFX_SWMP_DMG on a swamp (LCDD4)
         self.sound.play_sound(self.directories.barrier_sfx if force_field else self.directories.swamp_sfx)
         self.player.received_environment_damage = True
         if force_field:
-            # NES force field damage (LCE30): the screen flashes red three times
+            # NES force field damage (LCE30): the screen flashes red three times, each flash followed by
+            # LoadRegBGPal, all before the 15 HP are taken (LCE44). After that the palette is only loaded again if
+            # the hero is dead (LCE55; handle_death), so a force field step that leaves HP low doesn't turn the
+            # windows red: they stay as they were until the next palette load.
             force_field_flash(RED, self.screen, self.game_state.config)
+            self.load_window_palette()
+            self.player.current_hp = max(self.player.current_hp - damage_amount, 0)
         else:
-            # NES DoSwampDamage: one red flash
+            # NES DoSwampDamage: one red flash (RedFlashScreen), then the 2 HP (LCDDF), then LoadRegBGPal with the
+            # new HP (LCDED)
             flash_transparent_color(RED, self.screen, self.game_state.config)
-        # NES DoSwampDamage and the force field damage: RedFlashScreen, then LoadRegBGPal with the new HP
-        self.load_window_palette()
+            self.player.current_hp = max(self.player.current_hp - damage_amount, 0)
+            self.load_window_palette()
         self.drawer.draw_all(self, self.game_state.enable_animate)
         display.flip()
 
