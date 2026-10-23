@@ -230,7 +230,8 @@ class TestTransitionsUseTheSelectedFade(TestCase):
             with patch.object(ending, 'show_credit_screen'):
                 ending.roll_credits()
 
-        self.assert_fades(run, [False] + [True] * (len(CREDITS) - 1))
+        # LoadCreditsPals fades the king's scene out first, then every screen but THE END fades out (DoPalFadeOut)
+        self.assert_fades(run, [False] + [True] * len(CREDITS))
 
     def test_declining_to_continue_fades_out(self):
         # NES ExitGame: LoadCreditsPals (PalFadeOut), then LoadStartPals (PalFadeIn) over the cleared screen
