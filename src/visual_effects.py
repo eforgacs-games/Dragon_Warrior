@@ -91,6 +91,23 @@ def force_field_flash(color, screen, config, transparency=192) -> None:
     display.flip()
 
 
+# NES BWScreenFlash (Bank03, LDB37): eight times, two frames in color (WaitForNMI x2) and then three in greyscale
+# (PPUControl1 = %00011001, WaitForNMI x3), 40 frames in all. Used when a spell is cast (PlyrCastSpell) and by a few
+# story events (the Rainbow Drop shrine without Erdrick's Token, ...).
+BW_FLASH_COUNT = 8
+BW_FLASH_COLOR_FRAMES = 2
+BW_FLASH_GREY_FRAMES = 3
+
+
+def bw_screen_flash(screen: Surface, calculation, config) -> None:
+    """Flash the screen between color and greyscale, as NES BWScreenFlash does."""
+    if config['NO_BLIT']:
+        return
+    for _ in range(BW_FLASH_COUNT):
+        wait_frames(BW_FLASH_COLOR_FRAMES, config)
+        greyscale_screen(screen, calculation, frames=BW_FLASH_GREY_FRAMES)
+
+
 def greyscale_screen(screen, calculation, frames=30, no_blit=False):
     """Show the screen in greyscale for the given number of frames, then restore it
     (the NES does this by setting the greyscale bit of PPUControl1)."""

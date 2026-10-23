@@ -223,13 +223,17 @@ class TestCommandMenuAudio(unittest.TestCase):
                 self.assertEqual(self.play_sound.call_args_list,
                                  [call(self.directories.wyvern_wing_sfx), call('warp')])
 
-    def test_outside_plays_the_stairs_sound(self):
-        # NES ChangeMaps -> SetPlyrPixelLoc -> MapChngWithSound
+    def test_outside_plays_the_stairs_sound_after_the_fade(self):
+        # NES ChangeMaps -> SetPlyrPixelLoc -> MapChngWithSound: the sound comes once the screen has faded out
         self.go_to('ErdricksCaveB1', (1, 1))
-        with patch.object(self.cmd_menu, 'warp') as warp:
+        events = []
+        with patch.object(self.game.sound, 'play_sound', side_effect=events.append), \
+                patch('src.map_manager.screen_fade',
+                      side_effect=lambda fade_out, **kwargs: events.append('fade out' if fade_out else 'fade in')):
             self.cmd_menu.outside()
-        warp.assert_called_once()
-        self.play_sound.assert_called_once_with(self.directories.stairs_up_sfx)
+        self.play_sound.assert_not_called()  # nothing before the fade
+        self.assertEqual(events, ['fade out', self.directories.stairs_sfx, 'fade in'])
+        self.assertEqual(self.game.current_map.identifier, 'Alefgard')
 
     def test_outside_where_it_fails_plays_nothing(self):
         self.go_to('Brecconary', (23, 10))
@@ -249,10 +253,107 @@ class TestDragonlordDefeatedSound(unittest.TestCase):
         game = new_game()
         events = []
         with patch.object(game.ending, 'say'), \
-                patch.object(game.sound, 'play_sound', side_effect=lambda path: events.append(path)), \
-                patch.object(game, 'change_map', side_effect=lambda *args, **kwargs: events.append('change map')):
+                patch.object(game.sound, 'play_sound', side_effect=events.append), \
+                patch('src.map_manager.screen_fade',
+                      side_effect=lambda fade_out, **kwargs: events.append('fade out' if fade_out else 'fade in')):
             game.ending.final_boss_defeated()
-        self.assertEqual(events, [game.directories.stairs_up_sfx, 'change map'])
+        self.assertEqual(events, ['fade out', game.directories.stairs_sfx, 'fade in'])
+
+
+class TestStairsSound(unittest.TestCase):
+    """NES MapChngWithSound (Bank00, LB097-LB0B6): ScreenFadeOut, the display off, then SFX_STAIRS, and only then the
+    new map is drawn and faded in. StairsSFX (Bank01, $839E) is the one stairs sound, up or down; the soundtrack's
+    "Stairs Down" is RunSFX ($83C2), the running away sound."""
+
+    def setUp(self):
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
+        self.game = new_game()
+        self.directories = self.game.directories
+        self.addCleanup(patch.stopall)
+        patch.object(self.game, 'music_player').start()
+
+    def test_the_two_recordings(self):
+        self.assertTrue(self.directories.stairs_sfx.endswith('29 Dragon Quest 1 - Stairs Up.mp3'))
+        self.assertTrue(self.directories.run_away_sfx.endswith('30 Dragon Quest 1 - Stairs Down.mp3'))
+
+    def take_stairs(self, map_name, stair_direction):
+        current_map = map_lookup[map_name](self.game.config)
+        coordinates, staircase = next((coordinates, staircase) for coordinates, staircase in
+                                      current_map.staircases.items()
+                                      if staircase['stair_direction'] == stair_direction)
+        self.game.change_map(current_map, destination_coordinates=current_map.initial_coordinates)
+        self.game.player.row, self.game.player.column = coordinates
+        events = []
+        with patch.object(self.game.sound, 'play_sound', side_effect=events.append), \
+                patch('src.map_manager.screen_fade',
+                      side_effect=lambda fade_out, **kwargs: events.append('fade out' if fade_out else 'fade in')):
+            self.game.map_mgr.process_warp(staircase)
+        return events
+
+    def test_stairs_play_the_stairs_sound_after_the_fade_out(self):
+        for map_name, stair_direction in (('TantegelThroneRoom', 'down'), ('TantegelCourtyard', 'up')):
+            with self.subTest(stair_direction=stair_direction):
+                self.assertEqual(self.take_stairs(map_name, stair_direction),
+                                 ['fade out', self.directories.stairs_sfx, 'fade in'])
+
+    def test_a_map_change_without_stairs_is_silent(self):
+        # NES MapChngNoSound / MapChngFadeNoSound
+        events = []
+        with patch.object(self.game.sound, 'play_sound', side_effect=events.append), \
+                patch('src.map_manager.screen_fade',
+                      side_effect=lambda fade_out, **kwargs: events.append('fade out' if fade_out else 'fade in')):
+            self.game.change_map(map_lookup['Brecconary'](self.game.config), destination_coordinates=(23, 10))
+        self.assertEqual(events, ['fade out', 'fade in'])
+
+
+class TestRunAwaySound(unittest.TestCase):
+    """NES PlyrRun (LE88B) and an enemy running away (LEFCB): SFX_RUN, RunSFX ($83C2)."""
+
+    def setUp(self):
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
+        self.game = new_game()
+
+    def test_the_hero_running_away(self):
+        battle = Battle(self.game.config, 'Slime', self.game.current_map)
+        battle.enemy.is_asleep = True  # always gets away
+        with patch.object(battle.sound, 'play_sound') as play_sound:
+            battle.battle_run(MagicMock(), self.game.player, battle)
+        play_sound.assert_called_once_with(self.game.directories.run_away_sfx)
+
+    def test_an_enemy_running_away(self):
+        controller = self.game.battle_ctrl
+        battle = Battle(self.game.config, 'Slime', self.game.current_map)
+        with patch.object(controller.sound, 'play_sound') as play_sound, \
+                patch.object(controller.cmd_menu, 'show_line_in_dialog_box'), \
+                patch.object(battle, 'make_enemy_image_disappear'):
+            controller.enemy_run_away(battle, battle.enemy)
+        play_sound.assert_called_once_with(self.game.directories.run_away_sfx)
+
+
+class TestWaitForSoundEffectEnd(unittest.TestCase):
+    """NES WaitForMusicEnd after a sound effect (PlyrCastSpell LDBAC): only what is left of it is waited out, in game
+    time."""
+
+    def test_waits_out_the_rest_of_the_sound(self):
+        sound = Sound({**test_config, 'SOUND_ENABLED': False})
+        config = {'NO_WAIT': False}
+        with patch('src.sound.game_ticks', return_value=1000):
+            sound.play_sound('spell.mp3')
+        with patch('src.sound.game_ticks', return_value=1300), patch('src.sound.wait') as wait:
+            sound.wait_for_sfx_end(42, config)  # 700 ms
+        wait.assert_called_once_with(400, config)
+        with patch('src.sound.game_ticks', return_value=2000), patch('src.sound.wait') as wait:
+            sound.wait_for_sfx_end(42, config)  # already over
+        wait.assert_called_once_with(0, config)
+
+    def test_nothing_to_wait_for_before_any_sound(self):
+        with patch('src.sound.wait') as wait:
+            Sound({**test_config, 'SOUND_ENABLED': False}).wait_for_sfx_end(42, {'NO_WAIT': False})
+        wait.assert_not_called()
 
 
 class TestDeathMusic(unittest.TestCase):
@@ -322,7 +423,7 @@ class TestSoundEffectsAreNeverDropped(unittest.TestCase):
         burst = [directories.menu_button_sfx, directories.attack_sfx, directories.hit_sfx, directories.missed_sfx,
                  directories.spell_sfx, directories.prepare_attack_sfx, directories.receive_damage_2_sfx,
                  directories.excellent_move_sfx, directories.missed_2_sfx, directories.open_door_sfx,
-                 directories.open_treasure_sfx, directories.stairs_up_sfx]
+                 directories.open_treasure_sfx, directories.stairs_sfx]
         self.assertGreater(len(burst), pygame.mixer.get_num_channels())
         sfx_slot = pygame.mixer.Channel(SFX_CHANNEL)
         for path in burst:
