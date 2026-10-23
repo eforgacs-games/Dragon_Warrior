@@ -129,9 +129,21 @@ Esc: Close a menu or window, or answer NO, like J. Esc also cancels name entry
 
 I (Start): Pause
 
+U (Select) or Tab: Open the options over the map, and close them again (J and Esc close them too). Up and down pick
+a setting; left, right or K change it, and the change applies at once. These are the settings this game adds, none of
+them on the NES, and each adventure log saves its own the next time you save with the king:
+- DIALOG STYLE: CLASSIC (NES), the NES dialog window whose text scrolls, or MODERN, each message on a fresh window
+- NPCS MAKE WAY: ON, a townsperson you walk into steps aside, or OFF (NES), they stay in your way
+- FADE STYLE: NES, fades through the NES palette, or SMOOTH, a black fade
+- STAIRS: STEP ON, stepping onto stairs takes them, or NES, only the STAIRS command does (F2 switches this too)
+
+The message speed is the NES's own setting: choose it when you begin a quest, or with CHANGE MESSAGE SPEED on the
+title menu.
+
 F1: Show the controls
 
-F2 / F3 / F4 / F11: Turn auto-stairs, auto-battle, invulnerability or fullscreen on or off
+F2 / F3 / F4 / F11: Turn auto-stairs (the STAIRS option: STEP ON or NES), auto-battle, invulnerability or fullscreen on
+or off
 
 1 / 2 / 3 / 4: Game speed (normal, 2x, 4x, 8x). This works anywhere, including battles, dialogs and
 menus, and speeds up everything: walking, text, battle effects and pauses. Only timing changes, not what happens in
