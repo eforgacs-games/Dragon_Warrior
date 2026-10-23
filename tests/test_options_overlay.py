@@ -415,14 +415,24 @@ class TestPreset(OverlayTestCase):
         self.config['MENU_SPEED'] = FOLLOW
         self.assertEqual(PRESET_CUSTOM, current_preset(self.config))
 
-    def test_every_new_quest_default_but_the_music_is_the_nes_preset(self):
+    def test_a_new_quest_keeps_what_the_game_already_had(self):
+        # The conveniences there before the switches start on, as they always did; a new quest is CUSTOM, and the NES
+        # preset switches them all off
         from src.options_screen import DEFAULT_OPTIONS, apply_options
         config = {}
         apply_options(config, DEFAULT_OPTIONS)
         nes = preset_values(PRESET_NES)
         differences = {config_key for config_key, value in nes.items() if config[config_key] != value}
-        # base_config has always started with the orchestra, stepping onto stairs and NPCs making way
-        self.assertEqual({'ORCHESTRA_MUSIC_ENABLED', 'AUTO_STAIRS', 'NPCS_MAKE_WAY'}, differences)
+        self.assertEqual({'ORCHESTRA_MUSIC_ENABLED', 'AUTO_STAIRS', 'NPCS_MAKE_WAY', 'QUICK_ACTION', 'GAME_SPEED_KEYS',
+                          'SAVE_STATES', 'REWIND', 'AUTO_GRIND', 'CHEAT_KEYS'}, differences)
+        self.assertEqual(PRESET_CUSTOM, current_preset(config))
+
+    def test_an_older_save_loads_with_them_on(self):
+        from src.options_screen import options_from_save
+        options = options_from_save({'Name': 'Ed'})
+        self.assertEqual((True, True, True, True, True, True, True),
+                         (options.orchestra_music, options.game_speed_keys, options.save_states, options.rewind,
+                          options.auto_grind, options.cheat_keys, options.quick_action))
 
     def test_preset_sets_every_row_at_once(self):
         self.assertEqual(1, self.run_overlay(K_RIGHT, K_u))  # CUSTOM -> NES (the first)
@@ -592,11 +602,12 @@ class TestDevOnly(TestCase):
         self.assertFalse(prod_config['DEBUG_KEYS'])
         self.assertTrue(dev_config['DEBUG_KEYS'])
 
-    def test_prod_starts_with_every_key_convenience_off(self):
+    def test_prod_starts_with_every_key_convenience_as_it_was(self):
+        # on: the speed keys, save states, rewind, auto-grind, F4/F9 and the Enter shortcut worked before the switches
         from src.config.prod_config import prod_config
         for switch in SWITCHES:
-            if switch.config_key != 'ORCHESTRA_MUSIC_ENABLED':
-                self.assertFalse(prod_config[switch.config_key], switch.config_key)
+            self.assertEqual(switch.default, prod_config[switch.config_key], switch.config_key)
+            self.assertTrue(prod_config[switch.config_key], switch.config_key)
 
     def test_a_game_without_debug_keys_has_no_debug_tools(self):
         pygame.init()
