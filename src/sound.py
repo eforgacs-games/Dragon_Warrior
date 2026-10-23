@@ -4,10 +4,14 @@ from pygame import mixer
 
 from src.calculation import Calculation
 from src.directories import Directories
+from src.waiting import NES_FPS, game_ticks, wait
 
 # Sound
 
 _sound_library: dict[str, object] = {}
+
+# NES SpellSFX (Bank01, $848E): 7 notes of 6 counts each, 42 frames (the recording's audible part is 0.72 s)
+SPELL_SFX_FRAMES = 42
 
 
 class Sound:
@@ -17,6 +21,7 @@ class Sound:
         self.calculation = Calculation(config)
         self.directories = Directories(config)
         self.sfx_volume = 0.5
+        self._sfx_started_ticks: int | None = None  # game time the sound effect in the SFX slot started at
 
     def play_sound(self, path='data/sound/sfx'):
         """Plays a sound effect. Every sound effect goes to the one SFX slot (play_sfx), as on the NES: InitMusicSFX
@@ -33,7 +38,18 @@ class Sound:
         DoSFX resets the SFX data pointer and SFXActive). Here the slot is a reserved mixer channel."""
         self._play_in_sfx_slot(path)
 
+    def wait_for_sfx_end(self, length_frames: float, config: dict) -> None:
+        """Wait until the sound effect that last started, which is length_frames NES frames long, has finished: the
+        NES WaitForMusicEnd (Bank01, $815E) after a sound effect, as in PlyrCastSpell (LDBAC). Only the rest of it is
+        waited out, in game frames (shorter at a higher game speed), so whatever ran since it started counts. The
+        recordings are padded with silence, so their length can't be read off the file. NO_WAIT skips it."""
+        if self._sfx_started_ticks is None:
+            return
+        end_ticks = self._sfx_started_ticks + length_frames * 1000 / NES_FPS
+        wait(max(0.0, end_ticks - game_ticks()), config)
+
     def _play_in_sfx_slot(self, path):
+        self._sfx_started_ticks = game_ticks()
         if self.config["SOUND_ENABLED"]:
             sound = retrieve_audio_resource(_sound_library, path, _sound_library.get(path))
             sound.set_volume(self.sfx_volume)

@@ -12,7 +12,7 @@ RIMULDAR_TEXT = {
     0x51: "I am Orwick, and I am waiting for my girl friend.",
     0x52: "The scales of the Dragonlord are as hard as steel.",
     0x53: ("Over the western part of this island Erdrick created a rainbow.",
-           "'Tis also said that he entered the darkness from a hidden entrance in the room of the Dragonlord."),
+           "ʼTis also said that he entered the darkness from a hidden entrance in the room of the Dragonlord."),
     0x54: "Thou shalt find the Stones of Sunlight in Tantegel Castle,\nif thou has not found them yet.",
     0x55: "Welcome to the town of Rimuldar.",
     0x56: "No, I have no tomatoes.\nI have no tomatoes today.",

@@ -119,25 +119,23 @@ class MapManager:
 
     def process_warp(self, staircase_dict):
         self.player.bumped = False
-        match staircase_dict['stair_direction']:
-            case 'down':
-                self.sound.play_sound(self.directories.stairs_down_sfx)
-            case 'up':
-                self.sound.play_sound(self.directories.stairs_up_sfx)
         next_map = map_lookup[staircase_dict['map']](self.config)
-        self.change_map(next_map)
+        self.change_map(next_map, stairs_sound=True)
 
     # ------------------------------------------------------------------ #
     #  Map change                                                          #
     # ------------------------------------------------------------------ #
 
     def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: tuple | None = None,
-                   direction: int | None = None, fade_out_first: bool = True) -> None:
+                   direction: int | None = None, fade_out_first: bool = True, stairs_sound: bool = False) -> None:
         """Change to a different map. Pass destination_coordinates (and optionally direction) to warp somewhere other
         than where the staircase the player is standing on leads, e.g. for RETURN or when loading a save.
         fade_out_first=False cuts straight to black instead of fading the old screen out, as NES StartAtThroneRoom
         (Bank03, LCB47) does: it loads BlackPalPtr at once and changes maps with MapChngNoSound (Bank00, LB091),
-        which skips ScreenFadeOut, so the only fade is MapChngNoSound's PalFadeIn."""
+        which skips ScreenFadeOut, so the only fade is MapChngNoSound's PalFadeIn.
+        stairs_sound=True plays the stairs sound once the old screen has faded out, as NES MapChngWithSound (Bank00,
+        LB097-LB0B6) does: ScreenFadeOut, display off, then SFX_STAIRS, before the new map is drawn. It is the same
+        sound going up or down stairs."""
         self.game_state.pause_all_movement()
         self.last_map = self.current_map
         self.current_map = next_map
@@ -155,6 +153,8 @@ class MapManager:
             screen_fade(fade_out=True, screen=self.screen, config=self.game_state.config)
         else:
             cut_to_black(self.screen, self.game_state.config)
+        if stairs_sound:
+            self.sound.play_sound(self.directories.stairs_sfx)  # SFX_STAIRS
         self.set_big_map()
         self.set_roaming_character_positions()
         is_warp = destination_coordinates is not None

@@ -14,7 +14,8 @@ from src.config.test_config import test_config
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from tests.nes_map_data import MAPS
-from tests.nes_maps import NES_MAPS, OVERWORLD_SIZE, boundary_tile, decode_map, layout_location, nes_tiles
+from tests.nes_maps import NES_MAPS, OVERWORLD_SIZE, boundary_tile, decode_map, layout_location, nes_tiles, \
+    overworld_water_block
 
 TILE_NAMES = {value: name for name, value in vars(map_layouts).items() if name.isupper() and isinstance(value, int)}
 
@@ -47,7 +48,7 @@ STAIR_TILES = ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN')
 
 def tile_name(value: int) -> str:
     """This game's tile name, with every coast counted as water: the NES works out the shores while drawing (DoWtrConv),
-    and the map data only has water."""
+    and the map data only has water. TestNESMapLayouts.test_overworld_shores checks the shores."""
     name = TILE_NAMES[value]
     return 'WATER' if name.endswith('_COAST') else name
 
@@ -111,6 +112,22 @@ class TestNESMapLayouts(TestCase):
                     if here != nes_tile and (map_name, (row, column)) not in INTENTIONAL_DIFFERENCES:
                         mismatches.append(((row, column), here, nes_tile))
                 self.assertEqual(mismatches, [], '(row, column), tile here, NES tile')
+
+    def test_overworld_shores(self):
+        # NES DoWtrConv and TrgtOutOfBounds: every overworld water block shows the shores of the land beside it (#316)
+        overworld = decode_map(0x01)
+        row_offset, column_offset = next(offset for number, _nes_name, _name, offset, _rows in NES_MAPS if number == 0x01)
+        layout = self.layouts['Alefgard']
+        mismatches = []
+        for row, values in enumerate(layout):
+            for column, value in enumerate(values):
+                x, y = column - column_offset, row - row_offset
+                if 0 <= x < OVERWORLD_SIZE and 0 <= y < OVERWORLD_SIZE and overworld[y][x] != 'WATER':
+                    continue
+                here, nes_block = TILE_NAMES[value], overworld_water_block(overworld, x, y)
+                if here != nes_block:
+                    mismatches.append(((row, column), here, nes_block))
+        self.assertEqual(mismatches, [], '(row, column), tile here, NES block')
 
     def test_the_intentional_differences_are_still_needed(self):
         for (map_name, (row, column)), (here, nes_tile, why) in INTENTIONAL_DIFFERENCES.items():
