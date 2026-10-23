@@ -2,7 +2,7 @@
 WndGetButtons, WndProcessInput; src/command_window.py), one NES frame at a time."""
 from collections import defaultdict
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pygame
 from pygame import KEYDOWN, K_1, K_2, K_DOWN, K_ESCAPE, K_LEFT, K_RETURN, K_RIGHT, K_UP, K_i, K_j, K_k
@@ -11,6 +11,7 @@ from src.command_window import WND_ABORT, CommandWindow, tapped_buttons
 from src.config.test_config import test_config
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_START, IN_UP
 from src.menu import COMMAND_METHODS, CommandMenu
+from src.selection import Answer
 from src.waiting import NES_FPS, game_speed, set_game_speed
 from src.windows import COMMAND_ENTRIES
 from tests.helpers import new_game
@@ -215,6 +216,22 @@ class TestCommandWindowFrames(CommandWindowFrames):
                 self.assertEqual([COMMAND_METHODS[entry]], self.chosen)
                 self.game.unlaunch_menu(self.cmd_menu)
 
+    def test_every_choice_plays_the_menu_sound(self):
+        # WndAPressed plays SFX_MENU_BTN for every entry, whatever the command then does
+        moves = {TALK: (), STATUS: (K_DOWN,), STAIRS: (K_DOWN, K_DOWN), SEARCH: (K_DOWN, K_DOWN, K_DOWN),
+                 SPELL: (K_RIGHT,), ITEM: (K_RIGHT, K_DOWN), DOOR: (K_RIGHT, K_DOWN, K_DOWN),
+                 TAKE: (K_DOWN, K_DOWN, K_DOWN, K_RIGHT)}
+        menu_sound = self.cmd_menu.directories.menu_button_sfx
+        for entry, keys in moves.items():
+            with self.subTest(entry=COMMAND_ENTRIES[entry]):
+                self.open_window()
+                for pressed_key in keys:
+                    self.tap(pressed_key)
+                with patch.object(self.cmd_menu.sound, 'play_sound') as play_sound:
+                    self.tap(K_k)
+                self.assertEqual([call(menu_sound)], play_sound.call_args_list)
+                self.game.unlaunch_menu(self.cmd_menu)
+
     def test_enter_chooses_too(self):
         self.open_window()
         self.tap(K_DOWN)
@@ -313,3 +330,53 @@ class TestCommandWindowDrawing(CommandWindowFrames):
         self.assertIs(COMMAND_BORDER_LAYOUT, draw_window.call_args.args[1])
         drawn = [c.args[0] for c in draw_text.call_args_list]
         self.assertEqual(['작전', '대화', 'STATUS', 'STAIRS', 'SEARCH', 'SPELL', 'ITEM', 'DOOR', 'TAKE'], drawn)
+
+
+class TestCommandSound(TestCase):
+    """The commands themselves don't play the menu sound again: choosing one plays it once, whatever it finds (TAKE
+    with no chest under the hero played none)."""
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+        pygame.display.set_mode((800, 600))
+
+    @classmethod
+    def tearDownClass(cls):
+        pygame.quit()
+
+    def setUp(self):
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
+        self.game = new_game()
+        self.game.game_state.is_initial_dialog = False
+        self.cmd_menu = self.game.cmd_menu
+        self.addCleanup(patch.stopall)
+        for blocking in ('show_text_in_dialog_box', 'window_drop_down_effect', 'window_drop_up_effect'):
+            patch.object(self.cmd_menu, blocking).start()
+        # STATUS waits for a button: press one right away
+        patch('src.menu.frame_events', return_value=[keydown(K_k)]).start()
+        self.play_sound = patch.object(self.cmd_menu.sound, 'play_sound').start()
+
+    def test_each_command_plays_the_menu_sound_once(self):
+        menu_sound = self.cmd_menu.directories.menu_button_sfx
+        for name in COMMAND_METHODS:
+            with self.subTest(command=name):
+                self.play_sound.reset_mock()
+                self.cmd_menu.choose_command(getattr(self.cmd_menu, name))
+                self.assertEqual(1, self.play_sound.call_args_list.count(call(menu_sound)))
+
+    def test_spell_and_item_choices_play_the_menu_sound(self):
+        # WndAPressed beeps in the SPELL and ITEM windows too (a Magic Key used from ITEM sounds as DOOR did); B doesn't
+        self.cmd_menu.player.inventory = ['Magic Key']
+        self.cmd_menu.player.spells = ['HEAL']
+        for menu_name in ('inventory', 'spells'):
+            with self.subTest(menu=menu_name), \
+                    patch('src.menu.run_selection', return_value=Answer(IN_B, 0)) as run_selection:
+                self.cmd_menu.display_item_menu(menu_name)
+                sound, sound_buttons = (run_selection.call_args.kwargs.get(name) for name in ('sound', 'sound_buttons'))
+                self.assertIsNotNone(sound)
+                self.assertEqual((IN_A,), tuple(sound_buttons))
+                sound()
+                self.play_sound.assert_called_with(self.cmd_menu.directories.menu_button_sfx)

@@ -3,7 +3,7 @@ from collections import defaultdict
 from unittest.mock import MagicMock, Mock, patch
 
 import pygame
-from pygame import KEYDOWN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_ESCAPE, K_LEFT, K_RETURN, K_RIGHT, K_SPACE, K_UP, K_x
+from pygame import KEYDOWN, KEYUP, K_1, K_2, K_3, K_4, K_DOWN, K_ESCAPE, K_LEFT, K_RETURN, K_RIGHT, K_UP, K_i
 from pygame.event import Event
 from src.waiting import NES_FPS, game_speed, reset_game_speed
 
@@ -66,6 +66,7 @@ class BattlePromptFrames(unittest.TestCase):
     def setUp(self):
         pygame.init()
         pygame.event.clear()
+        self.addCleanup(pygame.event.clear)  # keys a test leaves unread aren't for the next test in this process
         self.game = make_game()
         self.frame_number = 0
         patch('src.battle_controller.display').start()
@@ -264,36 +265,49 @@ class TestHandleBattlePrompts(BattlePromptFrames):
         fight.assert_called_once()
         self.assertTrue(pygame.event.peek(KEYDOWN))  # the keyboard isn't read
 
-    def test_asleep_player_loses_turn_on_any_key(self, mock_time, mock_display):
-        # NES StartPlayerTurn: bit 0 of the roll clear, so "Thou art still asleep." and the enemy moves
+    def test_asleep_player_loses_turn_without_a_key(self, mock_time, mock_display):
+        # NES StartPlayerTurn: bit 0 of the roll clear, so "Thou art still asleep." and the enemy moves, with no button
+        # waited for (#310)
         self.game.player.is_asleep = True
         with patch.object(self.controller, 'fight') as fight, \
                 self.patch_enemy_move() as enemy_move, \
                 patch('src.battle_controller.random.randint', return_value=0):
-            self.press(K_DOWN)
+            self.frame()
         fight.assert_not_called()
         enemy_move.assert_called_once()
         self.assertEqual(self.controller.last_battle_action, 'Fight')
         self.assertTrue(self.game.player.is_asleep)
         self.assertEqual(self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0], 'Thou art still asleep.\n')
 
-    def test_asleep_player_ignores_keys_that_are_not_buttons(self, mock_time, mock_display):
+    def test_asleep_player_gets_no_command_window(self, mock_time, mock_display):
+        # NES StartPlayerTurn: ShowCmbtCmd (Dowindow WND_CMD_CMB) only comes after PlayerAwakes, and the joypad isn't
+        # read, so a key pressed meanwhile is left for the window that opens once the hero is awake (#310)
         self.game.player.is_asleep = True
-        with self.patch_enemy_move() as enemy_move:
-            self.press(K_x, K_SPACE)
-        enemy_move.assert_not_called()
-        self.assertEqual(self.battle.turn, 0)
+        self.controller.command_window_open = False
+        self.post(K_DOWN)
+        with patch.object(self.controller, 'draw_command_window') as draw, \
+                patch.object(self.controller, 'open_command_window') as open_window, \
+                self.patch_enemy_move(), patch('src.battle_controller.random.randint', return_value=0):
+            self.frame()
+        draw.assert_not_called()
+        open_window.assert_not_called()
+        self.assertTrue(pygame.event.peek(KEYDOWN))
 
     def test_asleep_player_wakes_and_gets_the_turn(self, mock_time, mock_display):
         # NES StartPlayerTurn -> PlayerAwakes -> ShowCmbtCmd: the hero wakes and chooses a command this turn,
         # so the enemy doesn't move first.
         self.game.player.is_asleep = True
         with self.patch_enemy_move() as enemy_move, patch('src.battle_controller.random.randint', return_value=1):
-            self.press(K_RETURN)
+            self.frame()
         self.assertFalse(self.game.player.is_asleep)
         enemy_move.assert_not_called()
         self.assertEqual(self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0], 'Erdrick awakes.\nCommand?\n')
         self.assertFalse(self.battle.no_op)
+        # ShowCmbtCmd: then the command window opens, from FIGHT
+        with patch.object(self.controller, 'open_command_window', wraps=self.controller.open_command_window) as opened:
+            self.frame()
+        opened.assert_called_once()
+        self.assertEqual(FIGHT, self.selection)
 
     def test_wake_roll_is_bit_zero_of_a_random_byte(self, mock_time, mock_display):
         # 128 of the 256 rolls wake the hero, with no cap on how many turns the sleep lasts
@@ -301,7 +315,7 @@ class TestHandleBattlePrompts(BattlePromptFrames):
         for roll in range(256):
             self.game.player.is_asleep = True
             with self.patch_enemy_move(), patch('src.battle_controller.random.randint', return_value=roll):
-                self.press(K_RETURN)
+                self.frame()
             woke += not self.game.player.is_asleep
             self.assertEqual(not self.game.player.is_asleep, roll & 1 == 1)
         self.assertEqual(woke, 128)
@@ -310,7 +324,7 @@ class TestHandleBattlePrompts(BattlePromptFrames):
         self.game.player.is_asleep = True
         with self.patch_enemy_move() as enemy_move, patch('src.battle_controller.random.randint', return_value=0):
             for _ in range(20):
-                self.press(K_RETURN)
+                self.frame()
         self.assertTrue(self.game.player.is_asleep)
         self.assertEqual(enemy_move.call_count, 20)
 
@@ -493,6 +507,16 @@ class TestCommandWindowInput(BattlePromptFrames):
                 self.frame()  # the next turn's window
                 self.choose(*keys)
                 self.assertEqual(chosen, self.controller.last_battle_action)
+
+    def test_start_does_not_choose(self):
+        # Bank01 WndProcessInput skips SELECT and START: I (START) is no button to the window (#304)
+        with patch.object(self.controller, 'fight') as fight, self.patch_enemy_move() as enemy_move:
+            self.press(K_i)
+            self.frames(20, K_i)
+        fight.assert_not_called()
+        enemy_move.assert_not_called()
+        self.assertEqual(self.battle.turn, 0)
+        self.game.sound.play_sound.assert_not_called()
 
     def test_a_and_a_direction_on_the_same_frame_choose_without_moving(self):
         # WndProcessInput tests A first and handles only that one button
@@ -765,7 +789,8 @@ class TestHeroAttack(unittest.TestCase):
         order = []
         self.game.drawer.flash_enemy.side_effect = lambda *a: order.append('flash')
         self.game.cmd_menu.show_line_in_dialog_box.side_effect = lambda line, **k: order.append(line)
-        with patch('src.battle_controller.random.random', return_value=0.5):
+        # A 1 never dodges (test_enemy_can_dodge); left unpatched, the Slime's 1/64 dodge made this fail now and then
+        with patch('src.battle_controller.random.randint', return_value=1):
             self.controller.hero_attack(self.battle)
         self.game.drawer.flash_enemy.assert_called_once_with(self.game.screen, 'Slime')
         self.assertEqual(order[-2:], ['flash', "The Slime's Hit Points have been reduced by 4.\n"])
@@ -1134,6 +1159,9 @@ class TestEnemySpellResults(unittest.TestCase):
     def setUp(self):
         self.game = make_game()
         self.controller = BattleController(self.game)
+        # The second's pause after the enemy's chant (waiting.wait, not the patched time) really slept in every test
+        patch('src.battle_controller.wait').start()
+        self.addCleanup(patch.stopall)
 
     def cast(self, spell, roll, hp=2):
         enemy = patterned_enemy([(100, spell, True), Spell.ATTACK])
