@@ -87,7 +87,7 @@ class TestCommandWindowFrames(TestCase):
         # Everyone is already on a tile, between two NPC turns (#289), so the window opens on the very frame K is
         # pressed (resolve_pending_freezes)
         with patch.object(self.game, 'everyone_on_a_tile', return_value=True), \
-                patch.object(type(self.game.npc_schedule), 'between_turns', new_callable=PropertyMock,
+                patch.object(type(self.game.movement.npc_schedule), 'between_turns', new_callable=PropertyMock,
                              return_value=True):
             self.press_k()
             self.assertTrue(self.game.cmd_menu.menu.is_enabled())

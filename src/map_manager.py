@@ -266,6 +266,6 @@ class MapManager:
 
     def set_roaming_character_positions(self):
         # NES InitMapData: NPCUpdateCntr starts at 0 on every map, so pair 0 (the first two roaming NPCs) moves first
-        self.game.npc_schedule.new_map()
+        self.game.movement.npc_schedule.new_map()
         for roaming_character in self.current_map.roaming_characters:
             set_character_position(roaming_character, self.tile_size)

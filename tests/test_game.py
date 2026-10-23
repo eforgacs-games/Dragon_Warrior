@@ -816,7 +816,7 @@ class TestGame(TestCase):
 
     def test_move_roaming_characters(self):
         # test with no roaming characters
-        self.game.move_roaming_characters()
+        self.game.movement.move_roaming_characters()
         self.game.player.row = 10
         self.game.player.column = 13
         self.game.current_map.staircases = {
@@ -829,13 +829,13 @@ class TestGame(TestCase):
         # The first frame on a map is the first pair's decision frame (NES InitMapData: NPCUpdateCntr = 0)
         guard = self.game.current_map.roaming_characters[0]
         start = guard.rect.topleft
-        with patch('src.game.random.choice', return_value=Direction.DOWN.value):
-            self.game.do_sprites()
+        with patch('src.movement.random.choice', return_value=Direction.DOWN.value):
+            self.game.movement.do_sprites()
         self.assertTrue(guard.is_moving)
         self.assertEqual(Direction.DOWN.value, guard.direction_value)
         # test with moving characters once they're moving: 1 NES pixel a frame, 16 frames a step
         for _ in range(15):
-            self.game.do_sprites()
+            self.game.movement.do_sprites()
         self.assertFalse(guard.is_moving)
         self.assertEqual((start[0], start[1] + self.game.tile_size), guard.rect.topleft)
 
