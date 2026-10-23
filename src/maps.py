@@ -9,6 +9,7 @@ from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
 
 from src.common import Graphics
+from src.coordinates import Cell
 from src.direction import Direction
 from src.directories import Directories
 from src.map_layouts import MapLayouts
@@ -54,7 +55,7 @@ class DragonWarriorMap:
     # (an NES X,Y is at (Y + row, X + column) here), and the NES map's size in blocks, (columns, rows), i.e.
     # (MapWidth + 1, MapHeight + 1). Every map with NPCs has an origin. Without a size, the whole layout counts as the
     # NES map.
-    nes_origin: tuple[int, int] | None = None
+    nes_origin: Cell | None = None
     nes_size: tuple[int, int] | None = None
     # The map's NPCs (src/npcs.py), in the order of its NES NPC tables: the mobile one, then the static one
     npc_table: tuple[NPC, ...] = ()
@@ -103,7 +104,7 @@ class DragonWarriorMap:
         self.last_map = last_map
         # NES covered areas (CoverDatPtr): the blocks of a town that sit under a roof. Only Brecconary, Garinham,
         # Cantlin and Rimuldar have any (Bank00 InitMapData, ChkMapBrecconary..ChkMapRimuldar).
-        self.covered_area: frozenset[tuple[int, int]] = frozenset()
+        self.covered_area: frozenset[Cell] = frozenset()
         # NES CoverStatus: whether the hero is standing on a covered block.
         self.player_under_cover = False
         # Whether background palette 0's color 1 is the low HP red (set_low_hp_palette), and the red tiles, made the
@@ -191,14 +192,14 @@ class DragonWarriorMap:
         (origin_row, origin_column), (columns, rows) = self.nes_origin, self.nes_size
         return 0 <= column - origin_column < columns and 0 <= row - origin_row < rows
 
-    def npc_position(self, npc: NPC) -> tuple[int, int]:
+    def npc_position(self, npc: NPC) -> Cell:
         """The layout (row, column) of an NPC."""
         assert self.nes_origin is not None, f'{self.identifier} has NPCs, so it needs an nes_origin'
         origin_row, origin_column = self.nes_origin
         return npc.y + origin_row, npc.x + origin_column
 
     @property
-    def npc_coordinates(self) -> dict[tuple[int, int], str]:
+    def npc_coordinates(self) -> dict[Cell, str]:
         """Layout (row, column) -> sprite type of each NPC load_map places."""
         return {self.npc_position(npc): npc.sprite for npc in self.npcs}
 
@@ -224,7 +225,7 @@ class DragonWarriorMap:
         """Returns the tile name from the integer value associated with it."""
         return self._tile_key_list[position]
 
-    def load_map(self, player, destination_coordinates, tile_size) -> None:
+    def load_map(self, player, destination_coordinates: Cell | None, tile_size) -> None:
         self.destination_coordinates = destination_coordinates
         self.tile_types_in_current_map = self.get_tiles_in_current_map()
         self.impassable_tiles = tuple(self.tile_types_in_current_map & set(all_impassable_tiles))
