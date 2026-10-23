@@ -9,6 +9,7 @@ from src.waiting import NES_FPS, game_speed, reset_game_speed
 
 from src import enemy as enemies
 from src.color import WHITE
+from src.direction import Direction
 from src.battle_controller import BattleController
 from src.enemy_lookup import enemy_string_lookup
 from src.sound import SPELL_SFX_FRAMES
@@ -813,6 +814,67 @@ class TestMapMusicAfterAFight(unittest.TestCase):
         with patch.object(self.controller, 'handle_battle_prompts', side_effect=kill):
             self.assertEqual(self.controller.start_scripted_battle('Dragonlord 2').value, 'victory')
         self.assertEqual(self.map_music_starts(mixer_music), [('overworld',)])
+
+
+@patch('src.battle_controller.Battle')
+class TestFacingAfterAFight(unittest.TestCase):
+    """NES ExitFight / ExitFight2 (LEE82): the hero faces down after a win, the enemy running away and a normal run;
+    a guardian run or a run from the final form goes through MapChng and keeps the facing."""
+
+    def setUp(self):
+        self.game = make_game()
+        self.game.player.direction_value = Direction.UP.value
+        self.controller = BattleController(self.game)
+        patch.object(self.controller, 'start_fight', return_value=False).start()
+        patch.object(self.controller, 'reload_map_after_running_from_final_form').start()
+        self.step_back = patch.object(self.controller, 'step_back_after_running', return_value=False).start()
+        self.addCleanup(patch.stopall)
+
+    def fight(self, mock_battle_class, ending, name='Slime'):
+        battle = mock_battle_class.return_value
+        battle.enemy.name = name
+        battle.enemy.hp = 3
+        battle.enemy_fled = False
+
+        def prompts(run_away, current_battle):
+            if ending == 'win':
+                current_battle.enemy.hp = 0
+            elif ending == 'death':
+                self.game.player.is_dead = True
+            elif ending == 'run':
+                self.controller.player_ran_away = True
+                return True
+            elif ending == 'enemy ran':
+                current_battle.enemy_fled = True
+                return True
+            return False
+        with patch.object(self.controller, 'handle_battle_prompts', side_effect=prompts):
+            self.controller.launch_fight(name)
+        return self.game.player.direction_value
+
+    def test_faces_down_after_a_win(self, mock_battle_class):
+        self.assertEqual(Direction.DOWN.value, self.fight(mock_battle_class, 'win'))
+
+    def test_faces_down_after_the_enemy_runs_away(self, mock_battle_class):
+        self.assertEqual(Direction.DOWN.value, self.fight(mock_battle_class, 'enemy ran'))
+        self.game.player.direction_value = Direction.LEFT.value
+        self.controller.start_fight.return_value = True  # CheckEnRun as it appears
+        self.assertEqual(Direction.DOWN.value, self.fight(mock_battle_class, None))
+
+    def test_faces_down_after_a_normal_run(self, mock_battle_class):
+        self.assertEqual(Direction.DOWN.value, self.fight(mock_battle_class, 'run'))
+
+    def test_keeps_facing_after_running_from_a_guardian(self, mock_battle_class):
+        self.step_back.return_value = True  # RunSuccessful -> MapChngWithSound
+        self.assertEqual(Direction.UP.value, self.fight(mock_battle_class, 'run', 'Golem'))
+
+    def test_keeps_facing_after_running_from_the_final_form(self, mock_battle_class):
+        self.assertEqual(Direction.UP.value, self.fight(mock_battle_class, 'run', 'Dragonlord 2'))
+        self.controller.reload_map_after_running_from_final_form.assert_called_once()
+
+    def test_keeps_facing_after_beating_the_final_form_or_dying(self, mock_battle_class):
+        self.assertEqual(Direction.UP.value, self.fight(mock_battle_class, 'win', 'Dragonlord 2'))
+        self.assertEqual(Direction.UP.value, self.fight(mock_battle_class, 'death'))
 
 
 class TestEnemyRunAway(unittest.TestCase):
