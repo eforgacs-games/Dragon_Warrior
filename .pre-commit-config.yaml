@@ -1,0 +1,28 @@
+# Runs before each commit once installed (see CONTRIBUTING.md): `uv run pre-commit install`.
+# ruff and mypy run through uv, as in CI, so they use the versions in uv.lock and the settings in pyproject.toml.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^reference/  # checked-in copies of outside documents, kept as they came
+      # No end-of-file-fixer: some files end with an extra blank line or no newline, and fixing them all is a
+      # repository-wide diff
+      - id: check-yaml
+      - id: check-added-large-files
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff check
+        entry: uv run ruff check --force-exclude
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+      - id: mypy
+        name: mypy
+        # Checks the files in pyproject.toml's [tool.mypy] files, not just the staged ones, as CI does
+        entry: uv run mypy
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
+        require_serial: true
