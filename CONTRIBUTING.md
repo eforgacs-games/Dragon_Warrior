@@ -4,7 +4,7 @@ Pull requests welcome!
 
 Install [uv](https://docs.astral.sh/uv/), then run `uv sync` from the repository root. It installs Python 3.13 (from
 `.python-version`) if needed, then the locked dependencies from `uv.lock`, including the dev tools (pytest, mypy,
-ruff), into `.venv`. A `.venv` made with an older Python is rebuilt.
+ruff, pre-commit), into `.venv`. A `.venv` made with an older Python is rebuilt.
 
 ## Checks
 
@@ -24,6 +24,37 @@ before them.
 
 The tests run headless: `tests/__init__.py` points SDL at its dummy video and audio drivers. Tests that need a `Game`
 can make one with `new_game()` from `tests/helpers.py`.
+
+### Timeout
+
+Each test has 60 seconds ([pytest-timeout](https://github.com/pytest-dev/pytest-timeout), `timeout` in
+`pyproject.toml`), counting its setup (including `setUpClass`) and teardown. A test that goes over fails with the stack of
+where it was stuck, so a wait loop that never ends fails that one test instead of hanging the whole run. The slowest
+tests take under 10 seconds; one that legitimately needs longer can say so with `@pytest.mark.timeout(N)`. CI lists the
+10 slowest tests at the end of its pytest log, and `uv run pytest --durations=10` does the same locally. To debug a test
+without being cut off, pass `--timeout=0`.
+
+### Coverage
+
+CI measures line coverage of `src/` and fails if the total drops below 95% (`--cov-fail-under` in
+`.github/workflows/python-app.yml`). To see it locally, with the lines each module misses:
+
+```bash
+uv run pytest -n auto --cov=src --cov-report=term-missing
+```
+
+## Pre-commit hook
+
+[pre-commit](https://pre-commit.com/) can run the checks on every `git commit`: ruff and mypy (through `uv run`, so the
+same versions and settings as CI), plus trailing-whitespace, YAML and large-file checks. It's in the dev dependencies;
+install the hook once per clone:
+
+```bash
+uv run pre-commit install
+```
+
+`uv run pre-commit run --all-files` runs it on the whole tree without committing. The hook doesn't run the tests, which
+take a while; run pytest before opening a pull request. `git commit --no-verify` skips the hook.
 
 ## Dependencies
 
