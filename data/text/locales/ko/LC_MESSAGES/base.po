@@ -1299,6 +1299,13 @@ msgid ""
 "My hope is with thee.'"
 msgstr "'{}님, 제 목소리를 들어 주세요. 로라예요. 다음 레벨이 되려면 앞으로 {}포인트의 경험치가 필요해요. 당신을 믿고 있어요.'"
 
+#: src/menu.py
+msgid ""
+"'{}?\n"
+"This is Gwaelin.\n"
+"Know that thou hath reached the final level.'"
+msgstr "'{}님? 로라예요. 당신은 이미 마지막 레벨에 도달했어요.'"
+
 #: src/menu.py:726
 #: data/text/dialog_lookup_table.py:498
 msgid "I love thee, {}."
