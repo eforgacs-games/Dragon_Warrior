@@ -47,6 +47,9 @@ _speed = 1
 _real_anchor = 0
 _game_anchor = 0
 _rounding_carry = 0.0  # real milliseconds that rounding waits to whole milliseconds has left over (see _whole_real_ms)
+# Told the new speed after each change by set_game_speed (not reset_game_speed): the game saves it with the global
+# settings (src/settings.py)
+_speed_listener: Callable[[int], None] | None = None
 
 # Who is reading input when the virtual joypad is polled: the map loop (Game.read_events and the hero's walking) or
 # anything else (a dialog, a battle, a window or a wait)
@@ -127,7 +130,15 @@ def set_game_speed(speed: int) -> bool:
     _game_anchor = game_ticks()
     _real_anchor = now
     _speed = speed
+    if _speed_listener is not None:
+        _speed_listener(speed)
     return True
+
+
+def set_speed_listener(listener: Callable[[int], None] | None) -> None:
+    """Call ``listener`` with the new speed after every change set_game_speed makes (None: no one is told)."""
+    global _speed_listener
+    _speed_listener = listener
 
 
 def reset_game_speed() -> None:
