@@ -349,7 +349,7 @@ class StoryRunMixin:
             self.cmd_menu.rainbow_drop()
             self.assertTrue(rainbow_bridge_built(game))
             self.assertEqual(self.tile(RAINBOW_BRIDGE_COORDINATES), 'BRIDGE')
-            self.assertFalse(game.is_impassable('BRIDGE'))
+            self.assertFalse(game.movement.is_impassable('BRIDGE'))
             # The bridge stays after leaving the overworld and coming back (NES ChkRnbwBrdg)
             self.travel_to('Brecconary', (23, 10))
             self.travel_to('Alefgard', (55, 57))

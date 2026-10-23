@@ -25,10 +25,10 @@ The hero and the NPCs share FrameCounter, so they keep in step: the hero's steps
 every step and command, and by a bump, but each time when its low nibble is 0 already or on the frame before DoSprites
 would see 1 (PausePrepLoop and DoNCCmdWindow wait for that), so the frames DoSprites sees just keep counting
 1, 2, ..., 15, 0, 1, ...; a new map (InitMapData: NPCUpdateCntr = 0, then JoypadCheckLoop) starts with pair 0's turn.
-The one jump is IdleUpdate's pop-up window: see Game.do_sprites.
+The one jump is IdleUpdate's pop-up window: see MovementController.sprites_frame.
 
-Game.frame_counter is this class's frame_counter; Game.do_sprites runs a frame of it, once per main loop frame, so it
-speeds up with the game.
+MovementController.frame_counter is this class's frame_counter; MovementController.sprites_frame runs a frame of it,
+once per main loop frame, so it speeds up with the game.
 """
 from src.sprites.animated_sprite import AnimatedSprite
 

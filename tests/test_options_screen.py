@@ -333,7 +333,7 @@ class TestSaveRoundTrip(OptionsTestCase):
         self.assertEqual(('Normal', CLASSIC, True, FADE_STYLE_NES), settings(self.config))
 
     def test_loaded_setting_reaches_the_npcs(self):
-        # Game.ask_npc_to_make_way reads Game.config, the same dict the options are applied to
+        # MovementController.ask_npc_to_make_way reads Game.config, the same dict the options are applied to
         with patch.object(self.game.map_mgr, 'change_map'):
             self.game.load_game({'Name': 'Ed', 'Experience': 0, 'Gold': 0, 'Inventory': [],
                                  NPCS_MAKE_WAY_SAVE_KEY: False})

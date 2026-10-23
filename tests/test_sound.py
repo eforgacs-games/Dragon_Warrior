@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pygame
 
 from src.config.test_config import test_config
-from src.movement import Movement
+from src.movement import MovementController
 
 
 class TestSound(TestCase):
@@ -19,12 +19,13 @@ class TestSound(TestCase):
         pygame.quit()
 
     def test_bump(self):
-        """NES DirectionBlocked plays SFX_WALL_BUMP on every blocked step; how often is up to Game.move_player."""
+        """NES DirectionBlocked plays SFX_WALL_BUMP on every blocked step; how often is up to
+        MovementController.move_player."""
         character = MagicMock()
         character.identifier = 'HERO'
         character.current_tile = 'BRICK'
         character.bumped = False
-        movement = Movement(test_config)
+        movement = MovementController(MagicMock(config=test_config))
         with mock.patch.object(movement.sound, 'play_sound') as play_sound:
             for bumps in range(1, 3):
                 movement.bump(character)
