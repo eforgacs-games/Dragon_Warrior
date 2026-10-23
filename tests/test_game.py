@@ -127,6 +127,29 @@ class TestGame(TestCase):
         self.game.load_game({"Name": "Erdrick", "Experience": 26000, "Gold": 0, "Inventory": []})
         self.assertEqual((92, 88, 126, 117), self.stats())
 
+    def test_begin_new_quest_gives_the_hero_the_stats_for_the_chosen_name(self):
+        """The Player is made with the placeholder name "Player" (15 HP, strength 4). Ann has 13 max HP and strength
+        3 (tests/test_player.py), so she must start on 13/13 HP with 3 attack, not 15/13 with 4."""
+        with patch.object(self.game, 'select_adventure_log'), patch('src.game.NameSelection') as name_selection, \
+                patch.object(self.game, 'choose_new_quest_options'), patch('src.map_manager.screen_fade'), \
+                patch.object(self.game, 'music_player'), patch('src.game.CommandMenu'):
+            name_selection.return_value.select_name.return_value = 'Ann'
+            self.game.begin_new_quest()
+        player = self.game.player
+        self.assertEqual("Ann", player.name)
+        self.assertEqual((13, 13), (player.current_hp, player.max_hp))
+        self.assertEqual((0, 0), (player.current_mp, player.max_mp))
+        self.assertEqual((3, 2), (player.attack_power, player.defense_power))
+
+    def test_load_game_keeps_the_saved_hp_and_mp(self):
+        """Loading works the stats out again from the name and experience but, unlike a new hero, doesn't refill HP
+        and MP. Erdrick at level 20 has 126 max HP and 117 max MP."""
+        self.game.load_game({"Name": "Erdrick", "Experience": 26000, "Gold": 0, "Inventory": [], "CurrentHP": 50,
+                             "CurrentMP": 20})
+        player = self.game.player
+        self.assertEqual((50, 126), (player.current_hp, player.max_hp))
+        self.assertEqual((20, 117), (player.current_mp, player.max_mp))
+
     def test_save_and_load_keep_the_name_based_stats(self):
         player = self.game.cmd_menu.player = self.game.player
         player.name, player.total_experience = "Gina", 2000
