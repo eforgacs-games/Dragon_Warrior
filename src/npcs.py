@@ -14,6 +14,9 @@ from src.direction import Direction
 # Gwaelin in the Swamp Cave isn't an NES NPC: she's block $6 (BLK_PRINCESS) of SwampCaveDat, and DoTalkResults
 # (Bank03) starts her rescue when the hero talks to that block. This stands in for her dialog byte.
 GWAELIN_RESCUE = 'BLK_PRINCESS'
+# The dialog byte of Brecconary's guard who searched for Gwaelin (ChkPrncsDialog3), who says "...." once the Dragonlord
+# is dead (TantEndDialog)
+SEARCHED_FOR_GWAELIN = 0x64
 
 
 @dataclass(frozen=True)
