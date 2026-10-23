@@ -15,7 +15,7 @@ from src.command_window import held_buttons
 from src.menu import CommandMenu
 from src.sound import Sound
 from src.text import draw_text
-from src.visual_effects import cut_to_black, enemy_fade_in, enemy_hit_flash, screen_fade
+from src.visual_effects import cut_to_black, enemy_fade_in, enemy_hit_flash, enemy_spell_flash, screen_fade
 from src.waiting import NES_FPS, clear_events_keeping_quit, is_any_key_held, wait
 from src.window_renderer import draw_window
 from src.windows import COMMAND_WINDOW, POPUP_LAYOUT, POPUP_WINDOW
@@ -74,11 +74,13 @@ class Drawer:
     def fade_in_enemy(self, screen, enemy_name):
         """Show the enemy fading in from a black shadow (NES LoadEnemyGFX -> PalFadeIn twice). The final form's
         DoEndFight (Bank00 LoadEndBossGFX, $BABD) first fades the whole screen out (PalFadeOut) and blanks it, then
-        fades the final form in four times, then waits 41 frames."""
+        fades the final form in four times, then waits 41 frames. Just before the fade-in (LBB86) it plays SFX_FIRE,
+        over the end boss music InitFight has started."""
         enemy_image, enemy_position = self.get_enemy_image(enemy_name)
         if enemy_name == 'Dragonlord 2':
             screen_fade(fade_out=True, screen=screen, config=self.game_state.config)
             cut_to_black(screen, self.game_state.config)  # LoadBufferRows: the nametable is all blank tiles
+            self.sound.play_sound(self.directories.breathe_fire_sfx)  # SFX_FIRE
             enemy_fade_in(screen, enemy_image, enemy_position, self.game_state.config, repeats=4)
             wait(round(41 * 1000 / NES_FPS), self.game_state.config)
         else:
@@ -89,6 +91,11 @@ class Drawer:
         enemy_image, enemy_position = self.get_enemy_image(enemy_name)
         enemy_hit_flash(screen, enemy_image, enemy_position, self.game_state.config,
                         keep_black=enemy_name == 'Dragonlord 2')
+
+    def flash_enemy_spell(self, screen, enemy_name):
+        """Flash the enemy grey as it casts a spell (NES EnCastSpell -> PaletteFlash with SplFlshBGPalPtr)."""
+        enemy_image, enemy_position = self.get_enemy_image(enemy_name)
+        enemy_spell_flash(screen, enemy_image, enemy_position, self.game_state.config)
 
     @staticmethod
     def handle_sprite_animation(enable_animate, character_dict):
@@ -220,7 +227,7 @@ class Drawer:
         Bank00): a LightDiameter of 1, 3, 5 or 7 shows a square of that many blocks, centered on the hero."""
         hero_is_stepping = player.is_moving and not player.bumped
         if self.game_state.update_lit_diameter(hero_is_stepping):
-            self.sound.play_sound(self.directories.torch_sfx)  # SFX_RADIANT
+            self.sound.play_sound(self.directories.radiant_sfx)  # SFX_RADIANT
         self.draw_darkness(screen)
 
     def draw_darkness(self, screen) -> None:
