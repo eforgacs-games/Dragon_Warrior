@@ -125,22 +125,76 @@ class TestContinueQuest(TestCase):
         game = self.title_menu_then_continue([3, 0, 1, 0])
         self.assertEqual(game.save_files(), ['save_slot_1.json', 'save_slot_2.json'])
 
-    def test_a_game_with_no_log_saves_to_an_open_log(self):
-        # It used to write save_slot_0.json, which the title menu counted as a log
-        self.write_save(1, 'Eddie', 2, modified=1000)
+    def saved_logs(self) -> dict[str, tuple[str, int] | None]:
+        """Each file in the save folder: its hero's name and experience, or None if it isn't a readable save."""
+        logs: dict[str, tuple[str, int] | None] = {}
+        for file_name in sorted(os.listdir(self.save_dir.name)):
+            try:
+                with open(os.path.join(self.save_dir.name, file_name)) as save_file:
+                    save = json.load(save_file)
+                logs[file_name] = (save['Name'], save['Experience'])
+            except ValueError:
+                logs[file_name] = None
+        return logs
+
+    def save_with_no_log(self, name: str, experience: int = 99) -> Game:
+        """Saves a game whose title menu was skipped, so no adventure log was chosen."""
         game = self.new_game()
         self.assertEqual(game.player.adventure_log, 0)
+        game.player.name = name
+        game.player.total_experience = experience
         game.cmd_menu.save()
-        self.assertEqual(game.player.adventure_log, 2)
-        self.assertEqual(sorted(os.listdir(self.save_dir.name)), ['save_slot_1.json', 'save_slot_2.json'])
+        return game
 
-    def test_a_game_with_no_log_saves_nothing_when_every_log_is_used(self):
+    def test_a_game_with_no_log_saves_to_the_log_with_its_heros_name(self):
+        self.write_save(1, 'Eddie', 2, modified=1000)
+        self.write_save(2, 'Loto', 8, modified=2000)
+        game = self.save_with_no_log('Loto')
+        self.assertEqual(game.player.adventure_log, 2)
+        self.assertEqual({'save_slot_1.json': ('Eddie', 2), 'save_slot_2.json': ('Loto', 99)}, self.saved_logs())
+
+    def test_the_log_with_its_heros_name_is_used_even_when_every_log_is_used(self):
+        for slot, name in ((1, 'Eddie'), (2, 'Loto'), (3, 'Gwen')):
+            self.write_save(slot, name, slot, modified=1000 + slot)
+        game = self.save_with_no_log('Gwen')
+        self.assertEqual(game.player.adventure_log, 3)
+        self.assertEqual({'save_slot_1.json': ('Eddie', 1), 'save_slot_2.json': ('Loto', 2),
+                          'save_slot_3.json': ('Gwen', 99)}, self.saved_logs())
+
+    def test_a_game_with_no_log_and_a_new_name_saves_to_an_open_log(self):
+        # It used to write save_slot_0.json, which the title menu counted as a log
+        self.write_save(1, 'Eddie', 2, modified=1000)
+        game = self.save_with_no_log('Loto')
+        self.assertEqual(game.player.adventure_log, 2)
+        # and saving again goes to the same log
+        game.player.total_experience = 100
+        game.cmd_menu.save()
+        self.assertEqual({'save_slot_1.json': ('Eddie', 2), 'save_slot_2.json': ('Loto', 100)}, self.saved_logs())
+
+    def test_a_game_with_no_log_and_a_new_name_saves_nothing_when_every_log_is_used(self):
         for slot in (1, 2, 3):
             self.write_save(slot, 'Eddie', slot, modified=1000 + slot)
-        game = self.new_game()
-        game.cmd_menu.save()
-        self.assertEqual(sorted(os.listdir(self.save_dir.name)), ['save_slot_1.json', 'save_slot_2.json',
-                                                                  'save_slot_3.json'])
+        game = self.save_with_no_log('Loto')
+        self.assertEqual(game.player.adventure_log, 0)
+        self.assertEqual({'save_slot_1.json': ('Eddie', 1), 'save_slot_2.json': ('Eddie', 2),
+                          'save_slot_3.json': ('Eddie', 3)}, self.saved_logs())
+
+    def test_a_game_with_no_log_saves_nothing_when_several_logs_have_its_heros_name(self):
+        self.write_save(1, 'Loto', 2, modified=1000)
+        self.write_save(2, 'Loto', 8, modified=2000)
+        game = self.save_with_no_log('Loto')
+        self.assertEqual(game.player.adventure_log, 0)
+        self.assertEqual({'save_slot_1.json': ('Loto', 2), 'save_slot_2.json': ('Loto', 8)}, self.saved_logs())
+
+    def test_an_unreadable_log_is_never_overwritten(self):
+        with open(os.path.join(self.save_dir.name, 'save_slot_1.json'), 'w') as save_file:
+            save_file.write('{not json')
+        self.write_save(2, 'Eddie', 2, modified=1000)
+        self.write_save(3, 'Gwen', 3, modified=2000)
+        game = self.save_with_no_log('Loto')
+        self.assertEqual(game.player.adventure_log, 0)
+        self.assertEqual({'save_slot_1.json': None, 'save_slot_2.json': ('Eddie', 2),
+                          'save_slot_3.json': ('Gwen', 3)}, self.saved_logs())
 
     def test_files_that_arent_one_of_the_three_logs_are_ignored(self):
         # A save_slot_0.json made before used to make a fourth log, and the title menu then exited
