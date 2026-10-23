@@ -543,6 +543,8 @@ class TestDevices(TestCase):
         joystick.get_hat.return_value = (0, 1)
         joystick.get_numaxes.return_value = 2
         joystick.get_axis.side_effect = lambda axis: (0.25, 0.75)[axis]
-        state = JoystickDevice(joystick).read()
+        # JoystickDevice counts the joysticks when opened, which raises if an earlier test on this worker quit pygame
+        with patch('pygame.joystick.get_count', return_value=1):
+            state = JoystickDevice(joystick).read()
         self.assertEqual(frozenset({'b', 'start', 'dpup'}), state.buttons)
         self.assertEqual((0.25, 0.75), (state.stick_x, state.stick_y))
