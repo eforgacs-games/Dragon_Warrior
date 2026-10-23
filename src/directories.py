@@ -53,7 +53,10 @@ class Directories:
 
         # items
 
-        self.torch_sfx = join(sfx_dir, 'torch.wav')
+        # NES SFX_RADIANT (Bank01 RadiantSFX, $84A0: noise at 4 pitches for 3+2+1+2 = 8 frames, about 0.13 s), played
+        # by RADIANT (LDA89) and a torch (LDD4B). The soundtrack has no track for it, so tools/make_radiant_sfx.py
+        # renders it from that data with an emulated noise channel.
+        self.radiant_sfx = join(sfx_dir, 'radiant.wav')
         # music clips too (see victory_music)
         self.harp_music = join(sfx_dir, '17 Dragon Quest 1 - Silver Harp.mp3')  # MSC_SILV_HARP
         self.flute_music = join(sfx_dir, '18 Dragon Quest 1 - Fairy Flute.mp3')  # MSC_FRY_FLUTE
