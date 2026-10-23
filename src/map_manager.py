@@ -95,8 +95,9 @@ class MapManager:
     def stay_on_stairs(self, row: int, column: int) -> None:
         """A random fight has just started on the block the hero stepped onto (Bank03 CheckBlockDmg -> DoRandomFight).
         The NES never takes stairs on its own: only the STAIRS command does (ChkStairsUp/Down), so after the fight the
-        hero is still standing on them. Here stairs are taken by stepping onto them, so that step's warp is held back
-        until the hero steps off (or uses STAIRS), instead of happening in the frame right after the fight."""
+        hero is still standing on them. With STAIRS set to STEP ON, stairs are taken by stepping onto them, so that
+        step's warp is held back until the hero steps off (or uses STAIRS), instead of happening in the frame right
+        after the fight."""
         self.fought_on_stairs = row, column
 
     def handle_warps(self):
@@ -108,9 +109,12 @@ class MapManager:
         staircase_dict = self.current_map.staircases.get(location)
         if staircase_dict is None or not self.game.tiles_moved_since_spawn:
             return
-        if not self.game.auto_stairs and not self.current_map.is_step_warp(*location):
-            # Stairs (this project takes them by stepping onto them; the NES only by the STAIRS command): wait for a
-            # few steps on a new map, so the hero doesn't go straight back down the stairs they came up
+        if not self.current_map.is_step_warp(*location):
+            # Stairs: the NES only takes them by the STAIRS command (CheckStairs)
+            if not self.game.auto_stairs:
+                return  # STAIRS set to NES
+            # STAIRS set to STEP ON (not NES): taken by stepping onto them, but only after a few steps on a new map,
+            # so the hero doesn't go straight back down the stairs they came up
             immediate_move_maps = ('CharlockB1', 'MagicTemple', 'MountainCaveB1', 'MountainCaveB2')
             if not (self.game.tiles_moved_since_spawn > 2 or (
                     self.game.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps)):
