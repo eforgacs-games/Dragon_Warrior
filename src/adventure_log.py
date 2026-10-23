@@ -58,6 +58,12 @@ def first_open_log(save_dir: str) -> int | None:
     return None
 
 
+def logs_named(save_dir: str, name: str) -> List[int]:
+    """The adventure logs in save_dir whose hero is called name (the save's 'Name', as Game.load_game reads it). A
+    save that can't be read matches no name."""
+    return [log for log in ADVENTURE_LOGS if read_save_name(os.path.join(save_dir, f'save_slot_{log}.json')) == name]
+
+
 def log_name_tiles(name: str) -> str:
     """The 4 letters WndLwr4Saved shows: the start of the name, padded with blank tiles if it's shorter."""
     return name[:LOG_NAME_LENGTH].ljust(LOG_NAME_LENGTH)
