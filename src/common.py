@@ -11,6 +11,7 @@ from src.color import WHITE, BLACK
 from src.direction import Direction
 from src.directories import Directories
 from src.korean_particles import KoreanText
+from src.paths import data_path
 
 
 def find_file(name, path):
@@ -185,7 +186,7 @@ def singular_or_plural(count: int, singular: str, plural: str) -> str:
 
 
 def set_gettext_language(language):
-    localedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'text', 'locales'))
+    localedir = data_path('text', 'locales')
     if language == 'Korean':
         ko = gettext.translation('base', localedir=localedir, languages=['ko'])
         ko.install()

@@ -15,7 +15,7 @@ from pygame import KEYDOWN, display, event, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
-from src.common import ANY_BUTTON_KEYS, accept_keys, reject_keys, singular_or_plural
+from src.common import A_BUTTON_KEYS, reject_keys, singular_or_plural
 from src.cursor import BlinkingCursor
 from src.waiting import wait
 from src.constants import (
@@ -48,9 +48,10 @@ class BattleOutcome(Enum):
 # CmdCmbtDat: the commands, by row and column (WndCalcSelResult: CC_FIGHT, CC_SPELL, CC_RUN, CC_ITEM)
 BATTLE_MENU_OPTIONS = (('Fight', 'Spell'), ('Run', 'Item'))
 
-# The joypad on the keyboard, for the command window's SelectionButtons
+# The joypad on the keyboard, for the command window's SelectionButtons. A is K and Enter; START (I) is no button
+# here: Bank01 WndProcessInput skips SELECT and START, like the field COMMAND window (src/command_window.py).
 COMMAND_WINDOW_BUTTON_KEYS = (
-    (IN_A, accept_keys),
+    (IN_A, A_BUTTON_KEYS),
     (IN_B, reject_keys),
     (IN_UP, (K_UP, K_w)),
     (IN_DOWN, (K_DOWN, K_s)),
@@ -306,39 +307,37 @@ class BattleController:
         display.update(rect)
 
     def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
-        if not self.command_window_open:
-            self.open_command_window()
-        # Drawn when it opens, and again only when the cursor moves or blinks (or the window color changes)
-        drawn = (self.battle_menu_row, self.battle_menu_column, self.command_cursor.visible(), self.game.color)
-        if drawn != self.drawn_command_window:
-            self.draw_command_window(self.command_cursor.visible())
-            self.drawn_command_window = drawn
         selected_executed_option = None
-
-        if self.auto_battle and not self.player.is_asleep:
-            selected_executed_option = self.last_battle_action
-            time.wait(scaled_ms(AUTO_BATTLE_DELAY_MS))
+        if self.player.is_asleep:
+            # NES StartPlayerTurn: a sleeping hero's turn is the wake roll, at once. Only PlayerAwakes goes on to
+            # ShowCmbtCmd, so there is no command window and no button is waited for (sleeping_player_turn).
+            selected_executed_option = 'Sleep'
         else:
-            next_frame()  # one pass of the fight loop per NES frame (src/selection.py)
-            tapped = 0  # keys pressed since the last call, which may have been let go already
-            for current_event in frame_events():  # quits if the window is closed; 1 to 4 only set the speed
-                if current_event.type == KEYDOWN:
-                    if not self.player.is_asleep:
+            if not self.command_window_open:
+                self.open_command_window()
+            # Drawn when it opens, and again only when the cursor moves or blinks (or the window color changes)
+            drawn = (self.battle_menu_row, self.battle_menu_column, self.command_cursor.visible(), self.game.color)
+            if drawn != self.drawn_command_window:
+                self.draw_command_window(self.command_cursor.visible())
+                self.drawn_command_window = drawn
+            if self.auto_battle:
+                selected_executed_option = self.last_battle_action
+                time.wait(scaled_ms(AUTO_BATTLE_DELAY_MS))
+            else:
+                next_frame()  # one pass of the fight loop per NES frame (src/selection.py)
+                tapped = 0  # keys pressed since the last call, which may have been let go already
+                for current_event in frame_events():  # quits if the window is closed; 1 to 4 only set the speed
+                    if current_event.type == KEYDOWN:
                         tapped |= key_joypad_buttons(current_event.key)
-                    elif current_event.key in ANY_BUTTON_KEYS:
-                        # Asleep, a joypad button (any of them) moves the fight on; other keys do nothing
-                        selected_executed_option = 'Sleep'
-            if not self.player.is_asleep:
                 presses = self.command_buttons.read(held_joypad_buttons(), tapped)  # WndGetButtons
                 selected_executed_option = self.process_command_input(presses)
 
         if selected_executed_option:
             if selected_executed_option != 'Sleep':
                 self.last_battle_action = selected_executed_option
-
-            # WndAPressed: the chosen command's arrow is drawn once more and stays on while it runs
-            self.command_cursor.hold()
-            self.draw_command_window(True)
+                # WndAPressed: the chosen command's arrow is drawn once more and stays on while it runs
+                self.command_cursor.hold()
+                self.draw_command_window(True)
             if selected_executed_option == 'Fight':
                 self.fight(current_battle)
             elif selected_executed_option == 'Spell':

@@ -15,9 +15,11 @@ King Lorik in a game started from a checkpoint writes to CHECKPOINT_SAVE_DIR ins
 """
 import json
 import tempfile
-from os.path import dirname, join, realpath
+from os.path import join
 
-CHECKPOINTS_DIR = join(dirname(dirname(realpath(__file__))), 'data', 'checkpoints')
+from src.paths import data_path
+
+CHECKPOINTS_DIR = data_path('checkpoints')
 
 # In story order. Each one is data/checkpoints/<name>.json.
 CHECKPOINT_NAMES = (
