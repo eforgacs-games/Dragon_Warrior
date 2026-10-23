@@ -12,7 +12,7 @@ from src.color import BLACK, PINK, ORANGE
 from src.common import accept_keys
 from src.directories import Directories
 from src.text import draw_text
-from src.visual_effects import fade
+from src.visual_effects import cut_to_black, screen_fade
 
 
 def show_intro_banner(intro_banner_path, screen, no_blit) -> Rect:
@@ -22,6 +22,15 @@ def show_intro_banner(intro_banner_path, screen, no_blit) -> Rect:
     intro_banner_rect.midtop = (screen.get_width() / 2, screen.get_height() * 1 / 6)
     screen.blit(intro_banner, intro_banner_rect) if not no_blit else None
     return intro_banner_rect
+
+
+def cut_to_start_game(screen, config) -> None:
+    """Leaving the title screen for the title menu. NES DoIntroRoutine (Bank02, LBDBA), once START is pressed, loads
+    IntroPalPtr3 with no fade, so the title screen cuts to black. ShowStartGame (Bank03, $F842) then clears the screen,
+    and LoadStartPals (Bank00, $AA7E) runs a PalFadeIn over the empty screen (16 frames of black, PalFadeIn) before the
+    title menu's window opens."""
+    cut_to_black(screen, config)
+    screen_fade(fade_out=False, screen=screen, config=config)
 
 
 class Intro:
@@ -72,7 +81,7 @@ class Intro:
                     if current_event.key in accept_keys:
                         intro_banner_with_text_enabled = False
             display.flip()
-        fade(fade_out=True, screen=screen, config=config)
+        cut_to_start_game(screen, config)
 
     def handle_all_sparkles(self, start_time, screen):
         frames_since_banner_launch = self.calculation.convert_to_frames_since_start_time(start_time)

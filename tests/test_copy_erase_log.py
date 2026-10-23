@@ -10,7 +10,7 @@ from pygame import K_ESCAPE, KEYDOWN
 from pygame.event import Event
 
 from src.common import set_gettext_language
-from src.game import BACK_TO_TITLE_MENU
+from src.title_menu import BACK_TO_TITLE_MENU
 from src.options_screen import OptionsScreen, erase_log_window, open_log_options, yes_no_options
 from src.windows import ADVENTURE_LOG_WINDOW_1, ERASE_LOG_WINDOW, YES_NO_2_WINDOW
 from tests.test_options_screen import B, DOWN, ENTER, OptionsTestCase, presses
@@ -58,9 +58,9 @@ class TestCopyAndErase(OptionsTestCase):
         """Choose `entry` on the title menu, play the events in its windows, then CONTINUE A QUEST: the title menu
         has to come back (WndBackToMain)."""
         with patch.object(self.game.game_functions, 'main_menu_selection', side_effect=[entry, CONTINUE]) \
-                as title_menu, patch.object(self.game, 'continue_quest') as continue_quest, \
-                patch('src.options_screen.event.get', side_effect=presses(*events)):
-            self.game.show_main_menu_screen(self.game.screen)
+                as title_menu, patch.object(self.game.title_menu, 'continue_quest') as continue_quest, \
+                patch('src.selection.event.get', side_effect=presses(*events)):
+            self.game.title_menu.show_main_menu_screen(self.game.screen)
         self.assertEqual(2, title_menu.call_count)
         continue_quest.assert_called_once()
 
@@ -73,11 +73,11 @@ class TestCopyAndErase(OptionsTestCase):
 
     def test_copy_lists_the_used_logs_then_only_the_open_logs(self):
         # It used to list all three logs both times, so a used log could be the source of nothing or be overwritten
-        self.game.save_dir_contents = self.game.save_files()
+        self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
         with patch.object(OptionsScreen, 'choose_log', return_value=1) as choose_log, \
                 patch.object(OptionsScreen, 'choose_open_log', return_value=None) as choose_open_log, \
                 self.no_screenshot_menu():
-            self.assertIs(BACK_TO_TITLE_MENU, self.game.copy_quest())
+            self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.copy_quest())
         self.assertEqual([(1, 'Erdrick'), (2, 'Lotoroto')], choose_log.call_args.args[0])
         self.assertEqual([3], choose_open_log.call_args.args[0])
         self.assertEqual({1: self.saves[1], 2: self.saves[2], 3: None}, self.logs())
@@ -108,8 +108,9 @@ class TestCopyAndErase(OptionsTestCase):
         with open(self.save_path(3), 'w') as save_file:
             json.dump(self.saves[1], save_file)
         with patch.object(self.game.game_functions, 'main_menu_selection', return_value=2) as title_menu, \
-                patch.object(self.game, 'erase_quest') as erase_quest, patch.object(self.game, 'copy_quest') as copy:
-            self.game.show_title_menu(self.game.screen)
+                patch.object(self.game.title_menu, 'erase_quest') as erase_quest, \
+                patch.object(self.game.title_menu, 'copy_quest') as copy:
+            self.game.title_menu.show_title_menu(self.game.screen)
         self.assertEqual(2, len(title_menu.call_args.args[4]))
         erase_quest.assert_called_once()
         copy.assert_not_called()
@@ -135,11 +136,11 @@ class TestCopyAndErase(OptionsTestCase):
         self.assertEqual({1: self.saves[1], 2: self.saves[2], 3: None}, self.logs())
 
     def test_erase_shows_the_logs_hero_and_level(self):
-        self.game.save_dir_contents = self.game.save_files()
+        self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
         with patch.object(OptionsScreen, 'choose_log', return_value=2), \
                 patch.object(OptionsScreen, 'confirm_erase', return_value=False) as confirm_erase, \
                 self.no_screenshot_menu():
-            self.assertIs(BACK_TO_TITLE_MENU, self.game.erase_quest())
+            self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.erase_quest())
         confirm_erase.assert_called_once_with('Lotoroto', 2)
 
 
@@ -174,7 +175,7 @@ class TestLogWindows(OptionsTestCase):
 
     def test_open_logs_window_opens_over_the_used_logs_window(self):
         screen = OptionsScreen(self.game.screen, self.config)
-        with patch('src.options_screen.event.get', side_effect=presses(DOWN, ENTER, DOWN, ENTER)):
+        with patch('src.selection.event.get', side_effect=presses(DOWN, ENTER, DOWN, ENTER)):
             self.assertEqual(2, screen.choose_log([(1, 'Erdrick'), (2, 'Lotoroto')]))
             self.assertEqual(3, screen.choose_open_log([1, 3]))
         self.assertEqual([1, 1], [index for _, index in screen.windows])
@@ -189,11 +190,11 @@ class TestContinueWithOneLog(OptionsTestCase):
         self.game.directories.save_dir = tmp_dir.name
         with open(os.path.join(tmp_dir.name, 'save_slot_1.json'), 'w') as save_file:
             json.dump({'Name': 'Erdrick', 'Experience': 0}, save_file)
-        self.game.save_dir_contents = self.game.save_files()
+        self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
         # B, then A (which would continue the quest if B were ignored)
-        with patch('src.game_functions.event.get', side_effect=[[B], [ENTER]]), \
+        with patch('src.selection.event.get', side_effect=[[B], [ENTER]]), \
                 patch.object(self.game, 'load_game') as load_game:
-            self.assertIs(BACK_TO_TITLE_MENU, self.game.continue_quest())
+            self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.continue_quest())
         load_game.assert_not_called()
 
     def test_a_still_continues(self):
@@ -202,10 +203,10 @@ class TestContinueWithOneLog(OptionsTestCase):
         self.game.directories.save_dir = tmp_dir.name
         with open(os.path.join(tmp_dir.name, 'save_slot_1.json'), 'w') as save_file:
             json.dump({'Name': 'Erdrick', 'Experience': 0}, save_file)
-        self.game.save_dir_contents = self.game.save_files()
-        with patch('src.game_functions.event.get', side_effect=[[ENTER]]), \
+        self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
+        with patch('src.selection.event.get', side_effect=[[ENTER]]), \
                 patch.object(self.game, 'load_game') as load_game:
-            self.game.continue_quest()
+            self.game.title_menu.continue_quest()
         load_game.assert_called_once()
 
 
@@ -220,11 +221,11 @@ class TestNewQuestLog(OptionsTestCase):
 
     def new_quest(self, keys):
         """The real title menu with no logs, played key by key (one key per frame), up to the name entry."""
-        with patch('src.game_functions.event.get', side_effect=[[key] for key in keys]), \
-                patch('src.game.NameSelection') as name_selection, \
-                patch.object(self.game, 'choose_new_quest_options'), \
+        with patch('src.selection.event.get', side_effect=[[key] for key in keys]), \
+                patch('src.title_menu.NameSelection') as name_selection, \
+                patch.object(self.game.title_menu, 'choose_new_quest_options'), \
                 patch.object(self.game, 'start_at_throne_room'):
-            self.game.show_main_menu_screen(self.game.screen)
+            self.game.title_menu.show_main_menu_screen(self.game.screen)
         return name_selection
 
     def test_b_in_the_log_window_goes_back_to_the_title_menu(self):
@@ -240,8 +241,8 @@ class TestNewQuestLog(OptionsTestCase):
         self.assertEqual(3, self.game.player.adventure_log)
 
     def test_b_goes_back_before_the_name_entry(self):
-        with patch('src.game_functions.event.get', side_effect=[[B]]), \
-                patch('src.game.NameSelection') as name_selection:
-            self.assertIs(BACK_TO_TITLE_MENU, self.game.begin_new_quest())
+        with patch('src.selection.event.get', side_effect=[[B]]), \
+                patch('src.title_menu.NameSelection') as name_selection:
+            self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.begin_new_quest())
         name_selection.assert_not_called()
         self.assertEqual(0, self.game.player.adventure_log)

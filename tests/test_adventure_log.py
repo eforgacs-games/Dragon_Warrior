@@ -6,12 +6,12 @@ from unittest.mock import MagicMock, patch
 
 import pygame
 
-from src.adventure_log import (AdventureLogOverlay, OverlayText, adventure_log_overlay_texts,
-                               log_name_tiles, read_save_name, save_slot_number)
+from src.adventure_log import AdventureLogOverlay, OverlayText, adventure_log_overlay_texts, log_name_tiles
 from src.color import WHITE
 from src.config.test_config import test_config
 from src.directories import Directories
 from src.game_functions import blit_scaled_image
+from src.save_file import log_number_of_path, read_save_name
 
 
 def write_save(directory: str, slot: int, contents) -> str:
@@ -58,9 +58,9 @@ class TestReadSave(TestCase):
                 self.assertIsNone(read_save_name(write_save(self.tmp_dir.name, 1, contents)))
 
     def test_slot_number(self):
-        self.assertEqual(1, save_slot_number('/x/save_slot_1.json'))
-        self.assertEqual(3, save_slot_number('save_slot_3.json'))
-        self.assertIsNone(save_slot_number('/x/notes.txt'))
+        self.assertEqual(1, log_number_of_path('/x/save_slot_1.json'))
+        self.assertEqual(3, log_number_of_path('save_slot_3.json'))
+        self.assertIsNone(log_number_of_path('/x/notes.txt'))
 
 
 class TestOverlayTexts(TestCase):

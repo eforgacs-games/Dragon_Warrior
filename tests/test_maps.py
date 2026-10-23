@@ -37,7 +37,8 @@ class TestDragonWarriorMap(TestCase):
             if dw_map not in (
                     'ABC', 'AnimatedSprite', 'BaseSprite', 'BasementWithNPCs', 'BasementWithoutNPCs', 'CaveMap',
                     'Direction', 'Directories', 'DragonWarriorMap', 'FixedCharacter',
-                    'Graphics', 'Group', 'LayeredDirty', 'MapLayouts', 'MapWithoutNPCs', 'Player', 'RoamingCharacter'):
+                    'Graphics', 'Group', 'LayeredDirty', 'MapLayouts', 'MapWithoutNPCs', 'NPC', 'Player',
+                    'RoamingCharacter'):
                 initialized_map_class = map_class(self.game.config)
                 self.assertTrue(hasattr(initialized_map_class, 'music_file_path'))
 
