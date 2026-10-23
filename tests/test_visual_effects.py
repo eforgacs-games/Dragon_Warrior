@@ -4,8 +4,9 @@ from unittest.mock import patch, MagicMock
 import pygame
 
 from src.visual_effects import (
-    NES_PALETTE, NES_RED, SWAMP_FLASH_FRAMES, draw_transparent_color, enemy_fade_in, enemy_hit_flash, fade_surface,
-    flash_transparent_color, force_field_flash, nes_color_index, nes_faded_color, player_hit_shake, silhouette_surface,
+    NES_PALETTE, NES_RED, SWAMP_FLASH_FRAMES, draw_transparent_color, enemy_fade_in, enemy_hit_flash, enemy_spell_flash,
+    fade_surface, flash_transparent_color, force_field_flash, nes_color_index, nes_faded_color, player_hit_shake,
+    silhouette_surface,
 )
 
 
@@ -253,6 +254,25 @@ class TestEnemyHitFlash(NesPaletteTestCase):
         with patch('src.visual_effects.display'):
             enemy_hit_flash(pygame.Surface((10, 10)), self.sprite(NES_PALETTE[0x30]), (0, 0),
                             {'NO_WAIT': False, 'NO_BLIT': False})
+        self.assertEqual([c.args[0] for c in mock_wait.call_args_list], [50, 33] * 5)
+
+
+class TestEnemySpellFlash(NesPaletteTestCase):
+    """NES EnCastSpell (LEC03-LEC0D): PaletteFlash with SplFlshBGPal, every color $10."""
+
+    def test_flashes_grey_five_times_then_restores(self):
+        screen = pygame.Surface((10, 10))
+        recorder, shown = self.record_flips(screen, (0, 0))
+        with recorder:
+            enemy_spell_flash(screen, self.sprite(NES_PALETTE[0x16]), (0, 0), {'NO_WAIT': True, 'NO_BLIT': False})
+        self.assertEqual([color for (color,) in shown],
+                         [NES_PALETTE[0x16], NES_PALETTE[0x10]] * 5 + [NES_PALETTE[0x16]])
+
+    @patch('src.visual_effects.wait')
+    def test_same_timing_as_the_hit_flash(self, mock_wait):
+        with patch('src.visual_effects.display'):
+            enemy_spell_flash(pygame.Surface((10, 10)), self.sprite(NES_PALETTE[0x30]), (0, 0),
+                              {'NO_WAIT': False, 'NO_BLIT': False})
         self.assertEqual([c.args[0] for c in mock_wait.call_args_list], [50, 33] * 5)
 
 

@@ -18,11 +18,13 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
     times it off the frame counter. It is still accepted so callers that pass it keep working."""
     def display_prompt():
         command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, hide_arrow=True, letter_by_letter=True)
+        # NES ShowWindow (Bank01, $A194) runs DoWindowPrep before WindowSequence builds the window, and for the YES/NO
+        # window (WND_YES_NO1, LAF02) DoWindowPrep plays SFX_CONFIRM (DoConfirmSFX, LAF19): the sound starts as the
+        # window starts to drop down
+        sound.play_sound(directories.confirmation_sfx)
         command_menu.window_drop_down_effect(*YES_NO_WINDOW)
         # The window without its cursor, until the selection starts below (generated: src/window_renderer.py)
         display.update(draw_translated_window(command_menu.screen, YES_NO_LAYOUT, color, config, command_menu._))
-        # NES WindowSequence (Bank01, LAF02/LAF19 DoConfirmSFX): SFX_CONFIRM plays as soon as the YES/NO window is built
-        sound.play_sound(directories.confirmation_sfx)
 
     # Initialization
     directories = command_menu.directories
