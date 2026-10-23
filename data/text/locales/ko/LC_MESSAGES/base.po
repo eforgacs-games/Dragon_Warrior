@@ -168,6 +168,10 @@ msgstr "오오, {}! 잘 돌아와 주었다! 나느 참으로 기쁘다네."
 msgid "Before reaching thy next level of experience thou must gain {} Points."
 msgstr "자네가 다음 레벨에 되려면 앞으로 {}포인트의 경험치가 필요하군."
 
+#: .\dialog_lookup_table.py:69
+msgid "Before reaching thy next level of experience thou must gain {} Point."
+msgstr "자네가 다음 레벨에 되려면 앞으로 {}포인트의 경험치가 필요하군."
+
 #: .\dialog_lookup_table.py:70
 msgid "Will thou tell me now of thy deeds so they won't be forgotten?"
 msgstr "자네가 지금까지 해 온 여행을 모험의 서에 기록하겠나?"
@@ -203,6 +207,10 @@ msgstr "어쩔 수 없군. 자네에게 다시 한 번 기회를 주겠네!"
 msgid "To reach the next level, thy Experience Points must increase by {}."
 msgstr "자네가 다음 레벨에 되려면 앞으로 {}포인트의 경험치가 필요하군."
 
+#: .\dialog_lookup_table.py:81
+msgid "To reach the next level, thy Experience Point must increase by {}."
+msgstr "자네가 다음 레벨에 되려면 앞으로 {}포인트의 경험치가 필요하군."
+
 #: .\dialog_lookup_table.py:82
 msgid "Now, go, {}!"
 msgstr "이제 가게, {}!"
@@ -225,7 +233,9 @@ msgid "Sleep heals all."
 msgstr "잠을 자면 상처가 회복됩니다."
 
 #: .\dialog_lookup_table.py:89
-msgid "If thou hast collected all the Treasure Chests, a key will be found."
+msgid ""
+"If thou hast collected all the Treasure Chests,\n"
+"a key will be found."
 msgstr "보물 상자를 모두 열었다면 그 안에는 마법의 열쇠가 들어 있었을 겁니다."
 
 #: .\dialog_lookup_table.py:90
@@ -238,7 +248,8 @@ msgstr ""
 
 #: .\dialog_lookup_table.py:96
 msgid ""
-"Magic keys! They will unlock any door.\n"
+"Magic keys!\n"
+"They will unlock any door.\n"
 "Dost thou wish to purchase one for {} GOLD?"
 msgstr ""
 "어떤 문이든 척척 여는 마법의 열쇠 필요 없나?\n"
@@ -246,8 +257,8 @@ msgstr ""
 
 #: .\dialog_lookup_table.py:97
 msgid ""
-"We are merchants who have traveled much in this land. Many of our colleagues "
-"have been killed by servants of the Dragonlord."
+"We are merchants who have traveled much in this land.\n"
+"Many of our colleagues have been killed by servants of the Dragonlord."
 msgstr ""
 "저는 떠돌이 상인입니다. 지금까지도 수많은 동료들이 마물 때문에 목숨을 잃었죠. 그"
 "때를 떠올리면 분하고 슬퍼서 견딜 수가 없습니다."
@@ -295,7 +306,8 @@ msgstr ""
 
 #: .\dialog_lookup_table.py:111
 msgid ""
-"{}'s coming was foretold by legend. May the light shine upon this brave warrior."
+"{}'s coming was foretold by legend.\n"
+"May the light shine upon this brave warrior."
 msgstr ""
 "어둠의 용이 날개를 펼칠 때 로토의 피를 이어받은 자 나타나 어둠을 비추는 빛이 될지"
 "니. 오오, 신이시여! 옛 전설의 용사 {}에게 광명이 있기를!!"
@@ -385,7 +397,9 @@ msgid "Is that Okay.?"
 msgstr "괜찮아?"
 
 #: .\dialog_lookup_table.py:238
-msgid "Oh, yes? That's too bad."
+msgid ""
+"Oh, yes?\n"
+"That's too bad."
 msgstr "아, 그래? 유감 이네."
 
 # not sure about "유감 이네." - used when player decides not to purchase an item.
@@ -505,13 +519,21 @@ msgstr "반응 속도가 {}포인트 올랐다!\n"
 msgid "Thy Maximum Hit Points increase by {}.\n"
 msgstr "최대 HP가 {}포인트 올랐다!\n"
 
+#: ..\battle.py:195
+msgid "Thy Maximum Hit Point increase by {}.\n"
+msgstr "최대 HP가 {}포인트 올랐다!\n"
+
 #: ..\battle.py:199
 msgid "Thy Maximum Magic Points increase by {}.\n"
 msgstr "최대 MP가 {}포인트 올랐다!\n"
 
+#: ..\battle.py:199
+msgid "Thy Maximum Magic Point increase by {}.\n"
+msgstr "최대 MP가 {}포인트 올랐다!\n"
+
 #: ..\battle.py:59
 msgid "{} started to run away.\n"
-msgstr "{}은 도망쳤다!\n"
+msgstr "{}은/는 도망쳤다!\n"
 
 #: ..\battle.py:60
 msgid "But was blocked in front."
@@ -526,11 +548,15 @@ msgid "Thou hast done well in defeating the {}.\n"
 msgstr "{} 물리쳤다!\n"
 
 #: ..\battle.py:125
-msgid "Thy experience increases by {}.\n"
+msgid ""
+"Thy Experience\n"
+"increases by {}.\n"
 msgstr "{}포인트의 경험치 획득!\n"
 
 #: ..\battle.py:126
-msgid "Thy GOLD increases by {}.\n"
+msgid ""
+"Thy GOLD\n"
+"increases by {}.\n"
 msgstr "{}골드를 획득했다!\n"
 
 #: ..\battle.py:164
@@ -705,12 +731,20 @@ msgstr "{}의 공격!\n"
 msgid "The {}'s Hit Points have been reduced by {}.\n"
 msgstr "{}에게 {}포인트의 대미지!\n"
 
+#: ..\game.py:411
+msgid "The {}'s Hit Point have been reduced by {}.\n"
+msgstr "{}에게 {}포인트의 대미지!\n"
+
 #: ..\game.py:419
 msgid "The {} attacks!\n"
 msgstr "{}의 공격!\n"
 
 #: ..\game.py:448
-msgid "Thy Hit Points decreased by {}.\n"
+msgid "Thy Hits decreased by {}.\n"
+msgstr "{}포인트의 대미지를 입었다!\n"
+
+#: ..\game.py:448
+msgid "Thy Hit decreased by {}.\n"
 msgstr "{}포인트의 대미지를 입었다!\n"
 
 #: ..\game.py:544
@@ -767,9 +801,7 @@ msgstr "할 말이 없다."
 
 #: ..\menu.py:279
 msgid "Fortune smiles upon thee, {}.\nThou hast found the {}."
-msgstr "{}는 보물 상자를 열었다. 놀랍게도! {}를 획득했다!"
-
-# need to handle 을/를 for treasure boxes
+msgstr "{}은/는 보물 상자를 열었다. 놀랍게도! {}을/를 획득했다!"
 
 #: ..\menu.py:279
 msgid "Torch"
@@ -877,7 +909,7 @@ msgstr "그러나 아무 일도 일어나지 않았다…!"
 
 #: ..\menu.py:538
 msgid "{} cannot yet use the spell."
-msgstr "{}는 아직 주문을 사용할 수 없다."
+msgstr "{}은/는 아직 주문을 사용할 수 없다."
 
 #: ..\menu.py:557
 msgid "Nothing of use has yet been given to thee."
@@ -889,7 +921,7 @@ msgstr "MP가 부족한 것 같다."
 
 #: ..\menu.py:624
 msgid "{} chanted the spell of {}."
-msgstr "{}은 {}를 외쳤다!"
+msgstr "{}은/는 {}을/를 외쳤다!"
 
 #: ..\menu.py:662
 msgid "There is no door here."
@@ -1248,7 +1280,19 @@ msgstr ""
 "몸이 조여 온다."
 
 #: src/menu.py:710
-msgid "Heed my voice, '{}, for this is Gwaelin. To reach the next level thou must raise thy Experience Points by {}. My hope is with thee.'"
+msgid ""
+"Heed my voice,\n"
+"'{}, for this is Gwaelin.\n"
+"To reach the next level thou must raise thy Experience Points by {}.\n"
+"My hope is with thee.'"
+msgstr "'{}님, 제 목소리를 들어 주세요. 로라예요. 다음 레벨이 되려면 앞으로 {}포인트의 경험치가 필요해요. 당신을 믿고 있어요.'"
+
+#: src/menu.py:710
+msgid ""
+"Heed my voice,\n"
+"'{}, for this is Gwaelin.\n"
+"To reach the next level thou must raise thy Experience Point by {}.\n"
+"My hope is with thee.'"
 msgstr "'{}님, 제 목소리를 들어 주세요. 로라예요. 다음 레벨이 되려면 앞으로 {}포인트의 경험치가 필요해요. 당신을 믿고 있어요.'"
 
 #: src/menu.py:726
@@ -2339,6 +2383,18 @@ msgstr "켜기"
 msgid "OFF (NES)"
 msgstr "끄기 (NES)"
 
+#: src/options_screen.py
+msgid "Fade Style"
+msgstr "페이드 방식"
+
+#: src/options_screen.py
+msgid "NES"
+msgstr "NES"
+
+#: src/options_screen.py
+msgid "SMOOTH"
+msgstr "스무스"
+
 #: src/options_screen.py:236
 msgid ""
 "Do You Want To\n"
@@ -2351,6 +2407,31 @@ msgstr ""
 #: src/options_screen.py:238
 msgid "LEVEL"
 msgstr "레벨"
+
+#: src/options_screen.py:231
+#: src/title_windows.py:41
+msgid "ADVENTURE LOG {}"
+msgstr "모험의 서 {}"
+
+#: src/windows.py
+msgid "BEGIN A NEW QUEST"
+msgstr "새로운 모험을 시작한다"
+
+#: src/windows.py
+msgid "CONTINUE A QUEST"
+msgstr "모험을 계속한다"
+
+#: src/windows.py
+msgid "CHANGE MESSAGE SPEED"
+msgstr "메시지 속도를 바꾼다"
+
+#: src/windows.py
+msgid "COPY A QUEST"
+msgstr "모험의 서를 복사한다"
+
+#: src/windows.py
+msgid "ERASE A QUEST"
+msgstr "모험의 서를 지운다"
 
 #: data/text/intro_lookup_table.py:21
 msgid "Ctrl +/-/Wheel: Zoom"

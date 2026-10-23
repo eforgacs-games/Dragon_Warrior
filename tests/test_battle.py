@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pygame
 
-from src.battle import has_final_consonant, get_postposition, Battle, calculate_enemy_attack_damage, \
+from src.battle import Battle, calculate_enemy_attack_damage, \
     randomize_enemy_hp, randomize_enemy_gold, is_excellent_move, excellent_move_damage, player_hit_damage, \
     normal_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.config.test_config import test_config
@@ -21,14 +21,6 @@ class TestBattleMethods(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         pygame.quit()
-
-    def test_has_final_consonant(self):
-        self.assertTrue(has_final_consonant('갈'))
-        self.assertFalse(has_final_consonant('가'))
-
-    def test_get_postposition(self):
-        self.assertEqual(get_postposition('갈', '을', '를'), '을')
-        self.assertEqual(get_postposition('가', '을', '를'), '를')
 
     def setUp(self):
         config = {
@@ -86,6 +78,29 @@ class TestBattleMethods(unittest.TestCase):
         done_well = self.battle.get_enemy_defeated_string(enemy).split('\n')[0]
         self.assertEqual(events[:3], [(done_well, True), 'erase', 'victory'])
         self.assertEqual(len(events), 4)  # then the experience and gold
+
+    def test_experience_and_gold_lines_break_like_the_nes(self):
+        # NES TextBlock15 entry 15 and TextBlock16 entry 0 break the line after "Experience" and "GOLD"
+        battle = Battle({**self.battle.config, 'LANGUAGE': 'English'}, self.enemy_name, self.current_map)
+        cmd_menu = Mock()
+        player = Mock(total_experience=0, gold=0, level=1, spells=[])
+        enemy = Mock(xp=1, gold=2)
+        enemy.name = 'Slime'
+        with patch.object(battle, 'make_enemy_image_disappear'), patch.object(battle, 'check_player_level_up'), \
+                patch('src.battle.random.randint', return_value=63):
+            battle.enemy_defeated(cmd_menu, Mock(), player, enemy)
+        self.assertEqual(cmd_menu.show_line_in_dialog_box.call_args_list[-1].args[0],
+                         "Thy Experience\nincreases by 1.\nThy GOLD\nincreases by 1.\n")
+
+    def test_stat_increases_of_one_say_point(self):
+        # NES TextBlock18 entries 0 and 1: "Hit" / "Magic" + PNTS, " Point" for an increase of 1 (Bank01 DoPNTS)
+        battle = Battle({**self.battle.config, 'LANGUAGE': 'English'}, self.enemy_name, self.current_map)
+        cmd_menu = Mock()
+        player = Mock(strength=4, agility=4, max_hp=16, max_mp=2, spells=[])
+        battle.display_stat_increases(cmd_menu, player, {"strength": 4, "agility": 4, "max_hp": 15, "max_mp": 0,
+                                                         "spells": []})
+        self.assertEqual([c.args[0] for c in cmd_menu.show_line_in_dialog_box.call_args_list],
+                         ["Thy Maximum Hit Point increase by 1.\n", "Thy Maximum Magic Points increase by 2.\n"])
 
     def level_up(self, name, experience_before, experience_gained):
         from src.config.test_config import test_config

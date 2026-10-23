@@ -53,7 +53,8 @@ CURRENT_FORMAT_SAVE = '''{
     },
     "MessageSpeed": "Fast",
     "DialogStyle": "Modern",
-    "NpcsMakeWay": false
+    "NpcsMakeWay": false,
+    "FadeStyle": "Smooth"
 }'''
 
 
@@ -81,10 +82,10 @@ class TestSaveFileRoundTrip(TestCase):
         self.assertEqual(['HEAL', 'HURT'], save.spells)
         self.assertEqual(('TantegelThroneRoom', 10, 13), (save.current_map, save.player_row, save.player_column))
         self.assertEqual(StoryFlags(left_throne_room=True), save.story_flags)
-        self.assertEqual(Options('Fast', 'Modern', False), save.options)
+        self.assertEqual(Options('Fast', 'Modern', False, 'Smooth'), save.options)
 
     def test_every_checkpoint_round_trips(self):
-        """A checkpoint has no HP, MP or options (they load as full, NORMAL, CLASSIC and ON) and may have Facing,
+        """A checkpoint has no HP, MP or options (they load as full, NORMAL, CLASSIC, ON and NES) and may have Facing,
         which only load_checkpoint reads. Everything else it has is written back as it was, and reading what's
         written gives the same save."""
         for name in CHECKPOINT_NAMES:
@@ -125,6 +126,10 @@ class TestSaveFromTheGame(TestCase):
         pygame.quit()
 
     def setUp(self):
+        # Loading a save applies its options (message speed, dialog style, NPCs making way, fade style) to the shared
+        # test_config, so put it back afterwards: another test on this worker would see this save's options
+        saved_config = dict(test_config)
+        self.addCleanup(lambda: (test_config.clear(), test_config.update(saved_config)))
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
