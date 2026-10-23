@@ -68,7 +68,7 @@ NPCS_MAKE_WAY_CHOICES = (True, False)  # the window's entries, left to right
 DEFAULT_FADE_STYLE = FADE_STYLE_NES
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Options:
     """The settings kept per adventure log."""
     message_speed: str = DEFAULT_MESSAGE_SPEED

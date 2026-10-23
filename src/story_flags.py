@@ -21,7 +21,7 @@ SAVE_KEY = 'StoryFlags'
 LEGACY_SAVE_KEYS = {'RainbowBridgeBuilt': 'rainbow_bridge_built', 'CharlockStairsRevealed': 'charlock_stairs_revealed'}
 
 
-@dataclass
+@dataclass(slots=True)
 class StoryFlags:
     # ModsnSpells bit 2, NES F_PSG_FOUND: the secret passage behind the Dragonlord's throne has been found.
     charlock_stairs_revealed: bool = False

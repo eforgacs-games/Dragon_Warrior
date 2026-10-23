@@ -46,7 +46,7 @@ ADVENTURE_LOGS = (1, 2, 3)
 SAVE_FILE_PATTERN = re.compile(r'save_slot_([123])\.json')
 
 
-@dataclass
+@dataclass(slots=True, kw_only=True)
 class SaveFile:
     """One adventure log's save. A key the save doesn't have reads as the default here; CurrentHP and CurrentMP read
     as None, which load_game turns into the hero's max HP and MP, and a missing position (None) starts the hero on the
