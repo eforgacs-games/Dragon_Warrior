@@ -15,7 +15,7 @@ tiles are in NES_GLYPHS, copied from the screenshots (the name entry alphabet, a
 ELISION_APOSTROPHE). src/text.py's NESFont draws them
 the same way in all other text (dialog, draw_text).
 """
-from functools import lru_cache, cache
+from functools import cache, lru_cache
 
 from pygame import Rect, Surface, font
 
