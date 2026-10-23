@@ -9,6 +9,7 @@ from src.enemy_lookup import enemy_string_lookup
 from src.korean_particles import get_postposition, particle
 from src.maps import DragonWarriorMap
 from src.menu import BATTLE_LINE, CommandMenu
+from src.options_screen import EXP_GOLD_MULTIPLIERS
 from src.windows import POPUP_WINDOW
 from src.player.player import Player
 from src.player.player_stats import get_level_by_experience
@@ -198,14 +199,16 @@ class Battle:
             cmd_menu.game.ending.final_boss_defeated()
             return
         # NES RegEnDefeated: the experience is the enemy's exact base value; the gold is varied (CalcPlyrGold).
-        # Both totals stop at 65535.
-        gold = randomize_enemy_gold(enemy.gold)
-        exp_and_gold = self._("Thy Experience\nincreases by {}.\n").format(enemy.xp) + self._(
+        # Both totals stop at 65535. The EXP/GOLD option (not NES) multiplies both, and the lines show what's given.
+        multiplier = exp_gold_multiplier(self.config)
+        experience = enemy.xp * multiplier
+        gold = randomize_enemy_gold(enemy.gold) * multiplier
+        exp_and_gold = self._("Thy Experience\nincreases by {}.\n").format(experience) + self._(
             "Thy GOLD\nincreases by {}.\n").format(gold)
         # TB15E15 and TB16E0 end with no WAIT: the victory music goes on playing while they print
         cmd_menu.show_line_in_dialog_box(exp_and_gold, add_quotes=False, disable_sound=True, hide_arrow=True,
                                          skip_text=True)
-        player.total_experience = min(player.total_experience + enemy.xp, MAX_EXPERIENCE)
+        player.total_experience = min(player.total_experience + experience, MAX_EXPERIENCE)
         player.gold = min(player.gold + gold, MAX_GOLD)
         self.check_player_level_up(cmd_menu, player)
 
@@ -375,6 +378,12 @@ def randomize_enemy_hp(enemy) -> int:
     if enemy.name == 'Dragonlord 2':
         return enemy.max_hp
     return enemy.max_hp - (enemy.max_hp * random.randint(0, 255) // 256) // 4
+
+
+def exp_gold_multiplier(config: dict) -> int:
+    """The EXP/GOLD option (EXP_GOLD): 1 (the NES), 2 or 4."""
+    multiplier = config.get('EXP_GOLD', 1)
+    return multiplier if multiplier in EXP_GOLD_MULTIPLIERS else 1
 
 
 def randomize_enemy_gold(base_gold: int) -> int:
