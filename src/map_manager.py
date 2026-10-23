@@ -12,6 +12,7 @@ from src import maps
 from src.camera import Camera
 from src.common import BLACK
 from src.constants import RAINBOW_BRIDGE_COORDINATES, THRONE_ROOM_DOOR_COORDINATES
+from src.coordinates import Cell
 from src.direction import Direction
 from src.game_functions import set_character_position
 from src.map_layouts import BRICK, TREASURE_BOX
@@ -25,7 +26,7 @@ class MapManager:
         self.game = game
         # The (row, column) of the stairs a random fight started on: the hero stays there after the fight, and the
         # stairs aren't taken until the hero steps off them (or uses STAIRS). See stay_on_stairs.
-        self.fought_on_stairs: tuple[int, int] | None = None
+        self.fought_on_stairs: Cell | None = None
 
     # ------------------------------------------------------------------ #
     #  Properties forwarding to game                                       #
@@ -126,7 +127,7 @@ class MapManager:
     #  Map change                                                          #
     # ------------------------------------------------------------------ #
 
-    def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: tuple | None = None,
+    def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: Cell | None = None,
                    direction: int | None = None, fade_out_first: bool = True, stairs_sound: bool = False) -> None:
         """Change to a different map. Pass destination_coordinates (and optionally direction) to warp somewhere other
         than where the staircase the player is standing on leads, e.g. for RETURN or when loading a save.

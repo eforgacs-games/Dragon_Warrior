@@ -1,5 +1,8 @@
 import random
 
+from src.coordinates import Cell
+
+
 # Equipment and tool prices are the NES ItemCostTbl (Bank00); the towns are from ShopItemsTbl.
 
 weapons = {
@@ -87,7 +90,7 @@ tools = {
     "Rainbow Drop": {'cost': 0},
 }
 
-treasure: dict[str, dict[tuple[int, int], dict[str, object]]] = {
+treasure: dict[str, dict[Cell, dict[str, object]]] = {
     # MAP_TANTCSTL_GF: row = y + 7, column = x + 7
     'TantegelCourtyard': {
         (20, 8): _gold(6, 0x07),  # (1, 13): 6-13 gold
@@ -189,12 +192,12 @@ class TreasureChestHistory:
     """
 
     def __init__(self):
-        self.slots: list[tuple[str, tuple[int, int]] | None] = [None] * 8
+        self.slots: list[tuple[str, Cell] | None] = [None] * 8
 
-    def is_opened(self, map_name: str, coordinates: tuple[int, int]) -> bool:
+    def is_opened(self, map_name: str, coordinates: Cell) -> bool:
         return (map_name, tuple(coordinates)) in self.slots
 
-    def record(self, map_name: str, coordinates: tuple[int, int]) -> bool:
+    def record(self, map_name: str, coordinates: Cell) -> bool:
         """NES GetTreasure: store the chest in the first free slot. Returns False when every slot is taken."""
         for index, slot in enumerate(self.slots):
             if slot is None:
@@ -222,7 +225,7 @@ class TreasureChestHistory:
 # Nothing here is tracked with a "found" flag: like the NES, an item is found again only if the player doesn't
 # already have it (Erdrick's Token, Fairy Flute) or isn't wearing it (Erdrick's Armor), so the inventory and
 # equipment (already saved) are the only state.
-hidden_items: dict[str, dict[tuple[int, int], str]] = {
+hidden_items: dict[str, dict[Cell, str]] = {
     'Alefgard': {(120, 91): "Erdrick's Token"},  # NES overworld (X 83, Y 113)
     'Kol': {(14, 19): 'Fairy Flute'},  # NES Kol (X 9, Y 6)
     # Stepping onto this tile starts the fixed Axe Knight fight first (NES CheckAxeKnight, see src/guardians.py)

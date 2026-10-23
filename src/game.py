@@ -20,6 +20,7 @@ from src.common import A_OR_START_KEYS, Graphics, set_gettext_language
 from src.common import singular_or_plural
 from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
+from src.coordinates import Cell
 from src.debug_tools import DebugTools
 from src.constants import (
     TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT,
@@ -777,11 +778,11 @@ class Game:
         self.cmd_menu.show_text_in_dialog_box(text, add_quotes=add_quotes, temp_text_start=temp_text_start,
                                               skip_text=False)
 
-    def process_staircase_warps(self, staircase_location: tuple, staircase_dict: dict) -> None:
+    def process_staircase_warps(self, staircase_location: Cell, staircase_dict: dict) -> None:
         if (self.player.row, self.player.column) == staircase_location:
             self.map_mgr.process_warp(staircase_dict)
 
-    def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: tuple | None = None,
+    def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: Cell | None = None,
                    direction: int | None = None, fade_out_first: bool = True, stairs_sound: bool = False) -> None:
         self.map_mgr.change_map(next_map, destination_coordinates, direction, fade_out_first=fade_out_first,
                                 stairs_sound=stairs_sound)

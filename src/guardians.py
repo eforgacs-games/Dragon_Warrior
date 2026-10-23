@@ -21,6 +21,7 @@ Coordinates here are (row, column) in this game's layouts. The NES (x, y) of eac
 """
 from dataclasses import dataclass
 
+from src.coordinates import Cell
 from src.story_flags import StoryFlags
 
 
@@ -28,9 +29,9 @@ from src.story_flags import StoryFlags
 class Guardian:
     enemy_name: str
     map_identifier: str
-    coordinates: tuple[int, int]
+    coordinates: Cell
     # Where RunSuccessful puts the hero after running away
-    escape_coordinates: tuple[int, int]
+    escape_coordinates: Cell
     # The StoryFlags field that keeps the guardian away once beaten (None: he always comes back)
     defeated_flag: str | None
 
@@ -55,7 +56,7 @@ GOLEM = Guardian(
 GUARDIANS = (AXE_KNIGHT, GREEN_DRAGON, GOLEM)
 
 
-def _guardian_on_tile(map_identifier: str, coordinates: tuple[int, int],
+def _guardian_on_tile(map_identifier: str, coordinates: Cell,
                       story_flags: StoryFlags) -> Guardian | None:
     for guardian in GUARDIANS:
         if (guardian.map_identifier, guardian.coordinates) == (map_identifier, coordinates) and \
@@ -64,7 +65,7 @@ def _guardian_on_tile(map_identifier: str, coordinates: tuple[int, int],
     return None
 
 
-def guardian_at(map_identifier: str, coordinates: tuple[int, int], story_flags: StoryFlags) -> Guardian | None:
+def guardian_at(map_identifier: str, coordinates: Cell, story_flags: StoryFlags) -> Guardian | None:
     """NES CheckForTriggers/MovementUpdates: the guardian who fights the hero for stepping onto this tile, if any."""
     if story_flags.dragonlord_defeated:
         # CheckForTriggers only jumps to MovementUpdates while F_DGNLRD_DEAD is clear
@@ -72,8 +73,8 @@ def guardian_at(map_identifier: str, coordinates: tuple[int, int], story_flags: 
     return _guardian_on_tile(map_identifier, coordinates, story_flags)
 
 
-def escape_coordinates(map_identifier: str, coordinates: tuple[int, int],
-                       story_flags: StoryFlags) -> tuple[int, int] | None:
+def escape_coordinates(map_identifier: str, coordinates: Cell,
+                       story_flags: StoryFlags) -> Cell | None:
     """NES RunSuccessful: where the hero is moved after running away on this tile, or None to stay put. Like the
     NES, this looks only at the map, the tile and the story flags, not at which enemy it was."""
     guardian = _guardian_on_tile(map_identifier, coordinates, story_flags)
