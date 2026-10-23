@@ -491,6 +491,14 @@ class Game:
         if not is_low_hp(self.player.current_hp, self.player.max_hp):
             self.set_window_color(WHITE)
 
+    def reset_step_count(self):
+        """Start counting steps again from 0, as on arriving on a map (stairs then wait for a step off them).
+        handle_battles' record of the last step it rolled for goes back to 0 with it: otherwise, a count that reached it
+        again (one step after leaving a map after one step) would look like that already-rolled step, and the step
+        would get no CheckBlockDmg (no damage and no fight roll), when on the NES every step onto a block runs it."""
+        self.tiles_moved_since_spawn = 0
+        self.last_amount_of_tiles_moved = 0
+
     def count_step(self):
         self.tiles_moved_since_spawn += 1
         self.game_state.tiles_moved_total += 1
