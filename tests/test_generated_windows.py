@@ -75,6 +75,7 @@ class TestBattleCommandWindow(TestCase):
         game = MagicMock()
         game.game_state.config = config
         game.screen = pygame.Surface((16 * tile_size, 15 * tile_size))
+        game._ = lambda text: text  # English: generated in the NES font
         controller = BattleController(game)
         area = pygame.Rect(6 * tile_size, 1 * tile_size, 8 * tile_size, 3 * tile_size)
         for color in (WHITE, RED):

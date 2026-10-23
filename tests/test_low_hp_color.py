@@ -176,7 +176,7 @@ class TestLowHPWindowColor(TestCase):
         for hp, color in ((15, WHITE), (4, LOW_HP_RED)):
             self.set_hp(hp)
             pygame.event.post(pygame.event.Event(KEYDOWN, key=K_RETURN))
-            with patch('src.menu.draw_window') as draw_window, patch('src.menu.display'), \
+            with patch('src.translated_window.draw_window') as draw_window, patch('src.menu.display'), \
                     patch.dict(self.game.game_state.config, NO_BLIT=False):
                 self.cmd_menu.prompt_yes_no()
             # The border, the text and the cursor are all in the window color (see tests/test_generated_windows.py)
@@ -198,7 +198,7 @@ class TestLowHPWindowColor(TestCase):
         battle_ctrl = self.game.battle_ctrl
         for hp, color in ((15, WHITE), (4, LOW_HP_RED)):
             self.set_hp(hp)
-            with patch('src.battle_controller.draw_window') as draw_window, \
+            with patch('src.translated_window.draw_window') as draw_window, \
                     patch('src.battle_controller.display'), \
                     patch('src.battle_controller.event.get', return_value=[]), \
                     patch.dict(self.game.game_state.config, NO_BLIT=False):
