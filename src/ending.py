@@ -29,6 +29,7 @@ from src.npcs import GWAELIN_RESCUE, SEARCHED_FOR_GWAELIN
 from src.text import draw_text
 from src.visual_effects import screen_fade
 from src.waiting import wait_frames
+from src.zoom import handle_zoom_event
 
 NES_FPS = 60
 
@@ -325,6 +326,7 @@ class Ending:
         """NES Spinlock1: after the credits the game does nothing more until it's reset; here, until it's closed."""
         while True:
             for current_event in event.get():
+                handle_zoom_event(current_event)  # the window can still be zoomed (src/zoom.py)
                 if current_event.type == QUIT:
                     pygame_quit()
                     sys.exit()
