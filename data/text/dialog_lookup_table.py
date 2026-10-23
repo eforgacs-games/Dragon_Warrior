@@ -655,7 +655,7 @@ class DialogLookup:
         current_map = game.current_map
         if current_map.identifier == 'TantegelThroneRoom' and 'PRINCESS_GWAELIN' not in current_map.characters:
             row, column = GWAELIN_THRONE_ROOM_COORDINATES
-            current_map.npc_coordinates[GWAELIN_THRONE_ROOM_COORDINATES] = 'PRINCESS_GWAELIN'
+            current_map.include_npc('PRINCESS_GWAELIN')
             current_map.center_pt = get_center_point(column, row, tile_size=self.config['TILE_SIZE'])
             princess = current_map.character_key['PRINCESS_GWAELIN']
             current_map.map_npc('PRINCESS_GWAELIN', Direction.DOWN.value, princess['underlying_tile'],

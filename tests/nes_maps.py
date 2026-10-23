@@ -8,10 +8,11 @@ NES references (nmikstas disassembly, Bank00):
   towns. The three caves use the town part of GenBlkConvTbl. The dungeons (MAP_DLCSTL_SL1 and up, MapType MAP_DUNGEON)
   use the dungeon part.
 - WrldMapPtrTbl, Row000-Row119 and WrldBlkConvTbl: the overworld, run-length encoded (FindMapBlkLoop).
+- NPCMobPtrTbl and NPCStatPtrTbl: each town's and castle's mobile and static NPC tables (GetNPCDataPointer).
 
 Regenerate tests/nes_map_data.py with reference/reference_utility_scripts/extract_nes_map_data.py.
 """
-from tests.nes_map_data import BOUNDARY_BLOCKS, MAPS, OVERWORLD_ROWS
+from tests.nes_map_data import BOUNDARY_BLOCKS, MAPS, NPC_TABLES, OVERWORLD_ROWS
 
 MAP_OVERWORLD = 0x01
 MAP_TANTCSTL_SL = 0x0C
@@ -114,3 +115,48 @@ def layout_location(map_name: str, x: int, y: int) -> tuple:
         if name == map_name and (nes_rows is None or y in nes_rows):
             return y + row_offset, x + column_offset
     raise KeyError((map_name, x, y))
+
+
+# The NES NPC tables of this game's maps: map name (with _DL for after the Dragonlord's defeat, when GetNPCDataPointer
+# loads TaDLMobTbl and TaDLStatTbl on the ground floor) -> the tables' name prefix (ThRmMobTbl, ThRmStatTbl, ...)
+NPC_TABLE_PREFIXES = {
+    'TantegelThroneRoom': 'ThRm',
+    'TantegelCourtyard': 'Tant',
+    'TantegelCourtyard_DL': 'TaDL',
+    'TantegelCellar': 'TaSL',
+    'CharlockB8': 'DLBF',
+    'StaffOfRainCave': 'Rain',
+    'MagicTemple': 'Rnbw',
+    'Brecconary': 'Brec',
+    'Garinham': 'Gar',
+    'Kol': 'Kol',
+    'Rimuldar': 'Rim',
+    'Cantlin': 'Cant',
+}
+# The NNN bits of an NPC table entry, as this game's sprites (NES fighters are SOLDIER here, and stationary guards and
+# guards with trumpets are GUARD)
+NPC_GRAPHICS = ('MAN', 'SOLDIER', 'GUARD', 'MERCHANT', 'KING_LORIK', 'WISE_MAN', 'WOMAN', 'GUARD')
+# The DD bits
+NPC_DIRECTIONS = ('UP', 'RIGHT', 'DOWN', 'LEFT')
+
+
+def npc_sprite(table: str, graphic: int, dialog: int) -> str:
+    """This game's sprite for an NPC table entry. Graphic 5 with dialog byte $70 is the Dragonlord and graphic 6 with
+    $6F is Gwaelin, not a wizard and a female villager. After the Dragonlord's defeat the ground floor's wizards and
+    trumpet guards are all guards (NES GetGuardType; there's no trumpet sprite here)."""
+    if graphic == 5 and dialog == 0x70:
+        return 'DRAGONLORD'
+    if graphic == 6 and dialog == 0x6F:
+        return 'PRINCESS_GWAELIN'
+    if table == 'TaDLStatTbl' and graphic in (5, 7):
+        return 'GUARD'
+    return NPC_GRAPHICS[graphic]
+
+
+def nes_npcs(map_name: str) -> list[tuple[str, int, int, int, bool, str]]:
+    """A map's NES NPCs in table order (the mobile table, then the static one), as (sprite, x, y, dialog byte, mobile,
+    facing). map_name is a key of NPC_TABLE_PREFIXES."""
+    prefix = NPC_TABLE_PREFIXES[map_name]
+    return [(npc_sprite(table, graphic, dialog), x, y, dialog, mobile, NPC_DIRECTIONS[direction])
+            for table, mobile in ((f'{prefix}MobTbl', True), (f'{prefix}StatTbl', False))
+            for graphic, x, y, direction, dialog in NPC_TABLES[table]]
