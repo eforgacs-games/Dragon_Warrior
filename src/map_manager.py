@@ -13,7 +13,7 @@ from src.coordinates import Cell
 from src.direction import Direction
 from src.drawer import map_surface
 from src.game_functions import set_character_position
-from src.map_layouts import BRICK, TREASURE_BOX
+from src.map_layouts import BRICK, DOOR, TREASURE_BOX
 from src.maps import map_lookup
 from src.menu import CommandMenu
 from src.visual_effects import cut_to_black, screen_fade
@@ -160,11 +160,13 @@ class MapManager:
         self.set_big_map()
         self.set_roaming_character_positions()
         is_warp = destination_coordinates is not None
+        came_up_stairs = False
         if is_warp:
             current_map_staircase_dict = None
         elif not self.player.is_dead:
             current_map_staircase_dict = self.last_map.staircases[(self.player.row, self.player.column)]
             destination_coordinates = current_map_staircase_dict.get('destination_coordinates')
+            came_up_stairs = self.on_stairs_up()
         else:
             current_map_staircase_dict = None
             destination_coordinates = THRONE_ROOM_START_COORDINATES
@@ -182,7 +184,7 @@ class MapManager:
         if direction is not None:
             self.player.direction_value = direction
         elif current_map_staircase_dict is not None or self.player.is_dead:
-            self.handle_player_direction_on_map_change(current_map_staircase_dict)
+            self.handle_player_direction_on_map_change(current_map_staircase_dict, came_up_stairs)
         self.game.camera = Camera(hero_position=(int(self.player.column), int(self.player.row)),
                                   current_map=self.current_map, screen=self.screen, tile_size=self.tile_size)
         self.game.loop_count = 1
@@ -223,17 +225,21 @@ class MapManager:
             self.current_map.layout[row][column] = self.current_map.floor_tile_key['BRIDGE']['val']
 
     def apply_chest_history(self):
-        # NES InitMapData and GetBlockID: update the chest history for the new map, then show opened chests as brick
+        # NES InitMapData and GetBlockID: update the chest and door histories for the new map, then show opened chests
+        # and doors as brick
         map_name = self.current_map.identifier
         if map_name != 'TantegelThroneRoom':
             self.game.story_flags.left_throne_room = True  # NES ChkThRoomMap sets F_LEFT_THROOM
         self.game.chest_history.enter_map(map_name, self.game.story_flags.left_throne_room)
         self.game.chest_history.apply_to_layout(map_name, self.current_map.layout, TREASURE_BOX, BRICK)
-        if map_name == 'TantegelThroneRoom' and self.game.story_flags.left_throne_room:
-            # NES ChkLeftThRoom: the throne room door is removed with the chests, so a continued game never finds
-            # it locked again
-            row, column = THRONE_ROOM_DOOR_COORDINATES
-            self.current_map.layout[row][column] = BRICK
+        # NES ChkOverworldMap clears the door history on the overworld, and ChkLeftThRoom writes the throne room door
+        # into it with the chests, so a continued game never finds that door locked again; every other door locks
+        # again, and opened doors show as brick
+        self.game.door_history.enter_map(map_name, self.game.story_flags.left_throne_room,
+                                         THRONE_ROOM_DOOR_COORDINATES)
+        self.game.door_history.apply_to_layout(map_name, self.current_map.layout,
+                                               self.layouts.door_coordinates.get(map_name, ()), DOOR, BRICK)
+
     def place_princess_gwaelin(self):
         """Put Gwaelin where the NES story flags say she is before the map's NPCs are loaded."""
         if self.current_map.identifier == 'TantegelThroneRoom' and self.game.story_flags.gwaelin_returned:
@@ -260,13 +266,25 @@ class MapManager:
         self.game.big_map = map_surface(self.current_map.width, self.current_map.height)
         self.drawer.background = self.game.big_map
 
-    def handle_player_direction_on_map_change(self, current_map_staircase_dict):
+    def handle_player_direction_on_map_change(self, current_map_staircase_dict, came_up_stairs: bool = False):
         if not self.player.is_dead:
+            if came_up_stairs:
+                # NES CheckStairs StairUpFound (Bank03, LD9E0): coming up any stairs, the hero always faces left
+                self.player.direction_value = Direction.LEFT.value
+                return
             destination_direction = current_map_staircase_dict.get('direction')
             if destination_direction:
                 self.player.direction_value = destination_direction
         else:
             self.player.direction_value = Direction.UP.value
+
+    def on_stairs_up(self) -> bool:
+        """Whether the hero is standing on a stairs up block (BLK_STAIR_UP) of the map being left."""
+        layout = self.last_map.layout
+        row, column = self.player.row, self.player.column
+        if not (0 <= row < len(layout) and 0 <= column < len(layout[0])):
+            return False
+        return maps.STAIR_DIRECTIONS.get(layout[row][column]) == 'up'
 
     def set_roaming_character_positions(self):
         # NES InitMapData: NPCUpdateCntr starts at 0 on every map, so pair 0 (the first two roaming NPCs) moves first

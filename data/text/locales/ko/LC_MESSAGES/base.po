@@ -1214,8 +1214,10 @@ msgid "{} discovers the {}."
 msgstr "{}은/는 {}을/를 발견했다!"
 
 #: src/menu.py:408
-msgid "If thou would take the {}, thou must now discard some other item."
-msgstr "{}을/를 가지려면 다른 도구를 하나 버려야 한다."
+msgid ""
+"If thou would take the {}, thou must now discard some other item.\n"
+"Dost thou wish to have the {}?"
+msgstr "{}을/를 가지려면 다른 도구를 하나 버려야 한다.\n{}을/를 가지겠는가?"
 
 #: src/menu.py:412
 msgid "What shall thou drop?"
@@ -1298,6 +1300,13 @@ msgid ""
 "To reach the next level thou must raise thy Experience Point by {}.\n"
 "My hope is with thee.'"
 msgstr "'{}님, 제 목소리를 들어 주세요. 로라예요. 다음 레벨이 되려면 앞으로 {}포인트의 경험치가 필요해요. 당신을 믿고 있어요.'"
+
+#: src/menu.py
+msgid ""
+"'{}?\n"
+"This is Gwaelin.\n"
+"Know that thou hath reached the final level.'"
+msgstr "'{}님? 로라예요. 당신은 이미 마지막 레벨에 도달했어요.'"
 
 #: src/menu.py:726
 #: data/text/dialog_lookup_table.py:498

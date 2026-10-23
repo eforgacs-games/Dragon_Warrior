@@ -96,6 +96,18 @@ class TestSaveStoryProgress(TestCase):
         self.assertTrue(loaded.wearing_death_necklace)
         self.assertTrue(loaded.is_wearing_cursed_item("Cursed Belt"))
 
+    def test_empty_inventory_slots_round_trip(self):
+        # NES SaveData keeps the inventory bytes as they are, emptied slots included
+        player = self.game.player
+        player.inventory = ['Torch', 'Wings', 'Herb', 'Fairy Water']
+        player.inventory.remove('Wings')
+        save = self.save()
+        self.assertEqual(save['Inventory'], ['Torch', None, 'Herb', 'Fairy Water'])
+        loaded = self.load(save).player
+        self.assertEqual(loaded.inventory, ['Torch', 'Herb', 'Fairy Water'])
+        loaded.inventory.append('Silver Harp')
+        self.assertEqual(loaded.inventory, ['Torch', 'Silver Harp', 'Herb', 'Fairy Water'])
+
     # What the NES doesn't save
 
     def test_chest_history_and_repel_timer_are_not_saved(self):
@@ -167,6 +179,28 @@ class TestSaveStoryProgress(TestCase):
         with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
             self.game.set_post_death_attributes()
         self.assertEqual(self.game.repel_timer, 0)
+
+    def test_dying_refills_hp_and_mp(self):
+        # NES DeathText: ThisStrtStat = STRT_FULL_HP, so StartAtThroneRoom (LCB78-LCB87) sets both HitPoints and
+        # MagicPoints to their maximums
+        player = self.game.player
+        player.max_hp, player.max_mp = 30, 20
+        player.current_hp, player.current_mp = 0, 4
+        player.is_dead = True
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
+            self.game.set_post_death_attributes()
+        self.assertEqual((player.current_hp, player.current_mp), (30, 20))
+
+    def test_dying_cursed_leaves_mp_alone(self):
+        # NES StartAtThroneRoom (LCB6B-LCB75): a cursed hero gets HitPoints = 1 and skips the MP step
+        player = self.game.player
+        player.wearing_cursed_belt = True
+        player.max_hp, player.max_mp = 30, 20
+        player.current_hp, player.current_mp = 0, 4
+        player.is_dead = True
+        with patch('src.menu.CommandMenu.show_text_in_dialog_box'), patch.object(self.game, 'leave_tantegel'):
+            self.game.set_post_death_attributes()
+        self.assertEqual((player.current_hp, player.current_mp), (1, 4))
 
     def test_continue_while_carrying_gwaelin(self):
         # The NES saves PlayerFlags whole, so F_GOT_GWAELIN comes back: she's still in the hero's arms, gone from the

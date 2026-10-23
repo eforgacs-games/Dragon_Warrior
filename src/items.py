@@ -1,4 +1,6 @@
 import random
+from collections.abc import Iterable
+from typing import Any, SupportsIndex, override
 
 from src.coordinates import Cell
 
@@ -48,6 +50,114 @@ INVENTORY_SLOTS = 8  # NES AddInvItem: 4 bytes of 2 items each
 MAX_HERBS = 6
 MAX_KEYS = 6
 MAX_GOLD = 65535
+
+
+class Inventory(list[str]):
+    """The hero's items: a list of their names (Herbs and Magic Keys, which have their own counts on the NES, one entry
+    each), kept in NES slot order.
+
+    NES AddInvItem (Bank03, LE01B) puts a new item in the first empty one of the 8 slots, and RemoveInvItem (LE04B)
+    empties the item's slot without moving anything else, so the lists (CreateInvList) keep the slot order and a gap
+    is filled by the next item added. Here append() is AddInvItem and remove() is RemoveInvItem; the emptied slots are
+    kept out of the list itself, which holds only the items, in slot order. Any other change to the list (insert,
+    pop, assigning to it...) closes the gaps.
+    """
+
+    def __init__(self, slots: Iterable[str | None] = ()):
+        """slots: the items in slot order, with None for an empty slot (as with_empty_slots gives them)."""
+        self._slots: list[str | None] = list(slots)
+        super().__init__(item for item in self._slots if item is not None)
+
+    def _update(self) -> None:
+        list.__setitem__(self, slice(None), [item for item in self._slots if item is not None])
+
+    @override
+    def append(self, item: str) -> None:
+        """NES AddInvItem: the first empty slot, or the next one never used."""
+        if item not in UNSLOTTED_ITEMS and None in self._slots:
+            self._slots[self._slots.index(None)] = item
+        else:
+            self._slots.append(item)
+        self._update()
+
+    @override
+    def remove(self, item: str) -> None:
+        """NES RemoveInvItem: the item's first slot is emptied; the items after it stay where they are."""
+        index = self._slots.index(item)  # ValueError, as list.remove, if it isn't there
+        if item in UNSLOTTED_ITEMS:
+            del self._slots[index]
+        else:
+            self._slots[index] = None
+        self._update()
+
+    def with_empty_slots(self) -> list[str | None]:
+        """The items in slot order with None for each empty slot before the last item, as a save keeps them."""
+        slots = list(self._slots)
+        while slots and slots[-1] is None:
+            slots.pop()
+        return slots
+
+    @override
+    def __reduce__(self) -> tuple[type['Inventory'], tuple[list[str | None]]]:  # copy and pickle keep the gaps
+        return self.__class__, (self.with_empty_slots(),)
+
+    # Any other change closes the gaps: the slots become the list as it is afterwards
+
+    def _close_gaps(self) -> None:
+        self._slots = list(self)
+
+    @override
+    def insert(self, index: SupportsIndex, item: str) -> None:
+        super().insert(index, item)
+        self._close_gaps()
+
+    @override
+    def pop(self, index: SupportsIndex = -1) -> str:
+        item = super().pop(index)
+        self._close_gaps()
+        return item
+
+    @override
+    def clear(self) -> None:
+        super().clear()
+        self._close_gaps()
+
+    @override
+    def extend(self, items: Iterable[str]) -> None:
+        super().extend(items)
+        self._close_gaps()
+
+    @override
+    def sort(self, *args: Any, **kwargs: Any) -> None:
+        super().sort(*args, **kwargs)
+        self._close_gaps()
+
+    @override
+    def reverse(self) -> None:
+        super().reverse()
+        self._close_gaps()
+
+    @override
+    def __setitem__(self, index: Any, value: Any) -> None:
+        super().__setitem__(index, value)
+        self._close_gaps()
+
+    @override
+    def __delitem__(self, index: Any) -> None:
+        super().__delitem__(index)
+        self._close_gaps()
+
+    @override
+    def __iadd__(self, items: Iterable[str]) -> 'Inventory':  # type: ignore[override,misc]
+        super().__iadd__(items)
+        self._close_gaps()
+        return self
+
+    @override
+    def __imul__(self, count: SupportsIndex) -> 'Inventory':  # type: ignore[override,misc]
+        super().__imul__(count)
+        self._close_gaps()
+        return self
 
 
 def inventory_list(inventory: list[str]) -> list[str]:
@@ -219,6 +329,55 @@ class TreasureChestHistory:
         """Show each of the map's chests as closed or opened, according to the history."""
         for (row, column) in treasure.get(map_name, {}):
             layout[row][column] = opened_value if self.is_opened(map_name, (row, column)) else chest_value
+
+
+# NES InitMapData (ChkLeftThRoom): once F_LEFT_THROOM is set, the throne room door is written into door history
+# slot 7 (DoorXPos+14 = 4, DoorYPos+14 = 7) every time the throne room is entered, so it never locks again.
+THRONE_ROOM_DOOR_SLOT = 7
+
+
+class OpenDoorHistory:
+    """Which locked doors are open: the one place this game keeps that state.
+
+    NES DoorXPos/DoorYPos: 8 slots holding the position of each door opened since the hero was last on the
+    overworld. GetBlockID (ChkDoorBlock, Bank00 LAD45) reads a door in this list as plain brick, InitMapData
+    (ChkOverworldMap/ClrOpenDoorsLoop, LAF2B-LAF3A) clears the list when the overworld is entered, so doors lock
+    again and every visit costs another key, and UseKey (DoorCheckLoop, Bank03 LDCA8-LDCB7) takes the key but
+    doesn't open the door when all 8 slots are in use.
+    As with TreasureChestHistory, the map name is kept with the position, which behaves the same as the NES (x, y),
+    and the history isn't saved: MainGameEngine (LCA0F-LCA18) clears it whenever a game is started or continued.
+    """
+
+    def __init__(self):
+        self.slots: list[tuple[str, Cell] | None] = [None] * 8
+
+    def is_opened(self, map_name: str, coordinates: Cell) -> bool:
+        return (map_name, tuple(coordinates)) in self.slots
+
+    def record(self, map_name: str, coordinates: Cell) -> bool:
+        """NES UseKey: store the door in the first free slot. Returns False when every slot is taken."""
+        for index, slot in enumerate(self.slots):
+            if slot is None:
+                row, column = coordinates
+                self.slots[index] = (map_name, (row, column))
+                return True
+        return False
+
+    def enter_map(self, map_name: str, left_throne_room: bool, throne_room_door: Cell) -> None:
+        """NES InitMapData, run whenever a map is loaded. left_throne_room is the F_LEFT_THROOM story flag: once the
+        hero has been beyond the throne room, its door is always shown as opened."""
+        if map_name == 'Alefgard':
+            self.slots = [None] * 8
+        if left_throne_room and map_name == 'TantegelThroneRoom':
+            row, column = throne_room_door
+            self.slots[THRONE_ROOM_DOOR_SLOT] = ('TantegelThroneRoom', (row, column))
+
+    def apply_to_layout(self, map_name: str, layout: list[list[int]], doors: Iterable[Cell], door_value: int,
+                        opened_value: int) -> None:
+        """Show each of the map's doors (doors: where the map's own layout has one) as locked or opened, according
+        to the history."""
+        for (row, column) in doors:
+            layout[row][column] = opened_value if self.is_opened(map_name, (row, column)) else door_value
 
 
 # NES DoSearch: the hidden items found with SEARCH, by map and then (row, column) in this codebase's coordinates.
