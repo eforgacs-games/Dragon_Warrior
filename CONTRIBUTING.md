@@ -2,12 +2,13 @@ Pull requests welcome!
 
 ## Setup
 
-Install [uv](https://docs.astral.sh/uv/), then run `uv sync` from the repository root. It installs the locked
-dependencies from `uv.lock`, including the dev tools (pytest, mypy, ruff), into `.venv`.
+Install [uv](https://docs.astral.sh/uv/), then run `uv sync` from the repository root. It installs Python 3.13 (from
+`.python-version`) if needed, then the locked dependencies from `uv.lock`, including the dev tools (pytest, mypy,
+ruff), into `.venv`. A `.venv` made with an older Python is rebuilt.
 
 ## Checks
 
-CI (`.github/workflows/python-app.yml`) runs these on Python 3.10 and 3.13. Run them before opening a pull request:
+CI (`.github/workflows/python-app.yml`) runs these on Python 3.13. Run them before opening a pull request:
 
 ```bash
 uv run ruff check .
