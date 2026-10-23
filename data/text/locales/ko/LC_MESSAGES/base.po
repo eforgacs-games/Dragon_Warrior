@@ -2339,6 +2339,18 @@ msgstr "켜기"
 msgid "OFF (NES)"
 msgstr "끄기 (NES)"
 
+#: src/options_screen.py
+msgid "Fade Style"
+msgstr "페이드 방식"
+
+#: src/options_screen.py
+msgid "NES"
+msgstr "NES"
+
+#: src/options_screen.py
+msgid "SMOOTH"
+msgstr "스무스"
+
 #: src/options_screen.py:236
 msgid ""
 "Do You Want To\n"
