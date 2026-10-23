@@ -25,6 +25,7 @@ from src.constants import DRAGONLORD_DEFEATED_DESTINATION, ENDING_GWAELIN_BESIDE
 from src.direction import Direction
 from src.maps import map_lookup
 from src.maps_functions import get_center_point
+from src.npcs import GWAELIN_RESCUE, SEARCHED_FOR_GWAELIN
 from src.text import draw_text
 from src.visual_effects import screen_fade
 from src.waiting import wait_frames
@@ -155,15 +156,17 @@ class Ending:
         straight to DoGwaelinRescue, and GetBaseBlockID only turns that block into brick once F_DONE_GWAELIN is set,
         whatever F_DGNLRD_DEAD says. So she can still be rescued after the Dragonlord's defeat, and then carried to
         King Lorik for the ending (ChkCarryGwaelin)."""
-        return not (current_map.identifier == 'SwampCave' and dialog_character == 'PRINCESS_GWAELIN')
+        npc = current_map.npc(dialog_character)
+        return npc is None or npc.dialog != GWAELIN_RESCUE
 
     def npc_dialog(self, dialog_character: str, current_map) -> str:
         """NES LD134: every NPC's dialog once the Dragonlord is dead (see has_victory_dialog for who's exempt)."""
         _ = self._
         if current_map.identifier == 'TantegelCourtyard':
             return _("Come now, King Lorik awaits.")
-        if current_map.identifier == 'Brecconary' and dialog_character == 'GUARD':
-            # NES TantEndDialog: the guard who searched for Gwaelin (dialog byte $64) has nothing more to say
+        npc = current_map.npc(dialog_character)
+        if npc is not None and npc.dialog == SEARCHED_FOR_GWAELIN:
+            # NES TantEndDialog: the guard in Brecconary who searched for Gwaelin has nothing more to say
             return "...."
         # NES RandEndDialog: the low bit of a random number picks one of two lines
         if random.randint(0, 1):
