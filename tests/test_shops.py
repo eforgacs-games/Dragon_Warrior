@@ -1,8 +1,4 @@
-import os
 import unittest
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
 
@@ -166,7 +162,6 @@ class TestShopInventories(unittest.TestCase):
     def test_all_inventories_not_empty(self):
         for inventory in self._all_inventories():
             self.assertGreater(len(inventory), 0)
-
 
 
 class TestShopRules(unittest.TestCase):

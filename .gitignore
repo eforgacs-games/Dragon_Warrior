@@ -10,3 +10,6 @@ code-coverage-results.md
 
 # Claude Code per-session folder (worktrees, etc.)
 .claude/
+
+# Save files the game writes when run from source (Directories.save_dir)
+src/saves/

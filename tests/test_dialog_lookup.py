@@ -5,7 +5,7 @@ import pygame
 from pygame import KEYDOWN, K_DOWN, QUIT
 
 from src.config.test_config import test_config
-from src.game import Game
+from tests.helpers import new_game
 
 
 class TestDialogLookup(TestCase):
@@ -22,8 +22,7 @@ class TestDialogLookup(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.dialog_lookup = Game(test_config).cmd_menu.dialog_lookup
+        self.dialog_lookup = new_game().cmd_menu.dialog_lookup
 
     def test_inn_costs_match_nes(self):
         # NES InnCostTbl (Bank00): Kol 20, Brecconary 6, Garinham 25, Cantlin 100, Rimuldar 55

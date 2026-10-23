@@ -7,10 +7,7 @@ import pygame
 from src.battle import Battle, can_run_away
 from src.battle_controller import BattleController, BattleOutcome
 from src.config.test_config import test_config
-from src.game import Game
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 def answer(*answers):
@@ -39,8 +36,7 @@ class TestDragonlordDialog(unittest.TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.dialog_lookup = self.game.cmd_menu.dialog_lookup
         self.cmd_menu = self.dialog_lookup.command_menu
         self.shown = []

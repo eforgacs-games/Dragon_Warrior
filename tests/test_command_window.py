@@ -1,23 +1,19 @@
 """The field COMMAND window (CmdNonCmbtDat) reads the joypad like the NES selection windows (Bank01 WndDoSelect,
 WndGetButtons, WndProcessInput; src/command_window.py), one NES frame at a time."""
-import os
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
+from pygame import KEYDOWN, K_1, K_2, K_DOWN, K_ESCAPE, K_LEFT, K_RETURN, K_RIGHT, K_UP, K_i, K_j, K_k
 
-import pygame  # noqa: E402
-from pygame import KEYDOWN, K_1, K_2, K_DOWN, K_ESCAPE, K_LEFT, K_RETURN, K_RIGHT, K_UP, K_i, K_j, K_k  # noqa: E402
-
-from src.command_window import WND_ABORT, CommandWindow, tapped_buttons  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_START, IN_UP  # noqa: E402
-from src.game import Game  # noqa: E402
-from src.menu import COMMAND_METHODS, CommandMenu  # noqa: E402
-from src.waiting import NES_FPS, game_speed, set_game_speed  # noqa: E402
-from src.windows import COMMAND_ENTRIES  # noqa: E402
+from src.command_window import WND_ABORT, CommandWindow, tapped_buttons
+from src.config.test_config import test_config
+from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_START, IN_UP
+from src.menu import COMMAND_METHODS, CommandMenu
+from src.waiting import NES_FPS, game_speed, set_game_speed
+from src.windows import COMMAND_ENTRIES
+from tests.helpers import new_game
 
 TALK, STATUS, STAIRS, SEARCH, SPELL, ITEM, DOOR, TAKE = range(8)
 
@@ -145,8 +141,7 @@ class CommandWindowFrames(TestCase):
         for name in COMMAND_METHODS:
             patch.object(CommandMenu, name, autospec=True,
                          side_effect=lambda menu, name=name: self.record(menu, name)).start()
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.game_state.is_initial_dialog = False
         self.cmd_menu = self.game.cmd_menu
         for blocking in ('window_drop_down_effect', 'window_drop_up_effect'):
