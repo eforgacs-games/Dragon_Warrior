@@ -188,9 +188,9 @@ class TestTransitionsUseTheSelectedFade(TestCase):
 
     def test_begin_a_new_quest_only_fades_in(self):
         def run():
-            with patch.object(self.game, 'select_adventure_log'), patch('src.game.NameSelection'), \
-                    patch.object(self.game, 'choose_new_quest_options'):
-                self.game.begin_new_quest()
+            with patch.object(self.game.title_menu, 'select_adventure_log'), patch('src.title_menu.NameSelection'), \
+                    patch.object(self.game.title_menu, 'choose_new_quest_options'):
+                self.game.title_menu.begin_new_quest()
 
         self.assert_fades(run, [False])
 

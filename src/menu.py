@@ -1,7 +1,5 @@
 import functools
-import json
 import random
-from os.path import join
 
 from src.spells import Spell
 from typing import Any, Callable, Collection, Iterable, Tuple, List
@@ -11,7 +9,6 @@ from pygame.sprite import Group
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from data.text.dialog_lookup_table import DialogLookup
-from src.adventure_log import ADVENTURE_LOGS, first_open_log, logs_named
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, accept_keys, reject_keys, Graphics, set_gettext_language
@@ -29,9 +26,9 @@ from src.direction import Direction
 from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
-from src.options_screen import MODERN, options_from_config, options_to_save
+from src.options_screen import MODERN, options_from_config
+from src.save_file import ADVENTURE_LOGS, SaveFile, log_for_unchosen_save, save_path, write_save
 from src.sound import Sound
-from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.text import draw_text, set_font_by_ascii_chars
 from src.translated_window import draw_translated_window
 from src.waiting import handle_speed_key
@@ -175,56 +172,14 @@ class CommandMenu:
         are saved with the hero and the story bits as one StoryFlags entry. Like the NES, the treasure chest history
         and the repel timer aren't saved (Game.load_game)."""
         if self.player.adventure_log not in ADVENTURE_LOGS:
-            log = self.log_for_unchosen_save()
+            log = log_for_unchosen_save(self.directories.save_dir, self.player.name)
             if log is None:
                 return
             # later saves go to the same log
             self.player.adventure_log = log
-        save_dict = {
-            'Name': self.player.name,
-            'Experience': self.player.total_experience,
-            'Gold': self.player.gold,
-            'CurrentHP': self.player.current_hp,
-            'CurrentMP': self.player.current_mp,
-            'Weapon': self.player.weapon,
-            'Armor': self.player.armor,
-            'Shield': self.player.shield,
-            'WearingDragonScale': self.player.wearing_dragon_scale,
-            'WearingFightersRing': self.player.wearing_fighters_ring,
-            'WearingCursedBelt': self.player.wearing_cursed_belt,
-            'WearingDeathNecklace': self.player.wearing_death_necklace,
-            'Inventory': self.player.inventory,
-            'Spells': self.player.spells,
-            'CurrentMap': self.game.current_map.identifier,
-            'PlayerRow': self.player.row,
-            'PlayerColumn': self.player.column,
-            STORY_FLAGS_SAVE_KEY: self.game.story_flags.to_save(),
-            # NES SaveData (LFA7D): the message speed is saved with each log (offset $16); so are the dialog style
-            # and NPCS MAKE WAY (src/options_screen.py)
-            **options_to_save(options_from_config(self.game.game_state.config)),
-        }
-        json_object = json.dumps(save_dict, indent=4)
-        with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'),
-                  'w') as output_save_file:
-            output_save_file.write(json_object)
-
-    def log_for_unchosen_save(self) -> int | None:
-        """The adventure log to save to when none was chosen (the title menu was skipped), never a save_slot_0.json
-        that isn't a log: the one log whose hero has this hero's name, else the first open log. None, so nothing is
-        saved, if several logs have the name, or if none has it and all three are used: a log with a different hero
-        is never overwritten."""
-        save_dir = self.directories.save_dir
-        named = logs_named(save_dir, self.player.name)
-        if len(named) == 1:
-            return named[0]
-        if named:
-            print(f"Not saved: adventure logs {', '.join(map(str, named))} all have the hero {self.player.name}, "
-                  f"so it isn't clear which one to save to.")
-            return None
-        open_log = first_open_log(save_dir)
-        if open_log is None:
-            print(f"Not saved: all three adventure logs are used, and none has the hero {self.player.name}.")
-        return open_log
+        save = SaveFile.from_game(self.player, self.game.current_map.identifier, self.game.story_flags,
+                                  options_from_config(self.game.game_state.config))
+        write_save(save_path(self.directories.save_dir, self.player.adventure_log), save.to_save())
 
     def set_king_lorik_dialog(self, left_throne_room: bool = False):
         # NES DoKingDialog: carrying Gwaelin comes first, then whether the hero has left the throne room yet
