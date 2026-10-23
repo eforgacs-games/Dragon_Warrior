@@ -308,8 +308,7 @@ class TestGuardianFights(TestCase):
         for guardian in (GOLEM, GREEN_DRAGON):
             with self.subTest(guardian.enemy_name):
                 self.player.current_hp = self.player.max_hp
-                with patch.object(self.game.music_player, 'load_and_play_music'), \
-                        patch.object(self.game.calculation, 'convert_to_frames_since_start_time', return_value=318):
+                with patch.object(self.game.music_player, 'load_and_play_music'):
                     self.step_onto(guardian, self.die)
                 self.assertEqual(self.where, ('TantegelThroneRoom', (10, 13)))
                 self.assertFalse(getattr(self.game.story_flags, str(guardian.defeated_flag)))

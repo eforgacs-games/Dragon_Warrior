@@ -23,7 +23,7 @@ Everything here follows the dialog engine in Bank01 of the disassembly (DoDialog
 """
 import re
 from dataclasses import dataclass
-from typing import Iterator, List
+from collections.abc import Iterator
 
 DIALOG_ROWS = 8  # DialogToScreenBuf: "Total rows=8"
 DIALOG_COLUMNS = 22  # CalcWndYByteNum: "22 text characters per line"
@@ -40,7 +40,7 @@ BLANK = ' '
 PERIOD_END_QUOTE = '.’'  # TXT_PRD_QUOTE ($52): one tile, '.'' in the disassembly's text comments
 
 
-def tiles(word: str) -> List[str]:
+def tiles(word: str) -> list[str]:
     """Splits text into the tiles it takes on screen: one per character, except a period and closing quote together."""
     return re.findall(re.escape(PERIOD_END_QUOTE) + '|.', word)
 
@@ -57,7 +57,7 @@ def plays_text_beep(char: str, column: int, indented: bool) -> bool:
     return indented and char != BLANK and column % 2 == 1
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class CharacterStep:
     """One character written to the window (one TextToPPU call that reaches the PPU)."""
     row: int
@@ -66,7 +66,7 @@ class CharacterStep:
     beep: bool
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ScrollStep:
     """The window scrolled up one row (ScrollDialog)."""
 
@@ -82,7 +82,7 @@ class DialogBuffer:
     without drawing."""
 
     def __init__(self) -> None:
-        self.rows: List[List[str]] = []
+        self.rows: list[list[str]] = []
         self.row = 0
         self.column = 0
         self.indent = 0
@@ -96,12 +96,12 @@ class DialogBuffer:
         self.indent = 0
 
     @property
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         """The text of each of the 8 rows, top to bottom, without trailing blanks."""
         return [''.join(row).rstrip() for row in self.rows]
 
     @property
-    def visible_lines(self) -> List[str]:
+    def visible_lines(self) -> list[str]:
         """The rows that have text on them, top to bottom."""
         return [line for line in self.lines if line]
 

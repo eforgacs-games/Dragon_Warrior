@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class Spell(str, Enum):
-    """All spells in the game. Inherits str so values can be used as dict keys
-    and in gettext calls without casting."""
+class Spell(StrEnum):
+    """All spells in the game. A StrEnum, so values can be used as dict keys and in gettext calls without casting, and
+    str()/format() give the plain name ("HEAL", not "Spell.HEAL") for dialog and menus."""
     HEAL = "HEAL"
     HEALMORE = "HEALMORE"
     HURT = "HURT"
@@ -17,7 +17,3 @@ class Spell(str, Enum):
     FIREBREATH = "FIREBREATH"
     FIREBREATH2 = "FIREBREATH2"
     ATTACK = "ATTACK"
-
-    def __str__(self) -> str:
-        # Python 3.11+ formats str-mixin enums as "Spell.HEAL"; spell names appear in dialog and menus
-        return self.value

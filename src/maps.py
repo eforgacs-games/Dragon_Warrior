@@ -1,16 +1,19 @@
 import inspect
 import sys
 from abc import ABC
-from typing import Callable, Dict
+from collections.abc import Callable
+from typing import override
 
 from pygame import surface
 from pygame.sprite import Group, LayeredDirty
 from pygame.transform import scale
 
 from src.common import Graphics
+from src.coordinates import Cell
+from src.constants import THRONE_ROOM_START_COORDINATES
 from src.direction import Direction
 from src.directories import Directories
-from src.map_layouts import MapLayouts
+from src.map_layouts import BRICK_STAIR_DOWN, BRICK_STAIR_UP, GRASS_STAIR_DOWN, MapLayouts
 from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point, \
     covered_cells, low_hp_tile_image, bad_ending_tile_image, tile_from_quarters
 from src.npcs import GWAELIN_RESCUE, NPC
@@ -48,12 +51,17 @@ COMPOSED_COAST_TILES = {
 DOWN, UP, LEFT, RIGHT = Direction.DOWN, Direction.UP, Direction.LEFT, Direction.RIGHT
 
 
+TILESET_COLUMNS = 11  # tiles to a row in tileset.png
+# Which way each stairs tile goes (GRASS_STAIR_DOWN is the overworld shrine entrance)
+STAIR_DIRECTIONS = {BRICK_STAIR_DOWN: 'down', BRICK_STAIR_UP: 'up', GRASS_STAIR_DOWN: 'down'}
+
+
 class DragonWarriorMap:
     # Where the NES map (MapDatTbl, Bank00) is in this layout, which pads it: the layout (row, column) of NES (0, 0)
     # (an NES X,Y is at (Y + row, X + column) here), and the NES map's size in blocks, (columns, rows), i.e.
     # (MapWidth + 1, MapHeight + 1). Every map with NPCs has an origin. Without a size, the whole layout counts as the
     # NES map.
-    nes_origin: tuple[int, int] | None = None
+    nes_origin: Cell | None = None
     nes_size: tuple[int, int] | None = None
     # The map's NPCs (src/npcs.py), in the order of its NES NPC tables: the mobile one, then the static one
     npc_table: tuple[NPC, ...] = ()
@@ -102,17 +110,17 @@ class DragonWarriorMap:
         self.last_map = last_map
         # NES covered areas (CoverDatPtr): the blocks of a town that sit under a roof. Only Brecconary, Garinham,
         # Cantlin and Rimuldar have any (Bank00 InitMapData, ChkMapBrecconary..ChkMapRimuldar).
-        self.covered_area: frozenset[tuple[int, int]] = frozenset()
+        self.covered_area: frozenset[Cell] = frozenset()
         # NES CoverStatus: whether the hero is standing on a covered block.
         self.player_under_cover = False
         # Whether background palette 0's color 1 is the low HP red (set_low_hp_palette), and the red tiles, made the
         # first time they're needed.
         self.low_hp_palette = False
-        self._low_hp_tile_images: Dict[str, surface.Surface] = {}
-        self._composed_tile_images: Dict[str, surface.Surface] = {}
+        self._low_hp_tile_images: dict[str, surface.Surface] = {}
+        self._composed_tile_images: dict[str, surface.Surface] = {}
         # The window color once the bad ending's BadEndBGPal is loaded (load_bad_ending_palette), and its tiles
         self.bad_ending_window_color: tuple[int, int, int] | None = None
-        self._bad_ending_tile_images: Dict[str, surface.Surface] = {}
+        self._bad_ending_tile_images: dict[str, surface.Surface] = {}
 
         # Tile Key:
         # Index values for the map tiles corresponding to location on tile sheet.
@@ -190,14 +198,14 @@ class DragonWarriorMap:
         (origin_row, origin_column), (columns, rows) = self.nes_origin, self.nes_size
         return 0 <= column - origin_column < columns and 0 <= row - origin_row < rows
 
-    def npc_position(self, npc: NPC) -> tuple[int, int]:
+    def npc_position(self, npc: NPC) -> Cell:
         """The layout (row, column) of an NPC."""
         assert self.nes_origin is not None, f'{self.identifier} has NPCs, so it needs an nes_origin'
         origin_row, origin_column = self.nes_origin
         return npc.y + origin_row, npc.x + origin_column
 
     @property
-    def npc_coordinates(self) -> dict[tuple[int, int], str]:
+    def npc_coordinates(self) -> dict[Cell, str]:
         """Layout (row, column) -> sprite type of each NPC load_map places."""
         return {self.npc_position(npc): npc.sprite for npc in self.npcs}
 
@@ -223,7 +231,7 @@ class DragonWarriorMap:
         """Returns the tile name from the integer value associated with it."""
         return self._tile_key_list[position]
 
-    def load_map(self, player, destination_coordinates, tile_size) -> None:
+    def load_map(self, player, destination_coordinates: Cell | None, tile_size) -> None:
         self.destination_coordinates = destination_coordinates
         self.tile_types_in_current_map = self.get_tiles_in_current_map()
         self.impassable_tiles = tuple(self.tile_types_in_current_map & set(all_impassable_tiles))
@@ -243,7 +251,7 @@ class DragonWarriorMap:
         # (DialogLookup.remove_npc)
         for slot, roaming_character in enumerate(self.roaming_characters):
             roaming_character.slot = slot
-        hero_coords = destination_coordinates if destination_coordinates else self.initial_coordinates
+        hero_coords = destination_coordinates or self.initial_coordinates
         if hero_coords:
             hero_row, hero_col = hero_coords
             self.center_pt = get_center_point(hero_col, hero_row, tile_size=tile_size)
@@ -343,11 +351,11 @@ class DragonWarriorMap:
         self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'].add(tile)
 
     def normal_tile_image(self, tile_value: int) -> surface.Surface:
-        """The tileset image for a floor tile: tileset.png has 11 tiles to a row. The shore blocks it doesn't have are
-        put together from the ones it does (COMPOSED_COAST_TILES), once."""
+        """The tileset image for a floor tile: tileset.png has TILESET_COLUMNS (11) tiles to a row. The shore blocks it
+        doesn't have are put together from the ones it does (COMPOSED_COAST_TILES), once."""
         tile_name = self.get_tile_by_value(tile_value)
         if tile_name not in COMPOSED_COAST_TILES:
-            return self.map_tiles[tile_value % 11][tile_value // 11]
+            return self.map_tiles[tile_value % TILESET_COLUMNS][tile_value // TILESET_COLUMNS]
         if tile_name not in self._composed_tile_images:
             quarters = [self.normal_tile_image(self.floor_tile_key[source]['val'])
                         for source in COMPOSED_COAST_TILES[tile_name]]
@@ -442,14 +450,10 @@ class DragonWarriorMap:
             self.staircases.update(dict(zip(staircases_keys, staircases_values)))
 
     def assign_stair_directions(self):
-        for staircase_coordinates, staircase_dict in self.staircases.items():
-            layout_staircase_coordinates = self.layout[staircase_coordinates[0]][staircase_coordinates[1]]
-            if layout_staircase_coordinates == 6:
-                staircase_dict['stair_direction'] = 'down'
-            elif layout_staircase_coordinates == 7:
-                staircase_dict['stair_direction'] = 'up'
-            elif layout_staircase_coordinates == 18:
-                staircase_dict['stair_direction'] = 'down'
+        for (row, column), staircase_dict in self.staircases.items():
+            stair_tile = self.layout[row][column]
+            if stair_tile in STAIR_DIRECTIONS:
+                staircase_dict['stair_direction'] = STAIR_DIRECTIONS[stair_tile]
 
 
 class MapWithoutNPCs(DragonWarriorMap, ABC):
@@ -457,18 +461,22 @@ class MapWithoutNPCs(DragonWarriorMap, ABC):
 
 
 class BasementWithNPCs(DragonWarriorMap, ABC):
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self) -> int:
         return Direction.RIGHT.value
 
 
 class BasementWithoutNPCs(MapWithoutNPCs):
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -499,7 +507,7 @@ class TantegelThroneRoom(DragonWarriorMap):
 
     def __init__(self, config):
         super().__init__(MapLayouts().tantegel_throne_room, config,
-                         Directories(config).tantegel_castle_throne_room_music, (10, 13),
+                         Directories(config).tantegel_castle_throne_room_music, THRONE_ROOM_START_COORDINATES,
                          staircases={
                              (14, 18): {'map': 'TantegelCourtyard', 'destination_coordinates': (14, 14),
                                         'direction': Direction.RIGHT.value}})
@@ -507,9 +515,11 @@ class TantegelThroneRoom(DragonWarriorMap):
         self.exclude_npc('PRINCESS_GWAELIN')
         self.assign_stair_directions()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.UP.value
 
@@ -586,12 +596,15 @@ class TantegelCourtyard(DragonWarriorMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
+    @override
     def apply_dragonlord_defeated(self):
         self.npcs = list(self.npc_table_after_dragonlord)
 
@@ -646,9 +659,11 @@ class CharlockB1(MapWithoutNPCs):
         self.layout[row][column] = self.floor_tile_key['BRICK_STAIR_DOWN']['val']
         self.staircases[self.HIDDEN_STAIRCASE_COORDINATES] = {**self.HIDDEN_STAIRCASE, 'stair_direction': 'down'}
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.UP.value
 
@@ -781,12 +796,15 @@ class CharlockB8(DragonWarriorMap):
                 (33, 16): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 12)}})
         self.assign_stair_directions()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
+    @override
     def apply_dragonlord_defeated(self):
         # NES LoadMobNPCDataLoop: the Dragonlord NPC isn't loaded once he's been defeated
         self.npcs = []
@@ -824,9 +842,11 @@ class Alefgard(MapWithoutNPCs):
         for staircase_dict in self.staircases.values():
             staircase_dict['stair_direction'] = 'up'
 
+    @override
     def hero_underlying_tile(self):
         return 'CASTLE'
 
+    @override
     def hero_initial_direction(self):
         return Direction.DOWN.value if self.character_key['HERO'][
                                            'underlying_tile'] != 'GRASS_STAIR_DOWN' else Direction.LEFT.value
@@ -877,9 +897,11 @@ class Brecconary(DragonWarriorMap):
             **{y: range(21, 27) for y in range(24, 28)},
         }, row_offset=8, column_offset=10)
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -926,9 +948,11 @@ class Garinham(DragonWarriorMap):
             10: (15, 16, 18, 19),  # 17,10 is the door
         }, row_offset=1, column_offset=9)
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -968,9 +992,11 @@ class Kol(DragonWarriorMap):
                                south_gate=warp_line((32, 9), (32, 34)))
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'SAND'
 
+    @override
     def hero_initial_direction(self):
         return Direction.UP.value
 
@@ -1024,9 +1050,11 @@ class Rimuldar(DragonWarriorMap):
             **{y: range(2, 13) for y in range(20, 28)},
         }, row_offset=8, column_offset=8)
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.LEFT.value
 
@@ -1048,9 +1076,11 @@ class Hauksness(MapWithoutNPCs):
                                south_gate=warp_line((28, 9), (28, 28)))
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1101,9 +1131,11 @@ class Cantlin(DragonWarriorMap):
             **{y: range(11, 19) for y in range(11, 24)},
         }, row_offset=8, column_offset=1)
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.DOWN.value
 
@@ -1118,9 +1150,11 @@ class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1132,9 +1166,11 @@ class ErdricksCaveB2(MapWithoutNPCs, CaveMap):
                              (10, 9): {'map': 'ErdricksCaveB1', 'destination_coordinates': (12, 12)}})
         self.assign_stair_directions()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1159,9 +1195,11 @@ class SwampCave(CaveMap):
                          initial_coordinates=(6, 4))
         self.assign_stair_directions()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1177,9 +1215,11 @@ class GarinsGraveB1(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1200,9 +1240,11 @@ class GarinsGraveB2(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1229,9 +1271,11 @@ class GarinsGraveB3(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1248,9 +1292,11 @@ class GarinsGraveB4(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1270,9 +1316,11 @@ class MountainCaveB1(MapWithoutNPCs, CaveMap):
                          })
         self.assign_stair_directions()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1291,9 +1339,11 @@ class MountainCaveB2(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1313,9 +1363,11 @@ class StaffOfRainCave(DragonWarriorMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1335,14 +1387,16 @@ class MagicTemple(DragonWarriorMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
 
 # Lookup of all map names with their associated class
-map_lookup: Dict[str, Callable[..., DragonWarriorMap]] = {
+map_lookup: dict[str, Callable[..., DragonWarriorMap]] = {
     map_name: map_class for map_name, map_class in inspect.getmembers(sys.modules[__name__], inspect.isclass)
     if issubclass(map_class, DragonWarriorMap)}

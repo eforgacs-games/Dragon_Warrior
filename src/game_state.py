@@ -1,4 +1,3 @@
-from typing import List
 
 # NES LightDiameter ($D0) is the width, in blocks, of the lit square around the hero in a dungeon. The visible-area
 # checks in Bank00 (ChkLightDiameterX/ChkLightDiameterY) black out every block further than LightDiameter tiles from
@@ -33,7 +32,7 @@ class GameState:
         # isn't seen until the next step.
         self.lit_diameter = MIN_LIGHT_DIAMETER
         # Light diameters still to be drawn by PostMoveUpdate after RADIANT or a torch, one per LIGHT_REDRAW_FRAMES
-        self.pending_light_redraws: List[int] = []
+        self.pending_light_redraws: list[int] = []
         self.light_redraw_frame = 0
         self.config = config
 

@@ -17,6 +17,7 @@ passes; otherwise HaltNPCMoveCalcs stops it, and it stays where it is, facing th
 There is no limit on how far an NPC may wander from where it started. (ChkNPCWndwBlock also stops NPCs that are under
 an open window; that's about when NPCs move, not where.)
 """
+from src.coordinates import Cell
 from src.direction import Direction
 
 # Tiles whose NES block ID is below BLK_FFIELD ($0D): BLK_GRASS, BLK_SAND, BLK_HILL, BLK_STAIR_UP, BLK_BRICK,
@@ -29,18 +30,20 @@ NPC_WALKABLE_TILES = frozenset({
 })
 
 
-def step(row: int, column: int, direction: int, offset: int = 1) -> tuple[int, int]:
+def step(row: int, column: int, direction: int, offset: int = 1) -> Cell:
     """The (row, column) `offset` tiles from (row, column) in the given direction."""
-    if direction == Direction.UP.value:
-        return row - offset, column
-    if direction == Direction.DOWN.value:
-        return row + offset, column
-    if direction == Direction.LEFT.value:
-        return row, column - offset
-    return row, column + offset
+    match direction:
+        case Direction.UP:
+            return row - offset, column
+        case Direction.DOWN:
+            return row + offset, column
+        case Direction.LEFT:
+            return row, column - offset
+        case _:
+            return row, column + offset
 
 
-def npc_may_step_onto(current_map, target: tuple[int, int]) -> bool:
+def npc_may_step_onto(current_map, target: Cell) -> bool:
     """Whether an NPC may step onto `target`, a (row, column) in the layout, as far as the map goes (NES UpdateNPCs1
     checks 1 and 4 above)."""
     row, column = target

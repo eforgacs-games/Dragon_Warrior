@@ -1,7 +1,6 @@
 import argparse
 import os
 import sys
-from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_i, K_k, RESIZABLE, display, event, image, init, K_F1, K_F2, K_F3, K_F4, K_F11, KEYDOWN, \
     SCALED, K_RETURN, VIDEORESIZE
@@ -21,9 +20,10 @@ from src.common import A_OR_START_KEYS, Graphics, set_gettext_language
 from src.common import singular_or_plural
 from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
+from src.coordinates import Cell
 from src.debug_tools import DebugTools
 from src.constants import (
-    TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT,
+    TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT, TEMP_TEXT_MS,
 )
 from src.direction import Direction
 from src.directories import Directories
@@ -58,6 +58,11 @@ from src.windows import COMMAND_WINDOW
 from src.zoom import handle_zoom_event, remember_default_zoom, remember_windowed_size, restore_windowed_size
 
 
+# NES ChkOtherBlocks: a swamp step costs 2 HP (DoSwampDamage, LCDD4), a force field step 15 (LCE2B)
+SWAMP_DAMAGE = 2
+FORCE_FIELD_DAMAGE = 15
+# NES MjArmrHP: Magic Armor heals 1 HP every 4th step (when the counter's low 2 bits wrap to 0)
+MAGIC_ARMOR_HEAL_STEPS = 4
 
 
 class Game:
@@ -323,7 +328,7 @@ class Game:
         # as done with Cantlin and others below
         self.handle_warps()
 
-    def _handle_pygame_events(self, events: List[event.Event]) -> None:
+    def _handle_pygame_events(self, events: list[event.Event]) -> None:
         """
         Handles low-level pygame events such as QUIT, KEYDOWN, arrow fade toggles, and window resize.
         """
@@ -411,8 +416,8 @@ class Game:
         if self.player.armor == "Erdrick's Armor":
             heal = True
         elif self.player.armor == "Magic Armor":
-            self.magic_armor_steps = (self.magic_armor_steps + 1) & 0xFF
-            heal = self.magic_armor_steps & 0x03 == 0
+            self.magic_armor_steps = (self.magic_armor_steps + 1) % 256  # MjArmrHP is one byte
+            heal = self.magic_armor_steps % MAGIC_ARMOR_HEAL_STEPS == 0
         else:
             heal = False
         if heal:
@@ -599,10 +604,10 @@ class Game:
             if not self.player.is_moving:
                 if tile == 'MARSH':
                     if not self.player.received_environment_damage:
-                        self.damage_step(damage_amount=2)
+                        self.damage_step(damage_amount=SWAMP_DAMAGE)
                 elif tile == 'BARRIER':
                     if not self.player.received_environment_damage:
-                        self.damage_step(damage_amount=15, force_field=True)
+                        self.damage_step(damage_amount=FORCE_FIELD_DAMAGE, force_field=True)
             else:
                 self.player.received_environment_damage = False
 
@@ -620,7 +625,7 @@ class Game:
             force_field_flash(RED, self.screen, self.game_state.config)
         else:
             # NES DoSwampDamage: one red flash
-            flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
+            flash_transparent_color(RED, self.screen, self.game_state.config)
         # NES DoSwampDamage and the force field damage: RedFlashScreen, then LoadRegBGPal with the new HP
         self.load_window_palette()
         self.drawer.draw_all(self, self.game_state.enable_animate)
@@ -770,19 +775,19 @@ class Game:
                 mode_text = self._("Invulnerability disabled")
             self.draw_temporary_text(mode_text)
 
-    def draw_temporary_text(self, text: Tuple[str] | List[str] | str, add_quotes=False) -> None:
+    def draw_temporary_text(self, text: tuple[str] | list[str] | str, add_quotes=False) -> None:
         """Show a settings message (F2, keys 1 to 4, ...) for a second. It's not part of the game, so it stays up for a
-        real second at any game speed: the dialog closes 1000 game milliseconds after temp_text_start, so start it
+        real second at any game speed: the dialog closes TEMP_TEXT_MS game milliseconds after temp_text_start, so start it
         that much later at higher speeds."""
-        temp_text_start = get_ticks() + 1000 * (game_speed() - 1)
+        temp_text_start = get_ticks() + TEMP_TEXT_MS * (game_speed() - 1)
         self.cmd_menu.show_text_in_dialog_box(text, add_quotes=add_quotes, temp_text_start=temp_text_start,
                                               skip_text=False)
 
-    def process_staircase_warps(self, staircase_location: tuple, staircase_dict: dict) -> None:
+    def process_staircase_warps(self, staircase_location: Cell, staircase_dict: dict) -> None:
         if (self.player.row, self.player.column) == staircase_location:
             self.map_mgr.process_warp(staircase_dict)
 
-    def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: tuple | None = None,
+    def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: Cell | None = None,
                    direction: int | None = None, fade_out_first: bool = True, stairs_sound: bool = False) -> None:
         self.map_mgr.change_map(next_map, destination_coordinates, direction, fade_out_first=fade_out_first,
                                 stairs_sound=stairs_sound)

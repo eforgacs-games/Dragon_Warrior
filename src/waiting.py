@@ -22,7 +22,7 @@ without an import cycle.
 """
 import sys
 
-from typing import Collection
+from collections.abc import Collection
 
 from pygame import K_1, K_2, K_3, K_4, KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
 
@@ -171,6 +171,12 @@ def wait(milliseconds: float, config: dict | None = None) -> None:
         if slice_ms:
             time.wait(slice_ms)
         slept += real_slice * speed
+
+
+def wait_until(deadline: float, config: dict | None = None) -> None:
+    """``wait`` until the game clock reaches ``deadline`` (a ``game_ticks`` value). Taking the deadline before drawing
+    and waiting until it after, a frame lasts one frame however long the drawing took."""
+    wait(max(0.0, deadline - game_ticks()), config)
 
 
 def wait_frames(frames: float, config: dict | None = None, fps: float = NES_FPS) -> None:

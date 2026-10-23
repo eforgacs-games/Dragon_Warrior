@@ -6,7 +6,7 @@ from pygame import KEYDOWN, K_RETURN, QUIT
 from pygame.event import Event
 
 from src.config.test_config import test_config
-from src.waiting import check_for_quit, quit_if_requested, reset_game_speed, wait, wait_frames
+from src.waiting import check_for_quit, quit_if_requested, reset_game_speed, wait, wait_frames, wait_until
 from tests.helpers import new_game
 
 
@@ -38,6 +38,13 @@ class TestWait(TestCase):
         with patch('src.waiting.wait') as mock_wait:
             wait_frames(30, {'NO_WAIT': False})
         mock_wait.assert_called_once_with(500, {'NO_WAIT': False})
+
+    def test_wait_until_waits_out_only_what_is_left(self):
+        with patch('src.waiting.game_ticks', return_value=1000), patch('src.waiting.wait') as mock_wait:
+            wait_until(1050, {'NO_WAIT': False})
+            wait_until(900, {'NO_WAIT': False})  # already past: no waiting
+        self.assertEqual([((50, {'NO_WAIT': False}),), ((0.0, {'NO_WAIT': False}),)],
+                         [c[:1] for c in mock_wait.call_args_list])
 
     def test_no_wait_returns_at_once(self):
         with patch('src.waiting.time.wait') as mock_time_wait:
