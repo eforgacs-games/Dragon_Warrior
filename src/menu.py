@@ -1377,6 +1377,10 @@ class CommandMenu:
                                sound_buttons=(IN_A,))
         # NES WindowSequence: RemoveWindow, chosen or not, before the choice is acted on
         self.remove_window(window, covered)
+        if self.current_battle is not None:
+            # Then the battle command window, chosen or not (PlyrSpellChosen LE6E7 and LE6DE, ChkCmbtItemUsed LE7CD
+            # and LE7C4: RemoveWindow WND_CMD_CMB)
+            self.game.battle_ctrl.remove_command_window()
         currently_selected_item = entries[answer.entry]
         if not answer.accepted:
             if self.current_battle is not None:

@@ -185,7 +185,7 @@ class TestCheckpoints(story_run.StoryRunMixin, TestCase):
 
     def test_rainbow_bridge(self):
         self.check('rainbow_bridge')
-        self.assertEqual(self.tile(RAINBOW_BRIDGE_COORDINATES), 'WATER')
+        self.assertEqual(self.tile(RAINBOW_BRIDGE_COORDINATES), 'LEFT_RIGHT_COAST')  # water, shores on both sides
         self.cmd_menu.rainbow_drop()
         self.assertEqual(self.tile(RAINBOW_BRIDGE_COORDINATES), 'BRIDGE')
 

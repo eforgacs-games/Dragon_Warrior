@@ -134,7 +134,7 @@ class TestLowHPWindowColor(TestCase):
                 with patch.object(self.cmd_menu, 'show_line_in_dialog_box'), \
                         patch.object(self.game.drawer, 'draw_hovering_stats_window') as stats_window, \
                         patch('data.text.dialog_lookup_table.display'):
-                    dialog_lookup.show_bad_ending_palette('')
+                    dialog_lookup.show_bad_ending_palette()
                 self.assertEqual(self.game.color, color)
                 self.assertEqual(stats_window.call_args.args[2], color)
                 self.assertEqual(self.game.current_map.low_hp_palette, color == LOW_HP_RED)
