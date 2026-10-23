@@ -2,7 +2,7 @@ import os
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
-from pygame import KEYDOWN, K_RETURN, event, K_e, K_d
+from pygame import KEYDOWN, K_RETURN, QUIT, event, K_e, K_d
 from pygame.time import get_ticks
 
 from src.config.test_config import test_config
@@ -42,6 +42,14 @@ class TestMenuFunctions(TestCase):
         with patch.object(event, 'get', return_value=[mocked_e, mocked_d, mocked_return]):
             self.assertEqual('ed', NameSelection(self.game.game_state.config).select_name(get_ticks(), self.game.screen,
                                                                                           self.game.cmd_menu))
+
+    def test_closing_the_window_during_name_entry_quits_the_game(self):
+        # It used to call pygame.quit() and carry on, so the next draw raised "video system not initialized"
+        with patch.object(event, 'get', side_effect=[[event.Event(QUIT)]]), \
+                patch.object(self.game.cmd_menu, 'show_line_in_dialog_box'), \
+                patch('src.waiting.pygame_quit') as pygame_quit, self.assertRaises(SystemExit):
+            NameSelection(self.game.game_state.config).select_name(get_ticks(), self.game.screen, self.game.cmd_menu)
+        pygame_quit.assert_called_once()
 
     def test_get_opposite_direction(self):
         self.assertEqual(0, get_opposite_direction(2))
