@@ -13,6 +13,7 @@ from src.enemy_lookup import enemy_image_position_lookup
 from src.game_functions import get_surrounding_rect
 from src.command_window import held_buttons
 from src.menu import CommandMenu
+from src.options_screen import STATUS_WINDOW_ALWAYS
 from src.sound import Sound
 from src.text import draw_text
 from src.visual_effects import cut_to_black, enemy_fade_in, enemy_hit_flash, enemy_spell_flash, screen_fade
@@ -210,9 +211,18 @@ class Drawer:
             self.game_state.enable_movement = True
             self.show_pop_up_after_automatic_dialog()
 
+    def status_window_always(self) -> bool:
+        """The STATUS WINDOW option on ALWAYS (not NES): the pop-up window stays up on the map, walking too, but for
+        the throne room's automatic dialogs, which keep it closed as they do on the NES setting. It's drawn on every
+        frame (draw_all), so it shows the values as they change; windows open over it as they do over the NES's."""
+        return (self.game_state.config.get('STATUS_WINDOW') == STATUS_WINDOW_ALWAYS
+                and not self.game_state.is_initial_dialog and not self.game_state.is_post_death_dialog)
+
     def remove_pop_up(self, cmd_menu: CommandMenu) -> None:
         """NES ChkRemovePopUp (Bank00): take the pop-up window off the screen if it is up (DoRemovePopUp: RemoveWindow,
-        FrameCounter kept as it was)."""
+        FrameCounter kept as it was). With STATUS WINDOW on ALWAYS it stays."""
+        if self.status_window_always():
+            return
         self.display_hovering_stats = False
         if self.hovering_stats_displayed:
             cmd_menu.window_drop_up_effect(*POPUP_WINDOW)
@@ -418,7 +428,7 @@ class Drawer:
             self.handle_post_death_dialog(game_state, cmd_menu, events, skip_text)
         if current_map.is_dark and self.game_state.config["ENABLE_DARKNESS"]:
             self.handle_darkness(screen, player)
-        if self.display_hovering_stats:
+        if self.display_hovering_stats or self.status_window_always():
             if not self.hovering_stats_displayed:
                 cmd_menu.window_drop_down_effect(*POPUP_WINDOW)
                 self.hovering_stats_displayed = True
