@@ -25,7 +25,9 @@ class DialogBoxWrapper(textwrap.TextWrapper):
 
 def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, color: tuple = WHITE, size: int = 16,
               text_wrap_length: int = WRAP_LENGTH, alignment: str = 'left', letter_by_letter: bool = True,
-              disable_sound: bool = False, font_name: str | None = None) -> str | None:
+              disable_sound: bool = False, font_name: str | None = None, text_font: Font | None = None) -> str | None:
+    """:param text_font: The font to draw in, instead of the one the text's characters pick (a translated window keeps
+        one font for all its lines)."""
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
     # chunks = [text[i:i + n] for i in range(0, len(text), n)]
@@ -35,7 +37,7 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
     item_gained_matches = ("thou hast gained", "Thou hast found")
     if any([x in text for x in item_gained_matches]):
         disable_sound = True
-    current_font = set_font_by_ascii_chars(chunks, size, font_name, directories)
+    current_font = text_font or set_font_by_ascii_chars(chunks, size, font_name, directories)
     for chunk in chunks:
         if letter_by_letter:
             string = ''
@@ -50,7 +52,7 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
                         Sound(config).play_sound(directories.text_beep_sfx)
         else:
             if not config['NO_BLIT']:
-                current_font = set_font_by_ascii_chars(chunks, size, font_name, directories)
+                current_font = text_font or set_font_by_ascii_chars(chunks, size, font_name, directories)
                 blit_text_to_screen(alignment, color, current_font, screen, chunk, x, y, config["RENDER_TEXT"])
         y += 17
         if chunk == chunks[len(chunks) - 1]:

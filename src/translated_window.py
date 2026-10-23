@@ -2,8 +2,9 @@
 
 The NES font has no Korean, so a window can only be generated tile by tile while all of its text is untranslated
 (English). Once any of it is translated, the border is generated without text and every title and line is drawn over
-it as text (src/text.py draw_text, which picks Unifont for Korean) at the tile the NES puts it in, the same way the
-COMMAND window (CommandMenu.draw_command_window) and the shop windows (DialogLookup.is_nes_text) do it.
+it as text at the tile the NES puts it in, the same way the COMMAND window (CommandMenu.draw_command_window) and the
+shop windows (DialogLookup.is_nes_text) do it. The whole window then uses one font, Unifont, so words that stay in
+English (NES, say) don't show up in the NES font next to the Korean.
 """
 from collections.abc import Callable
 
@@ -53,15 +54,18 @@ def draw_translated_window(screen: Surface, layout: WindowLayout, color: tuple, 
         return rect
     nes_tile = config['TILE_SIZE'] / 2
     window_column, window_row = layout.window.x * 2, layout.window.y * 2
-    for text in layout_texts(layout):
+    texts = layout_texts(layout)
+    window_font = set_font_by_ascii_chars([translate(text.text) for text in texts], 16, None, Directories(config))
+    for text in texts:
         translated = translate(text.text)
         column, alignment = (text.column + len(text.text), 'right') if right_aligned else (text.column, 'left')
         x, y = (window_column + column) * nes_tile, (window_row + text.row + 0.5) * nes_tile
         if text.row == 0:
             # A title: the top border stops one pixel short of it on each side (TL_TOP2)
             scale = config['TILE_SIZE'] // 16  # screen pixels per NES pixel
-            width = set_font_by_ascii_chars([translated], 16, None, Directories(config)).size(translated)[0]
+            width = window_font.size(translated)[0]
             left = x - width if alignment == 'right' else x
             screen.fill(BLACK, (left - scale, window_row * nes_tile, width + 2 * scale, nes_tile))
-        draw_text(translated, x, y, screen, config, color=color, alignment=alignment, letter_by_letter=False)
+        draw_text(translated, x, y, screen, config, color=color, alignment=alignment, letter_by_letter=False,
+                  text_font=window_font)
     return rect

@@ -61,9 +61,13 @@ class MovementGame(Protocol):
     paused: bool
     # START or A pressed while someone is between tiles: see MovementController.resolve_pending_freezes
     pause_requested: bool
+    # SELECT or Tab: the options overlay, which waits for the same moment as the pause
+    options_requested: bool
     cmd_menu_requested: bool
 
     def count_step(self) -> None: ...
+
+    def open_options(self) -> None: ...
 
     def roll_for_fight(self, column: int, row: int, tile: str | None) -> None: ...
 
@@ -158,7 +162,7 @@ class MovementController:
 
     @property
     def freeze_pending(self) -> bool:
-        return self.game.pause_requested or self.game.cmd_menu_requested
+        return self.game.pause_requested or self.game.options_requested or self.game.cmd_menu_requested
 
     @property
     def sprites_animate(self) -> bool:
@@ -179,7 +183,8 @@ class MovementController:
 
     def resolve_pending_freezes(self) -> None:
         """
-        Pause, or open the command window, once the hero and the NPCs have finished their steps.
+        Pause, open the options overlay (not NES) or open the command window, once the hero and the NPCs have finished
+        their steps.
         NES PausePrepLoop (START) and DoNCCmdWindow (A) keep calling DoSprites until FrameCounter & $0F == 1, the
         frame on which every NPC is lined up on a tile, and only then (before that frame's DoSprites, so before any NPC
         starts a step) pause or set StopNPCMove. START is checked
@@ -199,6 +204,10 @@ class MovementController:
         if self.game.pause_requested:
             self.game.pause_requested = False
             self.game.paused = True
+            return
+        if self.game.options_requested:
+            self.game.options_requested = False
+            self.game.open_options()
             return
         self.game.cmd_menu_requested = False
         self.game.drawer.display_hovering_stats = True
