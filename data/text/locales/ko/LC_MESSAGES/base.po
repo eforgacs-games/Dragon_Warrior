@@ -2460,3 +2460,71 @@ msgstr "Ctrl 0: 원래 크기"
 #: data/text/intro_lookup_table.py:35
 msgid "Window zoom:"
 msgstr "화면 확대/축소:"
+
+#: src/auto_grind.py:172
+msgid "Auto-grind stopped"
+msgstr "자동 사냥 멈춤"
+
+#: src/auto_grind.py:138
+msgid ""
+"Auto-grind on\n"
+"(G or any key to stop)"
+msgstr ""
+"자동 사냥 켜짐\n"
+"(G나 아무 키로 멈춤)"
+
+#: src/auto_grind.py:124
+msgid "Auto-grind: no fights here"
+msgstr "자동 사냥: 여기는 적이 나오지 않는다"
+
+#: src/auto_grind.py:127
+msgid "Auto-grind: HP is already low"
+msgstr "자동 사냥: HP가 이미 낮다"
+
+#: src/auto_grind.py:132
+msgid "Auto-grind: no safe tile to walk to"
+msgstr "자동 사냥: 안전하게 걸을 곳이 없다"
+
+#: src/auto_grind.py:163
+msgid "Auto-grind stopped: HP low"
+msgstr "자동 사냥 멈춤: HP 부족"
+
+#: src/auto_grind.py:165
+msgid "Auto-grind stopped: asleep"
+msgstr "자동 사냥 멈춤: 잠듦"
+
+#: src/auto_grind.py:167
+msgid "Auto-grind stopped: STOPSPELL"
+msgstr "자동 사냥 멈춤: 마호톤"
+
+#: src/auto_grind.py:169
+msgid "Auto-grind stopped: special fight"
+msgstr "자동 사냥 멈춤: 특별한 전투"
+
+#: src/auto_grind.py:171
+msgid ""
+"Auto-grind stopped: level up\n"
+"(G to go on)"
+msgstr ""
+"자동 사냥 멈춤: 레벨 업\n"
+"(G로 계속)"
+
+#: data/text/intro_lookup_table.py:23
+msgid "G: Auto-grind"
+msgstr "G: 자동 사냥"
+
+#: src/options_overlay.py
+msgid "GRIND STOP"
+msgstr "사냥 멈춤"
+
+#: src/options_overlay.py
+msgid "RED HP"
+msgstr "빨간 HP"
+
+#: src/options_overlay.py
+msgid "HALF HP"
+msgstr "HP 절반"
+
+#: src/options_overlay.py
+msgid "3/4 HP"
+msgstr "HP 3/4"

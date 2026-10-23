@@ -17,12 +17,17 @@ with WaitForMusicEnd (the victory and level-up fanfares, the inn, the harp, ...)
 The window zoom keys (Ctrl +, Ctrl -, Ctrl 0 and Ctrl with the mouse wheel, src/zoom.py) are taken out of the event loops
 the same way, so they also work everywhere.
 
+It is also where a virtual joypad (src/virtual_joypad.py, which auto-grind drives) plugs into the game's input: every
+read of the keys goes through here or calls ``poll_virtual_joypad`` / ``with_virtual_keys`` first, so the joypad can
+post its button presses and report its held keys from inside whichever loop is reading input (see those two).
+
 This module imports nothing from ``src`` but src/zoom.py (which imports nothing from ``src``), so any module can use it
 without an import cycle.
 """
 import sys
 
 from collections.abc import Collection
+from typing import Any, Protocol
 
 from pygame import K_1, K_2, K_3, K_4, KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
 
@@ -38,6 +43,63 @@ _speed = 1
 _real_anchor = 0
 _game_anchor = 0
 _rounding_carry = 0.0  # real milliseconds that rounding waits to whole milliseconds has left over (see _whole_real_ms)
+
+# Who is reading input when the virtual joypad is polled: the map loop (Game.read_events and the hero's walking) or
+# anything else (a dialog, a battle, a window or a wait)
+MAP_CONTEXT = 'map'
+WINDOW_CONTEXT = 'window'
+
+
+class VirtualJoypadHook(Protocol):
+    """What this module needs of a virtual joypad (src/virtual_joypad.py VirtualJoypad)."""
+    held: set[int]
+
+    def poll(self, context: str) -> None: ...
+
+
+_virtual_joypad: VirtualJoypadHook | None = None  # the connected virtual joypad, if one is driving the game
+
+
+def set_virtual_joypad(joypad: VirtualJoypadHook | None) -> None:
+    """Connect a virtual joypad (or None to disconnect it). Only a connected one is polled, so there is nothing to do
+    on any input read while none is."""
+    global _virtual_joypad
+    _virtual_joypad = joypad
+
+
+def virtual_joypad() -> VirtualJoypadHook | None:
+    return _virtual_joypad
+
+
+def poll_virtual_joypad(context: str = WINDOW_CONTEXT) -> None:
+    """Let the connected virtual joypad post the presses that are due on the game clock, and look at the keys the
+    player pressed, before the caller reads the event queue. ``context`` says who is reading."""
+    if _virtual_joypad is not None:
+        _virtual_joypad.poll(context)
+
+
+class _WithVirtualKeys:
+    """``key.get_pressed()``, with the virtual joypad's held keys down as well."""
+
+    def __init__(self, real: Any, held: frozenset[int]) -> None:
+        self.real = real
+        self.held = held
+
+    def __getitem__(self, pressed_key: int) -> bool:
+        return pressed_key in self.held or bool(self.real[pressed_key])
+
+
+def with_virtual_keys(real: Any, context: str = WINDOW_CONTEXT) -> Any:
+    """``real`` (what ``key.get_pressed()`` returned) with the connected virtual joypad's held keys added, after
+    polling it. Without a virtual joypad, ``real`` itself. The callers still call ``key.get_pressed()`` themselves, so
+    the tests that patch it keep working."""
+    if _virtual_joypad is None:
+        return real
+    _virtual_joypad.poll(context)
+    joypad = _virtual_joypad
+    if joypad is None or not joypad.held:
+        return real
+    return _WithVirtualKeys(real, frozenset(joypad.held))
 
 
 def game_speed() -> int:
@@ -101,6 +163,7 @@ def get_events(*args, **kwargs) -> list[event.Event]:
     """``pygame.event.get`` for the game's own event loops (battle, dialogs, menus, shops): presses of 1 to 4 set the
     game speed, and the zoom keys zoom the window (src/zoom.py); both are taken out, so they work everywhere and never
     count as "any key" to close a dialog."""
+    poll_virtual_joypad()
     return [current_event for current_event in event.get(*args, **kwargs)
             if not handle_speed_key(current_event) and not handle_zoom_event(current_event)]
 
@@ -146,6 +209,7 @@ def check_for_quit() -> None:
         if event.peek(QUIT):
             quit_game()
         poll_speed_keys()
+        poll_virtual_joypad()
 
 
 def wait(milliseconds: float, config: dict | None = None) -> None:
@@ -227,5 +291,5 @@ class FramePacer:
 def is_any_key_held(keys: Collection[int]) -> bool:
     """Whether one of ``keys`` is down right now, for the NES waits that read JoypadBtns as it is (so a button held
     since before the wait counts) rather than waiting for a new press."""
-    pressed = key.get_pressed()
+    pressed = with_virtual_keys(key.get_pressed())
     return any(pressed[pressed_key] for pressed_key in keys)

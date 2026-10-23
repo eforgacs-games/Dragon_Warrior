@@ -47,6 +47,9 @@ base_config = {
     "INVULNERABLE": False,
     "AUTO_STAIRS": True,  # STAIRS: True steps onto stairs to take them (not NES); False needs the STAIRS command (NES)
     "AUTO_BATTLE": False,
+    # GRIND STOP (not NES): the HP at which auto-grind (G, src/auto_grind.py) stops: "RedHP" (the NES's low HP, where
+    # the windows turn red), "HalfHP" or "ThreeQuartersHP"
+    "AUTO_GRIND_STOP": "RedHP",
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on
