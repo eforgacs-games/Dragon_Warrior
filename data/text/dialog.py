@@ -2,7 +2,6 @@ from pygame import display, K_y, K_n, event
 
 from src.cursor import IN_A, IN_B
 from src.selection import NO, YES, Answer, run_selection, toggle
-from src.waiting import wait
 from src.translated_window import draw_translated_window
 from src.windows import YES_NO_LAYOUT, YES_NO_WINDOW
 
@@ -22,8 +21,7 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         command_menu.window_drop_down_effect(*YES_NO_WINDOW)
         # The window without its cursor, until the selection starts below (generated: src/window_renderer.py)
         display.update(draw_translated_window(command_menu.screen, YES_NO_LAYOUT, color, config, command_menu._))
-        # for some reason it needs this wait() call to actually play the sound
-        wait(300, config)
+        # NES WindowSequence (Bank01, LAF02/LAF19 DoConfirmSFX): SFX_CONFIRM plays as soon as the YES/NO window is built
         sound.play_sound(directories.confirmation_sfx)
 
     # Initialization

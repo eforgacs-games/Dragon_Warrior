@@ -164,7 +164,7 @@ class TestOtherPopupRedraws(PopupWindowTestCase):
         self.assertEqual(self.events[1:], [('line', "The Herb?\nThank you very much."), ('popup', 15, 1, 76, WHITE)])
 
     def test_magic_key_purchase(self):
-        # NES BuyKey: Dowindow WND_POPUP, then "Here, take this key."
+        # NES BuyKey: Dowindow WND_POPUP, then "Here,take this key."
         with patch('data.text.dialog_lookup_table.confirmation_prompt'):
             self.dialog_lookup.buy_magic_key(53)
         self.assertEqual(self.popups(), [(15, 1, 47, WHITE)])
