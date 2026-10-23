@@ -51,3 +51,44 @@ class TestDragonWarriorMap(TestCase):
             dw_map = map_class(self.game.config)
             for (row, column), character_name in dw_map.npc_coordinates.items():
                 self.assertTrue(dw_map.has_floor_tile(row, column), f'{map_name} {character_name} at {row},{column}')
+
+
+class TestComposedCoastTiles(TestCase):
+    """The shore blocks tileset.png doesn't have are made of the quarters of ones it has, the way NES GFXTilesTbl's
+    shore blocks share their 8x8 tiles (#316)."""
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+        pygame.display.set_mode((800, 600))
+        cls.alefgard = maps.Alefgard(test_config)
+
+    @classmethod
+    def tearDownClass(cls):
+        pygame.quit()
+
+    def image(self, tile_name):
+        return self.alefgard.normal_tile_image(self.alefgard.floor_tile_key[tile_name]['val'])
+
+    def quarter(self, tile_name, quarter_x, quarter_y):
+        image = self.image(tile_name)
+        half_width, half_height = image.get_width() // 2, image.get_height() // 2
+        return pygame.image.tobytes(image.subsurface((quarter_x * half_width, quarter_y * half_height, half_width,
+                                                      half_height)), 'RGBA')
+
+    def test_each_quarter_comes_from_the_shore_block_with_the_same_two_sides(self):
+        for tile_name, sources in maps.COMPOSED_COAST_TILES.items():
+            for (quarter_x, quarter_y), source in zip(((0, 0), (1, 0), (0, 1), (1, 1)), sources):
+                with self.subTest(tile=tile_name, quarter=(quarter_x, quarter_y)):
+                    self.assertEqual(self.quarter(source, quarter_x, quarter_y),
+                                     self.quarter(tile_name, quarter_x, quarter_y))
+
+    def test_a_shore_on_both_sides_differs_from_one_side(self):
+        self.assertNotEqual(pygame.image.tobytes(self.image('LEFT_RIGHT_COAST'), 'RGBA'),
+                            pygame.image.tobytes(self.image('LEFT_COAST'), 'RGBA'))
+        self.assertNotEqual(pygame.image.tobytes(self.image('BOTTOM_TOP_COAST'), 'RGBA'),
+                            pygame.image.tobytes(self.image('TOP_COAST'), 'RGBA'))
+
+    def test_the_overworld_draws_them(self):
+        tiles = self.alefgard.get_tiles_in_current_map()
+        self.assertLessEqual(set(maps.COMPOSED_COAST_TILES), tiles)
