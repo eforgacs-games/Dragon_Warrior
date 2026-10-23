@@ -2628,3 +2628,11 @@ msgstr "RB: 상태 1 저장"
 #: data/text/intro_lookup_table.py
 msgid "LT (hold): Rewind"
 msgstr "LT (누르고 있기): 되감기"
+
+#: src/options_overlay.py
+msgid "MENU SPEED"
+msgstr "메뉴 속도"
+
+#: src/options_overlay.py
+msgid "FOLLOW GAME"
+msgstr "게임 속도대로"

@@ -29,7 +29,7 @@ from src.save_file import ADVENTURE_LOGS, EXPERIENCE_KEY, NAME_KEY, load_save, r
 from src.save_file import save_file_name as save_file_name_for
 from src.sound import Sound
 from src.title_windows import draw_title_windows, title_menu_layout, title_translate
-from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
+from src.waiting import menu_ticks  # the cursor blink starts on menu time (src/cursor.py BlinkingCursor)
 from src.windows import WindowLayout, open_logs_layout, used_logs_layout
 
 # Returned by a title menu entry that goes back to the title menu when it's done (NES WndBackToMain)
@@ -117,7 +117,7 @@ class TitleMenu:
         else:
             # ContChngErsDat, with every log used: CONTINUE A QUEST, CHANGE MESSAGE SPEED, ERASE A QUEST
             entries = (self.continue_quest, self.change_message_speed, self.erase_quest)
-        selection = self.game_functions.main_menu_selection(get_ticks(), screen, title_menu_layout(used))
+        selection = self.game_functions.main_menu_selection(menu_ticks(), screen, title_menu_layout(used))
         return entries[selection]()
 
     def begin_new_quest(self) -> object:
@@ -128,7 +128,7 @@ class TitleMenu:
             return BACK_TO_TITLE_MENU
         # The open logs window stays on the screen behind the name entry, its arrow on the chosen log
         name_selection = NameSelection(self.config, log_window if isinstance(log_window, tuple) else None)
-        name = name_selection.select_name(get_ticks(), self.screen, self.game.cmd_menu)
+        name = name_selection.select_name(menu_ticks(), self.screen, self.game.cmd_menu)
         if name is None:
             return BACK_TO_TITLE_MENU
         self.player.name = name
@@ -151,7 +151,7 @@ class TitleMenu:
             if not logs:
                 # its save can't be read: there is nothing to continue
                 return BACK_TO_TITLE_MENU
-            selection = self.game_functions.main_menu_selection(get_ticks(), self.screen,
+            selection = self.game_functions.main_menu_selection(menu_ticks(), self.screen,
                                                                 used_logs_layout(tuple(logs)),
                                                                 below=[(self.title_layout(), 0)], b_goes_back=True)
             if selection == MENU_BACK:
@@ -281,7 +281,7 @@ class TitleMenu:
             return BACK_TO_TITLE_MENU
         layout = open_logs_layout(open_logs)
         begin_entry = BEGIN_ENTRY if used else BEGIN_ENTRY_WITH_NO_LOG
-        selection = self.game_functions.main_menu_selection(get_ticks(), screen, layout,
+        selection = self.game_functions.main_menu_selection(menu_ticks(), screen, layout,
                                                             below=[(title_menu_layout(len(used)), begin_entry)],
                                                             b_goes_back=True)
         if selection == MENU_BACK:
