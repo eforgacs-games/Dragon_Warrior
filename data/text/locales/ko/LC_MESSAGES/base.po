@@ -2351,3 +2351,15 @@ msgstr ""
 #: src/options_screen.py:238
 msgid "LEVEL"
 msgstr "레벨"
+
+#: data/text/intro_lookup_table.py:21
+msgid "Ctrl +/-/Wheel: Zoom"
+msgstr "Ctrl +/-/휠: 확대/축소"
+
+#: data/text/intro_lookup_table.py:22
+msgid "Ctrl 0: Reset Zoom"
+msgstr "Ctrl 0: 원래 크기"
+
+#: data/text/intro_lookup_table.py:35
+msgid "Window zoom:"
+msgstr "화면 확대/축소:"

@@ -14,13 +14,19 @@ music) is shortened too, and the sound just carries on over whatever comes next.
 with WaitForMusicEnd (the victory and level-up fanfares, the inn, the harp, ...) are waited for until they end
 (MusicPlayer.wait_for_music_end).
 
-This module imports nothing from ``src``, so any module can use it without an import cycle.
+The window zoom keys (Ctrl +, Ctrl -, Ctrl 0 and Ctrl with the mouse wheel, src/zoom.py) are taken out of the event loops
+the same way, so they also work everywhere.
+
+This module imports nothing from ``src`` but src/zoom.py (which imports nothing from ``src``), so any module can use it
+without an import cycle.
 """
 import sys
 
 from typing import Collection
 
 from pygame import K_1, K_2, K_3, K_4, KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
+
+from src.zoom import handle_zoom_event
 
 NES_FPS = 60
 POLL_INTERVAL_MS = 16  # about one frame: how often the queue is checked for QUIT during a wait
@@ -93,8 +99,10 @@ def handle_speed_key(current_event: event.Event) -> bool:
 
 def get_events(*args, **kwargs) -> list[event.Event]:
     """``pygame.event.get`` for the game's own event loops (battle, dialogs, menus, shops): presses of 1 to 4 set the
-    game speed and are taken out, so they work everywhere and never count as "any key" to close a dialog."""
-    return [current_event for current_event in event.get(*args, **kwargs) if not handle_speed_key(current_event)]
+    game speed, and the zoom keys zoom the window (src/zoom.py); both are taken out, so they work everywhere and never
+    count as "any key" to close a dialog."""
+    return [current_event for current_event in event.get(*args, **kwargs)
+            if not handle_speed_key(current_event) and not handle_zoom_event(current_event)]
 
 
 def poll_speed_keys() -> None:

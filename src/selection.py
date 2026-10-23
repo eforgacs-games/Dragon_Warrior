@@ -35,6 +35,7 @@ from pygame.event import Event
 from src.common import DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, accept_keys, reject_keys
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, BlinkingCursor, SelectionButtons, first_button
 from src.waiting import handle_speed_key, quit_if_requested, wait_frames
+from src.zoom import handle_zoom_event
 
 ButtonKeys = tuple[tuple[int, tuple[int, ...]], ...]
 
@@ -72,11 +73,12 @@ def next_frame() -> None:
 
 def frame_events() -> list[Event]:
     """The events queued since the last pass: quits if the window was closed (quit_if_requested), and takes out the
-    presses of 1 to 4 after setting the game speed (handle_speed_key), so no window reads them as a key."""
+    presses of 1 to 4 after setting the game speed (handle_speed_key) and the zoom keys after zooming the window
+    (handle_zoom_event, src/zoom.py), so no window reads them as a key."""
     events = []
     for current_event in event.get():
         quit_if_requested(current_event)
-        if not handle_speed_key(current_event):
+        if not handle_speed_key(current_event) and not handle_zoom_event(current_event):
             events.append(current_event)
     return events
 
