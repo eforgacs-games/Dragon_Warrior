@@ -349,15 +349,32 @@ class TestStairs(OverlayTestCase):
                 self.stand_on(map_name, location)
                 self.warps().assert_called_once()
 
-    def test_nes_steps_into_the_overworld_shrines(self):
-        # GRASS_STAIR_DOWN, the overworld shrine entrances, are cave blocks on the NES (src/encounters.py
-        # MAP_CHANGE_TILES), so they're stepped into whatever STAIRS is set to
-        self.config['AUTO_STAIRS'] = False
+    def shrine_stairs(self):
         alefgard = map_lookup['Alefgard'](self.game.config)
-        shrine = next(location for location in alefgard.staircases
-                      if alefgard.layout[location[0]][location[1]] == GRASS_STAIR_DOWN)
-        self.stand_on('Alefgard', shrine)
+        return next(location for location in alefgard.staircases
+                    if alefgard.layout[location[0]][location[1]] == GRASS_STAIR_DOWN)
+
+    def test_nes_does_not_step_into_the_overworld_shrines(self):
+        # GRASS_STAIR_DOWN, the overworld shrine entrances, are BLK_STAIR_DN on the NES (Bank00 WrldBlkConvTbl
+        # index $0C), and CheckBlockDmg only changes maps for town, cave and castle blocks, so they wait for STAIRS
+        self.config['AUTO_STAIRS'] = False
+        self.stand_on('Alefgard', self.shrine_stairs())
+        self.warps().assert_not_called()
+
+    def test_step_on_steps_into_the_overworld_shrines(self):
+        self.stand_on('Alefgard', self.shrine_stairs())
         self.warps().assert_called_once()
+
+    def test_stairs_command_takes_the_overworld_shrines(self):
+        self.config['AUTO_STAIRS'] = False
+        shrine = self.shrine_stairs()
+        self.stand_on('Alefgard', shrine)
+        self.game.player.current_tile = 'GRASS_STAIR_DOWN'
+        destination = self.game.current_map.staircases[shrine]['map']
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.stairs()
+        show_text.assert_not_called()
+        self.assertEqual(destination, self.game.current_map.identifier)
 
 
 class TestNoGhosting(OverlayTestCase):
