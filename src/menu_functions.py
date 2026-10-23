@@ -11,7 +11,7 @@ from src.color import WHITE
 from src.common import accept_keys, reject_keys
 from src.cursor import BlinkingCursor
 from src.directories import Directories
-from src.name_entry import NameEntry, render_name_entry_screen
+from src.name_entry import EVERY_LOG_OPEN, LogWindow, NameEntry, render_name_entry_screen
 from src.selection import frame_events, next_frame
 from src.sound import Sound
 
@@ -33,8 +33,11 @@ class NameSelection:
     moves the cursor to it), Backspace removes the last one and Return ends the name. In either mode, Escape leaves the
     name entry (select_name returns None) and the new quest is cancelled."""
 
-    def __init__(self, config):
+    def __init__(self, config, log_window: LogWindow | None = None):
+        """``log_window``: the open logs window behind the name entry and the log chosen in it (TitleMenu.
+        select_adventure_log); by default every log open and none chosen."""
         self.config = config
+        self.log_window = log_window or EVERY_LOG_OPEN
         self.calculation = Calculation(config)
         self.directories = Directories(config)
         self.control_info = ControlInfo(config)
@@ -43,7 +46,8 @@ class NameSelection:
     def draw(self, screen, entry: NameEntry, cursor_visible: bool | None = True) -> None:
         """Draw the whole screen (see render_name_entry_screen), in the title screen's white."""
         if not self.config['NO_BLIT']:
-            screen.blit(render_name_entry_screen(entry, WHITE, self.config['TILE_SIZE'] // 16, cursor_visible), (0, 0))
+            screen.blit(render_name_entry_screen(entry, WHITE, self.config['TILE_SIZE'] // 16, cursor_visible,
+                                                 self.log_window), (0, 0))
         display.update(screen.get_rect())
 
     def select_name(self, blink_start, screen, command_menu) -> str | None:
