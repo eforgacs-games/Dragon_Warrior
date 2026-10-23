@@ -68,7 +68,8 @@ class TestSettingsFile(TempDirTestCase):
     def test_format(self):
         save_settings(self.path, Settings(zoom=3, language='Korean'))
         self.assertEqual({'version': 1, 'zoom': 3, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
-                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': True},
+                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': True,
+                          'controls': None},
                          self.saved())
         self.assertEqual(['settings.json'], os.listdir(os.path.dirname(self.path)))  # no temporary file left over
 
@@ -245,7 +246,8 @@ class TestSavedWhenChanged(GameTestCase):
         self.assertEqual('Korean', self.saved()['language'])
         # and nothing else was written
         self.assertEqual({'version': 1, 'zoom': None, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
-                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': True},
+                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': True,
+                          'controls': None},
                          self.saved())
 
     def test_game_speed_off_plays_at_normal_speed_and_keeps_the_saved_one(self):

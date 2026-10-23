@@ -8,12 +8,12 @@ Where an NPC may step, as far as the map goes, is src/npc_movement.py; when the 
 import random
 from typing import Any, Protocol
 
-from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w, key
+from pygame import key
 
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
-from src.common import B_BUTTON_KEYS, is_facing_down, is_facing_laterally, is_facing_left, is_facing_medially, \
-    is_facing_right, is_facing_up
+from src.common import B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, is_facing_down, \
+    is_facing_laterally, is_facing_left, is_facing_medially, is_facing_right, is_facing_up
 from src.direction import Direction
 from src.directories import Directories
 from src.game_functions import set_character_position
@@ -39,8 +39,9 @@ RUN_STEP_FRAMES = STEP_SYNC_FRAMES // RUN_SPEED_FACTOR
 HILL_PAUSE_FRAMES = 3
 
 # NES CheckInputs (Bank03) checks up, then down, then left, then right
-DIRECTION_KEYS = ((Direction.UP.value, (K_UP, K_w)), (Direction.DOWN.value, (K_DOWN, K_s)),
-                  (Direction.LEFT.value, (K_LEFT, K_a)), (Direction.RIGHT.value, (K_RIGHT, K_d)))
+# (the keys are the player's, src/controls.py)
+DIRECTION_KEYS = ((Direction.UP.value, UP_KEYS), (Direction.DOWN.value, DOWN_KEYS),
+                  (Direction.LEFT.value, LEFT_KEYS), (Direction.RIGHT.value, RIGHT_KEYS))
 
 
 def held_direction(current_key) -> int | None:

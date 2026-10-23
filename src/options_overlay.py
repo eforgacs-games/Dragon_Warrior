@@ -41,6 +41,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     CHEATS         OFF (NES) / ON           (CHEAT_KEYS: F4 auto-battle, F9 invulnerability)
     RUN BUTTON     OFF (NES) / ON           (RUN_BUTTON: hold B to walk twice as fast, src/movement.py)
     DUNGEON MAP    OFF (NES) / ON           (DUNGEON_MAP: whether M shows the dungeon map, src/dungeon_map.py; global)
+    CONTROLS                                (A opens the CONTROLS screen to rebind the keys, src/controls_screen.py)
 
 Above every page's rows are two more:
 
@@ -73,11 +74,13 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from pygame import K_PAGEDOWN, K_PAGEUP, K_TAB, KEYDOWN, SRCALPHA, Rect, Surface, display
+from pygame import K_PAGEDOWN, K_PAGEUP, KEYDOWN, SRCALPHA, Rect, Surface, display
 
 from src.color import BLACK
 from src.common import A_BUTTON_KEYS, B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, SELECT_BUTTON_KEYS, \
     START_BUTTON_KEYS, UP_KEYS, set_gettext_language
+from src.controls import KeySet
+from src.controls_screen import ControlsScreen
 from src.cursor import BlinkingCursor
 from src.display_filters import SCALING_KEY, SCALING_MODES, SCANLINES_KEY
 from src.items import BAG_SIZES, BIG_BAG_SLOTS, INVENTORY_SLOTS
@@ -94,7 +97,7 @@ from src.waiting import MENU_SPEED_FOLLOW, MENU_SPEED_NORMAL
 from src.windows import Window, WindowLayout, WindowText
 
 # The keys that open the overlay on the map, and close it again
-OPTIONS_KEYS = SELECT_BUTTON_KEYS + (K_TAB,)
+OPTIONS_KEYS = SELECT_BUTTON_KEYS + KeySet('OPTIONS')  # U and Tab, as bound (src/controls.py)
 CLOSE_KEYS = B_BUTTON_KEYS + OPTIONS_KEYS
 # The keys that turn the page from any row
 NEXT_PAGE_KEYS = START_BUTTON_KEYS + (K_PAGEDOWN,)
@@ -142,9 +145,22 @@ def switch_row(label: str, config_key: str, modern: bool = True) -> OptionRow:
 
 
 @dataclass(frozen=True, slots=True)
+class ScreenRow:
+    """A row with no value that opens a screen of its own with A (CONTROLS)."""
+    label: str
+    value_labels: tuple[str, ...] = ()
+
+    def value_label(self, config: dict) -> str:
+        return ''
+
+
+CONTROLS_ROW = ScreenRow("CONTROLS")
+
+
+@dataclass(frozen=True, slots=True)
 class OptionPage:
     title: str
-    rows: tuple[OptionRow, ...]
+    rows: tuple[OptionRow | ScreenRow, ...]
 
 
 OPTION_PAGES = (
@@ -199,9 +215,12 @@ OPTION_PAGES = (
         switch_row("RUN BUTTON", 'RUN_BUTTON'),
         # The player's, kept in the global settings (src/settings.py): M shows the dark floor's map (src/dungeon_map.py)
         switch_row("DUNGEON MAP", 'DUNGEON_MAP'),
+        # A opens the CONTROLS screen to rebind the keys (src/controls_screen.py)
+        CONTROLS_ROW,
     )),
 )
-OPTION_ROWS = tuple(row for page in OPTION_PAGES for row in page.rows)
+# The rows with a setting (every row but CONTROLS)
+OPTION_ROWS = tuple(row for page in OPTION_PAGES for row in page.rows if isinstance(row, OptionRow))
 PRESET_ROWS = tuple(row for row in OPTION_ROWS if row.presets is not None)
 
 PRESET_LABEL = "PRESET"
@@ -255,7 +274,9 @@ def options_layout(config: dict, page: int = 0) -> WindowLayout:
     texts: list[WindowText] = []
     for number, (label, value) in enumerate(lines):
         tile_row = FIRST_ROW + 2 * number
-        texts += [WindowText(label, LABEL_COLUMN, tile_row), WindowText(value, VALUE_COLUMN, tile_row)]
+        texts.append(WindowText(label, LABEL_COLUMN, tile_row))
+        if value:  # a screen row (CONTROLS) has no value
+            texts.append(WindowText(value, VALUE_COLUMN, tile_row))
     return WindowLayout(window=OPTIONS_WINDOW, title=WindowText(shown.title, TITLE_COLUMN, 0), texts=tuple(texts),
                         cursor_tiles=tuple((CURSOR_COLUMN, FIRST_ROW + 2 * number) for number in range(len(lines))))
 
@@ -263,7 +284,7 @@ def options_layout(config: dict, page: int = 0) -> WindowLayout:
 def overlay_texts() -> list[str]:
     """Every text the window can show, for the translation catalog (catalog_tools.dynamic_messages)."""
     return ([page.title for page in OPTION_PAGES] + [PRESET_LABEL, *PRESET_LABELS.values(), PAGE_LABEL] +
-            [text for row in OPTION_ROWS for text in (row.label, *row.value_labels)])
+            [text for page in OPTION_PAGES for row in page.rows for text in (row.label, *row.value_labels)])
 
 
 def darken(screen: Surface) -> None:
@@ -288,7 +309,7 @@ class OptionsOverlay:
         self.remember_custom()
 
     @property
-    def rows(self) -> tuple[OptionRow, ...]:
+    def rows(self) -> tuple[OptionRow | ScreenRow, ...]:
         """The rows of the page shown."""
         return self.pages[self.page].rows
 
@@ -328,9 +349,18 @@ class OptionsOverlay:
                 elif key in NEXT_PAGE_KEYS or key in PREVIOUS_PAGE_KEYS:
                     self.turn_page(-1 if key in PREVIOUS_PAGE_KEYS else 1)
                     self.play_sound()
+                elif isinstance(row := self.shown_row(), ScreenRow):
+                    if key in A_BUTTON_KEYS:
+                        self.play_sound()
+                        self.open_screen(row)
+                        drawn = None  # the screen covered the window: draw it again
                 elif key in LEFT_KEYS or key in RIGHT_KEYS or key in A_BUTTON_KEYS:
                     self.change(-1 if key in LEFT_KEYS else 1)
                     self.play_sound()
+
+    def shown_row(self) -> OptionRow | ScreenRow | None:
+        """The page's own row the cursor is on (None on PRESET and PAGE)."""
+        return self.rows[self.index - FIXED_ROWS] if self.index >= FIXED_ROWS else None
 
     def play_sound(self) -> None:
         self.game.sound.play_sound(self.game.directories.menu_button_sfx)
@@ -347,6 +377,7 @@ class OptionsOverlay:
             self.turn_page(step)
         else:
             row = self.rows[self.index - FIXED_ROWS]
+            assert isinstance(row, OptionRow)
             row.change(self.config, step)
             self.game.apply_option(row.config_key)
             # The window's own text in the language just chosen
@@ -364,6 +395,10 @@ class OptionsOverlay:
             if self.config.get(key) != value:
                 self.config[key] = value
                 self.game.apply_option(key)
+
+    def open_screen(self, row: ScreenRow) -> None:
+        """Run the screen the row opens (CONTROLS: src/controls_screen.py) until it's closed."""
+        ControlsScreen(self.game).run()
 
     def draw(self, background: Surface, index: int, cursor_visible: bool) -> None:
         """The map frame the overlay opened over, darkened, then the window."""

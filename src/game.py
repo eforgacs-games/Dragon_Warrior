@@ -2,8 +2,7 @@ import argparse
 import os
 import sys
 
-from pygame import FULLSCREEN, K_h, K_i, K_k, K_q, RESIZABLE, display, event, image, init, K_F1, K_F2, K_F3, K_F4, K_F9, \
-    K_F11, K_BACKSPACE, KEYDOWN, KEYUP, KMOD_SHIFT, SCALED, K_RETURN, VIDEORESIZE
+from pygame import FULLSCREEN, RESIZABLE, display, event, image, init, KEYDOWN, KEYUP, SCALED, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -18,6 +17,8 @@ from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
 from src.color import LOW_HP_RED, RED, WHITE, is_low_hp, window_color
 from src.common import A_OR_START_KEYS, Graphics, set_gettext_language
+from src.controls import LOAD_STATE_ACTIONS, SAVE_STATE_ACTIONS, SPEED_ACTIONS, Controls, KeySet, actions_for_event, \
+    pressed, set_controls, set_controls_listener
 from src.common import singular_or_plural
 from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
@@ -59,8 +60,8 @@ from src.ending import Ending
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
 from src.autosave import Autosave
-from src.waiting import NES_FPS, SPEED_KEYS, FrameClock, FramePacer, clear_events_keeping_quit, game_speed, \
-    reset_game_speed, set_game_speed, set_speed_keys_enabled, speed_keys_enabled
+from src.waiting import NES_FPS, FrameClock, FramePacer, clear_events_keeping_quit, game_speed, \
+    next_game_speed, reset_game_speed, set_game_speed, set_speed_keys_enabled, speed_keys_enabled
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.visual_effects import flash_transparent_color, force_field_flash
@@ -72,8 +73,8 @@ from src.zoom import handle_zoom_event, remember_default_zoom, remember_windowed
     set_windowed_zoom, set_zoom, set_zoom_listener, window_zoom
 
 
-# Shift + F1/F2/F3 saves a save state in slot 1/2/3, F1/F2/F3 loads it (Game.handle_save_state_keys)
-SAVE_STATE_KEYS = {K_F1: 1, K_F2: 2, K_F3: 3}
+# The rewind keys (Backspace, as bound, src/controls.py): rewinding goes on until one is let go
+REWIND_KEYS = KeySet('REWIND')
 
 # NES ChkOtherBlocks: a swamp step costs 2 HP (DoSwampDamage, LCDD4), a force field step 15 (LCE2B)
 SWAMP_DAMAGE = 2
@@ -130,6 +131,10 @@ class Game:
         set_virtual_joypad(None)  # no auto-grind (src/auto_grind.py) left driving from an earlier game
         connect_gamepad()  # a controller works like the keyboard (src/gamepad.py), plugged in now or later
         follow_menu_speed_option(self.game_state.config)  # MENU SPEED: the selection windows at 1x or the game speed
+        # the player's keys (src/controls.py), kept with the global settings: changed on the CONTROLS screen and saved
+        # at once
+        set_controls(Controls.from_json(self.settings.settings.controls))
+        set_controls_listener(self.save_controls)
         # intro
         self.start_time = get_ticks()
         self.splash_screen_enabled = self.game_state.config["SPLASH_SCREEN_ENABLED"]
@@ -520,7 +525,7 @@ class Game:
             quit_if_requested(current_event)
             if current_event.type == KEYDOWN:
                 self.handle_keypresses(current_event)
-            elif current_event.type == KEYUP and current_event.key == K_BACKSPACE:
+            elif current_event.type == KEYUP and current_event.key in REWIND_KEYS:
                 self.rewind.stop()  # play on from the snapshot on screen
             elif current_event.type == VIDEORESIZE:
                 self._handle_window_resize(current_event)
@@ -908,8 +913,9 @@ class Game:
             self.debug_tools.handle_keydown(current_keydown_event)
 
     def handle_help_button(self, keydown_event):
-        """H: the controls, one dialog box page per group of keys (data/text/intro_lookup_table.py)."""
-        if keydown_event.key == K_h:
+        """H: the controls, one dialog box page per group of keys, with the keys as they are bound
+        (data/text/intro_lookup_table.py)."""
+        if pressed(keydown_event, 'HELP'):
             control_info = ControlInfo(self.config)
             # one page per group of keys, so nothing runs past the bottom of the dialog box
             self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
@@ -927,10 +933,9 @@ class Game:
             self.cmd_menu.show_text_in_dialog_box(pages)
 
     def handle_a_button(self, keydown_event):
-        # Enter is the A button on the map too unless QUICK ACTION is on (handle_enter_key)
-        if keydown_event.key == K_k or (keydown_event.key == K_RETURN and not self.game_state.config.get('QUICK_ACTION')):
-            # A button
-            # print("K key pressed (A button).")
+        # The SMART A key (Enter) is the A button on the map too unless QUICK ACTION is on (handle_enter_key)
+        if pressed(keydown_event, 'A') or (pressed(keydown_event, 'SMART_A')
+                                           and not self.game_state.config.get('QUICK_ACTION')):
             if self.movement.world_frozen or self.pause_requested or self.options_requested or \
                     self.auto_grind_requested:
                 return
@@ -939,8 +944,7 @@ class Game:
             self.movement.resolve_pending_freezes()
 
     def handle_start_button(self, keydown_event):
-        if keydown_event.key == K_i:
-            # Start button
+        if pressed(keydown_event, 'START'):
             if self.paused:
                 self.paused = False
             elif not (self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled() or self.movement.light_growing):
@@ -996,18 +1000,20 @@ class Game:
         """Shift + F1/F2/F3 saves a save state in slot 1/2/3 and F1/F2/F3 loads it (src/save_state.py), not NES. Only
         on the map, when START would pause the game: no window open or about to open, the light not growing. Like
         the pause, it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes)."""
-        slot = SAVE_STATE_KEYS.get(keydown_event.key)
-        if slot is None or not self.game_state.config.get('SAVE_STATES'):
+        names = actions_for_event(keydown_event)
+        request = next(((kind, slots[name]) for name in names for kind, slots in
+                        (('save', SAVE_STATE_ACTIONS), ('load', LOAD_STATE_ACTIONS)) if name in slots), None)
+        if request is None or not self.game_state.config.get('SAVE_STATES'):
             return  # SAVE STATES off: the keys do nothing
         if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
             return
-        self.state_request = ('save' if getattr(keydown_event, 'mod', 0) & KMOD_SHIFT else 'load', slot)
+        self.state_request = request
         self.movement.resolve_pending_freezes()
 
     def handle_rewind_key(self, keydown_event) -> None:
         """Backspace: start rewinding (src/rewind.py), not NES. Only on the map, when START would be accepted and
         nothing is waiting to open; it goes on until Backspace is let go (_handle_pygame_events)."""
-        if keydown_event.key == K_BACKSPACE:
+        if pressed(keydown_event, 'REWIND'):
             self.rewind.start()
 
     def run_due_state_request(self) -> None:
@@ -1046,6 +1052,10 @@ class Game:
             return
         self.draw_temporary_text(self._("State {} loaded").format(slot))
 
+    def save_controls(self, controls: Controls) -> None:
+        """Keep the player's controls for the next time, with the global settings."""
+        self.settings.update(controls=controls.to_json())
+
     def start_auto_grind(self) -> None:
         self.auto_grind.start()
 
@@ -1056,9 +1066,9 @@ class Game:
         self.set_view()  # the VIEW row: the map is drawn across the new width from the next frame
 
     def handle_enter_key(self, keydown_event):
-        """QUICK ACTION (not NES): Enter on the map takes, opens a door or talks without the COMMAND window. With it off
-        Enter is the A button (handle_a_button)."""
-        if keydown_event.key == K_RETURN and self.game_state.config.get('QUICK_ACTION'):
+        """QUICK ACTION (not NES): the SMART A key (Enter) on the map takes, opens a door or talks without the COMMAND
+        window. With it off the key is the A button (handle_a_button)."""
+        if pressed(keydown_event, 'SMART_A') and self.game_state.config.get('QUICK_ACTION'):
             # A shortcut for TAKE/DOOR/TALK, so it follows the same rule as the A button: NES GameEngineLoop only reads
             # commands between steps (DoJoyUp etc. move a whole tile before returning to CheckInputs). Mid-step, or
             # while a pause or the command window is pending or open (where Enter picks a menu item), it does nothing.
@@ -1089,8 +1099,13 @@ class Game:
         """Keys 1 to 5: normal, 2x, 4x, 8x or 16x game speed (60.1, 120.2, 240.4, 480.8 or 961.6 FPS). It applies
         everywhere: the map, battles, dialogs, menus and effects (src/waiting.py reads these keys in their loops and
         waits too, without this text)."""
-        speed = SPEED_KEYS.get(keydown_event.key)
-        if speed is None or not speed_keys_enabled():
+        names = actions_for_event(keydown_event)
+        speed = next((SPEED_ACTIONS[name] for name in names if name in SPEED_ACTIONS), None)
+        if speed is None:
+            if 'NEXT_SPEED' not in names:
+                return
+            speed = next_game_speed()
+        if not speed_keys_enabled():
             return  # GAME SPEED off: the keys do nothing
         set_game_speed(speed)
         if speed == 1:
@@ -1101,7 +1116,7 @@ class Game:
 
     def handle_fullscreen_toggle(self, keydown_event) -> None:
         """Toggle between fullscreen and windowed mode when F11 is pressed."""
-        if keydown_event.key == K_F11:
+        if pressed(keydown_event, 'FULLSCREEN'):
             self.fullscreen_enabled = not self.fullscreen_enabled
             if self.fullscreen_enabled:
                 remember_windowed_size()
@@ -1128,8 +1143,8 @@ class Game:
             self.draw_temporary_text(mode_text)
 
     def handle_auto_battle_toggle(self, keydown_event) -> None:
-        """Toggle auto-battle mode when F4 is pressed, with CHEATS on."""
-        if keydown_event.key == K_F4 and self.game_state.config.get('CHEAT_KEYS'):
+        """Toggle auto-battle mode when F4 (AUTO FIGHT) is pressed, with CHEATS on."""
+        if pressed(keydown_event, 'AUTO_BATTLE') and self.game_state.config.get('CHEAT_KEYS'):
             self.auto_battle = not self.auto_battle
             if self.auto_battle:
                 mode_text = self._("Auto-battle enabled\n(Repeats: {})").format(self.battle_ctrl.last_battle_action)
@@ -1138,8 +1153,8 @@ class Game:
             self.draw_temporary_text(mode_text)
 
     def handle_invulnerability_toggle(self, keydown_event) -> None:
-        """Toggle invulnerability mode when F9 is pressed, with CHEATS on."""
-        if keydown_event.key == K_F9 and self.game_state.config.get('CHEAT_KEYS'):
+        """Toggle invulnerability mode when F9 (INVINCIBLE) is pressed, with CHEATS on."""
+        if pressed(keydown_event, 'INVULNERABLE') and self.game_state.config.get('CHEAT_KEYS'):
             self.invulnerable = not self.invulnerable
             if self.invulnerable:
                 mode_text = self._("Invulnerability enabled")

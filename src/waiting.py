@@ -35,12 +35,13 @@ drives the game, whose presses are timed on the game clock.
 """
 import sys
 
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Iterator, Mapping
 from time import perf_counter, sleep
-from typing import Any, Protocol
+from typing import Any, Protocol, override
 
-from pygame import K_1, K_2, K_3, K_4, K_5, KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
+from pygame import KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
 
+from src.controls import SPEED_ACTIONS, action_keys, actions_for_event
 from src.zoom import handle_zoom_event
 
 # The NTSC NES's frame rate, 60.0988 Hz: the PPU draws 341 x 262 dots a frame, one fewer every other frame (89,341.5 on
@@ -48,7 +49,30 @@ from src.zoom import handle_zoom_event
 # (frame_at, frames_to_ms), and the main loop is paced at this rate times the game speed (FrameClock).
 NES_FPS = 236.25e6 / 11 / 4 / 89341.5
 POLL_INTERVAL_MS = 16  # about one frame: how often the queue is checked for QUIT during a wait
-SPEED_KEYS = {K_1: 1, K_2: 2, K_3: 4, K_4: 8, K_5: 16}  # the speed each key sets: 1x, 2x, 4x, 8x, 16x
+
+
+class _SpeedKeys(Mapping[int, int]):
+    """The speed each speed key sets, as the keys are bound now (src/controls.py): by default 1 to 5 set 1x, 2x, 4x, 8x
+    and 16x."""
+
+    def _keys(self) -> dict[int, int]:
+        return {speed_key: speed for name, speed in SPEED_ACTIONS.items() for speed_key in action_keys(name)}
+
+    @override
+    def __getitem__(self, speed_key: int) -> int:
+        return self._keys()[speed_key]
+
+    @override
+    def __iter__(self) -> Iterator[int]:
+        return iter(self._keys())
+
+    @override
+    def __len__(self) -> int:
+        return len(self._keys())
+
+
+SPEED_KEYS: Mapping[int, int] = _SpeedKeys()
+GAME_SPEEDS = tuple(SPEED_ACTIONS.values())
 
 _speed = 1
 # game_ticks() == _game_anchor + (get_ticks() - _real_anchor) * _speed, re-anchored on every speed change, so the game
@@ -287,12 +311,26 @@ def scaled_ms(milliseconds: float) -> int:
 
 
 def handle_speed_key(current_event: event.Event) -> bool:
-    """If ``current_event`` is a press of 1 to 5, set the game speed (if the keys are on) and return True."""
-    if current_event.type == KEYDOWN and getattr(current_event, 'key', None) in SPEED_KEYS:
-        if _speed_keys_enabled:
-            set_game_speed(SPEED_KEYS[current_event.key])
-        return True
+    """If ``current_event`` is a press of a speed key (1 to 5, or the NEXT SPEED key if one is bound), set the game
+    speed (if the keys are on: the GAME SPEED switch) and return True."""
+    if current_event.type != KEYDOWN:
+        return False
+    for name in actions_for_event(current_event):
+        if name in SPEED_ACTIONS:
+            if _speed_keys_enabled:
+                set_game_speed(SPEED_ACTIONS[name])
+            return True
+        if name == 'NEXT_SPEED':
+            if _speed_keys_enabled:
+                set_game_speed(next_game_speed())
+            return True
     return False
+
+
+def next_game_speed() -> int:
+    """The game speed after the current one, back to 1x after the fastest."""
+    later = [speed for speed in GAME_SPEEDS if speed > _speed]
+    return later[0] if later else GAME_SPEEDS[0]
 
 
 def get_events(*args, **kwargs) -> list[event.Event]:
