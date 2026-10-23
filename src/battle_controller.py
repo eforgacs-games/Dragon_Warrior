@@ -17,6 +17,7 @@ from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enem
 from src.color import LOW_HP_RED
 from src.common import A_BUTTON_KEYS, reject_keys, singular_or_plural
 from src.cursor import BlinkingCursor
+from src.direction import Direction
 from src.constants import (
     AUTO_BATTLE_DELAY_MS,
 )
@@ -272,9 +273,17 @@ class BattleController:
             self.music_player.load_and_play_music(self.current_map.music_file_path)
             if current_battle.enemy.name == 'Dragonlord 2':
                 self.reload_map_after_running_from_final_form()
-        if outcome == BattleOutcome.ESCAPED and self.player_ran_away:
-            self.step_back_after_running()
+        stepped_back = outcome == BattleOutcome.ESCAPED and self.player_ran_away and self.step_back_after_running()
+        if outcome != BattleOutcome.DEFEAT and current_battle.enemy.name != 'Dragonlord 2' and not stepped_back:
+            self.face_down_after_fight()
         return outcome
+
+    def face_down_after_fight(self) -> None:
+        """NES ExitFight / ExitFight2 (LEE82): CharDirection = DIR_DOWN, so the hero faces down on the map after a win,
+        after the enemy runs away (CheckEnRun) and after a normal run (RunSuccessful's ChkMapsDone). A run from a
+        guardian (step_back_after_running) or from the Dragonlord's final form leaves through MapChng instead and keeps
+        the old facing, and beating the final form goes on to the ending."""
+        self.player.direction_value = Direction.DOWN.value
 
     def reload_map_after_running_from_final_form(self) -> None:
         """NES RunSuccessful (LE8B2-LE8D1): after running from the Dragonlord's final form, BlackPal is loaded at once,
@@ -285,19 +294,20 @@ class BattleController:
         self.game.change_map(map_lookup[self.current_map.identifier](self.config), destination_coordinates=coordinates,
                              direction=self.player.direction_value, fade_out_first=False)
 
-    def step_back_after_running(self) -> None:
+    def step_back_after_running(self) -> bool:
         """NES RunSuccessful (ChkMapHauksness, ChkMapSwampCave, ChkMapOverworld): after running from a guardian, the
         hero is moved one block back off its tile and the map is reloaded with the stairs sound (MapChngWithSound),
-        so the guardian can't be slipped past and Erdrick's Armor can't be searched for."""
+        so the guardian can't be slipped past and Erdrick's Armor can't be searched for. Returns whether it did."""
         tile_size = self.game.tile_size  # the fight may have started before row and column caught up with the rect
         coordinates = escape_coordinates(self.current_map.identifier,
                                          (self.player.rect.y // tile_size, self.player.rect.x // tile_size),
                                          self.game.story_flags)
         if coordinates is None:
-            return
+            return False
         self.game.change_map(map_lookup[self.current_map.identifier](self.config),
                              destination_coordinates=coordinates, direction=self.player.direction_value,
                              stairs_sound=True)
+        return True
 
     def start_fight(self, current_battle: Battle) -> bool:
         """NES InitFight, after the enemy appears (SetEnHP): CheckEnRun gives a much weaker enemy its chance to run
