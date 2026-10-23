@@ -9,7 +9,6 @@ Magic Keys can always be bought.
 NES references (nmikstas disassembly): MapEntryTbl/MapTargetTbl (Bank03) for the links between maps, and the map data
 in Bank00 for where the stairs are.
 """
-import os
 from collections import deque
 from unittest import TestCase
 from unittest.mock import patch
@@ -22,9 +21,6 @@ from src.game import Game
 from src.map_layouts import MapLayouts
 from src.maps import CharlockB1, all_impassable_tiles, map_lookup
 from tests.nes_maps import NES_MAPS as NES_MAP_TABLE, boundary_tile, nes_tiles
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 # Every concrete map, i.e. every NES map number from $01 to $1D (the Dragonlord's castle's sublevel 6 is split in two
 # here, CharlockB7Wide and CharlockB7Narrow).

@@ -12,7 +12,6 @@ If a step breaks, the failure names it, e.g. "Story step 10 (use the Rainbow Dro
 A second run leaves Gwaelin in the Swamp Cave until the Dragonlord is dead, then carries her to King Lorik, which the
 NES allows: she's a map block there, not an NPC, so the victory dialog doesn't replace her rescue (DoTalkResults).
 """
-import os
 from contextlib import contextmanager
 from unittest import TestCase
 from unittest.mock import patch
@@ -30,9 +29,6 @@ from src.guardians import AXE_KNIGHT, GOLEM, GREEN_DRAGON
 from src.maps import CharlockB1, map_lookup
 from src.maps_functions import get_center_point
 from src.menu import CommandMenu
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 UP, DOWN, LEFT, RIGHT = Direction.UP.value, Direction.DOWN.value, Direction.LEFT.value, Direction.RIGHT.value
 

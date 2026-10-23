@@ -1,4 +1,3 @@
-import os
 import unittest
 from collections import defaultdict
 from unittest.mock import MagicMock, Mock, patch
@@ -65,8 +64,6 @@ class BattlePromptFrames(unittest.TestCase):
     key.get_pressed and key presses posted to the real pygame event queue."""
 
     def setUp(self):
-        os.environ['SDL_VIDEODRIVER'] = 'dummy'
-        os.environ['SDL_AUDIODRIVER'] = 'dummy'
         pygame.init()
         pygame.event.clear()
         self.game = make_game()

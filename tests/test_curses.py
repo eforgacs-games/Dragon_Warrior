@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -10,9 +9,6 @@ from src.constants import TANTEGEL_CURSED_ROW
 from src.direction import Direction
 from src.game import Game
 from src.maps import map_lookup
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestCurses(TestCase):

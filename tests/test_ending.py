@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -10,9 +9,6 @@ from src.direction import Direction
 from src.ending import CREDITS, credit_screen_music_events
 from src.game import Game
 from src.maps import map_lookup
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestEnding(TestCase):

@@ -1,24 +1,20 @@
 """Every text path draws j, k, p, t and the apostrophe as their NES font tiles (NES_GLYPHS, and the font's ’ for the
 apostrophe: src/window_renderer.py glyph_tile), pixel for pixel, in the text color and at every scale; dragon-quest.ttf
 draws those five differently. The other characters, and Korean text (unifont), are drawn exactly as before."""
-import os
 import string
 from unittest import TestCase
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
+from pygame import Rect, Surface, font
 
-import pygame  # noqa: E402
-from pygame import Rect, Surface, font  # noqa: E402
-
-from src.adventure_log import AdventureLogOverlay, OverlayText  # noqa: E402
-from src.color import BLACK, RED, WHITE  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.directories import Directories  # noqa: E402
-from src.text import NESFont, draw_text, set_font_by_ascii_chars  # noqa: E402
-from src.window_renderer import NES_GLYPHS, NES_TILE, glyph_tile, tile_surface  # noqa: E402
-from tests.nes_screen_diff import count_differing_pixels  # noqa: E402
+from src.adventure_log import AdventureLogOverlay, OverlayText
+from src.color import BLACK, RED, WHITE
+from src.config.test_config import test_config
+from src.directories import Directories
+from src.text import NESFont, draw_text, set_font_by_ascii_chars
+from src.window_renderer import NES_GLYPHS, NES_TILE, glyph_tile, tile_surface
+from tests.nes_screen_diff import count_differing_pixels
 
 SCALES = (1, 2, 3)
 COLORS = (WHITE, RED)

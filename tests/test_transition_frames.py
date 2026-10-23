@@ -1,20 +1,16 @@
 """Frames that used to flicker: the guards turning round right after the throne room faded in, and a closing dialog
 window going black all at once before it shrank away."""
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
+from pygame import Rect
 
-import pygame  # noqa: E402
-from pygame import Rect  # noqa: E402
-
-from src.config.test_config import test_config  # noqa: E402
-from src.direction import Direction  # noqa: E402
-from src.game import Game  # noqa: E402
-from src.maps import Brecconary, map_lookup  # noqa: E402
-from src.windows import DIALOG_WINDOW  # noqa: E402
+from src.config.test_config import test_config
+from src.direction import Direction
+from src.game import Game
+from src.maps import Brecconary, map_lookup
+from src.windows import DIALOG_WINDOW
 
 
 class TransitionTestCase(TestCase):

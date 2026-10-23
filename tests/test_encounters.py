@@ -1,4 +1,3 @@
-import os
 import random
 import unittest
 from collections import Counter
@@ -15,9 +14,6 @@ from src.encounters import (
 from src.enemy_lookup import enemy_string_lookup
 from src.game import Game
 from src.maps import map_lookup
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 # The NES data, copied byte for byte from Bank03 of the nmikstas disassembly.
 
@@ -287,7 +283,6 @@ class TestPickEnemy(unittest.TestCase):
         self.assertAlmostEqual(counts['Druin'] / trials, 2 / 5, delta=0.02)
         for name in ('Ghost', 'Magician', 'Scorpion'):
             self.assertAlmostEqual(counts[name] / trials, 1 / 5, delta=0.02)
-
 
 
 class TestHandleBattles(unittest.TestCase):

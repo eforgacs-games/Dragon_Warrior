@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase, mock
 from unittest.mock import MagicMock, patch
 
@@ -17,14 +16,9 @@ from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
 from tests.mock_map import MockMap
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 layout = [[33, 0, 3],
           [1, 2, 3],
           [3, 3, 3]]
-
-
-
 
 
 class TestGameFunctions(TestCase):

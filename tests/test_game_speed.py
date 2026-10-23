@@ -1,6 +1,5 @@
 """The game speed (keys 1 to 4, src/waiting.py): every timed wait and timer runs N times as fast at speed N, the keys
 work in battles and dialogs too, and the speed never changes what happens."""
-import os
 import random
 from collections import defaultdict
 from unittest import TestCase
@@ -20,9 +19,6 @@ from src.menu import CommandMenu
 from src.visual_effects import fade, player_hit_shake
 from src.waiting import game_speed, game_ticks, get_events, reset_game_speed, set_game_speed, wait, wait_frames
 from tests.mock_map import MockMap
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class FakeClock:

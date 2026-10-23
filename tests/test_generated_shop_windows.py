@@ -8,21 +8,18 @@ from os.path import basename, dirname, join
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
+from pygame import KEYDOWN, K_DOWN, K_RETURN
 
-import pygame  # noqa: E402
-from pygame import KEYDOWN, K_DOWN, K_RETURN  # noqa: E402
-
-from src.color import RED, WHITE  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.directories import Directories  # noqa: E402
-from src.items import armor, shields, tools, weapons  # noqa: E402
-from src.shops import ShopInventories  # noqa: E402
-from src.window_renderer import render_window, window_tiles  # noqa: E402
-from src.windows import (BUY_SELL_LAYOUT, SHOP_INVENTORY_WINDOW, Window, WindowText, name_halves,  # noqa: E402
+from src.color import RED, WHITE
+from src.config.test_config import test_config
+from src.directories import Directories
+from src.items import armor, shields, tools, weapons
+from src.shops import ShopInventories
+from src.window_renderer import render_window, window_tiles
+from src.windows import (BUY_SELL_LAYOUT, SHOP_INVENTORY_WINDOW, Window, WindowText, name_halves,
                          shop_inventory_layout)
-from tests.nes_screen_diff import compare_with_screenshot  # noqa: E402
+from tests.nes_screen_diff import compare_with_screenshot
 
 SCALES = (1, 2, 3)
 COLORS = (WHITE, RED)

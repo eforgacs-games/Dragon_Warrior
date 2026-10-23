@@ -12,25 +12,21 @@ and then the fanfare just didn't play. Here the sound effects play on the real m
 NO_WAIT on they pile up, so the channels are full when the fanfares start. The music track is a recording stand-in for
 pygame.mixer.music, so the test can see exactly when each piece of music starts and stops.
 """
-import os
 import random
 from os.path import basename
 from unittest import TestCase
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
 
-import pygame  # noqa: E402
-
-from src.battle_controller import BattleOutcome  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.game import Game  # noqa: E402
-from src.maps import map_lookup  # noqa: E402
-from src.menu import CommandMenu  # noqa: E402
-from src.music_player import MusicPlayer  # noqa: E402
-from src.player.player_stats import levels_list  # noqa: E402
-from src.sound import SFX_CHANNEL, Sound, sfx_channel  # noqa: E402
+from src.battle_controller import BattleOutcome
+from src.config.test_config import test_config
+from src.game import Game
+from src.maps import map_lookup
+from src.menu import CommandMenu
+from src.music_player import MusicPlayer
+from src.player.player_stats import levels_list
+from src.sound import SFX_CHANNEL, Sound, sfx_channel
 
 VICTORY = '25 Dragon Quest 1 - Victory.mp3'
 LEVEL_UP = '26 Dragon Quest 1 - Improvement.mp3'

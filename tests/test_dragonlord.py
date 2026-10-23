@@ -9,9 +9,6 @@ from src.battle_controller import BattleController, BattleOutcome
 from src.config.test_config import test_config
 from src.game import Game
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
 
 def answer(*answers):
     """Stand-in for confirmation_prompt that answers each prompt in turn (True = yes)."""

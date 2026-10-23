@@ -1,10 +1,5 @@
-import os
-
 from src.direction import Direction
 from src.maps import MapWithoutNPCs
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 layout = [[3, 0, 3],
           [1, 2, 3],

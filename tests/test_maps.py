@@ -1,5 +1,4 @@
 import inspect
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -9,9 +8,6 @@ from src import maps
 from src.config.test_config import test_config
 from src.game import Game
 from tests.test_game import MockMap
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestDragonWarriorMap(TestCase):

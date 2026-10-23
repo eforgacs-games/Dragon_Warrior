@@ -1,9 +1,6 @@
 import os
 import unittest
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
 from src.common import (
     is_facing_down, is_facing_up, is_facing_left, is_facing_right,
     is_facing_medially, is_facing_laterally, set_gettext_language, find_file
@@ -129,7 +126,6 @@ class TestFindFile(unittest.TestCase):
 
     def test_find_existing_file(self):
         import tempfile
-        import os
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a test file
@@ -149,7 +145,6 @@ class TestFindFile(unittest.TestCase):
 
     def test_find_file_in_subdirectory(self):
         import tempfile
-        import os
 
         with tempfile.TemporaryDirectory() as tmpdir:
             subdir = os.path.join(tmpdir, 'subdir')
