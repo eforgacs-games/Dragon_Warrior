@@ -27,6 +27,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     EXP/GOLD       x1 (NES) / x2 / x4       (EXP_GOLD: what a won fight gives, Battle.enemy_defeated)
     QUEST JOURNAL  OFF (NES) / GOALS / HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
     AUTOSAVE       OFF (NES) / ON           (AUTOSAVE: the autosave slot, src/autosave.py)
+    BAG            NES (8) / 16             (BAG_SIZE: the inventory slots, src/items.py bag_slots)
 
     CONTROLS
     GAME SPEED     OFF (NES) / ON           (GAME_SPEED_KEYS: keys 1 to 5, src/waiting.py)
@@ -76,6 +77,7 @@ from src.common import A_BUTTON_KEYS, B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT
     START_BUTTON_KEYS, UP_KEYS, set_gettext_language
 from src.cursor import BlinkingCursor
 from src.display_filters import SCALING_KEY, SCALING_MODES, SCANLINES_KEY
+from src.items import BAG_SIZES, BIG_BAG_SLOTS, INVENTORY_SLOTS
 from src.options_screen import AUTO_GRIND_STOP_VALUES, CLASSIC, ENCOUNTER_SETTINGS, ENCOUNTERS_NES, \
     EXP_GOLD_MULTIPLIERS, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN, STATUS_WINDOW_ALWAYS, \
     STATUS_WINDOW_NES, STATUS_WINDOW_SETTINGS
@@ -173,6 +175,8 @@ OPTION_PAGES = (
                   (JOURNAL_OFF, JOURNAL_GOALS)),
         # The autosave slot (src/autosave.py): the NES only saves with King Lorik
         switch_row("AUTOSAVE", 'AUTOSAVE'),
+        # The inventory slots (src/items.py bag_slots): the NES's 8, or 16 in the MODERN preset
+        OptionRow("BAG", 'BAG_SIZE', BAG_SIZES, ("NES (8)", "16"), (INVENTORY_SLOTS, BIG_BAG_SLOTS)),
     )),
     OptionPage("CONTROLS", (
         switch_row("GAME SPEED", 'GAME_SPEED_KEYS'),
