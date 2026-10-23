@@ -98,7 +98,7 @@ class TestLoadSaveFrames(TestCase):
             loops.append(1)
             Game.get_events(game)
 
-        game.get_events = get_events  # type: ignore[method-assign]
+        game.run_due_frames = get_events  # type: ignore[method-assign]  # one frame a pass, as when drawing keeps up
         game.clock = MagicMock()  # don't wait for the frame rate
         try:
             game.main()
