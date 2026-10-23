@@ -87,6 +87,7 @@ def dynamic_messages() -> dict[str, list[str]]:
     from src.enemy_lookup import enemy_string_lookup
     from src.items import armor, shields, tools, weapons
     from src.controls_screen import screen_texts
+    from src.message_log import screen_texts as log_texts
     from src.options_overlay import overlay_texts
     from src.options_screen import MESSAGE_SPEED_OPTIONS
     from src.shop_preview import preview_texts
@@ -123,6 +124,9 @@ def dynamic_messages() -> dict[str, list[str]]:
     for text in screen_texts():
         if 'src/controls_screen.py' not in messages.get(text, []):
             messages.setdefault(text, []).append('src/controls_screen.py')
+    for text in log_texts():
+        if 'src/message_log.py' not in messages.get(text, []):
+            messages.setdefault(text, []).append('src/message_log.py')
     return messages
 
 

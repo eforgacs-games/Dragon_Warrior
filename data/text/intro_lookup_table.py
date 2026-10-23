@@ -64,6 +64,10 @@ class ControlInfo:
         self.dungeon_map_key = _("{}: Dungeon map").format(keys_label('MAP'))
         self.controller_dungeon_map = _("Top Button: Dungeon map") if pad_is_default('MAP') else _(
             "{}: Dungeon map").format(pad_name('MAP'))
+        # The message log on the map (src/message_log.py): L, or the controller's left face button, by default
+        self.message_log_key = _("{}: Message log").format(keys_label('MESSAGE_LOG'))
+        self.controller_message_log = _("Left Button: Message log") if pad_is_default('MESSAGE_LOG') else _(
+            "{}: Message log").format(pad_name('MESSAGE_LOG'))
         self.controls: tuple[str, ...] = (
             self.a_button, self.b_button, self.start_button, self.select_button, self.arrow_keys_move_buttons,
             self.smart_a_button, self.help_button, self.auto_battle_toggle, self.invulnerability_toggle,
@@ -71,15 +75,14 @@ class ControlInfo:
             self.zoom_reset, self.save_state_keys, self.load_state_keys, self.rewind_key,
             self.controller_a, self.controller_b, self.controller_start, self.controller_select, self.controller_move,
             self.controller_speed, self.controller_load_state, self.controller_save_state, self.controller_rewind,
-            self.dungeon_map_key, self.controller_dungeon_map)
+            self.dungeon_map_key, self.controller_dungeon_map, self.message_log_key, self.controller_message_log)
         # The H help, one string per dialog box page (the A button turns the page). The dialog box fits five rows
         # above the continue arrow, so each page is a short group of related keys. "Controls:\n" keeps its newline
         # so it still matches the existing Korean translation.
         self.help_pages: tuple[str, ...] = (
             "\n".join((_("Controls:\n").rstrip("\n"), self.a_button, self.b_button, self.start_button,
                        self.select_button)),
-            "\n".join((self.arrow_keys_move_buttons, self.smart_a_button, self.help_button, self.speed_controls,
-                       self.auto_grind_key)),
+            "\n".join((self.arrow_keys_move_buttons, self.smart_a_button, self.speed_controls, self.auto_grind_key)),
             "\n".join((_("Toggle on/off:"), self.auto_battle_toggle, self.invulnerability_toggle,
                        self.fullscreen_toggle)),
             "\n".join((_("Window zoom:"), self.zoom_controls, self.zoom_reset)),
@@ -90,6 +93,7 @@ class ControlInfo:
             "\n".join((self.controller_move, self.controller_speed, self.controller_load_state,
                        self.controller_save_state, self.controller_rewind)),
             "\n".join((_("Dungeon map:"), self.dungeon_map_key, self.controller_dungeon_map)),
+            "\n".join((self.help_button, self.message_log_key, self.controller_message_log)),
         )
         if config.get('DEBUG_KEYS'):
             # Dev config only (src/debug_tools.py), on a page of their own

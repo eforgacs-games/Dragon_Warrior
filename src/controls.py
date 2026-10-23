@@ -113,6 +113,9 @@ ACTIONS: tuple[Action, ...] = (
     _extra('SAVE_STATE_3', "SAVE 3", ('F3',), mod=KMOD_SHIFT),
     # Held on the map: rewind (src/rewind.py), until it's let go
     _extra('REWIND', "REWIND", ('BACKSPACE',), 'lefttrigger'),
+    # The message log (src/message_log.py), on the map
+    # L, or the pad's left face button (M and the top button are the dungeon map's, MAP)
+    _extra('MESSAGE_LOG', "MSG LOG", ('l',), 'x'),
     # The next game speed, back to 1x after 16x
     _extra('NEXT_SPEED', "NEXT SPEED", (), 'righttrigger'),
 )

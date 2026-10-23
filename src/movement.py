@@ -68,6 +68,8 @@ class MovementGame(Protocol):
     pause_requested: bool
     # SELECT or Tab: the options overlay, which waits for the same moment as the pause
     options_requested: bool
+    # The MESSAGE LOG key: the message log, which waits for the same moment as the pause
+    message_log_requested: bool
     # G: auto-grind (src/auto_grind.py), which starts at the same moment as the pause
     auto_grind_requested: bool
     # M: the dungeon map (src/dungeon_map.py), which opens at the same moment as the pause
@@ -84,6 +86,7 @@ class MovementGame(Protocol):
     def open_options(self) -> None: ...
 
     def open_dungeon_map(self) -> None: ...
+    def open_message_log(self) -> None: ...
 
     def start_auto_grind(self) -> None: ...
 
@@ -185,6 +188,7 @@ class MovementController:
     @property
     def freeze_pending(self) -> bool:
         return (self.game.pause_requested or self.game.options_requested or self.game.cmd_menu_requested
+                or getattr(self.game, 'message_log_requested', False) is True
                 or getattr(self.game, 'auto_grind_requested', False) is True
                 or getattr(self.game, 'dungeon_map_requested', False) is True
                 or getattr(self.game, 'state_request', None) is not None
@@ -238,6 +242,9 @@ class MovementController:
         if getattr(self.game, 'dungeon_map_requested', False) is True:
             self.game.dungeon_map_requested = False
             self.game.open_dungeon_map()
+        if getattr(self.game, 'message_log_requested', False) is True:
+            self.game.message_log_requested = False
+            self.game.open_message_log()
             return
         if getattr(self.game, 'auto_grind_requested', False) is True:
             self.game.auto_grind_requested = False

@@ -43,6 +43,7 @@ from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import BATTLE_LINE, STAIR_TILES, CommandMenu
 from src.movement import HILL_PAUSE_FRAMES, RUN_SPEED_FACTOR, STEP_SYNC_FRAMES, MovementController
+from src.message_log import MessageLog, MessageLogScreen
 from src.music_player import MusicPlayer
 from src.npc_movement import step
 from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
@@ -169,6 +170,10 @@ class Game:
         # A pressed with SMART A on: when the command window would open, TALK, TAKE, DOOR or STAIRS runs instead if one
         # applies (run_smart_command)
         self.smart_a_pending = False
+        # The MESSAGE LOG key on the map: the log (src/message_log.py) opens once everyone has finished their step,
+        # like the options overlay
+        self.message_log_requested = False
+        self.message_log = MessageLog()
         # SELECT or Tab pressed on the map: the options overlay (src/options_overlay.py) opens once everyone has finished
         # their step, like the pause (resolve_pending_freezes)
         self.options_requested = False
@@ -900,6 +905,7 @@ class Game:
         self.handle_a_button(current_keydown_event)
         self.handle_start_button(current_keydown_event)
         self.handle_select_button(current_keydown_event)
+        self.handle_message_log_key(current_keydown_event)
         self.handle_auto_grind_key(current_keydown_event)
         self.handle_dungeon_map_key(current_keydown_event)
         self.handle_help_button(current_keydown_event)
@@ -959,6 +965,7 @@ class Game:
                 self.pause_requested = True
                 self.cmd_menu_requested = False
                 self.options_requested = False
+                self.message_log_requested = False
                 self.auto_grind_requested = False
                 self.dungeon_map_requested = False
                 self.movement.resolve_pending_freezes()
@@ -973,6 +980,21 @@ class Game:
             return
         self.options_requested = True
         self.movement.resolve_pending_freezes()
+
+    def handle_message_log_key(self, keydown_event) -> None:
+        """L (MESSAGE LOG): the message log (src/message_log.py), not NES, when the MESSAGE LOG option is on. Like the options
+        overlay, it opens from the map only when START would pause the game, once the hero and the NPCs have finished
+        their steps (resolve_pending_freezes)."""
+        if not pressed(keydown_event, 'MESSAGE_LOG') or not self.config.get('MESSAGE_LOG'):
+            return
+        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+            return
+        self.message_log_requested = True
+        self.movement.resolve_pending_freezes()
+
+    def open_message_log(self) -> None:
+        """Show the message log over the map until it's closed; nothing else runs meanwhile."""
+        MessageLogScreen(self).run()
 
     def handle_auto_grind_key(self, keydown_event) -> None:
         """G: auto-grind (src/auto_grind.py), not NES. It starts from the map only when START would pause the game, and
