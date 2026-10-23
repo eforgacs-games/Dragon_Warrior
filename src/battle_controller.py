@@ -169,7 +169,7 @@ class BattleController:
 
     @property
     def grinding(self) -> bool:
-        """Whether auto-grind (src/auto_grind.py) is running: it chooses FIGHT every turn, whatever F3 says."""
+        """Whether auto-grind (src/auto_grind.py) is running: it chooses FIGHT every turn, whatever F4 says."""
         return getattr(getattr(self.game, 'auto_grind', None), 'active', False) is True
 
     @property

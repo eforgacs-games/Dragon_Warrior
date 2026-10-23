@@ -139,21 +139,20 @@ The rest are settings this game adds, none of them on the NES:
 - DIALOG STYLE: CLASSIC (NES), the NES dialog window whose text scrolls, or MODERN, each message on a fresh window
 - NPCS MAKE WAY: ON, a townsperson you walk into steps aside, or OFF (NES), they stay in your way
 - FADE STYLE: NES, fades through the NES palette, or SMOOTH, a black fade
-- STAIRS: STEP ON, stepping onto stairs takes them, or NES, only the STAIRS command does (F2 switches this too)
+- STAIRS: STEP ON, stepping onto stairs takes them, or NES, only the STAIRS command does
 - GRIND STOP: when auto-grind (G) stops: RED HP, the NES's low HP where the windows turn red (HP at or below a quarter
   of the maximum, plus 1), HALF HP or 3/4 HP
 
-F1: Show the controls
+H: Show the controls
 
 G: Auto-grind, not on the NES. On a map with random fights, the hero walks back and forth between his tile and a safe
 one next to it and chooses FIGHT in every fight, moving every message on by itself, until a decision is yours: HP at
 or below the GRIND STOP setting (checked at the start of every turn, so you get the battle's command window to HEAL
 or RUN, and after every fight and step), the hero asleep or STOPSPELLed, a guardian or the Dragonlord, or a level up
-(press G to go on). G or any other key stops it too; 1 to 5 still change the game speed. F3 auto-battle is ignored
+(press G to go on). G or any other key stops it too; 1 to 5 still change the game speed. F4 auto-battle is ignored
 while it runs.
 
-F2 / F3 / F4 / F11: Turn auto-stairs (the STAIRS option: STEP ON or NES), auto-battle, invulnerability or fullscreen on
-or off
+F4 / F9 / F11: Turn auto-battle, invulnerability or fullscreen on or off
 
 1 / 2 / 3 / 4 / 5: Game speed (normal, 2x, 4x, 8x, 16x). This works anywhere, including battles, dialogs and
 menus, and speeds up everything: walking, text, battle effects and pauses. On the map the higher speeds go as fast as

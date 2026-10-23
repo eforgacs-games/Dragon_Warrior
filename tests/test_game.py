@@ -816,15 +816,49 @@ class TestGame(TestCase):
 
     def test_handle_help_button(self):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
-            keydown_event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F1, mod=pygame.KMOD_NONE)
+            keydown_event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_h, mod=pygame.KMOD_NONE)
             self.game.handle_help_button(keydown_event)
         # a tuple, so the dialog box shows one page at a time and waits for the A button between them
         mock_show_text_in_dialog_box.assert_called_once_with(ControlInfo(test_config).help_pages)
 
     def test_handle_help_button_ignores_other_keys(self):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
-            self.game.handle_help_button(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F2, mod=pygame.KMOD_NONE))
+            # F1 was the help key before the save states took it
+            for other_key in (pygame.K_F1, pygame.K_F2):
+                self.game.handle_help_button(pygame.event.Event(pygame.KEYDOWN, key=other_key, mod=pygame.KMOD_NONE))
         mock_show_text_in_dialog_box.assert_not_called()
+
+    def test_f4_toggles_auto_battle(self):
+        auto_battle = self.game.auto_battle
+        with patch.object(self.game, 'draw_temporary_text') as draw_temporary_text:
+            self.game.handle_keypresses(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F4, mod=pygame.KMOD_NONE))
+            self.assertEqual(not auto_battle, self.game.auto_battle)
+            self.game.handle_keypresses(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F4, mod=pygame.KMOD_NONE))
+        self.assertEqual(auto_battle, self.game.auto_battle)
+        self.assertEqual(2, draw_temporary_text.call_count)
+
+    def test_f9_toggles_invulnerability(self):
+        invulnerable = self.game.invulnerable
+        with patch.object(self.game, 'draw_temporary_text') as draw_temporary_text:
+            self.game.handle_keypresses(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F9, mod=pygame.KMOD_NONE))
+            self.assertEqual(not invulnerable, self.game.invulnerable)
+            draw_temporary_text.assert_called_with("Invulnerability enabled" if not invulnerable else
+                                                   "Invulnerability disabled")
+            self.game.handle_keypresses(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F9, mod=pygame.KMOD_NONE))
+        self.assertEqual(invulnerable, self.game.invulnerable)
+
+    def test_f1_to_f3_are_free(self):
+        """F1 to F3 are kept for the save states: on their own they no longer show the help, toggle the STAIRS
+        setting or auto-battle, and F4 no longer toggles invulnerability."""
+        auto_stairs, auto_battle, invulnerable = self.game.auto_stairs, self.game.auto_battle, self.game.invulnerable
+        with patch.object(self.game, 'draw_temporary_text') as draw_temporary_text, \
+                patch.object(CommandMenu, 'show_text_in_dialog_box') as show_text_in_dialog_box:
+            for free_key in (pygame.K_F1, pygame.K_F2, pygame.K_F3):
+                self.game.handle_keypresses(pygame.event.Event(pygame.KEYDOWN, key=free_key, mod=pygame.KMOD_NONE))
+        draw_temporary_text.assert_not_called()
+        show_text_in_dialog_box.assert_not_called()
+        self.assertEqual((auto_stairs, auto_battle, invulnerable),
+                         (self.game.auto_stairs, self.game.auto_battle, self.game.invulnerable))
 
     # def test_handle_keypresses(self):
     #     pygame.key.get_pressed = create_f1_key_mock(pygame.K_k)
