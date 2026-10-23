@@ -149,14 +149,15 @@ G: Auto-grind, not on the NES. On a map with random fights, the hero walks back 
 one next to it and chooses FIGHT in every fight, moving every message on by itself, until a decision is yours: HP at
 or below the GRIND STOP setting (checked at the start of every turn, so you get the battle's command window to HEAL
 or RUN, and after every fight and step), the hero asleep or STOPSPELLed, a guardian or the Dragonlord, or a level up
-(press G to go on). G or any other key stops it too; 1 to 4 still change the game speed. F3 auto-battle is ignored
+(press G to go on). G or any other key stops it too; 1 to 5 still change the game speed. F3 auto-battle is ignored
 while it runs.
 
 F2 / F3 / F4 / F11: Turn auto-stairs (the STAIRS option: STEP ON or NES), auto-battle, invulnerability or fullscreen on
 or off
 
-1 / 2 / 3 / 4: Game speed (normal, 2x, 4x, 8x). This works anywhere, including battles, dialogs and
-menus, and speeds up everything: walking, text, battle effects and pauses. Only timing changes, not what happens in
+1 / 2 / 3 / 4 / 5: Game speed (normal, 2x, 4x, 8x, 16x). This works anywhere, including battles, dialogs and
+menus, and speeds up everything: walking, text, battle effects and pauses. On the map the higher speeds go as fast as
+the computer can draw it, up to the speed you chose. Only timing changes, not what happens in
 the game. Music and sound effects play at normal speed. The speed lasts until you close the game and isn't saved.
 
 Ctrl + / Ctrl - (or hold Ctrl and turn the mouse wheel): Zoom the window in or out, in whole steps of the NES's

@@ -5,7 +5,7 @@ It works like tools/scripted_input.py, but in the real game loop rather than und
 read, ``with_virtual_keys`` wherever ``key.get_pressed()`` is), so it acts from inside whichever loop is reading input
 at the time: the map loop, a dialog's wait for a button, the battle's command window, a timed wait. Each poll it
 
-- counts game frames (``game_ticks``, so it speeds up with the game speed keys 1 to 4);
+- counts game frames (``game_ticks``, so it speeds up with the game speed keys 1 to 5);
 - takes the KEYDOWN events off the queue and puts back the ones that should stay: the player's own presses go to the
   driver first (``JoypadDriver.real_key``, which may stop it and use the key up), and its own presses are dropped when
   the map loop reads, so a button meant for a dialog that has closed doesn't open the COMMAND window on the map;

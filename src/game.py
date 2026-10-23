@@ -93,7 +93,7 @@ class Game:
         self.initial_dialog_enabled = self.game_state.config["INITIAL_DIALOG_ENABLED"]
         self.skip_text = False
 
-        # engine: keys 1 to 4 change the game speed (self.fps); it lasts until the game is closed, and isn't saved
+        # engine: keys 1 to 5 change the game speed (self.fps); it lasts until the game is closed, and isn't saved
         reset_game_speed()
         set_virtual_joypad(None)  # no auto-grind (src/auto_grind.py) left driving from an earlier game
         # intro
@@ -742,7 +742,7 @@ class Game:
     def handle_auto_grind_key(self, keydown_event) -> None:
         """G: auto-grind (src/auto_grind.py), not NES. It starts from the map only when START would pause the game, and
         like the pause it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes). While it
-        runs, G (or any key but 1 to 4) stops it before it gets here (AutoGrind.real_key)."""
+        runs, G (or any key but 1 to 5) stops it before it gets here (AutoGrind.real_key)."""
         if keydown_event.key not in AUTO_GRIND_KEYS:
             return
         if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
@@ -786,8 +786,9 @@ class Game:
         return self.game_state.config["FPS"] * game_speed()
 
     def handle_fps_changes(self, keydown_event) -> None:
-        """Keys 1 to 4: normal, 2x, 4x or 8x game speed (60, 120, 240 or 480 FPS). It applies everywhere: the map, battles,
-        dialogs, menus and effects (src/waiting.py reads these keys in their loops and waits too, without this text)."""
+        """Keys 1 to 5: normal, 2x, 4x, 8x or 16x game speed (60, 120, 240, 480 or 960 FPS). It applies everywhere: the
+        map, battles, dialogs, menus and effects (src/waiting.py reads these keys in their loops and waits too, without
+        this text)."""
         speed = SPEED_KEYS.get(keydown_event.key)
         if speed is None:
             return
@@ -852,7 +853,7 @@ class Game:
             self.draw_temporary_text(mode_text)
 
     def draw_temporary_text(self, text: tuple[str] | list[str] | str, add_quotes=False) -> None:
-        """Show a settings message (F2, keys 1 to 4, ...) for a second. It's not part of the game, so it stays up for a
+        """Show a settings message (F2, keys 1 to 5, ...) for a second. It's not part of the game, so it stays up for a
         real second at any game speed: the dialog closes TEMP_TEXT_MS game milliseconds after temp_text_start, so start it
         that much later at higher speeds."""
         temp_text_start = get_ticks() + TEMP_TEXT_MS * (game_speed() - 1)

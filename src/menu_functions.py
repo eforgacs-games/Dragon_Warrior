@@ -65,7 +65,7 @@ class NameSelection:
         drawn_visible: bool | None = None
         while True:
             # The whole screen is drawn again only after a key press or when the cursor blinks, one pass per NES
-            # frame (src/selection.py); the keys 1 to 4 set the game speed (no letter of the alphabet is a digit)
+            # frame (src/selection.py); the keys 1 to 5 set the game speed (no letter of the alphabet is a digit)
             if cursor.visible() != drawn_visible:
                 drawn_visible = cursor.visible()
                 self.draw(screen, entry, drawn_visible)

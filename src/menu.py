@@ -368,7 +368,7 @@ class CommandMenu:
 
     def read_dialog_events(self, advance_keys: Collection[int]) -> bool:
         """Takes the queued events; returns whether one was a press of advance_keys. Closing the window quits and the
-        keys 1 to 4 only set the game speed (src/selection.py frame_events)."""
+        keys 1 to 5 only set the game speed (src/selection.py frame_events)."""
         return any(current_event.type == KEYDOWN and current_event.key in advance_keys
                    for current_event in frame_events())
 
