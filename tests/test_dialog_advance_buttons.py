@@ -2,7 +2,6 @@
 
 K = A (Enter too), J = B (Escape too), I = START, U = SELECT, WASD or the arrow keys = D-pad. Any other key is ignored.
 """
-import os
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import patch
@@ -16,9 +15,6 @@ from src.common import A_OR_START_KEYS
 from src.config.test_config import test_config
 from src.game import Game
 from tests.mock_map import MockMap
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 A_AND_B = (K_k, K_RETURN, K_j, K_ESCAPE)
 START_AND_SELECT = (K_i, K_u)

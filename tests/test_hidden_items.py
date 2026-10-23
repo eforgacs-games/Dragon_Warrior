@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -9,9 +8,6 @@ from src.game import Game
 from src.items import armor, hidden_items
 from src.map_layouts import MapLayouts
 from tests.mock_map import MockMap
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestHiddenItems(TestCase):

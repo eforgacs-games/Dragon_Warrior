@@ -10,9 +10,6 @@ from src.config.test_config import test_config
 from src.game import Game
 from src.maps import CharlockB1, CharlockB2, CharlockB3, map_lookup
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
 THRONE = CharlockB1.THRONE_COORDINATES
 HIDDEN_STAIRS = CharlockB1.HIDDEN_STAIRCASE_COORDINATES
 BARRIER_VALUE = 8

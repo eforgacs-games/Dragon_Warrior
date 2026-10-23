@@ -5,7 +5,6 @@ The NES data is MapDatTbl, the per-map data blocks (DLCstlGFDat, KolDat, RckMtnB
 (WrldMapPtrTbl, Row000-Row119) in Bank00 of the nmikstas disassembly, decoded by tests/nes_maps.py. The links between
 maps are MapEntryTbl and MapTargetTbl in Bank03.
 """
-import os
 from unittest import TestCase
 
 import pygame
@@ -16,9 +15,6 @@ from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from tests.nes_map_data import MAPS
 from tests.nes_maps import NES_MAPS, OVERWORLD_SIZE, boundary_tile, decode_map, layout_location, nes_tiles
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 TILE_NAMES = {value: name for name, value in vars(map_layouts).items() if name.isupper() and isinstance(value, int)}
 

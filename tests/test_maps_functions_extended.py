@@ -1,8 +1,4 @@
-import os
 import unittest
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 from src.maps_functions import warp_line, get_center_point
 

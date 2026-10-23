@@ -3,7 +3,6 @@ The three fixed guardian fights (NES Bank03 MovementUpdates: CheckAxeKnight, Che
 RunSuccessful), played on a real Game: the hero takes a real step onto the guardian's tile and the fight that follows
 is a real one. Only the windows that wait for a key press are replaced.
 """
-import os
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import patch
@@ -22,9 +21,6 @@ from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu
 from src.story_flags import StoryFlags
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 STEP_KEYS = {Direction.UP.value: K_UP, Direction.DOWN.value: K_DOWN,
              Direction.LEFT.value: K_LEFT, Direction.RIGHT.value: K_RIGHT}

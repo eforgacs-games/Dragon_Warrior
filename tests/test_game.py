@@ -33,9 +33,6 @@ from src.sprites.roaming_character import RoamingCharacter
 from src.waiting import game_speed, reset_game_speed
 from tests.mock_map import MockMap
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
 
 def pressed_keys(pressed_key):
     """A stand-in for pygame.key.get_pressed() with one key held. pygame 2 key codes like K_UP are over a billion,

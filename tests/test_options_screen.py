@@ -19,9 +19,6 @@ from src.options_screen import CLASSIC, DEFAULT_DIALOG_STYLE, DEFAULT_MESSAGE_SP
 from src.windows import MESSAGE_SPEED_WINDOW
 from tests.mock_map import MockMap
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
 ENTER = Event(KEYDOWN, key=K_RETURN)  # A
 DOWN = Event(KEYDOWN, key=K_DOWN)
 LEFT = Event(KEYDOWN, key=K_LEFT)

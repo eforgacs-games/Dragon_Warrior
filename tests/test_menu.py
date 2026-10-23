@@ -1,4 +1,3 @@
-import os
 from contextlib import ExitStack
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -11,9 +10,6 @@ from src.config.test_config import test_config
 from src.menu import COMMAND_METHODS
 from src.game import Game
 from tests.mock_map import MockMap
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestCommandMenu(TestCase):

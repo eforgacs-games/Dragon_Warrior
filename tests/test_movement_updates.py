@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -6,9 +5,6 @@ import pygame
 
 from src.config.test_config import test_config
 from src.game import Game
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestMovementUpdates(TestCase):

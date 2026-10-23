@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
@@ -8,9 +7,6 @@ from pygame import Rect, event, KEYDOWN, K_i, QUIT
 from src.config.test_config import test_config
 from src.game import Game
 from src.intro import show_intro_banner, Intro
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestIntro(TestCase):

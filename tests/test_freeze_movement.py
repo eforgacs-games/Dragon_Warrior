@@ -3,7 +3,6 @@
 NES: START (PausePrepLoop) and A (DoNCCmdWindow) both wait until the hero and the NPCs have finished their steps,
 then pause or set StopNPCMove; nothing calls DoSprites until the game is unpaused or the window closes.
 """
-import os
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import patch
@@ -17,9 +16,6 @@ from src.command_window import held_buttons
 from src.game import Game
 from src.menu import COMMAND_METHODS
 from src.waiting import NES_FPS
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 def keys_held(*held_keys):

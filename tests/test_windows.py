@@ -1,9 +1,5 @@
-import os
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
 from pygame import KEYDOWN, K_DOWN, K_ESCAPE, K_RETURN, event

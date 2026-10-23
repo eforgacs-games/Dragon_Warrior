@@ -10,7 +10,6 @@ ENGLISH_ONLY in catalog_tools.py, with the reason.
 import builtins
 import gettext
 import io
-import os
 import string
 from unittest import TestCase
 
@@ -19,9 +18,6 @@ from data.text.locales import catalog_tools
 from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.text import WRAP_LENGTH, DialogBoxWrapper
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 # Translations that leave a placeholder out on purpose (the Korean line reads better without the hero's name)
 PLACEHOLDER_DROPPED = ("Return to the Inn for a rest if thou art wounded in battle, {}.",)

@@ -11,18 +11,15 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
 
-import pygame  # noqa: E402
-
-from src.color import RED, WHITE  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.cursor import CURSOR_TILE, draw_cursor_tile  # noqa: E402
-from src.directories import Directories  # noqa: E402
-from src.window_renderer import render_window  # noqa: E402
-from src.windows import COMMAND_LAYOUT, COMMAND_WINDOW  # noqa: E402
-from tests.nes_screen_diff import compare_with_screenshot, count_differing_pixels, load_screenshot  # noqa: E402
+from src.color import RED, WHITE
+from src.config.test_config import test_config
+from src.cursor import CURSOR_TILE, draw_cursor_tile
+from src.directories import Directories
+from src.window_renderer import render_window
+from src.windows import COMMAND_LAYOUT, COMMAND_WINDOW
+from tests.nes_screen_diff import compare_with_screenshot, count_differing_pixels, load_screenshot
 
 SCALES = (1, 2, 3)
 COLORS = (WHITE, RED)

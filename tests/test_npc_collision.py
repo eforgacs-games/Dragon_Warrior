@@ -1,19 +1,15 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
 
-import pygame  # noqa: E402
-
-from src.config.test_config import test_config  # noqa: E402
-from src.direction import Direction  # noqa: E402
-from src.game import Game  # noqa: E402
-from src.game_functions import set_character_position  # noqa: E402
-from src.maps import MapWithoutNPCs  # noqa: E402
-from src.maps_functions import get_center_point  # noqa: E402
-from src.sprites.roaming_character import RoamingCharacter  # noqa: E402
+from src.config.test_config import test_config
+from src.direction import Direction
+from src.game import Game
+from src.game_functions import set_character_position
+from src.maps import MapWithoutNPCs
+from src.maps_functions import get_center_point
+from src.sprites.roaming_character import RoamingCharacter
 
 BRICK = 3
 

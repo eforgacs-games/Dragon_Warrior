@@ -1,14 +1,10 @@
-import os
 import unittest
 from unittest.mock import MagicMock, patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from pygame import KEYDOWN, K_RETURN
+from pygame.event import Event
 
-from pygame import KEYDOWN, K_RETURN  # noqa: E402
-from pygame.event import Event  # noqa: E402
-
-from data.text.dialog import confirmation_prompt  # noqa: E402
+from data.text.dialog import confirmation_prompt
 
 CONFIG = {'TILE_SIZE': 32, 'NO_WAIT': True}
 

@@ -10,9 +10,6 @@ from src.config.test_config import test_config
 from src.game import BACK_TO_TITLE_MENU, Game, save_slot_number
 from src.options_screen import OptionsScreen
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
 
 class TestContinueQuest(TestCase):
     """CONTINUE A QUEST must load a save, and saving afterwards must write back to the same adventure log."""
