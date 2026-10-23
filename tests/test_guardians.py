@@ -20,7 +20,7 @@ from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu
 from src.story_flags import StoryFlags
-from tests.helpers import new_game
+from tests.helpers import new_game, skip_window_frame_waits
 
 STEP_KEYS = {Direction.UP.value: K_UP, Direction.DOWN.value: K_DOWN,
              Direction.LEFT.value: K_LEFT, Direction.RIGHT.value: K_RIGHT}
@@ -110,6 +110,8 @@ class TestGuardianFights(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
+        skip_window_frame_waits()
+        self.addCleanup(patch.stopall)
         self.game = new_game()
         self.player = self.game.player
         self.player.name = "Erdrick"

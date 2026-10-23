@@ -19,7 +19,7 @@ class TestConfirmationPrompt(unittest.TestCase):
         yes, no = MagicMock(), MagicMock()
         command_menu = MagicMock()
         command_menu._ = lambda text: text  # English: the YES/NO window is generated in the NES font
-        with patch('data.text.dialog.get', side_effect=[events]), \
+        with patch('src.selection.event.get', side_effect=[events]), \
                 patch('data.text.dialog.display'), patch('data.text.dialog.event'):
             confirmation_prompt(command_menu, "Dost thou want a room?", yes, no, CONFIG, show_arrow=True,
                                 color=(255, 255, 255))

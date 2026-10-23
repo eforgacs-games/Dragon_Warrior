@@ -70,6 +70,27 @@ def flash_transparent_color(color, screen, calculation, transparency=192, no_bli
         display.flip()
 
 
+# NES force field damage (Bank03, LCE30-LCE42): three times over, WaitForNMI, RedFlashScreen (which waits a frame
+# before loading RedFlashPal), WaitForNMI, then LoadRegBGPal (which waits a frame before loading the map's palette).
+# A palette load shows from the next NMI, so the screen is as it was for 2 frames, then red for 2, three times.
+FORCE_FIELD_FLASHES = 3
+FORCE_FIELD_FLASH_FRAMES = 2
+
+
+def force_field_flash(color, screen, config, transparency=192) -> None:
+    """The screen flashing red three times when the hero steps onto a force field (barrier), 12 frames in all. A
+    swamp step flashes once (flash_transparent_color)."""
+    no_blit = config.get('NO_BLIT')
+    original = screen.copy()
+    for _ in range(FORCE_FIELD_FLASHES):
+        show_frames(FORCE_FIELD_FLASH_FRAMES, config)
+        draw_transparent_color(color, screen, transparency, no_blit)
+        show_frames(FORCE_FIELD_FLASH_FRAMES, config)
+        if not no_blit:
+            screen.blit(original, (0, 0))
+    display.flip()
+
+
 def greyscale_screen(screen, calculation, frames=30, no_blit=False):
     """Show the screen in greyscale for the given number of frames, then restore it
     (the NES does this by setting the greyscale bit of PPUControl1)."""

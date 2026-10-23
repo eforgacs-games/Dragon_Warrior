@@ -2,9 +2,8 @@ from functools import partial
 from typing import Callable, List
 
 from pygame import display, KEYDOWN, K_RETURN, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, \
-    K_TAB, K_BACKSPACE, K_ESCAPE, event
+    K_TAB, K_BACKSPACE, K_ESCAPE
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
-from src.waiting import quit_if_requested
 
 from data.text.intro_lookup_table import ControlInfo
 from src.calculation import Calculation
@@ -13,6 +12,7 @@ from src.common import accept_keys, reject_keys
 from src.cursor import BlinkingCursor
 from src.directories import Directories
 from src.name_entry import NameEntry, render_name_entry_screen
+from src.selection import frame_events, next_frame
 from src.sound import Sound
 
 # The alphabet window's cursor keys, with joystick input (WndUpPressed, WndDownPressed, WndDoLeftPressed,
@@ -58,11 +58,17 @@ class NameSelection:
         # The alphabet window's cursor blinks like every NES window cursor (src/cursor.py), restarting whenever it
         # moves or A or B is pressed (WndUpdateCrsrPos)
         cursor = BlinkingCursor(blink_start)
+        drawn_visible: bool | None = None
         while True:
-            self.draw(screen, entry, cursor.visible())
-            for current_event in event.get():
-                quit_if_requested(current_event)
+            # The whole screen is drawn again only after a key press or when the cursor blinks, one pass per NES
+            # frame (src/selection.py); the keys 1 to 4 set the game speed (no letter of the alphabet is a digit)
+            if cursor.visible() != drawn_visible:
+                drawn_visible = cursor.visible()
+                self.draw(screen, entry, drawn_visible)
+            next_frame()
+            for current_event in frame_events():
                 if current_event.type == KEYDOWN:
+                    drawn_visible = None
                     if current_event.key == K_ESCAPE:
                         # Not the NES B button here (J is): Escape cancels the name entry, back to the title menu
                         return None
