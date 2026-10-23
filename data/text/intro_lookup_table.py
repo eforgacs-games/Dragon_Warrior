@@ -9,6 +9,8 @@ class ControlInfo:
         self.a_button = _("K key: A Button")
         self.b_button = _("J key: B Button")
         self.start_button = _("I key: Start")
+        # SELECT or Tab opens the options overlay on the map (src/options_overlay.py)
+        self.select_button = _("U key/Tab: Options")
         self.arrow_keys_move_buttons = _("WASD / Arrow Keys: Move")
         self.help_button = _("F1: Show Controls")
         # F2-F4 and F11 are on/off toggles, listed under "Toggle on/off:" in the F1 help
@@ -21,14 +23,15 @@ class ControlInfo:
         self.zoom_controls = _("Ctrl +/-/Wheel: Zoom")
         self.zoom_reset = _("Ctrl 0: Reset Zoom")
         self.controls: tuple[str, ...] = (
-            self.a_button, self.b_button, self.start_button, self.arrow_keys_move_buttons, self.help_button,
-            self.auto_stairs_toggle, self.auto_battle_toggle, self.invulnerability_toggle, self.fullscreen_toggle,
-            self.speed_controls, self.zoom_controls, self.zoom_reset)
+            self.a_button, self.b_button, self.start_button, self.select_button, self.arrow_keys_move_buttons,
+            self.help_button, self.auto_stairs_toggle, self.auto_battle_toggle, self.invulnerability_toggle,
+            self.fullscreen_toggle, self.speed_controls, self.zoom_controls, self.zoom_reset)
         # The F1 help, one string per dialog box page (the A button turns the page). The dialog box fits five rows
         # above the continue arrow, so each page is a short group of related keys. "Controls:\n" keeps its newline
         # so it still matches the existing Korean translation.
         self.help_pages: tuple[str, ...] = (
-            "\n".join((_("Controls:\n").rstrip("\n"), self.a_button, self.b_button, self.start_button)),
+            "\n".join((_("Controls:\n").rstrip("\n"), self.a_button, self.b_button, self.start_button,
+                       self.select_button)),
             "\n".join((self.arrow_keys_move_buttons, self.help_button, self.speed_controls)),
             "\n".join((_("Toggle on/off:"), self.auto_stairs_toggle, self.auto_battle_toggle,
                        self.invulnerability_toggle, self.fullscreen_toggle)),

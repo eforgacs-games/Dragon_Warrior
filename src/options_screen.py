@@ -1,5 +1,5 @@
-"""The title menu's CHANGE MESSAGE SPEED: pick an adventure log, then its message speed (the NES window) and its dialog
-style (a modern option this game adds below the NES behaviour, which stays the default).
+"""The title menu's CHANGE MESSAGE SPEED: pick an adventure log, then its message speed (the NES window); and the
+settings kept per adventure log.
 
 NES flow (Bank03):
 
@@ -14,14 +14,9 @@ NES flow (Bank03):
 - A new quest (DoNewQuest -> NewQuest) shows the same window right after the name is entered, with the cursor on
   NORMAL (LF8D4: LDA #MSG_NORMAL), and InitNewGame saves the choice with the new log.
 
-What this game adds: a DIALOG STYLE window above the speed window, drawn the same way. CLASSIC is the NES dialog
-window, whose text scrolls up a row at a time (src/dialog_box.py); MODERN is how this game drew dialog before it
-copied the NES: each message on a fresh window, replacing the one before. Above that, an NPCS MAKE WAY window:
-ON lets a roaming NPC the hero walks into step aside (MovementController.ask_npc_to_make_way), OFF (the NES) leaves it
-in the way.
-Beside it, a FADE STYLE window: NES (the default) fades the screen through the NES palette, SMOOTH with a black
-overlay (src/visual_effects.py screen_fade). After the speed is chosen the cursor moves to the dialog style, then to
-NPCS MAKE WAY, then to FADE STYLE; B goes back a window.
+What this game adds (none of it on the NES, so none of it asked here): the dialog style, NPCS MAKE WAY, the fade style
+and the stairs. They are changed during play, in the options overlay (src/options_overlay.py: SELECT or Tab on the
+map), and kept per adventure log beside the message speed (Options below). A new quest starts with their defaults.
 
 The windows read the joypad like every NES selection window (src/cursor.py SelectionButtons, WndProcessInput): one
 button per press, up and down in a one-column window, left and right in a one-row window, stopping at the edges.
@@ -48,6 +43,7 @@ MESSAGE_SPEED_SAVE_KEY = 'MessageSpeed'
 DIALOG_STYLE_SAVE_KEY = 'DialogStyle'
 NPCS_MAKE_WAY_SAVE_KEY = 'NpcsMakeWay'
 FADE_STYLE_SAVE_KEY = 'FadeStyle'
+AUTO_STAIRS_SAVE_KEY = 'AutoStairs'
 
 # MessageSpeed: #$00-fast, #$01-normal, #$02-slow; the window lists them in that order (WndRow = MessageSpeed)
 MESSAGE_SPEED_NAMES = ('Fast', 'Normal', 'Slow')
@@ -61,11 +57,13 @@ DEFAULT_DIALOG_STYLE = CLASSIC
 
 # NPCS_MAKE_WAY (base_config, #297): on by default; a save without the setting loads as ON
 DEFAULT_NPCS_MAKE_WAY = True
-NPCS_MAKE_WAY_CHOICES = (True, False)  # the window's entries, left to right
 
-# FADE_STYLE (base_config, #319): the NES palette fade by default; a save without the setting loads as NES. The window
-# lists FADE_STYLES in order: NES, then SMOOTH.
+# FADE_STYLE (base_config, #319): the NES palette fade by default; a save without the setting loads as NES
 DEFAULT_FADE_STYLE = FADE_STYLE_NES
+
+# AUTO_STAIRS (base_config): STEP ON by default, stairs are taken by stepping onto them; off is the NES, where only the
+# STAIRS command takes them (Bank03 CheckStairs). A save without the setting loads as STEP ON.
+DEFAULT_AUTO_STAIRS = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +73,7 @@ class Options:
     dialog_style: str = DEFAULT_DIALOG_STYLE
     npcs_make_way: bool = DEFAULT_NPCS_MAKE_WAY
     fade_style: str = DEFAULT_FADE_STYLE
+    auto_stairs: bool = DEFAULT_AUTO_STAIRS
 
 
 # A new quest's settings when none are chosen: NewQuest's MSG_NORMAL, the NES dialog window, and base_config's
@@ -89,31 +88,6 @@ MESSAGE_SPEED_LABELS = ('FAST', 'NORMAL', 'SLOW')
 MESSAGE_SPEED_FIRST_ROW = 8
 MESSAGE_SPEED_TEXT_COLUMN = 7
 MESSAGE_SPEED_CURSOR_COLUMN = 6
-
-# The dialog style window: not on the NES. The same width and column as MsgSpeedDat, directly above it (block rows 3
-# to 6), laid out the same way: a prompt on row 1, the entries 2 rows apart from row 3, the cursor in the tile before.
-DIALOG_STYLE_WINDOW = Window(MESSAGE_SPEED_WINDOW.x, MESSAGE_SPEED_WINDOW.y - 4, MESSAGE_SPEED_WINDOW.width, 4)
-DIALOG_STYLE_PROMPT = ((2, 1, 'Dialog Style'),)
-DIALOG_STYLE_LABELS = ('CLASSIC (NES)', 'MODERN')
-DIALOG_STYLE_FIRST_ROW = 3
-DIALOG_STYLE_TEXT_COLUMN = 3
-DIALOG_STYLE_CURSOR_COLUMN = 2
-
-# The NPCS MAKE WAY and FADE STYLE windows: not on the NES either. Above the dialog style window (block rows 0 to 2),
-# which leaves no room for a fourth window in the column, so they are side by side across the screen's 16 blocks:
-# NPCS MAKE WAY on the left, the same width as the others, and FADE STYLE in the 7 blocks to its right. Each has its
-# prompt on row 1 and its two entries side by side on row 3, each with the cursor in the tile before.
-NPCS_MAKE_WAY_WINDOW = Window(0, DIALOG_STYLE_WINDOW.y - 3, MESSAGE_SPEED_WINDOW.width, 3)
-NPCS_MAKE_WAY_PROMPT = ((2, 1, 'NPCs Make Way'),)
-NPCS_MAKE_WAY_LABELS = ('ON', 'OFF (NES)')
-NPCS_MAKE_WAY_ROW = 3
-NPCS_MAKE_WAY_TEXT_COLUMNS = (3, 8)
-
-FADE_STYLE_WINDOW = Window(NPCS_MAKE_WAY_WINDOW.x + NPCS_MAKE_WAY_WINDOW.width, NPCS_MAKE_WAY_WINDOW.y, 7, 3)
-FADE_STYLE_PROMPT = ((2, 1, 'Fade Style'),)
-FADE_STYLE_LABELS = ('NES', 'SMOOTH')  # FADE_STYLES' order
-FADE_STYLE_ROW = 3
-FADE_STYLE_TEXT_COLUMNS = (2, 7)  # 14 tiles: SMOOTH ends in column 12, before the right border
 
 # LogList1Dat2 ... LogList123Dat2 (see used_logs_layout in src/windows.py): " ADVENTURE LOG n:" and the first 4 letters of the
 # name; the first line on tile row 2 of the window, one block apart; the cursor in column 1, the text from column 2
@@ -169,32 +143,40 @@ def fade_style_from_save(save: dict) -> str:
     return style if style in FADE_STYLES else DEFAULT_FADE_STYLE
 
 
+def auto_stairs_from_save(save: dict) -> bool:
+    """The log's STAIRS setting; a save from before it was kept loads as STEP ON (the default)."""
+    auto_stairs = save.get(AUTO_STAIRS_SAVE_KEY)
+    return auto_stairs if isinstance(auto_stairs, bool) else DEFAULT_AUTO_STAIRS
+
+
 def options_from_save(save: dict) -> Options:
     return Options(message_speed_from_save(save), dialog_style_from_save(save), npcs_make_way_from_save(save),
-                   fade_style_from_save(save))
+                   fade_style_from_save(save), auto_stairs_from_save(save))
 
 
 def options_to_save(options: Options) -> dict:
     """The save file entries for these settings (CommandMenu.save, TitleMenu.change_message_speed)."""
     return {MESSAGE_SPEED_SAVE_KEY: options.message_speed, DIALOG_STYLE_SAVE_KEY: options.dialog_style,
-            NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way, FADE_STYLE_SAVE_KEY: options.fade_style}
+            NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way, FADE_STYLE_SAVE_KEY: options.fade_style,
+            AUTO_STAIRS_SAVE_KEY: options.auto_stairs}
 
 
 def options_from_config(config: dict) -> Options:
     """The settings the running game uses."""
     return Options(config.get('TEXT_SPEED', DEFAULT_MESSAGE_SPEED), config.get('DIALOG_STYLE', DEFAULT_DIALOG_STYLE),
                    bool(config.get('NPCS_MAKE_WAY', DEFAULT_NPCS_MAKE_WAY)),
-                   fade_style(config))
+                   fade_style(config), bool(config.get('AUTO_STAIRS', DEFAULT_AUTO_STAIRS)))
 
 
 def apply_options(config: dict, options: Options) -> None:
     """Use these settings from now on: the dialog code reads TEXT_SPEED and DIALOG_STYLE for every message, and
-    MovementController.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump, and screen_fade reads FADE_STYLE for every
-    fade."""
+    MovementController.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump, screen_fade reads FADE_STYLE for every
+    fade and MapManager.handle_warps reads AUTO_STAIRS for every step."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way
     config['FADE_STYLE'] = options.fade_style
+    config['AUTO_STAIRS'] = options.auto_stairs
 
 
 class OptionWindow:
@@ -238,15 +220,6 @@ class OptionWindow:
 
 MESSAGE_SPEED_OPTIONS = OptionWindow(MESSAGE_SPEED_WINDOW, MESSAGE_SPEED_PROMPT, MESSAGE_SPEED_LABELS,
                                      MESSAGE_SPEED_FIRST_ROW, MESSAGE_SPEED_TEXT_COLUMN, MESSAGE_SPEED_CURSOR_COLUMN)
-DIALOG_STYLE_OPTIONS = OptionWindow(DIALOG_STYLE_WINDOW, DIALOG_STYLE_PROMPT, DIALOG_STYLE_LABELS,
-                                    DIALOG_STYLE_FIRST_ROW, DIALOG_STYLE_TEXT_COLUMN, DIALOG_STYLE_CURSOR_COLUMN)
-NPCS_MAKE_WAY_OPTIONS = OptionWindow(NPCS_MAKE_WAY_WINDOW, NPCS_MAKE_WAY_PROMPT, NPCS_MAKE_WAY_LABELS,
-                                     NPCS_MAKE_WAY_ROW, NPCS_MAKE_WAY_TEXT_COLUMNS[0], NPCS_MAKE_WAY_TEXT_COLUMNS[0] - 1,
-                                     text_columns=NPCS_MAKE_WAY_TEXT_COLUMNS)
-FADE_STYLE_OPTIONS = OptionWindow(FADE_STYLE_WINDOW, FADE_STYLE_PROMPT, FADE_STYLE_LABELS, FADE_STYLE_ROW,
-                                  FADE_STYLE_TEXT_COLUMNS[0], FADE_STYLE_TEXT_COLUMNS[0] - 1,
-                                  text_columns=FADE_STYLE_TEXT_COLUMNS)
-
 
 def adventure_log_options(logs: Sequence[tuple[int, str]], _: Callable[[str], str] = str) -> OptionWindow:
     """The used logs window (LogList*Dat2): one line per log, " ADVENTURE LOG n:" and 4 letters of the hero's name.
@@ -325,29 +298,16 @@ class OptionsScreen:
         self.windows = self.windows + [(erase_log_window(name, level, self._), 0)]
         return self.confirm()
 
-    def choose_options(self, current: Options) -> Options | None:
-        """WND_MSG_SPEED, then the dialog style, then NPCS MAKE WAY, then FADE STYLE: the chosen settings, or None if
-        B was pressed in the speed window (WndBackToMain). B in a later window goes back to the one before. The cursors
-        start on the current settings (LA93E: WndRow = MessageSpeed)."""
-        choices = [MESSAGE_SPEED_NAMES.index(current.message_speed), DIALOG_STYLES.index(current.dialog_style),
-                   NPCS_MAKE_WAY_CHOICES.index(current.npcs_make_way), FADE_STYLES.index(current.fade_style)]
-        # chosen in this order; drawn bottom to top in the reverse order, so the speed window is on top
-        steps = (MESSAGE_SPEED_OPTIONS, DIALOG_STYLE_OPTIONS, NPCS_MAKE_WAY_OPTIONS, FADE_STYLE_OPTIONS)
+    def choose_message_speed(self, current: str) -> str | None:
+        """WND_MSG_SPEED over the windows on screen: the chosen speed, or None for B (WndBackToMain). The cursor starts
+        on the current speed (LA93E: WndRow = MessageSpeed)."""
         base = list(self.windows)
-        step = 0
-        while step < len(steps):
-            self.windows = base + [(steps[i], choices[i]) for i in reversed(range(len(steps)))]
-            chosen = self.select(len(self.windows) - 1 - step)
-            if chosen is None:
-                if step == 0:
-                    self.windows = base
-                    return None
-                step -= 1
-                continue
-            choices[step] = chosen
-            step += 1
-        return Options(MESSAGE_SPEED_NAMES[choices[0]], DIALOG_STYLES[choices[1]], NPCS_MAKE_WAY_CHOICES[choices[2]],
-                       FADE_STYLES[choices[3]])
+        self.windows = base + [(MESSAGE_SPEED_OPTIONS, MESSAGE_SPEED_NAMES.index(current))]
+        chosen = self.select(len(self.windows) - 1)
+        if chosen is None:
+            self.windows = base
+            return None
+        return MESSAGE_SPEED_NAMES[chosen]
 
     def select(self, active: int) -> int | None:
         """WndDoSelect for self.windows[active]: once a frame, read the joypad (SelectionButtons) and handle the
