@@ -81,6 +81,18 @@ class TestPlayer(TestCase):
         self.player.update_attack_power()
         self.assertEqual(self.player.attack_power, self.player.strength + 4 + 2)
 
+    def test_set_initial_stats_fills_hp_and_mp_and_works_out_the_powers_for_the_name(self):
+        """Ann = A $24 + n $17 + n $17 + blank $60 = $B2 -> %10: strength and max HP cut, bonus 0. At level 1 that's
+        strength 4 * 9 // 10 = 3, agility 4, max HP 15 * 9 // 10 = 13 and max MP 0 (tests/test_player_stats.py).
+        The placeholder name's stats (15 HP, strength 4) mustn't be left over."""
+        self.player.current_hp, self.player.current_mp = 1, 7
+        self.player.name = "Ann"
+        self.player.set_initial_stats()
+        self.assertEqual((3, 4, 13, 0), (self.player.strength, self.player.agility, self.player.max_hp,
+                                         self.player.max_mp))
+        self.assertEqual((13, 0), (self.player.current_hp, self.player.current_mp))
+        self.assertEqual((3, 2), (self.player.attack_power, self.player.defense_power))
+
     def test_get_level_by_experience(self):
         self.assertEqual(1, self.player.level)
 
