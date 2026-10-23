@@ -85,7 +85,7 @@ def dynamic_messages() -> dict[str, list[str]]:
     from src.options_screen import DIALOG_STYLE_OPTIONS, MESSAGE_SPEED_OPTIONS, NPCS_MAKE_WAY_OPTIONS
     from src.spells import Spell
     from src.translated_window import layout_texts
-    from src.windows import COMBAT_COMMAND_LAYOUT, COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT
+    from src.windows import COMBAT_COMMAND_LAYOUT, COMMAND_LAYOUT, STATUS_LAYOUT, TITLE_MENU_LAYOUTS, YES_NO_LAYOUT
 
     messages: dict[str, list[str]] = {}
     for source, table in (('src/items.py', weapons), ('src/items.py', armor), ('src/items.py', shields),
@@ -95,9 +95,10 @@ def dynamic_messages() -> dict[str, list[str]]:
     for spell in Spell:
         if spell.value not in UNNAMED_SPELLS:
             messages.setdefault(spell.value, []).append('src/spells.py')
-    for layout in (COMMAND_LAYOUT, COMBAT_COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT):
+    for layout in (COMMAND_LAYOUT, COMBAT_COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT, *TITLE_MENU_LAYOUTS):
         for text in layout_texts(layout):
-            messages.setdefault(text.text, []).append('src/windows.py')
+            if 'src/windows.py' not in messages.get(text.text, []):
+                messages.setdefault(text.text, []).append('src/windows.py')
     for options in (MESSAGE_SPEED_OPTIONS, DIALOG_STYLE_OPTIONS, NPCS_MAKE_WAY_OPTIONS):
         for text in [prompt[2] for prompt in options.prompt] + list(options.labels):
             messages.setdefault(text, []).append('src/options_screen.py')
