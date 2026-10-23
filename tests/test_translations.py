@@ -195,5 +195,5 @@ class TestKoreanText(TestCase):
 
     def test_control_info_in_korean(self):
         control_info = ControlInfo({**test_config, 'LANGUAGE': 'Korean'})
-        self.assertEqual("F1: 조작 방법 보기", control_info.help_button)
+        self.assertEqual("H: 조작 방법 보기", control_info.help_button)
         self.assertEqual("1-5: 게임 속도 조절", control_info.speed_controls)
