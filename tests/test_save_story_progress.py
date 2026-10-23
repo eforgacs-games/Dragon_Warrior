@@ -96,6 +96,18 @@ class TestSaveStoryProgress(TestCase):
         self.assertTrue(loaded.wearing_death_necklace)
         self.assertTrue(loaded.is_wearing_cursed_item("Cursed Belt"))
 
+    def test_empty_inventory_slots_round_trip(self):
+        # NES SaveData keeps the inventory bytes as they are, emptied slots included
+        player = self.game.player
+        player.inventory = ['Torch', 'Wings', 'Herb', 'Fairy Water']
+        player.inventory.remove('Wings')
+        save = self.save()
+        self.assertEqual(save['Inventory'], ['Torch', None, 'Herb', 'Fairy Water'])
+        loaded = self.load(save).player
+        self.assertEqual(loaded.inventory, ['Torch', 'Herb', 'Fairy Water'])
+        loaded.inventory.append('Silver Harp')
+        self.assertEqual(loaded.inventory, ['Torch', 'Silver Harp', 'Herb', 'Fairy Water'])
+
     # What the NES doesn't save
 
     def test_chest_history_and_repel_timer_are_not_saved(self):
