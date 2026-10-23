@@ -20,7 +20,7 @@ from src.config.test_config import test_config
 from src.options_overlay import OPTION_ROWS, OPTIONS_TITLE
 from src.settings import SETTINGS_ENV_VAR, USER_SETTINGS, Settings, SettingsStore, load_settings, save_settings, \
     settings_path
-from src.waiting import game_speed, get_events, reset_game_speed, set_speed_listener
+from src.waiting import NES_FPS, game_speed, get_events, reset_game_speed, set_speed_listener
 from src.windows import COMMAND_ENTRIES, COMMAND_TITLE
 from src.zoom import set_zoom_listener
 from tests import helpers
@@ -185,7 +185,7 @@ class TestReadAtStart(GameTestCase):
         save_settings(self.path, Settings(game_speed=4))
         game = self.new_game()
         self.assertEqual(4, game_speed())
-        self.assertEqual(240, game.fps)
+        self.assertAlmostEqual(4 * NES_FPS, game.fps)
 
     def test_saved_zoom_sizes_the_new_window(self):
         save_settings(self.path, Settings(zoom=3))
@@ -311,7 +311,8 @@ class TestLanguageSwitch(GameTestCase):
         # and a line the game itself shows
         with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
             self.game.handle_keypresses(key(K_2))
-        self.assertEqual(KOREAN("Game set to {}x speed.\n({} FPS)").format(2, 120), show_text.call_args.args[0])
+        self.assertEqual(KOREAN("Game set to {}x speed.\n({} FPS)").format(2, f'{2 * NES_FPS:.1f}'),
+                         show_text.call_args.args[0])
 
     def test_king_loriks_line_carries_over(self):
         cmd_menu = self.game.cmd_menu
