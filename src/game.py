@@ -40,7 +40,7 @@ from src.items import TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu
-from src.movement import Movement
+from src.movement import MovementController
 from src.music_player import MusicPlayer
 from src.npc_schedule import NPCSchedule, POP_UP_FRAME
 from src.npc_movement import npc_may_step_onto, step
@@ -95,7 +95,7 @@ class Game:
         self.directories = Directories(config)
         self.calculation = Calculation(config)
         self.game_functions = GameFunctions(config)
-        self.movement = Movement(self.config)
+        self.movement = MovementController(self)
         # Only still passed to confirmation_prompt, which ignores it: the dialog's down arrow blinks on its own
         # (src/cursor.py DialogArrowBlink)
         self.show_arrow = True
