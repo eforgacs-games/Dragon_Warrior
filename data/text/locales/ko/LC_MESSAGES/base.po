@@ -2908,3 +2908,21 @@ msgstr "NES (4:3)"
 #: src/options_overlay.py
 msgid "WIDE"
 msgstr "와이드"
+msgid "M: Dungeon map"
+msgstr "M: 던전 지도"
+
+#: src/options_overlay.py
+msgid "DUNGEON MAP"
+msgstr "던전 지도"
+
+#: src/dungeon_map.py
+msgid "MAP"
+msgstr "지도"
+
+#: data/text/intro_lookup_table.py
+msgid "Top Button: Dungeon map"
+msgstr "위쪽 버튼: 던전 지도"
+
+#: data/text/intro_lookup_table.py
+msgid "Dungeon map:"
+msgstr "던전 지도:"
