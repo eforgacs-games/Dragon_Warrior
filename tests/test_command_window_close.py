@@ -124,6 +124,8 @@ class TestCommandWindowClose(TestCase):
 
     def test_after_a_map_change(self):
         # The menu used to keep the camera from when it was made: before a map change put the hero somewhere else
+        # load_checkpoint points saving away from src/saves; don't let that leak into other tests
+        self.addCleanup(test_config.__setitem__, 'SAVE_DIR', test_config['SAVE_DIR'])
         self.game.load_checkpoint('swamp_cave')
         open_frame, closing_frames = self.run_and_record(walk_loops=0)
         self.assert_nothing_outside_the_windows_moves(open_frame, closing_frames)
