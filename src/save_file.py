@@ -15,7 +15,7 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Any, List
+from typing import Any
 
 from src.options_screen import Options, options_from_save, options_to_save
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
@@ -46,7 +46,7 @@ ADVENTURE_LOGS = (1, 2, 3)
 SAVE_FILE_PATTERN = re.compile(r'save_slot_([123])\.json')
 
 
-@dataclass
+@dataclass(slots=True, kw_only=True)
 class SaveFile:
     """One adventure log's save. A key the save doesn't have reads as the default here; CurrentHP and CurrentMP read
     as None, which load_game turns into the hero's max HP and MP, and a missing position (None) starts the hero on the
@@ -54,7 +54,7 @@ class SaveFile:
     name: str
     experience: int
     gold: int
-    inventory: List[str]
+    inventory: list[str]
     current_hp: int | None = None
     current_mp: int | None = None
     weapon: str = ''
@@ -64,7 +64,7 @@ class SaveFile:
     wearing_fighters_ring: bool = False
     wearing_cursed_belt: bool = False
     wearing_death_necklace: bool = False
-    spells: List[str] = field(default_factory=list)
+    spells: list[str] = field(default_factory=list)
     current_map: str | None = None
     player_row: int | None = None
     player_column: int | None = None
@@ -224,7 +224,7 @@ def first_open_log(save_dir: str) -> int | None:
     return None
 
 
-def logs_named(save_dir: str, name: str) -> List[int]:
+def logs_named(save_dir: str, name: str) -> list[int]:
     """The adventure logs in save_dir whose hero is called name (the save's 'Name', as Game.load_game reads it). A
     save that can't be read matches no name."""
     return [log for log in ADVENTURE_LOGS if read_save_name(save_path(save_dir, log)) == name]

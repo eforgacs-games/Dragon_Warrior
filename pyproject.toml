@@ -39,6 +39,9 @@ python_version = "3.13"
 files = ["src", "tools"]
 exclude = ["src/map_layouts.py"]
 ignore_missing_imports = true
+# A method that overrides a base class method must say so with @typing.override, so a misspelled or removed base
+# method is a type error instead of a silent new method
+enable_error_code = ["explicit-override"]
 
 [tool.ruff]
 target-version = "py313"
@@ -48,7 +51,12 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "W"]
+select = [
+    "E", "F", "W",
+    "UP",    # pyupgrade: Python 3.13 syntax (builtin generics, X | None, functools.cache, StrEnum)
+    "FURB",  # refurb: stable rules only (3 hits when enabled)
+    "PERF",  # perflint: manual list building (1 hit when enabled)
+]
 
 [tool.ruff.lint.per-file-ignores]
 # Data tables: map tile grids and per-level stat tables

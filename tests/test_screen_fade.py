@@ -20,9 +20,9 @@ COLORS = (0x30, 0x10, 0x00, 0x11, 0x29, 0x1A, 0x27, 0x37, 0x35, 0x12, 0x16, 0x26
 BLOCK = 8
 
 
-def faded(color_number: int, pal_mod: int) -> tuple[int, int, int]:
+def faded(color_number: int, darkening: int) -> tuple[int, int, int]:
     """NES AddPalByte/ChkPalFade: subtract PalModByte from the color number; below $00 is black."""
-    return BLACK_RGB if color_number - pal_mod < 0 else NES_PALETTE[color_number - pal_mod]
+    return BLACK_RGB if color_number - darkening < 0 else NES_PALETTE[color_number - darkening]
 
 
 class TestNesPaletteFade(TestCase):
@@ -70,8 +70,8 @@ class TestNesPaletteFade(TestCase):
         self.draw_colors()
         nes_palette_fade(False, self.screen, self.config)
         # first the black palette, then $30, $20, $10 and $00 (the picture as it was)
-        expected = [[BLACK_RGB] * len(COLORS)] + [[faded(color, pal_mod) for color in COLORS]
-                                                    for pal_mod in FADE_IN_STEPS]
+        expected = [[BLACK_RGB] * len(COLORS)] + [[faded(color, darkening) for color in COLORS]
+                                                    for darkening in FADE_IN_STEPS]
         self.assertEqual(self.shown, expected)
         self.assertEqual(len(self.waits), 4)
         self.assertEqual(self.waits[1:], [4000 / NES_FPS] * 3)
@@ -81,7 +81,7 @@ class TestNesPaletteFade(TestCase):
     def test_fade_out_ends_all_black_after_twenty_frames(self):
         self.draw_colors()
         nes_palette_fade(True, self.screen, self.config)
-        expected = [[faded(color, pal_mod) for color in COLORS] for pal_mod in FADE_OUT_STEPS]
+        expected = [[faded(color, darkening) for color in COLORS] for darkening in FADE_OUT_STEPS]
         self.assertEqual(self.shown, expected)
         self.assertEqual(self.shown[-1], [BLACK_RGB] * len(COLORS))
         self.assertLessEqual(sum(self.waits), 20 * 1000 / NES_FPS + 1e-9)

@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Callable, List
+from collections.abc import Callable
 
 from pygame import display, KEYDOWN, K_RETURN, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, \
     K_TAB, K_BACKSPACE, K_ESCAPE
@@ -111,13 +111,11 @@ class NameSelection:
 
 
 def get_opposite_direction(direction: int) -> int:
-    if direction >= 2:
-        return direction - 2
-    else:
-        return direction + 2
+    """DOWN <-> UP and LEFT <-> RIGHT (the directions are numbered 0-3 around, so the opposite is 2 along)."""
+    return (direction + 2) % 4
 
 
-def convert_list_to_newline_separated_string(list_to_convert: List[str]) -> str:
+def convert_list_to_newline_separated_string(list_to_convert: list[str]) -> str:
     return '\n \n'.join([item for item in list_to_convert])
 
 

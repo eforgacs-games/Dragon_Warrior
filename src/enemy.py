@@ -1,3 +1,6 @@
+from typing import override
+
+
 class Enemy:
     """One row of the NES enemy stat table (Bank01 EnStatTbl, loaded into $0100-$0107 by LoadEnemyStats).
 
@@ -77,6 +80,7 @@ class MetalSlime(Enemy):
                          stopspell_resist=15 / 16, hurt_resist=15 / 16, dodge=1 / 64)
         self.name = "Metal Slime"
 
+    @override
     def set_pattern(self):
         return [(75, "HURT", True), "ATTACK"]
 
@@ -96,6 +100,7 @@ class Magidrakee(Enemy):
                          stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=1 / 64)
         self.name = "Magidrakee"
 
+    @override
     def set_pattern(self):
         return [(50, "HURT", True), "ATTACK"]
 
@@ -108,6 +113,7 @@ class Drakeema(Enemy):
         self.name = "Drakeema"
         self.pattern = self.set_pattern()
 
+    @override
     def set_pattern(self):
         return [(25, "HEAL", self.get_current_hp() <= self.max_hp // 4), (50, "HURT", True), "ATTACK"]
 
@@ -127,6 +133,7 @@ class Poltergeist(Enemy):
                          stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=6 / 64)
         self.name = "Poltergeist"
 
+    @override
     def set_pattern(self):
         return [(75, "HURT", True), "ATTACK"]
 
@@ -138,6 +145,7 @@ class Specter(Enemy):
                          sleep_resist=3 / 16, stopspell_resist=1 / 16, hurt_resist=0 / 16, dodge=4 / 64)
         self.name = "Specter"
 
+    @override
     def set_pattern(self):
         return [(25, "SLEEP", True), (75, "HURT", True), "ATTACK"]
 
@@ -150,6 +158,7 @@ class Magician(Enemy):
         self.name = "Magician"
         self.pattern = self.set_pattern()
 
+    @override
     def set_pattern(self):
         return [(50, "HURT", True), "ATTACK"]
 
@@ -161,6 +170,7 @@ class Warlock(Enemy):
                          sleep_resist=3 / 16, stopspell_resist=1 / 16, hurt_resist=0 / 16, dodge=2 / 64)
         self.name = "Warlock"
 
+    @override
     def set_pattern(self):
         return [(25, "SLEEP", True), (50, "HURT", True), "ATTACK"]
 
@@ -172,6 +182,7 @@ class Wizard(Enemy):
                          sleep_resist=15 / 16, stopspell_resist=7 / 16, hurt_resist=15 / 16, dodge=2 / 64)
         self.name = "Wizard"
 
+    @override
     def set_pattern(self):
         return [(50, "HURTMORE", True), "ATTACK"]
 
@@ -215,6 +226,7 @@ class Druinlord(Enemy):
                          sleep_resist=15 / 16, stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=4 / 64)
         self.name = "Druinlord"
 
+    @override
     def set_pattern(self):
         return [(75, "HEAL", self.get_current_hp() <= self.max_hp // 4), (25, "HURT", True), "ATTACK"]
 
@@ -234,6 +246,7 @@ class Drollmagi(Enemy):
                          sleep_resist=2 / 16, stopspell_resist=2 / 16, hurt_resist=0 / 16, dodge=1 / 64)
         self.name = "Drollmagi"
 
+    @override
     def set_pattern(self):
         return [(50, "STOPSPELL", True), "ATTACK"]
 
@@ -253,6 +266,7 @@ class Wraith(Enemy):
                          stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=4 / 64)
         self.name = "Wraith"
 
+    @override
     def set_pattern(self):
         return [(25, "HEAL", self.get_current_hp() <= self.max_hp // 4), "ATTACK"]
 
@@ -264,6 +278,7 @@ class WraithKnight(Enemy):
                          stopspell_resist=0 / 16, hurt_resist=3 / 16, dodge=4 / 64)
         self.name = "Wraith Knight"
 
+    @override
     def set_pattern(self):
         return [(75, "HEAL", self.get_current_hp() <= self.max_hp // 4), "ATTACK"]
 
@@ -291,6 +306,7 @@ class Wolflord(Enemy):
                          sleep_resist=4 / 16, stopspell_resist=7 / 16, hurt_resist=0 / 16, dodge=2 / 64)
         self.name = "Wolflord"
 
+    @override
     def set_pattern(self):
         return [(50, "STOPSPELL", True), "ATTACK"]
 
@@ -342,6 +358,7 @@ class Magiwyvern(Enemy):
                          sleep_resist=2 / 16, stopspell_resist=0 / 16, hurt_resist=0 / 16, dodge=2 / 64)
         self.name = "Magiwyvern"
 
+    @override
     def set_pattern(self):
         return [(50, "SLEEP", True), "ATTACK"]
 
@@ -353,6 +370,7 @@ class Starwyvern(Enemy):
                          sleep_resist=8 / 16, stopspell_resist=0 / 16, hurt_resist=1 / 16, dodge=2 / 64)
         self.name = "Starwyvern"
 
+    @override
     def set_pattern(self):
         return [(75, "HEALMORE", self.get_current_hp() <= self.max_hp // 4), (25, "FIREBREATH", True), "ATTACK"]
 
@@ -364,6 +382,7 @@ class Knight(Enemy):
                          sleep_resist=6 / 16, stopspell_resist=7 / 16, hurt_resist=0 / 16, dodge=1 / 64)
         self.name = "Knight"
 
+    @override
     def set_pattern(self):
         return [(50, "STOPSPELL", True), "ATTACK"]
 
@@ -375,6 +394,7 @@ class AxeKnight(Enemy):
                          sleep_resist=15 / 16, stopspell_resist=3 / 16, hurt_resist=1 / 16, dodge=1 / 64)
         self.name = "Axe Knight"
 
+    @override
     def set_pattern(self):
         return [(25, "SLEEP", True), "ATTACK"]
 
@@ -386,6 +406,7 @@ class ArmoredKnight(Enemy):
                          sleep_resist=15 / 16, stopspell_resist=7 / 16, hurt_resist=1 / 16, dodge=2 / 64)
         self.name = "Armored Knight"
 
+    @override
     def set_pattern(self):
         return [(75, "HEALMORE", self.get_current_hp() <= self.max_hp // 4), (25, "HURTMORE", True), "ATTACK"]
 
@@ -397,6 +418,7 @@ class GreenDragon(Enemy):
                          sleep_resist=7 / 16, stopspell_resist=15 / 16, hurt_resist=2 / 16, dodge=2 / 64)
         self.name = "Green Dragon"
 
+    @override
     def set_pattern(self):
         return [(25, "FIREBREATH", True), "ATTACK"]
 
@@ -408,6 +430,7 @@ class BlueDragon(Enemy):
                          sleep_resist=15 / 16, stopspell_resist=15 / 16, hurt_resist=7 / 16, dodge=2 / 64)
         self.name = "Blue Dragon"
 
+    @override
     def set_pattern(self):
         return [(25, "FIREBREATH", True), "ATTACK"]
 
@@ -419,6 +442,7 @@ class RedDragon(Enemy):
                          sleep_resist=15 / 16, stopspell_resist=7 / 16, hurt_resist=15 / 16, dodge=2 / 64)
         self.name = "Red Dragon"
 
+    @override
     def set_pattern(self):
         return [(25, "SLEEP", True), (25, "FIREBREATH", True), "ATTACK"]
 
@@ -430,6 +454,7 @@ class Dragonlord(Enemy):
                          sleep_resist=15 / 16, stopspell_resist=15 / 16, hurt_resist=15 / 16, dodge=0 / 64)
         self.name = "Dragonlord"
 
+    @override
     def set_pattern(self):
         return [(25, "STOPSPELL", True), (75, "HURTMORE", True), "ATTACK"]
 
@@ -441,6 +466,7 @@ class Dragonlord2(Enemy):
                          sleep_resist=15 / 16, stopspell_resist=15 / 16, hurt_resist=15 / 16, dodge=0 / 64)
         self.name = "Dragonlord 2"
 
+    @override
     def set_pattern(self):
         return [(50, "FIREBREATH2", True), "ATTACK"]
 

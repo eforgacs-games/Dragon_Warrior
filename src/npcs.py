@@ -19,7 +19,7 @@ GWAELIN_RESCUE = 'BLK_PRINCESS'
 SEARCHED_FOR_GWAELIN = 0x64
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class NPC:
     """One NPC table entry.
 

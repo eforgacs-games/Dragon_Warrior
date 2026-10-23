@@ -1,9 +1,10 @@
-from typing import Dict, FrozenSet, Iterable, List, Tuple
+from collections.abc import Iterable
 
 from pygame import PixelArray, mask, surface
 from pygame.transform import scale
 
 from src.color import BLACK, LOW_HP_RED
+from src.coordinates import Cell, Pixel
 from src.visual_effects import NES_PALETTE
 
 # NES AddPalByte/ChkLowHPPal (Bank03, $C661): while HP is low, background palette 0's color 1 ($3F01) is loaded as $26
@@ -59,7 +60,7 @@ def bad_ending_tile_image(tile: surface.Surface, palette_0_tile: bool, window_co
     return image
 
 
-def warp_line(lower_bound, upper_bound) -> List[tuple]:
+def warp_line(lower_bound, upper_bound) -> list[tuple]:
     assert lower_bound[0] == upper_bound[0] or lower_bound[1] == upper_bound[1]
     if lower_bound[0] != upper_bound[0]:
         return [(min(n, upper_bound[0]), upper_bound[1]) for n in range(lower_bound[0], upper_bound[0] + 1)]
@@ -67,7 +68,7 @@ def warp_line(lower_bound, upper_bound) -> List[tuple]:
         return [(upper_bound[0], min(n, upper_bound[1])) for n in range(lower_bound[1], upper_bound[1] + 1)]
 
 
-def parse_animated_sprite_sheet(sheet: surface.Surface, config: dict) -> Tuple[list, list, list, list]:
+def parse_animated_sprite_sheet(sheet: surface.Surface, config: dict) -> tuple[list, list, list, list]:
     """
     Parses sprite sheets and creates image lists. If is_roaming is True
     the sprite will have four lists of images, one for each direction. If
@@ -99,12 +100,13 @@ def parse_animated_sprite_sheet(sheet: surface.Surface, config: dict) -> Tuple[l
     return facing_down, facing_left, facing_up, facing_right
 
 
-def get_center_point(x, y, tile_size):
+def get_center_point(x: int, y: int, tile_size: int) -> Pixel:
+    """The pixel center of the block in column x, row y."""
     offset = tile_size // 2
     return (x * tile_size) + offset, (y * tile_size) + offset
 
 
-def covered_cells(nes_rows: Dict[int, Iterable[int]], row_offset: int, column_offset: int) -> FrozenSet[Tuple[int, int]]:
+def covered_cells(nes_rows: dict[int, Iterable[int]], row_offset: int, column_offset: int) -> frozenset[Cell]:
     """
     Converts a town's NES covered-area data into the (row, column) cells of this project's layout.
     :param nes_rows: NES map Y -> the NES map X positions whose covered-area nibble has bit 3 set.

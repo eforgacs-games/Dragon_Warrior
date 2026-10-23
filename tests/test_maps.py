@@ -33,8 +33,8 @@ class TestDragonWarriorMap(TestCase):
 
     def test_music_path_in_every_map(self):
         for dw_map, map_class in inspect.getmembers(maps, inspect.isclass):
-            # excluding non-map classes
-            if dw_map not in (
+            # excluding non-map classes (imported ones, like collections.abc.Callable, and the map base classes)
+            if map_class.__module__ == maps.__name__ and dw_map not in (
                     'ABC', 'AnimatedSprite', 'BaseSprite', 'BasementWithNPCs', 'BasementWithoutNPCs', 'CaveMap',
                     'Direction', 'Directories', 'DragonWarriorMap', 'FixedCharacter',
                     'Graphics', 'Group', 'LayeredDirty', 'MapLayouts', 'MapWithoutNPCs', 'NPC', 'Player',

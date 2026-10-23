@@ -5,7 +5,7 @@ The NES font has no Korean, so a window can only be generated tile by tile while
 it as text (src/text.py draw_text, which picks Unifont for Korean) at the tile the NES puts it in, the same way the
 COMMAND window (CommandMenu.draw_command_window) and the shop windows (DialogLookup.is_nes_text) do it.
 """
-from typing import Callable
+from collections.abc import Callable
 
 from pygame import Rect, Surface
 

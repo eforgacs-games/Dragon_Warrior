@@ -8,7 +8,10 @@
 4. GetEnemyInRow picks one of the row's five slots (pick_enemy).
 """
 import random
-from typing import Sequence
+from collections.abc import Sequence
+
+from src.coordinates import NesPosition
+
 
 # NES EnemyGroupsTbl (Bank03): five slots per row. A repeated enemy is that much more likely, since each slot is
 # equally likely. Rows $00-$0D are the overworld zones (OvrWrldEnGrid), rows $0E-$13 are for the dungeons.
@@ -103,7 +106,7 @@ NES_COORDINATE_OFFSETS: dict[str, tuple[int, int]] = {
 MAP_CHANGE_TILES = frozenset({'TOWN', 'CASTLE', 'CAVE', 'GRASS_STAIR_DOWN'})
 
 
-def nes_coordinates(map_identifier: str, column: int, row: int) -> tuple[int, int]:
+def nes_coordinates(map_identifier: str, column: int, row: int) -> NesPosition:
     """The NES CharXPos/CharYPos for a position on one of this project's layouts."""
     column_offset, row_offset = NES_COORDINATE_OFFSETS.get(map_identifier, (0, 0))
     return column - column_offset, row - row_offset
