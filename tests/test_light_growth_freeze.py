@@ -50,11 +50,11 @@ class TestLightGrowthFreeze(FreezeTestCase):
     def test_radiant_grows_the_light_for_24_frames(self):
         self.assertEqual(24, RADIANT_GROWTH_FRAMES)
         self.game.game_state.cast_radiant()
-        self.assertTrue(self.game.light_growing)
+        self.assertTrue(self.game.movement.light_growing)
         self.frames(RADIANT_GROWTH_FRAMES - 1)
-        self.assertTrue(self.game.light_growing)
+        self.assertTrue(self.game.movement.light_growing)
         self.frame()
-        self.assertFalse(self.game.light_growing)
+        self.assertFalse(self.game.movement.light_growing)
         self.assertEqual(7, self.game.game_state.lit_diameter)
 
     def test_the_hero_does_not_move_while_the_light_grows(self):
@@ -90,4 +90,4 @@ class TestLightGrowthFreeze(FreezeTestCase):
         # With ENABLE_DARKNESS off nothing draws the light, so it must not hold the hero up
         self.game.game_state.config['ENABLE_DARKNESS'] = False
         self.game.game_state.cast_radiant()
-        self.assertFalse(self.game.light_growing)
+        self.assertFalse(self.game.movement.light_growing)
