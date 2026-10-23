@@ -108,7 +108,7 @@ class TestDialogLookup(TestCase):
     def test_closing_the_window_in_a_selection_window_quits_the_game(self):
         # It used to call the builtin quit(), which exits without pygame.quit() (and isn't there in every Python)
         from src.windows import SHOP_INVENTORY_WINDOW
-        with patch('data.text.dialog_lookup_table.get', side_effect=[[pygame.event.Event(QUIT)]]), \
+        with patch('src.selection.event.get', side_effect=[[pygame.event.Event(QUIT)]]), \
                 patch('data.text.dialog_lookup_table.display'), \
                 patch.object(self.dialog_lookup.command_menu, 'window_drop_down_effect'), \
                 patch('src.waiting.pygame_quit') as pygame_quit, self.assertRaises(SystemExit):

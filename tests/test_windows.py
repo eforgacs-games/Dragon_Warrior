@@ -209,7 +209,7 @@ class TestShopWindows(WindowTestCase):
     def run_window(self, function, *keys):
         # One key press per pass of the window's loop, so the cursor is drawn after each move
         events = [[MagicMock(type=KEYDOWN, key=key)] for key in keys]
-        with patch('data.text.dialog_lookup_table.get', side_effect=events), \
+        with patch('src.selection.event.get', side_effect=events), \
                 patch('data.text.dialog_lookup_table.draw_text') as draw_text, \
                 patch('src.menu.draw_text') as item_draw_text, \
                 patch('src.common.Graphics.create_window') as create_window, \
