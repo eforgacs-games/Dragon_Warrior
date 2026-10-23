@@ -3,7 +3,7 @@ import os
 import sys
 
 from pygame import FULLSCREEN, K_h, K_i, K_k, RESIZABLE, display, event, image, init, K_F1, K_F2, K_F3, K_F4, K_F9, \
-    K_F11, KEYDOWN, KMOD_SHIFT, SCALED, K_RETURN, VIDEORESIZE
+    K_F11, K_BACKSPACE, KEYDOWN, KEYUP, KMOD_SHIFT, SCALED, K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -43,6 +43,7 @@ from src.music_player import MusicPlayer
 from src.npc_movement import step
 from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
 from src.options_screen import apply_options
+from src.rewind import Rewind
 from src.save_file import SaveFile
 from src.save_state import OLD_VERSION, StateError, read_state, restore_snapshot, take_snapshot, write_state
 from src.paths import data_path
@@ -141,6 +142,8 @@ class Game:
         # end of that frame carries out (run_due_state_request)
         self.state_request: tuple[str, int] | None = None
         self.state_request_due: tuple[str, int] | None = None
+        # Hold Backspace on the map to rewind (src/rewind.py): the snapshots it steps back through
+        self.rewind = Rewind(self)
         # Create the game window.
         if self.fullscreen_enabled:
             # according to pygame docs: "SCALED is considered an experimental API and may change in future releases."
@@ -271,6 +274,10 @@ class Game:
         loop of its own (a battle, a dialog), ends the run: the next one starts after the next draw."""
         frames = self.frame_pacer.frames_due()
         self.read_events()
+        if self.rewind.active:
+            # Backspace held: the map waits while the rewind steps back (src/rewind.py)
+            self.rewind.update()
+            return
         for _ in range(frames):
             current_map = self.current_map
             self.map_frame()
@@ -291,7 +298,13 @@ class Game:
         self._handle_pygame_events(self.events)
 
     def map_frame(self) -> None:
-        """One frame on the map (one NES frame): the hero, fights, the NPCs and what the step leads to."""
+        """One frame on the map (one NES frame): the hero, fights, the NPCs and what the step leads to. The rewind
+        (src/rewind.py) takes its snapshots between frames."""
+        self.rewind.before_frame()
+        self.run_map_frame()
+        self.rewind.after_frame()
+
+    def run_map_frame(self) -> None:
         self.auto_grind.show_pending()  # why auto-grind stopped, if it stopped where a message couldn't be shown
         if self.movement.hill_pause_frames:
             self.movement.hill_pause_frame()
@@ -378,6 +391,8 @@ class Game:
             quit_if_requested(current_event)
             if current_event.type == KEYDOWN:
                 self.handle_keypresses(current_event)
+            elif current_event.type == KEYUP and current_event.key == K_BACKSPACE:
+                self.rewind.stop()  # play on from the snapshot on screen
             elif current_event.type == VIDEORESIZE:
                 self._handle_window_resize(current_event)
 
@@ -712,6 +727,8 @@ class Game:
         self.map_mgr.handle_warps()
 
     def handle_keypresses(self, current_keydown_event):
+        if self.rewind.active:
+            return  # only letting go of Backspace does anything while rewinding
         if self.paused:
             # NES GamePaused only reads START until the game is unpaused
             self.handle_start_button(current_keydown_event)
@@ -729,6 +746,7 @@ class Game:
         self.handle_auto_battle_toggle(current_keydown_event)
         self.handle_invulnerability_toggle(current_keydown_event)
         self.handle_save_state_keys(current_keydown_event)
+        self.handle_rewind_key(current_keydown_event)
         if self.debug_tools is not None:
             # Dev config only (DEBUG_KEYS): F5 warp, F6 give, F7 load a checkpoint
             self.debug_tools.handle_keydown(current_keydown_event)
@@ -798,6 +816,12 @@ class Game:
             return
         self.state_request = ('save' if getattr(keydown_event, 'mod', 0) & KMOD_SHIFT else 'load', slot)
         self.movement.resolve_pending_freezes()
+
+    def handle_rewind_key(self, keydown_event) -> None:
+        """Backspace: start rewinding (src/rewind.py), not NES. Only on the map, when START would be accepted and
+        nothing is waiting to open; it goes on until Backspace is let go (_handle_pygame_events)."""
+        if keydown_event.key == K_BACKSPACE:
+            self.rewind.start()
 
     def run_due_state_request(self) -> None:
         """Save or load the save state asked for, once everyone is on a tile (resolve_pending_freezes), between two
