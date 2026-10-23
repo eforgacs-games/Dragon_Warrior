@@ -178,7 +178,7 @@ class TestKoreanText(TestCase):
         self.assertEqual("저는 로릭 왕의 딸 로라입니다.", _("I am Gwaelin, daughter of Lorik."))
         self.assertEqual("몸에 저주가 걸려 있다.", _("A curse is upon thy body."))
         self.assertEqual("성채 도시 메르키드에 오신 것을 환영합니다.", _("Welcome to Cantlin, the castle town."))
-        self.assertEqual("Edward은/는 비밀 통로를 발견했다!", _("{} discovers the Secret Passage.").format("Edward"))
+        self.assertEqual("Edward는 비밀 통로를 발견했다!", _("{} discovers the Secret Passage.").format("Edward"))
         self.assertEqual("남쪽으로 3, 그리고..", _("{} to the south and..").format(3))
         self.assertEqual("게임이 2배속으로 설정되었습니다.\n(120 FPS)",
                          _("Game set to {}x speed.\n({} FPS)").format(2, 120))

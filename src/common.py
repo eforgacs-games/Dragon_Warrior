@@ -11,6 +11,7 @@ from src.catalog import load_translations
 from src.color import WHITE, BLACK
 from src.direction import Direction
 from src.directories import Directories
+from src.korean_particles import KoreanText
 
 
 def find_file(name, path):
@@ -178,13 +179,22 @@ ANY_BUTTON_KEYS = A_BUTTON_KEYS + B_BUTTON_KEYS + START_BUTTON_KEYS + SELECT_BUT
 A_OR_START_KEYS = A_BUTTON_KEYS + START_BUTTON_KEYS
 
 
+def singular_or_plural(count: int, singular: str, plural: str) -> str:
+    """The NES text's PLRL, PNTS and AMTP (Bank01 DoPLRL, DoPNTS, DoAMTP): "Point" or "Hit" when the amount is exactly 1,
+    "Points" or "Hits" for anything else, 0 included. Both forms are separate catalog entries."""
+    return singular if count == 1 else plural
+
+
 def set_gettext_language(language):
     """The gettext function for the language; Korean also installs it as the builtin _. The Korean catalog is compiled
     from its .po once per run (src/catalog.py), however often this is called."""
     if language == 'Korean':
         ko = load_translations('ko')
         ko.install()
-        _ = ko.gettext
+
+        def _(message):
+            # KoreanText: .format() makes a particle after a placeholder agree with the value (src/korean_particles.py)
+            return KoreanText(ko.gettext(message))
     else:
         _ = gettext.gettext
     return _
