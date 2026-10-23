@@ -232,7 +232,7 @@ class TestGame(TestCase):
                 ('SwampCave', (6, 4), ('Alefgard', (51, 112))),
                 ('MountainCaveB2', (1, 1), ('Alefgard', (64, 37))),
                 ('CharlockB8', (33, 16), ('Alefgard', (55, 56))),
-                ('GarinsGraveB3', (2, 19), ('Garinham', (0, 28)))):
+                ('GarinsGraveB3', (2, 19), ('Garinham', (1, 28)))):
             with self.subTest(map=map_name):
                 self.go_to(map_name, start)
                 self.game.cmd_menu.outside()
@@ -266,7 +266,7 @@ class TestGame(TestCase):
 
     def test_wings_are_used_up(self):
         self.game.player.inventory = ['Wings', 'Wings']
-        self.go_to('Garinham', (11, 29))
+        self.go_to('Garinham', (12, 29))
         with patch('src.menu.CommandMenu.show_text_in_dialog_box'):
             self.game.cmd_menu.wings()
         self.assertEqual(self.where(), ('Alefgard', (50, 50)))

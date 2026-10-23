@@ -266,8 +266,8 @@ class TestStoryRun(TestCase):
         game, player = self.game, self.player
         with self.step("5 (get the Silver Harp in Garin's Grave)"):
             self.walk_onto((9, 10))
-            self.assertEqual(self.where, ('Garinham', (14, 9)))
-            for stairs, arrival in (((0, 28), ('GarinsGraveB1', (12, 7))),
+            self.assertEqual(self.where, ('Garinham', (15, 9)))
+            for stairs, arrival in (((1, 28), ('GarinsGraveB1', (12, 7))),
                                     ((19, 2), ('GarinsGraveB2', (3, 12))),
                                     ((11, 2), ('GarinsGraveB3', (18, 3))),
                                     ((6, 10), ('GarinsGraveB4', (5, 1))),
@@ -278,7 +278,7 @@ class TestStoryRun(TestCase):
             self.assertIn('Silver Harp', player.inventory)
             self.cmd_menu.outside()
             self.settle()
-            self.assertEqual(self.where, ('Garinham', (0, 28)))
+            self.assertEqual(self.where, ('Garinham', (1, 28)))
 
         with self.step("6 (trade the Silver Harp for the Staff of Rain)"):
             self.travel_to('Alefgard', (9, 89))
@@ -312,7 +312,7 @@ class TestStoryRun(TestCase):
             self.assertEqual(self.fight_guardian(GOLEM), ['Golem'])
             self.assertTrue(game.story_flags.golem_defeated)
             self.walk_onto((109, 81))  # Cantlin's gate, just past him
-            self.assertEqual(self.where, ('Cantlin', (8, 15)))
+            self.assertEqual(self.where, ('Cantlin', (8, 16)))
 
     def rescue_gwaelin(self, name):
         game = self.game
