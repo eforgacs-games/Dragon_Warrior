@@ -36,6 +36,7 @@ from src.zoom import handle_zoom_event
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, SelectionButtons, first_button
+from src.nes_random import coin_flip
 
 
 class BattleOutcome(Enum):
@@ -466,7 +467,7 @@ class BattleController:
         """NES StartPlayerTurn: a sleeping hero wakes when bit 0 of a random byte is set (50%), with no limit on how
         long the sleep can last. On waking, "<player> awakes." then "Command?": the hero takes this turn as usual.
         Otherwise "Thou art still asleep." (PlayerAsleepDialog) and the enemy takes its turn."""
-        if random.randint(0, 255) & 0x01:
+        if coin_flip():
             self.player.is_asleep = False
             self.cmd_menu.show_line_in_dialog_box(
                 self._("{} awakes.\n").format(self.player.name) + self._("Command?\n"),
@@ -612,7 +613,7 @@ class BattleController:
                         case Spell.STOPSPELL:
                             # NES EnCastStopspell: Erdrick's Armor always blocks it; otherwise it works when bit 0 of a
                             # random byte is set (50%). It lasts for the rest of the fight.
-                            if self.player.armor != "Erdrick's Armor" and random.randint(0, 255) & 0x01:
+                            if self.player.armor != "Erdrick's Armor" and coin_flip():
                                 self.player.is_stopspelled = True
                                 message = self._("{}'s spell is blocked.").format(self.player.name)
                             else:

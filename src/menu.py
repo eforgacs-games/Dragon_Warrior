@@ -42,6 +42,7 @@ from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENT
     STATUS_EQUIPMENT_TILE_COLUMN, STATUS_EQUIPMENT_TILE_ROWS, STATUS_LAYOUT, STATUS_NAME_TILE_COLUMN, \
     STATUS_NAME_TILE_ROW, STATUS_VALUE_RIGHT_TILE_COLUMN, STATUS_VALUE_TILE_ROWS, STATUS_WINDOW, YES_NO_LAYOUT, \
     YES_NO_WINDOW, item_menu_entry_tile_row, item_menu_layout, item_menu_window, Window, name_halves
+from src.nes_random import one_in
 
 # The COMMAND window's commands, in WndSelResults order (NCC_TALK $00 to NCC_TAKE $07; src/windows.py COMMAND_ENTRIES):
 # the CommandMenu methods Bank03 NCCmdSelected and CheckCmdWndResults run for each
@@ -694,7 +695,7 @@ class CommandMenu:
     def take_death_necklace(self) -> None:
         """NES ChkTrsrNecklace: the first time, there is a 1 in 32 chance of the Death Necklace (the low 5 bits of a
         random byte all zero). Otherwise, and always once it has been found, the chest holds 100-131 gold."""
-        if not self.game.story_flags.death_necklace_found and random.randint(0, 255) & 0x1F == 0:
+        if not self.game.story_flags.death_necklace_found and one_in(32):
             self.game.story_flags.death_necklace_found = True
             self.take_item('Death Necklace')
         else:
