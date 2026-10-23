@@ -2338,3 +2338,16 @@ msgstr "켜기"
 #: src/options_screen.py
 msgid "OFF (NES)"
 msgstr "끄기 (NES)"
+
+#: src/options_screen.py:236
+msgid ""
+"Do You Want To\n"
+"Erase This\n"
+"Character?"
+msgstr ""
+"이 캐릭터를\n"
+"지우시겠습니까?"
+
+#: src/options_screen.py:238
+msgid "LEVEL"
+msgstr "레벨"

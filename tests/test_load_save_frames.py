@@ -125,11 +125,11 @@ class TestLoadSaveFrames(TestCase):
 
             loaded = new_game()
             loaded.directories.save_dir = save_dir
-            loaded.save_dir_contents = os.listdir(save_dir)
+            loaded.title_menu.save_dir_contents = os.listdir(save_dir)
             self.record_frames(loaded)
             with patch.object(loaded.game_functions, 'main_menu_selection', return_value=0), \
                     patch.object(loaded.cmd_menu.__class__, 'show_text_in_dialog_box'):
-                loaded.continue_quest()
+                loaded.title_menu.continue_quest()
                 self.run_main_loop(loaded, frames=3)
         self.assert_every_frame_shows('TantegelThroneRoom', Direction.UP, 'ARMED')
         self.assertTrue(loaded.story_flags.left_throne_room)
@@ -150,11 +150,11 @@ class TestLoadSaveFrames(TestCase):
         game = new_game()
         facing = Direction(game.player.direction_value)
         self.record_frames(game)
-        with patch.object(game, 'select_adventure_log'), patch('src.game.NameSelection') as name_selection, \
-                patch.object(game, 'choose_new_quest_options'), \
+        with patch.object(game.title_menu, 'select_adventure_log'), patch('src.title_menu.NameSelection') as name_selection, \
+                patch.object(game.title_menu, 'choose_new_quest_options'), \
                 patch.object(game.cmd_menu.__class__, 'show_text_in_dialog_box'):
             name_selection.return_value.select_name.return_value = "Erdrick"
-            game.begin_new_quest()
+            game.title_menu.begin_new_quest()
             self.run_main_loop(game, frames=3)
         self.assert_every_frame_shows('TantegelThroneRoom', facing, 'UNARMED')
         self.assertEqual(game.player.name, "Erdrick")
