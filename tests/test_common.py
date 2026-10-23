@@ -24,7 +24,7 @@ class Test(TestCase):
         self.assertEqual({39}, get_surrounding_tile_values((3, 2), layout))
 
     def test_convert_to_frames(self):
-        self.assertEqual(0.6, calculation.convert_to_frames(10))
+        self.assertAlmostEqual(0.600988, calculation.convert_to_frames(10), places=6)
 
     def test_nine_slice_keeps_the_border(self):
         from pygame import Surface

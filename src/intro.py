@@ -3,7 +3,7 @@ from os.path import join
 
 from pygame import image, display, Rect, Surface, KEYDOWN
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
-from src.waiting import NES_FPS, game_speed, get_events, quit_if_requested, wait_until
+from src.waiting import NES_FPS, FrameClock, get_events, quit_if_requested, wait_until
 from pygame.transform import scale
 
 from data.text.intro_lookup_table import ControlInfo
@@ -15,7 +15,7 @@ from src.text import draw_text
 from src.visual_effects import cut_to_black, screen_fade
 
 
-# The title screen's timeline, in frames (60 a second)
+# The title screen's timeline, in NES frames (NES_FPS, 60.0988 a second)
 TITLE_BANNER_FRAMES = 620  # the banner alone, before the dragon and the text appear
 FIRST_SPARKLE_FRAME = 32  # frames after the dragon banner appears: the long sparkle
 SECOND_SPARKLE_FRAME = FIRST_SPARKLE_FRAME + 128  # the first short sparkle
@@ -49,6 +49,7 @@ class Intro:
         self.config = config
         self.directories = Directories(config)
         self.calculation = Calculation(config)
+        self.frame_clock = FrameClock()
         self.last_long_sparkle_clock_check = None
         self.last_first_short_sparkle_clock_check = None
         self.last_second_short_sparkle_clock_check = None
@@ -64,7 +65,7 @@ class Intro:
         display.update(intro_banner_rect)
         waiting = True
         while waiting:
-            clock.tick(config['FPS'] * game_speed())
+            self.frame_clock.tick()  # NES_FPS x the game speed
             for current_event in get_events():
                 quit_if_requested(current_event)
                 if current_event.type == KEYDOWN:
@@ -84,7 +85,7 @@ class Intro:
 
         while intro_banner_with_text_enabled:
             self.handle_all_sparkles(intro_banner_with_text_enabled_start_time, screen)
-            clock.tick(config['FPS'] * game_speed())
+            self.frame_clock.tick()  # NES_FPS x the game speed
             for current_event in get_events():
                 quit_if_requested(current_event)
                 if current_event.type == KEYDOWN:

@@ -14,7 +14,6 @@ def language_from_locale(locale_name: str | None) -> str:
 
 base_config = {
     "START_MAP": "TantegelThroneRoom",
-    "FPS": 60,
     "SCALE": SCALE,
     "TILE_SIZE": 16 * SCALE,
     "NES_RES": (256, 240),

@@ -3,7 +3,7 @@ Scripted button presses for the headless tools (tools/record_frames.py, tools/be
 turned into key presses, and ``ScriptedInput`` posts them on the game clock from inside whichever loop of the game is
 reading input at the time.
 
-The script is a comma-separated list of steps, run in order on the game clock (60 frames a second):
+The script is a comma-separated list of steps, run in order on the game clock (NES frames, 60.0988 a second):
 - a button: ``a``, ``b``, ``start``, ``select``, ``enter``, ``up``, ``down``, ``left`` or ``right``. A button is
   held for 2 frames, a direction for 16 (one step); ``right:48`` holds it for 48 frames (three steps).
 - ``wait:N``: wait N frames.
@@ -18,7 +18,7 @@ from unittest.mock import patch
 import pygame
 from pygame import KEYDOWN, KEYUP, K_DOWN, K_LEFT, K_RETURN, K_RIGHT, K_UP, K_i, K_j, K_k, K_u
 
-from src.waiting import NES_FPS, game_ticks
+from src.waiting import frame_at, game_ticks
 
 BUTTON_KEYS = {'a': K_k, 'b': K_j, 'start': K_i, 'select': K_u, 'enter': K_RETURN,
                'up': K_UP, 'down': K_DOWN, 'left': K_LEFT, 'right': K_RIGHT}
@@ -99,7 +99,7 @@ class ScriptedInput:
         if self.last_ticks is not None:
             self.elapsed_ms += min(now - self.last_ticks, STALL_MS)
         self.last_ticks = now
-        return self.elapsed_ms * NES_FPS // 1000
+        return frame_at(self.elapsed_ms)
 
     def poll(self) -> None:
         now = self.frame_now()

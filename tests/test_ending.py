@@ -8,6 +8,7 @@ from src.config.test_config import test_config
 from src.direction import Direction
 from src.ending import CREDITS, END_MUSIC_TIMING_EVENTS, EndMusicTimingEvents, credit_screen_music_events
 from src.maps import map_lookup
+from src.waiting import NES_FPS
 from tests.helpers import new_game
 
 
@@ -270,13 +271,13 @@ class TestEnding(TestCase):
         clock = [0.0]  # milliseconds
 
         def frames_pass(frames, *args, **kwargs):
-            clock[0] += frames * 1000 / 60
+            clock[0] += frames * 1000 / NES_FPS
 
         def fade(fade_out, **kwargs):
             frames_pass(20 if fade_out else 16)  # PalFadeOut, PalFadeIn
 
         def frame_now():
-            return round(clock[0] * 60 / 1000)
+            return round(clock[0] * NES_FPS / 1000)
 
         shown = []
         with patch('src.ending.game_ticks', side_effect=lambda: clock[0]), \
@@ -303,7 +304,7 @@ class TestEnding(TestCase):
         # The note before the no-op is still playing when the wait starts: WaitForMusicEnd returns on the next frame
         first_frame, gone = END_MUSIC_TIMING_EVENTS[0]
         now = (first_frame + gone) // 2
-        with patch('src.ending.game_ticks', side_effect=[0, now * 1000 / 60]), \
+        with patch('src.ending.game_ticks', side_effect=[0, now * 1000 / NES_FPS]), \
                 patch('src.ending.wait_frames') as wait:
             EndMusicTimingEvents(self.game.config).wait(1)
         self.assertEqual(0, wait.call_args.args[0])
@@ -311,7 +312,7 @@ class TestEnding(TestCase):
     def test_a_timing_event_that_went_by_is_gone(self):
         _, gone = END_MUSIC_TIMING_EVENTS[0]
         next_event = END_MUSIC_TIMING_EVENTS[1][0]
-        with patch('src.ending.game_ticks', side_effect=[0, gone * 1000 / 60]), \
+        with patch('src.ending.game_ticks', side_effect=[0, gone * 1000 / NES_FPS]), \
                 patch('src.ending.wait_frames') as wait:
             EndMusicTimingEvents(self.game.config).wait(1)
         self.assertAlmostEqual(next_event - gone, wait.call_args.args[0])

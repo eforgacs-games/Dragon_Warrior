@@ -6,7 +6,7 @@ from pygame import KEYDOWN, K_RETURN, QUIT
 from pygame.event import Event
 
 from src.config.test_config import test_config
-from src.waiting import check_for_quit, quit_if_requested, reset_game_speed, wait, wait_frames, wait_until
+from src.waiting import NES_FPS, check_for_quit, quit_if_requested, reset_game_speed, wait, wait_frames, wait_until
 from tests.helpers import new_game
 
 
@@ -37,7 +37,7 @@ class TestWait(TestCase):
     def test_wait_frames_converts_nes_frames(self):
         with patch('src.waiting.wait') as mock_wait:
             wait_frames(30, {'NO_WAIT': False})
-        mock_wait.assert_called_once_with(500, {'NO_WAIT': False})
+        mock_wait.assert_called_once_with(30 * 1000 / NES_FPS, {'NO_WAIT': False})  # 499.2 ms
 
     def test_wait_until_waits_out_only_what_is_left(self):
         with patch('src.waiting.game_ticks', return_value=1000), patch('src.waiting.wait') as mock_wait:
