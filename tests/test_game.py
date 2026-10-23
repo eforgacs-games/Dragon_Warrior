@@ -773,12 +773,6 @@ class TestGame(TestCase):
             self.assertTrue(self.game.hovering_stats_displayed)
         mock_window_drop_down_effect.assert_called_with(1, 2, 4, 6)
 
-    # select button doesn't do anything (for now). Commenting it out to keep the unit tests fast.
-
-    # def test_handle_select_button(self):
-    #     pygame.key.get_pressed = create_key_mock_u(pygame.K_u)
-    #     self.game.handle_select_button(pygame.key.get_pressed())
-
     def test_handle_help_button(self):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
             keydown_event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F1, mod=pygame.KMOD_NONE)

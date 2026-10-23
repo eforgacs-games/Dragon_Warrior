@@ -8,7 +8,7 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
-    K_u, K_w, RESIZABLE, display, event, image, init, key, K_F1, K_F2, K_F3, K_F4, K_F11, time, KEYDOWN, SCALED, \
+    K_w, RESIZABLE, display, event, image, init, key, K_F1, K_F2, K_F3, K_F4, K_F11, time, KEYDOWN, SCALED, \
     K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
@@ -981,9 +981,6 @@ class Game:
     def handle_warps(self):
         self.map_mgr.handle_warps()
 
-    def process_warp(self, staircase_dict):
-        self.map_mgr.process_warp(staircase_dict)
-
     def handle_keypresses(self, current_keydown_event):
         if self.paused:
             # NES GamePaused only reads START until the game is unpaused
@@ -993,7 +990,6 @@ class Game:
         # B does nothing on the map: in the COMMAND window it is read with the other buttons (CommandMenu.select_command)
         self.handle_a_button(current_keydown_event)
         self.handle_start_button(current_keydown_event)
-        self.handle_select_button(current_keydown_event)
         # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed (or scroll wheel is moved). (modernization)
         # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
         #     self.scale = self.scale + 1
@@ -1051,12 +1047,6 @@ class Game:
             elif self.cmd_menu.check_across_from_npc() and not self.game_state.is_initial_dialog:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
                 self.cmd_menu.talk()
-
-    @staticmethod
-    def handle_select_button(keydown_event):
-        if keydown_event.key == K_u:
-            # Select button
-            pass
 
     @property
     def fps(self) -> int:
@@ -1142,23 +1132,14 @@ class Game:
 
     def process_staircase_warps(self, staircase_location: tuple, staircase_dict: dict) -> None:
         if (self.player.row, self.player.column) == staircase_location:
-            self.process_warp(staircase_dict)
+            self.map_mgr.process_warp(staircase_dict)
 
     def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: tuple | None = None,
                    direction: int | None = None, fade_out_first: bool = True) -> None:
         self.map_mgr.change_map(next_map, destination_coordinates, direction, fade_out_first=fade_out_first)
 
-    def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
-        self.map_mgr.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
-
-    def reset_initial_hero_location_tile(self):
-        self.map_mgr.reset_initial_hero_location_tile()
-
     def set_big_map(self):
         self.map_mgr.set_big_map()
-
-    def handle_player_direction_on_map_change(self, current_map_staircase_dict):
-        self.map_mgr.handle_player_direction_on_map_change(current_map_staircase_dict)
 
     def set_roaming_character_positions(self):
         self.map_mgr.set_roaming_character_positions()
