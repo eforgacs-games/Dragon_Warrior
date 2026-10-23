@@ -269,9 +269,9 @@ class BattleController:
                                          self.game.story_flags)
         if coordinates is None:
             return
-        self.sound.play_sound(self.directories.stairs_down_sfx)
         self.game.change_map(map_lookup[self.current_map.identifier](self.config),
-                             destination_coordinates=coordinates, direction=self.player.direction_value)
+                             destination_coordinates=coordinates, direction=self.player.direction_value,
+                             stairs_sound=True)
 
     def start_fight(self, current_battle: Battle) -> bool:
         """NES InitFight, after the enemy appears (SetEnHP): CheckEnRun gives a much weaker enemy its chance to run
@@ -447,7 +447,7 @@ class BattleController:
                                                   hide_arrow=True, skip_text=True)
 
     def enemy_run_away(self, current_battle, enemy):
-        self.sound.play_sound(self.directories.stairs_down_sfx)
+        self.sound.play_sound(self.directories.run_away_sfx)  # NES LEFCB: SFX_RUN
         self.cmd_menu.show_line_in_dialog_box(self._("The {} is running away.").format(self._(enemy.name)),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
         current_battle.make_enemy_image_disappear(self.screen)
