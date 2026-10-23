@@ -197,10 +197,12 @@ class MapManager:
         if destination_coordinates:
             self.game.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]),
                                                  self.tile_size)
-        # load_map gave the hero the unarmed sprite sheet on its first image (facing down); show the right sheet and
-        # facing in the frame the fade-in starts from, not only once the main loop has animated the hero
+        # load_map gave the hero the unarmed sprite sheet and every character its first image (facing down); show the
+        # right sheet and each one's facing in the frame the fade-in starts from, not only once the main loop has
+        # animated them (the guards used to turn round the frame after the fade)
         self.game.set_player_images_by_equipment()
-        self.player.show_facing()
+        for character_dict in self.current_map.characters.values():
+            character_dict['character'].show_facing()
         self.drawer.draw_all(self.screen, self.game.loop_count, self.game.big_map, self.current_map, self.player,
                              self.game.cmd_menu, self.game.foreground_rects, self.game_state.enable_animate,
                              self.game.camera, self.game.initial_dialog_enabled, self.game.events,
