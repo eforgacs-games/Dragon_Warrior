@@ -27,6 +27,7 @@ from src.maps import TantegelThroneRoom, TantegelCourtyard, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.menu import CommandMenu
 from src.music_player import MusicPlayer
+from src.options_screen import OptionsScreen
 from src.player.player import Player
 from src.spells import Spell
 from src.sprites.roaming_character import RoamingCharacter
@@ -966,14 +967,17 @@ class TestGame(TestCase):
             save_path = os.path.join(tmp_dir, 'save_slot_1.json')
             with open(save_path, 'w') as f:
                 json.dump({'Name': 'Hero'}, f)
-            with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0):
+            # log 1, then YES (tests/test_copy_erase_log.py plays the windows key by key)
+            with patch.object(OptionsScreen, 'choose_log', return_value=1), \
+                    patch.object(OptionsScreen, 'confirm_erase', return_value=True):
                 self.game.erase_quest()
             self.assertFalse(os.path.exists(save_path))
 
-    def test_erase_quest_missing_file_is_noop(self):
+    def test_erase_quest_with_no_logs_is_noop(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.game.directories.save_dir = tmp_dir
-            with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0):
+            # ShowUsedLogs with no used log: straight back to the title menu, no window
+            with patch.object(OptionsScreen, 'choose_log', side_effect=AssertionError('a log window opened')):
                 self.game.erase_quest()  # should not raise
 
     def test_copy_quest_copies_save_file(self):
@@ -983,22 +987,26 @@ class TestGame(TestCase):
             dst_path = os.path.join(tmp_dir, 'save_slot_2.json')
             with open(src_path, 'w') as f:
                 json.dump({'Name': 'Hero'}, f)
-            # first call = pick src slot (0 → slot 1), second = pick dst slot (1 → slot 2)
-            with patch.object(self.game.game_functions, 'main_menu_selection', side_effect=[0, 1]):
+            # from used log 1, to open log 2, then YES
+            with patch.object(OptionsScreen, 'choose_log', return_value=1), \
+                    patch.object(OptionsScreen, 'choose_open_log', return_value=2), \
+                    patch.object(OptionsScreen, 'confirm', return_value=True):
                 self.game.copy_quest()
             self.assertTrue(os.path.exists(dst_path))
             with open(dst_path) as f:
                 self.assertEqual({'Name': 'Hero'}, json.load(f))
 
-    def test_copy_quest_same_slot_is_noop(self):
+    def test_copy_quest_no_is_noop(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.game.directories.save_dir = tmp_dir
             src_path = os.path.join(tmp_dir, 'save_slot_1.json')
             with open(src_path, 'w') as f:
                 json.dump({'Name': 'Hero'}, f)
-            with patch.object(self.game.game_functions, 'main_menu_selection', side_effect=[0, 0]):
+            with patch.object(OptionsScreen, 'choose_log', return_value=1), \
+                    patch.object(OptionsScreen, 'choose_open_log', return_value=2), \
+                    patch.object(OptionsScreen, 'confirm', return_value=False):
                 self.game.copy_quest()
-            # only one file should exist (no copy made to same slot)
+            # only one file should exist (NO copies nothing)
             self.assertEqual(['save_slot_1.json'], os.listdir(tmp_dir))
 
     # this test fails in GitHub Actions
