@@ -8,7 +8,7 @@ passes; otherwise HaltNPCMoveCalcs stops it, and it stays where it is, facing th
    wraps to $FF, past the limit). Our layouts pad the NES maps, so this is the NES area, not the layout.
 2. The target isn't the player's position (CharXPos, CharYPos) or the player's next position (_CharXPos, _CharYPos).
 3. NPCCollideLoop: the target isn't the position of any of the 20 NPCs, mobile or static.
-   (Game.character_in_path checks 2 and 3, for the player and NPCs alike.)
+   (MovementController.character_in_path checks 2 and 3, for the player and NPCs alike.)
 4. GetBlockID: the target's block ID is below BLK_FFIELD ($0D). GetBlockID returns opened doors and taken chests as
    BLK_BRICK; here those are already BRICK in the layout.
 5. HasCoverData/CoveredStsNext: the target is covered (under a roof) exactly when the NPC's current tile is
