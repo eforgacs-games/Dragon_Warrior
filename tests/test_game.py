@@ -280,6 +280,17 @@ class TestGame(TestCase):
         self.assertEqual(self.where(), ('Alefgard', (50, 50)))
         self.assertEqual(self.game.player.inventory, ['Wings'])
 
+    def test_wings_flash_the_screen_before_the_return(self):
+        # NES UseWings: the text (TextBlock4 entry 9), BWScreenFlash (LDD8F), then DoReturn (SFX_WVRN_WNG and the warp)
+        self.game.player.inventory = ['Wings']
+        self.go_to('Garinham', (12, 29))
+        events = []
+        with patch('src.menu.CommandMenu.show_text_in_dialog_box', side_effect=lambda *a, **k: events.append('text')), \
+                patch('src.menu.bw_screen_flash', side_effect=lambda *a: events.append('flash')), \
+                patch.object(self.game.cmd_menu, 'return_to_tantegel', side_effect=lambda: events.append('return')):
+            self.game.cmd_menu.wings()
+        self.assertEqual(['text', 'flash', 'return'], events)
+
     def test_wings_cannot_be_used_in_dungeons(self):
         self.game.player.inventory = ['Wings']
         self.go_to('ErdricksCaveB1', (3, 3))
