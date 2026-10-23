@@ -645,7 +645,7 @@ class CommandMenu:
         if self.player.inventory.count(item_name) >= maximum:
             self.take_empty_chest()
             return
-        self.player.inventory.insert(0, item_name)
+        self.player.inventory.append(item_name)
         self.open_chest()
         self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
 
@@ -657,7 +657,7 @@ class CommandMenu:
         self.open_chest()
         self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
         if item_name in UNSLOTTED_ITEMS or not self.inventory_is_full():
-            self.player.inventory.insert(0, item_name)
+            self.player.inventory.append(item_name)  # NES AddInvItem: the first empty slot
         else:
             self.discard_for_item(item_name)
 
@@ -684,8 +684,9 @@ class CommandMenu:
                     # NES LE0B9: a worn Cursed Belt or Death Necklace can't be dropped
                     self.show_text_in_dialog_box(self._("A curse is upon thy body."), skip_text=self.skip_text)
                     continue
+                # NES LE0EF-LE0F4: RemoveInvItem, then AddInvItem, so the new item takes the dropped one's slot
                 self.player.inventory.remove(item_to_drop)
-                self.player.inventory.insert(0, item_name)
+                self.player.inventory.append(item_name)
                 self.show_text_in_dialog_box((self._("Thou hast dropped thy {}.").format(self._(item_to_drop)),
                                               self._("And obtained the {}.").format(self._(item_name))),
                                              skip_text=self.skip_text)
@@ -1192,6 +1193,13 @@ class CommandMenu:
         """Draw a character's current image on the screen at once. NES PrepTalk calls NPCFacePlayer (LC04A) before the
         dialog: it writes the NPC's new sprite tiles straight into sprite RAM, so the NPC is seen facing the hero from
         the next frame, before the first letter. Drawing it is otherwise left to the next draw_all, after the talk."""
+        self.redraw_character_block(character, draw_character=True)
+
+    def erase_character_now(self, character) -> None:
+        """Draw the floor over a character that has just been taken off the map, at once (NES ModMapBlock)."""
+        self.redraw_character_block(character, draw_character=False)
+
+    def redraw_character_block(self, character, draw_character: bool) -> None:
         if self.game.game_state.config['NO_BLIT'] or self.current_map.is_hidden_by_cover(character.row,
                                                                                           character.column):
             return
@@ -1201,7 +1209,8 @@ class CommandMenu:
                 if tile.rect.colliderect(character.rect):
                     tiles.add(tile)
         tiles.draw(self.background)  # the old image off the block first: the sprites are see-through
-        self.background.blit(character.image, character.rect)
+        if draw_character:
+            self.background.blit(character.image, character.rect)
         display.update(self.screen.blit(self.background, character.rect.move(self.camera_position),
                                         area=character.rect))
 

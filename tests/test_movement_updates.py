@@ -91,6 +91,7 @@ class TestMovementUpdates(TestCase):
         self.game.story_flags.dragonlord_defeated = True
         self.game.repel_timer = 9
         self.game.count_step()
+        self.game.tick_repel_timer_after_step()
         self.assertEqual(self.game.repel_timer, 7)
 
     # CheckBlockDmg/ChkOtherBlocks: its own F_DGNLRD_DEAD check ends swamp and barrier damage

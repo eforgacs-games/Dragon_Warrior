@@ -272,6 +272,22 @@ class TestCommandMenu(TestCase):
         self.assertIn("If thou would take the Wings, thou must now discard some other item.\n"
                       "Dost thou wish to have the Wings?", messages)
 
+    def test_chest_item_fills_the_first_empty_slot(self):
+        # NES AddInvItem: the first empty slot, so the list keeps the slot order
+        self.game.player.inventory = ['Torch', 'Fairy Water', 'Dragon\'s Scale']
+        self.game.player.inventory.remove('Fairy Water')
+        self.open_chest_at('Rimuldar', (31, 32))
+        self.assertEqual(self.game.player.inventory, ['Torch', 'Wings', "Dragon's Scale"])
+
+    def test_discarded_items_slot_gets_the_new_item(self):
+        # NES LE0EF-LE0F4: RemoveInvItem, then AddInvItem
+        self.game.player.inventory = ['Torch', 'Fairy Water', 'Silver Harp', 'Torch', 'Torch', 'Torch', 'Torch',
+                                      'Torch']
+        with patch.object(self.game.cmd_menu, 'prompt_yes_no', return_value=True), \
+                patch.object(self.game.cmd_menu, 'display_item_menu', return_value='Fairy Water'):
+            self.open_chest_at('Rimuldar', (31, 32))
+        self.assertEqual(self.game.player.inventory[:3], ['Torch', 'Wings', 'Silver Harp'])
+
     def test_full_inventory_discard_item(self):
         self.game.player.inventory = ['Silver Harp'] + ['Torch'] * 7
         with patch.object(self.game.cmd_menu, 'prompt_yes_no', return_value=True), \

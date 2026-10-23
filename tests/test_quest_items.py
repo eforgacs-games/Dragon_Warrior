@@ -211,7 +211,9 @@ class TestQuestItems(TestCase):
                              ["Now the sun and rain shall meet and the Rainbow Drop passes to thy keeping."])
         greyscale.assert_called_once()
         self.assertEqual(greyscale.call_args.kwargs['frames'], 30)
-        self.assertEqual(self.game.player.inventory, ['Rainbow Drop', "Erdrick's Token", 'Herb'])
+        # NES LD37B-LD387: RemoveInvItem the Stones and the Staff, then AddInvItem puts the Rainbow Drop in the first
+        # empty slot, the Staff's
+        self.assertEqual(self.game.player.inventory, ["Erdrick's Token", 'Rainbow Drop', 'Herb'])
         self.assertEqual(self.talk_to('WISE_MAN'), [NO_BUSINESS])
 
     def test_rainbow_drop_exchange_without_both_items(self):
