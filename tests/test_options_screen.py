@@ -388,6 +388,7 @@ class TestDialogStyles(OptionsTestCase):
         self.config['DIALOG_STYLE'] = MODERN
         pygame.event.clear()
         pygame.event.post(Event(QUIT))
+        self.addCleanup(pygame.event.clear)  # the QUIT is only peeked at; don't leave it for the next test
         with patch('src.waiting.pygame_quit'), self.assertRaises(SystemExit):
             self.cmd_menu.show_line_in_dialog_box("Hello there.", skip_text=True, hide_arrow=True)
 
