@@ -4,7 +4,6 @@ NES RemoveWindow (Bank00, $A7A2) redraws only the map blocks under a closing win
 (StartSignedXPos), so they line up with the map around them and nothing else on the screen moves. Here every frame
 drawn while the window closes must match, outside the window, the last frame drawn while it was open.
 """
-import os
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -16,9 +15,7 @@ from src.config.test_config import test_config
 from src.game import Game
 from src.waiting import NES_FPS
 from src.windows import COMMAND_WINDOW, POPUP_WINDOW
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 class StopMainLoop(Exception):
@@ -45,8 +42,7 @@ class TestCommandWindowClose(TestCase):
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = False  # draw for real: the frames are what's being tested
         self.addCleanup(test_config.__setitem__, 'NO_BLIT', True)
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.game_state.is_initial_dialog = False
         self.game.handle_battles = MagicMock()  # type: ignore[method-assign]
         pygame.event.clear()
@@ -92,7 +88,7 @@ class TestCommandWindowClose(TestCase):
                 mock_key.get_pressed.return_value = held
                 Game.get_events(game)
 
-        game.get_events = get_events  # type: ignore[method-assign]
+        game.run_due_frames = get_events  # type: ignore[method-assign]  # one frame a pass, as when drawing keeps up
         game.clock = MagicMock()  # don't wait for the frame rate
         # One NES frame per pass of the main loop, for the window's joypad reading (src/command_window.py)
         with patch('pygame.display.flip', flip), patch('pygame.display.update', update), \

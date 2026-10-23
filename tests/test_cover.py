@@ -1,4 +1,3 @@
-import os
 from collections import Counter
 from unittest import TestCase
 from unittest.mock import MagicMock
@@ -8,13 +7,11 @@ import pygame
 from src import maps
 from src.common import BLACK
 from src.config.test_config import test_config
+from src.direction import Direction
 from src.drawer import draw_cover, get_player_block
 from src.game import Game
 from src.maps_functions import covered_cells
 from tests.test_drawer import _make_drawer
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 TILE_SIZE = test_config['TILE_SIZE']
 
@@ -131,12 +128,9 @@ class TestHiddenByCover(TestCase):
     def test_npc_crosses_cover_boundary(self):
         game = MagicMock()
         game.current_map = self.brecconary
-        npc = MagicMock(row=32, column=32)
-        game.get_next_coordinates.return_value = (32, 31)  # (column, row): stepping out of the shop
+        npc = MagicMock(row=32, column=32, direction_value=Direction.UP.value)  # stepping out of the shop
         self.assertTrue(Game.npc_crosses_cover_boundary(game, npc))
-        game.get_next_coordinates.return_value = (33, 32)
-        self.assertFalse(Game.npc_crosses_cover_boundary(game, npc))
-        game.get_next_coordinates.return_value = None
+        npc.direction_value = Direction.RIGHT.value
         self.assertFalse(Game.npc_crosses_cover_boundary(game, npc))
 
 

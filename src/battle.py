@@ -1,6 +1,6 @@
 import random
 
-from pygame import display, mixer, Surface
+from pygame import display, Surface
 
 from src.common import BLACK, set_gettext_language
 from src.constants import BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT
@@ -8,7 +8,7 @@ from src.directories import Directories
 from src.enemy import enemy_groups
 from src.enemy_lookup import enemy_string_lookup
 from src.maps import DragonWarriorMap
-from src.window_renderer import draw_window
+from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT
 from src.menu import CommandMenu
 from src.player.player import Player
@@ -61,14 +61,11 @@ class Battle:
         from src.common import Graphics
         self.graphics = Graphics(config)
 
-    def play_battle_music(self):
-        if self.config["MUSIC_ENABLED"]:
-            # NES InitFight: the Dragonlord's final form gets the end boss music (MSC_END_BOSS); every other
-            # fight, including his first form, gets the regular fight music (MSC_ENTR_FGHT).
-            music = self.directories.end_boss_music if self.enemy.name == 'Dragonlord 2' else \
-                self.directories.battle_music
-            mixer.music.load(music)
-            mixer.music.play(-1)
+    def play_battle_music(self, music_player):
+        """NES InitFight: the Dragonlord's final form gets the end boss music (MSC_END_BOSS); every other fight,
+        including his first form, gets the regular fight music (MSC_ENTR_FGHT)."""
+        music = self.directories.end_boss_music if self.enemy.name == 'Dragonlord 2' else self.directories.battle_music
+        music_player.load_and_play_music(music)
 
     def transition_battle_background_image_effect(self, screen, player):
         """Spiral effect to introduce battle background (NES LoadCombatBckgrnd, $E3CD).
@@ -149,7 +146,7 @@ class Battle:
                             self.get_group_factor(current_battle.enemy.name)):
             cmd_menu.show_line_in_dialog_box(self._("But was blocked in front.").format(current_battle.enemy.name),
                                              add_quotes=False, hide_arrow=True, disable_sound=True)
-            if cmd_menu.game.enemy_move(current_battle):
+            if cmd_menu.game.battle_ctrl.enemy_move(current_battle):
                 return True
             if player.current_hp <= 0:
                 player.is_dead = True
@@ -201,7 +198,7 @@ class Battle:
         else:
             cmd_menu.display_item_menu('spells')
 
-    def enemy_defeated(self, cmd_menu, screen, player, music_enabled, enemy):
+    def enemy_defeated(self, cmd_menu, screen, player, enemy):
         """Handle an enemy being defeated."""
         self.announce_enemy_defeated(cmd_menu, screen, enemy)
         if enemy.name == 'Dragonlord 2':
@@ -218,7 +215,7 @@ class Battle:
                                          skip_text=True)
         player.total_experience = min(player.total_experience + enemy.xp, MAX_EXPERIENCE)
         player.gold = min(player.gold + gold, MAX_GOLD)
-        self.check_player_level_up(cmd_menu, player, music_enabled)
+        self.check_player_level_up(cmd_menu, player)
 
     def dragonlord_first_form_defeated(self, cmd_menu, screen):
         """NES EnemyDefeated for EN_DRAGONLORD1: "Thou hast done well in defeating the Dragonlord.", the victory
@@ -246,7 +243,7 @@ class Battle:
             return f"{ko_enemy_name} 물리쳤다!\n"
         return self._("Thou hast done well in defeating the {}.\n").format(self._(enemy_name))
 
-    def check_player_level_up(self, cmd_menu, player, music_enabled):
+    def check_player_level_up(self, cmd_menu, player):
         """NES ChkLevelUp (RegEnDefeated). LoadStats works the level out from the experience again, so the level can
         jump by more than one, and level 30 can be reached. Without a level up, WaitForMusicEnd lets the victory music
         finish and the map's music resumes (ResumeMusicTbl), then ExitFight waits for a new button press. With one,
@@ -257,7 +254,7 @@ class Battle:
         new_level = get_level_by_experience(player.total_experience)
         if new_level > player.level:
             music_player.play_until_end(self.directories.level_up_music, self.config)
-            self.resume_map_music(music_player, music_enabled)
+            self.resume_map_music(music_player)
             # TB16E1 starts with a WAIT: the experience and gold lines stay up, with the arrow, until A or B
             cmd_menu.wait_for_button(shows_arrow=True)
             self.display_level_up_message(cmd_menu, player, new_level)
@@ -269,15 +266,14 @@ class Battle:
             self.display_stat_increases(cmd_menu, player, old_stats)
         else:
             music_player.wait_for_music_end(self.config)
-            self.resume_map_music(music_player, music_enabled)
+            self.resume_map_music(music_player)
             # ExitFight: WaitForBtnRelease, so a button pressed during the music doesn't count; a new press returns
             # to the map
             cmd_menu.wait_for_button(shows_arrow=False)
 
-    def resume_map_music(self, music_player, music_enabled):
+    def resume_map_music(self, music_player):
         """NES ResumeMusicTbl: the current map's music, from the start."""
-        if music_enabled:
-            music_player.load_and_play_music(self.current_map.music_file_path)
+        music_player.load_and_play_music(self.current_map.music_file_path)
 
     def display_level_up_message(self, cmd_menu, player, new_level=None):
         """Display the level up message."""
@@ -359,7 +355,7 @@ class Battle:
         # drop down for the battle menu
         cmd_menu.window_drop_down_effect(BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT)
         # The command window (CmdCmbtDat) opens with the cursor on FIGHT
-        draw_window(screen, COMBAT_COMMAND_LAYOUT, color, graphics.config, cursor_index=0)
+        draw_translated_window(screen, COMBAT_COMMAND_LAYOUT, color, graphics.config, self._, cursor_index=0)
         drawer.hovering_stats_displayed = True
         drawer.draw_hovering_stats_window(screen, player, color)
 

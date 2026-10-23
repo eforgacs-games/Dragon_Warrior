@@ -66,10 +66,6 @@ class MapManager:
         return self.game.layouts
 
     @property
-    def music_enabled(self):
-        return self.game.music_enabled
-
-    @property
     def music_player(self):
         return self.game.music_player
 
@@ -155,10 +151,8 @@ class MapManager:
             cut_to_black(self.screen, self.game_state.config)
         self.set_big_map()
         self.set_roaming_character_positions()
-        if self.music_enabled:
-            if not moving_within_tantegel_castle and not self.config['ORCHESTRA_MUSIC_ENABLED']:
-                from pygame import mixer
-                mixer.music.stop()
+        if not moving_within_tantegel_castle and not self.config['ORCHESTRA_MUSIC_ENABLED']:
+            self.music_player.stop_music()
         is_warp = destination_coordinates is not None
         if is_warp:
             current_map_staircase_dict = None

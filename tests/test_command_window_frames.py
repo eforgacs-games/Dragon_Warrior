@@ -6,7 +6,6 @@ press on to it ran TALK at once, before the window was drawn, so it stayed black
 reads the joypad like the NES (WndDoSelect, src/command_window.py): the press that opened it is ignored until it has
 been let go.
 """
-import os
 from unittest import TestCase
 from unittest.mock import MagicMock, PropertyMock, patch
 
@@ -19,9 +18,6 @@ from src.game import Game
 from src.menu import CommandMenu
 from src.waiting import NES_FPS
 from src.windows import COMMAND_TITLE_TILE_COLUMN, COMMAND_WINDOW
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 # The window's tiles (column, row from its top left corner) that must be drawn: the border, the title in the top
 # border and the first and last entry of each column (CmdNonCmbtDat: entries at tile columns 2 and 10, rows 2 to 8)

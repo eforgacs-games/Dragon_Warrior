@@ -4,17 +4,14 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
 
-import pygame  # noqa: E402
-
-from src.adventure_log import (AdventureLogOverlay, OverlayText, adventure_log_overlay_texts,  # noqa: E402
+from src.adventure_log import (AdventureLogOverlay, OverlayText, adventure_log_overlay_texts,
                                log_name_tiles, read_save_name, save_slot_number)
-from src.color import WHITE  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.directories import Directories  # noqa: E402
-from src.game_functions import blit_scaled_image  # noqa: E402
+from src.color import WHITE
+from src.config.test_config import test_config
+from src.directories import Directories
+from src.game_functions import blit_scaled_image
 
 
 def write_save(directory: str, slot: int, contents) -> str:

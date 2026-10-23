@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 
 import pygame
@@ -7,9 +6,6 @@ from src.config.test_config import test_config
 from src.direction import Direction
 from src.maps import MapWithoutNPCs
 from src.player.player import Player
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 layout = [[3, 0, 3],
           [1, 2, 3],
