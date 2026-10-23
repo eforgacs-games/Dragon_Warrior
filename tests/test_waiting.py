@@ -92,10 +92,9 @@ class TestQuitDuringGameWaits(TestCase):
             self.game = Game(config)
         self.game.player.name = "Edward"
         pygame.event.clear()
-        for target in ('src.waiting.pygame_quit', 'data.text.dialog_lookup_table.mixer'):
-            patcher = patch(target)
-            patcher.start()
-            self.addCleanup(patcher.stop)
+        patcher = patch('src.waiting.pygame_quit')
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def post_quit(self):
         pygame.event.post(Event(QUIT))
