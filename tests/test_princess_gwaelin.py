@@ -120,12 +120,16 @@ class TestPrincessGwaelin(TestCase):
         self.assertNotIn('Torch', self.player.inventory)
         self.assertIn("Gwaelin's Love", self.player.inventory)
 
-    def test_receive_gwaelins_love_takes_off_the_dragons_scale(self):
-        self.player.inventory = ["Dragon's Scale"] + ['Silver Harp'] * 7
-        self.player.wearing_dragon_scale = True
-        self.spoken_lines(self.dialog_lookup.receive_gwaelins_love)
-        self.assertFalse(self.player.wearing_dragon_scale)
-        self.assertNotIn("Dragon's Scale", self.player.inventory)
+    def test_receive_gwaelins_love_keeps_the_dragons_scale_worn(self):
+        # NES DoKingDialog TakeItemFound (LD3D8) uses RemoveInvItem, which leaves ModsnSpells' F_DRGSCALE and
+        # F_FTR_RING alone, as selling does
+        for item, worn in (("Dragon's Scale", 'wearing_dragon_scale'), ("Fighter's Ring", 'wearing_fighters_ring')):
+            with self.subTest(item=item):
+                self.player.inventory = [item] + ['Silver Harp'] * 7
+                setattr(self.player, worn, True)
+                self.spoken_lines(self.dialog_lookup.receive_gwaelins_love)
+                self.assertTrue(getattr(self.player, worn))
+                self.assertNotIn(item, self.player.inventory)
 
     def test_receive_gwaelins_love_with_full_inventory_and_nothing_to_take(self):
         inventory = ['Silver Harp', 'Rainbow Drop', "Erdrick's Token", 'Stones of Sunlight', 'Silver Harp',
@@ -172,6 +176,27 @@ class TestPrincessGwaelin(TestCase):
         self.go_to('TantegelThroneRoom', (10, 13))
         self.assertEqual(self.game.current_map.characters['PRINCESS_GWAELIN']['coordinates'],
                          GWAELIN_THRONE_ROOM_COORDINATES)
+
+    def test_rescue_carries_her_before_she_embraces_the_hero(self):
+        # NES DoGwaelinRescue (LD072-LD096): F_GOT_GWAELIN, DoSprites (the hero carrying her) and ModMapBlock (her
+        # block removed) all come before "Princess Gwaelin embraces thee" and MSC_PRNCS_LOVE
+        self.go_to('SwampCave', (6, 4))
+        events = []
+
+        def show_line(text, *_args, **_kwargs):
+            events.append((text, self.game.story_flags.carrying_gwaelin,
+                           'PRINCESS_GWAELIN' in self.game.current_map.characters))
+
+        with patch.object(self.game.cmd_menu, 'show_line_in_dialog_box', side_effect=show_line), \
+                patch.object(self.dialog_lookup, 'play_gwaelins_love_music',
+                             side_effect=lambda: events.append('music')), \
+                patch.object(self.game.cmd_menu, 'show_character_now',
+                             side_effect=lambda character: events.append('hero drawn')), \
+                patch.object(self.game.cmd_menu, 'erase_character_now',
+                             side_effect=lambda character: events.append('gwaelin erased')):
+            self.dialog_lookup.embrace_princess_gwaelin()
+        self.assertEqual(events, ['hero drawn', 'gwaelin erased', ("Princess Gwaelin embraces thee.\n", True, False),
+                                  'music', ("I'm so happy!", True, False)])
 
     def test_gwaelin_leaves_the_swamp_cave(self):
         self.go_to('SwampCave', (6, 4))

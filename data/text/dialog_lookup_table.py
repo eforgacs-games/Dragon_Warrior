@@ -448,17 +448,22 @@ class DialogLookup:
             color=self.color)
 
     def embrace_princess_gwaelin(self):
+        """NES DoGwaelinRescue (Bank03, LD072-LD09A): F_GOT_GWAELIN is set and DoSprites draws the hero carrying her,
+        and ModMapBlock removes her block, all before "Princess Gwaelin embraces thee" and the music."""
+        self.command_menu.game.story_flags.carrying_gwaelin = True
+        self.player.images = self.current_map.scale_sprite_sheet(self.directories.HERO_CARRYING_PRINCESS_PATH)
+        self.player.set_images(self.player.images)
+        self.player.show_facing()
+        self.command_menu.show_character_now(self.player)
+        gwaelin = self.current_map.characters.pop('PRINCESS_GWAELIN', None)
+        self.current_map.fixed_characters = []
+        if gwaelin is not None:
+            self.command_menu.erase_character_now(gwaelin['character'])
+
         self.command_menu.show_line_in_dialog_box(self._("Princess Gwaelin embraces thee.\n"),
                                                   add_quotes=False)
         # NES DoGwaelinRescue: MSC_PRNCS_LOVE right after the line, WaitForMusicEnd, then MSC_DUNGEON1 (the map's music)
         self.play_gwaelins_love_music()
-
-        self.current_map.fixed_characters = []
-        del self.current_map.characters['PRINCESS_GWAELIN']
-
-        self.player.images = self.current_map.scale_sprite_sheet(self.directories.HERO_CARRYING_PRINCESS_PATH)
-        self.player.set_images(self.player.images)
-        self.command_menu.game.story_flags.carrying_gwaelin = True
         self.command_menu.show_line_in_dialog_box(self._("I'm so happy!"))
 
     def but_thou_must(self, original_function):
@@ -580,12 +585,9 @@ class DialogLookup:
                               None)
             if taken_item is None:
                 return
+            # TakeItemFound (LD3D8): RemoveInvItem leaves the F_DRGSCALE/F_FTR_RING flags as they are, as selling
+            # does, so a Dragon's Scale or Fighter's Ring that is taken stays worn
             self.player.inventory.remove(taken_item)
-            if taken_item == "Dragon's Scale":
-                self.player.wearing_dragon_scale = False
-                self.player.update_defense_power()
-            elif taken_item == "Fighter's Ring":
-                self.player.wearing_fighters_ring = False
             self.player.inventory.append("Gwaelin's Love")
             self.command_menu.show_line_in_dialog_box(
                 _("And I would like to have something of thine--a token."))
@@ -780,7 +782,7 @@ class DialogLookup:
         self.say(self._("Now the sun and rain shall meet and the Rainbow Drop passes to thy keeping."))
         self.player.inventory.remove("Stones of Sunlight")
         self.player.inventory.remove("Staff of Rain")
-        self.player.inventory.insert(0, "Rainbow Drop")
+        self.player.inventory.append("Rainbow Drop")  # NES AddInvItem: the first empty slot
         greyscale_screen(self.screen, self.config, frames=30)
 
     def bw_screen_flash(self):
