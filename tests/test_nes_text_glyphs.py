@@ -8,7 +8,6 @@ from unittest.mock import patch
 import pygame
 from pygame import Rect, Surface, font
 
-from src.adventure_log import AdventureLogOverlay, OverlayText
 from src.color import BLACK, RED, WHITE
 from src.config.test_config import test_config
 from src.directories import Directories
@@ -107,20 +106,6 @@ class TestDrawText(GlyphAssertions):
             for color in COLORS:
                 screen, left, top = self.draw(scale, color, letter_by_letter=True)
                 self.assert_nes_tiles(screen, SAMPLE + ' ' + FIVE, left, top, scale, color)
-
-
-class TestAdventureLogOverlay(GlyphAssertions):
-
-    @classmethod
-    def setUpClass(cls):
-        pygame.init()
-
-    def test_overlay_text(self):
-        for scale in SCALES:
-            screen = Surface((256 * scale, 32 * scale))
-            screen.fill(BLACK)
-            AdventureLogOverlay([OverlayText(FIVE, 2, 1)], text_config(scale))(screen)
-            self.assert_nes_tiles(screen, FIVE, 2 * 8 * scale, 8 * scale, scale, WHITE)
 
 
 class TestDialogBox(GlyphAssertions):

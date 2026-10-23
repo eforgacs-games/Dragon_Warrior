@@ -1,10 +1,11 @@
 """The name entry screen, as the NES runs and draws it (Bank03 DoNewQuest, Bank01 WndEnterName and the routines after
 it), generated from the window data instead of from screenshots.
 
-The screen: the title menu's NewQuestDat and the open log list LogList123Dat1 stay on the screen, and InitNameWindow
-draws NameEntryDat and then AlphabetDat over them (src/windows.py has their layouts). The name is 8 tiles in
-NameEntryDat: each starts as the placeholder tile $41 and is replaced by the character entered there
-(WndNameCharYPos), and the underscore, a TL_TOP1 tile, is under the next one (WndShowUnderscore).
+The screen: the title menu and the open logs window BEGIN A NEW QUEST chose the log in (LogList??Dat1, with its arrow
+held on the chosen log) stay on the screen, and InitNameWindow draws NameEntryDat and then AlphabetDat over them
+(src/windows.py has their layouts). The name is 8 tiles in NameEntryDat: each starts as the placeholder tile $41 and is
+replaced by the character entered there (WndNameCharYPos), and the underscore, a TL_TOP1 tile, is under the next one
+(WndShowUnderscore).
 
 The input: the alphabet window is a selection window with 11 columns of 6 rows (WndDoSelect), whose last row has
 BACK and END; A enters the selected character (WndProcessChar), B and BACK move back one character (WndDoBackspace)
@@ -19,12 +20,18 @@ from src.cursor import draw_cursor_tile
 from src.window_renderer import NES_TILE, TL_NAME_PLACEHOLDER, TL_TOP1, glyph_tile, render_window, tile_surface
 from src.windows import (ADVENTURE_LOG_123_LAYOUT, ALPHABET_BACK, ALPHABET_COLUMNS, ALPHABET_END, ALPHABET_LAYOUT,
                          ALPHABET_ROWS, NAME_ENTRY_LAYOUT, NAME_FIRST_TILE_COLUMN, NAME_LENGTH, NAME_TILE_ROW,
-                         NAME_UNDERSCORE_TILE_ROW, NEW_QUEST_LAYOUT, Window)
+                         NAME_UNDERSCORE_TILE_ROW, NEW_QUEST_LAYOUT, Window, WindowLayout)
 
 # The NES screen, in NES pixels (config NES_RES)
 NES_SCREEN_SIZE = (256, 240)
-# The windows on the name entry screen, in the order the NES draws them: each one is drawn over the ones before
+# The windows on the name entry screen, in the order the NES draws them: each one is drawn over the ones before. The
+# open logs window is LogList123Dat1 when every log is open; with fewer open logs it is shorter, and hidden by
+# AlphabetDat. The title menu is NewQuestDat with no log used and FullMenuDat otherwise, which look the same in the
+# rows the name entry windows leave uncovered (their top border), so NewQuestDat stands for both.
 NAME_ENTRY_SCREEN_LAYOUTS = (NEW_QUEST_LAYOUT, ADVENTURE_LOG_123_LAYOUT, NAME_ENTRY_LAYOUT, ALPHABET_LAYOUT)
+# An open logs window and the entry chosen in it (its arrow held on), or no arrow
+LogWindow = tuple[WindowLayout, int | None]
+EVERY_LOG_OPEN: LogWindow = (ADVENTURE_LOG_123_LAYOUT, None)
 BACK = 'BACK'
 END = 'END'
 
@@ -159,19 +166,23 @@ def window_origin(window: Window) -> tuple[int, int]:
 
 
 @lru_cache(maxsize=8)
-def name_entry_background(color: tuple, nes_pixel: int) -> Surface:
+def name_entry_background(color: tuple, nes_pixel: int, log_window: LogWindow = EVERY_LOG_OPEN) -> Surface:
     """The screen's windows, without the name and the cursor. Cached: copy it, don't draw on it."""
     screen = Surface((NES_SCREEN_SIZE[0] * nes_pixel, NES_SCREEN_SIZE[1] * nes_pixel))
     screen.fill(BLACK)
     tile = NES_TILE * nes_pixel
+    log_layout, log_cursor = log_window
     for layout in NAME_ENTRY_SCREEN_LAYOUTS:
+        cursor = None
+        if layout is ADVENTURE_LOG_123_LAYOUT:
+            layout, cursor = log_layout, log_cursor
         column, row = window_origin(layout.window)
-        screen.blit(render_window(layout, color, nes_pixel), (column * tile, row * tile))
+        screen.blit(render_window(layout, color, nes_pixel, cursor), (column * tile, row * tile))
     return screen
 
 
-def render_name_entry_screen(entry: NameEntry, color: tuple, nes_pixel: int, cursor_visible: bool | None = True
-                             ) -> Surface:
+def render_name_entry_screen(entry: NameEntry, color: tuple, nes_pixel: int, cursor_visible: bool | None = True,
+                             log_window: LogWindow = EVERY_LOG_OPEN) -> Surface:
     """
     The whole name entry screen.
     :param entry: The name so far and the cursor.
@@ -179,9 +190,11 @@ def render_name_entry_screen(entry: NameEntry, color: tuple, nes_pixel: int, cur
     :param nes_pixel: Screen pixels per NES pixel (SCALE; TILE_SIZE // 16).
     :param cursor_visible: Whether the alphabet window's cursor is in the "on" half of its blink (src/cursor.py), or
     None for no cursor at all (before WndDoSelect).
+    :param log_window: The open logs window behind the name entry, and the log chosen in it (TitleMenu.
+    select_adventure_log).
     :return: A new surface, NES_SCREEN_SIZE NES pixels, scaled.
     """
-    screen = name_entry_background(color, nes_pixel).copy()
+    screen = name_entry_background(color, nes_pixel, log_window).copy()
     tile = NES_TILE * nes_pixel
     name_column, name_row = window_origin(NAME_ENTRY_LAYOUT.window)
     for slot, character in enumerate(entry.characters):
