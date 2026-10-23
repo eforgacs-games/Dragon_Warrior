@@ -19,7 +19,7 @@ from src.gamepad import DOWN, LEFT, RIGHT, UP, Gamepad, PadState, SdlBackend, is
     stick_direction
 from src.selection import Answer, run_selection, stop_at_edges
 from src.waiting import NES_FPS, WINDOW_CONTEXT, game_speed, gamepad, poll_virtual_joypad, reset_game_speed, \
-    set_gamepad, with_virtual_keys
+    set_gamepad, set_speed_keys_enabled, with_virtual_keys
 from tests.test_battle_controller import BattlePromptFrames, RUN
 
 # The pad buttons (SDL GameController names) for the NES ones: Nintendo's positional layout
@@ -219,6 +219,14 @@ class TestKeys(GamepadTestCase):
         self.assertEqual([2, 4, 8, 16, 1, 2], speeds)
         self.assertEqual([], queued())  # no key, so no window reads it and auto-grind carries on
 
+    def test_the_speed_trigger_does_nothing_with_game_speed_off(self):
+        # the options overlay's GAME SPEED switch (src/options_overlay.py), off on the NES, as for the keys 1 to 5
+        set_speed_keys_enabled(False)
+        self.pad.state = pad('righttrigger')
+        poll_virtual_joypad()
+        self.assertEqual(1, game_speed())
+        self.assertEqual([], queued())
+
 
 class TestHotPlug(GamepadTestCase):
 
@@ -343,7 +351,8 @@ class TestMapFrame(GamepadTestCase):
         super().setUp()
         from tests.helpers import new_game
         from tests.mock_map import MockMap
-        self.game = new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True})
+        self.game = new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
+                                 'SAVE_STATES': True, 'REWIND': True})  # their switches on (off on the NES)
         self.gamepad.connect()  # the game connected the real one
         self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])

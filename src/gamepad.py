@@ -32,7 +32,7 @@ import pygame
 from pygame import KEYDOWN, KEYUP, KMOD_LSHIFT, K_BACKSPACE, K_DOWN, K_F1, K_LEFT, K_RIGHT, K_UP
 
 from src import common
-from src.waiting import SPEED_KEYS, game_speed, set_game_speed, set_gamepad
+from src.waiting import SPEED_KEYS, game_speed, set_game_speed, set_gamepad, speed_keys_enabled
 
 # SDL names the face buttons by where they are on an Xbox pad, whatever the pad's labels say ('a' bottom, 'b' right,
 # 'x' left, 'y' top). Nintendo pads swap them to match their labels unless this hint is off; off, every pad is read
@@ -62,7 +62,8 @@ BUTTON_MAP: dict[str, str] = {
 # over right, as on the keyboard, src/movement.py)
 D_PAD: tuple[tuple[str, str], ...] = (('dpup', UP), ('dpdown', DOWN), ('dpleft', LEFT), ('dpright', RIGHT))
 
-# Pressing it steps through the game speeds (the keys 1 to 5: 1x, 2x, 4x, 8x, 16x, then 1x again)
+# Pressing it steps through the game speeds (the keys 1 to 5: 1x, 2x, 4x, 8x, 16x, then 1x again), with the options
+# overlay's GAME SPEED on, as the keys are
 SPEED_PAD_BUTTON = 'righttrigger'
 
 # The buttons left over, for what the keyboard has beyond the NES pad: pad button -> (key, modifiers) it presses, held
@@ -216,7 +217,7 @@ class Gamepad:
             return
         self.direction = pad_direction(state, self.direction)
         speed_pressed = SPEED_PAD_BUTTON in state.buttons
-        if speed_pressed and not self.speed_pressed:
+        if speed_pressed and not self.speed_pressed and speed_keys_enabled():
             set_game_speed(next_speed())
         self.speed_pressed = speed_pressed
         self.press(self.pad_keys(state), self.extra_modifiers(state.buttons))

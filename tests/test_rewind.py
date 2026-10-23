@@ -65,6 +65,19 @@ class TestRecording(RewindTestCase):
         self.run_frames(self.game, REWIND_INTERVAL_FRAMES * 3, first_frame=REWIND_INTERVAL_FRAMES)
         self.assertEqual(4, len(self.rewind.snapshots))
 
+    def test_rewind_off_records_nothing_and_backspace_does_nothing(self):
+        # the options overlay's REWIND switch (src/options_overlay.py), off on the NES
+        self.run_frames(self.game, REWIND_INTERVAL_FRAMES)
+        self.assertEqual(1, len(self.rewind.snapshots))
+        self.game.game_state.config['REWIND'] = False
+        self.game.apply_option('REWIND')
+        self.assertEqual(0, len(self.rewind.snapshots))  # switching it off drops them
+        self.run_frames(self.game, REWIND_INTERVAL_FRAMES * 2, first_frame=REWIND_INTERVAL_FRAMES)
+        self.assertEqual(0, len(self.rewind.snapshots))
+        self.assertIsNone(self.rewind.fight_candidate)
+        self.press_backspace()
+        self.assertFalse(self.rewind.active)
+
     def test_not_while_a_window_is_open(self):
         self.game.cmd_menu.launch_signaled = True
         with patch.object(self.game.drawer, 'draw_all'):
