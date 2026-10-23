@@ -3,18 +3,20 @@
 all of its files, starts it, draws the first frame of the map and exits. The release workflow runs it on every build,
 headless (SDL_VIDEODRIVER and SDL_AUDIODRIVER set to dummy), to prove the build bundles everything it needs.
 """
-import gettext
 import json
 import os
 
 from pygame import image, mixer
 
+from src.catalog import compile_po, po_path
 from src.checkpoints import CHECKPOINT_NAMES, checkpoint_path
 from src.directories import Directories
 from src.paths import data_path
 
 IMAGE_EXTENSIONS = ('.png', '.gif')
 SOUND_EXTENSIONS = ('.mp3', '.wav')
+# A line the Korean catalog translates, to check it loaded
+KOREAN_CHECK_LINE = "Thou art a fool!"
 
 
 def game_file_paths(config: dict) -> set[str]:
@@ -53,12 +55,21 @@ def check_game_files(config: dict) -> list[str]:
                     json.load(json_file)
         except Exception as error:  # every failure is reported, not just the first
             problems.append(f"can't load {path}: {error}")
-    for language in ('en', 'ko'):
-        try:
-            gettext.translation('base', localedir=data_path('text', 'locales'), languages=[language])
-        except OSError as error:
-            problems.append(f"can't load the {language} translations: {error}")
+    problems.extend(check_korean_translations())
     return problems
+
+
+def check_korean_translations() -> list[str]:
+    """Compiles the bundled Korean .po (as the game does when Korean is chosen) and translates a line with it. Not
+    through load_translations' cache, so it checks the files of the build that's running."""
+    try:
+        translations = compile_po(po_path('ko'))
+    except (OSError, ValueError) as error:
+        return [f"can't load the Korean translations: {error}"]
+    translated = translations.gettext(KOREAN_CHECK_LINE)
+    if translated == KOREAN_CHECK_LINE:
+        return [f"the Korean translations don't translate {KOREAN_CHECK_LINE!r}"]
+    return []
 
 
 def check_save_dir(save_dir: str) -> list[str]:

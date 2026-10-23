@@ -15,6 +15,7 @@ on:
       - ".github/workflows/release.yml"
       - "dragon_warrior.spec"
       - "src/paths.py"
+      - "src/catalog.py"
       - "src/directories.py"
       - "src/smoke_test.py"
       - "pyproject.toml"

@@ -35,7 +35,7 @@ UP, DOWN, LEFT, RIGHT = Direction.UP.value, Direction.DOWN.value, Direction.LEFT
 # How each yes/no window on the way is answered (True = YES). "Dost thou wish to purchase more?" at the key shop is
 # answered by StoryRunMixin.answer.
 STORY_ANSWERS = {
-    "Magic keys! They will unlock any door.\nDost thou wish to purchase one for 85 GOLD?": True,
+    "Magic keys!\nThey will unlock any door.\nDost thou wish to purchase one for 85 GOLD?": True,
     "Will thou take me to the castle?": True,
     "Will thou tell me now of thy deeds so they won't be forgotten?": False,  # saving isn't part of this run
     "Dost thou wish to continue thy quest?": True,
