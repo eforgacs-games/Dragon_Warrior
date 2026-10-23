@@ -3,7 +3,7 @@ from pygame.event import get
 
 from src.cursor import BlinkingCursor
 from src.waiting import quit_if_requested, wait
-from src.window_renderer import draw_window
+from src.translated_window import draw_translated_window
 from src.windows import YES_NO_LAYOUT, YES_NO_WINDOW
 
 
@@ -17,7 +17,7 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, hide_arrow=True, letter_by_letter=True)
         command_menu.window_drop_down_effect(*YES_NO_WINDOW)
         # The window without its cursor, until the selection starts below (generated: src/window_renderer.py)
-        display.update(draw_window(command_menu.screen, YES_NO_LAYOUT, color, config))
+        display.update(draw_translated_window(command_menu.screen, YES_NO_LAYOUT, color, config, command_menu._))
         # for some reason it needs this wait() call to actually play the sound
         wait(300, config)
         sound.play_sound(directories.confirmation_sfx)

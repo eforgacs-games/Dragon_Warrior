@@ -27,7 +27,7 @@ from src.enemy_spells import enemy_spell_lookup
 from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
 from src.spells import Spell
-from src.window_renderer import draw_window
+from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT
 from src.visual_effects import player_hit_shake
 from src.waiting import handle_speed_key, scaled_ms
@@ -294,10 +294,11 @@ class BattleController:
 
     def draw_command_window(self, cursor_visible: bool) -> None:
         """The battle command window (CmdCmbtDat), generated like the NES draws it (src/window_renderer.py), with the
-        NES cursor at the selected command (src/cursor.py), in the window color."""
-        rect = draw_window(self.screen, COMBAT_COMMAND_LAYOUT, self.game.color, self.game.game_state.config,
-                           cursor_index=self.battle_menu_row * 2 + self.battle_menu_column,
-                           cursor_visible=cursor_visible)
+        NES cursor at the selected command (src/cursor.py), in the window color. Translated, its text is drawn over
+        the generated border (src/translated_window.py)."""
+        rect = draw_translated_window(self.screen, COMBAT_COMMAND_LAYOUT, self.game.color, self.game.game_state.config,
+                                      self._, cursor_index=self.battle_menu_row * 2 + self.battle_menu_column,
+                                      cursor_visible=cursor_visible)
         display.update(rect)
 
     def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
