@@ -32,13 +32,15 @@ NPC_WALKABLE_TILES = frozenset({
 
 def step(row: int, column: int, direction: int, offset: int = 1) -> Cell:
     """The (row, column) `offset` tiles from (row, column) in the given direction."""
-    if direction == Direction.UP.value:
-        return row - offset, column
-    if direction == Direction.DOWN.value:
-        return row + offset, column
-    if direction == Direction.LEFT.value:
-        return row, column - offset
-    return row, column + offset
+    match direction:
+        case Direction.UP:
+            return row - offset, column
+        case Direction.DOWN:
+            return row + offset, column
+        case Direction.LEFT:
+            return row, column - offset
+        case _:
+            return row, column + offset
 
 
 def npc_may_step_onto(current_map, target: Cell) -> bool:
