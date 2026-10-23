@@ -15,7 +15,7 @@ from pygame import KEYDOWN, display, event, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
-from src.common import ANY_BUTTON_KEYS, accept_keys, reject_keys
+from src.common import ANY_BUTTON_KEYS, accept_keys, reject_keys, singular_or_plural
 from src.cursor import BlinkingCursor
 from src.waiting import wait
 from src.constants import (
@@ -478,8 +478,10 @@ class BattleController:
             self.sound.play_sound(self.directories.hit_sfx)
             # NES PlyrHitEn: the enemy flashes red (PaletteFlash) before the damage text
             self.drawer.flash_enemy(self.screen, current_battle.enemy.name)
+            # NES TextBlock15 entry 6: PNTS prints "Point" for 1 damage (Bank01 DoPNTS)
             self.cmd_menu.show_line_in_dialog_box(
-                self._("The {}'s Hit Points have been reduced by {}.\n").format(
+                singular_or_plural(attack_damage, self._("The {}'s Hit Point have been reduced by {}.\n"),
+                                   self._("The {}'s Hit Points have been reduced by {}.\n")).format(
                     self._(current_battle.enemy.name), attack_damage),
                 add_quotes=False, disable_sound=True, hide_arrow=True)
             current_battle.enemy.hp -= attack_damage

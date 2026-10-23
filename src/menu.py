@@ -11,7 +11,7 @@ from src.waiting import game_ticks as get_ticks  # game time: runs N times as fa
 from data.text.dialog_lookup_table import DialogLookup
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
-from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, Graphics, set_gettext_language
+from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, Graphics, set_gettext_language, singular_or_plural
 from src.command_window import WND_ABORT, CommandWindow
 from src.cursor import DialogArrowBlink, draw_cursor_tile
 from src.waiting import is_any_key_held, wait
@@ -923,9 +923,15 @@ class CommandMenu:
             self.resume_music()
 
     def gwaelins_love(self):
-        self.show_text_in_dialog_box(self._("Heed my voice, '{}, for this is Gwaelin. To reach the next level thou "
-                                            "must raise thy Experience Points by {}. My hope is with thee.'").format(
-            self.player.name, self.player.points_to_next_level))
+        # NES TextBlock14 entry 11: PNTS prints "Point" when exactly 1 is left (Bank01 DoPNTS)
+        points = self.player.points_to_next_level
+        self.show_text_in_dialog_box(singular_or_plural(
+            points,
+            self._("Heed my voice,\n'{}, for this is Gwaelin.\n"
+                   "To reach the next level thou must raise thy Experience Point by {}.\nMy hope is with thee.'"),
+            self._("Heed my voice,\n'{}, for this is Gwaelin.\n"
+                   "To reach the next level thou must raise thy Experience Points by {}.\nMy hope is with thee.'"),
+        ).format(self.player.name, points))
         if self.current_map.identifier == 'Alefgard':
             distance_string = self._("From where thou art now, my castle lies..\n")
             east_west_distance, north_south_distance = self.calculation.get_distance_from_tantegel(self.player.column,
@@ -979,7 +985,10 @@ class CommandMenu:
         self.sound.play_sound(self.directories.hit_sfx)
         # NES SetSpellDmg falls through to PlyrHitEn, so a damage spell flashes the enemy red too
         self.game.drawer.flash_enemy(self.screen, enemy.name)
-        self.show_battle_line(self._("The {}'s Hit Points have been reduced by {}.\n").format(self._(enemy.name), damage))
+        # NES TextBlock15 entry 6: PNTS prints "Point" for 1 damage (Bank01 DoPNTS)
+        self.show_battle_line(singular_or_plural(
+            damage, self._("The {}'s Hit Point have been reduced by {}.\n"),
+            self._("The {}'s Hit Points have been reduced by {}.\n")).format(self._(enemy.name), damage))
         enemy.hp -= damage
 
     def hurt(self):

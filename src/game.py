@@ -21,7 +21,7 @@ from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, c
 from src.color import LOW_HP_RED, RED, WHITE, is_low_hp, window_color
 from src.common import A_OR_START_KEYS, Graphics, is_facing_medially, is_facing_laterally, \
     set_gettext_language
-from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right
+from src.common import is_facing_up, is_facing_down, is_facing_left, is_facing_right, singular_or_plural
 from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
 from src.debug_tools import DebugTools
@@ -693,9 +693,11 @@ class Game:
         self.battle_ctrl.player_hit_effect()  # NES PlayerHit: screen shake, red flash on a deathblow
         self.load_window_palette()  # NES PlayerHit: LoadRegBGPal, after the screen shake (red if HP is now low)
         self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
-        self.cmd_menu.show_line_in_dialog_box(self._("Thy Hit Points decreased by {}.\n").format(attack_damage),
-                                              add_quotes=False, disable_sound=True, hide_arrow=True, skip_text=True if
-            self.player.current_hp == 0 else False)
+        # NES TextBlock16 entry 10: "Thy Hit" + PLRL, which adds an "s" unless the damage is 1 (Bank01 DoPLRL)
+        damage_line = singular_or_plural(attack_damage, self._("Thy Hit decreased by {}.\n"),
+                                         self._("Thy Hits decreased by {}.\n")).format(attack_damage)
+        self.cmd_menu.show_line_in_dialog_box(damage_line, add_quotes=False, disable_sound=True, hide_arrow=True,
+                                              skip_text=True if self.player.current_hp == 0 else False)
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
 
     def set_player_images_by_equipment(self):

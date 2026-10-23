@@ -770,6 +770,14 @@ class TestHeroAttack(unittest.TestCase):
         self.game.drawer.flash_enemy.assert_called_once_with(self.game.screen, 'Slime')
         self.assertEqual(order[-2:], ['flash', "The Slime's Hit Points have been reduced by 4.\n"])
 
+    def test_one_point_of_damage_says_point(self):
+        # NES TextBlock15 entry 6: "Hit" + PNTS, which is " Point" when the amount is 1 (Bank01 DoPNTS)
+        self.battle.calculate_attack_damage.return_value = 1
+        with patch('src.battle_controller.random.random', return_value=0.5):
+            self.controller.hero_attack(self.battle)
+        self.game.cmd_menu.show_line_in_dialog_box.assert_called_with(
+            "The Slime's Hit Point have been reduced by 1.\n", add_quotes=False, disable_sound=True, hide_arrow=True)
+
     def test_miss_does_not_flash_enemy(self):
         self.battle.calculate_attack_damage.return_value = 0
         self.controller.hero_attack(self.battle)
