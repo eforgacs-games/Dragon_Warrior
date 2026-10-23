@@ -310,8 +310,14 @@ class Drawer:
         if last_player_rect is not None and last_player_rect != player.rect and \
                 abs(last_player_rect.x - player.rect.x) <= tile_size and abs(last_player_rect.y - player.rect.y) <= tile_size:
             # The hero arrives on a step's last moving frame (#237), so he's no longer moving on the frame that moved
-            # him off where he was drawn last: redraw there too, or the edge of his last frame stays behind.
+            # him off where he was drawn last: redraw there too, or the edge of his last frame stays behind. Those
+            # blocks can be another type than the one he's on now (a step from grass into the trees), so their types
+            # are drawn too.
             player_check_rect = player_check_rect.union(last_player_rect)
+            tile_types_to_draw += replace_characters_with_underlying_tiles(
+                convert_numeric_tile_list_to_unique_tile_values(
+                    current_map, tile_values_under_rect(last_player_rect, current_map.layout, tile_size)),
+                current_map.character_key)
         self.last_player_rect = player.rect.copy()
         roaming_last_rects = [rc.last_rect for rc in current_map.roaming_characters if rc.last_rect is not None]
         all_roaming_rects = roaming_character_rects + roaming_last_rects
@@ -424,6 +430,16 @@ def block_corners_under_rects(rects: Iterable[Rect], tile_size: int) -> set[Pixe
             for y in range(rect.top // tile_size * tile_size, rect.bottom, tile_size):
                 cells.add((x, y))
     return cells
+
+
+def tile_values_under_rect(rect: Rect, map_layout, tile_size: int) -> list[int]:
+    """The layout values of the blocks that rect overlaps, leaving out any off the map."""
+    values = []
+    for x, y in block_corners_under_rects([rect], tile_size):
+        row, column = y // tile_size, x // tile_size
+        if 0 <= row < len(map_layout) and 0 <= column < len(map_layout[row]):
+            values.append(map_layout[row][column])
+    return values
 
 
 def get_surrounding_tile_values(coordinates, map_layout):
