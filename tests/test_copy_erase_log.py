@@ -191,7 +191,7 @@ class TestContinueWithOneLog(OptionsTestCase):
             json.dump({'Name': 'Erdrick', 'Experience': 0}, save_file)
         self.game.save_dir_contents = self.game.save_files()
         # B, then A (which would continue the quest if B were ignored)
-        with patch('src.game_functions.event.get', side_effect=[[B], [ENTER]]), \
+        with patch('src.selection.event.get', side_effect=[[B], [ENTER]]), \
                 patch.object(self.game, 'load_game') as load_game:
             self.assertIs(BACK_TO_TITLE_MENU, self.game.continue_quest())
         load_game.assert_not_called()
@@ -203,7 +203,7 @@ class TestContinueWithOneLog(OptionsTestCase):
         with open(os.path.join(tmp_dir.name, 'save_slot_1.json'), 'w') as save_file:
             json.dump({'Name': 'Erdrick', 'Experience': 0}, save_file)
         self.game.save_dir_contents = self.game.save_files()
-        with patch('src.game_functions.event.get', side_effect=[[ENTER]]), \
+        with patch('src.selection.event.get', side_effect=[[ENTER]]), \
                 patch.object(self.game, 'load_game') as load_game:
             self.game.continue_quest()
         load_game.assert_called_once()
@@ -220,7 +220,7 @@ class TestNewQuestLog(OptionsTestCase):
 
     def new_quest(self, keys):
         """The real title menu with no logs, played key by key (one key per frame), up to the name entry."""
-        with patch('src.game_functions.event.get', side_effect=[[key] for key in keys]), \
+        with patch('src.selection.event.get', side_effect=[[key] for key in keys]), \
                 patch('src.game.NameSelection') as name_selection, \
                 patch.object(self.game, 'choose_new_quest_options'), \
                 patch.object(self.game, 'start_at_throne_room'):
@@ -240,7 +240,7 @@ class TestNewQuestLog(OptionsTestCase):
         self.assertEqual(3, self.game.player.adventure_log)
 
     def test_b_goes_back_before_the_name_entry(self):
-        with patch('src.game_functions.event.get', side_effect=[[B]]), \
+        with patch('src.selection.event.get', side_effect=[[B]]), \
                 patch('src.game.NameSelection') as name_selection:
             self.assertIs(BACK_TO_TITLE_MENU, self.game.begin_new_quest())
         name_selection.assert_not_called()
