@@ -240,8 +240,8 @@ class Drawer:
             if player.is_moving:
                 tile_types_to_draw += replace_characters_with_underlying_tiles(
                     list(filter(None, player_surrounding_tiles)), current_map.character_key)
-                # The pop-up window opens on the hero's POP_UP_FRAME of standing still (Game.do_sprites, counted in
-                # game frames like the steps) and closes when he moves
+                # The pop-up window opens on the hero's POP_UP_FRAME of standing still
+                # (MovementController.sprites_frame, counted in game frames like the steps) and closes when he moves
                 self.display_hovering_stats = False
                 if self.hovering_stats_displayed:
                     cmd_menu.window_drop_up_effect(1, 2, 4, 6)

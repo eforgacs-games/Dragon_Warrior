@@ -66,7 +66,8 @@ class DragonWarriorMap:
         self.player_sprites = None
         self.characters = {}
         self.fixed_characters = []
-        # The roaming NPCs, in the order of their mobile slots (Game.move_roaming_characters, src/npc_schedule.py)
+        # The roaming NPCs, in the order of their mobile slots (MovementController.move_roaming_characters,
+        # src/npc_schedule.py)
         self.roaming_characters = []
         # The NPCs load_map places: the NPC table, less any the story has taken off the map
         self.npcs: list[NPC] = list(self.npc_table)

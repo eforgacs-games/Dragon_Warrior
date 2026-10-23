@@ -808,7 +808,8 @@ class TestGame(TestCase):
                                   self.game.game_state.enable_animate, self.game.camera, self.game.initial_dialog_enabled,
                                   self.game.events, self.game.skip_text, self.game.story_flags.left_throne_room,
                                   self.game.game_state, self.game.color)
-        # The hero isn't moving: the pop-up window isn't closed (it opens on the POP_UP_FRAME, see Game.do_sprites)
+        # The hero isn't moving: the pop-up window isn't closed (it opens on the POP_UP_FRAME, see
+        # MovementController.sprites_frame)
         self.assertFalse(self.game.player.is_moving)
 
     # def test_handle_sprite_drawing_and_animation(self):
@@ -830,12 +831,12 @@ class TestGame(TestCase):
         guard = self.game.current_map.roaming_characters[0]
         start = guard.rect.topleft
         with patch('src.movement.random.choice', return_value=Direction.DOWN.value):
-            self.game.movement.do_sprites()
+            self.game.movement.sprites_frame()
         self.assertTrue(guard.is_moving)
         self.assertEqual(Direction.DOWN.value, guard.direction_value)
         # test with moving characters once they're moving: 1 NES pixel a frame, 16 frames a step
         for _ in range(15):
-            self.game.movement.do_sprites()
+            self.game.movement.sprites_frame()
         self.assertFalse(guard.is_moving)
         self.assertEqual((start[0], start[1] + self.game.tile_size), guard.rect.topleft)
 
