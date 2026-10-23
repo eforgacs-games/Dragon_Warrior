@@ -11,7 +11,7 @@ import random
 from collections.abc import Callable
 from enum import Enum
 
-from pygame import KEYDOWN, display, event, key, time
+from pygame import KEYDOWN, Surface, display, event, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
@@ -29,7 +29,7 @@ from src.maps import map_lookup
 from src.selection import frame_events, next_frame
 from src.spells import Spell
 from src.translated_window import draw_translated_window
-from src.windows import COMBAT_COMMAND_LAYOUT
+from src.windows import COMBAT_COMMAND_LAYOUT, COMBAT_COMMAND_WINDOW
 from src.visual_effects import player_hit_shake
 from src.waiting import handle_speed_key, scaled_ms
 
@@ -101,6 +101,10 @@ class BattleController:
         self.command_window_open = False
         # What the command window was last drawn with (row, column, cursor shown, color), so it is drawn on changes only
         self.drawn_command_window: tuple | None = None
+        # Whether the command window is on the screen, and what it covers there (CommandMenu.covered_area), to put
+        # back when it is removed: the NES removes it after every command (RemoveWindow WND_CMD_CMB)
+        self.command_window_shown = False
+        self.command_window_covered: Surface | None = None
         # Set when the enemy has just cast SLEEP on the hero, so it takes another turn straight away.
         self.player_fell_asleep = False
 
@@ -217,7 +221,10 @@ class BattleController:
         current_battle.display_battle_window(self.screen, self.drawer,
                                              self.cmd_menu, self.graphics, self.directories,
                                              self.game.color, self.player)
-        self.command_window_open = False  # the first player turn opens the command window (StartPlayerTurn)
+        # The first player turn opens the command window (StartPlayerTurn): if the enemy attacks first, there is none
+        self.command_window_open = False
+        self.command_window_shown = False
+        self.command_window_covered = None
         run_away = self.start_fight(current_battle)
         while current_battle.enemy.hp > 0 and not run_away and not self.player.is_dead:
             run_away = self.handle_battle_prompts(run_away, current_battle)
@@ -338,9 +345,15 @@ class BattleController:
                 # WndAPressed: the chosen command's arrow is drawn once more and stays on while it runs
                 self.command_cursor.hold()
                 self.draw_command_window(True)
+            if selected_executed_option in ('Fight', 'Run'):
+                # PlyrFight (LE5FE), PlyrRun (LE886): RemoveWindow WND_CMD_CMB before anything is shown
+                self.remove_command_window()
             if selected_executed_option == 'Fight':
                 self.fight(current_battle)
             elif selected_executed_option == 'Spell':
+                if not self.player.spells:
+                    self.remove_command_window()  # PlyrSpell (LE6CB): no spells yet
+                # Otherwise the SPELL window is answered first (CommandMenu.display_item_menu removes both)
                 current_battle.battle_spell(self.cmd_menu, self.player, current_battle)
             elif selected_executed_option == 'Run':
                 run_away = current_battle.battle_run(self.cmd_menu, self.player, current_battle)
@@ -353,6 +366,7 @@ class BattleController:
                     current_battle.no_op = True
             elif selected_executed_option == 'Item':
                 if not self.player.inventory:
+                    self.remove_command_window()  # PlyrItem (LE7B0): nothing to show
                     self.cmd_menu.show_line_in_dialog_box(
                         self._('Nothing of use has yet been given to thee.\n'),
                         add_quotes=False, hide_arrow=True, disable_sound=True)
@@ -392,6 +406,21 @@ class BattleController:
         self.command_buttons.open(held_joypad_buttons())
         self.command_window_open = True
         self.drawn_command_window = None
+        if not self.command_window_shown:
+            # After B (WND_ABORT) it is still on the screen and is only drawn again
+            self.command_window_covered = self.cmd_menu.covered_area(COMBAT_COMMAND_WINDOW)
+            self.cmd_menu.window_drop_down_effect(*COMBAT_COMMAND_WINDOW)
+            self.command_window_shown = True
+
+    def remove_command_window(self) -> None:
+        """NES RemoveWindow WND_CMD_CMB: once a command has been chosen (and its SPELL or ITEM window answered), the
+        command window is taken off the screen and what it covered is put back, so it isn't there during the hero's
+        action, the enemy's turn or while the hero sleeps. The next player turn opens it again."""
+        if not self.command_window_shown:
+            return
+        self.cmd_menu.remove_window(COMBAT_COMMAND_WINDOW, self.command_window_covered)
+        self.command_window_shown = False
+        self.command_window_covered = None
 
     def process_command_input(self, presses: int) -> str | None:
         """WndProcessInput for the command window (CmdCmbtDat: 2 columns of 2 rows): only the first of A, B, up,
