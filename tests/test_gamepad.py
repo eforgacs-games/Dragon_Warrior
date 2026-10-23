@@ -10,9 +10,8 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
-from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_i, K_j, K_k, K_u, KEYDOWN, KEYUP
+from pygame import K_BACKSPACE, K_DOWN, K_F1, K_LEFT, K_RIGHT, K_UP, K_i, K_j, K_k, K_u, KEYDOWN, KEYUP, KMOD_SHIFT
 
-from src import gamepad as gamepad_module
 from src.config.test_config import test_config
 from src.cursor import IN_A, IN_B
 from src.direction import Direction
@@ -172,18 +171,41 @@ class TestKeys(GamepadTestCase):
         self.assertEqual({K_k, K_LEFT}, self.gamepad.held)
 
     def test_unmapped_buttons_do_nothing(self):
-        self.pad.state = pad('x', 'y', 'leftshoulder', 'rightshoulder', 'lefttrigger', 'guide')
+        self.pad.state = pad('x', 'y', 'guide')
         poll_virtual_joypad()
         self.assertEqual([], queued())
         self.assertEqual(set(), self.gamepad.held)
 
-    def test_extra_buttons_press_their_keys_once_filled_in(self):
-        with patch.dict(gamepad_module.EXTRA_BUTTONS, {'rightshoulder': (pygame.K_F1, pygame.KMOD_LSHIFT)}):
-            self.pad.state = pad('rightshoulder')
-            poll_virtual_joypad()
-            [press] = queued()
-            self.assertEqual((pygame.K_F1, pygame.KMOD_LSHIFT), (press.key, press.mod))
-            self.assertEqual({pygame.K_F1}, self.gamepad.held)
+    def test_left_bumper_presses_f1(self):
+        # load state 1
+        self.pad.state = pad('leftshoulder')
+        poll_virtual_joypad()
+        [press] = queued()
+        self.assertEqual((K_F1, 0), (press.key, press.mod & KMOD_SHIFT))
+        self.assertTrue(is_gamepad(press))
+        self.assertEqual({K_F1}, self.gamepad.held)
+
+    def test_right_bumper_presses_shift_f1(self):
+        # save state 1
+        self.pad.state = pad('rightshoulder')
+        poll_virtual_joypad()
+        [press] = queued()
+        self.assertEqual(K_F1, press.key)
+        self.assertTrue(press.mod & KMOD_SHIFT)
+        self.assertEqual({K_F1}, self.gamepad.held)
+
+    def test_left_trigger_holds_backspace_until_let_go(self):
+        # rewind, for as long as the trigger is pulled
+        self.pad.state = pad('lefttrigger')
+        poll_virtual_joypad()
+        self.assertEqual([K_BACKSPACE], [press.key for press in queued()])
+        poll_virtual_joypad()
+        self.assertEqual(1, len(queued()))  # held: one press
+        self.assertTrue(with_virtual_keys(defaultdict(int))[K_BACKSPACE])
+        self.pad.state = pad()
+        poll_virtual_joypad()
+        self.assertEqual([K_BACKSPACE], [release.key for release in queued(KEYUP)])
+        self.assertEqual(set(), self.gamepad.held)
 
     def test_right_trigger_steps_through_the_speeds(self):
         speeds = []
@@ -342,6 +364,24 @@ class TestMapFrame(GamepadTestCase):
             with self.subTest(button=button), patch.object(self.game, 'handle_keypresses') as keypresses:
                 self.press(button)
                 self.assertEqual([pressed_key], [call.args[0].key for call in keypresses.call_args_list])
+
+    def test_bumpers_load_and_save_state_1(self):
+        for button, request in (('leftshoulder', ('load', 1)), ('rightshoulder', ('save', 1))):
+            with self.subTest(button=button), patch.object(self.game.movement, 'resolve_pending_freezes'):
+                self.game.state_request = None
+                self.press(button)
+                self.assertEqual(request, self.game.state_request)
+
+    def test_left_trigger_rewinds_while_held(self):
+        rewind = self.game.rewind
+        with patch.object(rewind, 'start') as start, patch.object(rewind, 'stop') as stop:
+            self.pad.state = pad('lefttrigger')
+            self.game.read_events()
+            start.assert_called_once_with()
+            stop.assert_not_called()
+            self.pad.state = pad()
+            self.game.read_events()
+            stop.assert_called_once_with()
 
     def test_select_opens_the_options(self):
         with patch('src.game.OptionsOverlay') as overlay:
