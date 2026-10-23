@@ -13,7 +13,7 @@ from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, Graphics, set_gettext_language, singular_or_plural
 from src.command_window import WND_ABORT, CommandWindow
-from src.cursor import DialogArrowBlink, draw_cursor_tile
+from src.cursor import IN_A, DialogArrowBlink, draw_cursor_tile
 from src.waiting import is_any_key_held, wait
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
@@ -134,20 +134,35 @@ class CommandMenu:
         self.draw_command_window()
         self.screen.set_clip(previous_clip)
 
-    def remove_window(self, window: Window | tuple[int, int, int, int]) -> None:
+    def window_rect(self, window: Window | tuple[int, int, int, int]) -> Rect:
+        """A window's rect on the screen."""
+        tile_size = self.game.game_state.config['TILE_SIZE']
+        return Rect(window[0] * tile_size, window[1] * tile_size, window[2] * tile_size, window[3] * tile_size)
+
+    def covered_area(self, window: Window | tuple[int, int, int, int]) -> Surface | None:
+        """What is on the screen where a window is about to open, to put back with remove_window."""
+        if self.game.game_state.config['NO_BLIT']:
+            return None
+        return self.screen.subsurface(self.window_rect(window).clip(self.screen.get_rect())).copy()
+
+    def remove_window(self, window: Window | tuple[int, int, int, int], covered: Surface | None = None) -> None:
         """NES RemoveWindow (Bank00, LA7A2) for a foreground window: WindowSequence (Bank01) calls it as soon as a
         selection window (spells, inventories, YES/NO, BUY/SELL) has been answered. Each of its blocks goes back to
         what it covered: the background windows that are open (ClearWndBuf -> UncoverWindow), or else the map
         (ModWindowBlock). Only that area is redrawn; the windows that are still open stay as they are.
 
         Here the background windows are the pop-up, the COMMAND window and the dialog window, drawn over the map as
-        it is now, at the camera's current position."""
+        it is now, at the camera's current position. With ``covered`` (covered_area, taken as the window opened), that
+        is put back instead: in a fight, where the window covers the battle scene."""
         config = self.game.game_state.config
         if config['NO_BLIT']:
             return
         tile_size = config['TILE_SIZE']
-        rect = Rect(window[0] * tile_size, window[1] * tile_size, window[2] * tile_size, window[3] * tile_size)
+        rect = self.window_rect(window)
         screen = self.screen
+        if covered is not None:
+            display.update(screen.blit(covered, rect.topleft))
+            return
         previous_clip = screen.get_clip()
         screen.set_clip(rect)
         drawer = self.game.drawer
@@ -776,7 +791,7 @@ class CommandMenu:
         self.player.inventory.remove("Wings")
         self.show_text_in_dialog_box(
             self._("{} threw The Wings of the Wyvern up into the sky.").format(self.player.name))
-        self.warp(*RETURN_DESTINATION)
+        self.return_to_tantegel()
 
     def torch(self):
         if not self.current_map.is_dark:
@@ -801,11 +816,11 @@ class CommandMenu:
         self.game.repel_timer = FAIRY_WATER_TIMER
 
     def resume_music(self):
-        """After a music clip: in a fight, the fight's music again (the end boss music against the Dragonlord's final
-        form, ChkUseFlute and ChkUseHarp); on the map, the map's music (ResumeMusicTbl). Both start from the
-        beginning."""
+        """After a music clip: in a fight, the fight's music again (MSC_REG_FGHT, or MSC_END_BOSS against the
+        Dragonlord's final form: ChkUseFlute and ChkUseHarp); on the map, the map's music (ResumeMusicTbl). Both start
+        from the beginning."""
         if self.current_battle is not None:
-            self.current_battle.play_battle_music(self.game.music_player)
+            self.current_battle.resume_battle_music(self.game.music_player)
         else:
             self.game.music_player.load_and_play_music(self.current_map.music_file_path)
 
@@ -868,6 +883,10 @@ class CommandMenu:
             self.show_text_in_dialog_box(self._("But no rainbow appeared here."), skip_text=self.skip_text)
             return
         self.game.story_flags.rainbow_bridge_built = True
+        # NES ChkDrop: MSC_RNBW_BRDG starts as the rainbow flashes, WaitForMusicEnd lets it finish, then MSC_OUTDOOR
+        # (the overworld music, from the start), and only then does ModMapBlock put the bridge on the map
+        self.game.music_player.play_until_end(self.directories.rainbow_bridge_music, self.game.game_state.config)
+        self.game.music_player.load_and_play_music(self.directories.overworld_music)
         bridge_row, bridge_column = RAINBOW_BRIDGE_COORDINATES
         self.set_tile_by_coordinates('BRIDGE', bridge_column, bridge_row, self.player)
 
@@ -918,7 +937,7 @@ class CommandMenu:
         # the regular fight music even against the Dragonlord's final form.
         self.game.music_player.play_until_end(self.directories.cursed_music, self.game.game_state.config)
         if self.current_battle is not None:
-            self.game.music_player.load_and_play_music(self.directories.battle_music)
+            self.game.music_player.load_and_play_music(self.directories.regular_fight_music)
         else:
             self.resume_music()
 
@@ -1045,12 +1064,20 @@ class CommandMenu:
         if destination is None:
             self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
             return
+        # NES ChangeMaps -> SetPlyrPixelLoc -> MapChngWithSound: the stairs sound, as on a staircase
+        self.sound.play_sound(self.directories.stairs_up_sfx)
         self.warp(*destination)
 
     def return_(self):
         if not self.can_return():
             self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
             return
+        self.return_to_tantegel()
+
+    def return_to_tantegel(self):
+        """NES DoReturn, for RETURN and the Wings of the Wyvern: SFX_WVRN_WNG, then MapChngFadeNoSound (no stairs
+        sound) to the overworld outside Tantegel."""
+        self.sound.play_sound(self.directories.wyvern_wing_sfx)
         self.warp(*RETURN_DESTINATION)
 
     def repel(self):
@@ -1071,7 +1098,6 @@ class CommandMenu:
         Talk to an NPC.
         :return: None
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         # dialog = Dialog(player=self.player)
 
         # for now, implementing using print statements. will be useful for debugging as well.
@@ -1109,7 +1135,6 @@ class CommandMenu:
         Display the current player's status.
         :return: None
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         show_status = True
         x, y, width, height = STATUS_WINDOW
         self.window_drop_down_effect(x, y, width, height)
@@ -1175,7 +1200,6 @@ class CommandMenu:
         Go up or down a staircase.
         :return: None
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         # this might be something we could turn off as one of the "modernization" updates
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN'):
             self.game.process_staircase_warps(staircase_location=(self.game.player.row, self.game.player.column),
@@ -1192,7 +1216,6 @@ class CommandMenu:
         Search the ground for items.
         :return: None
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         # open a window
         text_to_print = [self._("{} searched the ground all about.").format(self.player.name), ]
         # wait for input...
@@ -1256,7 +1279,6 @@ class CommandMenu:
         """
         Cast a magic spell.
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
         if not self.player.spells:
             self.show_text_in_dialog_box(self._("{} cannot yet use the spell.").format(self.player.name),
@@ -1271,7 +1293,6 @@ class CommandMenu:
         View/use items. (Not yet implemented)
         :return: To be determined upon implementation
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         # the implementation of this will vary upon which item is being used.
         if not self.player.inventory:
             self.show_text_in_dialog_box(self._("Nothing of use has yet been given to thee."), skip_text=self.skip_text)
@@ -1342,8 +1363,15 @@ class CommandMenu:
                                     item_menu_entry_tile_row(menu_name, index), cursor_visible)
             display.update(window_rect)
 
-        # Up and down stop at the first and last entries; A chooses, B closes the window (src/selection.py)
-        answer = run_selection(draw, 0, move=stop_at_edges(len(entries)))
+        # Up and down stop at the first and last entries; A chooses, with the menu button sound (WndAPressed), B
+        # closes the window (src/selection.py)
+        window = item_menu_window(menu_name, len(entries))
+        # In a fight the window covers the battle scene, which remove_window doesn't draw: what it covers is kept
+        covered = self.covered_area(window) if self.current_battle is not None else None
+        answer = run_selection(draw, 0, move=stop_at_edges(len(entries)), sound=self.play_menu_button_sound,
+                               sound_buttons=(IN_A,))
+        # NES WindowSequence: RemoveWindow, chosen or not, before the choice is acted on
+        self.remove_window(window, covered)
         currently_selected_item = entries[answer.entry]
         if not answer.accepted:
             if self.current_battle is not None:
@@ -1431,16 +1459,22 @@ class CommandMenu:
 
     def choose_command(self, command: Callable[[], Any]) -> None:
         """A COMMAND entry was chosen (WndAPressed): its arrow is drawn and stays on, not blinking, while the
-        command runs and the windows it opens are in front of the COMMAND window."""
+        command runs and the windows it opens are in front of the COMMAND window. WndAPressed then plays the menu
+        button sound (SFX_MENU_BTN) for every entry, before NCCmdSelected runs the command."""
         self.cursor.hold()
         if not self.game.game_state.config['NO_BLIT']:
             display.update(self.draw_command_window())
+        self.play_menu_button_sound()
         try:
             command()
         finally:
             # If the COMMAND window is still open, it is selecting again, its cursor blinking from the start
             # (WndUpdateCrsrPos)
             self.menu.buttons.moved()
+
+    def play_menu_button_sound(self) -> None:
+        """SFX_MENU_BTN: what WndAPressed plays when an entry of a selection window is chosen."""
+        self.sound.play_sound(self.directories.menu_button_sfx)
 
     def draw_window_cursor(self, window_x: int, window_y: int, column: int, row: int, visible: bool = True) -> Rect:
         """
@@ -1533,7 +1567,6 @@ class CommandMenu:
         Open a door.
         :return: None
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         if self.player.next_tile_id == 'DOOR':
             if 'Magic Key' in self.player.inventory:
                 # actually open the door
@@ -1559,7 +1592,6 @@ class CommandMenu:
             self.show_text_in_dialog_box(self._("There is nothing to take here, {}.").format(self.player.name),
                                          skip_text=self.skip_text)
         else:
-            self.sound.play_sound(self.directories.menu_button_sfx)
             self.take_chest_contents(str(chest['item']), chest)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
