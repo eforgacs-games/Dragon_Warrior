@@ -173,11 +173,23 @@ class TestScriptedBattle(unittest.TestCase):
 
     def test_running_from_final_form_returns_to_map(self, mock_battle_class, mock_display):
         mock_battle_class.return_value = fake_battle('Dragonlord 2', 130)
-        with patch.object(self.controller, 'handle_battle_prompts', return_value=True):
+        with patch.object(self.controller, 'handle_battle_prompts', return_value=True), \
+                patch.object(self.controller, 'reload_map_after_running_from_final_form') as mock_reload:
             outcome = self.controller.start_scripted_battle('Dragonlord 2')
         self.assertEqual(outcome, BattleOutcome.ESCAPED)
-        self.game.screen.fill.assert_called_once()
+        # NES RunSuccessful: the map's music, then a cut to black (no fade out) and MapChngNoSound's reload and fade in
         self.game.music_player.load_and_play_music.assert_called_once_with(self.game.current_map.music_file_path)
+        mock_reload.assert_called_once_with()
+
+    def test_the_map_is_reloaded_with_a_cut_to_black_then_a_fade_in(self, mock_battle_class, mock_display):
+        self.game.current_map.identifier = 'CharlockB7Wide'
+        self.game.tile_size = 16
+        self.game.player.rect.x, self.game.player.rect.y = 17 * 16, 10 * 16
+        self.game.player.direction_value = 0
+        with patch.dict('src.battle_controller.map_lookup', CharlockB7Wide=lambda config: 'reloaded map'):
+            self.controller.reload_map_after_running_from_final_form()
+        self.game.change_map.assert_called_once_with('reloaded map', destination_coordinates=(10, 17), direction=0,
+                                                     fade_out_first=False)
 
 
 class TestDragonlordBattle(unittest.TestCase):

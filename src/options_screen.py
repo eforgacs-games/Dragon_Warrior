@@ -150,7 +150,7 @@ def options_from_save(save: dict) -> Options:
 
 
 def options_to_save(options: Options) -> dict:
-    """The save file entries for these settings (CommandMenu.save, Game.change_message_speed)."""
+    """The save file entries for these settings (CommandMenu.save, TitleMenu.change_message_speed)."""
     return {MESSAGE_SPEED_SAVE_KEY: options.message_speed, DIALOG_STYLE_SAVE_KEY: options.dialog_style,
             NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way}
 
