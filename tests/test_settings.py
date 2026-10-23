@@ -61,14 +61,14 @@ class TestSettingsFile(TempDirTestCase):
 
     def test_round_trip(self):
         settings = Settings(zoom=3, fullscreen=True, game_speed=4, language='Korean', scanlines=True,
-                            scaling='PixelPerfect', view='Wide')
+                            scaling='PixelPerfect', view='Wide', dungeon_map=False)
         self.assertTrue(save_settings(self.path, settings))
         self.assertEqual(settings, load_settings(self.path))
 
     def test_format(self):
         save_settings(self.path, Settings(zoom=3, language='Korean'))
         self.assertEqual({'version': 1, 'zoom': 3, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
-                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES'},
+                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': True},
                          self.saved())
         self.assertEqual(['settings.json'], os.listdir(os.path.dirname(self.path)))  # no temporary file left over
 
@@ -92,7 +92,7 @@ class TestSettingsFile(TempDirTestCase):
 
     def test_each_bad_value_is_its_default_alone(self):
         self.write(json.dumps({'zoom': 'big', 'fullscreen': 'yes', 'game_speed': 3, 'language': 'Klingon',
-                               'scanlines': 'on', 'scaling': 'Blurry', 'view': 'Ultra'}))
+                               'scanlines': 'on', 'scaling': 'Blurry', 'view': 'Ultra', 'dungeon_map': 'off'}))
         self.assertEqual(Settings(), load_settings(self.path))
         self.write(json.dumps({'zoom': 0, 'fullscreen': 1, 'game_speed': True, 'language': None}))
         self.assertEqual(Settings(), load_settings(self.path))
@@ -245,7 +245,7 @@ class TestSavedWhenChanged(GameTestCase):
         self.assertEqual('Korean', self.saved()['language'])
         # and nothing else was written
         self.assertEqual({'version': 1, 'zoom': None, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
-                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES'},
+                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': True},
                          self.saved())
 
     def test_game_speed_off_plays_at_normal_speed_and_keeps_the_saved_one(self):
@@ -261,6 +261,15 @@ class TestSavedWhenChanged(GameTestCase):
         game.apply_option('GAME_SPEED_KEYS')
         self.assertEqual(1, game_speed())
         self.assertEqual(4, self.saved()['game_speed'])
+
+    def test_dungeon_map(self):
+        game = self.new_game()
+        # switched off in the options overlay (OptionsOverlay changes the config, then calls apply_option)
+        game.game_state.config['DUNGEON_MAP'] = False
+        game.apply_option('DUNGEON_MAP')
+        self.assertFalse(game.game_state.config['DUNGEON_MAP'])
+        self.assertFalse(self.saved()['dungeon_map'])
+        self.assertFalse(self.new_game().game_state.config['DUNGEON_MAP'])
 
     def test_a_new_game_starts_with_what_was_saved(self):
         game = self.new_game()

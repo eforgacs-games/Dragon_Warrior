@@ -30,6 +30,7 @@ from src.direction import Direction
 from src.display_filters import PRESENTER, SCALING_KEY, SCALING_SMOOTH, SCANLINES_KEY
 from src.directories import Directories, music_name
 from src.drawer import Drawer
+from src.dungeon_map import DUNGEON_MAP_KEYS, DungeonMap, DungeonMapOverlay, dungeon_map_enabled
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
@@ -108,6 +109,8 @@ class Game:
             config[SCALING_KEY] = self.settings.settings.scaling
         if self.settings.settings.view != VIEW_NES:
             config['VIEW'] = self.settings.settings.view
+        if not self.settings.settings.dungeon_map:
+            config['DUNGEON_MAP'] = False
         self._ = _ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
         # map/graphics
@@ -164,6 +167,10 @@ class Game:
         # G pressed on the map: auto-grind (src/auto_grind.py) starts once everyone has finished their step, like the
         # pause (resolve_pending_freezes)
         self.auto_grind_requested = False
+        # M pressed on a dark map: the dungeon map (src/dungeon_map.py) opens once everyone has finished their step,
+        # like the pause (resolve_pending_freezes). What the hero has seen of each dark floor, kept with the adventure log
+        self.dungeon_map_requested = False
+        self.dungeon_map = DungeonMap()
         # Shift + F1/F2/F3 or F1/F2/F3 pressed on the map: ('save' or 'load', slot). Like the pause, it waits for the
         # hero and the NPCs to finish their steps (resolve_pending_freezes), then becomes state_request_due, which the
         # end of that frame carries out (run_due_state_request)
@@ -269,6 +276,7 @@ class Game:
         - LANGUAGE, a global setting: switched to at once (set_language) and saved with the global settings.
         - SCANLINES and SCALING, global settings: the display filters change from the next frame on, and are saved.
         - VIEW, a global setting: saved now, and shown once the overlay closes (set_view).
+        - DUNGEON MAP, a global setting: saved now; M reads it each time it's pressed.
         - MUSIC (ORCHESTRA_MUSIC_ENABLED): every Directories reads the music from the config (src/directories.py), so
           the next music played is from the new set; the map's music is started again from the new set now.
         - GAME SPEED (GAME_SPEED_KEYS): keys 1 to 5 are switched on or off; off goes back to normal speed, and on to
@@ -284,6 +292,8 @@ class Game:
                                  scaling=config.get(SCALING_KEY, SCALING_SMOOTH))
         elif config_key == 'VIEW':
             self.settings.update(view=view_name(config))  # shown once the overlay closes (set_view)
+        elif config_key == 'DUNGEON_MAP':
+            self.settings.update(dungeon_map=dungeon_map_enabled(config))
         elif config_key == 'ORCHESTRA_MUSIC_ENABLED':
             name = music_name(self.current_map.music_file_path)
             if name is not None:
@@ -435,6 +445,8 @@ class Game:
         if not self.player.is_moving:
             set_character_position(self.player, tile_size=self.tile_size)
         self._handle_map_updates()
+        # The dungeon map (src/dungeon_map.py): the blocks the light shows around the hero on a dark floor are seen
+        self.dungeon_map.see(self.current_map, self.player.row, self.player.column, self.game_state.lit_diameter)
         self.movement.resolve_pending_freezes()
         self._handle_post_move_checks()
         self.ending.check_for_end_game_trigger()
@@ -881,6 +893,7 @@ class Game:
         self.handle_start_button(current_keydown_event)
         self.handle_select_button(current_keydown_event)
         self.handle_auto_grind_key(current_keydown_event)
+        self.handle_dungeon_map_key(current_keydown_event)
         self.handle_help_button(current_keydown_event)
         self.handle_quest_journal_key(current_keydown_event)
         self.handle_enter_key(current_keydown_event)
@@ -937,6 +950,7 @@ class Game:
                 self.cmd_menu_requested = False
                 self.options_requested = False
                 self.auto_grind_requested = False
+                self.dungeon_map_requested = False
                 self.movement.resolve_pending_freezes()
 
     def handle_select_button(self, keydown_event):
@@ -960,6 +974,23 @@ class Game:
             return
         self.auto_grind_requested = True
         self.movement.resolve_pending_freezes()
+
+    def handle_dungeon_map_key(self, keydown_event) -> None:
+        """M: the dungeon map (src/dungeon_map.py), not NES. Only on a dark map, with the DUNGEON MAP option ON, and
+        only when START would pause the game; like the pause it waits for the hero and the NPCs to finish their steps
+        (resolve_pending_freezes)."""
+        if keydown_event.key not in DUNGEON_MAP_KEYS:
+            return
+        if not (self.current_map.is_dark and dungeon_map_enabled(self.game_state.config)):
+            return
+        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+            return
+        self.dungeon_map_requested = True
+        self.movement.resolve_pending_freezes()
+
+    def open_dungeon_map(self) -> None:
+        """Show the dungeon map over the map until it's closed (its loop is the only thing running meanwhile)."""
+        DungeonMapOverlay(self).run()
 
     def handle_save_state_keys(self, keydown_event) -> None:
         """Shift + F1/F2/F3 saves a save state in slot 1/2/3 and F1/F2/F3 loads it (src/save_state.py), not NES. Only
@@ -1172,6 +1203,7 @@ class Game:
         save = SaveFile.from_save(save_file)
         save.restore_player(self.player)
         self.story_flags = save.story_flags
+        self.dungeon_map = DungeonMap.from_save(save.dungeon_map)
         # NES LoadSavedData (LFBC8): the log's message speed; and this game's dialog style and NPCS MAKE WAY. Older
         # saves: NORMAL, CLASSIC, ON
         apply_options(self.game_state.config, save.options)

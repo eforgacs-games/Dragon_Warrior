@@ -1,8 +1,9 @@
 """The global settings: the player's own, kept from one launch to the next, in one small file. Not NES behavior.
 
 They are the window zoom (Ctrl + / Ctrl -, src/zoom.py), fullscreen (F11, Game.handle_fullscreen_toggle), the game
-speed (keys 1 to 5, src/waiting.py), the language, the display filters and the view (the options overlay's LANGUAGE,
-SCANLINES, SCALING and VIEW rows, src/options_overlay.py, src/display_filters.py and src/view.py).
+speed (keys 1 to 5, src/waiting.py), the language, the display filters, the view and the dungeon map (the options
+overlay's LANGUAGE, SCANLINES, SCALING, VIEW and DUNGEON MAP rows, src/options_overlay.py, src/display_filters.py,
+src/view.py and src/dungeon_map.py).
 They belong to whoever plays on this computer, not to an adventure, so they are kept apart from the adventure logs
 (src/save_file.py), which carry the per-adventure options (message speed, dialog style and the rest).
 
@@ -10,7 +11,7 @@ The file is JSON, in the per-user config folder (src/paths.py user_config_dir), 
 ~/.config/dragon-warrior/settings.json:
 
     {"version": 1, "zoom": 3, "fullscreen": false, "game_speed": 1, "language": "Korean", "scanlines": false,
-     "scaling": "Smooth", "view": "NES"}
+     "scaling": "Smooth", "view": "NES", "dungeon_map": true}
 
 "zoom" and "language" can be null: the window opens at its normal size, and the language comes from the system locale
 (base_config language_from_locale). A saved language wins over the locale.
@@ -54,6 +55,7 @@ class Settings:
     scanlines: bool = False
     scaling: str = SCALING_SMOOTH  # src/display_filters.py SCALING_MODES
     view: str = VIEW_NES  # the VIEW row: src/view.py VIEWS
+    dungeon_map: bool = True  # the DUNGEON MAP row: whether M shows the dungeon map (src/dungeon_map.py)
 
     def to_json(self) -> dict[str, Any]:
         return {'version': FORMAT_VERSION, **asdict(self)}
@@ -80,6 +82,8 @@ class Settings:
         values['scaling'] = scaling if scaling in SCALING_MODES else default.scaling
         view = data.get('view')
         values['view'] = view if view in VIEWS else default.view
+        dungeon_map = data.get('dungeon_map')
+        values['dungeon_map'] = dungeon_map if isinstance(dungeon_map, bool) else default.dungeon_map
         return cls(**values)
 
 

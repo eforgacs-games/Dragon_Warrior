@@ -171,7 +171,7 @@ class TestKeys(GamepadTestCase):
         self.assertEqual({K_k, K_LEFT}, self.gamepad.held)
 
     def test_unmapped_buttons_do_nothing(self):
-        self.pad.state = pad('x', 'y', 'guide')
+        self.pad.state = pad('x', 'guide')  # 'y' is the dungeon map's M (tests/test_dungeon_map.py)
         poll_virtual_joypad()
         self.assertEqual([], queued())
         self.assertEqual(set(), self.gamepad.held)

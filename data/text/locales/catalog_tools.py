@@ -81,8 +81,9 @@ def unextractable_gettext_calls(root: Path = ROOT) -> list[str]:
 
 def dynamic_messages() -> dict[str, list[str]]:
     """Text that reaches _() through a variable: item, spell and enemy names, the text of the generated windows
-    that are drawn translated (src/translated_window.py), the options screen's and the options overlay's text, and the
-    shop stat preview's labels."""
+    that are drawn translated (src/translated_window.py), the options screen's and the options overlay's text, the
+    shop stat preview's labels and the dungeon map's text."""
+    from src.dungeon_map import overlay_texts as dungeon_map_texts
     from src.enemy_lookup import enemy_string_lookup
     from src.items import armor, shields, tools, weapons
     from src.options_overlay import overlay_texts
@@ -116,6 +117,8 @@ def dynamic_messages() -> dict[str, list[str]]:
         messages.setdefault(text, []).append('src/shop_preview.py')
     for text in journal_texts():
         messages.setdefault(text, []).append('src/quest_journal.py')
+    for text in dungeon_map_texts():
+        messages.setdefault(text, []).append('src/dungeon_map.py')
     return messages
 
 
