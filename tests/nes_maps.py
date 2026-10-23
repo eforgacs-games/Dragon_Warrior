@@ -94,6 +94,35 @@ def decode_map(map_number: int) -> list[list[str]]:
     return [[TOWN_BLOCKS[int(nibble, 16) & mask] for nibble in row] for row in rows]
 
 
+# GenBlkConvTbl, overworld water block conversions (BLK_WATER, BLK_WTR_T .. BLK_WTR_TLRB), as this game's tiles, indexed
+# by the shores: top 1, left 2, right 4, bottom 8. The left, right and bottom and the all-sides shores are never used.
+SHORE_BLOCKS = ('WATER', 'TOP_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST', 'RIGHT_COAST', 'TOP_RIGHT_COAST', 'LEFT_RIGHT_COAST',
+                'TOP_LEFT_RIGHT_COAST', 'BOTTOM_COAST', 'BOTTOM_TOP_COAST', 'BOTTOM_LEFT_COAST', 'BOTTOM_TOP_LEFT_COAST',
+                'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_RIGHT_COAST', None, None)
+SHORE_TOP, SHORE_LEFT, SHORE_RIGHT, SHORE_BOTTOM = 1, 2, 4, 8
+
+
+def overworld_water_block(overworld: list[list[str]], x: int, y: int) -> str:
+    """The water block the NES draws at overworld (x, y), with its shores: a shore on each side with land next to it.
+
+    DoWtrConv (Bank00, $AB24) for a water block in the map: water and bridges aren't land (ChkWtrOrBrdg), and the
+    map's edges count as water. TrgtOutOfBounds ($AB77) outside it: the boundary block is water, and the blocks just
+    past an edge, beside the map, get a shore on the side that faces land."""
+    def is_land(land_x: int, land_y: int) -> bool:
+        inside = 0 <= land_x < OVERWORLD_SIZE and 0 <= land_y < OVERWORLD_SIZE
+        return inside and overworld[land_y][land_x] not in ('WATER', 'BRIDGE')
+
+    inside = 0 <= x < OVERWORLD_SIZE and 0 <= y < OVERWORLD_SIZE
+    beside_the_map = 0 <= x < OVERWORLD_SIZE or 0 <= y < OVERWORLD_SIZE
+    shores = 0
+    if inside or beside_the_map:
+        for side, (dx, dy) in ((SHORE_TOP, (0, -1)), (SHORE_LEFT, (-1, 0)), (SHORE_RIGHT, (1, 0)),
+                               (SHORE_BOTTOM, (0, 1))):
+            if is_land(x + dx, y + dy):
+                shores |= side
+    return SHORE_BLOCKS[shores]
+
+
 def boundary_tile(map_number: int) -> str:
     return BOUNDARY_TILES[BOUNDARY_BLOCKS[map_number]]
 
