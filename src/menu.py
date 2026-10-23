@@ -11,7 +11,7 @@ from pygame.sprite import Group
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from data.text.dialog_lookup_table import DialogLookup
-from src.adventure_log import ADVENTURE_LOGS, first_open_log
+from src.adventure_log import ADVENTURE_LOGS, first_open_log, logs_named
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, accept_keys, reject_keys, Graphics, set_gettext_language
@@ -181,13 +181,11 @@ class CommandMenu(Menu):
         are saved with the hero and the story bits as one StoryFlags entry. Like the NES, the treasure chest history
         and the repel timer aren't saved (Game.load_game)."""
         if self.player.adventure_log not in ADVENTURE_LOGS:
-            # No log was chosen (the title menu was skipped): use the first open one rather than a save_slot_0.json
-            # that isn't an adventure log. With all three used there is nowhere to save.
-            open_log = first_open_log(self.directories.save_dir)
-            if open_log is None:
-                print("No open adventure log to save to.")
+            log = self.log_for_unchosen_save()
+            if log is None:
                 return
-            self.player.adventure_log = open_log
+            # later saves go to the same log
+            self.player.adventure_log = log
         save_dict = {
             'Name': self.player.name,
             'Experience': self.player.total_experience,
@@ -215,6 +213,24 @@ class CommandMenu(Menu):
         with open(join(self.directories.save_dir, f'save_slot_{self.player.adventure_log}.json'),
                   'w') as output_save_file:
             output_save_file.write(json_object)
+
+    def log_for_unchosen_save(self) -> int | None:
+        """The adventure log to save to when none was chosen (the title menu was skipped), never a save_slot_0.json
+        that isn't a log: the one log whose hero has this hero's name, else the first open log. None, so nothing is
+        saved, if several logs have the name, or if none has it and all three are used: a log with a different hero
+        is never overwritten."""
+        save_dir = self.directories.save_dir
+        named = logs_named(save_dir, self.player.name)
+        if len(named) == 1:
+            return named[0]
+        if named:
+            print(f"Not saved: adventure logs {', '.join(map(str, named))} all have the hero {self.player.name}, "
+                  f"so it isn't clear which one to save to.")
+            return None
+        open_log = first_open_log(save_dir)
+        if open_log is None:
+            print(f"Not saved: all three adventure logs are used, and none has the hero {self.player.name}.")
+        return open_log
 
     def set_king_lorik_dialog(self, left_throne_room: bool = False):
         # NES DoKingDialog: carrying Gwaelin comes first, then whether the hero has left the throne room yet
