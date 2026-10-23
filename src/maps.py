@@ -73,7 +73,6 @@ class DragonWarriorMap:
                                          graphics=self.graphics,
                                          configured_scale=config['SCALE'])
         self.impassable_tiles = all_impassable_tiles
-        self.custom_underlying_tiles = {}
         self.npc_coordinates = {}
         self.tile_group_dict = {}
         if staircases is None:
@@ -255,8 +254,6 @@ class DragonWarriorMap:
                                                  'coordinates': coordinates
                                                  }
         if not self.has_floor_tile(*coordinates):
-            if self.custom_underlying_tiles and self.custom_underlying_tiles.get(character.identifier):
-                underlying_tile = self.custom_underlying_tiles[character.identifier]
             self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
 
     def map_player(self, underlying_tile, player, coordinates) -> None:
@@ -490,10 +487,6 @@ class TantegelCourtyard(DragonWarriorMap):
         # The NPCs from TantMobTbl
         self.roaming_character_list = ['MAN_2', 'GUARD_3', 'WOMAN_2', 'MERCHANT_2', 'MERCHANT_3', 'SOLDIER',
                                        'GUARD_7', 'GUARD_9', 'WISE_MAN_2', 'SOLDIER_2']
-        self.custom_underlying_tiles = {
-            'WOMAN': 'GRASS',
-            'WOMAN_2': 'GRASS'
-        }
         self.dragonlord_defeated = False
 
     def hero_underlying_tile(self):
@@ -520,7 +513,6 @@ class TantegelCourtyard(DragonWarriorMap):
             (32, 13): 'MERCHANT',
         }
         self.roaming_character_list = ['GUARD_9', 'GUARD_10', 'GUARD_11', 'MAN', 'SOLDIER', 'SOLDIER_2', 'MERCHANT']
-        self.custom_underlying_tiles = {}
 
     def set_characters_initial_directions(self):
         if self.dragonlord_defeated:
@@ -811,17 +803,6 @@ class Brecconary(DragonWarriorMap):
             (30, 35): 'MAN',  # mobile male villager at 25,22 ($31)
             (32, 25): 'WOMAN',  # mobile female villager at 15,24 ($2D)
         }
-        self.custom_underlying_tiles = {
-            'SOLDIER': 'TREES',
-            'WOMAN_2': 'GRASS',
-            'MAN_2': 'TREES',
-            'MAN_3': 'GRASS',
-            'WISE_MAN_2': 'GRASS',
-            'SOLDIER_3': 'GRASS',
-            'SOLDIER_4': 'GRASS',
-            'MAN_5': 'GRASS',
-            'WOMAN_3': 'GRASS',
-        }
         # The NPCs from BrecMobTbl
         self.roaming_character_list = ['WOMAN', 'SOLDIER_2', 'WISE_MAN_2', 'MERCHANT_4', 'MAN_4', 'GUARD_2',
                                        'SOLDIER_3', 'SOLDIER_4', 'MAN_5', 'WOMAN_3']
@@ -883,10 +864,6 @@ class Garinham(DragonWarriorMap):
             (18, 16): 'SOLDIER',  # mobile fighter at 7,17 ($41)
             (19, 19): 'MERCHANT',  # static shopkeeper at 10,18: weapons and armor ($02, WeaponsDialog)
         }
-        self.custom_underlying_tiles = {
-            'WISE_MAN': 'SAND',  # GarinhamDat has sand under the wizard at 14,1
-            'SOLDIER': 'SAND',
-        }
         # The NPCs from GarMobTbl
         self.roaming_character_list = ['WOMAN', 'MAN', 'WISE_MAN_2', 'WISE_MAN_3', 'WOMAN_2', 'MAN_2', 'SOLDIER']
         # NES GarinCvrdDatPtr -> DgnLrdSL4Dat ($8EE6): the whole top of town. NES X,Y is at (Y + 1, X + 9) here.
@@ -944,18 +921,6 @@ class Kol(DragonWarriorMap):
             (29, 24): 'MERCHANT',  # static shopkeeper at 14,21: item shop ($07)
             (31, 11): 'GUARD',  # static guard at 1,23 ($34)
         }
-        # The KolDat tile under each NPC that isn't on brick
-        self.custom_underlying_tiles = {
-            'WOMAN': 'TREES',
-            'SOLDIER': 'TREES',
-            'WISE_MAN_2': 'GRASS',
-            'MAN': 'TREES',  # KolDat has trees under the male villager at 5,12
-            'GUARD': 'SAND',
-            'MAN_2': 'SAND',
-            'WOMAN_2': 'SAND',
-            'WISE_MAN_4': 'SAND',
-            'GUARD_2': 'TREES',  # KolDat has trees under the guard at 1,23
-        }
         # The NPCs from KolMobTbl
         self.roaming_character_list = ['SOLDIER', 'WISE_MAN_2', 'GUARD', 'WISE_MAN_3', 'MAN', 'MAN_2', 'WOMAN_2',
                                        'MERCHANT_3', 'WISE_MAN_4']
@@ -1011,14 +976,6 @@ class Rimuldar(DragonWarriorMap):
             (34, 24): 'SOLDIER',  # mobile fighter at 16,26: the Fighter's Ring ($69)
         }
         # The NPCs that don't stand on brick
-        self.custom_underlying_tiles = {
-            'MAN': 'GRASS',
-            'MERCHANT': 'GRASS',
-            'WISE_MAN_2': 'GRASS',  # RimuldarDat (#259) has grass under the wizard at 6,13
-            'GUARD': 'GRASS',
-            'WOMAN_4': 'GRASS',
-            'SOLDIER_4': 'GRASS',
-        }
         # The NPCs from RimMobTbl
         self.roaming_character_list = ['MAN_2', 'MAN_3', 'SOLDIER', 'WOMAN_2', 'GUARD', 'SOLDIER_2', 'WOMAN_3', 'MAN_4',
                                        'SOLDIER_3', 'SOLDIER_4']
@@ -1108,9 +1065,6 @@ class Cantlin(DragonWarriorMap):
             (34, 4): 'MERCHANT',  # mobile shopkeeper at 3,26 ($4E)
             (34, 28): 'MERCHANT',  # static shopkeeper at 27,26: weapons and armor shop 2 ($04)
             (36, 15): 'WISE_MAN',  # mobile wizard at 14,28 ($6B)
-        }
-        self.custom_underlying_tiles = {
-            'WISE_MAN_2': 'GRASS'
         }
         # The NPCs from CantMobTbl
         self.roaming_character_list = ['MERCHANT_2', 'GUARD', 'GUARD_2', 'GUARD_3', 'WOMAN_2', 'MAN_2', 'WOMAN_3',

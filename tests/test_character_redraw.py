@@ -235,7 +235,7 @@ class TestCharacterRedraw(TestCase):
                 self.assertEqual(start, (game.player.row, game.player.column))
 
     def test_every_block_has_only_the_map_tile(self):
-        # Each NPC also got its "underlying" tile (BRICK, or one from custom_underlying_tiles) on top of the map's own
+        # Each NPC also got its "underlying" tile (BRICK, or a per-map override) on top of the map's own
         # tile there, e.g. Brecconary's MAN_3 got GRASS on brick. The block (or a roaming NPC's starting block, once
         # it walked away) then showed one or the other, depending on which tile types were being redrawn.
         for start_map in ('Brecconary', 'Garinham', 'Kol', 'Cantlin', 'Rimuldar', 'TantegelCourtyard',
