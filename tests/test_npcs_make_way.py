@@ -111,7 +111,7 @@ class MakeWayTestCase(TestCase):
         self.game.movement.npc_schedule.update_counter = 1
 
     def frame(self, held=()):
-        with patch('src.game.key') as mock_key:
+        with patch('src.movement.key') as mock_key:
             mock_key.get_pressed.return_value = keys_held(*held)
             self.game.get_events()
         self.check_nobody_overlaps()
