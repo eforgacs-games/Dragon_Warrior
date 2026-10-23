@@ -139,6 +139,8 @@ class Ending:
         self.player.restore_hp()
         self.player.restore_mp()
         map_name, coordinates = DRAGONLORD_DEFEATED_DESTINATION
+        # ChangeMaps -> SetPlyrPixelLoc -> MapChngWithSound: the stairs sound
+        self.game.sound.play_sound(self.game.directories.stairs_up_sfx)
         self.game.change_map(map_lookup[map_name](self.config), destination_coordinates=coordinates,
                              direction=Direction.DOWN.value)
 

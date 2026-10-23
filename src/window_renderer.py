@@ -15,18 +15,18 @@ tiles are in NES_GLYPHS, copied from the screenshots (the name entry alphabet, a
 the same way in all other text (dialog, draw_text).
 """
 from functools import lru_cache
-from os.path import dirname, join, realpath
 
 from pygame import Rect, Surface, font
 
 from src.color import BLACK
 from src.cursor import draw_cursor_tile
+from src.paths import data_path
 from src.windows import WindowLayout
 
 NES_TILE = 8
 # A tile's 8 rows of 8 pixels: '#' is drawn in the window color, '.' is black
 Pattern = tuple[str, ...]
-DRAGON_QUEST_FONT_PATH = join(dirname(dirname(realpath(__file__))), 'data', 'fonts', 'dragon-quest.ttf')
+DRAGON_QUEST_FONT_PATH = data_path('fonts', 'dragon-quest.ttf')
 
 # The window border tiles (Defines TL_LEFT $61 to TL_BOT_RIGHT $69): '#' is drawn in the window color.
 TL_UPPER_LEFT: Pattern = (
