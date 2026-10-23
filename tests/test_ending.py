@@ -6,7 +6,9 @@ import pygame
 from src.battle import Battle
 from src.config.test_config import test_config
 from src.direction import Direction
-from src.ending import CREDITS, END_MUSIC_TIMING_EVENTS, EndMusicTimingEvents, credit_screen_music_events
+from src.ending import (
+    CREDITS, END_MUSIC_RECORDING_START_FRAME, END_MUSIC_TIMING_EVENTS, EndMusicTimingEvents, credit_screen_music_events,
+)
 from src.maps import map_lookup
 from src.waiting import NES_FPS
 from tests.helpers import new_game
@@ -299,6 +301,29 @@ class TestEnding(TestCase):
         # stays 160 frames (FinishCredits)
         self.assertEqual(END_MUSIC_TIMING_EVENTS[-1][0] + 20 + 3, shown[-1])
         self.assertEqual(shown[-1] + 16 + 160, end)
+
+    def test_the_end_music_recording_starts_where_it_does_in_the_nes_music(self):
+        # The mp3 leaves out the first 0.73 s of the NES music's opening rest (#429): it starts 44 frames after the
+        # frame the timing events count from, so the credits stay in step with what is heard
+        clock = [0.0]
+        started_at = []
+
+        def frames_pass(frames, *args, **kwargs):
+            clock[0] += frames * 1000 / NES_FPS
+
+        def load_and_play_music(path, **kwargs):
+            started_at.append((path, round(clock[0] * NES_FPS / 1000)))
+        for orchestra, start in ((False, END_MUSIC_RECORDING_START_FRAME), (True, 0)):
+            with self.subTest(orchestra=orchestra):
+                clock[0], started_at[:] = 0.0, []
+                with patch.dict(self.game.config, ORCHESTRA_MUSIC_ENABLED=orchestra), \
+                        patch('src.ending.game_ticks', side_effect=lambda: clock[0]), \
+                        patch('src.ending.wait_frames', side_effect=frames_pass), \
+                        patch('src.ending.screen_fade'), patch.object(self.game.ending, 'show_credit_screen'), \
+                        patch.object(self.game.music_player, 'load_and_play_music',
+                                     side_effect=load_and_play_music):
+                    self.game.ending.roll_credits()
+                self.assertEqual([(self.game.directories.ending_music, start)], started_at)
 
     def test_a_timing_event_already_waiting_is_caught_at_once(self):
         # The note before the no-op is still playing when the wait starts: WaitForMusicEnd returns on the next frame
