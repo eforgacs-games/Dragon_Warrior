@@ -108,7 +108,9 @@ class TestOnePressATurn(unittest.TestCase):
     def test_a_fight_turn_takes_one_press(self):
         # FIGHT, the hero's hit, the enemy's attack, back to the command window
         battle = self.fight('Slime')
-        events = self.play_turn(battle, 'Fight')
+        # a hit that lands (a level 1 hero's damage roll on a Slime can be 0, which is the missed-hit line)
+        with patch('src.battle.player_hit_damage', return_value=3):
+            events = self.play_turn(battle, 'Fight')
         self.assertEqual(self.buttons(events), ['command'], events)
         lines = self.lines(events)
         self.assertEqual(lines[0], 'Erdrick attacks!\n')
