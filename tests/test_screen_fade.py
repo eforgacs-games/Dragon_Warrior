@@ -7,6 +7,7 @@ import pygame
 
 from src.config.test_config import test_config
 from src.ending import CREDITS
+from src.intro import Intro
 from src.maps import Brecconary
 from src.visual_effects import FADE_IN_STEPS, FADE_OUT_STEPS, FADE_STEP_FRAMES, FADE_STYLE_NES, FADE_STYLE_SMOOTH, \
     NES_FPS, NES_PALETTE, PAL_BLACK, fade_style, nes_fade_palette, nes_palette_fade, screen_fade
@@ -188,9 +189,9 @@ class TestTransitionsUseTheSelectedFade(TestCase):
 
     def test_begin_a_new_quest_only_fades_in(self):
         def run():
-            with patch.object(self.game, 'select_adventure_log'), patch('src.game.NameSelection'), \
-                    patch.object(self.game, 'choose_new_quest_options'):
-                self.game.begin_new_quest()
+            with patch.object(self.game.title_menu, 'select_adventure_log'), patch('src.title_menu.NameSelection'), \
+                    patch.object(self.game.title_menu, 'choose_new_quest_options'):
+                self.game.title_menu.begin_new_quest()
 
         self.assert_fades(run, [False])
 
@@ -238,3 +239,22 @@ class TestTransitionsUseTheSelectedFade(TestCase):
 
         self.assert_fades(run, [True, False])
 
+    def test_title_screen_cuts_to_black_then_fades_the_empty_screen_in(self):
+        # NES DoIntroRoutine (LBDBA) cuts to black with IntroPalPtr3; ShowStartGame's LoadStartPals then runs a
+        # PalFadeIn over the cleared screen. There is no fade out.
+        def run():
+            start = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_i, mod=pygame.KMOD_NONE, unicode='')
+            with patch('src.intro.get_events', return_value=[start]):
+                Intro(self.game.config).show_intro_dragon_banner_with_text(self.game.screen, self.game.clock,
+                                                                          self.game.game_state.config)
+
+        self.assert_fades(run, [False])
+
+    def test_the_final_form_fades_the_screen_out_first(self):
+        # NES LoadEndBossGFX ($BABD): a whole-screen PalFadeOut before the final form fades in (that one is the enemy's
+        # own sprite fade, enemy_fade_in)
+        self.assert_fades(lambda: self.game.drawer.fade_in_enemy(self.game.screen, 'Dragonlord 2'), [True])
+
+    def test_running_from_the_final_form_cuts_to_black_then_fades_in(self):
+        # NES RunSuccessful (LE8B5): BlackPal at once, then MapChngNoSound reloads the map with a PalFadeIn
+        self.assert_fades(lambda: self.game.battle_ctrl.reload_map_after_running_from_final_form(), [False])
