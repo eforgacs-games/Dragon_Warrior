@@ -1,5 +1,6 @@
-"""The title menu's CHANGE MESSAGE SPEED options (src/options_screen.py), the Classic / Modern dialog styles and the
-fade style."""
+"""The title menu's CHANGE MESSAGE SPEED and BEGIN A NEW QUEST's message speed (src/options_screen.py), the settings
+kept per adventure log, the Classic / Modern dialog styles and the fade style. The overlay that changes this game's own
+settings in play is tests/test_options_overlay.py."""
 import json
 import os
 import tempfile
@@ -7,18 +8,18 @@ from unittest import TestCase
 from unittest.mock import patch
 
 import pygame
-from pygame import K_DOWN, K_LEFT, K_RETURN, K_RIGHT, K_j, KEYDOWN, QUIT
+from pygame import K_DOWN, K_RETURN, K_RIGHT, K_UP, K_j, KEYDOWN, QUIT
 from pygame.event import Event
 
 from src.config.test_config import test_config
 from src.dialog_box import DIALOG_ROWS, frames_per_character
 from src.game import Game
 from src.title_menu import BACK_TO_TITLE_MENU
-from src.options_screen import CLASSIC, DEFAULT_DIALOG_STYLE, DEFAULT_FADE_STYLE, DEFAULT_MESSAGE_SPEED, \
-    DEFAULT_OPTIONS, DIALOG_STYLE_OPTIONS, DIALOG_STYLE_SAVE_KEY, FADE_STYLE_OPTIONS, FADE_STYLE_SAVE_KEY, \
-    MESSAGE_SPEED_NAMES, MESSAGE_SPEED_OPTIONS, MESSAGE_SPEED_SAVE_KEY, MODERN, NPCS_MAKE_WAY_OPTIONS, \
-    NPCS_MAKE_WAY_SAVE_KEY, Options, OptionsScreen, dialog_style_from_save, fade_style_from_save, \
-    message_speed_from_save, npcs_make_way_from_save
+from src.options_screen import AUTO_STAIRS_SAVE_KEY, CLASSIC, DEFAULT_DIALOG_STYLE, DEFAULT_FADE_STYLE, \
+    DEFAULT_MESSAGE_SPEED, DEFAULT_OPTIONS, DIALOG_STYLE_SAVE_KEY, FADE_STYLE_SAVE_KEY, MESSAGE_SPEED_NAMES, \
+    MESSAGE_SPEED_OPTIONS, MESSAGE_SPEED_SAVE_KEY, MODERN, NPCS_MAKE_WAY_SAVE_KEY, Options, OptionsScreen, \
+    auto_stairs_from_save, dialog_style_from_save, fade_style_from_save, message_speed_from_save, \
+    npcs_make_way_from_save
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH, screen_fade
 from src.windows import MESSAGE_SPEED_WINDOW
 from tests import helpers
@@ -26,7 +27,7 @@ from tests.mock_map import MockMap
 
 ENTER = Event(KEYDOWN, key=K_RETURN)  # A
 DOWN = Event(KEYDOWN, key=K_DOWN)
-LEFT = Event(KEYDOWN, key=K_LEFT)
+UP = Event(KEYDOWN, key=K_UP)
 RIGHT = Event(KEYDOWN, key=K_RIGHT)
 B = Event(KEYDOWN, key=K_j)
 # Frames with nothing pressed after each press: a window reads one button per press (SelectionButtons), and the next
@@ -45,12 +46,24 @@ def presses(*keys):
 def new_game(**overrides) -> Game:
     # A copy of test_config, so the settings these tests change don't leak into other tests
     config = {**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True, 'TEXT_SPEED': 'Fast',
-              'DIALOG_STYLE': CLASSIC, 'NPCS_MAKE_WAY': True, 'FADE_STYLE': FADE_STYLE_NES, **overrides}
+              'DIALOG_STYLE': CLASSIC, 'NPCS_MAKE_WAY': True, 'FADE_STYLE': FADE_STYLE_NES, 'AUTO_STAIRS': True,
+              **overrides}
     return helpers.new_game(config)
 
 
 def settings(config):
-    return config['TEXT_SPEED'], config['DIALOG_STYLE'], config['NPCS_MAKE_WAY'], config['FADE_STYLE']
+    return (config['TEXT_SPEED'], config['DIALOG_STYLE'], config['NPCS_MAKE_WAY'], config['FADE_STYLE'],
+            config['AUTO_STAIRS'])
+
+
+# What a new quest starts with besides its message speed: CLASSIC, NPCs making way, the NES fade, STAIRS on STEP ON
+DEFAULT_OWN_SETTINGS = (CLASSIC, True, FADE_STYLE_NES, True)
+# Not the defaults, to see them replaced
+OTHER_OWN_SETTINGS = (MODERN, False, FADE_STYLE_SMOOTH, False)
+
+
+def set_own_settings(config, own_settings):
+    config['DIALOG_STYLE'], config['NPCS_MAKE_WAY'], config['FADE_STYLE'], config['AUTO_STAIRS'] = own_settings
 
 
 class OptionsTestCase(TestCase):
@@ -92,41 +105,11 @@ class TestMessageSpeedRules(TestCase):
         self.assertEqual(MESSAGE_SPEED_WINDOW, MESSAGE_SPEED_OPTIONS.window)
         self.assertEqual([8, 10, 12], [MESSAGE_SPEED_OPTIONS.entry_row(index) for index in range(3)])
         self.assertEqual(6, MESSAGE_SPEED_OPTIONS.cursor_column)
-        # the dialog style window sits directly above it, the same width
-        style_window, npcs_window = DIALOG_STYLE_OPTIONS.window, NPCS_MAKE_WAY_OPTIONS.window
-        self.assertEqual(MESSAGE_SPEED_WINDOW.y, style_window.y + style_window.height)
-        self.assertEqual((MESSAGE_SPEED_WINDOW.x, MESSAGE_SPEED_WINDOW.width), (style_window.x, style_window.width))
-        # above it, at the top of the screen, NPCS MAKE WAY (the same width) and FADE STYLE side by side
-        fade_window = FADE_STYLE_OPTIONS.window
-        for window in (npcs_window, fade_window):
-            self.assertEqual((0, style_window.y), (window.y, window.y + window.height))
-        self.assertEqual(MESSAGE_SPEED_WINDOW.width, npcs_window.width)
-        self.assertEqual((0, npcs_window.x + npcs_window.width), (npcs_window.x, fade_window.x))
-        self.assertEqual(16, fade_window.x + fade_window.width)  # the right edge of the 256 pixel wide screen
-        self.assertEqual('CLASSIC (NES)', DIALOG_STYLE_OPTIONS.labels[0])
-        self.assertEqual(('ON', 'OFF (NES)'), NPCS_MAKE_WAY_OPTIONS.labels)
-        self.assertEqual((('Fade Style', 'NES', 'SMOOTH')), (FADE_STYLE_OPTIONS.prompt[0][2], *FADE_STYLE_OPTIONS.labels))
-
-    def test_npcs_make_way_entries_side_by_side(self):
-        # both on row 3, the cursor in the tile before each, and the text ending inside the right border (column 17)
-        self.assertEqual([3, 3], [NPCS_MAKE_WAY_OPTIONS.entry_row(index) for index in range(2)])
-        self.assertEqual([2, 7], [NPCS_MAKE_WAY_OPTIONS.entry_cursor_column(index) for index in range(2)])
-        last = NPCS_MAKE_WAY_OPTIONS.entry_text_column(1) + len(NPCS_MAKE_WAY_OPTIONS.labels[1])
-        self.assertLessEqual(last, NPCS_MAKE_WAY_OPTIONS.window.width * 2 - 1)
-
-    def test_fade_style_entries_side_by_side(self):
-        # both on row 3, the cursor in the tile before each; the prompt and SMOOTH end inside the right border
-        self.assertEqual([3, 3], [FADE_STYLE_OPTIONS.entry_row(index) for index in range(2)])
-        self.assertEqual([1, 6], [FADE_STYLE_OPTIONS.entry_cursor_column(index) for index in range(2)])
-        right_border = FADE_STYLE_OPTIONS.window.width * 2 - 1
-        self.assertLessEqual(FADE_STYLE_OPTIONS.entry_text_column(1) + len(FADE_STYLE_OPTIONS.labels[1]), right_border)
-        column, _, prompt = FADE_STYLE_OPTIONS.prompt[0]
-        self.assertLessEqual(column + len(prompt), right_border)
 
     def test_defaults(self):
         # NewQuest: LDA #MSG_NORMAL; Classic (the NES dialog window) is the default style; NPCs make way by default
         self.assertEqual(('Normal', CLASSIC), (DEFAULT_MESSAGE_SPEED, DEFAULT_DIALOG_STYLE))
-        self.assertEqual(Options('Normal', CLASSIC, True, FADE_STYLE_NES), DEFAULT_OPTIONS)
+        self.assertEqual(Options('Normal', CLASSIC, True, FADE_STYLE_NES, True), DEFAULT_OPTIONS)
         # base_config's FADE_STYLE: the NES palette fade
         self.assertEqual(FADE_STYLE_NES, DEFAULT_FADE_STYLE)
 
@@ -142,54 +125,44 @@ class TestMessageSpeedRules(TestCase):
         self.assertEqual(FADE_STYLE_NES, fade_style_from_save({'Name': 'Ed'}))
         self.assertEqual(FADE_STYLE_SMOOTH, fade_style_from_save({FADE_STYLE_SAVE_KEY: FADE_STYLE_SMOOTH}))
         self.assertEqual(FADE_STYLE_NES, fade_style_from_save({FADE_STYLE_SAVE_KEY: 'Wipe'}))
+        # STAIRS: STEP ON unless the log says otherwise
+        self.assertTrue(auto_stairs_from_save({'Name': 'Ed'}))
+        self.assertFalse(auto_stairs_from_save({AUTO_STAIRS_SAVE_KEY: False}))
+        self.assertTrue(auto_stairs_from_save({AUTO_STAIRS_SAVE_KEY: 'NES'}))
 
 
 class TestOptionsScreen(OptionsTestCase):
 
-    def choose(self, events, speed='Normal', style=CLASSIC, make_way=True, fade=FADE_STYLE_NES):
+    def choose(self, events, speed='Normal'):
         options_screen = OptionsScreen(self.game.screen, self.config)
         with patch('src.selection.event.get', side_effect=presses(*events)):
-            return options_screen.choose_options(Options(speed, style, make_way, fade))
+            return options_screen.choose_message_speed(speed)
 
-    def test_cursor_starts_on_the_current_settings(self):
+    def test_cursor_starts_on_the_current_speed(self):
         # LA93E: WndRow = MessageSpeed
-        self.assertEqual(Options('Fast', MODERN, False, FADE_STYLE_SMOOTH),
-                         self.choose([ENTER] * 4, 'Fast', MODERN, False, FADE_STYLE_SMOOTH))
-        self.assertEqual(Options('Slow', CLASSIC, True), self.choose([ENTER] * 4, 'Slow'))
+        for speed in MESSAGE_SPEED_NAMES:
+            self.assertEqual(speed, self.choose([ENTER], speed))
 
-    def test_choose_speed_then_style_then_npcs_then_fade(self):
-        self.assertEqual(Options('Slow', MODERN, False, FADE_STYLE_SMOOTH),
-                         self.choose([DOWN, ENTER, DOWN, ENTER, RIGHT, ENTER, RIGHT, ENTER]))
+    def test_choose_a_speed(self):
+        self.assertEqual('Slow', self.choose([DOWN, ENTER]))
+        self.assertEqual('Fast', self.choose([UP, ENTER]))
+
+    def test_only_the_speed_window_opens(self):
+        # The message speed is the only question: A in it answers the whole screen
+        options_screen = OptionsScreen(self.game.screen, self.config)
+        with patch('src.selection.event.get', side_effect=presses(ENTER)):
+            options_screen.choose_message_speed('Normal')
+        self.assertEqual([MESSAGE_SPEED_OPTIONS], [window for window, _ in options_screen.windows])
 
     def test_cursor_stops_at_the_edges(self):
-        self.assertEqual(Options('Slow', MODERN, False, FADE_STYLE_SMOOTH),
-                         self.choose([DOWN, DOWN, DOWN, ENTER, DOWN, DOWN, ENTER, RIGHT, RIGHT, ENTER, RIGHT, RIGHT,
-                                      ENTER], 'Fast'))
-        self.assertEqual(Options('Normal', CLASSIC, True), self.choose([ENTER, ENTER, LEFT, ENTER, LEFT, ENTER]))
-
-    def test_npcs_make_way_and_fade_move_left_and_right_only(self):
-        # one-row windows: up and down do nothing (WndUpPressed/WndDownPressed stop on their only row)
-        self.assertEqual(Options('Normal', CLASSIC, True), self.choose([ENTER, ENTER, DOWN, ENTER, DOWN, ENTER]))
-        self.assertEqual(Options('Normal', CLASSIC, True, FADE_STYLE_SMOOTH),
-                         self.choose([ENTER, ENTER, RIGHT, LEFT, ENTER, RIGHT, ENTER]))
-        self.assertEqual(Options('Normal', CLASSIC, True), self.choose([ENTER, ENTER, ENTER, RIGHT, LEFT, ENTER]))
+        self.assertEqual('Slow', self.choose([DOWN, DOWN, DOWN, ENTER], 'Fast'))
+        self.assertEqual('Fast', self.choose([UP, UP, ENTER], 'Normal'))
 
     def test_left_and_right_do_nothing_in_the_speed_window(self):
-        self.assertEqual(Options('Normal', CLASSIC, True), self.choose([RIGHT, ENTER, ENTER, ENTER, ENTER]))
+        self.assertEqual('Normal', self.choose([RIGHT, ENTER]))
 
     def test_b_in_the_speed_window_cancels(self):
         self.assertIsNone(self.choose([DOWN, B]))
-
-    def test_b_goes_back_a_window(self):
-        # FAST, then B: the speed window again, still on FAST
-        self.assertEqual(Options('Normal', CLASSIC, True),
-                         self.choose([ENTER, B, DOWN, ENTER, ENTER, ENTER, ENTER], 'Fast'))
-        # B in the NPCS MAKE WAY window: back to the dialog style
-        self.assertEqual(Options('Normal', MODERN, False),
-                         self.choose([ENTER, ENTER, B, DOWN, ENTER, RIGHT, ENTER, ENTER]))
-        # B in the FADE STYLE window: back to NPCS MAKE WAY
-        self.assertEqual(Options('Normal', CLASSIC, False, FADE_STYLE_SMOOTH),
-                         self.choose([ENTER, ENTER, ENTER, RIGHT, B, RIGHT, ENTER, RIGHT, ENTER]))
 
     def test_quit_in_the_options_screen(self):
         with patch('src.waiting.pygame_quit'), self.assertRaises(SystemExit):
@@ -225,19 +198,25 @@ class TestTitleMenuFlow(OptionsTestCase):
             self.game.title_menu.show_main_menu_screen(self.game.screen)
         return title_menu, begin_new_quest
 
-    def test_choose_a_log_then_its_speed_dialog_style_npcs_and_fade(self):
+    def test_choose_a_log_then_its_speed(self):
         self.config['TEXT_SPEED'] = 'Fast'
-        # log 2, then SLOW (from FAST, its saved speed), then MODERN, then OFF, then SMOOTH
-        title_menu, begin_new_quest = self.run_title_menu([DOWN, ENTER, DOWN, DOWN, ENTER, DOWN, ENTER, RIGHT, ENTER,
-                                                           RIGHT, ENTER])
-        self.assertEqual({**self.saves[2], MESSAGE_SPEED_SAVE_KEY: 'Slow', DIALOG_STYLE_SAVE_KEY: MODERN,
-                          NPCS_MAKE_WAY_SAVE_KEY: False, FADE_STYLE_SAVE_KEY: FADE_STYLE_SMOOTH}, self.read(2))
+        # log 2, then SLOW (from FAST, its saved speed): nothing else is asked
+        title_menu, begin_new_quest = self.run_title_menu([DOWN, ENTER, DOWN, DOWN, ENTER])
+        self.assertEqual({**self.saves[2], MESSAGE_SPEED_SAVE_KEY: 'Slow'}, self.read(2))
         self.assertEqual(self.saves[1], self.read(1))
         # ChngMsgSpeed -> WndBackToMain: the title menu again
         self.assertEqual(2, title_menu.call_count)
         begin_new_quest.assert_called_once()
         # the settings are the log's, not the running game's until that log is continued
-        self.assertEqual(('Fast', CLASSIC, True, FADE_STYLE_NES), settings(self.config))
+        self.assertEqual(('Fast',) + DEFAULT_OWN_SETTINGS, settings(self.config))
+
+    def test_changing_the_speed_keeps_the_logs_other_settings(self):
+        saved = {**self.saves[1], DIALOG_STYLE_SAVE_KEY: MODERN, NPCS_MAKE_WAY_SAVE_KEY: False,
+                 FADE_STYLE_SAVE_KEY: FADE_STYLE_SMOOTH, AUTO_STAIRS_SAVE_KEY: False}
+        with open(self.save_path(1), 'w') as save_file:
+            json.dump(saved, save_file)
+        self.run_title_menu([ENTER, UP, ENTER])
+        self.assertEqual({**saved, MESSAGE_SPEED_SAVE_KEY: 'Fast'}, self.read(1))
 
     def test_b_in_the_log_window_goes_back_to_the_title_menu(self):
         title_menu, _ = self.run_title_menu([B])
@@ -256,35 +235,38 @@ class TestTitleMenuFlow(OptionsTestCase):
         self.assertEqual([(1, 'Erdrick'), (2, 'Loto')], choose_log.call_args.args[0])
 
     def test_continuing_the_log_uses_its_settings(self):
-        self.run_title_menu([ENTER, DOWN, DOWN, ENTER, DOWN, ENTER, RIGHT, ENTER, RIGHT, ENTER])
+        self.run_title_menu([ENTER, DOWN, DOWN, ENTER])
+        set_own_settings(self.config, OTHER_OWN_SETTINGS)
         with patch.object(self.game.map_mgr, 'change_map'):
             self.game.load_game(self.read(1))
-        self.assertEqual(('Slow', MODERN, False, FADE_STYLE_SMOOTH), settings(self.config))
+        # its speed, and the defaults for the settings the old save doesn't have
+        self.assertEqual(('Slow',) + DEFAULT_OWN_SETTINGS, settings(self.config))
 
 
 class TestNewQuestOptions(OptionsTestCase):
 
-    def test_new_quest_uses_the_chosen_options(self):
-        self.config['TEXT_SPEED'], self.config['NPCS_MAKE_WAY'] = 'Fast', False
-        self.config['FADE_STYLE'] = FADE_STYLE_SMOOTH
-        with patch('src.selection.event.get', side_effect=presses(DOWN, ENTER, DOWN, ENTER, RIGHT, ENTER, RIGHT,
-                                                                  ENTER)):
+    def test_new_quest_asks_only_the_message_speed(self):
+        self.config['TEXT_SPEED'] = 'Fast'
+        set_own_settings(self.config, OTHER_OWN_SETTINGS)
+        with patch.object(OptionsScreen, 'select', return_value=2) as select:
             self.game.title_menu.choose_new_quest_options()
-        # the cursors start on NORMAL (NewQuest: LDA #MSG_NORMAL), CLASSIC, ON and NES, whatever the last game used
-        self.assertEqual(('Slow', MODERN, False, FADE_STYLE_SMOOTH), settings(self.config))
+        select.assert_called_once()
+        # SLOW; this game's own settings back to their defaults, whatever the last game used
+        self.assertEqual(('Slow',) + DEFAULT_OWN_SETTINGS, settings(self.config))
 
-    def test_new_quest_keeps_npcs_making_way_by_default(self):
-        self.config['NPCS_MAKE_WAY'], self.config['FADE_STYLE'] = False, FADE_STYLE_SMOOTH
-        with patch('src.selection.event.get', side_effect=presses(ENTER, ENTER, ENTER, ENTER)):
+    def test_new_quest_uses_the_chosen_speed(self):
+        self.config['TEXT_SPEED'] = 'Fast'
+        # the cursor starts on NORMAL (NewQuest: LDA #MSG_NORMAL), whatever the last game used
+        with patch('src.selection.event.get', side_effect=presses(DOWN, ENTER)):
             self.game.title_menu.choose_new_quest_options()
-        self.assertEqual(('Normal', CLASSIC, True, FADE_STYLE_NES), settings(self.config))
+        self.assertEqual(('Slow',) + DEFAULT_OWN_SETTINGS, settings(self.config))
 
     def test_new_quest_without_a_choice_uses_the_defaults(self):
-        self.config['TEXT_SPEED'], self.config['DIALOG_STYLE'], self.config['NPCS_MAKE_WAY'] = 'Fast', MODERN, False
-        self.config['FADE_STYLE'] = FADE_STYLE_SMOOTH
+        self.config['TEXT_SPEED'] = 'Fast'
+        set_own_settings(self.config, OTHER_OWN_SETTINGS)
         with patch('src.selection.event.get', side_effect=presses(B)):
             self.game.title_menu.choose_new_quest_options()
-        self.assertEqual(('Normal', CLASSIC, True, FADE_STYLE_NES), settings(self.config))
+        self.assertEqual(('Normal',) + DEFAULT_OWN_SETTINGS, settings(self.config))
 
     def test_begin_new_quest_shows_the_options_after_the_name(self):
         calls = []
@@ -307,7 +289,8 @@ class TestSaveRoundTrip(OptionsTestCase):
             with open(os.path.join(tmp_dir, 'save_slot_3.json')) as save_file:
                 save = json.load(save_file)
         other_fade = FADE_STYLE_NES if self.config['FADE_STYLE'] == FADE_STYLE_SMOOTH else FADE_STYLE_SMOOTH
-        loaded = new_game(NPCS_MAKE_WAY=not self.config['NPCS_MAKE_WAY'], FADE_STYLE=other_fade)
+        loaded = new_game(NPCS_MAKE_WAY=not self.config['NPCS_MAKE_WAY'], FADE_STYLE=other_fade,
+                          AUTO_STAIRS=not self.config['AUTO_STAIRS'])
         with patch.object(loaded.map_mgr, 'change_map'):
             loaded.load_game(save)
         return save, loaded.game_state.config
@@ -317,20 +300,29 @@ class TestSaveRoundTrip(OptionsTestCase):
             for style in (CLASSIC, MODERN):
                 for make_way in (True, False):
                     for fade in (FADE_STYLE_NES, FADE_STYLE_SMOOTH):
-                        self.config['TEXT_SPEED'], self.config['DIALOG_STYLE'] = speed, style
-                        self.config['NPCS_MAKE_WAY'], self.config['FADE_STYLE'] = make_way, fade
-                        save, loaded_config = self.save_and_load()
-                        self.assertEqual((speed, style, make_way, fade),
-                                         (save[MESSAGE_SPEED_SAVE_KEY], save[DIALOG_STYLE_SAVE_KEY],
-                                          save[NPCS_MAKE_WAY_SAVE_KEY], save[FADE_STYLE_SAVE_KEY]))
-                        self.assertEqual((speed, style, make_way, fade), settings(loaded_config))
+                        for auto_stairs in (True, False):
+                            self.config['TEXT_SPEED'] = speed
+                            set_own_settings(self.config, (style, make_way, fade, auto_stairs))
+                            save, loaded_config = self.save_and_load()
+                            expected = (speed, style, make_way, fade, auto_stairs)
+                            self.assertEqual(expected, (save[MESSAGE_SPEED_SAVE_KEY], save[DIALOG_STYLE_SAVE_KEY],
+                                                        save[NPCS_MAKE_WAY_SAVE_KEY], save[FADE_STYLE_SAVE_KEY],
+                                                        save[AUTO_STAIRS_SAVE_KEY]))
+                            self.assertEqual(expected, settings(loaded_config))
 
     def test_old_save_loads_with_the_defaults(self):
-        self.config['TEXT_SPEED'], self.config['DIALOG_STYLE'], self.config['NPCS_MAKE_WAY'] = 'Fast', MODERN, False
-        self.config['FADE_STYLE'] = FADE_STYLE_SMOOTH
+        self.config['TEXT_SPEED'] = 'Fast'
+        set_own_settings(self.config, OTHER_OWN_SETTINGS)
         with patch.object(self.game.map_mgr, 'change_map'):
             self.game.load_game({'Name': 'Ed', 'Experience': 0, 'Gold': 0, 'Inventory': []})
-        self.assertEqual(('Normal', CLASSIC, True, FADE_STYLE_NES), settings(self.config))
+        self.assertEqual(('Normal',) + DEFAULT_OWN_SETTINGS, settings(self.config))
+
+    def test_loaded_stairs_setting_reaches_the_game(self):
+        # MapManager.handle_warps reads Game.auto_stairs, which is the config's AUTO_STAIRS
+        with patch.object(self.game.map_mgr, 'change_map'):
+            self.game.load_game({'Name': 'Ed', 'Experience': 0, 'Gold': 0, 'Inventory': [],
+                                 AUTO_STAIRS_SAVE_KEY: False})
+        self.assertFalse(self.game.auto_stairs)
 
     def test_loaded_setting_reaches_the_npcs(self):
         # MovementController.ask_npc_to_make_way reads Game.config, the same dict the options are applied to

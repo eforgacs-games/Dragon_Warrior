@@ -14,8 +14,10 @@ from src.battle_controller import BattleController
 from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.game import Game
-from src.options_screen import DIALOG_STYLE_OPTIONS, FADE_STYLE_OPTIONS, MESSAGE_SPEED_OPTIONS, \
-    NPCS_MAKE_WAY_OPTIONS, OptionsScreen, adventure_log_options
+from src.directories import Directories
+from src.options_overlay import OPTIONS_WINDOW, VALUE_COLUMN, options_layout
+from src.options_screen import MESSAGE_SPEED_OPTIONS, OptionsScreen, adventure_log_options
+from src.text import set_font_by_ascii_chars
 from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT
 
@@ -179,12 +181,33 @@ class TestKoreanOptionsScreen(KoreanTestCase):
         self.assertEqual(['메시지 속도를', '어느 것으로', '하겠습니까?', '빠르게', '보통', '느리게'],
                          self.draw(MESSAGE_SPEED_OPTIONS))
 
-    def test_dialog_style_and_npcs_make_way_windows(self):
-        self.assertEqual(['대화 방식', '클래식 (NES)', '모던'], self.draw(DIALOG_STYLE_OPTIONS))
-        self.assertEqual(['NPC가 길 비키기', '켜기', '끄기 (NES)'], self.draw(NPCS_MAKE_WAY_OPTIONS))
+    def overlay_texts(self, config):
+        with patch('src.translated_window.draw_text') as draw_text:
+            draw_translated_window(self.game.screen, options_layout(config), (255, 255, 255), config, self.korean,
+                                   cursor_index=0)
+        return self.drawn(draw_text)
 
-    def test_fade_style_window(self):
-        self.assertEqual(['페이드 방식', 'NES', '스무스'], self.draw(FADE_STYLE_OPTIONS))
+    def test_options_overlay(self):
+        config = {**self.game.game_state.config, 'DIALOG_STYLE': 'Classic', 'NPCS_MAKE_WAY': True,
+                  'FADE_STYLE': 'NES', 'AUTO_STAIRS': True}
+        self.assertEqual(['설정', '대화 방식', '클래식 (NES)', 'NPC가 길 비키기', '켜기', '페이드 방식', 'NES', '계단',
+                          '밟으면 이동'], [text for text, _, _ in self.overlay_texts(config)])
+        config.update(DIALOG_STYLE='Modern', NPCS_MAKE_WAY=False, FADE_STYLE='Smooth', AUTO_STAIRS=False)
+        self.assertEqual(['설정', '대화 방식', '모던', 'NPC가 길 비키기', '끄기 (NES)', '페이드 방식', '스무스', '계단',
+                          'NES'], [text for text, _, _ in self.overlay_texts(config)])
+
+    def test_options_overlay_text_fits(self):
+        # Each label ends before its value starts, and each value inside the window's right border
+        directories = Directories(test_config)
+        right_border = (OPTIONS_WINDOW.x + OPTIONS_WINDOW.width) * 2 - 1
+        for overrides in ({'NPCS_MAKE_WAY': True, 'AUTO_STAIRS': True}, {'NPCS_MAKE_WAY': False,
+                                                                          'AUTO_STAIRS': False}):
+            config = {**self.game.game_state.config, 'DIALOG_STYLE': 'Classic', 'FADE_STYLE': 'Smooth', **overrides}
+            for text, column, row in self.overlay_texts(config)[1:]:
+                width = set_font_by_ascii_chars([text], 16, None, directories).size(text)[0] / self.nes_tile
+                end = OPTIONS_WINDOW.x * 2 + (VALUE_COLUMN - 1 if column < VALUE_COLUMN else right_border)
+                with self.subTest(text=text):
+                    self.assertLessEqual(column + width, end)
 
     def test_adventure_log_window(self):
         self.assertEqual(['모험의 서 1:ERDR', '모험의 서 3:LORA'],

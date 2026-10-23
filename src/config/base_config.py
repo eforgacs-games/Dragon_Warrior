@@ -45,7 +45,7 @@ base_config = {
     "NO_WAIT": False,
     "GOD_MODE": False,
     "INVULNERABLE": False,
-    "AUTO_STAIRS": False,
+    "AUTO_STAIRS": True,  # STAIRS: True steps onto stairs to take them (not NES); False needs the STAIRS command (NES)
     "AUTO_BATTLE": False,
     "RENDER_TEXT": True,
     "NO_BLIT": False,

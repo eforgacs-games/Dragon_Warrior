@@ -9,6 +9,7 @@ The saves the entries read, copy and erase are the adventure logs in the save fo
 quest is the Game's: a new quest starts in the throne room (Game.start_at_throne_room) and a continued one loads its
 save (Game.load_game).
 """
+from dataclasses import replace
 import os
 import shutil
 from typing import Any, Protocol
@@ -20,7 +21,8 @@ from src.directories import Directories
 from src.common import set_gettext_language
 from src.game_functions import MENU_BACK, GameFunctions
 from src.menu_functions import NameSelection
-from src.options_screen import DEFAULT_OPTIONS, OptionsScreen, apply_options, options_from_save, options_to_save
+from src.options_screen import DEFAULT_OPTIONS, MESSAGE_SPEED_SAVE_KEY, OptionsScreen, apply_options, \
+    message_speed_from_save
 from src.player.player_stats import get_level_by_experience
 from src.save_file import ADVENTURE_LOGS, EXPERIENCE_KEY, NAME_KEY, load_save, read_save, save_files, save_path, \
     save_slot_number, used_logs, write_save
@@ -180,9 +182,8 @@ class TitleMenu:
 
     def change_message_speed(self) -> object:
         """NES DoChngMsgSpeed (Bank03): choose a used adventure log (ShowUsedLogs), then its message speed in the NES
-        window (WND_MSG_SPEED) and, after it, this game's dialog style and NPCS MAKE WAY; ChngMsgSpeed saves them to that log
-        (SaveCurrentGame). B in the log or speed window saves nothing. Either way it's back to the title menu
-        (WndBackToMain). See src/options_screen.py."""
+        window (WND_MSG_SPEED); ChngMsgSpeed saves it to that log (SaveCurrentGame). B in the log or speed window saves
+        nothing. Either way it's back to the title menu (WndBackToMain). See src/options_screen.py."""
         logs = self.used_logs()
         if not logs:
             return BACK_TO_TITLE_MENU
@@ -192,19 +193,19 @@ class TitleMenu:
             return BACK_TO_TITLE_MENU
         log_path = save_path(self.directories.save_dir, slot)
         save = read_save(self.directories.save_dir, save_file_name_for(slot)) or {}
-        chosen = options_screen.choose_options(options_from_save(save))
+        chosen = options_screen.choose_message_speed(message_speed_from_save(save))
         if chosen is not None:
-            save.update(options_to_save(chosen))
+            save[MESSAGE_SPEED_SAVE_KEY] = chosen
             write_save(log_path, save)
         return BACK_TO_TITLE_MENU
 
     def choose_new_quest_options(self) -> None:
-        """NES NewQuest (LF8D4): after the name, the message speed window with the cursor on NORMAL, then this game's
-        dialog style with the cursor on CLASSIC and NPCS MAKE WAY on ON. The choice is used from now on and saved with
-        the log (CommandMenu.save). B keeps those defaults (the NES goes back to the title menu instead)."""
+        """NES NewQuest (LF8D4): after the name, the message speed window with the cursor on NORMAL. The choice is used
+        from now on and saved with the log (CommandMenu.save). B keeps NORMAL (the NES goes back to the title menu
+        instead). This game's own settings start at their defaults; they're changed during play (src/options_overlay.py)."""
         options_screen = OptionsScreen(self.screen, self.config)
-        chosen = options_screen.choose_options(DEFAULT_OPTIONS)
-        apply_options(self.config, chosen or DEFAULT_OPTIONS)
+        chosen = options_screen.choose_message_speed(DEFAULT_OPTIONS.message_speed)
+        apply_options(self.config, replace(DEFAULT_OPTIONS, message_speed=chosen or DEFAULT_OPTIONS.message_speed))
 
     def title_layout(self) -> WindowLayout:
         """The title menu window for the logs in use (NewQuestDat, FullMenuDat or ContChngErsDat)."""
