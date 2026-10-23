@@ -139,6 +139,7 @@ class TestSpeedKeys(GameSpeedTestCase):
         game.auto_battle = False
         game.color = WHITE
         game.game_state.config = {"TILE_SIZE": 32}
+        game._ = lambda text: text  # English: the window is generated in the NES font
         game.player.is_asleep = False
         controller = BattleController(game)
         battle = MagicMock(turn=0, last_turn=0)

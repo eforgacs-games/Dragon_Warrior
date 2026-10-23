@@ -145,7 +145,7 @@ class TestHandleBattlePrompts(BattlePromptFrames):
     def test_cursor_is_at_the_selected_command(self, mock_time, mock_display):
         # CmdCmbtDat: FIGHT (1, 2), SPELL (9, 2), RUN (1, 4), ITEM (9, 4)
         for row, column, tile in ((0, 0, (1, 2)), (0, 1, (9, 2)), (1, 0, (1, 4)), (1, 1, (9, 4))):
-            with self.subTest(row=row, column=column), patch('src.battle_controller.draw_window') as draw_window:
+            with self.subTest(row=row, column=column), patch('src.translated_window.draw_window') as draw_window:
                 self.controller.battle_menu_row, self.controller.battle_menu_column = row, column
                 self.controller.handle_battle_prompts(False, self.battle)
                 self.assertIs(COMBAT_COMMAND_LAYOUT, draw_window.call_args.args[1])
@@ -157,7 +157,7 @@ class TestHandleBattlePrompts(BattlePromptFrames):
         with patch.object(self.controller, 'fight',
                           side_effect=lambda battle: visible_during_fight.append(
                               self.controller.command_cursor.visible())), self.patch_enemy_move(), \
-                patch('src.battle_controller.draw_window') as draw_window:
+                patch('src.translated_window.draw_window') as draw_window:
             self.press(K_RETURN)
         self.assertEqual([True], visible_during_fight)
         self.assertIs(draw_window.call_args_list[-1].kwargs['cursor_visible'], True)
