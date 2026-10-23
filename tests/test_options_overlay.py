@@ -212,7 +212,8 @@ class TestRows(OverlayTestCase):
                                         ("GRIND STOP", 'AUTO_GRIND_STOP', ("RED HP", "HALF HP", "3/4 HP")),
                                         ("MENU SPEED", 'MENU_SPEED', ("NORMAL", "FOLLOW GAME")),
                                         ("CHEATS", 'CHEAT_KEYS', ("OFF (NES)", "ON")),
-                                        ("RUN BUTTON", 'RUN_BUTTON', ("OFF (NES)", "ON"))])],
+                                        ("RUN BUTTON", 'RUN_BUTTON', ("OFF (NES)", "ON")),
+                                        ("DUNGEON MAP", 'DUNGEON_MAP', ("OFF (NES)", "ON"))])],
                          [(page.title, [(row.label, row.config_key, row.value_labels) for row in page.rows])
                           for page in OPTION_PAGES])
 
@@ -248,7 +249,7 @@ class TestRows(OverlayTestCase):
                          page_texts(self.config, 1))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "3/3", "GAME SPEED", "OFF (NES)", "SAVE STATES", "OFF (NES)",
                           "REWIND", "ON", "AUTO-GRIND", "OFF (NES)", "GRIND STOP", "3/4 HP", "MENU SPEED", "NORMAL",
-                          "CHEATS", "ON", "RUN BUTTON", "ON"], page_texts(self.config, 2))
+                          "CHEATS", "ON", "RUN BUTTON", "ON", "DUNGEON MAP", "OFF (NES)"], page_texts(self.config, 2))
 
     def test_the_window_is_the_same_size_on_every_page_and_fits_the_screen(self):
         self.assertEqual(MOST_ROWS + 2, OPTIONS_WINDOW.height)
@@ -419,7 +420,7 @@ class TestPreset(OverlayTestCase):
                           'REWIND': False, 'AUTO_GRIND': False, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
                           'CHEAT_KEYS': False, 'RUN_BUTTON': False, 'SHOP_PREVIEW': False,
                           'QUEST_JOURNAL': JOURNAL_OFF, 'AUTOSAVE': False, 'BAG_SIZE': 8,
-                          'VIEW': 'NES'},
+                          'VIEW': 'NES', 'DUNGEON_MAP': False},
                          preset_values(PRESET_NES))
         # MODERN: every convenience but the cheats; the number of fights and what they give stay the NES's
         self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': True,
@@ -428,7 +429,7 @@ class TestPreset(OverlayTestCase):
                           'REWIND': True, 'AUTO_GRIND': True, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
                           'CHEAT_KEYS': False, 'RUN_BUTTON': True, 'SHOP_PREVIEW': True,
                           'QUEST_JOURNAL': JOURNAL_GOALS, 'AUTOSAVE': True, 'BAG_SIZE': 16,
-                          'VIEW': 'NES'},
+                          'VIEW': 'NES', 'DUNGEON_MAP': True},
                          preset_values(PRESET_MODERN))
         # the message speed is the NES's own setting, and the language the player's: no preset changes them
         self.assertNotIn('TEXT_SPEED', [row.config_key for row in PRESET_ROWS])
@@ -447,13 +448,14 @@ class TestPreset(OverlayTestCase):
         # preset switches them all off
         from src.config.base_config import base_config
         from src.options_screen import DEFAULT_OPTIONS, apply_options
-        # a new quest keeps the config's AUTOSAVE (OFF, the NES) and the player's VIEW (NES unless changed)
-        config = {'AUTOSAVE': base_config['AUTOSAVE'], 'VIEW': base_config['VIEW']}
+        # a new quest keeps the config's AUTOSAVE (OFF, the NES), and the player's VIEW and DUNGEON MAP
+        config = {key: base_config[key] for key in ('AUTOSAVE', 'VIEW', 'DUNGEON_MAP')}
         apply_options(config, DEFAULT_OPTIONS)
         nes = preset_values(PRESET_NES)
         differences = {config_key for config_key, value in nes.items() if config[config_key] != value}
         self.assertEqual({'ORCHESTRA_MUSIC_ENABLED', 'AUTO_STAIRS', 'NPCS_MAKE_WAY', 'QUICK_ACTION', 'GAME_SPEED_KEYS',
-                          'SAVE_STATES', 'REWIND', 'AUTO_GRIND', 'CHEAT_KEYS', 'SHOP_PREVIEW', 'QUEST_JOURNAL'},
+                          'SAVE_STATES', 'REWIND', 'AUTO_GRIND', 'CHEAT_KEYS', 'SHOP_PREVIEW', 'QUEST_JOURNAL',
+                          'DUNGEON_MAP'},
                          differences)
         self.assertEqual(PRESET_CUSTOM, current_preset(config))
 

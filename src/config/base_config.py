@@ -83,6 +83,8 @@ base_config = {
     # BAG (not NES): the inventory's slots for everything but Herbs and Magic Keys: 8 (the NES) or 16
     # (src/items.py bag_slots)
     "BAG_SIZE": 8,
+    # DUNGEON MAP (not NES): True lets M show the map of the dark floor the hero is on (src/dungeon_map.py)
+    "DUNGEON_MAP": True,
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on

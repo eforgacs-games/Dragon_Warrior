@@ -199,7 +199,8 @@ class TestKoreanOptionsScreen(KoreanTestCase):
                            '소지품', 'NES (8개)'],
                           ['조작', '프리셋', '커스텀', '페이지', '3/3', '게임 속도', '끄기 (NES)', '상태 저장',
                            '끄기 (NES)', '되감기', '끄기 (NES)', '자동 사냥', '끄기 (NES)', '사냥 멈춤', '빨간 HP',
-                           '메뉴 속도', '보통', '치트', '끄기 (NES)', '달리기 버튼', '끄기 (NES)']],
+                           '메뉴 속도', '보통', '치트', '끄기 (NES)', '달리기 버튼', '끄기 (NES)', '던전 지도',
+                           '끄기 (NES)']],
                          [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(3)])
         config.update({row.config_key: row.values[1] for row in OPTION_ROWS})
         self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/3', '표시 속도', '보통', '대화 방식', '모던',
@@ -210,7 +211,7 @@ class TestKoreanOptionsScreen(KoreanTestCase):
                            '자동 저장', '켜기', '소지품', '16개'],
                           ['조작', '프리셋', '커스텀', '페이지', '3/3', '게임 속도', '켜기', '상태 저장', '켜기',
                            '되감기', '켜기', '자동 사냥', '켜기', '사냥 멈춤', 'HP 절반', '메뉴 속도', '게임 속도대로',
-                           '치트', '켜기', '달리기 버튼', '켜기']],
+                           '치트', '켜기', '달리기 버튼', '켜기', '던전 지도', '켜기']],
                          [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(3)])
 
     def test_a_translated_window_draws_every_line_in_one_font(self):
