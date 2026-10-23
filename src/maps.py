@@ -2,6 +2,7 @@ import inspect
 import sys
 from abc import ABC
 from collections.abc import Callable
+from typing import override
 
 from pygame import surface
 from pygame.sprite import Group, LayeredDirty
@@ -457,18 +458,22 @@ class MapWithoutNPCs(DragonWarriorMap, ABC):
 
 
 class BasementWithNPCs(DragonWarriorMap, ABC):
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self) -> int:
         return Direction.RIGHT.value
 
 
 class BasementWithoutNPCs(MapWithoutNPCs):
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -507,9 +512,11 @@ class TantegelThroneRoom(DragonWarriorMap):
         self.exclude_npc('PRINCESS_GWAELIN')
         self.assign_stair_directions()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.UP.value
 
@@ -586,12 +593,15 @@ class TantegelCourtyard(DragonWarriorMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
+    @override
     def apply_dragonlord_defeated(self):
         self.npcs = list(self.npc_table_after_dragonlord)
 
@@ -646,9 +656,11 @@ class CharlockB1(MapWithoutNPCs):
         self.layout[row][column] = self.floor_tile_key['BRICK_STAIR_DOWN']['val']
         self.staircases[self.HIDDEN_STAIRCASE_COORDINATES] = {**self.HIDDEN_STAIRCASE, 'stair_direction': 'down'}
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.UP.value
 
@@ -781,12 +793,15 @@ class CharlockB8(DragonWarriorMap):
                 (33, 16): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 12)}})
         self.assign_stair_directions()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
+    @override
     def apply_dragonlord_defeated(self):
         # NES LoadMobNPCDataLoop: the Dragonlord NPC isn't loaded once he's been defeated
         self.npcs = []
@@ -824,9 +839,11 @@ class Alefgard(MapWithoutNPCs):
         for staircase_dict in self.staircases.values():
             staircase_dict['stair_direction'] = 'up'
 
+    @override
     def hero_underlying_tile(self):
         return 'CASTLE'
 
+    @override
     def hero_initial_direction(self):
         return Direction.DOWN.value if self.character_key['HERO'][
                                            'underlying_tile'] != 'GRASS_STAIR_DOWN' else Direction.LEFT.value
@@ -877,9 +894,11 @@ class Brecconary(DragonWarriorMap):
             **{y: range(21, 27) for y in range(24, 28)},
         }, row_offset=8, column_offset=10)
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -926,9 +945,11 @@ class Garinham(DragonWarriorMap):
             10: (15, 16, 18, 19),  # 17,10 is the door
         }, row_offset=1, column_offset=9)
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -968,9 +989,11 @@ class Kol(DragonWarriorMap):
                                south_gate=warp_line((32, 9), (32, 34)))
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'SAND'
 
+    @override
     def hero_initial_direction(self):
         return Direction.UP.value
 
@@ -1024,9 +1047,11 @@ class Rimuldar(DragonWarriorMap):
             **{y: range(2, 13) for y in range(20, 28)},
         }, row_offset=8, column_offset=8)
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.LEFT.value
 
@@ -1048,9 +1073,11 @@ class Hauksness(MapWithoutNPCs):
                                south_gate=warp_line((28, 9), (28, 28)))
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1101,9 +1128,11 @@ class Cantlin(DragonWarriorMap):
             **{y: range(11, 19) for y in range(11, 24)},
         }, row_offset=8, column_offset=1)
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK'
 
+    @override
     def hero_initial_direction(self):
         return Direction.DOWN.value
 
@@ -1118,9 +1147,11 @@ class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1132,9 +1163,11 @@ class ErdricksCaveB2(MapWithoutNPCs, CaveMap):
                              (10, 9): {'map': 'ErdricksCaveB1', 'destination_coordinates': (12, 12)}})
         self.assign_stair_directions()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1159,9 +1192,11 @@ class SwampCave(CaveMap):
                          initial_coordinates=(6, 4))
         self.assign_stair_directions()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1177,9 +1212,11 @@ class GarinsGraveB1(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1200,9 +1237,11 @@ class GarinsGraveB2(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1229,9 +1268,11 @@ class GarinsGraveB3(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1248,9 +1289,11 @@ class GarinsGraveB4(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1270,9 +1313,11 @@ class MountainCaveB1(MapWithoutNPCs, CaveMap):
                          })
         self.assign_stair_directions()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1291,9 +1336,11 @@ class MountainCaveB2(MapWithoutNPCs, CaveMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1313,9 +1360,11 @@ class StaffOfRainCave(DragonWarriorMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
@@ -1335,9 +1384,11 @@ class MagicTemple(DragonWarriorMap):
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
+    @override
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
 
+    @override
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 

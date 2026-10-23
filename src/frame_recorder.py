@@ -35,7 +35,7 @@ import tempfile
 import zlib
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, overload
+from typing import Any, overload, override
 from collections.abc import Callable, Iterator, Sequence
 
 from pygame import BLEND_RGB_ADD, BLEND_RGB_SUB, Rect, Surface, display, image, mask
@@ -141,9 +141,11 @@ class FrameRecorder(Sequence[Frame]):
 
     # The sequence of frames
 
+    @override
     def __len__(self) -> int:
         return len(self.frames)
 
+    @override
     def __iter__(self) -> Iterator[Frame]:
         return iter(self.frames)
 
@@ -153,6 +155,7 @@ class FrameRecorder(Sequence[Frame]):
     @overload
     def __getitem__(self, index: slice) -> Sequence[Frame]: ...
 
+    @override
     def __getitem__(self, index):
         return self.frames[index]
 
