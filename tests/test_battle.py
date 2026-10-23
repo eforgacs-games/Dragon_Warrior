@@ -139,6 +139,36 @@ class TestBattleMethods(unittest.TestCase):
                           "Thy Response Speed increases by 2.\n", "Thy Maximum Hit Points increase by 6.\n",
                           "Thy Maximum Magic Points increase by 11.\n"], lines[:4])
 
+    def test_level_up_waits_where_the_text_has_a_wait(self):
+        """NES DoLevelUp (#381): TB16E1 has a WAIT before "Courage and wit" and one after "next level."; "Thy power"
+        (TB17E14), "Thy Response Speed" (TB17E15) and "Thou hast learned a new spell." (TB16E2) have none; the maximum
+        Hit Points and Magic Points lines (TB18E0, TB18E1) start with one. Then ExitFight waits for a new press."""
+        from src.config.test_config import test_config
+        from src.player.player import Player
+        from tests.mock_map import MockMap
+        player = Player(center_point=None, images=None, current_map=MockMap(test_config))
+        player.name, player.total_experience = 'Erdrick', 7
+        player.level = player.get_level_by_experience()
+        player.update_stats_to_current_level()
+        player.total_experience = 23  # level 2 -> 3: every stat goes up, and HEAL is learned
+        cmd_menu = Mock()
+        steps = []
+        cmd_menu.wait_for_button.side_effect = lambda shows_arrow: steps.append(('button', shows_arrow))
+
+        def show_line(line, **kwargs):
+            waits = not kwargs.get('skip_text') and not kwargs.get('temp_text_start')
+            steps.append((line.split('\n')[0].split(' increase')[0], waits and not kwargs.get('hide_arrow')))
+        cmd_menu.show_line_in_dialog_box.side_effect = show_line
+        battle = Battle({**self.battle.config, 'LANGUAGE': 'English'}, self.enemy_name, self.current_map)
+        battle.check_player_level_up(cmd_menu, player)
+        self.assertEqual(3, player.level)
+        # (line, whether it waits with the arrow after it)
+        self.assertEqual([('button', True), ('Courage and wit have served thee well.', True),
+                          ('Thy power', False), ('Thy Response Speed', False),
+                          ('button', True), ('Thy Maximum Hit Points', False),
+                          ('button', True), ('Thy Maximum Magic Points', False),
+                          ('Thou hast learned a new spell.', False), ('button', False)], steps)
+
     def test_level_up_can_jump_several_levels_and_reach_30(self):
         player, _ = self.level_up('Erdrick', 47, 220 - 47)
         self.assertEqual(6, player.level)

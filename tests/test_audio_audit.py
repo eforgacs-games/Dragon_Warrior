@@ -333,6 +333,7 @@ class TestRunAwaySound(unittest.TestCase):
         battle = Battle(self.game.config, 'Slime', self.game.current_map)
         with patch.object(controller.sound, 'play_sound') as play_sound, \
                 patch.object(controller.cmd_menu, 'show_line_in_dialog_box'), \
+                patch.object(controller.cmd_menu, 'wait_for_button'), \
                 patch.object(battle, 'make_enemy_image_disappear'):
             controller.enemy_run_away(battle, battle.enemy)
         play_sound.assert_called_once_with(self.game.directories.run_away_sfx)

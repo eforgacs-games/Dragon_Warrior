@@ -241,6 +241,22 @@ class TestCommandMenuDialog(TestCase):
         # 9 rows of text in an 8-row window: the first two have scrolled off the top, the bottom row is empty
         self.assertEqual(['Erdrick attacks!'] * 7, self.cmd_menu.dialog_buffer.visible_lines)
 
+    def test_a_wait_on_its_own_leaves_the_arrow_row_blank(self):
+        # NES WaitFound for a WAIT that starts a message (TB16E1, TB18E0): the arrow blinks on the row below the last
+        # message, and after the press the text goes on below that row (MoveToNextLine), so it stays blank
+        self.cmd_menu.show_line_in_battle_dialog_box("Thy power increases by 4.\n")
+        arrow_rows = []
+        with patch.object(self.cmd_menu, 'wait_for_dialog_key') as wait, \
+                patch.object(self.cmd_menu, 'draw_dialog_arrow',
+                             side_effect=lambda visible: arrow_rows.append(self.cmd_menu.dialog_buffer.row)):
+            self.cmd_menu.wait_for_button(shows_arrow=True)
+        wait.assert_called_once_with(shows_arrow=True, skip_text=False, temp_text_start=None, disable_sound=True)
+        self.assertEqual([2], arrow_rows)  # cleared on the row it blinked on, below the message's two rows
+        self.cmd_menu.show_line_in_dialog_box("Thy Maximum Hit Points increase by 6.\n", add_quotes=False,
+                                              skip_text=True, hide_arrow=True, disable_sound=True)
+        self.assertEqual(['Thy power increases by', '4.', '', 'Thy Maximum Hit Points', 'increase by 6.'],
+                         self.cmd_menu.dialog_buffer.lines[:5])
+
     def text_beeps(self, text, **kwargs):
         with patch.object(self.cmd_menu.sound, 'play_sfx') as play_sfx:
             self.cmd_menu.show_line_in_dialog_box(text, skip_text=True, hide_arrow=True, **kwargs)
