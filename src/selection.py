@@ -35,7 +35,7 @@ from pygame.event import Event
 
 from src.common import A_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, reject_keys
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, BlinkingCursor, SelectionButtons, first_button
-from src.waiting import handle_speed_key, quit_if_requested, wait_frames
+from src.waiting import handle_speed_key, poll_virtual_joypad, quit_if_requested, wait_frames, with_virtual_keys
 from src.zoom import handle_zoom_event
 
 ButtonKeys = tuple[tuple[int, tuple[int, ...]], ...]
@@ -78,6 +78,7 @@ def frame_events() -> list[Event]:
     presses of 1 to 4 after setting the game speed (handle_speed_key) and the zoom keys after zooming the window
     (handle_zoom_event, src/zoom.py), so no window reads them as a key."""
     events = []
+    poll_virtual_joypad()
     for current_event in event.get():
         quit_if_requested(current_event)
         if not handle_speed_key(current_event) and not handle_zoom_event(current_event):
@@ -96,7 +97,7 @@ def key_buttons(pressed_key: int, keys: ButtonKeys = SELECTION_KEYS) -> int:
 
 def held_buttons(keys: ButtonKeys = SELECTION_KEYS) -> int:
     """The buttons held right now (GetJoypadStatus), from the keyboard state."""
-    pressed = key.get_pressed()
+    pressed = with_virtual_keys(key.get_pressed())
     buttons = 0
     for button, button_keys in keys:
         if any(pressed[button_key] for button_key in button_keys):

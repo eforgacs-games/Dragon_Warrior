@@ -19,6 +19,7 @@ from pygame.event import Event
 from src.common import reject_keys
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, BlinkingCursor, SelectionButtons, first_button
 from src.windows import COMMAND_COLUMNS, COMMAND_ROWS
+from src.waiting import with_virtual_keys
 
 # Defines WND_ABORT ($FF): the selection result of WndBPressed
 WND_ABORT = 0xFF
@@ -46,7 +47,7 @@ def keyboard_buttons(is_down: Callable[[int], object]) -> int:
 
 def held_buttons() -> int:
     """The buttons held right now (GetJoypadStatus), from the keyboard state."""
-    pressed = key.get_pressed()
+    pressed = with_virtual_keys(key.get_pressed())
     return keyboard_buttons(lambda button_key: pressed[button_key])
 
 
