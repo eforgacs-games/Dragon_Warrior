@@ -33,6 +33,7 @@ from src.drawer import Drawer
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
+from src.gamepad import connect_gamepad
 from src.guardians import guardian_at
 from src.intro import Intro
 from src.items import OpenDoorHistory, TreasureChestHistory
@@ -117,6 +118,7 @@ class Game:
         set_game_speed(self.settings.settings.game_speed)
         set_speed_listener(self.settings.updater('game_speed'))
         set_virtual_joypad(None)  # no auto-grind (src/auto_grind.py) left driving from an earlier game
+        connect_gamepad()  # a controller works like the keyboard (src/gamepad.py), plugged in now or later
         # intro
         self.start_time = get_ticks()
         self.splash_screen_enabled = self.game_state.config["SPLASH_SCREEN_ENABLED"]

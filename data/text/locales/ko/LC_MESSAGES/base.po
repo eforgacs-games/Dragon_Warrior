@@ -2585,3 +2585,43 @@ msgstr "화면 배율"
 #: src/options_overlay.py
 msgid "PIXEL PERFECT"
 msgstr "정수 배율"
+
+#: data/text/intro_lookup_table.py
+msgid "Right Button: A"
+msgstr "오른쪽 버튼: A"
+
+#: data/text/intro_lookup_table.py
+msgid "Bottom Button: B"
+msgstr "아래 버튼: B"
+
+#: data/text/intro_lookup_table.py
+msgid "Start Button: Start"
+msgstr "Start 버튼: 스타트"
+
+#: data/text/intro_lookup_table.py
+msgid "Back Button: Select"
+msgstr "Back 버튼: 셀렉트"
+
+#: data/text/intro_lookup_table.py
+msgid "D-Pad/Stick: Move"
+msgstr "십자키/스틱: 이동"
+
+#: data/text/intro_lookup_table.py
+msgid "Right Trigger: Speed"
+msgstr "오른쪽 트리거: 게임 속도"
+
+#: data/text/intro_lookup_table.py
+msgid "Controller:"
+msgstr "컨트롤러:"
+
+#: data/text/intro_lookup_table.py
+msgid "LB: Load state 1"
+msgstr "LB: 상태 1 불러오기"
+
+#: data/text/intro_lookup_table.py
+msgid "RB: Save state 1"
+msgstr "RB: 상태 1 저장"
+
+#: data/text/intro_lookup_table.py
+msgid "LT (hold): Rewind"
+msgstr "LT (누르고 있기): 되감기"
