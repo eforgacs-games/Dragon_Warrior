@@ -21,6 +21,8 @@ MAX_GOLD = 0xFFFF  # NES RegEnDefeated: GoldLB/GoldUB max out at $FFFF
 DRAGONLORD_TRANSFORM_WAIT_FRAMES = 80  # NES EnemyDefeated: 80 frames between the two Dragonlord fights
 SPIRAL_LEAD_IN_FRAMES = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E40A, before the first block
 SPIRAL_FRAMES_PER_BLOCK = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E43D, once per block
+# NES ChkNewSpell (LEAE6): the levels that say "Thou hast learned a new spell." (TextBlock16 entry 2)
+NEW_SPELL_LEVELS = frozenset((3, 4, 7, 9, 10, 12, 13, 15, 17, 19))
 HERO_SCREEN_BLOCK = (8, 7)  # NES DoSprites: the hero's sprites are at x $80, y $6F, the middle of the screen
 
 
@@ -313,7 +315,9 @@ class Battle:
                 singular_or_plural(increase, self._("Thy Maximum Magic Point increase by {}.\n"),
                                    self._("Thy Maximum Magic Points increase by {}.\n")).format(increase),
                 add_quotes=False, disable_sound=True)
-        if len(player.spells) > len(old_stats["spells"]):
+        # NES ChkNewSpell (LEAE6): only the new level is checked, not the spell list, so a jump from level 2 to 5 (which
+        # learns HEAL at 3 and HURT at 4) says nothing
+        if player.level in NEW_SPELL_LEVELS:
             cmd_menu.show_line_in_dialog_box(self._("Thou hast learned a new spell.\n"), add_quotes=False, disable_sound=True)
 
     def make_enemy_image_disappear(self, screen):
