@@ -68,7 +68,9 @@ from src.waiting import quit_if_requested, wait
 from src.windows import COMMAND_WINDOW
 
 
-SAVE_FILE_PATTERN = re.compile(r'save_slot_(\d+)\.json')
+# Only the NES's three adventure logs (src.adventure_log.ADVENTURE_LOGS) are saves; a save_slot_0.json or
+# save_slot_4.json is ignored like any other stray file
+SAVE_FILE_PATTERN = re.compile(r'save_slot_([123])\.json')
 # Returned by a title menu entry that goes back to the title menu when it's done (NES WndBackToMain)
 BACK_TO_TITLE_MENU = object()
 
@@ -269,7 +271,8 @@ class Game:
             self.loop_count += 1
 
     def show_main_menu_screen(self, screen) -> None:
-        """The title menu. Choosing CHANGE MESSAGE SPEED comes back to it afterwards (NES WndBackToMain)."""
+        """The title menu. Choosing CHANGE MESSAGE SPEED, COPY A QUEST or ERASE AN ADVENTURE LOG, or B in CONTINUE A
+        QUEST's log window, comes back to it afterwards (NES WndBackToMain)."""
         while self.show_title_menu(screen) is BACK_TO_TITLE_MENU:
             pass
 
@@ -351,36 +354,47 @@ class Game:
             return []
         return sorted(name for name in os.listdir(self.directories.save_dir) if SAVE_FILE_PATTERN.fullmatch(name))
 
-    def continue_quest(self):
-        # make the window the right size based on self.save_dir_contents
-        # populate the save file list with the player names
-        # allow the user to select a save file
-        # load the save file
+    def continue_quest(self) -> object:
+        """CONTINUE A QUEST: choose a used adventure log (ShowUsedLogs) and load it. With one log, its screenshot with
+        the hero's name on it; with several, the log window. B in the log window goes back to the title menu
+        (WndBackToMain)."""
         if len(self.save_dir_contents) == 1:
-            save_path = os.path.join(self.directories.save_dir, self.save_dir_contents[0])
+            save_file_name = self.save_dir_contents[0]
+            save_path = os.path.join(self.directories.save_dir, save_file_name)
             self.game_functions.main_menu_selection(get_ticks(), self.screen,
                                                     self.directories.one_adventure_log_unselected,
                                                     self.directories.one_adventure_log_0,
                                                     [],
                                                     no_blit=self.game_state.config['NO_BLIT'],
                                                     overlay=self.adventure_log_overlay(save_path))
-        if self.save_dir_contents:
-            # TODO(#234): let the player pick the log when there are several. Until then, continue the most recently
-            # saved one rather than silently starting a new game.
-            save_file_name = max(self.save_dir_contents,
-                                 key=lambda name: os.path.getmtime(os.path.join(self.directories.save_dir, name)))
-            with open(os.path.join(self.directories.save_dir, save_file_name)) as save_file:
-                loaded_save = json.load(save_file)
+        elif self.save_dir_contents:
+            options_screen = OptionsScreen(self.screen, self.game_state.config, self.title_menu_background(0))
+            slot = options_screen.choose_log(self.used_logs())
+            if slot is None:
+                return BACK_TO_TITLE_MENU
+            save_file_name = f'save_slot_{slot}.json'
+        else:
             self.sound.play_sound(self.directories.menu_button_sfx)
-            # load_game has already cut to black, faded the starting map in, started its music and made a new
-            # CommandMenu, as NES StartAtThroneRoom does; fading out again here would show the map twice
-            self.load_game(loaded_save)
-            # Save back to the same log, so continuing and saving doesn't create another save file
-            self.player.adventure_log = save_slot_number(save_file_name)
-            return
-
+            self.start_at_throne_room()
+            return None
+        with open(os.path.join(self.directories.save_dir, save_file_name)) as save_file:
+            loaded_save = json.load(save_file)
         self.sound.play_sound(self.directories.menu_button_sfx)
-        self.start_at_throne_room()
+        # load_game has already cut to black, faded the starting map in, started its music and made a new
+        # CommandMenu, as NES StartAtThroneRoom does; fading out again here would show the map twice
+        self.load_game(loaded_save)
+        # Save back to the same log, so continuing and saving doesn't create another save file
+        self.player.adventure_log = save_slot_number(save_file_name)
+        return None
+
+    def used_logs(self) -> list[tuple[int, str]]:
+        """ShowUsedLogs: each used adventure log's number and hero's name, for the log window."""
+        logs = []
+        for save_file_name in self.save_dir_contents or self.save_files():
+            save = self.read_save(save_file_name)
+            if save is not None:
+                logs.append((save_slot_number(save_file_name), str(save.get('Name', ''))))
+        return logs
 
     def adventure_log_overlay(self, save_path: str) -> AdventureLogOverlay:
         """The name of the hero in save_path, to draw on the one_adventure_log screenshot's "ADVENTURE LOG 1:" line
@@ -392,14 +406,10 @@ class Game:
         window (WND_MSG_SPEED) and, after it, this game's dialog style and NPCS MAKE WAY; ChngMsgSpeed saves them to that log
         (SaveCurrentGame). B in the log or speed window saves nothing. Either way it's back to the title menu
         (WndBackToMain). See src/options_screen.py."""
-        logs = []
-        for save_file_name in self.save_dir_contents or self.save_files():
-            save = self.read_save(save_file_name)
-            if save is not None:
-                logs.append((save_slot_number(save_file_name), str(save.get('Name', ''))))
+        logs = self.used_logs()
         if not logs:
             return BACK_TO_TITLE_MENU
-        options_screen = OptionsScreen(self.screen, self.game_state.config, self.title_menu_background())
+        options_screen = OptionsScreen(self.screen, self.game_state.config, self.title_menu_background(1))
         slot = options_screen.choose_log(logs)
         if slot is None:
             return BACK_TO_TITLE_MENU
@@ -429,13 +439,16 @@ class Game:
             return None
         return save if isinstance(save, dict) else None
 
-    def title_menu_background(self) -> str:
-        """The title menu screenshot with CHANGE MESSAGE SPEED chosen, for the windows to open over."""
+    def title_menu_background(self, entry: int) -> str:
+        """The title menu screenshot with CONTINUE A QUEST (0) or CHANGE MESSAGE SPEED (1) chosen, for the windows to
+        open over."""
         if len(self.save_dir_contents or []) >= 3:
-            return self.directories.continue_quest_full_log_1
-        return self.directories.main_menu_partially_full_log_1
+            return (self.directories.continue_quest_full_log_0, self.directories.continue_quest_full_log_1)[entry]
+        return (self.directories.main_menu_partially_full_log_0, self.directories.main_menu_partially_full_log_1)[entry]
 
-    def copy_quest(self):
+    def copy_quest(self) -> object:
+        """COPY A QUEST: copy one adventure log to another, then back to the title menu (WndBackToMain), never on
+        into a game with no log."""
         src_slot = self.game_functions.main_menu_selection(
             get_ticks(), self.screen,
             self.directories.empty_log_adventure_log_path,
@@ -453,8 +466,11 @@ class Game:
         if os.path.exists(src_path) and src_slot != dst_slot:
             shutil.copy2(src_path, dst_path)
         self.sound.play_sound(self.directories.menu_button_sfx)
+        return BACK_TO_TITLE_MENU
 
-    def erase_quest(self):
+    def erase_quest(self) -> object:
+        """ERASE AN ADVENTURE LOG: erase a log, then back to the title menu (WndBackToMain), never on into a game with
+        no log."""
         slot = self.game_functions.main_menu_selection(
             get_ticks(), self.screen,
             self.directories.empty_log_adventure_log_path,
@@ -466,6 +482,7 @@ class Game:
             os.remove(save_path)
             self.save_dir_contents = self.save_files()
         self.sound.play_sound(self.directories.menu_button_sfx)
+        return BACK_TO_TITLE_MENU
 
     def select_adventure_log(self, screen):
         self.player.adventure_log = self.game_functions.main_menu_selection(get_ticks(), screen,

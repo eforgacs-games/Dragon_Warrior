@@ -46,6 +46,22 @@ LOG_NUMBER_COLUMN = ADVENTURE_LOG_WINDOW_2.x * 2 + 16
 LOG_NAME_COLUMN = LOG_NUMBER_COLUMN + 2
 
 SAVE_SLOT_PATTERN = re.compile(r'save_slot_(\d+)\.json$')
+# The NES has three adventure logs (reference/sram-doc.txt), numbered 1 to 3 on screen
+ADVENTURE_LOGS = (1, 2, 3)
+
+
+def first_open_log(save_dir: str) -> int | None:
+    """ShowOpenLogs: the lowest adventure log with no save in save_dir, or None if all three are used."""
+    for log in ADVENTURE_LOGS:
+        if not os.path.exists(os.path.join(save_dir, f'save_slot_{log}.json')):
+            return log
+    return None
+
+
+def logs_named(save_dir: str, name: str) -> List[int]:
+    """The adventure logs in save_dir whose hero is called name (the save's 'Name', as Game.load_game reads it). A
+    save that can't be read matches no name."""
+    return [log for log in ADVENTURE_LOGS if read_save_name(os.path.join(save_dir, f'save_slot_{log}.json')) == name]
 
 
 def log_name_tiles(name: str) -> str:
