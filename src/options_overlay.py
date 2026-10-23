@@ -9,7 +9,7 @@ drawn by src/translated_window.py), titled OPTIONS, with one row per setting and
     DIALOG STYLE   CLASSIC (NES) / MODERN   (DIALOG_STYLE, src/dialog_box.py)
     NPCS MAKE WAY  ON / OFF (NES)           (NPCS_MAKE_WAY, MovementController.ask_npc_to_make_way)
     FADE STYLE     NES / SMOOTH             (FADE_STYLE, src/visual_effects.py screen_fade)
-    STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps; F2 toggles it too)
+    STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps)
     GRIND STOP     RED HP / HALF HP / 3/4 HP  (AUTO_GRIND_STOP: when auto-grind stops, src/auto_grind.py)
 
 Up and down move the NES cursor (src/cursor.py) between the rows; left, right or A change the row's value, with the
