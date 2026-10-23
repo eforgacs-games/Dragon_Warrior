@@ -2,7 +2,7 @@ import functools
 import random
 
 from src.spells import Spell
-from typing import Any
+from typing import Any, TypedDict
 from collections.abc import Callable, Collection, Iterable
 
 from pygame import Surface, display, KEYDOWN, Rect, event, transform
@@ -50,6 +50,19 @@ from src.nes_random import one_in
 COMMAND_METHODS = ('talk', 'status', 'stairs', 'search', 'spell', 'item', 'door', 'take')
 
 
+
+class BattleLineOptions(TypedDict):
+    add_quotes: bool
+    disable_sound: bool
+    hide_arrow: bool
+    skip_text: bool
+
+
+# A fight's message, for show_line_in_dialog_box(text, **BATTLE_LINE): DoDialogLoBlock or DoDialogHiBlock prints a
+# TextBlock entry that ends with END and no WAIT, and returns. It prints letter by letter at the message speed, then
+# the fight goes on without waiting for a button; only the command window, a WAIT in the text and ExitFight wait for
+# one (#381).
+BATTLE_LINE: BattleLineOptions = {'add_quotes': False, 'disable_sound': True, 'hide_arrow': True, 'skip_text': True}
 
 # NES ShowWindow and RemoveWindow (Bank00, LA7A2) draw or take away one row of a window's blocks a frame
 WINDOW_ROW_FRAMES = 1
@@ -361,10 +374,26 @@ class CommandMenu:
 
     def wait_for_button(self, shows_arrow: bool) -> None:
         """A wait for a button with no text of its own, silent: a TXT_WAIT (DoWait) with the arrow, or, without it,
-        WaitForBtnRelease then WaitForBtnPress, where a button pressed earlier doesn't count (see wait_for_dialog_key)."""
+        WaitForBtnRelease then WaitForBtnPress, where a button pressed earlier doesn't count (see wait_for_dialog_key).
+
+        A TXT_WAIT moves the text cursor like one inside a message (WaitFound): to a new row if anything is on this one
+        (DoNewline), where the arrow blinks, and after the press on to the next row (MoveToNextLine). So a WAIT that
+        starts a message (TB16E1, TB18E0, TB18E1) leaves the arrow's row blank above the text that follows."""
         if not shows_arrow:
             event.clear(KEYDOWN)
-        self.wait_for_dialog_key(shows_arrow=shows_arrow, skip_text=False, temp_text_start=None, disable_sound=True)
+            self.wait_for_dialog_key(shows_arrow=False, skip_text=False, temp_text_start=None, disable_sound=True)
+            return
+        config = self.game.game_state.config
+        animate = not config['NO_WAIT']
+        frames = frames_per_character(config['TEXT_SPEED'])
+        self._dialog_frame_deadline = float(get_ticks())
+        self.run_dialog_steps(self.dialog_buffer.start_wait(), animate, frames, disable_sound=True)
+        self.wait_for_dialog_key(shows_arrow=True, skip_text=False, temp_text_start=None, disable_sound=True)
+        self.draw_dialog_arrow(False)  # DoWait: TxtClearArrow
+        if not self.modern_dialog:
+            self.run_dialog_steps(self.dialog_buffer.finish_wait(), animate, frames, disable_sound=True)
+        if not animate:
+            self.draw_dialog_window()
 
     def read_dialog_events(self, advance_keys: Collection[int]) -> bool:
         """Takes the queued events; returns whether one was a press of advance_keys. Closing the window quits and the
@@ -1009,7 +1038,8 @@ class CommandMenu:
         self.show_popup_window()
 
     def show_battle_line(self, text: str):
-        self.show_line_in_dialog_box(text, add_quotes=False, disable_sound=True, hide_arrow=True)
+        """A fight's message, with no button wait after it (BATTLE_LINE)."""
+        self.show_line_in_dialog_box(text, **BATTLE_LINE)
 
     def battle_spell_resisted(self, resistance: float) -> bool:
         """NES ChkSpellFail: the spell fails if a 0-15 roll is below the enemy's resistance (n/16)."""
@@ -1049,11 +1079,9 @@ class CommandMenu:
         if self.battle_spell_resisted(enemy.sleep_resist):  # NES ChkSpellFail
             return
         enemy.is_asleep = True
-        self.show_line_in_dialog_box(self._("Thou hast put the {} to sleep.").format(enemy_name), add_quotes=False,
-                                     disable_sound=True, hide_arrow=True)
-        # The enemy loses the turn it was put to sleep (NES jumps straight to EnStillAsleep).
-        self.show_line_in_dialog_box(self._("The {} is asleep.").format(enemy_name), add_quotes=False,
-                                     disable_sound=True, hide_arrow=True)
+        self.show_battle_line(self._("Thou hast put the {} to sleep.").format(enemy_name))  # TB15E12
+        # The enemy loses the turn it was put to sleep (NES jumps straight to EnStillAsleep, TB16E8).
+        self.show_battle_line(self._("The {} is asleep.").format(enemy_name))
         self.current_battle.no_op = True
 
     def radiant(self):
@@ -1431,12 +1459,14 @@ class CommandMenu:
                 self.show_battle_line(self._("That cannot be used in battle."))
                 self.current_battle.no_op = True
             elif self.player.current_mp < spell_mp_cost:
+                # TB4E2 and TB4E0 below end with no WAIT: in a fight, nothing waits for a button after them
+                in_battle = self.current_battle is not None
                 self.show_line_in_dialog_box(self._("Thy MP is too low."),
-                                             skip_text=self.skip_text,
+                                             skip_text=self.skip_text or in_battle,
                                              disable_sound=True,
                                              hide_arrow=True,
                                              add_quotes=False)
-                if self.current_battle is not None:
+                if in_battle:
                     self.current_battle.no_op = True
             else:
                 self.show_line_in_dialog_box(
@@ -1445,7 +1475,7 @@ class CommandMenu:
                     add_quotes=False,
                     disable_sound=True,
                     hide_arrow=True,
-                    skip_text=self.skip_text)
+                    skip_text=self.skip_text or self.current_battle is not None)
                 # NES PlyrCastSpell (LDBA4-LDBAD): SFX_SPELL, BWScreenFlash, then WaitForMusicEnd
                 self.sound.play_sound(self.directories.spell_sfx)
                 bw_screen_flash(self.screen, self.game.game_state.config)

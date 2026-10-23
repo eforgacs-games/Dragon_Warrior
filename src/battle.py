@@ -8,7 +8,7 @@ from src.enemy import enemy_groups
 from src.enemy_lookup import enemy_string_lookup
 from src.korean_particles import get_postposition, particle
 from src.maps import DragonWarriorMap
-from src.menu import CommandMenu
+from src.menu import BATTLE_LINE, CommandMenu
 from src.windows import POPUP_WINDOW
 from src.player.player import Player
 from src.player.player_stats import get_level_by_experience
@@ -128,10 +128,11 @@ class Battle:
         )
 
     def battle_run(self, cmd_menu: CommandMenu, player: Player, current_battle):
-        """Attempt to run from a battle (NES PlyrRun)."""
+        """Attempt to run from a battle (NES PlyrRun). "started to run away." (TB16E5) and "But was blocked in front."
+        (TB16E6) end with no WAIT: a successful run goes straight back to the map (RunSuccessful ends in ExitFight2,
+        which doesn't wait for a button), a blocked one straight into the enemy's turn."""
         self.sound.play_sound(self.directories.run_away_sfx)  # SFX_RUN
-        cmd_menu.show_line_in_dialog_box(self._("{} started to run away.\n").format(player.name), add_quotes=False,
-                                         hide_arrow=True, disable_sound=True)
+        cmd_menu.show_line_in_dialog_box(self._("{} started to run away.\n").format(player.name), **BATTLE_LINE)
 
         # NES PlyrRun: running from a sleeping enemy always works.
         if current_battle.enemy.is_asleep:
@@ -139,8 +140,7 @@ class Battle:
 
         if not can_run_away(player.agility, current_battle.enemy.defense,
                             self.get_group_factor(current_battle.enemy.name)):
-            cmd_menu.show_line_in_dialog_box(self._("But was blocked in front.").format(current_battle.enemy.name),
-                                             add_quotes=False, hide_arrow=True, disable_sound=True)
+            cmd_menu.show_line_in_dialog_box(self._("But was blocked in front."), **BATTLE_LINE)
             if cmd_menu.game.battle_ctrl.enemy_move(current_battle):
                 return True
             if player.current_hp <= 0:
@@ -162,21 +162,21 @@ class Battle:
         of Hit Points!" (TextBlock15, entry 7)."""
         self.sound.play_sound(self.directories.missed_sfx)
         cmd_menu.show_line_in_dialog_box(self._("The attack failed and there was no loss of Hit Points!"),
-                                         add_quotes=False, disable_sound=True, hide_arrow=True)
+                                         **BATTLE_LINE)
 
     def enemy_missed_attack(self, cmd_menu):
         """NES EnPhysAttack: the enemy's hit did no damage. SFX_MISSED2 and "A miss! No damage hath been scored!"
         (TextBlock16, entry 11)."""
         self.sound.play_sound(self.directories.missed_2_sfx)
-        cmd_menu.show_line_in_dialog_box(self._("A miss! No damage hath been scored!"), add_quotes=False,
-                                         disable_sound=True, hide_arrow=True)
+        cmd_menu.show_line_in_dialog_box(self._("A miss! No damage hath been scored!"), **BATTLE_LINE)
 
     def calculate_attack_damage(self, cmd_menu, player, enemy):
         """The hero's FIGHT damage, per NES PlyrFight ($E5FE)."""
         # NES PlyrFight: no excellent moves against either form of the Dragonlord (EN_DRAGONLORD1/2)
         if enemy.name not in ('Dragonlord', 'Dragonlord 2') and is_excellent_move(random.randint(0, 255)):
             self.sound.play_sound(self.directories.excellent_move_sfx)
-            cmd_menu.show_line_in_dialog_box(self._("Excellent move!\n"), add_quotes=False, disable_sound=True)
+            # TB17E4 ends with no WAIT: no arrow and no button, the damage line follows
+            cmd_menu.show_line_in_dialog_box(self._("Excellent move!\n"), **BATTLE_LINE)
             return excellent_move_damage(player.attack_power, random.randint(0, 255))
         return player_hit_damage(player.attack_power, enemy.defense)
 
@@ -185,8 +185,7 @@ class Battle:
         BattleController.process_command_input); the spell window plays it again when a spell is chosen."""
         if not player.spells:
             cmd_menu.show_line_in_dialog_box(self._("{} cannot yet use the spell.").format(player.name),
-                                             skip_text=cmd_menu.skip_text, add_quotes=False, hide_arrow=True,
-                                             disable_sound=True)
+                                             **BATTLE_LINE)  # TB4E1
             current_battle.no_op = True
         else:
             cmd_menu.display_item_menu('spells')
@@ -242,7 +241,7 @@ class Battle:
         finish and the map's music resumes (ResumeMusicTbl), then ExitFight waits for a new button press. With one,
         DoLevelUp starts MSC_LEVEL_UP, which cuts the victory music off, waits for it to end (WaitForMusicEnd), resumes
         the map's music, and only then says "Thou hast been promoted to the next level." and the stat increases
-        (ChkStrengthUp-ChkMPUp)."""
+        (ChkStrengthUp-ChkMPUp), then goes to ExitFight too."""
         music_player = cmd_menu.game.music_player
         new_level = get_level_by_experience(player.total_experience)
         if new_level > player.level:
@@ -259,6 +258,8 @@ class Battle:
             player.update_attack_power()
             player.update_defense_power()
             self.display_stat_increases(cmd_menu, player, old_stats)
+            # ExitFight (DoLevelUp's JMP ExitFight, LEB18): a new press returns to the map
+            cmd_menu.wait_for_button(shows_arrow=False)
         else:
             music_player.wait_for_music_end(self.config)
             self.resume_map_music(music_player)
@@ -271,7 +272,8 @@ class Battle:
         music_player.load_and_play_music(self.current_map.music_file_path)
 
     def display_level_up_message(self, cmd_menu, player, new_level=None):
-        """Display the level up message."""
+        """TB16E1, "Courage and wit have served thee well. Thou hast been promoted to the next level.", ends with a
+        WAIT: the arrow and A or B. (Its leading WAIT is check_player_level_up's.)"""
         if self.config['LANGUAGE'] == 'English':
             cmd_menu.show_line_in_dialog_box(
                 self._("Courage and wit have served thee well.\nThou hast been promoted to the next level.\n"),
@@ -293,32 +295,35 @@ class Battle:
         }
 
     def display_stat_increases(self, cmd_menu, player, old_stats):
-        """Display the increases in player's stats."""
+        """NES ChkStrengthUp-ChkNewSpell. Where the text waits: "Thy power increases" (TB17E14) and "Thy Response Speed
+        increases" (TB17E15) end with no WAIT, so they print one after the other; the maximum Hit Points and Magic
+        Points lines (TB18E0, TB18E1) start with a WAIT, so the arrow blinks before each; "Thou hast learned a new
+        spell." (TB16E2) has none, and ExitFight's press follows it."""
         if player.strength > old_stats["strength"]:
             cmd_menu.show_line_in_dialog_box(
-                self._("Thy power increases by {}.\n").format(player.strength - old_stats["strength"]),
-                add_quotes=False, disable_sound=True)
+                self._("Thy power increases by {}.\n").format(player.strength - old_stats["strength"]), **BATTLE_LINE)
         if player.agility > old_stats["agility"]:
             cmd_menu.show_line_in_dialog_box(
                 self._("Thy Response Speed increases by {}.\n").format(player.agility - old_stats["agility"]),
-                add_quotes=False, disable_sound=True)
+                **BATTLE_LINE)
         # NES TextBlock18 entries 0 and 1: PNTS prints "Point" for an increase of 1 (Bank01 DoPNTS)
         if player.max_hp > old_stats["max_hp"]:
             increase = player.max_hp - old_stats["max_hp"]
+            cmd_menu.wait_for_button(shows_arrow=True)
             cmd_menu.show_line_in_dialog_box(
                 singular_or_plural(increase, self._("Thy Maximum Hit Point increase by {}.\n"),
-                                   self._("Thy Maximum Hit Points increase by {}.\n")).format(increase),
-                add_quotes=False, disable_sound=True)
+                                   self._("Thy Maximum Hit Points increase by {}.\n")).format(increase), **BATTLE_LINE)
         if player.max_mp > old_stats["max_mp"]:
             increase = player.max_mp - old_stats["max_mp"]
+            cmd_menu.wait_for_button(shows_arrow=True)
             cmd_menu.show_line_in_dialog_box(
                 singular_or_plural(increase, self._("Thy Maximum Magic Point increase by {}.\n"),
                                    self._("Thy Maximum Magic Points increase by {}.\n")).format(increase),
-                add_quotes=False, disable_sound=True)
+                **BATTLE_LINE)
         # NES ChkNewSpell (LEAE6): only the new level is checked, not the spell list, so a jump from level 2 to 5 (which
         # learns HEAL at 3 and HURT at 4) says nothing
         if player.level in NEW_SPELL_LEVELS:
-            cmd_menu.show_line_in_dialog_box(self._("Thou hast learned a new spell.\n"), add_quotes=False, disable_sound=True)
+            cmd_menu.show_line_in_dialog_box(self._("Thou hast learned a new spell.\n"), **BATTLE_LINE)
 
     def make_enemy_image_disappear(self, screen):
         """Make the enemy image disappear from the screen."""

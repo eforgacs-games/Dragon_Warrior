@@ -187,7 +187,9 @@ class TestVictoryMusic(TestCase):
             # TB16E1's leading WAIT: the arrow, after the music and before "Courage and wit"
             self.assertLess(events.index(('load', map_music)), events.index(('button', True)))
             self.assertLess(events.index(('button', True)), promoted)
-            self.assertNotIn(('button', False), events)
+            # DoLevelUp ends in JMP ExitFight (LEB18): after the last stat line, a new press returns to the map (#381)
+            self.assertEqual(events.count(('button', False)), 1, events)
+            self.assertEqual(events[-1], ('button', False), events)
         else:
             # WaitForMusicEnd, then ResumeMusicTbl: nothing touches the victory music before it has ended
             self.assertEqual(after_victory[:3], [('wait for music end',), ('stop', VICTORY), ('load', map_music)],
