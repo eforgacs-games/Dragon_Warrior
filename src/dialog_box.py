@@ -57,7 +57,7 @@ def plays_text_beep(char: str, column: int, indented: bool) -> bool:
     return indented and char != BLANK and column % 2 == 1
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class CharacterStep:
     """One character written to the window (one TextToPPU call that reaches the PPU)."""
     row: int
@@ -66,7 +66,7 @@ class CharacterStep:
     beep: bool
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ScrollStep:
     """The window scrolled up one row (ScrollDialog)."""
 

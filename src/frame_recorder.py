@@ -49,7 +49,7 @@ FRAME_RECORDINGS_DIR = os.path.join(tempfile.gettempdir(), 'dragon_warrior_frame
 _SKIPPED_MODULES = (__name__, 'pygame')
 
 
-@dataclass(frozen=True, eq=False)
+@dataclass(frozen=True, eq=False, slots=True)
 class Frame:
     """One presented frame: its number in the recording, who presented it and the picture."""
     index: int
@@ -211,7 +211,7 @@ def recording(**kwargs) -> Iterator[FrameRecorder]:
 
 # Comparing frames
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class FrameDiff:
     """How one frame differs from the one before it."""
     before: Frame
@@ -266,7 +266,7 @@ def changes(frames: Sequence[Frame]) -> list[FrameDiff]:
             if not frames[index - 1].same_picture(frames[index])]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Flicker:
     """A picture shown for at most a few frames between two frames that show the same picture as each other."""
     before: Frame
