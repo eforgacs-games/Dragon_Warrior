@@ -15,6 +15,12 @@ uv run mypy          # settings are in pyproject.toml
 uv run pytest
 ```
 
+`uv run pytest -n auto` runs the tests in parallel with [pytest-xdist](https://pytest-xdist.readthedocs.io/), one
+worker per CPU, as CI does; plain `uv run pytest` runs them in one process. Each worker is its own process, so tests
+that write files must use their own temporary directory (`tempfile.TemporaryDirectory()`), not a fixed path, and tests
+whose result depends on a random roll must patch the roll or seed `random` themselves rather than rely on what ran
+before them.
+
 The tests run headless: `tests/__init__.py` points SDL at its dummy video and audio drivers. Tests that need a `Game`
 can make one with `new_game()` from `tests/helpers.py`.
 

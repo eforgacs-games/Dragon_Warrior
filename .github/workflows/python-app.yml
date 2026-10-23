@@ -16,6 +16,12 @@ on:
 permissions:
   contents: read
 
+# A new push to a PR cancels the PR's run still in progress. Every other run (pushes to main, and the run
+# sync-requirements dispatches on a Dependabot branch) gets its own group (its run_id), so none is ever cancelled
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Dependabot updates uv.lock but not requirements.txt, so regenerate it on Dependabot's uv PRs.
   # Uses pull_request, not pull_request_target, so a fork PR never gets a write token here. The PR's
@@ -101,7 +107,14 @@ jobs:
       # Settings live in pyproject.toml
       run: uv run mypy
     - name: Test with pytest
-      run: uv run pytest --cov=src --cov-report=term --cov-report=xml
+      if: ${{ !matrix.publish-coverage }}
+      # -n auto: pytest-xdist runs the tests on every CPU (4 on GitHub's runners)
+      run: uv run pytest -n auto  # --dist loadscope is in pyproject.toml
+    - name: Test with pytest and coverage
+      if: matrix.publish-coverage
+      env:
+        COVERAGE_CORE: sysmon  # coverage.py's sys.monitoring tracer (Python 3.12+), much cheaper than its default
+      run: uv run pytest -n auto --cov=src --cov-report=term --cov-report=xml
     - name: Build coverage summary
       if: matrix.publish-coverage
       # Report only for now; add thresholds (e.g. "60 80") and fail_below_min to enforce a minimum
