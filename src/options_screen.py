@@ -16,9 +16,9 @@ NES flow (Bank03):
 
 What this game adds (none of it on the NES, so none of it asked here): the dialog style, NPCS MAKE WAY, the fade style,
 the stairs, the grind stop and the switches for this game's other conveniences (SWITCHES: the music, the game speed
-keys, save states, rewind, auto-grind and the cheat keys). They are changed during play, in the options overlay
-(src/options_overlay.py: SELECT or Tab on the map), and kept per adventure log beside the message speed (Options
-below). A new quest starts with their defaults.
+keys, save states, rewind, auto-grind, the cheat keys and the shop preview). They are changed during play, in the
+options overlay (src/options_overlay.py: SELECT or Tab on the map), and kept per adventure log beside the message
+speed (Options below). A new quest starts with their defaults.
 
 The windows read the joypad like every NES selection window (src/cursor.py SelectionButtons, WndProcessInput): one
 button per press, up and down in a one-column window, left and right in a one-row window, stopping at the edges.
@@ -133,6 +133,9 @@ SWITCHES = (
     Switch('run_button', 'RUN_BUTTON', 'RunButton', (False, True), False),
     # STATUS WINDOW: the NES pop-up after standing still, or always on the map (Drawer.status_window_always)
     Switch('status_window', 'STATUS_WINDOW', 'StatusWindow', STATUS_WINDOW_SETTINGS, STATUS_WINDOW_NES),
+    # SHOP PREVIEW (#401): a weapon and armor shop's list shows the attack or defense power the highlighted item would
+    # give (src/shop_preview.py). On by default, since it only shows information; off is the NES
+    Switch('shop_preview', 'SHOP_PREVIEW', 'ShopPreview', (False, True), True),
 )
 
 
@@ -158,6 +161,7 @@ class Options:
     exp_gold: int = 1
     run_button: bool = False
     status_window: str = STATUS_WINDOW_NES
+    shop_preview: bool = True
 
 
 # A new quest's settings when none are chosen: NewQuest's MSG_NORMAL, the NES dialog window, and base_config's
@@ -277,7 +281,8 @@ def apply_options(config: dict, options: Options) -> None:
     MovementController.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump, screen_fade reads FADE_STYLE for every
     fade, MapManager.handle_warps reads AUTO_STAIRS for every step, auto-grind reads AUTO_GRIND_STOP for every check
     and the menu clock reads MENU_SPEED (src/waiting.py menu_speed). Each of the SWITCHES goes into its config key,
-    which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once)."""
+    which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once); the
+    shops read SHOP_PREVIEW whenever their list opens."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way

@@ -94,25 +94,32 @@ class Player(AnimatedSprite):
             self.gold = 99_999
 
     def update_attack_power(self):
-        if self.weapon == "":
-            self.attack_power = self.strength
-        elif weapons.get(self.weapon):
-            self.attack_power = self.strength + weapons[self.weapon]['offense']
-        else:
+        if self.weapon and not weapons.get(self.weapon):
             print(f"ERROR: {self.weapon} is not a valid weapon.")
-            self.attack_power = self.strength
+        self.attack_power = self.attack_power_with(self.weapon)
+
+    def attack_power_with(self, weapon: str) -> int:
+        """The attack power with this weapon (NES: strength + the weapon's attack bonus), all else as it is. The
+        shop stat preview (src/shop_preview.py) asks it about a weapon the hero hasn't got."""
+        attack_power = self.strength + (cast(int, weapons[weapon]['offense']) if weapons.get(weapon) else 0)
         if self.wearing_fighters_ring:
-            self.attack_power += self.fighters_ring_attack_bonus
+            attack_power += self.fighters_ring_attack_bonus
+        return attack_power
 
     def update_defense_power(self):
-        # NES: defense = agility / 2 + armor bonus + shield bonus
-        self.defense_power = self.agility // 2
-        if armor.get(self.armor):
-            self.defense_power += armor[self.armor]['defense']
-        if shields.get(self.shield):
-            self.defense_power += shields[self.shield]['defense']
+        self.defense_power = self.defense_power_with(self.armor, self.shield)
+
+    def defense_power_with(self, armor_name: str, shield: str) -> int:
+        """The defense power with this armor and shield (NES: agility / 2 + the armor's and the shield's defense
+        bonuses, + 2 for the Dragon's Scale), all else as it is."""
+        defense_power = self.agility // 2
+        if armor.get(armor_name):
+            defense_power += cast(int, armor[armor_name]['defense'])
+        if shields.get(shield):
+            defense_power += cast(int, shields[shield]['defense'])
         if self.wearing_dragon_scale:
-            self.defense_power += 2
+            defense_power += 2
+        return defense_power
 
     @property
     def is_cursed(self) -> bool:
