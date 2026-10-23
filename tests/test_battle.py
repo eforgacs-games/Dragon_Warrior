@@ -231,7 +231,7 @@ class TestBattleMethods(unittest.TestCase):
         drawer.fade_in_enemy.side_effect = lambda *a: order.append('fade')
         cmd_menu.show_line_in_battle_dialog_box.side_effect = lambda *a: order.append('text')
         with patch.object(self.battle, 'transition_battle_background_image_effect'), \
-                patch('src.battle.draw_window') as draw_window:
+                patch('src.translated_window.draw_window') as draw_window:
             self.battle.display_battle_window(Mock(), drawer, cmd_menu, Mock(), Mock(), (255, 255, 255), Mock())
         # The command window opens with the cursor on FIGHT
         self.assertEqual(0, draw_window.call_args.kwargs['cursor_index'])
@@ -299,7 +299,7 @@ class TestBattleSpiral(unittest.TestCase):
         # NES LoadCombatBckgrnd returns at once for EN_DRAGONLORD2, before the DoSprites call; DoSprites also exits
         battle = Battle(dict(test_config), 'Dragonlord 2', Mock())
         with patch.object(battle, 'hide_hero') as hide_hero, patch('src.battle.wait_frames') as wait_frames, \
-                patch('src.battle.draw_window'):
+                patch('src.translated_window.draw_window'):
             battle.display_battle_window(Mock(), Mock(), Mock(), Mock(), Mock(), (255, 255, 255), Mock())
         hide_hero.assert_not_called()
         wait_frames.assert_not_called()
