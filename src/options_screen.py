@@ -83,8 +83,10 @@ DEFAULT_MENU_SPEED = MENU_SPEED_NORMAL
 @dataclass(frozen=True, slots=True)
 class Switch:
     """One of this game's conveniences, switched in the options overlay (#409, #437): the Options field, the config
-    key the game reads, the save file key, its values and its default. Every one but the music defaults to its NES
-    value, so a new quest plays as the NES does until a convenience is switched on."""
+    key the game reads, the save file key, its values and its default (also what a save without it loads as). The
+    conveniences the game already had (the music, the key features, the Enter shortcut) default to how they were, so
+    nothing changes for a player who never opens the options; the NES preset (src/options_overlay.py) switches them all
+    to the NES. Options new with the overlay default to the NES."""
     field_name: str
     config_key: str
     save_key: str
@@ -102,19 +104,20 @@ SWITCHES = (
     # MUSIC: the orchestral soundtrack (data/sound/music/orchestra) or the NES's (data/sound/music/NES). Orchestral by
     # default, as the game has always started; the NES preset (src/options_overlay.py) picks the NES music
     Switch('orchestra_music', 'ORCHESTRA_MUSIC_ENABLED', 'OrchestraMusic', (True, False), True),
-    # GAME SPEED: keys 1 to 5 set the game speed (src/waiting.py); off, they do nothing (the NES has one speed)
-    Switch('game_speed_keys', 'GAME_SPEED_KEYS', 'GameSpeedKeys', (False, True), False),
+    # GAME SPEED: keys 1 to 5 set the game speed (src/waiting.py); off, they do nothing (the NES has one speed). This
+    # and the next five were there before the switches, so they default to on
+    Switch('game_speed_keys', 'GAME_SPEED_KEYS', 'GameSpeedKeys', (False, True), True),
     # SAVE STATES: F1-F3 load and Shift+F1-F3 save a state; off, the keys do nothing
-    Switch('save_states', 'SAVE_STATES', 'SaveStates', (False, True), False),
+    Switch('save_states', 'SAVE_STATES', 'SaveStates', (False, True), True),
     # REWIND: Backspace rewinds; off, it does nothing
-    Switch('rewind', 'REWIND', 'Rewind', (False, True), False),
+    Switch('rewind', 'REWIND', 'Rewind', (False, True), True),
     # AUTO-GRIND: G starts auto-grind (src/auto_grind.py); off, G does nothing
-    Switch('auto_grind', 'AUTO_GRIND', 'AutoGrind', (False, True), False),
+    Switch('auto_grind', 'AUTO_GRIND', 'AutoGrind', (False, True), True),
     # CHEATS: F4 auto-battle and F9 invulnerability; off, the keys do nothing and both are off
-    Switch('cheat_keys', 'CHEAT_KEYS', 'CheatKeys', (False, True), False),
+    Switch('cheat_keys', 'CHEAT_KEYS', 'CheatKeys', (False, True), True),
     # QUICK ACTION: Enter on the map takes a chest, opens a door or talks without the COMMAND window; off, Enter is
     # the A button there too, as everywhere else
-    Switch('quick_action', 'QUICK_ACTION', 'QuickAction', (False, True), False),
+    Switch('quick_action', 'QUICK_ACTION', 'QuickAction', (False, True), True),
 )
 
 
@@ -130,12 +133,12 @@ class Options:
     menu_speed: str = DEFAULT_MENU_SPEED
     # SWITCHES, each defaulting to its Switch.default
     orchestra_music: bool = True
-    game_speed_keys: bool = False
-    save_states: bool = False
-    rewind: bool = False
-    auto_grind: bool = False
-    cheat_keys: bool = False
-    quick_action: bool = False
+    game_speed_keys: bool = True
+    save_states: bool = True
+    rewind: bool = True
+    auto_grind: bool = True
+    cheat_keys: bool = True
+    quick_action: bool = True
 
 
 # A new quest's settings when none are chosen: NewQuest's MSG_NORMAL, the NES dialog window, and base_config's
