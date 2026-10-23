@@ -87,6 +87,7 @@ class TestMapFramePacing(GameSpeedTestCase):
         super().setUp()
         self.game = MagicMock()
         self.game.frame_pacer = FramePacer(max_frames=MAX_FRAMES_PER_DRAW)
+        self.game.rewind.active = False  # not rewinding (src/rewind.py), so the map frames run
         self.frames_run = 0
 
         def map_frame():

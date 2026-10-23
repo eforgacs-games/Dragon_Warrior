@@ -208,6 +208,9 @@ class BattleController:
     def launch_fight(self, enemy_name: str) -> BattleOutcome:
         """Fight enemy_name with launch_battle set. It stays set only on a defeat, so Game.handle_death draws the
         in-battle death screen; after a win or an escape a death on the map (a swamp step) is shown on the map."""
+        rewind = getattr(self.game, 'rewind', None)
+        if rewind is not None:
+            rewind.fight_starts()  # the snapshot from just before the fight (src/rewind.py)
         self.launch_battle = True
         outcome = self.fight_enemy(enemy_name)
         if outcome != BattleOutcome.DEFEAT:
