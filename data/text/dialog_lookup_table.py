@@ -1,6 +1,6 @@
 import random
 from functools import partial
-from typing import Callable
+from collections.abc import Callable
 
 from pygame import display, time, Rect
 from pygame.event import get, pump

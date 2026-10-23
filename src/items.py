@@ -1,5 +1,4 @@
 import random
-from typing import Dict, Tuple
 
 # Equipment and tool prices are the NES ItemCostTbl (Bank00); the towns are from ShopItemsTbl.
 
@@ -58,7 +57,7 @@ def inventory_list(inventory: list[str]) -> list[str]:
 GOLD = "GOLD"
 
 
-def _gold(base: int, random_bits: int) -> Dict[str, object]:
+def _gold(base: int, random_bits: int) -> dict[str, object]:
     """NES GetTrsrGold: the chest holds base + (random byte AND random_bits) gold, rolled when it is opened."""
     return {'item': GOLD, 'gold': (base, random_bits)}
 
@@ -88,7 +87,7 @@ tools = {
     "Rainbow Drop": {'cost': 0},
 }
 
-treasure: Dict[str, Dict[Tuple[int, int], Dict[str, object]]] = {
+treasure: dict[str, dict[tuple[int, int], dict[str, object]]] = {
     # MAP_TANTCSTL_GF: row = y + 7, column = x + 7
     'TantegelCourtyard': {
         (20, 8): _gold(6, 0x07),  # (1, 13): 6-13 gold
@@ -172,7 +171,7 @@ DEATH_NECKLACE_GOLD = (100, 0x1F)
 THRONE_ROOM_CHEST_SLOTS = {5: (7, 16), 6: (10, 15), 7: (10, 14)}
 
 
-def roll_treasure_gold(gold: Tuple[int, int]) -> int:
+def roll_treasure_gold(gold: tuple[int, int]) -> int:
     """NES GetTrsrGold: base gold plus a random byte masked with the chest's random bits."""
     base, random_bits = gold
     return base + (random.randint(0, 255) & random_bits)
@@ -190,12 +189,12 @@ class TreasureChestHistory:
     """
 
     def __init__(self):
-        self.slots: list[Tuple[str, Tuple[int, int]] | None] = [None] * 8
+        self.slots: list[tuple[str, tuple[int, int]] | None] = [None] * 8
 
-    def is_opened(self, map_name: str, coordinates: Tuple[int, int]) -> bool:
+    def is_opened(self, map_name: str, coordinates: tuple[int, int]) -> bool:
         return (map_name, tuple(coordinates)) in self.slots
 
-    def record(self, map_name: str, coordinates: Tuple[int, int]) -> bool:
+    def record(self, map_name: str, coordinates: tuple[int, int]) -> bool:
         """NES GetTreasure: store the chest in the first free slot. Returns False when every slot is taken."""
         for index, slot in enumerate(self.slots):
             if slot is None:
@@ -223,7 +222,7 @@ class TreasureChestHistory:
 # Nothing here is tracked with a "found" flag: like the NES, an item is found again only if the player doesn't
 # already have it (Erdrick's Token, Fairy Flute) or isn't wearing it (Erdrick's Armor), so the inventory and
 # equipment (already saved) are the only state.
-hidden_items: Dict[str, Dict[Tuple[int, int], str]] = {
+hidden_items: dict[str, dict[tuple[int, int], str]] = {
     'Alefgard': {(120, 91): "Erdrick's Token"},  # NES overworld (X 83, Y 113)
     'Kol': {(14, 19): 'Fairy Flute'},  # NES Kol (X 9, Y 6)
     # Stepping onto this tile starts the fixed Axe Knight fight first (NES CheckAxeKnight, see src/guardians.py)

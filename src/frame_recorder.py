@@ -35,7 +35,8 @@ import tempfile
 import zlib
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Callable, Iterator, Sequence, overload
+from typing import Any, overload
+from collections.abc import Callable, Iterator, Sequence
 
 from pygame import BLEND_RGB_ADD, BLEND_RGB_SUB, Rect, Surface, display, image, mask
 
