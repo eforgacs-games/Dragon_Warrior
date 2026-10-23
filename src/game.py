@@ -620,7 +620,7 @@ class Game:
             force_field_flash(RED, self.screen, self.game_state.config)
         else:
             # NES DoSwampDamage: one red flash
-            flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
+            flash_transparent_color(RED, self.screen, self.game_state.config)
         # NES DoSwampDamage and the force field damage: RedFlashScreen, then LoadRegBGPal with the new HP
         self.load_window_palette()
         self.drawer.draw_all(self, self.game_state.enable_animate)

@@ -1,11 +1,14 @@
 import sys
 from array import array
 
-from pygame import Surface, display, image, mask, time, transform
+from pygame import Surface, display, image, mask, transform
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src.common import BLACK
-from src.waiting import check_for_quit, scaled_ms, wait, wait_frames
+from src.waiting import check_for_quit, wait, wait_frames
+
+
+SMOOTH_FADE_STEP_MS = 5  # the 'Smooth' fade (not an NES effect): one alpha step every 5 ms
 
 
 def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -> None:
@@ -45,8 +48,7 @@ def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -
         screen.blit(fade_surface, (0, 0)) if not config['NO_BLIT'] else None
         display.update()
         check_for_quit()
-        if not config['NO_WAIT']:
-            time.delay(scaled_ms(5))
+        wait(SMOOTH_FADE_STEP_MS, config)
 
         # Update opacity based on fade direction
         if fade_out:
@@ -63,11 +65,15 @@ def draw_transparent_color(color, screen, transparency, no_blit):
         screen.blit(color_flash_surface, (0, 0))
 
 
-def flash_transparent_color(color, screen, calculation, transparency=192, no_blit=False):
-    start_time = get_ticks()
-    draw_transparent_color(color, screen, transparency, no_blit)
-    while calculation.convert_to_frames_since_start_time(start_time) < 3:
-        display.flip()
+# A swamp step (NES DoSwampDamage -> RedFlashScreen): the red overlay is shown for 3 frames
+SWAMP_FLASH_FRAMES = 3
+
+
+def flash_transparent_color(color, screen, config, transparency=192) -> None:
+    """Show the screen tinted with ``color`` for SWAMP_FLASH_FRAMES frames (the swamp damage flash). The wait goes
+    through src.waiting, so it follows the game speed and NO_WAIT."""
+    draw_transparent_color(color, screen, transparency, config.get('NO_BLIT'))
+    show_frames(SWAMP_FLASH_FRAMES, config)
 
 
 # NES force field damage (Bank03, LCE30-LCE42): three times over, WaitForNMI, RedFlashScreen (which waits a frame
@@ -99,7 +105,7 @@ BW_FLASH_COLOR_FRAMES = 2
 BW_FLASH_GREY_FRAMES = 3
 
 
-def bw_screen_flash(screen: Surface, calculation, config) -> None:
+def bw_screen_flash(screen: Surface, config) -> None:
     """Flash the screen between color and greyscale, as NES BWScreenFlash does."""
     if config['NO_BLIT']:
         return
