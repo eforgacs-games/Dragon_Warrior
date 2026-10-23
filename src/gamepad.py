@@ -9,7 +9,8 @@ A controller doesn't get a code path of its own: it presses keyboard keys. Every
   a poll costs one call);
 - reads its state (``PadState``: the buttons down, named the way SDL's GameController API names them, and the left
   stick) and turns it into the keys it stands for (``pad_keys``): the NES buttons' first keys (A is K, B is J, START
-  is I, SELECT is U) and the arrows, one direction at a time;
+  is I, SELECT is U), the arrows, one direction at a time, and the keys of the extra buttons (``EXTRA_BUTTONS``: F1,
+  Shift+F1 and Backspace for the save states and rewind);
 - posts a KEYDOWN for every key that went down since the last poll and a KEYUP for every one let go, and keeps the
   keys down in ``held``, which ``with_virtual_keys`` adds to the keyboard state.
 
@@ -28,7 +29,7 @@ from collections.abc import Iterable
 from typing import Any, NamedTuple, Protocol
 
 import pygame
-from pygame import KEYDOWN, KEYUP, K_DOWN, K_LEFT, K_RIGHT, K_UP
+from pygame import KEYDOWN, KEYUP, KMOD_LSHIFT, K_BACKSPACE, K_DOWN, K_F1, K_LEFT, K_RIGHT, K_UP
 
 from src import common
 from src.waiting import SPEED_KEYS, game_speed, set_game_speed, set_gamepad
@@ -65,16 +66,13 @@ D_PAD: tuple[tuple[str, str], ...] = (('dpup', UP), ('dpdown', DOWN), ('dpleft',
 SPEED_PAD_BUTTON = 'righttrigger'
 
 # The buttons left over, for what the keyboard has beyond the NES pad: pad button -> (key, modifiers) it presses, held
-# for as long as the button is. None: nothing yet.
-# TO FILL IN once the save states and rewind are on main (branches qol-save-states and qol-rewind): F1 to F3 load a
-# state, Shift+F1 to F3 save one, holding Backspace rewinds. Then:
-#     'leftshoulder': (K_F1, 0),            # load state 1
-#     'rightshoulder': (K_F1, KMOD_LSHIFT), # save state 1
-#     'lefttrigger': (K_BACKSPACE, 0),      # rewind, while held
+# for as long as the button is. The save states (src/save_state.py, Game.handle_save_state_keys) read the KEYDOWN's
+# modifiers, and the rewind (src/rewind.py) runs from Backspace's KEYDOWN until its KEYUP, so the posted events are
+# all they need.
 EXTRA_BUTTONS: dict[str, tuple[int, int] | None] = {
-    'leftshoulder': None,
-    'rightshoulder': None,
-    'lefttrigger': None,
+    'leftshoulder': (K_F1, 0),  # load state 1 (F1)
+    'rightshoulder': (K_F1, KMOD_LSHIFT),  # save state 1 (Shift+F1)
+    'lefttrigger': (K_BACKSPACE, 0),  # rewind, while held (Backspace held)
 }
 
 # The left stick: pushed past STICK_PRESS it presses a direction, and it lets go once back under STICK_RELEASE, so a
