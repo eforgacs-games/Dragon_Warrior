@@ -48,7 +48,7 @@ RAINBOW_BRIDGE_COORDINATES = (56, 72)
 # rerolling 5 and 7), i.e. each of these six with equal chance
 SILVER_HARP_ENEMIES = ('Slime', 'Red Slime', 'Drakee', 'Ghost', 'Magician', 'Scorpion')
 # NES CheckTantCursed: a cursed player who steps onto Y=27 of Tantegel's ground floor (two steps in from the gate) is
-# told "Cursed one, be gone!" and thrown out to the overworld. NES Tantegel GF (x, y) is (y + 7, x + 7) here.
+# told "Cursed one,be gone!" and thrown out to the overworld. NES Tantegel GF (x, y) is (y + 7, x + 7) here.
 TANTEGEL_CURSED_ROW = 27 + 7
 # Where the cursed player lands: the castle tile on the overworld, NES (43, 43) (MapEntryTbl entry 4, X = $0C)
 TANTEGEL_OVERWORLD_EXIT = ('Alefgard', (50, 51))

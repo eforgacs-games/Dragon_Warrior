@@ -1093,7 +1093,7 @@ msgid "said {}."
 msgstr "{}은/는 말했다."
 
 #: src/game.py:461
-msgid "Cursed one, be gone!"
+msgid "Cursed one,be gone!"
 msgstr "저주받은 자여, 썩 물러가라!"
 
 #: src/game.py:476
@@ -1272,12 +1272,12 @@ msgid "The {} is squeezing thy body."
 msgstr "{}이/가 몸을 조이고 있다."
 
 #: src/menu.py:703
-msgid ""
-"{} put on the {} and was cursed!\n"
-"Thy body is being squeezed."
-msgstr ""
-"{}은/는 {}을/를 몸에 걸쳤다가 저주를 받았다!\n"
-"몸이 조여 온다."
+msgid "{} put on the {} and was cursed!."
+msgstr "{}은/는 {}을/를 몸에 걸쳤다가 저주를 받았다!"
+
+#: src/menu.py:703
+msgid "Thy body is being squeezed."
+msgstr "몸이 조여 온다."
 
 #: src/menu.py:710
 msgid ""
@@ -1570,7 +1570,7 @@ msgid "This is the village of Kol."
 msgstr "여기는 마이라 마을입니다."
 
 #: data/text/dialog_lookup_table.py:215
-msgid "Golem is afraid of the music of the flute, so 'tis said."
+msgid "Golem is afraid of the music of the flute, so ʼtis said."
 msgstr "골렘은 피리 소리를 무서워한다고 하더군."
 
 #: data/text/dialog_lookup_table.py:216
@@ -1598,7 +1598,7 @@ msgstr ""
 "도움이 필요할 것 같은데."
 
 #: data/text/dialog_lookup_table.py:224
-msgid "East of Hauksness there is a town, 'tis said, where one may purchase weapons of extraordinary quality."
+msgid "East of Hauksness there is a town, ʼtis said, where one may purchase weapons of extraordinary quality."
 msgstr "도무도라 동쪽에 아주 뛰어난 무기를 살 수 있는 마을이 있다고 하더군."
 
 #: data/text/dialog_lookup_table.py:249
@@ -1638,7 +1638,7 @@ msgid "Grandfather used to say that his friend, Wynn, had buried something of gr
 msgstr "할아버지께서는 친구 윈이 자기 가게 뒤 나무 밑에 아주 귀한 물건을 묻었다고 말씀하시곤 했어요."
 
 #: data/text/dialog_lookup_table.py:282
-msgid "'Tis said that Erdrick's sword could cleave steel."
+msgid "ʼTis said that Erdrick's sword could cleave steel."
 msgstr "로토의 검은 강철도 벨 수 있었다고 하네."
 
 #: data/text/dialog_lookup_table.py:284
@@ -1694,7 +1694,7 @@ msgstr ""
 
 #: data/text/dialog_lookup_table.py:1012
 msgid ""
-"Here, take this key.\n"
+"Here,take this key.\n"
 "Dost thou wish to purchase more?"
 msgstr ""
 "자, 여기 열쇠일세.\n"
@@ -1737,7 +1737,7 @@ msgid "Great strength and skill and wit only will bring thee back from that plac
 msgstr "강한 힘과 기술과 지혜가 있어야만 그곳에서 살아 돌아올 수 있지."
 
 #: data/text/dialog_lookup_table.py:245
-msgid "'Tis said that the Dragonlord hath claws that can cleave iron and fiery breath that can melt stone."
+msgid "ʼTis said that the Dragonlord hath claws that can cleave iron and fiery breath that can melt stone."
 msgstr "용왕은 쇠도 찢는 발톱과 돌도 녹이는 불꽃 숨결을 지녔다고 하오."
 
 #: data/text/dialog_lookup_table.py:255
@@ -2211,7 +2211,7 @@ msgid "Over the western part of this island Erdrick created a rainbow."
 msgstr "로토는 이 섬의 서쪽에 무지개를 만들었다고 하네."
 
 #: data/text/dialog_lookup_table.py:380
-msgid "'Tis also said that he entered the darkness from a hidden entrance in the room of the Dragonlord."
+msgid "ʼTis also said that he entered the darkness from a hidden entrance in the room of the Dragonlord."
 msgstr "또 용왕의 방에 숨겨진 입구에서 어둠 속으로 들어갔다고도 하지."
 
 #: data/text/dialog_lookup_table.py:393
