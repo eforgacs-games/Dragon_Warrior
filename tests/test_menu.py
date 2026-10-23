@@ -264,6 +264,14 @@ class TestCommandMenu(TestCase):
         self.assertNotIn('Wings', self.game.player.inventory)
         self.assertTrue(self.game.chest_history.is_opened('Rimuldar', (31, 32)))
 
+    def test_discard_prompt_asks_whether_to_take_the_item(self):
+        # NES TB13E12 (DiscardItem LE07D), the text before the YES/NO window
+        self.game.player.inventory = ['Torch'] * 8
+        with patch.object(self.game.cmd_menu, 'prompt_yes_no', return_value=False):
+            messages = self.open_chest_at('Rimuldar', (31, 32))
+        self.assertIn("If thou would take the Wings, thou must now discard some other item.\n"
+                      "Dost thou wish to have the Wings?", messages)
+
     def test_full_inventory_discard_item(self):
         self.game.player.inventory = ['Silver Harp'] + ['Torch'] * 7
         with patch.object(self.game.cmd_menu, 'prompt_yes_no', return_value=True), \
