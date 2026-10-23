@@ -37,7 +37,7 @@ from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
-from src.game_functions import set_character_position, get_next_coordinates, GameFunctions
+from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
 from src.guardians import guardian_at
 from src.intro import Intro
@@ -546,12 +546,11 @@ class Game:
         self.player.next_tile_id = self.calculation.get_next_tile_identifier(self.player.column, self.player.row,
                                                                              self.player.direction_value,
                                                                              self.current_map)
-        self.player.next_coordinates = get_next_coordinates(self.player.rect.x // self.tile_size,
-                                                            self.player.rect.y // self.tile_size,
-                                                            self.player.direction_value)
-        self.player.next_next_coordinates = get_next_coordinates(self.player.rect.x // self.tile_size,
-                                                                 self.player.rect.y // self.tile_size,
-                                                                 self.player.direction_value, offset_from_character=2)
+        self.player.next_coordinates = step(self.player.rect.y // self.tile_size, self.player.rect.x // self.tile_size,
+                                            self.player.direction_value)
+        self.player.next_next_coordinates = step(self.player.rect.y // self.tile_size,
+                                                 self.player.rect.x // self.tile_size, self.player.direction_value,
+                                                 offset=2)
         self.set_player_images_by_equipment()
         self.handle_environment_damage()
         self.handle_death()
@@ -1224,9 +1223,9 @@ class Game:
         map's roaming list) never make way."""
         if not self.config.get('NPCS_MAKE_WAY'):
             return
-        blocked_at = self.get_next_coordinates(self.player.column, self.player.row, self.player.direction_value)
+        blocked_at = step(self.player.row, self.player.column, self.player.direction_value)
         for roaming_character in self.current_map.roaming_characters:
-            if not roaming_character.is_moving and (roaming_character.column, roaming_character.row) == blocked_at:
+            if not roaming_character.is_moving and (roaming_character.row, roaming_character.column) == blocked_at:
                 self.npc_asked_to_make_way = roaming_character, self.player.direction_value
                 return
 
@@ -1267,10 +1266,10 @@ class Game:
                                                                                 self.current_map, offset=2)
         if character.step_destination is None:
             # Start of a step: check it once, then reserve the destination until the character arrives
+            destination = step(character.row, character.column, character.direction_value)
             if isinstance(character, RoamingCharacter):
                 # NES UpdateNPCs1: NPCs keep to the NES map and walk on fewer tiles, see src/npc_movement.py
-                blocked = not npc_may_step_onto(self.current_map,
-                                                step(character.row, character.column, character.direction_value))
+                blocked = not npc_may_step_onto(self.current_map, destination)
             else:
                 blocked = self.is_impassable(character.next_tile_id)
             if blocked or self.character_in_path(character) or (
@@ -1278,9 +1277,8 @@ class Game:
                 self.movement.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
                 delta_x = delta_y = 0
             else:
-                character.step_origin = (character.column, character.row)
-                character.step_destination = self.get_next_coordinates(character.column, character.row,
-                                                                      character.direction_value)
+                character.step_origin = (character.row, character.column)
+                character.step_destination = destination
         if delta_x or delta_y:
             if delta_x:
                 character.rect.x += delta_x
@@ -1308,12 +1306,12 @@ class Game:
         """Whether the tile in front of a character is taken by someone else: where they stand, or the origin and
         destination of a step they're taking (NES: an NPC can't move onto the player's position or next position, or
         onto another NPC's)."""
-        next_coordinates = self.get_next_coordinates(character.column, character.row, character.direction_value)
+        next_coordinates = step(character.row, character.column, character.direction_value)
         others = [*self.current_map.fixed_characters, *self.current_map.roaming_characters, self.player]
         for other in others:
             if other is character:
                 continue
-            if next_coordinates in ((other.column, other.row), other.step_origin, other.step_destination):
+            if next_coordinates in ((other.row, other.column), other.step_origin, other.step_destination):
                 return True
         return False
 
@@ -1324,23 +1322,8 @@ class Game:
 
     def npc_crosses_cover_boundary(self, character: Player | RoamingCharacter) -> bool:
         """NES $B839-$B84F: an NPC can't step into or out of a covered area."""
-        next_coordinates = self.get_next_coordinates(character.column, character.row, character.direction_value)
-        if next_coordinates is None:
-            return False
-        next_column, next_row = next_coordinates
+        next_row, next_column = step(character.row, character.column, character.direction_value)
         return self.current_map.crosses_cover_boundary(character.row, character.column, next_row, next_column)
-
-    def get_next_coordinates(self, character_column: int, character_row: int, direction: int) -> tuple | None:
-        if character_row < len(self.current_map.layout) and character_column < len(self.current_map.layout[0]):
-            if direction == Direction.UP.value:
-                return character_column, character_row - 1
-            elif direction == Direction.DOWN.value:
-                return character_column, character_row + 1
-            elif direction == Direction.LEFT.value:
-                return character_column - 1, character_row
-            elif direction == Direction.RIGHT.value:
-                return character_column + 1, character_row
-        return None
 
     def is_impassable(self, tile: str) -> bool:
         """
