@@ -11,9 +11,11 @@ from pygame.event import Event
 
 from data.text.dialog import confirmation_prompt
 from src.config.test_config import test_config
+from src.cursor import IN_A
 from src.direction import Direction
 from src.maps import Brecconary
 from src.menu import NES_FPS, WINDOW_ROW_FRAMES, wait_for_next_window_row
+from src.selection import YES, Answer
 from src.spells import Spell
 from src.windows import BUY_SELL_WINDOW, COMMAND_WINDOW, YES_NO_WINDOW, item_menu_window
 from tests.helpers import new_game
@@ -97,6 +99,16 @@ class TestWindowRemoval(TestCase):
         pygame.event.post(accept())
         self.assertTrue(self.cmd_menu.prompt_yes_no())
         self.assert_window_removed(before, YES_NO_WINDOW)
+
+    def test_prompt_yes_no_plays_the_confirmation_sound_as_the_window_opens(self):
+        # NES ShowWindow -> DoWindowPrep (LAF02 -> DoConfirmSFX): SFX_CONFIRM for WND_YES_NO1, which DiscardItem
+        # (LE084) uses, before the window is built (drops down), and so before the answer is read
+        order = []
+        with patch.object(self.cmd_menu, 'window_drop_down_effect', side_effect=lambda *w: order.append(w)), \
+                patch.object(self.cmd_menu.sound, 'play_sound', side_effect=order.append), \
+                patch('src.menu.run_selection', side_effect=lambda *_, **__: order.append('select') or Answer(IN_A, YES)):
+            self.assertTrue(self.cmd_menu.prompt_yes_no())
+        self.assertEqual(order, [self.game.directories.confirmation_sfx, YES_NO_WINDOW, 'select'])
 
     def test_buy_sell_window(self):
         before = self.screen_bytes()

@@ -10,6 +10,7 @@ from src.config.test_config import test_config
 from src.directories import Directories
 from src.sound import Sound, _sound_library, sfx_channel
 from src.waiting import game_ticks
+from src.windows import YES_NO_WINDOW
 
 CONFIG = {'TILE_SIZE': 32, 'NO_WAIT': True}
 
@@ -74,8 +75,8 @@ class TestConfirmationPrompt(unittest.TestCase):
 
 
 class TestConfirmationSound(unittest.TestCase):
-    """NES WindowSequence (Bank01, LAF02 -> DoConfirmSFX LAF19): SFX_CONFIRM starts as the YES/NO window is built, with
-    no pause in between. It used to come 300 ms after the window."""
+    """NES ShowWindow (Bank01, $A194) -> DoWindowPrep (LAF02 -> DoConfirmSFX LAF19): SFX_CONFIRM starts before
+    WindowSequence builds the YES/NO window, with no pause in between. It used to come 300 ms after the window."""
 
     def setUp(self):
         pygame.mixer.init()
@@ -83,6 +84,21 @@ class TestConfirmationSound(unittest.TestCase):
         patcher = patch.dict('src.sound._sound_library', clear=True)  # real sounds, not another test's mocks
         patcher.start()
         self.addCleanup(patcher.stop)
+
+    def test_the_confirmation_sound_starts_before_the_window_drops_down(self):
+        config = {**test_config, 'SOUND_ENABLED': False}
+        command_menu = MagicMock()
+        command_menu._ = lambda text: text
+        command_menu.directories = Directories(config)
+        order = []
+        command_menu.sound.play_sound.side_effect = order.append
+        command_menu.window_drop_down_effect.side_effect = lambda *window: order.append(window)
+        with patch('data.text.dialog.display'), patch('data.text.dialog.event'), \
+                patch('data.text.dialog.draw_translated_window'), \
+                patch('src.selection.event.get', side_effect=lambda *_, **__: [accept()]):
+            confirmation_prompt(command_menu, "Dost thou want a room?", MagicMock(), MagicMock(), config,
+                                color=(255, 255, 255))
+        self.assertEqual(order[:2], [command_menu.directories.confirmation_sfx, YES_NO_WINDOW])
 
     def test_the_confirmation_sound_plays_when_the_window_is_drawn(self):
         config = {**test_config, 'SOUND_ENABLED': True, 'NO_WAIT': False}
