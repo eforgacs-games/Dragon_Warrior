@@ -73,6 +73,8 @@ class MovementGame(Protocol):
     # M: the dungeon map (src/dungeon_map.py), which opens at the same moment as the pause
     dungeon_map_requested: bool
     cmd_menu_requested: bool
+    # A with SMART A on: run_smart_command when the COMMAND window would open
+    smart_a_pending: bool
     # Shift + F1/F2/F3 or F1/F2/F3: a save state to save or load (Game.handle_save_state_keys), and once it's due
     state_request: tuple[str, int] | None
     state_request_due: tuple[str, int] | None
@@ -84,6 +86,8 @@ class MovementGame(Protocol):
     def open_dungeon_map(self) -> None: ...
 
     def start_auto_grind(self) -> None: ...
+
+    def run_smart_command(self) -> bool: ...
 
     def roll_for_fight(self, column: int, row: int, tile: str | None) -> None: ...
 
@@ -247,6 +251,11 @@ class MovementController:
         if getattr(self.game, 'state_request_due', None) is not None:
             return
         self.game.cmd_menu_requested = False
+        if getattr(self.game, 'smart_a_pending', False) is True:
+            # SMART A (Game.handle_a_button): the command that applies here runs instead of the COMMAND window
+            self.game.smart_a_pending = False
+            if self.game.run_smart_command():
+                return
         self.game.drawer.display_hovering_stats = True
         self.game.cmd_menu.launch_signaled = True
         self.game_state.pause_all_movement()
