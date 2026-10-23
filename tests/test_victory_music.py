@@ -26,7 +26,7 @@ from src.menu import CommandMenu
 from src.music_player import MusicPlayer
 from src.player.player_stats import levels_list
 from src.sound import SFX_CHANNEL, Sound, sfx_channel
-from tests.helpers import new_game
+from tests.helpers import new_game, skip_window_frame_waits
 
 VICTORY = '25 Dragon Quest 1 - Victory.mp3'
 LEVEL_UP = '26 Dragon Quest 1 - Improvement.mp3'
@@ -78,6 +78,8 @@ class TestVictoryMusic(TestCase):
 
     def setUp(self):
         random.seed(1985)
+        skip_window_frame_waits()
+        self.addCleanup(patch.stopall)
         config = {**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True, 'SOUND_ENABLED': True,
                   'MUSIC_ENABLED': True}
         self.game = new_game(config)

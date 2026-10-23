@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "A Python remake of Dragon Warrior for the NES, built with Pygame"
 readme = "README.md"
 # pygame 2.6.1 has no wheels for Python 3.14 yet
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "pygame~=2.6.1",
 ]
@@ -14,18 +14,25 @@ dev = [
     "mypy~=2.4",
     "pytest~=9.1",
     "pytest-cov~=7.1",
+    "pytest-xdist~=3.8",
     "ruff==0.16.10",  # exact: new ruff releases can add lint rules
 ]
 
 [tool.uv]
 package = false  # a game run from source, not an installable package
 
+[tool.pytest.ini_options]
+# Only used with -n (pytest-xdist): keep each test class on one worker, so its setUpClass runs once
+addopts = "--dist loadscope"
+
 [tool.mypy]
+python_version = "3.13"
 files = ["src"]
 exclude = ["src/map_layouts.py"]
 ignore_missing_imports = true
 
 [tool.ruff]
+target-version = "py313"
 line-length = 127
 extend-exclude = [
     "reference",  # offline utility scripts and generated data, not part of the game
