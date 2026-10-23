@@ -1008,18 +1008,18 @@ class Game:
                         self.damage_step(damage_amount=2)
                 elif tile == 'BARRIER':
                     if not self.player.received_environment_damage:
-                        self.damage_step(damage_amount=15, sfx=self.directories.barrier_sfx)
+                        self.damage_step(damage_amount=15, force_field=True)
             else:
                 self.player.received_environment_damage = False
 
-    def damage_step(self, damage_amount, sfx=None):
-        """NES ChkOtherBlocks: SFX_SWMP_DMG on a swamp (the default), SFX_FFDAMAGE on a force field."""
+    def damage_step(self, damage_amount, force_field=False):
         # God mode or invulnerable: take no damage
         if self.player.god_mode or self.invulnerable:
             return
 
         self.player.current_hp = max(self.player.current_hp - damage_amount, 0)
-        self.sound.play_sound(sfx or self.directories.swamp_sfx)
+        # NES ChkOtherBlocks: SFX_FFDAMAGE on a force field (LCE2B), SFX_SWMP_DMG on a swamp (LCDD4)
+        self.sound.play_sound(self.directories.barrier_sfx if force_field else self.directories.swamp_sfx)
         self.player.received_environment_damage = True
         flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
         # NES DoSwampDamage and the force field damage: RedFlashScreen, then LoadRegBGPal with the new HP
