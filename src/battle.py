@@ -1,6 +1,6 @@
 import random
 
-from pygame import display, mixer, Surface
+from pygame import display, Surface
 
 from src.common import BLACK, set_gettext_language
 from src.constants import BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT
@@ -61,14 +61,11 @@ class Battle:
         from src.common import Graphics
         self.graphics = Graphics(config)
 
-    def play_battle_music(self):
-        if self.config["MUSIC_ENABLED"]:
-            # NES InitFight: the Dragonlord's final form gets the end boss music (MSC_END_BOSS); every other
-            # fight, including his first form, gets the regular fight music (MSC_ENTR_FGHT).
-            music = self.directories.end_boss_music if self.enemy.name == 'Dragonlord 2' else \
-                self.directories.battle_music
-            mixer.music.load(music)
-            mixer.music.play(-1)
+    def play_battle_music(self, music_player):
+        """NES InitFight: the Dragonlord's final form gets the end boss music (MSC_END_BOSS); every other fight,
+        including his first form, gets the regular fight music (MSC_ENTR_FGHT)."""
+        music = self.directories.end_boss_music if self.enemy.name == 'Dragonlord 2' else self.directories.battle_music
+        music_player.load_and_play_music(music)
 
     def transition_battle_background_image_effect(self, screen, player):
         """Spiral effect to introduce battle background (NES LoadCombatBckgrnd, $E3CD).
@@ -201,7 +198,7 @@ class Battle:
         else:
             cmd_menu.display_item_menu('spells')
 
-    def enemy_defeated(self, cmd_menu, screen, player, music_enabled, enemy):
+    def enemy_defeated(self, cmd_menu, screen, player, enemy):
         """Handle an enemy being defeated."""
         self.announce_enemy_defeated(cmd_menu, screen, enemy)
         if enemy.name == 'Dragonlord 2':
@@ -218,7 +215,7 @@ class Battle:
                                          skip_text=True)
         player.total_experience = min(player.total_experience + enemy.xp, MAX_EXPERIENCE)
         player.gold = min(player.gold + gold, MAX_GOLD)
-        self.check_player_level_up(cmd_menu, player, music_enabled)
+        self.check_player_level_up(cmd_menu, player)
 
     def dragonlord_first_form_defeated(self, cmd_menu, screen):
         """NES EnemyDefeated for EN_DRAGONLORD1: "Thou hast done well in defeating the Dragonlord.", the victory
@@ -246,7 +243,7 @@ class Battle:
             return f"{ko_enemy_name} 물리쳤다!\n"
         return self._("Thou hast done well in defeating the {}.\n").format(self._(enemy_name))
 
-    def check_player_level_up(self, cmd_menu, player, music_enabled):
+    def check_player_level_up(self, cmd_menu, player):
         """NES ChkLevelUp (RegEnDefeated). LoadStats works the level out from the experience again, so the level can
         jump by more than one, and level 30 can be reached. Without a level up, WaitForMusicEnd lets the victory music
         finish and the map's music resumes (ResumeMusicTbl), then ExitFight waits for a new button press. With one,
@@ -257,7 +254,7 @@ class Battle:
         new_level = get_level_by_experience(player.total_experience)
         if new_level > player.level:
             music_player.play_until_end(self.directories.level_up_music, self.config)
-            self.resume_map_music(music_player, music_enabled)
+            self.resume_map_music(music_player)
             # TB16E1 starts with a WAIT: the experience and gold lines stay up, with the arrow, until A or B
             cmd_menu.wait_for_button(shows_arrow=True)
             self.display_level_up_message(cmd_menu, player, new_level)
@@ -269,15 +266,14 @@ class Battle:
             self.display_stat_increases(cmd_menu, player, old_stats)
         else:
             music_player.wait_for_music_end(self.config)
-            self.resume_map_music(music_player, music_enabled)
+            self.resume_map_music(music_player)
             # ExitFight: WaitForBtnRelease, so a button pressed during the music doesn't count; a new press returns
             # to the map
             cmd_menu.wait_for_button(shows_arrow=False)
 
-    def resume_map_music(self, music_player, music_enabled):
+    def resume_map_music(self, music_player):
         """NES ResumeMusicTbl: the current map's music, from the start."""
-        if music_enabled:
-            music_player.load_and_play_music(self.current_map.music_file_path)
+        music_player.load_and_play_music(self.current_map.music_file_path)
 
     def display_level_up_message(self, cmd_menu, player, new_level=None):
         """Display the level up message."""
