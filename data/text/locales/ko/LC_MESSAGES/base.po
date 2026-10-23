@@ -3180,3 +3180,62 @@ msgstr "{}: 모험 일지"
 #: data/text/intro_lookup_table.py
 msgid "{}: Dungeon map"
 msgstr "{}: 던전 지도"
+#: src/controls.py
+msgid "MSG LOG"
+msgstr "대화 기록"
+
+#: src/options_overlay.py
+msgid "MESSAGE LOG"
+msgstr "대화 기록"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Message log"
+msgstr "{}: 대화 기록"
+
+#: src/message_log.py
+msgid "UP/DOWN:SCROLL  B:CLOSE"
+msgstr "위/아래:스크롤 B:닫기"
+
+#: src/message_log.py
+msgid "NO MESSAGES YET"
+msgstr "아직 대화가 없습니다"
+
+#: src/message_log.py
+msgid "KING LORIK"
+msgstr "로릭 왕"
+
+#: src/message_log.py
+msgid "GWAELIN"
+msgstr "로라 공주"
+
+#: src/message_log.py
+msgid "GUARD"
+msgstr "경비병"
+
+#: src/message_log.py
+msgid "SOLDIER"
+msgstr "병사"
+
+#: src/message_log.py
+msgid "MERCHANT"
+msgstr "상인"
+
+#: src/message_log.py
+msgid "MAN"
+msgstr "남자"
+
+#: src/message_log.py
+msgid "WOMAN"
+msgstr "여자"
+
+#: src/message_log.py
+msgid "WISE MAN"
+msgstr "현자"
+
+#: src/message_log.py
+msgid "DRAGONLORD"
+msgstr "용왕"
+
+#: data/text/intro_lookup_table.py
+msgid "Left Button: Message log"
+msgstr "왼쪽 버튼: 대화 기록"
