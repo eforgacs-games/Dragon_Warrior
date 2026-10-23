@@ -8,7 +8,7 @@ from pygame.event import get, pump
 from data.text.dialog import confirmation_prompt
 from src.calculation import Calculation
 from src.color import BLACK, window_color
-from src.common import WHITE, Graphics, set_gettext_language
+from src.common import WHITE, Graphics, set_gettext_language, singular_or_plural
 from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACEABLE_ITEMS
 from src.cursor import IN_A
 from src.direction import Direction
@@ -69,13 +69,17 @@ class DialogLookup:
                              "We deal in tools.\n"
                              "What can I do for thee?")
         self.directories = Directories(self.config)
-        before_reaching_thy_next_level_of_experience = _(
-            "Before reaching thy next level of experience thou must gain {} Points.")
+        # NES TextBlock13 entry 1: AMTP prints "Point" when exactly 1 is left (Bank01 DoAMTP)
+        points_to_next_level = self.player.points_to_next_level
+        before_reaching_thy_next_level_of_experience = singular_or_plural(
+            points_to_next_level,
+            _("Before reaching thy next level of experience thou must gain {} Point."),
+            _("Before reaching thy next level of experience thou must gain {} Points.")).format(points_to_next_level)
         # NES TextBlock1 entry 2: King Lorik says this instead of the experience line once DisplayedLevel is LVL_30
         thou_art_strong_enough = _("Thou art strong enough!\nWhy can thou not defeat the Dragonlord?")
         at_max_level = self.player.level == NES_MAX_LEVEL
 
-        self.magic_key_prompt = _("Magic keys! They will unlock any door.\n"
+        self.magic_key_prompt = _("Magic keys!\nThey will unlock any door.\n"
                                   "Dost thou wish to purchase one for {} GOLD?")
 
         # What each NPC says, by its NES dialog byte (NPC.dialog in the maps' NPC tables, src/npcs.py). Bytes $00-$15
@@ -138,8 +142,8 @@ class DialogLookup:
             # Tantegel: the guard at 26,15 (TextBlock5 entry 13)
             0x1E: {'dialog': _("If thy Hit Points are high enough, by all means, enter.")},
             # Tantegel: the mobile shopkeeper at 4,21 (TextBlock5 entry 14)
-            0x1F: {'dialog': _("We are merchants who have traveled much in this land. Many of our colleagues have been "
-                               "killed by servants of the Dragonlord.")},
+            0x1F: {'dialog': _("We are merchants who have traveled much in this land.\n"
+                               "Many of our colleagues have been killed by servants of the Dragonlord.")},
             # Tantegel: the mobile shopkeeper at 6,25 (TextBlock5 entry 15)
             0x20: {'dialog': _("Rumor has it that entire towns have been destroyed by the Dragonlord's servants.")},
             # Tantegel: the gate guards at 9,27 and 12,27 (TextBlock6 entry 0)
@@ -158,7 +162,7 @@ class DialogLookup:
             # The throne room: the guard at 5,6 (ThrnRmDialog2): TextBlock17 entry 0, then TextBlock6 entry 3
             0x24: {'dialog': (partial(
                 self.dialog_once_left_throne_room,
-                (_("If thou hast collected all the Treasure Chests, a key will be found."),
+                (_("If thou hast collected all the Treasure Chests,\na key will be found."),
                  _("Once used, the key will disappear, but the door will be open and thou may pass through.")),
                 (_("Listen to what people say.\nIt can be of great help."),)),)},
             # Brecconary: the fighter at 28,1 (TextBlock6 entry 4)
@@ -329,7 +333,7 @@ class DialogLookup:
             0x69: {'dialog': (self.rimuldar_fighters_ring_dialog,)},
             # Tantegel: the wizard at 20,26 (ChkMagicDialog): TextBlock11 entry 13, BWScreenFlash, MP to the max
             0x6A: {'dialog': (
-                _("{}'s coming was foretold by legend. May the light shine upon this brave warrior.").format(
+                _("{}'s coming was foretold by legend.\nMay the light shine upon this brave warrior.").format(
                     self.player.name),
                 self.flash_and_restore_mp)},
             # Cantlin: the mobile wizard at 14,28 (ErdTknDialog): TextBlock5 entry 12, then TextBlock11 entries 14 and
@@ -363,8 +367,7 @@ class DialogLookup:
                 # level 30 (LVL_30) or TextBlock13 entry 1 (GetExpRemaining) below it, then SaveDialog
                 'returned_dialog': (
                     _("I am greatly pleased that thou hast returned, {}.").format(self.player.name),
-                    thou_art_strong_enough if at_max_level else before_reaching_thy_next_level_of_experience.format(
-                        self.player.points_to_next_level),
+                    thou_art_strong_enough if at_max_level else before_reaching_thy_next_level_of_experience,
                     self.prompt_for_save,
                     self.prompt_to_continue_quest,
                 ),
@@ -373,8 +376,7 @@ class DialogLookup:
                 'load_from_save_dialog': (self._("I am glad thou hast returned.\n"
                                                  "All our hopes are riding on thee."),
                                           *((thou_art_strong_enough,) if at_max_level else (
-                                              before_reaching_thy_next_level_of_experience.format(
-                                                  self.player.points_to_next_level),
+                                              before_reaching_thy_next_level_of_experience,
                                               self._("See me again when thy level has increased."))),
                                           self.goodbye_tempt_not_the_fates.format(self.player.name)
                                           ),
@@ -383,8 +385,11 @@ class DialogLookup:
                 'post_death_dialog': (_("Death should not have taken thee, {}.").format(self.player.name),
                                       _("I will give thee another chance."),
                                       *(() if at_max_level else (
-                                          _("To reach the next level, thy Experience Points must increase by "
-                                            "{}.").format(self.player.points_to_next_level),)),
+                                          singular_or_plural(
+                                              points_to_next_level,
+                                              _("To reach the next level, thy Experience Point must increase by {}."),
+                                              _("To reach the next level, thy Experience Points must increase by {}.")
+                                          ).format(points_to_next_level),)),
                                       _("Now, go, {}!").format(self.player.name)),
                 # NES DoKingDialog (Bank03), when F_GOT_GWAELIN is set: TextBlock12 entry 9, AddInvItem
                 # (Gwaelin's Love), entries 11 and 12, then Gwaelin is put on the throne and it goes straight
@@ -1053,7 +1058,7 @@ class DialogLookup:
             self.confirm(_("Is that Okay.?"),
                          yes_path_function=partial(self.complete_transaction, selected_item,
                                                    current_store_inventory, old_item_cost),
-                         no_path_function=partial(self.say, _("Oh, yes? That's too bad.")))
+                         no_path_function=partial(self.say, _("Oh, yes?\nThat's too bad.")))
         else:
             self.say(_("Sorry.\nThou hast not enough money."))
         self.confirm(_("Dost thou wish to buy anything more?"),

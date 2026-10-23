@@ -10,6 +10,7 @@ from pygame import Surface, image, transform, K_RETURN, K_i, K_k, K_ESCAPE, K_j,
 from src.color import WHITE, BLACK
 from src.direction import Direction
 from src.directories import Directories
+from src.korean_particles import KoreanText
 
 
 def find_file(name, path):
@@ -177,12 +178,21 @@ ANY_BUTTON_KEYS = A_BUTTON_KEYS + B_BUTTON_KEYS + START_BUTTON_KEYS + SELECT_BUT
 A_OR_START_KEYS = A_BUTTON_KEYS + START_BUTTON_KEYS
 
 
+def singular_or_plural(count: int, singular: str, plural: str) -> str:
+    """The NES text's PLRL, PNTS and AMTP (Bank01 DoPLRL, DoPNTS, DoAMTP): "Point" or "Hit" when the amount is exactly 1,
+    "Points" or "Hits" for anything else, 0 included. Both forms are separate catalog entries."""
+    return singular if count == 1 else plural
+
+
 def set_gettext_language(language):
     localedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'text', 'locales'))
     if language == 'Korean':
         ko = gettext.translation('base', localedir=localedir, languages=['ko'])
         ko.install()
-        _ = ko.gettext
+
+        def _(message):
+            # KoreanText: .format() makes a particle after a placeholder agree with the value (src/korean_particles.py)
+            return KoreanText(ko.gettext(message))
     else:
         _ = gettext.gettext
     return _
