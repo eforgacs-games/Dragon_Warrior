@@ -114,7 +114,7 @@ FADE_STYLE_LABELS = ('NES', 'SMOOTH')  # FADE_STYLES' order
 FADE_STYLE_ROW = 3
 FADE_STYLE_TEXT_COLUMNS = (2, 7)  # 14 tiles: SMOOTH ends in column 12, before the right border
 
-# LogList1Dat2 ... LogList123Dat2 (see src/adventure_log.py): " ADVENTURE LOG n:" and the first 4 letters of the
+# LogList1Dat2 ... LogList123Dat2 (see used_logs_layout in src/windows.py): " ADVENTURE LOG n:" and the first 4 letters of the
 # name; the first line on tile row 2 of the window, one block apart; the cursor in column 1, the text from column 2
 LOG_FIRST_ROW = 2
 LOG_TEXT_COLUMN = 2
@@ -254,10 +254,11 @@ def adventure_log_options(logs: Sequence[Tuple[int, str]], _: Callable[[str], st
     return OptionWindow(window, (), labels, LOG_FIRST_ROW, LOG_TEXT_COLUMN, LOG_CURSOR_COLUMN)
 
 
-def open_log_options(logs: Sequence[int]) -> OptionWindow:
-    """The open logs window (ShowOpenLogs, LogList*Dat1): one line per open log, " ADVENTURE LOG n"."""
+def open_log_options(logs: Sequence[int], _: Callable[[str], str] = str) -> OptionWindow:
+    """The open logs window (ShowOpenLogs, LogList*Dat1): one line per open log, " ADVENTURE LOG n". ``_`` translates
+    the line."""
     window = variable_height_window(ADVENTURE_LOG_WINDOW_1, len(logs))
-    labels = [f'ADVENTURE LOG {slot}' for slot in logs]
+    labels = [_("ADVENTURE LOG {}").format(slot) for slot in logs]
     return OptionWindow(window, (), labels, OPEN_LOG_FIRST_ROW, OPEN_LOG_TEXT_COLUMN, OPEN_LOG_CURSOR_COLUMN)
 
 
@@ -279,12 +280,14 @@ def yes_no_options(_: Callable[[str], str]) -> OptionWindow:
 
 
 class OptionsScreen:
-    """Draws the title menu's windows over a background (the title menu screenshot, or black) and runs their cursors.
+    """Draws the title menu's windows over a background (the title menu window, or black) and runs their cursors.
 
     Each window keeps its cursor: the one being chosen from blinks like every NES window cursor (src/cursor.py), the
     others hold theirs on their choice, as the NES leaves a chosen entry's arrow on behind the windows it opens."""
 
-    def __init__(self, screen: Surface, config: dict, background: str | None = None):
+    def __init__(self, screen: Surface, config: dict, background: Callable[[Surface], None] | None = None):
+        """``background`` draws what the windows open over (the title menu, TitleMenu.title_menu_background); without
+        it they open on black."""
         self.screen = screen
         self.config = config
         self.background = background
@@ -306,7 +309,7 @@ class OptionsScreen:
     def choose_open_log(self, logs: Sequence[int]) -> int | None:
         """ShowOpenLogs, opened over the windows already on screen (DoCopyGame's used logs window): the chosen open
         log's number, or None for B."""
-        self.windows = self.windows + [(open_log_options(logs), 0)]
+        self.windows = self.windows + [(open_log_options(logs, self._), 0)]
         index = self.select(len(self.windows) - 1)
         return None if index is None else logs[index]
 
@@ -362,11 +365,9 @@ class OptionsScreen:
         """The background, then each window with its text and cursor; only the active window's cursor blinks."""
         if self.config['NO_BLIT']:
             return
-        if self.background is None:
-            self.screen.fill(BLACK)
-        else:
-            size = (self.screen.get_width(), self.screen.get_height())
-            self.screen.blit(self.graphics.get_scaled_image(self.background, size), (0, 0))
+        self.screen.fill(BLACK)
+        if self.background is not None:
+            self.background(self.screen)
         for window_index, (options, index) in enumerate(self.windows):
             self.draw_window(options, index, show_cursor=window_index != active or cursor_visible)
         display.update(Rect(0, 0, self.screen.get_width(), self.screen.get_height()))
