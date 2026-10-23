@@ -2,7 +2,8 @@
 #     uv sync --group build
 #     uv run pyinstaller dragon_warrior.spec --noconfirm
 # builds dist/DragonWarrior/ (a folder with the DragonWarrior executable), and on macOS also dist/Dragon Warrior.app.
-# Check a build with `dist/DragonWarrior/DragonWarrior --smoke-test` (see src/smoke_test.py).
+# Check a build with `dist/DragonWarrior/DragonWarrior --smoke-test --language English` (and `--language Korean`),
+# headless with SDL_VIDEODRIVER=dummy and SDL_AUDIODRIVER=dummy (see src/smoke_test.py).
 #
 # The game finds data/ through src/paths.py, which uses sys._MEIPASS in a build, so the files are bundled at the same
 # paths relative to it as in the repository. Saves go to a per-user folder in a build (src/paths.py default_save_dir).
