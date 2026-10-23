@@ -1,14 +1,13 @@
 from functools import partial
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 
-from pygame import display, KEYDOWN, K_RETURN, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, \
-    K_TAB, K_BACKSPACE, K_ESCAPE
+from pygame import display, KEYDOWN, K_RETURN, K_TAB, K_BACKSPACE, K_ESCAPE
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from data.text.intro_lookup_table import ControlInfo
 from src.calculation import Calculation
 from src.color import WHITE
-from src.common import accept_keys, reject_keys
+from src.common import DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, accept_keys, reject_keys
 from src.cursor import BlinkingCursor
 from src.gamepad import is_gamepad
 from src.directories import Directories
@@ -17,13 +16,16 @@ from src.selection import frame_events, next_frame
 from src.sound import Sound
 
 # The alphabet window's cursor keys, with joystick input (WndUpPressed, WndDownPressed, WndDoLeftPressed,
-# WndRightPressed)
-DIRECTION_KEYS: dict[int, Callable[[NameEntry], bool]] = {
-    K_UP: NameEntry.move_up, K_w: NameEntry.move_up,
-    K_DOWN: NameEntry.move_down, K_s: NameEntry.move_down,
-    K_LEFT: NameEntry.move_left, K_a: NameEntry.move_left,
-    K_RIGHT: NameEntry.move_right, K_d: NameEntry.move_right,
-}
+# WndRightPressed), as the D-pad is bound (src/controls.py)
+DIRECTION_MOVES: tuple[tuple[Collection[int], Callable[[NameEntry], bool]], ...] = (
+    (UP_KEYS, NameEntry.move_up), (DOWN_KEYS, NameEntry.move_down),
+    (LEFT_KEYS, NameEntry.move_left), (RIGHT_KEYS, NameEntry.move_right),
+)
+
+
+def direction_move(pressed_key: int) -> Callable[[NameEntry], bool] | None:
+    """How a direction key moves the alphabet window's cursor (None if it isn't one)."""
+    return next((move for keys, move in DIRECTION_MOVES if pressed_key in keys), None)
 
 
 class NameSelection:
@@ -95,7 +97,7 @@ class NameSelection:
                             # WndBPressed (J; Escape cancels above): back one character, without a sound
                             entry.back()
                             cursor.restart()
-                        elif current_event.key in DIRECTION_KEYS and DIRECTION_KEYS[current_event.key](entry):
+                        elif (move := direction_move(current_event.key)) is not None and move(entry):
                             cursor.restart()
                     else:
                         if current_event.key == K_BACKSPACE:
