@@ -21,12 +21,12 @@ from src.direction import Direction
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
     set_to_save_prompt
 from src.game import Game
-from src.game_functions import get_next_coordinates
 from src.map_layouts import MapLayouts
 from src.maps import TantegelThroneRoom, TantegelCourtyard, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
 from src.menu import CommandMenu
 from src.music_player import MusicPlayer
+from src.npc_movement import step
 from src.player.player import Player
 from src.spells import Spell
 from src.sprites.roaming_character import RoamingCharacter
@@ -684,8 +684,7 @@ class TestGame(TestCase):
         self.game.cmd_menu.skip_text = True
         self.game.player.gold = 10
         self.game.player.row, self.game.player.column = 29, 18
-        self.game.player.next_next_coordinates = get_next_coordinates(18, 29, self.game.player.direction_value,
-                                                                      offset_from_character=2)
+        self.game.player.next_next_coordinates = step(29, 18, self.game.player.direction_value, offset=2)
         self.assertEqual((29, 20), self.game.player.next_next_coordinates)
         self.assertEqual('BRICK', get_tile_id_by_coordinates(self.game.player.next_next_coordinates[1],
                                                              self.game.player.next_next_coordinates[0],
@@ -695,8 +694,8 @@ class TestGame(TestCase):
                                                                                        self.game.player.direction_value,
                                                                                        self.game.current_map)
         self.assertEqual('WOOD', self.game.player.next_tile_id)
-        self.game.player.next_coordinates = get_next_coordinates(self.game.player.column, self.game.player.row,
-                                                                 direction=self.game.player.direction_value)
+        self.game.player.next_coordinates = step(self.game.player.row, self.game.player.column,
+                                                 self.game.player.direction_value)
         self.assertEqual((29, 19), self.game.player.next_coordinates)
         self.game.cmd_menu.talk()
         self.assertEqual(self.game.player.max_hp, self.game.player.current_hp)
