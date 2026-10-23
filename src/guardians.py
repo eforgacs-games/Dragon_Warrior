@@ -25,7 +25,7 @@ from src.coordinates import Cell
 from src.story_flags import StoryFlags
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Guardian:
     enemy_name: str
     map_identifier: str
