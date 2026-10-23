@@ -59,7 +59,10 @@ class DragonWarriorMap:
         self.player_sprites = None
         self.characters = {}
         self.fixed_characters = []
+        # The roaming NPCs, in the order of their mobile slots (Game.move_roaming_characters, src/npc_schedule.py)
         self.roaming_characters = []
+        # The identifiers of the roaming NPCs, in the order of the map's NES mobile NPC table (TantMobTbl etc., Bank00),
+        # which is the order of the NES's mobile NPC slots
         self.roaming_character_list = []
 
         # Map variables
@@ -182,6 +185,11 @@ class DragonWarriorMap:
             self.map_npc(identifier, char_dict.get('direction'), char_dict['underlying_tile'],
                          char_dict['path'], char_dict['four_sided'],
                          (npc_row, npc_col), identifier in self.roaming_character_list)
+        # NES GetNPCDataPointer copies the mobile NPC table into the mobile slots in order. An NPC keeps its slot until
+        # the map is loaded again, even if it's removed (DialogLookup.remove_npc)
+        self.roaming_characters.sort(key=lambda npc: self.roaming_character_list.index(npc.identifier))
+        for slot, roaming_character in enumerate(self.roaming_characters):
+            roaming_character.slot = slot
         hero_coords = destination_coordinates if destination_coordinates else self.initial_coordinates
         if hero_coords:
             hero_row, hero_col = hero_coords
@@ -484,9 +492,9 @@ class TantegelCourtyard(DragonWarriorMap):
         }
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
-        # The NPCs from TantMobTbl
-        self.roaming_character_list = ['MAN_2', 'GUARD_3', 'WOMAN_2', 'MERCHANT_2', 'MERCHANT_3', 'SOLDIER',
-                                       'GUARD_7', 'GUARD_9', 'WISE_MAN_2', 'SOLDIER_2']
+        # The NPCs from TantMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
+        self.roaming_character_list = ['WOMAN_2', 'GUARD_7', 'MAN_2', 'WISE_MAN_2', 'MERCHANT_2', 'SOLDIER_2',
+                                       'GUARD_9', 'GUARD_3', 'MERCHANT_3', 'SOLDIER']
         self.dragonlord_defeated = False
 
     def hero_underlying_tile(self):
@@ -512,7 +520,8 @@ class TantegelCourtyard(DragonWarriorMap):
             (18, 32): 'SOLDIER', (28, 31): 'SOLDIER',
             (32, 13): 'MERCHANT',
         }
-        self.roaming_character_list = ['GUARD_9', 'GUARD_10', 'GUARD_11', 'MAN', 'SOLDIER', 'SOLDIER_2', 'MERCHANT']
+        # TaDLMobTbl, in its order: the mobile NPC slots
+        self.roaming_character_list = ['GUARD_9', 'MAN', 'SOLDIER', 'GUARD_10', 'GUARD_11', 'MERCHANT', 'SOLDIER_2']
 
     def set_characters_initial_directions(self):
         if self.dragonlord_defeated:
@@ -803,9 +812,9 @@ class Brecconary(DragonWarriorMap):
             (30, 35): 'MAN',  # mobile male villager at 25,22 ($31)
             (32, 25): 'WOMAN',  # mobile female villager at 15,24 ($2D)
         }
-        # The NPCs from BrecMobTbl
-        self.roaming_character_list = ['WOMAN', 'SOLDIER_2', 'WISE_MAN_2', 'MERCHANT_4', 'MAN_4', 'GUARD_2',
-                                       'SOLDIER_3', 'SOLDIER_4', 'MAN_5', 'WOMAN_3']
+        # The NPCs from BrecMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
+        self.roaming_character_list = ['WISE_MAN_2', 'SOLDIER_4', 'MERCHANT_4', 'MAN_5', 'MAN_4', 'WOMAN', 'GUARD_2',
+                                       'WOMAN_3', 'SOLDIER_3', 'SOLDIER_2']
         # NES BrecCvrdDatPtr -> TantSLDat ($8D24): the upper right building (fairy water) and the lower right one
         # (item shop). NES X,Y is at (Y + 8, X + 10) here.
         self.covered_area = covered_cells({
@@ -864,8 +873,8 @@ class Garinham(DragonWarriorMap):
             (18, 16): 'SOLDIER',  # mobile fighter at 7,17 ($41)
             (19, 19): 'MERCHANT',  # static shopkeeper at 10,18: weapons and armor ($02, WeaponsDialog)
         }
-        # The NPCs from GarMobTbl
-        self.roaming_character_list = ['WOMAN', 'MAN', 'WISE_MAN_2', 'WISE_MAN_3', 'WOMAN_2', 'MAN_2', 'SOLDIER']
+        # The NPCs from GarMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
+        self.roaming_character_list = ['WOMAN', 'WOMAN_2', 'WISE_MAN_2', 'WISE_MAN_3', 'MAN', 'MAN_2', 'SOLDIER']
         # NES GarinCvrdDatPtr -> DgnLrdSL4Dat ($8EE6): the whole top of town. NES X,Y is at (Y + 1, X + 9) here.
         self.covered_area = covered_cells({
             **{y: range(20) for y in range(3, 10)},
@@ -921,9 +930,9 @@ class Kol(DragonWarriorMap):
             (29, 24): 'MERCHANT',  # static shopkeeper at 14,21: item shop ($07)
             (31, 11): 'GUARD',  # static guard at 1,23 ($34)
         }
-        # The NPCs from KolMobTbl
-        self.roaming_character_list = ['SOLDIER', 'WISE_MAN_2', 'GUARD', 'WISE_MAN_3', 'MAN', 'MAN_2', 'WOMAN_2',
-                                       'MERCHANT_3', 'WISE_MAN_4']
+        # The NPCs from KolMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
+        self.roaming_character_list = ['MAN_2', 'MAN', 'GUARD', 'WISE_MAN_3', 'WISE_MAN_4', 'SOLDIER', 'WOMAN_2',
+                                       'MERCHANT_3', 'WISE_MAN_2']
 
     def hero_underlying_tile(self):
         return 'SAND'
@@ -975,10 +984,9 @@ class Rimuldar(DragonWarriorMap):
             (34, 8): 'WOMAN',  # static female villager at 0,26: Orwick's girlfriend ($5C)
             (34, 24): 'SOLDIER',  # mobile fighter at 16,26: the Fighter's Ring ($69)
         }
-        # The NPCs that don't stand on brick
-        # The NPCs from RimMobTbl
-        self.roaming_character_list = ['MAN_2', 'MAN_3', 'SOLDIER', 'WOMAN_2', 'GUARD', 'SOLDIER_2', 'WOMAN_3', 'MAN_4',
-                                       'SOLDIER_3', 'SOLDIER_4']
+        # The NPCs from RimMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
+        self.roaming_character_list = ['WOMAN_3', 'MAN_2', 'MAN_4', 'WOMAN_2', 'SOLDIER_3', 'SOLDIER', 'MAN_3',
+                                       'SOLDIER_4', 'GUARD', 'SOLDIER_2']
         # NES RimCvrdDatPtr -> GarinCaveB3Dat+$E ($9170): the upper left building and the lower left one.
         # NES X,Y is at (Y + 8, X + 8) here.
         self.covered_area = covered_cells({
@@ -1066,9 +1074,9 @@ class Cantlin(DragonWarriorMap):
             (34, 28): 'MERCHANT',  # static shopkeeper at 27,26: weapons and armor shop 2 ($04)
             (36, 15): 'WISE_MAN',  # mobile wizard at 14,28 ($6B)
         }
-        # The NPCs from CantMobTbl
-        self.roaming_character_list = ['MERCHANT_2', 'GUARD', 'GUARD_2', 'GUARD_3', 'WOMAN_2', 'MAN_2', 'WOMAN_3',
-                                       'MERCHANT_5', 'MERCHANT_6', 'WISE_MAN_4']
+        # The NPCs from CantMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
+        self.roaming_character_list = ['MAN_2', 'GUARD', 'MERCHANT_5', 'WOMAN_2', 'MERCHANT_2', 'WOMAN_3', 'WISE_MAN_4',
+                                       'GUARD_2', 'MERCHANT_6', 'GUARD_3']
         # NES CantCvrdDatPtr -> SwampCaveDat+$32 ($8FAE): two small rooms at the top and the middle of town.
         # NES X,Y is at (Y + 8, X + 1) here.
         self.covered_area = covered_cells({

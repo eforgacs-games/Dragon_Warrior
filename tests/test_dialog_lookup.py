@@ -5,7 +5,7 @@ import pygame
 from pygame import KEYDOWN, K_DOWN, QUIT
 
 from src.config.test_config import test_config
-from src.game import Game
+from tests.helpers import new_game
 
 
 class TestDialogLookup(TestCase):
@@ -22,8 +22,7 @@ class TestDialogLookup(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.dialog_lookup = Game(test_config).cmd_menu.dialog_lookup
+        self.dialog_lookup = new_game().cmd_menu.dialog_lookup
 
     def test_inn_costs_match_nes(self):
         # NES InnCostTbl (Bank00): Kol 20, Brecconary 6, Garinham 25, Cantlin 100, Rimuldar 55
@@ -43,7 +42,7 @@ class TestDialogLookup(TestCase):
         events = []
         menu = self.dialog_lookup.command_menu
         with patch.object(menu, 'show_line_in_dialog_box', side_effect=lambda line, **_: events.append(line)), \
-                patch('data.text.dialog_lookup_table.mixer.music.stop', side_effect=lambda: events.append('stop')), \
+                patch.object(menu.game.music_player, 'stop_music', side_effect=lambda: events.append('stop')), \
                 patch.object(self.dialog_lookup, 'wait_for_reset', side_effect=lambda: events.append('hang')):
             self.dialog_lookup.rest_then_for_awhile()
         self.assertEqual(events, ["Rest then for awhile.", 'stop',
@@ -64,7 +63,7 @@ class TestDialogLookup(TestCase):
                 list(menu.dialog_buffer.print_message(line, quoted=False))
 
         with patch.object(menu, 'show_line_in_dialog_box', side_effect=show), \
-                patch('data.text.dialog_lookup_table.mixer.music.stop'), \
+                patch.object(menu.game.music_player, 'stop_music'), \
                 patch.object(self.dialog_lookup, 'wait_for_reset'):
             self.dialog_lookup.rest_then_for_awhile()
         self.assertEqual(text_before_reset_message, [])
@@ -73,7 +72,7 @@ class TestDialogLookup(TestCase):
         # NES TextBlock19 entry 8: WAIT after "...turn off the POWER.", then the second sentence ends with no wait
         menu = self.dialog_lookup.command_menu
         with patch.object(menu, 'show_line_in_dialog_box') as show_line, \
-                patch('data.text.dialog_lookup_table.mixer.music.stop'), \
+                patch.object(menu.game.music_player, 'stop_music'), \
                 patch.object(self.dialog_lookup, 'wait_for_reset'):
             self.dialog_lookup.rest_then_for_awhile()
         first, second = show_line.call_args_list[1:]

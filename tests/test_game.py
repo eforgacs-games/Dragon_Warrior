@@ -20,7 +20,6 @@ from src.config.test_config import test_config
 from src.direction import Direction
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
     set_to_save_prompt
-from src.game import Game
 from src.map_layouts import MapLayouts
 from src.maps import TantegelThroneRoom, TantegelCourtyard, Alefgard
 from src.maps_functions import parse_animated_sprite_sheet
@@ -32,9 +31,7 @@ from src.spells import Spell
 from src.sprites.roaming_character import RoamingCharacter
 from src.waiting import game_speed, reset_game_speed
 from tests.mock_map import MockMap
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 def pressed_keys(pressed_key):
@@ -67,8 +64,7 @@ class TestGame(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.player.name = "Edward"
         self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu, self.game.game_state.config)
         self.game.current_map = MockMap(self.game.config)
@@ -380,8 +376,7 @@ class TestGame(TestCase):
                 save = json.load(save_file)
         self.assertTrue(save['StoryFlags']['rainbow_bridge_built'])
 
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.assertFalse(self.game.story_flags.rainbow_bridge_built)
         self.game.load_game(save)
         self.assertTrue(self.game.story_flags.rainbow_bridge_built)
@@ -576,7 +571,7 @@ class TestGame(TestCase):
         self.game.last_map = TantegelThroneRoom(self.game.config)
         self.game.change_map(TantegelCourtyard(self.game.config))
         self.assertTrue(self.game.story_flags.left_throne_room)
-        self.game.music_enabled = False
+        self.game.music_player.music_enabled = False
         self.game.player.row = 14
         self.game.player.column = 14
         self.game.change_map(TantegelThroneRoom(self.game.config))

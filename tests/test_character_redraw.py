@@ -6,7 +6,6 @@ over the old one, and the old frame shows through the new one's transparent pixe
 headless and compare the background around each on-screen character with a clean redraw of the same frame.
 """
 import inspect
-import os
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import patch
@@ -18,9 +17,6 @@ from src.config.test_config import test_config
 from src.direction import Direction
 from src.game import Game
 from src.game_functions import set_character_position
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 FRAMES = 60  # characters change animation frame every 16 frames (NES CharLeftRight)
 

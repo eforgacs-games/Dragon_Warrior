@@ -9,9 +9,7 @@ import pygame
 from src.config.test_config import test_config
 from src.game import BACK_TO_TITLE_MENU, Game, save_slot_number
 from src.options_screen import OptionsScreen
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 class TestContinueQuest(TestCase):
@@ -31,12 +29,8 @@ class TestContinueQuest(TestCase):
         self.config = {**test_config, 'SAVE_DIR': self.save_dir.name}
         self.addCleanup(self.save_dir.cleanup)
 
-    def new_game(self) -> Game:
-        with patch('src.game.SCALED'):
-            return Game(self.config)
-
     def write_save(self, slot: int, name: str, experience: int, modified: float) -> None:
-        game = self.new_game()
+        game = new_game(self.config)
         game.player.name = name
         game.player.total_experience = experience
         game.player.adventure_log = slot
@@ -45,7 +39,7 @@ class TestContinueQuest(TestCase):
         os.utime(path, (modified, modified))
 
     def continue_quest(self) -> Game:
-        game = self.new_game()
+        game = new_game(self.config)
         game.save_dir_contents = game.save_files()
         with patch.object(game.game_functions, 'main_menu_selection', return_value=0), \
                 patch('src.map_manager.screen_fade'), patch.object(game.music_player, 'load_and_play_music'):
@@ -74,7 +68,7 @@ class TestContinueQuest(TestCase):
     def test_b_in_the_log_window_goes_back_to_the_title_menu(self):
         self.write_save(1, 'Eddie', 2, modified=1000)
         self.write_save(2, 'Loto', 8, modified=2000)
-        game = self.new_game()
+        game = new_game(self.config)
         game.save_dir_contents = game.save_files()
         with patch.object(OptionsScreen, 'choose_log', return_value=None), \
                 patch.object(game, 'load_game') as load_game, patch.object(game, 'start_at_throne_room') as start:
@@ -87,7 +81,7 @@ class TestContinueQuest(TestCase):
         for stray in ('.gitkeep', 'notes.txt', 'save_slot_1.json.bak'):
             with open(os.path.join(self.save_dir.name, stray), 'w') as stray_file:
                 json.dump({}, stray_file)
-        game = self.new_game()
+        game = new_game(self.config)
         self.assertEqual(game.save_files(), ['save_slot_1.json'])
         self.assertEqual(self.continue_quest().player.total_experience, 5)
 
@@ -95,7 +89,7 @@ class TestContinueQuest(TestCase):
         # NES with all three logs used: CONTINUE A QUEST, CHANGE MESSAGE SPEED, ERASE AN ADVENTURE LOG
         for slot in (1, 2, 3):
             self.write_save(slot, 'Eddie', slot, modified=1000 + slot)
-        game = self.new_game()
+        game = new_game(self.config)
         with patch.object(game.game_functions, 'main_menu_selection', return_value=0), \
                 patch.object(game, 'continue_quest') as continue_quest:
             game.show_main_menu_screen(game.screen)
@@ -104,7 +98,7 @@ class TestContinueQuest(TestCase):
     def title_menu_then_continue(self, selections: list[int]) -> Game:
         """Runs the title menu with these main_menu_selection choices; it must come back to the title menu for the
         last one, CONTINUE A QUEST."""
-        game = self.new_game()
+        game = new_game(self.config)
         with patch.object(game.game_functions, 'main_menu_selection', side_effect=selections), \
                 patch.object(game, 'continue_quest') as continue_quest:
             game.show_main_menu_screen(game.screen)
@@ -139,7 +133,7 @@ class TestContinueQuest(TestCase):
 
     def save_with_no_log(self, name: str, experience: int = 99) -> Game:
         """Saves a game whose title menu was skipped, so no adventure log was chosen."""
-        game = self.new_game()
+        game = new_game(self.config)
         self.assertEqual(game.player.adventure_log, 0)
         game.player.name = name
         game.player.total_experience = experience
@@ -201,7 +195,7 @@ class TestContinueQuest(TestCase):
         for slot in (0, 1, 2, 3, 4):
             with open(os.path.join(self.save_dir.name, f'save_slot_{slot}.json'), 'w') as save_file:
                 json.dump({'Name': 'Eddie'}, save_file)
-        self.assertEqual(self.new_game().save_files(), ['save_slot_1.json', 'save_slot_2.json', 'save_slot_3.json'])
+        self.assertEqual(new_game(self.config).save_files(), ['save_slot_1.json', 'save_slot_2.json', 'save_slot_3.json'])
 
     def test_save_slot_number(self):
         self.assertEqual(save_slot_number('save_slot_3.json'), 3)

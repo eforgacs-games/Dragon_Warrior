@@ -6,11 +6,12 @@ with the same stand-ins as the headless story run. If a checkpoint goes stale af
 import json
 import os
 from dataclasses import fields
+from unittest import TestCase
 from unittest.mock import patch
 
 import pygame
 
-import tests.test_story_run as story_run  # imported as a module so pytest doesn't collect TestStoryRun twice
+import tests.test_story_run as story_run  # imported as a module so pytest doesn't collect TestStoryRun here too
 from src.checkpoints import CHECKPOINT_HERO_NAME, CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, CHECKPOINTS_DIR, \
     LOCALIZED_HERO_NAMES, checkpoint_hero_name, read_checkpoint
 from src.config.test_config import test_config
@@ -58,8 +59,7 @@ EXPECTED = {
 }
 
 
-class TestCheckpoints(story_run.TestStoryRun):
-    test_the_game_can_be_finished = None  # the whole run is in test_story_run.py
+class TestCheckpoints(story_run.StoryRunMixin, TestCase):
 
     def setUp(self):
         super().setUp()
@@ -233,9 +233,8 @@ class TestCheckpoints(story_run.TestStoryRun):
         self.assertIn("May I travel as thy companion?", self.prompts)
 
 
-class TestDebugTools(story_run.TestStoryRun):
+class TestDebugTools(story_run.StoryRunMixin, TestCase):
     """The F5-F7 debug keys (dev config only)."""
-    test_the_game_can_be_finished = None
 
     def setUp(self):
         super().setUp()

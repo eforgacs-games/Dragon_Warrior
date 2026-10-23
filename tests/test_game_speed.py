@@ -1,6 +1,5 @@
 """The game speed (keys 1 to 4, src/waiting.py): every timed wait and timer runs N times as fast at speed N, the keys
 work in battles and dialogs too, and the speed never changes what happens."""
-import os
 import random
 from collections import defaultdict
 from unittest import TestCase
@@ -15,14 +14,11 @@ from src.battle import Battle
 from src.battle_controller import BattleController
 from src.color import WHITE
 from src.config.test_config import test_config
-from src.game import Game
 from src.menu import CommandMenu
 from src.visual_effects import fade, player_hit_shake
 from src.waiting import game_speed, game_ticks, get_events, reset_game_speed, set_game_speed, wait, wait_frames
 from tests.mock_map import MockMap
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 class FakeClock:
@@ -139,6 +135,7 @@ class TestSpeedKeys(GameSpeedTestCase):
         game.auto_battle = False
         game.color = WHITE
         game.game_state.config = {"TILE_SIZE": 32}
+        game._ = lambda text: text  # English: the window is generated in the NES font
         game.player.is_asleep = False
         controller = BattleController(game)
         battle = MagicMock(turn=0, last_turn=0)
@@ -174,8 +171,7 @@ class TestBattleTiming(GameSpeedTestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
         super().setUp()
