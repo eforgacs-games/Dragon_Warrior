@@ -41,6 +41,29 @@ class TestHiddenItems(TestCase):
             self.cmd_menu.search()
         return show_text.call_args.args[0]
 
+    def test_full_bag_offers_to_discard_for_a_searched_item(self):
+        # NES ErdrickTknFound (LE139-LE147), shared by Erdrick's Token and the Fairy Flute: AddInvItem returns
+        # INV_FULL, and DiscardItem follows, as for a chest
+        for map_identifier, (row, column), item in (('Alefgard', (120, 91), "Erdrick's Token"),
+                                                    ('Kol', (14, 19), 'Fairy Flute')):
+            for wants_it in (False, True):
+                with self.subTest(item=item, wants_it=wants_it):
+                    self.player.inventory = ['Torch'] * 8
+                    with patch.object(self.cmd_menu, 'prompt_yes_no', return_value=wants_it), \
+                            patch.object(self.cmd_menu, 'display_item_menu', return_value='Torch'):
+                        self.cmd_menu.current_map = MagicMock(identifier=map_identifier)
+                        self.player.row, self.player.column = row, column
+                        self.player.current_tile = 'GRASS'
+                        with patch.object(self.cmd_menu, 'show_text_in_dialog_box') as show_text:
+                            self.cmd_menu.search()
+                    lines = [call.args[0] for call in show_text.call_args_list]
+                    self.assertEqual(lines[0][1], f"{self.player.name} discovers the {item}.")
+                    self.assertTrue(lines[1].startswith(f"If thou would take the {item},"))
+                    self.assertEqual(len(self.player.inventory), 8)
+                    self.assertEqual(item in self.player.inventory, wants_it)
+                    if not wants_it:
+                        self.assertEqual(lines[-1], f"Thou hast given up thy {item}.")
+
     def test_nothing_found_elsewhere(self):
         self.assertEqual(self.search_at('Kol', 14, 20),
                          [f"{self.player.name} searched the ground all about.", "But there found nothing."])

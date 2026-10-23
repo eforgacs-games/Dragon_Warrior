@@ -19,8 +19,9 @@ from src.waiting import NES_FPS, is_any_key_held, wait, wait_until
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
-from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, RAINBOW_BRIDGE_COORDINATES, \
-    RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES, \
+from src.coordinates import Cell
+from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, MAX_LEVEL, OUTSIDE_DESTINATIONS, \
+    RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES, \
     TEMP_TEXT_MS
 from src.dialog_box import ARROW_COLUMN, DIALOG_COLUMNS, DIALOG_ROWS, OPEN_QUOTES, SCROLL_ROWS_PER_FRAME, \
     DialogBuffer, DialogStep, ScrollStep, frames_per_character
@@ -644,7 +645,7 @@ class CommandMenu:
         if self.player.inventory.count(item_name) >= maximum:
             self.take_empty_chest()
             return
-        self.player.inventory.insert(0, item_name)
+        self.player.inventory.append(item_name)
         self.open_chest()
         self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
 
@@ -656,15 +657,18 @@ class CommandMenu:
         self.open_chest()
         self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
         if item_name in UNSLOTTED_ITEMS or not self.inventory_is_full():
-            self.player.inventory.insert(0, item_name)
+            self.player.inventory.append(item_name)  # NES AddInvItem: the first empty slot
         else:
             self.discard_for_item(item_name)
 
     def discard_for_item(self, item_name: str) -> None:
-        """NES DiscardItem: with a full inventory, the player may drop something to make room.
-        The chest has already been opened, so an item given up here is gone until the chest refills."""
+        """NES DiscardItem: with a full inventory, the player may drop something to make room, for a chest's item or
+        one found with SEARCH. A chest has already been opened, so an item given up here is gone until the chest
+        refills; a searched-for item is still there to find again."""
         self.show_text_in_dialog_box(
-            self._("If thou would take the {}, thou must now discard some other item.").format(self._(item_name)),
+            # NES TB13E12 (DiscardItem LE07D), before the YES/NO window
+            self._("If thou would take the {}, thou must now discard some other item.\n"
+                   "Dost thou wish to have the {}?").format(self._(item_name), self._(item_name)),
             skip_text=self.skip_text)
         if self.prompt_yes_no():
             while True:
@@ -680,8 +684,9 @@ class CommandMenu:
                     # NES LE0B9: a worn Cursed Belt or Death Necklace can't be dropped
                     self.show_text_in_dialog_box(self._("A curse is upon thy body."), skip_text=self.skip_text)
                     continue
+                # NES LE0EF-LE0F4: RemoveInvItem, then AddInvItem, so the new item takes the dropped one's slot
                 self.player.inventory.remove(item_to_drop)
-                self.player.inventory.insert(0, item_name)
+                self.player.inventory.append(item_name)
                 self.show_text_in_dialog_box((self._("Thou hast dropped thy {}.").format(self._(item_to_drop)),
                                               self._("And obtained the {}.").format(self._(item_name))),
                                              skip_text=self.skip_text)
@@ -997,27 +1002,37 @@ class CommandMenu:
             self.resume_music()
 
     def gwaelins_love(self):
-        # NES TextBlock14 entry 11: PNTS prints "Point" when exactly 1 is left (Bank01 DoPNTS)
-        points = self.player.points_to_next_level
-        self.show_text_in_dialog_box(singular_or_plural(
-            points,
-            self._("Heed my voice,\n'{}, for this is Gwaelin.\n"
-                   "To reach the next level thou must raise thy Experience Point by {}.\nMy hope is with thee.'"),
-            self._("Heed my voice,\n'{}, for this is Gwaelin.\n"
-                   "To reach the next level thou must raise thy Experience Points by {}.\nMy hope is with thee.'"),
-        ).format(self.player.name, points))
+        """NES ChkLove (Bank03, LDF0D-LDF71)."""
+        if self.player.level >= MAX_LEVEL:
+            # LDF15-LDF1F: at level 30, TB17E5 instead of the experience still needed
+            self.show_text_in_dialog_box(
+                self._("'{}?\nThis is Gwaelin.\nKnow that thou hath reached the final level.'").format(
+                    self.player.name))
+        else:
+            # NES TextBlock14 entry 11: PNTS prints "Point" when exactly 1 is left (Bank01 DoPNTS)
+            points = self.player.points_to_next_level
+            self.show_text_in_dialog_box(singular_or_plural(
+                points,
+                self._("Heed my voice,\n'{}, for this is Gwaelin.\n"
+                       "To reach the next level thou must raise thy Experience Point by {}.\nMy hope is with thee.'"),
+                self._("Heed my voice,\n'{}, for this is Gwaelin.\n"
+                       "To reach the next level thou must raise thy Experience Points by {}.\nMy hope is with thee.'"),
+            ).format(self.player.name, points))
         if self.current_map.identifier == 'Alefgard':
             distance_string = self._("From where thou art now, my castle lies..\n")
             east_west_distance, north_south_distance = self.calculation.get_distance_from_tantegel(self.player.column,
                                                                                                    self.player.row)
-            if north_south_distance < 0:
-                distance_string += self._("{} to the south and..").format(abs(north_south_distance))
-            elif north_south_distance > 0:
-                distance_string += self._("{} to the north and..").format(abs(north_south_distance))
-            if east_west_distance < 0:
-                distance_string += self._("{} to the west.").format(abs(east_west_distance))
-            elif east_west_distance > 0:
-                distance_string += self._("{} to the east.").format(abs(east_west_distance))
+            # LDF37-LDF6C: the hero's distance from the castle block ($2B, $2B). A Y distance of 0 or more means the
+            # castle is to the north, an X distance of 0 or more that it is to the west, so both lines are always
+            # shown, even for a distance of 0
+            if north_south_distance >= 0:
+                distance_string += self._("{} to the north and..").format(north_south_distance)  # TB14E14
+            else:
+                distance_string += self._("{} to the south and..").format(-north_south_distance)  # TB14E15
+            if east_west_distance >= 0:
+                distance_string += self._("{} to the west.").format(east_west_distance)  # TB15E1
+            else:
+                distance_string += self._("{} to the east.").format(-east_west_distance)  # TB15E0
             self.show_text_in_dialog_box(distance_string)
         self.show_text_in_dialog_box(self._("I love thee, {}.").format(self.player.name))
 
@@ -1178,6 +1193,13 @@ class CommandMenu:
         """Draw a character's current image on the screen at once. NES PrepTalk calls NPCFacePlayer (LC04A) before the
         dialog: it writes the NPC's new sprite tiles straight into sprite RAM, so the NPC is seen facing the hero from
         the next frame, before the first letter. Drawing it is otherwise left to the next draw_all, after the talk."""
+        self.redraw_character_block(character, draw_character=True)
+
+    def erase_character_now(self, character) -> None:
+        """Draw the floor over a character that has just been taken off the map, at once (NES ModMapBlock)."""
+        self.redraw_character_block(character, draw_character=False)
+
+    def redraw_character_block(self, character, draw_character: bool) -> None:
         if self.game.game_state.config['NO_BLIT'] or self.current_map.is_hidden_by_cover(character.row,
                                                                                           character.column):
             return
@@ -1187,7 +1209,8 @@ class CommandMenu:
                 if tile.rect.colliderect(character.rect):
                     tiles.add(tile)
         tiles.draw(self.background)  # the old image off the block first: the sprites are see-through
-        self.background.blit(character.image, character.rect)
+        if draw_character:
+            self.background.blit(character.image, character.rect)
         display.update(self.screen.blit(self.background, character.rect.move(self.camera_position),
                                         area=character.rect))
 
@@ -1287,15 +1310,23 @@ class CommandMenu:
         """
         # open a window
         text_to_print = [self._("{} searched the ground all about.").format(self.player.name), ]
+        item_to_make_room_for = None
         # wait for input...
         if self.player.current_tile == 'TREASURE_BOX':
             text_to_print.append(self._("There is a treasure box."))
         elif hidden_item := hidden_items.get(self.current_map.identifier, {}).get((self.player.row, self.player.column)):
-            text_to_print.append(self.find_hidden_item(hidden_item))
+            line, bag_full = self.find_hidden_item(hidden_item)
+            text_to_print.append(line)
+            if bag_full:
+                item_to_make_room_for = hidden_item
         elif not (self.current_map.identifier == 'CharlockB1' and self.search_for_secret_passage(text_to_print)):
             text_to_print.append(self._("But there found nothing."))
 
         self.show_text_in_dialog_box(text_to_print, skip_text=self.skip_text)
+        if item_to_make_room_for is not None:
+            # NES ErdrickTknFound (LE139-LE147), for Erdrick's Token and the Fairy Flute: AddInvItem returns INV_FULL,
+            # so DiscardItem asks the player to drop something, as for a chest
+            self.discard_for_item(item_to_make_room_for)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
 
@@ -1324,25 +1355,28 @@ class CommandMenu:
         self.game.tiles_moved_since_spawn = 0
         return True
 
-    def find_hidden_item(self, item_name: str) -> str:
+    def find_hidden_item(self, item_name: str) -> tuple[str, bool]:
         """
         NES DoSearch: pick up (or, for Erdrick's Armor, put on) a hidden item, unless the player already has it.
         :param item_name: The item hidden on the player's tile.
-        :return: The line to show after "searched the ground all about."
+        :return: The line to show after "searched the ground all about.", and whether the item was found but the
+            inventory was full (NES AddInvItem INV_FULL), so the player must discard something to take it.
         """
         if item_name in armor:
             # NES SrchEdrckArmor: found only if not already worn; it's equipped directly (replacing the old armor,
             # which is not kept) instead of going into the inventory
             if self.player.armor == item_name:
-                return self._("But there found nothing.")
+                return self._("But there found nothing."), False
             self.player.armor = item_name
             self.player.update_defense_power()
         else:
             # NES FoundItem/ItemAlreadyFound: found only if it isn't already in the inventory
             if item_name in self.player.inventory:
-                return self._("But there found nothing.")
+                return self._("But there found nothing."), False
+            if self.inventory_is_full():
+                return self._("{} discovers the {}.").format(self.player.name, self._(item_name)), True
             self.player.inventory.append(item_name)
-        return self._("{} discovers the {}.").format(self.player.name, self._(item_name))
+        return self._("{} discovers the {}.").format(self.player.name, self._(item_name)), False
 
     def spell(self):
         """
@@ -1640,18 +1674,27 @@ class CommandMenu:
                                      config['TILE_SIZE'] / 2))
         draw_text(title, x, y, self.screen, config, color=self.color, letter_by_letter=False)
 
+    def find_door(self) -> Cell | None:
+        """NES CheckDoor (Bank03, LDC42-LDC8C): a locked door above, below, left or right of the hero, looked for in
+        that order whichever way he faces. An opened door reads as brick (GetBlockID ChkDoorBlock)."""
+        row, column = self.player.row, self.player.column
+        for door_row, door_column in ((row - 1, column), (row + 1, column), (row, column - 1), (row, column + 1)):
+            if get_tile_id_by_coordinates(door_column, door_row, self.current_map) == 'DOOR':
+                return door_row, door_column
+        return None
+
     def door(self) -> None:
-        """
-        Open a door.
-        :return: None
-        """
-        if self.player.next_tile_id == 'DOOR':
+        """NES CheckDoor/DoorFound/UseKey: the DOOR command, and ITEM -> Magic Key."""
+        door = self.find_door()
+        if door is not None:
             if 'Magic Key' in self.player.inventory:
-                # actually open the door
+                # NES UseKey: the key is used up first. The door is recorded in the door history (which locks it
+                # again when the hero next goes out to the overworld); with all 8 slots in use, nothing opens
                 self.player.inventory.remove('Magic Key')
-                self.set_tile_by_coordinates('BRICK', self.player.next_coordinates[1], self.player.next_coordinates[0],
-                                             self.player)
-                self.sound.play_sound(self.directories.open_door_sfx)
+                row, column = door
+                if self.game.door_history.record(self.map_name, (row, column)):
+                    self.sound.play_sound(self.directories.open_door_sfx)  # SFX_DOOR, then ModMapBlock
+                    self.set_tile_by_coordinates('BRICK', column, row, self.player)
             else:
                 self.show_text_in_dialog_box(self._("Thou hast not a key to use."), skip_text=self.skip_text)
         else:

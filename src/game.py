@@ -34,7 +34,7 @@ from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
 from src.guardians import guardian_at
 from src.intro import Intro
-from src.items import TreasureChestHistory
+from src.items import OpenDoorHistory, TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import BATTLE_LINE, CommandMenu
@@ -107,9 +107,11 @@ class Game:
         self.loop_count = 1
         self.foreground_rects = []
         self.repel_timer = 0  # NES RepelTimer, set by REPEL or Fairy Water
+        self.repel_tick_pending = False  # a step has been taken, and CheckRepelTimer is still to come for it
         # NES MjArmrHP: counts steps taken in Magic Armor; every 4th one heals 1 HP (see armor_step_heal)
         self.magic_armor_steps = 0
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
+        self.door_history = OpenDoorHistory()  # which locked doors have been opened since the last overworld visit
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
@@ -281,10 +283,14 @@ class Game:
         self.auto_grind.show_pending()  # why auto-grind stopped, if it stopped where a message couldn't be shown
         if self.movement.hill_pause_frames:
             self.movement.hill_pause_frame()
+            if not self.movement.hill_pause_frames:
+                self.tick_repel_timer_after_step()  # the hill's fight roll has just been made
             event.pump()
             return
         self.movement.handle_player_movement()
         self.handle_battles()
+        if not self.movement.hill_pause_frames:
+            self.tick_repel_timer_after_step()
         if not self.player.is_moving:
             set_character_position(self.player, tile_size=self.tile_size)
         self._handle_map_updates()
@@ -405,9 +411,11 @@ class Game:
         self.tiles_moved_since_spawn += 1
         self.game_state.tiles_moved_total += 1
         # NES GameEngineLoop: the radiant timer (#216) and CheckRepelTimer are outside CheckForTriggers, so they keep
-        # ticking (and wear off) after the Dragonlord's defeat
+        # ticking (and wear off) after the Dragonlord's defeat. CheckRepelTimer (LCA6C) runs at the top of the loop,
+        # after ChkSpecialLoc has rolled this step's fight, so the repel timer ticks once that roll (and any fight) is
+        # done: see tick_repel_timer_after_step
         self.game_state.tick_radiant_timer()
-        self.tick_repel_timer()
+        self.repel_tick_pending = True
         # NES ChkSpecialLoc: a step off the map's edge goes to CheckMapExit instead of CheckForTriggers, so it doesn't
         # heal (MovmtIncHP) or count a Magic Armor step, and gets no damage or fight roll (see handle_battles)
         if not self.stepped_off_the_map():
@@ -479,6 +487,14 @@ class Game:
     def leave_tantegel(self, direction: int | None = None):
         map_name, coordinates = TANTEGEL_OVERWORLD_EXIT
         self.change_map(map_lookup[map_name](self.config), destination_coordinates=coordinates, direction=direction)
+
+    def tick_repel_timer_after_step(self):
+        """NES GameEngineLoop -> CheckRepelTimer, once per step, after that step's fight roll (ChkSpecialLoc ->
+        CheckBlockDmg): the step that brings REPEL's 255 down to 1 is still protected, so it lasts 127 steps, and its
+        message comes after that step's roll."""
+        if self.repel_tick_pending:
+            self.repel_tick_pending = False
+            self.tick_repel_timer()
 
     def tick_repel_timer(self):
         """NES CheckRepelTimer: the timer drops by 2 per step. REPEL (odd start) ends at 1, Fairy Water (even) at 0."""
@@ -612,8 +628,14 @@ class Game:
         self.player.gold = self.player.gold // 2
         # NES StartAtThroneRoom sets HP before MapChngNoSound fades the throne room in, so the fade's palette load
         # (ChkLowHPPal) sees the new HP: a cursed hero comes back with 1 HP, which is always low, so the king's words
-        # are in red windows; anyone else comes back with full HP and white windows.
-        self.player.current_hp = 1 if self.player.is_cursed else self.player.max_hp
+        # are in red windows; anyone else comes back with full HP and white windows. DeathText sets ThisStrtStat to
+        # STRT_FULL_HP, so StartAtThroneRoom (LCB78-LCB87) fills MP as well as HP; for a cursed hero it sets HP to 1
+        # and skips that step (LCB71-LCB75), so MP stays as it was.
+        if self.player.is_cursed:
+            self.player.current_hp = 1
+        else:
+            self.player.current_hp = self.player.max_hp
+            self.player.current_mp = self.player.max_mp
         self.load_window_palette()
         # NES DeathText -> StartAtThroneRoom (LEDDE): the screen cuts to black and the throne room fades in once
         next_map = map_lookup['TantegelThroneRoom'](self.config)
@@ -897,7 +919,7 @@ class Game:
         """Continue a saved game (see CommandMenu.save for what is kept).
 
         NES LoadSavedData (Bank03) restores the hero and the ModsnSpells, PlayerFlags and StoryFlags bytes as they
-        were saved. MainGameEngine then clears the treasure chest history, and StartAtThroneRoom clears the repel
+        were saved. MainGameEngine then clears the treasure chest and door histories, and StartAtThroneRoom clears the repel
         timer, gives a cursed hero 1 HP and loads the starting map, whose InitMapData applies the story flags (the
         throne room chests are gone once F_LEFT_THROOM is set). The NES always starts in the throne room; this game
         starts where the save was made, which is always beside King Lorik.
@@ -913,6 +935,7 @@ class Game:
         # saves: NORMAL, CLASSIC, ON
         apply_options(self.game_state.config, save.options)
         self.chest_history = TreasureChestHistory()
+        self.door_history = OpenDoorHistory()
         self.repel_timer = 0
         if self.player.is_cursed:
             # NES StartAtThroneRoom (LCB6B): a cursed hero always starts with 1 HP

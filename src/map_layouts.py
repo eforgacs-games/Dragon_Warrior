@@ -1046,3 +1046,9 @@ class MapLayouts:
             'StaffOfRainCave': decode_rle(self._encoded_staff_of_rain_cave),
             'MagicTemple': decode_rle(self._encoded_magic_temple),
         }
+        # Where each map's locked doors are, read before anything opens one, so OpenDoorHistory.apply_to_layout can
+        # lock them again (NES InitMapData clears the door history on the overworld)
+        self.door_coordinates: dict[str, list[tuple[int, int]]] = {
+            map_name: [(row, column) for row, tiles in enumerate(layout) for column, tile in enumerate(tiles)
+                       if tile == DOOR]
+            for map_name, layout in self.map_layout_lookup.items()}
