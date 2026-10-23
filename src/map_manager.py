@@ -204,7 +204,13 @@ class MapManager:
         self.game.set_player_images_by_equipment()
         for character_dict in self.current_map.characters.values():
             character_dict['character'].show_facing()
-        self.drawer.draw_all(self.game, self.game_state.enable_animate)
+        # The frame the fade-in starts from. Nothing reads the joypad in it: on the NES the map fades in before the
+        # game reads any button (Drawer.drawing_fade_in_frame)
+        self.drawer.drawing_fade_in_frame = True
+        try:
+            self.drawer.draw_all(self.game, self.game_state.enable_animate)
+        finally:
+            self.drawer.drawing_fade_in_frame = False
         # NES MapChngNoSound/MapChngWithSound (LB133): the map's music starts (ResumeMusicTbl), then PalFadeIn
         screen_fade(fade_out=False, screen=self.screen, config=self.game_state.config)
 
