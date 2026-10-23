@@ -1,6 +1,6 @@
 """The hero's name on the "ADVENTURE LOG n:" line of the start menus, drawn over the NES screenshot.
 
-The start menus are full-screen NES screenshots (see Game.show_main_menu_screen), so the name, which the screenshot
+The start menus are full-screen NES screenshots (see TitleMenu.show_main_menu_screen), so the name, which the screenshot
 can't know, is drawn on top of it here at the NES tile position.
 
 On the NES (Bank03 ShowUsedLogs) "continue a quest", "change message speed", "copy a quest" (the log to copy from)
