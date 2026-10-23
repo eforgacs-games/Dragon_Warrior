@@ -2,7 +2,7 @@ from functools import partial
 from typing import Callable, List
 
 from pygame import display, KEYDOWN, K_RETURN, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, \
-    K_TAB, K_BACKSPACE, event
+    K_TAB, K_BACKSPACE, K_ESCAPE, event
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.waiting import quit_if_requested
 
@@ -29,8 +29,9 @@ class NameSelection:
     """The name entry screen (src/name_entry.py), drawn from the NES window data and run like WndEnterName.
 
     With joystick input (Tab turns it on and off), the keys are the NES buttons: the arrows move the cursor, A enters
-    the selected character, BACK or END, and B is BACK. Without it, typing a character of the alphabet enters it (and
-    moves the cursor to it), Backspace removes the last one and Return ends the name."""
+    the selected character, BACK or END, and B (J) is BACK. Without it, typing a character of the alphabet enters it (and
+    moves the cursor to it), Backspace removes the last one and Return ends the name. In either mode, Escape leaves the
+    name entry (select_name returns None) and the new quest is cancelled."""
 
     def __init__(self, config):
         self.config = config
@@ -45,7 +46,8 @@ class NameSelection:
             screen.blit(render_name_entry_screen(entry, WHITE, self.config['TILE_SIZE'] // 16, cursor_visible), (0, 0))
         display.update(screen.get_rect())
 
-    def select_name(self, blink_start, screen, command_menu) -> str:
+    def select_name(self, blink_start, screen, command_menu) -> str | None:
+        """The name entered, or None if Escape was pressed to leave the name entry (back to the title menu)."""
         entry = NameEntry()
         enable_joystick_input = False
         # No cursor until the alphabet window's selection starts (WndDoSelect)
@@ -61,6 +63,9 @@ class NameSelection:
             for current_event in event.get():
                 quit_if_requested(current_event)
                 if current_event.type == KEYDOWN:
+                    if current_event.key == K_ESCAPE:
+                        # Not the NES B button here (J is): Escape cancels the name entry, back to the title menu
+                        return None
                     if current_event.key == K_TAB:
                         enable_joystick_input = toggle_joystick_input(
                             command_menu, partial(self.draw, screen, entry, cursor.visible()), enable_joystick_input,
@@ -72,7 +77,7 @@ class NameSelection:
                             entry.select()
                             cursor.restart()
                         elif current_event.key in reject_keys:
-                            # WndBPressed: back one character, without a sound
+                            # WndBPressed (J; Escape cancels above): back one character, without a sound
                             entry.back()
                             cursor.restart()
                         elif current_event.key in DIRECTION_KEYS and DIRECTION_KEYS[current_event.key](entry):
