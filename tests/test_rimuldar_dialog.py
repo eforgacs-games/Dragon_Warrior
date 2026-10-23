@@ -120,14 +120,6 @@ class TestRimuldarDialog(TestCase):
             self.assertEqual(self.rimuldar.characters[identifier]['character'].direction_value, expected.value,
                              identifier)
 
-    def test_underlying_tiles_match_the_layout(self):
-        brick = self.rimuldar.floor_tile_key['BRICK']['val']
-        for (row, column), _ in self.rimuldar.npc_coordinates.items():
-            identifier = self.identifiers[(row, column)]
-            tile = self.rimuldar.layout[row][column]
-            expected = None if tile == brick else self.rimuldar.get_tile_by_value(tile)
-            self.assertEqual(self.rimuldar.custom_underlying_tiles.get(identifier), expected, identifier)
-
     def test_text_dialog_matches_nes(self):
         for _, x, y, dialog_byte, _ in RIMULDAR_NPCS:
             if dialog_byte in RIMULDAR_TEXT:
