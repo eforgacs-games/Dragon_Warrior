@@ -134,6 +134,14 @@ class Drawer:
             self.game_state.enable_movement = True
             self.show_pop_up_after_automatic_dialog()
 
+    def remove_pop_up(self, cmd_menu: CommandMenu) -> None:
+        """NES ChkRemovePopUp (Bank00): take the pop-up window off the screen if it is up (DoRemovePopUp: RemoveWindow,
+        FrameCounter kept as it was)."""
+        self.display_hovering_stats = False
+        if self.hovering_stats_displayed:
+            cmd_menu.window_drop_up_effect(*POPUP_WINDOW)
+            self.hovering_stats_displayed = False
+
     def show_pop_up_after_automatic_dialog(self) -> None:
         """The king's words in the throne room, which start on their own, keep the pop-up window closed while they wait
         for a button (handle_initial_dialog, handle_post_death_dialog). The hero has been standing still all along, so
@@ -241,11 +249,9 @@ class Drawer:
                 tile_types_to_draw += replace_characters_with_underlying_tiles(
                     list(filter(None, player_surrounding_tiles)), current_map.character_key)
                 # The pop-up window opens on the hero's POP_UP_FRAME of standing still (Game.do_sprites, counted in
-                # game frames like the steps) and closes when he moves
-                self.display_hovering_stats = False
-                if self.hovering_stats_displayed:
-                    cmd_menu.window_drop_up_effect(1, 2, 4, 6)
-                    self.hovering_stats_displayed = False
+                # game frames like the steps) and is closed by any direction press (Game.move_player), so it is gone
+                # once he moves
+                self.remove_pop_up(cmd_menu)
         except IndexError:
             all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles(current_map)
             all_fixed_character_underlying_tiles = get_fixed_character_underlying_tiles(current_map)
