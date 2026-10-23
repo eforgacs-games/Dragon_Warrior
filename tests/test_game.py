@@ -28,6 +28,7 @@ from src.maps_functions import parse_animated_sprite_sheet
 from src.menu import CommandMenu
 from src.music_player import MusicPlayer
 from src.player.player import Player
+from src.spells import Spell
 from src.sprites.roaming_character import RoamingCharacter
 from src.waiting import game_speed, reset_game_speed
 from tests.mock_map import MockMap
@@ -273,6 +274,33 @@ class TestGame(TestCase):
         self.assertEqual(self.where(), ('ErdricksCaveB1', (3, 3)))
         self.assertEqual(self.game.player.inventory, ['Wings'])
         self.assertEqual(show_text.call_args.args[0], 'The Wings of the Wyvern cannot be used here.')
+
+    def test_warping_from_the_command_window_does_not_close_it_over_the_new_map(self):
+        # OUTSIDE, RETURN and the Wings change the map (and the COMMAND menu) while the old COMMAND window is still
+        # open. Closing that window must not run its drop-up effect, which paints the old map's tiles and characters
+        # over the new map for a few frames.
+        for command, use in (('spell', lambda menu: menu.return_()), ('item', lambda menu: menu.wings())):
+            with self.subTest(command=command):
+                self.game.player.spells = [Spell.RETURN]
+                self.game.player.inventory = ['Wings']
+                self.go_to('Garinham', (11, 29))
+                old_menu = self.game.cmd_menu
+                old_menu.menu.enable()
+                drop_ups = []
+                real_drop_up = CommandMenu.window_drop_up_effect
+
+                def record_drop_up(menu, *window):
+                    drop_ups.append((menu.current_map.identifier, self.game.current_map.identifier))
+                    real_drop_up(menu, *window)
+
+                with patch.object(CommandMenu, 'display_item_menu', lambda menu, name: use(menu)), \
+                        patch.object(CommandMenu, 'window_drop_up_effect', record_drop_up), \
+                        patch('src.menu.CommandMenu.show_text_in_dialog_box'):
+                    getattr(old_menu, command)()
+                self.assertEqual(self.where(), ('Alefgard', (50, 50)))
+                self.assertEqual(drop_ups, [])
+                self.assertFalse(old_menu.menu.is_enabled())
+                self.assertFalse(self.game.cmd_menu.menu.is_enabled())
 
     def test_load_game_on_another_map(self):
         # Used to raise KeyError: change_map looked up a staircase at the player's position
