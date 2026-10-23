@@ -29,15 +29,15 @@ NPC_WALKABLE_TILES = frozenset({
 })
 
 
-def step(row: int, column: int, direction: int) -> tuple[int, int]:
-    """The (row, column) one tile from (row, column) in the given direction."""
+def step(row: int, column: int, direction: int, offset: int = 1) -> tuple[int, int]:
+    """The (row, column) `offset` tiles from (row, column) in the given direction."""
     if direction == Direction.UP.value:
-        return row - 1, column
+        return row - offset, column
     if direction == Direction.DOWN.value:
-        return row + 1, column
+        return row + offset, column
     if direction == Direction.LEFT.value:
-        return row, column - 1
-    return row, column + 1
+        return row, column - offset
+    return row, column + offset
 
 
 def npc_may_step_onto(current_map, target: tuple[int, int]) -> bool:

@@ -207,11 +207,11 @@ class TestDragonlordBattle(unittest.TestCase):
     def test_blocked_run_from_dragonlord_gives_him_a_turn(self):
         battle = Battle(self.config, 'Dragonlord', Mock())
         cmd_menu = Mock()
-        cmd_menu.game.enemy_move = Mock(return_value=False)
+        cmd_menu.game.battle_ctrl.enemy_move = Mock(return_value=False)
         player = Mock(agility=1, current_hp=50)
         with patch('src.battle.random.randint', return_value=255):
             self.assertFalse(battle.battle_run(cmd_menu, player, battle))
-        cmd_menu.game.enemy_move.assert_called_once_with(battle)
+        cmd_menu.game.battle_ctrl.enemy_move.assert_called_once_with(battle)
 
     def test_end_boss_music_only_for_final_form(self):
         music_player = Mock()
