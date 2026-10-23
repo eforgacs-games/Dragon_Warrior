@@ -871,7 +871,7 @@ class CommandMenu(Menu):
         form, ChkUseFlute and ChkUseHarp); on the map, the map's music (ResumeMusicTbl). Both start from the
         beginning."""
         if self.current_battle is not None:
-            self.current_battle.play_battle_music()
+            self.current_battle.play_battle_music(self.game.music_player)
         else:
             self.game.music_player.load_and_play_music(self.current_map.music_file_path)
 
