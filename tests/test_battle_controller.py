@@ -44,6 +44,7 @@ def make_battle(enemy=None):
     battle.turn = 0
     battle.last_turn = 0
     battle.no_op = False
+    battle.enemy_fled = False
     return battle
 
 
@@ -215,7 +216,19 @@ class TestHandleBattlePrompts(BattlePromptFrames):
         with self.patch_enemy_move() as enemy_move:
             self.assertTrue(self.press(K_RETURN))
         enemy_move.assert_not_called()
-        self.game.music_player.load_and_play_music.assert_called_once_with(self.game.current_map.music_file_path)
+        self.assertTrue(self.controller.player_ran_away)
+        # fight_enemy resumes the map's music once the fight is over, not the command prompt
+        self.game.music_player.load_and_play_music.assert_not_called()
+
+    def test_enemy_fleeing_after_a_blocked_run_is_not_the_hero_escaping(self, mock_time, mock_display):
+        # battle_run returns True when the enemy ran away on its turn after "But was blocked in front."
+        self.controller.battle_menu_row = 1
+
+        def blocked_then_enemy_flees(*args):
+            return self.controller.enemy_run_away(self.battle, self.battle.enemy)
+        self.battle.battle_run.side_effect = blocked_then_enemy_flees
+        self.assertTrue(self.press(K_RETURN))
+        self.assertFalse(self.controller.player_ran_away)
 
     def test_failed_run_does_not_give_enemy_a_second_turn(self, mock_time, mock_display):
         # battle_run already lets the enemy attack when the run fails (regression test for #179)
@@ -587,8 +600,104 @@ class TestRunBattle(unittest.TestCase):
         battle.enemy_defeated.assert_not_called()
         self.game.music_player.load_and_play_music.assert_called_once()
 
+    # launch_battle tells Game.handle_death whether to draw the in-battle death screen: only a defeat keeps it set
 
-@patch('src.battle_controller.mixer')
+    def test_launch_battle_is_cleared_after_a_win_or_an_escape(self, mock_battle_class):
+        battle = mock_battle_class.return_value
+
+        def kill(run_away, current_battle):
+            current_battle.enemy.hp = 0
+            return False
+        for prompts in (dict(side_effect=kill), dict(return_value=True)):
+            with self.subTest(prompts=prompts):
+                battle.enemy.hp = 3
+                self.controller.launch_battle = True
+                with patch.object(self.controller, 'handle_battle_prompts', **prompts):
+                    self.controller.run_battle(['Slime'])
+                self.assertFalse(self.controller.launch_battle)
+
+    def test_launch_battle_stays_set_after_a_defeat(self, mock_battle_class):
+        mock_battle_class.return_value.enemy.hp = 3
+
+        def die(run_away, current_battle):
+            self.game.player.is_dead = True
+            return False
+        with patch.object(self.controller, 'handle_battle_prompts', side_effect=die):
+            self.assertEqual(self.controller.run_battle(['Slime']).value, 'defeat')
+        self.assertTrue(self.controller.launch_battle)
+        self.game.music_player.load_and_play_music.assert_not_called()  # the death music comes next
+
+
+@patch('pygame.mixer.music')
+@patch('src.battle_controller.Battle')
+class TestMapMusicAfterAFight(unittest.TestCase):
+    """However a fight ends, the map's music starts exactly once, through MusicPlayer."""
+
+    def setUp(self):
+        self.game = make_game()
+        self.game.config["MUSIC_ENABLED"] = True
+        self.controller = BattleController(self.game)
+        patch.object(self.controller, 'start_fight', return_value=False).start()
+        patch.object(self.controller, 'draw_command_window').start()
+        patch.object(self.controller, 'open_command_window').start()
+        patch.object(self.controller, 'step_back_after_running').start()
+        patch('src.battle_controller.time').start()
+        self.addCleanup(patch.stopall)
+        # auto battle repeats RUN without waiting for a key
+        self.game.auto_battle = True
+        self.controller.last_battle_action = 'Run'
+
+    @staticmethod
+    def battle(mock_battle_class, name='Slime'):
+        battle = mock_battle_class.return_value
+        battle.enemy.name = name
+        battle.enemy.hp = 3
+        battle.enemy_fled = False
+        battle.turn = battle.last_turn = 0
+        return battle
+
+    def map_music_starts(self, mixer_music):
+        mixer_music.play.assert_not_called()  # never around MusicPlayer
+        return [c.args for c in self.game.music_player.load_and_play_music.call_args_list]
+
+    def test_running_away(self, mock_battle_class, mixer_music):
+        self.battle(mock_battle_class).battle_run.return_value = True
+        self.assertEqual(self.controller.run_battle(['Slime']).value, 'escaped')
+        self.assertEqual(self.map_music_starts(mixer_music), [(self.game.current_map.music_file_path,)])
+        self.controller.step_back_after_running.assert_called_once()
+
+    def test_enemy_running_away_at_the_start(self, mock_battle_class, mixer_music):
+        battle = self.battle(mock_battle_class)
+        self.controller.start_fight.side_effect = lambda b: self.controller.enemy_run_away(b, b.enemy)
+        self.assertEqual(self.controller.run_battle(['Slime']).value, 'escaped')
+        self.assertEqual(self.map_music_starts(mixer_music), [(self.game.current_map.music_file_path,)])
+        battle.battle_run.assert_not_called()
+        self.controller.step_back_after_running.assert_not_called()
+
+    def test_enemy_running_away_after_a_blocked_run(self, mock_battle_class, mixer_music):
+        battle = self.battle(mock_battle_class)
+        battle.battle_run.side_effect = lambda *args: self.controller.enemy_run_away(battle, battle.enemy)
+        self.assertEqual(self.controller.run_battle(['Slime']).value, 'escaped')
+        self.assertEqual(self.map_music_starts(mixer_music), [(self.game.current_map.music_file_path,)])
+        # NES: the hero didn't escape, so he isn't moved back off a guardian's block
+        self.controller.step_back_after_running.assert_not_called()
+
+    def test_beating_the_dragonlords_final_form(self, mock_battle_class, mixer_music):
+        battle = self.battle(mock_battle_class, 'Dragonlord 2')
+
+        def kill(run_away, current_battle):
+            current_battle.enemy.hp = 0
+            return False
+
+        def final_boss_defeated(*args):
+            # Ending.final_boss_defeated -> change_map, which starts the overworld music
+            self.game.music_player.load_and_play_music('overworld')
+        battle.enemy_defeated.side_effect = final_boss_defeated
+        with patch.object(self.controller, 'handle_battle_prompts', side_effect=kill):
+            self.assertEqual(self.controller.start_scripted_battle('Dragonlord 2').value, 'victory')
+        self.assertEqual(self.map_music_starts(mixer_music), [('overworld',)])
+
+
 class TestEnemyRunAway(unittest.TestCase):
 
     def setUp(self):
@@ -596,18 +705,14 @@ class TestEnemyRunAway(unittest.TestCase):
         self.controller = BattleController(self.game)
         self.battle = make_battle()
 
-    def test_enemy_run_away(self, mock_mixer):
+    def test_enemy_run_away(self):
         self.assertTrue(self.controller.enemy_run_away(self.battle, self.battle.enemy))
         self.game.cmd_menu.show_line_in_dialog_box.assert_called_once()
         self.assertEqual(self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0], 'The Slime is running away.')
         self.battle.make_enemy_image_disappear.assert_called_once_with(self.game.screen)
-        mock_mixer.music.play.assert_not_called()
-
-    def test_enemy_run_away_restores_map_music(self, mock_mixer):
-        self.game.config["MUSIC_ENABLED"] = True
-        self.controller.enemy_run_away(self.battle, self.battle.enemy)
-        mock_mixer.music.load.assert_called_once_with(self.game.current_map.music_file_path)
-        mock_mixer.music.play.assert_called_once_with(-1)
+        self.assertTrue(self.battle.enemy_fled)
+        # the map's music is resumed by fight_enemy once the fight is over
+        self.game.music_player.load_and_play_music.assert_not_called()
 
 
 class TestHeroAttack(unittest.TestCase):

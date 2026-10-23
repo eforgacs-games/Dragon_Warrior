@@ -56,6 +56,7 @@ class Battle:
         self.tile_size = config['TILE_SIZE']
         self.current_map = current_map
         self.no_op = False
+        self.enemy_fled = False  # set by BattleController.enemy_run_away
         # Add graphics for image caching
         from src.common import Graphics
         self.graphics = Graphics(config)
