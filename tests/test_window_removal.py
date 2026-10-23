@@ -1,9 +1,9 @@
-"""Answered selection windows (YES/NO, BUY/SELL, shop inventories) are taken off the screen the way the NES does it:
-WindowSequence (Bank01) calls RemoveWindow (Bank00), which puts back what the window covered, the open background
-windows (pop-up, COMMAND, dialog) or else the map, and touches nothing else."""
+"""Answered selection windows (YES/NO, BUY/SELL, shop inventories, SPELL and ITEM) are taken off the screen the way
+the NES does it: WindowSequence (Bank01) calls RemoveWindow (Bank00), which puts back what the window covered, the open
+background windows (pop-up, COMMAND, dialog) or else the map, and touches nothing else."""
 import hashlib
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pygame
 from pygame import KEYDOWN, K_RETURN, Rect
@@ -13,7 +13,8 @@ from data.text.dialog import confirmation_prompt
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.maps import Brecconary
-from src.windows import BUY_SELL_WINDOW, COMMAND_WINDOW, YES_NO_WINDOW
+from src.spells import Spell
+from src.windows import BUY_SELL_WINDOW, COMMAND_WINDOW, YES_NO_WINDOW, item_menu_window
 from tests.helpers import new_game
 
 
@@ -111,3 +112,36 @@ class TestWindowRemoval(TestCase):
         dialog_lookup = self.cmd_menu.dialog_lookup
         self.assertIsNone(dialog_lookup.select_from_text_menu(["BUY", "SELL"], BUY_SELL_WINDOW))
         self.assert_window_removed(before, BUY_SELL_WINDOW)
+
+    def test_spell_window_is_gone_before_the_spell_is_cast(self):
+        window = item_menu_window('spells', 1)
+        self.assertTrue(self.rect(window).colliderect(self.rect(COMMAND_WINDOW)))
+        before = image_digest(self.game.screen.subsurface(self.rect(window)))
+        self.game.player.spells = [Spell.HEAL]
+        self.game.player.current_mp = self.game.player.max_mp = 10
+        seen = []
+        pygame.event.post(accept())
+        with patch.object(self.cmd_menu, 'show_line_in_dialog_box',
+                          side_effect=lambda *args, **kwargs: seen.append(
+                              image_digest(self.game.screen.subsurface(self.rect(window))))), \
+                patch.object(self.cmd_menu, 'heal'), patch.object(self.cmd_menu, 'show_popup_window'):
+            self.assertEqual(Spell.HEAL, self.cmd_menu.display_item_menu('spells'))
+        self.assertEqual([before], seen)
+
+    def test_cancelled_item_window_is_removed(self):
+        before = self.screen_bytes()
+        self.game.player.inventory = ['Torch', 'Wings']
+        pygame.event.post(Event(KEYDOWN, key=pygame.K_ESCAPE, unicode='\x1b'))
+        self.assertIsNone(self.cmd_menu.display_item_menu('inventory'))
+        self.assert_window_removed(before, item_menu_window('inventory', 2))
+
+    def test_in_a_fight_the_battle_scene_is_put_back(self):
+        # The window covers the battle scene, not the map: what it covered is put back
+        self.cmd_menu.current_battle = MagicMock()
+        self.addCleanup(setattr, self.cmd_menu, 'current_battle', None)
+        self.game.screen.fill((12, 34, 56), self.rect((5, 4, 7, 7)))  # a stand-in for the enemy and its background
+        before = self.screen_bytes()
+        self.game.player.inventory = ['Torch']
+        pygame.event.post(Event(KEYDOWN, key=pygame.K_ESCAPE, unicode='\x1b'))
+        self.assertIsNone(self.cmd_menu.display_item_menu('inventory'))
+        self.assertEqual(before, self.screen_bytes())
