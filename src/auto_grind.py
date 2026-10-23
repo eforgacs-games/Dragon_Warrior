@@ -120,6 +120,10 @@ class AutoGrind:
         if self.active:
             return False
         _ = self.game._
+        if self.game.game_state.config.get('NO_BATTLES'):
+            # dev_config's NO_BATTLES: no step starts a fight, so it would only walk back and forth
+            self.game.draw_temporary_text(_("Auto-grind: battles are off (NO_BATTLES)"))
+            return False
         if not self.has_random_fights():
             self.game.draw_temporary_text(_("Auto-grind: no fights here"))
             return False

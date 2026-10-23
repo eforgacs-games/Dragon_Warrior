@@ -2473,7 +2473,11 @@ msgstr ""
 "자동 사냥 켜짐\n"
 "(G나 아무 키로 멈춤)"
 
-#: src/auto_grind.py:124
+#: src/auto_grind.py
+msgid "Auto-grind: battles are off (NO_BATTLES)"
+msgstr "자동 사냥: 전투가 꺼져 있다 (NO_BATTLES)"
+
+#: src/auto_grind.py
 msgid "Auto-grind: no fights here"
 msgstr "자동 사냥: 여기는 적이 나오지 않는다"
 

@@ -143,6 +143,14 @@ class TestStarting(GrindTestCase):
                 self.assertFalse(self.grind.active)
                 self.temporary_text.assert_called_once_with("Auto-grind: no fights here")
 
+    def test_not_with_battles_turned_off(self):
+        # dev_config's NO_BATTLES: no step can start a fight, so there's nothing to grind
+        self.game.game_state.config['NO_BATTLES'] = True
+        self.addCleanup(self.game.game_state.config.__setitem__, 'NO_BATTLES', False)
+        self.assertFalse(self.grind.start())
+        self.assertFalse(self.grind.active)
+        self.temporary_text.assert_called_once_with("Auto-grind: battles are off (NO_BATTLES)")
+
     def test_not_once_the_dragonlord_is_dead(self):
         self.game.story_flags.dragonlord_defeated = True
         self.assertFalse(self.grind.start())
@@ -235,8 +243,8 @@ class TestPacing(GrindTestCase):
         self.assertEqual({K_UP}, joypad.held)
 
     def test_walks_back_and_forth_through_the_movement_code(self):
-        self.game.config['NO_BATTLES'] = True
         self.start()
+        self.game.config['NO_BATTLES'] = True  # only once it's walking (it won't start with it): no fight interrupts
         cells = []
         real_count_step = self.game.count_step
 
