@@ -213,7 +213,7 @@ class CommandMenu:
         drawer = self.game.drawer
         screen.fill(BLACK)
         if drawer.background is not None:
-            screen.blit(drawer.background, self.game.camera.pos)
+            drawer.blit_map(screen, self.current_map, self.game.camera.pos)
         if self.current_map.is_dark and config['ENABLE_DARKNESS']:
             drawer.draw_darkness(screen)
         self.redraw_command_window(rect)
@@ -626,7 +626,7 @@ class CommandMenu:
                             self.background.blit(character_dict['character_sprites'].sprites()[0].image,
                                                  (character_dict['character'].rect.x,
                                                   character_dict['character'].rect.y))
-                        self.screen.blit(self.background, self.camera_position)
+                        self.game.drawer.blit_map(self.screen, self.current_map, self.camera_position)
                 if self.launch_signaled:
                     # The COMMAND window behind, as it is: the chosen entry's arrow is still on (WndAPressed), as
                     # RemoveWindow puts back the window's tiles
