@@ -134,20 +134,35 @@ class CommandMenu:
         self.draw_command_window()
         self.screen.set_clip(previous_clip)
 
-    def remove_window(self, window: Window | tuple[int, int, int, int]) -> None:
+    def window_rect(self, window: Window | tuple[int, int, int, int]) -> Rect:
+        """A window's rect on the screen."""
+        tile_size = self.game.game_state.config['TILE_SIZE']
+        return Rect(window[0] * tile_size, window[1] * tile_size, window[2] * tile_size, window[3] * tile_size)
+
+    def covered_area(self, window: Window | tuple[int, int, int, int]) -> Surface | None:
+        """What is on the screen where a window is about to open, to put back with remove_window."""
+        if self.game.game_state.config['NO_BLIT']:
+            return None
+        return self.screen.subsurface(self.window_rect(window).clip(self.screen.get_rect())).copy()
+
+    def remove_window(self, window: Window | tuple[int, int, int, int], covered: Surface | None = None) -> None:
         """NES RemoveWindow (Bank00, LA7A2) for a foreground window: WindowSequence (Bank01) calls it as soon as a
         selection window (spells, inventories, YES/NO, BUY/SELL) has been answered. Each of its blocks goes back to
         what it covered: the background windows that are open (ClearWndBuf -> UncoverWindow), or else the map
         (ModWindowBlock). Only that area is redrawn; the windows that are still open stay as they are.
 
         Here the background windows are the pop-up, the COMMAND window and the dialog window, drawn over the map as
-        it is now, at the camera's current position."""
+        it is now, at the camera's current position. With ``covered`` (covered_area, taken as the window opened), that
+        is put back instead: in a fight, where the window covers the battle scene."""
         config = self.game.game_state.config
         if config['NO_BLIT']:
             return
         tile_size = config['TILE_SIZE']
-        rect = Rect(window[0] * tile_size, window[1] * tile_size, window[2] * tile_size, window[3] * tile_size)
+        rect = self.window_rect(window)
         screen = self.screen
+        if covered is not None:
+            display.update(screen.blit(covered, rect.topleft))
+            return
         previous_clip = screen.get_clip()
         screen.set_clip(rect)
         drawer = self.game.drawer
@@ -1329,8 +1344,13 @@ class CommandMenu:
 
         # Up and down stop at the first and last entries; A chooses, with the menu button sound (WndAPressed), B
         # closes the window (src/selection.py)
+        window = item_menu_window(menu_name, len(entries))
+        # In a fight the window covers the battle scene, which remove_window doesn't draw: what it covers is kept
+        covered = self.covered_area(window) if self.current_battle is not None else None
         answer = run_selection(draw, 0, move=stop_at_edges(len(entries)), sound=self.play_menu_button_sound,
                                sound_buttons=(IN_A,))
+        # NES WindowSequence: RemoveWindow, chosen or not, before the choice is acted on
+        self.remove_window(window, covered)
         currently_selected_item = entries[answer.entry]
         if not answer.accepted:
             if self.current_battle is not None:
