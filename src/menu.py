@@ -19,8 +19,8 @@ from src.waiting import NES_FPS, is_any_key_held, wait, wait_until
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
-from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, RAINBOW_BRIDGE_COORDINATES, \
-    RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES, \
+from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, MAX_LEVEL, OUTSIDE_DESTINATIONS, \
+    RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES, \
     TEMP_TEXT_MS
 from src.dialog_box import ARROW_COLUMN, DIALOG_COLUMNS, DIALOG_ROWS, OPEN_QUOTES, SCROLL_ROWS_PER_FRAME, \
     DialogBuffer, DialogStep, ScrollStep, frames_per_character
@@ -997,27 +997,37 @@ class CommandMenu:
             self.resume_music()
 
     def gwaelins_love(self):
-        # NES TextBlock14 entry 11: PNTS prints "Point" when exactly 1 is left (Bank01 DoPNTS)
-        points = self.player.points_to_next_level
-        self.show_text_in_dialog_box(singular_or_plural(
-            points,
-            self._("Heed my voice,\n'{}, for this is Gwaelin.\n"
-                   "To reach the next level thou must raise thy Experience Point by {}.\nMy hope is with thee.'"),
-            self._("Heed my voice,\n'{}, for this is Gwaelin.\n"
-                   "To reach the next level thou must raise thy Experience Points by {}.\nMy hope is with thee.'"),
-        ).format(self.player.name, points))
+        """NES ChkLove (Bank03, LDF0D-LDF71)."""
+        if self.player.level >= MAX_LEVEL:
+            # LDF15-LDF1F: at level 30, TB17E5 instead of the experience still needed
+            self.show_text_in_dialog_box(
+                self._("'{}?\nThis is Gwaelin.\nKnow that thou hath reached the final level.'").format(
+                    self.player.name))
+        else:
+            # NES TextBlock14 entry 11: PNTS prints "Point" when exactly 1 is left (Bank01 DoPNTS)
+            points = self.player.points_to_next_level
+            self.show_text_in_dialog_box(singular_or_plural(
+                points,
+                self._("Heed my voice,\n'{}, for this is Gwaelin.\n"
+                       "To reach the next level thou must raise thy Experience Point by {}.\nMy hope is with thee.'"),
+                self._("Heed my voice,\n'{}, for this is Gwaelin.\n"
+                       "To reach the next level thou must raise thy Experience Points by {}.\nMy hope is with thee.'"),
+            ).format(self.player.name, points))
         if self.current_map.identifier == 'Alefgard':
             distance_string = self._("From where thou art now, my castle lies..\n")
             east_west_distance, north_south_distance = self.calculation.get_distance_from_tantegel(self.player.column,
                                                                                                    self.player.row)
-            if north_south_distance < 0:
-                distance_string += self._("{} to the south and..").format(abs(north_south_distance))
-            elif north_south_distance > 0:
-                distance_string += self._("{} to the north and..").format(abs(north_south_distance))
-            if east_west_distance < 0:
-                distance_string += self._("{} to the west.").format(abs(east_west_distance))
-            elif east_west_distance > 0:
-                distance_string += self._("{} to the east.").format(abs(east_west_distance))
+            # LDF37-LDF6C: the hero's distance from the castle block ($2B, $2B). A Y distance of 0 or more means the
+            # castle is to the north, an X distance of 0 or more that it is to the west, so both lines are always
+            # shown, even for a distance of 0
+            if north_south_distance >= 0:
+                distance_string += self._("{} to the north and..").format(north_south_distance)  # TB14E14
+            else:
+                distance_string += self._("{} to the south and..").format(-north_south_distance)  # TB14E15
+            if east_west_distance >= 0:
+                distance_string += self._("{} to the west.").format(east_west_distance)  # TB15E1
+            else:
+                distance_string += self._("{} to the east.").format(-east_west_distance)  # TB15E0
             self.show_text_in_dialog_box(distance_string)
         self.show_text_in_dialog_box(self._("I love thee, {}.").format(self.player.name))
 
