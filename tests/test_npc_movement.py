@@ -35,9 +35,9 @@ NES_TOWNS = {
     'TantegelThroneRoom': ((6, 10), (10, 10)),
     'TantegelCourtyard': ((7, 7), (30, 30)),
     'Brecconary': ((8, 10), (30, 30)),
-    'Garinham': ((0, 9), (20, 20)),
+    'Garinham': ((1, 9), (20, 20)),
     'Kol': ((8, 10), (24, 24)),
-    'Cantlin': ((8, 0), (30, 30)),
+    'Cantlin': ((8, 1), (30, 30)),
     'Rimuldar': ((8, 8), (30, 30)),
 }
 ROUNDS = 1000
