@@ -8,18 +8,7 @@ from src.maps_functions import warp_line, get_center_point
 
 
 class TestWarpLine(unittest.TestCase):
-
-    def test_horizontal_line(self):
-        result = warp_line((0, 5), (3, 5))
-        self.assertEqual(result, [(0, 5), (1, 5), (2, 5), (3, 5)])
-
-    def test_vertical_line(self):
-        result = warp_line((5, 0), (5, 3))
-        self.assertEqual(result, [(5, 0), (5, 1), (5, 2), (5, 3)])
-
-    def test_single_point(self):
-        result = warp_line((2, 2), (2, 2))
-        self.assertEqual(result, [(2, 2)])
+    """More warp_line cases; the basic ones are in test_maps_functions.py."""
 
     def test_horizontal_two_points(self):
         result = warp_line((0, 0), (1, 0))
@@ -29,37 +18,10 @@ class TestWarpLine(unittest.TestCase):
         result = warp_line((0, 0), (0, 1))
         self.assertEqual(result, [(0, 0), (0, 1)])
 
-    def test_horizontal_includes_endpoints(self):
-        result = warp_line((2, 7), (5, 7))
-        self.assertIn((2, 7), result)
-        self.assertIn((5, 7), result)
-
     def test_vertical_includes_endpoints(self):
         result = warp_line((3, 1), (3, 4))
         self.assertIn((3, 1), result)
         self.assertIn((3, 4), result)
-
-    def test_horizontal_correct_length(self):
-        result = warp_line((0, 0), (4, 0))
-        self.assertEqual(len(result), 5)
-
-    def test_vertical_correct_length(self):
-        result = warp_line((0, 0), (0, 4))
-        self.assertEqual(len(result), 5)
-
-    def test_diagonal_raises_assertion_error(self):
-        with self.assertRaises(AssertionError):
-            warp_line((0, 0), (3, 4))
-
-    def test_horizontal_y_is_constant(self):
-        result = warp_line((0, 7), (5, 7))
-        for pt in result:
-            self.assertEqual(pt[1], 7)
-
-    def test_vertical_x_is_constant(self):
-        result = warp_line((3, 0), (3, 5))
-        for pt in result:
-            self.assertEqual(pt[0], 3)
 
     def test_result_is_list(self):
         result = warp_line((0, 0), (3, 0))
