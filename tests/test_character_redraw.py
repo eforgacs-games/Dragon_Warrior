@@ -19,6 +19,7 @@ from src.direction import Direction
 from src.drawer import MapDrawingGame
 from src.game import Game
 from src.game_functions import set_character_position
+from src.maps import map_lookup
 
 FRAMES = 60  # characters change animation frame every 16 frames (NES CharLeftRight)
 
@@ -226,6 +227,21 @@ class TestCharacterRedraw(TestCase):
                 self.assertEqual([], walk_hero_and_find_ghosts(game, [(K_RIGHT, 3), (K_UP, 1), (K_DOWN, 1),
                                                                       (K_LEFT, 3)]))
                 self.assertEqual(start, (game.player.row, game.player.column))
+
+    def test_the_hero_leaves_no_trail_crossing_onto_another_tile_type(self):
+        # A step ends on its last moving frame (#237), so on the next frame only the tile type the hero stands on was
+        # redrawn. Where his last frame overlapped a block of another type (grass into the trees north-west of
+        # Tantegel), that block kept a row of his feet, which then scrolled with the map.
+        for scale in (1, 2):
+            with self.subTest(scale=scale):
+                game = make_game('Alefgard', scale)
+                game.game_state.config['NO_BATTLES'] = True
+                game.change_map(map_lookup['Alefgard'](game.config), destination_coordinates=(50, 44),
+                                direction=Direction.UP.value)
+                layout = game.current_map.layout
+                self.assertEqual(['GRASS', 'TREES', 'TREES', 'TREES', 'TREES', 'TREES', 'GRASS'],
+                                 [game.current_map.get_tile_by_value(layout[row][44]) for row in range(50, 43, -1)])
+                self.assertEqual([], walk_hero_and_find_ghosts(game, [(K_UP, 6)]))
 
     def test_every_block_has_only_the_map_tile(self):
         # Each NPC also got its "underlying" tile (BRICK, or a per-map override) on top of the map's own
