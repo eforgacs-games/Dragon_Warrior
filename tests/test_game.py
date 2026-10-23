@@ -459,7 +459,8 @@ class TestGame(TestCase):
 
     def test_death_in_battle(self):
         command_window, drawer, show_text = self.die(in_battle=True)
-        command_window.assert_called_once_with(True)
+        # NES PlayerHasDied: every command removed the command window (PlyrFight LE5FE), and it isn't drawn again
+        command_window.assert_not_called()
         drawer.draw_all_tiles_in_current_map.assert_not_called()
         self.assertFalse(self.game.battle_ctrl.launch_battle)
         show_text.assert_called_once_with("Thou art dead.", disable_sound=True, advance_keys=A_OR_START_KEYS)
