@@ -7,7 +7,7 @@ from pygame.event import Event
 
 from src.config.test_config import test_config
 from src.waiting import NES_FPS, check_for_quit, quit_if_requested, reset_game_speed, wait, wait_frames, wait_until
-from tests.helpers import new_game
+from tests.helpers import fake_game_clock, new_game
 
 
 class TestWait(TestCase):
@@ -28,11 +28,10 @@ class TestWait(TestCase):
         self.addCleanup(quit_patch.stop)
 
     def test_returns_after_the_given_time(self):
-        start = pygame.time.get_ticks()
+        clock = fake_game_clock(1000)
+        self.addCleanup(patch.stopall)
         wait(60)
-        elapsed = pygame.time.get_ticks() - start
-        self.assertGreaterEqual(elapsed, 60)
-        self.assertLess(elapsed, 500)
+        self.assertEqual(1060, clock.get_ticks())
 
     def test_wait_frames_converts_nes_frames(self):
         with patch('src.waiting.wait') as mock_wait:
