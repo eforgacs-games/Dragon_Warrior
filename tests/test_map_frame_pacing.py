@@ -5,11 +5,12 @@ The map counts frames (a step is 16, as on the NES) while the dialogs, effects a
 so walking keeps up with everything else even when a draw takes longer than 1/(60 N) of a second.
 """
 import os
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
-from src.cursor import DIALOG_ARROW_BLINK_FRAMES, dialog_arrow_visible
+from src.cursor import TXT_WAIT_START_FRAME, DialogArrowBlink, dialog_arrow_visible_on_frame
 from src.game import STEP_SYNC_FRAMES, Game
-from src.waiting import NES_FPS, FramePacer, game_ticks, set_game_speed
+from src.menu import CommandMenu
+from src.waiting import NES_FPS, FramePacer, set_game_speed
 from tests.test_game_speed import GameSpeedTestCase
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
@@ -19,39 +20,62 @@ MAX_FRAMES_PER_DRAW = STEP_SYNC_FRAMES // 2
 
 
 class TestDialogArrowBlink(GameSpeedTestCase):
+    """Bank01 DoWait / TxtWaitAnim: FrameCounter is set to $10, then the arrow is on while FrameCounter AND $1F is $10
+    or more: 16 frames on, 16 off, starting on. It used to toggle every 530 real ms (a USEREVENT timer), at any speed."""
 
-    def real_ms_until_the_arrow_changes(self) -> float:
-        start = dialog_arrow_visible()
-        start_real = self.clock.now
-        while dialog_arrow_visible() == start:
+    def blink(self) -> list[bool]:
+        """Whether the arrow is on, every real millisecond for 2 real seconds of one wait."""
+        arrow = DialogArrowBlink()
+        states = []
+        for _ in range(2000):
+            states.append(arrow.visible())
             self.clock.now += 1
-        return self.clock.now - start_real
+        return states
+
+    @staticmethod
+    def runs(states: list[bool]) -> list[tuple[bool, int]]:
+        """(state, real ms) for each run of the same state, the last (cut off) one left out."""
+        result: list[tuple[bool, int]] = []
+        for state in states:
+            if result and result[-1][0] == state:
+                result[-1] = (state, result[-1][1] + 1)
+            else:
+                result.append((state, 1))
+        return result[:-1]
+
+    def test_16_frames_on_16_off_starting_on(self):
+        runs = self.runs(self.blink())
+        self.assertTrue(runs[0][0])
+        for state, length in runs:
+            self.assertAlmostEqual(16 * 1000 / NES_FPS, length, delta=1)
 
     def test_blink_period_scales_with_the_game_speed(self):
-        # Like the selection cursors (BlinkingCursor), not the 530 ms real-time USEREVENT timer it used to be
-        half_period_ms = DIALOG_ARROW_BLINK_FRAMES * 1000 / NES_FPS
         for speed in (1, 2, 4, 8):
             with self.subTest(speed=speed):
                 set_game_speed(speed)
-                self.real_ms_until_the_arrow_changes()  # line up with a change
-                for _ in range(3):
-                    self.assertAlmostEqual(half_period_ms / speed, self.real_ms_until_the_arrow_changes(),
-                                           delta=1)
+                runs = self.runs(self.blink())
+                self.assertTrue(runs[0][0])
+                for _, length in runs:
+                    self.assertAlmostEqual(16 * 1000 / NES_FPS / speed, length, delta=1)
 
-    def test_on_and_off_for_the_same_number_of_frames(self):
-        frame_ms = 1000 / NES_FPS
-        self.assertTrue(dialog_arrow_visible(0))
-        self.assertTrue(dialog_arrow_visible(int((DIALOG_ARROW_BLINK_FRAMES - 1) * frame_ms)))
-        self.assertFalse(dialog_arrow_visible(int(DIALOG_ARROW_BLINK_FRAMES * frame_ms) + 1))
-        self.assertFalse(dialog_arrow_visible(int((2 * DIALOG_ARROW_BLINK_FRAMES - 1) * frame_ms)))
-        self.assertTrue(dialog_arrow_visible(int(2 * DIALOG_ARROW_BLINK_FRAMES * frame_ms) + 1))
+    def test_on_and_off_frames(self):
+        self.assertEqual([True] * 16 + [False] * 16 + [True],
+                         [dialog_arrow_visible_on_frame(TXT_WAIT_START_FRAME + frame) for frame in range(33)])
 
-    def test_the_game_reads_the_arrow_off_the_game_clock(self):
+    def test_each_wait_starts_with_the_arrow_on(self):
         set_game_speed(8)
-        game = MagicMock()
-        for _ in range(100):
-            self.clock.now += 7
-            self.assertEqual(dialog_arrow_visible(game_ticks()), Game.show_arrow.fget(game))
+        menu = MagicMock()
+        menu.read_dialog_events = MagicMock(side_effect=[False] * 5 + [True])
+        drawn = []
+        menu.draw_dialog_arrow = drawn.append
+        for _ in range(3):
+            self.clock.now += 37  # the arrow of a wait that started earlier could be off by now
+            menu.read_dialog_events.side_effect = [False] * 5 + [True]
+            drawn.clear()
+            with patch('src.menu.is_any_key_held', return_value=False), patch('pygame.event.clear'):
+                CommandMenu.wait_for_dialog_key(menu, shows_arrow=True, skip_text=False, temp_text_start=None,
+                                                disable_sound=True)
+            self.assertTrue(drawn[0])
 
 
 class TestMapFramePacing(GameSpeedTestCase):
