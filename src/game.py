@@ -19,7 +19,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from data.text.intro_lookup_table import ControlInfo
 from src import maps
 from src.adventure_log import AdventureLogOverlay, adventure_log_overlay_texts
-from src.battle import Battle
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
@@ -856,39 +855,6 @@ class Game:
                 self.battle_ctrl.run_battle(enemies_in_current_zone)
             self.battle_ctrl.battle_menu_row = 0
             self.battle_ctrl.battle_menu_column = 0
-
-    def battle(self, enemies_in_current_zone):
-        self.battle_ctrl.run_battle(enemies_in_current_zone)
-
-    def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
-        return self.battle_ctrl.handle_battle_prompts(run_away, current_battle)
-
-    def enemy_run_away(self, current_battle, enemy):
-        return self.battle_ctrl.enemy_run_away(current_battle, enemy)
-
-    def fight(self, current_battle):
-        self.battle_ctrl.fight(current_battle)
-
-    def hero_attack(self, current_battle):
-        self.battle_ctrl.hero_attack(current_battle)
-
-    def enemy_move(self, current_battle: Battle) -> bool:
-        return self.battle_ctrl.enemy_move(current_battle)
-
-    def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
-        self.battle_ctrl.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
-
-    def increment_and_execute_enemy_pattern(self, current_battle, current_index, enemy):
-        self.battle_ctrl.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
-
-    def enemy_attack(self, current_battle):
-        self.battle_ctrl.enemy_attack(current_battle)
-
-    def execute_enemy_attack(self, current_battle):
-        self.battle_ctrl.execute_enemy_attack(current_battle)
-
-    def enemy_attack_message(self, enemy):
-        self.battle_ctrl.enemy_attack_message(enemy)
 
     def receive_damage(self, attack_damage):
         # God mode or invulnerable: take no damage
