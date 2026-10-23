@@ -317,6 +317,8 @@ class TestHandleBattles(unittest.TestCase):
         with patch('src.encounters.random.randint', return_value=0) as randint, \
                 patch.object(self.game.battle_ctrl, 'run_battle') as run_battle:
             self.game.handle_battles()
+            while self.game.hill_pause_frames:  # on a hill, the roll comes after the pause
+                self.game.hill_pause_frame()
         return randint, run_battle
 
     def test_overworld_fight_uses_the_new_block(self):
