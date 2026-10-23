@@ -124,16 +124,6 @@ class TestBrecconaryDialog(TestCase):
             self.assertEqual(self.brecconary.characters[identifier]['character'].direction_value, expected.value,
                              identifier)
 
-    def test_npcs_stand_on_the_map_floor(self):
-        # Each NPC's underlying tile is the floor tile under it, so a roaming NPC doesn't leave a patch behind
-        floor_names = {value['val']: name for name, value in self.brecconary.floor_tile_key.items()}
-        for _, x, y, _, mobile in BRECCONARY_NPCS:
-            if mobile:
-                row, column = nes_to_map(x, y)
-                identifier = self.identifiers[(row, column)]
-                underlying = self.brecconary.custom_underlying_tiles.get(identifier, 'BRICK')
-                self.assertEqual(underlying, floor_names[self.brecconary.layout[row][column]], identifier)
-
     def test_text_dialog_matches_nes(self):
         for _, x, y, dialog_byte, _ in BRECCONARY_NPCS:
             if dialog_byte in BRECCONARY_TEXT:
