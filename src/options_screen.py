@@ -89,6 +89,10 @@ DEFAULT_MENU_SPEED = MENU_SPEED_NORMAL
 # or STAIRS when one applies (Game.smart_command). A save without the setting loads as OFF.
 DEFAULT_SMART_A = False
 
+# MESSAGE_LOG (base_config): on by default, the MESSAGE LOG key opens the log of the last messages
+# (src/message_log.py); off is the NES, which has none. A save without the setting loads as ON.
+DEFAULT_MESSAGE_LOG = True
+
 
 # ENCOUNTERS, EXP/GOLD and STATUS WINDOW's values
 ENCOUNTERS_NES, ENCOUNTERS_HALF, ENCOUNTERS_OFF = ENCOUNTER_SETTINGS = ('NES', 'Half', 'Off')
@@ -154,7 +158,10 @@ SWITCHES = (
     Switch('bag_size', 'BAG_SIZE', BAG_SIZE_SAVE_KEY, BAG_SIZES, DEFAULT_BAG_SIZE),
     # SMART A (#404): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, instead of opening COMMAND
     # (Game.smart_command); off, the NES and the default, A always opens COMMAND
-    Switch('smart_a', 'SMART_A', 'SmartA', (False, True), False),
+    Switch('smart_a', 'SMART_A', 'SmartA', (False, True), DEFAULT_SMART_A),
+    # MESSAGE LOG (#405): the MESSAGE LOG key (L) shows the last messages on the map (src/message_log.py). On by
+    # default, since it only shows information when the key is pressed; off is the NES
+    Switch('message_log', 'MESSAGE_LOG', 'MessageLog', (False, True), DEFAULT_MESSAGE_LOG),
 )
 
 # AUTOSAVE (base_config, src/autosave.py): OFF by default, which is the NES (it only saves with King Lorik); the MODERN
@@ -188,7 +195,8 @@ class Options:
     shop_preview: bool = True
     quest_journal: str = JOURNAL_GOALS
     bag_size: int = DEFAULT_BAG_SIZE
-    smart_a: bool = False
+    smart_a: bool = DEFAULT_SMART_A
+    message_log: bool = DEFAULT_MESSAGE_LOG
     autosave: bool | None = None  # None: the config's AUTOSAVE is kept
 
 
@@ -322,8 +330,8 @@ def apply_options(config: dict, options: Options) -> None:
     and the menu clock reads MENU_SPEED (src/waiting.py menu_speed). Each of the SWITCHES goes into its config key,
     which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once); the
     shops read SHOP_PREVIEW whenever their list opens, Q reads QUEST_JOURNAL each time it's pressed, Game.map_frame
-    reads AUTOSAVE every frame, the inventory checks read BAG_SIZE for every item added, and Game.handle_a_button reads
-    SMART_A for every press."""
+    reads AUTOSAVE every frame, the inventory checks read BAG_SIZE for every item added, and Game.handle_a_button and
+    Game.handle_message_log_key read SMART_A and MESSAGE_LOG for every press."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way
