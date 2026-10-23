@@ -334,7 +334,7 @@ class TestGame(TestCase):
         self.assertEqual(self.use_rainbow_drop(), [f'{self.game.player.name} held the Rainbow Drop toward the sky.'])
         self.assertTrue(self.game.story_flags.rainbow_bridge_built)
         self.assertEqual(self.bridge_tile(), 'BRIDGE')
-        self.assertFalse(self.game.is_impassable(self.bridge_tile()))
+        self.assertFalse(self.game.movement.is_impassable(self.bridge_tile()))
         # NES ChkDrop never removes the Rainbow Drop
         self.assertEqual(self.game.player.inventory, ['Rainbow Drop'])
 
@@ -841,16 +841,16 @@ class TestGame(TestCase):
 
     def test_move_and_handle_sides_collision(self):
         self.game.player.rect.x = -1
-        self.game.move_and_handle_sides_collision(-1, 1)
+        self.game.movement.move_and_handle_sides_collision(-1, 1)
         self.assertEqual(0, self.game.player.rect.x)
         self.game.player.rect.y = -1
-        self.game.move_and_handle_sides_collision(1, -1)
+        self.game.movement.move_and_handle_sides_collision(1, -1)
         self.assertEqual(0, self.game.player.rect.y)
         self.game.player.rect.x = 65
-        self.game.move_and_handle_sides_collision(65, 1)
+        self.game.movement.move_and_handle_sides_collision(65, 1)
         self.assertEqual(64, self.game.player.rect.x)
         self.game.player.rect.y = 65
-        self.game.move_and_handle_sides_collision(1, 65)
+        self.game.movement.move_and_handle_sides_collision(1, 65)
         self.assertEqual(64, self.game.player.rect.y)
 
     def test_move_player_up(self):

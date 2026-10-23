@@ -22,6 +22,7 @@ from src.npc_movement import npc_may_step_onto, step
 from src.npc_schedule import NPCSchedule, POP_UP_FRAME
 from src.player.player import Player
 from src.sound import Sound
+from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
 
 
@@ -59,16 +60,6 @@ class MovementGame(Protocol):
     world_frozen: bool
 
     def count_step(self) -> None: ...
-
-    def check_next_tile(self, character) -> None: ...
-
-    def character_in_path(self, character) -> bool: ...
-
-    def npc_crosses_cover_boundary(self, character) -> bool: ...
-
-    def is_impassable(self, tile) -> bool: ...
-
-    def move_and_handle_sides_collision(self, next_pos_x: int, next_pos_y: int) -> tuple: ...
 
 
 class MovementController:
@@ -244,7 +235,7 @@ class MovementController:
         :return: None
         """
         curr_cam_pos_x, curr_cam_pos_y = next_cam_pos_x, next_cam_pos_y = self.camera.pos
-        self.game.check_next_tile(character)
+        self.check_next_tile(character)
         character.next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
                                                                            character.direction_value,
                                                                            self.current_map)
@@ -258,9 +249,9 @@ class MovementController:
                 # NES UpdateNPCs1: NPCs keep to the NES map and walk on fewer tiles, see src/npc_movement.py
                 blocked = not npc_may_step_onto(self.current_map, destination)
             else:
-                blocked = self.game.is_impassable(character.next_tile_id)
-            if blocked or self.game.character_in_path(character) or (
-                    character is not self.player and self.game.npc_crosses_cover_boundary(character)):
+                blocked = self.is_impassable(character.next_tile_id)
+            if blocked or self.character_in_path(character) or (
+                    character is not self.player and self.npc_crosses_cover_boundary(character)):
                 self.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
                 delta_x = delta_y = 0
             else:
@@ -278,12 +269,76 @@ class MovementController:
                 next_cam_pos_y = curr_cam_pos_y + delta_y
                 # character.row += -delta_y // 2
         if character.identifier == 'HERO' and self.game_state.enable_movement:
-            self.camera.pos = self.game.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y)
+            self.camera.pos = self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y)
 
     @staticmethod
     def finish_step(character: Player | RoamingCharacter) -> None:
         character.is_moving, character.next_tile_checked = False, False
         character.step_origin = character.step_destination = None
+
+    def check_next_tile(self, character: Player | RoamingCharacter) -> None:
+        if not character.next_tile_checked or not character.next_tile_id:
+            character.next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
+                                                                               character.direction_value,
+                                                                               self.current_map)
+        character.next_next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
+                                                                                character.direction_value,
+                                                                                self.current_map, offset=2)
+
+    def character_in_path(self, character: Player | RoamingCharacter | FixedCharacter) -> bool:
+        """Whether the tile in front of a character is taken by someone else: where they stand, or the origin and
+        destination of a step they're taking (NES: an NPC can't move onto the player's position or next position, or
+        onto another NPC's)."""
+        next_coordinates = step(character.row, character.column, character.direction_value)
+        others = [*self.current_map.fixed_characters, *self.current_map.roaming_characters, self.player]
+        for other in others:
+            if other is character:
+                continue
+            if next_coordinates in ((other.row, other.column), other.step_origin, other.step_destination):
+                return True
+        return False
+
+    def npc_crosses_cover_boundary(self, character: Player | RoamingCharacter) -> bool:
+        """NES $B839-$B84F: an NPC can't step into or out of a covered area."""
+        next_row, next_column = step(character.row, character.column, character.direction_value)
+        return self.current_map.crosses_cover_boundary(character.row, character.column, next_row, next_column)
+
+    def is_impassable(self, tile: str | None) -> bool:
+        """
+        Check if a tile is impassable (a tile that blocks the player from moving).
+        :param tile: Tile to be checked for impassibility.
+        :return: bool: A boolean value stating whether the tile is impassable.
+        """
+        return tile in self.current_map.impassable_tiles
+
+    def move_and_handle_sides_collision(self, next_pos_x: int, next_pos_y: int) -> tuple:
+        """
+        Move while handling collision with the sides of the map (for the player).
+        :type next_pos_x: int
+        :type next_pos_y: int
+        :param next_pos_x: Next x position (in terms of tile size).
+        :param next_pos_y: Next y position (in terms of tile size).
+        :return: tuple: The x, y coordinates (in terms of tile size) of the next position of the player.
+        """
+        max_x_bound, max_y_bound = self.current_map.width - self.tile_size, self.current_map.height - self.tile_size
+        min_bound = 0
+        if self.player.rect.x < min_bound:
+            self.player.rect.x = min_bound
+            self.bump(self.player)
+            next_pos_x += -self.speed
+        elif self.player.rect.x > max_x_bound:
+            self.player.rect.x = max_x_bound
+            self.bump(self.player)
+            next_pos_x += self.speed
+        elif self.player.rect.y < min_bound:
+            self.player.rect.y = min_bound
+            self.bump(self.player)
+            next_pos_y -= self.speed
+        elif self.player.rect.y > max_y_bound:
+            self.player.rect.y = max_y_bound
+            self.bump(self.player)
+            next_pos_y += self.speed
+        return next_pos_x, next_pos_y
 
     def do_sprites(self) -> None:
         """One frame on the map, after the hero's part: NMI counts it (INC FrameCounter), then NES DoSprites (Bank00)

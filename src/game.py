@@ -44,8 +44,6 @@ from src.save_file import SaveFile
 from src.paths import data_path
 from src.player.player import Player
 from src.sound import Sound
-from src.sprites.fixed_character import FixedCharacter
-from src.sprites.roaming_character import RoamingCharacter
 from src.battle_controller import BattleController, BattleOutcome
 from src.ending import Ending
 from src.story_flags import StoryFlags
@@ -895,70 +893,6 @@ class Game:
             menu_to_unlaunch.window_drop_up_effect(*COMMAND_WINDOW)
             menu_to_unlaunch.menu.disable()
         self.drawer.draw_all_tiles_in_current_map(self.current_map, self.drawer.background)
-
-    def check_next_tile(self, character: Player | RoamingCharacter) -> None:
-        if not character.next_tile_checked or not character.next_tile_id:
-            character.next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
-                                                                               character.direction_value,
-                                                                               self.current_map)
-        character.next_next_tile_id = self.calculation.get_next_tile_identifier(character.column, character.row,
-                                                                                character.direction_value,
-                                                                                self.current_map, offset=2)
-
-    def character_in_path(self, character: Player | RoamingCharacter | FixedCharacter) -> bool:
-        """Whether the tile in front of a character is taken by someone else: where they stand, or the origin and
-        destination of a step they're taking (NES: an NPC can't move onto the player's position or next position, or
-        onto another NPC's)."""
-        next_coordinates = step(character.row, character.column, character.direction_value)
-        others = [*self.current_map.fixed_characters, *self.current_map.roaming_characters, self.player]
-        for other in others:
-            if other is character:
-                continue
-            if next_coordinates in ((other.row, other.column), other.step_origin, other.step_destination):
-                return True
-        return False
-
-    def npc_crosses_cover_boundary(self, character: Player | RoamingCharacter) -> bool:
-        """NES $B839-$B84F: an NPC can't step into or out of a covered area."""
-        next_row, next_column = step(character.row, character.column, character.direction_value)
-        return self.current_map.crosses_cover_boundary(character.row, character.column, next_row, next_column)
-
-    def is_impassable(self, tile: str) -> bool:
-        """
-        Check if a tile is impassable (a tile that blocks the player from moving).
-        :param tile: Tile to be checked for impassibility.
-        :return: bool: A boolean value stating whether the tile is impassable.
-        """
-        return tile in self.current_map.impassable_tiles
-
-    def move_and_handle_sides_collision(self, next_pos_x: int, next_pos_y: int) -> tuple:
-        """
-        Move while handling collision with the sides of the map (for the player).
-        :type next_pos_x: int
-        :type next_pos_y: int
-        :param next_pos_x: Next x position (in terms of tile size).
-        :param next_pos_y: Next y position (in terms of tile size).
-        :return: tuple: The x, y coordinates (in terms of tile size) of the next position of the player.
-        """
-        max_x_bound, max_y_bound = self.current_map.width - self.tile_size, self.current_map.height - self.tile_size
-        min_bound = 0
-        if self.player.rect.x < min_bound:
-            self.player.rect.x = min_bound
-            self.movement.bump(self.player)
-            next_pos_x += -self.movement.speed
-        elif self.player.rect.x > max_x_bound:
-            self.player.rect.x = max_x_bound
-            self.movement.bump(self.player)
-            next_pos_x += self.movement.speed
-        elif self.player.rect.y < min_bound:
-            self.player.rect.y = min_bound
-            self.movement.bump(self.player)
-            next_pos_y -= self.movement.speed
-        elif self.player.rect.y > max_y_bound:
-            self.player.rect.y = max_y_bound
-            self.movement.bump(self.player)
-            next_pos_y += self.movement.speed
-        return next_pos_x, next_pos_y
 
     def load_game(self, save_file: dict, direction: int | None = None) -> None:
         """Continue a saved game (see CommandMenu.save for what is kept).
