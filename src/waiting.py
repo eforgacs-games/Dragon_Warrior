@@ -19,7 +19,9 @@ the same way, so they also work everywhere.
 
 It is also where a virtual joypad (src/virtual_joypad.py, which auto-grind drives) plugs into the game's input: every
 read of the keys goes through here or calls ``poll_virtual_joypad`` / ``with_virtual_keys`` first, so the joypad can
-post its button presses and report its held keys from inside whichever loop is reading input (see those two).
+post its button presses and report its held keys from inside whichever loop is reading input (see those two). A
+gamepad (src/gamepad.py) plugs in at the same two places, polled just before the virtual joypad, so its presses reach
+the game, and auto-grind, as the player's own key presses.
 
 This module imports nothing from ``src`` but src/zoom.py (which imports nothing from ``src``), so any module can use it
 without an import cycle.
@@ -67,6 +69,27 @@ class VirtualJoypadHook(Protocol):
 _virtual_joypad: VirtualJoypadHook | None = None  # the connected virtual joypad, if one is driving the game
 
 
+class GamepadHook(Protocol):
+    """What this module needs of a gamepad (src/gamepad.py Gamepad)."""
+    held: set[int]
+
+    def poll(self) -> None: ...
+
+
+_gamepad: GamepadHook | None = None  # the player's gamepad, if the game has connected one (src/gamepad.py)
+
+
+def set_gamepad(gamepad: GamepadHook | None) -> None:
+    """Connect the player's gamepad (or None to disconnect it): it is polled on every read of input, before the
+    virtual joypad, so the keys it presses look like the player's to auto-grind."""
+    global _gamepad
+    _gamepad = gamepad
+
+
+def gamepad() -> GamepadHook | None:
+    return _gamepad
+
+
 def set_virtual_joypad(joypad: VirtualJoypadHook | None) -> None:
     """Connect a virtual joypad (or None to disconnect it). Only a connected one is polled, so there is nothing to do
     on any input read while none is."""
@@ -80,13 +103,16 @@ def virtual_joypad() -> VirtualJoypadHook | None:
 
 def poll_virtual_joypad(context: str = WINDOW_CONTEXT) -> None:
     """Let the connected virtual joypad post the presses that are due on the game clock, and look at the keys the
-    player pressed, before the caller reads the event queue. ``context`` says who is reading."""
+    player pressed, before the caller reads the event queue. ``context`` says who is reading. The gamepad, if one is
+    connected, posts its presses first, so the virtual joypad sees them as the player's."""
+    if _gamepad is not None:
+        _gamepad.poll()
     if _virtual_joypad is not None:
         _virtual_joypad.poll(context)
 
 
 class _WithVirtualKeys:
-    """``key.get_pressed()``, with the virtual joypad's held keys down as well."""
+    """``key.get_pressed()``, with the gamepad's and the virtual joypad's held keys down as well."""
 
     def __init__(self, real: Any, held: frozenset[int]) -> None:
         self.real = real
@@ -97,16 +123,20 @@ class _WithVirtualKeys:
 
 
 def with_virtual_keys(real: Any, context: str = WINDOW_CONTEXT) -> Any:
-    """``real`` (what ``key.get_pressed()`` returned) with the connected virtual joypad's held keys added, after
-    polling it. Without a virtual joypad, ``real`` itself. The callers still call ``key.get_pressed()`` themselves, so
-    the tests that patch it keep working."""
-    if _virtual_joypad is None:
+    """``real`` (what ``key.get_pressed()`` returned) with the keys the gamepad and the connected virtual joypad hold
+    added, after polling them. With neither holding a key, ``real`` itself. The callers still call
+    ``key.get_pressed()`` themselves, so the tests that patch it keep working."""
+    if _gamepad is None and _virtual_joypad is None:
         return real
-    _virtual_joypad.poll(context)
-    joypad = _virtual_joypad
-    if joypad is None or not joypad.held:
+    poll_virtual_joypad(context)
+    held: set[int] = set()
+    if _gamepad is not None:
+        held |= _gamepad.held
+    if _virtual_joypad is not None:
+        held |= _virtual_joypad.held
+    if not held:
         return real
-    return _WithVirtualKeys(real, frozenset(joypad.held))
+    return _WithVirtualKeys(real, frozenset(held))
 
 
 def game_speed() -> int:
