@@ -2,15 +2,15 @@ import random
 from functools import partial
 from typing import Callable
 
-from pygame import display, time, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect
+from pygame import display, time, Rect
 from pygame.event import get, pump
 
 from data.text.dialog import confirmation_prompt
 from src.calculation import Calculation
 from src.color import BLACK, window_color
-from src.common import WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
+from src.common import WHITE, Graphics, set_gettext_language
 from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACEABLE_ITEMS
-from src.cursor import BlinkingCursor
+from src.cursor import IN_A
 from src.direction import Direction
 from src.directories import Directories
 from src.items import INVENTORY_SLOTS, MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS, inventory_list
@@ -22,6 +22,7 @@ from src.windows import BUY_SELL_LAYOUT, WindowLayout, shop_inventory_layout
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_price, \
     inventory_is_full, pay_player, sell_price
+from src.selection import run_selection, stop_at_edges
 from src.sound import Sound
 from src.story_flags import StoryFlags
 from src.text import draw_text
@@ -986,41 +987,23 @@ class DialogLookup:
         x, y, width, height = window
         self.command_menu.window_drop_down_effect(x, y, width, height)
         window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
-        current_index = initial_index
-        # The NES cursor (src/cursor.py): visible when the window opens (WndInitSelect)
-        cursor = BlinkingCursor()
 
-        def draw(cursor_visible: bool) -> None:
+        def draw(index: int, cursor_visible: bool) -> None:
             draw_window()
             # The cursor goes in tile column 1, between the left border and the entry (cursor home X = 1)
-            self.command_menu.draw_window_cursor(x, y, 1, first_tile_row + 2 * current_index, cursor_visible)
+            self.command_menu.draw_window_cursor(x, y, 1, first_tile_row + 2 * index, cursor_visible)
             if not self.config['NO_BLIT']:
                 display.update(window_rect)
 
-        while True:
-            draw(cursor.visible())
-            for current_event in get():
-                quit_if_requested(current_event)
-                if current_event.type == KEYDOWN:
-                    if current_event.key in (K_DOWN, K_s) and current_index < number_of_entries - 1:
-                        current_index += 1
-                        cursor.restart()  # WndUpdateCrsrPos
-                    elif current_event.key in (K_UP, K_w) and current_index > 0:
-                        current_index -= 1
-                        cursor.restart()
-                    elif current_event.key in reject_keys:
-                        # WndBPressed: the arrow is drawn once more and stays on
-                        draw(True)
-                        # NES WindowSequence (Bank01): a selection window is removed once it's answered or cancelled
-                        self.command_menu.remove_window(window)
-                        return None
-                    elif current_event.key in accept_keys:
-                        # WndAPressed: the chosen entry's arrow is drawn once more and stays on
-                        draw(True)
-                        self.sound.play_sound(self.directories.menu_button_sfx)
-                        self.command_menu.remove_window(window)
-                        return current_index
-            pump()
+        # The NES cursor (src/cursor.py), visible when the window opens (WndInitSelect), stops at the first and last
+        # entries. A chooses, with the menu sound; B cancels, silently. Either way the arrow is drawn once more and
+        # stays on (WndAPressed, WndBPressed), and the window is removed once it's answered or cancelled (NES
+        # WindowSequence, Bank01).
+        answer = run_selection(draw, initial_index, move=stop_at_edges(number_of_entries),
+                               sound=lambda: self.sound.play_sound(self.directories.menu_button_sfx),
+                               sound_buttons=(IN_A,))
+        self.command_menu.remove_window(window)
+        return answer.entry if answer.accepted else None
 
     def draw_window_background(self, window: Window) -> None:
         """A blank window with a border, stretched to its size (Graphics.create_window border)."""
