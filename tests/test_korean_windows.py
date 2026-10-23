@@ -17,7 +17,7 @@ from src.game import Game
 from src.directories import Directories
 from src.options_overlay import OPTION_PAGES, OPTION_ROWS, OPTIONS_WINDOW, VALUE_COLUMN, options_layout
 from src.options_screen import MESSAGE_SPEED_OPTIONS, OptionsScreen, adventure_log_options
-from src.text import NESFont, set_font_by_ascii_chars
+from src.text import WRAP_LENGTH, NESFont, set_font_by_ascii_chars
 from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT
 
@@ -200,7 +200,7 @@ class TestKoreanOptionsScreen(KoreanTestCase):
                           ['조작', '프리셋', '커스텀', '페이지', '3/3', '게임 속도', '끄기 (NES)', '상태 저장',
                            '끄기 (NES)', '되감기', '끄기 (NES)', '자동 사냥', '끄기 (NES)', '사냥 멈춤', '빨간 HP',
                            '메뉴 속도', '보통', '치트', '끄기 (NES)', '달리기 버튼', '끄기 (NES)', '던전 지도',
-                           '끄기 (NES)']],
+                           '끄기 (NES)', '조작']],
                          [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(3)])
         config.update({row.config_key: row.values[1] for row in OPTION_ROWS})
         self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/3', '표시 속도', '보통', '대화 방식', '모던',
@@ -211,7 +211,7 @@ class TestKoreanOptionsScreen(KoreanTestCase):
                            '자동 저장', '켜기', '소지품', '16개'],
                           ['조작', '프리셋', '커스텀', '페이지', '3/3', '게임 속도', '켜기', '상태 저장', '켜기',
                            '되감기', '켜기', '자동 사냥', '켜기', '사냥 멈춤', 'HP 절반', '메뉴 속도', '게임 속도대로',
-                           '치트', '켜기', '달리기 버튼', '켜기', '던전 지도', '켜기']],
+                           '치트', '켜기', '달리기 버튼', '켜기', '던전 지도', '켜기', '조작']],
                          [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(3)])
 
     def test_a_translated_window_draws_every_line_in_one_font(self):
@@ -257,3 +257,44 @@ class TestKoreanOptionsScreen(KoreanTestCase):
         self.assertEqual(['Which Message', 'Speed Do You', 'Want To Use?', 'FAST', 'NORMAL', 'SLOW'],
                          self.texts(draw_text))
         self.assertEqual(['ADVENTURE LOG 2:ERDR'], list(adventure_log_options([(2, 'ERDRICK')]).labels))
+
+
+class TestKoreanControlsScreen(KoreanTestCase):
+
+    def layouts(self):
+        """The CONTROLS window scrolled to each place, and with each bottom line, in Korean."""
+        from src.controls import ACTIONS, current_controls
+        from src.controls_screen import CHANGED_TOO, NEEDS_A_KEY, VISIBLE_ROWS, Cell, controls_layout, screen_texts
+        layouts = [controls_layout(current_controls(), Cell(top, 0), top, '')
+                   for top in range(len(ACTIONS) + 2 - VISIBLE_ROWS)]
+        for hint in screen_texts():
+            translated = self.korean(hint)
+            if hint in (CHANGED_TOO, NEEDS_A_KEY):
+                longest = max((self.korean(action.label) for action in ACTIONS), key=len)
+                translated = translated.format(longest)
+            layouts.append(controls_layout(current_controls(), Cell(0, 0), 0, translated))
+        return layouts
+
+    def test_translated(self):
+        with patch('src.translated_window.draw_text') as draw_text:
+            draw_translated_window(self.game.screen, self.layouts()[0], (255, 255, 255), self.game.game_state.config,
+                                   self.korean, cursor_index=0)
+        texts = self.texts(draw_text)
+        self.assertEqual(['조작 설정', '키 1', '키 2', '패드', 'A 버튼'], texts[:5])
+
+    def test_text_fits(self):
+        # Each label ends before KEY 1's cursor, each cell before the next cell's cursor, and the rest (the reset
+        # row, the bottom line, the PAD cell) inside the right border
+        from src.controls_screen import CELL_CURSOR_COLUMNS, CONTROLS_WINDOW, HINT_ROW, RESET_LABEL
+        right_border = (CONTROLS_WINDOW.x + CONTROLS_WINDOW.width) * 2 - 1
+        font = set_font_by_ascii_chars(['조작'], 16, None, Directories(test_config))
+        for layout in self.layouts():
+            for text in layout.texts:
+                translated = self.korean(text.text)
+                width = font.size(translated)[0] / self.nes_tile
+                spans_the_row = text.row == HINT_ROW or text.text == RESET_LABEL
+                end = right_border if spans_the_row else next(
+                    (column for column in CELL_CURSOR_COLUMNS if column > text.column), right_border)
+                with self.subTest(text=translated):
+                    self.assertLessEqual(text.column + width, end)
+                    self.assertLessEqual(len(translated), WRAP_LENGTH)  # draw_text would wrap it

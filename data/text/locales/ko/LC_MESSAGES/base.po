@@ -2926,3 +2926,257 @@ msgstr "위쪽 버튼: 던전 지도"
 #: data/text/intro_lookup_table.py
 msgid "Dungeon map:"
 msgstr "던전 지도:"
+msgid "{}: A Button"
+msgstr "{}: A 버튼"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: B Button"
+msgstr "{}: B 버튼"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Start"
+msgstr "{}: 스타트 버튼"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Options"
+msgstr "{}: 설정"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Move"
+msgstr "{}: 이동"
+
+#: data/text/intro_lookup_table.py
+msgid "ARROWS"
+msgstr "화살표 키"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Smart A"
+msgstr "{}: 스마트 A"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Show Controls"
+msgstr "{}: 조작 방법 보기"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Auto-Battle"
+msgstr "{}: 자동 전투"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Invulnerability"
+msgstr "{}: 무적 모드"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Fullscreen"
+msgstr "{}: 전체 화면"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Game Speed"
+msgstr "{}: 게임 속도 조절"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Auto-grind"
+msgstr "{}: 자동 사냥"
+
+#: src/controls_screen.py
+msgid "KEY 1"
+msgstr "키 1"
+
+#: src/controls_screen.py
+msgid "KEY 2"
+msgstr "키 2"
+
+#: src/controls_screen.py
+msgid "PAD"
+msgstr "패드"
+
+#: src/controls_screen.py
+msgid "RESET TO DEFAULTS"
+msgstr "기본값으로 초기화"
+
+#: src/controls_screen.py
+msgid "A:SET  SELECT:CLEAR  B:BACK"
+msgstr "A:변경 SELECT:지우기 B:뒤로"
+
+#: src/controls_screen.py
+msgid "PRESS A KEY"
+msgstr "키를 누르세요"
+
+#: src/controls_screen.py
+msgid "PRESS A PAD BUTTON"
+msgstr "패드 버튼을 누르세요"
+
+#: src/controls_screen.py
+msgid "NO CONTROLLER"
+msgstr "컨트롤러 없음"
+
+#: src/controls_screen.py
+msgid "{}: CHANGED TOO"
+msgstr "{}: 함께 바뀜"
+
+#: src/controls_screen.py
+msgid "{}: NEEDS A KEY"
+msgstr "{}: 키가 필요함"
+
+#: src/controls_screen.py
+msgid "DEFAULTS RESTORED"
+msgstr "기본값으로 되돌림"
+
+#: src/controls.py
+msgid "A BUTTON"
+msgstr "A 버튼"
+
+#: src/controls.py
+msgid "B BUTTON"
+msgstr "B 버튼"
+
+#: src/controls.py
+msgid "START"
+msgstr "스타트"
+
+#: src/controls.py
+msgid "SELECT"
+msgstr "셀렉트"
+
+#: src/controls.py
+msgid "UP"
+msgstr "위"
+
+#: src/controls.py
+msgid "DOWN"
+msgstr "아래"
+
+#: src/controls.py
+msgid "LEFT"
+msgstr "왼쪽"
+
+#: src/controls.py
+msgid "RIGHT"
+msgstr "오른쪽"
+
+#: src/controls.py
+msgid "SMART A"
+msgstr "스마트 A"
+
+#: src/controls.py
+msgid "HELP"
+msgstr "도움말"
+
+#: src/controls.py
+msgid "AUTO GRIND"
+msgstr "자동 사냥"
+
+#: src/controls.py
+msgid "AUTO FIGHT"
+msgstr "자동 전투"
+
+#: src/controls.py
+msgid "INVINCIBLE"
+msgstr "무적 모드"
+
+#: src/controls.py
+msgid "FULLSCREEN"
+msgstr "전체 화면"
+
+#: src/controls.py
+msgid "SPEED 1X"
+msgstr "속도 1X"
+
+#: src/controls.py
+msgid "SPEED 2X"
+msgstr "속도 2X"
+
+#: src/controls.py
+msgid "SPEED 4X"
+msgstr "속도 4X"
+
+#: src/controls.py
+msgid "SPEED 8X"
+msgstr "속도 8X"
+
+#: src/controls.py
+msgid "SPEED 16X"
+msgstr "속도 16X"
+
+#: src/controls.py
+msgid "NEXT SPEED"
+msgstr "다음 속도"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Save state"
+msgstr "{}: 상태 저장"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Load state"
+msgstr "{}: 상태 불러오기"
+
+#: src/controls.py
+msgid "LOAD 1"
+msgstr "불러오기 1"
+
+#: src/controls.py
+msgid "LOAD 2"
+msgstr "불러오기 2"
+
+#: src/controls.py
+msgid "LOAD 3"
+msgstr "불러오기 3"
+
+#: src/controls.py
+msgid "SAVE 1"
+msgstr "저장 1"
+
+#: src/controls.py
+msgid "SAVE 2"
+msgstr "저장 2"
+
+#: src/controls.py
+msgid "SAVE 3"
+msgstr "저장 3"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Rewind"
+msgstr "{}: 되감기"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: A"
+msgstr "{}: A"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: B"
+msgstr "{}: B"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Select"
+msgstr "{}: 셀렉트"
+
+#: data/text/intro_lookup_table.py
+msgid "{}/Stick: Move"
+msgstr "{}/스틱: 이동"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Speed"
+msgstr "{}: 게임 속도"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Load state 1"
+msgstr "{}: 상태 1 불러오기"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Save state 1"
+msgstr "{}: 상태 1 저장"
+
+#: data/text/intro_lookup_table.py
+msgid "{} (hold): Rewind"
+msgstr "{} (누르고 있기): 되감기"
+
+#: src/controls.py
+msgid "JOURNAL"
+msgstr "모험 일지"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Quest Journal"
+msgstr "{}: 모험 일지"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Dungeon map"
+msgstr "{}: 던전 지도"

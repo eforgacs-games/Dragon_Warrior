@@ -169,6 +169,7 @@ CONTROLS (off, which is the NES, their keys do nothing):
 - CHEATS: F4 auto-battle and F9 invulnerability (off in both presets)
 - RUN BUTTON: hold J (B) while walking on the map to walk twice as fast; the fights, the NPCs and the timers keep
   their own pace
+- CONTROLS: K opens the CONTROLS screen (see below)
 
 MODERN leaves ENCOUNTERS and EXP/GOLD at the NES's: they change the game's balance rather than its conveniences.
 
@@ -231,8 +232,22 @@ labelled, as on the NES and SNES:
 | Right shoulder button (RB, R1, R) | Save state 1 (Shift+F1) |
 | Left trigger, held | Rewind (Backspace held) |
 
-On the name entry screen a controller button switches to joystick input (the arrows and A pick the letters) without
+These are the defaults: every button but the stick can be changed on the CONTROLS screen (its PAD column, see
+below). On the name entry screen a controller button switches to joystick input (the arrows and A pick the letters) without
 Tab.
+
+## Changing the keys
+
+Every key above but the zoom keys can be changed: open the options (U or Tab) and choose CONTROLS. Each action has a
+row with two keys (KEY 1, KEY 2) and a controller button (PAD). Move to a cell and press K or Enter, then press the
+key to use (Shift, Ctrl or Alt held with it count, for the save states and the other extra keys). Nothing pressed for
+five seconds leaves the cell as it was. A key another action already has is swapped: that action gets this cell's old key,
+and the bottom line says which one changed. The NES buttons and the D-pad always keep at least one key. U or Delete
+clears a cell, RESET TO DEFAULTS at the bottom puts every key back, and J or Esc goes back to the options. The arrows,
+Enter, Esc and Delete always work on this screen, whatever they are bound to, so you can't lock yourself out.
+
+The keys apply at once everywhere (the map, menus, battles, the H help) and are kept for the next time with the
+other global settings, in `settings.json`.
 
 ## Demo video
 

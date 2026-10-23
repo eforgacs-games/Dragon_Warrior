@@ -15,7 +15,7 @@ from pygame import KEYDOWN, Surface, display, event, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
-from src.common import A_BUTTON_KEYS, reject_keys, singular_or_plural
+from src.common import A_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, reject_keys, singular_or_plural
 from src.menu import BATTLE_LINE
 from src.cursor import BlinkingCursor
 from src.direction import Direction
@@ -36,7 +36,6 @@ from src.visual_effects import player_hit_shake
 from src.waiting import handle_speed_key, poll_virtual_joypad, scaled_ms, with_virtual_keys
 from src.zoom import handle_zoom_event
 
-from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, SelectionButtons, first_button
 from src.nes_random import coin_flip
 
@@ -57,10 +56,10 @@ BATTLE_MENU_OPTIONS = (('Fight', 'Spell'), ('Run', 'Item'))
 COMMAND_WINDOW_BUTTON_KEYS = (
     (IN_A, A_BUTTON_KEYS),
     (IN_B, reject_keys),
-    (IN_UP, (K_UP, K_w)),
-    (IN_DOWN, (K_DOWN, K_s)),
-    (IN_LEFT, (K_LEFT, K_a)),
-    (IN_RIGHT, (K_RIGHT, K_d)),
+    (IN_UP, UP_KEYS),
+    (IN_DOWN, DOWN_KEYS),
+    (IN_LEFT, LEFT_KEYS),
+    (IN_RIGHT, RIGHT_KEYS),
 )
 
 

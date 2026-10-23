@@ -213,8 +213,10 @@ class TestRows(OverlayTestCase):
                                         ("MENU SPEED", 'MENU_SPEED', ("NORMAL", "FOLLOW GAME")),
                                         ("CHEATS", 'CHEAT_KEYS', ("OFF (NES)", "ON")),
                                         ("RUN BUTTON", 'RUN_BUTTON', ("OFF (NES)", "ON")),
-                                        ("DUNGEON MAP", 'DUNGEON_MAP', ("OFF (NES)", "ON"))])],
-                         [(page.title, [(row.label, row.config_key, row.value_labels) for row in page.rows])
+                                        ("DUNGEON MAP", 'DUNGEON_MAP', ("OFF (NES)", "ON")),
+                                        ("CONTROLS", None, ())])],
+                         [(page.title, [(row.label, getattr(row, 'config_key', None), row.value_labels)
+                                        for row in page.rows])
                           for page in OPTION_PAGES])
 
     def test_every_page_starts_with_preset_and_page(self):
@@ -249,7 +251,8 @@ class TestRows(OverlayTestCase):
                          page_texts(self.config, 1))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "3/3", "GAME SPEED", "OFF (NES)", "SAVE STATES", "OFF (NES)",
                           "REWIND", "ON", "AUTO-GRIND", "OFF (NES)", "GRIND STOP", "3/4 HP", "MENU SPEED", "NORMAL",
-                          "CHEATS", "ON", "RUN BUTTON", "ON", "DUNGEON MAP", "OFF (NES)"], page_texts(self.config, 2))
+                          "CHEATS", "ON", "RUN BUTTON", "ON", "DUNGEON MAP", "OFF (NES)", "CONTROLS"],
+                         page_texts(self.config, 2))
 
     def test_the_window_is_the_same_size_on_every_page_and_fits_the_screen(self):
         self.assertEqual(MOST_ROWS + 2, OPTIONS_WINDOW.height)
