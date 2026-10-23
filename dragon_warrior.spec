@@ -17,9 +17,9 @@ datas = [
     (join(ROOT, 'data', folder), join('data', folder))
     for folder in ('checkpoints', 'fonts', 'images', 'sound')
 ]
-# The compiled translations only; the .po/.pot sources and the tools that make them stay out
-for mo_file in glob(join(ROOT, 'data', 'text', 'locales', '*', 'LC_MESSAGES', '*.mo')):
-    datas.append((mo_file, dirname(mo_file[len(ROOT):].lstrip('/\\'))))
+# The translations (the game compiles each .po in memory, src/catalog.py); the .pot and the catalog tools stay out
+for po_file in glob(join(ROOT, 'data', 'text', 'locales', '*', 'LC_MESSAGES', '*.po')):
+    datas.append((po_file, dirname(po_file[len(ROOT):].lstrip('/\\'))))
 
 a = Analysis(  # noqa: F821
     [join(ROOT, 'src', 'game.py')],

@@ -7,11 +7,11 @@ from os.path import sep, exists
 from pygame import Surface, image, transform, K_RETURN, K_i, K_k, K_ESCAPE, K_j, K_u, K_UP, K_DOWN, K_LEFT, K_RIGHT, \
     K_w, K_a, K_s, K_d
 
+from src.catalog import load_translations
 from src.color import WHITE, BLACK
 from src.direction import Direction
 from src.directories import Directories
 from src.korean_particles import KoreanText
-from src.paths import data_path
 
 
 def find_file(name, path):
@@ -186,9 +186,10 @@ def singular_or_plural(count: int, singular: str, plural: str) -> str:
 
 
 def set_gettext_language(language):
-    localedir = data_path('text', 'locales')
+    """The gettext function for the language; Korean also installs it as the builtin _. The Korean catalog is compiled
+    from its .po once per run (src/catalog.py), however often this is called."""
     if language == 'Korean':
-        ko = gettext.translation('base', localedir=localedir, languages=['ko'])
+        ko = load_translations('ko')
         ko.install()
 
         def _(message):
