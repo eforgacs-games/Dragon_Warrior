@@ -143,9 +143,7 @@ class Battle:
                 return True
             if player.current_hp <= 0:
                 player.is_dead = True
-            else:
-                cmd_menu.show_line_in_dialog_box(self._("Command?\n"), add_quotes=False, hide_arrow=True,
-                                                 disable_sound=True)
+            # Otherwise the next player turn says "Command?" (ShowCmbtCmd, BattleController.open_command_window)
             return False
         return True
 
@@ -325,23 +323,26 @@ class Battle:
         display.update(battle_background_image.get_rect())
 
     def get_enemy_draws_near_string(self):
-        """Get string for when an enemy draws near."""
+        """The encounter line: "A ENM2 draws near!" (TextBlock15 entry 2, EnAppearText), or for the Dragonlord's final
+        form "The Dragonlord revealed his true self!" (TextBlock18 entry 9). "Command?" isn't part of it: it comes with
+        the first player turn (StartPlayerTurn -> ShowCmbtCmd, BattleController.open_command_window), after the
+        enemy's first strike if it attacks before the hero is ready, and not at all if it runs away."""
         if self.enemy.name == 'Dragonlord 2':
-            return self._('The Dragonlord revealed his true self!\n') + self._("Command?\n")
+            return self._('The Dragonlord revealed his true self!\n')
 
         if self.config['LANGUAGE'] == 'English':
             enemy_draws_near_string = self._('{} draws near!\n').format(self._(self.enemy.name))
             vowels = 'AEIOU'
             if self.enemy.name[0] in vowels:
-                return self._('An {}').format(enemy_draws_near_string) + self._("Command?\n")
-            return self._('A {}').format(enemy_draws_near_string) + self._("Command?\n")
+                return self._('An {}').format(enemy_draws_near_string)
+            return self._('A {}').format(enemy_draws_near_string)
 
         if self.config['LANGUAGE'] == 'Korean':
             ko_enemy_name = self._(self.enemy.name)
             ko_enemy_name += get_postposition(ko_enemy_name, "이", "가")
-            return self._('{} draws near!\n').format(ko_enemy_name) + self._("Command?\n")
+            return self._('{} draws near!\n').format(ko_enemy_name)
 
-        return self._('{} draws near!\n').format(self._(self.enemy.name)) + self._("Command?\n")
+        return self._('{} draws near!\n').format(self._(self.enemy.name))
 
     def display_battle_window(self, screen, drawer, cmd_menu, graphics, directories, color, player):
         """Display the battle window."""

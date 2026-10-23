@@ -53,10 +53,14 @@ class TestBattleCommandWindowRemoval(TestCase):
         self.game.screen.fill((0, 0, 0))
         self.game.screen.fill(BATTLE_SCENE_COLOR, self.window_rect.inflate(-tile_size, -tile_size))
         self.battle_scene = self.window_area()
-        # What is under the command window whenever a line is shown
+        # What is under the command window whenever a line is shown, but "Command?": ShowCmbtCmd prints it before the
+        # window opens (BattleController.open_command_window)
         self.seen_with_lines: list[str] = []
-        patch.object(self.cmd_menu, 'show_line_in_dialog_box',
-                     side_effect=lambda *args, **kwargs: self.seen_with_lines.append(self.window_area())).start()
+
+        def record(line, *args, **kwargs):
+            if line != 'Command?\n':
+                self.seen_with_lines.append(self.window_area())
+        patch.object(self.cmd_menu, 'show_line_in_dialog_box', side_effect=record).start()
 
     def window_area(self) -> str:
         return image_digest(self.game.screen.subsurface(self.window_rect))
