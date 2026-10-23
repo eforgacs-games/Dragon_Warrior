@@ -232,7 +232,7 @@ class TestDrawnByTheShop(TestCase):
         """Open the shop's window, move the cursor to the item at index and choose it."""
         keys = [K_DOWN] * index + [K_RETURN]
         events = [[MagicMock(type=KEYDOWN, key=key)] for key in keys]
-        with patch('data.text.dialog_lookup_table.get', side_effect=events), \
+        with patch('src.selection.event.get', side_effect=events), \
                 patch('data.text.dialog_lookup_table.display'), \
                 patch.object(self.game.cmd_menu, 'window_drop_down_effect'), \
                 patch.object(self.game.cmd_menu, 'remove_window'):  # the answered window is taken off afterwards (#283)
@@ -260,7 +260,7 @@ class TestDrawnByTheShop(TestCase):
         # The window the item shops open, with the cursor on SELL: YesNo1Dat's border and cursor, with BUY and SELL
         tile_size = test_config['TILE_SIZE']
         events = [[MagicMock(type=KEYDOWN, key=K_DOWN)], [MagicMock(type=KEYDOWN, key=K_RETURN)]]
-        with patch('data.text.dialog_lookup_table.get', side_effect=events), \
+        with patch('src.selection.event.get', side_effect=events), \
                 patch('data.text.dialog_lookup_table.display'), \
                 patch.object(self.game.cmd_menu, 'window_drop_down_effect'), \
                 patch.object(self.game.cmd_menu, 'remove_window'):  # the answered window is taken off afterwards (#283)

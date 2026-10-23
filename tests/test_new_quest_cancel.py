@@ -43,7 +43,7 @@ class TestNewQuestCancel(TestCase):
 
     def begin_new_quest(self, name_entry_events: list):
         with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0), \
-                patch('src.menu_functions.event.get', side_effect=[[e] for e in name_entry_events]), \
+                patch('src.selection.event.get', side_effect=[[e] for e in name_entry_events]), \
                 patch('src.menu_functions.display'), patch('src.menu_functions.Sound'), \
                 patch('src.menu_functions.toggle_joystick_input', return_value=True), \
                 patch.object(self.game.title_menu, 'choose_new_quest_options') as choose_options, \
@@ -75,7 +75,7 @@ class TestNewQuestCancel(TestCase):
         # and this time a name: the quest starts.
         name_entry_events = [ESCAPE, key_event(pygame.K_a, 'A'), key_event(K_RETURN)]
         with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0) as menu, \
-                patch('src.menu_functions.event.get', side_effect=[[e] for e in name_entry_events]), \
+                patch('src.selection.event.get', side_effect=[[e] for e in name_entry_events]), \
                 patch('src.menu_functions.display'), patch('src.menu_functions.Sound'), \
                 patch.object(self.game.title_menu, 'choose_new_quest_options'), \
                 patch.object(self.game, 'start_at_throne_room') as start:
