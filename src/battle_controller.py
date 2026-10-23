@@ -16,6 +16,7 @@ from pygame import KEYDOWN, Surface, display, event, key, time
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
 from src.common import A_BUTTON_KEYS, reject_keys, singular_or_plural
+from src.menu import BATTLE_LINE
 from src.cursor import BlinkingCursor
 from src.direction import Direction
 from src.constants import (
@@ -264,12 +265,13 @@ class BattleController:
         else:
             outcome = BattleOutcome.ESCAPED
         self.cmd_menu.current_battle = None
-        if outcome == BattleOutcome.ESCAPED:
-            # The one place an escape (the hero ran or the enemy fled) resumes the map's music (ResumeMusicTbl). After
-            # a win, Battle.check_player_level_up has already let the victory (or level-up) music end and resumed it,
-            # the way the NES does before ExitFight, and beating the Dragonlord's final form ends in
-            # Ending.final_boss_defeated's change of map, which starts the overworld music: starting it again here
-            # would restart it. A defeat goes on to the death music (Game.handle_death).
+        if outcome == BattleOutcome.ESCAPED and not current_battle.enemy_fled:
+            # The one place the hero's escape resumes the map's music (ResumeMusicTbl). An enemy that ran away has
+            # already resumed it, before ExitFight's press (enemy_run_away). After a win, Battle.check_player_level_up
+            # has already let the victory (or level-up) music end and resumed it, the way the NES does before
+            # ExitFight, and beating the Dragonlord's final form ends in Ending.final_boss_defeated's change of map,
+            # which starts the overworld music: starting it again here would restart it. A defeat goes on to the death
+            # music (Game.handle_death).
             self.music_player.load_and_play_music(self.current_map.music_file_path)
             if current_battle.enemy.name == 'Dragonlord 2':
                 self.reload_map_after_running_from_final_form()
@@ -320,7 +322,7 @@ class BattleController:
             return False
         self.cmd_menu.show_line_in_dialog_box(
             self._("The {} attacked before {} was ready.").format(self._(enemy.name), self.player.name),
-            add_quotes=False, disable_sound=True, hide_arrow=True)
+            **BATTLE_LINE)  # TB15E4
         if self.enemy_move(current_battle):
             return True
         if self.player.current_hp <= 0:
@@ -401,9 +403,8 @@ class BattleController:
                 case 'Item':
                     if not self.player.inventory:
                         self.remove_command_window()  # PlyrItem (LE7B0): nothing to show
-                        self.cmd_menu.show_line_in_dialog_box(
-                            self._('Nothing of use has yet been given to thee.\n'),
-                            add_quotes=False, hide_arrow=True, disable_sound=True)
+                        self.cmd_menu.show_line_in_dialog_box(self._('Nothing of use has yet been given to thee.\n'),
+                                                              **BATTLE_LINE)  # TB4E13
                         current_battle.no_op = True
                     else:
                         self.cmd_menu.display_item_menu('inventory')
@@ -512,8 +513,7 @@ class BattleController:
         Otherwise "Thou art still asleep." (PlayerAsleepDialog) and the enemy takes its turn."""
         if coin_flip():
             self.player.is_asleep = False
-            self.cmd_menu.show_line_in_dialog_box(self._("{} awakes.\n").format(self.player.name),
-                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
+            self.cmd_menu.show_line_in_dialog_box(self._("{} awakes.\n").format(self.player.name), **BATTLE_LINE)
             # The hero chooses a command next, so the enemy doesn't move this time round.
             current_battle.no_op = True
         else:
@@ -522,12 +522,16 @@ class BattleController:
                                                   hide_arrow=True, skip_text=True)
 
     def enemy_run_away(self, current_battle, enemy):
+        """NES CheckEnRun: the enemy is erased (ClearSpriteRAM), SFX_RUN, "The ENMY is running away." (TB15E3, no WAIT),
+        the map's music again (ResumeMusicTbl), then ExitFight: a new press returns to the map."""
+        current_battle.make_enemy_image_disappear(self.screen)
         self.sound.play_sound(self.directories.run_away_sfx)  # NES LEFCB: SFX_RUN
         self.cmd_menu.show_line_in_dialog_box(self._("The {} is running away.").format(self._(enemy.name)),
-                                              add_quotes=False, disable_sound=True, hide_arrow=True)
-        current_battle.make_enemy_image_disappear(self.screen)
+                                              **BATTLE_LINE)
+        self.music_player.load_and_play_music(self.current_map.music_file_path)
+        self.cmd_menu.wait_for_button(shows_arrow=False)
         current_battle.enemy_fled = True
-        return True  # fight_enemy resumes the map's music
+        return True
 
     # ------------------------------------------------------------------ #
     #  Hero attack                                                         #
@@ -538,16 +542,14 @@ class BattleController:
 
     def hero_attack(self, current_battle):
         self.sound.play_sound(self.directories.attack_sfx)
-        self.cmd_menu.show_line_in_dialog_box(self._("{} attacks!\n").format(self.player.name),
-                                              add_quotes=False, disable_sound=True, hide_arrow=True)
+        self.cmd_menu.show_line_in_dialog_box(self._("{} attacks!\n").format(self.player.name), **BATTLE_LINE)  # TB15E5
         attack_damage = current_battle.calculate_attack_damage(self.cmd_menu, self.player, current_battle.enemy)
         if attack_damage <= 0:
             current_battle.missed_attack(self.cmd_menu)
         elif not current_battle.enemy.is_asleep and enemy_dodges(current_battle.enemy.dodge, random.randint(0, 255)):
             # NES SetEnDmg1: a sleeping enemy can't dodge (excellent moves can be dodged too)
             self.sound.play_sound(self.directories.missed_sfx)
-            self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!").format(self._(current_battle.enemy.name)),
-                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
+            self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!"), **BATTLE_LINE)  # TB17E10
         else:
             self.sound.play_sound(self.directories.hit_sfx)
             # NES PlyrHitEn: the enemy flashes red (PaletteFlash) before the damage text
@@ -556,8 +558,7 @@ class BattleController:
             self.cmd_menu.show_line_in_dialog_box(
                 singular_or_plural(attack_damage, self._("The {}'s Hit Point have been reduced by {}.\n"),
                                    self._("The {}'s Hit Points have been reduced by {}.\n")).format(
-                    self._(current_battle.enemy.name), attack_damage),
-                add_quotes=False, disable_sound=True, hide_arrow=True)
+                    self._(current_battle.enemy.name), attack_damage), **BATTLE_LINE)
             current_battle.enemy.hp -= attack_damage
 
     # ------------------------------------------------------------------ #
@@ -585,11 +586,11 @@ class BattleController:
         if enemy.is_asleep:
             if random.randint(1, 3) != 1:
                 self.cmd_menu.show_line_in_dialog_box(self._("The {} is asleep.").format(self._(enemy.name)),
-                                                      add_quotes=False, disable_sound=True, hide_arrow=True)
+                                                      **BATTLE_LINE)  # TB16E8
                 return False
             enemy.is_asleep = False
             self.cmd_menu.show_line_in_dialog_box(self._("{} hath woken up.").format(self._(enemy.name)),
-                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
+                                                  **BATTLE_LINE)  # TB1E0
         # NES DoEnemyAttack calls CheckEnRun first: an enemy facing a hero with at least double its attack in
         # strength has a 1 in 4 chance to run away.
         if enemy_flees(self.player.strength, enemy.attack, random.randint(0, 255)):
@@ -616,10 +617,10 @@ class BattleController:
             if may_cast:
                 if random.randint(0, 99) < chance_percent:
                     if current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
+                        # TB16E12 and TB16E13, both with no WAIT
                         self.cmd_menu.show_line_in_dialog_box(
-                            self._("{} chants the spell of {}.").format(self._(enemy.name),
-                                                                        self._(current_spell)),
-                            add_quotes=False, disable_sound=True, hide_arrow=True)
+                            self._("{} chants the spell of {}.").format(self._(enemy.name), self._(current_spell)),
+                            **BATTLE_LINE)
                         # NES EnCastSpell (LEBFE-LEC11): SFX_SPELL, the enemy flashes grey (PaletteFlash with
                         # SplFlshBGPal), then WaitForMusicEnd lets the spell sound finish
                         self.sound.play_sound(self.directories.spell_sfx)
@@ -630,12 +631,11 @@ class BattleController:
                         # PlayerHit's SFX_PLYR_HIT1 cuts it off
                         self.sound.play_sound(self.directories.breathe_fire_sfx)
                         self.cmd_menu.show_line_in_dialog_box(
-                            self._("The {} is breathing fire.\n").format(self._(enemy.name)),
-                            add_quotes=False, disable_sound=True, hide_arrow=True)
+                            self._("The {} is breathing fire.\n").format(self._(enemy.name)), **BATTLE_LINE)  # TB16E15
                     if enemy.is_stopspelled and current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         # NES: a stopspelled enemy still chants, but the spell is blocked (fire breath isn't a spell)
                         self.cmd_menu.show_line_in_dialog_box(self._("But that spell hath been blocked."),
-                                                              add_quotes=False, disable_sound=True, hide_arrow=True)
+                                                              **BATTLE_LINE)  # TB15E10
                         return
                     spell_effect_lower_bound, spell_effect_upper_bound = enemy_spell_lookup[current_spell]
                     spell_effect = random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
@@ -644,14 +644,12 @@ class BattleController:
                             # NES EnemyAddHP: capped at the enemy's base HP
                             enemy.recover_hp(spell_effect)
                             self.cmd_menu.show_line_in_dialog_box(
-                                self._("The {} hath recovered.").format(self._(enemy.name)), add_quotes=False,
-                                disable_sound=True, hide_arrow=True)
+                                self._("The {} hath recovered.").format(self._(enemy.name)), **BATTLE_LINE)  # TB17E9
                         case Spell.SLEEP:
                             # NES EnCastSleep: always works; the enemy moves again straight away (see enemy_move)
                             self.player.is_asleep = True
                             self.player_fell_asleep = True
-                            self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), add_quotes=False,
-                                                                  disable_sound=True, hide_arrow=True)
+                            self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), **BATTLE_LINE)  # TB17E6
                         case Spell.HURT | Spell.HURTMORE:
                             if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
                                 spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
@@ -664,8 +662,7 @@ class BattleController:
                                 message = self._("{}'s spell is blocked.").format(self.player.name)
                             else:
                                 message = self._("The spell will not work.")
-                            self.cmd_menu.show_line_in_dialog_box(message, add_quotes=False, disable_sound=True,
-                                                                  hide_arrow=True)
+                            self.cmd_menu.show_line_in_dialog_box(message, **BATTLE_LINE)  # TB16E14 or TB15E11
                             if self.player.is_stopspelled:
                                 self.auto_grind.stopspell_hit()
                         case Spell.FIREBREATH | Spell.FIREBREATH2:
@@ -717,4 +714,4 @@ class BattleController:
     def enemy_attack_message(self, enemy):
         self.sound.play_sound(self.directories.prepare_attack_sfx)
         self.cmd_menu.show_line_in_dialog_box(self._("The {} attacks!\n").format(self._(enemy.name)),
-                                              add_quotes=False, disable_sound=True, hide_arrow=True)
+                                              **BATTLE_LINE)  # TB16E9
