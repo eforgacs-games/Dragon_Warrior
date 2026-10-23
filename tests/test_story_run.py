@@ -103,7 +103,6 @@ class TestStoryRun(TestCase):
                 ((CommandMenu, 'window_drop_down_effect'), {}),
                 ((CommandMenu, 'window_drop_up_effect'), {}),
                 (('data.text.dialog_lookup_table.time.wait',), {}),
-                (('data.text.dialog_lookup_table.mixer',), {}),
                 (('src.music_player.mixer',), {}),
                 # The hero always gets the first turn (no CheckEnRun / CalcWhoIsNext roll, #232), so the scripted
                 # fights can't go wrong
