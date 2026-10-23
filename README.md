@@ -85,7 +85,7 @@ WASD / ↑←↓→ : Move
 
 K: Open Command Menu
 
-J: Close Command Menu
+J / Esc: Close Command Menu, back out of a menu or answer NO (B button). Esc also cancels name entry.
 
 Enter: Select menu option
 

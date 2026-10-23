@@ -330,14 +330,20 @@ class Game:
                 exit(1)
         return None
 
-    def begin_new_quest(self):
+    def begin_new_quest(self) -> object:
+        """BEGIN A NEW QUEST: an adventure log, the name, then the options. Escape in the name entry cancels it, back
+        to the title menu with nothing saved."""
         self.select_adventure_log(self.screen)
         name_selection = NameSelection(self.config)
-        self.player.name = name_selection.select_name(get_ticks(), self.screen, self.cmd_menu)
+        name = name_selection.select_name(get_ticks(), self.screen, self.cmd_menu)
+        if name is None:
+            return BACK_TO_TITLE_MENU
+        self.player.name = name
         self.choose_new_quest_options()
         self.player.set_initial_stats()
         self.sound.play_sound(self.directories.menu_button_sfx)
         self.start_at_throne_room()
+        return None
 
     def start_at_throne_room(self) -> None:
         """Start a new quest in the throne room the way NES MainGameEngine does for every start: StartAtThroneRoom
