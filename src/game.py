@@ -1,8 +1,6 @@
 import argparse
-import json
 import os
 import random
-import re
 import shutil
 import sys
 from typing import List, Tuple
@@ -18,7 +16,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data.text.intro_lookup_table import ControlInfo
 from src import maps
-from src.adventure_log import ADVENTURE_LOGS, AdventureLogOverlay, adventure_log_overlay_texts
+from src.adventure_log import AdventureLogOverlay, adventure_log_overlay_texts
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
@@ -50,6 +48,9 @@ from src.music_player import MusicPlayer
 from src.npc_schedule import NPCSchedule, POP_UP_FRAME
 from src.npc_movement import npc_may_step_onto, step
 from src.options_screen import DEFAULT_OPTIONS, OptionsScreen, apply_options, options_from_save, options_to_save
+from src.save_file import ADVENTURE_LOGS, EXPERIENCE_KEY, NAME_KEY, SaveFile, load_save, read_save, save_files, \
+    save_path, save_slot_number, used_logs, write_save
+from src.save_file import save_file_name as save_file_name_for
 from src.player.player import Player
 from src.player.player_stats import get_level_by_experience
 from src.sound import Sound
@@ -66,21 +67,10 @@ from src.waiting import quit_if_requested, wait
 from src.windows import COMMAND_WINDOW
 
 
-# Only the NES's three adventure logs (src.adventure_log.ADVENTURE_LOGS) are saves; a save_slot_0.json or
-# save_slot_4.json is ignored like any other stray file
-SAVE_FILE_PATTERN = re.compile(r'save_slot_([123])\.json')
 # Returned by a title menu entry that goes back to the title menu when it's done (NES WndBackToMain)
 BACK_TO_TITLE_MENU = object()
 # COPY A QUEST's place in the title menu with a log open (FullMenuDat); with none open it isn't there
 COPY_ENTRY = 3
-
-
-def save_slot_number(save_file_name: str) -> int:
-    """The adventure log number in a save file's name, e.g. 2 for save_slot_2.json."""
-    match = SAVE_FILE_PATTERN.fullmatch(save_file_name)
-    if match is None:
-        raise ValueError(f"Not a save file name: {save_file_name}")
-    return int(match.group(1))
 
 
 # NES DoJoyUp etc. (Bank00) only start a step when FrameCounter & $0F is 0. A step is 16 frames long too.
@@ -362,9 +352,7 @@ class Game:
 
     def save_files(self) -> list[str]:
         """The adventure log save files in the save folder, ignoring anything else that might be there."""
-        if not os.path.isdir(self.directories.save_dir):
-            return []
-        return sorted(name for name in os.listdir(self.directories.save_dir) if SAVE_FILE_PATTERN.fullmatch(name))
+        return save_files(self.directories.save_dir)
 
     def continue_quest(self) -> object:
         """CONTINUE A QUEST: choose a used adventure log (ShowUsedLogs) and load it. With one log, its screenshot with
@@ -372,13 +360,13 @@ class Game:
         (WndBackToMain)."""
         if len(self.save_dir_contents) == 1:
             save_file_name = self.save_dir_contents[0]
-            save_path = os.path.join(self.directories.save_dir, save_file_name)
+            log_path = os.path.join(self.directories.save_dir, save_file_name)
             selection = self.game_functions.main_menu_selection(get_ticks(), self.screen,
                                                                 self.directories.one_adventure_log_unselected,
                                                                 self.directories.one_adventure_log_0,
                                                                 [],
                                                                 no_blit=self.game_state.config['NO_BLIT'],
-                                                                overlay=self.adventure_log_overlay(save_path),
+                                                                overlay=self.adventure_log_overlay(log_path),
                                                                 b_goes_back=True)
             if selection == MENU_BACK:
                 return BACK_TO_TITLE_MENU
@@ -387,13 +375,12 @@ class Game:
             slot = options_screen.choose_log(self.used_logs())
             if slot is None:
                 return BACK_TO_TITLE_MENU
-            save_file_name = f'save_slot_{slot}.json'
+            save_file_name = save_file_name_for(slot)
         else:
             self.sound.play_sound(self.directories.menu_button_sfx)
             self.start_at_throne_room()
             return None
-        with open(os.path.join(self.directories.save_dir, save_file_name)) as save_file:
-            loaded_save = json.load(save_file)
+        loaded_save = load_save(os.path.join(self.directories.save_dir, save_file_name))
         self.sound.play_sound(self.directories.menu_button_sfx)
         # load_game has already cut to black, faded the starting map in, started its music and made a new
         # CommandMenu, as NES StartAtThroneRoom does; fading out again here would show the map twice
@@ -404,12 +391,7 @@ class Game:
 
     def used_logs(self) -> list[tuple[int, str]]:
         """ShowUsedLogs: each used adventure log's number and hero's name, for the log window."""
-        logs = []
-        for save_file_name in self.save_dir_contents or self.save_files():
-            save = self.read_save(save_file_name)
-            if save is not None:
-                logs.append((save_slot_number(save_file_name), str(save.get('Name', ''))))
-        return logs
+        return used_logs(self.directories.save_dir, self.save_dir_contents or self.save_files())
 
     def adventure_log_overlay(self, save_path: str) -> AdventureLogOverlay:
         """The name of the hero in save_path, to draw on the one_adventure_log screenshot's "ADVENTURE LOG 1:" line
@@ -428,13 +410,12 @@ class Game:
         slot = options_screen.choose_log(logs)
         if slot is None:
             return BACK_TO_TITLE_MENU
-        save_path = os.path.join(self.directories.save_dir, f'save_slot_{slot}.json')
-        save = self.read_save(os.path.basename(save_path)) or {}
+        log_path = save_path(self.directories.save_dir, slot)
+        save = read_save(self.directories.save_dir, save_file_name_for(slot)) or {}
         chosen = options_screen.choose_options(options_from_save(save))
         if chosen is not None:
             save.update(options_to_save(chosen))
-            with open(save_path, 'w') as save_file:
-                json.dump(save, save_file, indent=4)
+            write_save(log_path, save)
         return BACK_TO_TITLE_MENU
 
     def choose_new_quest_options(self) -> None:
@@ -444,15 +425,6 @@ class Game:
         options_screen = OptionsScreen(self.screen, self.game_state.config)
         chosen = options_screen.choose_options(DEFAULT_OPTIONS)
         apply_options(self.game_state.config, chosen or DEFAULT_OPTIONS)
-
-    def read_save(self, save_file_name: str) -> dict | None:
-        """The save in the save folder with this name, or None if it can't be read."""
-        try:
-            with open(os.path.join(self.directories.save_dir, save_file_name)) as save_file:
-                save = json.load(save_file)
-        except (OSError, ValueError):
-            return None
-        return save if isinstance(save, dict) else None
 
     def title_menu_background(self, entry: int) -> str:
         """The title menu screenshot with this entry chosen, for the windows to open over: CONTINUE A QUEST (0),
@@ -477,7 +449,7 @@ class Game:
         open (FullMenuDat)."""
         logs = self.used_logs()
         used = self.save_files()
-        open_logs = [log for log in ADVENTURE_LOGS if f'save_slot_{log}.json' not in used]
+        open_logs = [log for log in ADVENTURE_LOGS if save_file_name_for(log) not in used]
         if not logs or not open_logs:
             return BACK_TO_TITLE_MENU
         options_screen = OptionsScreen(self.screen, self.game_state.config, self.title_menu_background(COPY_ENTRY))
@@ -487,8 +459,7 @@ class Game:
         dst_slot = options_screen.choose_open_log(open_logs)
         if dst_slot is None or not options_screen.confirm():
             return BACK_TO_TITLE_MENU
-        shutil.copy2(os.path.join(self.directories.save_dir, f'save_slot_{src_slot}.json'),
-                     os.path.join(self.directories.save_dir, f'save_slot_{dst_slot}.json'))
+        shutil.copy2(save_path(self.directories.save_dir, src_slot), save_path(self.directories.save_dir, dst_slot))
         self.save_dir_contents = self.save_files()
         return BACK_TO_TITLE_MENU
 
@@ -504,11 +475,11 @@ class Game:
         slot = options_screen.choose_log(logs)
         if slot is None:
             return BACK_TO_TITLE_MENU
-        save_file_name = f'save_slot_{slot}.json'
-        save = self.read_save(save_file_name) or {}
-        experience = save.get('Experience')
+        save_file_name = save_file_name_for(slot)
+        save = read_save(self.directories.save_dir, save_file_name) or {}
+        experience = save.get(EXPERIENCE_KEY)
         level = get_level_by_experience(experience if isinstance(experience, int) else 0)
-        if options_screen.confirm_erase(str(save.get('Name', '')), level):
+        if options_screen.confirm_erase(str(save.get(NAME_KEY, '')), level):
             os.remove(os.path.join(self.directories.save_dir, save_file_name))
             self.save_dir_contents = self.save_files()
         return BACK_TO_TITLE_MENU
@@ -1510,28 +1481,12 @@ class Game:
         room, as NES ContinueReset clears CharDirection to 0), is in place before the map's first frame is drawn.
         StartAtThroneRoom loads BlackPalPtr straight away and changes maps with MapChngNoSound, which skips the fade
         out, so the screen cuts to black and the map appears with a single PalFadeIn."""
-        self.player.name = save_file["Name"]
-        self.player.total_experience = save_file["Experience"]
-        self.player.level = self.player.get_level_by_experience()
-        self.player.update_stats_to_current_level()
-        self.player.gold = save_file["Gold"]
-        self.player.current_hp = save_file.get("CurrentHP", self.player.max_hp)
-        self.player.current_mp = save_file.get("CurrentMP", self.player.max_mp)
-        self.player.weapon = save_file.get("Weapon", "")
-        self.player.armor = save_file.get("Armor", "")
-        self.player.shield = save_file.get("Shield", "")
-        self.player.wearing_dragon_scale = save_file.get("WearingDragonScale", False)
-        self.player.wearing_fighters_ring = save_file.get("WearingFightersRing", False)
-        self.player.wearing_cursed_belt = save_file.get("WearingCursedBelt", False)
-        self.player.wearing_death_necklace = save_file.get("WearingDeathNecklace", False)
-        self.player.update_attack_power()
-        self.player.update_defense_power()
-        self.player.inventory = save_file["Inventory"]
-        self.player.spells = save_file.get("Spells", [])
-        self.story_flags = StoryFlags.from_save(save_file)
+        save = SaveFile.from_save(save_file)
+        save.restore_player(self.player)
+        self.story_flags = save.story_flags
         # NES LoadSavedData (LFBC8): the log's message speed; and this game's dialog style and NPCS MAKE WAY. Older
         # saves: NORMAL, CLASSIC, ON
-        apply_options(self.game_state.config, options_from_save(save_file))
+        apply_options(self.game_state.config, save.options)
         self.chest_history = TreasureChestHistory()
         self.repel_timer = 0
         if self.player.is_cursed:
@@ -1540,10 +1495,9 @@ class Game:
         # NES StartAtThroneRoom: the fade in after loading sets the window color for the loaded HP (ChkLowHPPal)
         self.load_window_palette()
         # Reload the starting map even if it's the one already shown, so the loaded flags apply to it
-        saved_map = save_file.get("CurrentMap")
-        if saved_map in map_lookup:
-            next_map = map_lookup[saved_map](self.config)
-            destination = (save_file.get("PlayerRow"), save_file.get("PlayerColumn"))
+        if save.current_map in map_lookup:
+            next_map = map_lookup[save.current_map](self.config)
+            destination = (save.player_row, save.player_column)
             if destination[0] is None:
                 destination = next_map.initial_coordinates
         elif self.current_map.identifier in map_lookup:
