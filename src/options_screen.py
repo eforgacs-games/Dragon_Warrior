@@ -37,7 +37,8 @@ from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, BlinkingCu
 from src.sound import Sound
 from src.text import draw_text
 from src.waiting import quit_if_requested, wait_frames
-from src.windows import ADVENTURE_LOG_WINDOW_2, ITEM_MENU_BORDER, MESSAGE_SPEED_WINDOW, Window, variable_height_window
+from src.windows import ADVENTURE_LOG_WINDOW_1, ADVENTURE_LOG_WINDOW_2, ERASE_LOG_WINDOW, ITEM_MENU_BORDER, \
+    MESSAGE_SPEED_WINDOW, YES_NO_2_WINDOW, Window, variable_height_window
 
 # The save file keys (CommandMenu.save, Game.load_game): one per adventure log, like the NES MessageSpeed byte
 MESSAGE_SPEED_SAVE_KEY = 'MessageSpeed'
@@ -102,6 +103,26 @@ LOG_FIRST_ROW = 2
 LOG_TEXT_COLUMN = 2
 LOG_CURSOR_COLUMN = 1
 LOG_NAME_LETTERS = 4
+
+# LogList1Dat1 ... LogList123Dat1 (ShowOpenLogs): " ADVENTURE LOG n", no colon and no name, laid out like the used logs
+# window above
+OPEN_LOG_FIRST_ROW = 2
+OPEN_LOG_TEXT_COLUMN = 2
+OPEN_LOG_CURSOR_COLUMN = 1
+
+# EraseLogDat ($B4D4), double spaced, each line after 1 blank tile ($81): the saved hero's full name ($B4), " LEVEL",
+# 2 blank tiles ($82) and the saved level in 2 digits ($A1), then " Do You Want To", " Erase This", " Character?"
+ERASE_LOG_TEXT_COLUMN = 2
+ERASE_LOG_NAME_ROW = 2
+ERASE_LOG_LEVEL_ROW = 4
+ERASE_LOG_LEVEL_COLUMN = 9  # after "LEVEL" (columns 2-6) and the 2 blank tiles
+ERASE_LOG_QUESTION_ROW = 6
+
+# YesNo2Dat ($B50D): a selection window, cursor home Y = 2, X = 1; 1 blank tile ($81) then YES, and NO a row below
+YES_NO_FIRST_ROW = 2
+YES_NO_TEXT_COLUMN = 2
+YES_NO_CURSOR_COLUMN = 1
+YES = 0  # WND_YES: the first entry
 
 ENTRY_SPACING = 2  # every window here is single spaced with a blank row between entries: 2 tile rows per entry
 
@@ -204,6 +225,30 @@ def adventure_log_options(logs: Sequence[Tuple[int, str]], _: Callable[[str], st
     return OptionWindow(window, (), labels, LOG_FIRST_ROW, LOG_TEXT_COLUMN, LOG_CURSOR_COLUMN)
 
 
+def open_log_options(logs: Sequence[int]) -> OptionWindow:
+    """The open logs window (ShowOpenLogs, LogList*Dat1): one line per open log, " ADVENTURE LOG n"."""
+    window = variable_height_window(ADVENTURE_LOG_WINDOW_1, len(logs))
+    labels = [f'ADVENTURE LOG {slot}' for slot in logs]
+    return OptionWindow(window, (), labels, OPEN_LOG_FIRST_ROW, OPEN_LOG_TEXT_COLUMN, OPEN_LOG_CURSOR_COLUMN)
+
+
+def erase_log_window(name: str, level: int, _: Callable[[str], str]) -> OptionWindow:
+    """EraseLogDat: the log's hero and level, and the question. Nothing to choose in it; YesNo2Dat opens over it."""
+    question = _("Do You Want To\nErase This\nCharacter?").split('\n')
+    prompt = [(ERASE_LOG_TEXT_COLUMN, ERASE_LOG_NAME_ROW, name),
+              (ERASE_LOG_TEXT_COLUMN, ERASE_LOG_LEVEL_ROW, _("LEVEL")),
+              (ERASE_LOG_LEVEL_COLUMN, ERASE_LOG_LEVEL_ROW, f'{level:>2}')]
+    prompt += [(ERASE_LOG_TEXT_COLUMN, ERASE_LOG_QUESTION_ROW + ENTRY_SPACING * line, text)
+               for line, text in enumerate(question)]
+    return OptionWindow(ERASE_LOG_WINDOW, prompt, (), 0, 0, 0)
+
+
+def yes_no_options(_: Callable[[str], str]) -> OptionWindow:
+    """YesNo2Dat: YES and NO."""
+    return OptionWindow(YES_NO_2_WINDOW, (), (_("YES"), _("NO")), YES_NO_FIRST_ROW, YES_NO_TEXT_COLUMN,
+                        YES_NO_CURSOR_COLUMN)
+
+
 class OptionsScreen:
     """Draws the title menu's windows over a background (the title menu screenshot, or black) and runs their cursors.
 
@@ -218,7 +263,7 @@ class OptionsScreen:
         self.directories = Directories(config)
         self.sound = Sound(config)
         # The prompts and entries are translated (the NES font has no Korean: draw_text draws it in Unifont)
-        self._ = set_gettext_language(config['LANGUAGE'])
+        self._ = set_gettext_language(config.get('LANGUAGE'))
         # windows on screen, bottom to top, each with the entry its cursor is on
         self.windows: List[Tuple[OptionWindow, int]] = []
 
@@ -228,6 +273,23 @@ class OptionsScreen:
         self.windows = [(log_window, 0)]
         index = self.select(0)
         return None if index is None else logs[index][0]
+
+    def choose_open_log(self, logs: Sequence[int]) -> int | None:
+        """ShowOpenLogs, opened over the windows already on screen (DoCopyGame's used logs window): the chosen open
+        log's number, or None for B."""
+        self.windows = self.windows + [(open_log_options(logs), 0)]
+        index = self.select(len(self.windows) - 1)
+        return None if index is None else logs[index]
+
+    def confirm(self) -> bool:
+        """YesNo2Dat over the windows on screen: True for YES, False for NO or B (anything but WND_YES)."""
+        self.windows = self.windows + [(yes_no_options(self._), YES)]
+        return self.select(len(self.windows) - 1) == YES
+
+    def confirm_erase(self, name: str, level: int) -> bool:
+        """DoEraseGame's VerifyErase: EraseLogDat with the log's hero and level, then YesNo2Dat over it."""
+        self.windows = self.windows + [(erase_log_window(name, level, self._), 0)]
+        return self.confirm()
 
     def choose_options(self, current: Options) -> Options | None:
         """WND_MSG_SPEED, then the dialog style, then NPCS MAKE WAY: the chosen settings, or None if B was pressed in
@@ -307,7 +369,7 @@ class OptionsScreen:
             draw(self._(text), column, row)
         for entry, label in enumerate(options.labels):
             draw(self._(label), options.entry_text_column(entry), options.entry_row(entry))
-        if show_cursor:
+        if show_cursor and options.labels:
             nes_tile = self.config['TILE_SIZE'] // 2
             draw_cursor_tile(self.screen, (x * 2 + options.entry_cursor_column(index)) * nes_tile,
                              (y * 2 + options.entry_row(index)) * nes_tile, self.config['TILE_SIZE'] // 16, WHITE)
