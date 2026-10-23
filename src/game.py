@@ -61,7 +61,8 @@ from src.waiting import NES_FPS, SPEED_KEYS, FrameClock, FramePacer, clear_event
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.visual_effects import flash_transparent_color, force_field_flash
-from src.waiting import MAP_CONTEXT, poll_virtual_joypad, quit_if_requested, set_speed_listener, set_virtual_joypad
+from src.waiting import MAP_CONTEXT, follow_menu_speed_option, poll_virtual_joypad, quit_if_requested, \
+    set_speed_listener, set_virtual_joypad
 from src.windows import COMMAND_WINDOW
 from src.zoom import handle_zoom_event, remember_default_zoom, remember_windowed_size, restore_windowed_size, \
     set_windowed_zoom, set_zoom, set_zoom_listener
@@ -119,6 +120,7 @@ class Game:
         set_speed_listener(self.settings.updater('game_speed'))
         set_virtual_joypad(None)  # no auto-grind (src/auto_grind.py) left driving from an earlier game
         connect_gamepad()  # a controller works like the keyboard (src/gamepad.py), plugged in now or later
+        follow_menu_speed_option(self.game_state.config)  # MENU SPEED: the selection windows at 1x or the game speed
         # intro
         self.start_time = get_ticks()
         self.splash_screen_enabled = self.game_state.config["SPLASH_SCREEN_ENABLED"]
