@@ -2569,3 +2569,19 @@ msgstr "ENGLISH"
 #: src/options_overlay.py
 msgid "한국어"
 msgstr "한국어"
+
+#: src/options_overlay.py
+msgid "SCANLINES"
+msgstr "주사선"
+
+#: src/options_overlay.py
+msgid "OFF"
+msgstr "끄기"
+
+#: src/options_overlay.py
+msgid "SCALING"
+msgstr "화면 배율"
+
+#: src/options_overlay.py
+msgid "PIXEL PERFECT"
+msgstr "정수 배율"

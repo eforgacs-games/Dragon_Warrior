@@ -12,6 +12,7 @@ from pygame import K_DOWN, K_ESCAPE, K_F2, K_LEFT, K_RETURN, K_RIGHT, K_TAB, K_U
 from pygame.event import Event
 
 from src.config.test_config import test_config
+from src.display_filters import SCALING_PIXEL_PERFECT, SCALING_SMOOTH
 from src.map_layouts import GRASS_STAIR_DOWN
 from src.maps import STAIR_DIRECTIONS, map_lookup
 from src.options_overlay import OPTION_ROWS, OPTIONS_TITLE, OptionsOverlay, options_layout
@@ -41,7 +42,7 @@ def new_game(**overrides):
     return helpers.new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
                              'TEXT_SPEED': 'Fast', 'DIALOG_STYLE': CLASSIC, 'NPCS_MAKE_WAY': True,
                              'FADE_STYLE': FADE_STYLE_NES, 'AUTO_STAIRS': True, 'AUTO_GRIND_STOP': 'RedHP',
-                             'LANGUAGE': 'English', **overrides})
+                             'LANGUAGE': 'English', 'SCANLINES': False, 'SCALING': SCALING_SMOOTH, **overrides})
 
 
 DEFAULTS = ('Fast', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP')  # new_game's settings, in own_settings' order
@@ -177,20 +178,22 @@ class TestRows(OverlayTestCase):
                           ("FADE STYLE", 'FADE_STYLE', ("NES", "SMOOTH")),
                           ("STAIRS", 'AUTO_STAIRS', ("STEP ON", "NES")),
                           ("GRIND STOP", 'AUTO_GRIND_STOP', ("RED HP", "HALF HP", "3/4 HP")),
-                          ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어"))],
+                          ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어")),
+                          ("SCANLINES", 'SCANLINES', ("OFF", "ON")),
+                          ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT"))],
                          [(row.label, row.config_key, row.value_labels) for row in OPTION_ROWS])
 
     def test_window_shows_the_current_values(self):
         texts = [text.text for text in options_layout(self.config).texts]
         self.assertEqual(["MESSAGE SPEED", "FAST", "DIALOG STYLE", "CLASSIC (NES)", "NPCS MAKE WAY", "ON",
-                          "FADE STYLE", "NES", "STAIRS", "STEP ON", "GRIND STOP", "RED HP", "LANGUAGE", "ENGLISH"],
-                         texts)
+                          "FADE STYLE", "NES", "STAIRS", "STEP ON", "GRIND STOP", "RED HP", "LANGUAGE", "ENGLISH",
+                          "SCANLINES", "OFF", "SCALING", "SMOOTH"], texts)
         self.config.update(TEXT_SPEED='Slow', DIALOG_STYLE=MODERN, NPCS_MAKE_WAY=False, FADE_STYLE=FADE_STYLE_SMOOTH,
                            AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP')
         texts = [text.text for text in options_layout(self.config).texts]
         self.assertEqual(["MESSAGE SPEED", "SLOW", "DIALOG STYLE", "MODERN", "NPCS MAKE WAY", "OFF (NES)",
-                          "FADE STYLE", "SMOOTH", "STAIRS", "NES", "GRIND STOP", "3/4 HP", "LANGUAGE", "ENGLISH"],
-                         texts)
+                          "FADE STYLE", "SMOOTH", "STAIRS", "NES", "GRIND STOP", "3/4 HP", "LANGUAGE", "ENGLISH",
+                          "SCANLINES", "OFF", "SCALING", "SMOOTH"], texts)
 
     def test_every_text_fits_the_window(self):
         # window_tiles raises ValueError for text outside the window
@@ -249,7 +252,8 @@ class TestRows(OverlayTestCase):
         # up from the first row stays on it; down past the last row stays on the last
         self.run_overlay(K_UP, K_RIGHT, *(K_DOWN,) * (len(OPTION_ROWS) + 1), K_RIGHT, K_u)
         self.assertEqual(('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP'), own_settings(self.config))
-        self.assertEqual('Korean', self.config['LANGUAGE'])
+        self.assertEqual(('English', False, SCALING_PIXEL_PERFECT),
+                         (self.config['LANGUAGE'], self.config['SCANLINES'], self.config['SCALING']))
 
     def test_b_esc_select_and_tab_close_it(self):
         for close in (K_j, K_ESCAPE, K_u, K_TAB):
@@ -280,8 +284,11 @@ class TestRows(OverlayTestCase):
             loaded.load_game(save)
         self.assertEqual(changed, own_settings(loaded.game_state.config))
         # The language is the player's, kept in the global settings (src/settings.py), not the adventure's
-        self.assertEqual('Korean', self.config['LANGUAGE'])
-        self.assertEqual('English', loaded.game_state.config['LANGUAGE'])
+        self.assertEqual(('Korean', True, SCALING_PIXEL_PERFECT),
+                         (self.config['LANGUAGE'], self.config['SCANLINES'], self.config['SCALING']))
+        self.assertEqual(('English', False, SCALING_SMOOTH), (loaded.game_state.config['LANGUAGE'],
+                                                              loaded.game_state.config['SCANLINES'],
+                                                              loaded.game_state.config['SCALING']))
 
 
 class TestStairsHasNoKey(OverlayTestCase):
