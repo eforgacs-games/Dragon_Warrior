@@ -17,7 +17,6 @@ from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enem
 from src.color import LOW_HP_RED
 from src.common import A_BUTTON_KEYS, reject_keys, singular_or_plural
 from src.cursor import BlinkingCursor
-from src.waiting import wait
 from src.constants import (
     AUTO_BATTLE_DELAY_MS,
 )
@@ -27,6 +26,7 @@ from src.enemy_spells import enemy_spell_lookup
 from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
 from src.selection import frame_events, next_frame
+from src.sound import SPELL_SFX_FRAMES
 from src.spells import Spell
 from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT, COMBAT_COMMAND_WINDOW
@@ -48,7 +48,6 @@ class BattleOutcome(Enum):
 
 
 # CmdCmbtDat: the commands, by row and column (WndCalcSelResult: CC_FIGHT, CC_SPELL, CC_RUN, CC_ITEM)
-ENEMY_SPELL_PAUSE_MS = 1000  # the pause after "<enemy> chants the spell of ..." or "is breathing fire" (not NES timing)
 BATTLE_MENU_OPTIONS = (('Fight', 'Spell'), ('Run', 'Item'))
 
 # The joypad on the keyboard, for the command window's SelectionButtons. A is K and Enter; START (I) is no button
@@ -411,6 +410,10 @@ class BattleController:
         self.command_buttons.open(held_joypad_buttons())
         self.command_window_open = True
         self.drawn_command_window = None
+        # NES ShowWindow -> DoWindowPrep (Bank01, LAEFE -> DoBeepSFX LAF15): SFX_MENU_BTN for WND_CMD_CMB before the
+        # window is built, every time ShowCmbtCmd opens it, after B too. The field COMMAND window does the same
+        # (Drawer.handle_menu_launch).
+        self.sound.play_sound(self.directories.menu_button_sfx)
         if not self.command_window_shown:
             # After B (WND_ABORT) it is still on the screen and is only drawn again
             self.command_window_covered = self.cmd_menu.covered_area(COMBAT_COMMAND_WINDOW)
@@ -579,13 +582,18 @@ class BattleController:
                             self._("{} chants the spell of {}.").format(self._(enemy.name),
                                                                         self._(current_spell)),
                             add_quotes=False, disable_sound=True, hide_arrow=True)
+                        # NES EnCastSpell (LEBFE-LEC11): SFX_SPELL, the enemy flashes grey (PaletteFlash with
+                        # SplFlshBGPal), then WaitForMusicEnd lets the spell sound finish
                         self.sound.play_sound(self.directories.spell_sfx)
+                        self.drawer.flash_enemy_spell(self.screen, enemy.name)
+                        self.sound.wait_for_sfx_end(SPELL_SFX_FRAMES, self.config)
                     else:
+                        # NES DoFireSFX (LED14): SFX_FIRE starts before "is breathing fire", and nothing waits for it:
+                        # PlayerHit's SFX_PLYR_HIT1 cuts it off
+                        self.sound.play_sound(self.directories.breathe_fire_sfx)
                         self.cmd_menu.show_line_in_dialog_box(
                             self._("The {} is breathing fire.\n").format(self._(enemy.name)),
                             add_quotes=False, disable_sound=True, hide_arrow=True)
-                        self.sound.play_sound(self.directories.breathe_fire_sfx)
-                    wait(ENEMY_SPELL_PAUSE_MS)
                     if enemy.is_stopspelled and current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         # NES: a stopspelled enemy still chants, but the spell is blocked (fire breath isn't a spell)
                         self.cmd_menu.show_line_in_dialog_box(self._("But that spell hath been blocked."),

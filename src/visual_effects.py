@@ -358,20 +358,35 @@ ENEMY_FLASH_NORMAL_FRAMES = 3
 ENEMY_FLASH_RED_FRAMES = 2
 
 
+# SplFlshBGPal (Bank00, $9A97): every color is $10. Despite its name, PaletteFlash loads it as the sprite palette
+# when an enemy casts a spell (EnCastSpell, LEC03-LEC0D), so the enemy flashes grey.
+NES_SPELL_FLASH_GREY = NES_PALETTE[0x10]
+
+
+def enemy_palette_flash(screen: Surface, image: Surface, position, config, color, keep_black: bool = False) -> None:
+    """NES PaletteFlash ($EF38): the enemy flashes in one color, ENEMY_FLASH_COUNT times."""
+    if config.get('NO_BLIT'):
+        return
+    flash = silhouette_surface(image, color, keep_black=keep_black)
+    for _ in range(ENEMY_FLASH_COUNT):
+        screen.blit(image, position)
+        show_frames(ENEMY_FLASH_NORMAL_FRAMES, config)
+        screen.blit(flash, position)
+        show_frames(ENEMY_FLASH_RED_FRAMES, config)
+    screen.blit(image, position)
+    display.flip()
+
+
 def enemy_hit_flash(screen: Surface, image: Surface, position, config, keep_black: bool = False) -> None:
     """The enemy flashing red when the hero hits it (NES PlyrHitEn -> PaletteFlash with RedFlashPalPtr).
     For the final form, which is drawn with background tiles, PaletteFlash swaps in FinalRedBGPal instead, which
     leaves the universal black alone (keep_black=True)."""
-    if config.get('NO_BLIT'):
-        return
-    red = silhouette_surface(image, NES_RED, keep_black=keep_black)
-    for _ in range(ENEMY_FLASH_COUNT):
-        screen.blit(image, position)
-        show_frames(ENEMY_FLASH_NORMAL_FRAMES, config)
-        screen.blit(red, position)
-        show_frames(ENEMY_FLASH_RED_FRAMES, config)
-    screen.blit(image, position)
-    display.flip()
+    enemy_palette_flash(screen, image, position, config, NES_RED, keep_black=keep_black)
+
+
+def enemy_spell_flash(screen: Surface, image: Surface, position, config) -> None:
+    """The enemy flashing grey as it casts a spell (NES EnCastSpell -> PaletteFlash with SplFlshBGPalPtr)."""
+    enemy_palette_flash(screen, image, position, config, NES_SPELL_FLASH_GREY)
 
 
 # NES PlayerHit ($ED20): ShakeCounter starts at 8. Each pass waits a frame (two if the hero is still alive),

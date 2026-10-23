@@ -662,6 +662,11 @@ class CommandMenu:
 
     def prompt_yes_no(self) -> bool:
         """A YES/NO window. Returns True for YES; NO or backing out returns False."""
+        # NES ShowWindow -> DoWindowPrep (Bank01, LAF02/LAF19 DoConfirmSFX): SFX_CONFIRM for the YES/NO window
+        # (WND_YES_NO1), before WindowSequence builds it, as in data/text/dialog.py's confirmation_prompt. DiscardItem
+        # (Bank03, LE084) asks with this window.
+        self.sound.play_sound(self.directories.confirmation_sfx)
+        self.window_drop_down_effect(*YES_NO_WINDOW)
         # Up goes to YES and down to NO; A answers with the entry under the cursor, and B is NO (src/selection.py)
         answer = run_selection(lambda index, visible: self.draw_yes_no_window(index == YES, visible), YES,
                                move=stop_at_edges(2))
