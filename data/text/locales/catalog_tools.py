@@ -2,22 +2,26 @@
 
     uv run --frozen python data/text/locales/catalog_tools.py missing   # list untranslated messages
     uv run --frozen python data/text/locales/catalog_tools.py add       # append them to the .po with empty msgstr
-    uv run --frozen python data/text/locales/catalog_tools.py compile   # rebuild base.mo from base.po
 
 Messages are found the way xgettext would find them: the first argument of every _("...") or self._("...") call in
 src/ and data/. Some text is translated through a variable (_(item_name), self._(enemy.name)), so item, spell and
 enemy names are added from the game's own tables. tests/test_translations.py fails when any of these has no Korean
-translation, or when base.mo is out of date.
+translation.
+
+There's no compile step: the game reads base.po and compiles it in memory when it runs (src/catalog.py).
 """
 import ast
-import struct
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:  # run as a script, only data/text/locales is on the path
+    sys.path.insert(0, str(ROOT))
+
+from src import catalog  # noqa: E402
+
 LOCALES_DIR = Path(__file__).resolve().parent
 KOREAN_PO = LOCALES_DIR / 'ko' / 'LC_MESSAGES' / 'base.po'
-KOREAN_MO = LOCALES_DIR / 'ko' / 'LC_MESSAGES' / 'base.mo'
 SOURCE_DIRS = ('src', 'data')
 
 # Enemy spells that are never named on screen (the breath attacks print their own line)
@@ -78,8 +82,6 @@ def unextractable_gettext_calls(root: Path = ROOT) -> list[str]:
 def dynamic_messages() -> dict[str, list[str]]:
     """Text that reaches _() through a variable: item, spell and enemy names, the text of the generated windows
     that are drawn translated (src/translated_window.py) and the options screen's text."""
-    if str(ROOT) not in sys.path:
-        sys.path.insert(0, str(ROOT))
     from src.enemy_lookup import enemy_string_lookup
     from src.items import armor, shields, tools, weapons
     from src.options_screen import DIALOG_STYLE_OPTIONS, MESSAGE_SPEED_OPTIONS, NPCS_MAKE_WAY_OPTIONS
@@ -114,41 +116,9 @@ def extract_messages(root: Path = ROOT) -> dict[str, list[str]]:
 
 # .po reading and writing
 
-def _unquote(line: str) -> str:
-    line = line.strip()
-    assert line.startswith('"') and line.endswith('"'), line
-    return ast.literal_eval(line)
-
-
 def read_po(path: Path = KOREAN_PO) -> dict[str, str]:
     """msgid -> msgstr for every (non-obsolete) entry, header included under the empty msgid."""
-    catalog: dict[str, str] = {}
-    msgid: str | None = None
-    msgstr: str | None = None
-    current = None
-
-    def flush():
-        if msgid is not None and msgstr is not None:
-            catalog[msgid] = msgstr
-
-    for raw_line in path.read_text(encoding='utf-8').splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith('#'):
-            continue
-        if line.startswith('msgid '):
-            flush()
-            msgid, msgstr, current = _unquote(line[len('msgid '):]), None, 'msgid'
-        elif line.startswith('msgstr '):
-            msgstr, current = _unquote(line[len('msgstr '):]), 'msgstr'
-        elif line.startswith('"'):
-            if current == 'msgid' and msgid is not None:
-                msgid += _unquote(line)
-            elif current == 'msgstr' and msgstr is not None:
-                msgstr += _unquote(line)
-        else:
-            raise ValueError(f"{path}: can't parse line: {raw_line!r}")
-    flush()
-    return catalog
+    return catalog.read_po(path)
 
 
 def _po_string(keyword: str, text: str) -> str:
@@ -184,34 +154,6 @@ def add_missing_entries(path: Path = KOREAN_PO) -> list[str]:
     return list(new)
 
 
-# .mo compiling (the GNU format, as written by msgfmt and Python's Tools/i18n/msgfmt.py)
-
-def mo_bytes(catalog: dict[str, str]) -> bytes:
-    entries = sorted((msgid.encode('utf-8'), msgstr.encode('utf-8')) for msgid, msgstr in catalog.items()
-                     if msgstr)
-    ids = b''
-    strs = b''
-    offsets = []
-    for msgid, msgstr in entries:
-        offsets.append((len(ids), len(msgid), len(strs), len(msgstr)))
-        ids += msgid + b'\0'
-        strs += msgstr + b'\0'
-    key_start = 7 * 4 + 16 * len(entries)
-    value_start = key_start + len(ids)
-    key_offsets: list[int] = []
-    value_offsets: list[int] = []
-    for id_offset, id_length, str_offset, str_length in offsets:
-        key_offsets += [id_length, id_offset + key_start]
-        value_offsets += [str_length, str_offset + value_start]
-    header = struct.pack('Iiiiiii', 0x950412de, 0, len(entries), 7 * 4, 7 * 4 + len(entries) * 8, 0, 0)
-    return header + struct.pack(f'{len(key_offsets)}i', *key_offsets) + \
-        struct.pack(f'{len(value_offsets)}i', *value_offsets) + ids + strs
-
-
-def compile_mo(po_path: Path = KOREAN_PO, mo_path: Path = KOREAN_MO) -> None:
-    mo_path.write_bytes(mo_bytes(read_po(po_path)))
-
-
 def main(argv: list[str]) -> int:
     command = argv[1] if len(argv) > 1 else 'missing'
     if command == 'missing':
@@ -223,10 +165,6 @@ def main(argv: list[str]) -> int:
     if command == 'add':
         added = add_missing_entries()
         print(f"Added {len(added)} empty entr{'y' if len(added) == 1 else 'ies'} to {KOREAN_PO.relative_to(ROOT)}")
-        return 0
-    if command == 'compile':
-        compile_mo()
-        print(f"Wrote {KOREAN_MO.relative_to(ROOT)}")
         return 0
     print(__doc__)
     return 2
