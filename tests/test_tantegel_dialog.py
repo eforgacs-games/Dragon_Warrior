@@ -200,6 +200,17 @@ class TestTantegelDialog(TestCase):
             "Edward's coming was foretold by legend. May the light shine upon this brave warrior.",
             self.dialog_lookup.flash_and_restore_mp))
 
+    def test_mp_restoring_wizard_flashes_black_and_white_then_restores_mp(self):
+        # NES ChkMagicDialog (LD2D7): BWScreenFlash, then MagicPoints = DisplayedMaxMP, then Dowindow WND_POPUP
+        calls = []
+        player = self.dialog_lookup.player
+        with patch.object(self.dialog_lookup, 'bw_screen_flash', side_effect=lambda: calls.append('flash')), \
+                patch.object(player, 'restore_mp', side_effect=lambda: calls.append('mp')), \
+                patch.object(self.dialog_lookup.command_menu, 'show_popup_window',
+                             side_effect=lambda: calls.append('window')):
+            self.dialog_lookup.flash_and_restore_mp()
+        self.assertEqual(['flash', 'mp', 'window'], calls)
+
     def test_gwaelin_npcs(self):
         # NES ChkPrncsDialog1 ($62) and ChkPrncsDialog2 ($63)
         for x, y in ((8, 13), (15, 20)):
