@@ -59,10 +59,12 @@ If you're using Visual Studio Code:
      # On macOS/Linux:
      source venv/bin/activate
      ```
-   - Install required packages:
+   - Install required packages. With [uv](https://docs.astral.sh/uv/), `uv sync` installs the game and dev
+     dependencies (pytest, mypy, ruff) into `.venv`, and you can skip the virtual environment step above. Without uv:
      ```bash
-     pip install -r requirements.txt
+     pip install -r requirements.txt pytest
      ```
+     (`requirements.txt` only has the game's dependencies, so pytest is installed separately.)
 
 3. **Run the game**:
    - **Option 1 - Using the terminal**: In the VS Code terminal, run:
@@ -76,20 +78,28 @@ If you're using Visual Studio Code:
 
 4. **Run tests** (optional):
    ```bash
-   pytest
+   uv run pytest   # with uv
+   pytest          # without uv, in the virtual environment
    ```
 
 ## Default Keys
 
 WASD / ↑←↓→ : Move
 
-K: Open Command Menu
+K (A button): Open the command menu on the map; select a menu option
 
-J: Close Command Menu
+J (B button): Close a menu or window
 
-Enter: Select menu option
+Enter: Select a menu option, like K. On the map it's a shortcut instead of opening the command menu: it does TAKE
+when standing on a treasure chest, DOOR when facing a door, or TALK when facing someone
 
-I: Pause
+Esc: Close a menu or window, like J
+
+I (Start): Pause
+
+F1: Show the controls
+
+F2 / F3 / F4 / F11: Turn auto-stairs, auto-battle, invulnerability or fullscreen on or off
 
 1 / 2 / 3 / 4: Game speed (normal, 2x, 4x, 8x). This works anywhere, including battles, dialogs and
 menus, and speeds up everything: walking, text, battle effects and pauses. Only timing changes, not what happens in
@@ -100,12 +110,3 @@ the game. Music and sound effects play at normal speed. The speed lasts until yo
 
 
 https://user-images.githubusercontent.com/23140027/165859033-1abe8a84-af2e-48c1-9d74-38cd700d98b5.mp4
-
-
-
-## Run on Repl.it
-
-
-For quick demonstration purposes, you can run this in the browser on repl.it, but ideally this should be run normally through the command line as delineated above, since performance suffers greatly in the browser. Additionally, the version of the code currently on repl.it does not have the latest code improvements that this repository does.
-
-[![Run on Repl.it](https://repl.it/badge/github/eforgacs-games/DragonWarrior)]([https://repl.it/@eforgacs/DW](https://replit.com/@eforgacs/DragonWarrior))
