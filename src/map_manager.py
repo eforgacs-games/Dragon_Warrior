@@ -6,14 +6,12 @@ delegates to it; MapManager holds a back-reference to Game so it can reach
 shared resources (player, camera, screen, music_player, …).
 """
 
-from pygame import Surface
-
 from src import maps
 from src.camera import Camera
-from src.common import BLACK
 from src.constants import RAINBOW_BRIDGE_COORDINATES, THRONE_ROOM_DOOR_COORDINATES, THRONE_ROOM_START_COORDINATES
 from src.coordinates import Cell
 from src.direction import Direction
+from src.drawer import map_surface
 from src.game_functions import set_character_position
 from src.map_layouts import BRICK, TREASURE_BOX
 from src.maps import map_lookup
@@ -256,11 +254,11 @@ class MapManager:
                 self.current_map.layout[destination_coordinates[0]][destination_coordinates[1]])
 
     def set_big_map(self):
-        self.game.big_map = Surface(
-            (self.current_map.width, self.current_map.height)).convert()
-        self.game.big_map.fill(BLACK)
-        self.drawer.background = self.game.big_map.subsurface(0, 0, self.current_map.width,
-                                                               self.current_map.height).convert_alpha()
+        """A black surface for the new map, which its first frame draws every tile on (Drawer.draw_all). It is the
+        background until then too: that used to be a copy of it, but nothing shows the background before the first
+        frame redraws it, and a copy of Alefgard's takes about 30 ms."""
+        self.game.big_map = map_surface(self.current_map.width, self.current_map.height)
+        self.drawer.background = self.game.big_map
 
     def handle_player_direction_on_map_change(self, current_map_staircase_dict):
         if not self.player.is_dead:

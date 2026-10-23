@@ -92,6 +92,10 @@ SCENES = (
     # three steps: STAIRS set to STEP ON takes stairs only from a new map's third step (MapManager.handle_warps)
     Scene('map_change', "Down the throne room stairs: fade out, load the courtyard, fade in", 'TantegelThroneRoom',
           (14, 15), script='wait:30,right:48', tail=300, config={'AUTO_STAIRS': True}),
+    Scene('dungeon', "The Swamp Cave without a torch, walking down and up its first corridor (darkness)", 'SwampCave',
+          (9, 4), script='down:64,up:64,down:64,up:64,down:64,up:64', config=NO_FIGHTS),
+    Scene('enter_overworld', "Up the Swamp Cave stairs onto Alefgard, the biggest map to load and draw",
+          'SwampCave', (9, 4), script='wait:30,up:48', tail=300, config={**NO_FIGHTS, 'AUTO_STAIRS': True}),
 )
 SCENES_BY_NAME = {scene.name: scene for scene in SCENES}
 
