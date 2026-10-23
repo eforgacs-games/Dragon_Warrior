@@ -59,6 +59,9 @@ _rounding_carry = 0.0  # real milliseconds that rounding waits to whole millisec
 # Told the new speed after each change by set_game_speed (not reset_game_speed): the game saves it with the global
 # settings (src/settings.py)
 _speed_listener: Callable[[int], None] | None = None
+# The options overlay's GAME SPEED switch (GAME_SPEED_KEYS, src/options_screen.py SWITCHES): off, keys 1 to 5 do nothing
+# (they are still taken out of the event loops, so they never count as "any key"). Game.apply_option sets it.
+_speed_keys_enabled = True
 
 # The MENU SPEED option (config['MENU_SPEED']): NORMAL keeps the selection windows at 1x; FOLLOW GAME SPEED runs them at
 # the game speed (see the module docstring)
@@ -191,12 +194,32 @@ def set_speed_listener(listener: Callable[[int], None] | None) -> None:
     _speed_listener = listener
 
 
+def set_speed_keys_enabled(enabled: bool) -> None:
+    """Switch keys 1 to 5 on or off (GAME_SPEED_KEYS). Switching them off also goes back to normal speed, which isn't
+    saved: the global settings keep the speed chosen with the keys, for when they're on again."""
+    global _speed_keys_enabled, _speed_listener
+    _speed_keys_enabled = enabled
+    if not enabled:
+        listener, _speed_listener = _speed_listener, None
+        try:
+            set_game_speed(1)
+        finally:
+            _speed_listener = listener
+
+
+def speed_keys_enabled() -> bool:
+    return _speed_keys_enabled
+
+
 def reset_game_speed() -> None:
     """Back to speed 1 with ``game_ticks() == get_ticks()`` (a new game, or a test): the game clock may jump. So may
-    the menu clock, which is back to ``get_ticks()`` too."""
-    global _speed, _real_anchor, _game_anchor, _rounding_carry, _menu_real_anchor, _menu_anchor, _menu_rate
+    the menu clock, which is back to ``get_ticks()`` too. The speed keys are switched back on; a new Game then sets
+    them from its config."""
+    global _speed, _real_anchor, _game_anchor, _rounding_carry, _menu_real_anchor, _menu_anchor, _menu_rate, \
+        _speed_keys_enabled
     _speed, _real_anchor, _game_anchor, _rounding_carry = 1, 0, 0, 0.0
     _menu_real_anchor, _menu_anchor, _menu_rate = 0, 0, 1
+    _speed_keys_enabled = True
 
 
 def follow_menu_speed_option(config: dict | None) -> None:
@@ -264,9 +287,10 @@ def scaled_ms(milliseconds: float) -> int:
 
 
 def handle_speed_key(current_event: event.Event) -> bool:
-    """If ``current_event`` is a press of 1 to 5, set the game speed and return True."""
+    """If ``current_event`` is a press of 1 to 5, set the game speed (if the keys are on) and return True."""
     if current_event.type == KEYDOWN and getattr(current_event, 'key', None) in SPEED_KEYS:
-        set_game_speed(SPEED_KEYS[current_event.key])
+        if _speed_keys_enabled:
+            set_game_speed(SPEED_KEYS[current_event.key])
         return True
     return False
 
@@ -283,6 +307,8 @@ def get_events(*args, **kwargs) -> list[event.Event]:
 def poll_speed_keys() -> None:
     """Set the game speed while one of the keys 1 to 5 is held. Reads the key state, not the queue, so nothing is taken off
     it: used during waits, which leave the queue alone."""
+    if not _speed_keys_enabled:
+        return
     pressed = key.get_pressed()
     for speed_key, speed in SPEED_KEYS.items():
         if pressed[speed_key]:

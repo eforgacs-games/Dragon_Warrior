@@ -17,7 +17,7 @@ from pygame.event import Event
 from src import display_filters
 from src.config.test_config import test_config
 from src.display_filters import PRESENTER, SCALING_PIXEL_PERFECT, SCALING_SMOOTH, presentation_rect
-from src.options_overlay import OPTION_ROWS, OptionsOverlay, options_layout
+from src.options_overlay import FIXED_ROWS, OPTION_PAGES, OptionsOverlay, options_layout
 from src.settings import Settings, load_settings, save_settings
 from src.waiting import reset_game_speed, set_speed_listener
 from src.zoom import set_zoom_listener
@@ -240,7 +240,8 @@ class TestOverlayRows(TestCase):
             OptionsOverlay(game).run()
 
     def down_to(self, label):
-        return (K_DOWN,) * [row.label for row in OPTION_ROWS].index(label)
+        # the rows are on the first page (LOOK & SOUND), under PRESET and PAGE
+        return (K_DOWN,) * (FIXED_ROWS + [row.label for row in OPTION_PAGES[0].rows].index(label))
 
     def test_off_by_default(self):
         game = self.new_game()

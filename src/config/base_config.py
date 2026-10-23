@@ -55,6 +55,14 @@ base_config = {
     # MENU SPEED (not NES, #440): "Normal" keeps the selection windows (their cursor's blink and held button repeat) at
     # 1x whatever the game speed (keys 1 to 5); "FollowGameSpeed" speeds them up with the game (src/waiting.py)
     "MENU_SPEED": "Normal",
+    # The switches for this game's conveniences that act on a key (src/options_screen.py SWITCHES, the options
+    # overlay's CONTROLS page). Off is the NES: their keys do nothing.
+    "GAME_SPEED_KEYS": False,  # GAME SPEED: keys 1 to 5 set the game speed (src/waiting.py)
+    "SAVE_STATES": False,  # SAVE STATES: F1-F3 load a state, Shift+F1-F3 save one
+    "REWIND": False,  # REWIND: Backspace rewinds
+    "AUTO_GRIND": False,  # AUTO-GRIND: G starts auto-grind (src/auto_grind.py)
+    "CHEAT_KEYS": False,  # CHEATS: F4 auto-battle and F9 invulnerability
+    "QUICK_ACTION": False,  # QUICK ACTION: Enter on the map takes, opens a door or talks; off, Enter is A there too
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on

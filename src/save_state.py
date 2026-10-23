@@ -320,7 +320,10 @@ def restore_snapshot(game: Any, snapshot: dict[str, Any], fade_in: bool = True) 
     apply_layout_changes(game.layouts.map_layout_lookup, state['layout_changes'])
     game.story_flags = state['story_flags']
     _restore_histories(game, state)
+    music_before = game.game_state.config.get('ORCHESTRA_MUSIC_ENABLED')
     apply_options(game.game_state.config, state['options'])
+    for config_key in ('GAME_SPEED_KEYS', 'CHEAT_KEYS'):  # the switches that act at once (Game.apply_option)
+        game.apply_option(config_key)
     same_map = (not fade_in and old_map.identifier == state['map'] and old_tiles is not None
                 and old_tiles == state['layout_changes'].get(state['map'], [])
                 and [character.identifier for character in old_map.roaming_characters]
@@ -340,6 +343,8 @@ def restore_snapshot(game: Any, snapshot: dict[str, Any], fade_in: bool = True) 
         screen_fade(fade_out=False, screen=game.screen, config=game.game_state.config)
     if fade_in or game.current_map.identifier != old_map.identifier:
         game.music_player.load_and_play_music(game.current_map.music_file_path)
+    elif game.game_state.config.get('ORCHESTRA_MUSIC_ENABLED') != music_before:
+        game.apply_option('ORCHESTRA_MUSIC_ENABLED')  # the state's MUSIC setting, on the map that stayed
 
 
 def _rebuild_map(game: Any, state: dict[str, Any], cut_to_black_first: bool) -> None:
