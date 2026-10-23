@@ -12,7 +12,7 @@ from src.direction import Direction
 from src.directories import Directories
 from src.map_layouts import MapLayouts
 from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point, \
-    covered_cells, low_hp_tile_image
+    covered_cells, low_hp_tile_image, bad_ending_tile_image
 from src.npcs import GWAELIN_RESCUE, NPC
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
@@ -98,6 +98,9 @@ class DragonWarriorMap:
         # first time they're needed.
         self.low_hp_palette = False
         self._low_hp_tile_images: Dict[str, surface.Surface] = {}
+        # The window color once the bad ending's BadEndBGPal is loaded (load_bad_ending_palette), and its tiles
+        self.bad_ending_window_color: tuple[int, int, int] | None = None
+        self._bad_ending_tile_images: Dict[str, surface.Surface] = {}
 
         # Tile Key:
         # Index values for the map tiles corresponding to location on tile sheet.
@@ -328,8 +331,14 @@ class DragonWarriorMap:
         return self.map_tiles[tile_value % 11][tile_value // 11]
 
     def floor_tile_image(self, tile_value: int) -> surface.Surface:
-        """The image for a floor tile in the current background palette: palette 0 tiles are red while HP is low."""
+        """The image for a floor tile in the current background palette: palette 0 tiles are red while HP is low, and
+        every tile is black but palette 0's color 1 in the bad ending."""
         tile_name = self.get_tile_by_value(tile_value)
+        if self.bad_ending_window_color is not None:
+            if tile_name not in self._bad_ending_tile_images:
+                self._bad_ending_tile_images[tile_name] = bad_ending_tile_image(
+                    self.normal_tile_image(tile_value), tile_name in LOW_HP_PALETTE_TILES, self.bad_ending_window_color)
+            return self._bad_ending_tile_images[tile_name]
         if not self.low_hp_palette or tile_name not in LOW_HP_PALETTE_TILES:
             return self.normal_tile_image(tile_value)
         if tile_name not in self._low_hp_tile_images:
@@ -343,13 +352,24 @@ class DragonWarriorMap:
         if low_hp == self.low_hp_palette:
             return False
         self.low_hp_palette = low_hp
-        for tile_name in LOW_HP_PALETTE_TILES:
+        self.update_tile_images(LOW_HP_PALETTE_TILES)
+        return True
+
+    def load_bad_ending_palette(self, window_color: tuple[int, int, int]) -> None:
+        """NES ChooseDrgnLrd (Bank03, LD515): BadEndBGPal replaces the background palettes, so every tile on the map
+        changes (bad_ending_tile_image). The sprite palettes are left alone."""
+        self.bad_ending_window_color = window_color
+        self._bad_ending_tile_images.clear()
+        self.update_tile_images(self.floor_tile_key)
+
+    def update_tile_images(self, tile_names) -> None:
+        """Give the map's tiles of these types their image in the current background palette (floor_tile_image)."""
+        for tile_name in tile_names:
             tile_dict = self.floor_tile_key[tile_name]
             if tile_dict.get('group'):
                 image = self.floor_tile_image(tile_dict['val'])
                 for tile in tile_dict['group']:
                     tile.image = image
-        return True
 
     @property
     def hero_underlying_tile(self):

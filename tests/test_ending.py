@@ -6,7 +6,7 @@ import pygame
 from src.battle import Battle
 from src.config.test_config import test_config
 from src.direction import Direction
-from src.ending import CREDITS, credit_screen_music_events
+from src.ending import CREDITS, END_MUSIC_TIMING_EVENTS, EndMusicTimingEvents, credit_screen_music_events
 from src.maps import map_lookup
 from tests.helpers import new_game
 
@@ -263,6 +263,58 @@ class TestEnding(TestCase):
         self.assertEqual(shown[0][0], (7, 8, 'CONGRATULATIONS'))
         self.assertEqual(shown[-1], ((13, 12, 'THE END'),))
         self.assertEqual(shown, list(CREDITS))
+
+    def credits_timeline(self):
+        """Roll the credits against a fake clock, every wait and fade taking its NES frames: the frame (counted from
+        the start of the end music) at which each screen starts to fade in, and the frame the credits end."""
+        clock = [0.0]  # milliseconds
+
+        def frames_pass(frames, *args, **kwargs):
+            clock[0] += frames * 1000 / 60
+
+        def fade(fade_out, **kwargs):
+            frames_pass(20 if fade_out else 16)  # PalFadeOut, PalFadeIn
+
+        def frame_now():
+            return round(clock[0] * 60 / 1000)
+
+        shown = []
+        with patch('src.ending.game_ticks', side_effect=lambda: clock[0]), \
+                patch('src.ending.wait_frames', side_effect=frames_pass), \
+                patch('src.ending.screen_fade', side_effect=fade), \
+                patch.object(self.game.ending, 'show_credit_screen',
+                             side_effect=lambda credit_screen: (shown.append(frame_now()), fade(fade_out=False))):
+            self.game.ending.roll_credits()
+        return shown, frame_now()
+
+    def test_credits_follow_the_end_music(self):
+        # NES DoEndCredits: the king's scene fades out at the music's first timing event (frame 683), and each screen
+        # then fades in after its fade out (20 frames) and the next screen's load (3 frames)
+        shown, end = self.credits_timeline()
+        self.assertEqual(683 + 20 + 3, shown[0])
+        # CONGRATULATIONS stays for 8 events: the 9th of the music, at frame 1734
+        self.assertEqual(1734 + 20 + 3, shown[1])
+        # Every credit screen takes up exactly the music's 50 timing events: THE END comes after the last one, and
+        # stays 160 frames (FinishCredits)
+        self.assertEqual(END_MUSIC_TIMING_EVENTS[-1][0] + 20 + 3, shown[-1])
+        self.assertEqual(shown[-1] + 16 + 160, end)
+
+    def test_a_timing_event_already_waiting_is_caught_at_once(self):
+        # The note before the no-op is still playing when the wait starts: WaitForMusicEnd returns on the next frame
+        first_frame, gone = END_MUSIC_TIMING_EVENTS[0]
+        now = (first_frame + gone) // 2
+        with patch('src.ending.game_ticks', side_effect=[0, now * 1000 / 60]), \
+                patch('src.ending.wait_frames') as wait:
+            EndMusicTimingEvents(self.game.config).wait(1)
+        self.assertEqual(0, wait.call_args.args[0])
+
+    def test_a_timing_event_that_went_by_is_gone(self):
+        _, gone = END_MUSIC_TIMING_EVENTS[0]
+        next_event = END_MUSIC_TIMING_EVENTS[1][0]
+        with patch('src.ending.game_ticks', side_effect=[0, gone * 1000 / 60]), \
+                patch('src.ending.wait_frames') as wait:
+            EndMusicTimingEvents(self.game.config).wait(1)
+        self.assertAlmostEqual(next_event - gone, wait.call_args.args[0])
 
     def test_credit_screen_timing(self):
         # NES DoEndCredits: music timing events per screen, before THE END
