@@ -66,6 +66,7 @@ class BattlePromptFrames(unittest.TestCase):
     def setUp(self):
         pygame.init()
         pygame.event.clear()
+        self.addCleanup(pygame.event.clear)  # keys a test leaves unread aren't for the next test in this process
         self.game = make_game()
         self.frame_number = 0
         patch('src.battle_controller.display').start()
