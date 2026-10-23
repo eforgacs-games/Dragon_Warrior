@@ -12,12 +12,15 @@ drawn by src/translated_window.py), titled OPTIONS, with one row per setting and
     STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps)
     GRIND STOP     RED HP / HALF HP / 3/4 HP  (AUTO_GRIND_STOP: when auto-grind stops, src/auto_grind.py)
     LANGUAGE       ENGLISH / 한국어          (LANGUAGE: a global setting, src/settings.py)
+    SCANLINES      OFF / ON                 (SCANLINES: a display filter, src/display_filters.py; global)
+    SCALING        SMOOTH / PIXEL PERFECT   (SCALING: pygame's SCALED, or whole multiples of 256x240 only; global)
 
 Up and down move the NES cursor (src/cursor.py) between the rows; left, right or A change the row's value, with the
 menu button sound. A change goes into the game config at once, so the next dialog, fade, bump or step uses it. The
 first six are the adventure's own: they are saved with the adventure log the next time the game is saved
-(options_from_config). LANGUAGE is the player's: Game.apply_option switches the game to it at once (Game.set_language),
-this window included, and keeps it in the global settings file. Each language's name is in that language, so it can
+(options_from_config). The last three are the player's, kept in the global settings file: Game.apply_option switches
+the game to the new language at once (Game.set_language), this window included, and the display filters from the next
+frame on. Each language's name is in that language, so it can
 be found whichever is on. B, Esc, SELECT or Tab close it, and the map frame is put back exactly as it was.
 
 The overlay runs its own loop, so nothing else runs while it's open: the map, the NPCs, the timers and the pop-up
@@ -34,6 +37,7 @@ from src.color import BLACK
 from src.common import A_BUTTON_KEYS, B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, SELECT_BUTTON_KEYS, UP_KEYS, \
     set_gettext_language
 from src.cursor import BlinkingCursor
+from src.display_filters import SCALING_KEY, SCALING_MODES, SCANLINES_KEY
 from src.options_screen import AUTO_GRIND_STOP_VALUES, CLASSIC, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN
 from src.selection import frame_events, next_frame
 from src.settings import LANGUAGES
@@ -78,13 +82,15 @@ OPTION_ROWS = (
     OptionRow("STAIRS", 'AUTO_STAIRS', (True, False), ("STEP ON", "NES")),
     OptionRow("GRIND STOP", 'AUTO_GRIND_STOP', AUTO_GRIND_STOP_VALUES, ("RED HP", "HALF HP", "3/4 HP")),
     OptionRow("LANGUAGE", 'LANGUAGE', LANGUAGES, ("ENGLISH", "한국어")),
+    OptionRow("SCANLINES", SCANLINES_KEY, (False, True), ("OFF", "ON")),
+    OptionRow("SCALING", SCALING_KEY, SCALING_MODES, ("SMOOTH", "PIXEL PERFECT")),
 )
 
-# The window: the screen's full 16 blocks wide (the longest labels and value, MESSAGE SPEED, NPCS MAKE WAY and
-# CLASSIC (NES), are 13 tiles each), one block high per row plus a block of border at the top and bottom, from block
-# row 2. Laid out like the NES selection windows: the title in the top border after the corner and 3 border tiles (as
-# COMMAND), the rows double spaced from tile row 2, the cursor in tile column 1 and the label after it; the value
-# starts in tile column 17.
+# The window: the screen's full 16 blocks wide (the longest labels and values, MESSAGE SPEED, NPCS MAKE WAY,
+# CLASSIC (NES) and PIXEL PERFECT, are 13 tiles each), one block high per row plus a block of border at the top and
+# bottom, from block row 2. Laid out like the NES selection windows: the title in the top border after the corner and 3
+# border tiles (as COMMAND), the rows double spaced from tile row 2, the cursor in tile column 1 and the label after
+# it; the value starts in tile column 17.
 OPTIONS_WINDOW = Window(0, 2, 16, len(OPTION_ROWS) + 2)
 OPTIONS_TITLE = WindowText("OPTIONS", 4, 0)
 FIRST_ROW = 2
