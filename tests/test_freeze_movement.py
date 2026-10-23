@@ -63,7 +63,7 @@ class FreezeTestCase(TestCase):
         for current_event in events:
             pygame.event.post(current_event)
         # Replaces only src.game's (and the window's) name for pygame.key, never pygame.key.get_pressed itself
-        with patch('src.game.key') as mock_key, patch('src.command_window.key') as window_key:
+        with patch('src.movement.key') as mock_key, patch('src.command_window.key') as window_key:
             mock_key.get_pressed.return_value = window_key.get_pressed.return_value = keys_held(*held)
             self.game.get_events()
             cmd_menu = self.game.cmd_menu
@@ -184,7 +184,7 @@ class TestFreezeMovement(FreezeTestCase):
         before = self.guard_position()
         self.game.movement.npc_schedule.give_turn_to(0)
         with patch('src.movement.random.choice', return_value=Direction.LEFT.value), \
-                patch.object(self.game, 'move_player'):
+                patch.object(self.game.movement, 'move_player'):
             self.frames(10)
         self.assertEqual(before, self.guard_position())
 
@@ -352,7 +352,7 @@ class TestCommandsOnlyBetweenSteps(FreezeTestCase):
             with self.subTest(name):
                 self.setUp()
                 start_x = self.start_a_step()
-                self.spam_command(name, self.tile_size // self.game.speed, first_events=(keydown(K_i),))
+                self.spam_command(name, self.tile_size // self.game.movement.speed, first_events=(keydown(K_i),))
                 self.assertTrue(self.game.paused)
                 self.assertEqual([], self.commands_used)
                 self.assertEqual(start_x + self.tile_size, self.game.player.rect.x)

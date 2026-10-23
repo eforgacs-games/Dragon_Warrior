@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 from pygame import K_LEFT
 
-from src.game import HILL_PAUSE_FRAMES, STEP_SYNC_FRAMES
+from src.movement import HILL_PAUSE_FRAMES, STEP_SYNC_FRAMES
 from src.maps import Alefgard
 from tests.test_freeze_movement import FreezeTestCase
 
