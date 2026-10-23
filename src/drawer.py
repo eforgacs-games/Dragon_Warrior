@@ -21,6 +21,39 @@ from src.window_renderer import draw_window
 from src.windows import COMMAND_WINDOW, POPUP_LAYOUT, POPUP_WINDOW
 
 
+class TileIndex:
+    """Where each tile of a tile group is, so draw_all finds the tiles under the characters without going through
+    every tile of their types (Alefgard has 14,400 blocks, most of them grass, trees, hills or water).
+
+    A group's index is made the first time it is asked for and kept while it is the same group with as many tiles.
+    The map's groups only change by being replaced with a new one or by having tiles added (DragonWarriorMap.add_tile,
+    CommandMenu.set_tile_by_coordinates), and a tile never moves, so that is enough to tell when to index again. The
+    group is kept with its index, so it can't be freed and another group made with its id."""
+
+    def __init__(self) -> None:
+        self._indexes: dict[int, tuple[Group, int, dict[Pixel, list[tuple[int, Any]]]]] = {}
+
+    def tiles_at(self, group: Group, corners: set[Pixel]) -> list:
+        """The tiles of group whose top left corner is one of corners, in the order the group has them (the order
+        going through the group would find them in, so they are drawn in the same order)."""
+        index = self._index(group)
+        found = [entry for corner in corners for entry in index.get(corner, ())]
+        found.sort(key=lambda entry: entry[0])
+        return [tile for _, tile in found]
+
+    def _index(self, group: Group) -> dict[Pixel, list[tuple[int, Any]]]:
+        cached = self._indexes.get(id(group))
+        if cached is not None and cached[0] is group and cached[1] == len(group):
+            return cached[2]
+        index: dict[Pixel, list[tuple[int, Any]]] = {}
+        for position, tile in enumerate(group):
+            index.setdefault(tile.rect.topleft, []).append((position, tile))
+        if len(self._indexes) > 256:  # the groups of maps left long ago
+            self._indexes.clear()
+        self._indexes[id(group)] = (group, len(group), index)
+        return index
+
+
 class MapDrawingGame(Protocol):
     """What Drawer.draw_all draws a frame of the map from: the Game."""
     screen: Surface
@@ -50,6 +83,9 @@ class Drawer:
         # Where the hero was drawn on the last frame, so the frame a step ends on also redraws it (see draw_all)
         self.last_player_rect: Rect | None = None
         self.hovering_stats_displayed = False
+        self.tile_index = TileIndex()
+        # The light around the hero, black around a hole, for each light diameter and screen size (draw_darkness)
+        self._darkness: dict[tuple[int, int, int, int], Surface] = {}
         # Whether draw_all is drawing the frame a map change fades in from: the joypad isn't read until the fade-in
         # is over (see handle_initial_dialog)
         self.drawing_fade_in_frame = False
@@ -233,15 +269,19 @@ class Drawer:
     def draw_darkness(self, screen) -> None:
         """Black out everything outside the current light diameter (see handle_darkness), without updating it."""
         tile_size = self.game_state.config["TILE_SIZE"]
-        radius = (self.game_state.lit_diameter - 1) // 2
-        darkness = Surface((screen.get_width(), screen.get_height()))  # lgtm [py/call/wrong-arguments]
-        darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * radius,
-                                            (screen.get_height() / 2) - tile_size * (radius + 0.5),
-                                            tile_size * self.game_state.lit_diameter,
-                                            tile_size * self.game_state.lit_diameter)
-        darkness.fill(BLACK)
-        darkness_hole.fill(WHITE)
-        darkness.set_colorkey(WHITE)
+        lit_diameter = self.game_state.lit_diameter
+        key = (screen.get_width(), screen.get_height(), tile_size, lit_diameter)
+        darkness = self._darkness.get(key)
+        if darkness is None:
+            radius = (lit_diameter - 1) // 2
+            darkness = Surface((screen.get_width(), screen.get_height()))  # lgtm [py/call/wrong-arguments]
+            darkness_hole = darkness.subsurface((screen.get_width() / 2) - tile_size * radius,
+                                                (screen.get_height() / 2) - tile_size * (radius + 0.5),
+                                                tile_size * lit_diameter, tile_size * lit_diameter)
+            darkness.fill(BLACK)
+            darkness_hole.fill(WHITE)
+            darkness.set_colorkey(WHITE)
+            self._darkness[key] = darkness
         screen.blit(darkness, (0, 0)) if not self.game_state.config['NO_BLIT'] else None
 
     def draw_all(self, game: 'MapDrawingGame', enable_animate: bool, events: list | None = None) -> None:
@@ -272,8 +312,8 @@ class Drawer:
             if loop_count != 1 and self.background is not None:
                 self.draw_all_tiles_in_current_map(current_map, self.background)
         if loop_count == 1:
-            self.background = big_map.subsurface(0, 0, current_map.width - width_offset,
-                                                 current_map.height - height_offset).convert()
+            self.background = first_frame_background(big_map, current_map.width - width_offset,
+                                                     current_map.height - height_offset)
             # draw everything once on the first go-around
             self.draw_all_tiles_in_current_map(current_map, self.background)
         try:
@@ -337,10 +377,8 @@ class Drawer:
         cover_cells_to_draw = set()
         for tile, tile_dict in current_map.floor_tile_key.items():
             if tile_dict.get('group') and tile in tile_types_set:
-                for tile_to_draw in tile_dict['group']:
+                for tile_to_draw in self.tile_index.tiles_at(tile_dict['group'], block_corners_to_draw):
                     tile_rect = tile_to_draw.rect
-                    if tile_rect.topleft not in block_corners_to_draw:
-                        continue
                     if current_map.covered_area:
                         cell = (tile_rect.y // tile_size, tile_rect.x // tile_size)
                         if current_map.is_hidden_by_cover(*cell):
@@ -423,6 +461,25 @@ class Drawer:
             window_rect = cmd_menu.draw_command_window()
             if not self.game_state.config['NO_BLIT']:
                 display.update(window_rect)
+
+def map_surface(width: int, height: int) -> Surface:
+    """A black surface the size of a map, in the display's format: the same as ``Surface((width, height)).convert()``,
+    without making the surface twice (Alefgard's is 3840 x 3840 pixels, about 60 MB, and each copy takes tens of
+    milliseconds). The format is taken from converting a 1 x 1 surface, so it is exactly the one convert gives."""
+    surface = Surface((width, height), 0, Surface((1, 1)).convert())
+    surface.fill(BLACK)
+    return surface
+
+
+def first_frame_background(big_map, width: int, height: int) -> Surface:
+    """The black surface a map's first frame draws every tile on (draw_all with loop_count 1). That was a copy of
+    big_map, the black surface MapManager.set_big_map makes for the map, so big_map itself is used (filled black
+    again, in case a frame has already been drawn on it): it is in the same format and nothing else draws on it."""
+    if isinstance(big_map, Surface) and big_map.get_size() == (width, height):
+        big_map.fill(BLACK)
+        return big_map
+    return big_map.subsurface(0, 0, width, height).convert()
+
 
 def replace_characters_with_underlying_tiles(tile_types_to_draw: list[str], current_map_character_key) -> list[str]:
     substitution = {k: v['underlying_tile'] for k, v in current_map_character_key.items()}
