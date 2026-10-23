@@ -64,15 +64,15 @@ class TestNpcScheduleInTown(TestCase):
         decisions: dict[int, list[int]] = {slot: [] for slot in range(len(self.npcs))}
         positions = [[npc.rect.topleft for npc in self.npcs]]
         frame = [0]
-        start_npc_step = self.game.start_npc_step
+        start_npc_step = self.game.movement.start_npc_step
 
         def spy(npc):
             decisions[self.npcs.index(npc)].append(frame[0])
             start_npc_step(npc)
 
-        with patch('src.game.random', random.Random(seed)), patch.object(self.game, 'start_npc_step', spy):
+        with patch('src.movement.random', random.Random(seed)), patch.object(self.game.movement, 'start_npc_step', spy):
             for frame[0] in range(1, frames + 1):
-                self.game.do_sprites()
+                self.game.movement.do_sprites()
                 positions.append([npc.rect.topleft for npc in self.npcs])
         return decisions, positions
 
@@ -117,17 +117,17 @@ class TestNpcScheduleInTown(TestCase):
         characters = [character_dict['character'] for character_dict in self.game.current_map.characters.values()]
         self.assertIn(self.game.player, characters)
         first = AnimatedSprite.walk_frame
-        with patch('src.game.random', random.Random(5)):
+        with patch('src.movement.random', random.Random(5)):
             for frame in range(1, 3 * FRAMES_PER_TURN + 1):
-                self.game.do_sprites()
+                self.game.movement.do_sprites()
                 for character in characters:
                     character.animate()
                 expected = first ^ (frame // FRAMES_PER_TURN % 2)
                 self.assertEqual({expected}, {character.current_frame for character in characters}, frame)
 
     def test_a_new_map_starts_with_the_first_pair(self):
-        self.game.npc_schedule.give_turn_to(7)
-        self.game.do_sprites()
+        self.game.movement.npc_schedule.give_turn_to(7)
+        self.game.movement.do_sprites()
         self.game.set_roaming_character_positions()  # what MapManager.change_map does
         decisions, _ = self.run_frames(1)
         self.assertEqual([[1], [1]] + [[]] * 8, [decisions[slot] for slot in range(MOBILE_NPC_SLOTS)])
@@ -187,16 +187,16 @@ class TestNpcWalkingRate(TestCase):
             return directions[npc]
 
         deciding = [None]
-        start_npc_step = self.game.start_npc_step
+        start_npc_step = self.game.movement.start_npc_step
 
         def spy(npc):
             deciding[0] = npc
             start_npc_step(npc)
 
-        with patch('src.game.random.choice', side_effect=choose), patch.object(self.game, 'start_npc_step', spy):
+        with patch('src.movement.random.choice', side_effect=choose), patch.object(self.game.movement, 'start_npc_step', spy):
             for _ in range(cycles * FRAMES_PER_CYCLE):
                 tiles = [(npc.row, npc.column) for npc in npcs]
-                self.game.do_sprites()
+                self.game.movement.do_sprites()
                 for index, npc in enumerate(npcs):
                     if (npc.row, npc.column) != tiles[index]:
                         steps[index] += 1
@@ -214,9 +214,9 @@ class TestNpcWalkingRate(TestCase):
     def test_both_npcs_of_a_pair_step_together_and_the_pairs_one_after_another(self):
         npcs = self.add_npcs(MOBILE_NPC_SLOTS)
         offsets = []  # each frame: how far each NPC is from its tile, in NES pixels
-        with patch('src.game.random.choice', return_value=Direction.RIGHT.value):
+        with patch('src.movement.random.choice', return_value=Direction.RIGHT.value):
             for _ in range(FRAMES_PER_CYCLE):
-                self.game.do_sprites()
+                self.game.movement.do_sprites()
                 offsets.append([npc.rect.x % self.tile_size // (self.tile_size // 16) for npc in npcs])
         for frame, frame_offsets in enumerate(offsets, start=1):
             pair = turn_of(frame)
@@ -253,13 +253,13 @@ class TestHeroAndNpcsShareTheFrameCounter(FreezeTestCase):
                 self.game.game_state.enable_roaming = False  # keep the guard out of the way
                 self.frames(idle_frames)
                 self.frames_until_the_hero_moves((K_LEFT,))
-                self.assertTrue(self.game.npc_schedule.is_decision_frame)
+                self.assertTrue(self.game.movement.npc_schedule.is_decision_frame)
                 self.frames(FRAMES_PER_TURN - 1, held=(K_LEFT,))
                 self.assertFalse(self.game.player.is_moving)  # arrived on the turn's last frame
-                self.assertTrue(self.game.npc_schedule.between_turns)
+                self.assertTrue(self.game.movement.npc_schedule.between_turns)
                 # and the next step starts at once, on the next turn's first frame
                 self.assertEqual(1, self.frames_until_the_hero_moves((K_LEFT,)))
-                self.assertTrue(self.game.npc_schedule.is_decision_frame)
+                self.assertTrue(self.game.movement.npc_schedule.is_decision_frame)
 
     def test_the_pop_up_window_opens_on_the_pop_up_frame(self):
         # NES IdleUpdate: on the $31st frame of standing still, counted in frames like the steps and the NPC turns,
@@ -288,15 +288,15 @@ class TestHeroAndNpcsShareTheFrameCounter(FreezeTestCase):
         # FrameCounter is set to $32 and DoSprites runs again
         self.game.game_state.enable_roaming = False  # the guard stays where he starts until his turn below
         self.frames(POP_UP_FRAME - 1)
-        self.assertEqual(POP_UP_FRAME - 1, self.game.frame_counter)
+        self.assertEqual(POP_UP_FRAME - 1, self.game.movement.frame_counter)
         self.game.game_state.enable_roaming = True
-        self.game.npc_schedule.update_counter = 0  # the guard's turn is next
+        self.game.movement.npc_schedule.update_counter = 0  # the guard's turn is next
         offsets = []
-        with patch('src.game.random.choice', return_value=Direction.LEFT.value):
+        with patch('src.movement.random.choice', return_value=Direction.LEFT.value):
             for _ in range(FRAMES_PER_TURN - 1):
                 self.frame()
                 offsets.append((self.guard.last_rect.x - self.guard.rect.x) // (self.tile_size // 16))
-        self.assertEqual(0x40, self.game.frame_counter)  # the turn still ends on a multiple of 16
+        self.assertEqual(0x40, self.game.movement.frame_counter)  # the turn still ends on a multiple of 16
         # 2 pixels on the pop-up frame, then 1 a frame: the step still ends on the turn's last frame
         self.assertEqual(list(range(2, FRAMES_PER_TURN + 1)), offsets)
         self.assertFalse(self.guard.is_moving)

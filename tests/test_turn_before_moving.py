@@ -30,7 +30,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.play_sound = patch.object(self.game.movement.sound, 'play_sound').start()
         self.addCleanup(patch.stopall)
         self.assertEqual((13, 10), (self.player.column, self.player.row))
-        self.assertEqual(0, self.game.frame_counter)
+        self.assertEqual(0, self.game.movement.frame_counter)
 
     def hero_xy(self):
         return self.player.rect.x, self.player.rect.y
@@ -109,7 +109,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
     def test_the_pop_up_window_frame_skips_a_count(self):
         # NES IdleUpdate: on FrameCounter $31 it shows the pop-up window and sets FrameCounter to $32
         self.stand_still(60)
-        self.assertEqual(61, self.game.frame_counter)
+        self.assertEqual(61, self.game.movement.frame_counter)
         self.assertEqual(4, self.frames_until_moved((K_LEFT,)))  # 61, 62, 63, then 64
 
     def test_the_delay_is_counted_in_frames_at_any_game_speed(self):
@@ -145,7 +145,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.assertEqual(1, self.game.tiles_moved_since_spawn)
         self.assertFalse(self.player.is_moving)
         self.assertEqual((12, 10), (self.player.column, self.player.row))
-        self.assertEqual(0, self.game.frame_counter)
+        self.assertEqual(0, self.game.movement.frame_counter)
 
     def test_letting_go_mid_step_finishes_the_step(self):
         start_x, _ = self.hero_xy()

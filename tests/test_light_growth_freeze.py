@@ -27,14 +27,14 @@ class TestLightGrowthFreeze(FreezeTestCase):
         self.addCleanup(patch.stopall)
         patch.dict(self.game.game_state.config, NO_BATTLES=True, ENABLE_DARKNESS=True).start()
         patch.object(self.game.movement.sound, 'play_sound').start()
-        self.game.frame_counter = 0
+        self.game.movement.frame_counter = 0
         self.direction = self.open_direction()
 
     def open_direction(self):
         """A direction the hero can walk in from the start."""
         for direction in (K_DOWN, K_RIGHT, K_UP, K_LEFT):
             start = self.player.rect.topleft
-            self.game.frame_counter = 0
+            self.game.movement.frame_counter = 0
             self.frame(held=(direction,))
             moved = self.player.rect.topleft != start
             self.frames(32)  # finish the step, or the bump
@@ -58,7 +58,7 @@ class TestLightGrowthFreeze(FreezeTestCase):
         self.assertEqual(7, self.game.game_state.lit_diameter)
 
     def test_the_hero_does_not_move_while_the_light_grows(self):
-        self.game.frame_counter = 5  # would step on the 11th frame if the joypad were read
+        self.game.movement.frame_counter = 5  # would step on the 11th frame if the joypad were read
         self.game.game_state.cast_radiant()
         start = self.player.rect.topleft
         self.frames(RADIANT_GROWTH_FRAMES, held=(self.direction,))

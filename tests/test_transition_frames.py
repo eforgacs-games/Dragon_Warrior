@@ -144,7 +144,7 @@ class TestNoOneFrameFlickers(TransitionTestCase):
         self.frames(3)
         # Everyone is on a tile, between two NPC turns (#289), so the window opens on the frame K is pressed
         with patch.object(self.game, 'everyone_on_a_tile', return_value=True), \
-                patch.object(type(self.game.npc_schedule), 'between_turns', new_callable=PropertyMock,
+                patch.object(type(self.game.movement.npc_schedule), 'between_turns', new_callable=PropertyMock,
                              return_value=True), recording() as frames:
             self.frames(2)
             self.press(K_k)
