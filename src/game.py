@@ -699,8 +699,19 @@ class Game:
         everything that moves) doesn't run at all until they close.
         This is the one place movement is gated, rather than relying on the GameState flags alone, because those
         are turned back on in many places (e.g. every menu command ends with unpause_all_movement).
+        It's also frozen while RADIANT's or a torch's light grows (light_growing).
         """
-        return self.paused or self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled()
+        return (self.paused or self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled()
+                or self.light_growing)
+
+    @property
+    def light_growing(self) -> bool:
+        """Whether RADIANT's or a torch's light is still growing. NES LightIncreaseLoop (DoSpell, Bank03, about 24
+        frames: a PostMoveUpdate of LIGHT_REDRAW_FRAMES for each 2 blocks) and UseTorch redraw the light before they
+        return, with the NPCs still stopped, so nothing reads the joypad and nothing moves until it's done (#307).
+        Drawer.handle_darkness advances the light, and only runs while the darkness is drawn."""
+        return (bool(self.game_state.pending_light_redraws) and self.current_map.is_dark
+                and self.game_state.config['ENABLE_DARKNESS'])
 
     @property
     def freeze_pending(self) -> bool:
@@ -1108,9 +1119,9 @@ class Game:
             # Start button
             if self.paused:
                 self.paused = False
-            elif not (self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled()):
-                # NES CheckInputs: START only pauses from the map, not while a window is up. The hero finishes the
-                # step under way first (resolve_pending_freezes).
+            elif not (self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled() or self.light_growing):
+                # NES CheckInputs: START only pauses from the map, not while a window is up or the light grows. The
+                # hero finishes the step under way first (resolve_pending_freezes).
                 self.pause_requested = True
                 self.cmd_menu_requested = False
                 self.resolve_pending_freezes()
