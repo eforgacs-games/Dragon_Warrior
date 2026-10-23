@@ -1451,9 +1451,11 @@ class Game:
                 npc, hero_direction = self.npc_asked_to_make_way
                 if npc in roaming_characters and not npc.is_moving and self.make_way(npc, hero_direction):
                     making_way = npc
-            # Slots past the end are empty (NES: X and Y 0); they keep their place in the turns
-            deciding = [roaming_characters[slot] for slot in self.npc_schedule.slots_on_turn()
-                        if slot < len(roaming_characters) and not roaming_characters[slot].is_moving]
+            # Empty slots (NES: X and Y 0), past the end or of removed NPCs, keep their place in the turns
+            slots_on_turn = self.npc_schedule.slots_on_turn()
+            deciding = [roaming_character for index, roaming_character in enumerate(roaming_characters)
+                        if (index if roaming_character.slot is None else roaming_character.slot) in slots_on_turn
+                        and not roaming_character.is_moving]
         for roaming_character in roaming_characters:
             if roaming_character in deciding:
                 if roaming_character.turns_to_rest:
