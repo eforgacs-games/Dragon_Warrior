@@ -3,7 +3,8 @@
 A plain ``pygame.time.wait`` (or a ``while get_ticks() ...`` loop) doesn't read the event queue, so clicking the
 window's X does nothing until the wait is over, and code that clears the queue afterwards throws the ``QUIT`` away.
 These helpers only look for a ``QUIT`` event while they wait: every other event stays queued, exactly as it would
-during ``time.wait``, so a caller that used to drop them (``event.clear()``) still has to do that itself.
+during ``time.wait``, so a caller that used to drop them still has to do that itself, with ``clear_events_keeping_quit``
+(a plain ``event.clear()`` would throw away a ``QUIT`` that arrives just after the wait).
 
 It also keeps the game speed (keys 1 to 4: 1x, 2x, 4x or 8x, a modern convenience, not NES behavior). At speed N the
 game runs N times as fast: ``wait`` waits 1/N of the time, and ``game_ticks`` (the clock every timer in the game
@@ -119,6 +120,16 @@ def quit_if_requested(current_event: event.Event) -> None:
         quit_game()
 
 
+def clear_events_keeping_quit() -> None:
+    """``event.clear()`` for the waits that drop whatever was pressed meanwhile, without dropping a window close: quit
+    if one is queued, then clear the rest. ``event.peek`` reads the OS's new events into the queue (pumps) and the
+    clear doesn't, so a ``QUIT`` that arrives after the check stays queued for the next loop instead of being thrown
+    away with the keys."""
+    if event.peek(QUIT):
+        quit_game()
+    event.clear(pump=False)
+
+
 def check_for_quit() -> None:
     """Quit if the window has been closed, and change the game speed if 1 to 4 is held. Nothing is taken off the
     queue: ``event.peek`` only looks (and pumps), so other events stay queued, and tests that script ``event.get``
@@ -157,6 +168,46 @@ def wait(milliseconds: float, config: dict | None = None) -> None:
 def wait_frames(frames: float, config: dict | None = None, fps: float = NES_FPS) -> None:
     """``wait`` for a number of frames (NES frames, 60 per second, unless ``fps`` says otherwise)."""
     wait(frames * 1000 / fps, config)
+
+
+class FramePacer:
+    """How many frames the map loop runs before it draws the map again (Game.run_due_frames).
+
+    The map counts frames, as the NES does: a step takes 16 of them, and so does each NPC turn (src/npc_schedule.py).
+    Running one frame per draw at 60 * N FPS only keeps up with the game clock (``game_ticks``, which the dialogs,
+    effects and blinking read) while drawing a frame takes under 1/(60 N) of a second, about 2 ms at 8x; and
+    ``Clock.tick`` rounds the frame time down to whole milliseconds (16 ms, 62.5 FPS, at 1x). So the map runs the frames
+    the game clock has gone through since it last drew: N frames for every 1/60 of a real second, however long a draw
+    takes. Every frame still runs, in order, so steps and NPC turns are exactly as many frames as before; only the
+    drawing of some of them is skipped when drawing is slow."""
+
+    def __init__(self, max_frames: int, stall_ms: int = 100):
+        """
+        :param max_frames: The most frames run between two draws. The frames past that are dropped: the game slows
+            down rather than jump ahead.
+        :param stall_ms: A gap longer than this between two draws (real milliseconds) is something that took over
+            the screen in the middle of a frame, a battle, a dialog, a menu or a map change, not slow drawing: the
+            frames the game clock went through meanwhile aren't made up for, just the next one runs.
+        """
+        self.max_frames = max_frames
+        self.stall_ms = stall_ms
+        self._last_frame: int | None = None
+        self._last_real = 0
+
+    def frames_due(self) -> int:
+        """How many frames to run now, before the next draw (0 if the last draw came before a frame was due)."""
+        frame = game_ticks() * NES_FPS // 1000
+        real = time.get_ticks()
+        if self._last_frame is None or self.stalled(real):
+            due = 1
+        else:
+            due = max(0, min(frame - self._last_frame, self.max_frames))
+        self._last_frame, self._last_real = frame, real
+        return due
+
+    def stalled(self, now: int | None = None) -> bool:
+        """Whether more than ``stall_ms`` real milliseconds have gone by since ``frames_due``."""
+        return (time.get_ticks() if now is None else now) - self._last_real > self.stall_ms
 
 
 def is_any_key_held(keys: Collection[int]) -> bool:

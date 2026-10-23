@@ -740,7 +740,8 @@ class TestGame(TestCase):
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
         self.game.drawer.handle_initial_dialog(self.game.initial_dialog_enabled, self.game.cmd_menu, self.game.events,
                                                self.game.skip_text, self.game.story_flags.left_throne_room)
-        self.assertFalse(self.game.drawer.display_hovering_stats)
+        # The hero has been standing still all along, so the pop-up window opens as soon as the king's words end
+        self.assertTrue(self.game.drawer.display_hovering_stats)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
         self.assertTrue(self.game.game_state.automatic_initial_dialog_run)
         self.assertEqual('When thou art finished preparing for thy departure, please see me.\nI shall wait.',
@@ -817,7 +818,8 @@ class TestGame(TestCase):
                                   self.game.game_state.enable_animate, self.game.camera, self.game.initial_dialog_enabled,
                                   self.game.events, self.game.skip_text, self.game.story_flags.left_throne_room,
                                   self.game.game_state, self.game.color)
-        self.assertTrue(self.game.drawer.not_moving_time_start)
+        # The hero isn't moving: the pop-up window isn't closed (it opens on the POP_UP_FRAME, see Game.do_sprites)
+        self.assertFalse(self.game.player.is_moving)
 
     # def test_handle_sprite_drawing_and_animation(self):
     #     self.game.handle_sprite_drawing_and_animation()

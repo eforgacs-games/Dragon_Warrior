@@ -92,7 +92,7 @@ class TestCommandWindowClose(TestCase):
                 mock_key.get_pressed.return_value = held
                 Game.get_events(game)
 
-        game.get_events = get_events  # type: ignore[method-assign]
+        game.run_due_frames = get_events  # type: ignore[method-assign]  # one frame a pass, as when drawing keeps up
         game.clock = MagicMock()  # don't wait for the frame rate
         # One NES frame per pass of the main loop, for the window's joypad reading (src/command_window.py)
         with patch('pygame.display.flip', flip), patch('pygame.display.update', update), \
