@@ -147,11 +147,15 @@ LOOK & SOUND:
 - DIALOG STYLE: CLASSIC (NES), the NES dialog window whose text scrolls, or MODERN, each message on a fresh window
 - FADE STYLE: NES, fades through the NES palette, or SMOOTH, a black fade
 - MUSIC: ORCHESTRA, the orchestral soundtrack, or NES, the NES music
+- STATUS WINDOW: NES, the HP/MP window pops up after you stand still a moment, or ALWAYS, it stays up while you walk
 
 GAMEPLAY:
 - NPCS MAKE WAY: ON, a townsperson you walk into steps aside, or OFF (NES), they stay in your way
 - STAIRS: STEP ON, stepping onto stairs takes them, or NES, only the STAIRS command does
 - QUICK ACTION: ON, Enter on the map takes, opens a door or talks (see Enter), or OFF (NES), Enter is K there too
+- ENCOUNTERS: NES, the NES's random fights; HALF, every other one is skipped; or OFF, none (guardians, the Dragonlord
+  and the other set fights still happen, and auto-grind won't start)
+- EXP/GOLD: x1 (NES), x2 or x4 the experience and gold a won fight gives, still at most 65535 each
 
 CONTROLS (off, which is the NES, their keys do nothing):
 - GAME SPEED: keys 1 to 5
@@ -163,6 +167,10 @@ CONTROLS (off, which is the NES, their keys do nothing):
 - MENU SPEED: NORMAL, the menus' cursor (its blink and how fast a held direction or button repeats) stays at normal
   speed whatever the game speed, or FOLLOW GAME, it speeds up with the game as everything else does
 - CHEATS: F4 auto-battle and F9 invulnerability (off in both presets)
+- RUN BUTTON: hold J (B) while walking on the map to walk twice as fast; the fights, the NPCs and the timers keep
+  their own pace
+
+MODERN leaves ENCOUNTERS and EXP/GOLD at the NES's: they change the game's balance rather than its conveniences.
 
 H: Show the controls
 

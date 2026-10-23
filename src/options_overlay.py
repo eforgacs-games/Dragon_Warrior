@@ -16,11 +16,14 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     LANGUAGE       ENGLISH / 한국어          (LANGUAGE: a global setting, src/settings.py)
     SCANLINES      OFF / ON                 (SCANLINES: a display filter, src/display_filters.py; global)
     SCALING        SMOOTH / PIXEL PERFECT   (SCALING: pygame's SCALED, or whole multiples of 256x240 only; global)
+    STATUS WINDOW  NES / ALWAYS             (STATUS_WINDOW: the pop-up window, Drawer.status_window_always)
 
     GAMEPLAY
     NPCS MAKE WAY  ON / OFF (NES)           (NPCS_MAKE_WAY, MovementController.ask_npc_to_make_way)
     STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps)
     QUICK ACTION   OFF (NES) / ON           (QUICK_ACTION: Enter takes, opens or talks, Game.handle_enter_key)
+    ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, Game.thin_encounters)
+    EXP/GOLD       x1 (NES) / x2 / x4       (EXP_GOLD: what a won fight gives, Battle.enemy_defeated)
 
     CONTROLS
     GAME SPEED     OFF (NES) / ON           (GAME_SPEED_KEYS: keys 1 to 5, src/waiting.py)
@@ -31,6 +34,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     MENU SPEED     NORMAL / FOLLOW GAME     (MENU_SPEED: the selection windows at 1x, or at the game speed,
                                              src/waiting.py menu_ticks)
     CHEATS         OFF (NES) / ON           (CHEAT_KEYS: F4 auto-battle, F9 invulnerability)
+    RUN BUTTON     OFF (NES) / ON           (RUN_BUTTON: hold B to walk twice as fast, src/movement.py)
 
 Above every page's rows are two more:
 
@@ -69,7 +73,9 @@ from src.common import A_BUTTON_KEYS, B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT
     START_BUTTON_KEYS, UP_KEYS, set_gettext_language
 from src.cursor import BlinkingCursor
 from src.display_filters import SCALING_KEY, SCALING_MODES, SCANLINES_KEY
-from src.options_screen import AUTO_GRIND_STOP_VALUES, CLASSIC, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN
+from src.options_screen import AUTO_GRIND_STOP_VALUES, CLASSIC, ENCOUNTER_SETTINGS, ENCOUNTERS_NES, \
+    EXP_GOLD_MULTIPLIERS, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN, STATUS_WINDOW_ALWAYS, \
+    STATUS_WINDOW_NES, STATUS_WINDOW_SETTINGS
 from src.selection import frame_events, next_frame
 from src.settings import LANGUAGES
 from src.translated_window import draw_translated_window
@@ -146,11 +152,16 @@ OPTION_PAGES = (
         # is on the NES or off it (the NES drew to a TV), so no preset changes them.
         OptionRow("SCANLINES", SCANLINES_KEY, (False, True), ("OFF", "ON")),
         OptionRow("SCALING", SCALING_KEY, SCALING_MODES, ("SMOOTH", "PIXEL PERFECT")),
+        OptionRow("STATUS WINDOW", 'STATUS_WINDOW', STATUS_WINDOW_SETTINGS, ("NES", "ALWAYS"),
+                  (STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS)),
     )),
     OptionPage("GAMEPLAY", (
         OptionRow("NPCS MAKE WAY", 'NPCS_MAKE_WAY', (True, False), ("ON", "OFF (NES)"), (False, True)),
         OptionRow("STAIRS", 'AUTO_STAIRS', (True, False), ("STEP ON", "NES"), (False, True)),
         switch_row("QUICK ACTION", 'QUICK_ACTION'),
+        # How many fights, and what they give, are the game's balance, not conveniences: NES in both presets
+        OptionRow("ENCOUNTERS", 'ENCOUNTERS', ENCOUNTER_SETTINGS, ("NES", "HALF", "OFF"), (ENCOUNTERS_NES, ENCOUNTERS_NES)),
+        OptionRow("EXP/GOLD", 'EXP_GOLD', EXP_GOLD_MULTIPLIERS, ("x1 (NES)", "x2", "x4"), (1, 1)),
     )),
     OptionPage("CONTROLS", (
         switch_row("GAME SPEED", 'GAME_SPEED_KEYS'),
@@ -164,6 +175,7 @@ OPTION_PAGES = (
                   (MENU_SPEED_NORMAL, MENU_SPEED_NORMAL)),
         # F4 and F9 are cheats, not conveniences: off in both presets
         switch_row("CHEATS", 'CHEAT_KEYS', modern=False),
+        switch_row("RUN BUTTON", 'RUN_BUTTON'),
     )),
 )
 OPTION_ROWS = tuple(row for page in OPTION_PAGES for row in page.rows)

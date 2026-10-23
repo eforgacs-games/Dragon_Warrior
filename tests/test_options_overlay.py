@@ -192,17 +192,21 @@ class TestRows(OverlayTestCase):
                                             ("MUSIC", 'ORCHESTRA_MUSIC_ENABLED', ("ORCHESTRA", "NES")),
                                             ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어")),
                                             ("SCANLINES", 'SCANLINES', ("OFF", "ON")),
-                                            ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT"))]),
+                                            ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT")),
+                                            ("STATUS WINDOW", 'STATUS_WINDOW', ("NES", "ALWAYS"))]),
                           ("GAMEPLAY", [("NPCS MAKE WAY", 'NPCS_MAKE_WAY', ("ON", "OFF (NES)")),
                                         ("STAIRS", 'AUTO_STAIRS', ("STEP ON", "NES")),
-                                        ("QUICK ACTION", 'QUICK_ACTION', ("OFF (NES)", "ON"))]),
+                                        ("QUICK ACTION", 'QUICK_ACTION', ("OFF (NES)", "ON")),
+                                        ("ENCOUNTERS", 'ENCOUNTERS', ("NES", "HALF", "OFF")),
+                                        ("EXP/GOLD", 'EXP_GOLD', ("x1 (NES)", "x2", "x4"))]),
                           ("CONTROLS", [("GAME SPEED", 'GAME_SPEED_KEYS', ("OFF (NES)", "ON")),
                                         ("SAVE STATES", 'SAVE_STATES', ("OFF (NES)", "ON")),
                                         ("REWIND", 'REWIND', ("OFF (NES)", "ON")),
                                         ("AUTO-GRIND", 'AUTO_GRIND', ("OFF (NES)", "ON")),
                                         ("GRIND STOP", 'AUTO_GRIND_STOP', ("RED HP", "HALF HP", "3/4 HP")),
                                         ("MENU SPEED", 'MENU_SPEED', ("NORMAL", "FOLLOW GAME")),
-                                        ("CHEATS", 'CHEAT_KEYS', ("OFF (NES)", "ON"))])],
+                                        ("CHEATS", 'CHEAT_KEYS', ("OFF (NES)", "ON")),
+                                        ("RUN BUTTON", 'RUN_BUTTON', ("OFF (NES)", "ON"))])],
                          [(page.title, [(row.label, row.config_key, row.value_labels) for row in page.rows])
                           for page in OPTION_PAGES])
 
@@ -217,19 +221,23 @@ class TestRows(OverlayTestCase):
     def test_window_shows_the_current_values(self):
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/3", "MESSAGE SPEED", "FAST", "DIALOG STYLE", "CLASSIC (NES)",
                           "FADE STYLE", "NES", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
-                          "SCALING", "SMOOTH"], page_texts(self.config))
+                          "SCALING", "SMOOTH", "STATUS WINDOW", "NES"], page_texts(self.config))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "ON", "STAIRS", "STEP ON",
-                          "QUICK ACTION", "OFF (NES)"], page_texts(self.config, 1))
+                          "QUICK ACTION", "OFF (NES)", "ENCOUNTERS", "NES", "EXP/GOLD", "x1 (NES)"],
+                         page_texts(self.config, 1))
         self.config.update(TEXT_SPEED='Slow', DIALOG_STYLE=MODERN, NPCS_MAKE_WAY=False, FADE_STYLE=FADE_STYLE_SMOOTH,
-                           AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP', CHEAT_KEYS=True, REWIND=True)
+                           AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP', CHEAT_KEYS=True, REWIND=True,
+                           STATUS_WINDOW='Always', ENCOUNTERS='Half', EXP_GOLD=4, RUN_BUTTON=True)
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/3", "MESSAGE SPEED", "SLOW", "DIALOG STYLE", "MODERN",
                           "FADE STYLE", "SMOOTH", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
-                          "SCALING", "SMOOTH"],
+                          "SCALING", "SMOOTH", "STATUS WINDOW", "ALWAYS"],
                          page_texts(self.config))
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "OFF (NES)", "STAIRS", "NES",
+                          "QUICK ACTION", "OFF (NES)", "ENCOUNTERS", "HALF", "EXP/GOLD", "x4"],
+                         page_texts(self.config, 1))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "3/3", "GAME SPEED", "OFF (NES)", "SAVE STATES", "OFF (NES)",
                           "REWIND", "ON", "AUTO-GRIND", "OFF (NES)", "GRIND STOP", "3/4 HP", "MENU SPEED", "NORMAL",
-                          "CHEATS", "ON"],
-                         page_texts(self.config, 2))
+                          "CHEATS", "ON", "RUN BUTTON", "ON"], page_texts(self.config, 2))
 
     def test_the_window_is_the_same_size_on_every_page_and_fits_the_screen(self):
         self.assertEqual(MOST_ROWS + 2, OPTIONS_WINDOW.height)
@@ -298,10 +306,10 @@ class TestRows(OverlayTestCase):
         self.assertFalse(self.config['AUTO_STAIRS'])
 
     def test_cursor_stops_at_the_edges(self):
-        # up from PRESET stays on it (right there: CUSTOM to NES); down past the last row stays on the last
-        # (SCALING, which no preset changes)
+        # up from PRESET stays on it (right there: CUSTOM to NES); down past the last row stays on the last (STATUS
+        # WINDOW, which right turns from NES to ALWAYS)
         self.run_overlay(K_UP, K_RIGHT, *(K_DOWN,) * (MOST_ROWS + 1), K_RIGHT, K_u)
-        self.assertEqual({**DEFAULTS, **preset_values(PRESET_NES), 'SCALING': 'PixelPerfect'},
+        self.assertEqual({**DEFAULTS, **preset_values(PRESET_NES), 'STATUS_WINDOW': 'Always'},
                          own_settings(self.config))
 
     def test_b_esc_select_and_tab_close_it(self):
@@ -394,15 +402,16 @@ class TestPreset(OverlayTestCase):
 
     def test_the_presets(self):
         self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': False,
-                          'NPCS_MAKE_WAY': False, 'AUTO_STAIRS': False, 'QUICK_ACTION': False,
-                          'GAME_SPEED_KEYS': False, 'SAVE_STATES': False, 'REWIND': False, 'AUTO_GRIND': False,
-                          'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL, 'CHEAT_KEYS': False},
-                         preset_values(PRESET_NES))
+                          'STATUS_WINDOW': 'NES', 'NPCS_MAKE_WAY': False, 'AUTO_STAIRS': False, 'QUICK_ACTION': False,
+                          'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': False, 'SAVE_STATES': False,
+                          'REWIND': False, 'AUTO_GRIND': False, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
+                          'CHEAT_KEYS': False, 'RUN_BUTTON': False}, preset_values(PRESET_NES))
+        # MODERN: every convenience but the cheats; the number of fights and what they give stay the NES's
         self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': True,
-                          'NPCS_MAKE_WAY': True, 'AUTO_STAIRS': True, 'QUICK_ACTION': True,
-                          'GAME_SPEED_KEYS': True, 'SAVE_STATES': True, 'REWIND': True, 'AUTO_GRIND': True,
-                          'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL, 'CHEAT_KEYS': False},
-                         preset_values(PRESET_MODERN))
+                          'STATUS_WINDOW': 'Always', 'NPCS_MAKE_WAY': True, 'AUTO_STAIRS': True, 'QUICK_ACTION': True,
+                          'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': True, 'SAVE_STATES': True,
+                          'REWIND': True, 'AUTO_GRIND': True, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
+                          'CHEAT_KEYS': False, 'RUN_BUTTON': True}, preset_values(PRESET_MODERN))
         # the message speed is the NES's own setting, and the language the player's: no preset changes them
         self.assertNotIn('TEXT_SPEED', [row.config_key for row in PRESET_ROWS])
         for config_key in ('LANGUAGE', 'SCANLINES', 'SCALING'):
@@ -606,8 +615,12 @@ class TestDevOnly(TestCase):
         # on: the speed keys, save states, rewind, auto-grind, F4/F9 and the Enter shortcut worked before the switches
         from src.config.prod_config import prod_config
         for switch in SWITCHES:
+            if switch.config_key in ('ENCOUNTERS', 'EXP_GOLD', 'RUN_BUTTON', 'STATUS_WINDOW'):
+                # new options: the NES's
+                self.assertIn(switch.default, (False, 'NES', 1), switch.config_key)
+            else:
+                self.assertTrue(prod_config[switch.config_key], switch.config_key)
             self.assertEqual(switch.default, prod_config[switch.config_key], switch.config_key)
-            self.assertTrue(prod_config[switch.config_key], switch.config_key)
 
     def test_a_game_without_debug_keys_has_no_debug_tools(self):
         pygame.init()

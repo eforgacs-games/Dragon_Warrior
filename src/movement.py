@@ -12,8 +12,8 @@ from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w, key
 
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
-from src.common import is_facing_down, is_facing_laterally, is_facing_left, is_facing_medially, is_facing_right, \
-    is_facing_up
+from src.common import B_BUTTON_KEYS, is_facing_down, is_facing_laterally, is_facing_left, is_facing_medially, \
+    is_facing_right, is_facing_up
 from src.direction import Direction
 from src.directories import Directories
 from src.game_functions import set_character_position
@@ -31,6 +31,9 @@ from src.waiting import MAP_CONTEXT, with_virtual_keys
 NES_PIXELS_PER_TILE = 16
 # NES DoJoyUp etc. (Bank00) only start a step when FrameCounter & $0F is 0. A step is 16 frames long too.
 STEP_SYNC_FRAMES = NES_PIXELS_PER_TILE
+# RUN BUTTON (not NES, the options overlay): holding B, the hero walks twice as fast, a step in 8 frames
+RUN_SPEED_FACTOR = 2
+RUN_STEP_FRAMES = STEP_SYNC_FRAMES // RUN_SPEED_FACTOR
 # NES ChkBlkSand (Bank03, LCE0A): a step onto a hill block is followed by three WaitForNMI, with nothing moving, before
 # the step's fight roll
 HILL_PAUSE_FRAMES = 3
@@ -105,6 +108,8 @@ class MovementController:
         # Frames the hero has stood waiting for the NPCs to finish their steps before a pause or the command window
         # (see everyone_on_a_tile)
         self.freeze_wait_frames = 0
+        # RUN BUTTON: whether the hero's step under way is a running one, at twice the speed (see move_player)
+        self.running_step = False
 
     # What the controller uses of the Game, read from it each time
 
@@ -286,10 +291,13 @@ class MovementController:
             # DoJoyUp etc. start with ChkRemovePopUp: any direction press closes the pop-up window, even a tap that
             # only turns the hero
             self.game.drawer.remove_pop_up(self.game.cmd_menu)
-            if self.frame_counter % STEP_SYNC_FRAMES:
+            running = self.run_button_held(current_key)
+            if self.frame_counter % STEP_SYNC_FRAMES and not (
+                    running and self.frame_counter % STEP_SYNC_FRAMES == RUN_STEP_FRAMES and self.run_step_is_clear()):
                 self.idle_frame()
                 return
             self.player.is_moving = True
+            self.running_step = running
         # not sure if setting the player sprites to dirty makes a difference
         self.current_map.player_sprites.dirty = 1
         if is_facing_medially(self.player):
@@ -307,6 +315,7 @@ class MovementController:
             # NES DirectionBlocked: no step is taken; FrameCounter is reset, then IdleUpdate waits a frame
             self.player.bumped = False
             self.frame_counter = 0
+            self.running_step = False
             self.idle_frame()
             self.ask_npc_to_make_way()
         else:
@@ -316,6 +325,34 @@ class MovementController:
             # FrameCounter goes back to 0 once this frame's DoSprites has run (see sprites_frame)
             self.step_ends = True
         self.finish_step(self.player)
+
+    def run_button_held(self, current_key) -> bool:
+        """RUN BUTTON (RUN_BUTTON, not NES): with it on, B held while walking makes the step a running one, which moves
+        2 NES pixels a frame, so it takes RUN_STEP_FRAMES (8) frames instead of 16. Only the walking is faster: a step
+        counts once for the fight roll, the step effects and everything else, and the NPCs and the timers keep their
+        own pace, since FrameCounter keeps counting as it does (sprites_frame). B means nothing else on the map."""
+        return bool(self.config.get('RUN_BUTTON')) and any(current_key[b_key] for b_key in B_BUTTON_KEYS)
+
+    def run_step_is_clear(self) -> bool:
+        """Whether a running step may start half way through FrameCounter's 16 (on its 8th frame): only into a block
+        the hero can walk onto, on the map, with no one in it. Anything else (a wall, an NPC, the map's edge or a town
+        gate) waits for the next multiple of 16, where the NES's own checks bump or leave the map as walking does, so a
+        bump always resets FrameCounter on an NPC turn's last frame, as on the NES."""
+        row, column = step(self.player.row, self.player.column, self.player.direction_value)
+        layout = self.current_map.layout
+        if not (0 <= row < len(layout) and 0 <= column < len(layout[row])) or self.current_map.is_map_exit(row, column):
+            return False
+        next_tile = self.calculation.get_next_tile_identifier(self.player.column, self.player.row,
+                                                              self.player.direction_value, self.current_map)
+        return not self.is_impassable(next_tile) and not self.character_in_path(self.player)
+
+    @property
+    def hero_speed(self) -> int:
+        """Pixels the hero moves a frame: one NES pixel, two on a running step (RUN BUTTON)."""
+        return self.speed * RUN_SPEED_FACTOR if self.running_step else self.speed
+
+    def speed_of(self, character: Player | RoamingCharacter) -> int:
+        return self.hero_speed if character is self.player else self.speed
 
     def idle_frame(self) -> None:
         """NES IdleUpdate (Bank03): wait for the next frame, which counts it in FrameCounter (NMI: INC FrameCounter,
@@ -350,16 +387,18 @@ class MovementController:
     # A character's step, pixel by pixel
 
     def move_laterally(self, character: Player | RoamingCharacter) -> None:
+        speed = self.speed_of(character)
         if is_facing_left(character):
-            self.move(character, delta_x=-self.speed, delta_y=0)
+            self.move(character, delta_x=-speed, delta_y=0)
         elif is_facing_right(character):
-            self.move(character, delta_x=self.speed, delta_y=0)
+            self.move(character, delta_x=speed, delta_y=0)
 
     def move_medially(self, character: Player | RoamingCharacter) -> None:
+        speed = self.speed_of(character)
         if is_facing_up(character):
-            self.move(character, delta_x=0, delta_y=self.speed)
+            self.move(character, delta_x=0, delta_y=speed)
         elif is_facing_down(character):
-            self.move(character, delta_x=0, delta_y=-self.speed)
+            self.move(character, delta_x=0, delta_y=-speed)
 
     def move(self, character: Player | RoamingCharacter, delta_x: int, delta_y: int) -> None:
         """
@@ -458,23 +497,24 @@ class MovementController:
         :return: tuple: The x, y coordinates (in terms of tile size) of the next position of the player.
         """
         max_x_bound, max_y_bound = self.current_map.width - self.tile_size, self.current_map.height - self.tile_size
+        speed = self.hero_speed
         min_bound = 0
         if self.player.rect.x < min_bound:
             self.player.rect.x = min_bound
             self.bump(self.player)
-            next_pos_x += -self.speed
+            next_pos_x += -speed
         elif self.player.rect.x > max_x_bound:
             self.player.rect.x = max_x_bound
             self.bump(self.player)
-            next_pos_x += self.speed
+            next_pos_x += speed
         elif self.player.rect.y < min_bound:
             self.player.rect.y = min_bound
             self.bump(self.player)
-            next_pos_y -= self.speed
+            next_pos_y -= speed
         elif self.player.rect.y > max_y_bound:
             self.player.rect.y = max_y_bound
             self.bump(self.player)
-            next_pos_y += self.speed
+            next_pos_y += speed
         return next_pos_x, next_pos_y
 
     def bump_and_reset(self, character, pre_bump_next_tile, pre_bump_next_next_tile):
@@ -511,7 +551,13 @@ class MovementController:
         if self.step_ends:
             # NES: DoJoyUp etc. return through ChkSpecialLoc to GameEngineLoop -> JoypadCheckLoop
             self.step_ends = False
-            self.frame_counter = 0
+            if self.running_step:
+                # RUN BUTTON: a running step can end half way through an NPC turn, which goes on: FrameCounter keeps
+                # its place in the turn, so only the count of frames stood still (the pop-up window's) starts again
+                self.frame_counter %= STEP_SYNC_FRAMES
+            else:
+                self.frame_counter = 0
+            self.running_step = False
 
     def update_sprites(self) -> None:
         """NES DoSprites: the walking animation and the roaming NPCs."""
