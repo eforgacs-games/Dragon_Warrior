@@ -37,7 +37,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 UP, DOWN, LEFT, RIGHT = Direction.UP.value, Direction.DOWN.value, Direction.LEFT.value, Direction.RIGHT.value
 
 # How each yes/no window on the way is answered (True = YES). "Dost thou wish to purchase more?" at the key shop is
-# answered by TestStoryRun.answer.
+# answered by StoryRunMixin.answer.
 STORY_ANSWERS = {
     "Magic keys! They will unlock any door.\nDost thou wish to purchase one for 85 GOLD?": True,
     "Will thou take me to the castle?": True,
@@ -70,7 +70,9 @@ def dragonlord_defeated(game) -> bool:
     return game.story_flags.dragonlord_defeated
 
 
-class TestStoryRun(TestCase):
+class StoryRunMixin:
+    """The setup, stand-ins and story steps of the headless run, without any tests, so the classes that reuse them
+    (here and in test_checkpoints.py) don't inherit, and rerun, each other's tests. Mix in before TestCase."""
 
     @classmethod
     def setUpClass(cls):
@@ -423,7 +425,8 @@ class TestStoryRun(TestCase):
             self.assertEqual(credit_screens[-1], ((13, 12, "THE END"),))
         return [call.args for call in place_gwaelin.call_args_list], walk_gwaelin_to_king.called
 
-    # The story runs
+
+class TestStoryRun(StoryRunMixin, TestCase):
 
     def test_the_game_can_be_finished(self):
         self.take_the_throne_room_chests()
