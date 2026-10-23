@@ -171,6 +171,22 @@ class TestSnapshot(SaveStateTestCase):
                          game.layouts.map_layout_lookup['Brecconary'][door_row][door_column])
         self.assertIs(game.current_map.layout, game.layouts.map_layout_lookup['Brecconary'])
 
+    def test_a_door_history_is_kept_when_the_game_has_one(self):
+        """The door history of #369 (OpenDoorHistory), if this game has it: put back as it was saved."""
+        game = self.game
+        self.go_to(game, 'Brecconary')
+
+        class DoorHistory:
+            slots = [None] * 8
+
+        if getattr(game, 'door_history', None) is None:
+            game.door_history = DoorHistory()
+        game.door_history.slots = [('Brecconary', (3, 3))] + [None] * 7
+        game.save_state(1)
+        game.door_history.slots = [None] * 8
+        game.load_state(1)
+        self.assertEqual([('Brecconary', (3, 3))] + [None] * 7, game.door_history.slots)
+
     def test_a_removed_npc_stays_removed(self):
         game = self.game
         self.go_to(game, 'Brecconary')
