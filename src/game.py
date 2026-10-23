@@ -61,6 +61,7 @@ from src.map_manager import MapManager
 from src.visual_effects import flash_transparent_color, force_field_flash
 from src.waiting import quit_if_requested
 from src.windows import COMMAND_WINDOW
+from src.zoom import handle_zoom_event, remember_default_zoom, remember_windowed_size, restore_windowed_size
 
 
 
@@ -174,6 +175,8 @@ class Game:
         nes_res = self.game_state.config["NES_RES"]
         win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
         self.screen = self.set_screen(win_height, win_width)
+        # Ctrl 0 puts the window back to this size (Ctrl + / Ctrl - / Ctrl and the mouse wheel zoom it, src/zoom.py)
+        remember_default_zoom()
         # self.screen.set_alpha(None)
         set_caption(_("Dragon Warrior"))
 
@@ -291,7 +294,8 @@ class Game:
 
     def read_events(self) -> None:
         """Take the events off the queue (draw_all reads them too) and handle the keys and the window's events."""
-        self.events = get()
+        # The zoom keys only zoom the window (src/zoom.py), so they are taken out like any other window's loop does
+        self.events = [current_event for current_event in get() if not handle_zoom_event(current_event)]
         self._handle_pygame_events(self.events)
 
     def map_frame(self) -> None:
@@ -829,9 +833,6 @@ class Game:
         # B does nothing on the map: in the COMMAND window it is read with the other buttons (CommandMenu.select_command)
         self.handle_a_button(current_keydown_event)
         self.handle_start_button(current_keydown_event)
-        # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed (or scroll wheel is moved). (modernization)
-        # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
-        #     self.scale = self.scale + 1
         self.handle_help_button(current_keydown_event)
         self.handle_enter_key(current_keydown_event)
         self.handle_fps_changes(current_keydown_event)
@@ -916,6 +917,7 @@ class Game:
         if keydown_event.key == K_F11:
             self.fullscreen_enabled = not self.fullscreen_enabled
             if self.fullscreen_enabled:
+                remember_windowed_size()
                 self.flags = FULLSCREEN | SCALED
                 mode_text = self._("Fullscreen mode enabled")
             else:
@@ -926,6 +928,8 @@ class Game:
             nes_res = self.game_state.config["NES_RES"]
             win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
             self.screen = set_mode((win_width, win_height), self.flags)
+            # back in a window: the zoom it had before going fullscreen (src/zoom.py)
+            restore_windowed_size()
             set_caption(self._("Dragon Warrior"))
 
             # Show feedback to user

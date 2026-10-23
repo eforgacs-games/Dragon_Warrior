@@ -32,6 +32,7 @@ from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT, COMBAT_COMMAND_WINDOW
 from src.visual_effects import player_hit_shake
 from src.waiting import handle_speed_key, scaled_ms
+from src.zoom import handle_zoom_event
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, SelectionButtons, first_button
@@ -402,7 +403,8 @@ class BattleController:
         self.battle_menu_row = 0
         self.battle_menu_column = 0
         for queued_event in event.get(KEYDOWN):
-            handle_speed_key(queued_event)  # the speed keys (1 to 4) still count; every other key is dropped
+            # the speed keys (1 to 4) and the zoom keys (src/zoom.py) still count; every other key is dropped
+            handle_speed_key(queued_event) or handle_zoom_event(queued_event)
         self.command_buttons.open(held_joypad_buttons())
         self.command_window_open = True
         self.drawn_command_window = None
