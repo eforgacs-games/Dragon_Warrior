@@ -31,13 +31,16 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 The [Release builds](.github/workflows/release.yml) workflow builds the game with PyInstaller
-([dragon_warrior.spec](dragon_warrior.spec)) on Windows, macOS and Linux, checks that each build starts and finds all
-of its files (`--smoke-test`), and publishes them as a GitHub Release for the tag, with notes generated from the merged
-PRs. To try the builds without a release, run the workflow from the Actions tab (Run workflow): the builds are then
-uploaded as the run's artifacts. PRs that change the build do the same.
+([dragon_warrior.spec](dragon_warrior.spec)) on Windows, macOS and Linux, checks that each build starts, loads all
+of its files and plays a few scripted scenes headless in English and in Korean (`--smoke-test`,
+[src/smoke_test.py](src/smoke_test.py)), and publishes them as a GitHub Release for the tag, with notes generated from
+the merged PRs. To try the builds without a release, run the workflow from the Actions tab (Run workflow): the builds
+are then uploaded as the run's artifacts. PRs that change the build or data/ do the same.
 
 To build locally: `uv sync --group build`, then `uv run pyinstaller dragon_warrior.spec --noconfirm`. The game is in
-`dist/DragonWarrior/` (and `dist/Dragon Warrior.app` on macOS).
+`dist/DragonWarrior/` (and `dist/Dragon Warrior.app` on macOS). Check it the way CI does with
+`SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy dist/DragonWarrior/DragonWarrior --smoke-test --language Korean`
+(or `--language English`).
 
 
 # REQUIREMENTS

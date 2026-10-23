@@ -310,8 +310,6 @@ class Game:
             self.drawer.draw_all(self, self.movement.sprites_animate)
             display.flip()
             self.loop_count += 1
-            if self.config.get('EXIT_AFTER_FIRST_FRAME'):  # --smoke-test
-                return
 
     def start_at_throne_room(self) -> None:
         """Start a new quest in the throne room the way NES MainGameEngine does for every start: StartAtThroneRoom
@@ -1115,32 +1113,47 @@ def run():
     parser.add_argument("--checkpoint", choices=CHECKPOINT_NAMES,
                         help="start from a playtest checkpoint in data/checkpoints/ (see PLAYTEST.md); saves go to "
                              f"{CHECKPOINT_SAVE_DIR} instead of src/saves")
+    parser.add_argument("--language", choices=("English", "Korean"),
+                        help="play in this language (default: the system's)")
     parser.add_argument("--smoke-test", action="store_true",
-                        help="check that every game file is there and loads, draw the first frame of the map and exit "
-                             "(the release workflow runs this on each build)")
+                        help="check that every game file is there and loads, play a few scripted scenes headless and "
+                             "exit with 0, or 1 on any problem (the release workflow runs this on each build; see "
+                             "src/smoke_test.py)")
     args = parser.parse_args()
     config = dev_config if args.dev else prod_config
+    if args.language:
+        config = {**config, 'LANGUAGE': args.language}
     if args.checkpoint:
         config = {**config, 'CHECKPOINT': args.checkpoint, 'SPLASH_SCREEN_ENABLED': False}
     if args.smoke_test:
-        config = {**config, 'SPLASH_SCREEN_ENABLED': False, 'EXIT_AFTER_FIRST_FRAME': True}
+        # The scenes load their own starts (src/smoke_test.py SMOKE_SCENES)
+        config = {**config, 'SPLASH_SCREEN_ENABLED': False, 'CHECKPOINT': None}
     game = Game(config=config)
     if args.smoke_test:
-        run_smoke_test(game)
-        return
+        sys.exit(run_smoke_test(game))
     game.main()
 
 
-def run_smoke_test(game: Game) -> None:
-    """--smoke-test: see src/smoke_test.py. Exits with status 1 if anything is missing or doesn't load."""
-    from src.smoke_test import check_game_files, check_save_dir
+def run_smoke_test(game: Game) -> int:
+    """--smoke-test: see src/smoke_test.py. Returns the exit status: 1 if anything is missing, doesn't load or raises
+    while the scenes play, 0 otherwise."""
+    import traceback
+    from src.smoke_test import check_game_files, check_save_dir, play_smoke_scenes
     problems = check_game_files(game.config) + check_save_dir(game.directories.save_dir)
+    if not problems:
+        try:
+            problems = play_smoke_scenes(game)
+        except Exception:  # whatever the game raises fails the test, with its traceback
+            traceback.print_exc()
+            problems = ["the game raised an exception while playing the smoke test scenes"]
     for problem in problems:
         print(problem)
     if problems:
-        sys.exit(1)
-    game.main()
-    print(f"Smoke test passed: data from {data_path()}, saves in {game.directories.save_dir}")
+        print(f"Smoke test failed ({game.config['LANGUAGE']})")
+        return 1
+    print(f"Smoke test passed ({game.config['LANGUAGE']}): data from {data_path()}, saves in "
+          f"{game.directories.save_dir}")
+    return 0
 
 
 if __name__ == "__main__":

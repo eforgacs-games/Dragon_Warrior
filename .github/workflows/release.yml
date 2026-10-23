@@ -1,8 +1,9 @@
-# Builds the game with PyInstaller (dragon_warrior.spec) for Windows, macOS and Linux, and checks each build starts
-# and finds all of its files (--smoke-test, src/smoke_test.py).
+# Builds the game with PyInstaller (dragon_warrior.spec) for Windows, macOS and Linux, and checks each build starts,
+# finds and loads all of its files and plays a few scripted scenes, in English and in Korean (--smoke-test,
+# src/smoke_test.py), before anything is uploaded.
 # - A pushed vX.Y.Z tag also publishes the builds as a GitHub Release for that tag.
-# - Run by hand (Actions > Release builds > Run workflow), or on a PR that changes the build, the builds are uploaded
-#   as workflow artifacts only, to try them without making a release.
+# - Run by hand (Actions > Release builds > Run workflow), or on a PR that changes the build or what it bundles, the
+#   builds are uploaded as workflow artifacts only, to try them without making a release.
 
 name: Release builds
 
@@ -18,8 +19,10 @@ on:
       - "src/catalog.py"
       - "src/directories.py"
       - "src/smoke_test.py"
+      - "data/**"
       - "pyproject.toml"
       - "uv.lock"
+      - "requirements.txt"
   workflow_dispatch:
 
 permissions:
@@ -88,7 +91,12 @@ jobs:
         esac
         ls -l package
     - name: Smoke test the packaged build
-      # Unpacks the archive and runs the game from it, so it proves the download itself works
+      # Unpacks the archive and runs the game from it, so it proves the download itself works. Each run checks every
+      # data file loads, then plays the throne room (TALK, the COMMAND window), the stairs down to the courtyard and a
+      # fight on Alefgard through the virtual joypad, and exits with 1 on a missing file or any exception. Once in
+      # English (the NES font) and once in Korean (Unifont and the catalog compiled from the bundled base.po). The
+      # runners have no display or sound card, so SDL's dummy drivers (the job's env) stand in on all three OSes.
+      timeout-minutes: 5
       env:
         ARCHIVE: ${{ steps.name.outputs.archive }}
       run: |
@@ -107,7 +115,8 @@ jobs:
         esac
         # From the unpacked folder, so nothing can be found through the repository
         cd smoke
-        "$game" --smoke-test
+        "$game" --smoke-test --language English
+        "$game" --smoke-test --language Korean
     - name: Upload the build
       uses: actions/upload-artifact@v7
       with:
