@@ -176,7 +176,7 @@ def map_frame_method(game) -> str:
 
 def scene_config(scene: Scene, save_dir: str) -> dict:
     return {**prod_config, 'MUSIC_ENABLED': False, 'SOUND_ENABLED': False, 'SPLASH_SCREEN_ENABLED': False,
-            'INITIAL_DIALOG_ENABLED': False, 'SAVE_DIR': save_dir, **scene.config}
+            'INITIAL_DIALOG_ENABLED': False, 'SAVE_DIR': save_dir, 'SETTINGS_PATH': None, **scene.config}
 
 
 def scene_save(scene: Scene) -> dict:

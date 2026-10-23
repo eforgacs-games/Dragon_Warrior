@@ -46,6 +46,7 @@ from src.options_screen import apply_options
 from src.rewind import Rewind
 from src.save_file import SaveFile
 from src.save_state import OLD_VERSION, StateError, read_state, restore_snapshot, take_snapshot, write_state
+from src.settings import SettingsStore
 from src.paths import data_path
 from src.player.player import Player
 from src.sound import Sound
@@ -58,9 +59,10 @@ from src.waiting import NES_FPS, SPEED_KEYS, FrameClock, FramePacer, clear_event
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.visual_effects import flash_transparent_color, force_field_flash
-from src.waiting import MAP_CONTEXT, poll_virtual_joypad, quit_if_requested, set_virtual_joypad
+from src.waiting import MAP_CONTEXT, poll_virtual_joypad, quit_if_requested, set_speed_listener, set_virtual_joypad
 from src.windows import COMMAND_WINDOW
-from src.zoom import handle_zoom_event, remember_default_zoom, remember_windowed_size, restore_windowed_size
+from src.zoom import handle_zoom_event, remember_default_zoom, remember_windowed_size, restore_windowed_size, \
+    set_windowed_zoom, set_zoom, set_zoom_listener
 
 
 # Shift + F1/F2/F3 saves a save state in slot 1/2/3, F1/F2/F3 loads it (Game.handle_save_state_keys)
@@ -89,18 +91,26 @@ class Game:
         self.game_state = GameState(config=config)
         self.music_player = MusicPlayer(config)
 
+        # The global settings (src/settings.py): zoom, fullscreen, game speed and language, read before the window
+        # opens. A saved language wins over the system locale's (base_config language_from_locale).
+        self.settings = SettingsStore.from_config(config)
+        if self.settings.settings.language:
+            config['LANGUAGE'] = self.settings.settings.language
         self._ = _ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
         # map/graphics
         self.big_map = None
         self.layouts = MapLayouts()
-        self.fullscreen_enabled = self.game_state.config["FULLSCREEN_ENABLED"]
+        self.fullscreen_enabled = self.game_state.config["FULLSCREEN_ENABLED"] or self.settings.settings.fullscreen
         # text
         self.initial_dialog_enabled = self.game_state.config["INITIAL_DIALOG_ENABLED"]
         self.skip_text = False
 
-        # engine: keys 1 to 5 change the game speed (self.fps); it lasts until the game is closed, and isn't saved
+        # engine: keys 1 to 5 change the game speed (self.fps); it's kept with the global settings
+        set_speed_listener(None)
         reset_game_speed()
+        set_game_speed(self.settings.settings.game_speed)
+        set_speed_listener(self.settings.updater('game_speed'))
         set_virtual_joypad(None)  # no auto-grind (src/auto_grind.py) left driving from an earlier game
         # intro
         self.start_time = get_ticks()
@@ -163,6 +173,7 @@ class Game:
         self.screen = self.set_screen(win_height, win_width)
         # Ctrl 0 puts the window back to this size (Ctrl + / Ctrl - / Ctrl and the mouse wheel zoom it, src/zoom.py)
         remember_default_zoom()
+        self.apply_saved_zoom()
         # self.screen.set_alpha(None)
         set_caption(_("Dragon Warrior"))
 
@@ -233,6 +244,37 @@ class Game:
     def set_screen(self, win_height, win_width):
         """Stub for setting the screen."""
         return set_mode((win_width, win_height), self.flags)
+
+    def apply_saved_zoom(self) -> None:
+        """Give the new window the saved zoom (src/settings.py), or, opened in fullscreen, keep it for when the window
+        leaves fullscreen. From then on, every zoom change is saved."""
+        set_zoom_listener(None)
+        saved_zoom = self.settings.settings.zoom
+        if saved_zoom is not None:
+            if self.fullscreen_enabled:
+                set_windowed_zoom(saved_zoom)
+            else:
+                set_zoom(saved_zoom)
+        set_zoom_listener(self.settings.updater('zoom'))
+
+    def apply_option(self, config_key: str) -> None:
+        """The options overlay (src/options_overlay.py) has just changed this config key. Most need nothing more (the
+        game reads them where they're used); the global settings are switched on and saved."""
+        if config_key == 'LANGUAGE':
+            self.set_language(self.game_state.config['LANGUAGE'])
+
+    def set_language(self, language: str) -> None:
+        """Play in ``language`` ('English' or 'Korean') from now on, without a restart: the options overlay's LANGUAGE
+        row. Every text the game shows is translated when it is shown, through the ``_`` the game, its CommandMenu and
+        the CommandMenu's DialogLookup hold (the battle, the ending, auto-grind and the title menu use the game's or
+        make their own), so those are made again; the rendered text caches (src/text.py, src/window_renderer.py) are
+        keyed by the text itself, so they need nothing. The language is saved with the global settings."""
+        config = self.game_state.config
+        config['LANGUAGE'] = language
+        self._ = set_gettext_language(language)
+        self.cmd_menu.set_language(language)
+        set_caption(self._("Dragon Warrior"))
+        self.settings.update(language=language)
 
     def main(self) -> None:
         """
@@ -928,6 +970,7 @@ class Game:
             # back in a window: the zoom it had before going fullscreen (src/zoom.py)
             restore_windowed_size()
             set_caption(self._("Dragon Warrior"))
+            self.settings.update(fullscreen=self.fullscreen_enabled)
 
             # Show feedback to user
             self.draw_temporary_text(mode_text)

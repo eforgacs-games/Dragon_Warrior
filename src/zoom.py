@@ -12,11 +12,14 @@ The smallest zoom is the screen surface's own size (SCALE: pygame doesn't let a 
 surface), and the biggest is what fits on the desktop, or the size the window opened at if that is bigger.
 
 In fullscreen (F11) the keys do nothing: the screen fills the monitor there. Leaving fullscreen puts the window back
-at the size it had before (remember_windowed_size, restore_windowed_size). The zoom isn't saved; the window opens at
-its normal size each time, like the game speed (keys 1 to 5).
+at the size it had before (remember_windowed_size, restore_windowed_size). The zoom is kept with the global settings
+(src/settings.py): set_zoom tells the zoom listener (set_zoom_listener), and the game opens the window at the saved zoom
+the next time.
 
 This module imports nothing from ``src``, so src/waiting.py can use it without an import cycle.
 """
+from collections.abc import Callable
+
 from pygame import FULLSCREEN, K_0, K_EQUALS, K_KP0, K_KP_MINUS, K_KP_PLUS, K_MINUS, K_PLUS, KEYDOWN, KMOD_CTRL, \
     MOUSEWHEEL, display, error as pygame_error, event, key
 from pygame._sdl2.video import Window
@@ -37,6 +40,14 @@ _windowed_size: tuple[int, int] | None = None
 # pointer to it in the SDL window without a reference, and pygame reads that pointer for every window event, so a
 # Window that was garbage collected makes the next event.get() crash.
 _window_object: Window | None = None
+# Told the new zoom each time set_zoom changes the window's size: the game saves it with the global settings
+_zoom_listener: Callable[[int], None] | None = None
+
+
+def set_zoom_listener(listener: Callable[[int], None] | None) -> None:
+    """Call ``listener`` with the zoom after every change set_zoom makes (None: no one is told)."""
+    global _zoom_listener
+    _zoom_listener = listener
 
 
 def _window() -> Window | None:
@@ -111,6 +122,8 @@ def set_zoom(zoom: int) -> bool:
                            max(0, old_y + (old_height - new_size[1]) // 2))
     # Show the screen at the new size now: a window waiting for a key doesn't draw again until something changes
     display.flip()
+    if _zoom_listener is not None:
+        _zoom_listener(zoom)
     return True
 
 
@@ -142,6 +155,13 @@ def remember_windowed_size() -> None:
     global _windowed_size
     if _window() is not None and not is_fullscreen():
         _windowed_size = display.get_window_size()
+
+
+def set_windowed_zoom(zoom: int) -> None:
+    """The window size to go back to on leaving fullscreen: ``zoom`` times the NES's 256x240. For a game that opens in
+    fullscreen with a saved zoom, whose window has never had a size of its own."""
+    global _windowed_size
+    _windowed_size = (NES_WIDTH * zoom, NES_HEIGHT * zoom)
 
 
 def restore_windowed_size() -> None:

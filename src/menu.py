@@ -106,6 +106,25 @@ class CommandMenu:
         self.menu = CommandWindow()
         self.cursor = self.menu.cursor
 
+    def set_language(self, language: str) -> None:
+        """Translate into ``language`` from now on (Game.set_language): a new ``_`` and a new DialogLookup, whose
+        tables hold the NPCs' lines already translated. Which of King Lorik's lines he is on (set_king_lorik_dialog), or
+        any other character's 'dialog' that was set to one of its other lines, carries over to the new tables."""
+        self._ = set_gettext_language(language)
+        old_lookup = self.dialog_lookup
+        new_lookup = DialogLookup(self, self.game.game_state.config)
+        new_lookup.camera_position = old_lookup.camera_position
+        for map_name, characters in old_lookup.lookup_table.items():
+            for character, old_entry in characters.items():
+                new_entry = new_lookup.lookup_table.get(map_name, {}).get(character)
+                if not isinstance(old_entry, dict) or not isinstance(new_entry, dict):
+                    continue
+                chosen = next((key for key, line in old_entry.items()
+                               if key != 'dialog' and line is old_entry.get('dialog')), None)
+                if chosen is not None and chosen in new_entry:
+                    new_entry['dialog'] = new_entry[chosen]
+        self.dialog_lookup = new_lookup
+
     @property
     def camera_position(self) -> tuple[float, float]:
         """Where the map is drawn on the screen: always the game's camera as it is now. NES RemoveWindow (Bank00, $A7A2)
