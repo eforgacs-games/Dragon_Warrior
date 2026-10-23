@@ -100,10 +100,11 @@ NES_COORDINATE_OFFSETS: dict[str, tuple[int, int]] = {
     'GarinsGraveB4': (1, 1),
 }
 
-# CheckBlockDmg: BLK_TOWN, BLK_CAVE and BLK_CASTLE go to CalcNextMap instead of the fight checks. (Bridges, BLK_BRIDGE,
-# and stairs, BLK_STAIR_UP/BLK_STAIR_DN, do get the fight check.) GRASS_STAIR_DOWN is this project's tile for the
-# overworld shrine entrances, which are cave blocks on the NES.
-MAP_CHANGE_TILES = frozenset({'TOWN', 'CASTLE', 'CAVE', 'GRASS_STAIR_DOWN'})
+# CheckBlockDmg (LCDB4): BLK_TOWN, BLK_CAVE and BLK_CASTLE ($07-$09) go to CalcNextMap instead of the fight checks.
+# (Bridges, BLK_BRIDGE, and stairs, BLK_STAIR_UP/BLK_STAIR_DN, do get the fight check.) GRASS_STAIR_DOWN, this
+# project's tile for the two overworld shrine entrances, is BLK_STAIR_DN on the NES (Bank00 WrldBlkConvTbl, index $0C
+# "S"), so it isn't here: it gets the fight roll, and the NES takes it only with the STAIRS command (CheckStairs).
+MAP_CHANGE_TILES = frozenset({'TOWN', 'CASTLE', 'CAVE'})
 
 
 def nes_coordinates(map_identifier: str, column: int, row: int) -> NesPosition:

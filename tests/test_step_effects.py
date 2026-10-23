@@ -113,10 +113,12 @@ class TestMapExits(StepTestCase):
                 self.assertFalse(current_map.is_map_exit(*current_map.initial_coordinates))
 
     def test_overworld_entrances_are_taken_on_the_step_and_stairs_are_not(self):
-        # NES CheckBlockDmg: BLK_TOWN, BLK_CAVE and BLK_CASTLE go to CalcNextMap; stairs need STAIRS (CheckStairs)
+        # NES CheckBlockDmg: BLK_TOWN, BLK_CAVE and BLK_CASTLE go to CalcNextMap; stairs need STAIRS (CheckStairs).
+        # The overworld shrine stairs (GRASS_STAIR_DOWN) are BLK_STAIR_DN (WrldBlkConvTbl index $0C)
         alefgard = map_lookup['Alefgard'](test_config)
         for row, column in alefgard.staircases:
-            self.assertTrue(alefgard.is_step_warp(row, column), (row, column))
+            is_stairs = alefgard.get_tile_by_value(alefgard.layout[row][column]) == 'GRASS_STAIR_DOWN'
+            self.assertEqual(alefgard.is_step_warp(row, column), not is_stairs, (row, column))
         for map_name in ('GarinsGraveB2', 'CharlockB2', 'TantegelThroneRoom'):
             current_map = map_lookup[map_name](test_config)
             for row, column in current_map.staircases:
