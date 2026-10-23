@@ -131,7 +131,7 @@ class TestSmokeTest(FrozenTestCase):
                 problems = check_game_files(test_config)
         self.assertIn(f"missing: {join(meipass, 'data', 'images', 'tileset.png')}", problems)
         self.assertIn(f"missing: {join(meipass, 'data', 'checkpoints', 'throne_room.json')}", problems)
-        self.assertTrue(any(problem.startswith("can't load the ko translations") for problem in problems))
+        self.assertTrue(any(problem.startswith("can't load the Korean translations") for problem in problems))
         self.assertFalse(any('unifont' in problem for problem in problems))
 
     def test_save_dir_must_be_writable(self):
