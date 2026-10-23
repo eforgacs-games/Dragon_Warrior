@@ -318,7 +318,7 @@ class Game:
         Updates character positions and handles warp logic.
         """
         if not self.movement.world_frozen:
-            self.movement.do_sprites()
+            self.movement.sprites_frame()
         # currently can't process staircases right next to one another, need to fix
         # a quick fix would be to add an exception in the conditional for
         # the map where staircases right next to each other need to be enabled,

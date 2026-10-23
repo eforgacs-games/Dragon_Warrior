@@ -19,7 +19,8 @@ class TestSound(TestCase):
         pygame.quit()
 
     def test_bump(self):
-        """NES DirectionBlocked plays SFX_WALL_BUMP on every blocked step; how often is up to Game.move_player."""
+        """NES DirectionBlocked plays SFX_WALL_BUMP on every blocked step; how often is up to
+        MovementController.move_player."""
         character = MagicMock()
         character.identifier = 'HERO'
         character.current_tile = 'BRICK'

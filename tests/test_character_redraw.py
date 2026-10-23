@@ -124,7 +124,7 @@ def walk_and_find_ghosts(game: Game, npc_identifier: str, npc_direction: Directi
             if not npc.is_moving and steps_started < npc_steps:
                 game.movement.npc_schedule.give_turn_to(npc_slot)  # her next step starts now
                 steps_started += 1
-            game.movement.do_sprites()
+            game.movement.sprites_frame()
             drawn = characters_to_draw(game)
             draw_frame(game)
             if not visible_area_matches_a_clean_redraw(game, drawn):
@@ -189,7 +189,7 @@ class TestCharacterRedraw(TestCase):
         start_positions = [character.rect.topleft for character in roaming_characters]
 
         def roam(_frame):
-            game.movement.do_sprites()
+            game.movement.sprites_frame()
 
         residue = find_residue(game, before_drawing=roam)
         self.assertNotEqual(start_positions, [character.rect.topleft for character in roaming_characters])
@@ -262,7 +262,7 @@ def find_ghosts_drawing_every(game: Game, frames_per_draw: int, frames: int, hel
             game.movement.handle_player_movement()
             if not game.player.is_moving:
                 set_character_position(game.player, game.tile_size)
-            game.movement.do_sprites()
+            game.movement.sprites_frame()
             if frame % frames_per_draw == 0:
                 drawn = characters_to_draw(game)
                 draw_frame(game)

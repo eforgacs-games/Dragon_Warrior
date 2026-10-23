@@ -76,9 +76,9 @@ class TestHillPause(FreezeTestCase):
         self.walk_left_one_step()
         self.assertEqual(0, self.game.movement.frame_counter)
         position = self.player.rect.topleft
-        with patch.object(self.game.movement, 'do_sprites') as do_sprites:
+        with patch.object(self.game.movement, 'sprites_frame') as sprites_frame:
             self.frames(HILL_PAUSE_FRAMES, held=(K_LEFT,))
-        do_sprites.assert_not_called()
+        sprites_frame.assert_not_called()
         self.assertEqual(position, self.player.rect.topleft)
         self.assertEqual(0, self.game.movement.frame_counter)
 

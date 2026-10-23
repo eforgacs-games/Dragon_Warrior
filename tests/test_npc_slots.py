@@ -77,7 +77,7 @@ class TestMobileNPCSlots(TestCase):
             for frame in range(5 * FRAMES_PER_TURN):
                 if frame % FRAMES_PER_TURN == 0:
                     turns.append([])
-                self.game.movement.do_sprites()
+                self.game.movement.sprites_frame()
         return turns
 
     def test_removing_a_roaming_npc_keeps_the_others_slots(self):
