@@ -1,7 +1,7 @@
 """Roaming NPCs take turns, two at a time, on the NES's 16-frame schedule instead of all stepping together.
 
 NES DoSprites/UpdateNPCs1/UpdateNPCCounter (Bank00): see src/npc_schedule.py. The game is run a frame at a time
-(Game.do_sprites, which the main loop calls once a frame) and checked against that schedule.
+(MovementController.sprites_frame, which the main loop calls once a frame) and checked against that schedule.
 """
 import os
 import random
@@ -72,7 +72,7 @@ class TestNpcScheduleInTown(TestCase):
 
         with patch('src.movement.random', random.Random(seed)), patch.object(self.game.movement, 'start_npc_step', spy):
             for frame[0] in range(1, frames + 1):
-                self.game.movement.do_sprites()
+                self.game.movement.sprites_frame()
                 positions.append([npc.rect.topleft for npc in self.npcs])
         return decisions, positions
 
@@ -119,7 +119,7 @@ class TestNpcScheduleInTown(TestCase):
         first = AnimatedSprite.walk_frame
         with patch('src.movement.random', random.Random(5)):
             for frame in range(1, 3 * FRAMES_PER_TURN + 1):
-                self.game.movement.do_sprites()
+                self.game.movement.sprites_frame()
                 for character in characters:
                     character.animate()
                 expected = first ^ (frame // FRAMES_PER_TURN % 2)
@@ -127,7 +127,7 @@ class TestNpcScheduleInTown(TestCase):
 
     def test_a_new_map_starts_with_the_first_pair(self):
         self.game.movement.npc_schedule.give_turn_to(7)
-        self.game.movement.do_sprites()
+        self.game.movement.sprites_frame()
         self.game.set_roaming_character_positions()  # what MapManager.change_map does
         decisions, _ = self.run_frames(1)
         self.assertEqual([[1], [1]] + [[]] * 8, [decisions[slot] for slot in range(MOBILE_NPC_SLOTS)])
@@ -196,7 +196,7 @@ class TestNpcWalkingRate(TestCase):
         with patch('src.movement.random.choice', side_effect=choose), patch.object(self.game.movement, 'start_npc_step', spy):
             for _ in range(cycles * FRAMES_PER_CYCLE):
                 tiles = [(npc.row, npc.column) for npc in npcs]
-                self.game.movement.do_sprites()
+                self.game.movement.sprites_frame()
                 for index, npc in enumerate(npcs):
                     if (npc.row, npc.column) != tiles[index]:
                         steps[index] += 1
@@ -216,7 +216,7 @@ class TestNpcWalkingRate(TestCase):
         offsets = []  # each frame: how far each NPC is from its tile, in NES pixels
         with patch('src.movement.random.choice', return_value=Direction.RIGHT.value):
             for _ in range(FRAMES_PER_CYCLE):
-                self.game.movement.do_sprites()
+                self.game.movement.sprites_frame()
                 offsets.append([npc.rect.x % self.tile_size // (self.tile_size // 16) for npc in npcs])
         for frame, frame_offsets in enumerate(offsets, start=1):
             pair = turn_of(frame)

@@ -226,7 +226,7 @@ class TestRoamingNPCMovement(TestCase):
                 # One turn of the NPC schedule (#289): one pair steps at once, and ends the turn back on a tile.
                 # ROUNDS cycles of turns give each NPC ROUNDS chances to step.
                 for _ in range(FRAMES_PER_TURN):
-                    self.game.movement.do_sprites()
+                    self.game.movement.sprites_frame()
                 for npc in npcs:
                     position = (npc.row, npc.column)
                     self.assertFalse(npc.is_moving, npc.identifier)
