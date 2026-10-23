@@ -25,6 +25,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     QUICK ACTION   OFF (NES) / ON           (QUICK_ACTION: Enter takes, opens or talks, Game.handle_enter_key)
     ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, Game.thin_encounters)
     EXP/GOLD       x1 (NES) / x2 / x4       (EXP_GOLD: what a won fight gives, Battle.enemy_defeated)
+    QUEST JOURNAL  OFF (NES) / GOALS / HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
 
     CONTROLS
     GAME SPEED     OFF (NES) / ON           (GAME_SPEED_KEYS: keys 1 to 5, src/waiting.py)
@@ -77,6 +78,7 @@ from src.display_filters import SCALING_KEY, SCALING_MODES, SCANLINES_KEY
 from src.options_screen import AUTO_GRIND_STOP_VALUES, CLASSIC, ENCOUNTER_SETTINGS, ENCOUNTERS_NES, \
     EXP_GOLD_MULTIPLIERS, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN, STATUS_WINDOW_ALWAYS, \
     STATUS_WINDOW_NES, STATUS_WINDOW_SETTINGS
+from src.quest_journal import JOURNAL_GOALS, JOURNAL_OFF, JOURNAL_SETTINGS
 from src.selection import frame_events, next_frame
 from src.settings import LANGUAGES
 from src.translated_window import draw_translated_window
@@ -165,6 +167,9 @@ OPTION_PAGES = (
         # How many fights, and what they give, are the game's balance, not conveniences: NES in both presets
         OptionRow("ENCOUNTERS", 'ENCOUNTERS', ENCOUNTER_SETTINGS, ("NES", "HALF", "OFF"), (ENCOUNTERS_NES, ENCOUNTERS_NES)),
         OptionRow("EXP/GOLD", 'EXP_GOLD', EXP_GOLD_MULTIPLIERS, ("x1 (NES)", "x2", "x4"), (1, 1)),
+        # Information only, when Q is pressed: GOALS by default, off in the NES preset
+        OptionRow("QUEST JOURNAL", 'QUEST_JOURNAL', JOURNAL_SETTINGS, ("OFF (NES)", "GOALS", "HINTS"),
+                  (JOURNAL_OFF, JOURNAL_GOALS)),
     )),
     OptionPage("CONTROLS", (
         switch_row("GAME SPEED", 'GAME_SPEED_KEYS'),

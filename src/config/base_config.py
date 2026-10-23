@@ -71,6 +71,9 @@ base_config = {
     # SHOP PREVIEW (not NES): a weapon and armor shop's list shows the attack or defense power the highlighted item
     # would give (src/shop_preview.py); False is the NES
     "SHOP_PREVIEW": True,
+    # QUEST JOURNAL (not NES): what Q shows on the map (src/quest_journal.py): "Off" (the NES: nothing), "Goals" (what
+    # to do next) or "Hints" (and where to go)
+    "QUEST_JOURNAL": "Goals",
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on
