@@ -16,7 +16,7 @@ from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, accept_keys, reject_keys, Graphics, set_gettext_language
 from src.command_window import WND_ABORT, CommandWindow
-from src.cursor import BlinkingCursor, draw_cursor_tile
+from src.cursor import BlinkingCursor, DialogArrowBlink, draw_cursor_tile
 from src.waiting import is_any_key_held, quit_if_requested, wait
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
@@ -364,6 +364,7 @@ class CommandMenu(Menu):
         held_counts = shows_arrow or advance_keys is not None
         if advance_keys is None:
             advance_keys = A_OR_B_KEYS if shows_arrow else ANY_BUTTON_KEYS
+        arrow_blink = DialogArrowBlink()  # DoWait: the arrow starts on, then blinks on the frame count
         while True:
             if skip_text or (temp_text_start and get_ticks() - temp_text_start >= 1000):
                 if not skip_text and not disable_sound:
@@ -372,7 +373,7 @@ class CommandMenu(Menu):
             if held_counts and is_any_key_held(advance_keys):
                 break
             if shows_arrow:
-                self.draw_dialog_arrow(self.game.show_arrow)
+                self.draw_dialog_arrow(arrow_blink.visible())
             if self.read_dialog_events(advance_keys):
                 break
         if not disable_sound:
