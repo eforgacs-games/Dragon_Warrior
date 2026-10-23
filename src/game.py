@@ -230,7 +230,6 @@ class Game:
         self.cmd_menu = CommandMenu(self)
 
         self.clock = Clock()
-        self.music_enabled = self.game_state.music_enabled
 
         if self.splash_screen_enabled:
             self.music_player.load_and_play_music(self.directories.intro_overture)

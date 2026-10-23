@@ -4,6 +4,11 @@ from src.waiting import POLL_INTERVAL_MS, game_ticks, wait
 
 
 class MusicPlayer:
+    """The one place that talks to pygame.mixer.music, and the one place that decides whether music plays
+    (config["MUSIC_ENABLED"]). Everything else asks it to play, stop or wait for music. With the music off, every
+    method leaves pygame's music alone, so the game is silent; play_clip and wait_for_music_end still keep the clip's
+    timing (see play_clip). Sound effects are separate (src/sound.py)."""
+
     def __init__(self, config):
         self.music_enabled = config["MUSIC_ENABLED"]
         self.sound_enabled = config["SOUND_ENABLED"]
@@ -12,11 +17,12 @@ class MusicPlayer:
         self._clip_end_ticks: float | None = None  # when a clip started with the music off would end (game time)
 
     def load_and_play_music(self, path, loop=-1):
+        if not self.music_enabled:
+            return
         self.stop_music()
         mixer.music.load(path)
-        if self.music_enabled:
-            mixer.music.set_volume(self.music_volume)
-            mixer.music.play(loop)
+        mixer.music.set_volume(self.music_volume)
+        mixer.music.play(loop)
 
     def play_clip(self, path: str) -> None:
         """NES InitMusicSFX with a music clip (the victory and level-up fanfares, the harp, the flute, the curse,
@@ -58,25 +64,26 @@ class MusicPlayer:
         self.play_clip(path)
         self.wait_for_music_end(config)
 
-    @staticmethod
-    def stop_music():
-        mixer.music.stop()
+    def stop_music(self):
+        if self.music_enabled:
+            mixer.music.stop()
 
-    @staticmethod
-    def pause_music():
-        mixer.music.pause()
+    def pause_music(self):
+        if self.music_enabled:
+            mixer.music.pause()
 
-    @staticmethod
-    def unpause_music():
-        mixer.music.unpause()
+    def unpause_music(self):
+        if self.music_enabled:
+            mixer.music.unpause()
 
-    @staticmethod
-    def fadeout_music(fadeout_time):
-        mixer.music.fadeout(fadeout_time)
+    def fadeout_music(self, fadeout_time):
+        if self.music_enabled:
+            mixer.music.fadeout(fadeout_time)
 
     def set_music_volume(self, volume):
         self.music_volume = volume
-        mixer.music.set_volume(self.music_volume)
+        if self.music_enabled:
+            mixer.music.set_volume(self.music_volume)
 
     def get_music_volume(self):
         return self.music_volume

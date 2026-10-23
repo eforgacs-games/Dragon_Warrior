@@ -43,8 +43,7 @@ class TestBattleMethods(unittest.TestCase):
         self.battle = Battle(config, self.enemy_name, self.current_map)
 
     @patch('src.battle.Directories', autospec=True)
-    @patch('pygame.mixer.music')
-    def test_enemy_defeated(self, MockDirectories, mock_music):
+    def test_enemy_defeated(self, MockDirectories):
         cmd_menu = Mock()
         screen = Mock()
         player = Mock()
@@ -58,7 +57,6 @@ class TestBattleMethods(unittest.TestCase):
         player.max_mp = 10
         player.spells = []
         player.get_level_by_experience.return_value = 1
-        music_enabled = True
         enemy = Mock()
         enemy.name = 'Slime'
         enemy.xp = 10
@@ -66,7 +64,7 @@ class TestBattleMethods(unittest.TestCase):
 
         # NES CalcPlyrGold: 5 * (192 + 63) // 256 = 4 on the highest roll
         with patch('src.battle.random.randint', return_value=63):
-            self.battle.enemy_defeated(cmd_menu, screen, player, music_enabled, enemy)
+            self.battle.enemy_defeated(cmd_menu, screen, player, enemy)
         self.assertEqual(player.total_experience, 10)
         self.assertEqual(player.gold, 4)
 
@@ -84,7 +82,7 @@ class TestBattleMethods(unittest.TestCase):
                 patch.object(self.battle, 'check_player_level_up'):
             cmd_menu.game.music_player.play_clip.side_effect = lambda path: events.append(
                 'victory' if path == self.battle.directories.victory_music else path)
-            self.battle.enemy_defeated(cmd_menu, Mock(), player, True, enemy)
+            self.battle.enemy_defeated(cmd_menu, Mock(), player, enemy)
         done_well = self.battle.get_enemy_defeated_string(enemy).split('\n')[0]
         self.assertEqual(events[:3], [(done_well, True), 'erase', 'victory'])
         self.assertEqual(len(events), 4)  # then the experience and gold
@@ -101,8 +99,7 @@ class TestBattleMethods(unittest.TestCase):
         cmd_menu = Mock()
         battle = Battle({**self.battle.config, 'LANGUAGE': 'English'}, self.enemy_name, self.current_map)
         # cmd_menu.game.music_player (the level-up music, #300) is a Mock too
-        with patch('pygame.mixer.music'):
-            battle.check_player_level_up(cmd_menu, player, music_enabled=False)
+        battle.check_player_level_up(cmd_menu, player)
         return player, [call.args[0] for call in cmd_menu.show_line_in_dialog_box.call_args_list]
 
     def test_level_up_uses_the_name_based_stats(self):
@@ -520,9 +517,8 @@ class TestVictoryRewards(unittest.TestCase):
     def win(self, player, xp, gold, roll=0):
         enemy = Mock(xp=xp, gold=gold)
         enemy.name = 'Slime'
-        with patch('src.battle.random.randint', return_value=roll), patch('src.battle.mixer'), \
-                patch('src.battle.display'):
-            self.battle.enemy_defeated(self.cmd_menu, Mock(), player, False, enemy)
+        with patch('src.battle.random.randint', return_value=roll), patch('src.battle.display'):
+            self.battle.enemy_defeated(self.cmd_menu, Mock(), player, enemy)
 
     def test_experience_is_exact_and_gold_varies(self):
         player = LevelPlayer(total_experience=0, gold=0, level=1)
