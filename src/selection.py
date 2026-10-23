@@ -67,7 +67,7 @@ class Answer(NamedTuple):
 
 
 def next_frame() -> None:
-    """WaitForNMI: wait one NES frame of game time (1/60 s, 1/(60 N) s at game speed N), still quitting if the window
+    """WaitForNMI: wait one NES frame of game time (1/NES_FPS s, 1/(NES_FPS N) s at game speed N), still quitting if the window
     is closed meanwhile (src/waiting.py wait). The game's NO_WAIT doesn't skip it: it is the loop's frame pacing, not
     a pause in the game."""
     wait_frames(1)

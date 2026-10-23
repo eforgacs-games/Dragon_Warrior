@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.direction import Direction
+from src.waiting import NES_FPS
 
 
 class MockMapForCalculation:
@@ -27,14 +28,14 @@ class MockMapForCalculation:
 class TestCalculationConversions(unittest.TestCase):
 
     def setUp(self):
-        self.config = {'FPS': 60}
+        self.config = {}
         self.calc = Calculation(self.config)
 
     def test_convert_to_frames_1000ms(self):
-        self.assertAlmostEqual(self.calc.convert_to_frames(1000), 60.0)
+        self.assertAlmostEqual(self.calc.convert_to_frames(1000), NES_FPS)  # 60.0988
 
     def test_convert_to_frames_500ms(self):
-        self.assertAlmostEqual(self.calc.convert_to_frames(500), 30.0)
+        self.assertAlmostEqual(self.calc.convert_to_frames(500), NES_FPS / 2)
 
     def test_convert_to_frames_0ms(self):
         self.assertEqual(self.calc.convert_to_frames(0), 0)
@@ -44,10 +45,10 @@ class TestCalculationConversions(unittest.TestCase):
         self.assertAlmostEqual(result, 0.96, places=2)
 
     def test_convert_to_milliseconds_60frames(self):
-        self.assertAlmostEqual(self.calc.convert_to_milliseconds(60), 1000.0)
+        self.assertAlmostEqual(self.calc.convert_to_milliseconds(60), 998.356, places=3)
 
     def test_convert_to_milliseconds_30frames(self):
-        self.assertAlmostEqual(self.calc.convert_to_milliseconds(30), 500.0)
+        self.assertAlmostEqual(self.calc.convert_to_milliseconds(30), 499.178, places=3)
 
     def test_convert_to_milliseconds_0frames(self):
         self.assertEqual(self.calc.convert_to_milliseconds(0), 0)
@@ -67,18 +68,17 @@ class TestCalculationConversions(unittest.TestCase):
     def test_convert_to_frames_since_start_time(self):
         with patch('src.calculation.get_ticks', return_value=2000):
             result = self.calc.convert_to_frames_since_start_time(1000)
-            # 1000ms elapsed * 60fps / 1000 = 60 frames
-            self.assertAlmostEqual(result, 60.0)
+            # 1000 ms elapsed: NES_FPS frames
+            self.assertAlmostEqual(result, NES_FPS)
 
     def test_convert_to_frames_since_start_time_no_elapsed(self):
         with patch('src.calculation.get_ticks', return_value=1000):
             result = self.calc.convert_to_frames_since_start_time(1000)
             self.assertAlmostEqual(result, 0.0)
 
-    def test_different_fps(self):
-        calc_30fps = Calculation({'FPS': 30})
-        self.assertAlmostEqual(calc_30fps.convert_to_frames(1000), 30.0)
-        self.assertAlmostEqual(calc_30fps.convert_to_milliseconds(30), 1000.0)
+    def test_counts_nes_frames_whatever_the_config(self):
+        # There is no FPS setting any more: every timing is in NES frames (src/waiting.py NES_FPS)
+        self.assertAlmostEqual(Calculation({'FPS': 30}).convert_to_frames(1000), NES_FPS)
 
 
 class TestGetDistanceFromTantegel(unittest.TestCase):

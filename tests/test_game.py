@@ -30,7 +30,7 @@ from src.npc_movement import step
 from src.player.player import Player
 from src.spells import Spell
 from src.sprites.roaming_character import RoamingCharacter
-from src.waiting import game_speed, reset_game_speed
+from src.waiting import NES_FPS, game_speed, reset_game_speed
 from tests.mock_map import MockMap
 from tests.helpers import new_game
 
@@ -552,15 +552,15 @@ class TestGame(TestCase):
 
     @patch('src.menu.CommandMenu.show_text_in_dialog_box')
     def test_handle_fps_changes(self, mock_show_text_in_dialog_box):
-        """Keys 1 to 4 set the game speed to 1x, 2x, 4x or 8x: the main loop runs at 60 FPS times the speed."""
+        """Keys 1 to 4 set the game speed to 1x, 2x, 4x or 8x: the main loop runs at NES_FPS (60.0988) times the speed."""
         self.addCleanup(reset_game_speed)
         for key_code, speed, label in ((pygame.K_2, 2, '2x'), (pygame.K_3, 4, '4x'),
                                        (pygame.K_4, 8, '8x'), (pygame.K_1, 1, 'normal')):
             with self.subTest(speed=speed):
                 self.game.handle_fps_changes(pygame.event.Event(pygame.KEYDOWN, key=key_code))
                 self.assertEqual(speed, game_speed())
-                self.assertEqual(60 * speed, self.game.fps)
-                self.assertEqual(f"Game set to {label} speed.\n({60 * speed} FPS)",
+                self.assertEqual(NES_FPS * speed, self.game.fps)
+                self.assertEqual(f"Game set to {label} speed.\n({NES_FPS * speed:.1f} FPS)",
                                  mock_show_text_in_dialog_box.call_args.args[0])
 
     def test_handle_start_button(self):

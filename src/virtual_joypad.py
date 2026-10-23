@@ -22,7 +22,7 @@ from typing import Any, Protocol
 import pygame
 from pygame import KEYDOWN, KEYUP
 
-from src.waiting import MAP_CONTEXT, NES_FPS, game_ticks, set_virtual_joypad, virtual_joypad
+from src.waiting import MAP_CONTEXT, frame_at, game_ticks, set_virtual_joypad, virtual_joypad
 
 # Set on the events the virtual joypad posts
 VIRTUAL = 'virtual_joypad'
@@ -91,7 +91,7 @@ class VirtualJoypad:
         if self.last_ticks is not None:
             self.elapsed_ms += max(0, min(now - self.last_ticks, STALL_MS))
         self.last_ticks = now
-        return self.elapsed_ms * NES_FPS // 1000
+        return frame_at(self.elapsed_ms)
 
     # What the driver can do
 

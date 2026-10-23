@@ -1,4 +1,4 @@
-from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
+from src.waiting import NES_FPS, game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src.direction import Direction
 from src.npc_movement import step
@@ -8,11 +8,15 @@ class Calculation:
     def __init__(self, config):
         self.config = config
 
-    def convert_to_frames(self, time_to_convert: int) -> int:
-        return self.config["FPS"] * time_to_convert / 1000
+    @staticmethod
+    def convert_to_frames(time_to_convert: float) -> float:
+        """Milliseconds as NES frames (NES_FPS a second)."""
+        return NES_FPS * time_to_convert / 1000
 
-    def convert_to_milliseconds(self, fps_to_convert: int) -> int:
-        return fps_to_convert / self.config["FPS"] * 1000
+    @staticmethod
+    def convert_to_milliseconds(frames_to_convert: float) -> float:
+        """NES frames as milliseconds."""
+        return frames_to_convert / NES_FPS * 1000
 
     @staticmethod
     def get_next_tile_identifier(character_column: int, character_row: int, direction_value: int, current_map,
