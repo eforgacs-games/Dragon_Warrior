@@ -51,7 +51,7 @@ from src.player.player import Player
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
-from src.battle_controller import BattleController
+from src.battle_controller import BattleController, BattleOutcome
 from src.ending import Ending
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
@@ -680,7 +680,9 @@ class Game:
         enemies_in_current_zone = ENEMY_GROUPS[group] if self.game_state.config["FORCE_BATTLE"] else \
             roll_encounter(self.current_map.identifier, tile, column, row)
         if enemies_in_current_zone is not None and not self.game_state.config["NO_BATTLES"]:
-            self.battle_ctrl.run_battle(enemies_in_current_zone)
+            if self.battle_ctrl.run_battle(enemies_in_current_zone) != BattleOutcome.REPELLED:
+                # NES: after the fight the hero is still on this block; stairs wait for STAIRS (or a step off them)
+                self.map_mgr.stay_on_stairs(row, column)
         self.battle_ctrl.battle_menu_row = 0
         self.battle_ctrl.battle_menu_column = 0
 
