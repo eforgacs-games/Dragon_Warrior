@@ -85,7 +85,7 @@ class TestWindowRemoval(TestCase):
         yes_no = self.rect(YES_NO_WINDOW)
         before = image_digest(self.game.screen.subsurface(yes_no))
         answered = []
-        with patch('data.text.dialog.get', side_effect=[[accept()]]), \
+        with patch('src.selection.event.get', side_effect=[[accept()]]), \
                 patch.object(self.cmd_menu, 'show_line_in_dialog_box'):
             confirmation_prompt(self.cmd_menu, "Dost thou want a room?",
                                 lambda: answered.append(image_digest(self.game.screen.subsurface(yes_no))),

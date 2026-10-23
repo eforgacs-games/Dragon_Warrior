@@ -134,11 +134,12 @@ class TestGame(TestCase):
     def test_begin_new_quest_gives_the_hero_the_stats_for_the_chosen_name(self):
         """The Player is made with the placeholder name "Player" (15 HP, strength 4). Ann has 13 max HP and strength
         3 (tests/test_player.py), so she must start on 13/13 HP with 3 attack, not 15/13 with 4."""
-        with patch.object(self.game, 'select_adventure_log'), patch('src.game.NameSelection') as name_selection, \
-                patch.object(self.game, 'choose_new_quest_options'), patch('src.map_manager.screen_fade'), \
+        with patch.object(self.game.title_menu, 'select_adventure_log'), \
+                patch('src.title_menu.NameSelection') as name_selection, \
+                patch.object(self.game.title_menu, 'choose_new_quest_options'), patch('src.map_manager.screen_fade'), \
                 patch.object(self.game, 'music_player'), patch('src.game.CommandMenu'):
             name_selection.return_value.select_name.return_value = 'Ann'
-            self.game.begin_new_quest()
+            self.game.title_menu.begin_new_quest()
         player = self.game.player
         self.assertEqual("Ann", player.name)
         self.assertEqual((13, 13), (player.current_hp, player.max_hp))
@@ -926,15 +927,15 @@ class TestGame(TestCase):
     #     mocked_return.type = KEYDOWN
     #     mocked_return.key = K_RETURN
     #     with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
-    #         self.game.show_main_menu_screen(self.game.screen)
+    #         self.game.title_menu.show_main_menu_screen(self.game.screen)
 
     def test_change_message_speed_leaves_no_wait_alone(self):
         # it used to flip NO_WAIT; now it picks a log and its speed (tests/test_options_screen.py)
         original = self.game.game_state.config['NO_WAIT']
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.game.directories.save_dir = tmp_dir
-            self.game.save_dir_contents = []
-            self.game.change_message_speed()
+            self.game.title_menu.save_dir_contents = []
+            self.game.title_menu.change_message_speed()
         self.assertEqual(original, self.game.game_state.config['NO_WAIT'])
 
     def test_continue_quest_shows_the_saved_name_on_the_log(self):
@@ -942,11 +943,11 @@ class TestGame(TestCase):
             self.game.directories.save_dir = tmp_dir
             with open(os.path.join(tmp_dir, 'save_slot_1.json'), 'w') as f:
                 json.dump({'Name': 'Ed'}, f)
-            self.game.save_dir_contents = os.listdir(tmp_dir)
+            self.game.title_menu.save_dir_contents = os.listdir(tmp_dir)
             with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0) as mock_selection, \
                     patch.object(self.game, 'load_game'), patch.object(self.game, 'music_player'), \
                     patch('src.map_manager.screen_fade'), patch('src.game.CommandMenu'):
-                self.game.continue_quest()
+                self.game.title_menu.continue_quest()
             overlay = mock_selection.call_args.kwargs['overlay']
             self.assertEqual('Ed  ', overlay.texts[0].text)
             self.assertEqual((24, 14), (overlay.texts[0].column, overlay.texts[0].row))
@@ -960,7 +961,7 @@ class TestGame(TestCase):
             # log 1, then YES (tests/test_copy_erase_log.py plays the windows key by key)
             with patch.object(OptionsScreen, 'choose_log', return_value=1), \
                     patch.object(OptionsScreen, 'confirm_erase', return_value=True):
-                self.game.erase_quest()
+                self.game.title_menu.erase_quest()
             self.assertFalse(os.path.exists(save_path))
 
     def test_erase_quest_with_no_logs_is_noop(self):
@@ -968,7 +969,7 @@ class TestGame(TestCase):
             self.game.directories.save_dir = tmp_dir
             # ShowUsedLogs with no used log: straight back to the title menu, no window
             with patch.object(OptionsScreen, 'choose_log', side_effect=AssertionError('a log window opened')):
-                self.game.erase_quest()  # should not raise
+                self.game.title_menu.erase_quest()  # should not raise
 
     def test_copy_quest_copies_save_file(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -981,7 +982,7 @@ class TestGame(TestCase):
             with patch.object(OptionsScreen, 'choose_log', return_value=1), \
                     patch.object(OptionsScreen, 'choose_open_log', return_value=2), \
                     patch.object(OptionsScreen, 'confirm', return_value=True):
-                self.game.copy_quest()
+                self.game.title_menu.copy_quest()
             self.assertTrue(os.path.exists(dst_path))
             with open(dst_path) as f:
                 self.assertEqual({'Name': 'Hero'}, json.load(f))
@@ -995,7 +996,7 @@ class TestGame(TestCase):
             with patch.object(OptionsScreen, 'choose_log', return_value=1), \
                     patch.object(OptionsScreen, 'choose_open_log', return_value=2), \
                     patch.object(OptionsScreen, 'confirm', return_value=False):
-                self.game.copy_quest()
+                self.game.title_menu.copy_quest()
             # only one file should exist (NO copies nothing)
             self.assertEqual(['save_slot_1.json'], os.listdir(tmp_dir))
 
@@ -1007,7 +1008,7 @@ class TestGame(TestCase):
     #     mocked_return.type = KEYDOWN
     #     mocked_return.key = K_RETURN
     #     with patch.object(event, 'get', return_value=[mocked_return]) as mock_method:
-    #         self.game.show_main_menu_screen(self.game.screen)
+    #         self.game.title_menu.show_main_menu_screen(self.game.screen)
     #     self.assertEqual(1, self.game.player.adventure_log)
     #     self.assertEqual('ed', self.game.player.name)
     #

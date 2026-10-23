@@ -278,14 +278,13 @@ class TestCommandMenuDialog(TestCase):
 
     def test_play_sfx_restarts_on_its_own_channel(self):
         channel = MagicMock()
-        self.cmd_menu.sound.config['SOUND_ENABLED'] = True
-        try:
-            with patch('src.sound.sfx_channel', return_value=channel):
-                self.cmd_menu.sound.play_sfx(self.cmd_menu.directories.text_beep_sfx)
-                self.cmd_menu.sound.play_sfx(self.cmd_menu.directories.text_beep_sfx)
-                self.cmd_menu.sound.stop_sfx()
-        finally:
-            self.cmd_menu.sound.config['SOUND_ENABLED'] = test_config['SOUND_ENABLED']
+        # The config is test_config itself, so patch.dict puts SOUND_ENABLED back (setting it back from test_config
+        # used to leave it on for the tests after this one)
+        with patch.dict(self.cmd_menu.sound.config, {'SOUND_ENABLED': True}), \
+                patch('src.sound.sfx_channel', return_value=channel):
+            self.cmd_menu.sound.play_sfx(self.cmd_menu.directories.text_beep_sfx)
+            self.cmd_menu.sound.play_sfx(self.cmd_menu.directories.text_beep_sfx)
+            self.cmd_menu.sound.stop_sfx()
         # Channel.play replaces whatever the channel was playing, like DoSFX taking over the SFX slot
         self.assertEqual(2, channel.play.call_count)
         channel.stop.assert_called_once()

@@ -10,6 +10,8 @@ Bank00.asm is source_files/Bank00.asm from https://github.com/nmikstas/dragon-wa
   in the upper nibble. Every row is written out as a string of hex digits, one digit per tile.
 - WrldMapPtrTbl and Row000-Row119: the overworld, run-length encoded. Each byte is a block type in the upper nibble
   and (repeat count - 1) in the lower nibble. Every row's bytes are written out as a string of hex digits.
+- NPCMobPtrTbl and NPCStatPtrTbl: the mobile and static NPC tables (TantMobTbl, TantStatTbl, ...). Each entry is
+  three bytes, NNNXXXXX _DDYYYYY CCCCCCCC (graphic, X, direction, Y, dialog control byte), up to an $FF.
 
 Lines that are commented out in the disassembly (the covered-area notes after RimuldarDat) aren't data and are skipped.
 """
@@ -77,6 +79,25 @@ def map_table(lines):
     return maps
 
 
+def npc_tables(labels, memory, words):
+    """NPCMobPtrTbl and NPCStatPtrTbl: table label -> ((graphic, x, y, direction, dialog byte), ...), in the order
+    of the pointer tables."""
+    tables = {}
+    for pointer_table in ('NPCMobPtrTbl', 'NPCStatPtrTbl'):
+        address = labels[pointer_table]
+        for _ in range(12):
+            label = words[address][0]
+            address += 2
+            entries = []
+            entry = labels[label]
+            while memory[entry] != 0xFF:
+                first, second, dialog = memory[entry], memory[entry + 1], memory[entry + 2]
+                entries.append((first >> 5, first & 0x1F, second & 0x1F, (second >> 5) & 0x03, dialog))
+                entry += 3
+            tables[label] = tuple(entries)
+    return tables
+
+
 def main(path):
     with open(path) as asm:
         lines = asm.readlines()
@@ -90,6 +111,10 @@ def main(path):
     print('map\'s own block type (see tests/nes_maps.py).')
     print('BOUNDARY_BLOCKS: NES map number -> the block ID shown outside the map (MapDatTbl).')
     print('OVERWORLD_ROWS: Row000 to Row119 (WrldMapPtrTbl), as hex bytes: block type, then repeat count - 1.')
+    print('NPC_TABLES: the NPCMobPtrTbl and NPCStatPtrTbl tables -> their entries, (graphic, x, y, direction, dialog')
+    print('byte). Graphic: 0 male villager, 1 fighter, 2 guard, 3 shopkeeper, 4 King Lorik, 5 wizard/Dragonlord,')
+    print('6 Princess Gwaelin/female villager, 7 stationary guard/guard with trumpet. Direction: 0 up, 1 right, 2 down,')
+    print('3 left.')
     print('"""')
     print('')
     print('MAPS = {')
@@ -126,6 +151,17 @@ def main(path):
         assert column >= 120, (label, column)
         print(f"    '{''.join(f'{b:02X}' for b in row)}',  # {label}")
     print(')')
+    print('')
+    print('NPC_TABLES = {')
+    for label, entries in npc_tables(labels, memory, words).items():
+        if not entries:
+            print(f'    {label!r}: (),')
+            continue
+        print(f'    {label!r}: (')
+        for graphic, x, y, direction, dialog in entries:
+            print(f'        ({graphic}, {x}, {y}, {direction}, 0x{dialog:02X}),')
+        print('    ),')
+    print('}')
 
 
 if __name__ == '__main__':

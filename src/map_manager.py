@@ -11,8 +11,7 @@ from pygame import Surface
 from src import maps
 from src.camera import Camera
 from src.common import BLACK
-from src.constants import GWAELIN_SWAMP_CAVE_COORDINATES, GWAELIN_THRONE_ROOM_COORDINATES, \
-    RAINBOW_BRIDGE_COORDINATES, THRONE_ROOM_DOOR_COORDINATES
+from src.constants import RAINBOW_BRIDGE_COORDINATES, THRONE_ROOM_DOOR_COORDINATES
 from src.direction import Direction
 from src.game_functions import set_character_position
 from src.map_layouts import BRICK, TREASURE_BOX
@@ -228,10 +227,10 @@ class MapManager:
         if self.current_map.identifier == 'TantegelThroneRoom' and self.game.story_flags.gwaelin_returned:
             # NES ChkGwaelinNPC: she's in the throne room's static NPC table, and only removed while F_RTN_GWAELIN
             # is clear
-            self.current_map.npc_coordinates[GWAELIN_THRONE_ROOM_COORDINATES] = 'PRINCESS_GWAELIN'
+            self.current_map.include_npc('PRINCESS_GWAELIN')
         elif self.current_map.identifier == 'SwampCave' and self.game.story_flags.gwaelin_rescued:
             # NES GetBaseBlockID: once F_DONE_GWAELIN is set, her block in the Swamp Cave is read as brick floor
-            self.current_map.npc_coordinates.pop(GWAELIN_SWAMP_CAVE_COORDINATES, None)
+            self.current_map.exclude_npc('PRINCESS_GWAELIN')
 
     def set_underlying_tiles_on_map_change(self, destination_coordinates):
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN', 'CAVE'):

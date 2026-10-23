@@ -15,9 +15,9 @@ from pygame import KEYDOWN, display, event, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
-from src.common import ANY_BUTTON_KEYS, BLACK, accept_keys, reject_keys
+from src.common import ANY_BUTTON_KEYS, accept_keys, reject_keys
 from src.cursor import BlinkingCursor
-from src.waiting import quit_if_requested, wait
+from src.waiting import wait
 from src.constants import (
     AUTO_BATTLE_DELAY_MS,
 )
@@ -26,6 +26,7 @@ from src.enemy_lookup import enemy_repel_lookup
 from src.enemy_spells import enemy_spell_lookup
 from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
+from src.selection import frame_events, next_frame
 from src.spells import Spell
 from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT
@@ -97,6 +98,8 @@ class BattleController:
         self.command_buttons = SelectionButtons(self.command_cursor)
         # Whether the command window is selecting (WndDoSelect). It is opened again at the start of each player turn.
         self.command_window_open = False
+        # What the command window was last drawn with (row, column, cursor shown, color), so it is drawn on changes only
+        self.drawn_command_window: tuple | None = None
         # Set when the enemy has just cast SLEEP on the hero, so it takes another turn straight away.
         self.player_fell_asleep = False
 
@@ -232,11 +235,6 @@ class BattleController:
             outcome = BattleOutcome.DEFEAT
         else:
             outcome = BattleOutcome.ESCAPED
-            if current_battle.enemy.name == 'Dragonlord 2':
-                # NES RunSuccessful: running from the final form blacks out the screen and reloads the map
-                # (MapChngNoSound). The Dragonlord is still alive, so he is back on his throne.
-                self.screen.fill(BLACK)
-                display.flip()
         self.cmd_menu.current_battle = None
         if outcome == BattleOutcome.ESCAPED:
             # The one place an escape (the hero ran or the enemy fled) resumes the map's music (ResumeMusicTbl). After
@@ -245,9 +243,20 @@ class BattleController:
             # Ending.final_boss_defeated's change of map, which starts the overworld music: starting it again here
             # would restart it. A defeat goes on to the death music (Game.handle_death).
             self.music_player.load_and_play_music(self.current_map.music_file_path)
+            if current_battle.enemy.name == 'Dragonlord 2':
+                self.reload_map_after_running_from_final_form()
         if outcome == BattleOutcome.ESCAPED and self.player_ran_away:
             self.step_back_after_running()
         return outcome
+
+    def reload_map_after_running_from_final_form(self) -> None:
+        """NES RunSuccessful (LE8B2-LE8D1): after running from the Dragonlord's final form, BlackPal is loaded at once,
+        so the screen cuts to black with no fade out, then MapChngNoSound (Bank00, LB091) reloads the map and fades it
+        in (PalFadeIn). The Dragonlord is still alive, so he is back on his throne."""
+        tile_size = self.game.tile_size
+        coordinates = self.player.rect.y // tile_size, self.player.rect.x // tile_size
+        self.game.change_map(map_lookup[self.current_map.identifier](self.config), destination_coordinates=coordinates,
+                             direction=self.player.direction_value, fade_out_first=False)
 
     def step_back_after_running(self) -> None:
         """NES RunSuccessful (ChkMapHauksness, ChkMapSwampCave, ChkMapOverworld): after running from a guardian, the
@@ -299,18 +308,20 @@ class BattleController:
     def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
         if not self.command_window_open:
             self.open_command_window()
-        self.draw_command_window(self.command_cursor.visible())
+        # Drawn when it opens, and again only when the cursor moves or blinks (or the window color changes)
+        drawn = (self.battle_menu_row, self.battle_menu_column, self.command_cursor.visible(), self.game.color)
+        if drawn != self.drawn_command_window:
+            self.draw_command_window(self.command_cursor.visible())
+            self.drawn_command_window = drawn
         selected_executed_option = None
 
         if self.auto_battle and not self.player.is_asleep:
             selected_executed_option = self.last_battle_action
             time.wait(scaled_ms(AUTO_BATTLE_DELAY_MS))
         else:
+            next_frame()  # one pass of the fight loop per NES frame (src/selection.py)
             tapped = 0  # keys pressed since the last call, which may have been let go already
-            for current_event in event.get():
-                quit_if_requested(current_event)
-                if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
-                    continue
+            for current_event in frame_events():  # quits if the window is closed; 1 to 4 only set the speed
                 if current_event.type == KEYDOWN:
                     if not self.player.is_asleep:
                         tapped |= key_joypad_buttons(current_event.key)
@@ -381,6 +392,7 @@ class BattleController:
             handle_speed_key(queued_event)  # the speed keys (1 to 4) still count; every other key is dropped
         self.command_buttons.open(held_joypad_buttons())
         self.command_window_open = True
+        self.drawn_command_window = None
 
     def process_command_input(self, presses: int) -> str | None:
         """WndProcessInput for the command window (CmdCmbtDat: 2 columns of 2 rows): only the first of A, B, up,

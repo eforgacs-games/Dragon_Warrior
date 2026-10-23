@@ -26,17 +26,16 @@ button per press, up and down in a one-column window, left and right in a one-ro
 from dataclasses import dataclass
 from typing import Callable, Iterable, List, Sequence, Tuple
 
-from pygame import Rect, Surface, display, event
+from pygame import Rect, Surface, display
 
 from src.color import BLACK, WHITE
-from src.command_window import held_buttons, tapped_buttons
+from src.command_window import COMMAND_WINDOW_BUTTON_KEYS
 from src.common import Graphics, set_gettext_language
 from src.directories import Directories
-from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, BlinkingCursor, SelectionButtons, \
-    draw_cursor_tile, first_button
+from src.cursor import IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, draw_cursor_tile
+from src.selection import run_selection
 from src.sound import Sound
 from src.text import draw_text
-from src.waiting import quit_if_requested, wait_frames
 from src.windows import ADVENTURE_LOG_WINDOW_1, ADVENTURE_LOG_WINDOW_2, ERASE_LOG_WINDOW, ITEM_MENU_BORDER, \
     MESSAGE_SPEED_WINDOW, YES_NO_2_WINDOW, Window, variable_height_window
 
@@ -150,7 +149,7 @@ def options_from_save(save: dict) -> Options:
 
 
 def options_to_save(options: Options) -> dict:
-    """The save file entries for these settings (CommandMenu.save, Game.change_message_speed)."""
+    """The save file entries for these settings (CommandMenu.save, TitleMenu.change_message_speed)."""
     return {MESSAGE_SPEED_SAVE_KEY: options.message_speed, DIALOG_STYLE_SAVE_KEY: options.dialog_style,
             NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way}
 
@@ -316,36 +315,17 @@ class OptionsScreen:
 
     def select(self, active: int) -> int | None:
         """WndDoSelect for self.windows[active]: once a frame, read the joypad (SelectionButtons) and handle the
-        first button pressed (WndProcessInput) until A (the entry's index) or B (None)."""
+        first button pressed (WndProcessInput) until A (the entry's index) or B (None). A and B draw the arrow once
+        more, held on, and make the menu sound (src/selection.py)."""
         options, index = self.windows[active]
-        cursor = BlinkingCursor()
-        buttons = SelectionButtons(cursor)
-        buttons.open(held_buttons())  # WndInitSelect, and the joypad read from scratch
-        drawn = None
-        while True:
-            visible = cursor.visible()
-            if drawn != (index, visible):
-                self.windows[active] = (options, index)
-                self.draw(active, visible)
-                drawn = (index, visible)
-            wait_frames(1)  # WaitForNMI
-            events = event.get()
-            for current_event in events:
-                quit_if_requested(current_event)
-            button = first_button(buttons.read(held_buttons(), tapped_buttons(events)))
-            if not button:
-                continue
-            buttons.handled(button)  # STA WndBtnRetrig
-            if button in (IN_A, IN_B):
-                # WndAPressed, WndBPressed: the arrow is drawn once more and stays on
-                cursor.hold()
-                self.draw(active, True)
-                self.sound.play_sound(self.directories.menu_button_sfx)
-                return index if button == IN_A else None
-            moved_to = options.move(index, button)
-            if moved_to != index:
-                index = moved_to
-                buttons.moved()  # WndUpdateCrsrPos
+
+        def draw(entry: int, cursor_visible: bool) -> None:
+            self.windows[active] = (options, entry)
+            self.draw(active, cursor_visible)
+
+        answer = run_selection(draw, index, move=options.move, keys=COMMAND_WINDOW_BUTTON_KEYS, joypad=True,
+                               sound=lambda: self.sound.play_sound(self.directories.menu_button_sfx))
+        return answer.entry if answer.accepted else None
 
     def draw(self, active: int, cursor_visible: bool) -> None:
         """The background, then each window with its text and cursor; only the active window's cursor blinks."""
