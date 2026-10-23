@@ -66,6 +66,7 @@ class BattlePromptFrames(unittest.TestCase):
     def setUp(self):
         pygame.init()
         pygame.event.clear()
+        self.addCleanup(pygame.event.clear)  # keys a test leaves unread aren't for the next test in this process
         self.game = make_game()
         self.frame_number = 0
         patch('src.battle_controller.display').start()
@@ -765,7 +766,8 @@ class TestHeroAttack(unittest.TestCase):
         order = []
         self.game.drawer.flash_enemy.side_effect = lambda *a: order.append('flash')
         self.game.cmd_menu.show_line_in_dialog_box.side_effect = lambda line, **k: order.append(line)
-        with patch('src.battle_controller.random.random', return_value=0.5):
+        # A 1 never dodges (test_enemy_can_dodge); left unpatched, the Slime's 1/64 dodge made this fail now and then
+        with patch('src.battle_controller.random.randint', return_value=1):
             self.controller.hero_attack(self.battle)
         self.game.drawer.flash_enemy.assert_called_once_with(self.game.screen, 'Slime')
         self.assertEqual(order[-2:], ['flash', "The Slime's Hit Points have been reduced by 4.\n"])
@@ -1126,6 +1128,9 @@ class TestEnemySpellResults(unittest.TestCase):
     def setUp(self):
         self.game = make_game()
         self.controller = BattleController(self.game)
+        # The second's pause after the enemy's chant (waiting.wait, not the patched time) really slept in every test
+        patch('src.battle_controller.wait').start()
+        self.addCleanup(patch.stopall)
 
     def cast(self, spell, roll, hp=2):
         enemy = patterned_enemy([(100, spell, True), Spell.ATTACK])
