@@ -1,0 +1,3412 @@
+{
+ "data": [
+  [
+   [
+    "<3401<3F<07 examines the ground at his feet...<1A<0C\nBut there's nothing there.<0C",
+    "<3401<3F<07 examines the ground at his feet...<1A<0C\nWhat luck! <3F<4A!<33<130D<15<14<3400<1A<0C\n<3401<3F<07 gratefully pockets his find.<0C",
+    "<3401<3F<07 examines the ground at his feet...<1A<0C\nWhat luck! <3F<4A!<33<130D<15<14<3400<1A<0C<3401<386200"
+   ],
+   [
+    "<3401<3F<07 opens the treasure chest...<1A<0C\nBut there's nothing inside.<0C",
+    "<3401<3F<07 looks inside the treasure chest...<1A<0C\nBut it's empty.<0C",
+    "<3401<3F<07 opens the treasure chest...<1A<0C\nWhat luck! He finds <03 gold coin<5A<70s<71!<0C",
+    "<3401<3F<07 opens the treasure chest...<1A<0C\nWhat luck! <3F<4A!<1A<0C\n<3F<07 gratefully pockets his find.<0C",
+    "<3401<3F<07 opens the treasure chest...<1A<0C\nWhat luck! <3F<4A!<1A<0C\n<386100",
+    "<3401<3F<07 opens the treasure chest...<1A<0C\nWhat luck! <3F<4A!<33<130D<15<14<3400<1A<0C\n<3401<3F<07 gratefully pockets his find.<0C",
+    "<3401<3F<07 opens the treasure chest...<1A<0C\nWhat luck! <3F<4A!<33<130D<15<14<3400<1A<0C<3401<386100"
+   ],
+   [
+    "<3401<3F<07 peeks inside the pot...<1A<0C\nBut there's nothing there.<0C",
+    "<3401<3F<07 peeks inside the pot...<1A<0C\nWhat luck! He finds <03 gold coin<5A<70s<71!<0C",
+    "<3401<3F<07 peeks inside the pot...<1A<0C\nWhat luck! <3F<4A!<1A<0C\n<3F<07 gratefully pockets his find.<0C",
+    "<3401<3F<07 peeks inside the pot...<1A<0C\nWhat luck! <3F<4A!<1A<0C\n<386200"
+   ],
+   [
+    "<3401<3F<07 opens up the chest of drawers and rummages around inside...<1A<0C\nBut there's nothing useful there.<0C",
+    "<3401<3F<07 opens up the chest of drawers and rummages around inside...<0C\nWhat luck! He finds <03 gold coin<5A<70s<71!<0C",
+    "<3401<3F<07 opens up the chest of drawers and rummages around inside...<0C\nWhat luck! <3F<4A!<1A<0C\n<3F<07 gratefully pockets his find.<0C",
+    "<3401<3F<07 opens up the chest of drawers and rummages around inside...<0C\nWhat luck! <3F<4A!<1A<0C\n<386200"
+   ],
+   [
+    "Oh no! <3F<07's dead!<1309<15<0C"
+   ],
+   [
+    "<2902<2603",
+    "<2902<2604",
+    "<12The benevolent winds bear Princess Gwaelin's words to <07's waiting ear...<1A<0C",
+    "<11Princess Gwaelin: To attain the next level, my beloved, thou must needs earn <5Abut one more experience point<70another <03 experience points<71...\n<1A<0C",
+    "<11Princess Gwaelin: Thou needest grow no stronger, <07, my hero…\n<1A<0C",
+    "<11Princess Gwaelin: The great castle of Tantegel, wherein I await thy return, standeth a mere <03 pace<5A<70s<71 <04, and naught more than <03 pace<5A<70s<71 <04 of thy current position...<1A<0C\n<2606",
+    "<11Princess Gwaelin: <3F<07... Beloved... O, how I do yearn for thee...<0C",
+    ""
+   ]
+  ],
+  [
+   [
+    "<0D1E<3F<50 appears!<0C",
+    "...But <51 doesn't notice <07!<0C",
+    "<3F<51 suddenly attacks!<0C",
+    "<3F<51 disappears.<0C",
+    "<0D1E<3F<07 makes a break for safety!<3628<0C",
+    "...But the enemy blocks his path!<0C",
+    "<3F<07 is defeated.<0C",
+    "<3625<3F<07 attacks!<0C",
+    "<3F<51 takes <0A <5Cpoint<70points<71 of damage!<0C",
+    "<362AMiss! <3F<51 takes no damage!<0C",
+    "<362A<3F<51 dodges nimbly!<0C",
+    "<3625<3F<07 attacks!<0C\n<3629Critical hit!<0C",
+    "...But it fizzles away harmlessly!<0C",
+    "<3F<07 is asleep...<0C",
+    "<3F<07 wakes up!<0C",
+    "<3F<51 is asleep...<0C",
+    "<3627<3F<51 attacks!<0C",
+    "<3F<51 casts <08!<3624<0C<37",
+    "<3F<07 takes <0A <5Cpoint<70points<71 of damage!<0C",
+    "<362AMiss! <07 takes no damage!<0C",
+    "<362A<3F<07 dodges nimbly!<0C",
+    "<3F<51 defends.<0C",
+    "<3F<51 flees!<3628<0C",
+    "<3F<51 attacks!<0C\nCritical hit!<0C",
+    "<3F<51 recovers HP!<0C",
+    "<3F<07 falls asleep!<362C<0C<37",
+    "<3F<07 doesn't fall asleep!<0C",
+    "<3F<07 is prevented from casting spells!<3637<0C<37",
+    "<3F<07 isn't affected!<0C",
+    "<3F<51 breathes fire!<0C",
+    "<3F<51 spits out a fiery torrent of flame!<0C",
+    "<3F<51 belches forth blistering flames!<0C",
+    "Not enough MP!<0C",
+    "...But it fizzles away harmlessly!<0C",
+    "<3F<51 is asleep...<0C",
+    "<3F<51 wakes up!<0C",
+    "<3F<51 is defeated!<0C",
+    "Victory!<1326<15<0D06",
+    "<3F<07 earns <03 experience <5Apoint<70points<71!",
+    "<1A<0C\n...And obtains <03 gold <5Acoin<70coins<71!",
+    "<1A<0C\n<3F<07 reaches level <03!",
+    "<1A<0C\nHis strength increases by <03!",
+    "<1A<0C\nHis agility increases by <03!",
+    "<1A<0C\nHis resilience increases by <03!",
+    "<1A<0C\nHis maximum HP increase by <03!",
+    "<1A<0C\nHis maximum MP increase by <03!",
+    "<1A<0C\nHe learns the <08 spell!",
+    "<0F<3F<07 puts on <4D...<0C\n...And attacks!<0C",
+    "<3F<07 swaps his weapon for <4A...<0C\n...And attacks!<0C"
+   ]
+  ],
+  [
+   [
+    "<3401Do you wish to record your progress in the quick save log?<3B01",
+    "<3401Your adventure will be recorded in the quick save log, and any existing quick save data will be overwritten. Are you sure?<3B01",
+    "<3401Your progress has been recorded in the quick save log. Come back soon!<1A<0C",
+    "This will close the application. \nAre you sure?",
+    "Are you sure you wish to return to the title screen? If you do so, any unsaved progress will not be recorded.<3B00",
+    "Creating quick save log...\nPlease do not turn off the power or quit the application.<0D3C",
+    "Quick save log created.\nContinue your adventure?<3B00",
+    "Thank you for playing.\nReturning to title screen...<1A<0C"
+   ],
+   [],
+   [
+    "<3401The Basics of Battle\n\nBy Tutorio Lerngood<1A<0C\n<3000So, brave <07, you will presently set forth upon a grand adventure in the land of Alefgard.<1A<0C\nNow, I do not mean to alarm you, but you should know that foul fiends wait to assail you every step of the way.<1A<0C\nYou will have no choice but to take up arms. Be it with weapons, spells or items, you must strive to survive at any cost!<1A<0C\nShould your health reach zero, all is lost! So do not be afraid to flee, for discretion is often the better part of valour!<1A<0C\nBut should you emerge victorious, you will be showered with experience points, gold coins, and even items!<1A<0C\nAnd when you have earned a sufficiency of experience points, your level shall increase, and your might along with it.<1A<0C\nAnd there ends today's lesson.<0C",
+    "<3401Four Steps Toward Mastering Movement\n\nBy Tutorio Lerngood<1A<0C\n<30001. Move the directional pad up, down, left or right to walk in the desired direction. Diagonal movement is sadly beyond you.<1A<0C\n2. Whilst standing still, tap the screen in a place which looks promising to perform a variety of useful actions.<1A<0C\nSuch actions include talking, opening doors, and examining your surroundings.<1A<0C\n3. Tap the Menu icon, and the main menu will miraculously appear.<1A<0C\nHere, you can check your current state of health, arrange your equipment, and use all manner of items and spells.<1A<0C\nTo cancel any action within the menu, simply tap the Back button.<1A<0C\n4. Should you ever become confused, open the menu and select ‘Misc.’<1A<0C\nDoing so will grant you access to a range of invaluable resources, not least among them these humble tutorials.<1A<0C\nHere, you may also adjust the speed of battle messages...<1A<0C\n...create a quick save log, enabling instant suspension of your adventure...<1A<0C\n...and adjust the volume of the game's sound to a level befitting the acuteness of your hearing.<1A<0C\nAnd there ends today's lesson.<0C",
+    "<3401Taking a Break from Your Adventure\n\nBy Tutorio Lerngood<1A<0C\n<3000There is one thing which an adventurer must never ever do upon any account...<1A<0C\nAnd that is to force this noble application to close.<1A<0C\nDoing so will mean abandoning your adventure without a record of your progress being made.<1A<0C\nWhen you wish to call a halt to your quest, you must visit the King, and he will record your progress in an adventure log.<1A<0C\nSimply select a slot in which to save, and your heroic deeds shall be added to the annals of history.<1A<0C\nThe next time you play, you will begin again from the throne room where you saved.<1A<0C\nYou may alternatively elect to record your deeds in a quick save log.<1A<0C\nBut should you create a quick save log from another adventure log, the previous log will be lost for all eternity.<1A<0C\nIt is therefore more prudent to record a full adventure log. That way, defeat need not spell disaster.<1A<0C\nAnd there ends today's lesson.<0C",
+    "<3401Attributes Explained\n\nBy Tutorio Lerngood<1A<0C\nA hero's ‘level’ serves as a measure of his experience, and denotes his overall ability.<1A<0C\n<3000All heroes begin at Level 1, and raise themselves to higher levels by gaining experience through battling monsters.<1A<0C\n<30FF‘Health points’, known commonly as ‘HP’, serve to indicate a hero's physical well-being.<1A<0C\n<3000Should your health reach zero, either due to the wounds of battle, or the effects of poison, you will fall down, defeated.<1A<0C\nAll is not lost, however...<1A<0C\nSoon after you have tasted defeat, you will awake before His Majesty the King, ready to rejoin your adventure.<1A<0C\nThis miraculous preservation we owe to the divine protection of Almighty Rubiss! Praise be unto Her!<1A<0C\n<30FF‘Magic points’, known commonly as ‘MP’, confer the power to cast spells.<1A<0C\n<3000It is through the use of these precious points that men may weave wondrous magics.<1A<0C\n<30FF‘G’ stands for ‘gold coins’.<1A<0C\n<3000Gold coins are the money that makes the world go around.<1A<0C\n<30FF‘Strength’ is a measure of one's physical power.<1A<0C\n<3000The greater your strength, the more potent your attacks will be.<1A<0C\n<30FF‘Agility’ is a measure of one's swiftness.<1A<0C\n<3000The more agile you are, the more likely you will be to strike an enemy before he can strike you.<1A<0C\n<30FF‘Resilience’ indicates your body's ability to bear the blows of foes.<1A<0C\n<3000The greater your resilience, the less damage you will suffer at the hands of your enemy.<1A<0C\n<30FF‘Max. HP’ and ‘Max. MP’ indicate... Can you guess?<1A<0C\n<3000Correct! ‘Max. HP’ and ‘Max. MP’ indicate your maximum health points and maximum magic points respectively!<1A<0C\nRest overnight at an inn, and both will be restored to their maximum values.<1A<0C\n<30FF‘Attack’ measures how hard you hit.<1A<0C\n<3000The higher your attack, the more damage you will inflict when you strike a foe.<1A<0C\nAnd the better your weapon, the higher your attack will climb.<1A<0C\n<30FF‘Defence’ dictates how much punishment you are able to endure.<1A<0C\n<3000The better your defence, the less damage you will take from the blows of your foes.<1A<0C\nAnd the better your armour, the higher your defence will climb.<1A<0C\n<30FFFinally, ‘Exp.’ stands for, yes, ‘experience’.<1A<0C\nAs you gain experience, your level will increase, and your attributes will improve.<1A<0C\nAnd there ends today's lesson.<0C",
+    ""
+   ]
+  ],
+  [
+   [
+    "<1B01Thou art welcome, wanderer, in this, our humble armoury. How, pray, may we be of use to thee this day?<33",
+    "<1B01We shall await thy next coming most eagerly!<0C",
+    "<1B01Might we assist thee in some other manner?<33",
+    "<1B01Which of our fine items tickleth thy fancy?<1A<0C",
+    "<1B01<3F<4A?<1A<0C\nFor this exquisite article, we ask a mere <03 gold coins. Wilt thou part with this modest sum?<3B00",
+    "<1B01Alas, thou lackest the necessary funds, good sir!<1A<0C",
+    "<1B01But what is this? Already, friend, thou art burdened to the very limit of thy strength!<1A<0C\nThou must needs sell or otherwise rid thyself of an item or three, and then return here unto me.<1A<0C",
+    "<1B01Wilt thou equip this fine item forthwith?<3B00",
+    "<1B01But of course thou wilt! Wherefore wouldst thou purchase such a treasure, only for it to remain unused?<0C\n<12<3F<07 equips himself with <4D.<1A<0C",
+    "<1B01Then I hereby entrust it unto thy keeping!<1A<0C",
+    "<1B01And what, pray, wilt thou sell me?<1A<0C",
+    "<1B01Forgive me, friend, but unless mine eyes deceive me, thou carriest naught which I might buy from thee.<1A<0C",
+    "<1B01Alas, friend, I cannot in good conscience take such an item from thee.<1A<0C\nThink not on its monetary value, rather hold it close until such time as its import becometh clear to thee.<1A<0C",
+    "<1B01<3F<4A?<1A<0C\nI can offer thee <03 gold coin<5A<70s<71. What say'st thou to that?<3B00",
+    "<1B01As ever, a thousand thanks!<1A<0C",
+    "<1B01Alas and alack, a great shame indeed...<1A<0C",
+    "<1B01As ever, a thousand thanks!<1A<0C\nIf thou wouldst permit me... (gasp) This item is cursed, and no amount of force will prise it from thy person!<73<1308<15<14<3400<1A<0C\n<3401(sigh) Full grieved am I that it should be so...<0C",
+    "<1B01Which of our fine items, I wonder, doth tickle thy fancy?<1A<0C",
+    "<1B01<3F<4A?<1A<0C\nVerily, 'tis a wondrous piece. All the more so when used as an item in battle!<1A<0C\nFor this exquisite article, I ask a mere <03 gold coins. Wilt thou part with this trifling sum?<3B00"
+   ],
+   [
+    "<1B01Thou art welcome, wanderer, in this, our humble item shop. How, pray, may we be of service to thee this day?<33",
+    "<1B01Thanks unto thee! May fate guide thee unto our door once more!<0C",
+    "<1B01Is there aught else in which we might assist thee?<33",
+    "<1B01A purchase, hm? And which of our fine items, pray, hath tickled thy fancy?<1A<0C",
+    "<1B01<3F<4A, thou say'st?<1A<0C\nVery well. I shall require <03 gold coin<5A<70s<71 of thee. Findest thou this price agreeable?<3B00",
+    "<1B01Alas, though naught would please me more than to oblige thee, 'twould seem thou lackest the means to make this purchase...<1A<0C",
+    "<1B01Alas, friend, 'twould seem that thou canst carry no more.<1A<0C\nLighten thy burden, I prithee, then speak with me again.<1A<0C",
+    "<1B01Alas, thou already bearest all the medicinal herbs a man might carry...<1A<0C",
+    "",
+    "<1B01With our humblest compliments, good <07!<1A<0C",
+    "<1B01Thou wouldst sell me something? And what, pray tell, might it be?<1A<0C",
+    "<1B01But what is this? Good <07, thou carriest not a thing!<1A<0C",
+    "<1B01<3F<4A, thou say'st? But surely 'twould serve thee far better to retain such an item.<1A<0C\nIf thou art overburdened, mightst thou not deliver it instead unto a place of storage?<1A<0C",
+    "<1B01<3F<4A, thou say'st? Pray, permit me a moment to consider...<1A<0C\nWould, shall we say...<03 gold coin<5A<70s<71 suffice?<3B00",
+    "<1B01It would? Marry, it pleaseth me greatly to hear it!<1A<0C",
+    "<1B01Nay? 'Tis a great shame. A great shame...<1A<0C",
+    "<1B01Hyahh...nnngh... Ack! 'Tis no good!<73<1308<15<14<3400<1A<0C\n<3401Though I pull and pry, it cometh not loose!<0C",
+    "<1B01And what, pray, might be thy pleasure this day?<1A<0C"
+   ],
+   [
+    "<1B01Within these stout walls, thy gold and thy treasures shall ever be safe. What, pray, might thy pleasure be this day?<33",
+    "<1B01Thou hast our utmost thanks, friend.<0C",
+    "<1B01Might I assist thee in aught else?<33",
+    "<1B01Very well. And what, pray, wilt thou entrust to our care this day?<33",
+    "<1B01Beg pardon, friend, but we hold naught of thine at this time.<1A<0C",
+    "<1B01And what, pray, wilt thou retrieve from our care this day?<33",
+    "<1B01Thy gold must needs be deposited in units of one thousand coins. Pray, how many wilt thou entrust to us this day?<33",
+    "<1B01Alas, though it paineth me greatly to say it, our vault overfloweth, and may hold not a single coin more...<1A<0C",
+    "<1B01<03 gold coins, thou say'st? Then let it be so. Thy deposit is duly received.<1A<0C",
+    "<1B01Ah...though it paineth me greatly to say it, I fear thy purse containeth not so great a sum...<1A<0C",
+    "<1B01But friend...'tis plain thou carriest not a single item about thy person...<1A<0C",
+    "<1B01Alas, though it paineth me greatly to say it, our vault overfloweth, and may hold not an item more...<1A<0C",
+    "<1B01What, pray, wilt thou entrust unto our care this day?<1A<0C",
+    "<1B01Beg pardon, friend, but our vault may only house so many <45...<1A<0C",
+    "<1B01<3F<4A, thou say'st?<1A<0C",
+    "<1B01Then let it be so. Thy deposit is duly received.<1A<0C",
+    "<1B01<12This item is cursed, and cannot be removed!<33<1308<15<14<3400<1A<0C<3401",
+    "<1B01It grieveth me to refuse thee, but I fear our vault is no place for an item of that nature...<1A<0C",
+    "<1B01Wilt thou entrust aught else to us this day?<3B00",
+    "<1B01<03 of thy gold coins rest safe in our care. How many wilt thou now withdraw?<33",
+    "<1B01I fear thou art mistaken, friend. Our vault containeth not a single coin of thine at present...<1A<0C",
+    "<1B01Alas, thou hast perhaps...overestimated the extent of thy fortune...<1A<0C",
+    "<1B01Alas, thou canst not carry such a load...<1A<0C",
+    "<1B01Very well. With our humblest compliments.<1A<0C",
+    "<1B01Hm? I fear thou art mistaken, friend. Our vault containeth no items of thine at present.<1A<0C",
+    "<1B01And what, pray, wilt thou retrieve from our care this day?<1A<0C",
+    "<1B01But alas, friend, thou canst not well bear such a load...<1A<0C\nWert thou to sell, or even discard, certain other of thy possessions, then perhaps...<1A<0C",
+    "<1B01Then we do hereby restore unto thee thy treasured possession.<1A<0C",
+    "<1B01Wilt thou retrieve aught else of thine this day?<3B00",
+    "<1B01Very well. Then our business is concluded.<1A<0C"
+   ],
+   [
+    "<1B01Hast thou need of a magic key capable of opening any door? One such wonder will set thee back a mere <03 gold coins.<3B00",
+    "<1B01We await thy next coming with great anticipation.<0C",
+    "<1B01Alas, it seemeth that thy funds will not suffice...<1A<0C",
+    "<1B01Ah, but thou canst carry no more, I fear. Shed thee a possession or three, and I shall gladly oblige thee.<0C",
+    "<1B01Excellent. I present unto thee one magic key.<1A<0C\nDesirest thou another?<3B00",
+    "<1B01Alas, I am not permitted to sell thee any more keys at present. Pray, use those in thy possession, then come unto me again.<0C"
+   ],
+   [
+    "<1B01Might a phial of blessed water with the power to repel foul beasts interest thee? At a mere 12 gold coins, surely it must?<3B00",
+    "<1B01May the most holy on high watch over thee.<0C",
+    "<1B01Alas, thy purse will not stretch to such a purchase...<1A<0C",
+    "<1B01Hm?<0D0F Thy burden is too great already. Pray, lighten thy load and come unto me once more.<1A<0C\nMay the most holy on high watch over thee.<0C",
+    "<1B01Thanks unto thee, friend.<0C\nAnother phial, perhaps?<3B00"
+   ],
+   [
+    "<1B01Welcome, wanderer, unto this, our humble hostelry.<1A<0C\nHere, a night's lodging may be had for <5Abut a single gold coin<70a mere <03 gold coins<71. Wilt thou lay thy weary head to rest?<3B00",
+    "<1B01Then may thy sleep be sound, and thy dreams pleasant...<1A<0C",
+    "<1B01Ah... I fear thy purse will not stretch to a room, friend.<1A<0C",
+    "<1B01Good morrow, friend. Pray, go forth with our thanks, and fare thee well.<0C",
+    "<1B01Good morrow, friend.<1A<0C\nI trust that thou didst sleep soundly.<1A<0C\nPray, go forth with our thanks, and fare thee well.<0C",
+    "<1B01Fare thee well, wanderer. Take care not to overreach thyself upon the road.<0C"
+   ],
+   [
+    "<1B00<3401You'll need to free up some space if you want to carry anything else.<1A<0C",
+    "<3401Do you want to throw one of your possessions away?<3B00",
+    "<3401What will you discard?<1A<0C",
+    "<3401<3F<4A? Are you sure?<3B00",
+    "<3401Don't be ridiculous! You can't throw that away!<0C",
+    "<3401<3F<07 throws away <4D and grabs <4E instead!<0C",
+    "<3401<3F<07 changes his mind, and puts <4D back.<0C",
+    "But <07 cannot carry any more.<1A<0C\nHe changes his mind about acquiring <4D.<0C",
+    "<3401<1308<15<14<3F<4D is cursed, and cannot be removed.<0C"
+   ],
+   [
+    "<1B01<11King: Earn <5Abut a single additional point<70another <03 points<71 of experience, and thou shalt attain a new level.<1A<0C",
+    "<1B01<11King: Thou art more than mighty enough to face the Dragonlord! Go forth unto certain victory!<1A<0C",
+    "<1B01<11King: Wilt thou record thy tale thus far in an adventure log?<3B00",
+    "<1B01<11King: Very well. In which adventure log wouldst thou have thy deeds recorded?<33",
+    "<1B01<11King: Do so, and the entry titled ‘<07 of Level <03’ will be no more. Art thou sure?<3B01",
+    "<1B01<11King: Thou wouldst proceed without recording thy deeds? So be it...<1A<0C",
+    "<1B01<11King: Wilt thou continue on thy quest?<3B00",
+    "<1B01<11King: Hm? Thou meanest to take thy leave of us without recording thy progress?<1A<0C\n<11King: Do so, and thy next visit to this realm shall begin when last thou made a record of thy deeds. Art thou certain?<3B01",
+    "<1B01<11King: May destiny bring thee before us again ere long, brave <07!<0C",
+    "<1B01<11King: It serveth even the mighty to take pause and reflect upon their deeds from time to time.<1A<0C\n<11King: We shall await thy return most eagerly, brave <07!<0C",
+    "<1B01<11King: It is written! The record is made!<1A<0C",
+    "<1B01<11King: When thy level groweth greater, come before me and record thine adventure, that thy progress might not be lost.<1A<0C",
+    ""
+   ]
+  ],
+  [
+   [
+    "<3401Alas, <07 is no more...<0C",
+    "<3401The current quick save log belongs to <07 (Lv. <03).<1A<0C\nLoading it will result in it being erased.<1A<0C\nAre you sure you want to load this quick save log?<3B00",
+    "<3401Sorry, but you can't use that name. Please choose another.<0C",
+    "<3401Are you sure you want to erase \n<08?<3B01",
+    "<3401<3F<08 has been erased.<0C",
+    "<3401The message speed was changed successfully.<0C",
+    "<3401The adventure log was transferred successfully.<0C",
+    "<3401Volume changed.<0C",
+    "Do you really want to overwrite this adventure log?<3B00"
+   ],
+   [
+    "Venture Forth",
+    "",
+    "Create a New Adventure Log",
+    "Transfer an Adventure Log",
+    "Delete an Adventure Log",
+    "Sound"
+   ],
+   [
+    "Adventure Log 1",
+    "Adventure Log 2",
+    "Adventure Log 3",
+    "Quick Save Log"
+   ]
+  ],
+  [
+   [
+    "<3F<07 tries to use <4D...<1A<0C"
+   ],
+   [
+    "<3F<07 uses <4D.<1A<0C"
+   ],
+   [
+    "<3F<07 equips <4D.<0C"
+   ],
+   [
+    "<3F<07 unequips <4D.<0C"
+   ],
+   [
+    "...But nothing happens.<0C"
+   ],
+   [
+    "...But that can't be used right now.<0C"
+   ],
+   [
+    "...But that can't be used here.<0C"
+   ],
+   [
+    "<3F<51 takes <0A <5Cpoint<70points<71 of damage!<0C"
+   ],
+   [
+    "<3F<07 isn't carrying any items.<0C"
+   ],
+   [
+    "Are you sure you want to throw away <4D?<3B01"
+   ],
+   [
+    "Don't be ridiculous! You can't get rid of that!<0C"
+   ],
+   [
+    "<3F<07 flings <4D unceremoniously onto the ground.<0C"
+   ],
+   [
+    "Oh no! That item is cursed, and can't be unequipped!<33<1308<15<14<3400<0C"
+   ],
+   [
+    "<3F<07's HP are restored to <03!<362B<37<0C"
+   ],
+   [
+    "<3F<07 lights a torch.<0C"
+   ],
+   [
+    "<3F<07 throws the chimaera wing\ninto the air.<1A<0C"
+   ],
+   [
+    "...But it floats ineffectually back down again.<0C"
+   ],
+   [
+    "There's no door there!<0C"
+   ],
+   [
+    "<3F<07 sprinkles holy water over himself.<1A<0C"
+   ],
+   [
+    "The effect of the holy water wears off.<0C"
+   ],
+   [
+    "<3F<07 plays a soothing melody on the faerie flute...<33<130A<15<14<3400<1A<0C"
+   ],
+   [
+    "<3F<07 deftly plucks the Lyre of Ire...<33<1317<15<14<3400<1A<0C"
+   ],
+   [
+    "<3F<07 waves the Staff of Rain purposefully around in the air...<1A<0C"
+   ],
+   [
+    "<3F<07 holds the Sunstone aloft...<1A<0C"
+   ],
+   [
+    "<3F<07 grips the Mark of Erdrick tightly.<1A<0C"
+   ],
+   [
+    "Courage courses through his veins!<0C"
+   ],
+   [
+    "<3F<07 holds the Rainbow Drop aloft...<1A<0C"
+   ],
+   [
+    "<3F<07 is afflicted by a terrible curse!<33<1308<15<14<3400<0C"
+   ],
+   [
+    "<3F<07 puts on <4D.<1A<0C\n<69They stick<70It sticks<71 fast, and cannot be removed!<1A<0C"
+   ],
+   [
+    "<3F<07's agility increases by <03!<0C"
+   ],
+   [
+    "<3F<07's maximum MP increase by <03!<0C"
+   ],
+   [
+    "<3F<07's maximum HP increase by <03!<0C"
+   ],
+   [
+    "<3F<07's strength increases by <03!<0C"
+   ],
+   [
+    "<3F<07's resilience increases by 4!<0C"
+   ],
+   [
+    "<3F<07 brandishes the fire blade...<1A<0C\nFlame flies wildly from the tip!<0C"
+   ],
+   [
+    "<3F<07 flings the torch as hard as he can!<0C"
+   ],
+   [
+    "<3F<07's defence increases by 5!<0C"
+   ],
+   [
+    "<3F<07 drenches <51 in holy water!<0C"
+   ],
+   [
+    "<3F<51 is overcome with drowsiness...<1A<0C\n...And falls fast asleep!<0C"
+   ],
+   [
+    "<3F<51 looks as pleased as punch!<0C"
+   ],
+   [
+    "<3F<07 grips the Princess's pledge tightly...<0C"
+   ],
+   [
+    "...But Princess Gwaelin's voice cannot be heard right now.<0C"
+   ],
+   [
+    "...But that doesn't work on <51.<0C"
+   ],
+   [
+    "<3F<4A is already equipped!<0C"
+   ],
+   [
+    "The holy protection effect wears off.<0C"
+   ],
+   [
+    "<3F<07's health is completely restored!<362B<37<0C"
+   ]
+  ],
+  [
+   [
+    "<3F<07 casts <08!<3624<0C<37"
+   ],
+   [
+    "...But nothing happens.<0C"
+   ],
+   [
+    "<3F<07's HP are restored to <03!<362B<37<0C"
+   ],
+   [
+    "It suddenly seems as if monsters are keeping their distance...<0C"
+   ],
+   [
+    "<3F<51 takes <0A <5Cpoint<70points<71 of damage!<0C"
+   ],
+   [
+    "<3F<51 is sent to sleep!<0C"
+   ],
+   [
+    "<3F<51 is prevented from casting spells!<0C"
+   ],
+   [
+    "<3F<07 can't cast spells yet.<0C"
+   ],
+   [
+    "Not enough MP!<0C"
+   ],
+   [
+    "<3F<51 isn't affected!<0C"
+   ],
+   [
+    "<3F<07 casts <08!<3624"
+   ],
+   [
+    "<3F<07's health is completely restored!<362B<37<0C"
+   ]
+  ],
+  [
+   [
+    ""
+   ],
+   [
+    "Bamboo Spear"
+   ],
+   [
+    "Oaken Club"
+   ],
+   [
+    "Copper Sword"
+   ],
+   [
+    "Iron Axe"
+   ],
+   [
+    "Steel Broadsword"
+   ],
+   [
+    "Fire Blade"
+   ],
+   [
+    "Erdrick's Sword"
+   ],
+   [
+    "Plain Clothes"
+   ],
+   [
+    "Leather Suit"
+   ],
+   [
+    "Chain Mail"
+   ],
+   [
+    "Iron Armour"
+   ],
+   [
+    "Full Plate Armour"
+   ],
+   [
+    "Magic Armour"
+   ],
+   [
+    "Erdrick's Armour"
+   ],
+   [
+    "Leather Shield"
+   ],
+   [
+    "Iron Shield"
+   ],
+   [
+    "Silver Shield"
+   ],
+   [
+    "Medicinal Herb"
+   ],
+   [
+    "Torch"
+   ],
+   [
+    "Dragon Scale"
+   ],
+   [
+    "Chimaera Wing"
+   ],
+   [
+    "Magic Key"
+   ],
+   [
+    "Holy Water"
+   ],
+   [
+    "Sphere of Light"
+   ],
+   [
+    ""
+   ],
+   [
+    "Faerie Flute"
+   ],
+   [
+    "Lyre of Ire"
+   ],
+   [
+    "Staff of Rain"
+   ],
+   [
+    "Sunstone"
+   ],
+   [
+    "Princess's Pledge"
+   ],
+   [
+    "Mark of Erdrick"
+   ],
+   [
+    "Rainbow Drop"
+   ],
+   [
+    "Wasteband"
+   ],
+   [
+    "Choker"
+   ],
+   [
+    "Warrior's Ring"
+   ],
+   [
+    "Seed of Agility"
+   ],
+   [
+    "Seed of Magic"
+   ],
+   [
+    "Seed of Life"
+   ],
+   [
+    "Seed of Strength"
+   ],
+   [
+    "Seed of Resilience"
+   ]
+  ],
+  [
+   [
+    "///////"
+   ],
+   [
+    "bamboo spear/the /a /bamboo spear/the /some /bamboo spears/N"
+   ],
+   [
+    "oaken club/the /an /oaken club/the /some /oaken clubs/N"
+   ],
+   [
+    "copper sword/the /a /copper sword/the /some /copper swords/N"
+   ],
+   [
+    "iron axe/the /an /iron axe/the /some /iron axes/N"
+   ],
+   [
+    "steel broadsword/the /a /steel broadsword/the /some /steel broadswords/N"
+   ],
+   [
+    "fire blade/the /a /fire blade/the /some /fire blades/N"
+   ],
+   [
+    "Erdrick's Sword///Erdrick's Sword///Erdrick's Swords/N"
+   ],
+   [
+    "plain clothes/the /a set of /plain clothes/the /some /sets of plain clothes/Y"
+   ],
+   [
+    "leather suit/the /a /leather suit/the /some /leather suits/N"
+   ],
+   [
+    "chain mail/the /a suit of /chain mail/the /some /suits of chain mail/N"
+   ],
+   [
+    "iron armour/the /a suit of /iron armour/the /some /suits of iron armour/N"
+   ],
+   [
+    "full plate armour/the /a suit of /full plate armour/the /some /suits of full plate armour/N"
+   ],
+   [
+    "magic armour/the /a suit of /magic armour/the /some /suits of magic armour/N"
+   ],
+   [
+    "Erdrick's Armour///Erdrick's Armour///Erdrick's Armour/N"
+   ],
+   [
+    "leather shield/the /a /leather shield/the /some /leather shields/N"
+   ],
+   [
+    "iron shield/the /an /iron shield/the /some /iron shields/N"
+   ],
+   [
+    "silver shield/the /a /silver shield/the /some /silver shields/N"
+   ],
+   [
+    "medicinal herb/the /a /medicinal herb/the /some /medicinal herbs/N"
+   ],
+   [
+    "torch/the /a /torch/the /some /torches/N"
+   ],
+   [
+    "dragon scale/the /a /dragon scale/the /some /dragon scales/N"
+   ],
+   [
+    "chimaera wing/the /a /chimaera wing/the /some /chimaera wings/N"
+   ],
+   [
+    "magic key/the /a /magic key/the /some /magic keys/N"
+   ],
+   [
+    "holy water/the /a phial of /holy water/the /some /phials of holy water/N"
+   ],
+   [
+    "Sphere of Light/the /the /Sphere of Light/the /the /Sphere of Light/N"
+   ],
+   [
+    "///////"
+   ],
+   [
+    "faerie flute/the /the /faerie flute/the /the /faerie flutes/N"
+   ],
+   [
+    "Lyre of Ire/the /the /Lyre of Ire/the /the /Lyres of Ire/N"
+   ],
+   [
+    "Staff of Rain/the /the /Staff of Rain/the /the /Staves of Rain/N"
+   ],
+   [
+    "Sunstone/the /the /Sunstone/the /the /Sunstones/N"
+   ],
+   [
+    "Princess's pledge/the /the /Princess's pledge/the /the /Princess's pledges/N"
+   ],
+   [
+    "Mark of Erdrick/the /the /Mark of Erdrick/the /the /Marks of Erdrick/N"
+   ],
+   [
+    "Rainbow Drop/the /the /Rainbow Drop/the /the /Rainbow Drops/N"
+   ],
+   [
+    "wasteband/the /a /wasteband/the /some /wastebands/N"
+   ],
+   [
+    "choker/the /a /choker/the /some /chokers/N"
+   ],
+   [
+    "warrior's ring/the /a /warrior's ring/the /some /warrior's rings/N"
+   ],
+   [
+    "seed of agility/the /a /seed of agility/the /some /seeds of agility/N"
+   ],
+   [
+    "seed of magic/the /a /seed of magic/the /some /seeds of magic/N"
+   ],
+   [
+    "seed of life/the /a /seed of life/the /some /seeds of life/N"
+   ],
+   [
+    "seed of strength/the /a /seed of strength/the /some /seeds of strength/N"
+   ],
+   [
+    "seed of resilience/the /a /seed of resilience/the /some /seeds of resilience/N"
+   ]
+  ],
+  [
+   [
+    ""
+   ],
+   [
+    "A long spear made of bamboo."
+   ],
+   [
+    "A weapon hewn from a stout log."
+   ],
+   [
+    "A sturdy sword of copper."
+   ],
+   [
+    "Can fell feebler foes with a single swing."
+   ],
+   [
+    "Slices through enemies like a knife through butter."
+   ],
+   [
+    "Useful in battle, and not only when wielded..."
+   ],
+   [
+    "The sword of the legendary hero Erdrick."
+   ],
+   [
+    "An outfit woven from thick, sturdy thread."
+   ],
+   [
+    "Warrior's clothes made from tanned animal skins."
+   ],
+   [
+    "Made from interlocking loops of sturdy steel."
+   ],
+   [
+    "Armour favoured by the knights of Tantegel."
+   ],
+   [
+    "A peerlessly protective suit of armour."
+   ],
+   [
+    "Restores HP while you walk."
+   ],
+   [
+    "The armour of the legendary hero Erdrick."
+   ],
+   [
+    "A light shield of simple construction."
+   ],
+   [
+    "A large, sturdy shield of solid iron."
+   ],
+   [
+    "A shield made of purest beaten silver."
+   ],
+   [
+    "Restores 20-35 HP."
+   ],
+   [
+    "Lights up the darkness of dungeons."
+   ],
+   [
+    "A talisman carved from the scale of a dragon."
+   ],
+   [
+    "Instantly returns you to the safety of the castle."
+   ],
+   [
+    "Opens any door in the world."
+   ],
+   [
+    "Wards off weaker monsters."
+   ],
+   [
+    ""
+   ],
+   [
+    ""
+   ],
+   [
+    "A flute fashioned by the ancient faerie folk."
+   ],
+   [
+    "The great minstrel Galen's beloved harp."
+   ],
+   [
+    "Symbol of the blessed rains."
+   ],
+   [
+    "Symbol of the sun in the heavens."
+   ],
+   [
+    "A gift from your beloved Princess Gwaelin."
+   ],
+   [
+    "Proof of descent from the legendary hero Erdrick."
+   ],
+   [
+    "The light of life in all its many hues."
+   ],
+   [
+    "Woe unto the waist that wears it."
+   ],
+   [
+    "Said to have been made by the god of death..."
+   ],
+   [
+    "Worn by a warrior who fought at Erdrick's side."
+   ],
+   [
+    "Increases agility by 1-3 points."
+   ],
+   [
+    "Increases max. MP by 3-5 points."
+   ],
+   [
+    "Increases max. HP by 4-6 points."
+   ],
+   [
+    "Increases strength by 1-3 points."
+   ],
+   [
+    "Increases resilience by 4 points."
+   ]
+  ],
+  [
+   [
+    "Heal//////"
+   ],
+   [
+    "Sizz//////"
+   ],
+   [
+    "Snooze//////"
+   ],
+   [
+    "Glow//////"
+   ],
+   [
+    "Fizzle//////"
+   ],
+   [
+    "Evac//////"
+   ],
+   [
+    "Zoom//////"
+   ],
+   [
+    "Holy Protection//////"
+   ],
+   [
+    "Midheal//////"
+   ],
+   [
+    "Sizzle//////"
+   ]
+  ],
+  [
+   [
+    "Restores 25-30 HP."
+   ],
+   [
+    "Singes the enemy with a small fireball."
+   ],
+   [
+    "Sends the enemy into a deep sleep."
+   ],
+   [
+    "Lights up even the dingiest dungeon."
+   ],
+   [
+    "Causes enemy spells to fizzle and die."
+   ],
+   [
+    "Instantly escape from the depths of any dungeon."
+   ],
+   [
+    "Instantly return to the safety of a stronghold."
+   ],
+   [
+    "Wards off weaker monsters."
+   ],
+   [
+    "Restores 85-100 HP."
+   ],
+   [
+    "Burns the enemy with a blazing wall of fire."
+   ]
+  ],
+  [
+   [
+    "<72slime/the /a /slime/the /some /slimes/N"
+   ],
+   [
+    "<72she-<72slime/the /a /she-slime/the /some /she-slimes/N"
+   ],
+   [
+    "<72dracky/the /a /dracky/the /some /drackies/N"
+   ],
+   [
+    "<72ghost/the /a /ghost/the /some /ghosts/N"
+   ],
+   [
+    "<72prestidigitator/the /a /prestidigitator/the /some /prestidigitators/N"
+   ],
+   [
+    "<72drackolyte/the /a /drackolyte/the /some /drackolytes/N"
+   ],
+   [
+    "<72scorpion/the /a /scorpion/the /some /scorpions/N"
+   ],
+   [
+    "<72lunatick/the /a /lunatick/the /some /lunaticks/N"
+   ],
+   [
+    "<72fightgeist/the /a /fightgeist/the /some /fightgeists/N"
+   ],
+   [
+    "<72drohl <72drone/the /a /drohl drone/the /some /drohl drones/N"
+   ],
+   [
+    "<72drackyma/the /a /drackyma/the /some /drackymas/N"
+   ],
+   [
+    "<72skeleton/the /a /skeleton/the /some /skeletons/N"
+   ],
+   [
+    "<72legerdeman/the /a /legerdeman/the /some /legerdemen/N"
+   ],
+   [
+    "<72iron <72scorpion/the /an /iron scorpion/the /some /iron scorpions/N"
+   ],
+   [
+    "<72bewarewolf/the /a /bewarewolf/the /some /bewarewolves/N"
+   ],
+   [
+    "<72skeleton <72scrapper/the /a /skeleton scrapper/the /some /skeleton scrappers/N"
+   ],
+   [
+    "<72metal <72slime/the /a /metal slime/the /some /metal slimes/N"
+   ],
+   [
+    "<72spitegeist/the /a /spitegeist/the /some /spitegeists/N"
+   ],
+   [
+    "<72scarewolf/the /a /scarewolf/the /some /scarewolves/N"
+   ],
+   [
+    "<72raving <72lunatick/the /a /raving lunatick/the /some /raving lunaticks/N"
+   ],
+   [
+    "<72drohl <72diabolist/the /a /drohl diabolist/the /some /drohl diabolists/N"
+   ],
+   [
+    "<72chimaera/the /a /chimaera/the /some /chimaeras/N"
+   ],
+   [
+    "<72death <72scorpion/the /a /death scorpion/the /some /death scorpions/N"
+   ],
+   [
+    "<72skeleton <72soldier/the /a /skeleton soldier/the /some /skeleton soldiers/N"
+   ],
+   [
+    "<72golem/the /a /golem/the /some /golems/N"
+   ],
+   [
+    "<72gold <72golem/the /a /gold golem/the /some /gold golems/N"
+   ],
+   [
+    "<72knight <72errant/the /a /knight errant/the /some /knights errant/N"
+   ],
+   [
+    "<72hocus <72chimaera/the /a /hocus chimaera/the /some /hocus chimaeras/N"
+   ],
+   [
+    "<72dark <72skeleton/the /a /dark skeleton/the /some /dark skeletons/N"
+   ],
+   [
+    "<72tearwolf/the /a /tearwolf/the /some /tearwolves/N"
+   ],
+   [
+    "<72green <72dragon/the /a /green dragon/the /some /green dragons/N"
+   ],
+   [
+    "<72cosmic <72chimaera/the /a /cosmic chimaera/the /some /cosmic chimaeras/N"
+   ],
+   [
+    "<72vis <72mager/the /a /vis mager/the /some /vis magers/N"
+   ],
+   [
+    "<72knight <72aberrant/the /a /knight aberrant/the /some /knights aberrant/N"
+   ],
+   [
+    "<72blue <72dragon/the /a /blue dragon/the /some /blue dragons/N"
+   ],
+   [
+    "<72stone <72golem/the /a /stone golem/the /some /stone golems/N"
+   ],
+   [
+    "<72knight <72abhorrent/the /a /knight abhorrent/the /some /knights abhorrent/N"
+   ],
+   [
+    "<72red <72dragon/the /a /red dragon/the /some /red dragons/N"
+   ],
+   [
+    "Dragonlord/the /the /Dragonlord/the /the /Dragonlord/M"
+   ],
+   [
+    "Dragonlord/the /the /Dragonlord/the /the /Dragonlord/M"
+   ]
+  ],
+  [
+   [
+    "8DRAGON QUEST",
+    "8STAFF"
+   ],
+   [
+    "0",
+    "1SCENARIO & GAME DESIGN",
+    "1GENERAL DIRECTOR",
+    "2YUJI HORII"
+   ],
+   [
+    "1CHARACTER & MONSTER DESIGN",
+    "2AKIRA TORIYAMA"
+   ],
+   [
+    "1MUSIC",
+    "2KOICHI SUGIYAMA"
+   ]
+  ],
+  [
+   [
+    "1Matrix Software"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Planners"
+   ],
+   [
+    "0YOSUKE NIIYAMA"
+   ],
+   [
+    "0KAZUHIRO INOMOTO"
+   ],
+   [
+    "0YUJI TAKII"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Designer"
+   ],
+   [
+    "0MASATOSHI WAKAMATSU"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Programmers"
+   ],
+   [
+    "0YUKI FUJIWARA"
+   ],
+   [
+    "0NOBORU IKEDA"
+   ],
+   [
+    "0MASAFUMI NAKAHARA"
+   ],
+   [
+    "0HIROYUKI INOKO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1TOSE CO., LTD."
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Sound Advisors"
+   ],
+   [
+    "0TAKUMI HOSOYAMA"
+   ],
+   [
+    "0HIDENORI MIYANAGA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Chief Music Programmer"
+   ],
+   [
+    "0AYUMU MURAI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Music Programmers"
+   ],
+   [
+    "0TAKASHI HONDA"
+   ],
+   [
+    "0KOTA WATANABE"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Sound Designers"
+   ],
+   [
+    "0YUKIKO SUGIYAMA"
+   ],
+   [
+    "0CHIYOKO MATSUO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1SQUARE ENIX CO., LTD."
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Producer Management Division"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Publicity Director"
+   ],
+   [
+    "0RYOICHI KURAMOCHI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Publicity Assistant"
+   ],
+   [
+    "0KATSUYA AISO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1DRAGON QUEST Team"
+   ],
+   [
+    "0TAICHI INUZUKA"
+   ],
+   [
+    "0YOSUKE SAITO"
+   ],
+   [
+    "0TAKAHIRO MURAKAMI"
+   ],
+   [
+    "0RYOTA AOMI"
+   ],
+   [
+    "0FUMIKAZU IWAKI"
+   ],
+   [
+    "0KENTO YOKOTA"
+   ],
+   [
+    "0HOKUTO OKAMOTO"
+   ],
+   [
+    "0RYOKO ONISHI"
+   ],
+   [
+    "0HIROKI AOTO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0HIROSHI SATO"
+   ],
+   [
+    "0RYOUKO KIKUCHI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Mobile Business Division"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1General Manager"
+   ],
+   [
+    "0TAKUYA OKADA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Senior Manager"
+   ],
+   [
+    "0KAZUHIKO YAMAGUCHI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Technical Directors"
+   ],
+   [
+    "0KEISUKE HATA"
+   ],
+   [
+    "0HISANAO SUZUKI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Operations Producers"
+   ],
+   [
+    "0YASUNORI OHTSU"
+   ],
+   [
+    "0KENSUKE IMURA (GAGEX)"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Project Staff"
+   ],
+   [
+    "0NAOKO MURAKAMI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Sales"
+   ],
+   [
+    "0HIROKI IMAI"
+   ],
+   [
+    "0MEGUMI SHODA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Project Managers"
+   ],
+   [
+    "0KEIKO TAKESADA"
+   ],
+   [
+    "0YURI INAMOTO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Sound Group"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Supervisor"
+   ],
+   [
+    "0TOMOHIRO YAJIMA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Senior Manager"
+   ],
+   [
+    "0KAZUHISA ICHIGAYA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Project Manager"
+   ],
+   [
+    "0KAZUKI HAMAMOTO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Project Assistants"
+   ],
+   [
+    "0YUKO SAKAE"
+   ],
+   [
+    "0SHIHOKO KARUBE"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Quality Assurance Division"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Ratings Advisors"
+   ],
+   [
+    "0KENTARO ONO"
+   ],
+   [
+    "0MEGUMI TERADA"
+   ],
+   [
+    "0REIKO KONDO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Community & Service Division"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Senior Manager"
+   ],
+   [
+    "0TOSHIO MUROUCHI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Manager Assistant"
+   ],
+   [
+    "0TATSUHIKO NOZAKI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Operation Group Supervisor"
+   ],
+   [
+    "0RYUJI KUDO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Operation Group"
+   ],
+   [
+    "0HIROMI SUDA"
+   ],
+   [
+    "0YOSHIKAZU KAWAHAMA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Marketing & Publicity Division"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Publicity Planners"
+   ],
+   [
+    "0AKIKO WADA"
+   ],
+   [
+    "0MITSUNORI IIDA"
+   ],
+   [
+    "0TOMOMI ICHIKAWA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1DRAGON QUEST Publicity Team"
+   ],
+   [
+    "0MINAKO GOTOH"
+   ],
+   [
+    "0NORIKO OZAKI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Publicity Web Coordinator"
+   ],
+   [
+    "0MIKI KATO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1International Marketing"
+   ],
+   [
+    "1& Publicity Coordinator"
+   ],
+   [
+    "0YUKO ENDO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Online Marketing"
+   ],
+   [
+    "0NORIKO WATANABE"
+   ],
+   [
+    "0TAKAO KOGURE"
+   ],
+   [
+    "0TAKAHIRO NOMA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1DRAGON QUEST PARADISE"
+   ],
+   [
+    "1Management Team"
+   ],
+   [
+    "0SHOU FUJITA"
+   ],
+   [
+    "0TAKASHI DOI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Localization Division"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Lead Coordinator"
+   ],
+   [
+    "0MEI KOSHIMIZU"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Coordinators"
+   ],
+   [
+    "0YUSUKE HARUGUCHI"
+   ],
+   [
+    "0AYUMI MURATA"
+   ],
+   [
+    "0ATSUKO HIROSE"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Manager"
+   ],
+   [
+    "0SHINGO HOSOKAWA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1General Manager"
+   ],
+   [
+    "0KAZUHISA ICHIGAYA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Shloc Ltd."
+   ],
+   [
+    "0"
+   ],
+   [
+    "1English Translator"
+   ],
+   [
+    "0OLI CHANCE"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1English Editor"
+   ],
+   [
+    "0MORGAN M RUSHTON"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Chinese Translation & Quality Assurance"
+   ],
+   [
+    "0SQUARE ENIX (CHINA) CO., LTD."
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Keywords International"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Localization"
+   ],
+   [
+    "1Project Manager"
+   ],
+   [
+    "0BRANDON CUSHENBERRY"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Testing Project Manager"
+   ],
+   [
+    "0JEROM BARNES"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Korean Translators"
+   ],
+   [
+    "0YUNHYE LEE"
+   ],
+   [
+    "0JIN SEO HWANGBO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Korean Test Leads"
+   ],
+   [
+    "0SUNYONG LEE"
+   ],
+   [
+    "0TAKAYUKI TSUJI "
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Korean Tester"
+   ],
+   [
+    "0WOOYEON JUNG"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Localization Manager"
+   ],
+   [
+    "0MONTSE GARCIA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Testing Manager"
+   ],
+   [
+    "0THOMAS BARTH"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Localization Supervisor"
+   ],
+   [
+    "0CHRISTOPHER M. KENNEDY"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1SQUARE ENIX, INC."
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Assistant Director of Quality Assurance"
+   ],
+   [
+    "0DAVID \"RIBS\" CARRILLO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1QA Manager"
+   ],
+   [
+    "0AARON J. ADAMS"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Senior QA Coordinator"
+   ],
+   [
+    "0BRYAN D. CHEN"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1QA Team"
+   ],
+   [
+    "0ERIC LEA"
+   ],
+   [
+    "0GREG R. BUCHOLD"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1QA Administrator"
+   ],
+   [
+    "0KEITH P. MARTZ"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Assistant QA Administrator"
+   ],
+   [
+    "0LOUIS SEDENO III"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Localization & QA Director"
+   ],
+   [
+    "0YUTAKA SANO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1General Manager"
+   ],
+   [
+    "0KENJI HISATSUNE"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1President & CEO"
+   ],
+   [
+    "0PHIL ROGERS"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1SQUARE ENIX CO., LTD."
+   ],
+   [
+    "1MobileStudio"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Mobile Engineers"
+   ],
+   [
+    "0MICHITAKA YAMADA"
+   ],
+   [
+    "0TAKASHI MATSUMAE"
+   ],
+   [
+    "0TOSHIHIKO OKA"
+   ],
+   [
+    "0SHINYA OTAKI"
+   ],
+   [
+    "0KEISUKE YAMAMOTO"
+   ],
+   [
+    "0SHINTARO KIKUCHI"
+   ],
+   [
+    "0YUJI SATO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Website Management"
+   ],
+   [
+    "0AYAKA YAMAGUCHI"
+   ],
+   [
+    "0YUUKI YAMADA"
+   ],
+   [
+    "0YUTA SHIBASAKI"
+   ],
+   [
+    "0AYA TAMURA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1QA Coordinators"
+   ],
+   [
+    "0TAKANORI KAMADA "
+   ],
+   [
+    "0YUTA TANIFUJI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1QA Testers"
+   ],
+   [
+    "0TOSHIYA YAMADA"
+   ],
+   [
+    "0KOICHI SAITO"
+   ],
+   [
+    "0SHINYA ARAI"
+   ],
+   [
+    "0KENGO ITO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Special Thanks"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Spike Chunsoft Co., Ltd."
+   ],
+   [
+    "0KOICHI NAKAMURA"
+   ],
+   [
+    "0KAZUHIKO NAKANISHI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1SUGIYAMA KOBO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1SHUEISHA Inc."
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Bold Co., Ltd. "
+   ],
+   [
+    "0MASAHIKO FUCHIKAMI "
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0TAKASHI TOKITA"
+   ],
+   [
+    "0HIROKI FUJIMOTO"
+   ],
+   [
+    "0SHINICHI TATSUKE"
+   ],
+   [
+    "0MASATAKA ITO"
+   ],
+   [
+    "0TAKASHI FUJI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Assistant Directors"
+   ],
+   [
+    "0KOU NOGUCHI"
+   ],
+   [
+    "0KAZUHIRO KOBAYASHI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Assistant Producer"
+   ],
+   [
+    "0KYOKO SETANI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Director"
+   ],
+   [
+    "0TOSHIO AKIYAMA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Producers"
+   ],
+   [
+    "0RYOMA MATSUI"
+   ],
+   [
+    "0NORIYOSHI FUJIMOTO"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Executive Producer"
+   ],
+   [
+    "1(DRAGON QUEST Series)"
+   ],
+   [
+    "0YUU MIYAKE"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Executive Producer"
+   ],
+   [
+    "0YOICHI HARAGUCHI"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1General Producer"
+   ],
+   [
+    "0YUKINOBU CHIDA"
+   ],
+   [
+    "0"
+   ],
+   [
+    "0"
+   ],
+   [
+    "1Production Executives"
+   ],
+   [
+    "0YOSUKE MATSUDA"
+   ],
+   [
+    "0YOICHI WADA"
+   ],
+   [
+    "0KEIJI HONDA"
+   ]
+  ],
+  [
+   [
+    "1DRAGON QUEST",
+    "0",
+    "0",
+    "0©1986, 2014 ARMOR PROJECT",
+    "0©1986, 2014 BIRD STUDIO",
+    "0©1986, 2014 SUGIYAMA KOBO",
+    "0©1986, 2014 SPIKE CHUNSOFT",
+    "0©1986, 2014 SQUARE ENIX"
+   ]
+  ],
+  [
+   [
+    "Attack"
+   ],
+   [
+    "Spells"
+   ],
+   [
+    "Flee"
+   ],
+   [
+    "Items"
+   ],
+   [
+    "???"
+   ],
+   [
+    "Use"
+   ],
+   [
+    "Equip"
+   ],
+   [
+    "north"
+   ],
+   [
+    "south"
+   ],
+   [
+    "west"
+   ],
+   [
+    "east"
+   ],
+   [
+    "Items"
+   ],
+   [
+    "Spells"
+   ],
+   [
+    "Status"
+   ],
+   [
+    "Equipment"
+   ],
+   [
+    "Disappears when used."
+   ],
+   [
+    "Unlimited uses."
+   ],
+   [
+    "Do what?"
+   ],
+   [
+    "Use"
+   ],
+   [
+    "Discard"
+   ],
+   [
+    "Weapon"
+   ],
+   [
+    "Armour"
+   ],
+   [
+    "Shield"
+   ],
+   [
+    "Items"
+   ],
+   [
+    "Nothing Equipped"
+   ],
+   [
+    "Finish"
+   ],
+   [
+    "???"
+   ],
+   [
+    "Attack"
+   ],
+   [
+    "Defence"
+   ],
+   [
+    "MP Cost"
+   ],
+   [
+    "Descendant of Heroes"
+   ],
+   [
+    "Level"
+   ],
+   [
+    "HP"
+   ],
+   [
+    "MP"
+   ],
+   [
+    "None"
+   ],
+   [
+    "Strength"
+   ],
+   [
+    "Agility"
+   ],
+   [
+    "Resilience"
+   ],
+   [
+    "Max. HP"
+   ],
+   [
+    "Max. MP"
+   ],
+   [
+    "Attack"
+   ],
+   [
+    "Defence"
+   ],
+   [
+    "Exp."
+   ],
+   [
+    "Battle Spells"
+   ],
+   [
+    "Field Spells"
+   ],
+   [
+    "Quick Save Log"
+   ],
+   [
+    "Battle Message Speed"
+   ],
+   [
+    "Sound"
+   ],
+   [
+    "Travellers' Tips"
+   ],
+   [
+    "The Basics of Battle"
+   ],
+   [
+    "Mastering Movement"
+   ],
+   [
+    "Taking a Break from Your Adventure"
+   ],
+   [
+    "Attributes Explained"
+   ],
+   [
+    "You don't have any keys!"
+   ],
+   [
+    "Yes"
+   ],
+   [
+    "No"
+   ],
+   [
+    "Adventure Log"
+   ],
+   [
+    "Please enter a name."
+   ],
+   [
+    "Buy"
+   ],
+   [
+    "Sell"
+   ],
+   [
+    "Quit"
+   ],
+   [
+    "Items"
+   ],
+   [
+    "Owned"
+   ],
+   [
+    "Not Owned"
+   ],
+   [
+    "Attack"
+   ],
+   [
+    "Defence"
+   ],
+   [
+    "Disappears when used."
+   ],
+   [
+    "Unlimited uses."
+   ],
+   [
+    "Deposit"
+   ],
+   [
+    "Withdraw"
+   ],
+   [
+    "Cancel"
+   ],
+   [
+    "Money"
+   ],
+   [
+    "Items"
+   ],
+   [
+    "Balance"
+   ],
+   [
+    "Unused"
+   ],
+   [
+    "How loud would you like the sound?"
+   ],
+   [
+    "Off"
+   ],
+   [
+    "Loud"
+   ],
+   [
+    "How quickly would you like the dialogue to progress?"
+   ],
+   [
+    "Fast"
+   ],
+   [
+    "Slow"
+   ],
+   [
+    "Message Speed"
+   ],
+   [
+    "Settings"
+   ],
+   [
+    "[Nothing Equipped]"
+   ],
+   [
+    "[Empty]"
+   ],
+   [
+    "Confirm"
+   ],
+   [
+    "Change"
+   ],
+   [
+    "START"
+   ],
+   [
+    "*: "
+   ],
+   [
+    "Venture Forth"
+   ],
+   [
+    "Load Quick Save Log"
+   ],
+   [
+    "Continue from Autosave"
+   ],
+   [
+    ""
+   ],
+   [
+    "Create a New Adventure Log"
+   ],
+   [
+    "Transfer an Adventure Log"
+   ],
+   [
+    "Delete an Adventure Log"
+   ],
+   [
+    "Load a Saved Aventure Log"
+   ],
+   [
+    "Return to Title Screen"
+   ],
+   [
+    "Quick Save"
+   ],
+   [
+    "Settings"
+   ],
+   [
+    "Music"
+   ],
+   [
+    "SFX"
+   ],
+   [
+    "Centre 1"
+   ],
+   [
+    "Centre 2"
+   ],
+   [
+    "Small"
+   ],
+   [
+    "Medium"
+   ],
+   [
+    "Large"
+   ],
+   [
+    "None"
+   ],
+   [
+    "Accessories"
+   ],
+   [
+    "Max."
+   ],
+   [
+    "Balance"
+   ],
+   [
+    "Cannot Sell"
+   ],
+   [
+    "<3DYUJI HORII<0B"
+   ],
+   [
+    "<3DAKIRA TORIYAMA<0B"
+   ],
+   [
+    "<3DKOICHI SUGIYAMA<0B"
+   ],
+   [
+    "Misc."
+   ],
+   [
+    "Control Layout"
+   ],
+   [
+    "Left"
+   ],
+   [
+    "Right"
+   ],
+   [
+    "Directional Pad Position"
+   ],
+   [
+    "Directional Pad Size"
+   ],
+   [
+    "Dead"
+   ],
+   [
+    "Slp"
+   ],
+   [
+    "Fzl"
+   ],
+   [
+    "Cannot Sell"
+   ],
+   [
+    "Warning"
+   ],
+   [
+    "Unable to save, as there is insufficient space on the device.\nPlease free up some space and then restart the application."
+   ],
+   [
+    "Adventure Log"
+   ],
+   [
+    "Adventure Log 1"
+   ],
+   [
+    "Adventure Log 2"
+   ],
+   [
+    "Adventure Log 3"
+   ],
+   [
+    "A"
+   ],
+   [
+    "a"
+   ],
+   [
+    "Delete"
+   ],
+   [
+    "Finish"
+   ],
+   [
+    "Debug"
+   ],
+   [
+    "OK"
+   ],
+   [
+    "Back"
+   ],
+   [
+    "-"
+   ],
+   [
+    "＊＊ ＤＥＢＵＧ ＭＯＤＥ ＊＊"
+   ],
+   [
+    "Zoom"
+   ],
+   [
+    "Game Debug"
+   ],
+   [
+    "Battle"
+   ],
+   [
+    "Sound "
+   ],
+   [
+    "Other"
+   ],
+   [
+    "-"
+   ],
+   [
+    "Back"
+   ],
+   [
+    "＊＊ Zoom ＊＊"
+   ],
+   [
+    "Map"
+   ],
+   [
+    "＊＊ Game Debug ＊＊"
+   ],
+   [
+    "All equipments will be unequipped"
+   ],
+   [
+    "Select OK/Change Characters to save"
+   ],
+   [
+    "LV"
+   ],
+   [
+    "Gold"
+   ],
+   [
+    "Items"
+   ],
+   [
+    "None"
+   ],
+   [
+    "Monster"
+   ],
+   [
+    "Player LV"
+   ],
+   [
+    "＊＊ Sound ＊＊"
+   ],
+   [
+    "File"
+   ],
+   [
+    "BGM"
+   ],
+   [
+    " vol : "
+   ],
+   [
+    "ＳＥ　　"
+   ],
+   [
+    "Categories"
+   ],
+   [
+    "ＢＧＭ vol : "
+   ],
+   [
+    "ＳＥ    vol : "
+   ],
+   [
+    "Master volume"
+   ],
+   [
+    "ＢＧＭ: "
+   ],
+   [
+    "ＳＥ　: "
+   ],
+   [
+    "ＳＴＯＰ"
+   ],
+   [
+    "Save"
+   ],
+   [
+    "Load "
+   ],
+   [
+    "Commands"
+   ],
+   [
+    "LV MAX"
+   ],
+   [
+    "MAX Gold"
+   ],
+   [
+    "All items in storage"
+   ],
+   [
+    "Quick save"
+   ],
+   [
+    "Quick load"
+   ],
+   [
+    "Enlighten Dungeon"
+   ],
+   [
+    "Collision On/Off"
+   ],
+   [
+    "Encount On/Off"
+   ],
+   [
+    "Moving Speed"
+   ],
+   [
+    "Encont %"
+   ],
+   [
+    "No. of keys"
+   ],
+   [
+    "Back"
+   ],
+   [
+    ":On"
+   ],
+   [
+    ":Off"
+   ],
+   [
+    "***Languages***"
+   ],
+   [
+    "Language"
+   ],
+   [
+    "Back"
+   ],
+   [
+    "JP"
+   ],
+   [
+    "EN"
+   ],
+   [
+    "KO"
+   ],
+   [
+    "ZH(Simplified)"
+   ],
+   [
+    "ZH(Traditional)"
+   ],
+   [
+    "World"
+   ],
+   [
+    "Ｍ10 Tantege Castle 1Ｆ"
+   ],
+   [
+    "Ｍ11 Tantege Castle  2Ｆ"
+   ],
+   [
+    "Ｍ11ＯＰ Tantege Castle  2Ｆ"
+   ],
+   [
+    "Ｍ12 Tantege Castle  Ｂ1Ｆ"
+   ],
+   [
+    "Ｍ20 Tantege Toen "
+   ],
+   [
+    "Ｍ30 town of Rimuldar"
+   ],
+   [
+    "Ｍ40 town of Galen"
+   ],
+   [
+    "Ｍ50 village of Kol"
+   ],
+   [
+    "Ｍ60 city of Cantlin 1Ｆ"
+   ],
+   [
+    "Ｍ61 city of Cantlin 2Ｆ左"
+   ],
+   [
+    "Ｍ62 city of Cantlin 2Ｆ右"
+   ],
+   [
+    "Ｍ70 Damdara"
+   ],
+   [
+    "Ｈ10 Shirine of Rain 1Ｆ"
+   ],
+   [
+    "Ｈ11 Shrine of Rain Ｂ1Ｆ"
+   ],
+   [
+    "Ｈ20 Sacred shrine 1Ｆ"
+   ],
+   [
+    "Ｈ21 Sacred shrine Ｂ1Ｆ"
+   ],
+   [
+    "Ｄ10 Erdrick's Dungeon Ｂ1Ｆ"
+   ],
+   [
+    "Ｄ11 Erdrick's Dungeon Ｂ2Ｆ"
+   ],
+   [
+    "Ｄ20 Dungeon of the mountains Ｂ1Ｆ"
+   ],
+   [
+    "Ｄ21 Dungeon of the mountains Ｂ2Ｆ"
+   ],
+   [
+    "Ｄ30 Dungeon of the marshes Ｂ1Ｆ"
+   ],
+   [
+    "Ｄ40 grave of Rimuldar Ｂ1Ｆ"
+   ],
+   [
+    "Ｄ41 grave of Rimuldar Ｂ2Ｆ"
+   ],
+   [
+    "Ｄ42 grave of Rimuldar Ｂ3Ｆ"
+   ],
+   [
+    "Ｄ43 grave of Rimuldar Ｂ4Ｆ"
+   ],
+   [
+    "Ｄ50 Dragonlord's Castle 1Ｆ"
+   ],
+   [
+    "Ｄ51 Dragonlord's Castle Ｂ1Ｆ"
+   ],
+   [
+    "Ｄ52 Dragonlord's Castle Ｂ2Ｆ"
+   ],
+   [
+    "Ｄ53 Dragonlord's Castle Ｂ3Ｆ"
+   ],
+   [
+    "Ｄ54 Dragonlord's Castle Ｂ4Ｆ"
+   ],
+   [
+    "Ｄ55 Dragonlord's Castle Ｂ5Ｆ"
+   ],
+   [
+    "Ｄ56 Dragonlord's Castle Ｂ6Ｆ"
+   ],
+   [
+    "Ｄ57 Dragonlord's Castle Ｂ7Ｆ"
+   ],
+   [
+    "Ｍ10ＥＤ Tantege Castle  1Ｆ"
+   ]
+  ]
+ ],
+ "map": [
+  [
+   [],
+   [
+    "All hail mighty Erdrick!\nLong live the hero <07!<0C",
+    "Lo, peace hath returned unto our realm, and all is thanks to thee!<1A<0C\nWe shall be forever in thy debt!<0C",
+    "That thou shouldst possess the strength to best the Dragonlord... Why, it defieth belief!<1A<0C\nVerily, thou art a hero indeed!<0C",
+    "Never did I imagine that I would live to see the day when peace returned unto this realm...<1A<0C\nI had thought myself not long for this world, but it seemeth that I shall remain here a while yet! Huzza!<0C",
+    "All is as the Goddess intended!<1A<0C\nHis Majesty must be much relieved...<0C",
+    "H-Hm!?<0D0F P-Peace reigneth in Alefgard once more? Zounds! This is good news indeed!<0C",
+    "Is it true? Didst thou defeat the Dragonlord?<1A<0C\nBut of course it is true! Doth the sun not burn brighter? Do the birds not sing more sweetly?<1A<0C\nWhat else could this mean but that peace hath returned at last? Thanks be unto thee, brave hero!<0C",
+    "O happy day! Whoop, whoop! Huzza!<0D0F Words cannot express my joy!<0C",
+    "Mighty <07! Make haste forthwith to the castle!<1A<0C\nHis Majesty hath received word of thy victory, and awaiteth thy return most eagerly!<0C",
+    "Peace hath returned! Our prayers are answered! To do business on such a day as this would demean this great gift!<1A<0C\nLet every man set aside his labours and give thanks! Praise be unto thee, noble hero!<0C",
+    "A thousand thanks unto thee, brave hero! Nay, a thousand thousand!<1A<0C\nNow that the curse upon this land is lifted, we merchants may freely trade with the peoples of all four corners of the world!<0C",
+    "The news hath reached mine ears, friend!<1A<0C\nVerily, they do speak the truth who say that a book cannot be judged by its cover alone!<0C",
+    "Thou art most gallant and bold! Hee hee!<1A<0C\nA man amongst men! A hero amongst heroes! (swoon)<0C",
+    "Thou hast done well, brave <07.<1A<0C\nFor a certainty, the Goddess smileth this day!<1A<0C\nBenevolent Rubiss, Mother unto this realm, who did raise up each mountain, and gave form to every leaf and stone...<1A<0C\nLo, it is She and She alone who hath guided thee to victory.<0C",
+    "Never did I doubt that thy quest would succeed!<1A<0C\nMine eyes had seen the glory of the coming of a saviour! And lo, they were not mistaken! Ho ho ho!<0C",
+    "I congratulate thee, child.<1A<0C\nMine eyes, already beset by the furrowed lines of age, doth wrinkle yet more—but in joy, child, in joy!<0C",
+    "So thou art descended of Erdrick, hero of myth?<1A<0C\nThou, who didst take thy rest in this, our humble inn? Truly, we are honoured!<0C",
+    "Thou art truly as a man should be!<1A<0C\nWould that my husband might take after thee! (sigh)<0C",
+    "Verily, it is as the prophecies foretold!<1A<0C\n‘When dark doth veil the realm once more,\nThen shall return the knight of yore...’<1A<0C\nBrave <07, thou art the heir of Erdrick indeed! Thou art the Erdrick of our age!<0C",
+    "Tarry not! Hie thee to His Majesty, post-haste!<0C",
+    "Behold! The sky above the Dragonlord's isle is clear at last!<1A<0C\nWe are forever in thy debt, brave hero!<0C"
+   ]
+  ],
+  [
+   [
+    "<1E04<2701<1E0D<2701<1E00<2702If thou wouldst rejoin thy quest from a point of thy choosing, thou must needs record thy deeds in an adventure log.<0C",
+    "Full rarely doth the King give vent to his emotions, yet at the return of the Princess, his joy was plain for all to see.<1A<0C\nOur thanks unto thee, brave <07!<0C",
+    "P-Princess Gwaelin! Highness! Thou art returned unto us unharmed!<1A<0C\nThis is thanks to thee, is it not, <07? Praise be!<0C"
+   ],
+   [
+    "<1E04<2701<1E0D<2701<1E00<2702If thou wouldst rest from thy quest awhile, thou must request of the King that thy deeds be recorded in an adventure log.<0C",
+    "If the rumours are to be believed, a great castle town standeth far to the south, guarded over by a mighty golem.<1A<0C\nShouldst thou chance to pass by this place upon thy wanderings, go with care, brave <07.<0C",
+    "P-Princess Gwaelin! Highness! Thou art returned to us unharmed!<1A<0C\nThis is thanks to thee, is it not, brave <07? Praise be!<0C"
+   ],
+   [
+    "<1E04<2702<1E0D<2702<1E00<2703<2601",
+    "In days of yore, lo, the fair city of Tantegel was a veritable fairground, wherein the merrymakers of the world did play!<1A<0C\nAnd yet now, we are beset on all sides by foul fiends, and the golden days are no more... (sniff) Ahh, sweet memory... (sob)<0C",
+    "In days of yore, lo, the city of Tantegel was a veritable fairground, where the merrymakers of the world did play!<1A<0C\nAnd yet now, we are beset on all sides by foul fiends, and the golden days are no more... (sniff) Ahh, sweet memory... (sob)<1A<0C\nYet I must not dwell on our misfortunes, for the Princess Gwaelin is safely returned unto us.<1A<0C\nAnd with her return, perhaps the merest glimmer of hope, too, doth breach the horizon...<0C",
+    "Zounds!<0D1E Praise be! The Princess is saved!<1A<0C\nThou art a hero indeed, friend! Our realm is in thy debt!<0C"
+   ],
+   [
+    "<1E04<2702<1E0D<2702<1E00<2701(sigh)<0D1E O Princess... Princess, where art thou...?<1A<0C\nCould it be that the foul fiends who took thee have taken thy young life also...?<1A<0C\n...Nay!<0D0F We cannot—we must not—surrender to despair!<1A<0C\nBrave <07, I prithee—forget all that I said. Henceforth, hope, and hope alone, shall guide me!<0C",
+    "I-Is it...?<0D0F C-Can it truly be...?<0D0F Princess Gwaelin! Highness!<1A<0C\nAnd thou art unscathed? Verily, 'tis like unto a dream!<1A<0C\nMake haste unto the throne room, brave <07! The King must know of this!<1A<0C\nWhat I would not give to see the look upon His Majesty's face when he learneth of his daughter's miraculous preservation! (sigh)<0C",
+    "Thanks unto thee, brave <07! From the bottom of my heart, and the hearts of all those of our realm! The Princess is saved!<0C"
+   ],
+   [
+    "The castle of Tantegel bids thee welcome<1E04<2701<1E0D<2701<1E00<2702<2601",
+    ",\nwanderer.<0C",
+    "...<1A<0C\nZounds! <0D1EP-Princess Gwaelin!?<1A<0C\nEscort Her Royal Highness to the throne room at once! At once, I say!<0C"
+   ],
+   [
+    "<1E04<2702<1E0D<2702<1E00<2701If thou questeth in caves or dungeons dank, a torch or two will serve thee well, friend.<1A<0C\nIt is in the places where the darkness doth penetrate most deeply that the fiends do throng thickest.<0C",
+    "For a soul so noble as the Princess to have been held in the confines of such a dank, dark dungeon is despicable indeed...<1A<0C\nIt seemeth we have thee to thank for her deliverance, brave <07. 'Tis a debt we cannot hope to repay.<1A<0C\nNow, make haste to the throne room, where His Majesty awaiteth!<0C",
+    "Verily, <07, 'twould seem that I misjudged thee.<1A<0C\nWhen first thou didst set foot in this castle, I thought thee something of a milksop!<1A<0C\nAh, b-but forgive me... I-I jest, of course! Haha... Ha... Ahem.<0C"
+   ],
+   [
+    "<1E04<2702<1E0D<2702<1E00<2703(sniff sob) Ohhh, Princess...Princess Gwaelin...<0C",
+    "O Princess... Where art thou...?<0C",
+    "Ohh, Princess, dear Princess... Would that I might clutch thee to my chest after the manner of the mighty <07...<0C",
+    "O, Princess... Where art thou...?<1A<0C\nMelancholy hath so strong a hold upon my senses that I would swear she stood before me...<0D1E (sob)<0C"
+   ],
+   [
+    "‘When dark doth spread across the land,\nLight shall return by Erdrick's hand...’<1A<0C\nO, Almighty Goddess! We pray that the ancient teachings hold true! May Thy light shine upon brave <07's quest!<35<1C02<1D<31<0C"
+   ],
+   [
+    "<1E04<2701<1E0D<2701<1E00<2702<2601",
+    "I ply the trade of the travelling merchant. Lo, countless of our brotherhood are fallen at the hands of roaming beasts of late...<1A<0C\nFull many friends have I lost... (sigh) Merely to speak of them bringeth tears to mine eyes...<0C",
+    "What art thou about, thou swaggering rascal? Thou mouldy rogue! Thinkest thou this a fitting time to frolic with wenches!?<1A<0C\n...Hm?<0D1E (gasp) P-Princess Gwaelin! H-Highness, I...! Eek!<0C"
+   ],
+   [
+    "<1E04<2701<1E0D<2701<1E00<2704<2601",
+    "Didst thou hear the rumours?<3B00\n<2802<2603",
+    "Verily, they are shocking, are they not?<0C",
+    "They speak of a town laid to ruin by marauding monsters!<0C",
+    "Verily, thy ladyfriend is wondrous fair!<1A<0C\nIs she thy bride?<3B00\n<2805<2606",
+    "Thou art lucky indeed...<0C",
+    "Then wherefore dost thou...? Hmph. 'Tis some manner of curious adult business, no doubt...<0C"
+   ],
+   [
+    "Thy first priority must ever be to hone thy skills by battling beasts.<1A<0C\nAs thou gainest in experience, thy level shall increase, and so, too, shall thy might.<0C"
+   ],
+   [
+    "(sigh) Would that I might pass all the remaining days of my life alone with my beloved...<1A<0C\nYet the knowledge that a monster might rob us of this simple joy at any moment weigheth heavy upon my mind...<0C"
+   ],
+   [
+    "(sigh) To be alone with my beloved is to forget all that threateneth this world.<1A<0C\nBut, alas, I cannot put our plight entirely from my thoughts...<1A<0C\nFor my lover informs me that, were our world to be destroyed, our love, too, must surely perish...<0C"
+   ],
+   [
+    "No door may be opened without a key.<1A<0C\nBut alas, 'tis the curse of the magic key to crumble into dust after but a single use.<0C"
+   ],
+   [
+    "A pox on my memory! I could have sworn that the castle dungeon was around here somewhere...<0C"
+   ],
+   [
+    "Thou art young in years, as I am myself, and yet unlike myself, thou art charged with a quest of great danger.<1A<0C\nI shall remain here and pray for thy success. 'Tis the least I can do.<0C"
+   ],
+   [
+    "Let us pray for the success of this, our hero, who striveth with all his might to deliver us from evil.<1A<0C\nMay the light of the heavens shine upon thee...<35<1307<15<2F<1A<0C\n<25<31<12<3F<07's health is completely restored!<0C"
+   ],
+   [
+    "Pass beyond this point at thy peril.<1A<0C\nIf thou hast not the utmost faith in thy physical hardiness, turn back before it is too late.<0C"
+   ],
+   [
+    "That thou didst reach this place is proof of thy fortitude. But art thou strong enough to brave the grave of Galen?<1A<0C\nIf thou wouldst try thy mettle, get thee to Galenholm, and there press thee 'pon the wall of darkness till the path groweth clear.<0C"
+   ],
+   [
+    "‘When rain and sun, the twain do meet, the rain's bow shall a bridge complete.’<1A<0C\nThus spake the foretellings of old...<0C"
+   ],
+   [
+    "<383000"
+   ],
+   [
+    "A true hero would not stoop to petty thievery...<0C"
+   ],
+   [
+    "Begone, accursed one!<0C"
+   ]
+  ],
+  [
+   [
+    "<1E14<2B3100<1E1B<2701<11King: Brave <07, thou art returned to us! Full glad am I to see thee!<1A<0C\n<387000",
+    "<11King: Brave <07—sensing mine anguish, thou didst deliver my beloved daughter from her plight, and return her safely unto me.<1A<0C\n<11King: I shall not forget this great gift, nor shall I forget the man who gave it.<1A<0C\n<11King: But to business...<1A<0C\n<387000"
+   ],
+   [
+    "<1E04<2703<1E0D<2703<1E00<2705Dost thou know aught of poor Princess Gwaelin?<3B00\n<2801<2602",
+    "Brave <07, I beg of thee! Deliver the Princess from her plight!<0C",
+    "Princess Gwaelin is the sole heir of His Majesty the King.<1A<0C\nSince the untimely death of Her Majesty the Queen, Gwaelin hath been our beloved ruler's sole source of comfort.<1A<0C\nAlas, a half-year prior to this day, foul monsters saw fit to tear the Princess from the bosom of we, her people!<1A<0C\nHis Majesty speaketh not of the tragedy, but 'tis plain the loss doth pain him deeply...<1A<0C\n<2601",
+    "<2904Lo, though it seemeth so, it is not a dream! The light hath returned unto us, and the land is green and pleasant once more!<0C",
+    "Brave <07! Beloved saviour and hero of the people!<1A<0C",
+    "<2904Ever did I have faith that thou wouldst deliver us from evil! Never did I doubt thee!<0C"
+   ],
+   [
+    "<1E04<2701<1E0D<2701<1E00<2702When thou hast accrued sufficient funds, thou wouldst be well advised to purchase better weapons and armour.<1A<0C\nThus armed, thou mayest contend with more powerful foes, and through besting them, grow still stronger.<0C",
+    "Verily, brave <07, the pure-hearted love of fair Princess Gwaelin shalt surely be thy salvation!<0C",
+    "P-Princess Gwaelin! Thou art returned unto us unharmed! Praise be!<0C"
+   ],
+   [
+    "<1E04<2701<1E0D<2701<1E00<2702No hero should ever deem himself too busy to engage in idle conversation. Naught is e'er as trivial as it may seem...<0C",
+    "‘When rain and sun, the twain do meet, the rain's bow shall a bridge complete’...<0C\nOft have I heard this portentous saying, yet never have I discerned its sense...<1A<0C\nMayhap thou wilt have more luck than I,  <07. Pray, bear it in mind upon thy travels.<0C",
+    "P-Princess Gwaelin! Thou art returned unto us unharmed! Praise be!<0C"
+   ],
+   [],
+   [
+    "<11Princess Gwaelin: My love! Though we may be apart, I am ever by thy side!<0C",
+    "<11Princess Gwaelin: O <07, my hero! Thy beloved princess adoreth thee so!<0D1E Tee hee! (simper)<0C",
+    "<11Princess Gwaelin: <3F<07... Thinkest thou often of thy beloved princess?<3B00\n<2803<2604",
+    "<11Princess Gwaelin: Why, <07! Tee hee hee hee hee! Teeheeheeheehee! (simper)<33<1313<15<14<3400<0C",
+    "<11Princess Gwaelin: Th—!? B—!? Hmph! Grr...<0C"
+   ],
+   [
+    "<11King: Brave <07... Thou hast delivered mine only child from evil! Words cannot express my gratitude!<1A<0C\n<11King: Come now, Gwaelin. Return thee to thy rightful place at my side.<1A<0C",
+    "<11Princess Gwaelin: I shall, Father—but first I must give brave <07 a token of my undying...appreciation! (simper)<1A<0C",
+    "<11Princess Gwaelin: Brave <07! Verily and truly...from the very bottom of my heart...I do love thee!<1A<0C\n<11Princess Gwaelin: Pray accept this modest symbol of mine affection, humble though it may be!<1A<0C",
+    "<2304<220D<11Princess Gwaelin: Though we be far apart, ever shall I be at thy side!<1A<0C\n<11Princess Gwaelin: Now, brave <07, go forth upon thy quest!<0C",
+    "<230D<11Princess Gwaelin: But what is this?<0D1E Thou art encumbered, and can carry no more! Nay, not even a gift so humble as this!<1A<0C\n<11Princess Gwaelin: I prithee, lighten thy load, and come unto thy beloved princess once more.<0C"
+   ],
+   [
+    "<11King: But what is this, brave <07? Defeat doth ill become thee!<1A<0C\n<1EFF<2701<11King: That thy recklessness vexeth me I shall not deny, but there is naught for it—thou must be set upon thy path anew.<1A<0C\n<11King: Yet swear to me that when next thou suffereth, thou wilt straightways to the nearest town, and there seek out an inn.<1A<0C\n<11King: I pray most fervently that thou wilt not require such aid of me again in future!<1A<0C\n<387001",
+    "<11King: And what is this!? If thou shouldst ever again be so imprudent as to come before thy king thus accursed, thou wilt be sorry!<1A<0C\n<11King: Get thee to a priest ere thy malady infects us all. Begone, I say!<0C"
+   ],
+   [
+    "<11King: Brave <07! Thou art returned to us! By my troth, thou growest mightier with each passing day!<1A<0C\n<11King: If it be in the power of any man to deliver us from the Dragonlord's tyranny, that man is surely thee!<1A<0C\n<11King: Verily, 'tis not without reason that the people do begin to dream of a brighter tomorrow!<1A<0C\n<387002"
+   ]
+  ],
+  [
+   [
+    "<11King: <3F<07! Scion of the bloodline of Erdrick, hero of legend! Long have I awaited thy coming!<1A<0C\n<11King: In days of yore, thy revered ancestor did receive of the Almighty Goddess the Sphere of Light.<1A<0C\n<11King: By its power was our world rid of the menace which did beset it.<1A<0C\n<11King: Yet, alas, some few years past, there did arise a new threat—the Dragonlord.<1A<0C\n<11King: With his cunning, he did steal away the Sphere of Light from us, plunging the land into darkness once more.<1A<0C\n<11King: Should this state of affairs be suffered to continue, the night must surely take unrelenting hold, and our realm perish.<1A<0C\n<11King: So I say unto thee, <07 of the bloodline of heroes, vanquish the accursed Dragonlord, and reclaim the Sphere of Light!<1A<0C\n<11King: In the chests o'er yonder wilt thou find items to aid thee on thy quest. Take what thou wilt, with my blessing.<1A<0C\n<11King: Partake thee also of the wisdom of those loyal subjects gathered here in my throne room.<1A<0C\n<11King: Doubt not but that their knowledge will serve thee as well as any shield.<1A<0C\n<11King: May the Goddess guide thee to victory, and return thee unto us ere long, brave <07!<0C",
+    "Brave <07! Prithee, tarry awhile longer!<0C",
+    "<1E26<2703Forgive me, but I would fain furnish thee with such counsel as may be of use on thy quest.<1A<0C\nTap thee the menu icon beside the directional pad, and the main menu shalt appear.<1A<0C\nTherein canst thou also alter thine equipment, and take note of thy strengths and weaknesses.<1A<0C\nAh, and shouldst thou ever fall prey to puzzlement, tap thee ‘Misc.’, which resideth also within the menu.<1A<0C\nDo but this and thou shalt surely find some timeless words of wisdom which will set thee right again.<1A<0C\nNow, go thee forth, and may the winds of battle blow ever in thy favour!<0C",
+    ""
+   ],
+   [
+    "<11King: Come before me once more when thou art ready to embark upon thy quest. I shall await thy return, brave <07.<0C"
+   ],
+   [
+    "To the east of the castle lieth a sizeable settlement.<1A<0C\nTherein shalt thou find establishments offering weapons and armour which will serve thee well upon the battlefield.<1A<0C\nShouldst thou ever come to harm in battle, lay thy head to rest at the inn. Thy wounds will be healed ere thou wakest.<0C"
+   ],
+   [
+    "If thou hast partaken of the contents of each and every chest, thou shalt by now have found a magic key.<1A<0C\nUse thee this key to open yonder door and thou shalt lose it forever—yet use it thou must...<1A<0C\nFor beyond that door, thine adventure begins in earnest!<0C"
+   ]
+  ],
+  [
+   [
+    "<1E03<2701Thou art <07, art thou not? Praise be!<1A<0C\nEver have I known that the one descended of the mighty Erdrick would one day visit me here.<1A<0C\nThis stout chest doth house the holy Sunstone, entrusted unto my care by thy most heroic ancestor.<1A<0C\nIt is needed in thy quest to slay the Dragonlord, is it not? Then take it! Claim thy birthright!<0C",
+    "Thou wilt bring light unto our realm once more, of that I have no doubt.<1A<0C\nBut long now have I kept my vigil here. I grow tired.<1A<0C\nSoon must I take my rest at last...<0C"
+   ],
+   [
+    "Even now, I do well recall the face of mighty Erdrick, who did entrust the Sunstone unto me.<1A<0C\nThou art the very spit of thy storied forebear.<1A<0C\nI beg of thee, brave <07...bring peace unto our realm once more.<0C"
+   ]
+  ],
+  [
+   [
+    "<1E01<2A0106The castle town of Tantegel bids thee welcome, wanderer.<0C"
+   ],
+   [
+    "<1E01<2A0111Welcome unto thee, friend! Prithee, make thy way into the premises and state thy business o'er the counter!<0C"
+   ],
+   [
+    "<1E01<2A0102<1E00<2701Many a courageous young adventurer hath set forth from Tantegel town. Alas, nary a one of them hath returned.<1A<0C\nI cannot help but fear that we are allowing thee to go forth to thy doom, <07...<0C",
+    "What say'st thou!?<0D1E The Princess Gwaelin is saved? And by thine own hand?<1A<0C\nWh-Why, <07! Nay, brave <07! Mighty, even! Could it be that thou art indeed the one who will bring peace unto the land!?<1A<0C\nPrithee, do thine utmost!<0C"
+   ],
+   [
+    "<1E01<2A0101Wherever the path of adventure leadeth thee, beware of bridges!<1A<0C\nFor verily, beyond each bridge wilt thou find ever more fierce and fearsome beasts!<0C"
+   ],
+   [
+    "<1E01<2A0105<1E04<2701I am a wand'ring merchant, hailing originally from fair Galenholm.<1A<0C\n'Tis a handsome settlement, far to the north of here, and west along the coast.<1A<0C\nThe lands 'twixt here and there are home to monstrous multitudes who hesitate not to make a meal of unwary wanderers.<1A<0C\nVerily, 'tis a miracle that I arrived here in possession of my beloved life!<0C",
+    "Hark, I hear rumours from my fellow wand'ring tradesmen...<1A<0C\nSouth of this place wilt thou encounter fiends yet more fearsome even than those that do roam these parts!<1A<0C\nZounds!<0D1E Even to think of such monsters doth chill me to the very bone!<1A<0C\nLo, the Dragonlord hath doomed us to destruction!<0C"
+   ],
+   [
+    "<1E01<2A0107Friend, hast thou heard?<3B00\n<2801<2602",
+    "Thou hast? Oh...<0C",
+    "Yea, 'tis said that in a town far distant from this place, magic keys are sold as though they grew on the very trees!<0C"
+   ],
+   [
+    "<1E01<2A010FI am engaged in the study of methods for the removal of curses.<1A<0C\n<1EFF<2701Shouldst thou ever find thyself afflicted, prithee seek me out, and I shall be glad to aid thee.<0C",
+    "Hm? Art thou...?<0D1E Thou art! A foul curse afflicteth thee! Allow me to alleviate thy suffering!<1A<0C\n<32<2321",
+    "Be not afeared, friend. Thou art cursed no longer!<0C"
+   ],
+   [
+    "<1E01<2702<1E00<2701Friend...<0D0FI know not who thou art, but I do beseech thee: deliver unto His Majesty the King this news...<1A<0C\nThe expeditionary force tasked with the rescue of Princess Gwaelin is...no more...<1A<0C\nPrithee, tell His Majesty that I am so...<0D0F So very...<0D0F (sob) Goddess forgive us!<0C",
+    "Who...? Who toucheth now mine hand? I see not... I hear not... I am no more for this world...<0C",
+    "<12No reply. It's just a corpse.<0C"
+   ],
+   [
+    "<1E01<2A0108Hast thou heard tell of the great bard Galen? They say he took his beloved lyre unto his grave. Oh, to have heard him play...<0C"
+   ],
+   [
+    "<1E01<2A010BThou art of the bloodline of mighty Erdrick, thou say'st? Hast thou proof?<3B00\n<2801<2602",
+    "<171F<2703Fie!<0D0F Wherefore makest thou such grand claims when thou possessest nary a sign, seal nor signet betokening thy lineage!?<1A<0C\n<2602",
+    "If thou art truly descended from Erdrick, thou must needs bear proof of thy birthright!<0C",
+    "Hm?<0D0F By the Goddess...the Mark of Erdrick! Then the rumours are true! The scion of the great hero doth walk among us!<1A<0C\nThat I ever did doubt thy claim bringeth untold shame upon me! I beg of thee—deliver us!<0C"
+   ],
+   [
+    "<1E01<2A010C<1E00<2701Tee hee! Nay, nay! Thou art mistaken! I am not the fair Princess Gwaelin! (blush)<1A<0C\nThough the comparison doth flatter me greatly. Oh, thou art silver-tongued indeed, my lord!<0D0F Very well! Take me with thee!<0C<39",
+    "Though thou didst take me for the fair Princess Gwaelin when first we met, thou must by now know that 'tis otherwise.<1A<0C\nBut that thou shouldst think me so fair... Oh, thou art charm personified, my lord! Take me with thee! I am thine!<0C<39"
+   ],
+   [
+    "<1E01<2A0100Welcome, friend! Welcome unto thee! Prithee, make thy way inside, and we shall be delighted to assist thee!<0C"
+   ],
+   [
+    "<1E01<2A0107To the south, there lieth a great fortress shrouded in mist. Mayhap thou hast espied it on thy travels?<1A<0C\nWell, stray not near it, for 'tis the home of the Dragonlord! Lo, merely to mention his name doth strike fear into my heart!<1A<0C"
+   ],
+   [
+    "<1E01<2A0103<1E04<2701(cough)<0D1E (splutter)<0D1E Beware the... (gulp) ...poisonous marshes, friend...<1A<0C\nShouldst thou attempt to cross them when thou art not in full good health, misery and death shall be thy sole reward... (gasp)<0C",
+    "(cough)<0D1E (splutter)<0D1E Yea, I am not long for this world...<1A<0C\nYet were I to live longer, 'twould only be to witness the destruction of all that I hold dear.<1A<0C\nMayhap 'tis better that I pass over to the other realm ere the coming of that fateful day...<0C"
+   ],
+   [
+    "<1E01<2701The tales of the ancient times do tell of towering golems laid aslumber by tiny faeries.<1A<0C\nVerily, there are powers in this world of which we have not the faintest inkling...<0C",
+    "That thou—thou of all people—shouldst prove to be the legendary hero is...<1A<0C\nWhy, 'tis a gift to the folklore of our people! The song of thy most unlikely victory shall be sung till the end of time!<0C"
+   ],
+   [
+    "<1E01<2A0109<380000"
+   ],
+   [
+    "<1E01<2A0104<384000"
+   ],
+   [
+    "<385000"
+   ],
+   [
+    "<1E01<2A0109<381000"
+   ],
+   [
+    "<1E01<2A0110<382000"
+   ]
+  ],
+  [
+   [
+    "<1E01<2A0106Thou art come unto the town of Rimuldar, stranger. We bid thee welcome.<0C"
+   ],
+   [
+    "<1E01<2A0107Prithee, who art thou, good sir? Thou art not of Rimuldar, that much is certain.<1A<0C\nIf thou art weary with travelling, thou couldst do worse than to seek lodging at the fine inn of my family!<0C"
+   ],
+   [
+    "<1E01<2A0105What bringeth thee hither, friend? I came from Kol for to ply my wares, though it meant parting from my beloved wife, Clare.<1A<0C\nAlas, I cannot risk the homeward journey, lest monsters attack. It seems I will not be leaving Rimuldar for a while yet! Heh...<0C"
+   ],
+   [
+    "<1E01<2A0101I am come in search of a merchant rumoured to purvey magic keys...<1A<0C\nAnd yet, though I search high and low, I find no such man. 'Tis vexing in the extreme...<0C"
+   ],
+   [
+    "<1E01<2A0102I shall not dwell upon the Dragonlord's coming, lest the thought of it prevent me from p-plying my t-t-trade. Oh... Oh dear...<0C"
+   ],
+   [
+    "<1E01<2A0101Doubt not that the fiends are coming. Our town too will surely be laid waste ere long... O Holy Goddess, deliver us from this evil...<0C"
+   ],
+   [
+    "<1E01<2A0108Can there truly exist any weapon mighty enough to slay the Dragonlord? Any armour stout enough to withstand his wrath?<0C"
+   ],
+   [
+    "<1E01<2A0104Thou art come unto a place of foretelling... Of sight beyond sight.<0C\nThough thou speakest not a word, still do I know thy heart... Thy purpose...<1A<0C\nTell me...hast thou happened yet upon that most holy of shrines, the blessed Sanctum?<3B00\n<2801<2602",
+    "There shall rain and sun, the twain meet at last...<0C",
+    "Then journey thee south from this place. There shalt thou find it.<0C"
+   ],
+   [
+    "<1E01<2A0100<1823<2701To wear a ring is prudent, even for a mighty warrior. Such adornments are not solely the province of preening maidens.<0C",
+    "Is that a ring I spy upon thy finger, friend? Hast thou no shame? Such adornments are solely the province of preening maidens!<0C"
+   ],
+   [
+    "<1E01<2A0112Legends tell of how mighty Erdrick did use the rain's bow as a bridge to reach the forsaken isle north and west of here.<1A<0C\nThey speak also of how he did descend into the darkness through a hidden doorway in the throne room of his foe.<1A<0C\nWanderer—if, on thy travels, thou shouldst chance to meet with the descendant of the saviour Erdrick, promise me this...<1A<0C\nPromise me that thou wilt tell him all that I have told thee now. Verily shall it stand him in good stead.<0C"
+   ],
+   [
+    "<1E01<2A0101Knowest thou, wanderer, of the small shrine to the north and west of the village of Kol?<1A<0C\nA most curious old fellow doth dwell there all alone. Most curious indeed...<0C"
+   ],
+   [
+    "<1E01<2A010CEEEEK! Who art thou!? What business hast thou here!?<1A<0C\nCanst thou not see that I am engaged in the changing of my petticoats!? Begone, thou lascivious knave, lest I call the guard!<0C"
+   ],
+   [
+    "<1E01<2701By thy costume, friend, I gather thou art somewhat enamoured of the great hero, Erdrick.<1A<0C\nThen knowest thou of the mystery of the saviour's origins?<1A<0C\nSome say that Erdrick was sent unto us from a realm beyond the clouds...<0C",
+    "From the very first, I knew thou wert the heir of Erdrick, come to deliver us from evil! Praise be unto thee, brave <07!<0C"
+   ],
+   [
+    "<1E01<2704<1E12<2701<2311<11Enid: Oh, Roderick! What art thou about? Wherefore tarry'st thou so?<0D0F (grumble grumble)<0C",
+    "<1E11<2802<2311<11Enid: Hmph!<0D0F So my beloved blockhead Roderick doth await me in another place entirely?<1A<0C\n<11Enid: Wherefore must he blunder so? Tell him! Tell him that I await him here!<0C",
+    "<11Enid: Oh, Roderick! What art thou about? Wherefore tarry'st thou so?<0D0F (grumble grumble)<1A<0C\n<2311<2603",
+    "<11Enid: Hmph!<0D0F So my beloved blockhead Roderick doth await me in another place entirely?<1A<0C\n<11Enid: Wherefore must he blunder so? Tell him! Tell him I await him here!<0C",
+    "<11Enid: At long last did my Roderick find his beloved Enid. Alas, he hath yet to find his wits, and I do begin to lose patience!<1A<0C\n<11Enid: ...Hm?<0D0F Roderick's flute did aid thee in thy quest to restore peace unto the realm? Thou jesteth with me, surely?<1A<0C\n<11Enid: Hmm...mayhap he is not so witless after all...<0D1E Tee hee hee!<0C"
+   ],
+   [
+    "<1E01<2703<1E13<2702<2312<1E11<2701<11Roderick: Where art thou, my love? And wherefore art thou so very tardy?<1A<0C\n<11Roderick: Friend, shouldst thou meet with a maiden by the name of Enid, pray tell her that I await her here in...in, um...this place.<0C",
+    "<2313<11Roderick: Aye, friend, I am Roderick. What business hast thou with me?<0D0F ...Hm? My beloved awaiteth me elsewhere?<1A<0C\n<11Roderick: Lumme! Then I have mistaken our trysting place yet again? Verily am I doghouse-bound!<1A<0C\n<11Roderick: (sigh) I thank thee, friend, for apprising me of my blunder. In return, I shall tell thee something of use.<1A<0C\n<2602",
+    "<11Roderick: From the baths of Kol, walk thee two paces south, and look beneath thy feet. There shalt thou find a true treasure.<1A<0C\n<11Roderick: Now, leave me. I must concoct some manner of excuse for this most embarrassing blunder...<0C",
+    "<11Roderick: I thank thee, friend.<1A<0C\n<11Roderick: Were it not for thy kind words, mayhap I had fallen from my beloved's good graces. Oh, my sweetling...<0D0F (simper)<0C"
+   ],
+   [
+    "<1E01<2A0101<385000"
+   ],
+   [
+    "<1E01<2A0108<380001"
+   ],
+   [
+    "<1E01<2701<383000",
+    "Now that peace reigneth once more, I shall turn my mind to another field of study.<1A<0C\nI mean to find a way to fashion magic keys that will not crumble, though they be used a thousand times over...<0C"
+   ],
+   [
+    "<1E01<2A0103‘When rain and sun, the twain do meet, the rain's bow shall a bridge complete.’<1A<0C\nSo say the ancient rhymes of Alefgard.<1A<0C\nThe legends also speak of a stone betokening the sun which doth slumber within the keep of Tantegel's castle.<0C"
+   ],
+   [
+    "<1E01<2A010AGreetings! I am a travelling merchant. Thinkest thou the townsfolk will suffer me to sell my wares here? Let us hope so!<1A<0C\n<381001"
+   ]
+  ],
+  [
+   [
+    "<1E01<2703Brave wanderer, wilt thou hear a song?<3B00\n<2801<2602",
+    "Excellent! Ahem...<33<1308<15<14<3400<1A<0C<3401I thank thee, friend. Were it not for lovers of music such as thee, my quest to emulate the legendary bard Galen would lose all meaning.<0C",
+    "Hm. Very well. Shouldst thou ever want for soothing music, thou needst only ask.<0C",
+    "♪ Hal-deral-hay! Hal-deral-hay,\nPeace hath come unto the world\nthis fine day! ♪<1A<0C\n♪ Fol-derol-dee, fol-derol-dee,\nHero, we give heartfelt thanks unto theee! ♪<1A<0C\nDoth my song please thee, friend? Though I have as yet barely begun it, surely it shall become one of the great works of the age!<0C"
+   ],
+   [
+    "<1E01<2A010CWelcome, wanderer, to the storied settlement of Galenholm!<0C"
+   ],
+   [
+    "<1E01<2A0102Thou art come from Tantegel? Then surely thou didst espy a cavernous shrine on thy journey here?<1A<0C\n'Tis said 'twas built to honour the name of the mighty hero Erdrick.<0C"
+   ],
+   [
+    "<1E01<2A010ELong, long ago, when the great bard Galen did at last bring his wand'rings to an end, 'twas here that he did settle.<1A<0C\nThus did the town which sprang up around his dwelling come to be known as Galenholm.<0C"
+   ],
+   [
+    "<1E01<2A0101<1E04<2703<1E0D<2703Thou knowest of the cause of His Majesty's woe, dost thou not? Well, I did chance to espy the culprits!<1A<0C\nWho? Why, the foul fiends that did bear off the Princess Gwaelin! Eastward did they fly. Ever eastward...<1A<0C\n(sigh) Is there none in this realm with courage enough to go to her rescue?<3B00\n<2801<2602",
+    "Hm?<0D0F There is? Then I bid thee, bear word to this brave soul, whomsoever it may be...<1A<0C\nTell him that the Princess was taken to the east!<0C",
+    "Alas, poor Princess...<0C",
+    "Friend, hast thou heard the news? The fair Princess Gwaelin is delivered from peril! She is safe at last in her home, the castle!<1A<0C\nI know not who performed such a deed, or whence such a hero came, but he must certainly be the bravest soul alive!<0C"
+   ],
+   [
+    "<1E01<2A0110<385000"
+   ],
+   [
+    "<1E01<2A0109<380002"
+   ],
+   [
+    "<1E01<2A0100<381002"
+   ],
+   [
+    "<1E01<2A0105<1E16<2701<161B<2701Intendest thou to visit the grave of the great Galen?<1A<0C\nKnow then that the sound of his harp is said to draw monsters from miles around. Think upon that ere thou proceedest.<0C",
+    "Wand'ring merchants do tell that the armour of mighty Erdrick surviveth to this day somewhere in the land.<1A<0C\nAhh, would that I might see it but once before I go to my grave...<0C"
+   ],
+   [
+    "<1E01<2A0102In my travelling days, oft did I lay my head at the inn of fair Damdara in the south.<1A<0C\nKind indeed was the proprietor. I wonder if he prospers still...<0C"
+   ],
+   [
+    "<1E01<2A0108<1E16<2701<161B<2701...Hm? The entrance to the grave of Galen? Forgive me, friend, but I cannot simply tell thee of its whereabouts.<1A<0C\nIt must be found by thine own efforts, or not at all!<0C",
+    "Wh-What sayest thou!?<0D0F Thou hast liberated great Galen's lyre from its resting place!?<1A<0C\nBut the legends do tell that the sound of his harp doth bring monsters running from miles around!<1A<0C\nThou art young yet, friend, and daring, no doubt—but I beg of thee, be not so eager to throw thy life away!<0C"
+   ],
+   [
+    "<1E01<2A010ATake it, foul thief!<0D0F Licentious larcener—take it all!<1A<0C\nWhat need have I of money?<1A<0C\nOur world will soon be laid waste! What good will my gold be to me then?<0C"
+   ],
+   [
+    "<1E01<2A010F<1E1E<2701Gadzooks!<0D0F So, thou hast found a way to open my door, I see.<1A<0C\nThen let one good unlocking beget another! Here! A key for thy troubles!<1A<0C",
+    "Use the key I gave to thee wisely, child. And do not cause too much mischief! Ho ho ho!<0C<231E",
+    "Alas, thou art already grievously encumbered. Verily, 'tis a miracle thou canst stand!<1A<0C\nLighten thy load, and come unto me once more.<0C"
+   ],
+   [
+    "Know that no man hath ventured unto the grave of Galen and returned.<1A<0C\nEnter only if thou carest not for thy young life...<0C"
+   ]
+  ],
+  [
+   [
+    "<1E01<2A0107Good day, friend. Thou hast found thy way to the humble village of Kol.<0C"
+   ],
+   [
+    "<1E01<2A0111Prithee, stranger, tarry awhile and hear the news of the village.<1A<0C\nYonder housewife goeth by the name of Clare. Her husband did depart in search of magic keys, and hath yet to return.<1A<0C\nBut what manner of man must he be to leave such a beauty to wallow in solitude and woe? Hmph! Men!<0C"
+   ],
+   [
+    "<1E01<2A0106<11Clare: (sigh) I must not bemoan my lot. My beloved husband possesseth great dreams. Far be it from me to hinder them...<0C"
+   ],
+   [
+    "<1E01<2A0101Know'st thou of Rimuldar? I hear a merchant there doth ply a trade in keys!<0C"
+   ],
+   [
+    "<1E01<2A0102So, the sword of legend is not to be found in this establishment either...<1A<0C\nNow that I do think upon it, 'twould be strange for such a treasure to be bought and sold as if 'twere a common commodity...<0C"
+   ],
+   [
+    "<1E01<2A0103Lawks!<0D0F Child, thine is a face fit only for the fairest of maidens!<1A<0C\nI do not doubt that thou art an uncommonly happy young fellow! Hee hee hee!<0C"
+   ],
+   [
+    "<1E01<2A0105Puff-puff...!<0D0F Puff...! (mumble) Oh... Oooh, I can hardly bear it! Hee hee...! Zzz...<0C"
+   ],
+   [
+    "<1E01<2701Behold, the public baths! Enter, wanderer, and cleanse thyself!<0C",
+    "Yea, now that peace lieth upon the land once more, visitors will most surely flock to the soothing waters of our baths.<1A<0C\nPerhaps I might find myself a husband among those who do come to take the waters... Tee hee!<0C"
+   ],
+   [
+    "<1E01<2706Lo, thou art fair indeed! Wilt thou sample the sensual puff-puff for a mere 20 coins?<3B00\n<2802<2601",
+    "Alack, 'tis a grave shame indeed!<0D0F Should the urge ever come upon thee, thou needst only say the word!<0C",
+    "<0F<0E<3A1403<2320",
+    "Now, now, what japery is this?<0D0F Thinkest thou to buy the greatest pleasure in this world at a reduced price? For shame, sir!<0C",
+    "Tee hee hee!\nThen let the ritual begin!<1A<0C\nPuff-puff! Puff-puff!\nPuff-puff-puff-puff-puff!<1A<0C\nPuff! Puff-puff!\nPuff! Puff-puff!<1A<0C\nWell? Art thou not alive with pleasure? Puff!<0D0F Puff!<0D0F Puff-puff!<0D0F Puff-puff!<0D0F Puff...<0D0F Puff...<1A<0C",
+    "Tee hee hee!<0D0F Alas, the ritual is ended. Thy custom is e'er appreciated, noble sir! Pray, visit us as often as the mood taketh thee!<0C",
+    "How many moons has it been since last I wallowed, free from care, in the fragrant waters of the baths?<1A<0C\nWhen the Dragonlord yet lived, though I soaked and soaked, true calm did e'er escape me.<0C"
+   ],
+   [
+    "<1E01<2A010AHast thou set foot upon the isle to the south of this place?<3B00\n<2801<2602",
+    "Th-Thou hast!?<0D0F But 'tis said that land is rife with beasts of incomparable ferocity!<1A<0C\nMayhap thou art mightier than thou seem'st...<0C",
+    "'Tis famed for the town of Rimuldar, which standeth proudly upon it.<0C"
+   ],
+   [
+    "<1E01<2702<1607<2701Brave <07, bearer of the blood of Erdrick, hero of legend! Know that thy weapon will not serve to vanquish the Dragonlord!<1A<0C\nThe sword of thine ancestor remaineth still in this land. Seek it out, and let it cleanse our realm of evil once more!<0C",
+    "So, thou hast recovered the Sword of Erdrick at long last.<1A<0C\nThe very soul of the hero of legend resideth yet within its blade. Wield it with a reverence befitting its greatness, brave <07!<0C",
+    "<1E10<2703Wh-What say'st thou?<0D0F Thou didst lay low the dread Dragonlord without recourse to the weapon of mighty Erdrick!?<1A<0C\nBy the Goddess! Thou art mighty indeed!<0C",
+    "'Twas as I told thee, was it not?<1A<0C\nWithout the aid of the Sword of Erdrick, the task of slaying the dread Dragonlord would have been beyond even thee.<0C"
+   ],
+   [
+    "<1E01<2A0100<1E00<2701<1E04<2701<1E0D<2701A traveller did tell me of a cave at the sea's edge south of this place, in which languisheth a maiden most fair.<1A<0C\nBut the cave in question is overrun with foul fiends. Pray, how might a delicate damsel survive in such a hellish hole?<1A<0C\nMore likely doth it seem that the traveller, driven mad with fear, did glimpse a phantom of his mind's own making.<0C",
+    "O'er the seas, and away to the farthest south...<1A<0C\nThere towereth the ramparts of proud Cantlin, wherein weapons of surpassing might are made.<1A<0C\n(sigh) Would that I might lay my hands upon one, and grow mighty in mine own right...<0C"
+   ],
+   [
+    "<1E01<2A0108Though formidable indeed, the towering golem feareth but one thing: the painfully pure tones of the faerie flute.<1A<0C\nSome creatures cannot be vanquished by main force alone, yet all are possessed of a weakness. Learn of it, and exploit it.<0C"
+   ],
+   [
+    "<1E01<2A010B<380003"
+   ],
+   [
+    "<1E01<2A0109<385000"
+   ],
+   [
+    "<1E01<2A0109<381003"
+   ],
+   [
+    "<1E01<2A010EHo ho ho! Child, it seemeth that thou hast happened upon the place where magic keys are sold!<1A<0C\nHath my loose-lipped son in Rimuldar told thee of the faerie flute, also?<1A<0C\nIs the fabled instrument perhaps in thy possession already?<3B00\n<2801<2602",
+    "Then make haste unto the city of Cantlin—there wilt thou find out its use!<0C",
+    "This is strange indeed... Roderick dwelleth still within Rimuldar's walls, surely...?<0C"
+   ]
+  ],
+  [
+   [
+    "<1E01<2A0101The impenetrable fortress of Cantlin doth bid thee welcome!<0C"
+   ],
+   [],
+   [
+    "<1E01<2A0102The legends do tell that the armour of mighty Erdrick was passed down from hand to hand...<1A<0C\nDown through a dynasty of men, until it came finally into the hand of one who bore the name of Magog...<0C"
+   ],
+   [
+    "<1E01<2A0108The claws of the Dragonlord rendeth steel as if 'twere parchment, while his breath melteth stone as if 'twere ice.<1A<0C\nKnowing this, <07, art thou still resolved to face him?<3B00\n<2801<2602",
+    "Verily, thou art a hero indeed!<0C",
+    "Well, mayhap 'tis for the best. The hero who goeth blithely to his certain doom is no hero—he is but a heroical fool.<0C"
+   ],
+   [
+    "<1E01<2A0105Welcome, friend, welcome! If thou likest carrots, thou hast most certainly come to the right place!<1A<0C\nAh...<0D0F Thy stony demeanour bespeaketh not a pressing need for carrots.<1A<0C\nThe item shop is o'er yonder, friend!<0C"
+   ],
+   [
+    "<1E01<2701Hmm... What to prepare, I wonder...<0C",
+    "Lo, I am torn... What to prepare for this eve's repast...?<1A<0C\nIt is, after all, a day of great rejoicing. I must needs honour the occasion with a fitting feast.<0C"
+   ],
+   [
+    "<1E01<2A010COur town was enclosed within these mighty walls that marauding monsters might be kept at bay.<0C"
+   ],
+   [
+    "<1E01<2A010AMy father's father did often tell a curious tale.<1A<0C\nHe spoke of his friend Magog, and of a chest containing a great treasure which he did bury beneath the tree behind his shop...<1A<0C\nWould that I might go in search of the treasure myself. But alas, beyond these walls lieth untold danger...<0C"
+   ],
+   [
+    "<1E01<2A0104Here lie those fallen at the hands of the fiends that do plague the land.<1A<0C\nPerhaps thou wouldst offer up a prayer to their memories, that they might rest in peace.<0C"
+   ],
+   [
+    "<1E01<2A0106<380004"
+   ],
+   [
+    "<1E01<2701<385000",
+    "So thou art the one descended from mighty Erdrick? The Erdrick of our age?<1A<0C\nLo, we do humbly give thanks for all that thou hast done!<0C"
+   ],
+   [
+    "<1E01<2A0109<381004"
+   ],
+   [
+    "<1E01<2A0101<381005"
+   ],
+   [
+    "<1E01<2A010F<383000"
+   ],
+   [
+    "<1E01<2A010B<380006"
+   ],
+   [
+    "<1E01<2A0109<380005"
+   ],
+   [
+    "<1E01<2A0104<384000"
+   ],
+   [
+    "<1E01<2A0103If thou wand'rest in search of a mark or seal, thou wouldst do well to visit the old man in the house of worship that stands directly south of us.<0C"
+   ],
+   [
+    "<1E01<2A010D<161F<2701We do most fervently pray for thy success, hero.<1A<0C\nMay the holy light protect and guide thee.<1A<0C\nNow, set thee forth, and make haste unto the foretold place!<1A<0C\nWhat place? Why, the very spot from which fair Tantegel Castle standeth a mere 70 paces north and 40 paces west!<0C",
+    "Lo, thou hast in thy possession the Mark of Erdrick!<1A<0C\n'Tis the mark, the proof, the symbol of a true hero!<1A<0C\nNow set thee forth, and make haste unto the foretold place!<1A<0C\nOf what place do I speak? Why, the holy shrine to the south of Rimuldar, wherein the old man doth dwell, of course!<0C"
+   ],
+   [
+    "<1E01<2802We give thanks unto thee, mighty hero!<1A<0C\nAnd so, too, I am certain, do the departed of Damdara. Thanks to thee, they shall know peace at last.<0C",
+    "Magog, old friend... Peace reigneth o'er the land once more! Would that thou wert here to see it... (sob)<0C",
+    "My family did once tend a shop in the desert town of Damdara.<1A<0C\nAlas, in the time of my grandfather, Magog, monsters did lay waste to that ill-fated place.<1A<0C\nThose few who escaped with their lives fled hither unto Cantlin.<1A<0C\nFor a mercy, my family brought with them sufficient money to establish themselves here, and thus did we begin again.<1A<0C\nHm?<0D0F Thou wouldst know the whereabouts of my family's premises in Damdara?<1A<0C\nIf memory serves, they were based in the east of the town...<0C"
+   ]
+  ],
+  [
+   [
+    "<1E01<2A0101<382000"
+   ]
+  ],
+  [
+   [
+    "<1E01<2A0114Long ago, when darkness did threaten the land, a great hero did descend from beyond the heavens.<1A<0C\nAnd lo, the hero's name was called Erdrick.<1A<0C\nThinkest thou that Erdrick was a saviour sent unto us by the great and benevolent Goddess?<0C"
+   ]
+  ],
+  [
+   [
+    "Hm?<0D0F Thou canst my handsome form discern? What sorcery is this!? Ah, but I shall not question divine providence!<1A<0C\nI am Galen, best among bards, whose praises once were sung in every corner of this fair land!<1A<0C\nThe town of Damdara, in whose ruins thou standest, was once a bustling and handsome settlement. But alas, no more...<1A<0C\nThough when I close mine eyes, glad scenes of yesteryear do float before me as if they occurred only yesterday...<0C"
+   ]
+  ],
+  [],
+  [
+   [
+    "<1E01<2706<1E08<2705<161C<2705<1E0A<2702<1E09<2703<2309Thou art <07, art thou not? Word of thy quest to defeat the Dragonlord hath reached even unto this far-flung place.<1A<0C\nAlas, thy foe is blessed with strength beyond reckoning—and I cannot suffer thee to go to thy certain doom.<1A<0C\nTherefore, thou must first be tested.<1A<0C\n<161B<2804Somewhere in this world, there is a harp unto whose melody the beasts of the wild do flock as moths to a flame.<1A<0C\nBring me this curious instrument, and the Staff of Rain shall be thine.<1A<0C\n...Hm?<0D1E The Lyre is already in thy possession? Very well...<1A<0C\n<2601",
+    "Long have we awaited the coming of one such as thee, brave <07.<1A<0C\n<171B<2702Now, the Lyre, if it please thee.<0C",
+    "<230AThy prize lieth in the chest over yonder!<0C",
+    "<161B<2804Thou art in possession of the Lyre, thou say'st?<1A<0C\n<2601",
+    "Somewhere in this world, there is a harp unto whose melody the beasts of the wild do flock as moths to a flame.<1A<0C\nBring me this curious instrument, and the Staff of Rain shall be thine.<0C",
+    "Long have we awaited the coming of one such as thee, brave <07.<1A<0C\nShould our world be left to languish much longer in darkness, the hearts of its people, too, shall surely grow black.<1A<0C\nVerily, the night must not be suffered to encroach a step further!<1A<0C\nGo forth, <07! Make haste unto the place where rain and sun may be as one!<0C",
+    "I beg of thee thy forgiveness...<1A<0C\nHad I known that thy veins coursed with the blood of mighty Erdrick, I should never have presumed to test thee!<1A<0C\nThe song of thy deeds shall be sung throughout the ages.<1A<0C\nAll hail <07—the Erdrick of our age!<0C"
+   ]
+  ],
+  [],
+  [
+   [
+    "<1E01<2A010D<1620<2706<1E07<2706<1E08<2705<171F<2701If thou art of the blood of Erdrick, the one true hero, thou must surely possess proof of thy birthright?<1A<0C\nHm! Then begone!<35<35<35<1C02<1D<0C",
+    "<171C<2802<171D<2802<2603",
+    "Lo! 'Tis verily the Mark of Erdrick! So a hero walketh among us once more...<1A<0C\nListen well, <07: ‘When rain and sun, the twain do meet, the rain's bow shall a bridge complete.’<1A<0C\nNow go thee forth, and seek out sun and rain!<0C",
+    "Blood of the hero! Descendant of Erdrick! The time is upon us! Now, at last, rain and sun shall be conjoined!<1A<0C\nMake haste—give unto me the Sunstone and the Staff of Rain!<1A<0C\n<12<3F<07 presents the priest with the Staff of Rain and the Sunstone.<0C",
+    "Almighty Goddess...<0D0Fhear me! On this day, we do lay upon thy sacred altar the offerings of sun and rain!\n<0D1E<2308<1C03<1D<0C",
+    "Take thee the Rainbow Drop from the altar, and go forth!<0C",
+    "There is no more for thee here, brave <07. Go forth unto thy destiny!<0C"
+   ]
+  ],
+  [],
+  [
+   [
+    "<12<3F<07 examines the stone tablet.<1A<0C\n<12The following message is etched into its surface:<1A<0C\n<12‘I am Erdrick. Hear me well, bearer of my blood, heir to my destiny...<1A<0C\n<12‘If you would reach the evil island visible from Tantegel's shore, you will require the three sacred artefacts.<1A<0C\n<12‘Gather them, and you may yet cross to that accursed isle, and destroy the source of all evil, as I, too, did so long ago.<1A<0C\n<12‘Before my passing, I entrusted the three objects to three great sages.<1A<0C\n<12‘If the fates have been kind, their descendants guard them still.<1A<0C\n<12‘When evil rules the ill-starred isle once more...<1A<0C\n<12‘Gather the hallowed triad, and strike a blow for the cause of light.<1A<0C\n<12‘No doubt, those of the line of the sages await you somewhere in this world. Seek them out!<1A<0C\n<12‘Blood of my blood, child of my children—go forth and fulfil your destiny!’<0C"
+   ]
+  ],
+  [],
+  [],
+  [
+   [
+    "At long last!<0D1E One has come who will deliver me from my plight!<1A<0C\nBrave hero, I am Gwaelin, Princess of Tantegel.<1A<0C\n<11Princess Gwaelin: Hadst thou tarried a moment longer, the Dragonlord would surely have made me his bride!<1A<0C\n<11Princess Gwaelin: Merely to imagine such an unspeakable fate striketh dread into my dainty heart... (shudder)<1A<0C\n<2601",
+    "<11Princess Gwaelin: Mighty <07, thou wilt, of course, escort me to my home, the palace?<3B00\n<2702",
+    "<11Princess Gwaelin: Th—!? B—!? Grr... Mayhap thou didst not hear me correctly...<1A<0C\n<2601",
+    "<12<3F<07 takes the Princess in his big, strong arms.<1A<0C\n<11Princess Gwaelin: Why, <07!<0D1E Tee hee! (squeak)<33<1313<15<14<3400<0C"
+   ]
+  ],
+  [],
+  [],
+  [],
+  [],
+  [
+   [
+    "<12<3F<07 examines the ground at his feet...<1A<0C\n<12The faintest of draughts can be felt coming from behind the throne...<0C"
+   ],
+   [
+    "<12<3F<07 examines the ground at his feet...<1A<0C\n",
+    "<12Well, look at that! A hidden staircase!<0C",
+    "<12...But there's nothing there.<0C"
+   ]
+  ],
+  [],
+  [],
+  [],
+  [],
+  [],
+  [],
+  [
+   [
+    "<1E00<2801<1E04<2701<1E0D<2701<11Dragonlord: So, thou art come before me at last, <07!<1A<0C\n<11Dragonlord: And bearing tribute unto my glory in the form of a fair princess, no less! Hm hm hm! I am honoured indeed!<1A<0C\n<11Dragonlord: I am the Dragonlord, master of masters, king of kings!<1A<0C\n<2602",
+    "<11Dragonlord: So, thou art come before me at last, <07! I am the Dragonlord, master of masters, king of kings!<1A<0C\n<2602",
+    "<11Dragonlord: Long have I awaited this moment.<1A<0C\n<11Dragonlord: Come! Take thy rightful place at my side! Do so, and I will grant unto thee dominion over half this world!<1A<0C\n<11Dragonlord: What say'st thou? Wilt thou rule beside me?<3B00\n<2803<2608",
+    "<19<2807<11Dragonlord: Then let it be so! Yea, and to signify the peace between us, wilt thou offer up thy weapon unto me?<3B00\n<2804<2608",
+    "<12<07 presents <4D to the Dragonlord.<1A<0C\n<1807<2705<11Dragonlord: Hm hm hm! Ha ha ha! Didst thou truly mean to do battle with me wielding only this?<1A<0C\n<2606",
+    "<11Dragonlord: Ahh... The great blade... Hadst thou but trusted thine arm, such a weapon might well have brought thee victory.<1A<0C\n<2606",
+    "<11Dragonlord: It matters not...<1A<0C\n<2607",
+    "<11Dragonlord: Thou shalt receive thy just reward.<1A<0C\n<11Dragonlord: This world shall be cleft in twain, and its blackest pits and dankest recesses  rendered unto thee!<1A<0C\n<11Dragonlord: May the darkness engulf thee for all eternity! Hm hm hm! Ha ha ha! HAHAHAHAHAAA!<0C<230F",
+    "<11Dragonlord: Thou wishest not for half the world? Wilt thou not reconsider? 'Tis an offer few would refuse...<3B00\n<2803<11Dragonlord: Thou wilt brook no such covenant? Thou art resolved to face me no matter the cost?<1A<0C\n<11Dragonlord: So be it. Come, fool! Know thy insignificance!<33",
+    "Good morrow to thee, friend!<1A<0C\nBy thy groans, I gather thy dreams were troubled...<1A<0C\nTo what manner of vision didst thou bear witness, I wonder?<1A<0C\nNo matter. Go thee forth, and take care upon the road.<0C"
+   ],
+   [
+    "<12The Dragonlord flickers and fades...<1A<0C",
+    "<12...Only to reveal his terrifying true form!<0C"
+   ],
+   [
+    "<12<3F<07 wrests the Sphere of Light from the Dragonlord's death grip!<1A<0C\n<12As he holds the sphere aloft, a blinding light radiates from deep within its core...<1A<0C",
+    "<12The great evil has been banished, and the world knows peace once more!<0C<25<31<230C<1E04<2702<1E0D<2702",
+    "<2315"
+   ]
+  ],
+  [
+   [
+    "<11King: <3F<07, it is thee, is it not? Wherefore greetest thou not thy king?<0C",
+    "<11King: Art thou not the brave hero to whom we owe our salvation?<1A<0C\n<11King: Skulk thee not beside me—such behaviour befitteth not our saviour! Come, stand proudly before thine adoring public!<0C"
+   ],
+   [
+    "<11King: Gwaelin! Apple of mine eye! Flesh of my flesh! Thou art returned unto us!<1A<0C\n<11King: Quickly, fools! Tend to the Princess!<1A<0C\nYes, Majesty!<0C",
+    "<11King: <3F<07, thou hast achieved such feats as do rightly belong in legend.<1A<0C\n<11King: And all is as the prophecies foretold. Lo, the words of the ancients do ring clear and true down through the ages!<1A<0C",
+    "<11King: Mighty <07, all is as the prophecies foretold! Lo, the words of the ancients do ring clear and true down through the ages!<1A<0C",
+    "<11King: The promised hero in whose veins floweth the blood of mighty Erdrick is none other than thee.<1A<0C\n<11King: If there be a better man to rule this land, I know him not.<1A<0C\n<11King: What say'st thou? Wilt thou take the throne in my stead? Wilt thou watch o'er this fair realm till thy dying day?<1A<0C\n<12But alas, it was not to be...<1A<0C\n<11<3F<07: My thanks, Majesty, but were I ever to rule, it must needs be o'er a realm of mine own founding.<1A<0C\n<11King: Hm...<0D0F So be it. 'Tis not for me to persuade thee.<1A<0C\n<11King: Go forth then, <07, with my blessing. Seek out thy land. And may the Almighty watch over thee.<1A<0C",
+    "<11Princess Gwaelin: Wait! Wait, I prithee!<1A<0C",
+    "<11Princess Gwaelin: Take me with thee, my dearest heart!<1A<0C\n<11Princess Gwaelin: Pray, forsake me not! Wilt thou take me for thy companion?<3B00\n<2807<2606",
+    "<11Princess Gwaelin: Th— Thou wilt not!? Hmph! (pout) Perhaps thou didst not hear me correctly, beloved...<1A<0C\n<2605",
+    "<11Princess Gwaelin: Thou wilt? Oh, joy! Then let us away, my love! Tee hee! (simper)<1A<0C",
+    "<11King: 'Twould seem a new journey awaiteth thee, <07! May it be a happy one!<0C"
+   ],
+   [
+    "<2D0101<2E"
+   ],
+   [
+    "<2D0102<2E"
+   ],
+   [
+    "<2D0113<2E"
+   ],
+   [
+    "<2D0100<2E"
+   ],
+   [
+    "<2D0114<2E"
+   ],
+   [
+    "<2C0106"
+   ],
+   [
+    "<2C1600"
+   ],
+   [
+    "<2C0112"
+   ],
+   [
+    "<2C010A"
+   ],
+   [
+    "Thou art he who bested the beastliest of all beasts, art thou not? Zounds, thou must be mighty indeed!<0C"
+   ]
+  ]
+ ]
+}
