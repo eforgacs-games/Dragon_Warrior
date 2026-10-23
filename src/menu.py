@@ -17,7 +17,7 @@ from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, Graphics, set_gettext_language
 from src.command_window import WND_ABORT, CommandWindow
 from src.cursor import DialogArrowBlink, draw_cursor_tile
-from src.waiting import is_any_key_held, quit_if_requested, wait
+from src.waiting import is_any_key_held, wait
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
@@ -30,12 +30,11 @@ from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.options_screen import MODERN, options_from_config, options_to_save
-from src.selection import YES, run_selection, stop_at_edges
+from src.selection import YES, frame_events, next_frame, run_selection, stop_at_edges
 from src.sound import Sound
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.text import draw_text, set_font_by_ascii_chars
 from src.translated_window import draw_translated_window
-from src.waiting import handle_speed_key
 from src.window_renderer import draw_window
 from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENTRIES, COMMAND_LAYOUT, COMMAND_TITLE, \
     COMMAND_WINDOW, COUNTED_ITEMS, DIALOG_LAYOUT, ITEM_COUNT_TILE_COLUMN, ITEM_MENU_CURSOR_TILE_COLUMN, \
@@ -360,6 +359,7 @@ class CommandMenu:
         if advance_keys is None:
             advance_keys = A_OR_B_KEYS if shows_arrow else ANY_BUTTON_KEYS
         arrow_blink = DialogArrowBlink()  # DoWait: the arrow starts on, then blinks on the frame count
+        drawn_arrow: bool | None = None
         while True:
             if skip_text or (temp_text_start and get_ticks() - temp_text_start >= 1000):
                 if not skip_text and not disable_sound:
@@ -367,8 +367,10 @@ class CommandMenu:
                 return
             if held_counts and is_any_key_held(advance_keys):
                 break
-            if shows_arrow:
-                self.draw_dialog_arrow(arrow_blink.visible())
+            if shows_arrow and arrow_blink.visible() != drawn_arrow:  # drawn only when the blink changes
+                drawn_arrow = arrow_blink.visible()
+                self.draw_dialog_arrow(drawn_arrow)
+            next_frame()  # one pass per NES frame (src/selection.py)
             if self.read_dialog_events(advance_keys):
                 break
         if not disable_sound:
@@ -383,14 +385,10 @@ class CommandMenu:
         self.wait_for_dialog_key(shows_arrow=shows_arrow, skip_text=False, temp_text_start=None, disable_sound=True)
 
     def read_dialog_events(self, advance_keys: Collection[int]) -> bool:
-        """Takes the queued events; returns whether one was a press of advance_keys."""
-        for current_event in event.get():
-            quit_if_requested(current_event)
-            if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
-                continue
-            if current_event.type == KEYDOWN and current_event.key in advance_keys:
-                return True
-        return False
+        """Takes the queued events; returns whether one was a press of advance_keys. Closing the window quits and the
+        keys 1 to 4 only set the game speed (src/selection.py frame_events)."""
+        return any(current_event.type == KEYDOWN and current_event.key in advance_keys
+                   for current_event in frame_events())
 
     def run_dialog_steps(self, steps: Iterable[DialogStep], animate: bool, frames_per_char: int,
                          disable_sound: bool) -> None:
@@ -1154,13 +1152,10 @@ class CommandMenu:
         window_rect = self.draw_status_window()
         display.update(window_rect)
         while show_status:
-            for current_event in event.get():
-                quit_if_requested(current_event)
-                if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
-                    continue
-                # NES LCFA4: the status window waits in WaitForBtnRelease, so any button closes it
-                if current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS:
-                    show_status = False
+            next_frame()  # one pass per NES frame (src/selection.py)
+            # NES LCFA4: the status window waits in WaitForBtnRelease, so any button closes it
+            show_status = not any(current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS
+                                  for current_event in frame_events())
         self.window_drop_up_effect(x, y, width, height)
         # print(f"""
         # NAME: {self.player.name}
