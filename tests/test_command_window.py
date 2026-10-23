@@ -161,7 +161,7 @@ class CommandWindowFrames(TestCase):
         game = self.game
         game.get_events()
         game.drawer.draw_all(game.screen, game.loop_count, game.big_map, game.current_map, game.player,
-                             game.cmd_menu, game.foreground_rects, game.sprites_animate, game.camera,
+                             game.cmd_menu, game.foreground_rects, game.movement.sprites_animate, game.camera,
                              game.initial_dialog_enabled, game.events, game.skip_text,
                              game.story_flags.left_throne_room, game.game_state, game.color)
         game.loop_count += 1
@@ -177,7 +177,7 @@ class CommandWindowFrames(TestCase):
 
     def open_window(self) -> None:
         """Press A on the map and let go: the window opens on that frame (everyone is on a tile)."""
-        with patch.object(self.game, 'everyone_on_a_tile', return_value=True):
+        with patch.object(self.game.movement, 'everyone_on_a_tile', return_value=True):
             self.frame(K_k)
         self.assertTrue(self.cmd_menu.menu.is_enabled())
 
@@ -193,7 +193,7 @@ class TestCommandWindowFrames(CommandWindowFrames):
     def test_a_held_from_opening_chooses_talk_when_the_retrigger_times_out(self):
         # WndDoSelect: WndBtnRetrig = IN_RIGHT; it is cleared when FrameCounter AND #$0F is 0, 11 frames after
         # WndInitSelect set it to 5, and the A still held is read then
-        with patch.object(self.game, 'everyone_on_a_tile', return_value=True):
+        with patch.object(self.game.movement, 'everyone_on_a_tile', return_value=True):
             self.frame(K_k)
         self.frames(10, K_k)
         self.assertEqual([], self.chosen)
@@ -233,11 +233,11 @@ class TestCommandWindowFrames(CommandWindowFrames):
         for close_key in (K_j, K_ESCAPE):
             with self.subTest(key=pygame.key.name(close_key)):
                 self.open_window()
-                self.assertTrue(self.game.world_frozen)
+                self.assertTrue(self.game.movement.world_frozen)
                 self.tap(close_key)
                 self.assertFalse(self.cmd_menu.menu.is_enabled())
                 self.assertFalse(self.cmd_menu.launch_signaled)
-                self.assertFalse(self.game.world_frozen)
+                self.assertFalse(self.game.movement.world_frozen)
                 self.cmd_menu.window_drop_up_effect.assert_called()
                 self.assertEqual([], self.chosen)
 

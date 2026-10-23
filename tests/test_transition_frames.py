@@ -52,7 +52,7 @@ class TransitionTestCase(TestCase):
         game = self.game
         game.get_events()
         game.drawer.draw_all(game.screen, game.loop_count, game.big_map, game.current_map, game.player,
-                             game.cmd_menu, game.foreground_rects, game.sprites_animate, game.camera,
+                             game.cmd_menu, game.foreground_rects, game.movement.sprites_animate, game.camera,
                              game.initial_dialog_enabled, game.events, game.skip_text,
                              game.story_flags.left_throne_room, game.game_state, game.color)
         pygame.display.flip()
@@ -143,7 +143,7 @@ class TestNoOneFrameFlickers(TransitionTestCase):
         self.game.handle_battles = MagicMock()  # type: ignore[method-assign]
         self.frames(3)
         # Everyone is on a tile, between two NPC turns (#289), so the window opens on the frame K is pressed
-        with patch.object(self.game, 'everyone_on_a_tile', return_value=True), \
+        with patch.object(self.game.movement, 'everyone_on_a_tile', return_value=True), \
                 patch.object(type(self.game.movement.npc_schedule), 'between_turns', new_callable=PropertyMock,
                              return_value=True), recording() as frames:
             self.frames(2)
