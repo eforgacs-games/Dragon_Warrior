@@ -5,20 +5,16 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
+from pygame import K_BACKSPACE, K_DOWN, K_ESCAPE, K_RETURN, K_RIGHT, K_TAB, K_UP, K_LEFT, K_j, K_k, KEYDOWN
 
-import pygame  # noqa: E402
-from pygame import K_BACKSPACE, K_DOWN, K_ESCAPE, K_RETURN, K_RIGHT, K_TAB, K_UP, K_LEFT, K_j, K_k, \
-    KEYDOWN  # noqa: E402
-
-from src.color import RED, WHITE  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.directories import Directories  # noqa: E402
-from src.menu_functions import NameSelection  # noqa: E402
-from src.name_entry import BACK, END, NameEntry, render_name_entry_screen  # noqa: E402
-from src.windows import ALPHABET_COLUMNS, ALPHABET_ROWS  # noqa: E402
-from tests.nes_screen_diff import compare_with_screenshot  # noqa: E402
+from src.color import RED, WHITE
+from src.config.test_config import test_config
+from src.directories import Directories
+from src.menu_functions import NameSelection
+from src.name_entry import BACK, END, NameEntry, render_name_entry_screen
+from src.windows import ALPHABET_COLUMNS, ALPHABET_ROWS
+from tests.nes_screen_diff import compare_with_screenshot
 
 SCALES = (1, 2, 3)
 DIFF_DIR = os.path.join(tempfile.gettempdir(), 'dragon_warrior_screen_diffs')

@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase, mock
 from unittest.mock import MagicMock, patch
 
@@ -11,20 +10,15 @@ from src import drawer
 from src.camera import Camera
 from src.config.test_config import test_config
 from src.drawer import Drawer
-from src.game import Game
 from src.game_functions import get_next_coordinates, set_character_position
 from src.maps_functions import parse_animated_sprite_sheet
 from src.player.player import Player
 from tests.mock_map import MockMap
+from tests.helpers import new_game
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 layout = [[33, 0, 3],
           [1, 2, 3],
           [3, 3, 3]]
-
-
-
 
 
 class TestGameFunctions(TestCase):
@@ -33,8 +27,7 @@ class TestGameFunctions(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
         self.game.current_map = MockMap(self.game.config)

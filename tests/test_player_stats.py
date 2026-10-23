@@ -21,16 +21,12 @@ The same rules also reproduce, at every level, the 16 tables from https://guides
 that an older version of this file held (Steve, Eva, Im, Va, Eddie, Ed, Walter, Uno, gooo, Sejin, Stephen, James,
 Gao, Jacquie, Wall, Edward).
 """
-import os
 from unittest import TestCase
 
 from src.player import player_stats
 from src.player.player_stats import (BLANK_TILE, determine_penalized_stats, get_base_stats, get_bonus,
                                      get_level_by_experience, get_name_tiles, get_stats_for_level,
                                      get_total_name_score, levels_list, name_character_value, reduce_stat)
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 # (strength, agility, max HP, max MP) for levels 1-30
 STEVE = (

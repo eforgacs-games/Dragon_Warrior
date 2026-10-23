@@ -5,19 +5,15 @@ NES GetNPCDataPointer (Bank00) copies a map's mobile NPC table into the mobile s
 that take turns are the table's first and second NPCs, its third and fourth, and so on. Removing an NPC (zeroing its
 position) leaves its slot empty: the others keep theirs until the map is loaded again.
 """
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
 
-import pygame  # noqa: E402
-
-from src.config.test_config import test_config  # noqa: E402
-from src.game import Game  # noqa: E402
-from src.maps import map_lookup  # noqa: E402
-from src.npc_schedule import FRAMES_PER_TURN, NPCS_PER_TURN  # noqa: E402
+from src.config.test_config import test_config
+from src.game import Game
+from src.maps import map_lookup
+from src.npc_schedule import FRAMES_PER_TURN, NPCS_PER_TURN
 
 # The NES mobile NPC tables (Bank00.asm of the nmikstas Dragon Warrior disassembly, TantMobTbl to GarMobTbl), as each
 # entry's NES (x, y), in table order
