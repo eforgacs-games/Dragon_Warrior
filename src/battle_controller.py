@@ -418,11 +418,19 @@ class BattleController:
         return run_away
 
     def open_command_window(self) -> None:
-        """StartPlayerTurn and ShowCmbtCmd: Dowindow WND_CMD_CMB, whose WndDoSelect starts selecting afresh every
-        turn. WndInitSelect puts the cursor back on FIGHT (WndCol = WndRow = 0), whatever was chosen last turn, and
+        """StartPlayerTurn and ShowCmbtCmd (LE5EF): "Command?" (TextBlock15 entry 8), then Dowindow WND_CMD_CMB, whose
+        WndDoSelect starts selecting afresh every turn. Every player turn comes through here: the first one (unless
+        the enemy attacked first), after each enemy turn, after a message that takes no turn ("Thy MP is too low",
+        "That cannot be used in battle", "cannot yet use the spell", "Nothing of use"), after B in this window or in
+        SPELL or ITEM, and after the hero wakes (PlayerAwakes falls through into ShowCmbtCmd). The text ends with
+        TXT_END1, so nothing waits for a button before the window opens.
+
+        WndInitSelect puts the cursor back on FIGHT (WndCol = WndRow = 0), whatever was chosen last turn, and
         the joypad is read from scratch (SelectionButtons.open): the NES has no event queue, so keys pressed before
-        the window was up (during the walk into the fight, the enemy's fade-in, "draws near", the enemy's turn)
-        are dropped, and keys still held are ignored until they are let go or 11 frames have gone by."""
+        the window was up (during the walk into the fight, the enemy's fade-in, "draws near", the enemy's turn,
+        "Command?") are dropped, and keys still held are ignored until they are let go or 11 frames have gone by."""
+        self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"), add_quotes=False, skip_text=True, hide_arrow=True,
+                                              disable_sound=True)
         self.battle_menu_row = 0
         self.battle_menu_column = 0
         poll_virtual_joypad()  # a key the player pressed stops auto-grind before the queue is dropped
@@ -468,11 +476,9 @@ class BattleController:
             return BATTLE_MENU_OPTIONS[self.battle_menu_row][self.battle_menu_column]
         if button == IN_B:
             # WndBPressed returns WND_ABORT, which none of StartPlayerTurn's checks matches, so ChkPlyrRun ends in
-            # JMP ShowCmbtCmd: "Command?" again and a new selection, from FIGHT.
+            # JMP ShowCmbtCmd: "Command?" again and a new selection, from FIGHT (open_command_window, next frame).
             self.command_cursor.hold()
             self.draw_command_window(True)
-            self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"), add_quotes=False, hide_arrow=True,
-                                                  disable_sound=True)
             self.command_window_open = False
             return None
         row, column = self.battle_menu_row, self.battle_menu_column
@@ -491,13 +497,13 @@ class BattleController:
 
     def sleeping_player_turn(self, current_battle: Battle) -> None:
         """NES StartPlayerTurn: a sleeping hero wakes when bit 0 of a random byte is set (50%), with no limit on how
-        long the sleep can last. On waking, "<player> awakes." then "Command?": the hero takes this turn as usual.
+        long the sleep can last. On waking, "<player> awakes." (TextBlock17 entry 8), which falls through into
+        ShowCmbtCmd: "Command?" and the command window (open_command_window), so the hero takes this turn as usual.
         Otherwise "Thou art still asleep." (PlayerAsleepDialog) and the enemy takes its turn."""
         if coin_flip():
             self.player.is_asleep = False
-            self.cmd_menu.show_line_in_dialog_box(
-                self._("{} awakes.\n").format(self.player.name) + self._("Command?\n"),
-                add_quotes=False, disable_sound=True, hide_arrow=True)
+            self.cmd_menu.show_line_in_dialog_box(self._("{} awakes.\n").format(self.player.name),
+                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
             # The hero chooses a command next, so the enemy doesn't move this time round.
             current_battle.no_op = True
         else:
