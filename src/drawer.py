@@ -37,26 +37,6 @@ class Drawer:
         self.sound = Sound(game_state.config)
         self.calculation = Calculation(game_state.config)
 
-    def position_and_draw_enemy_image(self, screen, enemy_image, enemy_name):
-        tile_size = self.game_state.config["TILE_SIZE"]
-        enemy_position = enemy_image_position_lookup.get(enemy_name)
-        if enemy_position:
-            screen.blit(enemy_image, (enemy_position[0] * tile_size, enemy_position[1] * tile_size))
-        else:
-            average_x = mean(value[0] for value in enemy_image_position_lookup.values())
-            average_y = mean(value[1] for value in enemy_image_position_lookup.values())
-            screen.blit(enemy_image, average_x, average_y)
-
-    def show_enemy_image(self, screen, enemy_name):
-        enemy_name_without_spaces = enemy_name.replace(" ", "")
-        enemy_path = f'{self.directories.IMAGES_ENEMIES_DIR}/{enemy_name_without_spaces}.png'
-        # Load the base image through cache
-        enemy_image_base = self.graphics.get_image(enemy_path)
-        # Get scaled version through cache
-        scaled_size = (enemy_image_base.get_width() * self.scale, enemy_image_base.get_height() * self.scale)
-        enemy_image = self.graphics.get_scaled_image(enemy_path, scaled_size)
-        self.position_and_draw_enemy_image(screen, enemy_image, enemy_name)
-
     def get_enemy_image(self, enemy_name):
         """The enemy's scaled image and its top-left position on the screen."""
         enemy_path = f'{self.directories.IMAGES_ENEMIES_DIR}/{enemy_name.replace(" ", "")}.png'
