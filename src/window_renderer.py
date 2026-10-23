@@ -11,7 +11,8 @@ data/fonts/dragon-quest.ttf: rendered at 8 pixels without antialiasing, every ch
 pixels wide, its 8 rows from the second row of the rendered line), so a tile is that render scaled up, never the
 font rendered at a bigger size. Except for four letters: the font's j, k, p and t are not the NES ones, so their NES
 tiles are in NES_GLYPHS, copied from the screenshots (the name entry alphabet, and the shop windows' "Copper" and
-"Plate", agree pixel for pixel); and the NES apostrophe is the font's ’, not its '. src/text.py's NESFont draws them
+"Plate", agree pixel for pixel); and the NES apostrophe is the font's ’, not its ' (which is the apostrophe of 'tis,
+ELISION_APOSTROPHE). src/text.py's NESFont draws them
 the same way in all other text (dialog, draw_text).
 """
 from functools import lru_cache
@@ -27,6 +28,20 @@ NES_TILE = 8
 # A tile's 8 rows of 8 pixels: '#' is drawn in the window color, '.' is black
 Pattern = tuple[str, ...]
 DRAGON_QUEST_FONT_PATH = data_path('fonts', 'dragon-quest.ttf')
+
+# The apostrophe of 'tis (TB7E2, TB7E6, TB8E6, TB9E2, TB9E15) is its own NES font tile, $54, not the apostrophe of
+# "Erdrick's" ($53, like TXT_APOS $40) nor the comma ($48); the disassembly's text comments write it as a comma
+# (",Tis said ..."). It is the comma shape raised to the top of the tile, like the apostrophe, but at the tile's right
+# edge, against the letter after it, where the apostrophe ($53, the font's ’) is at the left edge, against the letter
+# before it. The font's ' is that tile, so the game's text writes this apostrophe as ʼ (U+02BC, MODIFIER LETTER
+# APOSTROPHE) and it is drawn with the font's '.
+ELISION_APOSTROPHE = 'ʼ'
+
+
+def font_characters(text: str) -> str:
+    """text in the characters dragon-quest.ttf draws its NES tiles with: the apostrophe is the font's ’ (the font's '
+    is the 'tis apostrophe, ELISION_APOSTROPHE)."""
+    return text.replace("'", '’').replace(ELISION_APOSTROPHE, "'")
 
 # The window border tiles (Defines TL_LEFT $61 to TL_BOT_RIGHT $69): '#' is drawn in the window color.
 TL_UPPER_LEFT: Pattern = (
@@ -169,9 +184,7 @@ def glyph_tile(character: str) -> Pattern:
     """A character's NES font tile, as a pattern like the border tiles."""
     if character in NES_GLYPHS:
         return NES_GLYPHS[character]
-    # The NES has one apostrophe, the font's right single quotation mark (the font's ' is a straight one)
-    if character == "'":
-        character = '’'
+    character = font_characters(character)
     if not font.get_init():
         font.init()
     rendered = font.Font(DRAGON_QUEST_FONT_PATH, NES_TILE).render(character, False, (255, 255, 255), BLACK)

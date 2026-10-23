@@ -1,9 +1,9 @@
 from typing import Dict, FrozenSet, Iterable, List, Tuple
 
-from pygame import PixelArray, surface
+from pygame import PixelArray, mask, surface
 from pygame.transform import scale
 
-from src.color import LOW_HP_RED
+from src.color import BLACK, LOW_HP_RED
 from src.visual_effects import NES_PALETTE
 
 # NES AddPalByte/ChkLowHPPal (Bank03, $C661): while HP is low, background palette 0's color 1 ($3F01) is loaded as $26
@@ -32,6 +32,31 @@ def low_hp_tile_image(tile: surface.Surface) -> surface.Surface:
     with PixelArray(red) as pixels:
         pixels.replace(PAL0_COLOR1_NORMAL, PAL0_COLOR1_LOW_HP)
     return red
+
+
+def tile_from_quarters(top_left: surface.Surface, top_right: surface.Surface, bottom_left: surface.Surface,
+                       bottom_right: surface.Surface) -> surface.Surface:
+    """A tile made of the matching quarter of each of four tiles (the NES draws a block as four 8x8 tiles)."""
+    width, height = top_left.get_size()
+    half_width, half_height = width // 2, height // 2
+    tile = surface.Surface((width, height), top_left.get_flags(), top_left)
+    for source, (x, y) in ((top_left, (0, 0)), (top_right, (half_width, 0)), (bottom_left, (0, half_height)),
+                           (bottom_right, (half_width, half_height))):
+        tile.blit(source, (x, y), (x, y, half_width, half_height))
+    return tile
+
+
+def bad_ending_tile_image(tile: surface.Surface, palette_0_tile: bool, window_color) -> surface.Surface:
+    """A tile under NES BadEndBGPal (Bank00, $9AA3: $16 then eleven $0E), the background palettes ChooseDrgnLrd loads
+    for the bad ending: background palette 0's color 1 is the window color (red, or the low HP red) and every other
+    background color is black. So a palette 0 block (LOW_HP_PALETTE_TILES in maps.py) keeps only its color 1 pixels
+    ($30 white, see low_hp_tile_image), in the window color, and every other block goes black."""
+    image = surface.Surface(tile.get_size())
+    image.fill(BLACK)
+    if palette_0_tile:
+        color_1_pixels = mask.from_threshold(tile, PAL0_COLOR1_NORMAL, (1, 1, 1, 255))
+        color_1_pixels.to_surface(image, setcolor=window_color, unsetcolor=None)
+    return image
 
 
 def warp_line(lower_bound, upper_bound) -> List[tuple]:
