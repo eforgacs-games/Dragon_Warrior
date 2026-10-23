@@ -310,14 +310,28 @@ STATUS_EQUIPMENT_TILE_ROWS = (15, 17, 19)
 STATUS_EQUIPMENT_TILE_COLUMN = 10
 
 
+# The most entries the SPELL or ITEM window shows at once: the NES's most, Herbs, Magic Keys and the 8 slots (10 spells
+# too). With BAG set to 16 (src/items.py bag_slots) there can be up to 18; the window then scrolls (first_shown_entry).
+ITEM_MENU_MAX_ENTRIES = 10
+
+
 def item_menu_window(menu_name: str, number_of_entries: int) -> tuple[int, int, int, int]:
     """
-    The SPELL or ITEM window's position and size for a number of entries.
+    The SPELL or ITEM window's position and size for a number of entries, at most ITEM_MENU_MAX_ENTRIES high.
     :param menu_name: 'spells', 'inventory' or 'discard'.
     :param number_of_entries: How many spells or items are listed (see src.items.inventory_list).
     :return: (x, y, width, height), in blocks.
     """
-    return ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_WIDTH, number_of_entries + 1
+    return ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_WIDTH, min(number_of_entries, ITEM_MENU_MAX_ENTRIES) + 1
+
+
+def first_shown_entry(index: int, first: int, number_of_entries: int, shown: int = ITEM_MENU_MAX_ENTRIES) -> int:
+    """The first entry a scrolling window shows (not NES: only a bag of 16 has more items than the ITEM window
+    fits), given the cursor's entry and the first entry it showed before: the list scrolls one entry at a time, only
+    when the cursor moves past the top or the bottom of the window."""
+    first = min(first, index)
+    first = max(first, index - shown + 1)
+    return max(0, min(first, number_of_entries - shown))
 
 
 def item_menu_layout(menu_name: str, number_of_entries: int) -> WindowLayout:

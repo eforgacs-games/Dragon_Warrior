@@ -14,8 +14,10 @@ def inventory_slots_used(inventory: list[str]) -> int:
     return sum(1 for item in inventory if item not in UNSLOTTED_ITEMS)
 
 
-def inventory_is_full(inventory: list[str]) -> bool:
-    return inventory_slots_used(inventory) >= INVENTORY_SLOTS
+def inventory_is_full(inventory: list[str], slots: int = INVENTORY_SLOTS) -> bool:
+    """No slot free in a bag of this many slots (src/items.py bag_slots); a bag holding more than that, after BAG was
+    set back to 8, is full too."""
+    return inventory_slots_used(inventory) >= slots
 
 
 def pay_player(gold: int, amount: int) -> int:
