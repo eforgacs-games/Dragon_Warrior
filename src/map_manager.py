@@ -11,7 +11,7 @@ from pygame import Surface
 from src import maps
 from src.camera import Camera
 from src.common import BLACK
-from src.constants import RAINBOW_BRIDGE_COORDINATES, THRONE_ROOM_DOOR_COORDINATES
+from src.constants import RAINBOW_BRIDGE_COORDINATES, THRONE_ROOM_DOOR_COORDINATES, THRONE_ROOM_START_COORDINATES
 from src.coordinates import Cell
 from src.direction import Direction
 from src.game_functions import set_character_position
@@ -166,7 +166,7 @@ class MapManager:
             destination_coordinates = current_map_staircase_dict.get('destination_coordinates')
         else:
             current_map_staircase_dict = None
-            destination_coordinates = (10, 13)  # TantegelThroneRoom, in front of King Lorik
+            destination_coordinates = THRONE_ROOM_START_COORDINATES
         self.current_map.destination_coordinates = destination_coordinates
         if is_warp and destination_coordinates is not None:
             # Not arriving by stairs, so the hero stands on whatever tile is at the destination

@@ -102,13 +102,13 @@ class TitleMenu:
             os.makedirs(self.directories.save_dir)
         self.save_dir_contents = self.save_files()
         used = len(self.save_dir_contents)
-        if used > 3:
-            print("Error: More than 3 save files detected. Exiting.")
+        if used > len(ADVENTURE_LOGS):
+            print(f"Error: More than {len(ADVENTURE_LOGS)} save files detected. Exiting.")
             exit(1)
         if used == 0:
             # NewQuestDat: BEGIN A NEW QUEST
             entries: tuple[Callable[[], object], ...] = (self.begin_new_quest,)
-        elif used < 3:
+        elif used < len(ADVENTURE_LOGS):
             # FullMenuDat: CONTINUE A QUEST, CHANGE MESSAGE SPEED, BEGIN A NEW QUEST, COPY A QUEST, ERASE A QUEST
             entries = (self.continue_quest, self.change_message_speed, self.begin_new_quest, self.copy_quest,
                        self.erase_quest)
@@ -223,7 +223,7 @@ class TitleMenu:
 
     def erase_entry(self) -> int:
         """ERASE AN ADVENTURE LOG's place in the title menu: last in FullMenuDat (4), or in ContChngErsDat (2)."""
-        return 2 if len(self.save_dir_contents or []) >= 3 else 4
+        return 2 if len(self.save_dir_contents or []) >= len(ADVENTURE_LOGS) else 4
 
     def copy_quest(self) -> object:
         """NES DoCopyGame (Bank03): choose the log to copy from among the used logs (ShowUsedLogs), then the log to

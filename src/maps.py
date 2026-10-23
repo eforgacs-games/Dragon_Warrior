@@ -10,9 +10,10 @@ from pygame.transform import scale
 
 from src.common import Graphics
 from src.coordinates import Cell
+from src.constants import THRONE_ROOM_START_COORDINATES
 from src.direction import Direction
 from src.directories import Directories
-from src.map_layouts import MapLayouts
+from src.map_layouts import BRICK_STAIR_DOWN, BRICK_STAIR_UP, GRASS_STAIR_DOWN, MapLayouts
 from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point, \
     covered_cells, low_hp_tile_image, bad_ending_tile_image, tile_from_quarters
 from src.npcs import GWAELIN_RESCUE, NPC
@@ -48,6 +49,11 @@ COMPOSED_COAST_TILES = {
 
 
 DOWN, UP, LEFT, RIGHT = Direction.DOWN, Direction.UP, Direction.LEFT, Direction.RIGHT
+
+
+TILESET_COLUMNS = 11  # tiles to a row in tileset.png
+# Which way each stairs tile goes (GRASS_STAIR_DOWN is the overworld shrine entrance)
+STAIR_DIRECTIONS = {BRICK_STAIR_DOWN: 'down', BRICK_STAIR_UP: 'up', GRASS_STAIR_DOWN: 'down'}
 
 
 class DragonWarriorMap:
@@ -345,11 +351,11 @@ class DragonWarriorMap:
         self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'].add(tile)
 
     def normal_tile_image(self, tile_value: int) -> surface.Surface:
-        """The tileset image for a floor tile: tileset.png has 11 tiles to a row. The shore blocks it doesn't have are
-        put together from the ones it does (COMPOSED_COAST_TILES), once."""
+        """The tileset image for a floor tile: tileset.png has TILESET_COLUMNS (11) tiles to a row. The shore blocks it
+        doesn't have are put together from the ones it does (COMPOSED_COAST_TILES), once."""
         tile_name = self.get_tile_by_value(tile_value)
         if tile_name not in COMPOSED_COAST_TILES:
-            return self.map_tiles[tile_value % 11][tile_value // 11]
+            return self.map_tiles[tile_value % TILESET_COLUMNS][tile_value // TILESET_COLUMNS]
         if tile_name not in self._composed_tile_images:
             quarters = [self.normal_tile_image(self.floor_tile_key[source]['val'])
                         for source in COMPOSED_COAST_TILES[tile_name]]
@@ -444,14 +450,10 @@ class DragonWarriorMap:
             self.staircases.update(dict(zip(staircases_keys, staircases_values)))
 
     def assign_stair_directions(self):
-        for staircase_coordinates, staircase_dict in self.staircases.items():
-            layout_staircase_coordinates = self.layout[staircase_coordinates[0]][staircase_coordinates[1]]
-            if layout_staircase_coordinates == 6:
-                staircase_dict['stair_direction'] = 'down'
-            elif layout_staircase_coordinates == 7:
-                staircase_dict['stair_direction'] = 'up'
-            elif layout_staircase_coordinates == 18:
-                staircase_dict['stair_direction'] = 'down'
+        for (row, column), staircase_dict in self.staircases.items():
+            stair_tile = self.layout[row][column]
+            if stair_tile in STAIR_DIRECTIONS:
+                staircase_dict['stair_direction'] = STAIR_DIRECTIONS[stair_tile]
 
 
 class MapWithoutNPCs(DragonWarriorMap, ABC):
@@ -505,7 +507,7 @@ class TantegelThroneRoom(DragonWarriorMap):
 
     def __init__(self, config):
         super().__init__(MapLayouts().tantegel_throne_room, config,
-                         Directories(config).tantegel_castle_throne_room_music, (10, 13),
+                         Directories(config).tantegel_castle_throne_room_music, THRONE_ROOM_START_COORDINATES,
                          staircases={
                              (14, 18): {'map': 'TantegelCourtyard', 'destination_coordinates': (14, 14),
                                         'direction': Direction.RIGHT.value}})

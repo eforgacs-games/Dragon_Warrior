@@ -7,6 +7,11 @@ Game-wide named constants. All magic numbers that appear in game logic live here
 # Auto-battle delay between actions (ms)
 AUTO_BATTLE_DELAY_MS = 200
 
+# ── Dialogs ───────────────────────────────────────────────────────────────────
+
+# How long a settings message (F2, the speed keys, ...) stays up: a second (not an NES message)
+TEMP_TEXT_MS = 1000
+
 # ── Maps ──────────────────────────────────────────────────────────────────────
 
 # Random encounters (which maps have them, and the zone and enemy tables) are in src/encounters.py.
@@ -81,3 +86,5 @@ FAIRY_WATER_TIMER = 254
 # NES InitMapData (ChkLeftThRoom, Bank00): once F_LEFT_THROOM is set, entering the throne room removes its door
 # (DoorXPos+14 = 4, DoorYPos+14 = 7) along with its 3 treasure chests. NES throne room (x, y) is (y + 6, x + 10) here.
 THRONE_ROOM_DOOR_COORDINATES = (7 + 6, 4 + 10)
+# The throne room tile in front of King Lorik, where a new quest starts and a dead hero wakes up
+THRONE_ROOM_START_COORDINATES = (10, 13)
