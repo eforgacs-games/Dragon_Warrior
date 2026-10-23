@@ -61,14 +61,14 @@ class TestSettingsFile(TempDirTestCase):
 
     def test_round_trip(self):
         settings = Settings(zoom=3, fullscreen=True, game_speed=4, language='Korean', scanlines=True,
-                            scaling='PixelPerfect')
+                            scaling='PixelPerfect', view='Wide')
         self.assertTrue(save_settings(self.path, settings))
         self.assertEqual(settings, load_settings(self.path))
 
     def test_format(self):
         save_settings(self.path, Settings(zoom=3, language='Korean'))
         self.assertEqual({'version': 1, 'zoom': 3, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
-                          'scanlines': False, 'scaling': 'Smooth'},
+                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES'},
                          self.saved())
         self.assertEqual(['settings.json'], os.listdir(os.path.dirname(self.path)))  # no temporary file left over
 
@@ -92,7 +92,7 @@ class TestSettingsFile(TempDirTestCase):
 
     def test_each_bad_value_is_its_default_alone(self):
         self.write(json.dumps({'zoom': 'big', 'fullscreen': 'yes', 'game_speed': 3, 'language': 'Klingon',
-                               'scanlines': 'on', 'scaling': 'Blurry'}))
+                               'scanlines': 'on', 'scaling': 'Blurry', 'view': 'Ultra'}))
         self.assertEqual(Settings(), load_settings(self.path))
         self.write(json.dumps({'zoom': 0, 'fullscreen': 1, 'game_speed': True, 'language': None}))
         self.assertEqual(Settings(), load_settings(self.path))
@@ -245,7 +245,7 @@ class TestSavedWhenChanged(GameTestCase):
         self.assertEqual('Korean', self.saved()['language'])
         # and nothing else was written
         self.assertEqual({'version': 1, 'zoom': None, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
-                          'scanlines': False, 'scaling': 'Smooth'},
+                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES'},
                          self.saved())
 
     def test_game_speed_off_plays_at_normal_speed_and_keeps_the_saved_one(self):

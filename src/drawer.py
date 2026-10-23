@@ -16,6 +16,7 @@ from src.menu import CommandMenu
 from src.options_screen import STATUS_WINDOW_ALWAYS
 from src.sound import Sound
 from src.text import draw_text
+from src.view import full_screen, screen_origin_x
 from src.visual_effects import cut_to_black, enemy_fade_in, enemy_hit_flash, enemy_spell_flash, screen_fade
 from src.waiting import NES_FPS, clear_events_keeping_quit, is_any_key_held, wait
 from src.window_renderer import draw_window
@@ -326,7 +327,9 @@ class Drawer:
         if events is None:
             events = game.events
 
-        screen.fill(BLACK)
+        # In the WIDE view (src/view.py) the map is drawn across the whole display, and the screen is its middle
+        view, view_x = full_screen(screen), screen_origin_x(screen)
+        view.fill(BLACK)
         width_offset = 0
         height_offset = 0
         tile_size = self.game_state.config["TILE_SIZE"]
@@ -422,12 +425,13 @@ class Drawer:
         self.handle_sprite_drawing_and_animation(current_map, foreground_rects, self.background,
                                                  enable_animate)
         if not self.game_state.config['NO_BLIT']:
-            self.blit_map(screen, current_map, camera.pos)
+            # the whole view in WIDE (src/view.py), with the map's boundary block past its edges (draw_boundary)
+            self.blit_map(view, current_map, (camera.pos[0] + view_x, camera.pos[1]))
         if current_map.identifier == 'TantegelThroneRoom':
             self.handle_initial_dialog(initial_dialog_enabled, cmd_menu, events, skip_text, left_throne_room)
             self.handle_post_death_dialog(game_state, cmd_menu, events, skip_text)
         if current_map.is_dark and self.game_state.config["ENABLE_DARKNESS"]:
-            self.handle_darkness(screen, player)
+            self.handle_darkness(view, player)  # centered on the whole view, so on the hero in the WIDE view too
         if self.display_hovering_stats or self.status_window_always():
             if not self.hovering_stats_displayed:
                 cmd_menu.window_drop_down_effect(*POPUP_WINDOW)
