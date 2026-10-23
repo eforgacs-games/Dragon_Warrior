@@ -1,70 +1,13 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
-import pygame
 
 from data.text.dialog_lookup_table import DialogLookup
 from src.config.test_config import test_config
 from src.constants import GWAELIN_THRONE_ROOM_COORDINATES
-from src.direction import Direction
-from src.game import Game
 from src.maps import TantegelCellar, TantegelCourtyard, TantegelThroneRoom
+from tests.nes_maps import nes_npcs
 from tests.test_shop_dialog import npc_identifiers
-
-# NES Bank00 NPC tables: (graphic, X, Y, dialog byte, mobile, facing). The fighter is SOLDIER here; the trumpet guards
-# and the two "wizards" of TaDLStatTbl get guard sprites on the ground floor (NES GetGuardType), so they're GUARD.
-DOWN, UP, LEFT, RIGHT = Direction.DOWN, Direction.UP, Direction.LEFT, Direction.RIGHT
-
-# ThRmMobTbl and ThRmStatTbl, without Gwaelin ($6F), who is only there once she's been returned. NES X,Y is
-# (Y + 6, X + 10).
-THRONE_ROOM_NPCS = (
-    ('GUARD', 7, 5, 0x65, True, DOWN),
-    ('KING_LORIK', 3, 3, 0x6E, False, DOWN),
-    ('GUARD', 3, 6, 0x23, False, RIGHT),
-    ('GUARD', 5, 6, 0x24, False, LEFT),
-)
-
-# TantMobTbl and TantStatTbl. NES X,Y is (Y + 7, X + 7).
-COURTYARD_NPCS = (
-    ('WOMAN', 8, 13, 0x62, True, DOWN),
-    ('GUARD', 19, 2, 0x17, True, DOWN),
-    ('MAN', 11, 11, 0x1C, True, DOWN),
-    ('WISE_MAN', 17, 11, 0x1D, True, DOWN),
-    ('MERCHANT', 4, 21, 0x1F, True, DOWN),
-    ('SOLDIER', 25, 11, 0x16, True, DOWN),
-    ('GUARD', 18, 18, 0x72, True, DOWN),
-    ('GUARD', 2, 12, 0x1B, True, DOWN),
-    ('MERCHANT', 6, 25, 0x20, True, DOWN),
-    ('SOLDIER', 24, 21, 0x22, True, DOWN),
-    ('MERCHANT', 24, 1, 0x0E, False, DOWN),
-    ('WOMAN', 27, 5, 0x1A, False, DOWN),
-    ('GUARD', 8, 6, 0x19, False, DOWN),
-    ('MAN', 2, 8, 0x18, False, DOWN),
-    ('GUARD', 8, 8, 0x71, False, UP),
-    ('GUARD', 26, 15, 0x1E, False, UP),
-    ('GUARD', 15, 20, 0x63, False, RIGHT),
-    ('WISE_MAN', 20, 26, 0x6A, False, LEFT),
-    ('GUARD', 9, 27, 0x21, False, RIGHT),
-    ('GUARD', 12, 27, 0x21, False, LEFT),
-)
-
-# TaDLMobTbl and TaDLStatTbl, after the Dragonlord's defeat
-COURTYARD_AFTER_DRAGONLORD_NPCS = (
-    ('GUARD', 19, 2, True), ('MAN', 14, 23, True), ('SOLDIER', 25, 11, True), ('GUARD', 18, 18, True),
-    ('GUARD', 2, 12, True), ('MERCHANT', 6, 25, True), ('SOLDIER', 24, 21, True),
-    ('KING_LORIK', 11, 7, False), ('GUARD', 9, 9, False), ('GUARD', 9, 11, False), ('GUARD', 9, 13, False),
-    ('GUARD', 12, 9, False), ('GUARD', 12, 11, False), ('GUARD', 12, 13, False), ('GUARD', 9, 27, False),
-    ('GUARD', 12, 27, False),
-)
-
-# TaSLStatTbl (TaSLMobTbl is empty). NES X,Y is (Y + 1, X + 1).
-CELLAR_NPCS = (
-    ('WISE_MAN', 4, 6, 0x66, False, DOWN),
-)
+from tests.town_dialog import TownDialogMixin
 
 # Bank02 text for the dialog bytes between $16 and $5D (TextBlock entry = byte + $2F), and GuardDialog1/2
 COURTYARD_TEXT = {
@@ -106,87 +49,45 @@ def cellar_coordinates(x, y):
     return y + 1, x + 1
 
 
-class TestTantegelDialog(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        pygame.init()
-        pygame.display.set_mode((800, 600))
+class TestThroneRoomNPCs(TownDialogMixin, TestCase):
+    map_class = TantegelThroneRoom
+    # ThRmStatTbl's Princess Gwaelin ($6F) is only there once she's been returned
+    not_on_the_map = frozenset({0x6F})
 
-    @classmethod
-    def tearDownClass(cls):
-        pygame.quit()
+
+class TestCellarNPCs(TownDialogMixin, TestCase):
+    map_class = TantegelCellar
+
+
+class TestTantegelDialog(TownDialogMixin, TestCase):
+    map_class = TantegelCourtyard
+    text = COURTYARD_TEXT
 
     def setUp(self):
-        test_config['NO_WAIT'] = True
-        test_config['RENDER_TEXT'] = False
-        test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        super().setUp()
         self.game.player.name = 'Edward'
         self.dialog_lookup = DialogLookup(self.game.cmd_menu, test_config)  # with the hero's name
         self.throne_room = TantegelThroneRoom(test_config)
-        self.courtyard = TantegelCourtyard(test_config)
+        self.courtyard = self.town
         self.cellar = TantegelCellar(test_config)
-        self.lines = []
-        self.dialog_lookup.command_menu.show_line_in_dialog_box = lambda line, **kwargs: self.lines.append(line)
 
-    def maps(self):
-        return ((self.throne_room, THRONE_ROOM_NPCS, throne_room_coordinates),
-                (self.courtyard, COURTYARD_NPCS, courtyard_coordinates),
-                (self.cellar, CELLAR_NPCS, cellar_coordinates))
+    def test_npcs_after_the_dragonlord(self):
+        # TaDLMobTbl and TaDLStatTbl
+        self.courtyard.apply_dragonlord_defeated()
+        expected = {courtyard_coordinates(x, y): sprite for sprite, x, y, *_ in nes_npcs('TantegelCourtyard_DL')}
+        self.assertEqual(self.courtyard.npc_coordinates, expected)
+        identifiers = npc_identifiers(self.courtyard)
+        roaming = [identifiers[courtyard_coordinates(x, y)] for _, x, y, _, mobile, _ in nes_npcs('TantegelCourtyard_DL')
+                   if mobile]
+        self.assertEqual(self.courtyard.roaming_character_list, roaming)
 
     def dialog(self, game_map, to_map, x, y):
         identifier = npc_identifiers(game_map)[to_map(x, y)]
         return self.dialog_lookup.lookup_table[game_map.identifier][identifier]['dialog']
 
-    def test_every_nes_npc_is_on_the_map(self):
-        for game_map, npcs, to_map in self.maps():
-            with self.subTest(game_map.identifier):
-                expected = {to_map(x, y): graphic for graphic, x, y, *_ in npcs}
-                self.assertEqual(game_map.npc_coordinates, expected)
-
     def test_gwaelin_on_the_throne(self):
         # ThRmStatTbl: Princess Gwaelin at 6,3 ($6F), placed once F_RTN_GWAELIN is set
         self.assertEqual(GWAELIN_THRONE_ROOM_COORDINATES, throne_room_coordinates(6, 3))
-
-    def test_npcs_after_the_dragonlord(self):
-        self.courtyard.apply_dragonlord_defeated()
-        expected = {courtyard_coordinates(x, y): graphic for graphic, x, y, _ in COURTYARD_AFTER_DRAGONLORD_NPCS}
-        self.assertEqual(self.courtyard.npc_coordinates, expected)
-        identifiers = npc_identifiers(self.courtyard)
-        roaming = {identifiers[courtyard_coordinates(x, y)] for _, x, y, mobile in COURTYARD_AFTER_DRAGONLORD_NPCS
-                   if mobile}
-        self.assertEqual(set(self.courtyard.roaming_character_list), roaming)
-
-    def test_every_npc_has_dialog(self):
-        for game_map, _, _ in self.maps():
-            with self.subTest(game_map.identifier):
-                identifiers = set(npc_identifiers(game_map).values())
-                if game_map is self.throne_room:
-                    identifiers.add('PRINCESS_GWAELIN')
-                self.assertEqual(identifiers, set(self.dialog_lookup.lookup_table[game_map.identifier]))
-
-    def test_mobile_npcs_roam(self):
-        for game_map, npcs, to_map in self.maps():
-            with self.subTest(game_map.identifier):
-                identifiers = npc_identifiers(game_map)
-                roaming = {identifiers[to_map(x, y)] for _, x, y, _, mobile, _ in npcs if mobile}
-                self.assertEqual(set(game_map.roaming_character_list), roaming)
-
-    def test_npc_directions(self):
-        for game_map, npcs, to_map in self.maps():
-            game_map.load_map(self.game.player, None, test_config['TILE_SIZE'])
-            identifiers = npc_identifiers(game_map)
-            for _, x, y, _, _, facing in npcs:
-                identifier = identifiers[to_map(x, y)]
-                with self.subTest(f'{game_map.identifier} {identifier}'):
-                    self.assertEqual(game_map.characters[identifier]['character'].direction_value, facing.value)
-
-    def test_courtyard_text_matches_nes(self):
-        for _, x, y, dialog_byte, _, _ in COURTYARD_NPCS:
-            if dialog_byte in COURTYARD_TEXT:
-                self.assertEqual(self.dialog(self.courtyard, courtyard_coordinates, x, y), COURTYARD_TEXT[dialog_byte],
-                                 f'NES {x},{y} ${dialog_byte:02X}')
 
     def test_key_shop(self):
         # NES KeysDialog: dialog byte $0E is KeyCostTbl entry 2, 85 GOLD
