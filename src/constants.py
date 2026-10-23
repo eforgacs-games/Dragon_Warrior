@@ -8,9 +8,6 @@ Game-wide named constants. All magic numbers that appear in game logic live here
 # Auto-battle delay between actions (ms)
 AUTO_BATTLE_DELAY_MS = 200
 
-# Arrow blink timer interval (ms)
-ARROW_BLINK_INTERVAL_MS = 530
-
 # ── Battle menu window position (tile units): x, y, width, height ─────────────
 BATTLE_MENU_X = 6
 BATTLE_MENU_Y = 1

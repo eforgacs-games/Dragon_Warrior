@@ -8,7 +8,7 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
-    K_u, K_w, RESIZABLE, display, event, image, init, key, K_F1, K_F2, K_F3, K_F4, K_F11, time, KEYDOWN, SCALED, \
+    K_w, RESIZABLE, display, event, image, init, key, K_F1, K_F2, K_F3, K_F4, K_F11, KEYDOWN, SCALED, \
     K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
@@ -19,7 +19,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from data.text.intro_lookup_table import ControlInfo
 from src import maps
 from src.adventure_log import ADVENTURE_LOGS, AdventureLogOverlay, adventure_log_overlay_texts
-from src.battle import Battle
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
@@ -31,14 +30,13 @@ from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
 from src.debug_tools import DebugTools
 from src.constants import (
-    ARROW_BLINK_INTERVAL_MS,
     TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT,
 )
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
-from src.game_functions import MENU_BACK, set_character_position, get_next_coordinates, GameFunctions
+from src.game_functions import MENU_BACK, set_character_position, GameFunctions
 from src.game_state import GameState
 from src.guardians import guardian_at
 from src.intro import Intro
@@ -60,10 +58,9 @@ from src.sprites.roaming_character import RoamingCharacter
 from src.battle_controller import BattleController
 from src.ending import Ending
 from src.story_flags import StoryFlags
-from src.waiting import SPEED_KEYS, game_speed, reset_game_speed, set_game_speed
+from src.waiting import SPEED_KEYS, FramePacer, clear_events_keeping_quit, game_speed, reset_game_speed, set_game_speed
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
-from src.pygame_compat import arrow_fade
 from src.visual_effects import flash_transparent_color
 from src.waiting import quit_if_requested, wait
 from src.windows import COMMAND_WINDOW
@@ -114,6 +111,8 @@ class Game:
         self.calculation = Calculation(config)
         self.game_functions = GameFunctions(config)
         self.movement = Movement(self.config)
+        # Only still passed to confirmation_prompt, which ignores it: the dialog's down arrow blinks on its own
+        # (src/cursor.py DialogArrowBlink)
         self.show_arrow = True
         self.game_state = GameState(config=config)
         self.music_player = MusicPlayer(config)
@@ -169,7 +168,6 @@ class Game:
         # debugging
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
         init()
-        time.set_timer(arrow_fade, ARROW_BLINK_INTERVAL_MS)
         self.paused = False
         # START or A pressed while the hero or an NPC is between tiles: the pause or command window waits until everyone
         # has finished their step (NES PausePrepLoop / DoNCCmdWindow), see resolve_pending_freezes
@@ -233,7 +231,9 @@ class Game:
         self.cmd_menu = CommandMenu(self)
 
         self.clock = Clock()
-        self.music_enabled = self.game_state.music_enabled
+        # Half a step at most between two draws: every step is drawn at least once while it's under way, so the drawer
+        # sees the hero moving (which closes the pop-up window), and he never moves more than a tile between two draws
+        self.frame_pacer = FramePacer(max_frames=STEP_SYNC_FRAMES // 2)
 
         if self.splash_screen_enabled:
             self.music_player.load_and_play_music(self.directories.intro_overture)
@@ -267,7 +267,7 @@ class Game:
                              self.color)
         while True:
             self.clock.tick(self.fps)
-            self.get_events()
+            self.run_due_frames()
             self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player,
                                  self.cmd_menu, self.foreground_rects, self.sprites_animate, self.camera,
                                  self.initial_dialog_enabled, self.events, self.skip_text, self.story_flags.left_throne_room,
@@ -334,15 +334,21 @@ class Game:
                 exit(1)
         return None
 
-    def begin_new_quest(self):
+    def begin_new_quest(self) -> object:
+        """BEGIN A NEW QUEST: an adventure log, the name, then the options. B in the log window, or Escape in the
+        name entry, cancels it, back to the title menu with nothing saved."""
         if self.select_adventure_log(self.screen) is BACK_TO_TITLE_MENU:
             return BACK_TO_TITLE_MENU
         name_selection = NameSelection(self.config)
-        self.player.name = name_selection.select_name(get_ticks(), self.screen, self.cmd_menu)
+        name = name_selection.select_name(get_ticks(), self.screen, self.cmd_menu)
+        if name is None:
+            return BACK_TO_TITLE_MENU
+        self.player.name = name
         self.choose_new_quest_options()
         self.player.set_initial_stats()
         self.sound.play_sound(self.directories.menu_button_sfx)
         self.start_at_throne_room()
+        return None
 
     def start_at_throne_room(self) -> None:
         """Start a new quest in the throne room the way NES MainGameEngine does for every start: StartAtThroneRoom
@@ -521,12 +527,31 @@ class Game:
         self.player.adventure_log = selection + 1
         return None
 
+    def run_due_frames(self) -> None:
+        """Read the events, then run the frames on the map that are due before the next draw (FramePacer): one at a
+        time while drawing keeps up with 60 * N FPS, more when it doesn't, so walking and the NPCs keep pace with the
+        game speed and the game clock everything else reads. A frame that changes the map, or opens something with a
+        loop of its own (a battle, a dialog), ends the run: the next one starts after the next draw."""
+        frames = self.frame_pacer.frames_due()
+        self.read_events()
+        for _ in range(frames):
+            current_map = self.current_map
+            self.map_frame()
+            if self.current_map is not current_map or self.frame_pacer.stalled():
+                return
+
     def get_events(self) -> None:
-        """
-        High-level event loop method that delegates to smaller helpers.
-        """
+        """Read the events, then run one frame on the map."""
+        self.read_events()
+        self.map_frame()
+
+    def read_events(self) -> None:
+        """Take the events off the queue (draw_all reads them too) and handle the keys and the window's events."""
         self.events = get()
         self._handle_pygame_events(self.events)
+
+    def map_frame(self) -> None:
+        """One frame on the map (one NES frame): the hero, fights, the NPCs and what the step leads to."""
         self._handle_player_movement()
         self.handle_battles()
         if not self.player.is_moving:
@@ -574,12 +599,11 @@ class Game:
         self.player.next_tile_id = self.calculation.get_next_tile_identifier(self.player.column, self.player.row,
                                                                              self.player.direction_value,
                                                                              self.current_map)
-        self.player.next_coordinates = get_next_coordinates(self.player.rect.x // self.tile_size,
-                                                            self.player.rect.y // self.tile_size,
-                                                            self.player.direction_value)
-        self.player.next_next_coordinates = get_next_coordinates(self.player.rect.x // self.tile_size,
-                                                                 self.player.rect.y // self.tile_size,
-                                                                 self.player.direction_value, offset_from_character=2)
+        self.player.next_coordinates = step(self.player.rect.y // self.tile_size, self.player.rect.x // self.tile_size,
+                                            self.player.direction_value)
+        self.player.next_next_coordinates = step(self.player.rect.y // self.tile_size,
+                                                 self.player.rect.x // self.tile_size, self.player.direction_value,
+                                                 offset=2)
         self.set_player_images_by_equipment()
         self.handle_environment_damage()
         self.handle_death()
@@ -612,9 +636,10 @@ class Game:
         frame the map is up, whether the hero is walking or standing.
         On the frame the hero has stood still for $31 frames, IdleUpdate (Bank03) opens the pop-up window, whose
         drawing calls DoSprites (WndCalcBufAddr, Bank01), then sets FrameCounter to $32 and calls DoSprites again, so
-        that frame has two."""
+        that frame has two. The drawer draws the window from then on, until the hero moves."""
         self.npc_schedule.count_frame()
         if self.idle_update and self.frame_counter == POP_UP_FRAME:
+            self.drawer.display_hovering_stats = True
             self.run_sprites()
             self.frame_counter = POP_UP_FRAME + 1
         self.idle_update = False
@@ -724,8 +749,6 @@ class Game:
             quit_if_requested(current_event)
             if current_event.type == KEYDOWN:
                 self.handle_keypresses(current_event)
-            elif current_event.type == arrow_fade:
-                self.show_arrow = not self.show_arrow
             elif current_event.type == VIDEORESIZE:
                 self._handle_window_resize(current_event)
 
@@ -884,39 +907,6 @@ class Game:
             self.battle_ctrl.battle_menu_row = 0
             self.battle_ctrl.battle_menu_column = 0
 
-    def battle(self, enemies_in_current_zone):
-        self.battle_ctrl.run_battle(enemies_in_current_zone)
-
-    def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
-        return self.battle_ctrl.handle_battle_prompts(run_away, current_battle)
-
-    def enemy_run_away(self, current_battle, enemy):
-        return self.battle_ctrl.enemy_run_away(current_battle, enemy)
-
-    def fight(self, current_battle):
-        self.battle_ctrl.fight(current_battle)
-
-    def hero_attack(self, current_battle):
-        self.battle_ctrl.hero_attack(current_battle)
-
-    def enemy_move(self, current_battle: Battle) -> bool:
-        return self.battle_ctrl.enemy_move(current_battle)
-
-    def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
-        self.battle_ctrl.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
-
-    def increment_and_execute_enemy_pattern(self, current_battle, current_index, enemy):
-        self.battle_ctrl.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
-
-    def enemy_attack(self, current_battle):
-        self.battle_ctrl.enemy_attack(current_battle)
-
-    def execute_enemy_attack(self, current_battle):
-        self.battle_ctrl.execute_enemy_attack(current_battle)
-
-    def enemy_attack_message(self, enemy):
-        self.battle_ctrl.enemy_attack_message(enemy)
-
     def receive_damage(self, attack_damage):
         # God mode or invulnerable: take no damage
         if self.player.god_mode or self.invulnerable:
@@ -969,7 +959,7 @@ class Game:
             self.music_player.load_and_play_music(self.directories.death_sfx, 1)
             self.game_state.enable_movement = False
             wait(self.calculation.convert_to_milliseconds(318), self.game_state.config)
-            event.clear()  # keys pressed during the death music are dropped
+            clear_events_keeping_quit()  # keys pressed during the death music are dropped (a window close isn't)
 
             # NES DeathText: the game then loops until JoypadBtns AND #$09, A or START (held or not)
             self.cmd_menu.show_text_in_dialog_box(self._("Thou art dead."), disable_sound=True,
@@ -1042,9 +1032,6 @@ class Game:
     def handle_warps(self):
         self.map_mgr.handle_warps()
 
-    def process_warp(self, staircase_dict):
-        self.map_mgr.process_warp(staircase_dict)
-
     def handle_keypresses(self, current_keydown_event):
         if self.paused:
             # NES GamePaused only reads START until the game is unpaused
@@ -1054,7 +1041,6 @@ class Game:
         # B does nothing on the map: in the COMMAND window it is read with the other buttons (CommandMenu.select_command)
         self.handle_a_button(current_keydown_event)
         self.handle_start_button(current_keydown_event)
-        self.handle_select_button(current_keydown_event)
         # TODO: Allow for zoom in and out if Ctrl + PLUS | MINUS is pressed (or scroll wheel is moved). (modernization)
         # if key[pg.K_LCTRL] and (key[pg.K_PLUS] or key[pg.K_KP_PLUS]):
         #     self.scale = self.scale + 1
@@ -1113,16 +1099,11 @@ class Game:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
                 self.cmd_menu.talk()
 
-    @staticmethod
-    def handle_select_button(keydown_event):
-        if keydown_event.key == K_u:
-            # Select button
-            pass
-
     @property
     def fps(self) -> int:
-        """Main loop frames per second: the NES's 60 times the game speed (src/waiting.py), so walking, NPC steps and
-        light changes, which all count main loop frames (frame_counter too), speed up with everything else."""
+        """The most frames per second the main loop draws: the NES's 60 times the game speed (src/waiting.py). Walking,
+        NPC steps and light changes count map frames (frame_counter too), which run at that rate even when drawing
+        can't keep up with it (run_due_frames), so they speed up with everything else."""
         return self.game_state.config["FPS"] * game_speed()
 
     def handle_fps_changes(self, keydown_event) -> None:
@@ -1203,23 +1184,14 @@ class Game:
 
     def process_staircase_warps(self, staircase_location: tuple, staircase_dict: dict) -> None:
         if (self.player.row, self.player.column) == staircase_location:
-            self.process_warp(staircase_dict)
+            self.map_mgr.process_warp(staircase_dict)
 
     def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: tuple | None = None,
                    direction: int | None = None, fade_out_first: bool = True) -> None:
         self.map_mgr.change_map(next_map, destination_coordinates, direction, fade_out_first=fade_out_first)
 
-    def set_underlying_tiles_on_map_change(self, destination_coordinates, initial_hero_location):
-        self.map_mgr.set_underlying_tiles_on_map_change(destination_coordinates, initial_hero_location)
-
-    def reset_initial_hero_location_tile(self):
-        self.map_mgr.reset_initial_hero_location_tile()
-
     def set_big_map(self):
         self.map_mgr.set_big_map()
-
-    def handle_player_direction_on_map_change(self, current_map_staircase_dict):
-        self.map_mgr.handle_player_direction_on_map_change(current_map_staircase_dict)
 
     def set_roaming_character_positions(self):
         self.map_mgr.set_roaming_character_positions()
@@ -1304,9 +1276,9 @@ class Game:
         map's roaming list) never make way."""
         if not self.config.get('NPCS_MAKE_WAY'):
             return
-        blocked_at = self.get_next_coordinates(self.player.column, self.player.row, self.player.direction_value)
+        blocked_at = step(self.player.row, self.player.column, self.player.direction_value)
         for roaming_character in self.current_map.roaming_characters:
-            if not roaming_character.is_moving and (roaming_character.column, roaming_character.row) == blocked_at:
+            if not roaming_character.is_moving and (roaming_character.row, roaming_character.column) == blocked_at:
                 self.npc_asked_to_make_way = roaming_character, self.player.direction_value
                 return
 
@@ -1347,10 +1319,10 @@ class Game:
                                                                                 self.current_map, offset=2)
         if character.step_destination is None:
             # Start of a step: check it once, then reserve the destination until the character arrives
+            destination = step(character.row, character.column, character.direction_value)
             if isinstance(character, RoamingCharacter):
                 # NES UpdateNPCs1: NPCs keep to the NES map and walk on fewer tiles, see src/npc_movement.py
-                blocked = not npc_may_step_onto(self.current_map,
-                                                step(character.row, character.column, character.direction_value))
+                blocked = not npc_may_step_onto(self.current_map, destination)
             else:
                 blocked = self.is_impassable(character.next_tile_id)
             if blocked or self.character_in_path(character) or (
@@ -1358,9 +1330,8 @@ class Game:
                 self.movement.bump_and_reset(character, character.next_tile_id, character.next_next_tile_id)
                 delta_x = delta_y = 0
             else:
-                character.step_origin = (character.column, character.row)
-                character.step_destination = self.get_next_coordinates(character.column, character.row,
-                                                                      character.direction_value)
+                character.step_origin = (character.row, character.column)
+                character.step_destination = destination
         if delta_x or delta_y:
             if delta_x:
                 character.rect.x += delta_x
@@ -1388,12 +1359,12 @@ class Game:
         """Whether the tile in front of a character is taken by someone else: where they stand, or the origin and
         destination of a step they're taking (NES: an NPC can't move onto the player's position or next position, or
         onto another NPC's)."""
-        next_coordinates = self.get_next_coordinates(character.column, character.row, character.direction_value)
+        next_coordinates = step(character.row, character.column, character.direction_value)
         others = [*self.current_map.fixed_characters, *self.current_map.roaming_characters, self.player]
         for other in others:
             if other is character:
                 continue
-            if next_coordinates in ((other.column, other.row), other.step_origin, other.step_destination):
+            if next_coordinates in ((other.row, other.column), other.step_origin, other.step_destination):
                 return True
         return False
 
@@ -1404,23 +1375,8 @@ class Game:
 
     def npc_crosses_cover_boundary(self, character: Player | RoamingCharacter) -> bool:
         """NES $B839-$B84F: an NPC can't step into or out of a covered area."""
-        next_coordinates = self.get_next_coordinates(character.column, character.row, character.direction_value)
-        if next_coordinates is None:
-            return False
-        next_column, next_row = next_coordinates
+        next_row, next_column = step(character.row, character.column, character.direction_value)
         return self.current_map.crosses_cover_boundary(character.row, character.column, next_row, next_column)
-
-    def get_next_coordinates(self, character_column: int, character_row: int, direction: int) -> tuple | None:
-        if character_row < len(self.current_map.layout) and character_column < len(self.current_map.layout[0]):
-            if direction == Direction.UP.value:
-                return character_column, character_row - 1
-            elif direction == Direction.DOWN.value:
-                return character_column, character_row + 1
-            elif direction == Direction.LEFT.value:
-                return character_column - 1, character_row
-            elif direction == Direction.RIGHT.value:
-                return character_column + 1, character_row
-        return None
 
     def is_impassable(self, tile: str) -> bool:
         """
@@ -1478,9 +1434,11 @@ class Game:
                 npc, hero_direction = self.npc_asked_to_make_way
                 if npc in roaming_characters and not npc.is_moving and self.make_way(npc, hero_direction):
                     making_way = npc
-            # Slots past the end are empty (NES: X and Y 0); they keep their place in the turns
-            deciding = [roaming_characters[slot] for slot in self.npc_schedule.slots_on_turn()
-                        if slot < len(roaming_characters) and not roaming_characters[slot].is_moving]
+            # Empty slots (NES: X and Y 0), past the end or of removed NPCs, keep their place in the turns
+            slots_on_turn = self.npc_schedule.slots_on_turn()
+            deciding = [roaming_character for index, roaming_character in enumerate(roaming_characters)
+                        if (index if roaming_character.slot is None else roaming_character.slot) in slots_on_turn
+                        and not roaming_character.is_moving]
         for roaming_character in roaming_characters:
             if roaming_character in deciding:
                 if roaming_character.turns_to_rest:

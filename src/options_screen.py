@@ -217,10 +217,11 @@ NPCS_MAKE_WAY_OPTIONS = OptionWindow(NPCS_MAKE_WAY_WINDOW, NPCS_MAKE_WAY_PROMPT,
                                      text_columns=NPCS_MAKE_WAY_TEXT_COLUMNS)
 
 
-def adventure_log_options(logs: Sequence[Tuple[int, str]]) -> OptionWindow:
-    """The used logs window (LogList*Dat2): one line per log, " ADVENTURE LOG n:" and 4 letters of the hero's name."""
+def adventure_log_options(logs: Sequence[Tuple[int, str]], _: Callable[[str], str] = str) -> OptionWindow:
+    """The used logs window (LogList*Dat2): one line per log, " ADVENTURE LOG n:" and 4 letters of the hero's name.
+    ``_`` translates the line (set_gettext_language); the hero's name is never translated."""
     window = variable_height_window(ADVENTURE_LOG_WINDOW_2, len(logs))
-    labels = [f'ADVENTURE LOG {slot}:{name[:LOG_NAME_LETTERS]}' for slot, name in logs]
+    labels = [_("ADVENTURE LOG {}:").format(slot) + name[:LOG_NAME_LETTERS] for slot, name in logs]
     return OptionWindow(window, (), labels, LOG_FIRST_ROW, LOG_TEXT_COLUMN, LOG_CURSOR_COLUMN)
 
 
@@ -261,13 +262,14 @@ class OptionsScreen:
         self.graphics = Graphics(config)
         self.directories = Directories(config)
         self.sound = Sound(config)
+        # The prompts and entries are translated (the NES font has no Korean: draw_text draws it in Unifont)
         self._ = set_gettext_language(config.get('LANGUAGE'))
         # windows on screen, bottom to top, each with the entry its cursor is on
         self.windows: List[Tuple[OptionWindow, int]] = []
 
     def choose_log(self, logs: Sequence[Tuple[int, str]]) -> int | None:
         """DoChngMsgSpeed -> ShowUsedLogs: the chosen log's number, or None for B."""
-        log_window = adventure_log_options(logs)
+        log_window = adventure_log_options(logs, self._)
         self.windows = [(log_window, 0)]
         index = self.select(0)
         return None if index is None else logs[index][0]
@@ -364,9 +366,9 @@ class OptionsScreen:
                                     border=ITEM_MENU_BORDER)
         draw = self.text_drawer(options.window)
         for column, row, text in options.prompt:
-            draw(text, column, row)
+            draw(self._(text), column, row)
         for entry, label in enumerate(options.labels):
-            draw(label, options.entry_text_column(entry), options.entry_row(entry))
+            draw(self._(label), options.entry_text_column(entry), options.entry_row(entry))
         if show_cursor and options.labels:
             nes_tile = self.config['TILE_SIZE'] // 2
             draw_cursor_tile(self.screen, (x * 2 + options.entry_cursor_column(index)) * nes_tile,

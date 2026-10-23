@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -8,14 +7,11 @@ from pygame import KEYDOWN, K_ESCAPE, K_RETURN
 from src.color import BLACK, LOW_HP_RED, WHITE, is_low_hp, window_color
 from src.config.test_config import test_config
 from src.cursor import IN_DOWN
-from src.game import Game
 from src.maps_functions import PAL0_COLOR1_LOW_HP
 from src.visual_effects import NES_PALETTE, NES_RED
 from src.maps import map_lookup
 from src.windows import SHOP_INVENTORY_WINDOW
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 class TestLowHPThreshold(TestCase):
@@ -56,8 +52,7 @@ class TestLowHPWindowColor(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.player = self.game.player
         self.player.name = "Edward"
         self.player.max_hp = 15
@@ -181,7 +176,7 @@ class TestLowHPWindowColor(TestCase):
         for hp, color in ((15, WHITE), (4, LOW_HP_RED)):
             self.set_hp(hp)
             pygame.event.post(pygame.event.Event(KEYDOWN, key=K_RETURN))
-            with patch('src.menu.draw_window') as draw_window, patch('src.menu.display'), \
+            with patch('src.translated_window.draw_window') as draw_window, patch('src.menu.display'), \
                     patch.dict(self.game.game_state.config, NO_BLIT=False):
                 self.cmd_menu.prompt_yes_no()
             # The border, the text and the cursor are all in the window color (see tests/test_generated_windows.py)
@@ -203,7 +198,7 @@ class TestLowHPWindowColor(TestCase):
         battle_ctrl = self.game.battle_ctrl
         for hp, color in ((15, WHITE), (4, LOW_HP_RED)):
             self.set_hp(hp)
-            with patch('src.battle_controller.draw_window') as draw_window, \
+            with patch('src.translated_window.draw_window') as draw_window, \
                     patch('src.battle_controller.display'), \
                     patch('src.battle_controller.event.get', return_value=[]), \
                     patch.dict(self.game.game_state.config, NO_BLIT=False):

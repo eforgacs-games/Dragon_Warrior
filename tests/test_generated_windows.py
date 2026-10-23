@@ -5,20 +5,18 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
 
-import pygame  # noqa: E402
-
-from src.color import RED, WHITE  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.directories import Directories  # noqa: E402
-from src.cursor import CURSOR_TILE  # noqa: E402
-from src import window_renderer  # noqa: E402
-from src.window_renderer import (TL_TOP1, TL_TOP2, glyph_tile, render_window, window_tiles)  # noqa: E402
-from src.windows import (COMBAT_COMMAND_LAYOUT, DIALOG_LAYOUT, POPUP_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT, Window,  # noqa: E402
+from src.color import RED, WHITE
+from src.config.test_config import test_config
+from src.directories import Directories
+from src.cursor import CURSOR_TILE
+from src import window_renderer
+from src.window_renderer import (TL_TOP1, TL_TOP2, glyph_tile, render_window, window_tiles)
+from src.windows import (COMBAT_COMMAND_LAYOUT, DIALOG_LAYOUT, POPUP_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT, Window,
                          WindowLayout, WindowText, item_menu_layout)
-from tests.nes_screen_diff import compare_with_screenshot, count_differing_pixels, load_screenshot  # noqa: E402
+from tests.nes_screen_diff import compare_with_screenshot, count_differing_pixels, load_screenshot
+from tests.helpers import new_game
 
 SCALES = (1, 2, 3)
 DIFF_DIR = os.path.join(tempfile.gettempdir(), 'dragon_warrior_screen_diffs')
@@ -77,6 +75,7 @@ class TestBattleCommandWindow(TestCase):
         game = MagicMock()
         game.game_state.config = config
         game.screen = pygame.Surface((16 * tile_size, 15 * tile_size))
+        game._ = lambda text: text  # English: generated in the NES font
         controller = BattleController(game)
         area = pygame.Rect(6 * tile_size, 1 * tile_size, 8 * tile_size, 3 * tile_size)
         for color in (WHITE, RED):
@@ -159,10 +158,8 @@ class TestMiscellaneousWindowsDrawnByTheGame(TestCase):
         pygame.quit()
 
     def setUp(self):
-        from src.game import Game
         config = dict(test_config, NO_WAIT=True, RENDER_TEXT=False, NO_BLIT=True)
-        with patch('src.game.SCALED'):
-            self.game = Game(config)
+        self.game = new_game(config)
         self.config = self.game.game_state.config
         self.cmd_menu = self.game.cmd_menu
         self.tile_size = self.config['TILE_SIZE']

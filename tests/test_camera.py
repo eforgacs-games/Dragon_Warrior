@@ -1,12 +1,7 @@
-import os
 from unittest import TestCase
-from unittest.mock import patch
 
 from src.config.test_config import test_config
-from src.game import Game
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 class TestCamera(TestCase):
@@ -14,8 +9,7 @@ class TestCamera(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.camera_pos = 0, 0
         self.center_pt = 0, 0
 
