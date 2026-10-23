@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase, mock
 from unittest.mock import MagicMock
 
@@ -6,9 +5,6 @@ import pygame
 
 from src.config.test_config import test_config
 from src.movement import Movement
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestSound(TestCase):

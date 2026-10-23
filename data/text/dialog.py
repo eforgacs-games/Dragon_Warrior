@@ -1,9 +1,10 @@
-from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event
+from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_y, K_n, event
 from pygame.event import get
 
+from src.common import accept_keys, reject_keys
 from src.cursor import BlinkingCursor
 from src.waiting import quit_if_requested, wait
-from src.window_renderer import draw_window
+from src.translated_window import draw_translated_window
 from src.windows import YES_NO_LAYOUT, YES_NO_WINDOW
 
 
@@ -17,7 +18,7 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         command_menu.show_line_in_dialog_box(prompt_line, skip_text=True, hide_arrow=True, letter_by_letter=True)
         command_menu.window_drop_down_effect(*YES_NO_WINDOW)
         # The window without its cursor, until the selection starts below (generated: src/window_renderer.py)
-        display.update(draw_window(command_menu.screen, YES_NO_LAYOUT, color, config))
+        display.update(draw_translated_window(command_menu.screen, YES_NO_LAYOUT, color, config, command_menu._))
         # for some reason it needs this wait() call to actually play the sound
         wait(300, config)
         sound.play_sound(directories.confirmation_sfx)
@@ -27,10 +28,12 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         if current_event.key in (K_DOWN, K_UP, K_w, K_s):
             cursor.restart()  # WndUpdateCrsrPos
             return not blinking_yes
-        elif (blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'y':
+        # Matched by key, not by the typed character, so Caps Lock doesn't matter. A (or Y) answers with the entry
+        # under the cursor or YES; B, Escape included, is NO (WndBPressed), as in CommandMenu.prompt_yes_no.
+        elif (blinking_yes and current_event.key in accept_keys) or current_event.key == K_y:
             finalize_choice(True, yes_path_function)
             blinking = False
-        elif (not blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode in ('n', 'j'):
+        elif (not blinking_yes and current_event.key in accept_keys) or current_event.key in (K_n, *reject_keys):
             finalize_choice(False, no_path_function)
             blinking = False
         return blinking_yes

@@ -1,4 +1,3 @@
-import os
 import random
 import unittest
 from collections import Counter
@@ -13,11 +12,8 @@ from src.encounters import (
     nes_coordinates, overworld_zone, passes_zone_zero_check, pick_enemy, roll_encounter, step_starts_fight,
 )
 from src.enemy_lookup import enemy_string_lookup
-from src.game import Game
 from src.maps import map_lookup
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 # The NES data, copied byte for byte from Bank03 of the nmikstas disassembly.
 
@@ -289,7 +285,6 @@ class TestPickEnemy(unittest.TestCase):
             self.assertAlmostEqual(counts[name] / trials, 1 / 5, delta=0.02)
 
 
-
 class TestHandleBattles(unittest.TestCase):
     """Game.handle_battles checks the block the player has just stepped onto, once per step."""
 
@@ -306,8 +301,7 @@ class TestHandleBattles(unittest.TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.addCleanup(patch.stopall)
         self.config = patch.dict(self.game.game_state.config, FORCE_BATTLE=False, NO_BATTLES=False)
         self.config.start()

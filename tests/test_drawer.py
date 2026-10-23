@@ -1,9 +1,5 @@
-import os
 import unittest
 from unittest.mock import MagicMock, patch
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 from src.config.test_config import test_config

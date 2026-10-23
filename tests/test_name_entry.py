@@ -5,19 +5,16 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
+from pygame import K_BACKSPACE, K_DOWN, K_ESCAPE, K_RETURN, K_RIGHT, K_TAB, K_UP, K_LEFT, K_j, K_k, KEYDOWN
 
-import pygame  # noqa: E402
-from pygame import K_BACKSPACE, K_DOWN, K_RETURN, K_RIGHT, K_TAB, K_UP, K_LEFT, K_j, K_k, KEYDOWN  # noqa: E402
-
-from src.color import RED, WHITE  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.directories import Directories  # noqa: E402
-from src.menu_functions import NameSelection  # noqa: E402
-from src.name_entry import BACK, END, NameEntry, render_name_entry_screen  # noqa: E402
-from src.windows import ALPHABET_COLUMNS, ALPHABET_ROWS  # noqa: E402
-from tests.nes_screen_diff import compare_with_screenshot  # noqa: E402
+from src.color import RED, WHITE
+from src.config.test_config import test_config
+from src.directories import Directories
+from src.menu_functions import NameSelection
+from src.name_entry import BACK, END, NameEntry, render_name_entry_screen
+from src.windows import ALPHABET_COLUMNS, ALPHABET_ROWS
+from tests.nes_screen_diff import compare_with_screenshot
 
 SCALES = (1, 2, 3)
 DIFF_DIR = os.path.join(tempfile.gettempdir(), 'dragon_warrior_screen_diffs')
@@ -286,3 +283,18 @@ class TestSelectName(TestCase):
         events += [key_event(K_k)]
         with patch('src.menu_functions.toggle_joystick_input', return_value=True):
             self.assertEqual('AM', self.select_name(events))
+
+    def test_escape_while_typing_leaves_the_name_entry(self):
+        self.assertIsNone(self.select_name([key_event(pygame.K_e, 'E'), key_event(K_ESCAPE, '\x1b')]))
+
+    def test_escape_with_joystick_input_leaves_the_name_entry(self):
+        # Escape is not the B button here (it would only delete the A): the name entry is left
+        with patch('src.menu_functions.toggle_joystick_input', return_value=True):
+            self.assertIsNone(self.select_name([key_event(K_TAB), key_event(K_k), key_event(K_ESCAPE, '\x1b')]))
+
+    def test_j_with_joystick_input_still_goes_back_one_character(self):
+        # A on A, A on A, B (J): back one character, then right and A on B, then down 5 and right 8 to END, A
+        events = [key_event(K_TAB), key_event(K_k), key_event(K_k), key_event(K_j), key_event(K_RIGHT), key_event(K_k)]
+        events += [key_event(K_DOWN)] * 5 + [key_event(K_RIGHT)] * 8 + [key_event(K_k)]
+        with patch('src.menu_functions.toggle_joystick_input', return_value=True):
+            self.assertEqual('AB', self.select_name(events))
