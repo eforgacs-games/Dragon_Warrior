@@ -188,8 +188,8 @@ class Battle:
         return player_hit_damage(player.attack_power, enemy.defense)
 
     def battle_spell(self, cmd_menu: CommandMenu, player: Player, current_battle):
-        """Handle casting a spell in battle."""
-        self.sound.play_sound(self.directories.menu_button_sfx)
+        """Handle casting a spell in battle. The menu sound was played as SPELL was chosen (WndAPressed, in
+        BattleController.process_command_input); the spell window plays it again when a spell is chosen."""
         if not player.spells:
             cmd_menu.show_line_in_dialog_box(self._("{} cannot yet use the spell.").format(player.name),
                                              skip_text=cmd_menu.skip_text, add_quotes=False, hide_arrow=True,
