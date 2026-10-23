@@ -12,7 +12,7 @@ The script is a comma-separated list of steps, run in order on the game clock (6
 Each step is followed by a gap of frames before the next.
 """
 import time
-from typing import Callable
+from collections.abc import Callable
 from unittest.mock import patch
 
 import pygame

@@ -33,8 +33,8 @@ import tempfile
 import time
 from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Callable, Iterator
+from datetime import datetime, UTC
+from collections.abc import Callable, Iterator
 from unittest.mock import patch
 
 os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
@@ -177,7 +177,7 @@ def scene_config(scene: Scene, save_dir: str) -> dict:
 def scene_save(scene: Scene) -> dict:
     """The throne_room checkpoint, moved to the scene's map (load_game starts at the map's own start for no row)."""
     save = read_checkpoint('throne_room')
-    row, column = scene.position if scene.position else (None, None)
+    row, column = scene.position or (None, None)
     save.update(CurrentMap=scene.map_name, PlayerRow=row, PlayerColumn=column)
     return save
 
@@ -317,7 +317,7 @@ def git_commit() -> str:
 
 
 def run_metadata(args) -> dict:
-    return {'commit': git_commit(), 'date': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+    return {'commit': git_commit(), 'date': datetime.now(UTC).isoformat(timespec='seconds'),
             'python': platform.python_version(), 'pygame': pygame.version.ver, 'machine': platform.machine(),
             'processor': platform.processor() or platform.machine(), 'frames': args.frames, 'seed': args.seed,
             'repeat': args.repeat}
