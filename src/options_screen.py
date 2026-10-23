@@ -249,12 +249,14 @@ def yes_no_options(_: Callable[[str], str]) -> OptionWindow:
 
 
 class OptionsScreen:
-    """Draws the title menu's windows over a background (the title menu screenshot, or black) and runs their cursors.
+    """Draws the title menu's windows over a background (the title menu window, or black) and runs their cursors.
 
     Each window keeps its cursor: the one being chosen from blinks like every NES window cursor (src/cursor.py), the
     others hold theirs on their choice, as the NES leaves a chosen entry's arrow on behind the windows it opens."""
 
-    def __init__(self, screen: Surface, config: dict, background: str | None = None):
+    def __init__(self, screen: Surface, config: dict, background: Callable[[Surface], None] | None = None):
+        """``background`` draws what the windows open over (the title menu, TitleMenu.title_menu_background); without
+        it they open on black."""
         self.screen = screen
         self.config = config
         self.background = background
@@ -331,11 +333,9 @@ class OptionsScreen:
         """The background, then each window with its text and cursor; only the active window's cursor blinks."""
         if self.config['NO_BLIT']:
             return
-        if self.background is None:
-            self.screen.fill(BLACK)
-        else:
-            size = (self.screen.get_width(), self.screen.get_height())
-            self.screen.blit(self.graphics.get_scaled_image(self.background, size), (0, 0))
+        self.screen.fill(BLACK)
+        if self.background is not None:
+            self.background(self.screen)
         for window_index, (options, index) in enumerate(self.windows):
             self.draw_window(options, index, show_cursor=window_index != active or cursor_visible)
         display.update(Rect(0, 0, self.screen.get_width(), self.screen.get_height()))

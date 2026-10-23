@@ -1,6 +1,8 @@
 """The title screen's windows (src/title_windows.py) against the 18 NES screenshots they replace, 0 differing pixels at
-every scale (see tests/nes_screen_diff.py), and in Korean."""
+every scale (see tests/nes_screen_diff.py), in Korean, and the title menu as TitleMenu runs it: CONTINUE A QUEST with
+one log shows its hero's name (ShowUsedLogs)."""
 import builtins
+import json
 import os
 import tempfile
 from unittest import TestCase
@@ -13,12 +15,14 @@ from src.color import BLACK, WHITE
 from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.directories import Directories
+from src.title_menu import BACK_TO_TITLE_MENU
 from src.title_windows import TitleWindow, draw_title_windows, title_menu_layout, title_translate
 from src.window_renderer import NES_TILE, glyph_tile, tile_surface
 from src.windows import (ADVENTURE_LOG_123_LAYOUT, ADVENTURE_LOG_WINDOW_1, ADVENTURE_LOG_WINDOW_2,
                          CONTINUE_CHANGE_ERASE_LAYOUT, FULL_MENU_LAYOUT, NEW_QUEST_LAYOUT, open_logs_layout,
                          used_logs_layout)
 from tests.nes_screen_diff import compare_with_screenshot, count_differing_pixels, load_screenshot
+from tests.test_options_screen import B, OptionsTestCase, presses
 
 SCALES = (1, 2, 3)
 DIFF_DIR = os.path.join(tempfile.gettempdir(), 'dragon_warrior_screen_diffs')
@@ -177,3 +181,50 @@ class TestKoreanTitleWindows(TestCase):
         with patch('src.translated_window.draw_text') as draw_text:
             title_screen([(used_logs_layout(((1, '용사'),)), 0, True)], 2, english)
         self.assertEqual(['ADVENTURE LOG 1:용사  '], [call.args[0] for call in draw_text.call_args_list])
+
+
+class TestTitleMenuFlow(OptionsTestCase):
+    """The windows the title menu opens, as TitleMenu runs them, with saves in a temporary folder."""
+
+    def setUp(self):
+        super().setUp()
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp_dir.cleanup)
+        self.game.directories.save_dir = self.tmp_dir.name
+
+    def write_saves(self, slots):
+        for slot in (1, 2, 3):
+            path = os.path.join(self.tmp_dir.name, f'save_slot_{slot}.json')
+            if slot in slots:
+                with open(path, 'w') as save_file:
+                    json.dump({'Name': f'Hero{slot}', 'Experience': 0}, save_file)
+            elif os.path.exists(path):
+                os.remove(path)
+
+    def test_continue_with_one_log_shows_its_hero(self):
+        # Log 3 only: LogList3Dat2 with its hero's name, over FullMenuDat with the arrow held on CONTINUE A QUEST
+        self.write_saves((3,))
+        self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
+        with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0) as selection, \
+                patch.object(self.game, 'load_game') as load_game:
+            self.game.title_menu.continue_quest()
+        self.assertEqual(used_logs_layout(((3, 'Hero3'),)), selection.call_args.args[2])
+        self.assertEqual([(FULL_MENU_LAYOUT, 0)], selection.call_args.kwargs['below'])
+        self.assertEqual('Hero3', load_game.call_args.args[0]['Name'])
+        self.assertEqual(3, self.game.player.adventure_log)
+
+    def test_b_in_the_one_log_window_goes_back(self):
+        self.write_saves((2,))
+        self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
+        with patch('src.selection.event.get', side_effect=presses(B)), \
+                patch.object(self.game, 'load_game') as load_game:
+            self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.continue_quest())
+        load_game.assert_not_called()
+
+    def test_the_windows_over_the_title_menu_keep_its_arrow(self):
+        # CHANGE MESSAGE SPEED's log window opens over FullMenuDat, its arrow on CHANGE MESSAGE SPEED
+        self.write_saves((1,))
+        self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
+        with patch('src.title_menu.draw_title_windows') as draw:
+            self.game.title_menu.title_menu_background(1)(self.game.screen)
+        self.assertEqual([(FULL_MENU_LAYOUT, 1, True)], draw.call_args.args[1])
