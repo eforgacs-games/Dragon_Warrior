@@ -15,7 +15,7 @@ from pygame import KEYDOWN, display, event, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
-from src.common import ANY_BUTTON_KEYS, BLACK, accept_keys, reject_keys
+from src.common import ANY_BUTTON_KEYS, accept_keys, reject_keys
 from src.cursor import BlinkingCursor
 from src.waiting import quit_if_requested, wait
 from src.constants import (
@@ -232,11 +232,6 @@ class BattleController:
             outcome = BattleOutcome.DEFEAT
         else:
             outcome = BattleOutcome.ESCAPED
-            if current_battle.enemy.name == 'Dragonlord 2':
-                # NES RunSuccessful: running from the final form blacks out the screen and reloads the map
-                # (MapChngNoSound). The Dragonlord is still alive, so he is back on his throne.
-                self.screen.fill(BLACK)
-                display.flip()
         self.cmd_menu.current_battle = None
         if outcome == BattleOutcome.ESCAPED:
             # The one place an escape (the hero ran or the enemy fled) resumes the map's music (ResumeMusicTbl). After
@@ -245,9 +240,20 @@ class BattleController:
             # Ending.final_boss_defeated's change of map, which starts the overworld music: starting it again here
             # would restart it. A defeat goes on to the death music (Game.handle_death).
             self.music_player.load_and_play_music(self.current_map.music_file_path)
+            if current_battle.enemy.name == 'Dragonlord 2':
+                self.reload_map_after_running_from_final_form()
         if outcome == BattleOutcome.ESCAPED and self.player_ran_away:
             self.step_back_after_running()
         return outcome
+
+    def reload_map_after_running_from_final_form(self) -> None:
+        """NES RunSuccessful (LE8B2-LE8D1): after running from the Dragonlord's final form, BlackPal is loaded at once,
+        so the screen cuts to black with no fade out, then MapChngNoSound (Bank00, LB091) reloads the map and fades it
+        in (PalFadeIn). The Dragonlord is still alive, so he is back on his throne."""
+        tile_size = self.game.tile_size
+        coordinates = self.player.rect.y // tile_size, self.player.rect.x // tile_size
+        self.game.change_map(map_lookup[self.current_map.identifier](self.config), destination_coordinates=coordinates,
+                             direction=self.player.direction_value, fade_out_first=False)
 
     def step_back_after_running(self) -> None:
         """NES RunSuccessful (ChkMapHauksness, ChkMapSwampCave, ChkMapOverworld): after running from a guardian, the
