@@ -1,8 +1,11 @@
+import copy
+import pickle
 import unittest
 
 from unittest.mock import patch
 
-from src.items import weapons, armor, shields, treasure, roll_treasure_gold, TreasureChestHistory
+from src.items import weapons, armor, shields, treasure, roll_treasure_gold, Inventory, TreasureChestHistory, \
+    inventory_list
 from src.map_layouts import MapLayouts, TREASURE_BOX, BRICK
 from src.maps import map_lookup
 
@@ -304,3 +307,56 @@ class TestTreasureChestHistory(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestInventorySlots(unittest.TestCase):
+    """NES AddInvItem (Bank03, LE01B) fills the first empty slot and RemoveInvItem (LE04B) empties the item's slot, so
+    CreateInvList's lists keep the slot order."""
+
+    def test_add_goes_after_the_last_item(self):
+        inventory = Inventory(['Torch', 'Wings'])
+        inventory.append('Fairy Water')
+        self.assertEqual(inventory, ['Torch', 'Wings', 'Fairy Water'])
+
+    def test_remove_leaves_the_slot_empty_for_the_next_item(self):
+        inventory = Inventory(['Torch', 'Wings', 'Fairy Water'])
+        inventory.remove('Torch')
+        self.assertEqual(inventory, ['Wings', 'Fairy Water'])
+        self.assertEqual(inventory.with_empty_slots(), [None, 'Wings', 'Fairy Water'])
+        inventory.append('Silver Harp')
+        self.assertEqual(inventory, ['Silver Harp', 'Wings', 'Fairy Water'])
+        inventory.append('Dragon\'s Scale')
+        self.assertEqual(inventory, ['Silver Harp', 'Wings', 'Fairy Water', "Dragon's Scale"])
+
+    def test_first_empty_slot_is_filled_first(self):
+        inventory = Inventory(['Torch', 'Wings', 'Fairy Water', 'Torch'])
+        inventory.remove('Fairy Water')
+        inventory.remove('Torch')  # the first Torch's slot
+        inventory.append('Silver Harp')
+        inventory.append('Fighter\'s Ring')
+        self.assertEqual(inventory, ['Silver Harp', 'Wings', "Fighter's Ring", 'Torch'])
+
+    def test_herbs_and_keys_take_no_slot(self):
+        inventory = Inventory(['Torch', 'Wings'])
+        inventory.remove('Torch')
+        inventory.append('Herb')
+        inventory.append('Magic Key')
+        self.assertEqual(inventory_list(inventory), ['Herb', 'Magic Key', 'Wings'])
+        inventory.append('Silver Harp')
+        self.assertEqual(inventory_list(inventory), ['Herb', 'Magic Key', 'Silver Harp', 'Wings'])
+
+    def test_copies_keep_the_empty_slots(self):
+        inventory = Inventory(['Torch', 'Wings'])
+        inventory.remove('Torch')
+        for copied in (copy.copy(inventory), copy.deepcopy(inventory), pickle.loads(pickle.dumps(inventory))):
+            self.assertEqual(copied.with_empty_slots(), [None, 'Wings'])
+
+    def test_the_hero_always_has_an_inventory(self):
+        from src.player.player import Player
+        player = Player.__new__(Player)
+        player.inventory = ['Torch', None, 'Wings']
+        self.assertIsInstance(player.inventory, Inventory)
+        self.assertEqual(player.inventory, ['Torch', 'Wings'])
+        player.inventory.append('Herb')
+        player.inventory.append('Silver Harp')
+        self.assertEqual(inventory_list(player.inventory), ['Herb', 'Torch', 'Silver Harp', 'Wings'])

@@ -54,7 +54,7 @@ class SaveFile:
     name: str
     experience: int
     gold: int
-    inventory: list[str]
+    inventory: list[str | None]  # in NES slot order, None for an emptied slot (Inventory.with_empty_slots)
     current_hp: int | None = None
     current_mp: int | None = None
     weapon: str = ''
@@ -74,7 +74,8 @@ class SaveFile:
     @classmethod
     def from_game(cls, player: Any, current_map: str, story_flags: StoryFlags, options: Options) -> 'SaveFile':
         """What CommandMenu.save keeps of the running game."""
-        return cls(name=player.name, experience=player.total_experience, gold=player.gold, inventory=player.inventory,
+        return cls(name=player.name, experience=player.total_experience, gold=player.gold,
+                   inventory=player.inventory.with_empty_slots(),
                    current_hp=player.current_hp, current_mp=player.current_mp, weapon=player.weapon,
                    armor=player.armor, shield=player.shield, wearing_dragon_scale=player.wearing_dragon_scale,
                    wearing_fighters_ring=player.wearing_fighters_ring,

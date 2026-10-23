@@ -418,7 +418,28 @@ class TestGame(TestCase):
         with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
             for _ in range(steps):
                 self.game.count_step()
+                self.game.tick_repel_timer_after_step()
         return [c.args[0] for c in show_text.call_args_list]
+
+    def test_repel_protects_the_127th_steps_fight_roll(self):
+        # NES CheckRepelTimer (LCA6C) is at the top of GameEngineLoop, after ChkSpecialLoc rolled the step's fight, so
+        # the roll for the step that brings 255 down to 1 still sees the timer running, and the message comes after
+        rolls, messages = [], []
+
+        def roll():
+            rolls.append(self.game.repel_timer)
+
+        self.game.repel_timer = 255
+        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.count_step), \
+                patch.object(self.game, 'handle_battles', side_effect=roll), \
+                patch.object(self.game, '_handle_map_updates'), patch.object(self.game, '_handle_post_move_checks'), \
+                patch.object(self.game.cmd_menu, 'show_text_in_dialog_box',
+                             side_effect=lambda text, **_: messages.append((len(rolls), text))):
+            for _ in range(128):
+                self.game.map_frame()
+        self.assertTrue(all(rolls[:127]))
+        self.assertEqual(rolls[127], 0)
+        self.assertEqual(messages, [(127, 'REPEL has lost its effect.')])
 
     def test_repel_lasts_127_steps(self):
         self.game.repel_timer = 255

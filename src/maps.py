@@ -208,7 +208,8 @@ class DragonWarriorMap:
     def is_step_warp(self, row: int, column: int) -> bool:
         """Whether the NES changes maps on the step onto this layout (row, column) itself: off the map's edge
         (is_map_exit, CheckMapExit) or onto a town, cave or castle block (CheckBlockDmg -> CalcNextMap, LCDB4).
-        Stairs are only taken by the STAIRS command (CheckStairs)."""
+        Stairs, the overworld shrine stairs (GRASS_STAIR_DOWN, BLK_STAIR_DN) among them, are only taken by the STAIRS
+        command (CheckStairs), or with STAIRS set to STEP ON by stepping onto them (MapManager.handle_warps)."""
         if self.is_map_exit(row, column):
             return True
         if 0 <= row < len(self.layout) and 0 <= column < len(self.layout[0]):

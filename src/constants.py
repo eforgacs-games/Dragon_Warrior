@@ -77,6 +77,9 @@ ENDING_TRIGGER_COORDINATES = ((15, 17), (15, 18))
 ENDING_GWAELIN_STAIRS = (14, 14)  # NES GwaelinXPos $C7 / GwaelinYPos $27: (7, 7), the throne room stairs
 ENDING_GWAELIN_BESIDE_KING = (14, 17)  # NES $CA / $47: (10, 7), next to King Lorik at (11, 7)
 
+# NES LVL_30: the highest level
+MAX_LEVEL = 30
+
 # NES RepelTimer: REPEL sets it to 255 and Fairy Water to 254; it drops by 2 per step (127 steps either way)
 REPEL_SPELL_TIMER = 255
 FAIRY_WATER_TIMER = 254

@@ -189,8 +189,14 @@ class TestFightChance(unittest.TestCase):
                 self.assertEqual(self.chance(tile, 0, 1), 1 / 16)
                 self.assertEqual(self.chance(tile, 1, 0), 1 / 16)
 
+    def test_overworld_shrine_stairs_get_the_stairs_fight_roll(self):
+        # NES WrldBlkConvTbl index $0C: the overworld "S" block is BLK_STAIR_DN, which CheckBlockDmg sends to the fight
+        # checks (ChkFight6), not CalcNextMap
+        self.assertEqual(self.chance('GRASS_STAIR_DOWN', 0, 0), 1 / 32)
+        self.assertEqual(self.chance('GRASS_STAIR_DOWN', 0, 1), 1 / 16)
+
     def test_map_changing_blocks_never_start_fights(self):
-        for tile in ('TOWN', 'CASTLE', 'CAVE', 'GRASS_STAIR_DOWN'):
+        for tile in ('TOWN', 'CASTLE', 'CAVE'):
             with self.subTest(tile=tile):
                 self.assertIsNone(fight_mask(tile, 0, 0))
                 self.assertFalse(any(step_starts_fight('Alefgard', tile, 20, 20) for _ in range(200)))

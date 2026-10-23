@@ -1,10 +1,11 @@
+from collections.abc import Iterable
 from typing import cast
 
 from pygame import Surface
 
 from src.calculation import Calculation
 from src.direction import Direction
-from src.items import weapons, armor, shields
+from src.items import Inventory, weapons, armor, shields
 from src.maps import DragonWarriorMap
 from src.player.player_stats import get_level_by_experience, get_stats_for_level, levels_list
 from src.sprites.animated_sprite import AnimatedSprite
@@ -78,7 +79,7 @@ class Player(AnimatedSprite):
         self.level = self.get_level_by_experience()
 
         self.spells: list[str] = []
-        self.inventory: list[str] = []
+        self.inventory = []  # an Inventory, in NES slot order (see the inventory property)
         self.god_mode = god_mode
         if god_mode:
             self.total_experience = 65536
@@ -133,6 +134,16 @@ class Player(AnimatedSprite):
             self.inventory.remove("Cursed Belt")
         self.wearing_cursed_belt = False
         self.wearing_death_necklace = False
+
+    @property
+    def inventory(self) -> Inventory:
+        """The hero's items in NES slot order: adding fills the first empty slot, removing leaves its slot empty
+        (Inventory, NES AddInvItem/RemoveInvItem)."""
+        return self._inventory
+
+    @inventory.setter
+    def inventory(self, items: Iterable[str | None]) -> None:
+        self._inventory = items if isinstance(items, Inventory) else Inventory(items)
 
     def get_points_to_next_level(self) -> int:
         """GetExpRemaining (LF134): the next level's LevelUpTbl entry minus the experience. 0 at level 30."""
