@@ -13,7 +13,7 @@ from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, Graphics, set_gettext_language
 from src.command_window import WND_ABORT, CommandWindow
-from src.cursor import DialogArrowBlink, draw_cursor_tile
+from src.cursor import IN_A, DialogArrowBlink, draw_cursor_tile
 from src.waiting import is_any_key_held, wait
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
@@ -1062,7 +1062,6 @@ class CommandMenu:
         Talk to an NPC.
         :return: None
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         # dialog = Dialog(player=self.player)
 
         # for now, implementing using print statements. will be useful for debugging as well.
@@ -1100,7 +1099,6 @@ class CommandMenu:
         Display the current player's status.
         :return: None
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         show_status = True
         x, y, width, height = STATUS_WINDOW
         self.window_drop_down_effect(x, y, width, height)
@@ -1166,7 +1164,6 @@ class CommandMenu:
         Go up or down a staircase.
         :return: None
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         # this might be something we could turn off as one of the "modernization" updates
         if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN'):
             self.game.process_staircase_warps(staircase_location=(self.game.player.row, self.game.player.column),
@@ -1183,7 +1180,6 @@ class CommandMenu:
         Search the ground for items.
         :return: None
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         # open a window
         text_to_print = [self._("{} searched the ground all about.").format(self.player.name), ]
         # wait for input...
@@ -1247,7 +1243,6 @@ class CommandMenu:
         """
         Cast a magic spell.
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         # the implementation of this will vary upon which spell is being cast.
         if not self.player.spells:
             self.show_text_in_dialog_box(self._("{} cannot yet use the spell.").format(self.player.name),
@@ -1262,7 +1257,6 @@ class CommandMenu:
         View/use items. (Not yet implemented)
         :return: To be determined upon implementation
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         # the implementation of this will vary upon which item is being used.
         if not self.player.inventory:
             self.show_text_in_dialog_box(self._("Nothing of use has yet been given to thee."), skip_text=self.skip_text)
@@ -1333,8 +1327,10 @@ class CommandMenu:
                                     item_menu_entry_tile_row(menu_name, index), cursor_visible)
             display.update(window_rect)
 
-        # Up and down stop at the first and last entries; A chooses, B closes the window (src/selection.py)
-        answer = run_selection(draw, 0, move=stop_at_edges(len(entries)))
+        # Up and down stop at the first and last entries; A chooses, with the menu button sound (WndAPressed), B
+        # closes the window (src/selection.py)
+        answer = run_selection(draw, 0, move=stop_at_edges(len(entries)), sound=self.play_menu_button_sound,
+                               sound_buttons=(IN_A,))
         currently_selected_item = entries[answer.entry]
         if not answer.accepted:
             if self.current_battle is not None:
@@ -1422,16 +1418,22 @@ class CommandMenu:
 
     def choose_command(self, command: Callable[[], Any]) -> None:
         """A COMMAND entry was chosen (WndAPressed): its arrow is drawn and stays on, not blinking, while the
-        command runs and the windows it opens are in front of the COMMAND window."""
+        command runs and the windows it opens are in front of the COMMAND window. WndAPressed then plays the menu
+        button sound (SFX_MENU_BTN) for every entry, before NCCmdSelected runs the command."""
         self.cursor.hold()
         if not self.game.game_state.config['NO_BLIT']:
             display.update(self.draw_command_window())
+        self.play_menu_button_sound()
         try:
             command()
         finally:
             # If the COMMAND window is still open, it is selecting again, its cursor blinking from the start
             # (WndUpdateCrsrPos)
             self.menu.buttons.moved()
+
+    def play_menu_button_sound(self) -> None:
+        """SFX_MENU_BTN: what WndAPressed plays when an entry of a selection window is chosen."""
+        self.sound.play_sound(self.directories.menu_button_sfx)
 
     def draw_window_cursor(self, window_x: int, window_y: int, column: int, row: int, visible: bool = True) -> Rect:
         """
@@ -1524,7 +1526,6 @@ class CommandMenu:
         Open a door.
         :return: None
         """
-        self.sound.play_sound(self.directories.menu_button_sfx)
         if self.player.next_tile_id == 'DOOR':
             if 'Magic Key' in self.player.inventory:
                 # actually open the door
@@ -1550,7 +1551,6 @@ class CommandMenu:
             self.show_text_in_dialog_box(self._("There is nothing to take here, {}.").format(self.player.name),
                                          skip_text=self.skip_text)
         else:
-            self.sound.play_sound(self.directories.menu_button_sfx)
             self.take_chest_contents(str(chest['item']), chest)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
