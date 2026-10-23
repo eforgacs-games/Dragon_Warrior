@@ -13,6 +13,7 @@ from src.directories import Directories
 from src.map_layouts import MapLayouts
 from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point, \
     covered_cells, low_hp_tile_image
+from src.npcs import GWAELIN_RESCUE, NPC
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
 from src.sprites.fixed_character import FixedCharacter
@@ -34,12 +35,18 @@ LOW_HP_PALETTE_TILES = frozenset((
     'BOTTOM_TOP_RIGHT_COAST'))
 
 
+DOWN, UP, LEFT, RIGHT = Direction.DOWN, Direction.UP, Direction.LEFT, Direction.RIGHT
+
+
 class DragonWarriorMap:
     # Where the NES map (MapDatTbl, Bank00) is in this layout, which pads it: the layout (row, column) of NES (0, 0)
-    # and the NES map's size in blocks, (columns, rows), i.e. (MapWidth + 1, MapHeight + 1). None if not recorded, in
-    # which case the whole layout counts as the NES map.
+    # (an NES X,Y is at (Y + row, X + column) here), and the NES map's size in blocks, (columns, rows), i.e.
+    # (MapWidth + 1, MapHeight + 1). Every map with NPCs has an origin. Without a size, the whole layout counts as the
+    # NES map.
     nes_origin: tuple[int, int] | None = None
     nes_size: tuple[int, int] | None = None
+    # The map's NPCs (src/npcs.py), in the order of its NES NPC tables: the mobile one, then the static one
+    npc_table: tuple[NPC, ...] = ()
 
     def __init__(self, layout, config, music_file_path, initial_coordinates, last_map=None, staircases=None):
 
@@ -61,9 +68,8 @@ class DragonWarriorMap:
         self.fixed_characters = []
         # The roaming NPCs, in the order of their mobile slots (Game.move_roaming_characters, src/npc_schedule.py)
         self.roaming_characters = []
-        # The identifiers of the roaming NPCs, in the order of the map's NES mobile NPC table (TantMobTbl etc., Bank00),
-        # which is the order of the NES's mobile NPC slots
-        self.roaming_character_list = []
+        # The NPCs load_map places: the NPC table, less any the story has taken off the map
+        self.npcs: list[NPC] = list(self.npc_table)
 
         # Map variables
 
@@ -76,7 +82,6 @@ class DragonWarriorMap:
                                          graphics=self.graphics,
                                          configured_scale=config['SCALE'])
         self.impassable_tiles = all_impassable_tiles
-        self.npc_coordinates = {}
         self.tile_group_dict = {}
         if staircases is None:
             staircases = {}
@@ -166,6 +171,35 @@ class DragonWarriorMap:
         (origin_row, origin_column), (columns, rows) = self.nes_origin, self.nes_size
         return 0 <= column - origin_column < columns and 0 <= row - origin_row < rows
 
+    def npc_position(self, npc: NPC) -> tuple[int, int]:
+        """The layout (row, column) of an NPC."""
+        assert self.nes_origin is not None, f'{self.identifier} has NPCs, so it needs an nes_origin'
+        origin_row, origin_column = self.nes_origin
+        return npc.y + origin_row, npc.x + origin_column
+
+    @property
+    def npc_coordinates(self) -> dict[tuple[int, int], str]:
+        """Layout (row, column) -> sprite type of each NPC load_map places."""
+        return {self.npc_position(npc): npc.sprite for npc in self.npcs}
+
+    @property
+    def roaming_character_list(self) -> list[str]:
+        """The identifiers of the roaming NPCs, in the order of the map's NES mobile NPC table (TantMobTbl etc.,
+        Bank00), which is the order of the NES's mobile NPC slots."""
+        return [npc.name for npc in self.npcs if npc.mobile]
+
+    def npc(self, name: str) -> NPC | None:
+        """The NPC table entry of the NPC with this identifier, if it's on the map."""
+        return next((npc for npc in self.npcs if npc.name == name), None)
+
+    def include_npc(self, name: str) -> None:
+        """Put an NPC from the NPC table back among the NPCs load_map places, in its table position."""
+        self.npcs = [npc for npc in self.npc_table if npc in self.npcs or npc.name == name]
+
+    def exclude_npc(self, name: str) -> None:
+        """Leave an NPC out of the ones load_map places."""
+        self.npcs = [npc for npc in self.npcs if npc.name != name]
+
     def get_tile_by_value(self, position: int) -> str:
         """Returns the tile name from the integer value associated with it."""
         return self._tile_key_list[position]
@@ -178,16 +212,16 @@ class DragonWarriorMap:
             for column in range(len(self.layout[row])):
                 self.center_pt = get_center_point(column, row, tile_size=tile_size)
                 self.map_floor_tiles(column, row)
-        for (npc_row, npc_col), character_name in self.npc_coordinates.items():
+        for npc in self.npcs:
+            npc_row, npc_col = self.npc_position(npc)
             self.center_pt = get_center_point(npc_col, npc_row, tile_size=tile_size)
-            char_dict = self.character_key[character_name]
-            identifier = self.set_identifiers_for_duplicate_characters(character_name)
-            self.map_npc(identifier, char_dict.get('direction'), char_dict['underlying_tile'],
+            char_dict = self.character_key[npc.sprite]
+            self.map_npc(npc.name, char_dict.get('direction'), char_dict['underlying_tile'],
                          char_dict['path'], char_dict['four_sided'],
-                         (npc_row, npc_col), identifier in self.roaming_character_list)
-        # NES GetNPCDataPointer copies the mobile NPC table into the mobile slots in order. An NPC keeps its slot until
-        # the map is loaded again, even if it's removed (DialogLookup.remove_npc)
-        self.roaming_characters.sort(key=lambda npc: self.roaming_character_list.index(npc.identifier))
+                         (npc_row, npc_col), npc.mobile)
+        # NES GetNPCDataPointer copies the mobile NPC table into the mobile slots in order, which is the order the
+        # roaming NPCs were added in. An NPC keeps its slot until the map is loaded again, even if it's removed
+        # (DialogLookup.remove_npc)
         for slot, roaming_character in enumerate(self.roaming_characters):
             roaming_character.slot = slot
         hero_coords = destination_coordinates if destination_coordinates else self.initial_coordinates
@@ -219,13 +253,6 @@ class DragonWarriorMap:
 
     def get_tiles_in_current_map(self) -> set:
         return set(self.get_tile_by_value(tile) for row in self.layout for tile in row)
-
-    def set_identifiers_for_duplicate_characters(self, character):
-        character_count = [character_dict['tile_value'] for character_dict in self.characters.values()].count(
-            self.character_key[character]['val']) + 1
-        if character_count > 1:
-            character = f'{character}_{character_count}'
-        return character
 
     def scale_sprite_sheet(self, image_path):
         return parse_animated_sprite_sheet(scale(self.graphics.get_image(image_path), (
@@ -333,7 +360,9 @@ class DragonWarriorMap:
         raise NotImplementedError("Method not implemented")
 
     def set_characters_initial_directions(self) -> None:
-        raise NotImplementedError("Method not implemented")
+        """Turn each NPC the way its NPC table entry faces."""
+        for npc in self.npcs:
+            self.set_character_initial_direction(npc.name, npc.facing)
 
     def apply_dragonlord_defeated(self) -> None:
         """Change the map for after the Dragonlord's defeat (NES F_DGNLRD_DEAD), before it's loaded. Most maps don't
@@ -380,8 +409,7 @@ class DragonWarriorMap:
 
 
 class MapWithoutNPCs(DragonWarriorMap, ABC):
-    def set_characters_initial_directions(self):
-        pass
+    """A map with an empty NPC table."""
 
 
 class BasementWithNPCs(DragonWarriorMap, ABC):
@@ -415,6 +443,15 @@ class TantegelThroneRoom(DragonWarriorMap):
 
     # NES MAP_THRONEROOM (ThrnRoomDat): NES (x, y) is layout (y + 6, x + 10) here
     nes_origin, nes_size = (6, 10), (10, 10)
+    npc_table = (
+        # ThRmMobTbl
+        NPC('GUARD', 7, 5, 0x65, mobile=True),
+        # ThRmStatTbl
+        NPC('KING_LORIK', 3, 3, 0x6E),
+        NPC('GUARD_2', 3, 6, 0x23, RIGHT),
+        NPC('GUARD_3', 5, 6, 0x24, LEFT),
+        NPC('PRINCESS_GWAELIN', 6, 3, 0x6F),  # only once she's been returned (NES ChkGwaelinNPC)
+    )
 
     def __init__(self, config):
         super().__init__(MapLayouts().tantegel_throne_room, config,
@@ -422,27 +459,15 @@ class TantegelThroneRoom(DragonWarriorMap):
                          staircases={
                              (14, 18): {'map': 'TantegelCourtyard', 'destination_coordinates': (14, 14),
                                         'direction': Direction.RIGHT.value}})
-        # NES ThRmMobTbl and ThRmStatTbl (Bank00). An NPC at NES X,Y is at (Y + 6, X + 10) here. The table's
-        # Princess Gwaelin at 6,3 ($6F) is added by MapManager.place_princess_gwaelin once she's been returned.
-        self.npc_coordinates = {
-            (9, 13): 'KING_LORIK',  # static King Lorik at 3,3 (dialog byte $6E)
-            (11, 17): 'GUARD',  # mobile guard at 7,5 ($65)
-            (12, 13): 'GUARD',  # static guard at 3,6, facing right ($23)
-            (12, 15): 'GUARD',  # static guard at 5,6, facing left ($24)
-        }
+        # Princess Gwaelin is added by MapManager.place_princess_gwaelin once she's been returned
+        self.exclude_npc('PRINCESS_GWAELIN')
         self.assign_stair_directions()
-        # The NPC from ThRmMobTbl
-        self.roaming_character_list = ['GUARD']
 
     def hero_underlying_tile(self):
         return 'BRICK'
 
     def hero_initial_direction(self):
         return Direction.UP.value
-
-    def set_characters_initial_directions(self):
-        self.set_character_initial_direction('GUARD_2', Direction.RIGHT)
-        self.set_character_initial_direction('GUARD_3', Direction.LEFT)
 
 
 class TantegelCourtyard(DragonWarriorMap):
@@ -452,6 +477,54 @@ class TantegelCourtyard(DragonWarriorMap):
 
     # NES MAP_TANTCSTL_GF (TantGFDat): NES (x, y) is layout (y + 7, x + 7) here
     nes_origin, nes_size = (7, 7), (30, 30)
+    npc_table = (
+        # TantMobTbl
+        NPC('WOMAN_2', 8, 13, 0x62, mobile=True),
+        NPC('GUARD_7', 19, 2, 0x17, mobile=True),
+        NPC('MAN_2', 11, 11, 0x1C, mobile=True),
+        NPC('WISE_MAN_2', 17, 11, 0x1D, mobile=True),
+        NPC('MERCHANT_2', 4, 21, 0x1F, mobile=True),
+        NPC('SOLDIER_2', 25, 11, 0x16, mobile=True),
+        NPC('GUARD_9', 18, 18, 0x72, mobile=True),
+        NPC('GUARD_3', 2, 12, 0x1B, mobile=True),
+        NPC('MERCHANT_3', 6, 25, 0x20, mobile=True),
+        NPC('SOLDIER', 24, 21, 0x22, mobile=True),
+        # TantStatTbl
+        NPC('MERCHANT', 24, 1, 0x0E),  # magic keys
+        NPC('WOMAN', 27, 5, 0x1A),
+        NPC('GUARD', 8, 6, 0x19),
+        NPC('MAN', 2, 8, 0x18),
+        NPC('GUARD_2', 8, 8, 0x71, UP),
+        NPC('GUARD_8', 26, 15, 0x1E, UP),
+        NPC('GUARD_4', 15, 20, 0x63, RIGHT),
+        NPC('WISE_MAN', 20, 26, 0x6A, LEFT),  # restores MP
+        NPC('GUARD_5', 9, 27, 0x21, RIGHT),
+        NPC('GUARD_6', 12, 27, 0x21, LEFT),
+    )
+    # NES GetNPCDataPointer: after the Dragonlord's defeat, the ground floor loads TaDLMobTbl and TaDLStatTbl. King
+    # Lorik waits in front of the throne room stairs between two rows of guards (with trumpets in the NES's last frame;
+    # there's no sprite for those, so they're plain guards, as are the two wizards: NES GetGuardType). Once the
+    # Dragonlord is dead, Ending.npc_dialog decides what every NPC here says.
+    npc_table_after_dragonlord = (
+        # TaDLMobTbl
+        NPC('GUARD_9', 19, 2, 0x17, mobile=True),
+        NPC('MAN', 14, 23, 0x1C, mobile=True),
+        NPC('SOLDIER', 25, 11, 0x16, mobile=True),
+        NPC('GUARD_10', 18, 18, 0x72, mobile=True),
+        NPC('GUARD_11', 2, 12, 0x1B, mobile=True),
+        NPC('MERCHANT', 6, 25, 0x20, mobile=True),
+        NPC('SOLDIER_2', 24, 21, 0x22, mobile=True),
+        # TaDLStatTbl
+        NPC('KING_LORIK', 11, 7, 0xFE),
+        NPC('GUARD', 9, 9, 0xFD),  # trumpet guards
+        NPC('GUARD_2', 9, 11, 0xFD),
+        NPC('GUARD_3', 9, 13, 0xFD),
+        NPC('GUARD_4', 12, 9, 0xFD),
+        NPC('GUARD_5', 12, 11, 0xFD),
+        NPC('GUARD_6', 12, 13, 0xFD),
+        NPC('GUARD_7', 9, 27, 0xFD, RIGHT),  # gate guards
+        NPC('GUARD_8', 12, 27, 0xFD, LEFT),
+    )
 
     def __init__(self, config):
         super().__init__(MapLayouts().tantegel_courtyard, config, Directories(config).tantegel_castle_courtyard_music,
@@ -466,36 +539,8 @@ class TantegelCourtyard(DragonWarriorMap):
                                      'direction': Direction.LEFT.value}
         # NES MapEntryTbl/MapTargetTbl: Tant castle GF(29,29) -> Tant castle SL(0,4)
         self.staircases[(36, 36)] = {'map': 'TantegelCellar', 'destination_coordinates': (5, 1)}
-        # NES TantMobTbl and TantStatTbl (Bank00). An NPC at NES X,Y is at (Y + 7, X + 7) here. The NPCs that were
-        # already here come first so they keep their identifiers; the ones added from the tables follow.
-        self.npc_coordinates = {
-            (8, 31): 'MERCHANT',  # static shopkeeper at 24,1: magic keys (dialog byte $0E)
-            (12, 34): 'WOMAN',  # static female villager at 27,5 ($1A)
-            (13, 15): 'GUARD',  # static guard at 8,6 ($19)
-            (15, 9): 'MAN',  # static male villager at 2,8 ($18)
-            (15, 15): 'GUARD',  # static guard at 8,8, facing up ($71)
-            (18, 18): 'MAN',  # mobile male villager at 11,11 ($1C)
-            (19, 9): 'GUARD',  # mobile guard at 2,12 ($1B)
-            (20, 15): 'WOMAN',  # mobile female villager at 8,13 ($62)
-            (27, 22): 'GUARD',  # static guard at 15,20, facing right ($63)
-            (28, 31): 'SOLDIER',  # mobile fighter at 24,21 ($22)
-            (28, 11): 'MERCHANT',  # mobile shopkeeper at 4,21 ($1F)
-            (32, 13): 'MERCHANT',  # mobile shopkeeper at 6,25 ($20)
-            (33, 27): 'WISE_MAN',  # static wizard at 20,26, facing left: restores MP ($6A)
-            (34, 16): 'GUARD',  # static guard at 9,27, facing right ($21)
-            (34, 19): 'GUARD',  # static guard at 12,27, facing left ($21)
-            (9, 26): 'GUARD',  # mobile guard at 19,2 ($17)
-            (22, 33): 'GUARD',  # static guard at 26,15, facing up ($1E)
-            (25, 25): 'GUARD',  # mobile guard at 18,18 ($72)
-            (18, 24): 'WISE_MAN',  # mobile wizard at 17,11 ($1D)
-            (18, 32): 'SOLDIER',  # mobile fighter at 25,11 ($16)
-        }
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
-        # The NPCs from TantMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
-        self.roaming_character_list = ['WOMAN_2', 'GUARD_7', 'MAN_2', 'WISE_MAN_2', 'MERCHANT_2', 'SOLDIER_2',
-                                       'GUARD_9', 'GUARD_3', 'MERCHANT_3', 'SOLDIER']
-        self.dragonlord_defeated = False
 
     def hero_underlying_tile(self):
         return 'BRICK_STAIR_UP'
@@ -504,55 +549,24 @@ class TantegelCourtyard(DragonWarriorMap):
         return Direction.RIGHT.value
 
     def apply_dragonlord_defeated(self):
-        """NES GetNPCDataPointer: after the Dragonlord's defeat, the ground floor loads TaDLMobTbl and TaDLStatTbl.
-        King Lorik waits in front of the throne room stairs between two rows of guards (with trumpets in the NES's
-        last frame; there's no sprite for those, so they're plain guards). NES (x, y) is (y + 7, x + 7) here."""
-        self.dragonlord_defeated = True
-        self.npc_coordinates = {
-            # TaDLStatTbl
-            (14, 18): 'KING_LORIK',
-            (16, 16): 'GUARD', (18, 16): 'GUARD', (20, 16): 'GUARD',  # trumpet guards, GUARD to GUARD_3
-            (16, 19): 'GUARD', (18, 19): 'GUARD', (20, 19): 'GUARD',  # trumpet guards, GUARD_4 to GUARD_6
-            (34, 16): 'GUARD', (34, 19): 'GUARD',  # gate guards, GUARD_7 and GUARD_8
-            # TaDLMobTbl
-            (9, 26): 'GUARD', (25, 25): 'GUARD', (19, 9): 'GUARD',  # GUARD_9 to GUARD_11
-            (30, 21): 'MAN',
-            (18, 32): 'SOLDIER', (28, 31): 'SOLDIER',
-            (32, 13): 'MERCHANT',
-        }
-        # TaDLMobTbl, in its order: the mobile NPC slots
-        self.roaming_character_list = ['GUARD_9', 'MAN', 'SOLDIER', 'GUARD_10', 'GUARD_11', 'MERCHANT', 'SOLDIER_2']
-
-    def set_characters_initial_directions(self):
-        if self.dragonlord_defeated:
-            self.set_character_initial_direction('GUARD_7', Direction.RIGHT)
-            self.set_character_initial_direction('GUARD_8', Direction.LEFT)
-            return
-        # The DD bits of each TantStatTbl entry; every NPC not listed here faces down
-        self.set_character_initial_direction('GUARD_2', Direction.UP)
-        self.set_character_initial_direction('GUARD_4', Direction.RIGHT)
-        self.set_character_initial_direction('GUARD_5', Direction.RIGHT)
-        self.set_character_initial_direction('GUARD_6', Direction.LEFT)
-        self.set_character_initial_direction('GUARD_8', Direction.UP)
-        self.set_character_initial_direction('WISE_MAN', Direction.LEFT)
+        self.npcs = list(self.npc_table_after_dragonlord)
 
 
 class TantegelCellar(BasementWithNPCs):
     """Tantegel Castle's sublevel (NES MAP_TANTCSTL_SL). Layout coordinates are the NES ones + (1, 1)."""
+
+    nes_origin = (1, 1)
+    npc_table = (
+        # TaSLStatTbl (TaSLMobTbl is empty)
+        NPC('WISE_MAN', 4, 6, 0x66),  # guarding the Stones of Sunlight
+    )
 
     def __init__(self, config):
         super().__init__(MapLayouts().tantegel_underground, config, Directories(config).tantegel_castle_courtyard_music,
                          (5, 1), staircases={
                 # NES MapTargetTbl: Tant castle SL(0,4) -> Tant castle GF(29,29)
                 (5, 1): {'map': 'TantegelCourtyard', 'destination_coordinates': (36, 36)}})
-        # NES TaSLStatTbl (Bank00); TaSLMobTbl is empty
-        self.npc_coordinates = {
-            (7, 5): 'WISE_MAN',  # static wizard at 4,6, guarding the Stones of Sunlight ($66)
-        }
         self.assign_stair_directions()
-
-    def set_characters_initial_directions(self):
-        self.set_character_initial_direction('WISE_MAN', Direction.DOWN)
 
 
 class CharlockB1(MapWithoutNPCs):
@@ -709,17 +723,18 @@ class CharlockB8(DragonWarriorMap):
 
     Layout coordinates are the NES ones offset by (row + 4, column + 6)."""
 
+    nes_origin = (4, 6)
+    # NES DLBFStatTbl (Bank00): the Dragonlord (wizard graphic), DgrnLrdDialog. DLBFMobTbl is empty. Charlock's other
+    # floors (MAP_DLCSTL_GF and the sublevels) have no NPC tables at all.
+    npc_table = (
+        NPC('DRAGONLORD', 16, 24, 0x70),
+    )
+
     def __init__(self, config):
         super().__init__(MapLayouts().charlock_b8, config, Directories(config).dungeon_floor_8_music,
                          (33, 16), staircases={
                 # NES MapTargetTbl/MapEntryTbl: DL castle BF(10,29) -> DL castle SL6(9,6)
                 (33, 16): {'map': 'CharlockB7Wide', 'destination_coordinates': (5, 12)}})
-        # NES DLBFStatTbl (Bank00): the Dragonlord (wizard graphic) at 16,24, facing down, dialog byte $70
-        # (DgrnLrdDialog). DLBFMobTbl is empty. Charlock's other floors (MAP_DLCSTL_GF and the sublevels) have no NPC
-        # tables at all.
-        self.npc_coordinates = {
-            (28, 22): 'DRAGONLORD',
-        }
         self.assign_stair_directions()
 
     def hero_underlying_tile(self):
@@ -730,10 +745,7 @@ class CharlockB8(DragonWarriorMap):
 
     def apply_dragonlord_defeated(self):
         # NES LoadMobNPCDataLoop: the Dragonlord NPC isn't loaded once he's been defeated
-        self.npc_coordinates = {}
-
-    def set_characters_initial_directions(self):
-        self.set_character_initial_direction('DRAGONLORD', Direction.DOWN)
+        self.npcs = []
 
 
 class Alefgard(MapWithoutNPCs):
@@ -780,6 +792,30 @@ class Brecconary(DragonWarriorMap):
 
     # NES MAP_BRECCONARY (BrecconaryDat): NES (x, y) is layout (y + 8, x + 10) here
     nes_origin, nes_size = (8, 10), (30, 30)
+    npc_table = (
+        # BrecMobTbl
+        NPC('WISE_MAN_2', 9, 4, 0x2B, mobile=True),
+        NPC('SOLDIER_4', 12, 19, 0x5D, mobile=True),
+        NPC('MERCHANT_4', 15, 9, 0x2E, mobile=True),
+        NPC('MAN_5', 25, 22, 0x31, mobile=True),
+        NPC('MAN_4', 10, 14, 0x2C, mobile=True),
+        NPC('WOMAN', 24, 4, 0x0F, mobile=True),  # Fairy Water
+        NPC('GUARD_2', 26, 15, 0x2F, mobile=True),
+        NPC('WOMAN_3', 15, 24, 0x2D, mobile=True),
+        NPC('SOLDIER_3', 19, 18, 0x30, mobile=True),
+        NPC('SOLDIER_2', 3, 26, 0x27, mobile=True),
+        # BrecStatTbl
+        NPC('MERCHANT', 5, 4, 0x01),  # weapons and armor shop
+        NPC('SOLDIER', 28, 1, 0x25),
+        NPC('WOMAN_2', 4, 7, 0x29),
+        NPC('MAN', 20, 10, 0x26),
+        NPC('WISE_MAN', 24, 10, 0x67),  # removes curses
+        NPC('MAN_2', 1, 13, 0x2A),
+        NPC('MERCHANT_2', 10, 21, 0x12, LEFT),  # the inn
+        NPC('MAN_3', 20, 23, 0x28, UP),
+        NPC('MERCHANT_3', 25, 25, 0x08, LEFT),  # item shop
+        NPC('GUARD', 10, 26, 0x64, UP),  # searching for Gwaelin
+    )
 
     def __init__(self, config):
         super().__init__(MapLayouts().brecconary, config, Directories(config).village_music,
@@ -788,33 +824,6 @@ class Brecconary(DragonWarriorMap):
                                east_gate=warp_line((21, 40), (25, 40)),
                                west_gate=warp_line((21, 9), (24, 9)))
         self.set_town_to_overworld_warps()
-        # NES BrecMobTbl and BrecStatTbl (Bank00). An NPC at NES X,Y is at (Y + 8, X + 10) here. The NPCs that were
-        # already here come first so they keep their identifiers; the rest follow in map order.
-        self.npc_coordinates = {
-            (9, 38): 'SOLDIER',  # static fighter at 28,1 (dialog byte $25)
-            (12, 15): 'MERCHANT',  # static shopkeeper at 5,4: weapons and armor shop ($01)
-            (12, 34): 'WOMAN',  # mobile female villager at 24,4: Fairy Water ($0F)
-            (15, 14): 'WOMAN',  # static female villager at 4,7 ($29)
-            (18, 30): 'MAN',  # static male villager at 20,10 ($26)
-            (18, 34): 'WISE_MAN',  # static wizard at 24,10: removes curses ($67)
-            (21, 11): 'MAN',  # static male villager at 1,13 ($2A)
-            (29, 20): 'MERCHANT',  # static shopkeeper at 10,21: the inn ($12)
-            (31, 30): 'MAN',  # static male villager at 20,23 ($28)
-            (33, 35): 'MERCHANT',  # static shopkeeper at 25,25: item shop ($08)
-            (34, 13): 'SOLDIER',  # mobile fighter at 3,26 ($27)
-            (34, 20): 'GUARD',  # static guard at 10,26: searching for Gwaelin ($64)
-            (12, 19): 'WISE_MAN',  # mobile wizard at 9,4 ($2B)
-            (17, 25): 'MERCHANT',  # mobile shopkeeper at 15,9 ($2E)
-            (22, 20): 'MAN',  # mobile male villager at 10,14 ($2C)
-            (23, 36): 'GUARD',  # mobile guard at 26,15 ($2F)
-            (26, 29): 'SOLDIER',  # mobile fighter at 19,18 ($30)
-            (27, 22): 'SOLDIER',  # mobile fighter at 12,19 ($5D)
-            (30, 35): 'MAN',  # mobile male villager at 25,22 ($31)
-            (32, 25): 'WOMAN',  # mobile female villager at 15,24 ($2D)
-        }
-        # The NPCs from BrecMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
-        self.roaming_character_list = ['WISE_MAN_2', 'SOLDIER_4', 'MERCHANT_4', 'MAN_5', 'MAN_4', 'WOMAN', 'GUARD_2',
-                                       'WOMAN_3', 'SOLDIER_3', 'SOLDIER_2']
         # NES BrecCvrdDatPtr -> TantSLDat ($8D24): the upper right building (fairy water) and the lower right one
         # (item shop). NES X,Y is at (Y + 8, X + 10) here.
         self.covered_area = covered_cells({
@@ -830,18 +839,30 @@ class Brecconary(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
-    def set_characters_initial_directions(self):
-        # The DD bits of each NES table entry; every NPC not listed here faces down
-        self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
-        self.set_character_initial_direction('MAN_3', Direction.UP)
-        self.set_character_initial_direction('MERCHANT_3', Direction.LEFT)
-        self.set_character_initial_direction('GUARD', Direction.UP)
-
 
 class Garinham(DragonWarriorMap):
 
     # NES MAP_GARINHAM (GarinhamDat): NES (x, y) is layout (y + 1, x + 9) here
     nes_origin, nes_size = (1, 9), (20, 20)
+    npc_table = (
+        # GarMobTbl
+        NPC('WOMAN', 12, 4, 0x3E, mobile=True),
+        NPC('WOMAN_2', 12, 12, 0x43, mobile=True),
+        NPC('WISE_MAN_2', 12, 8, 0x3F, mobile=True),
+        NPC('WISE_MAN_3', 2, 10, 0x42, mobile=True),
+        NPC('MAN', 11, 7, 0x3D, mobile=True),
+        NPC('MAN_2', 18, 12, 0x44, mobile=True),
+        NPC('SOLDIER', 7, 17, 0x41, mobile=True),
+        # GarStatTbl
+        NPC('WISE_MAN', 14, 1, 0x3A),
+        NPC('GUARD', 3, 5, 0x3B, RIGHT),
+        NPC('GUARD_2', 5, 5, 0x3B, LEFT),
+        NPC('MERCHANT', 9, 6, 0x3C),
+        NPC('MERCHANT_2', 5, 11, 0x09, LEFT),  # item shop
+        NPC('MERCHANT_3', 17, 15, 0x13, LEFT),  # the inn
+        NPC('WISE_MAN_4', 2, 17, 0x40, RIGHT),
+        NPC('MERCHANT_4', 10, 18, 0x02, UP),  # weapons and armor shop
+    )
 
     def __init__(self, config):
         super().__init__(MapLayouts().garinham, config, Directories(config).village_music, (15, 9),
@@ -855,26 +876,6 @@ class Garinham(DragonWarriorMap):
                                west_gate=warp_line((0, 8), (21, 8)),
                                south_gate=warp_line((21, 8), (21, 29)))
         self.set_town_to_overworld_warps()
-        # NES GarMobTbl and GarStatTbl (Bank00). An NPC at NES X,Y is at (Y + 1, X + 9) here.
-        self.npc_coordinates = {
-            (2, 23): 'WISE_MAN',  # static wizard at 14,1 (dialog byte $3A)
-            (5, 21): 'WOMAN',  # mobile female villager at 12,4 ($3E)
-            (6, 12): 'GUARD',  # static guard at 3,5 ($3B)
-            (6, 14): 'GUARD',  # static guard at 5,5 ($3B)
-            (7, 18): 'MERCHANT',  # static shopkeeper at 9,6 ($3C)
-            (8, 20): 'MAN',  # mobile male villager at 11,7 ($3D)
-            (9, 21): 'WISE_MAN',  # mobile wizard at 12,8 ($3F)
-            (11, 11): 'WISE_MAN',  # mobile wizard at 2,10 ($42)
-            (12, 14): 'MERCHANT',  # static shopkeeper at 5,11: the item shop ($09, ToolsDialog)
-            (13, 21): 'WOMAN',  # mobile female villager at 12,12 ($43)
-            (13, 27): 'MAN',  # mobile male villager at 18,12 ($44)
-            (16, 26): 'MERCHANT',  # static shopkeeper at 17,15: the inn ($13, InnDialog)
-            (18, 11): 'WISE_MAN',  # static wizard at 2,17 ($40)
-            (18, 16): 'SOLDIER',  # mobile fighter at 7,17 ($41)
-            (19, 19): 'MERCHANT',  # static shopkeeper at 10,18: weapons and armor ($02, WeaponsDialog)
-        }
-        # The NPCs from GarMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
-        self.roaming_character_list = ['WOMAN', 'WOMAN_2', 'WISE_MAN_2', 'WISE_MAN_3', 'MAN', 'MAN_2', 'SOLDIER']
         # NES GarinCvrdDatPtr -> DgnLrdSL4Dat ($8EE6): the whole top of town. NES X,Y is at (Y + 1, X + 9) here.
         self.covered_area = covered_cells({
             **{y: range(20) for y in range(3, 10)},
@@ -887,21 +888,32 @@ class Garinham(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.RIGHT.value
 
-    def set_characters_initial_directions(self):
-        # The DD bits of each NES table entry; every NPC not listed here faces down
-        self.set_character_initial_direction('GUARD', Direction.RIGHT)
-        self.set_character_initial_direction('GUARD_2', Direction.LEFT)
-        self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
-        self.set_character_initial_direction('MERCHANT_3', Direction.LEFT)
-        self.set_character_initial_direction('WISE_MAN_4', Direction.RIGHT)
-        self.set_character_initial_direction('MERCHANT_4', Direction.UP)
-
 
 class Kol(DragonWarriorMap):
     """Kol (NES MAP_KOL). Layout coordinates are the NES ones offset by (row + 8, column + 10)."""
 
     # NES MAP_KOL (KolDat): NES (x, y) is layout (y + 8, x + 10) here
     nes_origin, nes_size = (8, 10), (24, 24)
+    npc_table = (
+        # KolMobTbl
+        NPC('MAN_2', 14, 13, 0x36, mobile=True),
+        NPC('MAN', 5, 12, 0x30, mobile=True),
+        NPC('GUARD', 12, 10, 0x37, mobile=True),
+        NPC('WISE_MAN_3', 2, 12, 0x5E, mobile=True),  # the flute question
+        NPC('WISE_MAN_4', 20, 19, 0x38, mobile=True),
+        NPC('SOLDIER', 6, 7, 0x35, mobile=True),
+        NPC('WOMAN_2', 11, 14, 0x2E, mobile=True),
+        NPC('MERCHANT_3', 7, 19, 0x5F, mobile=True),  # the southern island question
+        NPC('WISE_MAN_2', 20, 8, 0x39, mobile=True),
+        # KolStatTbl
+        NPC('WISE_MAN', 1, 1, 0x68),  # Erdrick's Sword
+        NPC('WOMAN', 12, 1, 0x32),
+        NPC('MERCHANT', 19, 4, 0x11, UP),  # the inn
+        NPC('MERCHANT_2', 22, 12, 0x00, LEFT),  # weapons and armor shop
+        NPC('SOLDIER_2', 20, 13, 0x33),
+        NPC('MERCHANT_4', 14, 21, 0x07, LEFT),  # item shop
+        NPC('GUARD_2', 1, 23, 0x34),
+    )
 
     def __init__(self, config):
         super().__init__(MapLayouts().kol, config, Directories(config).village_music, (31, 29))
@@ -911,28 +923,6 @@ class Kol(DragonWarriorMap):
                                west_gate=warp_line((7, 9), (32, 9)),
                                south_gate=warp_line((32, 9), (32, 34)))
         self.set_town_to_overworld_warps()
-        # NES KolMobTbl and KolStatTbl (Bank00). An NPC at NES X,Y is at (Y + 8, X + 10) here.
-        self.npc_coordinates = {
-            (9, 11): 'WISE_MAN',  # static wizard at 1,1: Erdrick's Sword ($68)
-            (9, 22): 'WOMAN',  # static female villager at 12,1 ($32)
-            (12, 29): 'MERCHANT',  # static shopkeeper at 19,4: the inn ($11)
-            (15, 16): 'SOLDIER',  # mobile fighter at 6,7 ($35)
-            (16, 30): 'WISE_MAN',  # mobile wizard at 20,8 ($39)
-            (18, 22): 'GUARD',  # mobile guard at 12,10 ($37)
-            (20, 12): 'WISE_MAN',  # mobile wizard at 2,12 ($5E)
-            (20, 15): 'MAN',  # mobile male villager at 5,12 ($30)
-            (20, 32): 'MERCHANT',  # static shopkeeper at 22,12: weapons and armor shop ($00)
-            (21, 24): 'MAN',  # mobile male villager at 14,13 ($36)
-            (21, 30): 'SOLDIER',  # static fighter at 20,13 ($33)
-            (22, 21): 'WOMAN',  # mobile female villager at 11,14 ($2E)
-            (27, 17): 'MERCHANT',  # mobile shopkeeper at 7,19 ($5F)
-            (27, 30): 'WISE_MAN',  # mobile wizard at 20,19 ($38)
-            (29, 24): 'MERCHANT',  # static shopkeeper at 14,21: item shop ($07)
-            (31, 11): 'GUARD',  # static guard at 1,23 ($34)
-        }
-        # The NPCs from KolMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
-        self.roaming_character_list = ['MAN_2', 'MAN', 'GUARD', 'WISE_MAN_3', 'WISE_MAN_4', 'SOLDIER', 'WOMAN_2',
-                                       'MERCHANT_3', 'WISE_MAN_2']
 
     def hero_underlying_tile(self):
         return 'SAND'
@@ -940,17 +930,35 @@ class Kol(DragonWarriorMap):
     def hero_initial_direction(self):
         return Direction.UP.value
 
-    def set_characters_initial_directions(self):
-        # The DD bits of each NES table entry; every NPC not listed here faces down
-        self.set_character_initial_direction('MERCHANT', Direction.UP)
-        self.set_character_initial_direction('MERCHANT_2', Direction.LEFT)
-        self.set_character_initial_direction('MERCHANT_4', Direction.LEFT)
-
 
 class Rimuldar(DragonWarriorMap):
 
     # NES MAP_RIMULDAR (RimuldarDat): NES (x, y) is layout (y + 8, x + 8) here
     nes_origin, nes_size = (8, 8), (30, 30)
+    npc_table = (
+        # RimMobTbl
+        NPC('WOMAN_3', 6, 21, 0x59, mobile=True),
+        NPC('MAN_2', 11, 8, 0x30, mobile=True),
+        NPC('MAN_4', 6, 23, 0x5A, mobile=True),
+        NPC('WOMAN_2', 22, 14, 0x56, mobile=True),
+        NPC('SOLDIER_3', 5, 25, 0x5B, mobile=True),
+        NPC('SOLDIER', 23, 11, 0x52, mobile=True),
+        NPC('MAN_3', 14, 11, 0x55, mobile=True),
+        NPC('SOLDIER_4', 16, 26, 0x69, mobile=True),  # the Fighter's Ring
+        NPC('GUARD', 8, 16, 0x54, mobile=True),
+        NPC('SOLDIER_2', 24, 19, 0x57, mobile=True),
+        # RimStatTbl
+        NPC('MAN', 27, 0, 0x51),  # Orwick
+        NPC('MERCHANT', 2, 4, 0x4F, UP),
+        NPC('WISE_MAN', 4, 7, 0x0D, UP),  # magic keys
+        NPC('MERCHANT_2', 23, 7, 0x06),  # weapons and armor shop
+        NPC('WOMAN', 15, 8, 0x50, UP),
+        NPC('WISE_MAN_2', 6, 13, 0x53, LEFT),
+        NPC('MERCHANT_3', 16, 18, 0x15, RIGHT),  # the inn
+        NPC('WISE_MAN_3', 3, 23, 0x61, RIGHT),  # the magic temple question
+        NPC('WISE_MAN_4', 20, 23, 0x58),
+        NPC('WOMAN_4', 0, 26, 0x5C),  # Orwick's girlfriend
+    )
 
     def __init__(self, config):
         super().__init__(MapLayouts().rimuldar, config, Directories(config).village_music, (14, 9))
@@ -961,32 +969,6 @@ class Rimuldar(DragonWarriorMap):
                                west_gate=warp_line((0, 7), (len(self.layout), 7)),
                                south_gate=warp_line((38, 0), (38, len(self.layout[0]))))
         self.set_town_to_overworld_warps()
-        # NES RimMobTbl and RimStatTbl (Bank00). An NPC at NES X,Y is at (Y + 8, X + 8) here.
-        self.npc_coordinates = {
-            (8, 35): 'MAN',  # static male villager at 27,0: Orwick (dialog byte $51)
-            (12, 10): 'MERCHANT',  # static shopkeeper at 2,4 ($4F)
-            (15, 12): 'WISE_MAN',  # static wizard at 4,7: magic keys ($0D)
-            (15, 31): 'MERCHANT',  # static shopkeeper at 23,7: weapons and armor shop ($06)
-            (16, 19): 'MAN',  # mobile male villager at 11,8 ($30)
-            (16, 23): 'WOMAN',  # static female villager at 15,8 ($50)
-            (19, 22): 'MAN',  # mobile male villager at 14,11 ($55)
-            (19, 31): 'SOLDIER',  # mobile fighter at 23,11 ($52)
-            (21, 14): 'WISE_MAN',  # static wizard at 6,13 ($53)
-            (22, 30): 'WOMAN',  # mobile female villager at 22,14 ($56)
-            (24, 16): 'GUARD',  # mobile guard at 8,16 ($54)
-            (26, 24): 'MERCHANT',  # static shopkeeper at 16,18: the inn ($15)
-            (27, 32): 'SOLDIER',  # mobile fighter at 24,19 ($57)
-            (29, 14): 'WOMAN',  # mobile female villager at 6,21 ($59)
-            (31, 11): 'WISE_MAN',  # static wizard at 3,23: the magic temple question ($61)
-            (31, 14): 'MAN',  # mobile male villager at 6,23 ($5A)
-            (31, 28): 'WISE_MAN',  # static wizard at 20,23 ($58)
-            (33, 13): 'SOLDIER',  # mobile fighter at 5,25 ($5B)
-            (34, 8): 'WOMAN',  # static female villager at 0,26: Orwick's girlfriend ($5C)
-            (34, 24): 'SOLDIER',  # mobile fighter at 16,26: the Fighter's Ring ($69)
-        }
-        # The NPCs from RimMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
-        self.roaming_character_list = ['WOMAN_3', 'MAN_2', 'MAN_4', 'WOMAN_2', 'SOLDIER_3', 'SOLDIER', 'MAN_3',
-                                       'SOLDIER_4', 'GUARD', 'SOLDIER_2']
         # NES RimCvrdDatPtr -> GarinCaveB3Dat+$E ($9170): the upper left building and the lower left one.
         # NES X,Y is at (Y + 8, X + 8) here.
         self.covered_area = covered_cells({
@@ -1003,15 +985,6 @@ class Rimuldar(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.LEFT.value
-
-    def set_characters_initial_directions(self):
-        # The DD bits of each RimStatTbl entry; every NPC not listed here faces down
-        self.set_character_initial_direction('WISE_MAN', Direction.UP)
-        self.set_character_initial_direction('WISE_MAN_2', Direction.LEFT)
-        self.set_character_initial_direction('WISE_MAN_3', Direction.RIGHT)
-        self.set_character_initial_direction('MERCHANT', Direction.UP)
-        self.set_character_initial_direction('MERCHANT_3', Direction.RIGHT)
-        self.set_character_initial_direction('WOMAN', Direction.UP)
 
 
 class Hauksness(MapWithoutNPCs):
@@ -1042,6 +1015,30 @@ class Cantlin(DragonWarriorMap):
 
     # NES MAP_CANTLIN (CantlinDat): NES (x, y) is layout (y + 8, x + 1) here
     nes_origin, nes_size = (8, 1), (30, 30)
+    npc_table = (
+        # CantMobTbl
+        NPC('MAN_2', 20, 15, 0x4B, mobile=True),
+        NPC('GUARD', 5, 6, 0x60, mobile=True),
+        NPC('MERCHANT_5', 25, 17, 0x4C, mobile=True),
+        NPC('WOMAN_2', 4, 14, 0x49, mobile=True),
+        NPC('MERCHANT_2', 22, 5, 0x03, mobile=True),  # weapons and armor shop 1
+        NPC('WOMAN_3', 9, 16, 0x4A, mobile=True),
+        NPC('WISE_MAN_4', 14, 28, 0x6B, mobile=True),  # Erdrick's Token
+        NPC('GUARD_2', 15, 6, 0x48, mobile=True),
+        NPC('MERCHANT_6', 3, 26, 0x4E, mobile=True),
+        NPC('GUARD_3', 22, 9, 0x4D, mobile=True),
+        # CantStatTbl
+        NPC('MERCHANT', 8, 3, 0x14),  # the inn
+        NPC('WISE_MAN', 27, 6, 0x0C),  # magic keys
+        NPC('MAN', 2, 7, 0x0A, RIGHT),  # item shop 1
+        NPC('MERCHANT_3', 2, 12, 0x45, RIGHT),
+        NPC('MERCHANT_4', 7, 12, 0x0B, LEFT),  # item shop 2
+        NPC('GUARD_4', 24, 12, 0x05, RIGHT),  # weapons and armor shop 3
+        NPC('WOMAN', 22, 13, 0x10, LEFT),  # Fairy Water
+        NPC('WISE_MAN_2', 15, 16, 0x46),
+        NPC('WISE_MAN_3', 22, 22, 0x47),
+        NPC('MERCHANT_7', 27, 26, 0x04, LEFT),  # weapons and armor shop 2
+    )
 
     def __init__(self, config):
         super().__init__(MapLayouts().cantlin, config, Directories(config).village_music, (8, 16))
@@ -1051,32 +1048,6 @@ class Cantlin(DragonWarriorMap):
                                west_gate=warp_line((7, 0), (38, 0)),
                                south_gate=warp_line((38, 0), (38, 31)))
         self.set_town_to_overworld_warps()
-        # NES CantMobTbl and CantStatTbl (Bank00). An NPC at NES X,Y is at (Y + 8, X + 1) here.
-        self.npc_coordinates = {
-            (11, 9): 'MERCHANT',  # static shopkeeper at 8,3: the inn (dialog byte $14)
-            (13, 23): 'MERCHANT',  # mobile shopkeeper at 22,5: weapons and armor shop 1 ($03)
-            (14, 6): 'GUARD',  # mobile guard at 5,6 ($60)
-            (14, 16): 'GUARD',  # mobile guard at 15,6 ($48)
-            (14, 28): 'WISE_MAN',  # static wizard at 27,6: magic keys ($0C)
-            (15, 3): 'MAN',  # static male villager at 2,7: item shop 1 ($0A)
-            (17, 23): 'GUARD',  # mobile guard at 22,9 ($4D)
-            (20, 3): 'MERCHANT',  # static shopkeeper at 2,12 ($45)
-            (20, 8): 'MERCHANT',  # static shopkeeper at 7,12: item shop 2 ($0B)
-            (20, 25): 'GUARD',  # static guard at 24,12: weapons and armor shop 3 ($05)
-            (21, 23): 'WOMAN',  # static female villager at 22,13: Fairy Water ($10)
-            (22, 5): 'WOMAN',  # mobile female villager at 4,14 ($49)
-            (23, 21): 'MAN',  # mobile male villager at 20,15 ($4B)
-            (24, 10): 'WOMAN',  # mobile female villager at 9,16 ($4A)
-            (24, 16): 'WISE_MAN',  # static wizard at 15,16 ($46)
-            (25, 26): 'MERCHANT',  # mobile shopkeeper at 25,17 ($4C)
-            (30, 23): 'WISE_MAN',  # static wizard at 22,22 ($47)
-            (34, 4): 'MERCHANT',  # mobile shopkeeper at 3,26 ($4E)
-            (34, 28): 'MERCHANT',  # static shopkeeper at 27,26: weapons and armor shop 2 ($04)
-            (36, 15): 'WISE_MAN',  # mobile wizard at 14,28 ($6B)
-        }
-        # The NPCs from CantMobTbl, in its order: the mobile NPC slots (src/npc_schedule.py)
-        self.roaming_character_list = ['MAN_2', 'GUARD', 'MERCHANT_5', 'WOMAN_2', 'MERCHANT_2', 'WOMAN_3', 'WISE_MAN_4',
-                                       'GUARD_2', 'MERCHANT_6', 'GUARD_3']
         # NES CantCvrdDatPtr -> SwampCaveDat+$32 ($8FAE): two small rooms at the top and the middle of town.
         # NES X,Y is at (Y + 8, X + 1) here.
         self.covered_area = covered_cells({
@@ -1091,15 +1062,6 @@ class Cantlin(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.DOWN.value
-
-    def set_characters_initial_directions(self):
-        # The DD bits of each NES table entry; every NPC not listed here faces down
-        self.set_character_initial_direction('MAN', Direction.RIGHT)
-        self.set_character_initial_direction('MERCHANT_3', Direction.RIGHT)
-        self.set_character_initial_direction('MERCHANT_4', Direction.LEFT)
-        self.set_character_initial_direction('MERCHANT_7', Direction.LEFT)
-        self.set_character_initial_direction('WOMAN', Direction.LEFT)
-        self.set_character_initial_direction('GUARD_4', Direction.RIGHT)
 
 
 class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
@@ -1136,6 +1098,14 @@ class ErdricksCaveB2(MapWithoutNPCs, CaveMap):
 class SwampCave(CaveMap):
     """The Swamp Cave (NES MAP_SWAMPCAVE). Layout coordinates are the NES ones + (6, 4)."""
 
+    nes_origin = (6, 4)
+    # On the NES Gwaelin isn't an NPC: she's block $6 (BLK_PRINCESS) of SwampCaveDat (Bank00), and DoTalkResults
+    # (Bank03) starts her rescue when the player talks to that block. GetBlockID turns her into brick once
+    # F_DONE_GWAELIN is set (MapManager.place_princess_gwaelin). She never moves or turns.
+    npc_table = (
+        NPC('PRINCESS_GWAELIN', 5, 18, GWAELIN_RESCUE),
+    )
+
     def __init__(self, config):
         super().__init__(MapLayouts().swamp_cave, config, Directories(config).dungeon_floor_1_music,
                          # NES MapTargetTbl/MapEntryTbl: Swamp cave(0,0) -> Overworld(104,44) and
@@ -1143,12 +1113,6 @@ class SwampCave(CaveMap):
                          staircases={(6, 4): {'map': 'Alefgard', 'destination_coordinates': (51, 112)},
                                      (35, 4): {'map': 'Alefgard', 'destination_coordinates': (56, 112)}},
                          initial_coordinates=(6, 4))
-        # On the NES Gwaelin isn't an NPC: she's block $6 (BLK_PRINCESS) of SwampCaveDat (Bank00), at 5,18, and
-        # DoTalkResults (Bank03) starts her rescue when the player talks to that block. GetBlockID turns her into
-        # brick once F_DONE_GWAELIN is set. She never moves or turns.
-        self.npc_coordinates = {
-            (24, 9): 'PRINCESS_GWAELIN',
-        }
         self.assign_stair_directions()
 
     def hero_underlying_tile(self):
@@ -1156,9 +1120,6 @@ class SwampCave(CaveMap):
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
-
-    def set_characters_initial_directions(self):
-        pass
 
 
 class GarinsGraveB1(MapWithoutNPCs, CaveMap):
@@ -1296,14 +1257,15 @@ class MountainCaveB2(MapWithoutNPCs, CaveMap):
 class StaffOfRainCave(DragonWarriorMap):
     """The Staff of Rain shrine (NES MAP_RAIN). Layout coordinates are the NES ones + (2, 2)."""
 
+    nes_origin = (2, 2)
+    npc_table = (
+        # RainStatTbl (RainMobTbl is empty)
+        NPC('WISE_MAN', 4, 4, 0x6C, RIGHT),  # RainStaffDialog
+    )
+
     def __init__(self, config):
         super().__init__(MapLayouts().staff_of_rain_cave, config, Directories(config).tantegel_castle_courtyard_music,
                          (11, 6), staircases={(11, 6): {'map': 'Alefgard'}})
-        # NES RainStatTbl (Bank00): the wizard at 4,4, facing right, dialog byte $6C (RainStaffDialog). RainMobTbl
-        # is empty.
-        self.npc_coordinates = {
-            (6, 6): 'WISE_MAN',
-        }
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
@@ -1312,22 +1274,20 @@ class StaffOfRainCave(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
-
-    def set_characters_initial_directions(self):
-        self.set_character_initial_direction('WISE_MAN', Direction.RIGHT)
 
 
 class MagicTemple(DragonWarriorMap):
     """The Rainbow Drop shrine (NES MAP_RAINBOW). Layout coordinates are the NES ones + (2, 2)."""
 
+    nes_origin = (2, 2)
+    npc_table = (
+        # RnbwStatTbl (RnbwMobTbl is empty)
+        NPC('WISE_MAN', 4, 5, 0x6D, LEFT),  # RnbwDrpDialog
+    )
+
     def __init__(self, config):
         super().__init__(MapLayouts().magic_temple, config, Directories(config).tantegel_castle_courtyard_music,
                          (6, 2), staircases={(6, 2): {'map': 'Alefgard'}})
-        # NES RnbwStatTbl (Bank00): the wizard at 4,5, facing left, dialog byte $6D (RnbwDrpDialog). RnbwMobTbl
-        # is empty.
-        self.npc_coordinates = {
-            (7, 6): 'WISE_MAN',
-        }
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()
 
@@ -1336,9 +1296,6 @@ class MagicTemple(DragonWarriorMap):
 
     def hero_initial_direction(self):
         return Direction.RIGHT.value
-
-    def set_characters_initial_directions(self):
-        self.set_character_initial_direction('WISE_MAN', Direction.LEFT)
 
 
 # Lookup of all map names with their associated class
