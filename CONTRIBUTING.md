@@ -90,3 +90,23 @@ A frame is one flip or update, and the game holds some pictures with a wait inst
 real-time recording the report gives how long each flagged picture was on screen; under 2 frames (33 ms) is what the
 eye catches. The recorder treats `display.update(rect)` as showing the whole screen, as it does on the game's SCALED
 window (`FrameRecorder(partial_updates=True)` models a plain software display instead).
+
+## Measuring performance
+
+`tools/benchmark.py` plays fixed scenes headless (the throne room, the courtyard, Brecconary, Cantlin, walking on
+Alefgard, a fight, the COMMAND window, a dialog's ▼ wait and a map change), each from the `throne_room` checkpoint
+with a fixed random seed, at 1x and 8x. For each it reports the time of a pass of the main loop split into game logic
+and drawing (mean / median / p95 / max), the map frames and the frames shown per second against 60 × the speed, CPU
+time against real time (a busy wait shows up as a high CPU share), and the `display.flip` and `display.update` calls.
+Run `uv run python -m tools.benchmark --help` for the scenes and options.
+
+```bash
+uv run python -m tools.benchmark --json before.json        # on main
+uv run python -m tools.benchmark --json after.json         # on your branch
+uv run python -m tools.benchmark --compare before.json after.json
+# One scene, profiled: the 20 functions with the most time of their own
+uv run python -m tools.benchmark --scenes brecconary --speeds 8 --profile 20
+```
+
+Timings depend on the machine and on what else runs on it, so compare runs made on the same machine, close together,
+and with `--repeat 3` (each scene's fastest run is kept) when the machine is busy.
