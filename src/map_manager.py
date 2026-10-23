@@ -104,19 +104,18 @@ class MapManager:
             if self.fought_on_stairs == (self.player.row, self.player.column):
                 return
             self.fought_on_stairs = None
-        immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1', 'MagicTemple',
-                               'Alefgard', 'MountainCaveB1', 'MountainCaveB2')
-        if self.game.auto_stairs:
-            movement_threshold = self.game.tiles_moved_since_spawn > 0
-        else:
-            movement_threshold = self.game.tiles_moved_since_spawn > 2 or (
-                self.game.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps)
-
-        if movement_threshold:
-            for staircase_location, staircase_dict in self.current_map.staircases.items():
-                if (self.player.row, self.player.column) == staircase_location:
-                    self.process_warp(staircase_dict)
-                    break
+        location = self.player.row, self.player.column
+        staircase_dict = self.current_map.staircases.get(location)
+        if staircase_dict is None or not self.game.tiles_moved_since_spawn:
+            return
+        if not self.game.auto_stairs and not self.current_map.is_step_warp(*location):
+            # Stairs (this project takes them by stepping onto them; the NES only by the STAIRS command): wait for a
+            # few steps on a new map, so the hero doesn't go straight back down the stairs they came up
+            immediate_move_maps = ('CharlockB1', 'MagicTemple', 'MountainCaveB1', 'MountainCaveB2')
+            if not (self.game.tiles_moved_since_spawn > 2 or (
+                    self.game.tiles_moved_since_spawn > 1 and self.current_map.identifier in immediate_move_maps)):
+                return
+        self.process_warp(staircase_dict)
 
     def process_warp(self, staircase_dict):
         self.player.bumped = False
