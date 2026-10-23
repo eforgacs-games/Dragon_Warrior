@@ -11,7 +11,8 @@ from pygame.event import Event
 
 from src.config.test_config import test_config
 from src.dialog_box import DIALOG_ROWS, frames_per_character
-from src.game import BACK_TO_TITLE_MENU, Game
+from src.game import Game
+from src.title_menu import BACK_TO_TITLE_MENU
 from src.options_screen import CLASSIC, DEFAULT_DIALOG_STYLE, DEFAULT_MESSAGE_SPEED, DEFAULT_OPTIONS, \
     DIALOG_STYLE_OPTIONS, DIALOG_STYLE_SAVE_KEY, MESSAGE_SPEED_NAMES, MESSAGE_SPEED_OPTIONS, MESSAGE_SPEED_SAVE_KEY, \
     MODERN, NPCS_MAKE_WAY_OPTIONS, NPCS_MAKE_WAY_SAVE_KEY, Options, OptionsScreen, dialog_style_from_save, \
@@ -188,9 +189,9 @@ class TestTitleMenuFlow(OptionsTestCase):
     def run_title_menu(self, events, then=2):
         """Choose CHANGE MESSAGE SPEED (1) on the title menu, play the events, then choose `then` (BEGIN A NEW QUEST)."""
         with patch.object(self.game.game_functions, 'main_menu_selection', side_effect=[1, then]) as title_menu, \
-                patch.object(self.game, 'begin_new_quest') as begin_new_quest, \
+                patch.object(self.game.title_menu, 'begin_new_quest') as begin_new_quest, \
                 patch('src.selection.event.get', side_effect=presses(*events)):
-            self.game.show_main_menu_screen(self.game.screen)
+            self.game.title_menu.show_main_menu_screen(self.game.screen)
         return title_menu, begin_new_quest
 
     def test_choose_a_log_then_its_speed_dialog_style_and_npcs(self):
@@ -217,9 +218,9 @@ class TestTitleMenuFlow(OptionsTestCase):
         self.assertEqual(2, title_menu.call_count)
 
     def test_change_message_speed_lists_the_used_logs(self):
-        self.game.save_dir_contents = self.game.save_files()
+        self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
         with patch.object(OptionsScreen, 'choose_log', return_value=None) as choose_log:
-            self.assertIs(BACK_TO_TITLE_MENU, self.game.change_message_speed())
+            self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.change_message_speed())
         self.assertEqual([(1, 'Erdrick'), (2, 'Loto')], choose_log.call_args.args[0])
 
     def test_continuing_the_log_uses_its_settings(self):
@@ -234,30 +235,30 @@ class TestNewQuestOptions(OptionsTestCase):
     def test_new_quest_uses_the_chosen_options(self):
         self.config['TEXT_SPEED'], self.config['NPCS_MAKE_WAY'] = 'Fast', False
         with patch('src.selection.event.get', side_effect=presses(DOWN, ENTER, DOWN, ENTER, RIGHT, ENTER)):
-            self.game.choose_new_quest_options()
+            self.game.title_menu.choose_new_quest_options()
         # the cursors start on NORMAL (NewQuest: LDA #MSG_NORMAL), CLASSIC and ON, whatever the last game used
         self.assertEqual(('Slow', MODERN, False), settings(self.config))
 
     def test_new_quest_keeps_npcs_making_way_by_default(self):
         self.config['NPCS_MAKE_WAY'] = False
         with patch('src.selection.event.get', side_effect=presses(ENTER, ENTER, ENTER)):
-            self.game.choose_new_quest_options()
+            self.game.title_menu.choose_new_quest_options()
         self.assertEqual(('Normal', CLASSIC, True), settings(self.config))
 
     def test_new_quest_without_a_choice_uses_the_defaults(self):
         self.config['TEXT_SPEED'], self.config['DIALOG_STYLE'], self.config['NPCS_MAKE_WAY'] = 'Fast', MODERN, False
         with patch('src.selection.event.get', side_effect=presses(B)):
-            self.game.choose_new_quest_options()
+            self.game.title_menu.choose_new_quest_options()
         self.assertEqual(('Normal', CLASSIC, True), settings(self.config))
 
     def test_begin_new_quest_shows_the_options_after_the_name(self):
         calls = []
-        with patch.object(self.game, 'select_adventure_log', side_effect=lambda screen: calls.append('log')), \
-                patch('src.game.NameSelection') as name_selection, \
-                patch.object(self.game, 'choose_new_quest_options', side_effect=lambda: calls.append('options')), \
+        with patch.object(self.game.title_menu, 'select_adventure_log', side_effect=lambda screen: calls.append('log')), \
+                patch('src.title_menu.NameSelection') as name_selection, \
+                patch.object(self.game.title_menu, 'choose_new_quest_options', side_effect=lambda: calls.append('options')), \
                 patch('src.map_manager.screen_fade'), patch.object(self.game, 'music_player'), patch('src.game.CommandMenu'):
             name_selection.return_value.select_name.side_effect = lambda *args: calls.append('name') or 'Ed'
-            self.game.begin_new_quest()
+            self.game.title_menu.begin_new_quest()
         self.assertEqual(['log', 'name', 'options'], calls)
 
 

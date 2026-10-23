@@ -7,7 +7,9 @@ from unittest.mock import patch
 import pygame
 
 from src.config.test_config import test_config
-from src.game import BACK_TO_TITLE_MENU, Game, save_slot_number
+from src.game import Game
+from src.save_file import save_slot_number
+from src.title_menu import BACK_TO_TITLE_MENU
 from src.options_screen import OptionsScreen
 from tests.helpers import new_game
 
@@ -40,10 +42,10 @@ class TestContinueQuest(TestCase):
 
     def continue_quest(self) -> Game:
         game = new_game(self.config)
-        game.save_dir_contents = game.save_files()
+        game.title_menu.save_dir_contents = game.title_menu.save_files()
         with patch.object(game.game_functions, 'main_menu_selection', return_value=0), \
                 patch('src.map_manager.screen_fade'), patch.object(game.music_player, 'load_and_play_music'):
-            game.continue_quest()
+            game.title_menu.continue_quest()
         return game
 
     def test_one_save_is_loaded_and_saved_back_to_its_log(self):
@@ -52,7 +54,7 @@ class TestContinueQuest(TestCase):
         self.assertEqual((game.player.name, game.player.total_experience), ('Eddie', 8))
         self.assertEqual(game.player.adventure_log, 2)
         game.cmd_menu.save()
-        self.assertEqual(game.save_files(), ['save_slot_2.json'])
+        self.assertEqual(game.title_menu.save_files(), ['save_slot_2.json'])
 
     def test_with_two_saves_the_chosen_log_is_continued(self):
         # This used to continue the most recently saved log, so CHANGE MESSAGE SPEED (which saves the log it changes)
@@ -69,10 +71,10 @@ class TestContinueQuest(TestCase):
         self.write_save(1, 'Eddie', 2, modified=1000)
         self.write_save(2, 'Loto', 8, modified=2000)
         game = new_game(self.config)
-        game.save_dir_contents = game.save_files()
+        game.title_menu.save_dir_contents = game.title_menu.save_files()
         with patch.object(OptionsScreen, 'choose_log', return_value=None), \
                 patch.object(game, 'load_game') as load_game, patch.object(game, 'start_at_throne_room') as start:
-            self.assertIs(game.continue_quest(), BACK_TO_TITLE_MENU)
+            self.assertIs(game.title_menu.continue_quest(), BACK_TO_TITLE_MENU)
         load_game.assert_not_called()
         start.assert_not_called()
 
@@ -82,7 +84,7 @@ class TestContinueQuest(TestCase):
             with open(os.path.join(self.save_dir.name, stray), 'w') as stray_file:
                 json.dump({}, stray_file)
         game = new_game(self.config)
-        self.assertEqual(game.save_files(), ['save_slot_1.json'])
+        self.assertEqual(game.title_menu.save_files(), ['save_slot_1.json'])
         self.assertEqual(self.continue_quest().player.total_experience, 5)
 
     def test_full_logs_menu_continues_the_quest(self):
@@ -91,8 +93,8 @@ class TestContinueQuest(TestCase):
             self.write_save(slot, 'Eddie', slot, modified=1000 + slot)
         game = new_game(self.config)
         with patch.object(game.game_functions, 'main_menu_selection', return_value=0), \
-                patch.object(game, 'continue_quest') as continue_quest:
-            game.show_main_menu_screen(game.screen)
+                patch.object(game.title_menu, 'continue_quest') as continue_quest:
+            game.title_menu.show_main_menu_screen(game.screen)
         continue_quest.assert_called_once()
 
     def title_menu_then_continue(self, selections: list[int]) -> Game:
@@ -100,8 +102,8 @@ class TestContinueQuest(TestCase):
         last one, CONTINUE A QUEST."""
         game = new_game(self.config)
         with patch.object(game.game_functions, 'main_menu_selection', side_effect=selections), \
-                patch.object(game, 'continue_quest') as continue_quest:
-            game.show_main_menu_screen(game.screen)
+                patch.object(game.title_menu, 'continue_quest') as continue_quest:
+            game.title_menu.show_main_menu_screen(game.screen)
         continue_quest.assert_called_once()
         return game
 
@@ -113,7 +115,7 @@ class TestContinueQuest(TestCase):
         with patch.object(OptionsScreen, 'choose_log', return_value=1), \
                 patch.object(OptionsScreen, 'confirm_erase', return_value=True):
             game = self.title_menu_then_continue([4, 0])
-        self.assertEqual(game.save_files(), ['save_slot_2.json'])
+        self.assertEqual(game.title_menu.save_files(), ['save_slot_2.json'])
 
     def test_copy_goes_back_to_the_title_menu(self):
         self.write_save(1, 'Eddie', 2, modified=1000)
@@ -122,7 +124,7 @@ class TestContinueQuest(TestCase):
                 patch.object(OptionsScreen, 'choose_open_log', return_value=2), \
                 patch.object(OptionsScreen, 'confirm', return_value=True):
             game = self.title_menu_then_continue([3, 0])
-        self.assertEqual(game.save_files(), ['save_slot_1.json', 'save_slot_2.json'])
+        self.assertEqual(game.title_menu.save_files(), ['save_slot_1.json', 'save_slot_2.json'])
 
     def saved_logs(self) -> dict[str, tuple[str, int] | None]:
         """Each file in the save folder: its hero's name and experience, or None if it isn't a readable save."""
@@ -200,7 +202,8 @@ class TestContinueQuest(TestCase):
         for slot in (0, 1, 2, 3, 4):
             with open(os.path.join(self.save_dir.name, f'save_slot_{slot}.json'), 'w') as save_file:
                 json.dump({'Name': 'Eddie'}, save_file)
-        self.assertEqual(new_game(self.config).save_files(), ['save_slot_1.json', 'save_slot_2.json', 'save_slot_3.json'])
+        self.assertEqual(new_game(self.config).title_menu.save_files(),
+                         ['save_slot_1.json', 'save_slot_2.json', 'save_slot_3.json'])
 
     def test_save_slot_number(self):
         self.assertEqual(save_slot_number('save_slot_3.json'), 3)
