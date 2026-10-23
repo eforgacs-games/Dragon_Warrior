@@ -385,6 +385,40 @@ class TestCommandMenu(TestCase):
                          "Heed my voice,\n'Edward, for this is Gwaelin.\n"
                          "To reach the next level thou must raise thy Experience Points by 7.\nMy hope is with thee.'")
 
+    def gwaelins_love_on_the_overworld(self, row, column):
+        """Use Gwaelin's Love on the overworld at (row, column) and return the distance line."""
+        from src.maps import map_lookup
+        self.game.change_map(map_lookup['Alefgard'](self.game.config), destination_coordinates=(row, column))
+        player = self.game.cmd_menu.player
+        player.row, player.column = row, column
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.gwaelins_love()
+        return [c.args[0] for c in show_text.call_args_list if c.args[0].startswith('From where')][0]
+
+    def test_gwaelins_love_directions(self):
+        # NES ChkLove (LDF37-LDF66): the castle block is at NES (43, 43), (50, 51) here. Y - 43 >= 0 is "to the
+        # north", X - 43 >= 0 is "to the west": the castle's direction from the hero
+        lies = "From where thou art now, my castle lies..\n"
+        self.assertEqual(self.gwaelins_love_on_the_overworld(60, 41),  # south-west of the castle
+                         lies + "10 to the north and..10 to the east.")
+        self.assertEqual(self.gwaelins_love_on_the_overworld(45, 54),  # north-east of the castle
+                         lies + "5 to the south and..3 to the west.")
+
+    def test_gwaelins_love_shows_a_distance_of_0(self):
+        # A distance of 0 takes the >= 0 branch, so the NES still prints both lines
+        self.assertEqual(self.gwaelins_love_on_the_overworld(50, 51),
+                         "From where thou art now, my castle lies..\n0 to the north and..0 to the west.")
+
+    def test_gwaelins_love_at_the_final_level(self):
+        # NES ChkLove (LDF15-LDF1F): at LVL_30, TB17E5 instead of the experience line
+        player = self.game.cmd_menu.player
+        player.name, player.level = 'Edward', 30
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            self.game.cmd_menu.gwaelins_love()
+        lines = [c.args[0] for c in show_text.call_args_list]
+        self.assertEqual(lines[0], "'Edward?\nThis is Gwaelin.\nKnow that thou hath reached the final level.'")
+        self.assertFalse(any(line.startswith('Heed') for line in lines))
+
     def test_hurt_flashes_enemy_red(self):
         # NES SetSpellDmg falls through to PlyrHitEn, which runs PaletteFlash
         from src.enemy import Slime
