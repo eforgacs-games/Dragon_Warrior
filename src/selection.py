@@ -7,7 +7,7 @@ windows, the message speed windows) runs ``run_selection``. Once per pass it
   (src/cursor.py BlinkingCursor), which only changes every 16 frames;
 - waits for the next NES frame of game time (``next_frame``, the WaitForNMI of WndGetButtons), so the loop no longer
   spins at full speed: at game speed N the frames come N times as often, like every other wait (src/waiting.py);
-- reads the events (``frame_events``): closing the window quits (quit_if_requested), the keys 1 to 4 set the game
+- reads the events (``frame_events``): closing the window quits (quit_if_requested), the keys 1 to 5 set the game
   speed (handle_speed_key) and are no button to the window;
 - maps keys to the NES buttons (``SELECTION_KEYS``: A is K and Enter, B is reject_keys, Escape included, and the
   D-pad; START is no button, as WndProcessInput skips it) and handles them: A or B answers (the arrow is drawn one
@@ -75,7 +75,7 @@ def next_frame() -> None:
 
 def frame_events() -> list[Event]:
     """The events queued since the last pass: quits if the window was closed (quit_if_requested), and takes out the
-    presses of 1 to 4 after setting the game speed (handle_speed_key) and the zoom keys after zooming the window
+    presses of 1 to 5 after setting the game speed (handle_speed_key) and the zoom keys after zooming the window
     (handle_zoom_event, src/zoom.py), so no window reads them as a key."""
     events = []
     poll_virtual_joypad()

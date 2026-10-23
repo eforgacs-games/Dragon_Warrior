@@ -1871,8 +1871,8 @@ msgid "F11: Toggle Fullscreen"
 msgstr "F11: 전체 화면 켜기/끄기"
 
 #: data/text/intro_lookup_table.py:18
-msgid "1-4: Adjust Game Speed"
-msgstr "1-4: 게임 속도 조절"
+msgid "1-5: Adjust Game Speed"
+msgstr "1-5: 게임 속도 조절"
 
 #: src/items.py
 msgid "Broad Sword"
@@ -2271,8 +2271,8 @@ msgid "F11: Fullscreen"
 msgstr "F11: 전체 화면"
 
 #: data/text/intro_lookup_table.py:19
-msgid "1-4: Game Speed"
-msgstr "1-4: 게임 속도 조절"
+msgid "1-5: Game Speed"
+msgstr "1-5: 게임 속도 조절"
 
 #: data/text/intro_lookup_table.py:30
 msgid "Toggle on/off:"
