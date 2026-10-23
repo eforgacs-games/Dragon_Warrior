@@ -24,10 +24,14 @@ class ControlInfo:
         # Window zoom (src/zoom.py): Ctrl + / Ctrl - or Ctrl and the mouse wheel, and Ctrl 0 for the normal size
         self.zoom_controls = _("Ctrl +/-/Wheel: Zoom")
         self.zoom_reset = _("Ctrl 0: Reset Zoom")
+        # Save states (src/save_state.py): Shift + F1/F2/F3 saves into slot 1/2/3, F1/F2/F3 loads it
+        self.save_state_keys = _("Shift+F1-F3: Save state")
+        self.load_state_keys = _("F1-F3: Load state")
         self.controls: tuple[str, ...] = (
             self.a_button, self.b_button, self.start_button, self.select_button, self.arrow_keys_move_buttons,
             self.help_button, self.auto_battle_toggle, self.invulnerability_toggle,
-            self.fullscreen_toggle, self.speed_controls, self.auto_grind_key, self.zoom_controls, self.zoom_reset)
+            self.fullscreen_toggle, self.speed_controls, self.auto_grind_key, self.zoom_controls, self.zoom_reset,
+            self.save_state_keys, self.load_state_keys)
         # The H help, one string per dialog box page (the A button turns the page). The dialog box fits five rows
         # above the continue arrow, so each page is a short group of related keys. "Controls:\n" keeps its newline
         # so it still matches the existing Korean translation.
@@ -38,6 +42,7 @@ class ControlInfo:
             "\n".join((_("Toggle on/off:"), self.auto_battle_toggle, self.invulnerability_toggle,
                        self.fullscreen_toggle)),
             "\n".join((_("Window zoom:"), self.zoom_controls, self.zoom_reset)),
+            "\n".join((_("Save states:"), self.save_state_keys, self.load_state_keys)),
         )
         if config.get('DEBUG_KEYS'):
             # Dev config only (src/debug_tools.py), on a page of their own

@@ -2,8 +2,8 @@ import argparse
 import os
 import sys
 
-from pygame import FULLSCREEN, K_h, K_i, K_k, RESIZABLE, display, event, image, init, K_F4, K_F9, K_F11, KEYDOWN, \
-    SCALED, K_RETURN, VIDEORESIZE
+from pygame import FULLSCREEN, K_h, K_i, K_k, RESIZABLE, display, event, image, init, K_F1, K_F2, K_F3, K_F4, K_F9, \
+    K_F11, KEYDOWN, KMOD_SHIFT, SCALED, K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -44,6 +44,7 @@ from src.npc_movement import step
 from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
 from src.options_screen import apply_options
 from src.save_file import SaveFile
+from src.save_state import OLD_VERSION, StateError, read_state, restore_snapshot, take_snapshot, write_state
 from src.paths import data_path
 from src.player.player import Player
 from src.sound import Sound
@@ -60,6 +61,9 @@ from src.waiting import MAP_CONTEXT, poll_virtual_joypad, quit_if_requested, set
 from src.windows import COMMAND_WINDOW
 from src.zoom import handle_zoom_event, remember_default_zoom, remember_windowed_size, restore_windowed_size
 
+
+# Shift + F1/F2/F3 saves a save state in slot 1/2/3, F1/F2/F3 loads it (Game.handle_save_state_keys)
+SAVE_STATE_KEYS = {K_F1: 1, K_F2: 2, K_F3: 3}
 
 # NES ChkOtherBlocks: a swamp step costs 2 HP (DoSwampDamage, LCDD4), a force field step 15 (LCE2B)
 SWAMP_DAMAGE = 2
@@ -132,6 +136,11 @@ class Game:
         # G pressed on the map: auto-grind (src/auto_grind.py) starts once everyone has finished their step, like the
         # pause (resolve_pending_freezes)
         self.auto_grind_requested = False
+        # Shift + F1/F2/F3 or F1/F2/F3 pressed on the map: ('save' or 'load', slot). Like the pause, it waits for the
+        # hero and the NPCs to finish their steps (resolve_pending_freezes), then becomes state_request_due, which the
+        # end of that frame carries out (run_due_state_request)
+        self.state_request: tuple[str, int] | None = None
+        self.state_request_due: tuple[str, int] | None = None
         # Create the game window.
         if self.fullscreen_enabled:
             # according to pygame docs: "SCALED is considered an experimental API and may change in future releases."
@@ -301,6 +310,7 @@ class Game:
         self._handle_post_move_checks()
         self.ending.check_for_end_game_trigger()
         self._handle_debugging_info()
+        self.run_due_state_request()
         event.pump()
 
     def _handle_debugging_info(self) -> None:
@@ -718,6 +728,7 @@ class Game:
         self.handle_fullscreen_toggle(current_keydown_event)
         self.handle_auto_battle_toggle(current_keydown_event)
         self.handle_invulnerability_toggle(current_keydown_event)
+        self.handle_save_state_keys(current_keydown_event)
         if self.debug_tools is not None:
             # Dev config only (DEBUG_KEYS): F5 warp, F6 give, F7 load a checkpoint
             self.debug_tools.handle_keydown(current_keydown_event)
@@ -775,6 +786,54 @@ class Game:
             return
         self.auto_grind_requested = True
         self.movement.resolve_pending_freezes()
+
+    def handle_save_state_keys(self, keydown_event) -> None:
+        """Shift + F1/F2/F3 saves a save state in slot 1/2/3 and F1/F2/F3 loads it (src/save_state.py), not NES. Only
+        on the map, when START would pause the game: no window open or about to open, the light not growing. Like
+        the pause, it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes)."""
+        slot = SAVE_STATE_KEYS.get(keydown_event.key)
+        if slot is None:
+            return
+        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+            return
+        self.state_request = ('save' if getattr(keydown_event, 'mod', 0) & KMOD_SHIFT else 'load', slot)
+        self.movement.resolve_pending_freezes()
+
+    def run_due_state_request(self) -> None:
+        """Save or load the save state asked for, once everyone is on a tile (resolve_pending_freezes), between two
+        map frames."""
+        request, self.state_request_due = self.state_request_due, None
+        if request is None:
+            return
+        action, slot = request
+        if action == 'save':
+            self.save_state(slot)
+        else:
+            self.load_state(slot)
+
+    def save_state(self, slot: int) -> None:
+        """Save the game as it is into a save state slot (src/save_state.py), and say so."""
+        write_state(self.directories.save_dir, slot, take_snapshot(self))
+        self.draw_temporary_text(self._("State {} saved").format(slot))
+
+    def load_state(self, slot: int) -> None:
+        """Load a save state slot (src/save_state.py), and say so: the game is put back as it was when it was saved,
+        and play goes on from there. An empty slot, or a state that can't be loaded (from an older version of the
+        game, or unreadable), changes nothing."""
+        try:
+            snapshot = read_state(self.directories.save_dir, slot)
+            if snapshot is None:
+                self.draw_temporary_text(self._("State {} is empty").format(slot))
+                return
+            restore_snapshot(self, snapshot)
+        except StateError as error:
+            if error.reason == OLD_VERSION:
+                message = self._("State {} is from another version\nand can't be loaded").format(slot)
+            else:
+                message = self._("State {} can't be read").format(slot)
+            self.draw_temporary_text(message)
+            return
+        self.draw_temporary_text(self._("State {} loaded").format(slot))
 
     def start_auto_grind(self) -> None:
         self.auto_grind.start()
