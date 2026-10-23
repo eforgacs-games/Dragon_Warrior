@@ -36,6 +36,7 @@ from src.zoom import handle_zoom_event
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, SelectionButtons, first_button
+from src.nes_random import coin_flip
 
 
 class BattleOutcome(Enum):
@@ -47,6 +48,7 @@ class BattleOutcome(Enum):
 
 
 # CmdCmbtDat: the commands, by row and column (WndCalcSelResult: CC_FIGHT, CC_SPELL, CC_RUN, CC_ITEM)
+ENEMY_SPELL_PAUSE_MS = 1000  # the pause after "<enemy> chants the spell of ..." or "is breathing fire" (not NES timing)
 BATTLE_MENU_OPTIONS = (('Fight', 'Spell'), ('Run', 'Item'))
 
 # The joypad on the keyboard, for the command window's SelectionButtons. A is K and Enter; START (I) is no button
@@ -349,33 +351,34 @@ class BattleController:
             if selected_executed_option in ('Fight', 'Run'):
                 # PlyrFight (LE5FE), PlyrRun (LE886): RemoveWindow WND_CMD_CMB before anything is shown
                 self.remove_command_window()
-            if selected_executed_option == 'Fight':
-                self.fight(current_battle)
-            elif selected_executed_option == 'Spell':
-                if not self.player.spells:
-                    self.remove_command_window()  # PlyrSpell (LE6CB): no spells yet
-                # Otherwise the SPELL window is answered first (CommandMenu.display_item_menu removes both)
-                current_battle.battle_spell(self.cmd_menu, self.player, current_battle)
-            elif selected_executed_option == 'Run':
-                run_away = current_battle.battle_run(self.cmd_menu, self.player, current_battle)
-                if run_away:
-                    # The enemy may have fled on its turn after the hero was blocked: that's no escape by the hero
-                    self.player_ran_away = not current_battle.enemy_fled
-                    return run_away
-                else:
-                    # enemy already attacked inside battle_run; skip the outer enemy turn
-                    current_battle.no_op = True
-            elif selected_executed_option == 'Item':
-                if not self.player.inventory:
-                    self.remove_command_window()  # PlyrItem (LE7B0): nothing to show
-                    self.cmd_menu.show_line_in_dialog_box(
-                        self._('Nothing of use has yet been given to thee.\n'),
-                        add_quotes=False, hide_arrow=True, disable_sound=True)
-                    current_battle.no_op = True
-                else:
-                    self.cmd_menu.display_item_menu('inventory')
-            elif selected_executed_option == 'Sleep':
-                self.sleeping_player_turn(current_battle)
+            match selected_executed_option:
+                case 'Fight':
+                    self.fight(current_battle)
+                case 'Spell':
+                    if not self.player.spells:
+                        self.remove_command_window()  # PlyrSpell (LE6CB): no spells yet
+                    # Otherwise the SPELL window is answered first (CommandMenu.display_item_menu removes both)
+                    current_battle.battle_spell(self.cmd_menu, self.player, current_battle)
+                case 'Run':
+                    run_away = current_battle.battle_run(self.cmd_menu, self.player, current_battle)
+                    if run_away:
+                        # The enemy may have fled on its turn after the hero was blocked: that's no escape by the hero
+                        self.player_ran_away = not current_battle.enemy_fled
+                        return run_away
+                    else:
+                        # enemy already attacked inside battle_run; skip the outer enemy turn
+                        current_battle.no_op = True
+                case 'Item':
+                    if not self.player.inventory:
+                        self.remove_command_window()  # PlyrItem (LE7B0): nothing to show
+                        self.cmd_menu.show_line_in_dialog_box(
+                            self._('Nothing of use has yet been given to thee.\n'),
+                            add_quotes=False, hide_arrow=True, disable_sound=True)
+                        current_battle.no_op = True
+                    else:
+                        self.cmd_menu.display_item_menu('inventory')
+                case 'Sleep':
+                    self.sleeping_player_turn(current_battle)
             current_battle.last_turn = current_battle.turn
             current_battle.turn += 1
             selected_executed_option = None
@@ -465,7 +468,7 @@ class BattleController:
         """NES StartPlayerTurn: a sleeping hero wakes when bit 0 of a random byte is set (50%), with no limit on how
         long the sleep can last. On waking, "<player> awakes." then "Command?": the hero takes this turn as usual.
         Otherwise "Thou art still asleep." (PlayerAsleepDialog) and the enemy takes its turn."""
-        if random.randint(0, 255) & 0x01:
+        if coin_flip():
             self.player.is_asleep = False
             self.cmd_menu.show_line_in_dialog_box(
                 self._("{} awakes.\n").format(self.player.name) + self._("Command?\n"),
@@ -563,15 +566,14 @@ class BattleController:
     def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
         enemy.refresh_pattern()
         if isinstance(current_enemy_pattern, tuple):
-            x = current_enemy_pattern[0]
-            current_spell = current_enemy_pattern[1]
-            z = current_enemy_pattern[2]
+            # (chance in percent, spell, whether its condition holds), from Enemy.set_pattern
+            chance_percent, current_spell, may_cast = current_enemy_pattern
             if current_spell == Spell.SLEEP and self.player.is_asleep:
-                z = False
+                may_cast = False
             elif current_spell == Spell.STOPSPELL and self.player.is_stopspelled:
-                z = False
-            if z:
-                if random.randint(0, 99) < x:
+                may_cast = False
+            if may_cast:
+                if random.randint(0, 99) < chance_percent:
                     if current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         self.cmd_menu.show_line_in_dialog_box(
                             self._("{} chants the spell of {}.").format(self._(enemy.name),
@@ -583,7 +585,7 @@ class BattleController:
                             self._("The {} is breathing fire.\n").format(self._(enemy.name)),
                             add_quotes=False, disable_sound=True, hide_arrow=True)
                         self.sound.play_sound(self.directories.breathe_fire_sfx)
-                    wait(1000)
+                    wait(ENEMY_SPELL_PAUSE_MS)
                     if enemy.is_stopspelled and current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         # NES: a stopspelled enemy still chants, but the spell is blocked (fire breath isn't a spell)
                         self.cmd_menu.show_line_in_dialog_box(self._("But that spell hath been blocked."),
@@ -591,36 +593,37 @@ class BattleController:
                         return
                     spell_effect_lower_bound, spell_effect_upper_bound = enemy_spell_lookup[current_spell]
                     spell_effect = random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
-                    if current_spell in (Spell.HEAL, Spell.HEALMORE):
-                        # NES EnemyAddHP: capped at the enemy's base HP
-                        enemy.recover_hp(spell_effect)
-                        self.cmd_menu.show_line_in_dialog_box(
-                            self._("The {} hath recovered.").format(self._(enemy.name)), add_quotes=False,
-                            disable_sound=True, hide_arrow=True)
-                    elif current_spell == Spell.SLEEP:
-                        # NES EnCastSleep: always works; the enemy moves again straight away (see enemy_move)
-                        self.player.is_asleep = True
-                        self.player_fell_asleep = True
-                        self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), add_quotes=False,
-                                                              disable_sound=True, hide_arrow=True)
-                    elif current_spell in (Spell.HURT, Spell.HURTMORE):
-                        if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
-                            spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
-                        self.game.receive_damage(spell_effect)
-                    elif current_spell == Spell.STOPSPELL:
-                        # NES EnCastStopspell: Erdrick's Armor always blocks it; otherwise it works when bit 0 of a
-                        # random byte is set (50%). It lasts for the rest of the fight.
-                        if self.player.armor != "Erdrick's Armor" and random.randint(0, 255) & 0x01:
-                            self.player.is_stopspelled = True
-                            message = self._("{}'s spell is blocked.").format(self.player.name)
-                        else:
-                            message = self._("The spell will not work.")
-                        self.cmd_menu.show_line_in_dialog_box(message, add_quotes=False, disable_sound=True,
-                                                              hide_arrow=True)
-                    elif current_spell in (Spell.FIREBREATH, Spell.FIREBREATH2):
-                        if self.player.armor == "Erdrick's Armor":
-                            spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
-                        self.game.receive_damage(spell_effect)
+                    match current_spell:
+                        case Spell.HEAL | Spell.HEALMORE:
+                            # NES EnemyAddHP: capped at the enemy's base HP
+                            enemy.recover_hp(spell_effect)
+                            self.cmd_menu.show_line_in_dialog_box(
+                                self._("The {} hath recovered.").format(self._(enemy.name)), add_quotes=False,
+                                disable_sound=True, hide_arrow=True)
+                        case Spell.SLEEP:
+                            # NES EnCastSleep: always works; the enemy moves again straight away (see enemy_move)
+                            self.player.is_asleep = True
+                            self.player_fell_asleep = True
+                            self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), add_quotes=False,
+                                                                  disable_sound=True, hide_arrow=True)
+                        case Spell.HURT | Spell.HURTMORE:
+                            if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
+                                spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
+                            self.game.receive_damage(spell_effect)
+                        case Spell.STOPSPELL:
+                            # NES EnCastStopspell: Erdrick's Armor always blocks it; otherwise it works when bit 0 of a
+                            # random byte is set (50%). It lasts for the rest of the fight.
+                            if self.player.armor != "Erdrick's Armor" and coin_flip():
+                                self.player.is_stopspelled = True
+                                message = self._("{}'s spell is blocked.").format(self.player.name)
+                            else:
+                                message = self._("The spell will not work.")
+                            self.cmd_menu.show_line_in_dialog_box(message, add_quotes=False, disable_sound=True,
+                                                                  hide_arrow=True)
+                        case Spell.FIREBREATH | Spell.FIREBREATH2:
+                            if self.player.armor == "Erdrick's Armor":
+                                spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
+                            self.game.receive_damage(spell_effect)
                 else:
                     self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
             else:

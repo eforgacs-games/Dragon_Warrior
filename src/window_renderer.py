@@ -15,7 +15,7 @@ tiles are in NES_GLYPHS, copied from the screenshots (the name entry alphabet, a
 ELISION_APOSTROPHE). src/text.py's NESFont draws them
 the same way in all other text (dialog, draw_text).
 """
-from functools import lru_cache
+from functools import cache, lru_cache
 
 from pygame import Rect, Surface, font
 
@@ -179,7 +179,7 @@ NES_GLYPHS: dict[str, Pattern] = {
 }
 
 
-@lru_cache(maxsize=None)
+@cache
 def glyph_tile(character: str) -> Pattern:
     """A character's NES font tile, as a pattern like the border tiles."""
     if character in NES_GLYPHS:
@@ -216,7 +216,7 @@ def window_tiles(layout: WindowLayout) -> list[list[Pattern]]:
     return grid
 
 
-@lru_cache(maxsize=None)
+@cache
 def tile_surface(pattern: Pattern, color: tuple, nes_pixel: int) -> Surface:
     """A tile drawn in color on black, nes_pixel screen pixels per NES pixel."""
     surface = Surface((NES_TILE * nes_pixel, NES_TILE * nes_pixel))

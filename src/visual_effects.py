@@ -1,11 +1,14 @@
 import sys
 from array import array
 
-from pygame import Surface, display, image, mask, time, transform
+from pygame import Surface, display, image, mask, transform
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src.common import BLACK
-from src.waiting import check_for_quit, scaled_ms, wait, wait_frames
+from src.waiting import NES_FPS, check_for_quit, wait, wait_frames
+
+
+SMOOTH_FADE_STEP_MS = 5  # the 'Smooth' fade (not an NES effect): one alpha step every 5 ms
 
 
 def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -> None:
@@ -20,8 +23,8 @@ def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -
     If true, fades out. If false, fades in.
     """
     width, height = screen.get_width(), screen.get_height()
-    fade_surface = Surface((width, height))  # lgtm [py/call/wrong-arguments]
-    fade_surface.fill(BLACK)
+    black_overlay = Surface((width, height))  # lgtm [py/call/wrong-arguments]
+    black_overlay.fill(BLACK)
 
     # For fade in, capture the current screen state
     if not fade_out:
@@ -41,12 +44,11 @@ def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -
             else:
                 screen.blit(background, (0, 0))
 
-        fade_surface.set_alpha(opacity)
-        screen.blit(fade_surface, (0, 0)) if not config['NO_BLIT'] else None
+        black_overlay.set_alpha(opacity)
+        screen.blit(black_overlay, (0, 0)) if not config['NO_BLIT'] else None
         display.update()
         check_for_quit()
-        if not config['NO_WAIT']:
-            time.delay(scaled_ms(5))
+        wait(SMOOTH_FADE_STEP_MS, config)
 
         # Update opacity based on fade direction
         if fade_out:
@@ -63,11 +65,15 @@ def draw_transparent_color(color, screen, transparency, no_blit):
         screen.blit(color_flash_surface, (0, 0))
 
 
-def flash_transparent_color(color, screen, calculation, transparency=192, no_blit=False):
-    start_time = get_ticks()
-    draw_transparent_color(color, screen, transparency, no_blit)
-    while calculation.convert_to_frames_since_start_time(start_time) < 3:
-        display.flip()
+# A swamp step (NES DoSwampDamage -> RedFlashScreen): the red overlay is shown for 3 frames
+SWAMP_FLASH_FRAMES = 3
+
+
+def flash_transparent_color(color, screen, config, transparency=192) -> None:
+    """Show the screen tinted with ``color`` for SWAMP_FLASH_FRAMES frames (the swamp damage flash). The wait goes
+    through src.waiting, so it follows the game speed and NO_WAIT."""
+    draw_transparent_color(color, screen, transparency, config.get('NO_BLIT'))
+    show_frames(SWAMP_FLASH_FRAMES, config)
 
 
 # NES force field damage (Bank03, LCE30-LCE42): three times over, WaitForNMI, RedFlashScreen (which waits a frame
@@ -99,7 +105,7 @@ BW_FLASH_COLOR_FRAMES = 2
 BW_FLASH_GREY_FRAMES = 3
 
 
-def bw_screen_flash(screen: Surface, calculation, config) -> None:
+def bw_screen_flash(screen: Surface, config) -> None:
     """Flash the screen between color and greyscale, as NES BWScreenFlash does."""
     if config['NO_BLIT']:
         return
@@ -124,8 +130,6 @@ def greyscale_screen(screen: Surface, config: dict, frames: int = 30) -> None:
 # ---------------------------------------------------------------------------------------------------- #
 #  NES palette effects used in battle (issue #96)                                                       #
 # ---------------------------------------------------------------------------------------------------- #
-
-NES_FPS = 60
 
 # The NES master palette, indexed by NES color number ($00-$3F). These are the RGB values the game's images use.
 NES_PALETTE: tuple[tuple[int, int, int], ...] = (
@@ -173,16 +177,18 @@ def nes_color_index(rgb) -> int:
                key=lambda item: sum((a - b) ** 2 for a, b in zip(item[0], rgb)))[1]
 
 
-def nes_faded_color(rgb, pal_mod: int) -> tuple[int, int, int]:
-    """NES AddPalByte/ChkPalFade ($C680): subtract the fade offset from the color number; below $00 is black."""
-    index = nes_color_index(rgb) - pal_mod
+def nes_faded_color(rgb, darkening: int) -> tuple[int, int, int]:
+    """NES AddPalByte/ChkPalFade ($C680): subtract ``darkening`` (NES PalModByte, $10 per brightness row) from the
+    color number; below $00 is black."""
+    index = nes_color_index(rgb) - darkening
     return NES_PALETTE[PAL_BLACK] if index < 0 else NES_PALETTE[index]
 
 
-def fade_surface(surface: Surface, pal_mod: int) -> Surface:
-    """A copy of a sprite with every opaque pixel's NES color darkened by pal_mod ($10 per brightness row)."""
+def fade_surface(surface: Surface, darkening: int) -> Surface:
+    """A copy of a sprite with every opaque pixel's NES color darkened by ``darkening`` (NES PalModByte, $10 per
+    brightness row)."""
     faded = surface.copy()
-    if pal_mod == 0:
+    if darkening == 0:
         return faded
     colors: dict[tuple[int, int, int], tuple[int, int, int]] = {}
     for x in range(faded.get_width()):
@@ -191,7 +197,7 @@ def fade_surface(surface: Surface, pal_mod: int) -> Surface:
             if a:
                 rgb = (r, g, b)
                 if rgb not in colors:
-                    colors[rgb] = nes_faded_color(rgb, pal_mod)
+                    colors[rgb] = nes_faded_color(rgb, darkening)
                 faded.set_at((x, y), (*colors[rgb], a))
     return faded
 
@@ -239,10 +245,10 @@ def nearest_nes_color_index(rgb) -> int:
     return _NEAREST_NES_COLOR[rgb]
 
 
-def nes_fade_palette(pal_mod: int) -> list[tuple[int, int, int]]:
-    """The 64 NES colors after AddPalByte/ChkPalFade ($C680) subtracts pal_mod from each color number: entry n is
-    the color n becomes, black if n - pal_mod is below $00."""
-    return [NES_PALETTE[index - pal_mod] if index >= pal_mod else NES_PALETTE[PAL_BLACK]
+def nes_fade_palette(darkening: int) -> list[tuple[int, int, int]]:
+    """The 64 NES colors after AddPalByte/ChkPalFade ($C680) subtracts ``darkening`` (NES PalModByte) from each color
+    number: entry n is the color n becomes, black if n - darkening is below $00."""
+    return [NES_PALETTE[index - darkening] if index >= darkening else NES_PALETTE[PAL_BLACK]
             for index in range(len(NES_PALETTE))]
 
 
@@ -290,15 +296,15 @@ def nes_palette_fade(fade_out: bool, screen: Surface, config) -> None:
     started = get_ticks()
     indexed = nes_indexed_surface(picture)
     first_wait = max(0.0, FADE_STEP_FRAMES * 1000 / NES_FPS - (get_ticks() - started))
-    for step, pal_mod in enumerate(steps):
+    for step, darkening in enumerate(steps):
         if step == 0:
             wait(first_wait, config)
         else:
             wait_frames(FADE_STEP_FRAMES, config)
-        if pal_mod == 0:
+        if darkening == 0:
             screen.blit(picture, (0, 0))  # the colors exactly as they were, even ones that aren't NES colors
         else:
-            indexed.set_palette(nes_fade_palette(pal_mod))
+            indexed.set_palette(nes_fade_palette(darkening))
             screen.blit(indexed, (0, 0))
         display.flip()
 
@@ -336,10 +342,10 @@ def enemy_fade_in(screen: Surface, image: Surface, position, config, repeats: in
         return
     steps = [(FADE_FULL_BLACK, FADE_STEP_FRAMES)] + [(step, FADE_STEP_FRAMES) for step in FADE_IN_STEPS] * repeats
     faded: dict[int, Surface] = {}
-    for pal_mod, frames in steps:
-        if pal_mod not in faded:
-            faded[pal_mod] = fade_surface(image, pal_mod)
-        screen.blit(faded[pal_mod], position)
+    for darkening, frames in steps:
+        if darkening not in faded:
+            faded[darkening] = fade_surface(image, darkening)
+        screen.blit(faded[darkening], position)
         show_frames(frames, config)
     screen.blit(image, position)
     display.flip()
@@ -398,11 +404,13 @@ def player_hit_shake(screen: Surface, config, deathblow: bool = False, enemy=Non
         enemy_rect = enemy_image.get_rect(topleft=enemy_position)
         area = enemy_rect.move(-background_position[0], -background_position[1])
         without_enemy.blit(background_image, enemy_rect.topleft, area=area)
-    for shake_counter in range(SHAKE_COUNT, 0, -1):
+    for shake_number in range(SHAKE_COUNT):
         show_frames(SHAKE_STILL_FRAMES, config)
         offset = SHAKE_PIXELS * scale
-        # Scrolling right/down moves the picture left/up.
-        shift = (-offset, 0) if shake_counter % 2 == 0 else (0, -offset)
+        # ShakeCounter counts down from 8 and moves ScrollX on even counts, so the shakes alternate horizontal and
+        # vertical, starting horizontal. Scrolling right/down moves the picture left/up.
+        horizontal = shake_number % 2 == 0
+        shift = (-offset, 0) if horizontal else (0, -offset)
         screen.blit(without_enemy, shift)
         if deathblow:
             screen.blit(red_flash_overlay(screen), (0, 0))

@@ -27,7 +27,7 @@ The windows read the joypad like every NES selection window (src/cursor.py Selec
 button per press, up and down in a one-column window, left and right in a one-row window, stopping at the edges.
 """
 from dataclasses import dataclass
-from typing import Callable, Iterable, List, Sequence, Tuple
+from collections.abc import Callable, Iterable, Sequence
 
 from pygame import Rect, Surface, display
 
@@ -68,7 +68,7 @@ NPCS_MAKE_WAY_CHOICES = (True, False)  # the window's entries, left to right
 DEFAULT_FADE_STYLE = FADE_STYLE_NES
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Options:
     """The settings kept per adventure log."""
     message_speed: str = DEFAULT_MESSAGE_SPEED
@@ -200,7 +200,7 @@ def apply_options(config: dict, options: Options) -> None:
 class OptionWindow:
     """One selection window: its place, fixed text, entries and where its cursor goes."""
 
-    def __init__(self, window: Window, prompt: Iterable[Tuple[int, int, str]], labels: Sequence[str], first_row: int,
+    def __init__(self, window: Window, prompt: Iterable[tuple[int, int, str]], labels: Sequence[str], first_row: int,
                  text_column: int, cursor_column: int, text_columns: Sequence[int] = ()):
         """``text_columns``, if given, puts the entries side by side on first_row, starting at these columns (a one-row
         window, moved through with left and right); otherwise they go down from first_row at text_column."""
@@ -248,7 +248,7 @@ FADE_STYLE_OPTIONS = OptionWindow(FADE_STYLE_WINDOW, FADE_STYLE_PROMPT, FADE_STY
                                   text_columns=FADE_STYLE_TEXT_COLUMNS)
 
 
-def adventure_log_options(logs: Sequence[Tuple[int, str]], _: Callable[[str], str] = str) -> OptionWindow:
+def adventure_log_options(logs: Sequence[tuple[int, str]], _: Callable[[str], str] = str) -> OptionWindow:
     """The used logs window (LogList*Dat2): one line per log, " ADVENTURE LOG n:" and 4 letters of the hero's name.
     ``_`` translates the line (set_gettext_language); the hero's name is never translated."""
     window = variable_height_window(ADVENTURE_LOG_WINDOW_2, len(logs))
@@ -299,9 +299,9 @@ class OptionsScreen:
         # The prompts and entries are translated (the NES font has no Korean: draw_text draws it in Unifont)
         self._ = set_gettext_language(config.get('LANGUAGE'))
         # windows on screen, bottom to top, each with the entry its cursor is on
-        self.windows: List[Tuple[OptionWindow, int]] = []
+        self.windows: list[tuple[OptionWindow, int]] = []
 
-    def choose_log(self, logs: Sequence[Tuple[int, str]]) -> int | None:
+    def choose_log(self, logs: Sequence[tuple[int, str]]) -> int | None:
         """DoChngMsgSpeed -> ShowUsedLogs: the chosen log's number, or None for B."""
         log_window = adventure_log_options(logs, self._)
         self.windows = [(log_window, 0)]

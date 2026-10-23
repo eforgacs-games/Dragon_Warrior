@@ -28,10 +28,10 @@ from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE, SEARCHED_FOR_GWAELIN
 from src.text import draw_text
 from src.visual_effects import screen_fade
-from src.waiting import game_ticks, wait_frames
+from src.waiting import NES_FPS, POLL_INTERVAL_MS, game_ticks, wait_frames
+from src.windows import DIALOG_WINDOW
 from src.zoom import handle_zoom_event
 
-NES_FPS = 60
 
 # NES DoEndCredits (Bank01) moves on to the next credits screen after a number of "music timing events" in the end
 # music (WaitForMusicEnd, $815E): the triangle part (TRIEndGame) has a no-op byte (MCTL_NO_OP, $FC) after every few
@@ -48,6 +48,14 @@ END_MUSIC_TIMING_EVENTS = (
     (5924, 5956), (6054, 6087), (6185, 6218), (6316, 6349), (6447, 6480), (6577, 6593), (6697, 6712), (6813, 6843),
     (6945, 6963), (7120, 7137),
 )
+
+# NES GwaelinMoveLoop: Gwaelin walks to the king one NES pixel (16 to a block) every 2 frames
+NES_PIXELS_PER_BLOCK = 16
+GWAELIN_FRAMES_PER_PIXEL = 2
+# NES TaleEnd: a pause after "And thus the tale comes to an end....", then the hero looks right, then down, a short
+# pause each, before the trumpets
+TALE_END_PAUSE_FRAMES = 120
+TALE_END_LOOK_FRAMES = 30
 
 # NES DoClearPPU and RollCredits: between one screen's fade out and the next one's fade in, ClearPPU waits for two NMIs
 # and RollCredits one more before DoPalFadeIn (a screen with a lot of text can fill the PPU buffer and add a frame).
@@ -85,17 +93,15 @@ CREDITS = (
 )
 
 
+# NES DoEndCredits: how many music timing events each credits screen (CREDITS, in order) stays up for, from the
+# EndCreditCount checks: CONGRATULATIONS 8, the DRAGON WARRIOR STAFF title 2, the scenario, character design and
+# music screens 3 each, the next nine 2 each, and the rest 3 (THE END's entry is never used: it stays up THE_END_FRAMES)
+CREDIT_SCREEN_MUSIC_EVENTS = (8, 2, 3, 3, 3) + (2,) * 9 + (3,) * 4
+
+
 def credit_screen_music_events(screen_index: int) -> int:
-    """NES DoEndCredits: how many music timing events each credits screen stays up for (EndCreditCount checks)."""
-    if screen_index == 0:
-        return 8
-    if screen_index == 1:
-        return 2
-    if screen_index in (2, 3, 4):
-        return 3
-    if screen_index <= 13:
-        return 2
-    return 3
+    """NES DoEndCredits: how many music timing events a credits screen stays up for."""
+    return CREDIT_SCREEN_MUSIC_EVENTS[screen_index]
 
 
 class EndMusicTimingEvents:
@@ -239,7 +245,7 @@ class Ending:
         name = self.player.name
         self.game.music_player.stop_music()
         self.game.game_state.pause_all_movement()
-        self.game.cmd_menu.window_drop_down_effect(2, 9, 12, 5)
+        self.game.cmd_menu.window_drop_down_effect(*DIALOG_WINDOW)
         # TextBlock18, entry 11
         self.say(_("The legends have proven true."))
         self.say(_("Thou art indeed of the line of Erdrick."))
@@ -282,10 +288,10 @@ class Ending:
         tile_size = self.game.tile_size
         row, target_column = ENDING_GWAELIN_BESIDE_KING
         while gwaelin.column < target_column:
-            for _ in range(16):  # 16 NES pixels to a tile
-                gwaelin.rect.x += tile_size // 16
+            for _ in range(NES_PIXELS_PER_BLOCK):
+                gwaelin.rect.x += tile_size // NES_PIXELS_PER_BLOCK
                 self.redraw()
-                self.wait_frames(2)
+                self.wait_frames(GWAELIN_FRAMES_PER_PIXEL)
             gwaelin.column += 1
             gwaelin.rect.center = get_center_point(gwaelin.column, row, tile_size)
         self.game.current_map.characters['PRINCESS_GWAELIN']['coordinates'] = (row, target_column)
@@ -328,13 +334,13 @@ class Ending:
         """NES TaleEnd: TextBlock19, entry 2, then the hero looks right and down before the trumpets sound."""
         self.say(self._("And thus the tale comes to an end....") + "\n" +
                  self._("unless the dragons return again."), quoted=False, wait_for_key=False)
-        self.wait_frames(120)
+        self.wait_frames(TALE_END_PAUSE_FRAMES)
         self.player.direction_value = Direction.RIGHT.value
         self.redraw()
-        self.wait_frames(30)
+        self.wait_frames(TALE_END_LOOK_FRAMES)
         self.player.direction_value = Direction.DOWN.value
         self.redraw()
-        self.wait_frames(30)
+        self.wait_frames(TALE_END_LOOK_FRAMES)
 
     # ------------------------------------------------------------------ #
     #  4. Credits                                                          #
@@ -374,4 +380,4 @@ class Ending:
                 if current_event.type == QUIT:
                     pygame_quit()
                     sys.exit()
-            time.wait(16)
+            time.wait(POLL_INTERVAL_MS)  # idle about a frame between checks

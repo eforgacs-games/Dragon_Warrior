@@ -10,7 +10,7 @@ F5 to F7 each open a small list: type to filter it, ↑/↓ to choose, Enter to 
 """
 import os
 import time
-from typing import Callable, Sequence
+from collections.abc import Callable, Sequence
 
 from pygame import KEYDOWN, K_BACKSPACE, K_DOWN, K_ESCAPE, K_F5, K_F6, K_F7, K_F8, K_KP_ENTER, K_RETURN, K_UP, QUIT, \
     Rect, display, draw, event
@@ -19,6 +19,7 @@ from pygame.time import Clock
 from src.checkpoints import CHECKPOINT_NAMES
 from src.color import BLACK, WHITE
 from src.constants import RETURN_DESTINATION
+from src.coordinates import Cell
 from src.frame_recorder import FRAME_RECORDINGS_DIR, REAL_TIME_FLICKER_MS, FrameRecorder, find_flickers, \
     save_recording
 from src.items import MAX_GOLD, MAX_HERBS, MAX_KEYS
@@ -50,7 +51,7 @@ RECORDING_CAPTION = " - recording frames (F8 to stop)"
 class DebugTools:
     def __init__(self, game) -> None:
         self.game = game
-        self._entrances: dict[str, tuple[int, int]] | None = None
+        self._entrances: dict[str, Cell] | None = None
         self.frame_recorder: FrameRecorder | None = None
 
     def handle_keydown(self, keydown_event) -> None:
@@ -72,7 +73,7 @@ class DebugTools:
         """Every map that can be loaded (map_lookup also holds the base classes, which have no layout)."""
         return sorted(name for name in map_lookup if name in self.game.layouts.map_layout_lookup)
 
-    def entrance(self, map_name: str) -> tuple[int, int]:
+    def entrance(self, map_name: str) -> Cell:
         """Where a warp lands: outside Tantegel on the overworld, where the overworld entrance leads for towns and
         caves, and the map's own starting tile (the stairs down to it) for everything else."""
         if map_name == 'Alefgard':

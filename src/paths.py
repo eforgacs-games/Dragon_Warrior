@@ -23,7 +23,7 @@ def project_root() -> str:
     """The folder that holds data/ (and src/): the repository from source, sys._MEIPASS in a PyInstaller build."""
     if is_frozen():
         bundle_dir = getattr(sys, '_MEIPASS', None)
-        return bundle_dir if bundle_dir else dirname(realpath(sys.executable))
+        return bundle_dir or dirname(realpath(sys.executable))
     return dirname(dirname(realpath(__file__)))
 
 

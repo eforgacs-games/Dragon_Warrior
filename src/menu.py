@@ -2,7 +2,8 @@ import functools
 import random
 
 from src.spells import Spell
-from typing import Any, Callable, Collection, Iterable, Tuple, List
+from typing import Any
+from collections.abc import Callable, Collection, Iterable
 
 from pygame import Surface, display, KEYDOWN, Rect, event, transform
 from pygame.sprite import Group
@@ -14,12 +15,13 @@ from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, Graphics, set_gettext_language, singular_or_plural
 from src.command_window import WND_ABORT, CommandWindow
 from src.cursor import IN_A, DialogArrowBlink, draw_cursor_tile
-from src.waiting import is_any_key_held, wait
+from src.waiting import NES_FPS, is_any_key_held, wait, wait_until
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, OUTSIDE_DESTINATIONS, RAINBOW_BRIDGE_COORDINATES, \
-    RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES
+    RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES, \
+    TEMP_TEXT_MS
 from src.dialog_box import ARROW_COLUMN, DIALOG_COLUMNS, DIALOG_ROWS, OPEN_QUOTES, SCROLL_ROWS_PER_FRAME, \
     DialogBuffer, DialogStep, ScrollStep, frames_per_character
 from src.direction import Direction
@@ -35,20 +37,29 @@ from src.text import draw_text, in_nes_font, set_font_by_ascii_chars
 from src.translated_window import draw_translated_window
 from src.window_renderer import draw_window
 from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENTRIES, COMMAND_LAYOUT, COMMAND_TITLE, \
-    COMMAND_WINDOW, COUNTED_ITEMS, DIALOG_LAYOUT, ITEM_COUNT_TILE_COLUMN, ITEM_MENU_CURSOR_TILE_COLUMN, \
+    COMMAND_WINDOW, COUNTED_ITEMS, DIALOG_LAYOUT, DIALOG_WINDOW, ITEM_COUNT_TILE_COLUMN, ITEM_MENU_CURSOR_TILE_COLUMN, \
     ITEM_MENU_TEXT_TILE_COLUMN, \
     ITEM_MENU_X, ITEM_MENU_Y, POPUP_WINDOW, SPELL_MENU_TITLE_TILE_COLUMN, \
     STATUS_EQUIPMENT_TILE_COLUMN, STATUS_EQUIPMENT_TILE_ROWS, STATUS_LAYOUT, STATUS_NAME_TILE_COLUMN, \
     STATUS_NAME_TILE_ROW, STATUS_VALUE_RIGHT_TILE_COLUMN, STATUS_VALUE_TILE_ROWS, STATUS_WINDOW, YES_NO_LAYOUT, \
     YES_NO_WINDOW, item_menu_entry_tile_row, item_menu_layout, item_menu_window, Window, name_halves
+from src.nes_random import one_in
 
 # The COMMAND window's commands, in WndSelResults order (NCC_TALK $00 to NCC_TAKE $07; src/windows.py COMMAND_ENTRIES):
 # the CommandMenu methods Bank03 NCCmdSelected and CheckCmdWndResults run for each
 COMMAND_METHODS = ('talk', 'status', 'stairs', 'search', 'spell', 'item', 'door', 'take')
 
-# The dialog window: x, y, width, height in 16x16 blocks (NES WND_DIALOG, screen tiles 4-27 x 18-27)
-DIALOG_WINDOW = (2, 9, 12, 5)
-DIALOG_FPS = 60
+
+
+# NES ShowWindow and RemoveWindow (Bank00, LA7A2) draw or take away one row of a window's blocks a frame
+WINDOW_ROW_FRAMES = 1
+
+
+def wait_for_next_window_row(row_started: float, config: dict) -> None:
+    """The wait between two rows of a window opening (drop-down) or closing (drop-up): each row lasts
+    WINDOW_ROW_FRAMES from when it started drawing (``row_started``, a ``game_ticks`` value), so drawing it doesn't
+    lengthen it."""
+    wait_until(row_started + WINDOW_ROW_FRAMES * 1000 / NES_FPS, config)
 
 
 class CommandMenu:
@@ -175,8 +186,8 @@ class CommandMenu:
         self.redraw_command_window(rect)
         if drawer.display_hovering_stats:
             drawer.draw_hovering_stats_window(screen, self.player, self.color)
-        dialog_rect = Rect(DIALOG_WINDOW[0] * tile_size, DIALOG_WINDOW[1] * tile_size, DIALOG_WINDOW[2] * tile_size,
-                           DIALOG_WINDOW[3] * tile_size)
+        dialog_rect = Rect(DIALOG_WINDOW.x * tile_size, DIALOG_WINDOW.y * tile_size, DIALOG_WINDOW.width * tile_size,
+                           DIALOG_WINDOW.height * tile_size)
         if rect.colliderect(dialog_rect):
             self.draw_dialog_window()
         screen.set_clip(previous_clip)
@@ -332,7 +343,7 @@ class CommandMenu:
         arrow_blink = DialogArrowBlink()  # DoWait: the arrow starts on, then blinks on the frame count
         drawn_arrow: bool | None = None
         while True:
-            if skip_text or (temp_text_start and get_ticks() - temp_text_start >= 1000):
+            if skip_text or (temp_text_start and get_ticks() - temp_text_start >= TEMP_TEXT_MS):
                 if not skip_text and not disable_sound:
                     self.sound.play_sound(self.directories.menu_button_sfx)
                 return
@@ -400,7 +411,7 @@ class CommandMenu:
         if self.game.game_state.config['NO_WAIT']:
             return
         now = get_ticks()
-        self._dialog_frame_deadline = max(self._dialog_frame_deadline, now) + frames * 1000 / DIALOG_FPS
+        self._dialog_frame_deadline = max(self._dialog_frame_deadline, now) + frames * 1000 / NES_FPS
         delay = int(self._dialog_frame_deadline - now)
         if delay > 0:
             wait(delay)
@@ -410,7 +421,7 @@ class CommandMenu:
         column 5, row 19), and each character is one NES tile."""
         tile_size = self.game.game_state.config['TILE_SIZE']
         nes_tile = tile_size // 2
-        return Rect((DIALOG_WINDOW[0] * 2 + 1 + column) * nes_tile, (DIALOG_WINDOW[1] * 2 + 1 + row) * nes_tile,
+        return Rect((DIALOG_WINDOW.x * 2 + 1 + column) * nes_tile, (DIALOG_WINDOW.y * 2 + 1 + row) * nes_tile,
                     columns * nes_tile, nes_tile)
 
     def draw_dialog_window(self) -> None:
@@ -469,7 +480,7 @@ class CommandMenu:
         if update:
             display.update(cells)
 
-    def show_text_in_dialog_box(self, text: Tuple | List | str, add_quotes=False, temp_text_start=None, skip_text=False,
+    def show_text_in_dialog_box(self, text: tuple | list | str, add_quotes=False, temp_text_start=None, skip_text=False,
                                 drop_down=True, drop_up=True, disable_sound=False, letter_by_letter=True,
                                 advance_keys: Collection[int] | None = None):
         """Shows a passage of text in a dialog box.
@@ -516,14 +527,13 @@ class CommandMenu:
         tile_size = self.game.game_state.config['TILE_SIZE']
         window_rect = Rect(left * tile_size, top * tile_size, width * tile_size, height * tile_size)
         for i in range(height + 1):
+            row_started = get_ticks()
             black_box = Surface((tile_size * width, tile_size * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
-            drop_down_start = get_ticks()
-            # each "bar" lasts 1 frame
-            while self.calculation.convert_to_frames_since_start_time(drop_down_start) < 1:
-                if not self.game.game_state.config['NO_BLIT']:
-                    self.screen.blit(black_box, (tile_size * left, tile_size * top))
-                    display.update(window_rect)
+            if not self.game.game_state.config['NO_BLIT']:
+                self.screen.blit(black_box, (tile_size * left, tile_size * top))
+                display.update(window_rect)
+            wait_for_next_window_row(row_started, self.game.game_state.config)  # each "bar" lasts 1 frame
 
     def window_drop_up_effect(self, left, top, width, height) -> None:
         """Outro effect for menus, NES RemoveWindow (Bank00, LA7A2): from the bottom row of blocks up, one row a frame,
@@ -553,30 +563,30 @@ class CommandMenu:
             group_to_draw.draw(self.background)
 
             for i in range(height - 1, -1, -1):
+                row_started = get_ticks()
                 # The top i rows of the window are still there
                 rows_left = window_picture.subsurface((0, 0, window_picture.get_width(),
                                                        min(tile_size * i, window_picture.get_height())))
-                drop_up_start = get_ticks()
-                while self.calculation.convert_to_frames_since_start_time(drop_up_start) < 1:
-                    # draw_player_sprites(self.current_map, self.background, self.player.rect.x, self.player.rect.y)
-                    if not self.game.game_state.config['NO_BLIT']:
-                        for character_dict in self.current_map.characters.values():
-                            character = character_dict['character']
-                            if camera_screen_rect.colliderect(character.rect) and (
-                                    character is self.player or
-                                    not self.current_map.is_hidden_by_cover(character.row, character.column)):
-                                self.background.blit(character_dict['character_sprites'].sprites()[0].image,
-                                                     (character_dict['character'].rect.x,
-                                                      character_dict['character'].rect.y))
-                            self.screen.blit(self.background, self.camera_position)
-                    if self.launch_signaled:
-                        # The COMMAND window behind, as it is: the chosen entry's arrow is still on (WndAPressed), as
-                        # RemoveWindow puts back the window's tiles
-                        self.draw_command_window()
-                    if self.game.drawer.display_hovering_stats:
-                        self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
-                    if not self.game.game_state.config['NO_BLIT']:
-                        display.update(self.screen.blit(rows_left, window_rect.topleft))
+                # draw_player_sprites(self.current_map, self.background, self.player.rect.x, self.player.rect.y)
+                if not self.game.game_state.config['NO_BLIT']:
+                    for character_dict in self.current_map.characters.values():
+                        character = character_dict['character']
+                        if camera_screen_rect.colliderect(character.rect) and (
+                                character is self.player or
+                                not self.current_map.is_hidden_by_cover(character.row, character.column)):
+                            self.background.blit(character_dict['character_sprites'].sprites()[0].image,
+                                                 (character_dict['character'].rect.x,
+                                                  character_dict['character'].rect.y))
+                        self.screen.blit(self.background, self.camera_position)
+                if self.launch_signaled:
+                    # The COMMAND window behind, as it is: the chosen entry's arrow is still on (WndAPressed), as
+                    # RemoveWindow puts back the window's tiles
+                    self.draw_command_window()
+                if self.game.drawer.display_hovering_stats:
+                    self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
+                if not self.game.game_state.config['NO_BLIT']:
+                    display.update(self.screen.blit(rows_left, window_rect.topleft))
+                wait_for_next_window_row(row_started, self.game.game_state.config)
 
     # Treasure chests
 
@@ -677,7 +687,7 @@ class CommandMenu:
         self.open_chest()
         self.show_text_in_dialog_box(self.found_item_text("Erdrick's Sword"), skip_text=self.skip_text)
 
-    def take_unique_item(self, item_name: str, blocking_items: Tuple[str, ...]) -> None:
+    def take_unique_item(self, item_name: str, blocking_items: tuple[str, ...]) -> None:
         """NES ChkTrsrHarp/ChkTrsrStones: the chest is empty while the player has the item, or what it becomes."""
         if any(item in self.player.inventory for item in blocking_items):
             self.take_empty_chest()
@@ -687,7 +697,7 @@ class CommandMenu:
     def take_death_necklace(self) -> None:
         """NES ChkTrsrNecklace: the first time, there is a 1 in 32 chance of the Death Necklace (the low 5 bits of a
         random byte all zero). Otherwise, and always once it has been found, the chest holds 100-131 gold."""
-        if not self.game.story_flags.death_necklace_found and random.randint(0, 255) & 0x1F == 0:
+        if not self.game.story_flags.death_necklace_found and one_in(32):
             self.game.story_flags.death_necklace_found = True
             self.take_item('Death Necklace')
         else:
@@ -1025,10 +1035,7 @@ class CommandMenu:
             return
         enemy = self.current_battle.enemy
         enemy_name = self._(enemy.name)
-        # NES (ChkSpellFail): the spell fails if a 0-15 roll is below the enemy's sleep resistance (n/16).
-        if random.randint(0, 15) < round(enemy.sleep_resist * 16):
-            self.show_line_in_dialog_box(self._("The spell will not work."), add_quotes=False,
-                                         disable_sound=True, hide_arrow=True)
+        if self.battle_spell_resisted(enemy.sleep_resist):  # NES ChkSpellFail
             return
         enemy.is_asleep = True
         self.show_line_in_dialog_box(self._("Thou hast put the {} to sleep.").format(enemy_name), add_quotes=False,
@@ -1412,7 +1419,7 @@ class CommandMenu:
                     skip_text=self.skip_text)
                 # NES PlyrCastSpell (LDBA4-LDBAD): SFX_SPELL, BWScreenFlash, then WaitForMusicEnd
                 self.sound.play_sound(self.directories.spell_sfx)
-                bw_screen_flash(self.screen, self.calculation, self.game.game_state.config)
+                bw_screen_flash(self.screen, self.game.game_state.config)
                 self.sound.wait_for_sfx_end(SPELL_SFX_FRAMES, self.game.game_state.config)
                 self.player.current_mp -= spell_mp_cost
                 # NES PlyrCastSpell (LDBB2): the pop-up is redrawn with the MP that is left

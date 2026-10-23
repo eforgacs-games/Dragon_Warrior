@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 import pygame
 
 from src.visual_effects import (
-    NES_PALETTE, NES_RED, draw_transparent_color, enemy_fade_in, enemy_hit_flash, fade_surface,
+    NES_PALETTE, NES_RED, SWAMP_FLASH_FRAMES, draw_transparent_color, enemy_fade_in, enemy_hit_flash, fade_surface,
     flash_transparent_color, force_field_flash, nes_color_index, nes_faded_color, player_hit_shake, silhouette_surface,
 )
 
@@ -115,41 +115,31 @@ class TestFlashTransparentColor(unittest.TestCase):
     def tearDownClass(cls):
         pygame.quit()
 
-    def test_flash_returns_quickly_with_mock_calculation(self):
+    def test_flash_shows_the_tint_for_three_frames(self):
         mock_screen = MagicMock()
         mock_screen.get_width.return_value = 100
         mock_screen.get_height.return_value = 100
-        mock_calc = MagicMock()
-        # Make the while loop exit immediately (frames >= 3 from the start)
-        mock_calc.convert_to_frames_since_start_time.return_value = 10
-
-        with patch('src.visual_effects.display'):
-            flash_transparent_color((255, 0, 0), mock_screen, mock_calc, no_blit=True)
-
-        # draw_transparent_color should have been called once
-        # (since no_blit=True, screen.blit won't actually be called)
-
-    def test_flash_calls_display_flip(self):
-        mock_screen = MagicMock()
-        mock_screen.get_width.return_value = 100
-        mock_screen.get_height.return_value = 100
-        mock_calc = MagicMock()
-        mock_calc.convert_to_frames_since_start_time.side_effect = [0, 1, 2, 10]
-
-        with patch('src.visual_effects.display') as mock_display:
-            flash_transparent_color((255, 0, 0), mock_screen, mock_calc, no_blit=True)
-            mock_display.flip.assert_called()
+        with patch('src.visual_effects.display') as mock_display, patch('src.visual_effects.wait') as mock_wait:
+            flash_transparent_color((255, 0, 0), mock_screen, {'NO_BLIT': True, 'NO_WAIT': False})
+        mock_display.flip.assert_called_once()
+        mock_wait.assert_called_once_with(round(SWAMP_FLASH_FRAMES * 1000 / 60), {'NO_BLIT': True, 'NO_WAIT': False})
+        self.assertEqual(SWAMP_FLASH_FRAMES, 3)
 
     def test_flash_with_custom_transparency(self):
         mock_screen = MagicMock()
         mock_screen.get_width.return_value = 100
         mock_screen.get_height.return_value = 100
-        mock_calc = MagicMock()
-        mock_calc.convert_to_frames_since_start_time.return_value = 10
-
-        with patch('src.visual_effects.display'):
+        with patch('src.visual_effects.display'), patch('src.visual_effects.wait'):
             # Should not raise with custom transparency value
-            flash_transparent_color((0, 255, 0), mock_screen, mock_calc, transparency=64, no_blit=True)
+            flash_transparent_color((0, 255, 0), mock_screen, {'NO_BLIT': True}, transparency=64)
+
+    def test_flash_follows_no_wait(self):
+        mock_screen = MagicMock()
+        mock_screen.get_width.return_value = 100
+        mock_screen.get_height.return_value = 100
+        with patch('src.visual_effects.display'), patch('src.waiting.time.wait') as sleep:
+            flash_transparent_color((255, 0, 0), mock_screen, {'NO_BLIT': True, 'NO_WAIT': True})
+        sleep.assert_not_called()
 
 
 class NesPaletteTestCase(unittest.TestCase):

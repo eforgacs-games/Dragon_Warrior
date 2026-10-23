@@ -9,10 +9,12 @@ from src.enemy_lookup import enemy_string_lookup
 from src.korean_particles import get_postposition, particle
 from src.maps import DragonWarriorMap
 from src.menu import CommandMenu
+from src.windows import POPUP_WINDOW
 from src.player.player import Player
 from src.player.player_stats import get_level_by_experience
 from src.sound import Sound
 from src.waiting import check_for_quit, wait_frames
+from src.nes_random import coin_flip
 
 MAX_EXPERIENCE = 0xFFFF  # NES RegEnDefeated: ExpLB/ExpUB max out at $FFFF
 MAX_GOLD = 0xFFFF  # NES RegEnDefeated: GoldLB/GoldUB max out at $FFFF
@@ -348,7 +350,7 @@ class Battle:
         drawer.fade_in_enemy(screen, self.enemy.name)
         cmd_menu.show_line_in_battle_dialog_box(self.get_enemy_draws_near_string())
         # drop down for the hovering stats window
-        cmd_menu.window_drop_down_effect(1, 2, 4, 6)
+        cmd_menu.window_drop_down_effect(*POPUP_WINDOW)
         # The command window (CmdCmbtDat) isn't opened here but by the first player turn (StartPlayerTurn ->
         # ShowCmbtCmd, BattleController.open_command_window): if the enemy attacks first, it isn't on the screen
         drawer.hovering_stats_displayed = True
@@ -408,7 +410,7 @@ def player_hit_damage(attack_power: int, enemy_defense: int) -> int:
     damage at 50/50; otherwise NormalAttack."""
     base_attack = attack_power - enemy_defense // 2
     if base_attack < 2:
-        return random.randint(0, 255) & 0x01
+        return int(coin_flip())  # PlyrWeakAttack: 0 or 1
     return normal_attack_damage(base_attack, random.randint(0, 255))
 
 
