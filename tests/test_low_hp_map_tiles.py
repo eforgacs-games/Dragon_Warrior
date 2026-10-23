@@ -85,7 +85,7 @@ class TestLowHPTileImages(LowHPMapTestCase):
         self.assertEqual(LOW_HP_PALETTE_TILES, {
             'CASTLE', 'TOWN', 'BRIDGE', 'WATER', 'BOTTOM_COAST', 'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST',
             'TOP_COAST', 'TOP_RIGHT_COAST', 'RIGHT_COAST', 'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST',
-            'BOTTOM_TOP_RIGHT_COAST'})
+            'BOTTOM_TOP_RIGHT_COAST', 'LEFT_RIGHT_COAST', 'BOTTOM_TOP_COAST', 'TOP_LEFT_RIGHT_COAST'})
 
     def test_only_color_1_pixels_turn_red(self):
         self.assertEqual(PAL0_COLOR1_NORMAL, NES_PALETTE[0x30])

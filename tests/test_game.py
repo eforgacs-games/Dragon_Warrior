@@ -330,7 +330,8 @@ class TestGame(TestCase):
     def test_rainbow_drop_builds_the_rainbow_bridge(self):
         self.game.player.inventory = ['Rainbow Drop']
         self.stand_on('Alefgard', (56, 73))  # NES overworld (65, 49), the tile east of the bridge
-        self.assertEqual(self.bridge_tile(), 'WATER')
+        # Water with shores on both sides (NES DoWtrConv) until the bridge is built
+        self.assertEqual(self.bridge_tile(), 'LEFT_RIGHT_COAST')
         self.assertEqual(self.use_rainbow_drop(), [f'{self.game.player.name} held the Rainbow Drop toward the sky.'])
         self.assertTrue(self.game.story_flags.rainbow_bridge_built)
         self.assertEqual(self.bridge_tile(), 'BRIDGE')
@@ -347,7 +348,7 @@ class TestGame(TestCase):
                 self.assertFalse(self.game.story_flags.rainbow_bridge_built)
                 self.assertEqual(self.game.player.inventory, ['Rainbow Drop'])
         self.go_to('Alefgard', (56, 74))
-        self.assertEqual(self.bridge_tile(), 'WATER')
+        self.assertEqual(self.bridge_tile(), 'LEFT_RIGHT_COAST')
 
     def test_rainbow_drop_only_builds_the_bridge_once(self):
         self.stand_on('Alefgard', (56, 73))
