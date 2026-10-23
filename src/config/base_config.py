@@ -1,5 +1,6 @@
 import locale
 
+from src.display_filters import SCALING_SMOOTH
 from src.settings import USER_SETTINGS
 
 SCALE = 2
@@ -59,4 +60,8 @@ base_config = {
     # The global settings file (zoom, fullscreen, game speed, language; src/settings.py): USER_SETTINGS is the user's
     # config folder (or $DRAGON_WARRIOR_SETTINGS), a path that file, None keeps no settings file
     "SETTINGS_PATH": USER_SETTINGS,
+    # Display filters (not NES; src/display_filters.py): SCANLINES darkens half of each NES line; SCALING is "Smooth"
+    # (pygame's SCALED) or "PixelPerfect" (whole multiples of 256x240 only). Global settings, like the language.
+    "SCANLINES": False,
+    "SCALING": SCALING_SMOOTH,
 }
