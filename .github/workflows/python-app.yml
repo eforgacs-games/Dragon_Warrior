@@ -101,10 +101,15 @@ jobs:
     - name: Test with pytest
       env:
         COVERAGE_CORE: sysmon  # coverage.py's sys.monitoring tracer (Python 3.12+), much cheaper than its default
-      # -n auto: pytest-xdist runs the tests on every CPU (4 on GitHub's runners); --dist loadscope is in pyproject.toml
-      run: uv run pytest -n auto --cov=src --cov-report=term --cov-report=xml
+      # -n auto: pytest-xdist runs the tests on every CPU (4 on GitHub's runners); --dist loadscope and the 60 s
+      # per-test timeout (pytest-timeout) are in pyproject.toml.
+      # --cov-fail-under: total line coverage was 96.9% when this was added; the floor is a couple of points below
+      # it (about 150 lines), so a big untested addition fails but ordinary changes don't. Raise it as coverage grows.
+      # --durations: lists the slowest tests in the log, to see how close any gets to the timeout
+      run: uv run pytest -n auto --cov=src --cov-report=term --cov-report=xml --cov-fail-under=95 --durations=10
+    # The coverage steps also run when the tests fail (coverage below the floor, say), as long as coverage.xml was written
     - name: Build coverage summary
-      # Report only for now; add thresholds (e.g. "60 80") and fail_below_min to enforce a minimum
+      if: ${{ !cancelled() && hashFiles('coverage.xml') != '' }}
       uses: irongut/CodeCoverageSummary@v1.3.0
       with:
         filename: coverage.xml
@@ -112,12 +117,16 @@ jobs:
         format: markdown
         output: both
         hide_complexity: true  # coverage.py does not report complexity
+        thresholds: "95 97"  # badge colours: red below the floor in the pytest step, yellow up to 97%, green above
     - name: Write coverage summary to the job summary
+      if: ${{ !cancelled() && hashFiles('code-coverage-results.md') != '' }}
       run: cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY"
     - name: Post coverage summary as a PR comment
       # Fork PRs get a read-only token, so only comment on PRs from this repository
       if: >-
-        github.event_name == 'pull_request'
+        !cancelled()
+        && hashFiles('code-coverage-results.md') != ''
+        && github.event_name == 'pull_request'
         && github.event.pull_request.head.repo.full_name == github.repository
       uses: marocchino/sticky-pull-request-comment@v3.0.5
       with:
