@@ -168,6 +168,28 @@ class TestSaveStoryProgress(TestCase):
             self.game.set_post_death_attributes()
         self.assertEqual(self.game.repel_timer, 0)
 
+    def test_dying_refills_hp_and_mp(self):
+        # NES DeathText: ThisStrtStat = STRT_FULL_HP, so StartAtThroneRoom (LCB78-LCB87) sets both HitPoints and
+        # MagicPoints to their maximums
+        player = self.game.player
+        player.max_hp, player.max_mp = 30, 20
+        player.current_hp, player.current_mp = 0, 4
+        player.is_dead = True
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
+            self.game.set_post_death_attributes()
+        self.assertEqual((player.current_hp, player.current_mp), (30, 20))
+
+    def test_dying_cursed_leaves_mp_alone(self):
+        # NES StartAtThroneRoom (LCB6B-LCB75): a cursed hero gets HitPoints = 1 and skips the MP step
+        player = self.game.player
+        player.wearing_cursed_belt = True
+        player.max_hp, player.max_mp = 30, 20
+        player.current_hp, player.current_mp = 0, 4
+        player.is_dead = True
+        with patch('src.menu.CommandMenu.show_text_in_dialog_box'), patch.object(self.game, 'leave_tantegel'):
+            self.game.set_post_death_attributes()
+        self.assertEqual((player.current_hp, player.current_mp), (1, 4))
+
     def test_continue_while_carrying_gwaelin(self):
         # The NES saves PlayerFlags whole, so F_GOT_GWAELIN comes back: she's still in the hero's arms, gone from the
         # Swamp Cave, and King Lorik's first words are his thanks for her return.
