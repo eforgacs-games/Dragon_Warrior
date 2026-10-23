@@ -876,13 +876,17 @@ class Game:
             # while a pause or the command window is pending or open (where Enter picks a menu item), it does nothing.
             if self.player.is_moving or self.world_frozen or self.freeze_pending:
                 return
+            # It sounds like choosing the command in the COMMAND window (WndAPressed's menu button sound)
             if self.player.current_tile == 'TREASURE_BOX':
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
+                self.cmd_menu.play_menu_button_sound()
                 self.cmd_menu.take()
             elif self.player.next_tile_id == 'DOOR':
+                self.cmd_menu.play_menu_button_sound()
                 self.cmd_menu.door()
             elif self.cmd_menu.check_across_from_npc() and not self.game_state.is_initial_dialog:
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
+                self.cmd_menu.play_menu_button_sound()
                 self.cmd_menu.talk()
 
     @property
@@ -1024,6 +1028,9 @@ class Game:
                 self.idle_frame()
                 return
             self.player.direction_value = direction
+            # DoJoyUp etc. start with ChkRemovePopUp: any direction press closes the pop-up window, even a tap that
+            # only turns the hero
+            self.drawer.remove_pop_up(self.cmd_menu)
             if self.frame_counter % STEP_SYNC_FRAMES:
                 self.idle_frame()
                 return
