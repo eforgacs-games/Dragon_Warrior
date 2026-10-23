@@ -59,7 +59,7 @@ class TestCopyAndErase(OptionsTestCase):
         has to come back (WndBackToMain)."""
         with patch.object(self.game.game_functions, 'main_menu_selection', side_effect=[entry, CONTINUE]) \
                 as title_menu, patch.object(self.game, 'continue_quest') as continue_quest, \
-                patch('src.options_screen.event.get', side_effect=presses(*events)):
+                patch('src.selection.event.get', side_effect=presses(*events)):
             self.game.show_main_menu_screen(self.game.screen)
         self.assertEqual(2, title_menu.call_count)
         continue_quest.assert_called_once()
@@ -174,7 +174,7 @@ class TestLogWindows(OptionsTestCase):
 
     def test_open_logs_window_opens_over_the_used_logs_window(self):
         screen = OptionsScreen(self.game.screen, self.config)
-        with patch('src.options_screen.event.get', side_effect=presses(DOWN, ENTER, DOWN, ENTER)):
+        with patch('src.selection.event.get', side_effect=presses(DOWN, ENTER, DOWN, ENTER)):
             self.assertEqual(2, screen.choose_log([(1, 'Erdrick'), (2, 'Lotoroto')]))
             self.assertEqual(3, screen.choose_open_log([1, 3]))
         self.assertEqual([1, 1], [index for _, index in screen.windows])
