@@ -34,6 +34,20 @@ match `uv.lock`:
 uv export --locked --no-dev --no-hashes --no-annotate -o requirements.txt
 ```
 
+## Translations
+
+The Korean text is in `data/text/locales/ko/LC_MESSAGES/base.po`. Editing it is all there is to do: the game compiles
+it in memory when it runs (`src/catalog.py`), so there's no `.mo` file to build or commit (`*.mo` is ignored).
+
+`tests/test_translations.py` fails when new text has no Korean translation. To add empty entries for it to the end of
+`base.po`, ready to fill in:
+
+```bash
+uv run python data/text/locales/catalog_tools.py add
+```
+
+`catalog_tools.py missing` lists the untranslated text without changing anything.
+
 ## Reference scripts
 
 `reference/reference_utility_scripts/` has offline scripts that regenerate checked-in files from the NES data:
