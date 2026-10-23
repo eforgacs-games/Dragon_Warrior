@@ -16,6 +16,7 @@ from tests.helpers import new_game
 
 # A save as CommandMenu.save writes it, byte for byte (json.dumps with indent=4, keys in this order)
 CURRENT_FORMAT_SAVE = '''{
+    "SaveVersion": 1,
     "Name": "Erdrick",
     "Experience": 1350,
     "Gold": 412,

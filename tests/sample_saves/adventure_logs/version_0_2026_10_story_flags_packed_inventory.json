@@ -1,0 +1,44 @@
+{
+    "Name": "Gwen",
+    "Experience": 4000,
+    "Gold": 900,
+    "CurrentHP": 60,
+    "CurrentMP": 30,
+    "Weapon": "Broad Sword",
+    "Armor": "Half Plate",
+    "Shield": "Large Shield",
+    "WearingDragonScale": false,
+    "WearingFightersRing": false,
+    "WearingCursedBelt": true,
+    "WearingDeathNecklace": false,
+    "Inventory": [
+        "Torch",
+        "Cursed Belt",
+        "Silver Harp",
+        "Magic Key",
+        "Magic Key"
+    ],
+    "Spells": [
+        "HEAL",
+        "HURT",
+        "SLEEP",
+        "RADIANT",
+        "STOPSPELL"
+    ],
+    "CurrentMap": "TantegelThroneRoom",
+    "PlayerRow": 10,
+    "PlayerColumn": 13,
+    "StoryFlags": {
+        "charlock_stairs_revealed": false,
+        "rainbow_bridge_built": false,
+        "carrying_gwaelin": false,
+        "gwaelin_returned": true,
+        "death_necklace_found": false,
+        "left_throne_room": true,
+        "golem_defeated": true,
+        "dragonlord_defeated": false
+    },
+    "MessageSpeed": "Slow",
+    "DialogStyle": "Modern",
+    "NpcsMakeWay": false
+}

@@ -1,0 +1,52 @@
+{
+    "SaveVersion": 1,
+    "Name": "Gwaelin",
+    "Experience": 12000,
+    "Gold": 2400,
+    "CurrentHP": 100,
+    "CurrentMP": 70,
+    "Weapon": "Broad Sword",
+    "Armor": "Magic Armor",
+    "Shield": "Silver Shield",
+    "WearingDragonScale": true,
+    "WearingFightersRing": false,
+    "WearingCursedBelt": false,
+    "WearingDeathNecklace": false,
+    "Inventory": [
+        "Dragon's Scale",
+        null,
+        "Silver Harp",
+        "Wings",
+        "Herb",
+        "Magic Key"
+    ],
+    "Spells": [
+        "HEAL",
+        "HURT",
+        "SLEEP",
+        "RADIANT",
+        "STOPSPELL",
+        "OUTSIDE",
+        "RETURN"
+    ],
+    "CurrentMap": "TantegelThroneRoom",
+    "PlayerRow": 10,
+    "PlayerColumn": 13,
+    "StoryFlags": {
+        "charlock_stairs_revealed": false,
+        "rainbow_bridge_built": false,
+        "carrying_gwaelin": false,
+        "gwaelin_returned": true,
+        "death_necklace_found": false,
+        "left_throne_room": true,
+        "golem_defeated": false,
+        "dragonlord_defeated": false,
+        "green_dragon_defeated": false
+    },
+    "MessageSpeed": "Normal",
+    "DialogStyle": "Modern",
+    "NpcsMakeWay": true,
+    "FadeStyle": "NES",
+    "AutoStairs": true,
+    "AutoGrindStop": "ThreeQuartersHP"
+}
