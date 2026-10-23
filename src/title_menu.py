@@ -8,6 +8,9 @@ windows that open over the title menu (the log lists, message speed, YES/NO) are
 The saves the entries read, copy and erase are the adventure logs in the save folder (src/save_file.py). Starting the
 quest is the Game's: a new quest starts in the throne room (Game.start_at_throne_room) and a continued one loads its
 save (Game.load_game).
+
+Not NES: when there's an autosave (src/autosave.py), CONTINUE AUTOSAVE is added at the bottom of the title menu, and
+puts the game back as it was when the autosave was written (src/save_state.py restore_snapshot).
 """
 from dataclasses import replace
 import os
@@ -17,6 +20,7 @@ from collections.abc import Callable
 
 from pygame import Surface
 
+from src.autosave import has_autosave, read_autosave
 from src.directories import Directories
 from src.common import set_gettext_language
 from src.game_functions import MENU_BACK, GameFunctions
@@ -24,6 +28,7 @@ from src.menu_functions import NameSelection
 from src.options_screen import DEFAULT_OPTIONS, MESSAGE_SPEED_SAVE_KEY, OptionsScreen, apply_options, \
     message_speed_from_save
 from src.player.player_stats import get_level_by_experience
+from src.save_state import StateError, restore_snapshot
 from src.save_file import ADVENTURE_LOGS, EXPERIENCE_KEY, NAME_KEY, load_save, read_save, save_files, save_path, \
     save_slot_number, used_logs, write_save
 from src.save_file import save_file_name as save_file_name_for
@@ -65,6 +70,8 @@ class TitleMenu:
         # The adventure log save files (a list of names), read each time the title menu is shown (show_title_menu);
         # None until then
         self.save_dir_contents: Any = None
+        # Whether there's an autosave, read with the save files (show_title_menu)
+        self.autosave_present = False
 
     # What the title menu uses of the Game, read from it each time, as the Game's own methods did
     @property
@@ -103,6 +110,7 @@ class TitleMenu:
         if not os.path.exists(self.directories.save_dir):
             os.makedirs(self.directories.save_dir)
         self.save_dir_contents = self.save_files()
+        self.autosave_present = has_autosave(self.directories.save_dir)
         used = len(self.save_dir_contents)
         if used > len(ADVENTURE_LOGS):
             print(f"Error: More than {len(ADVENTURE_LOGS)} save files detected. Exiting.")
@@ -117,7 +125,9 @@ class TitleMenu:
         else:
             # ContChngErsDat, with every log used: CONTINUE A QUEST, CHANGE MESSAGE SPEED, ERASE A QUEST
             entries = (self.continue_quest, self.change_message_speed, self.erase_quest)
-        selection = self.game_functions.main_menu_selection(menu_ticks(), screen, title_menu_layout(used))
+        if self.autosave_present:
+            entries += (self.continue_autosave,)
+        selection = self.game_functions.main_menu_selection(menu_ticks(), screen, self.title_layout())
         return entries[selection]()
 
     def begin_new_quest(self) -> object:
@@ -176,6 +186,20 @@ class TitleMenu:
         self.player.adventure_log = save_slot_number(save_file_name)
         return None
 
+    def continue_autosave(self) -> object:
+        """CONTINUE AUTOSAVE (not NES): the game as it was when the autosave was written (src/autosave.py). It cuts to
+        black and the map fades in with its music, as loading a save state does. An autosave that can't be loaded
+        (from another version of the game, or unreadable) goes back to the title menu, changing nothing."""
+        try:
+            snapshot = read_autosave(self.directories.save_dir)
+            if snapshot is None:
+                return BACK_TO_TITLE_MENU
+            self.sound.play_sound(self.directories.menu_button_sfx)
+            restore_snapshot(self.game, snapshot)
+        except StateError:
+            return BACK_TO_TITLE_MENU
+        return None
+
     def used_logs(self) -> list[tuple[int, str]]:
         """ShowUsedLogs: each used adventure log's number and hero's name, for the log window."""
         return used_logs(self.directories.save_dir, self.save_dir_contents or self.save_files())
@@ -208,8 +232,9 @@ class TitleMenu:
         apply_options(self.config, replace(DEFAULT_OPTIONS, message_speed=chosen or DEFAULT_OPTIONS.message_speed))
 
     def title_layout(self) -> WindowLayout:
-        """The title menu window for the logs in use (NewQuestDat, FullMenuDat or ContChngErsDat)."""
-        return title_menu_layout(len(self.save_dir_contents or []))
+        """The title menu window for the logs in use (NewQuestDat, FullMenuDat or ContChngErsDat), with CONTINUE
+        AUTOSAVE when there's an autosave."""
+        return title_menu_layout(len(self.save_dir_contents or []), self.autosave_present)
 
     def title_menu_background(self, entry: int) -> Callable[[Surface], None]:
         """Draws the title menu with this entry chosen (its arrow held on), for the windows to open over: CONTINUE A
@@ -282,7 +307,8 @@ class TitleMenu:
         layout = open_logs_layout(open_logs)
         begin_entry = BEGIN_ENTRY if used else BEGIN_ENTRY_WITH_NO_LOG
         selection = self.game_functions.main_menu_selection(menu_ticks(), screen, layout,
-                                                            below=[(title_menu_layout(len(used)), begin_entry)],
+                                                            below=[(title_menu_layout(len(used), self.autosave_present),
+                                                                    begin_entry)],
                                                             b_goes_back=True)
         if selection == MENU_BACK:
             return BACK_TO_TITLE_MENU

@@ -74,6 +74,9 @@ base_config = {
     # QUEST JOURNAL (not NES): what Q shows on the map (src/quest_journal.py): "Off" (the NES: nothing), "Goals" (what
     # to do next) or "Hints" (and where to go)
     "QUEST_JOURNAL": "Goals",
+    # AUTOSAVE (not NES): write the autosave slot on entering a town or castle and every few minutes (src/autosave.py);
+    # False is the NES, which only saves with King Lorik, and the default (the MODERN preset turns it on)
+    "AUTOSAVE": False,
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on
