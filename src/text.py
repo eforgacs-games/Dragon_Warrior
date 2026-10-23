@@ -1,4 +1,5 @@
 import textwrap
+from collections import OrderedDict
 from os.path import realpath
 from typing import override
 
@@ -6,12 +7,22 @@ from pygame import font, display, Surface
 from pygame.font import Font
 
 from src.color import WHITE, BLACK
-from src.directories import Directories
+from src.paths import data_path
 from src.sound import Sound
 from src.waiting import wait
 from src.window_renderer import DRAGON_QUEST_FONT_PATH, ELISION_APOSTROPHE, NES_GLYPHS, NES_TILE, font_characters
 
 WRAP_LENGTH = 21
+# How many rendered lines draw_text keeps (rendered_line): every window line on the screen at once, many times over
+RENDERED_LINES_KEPT = 256
+
+
+class TextPaths:
+    """The files draw_text uses, the same as Directories' (src/directories.py), without making a Directories (which
+    loads two fonts and builds every other path of the game) for every line of text drawn."""
+    DRAGON_QUEST_FONT_PATH = DRAGON_QUEST_FONT_PATH
+    UNIFONT_PATH = data_path('fonts', 'unifont.ttf')
+    text_beep_sfx = data_path('sound', 'sfx', 'text_beep.wav')
 
 
 class DialogBoxWrapper(textwrap.TextWrapper):
@@ -31,12 +42,25 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
     # 34 is the maximum characters on the screen at a time.
     # 21? appears to be the actual max in the original game
     # chunks = [text[i:i + n] for i in range(0, len(text), n)]
-    directories = Directories(config)
+    directories = TextPaths
     dialog_box_wrapper = DialogBoxWrapper(width=text_wrap_length, break_long_words=False)
     chunks = dialog_box_wrapper.wrap(text)
     item_gained_matches = ("thou hast gained", "Thou hast found")
     if any([x in text for x in item_gained_matches]):
         disable_sound = True
+    if not letter_by_letter and text_font is None:
+        # A whole line at once, in the font its characters pick: the same line in the same font and color is the same
+        # picture every time, so it is rendered once and kept (rendered_line). The pop-up window draws five of them
+        # every frame the hero stands still.
+        font_key = (font_name, size, font_name is None and all(in_nes_font(chunk) for chunk in chunks))
+        for chunk in chunks:
+            if not config['NO_BLIT'] and config["RENDER_TEXT"]:
+                text_surface = rendered_line(font_key, chunks, chunk, color)
+                screen.blit(text_surface, set_text_rect_alignment(alignment, text_surface, x, y))
+            y += 17
+            if chunk == chunks[len(chunks) - 1]:
+                return chunk
+        return None
     current_font = text_font or set_font_by_ascii_chars(chunks, size, font_name, directories)
     for chunk in chunks:
         if letter_by_letter:
@@ -52,12 +76,32 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
                         Sound(config).play_sound(directories.text_beep_sfx)
         else:
             if not config['NO_BLIT']:
-                current_font = text_font or set_font_by_ascii_chars(chunks, size, font_name, directories)
                 blit_text_to_screen(alignment, color, current_font, screen, chunk, x, y, config["RENDER_TEXT"])
         y += 17
         if chunk == chunks[len(chunks) - 1]:
             return chunk
     return None
+
+
+_rendered_lines: OrderedDict[tuple, Surface] = OrderedDict()
+
+
+def rendered_line(font_key: tuple, chunks: list[str], chunk: str, color: tuple) -> Surface:
+    """chunk rendered as blit_text_to_screen renders it, in the font set_font_by_ascii_chars picks for chunks
+    (font_key says which: the font name, the size and whether the NES font is picked). The last RENDERED_LINES_KEPT
+    are kept, so a line drawn again is blitted without making a font or rendering it again. Nothing draws on the
+    surfaces returned: they are only blitted."""
+    key = (font_key, chunk, tuple(color))
+    surface = _rendered_lines.get(key)
+    if surface is None:
+        surface = set_font_by_ascii_chars(chunks, font_key[1], font_key[0], TextPaths).render(chunk, True, color,
+                                                                                            BLACK)
+        _rendered_lines[key] = surface
+        if len(_rendered_lines) > RENDERED_LINES_KEPT:
+            _rendered_lines.popitem(last=False)
+    else:
+        _rendered_lines.move_to_end(key)
+    return surface
 
 
 class NESFont(Font):
