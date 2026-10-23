@@ -13,7 +13,7 @@ surface), and the biggest is what fits on the desktop, or the size the window op
 
 In fullscreen (F11) the keys do nothing: the screen fills the monitor there. Leaving fullscreen puts the window back
 at the size it had before (remember_windowed_size, restore_windowed_size). The zoom isn't saved; the window opens at
-its normal size each time, like the game speed (keys 1 to 4).
+its normal size each time, like the game speed (keys 1 to 5).
 
 This module imports nothing from ``src``, so src/waiting.py can use it without an import cycle.
 """

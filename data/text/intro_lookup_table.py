@@ -18,7 +18,7 @@ class ControlInfo:
         self.auto_battle_toggle = _("F3: Auto-Battle")
         self.invulnerability_toggle = _("F4: Invulnerability")
         self.fullscreen_toggle = _("F11: Fullscreen")
-        self.speed_controls = _("1-4: Game Speed")
+        self.speed_controls = _("1-5: Game Speed")
         # G starts and stops auto-grind on the map (src/auto_grind.py)
         self.auto_grind_key = _("G: Auto-grind")
         # Window zoom (src/zoom.py): Ctrl + / Ctrl - or Ctrl and the mouse wheel, and Ctrl 0 for the normal size

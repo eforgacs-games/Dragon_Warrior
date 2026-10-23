@@ -6,7 +6,7 @@ These helpers only look for a ``QUIT`` event while they wait: every other event 
 during ``time.wait``, so a caller that used to drop them still has to do that itself, with ``clear_events_keeping_quit``
 (a plain ``event.clear()`` would throw away a ``QUIT`` that arrives just after the wait).
 
-It also keeps the game speed (keys 1 to 4: 1x, 2x, 4x or 8x, a modern convenience, not NES behavior). At speed N the
+It also keeps the game speed (keys 1 to 5: 1x, 2x, 4x, 8x or 16x, a modern convenience, not NES behavior). At speed N the
 game runs N times as fast: ``wait`` waits 1/N of the time, and ``game_ticks`` (the clock every timer in the game
 reads) runs N times as fast as ``pygame.time.get_ticks``. Only timing changes: nothing that decides an outcome reads
 the speed. Sounds and music play at their normal pitch and length, so a timed wait that lets a sound finish (the death
@@ -29,13 +29,13 @@ import sys
 from collections.abc import Collection
 from typing import Any, Protocol
 
-from pygame import K_1, K_2, K_3, K_4, KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
+from pygame import K_1, K_2, K_3, K_4, K_5, KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
 
 from src.zoom import handle_zoom_event
 
 NES_FPS = 60
 POLL_INTERVAL_MS = 16  # about one frame: how often the queue is checked for QUIT during a wait
-SPEED_KEYS = {K_1: 1, K_2: 2, K_3: 4, K_4: 8}  # the speed each key sets: 1x, 2x, 4x, 8x
+SPEED_KEYS = {K_1: 1, K_2: 2, K_3: 4, K_4: 8, K_5: 16}  # the speed each key sets: 1x, 2x, 4x, 8x, 16x
 
 _speed = 1
 # game_ticks() == _game_anchor + (get_ticks() - _real_anchor) * _speed, re-anchored on every speed change, so the game
@@ -152,7 +152,7 @@ def scaled_ms(milliseconds: float) -> int:
 
 
 def handle_speed_key(current_event: event.Event) -> bool:
-    """If ``current_event`` is a press of 1 to 4, set the game speed and return True."""
+    """If ``current_event`` is a press of 1 to 5, set the game speed and return True."""
     if current_event.type == KEYDOWN and getattr(current_event, 'key', None) in SPEED_KEYS:
         set_game_speed(SPEED_KEYS[current_event.key])
         return True
@@ -160,7 +160,7 @@ def handle_speed_key(current_event: event.Event) -> bool:
 
 
 def get_events(*args, **kwargs) -> list[event.Event]:
-    """``pygame.event.get`` for the game's own event loops (battle, dialogs, menus, shops): presses of 1 to 4 set the
+    """``pygame.event.get`` for the game's own event loops (battle, dialogs, menus, shops): presses of 1 to 5 set the
     game speed, and the zoom keys zoom the window (src/zoom.py); both are taken out, so they work everywhere and never
     count as "any key" to close a dialog."""
     poll_virtual_joypad()
@@ -169,7 +169,7 @@ def get_events(*args, **kwargs) -> list[event.Event]:
 
 
 def poll_speed_keys() -> None:
-    """Set the game speed while one of the keys 1 to 4 is held. Reads the key state, not the queue, so nothing is taken off
+    """Set the game speed while one of the keys 1 to 5 is held. Reads the key state, not the queue, so nothing is taken off
     it: used during waits, which leave the queue alone."""
     pressed = key.get_pressed()
     for speed_key, speed in SPEED_KEYS.items():
@@ -202,7 +202,7 @@ def clear_events_keeping_quit() -> None:
 
 
 def check_for_quit() -> None:
-    """Quit if the window has been closed, and change the game speed if 1 to 4 is held. Nothing is taken off the
+    """Quit if the window has been closed, and change the game speed if 1 to 5 is held. Nothing is taken off the
     queue: ``event.peek`` only looks (and pumps), so other events stay queued, and tests that script ``event.get``
     aren't fed this check's calls."""
     if display.get_init():

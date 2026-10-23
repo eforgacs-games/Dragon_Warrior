@@ -51,7 +51,7 @@ class TestDialogArrowBlink(GameSpeedTestCase):
             self.assertAlmostEqual(16 * 1000 / NES_FPS, length, delta=1)
 
     def test_blink_period_scales_with_the_game_speed(self):
-        for speed in (1, 2, 4, 8):
+        for speed in (1, 2, 4, 8, 16):
             with self.subTest(speed=speed):
                 set_game_speed(speed)
                 runs = self.runs(self.blink())

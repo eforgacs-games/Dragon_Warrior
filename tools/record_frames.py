@@ -93,7 +93,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--max-seconds', type=float, default=120, help="stop after this many real seconds")
     parser.add_argument('--max-frames', type=int, default=20000, help="keep at most this many frames")
     parser.add_argument('--seed', type=int, default=0, help="random seed, so encounters and fights repeat (default 0)")
-    parser.add_argument('--speed', type=int, choices=(1, 2, 4, 8), default=1, help="game speed (keys 1 to 4)")
+    parser.add_argument('--speed', type=int, choices=(1, 2, 4, 8, 16), default=1, help="game speed (keys 1 to 5)")
     parser.add_argument('--all-frames', action='store_true',
                         help="save a PNG for every frame, not just each frame that changed the picture")
     parser.add_argument('--fail-on-flicker', action='store_true', help="exit with 1 if a one-frame flicker is found")

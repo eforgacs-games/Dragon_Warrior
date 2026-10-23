@@ -52,7 +52,7 @@ class MusicPlayer:
 
     def wait_for_music_end(self, config: dict) -> None:
         """NES WaitForMusicEnd (Bank01): wait until the clip play_clip started has finished. With the music on, that
-        is when pygame's music stops, whatever the game speed (keys 1 to 4 only make the polling faster), since the
+        is when pygame's music stops, whatever the game speed (keys 1 to 5 only make the polling faster), since the
         clip plays at its normal length. With the music off, it waits out the rest of the clip's length, in game time
         like any other wait (shorter at a higher game speed). Closing the window quits during either wait
         (src/waiting.py); NO_WAIT skips them."""

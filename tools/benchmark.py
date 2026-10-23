@@ -334,7 +334,7 @@ def parse_names(text: str) -> list[Scene]:
 
 def parse_speeds(text: str) -> list[int]:
     speeds = [int(speed) for speed in text.split(',') if speed.strip()]
-    if not speeds or any(speed not in (1, 2, 4, 8) for speed in speeds):
+    if not speeds or any(speed not in (1, 2, 4, 8, 16) for speed in speeds):
         raise argparse.ArgumentTypeError("Speeds are 1, 2, 4 or 8, e.g. 1,8")
     return speeds
 
