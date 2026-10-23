@@ -50,14 +50,16 @@ BLACK = (0, 0, 0, 255)
 def presentation_rect(output_size: tuple[int, int], surface_size: tuple[int, int], scaling: str,
                       fullscreen: bool) -> Rect:
     """Where in the window (``output_size``, in pixels) the screen surface (``surface_size``) is shown.
-    - PIXEL PERFECT: the biggest whole multiple of the NES's 256x240 that fits (at least 1x), centred.
+    - PIXEL PERFECT: the biggest whole multiple of the NES's 256x240 that fits (at least 1x), centred. In the WIDE view
+      (src/view.py) the surface is wider: the multiple is of its own NES size (426x240 for 16:9).
     - SMOOTH, as pygame's SCALED shows it: in a window the biggest whole multiple of the surface that fits, in fullscreen
       (or a window smaller than the surface) stretched to fit, keeping its shape; centred."""
     width, height = output_size
     surface_width, surface_height = surface_size
     if scaling == SCALING_PIXEL_PERFECT:
-        factor = max(1, min(width // NES_WIDTH, height // NES_HEIGHT))
-        size = (NES_WIDTH * factor, NES_HEIGHT * factor)
+        nes_width = max(NES_WIDTH, round(surface_width * NES_HEIGHT / surface_height))
+        factor = max(1, min(width // nes_width, height // NES_HEIGHT))
+        size = (nes_width * factor, NES_HEIGHT * factor)
     else:
         scale = min(width / surface_width, height / surface_height)
         if not fullscreen and scale >= 1:

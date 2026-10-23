@@ -16,6 +16,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     LANGUAGE       ENGLISH / 한국어          (LANGUAGE: a global setting, src/settings.py)
     SCANLINES      OFF / ON                 (SCANLINES: a display filter, src/display_filters.py; global)
     SCALING        SMOOTH / PIXEL PERFECT   (SCALING: pygame's SCALED, or whole multiples of 256x240 only; global)
+    VIEW           NES (4:3) / WIDE         (VIEW: more of the map left and right, src/view.py; global)
     STATUS WINDOW  NES / ALWAYS             (STATUS_WINDOW: the pop-up window, Drawer.status_window_always)
     SHOP PREVIEW   OFF (NES) / ON           (SHOP_PREVIEW: the shops' stat preview, src/shop_preview.py)
 
@@ -58,10 +59,10 @@ Up and down move the NES cursor (src/cursor.py) between the rows, stopping at th
 change the row's value, with the menu button sound. A change goes into the game config at once, so the next dialog,
 fade, bump, step or key press uses it (Game.apply_option does what can't wait for that: the music, the game speed and
 the cheats), and is saved with the adventure log the next time the game is saved (options_from_config). LANGUAGE,
-SCANLINES and SCALING are the player's, not the adventure's, kept in the global settings file: Game.apply_option
+SCANLINES, SCALING and VIEW are the player's, not the adventure's, kept in the global settings file: Game.apply_option
 switches the game to the new language at once (Game.set_language), this window included, and the display filters from
-the next frame on. B, Esc, SELECT or Tab close it, and the map frame is put back
-exactly as it was. Everything is on the NES buttons, so a gamepad works it as the keyboard does.
+the next frame on; the VIEW is shown once the overlay closes (Game.set_view). B, Esc, SELECT or Tab close it, and the
+map frame is put back exactly as it was. Everything is on the NES buttons, so a gamepad works it as the keyboard does.
 
 The overlay runs its own loop, so nothing else runs while it's open: the map, the NPCs, the timers and the pop-up
 window wait, as they do for a dialog.
@@ -85,6 +86,7 @@ from src.quest_journal import JOURNAL_GOALS, JOURNAL_OFF, JOURNAL_SETTINGS
 from src.selection import frame_events, next_frame
 from src.settings import LANGUAGES
 from src.translated_window import draw_translated_window
+from src.view import VIEW_NES, VIEW_WIDE, full_screen
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
 from src.waiting import MENU_SPEED_FOLLOW, MENU_SPEED_NORMAL
 from src.windows import Window, WindowLayout, WindowText
@@ -158,6 +160,8 @@ OPTION_PAGES = (
         # is on the NES or off it (the NES drew to a TV), so no preset changes them.
         OptionRow("SCANLINES", SCANLINES_KEY, (False, True), ("OFF", "ON")),
         OptionRow("SCALING", SCALING_KEY, SCALING_MODES, ("SMOOTH", "PIXEL PERFECT")),
+        # The player's too (src/view.py). WIDE is a display preference, not a convenience: both presets keep NES (4:3)
+        OptionRow("VIEW", 'VIEW', (VIEW_NES, VIEW_WIDE), ("NES (4:3)", "WIDE"), (VIEW_NES, VIEW_NES)),
         OptionRow("STATUS WINDOW", 'STATUS_WINDOW', STATUS_WINDOW_SETTINGS, ("NES", "ALWAYS"),
                   (STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS)),
         # Information only (src/shop_preview.py): on by default, off in the NES preset
@@ -294,7 +298,7 @@ class OptionsOverlay:
 
     def run(self) -> None:
         """Show the overlay, read the buttons once a frame until it's closed, then put the map frame back."""
-        screen = self.game.screen
+        screen = full_screen(self.game.screen)  # the whole picture in the WIDE view (src/view.py)
         background = screen.copy()
         cursor = BlinkingCursor()
         drawn: tuple | None = None
@@ -362,16 +366,17 @@ class OptionsOverlay:
         if self.config.get('NO_BLIT'):
             return
         screen = self.game.screen
-        screen.blit(background, (0, 0))
-        darken(screen)
+        whole = full_screen(screen)
+        whole.blit(background, (0, 0))
+        darken(whole)
         draw_translated_window(screen, options_layout(self.config, self.page), self.game.color, self.config, self._,
                                cursor_index=index, cursor_visible=cursor_visible)
-        display.update(Rect(0, 0, screen.get_width(), screen.get_height()))
+        display.update(Rect(0, 0, whole.get_width(), whole.get_height()))
 
     def close(self, background: Surface) -> None:
         """Put the map frame back as it was when the overlay opened."""
         if self.config.get('NO_BLIT'):
             return
-        screen = self.game.screen
+        screen = full_screen(self.game.screen)
         screen.blit(background, (0, 0))
         display.update(Rect(0, 0, screen.get_width(), screen.get_height()))

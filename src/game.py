@@ -66,8 +66,9 @@ from src.visual_effects import flash_transparent_color, force_field_flash
 from src.waiting import MAP_CONTEXT, follow_menu_speed_option, poll_virtual_joypad, quit_if_requested, \
     set_speed_listener, set_virtual_joypad
 from src.windows import COMMAND_WINDOW
+from src.view import NES_WIDTH, VIEW_NES, full_screen, reset_view, set_up_view, view_name, view_width
 from src.zoom import handle_zoom_event, remember_default_zoom, remember_windowed_size, restore_windowed_size, \
-    set_windowed_zoom, set_zoom, set_zoom_listener
+    set_windowed_zoom, set_zoom, set_zoom_listener, window_zoom
 
 
 # Shift + F1/F2/F3 saves a save state in slot 1/2/3, F1/F2/F3 loads it (Game.handle_save_state_keys)
@@ -105,6 +106,8 @@ class Game:
             config[SCANLINES_KEY] = True
         if self.settings.settings.scaling != SCALING_SMOOTH:
             config[SCALING_KEY] = self.settings.settings.scaling
+        if self.settings.settings.view != VIEW_NES:
+            config['VIEW'] = self.settings.settings.view
         self._ = _ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
         # map/graphics
@@ -265,6 +268,7 @@ class Game:
 
         - LANGUAGE, a global setting: switched to at once (set_language) and saved with the global settings.
         - SCANLINES and SCALING, global settings: the display filters change from the next frame on, and are saved.
+        - VIEW, a global setting: saved now, and shown once the overlay closes (set_view).
         - MUSIC (ORCHESTRA_MUSIC_ENABLED): every Directories reads the music from the config (src/directories.py), so
           the next music played is from the new set; the map's music is started again from the new set now.
         - GAME SPEED (GAME_SPEED_KEYS): keys 1 to 5 are switched on or off; off goes back to normal speed, and on to
@@ -278,6 +282,8 @@ class Game:
             PRESENTER.configure_from(config)
             self.settings.update(scanlines=bool(config.get(SCANLINES_KEY)),
                                  scaling=config.get(SCALING_KEY, SCALING_SMOOTH))
+        elif config_key == 'VIEW':
+            self.settings.update(view=view_name(config))  # shown once the overlay closes (set_view)
         elif config_key == 'ORCHESTRA_MUSIC_ENABLED':
             name = music_name(self.current_map.music_file_path)
             if name is not None:
@@ -294,8 +300,28 @@ class Game:
             self.rewind.snapshots.clear()
 
     def set_screen(self, win_height, win_width):
-        """Stub for setting the screen."""
-        return set_mode((win_width, win_height), self.flags)
+        """Open the window (or make it again) and return the game's screen. In the WIDE view (src/view.py) the window
+        is wider than win_width, and the screen is the NES-sized area in its middle."""
+        if view_name(self.game_state.config) == VIEW_NES:
+            reset_view()
+            return set_mode((win_width, win_height), self.flags)
+        width = view_width(self.game_state.config) * win_width // NES_WIDTH
+        return set_up_view(set_mode((width, win_height), self.flags), win_width // NES_WIDTH)
+
+    def set_view(self) -> None:
+        """Show the view the VIEW option says (src/view.py), if it isn't the one shown: make the window again at its
+        new width, keeping its zoom (or fullscreen), and give everything that keeps the screen the new one."""
+        config = self.game_state.config
+        if full_screen(self.screen).get_width() == view_width(config) * self.scale:
+            return
+        zoom = None if self.fullscreen_enabled else round(window_zoom())
+        nes_res = config["NES_RES"]
+        self.screen = self.set_screen(nes_res[1] * self.scale, nes_res[0] * self.scale)
+        if zoom is not None:
+            set_zoom(zoom)
+        self.cmd_menu.screen = self.screen
+        if getattr(self, 'camera', None) is not None:
+            self.camera.screen = self.screen
 
     def apply_saved_zoom(self) -> None:
         """Give the new window the saved zoom (src/settings.py), or, opened in fullscreen, keep it for when the window
@@ -996,6 +1022,7 @@ class Game:
         """Show the options overlay over the map until it's closed. Its loop is the only thing running meanwhile, so
         the map, the NPCs, the timers and the pop-up window all wait, as they do for a dialog."""
         OptionsOverlay(self).run()
+        self.set_view()  # the VIEW row: the map is drawn across the new width from the next frame
 
     def handle_enter_key(self, keydown_event):
         """QUICK ACTION (not NES): Enter on the map takes, opens a door or talks without the COMMAND window. With it off
@@ -1053,12 +1080,14 @@ class Game:
                 self.flags = RESIZABLE | SCALED
                 mode_text = self._("Windowed mode enabled")
 
-            # Recreate the window with new flags. The display filters let go of the old window's renderer first, and
-            # take the new one at the next frame (src/display_filters.py).
+            # Recreate the window with new flags, in the view it had (src/view.py). The display filters let go of the
+            # old window's renderer first, and take the new one at the next frame (src/display_filters.py).
             PRESENTER.release()
             nes_res = self.game_state.config["NES_RES"]
             win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
-            self.screen = set_mode((win_width, win_height), self.flags)
+            self.screen = self.set_screen(win_height, win_width)
+            self.cmd_menu.screen = self.screen
+            self.camera.screen = self.screen
             # back in a window: the zoom it had before going fullscreen (src/zoom.py)
             restore_windowed_size()
             set_caption(self._("Dragon Warrior"))
