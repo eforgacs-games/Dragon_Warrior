@@ -124,16 +124,9 @@ class MapManager:
         fade_out_first=False cuts straight to black instead of fading the old screen out, as NES StartAtThroneRoom
         (Bank03, LCB47) does: it loads BlackPalPtr at once and changes maps with MapChngNoSound (Bank00, LB091),
         which skips ScreenFadeOut, so the only fade is MapChngNoSound's PalFadeIn."""
-        if self.last_map is not None:
-            came_from_throne_room = self.current_map.identifier == 'TantegelThroneRoom'
-            came_from_courtyard = self.current_map.identifier == 'TantegelCourtyard'
-        else:
-            came_from_throne_room = True
-            came_from_courtyard = False
         self.game_state.pause_all_movement()
         self.last_map = self.current_map
         self.current_map = next_map
-        moving_within_tantegel_castle = came_from_throne_room or came_from_courtyard
         self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
         self.apply_rainbow_bridge()
         if isinstance(self.current_map, maps.CharlockB1) and self.game.story_flags.charlock_stairs_revealed:
@@ -150,8 +143,6 @@ class MapManager:
             cut_to_black(self.screen, self.game_state.config)
         self.set_big_map()
         self.set_roaming_character_positions()
-        if not moving_within_tantegel_castle and not self.config['ORCHESTRA_MUSIC_ENABLED']:
-            self.music_player.stop_music()
         is_warp = destination_coordinates is not None
         if is_warp:
             current_map_staircase_dict = None
@@ -185,7 +176,9 @@ class MapManager:
         # (ChkLowHPPal). This is where a level up's new max HP first changes the window color.
         self.game.load_window_palette()
         self.game.cmd_menu = CommandMenu(self.game)
-        # TODO: Allow music to continue playing when moving within Tantegel Castle.
+        # NES LB10E: the old map's music plays on through the fade-out until the new map is drawn, then ResumeMusicTbl
+        # starts the new map's music from the beginning, on every map change. That includes moving within Tantegel
+        # Castle: the throne room has MSC_THRN_ROOM, the rest of the castle MSC_TANTAGEL2 (the lower version)
         self.music_player.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             self.game.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]),
