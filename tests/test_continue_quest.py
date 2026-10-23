@@ -109,14 +109,19 @@ class TestContinueQuest(TestCase):
         # ERASE used to go on into a game with no log, whose save then wrote a fourth save file
         self.write_save(1, 'Eddie', 2, modified=1000)
         self.write_save(2, 'Loto', 8, modified=2000)
-        # ERASE AN ADVENTURE LOG, log 1, then CONTINUE A QUEST
-        game = self.title_menu_then_continue([4, 0, 0])
+        # ERASE AN ADVENTURE LOG, log 1, YES, then CONTINUE A QUEST
+        with patch.object(OptionsScreen, 'choose_log', return_value=1), \
+                patch.object(OptionsScreen, 'confirm_erase', return_value=True):
+            game = self.title_menu_then_continue([4, 0])
         self.assertEqual(game.save_files(), ['save_slot_2.json'])
 
     def test_copy_goes_back_to_the_title_menu(self):
         self.write_save(1, 'Eddie', 2, modified=1000)
-        # COPY A QUEST, from log 1, to log 2, then CONTINUE A QUEST
-        game = self.title_menu_then_continue([3, 0, 1, 0])
+        # COPY A QUEST, from log 1, to log 2, YES, then CONTINUE A QUEST
+        with patch.object(OptionsScreen, 'choose_log', return_value=1), \
+                patch.object(OptionsScreen, 'choose_open_log', return_value=2), \
+                patch.object(OptionsScreen, 'confirm', return_value=True):
+            game = self.title_menu_then_continue([3, 0])
         self.assertEqual(game.save_files(), ['save_slot_1.json', 'save_slot_2.json'])
 
     def saved_logs(self) -> dict[str, tuple[str, int] | None]:

@@ -38,12 +38,12 @@ All of them are full 256x240 screenshots: white windows on black. `GameFunctions
 | `menus/main_menu/empty_log/{-1_unselected,0_begin_quest}.png` (2) | `Game.show_main_menu_screen` (`src/game.py` ~245) | NewQuestDat ($B2A8) | hidden / entry 0 | easy |
 | `menus/main_menu/partially_full_log/{-1_unselected,0..4}.png` (6) | `show_main_menu_screen` (~259) | FullMenuDat ($B249) | hidden + 5 | easy |
 | `menus/main_menu/full_log/{-1_unselected,0..2}.png` (4) | `show_main_menu_screen` (~276) | ContChngErsDat ($B20B) | hidden + 3 | easy |
-| `menus/main_menu/empty_log/adventure_log/{-1_unselected,0..2}.png` (4) | `copy_quest`, `erase_quest`, `select_adventure_log` (`src/game.py` ~347-384) | NewQuestDat ($B2A8), with its arrow held on, + LogList123Dat1 ($B385) | hidden + 3 | medium (2 windows) |
+| `menus/main_menu/empty_log/adventure_log/{-1_unselected,0..2}.png` (4) | `select_adventure_log` (`src/game.py`) | NewQuestDat ($B2A8), with its arrow held on, + LogList123Dat1 ($B385) | hidden + 3 | medium (2 windows) |
 | `menus/main_menu/partially_full_log/one_adventure_log/{-1_unselected,0_adventure_log_1}.png` (2) | `Game.continue_quest` (~310), with `AdventureLogOverlay` drawing the name | FullMenuDat ($B249) + LogList1Dat2 ($B3BF) | hidden / on | medium (name and level from the save) |
 
 Things the NES does differently from these screens:
-- Copy, erase and log selection always show the empty-log screenshot, with all 3 logs listed.
-- On the NES, those flows list only the used logs (or only the free ones) with the matching LogList??Dat1/Dat2 window. Erase also shows EraseLogDat ($B4D4).
+- BEGIN A NEW QUEST's log selection still shows the empty-log screenshot, with all 3 logs listed. On the NES it lists only the open logs (ShowOpenLogs, LogList??Dat1).
+- Copy and erase no longer use these screenshots: like CONTINUE (with several logs) and CHANGE MESSAGE SPEED, they open generated windows (`src/options_screen.py`): the used logs (LogList??Dat2), the open logs for the copy target (LogList??Dat1), EraseLogDat ($B4D4) and YesNo2Dat ($B50D).
 - There are no screenshots for MsgSpeedDat, YesNo2Dat or the 2-log variants.
 
 Generating these screens will fix all of that, because any LogList variant can be built from its data.
