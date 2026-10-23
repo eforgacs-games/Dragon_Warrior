@@ -9,7 +9,7 @@ encounter rolls, the step effects, every window and wait.
 - On the map it holds the direction from the hero's tile to the partner tile and back, at walking speed.
 - Anywhere else (a fight, its dialog lines, the victory wait, a message) it taps A every TAP_PERIOD_FRAMES frames,
   which chooses FIGHT in the battle's command window (the cursor starts on FIGHT every turn) and moves every dialog
-  on. F3 auto-battle is ignored meanwhile (BattleController.handle_battle_prompts).
+  on. F4 auto-battle is ignored meanwhile (BattleController.handle_battle_prompts).
 
 It stops, with the menu button sound and a message saying why, and hands the game back on the screen it is at:
 - HP at or below the GRIND STOP option's threshold (AUTO_GRIND_STOP): checked at the start of every player turn

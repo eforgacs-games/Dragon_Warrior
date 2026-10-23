@@ -296,7 +296,7 @@ class TestVirtualJoypad(GrindTestCase):
 class TestKeys(GrindTestCase):
 
     def test_any_key_stops_it_and_is_used_up(self):
-        for pressed_key in (K_k, K_g, K_UP, pygame.K_i, pygame.K_F3):
+        for pressed_key in (K_k, K_g, K_UP, pygame.K_i, pygame.K_F4):
             with self.subTest(key=pygame.key.name(pressed_key)):
                 pygame.event.clear()
                 self.start()
