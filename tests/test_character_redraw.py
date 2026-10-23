@@ -33,11 +33,16 @@ def make_game(start_map: str, scale: int = test_config['SCALE']) -> Game:
     return game
 
 
-def draw_frame(game: Game) -> None:
-    """Draw one frame the way Game.main does (without the throne room's automatic dialogs, and with no events)."""
+def frame_view(game: Game) -> SimpleNamespace:
+    """What draw_all draws a frame from: the game, without the throne room's automatic dialogs, and with no events."""
     view = SimpleNamespace(**{name: getattr(game, name) for name in MapDrawingGame.__annotations__})
     view.initial_dialog_enabled, view.events, view.story_flags = False, [], SimpleNamespace(left_throne_room=True)
-    game.drawer.draw_all(view, game.game_state.enable_animate)
+    return view
+
+
+def draw_frame(game: Game) -> None:
+    """Draw one frame the way Game.main does (without the throne room's automatic dialogs, and with no events)."""
+    game.drawer.draw_all(frame_view(game), game.game_state.enable_animate)
     game.loop_count += 1
 
 
