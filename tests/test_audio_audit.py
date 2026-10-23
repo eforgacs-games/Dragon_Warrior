@@ -192,19 +192,23 @@ class TestCommandMenuAudio(unittest.TestCase):
                           call.load_and_play_music(self.directories.regular_fight_music)])
 
     def test_rainbow_drop_plays_the_rainbow_bridge_music(self):
-        # NES ChkDrop: MSC_RNBW_BRDG, WaitForMusicEnd, MSC_OUTDOOR, then ModMapBlock puts the bridge down
+        # NES ChkDrop: MSC_RNBW_BRDG, the rainbow flash while it plays (LDEC5-LDEFB), WaitForMusicEnd, MSC_OUTDOOR,
+        # then ModMapBlock puts the bridge down
         self.go_to('Alefgard', (50, 50))
         from src.constants import RAINBOW_DROP_COORDINATES
         self.game.player.row, self.game.player.column = RAINBOW_DROP_COORDINATES
         events = []
-        self.music_player.play_until_end.side_effect = lambda *args: events.append('rainbow bridge music')
+        self.music_player.play_clip.side_effect = lambda *args: events.append('rainbow bridge music')
+        self.music_player.wait_for_music_end.side_effect = lambda *args: events.append('music end')
         self.music_player.load_and_play_music.side_effect = lambda *args: events.append('overworld music')
         with patch.object(self.cmd_menu, 'set_tile_by_coordinates',
-                          side_effect=lambda *args: events.append('bridge')):
+                          side_effect=lambda *args: events.append('bridge')), \
+                patch('src.menu.rainbow_bridge_flash', side_effect=lambda *args: events.append('flash')):
             self.cmd_menu.rainbow_drop()
-        self.assertEqual(events, ['rainbow bridge music', 'overworld music', 'bridge'])
+        self.assertEqual(events, ['rainbow bridge music', 'flash', 'music end', 'overworld music', 'bridge'])
         self.assertEqual(self.music_player.mock_calls,
-                         [call.play_until_end(self.directories.rainbow_bridge_music, self.game.game_state.config),
+                         [call.play_clip(self.directories.rainbow_bridge_music),
+                          call.wait_for_music_end(self.game.game_state.config),
                           call.load_and_play_music(self.directories.overworld_music)])
 
     def test_rainbow_drop_in_the_wrong_place_plays_nothing(self):
