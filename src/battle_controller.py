@@ -15,7 +15,7 @@ from pygame import KEYDOWN, display, event, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
-from src.common import ANY_BUTTON_KEYS, accept_keys, reject_keys
+from src.common import A_BUTTON_KEYS, ANY_BUTTON_KEYS, reject_keys
 from src.cursor import BlinkingCursor
 from src.waiting import wait
 from src.constants import (
@@ -48,9 +48,10 @@ class BattleOutcome(Enum):
 # CmdCmbtDat: the commands, by row and column (WndCalcSelResult: CC_FIGHT, CC_SPELL, CC_RUN, CC_ITEM)
 BATTLE_MENU_OPTIONS = (('Fight', 'Spell'), ('Run', 'Item'))
 
-# The joypad on the keyboard, for the command window's SelectionButtons
+# The joypad on the keyboard, for the command window's SelectionButtons. A is K and Enter; START (I) is no button
+# here: Bank01 WndProcessInput skips SELECT and START, like the field COMMAND window (src/command_window.py).
 COMMAND_WINDOW_BUTTON_KEYS = (
-    (IN_A, accept_keys),
+    (IN_A, A_BUTTON_KEYS),
     (IN_B, reject_keys),
     (IN_UP, (K_UP, K_w)),
     (IN_DOWN, (K_DOWN, K_s)),
