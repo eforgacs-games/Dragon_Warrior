@@ -2731,3 +2731,15 @@ msgstr "달리기 버튼"
 #: src/auto_grind.py
 msgid "Auto-grind: ENCOUNTERS are off"
 msgstr "자동 사냥: 적 출현이 꺼져 있다"
+#: src/options_overlay.py
+msgid "SHOP PREVIEW"
+msgstr "상점 미리보기"
+
+# The shop stat preview's labels: the status window's ATTACK POWER and DEFENSE POWER, without the colon
+#: src/shop_preview.py
+msgid "ATTACK"
+msgstr "공격력"
+
+#: src/shop_preview.py
+msgid "DEFENSE"
+msgstr "수비력"
