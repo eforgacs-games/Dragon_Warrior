@@ -1,0 +1,101 @@
+kind	english_nes	english_remake	japanese	korean_official	our_korean_before	notes
+item	Bamboo Pole	Bamboo Spear	たけざお	대나무 장대	대나무 장대	already official
+item	Club	Oaken Club	こんぼう	곤봉	곤봉	already official
+item	Copper Sword	Copper Sword	どうのつるぎ	구리 검	구리 검	already official
+item	Hand Axe	Iron Axe	てつのおの	쇠도끼	쇠도끼	already official
+item	Broad Sword	Steel Broadsword	はがねのつるぎ	강철 검	강철 검	already official
+item	Flame Sword	Fire Blade	ほのおのつるぎ	불꽃의 검	불꽃의 검	already official
+item	Erdrick's Sword	Erdrick's Sword	ロトのつるぎ	로토의 검	로토의 검	already official
+item	Clothes	Plain Clothes	ぬののふく	천 옷	천 옷	already official
+item	Leather Armor	Leather Suit	かわのふく	가죽 옷	가죽 옷	already official
+item	Chain Mail	Chain Mail	くさりかたびら	체인 메일	사슬 갑옷	changed to the official name
+item	Half Plate	Iron Armour	てつのよろい	철 갑옷	철 갑옷	already official
+item	Full Plate	Full Plate Armour	はがねのよろい	강철 갑옷	강철 갑옷	already official
+item	Magic Armor	Magic Armour	まほうのよろい	마법의 갑옷	마법의 갑옷	already official
+item	Erdrick's Armor	Erdrick's Armour	ロトのよろい	로토의 갑옷	로토의 갑옷	already official
+item	Small Shield	Leather Shield	かわのたて	가죽 방패	가죽 방패	already official
+item	Large Shield	Iron Shield	てつのたて	철 방패	철 방패	already official
+item	Silver Shield	Silver Shield	みかがみのたて	거울 방패	은색 방패	changed to the official name
+item	Herb	Medicinal Herb	やくそう	약초	약초	already official
+item	Torch	Torch	たいまつ	횃불	횃불	already official
+item	Dragon's Scale	Dragon Scale	りゅうのうろこ	용의 비늘	용의 비늘	already official
+item	Wings	Chimaera Wing	キメラのつばさ	키메라의 날개	날개	changed to the official name
+item	Magic Key	Magic Key	かぎ	열쇠	열쇠	already official
+item	Fairy Water	Holy Water	せいすい	성수	요정의 물	changed to the official name
+item	Ball of Light	Sphere of Light	ひかりのたま	빛의 구슬	빛의 구슬	already official
+item	Tablet				석판	not in the remake; ours kept
+item	Fairy Flute	Faerie Flute	ようせいのふえ	요정의 피리	요정의 피리	already official
+item	Silver Harp	Lyre of Ire	ぎんのたてごと	은 하프	은색 하프	changed to the official name
+item	Staff of Rain	Staff of Rain	あまぐものつえ	비구름 지팡이	비의 지팡이	changed to the official name
+item	Stones of Sunlight	Sunstone	たいようのいし	태양의 돌	태양의 돌	already official
+item	Gwaelin's Love	Princess's Pledge	おうじょのあい	공주의 사랑	그웨일린의 사랑	changed to the official name
+item	Erdrick's Token	Mark of Erdrick	ロトのしるし	로토의 증표	로토의 증표	already official
+item	Rainbow Drop	Rainbow Drop	にじのしずく	무지개 방울	무지개의 물방울	changed to the official name
+item	Cursed Belt	Wasteband	のろいのベルト	저주의 벨트	저주받은 벨트	changed to the official name
+item	Death Necklace	Choker	しのくびかざり	죽음의 목걸이	죽음의 목걸이	already official
+item	Fighter's Ring	Warrior's Ring	せんしのゆびわ	전사의 반지	전사의 반지	already official
+spell	HEAL	Heal	ホイミ	호이미	호이미	already official
+spell	HURT	Sizz	ギラ	기라	기라	already official
+spell	SLEEP	Snooze	ラリホー	라리호	라리호	already official
+spell	RADIANT	Glow	レミーラ	레미라	레미라	already official
+spell	STOPSPELL	Fizzle	マホトーン	마호톤	마호톤	already official
+spell	OUTSIDE	Evac	リレミト	리레미트	리레미트	already official
+spell	RETURN	Zoom	ルーラ	루라	루라	already official
+spell	REPEL	Holy Protection	トヘロス	토헤로스	토헤로스	already official
+spell	HEALMORE	Midheal	ベホイミ	베호이미	베호이미	already official
+spell	HURTMORE	Sizzle	ベギラマ	베기라마	베기라마	already official
+monster	Slime	slime	スライム	슬라임	슬라임	already official
+monster	Red Slime	she-slime	スライムベス	슬라임 베스	슬라임 베스	already official
+monster	Drakee	dracky	ドラキー	드라키	드라키	already official
+monster	Ghost	ghost	ゴースト	고스트	고스트	already official
+monster	Magician	prestidigitator	まほうつかい	마법사	마법사	already official
+monster	Magidrakee	drackolyte	メイジドラキー	메이지 드라키	메이지 드라키	already official
+monster	Scorpion	scorpion	おおさそり	거대 전갈	거대 전갈	already official
+monster	Druin	lunatick	メーダ	메다	메다	already official
+monster	Poltergeist	fightgeist	メトロゴースト	메트로 고스트	메트로고스트	changed to the official name
+monster	Droll	drohl drone	ドロル	드롤	드롤	already official
+monster	Drakeema	drackyma	ドラキーマ	드라키마	드라키마	already official
+monster	Skeleton	skeleton	がいこつ	해골	해골	already official
+monster	Warlock	legerdeman	まどうし	마도사	마도사	already official
+monster	Metal Scorpion	iron scorpion	てつのさそり	강철 전갈	강철 전갈	already official
+monster	Wolf	bewarewolf	リカント	리칸트	리칸트	already official
+monster	Wraith	skeleton scrapper	しりょう	사령	사령	already official
+monster	Metal Slime	metal slime	メタルスライム	메탈 슬라임	메탈 슬라임	already official
+monster	Specter	spitegeist	ヘルゴースト	헬 고스트	헬고스트	changed to the official name
+monster	Wolflord	scarewolf	リカントマムル	리칸트 마믈	리칸트 마믈	already official
+monster	Druinlord	raving lunatick	メーダロード	메다 로드	메다 로드	already official
+monster	Drollmagi	drohl diabolist	ドロルメイジ	트롤 메이지	드롤 메이지	changed to the official name
+monster	Wyvern	chimaera	キメラ	키메라	키메라	already official
+monster	Rogue Scorpion	death scorpion	しのさそり	죽음의 전갈	죽음의 전갈	already official
+monster	Wraith Knight	skeleton soldier	しりょうのきし	사령 기사	사령의기사	changed to the official name
+monster	Golem	golem	ゴーレム	골렘	골렘	already official
+monster	Goldman	gold golem	ゴールドマン	골드맨	골드맨	already official
+monster	Knight	knight errant	よろいのきし	갑옷의 기사	갑옷의 기사	already official
+monster	Magiwyvern	hocus chimaera	メイジキメラ	메이지 키메라	메이지키메라	changed to the official name
+monster	Demon Knight	dark skeleton	かげのきし	그림자 기사	그림자 기사	already official
+monster	Werewolf	tearwolf	キラーリカント	킬러 리칸트	킬러 리칸트	already official
+monster	Green Dragon	green dragon	ドラゴン	드래곤	드래곤	already official
+monster	Starwyvern	cosmic chimaera	スターキメラ	스타 키메라	스타키메라	changed to the official name
+monster	Wizard	vis mager	だいまどう	대마도사	대마도사	already official
+monster	Axe Knight	knight aberrant	あくまのきし	악마의 기사	악마의기사	changed to the official name
+monster	Blue Dragon	blue dragon	キースドラゴン	키이스 드래곤	키스드래곤	changed to the official name
+monster	Stoneman	stone golem	ストーンマン	스톤맨	스톤맨	already official
+monster	Armored Knight	knight abhorrent	しにがみのきし	사신의 기사	죽음의기사	changed to the official name
+monster	Red Dragon	red dragon	ダースドラゴン	다스 드래곤	다스드래곤	changed to the official name
+monster	Dragonlord	Dragonlord	りゅうおう	용왕	용왕	already official
+monster	Dragonlord 2	Dragonlord	りゅうおう	용왕	용왕	already official
+label	FIGHT	Attack	こうげき	공격	싸운다	changed: the battle command
+label	RUN	Flee	にげる	도망치기	도망친다	changed: the battle command
+label	SPELL	Spells	じゅもん	주문	주문	already official
+label	ITEM	Items	どうぐ	도구	도구	already official
+label	STATUS	Status	つよさ	능력치	능력치	already official
+label	YES	Yes	はい	예	예	already official
+label	NO	No	いいえ	아니요	아니오	changed
+label	MESSAGE SPEED	Message Speed	ひょうじそくど	표시 속도	메시지 속도	changed, also in the title menu and the speed question
+label	FAST	Fast	はやい	빠름	빠르게	changed
+label	SLOW	Slow	おそい	느림	느리게	changed
+label	BUY	Buy	かいにきた	사러 왔다	사기	kept: the remake's 'I've come to buy' is its own shop menu's wording
+label	SELL	Sell	うりにきた	팔러 왔다	팔기	kept: the remake's 'I've come to sell' is its own shop menu's wording
+line	When the sun and rain meet, a Rainbow Bridge shall appear.	‘When rain and sun, the twain do meet, the rain's bow shall a bridge complete.’		비와 태양이 어우러질 때 무지개 다리가 생기리라...	비와 태양이 어우러질 떄 무지개 다리가 생기리라...	whole line, official map.1.19.0#0
+line	Now, Gwaelin, come to my side.	<11King: Come now, Gwaelin. Return thee to thy rightful place at my side.		<11왕: 자, 로라. 내 옆 자리로 오려무나.	자, 로라야, 이리 오너라.	whole line, official map.2.6.0#2
+line	In this temple do the sun and rain meet.	There shall rain and sun, the twain meet at last...		비와 태양이 어우러지는 성소라네.	이 신전에서 태양과 비가 만난다네.	whole line, official map.6.7.1#0
