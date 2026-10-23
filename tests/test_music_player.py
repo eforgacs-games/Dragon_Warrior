@@ -2,15 +2,12 @@ import os
 import unittest
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from pygame import mixer
 
-from pygame import mixer  # noqa: E402
-
-from src.config.test_config import test_config  # noqa: E402
-from src.directories import Directories  # noqa: E402
-from src.music_player import MusicPlayer, clip_length_ms  # noqa: E402
-from src.waiting import reset_game_speed, set_game_speed  # noqa: E402
+from src.config.test_config import test_config
+from src.directories import Directories
+from src.music_player import MusicPlayer, clip_length_ms
+from src.waiting import reset_game_speed, set_game_speed
 
 
 class TestMusicPlayerInitialization(unittest.TestCase):

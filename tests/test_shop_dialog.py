@@ -1,18 +1,14 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
 from pygame import KEYDOWN, K_DOWN, K_RETURN, K_ESCAPE
 
 from src.config.test_config import test_config
-from src.game import Game
 from src.maps import Brecconary, Cantlin, Garinham, Kol, Rimuldar
 from src.shops import KEY_COSTS
 from src.windows import BUY_SELL_WINDOW
+from tests.helpers import new_game
 
 
 def npc_identifiers(game_map):
@@ -39,8 +35,7 @@ class ShopDialogTestCase(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.dialog_lookup = self.game.cmd_menu.dialog_lookup
         self.player = self.dialog_lookup.player
         self.player.gold = 1000

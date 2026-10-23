@@ -4,26 +4,22 @@ Every test runs the main loop's update a frame at a time (Game.get_events) with 
 the NES FrameCounter and the NPC schedule (src/npc_schedule.py) all play their part. Random NPC steps are pointed
 left (back at the hero, so blocked) unless a test says otherwise, so only making way moves anyone.
 """
-import os
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
+from pygame import K_RIGHT
 
-import pygame  # noqa: E402
-from pygame import K_RIGHT  # noqa: E402
-
-from src.config.test_config import test_config  # noqa: E402
-from src.direction import Direction  # noqa: E402
-from src.game import Game  # noqa: E402
-from src.game_functions import set_character_position  # noqa: E402
-from src.maps import MapWithoutNPCs  # noqa: E402
-from src.maps_functions import get_center_point  # noqa: E402
-from src.npc_schedule import FRAMES_PER_CYCLE, FRAMES_PER_TURN  # noqa: E402
-from src.sprites.fixed_character import FixedCharacter  # noqa: E402
-from src.sprites.roaming_character import RoamingCharacter  # noqa: E402
+from src.config.test_config import test_config
+from src.direction import Direction
+from src.game_functions import set_character_position
+from src.maps import MapWithoutNPCs
+from src.maps_functions import get_center_point
+from src.npc_schedule import FRAMES_PER_CYCLE, FRAMES_PER_TURN
+from src.sprites.fixed_character import FixedCharacter
+from src.sprites.roaming_character import RoamingCharacter
+from tests.helpers import new_game
 
 W, B = 1, 3  # WALL, BRICK
 
@@ -81,8 +77,7 @@ class MakeWayTestCase(TestCase):
         pygame.display.set_mode((800, 600))
 
     def make_game(self, layout, make_way=True):
-        with patch('src.game.SCALED'):
-            self.game = Game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
+        self.game = new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
                               'NO_BATTLES': True, 'NPCS_MAKE_WAY': make_way})
         self.game.game_state.is_initial_dialog = False
         self.tile_size = self.game.tile_size

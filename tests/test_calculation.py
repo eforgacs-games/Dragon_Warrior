@@ -1,9 +1,5 @@
-import os
 import unittest
 from unittest.mock import patch
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.direction import Direction

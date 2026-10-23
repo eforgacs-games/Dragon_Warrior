@@ -1,17 +1,14 @@
-import os
 from unittest import TestCase
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
 
-import pygame  # noqa: E402
-
-from src.color import BLACK, RED, WHITE  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.cursor import (CURSOR_TILE, IN_A, IN_DOWN, IN_START, IN_UP, BlinkingCursor,  # noqa: E402
+from src.color import BLACK, RED, WHITE
+from src.config.test_config import test_config
+from src.cursor import (CURSOR_TILE, IN_A, IN_DOWN, IN_START, IN_UP, BlinkingCursor,
                         SelectionButtons, cursor_visible_on_frame, draw_cursor_tile, first_button)
-from src.directories import Directories  # noqa: E402
-from src.waiting import NES_FPS  # noqa: E402
+from src.directories import Directories
+from src.waiting import NES_FPS
+from tests.helpers import new_game
 
 
 def ticks_at_frame(frame: int) -> int:
@@ -126,13 +123,10 @@ class TestCommandWindowCursor(TestCase):
         pygame.quit()
 
     def setUp(self):
-        from unittest.mock import patch
-        from src.game import Game
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.cmd_menu = self.game.cmd_menu
 
     def test_cursor_is_in_the_tile_before_the_selected_entry(self):

@@ -4,14 +4,11 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
+from pygame import K_ESCAPE, K_RETURN, K_TAB, KEYDOWN
 
-import pygame  # noqa: E402
-from pygame import K_ESCAPE, K_RETURN, K_TAB, KEYDOWN  # noqa: E402
-
-from src.config.test_config import test_config  # noqa: E402
-from src.game import BACK_TO_TITLE_MENU, Game  # noqa: E402
+from src.config.test_config import test_config
+from src.game import BACK_TO_TITLE_MENU, Game
 
 
 def key_event(key: int, unicode: str = '') -> MagicMock:

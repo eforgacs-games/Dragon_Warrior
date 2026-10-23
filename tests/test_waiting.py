@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -7,11 +6,8 @@ from pygame import KEYDOWN, K_RETURN, QUIT
 from pygame.event import Event
 
 from src.config.test_config import test_config
-from src.game import Game
 from src.waiting import check_for_quit, quit_if_requested, reset_game_speed, wait, wait_frames
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 class TestWait(TestCase):
@@ -88,8 +84,7 @@ class TestQuitDuringGameWaits(TestCase):
 
     def setUp(self):
         config = {**test_config, 'NO_WAIT': False, 'RENDER_TEXT': False, 'NO_BLIT': True}
-        with patch('src.game.SCALED'):
-            self.game = Game(config)
+        self.game = new_game(config)
         self.game.player.name = "Edward"
         pygame.event.clear()
         patcher = patch('src.waiting.pygame_quit')

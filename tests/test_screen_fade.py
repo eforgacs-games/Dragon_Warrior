@@ -1,20 +1,16 @@
 """Full-screen fades: the NES palette fade (PalFadeOut, Bank03 $C212; PalFadeIn, $C529), the smooth alpha fade kept as
 an option (FADE_STYLE), and which transitions use them."""
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
 
-import pygame  # noqa: E402
-
-from src.config.test_config import test_config  # noqa: E402
-from src.ending import CREDITS  # noqa: E402
-from src.game import Game  # noqa: E402
-from src.maps import Brecconary  # noqa: E402
+from src.config.test_config import test_config
+from src.ending import CREDITS
+from src.maps import Brecconary
 from src.visual_effects import FADE_IN_STEPS, FADE_OUT_STEPS, FADE_STEP_FRAMES, FADE_STYLE_NES, FADE_STYLE_SMOOTH, \
-    NES_FPS, NES_PALETTE, PAL_BLACK, fade_style, nes_fade_palette, nes_palette_fade, screen_fade  # noqa: E402
+    NES_FPS, NES_PALETTE, PAL_BLACK, fade_style, nes_fade_palette, nes_palette_fade, screen_fade
+from tests.helpers import new_game
 
 BLACK_RGB = NES_PALETTE[PAL_BLACK]
 # NES color numbers the game's palettes use (OverworldPal, TownPal, RegSPPal, the windows' $30 and low HP $26)
@@ -161,8 +157,7 @@ class TestTransitionsUseTheSelectedFade(TestCase):
             self.addCleanup(test_config.__setitem__, key, test_config[key])
             test_config[key] = value
         self.addCleanup(test_config.__setitem__, 'FADE_STYLE', test_config['FADE_STYLE'])
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
 
     def record_fades(self, style: str):
         test_config['FADE_STYLE'] = style

@@ -20,7 +20,6 @@ from src.config.test_config import test_config
 from src.direction import Direction
 from src.drawer import replace_characters_with_underlying_tiles, convert_numeric_tile_list_to_unique_tile_values, \
     set_to_save_prompt
-from src.game import Game
 from src.game_functions import get_next_coordinates
 from src.map_layouts import MapLayouts
 from src.maps import TantegelThroneRoom, TantegelCourtyard, Alefgard
@@ -32,9 +31,7 @@ from src.spells import Spell
 from src.sprites.roaming_character import RoamingCharacter
 from src.waiting import game_speed, reset_game_speed
 from tests.mock_map import MockMap
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 def pressed_keys(pressed_key):
@@ -67,8 +64,7 @@ class TestGame(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.player.name = "Edward"
         self.game.cmd_menu.dialog_lookup = DialogLookup(self.game.cmd_menu, self.game.game_state.config)
         self.game.current_map = MockMap(self.game.config)
@@ -380,8 +376,7 @@ class TestGame(TestCase):
                 save = json.load(save_file)
         self.assertTrue(save['StoryFlags']['rainbow_bridge_built'])
 
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.assertFalse(self.game.story_flags.rainbow_bridge_built)
         self.game.load_game(save)
         self.assertTrue(self.game.story_flags.rainbow_bridge_built)

@@ -12,7 +12,6 @@ If a step breaks, the failure names it, e.g. "Story step 10 (use the Rainbow Dro
 A second run leaves Gwaelin in the Swamp Cave until the Dragonlord is dead, then carries her to King Lorik, which the
 NES allows: she's a map block there, not an NPC, so the victory dialog doesn't replace her rescue (DoTalkResults).
 """
-import os
 from contextlib import contextmanager
 from unittest import TestCase
 from unittest.mock import patch
@@ -24,20 +23,17 @@ from src.constants import ENDING_GWAELIN_BESIDE_KING, ENDING_GWAELIN_STAIRS, END
     GWAELIN_THRONE_ROOM_COORDINATES, RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES
 from src.direction import Direction
 from src.ending import CREDITS
-from src.game import Game
 from src.game_functions import set_character_position
 from src.guardians import AXE_KNIGHT, GOLEM, GREEN_DRAGON
 from src.maps import CharlockB1, map_lookup
 from src.maps_functions import get_center_point
 from src.menu import CommandMenu
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 UP, DOWN, LEFT, RIGHT = Direction.UP.value, Direction.DOWN.value, Direction.LEFT.value, Direction.RIGHT.value
 
 # How each yes/no window on the way is answered (True = YES). "Dost thou wish to purchase more?" at the key shop is
-# answered by TestStoryRun.answer.
+# answered by StoryRunMixin.answer.
 STORY_ANSWERS = {
     "Magic keys! They will unlock any door.\nDost thou wish to purchase one for 85 GOLD?": True,
     "Will thou take me to the castle?": True,
@@ -70,7 +66,9 @@ def dragonlord_defeated(game) -> bool:
     return game.story_flags.dragonlord_defeated
 
 
-class TestStoryRun(TestCase):
+class StoryRunMixin:
+    """The setup, stand-ins and story steps of the headless run, without any tests, so the classes that reuse them
+    (here and in test_checkpoints.py) don't inherit, and rerun, each other's tests. Mix in before TestCase."""
 
     @classmethod
     def setUpClass(cls):
@@ -86,8 +84,7 @@ class TestStoryRun(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.player = self.game.player
         self.player.name = "Erdrick"
         self.shown_text: list = []
@@ -422,7 +419,8 @@ class TestStoryRun(TestCase):
             self.assertEqual(credit_screens[-1], ((13, 12, "THE END"),))
         return [call.args for call in place_gwaelin.call_args_list], walk_gwaelin_to_king.called
 
-    # The story runs
+
+class TestStoryRun(StoryRunMixin, TestCase):
 
     def test_the_game_can_be_finished(self):
         self.take_the_throne_room_chests()

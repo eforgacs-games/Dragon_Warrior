@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 
 import pygame
@@ -7,9 +6,6 @@ from data.text.intro_lookup_table import ControlInfo
 from src.config.test_config import test_config
 from src.directories import Directories
 from src.text import DialogBoxWrapper, WRAP_LENGTH, set_font_by_ascii_chars
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 # The dialog box (CommandMenu.show_text_line_in_dialog_box) is 12 tiles wide from tile 2, with text starting at
 # tile 3. Its rows are 17 px apart from 9.75 tiles down, and the continue arrow blinks just under the fifth row.

@@ -12,25 +12,21 @@ and then the fanfare just didn't play. Here the sound effects play on the real m
 NO_WAIT on they pile up, so the channels are full when the fanfares start. The music track is a recording stand-in for
 pygame.mixer.music, so the test can see exactly when each piece of music starts and stops.
 """
-import os
 import random
 from os.path import basename
 from unittest import TestCase
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
 
-import pygame  # noqa: E402
-
-from src.battle_controller import BattleOutcome  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.game import Game  # noqa: E402
-from src.maps import map_lookup  # noqa: E402
-from src.menu import CommandMenu  # noqa: E402
-from src.music_player import MusicPlayer  # noqa: E402
-from src.player.player_stats import levels_list  # noqa: E402
-from src.sound import SFX_CHANNEL, Sound, sfx_channel  # noqa: E402
+from src.battle_controller import BattleOutcome
+from src.config.test_config import test_config
+from src.maps import map_lookup
+from src.menu import CommandMenu
+from src.music_player import MusicPlayer
+from src.player.player_stats import levels_list
+from src.sound import SFX_CHANNEL, Sound, sfx_channel
+from tests.helpers import new_game
 
 VICTORY = '25 Dragon Quest 1 - Victory.mp3'
 LEVEL_UP = '26 Dragon Quest 1 - Improvement.mp3'
@@ -84,8 +80,7 @@ class TestVictoryMusic(TestCase):
         random.seed(1985)
         config = {**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True, 'SOUND_ENABLED': True,
                   'MUSIC_ENABLED': True}
-        with patch('src.game.SCALED'):
-            self.game = Game(config)
+        self.game = new_game(config)
         self.player = self.game.player
         self.player.name = "Erdrick"
         self.events: list = []
@@ -303,8 +298,7 @@ class TestMusicOff(TestCase):
 
     def setUp(self):
         config = {**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True, 'MUSIC_ENABLED': False}
-        with patch('src.game.SCALED'):
-            self.game = Game(config)
+        self.game = new_game(config)
         self.music = patch('pygame.mixer.music').start()
         patch('src.battle_controller.BattleController.start_fight', return_value=False).start()
         for target in ('show_line_in_dialog_box', 'show_text_in_dialog_box', 'wait_for_button'):
