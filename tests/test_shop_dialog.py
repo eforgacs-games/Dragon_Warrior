@@ -232,7 +232,7 @@ class TestWeaponShop(ShopDialogTestCase):
         self.buy('cantlin_weapons_store_3_inventory', 'Flame Sword', [True, False, False])
         self.assertEqual(self.player.weapon, 'Club')
         self.assertEqual(self.player.gold, 10_000)
-        self.assertIn("Oh, yes? That's too bad.", self.lines)
+        self.assertIn("Oh, yes?\nThat's too bad.", self.lines)
 
     def test_flame_sword_shop(self):
         self.player.gold = 10_000
@@ -250,7 +250,7 @@ class TestKeyAndFairyWaterShops(ShopDialogTestCase):
         self.assertEqual(self.player.inventory.count('Magic Key'), 6)
         self.assertEqual(self.player.gold, 1000 - 53)
         self.assertEqual(self.lines[-2:], ["I am sorry, but I cannot sell thee anymore.", "I will see thee later."])
-        self.assertEqual(self.prompts[1], "Here, take this key.\nDost thou wish to purchase more?")
+        self.assertEqual(self.prompts[1], "Here,take this key.\nDost thou wish to purchase more?")
 
     def test_key_not_enough_money(self):
         self.player.gold = 97

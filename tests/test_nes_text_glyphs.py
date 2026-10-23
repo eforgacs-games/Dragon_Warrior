@@ -11,8 +11,8 @@ from pygame import Rect, Surface, font
 from src.color import BLACK, RED, WHITE
 from src.config.test_config import test_config
 from src.directories import Directories
-from src.text import NESFont, draw_text, set_font_by_ascii_chars
-from src.window_renderer import NES_GLYPHS, NES_TILE, glyph_tile, tile_surface
+from src.text import NESFont, draw_text, in_nes_font, set_font_by_ascii_chars
+from src.window_renderer import ELISION_APOSTROPHE, NES_GLYPHS, NES_TILE, glyph_tile, tile_surface
 from tests.nes_screen_diff import count_differing_pixels
 from tests.helpers import new_game
 
@@ -21,6 +21,16 @@ COLORS = (WHITE, RED)
 FIVE = "jkpt'"
 # A dialog line with all five
 SAMPLE = "Erdrick's pet jumped."
+# NES TB8E6: the apostrophe of 'tis ($54) and the one of Erdrick's ($53) are different tiles
+TIS_SAMPLE = f"{ELISION_APOSTROPHE}Tis said that Erdrick's sword could cleave steel."
+
+
+def lit_columns(pattern) -> set[int]:
+    return {column for row in pattern for column, pixel in enumerate(row) if pixel == '#'}
+
+
+def lit_rows(pattern) -> set[int]:
+    return {row for row, line in enumerate(pattern) if '#' in line}
 
 
 def text_config(scale: int = 2) -> dict:
@@ -77,6 +87,23 @@ class TestNESFont(GlyphAssertions):
         nes_font = NESFont(self.directories.DRAGON_QUEST_FONT_PATH, 16)
         self.assertEqual(0, count_differing_pixels(nes_font.render("'", True, WHITE, BLACK),
                                                    nes_font.render('’', True, WHITE, BLACK)))
+
+    def test_the_tis_apostrophe_is_the_fonts_straight_quote(self):
+        # NES $54: the raised comma at the right of the tile, next to the T; the apostrophe ($53) is at the left
+        nes_font = NESFont(self.directories.DRAGON_QUEST_FONT_PATH, 16)
+        plain_font = font.Font(self.directories.DRAGON_QUEST_FONT_PATH, 16)
+        self.assertEqual(0, count_differing_pixels(nes_font.render(ELISION_APOSTROPHE, True, WHITE, BLACK),
+                                                   plain_font.render("'", True, WHITE, BLACK)))
+        tis, apostrophe, comma = glyph_tile(ELISION_APOSTROPHE), glyph_tile("'"), glyph_tile(',')
+        self.assertTrue(lit_columns(tis) and min(lit_columns(tis)) >= NES_TILE // 2)
+        self.assertTrue(max(lit_columns(apostrophe)) < NES_TILE // 2)
+        # the comma's shape, at the top of the tile like the apostrophe
+        self.assertEqual(lit_rows(tis), lit_rows(apostrophe))
+        self.assertTrue(min(lit_rows(comma)) >= NES_TILE // 2)
+
+    def test_tis_is_nes_font_text(self):
+        self.assertTrue(in_nes_font(TIS_SAMPLE))
+        self.assertIsInstance(set_font_by_ascii_chars([TIS_SAMPLE], 16, None, self.directories), NESFont)
 
 
 class TestDrawText(GlyphAssertions):
@@ -160,6 +187,13 @@ class TestDialogBox(GlyphAssertions):
             self.cmd_menu.show_line_in_dialog_box(SAMPLE, add_quotes=False, skip_text=True, hide_arrow=True,
                                                   disable_sound=True)
         self.assert_dialog_row(SAMPLE, WHITE)
+
+    def test_tis_in_the_dialog_box(self):
+        with patch.object(self.cmd_menu, 'window_drop_down_effect'), \
+                patch.object(self.cmd_menu, 'window_drop_up_effect'):
+            self.cmd_menu.show_line_in_dialog_box(TIS_SAMPLE[:22], add_quotes=False, skip_text=True, hide_arrow=True,
+                                                  disable_sound=True)
+        self.assert_dialog_row(TIS_SAMPLE[:22], WHITE)
 
 
 class TestKorean(TestCase):

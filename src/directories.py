@@ -30,8 +30,11 @@ class Directories:
         self.princess_gwaelins_love_music = join(sfx_dir, "22 Dragon Quest 1 - Princess Gwaelin's Love.mp3")
         self.victory_music = join(sfx_dir, '25 Dragon Quest 1 - Victory.mp3')  # MSC_VICTORY
         self.level_up_music = join(sfx_dir, '26 Dragon Quest 1 - Improvement.mp3')  # MSC_LEVEL_UP
-        self.stairs_up_sfx = join(sfx_dir, '29 Dragon Quest 1 - Stairs Up.mp3')
-        self.stairs_down_sfx = join(sfx_dir, '30 Dragon Quest 1 - Stairs Down.mp3')
+        # NES SFX_STAIRS (Bank01 StairsSFX, $839E: 4 bursts 12 frames apart), the one sound for every map change with
+        # sound (MapChngWithSound), up or down. The soundtrack's "Stairs Down" is a different sound: RunSFX ($83C2, 6
+        # bursts 3 frames apart), SFX_RUN, played when the hero (PlyrRun) or an enemy (LEFCB) runs away.
+        self.stairs_sfx = join(sfx_dir, '29 Dragon Quest 1 - Stairs Up.mp3')
+        self.run_away_sfx = join(sfx_dir, '30 Dragon Quest 1 - Stairs Down.mp3')
         self.swamp_sfx = join(sfx_dir, '31 Dragon Quest 1 - Swamp.mp3')
         self.menu_button_sfx = join(sfx_dir, '32 Dragon Quest 1 - Menu Button.mp3')
         self.confirmation_sfx = join(sfx_dir, '33 Dragon Quest 1 - Confirmation.mp3')
