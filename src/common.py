@@ -165,7 +165,11 @@ A_BUTTON_KEYS = (K_k, K_RETURN)
 B_BUTTON_KEYS = (K_j, K_ESCAPE)
 START_BUTTON_KEYS = (K_i,)
 SELECT_BUTTON_KEYS = (K_u,)
-D_PAD_KEYS = (K_UP, K_w, K_DOWN, K_s, K_LEFT, K_a, K_RIGHT, K_d)
+UP_KEYS = (K_UP, K_w)
+DOWN_KEYS = (K_DOWN, K_s)
+LEFT_KEYS = (K_LEFT, K_a)
+RIGHT_KEYS = (K_RIGHT, K_d)
+D_PAD_KEYS = UP_KEYS + DOWN_KEYS + LEFT_KEYS + RIGHT_KEYS
 # Bank01 TxtCheckInput (DoWait, the dialog's blinking down arrow): JoypadBtns AND #IN_A_OR_B
 A_OR_B_KEYS = A_BUTTON_KEYS + B_BUTTON_KEYS
 # Bank03 WaitForBtnPress (after WaitForBtnRelease, ending a conversation): any joypad button, D-pad, START and SELECT too

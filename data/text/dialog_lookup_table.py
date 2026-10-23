@@ -2,26 +2,28 @@ import random
 from functools import partial
 from typing import Callable
 
-from pygame import display, time, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect
+from pygame import display, time, Rect
 from pygame.event import get, pump
 
 from data.text.dialog import confirmation_prompt
 from src.calculation import Calculation
 from src.color import BLACK, window_color
-from src.common import WHITE, reject_keys, accept_keys, Graphics, set_gettext_language
+from src.common import WHITE, Graphics, set_gettext_language
 from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACEABLE_ITEMS
-from src.cursor import BlinkingCursor
+from src.cursor import IN_A
 from src.direction import Direction
 from src.directories import Directories
 from src.items import INVENTORY_SLOTS, MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS, inventory_list
 from src import maps
 from src.maps import DragonWarriorMap
 from src.maps_functions import get_center_point
+from src.npcs import GWAELIN_RESCUE
 from src.window_renderer import draw_window as generated_window
 from src.windows import BUY_SELL_LAYOUT, WindowLayout, shop_inventory_layout
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_price, \
     inventory_is_full, pay_player, sell_price
+from src.selection import run_selection, stop_at_edges
 from src.sound import Sound
 from src.story_flags import StoryFlags
 from src.text import draw_text
@@ -57,7 +59,6 @@ class DialogLookup:
         self.goodbye_tempt_not_the_fates = _("Goodbye now, {}.\n'Take care and tempt not the Fates.")
 
         where_is_princess_gwaelin = _("Where oh where can I find Princess Gwaelin?")
-        welcome_to_tantegel = _("Welcome to Tantegel Castle.")
         brecconary_inn_cost = 6
         kol_inn_cost = 20
         garinham_inn_cost = 25
@@ -77,12 +78,275 @@ class DialogLookup:
         self.magic_key_prompt = _("Magic keys! They will unlock any door.\n"
                                   "Dost thou wish to purchase one for {} GOLD?")
 
-        self.lookup_table = {
-            # NES ThRmMobTbl and ThRmStatTbl (Bank00)
-            'TantegelThroneRoom': {
-                # Static King Lorik at 3,3 ($6E, DoKingDialog). 'dialog' starts as the opening speech (MainGameEngine,
-                # TextBlock17 entry 2) and CommandMenu.set_king_lorik_dialog switches it as the story goes on.
-                'KING_LORIK': {'dialog': (
+        # What each NPC says, by its NES dialog byte (NPC.dialog in the maps' NPC tables, src/npcs.py). Bytes $00-$15
+        # are the shops and inns, $16-$5D show the TextBlock entry at the byte + $2F (DoVariousDialog2, Bank03), so $16
+        # is TextBlock5 entry 5 and so on, and the rest have their own code (DoDialog). Each comment says who has the
+        # byte. Once the Dragonlord is dead, Ending.npc_dialog takes over (NES LD134).
+        npc_dialog: dict[int | str, dict] = {
+            # WeaponsDialog: the weapons and armor shops
+            0x00: {'dialog': (partial(self.check_buy_weapons_armor, self.shop_inventories.kol_weapons_store_inventory),)},
+            0x01: {'dialog': (
+                partial(self.check_buy_weapons_armor, self.shop_inventories.brecconary_weapons_store_inventory),)},
+            0x02: {'dialog': (
+                partial(self.check_buy_weapons_armor, self.shop_inventories.garinham_weapons_store_inventory),)},
+            # Cantlin's shop 1 is the mobile shopkeeper at 22,5, shop 2 the shopkeeper at 27,26 and shop 3 the guard
+            # at 24,12
+            0x03: {'dialog': (
+                partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_north_inventory),)},
+            0x04: {'dialog': (
+                partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory),)},
+            0x05: {'dialog': (
+                partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_3_inventory),)},
+            0x06: {'dialog': (
+                partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory),)},
+            # ToolsDialog: the item shops (Cantlin's shop 1 is the male villager at 2,7)
+            0x07: {'dialog': (partial(self.tool_shop, self.shop_inventories.kol_item_store_inventory),)},
+            0x08: {'dialog': (partial(self.tool_shop, self.shop_inventories.brecconary_item_store_inventory),)},
+            0x09: {'dialog': (partial(self.tool_shop, self.shop_inventories.garinham_item_store_inventory),)},
+            0x0A: {'dialog': (partial(self.tool_shop, self.shop_inventories.cantlin_item_store_1_inventory),)},
+            0x0B: {'dialog': (partial(self.tool_shop, self.shop_inventories.cantlin_item_store_2_inventory),)},
+            # KeysDialog: the magic key sellers (KeyCostTbl), Cantlin's and Rimuldar's wizards and Tantegel's shopkeeper
+            0x0C: {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['Cantlin']),)},
+            0x0D: {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['Rimuldar']),)},
+            0x0E: {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['TantegelCourtyard']),)},
+            # FairyDialog: Brecconary's mobile female villager at 24,4 and Cantlin's female villager at 22,13
+            0x0F: {'dialog': (self.fairy_water_shop,)},
+            0x10: {'dialog': (self.fairy_water_shop,)},
+            # InnDialog: the inns (InnCostTbl), in Kol, Brecconary, Garinham, Cantlin and Rimuldar
+            0x11: {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
+            0x12: {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
+            0x13: {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
+            0x14: {'dialog': (partial(self.check_stay_at_inn, cantlin_inn_cost),)},
+            0x15: {'dialog': (partial(self.check_stay_at_inn, rimuldar_inn_cost),)},
+            # Tantegel: the mobile fighter at 25,11 (TextBlock5 entry 5)
+            0x16: {'dialog': _("I am looking for the castle cellar.\nI heard it is not easily found.")},
+            # Tantegel: the mobile guard at 19,2 (TextBlock5 entry 6)
+            0x17: {'dialog': _("Thou must have a key to open a door.")},
+            # Tantegel: the male villager at 2,8 (TextBlock5 entry 7)
+            0x18: {'dialog': _("To become strong enough to face future trials thou must first battle many foes.")},
+            # Tantegel: the guard at 8,6 (TextBlock5 entry 8)
+            0x19: {'dialog': (
+                _("King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."),)},
+            # Tantegel: the female villager at 27,5 (TextBlock5 entry 9, then TextBlock12 entry 0)
+            0x1A: {'dialog': (_("When the sun and rain meet, a Rainbow Bridge shall appear."), _("It's a legend."))},
+            # Tantegel: the mobile guard at 2,12 (TextBlock5 entry 10)
+            0x1B: {'dialog': _("Never does a brave person steal.")},
+            # Tantegel: the mobile male villager at 11,11 (TextBlock5 entry 11)
+            0x1C: {'dialog': _("There was a time when Brecconary was a paradise.\nThen the Dragonlord's minions came.")},
+            # Tantegel: the mobile wizard at 17,11 (TextBlock5 entry 12)
+            0x1D: {'dialog': (_("Let us wish the warrior well!"), _("May the light be thy strength!"))},
+            # Tantegel: the guard at 26,15 (TextBlock5 entry 13)
+            0x1E: {'dialog': _("If thy Hit Points are high enough, by all means, enter.")},
+            # Tantegel: the mobile shopkeeper at 4,21 (TextBlock5 entry 14)
+            0x1F: {'dialog': _("We are merchants who have traveled much in this land. Many of our colleagues have been "
+                               "killed by servants of the Dragonlord.")},
+            # Tantegel: the mobile shopkeeper at 6,25 (TextBlock5 entry 15)
+            0x20: {'dialog': _("Rumor has it that entire towns have been destroyed by the Dragonlord's servants.")},
+            # Tantegel: the gate guards at 9,27 and 12,27 (TextBlock6 entry 0)
+            0x21: {'dialog': _("Welcome to Tantegel Castle.")},
+            # Tantegel: the mobile fighter at 24,21 (TextBlock6 entry 1; the ROM has no space in "Garinham,look")
+            0x22: {'dialog': _("In Garinham,look for the grave of Garin.\n"
+                               "Thou must push on a wall of darkness there.")},
+            # The throne room: the guard at 3,6. NES RegularDialog: until F_LEFT_THROOM is set it's TextBlock17 entry
+            # 1, then DoVariousDialog1 shows the byte + $2F, TextBlock6 entry 2
+            0x23: {'dialog': (partial(
+                self.dialog_once_left_throne_room,
+                (_("East of this castle is a town where armor, weapons, and many other items may be purchased."),
+                 _("Return to the Inn for a rest if thou art wounded in battle, {}.").format(self.player.name),
+                 _("Sleep heals all.")),
+                (_("A word of advice."), _("Save thy money for more expensive armor."))),)},
+            # The throne room: the guard at 5,6 (ThrnRmDialog2): TextBlock17 entry 0, then TextBlock6 entry 3
+            0x24: {'dialog': (partial(
+                self.dialog_once_left_throne_room,
+                (_("If thou hast collected all the Treasure Chests, a key will be found."),
+                 _("Once used, the key will disappear, but the door will be open and thou may pass through.")),
+                (_("Listen to what people say.\nIt can be of great help."),)),)},
+            # Brecconary: the fighter at 28,1 (TextBlock6 entry 4)
+            0x25: {'dialog': (_("Beware the bridges!"), _("Danger grows when thou crosses."))},
+            # Brecconary: the male villager at 20,10 (TextBlock6 entry 5)
+            0x26: {'dialog': _("There is a town where magic keys can be purchased.")},
+            # Brecconary: the mobile fighter at 3,26 (TextBlock6 entry 6)
+            0x27: {'dialog': _("Some say that Garin's grave is home to a Silver Harp.")},
+            # Brecconary: the male villager at 20,23 (TextBlock6 entry 7)
+            0x28: {'dialog': _("Enter where thou can.")},
+            # Brecconary: the female villager at 4,7 (TextBlock6 entry 8). The space before the line break isn't in the
+            # NES text, but it doesn't show and the translations are keyed on it.
+            0x29: {'dialog': _("Welcome! \n"
+                               "Enter the shop and speak to its keeper across the desk.")},
+            # Brecconary: the male villager at 1,13 (TextBlock6 entry 9)
+            0x2A: {'dialog': _("Thou art most welcome in Brecconary.")},
+            # Brecconary: the mobile wizard at 9,4 (TextBlock6 entry 10)
+            0x2B: {'dialog': _("Watch thy Hit Points when in the Poisonous Marsh.")},
+            # Brecconary: the mobile male villager at 10,14 (TextBlock6 entry 11)
+            0x2C: {'dialog': _("Go north to the seashore, then follow the coastline west until thou hath "
+                               "reached Garinham.")},
+            # Brecconary: the mobile female villager at 15,24 (TextBlock6 entry 12)
+            0x2D: {'dialog': _("No,I am not Princess Gwaelin.")},
+            # Brecconary: the mobile shopkeeper at 15,9, and Kol: the mobile female villager at 11,14 (TextBlock6
+            # entry 13)
+            0x2E: {'dialog': _("Please,save us from the minions of the Dragonlord.")},
+            # Brecconary: the mobile guard at 26,15 (TextBlock6 entry 14)
+            0x2F: {'dialog': _("See King Lorik when thy experience levels are raised.")},
+            # Brecconary: the mobile fighter at 19,18, Kol: the mobile male villager at 5,12, and Rimuldar: the mobile
+            # male villager at 11,8 (TextBlock6 entry 15)
+            0x30: {'dialog': _("Art thou the descendant of Erdrick?\n"
+                               "Hast thou any proof?")},
+            # Brecconary: the mobile male villager at 25,22 (TextBlock7 entry 0)
+            0x31: {'dialog': (_("Within sight of Tantegel Castle to the south is Charlock,"),
+                              _("The fortress of the Dragonlord."))},
+            # Kol: the female villager at 12,1 (TextBlock7 entry 1)
+            0x32: {'dialog': _("This bath cures rheumatism.")},
+            # Kol: the fighter at 20,13 (TextBlock7 entry 2)
+            0x33: {'dialog': _("East of Hauksness there is a town, 'tis said, where one may purchase "
+                               "weapons of extraordinary quality.")},
+            # Kol: the guard at 1,23 (TextBlock7 entry 3)
+            0x34: {'dialog': _("Rimuldar is the place to buy keys.")},
+            # Kol: the mobile fighter at 6,7 (TextBlock7 entry 4)
+            0x35: {'dialog': _("Hast thou seen Nester?\nI think he may need help.")},
+            # Kol: the mobile male villager at 14,13 (TextBlock7 entry 5)
+            0x36: {'dialog': (_("Dreadful is the South Island."),
+                              _("Great strength and skill and wit only will bring thee back from that place."))},
+            # Kol: the mobile guard at 12,10 (TextBlock7 entry 6)
+            0x37: {'dialog': _("Golem is afraid of the music of the flute, so 'tis said.")},
+            # Kol: the mobile wizard at 20,19 (TextBlock7 entry 7)
+            0x38: {'dialog': _("This is the village of Kol.")},
+            # Kol: the mobile wizard at 20,8 (TextBlock7 entry 8)
+            0x39: {'dialog': _("In legends it is said that fairies know how to put Golem to sleep.")},
+            # Garinham: the wizard at 14,1 (TextBlock7 entry 9)
+            0x3A: {'dialog': _("The harp attracts enemies.\nStay away from the grave in Garinham.")},
+            # Garinham: the guards at 3,5 and 5,5 (TextBlock7 entry 10)
+            0x3B: {'dialog': _("I'm too busy.\nAsk the other guard.")},
+            # Garinham: the shopkeeper at 9,6 (TextBlock7 entry 11)
+            0x3C: {'dialog': _("I suggest making a map if thy path leads into the darkness.")},
+            # Garinham: the mobile male villager at 11,7 (TextBlock7 entry 12)
+            0x3D: {'dialog': _("Once there was a town called Hauksness far to the south,but I do not know if "
+                               "it still exists.")},
+            # Garinham: the mobile female villager at 12,4 (TextBlock7 entry 13)
+            0x3E: {'dialog': _("I hate people!\nGo! Leave me!")},
+            # Garinham: the mobile wizard at 12,8 (TextBlock7 entry 14)
+            0x3F: {'dialog': _("They say that Erdrick's armor was hidden long ago.")},
+            # Garinham: the wizard at 2,17 (TextBlock7 entry 15)
+            0x40: {'dialog': _("Many believe that Princess Gwaelin is hidden away in a cave.")},
+            # Garinham: the mobile fighter at 7,17 (TextBlock8 entry 0)
+            0x41: {'dialog': _("I have heard of one named Nester.\nDost thou know such a one?")},
+            # Garinham: the mobile wizard at 2,10 (TextBlock8 entry 1)
+            0x42: {'dialog': _("Garin, a wandering minstrel of legendary fame, is said to have built this town.")},
+            # Garinham: the mobile female villager at 12,12 (TextBlock8 entry 2)
+            0x43: {'dialog': _("Welcome to Garinham.\nMay thy stay be a peaceful one.")},
+            # Garinham: the mobile male villager at 18,12 (TextBlock8 entry 3)
+            0x44: {'dialog': _("It is said that the Princess was kidnapped and taken eastward.")},
+            # Cantlin: the shopkeeper at 2,12 (TextBlock8 entry 4)
+            0x45: {'dialog': _("Come buy my radishes! They are fresh and cheap.\nBuy thy radishes today!")},
+            # Cantlin: the wizard at 15,16 (TextBlock8 entry 5)
+            0x46: {'dialog': _("To learn how proof may be obtained that thy ancestor was the great Erdrick, "
+                               "see a man in this very town.")},
+            # Cantlin: the wizard at 22,22 (TextBlock8 entry 6)
+            0x47: {'dialog': _("'Tis said that Erdrick's sword could cleave steel.")},
+            # Cantlin: the mobile guard at 15,6 (TextBlock8 entry 7)
+            0x48: {'dialog': _("Welcome to Cantlin, the castle town.")},
+            # Cantlin: the mobile female villager at 4,14 (TextBlock8 entry 8)
+            0x49: {'dialog': _("What shall I get for thy dinner?")},
+            # Cantlin: the mobile female villager at 9,16 (TextBlock8 entry 9)
+            0x4A: {'dialog': _("I know nothing.")},
+            # Cantlin: the mobile male villager at 20,15 (TextBlock8 entry 10)
+            0x4B: {'dialog': _("I'm Nester.\nHey, where am I? No, don't tell me!")},
+            # Cantlin: the mobile shopkeeper at 25,17 (TextBlock8 entry 11)
+            0x4C: {'dialog': _("Grandfather used to say that his friend, Wynn, had buried something of "
+                               "great value at the foot of a tree behind his shop.")},
+            # Cantlin: the mobile guard at 22,9 (TextBlock8 entry 12)
+            0x4D: {'dialog': (_("It is said that many have held Erdrick's armor."),
+                              _("The last to have it was a fellow named Wynn."))},
+            # Cantlin: the mobile shopkeeper at 3,26 (TextBlock8 entry 13)
+            0x4E: {'dialog': _("My Grandfather Wynn once had a shop on the east side of Hauksness.")},
+            # Rimuldar: the shopkeeper at 2,4 (TextBlock8 entry 14)
+            0x4F: {'dialog': _("Welcome!")},
+            # Rimuldar: the female villager at 15,8 (TextBlock8 entry 15)
+            0x50: {'dialog': _("Who art thou?\nLeave at once or I will call my friends.")},
+            # Rimuldar: the male villager at 27,0 (TextBlock9 entry 0)
+            0x51: {'dialog': _("I am Orwick, and I am waiting for my girl friend.")},
+            # Rimuldar: the mobile fighter at 23,11 (TextBlock9 entry 1)
+            0x52: {'dialog': _("The scales of the Dragonlord are as hard as steel.")},
+            # Rimuldar: the wizard at 6,13 (TextBlock9 entry 2)
+            0x53: {'dialog': (_("Over the western part of this island Erdrick created a rainbow."),
+                              _("'Tis also said that he entered the darkness from a hidden entrance in "
+                                "the room of the Dragonlord."))},
+            # Rimuldar: the mobile guard at 8,16 (TextBlock9 entry 3)
+            0x54: {'dialog': _("Thou shalt find the Stones of Sunlight in Tantegel Castle,\nif thou has not "
+                               "found them yet.")},
+            # Rimuldar: the mobile male villager at 14,11 (TextBlock9 entry 4)
+            0x55: {'dialog': _("Welcome to the town of Rimuldar.")},
+            # Rimuldar: the mobile female villager at 22,14 (TextBlock9 entry 5)
+            0x56: {'dialog': _("No, I have no tomatoes.\nI have no tomatoes today.")},
+            # Rimuldar: the mobile fighter at 24,19 (TextBlock9 entry 6)
+            0x57: {'dialog': _("You are {}?\nIt has been long since last we met.").format(self.player.name)},
+            # Rimuldar: the wizard at 20,23 (TextBlock9 entry 7)
+            0x58: {'dialog': _("Good day,I am Howard. Four steps south of the bath in Kol thou shalt "
+                               "find a magic item.")},
+            # Rimuldar: the mobile female villager at 6,21 (TextBlock9 entry 8)
+            0x59: {'dialog': _("Before long the enemy will arrive.")},
+            # Rimuldar: the mobile male villager at 6,23 (TextBlock9 entry 9)
+            0x5A: {'dialog': _("Heed my warning! Travel not to the south for there the monsters are fierce "
+                               "and terrible.")},
+            # Rimuldar: the mobile fighter at 5,25 (TextBlock9 entry 10)
+            0x5B: {'dialog': _("In this world is there any sword that can pierce the scales of the "
+                               "Dragonlord?")},
+            # Rimuldar: the female villager at 0,26 (TextBlock9 entry 11)
+            0x5C: {'dialog': _("Orwick is late again. I'm starving.")},
+            # Brecconary: the mobile fighter at 12,19 (TextBlock9 entry 12)
+            0x5D: {'dialog': (_("Many have been the warriors who have perished on this quest."),
+                              _("But for thee I wish success, {}.").format(self.player.name))},
+            # Kol: the mobile wizard at 2,12 (CheckYesNoDialog): TextBlock9 entry 13, then a yes/no window
+            0x5E: {'dialog': (self.kol_hast_thou_found_the_flute,)},
+            # Kol: the mobile shopkeeper at 7,19 (CheckYesNoDialog): TextBlock9 entry 14, then a yes/no window
+            0x5F: {'dialog': (self.kol_hast_thou_been_to_the_southern_island,)},
+            # Cantlin: the mobile guard at 5,6 (CheckYesNoDialog): TextBlock9 entry 15, then a yes/no window
+            0x60: {'dialog': (_("'Tis said that the Dragonlord hath claws that can cleave iron and fiery "
+                                "breath that can melt stone."),
+                              self.cantlin_still_wish_to_go_on)},
+            # Rimuldar: the wizard at 3,23 (CheckYesNoDialog): TextBlock10 entry 0, then a yes/no window
+            0x61: {'dialog': (_("This is a magic place."), self.rimuldar_hast_thou_found_a_magic_temple)},
+            # Tantegel: the mobile female villager at 8,13 (ChkPrncsDialog1)
+            0x62: {'dialog': (partial(self.dialog_once_gwaelin_rescued, where_is_princess_gwaelin,
+                                      _("Thank you for saving the Princess.")),)},
+            # Tantegel: the guard at 15,20 (ChkPrncsDialog2)
+            0x63: {'dialog': (partial(self.dialog_once_gwaelin_rescued, where_is_princess_gwaelin,
+                                      _("Oh, my dearest Gwaelin!’\n`I hate thee, {}.").format(self.player.name)),)},
+            # Brecconary: the guard at 10,26 (ChkPrncsDialog3): TextBlock10 entry 14, or entry 15 once F_DONE_GWAELIN
+            # is set
+            0x64: {'dialog': (partial(self.dialog_once_gwaelin_rescued,
+                                      (_("Tell King Lorik that the search for his daughter hath failed."),
+                                       _("I am almost gone....")),
+                                      _("Who touches me?’\n`I see nothing, nor can I hear.")),)},
+            # The throne room: the mobile guard at 7,5 (ChkPrncsDialog4)
+            0x65: {'dialog': (self.tantegel_throne_room_roaming_guard,)},
+            # Tantegel's cellar: the wizard at 4,6 (WzdGuardDialog)
+            0x66: {'dialog': (self.tantegel_cellar_stones_of_sunlight_guardian,)},
+            # Brecconary: the wizard at 24,10 (ChkCursedDialog)
+            0x67: {'dialog': (self.remove_curse,)},
+            # Kol: the wizard at 1,1 (ChkWeaponDialog): TextBlock11 entry 9, or entry 10 with Erdrick's Sword
+            0x68: {'dialog': (self.kol_erdricks_sword_wizard,)},
+            # Rimuldar: the mobile fighter at 16,26 (ChkRingDialog)
+            0x69: {'dialog': (self.rimuldar_fighters_ring_dialog,)},
+            # Tantegel: the wizard at 20,26 (ChkMagicDialog): TextBlock11 entry 13, BWScreenFlash, MP to the max
+            0x6A: {'dialog': (
+                _("{}'s coming was foretold by legend. May the light shine upon this brave warrior.").format(
+                    self.player.name),
+                self.flash_and_restore_mp)},
+            # Cantlin: the mobile wizard at 14,28 (ErdTknDialog): TextBlock5 entry 12, then TextBlock11 entries 14 and
+            # 15. He only gives the hint; the token itself is found on the overworld.
+            0x6B: {'dialog': (_("Let us wish the warrior well!"),
+                              _("May the light be thy strength!"),
+                              _("Thou may go and search."),
+                              _("From Tantegel Castle travel 70 leagues to the south and 40 to the "
+                                "east."))},
+            # The Staff of Rain shrine's wizard (RainStaffDialog)
+            0x6C: {'dialog': (self.staff_of_rain_guardian,)},
+            # The Rainbow Drop shrine's wizard (RnbwDrpDialog)
+            0x6D: {'dialog': (self.magic_temple_rainbow_drop_exchange,)},
+            # The throne room: King Lorik (DoKingDialog). 'dialog' starts as the opening speech (MainGameEngine,
+            # TextBlock17 entry 2) and CommandMenu.set_king_lorik_dialog switches it as the story goes on.
+            0x6E: {
+                'dialog': (
                     _("Descendant of Erdrick, listen now to my words."),
                     _("It is told that in ages past Erdrick fought demons with a Ball of Light."),
                     _("Then came the Dragonlord who stole the precious globe and hid it in the darkness."),
@@ -92,407 +356,83 @@ class DialogLookup:
                     _("Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."),
                     _("Then speak with the guards, for they have much knowledge that may aid thee."),
                     _("May the light shine upon thee, {}.").format(self.player.name)
-                ), 'post_initial_dialog': _(
+                ),
+                'post_initial_dialog': _(
                     "When thou art finished preparing for thy departure, please see me.\nI shall wait."),
-                    # NES DoKingDialog, KingDialog2/LeftThRoom: TextBlock13 entry 0, then TextBlock1 entry 2 at
-                    # level 30 (LVL_30) or TextBlock13 entry 1 (GetExpRemaining) below it, then SaveDialog
-                    'returned_dialog': (
-                        _("I am greatly pleased that thou hast returned, {}.").format(self.player.name),
-                        thou_art_strong_enough if at_max_level else before_reaching_thy_next_level_of_experience.format(
-                            self.player.points_to_next_level),
-                        self.prompt_for_save,
-                        self.prompt_to_continue_quest,
-                    ),
-                    # NES MainGameEngine (LCA23): TextBlock18 entry 7, then at level 30 TextBlock1 entry 2 and
-                    # straight on to EndKingDialog; below it TextBlock13 entry 1 and TextBlock18 entry 8
-                    'load_from_save_dialog': (self._("I am glad thou hast returned.\n"
-                                                     "All our hopes are riding on thee."),
-                                              *((thou_art_strong_enough,) if at_max_level else (
-                                                  before_reaching_thy_next_level_of_experience.format(
-                                                      self.player.points_to_next_level),
-                                                  self._("See me again when thy level has increased."))),
-                                              self.goodbye_tempt_not_the_fates.format(self.player.name)
-                                              ),
-                    # NES KingDeathDialog (LEDF2): TextBlock17 entry 13, TextBlock18 entry 2 unless the hero is
-                    # level 30 (NowGoText skips it), then entry 3
-                    'post_death_dialog': (_("Death should not have taken thee, {}.").format(self.player.name),
-                                          _("I will give thee another chance."),
-                                          *(() if at_max_level else (
-                                              _("To reach the next level, thy Experience Points must increase by "
-                                                "{}.").format(self.player.points_to_next_level),)),
-                                          _("Now, go, {}!").format(self.player.name)),
-                    # NES DoKingDialog (Bank03), when F_GOT_GWAELIN is set: TextBlock12 entry 9, AddInvItem
-                    # (Gwaelin's Love), entries 11 and 12, then Gwaelin is put on the throne and it goes straight
-                    # to SaveDialog. No experience or gold is given.
-                    'carrying_princess_dialog': (
-                        _("Forever shall I be grateful for the gift of my daughter returned to her home, {}.\n"
-                          "Accept my thanks.").format(self.player.name),
-                        _("Now, Gwaelin, come to my side."),
-                        self.princess_whispers,
-                        _("Please accept my love, {}.").format(self.player.name),
-                        self.receive_gwaelins_love,
-                        self.even_when_we_two_are_parted,
-                        _("Farewell, {}.").format(self.player.name),
-                        self.put_princess_on_throne,
-                        self.prompt_for_save,
-                        self.prompt_to_continue_quest,
-                    ),
-                },
-
-                # Mobile guard at NES 7,5 (ThRmMobTbl, dialog byte $65, ChkPrncsDialog4)
-                'GUARD': {'dialog': (
-                    self.tantegel_throne_room_roaming_guard,
-                )},
-                # Static Princess Gwaelin at 6,3 ($6F, PrincessDialog). Only on the map once she's been returned
-                # (NES ChkGwaelinNPC)
-                'PRINCESS_GWAELIN': {'dialog': (self.princess_gwaelin_throne_room,)},
-                # Static guard at 3,6 ($23). NES RegularDialog: until F_LEFT_THROOM is set it's TextBlock17 entry 1,
-                # then DoVariousDialog1 shows the byte + $2F, TextBlock6 entry 2
-                'GUARD_2': {'dialog': (partial(
-                    self.dialog_once_left_throne_room,
-                    (_("East of this castle is a town where armor, weapons, and many other items may be purchased."),
-                     _("Return to the Inn for a rest if thou art wounded in battle, {}.").format(self.player.name),
-                     _("Sleep heals all.")),
-                    (_("A word of advice."), _("Save thy money for more expensive armor."))),)},
-                # Static guard at 5,6 ($24, ThrnRmDialog2): TextBlock17 entry 0, then TextBlock6 entry 3
-                'GUARD_3': {'dialog': (partial(
-                    self.dialog_once_left_throne_room,
-                    (_("If thou hast collected all the Treasure Chests, a key will be found."),
-                     _("Once used, the key will disappear, but the door will be open and thou may pass through.")),
-                    (_("Listen to what people say.\nIt can be of great help."),)),)},
+                # NES DoKingDialog, KingDialog2/LeftThRoom: TextBlock13 entry 0, then TextBlock1 entry 2 at
+                # level 30 (LVL_30) or TextBlock13 entry 1 (GetExpRemaining) below it, then SaveDialog
+                'returned_dialog': (
+                    _("I am greatly pleased that thou hast returned, {}.").format(self.player.name),
+                    thou_art_strong_enough if at_max_level else before_reaching_thy_next_level_of_experience.format(
+                        self.player.points_to_next_level),
+                    self.prompt_for_save,
+                    self.prompt_to_continue_quest,
+                ),
+                # NES MainGameEngine (LCA23): TextBlock18 entry 7, then at level 30 TextBlock1 entry 2 and
+                # straight on to EndKingDialog; below it TextBlock13 entry 1 and TextBlock18 entry 8
+                'load_from_save_dialog': (self._("I am glad thou hast returned.\n"
+                                                 "All our hopes are riding on thee."),
+                                          *((thou_art_strong_enough,) if at_max_level else (
+                                              before_reaching_thy_next_level_of_experience.format(
+                                                  self.player.points_to_next_level),
+                                              self._("See me again when thy level has increased."))),
+                                          self.goodbye_tempt_not_the_fates.format(self.player.name)
+                                          ),
+                # NES KingDeathDialog (LEDF2): TextBlock17 entry 13, TextBlock18 entry 2 unless the hero is
+                # level 30 (NowGoText skips it), then entry 3
+                'post_death_dialog': (_("Death should not have taken thee, {}.").format(self.player.name),
+                                      _("I will give thee another chance."),
+                                      *(() if at_max_level else (
+                                          _("To reach the next level, thy Experience Points must increase by "
+                                            "{}.").format(self.player.points_to_next_level),)),
+                                      _("Now, go, {}!").format(self.player.name)),
+                # NES DoKingDialog (Bank03), when F_GOT_GWAELIN is set: TextBlock12 entry 9, AddInvItem
+                # (Gwaelin's Love), entries 11 and 12, then Gwaelin is put on the throne and it goes straight
+                # to SaveDialog. No experience or gold is given.
+                'carrying_princess_dialog': (
+                    _("Forever shall I be grateful for the gift of my daughter returned to her home, {}.\n"
+                      "Accept my thanks.").format(self.player.name),
+                    _("Now, Gwaelin, come to my side."),
+                    self.princess_whispers,
+                    _("Please accept my love, {}.").format(self.player.name),
+                    self.receive_gwaelins_love,
+                    self.even_when_we_two_are_parted,
+                    _("Farewell, {}.").format(self.player.name),
+                    self.put_princess_on_throne,
+                    self.prompt_for_save,
+                    self.prompt_to_continue_quest,
+                ),
             },
-            # NES TantMobTbl and TantStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte + $2F
-            # (DoVariousDialog2, Bank03), so $16 is TextBlock5 entry 5 and so on. Once the Dragonlord is dead, every
-            # NPC here says "Come now, King Lorik awaits." instead (NES LD134, Ending.npc_dialog).
-            'TantegelCourtyard': {
-                # Static shopkeeper at 24,1 ($0E, KeysDialog: KeyCostTbl entry 2)
-                'MERCHANT': {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['TantegelCourtyard']),)},
-                # Mobile shopkeeper at 4,21 ($1F, TextBlock5 entry 14)
-                'MERCHANT_2': {'dialog': _(
-                    "We are merchants who have traveled much in this land. Many of our colleagues have been "
-                    "killed by servants of the Dragonlord.")},
-                # Mobile shopkeeper at 6,25 ($20, TextBlock5 entry 15)
-                'MERCHANT_3': {
-                    'dialog': _("Rumor has it that entire towns have been destroyed by the Dragonlord's servants.")},
-                # Static male villager at 2,8 ($18, TextBlock5 entry 7)
-                'MAN': {'dialog': _("To become strong enough to face future trials thou must first battle many foes.")},
-                # Mobile male villager at 11,11 ($1C, TextBlock5 entry 11)
-                'MAN_2': {'dialog': _(
-                    "There was a time when Brecconary was a paradise.\nThen the Dragonlord's minions came.")},
-                # Static female villager at 27,5 ($1A, TextBlock5 entry 9, then TextBlock12 entry 0)
-                'WOMAN': {
-                    'dialog': (_("When the sun and rain meet, a Rainbow Bridge shall appear."), _("It's a legend."))},
-                # Mobile female villager at 8,13 ($62, ChkPrncsDialog1)
-                'WOMAN_2': {'dialog': (partial(self.dialog_once_gwaelin_rescued, where_is_princess_gwaelin,
-                                               _("Thank you for saving the Princess.")),)},
-                # Static guard at 8,6 ($19, TextBlock5 entry 8)
-                'GUARD': {'dialog': (
-                    _("King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."),)},
-                # Static guard at 8,8 ($71, GuardDialog1: TextBlock1 entry 3)
-                'GUARD_2': {'dialog': _("If thou art planning to take a rest, first see King Lorik.")},
-                # Mobile guard at 2,12 ($1B, TextBlock5 entry 10)
-                'GUARD_3': {'dialog': _("Never does a brave person steal.")},
-                # Static guard at 15,20 ($63, ChkPrncsDialog2)
-                'GUARD_4': {'dialog': (partial(self.dialog_once_gwaelin_rescued, where_is_princess_gwaelin,
-                                               _("Oh, my dearest Gwaelin!’\n`I hate thee, {}.").format(
-                                                   self.player.name)),)},
-                # Static gate guards at 9,27 and 12,27 ($21, TextBlock6 entry 0)
-                'GUARD_5': {'dialog': welcome_to_tantegel},
-                'GUARD_6': {'dialog': welcome_to_tantegel},
-                # Mobile guard at 19,2 ($17, TextBlock5 entry 6)
-                'GUARD_7': {'dialog': _("Thou must have a key to open a door.")},
-                # Static guard at 26,15 ($1E, TextBlock5 entry 13)
-                'GUARD_8': {'dialog': _("If thy Hit Points are high enough, by all means, enter.")},
-                # Mobile guard at 18,18 ($72, GuardDialog2: TextBlock10 entry 1)
-                'GUARD_9': {'dialog': _("When entering the cave, take with thee a torch.")},
-                # Static wizard at 20,26 ($6A, ChkMagicDialog): TextBlock11 entry 13, BWScreenFlash, MP to the max
-                'WISE_MAN': {'dialog': (
-                    _("{}'s coming was foretold by legend. May the light shine upon this brave warrior.").format(
-                        self.player.name),
-                    self.flash_and_restore_mp)},
-                # Mobile wizard at 17,11 ($1D, TextBlock5 entry 12)
-                'WISE_MAN_2': {'dialog': (_("Let us wish the warrior well!"), _("May the light be thy strength!"))},
-                # Mobile fighter at 24,21 ($22, TextBlock6 entry 1; the ROM has no space in "Garinham,look")
-                'SOLDIER': {'dialog': _("In Garinham,look for the grave of Garin.\n"
-                                        "Thou must push on a wall of darkness there.")},
-                # Mobile fighter at 25,11 ($16, TextBlock5 entry 5)
-                'SOLDIER_2': {'dialog': _("I am looking for the castle cellar.\nI heard it is not easily found.")},
-            },
-            # NES TaSLStatTbl: the static wizard at 4,6 ($66, WzdGuardDialog). TaSLMobTbl is empty.
-            'TantegelCellar': {'WISE_MAN': {'dialog': (self.tantegel_cellar_stones_of_sunlight_guardian,)}},
-            # NES BrecMobTbl and BrecStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte
-            # + $2F (DoVariousDialog2, Bank03), so $25 is TextBlock6 entry 4 and so on.
-            'Brecconary': {
-                # Static fighter at 28,1 ($25, TextBlock6 entry 4)
-                'SOLDIER': {'dialog': (_("Beware the bridges!"), _("Danger grows when thou crosses."))},
-                # Static shopkeeper at 5,4 ($01, WeaponsDialog: Brecconary weapons and armor shop)
-                'MERCHANT': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.brecconary_weapons_store_inventory),)},
-                # Mobile female villager at 24,4 ($0F, FairyDialog)
-                'WOMAN': {'dialog': (self.fairy_water_shop,)},
-                # Static female villager at 4,7 ($29, TextBlock6 entry 8). The space before the line break isn't in
-                # the NES text, but it doesn't show and the translations are keyed on it.
-                'WOMAN_2': {'dialog': _("Welcome! \n"
-                                        "Enter the shop and speak to its keeper across the desk.")},
-                # Static male villager at 20,10 ($26, TextBlock6 entry 5)
-                'MAN': {'dialog': _("There is a town where magic keys can be purchased.")},
-                # Static wizard at 24,10 ($67, ChkCursedDialog)
-                'WISE_MAN': {'dialog': (self.remove_curse,)},
-                # Static male villager at 1,13 ($2A, TextBlock6 entry 9)
-                'MAN_2': {'dialog': _("Thou art most welcome in Brecconary.")},
-                # Static shopkeeper at 10,21 ($12, InnDialog: InnCostTbl entry 1)
-                'MERCHANT_2': {'dialog': (partial(self.check_stay_at_inn, brecconary_inn_cost),)},
-                # Static male villager at 20,23 ($28, TextBlock6 entry 7)
-                'MAN_3': {'dialog': _("Enter where thou can.")},
-                # Static shopkeeper at 25,25 ($08, ToolsDialog: Brecconary item shop)
-                'MERCHANT_3': {'dialog': (
-                    partial(self.tool_shop, self.shop_inventories.brecconary_item_store_inventory),)},
-                # Mobile fighter at 3,26 ($27, TextBlock6 entry 6)
-                'SOLDIER_2': {'dialog': _("Some say that Garin's grave is home to a Silver Harp.")},
-                # Static guard at 10,26 ($64, ChkPrncsDialog3): TextBlock10 entry 14, or entry 15 once
-                # F_DONE_GWAELIN is set
-                'GUARD': {'dialog': (partial(self.dialog_once_gwaelin_rescued,
-                                             (_("Tell King Lorik that the search for his daughter hath failed."),
-                                              _("I am almost gone....")),
-                                             _("Who touches me?’\n`I see nothing, nor can I hear.")),)},
-                # Mobile wizard at 9,4 ($2B, TextBlock6 entry 10)
-                'WISE_MAN_2': {'dialog': _("Watch thy Hit Points when in the Poisonous Marsh.")},
-                # Mobile shopkeeper at 15,9 ($2E, TextBlock6 entry 13)
-                'MERCHANT_4': {'dialog': _("Please,save us from the minions of the Dragonlord.")},
-                # Mobile male villager at 10,14 ($2C, TextBlock6 entry 11)
-                'MAN_4': {'dialog': _("Go north to the seashore, then follow the coastline west until thou hath "
-                                      "reached Garinham.")},
-                # Mobile guard at 26,15 ($2F, TextBlock6 entry 14)
-                'GUARD_2': {'dialog': _("See King Lorik when thy experience levels are raised.")},
-                # Mobile fighter at 19,18 ($30, TextBlock6 entry 15)
-                'SOLDIER_3': {'dialog': _("Art thou the descendant of Erdrick?\n"
-                                          "Hast thou any proof?")},
-                # Mobile fighter at 12,19 ($5D, TextBlock9 entry 12)
-                'SOLDIER_4': {'dialog': (_("Many have been the warriors who have perished on this quest."),
-                                         _("But for thee I wish success, {}.").format(self.player.name))},
-                # Mobile male villager at 25,22 ($31, TextBlock7 entry 0)
-                'MAN_5': {'dialog': (_("Within sight of Tantegel Castle to the south is Charlock,"),
-                                     _("The fortress of the Dragonlord."))},
-                # Mobile female villager at 15,24 ($2D, TextBlock6 entry 12)
-                'WOMAN_3': {'dialog': _("No,I am not Princess Gwaelin.")},
-            },
-            # NES GarMobTbl and GarStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte
-            # + $2F (DoVariousDialog2, Bank03), so $3A is TextBlock7 entry 9 and $41 is TextBlock8 entry 0.
-            'Garinham': {
-                # Static wizard at 14,1 ($3A, TextBlock7 entry 9)
-                'WISE_MAN': {'dialog': _("The harp attracts enemies.\nStay away from the grave in Garinham.")},
-                # Mobile female villager at 12,4 ($3E, TextBlock7 entry 13)
-                'WOMAN': {'dialog': _("I hate people!\nGo! Leave me!")},
-                # Static guards at 3,5 and 5,5 (both $3B, TextBlock7 entry 10)
-                'GUARD': {'dialog': _("I'm too busy.\nAsk the other guard.")},
-                'GUARD_2': {'dialog': _("I'm too busy.\nAsk the other guard.")},
-                # Static shopkeeper at 9,6 ($3C, TextBlock7 entry 11)
-                'MERCHANT': {'dialog': _("I suggest making a map if thy path leads into the darkness.")},
-                # Mobile male villager at 11,7 ($3D, TextBlock7 entry 12)
-                'MAN': {'dialog': _("Once there was a town called Hauksness far to the south,but I do not know if "
-                                    "it still exists.")},
-                # Mobile wizard at 12,8 ($3F, TextBlock7 entry 14)
-                'WISE_MAN_2': {'dialog': _("They say that Erdrick's armor was hidden long ago.")},
-                # Mobile wizard at 2,10 ($42, TextBlock8 entry 1)
-                'WISE_MAN_3': {
-                    'dialog': _("Garin, a wandering minstrel of legendary fame, is said to have built this town.")},
-                # Static shopkeeper at 5,11 ($09, ToolsDialog: Garinham item shop)
-                'MERCHANT_2': {'dialog': (
-                    partial(self.tool_shop, self.shop_inventories.garinham_item_store_inventory),)},
-                # Mobile female villager at 12,12 ($43, TextBlock8 entry 2)
-                'WOMAN_2': {'dialog': _("Welcome to Garinham.\nMay thy stay be a peaceful one.")},
-                # Mobile male villager at 18,12 ($44, TextBlock8 entry 3)
-                'MAN_2': {'dialog': _("It is said that the Princess was kidnapped and taken eastward.")},
-                # Static shopkeeper at 17,15 ($13, InnDialog: the Garinham inn)
-                'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, garinham_inn_cost),)},
-                # Static wizard at 2,17 ($40, TextBlock7 entry 15)
-                'WISE_MAN_4': {'dialog': _("Many believe that Princess Gwaelin is hidden away in a cave.")},
-                # Mobile fighter at 7,17 ($41, TextBlock8 entry 0)
-                'SOLDIER': {'dialog': _("I have heard of one named Nester.\nDost thou know such a one?")},
-                # Static shopkeeper at 10,18 ($02, WeaponsDialog: Garinham weapons and armor shop)
-                'MERCHANT_4': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.garinham_weapons_store_inventory),)},
-            },
-            # NES KolMobTbl and KolStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte + $2F
-            # (DoVariousDialog2, Bank03), so $2E is TextBlock6 entry 13 and so on.
-            'Kol': {
-                # Static wizard at 1,1 ($68, ChkWeaponDialog): TextBlock11 entry 9, or entry 10 with Erdrick's Sword
-                'WISE_MAN': {'dialog': (self.kol_erdricks_sword_wizard,)},
-                # Static female villager at 12,1 ($32, TextBlock7 entry 1)
-                'WOMAN': {'dialog': _("This bath cures rheumatism.")},
-                # Static shopkeeper at 19,4 ($11, InnDialog: InnCostTbl entry 0)
-                'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, kol_inn_cost),)},
-                # Mobile fighter at 6,7 ($35, TextBlock7 entry 4)
-                'SOLDIER': {'dialog': _("Hast thou seen Nester?\nI think he may need help.")},
-                # Mobile wizard at 20,8 ($39, TextBlock7 entry 8)
-                'WISE_MAN_2': {'dialog': _("In legends it is said that fairies know how to put Golem to sleep.")},
-                # Mobile guard at 12,10 ($37, TextBlock7 entry 6)
-                'GUARD': {'dialog': _("Golem is afraid of the music of the flute, so 'tis said.")},
-                # Mobile wizard at 2,12 ($5E, CheckYesNoDialog): TextBlock9 entry 13, then a yes/no window
-                'WISE_MAN_3': {'dialog': (self.kol_hast_thou_found_the_flute,)},
-                # Mobile male villager at 5,12 ($30, TextBlock6 entry 15)
-                'MAN': {'dialog': _("Art thou the descendant of Erdrick?\nHast thou any proof?")},
-                # Static shopkeeper at 22,12 ($00, WeaponsDialog: Kol weapons and armor shop)
-                'MERCHANT_2': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.kol_weapons_store_inventory),)},
-                # Mobile male villager at 14,13 ($36, TextBlock7 entry 5)
-                'MAN_2': {'dialog': (_("Dreadful is the South Island."),
-                                     _("Great strength and skill and wit only will bring thee back from that place."))},
-                # Static fighter at 20,13 ($33, TextBlock7 entry 2)
-                'SOLDIER_2': {'dialog': _("East of Hauksness there is a town, 'tis said, where one may purchase "
-                                          "weapons of extraordinary quality.")},
-                # Mobile female villager at 11,14 ($2E, TextBlock6 entry 13)
-                'WOMAN_2': {'dialog': _("Please,save us from the minions of the Dragonlord.")},
-                # Mobile shopkeeper at 7,19 ($5F, CheckYesNoDialog): TextBlock9 entry 14, then a yes/no window
-                'MERCHANT_3': {'dialog': (self.kol_hast_thou_been_to_the_southern_island,)},
-                # Mobile wizard at 20,19 ($38, TextBlock7 entry 7)
-                'WISE_MAN_4': {'dialog': _("This is the village of Kol.")},
-                # Static shopkeeper at 14,21 ($07, ToolsDialog: Kol item shop)
-                'MERCHANT_4': {'dialog': (
-                    partial(self.tool_shop, self.shop_inventories.kol_item_store_inventory),)},
-                # Static guard at 1,23 ($34, TextBlock7 entry 3)
-                'GUARD_2': {'dialog': _("Rimuldar is the place to buy keys.")},
-            },
-            'Rimuldar': {
-                # NES RimMobTbl and RimStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte
-                # + $2F (DoVariousDialog2, Bank03), so $51 is TextBlock9 entry 0 and so on.
-                # Static shopkeeper at 23,7 ($06, WeaponsDialog: Rimuldar weapons and armor shop)
-                'MERCHANT_2': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.rimuldar_weapons_store_inventory),)},
-                # Static shopkeeper at 16,18 ($15, InnDialog)
-                'MERCHANT_3': {'dialog': (partial(self.check_stay_at_inn, rimuldar_inn_cost),)},
-                # Static wizard at 4,7 ($0D, KeysDialog)
-                'WISE_MAN': {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['Rimuldar']),)},
-                # Static male villager at 27,0 ($51, TextBlock9 entry 0)
-                'MAN': {'dialog': _("I am Orwick, and I am waiting for my girl friend.")},
-                # Static shopkeeper at 2,4 ($4F, TextBlock8 entry 14)
-                'MERCHANT': {'dialog': _("Welcome!")},
-                # Mobile male villager at 11,8 ($30, TextBlock6 entry 15)
-                'MAN_2': {'dialog': _("Art thou the descendant of Erdrick?\nHast thou any proof?")},
-                # Static female villager at 15,8 ($50, TextBlock8 entry 15)
-                'WOMAN': {'dialog': _("Who art thou?\nLeave at once or I will call my friends.")},
-                # Mobile male villager at 14,11 ($55, TextBlock9 entry 4)
-                'MAN_3': {'dialog': _("Welcome to the town of Rimuldar.")},
-                # Mobile fighter at 23,11 ($52, TextBlock9 entry 1)
-                'SOLDIER': {'dialog': _("The scales of the Dragonlord are as hard as steel.")},
-                # Static wizard at 6,13 ($53, TextBlock9 entry 2)
-                'WISE_MAN_2': {'dialog': (_("Over the western part of this island Erdrick created a rainbow."),
-                                          _("'Tis also said that he entered the darkness from a hidden entrance in "
-                                            "the room of the Dragonlord."))},
-                # Mobile female villager at 22,14 ($56, TextBlock9 entry 5)
-                'WOMAN_2': {'dialog': _("No, I have no tomatoes.\nI have no tomatoes today.")},
-                # Mobile guard at 8,16 ($54, TextBlock9 entry 3)
-                'GUARD': {'dialog': _("Thou shalt find the Stones of Sunlight in Tantegel Castle,\nif thou has not "
-                                      "found them yet.")},
-                # Mobile fighter at 24,19 ($57, TextBlock9 entry 6)
-                'SOLDIER_2': {'dialog': _("You are {}?\nIt has been long since last we met.").format(
-                    self.player.name)},
-                # Mobile female villager at 6,21 ($59, TextBlock9 entry 8)
-                'WOMAN_3': {'dialog': _("Before long the enemy will arrive.")},
-                # Static wizard at 3,23 ($61, CheckYesNoDialog): TextBlock10 entry 0, then a yes/no window
-                'WISE_MAN_3': {'dialog': (_("This is a magic place."), self.rimuldar_hast_thou_found_a_magic_temple)},
-                # Mobile male villager at 6,23 ($5A, TextBlock9 entry 9)
-                'MAN_4': {'dialog': _("Heed my warning! Travel not to the south for there the monsters are fierce "
-                                      "and terrible.")},
-                # Static wizard at 20,23 ($58, TextBlock9 entry 7)
-                'WISE_MAN_4': {'dialog': _("Good day,I am Howard. Four steps south of the bath in Kol thou shalt "
-                                           "find a magic item.")},
-                # Mobile fighter at 5,25 ($5B, TextBlock9 entry 10)
-                'SOLDIER_3': {'dialog': _("In this world is there any sword that can pierce the scales of the "
-                                          "Dragonlord?")},
-                # Static female villager at 0,26 ($5C, TextBlock9 entry 11)
-                'WOMAN_4': {'dialog': _("Orwick is late again. I'm starving.")},
-                # Mobile fighter at 16,26 ($69, ChkRingDialog)
-                'SOLDIER_4': {'dialog': (self.rimuldar_fighters_ring_dialog,)},
-            },
-            # NES CantMobTbl and CantStatTbl (Bank00). Dialog bytes $16-$5D show the TextBlock entry at the byte
-            # + $2F (DoVariousDialog2, Bank03), so $45 is TextBlock8 entry 4 and so on.
-            'Cantlin': {
-                # Static shopkeeper at 8,3 (dialog byte $14, InnDialog)
-                'MERCHANT': {'dialog': (partial(self.check_stay_at_inn, cantlin_inn_cost),)},
-                # Mobile shopkeeper at 22,5 ($03, WeaponsDialog: Cantlin weapons and armor shop 1)
-                'MERCHANT_2': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_north_inventory),)},
-                # Mobile guard at 5,6 ($60, CheckYesNoDialog): TextBlock9 entry 15, then a yes/no window
-                'GUARD': {'dialog': (_("'Tis said that the Dragonlord hath claws that can cleave iron and fiery "
-                                       "breath that can melt stone."),
-                                     self.cantlin_still_wish_to_go_on)},
-                # Mobile guard at 15,6 ($48, TextBlock8 entry 7)
-                'GUARD_2': {'dialog': _("Welcome to Cantlin, the castle town.")},
-                # Static wizard at 27,6 ($0C, KeysDialog)
-                'WISE_MAN': {'dialog': (partial(self.check_buy_magic_keys, KEY_COSTS['Cantlin']),)},
-                # Static male villager at 2,7 ($0A, ToolsDialog: Cantlin item shop 1)
-                'MAN': {'dialog': (partial(self.tool_shop, self.shop_inventories.cantlin_item_store_1_inventory),)},
-                # Mobile guard at 22,9 ($4D, TextBlock8 entry 12)
-                'GUARD_3': {'dialog': (_("It is said that many have held Erdrick's armor."),
-                                       _("The last to have it was a fellow named Wynn."))},
-                # Static shopkeeper at 2,12 ($45, TextBlock8 entry 4)
-                'MERCHANT_3': {
-                    'dialog': _("Come buy my radishes! They are fresh and cheap.\nBuy thy radishes today!")},
-                # Static shopkeeper at 7,12 ($0B, ToolsDialog: Cantlin item shop 2)
-                'MERCHANT_4': {'dialog': (
-                    partial(self.tool_shop, self.shop_inventories.cantlin_item_store_2_inventory),)},
-                # Static guard at 24,12 ($05, WeaponsDialog: Cantlin weapons and armor shop 3)
-                'GUARD_4': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_3_inventory),)},
-                # Static female villager at 22,13 ($10, FairyDialog)
-                'WOMAN': {'dialog': (self.fairy_water_shop,)},
-                # Mobile female villager at 4,14 ($49, TextBlock8 entry 8)
-                'WOMAN_2': {'dialog': _("What shall I get for thy dinner?")},
-                # Mobile male villager at 20,15 ($4B, TextBlock8 entry 10)
-                'MAN_2': {'dialog': _("I'm Nester.\nHey, where am I? No, don't tell me!")},
-                # Mobile female villager at 9,16 ($4A, TextBlock8 entry 9)
-                'WOMAN_3': {'dialog': _("I know nothing.")},
-                # Static wizard at 15,16 ($46, TextBlock8 entry 5)
-                'WISE_MAN_2': {
-                    'dialog': _("To learn how proof may be obtained that thy ancestor was the great Erdrick, "
-                                "see a man in this very town.")},
-                # Mobile shopkeeper at 25,17 ($4C, TextBlock8 entry 11)
-                'MERCHANT_5': {'dialog': _("Grandfather used to say that his friend, Wynn, had buried something of "
-                                           "great value at the foot of a tree behind his shop.")},
-                # Static wizard at 22,22 ($47, TextBlock8 entry 6)
-                'WISE_MAN_3': {'dialog': _("'Tis said that Erdrick's sword could cleave steel.")},
-                # Mobile shopkeeper at 3,26 ($4E, TextBlock8 entry 13)
-                'MERCHANT_6': {'dialog': _("My Grandfather Wynn once had a shop on the east side of Hauksness.")},
-                # Static shopkeeper at 27,26 ($04, WeaponsDialog: Cantlin weapons and armor shop 2)
-                'MERCHANT_7': {'dialog': (
-                    partial(self.check_buy_weapons_armor, self.shop_inventories.cantlin_weapons_store_south_inventory),)},
-                # Mobile wizard at 14,28 ($6B, ErdTknDialog): TextBlock5 entry 12, then TextBlock11 entries 14
-                # and 15. He only gives the hint; the token itself is found on the overworld.
-                'WISE_MAN_4': {'dialog': (_("Let us wish the warrior well!"),
-                                          _("May the light be thy strength!"),
-                                          _("Thou may go and search."),
-                                          _("From Tantegel Castle travel 70 leagues to the south and 40 to the "
-                                            "east."))},
-            },
-            # NES DoTalkResults / DoGwaelinRescue (Bank03): TextBlock12 entry 5, then PrincessRescueLoop (TextBlock13
-            # entry 5 and a yes/no window, "But thou must." (TextBlock12 entry 6) until the answer is yes)
-            'SwampCave': {
-                'PRINCESS_GWAELIN': {'dialog': (_("Thou art brave indeed to rescue me, {}.").format(self.player.name),
-                                                _("I am Gwaelin, daughter of Lorik."),
-                                                self.take_to_castle_confirmation_prompt
-                                                )}},
-
-            # NES RainStatTbl wizard at 4,4, dialog byte $6C (RainStaffDialog)
-            'StaffOfRainCave': {'WISE_MAN': {'dialog': (self.staff_of_rain_guardian,)}},
-            # NES RnbwStatTbl wizard at 4,5, dialog byte $6D (RnbwDrpDialog)
-            'MagicTemple': {'WISE_MAN': {'dialog': (self.magic_temple_rainbow_drop_exchange,)}},
-            # NES DLBFStatTbl Dragonlord at 16,24, dialog byte $70. DoDrgnLrdDialog (Bank03): TextBlock13 entries 7
-            # and 8 around TextBlock11 entry 4, then the yes/no window.
-            'CharlockB8': {'DRAGONLORD': {'dialog': (
+            # The throne room: Princess Gwaelin (PrincessDialog), only there once she's been returned (ChkGwaelinNPC)
+            0x6F: {'dialog': (self.princess_gwaelin_throne_room,)},
+            # Charlock: the Dragonlord. DoDrgnLrdDialog (Bank03): TextBlock13 entries 7 and 8 around TextBlock11 entry
+            # 4, then the yes/no window.
+            0x70: {'dialog': (
                 _("Welcome, {}.\nI am the Dragonlord--King of Kings.").format(self.player.name),
                 _("I have been waiting long for one such as thee."),
                 _("I give thee now a chance to share this world and to rule half of it if thou will now stand "
                   "beside me."),
                 self.dragonlord_offer_prompt,
-            )}},
+            )},
+            # Tantegel: the guard at 8,8 (GuardDialog1: TextBlock1 entry 3)
+            0x71: {'dialog': _("If thou art planning to take a rest, first see King Lorik.")},
+            # Tantegel: the mobile guard at 18,18 (GuardDialog2: TextBlock10 entry 1)
+            0x72: {'dialog': _("When entering the cave, take with thee a torch.")},
+            # Gwaelin in the Swamp Cave. NES DoTalkResults / DoGwaelinRescue (Bank03): TextBlock12 entry 5, then
+            # PrincessRescueLoop (TextBlock13 entry 5 and a yes/no window, "But thou must." (TextBlock12 entry 6) until
+            # the answer is yes)
+            GWAELIN_RESCUE: {'dialog': (_("Thou art brave indeed to rescue me, {}.").format(self.player.name),
+                                        _("I am Gwaelin, daughter of Lorik."),
+                                        self.take_to_castle_confirmation_prompt)},
         }
-
-        for map_dict in self.lookup_table.values():
-            assert isinstance(map_dict, dict)
-            for character_identifier, character_dict in map_dict.items():
-                assert isinstance(character_dict, dict)
-                character_dict['dialog_character'] = character_identifier
+        # Map name -> NPC identifier -> what it says, for every NPC in the maps' NPC tables. Each NPC gets its own copy
+        # of its dialog byte's entry (set_king_lorik_dialog changes King Lorik's 'dialog').
+        self.lookup_table: dict[str, dict[str, dict]] = {}
+        for map_name, map_class in maps.map_lookup.items():
+            for npc in map_class.npc_table:  # type: ignore[attr-defined]
+                if npc.dialog in npc_dialog:
+                    self.lookup_table.setdefault(map_name, {})[npc.name] = {**npc_dialog[npc.dialog],
+                                                                            'dialog_character': npc.name}
 
     def take_to_castle_confirmation_prompt(self):
         return confirmation_prompt(
@@ -655,7 +595,7 @@ class DialogLookup:
         current_map = game.current_map
         if current_map.identifier == 'TantegelThroneRoom' and 'PRINCESS_GWAELIN' not in current_map.characters:
             row, column = GWAELIN_THRONE_ROOM_COORDINATES
-            current_map.npc_coordinates[GWAELIN_THRONE_ROOM_COORDINATES] = 'PRINCESS_GWAELIN'
+            current_map.include_npc('PRINCESS_GWAELIN')
             current_map.center_pt = get_center_point(column, row, tile_size=self.config['TILE_SIZE'])
             princess = current_map.character_key['PRINCESS_GWAELIN']
             current_map.map_npc('PRINCESS_GWAELIN', Direction.DOWN.value, princess['underlying_tile'],
@@ -986,41 +926,23 @@ class DialogLookup:
         x, y, width, height = window
         self.command_menu.window_drop_down_effect(x, y, width, height)
         window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
-        current_index = initial_index
-        # The NES cursor (src/cursor.py): visible when the window opens (WndInitSelect)
-        cursor = BlinkingCursor()
 
-        def draw(cursor_visible: bool) -> None:
+        def draw(index: int, cursor_visible: bool) -> None:
             draw_window()
             # The cursor goes in tile column 1, between the left border and the entry (cursor home X = 1)
-            self.command_menu.draw_window_cursor(x, y, 1, first_tile_row + 2 * current_index, cursor_visible)
+            self.command_menu.draw_window_cursor(x, y, 1, first_tile_row + 2 * index, cursor_visible)
             if not self.config['NO_BLIT']:
                 display.update(window_rect)
 
-        while True:
-            draw(cursor.visible())
-            for current_event in get():
-                quit_if_requested(current_event)
-                if current_event.type == KEYDOWN:
-                    if current_event.key in (K_DOWN, K_s) and current_index < number_of_entries - 1:
-                        current_index += 1
-                        cursor.restart()  # WndUpdateCrsrPos
-                    elif current_event.key in (K_UP, K_w) and current_index > 0:
-                        current_index -= 1
-                        cursor.restart()
-                    elif current_event.key in reject_keys:
-                        # WndBPressed: the arrow is drawn once more and stays on
-                        draw(True)
-                        # NES WindowSequence (Bank01): a selection window is removed once it's answered or cancelled
-                        self.command_menu.remove_window(window)
-                        return None
-                    elif current_event.key in accept_keys:
-                        # WndAPressed: the chosen entry's arrow is drawn once more and stays on
-                        draw(True)
-                        self.sound.play_sound(self.directories.menu_button_sfx)
-                        self.command_menu.remove_window(window)
-                        return current_index
-            pump()
+        # The NES cursor (src/cursor.py), visible when the window opens (WndInitSelect), stops at the first and last
+        # entries. A chooses, with the menu sound; B cancels, silently. Either way the arrow is drawn once more and
+        # stays on (WndAPressed, WndBPressed), and the window is removed once it's answered or cancelled (NES
+        # WindowSequence, Bank01).
+        answer = run_selection(draw, initial_index, move=stop_at_edges(number_of_entries),
+                               sound=lambda: self.sound.play_sound(self.directories.menu_button_sfx),
+                               sound_buttons=(IN_A,))
+        self.command_menu.remove_window(window)
+        return answer.entry if answer.accepted else None
 
     def draw_window_background(self, window: Window) -> None:
         """A blank window with a border, stretched to its size (Graphics.create_window border)."""

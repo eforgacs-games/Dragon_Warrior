@@ -42,7 +42,7 @@ To build locally: `uv sync --group build`, then `uv run pyinstaller dragon_warri
 
 # REQUIREMENTS
 
-[Python 3.10 to 3.13](https://www.python.org/) (pygame doesn't support 3.14 yet), [PyGame](https://www.pygame.org/news)
+[Python 3.13](https://www.python.org/) (pygame doesn't support 3.14 yet), [PyGame](https://www.pygame.org/news)
 
 Dependency versions are pinned in `uv.lock`. With [uv](https://docs.astral.sh/uv/), `uv sync` installs them, plus the dev tools
 (pytest, mypy, ruff), into `.venv`. Without uv, `pip install -r requirements.txt` installs the same game dependencies.

@@ -1,11 +1,14 @@
-from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_y, K_n, event
-from pygame.event import get
+from pygame import display, K_y, K_n, event
 
-from src.common import accept_keys, reject_keys
-from src.cursor import BlinkingCursor
-from src.waiting import quit_if_requested, wait
+from src.cursor import IN_A, IN_B
+from src.selection import NO, YES, Answer, run_selection, toggle
+from src.waiting import wait
 from src.translated_window import draw_translated_window
 from src.windows import YES_NO_LAYOUT, YES_NO_WINDOW
+
+# Matched by key, not by the typed character, so Caps Lock doesn't matter: Y answers YES and N answers NO, wherever
+# the cursor is
+YES_NO_HOTKEYS = {K_y: Answer(IN_A, YES), K_n: Answer(IN_B, NO)}
 
 
 def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_function, config, color,
@@ -23,60 +26,30 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         wait(300, config)
         sound.play_sound(directories.confirmation_sfx)
 
-    def handle_keydown_event(current_event, blinking_yes):
-        nonlocal blinking
-        if current_event.key in (K_DOWN, K_UP, K_w, K_s):
-            cursor.restart()  # WndUpdateCrsrPos
-            return not blinking_yes
-        # Matched by key, not by the typed character, so Caps Lock doesn't matter. A (or Y) answers with the entry
-        # under the cursor or YES; B, Escape included, is NO (WndBPressed), as in CommandMenu.prompt_yes_no.
-        elif (blinking_yes and current_event.key in accept_keys) or current_event.key == K_y:
-            finalize_choice(True, yes_path_function)
-            blinking = False
-        elif (not blinking_yes and current_event.key in accept_keys) or current_event.key in (K_n, *reject_keys):
-            finalize_choice(False, no_path_function)
-            blinking = False
-        return blinking_yes
-
-    def finalize_choice(yes_chosen, path_function):
-        # WndAPressed: the chosen entry's arrow is drawn once more and stays on
-        command_menu.draw_yes_no_window(yes_chosen, True)
-        sound.play_sound(directories.menu_button_sfx)
-        event.pump()
-        # NES WindowSequence (Bank01): the answered YES/NO window is removed (RemoveWindow) before the answer is acted on
-        command_menu.remove_window(YES_NO_WINDOW)
-        path_function()
-
-    def handle_events(blinking_yes):
-        for current_event in get():
-            quit_if_requested(current_event)
-            if current_event.type == KEYDOWN:
-                blinking_yes = handle_keydown_event(current_event, blinking_yes)
-                if not blinking:
-                    # A choice was made: drop the rest of this batch so extra presses don't choose again (#97)
-                    break
-        event.pump()
-        return blinking_yes
-
     # Initialization
     directories = command_menu.directories
     sound = command_menu.sound
 
     display_prompt()
 
-    blinking = True
-    blinking_yes = True
-    cursor = BlinkingCursor()  # WndInitSelect
-
-    while blinking:
-        if skip_text:
-            sound.play_sound(directories.menu_button_sfx)
-            command_menu.remove_window(YES_NO_WINDOW)
+    if skip_text:
+        sound.play_sound(directories.menu_button_sfx)
+        command_menu.remove_window(YES_NO_WINDOW)
+        yes_path_function()
+    else:
+        # Up and down both switch entries. A answers with the entry under the cursor; B, Escape included, is NO
+        # (WndBPressed), as in CommandMenu.prompt_yes_no. The answer's arrow is drawn once more and stays on, and
+        # once a choice is made the rest of the keys pressed are dropped, so extra presses don't choose again (#97).
+        answer = run_selection(lambda index, visible: command_menu.draw_yes_no_window(index == YES, visible), YES,
+                               move=toggle, hotkeys=YES_NO_HOTKEYS, b_index=NO,
+                               sound=lambda: sound.play_sound(directories.menu_button_sfx))
+        event.pump()
+        # NES WindowSequence (Bank01): the answered YES/NO window is removed (RemoveWindow) before the answer is acted on
+        command_menu.remove_window(YES_NO_WINDOW)
+        if answer.accepted and answer.entry == YES:
             yes_path_function()
-            blinking = False
         else:
-            command_menu.draw_yes_no_window(blinking_yes, cursor.visible())
-            blinking_yes = handle_events(blinking_yes)
+            no_path_function()
 
     if finally_function is not None:
         finally_function()
