@@ -951,7 +951,8 @@ class TestHeroAttack(unittest.TestCase):
     def test_one_point_of_damage_says_point(self):
         # NES TextBlock15 entry 6: "Hit" + PNTS, which is " Point" when the amount is 1 (Bank01 DoPNTS)
         self.battle.calculate_attack_damage.return_value = 1
-        with patch('src.battle_controller.random.random', return_value=0.5):
+        # a dodge roll the Slime's 1/64 dodge doesn't reach (SetEnDmg1 uses a 0-63 roll, not random.random)
+        with patch('src.battle_controller.random.randint', return_value=1):
             self.controller.hero_attack(self.battle)
         self.game.cmd_menu.show_line_in_dialog_box.assert_called_with(
             "The Slime's Hit Point have been reduced by 1.\n", add_quotes=False, disable_sound=True, hide_arrow=True,

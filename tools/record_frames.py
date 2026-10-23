@@ -34,7 +34,7 @@ from tools.scripted_input import SceneOver, ScriptedInput, parse_script  # noqa:
 
 
 def make_config(args) -> dict:
-    config = {**prod_config, 'MUSIC_ENABLED': False, 'SOUND_ENABLED': False}
+    config = {**prod_config, 'MUSIC_ENABLED': False, 'SOUND_ENABLED': False, 'SETTINGS_PATH': None}
     if args.title:
         # The title screen lists the save slots: use an empty folder, not the real ones in src/saves
         config.update(SPLASH_SCREEN_ENABLED=True, SAVE_DIR=tempfile.mkdtemp(prefix='dragon_warrior_record_'))

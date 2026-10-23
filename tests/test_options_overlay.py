@@ -40,7 +40,8 @@ def new_game(**overrides):
     # A copy of test_config, so the settings these tests change don't leak into other tests
     return helpers.new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
                              'TEXT_SPEED': 'Fast', 'DIALOG_STYLE': CLASSIC, 'NPCS_MAKE_WAY': True,
-                             'FADE_STYLE': FADE_STYLE_NES, 'AUTO_STAIRS': True, 'AUTO_GRIND_STOP': 'RedHP', **overrides})
+                             'FADE_STYLE': FADE_STYLE_NES, 'AUTO_STAIRS': True, 'AUTO_GRIND_STOP': 'RedHP',
+                             'LANGUAGE': 'English', **overrides})
 
 
 DEFAULTS = ('Fast', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP')  # new_game's settings, in own_settings' order
@@ -175,18 +176,21 @@ class TestRows(OverlayTestCase):
                           ("NPCS MAKE WAY", 'NPCS_MAKE_WAY', ("ON", "OFF (NES)")),
                           ("FADE STYLE", 'FADE_STYLE', ("NES", "SMOOTH")),
                           ("STAIRS", 'AUTO_STAIRS', ("STEP ON", "NES")),
-                          ("GRIND STOP", 'AUTO_GRIND_STOP', ("RED HP", "HALF HP", "3/4 HP"))],
+                          ("GRIND STOP", 'AUTO_GRIND_STOP', ("RED HP", "HALF HP", "3/4 HP")),
+                          ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어"))],
                          [(row.label, row.config_key, row.value_labels) for row in OPTION_ROWS])
 
     def test_window_shows_the_current_values(self):
         texts = [text.text for text in options_layout(self.config).texts]
         self.assertEqual(["MESSAGE SPEED", "FAST", "DIALOG STYLE", "CLASSIC (NES)", "NPCS MAKE WAY", "ON",
-                          "FADE STYLE", "NES", "STAIRS", "STEP ON", "GRIND STOP", "RED HP"], texts)
+                          "FADE STYLE", "NES", "STAIRS", "STEP ON", "GRIND STOP", "RED HP", "LANGUAGE", "ENGLISH"],
+                         texts)
         self.config.update(TEXT_SPEED='Slow', DIALOG_STYLE=MODERN, NPCS_MAKE_WAY=False, FADE_STYLE=FADE_STYLE_SMOOTH,
                            AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP')
         texts = [text.text for text in options_layout(self.config).texts]
         self.assertEqual(["MESSAGE SPEED", "SLOW", "DIALOG STYLE", "MODERN", "NPCS MAKE WAY", "OFF (NES)",
-                          "FADE STYLE", "SMOOTH", "STAIRS", "NES", "GRIND STOP", "3/4 HP"], texts)
+                          "FADE STYLE", "SMOOTH", "STAIRS", "NES", "GRIND STOP", "3/4 HP", "LANGUAGE", "ENGLISH"],
+                         texts)
 
     def test_every_text_fits_the_window(self):
         # window_tiles raises ValueError for text outside the window
@@ -244,7 +248,8 @@ class TestRows(OverlayTestCase):
     def test_cursor_stops_at_the_edges(self):
         # up from the first row stays on it; down past the last row stays on the last
         self.run_overlay(K_UP, K_RIGHT, *(K_DOWN,) * (len(OPTION_ROWS) + 1), K_RIGHT, K_u)
-        self.assertEqual(('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'HalfHP'), own_settings(self.config))
+        self.assertEqual(('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP'), own_settings(self.config))
+        self.assertEqual('Korean', self.config['LANGUAGE'])
 
     def test_b_esc_select_and_tab_close_it(self):
         for close in (K_j, K_ESCAPE, K_u, K_TAB):
@@ -274,6 +279,9 @@ class TestRows(OverlayTestCase):
         with patch.object(loaded.map_mgr, 'change_map'):
             loaded.load_game(save)
         self.assertEqual(changed, own_settings(loaded.game_state.config))
+        # The language is the player's, kept in the global settings (src/settings.py), not the adventure's
+        self.assertEqual('Korean', self.config['LANGUAGE'])
+        self.assertEqual('English', loaded.game_state.config['LANGUAGE'])
 
 
 class TestStairsHasNoKey(OverlayTestCase):
