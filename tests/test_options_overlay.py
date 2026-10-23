@@ -1,5 +1,5 @@
 """The options overlay (src/options_overlay.py): SELECT or Tab on the map, this game's own settings changed in play,
-and the STAIRS setting (AUTO_STAIRS) it shares with F2."""
+and the STAIRS setting (AUTO_STAIRS), which has no key of its own."""
 import os
 from unittest import TestCase
 from unittest.mock import patch
@@ -276,26 +276,21 @@ class TestRows(OverlayTestCase):
         self.assertEqual(changed, own_settings(loaded.game_state.config))
 
 
-class TestF2(OverlayTestCase):
+class TestStairsHasNoKey(OverlayTestCase):
 
-    def test_f2_toggles_the_stairs_setting(self):
+    def test_f2_no_longer_toggles_the_stairs_setting(self):
+        """F2 was the STAIRS key; it's kept for the save states now, so STAIRS is only in the overlay."""
         with patch.object(self.game, 'draw_temporary_text') as draw_temporary_text:
             self.game.handle_keypresses(key(K_F2))
-            self.assertFalse(self.game.auto_stairs)
-            self.assertFalse(self.config['AUTO_STAIRS'])
-            texts = [text.text for text in options_layout(self.config).texts]
-            self.assertEqual("NES", texts[texts.index("STAIRS") + 1])
-            self.assertFalse(options_from_config(self.config).auto_stairs)
-            draw_temporary_text.assert_called_with("Stairs: NES (STAIRS command)")
-            self.game.handle_keypresses(key(K_F2))
-            self.assertTrue(self.config['AUTO_STAIRS'])
-            draw_temporary_text.assert_called_with("Stairs: STEP ON")
-
-    def test_the_overlay_and_f2_change_the_same_setting(self):
-        self.run_overlay(*down_to("STAIRS"), K_RIGHT, K_u)
-        with patch.object(self.game, 'draw_temporary_text'):
-            self.game.handle_keypresses(key(K_F2))
         self.assertTrue(self.game.auto_stairs)
+        draw_temporary_text.assert_not_called()
+
+    def test_the_overlay_changes_the_stairs_setting(self):
+        self.run_overlay(*down_to("STAIRS"), K_RIGHT, K_u)
+        self.assertFalse(self.game.auto_stairs)
+        self.assertFalse(options_from_config(self.config).auto_stairs)
+        texts = [text.text for text in options_layout(self.config).texts]
+        self.assertEqual("NES", texts[texts.index("STAIRS") + 1])
 
 
 class TestStairs(OverlayTestCase):

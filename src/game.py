@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 
-from pygame import FULLSCREEN, K_i, K_k, RESIZABLE, display, event, image, init, K_F1, K_F2, K_F3, K_F4, K_F11, KEYDOWN, \
+from pygame import FULLSCREEN, K_h, K_i, K_k, RESIZABLE, display, event, image, init, K_F4, K_F9, K_F11, KEYDOWN, \
     SCALED, K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
@@ -210,7 +210,7 @@ class Game:
     @property
     def auto_stairs(self) -> bool:
         """The STAIRS option (AUTO_STAIRS, src/options_overlay.py): True takes stairs by stepping onto them (not NES),
-        False only with the STAIRS command, as the NES does (MapManager.handle_warps). F2 toggles it too. It's in the
+        False only with the STAIRS command, as the NES does (MapManager.handle_warps). It's in the
         config, so it is saved with the adventure log like the other options (options_from_config)."""
         return bool(self.game_state.config['AUTO_STAIRS'])
 
@@ -716,7 +716,6 @@ class Game:
         self.handle_enter_key(current_keydown_event)
         self.handle_fps_changes(current_keydown_event)
         self.handle_fullscreen_toggle(current_keydown_event)
-        self.handle_auto_stairs_toggle(current_keydown_event)
         self.handle_auto_battle_toggle(current_keydown_event)
         self.handle_invulnerability_toggle(current_keydown_event)
         if self.debug_tools is not None:
@@ -724,7 +723,8 @@ class Game:
             self.debug_tools.handle_keydown(current_keydown_event)
 
     def handle_help_button(self, keydown_event):
-        if keydown_event.key == K_F1:
+        """H: the controls, one dialog box page per group of keys (data/text/intro_lookup_table.py)."""
+        if keydown_event.key == K_h:
             control_info = ControlInfo(self.config)
             # one page per group of keys, so nothing runs past the bottom of the dialog box
             self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
@@ -849,19 +849,9 @@ class Game:
             # Show feedback to user
             self.draw_temporary_text(mode_text)
 
-    def handle_auto_stairs_toggle(self, keydown_event) -> None:
-        """F2 toggles the STAIRS option (auto_stairs), the same setting as the options overlay's STAIRS row."""
-        if keydown_event.key == K_F2:
-            self.auto_stairs = not self.auto_stairs
-            if self.auto_stairs:
-                mode_text = self._("Stairs: STEP ON")
-            else:
-                mode_text = self._("Stairs: NES (STAIRS command)")
-            self.draw_temporary_text(mode_text)
-
     def handle_auto_battle_toggle(self, keydown_event) -> None:
-        """Toggle auto-battle mode when F3 is pressed."""
-        if keydown_event.key == K_F3:
+        """Toggle auto-battle mode when F4 is pressed."""
+        if keydown_event.key == K_F4:
             self.auto_battle = not self.auto_battle
             if self.auto_battle:
                 mode_text = self._("Auto-battle enabled\n(Repeats: {})").format(self.battle_ctrl.last_battle_action)
@@ -870,8 +860,8 @@ class Game:
             self.draw_temporary_text(mode_text)
 
     def handle_invulnerability_toggle(self, keydown_event) -> None:
-        """Toggle invulnerability mode when F4 is pressed."""
-        if keydown_event.key == K_F4:
+        """Toggle invulnerability mode when F9 is pressed."""
+        if keydown_event.key == K_F9:
             self.invulnerable = not self.invulnerable
             if self.invulnerable:
                 mode_text = self._("Invulnerability enabled")
@@ -880,7 +870,7 @@ class Game:
             self.draw_temporary_text(mode_text)
 
     def draw_temporary_text(self, text: tuple[str] | list[str] | str, add_quotes=False) -> None:
-        """Show a settings message (F2, keys 1 to 5, ...) for a second. It's not part of the game, so it stays up for a
+        """Show a settings message (F4, keys 1 to 5, ...) for a second. It's not part of the game, so it stays up for a
         real second at any game speed: the dialog closes TEMP_TEXT_MS game milliseconds after temp_text_start, so start it
         that much later at higher speeds."""
         temp_text_start = get_ticks() + TEMP_TEXT_MS * (game_speed() - 1)

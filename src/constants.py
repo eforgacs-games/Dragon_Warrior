@@ -9,7 +9,7 @@ AUTO_BATTLE_DELAY_MS = 200
 
 # ── Dialogs ───────────────────────────────────────────────────────────────────
 
-# How long a settings message (F2, the speed keys, ...) stays up: a second (not an NES message)
+# How long a settings message (F4, the speed keys, ...) stays up: a second (not an NES message)
 TEMP_TEXT_MS = 1000
 
 # ── Maps ──────────────────────────────────────────────────────────────────────
