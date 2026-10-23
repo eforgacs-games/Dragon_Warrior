@@ -319,7 +319,7 @@ class TestDrawerEnemyEffects(unittest.TestCase):
         self.drawer.game_state.config['NO_WAIT'] = False
         self.drawer.fade_in_enemy(MagicMock(), 'Dragonlord 2')
         self.assertEqual(mock_fade.call_args.kwargs['repeats'], 4)
-        mock_wait.assert_called_once_with(683, self.drawer.game_state.config)
+        mock_wait.assert_called_once_with(682, self.drawer.game_state.config)  # 41 frames
 
     @patch('src.drawer.wait')
     def test_final_form_fades_the_screen_out_first(self, _wait):

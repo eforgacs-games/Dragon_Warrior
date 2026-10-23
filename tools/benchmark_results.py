@@ -6,6 +6,9 @@ import statistics
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from src.waiting import NES_FPS
+
+
 RESULTS_VERSION = 1
 NOT_AVAILABLE = 'n/a'
 
@@ -69,8 +72,8 @@ class SceneResult:
         return self.status == 'ok'
 
     @property
-    def target_fps(self) -> int:
-        return 60 * self.speed
+    def target_fps(self) -> float:
+        return NES_FPS * self.speed
 
     @property
     def map_fps(self) -> float:
@@ -79,7 +82,7 @@ class SceneResult:
 
     @property
     def shown_fps(self) -> float:
-        """Frames presented per real second, counting at most one per frame of game time (so at most 60 x speed)."""
+        """Frames presented per real second, counting at most one per frame of game time (so at most NES_FPS x speed)."""
         return self.shown_frames / self.wall_seconds if self.wall_seconds else 0.0
 
     @property

@@ -17,7 +17,7 @@ from src.config.test_config import test_config
 from src.direction import Direction
 from src.movement import STEP_SYNC_FRAMES
 from src.npc_schedule import POP_UP_FRAME
-from src.waiting import set_game_speed
+from src.waiting import NES_FPS, set_game_speed
 from src.windows import POPUP_WINDOW
 from tests.test_freeze_movement import FreezeTestCase, keydown
 
@@ -136,13 +136,14 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.assertTrue(drawer.display_hovering_stats)
 
     def test_the_delay_is_counted_in_frames_at_any_game_speed(self):
-        # The speed keys (src/waiting.py's game speed) run the main loop at 60, 120, 240, 480 or 960 frames per second
+        # The speed keys (src/waiting.py's game speed) run the main loop at 60.1, 120.2, 240.4, 480.8 or 961.6
+        # frames per second
         self.addCleanup(set_game_speed, 1)
         for speed in (1, 2, 4, 8, 16):
             with self.subTest(speed=speed):
                 self.setUp()
                 set_game_speed(speed)
-                self.assertEqual(60 * speed, self.game.fps)
+                self.assertEqual(NES_FPS * speed, self.game.fps)
                 self.stand_still(5)
                 self.assertEqual(STEP_SYNC_FRAMES - 5 + 1, self.frames_until_moved((K_LEFT,)))
 
