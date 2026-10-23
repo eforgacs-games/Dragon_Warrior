@@ -30,7 +30,7 @@ can make one with `new_game()` from `tests/helpers.py`.
 Each test has 60 seconds ([pytest-timeout](https://github.com/pytest-dev/pytest-timeout), `timeout` in
 `pyproject.toml`), counting its setup (including `setUpClass`) and teardown. A test that goes over fails with the stack of
 where it was stuck, so a wait loop that never ends fails that one test instead of hanging the whole run. The slowest
-tests take under 10 seconds; one that legitimately needs longer can say so with `@pytest.mark.timeout(N)`. CI lists the
+tests take about 25 seconds on CI's runners and under 10 locally; one that legitimately needs longer can say so with `@pytest.mark.timeout(N)`. CI lists the
 10 slowest tests at the end of its pytest log, and `uv run pytest --durations=10` does the same locally. To debug a test
 without being cut off, pass `--timeout=0`.
 
