@@ -183,3 +183,47 @@ class TestOnePressATurn(unittest.TestCase):
         self.assertEqual(self.lines(self.events), ['Slime chants the spell of SLEEP.', 'Thou art asleep.\n',
                                                    'Thou art still asleep.\n', 'The Slime attacks!\n',
                                                    'Thy Hits decreased by 2.\n'])
+
+
+class TestFieldSpellWaits(TestOnePressATurn):
+    """The same count for a spell cast from the COMMAND window (#429). NES DoSpell: "chanted the spell" (TB4E0) has no
+    WAIT in the field either; the spell's press, if any, is ResumeGamePlay's, after the spell."""
+
+    def cast(self, spell: Spell, mp: int = 10) -> list:
+        self.player.spells = [spell]
+        self.player.current_mp = mp
+        self.game.cmd_menu.current_battle = None
+        with patch('src.menu.bw_screen_flash'):
+            self.game.cmd_menu.display_item_menu('spells')
+        return self.events
+
+    def test_heal_waits_once_after_healing(self):
+        real_recover_health = CommandMenu.recover_health
+
+        def recover_health(menu, *args):
+            self.events.append(('healed', None))
+            real_recover_health(menu, *args)
+        with patch.object(CommandMenu, 'recover_health', autospec=True, side_effect=recover_health):
+            events = self.cast(Spell.HEAL)
+        self.assertEqual(self.buttons(events), ['spell window', False], events)
+        self.assertEqual(self.lines(events), ['Erdrick chanted the spell of HEAL.'])
+        # the press is waited for once the HP is back (DoHeal, then ResumeGamePlay), not after the chant
+        self.assertEqual(events[-2:], [('healed', None), ('button', False)])
+
+    def test_a_spell_that_does_nothing_waits_once(self):
+        # HURT in the field: SpellFizzle's "But nothing happened.", then ResumeGamePlay
+        events = self.cast(Spell.HURT)
+        self.assertEqual(self.buttons(events), ['spell window', False], events)
+        self.assertEqual(self.lines(events), ['Erdrick chanted the spell of HURT.', 'But nothing happened.'])
+
+    def test_radiant_in_a_dungeon_waits_for_nothing(self):
+        # DoSpell's LightIncreaseLoop returns at once (LDA83): no ResumeGamePlay
+        self.game.current_map.is_dark = True
+        events = self.cast(Spell.RADIANT)
+        self.assertEqual(self.buttons(events), ['spell window'], events)
+
+    def test_too_little_mp_waits_once(self):
+        # TB4E2, then ResumeGamePlay (LDA44)
+        events = self.cast(Spell.HEAL, mp=0)
+        self.assertEqual(self.buttons(events), ['spell window', False], events)
+        self.assertEqual(self.lines(events), ['Thy MP is too low.'])

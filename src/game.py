@@ -503,10 +503,9 @@ class Game:
         self.tiles_moved_since_spawn += 1
         self.game_state.tiles_moved_total += 1
         # NES GameEngineLoop: the radiant timer (#216) and CheckRepelTimer are outside CheckForTriggers, so they keep
-        # ticking (and wear off) after the Dragonlord's defeat. CheckRepelTimer (LCA6C) runs at the top of the loop,
-        # after ChkSpecialLoc has rolled this step's fight, so the repel timer ticks once that roll (and any fight) is
-        # done: see tick_repel_timer_after_step
-        self.game_state.tick_radiant_timer()
+        # ticking (and wear off) after the Dragonlord's defeat. Both run at the top of the loop (LCA56, LCA6C), after
+        # ChkSpecialLoc has rolled this step's fight, so they tick once that roll (and any fight) is done: see
+        # tick_repel_timer_after_step
         self.repel_tick_pending = True
         # NES ChkSpecialLoc: a step off the map's edge goes to CheckMapExit instead of CheckForTriggers, so it doesn't
         # heal (MovmtIncHP) or count a Magic Armor step, and gets no damage or fight roll (see handle_battles)
@@ -581,11 +580,13 @@ class Game:
         self.change_map(map_lookup[map_name](self.config), destination_coordinates=coordinates, direction=direction)
 
     def tick_repel_timer_after_step(self):
-        """NES GameEngineLoop -> CheckRepelTimer, once per step, after that step's fight roll (ChkSpecialLoc ->
-        CheckBlockDmg): the step that brings REPEL's 255 down to 1 is still protected, so it lasts 127 steps, and its
-        message comes after that step's roll."""
+        """NES GameEngineLoop (LCA56) -> CheckRepelTimer (LCA6C), once per step, after that step's fight roll
+        (ChkSpecialLoc -> CheckBlockDmg): the radiant timer first, then the repel timer. The step that brings REPEL's
+        255 down to 1 is still protected, so it lasts 127 steps, and its message comes after that step's roll; the
+        light shrinks after the roll too (#429)."""
         if self.repel_tick_pending:
             self.repel_tick_pending = False
+            self.game_state.tick_radiant_timer()
             self.tick_repel_timer()
 
     def tick_repel_timer(self):

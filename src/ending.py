@@ -49,6 +49,15 @@ END_MUSIC_TIMING_EVENTS = (
     (6945, 6963), (7120, 7137),
 )
 
+# The end music recording (directories.ending_music, "16 ... Hero's Fanfare.mp3") leaves out most of the silence the
+# NES's end music starts with: SQ1EndGame's first byte after the tempo is a 48-count rest at volume 0, so the first note
+# (G5) starts at frame 58, while the mp3's first sound is 0.23 s in. Laying every note start of the music over the
+# mp3's onsets (reference/reference_utility_scripts/end_music_frame_rate.py, #391) puts the mp3's start 0.72 to 0.74 s
+# after the NES music's frame 0, the same at every frame rate tried; the first notes give 0.73 s. So the mp3 starts 44
+# frames into the music, and the credits, timed from frame 0, keep in step with it (#429). The orchestral finale is
+# another arrangement and isn't timed to the NES music at all, so it starts at frame 0.
+END_MUSIC_RECORDING_START_FRAME = 44
+
 # NES GwaelinMoveLoop: Gwaelin walks to the king one NES pixel (16 to a block) every 2 frames
 NES_PIXELS_PER_BLOCK = 16
 GWAELIN_FRAMES_PER_PIXEL = 2
@@ -350,8 +359,12 @@ class Ending:
         """NES DoEndCredits (Bank01): the end music starts, and at its first timing event the king's scene fades out
         (LoadCreditsPals' PalFadeOut). Then each screen fades in, stays for some of the music's timing events
         (credit_screen_music_events) and fades out. The last one, THE END, stays up."""
-        self.game.music_player.load_and_play_music(self.game.directories.ending_music, loop=0)
+        # NES InitMusicSFX MSC_END: frame 0 of the end music, which the timing events count from
         music_events = EndMusicTimingEvents(self.config)
+        if not self.config['ORCHESTRA_MUSIC_ENABLED']:
+            self.game.music_player.stop_music()
+            self.wait_frames(END_MUSIC_RECORDING_START_FRAME)  # the NES music is still silent here
+        self.game.music_player.load_and_play_music(self.game.directories.ending_music, loop=0)
         music_events.wait(1)
         screen_fade(fade_out=True, screen=self.game.screen, config=self.config)  # LoadCreditsPals ($AA62)
         for screen_index, credit_screen in enumerate(CREDITS):
