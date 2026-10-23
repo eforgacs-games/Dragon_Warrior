@@ -82,6 +82,12 @@ class TestGame(TestCase):
         self.camera = Camera((self.game.player.rect.y // tile_size, self.game.player.rect.x // tile_size),
                              self.game.current_map, self.screen, tile_size)
 
+    def test_closing_the_window_quits_the_game(self):
+        # It used to call pygame.quit() and carry on, so the next frame raised "video system not initialized"
+        with patch('src.waiting.pygame_quit') as pygame_quit, self.assertRaises(SystemExit):
+            self.game._handle_pygame_events([pygame.event.Event(pygame.QUIT)])
+        pygame_quit.assert_called_once()
+
     def test_get_initial_camera_position(self):
         self.assertEqual((288.0, 256.0), self.camera.pos)
         self.game.current_map.staircases = {
