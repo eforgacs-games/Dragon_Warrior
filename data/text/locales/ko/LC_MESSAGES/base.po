@@ -2229,3 +2229,24 @@ msgstr "1-4: 게임 속도 조절"
 #: data/text/intro_lookup_table.py:30
 msgid "Toggle on/off:"
 msgstr "켜기/끄기:"
+
+#: src/options_screen.py:236
+msgid ""
+"Do You Want To\n"
+"Erase This\n"
+"Character?"
+msgstr ""
+"이 캐릭터를\n"
+"지우시겠습니까?"
+
+#: src/options_screen.py:238
+msgid "LEVEL"
+msgstr "레벨"
+
+#: src/options_screen.py:247
+msgid "YES"
+msgstr "예"
+
+#: src/options_screen.py:247
+msgid "NO"
+msgstr "아니요"

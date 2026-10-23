@@ -29,6 +29,10 @@ def blit_scaled_image(image_path: str, screen, graphics=None, overlay: Callable 
     display.update(scaled_image.get_rect())
 
 
+# What main_menu_selection returns for B when B goes back (WND_ABORT)
+MENU_BACK = -1
+
+
 class GameFunctions:
     def __init__(self, config):
         self.config = config
@@ -39,11 +43,14 @@ class GameFunctions:
 
     def main_menu_selection(self, blink_start: int, screen, unselected_image: str, selected_image: str,
                             other_selected_images: List[str] | None = None, no_blit: bool = False,
-                            overlay: Callable | None = None) -> int:
+                            overlay: Callable | None = None, b_goes_back: bool = False) -> int:
         """A title screen menu (ContChngErsDat, the adventure log lists...), drawn from screenshots: each selected
         image is the window with the NES arrow at that entry, unselected_image the window without one. The arrow
         blinks like every NES window cursor (src/cursor.py), starting visible at blink_start and again whenever it
-        moves, and stays on once an entry is chosen."""
+        moves, and stays on once an entry is chosen.
+
+        B does nothing in the title menu itself (the NES loops on it). With b_goes_back (a log window, where B is
+        WND_ABORT), B returns MENU_BACK instead."""
         # TODO: Merge with open_store_inventory() if possible
         current_item_index = 0
         all_selected_images = [selected_image] + (other_selected_images or [])
@@ -63,6 +70,8 @@ class GameFunctions:
                         return current_item_index
                     elif current_event.key in reject_keys:
                         self.sound.play_sound(self.directories.menu_button_sfx)
+                        if b_goes_back:
+                            return MENU_BACK
                     elif current_event.key in (K_DOWN, K_s) and current_item_index < len(all_selected_images) - 1:
                         current_item_index += 1
                         cursor.restart()  # WndUpdateCrsrPos
