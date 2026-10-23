@@ -194,9 +194,12 @@ labelled, as on the NES and SNES:
 | Back / View / Share / Minus | Select (U): the options |
 | D-pad or left stick | Move (the arrows). The NES has no diagonals: the stick presses the way it is pushed furthest |
 | Right trigger | Next game speed (1x, 2x, 4x, 8x, 16x, then 1x again) |
+| Left shoulder button (LB, L1, L) | Load state 1 (F1) |
+| Right shoulder button (RB, R1, R) | Save state 1 (Shift+F1) |
+| Left trigger, held | Rewind (Backspace held) |
 
-The left and right shoulder buttons and the left trigger are kept for the save states and rewind. On the name entry
-screen a controller button switches to joystick input (the arrows and A pick the letters) without Tab.
+On the name entry screen a controller button switches to joystick input (the arrows and A pick the letters) without
+Tab.
 
 ## Demo video
 
