@@ -16,8 +16,6 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     LANGUAGE       ENGLISH / 한국어          (LANGUAGE: a global setting, src/settings.py)
     SCANLINES      OFF / ON                 (SCANLINES: a display filter, src/display_filters.py; global)
     SCALING        SMOOTH / PIXEL PERFECT   (SCALING: pygame's SCALED, or whole multiples of 256x240 only; global)
-    SCANLINES      OFF / ON                 (SCANLINES: a display filter, src/display_filters.py; global)
-    SCALING        SMOOTH / PIXEL PERFECT   (SCALING: pygame's SCALED, or whole multiples of 256x240 only; global)
 
     GAMEPLAY
     NPCS MAKE WAY  ON / OFF (NES)           (NPCS_MAKE_WAY, MovementController.ask_npc_to_make_way)
