@@ -128,12 +128,16 @@ class VirtualJoypad:
         self.polling = True
         try:
             now = self.now = self.frame()
-            self.check_keydowns(context)
+            self.check_keydowns()
             if not self.connected:
                 return
             self.driver.update(self, context)
             if not self.connected:
                 return
+            if context == MAP_CONTEXT:
+                # a press meant for a window that has closed: the map would take it for the player's
+                self.keep_keydowns(lambda current_event: not is_virtual(current_event) or
+                                   current_event.key in self.held)
             while self.timeline and self.timeline[0][0] <= now:
                 _frame, down, timed_key = self.timeline.pop(0)
                 if down:
@@ -144,14 +148,12 @@ class VirtualJoypad:
         finally:
             self.polling = False
 
-    def check_keydowns(self, context: str) -> None:
-        """Hand the player's presses to the driver, and drop this joypad's own unread presses if the map reads."""
+    def check_keydowns(self) -> None:
+        """Hand the player's presses to the driver, which says which of them stay queued."""
         def keep(current_event: pygame.event.Event) -> bool:
             if not self.connected:  # the driver stopped it over a key earlier in the queue
                 return not is_virtual(current_event)
-            if is_virtual(current_event):
-                return context != MAP_CONTEXT or current_event.key in self.held
-            return self.driver.real_key(current_event)
+            return is_virtual(current_event) or self.driver.real_key(current_event)
         self.keep_keydowns(keep)
 
     @staticmethod
