@@ -11,7 +11,8 @@ windows, the message speed windows) runs ``run_selection``. Once per pass it
   speed (handle_speed_key) and are no button to the window;
 - maps keys to the NES buttons (``SELECTION_KEYS``: A is K and Enter, B is reject_keys, Escape included, and the
   D-pad; START is no button, as WndProcessInput skips it) and handles them: A or B answers (the arrow is drawn one
-  last time and stays on, WndAPressed/WndBPressed), a direction asks ``move`` for the entry it goes to, and only a real move restarts the blink (WndUpdateCrsrPos).
+  last time and stays on, WndAPressed/WndBPressed), a direction asks ``move`` for the entry it goes to, and only a
+  real move restarts the blink (WndUpdateCrsrPos).
 
 What differs between the windows is a parameter: which buttons end the selection, which make the menu sound, which
 keep the arrow on, where the cursor can go (``move``: stop at the edges, or toggle), extra keys that answer at once
