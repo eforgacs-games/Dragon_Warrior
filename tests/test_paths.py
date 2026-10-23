@@ -13,7 +13,7 @@ from unittest.mock import patch
 from src import paths
 from src.config.test_config import test_config
 from src.directories import Directories
-from src.paths import data_path, default_save_dir, is_frozen, project_root, user_data_dir
+from src.paths import data_path, default_save_dir, is_frozen, project_root, user_config_dir, user_data_dir
 from src.smoke_test import check_game_files, check_save_dir, game_file_paths
 
 REPO_ROOT = dirname(dirname(realpath(__file__)))
@@ -142,3 +142,22 @@ class TestSmokeTest(FrozenTestCase):
             a_file = join(parent, 'file')
             open(a_file, 'w').close()
             self.assertEqual(len(check_save_dir(join(a_file, 'saves'))), 1)
+
+
+class TestUserConfigDir(TestCase):
+    """Where the global settings file goes (src/settings.py)."""
+
+    def test_windows_and_macos_share_the_data_dir(self):
+        self.assertEqual(user_config_dir('win32', {'APPDATA': r'C:\Users\me\AppData\Roaming'}),
+                         join(r'C:\Users\me\AppData\Roaming', paths.APP_NAME))
+        self.assertEqual(user_config_dir('darwin', {'XDG_CONFIG_HOME': '/ignored'}),
+                         join(HOME, 'Library', 'Application Support', paths.APP_NAME))
+
+    def test_linux_uses_xdg_config_home(self):
+        self.assertEqual(user_config_dir('linux', {'XDG_CONFIG_HOME': '/config/home'}),
+                         join('/config/home', 'dragon-warrior'))
+
+    def test_linux_defaults_to_dot_config(self):
+        expected = join(HOME, '.config', 'dragon-warrior')
+        self.assertEqual(user_config_dir('linux', {}), expected)
+        self.assertEqual(user_config_dir('linux', {'XDG_CONFIG_HOME': 'relative/path'}), expected)

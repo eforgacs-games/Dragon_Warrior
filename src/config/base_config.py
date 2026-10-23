@@ -1,5 +1,7 @@
 import locale
 
+from src.settings import USER_SETTINGS
+
 SCALE = 2
 LOCALE, ENCODING = locale.getlocale()
 
@@ -54,4 +56,7 @@ base_config = {
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on
     "CHECKPOINT": None,  # e.g. "rainbow_bridge": start from data/checkpoints/<name>.json (also --checkpoint)
     "SAVE_DIR": None,  # None saves to src/saves
+    # The global settings file (zoom, fullscreen, game speed, language; src/settings.py): USER_SETTINGS is the user's
+    # config folder (or $DRAGON_WARRIOR_SETTINGS), a path that file, None keeps no settings file
+    "SETTINGS_PATH": USER_SETTINGS,
 }

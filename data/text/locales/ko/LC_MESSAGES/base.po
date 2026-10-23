@@ -2557,3 +2557,15 @@ msgstr "상태 {}: 읽을 수 없음"
 #: data/text/intro_lookup_table.py
 msgid "Backspace: Rewind"
 msgstr "Backspace: 되감기"
+
+#: src/options_overlay.py
+msgid "LANGUAGE"
+msgstr "언어"
+
+#: src/options_overlay.py
+msgid "ENGLISH"
+msgstr "ENGLISH"
+
+#: src/options_overlay.py
+msgid "한국어"
+msgstr "한국어"
