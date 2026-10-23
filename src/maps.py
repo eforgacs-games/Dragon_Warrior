@@ -278,10 +278,7 @@ class DragonWarriorMap:
         self.destination_coordinates = destination_coordinates
         self.tile_types_in_current_map = self.get_tiles_in_current_map()
         self.impassable_tiles = tuple(self.tile_types_in_current_map & set(all_impassable_tiles))
-        for row in range(len(self.layout)):
-            for column in range(len(self.layout[row])):
-                self.center_pt = get_center_point(column, row, tile_size=tile_size)
-                self.map_floor_tiles(column, row)
+        self.map_all_floor_tiles(tile_size)
         for npc in self.npcs:
             npc_row, npc_col = self.npc_position(npc)
             self.center_pt = get_center_point(npc_col, npc_row, tile_size=tile_size)
@@ -378,7 +375,37 @@ class DragonWarriorMap:
         around (e.g. Brecconary's MAN_3 stands on brick, but also got a GRASS tile)."""
         return self.layout[row][column] < len(self.floor_tile_key)
 
-    # @timeit
+    def map_all_floor_tiles(self, tile_size: int) -> None:
+        """A tile for every floor block of the layout, the same as map_floor_tiles for each block in turn, row by row,
+        but with the tiles of each type made and added to their group at once (#431): Alefgard has 18,358 of them, and
+        the block by block way spent most of load_map looking up each block's type and image and adding its tile on
+        its own."""
+        floor_tile_count = len(self.floor_tile_key)
+        tile_names = self._tile_key_list
+        images: dict[int, surface.Surface] = {}
+        new_tiles: dict[int, list[BaseSprite]] = {}
+        offset = tile_size // 2
+        center_pt = self.center_pt
+        for row, layout_row in enumerate(self.layout):
+            y = row * tile_size + offset
+            for column, tile_value in enumerate(layout_row):
+                center_pt = column * tile_size + offset, y
+                if tile_value >= floor_tile_count:
+                    continue  # a character's block: map_npc and map_player give it its tile
+                image = images.get(tile_value)
+                if image is None:
+                    image = images[tile_value] = self.floor_tile_image(tile_value)
+                tiles = new_tiles.get(tile_value)
+                if tiles is None:
+                    tiles = new_tiles[tile_value] = []
+                tiles.append(BaseSprite(center_pt, image))
+        self.center_pt = center_pt
+        for tile_value, tiles in new_tiles.items():
+            tile_dict = self.floor_tile_key[tile_names[tile_value]]
+            if tile_dict.get('group') is None:
+                tile_dict['group'] = Group()
+            tile_dict['group'].add(tiles)
+
     def map_floor_tiles(self, column, row) -> None:
         for tile_dict in self.floor_tile_key.values():
             if self.layout[row][column] == tile_dict['val']:
