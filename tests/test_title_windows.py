@@ -159,10 +159,10 @@ class TestKoreanTitleWindows(TestCase):
         return [call.args[0] for call in draw_text.call_args_list]
 
     def test_title_menus(self):
-        self.assertEqual(['모험을 계속한다', '메시지 속도를 바꾼다', '새로운 모험을 시작한다', '모험의 서를 복사한다',
+        self.assertEqual(['모험을 계속한다', '표시 속도를 바꾼다', '새로운 모험을 시작한다', '모험의 서를 복사한다',
                           '모험의 서를 지운다'], self.drawn([(FULL_MENU_LAYOUT, 0, True)]))
         self.assertEqual(['새로운 모험을 시작한다'], self.drawn([(NEW_QUEST_LAYOUT, 0, True)]))
-        self.assertEqual(['모험을 계속한다', '메시지 속도를 바꾼다', '모험의 서를 지운다'],
+        self.assertEqual(['모험을 계속한다', '표시 속도를 바꾼다', '모험의 서를 지운다'],
                          self.drawn([(CONTINUE_CHANGE_ERASE_LAYOUT, 0, True)]))
 
     def test_log_windows_keep_the_number_and_the_name(self):
