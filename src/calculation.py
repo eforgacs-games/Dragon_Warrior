@@ -1,6 +1,7 @@
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src.direction import Direction
+from src.npc_movement import step
 
 
 class Calculation:
@@ -27,15 +28,10 @@ class Calculation:
         :param offset: How many tiles offset of the character to check. Defaults to 1 (the next tile).
         :return: str: The next tile that the character will step on (e.g., 'BRICK').
         """
-        if direction_value == Direction.UP.value:
-            return get_tile_id_by_coordinates(character_column, character_row - offset, current_map)
-        elif direction_value == Direction.DOWN.value:
-            return get_tile_id_by_coordinates(character_column, character_row + offset, current_map)
-        elif direction_value == Direction.LEFT.value:
-            return get_tile_id_by_coordinates(character_column - offset, character_row, current_map)
-        elif direction_value == Direction.RIGHT.value:
-            return get_tile_id_by_coordinates(character_column + offset, character_row, current_map)
-        return None
+        if direction_value not in Direction:
+            return None
+        row, column = step(character_row, character_column, direction_value, offset)
+        return get_tile_id_by_coordinates(column, row, current_map)
 
     def convert_to_frames_since_start_time(self, start_time):
         return self.convert_to_frames(get_ticks() - start_time)
