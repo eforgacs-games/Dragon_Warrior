@@ -351,6 +351,45 @@ def enemy_fade_in(screen: Surface, image: Surface, position, config, repeats: in
     display.flip()
 
 
+# NES ChkDrop (LDEC5-LDEFB), the rainbow bridge: BridgeFlashCntr = 4 cycles of PPUDataByte from $21 up to $2C (the
+# CMP #$2D ends a cycle), then $11, the color it was, after which the CMP #$12 ends the animation. Before each write
+# BuildBridgeLoop1 waits 5 frames (WaitForNMI x5), and AddPPUBufEntry puts it in background palette 0, color 3
+# ($3F03), the overworld's $11 blue (OverworldPal) that the water, shore, town, castle and bridge blocks use (block
+# palette 0 in GFXTilesTbl). 49 colors, 245 frames, while MSC_RNBW_BRDG plays.
+RAINBOW_FLASH_CYCLES = 4
+RAINBOW_FLASH_FIRST_COLOR = 0x21
+RAINBOW_FLASH_END_COLOR = 0x2D  # not shown: the cycle ends when PPUDataByte reaches it
+RAINBOW_FLASH_WATER_COLOR = 0x11  # OverworldPal's palette 0 color 3, and the last color written
+RAINBOW_FLASH_FRAMES = 5
+
+
+def rainbow_flash_colors() -> list[int]:
+    """The colors ChkDrop writes to $3F03, in order: $21-$2C four times, then $11."""
+    cycle = list(range(RAINBOW_FLASH_FIRST_COLOR, RAINBOW_FLASH_END_COLOR))
+    return cycle * RAINBOW_FLASH_CYCLES + [RAINBOW_FLASH_WATER_COLOR]
+
+
+def rainbow_bridge_flash(screen: Surface, config) -> None:
+    """NES ChkDrop's rainbow flash: every pixel in the water blue ($11) takes each color of rainbow_flash_colors in
+    turn, RAINBOW_FLASH_FRAMES frames before each, the way rewriting palette entry $3F03 recolors it. The hero's
+    sprite palette (RegSPPal) has no $11, so only the map's blue changes; the last color is $11 itself, so the screen
+    ends as it was."""
+    if config.get('NO_BLIT'):
+        return
+    original = screen.copy()
+    water = mask.from_threshold(original, (*NES_PALETTE[RAINBOW_FLASH_WATER_COLOR], 255), (1, 1, 1, 255))
+    overlays: dict[int, Surface] = {}
+    for color in rainbow_flash_colors():
+        wait_frames(RAINBOW_FLASH_FRAMES, config)
+        screen.blit(original, (0, 0))
+        if color != RAINBOW_FLASH_WATER_COLOR:
+            if color not in overlays:
+                overlays[color] = water.to_surface(setcolor=NES_PALETTE[color], unsetcolor=(0, 0, 0, 0))
+            screen.blit(overlays[color], (0, 0))
+        display.flip()
+        check_for_quit()
+
+
 # NES PaletteFlash ($EF38): 5 times, wait 3 frames, load the red flash sprite palette, wait 2 frames, reload the
 # enemy palette (LoadEnPalette). Palette writes land on the next NMI, so the enemy is red 2 frames out of every 5.
 ENEMY_FLASH_COUNT = 5

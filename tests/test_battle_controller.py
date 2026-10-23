@@ -9,6 +9,7 @@ from src.waiting import NES_FPS, game_speed, reset_game_speed
 
 from src import enemy as enemies
 from src.color import WHITE
+from src.direction import Direction
 from src.battle_controller import BattleController
 from src.enemy_lookup import enemy_string_lookup
 from src.sound import SPELL_SFX_FRAMES
@@ -302,12 +303,13 @@ class TestHandleBattlePrompts(BattlePromptFrames):
             self.frame()
         self.assertFalse(self.game.player.is_asleep)
         enemy_move.assert_not_called()
-        self.assertEqual(self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0], 'Erdrick awakes.\nCommand?\n')
+        self.assertEqual(self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0], 'Erdrick awakes.\n')
         self.assertFalse(self.battle.no_op)
-        # ShowCmbtCmd: then the command window opens, from FIGHT
+        # ShowCmbtCmd: then "Command?" and the command window, from FIGHT
         with patch.object(self.controller, 'open_command_window', wraps=self.controller.open_command_window) as opened:
             self.frame()
         opened.assert_called_once()
+        self.assertEqual(self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0], 'Command?\n')
         self.assertEqual(FIGHT, self.selection)
 
     def test_wake_roll_is_bit_zero_of_a_random_byte(self, mock_time, mock_display):
@@ -379,9 +381,11 @@ class TestCommandWindowInput(BattlePromptFrames):
     def test_b_says_command_again_and_starts_over_on_fight(self):
         # WndBPressed: WND_ABORT matches no command, so ChkPlyrRun jumps to ShowCmbtCmd
         self.press(K_RIGHT)
+        self.game.cmd_menu.show_line_in_dialog_box.reset_mock()
         self.press(K_ESCAPE)
-        self.assertEqual('Command?\n', self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0])
-        self.frame()
+        self.game.cmd_menu.show_line_in_dialog_box.assert_not_called()
+        self.frame()  # ShowCmbtCmd again: "Command?" once, with the window
+        self.assertEqual(['Command?\n'], [c.args[0] for c in self.game.cmd_menu.show_line_in_dialog_box.call_args_list])
         self.assertEqual(FIGHT, self.selection)
         self.assertEqual(0, self.battle.turn)
 
@@ -557,6 +561,63 @@ class TestCommandWindowInput(BattlePromptFrames):
         pygame.event.post(Event(KEYUP, key=K_DOWN))
         self.frame()  # already let go when the frame reads the keyboard
         self.assertEqual(RUN, self.selection)
+
+
+class TestCommandPrompt(BattlePromptFrames):
+    """NES ShowCmbtCmd (LE5EF): "Command?" (TextBlock15 entry 8) at the start of every player turn, before the command
+    window, and never before the enemy's first strike (InitFight LE5C4-LE5CB jumps straight to StartEnemyTurn)."""
+
+    def lines(self):
+        return [c.args[0] for c in self.game.cmd_menu.show_line_in_dialog_box.call_args_list]
+
+    def test_first_player_turn_says_command_before_the_window_beeps(self):
+        order = []
+        self.game.cmd_menu.show_line_in_dialog_box.side_effect = lambda line, **_: order.append(line)
+        self.game.sound.play_sound.side_effect = order.append
+        self.controller.command_window_open = False
+        self.controller.command_window_shown = False
+        self.frame()
+        self.assertEqual(['Command?\n', self.game.directories.menu_button_sfx], order)
+        # TXT_END1: nothing waits for a button before the window opens
+        self.assertTrue(self.game.cmd_menu.show_line_in_dialog_box.call_args.kwargs['skip_text'])
+
+    def test_command_after_every_enemy_turn(self):
+        for turn in range(3):
+            with self.subTest(turn=turn), patch.object(self.controller, 'fight'), self.patch_enemy_move():
+                self.press(K_RETURN)
+                self.game.cmd_menu.show_line_in_dialog_box.reset_mock()
+                self.frame()
+                self.assertEqual(['Command?\n'], self.lines())
+
+    def test_command_after_a_turn_that_takes_no_turn(self):
+        # "Nothing of use has yet been given to thee." then ShowCmbtCmd (PlyrItem LE7B0)
+        self.controller.battle_menu_row, self.controller.battle_menu_column = ITEM
+        with self.patch_enemy_move() as enemy_move:
+            self.press(K_RETURN)
+            self.frame()
+        enemy_move.assert_not_called()
+        self.assertEqual(['Nothing of use has yet been given to thee.\n', 'Command?\n'], self.lines()[-2:])
+
+    def test_command_after_a_blocked_run(self):
+        self.battle.battle_run.return_value = False
+        self.controller.battle_menu_row, self.controller.battle_menu_column = RUN
+        self.game.cmd_menu.show_line_in_dialog_box.reset_mock()
+        self.press(K_RETURN)
+        self.assertEqual([], self.lines())
+        self.frame()
+        self.assertEqual(['Command?\n'], self.lines())
+
+    def test_no_command_before_the_enemy_strikes_first(self):
+        order = []
+        self.game.cmd_menu.show_line_in_dialog_box.side_effect = lambda line, **_: order.append(line)
+        self.game.player.agility = 10
+        self.battle.enemy = enemies.Slime()
+        self.controller.command_window_open = False
+        with patch.object(self.controller, 'enemy_move', side_effect=lambda _: order.append('enemy turn')), \
+                patch('src.battle_controller.random.randint', side_effect=[1, 63, 18]):
+            self.assertFalse(self.controller.start_fight(self.battle))
+        self.frame()
+        self.assertEqual(['The Slime attacked before Erdrick was ready.', 'enemy turn', 'Command?\n'], order)
 
 
 @patch('src.battle_controller.Battle')
@@ -753,6 +814,67 @@ class TestMapMusicAfterAFight(unittest.TestCase):
         with patch.object(self.controller, 'handle_battle_prompts', side_effect=kill):
             self.assertEqual(self.controller.start_scripted_battle('Dragonlord 2').value, 'victory')
         self.assertEqual(self.map_music_starts(mixer_music), [('overworld',)])
+
+
+@patch('src.battle_controller.Battle')
+class TestFacingAfterAFight(unittest.TestCase):
+    """NES ExitFight / ExitFight2 (LEE82): the hero faces down after a win, the enemy running away and a normal run;
+    a guardian run or a run from the final form goes through MapChng and keeps the facing."""
+
+    def setUp(self):
+        self.game = make_game()
+        self.game.player.direction_value = Direction.UP.value
+        self.controller = BattleController(self.game)
+        patch.object(self.controller, 'start_fight', return_value=False).start()
+        patch.object(self.controller, 'reload_map_after_running_from_final_form').start()
+        self.step_back = patch.object(self.controller, 'step_back_after_running', return_value=False).start()
+        self.addCleanup(patch.stopall)
+
+    def fight(self, mock_battle_class, ending, name='Slime'):
+        battle = mock_battle_class.return_value
+        battle.enemy.name = name
+        battle.enemy.hp = 3
+        battle.enemy_fled = False
+
+        def prompts(run_away, current_battle):
+            if ending == 'win':
+                current_battle.enemy.hp = 0
+            elif ending == 'death':
+                self.game.player.is_dead = True
+            elif ending == 'run':
+                self.controller.player_ran_away = True
+                return True
+            elif ending == 'enemy ran':
+                current_battle.enemy_fled = True
+                return True
+            return False
+        with patch.object(self.controller, 'handle_battle_prompts', side_effect=prompts):
+            self.controller.launch_fight(name)
+        return self.game.player.direction_value
+
+    def test_faces_down_after_a_win(self, mock_battle_class):
+        self.assertEqual(Direction.DOWN.value, self.fight(mock_battle_class, 'win'))
+
+    def test_faces_down_after_the_enemy_runs_away(self, mock_battle_class):
+        self.assertEqual(Direction.DOWN.value, self.fight(mock_battle_class, 'enemy ran'))
+        self.game.player.direction_value = Direction.LEFT.value
+        self.controller.start_fight.return_value = True  # CheckEnRun as it appears
+        self.assertEqual(Direction.DOWN.value, self.fight(mock_battle_class, None))
+
+    def test_faces_down_after_a_normal_run(self, mock_battle_class):
+        self.assertEqual(Direction.DOWN.value, self.fight(mock_battle_class, 'run'))
+
+    def test_keeps_facing_after_running_from_a_guardian(self, mock_battle_class):
+        self.step_back.return_value = True  # RunSuccessful -> MapChngWithSound
+        self.assertEqual(Direction.UP.value, self.fight(mock_battle_class, 'run', 'Golem'))
+
+    def test_keeps_facing_after_running_from_the_final_form(self, mock_battle_class):
+        self.assertEqual(Direction.UP.value, self.fight(mock_battle_class, 'run', 'Dragonlord 2'))
+        self.controller.reload_map_after_running_from_final_form.assert_called_once()
+
+    def test_keeps_facing_after_beating_the_final_form_or_dying(self, mock_battle_class):
+        self.assertEqual(Direction.UP.value, self.fight(mock_battle_class, 'win', 'Dragonlord 2'))
+        self.assertEqual(Direction.UP.value, self.fight(mock_battle_class, 'death'))
 
 
 class TestEnemyRunAway(unittest.TestCase):
