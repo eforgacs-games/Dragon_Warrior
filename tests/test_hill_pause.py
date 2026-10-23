@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 from pygame import K_LEFT
 
-from src.game import HILL_PAUSE_FRAMES, STEP_SYNC_FRAMES
+from src.movement import HILL_PAUSE_FRAMES, STEP_SYNC_FRAMES
 from src.maps import Alefgard
 from tests.test_freeze_movement import FreezeTestCase
 
@@ -29,7 +29,7 @@ class TestHillPause(FreezeTestCase):
         patch.object(self.game.movement.sound, 'play_sound').start()
         self.rolls: list[int] = []  # the frame numbers of the fight rolls
         patch.object(self.game, 'roll_for_fight', side_effect=lambda *_: self.rolls.append(self.frame_number)).start()
-        self.game.frame_counter = 0
+        self.game.movement.frame_counter = 0
 
     def hero_tile(self):
         return self.player.rect.y // self.tile_size, self.player.rect.x // self.tile_size
@@ -61,7 +61,7 @@ class TestHillPause(FreezeTestCase):
     def test_a_step_onto_grass_does_not_pause(self):
         self.player.direction_value = 0
         self.game.change_map(Alefgard(self.game.config), destination_coordinates=(37, 70))
-        self.game.frame_counter = 0
+        self.game.movement.frame_counter = 0
         self.walk_left_one_step()
         self.assertEqual('GRASS', self.player.current_tile)
         self.assertEqual(1, self.frames_until_moved())
@@ -74,13 +74,13 @@ class TestHillPause(FreezeTestCase):
 
     def test_nothing_moves_during_the_pause(self):
         self.walk_left_one_step()
-        self.assertEqual(0, self.game.frame_counter)
+        self.assertEqual(0, self.game.movement.frame_counter)
         position = self.player.rect.topleft
-        with patch.object(self.game, 'do_sprites') as do_sprites:
+        with patch.object(self.game.movement, 'sprites_frame') as sprites_frame:
             self.frames(HILL_PAUSE_FRAMES, held=(K_LEFT,))
-        do_sprites.assert_not_called()
+        sprites_frame.assert_not_called()
         self.assertEqual(position, self.player.rect.topleft)
-        self.assertEqual(0, self.game.frame_counter)
+        self.assertEqual(0, self.game.movement.frame_counter)
 
     def test_no_pause_once_the_dragonlord_is_dead(self):
         # NES ChkOtherBlocks returns before ChkBlkSand once F_DGNLRD_DEAD is set

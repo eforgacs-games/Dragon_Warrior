@@ -5,9 +5,9 @@ characters before drawing them again. If the tile under a character isn't redraw
 over the old one, and the old frame shows through the new one's transparent pixels. These tests render real frames
 headless and compare the background around each on-screen character with a clean redraw of the same frame.
 """
-import inspect
 import random
 from collections import defaultdict
+from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -16,6 +16,7 @@ from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP
 
 from src.config.test_config import test_config
 from src.direction import Direction
+from src.drawer import MapDrawingGame
 from src.game import Game
 from src.game_functions import set_character_position
 
@@ -32,15 +33,10 @@ def make_game(start_map: str, scale: int = test_config['SCALE']) -> Game:
 
 
 def draw_frame(game: Game) -> None:
-    """Draw one frame the way Game.main does."""
-    arguments = {'screen': game.screen, 'loop_count': game.loop_count, 'big_map': game.big_map,
-                 'current_map': game.current_map, 'player': game.player, 'cmd_menu': game.cmd_menu,
-                 'foreground_rects': game.foreground_rects, 'enable_animate': game.game_state.enable_animate,
-                 'camera': game.camera, 'initial_dialog_enabled': False, 'events': [], 'skip_text': game.skip_text,
-                 'left_throne_room': True, 'game_state': game.game_state, 'color': game.color}
-    parameters = inspect.signature(game.drawer.draw_all).parameters
-    game.drawer.draw_all(**{name: arguments[name] if name in arguments else getattr(game, name)
-                            for name in parameters})
+    """Draw one frame the way Game.main does (without the throne room's automatic dialogs, and with no events)."""
+    view = SimpleNamespace(**{name: getattr(game, name) for name in MapDrawingGame.__annotations__})
+    view.initial_dialog_enabled, view.events, view.story_flags = False, [], SimpleNamespace(left_throne_room=True)
+    game.drawer.draw_all(view, game.game_state.enable_animate)
     game.loop_count += 1
 
 
@@ -53,8 +49,8 @@ def find_residue(game: Game, before_drawing=None) -> dict:
         if before_drawing:
             before_drawing(frame)
         else:
-            game.npc_schedule.count_frame()  # the walking animation moves on every 16 frames
-            game.npc_schedule.start_sprites()
+            game.movement.npc_schedule.count_frame()  # the walking animation moves on every 16 frames
+            game.movement.npc_schedule.start_sprites()
         # draw_all draws each character, then moves its animation on to the next image
         drawn = {identifier: (character_dict['character'].image, character_dict['character'].rect.copy())
                  for identifier, character_dict in game.current_map.characters.items()}
@@ -111,20 +107,20 @@ def walk_and_find_ghosts(game: Game, npc_identifier: str, npc_direction: Directi
     ghost_frames = []
     hero_start_x = game.player.rect.x
     frame = 0
-    with patch('src.game.random.choice', return_value=npc_direction.value), \
-            patch('src.game.key.get_pressed', return_value=held_keys):
+    with patch('src.movement.random.choice', return_value=npc_direction.value), \
+            patch('src.movement.key.get_pressed', return_value=held_keys):
         while frame < 300 and (steps_started < npc_steps or npc.is_moving or game.player.is_moving or
                                game.player.rect.x < hero_start_x + hero_steps * game.tile_size):
             frame += 1
             held_keys[K_RIGHT] = int(hero_waits < frame and
                                      game.player.rect.x <= hero_start_x + (hero_steps - 1) * game.tile_size)
-            game._handle_player_movement()
+            game.movement.handle_player_movement()
             if not game.player.is_moving:
                 set_character_position(game.player, game.tile_size)
             if not npc.is_moving and steps_started < npc_steps:
-                game.npc_schedule.give_turn_to(npc_slot)  # her next step starts now
+                game.movement.npc_schedule.give_turn_to(npc_slot)  # her next step starts now
                 steps_started += 1
-            game.do_sprites()
+            game.movement.sprites_frame()
             drawn = characters_to_draw(game)
             draw_frame(game)
             if not visible_area_matches_a_clean_redraw(game, drawn):
@@ -141,20 +137,20 @@ def walk_hero_and_find_ghosts(game: Game, walk: list) -> list:
     ghost_frames = []
     frame = 0
     with patch('src.game.get_ticks', return_value=0), \
-            patch('src.game.key.get_pressed', return_value=held_keys):
+            patch('src.movement.key.get_pressed', return_value=held_keys):
         for walk_key, blocks in walk:
             held_keys.clear()
             held_keys[walk_key] = 1
-            for _ in range(blocks * game.tile_size // game.speed + 1):
+            for _ in range(blocks * game.tile_size // game.movement.speed + 1):
                 frame += 1
-                game._handle_player_movement()
+                game.movement.handle_player_movement()
                 drawn = characters_to_draw(game)
                 draw_frame(game)
                 if not visible_area_matches_a_clean_redraw(game, drawn):
                     ghost_frames.append(frame)
             held_keys.clear()
             while game.player.is_moving:
-                game._handle_player_movement()
+                game.movement.handle_player_movement()
             set_character_position(game.player, game.tile_size)
     return ghost_frames
 
@@ -189,7 +185,7 @@ class TestCharacterRedraw(TestCase):
         start_positions = [character.rect.topleft for character in roaming_characters]
 
         def roam(_frame):
-            game.do_sprites()
+            game.movement.sprites_frame()
 
         residue = find_residue(game, before_drawing=roam)
         self.assertNotEqual(start_positions, [character.rect.topleft for character in roaming_characters])
@@ -257,12 +253,12 @@ def find_ghosts_drawing_every(game: Game, frames_per_draw: int, frames: int, hel
     if held_key is not None:
         held_keys[held_key] = 1
     ghost_frames = []
-    with patch('src.game.random', random.Random(1)), patch('src.game.key.get_pressed', return_value=held_keys):
+    with patch('src.movement.random', random.Random(1)), patch('src.movement.key.get_pressed', return_value=held_keys):
         for frame in range(1, frames + 1):
-            game._handle_player_movement()
+            game.movement.handle_player_movement()
             if not game.player.is_moving:
                 set_character_position(game.player, game.tile_size)
-            game.do_sprites()
+            game.movement.sprites_frame()
             if frame % frames_per_draw == 0:
                 drawn = characters_to_draw(game)
                 draw_frame(game)

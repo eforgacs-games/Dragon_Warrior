@@ -152,11 +152,11 @@ class TestGuardianFights(TestCase):
         """One real step, the way the game loop takes it: move_player until the hero is on the next tile, then
         handle_battles, which starts any fight the step queued."""
         keys = defaultdict(bool, {STEP_KEYS[direction]: True})
-        self.game.move_player(keys)
+        self.game.movement.move_player(keys)
         for _ in range(1000):
             if not self.player.is_moving:
                 break
-            self.game.move_player(keys)
+            self.game.movement.move_player(keys)
         self.assertFalse(self.player.is_moving)
         self.game.handle_battles()
         self.settle()

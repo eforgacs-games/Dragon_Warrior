@@ -86,7 +86,7 @@ class TestCommandWindowClose(TestCase):
                 self.assertTrue(game.cmd_menu.menu.is_enabled())
                 pygame.event.post(keydown(K_j))
             held = defaultdict(int, {K_DOWN: 1} if loop <= walk_loops else {})
-            with patch('src.game.key') as mock_key:
+            with patch('src.movement.key') as mock_key:
                 mock_key.get_pressed.return_value = held
                 Game.get_events(game)
 

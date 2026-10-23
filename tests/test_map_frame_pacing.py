@@ -8,7 +8,8 @@ import os
 from unittest.mock import MagicMock, patch
 
 from src.cursor import TXT_WAIT_START_FRAME, DialogArrowBlink, dialog_arrow_visible_on_frame
-from src.game import STEP_SYNC_FRAMES, Game
+from src.game import Game
+from src.movement import STEP_SYNC_FRAMES
 from src.menu import CommandMenu
 from src.waiting import NES_FPS, FramePacer, set_game_speed
 from tests.test_game_speed import GameSpeedTestCase

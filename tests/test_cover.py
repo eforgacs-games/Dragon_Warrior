@@ -9,7 +9,7 @@ from src.common import BLACK
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.drawer import draw_cover, get_player_block
-from src.game import Game
+from src.movement import MovementController
 from src.maps_functions import covered_cells
 from tests.test_drawer import _make_drawer
 
@@ -126,12 +126,12 @@ class TestHiddenByCover(TestCase):
         self.assertFalse(self.brecconary.crosses_cover_boundary(30, 32, 31, 32))
 
     def test_npc_crosses_cover_boundary(self):
-        game = MagicMock()
-        game.current_map = self.brecconary
+        movement = MagicMock()
+        movement.current_map = self.brecconary
         npc = MagicMock(row=32, column=32, direction_value=Direction.UP.value)  # stepping out of the shop
-        self.assertTrue(Game.npc_crosses_cover_boundary(game, npc))
+        self.assertTrue(MovementController.npc_crosses_cover_boundary(movement, npc))
         npc.direction_value = Direction.RIGHT.value
-        self.assertFalse(Game.npc_crosses_cover_boundary(game, npc))
+        self.assertFalse(MovementController.npc_crosses_cover_boundary(movement, npc))
 
 
 class TestDrawCover(TestCase):

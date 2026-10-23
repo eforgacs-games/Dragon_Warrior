@@ -345,7 +345,7 @@ class TestGame(TestCase):
         self.assertEqual(self.use_rainbow_drop(), [f'{self.game.player.name} held the Rainbow Drop toward the sky.'])
         self.assertTrue(self.game.story_flags.rainbow_bridge_built)
         self.assertEqual(self.bridge_tile(), 'BRIDGE')
-        self.assertFalse(self.game.is_impassable(self.bridge_tile()))
+        self.assertFalse(self.game.movement.is_impassable(self.bridge_tile()))
         # NES ChkDrop never removes the Rainbow Drop
         self.assertEqual(self.game.player.inventory, ['Rainbow Drop'])
 
@@ -484,35 +484,35 @@ class TestGame(TestCase):
         # NES ChkNPCMapLimit (Bank00): an NPC on the map's edge can't step off it
         test_roaming_character = setup_roaming_character(row=2, column=2, direction=Direction.DOWN.value)
         test_roaming_character.rect.y = 0
-        self.game.move_medially(test_roaming_character)
+        self.game.movement.move_medially(test_roaming_character)
         self.assertEqual(0, test_roaming_character.rect.y)
         test_roaming_character.direction_value = Direction.RIGHT.value
         test_roaming_character.rect.x = 0
-        self.game.move_laterally(test_roaming_character)
+        self.game.movement.move_laterally(test_roaming_character)
         self.assertEqual(0, test_roaming_character.rect.x)
 
     def test_move_roaming_character_medially(self):
         test_roaming_character = setup_roaming_character(row=1, column=2, direction=Direction.UP.value)
         test_roaming_character.rect.y = 0
-        self.game.move_medially(test_roaming_character)
+        self.game.movement.move_medially(test_roaming_character)
         self.assertEqual(-2, test_roaming_character.rect.y)
         test_roaming_character.direction_value = Direction.DOWN.value
-        self.game.move_medially(test_roaming_character)
+        self.game.movement.move_medially(test_roaming_character)
         self.assertEqual(0, test_roaming_character.rect.y)
 
     def test_move_roaming_character_laterally(self):
         test_roaming_character = setup_roaming_character(row=2, column=1, direction=Direction.LEFT.value)
         test_roaming_character.rect.x = 0
-        self.game.move_laterally(test_roaming_character)
+        self.game.movement.move_laterally(test_roaming_character)
         self.assertEqual(-2, test_roaming_character.rect.x)
         test_roaming_character.direction_value = Direction.RIGHT.value
-        self.game.move_laterally(test_roaming_character)
+        self.game.movement.move_laterally(test_roaming_character)
         self.assertEqual(0, test_roaming_character.rect.x)
 
     def test_roaming_character_blocked_by_object(self):
         test_roaming_character = setup_roaming_character(row=2, column=0, direction=Direction.UP.value)
         test_roaming_character.rect.y = 0
-        self.game.move_medially(test_roaming_character)
+        self.game.movement.move_medially(test_roaming_character)
         self.assertEqual(0, test_roaming_character.rect.y)
 
     # TODO(ELF): Write tests that test the test_roaming_character.row / column update correctly after moving/not moving
@@ -627,7 +627,7 @@ class TestGame(TestCase):
     # def test_move_player_directions(self):
     #     self.assertEqual(Direction.UP.value, self.game.player.direction_value)
     #     pygame.key.get_pressed = create_key_mock(pygame.K_s)
-    #     self.game.move_player(pygame.key.get_pressed())
+    #     self.game.movement.move_player(pygame.key.get_pressed())
     #     self.assertEqual(Direction.DOWN.value, self.game.player.direction_value)
 
     def test_run_automatic_initial_dialog(self):
@@ -814,12 +814,9 @@ class TestGame(TestCase):
         self.game.get_events()
 
     def test_draw_all(self):
-        self.game.drawer.draw_all(self.game.screen, self.game.loop_count, self.game.big_map, self.game.current_map,
-                                  self.game.player, self.game.cmd_menu, self.game.foreground_rects,
-                                  self.game.game_state.enable_animate, self.game.camera, self.game.initial_dialog_enabled,
-                                  self.game.events, self.game.skip_text, self.game.story_flags.left_throne_room,
-                                  self.game.game_state, self.game.color)
-        # The hero isn't moving: the pop-up window isn't closed (it opens on the POP_UP_FRAME, see Game.do_sprites)
+        self.game.drawer.draw_all(self.game, self.game.game_state.enable_animate)
+        # The hero isn't moving: the pop-up window isn't closed (it opens on the POP_UP_FRAME, see
+        # MovementController.sprites_frame)
         self.assertFalse(self.game.player.is_moving)
 
     # def test_handle_sprite_drawing_and_animation(self):
@@ -827,7 +824,7 @@ class TestGame(TestCase):
 
     def test_move_roaming_characters(self):
         # test with no roaming characters
-        self.game.move_roaming_characters()
+        self.game.movement.move_roaming_characters()
         self.game.player.row = 10
         self.game.player.column = 13
         self.game.current_map.staircases = {
@@ -840,28 +837,28 @@ class TestGame(TestCase):
         # The first frame on a map is the first pair's decision frame (NES InitMapData: NPCUpdateCntr = 0)
         guard = self.game.current_map.roaming_characters[0]
         start = guard.rect.topleft
-        with patch('src.game.random.choice', return_value=Direction.DOWN.value):
-            self.game.do_sprites()
+        with patch('src.movement.random.choice', return_value=Direction.DOWN.value):
+            self.game.movement.sprites_frame()
         self.assertTrue(guard.is_moving)
         self.assertEqual(Direction.DOWN.value, guard.direction_value)
         # test with moving characters once they're moving: 1 NES pixel a frame, 16 frames a step
         for _ in range(15):
-            self.game.do_sprites()
+            self.game.movement.sprites_frame()
         self.assertFalse(guard.is_moving)
         self.assertEqual((start[0], start[1] + self.game.tile_size), guard.rect.topleft)
 
     def test_move_and_handle_sides_collision(self):
         self.game.player.rect.x = -1
-        self.game.move_and_handle_sides_collision(-1, 1)
+        self.game.movement.move_and_handle_sides_collision(-1, 1)
         self.assertEqual(0, self.game.player.rect.x)
         self.game.player.rect.y = -1
-        self.game.move_and_handle_sides_collision(1, -1)
+        self.game.movement.move_and_handle_sides_collision(1, -1)
         self.assertEqual(0, self.game.player.rect.y)
         self.game.player.rect.x = 65
-        self.game.move_and_handle_sides_collision(65, 1)
+        self.game.movement.move_and_handle_sides_collision(65, 1)
         self.assertEqual(64, self.game.player.rect.x)
         self.game.player.rect.y = 65
-        self.game.move_and_handle_sides_collision(1, 65)
+        self.game.movement.move_and_handle_sides_collision(1, 65)
         self.assertEqual(64, self.game.player.rect.y)
 
     def test_move_player_up(self):
@@ -869,7 +866,7 @@ class TestGame(TestCase):
         keys = pressed_keys(pygame.K_w)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
         self.assertEqual(self.game.player.rect.y, -16)
-        self.game.move_player(keys)
+        self.game.movement.move_player(keys)
         # I'm not sure why this is -18, need to investigate
         self.assertEqual(self.game.player.rect.y, -18)
         self.assertEqual(Direction.UP.value, self.game.player.direction_value)
@@ -879,7 +876,7 @@ class TestGame(TestCase):
         keys = pressed_keys(pygame.K_a)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
         initial_x = self.game.player.rect.x
-        self.game.move_player(keys)
+        self.game.movement.move_player(keys)
         self.assertEqual(initial_x + 16, self.game.player.rect.x)
         self.assertEqual(Direction.LEFT.value, self.game.player.direction_value)
 
@@ -889,7 +886,7 @@ class TestGame(TestCase):
         keys = pressed_keys(pygame.K_s)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
         self.assertEqual(self.game.player.rect.y, -16)
-        self.game.move_player(keys)
+        self.game.movement.move_player(keys)
         # impassable object in way of player
         self.assertEqual(self.game.player.rect.y, -16)
         self.assertEqual(Direction.DOWN.value, self.game.player.direction_value)
@@ -899,7 +896,7 @@ class TestGame(TestCase):
         keys = pressed_keys(pygame.K_d)
         self.game.current_map.player_sprites = LayeredDirty(self.game.player)
         initial_x = self.game.player.rect.x
-        self.game.move_player(keys)
+        self.game.movement.move_player(keys)
         self.assertEqual(self.game.player.rect.x, initial_x + 16)
         self.assertEqual(Direction.RIGHT.value, self.game.player.direction_value)
 

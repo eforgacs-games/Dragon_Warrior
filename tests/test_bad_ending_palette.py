@@ -75,10 +75,7 @@ class TestBadEndingScreen(TestCase):
         game.drawer.display_hovering_stats = True
         game.cmd_menu.launch_signaled = True
         for _ in range(3):
-            game.drawer.draw_all(game.screen, game.loop_count, game.big_map, game.current_map, game.player,
-                                 game.cmd_menu, game.foreground_rects, game.sprites_animate, game.camera,
-                                 game.initial_dialog_enabled, [], game.skip_text, game.story_flags.left_throne_room,
-                                 game.game_state, game.color)
+            game.drawer.draw_all(game, game.movement.sprites_animate, [])
             game.loop_count += 1
         self.tile_size = game.tile_size
         with patch.object(game.cmd_menu, 'show_line_in_dialog_box'):

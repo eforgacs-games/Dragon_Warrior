@@ -27,14 +27,14 @@ class TestLightGrowthFreeze(FreezeTestCase):
         self.addCleanup(patch.stopall)
         patch.dict(self.game.game_state.config, NO_BATTLES=True, ENABLE_DARKNESS=True).start()
         patch.object(self.game.movement.sound, 'play_sound').start()
-        self.game.frame_counter = 0
+        self.game.movement.frame_counter = 0
         self.direction = self.open_direction()
 
     def open_direction(self):
         """A direction the hero can walk in from the start."""
         for direction in (K_DOWN, K_RIGHT, K_UP, K_LEFT):
             start = self.player.rect.topleft
-            self.game.frame_counter = 0
+            self.game.movement.frame_counter = 0
             self.frame(held=(direction,))
             moved = self.player.rect.topleft != start
             self.frames(32)  # finish the step, or the bump
@@ -50,15 +50,15 @@ class TestLightGrowthFreeze(FreezeTestCase):
     def test_radiant_grows_the_light_for_24_frames(self):
         self.assertEqual(24, RADIANT_GROWTH_FRAMES)
         self.game.game_state.cast_radiant()
-        self.assertTrue(self.game.light_growing)
+        self.assertTrue(self.game.movement.light_growing)
         self.frames(RADIANT_GROWTH_FRAMES - 1)
-        self.assertTrue(self.game.light_growing)
+        self.assertTrue(self.game.movement.light_growing)
         self.frame()
-        self.assertFalse(self.game.light_growing)
+        self.assertFalse(self.game.movement.light_growing)
         self.assertEqual(7, self.game.game_state.lit_diameter)
 
     def test_the_hero_does_not_move_while_the_light_grows(self):
-        self.game.frame_counter = 5  # would step on the 11th frame if the joypad were read
+        self.game.movement.frame_counter = 5  # would step on the 11th frame if the joypad were read
         self.game.game_state.cast_radiant()
         start = self.player.rect.topleft
         self.frames(RADIANT_GROWTH_FRAMES, held=(self.direction,))
@@ -90,4 +90,4 @@ class TestLightGrowthFreeze(FreezeTestCase):
         # With ENABLE_DARKNESS off nothing draws the light, so it must not hold the hero up
         self.game.game_state.config['ENABLE_DARKNESS'] = False
         self.game.game_state.cast_radiant()
-        self.assertFalse(self.game.light_growing)
+        self.assertFalse(self.game.movement.light_growing)
