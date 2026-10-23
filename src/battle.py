@@ -2,11 +2,12 @@ import random
 
 from pygame import display, Surface
 
-from src.common import BLACK, set_gettext_language
+from src.common import BLACK, set_gettext_language, singular_or_plural
 from src.constants import BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT
 from src.directories import Directories
 from src.enemy import enemy_groups
 from src.enemy_lookup import enemy_string_lookup
+from src.korean_particles import get_postposition, particle
 from src.maps import DragonWarriorMap
 from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT
@@ -22,25 +23,6 @@ DRAGONLORD_TRANSFORM_WAIT_FRAMES = 80  # NES EnemyDefeated: 80 frames between th
 SPIRAL_LEAD_IN_FRAMES = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E40A, before the first block
 SPIRAL_FRAMES_PER_BLOCK = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E43D, once per block
 HERO_SCREEN_BLOCK = (8, 7)  # NES DoSprites: the hero's sprites are at x $80, y $6F, the middle of the screen
-
-
-def has_final_consonant(char: str) -> bool:
-    """Check if a Korean character has a final consonant."""
-    if len(char) != 1:
-        raise ValueError("Function expects a single character")
-    code = ord(char) - 0xAC00
-    return (code % 28) != 0
-
-
-def get_postposition(name: str, consonant_josa: str, vowel_josa: str) -> str:
-    """Get the correct postposition for a Korean character.
-    :param name: The name.
-    :param consonant_josa: The postposition for a consonant. e.g. "을"
-    :param vowel_josa: The postposition for a vowel. e.g. "를"
-    :return: The correct postposition.
-    """
-    last_char = name[-1]
-    return consonant_josa if has_final_consonant(last_char) else vowel_josa
 
 
 class Battle:
@@ -208,8 +190,8 @@ class Battle:
         # NES RegEnDefeated: the experience is the enemy's exact base value; the gold is varied (CalcPlyrGold).
         # Both totals stop at 65535.
         gold = randomize_enemy_gold(enemy.gold)
-        exp_and_gold = self._("Thy experience increases by {}.\n").format(enemy.xp) + self._(
-            "Thy GOLD increases by {}.\n").format(gold)
+        exp_and_gold = self._("Thy Experience\nincreases by {}.\n").format(enemy.xp) + self._(
+            "Thy GOLD\nincreases by {}.\n").format(gold)
         # TB15E15 and TB16E0 end with no WAIT: the victory music goes on playing while they print
         cmd_menu.show_line_in_dialog_box(exp_and_gold, add_quotes=False, disable_sound=True, hide_arrow=True,
                                          skip_text=True)
@@ -283,7 +265,8 @@ class Battle:
                 add_quotes=False, disable_sound=True)
         elif self.config['LANGUAGE'] == 'Korean':
             new_level = player.level + 1 if new_level is None else new_level
-            cmd_menu.show_line_in_dialog_box(f"{player.name}은 {new_level}레벨로 올랐다!", add_quotes=False)
+            hero = player.name + particle(player.name, '은/는')
+            cmd_menu.show_line_in_dialog_box(f"{hero} {new_level}레벨로 올랐다!", add_quotes=False)
 
     @staticmethod
     def get_player_stats(player):
@@ -306,13 +289,18 @@ class Battle:
             cmd_menu.show_line_in_dialog_box(
                 self._("Thy Response Speed increases by {}.\n").format(player.agility - old_stats["agility"]),
                 add_quotes=False, disable_sound=True)
+        # NES TextBlock18 entries 0 and 1: PNTS prints "Point" for an increase of 1 (Bank01 DoPNTS)
         if player.max_hp > old_stats["max_hp"]:
+            increase = player.max_hp - old_stats["max_hp"]
             cmd_menu.show_line_in_dialog_box(
-                self._("Thy Maximum Hit Points increase by {}.\n").format(player.max_hp - old_stats["max_hp"]),
+                singular_or_plural(increase, self._("Thy Maximum Hit Point increase by {}.\n"),
+                                   self._("Thy Maximum Hit Points increase by {}.\n")).format(increase),
                 add_quotes=False, disable_sound=True)
         if player.max_mp > old_stats["max_mp"]:
+            increase = player.max_mp - old_stats["max_mp"]
             cmd_menu.show_line_in_dialog_box(
-                self._("Thy Maximum Magic Points increase by {}.\n").format(player.max_mp - old_stats["max_mp"]),
+                singular_or_plural(increase, self._("Thy Maximum Magic Point increase by {}.\n"),
+                                   self._("Thy Maximum Magic Points increase by {}.\n")).format(increase),
                 add_quotes=False, disable_sound=True)
         if len(player.spells) > len(old_stats["spells"]):
             cmd_menu.show_line_in_dialog_box(self._("Thou hast learned a new spell.\n"), add_quotes=False, disable_sound=True)
