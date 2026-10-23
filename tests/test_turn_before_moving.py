@@ -16,7 +16,9 @@ from pygame import K_DOWN, K_LEFT, K_UP, K_i
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.movement import STEP_SYNC_FRAMES
+from src.npc_schedule import POP_UP_FRAME
 from src.waiting import set_game_speed
+from src.windows import POPUP_WINDOW
 from tests.test_freeze_movement import FreezeTestCase, keydown
 
 
@@ -111,6 +113,27 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.stand_still(60)
         self.assertEqual(61, self.game.movement.frame_counter)
         self.assertEqual(4, self.frames_until_moved((K_LEFT,)))  # 61, 62, 63, then 64
+
+    def test_a_tap_that_only_turns_closes_the_pop_up_window(self):
+        # NES DoJoyUp etc. start with ChkRemovePopUp, before the FrameCounter & $0F check that only lets the hero turn
+        drawer = self.game.drawer
+        drop_up = patch.object(self.game.cmd_menu, 'window_drop_up_effect').start()
+        self.stand_still(60)
+        self.assertTrue(drawer.display_hovering_stats)
+        drawer.hovering_stats_displayed = True  # drawn (Drawer.draw_all)
+        before = self.hero_xy()
+        self.frame(held=(K_LEFT,))
+        self.assertEqual(before, self.hero_xy())
+        self.assertEqual(Direction.LEFT.value, self.player.direction_value)
+        self.assertFalse(drawer.display_hovering_stats)
+        self.assertFalse(drawer.hovering_stats_displayed)
+        drop_up.assert_called_once_with(*POPUP_WINDOW)
+        # DoRemovePopUp keeps FrameCounter: the window opens again when it comes round to $31, 256 frames later
+        self.assertEqual(62, self.game.movement.frame_counter)
+        self.stand_still(0x100 + POP_UP_FRAME - 62 - 1)
+        self.assertFalse(drawer.display_hovering_stats)
+        self.stand_still(1)
+        self.assertTrue(drawer.display_hovering_stats)
 
     def test_the_delay_is_counted_in_frames_at_any_game_speed(self):
         # The speed keys (src/waiting.py's game speed) run the main loop at 60, 120, 240 or 480 frames per second

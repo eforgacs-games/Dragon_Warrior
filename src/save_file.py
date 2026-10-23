@@ -44,8 +44,6 @@ PLAYER_COLUMN_KEY = 'PlayerColumn'
 ADVENTURE_LOGS = (1, 2, 3)
 # Only the three adventure logs are saves; a save_slot_0.json or save_slot_4.json is ignored like any other stray file
 SAVE_FILE_PATTERN = re.compile(r'save_slot_([123])\.json')
-# Any save_slot_<n>.json, for reading the log number out of a path
-SAVE_SLOT_PATTERN = re.compile(r'save_slot_(\d+)\.json$')
 
 
 @dataclass
@@ -166,12 +164,6 @@ def save_slot_number(save_file_name: str) -> int:
     if match is None:
         raise ValueError(f"Not a save file name: {save_file_name}")
     return int(match.group(1))
-
-
-def log_number_of_path(save_path: str) -> int | None:
-    """The adventure log number of a save_slot_<n>.json file, or None for any other file."""
-    match = SAVE_SLOT_PATTERN.search(os.path.basename(save_path))
-    return int(match.group(1)) if match else None
 
 
 def save_files(save_dir: str) -> list[str]:
