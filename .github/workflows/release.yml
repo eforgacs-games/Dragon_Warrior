@@ -1,0 +1,140 @@
+# Builds the game with PyInstaller (dragon_warrior.spec) for Windows, macOS and Linux, and checks each build starts
+# and finds all of its files (--smoke-test, src/smoke_test.py).
+# - A pushed vX.Y.Z tag also publishes the builds as a GitHub Release for that tag.
+# - Run by hand (Actions > Release builds > Run workflow), or on a PR that changes the build, the builds are uploaded
+#   as workflow artifacts only, to try them without making a release.
+
+name: Release builds
+
+on:
+  push:
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/release.yml"
+      - "dragon_warrior.spec"
+      - "src/paths.py"
+      - "src/directories.py"
+      - "src/smoke_test.py"
+      - "pyproject.toml"
+      - "uv.lock"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Never cancel a release build part way; a newer push to a PR replaces the older run
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The oldest supported Ubuntu, so the build runs on distributions with an older glibc too
+          - os: ubuntu-22.04
+            platform: linux-x64
+          - os: windows-latest
+            platform: windows-x64
+          - os: macos-latest
+            platform: macos-arm64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      # Headless: the smoke test opens the game window and plays music on SDL's dummy drivers
+      SDL_VIDEODRIVER: dummy
+      SDL_AUDIODRIVER: dummy
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Set up uv and Python
+      uses: astral-sh/setup-uv@v10.2.0
+      with:
+        version: "0.11.26"
+        python-version: "3.13"
+        enable-cache: true
+    - name: Install the game and PyInstaller
+      # The game's dependencies and the build group, without the dev tools
+      run: uv sync --locked --no-dev --group build
+    - name: Name the build
+      id: name
+      env:
+        # The tag (v1.2.3) for a release, the commit otherwise
+        VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+      run: echo "archive=DragonWarrior-${VERSION:0:12}-${{ matrix.platform }}" >> "$GITHUB_OUTPUT"
+    - name: Build with PyInstaller
+      run: uv run --no-sync pyinstaller dragon_warrior.spec --noconfirm
+    - name: Package
+      env:
+        ARCHIVE: ${{ steps.name.outputs.archive }}
+      run: |
+        mkdir package
+        case "$RUNNER_OS" in
+          Linux)
+            # tar keeps the executable's permissions
+            tar -czf "package/$ARCHIVE.tar.gz" -C dist DragonWarrior ;;
+          Windows)
+            (cd dist && 7z a -tzip -mx=9 "../package/$ARCHIVE.zip" DragonWarrior > /dev/null) ;;
+          macOS)
+            # ditto keeps the .app's symlinks and permissions
+            ditto -c -k --keepParent "dist/Dragon Warrior.app" "package/$ARCHIVE.zip" ;;
+        esac
+        ls -l package
+    - name: Smoke test the packaged build
+      # Unpacks the archive and runs the game from it, so it proves the download itself works
+      env:
+        ARCHIVE: ${{ steps.name.outputs.archive }}
+      run: |
+        # Relative paths throughout: bash on Windows and 7z disagree about absolute ones
+        mkdir smoke
+        case "$RUNNER_OS" in
+          Linux)
+            tar -xzf "package/$ARCHIVE.tar.gz" -C smoke
+            game="./DragonWarrior/DragonWarrior" ;;
+          Windows)
+            7z x "package/$ARCHIVE.zip" -osmoke > /dev/null
+            game="./DragonWarrior/DragonWarrior.exe" ;;
+          macOS)
+            ditto -x -k "package/$ARCHIVE.zip" smoke
+            game="./Dragon Warrior.app/Contents/MacOS/DragonWarrior" ;;
+        esac
+        # From the unpacked folder, so nothing can be found through the repository
+        cd smoke
+        "$game" --smoke-test
+    - name: Upload the build
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.name.outputs.archive }}
+        path: package/*
+        compression-level: 0  # already compressed
+        if-no-files-found: error
+
+  release:
+    needs: build
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create the release and upload the builds to it
+    steps:
+    - name: Download the builds
+      uses: actions/download-artifact@v8
+      with:
+        path: package
+        merge-multiple: true
+    - name: Publish the release
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TAG: ${{ github.ref_name }}
+      run: |
+        ls -l package
+        # A re-run uploads to the release made by the first run instead of failing
+        if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "Dragon Warrior $TAG" --generate-notes
+        fi
+        gh release upload "$TAG" package/* --repo "$GITHUB_REPOSITORY" --clobber

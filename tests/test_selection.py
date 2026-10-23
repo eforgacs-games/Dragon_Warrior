@@ -64,8 +64,9 @@ class SelectionTestCase(TestCase):
 class TestKeys(SelectionTestCase):
 
     def test_key_buttons(self):
-        # A is accept_keys (Enter, I and K), B is reject_keys (Escape and J), and the D-pad
-        for key, button in ((K_RETURN, IN_A), (K_k, IN_A), (K_i, IN_A), (K_j, IN_B), (K_ESCAPE, IN_B),
+        # A is K and Enter, B is reject_keys (Escape and J), and the D-pad. START (I) is no button: Bank01
+        # WndProcessInput skips SELECT and START (#304)
+        for key, button in ((K_RETURN, IN_A), (K_k, IN_A), (K_i, 0), (K_j, IN_B), (K_ESCAPE, IN_B),
                             (K_UP, IN_UP), (K_w, IN_UP), (K_DOWN, IN_DOWN), (K_s, IN_DOWN), (K_LEFT, IN_LEFT),
                             (K_q, 0), (K_1, 0)):
             with self.subTest(key=pygame.key.name(key)):
@@ -73,10 +74,14 @@ class TestKeys(SelectionTestCase):
         self.assertEqual(IN_RIGHT, key_buttons(pygame.K_d))
 
     def test_a_answers_with_the_entry_under_the_cursor(self):
-        for key in (K_RETURN, K_k, K_i):
+        for key in (K_RETURN, K_k):
             with self.subTest(key=pygame.key.name(key)):
                 self.assertEqual(Answer(IN_A, 0), self.select([press(key)]))
                 self.assertTrue(self.select([press(key)]).accepted)
+
+    def test_start_does_not_answer(self):
+        # Bank01 WndProcessInput skips START: the window keeps selecting until A comes (#304)
+        self.assertEqual(Answer(IN_A, 1), self.select([press(K_i)], [press(K_DOWN)], [press(K_RETURN)]))
 
     def test_b_and_escape_answer_b(self):
         for key in (K_j, K_ESCAPE):
