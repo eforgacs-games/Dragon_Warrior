@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import tempfile
+from src.waiting import NES_FPS
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -38,7 +39,7 @@ class TestSceneResult(TestCase):
 
     def test_rates(self):
         result = scene_result(speed=8)
-        self.assertEqual(480, result.target_fps)
+        self.assertEqual(8 * NES_FPS, result.target_fps)
         self.assertEqual(60.0, result.map_fps)
         self.assertEqual(54.0, result.shown_fps)
         self.assertEqual(40.0, result.cpu_percent)

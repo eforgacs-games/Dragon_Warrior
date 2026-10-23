@@ -56,8 +56,10 @@ class TestDialogArrowBlink(GameSpeedTestCase):
                 set_game_speed(speed)
                 runs = self.runs(self.blink())
                 self.assertTrue(runs[0][0])
+                # The game clock moves speed ms at a time (it counts whole real ms), so a run can end up to one real
+                # ms either side of where 16 frames end
                 for _, length in runs:
-                    self.assertAlmostEqual(16 * 1000 / NES_FPS / speed, length, delta=1)
+                    self.assertAlmostEqual(16 * 1000 / NES_FPS / speed, length, delta=2)
 
     def test_on_and_off_frames(self):
         self.assertEqual([True] * 16 + [False] * 16 + [True],
