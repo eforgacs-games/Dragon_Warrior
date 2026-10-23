@@ -8,8 +8,9 @@ life feature, like an emulator's: Shift + F1/F2/F3 saves one into slot 1/2/3 and
 surfaces, no sprites; a map is named, not copied). It holds everything the game's next frames depend on:
 - the map and the hero's pixel position, facing and step under way, the camera, and the hero's stats, HP and MP,
   gold, experience, items, equipment, spells and statuses;
-- every story flag (src/story_flags.py), the treasure chest history, and the map layouts' changes: the doors opened
-  (CommandMenu.door writes them into the layouts), the chests shown open and the Rainbow Bridge;
+- every story flag (src/story_flags.py), the treasure chest history, the door history once the game has one (#369),
+  and the map layouts' changes: the doors opened (CommandMenu.door writes them into the layouts), the chests shown
+  open and the Rainbow Bridge;
 - the repel, radiant and light timers and the curse (the hero's worn cursed items);
 - the NPCs on the map: which are there, their pixel positions, facings, steps under way and mobile slots, and the NPC
   schedule (src/npc_schedule.py: FrameCounter, NPCUpdateCntr and the shared walking frame);
@@ -143,6 +144,24 @@ def _json_cell(value: Any) -> list[int] | None:
     return None if value is None else [int(value[0]), int(value[1])]
 
 
+def _json_history(history: Any) -> list | None:
+    """A TreasureChestHistory's or OpenDoorHistory's slots: (map name, (row, column)) or None each."""
+    if history is None:
+        return None
+    return [None if slot is None else [slot[0], _json_cell(slot[1])] for slot in history.slots]
+
+
+def _history(slots: list) -> list[tuple[str, tuple[int, int] | None] | None]:
+    return [None if slot is None else (str(slot[0]), _cell(slot[1])) for slot in slots]
+
+
+def _restore_histories(game: Any, state: dict[str, Any]) -> None:
+    game.chest_history.slots = list(state['chest_history'])
+    door_history = getattr(game, 'door_history', None)
+    if door_history is not None and state['door_history'] is not None:
+        door_history.slots = list(state['door_history'])
+
+
 def _rect(sprite: Any) -> list[int]:
     return [sprite.rect.x, sprite.rect.y]
 
@@ -194,8 +213,9 @@ def take_snapshot(game: Any) -> dict[str, Any]:
         'fixed': fixed,
         'camera': list(game.camera.pos),
         'story_flags': game.story_flags.to_save(),
-        'chest_history': [None if slot is None else [slot[0], _json_cell(slot[1])]
-                          for slot in game.chest_history.slots],
+        'chest_history': _json_history(game.chest_history),
+        # The door history (OpenDoorHistory, #369), once the game has one; the opened doors are in the layouts too
+        'door_history': _json_history(getattr(game, 'door_history', None)),
         'game': {name: getattr(game, name) for name in GAME_VALUES},
         'color': list(game.color),
         'game_state': {**{name: getattr(game.game_state, name) for name in GAME_STATE_VALUES},
@@ -264,8 +284,8 @@ def decode_snapshot(snapshot: Any) -> dict[str, Any]:
             'fixed': fixed,
             'camera': tuple(snapshot['camera']),
             'story_flags': StoryFlags.from_save({'StoryFlags': dict(snapshot['story_flags'])}),
-            'chest_history': [None if slot is None else (str(slot[0]), _cell(slot[1]))
-                              for slot in snapshot['chest_history']],
+            'chest_history': _history(snapshot['chest_history']),
+            'door_history': None if snapshot.get('door_history') is None else _history(snapshot['door_history']),
             'game': {name: snapshot['game'][name] for name in GAME_VALUES},
             'color': tuple(int(value) for value in snapshot['color']),
             'game_state': {**{name: snapshot['game_state'][name] for name in GAME_STATE_VALUES},
@@ -299,7 +319,7 @@ def restore_snapshot(game: Any, snapshot: dict[str, Any], fade_in: bool = True) 
         if old_map.identifier in pristine_layouts() else None
     apply_layout_changes(game.layouts.map_layout_lookup, state['layout_changes'])
     game.story_flags = state['story_flags']
-    game.chest_history.slots = list(state['chest_history'])
+    _restore_histories(game, state)
     apply_options(game.game_state.config, state['options'])
     same_map = (not fade_in and old_map.identifier == state['map'] and old_tiles is not None
                 and old_tiles == state['layout_changes'].get(state['map'], [])
@@ -332,12 +352,12 @@ def _rebuild_map(game: Any, state: dict[str, Any], cut_to_black_first: bool) -> 
     game.current_map = next_map
     next_map.layout = game.layouts.map_layout_lookup[next_map.__class__.__name__]
     # These only write into the layouts what the restored layout changes have already, and set left_throne_room as
-    # it already is; the chest history is put back after apply_chest_history's InitMapData step
+    # it already is; the chest (and door) history is put back after apply_chest_history's InitMapData step
     map_mgr.apply_rainbow_bridge()
     if isinstance(next_map, CharlockB1) and game.story_flags.charlock_stairs_revealed:
         next_map.reveal_hidden_staircase()
     map_mgr.apply_chest_history()
-    game.chest_history.slots = list(state['chest_history'])
+    _restore_histories(game, state)
     map_mgr.place_princess_gwaelin()
     if game.story_flags.dragonlord_defeated:
         next_map.apply_dragonlord_defeated()
