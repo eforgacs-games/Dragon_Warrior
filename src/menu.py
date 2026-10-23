@@ -811,6 +811,8 @@ class CommandMenu:
         self.player.inventory.remove("Wings")
         self.show_text_in_dialog_box(
             self._("{} threw The Wings of the Wyvern up into the sky.").format(self.player.name))
+        # NES UseWings (LDD8F): BWScreenFlash, then DoReturn
+        bw_screen_flash(self.screen, self.game.game_state.config)
         self.return_to_tantegel()
 
     def torch(self):
