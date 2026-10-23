@@ -188,13 +188,16 @@ class TestKoreanOptionsScreen(KoreanTestCase):
         return self.drawn(draw_text)
 
     def test_options_overlay(self):
-        config = {**self.game.game_state.config, 'DIALOG_STYLE': 'Classic', 'NPCS_MAKE_WAY': True,
-                  'FADE_STYLE': 'NES', 'AUTO_STAIRS': True}
-        self.assertEqual(['설정', '대화 방식', '클래식 (NES)', 'NPC가 길 비키기', '켜기', '페이드 방식', 'NES', '계단',
-                          '밟으면 이동'], [text for text, _, _ in self.overlay_texts(config)])
-        config.update(DIALOG_STYLE='Modern', NPCS_MAKE_WAY=False, FADE_STYLE='Smooth', AUTO_STAIRS=False)
-        self.assertEqual(['설정', '대화 방식', '모던', 'NPC가 길 비키기', '끄기 (NES)', '페이드 방식', '스무스', '계단',
-                          'NES'], [text for text, _, _ in self.overlay_texts(config)])
+        config = {**self.game.game_state.config, 'TEXT_SPEED': 'Fast', 'DIALOG_STYLE': 'Classic',
+                  'NPCS_MAKE_WAY': True, 'FADE_STYLE': 'NES', 'AUTO_STAIRS': True}
+        self.assertEqual(['설정', '메시지 속도', '빠르게', '대화 방식', '클래식 (NES)', 'NPC가 길 비키기', '켜기',
+                          '페이드 방식', 'NES', '계단', '밟으면 이동'],
+                         [text for text, _, _ in self.overlay_texts(config)])
+        config.update(TEXT_SPEED='Slow', DIALOG_STYLE='Modern', NPCS_MAKE_WAY=False, FADE_STYLE='Smooth',
+                      AUTO_STAIRS=False)
+        self.assertEqual(['설정', '메시지 속도', '느리게', '대화 방식', '모던', 'NPC가 길 비키기', '끄기 (NES)',
+                          '페이드 방식', '스무스', '계단', 'NES'],
+                         [text for text, _, _ in self.overlay_texts(config)])
 
     def test_a_translated_window_draws_every_line_in_one_font(self):
         # "NES" stays in English. Picked by its own characters it was drawn in the NES font, bigger than the Korean

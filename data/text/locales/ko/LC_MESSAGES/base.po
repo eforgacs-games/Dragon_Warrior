@@ -2368,6 +2368,10 @@ msgid "OPTIONS"
 msgstr "설정"
 
 #: src/options_overlay.py
+msgid "MESSAGE SPEED"
+msgstr "메시지 속도"
+
+#: src/options_overlay.py
 msgid "DIALOG STYLE"
 msgstr "대화 방식"
 

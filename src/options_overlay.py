@@ -5,6 +5,7 @@ and only once the hero and the NPCs have finished their steps (MovementControlle
 frame stays on screen, darkened by a translucent black overlay, with one NES-style window over it (src/windows.py,
 drawn by src/translated_window.py), titled OPTIONS, with one row per setting and its current value:
 
+    MESSAGE SPEED  FAST / NORMAL / SLOW     (TEXT_SPEED, src/dialog_box.py; the NES's own setting)
     DIALOG STYLE   CLASSIC (NES) / MODERN   (DIALOG_STYLE, src/dialog_box.py)
     NPCS MAKE WAY  ON / OFF (NES)           (NPCS_MAKE_WAY, MovementController.ask_npc_to_make_way)
     FADE STYLE     NES / SMOOTH             (FADE_STYLE, src/visual_effects.py screen_fade)
@@ -16,8 +17,8 @@ is saved with the adventure log the next time the game is saved (options_from_co
 it, and the map frame is put back exactly as it was.
 
 The overlay runs its own loop, so nothing else runs while it's open: the map, the NPCs, the timers and the pop-up
-window wait, as they do for a dialog. The message speed isn't here: it is the NES's, chosen on the title menu
-(src/options_screen.py).
+window wait, as they do for a dialog. The message speed is the NES's own setting, chosen on the title menu as well
+(src/options_screen.py): it is here too, so it can be changed without going back there.
 """
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -29,7 +30,7 @@ from src.color import BLACK
 from src.common import A_BUTTON_KEYS, B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, SELECT_BUTTON_KEYS, UP_KEYS, \
     set_gettext_language
 from src.cursor import BlinkingCursor
-from src.options_screen import CLASSIC, MODERN
+from src.options_screen import CLASSIC, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN
 from src.selection import frame_events, next_frame
 from src.translated_window import draw_translated_window
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
@@ -65,18 +66,19 @@ class OptionRow:
 
 
 OPTION_ROWS = (
+    OptionRow("MESSAGE SPEED", 'TEXT_SPEED', MESSAGE_SPEED_NAMES, MESSAGE_SPEED_LABELS),
     OptionRow("DIALOG STYLE", 'DIALOG_STYLE', (CLASSIC, MODERN), ("CLASSIC (NES)", "MODERN")),
     OptionRow("NPCS MAKE WAY", 'NPCS_MAKE_WAY', (True, False), ("ON", "OFF (NES)")),
     OptionRow("FADE STYLE", 'FADE_STYLE', (FADE_STYLE_NES, FADE_STYLE_SMOOTH), ("NES", "SMOOTH")),
     OptionRow("STAIRS", 'AUTO_STAIRS', (True, False), ("STEP ON", "NES")),
 )
 
-# The window: the screen's full 16 blocks wide (the longest label and value, NPCS MAKE WAY and CLASSIC (NES), are 13
-# tiles each), 6 blocks high, between the COMMAND window's top (block row 1) and the dialog window (block row 9).
-# Laid out like the NES selection windows: the title in the top border after the corner and 3 border tiles (as
+# The window: the screen's full 16 blocks wide (the longest labels and value, MESSAGE SPEED, NPCS MAKE WAY and
+# CLASSIC (NES), are 13 tiles each), one block high per row plus a block of border at the top and bottom, from block
+# row 2. Laid out like the NES selection windows: the title in the top border after the corner and 3 border tiles (as
 # COMMAND), the rows double spaced from tile row 2, the cursor in tile column 1 and the label after it; the value
 # starts in tile column 17.
-OPTIONS_WINDOW = Window(0, 3, 16, 6)
+OPTIONS_WINDOW = Window(0, 2, 16, len(OPTION_ROWS) + 2)
 OPTIONS_TITLE = WindowText("OPTIONS", 4, 0)
 FIRST_ROW = 2
 CURSOR_COLUMN = 1
