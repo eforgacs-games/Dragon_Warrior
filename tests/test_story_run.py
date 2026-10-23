@@ -35,7 +35,7 @@ UP, DOWN, LEFT, RIGHT = Direction.UP.value, Direction.DOWN.value, Direction.LEFT
 # How each yes/no window on the way is answered (True = YES). "Dost thou wish to purchase more?" at the key shop is
 # answered by StoryRunMixin.answer.
 STORY_ANSWERS = {
-    "Magic keys! They will unlock any door.\nDost thou wish to purchase one for 85 GOLD?": True,
+    "Magic keys!\nThey will unlock any door.\nDost thou wish to purchase one for 85 GOLD?": True,
     "Will thou take me to the castle?": True,
     "Will thou tell me now of thy deeds so they won't be forgotten?": False,  # saving isn't part of this run
     "Dost thou wish to continue thy quest?": True,
@@ -115,7 +115,7 @@ class StoryRunMixin:
 
     def answer(self, _command_menu, prompt_line, yes_path_function, no_path_function, **_kwargs):
         self.prompts.append(prompt_line)
-        if prompt_line == "Here, take this key.\nDost thou wish to purchase more?":
+        if prompt_line == "Here,take this key.\nDost thou wish to purchase more?":
             # Buy keys until there are four, one for each locked door still to come plus a spare
             yes = self.player.inventory.count('Magic Key') < 4
         else:
@@ -345,7 +345,7 @@ class StoryRunMixin:
         game = self.game
         with self.step("10 (use the Rainbow Drop to build the bridge)"):
             self.travel_to('Alefgard', RAINBOW_DROP_COORDINATES)
-            self.assertEqual(self.tile(RAINBOW_BRIDGE_COORDINATES), 'WATER')
+            self.assertEqual(self.tile(RAINBOW_BRIDGE_COORDINATES), 'LEFT_RIGHT_COAST')  # water, shores on both sides
             self.cmd_menu.rainbow_drop()
             self.assertTrue(rainbow_bridge_built(game))
             self.assertEqual(self.tile(RAINBOW_BRIDGE_COORDINATES), 'BRIDGE')

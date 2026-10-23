@@ -8,7 +8,7 @@ from pygame.event import get, pump
 from data.text.dialog import confirmation_prompt
 from src.calculation import Calculation
 from src.color import BLACK, window_color
-from src.common import WHITE, Graphics, set_gettext_language
+from src.common import WHITE, Graphics, set_gettext_language, singular_or_plural
 from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACEABLE_ITEMS
 from src.cursor import IN_A
 from src.direction import Direction
@@ -29,8 +29,8 @@ from src.story_flags import StoryFlags
 from src.text import draw_text
 from src.windows import BUY_SELL_WINDOW, DIALOG_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, \
     SHOP_COST_RIGHT_TILE_COLUMN, SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
-from src.visual_effects import NES_RED, greyscale_screen, screen_fade
-from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait, wait_frames
+from src.visual_effects import NES_RED, bw_screen_flash, greyscale_screen, screen_fade
+from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait_frames
 
 NES_MAX_LEVEL = 30  # LVL_30
 
@@ -69,13 +69,17 @@ class DialogLookup:
                              "We deal in tools.\n"
                              "What can I do for thee?")
         self.directories = Directories(self.config)
-        before_reaching_thy_next_level_of_experience = _(
-            "Before reaching thy next level of experience thou must gain {} Points.")
+        # NES TextBlock13 entry 1: AMTP prints "Point" when exactly 1 is left (Bank01 DoAMTP)
+        points_to_next_level = self.player.points_to_next_level
+        before_reaching_thy_next_level_of_experience = singular_or_plural(
+            points_to_next_level,
+            _("Before reaching thy next level of experience thou must gain {} Point."),
+            _("Before reaching thy next level of experience thou must gain {} Points.")).format(points_to_next_level)
         # NES TextBlock1 entry 2: King Lorik says this instead of the experience line once DisplayedLevel is LVL_30
         thou_art_strong_enough = _("Thou art strong enough!\nWhy can thou not defeat the Dragonlord?")
         at_max_level = self.player.level == NES_MAX_LEVEL
 
-        self.magic_key_prompt = _("Magic keys! They will unlock any door.\n"
+        self.magic_key_prompt = _("Magic keys!\nThey will unlock any door.\n"
                                   "Dost thou wish to purchase one for {} GOLD?")
 
         # What each NPC says, by its NES dialog byte (NPC.dialog in the maps' NPC tables, src/npcs.py). Bytes $00-$15
@@ -138,8 +142,8 @@ class DialogLookup:
             # Tantegel: the guard at 26,15 (TextBlock5 entry 13)
             0x1E: {'dialog': _("If thy Hit Points are high enough, by all means, enter.")},
             # Tantegel: the mobile shopkeeper at 4,21 (TextBlock5 entry 14)
-            0x1F: {'dialog': _("We are merchants who have traveled much in this land. Many of our colleagues have been "
-                               "killed by servants of the Dragonlord.")},
+            0x1F: {'dialog': _("We are merchants who have traveled much in this land.\n"
+                               "Many of our colleagues have been killed by servants of the Dragonlord.")},
             # Tantegel: the mobile shopkeeper at 6,25 (TextBlock5 entry 15)
             0x20: {'dialog': _("Rumor has it that entire towns have been destroyed by the Dragonlord's servants.")},
             # Tantegel: the gate guards at 9,27 and 12,27 (TextBlock6 entry 0)
@@ -158,7 +162,7 @@ class DialogLookup:
             # The throne room: the guard at 5,6 (ThrnRmDialog2): TextBlock17 entry 0, then TextBlock6 entry 3
             0x24: {'dialog': (partial(
                 self.dialog_once_left_throne_room,
-                (_("If thou hast collected all the Treasure Chests, a key will be found."),
+                (_("If thou hast collected all the Treasure Chests,\na key will be found."),
                  _("Once used, the key will disappear, but the door will be open and thou may pass through.")),
                 (_("Listen to what people say.\nIt can be of great help."),)),)},
             # Brecconary: the fighter at 28,1 (TextBlock6 entry 4)
@@ -197,7 +201,7 @@ class DialogLookup:
             # Kol: the female villager at 12,1 (TextBlock7 entry 1)
             0x32: {'dialog': _("This bath cures rheumatism.")},
             # Kol: the fighter at 20,13 (TextBlock7 entry 2)
-            0x33: {'dialog': _("East of Hauksness there is a town, 'tis said, where one may purchase "
+            0x33: {'dialog': _("East of Hauksness there is a town, ʼtis said, where one may purchase "
                                "weapons of extraordinary quality.")},
             # Kol: the guard at 1,23 (TextBlock7 entry 3)
             0x34: {'dialog': _("Rimuldar is the place to buy keys.")},
@@ -207,7 +211,7 @@ class DialogLookup:
             0x36: {'dialog': (_("Dreadful is the South Island."),
                               _("Great strength and skill and wit only will bring thee back from that place."))},
             # Kol: the mobile guard at 12,10 (TextBlock7 entry 6)
-            0x37: {'dialog': _("Golem is afraid of the music of the flute, so 'tis said.")},
+            0x37: {'dialog': _("Golem is afraid of the music of the flute, so ʼtis said.")},
             # Kol: the mobile wizard at 20,19 (TextBlock7 entry 7)
             0x38: {'dialog': _("This is the village of Kol.")},
             # Kol: the mobile wizard at 20,8 (TextBlock7 entry 8)
@@ -241,7 +245,7 @@ class DialogLookup:
             0x46: {'dialog': _("To learn how proof may be obtained that thy ancestor was the great Erdrick, "
                                "see a man in this very town.")},
             # Cantlin: the wizard at 22,22 (TextBlock8 entry 6)
-            0x47: {'dialog': _("'Tis said that Erdrick's sword could cleave steel.")},
+            0x47: {'dialog': _("ʼTis said that Erdrick's sword could cleave steel.")},
             # Cantlin: the mobile guard at 15,6 (TextBlock8 entry 7)
             0x48: {'dialog': _("Welcome to Cantlin, the castle town.")},
             # Cantlin: the mobile female villager at 4,14 (TextBlock8 entry 8)
@@ -268,7 +272,7 @@ class DialogLookup:
             0x52: {'dialog': _("The scales of the Dragonlord are as hard as steel.")},
             # Rimuldar: the wizard at 6,13 (TextBlock9 entry 2)
             0x53: {'dialog': (_("Over the western part of this island Erdrick created a rainbow."),
-                              _("'Tis also said that he entered the darkness from a hidden entrance in "
+                              _("ʼTis also said that he entered the darkness from a hidden entrance in "
                                 "the room of the Dragonlord."))},
             # Rimuldar: the mobile guard at 8,16 (TextBlock9 entry 3)
             0x54: {'dialog': _("Thou shalt find the Stones of Sunlight in Tantegel Castle,\nif thou has not "
@@ -300,7 +304,7 @@ class DialogLookup:
             # Kol: the mobile shopkeeper at 7,19 (CheckYesNoDialog): TextBlock9 entry 14, then a yes/no window
             0x5F: {'dialog': (self.kol_hast_thou_been_to_the_southern_island,)},
             # Cantlin: the mobile guard at 5,6 (CheckYesNoDialog): TextBlock9 entry 15, then a yes/no window
-            0x60: {'dialog': (_("'Tis said that the Dragonlord hath claws that can cleave iron and fiery "
+            0x60: {'dialog': (_("ʼTis said that the Dragonlord hath claws that can cleave iron and fiery "
                                 "breath that can melt stone."),
                               self.cantlin_still_wish_to_go_on)},
             # Rimuldar: the wizard at 3,23 (CheckYesNoDialog): TextBlock10 entry 0, then a yes/no window
@@ -329,7 +333,7 @@ class DialogLookup:
             0x69: {'dialog': (self.rimuldar_fighters_ring_dialog,)},
             # Tantegel: the wizard at 20,26 (ChkMagicDialog): TextBlock11 entry 13, BWScreenFlash, MP to the max
             0x6A: {'dialog': (
-                _("{}'s coming was foretold by legend. May the light shine upon this brave warrior.").format(
+                _("{}'s coming was foretold by legend.\nMay the light shine upon this brave warrior.").format(
                     self.player.name),
                 self.flash_and_restore_mp)},
             # Cantlin: the mobile wizard at 14,28 (ErdTknDialog): TextBlock5 entry 12, then TextBlock11 entries 14 and
@@ -363,8 +367,7 @@ class DialogLookup:
                 # level 30 (LVL_30) or TextBlock13 entry 1 (GetExpRemaining) below it, then SaveDialog
                 'returned_dialog': (
                     _("I am greatly pleased that thou hast returned, {}.").format(self.player.name),
-                    thou_art_strong_enough if at_max_level else before_reaching_thy_next_level_of_experience.format(
-                        self.player.points_to_next_level),
+                    thou_art_strong_enough if at_max_level else before_reaching_thy_next_level_of_experience,
                     self.prompt_for_save,
                     self.prompt_to_continue_quest,
                 ),
@@ -373,8 +376,7 @@ class DialogLookup:
                 'load_from_save_dialog': (self._("I am glad thou hast returned.\n"
                                                  "All our hopes are riding on thee."),
                                           *((thou_art_strong_enough,) if at_max_level else (
-                                              before_reaching_thy_next_level_of_experience.format(
-                                                  self.player.points_to_next_level),
+                                              before_reaching_thy_next_level_of_experience,
                                               self._("See me again when thy level has increased."))),
                                           self.goodbye_tempt_not_the_fates.format(self.player.name)
                                           ),
@@ -383,8 +385,11 @@ class DialogLookup:
                 'post_death_dialog': (_("Death should not have taken thee, {}.").format(self.player.name),
                                       _("I will give thee another chance."),
                                       *(() if at_max_level else (
-                                          _("To reach the next level, thy Experience Points must increase by "
-                                            "{}.").format(self.player.points_to_next_level),)),
+                                          singular_or_plural(
+                                              points_to_next_level,
+                                              _("To reach the next level, thy Experience Point must increase by {}."),
+                                              _("To reach the next level, thy Experience Points must increase by {}.")
+                                          ).format(points_to_next_level),)),
                                       _("Now, go, {}!").format(self.player.name)),
                 # NES DoKingDialog (Bank03), when F_GOT_GWAELIN is set: TextBlock12 entry 9, AddInvItem
                 # (Gwaelin's Love), entries 11 and 12, then Gwaelin is put on the throne and it goes straight
@@ -494,9 +499,8 @@ class DialogLookup:
     def join_dragonlord(self):
         """NES ChooseDrgnLrd / ZeroStats: the bad ending. The Dragonlord answers (TextBlock13 entries 10 and 2),
         the player's experience, gold, items, equipment, spells and flags are all zeroed, "Thy journey is over"
-        (entry 11) is shown, the background palette switches to BadEndBGPal (everything black except the window
-        color, which turns red), the pop-up status window opens, and the game spinlocks (Spinlock3) until the
-        console is reset."""
+        (entry 11) is shown, the background palettes switch to BadEndBGPal (show_bad_ending_palette), the pop-up
+        status window opens, and the game spinlocks (Spinlock3) until the console is reset."""
         _ = self._
         self.command_menu.show_line_in_dialog_box(
             _("Then half of this world is thine, half of the darkness, and...."))
@@ -506,7 +510,7 @@ class DialogLookup:
         journey_is_over = _("Thy journey is over.\nTake now a long, long rest.\nHahahaha....")
         self.command_menu.show_line_in_dialog_box(journey_is_over, add_quotes=False, hide_arrow=True,
                                                   skip_text=True)
-        self.show_bad_ending_palette(journey_is_over)
+        self.show_bad_ending_palette()
         self.bad_ending_spinlock()
 
     def zero_stats_for_bad_ending(self):
@@ -525,19 +529,28 @@ class DialogLookup:
         self.player.update_attack_power()
         self.player.update_defense_power()
 
-    def show_bad_ending_palette(self, final_line):
-        """Approximates NES BadEndBGPal ($16 red as the window color, every other background color black):
-        the map goes black, the dialog window and the pop-up status window are redrawn in red. BadEndBGPal is loaded
-        with PrepBGPalLoad, so AddPalByte's ChkLowHPPal still applies: ZeroStats doesn't touch HitPoints, and if HP is
-        low the window color is the low HP red ($26) instead of $16."""
+    def show_bad_ending_palette(self):
+        """NES ChooseDrgnLrd (Bank03, LD515-LD52D): BadEndBGPal is loaded into the background palettes (PrepBGPalLoad),
+        then the pop-up window is shown again (Dowindow WND_POPUP). BadEndBGPal is $16 (red) for background palette 0's
+        color 1 and black for every other background color, so the windows (the COMMAND, dialog and pop-up windows)
+        turn red on black, the map goes black but for the palette 0 blocks' color 1 pixels, which turn red too
+        (DragonWarriorMap.load_bad_ending_palette), and the hero and the Dragonlord, which are sprites, keep their
+        colors. PrepBGPalLoad's AddPalByte still runs ChkLowHPPal on that color: ZeroStats doesn't touch HitPoints, so
+        if HP is low it is the low HP red ($26) instead of $16."""
         game = self.command_menu.game
         color = window_color(self.player.current_hp, self.player.max_hp)
         color = NES_RED if color == WHITE else color
         game.set_window_color(color)
-        self.screen.fill(BLACK)
-        self.command_menu.show_line_in_dialog_box(final_line, add_quotes=False, hide_arrow=True, skip_text=True,
-                                                  letter_by_letter=False)
-        game.drawer.draw_hovering_stats_window(self.screen, self.player, color)
+        current_map = game.current_map
+        current_map.load_bad_ending_palette(color)
+        drawer = game.drawer
+        if not self.config['NO_BLIT'] and drawer.background is not None:
+            drawer.draw_all_tiles_in_current_map(current_map, drawer.background)
+            drawer.handle_sprite_drawing_and_animation(current_map, game.foreground_rects, drawer.background, False)
+            self.screen.blit(drawer.background, game.camera.pos)
+            self.command_menu.redraw_command_window()
+            self.command_menu.draw_dialog_window()
+        drawer.draw_hovering_stats_window(self.screen, self.player, color)
         display.flip()
 
     def bad_ending_spinlock(self):
@@ -751,14 +764,12 @@ class DialogLookup:
                             "would save us."),
                      self._("Go now!"))
             self.bw_screen_flash()
-            self.sound.play_sound(self.directories.stairs_up_sfx)
-            wait(500)
             # Move the player onto the temple's staircase (6, 2), then out to the overworld in front of the entrance
             self.player.row = 6
             self.player.column = 2
             alefgard_map = maps.map_lookup['Alefgard'](self.config)
             alefgard_map.destination_coordinates = (116, 116)
-            self.command_menu.game.change_map(alefgard_map)
+            self.command_menu.game.change_map(alefgard_map, stairs_sound=True)
             self.player.direction_value = Direction.DOWN.value
             return
         if "Stones of Sunlight" not in self.player.inventory or "Staff of Rain" not in self.player.inventory:
@@ -772,16 +783,11 @@ class DialogLookup:
         self.player.inventory.remove("Stones of Sunlight")
         self.player.inventory.remove("Staff of Rain")
         self.player.inventory.insert(0, "Rainbow Drop")
-        greyscale_screen(self.screen, self.calculation, frames=30, no_blit=self.config['NO_BLIT'])
+        greyscale_screen(self.screen, self.config, frames=30)
 
     def bw_screen_flash(self):
-        """NES BWScreenFlash (Bank03): eight times, 2 frames in color and then 3 frames in greyscale."""
-        if self.config['NO_BLIT']:
-            return
-        for _ in range(8):
-            if not self.config['NO_WAIT']:
-                time.wait(2 * 1000 // 60)
-            greyscale_screen(self.screen, self.calculation, frames=3)
+        """NES BWScreenFlash (Bank03, LDB37): see src.visual_effects.bw_screen_flash."""
+        bw_screen_flash(self.screen, self.calculation, self.config)
 
     def rimuldar_hast_thou_found_a_magic_temple(self):
         """NES CheckYesNoDialog, dialog byte $61 (the Rimuldar wizard at NES 3,23): after the first line of TextBlock10
@@ -1053,7 +1059,7 @@ class DialogLookup:
             self.confirm(_("Is that Okay.?"),
                          yes_path_function=partial(self.complete_transaction, selected_item,
                                                    current_store_inventory, old_item_cost),
-                         no_path_function=partial(self.say, _("Oh, yes? That's too bad.")))
+                         no_path_function=partial(self.say, _("Oh, yes?\nThat's too bad.")))
         else:
             self.say(_("Sorry.\nThou hast not enough money."))
         self.confirm(_("Dost thou wish to buy anything more?"),
@@ -1214,8 +1220,8 @@ class DialogLookup:
         else:
             self.player.gold -= magic_key_cost
             self.player.inventory.append('Magic Key')
-            self.command_menu.show_popup_window()  # NES BuyKey: Dowindow WND_POPUP, then "Here, take this key."
-            self.confirm(_("Here, take this key.\nDost thou wish to purchase more?"),
+            self.command_menu.show_popup_window()  # NES BuyKey: Dowindow WND_POPUP, then "Here,take this key."
+            self.confirm(_("Here,take this key.\nDost thou wish to purchase more?"),
                          yes_path_function=partial(self.buy_magic_key, magic_key_cost),
                          no_path_function=self.magic_key_goodbye)
 

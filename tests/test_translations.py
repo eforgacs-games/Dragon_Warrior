@@ -2,19 +2,20 @@
 
 When a test here fails because of new text, run
     uv run --frozen python data/text/locales/catalog_tools.py add
-fill in the new msgstr entries at the end of data/text/locales/ko/LC_MESSAGES/base.po, then run
-    uv run --frozen python data/text/locales/catalog_tools.py compile
-and commit both base.po and base.mo. A message that really should stay English (a dev-only debug key, say) goes in
-ENGLISH_ONLY in catalog_tools.py, with the reason.
+fill in the new msgstr entries at the end of data/text/locales/ko/LC_MESSAGES/base.po and commit it. There's no
+compile step: the game compiles base.po in memory when it runs (src/catalog.py). A message that really should stay
+English (a dev-only debug key, say) goes in ENGLISH_ONLY in catalog_tools.py, with the reason.
 """
 import builtins
-import gettext
-import io
 import string
+import tempfile
+from pathlib import Path
 from unittest import TestCase
+from unittest.mock import patch
 
 from data.text.intro_lookup_table import ControlInfo
 from data.text.locales import catalog_tools
+from src import catalog
 from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.text import WRAP_LENGTH, DialogBoxWrapper
@@ -25,6 +26,20 @@ PLACEHOLDER_DROPPED = ("Return to the Inn for a rest if thou art wounded in batt
 
 def placeholder_count(text: str) -> int:
     return sum(1 for _, field, _, _ in string.Formatter().parse(text) if field is not None)
+
+
+def keep_builtin_gettext():
+    """set_gettext_language('Korean') installs _ into builtins; returns a function that puts things back."""
+    had_builtin = hasattr(builtins, '_')
+    old_builtin = getattr(builtins, '_', None)
+
+    def restore():
+        if had_builtin:
+            builtins._ = old_builtin  # type: ignore[attr-defined]
+        elif hasattr(builtins, '_'):
+            del builtins._  # type: ignore[attr-defined]
+
+    return restore
 
 
 class TestKoreanCatalog(TestCase):
@@ -45,16 +60,6 @@ class TestKoreanCatalog(TestCase):
         extracted = catalog_tools.extract_messages()
         stale = [msgid for msgid in catalog_tools.ENGLISH_ONLY if msgid not in extracted]
         self.assertFalse(stale, f"ENGLISH_ONLY lists text the game no longer has: {stale}")
-
-    def test_compiled_catalog_matches_po(self):
-        with open(catalog_tools.KOREAN_MO, 'rb') as mo_file:
-            compiled = gettext.GNUTranslations(mo_file)
-        expected = gettext.GNUTranslations(io.BytesIO(catalog_tools.mo_bytes(self.po)))
-        out_of_date = sorted(msgid for msgid in set(compiled._catalog) | set(expected._catalog)  # type: ignore
-                             if compiled._catalog.get(msgid) != expected._catalog.get(msgid))  # type: ignore
-        self.assertFalse(out_of_date, "base.mo is out of date with base.po; run "
-                                      "`uv run --frozen python data/text/locales/catalog_tools.py compile`. "
-                                      f"Differing messages: {out_of_date}")
 
     def test_gettext_calls_can_be_extracted(self):
         # _(f"...") or _("...".format(...)) is looked up after the values are filled in, so it never matches the
@@ -90,19 +95,78 @@ class TestKoreanCatalog(TestCase):
         self.assertFalse(too_long, too_long)
 
 
+class TestRuntimeCatalog(TestCase):
+    """The game compiles base.po in memory (src/catalog.py) instead of reading a committed base.mo."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.po = catalog_tools.read_po()
+        cls.korean = catalog.load_translations('ko')
+
+    def test_every_translated_message_comes_out_as_in_the_po(self):
+        wrong = [msgid for msgid, msgstr in self.po.items() if msgid and msgstr and self.korean.gettext(msgid) != msgstr]
+        self.assertFalse(wrong, f"compiled differently from base.po: {wrong}")
+
+    def test_untranslated_messages_fall_back_to_english(self):
+        untranslated = [msgid for msgid, msgstr in self.po.items() if msgid and not msgstr]
+        self.assertEqual(untranslated, [self.korean.gettext(msgid) for msgid in untranslated])
+
+    def test_placeholders_survive_compiling(self):
+        for msgid, msgstr in self.po.items():
+            if msgid and msgstr and placeholder_count(msgid):
+                with self.subTest(msgid=msgid):
+                    self.assertEqual(placeholder_count(msgstr), placeholder_count(self.korean.gettext(msgid)))
+
+    def test_header_is_read(self):
+        self.assertEqual('utf-8', self.korean.charset().lower())
+
+    def test_po_has_no_contexts_or_plurals(self):
+        # src/catalog.py reads plain msgid/msgstr entries only
+        po_text = catalog_tools.KOREAN_PO.read_text(encoding='utf-8')
+        for keyword in ('msgctxt', 'msgid_plural'):
+            with self.subTest(keyword=keyword):
+                self.assertNotIn(f'\n{keyword} ', po_text)
+
+    def test_tricky_strings_compile(self):
+        po_text = (
+            'msgid ""\nmsgstr "Content-Type: text/plain; charset=UTF-8\\n"\n\n'
+            '#: src/example.py:1\nmsgid ""\n"Line one\\n"\n"Line \\"two\\""\nmsgstr "첫 줄\\n\\"둘째\\" 줄"\n\n'
+            'msgid "{} wins."\nmsgstr "{} 승리."\n\n'
+            'msgid "Not translated yet"\nmsgstr ""\n'
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            po_file = Path(directory, 'base.po')
+            po_file.write_text(po_text, encoding='utf-8')
+            translations = catalog.compile_po(po_file)
+        self.assertEqual('첫 줄\n"둘째" 줄', translations.gettext('Line one\nLine "two"'))
+        self.assertEqual('Edward 승리.', translations.gettext('{} wins.').format('Edward'))
+        self.assertEqual('Not translated yet', translations.gettext('Not translated yet'))
+
+    def test_compiles_without_writing_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            po_file = Path(directory, 'base.po')
+            po_file.write_text('msgid ""\nmsgstr "Content-Type: text/plain; charset=UTF-8\\n"\n\n'
+                               'msgid "Hello"\nmsgstr "안녕"\n', encoding='utf-8')
+            self.assertEqual('안녕', catalog.compile_po(po_file).gettext('Hello'))
+            self.assertEqual([po_file], list(Path(directory).iterdir()))
+
+    def test_compiled_once_per_run(self):
+        restore_builtin_gettext = keep_builtin_gettext()
+        self.addCleanup(restore_builtin_gettext)
+        catalog.load_translations.cache_clear()
+        with patch('src.catalog.read_po', wraps=catalog.read_po) as read_po:
+            for _ in range(3):
+                set_gettext_language('Korean')
+            catalog.load_translations('ko')
+        self.assertEqual(1, read_po.call_count)
+        self.assertIs(catalog.load_translations('ko'), catalog.load_translations('ko'))
+
+
 class TestKoreanText(TestCase):
 
     def setUp(self):
-        # set_gettext_language('Korean') installs _ into builtins; put things back afterwards
-        self.had_builtin = hasattr(builtins, '_')
-        self.old_builtin = getattr(builtins, '_', None)
+        self.addCleanup(keep_builtin_gettext())
         self._ = set_gettext_language('Korean')
-
-    def tearDown(self):
-        if self.had_builtin:
-            builtins._ = self.old_builtin  # type: ignore[attr-defined]
-        elif hasattr(builtins, '_'):
-            del builtins._  # type: ignore[attr-defined]
 
     def test_spot_check_translations(self):
         _ = self._
@@ -114,7 +178,7 @@ class TestKoreanText(TestCase):
         self.assertEqual("저는 로릭 왕의 딸 로라입니다.", _("I am Gwaelin, daughter of Lorik."))
         self.assertEqual("몸에 저주가 걸려 있다.", _("A curse is upon thy body."))
         self.assertEqual("성채 도시 메르키드에 오신 것을 환영합니다.", _("Welcome to Cantlin, the castle town."))
-        self.assertEqual("Edward은/는 비밀 통로를 발견했다!", _("{} discovers the Secret Passage.").format("Edward"))
+        self.assertEqual("Edward는 비밀 통로를 발견했다!", _("{} discovers the Secret Passage.").format("Edward"))
         self.assertEqual("남쪽으로 3, 그리고..", _("{} to the south and..").format(3))
         self.assertEqual("게임이 2배속으로 설정되었습니다.\n(120 FPS)",
                          _("Game set to {}x speed.\n({} FPS)").format(2, 120))

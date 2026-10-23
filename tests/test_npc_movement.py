@@ -25,7 +25,8 @@ NES_BLOCK_IDS = {
     'MOUNTAINS': 0x12, 'WEAPON_SIGN': 0x13, 'INN_SIGN': 0x14,
     **{coast: 0x18 for coast in ('BOTTOM_COAST', 'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST', 'TOP_COAST',
                                  'TOP_RIGHT_COAST', 'RIGHT_COAST', 'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST',
-                                 'BOTTOM_TOP_RIGHT_COAST')},
+                                 'BOTTOM_TOP_RIGHT_COAST', 'LEFT_RIGHT_COAST', 'BOTTOM_TOP_COAST',
+                                 'TOP_LEFT_RIGHT_COAST')},
 }
 BLK_FFIELD = 0x0D
 
