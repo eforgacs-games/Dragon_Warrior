@@ -57,7 +57,7 @@ from src.title_menu import TitleMenu
 from src.waiting import SPEED_KEYS, FramePacer, clear_events_keeping_quit, game_speed, reset_game_speed, set_game_speed
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
-from src.visual_effects import flash_transparent_color
+from src.visual_effects import flash_transparent_color, force_field_flash
 from src.waiting import quit_if_requested, wait
 from src.windows import COMMAND_WINDOW
 
@@ -66,6 +66,9 @@ from src.windows import COMMAND_WINDOW
 
 # NES DoJoyUp etc. (Bank00) only start a step when FrameCounter & $0F is 0. A step is 16 frames long too.
 STEP_SYNC_FRAMES = 16
+# NES ChkBlkSand (Bank03, LCE0A): a step onto a hill block is followed by three WaitForNMI, with nothing moving, before
+# the step's fight roll
+HILL_PAUSE_FRAMES = 3
 
 # NES CheckInputs (Bank03) checks up, then down, then left, then right
 DIRECTION_KEYS = ((Direction.UP.value, (K_UP, K_w)), (Direction.DOWN.value, (K_DOWN, K_s)),
@@ -136,6 +139,8 @@ class Game:
         # ends on it
         self.idle_update = False
         self.step_ends = False
+        # Frames left of the pause after a step onto a hill (HILL_PAUSE_FRAMES, see hill_pause_frame)
+        self.hill_pause_frames = 0
         # NPCS_MAKE_WAY: the roaming NPC the hero just bumped into, and the hero's direction (see ask_npc_to_make_way)
         self.npc_asked_to_make_way = None
 
@@ -288,6 +293,10 @@ class Game:
 
     def map_frame(self) -> None:
         """One frame on the map (one NES frame): the hero, fights, the NPCs and what the step leads to."""
+        if self.hill_pause_frames:
+            self.hill_pause_frame()
+            event.pump()
+            return
         self._handle_player_movement()
         self.handle_battles()
         if not self.player.is_moving:
@@ -426,8 +435,19 @@ class Game:
         everything that moves) doesn't run at all until they close.
         This is the one place movement is gated, rather than relying on the GameState flags alone, because those
         are turned back on in many places (e.g. every menu command ends with unpause_all_movement).
+        It's also frozen while RADIANT's or a torch's light grows (light_growing).
         """
-        return self.paused or self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled()
+        return (self.paused or self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled()
+                or self.light_growing)
+
+    @property
+    def light_growing(self) -> bool:
+        """Whether RADIANT's or a torch's light is still growing. NES LightIncreaseLoop (DoSpell, Bank03, about 24
+        frames: a PostMoveUpdate of LIGHT_REDRAW_FRAMES for each 2 blocks) and UseTorch redraw the light before they
+        return, with the NPCs still stopped, so nothing reads the joypad and nothing moves until it's done (#307).
+        Drawer.handle_darkness advances the light, and only runs while the darkness is drawn."""
+        return (bool(self.game_state.pending_light_redraws) and self.current_map.is_dark
+                and self.game_state.config['ENABLE_DARKNESS'])
 
     @property
     def freeze_pending(self) -> bool:
@@ -632,16 +652,34 @@ class Game:
             self.handle_environment_damage(tile)
             if self.player.current_hp <= 0:
                 return
-            group = encounter_group(self.current_map.identifier, column, row)
-            if group is None:
+            if tile == 'HILLS':
+                # NES ChkBlkSand: the fight roll waits for the hill's pause (hill_pause_frame)
+                self.hill_pause_frames = HILL_PAUSE_FRAMES
                 return
-            self.last_zone = group
-            enemies_in_current_zone = ENEMY_GROUPS[group] if self.game_state.config["FORCE_BATTLE"] else \
-                roll_encounter(self.current_map.identifier, tile, column, row)
-            if enemies_in_current_zone is not None and not self.game_state.config["NO_BATTLES"]:
-                self.battle_ctrl.run_battle(enemies_in_current_zone)
-            self.battle_ctrl.battle_menu_row = 0
-            self.battle_ctrl.battle_menu_column = 0
+            self.roll_for_fight(column, row, tile)
+
+    def hill_pause_frame(self) -> None:
+        """One of the HILL_PAUSE_FRAMES frames NES ChkBlkSand waits after a step onto a hill (three WaitForNMI). Nothing
+        moves and nothing animates (no DoSprites), and FrameCounter stays at the 0 the step left it at, as
+        JoypadCheckLoop resets it afterwards anyway. The step's fight roll (ChkSandFight) comes after the last one."""
+        self.hill_pause_frames -= 1
+        if self.hill_pause_frames:
+            return
+        column, row = self.player.rect.x // self.tile_size, self.player.rect.y // self.tile_size
+        self.roll_for_fight(column, row, get_tile_id_by_coordinates(column, row, self.current_map))
+
+    def roll_for_fight(self, column: int, row: int, tile: str | None) -> None:
+        """NES CheckBlockDmg's fight roll for the block the hero has just stepped onto, and the fight if it starts."""
+        group = encounter_group(self.current_map.identifier, column, row)
+        if group is None:
+            return
+        self.last_zone = group
+        enemies_in_current_zone = ENEMY_GROUPS[group] if self.game_state.config["FORCE_BATTLE"] else \
+            roll_encounter(self.current_map.identifier, tile, column, row)
+        if enemies_in_current_zone is not None and not self.game_state.config["NO_BATTLES"]:
+            self.battle_ctrl.run_battle(enemies_in_current_zone)
+        self.battle_ctrl.battle_menu_row = 0
+        self.battle_ctrl.battle_menu_column = 0
 
     def receive_damage(self, attack_damage):
         # God mode or invulnerable: take no damage
@@ -743,11 +781,11 @@ class Game:
                         self.damage_step(damage_amount=2)
                 elif tile == 'BARRIER':
                     if not self.player.received_environment_damage:
-                        self.damage_step(damage_amount=15)
+                        self.damage_step(damage_amount=15, force_field=True)
             else:
                 self.player.received_environment_damage = False
 
-    def damage_step(self, damage_amount):
+    def damage_step(self, damage_amount, force_field=False):
         # God mode or invulnerable: take no damage
         if self.player.god_mode or self.invulnerable:
             return
@@ -755,7 +793,12 @@ class Game:
         self.player.current_hp = max(self.player.current_hp - damage_amount, 0)
         self.sound.play_sound(self.directories.swamp_sfx)
         self.player.received_environment_damage = True
-        flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
+        if force_field:
+            # NES force field damage (LCE30): the screen flashes red three times
+            force_field_flash(RED, self.screen, self.game_state.config)
+        else:
+            # NES DoSwampDamage: one red flash
+            flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
         # NES DoSwampDamage and the force field damage: RedFlashScreen, then LoadRegBGPal with the new HP
         self.load_window_palette()
         self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
@@ -812,9 +855,9 @@ class Game:
             # Start button
             if self.paused:
                 self.paused = False
-            elif not (self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled()):
-                # NES CheckInputs: START only pauses from the map, not while a window is up. The hero finishes the
-                # step under way first (resolve_pending_freezes).
+            elif not (self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled() or self.light_growing):
+                # NES CheckInputs: START only pauses from the map, not while a window is up or the light grows. The
+                # hero finishes the step under way first (resolve_pending_freezes).
                 self.pause_requested = True
                 self.cmd_menu_requested = False
                 self.resolve_pending_freezes()
