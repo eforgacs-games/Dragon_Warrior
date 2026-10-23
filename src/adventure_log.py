@@ -20,9 +20,6 @@ The window data puts the first line at:
 - in the line, the left border on column 6, a blank (the cursor) on 7, "ADVENTURE LOG n" on columns 8-22, ":" on 23
   and the 4 name letters on 24-27, then a blank on 28 and the right border on 29 (24 tiles wide, $18).
 """
-import json
-import os
-import re
 from dataclasses import dataclass
 from typing import List
 
@@ -31,6 +28,7 @@ from pygame.font import Font
 
 from src.color import WHITE
 from src.directories import Directories
+from src.save_file import log_number_of_path, read_save_name
 from src.text import blit_text_to_screen, set_font_by_ascii_chars
 from src.windows import ADVENTURE_LOG_WINDOW_2
 
@@ -45,44 +43,10 @@ LOG_ROW_SPACING = 2
 LOG_NUMBER_COLUMN = ADVENTURE_LOG_WINDOW_2.x * 2 + 16
 LOG_NAME_COLUMN = LOG_NUMBER_COLUMN + 2
 
-SAVE_SLOT_PATTERN = re.compile(r'save_slot_(\d+)\.json$')
-# The NES has three adventure logs (reference/sram-doc.txt), numbered 1 to 3 on screen
-ADVENTURE_LOGS = (1, 2, 3)
-
-
-def first_open_log(save_dir: str) -> int | None:
-    """ShowOpenLogs: the lowest adventure log with no save in save_dir, or None if all three are used."""
-    for log in ADVENTURE_LOGS:
-        if not os.path.exists(os.path.join(save_dir, f'save_slot_{log}.json')):
-            return log
-    return None
-
-
-def logs_named(save_dir: str, name: str) -> List[int]:
-    """The adventure logs in save_dir whose hero is called name (the save's 'Name', as Game.load_game reads it). A
-    save that can't be read matches no name."""
-    return [log for log in ADVENTURE_LOGS if read_save_name(os.path.join(save_dir, f'save_slot_{log}.json')) == name]
-
 
 def log_name_tiles(name: str) -> str:
     """The 4 letters WndLwr4Saved shows: the start of the name, padded with blank tiles if it's shorter."""
     return name[:LOG_NAME_LENGTH].ljust(LOG_NAME_LENGTH)
-
-
-def read_save_name(save_path: str) -> str | None:
-    """The hero's name in a save file, or None if there is no readable save there."""
-    try:
-        with open(save_path) as save_file:
-            name = json.load(save_file).get('Name')
-    except (OSError, ValueError, AttributeError):
-        return None
-    return name if isinstance(name, str) else None
-
-
-def save_slot_number(save_path: str) -> int | None:
-    """The adventure log number of a save_slot_<n>.json file, or None for any other file."""
-    match = SAVE_SLOT_PATTERN.search(os.path.basename(save_path))
-    return int(match.group(1)) if match else None
 
 
 @dataclass(frozen=True)
@@ -103,7 +67,7 @@ def adventure_log_overlay_texts(save_path: str, line: int = 0, screenshot_log_nu
         return []
     row = FIRST_LOG_ROW + line * LOG_ROW_SPACING
     texts = []
-    slot = save_slot_number(save_path)
+    slot = log_number_of_path(save_path)
     if slot is not None and slot != screenshot_log_number:
         texts.append(OverlayText(str(slot), LOG_NUMBER_COLUMN, row))
     texts.append(OverlayText(log_name_tiles(name), LOG_NAME_COLUMN, row))
