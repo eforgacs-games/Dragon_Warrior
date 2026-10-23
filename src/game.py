@@ -34,7 +34,7 @@ from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
 from src.guardians import guardian_at
 from src.intro import Intro
-from src.items import TreasureChestHistory
+from src.items import OpenDoorHistory, TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import BATTLE_LINE, CommandMenu
@@ -110,6 +110,7 @@ class Game:
         # NES MjArmrHP: counts steps taken in Magic Armor; every 4th one heals 1 HP (see armor_step_heal)
         self.magic_armor_steps = 0
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
+        self.door_history = OpenDoorHistory()  # which locked doors have been opened since the last overworld visit
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
@@ -897,7 +898,7 @@ class Game:
         """Continue a saved game (see CommandMenu.save for what is kept).
 
         NES LoadSavedData (Bank03) restores the hero and the ModsnSpells, PlayerFlags and StoryFlags bytes as they
-        were saved. MainGameEngine then clears the treasure chest history, and StartAtThroneRoom clears the repel
+        were saved. MainGameEngine then clears the treasure chest and door histories, and StartAtThroneRoom clears the repel
         timer, gives a cursed hero 1 HP and loads the starting map, whose InitMapData applies the story flags (the
         throne room chests are gone once F_LEFT_THROOM is set). The NES always starts in the throne room; this game
         starts where the save was made, which is always beside King Lorik.
@@ -913,6 +914,7 @@ class Game:
         # saves: NORMAL, CLASSIC, ON
         apply_options(self.game_state.config, save.options)
         self.chest_history = TreasureChestHistory()
+        self.door_history = OpenDoorHistory()
         self.repel_timer = 0
         if self.player.is_cursed:
             # NES StartAtThroneRoom (LCB6B): a cursed hero always starts with 1 HP

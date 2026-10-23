@@ -1647,11 +1647,13 @@ class CommandMenu:
         """
         if self.player.next_tile_id == 'DOOR':
             if 'Magic Key' in self.player.inventory:
-                # actually open the door
+                # NES UseKey: the key is used up first. The door is recorded in the door history (which locks it
+                # again when the hero next goes out to the overworld); with all 8 slots in use, nothing opens
                 self.player.inventory.remove('Magic Key')
-                self.set_tile_by_coordinates('BRICK', self.player.next_coordinates[1], self.player.next_coordinates[0],
-                                             self.player)
-                self.sound.play_sound(self.directories.open_door_sfx)
+                row, column = self.player.next_coordinates
+                if self.game.door_history.record(self.map_name, (row, column)):
+                    self.sound.play_sound(self.directories.open_door_sfx)  # SFX_DOOR, then ModMapBlock
+                    self.set_tile_by_coordinates('BRICK', column, row, self.player)
             else:
                 self.show_text_in_dialog_box(self._("Thou hast not a key to use."), skip_text=self.skip_text)
         else:
