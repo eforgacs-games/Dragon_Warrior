@@ -20,6 +20,8 @@ datas = [
 # The translations (the game compiles each .po in memory, src/catalog.py); the .pot and the catalog tools stay out
 for po_file in glob(join(ROOT, 'data', 'text', 'locales', '*', 'LC_MESSAGES', '*.po')):
     datas.append((po_file, dirname(po_file[len(ROOT):].lstrip('/\\'))))
+# The game's version, for the crash log (src/crash_log.py game_version)
+datas.append((join(ROOT, 'pyproject.toml'), '.'))
 
 a = Analysis(  # noqa: F821
     [join(ROOT, 'src', 'game.py')],
