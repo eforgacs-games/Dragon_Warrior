@@ -105,3 +105,20 @@ class TestDialogLookup(TestCase):
                 patch('data.text.dialog_lookup_table.screen_fade'):
             self.dialog_lookup.check_stay_at_inn(6)
         self.assertEqual(player.gold, 94)
+
+    def test_closing_the_window_in_a_selection_window_quits_the_game(self):
+        # It used to call the builtin quit(), which exits without pygame.quit() (and isn't there in every Python)
+        from src.windows import SHOP_INVENTORY_WINDOW
+        with patch('data.text.dialog_lookup_table.get', side_effect=[[pygame.event.Event(QUIT)]]), \
+                patch('data.text.dialog_lookup_table.display'), \
+                patch.object(self.dialog_lookup.command_menu, 'window_drop_down_effect'), \
+                patch('src.waiting.pygame_quit') as pygame_quit, self.assertRaises(SystemExit):
+            self.dialog_lookup.select_in_window(SHOP_INVENTORY_WINDOW, 2, lambda: None, 2)
+        pygame_quit.assert_called_once()
+
+    def test_closing_the_window_after_the_bad_ending_quits_the_game(self):
+        with patch('data.text.dialog_lookup_table.get', side_effect=[[pygame.event.Event(QUIT)]]), \
+                patch('data.text.dialog_lookup_table.time.wait'), \
+                patch('src.waiting.pygame_quit') as pygame_quit, self.assertRaises(SystemExit):
+            self.dialog_lookup.bad_ending_spinlock()
+        pygame_quit.assert_called_once()

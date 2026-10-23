@@ -2,7 +2,7 @@ import random
 from functools import partial
 from typing import Callable
 
-from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect, QUIT
+from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect
 from pygame.event import get, pump
 
 from data.text.dialog import confirmation_prompt
@@ -605,8 +605,7 @@ class DialogLookup:
         equivalent."""
         while True:
             for current_event in get():
-                if current_event.type == QUIT:
-                    quit()
+                quit_if_requested(current_event)
             pump()
             time.wait(16)
 
@@ -1016,6 +1015,7 @@ class DialogLookup:
         while True:
             draw(cursor.visible())
             for current_event in get():
+                quit_if_requested(current_event)
                 if current_event.type == KEYDOWN:
                     if current_event.key in (K_DOWN, K_s) and current_index < number_of_entries - 1:
                         current_index += 1
@@ -1035,8 +1035,6 @@ class DialogLookup:
                         self.sound.play_sound(self.directories.menu_button_sfx)
                         self.command_menu.remove_window(window)
                         return current_index
-                elif current_event.type == QUIT:
-                    quit()
             pump()
 
     def draw_window_background(self, window: Window) -> None:
