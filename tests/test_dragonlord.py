@@ -117,6 +117,7 @@ def fake_battle(name, hp):
     battle = Mock()
     battle.enemy = Mock(hp=hp)
     battle.enemy.name = name
+    battle.enemy_fled = False
     return battle
 
 

@@ -37,7 +37,7 @@ from src.intro import Intro
 from src.items import TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
-from src.menu import CommandMenu
+from src.menu import BATTLE_LINE, CommandMenu
 from src.movement import HILL_PAUSE_FRAMES, STEP_SYNC_FRAMES, MovementController
 from src.music_player import MusicPlayer
 from src.npc_movement import step
@@ -554,8 +554,8 @@ class Game:
         # NES TextBlock16 entry 10: "Thy Hit" + PLRL, which adds an "s" unless the damage is 1 (Bank01 DoPLRL)
         damage_line = singular_or_plural(attack_damage, self._("Thy Hit decreased by {}.\n"),
                                          self._("Thy Hits decreased by {}.\n")).format(attack_damage)
-        self.cmd_menu.show_line_in_dialog_box(damage_line, add_quotes=False, disable_sound=True, hide_arrow=True,
-                                              skip_text=True if self.player.current_hp == 0 else False)
+        # It ends with no WAIT: PlayerHit goes on to the pop-up and the next player turn (or the death music) at once
+        self.cmd_menu.show_line_in_dialog_box(damage_line, **BATTLE_LINE)
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
 
     def set_player_images_by_equipment(self):

@@ -707,6 +707,7 @@ class TestRunBattle(unittest.TestCase):
     def test_running_away_skips_victory(self, mock_battle_class):
         battle = mock_battle_class.return_value
         battle.enemy.hp = 3
+        battle.enemy_fled = False  # the hero ran: an enemy that runs resumes the music itself (enemy_run_away)
         with patch.object(self.controller, 'handle_battle_prompts', return_value=True):
             self.controller.run_battle(['Slime'])
         battle.enemy_defeated.assert_not_called()
@@ -890,8 +891,11 @@ class TestEnemyRunAway(unittest.TestCase):
         self.assertEqual(self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0], 'The Slime is running away.')
         self.battle.make_enemy_image_disappear.assert_called_once_with(self.game.screen)
         self.assertTrue(self.battle.enemy_fled)
-        # the map's music is resumed by fight_enemy once the fight is over
-        self.game.music_player.load_and_play_music.assert_not_called()
+        # NES CheckEnRun: TB15E3 has no WAIT; the map's music comes back (ResumeMusicTbl), then ExitFight waits for a
+        # new press (#381)
+        self.assertEqual(self.game.cmd_menu.show_line_in_dialog_box.call_args.kwargs['skip_text'], True)
+        self.game.music_player.load_and_play_music.assert_called_once_with(self.game.current_map.music_file_path)
+        self.game.cmd_menu.wait_for_button.assert_called_once_with(shows_arrow=False)
 
 
 class TestHeroAttack(unittest.TestCase):
@@ -950,7 +954,8 @@ class TestHeroAttack(unittest.TestCase):
         with patch('src.battle_controller.random.random', return_value=0.5):
             self.controller.hero_attack(self.battle)
         self.game.cmd_menu.show_line_in_dialog_box.assert_called_with(
-            "The Slime's Hit Point have been reduced by 1.\n", add_quotes=False, disable_sound=True, hide_arrow=True)
+            "The Slime's Hit Point have been reduced by 1.\n", add_quotes=False, disable_sound=True, hide_arrow=True,
+            skip_text=True)
 
     def test_miss_does_not_flash_enemy(self):
         self.battle.calculate_attack_damage.return_value = 0
