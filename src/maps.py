@@ -1,7 +1,7 @@
 import inspect
 import sys
 from abc import ABC
-from typing import Callable, Dict
+from collections.abc import Callable
 
 from pygame import surface
 from pygame.sprite import Group, LayeredDirty
@@ -108,11 +108,11 @@ class DragonWarriorMap:
         # Whether background palette 0's color 1 is the low HP red (set_low_hp_palette), and the red tiles, made the
         # first time they're needed.
         self.low_hp_palette = False
-        self._low_hp_tile_images: Dict[str, surface.Surface] = {}
-        self._composed_tile_images: Dict[str, surface.Surface] = {}
+        self._low_hp_tile_images: dict[str, surface.Surface] = {}
+        self._composed_tile_images: dict[str, surface.Surface] = {}
         # The window color once the bad ending's BadEndBGPal is loaded (load_bad_ending_palette), and its tiles
         self.bad_ending_window_color: tuple[int, int, int] | None = None
-        self._bad_ending_tile_images: Dict[str, surface.Surface] = {}
+        self._bad_ending_tile_images: dict[str, surface.Surface] = {}
 
         # Tile Key:
         # Index values for the map tiles corresponding to location on tile sheet.
@@ -243,7 +243,7 @@ class DragonWarriorMap:
         # (DialogLookup.remove_npc)
         for slot, roaming_character in enumerate(self.roaming_characters):
             roaming_character.slot = slot
-        hero_coords = destination_coordinates if destination_coordinates else self.initial_coordinates
+        hero_coords = destination_coordinates or self.initial_coordinates
         if hero_coords:
             hero_row, hero_col = hero_coords
             self.center_pt = get_center_point(hero_col, hero_row, tile_size=tile_size)
@@ -1343,6 +1343,6 @@ class MagicTemple(DragonWarriorMap):
 
 
 # Lookup of all map names with their associated class
-map_lookup: Dict[str, Callable[..., DragonWarriorMap]] = {
+map_lookup: dict[str, Callable[..., DragonWarriorMap]] = {
     map_name: map_class for map_name, map_class in inspect.getmembers(sys.modules[__name__], inspect.isclass)
     if issubclass(map_class, DragonWarriorMap)}

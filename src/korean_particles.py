@@ -23,7 +23,8 @@ How the end of a word is read:
   correctly.
 """
 import string
-from typing import Any, Mapping, Sequence
+from typing import Any
+from collections.abc import Mapping, Sequence
 
 HANGUL_FIRST = 0xAC00  # 가
 HANGUL_LAST = 0xD7A3  # 힣

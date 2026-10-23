@@ -6,7 +6,7 @@ or ContChngErsDat (all three). BEGIN A NEW QUEST opens the open logs window over
 QUEST the used logs window (LogList??Dat2), with the title menu's arrow held on its entry behind them.
 """
 import re
-from typing import Sequence
+from collections.abc import Sequence
 
 from pygame import Surface
 
