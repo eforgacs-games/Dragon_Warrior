@@ -1125,6 +1125,7 @@ class CommandMenu:
                             self.player.direction_value)
                         character_dict['character'].animate()
                         character_dict['character'].pause()
+                        self.show_character_now(character_dict['character'])
                     self.launch_dialog(character_identifier, self.current_map)
                     break
         else:
@@ -1133,6 +1134,23 @@ class CommandMenu:
 
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
+
+    def show_character_now(self, character) -> None:
+        """Draw a character's current image on the screen at once. NES PrepTalk calls NPCFacePlayer (LC04A) before the
+        dialog: it writes the NPC's new sprite tiles straight into sprite RAM, so the NPC is seen facing the hero from
+        the next frame, before the first letter. Drawing it is otherwise left to the next draw_all, after the talk."""
+        if self.game.game_state.config['NO_BLIT'] or self.current_map.is_hidden_by_cover(character.row,
+                                                                                          character.column):
+            return
+        tiles: Group = Group()
+        for tile_dict in self.current_map.floor_tile_key.values():
+            for tile in tile_dict.get('group') or ():
+                if tile.rect.colliderect(character.rect):
+                    tiles.add(tile)
+        tiles.draw(self.background)  # the old image off the block first: the sprites are see-through
+        self.background.blit(character.image, character.rect)
+        display.update(self.screen.blit(self.background, character.rect.move(self.camera_position),
+                                        area=character.rect))
 
     def check_across_from_npc(self):
         character_coordinates = [(character_dict['character'].row, character_dict['character'].column) for
