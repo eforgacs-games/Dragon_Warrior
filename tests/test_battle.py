@@ -233,8 +233,9 @@ class TestBattleMethods(unittest.TestCase):
         with patch.object(self.battle, 'transition_battle_background_image_effect'), \
                 patch('src.translated_window.draw_window') as draw_window:
             self.battle.display_battle_window(Mock(), drawer, cmd_menu, Mock(), Mock(), (255, 255, 255), Mock())
-        # The command window opens with the cursor on FIGHT
-        self.assertEqual(0, draw_window.call_args.kwargs['cursor_index'])
+        # The command window isn't opened yet: the first player turn opens it, so it isn't there if the enemy
+        # attacks first (#310)
+        draw_window.assert_not_called()
         drawer.fade_in_enemy.assert_called_once()
         self.assertEqual(drawer.fade_in_enemy.call_args.args[1], 'Slime')
         self.assertEqual(order, ['fade', 'text'])
