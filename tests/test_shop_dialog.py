@@ -309,30 +309,30 @@ class TestShopkeeperPlacement(ShopDialogTestCase):
         shops = self.dialog_lookup.shop_inventories
         self.assert_shop(Kol, 'Kol', (29, 24), 'tool_shop', shops.kol_item_store_inventory)
         self.assert_shop(Brecconary, 'Brecconary', (33, 35), 'tool_shop', shops.brecconary_item_store_inventory)
-        self.assert_shop(Garinham, 'Garinham', (11, 14), 'tool_shop', shops.garinham_item_store_inventory)
-        self.assert_shop(Cantlin, 'Cantlin', (15, 2), 'tool_shop', shops.cantlin_item_store_1_inventory)
-        self.assert_shop(Cantlin, 'Cantlin', (20, 7), 'tool_shop', shops.cantlin_item_store_2_inventory)
+        self.assert_shop(Garinham, 'Garinham', (12, 14), 'tool_shop', shops.garinham_item_store_inventory)
+        self.assert_shop(Cantlin, 'Cantlin', (15, 3), 'tool_shop', shops.cantlin_item_store_1_inventory)
+        self.assert_shop(Cantlin, 'Cantlin', (20, 8), 'tool_shop', shops.cantlin_item_store_2_inventory)
 
     def test_weapon_shops(self):
         shops = self.dialog_lookup.shop_inventories
         self.assert_shop(Kol, 'Kol', (20, 32), 'check_buy_weapons_armor', shops.kol_weapons_store_inventory)
         self.assert_shop(Rimuldar, 'Rimuldar', (15, 31), 'check_buy_weapons_armor',
                          shops.rimuldar_weapons_store_inventory)
-        self.assert_shop(Cantlin, 'Cantlin', (13, 22), 'check_buy_weapons_armor',
+        self.assert_shop(Cantlin, 'Cantlin', (13, 23), 'check_buy_weapons_armor',
                          shops.cantlin_weapons_store_north_inventory)
-        self.assert_shop(Cantlin, 'Cantlin', (34, 27), 'check_buy_weapons_armor',
+        self.assert_shop(Cantlin, 'Cantlin', (34, 28), 'check_buy_weapons_armor',
                          shops.cantlin_weapons_store_south_inventory)
-        self.assert_shop(Cantlin, 'Cantlin', (20, 24), 'check_buy_weapons_armor',
+        self.assert_shop(Cantlin, 'Cantlin', (20, 25), 'check_buy_weapons_armor',
                          shops.cantlin_weapons_store_3_inventory)
 
     def test_key_shops(self):
         self.assertEqual(KEY_COSTS, {'Cantlin': 98, 'Rimuldar': 53, 'TantegelCourtyard': 85})
         self.assert_shop(Rimuldar, 'Rimuldar', (15, 12), 'check_buy_magic_keys', 53)
-        self.assert_shop(Cantlin, 'Cantlin', (14, 27), 'check_buy_magic_keys', 98)
+        self.assert_shop(Cantlin, 'Cantlin', (14, 28), 'check_buy_magic_keys', 98)
 
     def test_fairy_water_shops(self):
         self.assert_shop(Brecconary, 'Brecconary', (12, 34), 'fairy_water_shop')
-        self.assert_shop(Cantlin, 'Cantlin', (21, 22), 'fairy_water_shop')
+        self.assert_shop(Cantlin, 'Cantlin', (21, 23), 'fairy_water_shop')
 
 
 class TestTextMenu(ShopDialogTestCase):

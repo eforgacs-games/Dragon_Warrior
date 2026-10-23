@@ -14,7 +14,7 @@ from src.maps import Cantlin
 from tests.test_shop_dialog import npc_identifiers
 
 # NES CantMobTbl and CantStatTbl (Bank00): (graphic, X, Y, dialog byte, mobile). Cantlin is offset so that the NES
-# NPC at X,Y is at (Y + 8, X) on this map.
+# NPC at X,Y is at (Y + 8, X + 1) on this map.
 CANTLIN_NPCS = (
     ('MAN', 20, 15, 0x4B, True),
     ('GUARD', 5, 6, 0x60, True),
@@ -55,7 +55,7 @@ CANTLIN_TEXT = {
 
 
 def nes_to_map(x, y):
-    return y + 8, x
+    return y + 8, x + 1
 
 
 class TestCantlinDialog(TestCase):

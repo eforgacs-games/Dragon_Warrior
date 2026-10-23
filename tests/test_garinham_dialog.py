@@ -15,7 +15,7 @@ from src.maps import Garinham
 from tests.test_shop_dialog import npc_identifiers
 
 # NES GarMobTbl and GarStatTbl (Bank00): (graphic, X, Y, dialog byte, mobile). Garinham is offset so that the NES
-# NPC at X,Y is at (Y, X + 9) on this map. The NES fighter is this game's SOLDIER.
+# NPC at X,Y is at (Y + 1, X + 9) on this map. The NES fighter is this game's SOLDIER.
 GARINHAM_NPCS = (
     ('WOMAN', 12, 4, 0x3E, True),
     ('WOMAN', 12, 12, 0x43, True),
@@ -51,7 +51,7 @@ GARINHAM_TEXT = {
 
 
 def nes_to_map(x, y):
-    return y, x + 9
+    return y + 1, x + 9
 
 
 class TestGarinhamDialog(TestCase):

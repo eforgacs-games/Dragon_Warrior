@@ -29,7 +29,7 @@ KEY_ITEMS = ("Silver Harp", "Stones of Sunlight", "Staff of Rain", "Erdrick's To
 # What each checkpoint promises: map, (row, column), facing, the story flags that are set, and the key items carried.
 EXPECTED = {
     'throne_room': ('TantegelThroneRoom', (10, 13), None, set(), set()),
-    'garins_grave': ('Garinham', (1, 28), UP, {'left_throne_room'}, {'Stones of Sunlight'}),
+    'garins_grave': ('Garinham', (2, 28), UP, {'left_throne_room'}, {'Stones of Sunlight'}),
     'swamp_cave': ('Alefgard', (56, 110), RIGHT, {'left_throne_room'}, {'Stones of Sunlight', 'Silver Harp'}),
     'rainbow_drop_shrine': ('MagicTemple', (7, 5), RIGHT,
                             {'left_throne_room', 'gwaelin_returned', 'green_dragon_defeated'},
@@ -164,7 +164,7 @@ class TestCheckpoints(story_run.TestStoryRun):
 
     def test_garins_grave(self):
         self.check('garins_grave')
-        self.take_stairs((0, 28))
+        self.take_stairs((1, 28))
         self.assertEqual(self.where, ('GarinsGraveB1', (12, 7)))
 
     def test_swamp_cave(self):
@@ -258,7 +258,7 @@ class TestDebugTools(story_run.TestStoryRun):
                 self.assertNotEqual(self.player.current_tile, 'WALL')
 
     def test_warp_lands_at_the_overworld_entrance(self):
-        self.assertEqual(self.tools.entrance('Garinham'), (14, 9))
+        self.assertEqual(self.tools.entrance('Garinham'), (15, 9))
         self.assertEqual(self.tools.entrance('Rimuldar'), (22, 37))
         self.assertEqual(self.tools.entrance('Alefgard'), RETURN_DESTINATION[1])
 

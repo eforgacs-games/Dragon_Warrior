@@ -296,7 +296,7 @@ class TestPrincessGwaelin(TestCase):
         self.player.inventory = ['Wings']
         for map_name, start, warp in (('SwampCave', (6, 4), 'outside'),
                                       ('Brecconary', (7, 23), 'return_'),
-                                      ('Garinham', (11, 29), 'wings')):
+                                      ('Garinham', (12, 29), 'wings')):
             with self.subTest(map=map_name):
                 self.go_to(map_name, start)
                 self.carry_princess()

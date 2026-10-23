@@ -218,7 +218,7 @@ class TestCharacterRedraw(TestCase):
                     game = make_game('Garinham', scale)
                     self.assertEqual(16 * scale, game.tile_size)
                     woman = game.current_map.characters['WOMAN_2']['character']
-                    self.assertEqual(((14, 9), (12, 21)), ((game.player.row, game.player.column),
+                    self.assertEqual(((15, 9), (13, 21)), ((game.player.row, game.player.column),
                                                            (woman.row, woman.column)))
                     self.assertEqual([], walk_and_find_ghosts(game, 'WOMAN_2', npc_direction, 2, hero_waits,
                                                               hero_steps=6))
