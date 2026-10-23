@@ -137,22 +137,34 @@ class TestBattleMethods(unittest.TestCase):
 
     def test_get_enemy_draws_near_string(self):
         self.battle.enemy.name = 'Slime'
-        expected_string = '슬라임이 나타났다!\n어떻게 하겠나?\n'
+        expected_string = '슬라임이 나타났다!\n'
         self.assertEqual(expected_string, self.battle.get_enemy_draws_near_string())
 
         self.battle.enemy.name = 'Slime'
         self.battle.config['LANGUAGE'] = 'English'
         self.battle = Battle(self.battle.config, self.enemy_name, self.current_map)
-        expected_string = 'A Slime draws near!\nCommand?\n'
+        expected_string = 'A Slime draws near!\n'
         self.assertEqual(expected_string, self.battle.get_enemy_draws_near_string())
+
+    def test_draws_near_has_no_command_prompt(self):
+        # NES EnAppearText (TextBlock15 entry 2) and the final form's TextBlock18 entry 9 are printed on their own;
+        # "Command?" (entry 8) only comes with a player turn (ShowCmbtCmd, LE5EF), so not before the enemy's first
+        # strike or its running away
+        self.battle.config['LANGUAGE'] = 'English'
+        for enemy_name in ('Slime', 'Axe Knight', 'Dragonlord 2'):
+            with self.subTest(enemy_name=enemy_name):
+                self.assertNotIn('Command?', Battle(self.battle.config, enemy_name, self.current_map)
+                                 .get_enemy_draws_near_string())
+        self.assertEqual('The Dragonlord revealed his true self!\n',
+                         Battle(self.battle.config, 'Dragonlord 2', self.current_map).get_enemy_draws_near_string())
 
     def test_draws_near_uses_a_or_an_with_the_default_language(self):
         # NES TextBlock "A ENM2 draws near!": DoENM2 -> CheckAToAn adds 'n' before a vowel. The default config's
         # language must be the 'English' name for this rule to apply (it used to be the locale code 'en').
         config = {**self.battle.config, 'LANGUAGE': test_config['LANGUAGE']}
         self.assertEqual(test_config['LANGUAGE'], 'English')
-        for enemy_name, expected in (('Slime', 'A Slime draws near!\nCommand?\n'),
-                                     ('Axe Knight', 'An Axe Knight draws near!\nCommand?\n')):
+        for enemy_name, expected in (('Slime', 'A Slime draws near!\n'),
+                                     ('Axe Knight', 'An Axe Knight draws near!\n')):
             with self.subTest(enemy_name=enemy_name):
                 battle = Battle(config, enemy_name, self.current_map)
                 self.assertEqual(battle.get_enemy_draws_near_string(), expected)
