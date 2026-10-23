@@ -52,7 +52,7 @@ def held_buttons() -> int:
 
 
 def tapped_buttons(events: Iterable[Event]) -> int:
-    """The buttons pressed in these events, which may have been let go already. Other keys (the speed keys 1 to 4,
+    """The buttons pressed in these events, which may have been let go already. Other keys (the speed keys 1 to 5,
     START) are no button, so the window ignores them."""
     buttons = 0
     for current_event in events:

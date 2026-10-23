@@ -6,7 +6,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pygame
-from pygame import K_1, K_2, K_3, K_4, K_RETURN, KEYDOWN, K_k
+from pygame import K_1, K_2, K_3, K_4, K_5, K_RETURN, KEYDOWN, K_k
 from pygame.event import Event
 
 from src import waiting
@@ -59,7 +59,7 @@ class GameSpeedTestCase(TestCase):
 class TestWait(GameSpeedTestCase):
 
     def test_wait_takes_one_nth_of_the_time_at_speed_n(self):
-        for speed in (1, 2, 4, 8):
+        for speed in (1, 2, 4, 8, 16):
             with self.subTest(speed=speed):
                 set_game_speed(speed)
                 start = self.clock.now
@@ -139,7 +139,7 @@ class TestSpeedKeys(GameSpeedTestCase):
         game.player.is_asleep = False
         controller = BattleController(game)
         battle = MagicMock(turn=0, last_turn=0)
-        for key_code, speed in ((K_2, 2), (K_4, 8), (K_1, 1), (K_3, 4)):
+        for key_code, speed in ((K_2, 2), (K_4, 8), (K_5, 16), (K_1, 1), (K_3, 4)):
             with self.subTest(speed=speed), patch('pygame.event.get', return_value=[keydown(key_code)]):
                 self.assertFalse(controller.handle_battle_prompts(False, battle))
                 self.assertEqual(speed, game_speed())
@@ -207,7 +207,7 @@ class TestBattleTiming(GameSpeedTestCase):
     def test_a_battle_turn_takes_one_nth_of_the_time_and_comes_out_the_same(self):
         normal_time, normal_outcome = self.battle_turn(1)
         self.assertGreater(normal_time, 1000)  # sanity check: the effects and messages really waited
-        for speed in (2, 4, 8):
+        for speed in (2, 4, 8, 16):
             with self.subTest(speed=speed):
                 elapsed, outcome = self.battle_turn(speed)
                 self.assertAlmostEqual(normal_time / speed, elapsed, delta=normal_time / speed * 0.1)

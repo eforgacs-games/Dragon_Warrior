@@ -18,7 +18,7 @@ It stops, with the menu button sound and a message saying why, and hands the gam
 - the hero asleep at the start of a turn, or STOPSPELL working on the hero (``stopspell_hit``);
 - a scripted fight, a guardian or the Dragonlord (``scripted_fight_starts``), before its first command;
 - a level up (``level_up``), before the promotion and the stat lines, which wait for the player; G goes on;
-- any key the player presses (G included) but the game speed keys 1 to 4 and the zoom keys (``real_key``);
+- any key the player presses (G included) but the game speed keys 1 to 5 and the zoom keys (``real_key``);
 - the hero dying, or being somewhere he wasn't walking to (a map change), without a message for a death.
 """
 from enum import Enum
