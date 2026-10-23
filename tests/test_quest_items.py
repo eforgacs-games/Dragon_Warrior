@@ -1,4 +1,3 @@
-import os
 from collections import deque
 from unittest import TestCase
 from unittest.mock import patch
@@ -8,12 +7,9 @@ import pygame
 from src.config.test_config import test_config
 from src.constants import SILVER_HARP_ENEMIES
 from src.enemy_lookup import enemy_string_lookup
-from src.game import Game
 from src.items import treasure
 from src.maps import map_lookup
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 NO_BUSINESS = "Thou hast no business here.\nGo away."
 
@@ -36,8 +32,7 @@ class TestQuestItems(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.player.name = "Edward"
 
     def go_to(self, map_name, coordinates=None):

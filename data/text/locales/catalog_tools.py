@@ -76,12 +76,16 @@ def unextractable_gettext_calls(root: Path = ROOT) -> list[str]:
 
 
 def dynamic_messages() -> dict[str, list[str]]:
-    """Names that reach _() through a variable: items, spells and enemies."""
+    """Text that reaches _() through a variable: item, spell and enemy names, the text of the generated windows
+    that are drawn translated (src/translated_window.py) and the options screen's text."""
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
     from src.enemy_lookup import enemy_string_lookup
     from src.items import armor, shields, tools, weapons
+    from src.options_screen import DIALOG_STYLE_OPTIONS, MESSAGE_SPEED_OPTIONS, NPCS_MAKE_WAY_OPTIONS
     from src.spells import Spell
+    from src.translated_window import layout_texts
+    from src.windows import COMBAT_COMMAND_LAYOUT, COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT
 
     messages: dict[str, list[str]] = {}
     for source, table in (('src/items.py', weapons), ('src/items.py', armor), ('src/items.py', shields),
@@ -91,6 +95,12 @@ def dynamic_messages() -> dict[str, list[str]]:
     for spell in Spell:
         if spell.value not in UNNAMED_SPELLS:
             messages.setdefault(spell.value, []).append('src/spells.py')
+    for layout in (COMMAND_LAYOUT, COMBAT_COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT):
+        for text in layout_texts(layout):
+            messages.setdefault(text.text, []).append('src/windows.py')
+    for options in (MESSAGE_SPEED_OPTIONS, DIALOG_STYLE_OPTIONS, NPCS_MAKE_WAY_OPTIONS):
+        for text in [prompt[2] for prompt in options.prompt] + list(options.labels):
+            messages.setdefault(text, []).append('src/options_screen.py')
     return messages
 
 

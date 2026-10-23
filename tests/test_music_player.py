@@ -2,15 +2,12 @@ import os
 import unittest
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from pygame import mixer
 
-from pygame import mixer  # noqa: E402
-
-from src.config.test_config import test_config  # noqa: E402
-from src.directories import Directories  # noqa: E402
-from src.music_player import MusicPlayer, clip_length_ms  # noqa: E402
-from src.waiting import reset_game_speed, set_game_speed  # noqa: E402
+from src.config.test_config import test_config
+from src.directories import Directories
+from src.music_player import MusicPlayer, clip_length_ms
+from src.waiting import reset_game_speed, set_game_speed
 
 
 class TestMusicPlayerInitialization(unittest.TestCase):
@@ -59,9 +56,7 @@ class TestMusicPlayerControls(unittest.TestCase):
     def test_load_and_play_music_when_disabled(self, mock_mixer):
         self.player.music_enabled = False
         self.player.load_and_play_music('some/path.mp3')
-        mock_mixer.music.stop.assert_called_once()
-        mock_mixer.music.load.assert_called_once_with('some/path.mp3')
-        mock_mixer.music.play.assert_not_called()
+        self.assertEqual(mock_mixer.music.method_calls, [])
 
     @patch('src.music_player.mixer')
     def test_load_and_play_custom_loop(self, mock_mixer):
@@ -70,22 +65,22 @@ class TestMusicPlayerControls(unittest.TestCase):
 
     @patch('src.music_player.mixer')
     def test_stop_music(self, mock_mixer):
-        MusicPlayer.stop_music()
+        self.player.stop_music()
         mock_mixer.music.stop.assert_called_once()
 
     @patch('src.music_player.mixer')
     def test_pause_music(self, mock_mixer):
-        MusicPlayer.pause_music()
+        self.player.pause_music()
         mock_mixer.music.pause.assert_called_once()
 
     @patch('src.music_player.mixer')
     def test_unpause_music(self, mock_mixer):
-        MusicPlayer.unpause_music()
+        self.player.unpause_music()
         mock_mixer.music.unpause.assert_called_once()
 
     @patch('src.music_player.mixer')
     def test_fadeout_music(self, mock_mixer):
-        MusicPlayer.fadeout_music(1000)
+        self.player.fadeout_music(1000)
         mock_mixer.music.fadeout.assert_called_once_with(1000)
 
     @patch('src.music_player.mixer')
@@ -112,6 +107,22 @@ class TestMusicPlayerControls(unittest.TestCase):
     def test_set_volume_max(self, mock_mixer):
         self.player.set_music_volume(1.0)
         self.assertAlmostEqual(self.player.music_volume, 1.0)
+
+    @patch('src.music_player.mixer')
+    def test_music_off_never_touches_pygame_music(self, mock_mixer):
+        """With MUSIC_ENABLED off, MusicPlayer is silent: no method loads, plays, stops or changes pygame's music."""
+        player = MusicPlayer({**self.config, 'MUSIC_ENABLED': False})
+        player.load_and_play_music('map.mp3')
+        player.load_and_play_music('ending.mp3', loop=0)
+        player.stop_music()
+        player.pause_music()
+        player.unpause_music()
+        player.fadeout_music(1000)
+        player.set_music_volume(0.8)
+        with patch('src.music_player.clip_length_ms', return_value=0):
+            player.play_until_end('victory.mp3', {'NO_WAIT': False})
+        self.assertEqual(mock_mixer.music.method_calls, [])
+        self.assertAlmostEqual(player.get_music_volume(), 0.8)
 
     @patch('src.music_player.mixer')
     def test_load_and_play_stops_previous_music(self, mock_mixer):
