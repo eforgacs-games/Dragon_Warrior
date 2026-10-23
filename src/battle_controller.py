@@ -356,7 +356,7 @@ class BattleController:
             else:
                 next_frame()  # one pass of the fight loop per NES frame (src/selection.py)
                 tapped = 0  # keys pressed since the last call, which may have been let go already
-                for current_event in frame_events():  # quits if the window is closed; 1 to 4 only set the speed
+                for current_event in frame_events():  # quits if the window is closed; 1 to 5 only set the speed
                     if current_event.type == KEYDOWN:
                         tapped |= key_joypad_buttons(current_event.key)
                 presses = self.command_buttons.read(held_joypad_buttons(), tapped)  # WndGetButtons
@@ -427,7 +427,7 @@ class BattleController:
         self.battle_menu_column = 0
         poll_virtual_joypad()  # a key the player pressed stops auto-grind before the queue is dropped
         for queued_event in event.get(KEYDOWN):
-            # the speed keys (1 to 4) and the zoom keys (src/zoom.py) still count; every other key is dropped
+            # the speed keys (1 to 5) and the zoom keys (src/zoom.py) still count; every other key is dropped
             handle_speed_key(queued_event) or handle_zoom_event(queued_event)
         self.command_buttons.open(held_joypad_buttons())
         self.command_window_open = True
