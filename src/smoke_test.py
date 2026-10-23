@@ -137,10 +137,6 @@ class SceneLog:
             self.maps.append(identifier)
 
 
-def no_check(_game: Any, _log: SceneLog) -> list[str]:
-    return []
-
-
 @dataclass(frozen=True)
 class SmokeScene:
     """A short scripted scene.
@@ -150,13 +146,14 @@ class SmokeScene:
         Each press is followed by STEP_GAP frames.
     :param save_changes: Changes to the throne_room checkpoint's save, e.g. to start somewhere else.
     :param config: Changes to the game's config for this scene.
-    :param check: Returns what went wrong in the scene, given the game and what was seen while it ran.
+    :param check: Returns what went wrong in the scene, given the game and what was seen while it ran (None: nothing
+        to check but that it ran).
     """
     name: str
     script: str
     save_changes: dict = field(default_factory=dict)
     config: dict = field(default_factory=dict)
-    check: Callable[[Any, SceneLog], list[str]] = no_check
+    check: Callable[[Any, SceneLog], list[str]] | None = None
 
 
 def parse_smoke_script(script: str) -> tuple[list[tuple[int, int, int]], int]:
@@ -265,12 +262,12 @@ def play_scene(game: Any, scene: SmokeScene, max_seconds: float = SCENE_MAX_SECO
     joypad.connect()
     try:
         game.main()
-        return [f"{scene.name}: the game left its main loop before the scene was over"]
-    except SceneOver:
-        pass
+    except SceneOver:  # the script is over: the scene ran to its end
+        problems = scene.check(game, log) if scene.check else []
+        return [f'{scene.name}: {problem}' for problem in problems]
     finally:
         joypad.disconnect()
-    return [f'{scene.name}: {problem}' for problem in scene.check(game, log)]
+    return [f"{scene.name}: the game left its main loop before the scene was over"]
 
 
 def play_smoke_scenes(game: Any, scenes: tuple[SmokeScene, ...] = SMOKE_SCENES) -> list[str]:
