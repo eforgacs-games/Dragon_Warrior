@@ -13,6 +13,7 @@ from src.player.player import Player
 from src.player.player_stats import get_level_by_experience
 from src.sound import Sound
 from src.waiting import check_for_quit, wait_frames
+from src.nes_random import coin_flip
 
 MAX_EXPERIENCE = 0xFFFF  # NES RegEnDefeated: ExpLB/ExpUB max out at $FFFF
 MAX_GOLD = 0xFFFF  # NES RegEnDefeated: GoldLB/GoldUB max out at $FFFF
@@ -408,7 +409,7 @@ def player_hit_damage(attack_power: int, enemy_defense: int) -> int:
     damage at 50/50; otherwise NormalAttack."""
     base_attack = attack_power - enemy_defense // 2
     if base_attack < 2:
-        return random.randint(0, 255) & 0x01
+        return int(coin_flip())  # PlyrWeakAttack: 0 or 1
     return normal_attack_damage(base_attack, random.randint(0, 255))
 
 
