@@ -97,7 +97,7 @@ class TestDialogLookup(TestCase):
         player = self.dialog_lookup.player
         player.gold = 100
         mashed = [Event(KEYDOWN, key=K_RETURN, unicode='\r') for _ in range(3)]
-        with patch('data.text.dialog.get', side_effect=[mashed]), \
+        with patch('src.selection.event.get', side_effect=[mashed]), \
                 patch.object(self.dialog_lookup.command_menu, 'show_line_in_dialog_box'), \
                 patch.object(self.dialog_lookup.command_menu, 'show_text_in_dialog_box'), \
                 patch.object(self.dialog_lookup.command_menu, 'window_drop_down_effect'), \
