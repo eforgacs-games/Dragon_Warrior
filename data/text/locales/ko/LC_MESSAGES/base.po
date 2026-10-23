@@ -289,8 +289,9 @@ msgid "It's a legend."
 msgstr "오래전부터 전해지는 전설이에요."
 
 #: .\dialog_lookup_table.py:102
+#. official: map.1.19.0#0
 msgid "When the sun and rain meet, a Rainbow Bridge shall appear."
-msgstr "비와 태양이 어우러질 떄 무지개 다리가 생기리라..."
+msgstr "비와 태양이 어우러질 때 무지개 다리가 생기리라..."
 
 #: .\dialog_lookup_table.py:107
 msgid ""
@@ -593,7 +594,7 @@ msgstr "고스트"
 
 #: ..\battle.py:164
 msgid "Poltergeist"
-msgstr "메트로고스트"
+msgstr "메트로 고스트"
 
 #: ..\battle.py:164
 msgid "Magician"
@@ -609,7 +610,7 @@ msgstr "대마도사"
 
 #: ..\battle.py:164
 msgid "Specter"
-msgstr "헬고스트"
+msgstr "헬 고스트"
 
 #: ..\battle.py:164
 msgid "Scorpion"
@@ -637,7 +638,7 @@ msgstr "드롤"
 
  #: ..battle.py:164
 msgid "Drollmagi"
-msgstr "드롤 메이지"
+msgstr "트롤 메이지"
 
  #: ..battle.py:164
 msgid "Skeleton"
@@ -649,7 +650,7 @@ msgstr "사령"
 
  #: ..battle.py:164
 msgid "Wraith Knight"
-msgstr "사령의기사"
+msgstr "사령 기사"
 
  #: ..battle.py:164
 msgid "Demon Knight"
@@ -685,11 +686,11 @@ msgstr "키메라"
 
 #: ..\battle.py:164
 msgid "Magiwyvern"
-msgstr "메이지키메라"
+msgstr "메이지 키메라"
 
 #: ..\battle.py:164
 msgid "Starwyvern"
-msgstr "스타키메라"
+msgstr "스타 키메라"
 
 #: ..\battle.py:164
 msgid "Knight"
@@ -697,11 +698,11 @@ msgstr "갑옷의 기사"
 
 #: ..\battle.py:164
 msgid "Axe Knight"
-msgstr "악마의기사"
+msgstr "악마의 기사"
 
 #: ..\battle.py:164
 msgid "Armored Knight"
-msgstr "죽음의기사"
+msgstr "사신의 기사"
 
 #: ..\battle.py:164
 msgid "Green Dragon"
@@ -709,11 +710,11 @@ msgstr "드래곤"
 
 #: ..\battle.py:164
 msgid "Blue Dragon"
-msgstr "키스드래곤"
+msgstr "키이스 드래곤"
 
 #: ..\battle.py:164
 msgid "Red Dragon"
-msgstr "다스드래곤"
+msgstr "다스 드래곤"
 
 #: ..\battle.py:164
 msgid "Dragonlord"
@@ -823,11 +824,11 @@ msgstr "약초"
 
 #: ..\menu.py:279
 msgid "Fairy Water"
-msgstr "요정의 물"
+msgstr "성수"
 
 #: ..\menu.py:279
 msgid "Wings"
-msgstr "날개"
+msgstr "키메라의 날개"
 
 #: ..\menu.py:279
 msgid "Dragon's Scale"
@@ -875,15 +876,15 @@ msgstr "다시 악이 되살아나거든\n세 가지 물건을 모아 싸우거�
 
 #: ..\menu.py:279
 msgid "Cursed Belt"
-msgstr "저주받은 벨트"
+msgstr "저주의 벨트"
 
 #: ..\menu.py:279
 msgid "Silver Harp"
-msgstr "은색 하프"
+msgstr "은 하프"
 
 #: ..\menu.py:279
 msgid "Staff of Rain"
-msgstr "비의 지팡이"
+msgstr "비구름 지팡이"
 
 #: ..\menu.py:279
 msgid "Stones of Sunlight"
@@ -891,11 +892,11 @@ msgstr "태양의 돌"
 
 #: ..\menu.py:279
 msgid "Rainbow Drop"
-msgstr "무지개의 물방울"
+msgstr "무지개 방울"
 
 #: ..\menu.py:279
 msgid "Gwaelin's Love"
-msgstr "그웨일린의 사랑"
+msgstr "공주의 사랑"
 
 #: ..\menu.py:279
 msgid "Ball of Light"
@@ -1106,7 +1107,7 @@ msgstr "토헤로스의 효과가 사라졌다."
 
 #: src/game.py:478
 msgid "The Fairy Water has lost its effect."
-msgstr "요정의 물의 효과가 사라졌다."
+msgstr "성수의 효과가 사라졌다."
 
 #: src/game.py:798
 msgid "Fullscreen mode enabled"
@@ -1159,7 +1160,7 @@ msgstr "그것은 전투 중에 사용할 수 없다."
 
 #: src/menu.py:569
 msgid "The Wings of the Wyvern cannot be used here."
-msgstr "여기서는 날개를 사용할 수 없다."
+msgstr "여기서는 키메라의 날개를 사용할 수 없다."
 
 #: src/menu.py:579
 msgid "A torch can be used only in dark places."
@@ -1225,7 +1226,7 @@ msgstr "{}은/는 약초를 사용했다!"
 
 #: src/menu.py:574
 msgid "{} threw The Wings of the Wyvern up into the sky."
-msgstr "{}은/는 날개를 하늘 높이 던졌다!"
+msgstr "{}은/는 키메라의 날개를 하늘 높이 던졌다!"
 
 #: src/menu.py:593
 msgid "{} donned the scale of the dragon."
@@ -1233,7 +1234,7 @@ msgstr "{}은/는 용의 비늘을 몸에 걸쳤다."
 
 #: src/menu.py:597
 msgid "{} sprinkled the Fairy Water over his body."
-msgstr "{}은/는 요정의 물을 몸에 뿌렸다."
+msgstr "{}은/는 성수를 몸에 뿌렸다."
 
 #: src/menu.py:605
 #: src/menu.py:619
@@ -1259,7 +1260,7 @@ msgstr ""
 
 #: src/menu.py:653
 msgid "{} held the Rainbow Drop toward the sky."
-msgstr "{}은/는 무지개의 물방울을 하늘 높이 치켜들었다."
+msgstr "{}은/는 무지개 방울을 하늘 높이 치켜들었다."
 
 #: src/menu.py:683
 msgid "{} put on the Fighter's Ring."
@@ -1426,7 +1427,7 @@ msgstr "하프를 가져왔구나. 좋다."
 
 #: data/text/dialog_lookup_table.py:619
 msgid "Now the sun and rain shall meet and the Rainbow Drop passes to thy keeping."
-msgstr "이제 비와 태양이 어우러지니, 무지개의 물방울을 그대에게 맡기겠다."
+msgstr "이제 비와 태양이 어우러지니, 무지개 방울을 그대에게 맡기겠다."
 
 #: data/text/dialog_lookup_table.py:650
 msgid "Rest then for awhile."
@@ -1494,11 +1495,11 @@ msgstr "그러니 시험을 하나 내겠다."
 
 #: data/text/dialog_lookup_table.py:569
 msgid "There is a Silver Harp that beckons to the creatures of the Dragonlord."
-msgstr "용왕의 마물들을 불러들이는 은색 하프가 있다."
+msgstr "용왕의 마물들을 불러들이는 은 하프가 있다."
 
 #: data/text/dialog_lookup_table.py:570
 msgid "Bring this to me and I will reward thee with the Staff of Rain."
-msgstr "그것을 가져오면 그 보답으로 비의 지팡이를 주겠다."
+msgstr "그것을 가져오면 그 보답으로 비구름 지팡이를 주겠다."
 
 #: data/text/dialog_lookup_table.py:598
 msgid "In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted would save us."
@@ -1682,7 +1683,7 @@ msgstr ""
 
 #: data/text/dialog_lookup_table.py:970
 msgid "Will thou buy some Fairy Water for {} GOLD to keep the Dragonlord's minions away?"
-msgstr "용왕의 부하들을 막아 주는 요정의 물을 {}골드에 사지 않겠어요?"
+msgstr "용왕의 부하들을 막아 주는 성수를 {}골드에 사지 않겠어요?"
 
 #: data/text/dialog_lookup_table.py:983
 #: data/text/dialog_lookup_table.py:913
@@ -1718,8 +1719,9 @@ msgid "See me again when thy level has increased."
 msgstr "레벨이 오르면 다시 찾아오게."
 
 #: data/text/dialog_lookup_table.py:104
+#. official: map.2.6.0#2
 msgid "Now, Gwaelin, come to my side."
-msgstr "자, 로라야, 이리 오너라."
+msgstr "자, 로라. 내 옆 자리로 오려무나."
 
 #: data/text/dialog_lookup_table.py:166
 msgid "Beware the bridges!"
@@ -1881,7 +1883,7 @@ msgstr "로토의 검"
 
 #: src/items.py
 msgid "Chain Mail"
-msgstr "사슬 갑옷"
+msgstr "체인 메일"
 
 #: src/items.py
 msgid "Magic Armor"
@@ -1897,7 +1899,7 @@ msgstr "철 방패"
 
 #: src/items.py
 msgid "Silver Shield"
-msgstr "은색 방패"
+msgstr "거울 방패"
 
 #: src/items.py
 msgid "Fairy Flute"
@@ -2037,7 +2039,7 @@ msgstr ""
 
 #: data/text/dialog_lookup_table.py:251
 msgid "Some say that Garin's grave is home to a Silver Harp."
-msgstr "가라이의 무덤에 은색 하프가 있다고들 하더군."
+msgstr "가라이의 무덤에 은 하프가 있다고들 하더군."
 
 #: data/text/dialog_lookup_table.py:259
 msgid "Watch thy Hit Points when in the Poisonous Marsh."
@@ -2180,8 +2182,9 @@ msgid "To the south, I believe, there is a town called Rimuldar."
 msgstr "남쪽에 리무르다라는 마을이 있을 걸세."
 
 #: data/text/dialog_lookup_table.py:853
+#. official: map.6.7.1#0
 msgid "In this temple do the sun and rain meet."
-msgstr "이 신전에서 태양과 비가 만난다네."
+msgstr "비와 태양이 어우러지는 성소라네."
 
 #: data/text/dialog_lookup_table.py:855
 msgid "Go to the south."
@@ -2269,11 +2272,11 @@ msgstr "모험의 서 {}:"
 
 #: src/windows.py
 msgid "FIGHT"
-msgstr "싸운다"
+msgstr "공격"
 
 #: src/windows.py
 msgid "RUN"
-msgstr "도망친다"
+msgstr "도망치기"
 
 #: src/windows.py
 msgid "NAME:"
@@ -2321,12 +2324,12 @@ msgstr "예"
 
 #: src/windows.py
 msgid "NO"
-msgstr "아니오"
+msgstr "아니요"
 
 # The three lines of the message speed window's prompt, read together
 #: src/options_screen.py
 msgid "Which Message"
-msgstr "메시지 속도를"
+msgstr "표시 속도를"
 
 #: src/options_screen.py
 msgid "Speed Do You"
@@ -2338,7 +2341,7 @@ msgstr "하겠습니까?"
 
 #: src/options_screen.py
 msgid "FAST"
-msgstr "빠르게"
+msgstr "빠름"
 
 #: src/options_screen.py
 msgid "NORMAL"
@@ -2346,7 +2349,7 @@ msgstr "보통"
 
 #: src/options_screen.py
 msgid "SLOW"
-msgstr "느리게"
+msgstr "느림"
 
 #: src/options_overlay.py
 msgid "OPTIONS"
@@ -2354,7 +2357,7 @@ msgstr "설정"
 
 #: src/options_overlay.py
 msgid "MESSAGE SPEED"
-msgstr "메시지 속도"
+msgstr "표시 속도"
 
 #: src/options_overlay.py
 msgid "DIALOG STYLE"
@@ -2424,7 +2427,7 @@ msgstr "모험을 계속한다"
 
 #: src/windows.py
 msgid "CHANGE MESSAGE SPEED"
-msgstr "메시지 속도를 바꾼다"
+msgstr "표시 속도를 바꾼다"
 
 #: src/windows.py
 msgid "COPY A QUEST"

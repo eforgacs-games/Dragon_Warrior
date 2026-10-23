@@ -165,7 +165,7 @@ class TestLogWindows(OptionsTestCase):
         self.assertEqual(YES_NO_2_WINDOW, window.window)
         self.assertEqual(('YES', 'NO'), window.labels)
         self.assertEqual([(1, 2), (1, 4)], [(window.entry_cursor_column(i), window.entry_row(i)) for i in (0, 1)])
-        self.assertEqual(('예', '아니오'), yes_no_options(set_gettext_language('Korean')).labels)
+        self.assertEqual(('예', '아니요'), yes_no_options(set_gettext_language('Korean')).labels)
 
     def test_open_logs_window(self):
         # LogList13Dat1: one line per open log, no colon and no name; one block high plus one per log

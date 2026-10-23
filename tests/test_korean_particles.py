@@ -81,7 +81,7 @@ class TestFormatWithParticles(TestCase):
         self.assertEqual(format_with_particles('{{}}은/는', ()), '{}은/는')
 
     def test_korean_text_format(self):
-        self.assertEqual(KoreanText('{}이/가 몸을 조이고 있다.').format('저주받은 벨트'), '저주받은 벨트가 몸을 조이고 있다.')
+        self.assertEqual(KoreanText('{}이/가 몸을 조이고 있다.').format('저주의 벨트'), '저주의 벨트가 몸을 조이고 있다.')
         self.assertEqual(KoreanText('{}을/를 버렸다.'), '{}을/를 버렸다.')
 
 
@@ -118,9 +118,9 @@ class TestKoreanCatalogParticles(TestCase):
         _ = self._
         self.assertEqual(_("{} started to run away.\n").format(_('Slime')), "슬라임은 도망쳤다!\n")
         self.assertEqual(_("{} started to run away.\n").format(_('Ghost')), "고스트는 도망쳤다!\n")
-        self.assertEqual(_("The {} is squeezing thy body.").format(_('Cursed Belt')), "저주받은 벨트가 몸을 조이고 있다.")
+        self.assertEqual(_("The {} is squeezing thy body.").format(_('Cursed Belt')), "저주의 벨트가 몸을 조이고 있다.")
         self.assertEqual(_("Thou hast dropped thy {}.").format(_('Magic Key')), "열쇠를 버렸다.")
-        self.assertEqual(_("{} discovers the {}.").format('Michael', _('Fairy Water')), "Michael은 요정의 물을 발견했다!")
+        self.assertEqual(_("{} discovers the {}.").format('Michael', _('Fairy Water')), "Michael은 성수를 발견했다!")
 
     def test_level_up_line(self):
         from src.battle import Battle

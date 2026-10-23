@@ -131,7 +131,7 @@ class TestKoreanSelectionWindows(KoreanTestCase):
                 patch('src.translated_window.draw_window', return_value=pygame.Rect(0, 0, 1, 1)) as draw_window:
             self.cmd_menu.draw_yes_no_window(True, True)
         # YesNo1Dat is at tile (10, 4): YES and NO at tile column 2 of rows 2 and 4
-        self.assertEqual([('예', 12, 6.5), ('아니오', 12, 8.5)], self.drawn(draw_text))
+        self.assertEqual([('예', 12, 6.5), ('아니요', 12, 8.5)], self.drawn(draw_text))
         self.assertEqual(0, draw_window.call_args.kwargs['cursor_index'])  # the cursor on YES
 
     def test_combat_command_window(self):
@@ -139,7 +139,7 @@ class TestKoreanSelectionWindows(KoreanTestCase):
         with patch('src.translated_window.draw_text') as draw_text, \
                 patch('src.translated_window.draw_window', return_value=pygame.Rect(0, 0, 1, 1)):
             controller.draw_command_window(cursor_visible=True)
-        self.assertEqual(['작전', '싸운다', '주문', '도망친다', '도구'], self.texts(draw_text))
+        self.assertEqual(['작전', '공격', '주문', '도망치기', '도구'], self.texts(draw_text))
 
     def test_untranslated_window_is_generated_in_the_nes_font(self):
         with patch('src.translated_window.draw_text') as draw_text, \
@@ -178,7 +178,7 @@ class TestKoreanOptionsScreen(KoreanTestCase):
         return self.texts(draw_text)
 
     def test_message_speed_window(self):
-        self.assertEqual(['메시지 속도를', '어느 것으로', '하겠습니까?', '빠르게', '보통', '느리게'],
+        self.assertEqual(['표시 속도를', '어느 것으로', '하겠습니까?', '빠름', '보통', '느림'],
                          self.draw(MESSAGE_SPEED_OPTIONS))
 
     def overlay_texts(self, config):
@@ -191,14 +191,14 @@ class TestKoreanOptionsScreen(KoreanTestCase):
         config = {**self.game.game_state.config, 'TEXT_SPEED': 'Fast', 'DIALOG_STYLE': 'Classic',
                   'NPCS_MAKE_WAY': True, 'FADE_STYLE': 'NES', 'AUTO_STAIRS': True, 'AUTO_GRIND_STOP': 'RedHP',
                   'LANGUAGE': 'Korean', 'SCANLINES': False, 'SCALING': 'Smooth'}
-        self.assertEqual(['설정', '메시지 속도', '빠르게', '대화 방식', '클래식 (NES)', 'NPC가 길 비키기', '켜기',
+        self.assertEqual(['설정', '표시 속도', '빠름', '대화 방식', '클래식 (NES)', 'NPC가 길 비키기', '켜기',
                           '페이드 방식', 'NES', '계단', '밟으면 이동', '사냥 멈춤', '빨간 HP', '언어', '한국어',
                           '주사선', '끄기', '화면 배율', '스무스'],
                          [text for text, _, _ in self.overlay_texts(config)])
         config.update(TEXT_SPEED='Slow', DIALOG_STYLE='Modern', NPCS_MAKE_WAY=False, FADE_STYLE='Smooth',
                       AUTO_STAIRS=False, AUTO_GRIND_STOP='HalfHP', LANGUAGE='English', SCANLINES=True,
                       SCALING='PixelPerfect')
-        self.assertEqual(['설정', '메시지 속도', '느리게', '대화 방식', '모던', 'NPC가 길 비키기', '끄기 (NES)',
+        self.assertEqual(['설정', '표시 속도', '느림', '대화 방식', '모던', 'NPC가 길 비키기', '끄기 (NES)',
                           '페이드 방식', '스무스', '계단', 'NES', '사냥 멈춤', 'HP 절반', '언어', 'ENGLISH',
                           '주사선', '켜기', '화면 배율', '정수 배율'],
                          [text for text, _, _ in self.overlay_texts(config)])
