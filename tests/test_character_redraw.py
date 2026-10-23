@@ -112,13 +112,13 @@ def walk_and_find_ghosts(game: Game, npc_identifier: str, npc_direction: Directi
     hero_start_x = game.player.rect.x
     frame = 0
     with patch('src.movement.random.choice', return_value=npc_direction.value), \
-            patch('src.game.key.get_pressed', return_value=held_keys):
+            patch('src.movement.key.get_pressed', return_value=held_keys):
         while frame < 300 and (steps_started < npc_steps or npc.is_moving or game.player.is_moving or
                                game.player.rect.x < hero_start_x + hero_steps * game.tile_size):
             frame += 1
             held_keys[K_RIGHT] = int(hero_waits < frame and
                                      game.player.rect.x <= hero_start_x + (hero_steps - 1) * game.tile_size)
-            game._handle_player_movement()
+            game.movement.handle_player_movement()
             if not game.player.is_moving:
                 set_character_position(game.player, game.tile_size)
             if not npc.is_moving and steps_started < npc_steps:
@@ -141,20 +141,20 @@ def walk_hero_and_find_ghosts(game: Game, walk: list) -> list:
     ghost_frames = []
     frame = 0
     with patch('src.game.get_ticks', return_value=0), \
-            patch('src.game.key.get_pressed', return_value=held_keys):
+            patch('src.movement.key.get_pressed', return_value=held_keys):
         for walk_key, blocks in walk:
             held_keys.clear()
             held_keys[walk_key] = 1
-            for _ in range(blocks * game.tile_size // game.speed + 1):
+            for _ in range(blocks * game.tile_size // game.movement.speed + 1):
                 frame += 1
-                game._handle_player_movement()
+                game.movement.handle_player_movement()
                 drawn = characters_to_draw(game)
                 draw_frame(game)
                 if not visible_area_matches_a_clean_redraw(game, drawn):
                     ghost_frames.append(frame)
             held_keys.clear()
             while game.player.is_moving:
-                game._handle_player_movement()
+                game.movement.handle_player_movement()
             set_character_position(game.player, game.tile_size)
     return ghost_frames
 
@@ -257,9 +257,9 @@ def find_ghosts_drawing_every(game: Game, frames_per_draw: int, frames: int, hel
     if held_key is not None:
         held_keys[held_key] = 1
     ghost_frames = []
-    with patch('src.movement.random', random.Random(1)), patch('src.game.key.get_pressed', return_value=held_keys):
+    with patch('src.movement.random', random.Random(1)), patch('src.movement.key.get_pressed', return_value=held_keys):
         for frame in range(1, frames + 1):
-            game._handle_player_movement()
+            game.movement.handle_player_movement()
             if not game.player.is_moving:
                 set_character_position(game.player, game.tile_size)
             game.movement.do_sprites()

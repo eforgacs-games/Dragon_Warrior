@@ -91,9 +91,9 @@ class TestRoamingNPCMovement(TestCase):
         npc.step_origin = npc.step_destination = None
         x, y = npc.rect.x, npc.rect.y
         if direction in (Direction.UP, Direction.DOWN):
-            self.game.move_medially(npc)
+            self.game.movement.move_medially(npc)
         else:
-            self.game.move_laterally(npc)
+            self.game.movement.move_laterally(npc)
         moved = (npc.rect.x, npc.rect.y) != (x, y)
         npc.rect.x, npc.rect.y = x, y
         npc.step_origin = npc.step_destination = None
