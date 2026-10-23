@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -8,11 +7,8 @@ from src.battle import Battle
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.ending import CREDITS, credit_screen_music_events
-from src.game import Game
 from src.maps import map_lookup
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 class TestEnding(TestCase):
@@ -30,8 +26,7 @@ class TestEnding(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.player.name = "Edward"
         self.lines = []
         show_line = patch('src.menu.CommandMenu.show_line_in_dialog_box', side_effect=self.record_line).start()
@@ -53,7 +48,7 @@ class TestEnding(TestCase):
     def defeat_dragonlord(self):
         battle = Battle(self.game.config, 'Dragonlord 2', self.game.current_map)
         battle.enemy.hp = 0
-        battle.enemy_defeated(self.game.cmd_menu, self.game.screen, self.game.player, False, battle.enemy)
+        battle.enemy_defeated(self.game.cmd_menu, self.game.screen, self.game.player, battle.enemy)
 
     def stand_before_king(self, column=17):
         self.game.change_map(map_lookup['TantegelCourtyard'](self.game.config), destination_coordinates=(15, column))
@@ -84,7 +79,7 @@ class TestEnding(TestCase):
     def test_other_enemies_do_not_start_the_ending(self):
         battle = Battle(self.game.config, 'Slime', self.game.current_map)
         with patch.object(self.game.ending, 'final_boss_defeated') as final_boss_defeated:
-            battle.enemy_defeated(self.game.cmd_menu, self.game.screen, self.game.player, False, battle.enemy)
+            battle.enemy_defeated(self.game.cmd_menu, self.game.screen, self.game.player, battle.enemy)
         final_boss_defeated.assert_not_called()
         self.assertFalse(self.game.story_flags.dragonlord_defeated)
 
@@ -171,7 +166,7 @@ class TestEnding(TestCase):
             yes_path_function()
 
         with patch('data.text.dialog_lookup_table.confirmation_prompt', side_effect=confirmation_prompt), \
-                patch('data.text.dialog_lookup_table.mixer'), patch('data.text.dialog_lookup_table.time.wait'):
+                patch('src.music_player.mixer'), patch('data.text.dialog_lookup_table.time.wait'):
             self.talk_after_the_dragonlord('SwampCave', 'PRINCESS_GWAELIN')
         self.assertEqual(self.lines[:2],
                          ['Thou art brave indeed to rescue me, Edward.', 'I am Gwaelin, daughter of Lorik.'])

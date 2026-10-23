@@ -1,4 +1,3 @@
-import os
 from collections import Counter
 from unittest import TestCase
 from unittest.mock import MagicMock
@@ -13,9 +12,6 @@ from src.drawer import draw_cover, get_player_block
 from src.game import Game
 from src.maps_functions import covered_cells
 from tests.test_drawer import _make_drawer
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 TILE_SIZE = test_config['TILE_SIZE']
 

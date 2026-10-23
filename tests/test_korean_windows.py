@@ -1,0 +1,196 @@
+"""With the Korean catalog, the generated windows show their text in Korean (src/translated_window.py), and the item,
+spell and equipment names drawn over them are translated, each whole on one line (the NES font has no Korean)."""
+import builtins
+import os
+from unittest import TestCase
+from unittest.mock import MagicMock, patch
+
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
+
+import pygame
+
+from src.battle_controller import BattleController
+from src.common import set_gettext_language
+from src.config.test_config import test_config
+from src.game import Game
+from src.options_screen import DIALOG_STYLE_OPTIONS, MESSAGE_SPEED_OPTIONS, NPCS_MAKE_WAY_OPTIONS, OptionsScreen, \
+    adventure_log_options
+from src.translated_window import draw_translated_window
+from src.windows import COMBAT_COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT
+
+
+class KoreanTestCase(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+        pygame.display.set_mode((800, 600))
+
+    @classmethod
+    def tearDownClass(cls):
+        pygame.quit()
+
+    def setUp(self):
+        # set_gettext_language('Korean') installs _ into builtins; put things back afterwards
+        had_builtin, old_builtin = hasattr(builtins, '_'), getattr(builtins, '_', None)
+        self.korean = set_gettext_language('Korean')
+        self.addCleanup(self.restore_builtin, had_builtin, old_builtin)
+        self.saved_config = {key: test_config[key] for key in ('NO_WAIT', 'RENDER_TEXT', 'NO_BLIT')}
+        test_config.update(NO_WAIT=True, RENDER_TEXT=False, NO_BLIT=False)
+        self.addCleanup(test_config.update, self.saved_config)
+        with patch('src.game.SCALED'):
+            self.game = Game(test_config)
+        self.game._ = self.game.cmd_menu._ = self.korean
+        self.cmd_menu = self.game.cmd_menu
+        self.player = self.game.player
+        self.nes_tile = test_config['TILE_SIZE'] / 2
+
+    @staticmethod
+    def restore_builtin(had_builtin, old_builtin):
+        if had_builtin:
+            builtins._ = old_builtin  # type: ignore[attr-defined]
+        elif hasattr(builtins, '_'):
+            del builtins._  # type: ignore[attr-defined]
+
+    def drawn(self, draw_text):
+        """(text, tile column, tile row) of each draw_text call, in screen NES tiles."""
+        return [(call.args[0], call.args[1] / self.nes_tile, call.args[2] / self.nes_tile)
+                for call in draw_text.call_args_list]
+
+    def texts(self, draw_text):
+        return [call.args[0] for call in draw_text.call_args_list]
+
+
+class TestKoreanItemAndSpellWindows(KoreanTestCase):
+
+    def draw_item_menu(self, menu_name, entries):
+        with patch('src.menu.draw_text') as draw_text, patch('src.menu.draw_window'), \
+                patch.object(self.cmd_menu, 'draw_window_title') as draw_title:
+            self.cmd_menu.draw_item_menu(menu_name, entries)
+        return draw_text, draw_title
+
+    def test_item_window_names_are_korean_on_one_line(self):
+        self.player.inventory = ['Herb', 'Herb', 'Magic Key', 'Stones of Sunlight']
+        draw_text, _ = self.draw_item_menu('inventory', ['Herb', 'Magic Key', 'Stones of Sunlight'])
+        # The window is at tile (18, 6); each name whole at tile column 2 of its entry's row, the counts at column 10
+        self.assertEqual([('약초', 20, 7.5), ('2', 28, 7.5), ('열쇠', 20, 9.5), ('1', 28, 9.5), ('태양의 돌', 20, 11.5)],
+                         self.drawn(draw_text))
+
+    def test_spell_window_names_and_title_are_korean(self):
+        draw_text, draw_title = self.draw_item_menu('spells', ['HEAL', 'HURT', 'RETURN'])
+        self.assertEqual(['호이미', '기라', '루라'], self.texts(draw_text))
+        self.assertEqual('주문', draw_title.call_args.args[0])
+
+    def test_item_window_is_unchanged_in_english(self):
+        self.cmd_menu._ = set_gettext_language('English')
+        self.player.inventory = ['Magic Key']
+        draw_text, _ = self.draw_item_menu('inventory', ['Magic Key'])
+        self.assertEqual(['Magic', '1', 'Key'], self.texts(draw_text))
+
+
+class TestKoreanStatusWindow(KoreanTestCase):
+
+    def draw_status_window(self):
+        self.player.name = 'ERDRICK'
+        self.player.weapon, self.player.armor, self.player.shield = 'Copper Sword', 'Clothes', 'Small Shield'
+        with patch('src.menu.draw_text') as values, patch('src.translated_window.draw_text') as labels, \
+                patch('src.translated_window.draw_window') as draw_window:
+            self.cmd_menu.draw_status_window()
+        return values, labels, draw_window
+
+    def test_labels_are_korean_and_end_where_the_nes_labels_end(self):
+        _, labels, draw_window = self.draw_status_window()
+        # Only the border is generated; the labels are drawn as text over it
+        self.assertEqual((), draw_window.call_args.args[1].texts)
+        self.assertEqual([('이름:', 10 + 11, 6 + 1.5), ('힘:', 10 + 16, 6 + 3.5), ('민첩성:', 10 + 16, 6 + 5.5),
+                          ('최대 HP:', 10 + 16, 6 + 7.5), ('최대 MP:', 10 + 16, 6 + 9.5),
+                          ('공격력:', 10 + 16, 6 + 11.5), ('수비력:', 10 + 16, 6 + 13.5), ('무기:', 10 + 10, 6 + 15.5),
+                          ('갑옷:', 10 + 10, 6 + 17.5), ('방패:', 10 + 10, 6 + 19.5)], self.drawn(labels))
+        self.assertTrue(all(call.kwargs['alignment'] == 'right' for call in labels.call_args_list))
+
+    def test_equipment_is_korean_on_one_line(self):
+        values, _, _ = self.draw_status_window()
+        self.assertEqual([('구리 검', 10 + 10, 6 + 15.5), ('천 옷', 10 + 10, 6 + 17.5), ('가죽 방패', 10 + 10, 6 + 19.5)],
+                         self.drawn(values)[7:])
+
+    def test_english_status_window_is_generated(self):
+        self.cmd_menu._ = set_gettext_language('English')
+        values, labels, draw_window = self.draw_status_window()
+        self.assertIs(STATUS_LAYOUT, draw_window.call_args.args[1])
+        labels.assert_not_called()
+        self.assertEqual(['Copper', 'Sword', 'Clothes', 'Small', 'Shield'], self.texts(values)[7:])
+
+
+class TestKoreanSelectionWindows(KoreanTestCase):
+
+    def test_yes_no_window(self):
+        with patch('src.translated_window.draw_text') as draw_text, \
+                patch('src.translated_window.draw_window', return_value=pygame.Rect(0, 0, 1, 1)) as draw_window:
+            self.cmd_menu.draw_yes_no_window(True, True)
+        # YesNo1Dat is at tile (10, 4): YES and NO at tile column 2 of rows 2 and 4
+        self.assertEqual([('예', 12, 6.5), ('아니오', 12, 8.5)], self.drawn(draw_text))
+        self.assertEqual(0, draw_window.call_args.kwargs['cursor_index'])  # the cursor on YES
+
+    def test_combat_command_window(self):
+        controller = BattleController(self.game)
+        with patch('src.translated_window.draw_text') as draw_text, \
+                patch('src.translated_window.draw_window', return_value=pygame.Rect(0, 0, 1, 1)):
+            controller.draw_command_window(cursor_visible=True)
+        self.assertEqual(['작전', '싸운다', '주문', '도망친다', '도구'], self.texts(draw_text))
+
+    def test_untranslated_window_is_generated_in_the_nes_font(self):
+        with patch('src.translated_window.draw_text') as draw_text, \
+                patch('src.translated_window.draw_window') as draw_window:
+            draw_translated_window(MagicMock(), COMBAT_COMMAND_LAYOUT, (255, 255, 255), test_config, str,
+                                   cursor_index=2)
+        draw_text.assert_not_called()
+        self.assertIs(COMBAT_COMMAND_LAYOUT, draw_window.call_args.args[1])
+        self.assertEqual(2, draw_window.call_args.kwargs['cursor_index'])
+
+    def test_title_is_cut_out_of_the_top_border(self):
+        screen = MagicMock()
+        with patch('src.translated_window.draw_text'), patch('src.translated_window.draw_window'):
+            draw_translated_window(screen, COMBAT_COMMAND_LAYOUT, (255, 255, 255), test_config, self.korean)
+        # "COMMAND" starts at tile column 4 of the window at tile (12, 2)
+        left = screen.fill.call_args.args[1][0]
+        self.assertEqual((12 + 4) * self.nes_tile - test_config['SCALE'], left)
+
+    def test_nothing_is_drawn_without_blit(self):
+        screen = MagicMock()
+        with patch('src.translated_window.draw_text') as draw_text:
+            rect = draw_translated_window(screen, YES_NO_LAYOUT, (255, 255, 255), {**test_config, 'NO_BLIT': True},
+                                          self.korean)
+        draw_text.assert_not_called()
+        screen.blit.assert_not_called()
+        tile_size = test_config['TILE_SIZE']
+        self.assertEqual(pygame.Rect(*(value * tile_size for value in YES_NO_LAYOUT.window)), rect)
+
+
+class TestKoreanOptionsScreen(KoreanTestCase):
+
+    def draw(self, options, index=0):
+        options_screen = OptionsScreen(self.game.screen, {**self.game.game_state.config, 'LANGUAGE': 'Korean'})
+        with patch('src.options_screen.draw_text') as draw_text:
+            options_screen.draw_window(options, index, show_cursor=True)
+        return self.texts(draw_text)
+
+    def test_message_speed_window(self):
+        self.assertEqual(['메시지 속도를', '어느 것으로', '하겠습니까?', '빠르게', '보통', '느리게'],
+                         self.draw(MESSAGE_SPEED_OPTIONS))
+
+    def test_dialog_style_and_npcs_make_way_windows(self):
+        self.assertEqual(['대화 방식', '클래식 (NES)', '모던'], self.draw(DIALOG_STYLE_OPTIONS))
+        self.assertEqual(['NPC가 길 비키기', '켜기', '끄기 (NES)'], self.draw(NPCS_MAKE_WAY_OPTIONS))
+
+    def test_adventure_log_window(self):
+        self.assertEqual(['모험의 서 1:ERDR', '모험의 서 3:LORA'],
+                         self.draw(adventure_log_options([(1, 'ERDRICK'), (3, 'LORA')], self.korean)))
+
+    def test_english_options_are_unchanged(self):
+        options_screen = OptionsScreen(self.game.screen, {**self.game.game_state.config, 'LANGUAGE': 'English'})
+        with patch('src.options_screen.draw_text') as draw_text:
+            options_screen.draw_window(MESSAGE_SPEED_OPTIONS, 0, show_cursor=True)
+        self.assertEqual(['Which Message', 'Speed Do You', 'Want To Use?', 'FAST', 'NORMAL', 'SLOW'],
+                         self.texts(draw_text))
+        self.assertEqual(['ADVENTURE LOG 2:ERDR'], list(adventure_log_options([(2, 'ERDRICK')]).labels))

@@ -1,4 +1,3 @@
-import os
 import unittest
 from collections import defaultdict
 from unittest.mock import MagicMock, Mock, patch
@@ -65,8 +64,6 @@ class BattlePromptFrames(unittest.TestCase):
     key.get_pressed and key presses posted to the real pygame event queue."""
 
     def setUp(self):
-        os.environ['SDL_VIDEODRIVER'] = 'dummy'
-        os.environ['SDL_AUDIODRIVER'] = 'dummy'
         pygame.init()
         pygame.event.clear()
         self.game = make_game()
@@ -145,7 +142,7 @@ class TestHandleBattlePrompts(BattlePromptFrames):
     def test_cursor_is_at_the_selected_command(self, mock_time, mock_display):
         # CmdCmbtDat: FIGHT (1, 2), SPELL (9, 2), RUN (1, 4), ITEM (9, 4)
         for row, column, tile in ((0, 0, (1, 2)), (0, 1, (9, 2)), (1, 0, (1, 4)), (1, 1, (9, 4))):
-            with self.subTest(row=row, column=column), patch('src.battle_controller.draw_window') as draw_window:
+            with self.subTest(row=row, column=column), patch('src.translated_window.draw_window') as draw_window:
                 self.controller.battle_menu_row, self.controller.battle_menu_column = row, column
                 self.controller.handle_battle_prompts(False, self.battle)
                 self.assertIs(COMBAT_COMMAND_LAYOUT, draw_window.call_args.args[1])
@@ -157,7 +154,7 @@ class TestHandleBattlePrompts(BattlePromptFrames):
         with patch.object(self.controller, 'fight',
                           side_effect=lambda battle: visible_during_fight.append(
                               self.controller.command_cursor.visible())), self.patch_enemy_move(), \
-                patch('src.battle_controller.draw_window') as draw_window:
+                patch('src.translated_window.draw_window') as draw_window:
             self.press(K_RETURN)
         self.assertEqual([True], visible_during_fight)
         self.assertIs(draw_window.call_args_list[-1].kwargs['cursor_visible'], True)
@@ -659,6 +656,12 @@ class TestMapMusicAfterAFight(unittest.TestCase):
     def map_music_starts(self, mixer_music):
         mixer_music.play.assert_not_called()  # never around MusicPlayer
         return [c.args for c in self.game.music_player.load_and_play_music.call_args_list]
+
+    def test_battle_music_goes_through_music_player(self, mock_battle_class, mixer_music):
+        battle = self.battle(mock_battle_class)
+        battle.battle_run.return_value = True
+        self.controller.run_battle(['Slime'])
+        battle.play_battle_music.assert_called_once_with(self.game.music_player)
 
     def test_running_away(self, mock_battle_class, mixer_music):
         self.battle(mock_battle_class).battle_run.return_value = True
