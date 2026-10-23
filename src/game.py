@@ -1177,7 +1177,12 @@ class Game:
         :return: None
         """
         menu_to_unlaunch.launch_signaled = False
-        if menu_to_unlaunch.menu.is_enabled():
+        if menu_to_unlaunch is not self.cmd_menu:
+            # OUTSIDE, RETURN or the Wings changed the map (and the COMMAND menu) under this window, which the new map
+            # already replaced: just close it. Its drop-up would paint the old map's tiles and characters over the new
+            # map for a few frames.
+            menu_to_unlaunch.menu.disable()
+        elif menu_to_unlaunch.menu.is_enabled():
             self.game_state.unpause_all_movement()
             menu_to_unlaunch.window_drop_up_effect(*COMMAND_WINDOW)
             menu_to_unlaunch.menu.disable()
