@@ -474,6 +474,10 @@ msgstr "J키: B 버튼"
 msgid "I key: Start"
 msgstr "I키: 스타트 버튼"
 
+#: data/text/intro_lookup_table.py
+msgid "U key/Tab: Options"
+msgstr "U키/Tab: 설정"
+
 #: ..\intro_lookup_table.py:17
 msgid "WASD / Arrow Keys: Move"
 msgstr "WASD / 화살표 키: 이동"
@@ -1112,13 +1116,13 @@ msgstr "전체 화면 모드로 전환되었습니다"
 msgid "Windowed mode enabled"
 msgstr "창 모드로 전환되었습니다"
 
-#: src/game.py:817
-msgid "Auto-stairs enabled"
-msgstr "자동 계단 켜짐"
+#: src/game.py
+msgid "Stairs: STEP ON"
+msgstr "계단: 밟으면 이동"
 
-#: src/game.py:819
-msgid "Auto-stairs disabled"
-msgstr "자동 계단 꺼짐"
+#: src/game.py
+msgid "Stairs: NES (STAIRS command)"
+msgstr "계단: NES (계단 명령)"
 
 #: src/game.py:829
 msgid "Auto-battle disabled"
@@ -2359,41 +2363,49 @@ msgstr "보통"
 msgid "SLOW"
 msgstr "느리게"
 
-#: src/options_screen.py
-msgid "Dialog Style"
+#: src/options_overlay.py
+msgid "OPTIONS"
+msgstr "설정"
+
+#: src/options_overlay.py
+msgid "DIALOG STYLE"
 msgstr "대화 방식"
 
-#: src/options_screen.py
+#: src/options_overlay.py
 msgid "CLASSIC (NES)"
 msgstr "클래식 (NES)"
 
-#: src/options_screen.py
+#: src/options_overlay.py
 msgid "MODERN"
 msgstr "모던"
 
-#: src/options_screen.py
-msgid "NPCs Make Way"
+#: src/options_overlay.py
+msgid "NPCS MAKE WAY"
 msgstr "NPC가 길 비키기"
 
-#: src/options_screen.py
+#: src/options_overlay.py
 msgid "ON"
 msgstr "켜기"
 
-#: src/options_screen.py
+#: src/options_overlay.py
 msgid "OFF (NES)"
 msgstr "끄기 (NES)"
 
-#: src/options_screen.py
-msgid "Fade Style"
+#: src/options_overlay.py
+msgid "FADE STYLE"
 msgstr "페이드 방식"
 
-#: src/options_screen.py
+#: src/options_overlay.py
 msgid "NES"
 msgstr "NES"
 
-#: src/options_screen.py
+#: src/options_overlay.py
 msgid "SMOOTH"
 msgstr "스무스"
+
+#: src/options_overlay.py
+msgid "STEP ON"
+msgstr "밟으면 이동"
 
 #: src/options_screen.py:236
 msgid ""

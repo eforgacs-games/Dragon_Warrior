@@ -40,6 +40,7 @@ from src.menu import CommandMenu
 from src.movement import HILL_PAUSE_FRAMES, STEP_SYNC_FRAMES, MovementController
 from src.music_player import MusicPlayer
 from src.npc_movement import step
+from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
 from src.options_screen import apply_options
 from src.save_file import SaveFile
 from src.paths import data_path
@@ -87,7 +88,6 @@ class Game:
         self.big_map = None
         self.layouts = MapLayouts()
         self.fullscreen_enabled = self.game_state.config["FULLSCREEN_ENABLED"]
-        self.auto_stairs = self.game_state.config["AUTO_STAIRS"]
         # text
         self.initial_dialog_enabled = self.game_state.config["INITIAL_DIALOG_ENABLED"]
         self.skip_text = False
@@ -121,6 +121,9 @@ class Game:
         # has finished their step (NES PausePrepLoop / DoNCCmdWindow), see resolve_pending_freezes
         self.pause_requested = False
         self.cmd_menu_requested = False
+        # SELECT or Tab pressed on the map: the options overlay (src/options_overlay.py) opens once everyone has finished
+        # their step, like the pause (resolve_pending_freezes)
+        self.options_requested = False
         # Create the game window.
         if self.fullscreen_enabled:
             # according to pygame docs: "SCALED is considered an experimental API and may change in future releases."
@@ -193,6 +196,17 @@ class Game:
 
         display.set_icon(image.load(self.directories.ICON_PATH))
         # pg.event.set_allowed([pg.QUIT])
+
+    @property
+    def auto_stairs(self) -> bool:
+        """The STAIRS option (AUTO_STAIRS, src/options_overlay.py): True takes stairs by stepping onto them (not NES),
+        False only with the STAIRS command, as the NES does (MapManager.handle_warps). F2 toggles it too. It's in the
+        config, so it is saved with the adventure log like the other options (options_from_config)."""
+        return bool(self.game_state.config['AUTO_STAIRS'])
+
+    @auto_stairs.setter
+    def auto_stairs(self, value: bool) -> None:
+        self.game_state.config['AUTO_STAIRS'] = value
 
     def set_screen(self, win_height, win_width):
         """Stub for setting the screen."""
@@ -658,6 +672,7 @@ class Game:
         # B does nothing on the map: in the COMMAND window it is read with the other buttons (CommandMenu.select_command)
         self.handle_a_button(current_keydown_event)
         self.handle_start_button(current_keydown_event)
+        self.handle_select_button(current_keydown_event)
         self.handle_help_button(current_keydown_event)
         self.handle_enter_key(current_keydown_event)
         self.handle_fps_changes(current_keydown_event)
@@ -679,7 +694,7 @@ class Game:
         if keydown_event.key == K_k:
             # A button
             # print("K key pressed (A button).")
-            if self.movement.world_frozen or self.pause_requested:
+            if self.movement.world_frozen or self.pause_requested or self.options_requested:
                 return
             # The window opens once the hero and the NPCs have finished their steps (resolve_pending_freezes)
             self.cmd_menu_requested = True
@@ -695,7 +710,24 @@ class Game:
                 # hero finishes the step under way first (resolve_pending_freezes).
                 self.pause_requested = True
                 self.cmd_menu_requested = False
+                self.options_requested = False
                 self.movement.resolve_pending_freezes()
+
+    def handle_select_button(self, keydown_event):
+        """SELECT (U) or Tab: the options overlay (src/options_overlay.py), not NES (the NES map ignores SELECT). It
+        opens from the map only when START would pause the game: no window open or about to open, the light not
+        growing. Like the pause, it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes)."""
+        if keydown_event.key not in OPTIONS_KEYS:
+            return
+        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+            return
+        self.options_requested = True
+        self.movement.resolve_pending_freezes()
+
+    def open_options(self) -> None:
+        """Show the options overlay over the map until it's closed. Its loop is the only thing running meanwhile, so
+        the map, the NPCs, the timers and the pop-up window all wait, as they do for a dialog."""
+        OptionsOverlay(self).run()
 
     def handle_enter_key(self, keydown_event):
         if keydown_event.key == K_RETURN:
@@ -761,13 +793,13 @@ class Game:
             self.draw_temporary_text(mode_text)
 
     def handle_auto_stairs_toggle(self, keydown_event) -> None:
-        """Toggle auto-stairs mode when F2 is pressed."""
+        """F2 toggles the STAIRS option (auto_stairs), the same setting as the options overlay's STAIRS row."""
         if keydown_event.key == K_F2:
             self.auto_stairs = not self.auto_stairs
             if self.auto_stairs:
-                mode_text = self._("Auto-stairs enabled")
+                mode_text = self._("Stairs: STEP ON")
             else:
-                mode_text = self._("Auto-stairs disabled")
+                mode_text = self._("Stairs: NES (STAIRS command)")
             self.draw_temporary_text(mode_text)
 
     def handle_auto_battle_toggle(self, keydown_event) -> None:
