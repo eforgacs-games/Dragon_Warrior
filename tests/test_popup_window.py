@@ -1,22 +1,18 @@
 """The pop-up status window (name, level, HP, MP, gold, experience) is redrawn when the NES redraws it: Dowindow WND_POPUP
 right after a dialog event changes what it shows (Bank03)."""
 import hashlib
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
+from pygame import Rect
 
-import pygame  # noqa: E402
-from pygame import Rect  # noqa: E402
-
-from src.color import LOW_HP_RED, WHITE  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.drawer import Drawer  # noqa: E402
-from src.game import Game  # noqa: E402
-from src.maps import Brecconary  # noqa: E402
-from src.windows import POPUP_WINDOW  # noqa: E402
+from src.color import LOW_HP_RED, WHITE
+from src.config.test_config import test_config
+from src.drawer import Drawer
+from src.maps import Brecconary
+from src.windows import POPUP_WINDOW
+from tests.helpers import new_game
 
 INN_COST = 6
 
@@ -42,8 +38,7 @@ class PopupWindowTestCase(TestCase):
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
         self.addCleanup(test_config.__setitem__, 'NO_BLIT', True)
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.change_map(Brecconary(self.game.config), destination_coordinates=(29, 18))
         self.cmd_menu = self.game.cmd_menu
         self.dialog_lookup = self.cmd_menu.dialog_lookup

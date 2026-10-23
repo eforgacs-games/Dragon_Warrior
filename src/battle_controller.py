@@ -27,7 +27,7 @@ from src.enemy_spells import enemy_spell_lookup
 from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
 from src.spells import Spell
-from src.window_renderer import draw_window
+from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT
 from src.visual_effects import player_hit_shake
 from src.waiting import handle_speed_key, scaled_ms
@@ -145,10 +145,6 @@ class BattleController:
         return self.game.auto_battle
 
     @property
-    def music_enabled(self):
-        return self.game.music_enabled
-
-    @property
     def current_map(self):
         return self.game.current_map
 
@@ -212,7 +208,7 @@ class BattleController:
         self.player.is_asleep = False
         self.player.is_stopspelled = False
         self.player_ran_away = False
-        current_battle.play_battle_music()
+        current_battle.play_battle_music(self.music_player)
         # TODO: Group parameters into respective classes.
         current_battle.display_battle_window(self.screen, self.drawer,
                                              self.cmd_menu, self.graphics, self.directories,
@@ -230,8 +226,7 @@ class BattleController:
                 return self.fight_enemy('Dragonlord 2')
             # NES EnemyDefeated: the Green Dragon and Golem guardians' story flags
             record_victory(current_battle.enemy.name, self.current_map.identifier, self.game.story_flags)
-            current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, self.music_enabled,
-                                          current_battle.enemy)
+            current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, current_battle.enemy)
             outcome = BattleOutcome.VICTORY
         elif self.player.is_dead:
             outcome = BattleOutcome.DEFEAT
@@ -294,10 +289,11 @@ class BattleController:
 
     def draw_command_window(self, cursor_visible: bool) -> None:
         """The battle command window (CmdCmbtDat), generated like the NES draws it (src/window_renderer.py), with the
-        NES cursor at the selected command (src/cursor.py), in the window color."""
-        rect = draw_window(self.screen, COMBAT_COMMAND_LAYOUT, self.game.color, self.game.game_state.config,
-                           cursor_index=self.battle_menu_row * 2 + self.battle_menu_column,
-                           cursor_visible=cursor_visible)
+        NES cursor at the selected command (src/cursor.py), in the window color. Translated, its text is drawn over
+        the generated border (src/translated_window.py)."""
+        rect = draw_translated_window(self.screen, COMBAT_COMMAND_LAYOUT, self.game.color, self.game.game_state.config,
+                                      self._, cursor_index=self.battle_menu_row * 2 + self.battle_menu_column,
+                                      cursor_visible=cursor_visible)
         display.update(rect)
 
     def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:

@@ -20,18 +20,11 @@ from src.config.test_config import test_config
 from src.direction import Direction
 from src.game import Game
 from src.visual_effects import screen_fade
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 class StopMainLoop(Exception):
     pass
-
-
-def new_game() -> Game:
-    with patch('src.game.SCALED'):
-        return Game(test_config)
 
 
 class TestLoadSaveFrames(TestCase):
