@@ -4,15 +4,8 @@ Game-wide named constants. All magic numbers that appear in game logic live here
 
 # ── Battle ────────────────────────────────────────────────────────────────────
 
-
 # Auto-battle delay between actions (ms)
 AUTO_BATTLE_DELAY_MS = 200
-
-# ── Battle menu window position (tile units): x, y, width, height ─────────────
-BATTLE_MENU_X = 6
-BATTLE_MENU_Y = 1
-BATTLE_MENU_WIDTH = 8
-BATTLE_MENU_HEIGHT = 3
 
 # ── Maps ──────────────────────────────────────────────────────────────────────
 

@@ -3,13 +3,10 @@ import random
 from pygame import display, Surface
 
 from src.common import BLACK, set_gettext_language
-from src.constants import BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT
 from src.directories import Directories
 from src.enemy import enemy_groups
 from src.enemy_lookup import enemy_string_lookup
 from src.maps import DragonWarriorMap
-from src.translated_window import draw_translated_window
-from src.windows import COMBAT_COMMAND_LAYOUT
 from src.menu import CommandMenu
 from src.player.player import Player
 from src.player.player_stats import get_level_by_experience
@@ -364,10 +361,8 @@ class Battle:
         cmd_menu.show_line_in_battle_dialog_box(self.get_enemy_draws_near_string())
         # drop down for the hovering stats window
         cmd_menu.window_drop_down_effect(1, 2, 4, 6)
-        # drop down for the battle menu
-        cmd_menu.window_drop_down_effect(BATTLE_MENU_X, BATTLE_MENU_Y, BATTLE_MENU_WIDTH, BATTLE_MENU_HEIGHT)
-        # The command window (CmdCmbtDat) opens with the cursor on FIGHT
-        draw_translated_window(screen, COMBAT_COMMAND_LAYOUT, color, graphics.config, self._, cursor_index=0)
+        # The command window (CmdCmbtDat) isn't opened here but by the first player turn (StartPlayerTurn ->
+        # ShowCmbtCmd, BattleController.open_command_window): if the enemy attacks first, it isn't on the screen
         drawer.hovering_stats_displayed = True
         drawer.draw_hovering_stats_window(screen, player, color)
 
