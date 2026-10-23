@@ -217,7 +217,8 @@ class TestDragonlordBattle(unittest.TestCase):
         music_player = Mock()
         first = Battle(self.config, 'Dragonlord', Mock())
         first.play_battle_music(music_player)
-        music_player.load_and_play_music.assert_called_with(first.directories.battle_music)
+        music_player.load_and_play_music.assert_called_with(first.directories.battle_music,
+                                                            then_loop=first.directories.regular_fight_music)
         second = Battle(self.config, 'Dragonlord 2', Mock())
         second.play_battle_music(music_player)
         music_player.load_and_play_music.assert_called_with(second.directories.end_boss_music)

@@ -17,7 +17,8 @@ class Directories:
         # SAVE_DIR redirects saving, e.g. for a game started from a checkpoint (src/checkpoints.py)
         self.save_dir = config.get('SAVE_DIR') or join(src_dir, 'saves')
         self.text_beep_sfx = join(sfx_dir, 'text_beep.wav')
-        self.death_sfx = join(sfx_dir, '20 Dragon Quest 1 - Thou Hast Died.mp3')
+        # MSC_DEATH, a music clip like the ones below (PlayerHasDied / InitDeathSequence: InitMusicSFX, WaitForMusicEnd)
+        self.death_music = join(sfx_dir, '20 Dragon Quest 1 - Thou Hast Died.mp3')
         # NES MSC_INN ($15), the inn's jingle (BuyInnStay). The soundtrack calls it "Special Item"; it is the track
         # between Thou Hast Died (MSC_DEATH, $14) and Princess Gwaelin's Love (MSC_PRNCS_LOVE, $16), and the only place
         # the game plays it is the inn. There is no orchestral version, so it is used with either music setting.
@@ -53,6 +54,9 @@ class Directories:
         self.harp_music = join(sfx_dir, '17 Dragon Quest 1 - Silver Harp.mp3')  # MSC_SILV_HARP
         self.flute_music = join(sfx_dir, '18 Dragon Quest 1 - Fairy Flute.mp3')  # MSC_FRY_FLUTE
         self.cursed_music = join(sfx_dir, '23 Dragon Quest 1 - Cursed!.mp3')  # MSC_CURSED
+        self.rainbow_bridge_music = join(sfx_dir, '19 Dragon Quest 1 - Rainbow Bridge.mp3')  # MSC_RNBW_BRDG
+        self.barrier_sfx = join(sfx_dir, '27 Dragon Quest 1 - Barrier.mp3')  # SFX_FFDAMAGE (force field damage)
+        self.wyvern_wing_sfx = join(sfx_dir, '28 Dragon Quest 1 - Wyvern Wing.mp3')  # SFX_WVRN_WNG (RETURN, Wings)
 
 
         # movement
@@ -77,7 +81,7 @@ class Directories:
             self.tantegel_castle_courtyard_music = join(music_dir, 'orchestra', '02 Chateau Ladutorm.mp3')
             self.village_music = join(music_dir, 'orchestra', '03 People.mp3')
             self.overworld_music = join(music_dir, 'orchestra', '04 Unknown World.mp3')
-            self.battle_music = join(music_dir, 'orchestra', '05 Fight.mp3')
+            self.battle_music = self.regular_fight_music = join(music_dir, 'orchestra', '05 Fight.mp3')
             self.end_boss_music = join(music_dir, 'orchestra', '07 King Dragon.mp3')
             self.ending_music = join(music_dir, 'orchestra', '08 Finale.mp3')
             self.dungeon_floor_1_music = \
@@ -105,7 +109,12 @@ class Directories:
             self.dungeon_floor_6_music = join(music_dir, 'NES', '11 Dragon Quest 1 - Dark Dungeon ~ Floor 6.mp3')
             self.dungeon_floor_7_music = join(music_dir, 'NES', '12 Dragon Quest 1 - Dark Dungeon ~ Floor 7.mp3')
             self.dungeon_floor_8_music = join(music_dir, 'NES', '13 Dragon Quest 1 - Dark Dungeon ~ Floor 8.mp3')
+            # NES MSC_ENTR_FGHT, the music every fight but the last starts with (InitFight): the 'monster draws near'
+            # run (SQ1EntFight), which then falls through into the fight loop (SQ1Fight)
             self.battle_music = join(music_dir, 'NES', '14 Dragon Quest 1 - A Monster Draws Near.mp3')
+            # NES MSC_REG_FGHT, the fight loop on its own: what the fight music restarts with after the flute, the harp
+            # or a cursed item (ChkUseFlute, ChkUseHarp, ChkUseBelt, ChkUseNecklace), and what follows MSC_ENTR_FGHT
+            self.regular_fight_music = join(sfx_dir, '24 Dragon Quest 1 - Monster Battle.mp3')
             self.end_boss_music = join(music_dir, 'NES', '15 Dragon Quest 1 - The Dragon Lord.mp3')
             self.ending_music = join(music_dir, 'NES', "16 Dragon Quest 1 - Hero's Fanfare.mp3")  # NES MSC_END
 

@@ -836,7 +836,7 @@ class CommandMenu:
         self.player.inventory.remove("Wings")
         self.show_text_in_dialog_box(
             self._("{} threw The Wings of the Wyvern up into the sky.").format(self.player.name))
-        self.warp(*RETURN_DESTINATION)
+        self.return_to_tantegel()
 
     def torch(self):
         if not self.current_map.is_dark:
@@ -861,11 +861,11 @@ class CommandMenu:
         self.game.repel_timer = FAIRY_WATER_TIMER
 
     def resume_music(self):
-        """After a music clip: in a fight, the fight's music again (the end boss music against the Dragonlord's final
-        form, ChkUseFlute and ChkUseHarp); on the map, the map's music (ResumeMusicTbl). Both start from the
-        beginning."""
+        """After a music clip: in a fight, the fight's music again (MSC_REG_FGHT, or MSC_END_BOSS against the
+        Dragonlord's final form: ChkUseFlute and ChkUseHarp); on the map, the map's music (ResumeMusicTbl). Both start
+        from the beginning."""
         if self.current_battle is not None:
-            self.current_battle.play_battle_music(self.game.music_player)
+            self.current_battle.resume_battle_music(self.game.music_player)
         else:
             self.game.music_player.load_and_play_music(self.current_map.music_file_path)
 
@@ -928,6 +928,10 @@ class CommandMenu:
             self.show_text_in_dialog_box(self._("But no rainbow appeared here."), skip_text=self.skip_text)
             return
         self.game.story_flags.rainbow_bridge_built = True
+        # NES ChkDrop: MSC_RNBW_BRDG starts as the rainbow flashes, WaitForMusicEnd lets it finish, then MSC_OUTDOOR
+        # (the overworld music, from the start), and only then does ModMapBlock put the bridge on the map
+        self.game.music_player.play_until_end(self.directories.rainbow_bridge_music, self.game.game_state.config)
+        self.game.music_player.load_and_play_music(self.directories.overworld_music)
         bridge_row, bridge_column = RAINBOW_BRIDGE_COORDINATES
         self.set_tile_by_coordinates('BRIDGE', bridge_column, bridge_row, self.player)
 
@@ -978,7 +982,7 @@ class CommandMenu:
         # the regular fight music even against the Dragonlord's final form.
         self.game.music_player.play_until_end(self.directories.cursed_music, self.game.game_state.config)
         if self.current_battle is not None:
-            self.game.music_player.load_and_play_music(self.directories.battle_music)
+            self.game.music_player.load_and_play_music(self.directories.regular_fight_music)
         else:
             self.resume_music()
 
@@ -1096,12 +1100,20 @@ class CommandMenu:
         if destination is None:
             self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
             return
+        # NES ChangeMaps -> SetPlyrPixelLoc -> MapChngWithSound: the stairs sound, as on a staircase
+        self.sound.play_sound(self.directories.stairs_up_sfx)
         self.warp(*destination)
 
     def return_(self):
         if not self.can_return():
             self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
             return
+        self.return_to_tantegel()
+
+    def return_to_tantegel(self):
+        """NES DoReturn, for RETURN and the Wings of the Wyvern: SFX_WVRN_WNG, then MapChngFadeNoSound (no stairs
+        sound) to the overworld outside Tantegel."""
+        self.sound.play_sound(self.directories.wyvern_wing_sfx)
         self.warp(*RETURN_DESTINATION)
 
     def repel(self):
