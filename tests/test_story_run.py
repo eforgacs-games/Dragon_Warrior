@@ -345,7 +345,7 @@ class StoryRunMixin:
         game = self.game
         with self.step("10 (use the Rainbow Drop to build the bridge)"):
             self.travel_to('Alefgard', RAINBOW_DROP_COORDINATES)
-            self.assertEqual(self.tile(RAINBOW_BRIDGE_COORDINATES), 'WATER')
+            self.assertEqual(self.tile(RAINBOW_BRIDGE_COORDINATES), 'LEFT_RIGHT_COAST')  # water, shores on both sides
             self.cmd_menu.rainbow_drop()
             self.assertTrue(rainbow_bridge_built(game))
             self.assertEqual(self.tile(RAINBOW_BRIDGE_COORDINATES), 'BRIDGE')

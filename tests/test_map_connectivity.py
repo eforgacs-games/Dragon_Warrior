@@ -337,7 +337,7 @@ class TestMapConnectivity(TestCase):
 
     def test_rainbow_bridge_connects_the_mainland_to_charlock(self):
         row, column = RAINBOW_BRIDGE_COORDINATES
-        self.assertEqual(tile_name(self.world_at_start, 'Alefgard', (row, column)), 'WATER')
+        self.assertEqual(tile_name(self.world_at_start, 'Alefgard', (row, column)), 'LEFT_RIGHT_COAST')
         self.assertEqual(tile_name(self.world_with_bridge, 'Alefgard', (row, column)), 'BRIDGE')
         self.assertIn(('Alefgard', RAINBOW_DROP_COORDINATES), self.reached_at_start)
         self.assertNotIn(('CharlockB1', (25, 17)), self.reached_at_start)
