@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -10,9 +9,6 @@ from src.game import Game
 from src.maps import LOW_HP_PALETTE_TILES, map_lookup
 from src.maps_functions import PAL0_COLOR1_LOW_HP, PAL0_COLOR1_NORMAL, low_hp_tile_image
 from src.visual_effects import NES_PALETTE
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 def pixels(surface):

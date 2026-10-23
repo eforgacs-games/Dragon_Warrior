@@ -21,9 +21,6 @@ from src.direction import Direction
 from src.game import Game
 from src.visual_effects import screen_fade
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
 
 class StopMainLoop(Exception):
     pass

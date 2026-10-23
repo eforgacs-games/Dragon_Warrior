@@ -16,9 +16,6 @@ from src.map_layouts import BRICK, DOOR, TREASURE_BOX
 from src.maps import map_lookup
 from src.story_flags import StoryFlags
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
 FLAG_NAMES = [field.name for field in fields(StoryFlags)]
 THRONE_ROOM_CHESTS = list(treasure['TantegelThroneRoom'])
 

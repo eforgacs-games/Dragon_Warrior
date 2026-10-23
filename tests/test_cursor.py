@@ -1,17 +1,13 @@
-import os
 from unittest import TestCase
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
 
-import pygame  # noqa: E402
-
-from src.color import BLACK, RED, WHITE  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.cursor import (CURSOR_TILE, IN_A, IN_DOWN, IN_START, IN_UP, BlinkingCursor,  # noqa: E402
+from src.color import BLACK, RED, WHITE
+from src.config.test_config import test_config
+from src.cursor import (CURSOR_TILE, IN_A, IN_DOWN, IN_START, IN_UP, BlinkingCursor,
                         SelectionButtons, cursor_visible_on_frame, draw_cursor_tile, first_button)
-from src.directories import Directories  # noqa: E402
-from src.waiting import NES_FPS  # noqa: E402
+from src.directories import Directories
+from src.waiting import NES_FPS
 
 
 def ticks_at_frame(frame: int) -> int:

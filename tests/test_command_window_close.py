@@ -4,7 +4,6 @@ NES RemoveWindow (Bank00, $A7A2) redraws only the map blocks under a closing win
 (StartSignedXPos), so they line up with the map around them and nothing else on the screen moves. Here every frame
 drawn while the window closes must match, outside the window, the last frame drawn while it was open.
 """
-import os
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -16,9 +15,6 @@ from src.config.test_config import test_config
 from src.game import Game
 from src.waiting import NES_FPS
 from src.windows import COMMAND_WINDOW, POPUP_WINDOW
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class StopMainLoop(Exception):

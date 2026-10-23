@@ -1,9 +1,5 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
 

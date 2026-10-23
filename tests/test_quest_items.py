@@ -1,4 +1,3 @@
-import os
 from collections import deque
 from unittest import TestCase
 from unittest.mock import patch
@@ -11,9 +10,6 @@ from src.enemy_lookup import enemy_string_lookup
 from src.game import Game
 from src.items import treasure
 from src.maps import map_lookup
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 NO_BUSINESS = "Thou hast no business here.\nGo away."
 

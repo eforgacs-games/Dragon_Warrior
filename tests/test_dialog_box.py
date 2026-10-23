@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -9,9 +8,6 @@ from src.dialog_box import DIALOG_COLUMNS, DIALOG_ROWS, SCROLL_FRAMES, Character
     frames_per_character, plays_text_beep, tiles
 from src.game import Game
 from tests.mock_map import MockMap
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 def print_lines(buffer: DialogBuffer, text: str, quoted: bool, wait: bool = False) -> list:

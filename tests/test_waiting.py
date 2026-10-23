@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -9,9 +8,6 @@ from pygame.event import Event
 from src.config.test_config import test_config
 from src.game import Game
 from src.waiting import check_for_quit, quit_if_requested, reset_game_speed, wait, wait_frames
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestWait(TestCase):

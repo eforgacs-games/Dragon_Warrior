@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
@@ -8,9 +7,6 @@ from pygame.time import get_ticks
 from src.config.test_config import test_config
 from src.game import Game
 from src.menu_functions import NameSelection, get_opposite_direction, toggle_joystick_input
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestMenuFunctions(TestCase):

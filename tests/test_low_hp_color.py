@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -13,9 +12,6 @@ from src.maps_functions import PAL0_COLOR1_LOW_HP
 from src.visual_effects import NES_PALETTE, NES_RED
 from src.maps import map_lookup
 from src.windows import SHOP_INVENTORY_WINDOW
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
 class TestLowHPThreshold(TestCase):
