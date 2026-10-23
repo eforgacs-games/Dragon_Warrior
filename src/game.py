@@ -584,8 +584,9 @@ class Game:
             self.auto_grind.hero_died()
             self.load_window_palette()  # 0 HP is always low
             if self.battle_ctrl.launch_battle and not self.game_state.config["NO_BATTLES"]:
-                # The command window, red now, with the arrow on the command that was chosen (WndAPressed)
-                self.battle_ctrl.draw_command_window(True)
+                # NES PlayerHasDied (LED9C): the battle screen stays as the deathblow left it. The command window isn't
+                # drawn again: every command removed it (PlyrFight LE5FE and the others), and the death music and
+                # "Thou art dead." follow in the dialog window.
                 self.battle_ctrl.launch_battle = False
                 display.flip()
             else:
