@@ -107,17 +107,17 @@ class MakeWayTestCase(TestCase):
         turn (slot 0) is as far away as it can be."""
         set_character_position(self.game.player, self.tile_size)
         self.game.set_roaming_character_positions()
-        self.game.frame_counter = 0
-        self.game.npc_schedule.update_counter = 1
+        self.game.movement.frame_counter = 0
+        self.game.movement.npc_schedule.update_counter = 1
 
     def frame(self, held=()):
-        with patch('src.game.key') as mock_key:
+        with patch('src.movement.key') as mock_key:
             mock_key.get_pressed.return_value = keys_held(*held)
             self.game.get_events()
         self.check_nobody_overlaps()
 
     def frames(self, count, held=(), random_direction=Direction.LEFT.value):
-        with patch('src.game.random.choice', return_value=random_direction):
+        with patch('src.movement.random.choice', return_value=random_direction):
             for _ in range(count):
                 self.frame(held=held)
 
@@ -230,7 +230,7 @@ class TestNpcsMakeWay(MakeWayTestCase):
         self.frames(4 * FRAMES_PER_TURN, held=(K_RIGHT,))
         self.assertEqual(NPC_TILE, self.tile(npc))
         self.assertEqual((2, 2), self.tile(self.game.player))
-        self.assertIsNone(self.game.npc_asked_to_make_way)
+        self.assertIsNone(self.game.movement.npc_asked_to_make_way)
 
     def test_the_option_is_on_by_default(self):
         from src.config.prod_config import prod_config
@@ -249,7 +249,7 @@ class TestNpcsMakeWay(MakeWayTestCase):
         launch_dialog.assert_called_once_with('NPC', self.game.current_map)
         self.frames(2 * FRAMES_PER_TURN)
         self.assertEqual(NPC_TILE, self.tile(npc))
-        self.assertIsNone(self.game.npc_asked_to_make_way)
+        self.assertIsNone(self.game.movement.npc_asked_to_make_way)
 
     def test_it_never_steps_under_a_roof(self):
         # NES $B839-$B84F: an NPC can't step between a covered and an uncovered block; making way is no exception

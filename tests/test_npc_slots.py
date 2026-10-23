@@ -71,13 +71,13 @@ class TestMobileNPCSlots(TestCase):
 
     def deciders_by_turn(self) -> list[list[str]]:
         """Run one 5-pair cycle from the start of a pair 0 turn. Returns, by turn, the NPCs that decided a step."""
-        self.game.npc_schedule.give_turn_to(0)
+        self.game.movement.npc_schedule.give_turn_to(0)
         turns: list[list[str]] = []
-        with patch.object(self.game, 'start_npc_step', lambda npc: turns[-1].append(npc.identifier)):
+        with patch.object(self.game.movement, 'start_npc_step', lambda npc: turns[-1].append(npc.identifier)):
             for frame in range(5 * FRAMES_PER_TURN):
                 if frame % FRAMES_PER_TURN == 0:
                     turns.append([])
-                self.game.do_sprites()
+                self.game.movement.sprites_frame()
         return turns
 
     def test_removing_a_roaming_npc_keeps_the_others_slots(self):

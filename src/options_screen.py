@@ -17,7 +17,8 @@ NES flow (Bank03):
 What this game adds: a DIALOG STYLE window above the speed window, drawn the same way. CLASSIC is the NES dialog
 window, whose text scrolls up a row at a time (src/dialog_box.py); MODERN is how this game drew dialog before it
 copied the NES: each message on a fresh window, replacing the one before. Above that, an NPCS MAKE WAY window:
-ON lets a roaming NPC the hero walks into step aside (Game.ask_npc_to_make_way), OFF (the NES) leaves it in the way.
+ON lets a roaming NPC the hero walks into step aside (MovementController.ask_npc_to_make_way), OFF (the NES) leaves it
+in the way.
 Beside it, a FADE STYLE window: NES (the default) fades the screen through the NES palette, SMOOTH with a black
 overlay (src/visual_effects.py screen_fade). After the speed is chosen the cursor moves to the dialog style, then to
 NPCS MAKE WAY, then to FADE STYLE; B goes back a window.
@@ -188,7 +189,8 @@ def options_from_config(config: dict) -> Options:
 
 def apply_options(config: dict, options: Options) -> None:
     """Use these settings from now on: the dialog code reads TEXT_SPEED and DIALOG_STYLE for every message, and
-    Game.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump, and screen_fade reads FADE_STYLE for every fade."""
+    MovementController.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump, and screen_fade reads FADE_STYLE for every
+    fade."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way

@@ -15,7 +15,7 @@ from pygame import K_DOWN, K_LEFT, K_UP, K_i
 
 from src.config.test_config import test_config
 from src.direction import Direction
-from src.game import STEP_SYNC_FRAMES
+from src.movement import STEP_SYNC_FRAMES
 from src.npc_schedule import POP_UP_FRAME
 from src.waiting import set_game_speed
 from src.windows import POPUP_WINDOW
@@ -32,7 +32,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.play_sound = patch.object(self.game.movement.sound, 'play_sound').start()
         self.addCleanup(patch.stopall)
         self.assertEqual((13, 10), (self.player.column, self.player.row))
-        self.assertEqual(0, self.game.frame_counter)
+        self.assertEqual(0, self.game.movement.frame_counter)
 
     def hero_xy(self):
         return self.player.rect.x, self.player.rect.y
@@ -94,7 +94,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
             self.assertEqual((start_x, start_y), self.hero_xy())
         self.frame(held=(K_LEFT,))  # FrameCounter 16
         self.assertTrue(self.player.is_moving)
-        self.assertEqual((start_x - self.game.speed, start_y), self.hero_xy())
+        self.assertEqual((start_x - self.game.movement.speed, start_y), self.hero_xy())
 
     def test_the_first_step_waits_0_to_15_frames(self):
         for idle_frames in range(STEP_SYNC_FRAMES * 2):
@@ -111,7 +111,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
     def test_the_pop_up_window_frame_skips_a_count(self):
         # NES IdleUpdate: on FrameCounter $31 it shows the pop-up window and sets FrameCounter to $32
         self.stand_still(60)
-        self.assertEqual(61, self.game.frame_counter)
+        self.assertEqual(61, self.game.movement.frame_counter)
         self.assertEqual(4, self.frames_until_moved((K_LEFT,)))  # 61, 62, 63, then 64
 
     def test_a_tap_that_only_turns_closes_the_pop_up_window(self):
@@ -129,7 +129,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.assertFalse(drawer.hovering_stats_displayed)
         drop_up.assert_called_once_with(*POPUP_WINDOW)
         # DoRemovePopUp keeps FrameCounter: the window opens again when it comes round to $31, 256 frames later
-        self.assertEqual(62, self.game.frame_counter)
+        self.assertEqual(62, self.game.movement.frame_counter)
         self.stand_still(0x100 + POP_UP_FRAME - 62 - 1)
         self.assertFalse(drawer.display_hovering_stats)
         self.stand_still(1)
@@ -152,15 +152,15 @@ class TestTurnBeforeMoving(FreezeTestCase):
 
     def test_holding_the_same_direction_walks_without_pausing(self):
         start_x, start_y = self.hero_xy()
-        frames_per_step = self.tile_size // self.game.speed
+        frames_per_step = self.tile_size // self.game.movement.speed
         self.assertEqual(STEP_SYNC_FRAMES, frames_per_step)
         for frame in range(1, frames_per_step * 2 + 1):
             self.frame(held=(K_LEFT,))
-            self.assertEqual((start_x - frame * self.game.speed, start_y), self.hero_xy())
+            self.assertEqual((start_x - frame * self.game.movement.speed, start_y), self.hero_xy())
         self.assertEqual(2, self.game.tiles_moved_since_spawn)
 
     def test_each_step_is_counted_on_the_frame_the_hero_arrives(self):
-        frames_per_step = self.tile_size // self.game.speed
+        frames_per_step = self.tile_size // self.game.movement.speed
         self.frames(frames_per_step - 1, held=(K_LEFT,))
         self.assertEqual(0, self.game.tiles_moved_since_spawn)
         self.assertTrue(self.player.is_moving)
@@ -168,7 +168,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.assertEqual(1, self.game.tiles_moved_since_spawn)
         self.assertFalse(self.player.is_moving)
         self.assertEqual((12, 10), (self.player.column, self.player.row))
-        self.assertEqual(0, self.game.frame_counter)
+        self.assertEqual(0, self.game.movement.frame_counter)
 
     def test_letting_go_mid_step_finishes_the_step(self):
         start_x, _ = self.hero_xy()
@@ -179,7 +179,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
 
     def test_turning_mid_walk_finishes_the_step_then_steps_the_new_way_at_once(self):
         start_x, start_y = self.hero_xy()
-        frames_per_step = self.tile_size // self.game.speed
+        frames_per_step = self.tile_size // self.game.movement.speed
         self.frames(6, held=(K_LEFT,))
         for _ in range(frames_per_step - 6):  # DOWN is ignored until the step to the left is done
             self.frame(held=(K_DOWN,))
@@ -189,7 +189,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
         # the very next frame turns the hero and starts the step down: no pause
         self.frame(held=(K_DOWN,))
         self.assertEqual(Direction.DOWN.value, self.player.direction_value)
-        self.assertEqual((start_x - self.tile_size, start_y + self.game.speed), self.hero_xy())
+        self.assertEqual((start_x - self.tile_size, start_y + self.game.movement.speed), self.hero_xy())
 
     # ------------------------------------------------------------------ #
     #  Bumping                                                            #
@@ -216,7 +216,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.assertEqual(STEP_SYNC_FRAMES, self.frames_until_moved((K_LEFT,)))
 
     def test_walking_up_to_the_wall_bumps_after_the_last_step(self):
-        frames_per_step = self.tile_size // self.game.speed
+        frames_per_step = self.tile_size // self.game.movement.speed
         self.frames(frames_per_step * 2, held=(K_LEFT,))
         self.assertEqual((11, 10), (self.player.column, self.player.row))
         self.play_sound.assert_not_called()
@@ -225,7 +225,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.assertEqual((11, 10), (self.player.column, self.player.row))
 
     def test_walking_into_an_npc_bumps(self):
-        frames_per_step = self.tile_size // self.game.speed
+        frames_per_step = self.tile_size // self.game.movement.speed
         self.frames(frames_per_step, held=(K_DOWN,))
         self.assertEqual((13, 11), (self.player.column, self.player.row))
         before = self.hero_xy()
@@ -257,7 +257,7 @@ class TestTurnBeforeMoving(FreezeTestCase):
         # NES: unpausing ends with JMP JoypadCheckLoop, so FrameCounter is 0 and a held direction steps at once
         self.frame(keydown(K_i), held=(K_LEFT,))
         self.assertFalse(self.game.paused)
-        self.assertEqual((before[0] - self.game.speed, before[1]), self.hero_xy())
+        self.assertEqual((before[0] - self.game.movement.speed, before[1]), self.hero_xy())
 
     def test_pausing_mid_walk_stops_on_the_next_tile(self):
         start_x, _ = self.hero_xy()

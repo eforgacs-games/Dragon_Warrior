@@ -51,12 +51,12 @@ class TestNpcCollision(TestCase):
         self.game.current_map.roaming_characters.append(self.npc)
 
     def step_frame(self, character):
-        self.game.move_laterally(character)
+        self.game.movement.move_laterally(character)
 
     def finish_step(self, character):
         while character.rect.x % self.tile_size:
             self.step_frame(character)
-        self.game.finish_step(character)
+        self.game.movement.finish_step(character)
         set_character_position(character, self.tile_size)
 
     def tile(self, character):

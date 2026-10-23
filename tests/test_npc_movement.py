@@ -92,9 +92,9 @@ class TestRoamingNPCMovement(TestCase):
         npc.step_origin = npc.step_destination = None
         x, y = npc.rect.x, npc.rect.y
         if direction in (Direction.UP, Direction.DOWN):
-            self.game.move_medially(npc)
+            self.game.movement.move_medially(npc)
         else:
-            self.game.move_laterally(npc)
+            self.game.movement.move_laterally(npc)
         moved = (npc.rect.x, npc.rect.y) != (x, y)
         npc.rect.x, npc.rect.y = x, y
         npc.step_origin = npc.step_destination = None
@@ -220,14 +220,14 @@ class TestRoamingNPCMovement(TestCase):
         self.place(player, player.rect.y // self.tile_size, player.rect.x // self.tile_size)
         player_tile = (player.row, player.column)
         steps = 0
-        with patch('src.game.random', rng):
+        with patch('src.movement.random', rng):
             for _ in range(ROUNDS * TURNS_PER_CYCLE):
                 before = {npc: (npc.row, npc.column) for npc in npcs}
                 taken = set(before.values()) | {(npc.row, npc.column) for npc in current_map.fixed_characters}
                 # One turn of the NPC schedule (#289): one pair steps at once, and ends the turn back on a tile.
                 # ROUNDS cycles of turns give each NPC ROUNDS chances to step.
                 for _ in range(FRAMES_PER_TURN):
-                    self.game.do_sprites()
+                    self.game.movement.sprites_frame()
                 for npc in npcs:
                     position = (npc.row, npc.column)
                     self.assertFalse(npc.is_moving, npc.identifier)

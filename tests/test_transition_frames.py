@@ -52,10 +52,7 @@ class TransitionTestCase(TestCase):
         self.frame_number += 1
         game = self.game
         game.get_events()
-        game.drawer.draw_all(game.screen, game.loop_count, game.big_map, game.current_map, game.player,
-                             game.cmd_menu, game.foreground_rects, game.sprites_animate, game.camera,
-                             game.initial_dialog_enabled, game.events, game.skip_text,
-                             game.story_flags.left_throne_room, game.game_state, game.color)
+        game.drawer.draw_all(game, game.movement.sprites_animate)
         pygame.display.flip()
         game.loop_count += 1
 
@@ -80,10 +77,7 @@ class TestFadeInFrame(TransitionTestCase):
         pictures = []
 
         def draw_again():
-            game.drawer.draw_all(game.screen, game.loop_count, game.big_map, game.current_map, game.player,
-                                 game.cmd_menu, game.foreground_rects, game.game_state.enable_animate, game.camera,
-                                 game.initial_dialog_enabled, [], game.skip_text, game.story_flags.left_throne_room,
-                                 game.game_state, game.color)
+            game.drawer.draw_all(game, game.game_state.enable_animate, events=[])
 
         def record_pictures(*_args, **_kwargs):
             pictures.append(pygame.image.tobytes(game.screen, 'RGB'))
@@ -138,10 +132,7 @@ class TestThroneRoomInputAfterFadeIn(TransitionTestCase):
             # The press queued before the fade isn't read as a new one afterwards
             self.assertFalse(pygame.event.peek(KEYDOWN))
             # The first frame after the fade-in reads the button still held: the speech starts
-            game.drawer.draw_all(game.screen, game.loop_count, game.big_map, game.current_map, game.player,
-                                 game.cmd_menu, game.foreground_rects, game.game_state.enable_animate, game.camera,
-                                 game.initial_dialog_enabled, [], game.skip_text, game.story_flags.left_throne_room,
-                                 game.game_state, game.color)
+            game.drawer.draw_all(game, game.game_state.enable_animate, events=[])
         self.assertEqual(['black frame', 'fade-in', 'lit frame', 'dialog'], happened)
 
 
@@ -190,8 +181,8 @@ class TestNoOneFrameFlickers(TransitionTestCase):
         self.game.handle_battles = MagicMock()  # type: ignore[method-assign]
         self.frames(3)
         # Everyone is on a tile, between two NPC turns (#289), so the window opens on the frame K is pressed
-        with patch.object(self.game, 'everyone_on_a_tile', return_value=True), \
-                patch.object(type(self.game.npc_schedule), 'between_turns', new_callable=PropertyMock,
+        with patch.object(self.game.movement, 'everyone_on_a_tile', return_value=True), \
+                patch.object(type(self.game.movement.npc_schedule), 'between_turns', new_callable=PropertyMock,
                              return_value=True), recording() as frames:
             self.frames(2)
             self.press(K_k)

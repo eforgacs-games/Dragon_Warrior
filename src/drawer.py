@@ -1,5 +1,5 @@
 from statistics import mean
-from typing import Iterable, List, Set, Tuple
+from typing import Any, Iterable, List, Protocol, Set, Tuple
 
 from pygame import display, KEYDOWN, event, Surface, Rect
 from pygame.sprite import Group
@@ -17,6 +17,24 @@ from src.visual_effects import NES_FPS, cut_to_black, enemy_fade_in, enemy_hit_f
 from src.waiting import clear_events_keeping_quit, is_any_key_held, wait
 from src.window_renderer import draw_window
 from src.windows import COMMAND_WINDOW, POPUP_LAYOUT, POPUP_WINDOW
+
+
+class MapDrawingGame(Protocol):
+    """What Drawer.draw_all draws a frame of the map from: the Game."""
+    screen: Surface
+    loop_count: int
+    big_map: Any
+    current_map: Any
+    player: Any
+    cmd_menu: Any
+    foreground_rects: list
+    camera: Any
+    initial_dialog_enabled: bool
+    events: list
+    skip_text: bool
+    story_flags: Any
+    game_state: Any
+    color: Any
 
 
 class Drawer:
@@ -217,12 +235,21 @@ class Drawer:
         darkness.set_colorkey(WHITE)
         screen.blit(darkness, (0, 0)) if not self.game_state.config['NO_BLIT'] else None
 
-    def draw_all(self, screen, loop_count, big_map, current_map, player, cmd_menu, foreground_rects, enable_animate,
-                 camera, initial_dialog_enabled, events, skip_text, left_throne_room, game_state, color) -> None:
+    def draw_all(self, game: 'MapDrawingGame', enable_animate: bool, events: list | None = None) -> None:
         """
         Draw map, sprites, background, menu and other surfaces.
+        :param game: What to draw: the Game (MapDrawingGame).
+        :param enable_animate: Whether the characters' walking animation moves on this frame.
+        :param events: This frame's events, for the windows drawn from here (the game's own by default).
         :return: None
         """
+        screen, loop_count, big_map, current_map, player = (game.screen, game.loop_count, game.big_map,
+                                                            game.current_map, game.player)
+        cmd_menu, foreground_rects, camera, color = game.cmd_menu, game.foreground_rects, game.camera, game.color
+        initial_dialog_enabled, skip_text, game_state = game.initial_dialog_enabled, game.skip_text, game.game_state
+        left_throne_room = game.story_flags.left_throne_room
+        if events is None:
+            events = game.events
 
         screen.fill(BLACK)
         width_offset = 0
@@ -254,9 +281,9 @@ class Drawer:
             if player.is_moving:
                 tile_types_to_draw += replace_characters_with_underlying_tiles(
                     list(filter(None, player_surrounding_tiles)), current_map.character_key)
-                # The pop-up window opens on the hero's POP_UP_FRAME of standing still (Game.do_sprites, counted in
-                # game frames like the steps) and is closed by any direction press (Game.move_player), so it is gone
-                # once he moves
+                # The pop-up window opens on the hero's POP_UP_FRAME of standing still
+                # (MovementController.sprites_frame, counted in game frames like the steps) and is closed by any
+                # direction press (MovementController.move_player), so it is gone once he moves
                 self.remove_pop_up(cmd_menu)
         except IndexError:
             all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles(current_map)

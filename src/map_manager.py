@@ -208,11 +208,7 @@ class MapManager:
         # game reads any button (Drawer.drawing_fade_in_frame)
         self.drawer.drawing_fade_in_frame = True
         try:
-            self.drawer.draw_all(self.screen, self.game.loop_count, self.game.big_map, self.current_map, self.player,
-                                 self.game.cmd_menu, self.game.foreground_rects, self.game_state.enable_animate,
-                                 self.game.camera, self.game.initial_dialog_enabled, self.game.events,
-                                 self.game.skip_text, self.game.story_flags.left_throne_room, self.game_state,
-                                 self.game.color)
+            self.drawer.draw_all(self.game, self.game_state.enable_animate)
         finally:
             self.drawer.drawing_fade_in_frame = False
         # NES MapChngNoSound/MapChngWithSound (LB133): the map's music starts (ResumeMusicTbl), then PalFadeIn
@@ -272,6 +268,6 @@ class MapManager:
 
     def set_roaming_character_positions(self):
         # NES InitMapData: NPCUpdateCntr starts at 0 on every map, so pair 0 (the first two roaming NPCs) moves first
-        self.game.npc_schedule.new_map()
+        self.game.movement.npc_schedule.new_map()
         for roaming_character in self.current_map.roaming_characters:
             set_character_position(roaming_character, self.tile_size)
