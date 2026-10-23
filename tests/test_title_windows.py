@@ -1,6 +1,6 @@
 """The title screen's windows (src/title_windows.py) against the 18 NES screenshots they replace, 0 differing pixels at
-every scale (see tests/nes_screen_diff.py), in Korean, and the title menu as TitleMenu runs it: CONTINUE A QUEST with
-one log shows its hero's name (ShowUsedLogs)."""
+every scale (see tests/nes_screen_diff.py), in Korean, and the NES flow they're drawn in: BEGIN A NEW QUEST lists only
+the open logs (ShowOpenLogs), and CONTINUE A QUEST with one log shows its hero's name (ShowUsedLogs)."""
 import builtins
 import json
 import os
@@ -15,6 +15,7 @@ from src.color import BLACK, WHITE
 from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.directories import Directories
+from src.name_entry import NameEntry, render_name_entry_screen
 from src.title_menu import BACK_TO_TITLE_MENU
 from src.title_windows import TitleWindow, draw_title_windows, title_menu_layout, title_translate
 from src.window_renderer import NES_TILE, glyph_tile, tile_surface
@@ -22,7 +23,7 @@ from src.windows import (ADVENTURE_LOG_123_LAYOUT, ADVENTURE_LOG_WINDOW_1, ADVEN
                          CONTINUE_CHANGE_ERASE_LAYOUT, FULL_MENU_LAYOUT, NEW_QUEST_LAYOUT, open_logs_layout,
                          used_logs_layout)
 from tests.nes_screen_diff import compare_with_screenshot, count_differing_pixels, load_screenshot
-from tests.test_options_screen import B, OptionsTestCase, presses
+from tests.test_options_screen import B, DOWN, ENTER, OptionsTestCase, presses
 
 SCALES = (1, 2, 3)
 DIFF_DIR = os.path.join(tempfile.gettempdir(), 'dragon_warrior_screen_diffs')
@@ -201,6 +202,39 @@ class TestTitleMenuFlow(OptionsTestCase):
             elif os.path.exists(path):
                 os.remove(path)
 
+    def test_begin_a_new_quest_lists_only_the_open_logs(self):
+        # Logs 1 and 3 used: ShowOpenLogs shows LogList2Dat1, so A on its only entry is log 2, never log 1
+        self.write_saves((1, 3))
+        with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0) as selection:
+            log_window = self.game.title_menu.select_adventure_log(self.game.screen)
+        self.assertEqual(2, self.game.player.adventure_log)
+        self.assertEqual(open_logs_layout((2,)), selection.call_args.args[2])
+        # over FullMenuDat, its arrow held on BEGIN A NEW QUEST
+        self.assertEqual([(FULL_MENU_LAYOUT, 2)], selection.call_args.kwargs['below'])
+        self.assertEqual((open_logs_layout((2,)), 0), log_window)
+
+    def test_begin_a_new_quest_with_the_keys(self):
+        # Log 1 used: logs 2 and 3 are listed; down and A is log 3
+        self.write_saves((1,))
+        with patch('src.selection.event.get', side_effect=presses(DOWN, ENTER)):
+            self.assertEqual((open_logs_layout((2, 3)), 1), self.game.title_menu.select_adventure_log(self.game.screen))
+        self.assertEqual(3, self.game.player.adventure_log)
+
+    def test_b_in_the_open_logs_window_goes_back(self):
+        self.write_saves(())
+        with patch('src.selection.event.get', side_effect=presses(B)):
+            self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.select_adventure_log(self.game.screen))
+
+    def test_the_name_entry_draws_the_open_logs_window_behind_it(self):
+        self.write_saves((1,))
+        with patch.object(self.game.title_menu, 'select_adventure_log', return_value=(open_logs_layout((2, 3)), 1)), \
+                patch('src.title_menu.NameSelection') as name_selection, \
+                patch.object(self.game.title_menu, 'choose_new_quest_options'), \
+                patch.object(self.game, 'start_at_throne_room'):
+            name_selection.return_value.select_name.return_value = 'Ed'
+            self.game.title_menu.begin_new_quest()
+        self.assertEqual((open_logs_layout((2, 3)), 1), name_selection.call_args.args[1])
+
     def test_continue_with_one_log_shows_its_hero(self):
         # Log 3 only: LogList3Dat2 with its hero's name, over FullMenuDat with the arrow held on CONTINUE A QUEST
         self.write_saves((3,))
@@ -228,3 +262,35 @@ class TestTitleMenuFlow(OptionsTestCase):
         with patch('src.title_menu.draw_title_windows') as draw:
             self.game.title_menu.title_menu_background(1)(self.game.screen)
         self.assertEqual([(FULL_MENU_LAYOUT, 1, True)], draw.call_args.args[1])
+
+
+class TestNameEntryBackground(TestCase):
+    """The open logs window stays on screen behind the name entry; only LogList123Dat1's last line shows below
+    AlphabetDat, so a shorter window is hidden."""
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+
+    @classmethod
+    def tearDownClass(cls):
+        pygame.quit()
+
+    @staticmethod
+    def last_log_line(log_window) -> bytes:
+        # LogList123Dat1's third line: NES tile row 24 (block row 9, its tile row 6)
+        screen = render_name_entry_screen(NameEntry(), WHITE, 1, None, log_window)
+        return pygame.image.tobytes(screen.subsurface((0, 24 * NES_TILE, 256, 2 * NES_TILE)), 'RGB')
+
+    def test_shorter_open_logs_windows_are_hidden(self):
+        black = bytes(256 * 2 * NES_TILE * 3)
+        self.assertNotEqual(black, self.last_log_line((ADVENTURE_LOG_123_LAYOUT, None)))
+        for logs in ((1,), (2, 3), (1, 3)):
+            with self.subTest(logs=logs):
+                self.assertEqual(black, self.last_log_line((open_logs_layout(logs), 0)))
+
+    def test_log_3_chosen_keeps_its_arrow(self):
+        self.assertNotEqual(self.last_log_line((ADVENTURE_LOG_123_LAYOUT, None)),
+                            self.last_log_line((ADVENTURE_LOG_123_LAYOUT, 2)))
+        self.assertEqual(self.last_log_line((ADVENTURE_LOG_123_LAYOUT, None)),
+                         self.last_log_line((ADVENTURE_LOG_123_LAYOUT, 0)))

@@ -224,10 +224,11 @@ def adventure_log_options(logs: Sequence[Tuple[int, str]], _: Callable[[str], st
     return OptionWindow(window, (), labels, LOG_FIRST_ROW, LOG_TEXT_COLUMN, LOG_CURSOR_COLUMN)
 
 
-def open_log_options(logs: Sequence[int]) -> OptionWindow:
-    """The open logs window (ShowOpenLogs, LogList*Dat1): one line per open log, " ADVENTURE LOG n"."""
+def open_log_options(logs: Sequence[int], _: Callable[[str], str] = str) -> OptionWindow:
+    """The open logs window (ShowOpenLogs, LogList*Dat1): one line per open log, " ADVENTURE LOG n". ``_`` translates
+    the line."""
     window = variable_height_window(ADVENTURE_LOG_WINDOW_1, len(logs))
-    labels = [f'ADVENTURE LOG {slot}' for slot in logs]
+    labels = [_("ADVENTURE LOG {}").format(slot) for slot in logs]
     return OptionWindow(window, (), labels, OPEN_LOG_FIRST_ROW, OPEN_LOG_TEXT_COLUMN, OPEN_LOG_CURSOR_COLUMN)
 
 
@@ -278,7 +279,7 @@ class OptionsScreen:
     def choose_open_log(self, logs: Sequence[int]) -> int | None:
         """ShowOpenLogs, opened over the windows already on screen (DoCopyGame's used logs window): the chosen open
         log's number, or None for B."""
-        self.windows = self.windows + [(open_log_options(logs), 0)]
+        self.windows = self.windows + [(open_log_options(logs, self._), 0)]
         index = self.select(len(self.windows) - 1)
         return None if index is None else logs[index]
 
