@@ -113,10 +113,7 @@ class Ending:
 
     def redraw(self) -> None:
         game = self.game
-        game.drawer.draw_all(game.screen, game.loop_count, game.big_map, game.current_map, game.player, game.cmd_menu,
-                             game.foreground_rects, game.game_state.enable_animate, game.camera,
-                             game.initial_dialog_enabled, game.events, game.skip_text, game.story_flags.left_throne_room,
-                             game.game_state, game.color)
+        game.drawer.draw_all(game, game.game_state.enable_animate)
         display.flip()
 
     # ------------------------------------------------------------------ #

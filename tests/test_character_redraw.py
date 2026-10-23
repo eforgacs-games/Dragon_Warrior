@@ -5,9 +5,9 @@ characters before drawing them again. If the tile under a character isn't redraw
 over the old one, and the old frame shows through the new one's transparent pixels. These tests render real frames
 headless and compare the background around each on-screen character with a clean redraw of the same frame.
 """
-import inspect
 import random
 from collections import defaultdict
+from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -16,6 +16,7 @@ from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP
 
 from src.config.test_config import test_config
 from src.direction import Direction
+from src.drawer import MapDrawingGame
 from src.game import Game
 from src.game_functions import set_character_position
 
@@ -32,15 +33,10 @@ def make_game(start_map: str, scale: int = test_config['SCALE']) -> Game:
 
 
 def draw_frame(game: Game) -> None:
-    """Draw one frame the way Game.main does."""
-    arguments = {'screen': game.screen, 'loop_count': game.loop_count, 'big_map': game.big_map,
-                 'current_map': game.current_map, 'player': game.player, 'cmd_menu': game.cmd_menu,
-                 'foreground_rects': game.foreground_rects, 'enable_animate': game.game_state.enable_animate,
-                 'camera': game.camera, 'initial_dialog_enabled': False, 'events': [], 'skip_text': game.skip_text,
-                 'left_throne_room': True, 'game_state': game.game_state, 'color': game.color}
-    parameters = inspect.signature(game.drawer.draw_all).parameters
-    game.drawer.draw_all(**{name: arguments[name] if name in arguments else getattr(game, name)
-                            for name in parameters})
+    """Draw one frame the way Game.main does (without the throne room's automatic dialogs, and with no events)."""
+    view = SimpleNamespace(**{name: getattr(game, name) for name in MapDrawingGame.__annotations__})
+    view.initial_dialog_enabled, view.events, view.story_flags = False, [], SimpleNamespace(left_throne_room=True)
+    game.drawer.draw_all(view, game.game_state.enable_animate)
     game.loop_count += 1
 
 
