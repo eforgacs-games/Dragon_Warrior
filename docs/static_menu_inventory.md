@@ -27,26 +27,26 @@ The game now draws this window with `draw_window(..., COMBAT_COMMAND_LAYOUT, ...
 - `Battle.display_battle_window`;
 - `Game.handle_death`.
 
-## Title, main menu and adventure logs (18 files): don't convert yet
+## Title, main menu and adventure logs (18 files): done
 
-Other work is changing these screens: the options screen, message speed, and save slots and logs (#234).
-
-All of them are full 256x240 screenshots: white windows on black. `GameFunctions.main_menu_selection` (`src/game_functions.py:40`) swaps between the image with the arrow at entry N and the `-1_unselected` image, which is how the cursor blinks.
-
-| File(s) | Used at | NES window(s) | Variants | Difficulty |
+| File(s) | Used at | NES window(s) | Variants | Status |
 |---|---|---|---|---|
-| `menus/main_menu/empty_log/{-1_unselected,0_begin_quest}.png` (2) | `TitleMenu.show_main_menu_screen` (`src/title_menu.py`) | NewQuestDat ($B2A8) | hidden / entry 0 | easy |
-| `menus/main_menu/partially_full_log/{-1_unselected,0..4}.png` (6) | `show_main_menu_screen` (~259) | FullMenuDat ($B249) | hidden + 5 | easy |
-| `menus/main_menu/full_log/{-1_unselected,0..2}.png` (4) | `show_main_menu_screen` (~276) | ContChngErsDat ($B20B) | hidden + 3 | easy |
-| `menus/main_menu/empty_log/adventure_log/{-1_unselected,0..2}.png` (4) | `TitleMenu.select_adventure_log` (`src/title_menu.py`) | NewQuestDat ($B2A8), with its arrow held on, + LogList123Dat1 ($B385) | hidden + 3 | medium (2 windows) |
-| `menus/main_menu/partially_full_log/one_adventure_log/{-1_unselected,0_adventure_log_1}.png` (2) | `TitleMenu.continue_quest`, with `AdventureLogOverlay` drawing the name | FullMenuDat ($B249) + LogList1Dat2 ($B3BF) | hidden / on | medium (name and level from the save) |
+| `menus/main_menu/empty_log/{-1_unselected,0_begin_quest}.png` (2) | test reference only | NewQuestDat ($B2A8) | hidden / entry 0 | **generated**: `NEW_QUEST_LAYOUT` |
+| `menus/main_menu/partially_full_log/{-1_unselected,0..4}.png` (6) | test reference only | FullMenuDat ($B249) | hidden + 5 | **generated**: `FULL_MENU_LAYOUT` |
+| `menus/main_menu/full_log/{-1_unselected,0..2}.png` (4) | test reference only | ContChngErsDat ($B20B) | hidden + 3 | **generated**: `CONTINUE_CHANGE_ERASE_LAYOUT` |
+| `menus/main_menu/empty_log/adventure_log/{-1_unselected,0..2}.png` (4) | test reference only | NewQuestDat ($B2A8), with its arrow held on, + LogList123Dat1 ($B385) | hidden + 3 | **generated**: `open_logs_layout` over the title menu |
+| `menus/main_menu/partially_full_log/one_adventure_log/{-1_unselected,0_adventure_log_1}.png` (2) | test reference only | FullMenuDat ($B249) + LogList1Dat2 ($B3BF) | hidden / on | **generated**: `used_logs_layout`, with the hero's name in NES font tiles |
 
-Things the NES does differently from these screens:
-- BEGIN A NEW QUEST's log selection still shows the empty-log screenshot, with all 3 logs listed. On the NES it lists only the open logs (ShowOpenLogs, LogList??Dat1).
-- Copy and erase no longer use these screenshots: like CONTINUE (with several logs) and CHANGE MESSAGE SPEED, they open generated windows (`src/options_screen.py`): the used logs (LogList??Dat2), the open logs for the copy target (LogList??Dat1), EraseLogDat ($B4D4) and YesNo2Dat ($B50D).
-- There are no screenshots for MsgSpeedDat, YesNo2Dat or the 2-log variants.
+`src/title_windows.py` and the layouts in `src/windows.py`:
+- `TitleMenu.show_title_menu` (`src/title_menu.py`) picks the title menu by how many logs are used (`title_menu_layout`: PreNoSaves, PreUnusedSaves, PreSavesUsed), and `GameFunctions.main_menu_selection` runs its cursor, drawing the windows with `draw_translated_window`.
+- BEGIN A NEW QUEST lists **only the open logs** (ShowOpenLogs: `open_logs_layout` builds any of LogList1Dat1 to LogList123Dat1), over the title menu with its arrow held on BEGIN A NEW QUEST. Before, the screenshot listed all 3 logs, so a new quest could overwrite a used log.
+- That window stays behind the name entry (`render_name_entry_screen(..., log_window)`), with its arrow on the chosen log. Only LogList123Dat1's last line shows below AlphabetDat; the shorter windows are hidden.
+- CONTINUE A QUEST with one log shows that log's window (`used_logs_layout`: LogList1Dat2, 2Dat2 or 3Dat2) with the first 4 letters of its hero's name in NES font tiles (WndLwr4Saved). This replaced `src/adventure_log.py`'s `AdventureLogOverlay`, which drew the name over the screenshot. With several logs, CONTINUE uses the `OptionsScreen` log window, like the entries below.
+- The windows that CHANGE MESSAGE SPEED, COPY A QUEST and ERASE A QUEST open (`src/options_screen.py`) now open over the generated title menu, with its arrow held on the chosen entry, instead of over a screenshot.
+- Translated (Korean), the title menu entries and the "ADVENTURE LOG n" lines are drawn as text at their NES tiles (`title_translate` puts the log's number and the hero's name back in; a name is never translated).
+- `tests/test_title_windows.py` checks **0 differing pixels** for all 18 screenshots at scales 1, 2 and 3, and the hero's name tiles. The screenshots' paths are no longer in `Directories`.
 
-Generating these screens will fix all of that, because any LogList variant can be built from its data.
+The windows copy and erase open are the used logs (LogList??Dat2), the open logs for the copy target (LogList??Dat1), EraseLogDat ($B4D4) and YesNo2Dat ($B50D). There are no screenshots for MsgSpeedDat, YesNo2Dat or the 2-log variants.
 
 ## Name entry (72 files): done in phase 2
 
@@ -103,11 +103,11 @@ The SPELL/ITEM border is verified at 1, 2 and 5 entries (the heights there are s
 | Group | Files | Drawn by the game (before this PR) | Unused or test-only |
 |---|---|---|---|
 | Battle | 5 | 2 (now 0) | 3, now 5 |
-| Title, main menu and adventure logs | 18 | 18 | 0 |
+| Title, main menu and adventure logs | 18 | 18 (now 0) | 0, now 18 |
 | Name entry | 72 | 72 (now 0) | 0, now 72 |
 | Shops | 40 | 6 | 34 |
 | Miscellaneous | 23 | 15 (now 11) | 8 (now 12) |
-| **Total** | **158** | **113** (now 109) | **45** (now 49) |
+| **Total** | **158** | **113** (now 17) | **45** (now 141) |
 
 ## Phase 2 plan
 
@@ -118,8 +118,8 @@ The SPELL/ITEM border is verified at 1, 2 and 5 entries (the heights there are s
    - Write a ShopInvDat layout builder: the variable height, two-half item names (`name_halves`) and costs right-aligned at `SHOP_COST_RIGHT_TILE_COLUMN`.
    - Diff it against the 6 shop screenshots, and against the per-item arrow images.
 3. **Name entry: done in phase 2** (see above).
-4. **Title, main menu and adventure logs: easy to medium, but blocked** until the options screen and #234 land.
-   - These are 1-2 windows each. The log list windows have 7 variants each.
+4. **Title, main menu and adventure logs: done** (see above). The log list windows' 7 variants each are built from
+   their data (`open_logs_layout`, `used_logs_layout`).
 5. **Intro banner: hard. Leave it as an image.**
    - It is title art made of sprites and background tiles in other palettes (grey, orange), not window tiles.
    - It could be reproduced only from the CHR ROM and the title screen nametable. Neither is in the repo nor in the disassembly.
