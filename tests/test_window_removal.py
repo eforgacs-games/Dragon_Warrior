@@ -135,7 +135,8 @@ class TestWindowRemoval(TestCase):
         with patch.object(self.cmd_menu, 'show_line_in_dialog_box',
                           side_effect=lambda *args, **kwargs: seen.append(
                               image_digest(self.game.screen.subsurface(self.rect(window))))), \
-                patch.object(self.cmd_menu, 'heal'), patch.object(self.cmd_menu, 'show_popup_window'):
+                patch.object(self.cmd_menu, 'heal'), patch.object(self.cmd_menu, 'show_popup_window'), \
+                patch.object(self.cmd_menu, 'wait_for_button'):  # ResumeGamePlay's press after HEAL
             self.assertEqual(Spell.HEAL, self.cmd_menu.display_item_menu('spells'))
         self.assertEqual([before], seen)
 
