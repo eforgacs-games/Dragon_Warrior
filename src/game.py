@@ -230,7 +230,6 @@ class Game:
         self.cmd_menu = CommandMenu(self)
 
         self.clock = Clock()
-        self.music_enabled = self.game_state.music_enabled
 
         if self.splash_screen_enabled:
             self.music_player.load_and_play_music(self.directories.intro_overture)
@@ -331,14 +330,20 @@ class Game:
                 exit(1)
         return None
 
-    def begin_new_quest(self):
+    def begin_new_quest(self) -> object:
+        """BEGIN A NEW QUEST: an adventure log, the name, then the options. Escape in the name entry cancels it, back
+        to the title menu with nothing saved."""
         self.select_adventure_log(self.screen)
         name_selection = NameSelection(self.config)
-        self.player.name = name_selection.select_name(get_ticks(), self.screen, self.cmd_menu)
+        name = name_selection.select_name(get_ticks(), self.screen, self.cmd_menu)
+        if name is None:
+            return BACK_TO_TITLE_MENU
+        self.player.name = name
         self.choose_new_quest_options()
         self.player.set_initial_stats()
         self.sound.play_sound(self.directories.menu_button_sfx)
         self.start_at_throne_room()
+        return None
 
     def start_at_throne_room(self) -> None:
         """Start a new quest in the throne room the way NES MainGameEngine does for every start: StartAtThroneRoom
@@ -1451,9 +1456,11 @@ class Game:
                 npc, hero_direction = self.npc_asked_to_make_way
                 if npc in roaming_characters and not npc.is_moving and self.make_way(npc, hero_direction):
                     making_way = npc
-            # Slots past the end are empty (NES: X and Y 0); they keep their place in the turns
-            deciding = [roaming_characters[slot] for slot in self.npc_schedule.slots_on_turn()
-                        if slot < len(roaming_characters) and not roaming_characters[slot].is_moving]
+            # Empty slots (NES: X and Y 0), past the end or of removed NPCs, keep their place in the turns
+            slots_on_turn = self.npc_schedule.slots_on_turn()
+            deciding = [roaming_character for index, roaming_character in enumerate(roaming_characters)
+                        if (index if roaming_character.slot is None else roaming_character.slot) in slots_on_turn
+                        and not roaming_character.is_moving]
         for roaming_character in roaming_characters:
             if roaming_character in deciding:
                 if roaming_character.turns_to_rest:

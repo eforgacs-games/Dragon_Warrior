@@ -290,3 +290,39 @@ class TestVictoryMusic(TestCase):
             return False
         with patch.object(self.game.battle_ctrl, 'handle_battle_prompts', side_effect=use_in_fight):
             self.assertEqual(self.game.battle_ctrl.start_scripted_battle('Slime'), BattleOutcome.VICTORY)
+
+
+class TestMusicOff(TestCase):
+    """MUSIC_ENABLED off: MusicPlayer is the only thing that touches pygame's music, and it leaves it alone. The maps,
+    the fights, the fanfares and the item tunes are all silent."""
+
+    def setUp(self):
+        config = {**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True, 'MUSIC_ENABLED': False}
+        self.game = new_game(config)
+        self.music = patch('pygame.mixer.music').start()
+        patch('src.battle_controller.BattleController.start_fight', return_value=False).start()
+        for target in ('show_line_in_dialog_box', 'show_text_in_dialog_box', 'wait_for_button'):
+            patch.object(CommandMenu, target).start()
+        patch('src.battle_controller.time').start()
+        patch('src.waiting.time.wait').start()
+        self.addCleanup(patch.stopall)
+
+    def win(self, enemy_name, level_up):
+        player = self.game.player
+        player.total_experience = levels_list[player.level + 1]['total_exp'] - 1 if level_up else 0
+
+        def take_turn(_run_away, current_battle):
+            current_battle.enemy.hp = 0
+            return False
+        with patch.object(self.game.battle_ctrl, 'handle_battle_prompts', side_effect=take_turn):
+            return self.game.battle_ctrl.start_scripted_battle(enemy_name)
+
+    def test_nothing_touches_pygame_music(self):
+        self.game.change_map(map_lookup['Alefgard'](self.game.config), destination_coordinates=(50, 50))
+        self.assertEqual(self.win('Slime', level_up=True), BattleOutcome.VICTORY)
+        self.assertEqual(self.win('Slime', level_up=False), BattleOutcome.VICTORY)
+        cmd_menu = self.game.cmd_menu
+        for use in (cmd_menu.silver_harp, cmd_menu.fairy_flute, cmd_menu.cursed_belt):
+            use()
+        self.game.change_map(map_lookup['Brecconary'](self.game.config), destination_coordinates=(23, 10))
+        self.assertEqual(self.music.method_calls, [])

@@ -88,12 +88,12 @@ WASD / ↑←↓→ : Move
 
 K (A button): Open the command menu on the map; select a menu option
 
-J (B button): Close a menu or window
+J (B button): Close a menu or window, or answer NO
 
 Enter: Select a menu option, like K. On the map it's a shortcut instead of opening the command menu: it does TAKE
 when standing on a treasure chest, DOOR when facing a door, or TALK when facing someone
 
-Esc: Close a menu or window, like J
+Esc: Close a menu or window, or answer NO, like J. Esc also cancels name entry
 
 I (Start): Pause
 
