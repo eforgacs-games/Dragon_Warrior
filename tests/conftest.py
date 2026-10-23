@@ -10,8 +10,20 @@ import os
 import shutil
 import tempfile
 
+import pytest
+
+from src.display_filters import PRESENTER, SCALING_SMOOTH
 from src.settings import SETTINGS_ENV_VAR, SETTINGS_FILE_NAME
 
 _settings_dir = tempfile.mkdtemp(prefix='dragon_warrior_test_settings_')
 os.environ[SETTINGS_ENV_VAR] = os.path.join(_settings_dir, SETTINGS_FILE_NAME)
 atexit.register(shutil.rmtree, _settings_dir, ignore_errors=True)
+
+
+@pytest.fixture(autouse=True)
+def display_filters_off():
+    """The display filters (src/display_filters.py) replace pygame.display.flip and update while one is on: a test that
+    turns one on doesn't leave them on for the next."""
+    yield
+    if PRESENTER.active:
+        PRESENTER.configure(False, SCALING_SMOOTH)

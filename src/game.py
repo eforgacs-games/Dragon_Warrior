@@ -27,6 +27,7 @@ from src.constants import (
     TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT, TEMP_TEXT_MS,
 )
 from src.direction import Direction
+from src.display_filters import PRESENTER, SCALING_KEY, SCALING_SMOOTH, SCANLINES_KEY
 from src.directories import Directories
 from src.drawer import Drawer
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
@@ -96,6 +97,10 @@ class Game:
         self.settings = SettingsStore.from_config(config)
         if self.settings.settings.language:
             config['LANGUAGE'] = self.settings.settings.language
+        if self.settings.settings.scanlines:
+            config[SCANLINES_KEY] = True
+        if self.settings.settings.scaling != SCALING_SMOOTH:
+            config[SCALING_KEY] = self.settings.settings.scaling
         self._ = _ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
         # map/graphics
@@ -171,6 +176,8 @@ class Game:
         nes_res = self.game_state.config["NES_RES"]
         win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
         self.screen = self.set_screen(win_height, win_width)
+        # SCANLINES and SCALING (src/display_filters.py): with both off, pygame presents the screen as always
+        PRESENTER.configure_from(config)
         # Ctrl 0 puts the window back to this size (Ctrl + / Ctrl - / Ctrl and the mouse wheel zoom it, src/zoom.py)
         remember_default_zoom()
         self.apply_saved_zoom()
@@ -260,8 +267,13 @@ class Game:
     def apply_option(self, config_key: str) -> None:
         """The options overlay (src/options_overlay.py) has just changed this config key. Most need nothing more (the
         game reads them where they're used); the global settings are switched on and saved."""
+        config = self.game_state.config
         if config_key == 'LANGUAGE':
-            self.set_language(self.game_state.config['LANGUAGE'])
+            self.set_language(config['LANGUAGE'])
+        elif config_key in (SCANLINES_KEY, SCALING_KEY):
+            PRESENTER.configure_from(config)
+            self.settings.update(scanlines=bool(config.get(SCANLINES_KEY)),
+                                 scaling=config.get(SCALING_KEY, SCALING_SMOOTH))
 
     def set_language(self, language: str) -> None:
         """Play in ``language`` ('English' or 'Korean') from now on, without a restart: the options overlay's LANGUAGE
@@ -963,7 +975,9 @@ class Game:
                 self.flags = RESIZABLE | SCALED
                 mode_text = self._("Windowed mode enabled")
 
-            # Recreate the window with new flags
+            # Recreate the window with new flags. The display filters let go of the old window's renderer first, and
+            # take the new one at the next frame (src/display_filters.py).
+            PRESENTER.release()
             nes_res = self.game_state.config["NES_RES"]
             win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
             self.screen = set_mode((win_width, win_height), self.flags)
