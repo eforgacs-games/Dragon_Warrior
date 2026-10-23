@@ -445,10 +445,7 @@ def get_surrounding_tile_values(coordinates, map_layout):
 
 
 def convert_numeric_tile_list_to_unique_tile_values(current_map, numeric_tile_list: Iterable[int]) -> list[str]:
-    converted_tiles = []
-    for tile_value in set(numeric_tile_list):
-        converted_tiles.append(current_map.get_tile_by_value(tile_value))
-    return converted_tiles
+    return [current_map.get_tile_by_value(tile_value) for tile_value in set(numeric_tile_list)]
 
 
 def get_fixed_character_underlying_tiles(current_map) -> list[str]:
