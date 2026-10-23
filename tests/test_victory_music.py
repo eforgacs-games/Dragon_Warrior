@@ -8,9 +8,10 @@ fanfare cuts the victory music, and otherwise WaitForMusicEnd lets it finish bef
 
 They used to be played as sound effects (Sound.play_sound, any free mixer channel). Every sound effect file is about
 3 seconds long, so a few quick ones (the A press, the attack, the hit, the enemy's attack) could leave no free channel,
-and then the fanfare just didn't play. Here the sound effects play on the real mixer (SDL's dummy driver), and with
-NO_WAIT on they pile up, so the channels are full when the fanfares start. The music track is a recording stand-in for
-pygame.mixer.music, so the test can see exactly when each piece of music starts and stops.
+and then the fanfare just didn't play. Here the sound effects play on the real mixer (SDL's dummy driver), with NO_WAIT
+on, so they come one right after another; they now all take turns in the one SFX slot (NES DoSFX, #317), and none is
+left playing on another channel. The music track is a recording stand-in for pygame.mixer.music, so the test can see
+exactly when each piece of music starts and stops.
 """
 import random
 from os.path import basename
@@ -60,6 +61,9 @@ class MusicTrack:
         self.playing = self.loaded
         self.events.append(('play', self.loaded))
 
+    def queue(self, path, *_args, **_kwargs):
+        self.events.append(('queue', basename(path)))
+
     def stop(self):
         if self.playing:
             self.events.append(('stop', self.playing))
@@ -84,7 +88,7 @@ class TestVictoryMusic(TestCase):
         self.player = self.game.player
         self.player.name = "Erdrick"
         self.events: list = []
-        self.full_channel_sounds = 0  # sound effects started with no free channel left for Sound.play()
+        self.full_channel_sounds = 0  # sound effects that left a channel other than the SFX slot playing
         patch('pygame.mixer.music', MusicTrack(self.events)).start()
         # Real sounds on the real mixer, not ones another test's mocks may have left in the cache
         patch.dict('src.sound._sound_library', clear=True).start()
@@ -104,9 +108,10 @@ class TestVictoryMusic(TestCase):
 
         def play_sound(sound, path='data/sound/sfx'):
             self.assertNotIn(basename(path), FANFARES, "a fanfare was played as a sound effect")
-            if all(pygame.mixer.Channel(i).get_busy() for i in range(SFX_CHANNEL + 1, pygame.mixer.get_num_channels())):
-                self.full_channel_sounds += 1
             real_play_sound(sound, path)
+            # Every sound effect takes over the one SFX slot (NES DoSFX), so they never pile up on the other channels
+            if any(pygame.mixer.Channel(i).get_busy() for i in range(SFX_CHANNEL + 1, pygame.mixer.get_num_channels())):
+                self.full_channel_sounds += 1
 
         def wait_for_music_end(music_player, config):
             self.events.append(('wait for music end',))
@@ -212,8 +217,9 @@ class TestVictoryMusic(TestCase):
                 self.assert_fanfares_like_the_nes(events, level_up, enemy_name)
                 wins += 1
         self.assertEqual(wins, 40)
-        # The sound effect channels were full at times, which used to leave no channel for the fanfares
-        self.assertGreater(self.full_channel_sounds, 0)
+        # The sound effects used to fill the mixer channels at times, which left no channel for the fanfares when they
+        # were sound effects too (#300), and dropped sound effects (#317); now they only ever use the SFX slot
+        self.assertEqual(self.full_channel_sounds, 0)
 
     def test_a_fleeing_enemy_gives_no_victory_music(self):
         self.game.change_map(map_lookup['Alefgard'](self.game.config), destination_coordinates=(50, 50))
@@ -265,6 +271,7 @@ class TestVictoryMusic(TestCase):
         self.game.change_map(map_lookup['Brecconary'](self.game.config), destination_coordinates=(23, 10))
         map_music = basename(self.game.current_map.music_file_path)
         fight_music = basename(directories.battle_music)
+        regular_fight_music = basename(directories.regular_fight_music)
         cmd_menu = self.game.cmd_menu
         for use, tune in ((cmd_menu.silver_harp, harp), (cmd_menu.fairy_flute, flute), (cmd_menu.cursed_belt, cursed)):
             with self.subTest(tune=tune):
@@ -279,13 +286,15 @@ class TestVictoryMusic(TestCase):
             start = len(self.events)
             for use in (cmd_menu.silver_harp_in_battle, cmd_menu.fairy_flute, cmd_menu.cursed_belt):
                 use()
+            # ChkUseHarp, ChkUseFlute and ChkUseBelt restart the fight music with MSC_REG_FGHT: the fight loop, without
+            # the opening the fight started with (MSC_ENTR_FGHT)
             self.assertEqual(self.music_after(self.events, start - 1), [
                 ('stop', fight_music), ('load', harp), ('play', harp), ('wait for music end',), ('stop', harp),
-                ('load', fight_music), ('play', fight_music),
-                ('stop', fight_music), ('load', flute), ('play', flute), ('wait for music end',), ('stop', flute),
-                ('load', fight_music), ('play', fight_music),
-                ('stop', fight_music), ('load', cursed), ('play', cursed), ('wait for music end',), ('stop', cursed),
-                ('load', fight_music), ('play', fight_music)])
+                ('load', regular_fight_music), ('play', regular_fight_music),
+                ('stop', regular_fight_music), ('load', flute), ('play', flute), ('wait for music end',),
+                ('stop', flute), ('load', regular_fight_music), ('play', regular_fight_music),
+                ('stop', regular_fight_music), ('load', cursed), ('play', cursed), ('wait for music end',),
+                ('stop', cursed), ('load', regular_fight_music), ('play', regular_fight_music)])
             current_battle.enemy.hp = 0
             return False
         with patch.object(self.game.battle_ctrl, 'handle_battle_prompts', side_effect=use_in_fight):
