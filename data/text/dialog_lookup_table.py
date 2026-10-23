@@ -13,7 +13,7 @@ from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACE
 from src.cursor import IN_A
 from src.direction import Direction
 from src.directories import Directories
-from src.items import INVENTORY_SLOTS, MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS, inventory_list
+from src.items import MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS, bag_slots, inventory_list
 from src import maps
 from src.maps import DragonWarriorMap
 from src.maps_functions import get_center_point
@@ -29,7 +29,8 @@ from src.sound import Sound
 from src.story_flags import StoryFlags
 from src.text import draw_text
 from src.windows import BUY_SELL_WINDOW, DIALOG_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, \
-    SHOP_COST_RIGHT_TILE_COLUMN, SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
+    ITEM_MENU_MAX_ENTRIES, SHOP_COST_RIGHT_TILE_COLUMN, SHOP_INVENTORY_WINDOW, Window, first_shown_entry, \
+    item_menu_window, name_halves, variable_height_window
 from src.visual_effects import NES_RED, bw_screen_flash, greyscale_screen, screen_fade
 from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait_frames
 
@@ -582,7 +583,7 @@ class DialogLookup:
         items is there, Gwaelin's Love isn't given at all."""
         _ = self._
         used_slots = [item for item in self.player.inventory if item not in UNSLOTTED_ITEMS]
-        if len(used_slots) >= INVENTORY_SLOTS:
+        if len(used_slots) >= bag_slots(self.config):
             taken_item = next((item for item in GWAELINS_LOVE_REPLACEABLE_ITEMS if item in self.player.inventory),
                               None)
             if taken_item is None:
@@ -921,9 +922,10 @@ class DialogLookup:
                             no_path_function=no_path_function, config=self.config,
                             show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
-    def select_in_window(self, window: Window, number_of_entries: int, draw_window: Callable[[], object],
+    def select_in_window(self, window: Window, number_of_entries: int, draw_window: Callable[..., object],
                          first_tile_row: int, initial_index: int = 0,
-                         draw_beside: Callable[[int], Rect] | None = None) -> int | None:
+                         draw_beside: Callable[[int], Rect] | None = None,
+                         shown_entries: int | None = None) -> int | None:
         """Show a selection window with a blinking cursor. Returns the chosen entry's index, or None if cancelled.
         :param window: Where the window goes and how big it is, in blocks.
         :param number_of_entries: How many entries the window lists.
@@ -932,16 +934,25 @@ class DialogLookup:
         Entries are 2 tile rows (one block) apart, in single and double spaced windows alike.
         :param draw_beside: Draws something outside the window for the highlighted entry (the shop stat preview,
         src/shop_preview.py) and returns where; that area is removed with the window.
+        :param shown_entries: For a window that scrolls (the ITEM window with a bag of 16, not NES): how many entries
+        it shows at once. draw_window is then called with the first entry to show.
         """
         tile_size = self.config['TILE_SIZE']
         x, y, width, height = window
         self.command_menu.window_drop_down_effect(x, y, width, height)
         window_rect = Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
 
+        first = 0
+
         def draw(index: int, cursor_visible: bool) -> None:
-            draw_window()
+            nonlocal first
+            if shown_entries is None:
+                draw_window()
+            else:
+                first = first_shown_entry(index, first, number_of_entries, shown_entries)
+                draw_window(first)
             # The cursor goes in tile column 1, between the left border and the entry (cursor home X = 1)
-            self.command_menu.draw_window_cursor(x, y, 1, first_tile_row + 2 * index, cursor_visible)
+            self.command_menu.draw_window_cursor(x, y, 1, first_tile_row + 2 * (index - first), cursor_visible)
             beside_rect = draw_beside(index) if draw_beside else None
             if not self.config['NO_BLIT']:
                 display.update([window_rect, beside_rect] if beside_rect else window_rect)
@@ -1025,8 +1036,8 @@ class DialogLookup:
         """The player inventory window (NES PlayerInvDat), as the ITEM command shows it."""
         window = Window(*item_menu_window('inventory', len(items)))
         return self.select_in_window(window, len(items),
-                                     lambda: self.command_menu.draw_item_menu('inventory', items),
-                                     ITEM_MENU_FIRST_TILE_ROW['inventory'])
+                                     lambda first: self.command_menu.draw_item_menu('inventory', items, first),
+                                     ITEM_MENU_FIRST_TILE_ROW['inventory'], shown_entries=ITEM_MENU_MAX_ENTRIES)
 
     def open_store_inventory(self, current_store_inventory):
         """NES GetShopItems: show the shop's stock (ShopInvDat, select_shop_item) and return the name of the item
@@ -1141,7 +1152,7 @@ class DialogLookup:
         elif selected_item == 'Herb' and self.player.inventory.count('Herb') >= MAX_HERBS:
             # NES ChkToolPurchase
             self.say(_("Thou cannot hold more Herbs."))
-        elif selected_item != 'Herb' and inventory_is_full(self.player.inventory):
+        elif selected_item != 'Herb' and inventory_is_full(self.player.inventory, bag_slots(self.config)):
             # NES DoOthrToolPurchase: AddInvItem returns INV_FULL. Nothing stops buying a second Dragon's Scale.
             self.say(_("Thou cannot carry anymore."))
         else:
@@ -1212,7 +1223,7 @@ class DialogLookup:
         if self.player.gold < FAIRY_WATER_COST:
             self.say(_("Thou hast not enough money."))
             self.fairy_water_goodbye()
-        elif inventory_is_full(self.player.inventory):
+        elif inventory_is_full(self.player.inventory, bag_slots(self.config)):
             self.say(_("Thou cannot carry anymore."))
             self.fairy_water_goodbye()
         else:
