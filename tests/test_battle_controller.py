@@ -11,8 +11,9 @@ from src import enemy as enemies
 from src.color import WHITE
 from src.battle_controller import BattleController
 from src.enemy_lookup import enemy_string_lookup
+from src.sound import SPELL_SFX_FRAMES
 from src.spells import Spell
-from src.windows import COMBAT_COMMAND_LAYOUT
+from src.windows import COMBAT_COMMAND_LAYOUT, COMBAT_COMMAND_WINDOW
 
 
 def make_game():
@@ -384,6 +385,32 @@ class TestCommandWindowInput(BattlePromptFrames):
         self.assertEqual(FIGHT, self.selection)
         self.assertEqual(0, self.battle.turn)
 
+    # The menu sound
+
+    def menu_sounds(self):
+        return [c for c in self.game.sound.play_sound.call_args_list
+                if c.args == (self.game.directories.menu_button_sfx,)]
+
+    def test_opening_the_window_beeps_before_it_drops_down(self):
+        # NES ShowWindow -> DoWindowPrep (LAEFE -> DoBeepSFX): SFX_MENU_BTN for WND_CMD_CMB, then WindowSequence
+        order = []
+        self.game.sound.play_sound.side_effect = order.append
+        self.game.cmd_menu.window_drop_down_effect.side_effect = lambda *window: order.append(window)
+        self.controller.command_window_open = False
+        self.controller.command_window_shown = False
+        self.frame()
+        self.assertEqual(order, [self.game.directories.menu_button_sfx, COMBAT_COMMAND_WINDOW])
+
+    def test_each_opening_beeps_once_after_b_too(self):
+        # The first turn's opening (setUp), then B (no sound: WndBPressed), then ShowCmbtCmd opens it again
+        self.assertEqual(1, len(self.menu_sounds()))
+        self.press(K_ESCAPE)
+        self.assertEqual(1, len(self.menu_sounds()))
+        self.frame()
+        self.assertEqual(2, len(self.menu_sounds()))
+        self.frames(30)
+        self.assertEqual(2, len(self.menu_sounds()))
+
     # Held keys
 
     def test_holding_a_direction_moves_the_cursor_once(self):
@@ -516,7 +543,7 @@ class TestCommandWindowInput(BattlePromptFrames):
         fight.assert_not_called()
         enemy_move.assert_not_called()
         self.assertEqual(self.battle.turn, 0)
-        self.game.sound.play_sound.assert_not_called()
+        self.assertEqual(1, self.game.sound.play_sound.call_count)  # only the window's opening beep (setUp)
 
     def test_a_and_a_direction_on_the_same_frame_choose_without_moving(self):
         # WndProcessInput tests A first and handles only that one button
@@ -852,7 +879,6 @@ class TestEnemyMove(unittest.TestCase):
     def setUp(self):
         self.game = make_game()
         self.controller = BattleController(self.game)
-        patch('src.battle_controller.wait').start()  # the 1-second pause after an enemy's spell
         self.addCleanup(patch.stopall)
 
     def move(self, enemy, roll=0, effect=None):
@@ -929,6 +955,39 @@ class TestEnemyMove(unittest.TestCase):
         self.game.sound.play_sound.assert_any_call(self.game.directories.breathe_fire_sfx)
         self.assertEqual(self.game.cmd_menu.show_line_in_dialog_box.call_args_list[0].args[0],
                          'The Magician is breathing fire.\n')
+
+    def record_order(self):
+        """The order of the enemy's spell steps: dialog lines, sound effects, the spell flash and the wait."""
+        order = []
+        self.game.cmd_menu.show_line_in_dialog_box.side_effect = lambda line, *_, **__: order.append(line)
+        self.game.sound.play_sound.side_effect = order.append
+        self.game.drawer.flash_enemy_spell.side_effect = lambda *_: order.append('flash')
+        self.game.sound.wait_for_sfx_end.side_effect = lambda frames, _config: order.append(('wait', frames))
+        return order
+
+    def test_spell_sound_then_grey_flash_then_wait_for_the_sound(self, mock_time):
+        # NES EnCastSpell (LEBFE-LEC11): the chant, SFX_SPELL, PaletteFlash with SplFlshBGPal, WaitForMusicEnd
+        order = self.record_order()
+        self.move(enemies.Magician(), roll=0, effect=7)
+        self.assertEqual(order[:4], ['Magician chants the spell of HURT.', self.game.directories.spell_sfx, 'flash',
+                                     ('wait', SPELL_SFX_FRAMES)])
+        self.game.drawer.flash_enemy_spell.assert_called_once_with(self.game.screen, 'Magician')
+
+    def test_blocked_spell_still_flashes_and_waits(self, mock_time):
+        enemy = enemies.Magician()
+        enemy.is_stopspelled = True
+        order = self.record_order()
+        self.move(enemy, roll=0, effect=7)
+        self.assertEqual(order, ['Magician chants the spell of HURT.', self.game.directories.spell_sfx, 'flash',
+                                 ('wait', SPELL_SFX_FRAMES), 'But that spell hath been blocked.'])
+
+    def test_fire_sound_starts_before_the_text_and_nothing_waits_for_it(self, mock_time):
+        # NES DoFireSFX (LED14): SFX_FIRE, "is breathing fire", then straight into PlayerHit
+        order = self.record_order()
+        self.move(patterned_enemy([(100, Spell.FIREBREATH, True), Spell.ATTACK]), effect=20)
+        self.assertEqual(order[:2], [self.game.directories.breathe_fire_sfx, 'The Magician is breathing fire.\n'])
+        self.assertNotIn('flash', order)
+        self.game.sound.wait_for_sfx_end.assert_not_called()
 
     def test_erdricks_armor_reduces_firebreath(self, mock_time):
         self.game.player.armor = "Erdrick's Armor"
@@ -1159,8 +1218,6 @@ class TestEnemySpellResults(unittest.TestCase):
     def setUp(self):
         self.game = make_game()
         self.controller = BattleController(self.game)
-        # The second's pause after the enemy's chant (waiting.wait, not the patched time) really slept in every test
-        patch('src.battle_controller.wait').start()
         self.addCleanup(patch.stopall)
 
     def cast(self, spell, roll, hp=2):

@@ -332,6 +332,25 @@ class TestDrawerEnemyEffects(unittest.TestCase):
             self.drawer.fade_in_enemy(screen, 'Dragonlord 2')
         self.assertEqual(order, [('fade', True), 'black', 'enemy'])
 
+    @patch('src.drawer.wait')
+    def test_final_form_plays_the_fire_sound_before_fading_in(self, _wait):
+        # Bank00 LoadEndBossGFX (LBB86): SFX_FIRE once the screen is blank, before the PalFadeIns
+        order = []
+        sound = MagicMock()
+        sound.play_sound.side_effect = order.append
+        with patch.object(self.drawer, 'sound', sound), patch('src.drawer.screen_fade'), \
+                patch('src.drawer.cut_to_black', side_effect=lambda *_: order.append('black')), \
+                patch('src.drawer.enemy_fade_in', side_effect=lambda *_, **__: order.append('enemy')):
+            self.drawer.fade_in_enemy(MagicMock(), 'Dragonlord 2')
+        self.assertEqual(order, ['black', self.drawer.directories.breathe_fire_sfx, 'enemy'])
+
+    @patch('src.drawer.enemy_fade_in')
+    def test_other_enemies_play_no_sound_as_they_fade_in(self, _enemy_fade_in):
+        sound = MagicMock()
+        with patch.object(self.drawer, 'sound', sound):
+            self.drawer.fade_in_enemy(MagicMock(), 'Dragonlord')
+        sound.play_sound.assert_not_called()
+
     @patch('src.drawer.screen_fade')
     @patch('src.drawer.enemy_fade_in')
     def test_other_enemies_do_not_fade_the_screen_out(self, _enemy_fade_in, mock_screen_fade):
@@ -344,6 +363,12 @@ class TestDrawerEnemyEffects(unittest.TestCase):
         self.drawer.flash_enemy(screen, 'Slime')
         mock_flash.assert_called_once_with(screen, self.image, (256, 224), self.drawer.game_state.config,
                                            keep_black=False)
+
+    @patch('src.drawer.enemy_spell_flash')
+    def test_flash_enemy_spell(self, mock_flash):
+        screen = MagicMock()
+        self.drawer.flash_enemy_spell(screen, 'Slime')
+        mock_flash.assert_called_once_with(screen, self.image, (256, 224), self.drawer.game_state.config)
 
     @patch('src.drawer.enemy_hit_flash')
     def test_final_form_flash_keeps_black(self, mock_flash):

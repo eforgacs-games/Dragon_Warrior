@@ -214,7 +214,7 @@ class TestGame(TestCase):
                     battle = Battle(self.game.config, name, self.game.current_map)
                     with patch('src.battle_controller.random.randint', side_effect=lambda a, b: roll if b == 99 else a), \
                             patch('src.battle_controller.random.random', return_value=0.99), \
-                            patch('src.battle_controller.wait'), patch.object(self.game, 'drawer'), \
+                            patch.object(self.game.sound, 'wait_for_sfx_end'), patch.object(self.game, 'drawer'), \
                             patch.object(self.game.cmd_menu, 'show_line_in_dialog_box'):
                         self.game.battle_ctrl.enemy_move(battle)
 
