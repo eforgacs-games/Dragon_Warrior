@@ -91,7 +91,8 @@ def dynamic_messages() -> dict[str, list[str]]:
     from src.quest_journal import journal_texts
     from src.spells import Spell
     from src.translated_window import layout_texts
-    from src.windows import COMBAT_COMMAND_LAYOUT, COMMAND_LAYOUT, STATUS_LAYOUT, TITLE_MENU_LAYOUTS, YES_NO_LAYOUT
+    from src.windows import COMBAT_COMMAND_LAYOUT, COMMAND_LAYOUT, STATUS_LAYOUT, TITLE_MENU_LAYOUTS, \
+        TITLE_MENU_LAYOUTS_WITH_AUTOSAVE, YES_NO_LAYOUT
 
     messages: dict[str, list[str]] = {}
     for source, table in (('src/items.py', weapons), ('src/items.py', armor), ('src/items.py', shields),
@@ -101,7 +102,8 @@ def dynamic_messages() -> dict[str, list[str]]:
     for spell in Spell:
         if spell.value not in UNNAMED_SPELLS:
             messages.setdefault(spell.value, []).append('src/spells.py')
-    for layout in (COMMAND_LAYOUT, COMBAT_COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT, *TITLE_MENU_LAYOUTS):
+    for layout in (COMMAND_LAYOUT, COMBAT_COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT, *TITLE_MENU_LAYOUTS,
+                   *TITLE_MENU_LAYOUTS_WITH_AUTOSAVE):
         for text in layout_texts(layout):
             if 'src/windows.py' not in messages.get(text.text, []):
                 messages.setdefault(text.text, []).append('src/windows.py')

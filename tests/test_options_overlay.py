@@ -201,7 +201,8 @@ class TestRows(OverlayTestCase):
                                         ("QUICK ACTION", 'QUICK_ACTION', ("OFF (NES)", "ON")),
                                         ("ENCOUNTERS", 'ENCOUNTERS', ("NES", "HALF", "OFF")),
                                         ("EXP/GOLD", 'EXP_GOLD', ("x1 (NES)", "x2", "x4")),
-                                        ("QUEST JOURNAL", 'QUEST_JOURNAL', ("OFF (NES)", "GOALS", "HINTS"))]),
+                                        ("QUEST JOURNAL", 'QUEST_JOURNAL', ("OFF (NES)", "GOALS", "HINTS")),
+                                        ("AUTOSAVE", 'AUTOSAVE', ("OFF (NES)", "ON"))]),
                           ("CONTROLS", [("GAME SPEED", 'GAME_SPEED_KEYS', ("OFF (NES)", "ON")),
                                         ("SAVE STATES", 'SAVE_STATES', ("OFF (NES)", "ON")),
                                         ("REWIND", 'REWIND', ("OFF (NES)", "ON")),
@@ -228,7 +229,7 @@ class TestRows(OverlayTestCase):
                          page_texts(self.config))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "ON", "STAIRS", "STEP ON",
                           "QUICK ACTION", "OFF (NES)", "ENCOUNTERS", "NES", "EXP/GOLD", "x1 (NES)", "QUEST JOURNAL",
-                          "OFF (NES)"],
+                          "OFF (NES)", "AUTOSAVE", "OFF (NES)"],
                          page_texts(self.config, 1))
         self.config.update(TEXT_SPEED='Slow', DIALOG_STYLE=MODERN, NPCS_MAKE_WAY=False, FADE_STYLE=FADE_STYLE_SMOOTH,
                            AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP', CHEAT_KEYS=True, REWIND=True,
@@ -239,7 +240,7 @@ class TestRows(OverlayTestCase):
                          page_texts(self.config))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "OFF (NES)", "STAIRS", "NES",
                           "QUICK ACTION", "OFF (NES)", "ENCOUNTERS", "HALF", "EXP/GOLD", "x4", "QUEST JOURNAL",
-                          "OFF (NES)"],
+                          "OFF (NES)", "AUTOSAVE", "OFF (NES)"],
                          page_texts(self.config, 1))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "3/3", "GAME SPEED", "OFF (NES)", "SAVE STATES", "OFF (NES)",
                           "REWIND", "ON", "AUTO-GRIND", "OFF (NES)", "GRIND STOP", "3/4 HP", "MENU SPEED", "NORMAL",
@@ -412,14 +413,14 @@ class TestPreset(OverlayTestCase):
                           'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': False, 'SAVE_STATES': False,
                           'REWIND': False, 'AUTO_GRIND': False, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
                           'CHEAT_KEYS': False, 'RUN_BUTTON': False, 'SHOP_PREVIEW': False,
-                          'QUEST_JOURNAL': JOURNAL_OFF}, preset_values(PRESET_NES))
+                          'QUEST_JOURNAL': JOURNAL_OFF, 'AUTOSAVE': False}, preset_values(PRESET_NES))
         # MODERN: every convenience but the cheats; the number of fights and what they give stay the NES's
         self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': True,
                           'STATUS_WINDOW': 'Always', 'NPCS_MAKE_WAY': True, 'AUTO_STAIRS': True, 'QUICK_ACTION': True,
                           'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': True, 'SAVE_STATES': True,
                           'REWIND': True, 'AUTO_GRIND': True, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
                           'CHEAT_KEYS': False, 'RUN_BUTTON': True, 'SHOP_PREVIEW': True,
-                          'QUEST_JOURNAL': JOURNAL_GOALS}, preset_values(PRESET_MODERN))
+                          'QUEST_JOURNAL': JOURNAL_GOALS, 'AUTOSAVE': True}, preset_values(PRESET_MODERN))
         # the message speed is the NES's own setting, and the language the player's: no preset changes them
         self.assertNotIn('TEXT_SPEED', [row.config_key for row in PRESET_ROWS])
         for config_key in ('LANGUAGE', 'SCANLINES', 'SCALING'):
@@ -435,8 +436,9 @@ class TestPreset(OverlayTestCase):
     def test_a_new_quest_keeps_what_the_game_already_had(self):
         # The conveniences there before the switches start on, as they always did; a new quest is CUSTOM, and the NES
         # preset switches them all off
+        from src.config.base_config import base_config
         from src.options_screen import DEFAULT_OPTIONS, apply_options
-        config = {}
+        config = {'AUTOSAVE': base_config['AUTOSAVE']}  # a new quest keeps the config's AUTOSAVE: OFF, the NES
         apply_options(config, DEFAULT_OPTIONS)
         nes = preset_values(PRESET_NES)
         differences = {config_key for config_key, value in nes.items() if config[config_key] != value}
