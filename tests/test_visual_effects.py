@@ -6,7 +6,7 @@ import pygame
 from src.visual_effects import (
     NES_PALETTE, NES_RED, SWAMP_FLASH_FRAMES, draw_transparent_color, enemy_fade_in, enemy_hit_flash, enemy_spell_flash,
     fade_surface, flash_transparent_color, force_field_flash, nes_color_index, nes_faded_color, player_hit_shake,
-    silhouette_surface,
+    rainbow_bridge_flash, rainbow_flash_colors, silhouette_surface,
 )
 
 
@@ -292,6 +292,33 @@ class TestForceFieldFlash(NesPaletteTestCase):
         with patch('src.visual_effects.display'):
             force_field_flash(NES_RED, pygame.Surface((10, 10)), {'NO_WAIT': False, 'NO_BLIT': False})
         self.assertEqual([c.args[0] for c in mock_wait.call_args_list], [33, 33] * 3)  # 12 frames in all
+
+
+class TestRainbowBridgeFlash(NesPaletteTestCase):
+    """NES ChkDrop (LDEC5-LDEFB): $3F03, the overworld's water blue ($11), goes through $21-$2C four times and then
+    back to $11, a write every 5 frames."""
+
+    def test_the_colors(self):
+        cycle = list(range(0x21, 0x2D))
+        self.assertEqual(12, len(cycle))
+        self.assertEqual(cycle * 4 + [0x11], rainbow_flash_colors())
+
+    def test_only_the_water_blue_changes_and_the_screen_ends_as_it_was(self):
+        screen = pygame.Surface((10, 10))
+        screen.fill(NES_PALETTE[0x29])  # grass green
+        screen.set_at((5, 5), NES_PALETTE[0x11])  # water
+        screen.set_at((6, 6), NES_PALETTE[0x12])  # the hero's blue (RegSPPal), not $11
+        recorder, shown = self.record_flips(screen, (5, 5), (0, 0), (6, 6))
+        with recorder:
+            rainbow_bridge_flash(screen, {'NO_WAIT': True, 'NO_BLIT': False})
+        self.assertEqual([NES_PALETTE[color] for color in rainbow_flash_colors()], [water for water, _, _ in shown])
+        self.assertEqual({(NES_PALETTE[0x29], NES_PALETTE[0x12])}, {(grass, hero) for _, grass, hero in shown})
+        self.assertEqual(NES_PALETTE[0x11], tuple(screen.get_at((5, 5)))[:3])
+
+    def test_five_frames_before_each_color(self):
+        with patch('src.visual_effects.display'), patch('src.visual_effects.wait_frames') as wait_frames:
+            rainbow_bridge_flash(pygame.Surface((10, 10)), {'NO_WAIT': False, 'NO_BLIT': False})
+        self.assertEqual([5] * 49, [c.args[0] for c in wait_frames.call_args_list])  # 245 frames in all
 
 
 class TestPlayerHitShake(NesPaletteTestCase):

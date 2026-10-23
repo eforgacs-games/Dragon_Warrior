@@ -21,6 +21,8 @@ MAX_GOLD = 0xFFFF  # NES RegEnDefeated: GoldLB/GoldUB max out at $FFFF
 DRAGONLORD_TRANSFORM_WAIT_FRAMES = 80  # NES EnemyDefeated: 80 frames between the two Dragonlord fights
 SPIRAL_LEAD_IN_FRAMES = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E40A, before the first block
 SPIRAL_FRAMES_PER_BLOCK = 1  # NES LoadCombatBckgrnd: WaitForNMI at $E43D, once per block
+# NES ChkNewSpell (LEAE6): the levels that say "Thou hast learned a new spell." (TextBlock16 entry 2)
+NEW_SPELL_LEVELS = frozenset((3, 4, 7, 9, 10, 12, 13, 15, 17, 19))
 HERO_SCREEN_BLOCK = (8, 7)  # NES DoSprites: the hero's sprites are at x $80, y $6F, the middle of the screen
 
 
@@ -143,9 +145,7 @@ class Battle:
                 return True
             if player.current_hp <= 0:
                 player.is_dead = True
-            else:
-                cmd_menu.show_line_in_dialog_box(self._("Command?\n"), add_quotes=False, hide_arrow=True,
-                                                 disable_sound=True)
+            # Otherwise the next player turn says "Command?" (ShowCmbtCmd, BattleController.open_command_window)
             return False
         return True
 
@@ -315,7 +315,9 @@ class Battle:
                 singular_or_plural(increase, self._("Thy Maximum Magic Point increase by {}.\n"),
                                    self._("Thy Maximum Magic Points increase by {}.\n")).format(increase),
                 add_quotes=False, disable_sound=True)
-        if len(player.spells) > len(old_stats["spells"]):
+        # NES ChkNewSpell (LEAE6): only the new level is checked, not the spell list, so a jump from level 2 to 5 (which
+        # learns HEAL at 3 and HURT at 4) says nothing
+        if player.level in NEW_SPELL_LEVELS:
             cmd_menu.show_line_in_dialog_box(self._("Thou hast learned a new spell.\n"), add_quotes=False, disable_sound=True)
 
     def make_enemy_image_disappear(self, screen):
@@ -325,23 +327,26 @@ class Battle:
         display.update(battle_background_image.get_rect())
 
     def get_enemy_draws_near_string(self):
-        """Get string for when an enemy draws near."""
+        """The encounter line: "A ENM2 draws near!" (TextBlock15 entry 2, EnAppearText), or for the Dragonlord's final
+        form "The Dragonlord revealed his true self!" (TextBlock18 entry 9). "Command?" isn't part of it: it comes with
+        the first player turn (StartPlayerTurn -> ShowCmbtCmd, BattleController.open_command_window), after the
+        enemy's first strike if it attacks before the hero is ready, and not at all if it runs away."""
         if self.enemy.name == 'Dragonlord 2':
-            return self._('The Dragonlord revealed his true self!\n') + self._("Command?\n")
+            return self._('The Dragonlord revealed his true self!\n')
 
         if self.config['LANGUAGE'] == 'English':
             enemy_draws_near_string = self._('{} draws near!\n').format(self._(self.enemy.name))
             vowels = 'AEIOU'
             if self.enemy.name[0] in vowels:
-                return self._('An {}').format(enemy_draws_near_string) + self._("Command?\n")
-            return self._('A {}').format(enemy_draws_near_string) + self._("Command?\n")
+                return self._('An {}').format(enemy_draws_near_string)
+            return self._('A {}').format(enemy_draws_near_string)
 
         if self.config['LANGUAGE'] == 'Korean':
             ko_enemy_name = self._(self.enemy.name)
             ko_enemy_name += get_postposition(ko_enemy_name, "이", "가")
-            return self._('{} draws near!\n').format(ko_enemy_name) + self._("Command?\n")
+            return self._('{} draws near!\n').format(ko_enemy_name)
 
-        return self._('{} draws near!\n').format(self._(self.enemy.name)) + self._("Command?\n")
+        return self._('{} draws near!\n').format(self._(self.enemy.name))
 
     def display_battle_window(self, screen, drawer, cmd_menu, graphics, directories, color, player):
         """Display the battle window."""

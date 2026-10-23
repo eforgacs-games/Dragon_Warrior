@@ -32,7 +32,7 @@ from src.options_screen import MODERN, options_from_config
 from src.save_file import ADVENTURE_LOGS, SaveFile, log_for_unchosen_save, save_path, write_save
 from src.selection import YES, frame_events, next_frame, run_selection, stop_at_edges
 from src.sound import SPELL_SFX_FRAMES, Sound
-from src.visual_effects import bw_screen_flash
+from src.visual_effects import bw_screen_flash, rainbow_bridge_flash
 from src.text import draw_text, in_nes_font, set_font_by_ascii_chars
 from src.translated_window import draw_translated_window
 from src.window_renderer import draw_window
@@ -811,6 +811,8 @@ class CommandMenu:
         self.player.inventory.remove("Wings")
         self.show_text_in_dialog_box(
             self._("{} threw The Wings of the Wyvern up into the sky.").format(self.player.name))
+        # NES UseWings (LDD8F): BWScreenFlash, then DoReturn
+        bw_screen_flash(self.screen, self.game.game_state.config)
         self.return_to_tantegel()
 
     def torch(self):
@@ -903,9 +905,13 @@ class CommandMenu:
             self.show_text_in_dialog_box(self._("But no rainbow appeared here."), skip_text=self.skip_text)
             return
         self.game.story_flags.rainbow_bridge_built = True
-        # NES ChkDrop: MSC_RNBW_BRDG starts as the rainbow flashes, WaitForMusicEnd lets it finish, then MSC_OUTDOOR
-        # (the overworld music, from the start), and only then does ModMapBlock put the bridge on the map
-        self.game.music_player.play_until_end(self.directories.rainbow_bridge_music, self.game.game_state.config)
+        # NES ChkDrop: MSC_RNBW_BRDG starts, the water flashes through the rainbow colors (LDEC5-LDEFB), WaitForMusicEnd
+        # lets the music finish, then MSC_OUTDOOR (the overworld music, from the start), and only then does ModMapBlock
+        # put the bridge on the map
+        config = self.game.game_state.config
+        self.game.music_player.play_clip(self.directories.rainbow_bridge_music)
+        rainbow_bridge_flash(self.screen, config)
+        self.game.music_player.wait_for_music_end(config)
         self.game.music_player.load_and_play_music(self.directories.overworld_music)
         bridge_row, bridge_column = RAINBOW_BRIDGE_COORDINATES
         self.set_tile_by_coordinates('BRIDGE', bridge_column, bridge_row, self.player)
