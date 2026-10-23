@@ -20,8 +20,8 @@ COURTYARD_TEXT = {
     0x1C: "There was a time when Brecconary was a paradise.\nThen the Dragonlord's minions came.",
     0x1D: ("Let us wish the warrior well!", "May the light be thy strength!"),
     0x1E: "If thy Hit Points are high enough, by all means, enter.",
-    0x1F: "We are merchants who have traveled much in this land. Many of our colleagues have been killed by servants "
-          "of the Dragonlord.",
+    0x1F: "We are merchants who have traveled much in this land.\nMany of our colleagues have been killed by "
+          "servants of the Dragonlord.",
     0x20: "Rumor has it that entire towns have been destroyed by the Dragonlord's servants.",
     0x21: "Welcome to Tantegel Castle.",
     0x22: "In Garinham,look for the grave of Garin.\nThou must push on a wall of darkness there.",
@@ -32,7 +32,7 @@ COURTYARD_TEXT = {
 EAST_OF_THIS_CASTLE = ["East of this castle is a town where armor, weapons, and many other items may be purchased.",
                        "Return to the Inn for a rest if thou art wounded in battle, Edward.",
                        "Sleep heals all."]
-TREASURE_CHESTS_KEY = ["If thou hast collected all the Treasure Chests, a key will be found.",
+TREASURE_CHESTS_KEY = ["If thou hast collected all the Treasure Chests,\na key will be found.",
                        "Once used, the key will disappear, but the door will be open and thou may pass through."]
 STRONG_ENOUGH = "Thou art strong enough!\nWhy can thou not defeat the Dragonlord?"
 
@@ -98,7 +98,7 @@ class TestTantegelDialog(TownDialogMixin, TestCase):
     def test_mp_restoring_wizard(self):
         # NES ChkMagicDialog ($6A): TextBlock11 entry 13, then MP is maxed out
         self.assertEqual(self.dialog(self.courtyard, courtyard_coordinates, 20, 26), (
-            "Edward's coming was foretold by legend. May the light shine upon this brave warrior.",
+            "Edward's coming was foretold by legend.\nMay the light shine upon this brave warrior.",
             self.dialog_lookup.flash_and_restore_mp))
 
     def test_mp_restoring_wizard_flashes_black_and_white_then_restores_mp(self):
@@ -156,6 +156,16 @@ class TestTantegelDialog(TownDialogMixin, TestCase):
                          (experience_line, "See me again when thy level has increased."))
         self.assertEqual(king_lorik['post_death_dialog'][2],
                          f"To reach the next level, thy Experience Points must increase by {points}.")
+
+    def test_king_with_one_point_left_says_point(self):
+        # NES TextBlock13 entry 1 (AMTP) and TextBlock18 entry 2 (PNTS): "Point" when exactly 1 is left
+        self.game.player.total_experience = 6  # level 2 is at 7
+        king_lorik = self.king_lorik(1)
+        experience_line = "Before reaching thy next level of experience thou must gain 1 Point."
+        self.assertEqual(king_lorik['returned_dialog'][1], experience_line)
+        self.assertEqual(king_lorik['load_from_save_dialog'][1], experience_line)
+        self.assertEqual(king_lorik['post_death_dialog'][2],
+                         "To reach the next level, thy Experience Point must increase by 1.")
 
     def test_king_at_level_30(self):
         # NES LeftThRoom (LD41F), MainGameEngine (LCA27) and KingDeathDialog (LEDF6) all check for LVL_30

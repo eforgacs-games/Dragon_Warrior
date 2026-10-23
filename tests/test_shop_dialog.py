@@ -232,7 +232,7 @@ class TestWeaponShop(ShopDialogTestCase):
         self.buy('cantlin_weapons_store_3_inventory', 'Flame Sword', [True, False, False])
         self.assertEqual(self.player.weapon, 'Club')
         self.assertEqual(self.player.gold, 10_000)
-        self.assertIn("Oh, yes? That's too bad.", self.lines)
+        self.assertIn("Oh, yes?\nThat's too bad.", self.lines)
 
     def test_flame_sword_shop(self):
         self.player.gold = 10_000
