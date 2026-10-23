@@ -13,6 +13,7 @@ from data.text.dialog import confirmation_prompt
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.maps import Brecconary
+from src.menu import NES_FPS, WINDOW_ROW_FRAMES, wait_for_next_window_row
 from src.spells import Spell
 from src.windows import BUY_SELL_WINDOW, COMMAND_WINDOW, YES_NO_WINDOW, item_menu_window
 from tests.helpers import new_game
@@ -143,3 +144,14 @@ class TestWindowRemoval(TestCase):
         pygame.event.post(Event(KEYDOWN, key=pygame.K_ESCAPE, unicode='\x1b'))
         self.assertIsNone(self.cmd_menu.display_item_menu('inventory'))
         self.assertEqual(before, self.screen_bytes())
+
+
+class TestWindowRowTiming(TestCase):
+    """Each row of a window opening or closing lasts one NES frame from when it started drawing (RemoveWindow and
+    ShowWindow draw a row a frame), so a slow draw doesn't stretch the animation."""
+
+    def test_a_row_waits_until_one_frame_after_it_started(self):
+        config = {'NO_WAIT': False}
+        with patch('src.menu.wait_until') as mock_wait_until:
+            wait_for_next_window_row(1000.0, config)
+        mock_wait_until.assert_called_once_with(1000.0 + WINDOW_ROW_FRAMES * 1000 / NES_FPS, config)
