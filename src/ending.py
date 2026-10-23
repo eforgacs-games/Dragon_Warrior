@@ -28,14 +28,32 @@ from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE, SEARCHED_FOR_GWAELIN
 from src.text import draw_text
 from src.visual_effects import screen_fade
-from src.waiting import wait_frames
+from src.waiting import game_ticks, wait_frames
 from src.zoom import handle_zoom_event
 
 NES_FPS = 60
 
-# The NES moves to the next credits screen after a number of timing events in the end music (WaitForMusicEnd). The
-# events' length isn't in the disassembly's code, so this is an estimate.
-CREDITS_MUSIC_EVENT_FRAMES = 120
+# NES DoEndCredits (Bank01) moves on to the next credits screen after a number of "music timing events" in the end
+# music (WaitForMusicEnd, $815E): the triangle part (TRIEndGame) has a no-op byte (MCTL_NO_OP, $FC) after every few
+# notes, and an event is caught while one is waiting to be read, that is while the note before it plays. Once the note
+# is over the sound engine skips the no-op itself and that event is gone. Each event as (the first frame it can be
+# caught, the frame it's gone), counted from the start of the end music; worked out by playing the end music the way
+# the sound engine does (reference/reference_utility_scripts/end_music_timing.py). The music ends at frame 7237.
+END_MUSIC_TIMING_EVENTS = (
+    (683, 753), (818, 851), (949, 982), (1080, 1113), (1211, 1244), (1342, 1374), (1473, 1505), (1604, 1636),
+    (1734, 1767), (1865, 1882), (1996, 2013), (2127, 2144), (2258, 2274), (2389, 2405), (2520, 2536), (2651, 2684),
+    (2782, 2814), (2913, 2945), (3044, 3076), (3174, 3207), (3305, 3338), (3436, 3469), (3567, 3600), (3698, 3731),
+    (3829, 3862), (3960, 3993), (4091, 4107), (4222, 4238), (4353, 4369), (4484, 4500), (4614, 4631), (4745, 4762),
+    (4876, 4909), (5007, 5040), (5138, 5171), (5269, 5302), (5400, 5433), (5531, 5564), (5662, 5694), (5793, 5825),
+    (5924, 5956), (6054, 6087), (6185, 6218), (6316, 6349), (6447, 6480), (6577, 6593), (6697, 6712), (6813, 6843),
+    (6945, 6963), (7120, 7137),
+)
+
+# NES DoClearPPU and RollCredits: between one screen's fade out and the next one's fade in, ClearPPU waits for two NMIs
+# and RollCredits one more before DoPalFadeIn (a screen with a lot of text can fill the PPU buffer and add a frame).
+CREDIT_SCREEN_LOAD_FRAMES = 3
+# NES FinishCredits: THE END stays up 160 frames ($A0) before DoEndCredits returns and the game spinlocks.
+THE_END_FRAMES = 160
 
 # NES EndCreditDat (Bank01): one entry per screen, each line as (name table row, name table column, text) from its PPU
 # address ($2000 + row * 32 + column). The Chun Soft and Enix logos and the large THE END are tiles, drawn as text here.
@@ -78,6 +96,30 @@ def credit_screen_music_events(screen_index: int) -> int:
     if screen_index <= 13:
         return 2
     return 3
+
+
+class EndMusicTimingEvents:
+    """NES WaitForMusicEnd during the credits: waits for the end music's timing events (END_MUSIC_TIMING_EVENTS), going
+    by the time since the music started. An event that went by while the credits weren't waiting for one is gone, and
+    one that is still waiting to be read when the wait starts is caught at once."""
+
+    def __init__(self, config):
+        self.config = config
+        self.music_started = game_ticks()
+        self.events = list(END_MUSIC_TIMING_EVENTS)
+
+    def frames_since_music_started(self) -> float:
+        return (game_ticks() - self.music_started) * NES_FPS / 1000
+
+    def wait(self, count: int) -> None:
+        for _ in range(count):
+            now = self.frames_since_music_started()
+            while self.events and self.events[0][1] <= now:
+                self.events.pop(0)  # its note is over: skipped by the sound engine
+            if not self.events:
+                return  # the music is over (the NES would wait forever)
+            first_frame, _ = self.events.pop(0)
+            wait_frames(max(0.0, first_frame - now), self.config, NES_FPS)
 
 
 class Ending:
@@ -140,10 +182,9 @@ class Ending:
         self.player.restore_hp()
         self.player.restore_mp()
         map_name, coordinates = DRAGONLORD_DEFEATED_DESTINATION
-        # ChangeMaps -> SetPlyrPixelLoc -> MapChngWithSound: the stairs sound
-        self.game.sound.play_sound(self.game.directories.stairs_up_sfx)
+        # ChangeMaps -> SetPlyrPixelLoc -> MapChngWithSound: the stairs sound, once the screen has faded out
         self.game.change_map(map_lookup[map_name](self.config), destination_coordinates=coordinates,
-                             direction=Direction.DOWN.value)
+                             direction=Direction.DOWN.value, stairs_sound=True)
 
     # ------------------------------------------------------------------ #
     #  2. The world after the Dragonlord                                   #
@@ -303,16 +344,20 @@ class Ending:
     # ------------------------------------------------------------------ #
 
     def roll_credits(self) -> None:
-        """NES DoEndCredits (Bank01): the end music starts, then each screen fades in, stays for some music timing
-        events and fades out. The last one, THE END, stays up."""
+        """NES DoEndCredits (Bank01): the end music starts, and at its first timing event the king's scene fades out
+        (LoadCreditsPals' PalFadeOut). Then each screen fades in, stays for some of the music's timing events
+        (credit_screen_music_events) and fades out. The last one, THE END, stays up."""
         self.game.music_player.load_and_play_music(self.game.directories.ending_music, loop=0)
-        self.wait_frames(CREDITS_MUSIC_EVENT_FRAMES)  # NES WaitForMusicEnd before the first screen
+        music_events = EndMusicTimingEvents(self.config)
+        music_events.wait(1)
+        screen_fade(fade_out=True, screen=self.game.screen, config=self.config)  # LoadCreditsPals ($AA62)
         for screen_index, credit_screen in enumerate(CREDITS):
+            self.wait_frames(CREDIT_SCREEN_LOAD_FRAMES)
             self.show_credit_screen(credit_screen)
             if screen_index == len(CREDITS) - 1:
-                self.wait_frames(160)  # NES FinishCredits
+                self.wait_frames(THE_END_FRAMES)
                 return
-            self.wait_frames(credit_screen_music_events(screen_index) * CREDITS_MUSIC_EVENT_FRAMES)
+            music_events.wait(credit_screen_music_events(screen_index))
             screen_fade(fade_out=True, screen=self.game.screen, config=self.config)  # DoPalFadeOut ($AA43)
 
     def show_credit_screen(self, credit_screen) -> None:
