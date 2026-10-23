@@ -250,7 +250,7 @@ class TestKeyAndFairyWaterShops(ShopDialogTestCase):
         self.assertEqual(self.player.inventory.count('Magic Key'), 6)
         self.assertEqual(self.player.gold, 1000 - 53)
         self.assertEqual(self.lines[-2:], ["I am sorry, but I cannot sell thee anymore.", "I will see thee later."])
-        self.assertEqual(self.prompts[1], "Here, take this key.\nDost thou wish to purchase more?")
+        self.assertEqual(self.prompts[1], "Here,take this key.\nDost thou wish to purchase more?")
 
     def test_key_not_enough_money(self):
         self.player.gold = 97

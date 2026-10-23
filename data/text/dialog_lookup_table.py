@@ -29,8 +29,8 @@ from src.story_flags import StoryFlags
 from src.text import draw_text
 from src.windows import BUY_SELL_WINDOW, DIALOG_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, \
     SHOP_COST_RIGHT_TILE_COLUMN, SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
-from src.visual_effects import NES_RED, greyscale_screen, screen_fade
-from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait, wait_frames
+from src.visual_effects import NES_RED, bw_screen_flash, greyscale_screen, screen_fade
+from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait_frames
 
 NES_MAX_LEVEL = 30  # LVL_30
 
@@ -201,7 +201,7 @@ class DialogLookup:
             # Kol: the female villager at 12,1 (TextBlock7 entry 1)
             0x32: {'dialog': _("This bath cures rheumatism.")},
             # Kol: the fighter at 20,13 (TextBlock7 entry 2)
-            0x33: {'dialog': _("East of Hauksness there is a town, 'tis said, where one may purchase "
+            0x33: {'dialog': _("East of Hauksness there is a town, ʼtis said, where one may purchase "
                                "weapons of extraordinary quality.")},
             # Kol: the guard at 1,23 (TextBlock7 entry 3)
             0x34: {'dialog': _("Rimuldar is the place to buy keys.")},
@@ -211,7 +211,7 @@ class DialogLookup:
             0x36: {'dialog': (_("Dreadful is the South Island."),
                               _("Great strength and skill and wit only will bring thee back from that place."))},
             # Kol: the mobile guard at 12,10 (TextBlock7 entry 6)
-            0x37: {'dialog': _("Golem is afraid of the music of the flute, so 'tis said.")},
+            0x37: {'dialog': _("Golem is afraid of the music of the flute, so ʼtis said.")},
             # Kol: the mobile wizard at 20,19 (TextBlock7 entry 7)
             0x38: {'dialog': _("This is the village of Kol.")},
             # Kol: the mobile wizard at 20,8 (TextBlock7 entry 8)
@@ -245,7 +245,7 @@ class DialogLookup:
             0x46: {'dialog': _("To learn how proof may be obtained that thy ancestor was the great Erdrick, "
                                "see a man in this very town.")},
             # Cantlin: the wizard at 22,22 (TextBlock8 entry 6)
-            0x47: {'dialog': _("'Tis said that Erdrick's sword could cleave steel.")},
+            0x47: {'dialog': _("ʼTis said that Erdrick's sword could cleave steel.")},
             # Cantlin: the mobile guard at 15,6 (TextBlock8 entry 7)
             0x48: {'dialog': _("Welcome to Cantlin, the castle town.")},
             # Cantlin: the mobile female villager at 4,14 (TextBlock8 entry 8)
@@ -272,7 +272,7 @@ class DialogLookup:
             0x52: {'dialog': _("The scales of the Dragonlord are as hard as steel.")},
             # Rimuldar: the wizard at 6,13 (TextBlock9 entry 2)
             0x53: {'dialog': (_("Over the western part of this island Erdrick created a rainbow."),
-                              _("'Tis also said that he entered the darkness from a hidden entrance in "
+                              _("ʼTis also said that he entered the darkness from a hidden entrance in "
                                 "the room of the Dragonlord."))},
             # Rimuldar: the mobile guard at 8,16 (TextBlock9 entry 3)
             0x54: {'dialog': _("Thou shalt find the Stones of Sunlight in Tantegel Castle,\nif thou has not "
@@ -304,7 +304,7 @@ class DialogLookup:
             # Kol: the mobile shopkeeper at 7,19 (CheckYesNoDialog): TextBlock9 entry 14, then a yes/no window
             0x5F: {'dialog': (self.kol_hast_thou_been_to_the_southern_island,)},
             # Cantlin: the mobile guard at 5,6 (CheckYesNoDialog): TextBlock9 entry 15, then a yes/no window
-            0x60: {'dialog': (_("'Tis said that the Dragonlord hath claws that can cleave iron and fiery "
+            0x60: {'dialog': (_("ʼTis said that the Dragonlord hath claws that can cleave iron and fiery "
                                 "breath that can melt stone."),
                               self.cantlin_still_wish_to_go_on)},
             # Rimuldar: the wizard at 3,23 (CheckYesNoDialog): TextBlock10 entry 0, then a yes/no window
@@ -756,14 +756,12 @@ class DialogLookup:
                             "would save us."),
                      self._("Go now!"))
             self.bw_screen_flash()
-            self.sound.play_sound(self.directories.stairs_up_sfx)
-            wait(500)
             # Move the player onto the temple's staircase (6, 2), then out to the overworld in front of the entrance
             self.player.row = 6
             self.player.column = 2
             alefgard_map = maps.map_lookup['Alefgard'](self.config)
             alefgard_map.destination_coordinates = (116, 116)
-            self.command_menu.game.change_map(alefgard_map)
+            self.command_menu.game.change_map(alefgard_map, stairs_sound=True)
             self.player.direction_value = Direction.DOWN.value
             return
         if "Stones of Sunlight" not in self.player.inventory or "Staff of Rain" not in self.player.inventory:
@@ -780,13 +778,8 @@ class DialogLookup:
         greyscale_screen(self.screen, self.calculation, frames=30, no_blit=self.config['NO_BLIT'])
 
     def bw_screen_flash(self):
-        """NES BWScreenFlash (Bank03): eight times, 2 frames in color and then 3 frames in greyscale."""
-        if self.config['NO_BLIT']:
-            return
-        for _ in range(8):
-            if not self.config['NO_WAIT']:
-                time.wait(2 * 1000 // 60)
-            greyscale_screen(self.screen, self.calculation, frames=3)
+        """NES BWScreenFlash (Bank03, LDB37): see src.visual_effects.bw_screen_flash."""
+        bw_screen_flash(self.screen, self.calculation, self.config)
 
     def rimuldar_hast_thou_found_a_magic_temple(self):
         """NES CheckYesNoDialog, dialog byte $61 (the Rimuldar wizard at NES 3,23): after the first line of TextBlock10
@@ -1219,8 +1212,8 @@ class DialogLookup:
         else:
             self.player.gold -= magic_key_cost
             self.player.inventory.append('Magic Key')
-            self.command_menu.show_popup_window()  # NES BuyKey: Dowindow WND_POPUP, then "Here, take this key."
-            self.confirm(_("Here, take this key.\nDost thou wish to purchase more?"),
+            self.command_menu.show_popup_window()  # NES BuyKey: Dowindow WND_POPUP, then "Here,take this key."
+            self.confirm(_("Here,take this key.\nDost thou wish to purchase more?"),
                          yes_path_function=partial(self.buy_magic_key, magic_key_cost),
                          no_path_function=self.magic_key_goodbye)
 

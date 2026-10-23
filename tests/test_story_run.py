@@ -115,7 +115,7 @@ class StoryRunMixin:
 
     def answer(self, _command_menu, prompt_line, yes_path_function, no_path_function, **_kwargs):
         self.prompts.append(prompt_line)
-        if prompt_line == "Here, take this key.\nDost thou wish to purchase more?":
+        if prompt_line == "Here,take this key.\nDost thou wish to purchase more?":
             # Buy keys until there are four, one for each locked door still to come plus a spare
             yes = self.player.inventory.count('Magic Key') < 4
         else:
