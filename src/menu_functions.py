@@ -10,6 +10,7 @@ from src.calculation import Calculation
 from src.color import WHITE
 from src.common import accept_keys, reject_keys
 from src.cursor import BlinkingCursor
+from src.gamepad import is_gamepad
 from src.directories import Directories
 from src.name_entry import EVERY_LOG_OPEN, LogWindow, NameEntry, render_name_entry_screen
 from src.selection import frame_events, next_frame
@@ -28,10 +29,11 @@ DIRECTION_KEYS: dict[int, Callable[[NameEntry], bool]] = {
 class NameSelection:
     """The name entry screen (src/name_entry.py), drawn from the NES window data and run like WndEnterName.
 
-    With joystick input (Tab turns it on and off), the keys are the NES buttons: the arrows move the cursor, A enters
-    the selected character, BACK or END, and B (J) is BACK. Without it, typing a character of the alphabet enters it (and
-    moves the cursor to it), Backspace removes the last one and Return ends the name. In either mode, Escape leaves the
-    name entry (select_name returns None) and the new quest is cancelled."""
+    With joystick input (Tab turns it on and off; a controller's buttons, src/gamepad.py, turn it on), the keys are the
+    NES buttons: the arrows move the cursor, A enters the selected character, BACK or END, and B (J) is BACK. Without
+    it, typing a character of the alphabet enters it (and moves the cursor to it), Backspace removes the last one and
+    Return ends the name. In either mode, Escape leaves the name entry (select_name returns None) and the new quest is
+    cancelled."""
 
     def __init__(self, config, log_window: LogWindow | None = None):
         """``log_window``: the open logs window behind the name entry and the log chosen in it (TitleMenu.
@@ -76,6 +78,9 @@ class NameSelection:
                     if current_event.key == K_ESCAPE:
                         # Not the NES B button here (J is): Escape cancels the name entry, back to the title menu
                         return None
+                    if is_gamepad(current_event):
+                        # A controller (src/gamepad.py) can't type: its buttons are joystick input, without Tab
+                        enable_joystick_input = True
                     if current_event.key == K_TAB:
                         enable_joystick_input = toggle_joystick_input(
                             command_menu, partial(self.draw, screen, entry, cursor.visible()), enable_joystick_input,
