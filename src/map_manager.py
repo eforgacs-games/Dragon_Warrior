@@ -23,6 +23,9 @@ from src.visual_effects import cut_to_black, screen_fade
 class MapManager:
     def __init__(self, game):
         self.game = game
+        # The (row, column) of the stairs a random fight started on: the hero stays there after the fight, and the
+        # stairs aren't taken until the hero steps off them (or uses STAIRS). See stay_on_stairs.
+        self.fought_on_stairs: tuple[int, int] | None = None
 
     # ------------------------------------------------------------------ #
     #  Properties forwarding to game                                       #
@@ -88,7 +91,18 @@ class MapManager:
     #  Warp detection                                                      #
     # ------------------------------------------------------------------ #
 
+    def stay_on_stairs(self, row: int, column: int) -> None:
+        """A random fight has just started on the block the hero stepped onto (Bank03 CheckBlockDmg -> DoRandomFight).
+        The NES never takes stairs on its own: only the STAIRS command does (ChkStairsUp/Down), so after the fight the
+        hero is still standing on them. Here stairs are taken by stepping onto them, so that step's warp is held back
+        until the hero steps off (or uses STAIRS), instead of happening in the frame right after the fight."""
+        self.fought_on_stairs = row, column
+
     def handle_warps(self):
+        if self.fought_on_stairs is not None:
+            if self.fought_on_stairs == (self.player.row, self.player.column):
+                return
+            self.fought_on_stairs = None
         immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1', 'MagicTemple',
                                'Alefgard', 'MountainCaveB1', 'MountainCaveB2')
         if self.game.auto_stairs:
@@ -124,16 +138,9 @@ class MapManager:
         fade_out_first=False cuts straight to black instead of fading the old screen out, as NES StartAtThroneRoom
         (Bank03, LCB47) does: it loads BlackPalPtr at once and changes maps with MapChngNoSound (Bank00, LB091),
         which skips ScreenFadeOut, so the only fade is MapChngNoSound's PalFadeIn."""
-        if self.last_map is not None:
-            came_from_throne_room = self.current_map.identifier == 'TantegelThroneRoom'
-            came_from_courtyard = self.current_map.identifier == 'TantegelCourtyard'
-        else:
-            came_from_throne_room = True
-            came_from_courtyard = False
         self.game_state.pause_all_movement()
         self.last_map = self.current_map
         self.current_map = next_map
-        moving_within_tantegel_castle = came_from_throne_room or came_from_courtyard
         self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
         self.apply_rainbow_bridge()
         if isinstance(self.current_map, maps.CharlockB1) and self.game.story_flags.charlock_stairs_revealed:
@@ -150,8 +157,6 @@ class MapManager:
             cut_to_black(self.screen, self.game_state.config)
         self.set_big_map()
         self.set_roaming_character_positions()
-        if not moving_within_tantegel_castle and not self.config['ORCHESTRA_MUSIC_ENABLED']:
-            self.music_player.stop_music()
         is_warp = destination_coordinates is not None
         if is_warp:
             current_map_staircase_dict = None
@@ -181,11 +186,14 @@ class MapManager:
         self.game.loop_count = 1
         self.game_state.unpause_all_movement()
         self.game.tiles_moved_since_spawn = 0
+        self.fought_on_stairs = None
         # NES PalFadeIn: fading the new map in loads the palettes, so the windows turn red or white for the current HP
         # (ChkLowHPPal). This is where a level up's new max HP first changes the window color.
         self.game.load_window_palette()
         self.game.cmd_menu = CommandMenu(self.game)
-        # TODO: Allow music to continue playing when moving within Tantegel Castle.
+        # NES LB10E: the old map's music plays on through the fade-out until the new map is drawn, then ResumeMusicTbl
+        # starts the new map's music from the beginning, on every map change. That includes moving within Tantegel
+        # Castle: the throne room has MSC_THRN_ROOM, the rest of the castle MSC_TANTAGEL2 (the lower version)
         self.music_player.load_and_play_music(self.current_map.music_file_path)
         if destination_coordinates:
             self.game.camera.set_camera_position((destination_coordinates[1], destination_coordinates[0]),
@@ -196,11 +204,17 @@ class MapManager:
         self.game.set_player_images_by_equipment()
         for character_dict in self.current_map.characters.values():
             character_dict['character'].show_facing()
-        self.drawer.draw_all(self.screen, self.game.loop_count, self.game.big_map, self.current_map, self.player,
-                             self.game.cmd_menu, self.game.foreground_rects, self.game_state.enable_animate,
-                             self.game.camera, self.game.initial_dialog_enabled, self.game.events,
-                             self.game.skip_text, self.game.story_flags.left_throne_room, self.game_state,
-                             self.game.color)
+        # The frame the fade-in starts from. Nothing reads the joypad in it: on the NES the map fades in before the
+        # game reads any button (Drawer.drawing_fade_in_frame)
+        self.drawer.drawing_fade_in_frame = True
+        try:
+            self.drawer.draw_all(self.screen, self.game.loop_count, self.game.big_map, self.current_map, self.player,
+                                 self.game.cmd_menu, self.game.foreground_rects, self.game_state.enable_animate,
+                                 self.game.camera, self.game.initial_dialog_enabled, self.game.events,
+                                 self.game.skip_text, self.game.story_flags.left_throne_room, self.game_state,
+                                 self.game.color)
+        finally:
+            self.drawer.drawing_fade_in_frame = False
         # NES MapChngNoSound/MapChngWithSound (LB133): the map's music starts (ResumeMusicTbl), then PalFadeIn
         screen_fade(fade_out=False, screen=self.screen, config=self.game_state.config)
 

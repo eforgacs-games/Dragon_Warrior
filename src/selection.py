@@ -9,9 +9,10 @@ windows, the message speed windows) runs ``run_selection``. Once per pass it
   spins at full speed: at game speed N the frames come N times as often, like every other wait (src/waiting.py);
 - reads the events (``frame_events``): closing the window quits (quit_if_requested), the keys 1 to 4 set the game
   speed (handle_speed_key) and are no button to the window;
-- maps keys to the NES buttons (``SELECTION_KEYS``: A is accept_keys, B is reject_keys, Escape included, and the
-  D-pad) and handles them: A or B answers (the arrow is drawn one last time and stays on, WndAPressed/WndBPressed),
-  a direction asks ``move`` for the entry it goes to, and only a real move restarts the blink (WndUpdateCrsrPos).
+- maps keys to the NES buttons (``SELECTION_KEYS``: A is K and Enter, B is reject_keys, Escape included, and the
+  D-pad; START is no button, as WndProcessInput skips it) and handles them: A or B answers (the arrow is drawn one
+  last time and stays on, WndAPressed/WndBPressed), a direction asks ``move`` for the entry it goes to, and only a
+  real move restarts the blink (WndUpdateCrsrPos).
 
 What differs between the windows is a parameter: which buttons end the selection, which make the menu sound, which
 keep the arrow on, where the cursor can go (``move``: stop at the edges, or toggle), extra keys that answer at once
@@ -32,17 +33,18 @@ from typing import NamedTuple
 from pygame import KEYDOWN, event, key
 from pygame.event import Event
 
-from src.common import DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, accept_keys, reject_keys
+from src.common import A_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, reject_keys
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, BlinkingCursor, SelectionButtons, first_button
 from src.waiting import handle_speed_key, quit_if_requested, wait_frames
 from src.zoom import handle_zoom_event
 
 ButtonKeys = tuple[tuple[int, tuple[int, ...]], ...]
 
-# The joypad on the keyboard, in WndProcessInput's order (A, B, up, down, left, right). A is accept_keys, so Enter and
-# I (START) choose too, as they always have in these windows; B is reject_keys, Escape included.
+# The joypad on the keyboard, in WndProcessInput's order (A, B, up, down, left, right). A is K, and Enter chooses too,
+# as it always has in these windows; B is reject_keys, Escape included. START (I) and SELECT are no button: Bank01
+# WndProcessInput skips them, so they don't choose.
 SELECTION_KEYS: ButtonKeys = (
-    (IN_A, tuple(accept_keys)),
+    (IN_A, A_BUTTON_KEYS),
     (IN_B, tuple(reject_keys)),
     (IN_UP, UP_KEYS),
     (IN_DOWN, DOWN_KEYS),

@@ -16,13 +16,20 @@ class MusicPlayer:
         self.music_volume = 0.5
         self._clip_end_ticks: float | None = None  # when a clip started with the music off would end (game time)
 
-    def load_and_play_music(self, path, loop=-1):
+    def load_and_play_music(self, path, loop=-1, then_loop: str | None = None):
+        """NES InitMusicSFX with a music number: whatever was playing stops and the new music starts from the beginning
+        (even when it's the same music). With then_loop, path plays once and then_loop follows it and loops, the way
+        the NES's fight music runs into its loop (MSC_ENTR_FGHT falls through into SQ1Fight)."""
         if not self.music_enabled:
             return
-        self.stop_music()
+        self.stop_music()  # also drops anything queued
         mixer.music.load(path)
         mixer.music.set_volume(self.music_volume)
-        mixer.music.play(loop)
+        if then_loop is None or then_loop == path:
+            mixer.music.play(loop)
+        else:
+            mixer.music.play()
+            mixer.music.queue(then_loop, loops=-1)
 
     def play_clip(self, path: str) -> None:
         """NES InitMusicSFX with a music clip (the victory and level-up fanfares, the harp, the flute, the curse,

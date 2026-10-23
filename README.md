@@ -8,9 +8,41 @@
 This is a clone of Dragon Warrior for the Nintendo Entertainment System, done in Python.
 
 
+# DOWNLOAD
+
+Builds for Windows, macOS (Apple Silicon) and Linux, which don't need Python, are on the
+[Releases page](https://github.com/eforgacs-games/Dragon_Warrior/releases). Download the archive for your system,
+unpack it and run:
+- Windows: `DragonWarrior\DragonWarrior.exe`. The build isn't signed, so Windows SmartScreen may warn about it
+  ("More info", then "Run anyway").
+- macOS: `Dragon Warrior.app`. The build isn't signed, so the first time, right-click it and choose Open (or allow it in
+  System Settings > Privacy & Security).
+- Linux: `DragonWarrior/DragonWarrior`.
+
+A downloaded build keeps its adventure logs in `%APPDATA%\Dragon Warrior\saves` (Windows),
+`~/Library/Application Support/Dragon Warrior/saves` (macOS) or `~/.local/share/dragon-warrior/saves` (Linux, or
+`$XDG_DATA_HOME/dragon-warrior/saves`). Run from source, the game saves in `src/saves/`.
+
+## Making a release
+
+Push a tag named `vX.Y.Z` from `main`:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+The [Release builds](.github/workflows/release.yml) workflow builds the game with PyInstaller
+([dragon_warrior.spec](dragon_warrior.spec)) on Windows, macOS and Linux, checks that each build starts and finds all
+of its files (`--smoke-test`), and publishes them as a GitHub Release for the tag, with notes generated from the merged
+PRs. To try the builds without a release, run the workflow from the Actions tab (Run workflow): the builds are then
+uploaded as the run's artifacts. PRs that change the build do the same.
+
+To build locally: `uv sync --group build`, then `uv run pyinstaller dragon_warrior.spec --noconfirm`. The game is in
+`dist/DragonWarrior/` (and `dist/Dragon Warrior.app` on macOS).
+
+
 # REQUIREMENTS
 
-[Python 3.10 to 3.13](https://www.python.org/) (pygame doesn't support 3.14 yet), [PyGame](https://www.pygame.org/news)
+[Python 3.13](https://www.python.org/) (pygame doesn't support 3.14 yet), [PyGame](https://www.pygame.org/news)
 
 Dependency versions are pinned in `uv.lock`. With [uv](https://docs.astral.sh/uv/), `uv sync` installs them, plus the dev tools
 (pytest, mypy, ruff), into `.venv`. Without uv, `pip install -r requirements.txt` installs the same game dependencies.
