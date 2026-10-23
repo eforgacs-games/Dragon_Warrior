@@ -33,7 +33,6 @@ from src.debug_tools import DebugTools
 from src.constants import (
     TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT,
 )
-from src.cursor import dialog_arrow_visible
 from src.direction import Direction
 from src.directories import Directories
 from src.drawer import Drawer
@@ -110,6 +109,9 @@ class Game:
         self.calculation = Calculation(config)
         self.game_functions = GameFunctions(config)
         self.movement = Movement(self.config)
+        # Only still passed to confirmation_prompt, which ignores it: the dialog's down arrow blinks on its own
+        # (src/cursor.py DialogArrowBlink)
+        self.show_arrow = True
         self.game_state = GameState(config=config)
         self.music_player = MusicPlayer(config)
 
@@ -1109,12 +1111,6 @@ class Game:
         if keydown_event.key == K_u:
             # Select button
             pass
-
-    @property
-    def show_arrow(self) -> bool:
-        """Whether the dialog's down arrow is on: it blinks on the frame count of game time (src/cursor.py
-        dialog_arrow_visible), so it keeps pace with the game speed like the selection cursors."""
-        return dialog_arrow_visible()
 
     @property
     def fps(self) -> int:
