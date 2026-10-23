@@ -71,6 +71,8 @@ class BattlePromptFrames(unittest.TestCase):
         patch('src.battle_controller.display').start()
         patch('src.battle_controller.time').start()
         patch('src.cursor.get_ticks', side_effect=lambda: ticks_at_frame(self.frame_number)).start()
+        # frame() moves the fake clock on a frame per pass itself: the loop's real one-frame wait isn't needed
+        patch('src.battle_controller.next_frame').start()
         self.held = defaultdict(int)
         patch('src.battle_controller.key.get_pressed', side_effect=lambda: self.held).start()
         self.controller = BattleController(self.game)
@@ -144,6 +146,7 @@ class TestHandleBattlePrompts(BattlePromptFrames):
         for row, column, tile in ((0, 0, (1, 2)), (0, 1, (9, 2)), (1, 0, (1, 4)), (1, 1, (9, 4))):
             with self.subTest(row=row, column=column), patch('src.translated_window.draw_window') as draw_window:
                 self.controller.battle_menu_row, self.controller.battle_menu_column = row, column
+                self.controller.drawn_command_window = None  # drawn on changes only: draw it again for this check
                 self.controller.handle_battle_prompts(False, self.battle)
                 self.assertIs(COMBAT_COMMAND_LAYOUT, draw_window.call_args.args[1])
                 self.assertEqual(tile, COMBAT_COMMAND_LAYOUT.cursor_tiles[draw_window.call_args.kwargs['cursor_index']])
