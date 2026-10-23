@@ -261,6 +261,28 @@ class TestHeroAndNpcsShareTheFrameCounter(FreezeTestCase):
                 self.assertEqual(1, self.frames_until_the_hero_moves((K_LEFT,)))
                 self.assertTrue(self.game.npc_schedule.is_decision_frame)
 
+    def test_the_pop_up_window_opens_on_the_pop_up_frame(self):
+        # NES IdleUpdate: on the $31st frame of standing still, counted in frames like the steps and the NPC turns,
+        # not on the game clock (which the drawer used to read, so it opened a couple of frames later, and further off
+        # when the map ran slower or faster than the clock)
+        drawer = self.game.drawer
+        self.frames(POP_UP_FRAME - 1)
+        self.assertFalse(drawer.display_hovering_stats)
+        self.frame()
+        self.assertTrue(drawer.display_hovering_stats)
+
+    def test_the_pop_up_window_opens_after_the_kings_words(self):
+        # The automatic dialogs keep it closed while they wait for a button; the hero has been standing all along
+        drawer = self.game.drawer
+        drawer.display_hovering_stats = False
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'), patch('src.drawer.display'):
+            drawer.run_automatic_initial_dialog([], True, self.game.cmd_menu)
+        self.assertTrue(drawer.display_hovering_stats)
+        drawer.display_hovering_stats = False
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'), patch('src.drawer.set_to_save_prompt'):
+            drawer.run_automatic_post_death_dialog([], True, self.game.cmd_menu)
+        self.assertTrue(drawer.display_hovering_stats)
+
     def test_the_pop_up_window_frame_runs_two_npc_frames(self):
         # NES IdleUpdate on FrameCounter $31: the pop-up window's drawing calls DoSprites (WndCalcBufAddr), then
         # FrameCounter is set to $32 and DoSprites runs again

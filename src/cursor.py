@@ -52,6 +52,18 @@ WND_PROCESS_ORDER = (IN_A, IN_B, IN_UP, IN_DOWN, IN_LEFT, IN_RIGHT)
 RETRIGGER_FRAME_MASK = 0x0F
 
 
+# The dialog's down arrow (TxtWaitAnim) blinks on the frame count too: on for this many frames, then off as long. 32
+# frames is 533 ms at normal speed, about the 530 ms real-time timer (USEREVENT arrow_fade) it used to blink on.
+DIALOG_ARROW_BLINK_FRAMES = 32
+
+
+def dialog_arrow_visible(ticks: int | None = None) -> bool:
+    """Whether the dialog's down arrow is on now. It counts NES frames of game time (src/waiting.py game_ticks), like
+    BlinkingCursor, so it blinks N times as fast at game speed N, together with everything else."""
+    now = get_ticks() if ticks is None else ticks
+    return now * NES_FPS // 1000 // DIALOG_ARROW_BLINK_FRAMES % 2 == 0
+
+
 def cursor_visible_on_frame(frame_counter: int) -> bool:
     """UpdateCursorGFX: whether the arrow (rather than a blank tile) is drawn on this value of FrameCounter."""
     return frame_counter & CURSOR_BLINK_MASK < CURSOR_HIDDEN_FROM

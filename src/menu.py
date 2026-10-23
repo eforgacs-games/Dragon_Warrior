@@ -387,15 +387,13 @@ class CommandMenu(Menu):
         self.wait_for_dialog_key(shows_arrow=shows_arrow, skip_text=False, temp_text_start=None, disable_sound=True)
 
     def read_dialog_events(self, advance_keys: Collection[int]) -> bool:
-        """Takes the queued events, keeping the arrow blinking; returns whether one was a press of advance_keys."""
+        """Takes the queued events; returns whether one was a press of advance_keys."""
         for current_event in event.get():
             quit_if_requested(current_event)
             if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
                 continue
             if current_event.type == KEYDOWN and current_event.key in advance_keys:
                 return True
-            if current_event.type == arrow_fade:
-                self.game.show_arrow = not self.game.show_arrow
         return False
 
     def run_dialog_steps(self, steps: Iterable[DialogStep], animate: bool, frames_per_char: int,
