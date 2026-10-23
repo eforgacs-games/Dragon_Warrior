@@ -23,6 +23,9 @@ from src.visual_effects import cut_to_black, screen_fade
 class MapManager:
     def __init__(self, game):
         self.game = game
+        # The (row, column) of the stairs a random fight started on: the hero stays there after the fight, and the
+        # stairs aren't taken until the hero steps off them (or uses STAIRS). See stay_on_stairs.
+        self.fought_on_stairs: tuple[int, int] | None = None
 
     # ------------------------------------------------------------------ #
     #  Properties forwarding to game                                       #
@@ -88,7 +91,18 @@ class MapManager:
     #  Warp detection                                                      #
     # ------------------------------------------------------------------ #
 
+    def stay_on_stairs(self, row: int, column: int) -> None:
+        """A random fight has just started on the block the hero stepped onto (Bank03 CheckBlockDmg -> DoRandomFight).
+        The NES never takes stairs on its own: only the STAIRS command does (ChkStairsUp/Down), so after the fight the
+        hero is still standing on them. Here stairs are taken by stepping onto them, so that step's warp is held back
+        until the hero steps off (or uses STAIRS), instead of happening in the frame right after the fight."""
+        self.fought_on_stairs = row, column
+
     def handle_warps(self):
+        if self.fought_on_stairs is not None:
+            if self.fought_on_stairs == (self.player.row, self.player.column):
+                return
+            self.fought_on_stairs = None
         immediate_move_maps = ('Brecconary', 'Cantlin', 'Hauksness', 'Rimuldar', 'CharlockB1', 'MagicTemple',
                                'Alefgard', 'MountainCaveB1', 'MountainCaveB2')
         if self.game.auto_stairs:
@@ -181,6 +195,7 @@ class MapManager:
         self.game.loop_count = 1
         self.game_state.unpause_all_movement()
         self.game.tiles_moved_since_spawn = 0
+        self.fought_on_stairs = None
         # NES PalFadeIn: fading the new map in loads the palettes, so the windows turn red or white for the current HP
         # (ChkLowHPPal). This is where a level up's new max HP first changes the window color.
         self.game.load_window_palette()
