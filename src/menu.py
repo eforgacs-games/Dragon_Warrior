@@ -11,6 +11,7 @@ from pygame.sprite import Group
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from data.text.dialog_lookup_table import DialogLookup
+from src.adventure_log import ADVENTURE_LOGS, first_open_log
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, accept_keys, reject_keys, Graphics, set_gettext_language
@@ -179,7 +180,14 @@ class CommandMenu(Menu):
         PlayerFlags and StoryFlags bytes whole (game slot offsets $00-$18 in reference/sram-doc.txt). The worn items
         are saved with the hero and the story bits as one StoryFlags entry. Like the NES, the treasure chest history
         and the repel timer aren't saved (Game.load_game)."""
-        # TODO: Add multiple save slots.
+        if self.player.adventure_log not in ADVENTURE_LOGS:
+            # No log was chosen (the title menu was skipped): use the first open one rather than a save_slot_0.json
+            # that isn't an adventure log. With all three used there is nowhere to save.
+            open_log = first_open_log(self.directories.save_dir)
+            if open_log is None:
+                print("No open adventure log to save to.")
+                return
+            self.player.adventure_log = open_log
         save_dict = {
             'Name': self.player.name,
             'Experience': self.player.total_experience,
