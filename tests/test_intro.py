@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 import pygame
-from pygame import Rect, event, KEYDOWN, K_i
+from pygame import Rect, event, KEYDOWN, K_i, QUIT
 
 from src.config.test_config import test_config
 from src.game import Game
@@ -79,8 +79,15 @@ class TestIntro(TestCase):
         with patch.object(event, 'get', return_value=[mocked_i]):
             self.intro.show_start_screen(self.game.screen, 0, self.game.clock, self.game.game_state.config)
 
-    # def test_show_start_screen_quit(self):
-    #     mocked_quit = MagicMock()
-    #     mocked_quit.type = QUIT
-    #     with patch.object(event, 'get', return_value=[mocked_quit]) as mock_method:
-    #         self.intro.show_start_screen(self.game.screen, get_ticks(), self.game.clock)
+    def test_closing_the_window_on_the_title_screens_quits_the_game(self):
+        # They used to call pygame.quit() and carry on, so the next display update raised "video system not
+        # initialized"
+        config = self.game.game_state.config
+        for screen_name, show_screen in (
+                ('start screen', lambda: self.intro.show_start_screen(self.game.screen, 0, self.game.clock, config)),
+                ('dragon banner', lambda: self.intro.show_intro_dragon_banner_with_text(self.game.screen,
+                                                                                        self.game.clock, config))):
+            with self.subTest(screen_name), patch.object(event, 'get', side_effect=[[event.Event(QUIT)]]), \
+                    patch('src.waiting.pygame_quit') as pygame_quit, self.assertRaises(SystemExit):
+                show_screen()
+            pygame_quit.assert_called_once()

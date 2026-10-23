@@ -1,9 +1,10 @@
 from functools import partial
 from typing import Callable, List
 
-from pygame import display, QUIT, quit, KEYDOWN, K_RETURN, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, \
+from pygame import display, KEYDOWN, K_RETURN, K_DOWN, K_s, K_UP, K_w, K_LEFT, K_a, K_RIGHT, K_d, \
     K_TAB, K_BACKSPACE, event
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
+from src.waiting import quit_if_requested
 
 from data.text.intro_lookup_table import ControlInfo
 from src.calculation import Calculation
@@ -58,9 +59,8 @@ class NameSelection:
         while True:
             self.draw(screen, entry, cursor.visible())
             for current_event in event.get():
-                if current_event.type == QUIT:
-                    quit()
-                elif current_event.type == KEYDOWN:
+                quit_if_requested(current_event)
+                if current_event.type == KEYDOWN:
                     if current_event.key == K_TAB:
                         enable_joystick_input = toggle_joystick_input(
                             command_menu, partial(self.draw, screen, entry, cursor.visible()), enable_joystick_input,
