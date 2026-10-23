@@ -10,9 +10,9 @@ from pygame import Rect
 from src.color import LOW_HP_RED, WHITE
 from src.config.test_config import test_config
 from src.drawer import Drawer
-from src.game import Game
 from src.maps import Brecconary
 from src.windows import POPUP_WINDOW
+from tests.helpers import new_game
 
 INN_COST = 6
 
@@ -38,8 +38,7 @@ class PopupWindowTestCase(TestCase):
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
         self.addCleanup(test_config.__setitem__, 'NO_BLIT', True)
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.change_map(Brecconary(self.game.config), destination_coordinates=(29, 18))
         self.cmd_menu = self.game.cmd_menu
         self.dialog_lookup = self.cmd_menu.dialog_lookup

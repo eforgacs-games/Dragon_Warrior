@@ -20,6 +20,7 @@ from src.directories import Directories
 from src.window_renderer import render_window
 from src.windows import COMMAND_LAYOUT, COMMAND_WINDOW
 from tests.nes_screen_diff import compare_with_screenshot, count_differing_pixels, load_screenshot
+from tests.helpers import new_game
 
 SCALES = (1, 2, 3)
 COLORS = (WHITE, RED)
@@ -118,10 +119,8 @@ class TestCommandWindow(TestCase):
 
     def test_drawn_by_the_game(self):
         # What CommandMenu actually draws on the game screen, at the game's scale, where the window goes
-        from src.game import Game
         config = dict(test_config, NO_BLIT=False, NO_WAIT=True, RENDER_TEXT=True)
-        with patch('src.game.SCALED'):
-            game = Game(config)
+        game = new_game(config)
         cmd_menu = game.cmd_menu
         tile_size, scale = config['TILE_SIZE'], config['SCALE']
         area = pygame.Rect(6 * tile_size, 1 * tile_size, 8 * tile_size, 5 * tile_size)

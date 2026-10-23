@@ -7,11 +7,11 @@ from pygame import KEYDOWN, K_ESCAPE, K_RETURN
 from src.color import BLACK, LOW_HP_RED, WHITE, is_low_hp, window_color
 from src.config.test_config import test_config
 from src.cursor import IN_DOWN
-from src.game import Game
 from src.maps_functions import PAL0_COLOR1_LOW_HP
 from src.visual_effects import NES_PALETTE, NES_RED
 from src.maps import map_lookup
 from src.windows import SHOP_INVENTORY_WINDOW
+from tests.helpers import new_game
 
 
 class TestLowHPThreshold(TestCase):
@@ -52,8 +52,7 @@ class TestLowHPWindowColor(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.player = self.game.player
         self.player.name = "Edward"
         self.player.max_hp = 15

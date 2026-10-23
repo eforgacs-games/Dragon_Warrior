@@ -7,8 +7,8 @@ from src.battle import Battle
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.ending import CREDITS, credit_screen_music_events
-from src.game import Game
 from src.maps import map_lookup
+from tests.helpers import new_game
 
 
 class TestEnding(TestCase):
@@ -26,8 +26,7 @@ class TestEnding(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.player.name = "Edward"
         self.lines = []
         show_line = patch('src.menu.CommandMenu.show_line_in_dialog_box', side_effect=self.record_line).start()

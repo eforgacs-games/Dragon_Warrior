@@ -1,9 +1,8 @@
 from unittest import TestCase
-from unittest.mock import patch
 
 from src.config.test_config import test_config
-from src.game import Game
 from tests.mock_map import MockMap
+from tests.helpers import new_game
 
 
 class Test(TestCase):
@@ -12,8 +11,7 @@ class Test(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.current_map = MockMap(self.game.config)
 
     def test_bump_and_reset(self):

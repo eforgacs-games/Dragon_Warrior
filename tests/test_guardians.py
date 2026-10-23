@@ -13,7 +13,6 @@ from pygame import K_DOWN, K_LEFT, K_RETURN, K_RIGHT, K_UP
 from src.battle_controller import BattleOutcome
 from src.config.test_config import test_config
 from src.direction import Direction
-from src.game import Game
 from src.game_functions import set_character_position
 from src.guardians import AXE_KNIGHT, GOLEM, GREEN_DRAGON, GUARDIANS, escape_coordinates, guardian_at, \
     record_victory
@@ -21,6 +20,7 @@ from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import CommandMenu
 from src.story_flags import StoryFlags
+from tests.helpers import new_game
 
 STEP_KEYS = {Direction.UP.value: K_UP, Direction.DOWN.value: K_DOWN,
              Direction.LEFT.value: K_LEFT, Direction.RIGHT.value: K_RIGHT}
@@ -110,8 +110,7 @@ class TestGuardianFights(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.player = self.game.player
         self.player.name = "Erdrick"
         self.lines: list = []

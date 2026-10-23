@@ -15,6 +15,7 @@ from src.config.test_config import test_config
 from src.game import Game
 from src.waiting import NES_FPS
 from src.windows import COMMAND_WINDOW, POPUP_WINDOW
+from tests.helpers import new_game
 
 
 class StopMainLoop(Exception):
@@ -41,8 +42,7 @@ class TestCommandWindowClose(TestCase):
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = False  # draw for real: the frames are what's being tested
         self.addCleanup(test_config.__setitem__, 'NO_BLIT', True)
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.game_state.is_initial_dialog = False
         self.game.handle_battles = MagicMock()  # type: ignore[method-assign]
         pygame.event.clear()

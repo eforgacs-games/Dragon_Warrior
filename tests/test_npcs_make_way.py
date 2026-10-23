@@ -13,13 +13,13 @@ from pygame import K_RIGHT
 
 from src.config.test_config import test_config
 from src.direction import Direction
-from src.game import Game
 from src.game_functions import set_character_position
 from src.maps import MapWithoutNPCs
 from src.maps_functions import get_center_point
 from src.npc_schedule import FRAMES_PER_CYCLE, FRAMES_PER_TURN
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
+from tests.helpers import new_game
 
 W, B = 1, 3  # WALL, BRICK
 
@@ -77,8 +77,7 @@ class MakeWayTestCase(TestCase):
         pygame.display.set_mode((800, 600))
 
     def make_game(self, layout, make_way=True):
-        with patch('src.game.SCALED'):
-            self.game = Game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
+        self.game = new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
                               'NO_BATTLES': True, 'NPCS_MAKE_WAY': make_way})
         self.game.game_state.is_initial_dialog = False
         self.tile_size = self.game.tile_size

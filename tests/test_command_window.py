@@ -10,10 +10,10 @@ from pygame import KEYDOWN, K_1, K_2, K_DOWN, K_ESCAPE, K_LEFT, K_RETURN, K_RIGH
 from src.command_window import WND_ABORT, CommandWindow, tapped_buttons
 from src.config.test_config import test_config
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_START, IN_UP
-from src.game import Game
 from src.menu import COMMAND_METHODS, CommandMenu
 from src.waiting import NES_FPS, game_speed, set_game_speed
 from src.windows import COMMAND_ENTRIES
+from tests.helpers import new_game
 
 TALK, STATUS, STAIRS, SEARCH, SPELL, ITEM, DOOR, TAKE = range(8)
 
@@ -141,8 +141,7 @@ class CommandWindowFrames(TestCase):
         for name in COMMAND_METHODS:
             patch.object(CommandMenu, name, autospec=True,
                          side_effect=lambda menu, name=name: self.record(menu, name)).start()
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.game_state.is_initial_dialog = False
         self.cmd_menu = self.game.cmd_menu
         for blocking in ('window_drop_down_effect', 'window_drop_up_effect'):
