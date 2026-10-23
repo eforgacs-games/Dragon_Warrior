@@ -1116,14 +1116,6 @@ msgstr "전체 화면 모드로 전환되었습니다"
 msgid "Windowed mode enabled"
 msgstr "창 모드로 전환되었습니다"
 
-#: src/game.py
-msgid "Stairs: STEP ON"
-msgstr "계단: 밟으면 이동"
-
-#: src/game.py
-msgid "Stairs: NES (STAIRS command)"
-msgstr "계단: NES (계단 명령)"
-
 #: src/game.py:829
 msgid "Auto-battle disabled"
 msgstr "자동 전투 꺼짐"
@@ -1860,20 +1852,8 @@ msgstr ""
 "'{}, 자네가 미워!"
 
 #: data/text/intro_lookup_table.py:13
-msgid "F1: Show Controls"
-msgstr "F1: 조작 방법 보기"
-
-#: data/text/intro_lookup_table.py:14
-msgid "F2: Toggle Auto-Stairs"
-msgstr "F2: 자동 계단 켜기/끄기"
-
-#: data/text/intro_lookup_table.py:15
-msgid "F3: Toggle Auto-Battle"
-msgstr "F3: 자동 전투 켜기/끄기"
-
-#: data/text/intro_lookup_table.py:16
-msgid "F4: Toggle Invulnerability"
-msgstr "F4: 무적 모드 켜기/끄기"
+msgid "H: Show Controls"
+msgstr "H: 조작 방법 보기"
 
 #: data/text/intro_lookup_table.py:17
 msgid "F11: Toggle Fullscreen"
@@ -2263,17 +2243,13 @@ msgstr ""
 msgid "But for thee I wish success, {}."
 msgstr "하지만 자네의 성공을 비네, {}."
 
-#: data/text/intro_lookup_table.py:15
-msgid "F2: Auto-Stairs"
-msgstr "F2: 자동 계단"
-
 #: data/text/intro_lookup_table.py:16
-msgid "F3: Auto-Battle"
-msgstr "F3: 자동 전투"
+msgid "F4: Auto-Battle"
+msgstr "F4: 자동 전투"
 
 #: data/text/intro_lookup_table.py:17
-msgid "F4: Invulnerability"
-msgstr "F4: 무적 모드"
+msgid "F9: Invulnerability"
+msgstr "F9: 무적 모드"
 
 #: data/text/intro_lookup_table.py:18
 msgid "F11: Fullscreen"

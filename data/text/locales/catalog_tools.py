@@ -34,7 +34,7 @@ ENGLISH_ONLY = {
     "F5: Warp": "debug key",
     "F6: Give item/gold/level": "debug key",
     "F7: Load checkpoint": "debug key",
-    "Debug keys:": "debug key",  # the title of the F1 help page that lists them
+    "Debug keys:": "debug key",  # the title of the H help page that lists them
 }
 
 
