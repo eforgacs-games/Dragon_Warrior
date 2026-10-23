@@ -16,9 +16,9 @@ NES flow (Bank03):
 
 What this game adds (none of it on the NES, so none of it asked here): the dialog style, NPCS MAKE WAY, the fade style,
 the stairs, the grind stop and the switches for this game's other conveniences (SWITCHES: the music, the game speed
-keys, save states, rewind, auto-grind, the cheat keys, the shop preview and the quest journal). They are changed
-during play, in the options overlay (src/options_overlay.py: SELECT or Tab on the map), and kept per adventure log
-beside the message speed (Options below). A new quest starts with their defaults.
+keys, save states, rewind, auto-grind, the cheat keys, the shop preview and the quest journal) and AUTOSAVE. They are
+changed during play, in the options overlay (src/options_overlay.py: SELECT or Tab on the map), and kept per
+adventure log beside the message speed (Options below). A new quest starts with their defaults.
 
 The windows read the joypad like every NES selection window (src/cursor.py SelectionButtons, WndProcessInput): one
 button per press, up and down in a one-column window, left and right in a one-row window, stopping at the edges.
@@ -51,6 +51,7 @@ FADE_STYLE_SAVE_KEY = 'FadeStyle'
 AUTO_STAIRS_SAVE_KEY = 'AutoStairs'
 AUTO_GRIND_STOP_SAVE_KEY = 'AutoGrindStop'
 MENU_SPEED_SAVE_KEY = 'MenuSpeed'
+AUTOSAVE_SAVE_KEY = 'Autosave'
 
 # MessageSpeed: #$00-fast, #$01-normal, #$02-slow; the window lists them in that order (WndRow = MessageSpeed)
 MESSAGE_SPEED_NAMES = ('Fast', 'Normal', 'Slow')
@@ -142,6 +143,11 @@ SWITCHES = (
     Switch('quest_journal', 'QUEST_JOURNAL', 'QuestJournal', JOURNAL_SETTINGS, JOURNAL_GOALS),
 )
 
+# AUTOSAVE (base_config, src/autosave.py): OFF by default, which is the NES (it only saves with King Lorik); the MODERN
+# preset turns it on. A new quest, or a save without the setting, keeps the config's (OFF in every config, so the tests
+# and dev runs never write an autosave)
+DEFAULT_AUTOSAVE = False
+
 
 @dataclass(frozen=True, slots=True)
 class Options:
@@ -167,6 +173,7 @@ class Options:
     status_window: str = STATUS_WINDOW_NES
     shop_preview: bool = True
     quest_journal: str = JOURNAL_GOALS
+    autosave: bool | None = None  # None: the config's AUTOSAVE is kept
 
 
 # A new quest's settings when none are chosen: NewQuest's MSG_NORMAL, the NES dialog window, and base_config's
@@ -254,21 +261,31 @@ def menu_speed_from_save(save: dict) -> str:
     return setting if setting in MENU_SPEEDS else DEFAULT_MENU_SPEED
 
 
+def autosave_from_save(save: dict) -> bool | None:
+    """The log's AUTOSAVE setting (src/autosave.py); None for a save from before it was kept, which leaves the
+    config's as it is."""
+    autosave = save.get(AUTOSAVE_SAVE_KEY)
+    return autosave if isinstance(autosave, bool) else None
+
+
 def options_from_save(save: dict) -> Options:
     """The log's settings; each one a save from before it was kept doesn't have loads as its default."""
     return Options(message_speed_from_save(save), dialog_style_from_save(save), npcs_make_way_from_save(save),
                    fade_style_from_save(save), auto_stairs_from_save(save), auto_grind_stop_from_save(save),
-                   menu_speed_from_save(save),
+                   menu_speed_from_save(save), autosave=autosave_from_save(save),
                    **{switch.field_name: switch.valid(save.get(switch.save_key)) for switch in SWITCHES})
 
 
 def options_to_save(options: Options) -> dict:
     """The save file entries for these settings (CommandMenu.save, TitleMenu.change_message_speed)."""
-    return {MESSAGE_SPEED_SAVE_KEY: options.message_speed, DIALOG_STYLE_SAVE_KEY: options.dialog_style,
-            NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way, FADE_STYLE_SAVE_KEY: options.fade_style,
-            AUTO_STAIRS_SAVE_KEY: options.auto_stairs, AUTO_GRIND_STOP_SAVE_KEY: options.auto_grind_stop,
-            MENU_SPEED_SAVE_KEY: options.menu_speed,
-            **{switch.save_key: getattr(options, switch.field_name) for switch in SWITCHES}}
+    entries = {MESSAGE_SPEED_SAVE_KEY: options.message_speed, DIALOG_STYLE_SAVE_KEY: options.dialog_style,
+               NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way, FADE_STYLE_SAVE_KEY: options.fade_style,
+               AUTO_STAIRS_SAVE_KEY: options.auto_stairs, AUTO_GRIND_STOP_SAVE_KEY: options.auto_grind_stop,
+               MENU_SPEED_SAVE_KEY: options.menu_speed,
+               **{switch.save_key: getattr(options, switch.field_name) for switch in SWITCHES}}
+    if options.autosave is not None:
+        entries[AUTOSAVE_SAVE_KEY] = options.autosave
+    return entries
 
 
 def options_from_config(config: dict) -> Options:
@@ -278,6 +295,7 @@ def options_from_config(config: dict) -> Options:
                    fade_style(config), bool(config.get('AUTO_STAIRS', DEFAULT_AUTO_STAIRS)),
                    auto_grind_stop_from_save({AUTO_GRIND_STOP_SAVE_KEY: config.get('AUTO_GRIND_STOP')}),
                    menu_speed_from_save({MENU_SPEED_SAVE_KEY: config.get('MENU_SPEED')}),
+                   autosave=bool(config.get('AUTOSAVE', DEFAULT_AUTOSAVE)),
                    **{switch.field_name: switch.valid(config.get(switch.config_key)) for switch in SWITCHES})
 
 
@@ -287,7 +305,8 @@ def apply_options(config: dict, options: Options) -> None:
     fade, MapManager.handle_warps reads AUTO_STAIRS for every step, auto-grind reads AUTO_GRIND_STOP for every check
     and the menu clock reads MENU_SPEED (src/waiting.py menu_speed). Each of the SWITCHES goes into its config key,
     which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once); the
-    shops read SHOP_PREVIEW whenever their list opens, and Q reads QUEST_JOURNAL each time it's pressed."""
+    shops read SHOP_PREVIEW whenever their list opens, Q reads QUEST_JOURNAL each time it's pressed, and Game.map_frame
+    reads AUTOSAVE every frame."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way
@@ -297,6 +316,8 @@ def apply_options(config: dict, options: Options) -> None:
     config['MENU_SPEED'] = options.menu_speed
     for switch in SWITCHES:
         config[switch.config_key] = getattr(options, switch.field_name)
+    if options.autosave is not None:
+        config['AUTOSAVE'] = options.autosave
 
 
 class OptionWindow:

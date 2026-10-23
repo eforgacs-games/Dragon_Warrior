@@ -26,6 +26,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, Game.thin_encounters)
     EXP/GOLD       x1 (NES) / x2 / x4       (EXP_GOLD: what a won fight gives, Battle.enemy_defeated)
     QUEST JOURNAL  OFF (NES) / GOALS / HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
+    AUTOSAVE       OFF (NES) / ON           (AUTOSAVE: the autosave slot, src/autosave.py)
 
     CONTROLS
     GAME SPEED     OFF (NES) / ON           (GAME_SPEED_KEYS: keys 1 to 5, src/waiting.py)
@@ -170,6 +171,8 @@ OPTION_PAGES = (
         # Information only, when Q is pressed: GOALS by default, off in the NES preset
         OptionRow("QUEST JOURNAL", 'QUEST_JOURNAL', JOURNAL_SETTINGS, ("OFF (NES)", "GOALS", "HINTS"),
                   (JOURNAL_OFF, JOURNAL_GOALS)),
+        # The autosave slot (src/autosave.py): the NES only saves with King Lorik
+        switch_row("AUTOSAVE", 'AUTOSAVE'),
     )),
     OptionPage("CONTROLS", (
         switch_row("GAME SPEED", 'GAME_SPEED_KEYS'),

@@ -57,6 +57,7 @@ from src.battle_controller import BattleController, BattleOutcome
 from src.ending import Ending
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
+from src.autosave import Autosave
 from src.waiting import NES_FPS, SPEED_KEYS, FrameClock, FramePacer, clear_events_keeping_quit, game_speed, \
     reset_game_speed, set_game_speed, set_speed_keys_enabled, speed_keys_enabled
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
@@ -229,6 +230,8 @@ class Game:
                              self.tile_size)
         self.cmd_menu = CommandMenu(self)
         self.title_menu = TitleMenu(self)
+        # The autosave slot (src/autosave.py), written between map frames
+        self.autosave = Autosave(self)
 
         self.clock = Clock()
         self.frame_clock = FrameClock()
@@ -329,6 +332,7 @@ class Game:
             intro.show_start_screen(self.screen, self.start_time, self.clock, self.game_state.config)
             self.music_player.load_and_play_music(self.directories.intermezzo)
             self.title_menu.show_main_menu_screen(self.screen)
+            self.autosave.restart()  # the time on the title screen isn't play
         if self.config.get('CHECKPOINT'):
             self.load_checkpoint(self.config['CHECKPOINT'])
         self.drawer.draw_all(self, self.game_state.enable_animate)
@@ -410,6 +414,7 @@ class Game:
         self.ending.check_for_end_game_trigger()
         self._handle_debugging_info()
         self.run_due_state_request()
+        self.autosave.frame()
         event.pump()
 
     def _handle_debugging_info(self) -> None:
