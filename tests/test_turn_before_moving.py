@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 from pygame import K_DOWN, K_LEFT, K_UP, K_i
 
+from src.config.test_config import test_config
 from src.direction import Direction
 from src.game import STEP_SYNC_FRAMES
 from src.waiting import set_game_speed
@@ -243,3 +244,38 @@ class TestTurnBeforeMoving(FreezeTestCase):
         self.assertTrue(self.game.paused)
         self.assertEqual(start_x - self.tile_size, self.player.rect.x)
         self.assertEqual(1, self.game.tiles_moved_since_spawn)
+
+
+class TestStepLengthAtEveryScale(FreezeTestCase):
+    """The hero moves one NES pixel a frame (TILE_SIZE is 16 * SCALE), so a step is 16 frames at any SCALE, in step
+    with NES DoJoyUp etc.'s FrameCounter & $0F check (STEP_SYNC_FRAMES)."""
+
+    scale = 2
+
+    def setUp(self):
+        scaled = patch.dict(test_config, SCALE=self.scale, TILE_SIZE=16 * self.scale)
+        scaled.start()
+        self.addCleanup(scaled.stop)
+        super().setUp()
+        self.game.game_state.enable_roaming = False
+        patch.object(self.game.movement.sound, 'play_sound').start()
+        self.addCleanup(patch.stopall)
+
+    def test_a_step_takes_16_frames(self):
+        self.assertEqual(16 * self.scale, self.tile_size)
+        start_x = self.game.player.rect.x
+        self.frames(STEP_SYNC_FRAMES - 1, held=(K_LEFT,))
+        self.assertTrue(self.game.player.is_moving)
+        self.assertEqual(start_x - (STEP_SYNC_FRAMES - 1) * self.scale, self.game.player.rect.x)
+        self.frame(held=(K_LEFT,))
+        self.assertFalse(self.game.player.is_moving)
+        self.assertEqual(start_x - self.tile_size, self.game.player.rect.x)
+        self.assertEqual((12, 10), (self.game.player.column, self.game.player.row))
+
+
+class TestStepLengthAtScale1(TestStepLengthAtEveryScale):
+    scale = 1
+
+
+class TestStepLengthAtScale3(TestStepLengthAtEveryScale):
+    scale = 3
