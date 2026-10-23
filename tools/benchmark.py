@@ -19,6 +19,10 @@ Per scene and game speed it reports:
   frame of game time), each with its share of NES_FPS (60.0988) x the speed;
 - wall and CPU time (time.process_time): a CPU share near 100% while the game only waits is a busy loop;
 - how many times display.flip and display.update were called.
+
+The window is opened without SCALED by default, as tools/record_frames.py does. --display opens it SCALED, as the game
+does (under the dummy driver SDL draws with its software renderer), with or without the display filters
+(src/display_filters.py), to measure what they cost: scaled (no filter), scanlines, pixel-perfect or both.
 """
 import argparse
 import cProfile
@@ -55,6 +59,9 @@ STEP_GAP = 30  # frames between two steps of a scene's script
 # A pass longer than this ran a loop of its own: the same line FramePacer draws between slow drawing and a stall
 OWN_LOOP_MS = 100
 MAX_SCENE_SECONDS = 120
+# --display: the window SCALED or not, and the display filters (SCANLINES, SCALING) for each choice
+DISPLAYS = {'unscaled': None, 'scaled': (False, 'Smooth'), 'scanlines': (True, 'Smooth'),
+            'pixel-perfect': (False, 'PixelPerfect'), 'both': (True, 'PixelPerfect')}
 
 
 @dataclass(frozen=True)
@@ -187,11 +194,20 @@ def scene_save(scene: Scene) -> dict:
     return save
 
 
-def start_game(scene: Scene, save_dir: str):
+def start_game(scene: Scene, save_dir: str, display: str = 'unscaled'):
     from src.game import Game
-    # Without SCALED, which can't always make its renderer headless (as tools/record_frames.py)
-    with patch('src.game.SCALED', 0):
-        game = Game(scene_config(scene, save_dir))
+    filters = DISPLAYS[display]
+    if filters is None:
+        # Without SCALED, which can't always make its renderer headless (as tools/record_frames.py)
+        with patch('src.game.SCALED', 0):
+            game = Game(scene_config(scene, save_dir))
+    else:
+        from src.display_filters import PRESENTER
+        # A SCALED window can't be opened over another one under the dummy driver: start the display again
+        PRESENTER.release()
+        pygame.display.quit()
+        scanlines, scaling = filters
+        game = Game({**scene_config(scene, save_dir), 'SCANLINES': scanlines, 'SCALING': scaling})
     game.load_game(scene_save(scene))
     return game
 
@@ -259,14 +275,14 @@ def scene_length(scene: Scene, frames: int) -> tuple[list, int]:
 
 
 def run_scene(scene: Scene, speed: int, frames: int, seed: int,
-              profiler: cProfile.Profile | None = None) -> SceneResult:
+              profiler: cProfile.Profile | None = None, display: str = 'unscaled') -> SceneResult:
     """Play the scene at the game speed and measure it. A scene the game can't run (an older commit) is n/a."""
     random.seed(seed)
     reset_game_speed()
     meter = SceneMeter()
     try:
         with tempfile.TemporaryDirectory(prefix='dragon_warrior_benchmark_') as save_dir:
-            game = start_game(scene, save_dir)
+            game = start_game(scene, save_dir, display)
             set_game_speed(speed)
             wall_seconds, cpu_seconds = play(game, scene, frames, meter, profiler)
     except (Exception, SystemExit) as error:
@@ -297,13 +313,14 @@ def play(game, scene: Scene, frames: int, meter: SceneMeter, profiler: cProfile.
 
 def run_benchmark(scenes: list[Scene], speeds: list[int], frames: int, seed: int, repeat: int = 1,
                   profile_lines: int = 0,
-                  on_result: Callable[[SceneResult], None] = lambda _result: None) -> list[SceneResult]:
+                  on_result: Callable[[SceneResult], None] = lambda _result: None,
+                  display: str = 'unscaled') -> list[SceneResult]:
     """Each scene at each speed, ``repeat`` times, keeping the best run of each (see best_run)."""
     results = []
     for scene in scenes:
         for speed in speeds:
             profiler = cProfile.Profile() if profile_lines else None
-            result = best_run([run_scene(scene, speed, frames, seed, profiler) for _ in range(repeat)])
+            result = best_run([run_scene(scene, speed, frames, seed, profiler, display) for _ in range(repeat)])
             results.append(result)
             on_result(result)
             if profiler:
@@ -333,7 +350,7 @@ def run_metadata(args) -> dict:
     return {'commit': git_commit(), 'date': datetime.now(UTC).isoformat(timespec='seconds'),
             'python': platform.python_version(), 'pygame': pygame.version.ver, 'machine': platform.machine(),
             'processor': platform.processor() or platform.machine(), 'frames': args.frames, 'seed': args.seed,
-            'repeat': args.repeat}
+            'repeat': args.repeat, 'display': args.display}
 
 
 def parse_names(text: str) -> list[Scene]:
@@ -365,6 +382,8 @@ def make_parser() -> argparse.ArgumentParser:
     parser.add_argument('--seed', type=int, default=0, help="random seed (default 0)")
     parser.add_argument('--repeat', type=int, default=1,
                         help="run each scene this many times and keep the run with the shortest mean frame time")
+    parser.add_argument('--display', choices=list(DISPLAYS), default='unscaled',
+                        help="open the window SCALED, with these display filters (default: unscaled, no filters)")
     parser.add_argument('--json', metavar='OUT', help="also write the results to this JSON file")
     parser.add_argument('--profile', type=int, metavar='LINES', default=0,
                         help="run each scene under cProfile and print its LINES slowest functions by own time")
@@ -392,7 +411,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     try:
         results = run_benchmark(args.scenes, args.speeds, args.frames, args.seed, args.repeat, args.profile,
-                                print_progress)
+                                print_progress, args.display)
     finally:
         pygame.quit()
     print(format_report(results))

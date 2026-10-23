@@ -1,14 +1,16 @@
 """The global settings: the player's own, kept from one launch to the next, in one small file. Not NES behavior.
 
 They are the window zoom (Ctrl + / Ctrl -, src/zoom.py), fullscreen (F11, Game.handle_fullscreen_toggle), the game
-speed (keys 1 to 5, src/waiting.py) and the language (the options overlay's LANGUAGE row, src/options_overlay.py).
+speed (keys 1 to 5, src/waiting.py), the language and the display filters (the options overlay's LANGUAGE, SCANLINES
+and SCALING rows, src/options_overlay.py and src/display_filters.py).
 They belong to whoever plays on this computer, not to an adventure, so they are kept apart from the adventure logs
 (src/save_file.py), which carry the per-adventure options (message speed, dialog style and the rest).
 
 The file is JSON, in the per-user config folder (src/paths.py user_config_dir), e.g. on Linux
 ~/.config/dragon-warrior/settings.json:
 
-    {"version": 1, "zoom": 3, "fullscreen": false, "game_speed": 1, "language": "Korean"}
+    {"version": 1, "zoom": 3, "fullscreen": false, "game_speed": 1, "language": "Korean", "scanlines": false,
+     "scaling": "Smooth"}
 
 "zoom" and "language" can be null: the window opens at its normal size, and the language comes from the system locale
 (base_config language_from_locale). A saved language wins over the locale.
@@ -29,6 +31,7 @@ from dataclasses import asdict, dataclass, fields, replace
 from os.path import dirname, join
 from typing import Any
 
+from src.display_filters import SCALING_MODES, SCALING_SMOOTH
 from src.paths import user_config_dir
 
 SETTINGS_FILE_NAME = 'settings.json'
@@ -47,6 +50,8 @@ class Settings:
     fullscreen: bool = False
     game_speed: int = 1
     language: str | None = None  # None: from the system locale
+    scanlines: bool = False
+    scaling: str = SCALING_SMOOTH  # src/display_filters.py SCALING_MODES
 
     def to_json(self) -> dict[str, Any]:
         return {'version': FORMAT_VERSION, **asdict(self)}
@@ -67,6 +72,10 @@ class Settings:
         values['game_speed'] = speed if type(speed) is int and speed in GAME_SPEEDS else default.game_speed
         language = data.get('language')
         values['language'] = language if language in LANGUAGES else default.language
+        scanlines = data.get('scanlines')
+        values['scanlines'] = scanlines if isinstance(scanlines, bool) else default.scanlines
+        scaling = data.get('scaling')
+        values['scaling'] = scaling if scaling in SCALING_MODES else default.scaling
         return cls(**values)
 
 
