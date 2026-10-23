@@ -11,16 +11,15 @@ in Bank00 for where the stairs are.
 """
 from collections import deque
 from unittest import TestCase
-from unittest.mock import patch
 
 import pygame
 
 from src.config.test_config import test_config
 from src.constants import RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES
-from src.game import Game
 from src.map_layouts import MapLayouts
 from src.maps import CharlockB1, all_impassable_tiles, map_lookup
 from tests.nes_maps import NES_MAPS as NES_MAP_TABLE, boundary_tile, nes_tiles
+from tests.helpers import new_game
 
 # Every concrete map, i.e. every NES map number from $01 to $1D (the Dragonlord's castle's sublevel 6 is split in two
 # here, CharlockB7Wide and CharlockB7Narrow).
@@ -133,8 +132,7 @@ def set_story_flags(game, rainbow_bridge_built: bool, charlock_stairs_revealed: 
 
 def build_world(rainbow_bridge_built: bool, charlock_stairs_revealed: bool) -> dict:
     """Load every map through MapManager.change_map, as the game would with these story flags set."""
-    with patch('src.game.SCALED'):
-        game = Game(test_config)
+    game = new_game()
     set_story_flags(game, rainbow_bridge_built, charlock_stairs_revealed)
     world = {}
     for map_name in MAP_NAMES:

@@ -21,12 +21,12 @@ import pygame
 
 from src.battle_controller import BattleOutcome
 from src.config.test_config import test_config
-from src.game import Game
 from src.maps import map_lookup
 from src.menu import CommandMenu
 from src.music_player import MusicPlayer
 from src.player.player_stats import levels_list
 from src.sound import SFX_CHANNEL, Sound, sfx_channel
+from tests.helpers import new_game
 
 VICTORY = '25 Dragon Quest 1 - Victory.mp3'
 LEVEL_UP = '26 Dragon Quest 1 - Improvement.mp3'
@@ -80,8 +80,7 @@ class TestVictoryMusic(TestCase):
         random.seed(1985)
         config = {**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True, 'SOUND_ENABLED': True,
                   'MUSIC_ENABLED': True}
-        with patch('src.game.SCALED'):
-            self.game = Game(config)
+        self.game = new_game(config)
         self.player = self.game.player
         self.player.name = "Erdrick"
         self.events: list = []

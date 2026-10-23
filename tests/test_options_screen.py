@@ -17,6 +17,7 @@ from src.options_screen import CLASSIC, DEFAULT_DIALOG_STYLE, DEFAULT_MESSAGE_SP
     MODERN, NPCS_MAKE_WAY_OPTIONS, NPCS_MAKE_WAY_SAVE_KEY, Options, OptionsScreen, dialog_style_from_save, \
     message_speed_from_save, npcs_make_way_from_save
 from src.windows import MESSAGE_SPEED_WINDOW
+from tests import helpers
 from tests.mock_map import MockMap
 
 ENTER = Event(KEYDOWN, key=K_RETURN)  # A
@@ -41,8 +42,7 @@ def new_game(**overrides) -> Game:
     # A copy of test_config, so the settings these tests change don't leak into other tests
     config = {**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True, 'TEXT_SPEED': 'Fast',
               'DIALOG_STYLE': CLASSIC, 'NPCS_MAKE_WAY': True, **overrides}
-    with patch('src.game.SCALED'):
-        return Game(config)
+    return helpers.new_game(config)
 
 
 def settings(config):

@@ -5,8 +5,8 @@ import pygame
 from pygame import Rect, event, KEYDOWN, K_i, QUIT
 
 from src.config.test_config import test_config
-from src.game import Game
 from src.intro import show_intro_banner, Intro
+from tests.helpers import new_game
 
 
 class TestIntro(TestCase):
@@ -23,8 +23,7 @@ class TestIntro(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.intro = Intro(test_config)
 
     def test_show_intro_banner(self):

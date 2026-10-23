@@ -7,10 +7,10 @@ import pygame
 
 from src.config.test_config import test_config
 from src.ending import CREDITS
-from src.game import Game
 from src.maps import Brecconary
 from src.visual_effects import FADE_IN_STEPS, FADE_OUT_STEPS, FADE_STEP_FRAMES, FADE_STYLE_NES, FADE_STYLE_SMOOTH, \
     NES_FPS, NES_PALETTE, PAL_BLACK, fade_style, nes_fade_palette, nes_palette_fade, screen_fade
+from tests.helpers import new_game
 
 BLACK_RGB = NES_PALETTE[PAL_BLACK]
 # NES color numbers the game's palettes use (OverworldPal, TownPal, RegSPPal, the windows' $30 and low HP $26)
@@ -157,8 +157,7 @@ class TestTransitionsUseTheSelectedFade(TestCase):
             self.addCleanup(test_config.__setitem__, key, test_config[key])
             test_config[key] = value
         self.addCleanup(test_config.__setitem__, 'FADE_STYLE', test_config['FADE_STYLE'])
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
 
     def record_fades(self, style: str):
         test_config['FADE_STYLE'] = style

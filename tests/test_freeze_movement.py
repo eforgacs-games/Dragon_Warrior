@@ -13,9 +13,9 @@ from pygame import K_LEFT, K_RETURN, K_RIGHT, K_i, K_j, K_k
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.command_window import held_buttons
-from src.game import Game
 from src.menu import COMMAND_METHODS
 from src.waiting import NES_FPS
+from tests.helpers import new_game
 
 
 def keys_held(*held_keys):
@@ -43,8 +43,7 @@ class FreezeTestCase(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.game_state.is_initial_dialog = False
         self.tile_size = self.game.tile_size
         # TantegelThroneRoom's one roaming guard

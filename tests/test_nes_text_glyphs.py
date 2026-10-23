@@ -15,6 +15,7 @@ from src.directories import Directories
 from src.text import NESFont, draw_text, set_font_by_ascii_chars
 from src.window_renderer import NES_GLYPHS, NES_TILE, glyph_tile, tile_surface
 from tests.nes_screen_diff import count_differing_pixels
+from tests.helpers import new_game
 
 SCALES = (1, 2, 3)
 COLORS = (WHITE, RED)
@@ -136,12 +137,10 @@ class TestDialogBox(GlyphAssertions):
         pygame.quit()
 
     def setUp(self) -> None:
-        from src.game import Game
         from tests.mock_map import MockMap
         self.saved_config = dict(test_config)
         test_config.update(NO_WAIT=True, RENDER_TEXT=True, NO_BLIT=False)
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
         self.cmd_menu = self.game.cmd_menu

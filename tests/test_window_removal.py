@@ -12,9 +12,9 @@ from pygame.event import Event
 from data.text.dialog import confirmation_prompt
 from src.config.test_config import test_config
 from src.direction import Direction
-from src.game import Game
 from src.maps import Brecconary
 from src.windows import BUY_SELL_WINDOW, COMMAND_WINDOW, YES_NO_WINDOW
+from tests.helpers import new_game
 
 
 def image_digest(surface) -> str:
@@ -43,8 +43,7 @@ class TestWindowRemoval(TestCase):
         test_config['NO_BLIT'] = False
         self.addCleanup(test_config.__setitem__, 'NO_BLIT', True)
         self.addCleanup(test_config.__setitem__, 'RENDER_TEXT', False)
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.change_map(Brecconary(self.game.config), destination_coordinates=(29, 18),
                              direction=Direction.RIGHT.value)
         self.cmd_menu = self.game.cmd_menu

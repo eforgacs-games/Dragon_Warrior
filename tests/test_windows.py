@@ -5,13 +5,13 @@ import pygame
 from pygame import KEYDOWN, K_DOWN, K_ESCAPE, K_RETURN, event
 
 from src.config.test_config import test_config
-from src.game import Game
 from src.windows import ADVENTURE_LOG_WINDOW_1, ADVENTURE_LOG_WINDOW_2, ALPHABET_WINDOW, BUY_SELL_WINDOW, \
     COMBAT_COMMAND_WINDOW, COMMAND_WINDOW, CONTINUE_CHANGE_ERASE_WINDOW, DIALOG_WINDOW, ERASE_LOG_WINDOW, \
     FULL_MENU_WINDOW, INPUT_NAME_WINDOW, MESSAGE_SPEED_WINDOW, NAME_ENTRY_WINDOW, NEW_QUEST_WINDOW, POPUP_WINDOW, \
     SHOP_INVENTORY_WINDOW, STATUS_WINDOW, YES_NO_2_WINDOW, YES_NO_WINDOW, Window, name_halves, \
     variable_height_window
 from src.windows import BUY_SELL_LAYOUT, WindowText
+from tests.helpers import new_game
 
 # NES Bank01 window data: (height in blocks, width in tiles, position byte (Y << 4 | X, in blocks))
 NES_WINDOW_DATA = {
@@ -80,8 +80,7 @@ class WindowTestCase(TestCase):
         test_config['RENDER_TEXT'] = not self.no_blit
         test_config['NO_BLIT'] = self.no_blit
         self.addCleanup(test_config.update, self.saved_config)
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.cmd_menu = self.game.cmd_menu
         self.dialog_lookup = self.cmd_menu.dialog_lookup
         self.player = self.game.player

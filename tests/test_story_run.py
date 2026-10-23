@@ -23,12 +23,12 @@ from src.constants import ENDING_GWAELIN_BESIDE_KING, ENDING_GWAELIN_STAIRS, END
     GWAELIN_THRONE_ROOM_COORDINATES, RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES
 from src.direction import Direction
 from src.ending import CREDITS
-from src.game import Game
 from src.game_functions import set_character_position
 from src.guardians import AXE_KNIGHT, GOLEM, GREEN_DRAGON
 from src.maps import CharlockB1, map_lookup
 from src.maps_functions import get_center_point
 from src.menu import CommandMenu
+from tests.helpers import new_game
 
 UP, DOWN, LEFT, RIGHT = Direction.UP.value, Direction.DOWN.value, Direction.LEFT.value, Direction.RIGHT.value
 
@@ -84,8 +84,7 @@ class StoryRunMixin:
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.player = self.game.player
         self.player.name = "Erdrick"
         self.shown_text: list = []

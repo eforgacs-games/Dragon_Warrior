@@ -1,15 +1,14 @@
 from unittest import TestCase
-from unittest.mock import patch
 
 import pygame
 
 from src.config.test_config import test_config
 from src.direction import Direction
-from src.game import Game
 from src.game_functions import set_character_position
 from src.maps import MapWithoutNPCs
 from src.maps_functions import get_center_point
 from src.sprites.roaming_character import RoamingCharacter
+from tests.helpers import new_game
 
 BRICK = 3
 
@@ -38,8 +37,7 @@ class TestNpcCollision(TestCase):
         pygame.init()
 
     def setUp(self):
-        with patch('src.game.SCALED'):
-            self.game = Game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True})
+        self.game = new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True})
         self.tile_size = self.game.tile_size
         self.game.current_map = OpenRoom(self.game.config)
         self.game.current_map.load_map(self.game.player, (2, 1), self.tile_size)
