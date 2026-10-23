@@ -67,6 +67,9 @@ class MovementGame(Protocol):
     # G: auto-grind (src/auto_grind.py), which starts at the same moment as the pause
     auto_grind_requested: bool
     cmd_menu_requested: bool
+    # Shift + F1/F2/F3 or F1/F2/F3: a save state to save or load (Game.handle_save_state_keys), and once it's due
+    state_request: tuple[str, int] | None
+    state_request_due: tuple[str, int] | None
 
     def count_step(self) -> None: ...
 
@@ -168,7 +171,9 @@ class MovementController:
     @property
     def freeze_pending(self) -> bool:
         return (self.game.pause_requested or self.game.options_requested or self.game.cmd_menu_requested
-                or getattr(self.game, 'auto_grind_requested', False) is True)
+                or getattr(self.game, 'auto_grind_requested', False) is True
+                or getattr(self.game, 'state_request', None) is not None
+                or getattr(self.game, 'state_request_due', None) is not None)
 
     @property
     def sprites_animate(self) -> bool:
@@ -218,6 +223,13 @@ class MovementController:
         if getattr(self.game, 'auto_grind_requested', False) is True:
             self.game.auto_grind_requested = False
             self.game.start_auto_grind()
+            return
+        if getattr(self.game, 'state_request', None) is not None:
+            # A save state (Game.handle_save_state_keys): saved or loaded at the end of this map frame (Game.map_frame,
+            # or of the next one when the key was read between frames), with nobody starting a step meanwhile
+            self.game.state_request_due, self.game.state_request = self.game.state_request, None
+            return
+        if getattr(self.game, 'state_request_due', None) is not None:
             return
         self.game.cmd_menu_requested = False
         self.game.drawer.display_hovering_stats = True
