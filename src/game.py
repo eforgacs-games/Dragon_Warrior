@@ -85,6 +85,9 @@ def save_slot_number(save_file_name: str) -> int:
 
 # NES DoJoyUp etc. (Bank00) only start a step when FrameCounter & $0F is 0. A step is 16 frames long too.
 STEP_SYNC_FRAMES = 16
+# NES ChkBlkSand (Bank03, LCE0A): a step onto a hill block is followed by three WaitForNMI, with nothing moving, before
+# the step's fight roll
+HILL_PAUSE_FRAMES = 3
 
 # NES CheckInputs (Bank03) checks up, then down, then left, then right
 DIRECTION_KEYS = ((Direction.UP.value, (K_UP, K_w)), (Direction.DOWN.value, (K_DOWN, K_s)),
@@ -159,6 +162,8 @@ class Game:
         # ends on it
         self.idle_update = False
         self.step_ends = False
+        # Frames left of the pause after a step onto a hill (HILL_PAUSE_FRAMES, see hill_pause_frame)
+        self.hill_pause_frames = 0
         # NPCS_MAKE_WAY: the roaming NPC the hero just bumped into, and the hero's direction (see ask_npc_to_make_way)
         self.npc_asked_to_make_way = None
 
@@ -552,6 +557,10 @@ class Game:
 
     def map_frame(self) -> None:
         """One frame on the map (one NES frame): the hero, fights, the NPCs and what the step leads to."""
+        if self.hill_pause_frames:
+            self.hill_pause_frame()
+            event.pump()
+            return
         self._handle_player_movement()
         self.handle_battles()
         if not self.player.is_moving:
@@ -896,16 +905,34 @@ class Game:
             self.handle_environment_damage(tile)
             if self.player.current_hp <= 0:
                 return
-            group = encounter_group(self.current_map.identifier, column, row)
-            if group is None:
+            if tile == 'HILLS':
+                # NES ChkBlkSand: the fight roll waits for the hill's pause (hill_pause_frame)
+                self.hill_pause_frames = HILL_PAUSE_FRAMES
                 return
-            self.last_zone = group
-            enemies_in_current_zone = ENEMY_GROUPS[group] if self.game_state.config["FORCE_BATTLE"] else \
-                roll_encounter(self.current_map.identifier, tile, column, row)
-            if enemies_in_current_zone is not None and not self.game_state.config["NO_BATTLES"]:
-                self.battle_ctrl.run_battle(enemies_in_current_zone)
-            self.battle_ctrl.battle_menu_row = 0
-            self.battle_ctrl.battle_menu_column = 0
+            self.roll_for_fight(column, row, tile)
+
+    def hill_pause_frame(self) -> None:
+        """One of the HILL_PAUSE_FRAMES frames NES ChkBlkSand waits after a step onto a hill (three WaitForNMI). Nothing
+        moves and nothing animates (no DoSprites), and FrameCounter stays at the 0 the step left it at, as
+        JoypadCheckLoop resets it afterwards anyway. The step's fight roll (ChkSandFight) comes after the last one."""
+        self.hill_pause_frames -= 1
+        if self.hill_pause_frames:
+            return
+        column, row = self.player.rect.x // self.tile_size, self.player.rect.y // self.tile_size
+        self.roll_for_fight(column, row, get_tile_id_by_coordinates(column, row, self.current_map))
+
+    def roll_for_fight(self, column: int, row: int, tile: str | None) -> None:
+        """NES CheckBlockDmg's fight roll for the block the hero has just stepped onto, and the fight if it starts."""
+        group = encounter_group(self.current_map.identifier, column, row)
+        if group is None:
+            return
+        self.last_zone = group
+        enemies_in_current_zone = ENEMY_GROUPS[group] if self.game_state.config["FORCE_BATTLE"] else \
+            roll_encounter(self.current_map.identifier, tile, column, row)
+        if enemies_in_current_zone is not None and not self.game_state.config["NO_BATTLES"]:
+            self.battle_ctrl.run_battle(enemies_in_current_zone)
+        self.battle_ctrl.battle_menu_row = 0
+        self.battle_ctrl.battle_menu_column = 0
 
     def receive_damage(self, attack_damage):
         # God mode or invulnerable: take no damage
