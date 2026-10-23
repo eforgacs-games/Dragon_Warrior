@@ -151,7 +151,7 @@ class TestNpcsMakeWay(MakeWayTestCase):
         # The step aside started at once, sideways, like any NPC step: a pixel a frame, the walking frame its own
         self.assertTrue(npc.is_moving)
         self.assertIn(npc.direction_value, (Direction.UP.value, Direction.DOWN.value))
-        self.assertIn(npc.step_destination, ((3, 1), (3, 3)))
+        self.assertIn(npc.step_destination, ((1, 3), (3, 3)))  # (row, column)
         self.assertEqual(self.tile_size // 16, abs(npc.rect.y - npc.last_rect.y))
         offsets = []
         for _ in range(FRAMES_PER_TURN - 1):

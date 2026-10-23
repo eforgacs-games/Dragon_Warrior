@@ -177,8 +177,7 @@ class TestRoamingNPCMovement(TestCase):
         self.assertFalse(self.may_step(guard, Direction.RIGHT))
         self.place(self.game.player, *self.nes(cantlin, 7, 9), Direction.LEFT)
         self.assertTrue(self.may_step(guard, Direction.RIGHT))
-        row, column = self.nes(cantlin, 6, 9)
-        self.game.player.step_destination = (column, row)
+        self.game.player.step_destination = self.nes(cantlin, 6, 9)
         self.assertFalse(self.may_step(guard, Direction.RIGHT))
         self.game.player.step_destination = None
 
@@ -195,8 +194,7 @@ class TestRoamingNPCMovement(TestCase):
         self.assertFalse(self.may_step(guard, Direction.RIGHT))
         # Nor onto the tile another NPC is walking onto
         self.place(guard_2, *self.nes(cantlin, 6, 10), Direction.UP)
-        row, column = self.nes(cantlin, 6, 9)
-        guard_2.step_destination = (column, row)
+        guard_2.step_destination = self.nes(cantlin, 6, 9)
         self.assertFalse(self.may_step(guard, Direction.RIGHT))
         guard_2.step_destination = None
         self.assertTrue(self.may_step(guard, Direction.RIGHT))

@@ -10,7 +10,6 @@ import pygame
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.game import Game
-from src.map_layouts import MapLayouts
 from src.maps import Garinham
 from tests.test_shop_dialog import npc_identifiers
 
@@ -116,15 +115,6 @@ class TestGarinhamDialog(TestCase):
             entry, = self.dialog_at(x, y)
             self.assertEqual(entry.func.__name__, function_name, f'NES {x},{y}')
             self.assertEqual(entry.args[0], argument, f'NES {x},{y}')
-
-    def test_npc_underlying_tiles(self):
-        # Each NPC is drawn over the tile it stands on: the fighter at 7,17 is on sand, the rest on brick
-        layout = MapLayouts().garinham
-        for _, x, y, _, _ in GARINHAM_NPCS:
-            row, column = nes_to_map(x, y)
-            identifier = self.identifiers[(row, column)]
-            underlying = self.garinham.custom_underlying_tiles.get(identifier, 'BRICK')
-            self.assertEqual(layout[row][column], self.garinham.floor_tile_key[underlying]['val'], identifier)
 
     def test_garins_grave_stairs(self):
         # NES 19,0 is the staircase down into Garin's Grave

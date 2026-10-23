@@ -10,8 +10,9 @@ from src import drawer
 from src.camera import Camera
 from src.config.test_config import test_config
 from src.drawer import Drawer
-from src.game_functions import get_next_coordinates, set_character_position
+from src.game_functions import set_character_position
 from src.maps_functions import parse_animated_sprite_sheet
+from src.npc_movement import step
 from src.player.player import Player
 from tests.mock_map import MockMap
 from tests.helpers import new_game
@@ -58,28 +59,28 @@ class TestGameFunctions(TestCase):
                          (self.game.player.rect.x // tile_size, self.game.player.rect.y // tile_size))
         self.assertEqual((self.game.player.column, self.game.player.row), (13, 10))
 
-    def test_get_next_coordinates(self):
+    def test_step(self):
         # TODO(ELF): this test fails if the initial current map is not set to TantegelThroneRoom...might need work.
         self.game.player.direction_value = 0
         self.assertEqual((11, 13),
-                         get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
-                                              self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
-                                              self.game.player.direction_value))
+                         step(self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
+                              self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
+                              self.game.player.direction_value))
         self.game.player.direction_value = 1
         self.assertEqual((10, 12),
-                         get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
-                                              self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
-                                              self.game.player.direction_value))
+                         step(self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
+                              self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
+                              self.game.player.direction_value))
         self.game.player.direction_value = 2
         self.assertEqual((9, 13),
-                         get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
-                                              self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
-                                              self.game.player.direction_value))
+                         step(self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
+                              self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
+                              self.game.player.direction_value))
         self.game.player.direction_value = 3
         self.assertEqual((10, 14),
-                         get_next_coordinates(self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
-                                              self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
-                                              self.game.player.direction_value))
+                         step(self.game.player.rect.y // self.game.game_state.config['TILE_SIZE'],
+                              self.game.player.rect.x // self.game.game_state.config['TILE_SIZE'],
+                              self.game.player.direction_value))
 
     @mock.patch.object(Drawer, "draw_stats_strings_with_alignments")
     def test_draw_hovering_stats_window(self, mock_draw_stats_strings_with_alignments):
