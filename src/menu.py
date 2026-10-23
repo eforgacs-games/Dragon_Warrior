@@ -2,7 +2,8 @@ import functools
 import random
 
 from src.spells import Spell
-from typing import Any, Callable, Collection, Iterable, Tuple, List
+from typing import Any
+from collections.abc import Callable, Collection, Iterable
 
 from pygame import Surface, display, KEYDOWN, Rect, event, transform
 from pygame.sprite import Group
@@ -469,7 +470,7 @@ class CommandMenu:
         if update:
             display.update(cells)
 
-    def show_text_in_dialog_box(self, text: Tuple | List | str, add_quotes=False, temp_text_start=None, skip_text=False,
+    def show_text_in_dialog_box(self, text: tuple | list | str, add_quotes=False, temp_text_start=None, skip_text=False,
                                 drop_down=True, drop_up=True, disable_sound=False, letter_by_letter=True,
                                 advance_keys: Collection[int] | None = None):
         """Shows a passage of text in a dialog box.
@@ -677,7 +678,7 @@ class CommandMenu:
         self.open_chest()
         self.show_text_in_dialog_box(self.found_item_text("Erdrick's Sword"), skip_text=self.skip_text)
 
-    def take_unique_item(self, item_name: str, blocking_items: Tuple[str, ...]) -> None:
+    def take_unique_item(self, item_name: str, blocking_items: tuple[str, ...]) -> None:
         """NES ChkTrsrHarp/ChkTrsrStones: the chest is empty while the player has the item, or what it becomes."""
         if any(item in self.player.inventory for item in blocking_items):
             self.take_empty_chest()

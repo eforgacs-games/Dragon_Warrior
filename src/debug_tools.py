@@ -10,7 +10,7 @@ F5 to F7 each open a small list: type to filter it, ↑/↓ to choose, Enter to 
 """
 import os
 import time
-from typing import Callable, Sequence
+from collections.abc import Callable, Sequence
 
 from pygame import KEYDOWN, K_BACKSPACE, K_DOWN, K_ESCAPE, K_F5, K_F6, K_F7, K_F8, K_KP_ENTER, K_RETURN, K_UP, QUIT, \
     Rect, display, draw, event

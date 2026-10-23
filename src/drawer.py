@@ -1,5 +1,6 @@
 from statistics import mean
-from typing import Any, Iterable, List, Protocol, Set, Tuple
+from typing import Any, Protocol
+from collections.abc import Iterable
 
 from pygame import display, KEYDOWN, event, Surface, Rect
 from pygame.sprite import Group
@@ -387,7 +388,7 @@ class Drawer:
             draw_text(stat_string, tile_size * 4.2, tile_size * y_position, screen, self.game_state.config, color=color,
                       alignment='center', letter_by_letter=False)
 
-    def get_all_roaming_character_surrounding_tiles(self, current_map) -> List[str]:
+    def get_all_roaming_character_surrounding_tiles(self, current_map) -> list[str]:
         tile_size = self.game_state.config["TILE_SIZE"]
         all_roaming_character_surrounding_tiles = []
         for roaming_character in current_map.roaming_characters:
@@ -409,12 +410,12 @@ class Drawer:
             if not self.game_state.config['NO_BLIT']:
                 display.update(window_rect)
 
-def replace_characters_with_underlying_tiles(tile_types_to_draw: List[str], current_map_character_key) -> List[str]:
+def replace_characters_with_underlying_tiles(tile_types_to_draw: list[str], current_map_character_key) -> list[str]:
     substitution = {k: v['underlying_tile'] for k, v in current_map_character_key.items()}
     return [substitution.get(t, t) for t in tile_types_to_draw]
 
 
-def get_cells_under_rects(rects: Iterable[Rect], tile_size: int) -> Set[Tuple[int, int]]:
+def get_cells_under_rects(rects: Iterable[Rect], tile_size: int) -> set[tuple[int, int]]:
     """The top left corners of the blocks that the given rects overlap."""
     cells = set()
     for rect in rects:
@@ -443,14 +444,14 @@ def get_surrounding_tile_values(coordinates, map_layout):
     return set(neighbors)
 
 
-def convert_numeric_tile_list_to_unique_tile_values(current_map, numeric_tile_list: Iterable[int]) -> List[str]:
+def convert_numeric_tile_list_to_unique_tile_values(current_map, numeric_tile_list: Iterable[int]) -> list[str]:
     converted_tiles = []
     for tile_value in set(numeric_tile_list):
         converted_tiles.append(current_map.get_tile_by_value(tile_value))
     return converted_tiles
 
 
-def get_fixed_character_underlying_tiles(current_map) -> List[str]:
+def get_fixed_character_underlying_tiles(current_map) -> list[str]:
     all_fixed_character_underlying_tiles = []
     for fixed_character in current_map.fixed_characters:
         fixed_character_coordinates = current_map.characters[fixed_character.identifier]['coordinates']
@@ -464,7 +465,7 @@ def set_to_save_prompt(cmd_menu):
     cmd_menu.set_king_lorik_dialog(left_throne_room=True)
 
 
-def get_player_block(player, tile_size: int) -> Tuple[int, int]:
+def get_player_block(player, tile_size: int) -> tuple[int, int]:
     """The (row, column) of the block the hero stands on. While moving, that's still the block the step began on, as
     the NES only updates CharXPos/CharYPos once the step is done."""
     if player.is_moving:
@@ -472,7 +473,7 @@ def get_player_block(player, tile_size: int) -> Tuple[int, int]:
     return player.rect.y // tile_size, player.rect.x // tile_size
 
 
-def draw_cover(current_map, background, cells: Iterable[Tuple[int, int]]) -> None:
+def draw_cover(current_map, background, cells: Iterable[tuple[int, int]]) -> None:
     """
     Draws over the given cells that are on the other side of the cover from the hero. NES ChkCoveredArea ($A9CD):
     covered blocks become BLK_SML_TILES (this project's ROOF tile) while the hero is outside, and uncovered blocks

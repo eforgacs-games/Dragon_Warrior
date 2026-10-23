@@ -22,7 +22,7 @@ without an import cycle.
 """
 import sys
 
-from typing import Collection
+from collections.abc import Collection
 
 from pygame import K_1, K_2, K_3, K_4, KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
 

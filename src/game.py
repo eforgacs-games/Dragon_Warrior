@@ -1,7 +1,6 @@
 import argparse
 import os
 import sys
-from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_i, K_k, RESIZABLE, display, event, image, init, K_F1, K_F2, K_F3, K_F4, K_F11, KEYDOWN, \
     SCALED, K_RETURN, VIDEORESIZE
@@ -323,7 +322,7 @@ class Game:
         # as done with Cantlin and others below
         self.handle_warps()
 
-    def _handle_pygame_events(self, events: List[event.Event]) -> None:
+    def _handle_pygame_events(self, events: list[event.Event]) -> None:
         """
         Handles low-level pygame events such as QUIT, KEYDOWN, arrow fade toggles, and window resize.
         """
@@ -770,7 +769,7 @@ class Game:
                 mode_text = self._("Invulnerability disabled")
             self.draw_temporary_text(mode_text)
 
-    def draw_temporary_text(self, text: Tuple[str] | List[str] | str, add_quotes=False) -> None:
+    def draw_temporary_text(self, text: tuple[str] | list[str] | str, add_quotes=False) -> None:
         """Show a settings message (F2, keys 1 to 4, ...) for a second. It's not part of the game, so it stays up for a
         real second at any game speed: the dialog closes 1000 game milliseconds after temp_text_start, so start it
         that much later at higher speeds."""
