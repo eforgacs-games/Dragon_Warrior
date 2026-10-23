@@ -783,7 +783,7 @@ class DialogLookup:
         self.player.inventory.remove("Stones of Sunlight")
         self.player.inventory.remove("Staff of Rain")
         self.player.inventory.insert(0, "Rainbow Drop")
-        greyscale_screen(self.screen, self.calculation, frames=30, no_blit=self.config['NO_BLIT'])
+        greyscale_screen(self.screen, self.config, frames=30)
 
     def bw_screen_flash(self):
         """NES BWScreenFlash (Bank03, LDB37): see src.visual_effects.bw_screen_flash."""

@@ -105,20 +105,18 @@ def bw_screen_flash(screen: Surface, calculation, config) -> None:
         return
     for _ in range(BW_FLASH_COUNT):
         wait_frames(BW_FLASH_COLOR_FRAMES, config)
-        greyscale_screen(screen, calculation, frames=BW_FLASH_GREY_FRAMES)
+        greyscale_screen(screen, config, frames=BW_FLASH_GREY_FRAMES)
 
 
-def greyscale_screen(screen, calculation, frames=30, no_blit=False):
+def greyscale_screen(screen: Surface, config: dict, frames: int = 30) -> None:
     """Show the screen in greyscale for the given number of frames, then restore it
     (the NES does this by setting the greyscale bit of PPUControl1)."""
-    if no_blit:
+    if config['NO_BLIT']:
         return
     original = screen.copy()
     screen.blit(transform.grayscale(original), (0, 0))
-    start_time = get_ticks()
-    while calculation.convert_to_frames_since_start_time(start_time) < frames:
-        check_for_quit()
-        display.flip()
+    display.flip()
+    wait_frames(frames, config)
     screen.blit(original, (0, 0))
     display.flip()
 
