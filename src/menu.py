@@ -15,7 +15,7 @@ from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, Graphics, set_gettext_language, singular_or_plural
 from src.command_window import WND_ABORT, CommandWindow
 from src.cursor import IN_A, DialogArrowBlink, draw_cursor_tile
-from src.waiting import is_any_key_held, wait
+from src.waiting import is_any_key_held, wait, wait_frames
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
@@ -50,6 +50,15 @@ COMMAND_METHODS = ('talk', 'status', 'stairs', 'search', 'spell', 'item', 'door'
 # The dialog window: x, y, width, height in 16x16 blocks (NES WND_DIALOG, screen tiles 4-27 x 18-27)
 DIALOG_WINDOW = (2, 9, 12, 5)
 DIALOG_FPS = 60
+
+
+# NES ShowWindow and RemoveWindow (Bank00, LA7A2) draw or take away one row of a window's blocks a frame
+WINDOW_ROW_FRAMES = 1
+
+
+def wait_for_next_window_row(config: dict) -> None:
+    """The wait between two rows of a window opening (drop-down) or closing (drop-up)."""
+    wait_frames(WINDOW_ROW_FRAMES, config)
 
 
 class CommandMenu:
@@ -519,12 +528,10 @@ class CommandMenu:
         for i in range(height + 1):
             black_box = Surface((tile_size * width, tile_size * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
-            drop_down_start = get_ticks()
-            # each "bar" lasts 1 frame
-            while self.calculation.convert_to_frames_since_start_time(drop_down_start) < 1:
-                if not self.game.game_state.config['NO_BLIT']:
-                    self.screen.blit(black_box, (tile_size * left, tile_size * top))
-                    display.update(window_rect)
+            if not self.game.game_state.config['NO_BLIT']:
+                self.screen.blit(black_box, (tile_size * left, tile_size * top))
+                display.update(window_rect)
+            wait_for_next_window_row(self.game.game_state.config)  # each "bar" lasts 1 frame
 
     def window_drop_up_effect(self, left, top, width, height) -> None:
         """Outro effect for menus, NES RemoveWindow (Bank00, LA7A2): from the bottom row of blocks up, one row a frame,
@@ -557,27 +564,26 @@ class CommandMenu:
                 # The top i rows of the window are still there
                 rows_left = window_picture.subsurface((0, 0, window_picture.get_width(),
                                                        min(tile_size * i, window_picture.get_height())))
-                drop_up_start = get_ticks()
-                while self.calculation.convert_to_frames_since_start_time(drop_up_start) < 1:
-                    # draw_player_sprites(self.current_map, self.background, self.player.rect.x, self.player.rect.y)
-                    if not self.game.game_state.config['NO_BLIT']:
-                        for character_dict in self.current_map.characters.values():
-                            character = character_dict['character']
-                            if camera_screen_rect.colliderect(character.rect) and (
-                                    character is self.player or
-                                    not self.current_map.is_hidden_by_cover(character.row, character.column)):
-                                self.background.blit(character_dict['character_sprites'].sprites()[0].image,
-                                                     (character_dict['character'].rect.x,
-                                                      character_dict['character'].rect.y))
-                            self.screen.blit(self.background, self.camera_position)
-                    if self.launch_signaled:
-                        # The COMMAND window behind, as it is: the chosen entry's arrow is still on (WndAPressed), as
-                        # RemoveWindow puts back the window's tiles
-                        self.draw_command_window()
-                    if self.game.drawer.display_hovering_stats:
-                        self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
-                    if not self.game.game_state.config['NO_BLIT']:
-                        display.update(self.screen.blit(rows_left, window_rect.topleft))
+                # draw_player_sprites(self.current_map, self.background, self.player.rect.x, self.player.rect.y)
+                if not self.game.game_state.config['NO_BLIT']:
+                    for character_dict in self.current_map.characters.values():
+                        character = character_dict['character']
+                        if camera_screen_rect.colliderect(character.rect) and (
+                                character is self.player or
+                                not self.current_map.is_hidden_by_cover(character.row, character.column)):
+                            self.background.blit(character_dict['character_sprites'].sprites()[0].image,
+                                                 (character_dict['character'].rect.x,
+                                                  character_dict['character'].rect.y))
+                        self.screen.blit(self.background, self.camera_position)
+                if self.launch_signaled:
+                    # The COMMAND window behind, as it is: the chosen entry's arrow is still on (WndAPressed), as
+                    # RemoveWindow puts back the window's tiles
+                    self.draw_command_window()
+                if self.game.drawer.display_hovering_stats:
+                    self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
+                if not self.game.game_state.config['NO_BLIT']:
+                    display.update(self.screen.blit(rows_left, window_rect.topleft))
+                wait_for_next_window_row(self.game.game_state.config)
 
     # Treasure chests
 
@@ -1413,7 +1419,7 @@ class CommandMenu:
                     skip_text=self.skip_text)
                 # NES PlyrCastSpell (LDBA4-LDBAD): SFX_SPELL, BWScreenFlash, then WaitForMusicEnd
                 self.sound.play_sound(self.directories.spell_sfx)
-                bw_screen_flash(self.screen, self.calculation, self.game.game_state.config)
+                bw_screen_flash(self.screen, self.game.game_state.config)
                 self.sound.wait_for_sfx_end(SPELL_SFX_FRAMES, self.game.game_state.config)
                 self.player.current_mp -= spell_mp_cost
                 # NES PlyrCastSpell (LDBB2): the pop-up is redrawn with the MP that is left

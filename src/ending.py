@@ -28,7 +28,7 @@ from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE, SEARCHED_FOR_GWAELIN
 from src.text import draw_text
 from src.visual_effects import screen_fade
-from src.waiting import game_ticks, wait_frames
+from src.waiting import POLL_INTERVAL_MS, game_ticks, wait_frames
 from src.zoom import handle_zoom_event
 
 NES_FPS = 60
@@ -374,4 +374,4 @@ class Ending:
                 if current_event.type == QUIT:
                     pygame_quit()
                     sys.exit()
-            time.wait(16)
+            time.wait(POLL_INTERVAL_MS)  # idle about a frame between checks
