@@ -148,8 +148,15 @@ class Player(AnimatedSprite):
         return get_level_by_experience(self.total_experience)
 
     def set_initial_stats(self):
-        """Stats for a new hero: level 1, with the name applied (LoadStats)."""
+        """Stats for a new hero: level 1, with the name applied (LoadStats), and full HP and MP. LoadStats also works
+        out the attack and defense power, which depend on the name through strength and agility. Run again once the
+        name is chosen, so nothing is left over from the placeholder name; loading a game doesn't come through here,
+        so a saved game keeps its saved HP and MP."""
         self.set_stats_by_level(1)
+        self.update_attack_power()
+        self.update_defense_power()
+        self.restore_hp()
+        self.restore_mp()
 
     def update_stats_to_current_level(self):
         self.set_stats_by_level(self.level)
