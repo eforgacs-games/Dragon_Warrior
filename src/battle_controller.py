@@ -17,6 +17,7 @@ from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enem
 from src.color import LOW_HP_RED
 from src.common import A_BUTTON_KEYS, reject_keys, singular_or_plural
 from src.cursor import BlinkingCursor
+from src.direction import Direction
 from src.constants import (
     AUTO_BATTLE_DELAY_MS,
 )
@@ -272,9 +273,17 @@ class BattleController:
             self.music_player.load_and_play_music(self.current_map.music_file_path)
             if current_battle.enemy.name == 'Dragonlord 2':
                 self.reload_map_after_running_from_final_form()
-        if outcome == BattleOutcome.ESCAPED and self.player_ran_away:
-            self.step_back_after_running()
+        stepped_back = outcome == BattleOutcome.ESCAPED and self.player_ran_away and self.step_back_after_running()
+        if outcome != BattleOutcome.DEFEAT and current_battle.enemy.name != 'Dragonlord 2' and not stepped_back:
+            self.face_down_after_fight()
         return outcome
+
+    def face_down_after_fight(self) -> None:
+        """NES ExitFight / ExitFight2 (LEE82): CharDirection = DIR_DOWN, so the hero faces down on the map after a win,
+        after the enemy runs away (CheckEnRun) and after a normal run (RunSuccessful's ChkMapsDone). A run from a
+        guardian (step_back_after_running) or from the Dragonlord's final form leaves through MapChng instead and keeps
+        the old facing, and beating the final form goes on to the ending."""
+        self.player.direction_value = Direction.DOWN.value
 
     def reload_map_after_running_from_final_form(self) -> None:
         """NES RunSuccessful (LE8B2-LE8D1): after running from the Dragonlord's final form, BlackPal is loaded at once,
@@ -285,19 +294,20 @@ class BattleController:
         self.game.change_map(map_lookup[self.current_map.identifier](self.config), destination_coordinates=coordinates,
                              direction=self.player.direction_value, fade_out_first=False)
 
-    def step_back_after_running(self) -> None:
+    def step_back_after_running(self) -> bool:
         """NES RunSuccessful (ChkMapHauksness, ChkMapSwampCave, ChkMapOverworld): after running from a guardian, the
         hero is moved one block back off its tile and the map is reloaded with the stairs sound (MapChngWithSound),
-        so the guardian can't be slipped past and Erdrick's Armor can't be searched for."""
+        so the guardian can't be slipped past and Erdrick's Armor can't be searched for. Returns whether it did."""
         tile_size = self.game.tile_size  # the fight may have started before row and column caught up with the rect
         coordinates = escape_coordinates(self.current_map.identifier,
                                          (self.player.rect.y // tile_size, self.player.rect.x // tile_size),
                                          self.game.story_flags)
         if coordinates is None:
-            return
+            return False
         self.game.change_map(map_lookup[self.current_map.identifier](self.config),
                              destination_coordinates=coordinates, direction=self.player.direction_value,
                              stairs_sound=True)
+        return True
 
     def start_fight(self, current_battle: Battle) -> bool:
         """NES InitFight, after the enemy appears (SetEnHP): CheckEnRun gives a much weaker enemy its chance to run
@@ -418,11 +428,19 @@ class BattleController:
         return run_away
 
     def open_command_window(self) -> None:
-        """StartPlayerTurn and ShowCmbtCmd: Dowindow WND_CMD_CMB, whose WndDoSelect starts selecting afresh every
-        turn. WndInitSelect puts the cursor back on FIGHT (WndCol = WndRow = 0), whatever was chosen last turn, and
+        """StartPlayerTurn and ShowCmbtCmd (LE5EF): "Command?" (TextBlock15 entry 8), then Dowindow WND_CMD_CMB, whose
+        WndDoSelect starts selecting afresh every turn. Every player turn comes through here: the first one (unless
+        the enemy attacked first), after each enemy turn, after a message that takes no turn ("Thy MP is too low",
+        "That cannot be used in battle", "cannot yet use the spell", "Nothing of use"), after B in this window or in
+        SPELL or ITEM, and after the hero wakes (PlayerAwakes falls through into ShowCmbtCmd). The text ends with
+        TXT_END1, so nothing waits for a button before the window opens.
+
+        WndInitSelect puts the cursor back on FIGHT (WndCol = WndRow = 0), whatever was chosen last turn, and
         the joypad is read from scratch (SelectionButtons.open): the NES has no event queue, so keys pressed before
-        the window was up (during the walk into the fight, the enemy's fade-in, "draws near", the enemy's turn)
-        are dropped, and keys still held are ignored until they are let go or 11 frames have gone by."""
+        the window was up (during the walk into the fight, the enemy's fade-in, "draws near", the enemy's turn,
+        "Command?") are dropped, and keys still held are ignored until they are let go or 11 frames have gone by."""
+        self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"), add_quotes=False, skip_text=True, hide_arrow=True,
+                                              disable_sound=True)
         self.battle_menu_row = 0
         self.battle_menu_column = 0
         poll_virtual_joypad()  # a key the player pressed stops auto-grind before the queue is dropped
@@ -468,11 +486,9 @@ class BattleController:
             return BATTLE_MENU_OPTIONS[self.battle_menu_row][self.battle_menu_column]
         if button == IN_B:
             # WndBPressed returns WND_ABORT, which none of StartPlayerTurn's checks matches, so ChkPlyrRun ends in
-            # JMP ShowCmbtCmd: "Command?" again and a new selection, from FIGHT.
+            # JMP ShowCmbtCmd: "Command?" again and a new selection, from FIGHT (open_command_window, next frame).
             self.command_cursor.hold()
             self.draw_command_window(True)
-            self.cmd_menu.show_line_in_dialog_box(self._("Command?\n"), add_quotes=False, hide_arrow=True,
-                                                  disable_sound=True)
             self.command_window_open = False
             return None
         row, column = self.battle_menu_row, self.battle_menu_column
@@ -491,13 +507,13 @@ class BattleController:
 
     def sleeping_player_turn(self, current_battle: Battle) -> None:
         """NES StartPlayerTurn: a sleeping hero wakes when bit 0 of a random byte is set (50%), with no limit on how
-        long the sleep can last. On waking, "<player> awakes." then "Command?": the hero takes this turn as usual.
+        long the sleep can last. On waking, "<player> awakes." (TextBlock17 entry 8), which falls through into
+        ShowCmbtCmd: "Command?" and the command window (open_command_window), so the hero takes this turn as usual.
         Otherwise "Thou art still asleep." (PlayerAsleepDialog) and the enemy takes its turn."""
         if coin_flip():
             self.player.is_asleep = False
-            self.cmd_menu.show_line_in_dialog_box(
-                self._("{} awakes.\n").format(self.player.name) + self._("Command?\n"),
-                add_quotes=False, disable_sound=True, hide_arrow=True)
+            self.cmd_menu.show_line_in_dialog_box(self._("{} awakes.\n").format(self.player.name),
+                                                  add_quotes=False, disable_sound=True, hide_arrow=True)
             # The hero chooses a command next, so the enemy doesn't move this time round.
             current_battle.no_op = True
         else:
