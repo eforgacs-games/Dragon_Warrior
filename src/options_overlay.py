@@ -11,11 +11,14 @@ drawn by src/translated_window.py), titled OPTIONS, with one row per setting and
     FADE STYLE     NES / SMOOTH             (FADE_STYLE, src/visual_effects.py screen_fade)
     STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps)
     GRIND STOP     RED HP / HALF HP / 3/4 HP  (AUTO_GRIND_STOP: when auto-grind stops, src/auto_grind.py)
+    LANGUAGE       ENGLISH / 한국어          (LANGUAGE: a global setting, src/settings.py)
 
 Up and down move the NES cursor (src/cursor.py) between the rows; left, right or A change the row's value, with the
-menu button sound. A change goes into the game config at once, so the next dialog, fade, bump or step uses it, and
-is saved with the adventure log the next time the game is saved (options_from_config). B, Esc, SELECT or Tab close
-it, and the map frame is put back exactly as it was.
+menu button sound. A change goes into the game config at once, so the next dialog, fade, bump or step uses it. The
+first six are the adventure's own: they are saved with the adventure log the next time the game is saved
+(options_from_config). LANGUAGE is the player's: Game.apply_option switches the game to it at once (Game.set_language),
+this window included, and keeps it in the global settings file. Each language's name is in that language, so it can
+be found whichever is on. B, Esc, SELECT or Tab close it, and the map frame is put back exactly as it was.
 
 The overlay runs its own loop, so nothing else runs while it's open: the map, the NPCs, the timers and the pop-up
 window wait, as they do for a dialog. The message speed is the NES's own setting, chosen on the title menu as well
@@ -33,6 +36,7 @@ from src.common import A_BUTTON_KEYS, B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT
 from src.cursor import BlinkingCursor
 from src.options_screen import AUTO_GRIND_STOP_VALUES, CLASSIC, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN
 from src.selection import frame_events, next_frame
+from src.settings import LANGUAGES
 from src.translated_window import draw_translated_window
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
 from src.windows import Window, WindowLayout, WindowText
@@ -73,6 +77,7 @@ OPTION_ROWS = (
     OptionRow("FADE STYLE", 'FADE_STYLE', (FADE_STYLE_NES, FADE_STYLE_SMOOTH), ("NES", "SMOOTH")),
     OptionRow("STAIRS", 'AUTO_STAIRS', (True, False), ("STEP ON", "NES")),
     OptionRow("GRIND STOP", 'AUTO_GRIND_STOP', AUTO_GRIND_STOP_VALUES, ("RED HP", "HALF HP", "3/4 HP")),
+    OptionRow("LANGUAGE", 'LANGUAGE', LANGUAGES, ("ENGLISH", "한국어")),
 )
 
 # The window: the screen's full 16 blocks wide (the longest labels and value, MESSAGE SPEED, NPCS MAKE WAY and
@@ -147,7 +152,11 @@ class OptionsOverlay:
                         index = moved_to
                         cursor.restart()  # WndUpdateCrsrPos: the arrow shows at once on its new row
                 elif key in LEFT_KEYS or key in RIGHT_KEYS or key in A_BUTTON_KEYS:
-                    self.rows[index].change(self.config, -1 if key in LEFT_KEYS else 1)
+                    row = self.rows[index]
+                    row.change(self.config, -1 if key in LEFT_KEYS else 1)
+                    self.game.apply_option(row.config_key)
+                    # The window's own text in the language just chosen
+                    self._ = set_gettext_language(self.config.get('LANGUAGE'))
                     self.game.sound.play_sound(self.game.directories.menu_button_sfx)
 
     def draw(self, background: Surface, index: int, cursor_visible: bool) -> None:
