@@ -15,7 +15,7 @@ from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, Graphics, set_gettext_language, singular_or_plural
 from src.command_window import WND_ABORT, CommandWindow
 from src.cursor import IN_A, DialogArrowBlink, draw_cursor_tile
-from src.waiting import is_any_key_held, wait, wait_frames
+from src.waiting import NES_FPS, is_any_key_held, wait, wait_frames
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
@@ -36,7 +36,7 @@ from src.text import draw_text, in_nes_font, set_font_by_ascii_chars
 from src.translated_window import draw_translated_window
 from src.window_renderer import draw_window
 from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENTRIES, COMMAND_LAYOUT, COMMAND_TITLE, \
-    COMMAND_WINDOW, COUNTED_ITEMS, DIALOG_LAYOUT, ITEM_COUNT_TILE_COLUMN, ITEM_MENU_CURSOR_TILE_COLUMN, \
+    COMMAND_WINDOW, COUNTED_ITEMS, DIALOG_LAYOUT, DIALOG_WINDOW, ITEM_COUNT_TILE_COLUMN, ITEM_MENU_CURSOR_TILE_COLUMN, \
     ITEM_MENU_TEXT_TILE_COLUMN, \
     ITEM_MENU_X, ITEM_MENU_Y, POPUP_WINDOW, SPELL_MENU_TITLE_TILE_COLUMN, \
     STATUS_EQUIPMENT_TILE_COLUMN, STATUS_EQUIPMENT_TILE_ROWS, STATUS_LAYOUT, STATUS_NAME_TILE_COLUMN, \
@@ -48,9 +48,6 @@ from src.nes_random import one_in
 # the CommandMenu methods Bank03 NCCmdSelected and CheckCmdWndResults run for each
 COMMAND_METHODS = ('talk', 'status', 'stairs', 'search', 'spell', 'item', 'door', 'take')
 
-# The dialog window: x, y, width, height in 16x16 blocks (NES WND_DIALOG, screen tiles 4-27 x 18-27)
-DIALOG_WINDOW = (2, 9, 12, 5)
-DIALOG_FPS = 60
 
 
 # NES ShowWindow and RemoveWindow (Bank00, LA7A2) draw or take away one row of a window's blocks a frame
@@ -186,8 +183,8 @@ class CommandMenu:
         self.redraw_command_window(rect)
         if drawer.display_hovering_stats:
             drawer.draw_hovering_stats_window(screen, self.player, self.color)
-        dialog_rect = Rect(DIALOG_WINDOW[0] * tile_size, DIALOG_WINDOW[1] * tile_size, DIALOG_WINDOW[2] * tile_size,
-                           DIALOG_WINDOW[3] * tile_size)
+        dialog_rect = Rect(DIALOG_WINDOW.x * tile_size, DIALOG_WINDOW.y * tile_size, DIALOG_WINDOW.width * tile_size,
+                           DIALOG_WINDOW.height * tile_size)
         if rect.colliderect(dialog_rect):
             self.draw_dialog_window()
         screen.set_clip(previous_clip)
@@ -411,7 +408,7 @@ class CommandMenu:
         if self.game.game_state.config['NO_WAIT']:
             return
         now = get_ticks()
-        self._dialog_frame_deadline = max(self._dialog_frame_deadline, now) + frames * 1000 / DIALOG_FPS
+        self._dialog_frame_deadline = max(self._dialog_frame_deadline, now) + frames * 1000 / NES_FPS
         delay = int(self._dialog_frame_deadline - now)
         if delay > 0:
             wait(delay)
@@ -421,7 +418,7 @@ class CommandMenu:
         column 5, row 19), and each character is one NES tile."""
         tile_size = self.game.game_state.config['TILE_SIZE']
         nes_tile = tile_size // 2
-        return Rect((DIALOG_WINDOW[0] * 2 + 1 + column) * nes_tile, (DIALOG_WINDOW[1] * 2 + 1 + row) * nes_tile,
+        return Rect((DIALOG_WINDOW.x * 2 + 1 + column) * nes_tile, (DIALOG_WINDOW.y * 2 + 1 + row) * nes_tile,
                     columns * nes_tile, nes_tile)
 
     def draw_dialog_window(self) -> None:

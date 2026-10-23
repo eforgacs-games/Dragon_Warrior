@@ -5,7 +5,7 @@ from pygame import Surface, display, image, mask, transform
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src.common import BLACK
-from src.waiting import check_for_quit, wait, wait_frames
+from src.waiting import NES_FPS, check_for_quit, wait, wait_frames
 
 
 SMOOTH_FADE_STEP_MS = 5  # the 'Smooth' fade (not an NES effect): one alpha step every 5 ms
@@ -130,8 +130,6 @@ def greyscale_screen(screen: Surface, config: dict, frames: int = 30) -> None:
 # ---------------------------------------------------------------------------------------------------- #
 #  NES palette effects used in battle (issue #96)                                                       #
 # ---------------------------------------------------------------------------------------------------- #
-
-NES_FPS = 60
 
 # The NES master palette, indexed by NES color number ($00-$3F). These are the RGB values the game's images use.
 NES_PALETTE: tuple[tuple[int, int, int], ...] = (

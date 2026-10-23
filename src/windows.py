@@ -20,7 +20,7 @@ class Window(NamedTuple):
 POPUP_WINDOW = Window(1, 2, 4, 6)
 # StatusDat ($AFC7): 11 blocks high, 20 tiles wide, Y = 3, X = 5
 STATUS_WINDOW = Window(5, 3, 10, 11)
-# DialogDat ($B04B): 5 blocks high, 24 tiles wide, Y = 9, X = 2
+# DialogDat ($B04B), WND_DIALOG: 5 blocks high, 24 tiles wide, Y = 9, X = 2 (screen tiles 4-27 x 18-27)
 DIALOG_WINDOW = Window(2, 9, 12, 5)
 # CmdNonCmbtDat ($B054): 5 blocks high, 16 tiles wide, Y = 1, X = 6
 COMMAND_WINDOW = Window(6, 1, 8, 5)

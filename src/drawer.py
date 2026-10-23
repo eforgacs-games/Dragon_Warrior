@@ -15,8 +15,8 @@ from src.command_window import held_buttons
 from src.menu import CommandMenu
 from src.sound import Sound
 from src.text import draw_text
-from src.visual_effects import NES_FPS, cut_to_black, enemy_fade_in, enemy_hit_flash, screen_fade
-from src.waiting import clear_events_keeping_quit, is_any_key_held, wait
+from src.visual_effects import cut_to_black, enemy_fade_in, enemy_hit_flash, screen_fade
+from src.waiting import NES_FPS, clear_events_keeping_quit, is_any_key_held, wait
 from src.window_renderer import draw_window
 from src.windows import COMMAND_WINDOW, POPUP_LAYOUT, POPUP_WINDOW
 
