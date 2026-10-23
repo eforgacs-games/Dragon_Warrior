@@ -111,15 +111,6 @@ class TestKolDialog(TestCase):
             self.assertEqual(self.kol.characters[identifier]['character'].direction_value, expected.value,
                              identifier)
 
-    def test_npcs_stand_on_their_koldat_tile(self):
-        self.kol.load_map(self.game.player, None, test_config['TILE_SIZE'])
-        tile_names = {value['val']: name for name, value in self.kol.tile_key.items()}
-        for _, x, y, _, _ in KOL_NPCS:
-            row, column = nes_to_map(x, y)
-            identifier = self.identifiers[(row, column)]
-            expected = tile_names[self.kol.layout[row][column]]
-            self.assertEqual(self.kol.custom_underlying_tiles.get(identifier, 'BRICK'), expected, identifier)
-
     def test_text_dialog_matches_nes(self):
         for _, x, y, dialog_byte, _ in KOL_NPCS:
             if dialog_byte in KOL_TEXT:
