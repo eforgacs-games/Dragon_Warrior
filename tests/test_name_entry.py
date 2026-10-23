@@ -254,7 +254,7 @@ class TestSelectName(TestCase):
         self.screen = pygame.Surface((256, 240))
 
     def select_name(self, events: list) -> str:
-        with patch('src.menu_functions.event.get', side_effect=[[current_event] for current_event in events]), \
+        with patch('src.selection.event.get', side_effect=[[current_event] for current_event in events]), \
                 patch('src.menu_functions.display'), patch('src.menu_functions.Sound'):
             return NameSelection(self.config).select_name(0, self.screen, self.command_menu)
 

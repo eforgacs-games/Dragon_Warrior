@@ -69,7 +69,7 @@ class OptionsTestCase(TestCase):
         def next_frame(frames=1, *_args, **_kwargs):
             clock[0] += round(frames * 1000 / 60)
         patch('src.cursor.get_ticks', lambda: clock[0]).start()
-        patch('src.options_screen.wait_frames', side_effect=next_frame).start()
+        patch('src.selection.wait_frames', side_effect=next_frame).start()
         self.addCleanup(patch.stopall)
 
 
@@ -126,7 +126,7 @@ class TestOptionsScreen(OptionsTestCase):
 
     def choose(self, events, speed='Normal', style=CLASSIC, make_way=True):
         options_screen = OptionsScreen(self.game.screen, self.config)
-        with patch('src.options_screen.event.get', side_effect=presses(*events)):
+        with patch('src.selection.event.get', side_effect=presses(*events)):
             return options_screen.choose_options(Options(speed, style, make_way))
 
     def test_cursor_starts_on_the_current_settings(self):
@@ -190,7 +190,7 @@ class TestTitleMenuFlow(OptionsTestCase):
         """Choose CHANGE MESSAGE SPEED (1) on the title menu, play the events, then choose `then` (BEGIN A NEW QUEST)."""
         with patch.object(self.game.game_functions, 'main_menu_selection', side_effect=[1, then]) as title_menu, \
                 patch.object(self.game.title_menu, 'begin_new_quest') as begin_new_quest, \
-                patch('src.options_screen.event.get', side_effect=presses(*events)):
+                patch('src.selection.event.get', side_effect=presses(*events)):
             self.game.title_menu.show_main_menu_screen(self.game.screen)
         return title_menu, begin_new_quest
 
@@ -234,20 +234,20 @@ class TestNewQuestOptions(OptionsTestCase):
 
     def test_new_quest_uses_the_chosen_options(self):
         self.config['TEXT_SPEED'], self.config['NPCS_MAKE_WAY'] = 'Fast', False
-        with patch('src.options_screen.event.get', side_effect=presses(DOWN, ENTER, DOWN, ENTER, RIGHT, ENTER)):
+        with patch('src.selection.event.get', side_effect=presses(DOWN, ENTER, DOWN, ENTER, RIGHT, ENTER)):
             self.game.title_menu.choose_new_quest_options()
         # the cursors start on NORMAL (NewQuest: LDA #MSG_NORMAL), CLASSIC and ON, whatever the last game used
         self.assertEqual(('Slow', MODERN, False), settings(self.config))
 
     def test_new_quest_keeps_npcs_making_way_by_default(self):
         self.config['NPCS_MAKE_WAY'] = False
-        with patch('src.options_screen.event.get', side_effect=presses(ENTER, ENTER, ENTER)):
+        with patch('src.selection.event.get', side_effect=presses(ENTER, ENTER, ENTER)):
             self.game.title_menu.choose_new_quest_options()
         self.assertEqual(('Normal', CLASSIC, True), settings(self.config))
 
     def test_new_quest_without_a_choice_uses_the_defaults(self):
         self.config['TEXT_SPEED'], self.config['DIALOG_STYLE'], self.config['NPCS_MAKE_WAY'] = 'Fast', MODERN, False
-        with patch('src.options_screen.event.get', side_effect=presses(B)):
+        with patch('src.selection.event.get', side_effect=presses(B)):
             self.game.title_menu.choose_new_quest_options()
         self.assertEqual(('Normal', CLASSIC, True), settings(self.config))
 
@@ -388,6 +388,7 @@ class TestDialogStyles(OptionsTestCase):
         self.config['DIALOG_STYLE'] = MODERN
         pygame.event.clear()
         pygame.event.post(Event(QUIT))
+        self.addCleanup(pygame.event.clear)  # the QUIT is only peeked at; don't leave it for the next test
         with patch('src.waiting.pygame_quit'), self.assertRaises(SystemExit):
             self.cmd_menu.show_line_in_dialog_box("Hello there.", skip_text=True, hide_arrow=True)
 
