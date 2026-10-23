@@ -11,7 +11,7 @@ from src.camera import Camera
 from src.constants import RAINBOW_BRIDGE_COORDINATES, THRONE_ROOM_DOOR_COORDINATES, THRONE_ROOM_START_COORDINATES
 from src.coordinates import Cell
 from src.direction import Direction
-from src.drawer import map_surface
+from src.drawer import SpareMapSurface
 from src.game_functions import set_character_position
 from src.map_layouts import BRICK, DOOR, TREASURE_BOX
 from src.maps import map_lookup
@@ -25,6 +25,8 @@ class MapManager:
         # The (row, column) of the stairs a random fight started on: the hero stays there after the fight, and the
         # stairs aren't taken until the hero steps off them (or uses STAIRS). See stay_on_stairs.
         self.fought_on_stairs: Cell | None = None
+        # Alefgard's surface, kept while the hero is elsewhere, so going back doesn't make it again (set_big_map)
+        self.spare_map_surface = SpareMapSurface()
 
     # ------------------------------------------------------------------ #
     #  Properties forwarding to game                                       #
@@ -262,8 +264,11 @@ class MapManager:
     def set_big_map(self):
         """A black surface for the new map, which its first frame draws every tile on (Drawer.draw_all). It is the
         background until then too: that used to be a copy of it, but nothing shows the background before the first
-        frame redraws it, and a copy of Alefgard's takes about 30 ms."""
-        self.game.big_map = map_surface(self.current_map.width, self.current_map.height)
+        frame redraws it, and a copy of Alefgard's takes about 30 ms. The old map's surface is kept if it's the biggest
+        yet, and used again for the next map its size (SpareMapSurface)."""
+        old_big_map = self.game.big_map
+        self.game.big_map = self.spare_map_surface.take(self.current_map.width, self.current_map.height)
+        self.spare_map_surface.give_back(old_big_map)
         self.drawer.background = self.game.big_map
 
     def handle_player_direction_on_map_change(self, current_map_staircase_dict, came_up_stairs: bool = False):
