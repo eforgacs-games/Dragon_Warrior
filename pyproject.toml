@@ -21,7 +21,7 @@ dev = [
 package = false  # a game run from source, not an installable package
 
 [tool.mypy]
-files = ["src"]
+files = ["src", "tools"]
 exclude = ["src/map_layouts.py"]
 ignore_missing_imports = true
 
