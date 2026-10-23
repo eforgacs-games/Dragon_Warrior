@@ -31,7 +31,7 @@ from src.spells import Spell
 from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT, COMBAT_COMMAND_WINDOW
 from src.visual_effects import player_hit_shake
-from src.waiting import handle_speed_key, scaled_ms
+from src.waiting import handle_speed_key, poll_virtual_joypad, scaled_ms, with_virtual_keys
 from src.zoom import handle_zoom_event
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w
@@ -78,7 +78,7 @@ def key_joypad_buttons(pressed_key: int) -> int:
 
 def held_joypad_buttons() -> int:
     """The NES buttons held right now (GetJoypadStatus), from the keyboard state."""
-    pressed = key.get_pressed()
+    pressed = with_virtual_keys(key.get_pressed())
     return joypad_buttons(lambda button_key: pressed[button_key])
 
 
@@ -109,6 +109,9 @@ class BattleController:
         self.command_window_covered: Surface | None = None
         # Set when the enemy has just cast SLEEP on the hero, so it takes another turn straight away.
         self.player_fell_asleep = False
+        # Set by start_scripted_battle for the fight it starts (auto-grind stops before a scripted fight's first
+        # command)
+        self.scripted_fight = False
 
     # ------------------------------------------------------------------ #
     #  Properties that forward to game for brevity inside this class       #
@@ -159,6 +162,15 @@ class BattleController:
         return self.game.current_map
 
     @property
+    def auto_grind(self):
+        return self.game.auto_grind
+
+    @property
+    def grinding(self) -> bool:
+        """Whether auto-grind (src/auto_grind.py) is running: it chooses FIGHT every turn, whatever F3 says."""
+        return getattr(getattr(self.game, 'auto_grind', None), 'active', False) is True
+
+    @property
     def music_player(self):
         return self.game.music_player
 
@@ -185,6 +197,7 @@ class BattleController:
         """Start a fixed, story-driven fight right now, the way the NES jumps straight to InitFight with a set
         enemy number (the Dragonlord, and the Golem, Green Dragon and Axe Knight guardians). Unlike a random
         encounter it can't be repelled. Running away and dying work exactly as in a random fight."""
+        self.scripted_fight = True
         outcome = self.launch_fight(enemy_name)
         self.battle_menu_row = 0
         self.battle_menu_column = 0
@@ -223,6 +236,10 @@ class BattleController:
         current_battle.display_battle_window(self.screen, self.drawer,
                                              self.cmd_menu, self.graphics, self.directories,
                                              self.game.color, self.player)
+        scripted, self.scripted_fight = self.scripted_fight, False
+        if scripted or enemy_name == 'Dragonlord 2':
+            # Auto-grind never fights a guardian or the Dragonlord: the player chooses from the first command on
+            self.auto_grind.scripted_fight_starts()
         # The first player turn opens the command window (StartPlayerTurn): if the enemy attacks first, there is none
         self.command_window_open = False
         self.command_window_shown = False
@@ -317,6 +334,10 @@ class BattleController:
 
     def handle_battle_prompts(self, run_away: bool, current_battle: Battle) -> bool:
         selected_executed_option = None
+        if self.player.is_asleep or not self.command_window_open:
+            # The start of a player turn: auto-grind stops here if HP is low or the hero is asleep, so the command
+            # window is the player's
+            self.auto_grind.player_turn_starts()
         if self.player.is_asleep:
             # NES StartPlayerTurn: a sleeping hero's turn is the wake roll, at once. Only PlayerAwakes goes on to
             # ShowCmbtCmd, so there is no command window and no button is waited for (sleeping_player_turn).
@@ -329,7 +350,7 @@ class BattleController:
             if drawn != self.drawn_command_window:
                 self.draw_command_window(self.command_cursor.visible())
                 self.drawn_command_window = drawn
-            if self.auto_battle:
+            if self.auto_battle and not self.grinding:
                 selected_executed_option = self.last_battle_action
                 time.wait(scaled_ms(AUTO_BATTLE_DELAY_MS))
             else:
@@ -404,6 +425,7 @@ class BattleController:
         are dropped, and keys still held are ignored until they are let go or 11 frames have gone by."""
         self.battle_menu_row = 0
         self.battle_menu_column = 0
+        poll_virtual_joypad()  # a key the player pressed stops auto-grind before the queue is dropped
         for queued_event in event.get(KEYDOWN):
             # the speed keys (1 to 4) and the zoom keys (src/zoom.py) still count; every other key is dropped
             handle_speed_key(queued_event) or handle_zoom_event(queued_event)
@@ -628,6 +650,8 @@ class BattleController:
                                 message = self._("The spell will not work.")
                             self.cmd_menu.show_line_in_dialog_box(message, add_quotes=False, disable_sound=True,
                                                                   hide_arrow=True)
+                            if self.player.is_stopspelled:
+                                self.auto_grind.stopspell_hit()
                         case Spell.FIREBREATH | Spell.FIREBREATH2:
                             if self.player.armor == "Erdrick's Armor":
                                 spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double

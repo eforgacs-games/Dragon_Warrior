@@ -246,6 +246,8 @@ class Battle:
         music_player = cmd_menu.game.music_player
         new_level = get_level_by_experience(player.total_experience)
         if new_level > player.level:
+            # Auto-grind stops here: the promotion and the stat lines wait for the player's own buttons
+            cmd_menu.game.auto_grind.level_up()
             music_player.play_until_end(self.directories.level_up_music, self.config)
             self.resume_map_music(music_player)
             # TB16E1 starts with a WAIT: the experience and gold lines stay up, with the arrow, until A or B

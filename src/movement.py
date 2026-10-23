@@ -24,6 +24,7 @@ from src.player.player import Player
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
+from src.waiting import MAP_CONTEXT, with_virtual_keys
 
 
 # A tile is 16 NES pixels across, and the hero and the NPCs walk one NES pixel a frame
@@ -63,11 +64,15 @@ class MovementGame(Protocol):
     pause_requested: bool
     # SELECT or Tab: the options overlay, which waits for the same moment as the pause
     options_requested: bool
+    # G: auto-grind (src/auto_grind.py), which starts at the same moment as the pause
+    auto_grind_requested: bool
     cmd_menu_requested: bool
 
     def count_step(self) -> None: ...
 
     def open_options(self) -> None: ...
+
+    def start_auto_grind(self) -> None: ...
 
     def roll_for_fight(self, column: int, row: int, tile: str | None) -> None: ...
 
@@ -162,7 +167,8 @@ class MovementController:
 
     @property
     def freeze_pending(self) -> bool:
-        return self.game.pause_requested or self.game.options_requested or self.game.cmd_menu_requested
+        return (self.game.pause_requested or self.game.options_requested or self.game.cmd_menu_requested
+                or getattr(self.game, 'auto_grind_requested', False) is True)
 
     @property
     def sprites_animate(self) -> bool:
@@ -209,6 +215,10 @@ class MovementController:
             self.game.options_requested = False
             self.game.open_options()
             return
+        if getattr(self.game, 'auto_grind_requested', False) is True:
+            self.game.auto_grind_requested = False
+            self.game.start_auto_grind()
+            return
         self.game.cmd_menu_requested = False
         self.game.drawer.display_hovering_stats = True
         self.game.cmd_menu.launch_signaled = True
@@ -234,7 +244,7 @@ class MovementController:
             # returning), so a step already under way is finished, but no new one is started. PausePrepLoop and
             # DoNCCmdWindow keep counting frames until the end of the NPCs' turn.
             return
-        self.move_player(key.get_pressed())
+        self.move_player(with_virtual_keys(key.get_pressed(), MAP_CONTEXT))
 
     def move_player(self, current_key) -> None:
         """
