@@ -27,7 +27,7 @@ from src.story_flags import StoryFlags
 from src.text import draw_text
 from src.windows import BUY_SELL_WINDOW, DIALOG_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, \
     SHOP_COST_RIGHT_TILE_COLUMN, SHOP_INVENTORY_WINDOW, Window, item_menu_window, name_halves, variable_height_window
-from src.visual_effects import NES_RED, flash_transparent_color, greyscale_screen, screen_fade
+from src.visual_effects import NES_RED, greyscale_screen, screen_fade
 from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait, wait_frames
 
 NES_MAX_LEVEL = 30  # LVL_30
@@ -958,27 +958,11 @@ class DialogLookup:
                  "Dost thou want a room?").format(inn_cost)
 
     def flash_and_restore_mp(self):
+        """NES ChkMagicDialog (LD2D7): BWScreenFlash, then MP is set to the max (DisplayedMaxMP) and Dowindow
+        WND_POPUP shows the restored MP."""
+        self.bw_screen_flash()
         self.player.restore_mp()
-        # flash for 3 frames on, 3 frames off
-        # flash white 8 times
-        # TODO(ELF): This flashes once, but needs to flash 8 times.
-        flash_transparent_color(WHITE, self.screen, self.calculation, transparency=128)
-        display.flip()
-        flash_transparent_color(WHITE, self.screen, self.calculation, transparency=255)
-        display.flip()
-        # NES LD2DE: after BWScreenFlash, Dowindow WND_POPUP shows the restored MP
         self.command_menu.show_popup_window()
-        # draw_all_tiles_in_current_map(self.current_map, self.background)
-        # draw_player_sprites(self.current_map, self.background, self.player.column, self.player.row)
-        # display.flip()
-
-        # start_time = get_ticks()
-        # if convert_to_frames_since_start_time(start_time) <= 25:
-        #     if convert_to_frames_since_start_time(start_time) % 3 == 0:
-        #         start_flash = get_ticks()
-        #         while convert_to_frames_since_start_time(start_flash) < 3:
-        #             flash_transparent_color(WHITE, self.screen)
-        #             display.flip()
 
     # Shops. Each NES shop routine (Bank03) is a chain of dialogs and yes/no windows; here every "loop back" in the
     # NES routine is a call to the method for that step.
