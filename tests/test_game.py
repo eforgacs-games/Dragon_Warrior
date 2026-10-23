@@ -571,7 +571,7 @@ class TestGame(TestCase):
         self.game.last_map = TantegelThroneRoom(self.game.config)
         self.game.change_map(TantegelCourtyard(self.game.config))
         self.assertTrue(self.game.story_flags.left_throne_room)
-        self.game.music_enabled = False
+        self.game.music_player.music_enabled = False
         self.game.player.row = 14
         self.game.player.column = 14
         self.game.change_map(TantegelThroneRoom(self.game.config))

@@ -36,7 +36,6 @@ class GameState:
         self.pending_light_redraws: List[int] = []
         self.light_redraw_frame = 0
         self.config = config
-        self.music_enabled = config["MUSIC_ENABLED"]
 
     def unpause_all_movement(self) -> None:
         """

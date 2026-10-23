@@ -1,6 +1,7 @@
-from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, event
+from pygame import display, KEYDOWN, K_DOWN, K_UP, K_w, K_s, K_y, K_n, event
 from pygame.event import get
 
+from src.common import accept_keys, reject_keys
 from src.cursor import BlinkingCursor
 from src.waiting import quit_if_requested, wait
 from src.window_renderer import draw_window
@@ -27,10 +28,12 @@ def confirmation_prompt(command_menu, prompt_line, yes_path_function, no_path_fu
         if current_event.key in (K_DOWN, K_UP, K_w, K_s):
             cursor.restart()  # WndUpdateCrsrPos
             return not blinking_yes
-        elif (blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode == 'y':
+        # Matched by key, not by the typed character, so Caps Lock doesn't matter. A (or Y) answers with the entry
+        # under the cursor or YES; B, Escape included, is NO (WndBPressed), as in CommandMenu.prompt_yes_no.
+        elif (blinking_yes and current_event.key in accept_keys) or current_event.key == K_y:
             finalize_choice(True, yes_path_function)
             blinking = False
-        elif (not blinking_yes and current_event.unicode in ('\r', 'k')) or current_event.unicode in ('n', 'j'):
+        elif (not blinking_yes and current_event.key in accept_keys) or current_event.key in (K_n, *reject_keys):
             finalize_choice(False, no_path_function)
             blinking = False
         return blinking_yes
