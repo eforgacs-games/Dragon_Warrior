@@ -1,19 +1,22 @@
 """The title menu (NES Bank03 StartMenu): BEGIN A NEW QUEST, CONTINUE A QUEST, CHANGE MESSAGE SPEED, COPY A QUEST and
 ERASE AN ADVENTURE LOG, run before the game starts.
 
-The menus are full-screen NES screenshots chosen with GameFunctions.main_menu_selection; the windows that open over
-them (the log lists, message speed, YES/NO) are src/options_screen.py. The saves the entries read, copy and erase are
-the adventure logs in the save folder (src/save_file.py). Starting the quest is the Game's: a new quest starts in the
-throne room (Game.start_at_throne_room) and a continued one loads its save (Game.load_game).
+The title menu, BEGIN A NEW QUEST's open logs window and CONTINUE A QUEST's used logs window with one log are generated
+from the NES window data (src/title_windows.py) and chosen from with GameFunctions.main_menu_selection; the other
+windows that open over the title menu (the log lists, message speed, YES/NO) are src/options_screen.py.
+
+The saves the entries read, copy and erase are the adventure logs in the save folder (src/save_file.py). Starting the
+quest is the Game's: a new quest starts in the throne room (Game.start_at_throne_room) and a continued one loads its
+save (Game.load_game).
 """
 import os
 import shutil
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 
 from pygame import Surface
 
-from src.adventure_log import AdventureLogOverlay, adventure_log_overlay_texts
 from src.directories import Directories
+from src.common import set_gettext_language
 from src.game_functions import MENU_BACK, GameFunctions
 from src.menu_functions import NameSelection
 from src.options_screen import DEFAULT_OPTIONS, OptionsScreen, apply_options, options_from_save, options_to_save
@@ -22,12 +25,17 @@ from src.save_file import ADVENTURE_LOGS, EXPERIENCE_KEY, NAME_KEY, load_save, r
     save_slot_number, used_logs, write_save
 from src.save_file import save_file_name as save_file_name_for
 from src.sound import Sound
+from src.title_windows import draw_title_windows, title_menu_layout, title_translate
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
+from src.windows import ADVENTURE_LOG_123_LAYOUT, WindowLayout, used_logs_layout
 
 # Returned by a title menu entry that goes back to the title menu when it's done (NES WndBackToMain)
 BACK_TO_TITLE_MENU = object()
 # COPY A QUEST's place in the title menu with a log open (FullMenuDat); with none open it isn't there
 COPY_ENTRY = 3
+# BEGIN A NEW QUEST's place in the title menu: alone in NewQuestDat, third in FullMenuDat
+BEGIN_ENTRY_WITH_NO_LOG = 0
+BEGIN_ENTRY = 2
 
 
 class TitleMenuGame(Protocol):
@@ -92,52 +100,22 @@ class TitleMenu:
         if not os.path.exists(self.directories.save_dir):
             os.makedirs(self.directories.save_dir)
         self.save_dir_contents = self.save_files()
-        if len(self.save_dir_contents) == 0:
-            begin_quest_empty_log_function_lookup = {
-                0: self.begin_new_quest,
-            }
-            selection = self.game_functions.main_menu_selection(get_ticks(), screen,
-                                                                self.directories.main_menu_empty_log_unselected,
-                                                                self.directories.main_menu_empty_log_0, [],
-                                                                no_blit=self.config['NO_BLIT'])
-            return begin_quest_empty_log_function_lookup[selection]()
+        used = len(self.save_dir_contents)
+        if used > 3:
+            print("Error: More than 3 save files detected. Exiting.")
+            exit(1)
+        if used == 0:
+            # NewQuestDat: BEGIN A NEW QUEST
+            entries: tuple[Callable[[], object], ...] = (self.begin_new_quest,)
+        elif used < 3:
+            # FullMenuDat: CONTINUE A QUEST, CHANGE MESSAGE SPEED, BEGIN A NEW QUEST, COPY A QUEST, ERASE A QUEST
+            entries = (self.continue_quest, self.change_message_speed, self.begin_new_quest, self.copy_quest,
+                       self.erase_quest)
         else:
-            if len(self.save_dir_contents) < 3:
-                partially_full_log_function_lookup = {
-                    0: self.continue_quest,
-                    1: self.change_message_speed,
-                    2: self.begin_new_quest,
-                    3: self.copy_quest,
-                    4: self.erase_quest,
-                }
-                selection = self.game_functions.main_menu_selection(get_ticks(), screen,
-                                                                    self.directories.main_menu_partially_full_log_unselected,
-                                                                    self.directories.main_menu_partially_full_log_0,
-                                                                    [
-                                                                        self.directories.main_menu_partially_full_log_1,
-                                                                        self.directories.main_menu_partially_full_log_2,
-                                                                        self.directories.main_menu_partially_full_log_3,
-                                                                        self.directories.main_menu_partially_full_log_4],
-                                                                    no_blit=self.config['NO_BLIT'])
-                return partially_full_log_function_lookup[selection]()
-            elif len(self.save_dir_contents) == 3:
-                # NES with every log used: CONTINUE A QUEST, CHANGE MESSAGE SPEED, ERASE AN ADVENTURE LOG
-                full_log_function_lookup = {
-                    0: self.continue_quest,
-                    1: self.change_message_speed,
-                    2: self.erase_quest,
-                }
-                selection = self.game_functions.main_menu_selection(get_ticks(), screen,
-                                                                    self.directories.continue_quest_full_log_unselected,
-                                                                    self.directories.continue_quest_full_log_0,
-                                                                    [self.directories.continue_quest_full_log_1,
-                                                                     self.directories.continue_quest_full_log_2],
-                                                                    no_blit=self.config['NO_BLIT'])
-                return full_log_function_lookup[selection]()
-            else:
-                print("Error: More than 3 save files detected. Exiting.")
-                exit(1)
-        return None
+            # ContChngErsDat, with every log used: CONTINUE A QUEST, CHANGE MESSAGE SPEED, ERASE A QUEST
+            entries = (self.continue_quest, self.change_message_speed, self.erase_quest)
+        selection = self.game_functions.main_menu_selection(get_ticks(), screen, title_menu_layout(used))
+        return entries[selection]()
 
     def begin_new_quest(self) -> object:
         """BEGIN A NEW QUEST: an adventure log, the name, then the options. B in the log window, or Escape in the
@@ -160,21 +138,20 @@ class TitleMenu:
         return save_files(self.directories.save_dir)
 
     def continue_quest(self) -> object:
-        """CONTINUE A QUEST: choose a used adventure log (ShowUsedLogs) and load it. With one log, its screenshot with
-        the hero's name on it; with several, the log window. B in either goes back to the title menu
-        (WndBackToMain)."""
+        """CONTINUE A QUEST: choose a used adventure log (ShowUsedLogs) and load it. With one log, its window with the
+        hero's name (LogList1Dat2, LogList2Dat2 or LogList3Dat2) over the title menu; with several, the log window of
+        src/options_screen.py. B in either goes back to the title menu (WndBackToMain)."""
         if len(self.save_dir_contents) == 1:
-            save_file_name = self.save_dir_contents[0]
-            log_path = os.path.join(self.directories.save_dir, save_file_name)
+            logs = self.used_logs()
+            if not logs:
+                # its save can't be read: there is nothing to continue
+                return BACK_TO_TITLE_MENU
             selection = self.game_functions.main_menu_selection(get_ticks(), self.screen,
-                                                                self.directories.one_adventure_log_unselected,
-                                                                self.directories.one_adventure_log_0,
-                                                                [],
-                                                                no_blit=self.config['NO_BLIT'],
-                                                                overlay=self.adventure_log_overlay(log_path),
-                                                                b_goes_back=True)
+                                                                used_logs_layout(tuple(logs)),
+                                                                below=[(self.title_layout(), 0)], b_goes_back=True)
             if selection == MENU_BACK:
                 return BACK_TO_TITLE_MENU
+            save_file_name = save_file_name_for(logs[selection][0])
         elif self.save_dir_contents:
             options_screen = OptionsScreen(self.screen, self.config, self.title_menu_background(0))
             slot = options_screen.choose_log(self.used_logs())
@@ -197,11 +174,6 @@ class TitleMenu:
     def used_logs(self) -> list[tuple[int, str]]:
         """ShowUsedLogs: each used adventure log's number and hero's name, for the log window."""
         return used_logs(self.directories.save_dir, self.save_dir_contents or self.save_files())
-
-    def adventure_log_overlay(self, save_path: str) -> AdventureLogOverlay:
-        """The name of the hero in save_path, to draw on the one_adventure_log screenshot's "ADVENTURE LOG 1:" line
-        (Bank01 LogList1Dat2; see src/adventure_log.py)."""
-        return AdventureLogOverlay(adventure_log_overlay_texts(save_path), self.config)
 
     def change_message_speed(self) -> object:
         """NES DoChngMsgSpeed (Bank03): choose a used adventure log (ShowUsedLogs), then its message speed in the NES
@@ -231,16 +203,20 @@ class TitleMenu:
         chosen = options_screen.choose_options(DEFAULT_OPTIONS)
         apply_options(self.config, chosen or DEFAULT_OPTIONS)
 
-    def title_menu_background(self, entry: int) -> str:
-        """The title menu screenshot with this entry chosen, for the windows to open over: CONTINUE A QUEST (0),
-        CHANGE MESSAGE SPEED (1), COPY A QUEST (COPY_ENTRY) or ERASE AN ADVENTURE LOG (erase_entry()). With every log
-        used the menu has no COPY A QUEST (ContChngErsDat), so ERASE is entry 2 there."""
-        if len(self.save_dir_contents or []) >= 3:
-            return (self.directories.continue_quest_full_log_0, self.directories.continue_quest_full_log_1,
-                    self.directories.continue_quest_full_log_2)[entry]
-        return (self.directories.main_menu_partially_full_log_0, self.directories.main_menu_partially_full_log_1,
-                self.directories.main_menu_partially_full_log_2, self.directories.main_menu_partially_full_log_3,
-                self.directories.main_menu_partially_full_log_4)[entry]
+    def title_layout(self) -> WindowLayout:
+        """The title menu window for the logs in use (NewQuestDat, FullMenuDat or ContChngErsDat)."""
+        return title_menu_layout(len(self.save_dir_contents or []))
+
+    def title_menu_background(self, entry: int) -> Callable[[Surface], None]:
+        """Draws the title menu with this entry chosen (its arrow held on), for the windows to open over: CONTINUE A
+        QUEST (0), CHANGE MESSAGE SPEED (1), COPY A QUEST (COPY_ENTRY) or ERASE A QUEST (erase_entry()). With every
+        log used the menu has no COPY A QUEST (ContChngErsDat), so ERASE is entry 2 there."""
+        layout = self.title_layout()
+        translate = title_translate(set_gettext_language(self.config.get('LANGUAGE')))
+
+        def draw(screen: Surface) -> None:
+            draw_title_windows(screen, [(layout, entry, True)], self.config, translate)
+        return draw
 
     def erase_entry(self) -> int:
         """ERASE AN ADVENTURE LOG's place in the title menu: last in FullMenuDat (4), or in ContChngErsDat (2)."""
@@ -290,13 +266,13 @@ class TitleMenu:
         return BACK_TO_TITLE_MENU
 
     def select_adventure_log(self, screen) -> object:
-        """BEGIN A NEW QUEST's log window: the chosen log becomes the hero's. B goes back to the title menu (DoNewQuest:
-        ShowOpenLogs returns WND_ABORT, then WndBackToMain), returning BACK_TO_TITLE_MENU."""
-        selection = self.game_functions.main_menu_selection(get_ticks(), screen,
-                                                            self.directories.empty_log_adventure_log_path,
-                                                            self.directories.ADVENTURE_LOG_1_PATH,
-                                                            [self.directories.ADVENTURE_LOG_2_PATH,
-                                                             self.directories.ADVENTURE_LOG_3_PATH],
+        """BEGIN A NEW QUEST's log window, LogList123Dat1 over the title menu with its arrow held on BEGIN A NEW QUEST:
+        the chosen log becomes the hero's. B goes back to the title menu (DoNewQuest: ShowOpenLogs returns WND_ABORT,
+        then WndBackToMain), returning BACK_TO_TITLE_MENU."""
+        used = self.save_files()
+        begin_entry = BEGIN_ENTRY if used else BEGIN_ENTRY_WITH_NO_LOG
+        selection = self.game_functions.main_menu_selection(get_ticks(), screen, ADVENTURE_LOG_123_LAYOUT,
+                                                            below=[(title_menu_layout(len(used)), begin_entry)],
                                                             b_goes_back=True)
         if selection == MENU_BACK:
             return BACK_TO_TITLE_MENU
