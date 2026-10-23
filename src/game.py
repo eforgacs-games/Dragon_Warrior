@@ -13,6 +13,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from data.text.intro_lookup_table import ControlInfo
 from src import maps
 from src.calculation import Calculation, get_tile_id_by_coordinates
+from src.auto_grind import AUTO_GRIND_KEYS, AutoGrind
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
 from src.color import LOW_HP_RED, RED, WHITE, is_low_hp, window_color
@@ -54,7 +55,7 @@ from src.waiting import SPEED_KEYS, FramePacer, clear_events_keeping_quit, game_
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.visual_effects import flash_transparent_color, force_field_flash
-from src.waiting import quit_if_requested
+from src.waiting import MAP_CONTEXT, poll_virtual_joypad, quit_if_requested, set_virtual_joypad
 from src.windows import COMMAND_WINDOW
 from src.zoom import handle_zoom_event, remember_default_zoom, remember_windowed_size, restore_windowed_size
 
@@ -94,6 +95,7 @@ class Game:
 
         # engine: keys 1 to 4 change the game speed (self.fps); it lasts until the game is closed, and isn't saved
         reset_game_speed()
+        set_virtual_joypad(None)  # no auto-grind (src/auto_grind.py) left driving from an earlier game
         # intro
         self.start_time = get_ticks()
         self.splash_screen_enabled = self.game_state.config["SPLASH_SCREEN_ENABLED"]
@@ -124,6 +126,9 @@ class Game:
         # SELECT or Tab pressed on the map: the options overlay (src/options_overlay.py) opens once everyone has finished
         # their step, like the pause (resolve_pending_freezes)
         self.options_requested = False
+        # G pressed on the map: auto-grind (src/auto_grind.py) starts once everyone has finished their step, like the
+        # pause (resolve_pending_freezes)
+        self.auto_grind_requested = False
         # Create the game window.
         if self.fullscreen_enabled:
             # according to pygame docs: "SCALED is considered an experimental API and may change in future releases."
@@ -151,6 +156,7 @@ class Game:
         self.current_map = maps.map_lookup[self.game_state.config["START_MAP"]](self.game_state.config)
 
         self.battle_ctrl = BattleController(self)
+        self.auto_grind = AutoGrind(self)
         self.ending = Ending(self)
         self.map_mgr = MapManager(self)
         self.debug_tools = DebugTools(self) if config.get('DEBUG_KEYS') else None
@@ -264,12 +270,15 @@ class Game:
 
     def read_events(self) -> None:
         """Take the events off the queue (draw_all reads them too) and handle the keys and the window's events."""
+        # Auto-grind's virtual joypad (src/virtual_joypad.py) posts its presses and sees the player's keys first
+        poll_virtual_joypad(MAP_CONTEXT)
         # The zoom keys only zoom the window (src/zoom.py), so they are taken out like any other window's loop does
         self.events = [current_event for current_event in get() if not handle_zoom_event(current_event)]
         self._handle_pygame_events(self.events)
 
     def map_frame(self) -> None:
         """One frame on the map (one NES frame): the hero, fights, the NPCs and what the step leads to."""
+        self.auto_grind.show_pending()  # why auto-grind stopped, if it stopped where a message couldn't be shown
         if self.movement.hill_pause_frames:
             self.movement.hill_pause_frame()
             event.pump()
@@ -403,6 +412,7 @@ class Game:
         # heal (MovmtIncHP) or count a Magic Armor step, and gets no damage or fight roll (see handle_battles)
         if not self.stepped_off_the_map():
             self.check_for_triggers()
+        self.auto_grind.after_step()
 
     def stepped_off_the_map(self) -> bool:
         """NES ChkSpecialLoc: whether the step that has just finished took the hero off the map's edge (a town gate).
@@ -525,6 +535,7 @@ class Game:
             if self.battle_ctrl.run_battle(enemies_in_current_zone) != BattleOutcome.REPELLED:
                 # NES: after the fight the hero is still on this block; stairs wait for STAIRS (or a step off them)
                 self.map_mgr.stay_on_stairs(row, column)
+                self.auto_grind.after_fight()
         self.battle_ctrl.battle_menu_row = 0
         self.battle_ctrl.battle_menu_column = 0
 
@@ -570,6 +581,7 @@ class Game:
         if self.player.current_hp <= 0:
             self.player.current_hp = 0
             self.player.is_dead = True
+            self.auto_grind.hero_died()
             self.load_window_palette()  # 0 HP is always low
             if self.battle_ctrl.launch_battle and not self.game_state.config["NO_BATTLES"]:
                 # The command window, red now, with the arrow on the command that was chosen (WndAPressed)
@@ -673,6 +685,7 @@ class Game:
         self.handle_a_button(current_keydown_event)
         self.handle_start_button(current_keydown_event)
         self.handle_select_button(current_keydown_event)
+        self.handle_auto_grind_key(current_keydown_event)
         self.handle_help_button(current_keydown_event)
         self.handle_enter_key(current_keydown_event)
         self.handle_fps_changes(current_keydown_event)
@@ -694,7 +707,8 @@ class Game:
         if keydown_event.key == K_k:
             # A button
             # print("K key pressed (A button).")
-            if self.movement.world_frozen or self.pause_requested or self.options_requested:
+            if self.movement.world_frozen or self.pause_requested or self.options_requested or \
+                    self.auto_grind_requested:
                 return
             # The window opens once the hero and the NPCs have finished their steps (resolve_pending_freezes)
             self.cmd_menu_requested = True
@@ -711,6 +725,7 @@ class Game:
                 self.pause_requested = True
                 self.cmd_menu_requested = False
                 self.options_requested = False
+                self.auto_grind_requested = False
                 self.movement.resolve_pending_freezes()
 
     def handle_select_button(self, keydown_event):
@@ -723,6 +738,20 @@ class Game:
             return
         self.options_requested = True
         self.movement.resolve_pending_freezes()
+
+    def handle_auto_grind_key(self, keydown_event) -> None:
+        """G: auto-grind (src/auto_grind.py), not NES. It starts from the map only when START would pause the game, and
+        like the pause it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes). While it
+        runs, G (or any key but 1 to 4) stops it before it gets here (AutoGrind.real_key)."""
+        if keydown_event.key not in AUTO_GRIND_KEYS:
+            return
+        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+            return
+        self.auto_grind_requested = True
+        self.movement.resolve_pending_freezes()
+
+    def start_auto_grind(self) -> None:
+        self.auto_grind.start()
 
     def open_options(self) -> None:
         """Show the options overlay over the map until it's closed. Its loop is the only thing running meanwhile, so

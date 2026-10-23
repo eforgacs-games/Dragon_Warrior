@@ -10,6 +10,7 @@ drawn by src/translated_window.py), titled OPTIONS, with one row per setting and
     NPCS MAKE WAY  ON / OFF (NES)           (NPCS_MAKE_WAY, MovementController.ask_npc_to_make_way)
     FADE STYLE     NES / SMOOTH             (FADE_STYLE, src/visual_effects.py screen_fade)
     STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps; F2 toggles it too)
+    GRIND STOP     RED HP / HALF HP / 3/4 HP  (AUTO_GRIND_STOP: when auto-grind stops, src/auto_grind.py)
 
 Up and down move the NES cursor (src/cursor.py) between the rows; left, right or A change the row's value, with the
 menu button sound. A change goes into the game config at once, so the next dialog, fade, bump or step uses it, and
@@ -30,7 +31,7 @@ from src.color import BLACK
 from src.common import A_BUTTON_KEYS, B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, SELECT_BUTTON_KEYS, UP_KEYS, \
     set_gettext_language
 from src.cursor import BlinkingCursor
-from src.options_screen import CLASSIC, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN
+from src.options_screen import AUTO_GRIND_STOP_VALUES, CLASSIC, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN
 from src.selection import frame_events, next_frame
 from src.translated_window import draw_translated_window
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
@@ -71,6 +72,7 @@ OPTION_ROWS = (
     OptionRow("NPCS MAKE WAY", 'NPCS_MAKE_WAY', (True, False), ("ON", "OFF (NES)")),
     OptionRow("FADE STYLE", 'FADE_STYLE', (FADE_STYLE_NES, FADE_STYLE_SMOOTH), ("NES", "SMOOTH")),
     OptionRow("STAIRS", 'AUTO_STAIRS', (True, False), ("STEP ON", "NES")),
+    OptionRow("GRIND STOP", 'AUTO_GRIND_STOP', AUTO_GRIND_STOP_VALUES, ("RED HP", "HALF HP", "3/4 HP")),
 )
 
 # The window: the screen's full 16 blocks wide (the longest labels and value, MESSAGE SPEED, NPCS MAKE WAY and

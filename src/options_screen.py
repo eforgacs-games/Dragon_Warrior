@@ -44,6 +44,7 @@ DIALOG_STYLE_SAVE_KEY = 'DialogStyle'
 NPCS_MAKE_WAY_SAVE_KEY = 'NpcsMakeWay'
 FADE_STYLE_SAVE_KEY = 'FadeStyle'
 AUTO_STAIRS_SAVE_KEY = 'AutoStairs'
+AUTO_GRIND_STOP_SAVE_KEY = 'AutoGrindStop'
 
 # MessageSpeed: #$00-fast, #$01-normal, #$02-slow; the window lists them in that order (WndRow = MessageSpeed)
 MESSAGE_SPEED_NAMES = ('Fast', 'Normal', 'Slow')
@@ -65,6 +66,10 @@ DEFAULT_FADE_STYLE = FADE_STYLE_NES
 # STAIRS command takes them (Bank03 CheckStairs). A save without the setting loads as STEP ON.
 DEFAULT_AUTO_STAIRS = True
 
+# AUTO_GRIND_STOP (base_config): when auto-grind stops (src/auto_grind.py); a save without the setting loads as RED HP
+AUTO_GRIND_STOP_VALUES = ('RedHP', 'HalfHP', 'ThreeQuartersHP')
+DEFAULT_AUTO_GRIND_STOP = 'RedHP'
+
 
 @dataclass(frozen=True, slots=True)
 class Options:
@@ -74,6 +79,7 @@ class Options:
     npcs_make_way: bool = DEFAULT_NPCS_MAKE_WAY
     fade_style: str = DEFAULT_FADE_STYLE
     auto_stairs: bool = DEFAULT_AUTO_STAIRS
+    auto_grind_stop: str = DEFAULT_AUTO_GRIND_STOP
 
 
 # A new quest's settings when none are chosen: NewQuest's MSG_NORMAL, the NES dialog window, and base_config's
@@ -149,34 +155,43 @@ def auto_stairs_from_save(save: dict) -> bool:
     return auto_stairs if isinstance(auto_stairs, bool) else DEFAULT_AUTO_STAIRS
 
 
+def auto_grind_stop_from_save(save: dict) -> str:
+    """The log's GRIND STOP setting; a save from before it was kept loads as RED HP (the default)."""
+    setting = save.get(AUTO_GRIND_STOP_SAVE_KEY)
+    return setting if setting in AUTO_GRIND_STOP_VALUES else DEFAULT_AUTO_GRIND_STOP
+
+
 def options_from_save(save: dict) -> Options:
     return Options(message_speed_from_save(save), dialog_style_from_save(save), npcs_make_way_from_save(save),
-                   fade_style_from_save(save), auto_stairs_from_save(save))
+                   fade_style_from_save(save), auto_stairs_from_save(save), auto_grind_stop_from_save(save))
 
 
 def options_to_save(options: Options) -> dict:
     """The save file entries for these settings (CommandMenu.save, TitleMenu.change_message_speed)."""
     return {MESSAGE_SPEED_SAVE_KEY: options.message_speed, DIALOG_STYLE_SAVE_KEY: options.dialog_style,
             NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way, FADE_STYLE_SAVE_KEY: options.fade_style,
-            AUTO_STAIRS_SAVE_KEY: options.auto_stairs}
+            AUTO_STAIRS_SAVE_KEY: options.auto_stairs, AUTO_GRIND_STOP_SAVE_KEY: options.auto_grind_stop}
 
 
 def options_from_config(config: dict) -> Options:
     """The settings the running game uses."""
     return Options(config.get('TEXT_SPEED', DEFAULT_MESSAGE_SPEED), config.get('DIALOG_STYLE', DEFAULT_DIALOG_STYLE),
                    bool(config.get('NPCS_MAKE_WAY', DEFAULT_NPCS_MAKE_WAY)),
-                   fade_style(config), bool(config.get('AUTO_STAIRS', DEFAULT_AUTO_STAIRS)))
+                   fade_style(config), bool(config.get('AUTO_STAIRS', DEFAULT_AUTO_STAIRS)),
+                   auto_grind_stop_from_save({AUTO_GRIND_STOP_SAVE_KEY: config.get('AUTO_GRIND_STOP')}))
 
 
 def apply_options(config: dict, options: Options) -> None:
     """Use these settings from now on: the dialog code reads TEXT_SPEED and DIALOG_STYLE for every message, and
     MovementController.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump, screen_fade reads FADE_STYLE for every
-    fade and MapManager.handle_warps reads AUTO_STAIRS for every step."""
+    fade, MapManager.handle_warps reads AUTO_STAIRS for every step and auto-grind reads AUTO_GRIND_STOP for every
+    check."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way
     config['FADE_STYLE'] = options.fade_style
     config['AUTO_STAIRS'] = options.auto_stairs
+    config['AUTO_GRIND_STOP'] = options.auto_grind_stop
 
 
 class OptionWindow:
