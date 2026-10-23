@@ -1,5 +1,6 @@
 import textwrap
 from os.path import realpath
+from typing import override
 
 from pygame import font, display, Surface
 from pygame.font import Font
@@ -15,6 +16,7 @@ WRAP_LENGTH = 21
 
 class DialogBoxWrapper(textwrap.TextWrapper):
 
+    @override
     def wrap(self, text):
         split_text = text.split('\n')
         lines = [line for para in split_text for line in textwrap.TextWrapper.wrap(self, para)]
@@ -68,6 +70,7 @@ class NESFont(Font):
         super().__init__(path, size)
         self.font_size = size
 
+    @override
     def render(self, text, antialias, color, bgcolor=None) -> Surface:  # type: ignore[override]
         if not isinstance(text, str):
             return super().render(text, antialias, color, bgcolor)

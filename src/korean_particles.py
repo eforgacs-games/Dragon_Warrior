@@ -23,7 +23,7 @@ How the end of a word is read:
   correctly.
 """
 import string
-from typing import Any
+from typing import Any, override
 from collections.abc import Mapping, Sequence
 
 HANGUL_FIRST = 0xAC00  # 가
@@ -132,5 +132,6 @@ def format_with_particles(template: str, args: Sequence[Any] = (), kwargs: Mappi
 class KoreanText(str):
     """A translated string whose .format() makes the particles after its placeholders agree with the values."""
 
+    @override
     def format(self, *args: Any, **kwargs: Any) -> str:  # type: ignore[override]
         return format_with_particles(str(self), args, kwargs)
