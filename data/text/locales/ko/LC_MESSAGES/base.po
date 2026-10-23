@@ -2432,3 +2432,15 @@ msgstr "모험의 서를 복사한다"
 #: src/windows.py
 msgid "ERASE A QUEST"
 msgstr "모험의 서를 지운다"
+
+#: data/text/intro_lookup_table.py:21
+msgid "Ctrl +/-/Wheel: Zoom"
+msgstr "Ctrl +/-/휠: 확대/축소"
+
+#: data/text/intro_lookup_table.py:22
+msgid "Ctrl 0: Reset Zoom"
+msgstr "Ctrl 0: 원래 크기"
+
+#: data/text/intro_lookup_table.py:35
+msgid "Window zoom:"
+msgstr "화면 확대/축소:"

@@ -137,6 +137,11 @@ F2 / F3 / F4 / F11: Turn auto-stairs, auto-battle, invulnerability or fullscreen
 menus, and speeds up everything: walking, text, battle effects and pauses. Only timing changes, not what happens in
 the game. Music and sound effects play at normal speed. The speed lasts until you close the game and isn't saved.
 
+Ctrl + / Ctrl - (or hold Ctrl and turn the mouse wheel): Zoom the window in or out, in whole steps of the NES's
+256x240 so the pixels stay crisp, from the game's own size (`SCALE`) up to what fits on your screen. Ctrl 0 puts it
+back to the size it opened at. This works on every screen; it only changes the window's size, not what the game
+shows. It does nothing in fullscreen (F11 keeps your zoom for when you leave fullscreen) and isn't saved.
+
 ## Demo video
 
 
