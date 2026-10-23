@@ -24,7 +24,7 @@
         "SLEEP"
     ],
     "CurrentMap": "Garinham",
-    "PlayerRow": 1,
+    "PlayerRow": 2,
     "PlayerColumn": 28,
     "StoryFlags": {
         "charlock_stairs_revealed": false,

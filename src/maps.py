@@ -451,12 +451,12 @@ class TantegelCourtyard(DragonWarriorMap):
     def __init__(self, config):
         super().__init__(MapLayouts().tantegel_courtyard, config, Directories(config).tantegel_castle_courtyard_music,
                          (14, 14))
+        # The NES leaves the castle from the tiles just outside TantGFDat's 30 x 30 blocks
         self.create_town_gates(
-            # does the north gate change later on?
-            north_gate=warp_line((6, 6), (6, 35)),
+            north_gate=warp_line((6, 6), (6, 37)),
             west_gate=warp_line((6, 6), (37, 6)),
             east_gate=warp_line((6, 37), (37, 37)),
-            south_gate=warp_line((37, 9), (37, 26)))
+            south_gate=warp_line((37, 6), (37, 37)))
         self.staircases[(14, 14)] = {'map': 'TantegelThroneRoom', 'destination_coordinates': (14, 18),
                                      'direction': Direction.LEFT.value}
         # NES MapEntryTbl/MapTargetTbl: Tant castle GF(29,29) -> Tant castle SL(0,4)
@@ -573,7 +573,11 @@ class CharlockB1(MapWithoutNPCs):
                 (20, 11): {'map': 'CharlockB2', 'destination_coordinates': (16, 11)},  # B: GF(4,14) -> SL1(8,13)
                 (20, 22): {'map': 'CharlockB2', 'destination_coordinates': (18, 20)}  # C: GF(15,14) -> SL1(17,15)
             })
-        self.create_town_gates(south_gate=(warp_line((26, 15), (26, 18))))
+        # The NES leaves the castle from the tiles just outside DLCstlGFDat's 20 x 20 blocks
+        self.create_town_gates(north_gate=warp_line((5, 6), (5, 27)),
+                               east_gate=warp_line((5, 27), (26, 27)),
+                               west_gate=warp_line((5, 6), (26, 6)),
+                               south_gate=warp_line((26, 6), (26, 27)))
         self.set_town_to_overworld_warps()
         self.assign_stair_directions()
 
@@ -746,7 +750,7 @@ class Alefgard(MapWithoutNPCs):
                 (55, 56): {'map': 'CharlockB1', 'destination_coordinates': (25, 17)},
                 # villages
                 (48, 56): {'map': 'Brecconary', 'destination_coordinates': (23, 10)},
-                (9, 10): {'map': 'Garinham', 'destination_coordinates': (14, 9)},
+                (9, 10): {'map': 'Garinham', 'destination_coordinates': (15, 9)},
                 # NES MapEntryTbl/MapTargetTbl: Overworld(104,10) -> Kol(19,23)
                 (17, 112): {'map': 'Kol', 'destination_coordinates': (31, 29)},
                 # cave
@@ -756,7 +760,7 @@ class Alefgard(MapWithoutNPCs):
                 (64, 37): {'map': 'MountainCaveB1', 'destination_coordinates': (8, 1)},
                 (96, 33): {'map': 'Hauksness', 'destination_coordinates': (18, 9)},
                 (79, 110): {'map': 'Rimuldar', 'destination_coordinates': (22, 37)},
-                (109, 81): {'map': 'Cantlin', 'destination_coordinates': (8, 15)},
+                (109, 81): {'map': 'Cantlin', 'destination_coordinates': (8, 16)},
                 (116, 116): {'map': 'MagicTemple', 'destination_coordinates': (6, 2)},
                 (8, 89): {'map': 'StaffOfRainCave', 'destination_coordinates': (11, 6)},
             })
@@ -846,35 +850,38 @@ class Brecconary(DragonWarriorMap):
 
 class Garinham(DragonWarriorMap):
 
-    # NES MAP_GARINHAM (GarinhamDat): NES (x, y) is layout (y + 0, x + 9) here
-    nes_origin, nes_size = (0, 9), (20, 20)
+    # NES MAP_GARINHAM (GarinhamDat): NES (x, y) is layout (y + 1, x + 9) here
+    nes_origin, nes_size = (1, 9), (20, 20)
 
     def __init__(self, config):
-        super().__init__(MapLayouts().garinham, config, Directories(config).village_music, (14, 9),
+        super().__init__(MapLayouts().garinham, config, Directories(config).village_music, (15, 9),
                          staircases={
-                             (0, 28): {'map': 'GarinsGraveB1', 'destination_coordinates': (12, 7),
+                             (1, 28): {'map': 'GarinsGraveB1', 'destination_coordinates': (12, 7),
                                        'stair_direction': 'down'},
                          })
-        self.create_town_gates(west_gate=warp_line((13, 8), (15, 8)),
-                               east_gate=warp_line((11, 29), (14, 29)))
+        # The NES leaves the town from the tiles just outside GarinhamDat's 20 x 20 blocks
+        self.create_town_gates(north_gate=warp_line((0, 8), (0, 29)),
+                               east_gate=warp_line((0, 29), (21, 29)),
+                               west_gate=warp_line((0, 8), (21, 8)),
+                               south_gate=warp_line((21, 8), (21, 29)))
         self.set_town_to_overworld_warps()
-        # NES GarMobTbl and GarStatTbl (Bank00). An NPC at NES X,Y is at (Y, X + 9) here.
+        # NES GarMobTbl and GarStatTbl (Bank00). An NPC at NES X,Y is at (Y + 1, X + 9) here.
         self.npc_coordinates = {
-            (1, 23): 'WISE_MAN',  # static wizard at 14,1 (dialog byte $3A)
-            (4, 21): 'WOMAN',  # mobile female villager at 12,4 ($3E)
-            (5, 12): 'GUARD',  # static guard at 3,5 ($3B)
-            (5, 14): 'GUARD',  # static guard at 5,5 ($3B)
-            (6, 18): 'MERCHANT',  # static shopkeeper at 9,6 ($3C)
-            (7, 20): 'MAN',  # mobile male villager at 11,7 ($3D)
-            (8, 21): 'WISE_MAN',  # mobile wizard at 12,8 ($3F)
-            (10, 11): 'WISE_MAN',  # mobile wizard at 2,10 ($42)
-            (11, 14): 'MERCHANT',  # static shopkeeper at 5,11: the item shop ($09, ToolsDialog)
-            (12, 21): 'WOMAN',  # mobile female villager at 12,12 ($43)
-            (12, 27): 'MAN',  # mobile male villager at 18,12 ($44)
-            (15, 26): 'MERCHANT',  # static shopkeeper at 17,15: the inn ($13, InnDialog)
-            (17, 11): 'WISE_MAN',  # static wizard at 2,17 ($40)
-            (17, 16): 'SOLDIER',  # mobile fighter at 7,17 ($41)
-            (18, 19): 'MERCHANT',  # static shopkeeper at 10,18: weapons and armor ($02, WeaponsDialog)
+            (2, 23): 'WISE_MAN',  # static wizard at 14,1 (dialog byte $3A)
+            (5, 21): 'WOMAN',  # mobile female villager at 12,4 ($3E)
+            (6, 12): 'GUARD',  # static guard at 3,5 ($3B)
+            (6, 14): 'GUARD',  # static guard at 5,5 ($3B)
+            (7, 18): 'MERCHANT',  # static shopkeeper at 9,6 ($3C)
+            (8, 20): 'MAN',  # mobile male villager at 11,7 ($3D)
+            (9, 21): 'WISE_MAN',  # mobile wizard at 12,8 ($3F)
+            (11, 11): 'WISE_MAN',  # mobile wizard at 2,10 ($42)
+            (12, 14): 'MERCHANT',  # static shopkeeper at 5,11: the item shop ($09, ToolsDialog)
+            (13, 21): 'WOMAN',  # mobile female villager at 12,12 ($43)
+            (13, 27): 'MAN',  # mobile male villager at 18,12 ($44)
+            (16, 26): 'MERCHANT',  # static shopkeeper at 17,15: the inn ($13, InnDialog)
+            (18, 11): 'WISE_MAN',  # static wizard at 2,17 ($40)
+            (18, 16): 'SOLDIER',  # mobile fighter at 7,17 ($41)
+            (19, 19): 'MERCHANT',  # static shopkeeper at 10,18: weapons and armor ($02, WeaponsDialog)
         }
         self.custom_underlying_tiles = {
             'WISE_MAN': 'SAND',  # GarinhamDat has sand under the wizard at 14,1
@@ -882,11 +889,11 @@ class Garinham(DragonWarriorMap):
         }
         # The NPCs from GarMobTbl
         self.roaming_character_list = ['WOMAN', 'MAN', 'WISE_MAN_2', 'WISE_MAN_3', 'WOMAN_2', 'MAN_2', 'SOLDIER']
-        # NES GarinCvrdDatPtr -> DgnLrdSL4Dat ($8EE6): the whole top of town. NES X,Y is at (Y, X + 9) here.
+        # NES GarinCvrdDatPtr -> DgnLrdSL4Dat ($8EE6): the whole top of town. NES X,Y is at (Y + 1, X + 9) here.
         self.covered_area = covered_cells({
             **{y: range(20) for y in range(3, 10)},
             10: (15, 16, 18, 19),  # 17,10 is the door
-        }, row_offset=0, column_offset=9)
+        }, row_offset=1, column_offset=9)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -1068,38 +1075,39 @@ class Hauksness(MapWithoutNPCs):
 
 class Cantlin(DragonWarriorMap):
 
-    # NES MAP_CANTLIN (CantlinDat): NES (x, y) is layout (y + 8, x + 0) here
-    nes_origin, nes_size = (8, 0), (30, 30)
+    # NES MAP_CANTLIN (CantlinDat): NES (x, y) is layout (y + 8, x + 1) here
+    nes_origin, nes_size = (8, 1), (30, 30)
 
     def __init__(self, config):
-        super().__init__(MapLayouts().cantlin, config, Directories(config).village_music, (8, 15))
-        self.create_town_gates(north_gate=warp_line((7, 0), (7, 29))
-                               # west_gate = warp_line((21, 9), (24, 9))
-                               # east_gate = warp_line((21, 40), (25, 40))
-                               )
+        super().__init__(MapLayouts().cantlin, config, Directories(config).village_music, (8, 16))
+        # The NES leaves the town from the tiles just outside CantlinDat's 30 x 30 blocks
+        self.create_town_gates(north_gate=warp_line((7, 0), (7, 31)),
+                               east_gate=warp_line((7, 31), (38, 31)),
+                               west_gate=warp_line((7, 0), (38, 0)),
+                               south_gate=warp_line((38, 0), (38, 31)))
         self.set_town_to_overworld_warps()
-        # NES CantMobTbl and CantStatTbl (Bank00). An NPC at NES X,Y is at (Y + 8, X) here.
+        # NES CantMobTbl and CantStatTbl (Bank00). An NPC at NES X,Y is at (Y + 8, X + 1) here.
         self.npc_coordinates = {
-            (11, 8): 'MERCHANT',  # static shopkeeper at 8,3: the inn (dialog byte $14)
-            (13, 22): 'MERCHANT',  # mobile shopkeeper at 22,5: weapons and armor shop 1 ($03)
-            (14, 5): 'GUARD',  # mobile guard at 5,6 ($60)
-            (14, 15): 'GUARD',  # mobile guard at 15,6 ($48)
-            (14, 27): 'WISE_MAN',  # static wizard at 27,6: magic keys ($0C)
-            (15, 2): 'MAN',  # static male villager at 2,7: item shop 1 ($0A)
-            (17, 22): 'GUARD',  # mobile guard at 22,9 ($4D)
-            (20, 2): 'MERCHANT',  # static shopkeeper at 2,12 ($45)
-            (20, 7): 'MERCHANT',  # static shopkeeper at 7,12: item shop 2 ($0B)
-            (20, 24): 'GUARD',  # static guard at 24,12: weapons and armor shop 3 ($05)
-            (21, 22): 'WOMAN',  # static female villager at 22,13: Fairy Water ($10)
-            (22, 4): 'WOMAN',  # mobile female villager at 4,14 ($49)
-            (23, 20): 'MAN',  # mobile male villager at 20,15 ($4B)
-            (24, 9): 'WOMAN',  # mobile female villager at 9,16 ($4A)
-            (24, 15): 'WISE_MAN',  # static wizard at 15,16 ($46)
-            (25, 25): 'MERCHANT',  # mobile shopkeeper at 25,17 ($4C)
-            (30, 22): 'WISE_MAN',  # static wizard at 22,22 ($47)
-            (34, 3): 'MERCHANT',  # mobile shopkeeper at 3,26 ($4E)
-            (34, 27): 'MERCHANT',  # static shopkeeper at 27,26: weapons and armor shop 2 ($04)
-            (36, 14): 'WISE_MAN',  # mobile wizard at 14,28 ($6B)
+            (11, 9): 'MERCHANT',  # static shopkeeper at 8,3: the inn (dialog byte $14)
+            (13, 23): 'MERCHANT',  # mobile shopkeeper at 22,5: weapons and armor shop 1 ($03)
+            (14, 6): 'GUARD',  # mobile guard at 5,6 ($60)
+            (14, 16): 'GUARD',  # mobile guard at 15,6 ($48)
+            (14, 28): 'WISE_MAN',  # static wizard at 27,6: magic keys ($0C)
+            (15, 3): 'MAN',  # static male villager at 2,7: item shop 1 ($0A)
+            (17, 23): 'GUARD',  # mobile guard at 22,9 ($4D)
+            (20, 3): 'MERCHANT',  # static shopkeeper at 2,12 ($45)
+            (20, 8): 'MERCHANT',  # static shopkeeper at 7,12: item shop 2 ($0B)
+            (20, 25): 'GUARD',  # static guard at 24,12: weapons and armor shop 3 ($05)
+            (21, 23): 'WOMAN',  # static female villager at 22,13: Fairy Water ($10)
+            (22, 5): 'WOMAN',  # mobile female villager at 4,14 ($49)
+            (23, 21): 'MAN',  # mobile male villager at 20,15 ($4B)
+            (24, 10): 'WOMAN',  # mobile female villager at 9,16 ($4A)
+            (24, 16): 'WISE_MAN',  # static wizard at 15,16 ($46)
+            (25, 26): 'MERCHANT',  # mobile shopkeeper at 25,17 ($4C)
+            (30, 23): 'WISE_MAN',  # static wizard at 22,22 ($47)
+            (34, 4): 'MERCHANT',  # mobile shopkeeper at 3,26 ($4E)
+            (34, 28): 'MERCHANT',  # static shopkeeper at 27,26: weapons and armor shop 2 ($04)
+            (36, 15): 'WISE_MAN',  # mobile wizard at 14,28 ($6B)
         }
         self.custom_underlying_tiles = {
             'WISE_MAN_2': 'GRASS'
@@ -1108,13 +1116,13 @@ class Cantlin(DragonWarriorMap):
         self.roaming_character_list = ['MERCHANT_2', 'GUARD', 'GUARD_2', 'GUARD_3', 'WOMAN_2', 'MAN_2', 'WOMAN_3',
                                        'MERCHANT_5', 'MERCHANT_6', 'WISE_MAN_4']
         # NES CantCvrdDatPtr -> SwampCaveDat+$32 ($8FAE): two small rooms at the top and the middle of town.
-        # NES X,Y is at (Y + 8, X) here.
+        # NES X,Y is at (Y + 8, X + 1) here.
         self.covered_area = covered_cells({
             1: (1, 2, 3, 26, 27, 28),
             2: (1, 2, 26, 27, 28),
             3: (1, 2, 3, 26, 28),
             **{y: range(11, 19) for y in range(11, 24)},
-        }, row_offset=8, column_offset=0)
+        }, row_offset=8, column_offset=1)
 
     def hero_underlying_tile(self):
         return 'BRICK'
@@ -1197,7 +1205,7 @@ class GarinsGraveB1(MapWithoutNPCs, CaveMap):
                          staircases={
                              (19, 2): {'map': 'GarinsGraveB2', 'destination_coordinates': (3, 12),
                                        'stair_direction': 'down'},
-                             (12, 7): {'map': 'Garinham', 'destination_coordinates': (0, 28), 'stair_direction': 'up'},
+                             (12, 7): {'map': 'Garinham', 'destination_coordinates': (1, 28), 'stair_direction': 'up'},
                          })
         self.assign_stair_directions()
         self.set_town_to_overworld_warps()

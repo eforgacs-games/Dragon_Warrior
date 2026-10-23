@@ -32,7 +32,7 @@ DUNGEON_MAPS = (
 
 # OUTSIDE destinations from the NES MapEntryTbl, as (map, (row, column)). NES overworld (x, y) is (y + 7, x + 8) here.
 _ERDRICKS_CAVE_EXIT = ('Alefgard', (19, 36))
-_GARINS_GRAVE_EXIT = ('Garinham', (0, 28))  # OUTSIDE from Garin's Grave leads into Garinham, not the overworld
+_GARINS_GRAVE_EXIT = ('Garinham', (1, 28))  # OUTSIDE from Garin's Grave leads into Garinham, not the overworld
 _MOUNTAIN_CAVE_EXIT = ('Alefgard', (64, 37))
 _CHARLOCK_EXIT = ('Alefgard', (55, 56))
 OUTSIDE_DESTINATIONS = {

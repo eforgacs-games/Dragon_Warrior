@@ -106,11 +106,11 @@ treasure: Dict[str, Dict[Tuple[int, int], Dict[str, object]]] = {
     'Rimuldar': {
         (31, 32): {'item': 'Wings'},  # (24, 23)
     },
-    # MAP_GARINHAM: row = y, column = x + 9
+    # MAP_GARINHAM: row = y + 1, column = x + 9
     'Garinham': {
-        (5, 17): _gold(10, 0x07),  # (8, 5): 10-17 gold
-        (6, 17): {'item': 'Herb'},  # (8, 6)
-        (5, 18): {'item': 'Torch'},  # (9, 5)
+        (6, 17): _gold(10, 0x07),  # (8, 5): 10-17 gold
+        (7, 17): {'item': 'Herb'},  # (8, 6)
+        (6, 18): {'item': 'Torch'},  # (9, 5)
     },
     # MAP_DLCSTL_BF (the Dragonlord's floor): row = y + 4, column = x + 6
     'CharlockB8': {

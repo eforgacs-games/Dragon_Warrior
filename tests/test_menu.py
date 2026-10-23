@@ -170,7 +170,7 @@ class TestCommandMenu(TestCase):
             self.game.chest_history.record('Elsewhere', (0, column))
         with patch.object(self.game.cmd_menu, 'set_tile_by_coordinates') as set_tile:
             self.game.cmd_menu.map_name = 'Garinham'
-            self.game.player.row, self.game.player.column = (5, 18)
+            self.game.player.row, self.game.player.column = (6, 18)
             self.game.player.current_tile = 'TREASURE_BOX'
             with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
                 self.game.cmd_menu.take()
