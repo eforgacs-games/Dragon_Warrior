@@ -147,7 +147,9 @@ class Game:
         self.magic_armor_steps = 0
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
-        self.speed = 2
+        # Pixels the hero and the NPCs move a frame: one NES pixel (TILE_SIZE is 16 * SCALE), so a step takes
+        # STEP_SYNC_FRAMES (16) frames at any SCALE, like the NES
+        self.speed = self.game_state.config["TILE_SIZE"] // 16
         # NES FrameCounter, NPCUpdateCntr and CharLeftRight (src/npc_schedule.py): when the hero may start a step, which
         # NPCs may move on each frame, and the walking frame
         self.npc_schedule = NPCSchedule()
