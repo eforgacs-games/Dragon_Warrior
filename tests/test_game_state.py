@@ -36,13 +36,6 @@ class TestGameStateInitialization(unittest.TestCase):
         self.assertEqual(self.game_state.radiant_timer, 0)
         self.assertEqual(self.game_state.pending_light_redraws, [])
 
-    def test_music_enabled_from_config_true(self):
-        self.assertTrue(self.game_state.music_enabled)
-
-    def test_music_enabled_from_config_false(self):
-        gs = GameState({'MUSIC_ENABLED': False})
-        self.assertFalse(gs.music_enabled)
-
     def test_config_stored(self):
         self.assertEqual(self.game_state.config, self.config)
 

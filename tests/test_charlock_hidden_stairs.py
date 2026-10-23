@@ -7,11 +7,8 @@ from unittest.mock import patch
 import pygame
 
 from src.config.test_config import test_config
-from src.game import Game
 from src.maps import CharlockB1, CharlockB2, CharlockB3, map_lookup
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 THRONE = CharlockB1.THRONE_COORDINATES
 HIDDEN_STAIRS = CharlockB1.HIDDEN_STAIRCASE_COORDINATES
@@ -36,8 +33,7 @@ class TestCharlockHiddenStairs(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.player.name = "Edward"
 
     def go_to(self, map_name, coordinates):
@@ -144,8 +140,7 @@ class TestCharlockHiddenStairs(TestCase):
                 saved = json.load(save_file)
         self.assertTrue(saved['StoryFlags']['charlock_stairs_revealed'])
 
-        with patch('src.game.SCALED'):
-            loaded_game = Game(test_config)
+        loaded_game = new_game()
         saved['CurrentMap'], saved['PlayerRow'], saved['PlayerColumn'] = 'CharlockB1', 25, 17
         loaded_game.load_game(saved)
         self.assertTrue(loaded_game.story_flags.charlock_stairs_revealed)
@@ -164,8 +159,7 @@ class TestCharlockHiddenStairs(TestCase):
     def test_old_save_with_the_flat_flag_still_loads(self):
         save = {"Name": "Erdrick", "Experience": 0, "Gold": 0, "Inventory": [], "CharlockStairsRevealed": True,
                 "CurrentMap": "CharlockB1", "PlayerRow": 25, "PlayerColumn": 17}
-        with patch('src.game.SCALED'):
-            loaded_game = Game(test_config)
+        loaded_game = new_game()
         loaded_game.load_game(save)
         self.assertTrue(loaded_game.story_flags.charlock_stairs_revealed)
         self.assertEqual(loaded_game.current_map.layout[HIDDEN_STAIRS[0]][HIDDEN_STAIRS[1]], STAIR_DOWN_VALUE)

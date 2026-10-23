@@ -1,4 +1,4 @@
-from typing import Callable, Tuple, List
+from typing import Callable, List
 
 from pygame import K_DOWN, K_s, K_UP, K_w, KEYDOWN, event, Rect, image, display
 from pygame.transform import scale
@@ -6,7 +6,6 @@ from pygame.transform import scale
 from src.calculation import Calculation
 from src.common import BLACK, accept_keys, reject_keys, Graphics
 from src.cursor import BlinkingCursor
-from src.direction import Direction
 from src.directories import Directories
 from src.sound import Sound
 from src.waiting import quit_if_requested
@@ -81,20 +80,6 @@ class GameFunctions:
 
 def set_character_position(character, tile_size: int):
     character.column, character.row = character.rect.x // tile_size, character.rect.y // tile_size
-
-
-def get_next_coordinates(character_column: int, character_row: int, direction: int,
-                         offset_from_character: int = 1) -> Tuple[int, int] | None:
-    match direction:
-        case Direction.UP.value:
-            return character_row - offset_from_character, character_column
-        case Direction.DOWN.value:
-            return character_row + offset_from_character, character_column
-        case Direction.LEFT.value:
-            return character_row, character_column - offset_from_character
-        case Direction.RIGHT.value:
-            return character_row, character_column + offset_from_character
-    return None
 
 
 def get_surrounding_rect(character, tile_size: int) -> Rect:

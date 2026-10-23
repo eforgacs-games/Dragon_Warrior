@@ -1,17 +1,12 @@
 import inspect
-import os
 from unittest import TestCase
-from unittest.mock import patch
 
 import pygame
 
 from src import maps
 from src.config.test_config import test_config
-from src.game import Game
 from tests.test_game import MockMap
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 class TestDragonWarriorMap(TestCase):
@@ -30,8 +25,7 @@ class TestDragonWarriorMap(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.dragon_warrior_map = MockMap(self.game.config)
 
     def test_initial_coordinates(self):
@@ -46,3 +40,13 @@ class TestDragonWarriorMap(TestCase):
                     'Graphics', 'Group', 'LayeredDirty', 'MapLayouts', 'MapWithoutNPCs', 'Player', 'RoamingCharacter'):
                 initialized_map_class = map_class(self.game.config)
                 self.assertTrue(hasattr(initialized_map_class, 'music_file_path'))
+
+    def test_every_npc_stands_on_a_floor_tile(self):
+        # Every NPC's block in the layout is a real floor tile (the NES map data), so map_npc never adds a second
+        # "underlying" tile under an NPC
+        for map_name, map_class in maps.map_lookup.items():
+            if map_name in ('BasementWithNPCs', 'BasementWithoutNPCs', 'CaveMap', 'DragonWarriorMap', 'MapWithoutNPCs'):
+                continue
+            dw_map = map_class(self.game.config)
+            for (row, column), character_name in dw_map.npc_coordinates.items():
+                self.assertTrue(dw_map.has_floor_tile(row, column), f'{map_name} {character_name} at {row},{column}')

@@ -85,9 +85,8 @@ class NPCSchedule:
             self.update_counter = (self.update_counter + 1) % TURNS_PER_CYCLE
 
     def slots_on_turn(self) -> range:
-        """The mobile NPC slots handled this frame: indexes into the map's roaming characters, which are in the order of
-        its npc_coordinates. The NES slots are in the order of the map's mobile NPC table (TantMobTbl etc., Bank00), so
-        the pairs are the NES's where npc_coordinates lists the roaming NPCs in that order."""
+        """The mobile NPC slots handled this frame (RoamingCharacter.slot). The slots are in the order of the map's
+        mobile NPC table (TantMobTbl etc., Bank00), which is the order of its roaming_character_list."""
         first = self.update_counter * NPCS_PER_TURN
         return range(first, first + NPCS_PER_TURN)
 
