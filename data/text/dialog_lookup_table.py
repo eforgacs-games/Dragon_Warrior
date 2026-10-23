@@ -787,7 +787,8 @@ class DialogLookup:
         self.remove_npc('WISE_MAN')
 
     def remove_npc(self, identifier: str):
-        """NES: an NPC is removed from the screen by zeroing its position (until the map is loaded again)."""
+        """NES: an NPC is removed from the screen by zeroing its position (until the map is loaded again). Its mobile
+        slot is left empty, so the other roaming NPCs keep theirs (RoamingCharacter.slot)."""
         character_dict = self.current_map.characters.pop(identifier, None)
         if character_dict is None:
             return
