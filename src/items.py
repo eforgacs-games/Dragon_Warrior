@@ -1,4 +1,5 @@
 import random
+from collections.abc import Iterable
 
 from src.coordinates import Cell
 
@@ -219,6 +220,55 @@ class TreasureChestHistory:
         """Show each of the map's chests as closed or opened, according to the history."""
         for (row, column) in treasure.get(map_name, {}):
             layout[row][column] = opened_value if self.is_opened(map_name, (row, column)) else chest_value
+
+
+# NES InitMapData (ChkLeftThRoom): once F_LEFT_THROOM is set, the throne room door is written into door history
+# slot 7 (DoorXPos+14 = 4, DoorYPos+14 = 7) every time the throne room is entered, so it never locks again.
+THRONE_ROOM_DOOR_SLOT = 7
+
+
+class OpenDoorHistory:
+    """Which locked doors are open: the one place this game keeps that state.
+
+    NES DoorXPos/DoorYPos: 8 slots holding the position of each door opened since the hero was last on the
+    overworld. GetBlockID (ChkDoorBlock, Bank00 LAD45) reads a door in this list as plain brick, InitMapData
+    (ChkOverworldMap/ClrOpenDoorsLoop, LAF2B-LAF3A) clears the list when the overworld is entered, so doors lock
+    again and every visit costs another key, and UseKey (DoorCheckLoop, Bank03 LDCA8-LDCB7) takes the key but
+    doesn't open the door when all 8 slots are in use.
+    As with TreasureChestHistory, the map name is kept with the position, which behaves the same as the NES (x, y),
+    and the history isn't saved: MainGameEngine (LCA0F-LCA18) clears it whenever a game is started or continued.
+    """
+
+    def __init__(self):
+        self.slots: list[tuple[str, Cell] | None] = [None] * 8
+
+    def is_opened(self, map_name: str, coordinates: Cell) -> bool:
+        return (map_name, tuple(coordinates)) in self.slots
+
+    def record(self, map_name: str, coordinates: Cell) -> bool:
+        """NES UseKey: store the door in the first free slot. Returns False when every slot is taken."""
+        for index, slot in enumerate(self.slots):
+            if slot is None:
+                row, column = coordinates
+                self.slots[index] = (map_name, (row, column))
+                return True
+        return False
+
+    def enter_map(self, map_name: str, left_throne_room: bool, throne_room_door: Cell) -> None:
+        """NES InitMapData, run whenever a map is loaded. left_throne_room is the F_LEFT_THROOM story flag: once the
+        hero has been beyond the throne room, its door is always shown as opened."""
+        if map_name == 'Alefgard':
+            self.slots = [None] * 8
+        if left_throne_room and map_name == 'TantegelThroneRoom':
+            row, column = throne_room_door
+            self.slots[THRONE_ROOM_DOOR_SLOT] = ('TantegelThroneRoom', (row, column))
+
+    def apply_to_layout(self, map_name: str, layout: list[list[int]], doors: Iterable[Cell], door_value: int,
+                        opened_value: int) -> None:
+        """Show each of the map's doors (doors: where the map's own layout has one) as locked or opened, according
+        to the history."""
+        for (row, column) in doors:
+            layout[row][column] = opened_value if self.is_opened(map_name, (row, column)) else door_value
 
 
 # NES DoSearch: the hidden items found with SEARCH, by map and then (row, column) in this codebase's coordinates.

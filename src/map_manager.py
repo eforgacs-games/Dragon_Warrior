@@ -13,7 +13,7 @@ from src.coordinates import Cell
 from src.direction import Direction
 from src.drawer import map_surface
 from src.game_functions import set_character_position
-from src.map_layouts import BRICK, TREASURE_BOX
+from src.map_layouts import BRICK, DOOR, TREASURE_BOX
 from src.maps import map_lookup
 from src.menu import CommandMenu
 from src.visual_effects import cut_to_black, screen_fade
@@ -223,17 +223,21 @@ class MapManager:
             self.current_map.layout[row][column] = self.current_map.floor_tile_key['BRIDGE']['val']
 
     def apply_chest_history(self):
-        # NES InitMapData and GetBlockID: update the chest history for the new map, then show opened chests as brick
+        # NES InitMapData and GetBlockID: update the chest and door histories for the new map, then show opened chests
+        # and doors as brick
         map_name = self.current_map.identifier
         if map_name != 'TantegelThroneRoom':
             self.game.story_flags.left_throne_room = True  # NES ChkThRoomMap sets F_LEFT_THROOM
         self.game.chest_history.enter_map(map_name, self.game.story_flags.left_throne_room)
         self.game.chest_history.apply_to_layout(map_name, self.current_map.layout, TREASURE_BOX, BRICK)
-        if map_name == 'TantegelThroneRoom' and self.game.story_flags.left_throne_room:
-            # NES ChkLeftThRoom: the throne room door is removed with the chests, so a continued game never finds
-            # it locked again
-            row, column = THRONE_ROOM_DOOR_COORDINATES
-            self.current_map.layout[row][column] = BRICK
+        # NES ChkOverworldMap clears the door history on the overworld, and ChkLeftThRoom writes the throne room door
+        # into it with the chests, so a continued game never finds that door locked again; every other door locks
+        # again, and opened doors show as brick
+        self.game.door_history.enter_map(map_name, self.game.story_flags.left_throne_room,
+                                         THRONE_ROOM_DOOR_COORDINATES)
+        self.game.door_history.apply_to_layout(map_name, self.current_map.layout,
+                                               self.layouts.door_coordinates.get(map_name, ()), DOOR, BRICK)
+
     def place_princess_gwaelin(self):
         """Put Gwaelin where the NES story flags say she is before the map's NPCs are loaded."""
         if self.current_map.identifier == 'TantegelThroneRoom' and self.game.story_flags.gwaelin_returned:
