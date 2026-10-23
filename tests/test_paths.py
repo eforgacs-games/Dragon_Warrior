@@ -20,6 +20,11 @@ REPO_ROOT = dirname(dirname(realpath(__file__)))
 HOME = os.path.expanduser('~')
 
 
+def config_without_save_dir() -> dict:
+    """test_config without a SAVE_DIR (other tests, e.g. the checkpoint ones, may leave one in it)."""
+    return {**test_config, 'SAVE_DIR': None}
+
+
 class FrozenTestCase(TestCase):
     def freeze(self, meipass: str | None) -> None:
         """Patches sys as a PyInstaller build sets it: sys.frozen, and sys._MEIPASS for the folder it unpacks to."""
@@ -42,7 +47,7 @@ class TestFromSource(TestCase):
 
     def test_saves_stay_in_src_saves(self):
         self.assertEqual(default_save_dir(), join(REPO_ROOT, 'src', 'saves'))
-        self.assertEqual(Directories(test_config).save_dir, join(REPO_ROOT, 'src', 'saves'))
+        self.assertEqual(Directories(config_without_save_dir()).save_dir, join(REPO_ROOT, 'src', 'saves'))
 
     def test_save_dir_config_still_wins(self):
         self.assertEqual(Directories({**test_config, 'SAVE_DIR': '/somewhere'}).save_dir, '/somewhere')
@@ -70,7 +75,7 @@ class TestFrozen(FrozenTestCase):
     def test_directories_finds_files_in_meipass_and_saves_per_user(self):
         # The repository stands in for the unpacked build: it has data/ at the same paths
         self.freeze(REPO_ROOT)
-        directories = Directories(test_config)
+        directories = Directories(config_without_save_dir())
         self.assertEqual(directories.save_dir, join(user_data_dir(), 'saves'))
         self.assertEqual(directories.UNIFONT_PATH, join(REPO_ROOT, 'data', 'fonts', 'unifont.ttf'))
         self.assertEqual(directories.root_project_path, REPO_ROOT)
