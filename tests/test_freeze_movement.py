@@ -135,11 +135,11 @@ class TestFreezeMovement(FreezeTestCase):
         self.assertEqual(before, self.guard_position())
 
     def test_sprites_do_not_animate_while_the_command_menu_is_open(self):
-        self.assertTrue(self.game.sprites_animate)
+        self.assertTrue(self.game.movement.sprites_animate)
         self.open_command_menu()
-        self.assertFalse(self.game.sprites_animate)
+        self.assertFalse(self.game.movement.sprites_animate)
         self.game.game_state.unpause_all_movement()
-        self.assertFalse(self.game.sprites_animate)
+        self.assertFalse(self.game.movement.sprites_animate)
 
     def test_command_window_waits_for_npc_to_finish_its_step(self):
         self.let_guard_start_a_step()
@@ -194,7 +194,7 @@ class TestFreezeMovement(FreezeTestCase):
         with patch('src.movement.random.choice', return_value=Direction.LEFT.value):
             self.close_command_menu()
             self.assertFalse(self.game.cmd_menu.menu.is_enabled())
-            self.assertFalse(self.game.world_frozen)
+            self.assertFalse(self.game.movement.world_frozen)
             before = self.guard_position()
             self.frames(3)
         self.assertNotEqual(before, self.guard_position())
@@ -238,7 +238,7 @@ class TestFreezeMovement(FreezeTestCase):
     def test_pause_freezes_npcs_and_animation(self):
         self.frame(keydown(K_i))
         self.assertTrue(self.game.paused)
-        self.assertFalse(self.game.sprites_animate)
+        self.assertFalse(self.game.movement.sprites_animate)
         before = self.guard_position()
         for _ in range(5):
             self.game.movement.npc_schedule.give_turn_to(0)
@@ -270,7 +270,7 @@ class TestFreezeMovement(FreezeTestCase):
         # NES: unpausing ends with JMP JoypadCheckLoop (FrameCounter = 0), so a direction held then steps at once
         self.frame(keydown(K_i), held=(K_LEFT,))
         self.assertFalse(self.game.paused)
-        self.assertTrue(self.game.sprites_animate)
+        self.assertTrue(self.game.movement.sprites_animate)
         self.frames(2, held=(K_LEFT,))
         self.assertLess(self.game.player.rect.x, start_x)
 
@@ -283,7 +283,7 @@ class TestFreezeMovement(FreezeTestCase):
         with patch('src.movement.random.choice', return_value=Direction.LEFT.value):
             self.frames(20)
         self.assertEqual(before, self.guard_position())
-        self.assertFalse(self.game.sprites_animate)
+        self.assertFalse(self.game.movement.sprites_animate)
 
     def test_start_does_not_pause_while_the_command_menu_is_open(self):
         self.open_command_menu()

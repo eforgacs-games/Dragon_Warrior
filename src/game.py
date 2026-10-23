@@ -102,8 +102,6 @@ class Game:
         self.magic_armor_steps = 0
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
-        # Frames left of the pause after a step onto a hill (HILL_PAUSE_FRAMES, see hill_pause_frame)
-        self.hill_pause_frames = 0
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
         self.invulnerable = self.game_state.config["INVULNERABLE"]
@@ -116,7 +114,6 @@ class Game:
         # has finished their step (NES PausePrepLoop / DoNCCmdWindow), see resolve_pending_freezes
         self.pause_requested = False
         self.cmd_menu_requested = False
-        self.freeze_wait_frames = 0
         # Create the game window.
         if self.fullscreen_enabled:
             # according to pygame docs: "SCALED is considered an experimental API and may change in future releases."
@@ -213,7 +210,7 @@ class Game:
             self.clock.tick(self.fps)
             self.run_due_frames()
             self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player,
-                                 self.cmd_menu, self.foreground_rects, self.sprites_animate, self.camera,
+                                 self.cmd_menu, self.foreground_rects, self.movement.sprites_animate, self.camera,
                                  self.initial_dialog_enabled, self.events, self.skip_text, self.story_flags.left_throne_room,
                                  self.game_state, self.color)
             display.flip()
@@ -256,8 +253,8 @@ class Game:
 
     def map_frame(self) -> None:
         """One frame on the map (one NES frame): the hero, fights, the NPCs and what the step leads to."""
-        if self.hill_pause_frames:
-            self.hill_pause_frame()
+        if self.movement.hill_pause_frames:
+            self.movement.hill_pause_frame()
             event.pump()
             return
         self.movement.handle_player_movement()
@@ -265,7 +262,7 @@ class Game:
         if not self.player.is_moving:
             set_character_position(self.player, tile_size=self.tile_size)
         self._handle_map_updates()
-        self.resolve_pending_freezes()
+        self.movement.resolve_pending_freezes()
         self._handle_post_move_checks()
         self.ending.check_for_end_game_trigger()
         self._handle_debugging_info()
@@ -320,85 +317,13 @@ class Game:
         """
         Updates character positions and handles warp logic.
         """
-        if not self.world_frozen:
+        if not self.movement.world_frozen:
             self.movement.do_sprites()
         # currently can't process staircases right next to one another, need to fix
         # a quick fix would be to add an exception in the conditional for
         # the map where staircases right next to each other need to be enabled,
         # as done with Cantlin and others below
         self.handle_warps()
-
-    @property
-    def world_frozen(self) -> bool:
-        """
-        Whether everything on the map is stopped: the hero and NPCs don't move and sprites don't animate.
-        NES: StopNPCMove is set while the command window is up (ShowNCCmdWindow), and nothing calls DoSprites while
-        the game is paused (GamePaused) or a window waits for a button (WaitForBtnPress), so walking animation stops
-        too. Dialogs, shops and YES/NO prompts run in their own loops inside a command, so the main loop (and
-        everything that moves) doesn't run at all until they close.
-        This is the one place movement is gated, rather than relying on the GameState flags alone, because those
-        are turned back on in many places (e.g. every menu command ends with unpause_all_movement).
-        It's also frozen while RADIANT's or a torch's light grows (light_growing).
-        """
-        return (self.paused or self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled()
-                or self.light_growing)
-
-    @property
-    def light_growing(self) -> bool:
-        """Whether RADIANT's or a torch's light is still growing. NES LightIncreaseLoop (DoSpell, Bank03, about 24
-        frames: a PostMoveUpdate of LIGHT_REDRAW_FRAMES for each 2 blocks) and UseTorch redraw the light before they
-        return, with the NPCs still stopped, so nothing reads the joypad and nothing moves until it's done (#307).
-        Drawer.handle_darkness advances the light, and only runs while the darkness is drawn."""
-        return (bool(self.game_state.pending_light_redraws) and self.current_map.is_dark
-                and self.game_state.config['ENABLE_DARKNESS'])
-
-    @property
-    def freeze_pending(self) -> bool:
-        return self.pause_requested or self.cmd_menu_requested
-
-    @property
-    def sprites_animate(self) -> bool:
-        return self.game_state.enable_animate and not self.world_frozen
-
-    def everyone_on_a_tile(self) -> bool:
-        """Whether the hero and every roaming NPC are standing exactly on a tile, not partway through a step."""
-        if self.player.is_moving:
-            return False
-        if self.freeze_wait_frames > self.tile_size // self.movement.speed:
-            # Every NPC step finishes within this many frames; one that hasn't is stuck (e.g. the hero stepped
-            # into the tile it was walking to), so don't wait on it forever.
-            return True
-        return all(not roaming_character.is_moving or (roaming_character.rect.x % self.tile_size == 0 and
-                                                       roaming_character.rect.y % self.tile_size == 0)
-                   for roaming_character in self.current_map.roaming_characters)
-
-    def resolve_pending_freezes(self) -> None:
-        """
-        Pause, or open the command window, once the hero and the NPCs have finished their steps.
-        NES PausePrepLoop (START) and DoNCCmdWindow (A) keep calling DoSprites until FrameCounter & $0F == 1, the
-        frame on which every NPC is lined up on a tile, and only then (before that frame's DoSprites, so before any NPC
-        starts a step) pause or set StopNPCMove. START is checked
-        before A (CheckInputs), so a pause wins.
-        """
-        if not self.freeze_pending:
-            self.freeze_wait_frames = 0
-            return
-        if not self.everyone_on_a_tile():
-            if not self.player.is_moving:
-                self.freeze_wait_frames += 1
-            return
-        if not self.movement.npc_schedule.between_turns:
-            # The next frame would be an NPC turn's decision frame only once this one is the last of a turn
-            return
-        self.freeze_wait_frames = 0
-        if self.pause_requested:
-            self.pause_requested = False
-            self.paused = True
-            return
-        self.cmd_menu_requested = False
-        self.drawer.display_hovering_stats = True
-        self.cmd_menu.launch_signaled = True
-        self.game_state.pause_all_movement()
 
     def _handle_pygame_events(self, events: List[event.Event]) -> None:
         """
@@ -557,19 +482,9 @@ class Game:
                 return
             if tile == 'HILLS':
                 # NES ChkBlkSand: the fight roll waits for the hill's pause (hill_pause_frame)
-                self.hill_pause_frames = HILL_PAUSE_FRAMES
+                self.movement.hill_pause_frames = HILL_PAUSE_FRAMES
                 return
             self.roll_for_fight(column, row, tile)
-
-    def hill_pause_frame(self) -> None:
-        """One of the HILL_PAUSE_FRAMES frames NES ChkBlkSand waits after a step onto a hill (three WaitForNMI). Nothing
-        moves and nothing animates (no DoSprites), and FrameCounter stays at the 0 the step left it at, as
-        JoypadCheckLoop resets it afterwards anyway. The step's fight roll (ChkSandFight) comes after the last one."""
-        self.hill_pause_frames -= 1
-        if self.hill_pause_frames:
-            return
-        column, row = self.player.rect.x // self.tile_size, self.player.rect.y // self.tile_size
-        self.roll_for_fight(column, row, get_tile_id_by_coordinates(column, row, self.current_map))
 
     def roll_for_fight(self, column: int, row: int, tile: str | None) -> None:
         """NES CheckBlockDmg's fight roll for the block the hero has just stepped onto, and the fight if it starts."""
@@ -751,30 +666,30 @@ class Game:
         if keydown_event.key == K_k:
             # A button
             # print("K key pressed (A button).")
-            if self.world_frozen or self.pause_requested:
+            if self.movement.world_frozen or self.pause_requested:
                 return
             # The window opens once the hero and the NPCs have finished their steps (resolve_pending_freezes)
             self.cmd_menu_requested = True
-            self.resolve_pending_freezes()
+            self.movement.resolve_pending_freezes()
 
     def handle_start_button(self, keydown_event):
         if keydown_event.key == K_i:
             # Start button
             if self.paused:
                 self.paused = False
-            elif not (self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled() or self.light_growing):
+            elif not (self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled() or self.movement.light_growing):
                 # NES CheckInputs: START only pauses from the map, not while a window is up or the light grows. The
                 # hero finishes the step under way first (resolve_pending_freezes).
                 self.pause_requested = True
                 self.cmd_menu_requested = False
-                self.resolve_pending_freezes()
+                self.movement.resolve_pending_freezes()
 
     def handle_enter_key(self, keydown_event):
         if keydown_event.key == K_RETURN:
             # A shortcut for TAKE/DOOR/TALK, so it follows the same rule as the A button: NES GameEngineLoop only reads
             # commands between steps (DoJoyUp etc. move a whole tile before returning to CheckInputs). Mid-step, or
             # while a pause or the command window is pending or open (where Enter picks a menu item), it does nothing.
-            if self.player.is_moving or self.world_frozen or self.freeze_pending:
+            if self.player.is_moving or self.movement.world_frozen or self.movement.freeze_pending:
                 return
             if self.player.current_tile == 'TREASURE_BOX':
                 self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)

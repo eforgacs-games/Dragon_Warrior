@@ -10,7 +10,7 @@ from typing import Any, Protocol
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_s, K_w, key
 
-from src.calculation import Calculation
+from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.common import is_facing_down, is_facing_laterally, is_facing_left, is_facing_medially, is_facing_right, \
     is_facing_up
@@ -55,11 +55,15 @@ class MovementGame(Protocol):
     camera: Camera
     tile_size: int
     drawer: Any
-    freeze_pending: bool
-
-    world_frozen: bool
+    cmd_menu: Any
+    paused: bool
+    # START or A pressed while someone is between tiles: see MovementController.resolve_pending_freezes
+    pause_requested: bool
+    cmd_menu_requested: bool
 
     def count_step(self) -> None: ...
+
+    def roll_for_fight(self, column: int, row: int, tile: str | None) -> None: ...
 
 
 class MovementController:
@@ -82,6 +86,11 @@ class MovementController:
         self.step_ends = False
         # NPCS_MAKE_WAY: the roaming NPC the hero just bumped into, and the hero's direction (see ask_npc_to_make_way)
         self.npc_asked_to_make_way: tuple[RoamingCharacter, int] | None = None
+        # Frames left of the pause after a step onto a hill (HILL_PAUSE_FRAMES, see hill_pause_frame)
+        self.hill_pause_frames = 0
+        # Frames the hero has stood waiting for the NPCs to finish their steps before a pause or the command window
+        # (see everyone_on_a_tile)
+        self.freeze_wait_frames = 0
 
     # What the controller uses of the Game, read from it each time
     @property
@@ -123,7 +132,7 @@ class MovementController:
         Checks if the game is paused or if movement is disabled; if not,
         moves the player based on the current key state.
         """
-        if self.game.world_frozen:
+        if self.world_frozen:
             # NES: every command, the pause and the windows they open end with JMP JoypadCheckLoop, which resets
             # FrameCounter, so a direction held as they close starts a step at once. They open between NPC turns
             # (resolve_pending_freezes), when FrameCounter & $0F is 0 already, so the NPCs carry on where they were.
@@ -131,7 +140,7 @@ class MovementController:
             return
         if not self.game_state.enable_movement:
             return
-        if self.game.freeze_pending and not self.player.is_moving:
+        if self.freeze_pending and not self.player.is_moving:
             # NES GameEngineLoop only reads START and A between steps (DoJoyUp etc. move a whole tile before
             # returning), so a step already under way is finished, but no new one is started. PausePrepLoop and
             # DoNCCmdWindow keep counting frames until the end of the NPCs' turn.
@@ -364,7 +373,7 @@ class MovementController:
         self.npc_schedule.start_sprites()
         if self.game_state.enable_roaming and self.current_map.roaming_characters:
             # NES UpdateNPCs1: no NPC starts a new step once a pause or the command window has been asked for
-            self.move_roaming_characters(start_new_steps=not self.game.freeze_pending)
+            self.move_roaming_characters(start_new_steps=not self.freeze_pending)
             self.update_roaming_character_positions()
         # A request to make way is only for the frame right after the bump
         self.npc_asked_to_make_way = None
@@ -456,6 +465,88 @@ class MovementController:
         for roaming_character in self.current_map.roaming_characters:
             if not roaming_character.is_moving:
                 set_character_position(roaming_character, tile_size=self.tile_size)
+
+    @property
+    def world_frozen(self) -> bool:
+        """
+        Whether everything on the map is stopped: the hero and NPCs don't move and sprites don't animate.
+        NES: StopNPCMove is set while the command window is up (ShowNCCmdWindow), and nothing calls DoSprites while
+        the game is paused (GamePaused) or a window waits for a button (WaitForBtnPress), so walking animation stops
+        too. Dialogs, shops and YES/NO prompts run in their own loops inside a command, so the main loop (and
+        everything that moves) doesn't run at all until they close.
+        This is the one place movement is gated, rather than relying on the GameState flags alone, because those
+        are turned back on in many places (e.g. every menu command ends with unpause_all_movement).
+        It's also frozen while RADIANT's or a torch's light grows (light_growing).
+        """
+        return (self.game.paused or self.game.cmd_menu.launch_signaled or self.game.cmd_menu.menu.is_enabled()
+                or self.light_growing)
+
+    @property
+    def light_growing(self) -> bool:
+        """Whether RADIANT's or a torch's light is still growing. NES LightIncreaseLoop (DoSpell, Bank03, about 24
+        frames: a PostMoveUpdate of LIGHT_REDRAW_FRAMES for each 2 blocks) and UseTorch redraw the light before they
+        return, with the NPCs still stopped, so nothing reads the joypad and nothing moves until it's done (#307).
+        Drawer.handle_darkness advances the light, and only runs while the darkness is drawn."""
+        return (bool(self.game_state.pending_light_redraws) and self.current_map.is_dark
+                and self.game_state.config['ENABLE_DARKNESS'])
+
+    @property
+    def freeze_pending(self) -> bool:
+        return self.game.pause_requested or self.game.cmd_menu_requested
+
+    @property
+    def sprites_animate(self) -> bool:
+        return self.game_state.enable_animate and not self.world_frozen
+
+    def everyone_on_a_tile(self) -> bool:
+        """Whether the hero and every roaming NPC are standing exactly on a tile, not partway through a step."""
+        if self.player.is_moving:
+            return False
+        if self.freeze_wait_frames > self.tile_size // self.speed:
+            # Every NPC step finishes within this many frames; one that hasn't is stuck (e.g. the hero stepped
+            # into the tile it was walking to), so don't wait on it forever.
+            return True
+        return all(not roaming_character.is_moving or (roaming_character.rect.x % self.tile_size == 0 and
+                                                       roaming_character.rect.y % self.tile_size == 0)
+                   for roaming_character in self.current_map.roaming_characters)
+
+    def resolve_pending_freezes(self) -> None:
+        """
+        Pause, or open the command window, once the hero and the NPCs have finished their steps.
+        NES PausePrepLoop (START) and DoNCCmdWindow (A) keep calling DoSprites until FrameCounter & $0F == 1, the
+        frame on which every NPC is lined up on a tile, and only then (before that frame's DoSprites, so before any NPC
+        starts a step) pause or set StopNPCMove. START is checked
+        before A (CheckInputs), so a pause wins.
+        """
+        if not self.freeze_pending:
+            self.freeze_wait_frames = 0
+            return
+        if not self.everyone_on_a_tile():
+            if not self.player.is_moving:
+                self.freeze_wait_frames += 1
+            return
+        if not self.npc_schedule.between_turns:
+            # The next frame would be an NPC turn's decision frame only once this one is the last of a turn
+            return
+        self.freeze_wait_frames = 0
+        if self.game.pause_requested:
+            self.game.pause_requested = False
+            self.game.paused = True
+            return
+        self.game.cmd_menu_requested = False
+        self.game.drawer.display_hovering_stats = True
+        self.game.cmd_menu.launch_signaled = True
+        self.game_state.pause_all_movement()
+
+    def hill_pause_frame(self) -> None:
+        """One of the HILL_PAUSE_FRAMES frames NES ChkBlkSand waits after a step onto a hill (three WaitForNMI). Nothing
+        moves and nothing animates (no DoSprites), and FrameCounter stays at the 0 the step left it at, as
+        JoypadCheckLoop resets it afterwards anyway. The step's fight roll (ChkSandFight) comes after the last one."""
+        self.hill_pause_frames -= 1
+        if self.hill_pause_frames:
+            return
+        column, row = self.player.rect.x // self.tile_size, self.player.rect.y // self.tile_size
+        self.game.roll_for_fight(column, row, get_tile_id_by_coordinates(column, row, self.current_map))
 
     def bump_and_reset(self, character, pre_bump_next_tile, pre_bump_next_next_tile):
         if character.next_tile_id != pre_bump_next_tile:
