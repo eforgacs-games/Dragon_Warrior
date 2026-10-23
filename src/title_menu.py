@@ -27,7 +27,7 @@ from src.save_file import save_file_name as save_file_name_for
 from src.sound import Sound
 from src.title_windows import draw_title_windows, title_menu_layout, title_translate
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
-from src.windows import ADVENTURE_LOG_123_LAYOUT, WindowLayout, used_logs_layout
+from src.windows import WindowLayout, open_logs_layout, used_logs_layout
 
 # Returned by a title menu entry that goes back to the title menu when it's done (NES WndBackToMain)
 BACK_TO_TITLE_MENU = object()
@@ -120,9 +120,11 @@ class TitleMenu:
     def begin_new_quest(self) -> object:
         """BEGIN A NEW QUEST: an adventure log, the name, then the options. B in the log window, or Escape in the
         name entry, cancels it, back to the title menu with nothing saved."""
-        if self.select_adventure_log(self.screen) is BACK_TO_TITLE_MENU:
+        log_window = self.select_adventure_log(self.screen)
+        if log_window is BACK_TO_TITLE_MENU:
             return BACK_TO_TITLE_MENU
-        name_selection = NameSelection(self.config)
+        # The open logs window stays on the screen behind the name entry, its arrow on the chosen log
+        name_selection = NameSelection(self.config, log_window if isinstance(log_window, tuple) else None)
         name = name_selection.select_name(get_ticks(), self.screen, self.game.cmd_menu)
         if name is None:
             return BACK_TO_TITLE_MENU
@@ -266,15 +268,21 @@ class TitleMenu:
         return BACK_TO_TITLE_MENU
 
     def select_adventure_log(self, screen) -> object:
-        """BEGIN A NEW QUEST's log window, LogList123Dat1 over the title menu with its arrow held on BEGIN A NEW QUEST:
-        the chosen log becomes the hero's. B goes back to the title menu (DoNewQuest: ShowOpenLogs returns WND_ABORT,
-        then WndBackToMain), returning BACK_TO_TITLE_MENU."""
+        """BEGIN A NEW QUEST's log window, ShowOpenLogs: the open logs only (LogList??Dat1), so a new quest never
+        overwrites a used log. The chosen log becomes the hero's, and the window and the entry chosen in it are
+        returned, for the name entry to draw behind it. B goes back to the title menu (DoNewQuest: ShowOpenLogs
+        returns WND_ABORT, then WndBackToMain), returning BACK_TO_TITLE_MENU, as does having no open log
+        (NoOpenGames)."""
         used = self.save_files()
+        open_logs = tuple(log for log in ADVENTURE_LOGS if save_file_name_for(log) not in used)
+        if not open_logs:
+            return BACK_TO_TITLE_MENU
+        layout = open_logs_layout(open_logs)
         begin_entry = BEGIN_ENTRY if used else BEGIN_ENTRY_WITH_NO_LOG
-        selection = self.game_functions.main_menu_selection(get_ticks(), screen, ADVENTURE_LOG_123_LAYOUT,
+        selection = self.game_functions.main_menu_selection(get_ticks(), screen, layout,
                                                             below=[(title_menu_layout(len(used)), begin_entry)],
                                                             b_goes_back=True)
         if selection == MENU_BACK:
             return BACK_TO_TITLE_MENU
-        self.player.adventure_log = selection + 1
-        return None
+        self.player.adventure_log = open_logs[selection]
+        return layout, selection
