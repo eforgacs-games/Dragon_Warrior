@@ -14,8 +14,8 @@ from src.battle_controller import BattleController
 from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.game import Game
-from src.options_screen import DIALOG_STYLE_OPTIONS, MESSAGE_SPEED_OPTIONS, NPCS_MAKE_WAY_OPTIONS, OptionsScreen, \
-    adventure_log_options
+from src.options_screen import DIALOG_STYLE_OPTIONS, FADE_STYLE_OPTIONS, MESSAGE_SPEED_OPTIONS, \
+    NPCS_MAKE_WAY_OPTIONS, OptionsScreen, adventure_log_options
 from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT
 
@@ -182,6 +182,9 @@ class TestKoreanOptionsScreen(KoreanTestCase):
     def test_dialog_style_and_npcs_make_way_windows(self):
         self.assertEqual(['대화 방식', '클래식 (NES)', '모던'], self.draw(DIALOG_STYLE_OPTIONS))
         self.assertEqual(['NPC가 길 비키기', '켜기', '끄기 (NES)'], self.draw(NPCS_MAKE_WAY_OPTIONS))
+
+    def test_fade_style_window(self):
+        self.assertEqual(['페이드 방식', 'NES', '스무스'], self.draw(FADE_STYLE_OPTIONS))
 
     def test_adventure_log_window(self):
         self.assertEqual(['모험의 서 1:ERDR', '모험의 서 3:LORA'],
