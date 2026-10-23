@@ -8,7 +8,8 @@ import pygame
 from pygame import K_ESCAPE, K_RETURN, K_TAB, KEYDOWN
 
 from src.config.test_config import test_config
-from src.game import BACK_TO_TITLE_MENU, Game
+from src.game import Game
+from src.title_menu import BACK_TO_TITLE_MENU
 
 
 def key_event(key: int, unicode: str = '') -> MagicMock:
@@ -45,9 +46,9 @@ class TestNewQuestCancel(TestCase):
                 patch('src.selection.event.get', side_effect=[[e] for e in name_entry_events]), \
                 patch('src.menu_functions.display'), patch('src.menu_functions.Sound'), \
                 patch('src.menu_functions.toggle_joystick_input', return_value=True), \
-                patch.object(self.game, 'choose_new_quest_options') as choose_options, \
+                patch.object(self.game.title_menu, 'choose_new_quest_options') as choose_options, \
                 patch.object(self.game, 'start_at_throne_room') as start:
-            result = self.game.begin_new_quest()
+            result = self.game.title_menu.begin_new_quest()
         return result, choose_options, start
 
     def assert_cancelled(self, result, choose_options, start):
@@ -76,9 +77,9 @@ class TestNewQuestCancel(TestCase):
         with patch.object(self.game.game_functions, 'main_menu_selection', return_value=0) as menu, \
                 patch('src.selection.event.get', side_effect=[[e] for e in name_entry_events]), \
                 patch('src.menu_functions.display'), patch('src.menu_functions.Sound'), \
-                patch.object(self.game, 'choose_new_quest_options'), \
+                patch.object(self.game.title_menu, 'choose_new_quest_options'), \
                 patch.object(self.game, 'start_at_throne_room') as start:
-            self.game.show_main_menu_screen(self.game.screen)
+            self.game.title_menu.show_main_menu_screen(self.game.screen)
         # the title menu, the log, (Escape) the title menu again, the log
         self.assertEqual(4, menu.call_count)
         start.assert_called_once()
