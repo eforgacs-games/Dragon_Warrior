@@ -163,6 +163,12 @@ has finished his step; not in a fight, a dialog or a menu. States are kept in th
 game, after its format has changed, is refused with a message. The game speed, auto-battle, invulnerability and
 fullscreen aren't part of a state.
 
+Backspace (hold): Rewind, not on the NES. On the map, the game keeps a snapshot like a save state's every 30 frames
+(the last 60, about 30 seconds at normal speed) and one just before every fight. Holding Backspace steps back through
+them, a few frames apart; let go and play goes on from the one on screen (the ones after it are forgotten). It works
+when START would pause the game, not in a fight, a dialog or a menu; after a fight, rewinding goes back to just before
+it. The snapshots are only kept in memory, for this session.
+
 1 / 2 / 3 / 4 / 5: Game speed (normal, 2x, 4x, 8x, 16x). This works anywhere, including battles, dialogs and
 menus, and speeds up everything: walking, text, battle effects and pauses. On the map the higher speeds go as fast as
 the computer can draw it, up to the speed you chose. Only timing changes, not what happens in

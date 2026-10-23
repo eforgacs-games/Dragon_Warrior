@@ -2553,3 +2553,7 @@ msgstr ""
 #: src/game.py
 msgid "State {} can't be read"
 msgstr "상태 {}: 읽을 수 없음"
+
+#: data/text/intro_lookup_table.py
+msgid "Backspace: Rewind"
+msgstr "Backspace: 되감기"
