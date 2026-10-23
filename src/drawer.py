@@ -48,6 +48,9 @@ class Drawer:
         # Where the hero was drawn on the last frame, so the frame a step ends on also redraws it (see draw_all)
         self.last_player_rect: Rect | None = None
         self.hovering_stats_displayed = False
+        # Whether draw_all is drawing the frame a map change fades in from: the joypad isn't read until the fade-in
+        # is over (see handle_initial_dialog)
+        self.drawing_fade_in_frame = False
         self.graphics = Graphics(game_state.config)
         self.directories = Directories(game_state.config)
         self.sound = Sound(game_state.config)
@@ -152,6 +155,14 @@ class Drawer:
             self.game_state.enable_movement = True
             self.show_pop_up_after_automatic_dialog()
 
+    def remove_pop_up(self, cmd_menu: CommandMenu) -> None:
+        """NES ChkRemovePopUp (Bank00): take the pop-up window off the screen if it is up (DoRemovePopUp: RemoveWindow,
+        FrameCounter kept as it was)."""
+        self.display_hovering_stats = False
+        if self.hovering_stats_displayed:
+            cmd_menu.window_drop_up_effect(*POPUP_WINDOW)
+            self.hovering_stats_displayed = False
+
     def show_pop_up_after_automatic_dialog(self) -> None:
         """The king's words in the throne room, which start on their own, keep the pop-up window closed while they wait
         for a button (handle_initial_dialog, handle_post_death_dialog). The hero has been standing still all along, so
@@ -164,8 +175,8 @@ class Drawer:
         # king's speech, D-pad, START and SELECT included, and so does one that's still held. Other keys don't.
         key_pressed = nes_button_pressed(events) or is_any_key_held(ANY_BUTTON_KEYS)
         if skip_text or (key_pressed and not self.game_state.automatic_initial_dialog_run):
-            # show the map as it is before the dialog window opens over it. Only now: draw_all also runs for the frame
-            # a map change fades in from, and flipping that would flash the map at full brightness before the fade.
+            # show the map as it is before the dialog window opens over it (never in the frame a map change fades in
+            # from: handle_initial_dialog doesn't start the speech until the fade-in is over)
             display.flip()
             # NES MainGameEngine: the king greets a hero who has already been beyond the throne room (F_LEFT_THROOM,
             # kept in the save) as returning, and gives everyone else the opening speech
@@ -186,7 +197,10 @@ class Drawer:
             if self.game_state.is_initial_dialog:
                 self.display_hovering_stats = False
                 cmd_menu.launch_signaled = False
-                self.run_automatic_initial_dialog(events, skip_text, cmd_menu)
+                # NES StartAtThroneRoom: the map fades in (PalFadeIn) before FirstInputLoop reads the joypad, so a
+                # button held (or pressed) as the throne room loads doesn't start the king's speech before the fade
+                if not self.drawing_fade_in_frame:
+                    self.run_automatic_initial_dialog(events, skip_text, cmd_menu)
                 clear_events_keeping_quit()
             else:
                 if left_throne_room:
@@ -268,11 +282,9 @@ class Drawer:
                 tile_types_to_draw += replace_characters_with_underlying_tiles(
                     list(filter(None, player_surrounding_tiles)), current_map.character_key)
                 # The pop-up window opens on the hero's POP_UP_FRAME of standing still
-                # (MovementController.sprites_frame, counted in game frames like the steps) and closes when he moves
-                self.display_hovering_stats = False
-                if self.hovering_stats_displayed:
-                    cmd_menu.window_drop_up_effect(1, 2, 4, 6)
-                    self.hovering_stats_displayed = False
+                # (MovementController.sprites_frame, counted in game frames like the steps) and is closed by any
+                # direction press (MovementController.move_player), so it is gone once he moves
+                self.remove_pop_up(cmd_menu)
         except IndexError:
             all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles(current_map)
             all_fixed_character_underlying_tiles = get_fixed_character_underlying_tiles(current_map)
@@ -353,7 +365,8 @@ class Drawer:
         if game_state.is_post_death_dialog:
             self.display_hovering_stats = False
             cmd_menu.launch_signaled = False
-            self.run_automatic_post_death_dialog(events, skip_text, cmd_menu)
+            if not self.drawing_fade_in_frame:  # as in handle_initial_dialog: not before the fade-in
+                self.run_automatic_post_death_dialog(events, skip_text, cmd_menu)
             clear_events_keeping_quit()
 
     def draw_stats_strings_with_alignments(self, stat_string, y_position, screen, color):

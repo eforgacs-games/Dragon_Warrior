@@ -945,9 +945,10 @@ class TestGame(TestCase):
                     patch.object(self.game, 'load_game'), patch.object(self.game, 'music_player'), \
                     patch('src.map_manager.screen_fade'), patch('src.game.CommandMenu'):
                 self.game.title_menu.continue_quest()
-            overlay = mock_selection.call_args.kwargs['overlay']
-            self.assertEqual('Ed  ', overlay.texts[0].text)
-            self.assertEqual((24, 14), (overlay.texts[0].column, overlay.texts[0].row))
+            # LogList1Dat2: " ADVENTURE LOG 1:" and the name, padded to 4 tiles (WndLwr4Saved)
+            log_window = mock_selection.call_args.args[2]
+            self.assertEqual('ADVENTURE LOG 1:Ed  ', log_window.texts[0].text)
+            self.assertEqual((2, 2), (log_window.texts[0].column, log_window.texts[0].row))
 
     def test_erase_quest_removes_save_file(self):
         with tempfile.TemporaryDirectory() as tmp_dir:

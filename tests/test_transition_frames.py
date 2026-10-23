@@ -2,6 +2,7 @@
 window going black all at once before it shrank away. And, recorded with src/frame_recorder.py, the transitions that
 must never show a picture for a single frame: opening and closing the COMMAND window, a map change's fades and the
 battle-start spiral."""
+from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import MagicMock, PropertyMock, patch
 
@@ -90,6 +91,49 @@ class TestFadeInFrame(TransitionTestCase):
                             for character_dict in game.current_map.characters.values()))
         self.assertEqual(len(pictures), 2)
         self.assertTrue(pictures[0] == pictures[1], "the characters changed after the fade-in's first frame")
+
+
+class TestThroneRoomInputAfterFadeIn(TransitionTestCase):
+
+    def test_a_button_held_as_the_throne_room_loads_waits_for_the_fade_in(self):
+        # The press confirming BEGIN A NEW QUEST is still held (and queued) as the throne room loads. The frame the
+        # fade-in starts from used to start King Lorik's speech: the screen cut from black to full brightness, then
+        # the queued press could skip the first page's wait. NES StartAtThroneRoom fades in (PalFadeIn) before
+        # FirstInputLoop reads the joypad.
+        self.game = new_game({**test_config, 'INITIAL_DIALOG_ENABLED': True})
+        game = self.game
+        game.game_state.is_initial_dialog = True
+        happened: list[str] = []
+        real_flip = pygame.display.flip
+
+        def flip(*args, **kwargs):
+            lit = pygame.transform.average_color(game.screen)[:3] != (0, 0, 0)
+            happened.append('lit frame' if lit else 'black frame')
+            return real_flip(*args, **kwargs)
+
+        def fade(fade_out, **_kwargs):
+            happened.append('fade-out' if fade_out else 'fade-in')
+
+        def dialog(*_args, **_kwargs):
+            happened.append('dialog')
+
+        held = defaultdict(int, {K_k: 1})
+        pygame.event.clear()
+        pygame.event.post(pygame.event.Event(KEYDOWN, key=K_k, mod=0, unicode='k'))
+        throne_room = map_lookup['TantegelThroneRoom'](game.config)
+        with patch('pygame.display.flip', side_effect=flip), \
+                patch('src.map_manager.screen_fade', side_effect=fade), \
+                patch('pygame.key.get_pressed', return_value=held), \
+                patch.object(CommandMenu, 'show_text_in_dialog_box', autospec=True, side_effect=dialog):
+            game.map_mgr.change_map(throne_room, destination_coordinates=throne_room.initial_coordinates,
+                                    fade_out_first=False)
+            self.assertEqual(['black frame', 'fade-in'], happened)
+            self.assertTrue(game.game_state.is_initial_dialog)
+            # The press queued before the fade isn't read as a new one afterwards
+            self.assertFalse(pygame.event.peek(KEYDOWN))
+            # The first frame after the fade-in reads the button still held: the speech starts
+            game.drawer.draw_all(game, game.game_state.enable_animate, events=[])
+        self.assertEqual(['black frame', 'fade-in', 'lit frame', 'dialog'], happened)
 
 
 class TestWindowCloseFrames(TransitionTestCase):
