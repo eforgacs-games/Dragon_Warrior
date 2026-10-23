@@ -6,6 +6,7 @@ over the old one, and the old frame shows through the new one's transparent pixe
 headless and compare the background around each on-screen character with a clean redraw of the same frame.
 """
 import inspect
+import random
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import patch
@@ -139,7 +140,7 @@ def walk_hero_and_find_ghosts(game: Game, walk: list) -> list:
     held_keys = defaultdict(int)
     ghost_frames = []
     frame = 0
-    with patch('src.game.get_ticks', return_value=0), patch('src.drawer.get_ticks', return_value=0), \
+    with patch('src.game.get_ticks', return_value=0), \
             patch('src.game.key.get_pressed', return_value=held_keys):
         for walk_key, blocks in walk:
             held_keys.clear()
@@ -246,3 +247,55 @@ class TestCharacterRedraw(TestCase):
                                if game.current_map.get_tile_by_value(layout[sprite.rect.y // tile_size][
                                    sprite.rect.x // tile_size]) != tile]
                 self.assertEqual([], wrong_tiles)
+
+
+def find_ghosts_drawing_every(game: Game, frames_per_draw: int, frames: int, held_key: int | None = None) -> list:
+    """Run frames on the map (the hero, holding held_key, and the roaming NPCs) and draw only every frames_per_draw-th
+    one, as the main loop does when drawing can't keep up with the game speed (Game.run_due_frames). Returns the draws
+    on which anything on screen differed from a clean redraw."""
+    held_keys = defaultdict(int)
+    if held_key is not None:
+        held_keys[held_key] = 1
+    ghost_frames = []
+    with patch('src.game.random', random.Random(1)), patch('src.game.key.get_pressed', return_value=held_keys):
+        for frame in range(1, frames + 1):
+            game._handle_player_movement()
+            if not game.player.is_moving:
+                set_character_position(game.player, game.tile_size)
+            game.do_sprites()
+            if frame % frames_per_draw == 0:
+                drawn = characters_to_draw(game)
+                draw_frame(game)
+                if not visible_area_matches_a_clean_redraw(game, drawn):
+                    ghost_frames.append(frame)
+    return ghost_frames
+
+
+class TestSkippedDraws(TestCase):
+    """At a high game speed the main loop may run up to 8 frames between two draws (Game.run_due_frames): the tiles
+    redrawn around the characters still cover everywhere they were drawn last."""
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+
+    @classmethod
+    def tearDownClass(cls):
+        pygame.quit()
+
+    def test_the_walking_hero_leaves_no_trail(self):
+        for frames_per_draw in (2, 3, 5, 8):
+            with self.subTest(frames_per_draw=frames_per_draw):
+                game = make_game('Garinham')
+                start_column = game.player.column
+                self.assertEqual([], find_ghosts_drawing_every(game, frames_per_draw, 4 * 16, K_RIGHT))
+                self.assertGreater(game.player.column, start_column + 2)
+
+    def test_roaming_npcs_leave_no_ghosts(self):
+        for frames_per_draw in (2, 3, 5, 8):
+            with self.subTest(frames_per_draw=frames_per_draw):
+                game = make_game('TantegelCourtyard')
+                npcs = game.current_map.roaming_characters
+                start_positions = [npc.rect.topleft for npc in npcs]
+                self.assertEqual([], find_ghosts_drawing_every(game, frames_per_draw, 3 * 80))
+                self.assertNotEqual(start_positions, [npc.rect.topleft for npc in npcs])

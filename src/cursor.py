@@ -52,6 +52,34 @@ WND_PROCESS_ORDER = (IN_A, IN_B, IN_UP, IN_DOWN, IN_LEFT, IN_RIGHT)
 RETRIGGER_FRAME_MASK = 0x0F
 
 
+# The dialog's down arrow (Bank01 TxtWaitAnim) blinks on the frame counter too, the other way round: it is shown while
+# FrameCounter AND #$1F is #$10 or more, so 16 frames on and 16 off. DoWait sets FrameCounter to #$10 first
+# ("Initialize animation with down arrow visible"), so every wait starts with the arrow on.
+TXT_WAIT_START_FRAME = 0x10
+
+
+def dialog_arrow_visible_on_frame(frame_counter: int) -> bool:
+    """TxtWaitAnim: whether the down arrow (rather than a blank tile) is drawn on this value of FrameCounter."""
+    return frame_counter & CURSOR_BLINK_MASK >= CURSOR_HIDDEN_FROM
+
+
+class DialogArrowBlink:
+    """The blink of the dialog's down arrow during one wait for A or B (DoWait). It counts NES frames of game time
+    (src/waiting.py game_ticks), like BlinkingCursor, so it blinks N times as fast at game speed N."""
+
+    def __init__(self, ticks: int | None = None):
+        self.start_ticks = get_ticks() if ticks is None else ticks
+
+    def frame_counter(self, ticks: int | None = None) -> int:
+        """FrameCounter: #$10 when the wait started, plus one per NES frame since (counted as BlinkingCursor does)."""
+        now = get_ticks() if ticks is None else ticks
+        frames = max(0, now * NES_FPS // 1000 - self.start_ticks * NES_FPS // 1000)
+        return (TXT_WAIT_START_FRAME + frames) & 0xFF
+
+    def visible(self, ticks: int | None = None) -> bool:
+        return dialog_arrow_visible_on_frame(self.frame_counter(ticks))
+
+
 def cursor_visible_on_frame(frame_counter: int) -> bool:
     """UpdateCursorGFX: whether the arrow (rather than a blank tile) is drawn on this value of FrameCounter."""
     return frame_counter & CURSOR_BLINK_MASK < CURSOR_HIDDEN_FROM

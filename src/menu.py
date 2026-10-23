@@ -16,7 +16,7 @@ from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, accept_keys, reject_keys, Graphics, set_gettext_language
 from src.command_window import WND_ABORT, CommandWindow
-from src.cursor import BlinkingCursor, draw_cursor_tile
+from src.cursor import BlinkingCursor, DialogArrowBlink, draw_cursor_tile
 from src.waiting import is_any_key_held, quit_if_requested, wait
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
@@ -33,7 +33,6 @@ from src.options_screen import MODERN, options_from_config, options_to_save
 from src.sound import Sound
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.text import draw_text, set_font_by_ascii_chars
-from src.pygame_compat import arrow_fade
 from src.translated_window import draw_translated_window
 from src.waiting import handle_speed_key
 from src.window_renderer import draw_window
@@ -359,6 +358,7 @@ class CommandMenu:
         held_counts = shows_arrow or advance_keys is not None
         if advance_keys is None:
             advance_keys = A_OR_B_KEYS if shows_arrow else ANY_BUTTON_KEYS
+        arrow_blink = DialogArrowBlink()  # DoWait: the arrow starts on, then blinks on the frame count
         while True:
             if skip_text or (temp_text_start and get_ticks() - temp_text_start >= 1000):
                 if not skip_text and not disable_sound:
@@ -367,7 +367,7 @@ class CommandMenu:
             if held_counts and is_any_key_held(advance_keys):
                 break
             if shows_arrow:
-                self.draw_dialog_arrow(self.game.show_arrow)
+                self.draw_dialog_arrow(arrow_blink.visible())
             if self.read_dialog_events(advance_keys):
                 break
         if not disable_sound:
@@ -382,15 +382,13 @@ class CommandMenu:
         self.wait_for_dialog_key(shows_arrow=shows_arrow, skip_text=False, temp_text_start=None, disable_sound=True)
 
     def read_dialog_events(self, advance_keys: Collection[int]) -> bool:
-        """Takes the queued events, keeping the arrow blinking; returns whether one was a press of advance_keys."""
+        """Takes the queued events; returns whether one was a press of advance_keys."""
         for current_event in event.get():
             quit_if_requested(current_event)
             if handle_speed_key(current_event):  # keys 1 to 4: the game speed, nothing else
                 continue
             if current_event.type == KEYDOWN and current_event.key in advance_keys:
                 return True
-            if current_event.type == arrow_fade:
-                self.game.show_arrow = not self.game.show_arrow
         return False
 
     def run_dialog_steps(self, steps: Iterable[DialogStep], animate: bool, frames_per_char: int,

@@ -3,7 +3,6 @@ from typing import Iterable, List, Set, Tuple
 
 from pygame import display, KEYDOWN, event, Surface, Rect
 from pygame.sprite import Group
-from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src.calculation import Calculation
 from src.common import ANY_BUTTON_KEYS, WHITE, BLACK, Graphics
@@ -15,7 +14,7 @@ from src.menu import CommandMenu
 from src.sound import Sound
 from src.text import draw_text
 from src.visual_effects import NES_FPS, enemy_fade_in, enemy_hit_flash
-from src.waiting import is_any_key_held, wait
+from src.waiting import clear_events_keeping_quit, is_any_key_held, wait
 from src.window_renderer import draw_window
 from src.windows import COMMAND_WINDOW, POPUP_LAYOUT, POPUP_WINDOW
 
@@ -30,7 +29,6 @@ class Drawer:
         self.background = None
         # Where the hero was drawn on the last frame, so the frame a step ends on also redraws it (see draw_all)
         self.last_player_rect: Rect | None = None
-        self.not_moving_time_start = None
         self.hovering_stats_displayed = False
         self.graphics = Graphics(game_state.config)
         self.directories = Directories(game_state.config)
@@ -131,6 +129,13 @@ class Drawer:
             self.game_state.is_post_death_dialog = False
             set_to_save_prompt(command_menu)
             self.game_state.enable_movement = True
+            self.show_pop_up_after_automatic_dialog()
+
+    def show_pop_up_after_automatic_dialog(self) -> None:
+        """The king's words in the throne room, which start on their own, keep the pop-up window closed while they wait
+        for a button (handle_initial_dialog, handle_post_death_dialog). The hero has been standing still all along, so
+        it opens as soon as they end."""
+        self.display_hovering_stats = True
 
     def run_automatic_initial_dialog(self, events, skip_text, cmd_menu):
         self.game_state.enable_movement = False
@@ -153,6 +158,7 @@ class Drawer:
                     skip_text=skip_text)
             self.set_to_post_initial_dialog(cmd_menu)
             self.game_state.automatic_initial_dialog_run = True
+            self.show_pop_up_after_automatic_dialog()
 
     def handle_initial_dialog(self, initial_dialog_enabled, cmd_menu, events, skip_text, left_throne_room):
         if initial_dialog_enabled:
@@ -160,7 +166,7 @@ class Drawer:
                 self.display_hovering_stats = False
                 cmd_menu.launch_signaled = False
                 self.run_automatic_initial_dialog(events, skip_text, cmd_menu)
-                event.clear()
+                clear_events_keeping_quit()
             else:
                 if left_throne_room:
                     set_to_save_prompt(cmd_menu)
@@ -231,17 +237,12 @@ class Drawer:
             if player.is_moving:
                 tile_types_to_draw += replace_characters_with_underlying_tiles(
                     list(filter(None, player_surrounding_tiles)), current_map.character_key)
-                self.not_moving_time_start = None
+                # The pop-up window opens on the hero's POP_UP_FRAME of standing still (Game.do_sprites, counted in
+                # game frames like the steps) and closes when he moves
                 self.display_hovering_stats = False
                 if self.hovering_stats_displayed:
                     cmd_menu.window_drop_up_effect(1, 2, 4, 6)
                     self.hovering_stats_displayed = False
-            else:
-                if not self.not_moving_time_start:
-                    self.not_moving_time_start = get_ticks()
-                else:
-                    if self.calculation.convert_to_frames_since_start_time(self.not_moving_time_start) >= 51:
-                        self.display_hovering_stats = True
         except IndexError:
             all_roaming_character_surrounding_tiles = self.get_all_roaming_character_surrounding_tiles(current_map)
             all_fixed_character_underlying_tiles = get_fixed_character_underlying_tiles(current_map)
@@ -323,7 +324,7 @@ class Drawer:
             self.display_hovering_stats = False
             cmd_menu.launch_signaled = False
             self.run_automatic_post_death_dialog(events, skip_text, cmd_menu)
-            event.clear()
+            clear_events_keeping_quit()
 
     def draw_stats_strings_with_alignments(self, stat_string, y_position, screen, color):
         tile_size = self.game_state.config["TILE_SIZE"]
