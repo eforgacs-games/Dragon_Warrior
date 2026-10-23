@@ -117,6 +117,18 @@ class TestBattleMethods(unittest.TestCase):
         battle.check_player_level_up(cmd_menu, player)
         return player, [call.args[0] for call in cmd_menu.show_line_in_dialog_box.call_args_list]
 
+    def test_new_spell_line_only_on_the_spell_levels(self):
+        # NES ChkNewSpell (LEAE6): "Thou hast learned a new spell." only when the new level is 3, 4, 7, 9, 10, 12, 13,
+        # 15, 17 or 19, whatever the spell list did: a jump from level 2 to 5 learns HEAL and HURT but says nothing
+        new_spell = "Thou hast learned a new spell.\n"
+        for experience_before, experience_gained, level, says_it in ((7, 16, 3, True), (23, 24, 4, True),
+                                                                     (7, 103, 5, False), (110, 110, 6, False),
+                                                                     (220, 230, 7, True), (800, 500, 9, True)):
+            with self.subTest(level=level):
+                player, lines = self.level_up('Erdrick', experience_before, experience_gained)
+                self.assertEqual(level, player.level)
+                self.assertEqual(says_it, new_spell in lines)
+
     def test_level_up_uses_the_name_based_stats(self):
         """NES ChkLevelUp: LoadStats again, then each stat that went up. Deez cuts strength and max HP, bonus 1
         (tests/test_player_stats.py): level 3 (7, 6, 22, 5) -> level 4 (7, 8, 28, 16)."""
