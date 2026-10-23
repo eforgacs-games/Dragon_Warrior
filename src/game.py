@@ -613,8 +613,14 @@ class Game:
         self.player.gold = self.player.gold // 2
         # NES StartAtThroneRoom sets HP before MapChngNoSound fades the throne room in, so the fade's palette load
         # (ChkLowHPPal) sees the new HP: a cursed hero comes back with 1 HP, which is always low, so the king's words
-        # are in red windows; anyone else comes back with full HP and white windows.
-        self.player.current_hp = 1 if self.player.is_cursed else self.player.max_hp
+        # are in red windows; anyone else comes back with full HP and white windows. DeathText sets ThisStrtStat to
+        # STRT_FULL_HP, so StartAtThroneRoom (LCB78-LCB87) fills MP as well as HP; for a cursed hero it sets HP to 1
+        # and skips that step (LCB71-LCB75), so MP stays as it was.
+        if self.player.is_cursed:
+            self.player.current_hp = 1
+        else:
+            self.player.current_hp = self.player.max_hp
+            self.player.current_mp = self.player.max_mp
         self.load_window_palette()
         # NES DeathText -> StartAtThroneRoom (LEDDE): the screen cuts to black and the throne room fades in once
         next_map = map_lookup['TantegelThroneRoom'](self.config)
