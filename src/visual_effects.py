@@ -5,6 +5,7 @@ from pygame import Surface, display, image, mask, transform
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
 from src.common import BLACK
+from src.view import full_screen, screen_origin_x
 from src.waiting import NES_FPS, check_for_quit, wait, wait_frames
 
 
@@ -22,6 +23,7 @@ def fade(fade_out: bool, screen: Surface, config, draw_callback=None, speed=3) -
     @type fade_out: bool
     If true, fades out. If false, fades in.
     """
+    screen = full_screen(screen)  # the whole picture in the WIDE view (src/view.py)
     width, height = screen.get_width(), screen.get_height()
     black_overlay = Surface((width, height))  # lgtm [py/call/wrong-arguments]
     black_overlay.fill(BLACK)
@@ -72,6 +74,7 @@ SWAMP_FLASH_FRAMES = 3
 def flash_transparent_color(color, screen, config, transparency=192) -> None:
     """Show the screen tinted with ``color`` for SWAMP_FLASH_FRAMES frames (the swamp damage flash). The wait goes
     through src.waiting, so it follows the game speed and NO_WAIT."""
+    screen = full_screen(screen)  # the whole picture in the WIDE view (src/view.py)
     draw_transparent_color(color, screen, transparency, config.get('NO_BLIT'))
     show_frames(SWAMP_FLASH_FRAMES, config)
 
@@ -86,6 +89,7 @@ FORCE_FIELD_FLASH_FRAMES = 2
 def force_field_flash(color, screen, config, transparency=192) -> None:
     """The screen flashing red three times when the hero steps onto a force field (barrier), 12 frames in all. A
     swamp step flashes once (flash_transparent_color)."""
+    screen = full_screen(screen)  # the whole picture in the WIDE view (src/view.py)
     no_blit = config.get('NO_BLIT')
     original = screen.copy()
     for _ in range(FORCE_FIELD_FLASHES):
@@ -117,6 +121,7 @@ def bw_screen_flash(screen: Surface, config) -> None:
 def greyscale_screen(screen: Surface, config: dict, frames: int = 30) -> None:
     """Show the screen in greyscale for the given number of frames, then restore it
     (the NES does this by setting the greyscale bit of PPUControl1)."""
+    screen = full_screen(screen)  # the whole picture in the WIDE view (src/view.py)
     if config['NO_BLIT']:
         return
     original = screen.copy()
@@ -284,6 +289,7 @@ def nes_palette_fade(fade_out: bool, screen: Surface, config) -> None:
     The waits go through src.waiting, so they follow the game speed and NO_WAIT. Building the color number surface
     takes about 15 ms at scale 2 and is done during the first 4-frame wait; each step after that is a set_palette and
     one blit (well under 1 ms)."""
+    screen = full_screen(screen)  # the whole picture in the WIDE view (src/view.py)
     steps = FADE_OUT_STEPS if fade_out else FADE_IN_STEPS
     if config.get('NO_BLIT'):
         for _ in steps:
@@ -321,6 +327,7 @@ def screen_fade(fade_out: bool, screen: Surface, config, draw_callback=None) -> 
 
 def cut_to_black(screen: Surface, config) -> None:
     """The screen going black at once, as when the NES loads BlackPal without fading (StartAtThroneRoom, LCB47)."""
+    screen = full_screen(screen)  # the whole picture in the WIDE view (src/view.py)
     if not config.get('NO_BLIT'):
         screen.fill(BLACK)
         display.flip()
@@ -374,6 +381,7 @@ def rainbow_bridge_flash(screen: Surface, config) -> None:
     turn, RAINBOW_FLASH_FRAMES frames before each, the way rewriting palette entry $3F03 recolors it. The hero's
     sprite palette (RegSPPal) has no $11, so only the map's blue changes; the last color is $11 itself, so the screen
     ends as it was."""
+    screen = full_screen(screen)  # the whole picture in the WIDE view (src/view.py)
     if config.get('NO_BLIT'):
         return
     original = screen.copy()
@@ -450,6 +458,14 @@ def player_hit_shake(screen: Surface, config, deathblow: bool = False, enemy=Non
         still_frames = SHAKE_STILL_FRAMES - 1 if deathblow and not shake else SHAKE_STILL_FRAMES
         wait(round(SHAKE_COUNT * (still_frames + SHAKE_MOVED_FRAMES) * 1000 / NES_FPS), config)
         return
+    # The whole picture shakes in the WIDE view (src/view.py): the enemy and its background move with the screen
+    origin_x = screen_origin_x(screen)
+    screen = full_screen(screen)
+    if origin_x:
+        if enemy is not None:
+            enemy = (enemy[0], (enemy[1][0] + origin_x, enemy[1][1]))
+        if background is not None:
+            background = (background[0], (background[1][0] + origin_x, background[1][1]))
     original = screen.copy()
     without_enemy = original.copy()
     if enemy is not None and background is not None:

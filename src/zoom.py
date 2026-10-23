@@ -3,10 +3,10 @@ the size it opened at. A modern convenience, not NES behavior.
 
 Only the window changes size. The game still draws on the same screen surface (NES_RES * SCALE, with TILE_SIZE = 16 *
 SCALE): the window is opened with pygame's SCALED flag, so SDL stretches that surface to whatever size the window is,
-with nearest-neighbour sampling. The zoom levels are whole multiples of the NES's 256x240, so every NES pixel becomes
-the same number of window pixels and the pixel art stays crisp (at SCALE 2, zoom 3 turns each 2x2 block of the screen
-into a 3x3 block). Nothing the game draws, caches or decides changes, so it works the same on every screen: the map,
-battles, menus, dialogs and the title.
+with nearest-neighbour sampling. The zoom levels are whole multiples of the NES's 256x240 (wider in the WIDE view,
+src/view.py: nes_width), so every NES pixel becomes the same number of window pixels and the pixel art stays crisp
+(at SCALE 2, zoom 3 turns each 2x2 block of the screen into a 3x3 block). Nothing the game draws, caches or decides
+changes, so it works the same on every screen: the map, battles, menus, dialogs and the title.
 
 The smallest zoom is the screen surface's own size (SCALE: pygame doesn't let a SCALED window get smaller than the
 surface), and the biggest is what fits on the desktop, or the size the window opened at if that is bigger.
@@ -67,11 +67,21 @@ def is_fullscreen() -> bool:
     return surface is not None and bool(surface.get_flags() & FULLSCREEN)
 
 
+def nes_width() -> int:
+    """The picture's width in NES pixels: 256, or more in the WIDE view (src/view.py), whose window is wider. The
+    screen surface is always 240 NES pixels high, so its width at that height is the NES width."""
+    surface = display.get_surface()
+    if surface is None or not surface.get_height():
+        return NES_WIDTH
+    width, height = surface.get_size()
+    return max(NES_WIDTH, round(width * NES_HEIGHT / height))
+
+
 def window_zoom() -> float:
     """How many window pixels each NES pixel takes right now (not a whole number after the window is resized by
     dragging its edge)."""
     width, height = display.get_window_size()
-    return min(width / NES_WIDTH, height / NES_HEIGHT)
+    return min(width / nes_width(), height / NES_HEIGHT)
 
 
 def min_zoom() -> int:
@@ -80,13 +90,13 @@ def min_zoom() -> int:
     if surface is None:
         return 1
     width, height = surface.get_size()
-    return max(1, -(-width // NES_WIDTH), -(-height // NES_HEIGHT))
+    return max(1, -(-width // nes_width()), -(-height // NES_HEIGHT))
 
 
 def max_zoom() -> int:
     """The biggest zoom whose window fits on the biggest monitor, but never less than the zoom the window opened at or
     the smallest zoom."""
-    fits = [min(width // NES_WIDTH, (height - DESKTOP_MARGIN) // NES_HEIGHT)
+    fits = [min(width // nes_width(), (height - DESKTOP_MARGIN) // NES_HEIGHT)
             for width, height in display.get_desktop_sizes()]
     return max([min_zoom(), default_zoom()] + fits)
 
@@ -111,7 +121,7 @@ def set_zoom(zoom: int) -> bool:
         return False
     zoom = max(min_zoom(), min(zoom, max_zoom()))
     old_width, old_height = window.size
-    new_size = (NES_WIDTH * zoom, NES_HEIGHT * zoom)
+    new_size = (nes_width() * zoom, NES_HEIGHT * zoom)
     if new_size == (old_width, old_height):
         return False
     old_position = window.position  # typed as int too (WINDOWPOS_CENTERED when setting it), but read as (x, y)

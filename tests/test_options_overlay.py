@@ -194,6 +194,7 @@ class TestRows(OverlayTestCase):
                                             ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어")),
                                             ("SCANLINES", 'SCANLINES', ("OFF", "ON")),
                                             ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT")),
+                                            ("VIEW", 'VIEW', ("NES (4:3)", "WIDE")),
                                             ("STATUS WINDOW", 'STATUS_WINDOW', ("NES", "ALWAYS")),
                                             ("SHOP PREVIEW", 'SHOP_PREVIEW', ("OFF (NES)", "ON"))]),
                           ("GAMEPLAY", [("NPCS MAKE WAY", 'NPCS_MAKE_WAY', ("ON", "OFF (NES)")),
@@ -226,7 +227,8 @@ class TestRows(OverlayTestCase):
     def test_window_shows_the_current_values(self):
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/3", "MESSAGE SPEED", "FAST", "DIALOG STYLE", "CLASSIC (NES)",
                           "FADE STYLE", "NES", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
-                          "SCALING", "SMOOTH", "STATUS WINDOW", "NES", "SHOP PREVIEW", "OFF (NES)"],
+                          "SCALING", "SMOOTH", "VIEW", "NES (4:3)", "STATUS WINDOW", "NES", "SHOP PREVIEW",
+                          "OFF (NES)"],
                          page_texts(self.config))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "ON", "STAIRS", "STEP ON",
                           "QUICK ACTION", "OFF (NES)", "ENCOUNTERS", "NES", "EXP/GOLD", "x1 (NES)", "QUEST JOURNAL",
@@ -237,7 +239,8 @@ class TestRows(OverlayTestCase):
                            STATUS_WINDOW='Always', ENCOUNTERS='Half', EXP_GOLD=4, RUN_BUTTON=True)
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/3", "MESSAGE SPEED", "SLOW", "DIALOG STYLE", "MODERN",
                           "FADE STYLE", "SMOOTH", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
-                          "SCALING", "SMOOTH", "STATUS WINDOW", "ALWAYS", "SHOP PREVIEW", "OFF (NES)"],
+                          "SCALING", "SMOOTH", "VIEW", "NES (4:3)", "STATUS WINDOW", "ALWAYS", "SHOP PREVIEW",
+                          "OFF (NES)"],
                          page_texts(self.config))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "OFF (NES)", "STAIRS", "NES",
                           "QUICK ACTION", "OFF (NES)", "ENCOUNTERS", "HALF", "EXP/GOLD", "x4", "QUEST JOURNAL",
@@ -414,7 +417,8 @@ class TestPreset(OverlayTestCase):
                           'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': False, 'SAVE_STATES': False,
                           'REWIND': False, 'AUTO_GRIND': False, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
                           'CHEAT_KEYS': False, 'RUN_BUTTON': False, 'SHOP_PREVIEW': False,
-                          'QUEST_JOURNAL': JOURNAL_OFF, 'AUTOSAVE': False, 'BAG_SIZE': 8},
+                          'QUEST_JOURNAL': JOURNAL_OFF, 'AUTOSAVE': False, 'BAG_SIZE': 8,
+                          'VIEW': 'NES'},
                          preset_values(PRESET_NES))
         # MODERN: every convenience but the cheats; the number of fights and what they give stay the NES's
         self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': True,
@@ -422,7 +426,8 @@ class TestPreset(OverlayTestCase):
                           'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': True, 'SAVE_STATES': True,
                           'REWIND': True, 'AUTO_GRIND': True, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
                           'CHEAT_KEYS': False, 'RUN_BUTTON': True, 'SHOP_PREVIEW': True,
-                          'QUEST_JOURNAL': JOURNAL_GOALS, 'AUTOSAVE': True, 'BAG_SIZE': 16},
+                          'QUEST_JOURNAL': JOURNAL_GOALS, 'AUTOSAVE': True, 'BAG_SIZE': 16,
+                          'VIEW': 'NES'},
                          preset_values(PRESET_MODERN))
         # the message speed is the NES's own setting, and the language the player's: no preset changes them
         self.assertNotIn('TEXT_SPEED', [row.config_key for row in PRESET_ROWS])

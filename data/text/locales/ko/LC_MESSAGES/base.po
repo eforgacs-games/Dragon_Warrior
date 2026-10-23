@@ -2898,3 +2898,13 @@ msgstr "NES (8개)"
 #: src/options_overlay.py
 msgid "16"
 msgstr "16개"
+msgid "VIEW"
+msgstr "화면"
+
+#: src/options_overlay.py
+msgid "NES (4:3)"
+msgstr "NES (4:3)"
+
+#: src/options_overlay.py
+msgid "WIDE"
+msgstr "와이드"
