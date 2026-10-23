@@ -115,6 +115,11 @@ class TestMovementUpdates(TestCase):
         self.player.current_hp = 50
         self.assertEqual(self.environment_damage('BARRIER'), 15)
 
+    def test_swamp_and_barrier_damage_stop_at_zero_hp(self):
+        self.player.current_hp = 1
+        self.environment_damage('BARRIER')
+        self.assertEqual(self.player.current_hp, 0)
+
     def test_swamp_and_barrier_do_not_hurt_after_the_dragonlord_is_dead(self):
         self.game.story_flags.dragonlord_defeated = True
         self.assertEqual(self.environment_damage('MARSH'), 0)
