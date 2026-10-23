@@ -2351,3 +2351,28 @@ msgstr ""
 #: src/options_screen.py:238
 msgid "LEVEL"
 msgstr "레벨"
+
+#: src/options_screen.py:231
+#: src/title_windows.py:41
+msgid "ADVENTURE LOG {}"
+msgstr "모험의 서 {}"
+
+#: src/windows.py
+msgid "BEGIN A NEW QUEST"
+msgstr "새로운 모험을 시작한다"
+
+#: src/windows.py
+msgid "CONTINUE A QUEST"
+msgstr "모험을 계속한다"
+
+#: src/windows.py
+msgid "CHANGE MESSAGE SPEED"
+msgstr "메시지 속도를 바꾼다"
+
+#: src/windows.py
+msgid "COPY A QUEST"
+msgstr "모험의 서를 복사한다"
+
+#: src/windows.py
+msgid "ERASE A QUEST"
+msgstr "모험의 서를 지운다"

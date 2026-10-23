@@ -351,11 +351,67 @@ def item_menu_entry_tile_row(menu_name: str, index: int) -> int:
 # Windows without the single spaced option ($20) are double spaced: each line of their data is followed by a blank
 # row, so the first line of text is on tile row 2.
 
-# NewQuestDat ($B2A8): border ($88), then 1 blank tile ($81) and BEGIN A NEW QUEST
-NEW_QUEST_LAYOUT = WindowLayout(window=NEW_QUEST_WINDOW, texts=(WindowText("BEGIN A NEW QUEST", 2, 2),))
-# LogList123Dat1 ($B385): border ($88), then each line 1 blank tile ($81) and ADVENTURE LOG 1, 2 and 3
-ADVENTURE_LOG_123_LAYOUT = WindowLayout(window=ADVENTURE_LOG_WINDOW_1, texts=tuple(
-    WindowText(f"ADVENTURE LOG {log}", 2, 2 * log) for log in (1, 2, 3)))
+# The title menu windows (Bank03 StartMenu: PreNoSaves, PreUnusedSaves, PreSavesUsed) are selection windows (options
+# $81) of 1 column with the cursor home at Y = 2 tiles, X = 1 tile ($21), double spaced: after the top border ($88),
+# each entry is 1 blank tile ($81) and its text, followed by a blank row.
+TITLE_MENU_TEXT_COLUMN = 2
+
+
+def title_menu_layout(window: Window, entries: tuple[str, ...]) -> WindowLayout:
+    """A title menu window: its entries one under the other, each after its cursor's tile."""
+    cursor_tiles = selection_cursor_tiles(home_column=1, home_row=2, columns=1, column_spacing=0, rows=len(entries))
+    return WindowLayout(window=window, texts=tuple(WindowText(entry, TITLE_MENU_TEXT_COLUMN, row)
+                                                   for entry, (_, row) in zip(entries, cursor_tiles)),
+                        cursor_tiles=cursor_tiles)
+
+
+CONTINUE_A_QUEST = "CONTINUE A QUEST"
+CHANGE_MESSAGE_SPEED = "CHANGE MESSAGE SPEED"
+BEGIN_A_NEW_QUEST = "BEGIN A NEW QUEST"
+COPY_A_QUEST = "COPY A QUEST"
+ERASE_A_QUEST = "ERASE A QUEST"
+# NewQuestDat ($B2A8), with no log used: BEGIN A NEW QUEST
+NEW_QUEST_LAYOUT = title_menu_layout(NEW_QUEST_WINDOW, (BEGIN_A_NEW_QUEST,))
+# FullMenuDat ($B249), with a log used and a log open: CONTINUE A QUEST, CHANGE MESSAGE SPEED, BEGIN A NEW QUEST, COPY
+# A QUEST, ERASE A QUEST
+FULL_MENU_LAYOUT = title_menu_layout(FULL_MENU_WINDOW, (CONTINUE_A_QUEST, CHANGE_MESSAGE_SPEED, BEGIN_A_NEW_QUEST,
+                                                        COPY_A_QUEST, ERASE_A_QUEST))
+# ContChngErsDat ($B20B), with every log used: CONTINUE A QUEST, CHANGE MESSAGE SPEED, ERASE A QUEST
+CONTINUE_CHANGE_ERASE_LAYOUT = title_menu_layout(CONTINUE_CHANGE_ERASE_WINDOW,
+                                                 (CONTINUE_A_QUEST, CHANGE_MESSAGE_SPEED, ERASE_A_QUEST))
+TITLE_MENU_LAYOUTS = (NEW_QUEST_LAYOUT, FULL_MENU_LAYOUT, CONTINUE_CHANGE_ERASE_LAYOUT)
+
+# The adventure log windows (Bank03 ShowOpenLogs and ShowUsedLogs show one of 7 windows each, picked by which logs are
+# open or used) are selection windows (options $81) of 1 column, cursor home Y = 2 tiles, X = 1 tile ($21), as high
+# as the logs they list (1 block per log plus 1), double spaced: each line is 1 blank tile ($81) and the line.
+ADVENTURE_LOG_LINE = "ADVENTURE LOG {}"
+# The used logs' lines end in ":" ($44) and the first 4 letters of the hero's name ($B5-$B7: WndLwr4Saved, padded
+# with blank tiles)
+USED_ADVENTURE_LOG_LINE = "ADVENTURE LOG {}:{}"
+LOG_NAME_LETTERS = 4
+
+
+def adventure_log_layout(window: Window, lines: tuple[str, ...]) -> WindowLayout:
+    cursor_tiles = selection_cursor_tiles(home_column=1, home_row=2, columns=1, column_spacing=0, rows=len(lines))
+    return WindowLayout(window=variable_height_window(window, len(lines)),
+                        texts=tuple(WindowText(line, 2, row) for line, (_, row) in zip(lines, cursor_tiles)),
+                        cursor_tiles=cursor_tiles)
+
+
+def open_logs_layout(logs: tuple[int, ...]) -> WindowLayout:
+    """LogList1Dat1 ($B2C2) to LogList123Dat1 ($B385), ShowOpenLogs: " ADVENTURE LOG n" for each open log."""
+    return adventure_log_layout(ADVENTURE_LOG_WINDOW_1, tuple(ADVENTURE_LOG_LINE.format(log) for log in logs))
+
+
+def used_logs_layout(logs: tuple[tuple[int, str], ...]) -> WindowLayout:
+    """LogList1Dat2 ($B3BF) to LogList123Dat2 ($B494), ShowUsedLogs: " ADVENTURE LOG n:" and 4 letters of the hero's
+    name for each used log, given as (number, name)."""
+    return adventure_log_layout(ADVENTURE_LOG_WINDOW_2, tuple(
+        USED_ADVENTURE_LOG_LINE.format(log, name[:LOG_NAME_LETTERS].ljust(LOG_NAME_LETTERS)) for log, name in logs))
+
+
+# LogList123Dat1 ($B385), with no log used: ADVENTURE LOG 1, 2 and 3
+ADVENTURE_LOG_123_LAYOUT = open_logs_layout((1, 2, 3))
 # NameEntryDat ($B1F7): 3 border tiles ($8B), NAME, border to the end ($88); then 1 blank tile ($81) and the 8 name
 # placeholders (tile $41, TL_NAME_PLACEHOLDER in src/window_renderer.py, drawn by src/name_entry.py)
 NAME_ENTRY_LAYOUT = WindowLayout(window=NAME_ENTRY_WINDOW, title=WindowText("NAME", 4, 0))
