@@ -1,21 +1,17 @@
-import os
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
 from pygame import KEYDOWN, K_DOWN, K_ESCAPE, K_RETURN, event
 
 from src.config.test_config import test_config
-from src.game import Game
 from src.windows import ADVENTURE_LOG_WINDOW_1, ADVENTURE_LOG_WINDOW_2, ALPHABET_WINDOW, BUY_SELL_WINDOW, \
     COMBAT_COMMAND_WINDOW, COMMAND_WINDOW, CONTINUE_CHANGE_ERASE_WINDOW, DIALOG_WINDOW, ERASE_LOG_WINDOW, \
     FULL_MENU_WINDOW, INPUT_NAME_WINDOW, MESSAGE_SPEED_WINDOW, NAME_ENTRY_WINDOW, NEW_QUEST_WINDOW, POPUP_WINDOW, \
     SHOP_INVENTORY_WINDOW, STATUS_WINDOW, YES_NO_2_WINDOW, YES_NO_WINDOW, Window, name_halves, \
     variable_height_window
 from src.windows import BUY_SELL_LAYOUT, WindowText
+from tests.helpers import new_game
 
 # NES Bank01 window data: (height in blocks, width in tiles, position byte (Y << 4 | X, in blocks))
 NES_WINDOW_DATA = {
@@ -84,8 +80,7 @@ class WindowTestCase(TestCase):
         test_config['RENDER_TEXT'] = not self.no_blit
         test_config['NO_BLIT'] = self.no_blit
         self.addCleanup(test_config.update, self.saved_config)
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.cmd_menu = self.game.cmd_menu
         self.dialog_lookup = self.cmd_menu.dialog_lookup
         self.player = self.game.player
@@ -143,7 +138,7 @@ class TestStatusWindow(WindowTestCase):
         self.player.name = 'ERDRICK'
         self.player.weapon, self.player.armor, self.player.shield = 'Copper Sword', 'Clothes', 'Small Shield'
         with patch('src.menu.draw_text') as draw_text, \
-                patch('src.menu.draw_window') as draw_window:
+                patch('src.translated_window.draw_window') as draw_window:
             self.cmd_menu.draw_status_window()
         self.assertEqual((5, 3, 10, 11), draw_window.call_args.args[1].window)
         drawn = [(call.args[0], call.kwargs['alignment'], *self.tile(*call.args[1:3]))

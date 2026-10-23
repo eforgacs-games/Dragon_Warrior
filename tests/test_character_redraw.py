@@ -7,7 +7,6 @@ headless and compare the background around each on-screen character with a clean
 """
 import inspect
 import random
-import os
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import patch
@@ -19,9 +18,6 @@ from src.config.test_config import test_config
 from src.direction import Direction
 from src.game import Game
 from src.game_functions import set_character_position
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 FRAMES = 60  # characters change animation frame every 16 frames (NES CharLeftRight)
 
@@ -236,7 +232,7 @@ class TestCharacterRedraw(TestCase):
                 self.assertEqual(start, (game.player.row, game.player.column))
 
     def test_every_block_has_only_the_map_tile(self):
-        # Each NPC also got its "underlying" tile (BRICK, or one from custom_underlying_tiles) on top of the map's own
+        # Each NPC also got its "underlying" tile (BRICK, or a per-map override) on top of the map's own
         # tile there, e.g. Brecconary's MAN_3 got GRASS on brick. The block (or a roaming NPC's starting block, once
         # it walked away) then showed one or the other, depending on which tile types were being redrawn.
         for start_map in ('Brecconary', 'Garinham', 'Kol', 'Cantlin', 'Rimuldar', 'TantegelCourtyard',

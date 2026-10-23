@@ -1,17 +1,13 @@
-import os
 from unittest import TestCase
 from unittest.mock import patch
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
 
 from src.config.test_config import test_config
 from src.direction import Direction
-from src.game import Game
 from src.maps import map_lookup
 from tests.test_shop_dialog import npc_identifiers
+from tests.helpers import new_game
 
 # The NPCs outside the towns and Tantegel. (map, graphic, NES X, NES Y, facing, dialog byte), from the Bank00 tables
 # DLBFStatTbl, RainStatTbl and RnbwStatTbl (their mobile tables are empty). Gwaelin isn't in an NPC table: she's
@@ -49,8 +45,7 @@ class TestOtherNPCsDialog(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.dialog_lookup = self.game.cmd_menu.dialog_lookup
 
     def load(self, map_name):

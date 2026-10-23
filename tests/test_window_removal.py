@@ -2,23 +2,19 @@
 WindowSequence (Bank01) calls RemoveWindow (Bank00), which puts back what the window covered, the open background
 windows (pop-up, COMMAND, dialog) or else the map, and touches nothing else."""
 import hashlib
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import pygame
+from pygame import KEYDOWN, K_RETURN, Rect
+from pygame.event import Event
 
-import pygame  # noqa: E402
-from pygame import KEYDOWN, K_RETURN, Rect  # noqa: E402
-from pygame.event import Event  # noqa: E402
-
-from data.text.dialog import confirmation_prompt  # noqa: E402
-from src.config.test_config import test_config  # noqa: E402
-from src.direction import Direction  # noqa: E402
-from src.game import Game  # noqa: E402
-from src.maps import Brecconary  # noqa: E402
-from src.windows import BUY_SELL_WINDOW, COMMAND_WINDOW, YES_NO_WINDOW  # noqa: E402
+from data.text.dialog import confirmation_prompt
+from src.config.test_config import test_config
+from src.direction import Direction
+from src.maps import Brecconary
+from src.windows import BUY_SELL_WINDOW, COMMAND_WINDOW, YES_NO_WINDOW
+from tests.helpers import new_game
 
 
 def image_digest(surface) -> str:
@@ -47,8 +43,7 @@ class TestWindowRemoval(TestCase):
         test_config['NO_BLIT'] = False
         self.addCleanup(test_config.__setitem__, 'NO_BLIT', True)
         self.addCleanup(test_config.__setitem__, 'RENDER_TEXT', False)
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.change_map(Brecconary(self.game.config), destination_coordinates=(29, 18),
                              direction=Direction.RIGHT.value)
         self.cmd_menu = self.game.cmd_menu

@@ -1,4 +1,3 @@
-import os
 from contextlib import ExitStack
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -9,11 +8,8 @@ from pygame import KEYDOWN, K_RETURN, event
 from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.menu import COMMAND_METHODS
-from src.game import Game
 from tests.mock_map import MockMap
-
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from tests.helpers import new_game
 
 
 class TestCommandMenu(TestCase):
@@ -32,8 +28,7 @@ class TestCommandMenu(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
 

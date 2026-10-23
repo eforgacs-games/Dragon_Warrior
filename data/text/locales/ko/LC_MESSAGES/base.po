@@ -2229,3 +2229,112 @@ msgstr "1-4: 게임 속도 조절"
 #: data/text/intro_lookup_table.py:30
 msgid "Toggle on/off:"
 msgstr "켜기/끄기:"
+
+#: src/options_screen.py:203
+msgid "ADVENTURE LOG {}:"
+msgstr "모험의 서 {}:"
+
+#: src/windows.py
+msgid "FIGHT"
+msgstr "싸운다"
+
+#: src/windows.py
+msgid "RUN"
+msgstr "도망친다"
+
+#: src/windows.py
+msgid "NAME:"
+msgstr "이름:"
+
+#: src/windows.py
+msgid "STRENGTH:"
+msgstr "힘:"
+
+#: src/windows.py
+msgid "AGILITY:"
+msgstr "민첩성:"
+
+#: src/windows.py
+msgid "MAXIMUM HP:"
+msgstr "최대 HP:"
+
+#: src/windows.py
+msgid "MAXIMUM MP:"
+msgstr "최대 MP:"
+
+#: src/windows.py
+msgid "ATTACK POWER:"
+msgstr "공격력:"
+
+#: src/windows.py
+msgid "DEFENSE POWER:"
+msgstr "수비력:"
+
+#: src/windows.py
+msgid "WEAPON:"
+msgstr "무기:"
+
+#: src/windows.py
+msgid "ARMOR:"
+msgstr "갑옷:"
+
+#: src/windows.py
+msgid "SHIELD:"
+msgstr "방패:"
+
+#: src/windows.py
+msgid "YES"
+msgstr "예"
+
+#: src/windows.py
+msgid "NO"
+msgstr "아니오"
+
+# The three lines of the message speed window's prompt, read together
+#: src/options_screen.py
+msgid "Which Message"
+msgstr "메시지 속도를"
+
+#: src/options_screen.py
+msgid "Speed Do You"
+msgstr "어느 것으로"
+
+#: src/options_screen.py
+msgid "Want To Use?"
+msgstr "하겠습니까?"
+
+#: src/options_screen.py
+msgid "FAST"
+msgstr "빠르게"
+
+#: src/options_screen.py
+msgid "NORMAL"
+msgstr "보통"
+
+#: src/options_screen.py
+msgid "SLOW"
+msgstr "느리게"
+
+#: src/options_screen.py
+msgid "Dialog Style"
+msgstr "대화 방식"
+
+#: src/options_screen.py
+msgid "CLASSIC (NES)"
+msgstr "클래식 (NES)"
+
+#: src/options_screen.py
+msgid "MODERN"
+msgstr "모던"
+
+#: src/options_screen.py
+msgid "NPCs Make Way"
+msgstr "NPC가 길 비키기"
+
+#: src/options_screen.py
+msgid "ON"
+msgstr "켜기"
+
+#: src/options_screen.py
+msgid "OFF (NES)"
+msgstr "끄기 (NES)"
