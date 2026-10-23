@@ -130,15 +130,16 @@ Esc: Close a menu or window, or answer NO, like J. Esc also cancels name entry
 I (Start): Pause
 
 U (Select) or Tab: Open the options over the map, and close them again (J and Esc close them too). Up and down pick
-a setting; left, right or K change it, and the change applies at once. These are the settings this game adds, none of
-them on the NES, and each adventure log saves its own the next time you save with the king:
+a setting; left, right or K change it, and the change applies at once. Each adventure log saves its own the next time
+you save with the king:
+- MESSAGE SPEED: FAST, NORMAL or SLOW, the NES's own setting, which you also choose when you begin a quest or with
+  CHANGE MESSAGE SPEED on the title menu
+
+The rest are settings this game adds, none of them on the NES:
 - DIALOG STYLE: CLASSIC (NES), the NES dialog window whose text scrolls, or MODERN, each message on a fresh window
 - NPCS MAKE WAY: ON, a townsperson you walk into steps aside, or OFF (NES), they stay in your way
 - FADE STYLE: NES, fades through the NES palette, or SMOOTH, a black fade
 - STAIRS: STEP ON, stepping onto stairs takes them, or NES, only the STAIRS command does (F2 switches this too)
-
-The message speed is the NES's own setting: choose it when you begin a quest, or with CHANGE MESSAGE SPEED on the
-title menu.
 
 F1: Show the controls
 
