@@ -29,8 +29,9 @@ from src.menu_functions import get_opposite_direction
 from src.options_screen import MODERN, options_from_config
 from src.save_file import ADVENTURE_LOGS, SaveFile, log_for_unchosen_save, save_path, write_save
 from src.selection import YES, frame_events, next_frame, run_selection, stop_at_edges
-from src.sound import Sound
-from src.text import draw_text, set_font_by_ascii_chars
+from src.sound import SPELL_SFX_FRAMES, Sound
+from src.visual_effects import bw_screen_flash
+from src.text import draw_text, in_nes_font, set_font_by_ascii_chars
 from src.translated_window import draw_translated_window
 from src.window_renderer import draw_window
 from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENTRIES, COMMAND_LAYOUT, COMMAND_TITLE, \
@@ -455,7 +456,7 @@ class CommandMenu:
             return
         self.screen.fill(BLACK, cells)
         if text and config['RENDER_TEXT']:
-            is_ascii = text.strip('’(↑ ← ↓ →)▼').isascii()
+            is_ascii = in_nes_font(text)
             if is_ascii not in self._dialog_fonts:
                 self._dialog_fonts[is_ascii] = set_font_by_ascii_chars([text], cells.height, None, self.directories)
             text_surface = self._dialog_fonts[is_ascii].render(text, True, self.color)
@@ -750,12 +751,16 @@ class CommandMenu:
 
     # Items
 
-    def item_message(self, text: str):
-        """Show an item's text as a battle line during a fight, or in the dialog box in the field."""
+    def item_message(self, *pages: str):
+        """Show an item's text as a battle line during a fight, or in the dialog box in the field. Each page but the
+        last ends in a TXT_WAIT: the arrow blinks until a button is pressed."""
         if self.current_battle is not None:
-            self.show_battle_line(text)
+            *waiting_pages, last_page = pages
+            for page in waiting_pages:
+                self.show_line_in_dialog_box(page, add_quotes=False, disable_sound=True)
+            self.show_battle_line(last_page)
         else:
-            self.show_text_in_dialog_box(text, skip_text=self.skip_text)
+            self.show_text_in_dialog_box(pages if len(pages) > 1 else pages[0], skip_text=self.skip_text)
 
     def use_item_in_battle(self, item_name: str):
         """NES PlyrItem: only these items work in battle; the enemy then takes its turn. Anything else is refused
@@ -926,12 +931,12 @@ class CommandMenu:
     def put_on_cursed_item(self, item_name: str, already_worn: bool):
         if already_worn:
             # NES DoCursedDialog
-            text = self._("The {} is squeezing thy body.").format(self._(item_name))
+            self.item_message(self._("The {} is squeezing thy body.").format(self._(item_name)))
         else:
-            # NES PlayerCursed
-            text = self._("{} put on the {} and was cursed!\nThy body is being squeezed.").format(
-                self.player.name, self._(item_name))
-        self.item_message(text)
+            # NES PlayerCursed, TextBlock5 entry 2 (TB5E2): "... and was cursed!." (sic), then a TXT_WAIT before
+            # "Thy body is being squeezed."; the cursed music comes after both (LDFF6-LE000)
+            self.item_message(self._("{} put on the {} and was cursed!.").format(self.player.name, self._(item_name)),
+                              self._("Thy body is being squeezed."))
         # NES PlayCursedMusic: MSC_CURSED plays to the end either way (WaitForMusicEnd). Then ChkBelt and ChkNecklace
         # resume the map's music (ResumeMusicTbl), and in a fight ChkUseBelt and ChkUseNecklace start MSC_REG_FGHT,
         # the regular fight music even against the Dragonlord's final form.
@@ -1041,10 +1046,11 @@ class CommandMenu:
         enemy.is_stopspelled = True
         self.show_battle_line(self._("The {}'s spell hath been blocked.").format(self._(enemy.name)))
 
-    def warp(self, map_name: str, coordinates: tuple):
-        """Move the player to another map without using stairs (OUTSIDE, RETURN, Wings of the Wyvern)."""
+    def warp(self, map_name: str, coordinates: tuple, stairs_sound: bool = False):
+        """Move the player to another map without using stairs (OUTSIDE, RETURN, Wings of the Wyvern). stairs_sound
+        plays the stairs sound once the screen has faded out (MapChngWithSound)."""
         self.game.change_map(map_lookup[map_name](self.game.config), destination_coordinates=coordinates,
-                             direction=Direction.DOWN.value)
+                             direction=Direction.DOWN.value, stairs_sound=stairs_sound)
 
     def can_return(self) -> bool:
         return self.current_map.identifier not in DUNGEON_MAPS and self.current_map.identifier != 'CharlockB8'
@@ -1056,8 +1062,7 @@ class CommandMenu:
             self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
             return
         # NES ChangeMaps -> SetPlyrPixelLoc -> MapChngWithSound: the stairs sound, as on a staircase
-        self.sound.play_sound(self.directories.stairs_up_sfx)
-        self.warp(*destination)
+        self.warp(*destination, stairs_sound=True)
 
     def return_(self):
         if not self.can_return():
@@ -1392,7 +1397,10 @@ class CommandMenu:
                     disable_sound=True,
                     hide_arrow=True,
                     skip_text=self.skip_text)
+                # NES PlyrCastSpell (LDBA4-LDBAD): SFX_SPELL, BWScreenFlash, then WaitForMusicEnd
                 self.sound.play_sound(self.directories.spell_sfx)
+                bw_screen_flash(self.screen, self.calculation, self.game.game_state.config)
+                self.sound.wait_for_sfx_end(SPELL_SFX_FRAMES, self.game.game_state.config)
                 self.player.current_mp -= spell_mp_cost
                 # NES PlyrCastSpell (LDBB2): the pop-up is redrawn with the MP that is left
                 self.show_popup_window()

@@ -8,7 +8,7 @@ from src.color import WHITE, BLACK
 from src.directories import Directories
 from src.sound import Sound
 from src.waiting import wait
-from src.window_renderer import DRAGON_QUEST_FONT_PATH, NES_GLYPHS, NES_TILE
+from src.window_renderer import DRAGON_QUEST_FONT_PATH, ELISION_APOSTROPHE, NES_GLYPHS, NES_TILE, font_characters
 
 WRAP_LENGTH = 21
 
@@ -71,7 +71,7 @@ class NESFont(Font):
     def render(self, text, antialias, color, bgcolor=None) -> Surface:  # type: ignore[override]
         if not isinstance(text, str):
             return super().render(text, antialias, color, bgcolor)
-        text = text.replace("'", '’')
+        text = font_characters(text)
         # Render the NES_GLYPHS letters as spaces (the font is monospaced), then draw their NES tiles in those cells
         surface = super().render(''.join(' ' if character in NES_GLYPHS else character for character in text),
                                  antialias, color, bgcolor)
@@ -100,11 +100,17 @@ def nes_font(path: str, size: int) -> Font:
     return font.Font(path, size)
 
 
+def in_nes_font(text: str) -> bool:
+    """Whether text is drawn in the NES font (dragon-quest.ttf): English text, with the NES symbols it uses. Anything
+    else (Korean) is drawn in Unifont."""
+    return text.replace(ELISION_APOSTROPHE, "'").strip('’(↑ ← ↓ →)▼').isascii()
+
+
 def set_font_by_ascii_chars(chunks, size, font_name, directories):
     if font_name is not None:
         return nes_font(font_name, size)
     else:
-        if all(chunk.strip('’(↑ ← ↓ →)▼').isascii() for chunk in chunks):
+        if all(in_nes_font(chunk) for chunk in chunks):
             current_font = NESFont(directories.DRAGON_QUEST_FONT_PATH, size)
         else:
             current_font = font.Font(directories.UNIFONT_PATH, size)

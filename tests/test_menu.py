@@ -464,6 +464,31 @@ class TestCommandMenu(TestCase):
             self.game.cmd_menu.display_item_menu('spells')
         self.assertEqual(show_line.call_args_list[0].args[0], f"{self.game.player.name} chanted the spell of HEAL.")
 
+    def test_casting_a_spell_flashes_the_screen_and_waits_for_the_sound(self):
+        # NES PlyrCastSpell (LDBA4-LDBAD): the chant, SFX_SPELL, BWScreenFlash, WaitForMusicEnd, then the spell
+        from src.sound import SPELL_SFX_FRAMES
+        from src.spells import Spell
+        self.game.player.spells = [Spell.HEAL]
+        self.game.player.current_mp = 10
+        cmd_menu = self.game.cmd_menu
+        mocked_return = MagicMock()
+        mocked_return.type = KEYDOWN
+        mocked_return.key = K_RETURN
+        events = []
+        with patch.object(event, 'get', return_value=[mocked_return]), \
+                patch.object(cmd_menu, 'show_line_in_dialog_box', side_effect=lambda *args, **kwargs: events.append(
+                    'chant')), \
+                patch.object(cmd_menu, 'play_menu_button_sound'), \
+                patch.object(cmd_menu.sound, 'play_sound', side_effect=events.append), \
+                patch('src.menu.bw_screen_flash', side_effect=lambda *args: events.append('flash')), \
+                patch.object(cmd_menu.sound, 'wait_for_sfx_end',
+                             side_effect=lambda frames, config: events.append(('wait for the sound', frames))), \
+                patch.object(cmd_menu, 'heal', side_effect=lambda: events.append('heal')):
+            cmd_menu.display_item_menu('spells')
+        self.assertEqual(events, ['chant', self.game.directories.spell_sfx, 'flash',
+                                  ('wait for the sound', SPELL_SFX_FRAMES), 'heal'])
+        self.assertEqual(SPELL_SFX_FRAMES, 7 * 6)  # SpellSFX ($848E): 7 notes of 6 counts
+
     def test_repel_and_fairy_water_set_the_repel_timer(self):
         self.game.cmd_menu.repel()
         self.assertEqual(self.game.repel_timer, 255)
