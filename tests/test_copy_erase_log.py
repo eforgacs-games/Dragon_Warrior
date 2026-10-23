@@ -12,7 +12,7 @@ from pygame.event import Event
 from src.common import set_gettext_language
 from src.title_menu import BACK_TO_TITLE_MENU
 from src.options_screen import OptionsScreen, erase_log_window, open_log_options, yes_no_options
-from src.windows import ADVENTURE_LOG_WINDOW_1, ERASE_LOG_WINDOW, YES_NO_2_WINDOW
+from src.windows import ADVENTURE_LOG_WINDOW_1, CONTINUE_CHANGE_ERASE_LAYOUT, ERASE_LOG_WINDOW, YES_NO_2_WINDOW
 from tests.test_options_screen import B, DOWN, ENTER, OptionsTestCase, presses
 
 ESC = Event(KEYDOWN, key=K_ESCAPE)  # B too (reject_keys, B_BUTTON_KEYS)
@@ -111,7 +111,7 @@ class TestCopyAndErase(OptionsTestCase):
                 patch.object(self.game.title_menu, 'erase_quest') as erase_quest, \
                 patch.object(self.game.title_menu, 'copy_quest') as copy:
             self.game.title_menu.show_title_menu(self.game.screen)
-        self.assertEqual(2, len(title_menu.call_args.args[4]))
+        self.assertEqual(CONTINUE_CHANGE_ERASE_LAYOUT, title_menu.call_args.args[2])
         erase_quest.assert_called_once()
         copy.assert_not_called()
 
