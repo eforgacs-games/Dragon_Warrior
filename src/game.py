@@ -1021,6 +1021,9 @@ class Game:
                 self.idle_frame()
                 return
             self.player.direction_value = direction
+            # DoJoyUp etc. start with ChkRemovePopUp: any direction press closes the pop-up window, even a tap that
+            # only turns the hero
+            self.drawer.remove_pop_up(self.cmd_menu)
             if self.frame_counter % STEP_SYNC_FRAMES:
                 self.idle_frame()
                 return
