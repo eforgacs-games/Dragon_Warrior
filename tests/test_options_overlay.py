@@ -1,4 +1,5 @@
 """The options overlay (src/options_overlay.py): SELECT or Tab on the map, this game's own settings changed in play,
+in pages, with the NES / MODERN / CUSTOM preset (#409); the switches for the conveniences that act on a key (#437);
 and the STAIRS setting (AUTO_STAIRS), which has no key of its own."""
 import os
 from unittest import TestCase
@@ -8,15 +9,18 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
-from pygame import K_DOWN, K_ESCAPE, K_F2, K_LEFT, K_RETURN, K_RIGHT, K_TAB, K_UP, K_j, K_k, K_u, KEYDOWN
+from pygame import K_DOWN, K_ESCAPE, K_F2, K_LEFT, K_PAGEDOWN, K_PAGEUP, K_RETURN, K_RIGHT, K_TAB, K_UP, K_i, K_j, \
+    K_k, K_u, KEYDOWN
 from pygame.event import Event
 
 from src.config.test_config import test_config
 from src.display_filters import SCALING_PIXEL_PERFECT, SCALING_SMOOTH
 from src.map_layouts import GRASS_STAIR_DOWN
 from src.maps import STAIR_DIRECTIONS, map_lookup
-from src.options_overlay import OPTION_ROWS, OPTIONS_TITLE, OptionsOverlay, options_layout
-from src.options_screen import CLASSIC, MODERN, options_from_config
+from src.options_overlay import FIXED_ROWS, MOST_ROWS, OPTION_PAGES, OPTION_ROWS, OPTIONS_WINDOW, PRESET_CUSTOM, \
+    PRESET_MODERN, PRESET_NES, PRESET_ROWS, OptionsOverlay, current_preset, options_layout, overlay_texts, \
+    preset_values
+from src.options_screen import CLASSIC, MODERN, SWITCHES, options_from_config
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
 from src.waiting import MENU_SPEED_FOLLOW as FOLLOW, MENU_SPEED_NORMAL as NORMAL
 from tests import helpers
@@ -38,29 +42,38 @@ def presses(*keys):
     return results
 
 
+# new_game's settings: the first value of every row (the order the rows cycle in), whatever base_config says
+DEFAULTS = {row.config_key: row.values[0] for row in OPTION_ROWS}
+OWN_KEYS = tuple(DEFAULTS)
+
+
 def new_game(**overrides):
     # A copy of test_config, so the settings these tests change don't leak into other tests
-    return helpers.new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
-                             'TEXT_SPEED': 'Fast', 'DIALOG_STYLE': CLASSIC, 'NPCS_MAKE_WAY': True,
-                             'FADE_STYLE': FADE_STYLE_NES, 'AUTO_STAIRS': True, 'AUTO_GRIND_STOP': 'RedHP',
-                             'MENU_SPEED': NORMAL, 'LANGUAGE': 'English', 'SCANLINES': False, 'SCALING': SCALING_SMOOTH,
+    return helpers.new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True, **DEFAULTS,
                              **overrides})
 
 
-DEFAULTS = ('Fast', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP', NORMAL)  # new_game's settings, in own_settings' order
-
-
 def own_settings(config):
-    return (config['TEXT_SPEED'], config['DIALOG_STYLE'], config['NPCS_MAKE_WAY'], config['FADE_STYLE'],
-            config['AUTO_STAIRS'], config['AUTO_GRIND_STOP'], config['MENU_SPEED'])
+    return {config_key: config[config_key] for config_key in OWN_KEYS}
 
 
-OWN_KEYS = ('TEXT_SPEED', 'DIALOG_STYLE', 'NPCS_MAKE_WAY', 'FADE_STYLE', 'AUTO_STAIRS', 'AUTO_GRIND_STOP', 'MENU_SPEED')
+def row_named(label):
+    return next(row for row in OPTION_ROWS if row.label == label)
+
+
+def page_of(label):
+    return next(number for number, page in enumerate(OPTION_PAGES) if label in [row.label for row in page.rows])
 
 
 def down_to(label):
-    """The down presses that move the cursor from the first row to this one."""
-    return (K_DOWN,) * [row.label for row in OPTION_ROWS].index(label)
+    """The presses that go to the row's page (START turns the page) and move the cursor from PRESET to the row."""
+    page = page_of(label)
+    rows = [row.label for row in OPTION_PAGES[page].rows]
+    return (K_i,) * page + (K_DOWN,) * (FIXED_ROWS + rows.index(label))
+
+
+def page_texts(config, page=0):
+    return [text.text for text in options_layout(config, page).texts]
 
 
 class OverlayTestCase(TestCase):
@@ -172,58 +185,89 @@ class TestOpening(OverlayTestCase):
 
 class TestRows(OverlayTestCase):
 
-    def test_rows(self):
-        self.assertEqual("OPTIONS", OPTIONS_TITLE.text)
-        self.assertEqual([("MESSAGE SPEED", 'TEXT_SPEED', ("FAST", "NORMAL", "SLOW")),
-                          ("DIALOG STYLE", 'DIALOG_STYLE', ("CLASSIC (NES)", "MODERN")),
-                          ("NPCS MAKE WAY", 'NPCS_MAKE_WAY', ("ON", "OFF (NES)")),
-                          ("FADE STYLE", 'FADE_STYLE', ("NES", "SMOOTH")),
-                          ("STAIRS", 'AUTO_STAIRS', ("STEP ON", "NES")),
-                          ("GRIND STOP", 'AUTO_GRIND_STOP', ("RED HP", "HALF HP", "3/4 HP")),
-                          ("MENU SPEED", 'MENU_SPEED', ("NORMAL", "FOLLOW GAME")),
-                          ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어")),
-                          ("SCANLINES", 'SCANLINES', ("OFF", "ON")),
-                          ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT"))],
-                         [(row.label, row.config_key, row.value_labels) for row in OPTION_ROWS])
+    def test_pages(self):
+        self.assertEqual([("LOOK & SOUND", [("MESSAGE SPEED", 'TEXT_SPEED', ("FAST", "NORMAL", "SLOW")),
+                                            ("DIALOG STYLE", 'DIALOG_STYLE', ("CLASSIC (NES)", "MODERN")),
+                                            ("FADE STYLE", 'FADE_STYLE', ("NES", "SMOOTH")),
+                                            ("MUSIC", 'ORCHESTRA_MUSIC_ENABLED', ("ORCHESTRA", "NES")),
+                                            ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어")),
+                                            ("SCANLINES", 'SCANLINES', ("OFF", "ON")),
+                                            ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT"))]),
+                          ("GAMEPLAY", [("NPCS MAKE WAY", 'NPCS_MAKE_WAY', ("ON", "OFF (NES)")),
+                                        ("STAIRS", 'AUTO_STAIRS', ("STEP ON", "NES")),
+                                        ("QUICK ACTION", 'QUICK_ACTION', ("OFF (NES)", "ON"))]),
+                          ("CONTROLS", [("GAME SPEED", 'GAME_SPEED_KEYS', ("OFF (NES)", "ON")),
+                                        ("SAVE STATES", 'SAVE_STATES', ("OFF (NES)", "ON")),
+                                        ("REWIND", 'REWIND', ("OFF (NES)", "ON")),
+                                        ("AUTO-GRIND", 'AUTO_GRIND', ("OFF (NES)", "ON")),
+                                        ("GRIND STOP", 'AUTO_GRIND_STOP', ("RED HP", "HALF HP", "3/4 HP")),
+                                        ("MENU SPEED", 'MENU_SPEED', ("NORMAL", "FOLLOW GAME")),
+                                        ("CHEATS", 'CHEAT_KEYS', ("OFF (NES)", "ON"))])],
+                         [(page.title, [(row.label, row.config_key, row.value_labels) for row in page.rows])
+                          for page in OPTION_PAGES])
+
+    def test_every_page_starts_with_preset_and_page(self):
+        for number in range(len(OPTION_PAGES)):
+            with self.subTest(page=number):
+                layout = options_layout(self.config, number)
+                self.assertEqual(OPTION_PAGES[number].title, layout.title.text)
+                self.assertEqual(["PRESET", "CUSTOM", "PAGE", f"{number + 1}/3"], page_texts(self.config, number)[:4])
+                self.assertEqual(FIXED_ROWS + len(OPTION_PAGES[number].rows), len(layout.cursor_tiles))
 
     def test_window_shows_the_current_values(self):
-        texts = [text.text for text in options_layout(self.config).texts]
-        self.assertEqual(["MESSAGE SPEED", "FAST", "DIALOG STYLE", "CLASSIC (NES)", "NPCS MAKE WAY", "ON",
-                          "FADE STYLE", "NES", "STAIRS", "STEP ON", "GRIND STOP", "RED HP", "MENU SPEED", "NORMAL",
-                          "LANGUAGE", "ENGLISH", "SCANLINES", "OFF", "SCALING", "SMOOTH"], texts)
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/3", "MESSAGE SPEED", "FAST", "DIALOG STYLE", "CLASSIC (NES)",
+                          "FADE STYLE", "NES", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
+                          "SCALING", "SMOOTH"], page_texts(self.config))
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "ON", "STAIRS", "STEP ON",
+                          "QUICK ACTION", "OFF (NES)"], page_texts(self.config, 1))
         self.config.update(TEXT_SPEED='Slow', DIALOG_STYLE=MODERN, NPCS_MAKE_WAY=False, FADE_STYLE=FADE_STYLE_SMOOTH,
-                           AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP', MENU_SPEED=FOLLOW)
-        texts = [text.text for text in options_layout(self.config).texts]
-        self.assertEqual(["MESSAGE SPEED", "SLOW", "DIALOG STYLE", "MODERN", "NPCS MAKE WAY", "OFF (NES)",
-                          "FADE STYLE", "SMOOTH", "STAIRS", "NES", "GRIND STOP", "3/4 HP", "MENU SPEED",
-                          "FOLLOW GAME", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF", "SCALING", "SMOOTH"], texts)
+                           AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP', CHEAT_KEYS=True, REWIND=True)
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/3", "MESSAGE SPEED", "SLOW", "DIALOG STYLE", "MODERN",
+                          "FADE STYLE", "SMOOTH", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
+                          "SCALING", "SMOOTH"],
+                         page_texts(self.config))
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "3/3", "GAME SPEED", "OFF (NES)", "SAVE STATES", "OFF (NES)",
+                          "REWIND", "ON", "AUTO-GRIND", "OFF (NES)", "GRIND STOP", "3/4 HP", "MENU SPEED", "NORMAL",
+                          "CHEATS", "ON"],
+                         page_texts(self.config, 2))
+
+    def test_the_window_is_the_same_size_on_every_page_and_fits_the_screen(self):
+        self.assertEqual(MOST_ROWS + 2, OPTIONS_WINDOW.height)
+        self.assertLessEqual(OPTIONS_WINDOW.y + OPTIONS_WINDOW.height, 15)  # 240 / 16 blocks high
+        for number in range(len(OPTION_PAGES)):
+            self.assertEqual(OPTIONS_WINDOW, options_layout(self.config, number).window)
 
     def test_every_text_fits_the_window(self):
         # window_tiles raises ValueError for text outside the window
         from src.window_renderer import window_tiles
-        for values in (('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'HalfHP', NORMAL),
-                       ('Slow', MODERN, False, FADE_STYLE_SMOOTH, False, 'ThreeQuartersHP', FOLLOW)):
-            self.config.update(zip(OWN_KEYS, values))
-            window_tiles(options_layout(self.config))
+        for choice in range(3):
+            for row in OPTION_ROWS:
+                self.config[row.config_key] = row.values[choice % len(row.values)]
+            # 한국어 is drawn in the Korean font (src/translated_window.py), not in NES tiles: see
+            # tests/test_korean_windows.py
+            self.config['LANGUAGE'] = 'English'
+            for number in range(len(OPTION_PAGES)):
+                window_tiles(options_layout(self.config, number))
+
+    def test_each_text_is_in_the_catalog(self):
+        texts = overlay_texts()
+        for number in range(len(OPTION_PAGES)):
+            layout = options_layout(self.config, number)
+            for text in (layout.title, *layout.texts):
+                if '/' not in text.text or text.text == "3/4 HP":  # the page number isn't translated
+                    self.assertIn(text.text, texts)
 
     def test_each_row_changes_its_setting_with_a_sound(self):
-        cases = (("MESSAGE SPEED", ('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP', NORMAL)),
-                 ("DIALOG STYLE", ('Fast', MODERN, True, FADE_STYLE_NES, True, 'RedHP', NORMAL)),
-                 ("NPCS MAKE WAY", ('Fast', CLASSIC, False, FADE_STYLE_NES, True, 'RedHP', NORMAL)),
-                 ("FADE STYLE", ('Fast', CLASSIC, True, FADE_STYLE_SMOOTH, True, 'RedHP', NORMAL)),
-                 ("STAIRS", ('Fast', CLASSIC, True, FADE_STYLE_NES, False, 'RedHP', NORMAL)),
-                 ("GRIND STOP", ('Fast', CLASSIC, True, FADE_STYLE_NES, True, 'HalfHP', NORMAL)),
-                 ("MENU SPEED", ('Fast', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP', FOLLOW)))
-        for label, expected in cases:
-            with self.subTest(label):
-                self.config.update(zip(OWN_KEYS, DEFAULTS))
-                self.assertEqual(1, self.run_overlay(*down_to(label), K_RIGHT, K_u))
+        for row in OPTION_ROWS:
+            with self.subTest(row.label):
+                self.config.update(DEFAULTS)
+                presses_to_row = down_to(row.label)
+                # each page turn has the menu button sound too
+                self.assertEqual(presses_to_row.count(K_i) + 1, self.run_overlay(*presses_to_row, K_RIGHT, K_u))
+                expected = {**DEFAULTS, row.config_key: row.values[1]}
                 self.assertEqual(expected, own_settings(self.config))
                 # what the next save keeps (CommandMenu.save)
-                options = options_from_config(self.config)
-                self.assertEqual(expected, (options.message_speed, options.dialog_style, options.npcs_make_way,
-                                            options.fade_style, options.auto_stairs, options.auto_grind_stop,
-                                            options.menu_speed))
+                self.assertEqual(options_from_config(expected), options_from_config(self.config))
 
     def test_grind_stop_goes_round_all_three(self):
         settings = []
@@ -237,10 +281,10 @@ class TestRows(OverlayTestCase):
     def test_message_speed_goes_round_all_three(self):
         speeds = []
         for _ in range(3):
-            self.run_overlay(K_RIGHT, K_u)
+            self.run_overlay(*down_to("MESSAGE SPEED"), K_RIGHT, K_u)
             speeds.append(self.config['TEXT_SPEED'])
         self.assertEqual(['Normal', 'Slow', 'Fast'], speeds)
-        self.run_overlay(K_LEFT, K_u)
+        self.run_overlay(*down_to("MESSAGE SPEED"), K_LEFT, K_u)
         self.assertEqual('Slow', self.config['TEXT_SPEED'])
 
     def test_left_right_and_a_all_change_the_value(self):
@@ -250,15 +294,15 @@ class TestRows(OverlayTestCase):
                 self.run_overlay(*down_to("STAIRS"), change, K_u)
                 self.assertFalse(self.config['AUTO_STAIRS'])
         # and back again
-        self.assertEqual(2, self.run_overlay(*down_to("STAIRS"), K_RIGHT, K_LEFT, K_u))
+        self.assertEqual(3, self.run_overlay(*down_to("STAIRS"), K_RIGHT, K_LEFT, K_u))
         self.assertFalse(self.config['AUTO_STAIRS'])
 
     def test_cursor_stops_at_the_edges(self):
-        # up from the first row stays on it; down past the last row stays on the last
-        self.run_overlay(K_UP, K_RIGHT, *(K_DOWN,) * (len(OPTION_ROWS) + 1), K_RIGHT, K_u)
-        self.assertEqual(('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP', NORMAL), own_settings(self.config))
-        self.assertEqual(('English', False, SCALING_PIXEL_PERFECT),
-                         (self.config['LANGUAGE'], self.config['SCANLINES'], self.config['SCALING']))
+        # up from PRESET stays on it (right there: CUSTOM to NES); down past the last row stays on the last
+        # (SCALING, which no preset changes)
+        self.run_overlay(K_UP, K_RIGHT, *(K_DOWN,) * (MOST_ROWS + 1), K_RIGHT, K_u)
+        self.assertEqual({**DEFAULTS, **preset_values(PRESET_NES), 'SCALING': 'PixelPerfect'},
+                         own_settings(self.config))
 
     def test_b_esc_select_and_tab_close_it(self):
         for close in (K_j, K_ESCAPE, K_u, K_TAB):
@@ -275,25 +319,289 @@ class TestRows(OverlayTestCase):
     def test_saved_and_loaded_with_the_adventure_log(self):
         import json
         import tempfile
-        self.run_overlay(*(K_RIGHT, K_DOWN) * len(OPTION_ROWS), K_u)
+        for row in OPTION_ROWS:
+            self.run_overlay(*down_to(row.label), K_RIGHT, K_u)
         changed = own_settings(self.config)
-        self.assertEqual(('Normal', MODERN, False, FADE_STYLE_SMOOTH, False, 'HalfHP', FOLLOW), changed)
+        self.assertEqual({row.config_key: row.values[1] for row in OPTION_ROWS}, changed)
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.game.cmd_menu.directories.save_dir = tmp_dir
             self.game.player.adventure_log = 2
             self.game.cmd_menu.save()
             with open(os.path.join(tmp_dir, 'save_slot_2.json')) as save_file:
                 save = json.load(save_file)
+        self.assertLessEqual({switch.save_key for switch in SWITCHES}, set(save))
         loaded = new_game()
         with patch.object(loaded.map_mgr, 'change_map'):
             loaded.load_game(save)
-        self.assertEqual(changed, own_settings(loaded.game_state.config))
+        # the language and the display filters are the player's, kept in the global settings (src/settings.py)
+        self.assertEqual({**changed, 'LANGUAGE': 'English', 'SCANLINES': False, 'SCALING': 'Smooth'},
+                         own_settings(loaded.game_state.config))
         # The language is the player's, kept in the global settings (src/settings.py), not the adventure's
         self.assertEqual(('Korean', True, SCALING_PIXEL_PERFECT),
                          (self.config['LANGUAGE'], self.config['SCANLINES'], self.config['SCALING']))
         self.assertEqual(('English', False, SCALING_SMOOTH), (loaded.game_state.config['LANGUAGE'],
                                                               loaded.game_state.config['SCANLINES'],
                                                               loaded.game_state.config['SCALING']))
+
+
+class TestPages(OverlayTestCase):
+
+    def shown_pages(self, *keys):
+        """The page shown after each press (and before the first)."""
+        overlay = OptionsOverlay(self.game)
+        pages = []
+        with patch.object(OptionsOverlay, 'draw', autospec=True,
+                          side_effect=lambda shown, *_args: pages.append((shown.page, shown.index))), \
+                patch('src.selection.event.get', side_effect=presses(*keys, K_u)), \
+                patch.object(self.game.sound, 'play_sound'):
+            overlay.run()
+        return pages
+
+    def last_page(self, *keys):
+        overlay = OptionsOverlay(self.game)
+        with patch('src.selection.event.get', side_effect=presses(*keys, K_u)), \
+                patch.object(self.game.sound, 'play_sound'):
+            overlay.run()
+        return overlay.page, overlay.index
+
+    def test_page_row_turns_the_page_both_ways_going_round(self):
+        self.assertEqual((1, 1), self.last_page(K_DOWN, K_RIGHT))
+        self.assertEqual((2, 1), self.last_page(K_DOWN, K_RIGHT, K_k))
+        self.assertEqual((0, 1), self.last_page(K_DOWN, K_RIGHT, K_RIGHT, K_RIGHT))
+        self.assertEqual((2, 1), self.last_page(K_DOWN, K_LEFT))
+
+    def test_start_and_page_down_turn_to_the_next_page_and_page_up_to_the_previous_from_any_row(self):
+        self.assertEqual((1, 3), self.last_page(K_DOWN, K_DOWN, K_DOWN, K_i))
+        self.assertEqual((1, 0), self.last_page(K_PAGEDOWN))
+        self.assertEqual((2, 0), self.last_page(K_PAGEUP))
+
+    def test_the_cursor_goes_to_a_shorter_pages_last_row(self):
+        # the CONTROLS page's last row (CHEATS) is lower than any row of the GAMEPLAY page
+        last = FIXED_ROWS + len(OPTION_PAGES[2].rows) - 1
+        self.assertEqual((1, FIXED_ROWS + len(OPTION_PAGES[1].rows) - 1),
+                         self.last_page(K_i, K_i, *(K_DOWN,) * last, K_PAGEUP))
+
+    def test_each_page_is_drawn(self):
+        pages = {page for page, _index in self.shown_pages(K_i, K_i)}
+        self.assertEqual({0, 1, 2}, pages)
+
+    def test_turning_the_page_changes_no_setting(self):
+        self.assertEqual(3, self.run_overlay(K_DOWN, K_RIGHT, K_i, K_PAGEUP, K_u))
+        self.assertEqual(DEFAULTS, own_settings(self.config))
+
+
+class TestPreset(OverlayTestCase):
+
+    def test_the_presets(self):
+        self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': False,
+                          'NPCS_MAKE_WAY': False, 'AUTO_STAIRS': False, 'QUICK_ACTION': False,
+                          'GAME_SPEED_KEYS': False, 'SAVE_STATES': False, 'REWIND': False, 'AUTO_GRIND': False,
+                          'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL, 'CHEAT_KEYS': False},
+                         preset_values(PRESET_NES))
+        self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': True,
+                          'NPCS_MAKE_WAY': True, 'AUTO_STAIRS': True, 'QUICK_ACTION': True,
+                          'GAME_SPEED_KEYS': True, 'SAVE_STATES': True, 'REWIND': True, 'AUTO_GRIND': True,
+                          'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL, 'CHEAT_KEYS': False},
+                         preset_values(PRESET_MODERN))
+        # the message speed is the NES's own setting, and the language the player's: no preset changes them
+        self.assertNotIn('TEXT_SPEED', [row.config_key for row in PRESET_ROWS])
+        for config_key in ('LANGUAGE', 'SCANLINES', 'SCALING'):
+            self.assertNotIn(config_key, [row.config_key for row in PRESET_ROWS])
+
+    def test_menu_speed_is_normal_in_both_presets_so_follow_game_is_custom(self):
+        # the NES has only 1x, so NORMAL is as faithful as FOLLOW GAME: both presets keep the menus at NORMAL
+        self.config.update(preset_values(PRESET_MODERN))
+        self.assertEqual(PRESET_MODERN, current_preset(self.config))
+        self.config['MENU_SPEED'] = FOLLOW
+        self.assertEqual(PRESET_CUSTOM, current_preset(self.config))
+
+    def test_every_new_quest_default_but_the_music_is_the_nes_preset(self):
+        from src.options_screen import DEFAULT_OPTIONS, apply_options
+        config = {}
+        apply_options(config, DEFAULT_OPTIONS)
+        nes = preset_values(PRESET_NES)
+        differences = {config_key for config_key, value in nes.items() if config[config_key] != value}
+        # base_config has always started with the orchestra, stepping onto stairs and NPCs making way
+        self.assertEqual({'ORCHESTRA_MUSIC_ENABLED', 'AUTO_STAIRS', 'NPCS_MAKE_WAY'}, differences)
+
+    def test_preset_sets_every_row_at_once(self):
+        self.assertEqual(1, self.run_overlay(K_RIGHT, K_u))  # CUSTOM -> NES (the first)
+        self.assertEqual(PRESET_NES, current_preset(self.config))
+        self.assertEqual({**DEFAULTS, **preset_values(PRESET_NES)}, own_settings(self.config))
+        self.run_overlay(K_RIGHT, K_u)
+        self.assertEqual(PRESET_MODERN, current_preset(self.config))
+        self.assertEqual({**DEFAULTS, **preset_values(PRESET_MODERN)}, own_settings(self.config))
+        self.assertEqual('Fast', self.config['TEXT_SPEED'])
+
+    def test_a_row_that_differs_shows_custom(self):
+        self.config.update(preset_values(PRESET_NES))
+        self.assertEqual(["PRESET", "NES"], page_texts(self.config)[:2])
+        self.run_overlay(*down_to("REWIND"), K_RIGHT, K_u)
+        self.assertEqual(PRESET_CUSTOM, current_preset(self.config))
+        self.assertEqual(["PRESET", "CUSTOM"], page_texts(self.config, 2)[:2])
+        # and changing it back to the preset's value shows the preset again
+        self.run_overlay(*down_to("REWIND"), K_RIGHT, K_u)
+        self.assertEqual(["PRESET", "NES"], page_texts(self.config)[:2])
+
+    def test_preset_goes_back_to_the_last_custom_values(self):
+        custom = own_settings(self.config)  # DEFAULTS: neither preset
+        # CUSTOM -> NES -> MODERN -> CUSTOM, all in one go
+        self.run_overlay(K_RIGHT, K_RIGHT, K_RIGHT, K_u)
+        self.assertEqual(custom, own_settings(self.config))
+        # and left goes the other way round: CUSTOM -> MODERN
+        self.run_overlay(K_LEFT, K_u)
+        self.assertEqual(PRESET_MODERN, current_preset(self.config))
+
+    def test_without_custom_values_the_preset_goes_between_nes_and_modern(self):
+        self.config.update(preset_values(PRESET_NES))
+        self.run_overlay(K_RIGHT, K_RIGHT, K_u)
+        self.assertEqual(PRESET_NES, current_preset(self.config))
+
+    def test_a_row_changed_in_the_same_run_is_the_custom_values_to_go_back_to(self):
+        self.config.update(preset_values(PRESET_NES))
+        self.run_overlay(*down_to("STAIRS"), K_RIGHT, *(K_UP,) * 10, K_RIGHT, K_RIGHT, K_RIGHT, K_u)
+        self.assertEqual({**preset_values(PRESET_NES), 'AUTO_STAIRS': True},
+                         {config_key: self.config[config_key] for config_key in preset_values(PRESET_NES)})
+
+    def test_presets_switch_the_music_and_the_speed_keys_at_once(self):
+        with patch.object(self.game, 'apply_option', wraps=self.game.apply_option) as apply_option:
+            self.run_overlay(K_RIGHT, K_RIGHT, K_u)  # CUSTOM -> NES -> MODERN
+        applied = {call.args[0] for call in apply_option.call_args_list}
+        self.assertIn('ORCHESTRA_MUSIC_ENABLED', applied)
+        self.assertIn('GAME_SPEED_KEYS', applied)
+        from src.waiting import speed_keys_enabled
+        self.assertTrue(speed_keys_enabled())
+
+
+class TestSwitches(OverlayTestCase):
+    """The conveniences that act on a key (#409, #437): off, their keys do nothing."""
+
+    def press(self, pressed_key):
+        self.game.handle_keypresses(key(pressed_key))
+
+    def set_switch(self, label, on):
+        if self.config[row_named(label).config_key] != on:
+            self.run_overlay(*down_to(label), K_RIGHT, K_u)
+        self.assertEqual(on, self.config[row_named(label).config_key])
+
+    def test_game_speed(self):
+        from src.waiting import game_speed, handle_speed_key, reset_game_speed
+        self.addCleanup(reset_game_speed)
+        self.set_switch("GAME SPEED", False)
+        with patch.object(self.game, 'draw_temporary_text') as draw_temporary_text:
+            self.press(pygame.K_3)
+        draw_temporary_text.assert_not_called()
+        self.assertEqual(1, game_speed())
+        # in the other loops too, where the key is still taken out (so it's never "any key")
+        self.assertTrue(handle_speed_key(key(pygame.K_4)))
+        self.assertEqual(1, game_speed())
+        self.set_switch("GAME SPEED", True)
+        with patch.object(self.game, 'draw_temporary_text'):
+            self.press(pygame.K_3)
+        self.assertEqual(4, game_speed())
+        # switching it off goes back to normal speed
+        self.set_switch("GAME SPEED", False)
+        self.assertEqual(1, game_speed())
+
+    def test_auto_grind(self):
+        self.set_switch("AUTO-GRIND", False)
+        self.press(pygame.K_g)
+        self.assertFalse(self.game.auto_grind_requested)
+        self.set_switch("AUTO-GRIND", True)
+        with patch.object(self.game, 'start_auto_grind') as start_auto_grind:
+            self.press(pygame.K_g)
+        start_auto_grind.assert_called_once()
+
+    def test_cheats(self):
+        self.set_switch("CHEATS", False)
+        with patch.object(self.game, 'draw_temporary_text') as draw_temporary_text:
+            self.press(pygame.K_F4)
+            self.press(pygame.K_F9)
+        draw_temporary_text.assert_not_called()
+        self.assertEqual((False, False), (self.game.auto_battle, self.game.invulnerable))
+        self.set_switch("CHEATS", True)
+        with patch.object(self.game, 'draw_temporary_text'):
+            self.press(pygame.K_F4)
+            self.press(pygame.K_F9)
+        self.assertEqual((True, True), (self.game.auto_battle, self.game.invulnerable))
+        # switching them off switches both off
+        self.set_switch("CHEATS", False)
+        self.assertEqual((False, False), (self.game.auto_battle, self.game.invulnerable))
+
+    def test_quick_action(self):
+        self.game.player.current_tile = 'TREASURE_BOX'
+        self.set_switch("QUICK ACTION", True)
+        with patch.object(self.game.cmd_menu, 'take') as take, patch.object(self.game.drawer,
+                                                                             'draw_hovering_stats_window'):
+            self.press(K_RETURN)
+        take.assert_called_once()
+        self.assertFalse(self.game.cmd_menu_requested)
+        # off, Enter is the A button on the map, as everywhere else: it opens the COMMAND window
+        self.set_switch("QUICK ACTION", False)
+        with patch.object(self.game.cmd_menu, 'take') as take, \
+                patch.object(self.game.movement, 'resolve_pending_freezes'):
+            self.press(K_RETURN)
+        take.assert_not_called()
+        self.assertTrue(self.game.cmd_menu_requested)
+
+    def test_music(self):
+        directories = self.game.directories
+        self.assertTrue(self.config['ORCHESTRA_MUSIC_ENABLED'])
+        self.assertIn('orchestra', self.game.current_map.music_file_path)
+        with patch.object(self.game.music_player, 'load_and_play_music') as load_and_play_music:
+            self.set_switch("MUSIC", False)
+        # the map's music starts again, from the NES set, and every music path after it is from that set
+        load_and_play_music.assert_called_once_with(directories.tantegel_castle_throne_room_music)
+        self.assertIn(os.path.join('music', 'NES'), self.game.current_map.music_file_path)
+        self.assertIn(os.path.join('music', 'NES'), self.game.battle_ctrl.directories.overworld_music)
+        self.assertIn(os.path.join('music', 'NES'), map_lookup['Alefgard'](self.config).music_file_path)
+        with patch.object(self.game.music_player, 'load_and_play_music'):
+            self.set_switch("MUSIC", True)
+        self.assertIn('orchestra', self.game.current_map.music_file_path)
+
+    def test_save_states_and_rewind_have_switches(self):
+        for label in ("SAVE STATES", "REWIND"):
+            with self.subTest(label):
+                self.set_switch(label, True)
+                self.set_switch(label, False)
+
+    def test_new_game_follows_the_switches_in_the_config(self):
+        from src.waiting import reset_game_speed, speed_keys_enabled
+        self.addCleanup(reset_game_speed)
+        self.assertFalse(speed_keys_enabled())
+        new_game(GAME_SPEED_KEYS=True)
+        self.assertTrue(speed_keys_enabled())
+
+    def test_loading_a_log_applies_its_switches(self):
+        from src.waiting import reset_game_speed, speed_keys_enabled
+        self.addCleanup(reset_game_speed)
+        self.game.invulnerable = True
+        save = {'Name': 'Ed', 'Experience': 0, 'Gold': 0, 'Inventory': [], 'GameSpeedKeys': True, 'CheatKeys': False}
+        with patch.object(self.game.map_mgr, 'change_map'):
+            self.game.load_game(save)
+        self.assertTrue(speed_keys_enabled())
+        self.assertFalse(self.game.invulnerable)
+
+
+class TestDevOnly(TestCase):
+    """#437: the frame recorder (F8) and the debug keys (F5-F7) are only in dev builds (dev_config's DEBUG_KEYS)."""
+
+    def test_prod_has_no_debug_keys(self):
+        from src.config.dev_config import dev_config
+        from src.config.prod_config import prod_config
+        self.assertFalse(prod_config['DEBUG_KEYS'])
+        self.assertTrue(dev_config['DEBUG_KEYS'])
+
+    def test_prod_starts_with_every_key_convenience_off(self):
+        from src.config.prod_config import prod_config
+        for switch in SWITCHES:
+            if switch.config_key != 'ORCHESTRA_MUSIC_ENABLED':
+                self.assertFalse(prod_config[switch.config_key], switch.config_key)
+
+    def test_a_game_without_debug_keys_has_no_debug_tools(self):
+        pygame.init()
+        game = new_game(DEBUG_KEYS=False)
+        self.assertIsNone(game.debug_tools)
 
 
 class TestStairsHasNoKey(OverlayTestCase):
@@ -309,7 +617,7 @@ class TestStairsHasNoKey(OverlayTestCase):
         self.run_overlay(*down_to("STAIRS"), K_RIGHT, K_u)
         self.assertFalse(self.game.auto_stairs)
         self.assertFalse(options_from_config(self.config).auto_stairs)
-        texts = [text.text for text in options_layout(self.config).texts]
+        texts = page_texts(self.config, page_of("STAIRS"))
         self.assertEqual("NES", texts[texts.index("STAIRS") + 1])
 
 

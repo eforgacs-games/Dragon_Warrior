@@ -1,3 +1,4 @@
+from functools import cache
 from os.path import join
 
 from pygame import font
@@ -5,7 +6,84 @@ from pygame import font
 from src.paths import data_path, default_save_dir, project_root
 
 
+@cache
+def music_paths(orchestra: bool) -> dict[str, str]:
+    """The music files for the MUSIC setting (ORCHESTRA_MUSIC_ENABLED): the orchestral soundtrack or the NES's."""
+    sound_dir = join(data_path(), 'sound')
+    sfx_dir = join(sound_dir, 'sfx')
+    music_dir = join(sound_dir, 'music')
+    if orchestra:
+        orchestra_dir = join(music_dir, 'orchestra')
+        dungeon = join(orchestra_dir, '06 Dungeon.mp3')
+        fight = join(orchestra_dir, '05 Fight.mp3')
+        return {
+            'intro_overture': join(orchestra_dir, '01 Overture March (London Philharmonic Orchestra Version).mp3'),
+            'intermezzo': join(orchestra_dir, 'Android_iOS', 'Dragon Quest (Android_iOS) - Intermezzo.mp3'),
+            'tantegel_castle_throne_room_music': join(orchestra_dir, '02 Chateau Ladutorm.mp3'),
+            'tantegel_castle_courtyard_music': join(orchestra_dir, '02 Chateau Ladutorm.mp3'),
+            'village_music': join(orchestra_dir, '03 People.mp3'),
+            'overworld_music': join(orchestra_dir, '04 Unknown World.mp3'),
+            'battle_music': fight,
+            'regular_fight_music': fight,
+            'end_boss_music': join(orchestra_dir, '07 King Dragon.mp3'),
+            'ending_music': join(orchestra_dir, '08 Finale.mp3'),
+            **{f'dungeon_floor_{floor}_music': dungeon for floor in range(1, 9)},
+        }
+    nes_dir = join(music_dir, 'NES')
+    village = join(nes_dir, '04 Dragon Quest 1 - Peaceful Village.mp3')
+    return {
+        'intro_overture': join(nes_dir, '01 Dragon Quest 1 - Intro ~ Overture.mp3'),
+        'intermezzo': village,
+        'tantegel_castle_throne_room_music': join(nes_dir, '02 Dragon Quest 1 - Tantegel Castle.mp3'),
+        'tantegel_castle_courtyard_music': join(nes_dir, '03 Dragon Quest 1 - Tantegel Castle (Lower).mp3'),
+        'village_music': village,
+        'overworld_music': join(nes_dir, '05 Dragon Quest 1 - Kingdom of Alefgard.mp3'),
+        **{f'dungeon_floor_{floor}_music': join(nes_dir, f'{floor + 5:02} Dragon Quest 1 - Dark Dungeon ~ Floor {floor}.mp3')
+           for floor in range(1, 9)},
+        # NES MSC_ENTR_FGHT, the music every fight but the last starts with (InitFight): the 'monster draws near' run
+        # (SQ1EntFight), which then falls through into the fight loop (SQ1Fight)
+        'battle_music': join(nes_dir, '14 Dragon Quest 1 - A Monster Draws Near.mp3'),
+        # NES MSC_REG_FGHT, the fight loop on its own: what the fight music restarts with after the flute, the harp or
+        # a cursed item (ChkUseFlute, ChkUseHarp, ChkUseBelt, ChkUseNecklace), and what follows MSC_ENTR_FGHT
+        'regular_fight_music': join(sfx_dir, '24 Dragon Quest 1 - Monster Battle.mp3'),
+        'end_boss_music': join(nes_dir, '15 Dragon Quest 1 - The Dragon Lord.mp3'),
+        'ending_music': join(nes_dir, "16 Dragon Quest 1 - Hero's Fanfare.mp3"),  # NES MSC_END
+    }
+
+
+MUSIC_NAMES = tuple(music_paths(False))
+
+
+def music_name(path: str) -> str | None:
+    """Which music a file is (its Directories attribute), with either MUSIC setting; None if it's no map music."""
+    for orchestra in (False, True):
+        for name, music_path in music_paths(orchestra).items():
+            if music_path == path:
+                return name
+    return None
+
+
 class Directories:
+    # The music (music_paths): read from the config each time, so the MUSIC option (ORCHESTRA_MUSIC_ENABLED) switches
+    # every one at once, in every Directories the game holds
+    intro_overture: str
+    intermezzo: str
+    tantegel_castle_throne_room_music: str
+    tantegel_castle_courtyard_music: str
+    village_music: str
+    overworld_music: str
+    battle_music: str
+    regular_fight_music: str
+    end_boss_music: str
+    ending_music: str
+    dungeon_floor_1_music: str
+    dungeon_floor_2_music: str
+    dungeon_floor_3_music: str
+    dungeon_floor_4_music: str
+    dungeon_floor_5_music: str
+    dungeon_floor_6_music: str
+    dungeon_floor_7_music: str
+    dungeon_floor_8_music: str
 
     def __init__(self, config):
         self.config = config
@@ -75,55 +153,6 @@ class Directories:
         # Files/Directories: where Graphics.get_image looks for an image it can't find at its path
         self.root_project_path = project_root()
 
-        # Music
-
-        _music_library = {}
-        music_dir = join(sound_dir, 'music')
-
-        if self.config["ORCHESTRA_MUSIC_ENABLED"]:
-            self.intro_overture = join(music_dir, 'orchestra',
-                                       '01 Overture March (London Philharmonic Orchestra Version).mp3')
-            self.intermezzo = join(music_dir, 'orchestra', 'Android_iOS', 'Dragon Quest (Android_iOS) - Intermezzo.mp3')
-            self.tantegel_castle_throne_room_music = join(music_dir, 'orchestra', '02 Chateau Ladutorm.mp3')
-            self.tantegel_castle_courtyard_music = join(music_dir, 'orchestra', '02 Chateau Ladutorm.mp3')
-            self.village_music = join(music_dir, 'orchestra', '03 People.mp3')
-            self.overworld_music = join(music_dir, 'orchestra', '04 Unknown World.mp3')
-            self.battle_music = self.regular_fight_music = join(music_dir, 'orchestra', '05 Fight.mp3')
-            self.end_boss_music = join(music_dir, 'orchestra', '07 King Dragon.mp3')
-            self.ending_music = join(music_dir, 'orchestra', '08 Finale.mp3')
-            self.dungeon_floor_1_music = \
-                self.dungeon_floor_2_music = \
-                self.dungeon_floor_3_music = \
-                self.dungeon_floor_4_music = \
-                self.dungeon_floor_5_music = \
-                self.dungeon_floor_6_music = \
-                self.dungeon_floor_7_music = \
-                self.dungeon_floor_8_music = join(music_dir, 'orchestra', '06 Dungeon.mp3')
-
-        else:
-            self.intro_overture = join(music_dir, 'NES', '01 Dragon Quest 1 - Intro ~ Overture.mp3')
-            self.tantegel_castle_throne_room_music = join(music_dir, 'NES', '02 Dragon Quest 1 - Tantegel Castle.mp3')
-            self.tantegel_castle_courtyard_music = join(music_dir, 'NES',
-                                                        '03 Dragon Quest 1 - Tantegel Castle (Lower).mp3')
-            self.village_music = join(music_dir, 'NES', '04 Dragon Quest 1 - Peaceful Village.mp3')
-            self.intermezzo = self.village_music
-            self.overworld_music = join(music_dir, 'NES', '05 Dragon Quest 1 - Kingdom of Alefgard.mp3')
-            self.dungeon_floor_1_music = join(music_dir, 'NES', '06 Dragon Quest 1 - Dark Dungeon ~ Floor 1.mp3')
-            self.dungeon_floor_2_music = join(music_dir, 'NES', '07 Dragon Quest 1 - Dark Dungeon ~ Floor 2.mp3')
-            self.dungeon_floor_3_music = join(music_dir, 'NES', '08 Dragon Quest 1 - Dark Dungeon ~ Floor 3.mp3')
-            self.dungeon_floor_4_music = join(music_dir, 'NES', '09 Dragon Quest 1 - Dark Dungeon ~ Floor 4.mp3')
-            self.dungeon_floor_5_music = join(music_dir, 'NES', '10 Dragon Quest 1 - Dark Dungeon ~ Floor 5.mp3')
-            self.dungeon_floor_6_music = join(music_dir, 'NES', '11 Dragon Quest 1 - Dark Dungeon ~ Floor 6.mp3')
-            self.dungeon_floor_7_music = join(music_dir, 'NES', '12 Dragon Quest 1 - Dark Dungeon ~ Floor 7.mp3')
-            self.dungeon_floor_8_music = join(music_dir, 'NES', '13 Dragon Quest 1 - Dark Dungeon ~ Floor 8.mp3')
-            # NES MSC_ENTR_FGHT, the music every fight but the last starts with (InitFight): the 'monster draws near'
-            # run (SQ1EntFight), which then falls through into the fight loop (SQ1Fight)
-            self.battle_music = join(music_dir, 'NES', '14 Dragon Quest 1 - A Monster Draws Near.mp3')
-            # NES MSC_REG_FGHT, the fight loop on its own: what the fight music restarts with after the flute, the harp
-            # or a cursed item (ChkUseFlute, ChkUseHarp, ChkUseBelt, ChkUseNecklace), and what follows MSC_ENTR_FGHT
-            self.regular_fight_music = join(sfx_dir, '24 Dragon Quest 1 - Monster Battle.mp3')
-            self.end_boss_music = join(music_dir, 'NES', '15 Dragon Quest 1 - The Dragon Lord.mp3')
-            self.ending_music = join(music_dir, 'NES', "16 Dragon Quest 1 - Hero's Fanfare.mp3")  # NES MSC_END
 
         self.IMAGES_DIR = join(data_dir, 'images')
         self.MAP_TILES_PATH = join(self.IMAGES_DIR, 'tileset.png')
@@ -292,3 +321,11 @@ class Directories:
         self.SMB_FONT = font.Font(self.SMB_FONT_PATH, 15)
 
         self.UNIFONT_PATH = join(fonts_dir, 'unifont.ttf')
+
+
+def _music_property(name: str) -> property:
+    return property(lambda directories: music_paths(bool(directories.config["ORCHESTRA_MUSIC_ENABLED"]))[name])
+
+
+for _name in MUSIC_NAMES:
+    setattr(Directories, _name, _music_property(_name))

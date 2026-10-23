@@ -26,5 +26,12 @@ dev_config = {
     "SHOW_COORDINATES": True,
     "GOD_MODE": True,
     "DEBUG_KEYS": True,
+    # every key convenience on (the options overlay can still switch each off)
+    "GAME_SPEED_KEYS": True,
+    "SAVE_STATES": True,
+    "REWIND": True,
+    "AUTO_GRIND": True,
+    "CHEAT_KEYS": True,
+    "QUICK_ACTION": True,
     # "LANGUAGE": 'Korean',
 }
