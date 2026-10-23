@@ -8,7 +8,7 @@ import sys
 from typing import List, Tuple
 
 from pygame import FULLSCREEN, K_DOWN, K_LEFT, K_RIGHT, K_UP, K_a, K_d, K_i, K_k, K_s, \
-    K_u, K_w, QUIT, RESIZABLE, display, event, image, init, key, quit, K_F1, K_F2, K_F3, K_F4, K_F11, time, KEYDOWN, SCALED, \
+    K_u, K_w, RESIZABLE, display, event, image, init, key, K_F1, K_F2, K_F3, K_F4, K_F11, time, KEYDOWN, SCALED, \
     K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
@@ -64,7 +64,7 @@ from src.waiting import game_ticks as get_ticks  # game time: runs N times as fa
 from src.map_manager import MapManager
 from src.pygame_compat import arrow_fade
 from src.visual_effects import flash_transparent_color
-from src.waiting import wait
+from src.waiting import quit_if_requested, wait
 from src.windows import COMMAND_WINDOW
 
 
@@ -675,9 +675,8 @@ class Game:
         Handles low-level pygame events such as QUIT, KEYDOWN, arrow fade toggles, and window resize.
         """
         for current_event in events:
-            if current_event.type == QUIT:
-                quit()
-            elif current_event.type == KEYDOWN:
+            quit_if_requested(current_event)
+            if current_event.type == KEYDOWN:
                 self.handle_keypresses(current_event)
             elif current_event.type == arrow_fade:
                 self.show_arrow = not self.show_arrow

@@ -1,9 +1,9 @@
 import os
 from os.path import join
 
-from pygame import image, display, QUIT, quit, Rect, Surface, KEYDOWN
+from pygame import image, display, Rect, Surface, KEYDOWN
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
-from src.waiting import game_speed, get_events
+from src.waiting import game_speed, get_events, quit_if_requested
 from pygame.transform import scale
 
 from data.text.intro_lookup_table import ControlInfo
@@ -46,9 +46,8 @@ class Intro:
         while waiting:
             clock.tick(config['FPS'] * game_speed())
             for current_event in get_events():
-                if current_event.type == QUIT:
-                    quit()
-                elif current_event.type == KEYDOWN:
+                quit_if_requested(current_event)
+                if current_event.type == KEYDOWN:
                     if current_event.key in accept_keys:
                         waiting = False
             if self.calculation.convert_to_frames_since_start_time(
@@ -68,9 +67,8 @@ class Intro:
             self.handle_all_sparkles(intro_banner_with_text_enabled_start_time, screen)
             clock.tick(config['FPS'] * game_speed())
             for current_event in get_events():
-                if current_event.type == QUIT:
-                    quit()
-                elif current_event.type == KEYDOWN:
+                quit_if_requested(current_event)
+                if current_event.type == KEYDOWN:
                     if current_event.key in accept_keys:
                         intro_banner_with_text_enabled = False
             display.flip()
