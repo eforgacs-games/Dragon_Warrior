@@ -310,14 +310,33 @@ class TestDrawerEnemyEffects(unittest.TestCase):
         mock_fade.assert_called_once_with(screen, self.image, (256, 224), self.drawer.game_state.config)
         mock_wait.assert_not_called()
 
+    @patch('src.drawer.cut_to_black')
+    @patch('src.drawer.screen_fade')
     @patch('src.drawer.wait')
     @patch('src.drawer.enemy_fade_in')
-    def test_final_form_fades_in_four_times_then_waits_41_frames(self, mock_fade, mock_wait):
+    def test_final_form_fades_in_four_times_then_waits_41_frames(self, mock_fade, mock_wait, _screen_fade, _black):
         # Bank00 LoadEndBossGFX: PalFadeIn x4, then WaitForNMI + 40 more frames
         self.drawer.game_state.config['NO_WAIT'] = False
         self.drawer.fade_in_enemy(MagicMock(), 'Dragonlord 2')
         self.assertEqual(mock_fade.call_args.kwargs['repeats'], 4)
         mock_wait.assert_called_once_with(683, self.drawer.game_state.config)
+
+    @patch('src.drawer.wait')
+    def test_final_form_fades_the_screen_out_first(self, _wait):
+        # Bank00 LoadEndBossGFX: PalFadeOut over the whole screen, the nametable blanked, then the PalFadeIns
+        order = []
+        screen = MagicMock()
+        with patch('src.drawer.screen_fade', side_effect=lambda **kwargs: order.append(('fade', kwargs['fade_out']))), \
+                patch('src.drawer.cut_to_black', side_effect=lambda *_: order.append('black')), \
+                patch('src.drawer.enemy_fade_in', side_effect=lambda *_, **__: order.append('enemy')):
+            self.drawer.fade_in_enemy(screen, 'Dragonlord 2')
+        self.assertEqual(order, [('fade', True), 'black', 'enemy'])
+
+    @patch('src.drawer.screen_fade')
+    @patch('src.drawer.enemy_fade_in')
+    def test_other_enemies_do_not_fade_the_screen_out(self, _enemy_fade_in, mock_screen_fade):
+        self.drawer.fade_in_enemy(MagicMock(), 'Dragonlord')
+        mock_screen_fade.assert_not_called()
 
     @patch('src.drawer.enemy_hit_flash')
     def test_flash_enemy(self, mock_flash):
