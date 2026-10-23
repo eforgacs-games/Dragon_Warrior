@@ -3,7 +3,7 @@ from os.path import join
 
 from pygame import image, display, Rect, Surface, KEYDOWN
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
-from src.waiting import game_speed, get_events, quit_if_requested, wait_frames
+from src.waiting import NES_FPS, game_speed, get_events, quit_if_requested, wait_until
 from pygame.transform import scale
 
 from data.text.intro_lookup_table import ControlInfo
@@ -117,10 +117,11 @@ class Intro:
         # first (short) sparkle starts 782 frames in, ends at 794 frames in, lasts (794 - 782 = 12 frames)
         frames_per_picture = SHORT_SPARKLE_PICTURE_FRAMES if short else LONG_SPARKLE_PICTURE_FRAMES
         for banner in os.listdir(join(self.directories.IMAGES_DIR, 'intro_banner', 'sparkle')):
+            picture_started = get_ticks()
             intro_banner_rect = show_intro_banner(join(self.directories.IMAGES_DIR, 'intro_banner', 'sparkle', banner),
                                                   screen, False)
             display.update(intro_banner_rect)
-            wait_frames(frames_per_picture, self.config)
+            wait_until(picture_started + frames_per_picture * 1000 / NES_FPS, self.config)
 
     def repeated_sparkle(self, screen: Surface, clock_check, short, ticks) -> int | float:
         if ticks - clock_check >= self.calculation.convert_to_milliseconds(SPARKLE_REPEAT_FRAMES):

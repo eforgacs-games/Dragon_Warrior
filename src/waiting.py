@@ -173,6 +173,12 @@ def wait(milliseconds: float, config: dict | None = None) -> None:
         slept += real_slice * speed
 
 
+def wait_until(deadline: float, config: dict | None = None) -> None:
+    """``wait`` until the game clock reaches ``deadline`` (a ``game_ticks`` value). Taking the deadline before drawing
+    and waiting until it after, a frame lasts one frame however long the drawing took."""
+    wait(max(0.0, deadline - game_ticks()), config)
+
+
 def wait_frames(frames: float, config: dict | None = None, fps: float = NES_FPS) -> None:
     """``wait`` for a number of frames (NES frames, 60 per second, unless ``fps`` says otherwise)."""
     wait(frames * 1000 / fps, config)

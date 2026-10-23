@@ -15,7 +15,7 @@ from src.color import BLACK
 from src.common import A_OR_B_KEYS, ANY_BUTTON_KEYS, Graphics, set_gettext_language, singular_or_plural
 from src.command_window import WND_ABORT, CommandWindow
 from src.cursor import IN_A, DialogArrowBlink, draw_cursor_tile
-from src.waiting import NES_FPS, is_any_key_held, wait, wait_frames
+from src.waiting import NES_FPS, is_any_key_held, wait, wait_until
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
@@ -55,9 +55,11 @@ COMMAND_METHODS = ('talk', 'status', 'stairs', 'search', 'spell', 'item', 'door'
 WINDOW_ROW_FRAMES = 1
 
 
-def wait_for_next_window_row(config: dict) -> None:
-    """The wait between two rows of a window opening (drop-down) or closing (drop-up)."""
-    wait_frames(WINDOW_ROW_FRAMES, config)
+def wait_for_next_window_row(row_started: float, config: dict) -> None:
+    """The wait between two rows of a window opening (drop-down) or closing (drop-up): each row lasts
+    WINDOW_ROW_FRAMES from when it started drawing (``row_started``, a ``game_ticks`` value), so drawing it doesn't
+    lengthen it."""
+    wait_until(row_started + WINDOW_ROW_FRAMES * 1000 / NES_FPS, config)
 
 
 class CommandMenu:
@@ -525,12 +527,13 @@ class CommandMenu:
         tile_size = self.game.game_state.config['TILE_SIZE']
         window_rect = Rect(left * tile_size, top * tile_size, width * tile_size, height * tile_size)
         for i in range(height + 1):
+            row_started = get_ticks()
             black_box = Surface((tile_size * width, tile_size * i))  # lgtm [py/call/wrong-arguments]
             black_box.fill(BLACK)
             if not self.game.game_state.config['NO_BLIT']:
                 self.screen.blit(black_box, (tile_size * left, tile_size * top))
                 display.update(window_rect)
-            wait_for_next_window_row(self.game.game_state.config)  # each "bar" lasts 1 frame
+            wait_for_next_window_row(row_started, self.game.game_state.config)  # each "bar" lasts 1 frame
 
     def window_drop_up_effect(self, left, top, width, height) -> None:
         """Outro effect for menus, NES RemoveWindow (Bank00, LA7A2): from the bottom row of blocks up, one row a frame,
@@ -560,6 +563,7 @@ class CommandMenu:
             group_to_draw.draw(self.background)
 
             for i in range(height - 1, -1, -1):
+                row_started = get_ticks()
                 # The top i rows of the window are still there
                 rows_left = window_picture.subsurface((0, 0, window_picture.get_width(),
                                                        min(tile_size * i, window_picture.get_height())))
@@ -582,7 +586,7 @@ class CommandMenu:
                     self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
                 if not self.game.game_state.config['NO_BLIT']:
                     display.update(self.screen.blit(rows_left, window_rect.topleft))
-                wait_for_next_window_row(self.game.game_state.config)
+                wait_for_next_window_row(row_started, self.game.game_state.config)
 
     # Treasure chests
 
