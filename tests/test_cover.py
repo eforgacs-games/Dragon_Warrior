@@ -68,15 +68,15 @@ class TestTownCoveredAreas(TestCase):
 
     def test_garinham_door(self):
         garinham = self.towns['Garinham']
-        self.assertEqual('DOOR', garinham.get_tile_by_value(garinham.layout[10][26]))
-        self.assertFalse(garinham.is_covered(10, 26))
-        self.assertTrue(garinham.is_covered(9, 26))
-        self.assertTrue(garinham.is_covered(10, 25))
+        self.assertEqual('DOOR', garinham.get_tile_by_value(garinham.layout[11][26]))
         self.assertFalse(garinham.is_covered(11, 26))
+        self.assertTrue(garinham.is_covered(10, 26))
+        self.assertTrue(garinham.is_covered(11, 25))
+        self.assertFalse(garinham.is_covered(12, 26))
 
     def test_cantlin_and_rimuldar(self):
-        self.assertTrue(self.towns['Cantlin'].is_covered(24, 15))  # the wizard in the middle of town (NES 15,16)
-        self.assertFalse(self.towns['Cantlin'].is_covered(18, 11))
+        self.assertTrue(self.towns['Cantlin'].is_covered(24, 16))  # the wizard in the middle of town (NES 15,16)
+        self.assertFalse(self.towns['Cantlin'].is_covered(18, 12))
         self.assertTrue(self.towns['Rimuldar'].is_covered(31, 11))  # the wizard at NES 3,23
         self.assertFalse(self.towns['Rimuldar'].is_covered(27, 18))  # the way in (NES 10,19)
 

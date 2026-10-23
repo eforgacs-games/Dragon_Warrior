@@ -21,6 +21,7 @@ from src.constants import RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES
 from src.game import Game
 from src.map_layouts import MapLayouts
 from src.maps import CharlockB1, all_impassable_tiles, map_lookup
+from tests.nes_maps import NES_MAPS as NES_MAP_TABLE, boundary_tile, nes_tiles
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -46,7 +47,7 @@ NES_MAPS = {
     'OVERWORLD': ('Alefgard', (7, 8)),
     'THRONEROOM': ('TantegelThroneRoom', (6, 10)),
     'TANTCSTL_GF': ('TantegelCourtyard', (7, 7)),
-    'GARINHAM': ('Garinham', (0, 9)),
+    'GARINHAM': ('Garinham', (1, 9)),
     'TANTCSTL_SL': ('TantegelCellar', (1, 1)),
     'RAIN': ('StaffOfRainCave', (2, 2)),
     'RAINBOW': ('MagicTemple', (2, 2)),
@@ -182,6 +183,23 @@ def explore(world: dict) -> dict:
     return came_from
 
 
+def is_gate(current_map, coordinates: tuple) -> bool:
+    """Whether a tile is a town gate out to the overworld (create_town_gates), rather than stairs."""
+    staircase = current_map.staircases.get(coordinates)
+    return staircase is not None and staircase['map'] == 'Alefgard'
+
+
+def maps_left_by_their_edges() -> dict:
+    """{map: the (row, column) tiles of its NES map} for every map the NES leaves by walking off the edge: those whose
+    MapDatTbl boundary block can be walked on (the towns, Tantegel's courtyard and Charlock's ground floor). Past the
+    other maps' edges is stone or water."""
+    maps: dict = {}
+    for number, _nes_name, map_name, offset, nes_rows in NES_MAP_TABLE:
+        if map_name != 'Alefgard' and boundary_tile(number) not in BLOCKING_TILES:
+            maps.setdefault(map_name, set()).update(nes_tiles(number, offset, nes_rows))
+    return maps
+
+
 def maps_reached(reached: dict) -> set:
     return {map_name for map_name, _ in reached}
 
@@ -300,6 +318,26 @@ class TestMapConnectivity(TestCase):
         self.assertEqual(world['CharlockB7Wide'].staircases[(5, 12)]['destination_coordinates'], (33, 16))
         self.assertEqual(world['CharlockB8'].staircases[(33, 16)]['destination_coordinates'], (5, 12))
         self.assertEqual(tile_name(world, 'CharlockB8', (33, 16)), 'BRICK_STAIR_UP')
+
+    # Leaving towns
+
+    def test_every_way_off_a_town_map_is_a_gate(self):
+        # NES: the hero leaves a town, Tantegel's courtyard or Charlock's ground floor for the overworld by stepping off
+        # any edge of its map. So every step from a tile on the NES map that the hero can reach to a tile off it has to
+        # land on a gate, or the hero would bump into the edge of the layout or wander off into the boundary blocks.
+        world = self.world_at_the_end
+        self.maxDiff = None
+        for map_name, nes_map in maps_left_by_their_edges().items():
+            current_map = world[map_name]
+            steps_off = set()
+            for reached_map, (row, column) in self.reached_at_the_end:
+                if reached_map != map_name or (row, column) not in nes_map or is_gate(current_map, (row, column)):
+                    continue
+                for next_coordinates in ((row - 1, column), (row + 1, column), (row, column - 1), (row, column + 1)):
+                    if next_coordinates not in nes_map and not is_gate(current_map, next_coordinates):
+                        steps_off.add(((row, column), next_coordinates))
+            with self.subTest(map=map_name):
+                self.assertEqual(sorted(steps_off), [], '(row, column) on the NES map, (row, column) off it')
 
     # The way to the Dragonlord
 
