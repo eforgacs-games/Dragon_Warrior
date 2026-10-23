@@ -239,6 +239,22 @@ class TestCommandMenuAudio(unittest.TestCase):
         self.play_sound.assert_not_called()
 
 
+class TestDragonlordDefeatedSound(unittest.TestCase):
+
+    def test_the_way_out_plays_the_stairs_sound(self):
+        # NES NotDL1Defeated: ChangeMaps -> SetPlyrPixelLoc -> MapChngWithSound
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
+        game = new_game()
+        events = []
+        with patch.object(game.ending, 'say'), \
+                patch.object(game.sound, 'play_sound', side_effect=lambda path: events.append(path)), \
+                patch.object(game, 'change_map', side_effect=lambda *args, **kwargs: events.append('change map')):
+            game.ending.final_boss_defeated()
+        self.assertEqual(events, [game.directories.stairs_up_sfx, 'change map'])
+
+
 class TestDeathMusic(unittest.TestCase):
 
     def setUp(self):
