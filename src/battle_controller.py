@@ -11,7 +11,7 @@ import random
 from collections.abc import Callable
 from enum import Enum
 
-from pygame import KEYDOWN, display, event, key, mixer, time
+from pygame import KEYDOWN, display, event, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
@@ -173,19 +173,24 @@ class BattleController:
         enemy_name = self.config.get("FORCE_ENEMY") or pick_enemy(enemies_in_current_zone)
         if self.is_repelled(enemy_name):
             return BattleOutcome.REPELLED
-        return self.fight_enemy(enemy_name)
+        return self.launch_fight(enemy_name)
 
     def start_scripted_battle(self, enemy_name: str) -> BattleOutcome:
         """Start a fixed, story-driven fight right now, the way the NES jumps straight to InitFight with a set
         enemy number (the Dragonlord, and the Golem, Green Dragon and Axe Knight guardians). Unlike a random
         encounter it can't be repelled. Running away and dying work exactly as in a random fight."""
+        outcome = self.launch_fight(enemy_name)
+        self.battle_menu_row = 0
+        self.battle_menu_column = 0
+        return outcome
+
+    def launch_fight(self, enemy_name: str) -> BattleOutcome:
+        """Fight enemy_name with launch_battle set. It stays set only on a defeat, so Game.handle_death draws the
+        in-battle death screen; after a win or an escape a death on the map (a swamp step) is shown on the map."""
         self.launch_battle = True
         outcome = self.fight_enemy(enemy_name)
         if outcome != BattleOutcome.DEFEAT:
-            # Keep launch_battle set on a defeat so Game.handle_death draws the in-battle death screen.
             self.launch_battle = False
-        self.battle_menu_row = 0
-        self.battle_menu_column = 0
         return outcome
 
     def queue_scripted_battle(self, enemy_name: str) -> None:
@@ -238,9 +243,12 @@ class BattleController:
                 self.screen.fill(BLACK)
                 display.flip()
         self.cmd_menu.current_battle = None
-        if outcome != BattleOutcome.VICTORY or current_battle.enemy.name == 'Dragonlord 2':
-            # After a win, Battle.check_player_level_up has already let the victory (or level-up) music end and
-            # resumed the map's music, the way the NES does before ExitFight; starting it again would restart it.
+        if outcome == BattleOutcome.ESCAPED:
+            # The one place an escape (the hero ran or the enemy fled) resumes the map's music (ResumeMusicTbl). After
+            # a win, Battle.check_player_level_up has already let the victory (or level-up) music end and resumed it,
+            # the way the NES does before ExitFight, and beating the Dragonlord's final form ends in
+            # Ending.final_boss_defeated's change of map, which starts the overworld music: starting it again here
+            # would restart it. A defeat goes on to the death music (Game.handle_death).
             self.music_player.load_and_play_music(self.current_map.music_file_path)
         if outcome == BattleOutcome.ESCAPED and self.player_ran_away:
             self.step_back_after_running()
@@ -331,8 +339,8 @@ class BattleController:
             elif selected_executed_option == 'Run':
                 run_away = current_battle.battle_run(self.cmd_menu, self.player, current_battle)
                 if run_away:
-                    self.player_ran_away = True
-                    self.music_player.load_and_play_music(self.current_map.music_file_path)
+                    # The enemy may have fled on its turn after the hero was blocked: that's no escape by the hero
+                    self.player_ran_away = not current_battle.enemy_fled
                     return run_away
                 else:
                     # enemy already attacked inside battle_run; skip the outer enemy turn
@@ -436,10 +444,8 @@ class BattleController:
         self.cmd_menu.show_line_in_dialog_box(self._("The {} is running away.").format(self._(enemy.name)),
                                               add_quotes=False, disable_sound=True, hide_arrow=True)
         current_battle.make_enemy_image_disappear(self.screen)
-        if self.config["MUSIC_ENABLED"]:
-            mixer.music.load(self.current_map.music_file_path)
-            mixer.music.play(-1)
-        return True
+        current_battle.enemy_fled = True
+        return True  # fight_enemy resumes the map's music
 
     # ------------------------------------------------------------------ #
     #  Hero attack                                                         #

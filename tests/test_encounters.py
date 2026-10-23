@@ -348,6 +348,46 @@ class TestHandleBattles(unittest.TestCase):
         _, run_battle = self.fight_roll()
         run_battle.assert_called_once_with(ENEMY_GROUPS[0x10])
 
+    def swamp_step(self, hp):
+        """Step onto a swamp block (layout row 44, column 76) in an overworld zone, with a fight forced."""
+        self.game.game_state.config['FORCE_BATTLE'] = True
+        self.step_onto('Alefgard', 44, 76)
+        self.assertEqual(self.game.current_map.get_tile_by_value(self.game.current_map.layout[44][76]), 'MARSH')
+        player = self.game.player
+        player.current_hp, player.armor, player.is_moving = hp, None, False
+        player.received_environment_damage = False
+        hp_at_fight = []
+        with patch.object(self.game, 'drawer'), patch('src.game.display'), patch('src.game.flash_transparent_color'), \
+                patch.object(self.game.sound, 'play_sound'), \
+                patch.object(self.game.battle_ctrl, 'run_battle',
+                             side_effect=lambda _: hp_at_fight.append(player.current_hp)) as run_battle:
+            self.game.handle_battles()
+            # later in the frame (_handle_post_move_checks): the step has already done its damage
+            player.current_tile = 'MARSH'
+            self.game.handle_environment_damage()
+        return run_battle, hp_at_fight
+
+    def test_swamp_damage_comes_before_the_fight_roll(self):
+        # NES CheckBlockDmg: the swamp's 2 HP are taken before the fight starts, once
+        run_battle, hp_at_fight = self.swamp_step(hp=10)
+        run_battle.assert_called_once()
+        self.assertEqual(hp_at_fight, [8])
+        self.assertEqual(self.game.player.current_hp, 8)
+
+    def test_a_hero_killed_by_the_swamp_does_not_fight(self):
+        run_battle, _ = self.swamp_step(hp=2)
+        run_battle.assert_not_called()
+        self.assertEqual(self.game.player.current_hp, 0)
+        self.assertFalse(self.game.battle_ctrl.launch_battle)  # handle_death shows the death on the map
+
+    def test_a_repelled_enemy_leaves_no_fight_behind(self):
+        # A swamp death on a later step must be shown on the map, not with the battle command window
+        self.game.game_state.config['FORCE_BATTLE'] = True
+        self.step_onto('Alefgard', 37, 62)
+        with patch.object(self.game.battle_ctrl, 'is_repelled', return_value=True):
+            self.game.handle_battles()
+        self.assertFalse(self.game.battle_ctrl.launch_battle)
+
     def test_no_fights_in_erdricks_cave_or_towns(self):
         for map_name, row, column in (('ErdricksCaveB1', 3, 3), ('Brecconary', 23, 10)):
             with self.subTest(map=map_name):

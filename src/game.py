@@ -822,14 +822,18 @@ class Game:
             # NES CheckBlockDmg runs once per step, on the block the player has just stepped onto. The player's
             # column/row and current_tile aren't updated until later in the frame, so read them from the sprite.
             column, row = self.player.rect.x // self.tile_size, self.player.rect.y // self.tile_size
+            tile = get_tile_id_by_coordinates(column, row, self.current_map)
+            # NES CheckBlockDmg: swamp and force field damage come before the fight roll, and a hero they kill
+            # doesn't fight (handle_death, later this frame, shows the death on the map)
+            self.handle_environment_damage(tile)
+            if self.player.current_hp <= 0:
+                return
             group = encounter_group(self.current_map.identifier, column, row)
             if group is None:
                 return
             self.last_zone = group
-            tile = get_tile_id_by_coordinates(column, row, self.current_map)
             enemies_in_current_zone = ENEMY_GROUPS[group] if self.game_state.config["FORCE_BATTLE"] else \
                 roll_encounter(self.current_map.identifier, tile, column, row)
-            self.battle_ctrl.launch_battle = enemies_in_current_zone is not None
             if enemies_in_current_zone is not None and not self.game_state.config["NO_BATTLES"]:
                 self.battle_ctrl.run_battle(enemies_in_current_zone)
             self.battle_ctrl.battle_menu_row = 0
@@ -953,16 +957,20 @@ class Game:
             return
         self.game_state.is_post_death_dialog = True
 
-    def handle_environment_damage(self):
+    def handle_environment_damage(self, tile: str | None = None):
+        """Swamp and force field damage for the block the hero stands on (current_tile unless tile is given), once
+        per step. handle_battles calls it with the block just stepped onto, before the fight roll."""
         # NES ChkOtherBlocks: once the Dragonlord is dead, swamps and barriers no longer hurt
         if self.story_flags.dragonlord_defeated:
             return
+        if tile is None:
+            tile = self.player.current_tile
         if not self.player.armor == "Erdrick's Armor":
             if not self.player.is_moving:
-                if self.player.current_tile == 'MARSH':
+                if tile == 'MARSH':
                     if not self.player.received_environment_damage:
                         self.damage_step(damage_amount=2)
-                elif self.player.current_tile == 'BARRIER':
+                elif tile == 'BARRIER':
                     if not self.player.received_environment_damage:
                         self.damage_step(damage_amount=15)
             else:
@@ -973,7 +981,7 @@ class Game:
         if self.player.god_mode or self.invulnerable:
             return
 
-        self.player.current_hp -= damage_amount
+        self.player.current_hp = max(self.player.current_hp - damage_amount, 0)
         self.sound.play_sound(self.directories.swamp_sfx)
         self.player.received_environment_damage = True
         flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
