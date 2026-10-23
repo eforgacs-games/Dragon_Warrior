@@ -360,6 +360,31 @@ class TestCommandMenu(TestCase):
         self.assertEqual(slime.hp, 11)
         self.assertEqual(lines, ["The Slime's Hit Points have been reduced by 9.\n"])
 
+    def test_hurt_for_one_point_says_point(self):
+        # NES TextBlock15 entry 6: "Hit" + PNTS, which is " Point" when the amount is 1 (Bank01 DoPNTS)
+        from src.enemy import Slime
+        slime = Slime()
+        slime.hp = 20
+        self.in_battle_with(slime)
+        _, lines = self.cast('hurt', [0, 1])
+        self.assertEqual(lines, ["The Slime's Hit Point have been reduced by 1.\n"])
+
+    def test_gwaelins_love_keeps_the_nes_line_breaks(self):
+        # NES TextBlock14 entry 11, with PNTS: "Point" when 1 is left, "Points" otherwise
+        player = self.game.cmd_menu.player
+        player.name, player.level = 'Edward', 1
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
+            for experience in (6, 0):  # level 2 is at 7 experience
+                player.total_experience = experience
+                self.game.cmd_menu.gwaelins_love()
+        heed_my_voice = [c.args[0] for c in show_text.call_args_list if c.args[0].startswith('Heed')]
+        self.assertEqual(heed_my_voice[0],
+                         "Heed my voice,\n'Edward, for this is Gwaelin.\n"
+                         "To reach the next level thou must raise thy Experience Point by 1.\nMy hope is with thee.'")
+        self.assertEqual(heed_my_voice[1],
+                         "Heed my voice,\n'Edward, for this is Gwaelin.\n"
+                         "To reach the next level thou must raise thy Experience Points by 7.\nMy hope is with thee.'")
+
     def test_hurt_flashes_enemy_red(self):
         # NES SetSpellDmg falls through to PlyrHitEn, which runs PaletteFlash
         from src.enemy import Slime

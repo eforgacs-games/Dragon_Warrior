@@ -185,6 +185,16 @@ class TestGame(TestCase):
         player.level = player.get_level_by_experience()
         self.assertEqual(0, player.points_to_next_level)
 
+    def test_damage_line_says_hit_for_one_point(self):
+        # NES TextBlock16 entry 10: "Thy Hit" + PLRL, which adds an "s" unless the damage is 1 (Bank01 DoPLRL)
+        self.game.player.current_hp = self.game.player.max_hp = 50
+        with patch.object(self.game.battle_ctrl, 'player_hit_effect'), \
+                patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
+            self.game.receive_damage(1)
+            self.game.receive_damage(3)
+        self.assertEqual([c.args[0] for c in show_line.call_args_list],
+                         ["Thy Hit decreased by 1.\n", "Thy Hits decreased by 3.\n"])
+
     def test_hero_underlying_tile(self):
         self.assertEqual('BRICK', self.game.current_map.hero_underlying_tile())
 
@@ -608,7 +618,7 @@ class TestGame(TestCase):
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'])
 
     def test_wise_man_tantegel_courtyard_dialog(self):
-        self.assertEqual("Edward's coming was foretold by legend. May the light shine upon "
+        self.assertEqual("Edward's coming was foretold by legend.\nMay the light shine upon "
                          'this brave warrior.',
                          self.game.cmd_menu.dialog_lookup.lookup_table['TantegelCourtyard']['WISE_MAN']['dialog'][0])
 
