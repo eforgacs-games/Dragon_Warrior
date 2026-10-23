@@ -126,6 +126,10 @@ class TestSaveFromTheGame(TestCase):
         pygame.quit()
 
     def setUp(self):
+        # Loading a save applies its options (message speed, dialog style, NPCs making way, fade style) to the shared
+        # test_config, so put it back afterwards: another test on this worker would see this save's options
+        saved_config = dict(test_config)
+        self.addCleanup(lambda: (test_config.clear(), test_config.update(saved_config)))
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
