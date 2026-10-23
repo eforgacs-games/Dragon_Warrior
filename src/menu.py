@@ -539,11 +539,16 @@ class CommandMenu(Menu):
                     display.update(window_rect)
 
     def window_drop_up_effect(self, left, top, width, height) -> None:
-        """Outro effect for menus. Closing the dialog window throws its text away."""
+        """Outro effect for menus, NES RemoveWindow (Bank00, LA7A2): from the bottom row of blocks up, one row a frame,
+        the map is put back over the window, and the rows not yet removed still show the window as it was (its frame
+        and text). Closing the dialog window throws its text away."""
         if (left, top, width, height) == DIALOG_WINDOW:
             self.dialog_buffer.clear()
-        # draw all the tiles initially once
         tile_size = self.game.game_state.config['TILE_SIZE']
+        window_rect = Rect(tile_size * left, tile_size * top, tile_size * width, tile_size * height)
+        # The window as it is on the screen now, before the map is drawn under it
+        window_picture = self.screen.subsurface(window_rect.clip(self.screen.get_rect())).copy()
+        # draw all the tiles initially once
         camera_screen_rect = Rect(self.player.rect.x - tile_size * 8, self.player.rect.y - tile_size * 7,
                                   self.screen.get_width(), self.screen.get_height())
         if not self.current_map.is_dark:
@@ -561,8 +566,9 @@ class CommandMenu(Menu):
             group_to_draw.draw(self.background)
 
             for i in range(height - 1, -1, -1):
-                black_box = Surface((tile_size * width, tile_size * i))  # lgtm [py/call/wrong-arguments]
-                black_box.fill(BLACK)
+                # The top i rows of the window are still there
+                rows_left = window_picture.subsurface((0, 0, window_picture.get_width(),
+                                                       min(tile_size * i, window_picture.get_height())))
                 drop_up_start = get_ticks()
                 while self.calculation.convert_to_frames_since_start_time(drop_up_start) < 1:
                     # draw_player_sprites(self.current_map, self.background, self.player.rect.x, self.player.rect.y)
@@ -583,7 +589,7 @@ class CommandMenu(Menu):
                     if self.game.drawer.display_hovering_stats:
                         self.game.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
                     if not self.game.game_state.config['NO_BLIT']:
-                        display.update(self.screen.blit(black_box, (tile_size * left, tile_size * top)))
+                        display.update(self.screen.blit(rows_left, window_rect.topleft))
 
     # Treasure chests
 
