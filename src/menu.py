@@ -662,10 +662,13 @@ class CommandMenu:
             self.discard_for_item(item_name)
 
     def discard_for_item(self, item_name: str) -> None:
-        """NES DiscardItem: with a full inventory, the player may drop something to make room.
-        The chest has already been opened, so an item given up here is gone until the chest refills."""
+        """NES DiscardItem: with a full inventory, the player may drop something to make room, for a chest's item or
+        one found with SEARCH. A chest has already been opened, so an item given up here is gone until the chest
+        refills; a searched-for item is still there to find again."""
         self.show_text_in_dialog_box(
-            self._("If thou would take the {}, thou must now discard some other item.").format(self._(item_name)),
+            # NES TB13E12 (DiscardItem LE07D), before the YES/NO window
+            self._("If thou would take the {}, thou must now discard some other item.\n"
+                   "Dost thou wish to have the {}?").format(self._(item_name), self._(item_name)),
             skip_text=self.skip_text)
         if self.prompt_yes_no():
             while True:
@@ -1298,15 +1301,23 @@ class CommandMenu:
         """
         # open a window
         text_to_print = [self._("{} searched the ground all about.").format(self.player.name), ]
+        item_to_make_room_for = None
         # wait for input...
         if self.player.current_tile == 'TREASURE_BOX':
             text_to_print.append(self._("There is a treasure box."))
         elif hidden_item := hidden_items.get(self.current_map.identifier, {}).get((self.player.row, self.player.column)):
-            text_to_print.append(self.find_hidden_item(hidden_item))
+            line, bag_full = self.find_hidden_item(hidden_item)
+            text_to_print.append(line)
+            if bag_full:
+                item_to_make_room_for = hidden_item
         elif not (self.current_map.identifier == 'CharlockB1' and self.search_for_secret_passage(text_to_print)):
             text_to_print.append(self._("But there found nothing."))
 
         self.show_text_in_dialog_box(text_to_print, skip_text=self.skip_text)
+        if item_to_make_room_for is not None:
+            # NES ErdrickTknFound (LE139-LE147), for Erdrick's Token and the Fairy Flute: AddInvItem returns INV_FULL,
+            # so DiscardItem asks the player to drop something, as for a chest
+            self.discard_for_item(item_to_make_room_for)
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
 
@@ -1335,25 +1346,28 @@ class CommandMenu:
         self.game.tiles_moved_since_spawn = 0
         return True
 
-    def find_hidden_item(self, item_name: str) -> str:
+    def find_hidden_item(self, item_name: str) -> tuple[str, bool]:
         """
         NES DoSearch: pick up (or, for Erdrick's Armor, put on) a hidden item, unless the player already has it.
         :param item_name: The item hidden on the player's tile.
-        :return: The line to show after "searched the ground all about."
+        :return: The line to show after "searched the ground all about.", and whether the item was found but the
+            inventory was full (NES AddInvItem INV_FULL), so the player must discard something to take it.
         """
         if item_name in armor:
             # NES SrchEdrckArmor: found only if not already worn; it's equipped directly (replacing the old armor,
             # which is not kept) instead of going into the inventory
             if self.player.armor == item_name:
-                return self._("But there found nothing.")
+                return self._("But there found nothing."), False
             self.player.armor = item_name
             self.player.update_defense_power()
         else:
             # NES FoundItem/ItemAlreadyFound: found only if it isn't already in the inventory
             if item_name in self.player.inventory:
-                return self._("But there found nothing.")
+                return self._("But there found nothing."), False
+            if self.inventory_is_full():
+                return self._("{} discovers the {}.").format(self.player.name, self._(item_name)), True
             self.player.inventory.append(item_name)
-        return self._("{} discovers the {}.").format(self.player.name, self._(item_name))
+        return self._("{} discovers the {}.").format(self.player.name, self._(item_name)), False
 
     def spell(self):
         """

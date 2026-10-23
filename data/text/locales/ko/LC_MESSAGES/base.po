@@ -1214,8 +1214,10 @@ msgid "{} discovers the {}."
 msgstr "{}은/는 {}을/를 발견했다!"
 
 #: src/menu.py:408
-msgid "If thou would take the {}, thou must now discard some other item."
-msgstr "{}을/를 가지려면 다른 도구를 하나 버려야 한다."
+msgid ""
+"If thou would take the {}, thou must now discard some other item.\n"
+"Dost thou wish to have the {}?"
+msgstr "{}을/를 가지려면 다른 도구를 하나 버려야 한다.\n{}을/를 가지겠는가?"
 
 #: src/menu.py:412
 msgid "What shall thou drop?"
