@@ -179,6 +179,25 @@ Ctrl + / Ctrl - (or hold Ctrl and turn the mouse wheel): Zoom the window in or o
 back to the size it opened at. This works on every screen; it only changes the window's size, not what the game
 shows. It does nothing in fullscreen (F11 keeps your zoom for when you leave fullscreen) and isn't saved.
 
+## Controller
+
+A controller works everywhere the keyboard does, alongside it: plug it in before or while the game runs (with more
+than one, the first is used). SDL's controller database maps the common pads (Xbox, PlayStation, Switch Pro, Steam
+Deck, 8BitDo and others) without setup. The buttons are named here by where they are on the pad, whatever they're
+labelled, as on the NES and SNES:
+
+| Controller | Does |
+| --- | --- |
+| Right face button (Xbox B, PlayStation circle, Switch A) | A button (K) |
+| Bottom face button (Xbox A, PlayStation cross, Switch B) | B button (J) |
+| Start / Menu / Options | Start (I) |
+| Back / View / Share / Minus | Select (U): the options |
+| D-pad or left stick | Move (the arrows). The NES has no diagonals: the stick presses the way it is pushed furthest |
+| Right trigger | Next game speed (1x, 2x, 4x, 8x, 16x, then 1x again) |
+
+The left and right shoulder buttons and the left trigger are kept for the save states and rewind. On the name entry
+screen a controller button switches to joystick input (the arrows and A pick the letters) without Tab.
+
 ## Demo video
 
 
