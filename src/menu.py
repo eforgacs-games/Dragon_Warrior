@@ -19,6 +19,7 @@ from src.waiting import NES_FPS, is_any_key_held, wait, wait_until
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
+from src.coordinates import Cell
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, MAX_LEVEL, OUTSIDE_DESTINATIONS, \
     RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES, \
     TEMP_TEXT_MS
@@ -1650,17 +1651,24 @@ class CommandMenu:
                                      config['TILE_SIZE'] / 2))
         draw_text(title, x, y, self.screen, config, color=self.color, letter_by_letter=False)
 
+    def find_door(self) -> Cell | None:
+        """NES CheckDoor (Bank03, LDC42-LDC8C): a locked door above, below, left or right of the hero, looked for in
+        that order whichever way he faces. An opened door reads as brick (GetBlockID ChkDoorBlock)."""
+        row, column = self.player.row, self.player.column
+        for door_row, door_column in ((row - 1, column), (row + 1, column), (row, column - 1), (row, column + 1)):
+            if get_tile_id_by_coordinates(door_column, door_row, self.current_map) == 'DOOR':
+                return door_row, door_column
+        return None
+
     def door(self) -> None:
-        """
-        Open a door.
-        :return: None
-        """
-        if self.player.next_tile_id == 'DOOR':
+        """NES CheckDoor/DoorFound/UseKey: the DOOR command, and ITEM -> Magic Key."""
+        door = self.find_door()
+        if door is not None:
             if 'Magic Key' in self.player.inventory:
                 # NES UseKey: the key is used up first. The door is recorded in the door history (which locks it
                 # again when the hero next goes out to the overworld); with all 8 slots in use, nothing opens
                 self.player.inventory.remove('Magic Key')
-                row, column = self.player.next_coordinates
+                row, column = door
                 if self.game.door_history.record(self.map_name, (row, column)):
                     self.sound.play_sound(self.directories.open_door_sfx)  # SFX_DOOR, then ModMapBlock
                     self.set_tile_by_coordinates('BRICK', column, row, self.player)

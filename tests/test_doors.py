@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pygame
 
@@ -18,10 +18,7 @@ CELLAR_DOOR = (13, 25)
 BELOW_CELLAR_DOOR = (14, 25)
 
 
-class TestOpenDoorHistory(TestCase):
-    """NES DoorXPos/DoorYPos: CheckDoor/UseKey (Bank03 LDC42-LDCE0) record each door opened, GetBlockID (Bank00
-    ChkDoorBlock, LAD45) reads a recorded door as brick, and InitMapData (ChkOverworldMap, LAF2B-LAF3A) and
-    MainGameEngine (LCA0F) clear the history."""
+class DoorTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -70,6 +67,13 @@ class TestOpenDoorHistory(TestCase):
         self.door(BELOW_CELLAR_DOOR)
         self.assertEqual(self.tile(CELLAR_DOOR), BRICK)
         self.assertEqual(self.game.player.inventory, ['Magic Key'])
+
+
+
+class TestOpenDoorHistory(DoorTestCase):
+    """NES DoorXPos/DoorYPos: CheckDoor/UseKey (Bank03 LDC42-LDCE0) record each door opened, GetBlockID (Bank00
+    ChkDoorBlock, LAD45) reads a recorded door as brick, and InitMapData (ChkOverworldMap, LAF2B-LAF3A) and
+    MainGameEngine (LCA0F) clear the history."""
 
     def test_door_locks_again_after_the_overworld(self):
         # NES ChkOverworldMap: entering the overworld clears the door history
@@ -130,3 +134,56 @@ class TestOpenDoorHistory(TestCase):
         self.assertTrue(self.game.story_flags.left_throne_room)
         self.assertEqual(self.tile(THRONE_ROOM_DOOR_COORDINATES), BRICK)
         self.assertEqual(self.game.door_history.slots[7], ('TantegelThroneRoom', THRONE_ROOM_DOOR_COORDINATES))
+
+
+class TestCheckDoor(DoorTestCase):
+    """NES CheckDoor (Bank03, LDC42-LDC8C), for both the DOOR command and ITEM -> Magic Key: a door above, below,
+    left or right of the hero, in that order, whichever way he faces."""
+
+    def test_door_is_found_whichever_way_the_hero_faces(self):
+        for facing in (Direction.DOWN.value, Direction.LEFT.value, Direction.RIGHT.value):
+            with self.subTest(facing=facing):
+                self.setUp()
+                self.go_to('TantegelCourtyard', BELOW_CELLAR_DOOR)
+                self.game.player.inventory = ['Magic Key']
+                self.assertEqual(self.door(BELOW_CELLAR_DOOR, facing), [])
+                self.assertEqual(self.tile(CELLAR_DOOR), BRICK)
+
+    def test_door_on_each_side(self):
+        row, column = CELLAR_DOOR
+        for standing_at in ((row - 1, column), (row, column - 1), (row, column + 1)):
+            with self.subTest(standing_at=standing_at):
+                self.setUp()
+                self.go_to('TantegelCourtyard', BELOW_CELLAR_DOOR)
+                self.game.player.inventory = ['Magic Key']
+                self.game.player.row, self.game.player.column = standing_at
+                self.assertEqual(self.game.cmd_menu.find_door(), CELLAR_DOOR)
+
+    def test_doors_are_looked_for_above_below_left_then_right(self):
+        self.go_to('TantegelCourtyard', BELOW_CELLAR_DOOR)
+        layout = self.game.current_map.layout
+        row, column = 20, 20
+        sides = [(row - 1, column), (row + 1, column), (row, column - 1), (row, column + 1)]
+        for side in sides:
+            layout[side[0]][side[1]] = DOOR
+        self.game.player.row, self.game.player.column = row, column
+        for side in sides:
+            with self.subTest(side=side):
+                self.assertEqual(self.game.cmd_menu.find_door(), side)
+                layout[side[0]][side[1]] = BRICK
+        self.assertIsNone(self.game.cmd_menu.find_door())
+
+    def test_no_door_beside_the_hero(self):
+        self.go_to('TantegelCourtyard', (20, 20))
+        self.game.player.inventory = ['Magic Key']
+        self.assertEqual(self.door((20, 20)), ["There is no door here."])
+        self.assertEqual(self.game.player.inventory, ['Magic Key'])
+
+    def test_the_magic_key_item_opens_a_door_beside_the_hero(self):
+        self.go_to('TantegelCourtyard', BELOW_CELLAR_DOOR)
+        self.game.player.inventory = ['Magic Key']
+        self.game.player.direction_value = Direction.DOWN.value
+        with patch('src.menu.run_selection', return_value=MagicMock(accepted=True, entry=0)), \
+                patch('src.menu.CommandMenu.show_text_in_dialog_box'):
+            self.game.cmd_menu.item()
+        self.assertEqual(self.tile(CELLAR_DOOR), BRICK)
