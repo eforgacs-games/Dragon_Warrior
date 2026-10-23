@@ -20,6 +20,9 @@ class TestWait(TestCase):
     def setUp(self):
         reset_game_speed()  # these waits are timed in real milliseconds, at normal speed
         pygame.event.clear()
+        # A QUIT a wait only peeked at stays queued: don't leave it for the next test in this process (pytest-xdist
+        # runs other files' tests after these)
+        self.addCleanup(pygame.event.clear)
         quit_patch = patch('src.waiting.pygame_quit')
         self.pygame_quit = quit_patch.start()
         self.addCleanup(quit_patch.stop)
@@ -87,6 +90,7 @@ class TestQuitDuringGameWaits(TestCase):
         self.game = new_game(config)
         self.game.player.name = "Edward"
         pygame.event.clear()
+        self.addCleanup(pygame.event.clear)  # nor a QUIT these tests post
         patcher = patch('src.waiting.pygame_quit')
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -108,10 +112,11 @@ class TestQuitDuringGameWaits(TestCase):
         # The window closed after the wait's last check for QUIT: the clear that drops the keys pressed during the
         # music used to drop it too
         self.game.player.current_hp = 0
-        with patch.object(self.game, 'drawer'), patch.object(self.game, 'music_player'), \
+        with patch.object(self.game, 'drawer'), \
+                patch.object(self.game, 'music_player',
+                             **{'play_until_end.side_effect': lambda *args: self.post_quit()}), \
                 patch('src.game.display'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text, \
-                patch('src.game.wait', side_effect=lambda *args: self.post_quit()), \
                 self.assertRaises(SystemExit):
             self.game.handle_death()
         show_text.assert_not_called()
@@ -141,11 +146,10 @@ class TestQuitDuringGameWaits(TestCase):
     def test_keys_pressed_during_death_music_are_dropped(self):
         self.game.player.current_hp = 0
         pygame.event.post(Event(KEYDOWN, key=K_RETURN))
-        with patch.object(self.game, 'drawer'), patch.object(self.game, 'music_player'), \
-                patch('src.game.display'), patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'), \
-                patch('src.game.wait') as mock_wait:
+        with patch.object(self.game, 'drawer'), patch.object(self.game, 'music_player') as music_player, \
+                patch('src.game.display'), patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
             self.game.handle_death()
-        mock_wait.assert_called_once()
+        music_player.play_until_end.assert_called_once()  # the death music, played to the end
         self.assertEqual(pygame.event.get(KEYDOWN), [])
 
     def test_quit_during_gwaelins_love_jingle(self):

@@ -13,3 +13,7 @@ code-coverage-results.md
 
 # Save files the game writes when run from source (Directories.save_dir)
 src/saves/
+
+# PyInstaller output (dragon_warrior.spec)
+/build/
+/dist/
