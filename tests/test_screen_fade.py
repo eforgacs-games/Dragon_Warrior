@@ -9,6 +9,7 @@ from src.config.test_config import test_config
 from src.ending import CREDITS
 from src.intro import Intro
 from src.maps import Brecconary
+from src.options_screen import FADE_STYLE_SAVE_KEY
 from src.visual_effects import FADE_IN_STEPS, FADE_OUT_STEPS, FADE_STEP_FRAMES, FADE_STYLE_NES, FADE_STYLE_SMOOTH, \
     NES_FPS, NES_PALETTE, PAL_BLACK, fade_style, nes_fade_palette, nes_palette_fade, screen_fade
 from tests.helpers import new_game
@@ -197,7 +198,9 @@ class TestTransitionsUseTheSelectedFade(TestCase):
 
     def test_continue_a_quest_only_fades_in(self):
         def run():
-            self.game.load_game({'Name': 'Erdrick', 'Experience': 0, 'Gold': 0, 'Inventory': []})
+            # the log's own fade style (#301), which loading applies before the map fades in
+            self.game.load_game({'Name': 'Erdrick', 'Experience': 0, 'Gold': 0, 'Inventory': [],
+                                 FADE_STYLE_SAVE_KEY: test_config['FADE_STYLE']})
 
         self.assert_fades(run, [False])
 
