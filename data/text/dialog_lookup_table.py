@@ -6,7 +6,6 @@ from pygame import display, time, Rect
 from pygame.event import get, pump
 
 from data.text.dialog import confirmation_prompt
-from src.calculation import Calculation
 from src.color import BLACK, window_color
 from src.common import WHITE, Graphics, set_gettext_language, singular_or_plural
 from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACEABLE_ITEMS
@@ -43,7 +42,6 @@ class DialogLookup:
 
     def __init__(self, command_menu, config: dict):
         self.config = config
-        self.calculation = Calculation(config)
         self.sound = Sound(config)
         self._ = _ = set_gettext_language(self.config['LANGUAGE'])
 
@@ -787,7 +785,7 @@ class DialogLookup:
 
     def bw_screen_flash(self):
         """NES BWScreenFlash (Bank03, LDB37): see src.visual_effects.bw_screen_flash."""
-        bw_screen_flash(self.screen, self.calculation, self.config)
+        bw_screen_flash(self.screen, self.config)
 
     def rimuldar_hast_thou_found_a_magic_temple(self):
         """NES CheckYesNoDialog, dialog byte $61 (the Rimuldar wizard at NES 3,23): after the first line of TextBlock10
