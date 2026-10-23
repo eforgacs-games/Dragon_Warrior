@@ -13,6 +13,7 @@ from src.coordinates import Cell
 from src.constants import THRONE_ROOM_START_COORDINATES
 from src.direction import Direction
 from src.directories import Directories
+from src.encounters import MAP_CHANGE_TILES
 from src.map_layouts import BRICK_STAIR_DOWN, BRICK_STAIR_UP, GRASS_STAIR_DOWN, MapLayouts
 from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point, \
     covered_cells, low_hp_tile_image, bad_ending_tile_image, tile_from_quarters
@@ -197,6 +198,22 @@ class DragonWarriorMap:
             return 0 <= row < len(self.layout) and 0 <= column < len(self.layout[0])
         (origin_row, origin_column), (columns, rows) = self.nes_origin, self.nes_size
         return 0 <= column - origin_column < columns and 0 <= row - origin_row < rows
+
+    def is_map_exit(self, row: int, column: int) -> bool:
+        """Whether a step onto this layout (row, column) leaves the map by its edge: NES ChkSpecialLoc (Bank00, LB219)
+        branches to CheckMapExit when CharXPos > MapWidth or CharYPos > MapHeight (unsigned, so -1 too), before
+        CheckForTriggers. The town gates (create_town_gates) are these tiles."""
+        return not self.in_nes_map(row, column)
+
+    def is_step_warp(self, row: int, column: int) -> bool:
+        """Whether the NES changes maps on the step onto this layout (row, column) itself: off the map's edge
+        (is_map_exit, CheckMapExit) or onto a town, cave or castle block (CheckBlockDmg -> CalcNextMap, LCDB4).
+        Stairs are only taken by the STAIRS command (CheckStairs)."""
+        if self.is_map_exit(row, column):
+            return True
+        if 0 <= row < len(self.layout) and 0 <= column < len(self.layout[0]):
+            return self.get_tile_by_value(self.layout[row][column]) in MAP_CHANGE_TILES
+        return False
 
     def npc_position(self, npc: NPC) -> Cell:
         """The layout (row, column) of an NPC."""
@@ -630,6 +647,9 @@ class CharlockB1(MapWithoutNPCs):
     """Ground floor of Charlock Castle (NES MAP_DLCSTL_GF), with the Dragonlord's empty throne.
 
     Layout coordinates are the NES ones offset by (row + 6, column + 7)."""
+
+    # NES DLCstlGFDat: 20 x 20 blocks; the tiles just outside them (the swamp around the castle) are its exits
+    nes_origin, nes_size = (6, 7), (20, 20)
 
     # NES DoSearch (SrchPassage): searching on the throne at GF(10,3) only hints at the wind; the secret passage is
     # behind it at GF(10,1).
