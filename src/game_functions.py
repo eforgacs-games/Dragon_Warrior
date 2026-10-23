@@ -1,14 +1,14 @@
 from typing import Callable, List
 
-from pygame import K_DOWN, K_s, K_UP, K_w, KEYDOWN, event, Rect, image, display
+from pygame import Rect, image, display
 from pygame.transform import scale
 
 from src.calculation import Calculation
-from src.common import BLACK, accept_keys, reject_keys, Graphics
-from src.cursor import BlinkingCursor
+from src.common import BLACK, Graphics
+from src.cursor import IN_A, IN_B, BlinkingCursor
 from src.directories import Directories
+from src.selection import run_selection, stop_at_edges
 from src.sound import Sound
-from src.waiting import quit_if_requested
 
 
 def blit_scaled_image(image_path: str, screen, graphics=None, overlay: Callable | None = None):
@@ -50,33 +50,20 @@ class GameFunctions:
 
         B does nothing in the title menu itself (the NES loops on it). With b_goes_back (a log window, where B is
         WND_ABORT), B returns MENU_BACK instead."""
-        # TODO: Merge with open_store_inventory() if possible
-        current_item_index = 0
         all_selected_images = [selected_image] + (other_selected_images or [])
-        cursor = BlinkingCursor(blink_start)  # WndInitSelect
-        while True:
+
+        def draw(index: int, cursor_visible: bool) -> None:
             screen.fill(BLACK)
-            self.draw_menu_frame(all_selected_images[current_item_index], unselected_image, cursor.visible(), screen,
-                                 no_blit, overlay)
-            for current_event in event.get():
-                quit_if_requested(current_event)
-                if current_event.type == KEYDOWN:
-                    if current_event.key in accept_keys:
-                        # WndAPressed: the chosen entry's arrow is drawn once more and stays on
-                        self.draw_menu_frame(all_selected_images[current_item_index], unselected_image, True,
-                                             screen, no_blit, overlay)
-                        self.sound.play_sound(self.directories.menu_button_sfx)
-                        return current_item_index
-                    elif current_event.key in reject_keys:
-                        self.sound.play_sound(self.directories.menu_button_sfx)
-                        if b_goes_back:
-                            return MENU_BACK
-                    elif current_event.key in (K_DOWN, K_s) and current_item_index < len(all_selected_images) - 1:
-                        current_item_index += 1
-                        cursor.restart()  # WndUpdateCrsrPos
-                    elif current_event.key in (K_UP, K_w) and current_item_index > 0:
-                        current_item_index -= 1
-                        cursor.restart()
+            self.draw_menu_frame(all_selected_images[index], unselected_image, cursor_visible, screen, no_blit,
+                                 overlay)
+
+        # The cursor stops at the first and last entries. A chooses: its arrow is drawn once more and stays on
+        # (WndAPressed). B makes the menu sound either way, and only ends the selection with b_goes_back.
+        answer = run_selection(draw, 0, move=stop_at_edges(len(all_selected_images)),
+                               answers=(IN_A, IN_B) if b_goes_back else (IN_A,), hold=(IN_A,),
+                               sound=lambda: self.sound.play_sound(self.directories.menu_button_sfx),
+                               cursor=BlinkingCursor(blink_start))  # WndInitSelect
+        return answer.entry if answer.accepted else MENU_BACK
 
     def draw_menu_frame(self, selected_image: str, unselected_image: str, cursor_visible: bool, screen,
                         no_blit: bool, overlay: Callable | None = None) -> None:
