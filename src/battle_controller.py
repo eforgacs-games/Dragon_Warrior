@@ -48,6 +48,7 @@ class BattleOutcome(Enum):
 
 
 # CmdCmbtDat: the commands, by row and column (WndCalcSelResult: CC_FIGHT, CC_SPELL, CC_RUN, CC_ITEM)
+ENEMY_SPELL_PAUSE_MS = 1000  # the pause after "<enemy> chants the spell of ..." or "is breathing fire" (not NES timing)
 BATTLE_MENU_OPTIONS = (('Fight', 'Spell'), ('Run', 'Item'))
 
 # The joypad on the keyboard, for the command window's SelectionButtons. A is K and Enter; START (I) is no button
@@ -565,15 +566,14 @@ class BattleController:
     def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
         enemy.refresh_pattern()
         if isinstance(current_enemy_pattern, tuple):
-            x = current_enemy_pattern[0]
-            current_spell = current_enemy_pattern[1]
-            z = current_enemy_pattern[2]
+            # (chance in percent, spell, whether its condition holds), from Enemy.set_pattern
+            chance_percent, current_spell, may_cast = current_enemy_pattern
             if current_spell == Spell.SLEEP and self.player.is_asleep:
-                z = False
+                may_cast = False
             elif current_spell == Spell.STOPSPELL and self.player.is_stopspelled:
-                z = False
-            if z:
-                if random.randint(0, 99) < x:
+                may_cast = False
+            if may_cast:
+                if random.randint(0, 99) < chance_percent:
                     if current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         self.cmd_menu.show_line_in_dialog_box(
                             self._("{} chants the spell of {}.").format(self._(enemy.name),
@@ -585,7 +585,7 @@ class BattleController:
                             self._("The {} is breathing fire.\n").format(self._(enemy.name)),
                             add_quotes=False, disable_sound=True, hide_arrow=True)
                         self.sound.play_sound(self.directories.breathe_fire_sfx)
-                    wait(1000)
+                    wait(ENEMY_SPELL_PAUSE_MS)
                     if enemy.is_stopspelled and current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         # NES: a stopspelled enemy still chants, but the spell is blocked (fire breath isn't a spell)
                         self.cmd_menu.show_line_in_dialog_box(self._("But that spell hath been blocked."),

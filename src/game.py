@@ -58,6 +58,11 @@ from src.windows import COMMAND_WINDOW
 from src.zoom import handle_zoom_event, remember_default_zoom, remember_windowed_size, restore_windowed_size
 
 
+# NES ChkOtherBlocks: a swamp step costs 2 HP (DoSwampDamage, LCDD4), a force field step 15 (LCE2B)
+SWAMP_DAMAGE = 2
+FORCE_FIELD_DAMAGE = 15
+# NES MjArmrHP: Magic Armor heals 1 HP every 4th step (when the counter's low 2 bits wrap to 0)
+MAGIC_ARMOR_HEAL_STEPS = 4
 
 
 class Game:
@@ -411,8 +416,8 @@ class Game:
         if self.player.armor == "Erdrick's Armor":
             heal = True
         elif self.player.armor == "Magic Armor":
-            self.magic_armor_steps = (self.magic_armor_steps + 1) & 0xFF
-            heal = self.magic_armor_steps & 0x03 == 0
+            self.magic_armor_steps = (self.magic_armor_steps + 1) % 256  # MjArmrHP is one byte
+            heal = self.magic_armor_steps % MAGIC_ARMOR_HEAL_STEPS == 0
         else:
             heal = False
         if heal:
@@ -599,10 +604,10 @@ class Game:
             if not self.player.is_moving:
                 if tile == 'MARSH':
                     if not self.player.received_environment_damage:
-                        self.damage_step(damage_amount=2)
+                        self.damage_step(damage_amount=SWAMP_DAMAGE)
                 elif tile == 'BARRIER':
                     if not self.player.received_environment_damage:
-                        self.damage_step(damage_amount=15, force_field=True)
+                        self.damage_step(damage_amount=FORCE_FIELD_DAMAGE, force_field=True)
             else:
                 self.player.received_environment_damage = False
 
