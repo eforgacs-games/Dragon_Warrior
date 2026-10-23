@@ -201,18 +201,11 @@ class Game:
             self.title_menu.show_main_menu_screen(self.screen)
         if self.config.get('CHECKPOINT'):
             self.load_checkpoint(self.config['CHECKPOINT'])
-        self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
-                             self.foreground_rects, self.game_state.enable_animate, self.camera,
-                             self.initial_dialog_enabled,
-                             self.events, self.skip_text, self.story_flags.left_throne_room, self.game_state,
-                             self.color)
+        self.drawer.draw_all(self, self.game_state.enable_animate)
         while True:
             self.clock.tick(self.fps)
             self.run_due_frames()
-            self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player,
-                                 self.cmd_menu, self.foreground_rects, self.movement.sprites_animate, self.camera,
-                                 self.initial_dialog_enabled, self.events, self.skip_text, self.story_flags.left_throne_room,
-                                 self.game_state, self.color)
+            self.drawer.draw_all(self, self.movement.sprites_animate)
             display.flip()
             self.loop_count += 1
             if self.config.get('EXIT_AFTER_FIRST_FRAME'):  # --smoke-test
@@ -623,11 +616,7 @@ class Game:
             flash_transparent_color(RED, self.screen, self.calculation, no_blit=self.game_state.config['NO_BLIT'])
         # NES DoSwampDamage and the force field damage: RedFlashScreen, then LoadRegBGPal with the new HP
         self.load_window_palette()
-        self.drawer.draw_all(self.screen, self.loop_count, self.big_map, self.current_map, self.player, self.cmd_menu,
-                             self.foreground_rects, self.game_state.enable_animate, self.camera,
-                             self.initial_dialog_enabled,
-                             self.events, self.skip_text, self.story_flags.left_throne_room, self.game_state,
-                             self.color)
+        self.drawer.draw_all(self, self.game_state.enable_animate)
         display.flip()
 
     def handle_warps(self):
