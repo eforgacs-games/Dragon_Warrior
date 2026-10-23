@@ -2,7 +2,7 @@ import random
 from functools import partial
 from typing import Callable
 
-from pygame import display, time, mixer, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect
+from pygame import display, time, KEYDOWN, K_DOWN, K_UP, K_w, K_s, Rect
 from pygame.event import get, pump
 
 from data.text.dialog import confirmation_prompt
@@ -892,7 +892,7 @@ class DialogLookup:
     def rest_then_for_awhile(self):
         self.command_menu.show_line_in_dialog_box(self._("Rest then for awhile."))
         # NES ExitGame (Bank01): the music is silenced (MSC_NOSOUND) before the screen goes black for the reset message
-        mixer.music.stop()
+        self.command_menu.game.music_player.stop_music()
         # NES LoadCreditsPals (Bank00, LAA62): PalFadeOut. Then EndGameClearPPU clears the screen and LoadStartPals
         # (LAA7E) does a PalFadeIn over the empty screen before the window opens.
         screen_fade(fade_out=True, screen=self.screen, config=self.config)
@@ -1339,8 +1339,7 @@ class DialogLookup:
         self.player.restore_hp()
         self.player.restore_mp()
         game.music_player.play_until_end(self.directories.inn_music, config)
-        if game.music_player.music_enabled:
-            game.music_player.load_and_play_music(self.directories.village_music)
+        game.music_player.load_and_play_music(self.directories.village_music)
         game.load_window_palette()
         if not config['NO_BLIT']:
             background = game.drawer.background
