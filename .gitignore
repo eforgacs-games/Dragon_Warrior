@@ -17,3 +17,6 @@ src/saves/
 # PyInstaller output (dragon_warrior.spec)
 /build/
 /dist/
+
+# Compiled translations: the game compiles each base.po in memory when it runs (src/catalog.py)
+*.mo

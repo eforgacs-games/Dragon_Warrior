@@ -12,7 +12,7 @@ from pygame import Rect, Surface
 from src.color import BLACK
 from src.directories import Directories
 from src.text import draw_text, set_font_by_ascii_chars
-from src.window_renderer import draw_window
+from src.window_renderer import draw_window, window_tiles
 from src.windows import WindowLayout, WindowText
 
 Translate = Callable[[str], str]
@@ -24,8 +24,15 @@ def layout_texts(layout: WindowLayout) -> tuple[WindowText, ...]:
 
 
 def layout_in_nes_font(layout: WindowLayout, translate: Translate) -> bool:
-    """Whether none of the window's text is translated, so all of it can be generated in the NES font."""
-    return all(translate(text.text) == text.text for text in layout_texts(layout))
+    """Whether none of the window's text is translated and every character of it is an NES font tile, so all of it
+    can be generated in the NES font. (A hero's name in an adventure log window comes from the save file.)"""
+    if not all(translate(text.text) == text.text for text in layout_texts(layout)):
+        return False
+    try:
+        window_tiles(layout)
+    except ValueError:
+        return False
+    return True
 
 
 def draw_translated_window(screen: Surface, layout: WindowLayout, color: tuple, config: dict, translate: Translate,

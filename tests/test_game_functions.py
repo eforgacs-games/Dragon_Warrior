@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 from unittest.mock import MagicMock, patch
 
-from pygame import KEYDOWN, K_RETURN, event, K_s, K_w, image
+from pygame import KEYDOWN, K_RETURN, event, K_s, K_w
 from pygame.image import load_extended
 from pygame.time import get_ticks
 from pygame.transform import scale
@@ -11,6 +11,7 @@ from src.camera import Camera
 from src.config.test_config import test_config
 from src.drawer import Drawer
 from src.game_functions import set_character_position
+from src.windows import ADVENTURE_LOG_123_LAYOUT, NEW_QUEST_LAYOUT
 from src.maps_functions import parse_animated_sprite_sheet
 from src.npc_movement import step
 from src.player.player import Player
@@ -117,81 +118,38 @@ class TestGameFunctions(TestCase):
 
     # "1", 134.4, 32, self.game.screen
 
-    def test_draw_menu_frame(self):
-        selected_image_path = self.game.directories.NAME_SELECTION_UPPER_A
-        unselected_image_path = self.game.directories.NAME_SELECTION_STATIC_IMAGE_LEN_0
-        selected_image = scale(image.load(selected_image_path),
-                               (self.game.screen.get_width(), self.game.screen.get_height())).get_rect()
-        unselected_image = scale(image.load(unselected_image_path),
-                                 (self.game.screen.get_width(), self.game.screen.get_height())).get_rect()
-        # The screenshot with the arrow while the cursor is visible, the one without it while it isn't
-        with patch('src.game_functions.blit_scaled_image') as blit:
-            self.game.game_functions.draw_menu_frame(selected_image_path, unselected_image_path, True,
-                                                     self.game.screen, False)
-            self.assertEqual(selected_image_path, blit.call_args.args[0])
-            self.game.game_functions.draw_menu_frame(selected_image_path, unselected_image_path, False,
-                                                     self.game.screen, False)
-            self.assertEqual(unselected_image_path, blit.call_args.args[0])
-        self.assertEqual(selected_image.size, unselected_image.size)
+    def test_main_menu_selection_draws_the_generated_windows(self):
+        # The window chosen from, with its blinking arrow, over the windows below it with their arrows held on
+        drawn = []
+        with patch.dict(self.game.game_functions.config, NO_BLIT=False), \
+                patch('src.game_functions.draw_title_windows', side_effect=lambda screen, windows, *args:
+                      drawn.append(windows)), patch('src.game_functions.display'), \
+                patch.object(event, 'get', return_value=[self.key(K_RETURN)]):
+            self.assertEqual(0, self.game.game_functions.main_menu_selection(
+                get_ticks(), self.game.screen, ADVENTURE_LOG_123_LAYOUT, below=[(NEW_QUEST_LAYOUT, 0)]))
+        self.assertEqual([(NEW_QUEST_LAYOUT, 0, True), (ADVENTURE_LOG_123_LAYOUT, 0, True)], drawn[-1])
+
+    @staticmethod
+    def key(key):
+        pressed = MagicMock()
+        pressed.type = KEYDOWN
+        pressed.key = key
+        return pressed
+
+    def select(self, keys, layout=ADVENTURE_LOG_123_LAYOUT, blink_start=None):
+        with patch.object(event, 'get', return_value=[self.key(key) for key in keys]):
+            return self.game.game_functions.main_menu_selection(
+                get_ticks() if blink_start is None else blink_start, self.game.screen, layout)
 
     def test_select_from_vertical_menu(self):
-        mocked_return = MagicMock()
-        mocked_return.type = KEYDOWN
-        mocked_return.key = K_RETURN
-        with patch.object(event, 'get', return_value=[mocked_return]):
-            self.assertEqual(0, self.game.game_functions.main_menu_selection(get_ticks(), self.game.screen,
-                                                                             self.game.directories.empty_log_adventure_log_path,
-                                                                             self.game.directories.ADVENTURE_LOG_1_PATH,
-                                                                             [
-                                                                                       self.game.directories.ADVENTURE_LOG_2_PATH,
-                                                                                       self.game.directories.ADVENTURE_LOG_3_PATH],
-                                                                             no_blit=True))
-        mocked_up = MagicMock()
-        mocked_up.type = KEYDOWN
-        mocked_up.key = K_w
-        with patch.object(event, 'get', return_value=[mocked_up, mocked_return]):
-            self.assertEqual(0, self.game.game_functions.main_menu_selection(get_ticks(), self.game.screen,
-                                                                             self.game.directories.empty_log_adventure_log_path,
-                                                                             self.game.directories.ADVENTURE_LOG_1_PATH,
-                                                                             [self.game.directories.ADVENTURE_LOG_2_PATH,
-                                                           self.game.directories.ADVENTURE_LOG_3_PATH], no_blit=True))
-
-        mocked_down = MagicMock()
-        mocked_down.type = KEYDOWN
-        mocked_down.key = K_s
-        with patch.object(event, 'get', return_value=[mocked_down, mocked_return]):
-            self.assertEqual(1, self.game.game_functions.main_menu_selection(get_ticks(), self.game.screen,
-                                                                             self.game.directories.empty_log_adventure_log_path,
-                                                                             self.game.directories.ADVENTURE_LOG_1_PATH,
-                                                                             [self.game.directories.ADVENTURE_LOG_2_PATH,
-                                                           self.game.directories.ADVENTURE_LOG_3_PATH], no_blit=True))
-
-        with patch.object(event, 'get', return_value=[mocked_down, mocked_down, mocked_return]):
-            self.assertEqual(2, self.game.game_functions.main_menu_selection(get_ticks(), self.game.screen,
-                                                                             self.game.directories.empty_log_adventure_log_path,
-                                                                             self.game.directories.ADVENTURE_LOG_1_PATH,
-                                                                             [self.game.directories.ADVENTURE_LOG_2_PATH,
-                                                           self.game.directories.ADVENTURE_LOG_3_PATH], no_blit=True))
-
-        with patch.object(event, 'get',
-                          return_value=[mocked_down, mocked_down, mocked_up, mocked_return]):
-            self.assertEqual(1, self.game.game_functions.main_menu_selection(get_ticks(), self.game.screen,
-                                                                             self.game.directories.empty_log_adventure_log_path,
-                                                                             self.game.directories.ADVENTURE_LOG_1_PATH,
-                                                                             [self.game.directories.ADVENTURE_LOG_2_PATH,
-                                                           self.game.directories.ADVENTURE_LOG_3_PATH], no_blit=True))
-        # test without other_selected_images
-        with patch.object(event, 'get',
-                          return_value=[mocked_down, mocked_down, mocked_up, mocked_return]):
-            start_time = get_ticks()
-            directories = self.game.directories
-            while get_ticks() - start_time <= 64:
-                # just to hit the blink_start reset line
-                self.assertEqual(0, self.game.game_functions.main_menu_selection(start_time, self.game.screen,
-                                                                                 directories.main_menu_empty_log_unselected,
-                                                                                 directories.main_menu_empty_log_0, [],
-                                                                                 no_blit=True))
-            self.assertEqual(0, self.game.game_functions.main_menu_selection(start_time, self.game.screen,
-                                                                             self.game.directories.main_menu_empty_log_unselected,
-                                                                             self.game.directories.main_menu_empty_log_0, [],
-                                                                             no_blit=True))
+        self.assertEqual(0, self.select([K_RETURN]))
+        self.assertEqual(0, self.select([K_w, K_RETURN]))
+        self.assertEqual(1, self.select([K_s, K_RETURN]))
+        self.assertEqual(2, self.select([K_s, K_s, K_RETURN]))
+        self.assertEqual(1, self.select([K_s, K_s, K_w, K_RETURN]))
+        # a window of one entry
+        start_time = get_ticks()
+        while get_ticks() - start_time <= 64:
+            # just to hit the blink_start reset line
+            self.assertEqual(0, self.select([K_s, K_s, K_w, K_RETURN], NEW_QUEST_LAYOUT, start_time))
+        self.assertEqual(0, self.select([K_s, K_s, K_w, K_RETURN], NEW_QUEST_LAYOUT, start_time))
