@@ -106,6 +106,16 @@ class TestZoomKeys(ZoomTestCase):
             self.assertFalse(zoom.handle_zoom_event(wheel(1)))
         self.assertEqual(self.zoomed(SCALE), self.window_size())
 
+    def test_each_change_is_told_to_the_listener(self):
+        # The game saves the zoom with its global settings (src/settings.py) through this
+        told = []
+        zoom.set_zoom_listener(told.append)
+        self.addCleanup(zoom.set_zoom_listener, None)
+        zoom.handle_zoom_event(ctrl_key(K_EQUALS))
+        zoom.set_zoom(3)  # no change: nothing told
+        zoom.reset_zoom()
+        self.assertEqual([3, SCALE], told)
+
     def test_zoom_stays_within_bounds(self):
         for _ in range(10):
             zoom.handle_zoom_event(ctrl_key(K_EQUALS))

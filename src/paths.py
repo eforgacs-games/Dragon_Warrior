@@ -53,6 +53,24 @@ def user_data_dir(platform: str | None = None, environ: Mapping[str, str] | None
     return join(xdg_data_home, 'dragon-warrior')
 
 
+def user_config_dir(platform: str | None = None, environ: Mapping[str, str] | None = None) -> str:
+    """
+    The per-user folder for the game's settings (src/settings.py), as platformdirs' user_config_dir would give it:
+    - Windows: %APPDATA%\\Dragon Warrior
+    - macOS: ~/Library/Application Support/Dragon Warrior
+    - elsewhere: $XDG_CONFIG_HOME/dragon-warrior, by default ~/.config/dragon-warrior
+    """
+    platform = sys.platform if platform is None else platform
+    environ = os.environ if environ is None else environ
+    if platform.startswith('win') or platform == 'darwin':
+        return user_data_dir(platform, environ)
+    # The XDG spec says to ignore a relative XDG_CONFIG_HOME
+    xdg_config_home = environ.get('XDG_CONFIG_HOME', '')
+    if not os.path.isabs(xdg_config_home):
+        xdg_config_home = join(os.path.expanduser('~'), '.config')
+    return join(xdg_config_home, 'dragon-warrior')
+
+
 def default_save_dir() -> str:
     """Where the adventure logs go unless the config's SAVE_DIR says otherwise: src/saves/ from source, the per-user
     data folder in a build."""
