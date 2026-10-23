@@ -601,13 +601,13 @@ class Game:
 
     def check_tantegel_cursed(self):
         """NES CheckTantCursed (part of MovementUpdates, run every step while the Dragonlord is alive): a cursed player
-        who reaches Y=27 of Tantegel's ground floor is told "Cursed one, be gone!" and CheckMapExit forces them out of
+        who reaches Y=27 of Tantegel's ground floor is told "Cursed one,be gone!" and CheckMapExit forces them out of
         the castle."""
         if self.current_map.identifier != 'TantegelCourtyard' or not self.player.is_cursed:
             return
         if self.player.rect.y // self.tile_size != TANTEGEL_CURSED_ROW:
             return
-        self.cmd_menu.show_text_in_dialog_box(self._("Cursed one, be gone!"), add_quotes=True,
+        self.cmd_menu.show_text_in_dialog_box(self._("Cursed one,be gone!"), add_quotes=True,
                                               skip_text=self.skip_text)
         self.leave_tantegel()
 
@@ -983,8 +983,9 @@ class Game:
             self.map_mgr.process_warp(staircase_dict)
 
     def change_map(self, next_map: maps.DragonWarriorMap, destination_coordinates: tuple | None = None,
-                   direction: int | None = None, fade_out_first: bool = True) -> None:
-        self.map_mgr.change_map(next_map, destination_coordinates, direction, fade_out_first=fade_out_first)
+                   direction: int | None = None, fade_out_first: bool = True, stairs_sound: bool = False) -> None:
+        self.map_mgr.change_map(next_map, destination_coordinates, direction, fade_out_first=fade_out_first,
+                                stairs_sound=stairs_sound)
 
     def set_big_map(self):
         self.map_mgr.set_big_map()

@@ -106,13 +106,16 @@ class TestOtherNPCsDialog(TestCase):
                          (self.dialog_lookup.magic_temple_rainbow_drop_exchange,))
 
     def test_bw_screen_flash(self):
-        # NES BWScreenFlash: 8 flashes of 3 greyscale frames, each after 2 frames in color
+        # NES BWScreenFlash (LDB37): 8 flashes of 3 greyscale frames, each after 2 frames in color, 40 frames in all
         self.dialog_lookup.config = dict(test_config, NO_BLIT=False)
-        with patch('data.text.dialog_lookup_table.greyscale_screen') as greyscale:
+        frames = []
+        with patch('src.visual_effects.greyscale_screen',
+                   side_effect=lambda *args, **kwargs: frames.append(('grey', kwargs['frames']))), \
+                patch('src.visual_effects.wait_frames',
+                      side_effect=lambda count, config: frames.append(('color', count))):
             self.dialog_lookup.bw_screen_flash()
-        self.assertEqual(greyscale.call_count, 8)
-        for call in greyscale.call_args_list:
-            self.assertEqual(call.kwargs['frames'], 3)
+        self.assertEqual(frames, [('color', 2), ('grey', 3)] * 8)
+        self.assertEqual(sum(count for _, count in frames), 40)
 
     def test_rainbow_drop_shrine_without_token_flashes_black_and_white(self):
         self.game.player.inventory = ['Staff of Rain', 'Stones of Sunlight']
