@@ -1,7 +1,8 @@
-import os
-from os.path import join, dirname, realpath
+from os.path import join
 
 from pygame import font
+
+from src.paths import data_path, default_save_dir, project_root
 
 
 class Directories:
@@ -10,12 +11,12 @@ class Directories:
         self.config = config
 
         # menu
-        src_dir = join(dirname(dirname(realpath(__file__))), 'src')
-        data_dir = join(dirname(dirname(realpath(__file__))), 'data')
+        data_dir = data_path()
         sound_dir = join(data_dir, 'sound')
         sfx_dir = join(sound_dir, 'sfx')
-        # SAVE_DIR redirects saving, e.g. for a game started from a checkpoint (src/checkpoints.py)
-        self.save_dir = config.get('SAVE_DIR') or join(src_dir, 'saves')
+        # SAVE_DIR redirects saving, e.g. for a game started from a checkpoint (src/checkpoints.py). Otherwise src/saves
+        # from source, or a per-user folder in a PyInstaller build (src/paths.py)
+        self.save_dir = config.get('SAVE_DIR') or default_save_dir()
         self.text_beep_sfx = join(sfx_dir, 'text_beep.wav')
         self.death_sfx = join(sfx_dir, '20 Dragon Quest 1 - Thou Hast Died.mp3')
         # NES MSC_INN ($15), the inn's jingle (BuyInnStay). The soundtrack calls it "Special Item"; it is the track
@@ -61,8 +62,8 @@ class Directories:
         self.open_treasure_sfx = join(sfx_dir, '44 Dragon Quest 1 - Open Treasure.mp3')
         self.open_door_sfx = join(sfx_dir, '45 Dragon Quest 1 - Open Door.mp3')
 
-        # Files/Directories
-        self.root_project_path = os.getcwd().split('DragonWarrior', 1)[0]
+        # Files/Directories: where Graphics.get_image looks for an image it can't find at its path
+        self.root_project_path = project_root()
 
         # Music
 

@@ -50,6 +50,7 @@ from src.music_player import MusicPlayer
 from src.npc_schedule import NPCSchedule, POP_UP_FRAME
 from src.npc_movement import npc_may_step_onto, step
 from src.options_screen import DEFAULT_OPTIONS, OptionsScreen, apply_options, options_from_save, options_to_save
+from src.paths import data_path
 from src.player.player import Player
 from src.player.player_stats import get_level_by_experience
 from src.sound import Sound
@@ -274,6 +275,8 @@ class Game:
                                  self.game_state, self.color)
             display.flip()
             self.loop_count += 1
+            if self.config.get('EXIT_AFTER_FIRST_FRAME'):  # --smoke-test
+                return
 
     def show_main_menu_screen(self, screen) -> None:
         """The title menu. Choosing CHANGE MESSAGE SPEED, COPY A QUEST or ERASE AN ADVENTURE LOG, or B in CONTINUE A
@@ -1577,12 +1580,32 @@ def run():
     parser.add_argument("--checkpoint", choices=CHECKPOINT_NAMES,
                         help="start from a playtest checkpoint in data/checkpoints/ (see PLAYTEST.md); saves go to "
                              f"{CHECKPOINT_SAVE_DIR} instead of src/saves")
+    parser.add_argument("--smoke-test", action="store_true",
+                        help="check that every game file is there and loads, draw the first frame of the map and exit "
+                             "(the release workflow runs this on each build)")
     args = parser.parse_args()
     config = dev_config if args.dev else prod_config
     if args.checkpoint:
         config = {**config, 'CHECKPOINT': args.checkpoint, 'SPLASH_SCREEN_ENABLED': False}
+    if args.smoke_test:
+        config = {**config, 'SPLASH_SCREEN_ENABLED': False, 'EXIT_AFTER_FIRST_FRAME': True}
     game = Game(config=config)
+    if args.smoke_test:
+        run_smoke_test(game)
+        return
     game.main()
+
+
+def run_smoke_test(game: Game) -> None:
+    """--smoke-test: see src/smoke_test.py. Exits with status 1 if anything is missing or doesn't load."""
+    from src.smoke_test import check_game_files, check_save_dir
+    problems = check_game_files(game.config) + check_save_dir(game.directories.save_dir)
+    for problem in problems:
+        print(problem)
+    if problems:
+        sys.exit(1)
+    game.main()
+    print(f"Smoke test passed: data from {data_path()}, saves in {game.directories.save_dir}")
 
 
 if __name__ == "__main__":
