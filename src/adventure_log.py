@@ -11,7 +11,7 @@ up to 8 letters (WndMaxNameLength); WndEnterName fills the unused letters with b
 shorter name is padded with blanks. A log with no saved game isn't listed at all: "begin a new quest" and the copy
 target list the open logs instead (ShowOpenLogs, LogList1Dat1 ... LogList123Dat1), which show " ADVENTURE LOG n"
 with no colon and no name. The level only appears in the erase confirmation window (EraseLogDat: the full 8-letter
-name, then "LEVEL" and the level), which this game doesn't have a screenshot for.
+name, then "LEVEL" and the level), which src/options_screen.py generates (OptionsScreen.confirm_erase).
 
 The window data puts the first line at:
 - window position $63 (X = 3 blocks, Y = 6 blocks; src.windows.ADVENTURE_LOG_WINDOW_2): top-left corner at NES tile
