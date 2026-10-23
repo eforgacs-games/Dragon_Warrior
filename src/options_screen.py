@@ -35,6 +35,7 @@ from src.selection import run_selection
 from src.sound import Sound
 from src.text import draw_text
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLES, fade_style
+from src.waiting import MENU_SPEED_NORMAL, MENU_SPEEDS
 from src.windows import ADVENTURE_LOG_WINDOW_1, ADVENTURE_LOG_WINDOW_2, ERASE_LOG_WINDOW, ITEM_MENU_BORDER, \
     MESSAGE_SPEED_WINDOW, YES_NO_2_WINDOW, Window, variable_height_window
 
@@ -45,6 +46,7 @@ NPCS_MAKE_WAY_SAVE_KEY = 'NpcsMakeWay'
 FADE_STYLE_SAVE_KEY = 'FadeStyle'
 AUTO_STAIRS_SAVE_KEY = 'AutoStairs'
 AUTO_GRIND_STOP_SAVE_KEY = 'AutoGrindStop'
+MENU_SPEED_SAVE_KEY = 'MenuSpeed'
 
 # MessageSpeed: #$00-fast, #$01-normal, #$02-slow; the window lists them in that order (WndRow = MessageSpeed)
 MESSAGE_SPEED_NAMES = ('Fast', 'Normal', 'Slow')
@@ -70,6 +72,10 @@ DEFAULT_AUTO_STAIRS = True
 AUTO_GRIND_STOP_VALUES = ('RedHP', 'HalfHP', 'ThreeQuartersHP')
 DEFAULT_AUTO_GRIND_STOP = 'RedHP'
 
+# MENU_SPEED (base_config, #440): NORMAL by default, the selection windows at 1x whatever the game speed
+# (src/waiting.py menu_ticks); a save without the setting loads as NORMAL
+DEFAULT_MENU_SPEED = MENU_SPEED_NORMAL
+
 
 @dataclass(frozen=True, slots=True)
 class Options:
@@ -80,6 +86,7 @@ class Options:
     fade_style: str = DEFAULT_FADE_STYLE
     auto_stairs: bool = DEFAULT_AUTO_STAIRS
     auto_grind_stop: str = DEFAULT_AUTO_GRIND_STOP
+    menu_speed: str = DEFAULT_MENU_SPEED
 
 
 # A new quest's settings when none are chosen: NewQuest's MSG_NORMAL, the NES dialog window, and base_config's
@@ -161,16 +168,24 @@ def auto_grind_stop_from_save(save: dict) -> str:
     return setting if setting in AUTO_GRIND_STOP_VALUES else DEFAULT_AUTO_GRIND_STOP
 
 
+def menu_speed_from_save(save: dict) -> str:
+    """The log's MENU SPEED setting; a save from before it was kept loads as NORMAL (the default)."""
+    setting = save.get(MENU_SPEED_SAVE_KEY)
+    return setting if setting in MENU_SPEEDS else DEFAULT_MENU_SPEED
+
+
 def options_from_save(save: dict) -> Options:
     return Options(message_speed_from_save(save), dialog_style_from_save(save), npcs_make_way_from_save(save),
-                   fade_style_from_save(save), auto_stairs_from_save(save), auto_grind_stop_from_save(save))
+                   fade_style_from_save(save), auto_stairs_from_save(save), auto_grind_stop_from_save(save),
+                   menu_speed_from_save(save))
 
 
 def options_to_save(options: Options) -> dict:
     """The save file entries for these settings (CommandMenu.save, TitleMenu.change_message_speed)."""
     return {MESSAGE_SPEED_SAVE_KEY: options.message_speed, DIALOG_STYLE_SAVE_KEY: options.dialog_style,
             NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way, FADE_STYLE_SAVE_KEY: options.fade_style,
-            AUTO_STAIRS_SAVE_KEY: options.auto_stairs, AUTO_GRIND_STOP_SAVE_KEY: options.auto_grind_stop}
+            AUTO_STAIRS_SAVE_KEY: options.auto_stairs, AUTO_GRIND_STOP_SAVE_KEY: options.auto_grind_stop,
+            MENU_SPEED_SAVE_KEY: options.menu_speed}
 
 
 def options_from_config(config: dict) -> Options:
@@ -178,20 +193,22 @@ def options_from_config(config: dict) -> Options:
     return Options(config.get('TEXT_SPEED', DEFAULT_MESSAGE_SPEED), config.get('DIALOG_STYLE', DEFAULT_DIALOG_STYLE),
                    bool(config.get('NPCS_MAKE_WAY', DEFAULT_NPCS_MAKE_WAY)),
                    fade_style(config), bool(config.get('AUTO_STAIRS', DEFAULT_AUTO_STAIRS)),
-                   auto_grind_stop_from_save({AUTO_GRIND_STOP_SAVE_KEY: config.get('AUTO_GRIND_STOP')}))
+                   auto_grind_stop_from_save({AUTO_GRIND_STOP_SAVE_KEY: config.get('AUTO_GRIND_STOP')}),
+                   menu_speed_from_save({MENU_SPEED_SAVE_KEY: config.get('MENU_SPEED')}))
 
 
 def apply_options(config: dict, options: Options) -> None:
     """Use these settings from now on: the dialog code reads TEXT_SPEED and DIALOG_STYLE for every message, and
     MovementController.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump, screen_fade reads FADE_STYLE for every
-    fade, MapManager.handle_warps reads AUTO_STAIRS for every step and auto-grind reads AUTO_GRIND_STOP for every
-    check."""
+    fade, MapManager.handle_warps reads AUTO_STAIRS for every step, auto-grind reads AUTO_GRIND_STOP for every check
+    and the menu clock reads MENU_SPEED (src/waiting.py menu_speed)."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way
     config['FADE_STYLE'] = options.fade_style
     config['AUTO_STAIRS'] = options.auto_stairs
     config['AUTO_GRIND_STOP'] = options.auto_grind_stop
+    config['MENU_SPEED'] = options.menu_speed
 
 
 class OptionWindow:

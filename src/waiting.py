@@ -25,6 +25,13 @@ the game, and auto-grind, as the player's own key presses.
 
 This module imports nothing from ``src`` but src/zoom.py (which imports nothing from ``src``), so any module can use it
 without an import cycle.
+
+The selection windows don't speed up (#440): their cursor (src/cursor.py: the blink, the held button's retrigger, the
+"let go first" of a button held as a window opens) and their loops (src/selection.py next_frame) run on the menu
+clock, ``menu_ticks``, which keeps 1x time whatever the game speed, so a held direction doesn't race past the entries
+and a press held a moment too long isn't read twice at 8x. With the MENU SPEED option (MENU_SPEED, src/options_overlay.py)
+on FOLLOW GAME SPEED it runs at the game speed as it used to, and so it does while a virtual joypad (auto-grind)
+drives the game, whose presses are timed on the game clock.
 """
 import sys
 
@@ -52,6 +59,17 @@ _rounding_carry = 0.0  # real milliseconds that rounding waits to whole millisec
 # Told the new speed after each change by set_game_speed (not reset_game_speed): the game saves it with the global
 # settings (src/settings.py)
 _speed_listener: Callable[[int], None] | None = None
+
+# The MENU SPEED option (config['MENU_SPEED']): NORMAL keeps the selection windows at 1x; FOLLOW GAME SPEED runs them at
+# the game speed (see the module docstring)
+MENU_SPEED_NORMAL = 'Normal'
+MENU_SPEED_FOLLOW = 'FollowGameSpeed'
+MENU_SPEEDS = (MENU_SPEED_NORMAL, MENU_SPEED_FOLLOW)
+_menu_speed_config: dict | None = None  # the config whose MENU_SPEED says how fast the menus run (follow_menu_speed_option)
+# menu_ticks() == _menu_anchor + (get_ticks() - _menu_real_anchor) * _menu_rate, re-anchored whenever the rate changes
+_menu_real_anchor = 0
+_menu_anchor = 0
+_menu_rate = 1
 
 # Who is reading input when the virtual joypad is polled: the map loop (Game.read_events and the hero's walking) or
 # anything else (a dialog, a battle, a window or a wait)
@@ -95,6 +113,7 @@ def set_virtual_joypad(joypad: VirtualJoypadHook | None) -> None:
     on any input read while none is."""
     global _virtual_joypad
     _virtual_joypad = joypad
+    _sync_menu_clock()  # the menus follow the game speed while it drives (menu_speed)
 
 
 def virtual_joypad() -> VirtualJoypadHook | None:
@@ -160,6 +179,7 @@ def set_game_speed(speed: int) -> bool:
     _game_anchor = game_ticks()
     _real_anchor = now
     _speed = speed
+    _sync_menu_clock(now)
     if _speed_listener is not None:
         _speed_listener(speed)
     return True
@@ -172,9 +192,56 @@ def set_speed_listener(listener: Callable[[int], None] | None) -> None:
 
 
 def reset_game_speed() -> None:
-    """Back to speed 1 with ``game_ticks() == get_ticks()`` (a new game, or a test): the game clock may jump."""
-    global _speed, _real_anchor, _game_anchor, _rounding_carry
+    """Back to speed 1 with ``game_ticks() == get_ticks()`` (a new game, or a test): the game clock may jump. So may
+    the menu clock, which is back to ``get_ticks()`` too."""
+    global _speed, _real_anchor, _game_anchor, _rounding_carry, _menu_real_anchor, _menu_anchor, _menu_rate
     _speed, _real_anchor, _game_anchor, _rounding_carry = 1, 0, 0, 0.0
+    _menu_real_anchor, _menu_anchor, _menu_rate = 0, 0, 1
+
+
+def follow_menu_speed_option(config: dict | None) -> None:
+    """Read the MENU SPEED option from ``config['MENU_SPEED']`` from now on (Game.__init__), whenever it changes; None:
+    the menus keep 1x time (NORMAL)."""
+    global _menu_speed_config
+    _menu_speed_config = config
+    _sync_menu_clock()
+
+
+def menu_speed() -> int:
+    """How many times as fast as 1x the selection windows run: 1 (MENU SPEED NORMAL), or the game speed with FOLLOW GAME
+    SPEED or while a virtual joypad drives the game."""
+    if _virtual_joypad is not None or (
+            _menu_speed_config is not None and _menu_speed_config.get('MENU_SPEED') == MENU_SPEED_FOLLOW):
+        return _speed
+    return 1
+
+
+def _sync_menu_clock(now: int | None = None) -> None:
+    """Re-anchor the menu clock if its rate (menu_speed) has changed, so it never jumps: it only runs faster or slower
+    from then on. A change of the option is seen at the next read of the clock, at most a frame later."""
+    global _menu_real_anchor, _menu_anchor, _menu_rate
+    rate = menu_speed()
+    if rate == _menu_rate:
+        return
+    now = time.get_ticks() if now is None else now
+    _menu_anchor += (now - _menu_real_anchor) * _menu_rate
+    _menu_real_anchor = now
+    _menu_rate = rate
+
+
+def menu_ticks() -> int:
+    """Milliseconds of menu time, the clock of the selection windows' cursor (src/cursor.py): ``pygame.time.get_ticks``,
+    running ``menu_speed()`` times as fast. At speed 1, from the start, it is exactly ``get_ticks`` (and
+    ``game_ticks``)."""
+    now = time.get_ticks()
+    _sync_menu_clock(now)
+    return int(_menu_anchor + (now - _menu_real_anchor) * _menu_rate)
+
+
+def menu_frame_in_game_frames() -> int:
+    """How many NES frames of game time one frame of menu time lasts: the game speed over the menu speed (1 at 1x,
+    8 at 8x with MENU SPEED NORMAL, 1 with FOLLOW GAME SPEED)."""
+    return max(1, _speed // menu_speed())
 
 
 def _whole_real_ms(real_milliseconds: float) -> int:
