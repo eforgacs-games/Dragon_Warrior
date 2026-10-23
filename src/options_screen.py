@@ -96,7 +96,7 @@ NPCS_MAKE_WAY_LABELS = ('ON', 'OFF (NES)')
 NPCS_MAKE_WAY_ROW = 3
 NPCS_MAKE_WAY_TEXT_COLUMNS = (3, 8)
 
-# LogList1Dat2 ... LogList123Dat2 (see src/adventure_log.py): " ADVENTURE LOG n:" and the first 4 letters of the
+# LogList1Dat2 ... LogList123Dat2 (see used_logs_layout in src/windows.py): " ADVENTURE LOG n:" and the first 4 letters of the
 # name; the first line on tile row 2 of the window, one block apart; the cursor in column 1, the text from column 2
 LOG_FIRST_ROW = 2
 LOG_TEXT_COLUMN = 2
