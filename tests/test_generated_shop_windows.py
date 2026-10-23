@@ -20,6 +20,7 @@ from src.window_renderer import render_window, window_tiles
 from src.windows import (BUY_SELL_LAYOUT, SHOP_INVENTORY_WINDOW, Window, WindowText, name_halves,
                          shop_inventory_layout)
 from tests.nes_screen_diff import compare_with_screenshot
+from tests.helpers import new_game
 
 SCALES = (1, 2, 3)
 COLORS = (WHITE, RED)
@@ -220,13 +221,11 @@ class TestDrawnByTheShop(TestCase):
         pygame.quit()
 
     def setUp(self):
-        from src.game import Game
         saved = {key: test_config[key] for key in ('NO_WAIT', 'NO_BLIT')}
         test_config['NO_WAIT'] = True
         test_config['NO_BLIT'] = False
         self.addCleanup(test_config.update, saved)
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.dialog_lookup = self.game.cmd_menu.dialog_lookup
 
     def choose(self, inventory, index):

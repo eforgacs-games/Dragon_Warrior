@@ -8,9 +8,9 @@ from pygame import Rect
 
 from src.config.test_config import test_config
 from src.direction import Direction
-from src.game import Game
 from src.maps import Brecconary, map_lookup
 from src.windows import DIALOG_WINDOW
+from tests.helpers import new_game
 
 
 class TransitionTestCase(TestCase):
@@ -30,8 +30,7 @@ class TransitionTestCase(TestCase):
         test_config['NO_BLIT'] = False
         self.addCleanup(test_config.__setitem__, 'NO_BLIT', True)
         self.addCleanup(test_config.__setitem__, 'RENDER_TEXT', False)
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.tile_size = self.game.config['TILE_SIZE']
 
 
@@ -41,8 +40,7 @@ class TestFadeInFrame(TransitionTestCase):
         # The throne room's guards don't face down. draw_all draws the characters before animating them, so the
         # frame drawn before the fade showed their first image (facing down), and they turned round on the first frame
         # after it. Drawing the same frame again must change nothing.
-        with patch('src.game.SCALED'):
-            self.game = Game({**test_config, 'INITIAL_DIALOG_ENABLED': True})
+        self.game = new_game({**test_config, 'INITIAL_DIALOG_ENABLED': True})
         game = self.game
         pictures = []
 

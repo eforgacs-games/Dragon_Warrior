@@ -4,10 +4,10 @@ from unittest.mock import MagicMock, patch
 import pygame
 
 from src.config.test_config import test_config
-from src.game import Game
 from src.items import armor, hidden_items
 from src.map_layouts import MapLayouts
 from tests.mock_map import MockMap
+from tests.helpers import new_game
 
 
 class TestHiddenItems(TestCase):
@@ -26,8 +26,7 @@ class TestHiddenItems(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
         self.cmd_menu = self.game.cmd_menu

@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pygame
 
 from src.config.test_config import test_config
-from src.game import Game
+from tests.helpers import new_game
 
 
 class TestMovementUpdates(TestCase):
@@ -20,8 +20,7 @@ class TestMovementUpdates(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.player = self.game.player
         self.player.max_hp = 100
         self.player.current_hp = 50

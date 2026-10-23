@@ -16,6 +16,7 @@ from src.window_renderer import (TL_TOP1, TL_TOP2, glyph_tile, render_window, wi
 from src.windows import (COMBAT_COMMAND_LAYOUT, DIALOG_LAYOUT, POPUP_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT, Window,
                          WindowLayout, WindowText, item_menu_layout)
 from tests.nes_screen_diff import compare_with_screenshot, count_differing_pixels, load_screenshot
+from tests.helpers import new_game
 
 SCALES = (1, 2, 3)
 DIFF_DIR = os.path.join(tempfile.gettempdir(), 'dragon_warrior_screen_diffs')
@@ -156,10 +157,8 @@ class TestMiscellaneousWindowsDrawnByTheGame(TestCase):
         pygame.quit()
 
     def setUp(self):
-        from src.game import Game
         config = dict(test_config, NO_WAIT=True, RENDER_TEXT=False, NO_BLIT=True)
-        with patch('src.game.SCALED'):
-            self.game = Game(config)
+        self.game = new_game(config)
         self.config = self.game.game_state.config
         self.cmd_menu = self.game.cmd_menu
         self.tile_size = self.config['TILE_SIZE']

@@ -6,8 +6,8 @@ import pygame
 from src.config.test_config import test_config
 from src.dialog_box import DIALOG_COLUMNS, DIALOG_ROWS, SCROLL_FRAMES, CharacterStep, DialogBuffer, ScrollStep, \
     frames_per_character, plays_text_beep, tiles
-from src.game import Game
 from tests.mock_map import MockMap
+from tests.helpers import new_game
 
 
 def print_lines(buffer: DialogBuffer, text: str, quoted: bool, wait: bool = False) -> list:
@@ -193,8 +193,7 @@ class TestCommandMenuDialog(TestCase):
         # a loaded save sets these in the shared test config (Game.load_game)
         test_config['TEXT_SPEED'] = 'Fast'
         test_config['DIALOG_STYLE'] = 'Classic'
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
         self.cmd_menu = self.game.cmd_menu

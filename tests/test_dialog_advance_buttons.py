@@ -13,8 +13,8 @@ from pygame.event import Event
 
 from src.common import A_OR_START_KEYS
 from src.config.test_config import test_config
-from src.game import Game
 from tests.mock_map import MockMap
+from tests.helpers import new_game
 
 A_AND_B = (K_k, K_RETURN, K_j, K_ESCAPE)
 START_AND_SELECT = (K_i, K_u)
@@ -45,8 +45,7 @@ class DialogWaitTestCase(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
         self.cmd_menu = self.game.cmd_menu

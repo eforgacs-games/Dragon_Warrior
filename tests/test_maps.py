@@ -1,13 +1,12 @@
 import inspect
 from unittest import TestCase
-from unittest.mock import patch
 
 import pygame
 
 from src import maps
 from src.config.test_config import test_config
-from src.game import Game
 from tests.test_game import MockMap
+from tests.helpers import new_game
 
 
 class TestDragonWarriorMap(TestCase):
@@ -26,8 +25,7 @@ class TestDragonWarriorMap(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.dragon_warrior_map = MockMap(self.game.config)
 
     def test_initial_coordinates(self):

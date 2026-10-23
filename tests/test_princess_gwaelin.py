@@ -6,8 +6,8 @@ import pygame
 from src.config.test_config import test_config
 from src.constants import GWAELIN_SWAMP_CAVE_COORDINATES, GWAELIN_THRONE_ROOM_COORDINATES
 from src.drawer import set_to_save_prompt
-from src.game import Game
 from src.maps import map_lookup
+from tests.helpers import new_game
 
 
 class TestPrincessGwaelin(TestCase):
@@ -27,8 +27,7 @@ class TestPrincessGwaelin(TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        with patch('src.game.SCALED'):
-            self.game = Game(test_config)
+        self.game = new_game()
         self.game.player.name = "Edward"
         self.player = self.game.player
 
