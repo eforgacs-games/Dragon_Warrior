@@ -232,6 +232,17 @@ class TestSavedWhenChanged(GameTestCase):
         zoom._zoom_listener(3)
         self.assertEqual(3, self.saved()['zoom'])
 
+    def test_a_window_resized_by_dragging(self):
+        # #430: the map loop reads the resize, and the nearest whole zoom is saved (tests/test_zoom.py checks the
+        # rounding on a real window)
+        game = self.new_game()
+        with patch('src.zoom._window', return_value=object()), patch('src.zoom.is_fullscreen', return_value=False), \
+                patch('src.zoom.window_zoom', return_value=3.4), patch('src.zoom.min_zoom', return_value=2), \
+                patch('src.zoom.max_zoom', return_value=4), \
+                patch('src.game.get', return_value=[Event(pygame.VIDEORESIZE, w=870, h=816, size=(870, 816))]):
+            game.read_events()
+        self.assertEqual(3, self.saved()['zoom'])
+
     def test_language(self):
         game = self.new_game()
         rows = [row.label for row in OPTION_ROWS]
