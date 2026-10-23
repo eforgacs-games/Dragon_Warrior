@@ -12,7 +12,7 @@ from src.direction import Direction
 from src.directories import Directories
 from src.map_layouts import MapLayouts
 from src.maps_functions import parse_map_tiles, warp_line, parse_animated_sprite_sheet, get_center_point, \
-    covered_cells, low_hp_tile_image, bad_ending_tile_image
+    covered_cells, low_hp_tile_image, bad_ending_tile_image, tile_from_quarters
 from src.npcs import GWAELIN_RESCUE, NPC
 from src.sprites.animated_sprite import AnimatedSprite
 from src.sprites.base_sprite import BaseSprite
@@ -22,8 +22,8 @@ from src.sprites.roaming_character import RoamingCharacter
 all_impassable_tiles = (
     'ROOF', 'WALL', 'WOOD', 'DOOR', 'WEAPON_SIGN', 'INN_SIGN', 'MOUNTAINS', 'WATER', 'BOTTOM_COAST',
     'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST', 'TOP_COAST', 'TOP_RIGHT_COAST', 'RIGHT_COAST',
-    'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST', 'BOTTOM_TOP_COAST', 'BOTTOM_TOP_RIGHT_COAST',
-    'KING_LORIK', 'GUARD', 'MAN', 'WOMAN', 'WISE_MAN', 'SOLDIER', 'MERCHANT')
+    'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST', 'BOTTOM_TOP_COAST', 'BOTTOM_TOP_RIGHT_COAST', 'LEFT_RIGHT_COAST',
+    'TOP_LEFT_RIGHT_COAST', 'KING_LORIK', 'GUARD', 'MAN', 'WOMAN', 'WISE_MAN', 'SOLDIER', 'MERCHANT')
 
 # The tiles drawn with background palette 0, whose color 1 ($3F01) turns red while HP is low (AddPalByte/ChkLowHPPal,
 # Bank03). The fifth byte of each block in GFXTilesTbl (Bank03, $F5B5) is its palette, and only these blocks use
@@ -32,7 +32,17 @@ all_impassable_tiles = (
 LOW_HP_PALETTE_TILES = frozenset((
     'CASTLE', 'TOWN', 'BRIDGE', 'WATER', 'BOTTOM_COAST', 'BOTTOM_LEFT_COAST', 'LEFT_COAST', 'TOP_LEFT_COAST',
     'TOP_COAST', 'TOP_RIGHT_COAST', 'RIGHT_COAST', 'BOTTOM_RIGHT_COAST', 'BOTTOM_TOP_LEFT_COAST',
-    'BOTTOM_TOP_RIGHT_COAST'))
+    'BOTTOM_TOP_RIGHT_COAST', 'LEFT_RIGHT_COAST', 'BOTTOM_TOP_COAST', 'TOP_LEFT_RIGHT_COAST'))
+
+# NES GFXTilesTbl (Bank03, $F5B5): each quarter of a shore block shows the shores on its own two sides (the top left
+# quarter is $F6, $46, $5A or $5E for none, top, left or both), so a shore block that tileset.png doesn't have is put
+# together from the quarters of ones it does: (top left, top right, bottom left, bottom right). The overworld uses only
+# these three of the five missing ones; the left, right and bottom ($25) and all-sides ($26) shores are never drawn.
+COMPOSED_COAST_TILES = {
+    'LEFT_RIGHT_COAST': ('LEFT_COAST', 'RIGHT_COAST', 'LEFT_COAST', 'RIGHT_COAST'),  # $1D: $5A, $5C, $5B, $5D
+    'BOTTOM_TOP_COAST': ('TOP_COAST', 'TOP_COAST', 'BOTTOM_COAST', 'BOTTOM_COAST'),  # $20: $46, $4A, $58, $59
+    'TOP_LEFT_RIGHT_COAST': ('TOP_LEFT_COAST', 'TOP_RIGHT_COAST', 'LEFT_COAST', 'RIGHT_COAST'),  # $1E: $5E, $6A, $5B, $5D
+}
 
 
 DOWN, UP, LEFT, RIGHT = Direction.DOWN, Direction.UP, Direction.LEFT, Direction.RIGHT
@@ -98,6 +108,7 @@ class DragonWarriorMap:
         # first time they're needed.
         self.low_hp_palette = False
         self._low_hp_tile_images: Dict[str, surface.Surface] = {}
+        self._composed_tile_images: Dict[str, surface.Surface] = {}
         # The window color once the bad ending's BadEndBGPal is loaded (load_bad_ending_palette), and its tiles
         self.bad_ending_window_color: tuple[int, int, int] | None = None
         self._bad_ending_tile_images: Dict[str, surface.Surface] = {}
@@ -138,19 +149,23 @@ class DragonWarriorMap:
             'RIGHT_COAST': {'val': 29},
             'BOTTOM_RIGHT_COAST': {'val': 30},
             'BOTTOM_TOP_LEFT_COAST': {'val': 31},
-            'BOTTOM_TOP_RIGHT_COAST': {'val': 32}
+            'BOTTOM_TOP_RIGHT_COAST': {'val': 32},
+            # Not in tileset.png: see COMPOSED_COAST_TILES
+            'LEFT_RIGHT_COAST': {'val': 33},
+            'BOTTOM_TOP_COAST': {'val': 34},
+            'TOP_LEFT_RIGHT_COAST': {'val': 35},
         }
         self.character_key = {
-            'HERO': {'val': 33, 'path': self.directories.UNARMED_HERO_PATH},
-            'KING_LORIK': {'val': 34, 'path': self.directories.KING_LORIK_PATH},
-            'GUARD': {'val': 35, 'path': self.directories.GUARD_PATH},
-            'MAN': {'val': 36, 'path': self.directories.MAN_PATH},
-            'WOMAN': {'val': 37, 'path': self.directories.WOMAN_PATH},
-            'WISE_MAN': {'val': 38, 'path': self.directories.WISE_MAN_PATH},
-            'SOLDIER': {'val': 39, 'path': self.directories.SOLDIER_PATH},
-            'MERCHANT': {'val': 40, 'path': self.directories.MERCHANT_PATH},
-            'PRINCESS_GWAELIN': {'val': 41, 'path': self.directories.PRINCESS_GWAELIN_PATH},
-            'DRAGONLORD': {'val': 42, 'path': self.directories.DRAGONLORD_PATH}
+            'HERO': {'val': 36, 'path': self.directories.UNARMED_HERO_PATH},
+            'KING_LORIK': {'val': 37, 'path': self.directories.KING_LORIK_PATH},
+            'GUARD': {'val': 38, 'path': self.directories.GUARD_PATH},
+            'MAN': {'val': 39, 'path': self.directories.MAN_PATH},
+            'WOMAN': {'val': 40, 'path': self.directories.WOMAN_PATH},
+            'WISE_MAN': {'val': 41, 'path': self.directories.WISE_MAN_PATH},
+            'SOLDIER': {'val': 42, 'path': self.directories.SOLDIER_PATH},
+            'MERCHANT': {'val': 43, 'path': self.directories.MERCHANT_PATH},
+            'PRINCESS_GWAELIN': {'val': 44, 'path': self.directories.PRINCESS_GWAELIN_PATH},
+            'DRAGONLORD': {'val': 45, 'path': self.directories.DRAGONLORD_PATH}
         }
         for character, character_dict in self.character_key.items():
             if character in ('KING_LORIK', 'PRINCESS_GWAELIN'):
@@ -323,12 +338,20 @@ class DragonWarriorMap:
         tile_group = tile_dict.get('group')
         if tile_group is None:
             self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'] = Group()
-        tile = BaseSprite(center_pt, self.floor_tile_image(tile_value)) if tile_value < 33 else None
+        tile = BaseSprite(center_pt, self.floor_tile_image(tile_value)) if tile_value < len(self.floor_tile_key) else None
         self.floor_tile_key[self.get_tile_by_value(tile_value)]['group'].add(tile)
 
     def normal_tile_image(self, tile_value: int) -> surface.Surface:
-        """The tileset image for a floor tile: tileset.png has 11 tiles to a row."""
-        return self.map_tiles[tile_value % 11][tile_value // 11]
+        """The tileset image for a floor tile: tileset.png has 11 tiles to a row. The shore blocks it doesn't have are
+        put together from the ones it does (COMPOSED_COAST_TILES), once."""
+        tile_name = self.get_tile_by_value(tile_value)
+        if tile_name not in COMPOSED_COAST_TILES:
+            return self.map_tiles[tile_value % 11][tile_value // 11]
+        if tile_name not in self._composed_tile_images:
+            quarters = [self.normal_tile_image(self.floor_tile_key[source]['val'])
+                        for source in COMPOSED_COAST_TILES[tile_name]]
+            self._composed_tile_images[tile_name] = tile_from_quarters(*quarters)
+        return self._composed_tile_images[tile_name]
 
     def floor_tile_image(self, tile_value: int) -> surface.Surface:
         """The image for a floor tile in the current background palette: palette 0 tiles are red while HP is low, and
