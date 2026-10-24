@@ -21,6 +21,9 @@ base_config = {
     "TILE_SIZE": 16 * SCALE,
     "NES_RES": (256, 240),
     "FULLSCREEN_ENABLED": False,
+    # VIEW: "NES", the NES's 4:3 picture, or "Wide": more of the map left and right for 16:9 and 16:10 screens (not
+    # NES, src/view.py)
+    "VIEW": "NES",
     "ENABLE_DARKNESS": True,
     "MUSIC_ENABLED": True,
     "SOUND_ENABLED": True,
