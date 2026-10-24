@@ -583,7 +583,9 @@ class TestRebound(GamepadTestCase):
         self.rebind(lambda controls: controls.bind_pad('A', 'x'))
         self.assertEqual([(K_k, 0)], self.pressed_keys(pad('x')))
         self.pressed_keys(pad())
-        self.assertEqual([], self.pressed_keys(pad(PAD_A)))  # 'b' isn't bound any more
+        # 'x' was the message log's (L): binding it swaps, so 'b' is the message log's now
+        from pygame import K_l
+        self.assertEqual([(K_l, 0)], self.pressed_keys(pad(PAD_A)))
 
     def test_it_presses_the_actions_first_key(self):
         from pygame import K_l
