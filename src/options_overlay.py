@@ -11,13 +11,15 @@ drawn by src/translated_window.py), titled OPTIONS, with one row per setting and
     FADE STYLE     NES / SMOOTH             (FADE_STYLE, src/visual_effects.py screen_fade)
     STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps)
     GRIND STOP     RED HP / HALF HP / 3/4 HP  (AUTO_GRIND_STOP: when auto-grind stops, src/auto_grind.py)
+    MENU SPEED     NORMAL / FOLLOW GAME     (MENU_SPEED: the selection windows at 1x, or at the game speed,
+                                             src/waiting.py menu_ticks)
     LANGUAGE       ENGLISH / 한국어          (LANGUAGE: a global setting, src/settings.py)
     SCANLINES      OFF / ON                 (SCANLINES: a display filter, src/display_filters.py; global)
     SCALING        SMOOTH / PIXEL PERFECT   (SCALING: pygame's SCALED, or whole multiples of 256x240 only; global)
 
 Up and down move the NES cursor (src/cursor.py) between the rows; left, right or A change the row's value, with the
 menu button sound. A change goes into the game config at once, so the next dialog, fade, bump or step uses it. The
-first six are the adventure's own: they are saved with the adventure log the next time the game is saved
+first seven are the adventure's own: they are saved with the adventure log the next time the game is saved
 (options_from_config). The last three are the player's, kept in the global settings file: Game.apply_option switches
 the game to the new language at once (Game.set_language), this window included, and the display filters from the next
 frame on. Each language's name is in that language, so it can
@@ -43,6 +45,7 @@ from src.selection import frame_events, next_frame
 from src.settings import LANGUAGES
 from src.translated_window import draw_translated_window
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
+from src.waiting import MENU_SPEED_FOLLOW, MENU_SPEED_NORMAL
 from src.windows import Window, WindowLayout, WindowText
 
 # The keys that open the overlay on the map, and close it again
@@ -81,6 +84,7 @@ OPTION_ROWS = (
     OptionRow("FADE STYLE", 'FADE_STYLE', (FADE_STYLE_NES, FADE_STYLE_SMOOTH), ("NES", "SMOOTH")),
     OptionRow("STAIRS", 'AUTO_STAIRS', (True, False), ("STEP ON", "NES")),
     OptionRow("GRIND STOP", 'AUTO_GRIND_STOP', AUTO_GRIND_STOP_VALUES, ("RED HP", "HALF HP", "3/4 HP")),
+    OptionRow("MENU SPEED", 'MENU_SPEED', (MENU_SPEED_NORMAL, MENU_SPEED_FOLLOW), ("NORMAL", "FOLLOW GAME")),
     OptionRow("LANGUAGE", 'LANGUAGE', LANGUAGES, ("ENGLISH", "한국어")),
     OptionRow("SCANLINES", SCANLINES_KEY, (False, True), ("OFF", "ON")),
     OptionRow("SCALING", SCALING_KEY, SCALING_MODES, ("SMOOTH", "PIXEL PERFECT")),

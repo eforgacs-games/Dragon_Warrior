@@ -145,6 +145,8 @@ The rest are settings this game adds, none of them on the NES:
 - STAIRS: STEP ON, stepping onto stairs takes them, or NES, only the STAIRS command does
 - GRIND STOP: when auto-grind (G) stops: RED HP, the NES's low HP where the windows turn red (HP at or below a quarter
   of the maximum, plus 1), HALF HP or 3/4 HP
+- MENU SPEED: NORMAL, the menus' cursor (its blink and how fast a held direction or button repeats) stays at normal
+  speed whatever the game speed, or FOLLOW GAME, it speeds up with the game as everything else does
 
 H: Show the controls
 
@@ -173,7 +175,8 @@ when START would pause the game, not in a fight, a dialog or a menu; after a fig
 it. The snapshots are only kept in memory, for this session.
 
 1 / 2 / 3 / 4 / 5: Game speed (normal, 2x, 4x, 8x, 16x). This works anywhere, including battles, dialogs and
-menus, and speeds up everything: walking, text, battle effects and pauses. On the map the higher speeds go as fast as
+menus, and speeds up everything: walking, text, battle effects and pauses. The menus' cursor keeps normal speed, so
+choosing doesn't overshoot, unless MENU SPEED (in the options) is FOLLOW GAME. On the map the higher speeds go as fast as
 the computer can draw it, up to the speed you chose. Only timing changes, not what happens in
 the game. Music and sound effects play at normal speed. The speed lasts until you close the game and isn't saved.
 

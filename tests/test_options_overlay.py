@@ -18,6 +18,7 @@ from src.maps import STAIR_DIRECTIONS, map_lookup
 from src.options_overlay import OPTION_ROWS, OPTIONS_TITLE, OptionsOverlay, options_layout
 from src.options_screen import CLASSIC, MODERN, options_from_config
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
+from src.waiting import MENU_SPEED_FOLLOW as FOLLOW, MENU_SPEED_NORMAL as NORMAL
 from tests import helpers
 from tests.test_character_redraw import draw_frame
 
@@ -42,18 +43,19 @@ def new_game(**overrides):
     return helpers.new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
                              'TEXT_SPEED': 'Fast', 'DIALOG_STYLE': CLASSIC, 'NPCS_MAKE_WAY': True,
                              'FADE_STYLE': FADE_STYLE_NES, 'AUTO_STAIRS': True, 'AUTO_GRIND_STOP': 'RedHP',
-                             'LANGUAGE': 'English', 'SCANLINES': False, 'SCALING': SCALING_SMOOTH, **overrides})
+                             'MENU_SPEED': NORMAL, 'LANGUAGE': 'English', 'SCANLINES': False, 'SCALING': SCALING_SMOOTH,
+                             **overrides})
 
 
-DEFAULTS = ('Fast', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP')  # new_game's settings, in own_settings' order
+DEFAULTS = ('Fast', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP', NORMAL)  # new_game's settings, in own_settings' order
 
 
 def own_settings(config):
     return (config['TEXT_SPEED'], config['DIALOG_STYLE'], config['NPCS_MAKE_WAY'], config['FADE_STYLE'],
-            config['AUTO_STAIRS'], config['AUTO_GRIND_STOP'])
+            config['AUTO_STAIRS'], config['AUTO_GRIND_STOP'], config['MENU_SPEED'])
 
 
-OWN_KEYS = ('TEXT_SPEED', 'DIALOG_STYLE', 'NPCS_MAKE_WAY', 'FADE_STYLE', 'AUTO_STAIRS', 'AUTO_GRIND_STOP')
+OWN_KEYS = ('TEXT_SPEED', 'DIALOG_STYLE', 'NPCS_MAKE_WAY', 'FADE_STYLE', 'AUTO_STAIRS', 'AUTO_GRIND_STOP', 'MENU_SPEED')
 
 
 def down_to(label):
@@ -178,6 +180,7 @@ class TestRows(OverlayTestCase):
                           ("FADE STYLE", 'FADE_STYLE', ("NES", "SMOOTH")),
                           ("STAIRS", 'AUTO_STAIRS', ("STEP ON", "NES")),
                           ("GRIND STOP", 'AUTO_GRIND_STOP', ("RED HP", "HALF HP", "3/4 HP")),
+                          ("MENU SPEED", 'MENU_SPEED', ("NORMAL", "FOLLOW GAME")),
                           ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어")),
                           ("SCANLINES", 'SCANLINES', ("OFF", "ON")),
                           ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT"))],
@@ -186,30 +189,31 @@ class TestRows(OverlayTestCase):
     def test_window_shows_the_current_values(self):
         texts = [text.text for text in options_layout(self.config).texts]
         self.assertEqual(["MESSAGE SPEED", "FAST", "DIALOG STYLE", "CLASSIC (NES)", "NPCS MAKE WAY", "ON",
-                          "FADE STYLE", "NES", "STAIRS", "STEP ON", "GRIND STOP", "RED HP", "LANGUAGE", "ENGLISH",
-                          "SCANLINES", "OFF", "SCALING", "SMOOTH"], texts)
+                          "FADE STYLE", "NES", "STAIRS", "STEP ON", "GRIND STOP", "RED HP", "MENU SPEED", "NORMAL",
+                          "LANGUAGE", "ENGLISH", "SCANLINES", "OFF", "SCALING", "SMOOTH"], texts)
         self.config.update(TEXT_SPEED='Slow', DIALOG_STYLE=MODERN, NPCS_MAKE_WAY=False, FADE_STYLE=FADE_STYLE_SMOOTH,
-                           AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP')
+                           AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP', MENU_SPEED=FOLLOW)
         texts = [text.text for text in options_layout(self.config).texts]
         self.assertEqual(["MESSAGE SPEED", "SLOW", "DIALOG STYLE", "MODERN", "NPCS MAKE WAY", "OFF (NES)",
-                          "FADE STYLE", "SMOOTH", "STAIRS", "NES", "GRIND STOP", "3/4 HP", "LANGUAGE", "ENGLISH",
-                          "SCANLINES", "OFF", "SCALING", "SMOOTH"], texts)
+                          "FADE STYLE", "SMOOTH", "STAIRS", "NES", "GRIND STOP", "3/4 HP", "MENU SPEED",
+                          "FOLLOW GAME", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF", "SCALING", "SMOOTH"], texts)
 
     def test_every_text_fits_the_window(self):
         # window_tiles raises ValueError for text outside the window
         from src.window_renderer import window_tiles
-        for values in (('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'HalfHP'),
-                       ('Slow', MODERN, False, FADE_STYLE_SMOOTH, False, 'ThreeQuartersHP')):
+        for values in (('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'HalfHP', NORMAL),
+                       ('Slow', MODERN, False, FADE_STYLE_SMOOTH, False, 'ThreeQuartersHP', FOLLOW)):
             self.config.update(zip(OWN_KEYS, values))
             window_tiles(options_layout(self.config))
 
     def test_each_row_changes_its_setting_with_a_sound(self):
-        cases = (("MESSAGE SPEED", ('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP')),
-                 ("DIALOG STYLE", ('Fast', MODERN, True, FADE_STYLE_NES, True, 'RedHP')),
-                 ("NPCS MAKE WAY", ('Fast', CLASSIC, False, FADE_STYLE_NES, True, 'RedHP')),
-                 ("FADE STYLE", ('Fast', CLASSIC, True, FADE_STYLE_SMOOTH, True, 'RedHP')),
-                 ("STAIRS", ('Fast', CLASSIC, True, FADE_STYLE_NES, False, 'RedHP')),
-                 ("GRIND STOP", ('Fast', CLASSIC, True, FADE_STYLE_NES, True, 'HalfHP')))
+        cases = (("MESSAGE SPEED", ('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP', NORMAL)),
+                 ("DIALOG STYLE", ('Fast', MODERN, True, FADE_STYLE_NES, True, 'RedHP', NORMAL)),
+                 ("NPCS MAKE WAY", ('Fast', CLASSIC, False, FADE_STYLE_NES, True, 'RedHP', NORMAL)),
+                 ("FADE STYLE", ('Fast', CLASSIC, True, FADE_STYLE_SMOOTH, True, 'RedHP', NORMAL)),
+                 ("STAIRS", ('Fast', CLASSIC, True, FADE_STYLE_NES, False, 'RedHP', NORMAL)),
+                 ("GRIND STOP", ('Fast', CLASSIC, True, FADE_STYLE_NES, True, 'HalfHP', NORMAL)),
+                 ("MENU SPEED", ('Fast', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP', FOLLOW)))
         for label, expected in cases:
             with self.subTest(label):
                 self.config.update(zip(OWN_KEYS, DEFAULTS))
@@ -218,7 +222,8 @@ class TestRows(OverlayTestCase):
                 # what the next save keeps (CommandMenu.save)
                 options = options_from_config(self.config)
                 self.assertEqual(expected, (options.message_speed, options.dialog_style, options.npcs_make_way,
-                                            options.fade_style, options.auto_stairs, options.auto_grind_stop))
+                                            options.fade_style, options.auto_stairs, options.auto_grind_stop,
+                                            options.menu_speed))
 
     def test_grind_stop_goes_round_all_three(self):
         settings = []
@@ -251,7 +256,7 @@ class TestRows(OverlayTestCase):
     def test_cursor_stops_at_the_edges(self):
         # up from the first row stays on it; down past the last row stays on the last
         self.run_overlay(K_UP, K_RIGHT, *(K_DOWN,) * (len(OPTION_ROWS) + 1), K_RIGHT, K_u)
-        self.assertEqual(('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP'), own_settings(self.config))
+        self.assertEqual(('Normal', CLASSIC, True, FADE_STYLE_NES, True, 'RedHP', NORMAL), own_settings(self.config))
         self.assertEqual(('English', False, SCALING_PIXEL_PERFECT),
                          (self.config['LANGUAGE'], self.config['SCANLINES'], self.config['SCALING']))
 
@@ -272,7 +277,7 @@ class TestRows(OverlayTestCase):
         import tempfile
         self.run_overlay(*(K_RIGHT, K_DOWN) * len(OPTION_ROWS), K_u)
         changed = own_settings(self.config)
-        self.assertEqual(('Normal', MODERN, False, FADE_STYLE_SMOOTH, False, 'HalfHP'), changed)
+        self.assertEqual(('Normal', MODERN, False, FADE_STYLE_SMOOTH, False, 'HalfHP', FOLLOW), changed)
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.game.cmd_menu.directories.save_dir = tmp_dir
             self.game.player.adventure_log = 2
