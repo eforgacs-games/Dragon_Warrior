@@ -2882,3 +2882,9 @@ msgstr "메르키드를 지키는 골렘을 물리치자."
 #: src/quest_journal.py
 msgid "Golem fears the music of the flute. The Fairy Flute is in Kol, four steps south of the bath."
 msgstr "골렘은 피리 소리를 무서워한다. 요정의 피리는 마이라의 온천에서 남쪽으로 네 걸음 간 곳에 있다."
+msgid "AUTOSAVE"
+msgstr "자동 저장"
+
+#: src/windows.py
+msgid "CONTINUE AUTOSAVE"
+msgstr "자동 저장으로 시작"

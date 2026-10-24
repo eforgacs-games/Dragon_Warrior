@@ -456,10 +456,14 @@ def state_path(save_dir: str, slot: int) -> str:
 
 
 def write_state(save_dir: str, slot: int, snapshot: dict[str, Any]) -> None:
-    """Write a snapshot to its slot's file, replacing what was there. It's written to a temporary file first, so a
-    state is never left half written."""
-    os.makedirs(save_dir, exist_ok=True)
-    path = state_path(save_dir, slot)
+    """Write a snapshot to its slot's file, replacing what was there."""
+    write_snapshot(state_path(save_dir, slot), snapshot)
+
+
+def write_snapshot(path: str, snapshot: dict[str, Any]) -> None:
+    """Write a snapshot to a file (a save state slot's, or the autosave's: src/autosave.py), replacing what was there.
+    It's written to a temporary file first, so a state is never left half written."""
+    os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
     temporary_path = path + '.tmp'
     with open(temporary_path, 'w') as state_file:
         json.dump(snapshot, state_file, separators=(',', ':'))
@@ -469,7 +473,11 @@ def write_state(save_dir: str, slot: int, snapshot: dict[str, Any]) -> None:
 def read_state(save_dir: str, slot: int) -> dict[str, Any] | None:
     """The snapshot saved in a slot, or None if the slot is empty. Raises StateError if the file can't be read or is
     from another format version (decode_snapshot checks the rest)."""
-    path = state_path(save_dir, slot)
+    return read_snapshot(state_path(save_dir, slot))
+
+
+def read_snapshot(path: str) -> dict[str, Any] | None:
+    """The snapshot in a file, or None if there's no such file. Raises StateError as read_state does."""
     if not os.path.exists(path):
         return None
     try:

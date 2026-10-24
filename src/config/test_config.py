@@ -7,5 +7,6 @@ test_config = {
     "SPLASH_SCREEN_ENABLED": False,
     "INITIAL_DIALOG_ENABLED": False,
     "TEXT_SPEED": "Fast",  # the tests time dialog at the fastest speed
+    "AUTOSAVE": False,  # no autosave files from the tests; tests/test_autosave.py turns it on in a temporary folder
     "SETTINGS_PATH": None,  # never read or write the player's own settings file (src/settings.py)
 }
