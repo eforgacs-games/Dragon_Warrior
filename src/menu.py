@@ -65,6 +65,12 @@ class BattleLineOptions(TypedDict):
 # one (#381).
 BATTLE_LINE: BattleLineOptions = {'add_quotes': False, 'disable_sound': True, 'hide_arrow': True, 'skip_text': True}
 
+# NES DoSpell, in the field: after "chanted the spell" (no WAIT) and the spell, HEAL (LDA4E), REPEL (LDA9C) and
+# HEALMORE (LDAEA) jump to ResumeGamePlay, which waits for a new press. A spell that does nothing waits there too, after
+# "But nothing happened." (spell_fizzle). RADIANT in a dungeon returns at once (LDA83), and OUTSIDE and RETURN change
+# maps (ChangeMaps): no press.
+FIELD_SPELLS_ENDING_WITH_A_PRESS = (Spell.HEAL, Spell.REPEL, Spell.HEALMORE)
+
 # NES ShowWindow and RemoveWindow (Bank00, LA7A2) draw or take away one row of a window's blocks a frame
 WINDOW_ROW_FRAMES = 1
 
@@ -213,7 +219,7 @@ class CommandMenu:
         drawer = self.game.drawer
         screen.fill(BLACK)
         if drawer.background is not None:
-            screen.blit(drawer.background, self.game.camera.pos)
+            drawer.blit_map(screen, self.current_map, self.game.camera.pos)
         if self.current_map.is_dark and config['ENABLE_DARKNESS']:
             drawer.draw_darkness(screen)
         self.redraw_command_window(rect)
@@ -626,7 +632,7 @@ class CommandMenu:
                             self.background.blit(character_dict['character_sprites'].sprites()[0].image,
                                                  (character_dict['character'].rect.x,
                                                   character_dict['character'].rect.y))
-                        self.screen.blit(self.background, self.camera_position)
+                        self.game.drawer.blit_map(self.screen, self.current_map, self.camera_position)
                 if self.launch_signaled:
                     # The COMMAND window behind, as it is: the chosen entry's arrow is still on (WndAPressed), as
                     # RemoveWindow puts back the window's tiles
@@ -1082,9 +1088,14 @@ class CommandMenu:
             return True
         return False
 
+    def spell_fizzle(self):
+        """NES DoSpell's SpellFizzle (LDA55): "But nothing happened." (TB4E3) goes on below "chanted the spell" in the
+        dialog window that is already open, then ResumeGamePlay waits for a new press and removes the window."""
+        self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text, drop_down=False)
+
     def cast_damage_spell(self, lowest: int, highest: int):
         if self.current_battle is None:
-            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+            self.spell_fizzle()
             return
         enemy = self.current_battle.enemy
         if self.battle_spell_resisted(enemy.hurt_resist):
@@ -1106,7 +1117,7 @@ class CommandMenu:
 
     def sleep(self):
         if self.current_battle is None:
-            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+            self.spell_fizzle()
             return
         enemy = self.current_battle.enemy
         enemy_name = self._(enemy.name)
@@ -1123,11 +1134,11 @@ class CommandMenu:
             # NES DoSpell: SFX_RADIANT plays for each 2 blocks the light grows (Drawer.handle_darkness)
             self.game.game_state.cast_radiant()
         else:
-            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+            self.spell_fizzle()
 
     def stopspell(self):
         if self.current_battle is None:
-            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+            self.spell_fizzle()
             return
         enemy = self.current_battle.enemy
         if self.battle_spell_resisted(enemy.stopspell_resist):
@@ -1148,14 +1159,14 @@ class CommandMenu:
         # NES: only works in the caves and below the Dragonlord's castle's ground floor
         destination = OUTSIDE_DESTINATIONS.get(self.current_map.identifier)
         if destination is None:
-            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+            self.spell_fizzle()
             return
         # NES ChangeMaps -> SetPlyrPixelLoc -> MapChngWithSound: the stairs sound, as on a staircase
         self.warp(*destination, stairs_sound=True)
 
     def return_(self):
         if not self.can_return():
-            self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
+            self.spell_fizzle()
             return
         self.return_to_tantegel()
 
@@ -1371,7 +1382,7 @@ class CommandMenu:
         self.set_tile_by_coordinates('BRICK_STAIR_DOWN', self.player.column, self.player.row, self.player)
         charlock_ground_floor.reveal_hidden_staircase()
         # Like arriving on a map: don't auto-take the new stairs until the player steps off and back on (or uses STAIRS)
-        self.game.tiles_moved_since_spawn = 0
+        self.game.reset_step_count()
         return True
 
     def find_hidden_item(self, item_name: str) -> tuple[str, bool]:
@@ -1512,7 +1523,8 @@ class CommandMenu:
                 self.show_battle_line(self._("That cannot be used in battle."))
                 self.current_battle.no_op = True
             elif self.player.current_mp < spell_mp_cost:
-                # TB4E2 and TB4E0 below end with no WAIT: in a fight, nothing waits for a button after them
+                # TB4E2 and TB4E0 below end with no WAIT: in a fight, nothing waits for a button after them. In the
+                # field, DoSpell (LDA44) goes on to ResumeGamePlay, which waits for a new press
                 in_battle = self.current_battle is not None
                 self.show_line_in_dialog_box(self._("Thy MP is too low."),
                                              skip_text=self.skip_text or in_battle,
@@ -1522,13 +1534,15 @@ class CommandMenu:
                 if in_battle:
                     self.current_battle.no_op = True
             else:
+                # Nowhere, in a fight or in the field: PlyrCastSpell (LDBA0) goes straight on to the spell's sound,
+                # and any press comes after the spell (FIELD_SPELLS_ENDING_WITH_A_PRESS)
                 self.show_line_in_dialog_box(
                     (self._("{} chanted the spell of {}.").format(self.player.name,
                                                                   self._(currently_selected_item))),
                     add_quotes=False,
                     disable_sound=True,
                     hide_arrow=True,
-                    skip_text=self.skip_text or self.current_battle is not None)
+                    skip_text=True)
                 # NES PlyrCastSpell (LDBA4-LDBAD): SFX_SPELL, BWScreenFlash, then WaitForMusicEnd
                 self.sound.play_sound(self.directories.spell_sfx)
                 bw_screen_flash(self.screen, self.game.game_state.config)
@@ -1541,6 +1555,8 @@ class CommandMenu:
                     self.show_battle_line(self._("But that spell hath been blocked."))
                 else:
                     spell_function()
+                    if self.current_battle is None and currently_selected_item in FIELD_SPELLS_ENDING_WITH_A_PRESS:
+                        self.wait_for_button(shows_arrow=False)
         elif menu_name == 'inventory':
             if self.current_battle is not None:
                 self.use_item_in_battle(currently_selected_item)

@@ -266,6 +266,12 @@ class Drawer:
             self.sound.play_sound(self.directories.radiant_sfx)  # SFX_RADIANT
         self.draw_darkness(screen)
 
+    def blit_map(self, screen, current_map, camera_pos) -> None:
+        """Put the map (the background) on the screen at the camera's position, with its boundary block all around it
+        (draw_boundary)."""
+        draw_boundary(screen, current_map, camera_pos, self.game_state.config["TILE_SIZE"])
+        screen.blit(self.background, camera_pos)
+
     def draw_darkness(self, screen) -> None:
         """Black out everything outside the current light diameter (see handle_darkness), without updating it."""
         tile_size = self.game_state.config["TILE_SIZE"]
@@ -394,7 +400,8 @@ class Drawer:
         # in addition to the trajectory of the NPCs
         self.handle_sprite_drawing_and_animation(current_map, foreground_rects, self.background,
                                                  enable_animate)
-        screen.blit(self.background, camera.pos) if not self.game_state.config['NO_BLIT'] else None
+        if not self.game_state.config['NO_BLIT']:
+            self.blit_map(screen, current_map, camera.pos)
         if current_map.identifier == 'TantegelThroneRoom':
             self.handle_initial_dialog(initial_dialog_enabled, cmd_menu, events, skip_text, left_throne_room)
             self.handle_post_death_dialog(game_state, cmd_menu, events, skip_text)
@@ -565,6 +572,32 @@ def draw_cover(current_map, background, cells: Iterable[Cell]) -> None:
                 background.fill(BLACK, Rect(column * tile_size, row * tile_size, tile_size, tile_size))
             else:
                 background.blit(roof_image, (column * tile_size, row * tile_size))
+
+
+def draw_boundary(screen: Surface, current_map, camera_pos, tile_size: int) -> None:
+    """
+    Draw the map's boundary block (DragonWarriorMap.boundary_tile) on every block of the screen that is off the
+    layout, before the map is blitted over it. NES GetBlockID gives every block off the map the boundary block
+    (TrgtOutOfBounds, BoundsChkEnd LABDF), so the NES never shows black past a map's edge. The layouts are padded with
+    it, but not always by half a screen.
+
+    Off the map is never covered (HasCoverData's NoCover), so from under a roof it is blank (ChkCoveredArea's
+    BLK_BLANK), as the padding is (draw_cover): nothing is drawn then.
+    """
+    map_x, map_y = int(camera_pos[0]), int(camera_pos[1])
+    screen_width, screen_height = screen.get_size()
+    if map_x <= 0 and map_y <= 0 and map_x + current_map.width >= screen_width and \
+            map_y + current_map.height >= screen_height:
+        return  # the map fills the screen
+    if current_map.covered_area and current_map.player_under_cover:
+        return
+    image = current_map.floor_tile_image(current_map.floor_tile_key[current_map.boundary_tile]['val'])
+    rows, columns = len(current_map.layout), len(current_map.layout[0])
+    for row in range(-map_y // tile_size, (screen_height - map_y - 1) // tile_size + 1):
+        for column in range(-map_x // tile_size, (screen_width - map_x - 1) // tile_size + 1):
+            if 0 <= row < rows and 0 <= column < columns:
+                continue
+            screen.blit(image, (map_x + column * tile_size, map_y + row * tile_size))
 
 
 def nes_button_pressed(events: Iterable[event.Event]) -> bool:

@@ -68,6 +68,20 @@ class TestMovementUpdates(TestCase):
 
     # Dragonlord dead: CheckForTriggers skips MovementUpdates
 
+    def test_the_light_shrinks_after_the_steps_fight_roll(self):
+        # NES GameEngineLoop (LCA56) counts the radiant timer down at the top of the loop, just before CheckRepelTimer,
+        # so after ChkSpecialLoc has rolled the step's fight (#429)
+        game_state = self.game.game_state
+        game_state.radiant_timer, game_state.light_diameter = 1, 3
+        at_roll = []
+        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.count_step), \
+                patch.object(self.game, 'handle_battles',
+                             side_effect=lambda: at_roll.append((game_state.radiant_timer, game_state.light_diameter))), \
+                patch.object(self.game, '_handle_map_updates'), patch.object(self.game, '_handle_post_move_checks'):
+            self.game.map_frame()
+        self.assertEqual(at_roll, [(1, 3)])
+        self.assertEqual((game_state.radiant_timer, game_state.light_diameter), (0x3C, 1))
+
     def test_armor_does_not_heal_after_the_dragonlord_is_dead(self):
         self.game.story_flags.dragonlord_defeated = True
         for armor in ("Erdrick's Armor", "Magic Armor"):
