@@ -17,6 +17,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     SCANLINES      OFF / ON                 (SCANLINES: a display filter, src/display_filters.py; global)
     SCALING        SMOOTH / PIXEL PERFECT   (SCALING: pygame's SCALED, or whole multiples of 256x240 only; global)
     STATUS WINDOW  NES / ALWAYS             (STATUS_WINDOW: the pop-up window, Drawer.status_window_always)
+    SHOP PREVIEW   OFF (NES) / ON           (SHOP_PREVIEW: the shops' stat preview, src/shop_preview.py)
 
     GAMEPLAY
     NPCS MAKE WAY  ON / OFF (NES)           (NPCS_MAKE_WAY, MovementController.ask_npc_to_make_way)
@@ -154,6 +155,8 @@ OPTION_PAGES = (
         OptionRow("SCALING", SCALING_KEY, SCALING_MODES, ("SMOOTH", "PIXEL PERFECT")),
         OptionRow("STATUS WINDOW", 'STATUS_WINDOW', STATUS_WINDOW_SETTINGS, ("NES", "ALWAYS"),
                   (STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS)),
+        # Information only (src/shop_preview.py): on by default, off in the NES preset
+        switch_row("SHOP PREVIEW", 'SHOP_PREVIEW'),
     )),
     OptionPage("GAMEPLAY", (
         OptionRow("NPCS MAKE WAY", 'NPCS_MAKE_WAY', (True, False), ("ON", "OFF (NES)"), (False, True)),

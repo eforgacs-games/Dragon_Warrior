@@ -68,7 +68,8 @@ CURRENT_FORMAT_SAVE = '''{
     "Encounters": "Half",
     "ExpGold": 4,
     "RunButton": true,
-    "StatusWindow": "Always"
+    "StatusWindow": "Always",
+    "ShopPreview": false
 }'''
 
 
@@ -98,7 +99,8 @@ class TestSaveFileRoundTrip(TestCase):
         self.assertEqual(StoryFlags(left_throne_room=True), save.story_flags)
         self.assertEqual(Options('Fast', 'Modern', False, 'Smooth', False, 'HalfHP', 'FollowGameSpeed',
                                  orchestra_music=False, save_states=False, auto_grind=False, encounters='Half',
-                                 exp_gold=4, run_button=True, status_window='Always'), save.options)
+                                 exp_gold=4, run_button=True, status_window='Always', shop_preview=False),
+                         save.options)
 
     def test_every_checkpoint_round_trips(self):
         """A checkpoint has no HP, MP or options (they load as full, NORMAL, CLASSIC, ON and NES) and may have Facing,
