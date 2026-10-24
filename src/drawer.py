@@ -84,6 +84,8 @@ class Drawer:
         self.last_player_rect: Rect | None = None
         self.hovering_stats_displayed = False
         self.tile_index = TileIndex()
+        # What the background's tiles were the last time a frame drew them all (drawn_tiles_state)
+        self._drawn_in_full: tuple | None = None
         # The light around the hero, black around a hole, for each light diameter and screen size (draw_darkness)
         self._darkness: dict[tuple[int, int, int, int], Surface] = {}
         # Whether draw_all is drawing the frame a map change fades in from: the joypad isn't read until the fade-in
@@ -93,6 +95,14 @@ class Drawer:
         self.directories = Directories(game_state.config)
         self.sound = Sound(game_state.config)
         self.calculation = Calculation(game_state.config)
+
+    def drawn_in_full(self, current_map, big_map) -> bool:
+        """Whether every tile of the map is already on the background as it would be drawn again now: a map's first
+        frame (loop_count 1) draws them all, and the frame a map change fades in from is one (MapManager.change_map),
+        so the main loop's first frame after it, loop_count 1 too, used to draw all of Alefgard's 18,358 tiles a second
+        time (#431). The background is drawn in full again if anything about its tiles changed in between: another
+        map or background, a tile added or replaced, the palette (low HP, the bad ending) or the roofs."""
+        return self.background is big_map and self._drawn_in_full == drawn_tiles_state(current_map, self.background)
 
     def get_enemy_image(self, enemy_name):
         """The enemy's scaled image and its top-left position on the screen."""
@@ -317,11 +327,12 @@ class Drawer:
             current_map.player_under_cover = player_under_cover
             if loop_count != 1 and self.background is not None:
                 self.draw_all_tiles_in_current_map(current_map, self.background)
-        if loop_count == 1:
+        if loop_count == 1 and not self.drawn_in_full(current_map, big_map):
             self.background = first_frame_background(big_map, current_map.width - width_offset,
                                                      current_map.height - height_offset)
             # draw everything once on the first go-around
             self.draw_all_tiles_in_current_map(current_map, self.background)
+            self._drawn_in_full = drawn_tiles_state(current_map, self.background)
         try:
             surrounding_tile_values = get_surrounding_tile_values(
                 (player.rect.y // tile_size, player.rect.x // tile_size), current_map.layout)
@@ -473,9 +484,51 @@ def map_surface(width: int, height: int) -> Surface:
     """A black surface the size of a map, in the display's format: the same as ``Surface((width, height)).convert()``,
     without making the surface twice (Alefgard's is 3840 x 3840 pixels, about 60 MB, and each copy takes tens of
     milliseconds). The format is taken from converting a 1 x 1 surface, so it is exactly the one convert gives."""
-    surface = Surface((width, height), 0, Surface((1, 1)).convert())
+    surface = Surface((width, height), 0, display_format())
     surface.fill(BLACK)
     return surface
+
+
+class SpareMapSurface:
+    """The biggest map surface a map change has let go of, kept to be the next one of its size (#431). Making a map's
+    surface costs most in the system handing over its memory: Alefgard's 4352 x 4320 pixels took about 34 ms to make,
+    and filling a kept one black takes about 1.5 ms. Only the biggest is kept, so it is Alefgard's for as long as the
+    hero is anywhere else, and the smaller maps' surfaces, quick to make, are let go."""
+
+    def __init__(self) -> None:
+        self.surface: Surface | None = None
+
+    def take(self, width: int, height: int) -> Surface:
+        """A black surface the size of a map (map_surface): the kept one if it is that size and in the display's
+        format still (zooming sets the display mode again), filled black, or a new one."""
+        surface, self.surface = self.surface, None
+        if surface is not None and surface.get_size() == (width, height) and same_format(surface, display_format()):
+            surface.fill(BLACK)
+            return surface
+        if surface is not None:
+            self.surface = surface
+        return map_surface(width, height)
+
+    def give_back(self, surface: Surface | None) -> None:
+        """Keep a map's surface the game is done with, if it is bigger than the one kept (or the same size)."""
+        if not isinstance(surface, Surface) or surface is self.surface:
+            return
+        if self.surface is None or area(surface) >= area(self.surface):
+            self.surface = surface
+
+
+def area(surface: Surface) -> int:
+    width, height = surface.get_size()
+    return width * height
+
+
+def display_format() -> Surface:
+    return Surface((1, 1)).convert()
+
+
+def same_format(surface: Surface, other: Surface) -> bool:
+    return (surface.get_bitsize(), surface.get_masks(), surface.get_flags()) == \
+        (other.get_bitsize(), other.get_masks(), other.get_flags())
 
 
 def first_frame_background(big_map, width: int, height: int) -> Surface:
@@ -486,6 +539,21 @@ def first_frame_background(big_map, width: int, height: int) -> Surface:
         big_map.fill(BLACK)
         return big_map
     return big_map.subsurface(0, 0, width, height).convert()
+
+
+def drawn_tiles_state(current_map, background) -> tuple:
+    """What decides how a map's tiles are drawn on a background (Drawer.drawn_in_full): the map and the background,
+    each tile group and its size (tiles are only ever added, or a group replaced: see TileIndex), the images of the
+    groups' first tiles (a palette change gives every tile of a type its new image, DragonWarriorMap
+    update_tile_images), the palettes, and which side of the roofs the hero is on."""
+    groups = []
+    for tile_dict in current_map.floor_tile_key.values():
+        group = tile_dict.get('group')
+        if group:
+            first_tile = next(iter(group.spritedict))
+            groups.append((group, len(group), first_tile.image))
+    return (current_map, background, tuple(groups), current_map.low_hp_palette, current_map.bad_ending_window_color,
+            current_map.player_under_cover)
 
 
 def replace_characters_with_underlying_tiles(tile_types_to_draw: list[str], current_map_character_key) -> list[str]:
