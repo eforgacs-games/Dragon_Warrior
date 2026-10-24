@@ -204,7 +204,11 @@ class TestWideFrames(DisplayTestCase):
         def windows(game):
             game.drawer.draw_hovering_stats_window(game.screen, game.player)
             game.cmd_menu.draw_command_window()
-        self.assertEqual(walk(make_game('Brecconary', VIEW_NES), 4, windows), walk(make_game('Brecconary'), 4, windows))
+        # The COMMAND cursor blinks on the menu clock (src/cursor.py), not the game clock walk stops: stopped too, so
+        # both walks draw it at the same point of its blink however long they take
+        with patch('src.cursor.get_ticks', return_value=0):
+            self.assertEqual(walk(make_game('Brecconary', VIEW_NES), 4, windows),
+                             walk(make_game('Brecconary'), 4, windows))
 
     def test_the_sides_show_the_map(self):
         game = make_game('Alefgard')
