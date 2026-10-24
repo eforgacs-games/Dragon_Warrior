@@ -88,6 +88,7 @@ def dynamic_messages() -> dict[str, list[str]]:
     from src.options_overlay import overlay_texts
     from src.options_screen import MESSAGE_SPEED_OPTIONS
     from src.shop_preview import preview_texts
+    from src.quest_journal import journal_texts
     from src.spells import Spell
     from src.translated_window import layout_texts
     from src.windows import COMBAT_COMMAND_LAYOUT, COMMAND_LAYOUT, STATUS_LAYOUT, TITLE_MENU_LAYOUTS, YES_NO_LAYOUT
@@ -111,6 +112,8 @@ def dynamic_messages() -> dict[str, list[str]]:
             messages.setdefault(text, []).append('src/options_overlay.py')
     for text in preview_texts():
         messages.setdefault(text, []).append('src/shop_preview.py')
+    for text in journal_texts():
+        messages.setdefault(text, []).append('src/quest_journal.py')
     return messages
 
 

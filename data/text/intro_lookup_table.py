@@ -21,6 +21,8 @@ class ControlInfo:
         self.speed_controls = _("1-5: Game Speed")
         # G starts and stops auto-grind on the map (src/auto_grind.py)
         self.auto_grind_key = _("G: Auto-grind")
+        # Q shows the quest journal (src/quest_journal.py), unless QUEST JOURNAL is OFF in the options overlay
+        self.quest_journal_key = _("Q: Quest Journal")
         # Window zoom (src/zoom.py): Ctrl + / Ctrl - or Ctrl and the mouse wheel, and Ctrl 0 for the normal size
         self.zoom_controls = _("Ctrl +/-/Wheel: Zoom")
         self.zoom_reset = _("Ctrl 0: Reset Zoom")
@@ -44,8 +46,8 @@ class ControlInfo:
         self.controls: tuple[str, ...] = (
             self.a_button, self.b_button, self.start_button, self.select_button, self.arrow_keys_move_buttons,
             self.help_button, self.auto_battle_toggle, self.invulnerability_toggle,
-            self.fullscreen_toggle, self.speed_controls, self.auto_grind_key, self.zoom_controls, self.zoom_reset,
-            self.save_state_keys, self.load_state_keys, self.rewind_key,
+            self.fullscreen_toggle, self.speed_controls, self.auto_grind_key, self.quest_journal_key, self.zoom_controls,
+            self.zoom_reset, self.save_state_keys, self.load_state_keys, self.rewind_key,
             self.controller_a, self.controller_b, self.controller_start, self.controller_select, self.controller_move,
             self.controller_speed, self.controller_load_state, self.controller_save_state, self.controller_rewind)
         # The H help, one string per dialog box page (the A button turns the page). The dialog box fits five rows
@@ -59,6 +61,7 @@ class ControlInfo:
                        self.fullscreen_toggle)),
             "\n".join((_("Window zoom:"), self.zoom_controls, self.zoom_reset)),
             "\n".join((_("Save states:"), self.save_state_keys, self.load_state_keys, self.rewind_key)),
+            self.quest_journal_key,
             "\n".join((_("Controller:"), self.controller_a, self.controller_b, self.controller_start,
                        self.controller_select)),
             "\n".join((self.controller_move, self.controller_speed, self.controller_load_state,
