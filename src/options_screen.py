@@ -12,7 +12,8 @@ NES flow (Bank03):
 - ChngMsgSpeed stores the choice in MessageSpeed, saves the log (SaveCurrentGame -> SaveData, LFA7D: game slot offset
   $16, "Message Speed" in reference/sram-doc.txt: 0 fast, 1 normal, 2 slow) and goes back to the title menu.
 - A new quest (DoNewQuest -> NewQuest) shows the same window right after the name is entered, with the cursor on
-  NORMAL (LF8D4: LDA #MSG_NORMAL), and InitNewGame saves the choice with the new log.
+  NORMAL on the NES (LF8D4: LDA #MSG_NORMAL); here it starts on FAST, the game's default speed (DEFAULT_MESSAGE_SPEED),
+  and InitNewGame saves the choice with the new log.
 
 What this game adds (none of it on the NES, so none of it asked here): the dialog style, NPCS MAKE WAY, the fade style,
 the stairs, the grind stop and the switches for this game's other conveniences (SWITCHES: the music, the game speed
@@ -60,8 +61,9 @@ DEFAULT_BAG_SIZE = INVENTORY_SLOTS
 
 # MessageSpeed: #$00-fast, #$01-normal, #$02-slow; the window lists them in that order (WndRow = MessageSpeed)
 MESSAGE_SPEED_NAMES = ('Fast', 'Normal', 'Slow')
-# NewQuest (LF8D4): a new quest starts at normal speed; a save without the setting loads as normal too
-DEFAULT_MESSAGE_SPEED = 'Normal'
+# The default speed: a new quest's window starts on it, and a save without the setting loads with it. The NES starts a
+# new quest on NORMAL (NewQuest, LF8D4: LDA #MSG_NORMAL); this game defaults to FAST, and NORMAL is a choice away.
+DEFAULT_MESSAGE_SPEED = 'Fast'
 
 CLASSIC = 'Classic'  # the NES dialog window (src/dialog_box.py), the default
 MODERN = 'Modern'  # each message replaces the last one, as this game drew dialog before it matched the NES
@@ -200,7 +202,7 @@ class Options:
     autosave: bool | None = None  # None: the config's AUTOSAVE is kept
 
 
-# A new quest's settings when none are chosen: NewQuest's MSG_NORMAL, the NES dialog window, and base_config's
+# A new quest's settings when none are chosen: the default message speed, the NES dialog window, and base_config's
 # defaults
 DEFAULT_OPTIONS = Options()
 
