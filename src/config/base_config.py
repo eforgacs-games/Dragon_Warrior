@@ -41,7 +41,7 @@ base_config = {
     "COLOR_KEY": (0, 128, 128),
     # "Fast", "Normal" or "Slow": NES MessageSpeed, 1, 2 or 3 frames per character. Normal, as a new NES quest starts
     # with (NewQuest); a game started or loaded from the title menu sets it per adventure log (src/options_screen.py)
-    "TEXT_SPEED": "Normal",
+    "TEXT_SPEED": "Fast",
     # "Classic": the NES dialog window, whose text scrolls; "Modern": each message replaces the last (not NES)
     "DIALOG_STYLE": "Classic",
     # "NES": screen fades step through the NES palette (PalFadeOut/PalFadeIn); "Smooth": a black overlay alpha fade
