@@ -280,7 +280,7 @@ class TestKoreanControlsScreen(KoreanTestCase):
             draw_translated_window(self.game.screen, self.layouts()[0], (255, 255, 255), self.game.game_state.config,
                                    self.korean, cursor_index=0)
         texts = self.texts(draw_text)
-        self.assertEqual(['조작 설정', '키 1', '키 2', '패드', 'A 버튼'], texts[:5])
+        self.assertEqual(['조작', '키 1', '키 2', '패드', 'A 버튼'], texts[:5])
 
     def test_text_fits(self):
         # Each label ends before KEY 1's cursor, each cell before the next cell's cursor, and the rest (the reset
