@@ -439,7 +439,7 @@ def _restore_values(game: Any, state: dict[str, Any]) -> None:
     game.battle_ctrl.pending_scripted_battle = state['pending_scripted_battle']
     # Nothing is waiting to happen: the snapshot was taken with no window open or asked for
     game.paused = game.pause_requested = game.cmd_menu_requested = game.options_requested = False
-    game.auto_grind_requested = False
+    game.auto_grind_requested = game.message_log_requested = False
     game.cmd_menu.launch_signaled = False
     game.camera.pos = state['camera']
     # The map is drawn in full on the next frame, with the pop-up window already open if it was (no drop-down)

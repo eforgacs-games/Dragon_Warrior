@@ -88,6 +88,8 @@ base_config = {
     # SMART A (not NES when on): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, else opens COMMAND
     # (Game.smart_command); off, A always opens COMMAND, as on the NES
     "SMART_A": False,
+    # MESSAGE LOG (not NES when on): the MESSAGE LOG key (L) opens the last messages on the map (src/message_log.py)
+    "MESSAGE_LOG": True,
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on
