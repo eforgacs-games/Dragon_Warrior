@@ -18,16 +18,17 @@ was. Off (NES), M does nothing; the record is kept all the same, so turning it o
 import base64
 from collections.abc import Callable
 
-from pygame import K_ESCAPE, K_m, KEYDOWN, SRCALPHA, Rect, Surface, display
+from pygame import K_ESCAPE, KEYDOWN, SRCALPHA, Rect, Surface, display
 
 from src.color import BLACK
 from src.common import B_BUTTON_KEYS, SELECT_BUTTON_KEYS, set_gettext_language
+from src.controls import KeySet
 from src.cursor import BlinkingCursor
 from src.selection import frame_events, next_frame
 from src.translated_window import draw_translated_window
 from src.windows import Window, WindowLayout, WindowText
 
-DUNGEON_MAP_KEYS = (K_m,)
+DUNGEON_MAP_KEYS = KeySet('MAP')  # M, as bound (src/controls.py)
 CLOSE_KEYS = DUNGEON_MAP_KEYS + B_BUTTON_KEYS + SELECT_BUTTON_KEYS + (K_ESCAPE,)
 SAVE_KEY = 'DungeonMap'
 DEFAULT_DUNGEON_MAP = True  # DUNGEON_MAP: ON; OFF is the NES

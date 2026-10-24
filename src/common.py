@@ -4,11 +4,11 @@ import ntpath
 import os
 from os.path import sep, exists
 
-from pygame import Surface, image, transform, K_RETURN, K_i, K_k, K_ESCAPE, K_j, K_u, K_UP, K_DOWN, K_LEFT, K_RIGHT, \
-    K_w, K_a, K_s, K_d
+from pygame import Surface, image, transform
 
 from src.catalog import load_translations
 from src.color import WHITE, BLACK
+from src.controls import KeySet
 from src.direction import Direction
 from src.directories import Directories
 from src.korean_particles import KoreanText
@@ -157,20 +157,21 @@ class Graphics:
         return scaled_img
 
 
-accept_keys = (K_RETURN, K_i, K_k)
-reject_keys = (K_ESCAPE, K_j)
-
-# The NES joypad on the keyboard. Enter is an extra A (it also picks menu items and is the TAKE/DOOR/TALK shortcut) and
-# Escape an extra B (it closes the command window), like accept_keys and reject_keys.
-A_BUTTON_KEYS = (K_k, K_RETURN)
-B_BUTTON_KEYS = (K_j, K_ESCAPE)
-START_BUTTON_KEYS = (K_i,)
-SELECT_BUTTON_KEYS = (K_u,)
-UP_KEYS = (K_UP, K_w)
-DOWN_KEYS = (K_DOWN, K_s)
-LEFT_KEYS = (K_LEFT, K_a)
-RIGHT_KEYS = (K_RIGHT, K_d)
+# The NES joypad on the keyboard, as the player has bound it (src/controls.py: these are live, so a change on the
+# CONTROLS screen applies at once). By default A is K, B is J, START is I, SELECT is U and the D-pad the arrows and
+# WASD. Enter (SMART_A) is an extra A (it also picks menu items and is the TAKE/DOOR/TALK shortcut on the map) and
+# Escape is B's second key (it closes the command window).
+A_BUTTON_KEYS = KeySet('A', 'SMART_A')
+B_BUTTON_KEYS = KeySet('B')
+START_BUTTON_KEYS = KeySet('START')
+SELECT_BUTTON_KEYS = KeySet('SELECT')
+UP_KEYS = KeySet('UP')
+DOWN_KEYS = KeySet('DOWN')
+LEFT_KEYS = KeySet('LEFT')
+RIGHT_KEYS = KeySet('RIGHT')
 D_PAD_KEYS = UP_KEYS + DOWN_KEYS + LEFT_KEYS + RIGHT_KEYS
+accept_keys = A_BUTTON_KEYS + START_BUTTON_KEYS
+reject_keys = B_BUTTON_KEYS
 # Bank01 TxtCheckInput (DoWait, the dialog's blinking down arrow): JoypadBtns AND #IN_A_OR_B
 A_OR_B_KEYS = A_BUTTON_KEYS + B_BUTTON_KEYS
 # Bank03 WaitForBtnPress (after WaitForBtnRelease, ending a conversation): any joypad button, D-pad, START and SELECT too

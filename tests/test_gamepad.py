@@ -557,3 +557,82 @@ class TestDevices(TestCase):
             state = JoystickDevice(joystick).read()
         self.assertEqual(frozenset({'b', 'start', 'dpup'}), state.buttons)
         self.assertEqual((0.25, 0.75), (state.stick_x, state.stick_y))
+
+
+class TestRebound(GamepadTestCase):
+    """The pad follows the bindings (src/controls.py): which button is which action, and which key it presses."""
+
+    def setUp(self):
+        super().setUp()
+        from src.controls import reset_controls
+        self.addCleanup(reset_controls)
+
+    def rebind(self, edit):
+        from src.controls import current_controls, set_controls
+        controls = current_controls().copy()
+        edit(controls)
+        set_controls(controls)
+
+    def pressed_keys(self, state):
+        self.pad.state = state
+        self.gamepad.poll()
+        return [(current_event.key, current_event.mod) for current_event in pygame.event.get(KEYDOWN)]
+
+    def test_a_button_bound_elsewhere(self):
+        self.rebind(lambda controls: controls.bind_pad('A', 'x'))
+        self.assertEqual([(K_k, 0)], self.pressed_keys(pad('x')))
+        self.pressed_keys(pad())
+        self.assertEqual([], self.pressed_keys(pad(PAD_A)))  # 'b' isn't bound any more
+
+    def test_it_presses_the_actions_first_key(self):
+        from pygame import K_l
+        from src.controls import Binding
+        self.rebind(lambda controls: controls.bind_key('A', 0, Binding(K_l)))
+        self.assertEqual([(K_l, 0)], self.pressed_keys(pad(PAD_A)))
+
+    def test_an_extra_action_with_its_modifiers(self):
+        from pygame import K_F2
+        self.rebind(lambda controls: controls.bind_pad('SAVE_STATE_2', 'y'))
+        self.assertEqual([(K_F2, KMOD_SHIFT)], self.pressed_keys(pad('y')))
+
+    def test_an_action_without_a_key_presses_nothing(self):
+        self.rebind(lambda controls: controls.bind_pad('HELP', 'x'))
+        self.rebind(lambda controls: controls.clear_key('HELP', 0))
+        self.assertEqual([], self.pressed_keys(pad('x')))
+
+    def test_the_d_pad(self):
+        self.rebind(lambda controls: controls.bind_pad('UP', 'y'))
+        self.assertEqual([(K_UP, 0)], self.pressed_keys(pad('y')))
+
+    def test_next_speed(self):
+        self.rebind(lambda controls: controls.bind_pad('NEXT_SPEED', 'x'))
+        self.pressed_keys(pad('righttrigger'))
+        self.assertEqual(1, game_speed())
+        self.pressed_keys(pad('x'))
+        self.assertEqual(2, game_speed())
+
+    def test_read_button_for_the_controls_screen(self):
+        self.gamepad.poll()  # finds the pad
+        states = iter([pad(), pad(), pad('y'), pad('y'), pad()])
+        self.pad.read = lambda: next(states, pad())
+        with patch('src.gamepad.pygame.time.wait'):
+            self.assertEqual('y', self.gamepad.read_button(5000))
+        self.assertEqual([], queued())  # the press wasn't also a key
+
+    def test_read_button_times_out(self):
+        self.gamepad.poll()
+        with patch('src.gamepad.pygame.time.get_ticks', side_effect=[0, 0, 10_000, 10_000]):
+            self.assertIsNone(self.gamepad.read_button(5000))
+
+    def test_the_controls_screen_reads_it(self):
+        from src import controls
+        from src.gamepad import connect_gamepad
+        connected = connect_gamepad()
+        self.addCleanup(connected.disconnect)
+        self.addCleanup(controls.set_pad_reader, None)
+        self.assertEqual(connected.read_button, controls._pad_reader)
+        with patch.object(connected, 'device', None):
+            self.assertFalse(controls.pad_connected())
+            self.assertIsNone(controls.read_pad_button(100))
+        with patch.object(connected, 'device', self.pad):
+            self.assertTrue(controls.pad_connected())
