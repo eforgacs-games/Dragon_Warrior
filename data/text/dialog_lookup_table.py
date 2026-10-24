@@ -1,6 +1,7 @@
 import random
 from functools import partial
 from collections.abc import Callable
+from typing import cast
 
 from pygame import display, time, Rect
 from pygame.event import get, pump
@@ -23,6 +24,7 @@ from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_price, \
     inventory_is_full, pay_player, sell_price
 from src.selection import run_selection, stop_at_edges
+from src.shop_preview import SHOP_PREVIEW_WINDOW, StatPreview, draw_shop_preview, stat_preview
 from src.sound import Sound
 from src.story_flags import StoryFlags
 from src.text import draw_text
@@ -920,13 +922,16 @@ class DialogLookup:
                             show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
     def select_in_window(self, window: Window, number_of_entries: int, draw_window: Callable[[], object],
-                         first_tile_row: int, initial_index: int = 0) -> int | None:
+                         first_tile_row: int, initial_index: int = 0,
+                         draw_beside: Callable[[int], Rect] | None = None) -> int | None:
         """Show a selection window with a blinking cursor. Returns the chosen entry's index, or None if cancelled.
         :param window: Where the window goes and how big it is, in blocks.
         :param number_of_entries: How many entries the window lists.
         :param draw_window: Draws the window and its entries, without the cursor.
         :param first_tile_row: The tile row of the first entry and the cursor (the window data's cursor home Y).
         Entries are 2 tile rows (one block) apart, in single and double spaced windows alike.
+        :param draw_beside: Draws something outside the window for the highlighted entry (the shop stat preview,
+        src/shop_preview.py) and returns where; that area is removed with the window.
         """
         tile_size = self.config['TILE_SIZE']
         x, y, width, height = window
@@ -937,8 +942,9 @@ class DialogLookup:
             draw_window()
             # The cursor goes in tile column 1, between the left border and the entry (cursor home X = 1)
             self.command_menu.draw_window_cursor(x, y, 1, first_tile_row + 2 * index, cursor_visible)
+            beside_rect = draw_beside(index) if draw_beside else None
             if not self.config['NO_BLIT']:
-                display.update(window_rect)
+                display.update([window_rect, beside_rect] if beside_rect else window_rect)
 
         # The NES cursor (src/cursor.py), visible when the window opens (WndInitSelect), stops at the first and last
         # entries. A chooses, with the menu sound; B cancels, silently. Either way the arrow is drawn once more and
@@ -948,6 +954,8 @@ class DialogLookup:
                                sound=lambda: self.sound.play_sound(self.directories.menu_button_sfx),
                                sound_buttons=(IN_A,))
         self.command_menu.remove_window(window)
+        if draw_beside:
+            self.command_menu.remove_window(SHOP_PREVIEW_WINDOW)
         return answer.entry if answer.accepted else None
 
     def draw_window_background(self, window: Window) -> None:
@@ -972,7 +980,8 @@ class DialogLookup:
 
         return self.select_in_window(window, len(lines), draw_window, 2, initial_index)
 
-    def select_in_generated_window(self, layout: WindowLayout, initial_index: int = 0) -> int | None:
+    def select_in_generated_window(self, layout: WindowLayout, initial_index: int = 0,
+                                   draw_beside: Callable[[int], Rect] | None = None) -> int | None:
         """A selection window generated from its NES window data (src/window_renderer.py), with the blinking NES
         cursor at each entry's cursor tile (select_in_window). Returns the chosen entry's index, or None if cancelled."""
         first_row = layout.cursor_tiles[0][1]
@@ -981,20 +990,22 @@ class DialogLookup:
             raise ValueError(f"{layout.cursor_tiles} is not a single column of entries")
         return self.select_in_window(layout.window, len(layout.cursor_tiles),
                                      lambda: generated_window(self.screen, layout, self.color, self.config),
-                                     first_row, initial_index)
+                                     first_row, initial_index, draw_beside)
 
     def is_nes_text(self, *texts: str) -> bool:
         """Whether the texts are shown untranslated, so in the NES font a generated window can draw (Korean is drawn
         as text on a window background instead)."""
         return all(self._(text) == text for text in texts)
 
-    def select_shop_item(self, item_names: list[str], costs: list[int]) -> int | None:
+    def select_shop_item(self, item_names: list[str], costs: list[int],
+                         draw_beside: Callable[[int], Rect] | None = None) -> int | None:
         """The shop inventory window (NES ShopInvDat): single spaced and as high as the shop's stock
         (WndVariableHeight). Each item takes 2 tile rows: the first half of its name at tile column 2 and its cost,
         5 tiles wide, ending at column 16 (WndItemCost); the second half on the next row at column 3 (cursor home
         Y = 1). In English it is generated tile by tile (shop_inventory_layout); a translation is drawn as text."""
         if self.is_nes_text(*item_names):
-            return self.select_in_generated_window(shop_inventory_layout(tuple(item_names), tuple(costs)))
+            return self.select_in_generated_window(shop_inventory_layout(tuple(item_names), tuple(costs)),
+                                                   draw_beside=draw_beside)
         window = variable_height_window(SHOP_INVENTORY_WINDOW, len(item_names))
 
         def draw_window() -> None:
@@ -1008,7 +1019,7 @@ class DialogLookup:
                 if second_half:
                     self.draw_in_window(window, second_half, 3, row + 1)
 
-        return self.select_in_window(window, len(item_names), draw_window, 1)
+        return self.select_in_window(window, len(item_names), draw_window, 1, draw_beside=draw_beside)
 
     def select_from_inventory(self, items: list[str]) -> int | None:
         """The player inventory window (NES PlayerInvDat), as the ITEM command shows it."""
@@ -1019,12 +1030,24 @@ class DialogLookup:
 
     def open_store_inventory(self, current_store_inventory):
         """NES GetShopItems: show the shop's stock (ShopInvDat, select_shop_item) and return the name of the item
-        chosen, or None if cancelled. The pop-up status window stays up with it."""
+        chosen, or None if cancelled. The pop-up status window stays up with it, and in a weapon and armor shop the
+        stat preview beside it, if it's on (src/shop_preview.py)."""
         self.command_menu.game.drawer.display_hovering_stats = True
         item_names = list(current_store_inventory)
         selected_index = self.select_shop_item(item_names,
-                                               [current_store_inventory[name]['cost'] for name in item_names])
+                                               [current_store_inventory[name]['cost'] for name in item_names],
+                                               draw_beside=self.shop_preview_drawer(current_store_inventory))
         return None if selected_index is None else item_names[selected_index]
+
+    def shop_preview_drawer(self, current_store_inventory) -> Callable[[int], Rect] | None:
+        """With SHOP_PREVIEW on, in a shop that sells weapons and armor (not tools), what draws the stat preview for
+        the highlighted item (src/shop_preview.py); else None, and nothing is drawn."""
+        item_names = list(current_store_inventory)
+        previews = [stat_preview(self.player, name, current_store_inventory[name]['type']) for name in item_names]
+        if not self.config.get('SHOP_PREVIEW') or None in previews:
+            return None
+        return lambda index: draw_shop_preview(self.screen, cast(StatPreview, previews[index]), self.color,
+                                               self.config, self._)
 
     def please_come_again(self):
         self.say(self._("Please, come again."), hide_arrow=True)

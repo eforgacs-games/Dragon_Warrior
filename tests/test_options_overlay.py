@@ -193,7 +193,8 @@ class TestRows(OverlayTestCase):
                                             ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어")),
                                             ("SCANLINES", 'SCANLINES', ("OFF", "ON")),
                                             ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT")),
-                                            ("STATUS WINDOW", 'STATUS_WINDOW', ("NES", "ALWAYS"))]),
+                                            ("STATUS WINDOW", 'STATUS_WINDOW', ("NES", "ALWAYS")),
+                                            ("SHOP PREVIEW", 'SHOP_PREVIEW', ("OFF (NES)", "ON"))]),
                           ("GAMEPLAY", [("NPCS MAKE WAY", 'NPCS_MAKE_WAY', ("ON", "OFF (NES)")),
                                         ("STAIRS", 'AUTO_STAIRS', ("STEP ON", "NES")),
                                         ("QUICK ACTION", 'QUICK_ACTION', ("OFF (NES)", "ON")),
@@ -221,7 +222,8 @@ class TestRows(OverlayTestCase):
     def test_window_shows_the_current_values(self):
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/3", "MESSAGE SPEED", "FAST", "DIALOG STYLE", "CLASSIC (NES)",
                           "FADE STYLE", "NES", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
-                          "SCALING", "SMOOTH", "STATUS WINDOW", "NES"], page_texts(self.config))
+                          "SCALING", "SMOOTH", "STATUS WINDOW", "NES", "SHOP PREVIEW", "OFF (NES)"],
+                         page_texts(self.config))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "ON", "STAIRS", "STEP ON",
                           "QUICK ACTION", "OFF (NES)", "ENCOUNTERS", "NES", "EXP/GOLD", "x1 (NES)"],
                          page_texts(self.config, 1))
@@ -230,7 +232,7 @@ class TestRows(OverlayTestCase):
                            STATUS_WINDOW='Always', ENCOUNTERS='Half', EXP_GOLD=4, RUN_BUTTON=True)
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/3", "MESSAGE SPEED", "SLOW", "DIALOG STYLE", "MODERN",
                           "FADE STYLE", "SMOOTH", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
-                          "SCALING", "SMOOTH", "STATUS WINDOW", "ALWAYS"],
+                          "SCALING", "SMOOTH", "STATUS WINDOW", "ALWAYS", "SHOP PREVIEW", "OFF (NES)"],
                          page_texts(self.config))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "OFF (NES)", "STAIRS", "NES",
                           "QUICK ACTION", "OFF (NES)", "ENCOUNTERS", "HALF", "EXP/GOLD", "x4"],
@@ -306,10 +308,10 @@ class TestRows(OverlayTestCase):
         self.assertFalse(self.config['AUTO_STAIRS'])
 
     def test_cursor_stops_at_the_edges(self):
-        # up from PRESET stays on it (right there: CUSTOM to NES); down past the last row stays on the last (STATUS
-        # WINDOW, which right turns from NES to ALWAYS)
+        # up from PRESET stays on it (right there: CUSTOM to NES); down past the last row stays on the last (SHOP
+        # PREVIEW, which right turns from OFF to ON)
         self.run_overlay(K_UP, K_RIGHT, *(K_DOWN,) * (MOST_ROWS + 1), K_RIGHT, K_u)
-        self.assertEqual({**DEFAULTS, **preset_values(PRESET_NES), 'STATUS_WINDOW': 'Always'},
+        self.assertEqual({**DEFAULTS, **preset_values(PRESET_NES), 'SHOP_PREVIEW': True},
                          own_settings(self.config))
 
     def test_b_esc_select_and_tab_close_it(self):
@@ -405,13 +407,13 @@ class TestPreset(OverlayTestCase):
                           'STATUS_WINDOW': 'NES', 'NPCS_MAKE_WAY': False, 'AUTO_STAIRS': False, 'QUICK_ACTION': False,
                           'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': False, 'SAVE_STATES': False,
                           'REWIND': False, 'AUTO_GRIND': False, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
-                          'CHEAT_KEYS': False, 'RUN_BUTTON': False}, preset_values(PRESET_NES))
+                          'CHEAT_KEYS': False, 'RUN_BUTTON': False, 'SHOP_PREVIEW': False}, preset_values(PRESET_NES))
         # MODERN: every convenience but the cheats; the number of fights and what they give stay the NES's
         self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': True,
                           'STATUS_WINDOW': 'Always', 'NPCS_MAKE_WAY': True, 'AUTO_STAIRS': True, 'QUICK_ACTION': True,
                           'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': True, 'SAVE_STATES': True,
                           'REWIND': True, 'AUTO_GRIND': True, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
-                          'CHEAT_KEYS': False, 'RUN_BUTTON': True}, preset_values(PRESET_MODERN))
+                          'CHEAT_KEYS': False, 'RUN_BUTTON': True, 'SHOP_PREVIEW': True}, preset_values(PRESET_MODERN))
         # the message speed is the NES's own setting, and the language the player's: no preset changes them
         self.assertNotIn('TEXT_SPEED', [row.config_key for row in PRESET_ROWS])
         for config_key in ('LANGUAGE', 'SCANLINES', 'SCALING'):
@@ -433,7 +435,7 @@ class TestPreset(OverlayTestCase):
         nes = preset_values(PRESET_NES)
         differences = {config_key for config_key, value in nes.items() if config[config_key] != value}
         self.assertEqual({'ORCHESTRA_MUSIC_ENABLED', 'AUTO_STAIRS', 'NPCS_MAKE_WAY', 'QUICK_ACTION', 'GAME_SPEED_KEYS',
-                          'SAVE_STATES', 'REWIND', 'AUTO_GRIND', 'CHEAT_KEYS'}, differences)
+                          'SAVE_STATES', 'REWIND', 'AUTO_GRIND', 'CHEAT_KEYS', 'SHOP_PREVIEW'}, differences)
         self.assertEqual(PRESET_CUSTOM, current_preset(config))
 
     def test_an_older_save_loads_with_them_on(self):
