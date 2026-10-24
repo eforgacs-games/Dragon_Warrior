@@ -242,7 +242,7 @@ class TestTheOption(TestCase):
 
     def test_the_row(self):
         row = next(row for row in OPTION_ROWS if row.config_key == 'MESSAGE_LOG')
-        self.assertEqual(("MESSAGE LOG", (True, False), ("ON", "OFF (NES)")), (row.label, row.values, row.value_labels))
+        self.assertEqual(("MESSAGE LOG", (False, True), ("OFF (NES)", "ON")), (row.label, row.values, row.value_labels))
 
     def test_on_by_default_and_saved(self):
         self.assertTrue(DEFAULT_OPTIONS.message_log)
