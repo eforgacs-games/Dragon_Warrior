@@ -189,30 +189,32 @@ class TestKoreanOptionsScreen(KoreanTestCase):
 
     def test_options_overlay(self):
         config = {**self.game.game_state.config, **{row.config_key: row.values[0] for row in OPTION_ROWS}}
-        self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/3', '표시 속도', '빠름', '대화 방식',
+        self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/4', '표시 속도', '빠름', '대화 방식',
                            '클래식 (NES)', '페이드 방식', 'NES', '음악', '오케스트라', '언어', 'ENGLISH', '주사선',
                            '끄기', '화면 배율', '스무스', '화면', 'NES (4:3)', '능력치 창', 'NES', '상점 미리보기',
                            '끄기 (NES)'],
-                          ['게임 플레이', '프리셋', '커스텀', '페이지', '2/3', 'NPC가 길 비키기', '켜기', '계단',
+                          ['게임 플레이', '프리셋', '커스텀', '페이지', '2/4', 'NPC가 길 비키기', '켜기', '계단',
                            '밟으면 이동', '빠른 행동', '끄기 (NES)', '스마트 A', '끄기 (NES)', '적 출현', 'NES',
                            '경험치/골드', 'x1 (NES)', '모험 일지', '끄기 (NES)', '자동 저장', '끄기 (NES)', '소지품',
                            'NES (8개)', '달리기 버튼', '끄기 (NES)'],
-                          ['조작', '프리셋', '커스텀', '페이지', '3/3', '게임 속도', '끄기 (NES)', '상태 저장',
+                          ['조작', '프리셋', '커스텀', '페이지', '3/4', '게임 속도', '끄기 (NES)', '상태 저장',
                            '끄기 (NES)', '되감기', '끄기 (NES)', '자동 사냥', '끄기 (NES)', '사냥 멈춤', '빨간 HP',
                            '메뉴 속도', '보통', '치트', '끄기 (NES)', '던전 지도', '끄기 (NES)', '대화 기록',
-                           '끄기 (NES)', '조작']],
-                         [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(3)])
+                           '끄기 (NES)', '조작'],
+                          ['기타', '프리셋', '커스텀', '페이지', '4/4', '이름 확정', '끄기 (NES)']],
+                         [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(4)])
         config.update({row.config_key: row.values[1] for row in OPTION_ROWS})
-        self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/3', '표시 속도', '보통', '대화 방식', '모던',
+        self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/4', '표시 속도', '보통', '대화 방식', '모던',
                            '페이드 방식', '스무스', '음악', 'NES', '언어', '한국어', '주사선', '켜기',
                            '화면 배율', '정수 배율', '화면', '와이드', '능력치 창', '항상', '상점 미리보기', '켜기'],
-                          ['게임 플레이', '프리셋', '커스텀', '페이지', '2/3', 'NPC가 길 비키기', '끄기 (NES)', '계단',
+                          ['게임 플레이', '프리셋', '커스텀', '페이지', '2/4', 'NPC가 길 비키기', '끄기 (NES)', '계단',
                            'NES', '빠른 행동', '켜기', '스마트 A', '켜기', '적 출현', '절반', '경험치/골드', 'x2',
                            '모험 일지', '목표', '자동 저장', '켜기', '소지품', '16개', '달리기 버튼', '켜기'],
-                          ['조작', '프리셋', '커스텀', '페이지', '3/3', '게임 속도', '켜기', '상태 저장', '켜기',
+                          ['조작', '프리셋', '커스텀', '페이지', '3/4', '게임 속도', '켜기', '상태 저장', '켜기',
                            '되감기', '켜기', '자동 사냥', '켜기', '사냥 멈춤', 'HP 절반', '메뉴 속도', '게임 속도대로',
-                           '치트', '켜기', '던전 지도', '켜기', '대화 기록', '켜기', '조작']],
-                         [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(3)])
+                           '치트', '켜기', '던전 지도', '켜기', '대화 기록', '켜기', '조작'],
+                          ['기타', '프리셋', '커스텀', '페이지', '4/4', '이름 확정', '켜기']],
+                         [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(4)])
 
     def test_a_translated_window_draws_every_line_in_one_font(self):
         # "NES" stays in English. Picked by its own characters it was drawn in the NES font, bigger than the Korean

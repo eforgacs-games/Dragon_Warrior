@@ -114,6 +114,8 @@ class Game:
             config['VIEW'] = self.settings.settings.view
         if not self.settings.settings.dungeon_map:
             config['DUNGEON_MAP'] = False
+        if not self.settings.settings.name_confirm:
+            config['NAME_CONFIRM'] = False
         self._ = _ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
         # map/graphics
@@ -291,6 +293,7 @@ class Game:
         - SCANLINES and SCALING, global settings: the display filters change from the next frame on, and are saved.
         - VIEW, a global setting: saved now, and shown once the overlay closes (set_view).
         - DUNGEON MAP, a global setting: saved now; M reads it each time it's pressed.
+        - CONFIRM NAME, a global setting: saved now; the next name entry reads it.
         - MUSIC (ORCHESTRA_MUSIC_ENABLED): every Directories reads the music from the config (src/directories.py), so
           the next music played is from the new set; the map's music is started again from the new set now.
         - GAME SPEED (GAME_SPEED_KEYS): keys 1 to 5 are switched on or off; off goes back to normal speed, and on to
@@ -308,6 +311,8 @@ class Game:
             self.settings.update(view=view_name(config))  # shown once the overlay closes (set_view)
         elif config_key == 'DUNGEON_MAP':
             self.settings.update(dungeon_map=dungeon_map_enabled(config))
+        elif config_key == 'NAME_CONFIRM':
+            self.settings.update(name_confirm=bool(config.get('NAME_CONFIRM')))
         elif config_key == 'ORCHESTRA_MUSIC_ENABLED':
             name = music_name(self.current_map.music_file_path)
             if name is not None:

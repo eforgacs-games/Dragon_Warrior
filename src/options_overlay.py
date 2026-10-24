@@ -45,6 +45,9 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     MESSAGE LOG    OFF (NES) / ON           (MESSAGE_LOG: the L key shows the last messages, src/message_log.py)
     CONTROLS                                (A opens the CONTROLS screen to rebind the keys, src/controls_screen.py)
 
+    OTHER
+    CONFIRM NAME   OFF (NES) / ON           (NAME_CONFIRM: a full name waits on END, START ends it; global)
+
 Above every page's rows are two more:
 
     PRESET         NES / MODERN / CUSTOM
@@ -224,6 +227,11 @@ OPTION_PAGES = (
         switch_row("MESSAGE LOG", 'MESSAGE_LOG'),
         # A opens the CONTROLS screen to rebind the keys (src/controls_screen.py)
         CONTROLS_ROW,
+    )),
+    # The other pages are full (each fits 10 rows): settings that don't belong to the map
+    OptionPage("OTHER", (
+        # The player's, kept in the global settings (src/settings.py): a full name waits on END, START ends the name
+        switch_row("CONFIRM NAME", 'NAME_CONFIRM'),
     )),
 )
 # The rows with a setting (every row but CONTROLS)

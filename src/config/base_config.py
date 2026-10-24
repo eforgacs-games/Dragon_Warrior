@@ -85,6 +85,9 @@ base_config = {
     "BAG_SIZE": 8,
     # DUNGEON MAP (not NES): True lets M show the map of the dark floor the hero is on (src/dungeon_map.py)
     "DUNGEON_MAP": True,
+    # CONFIRM NAME (not NES when on): a full name waits on END instead of ending at the 8th character, and START ends
+    # the name (src/name_entry.py NameEntry, src/menu_functions.py); a global setting, as names come before a log
+    "NAME_CONFIRM": True,
     # SMART A (not NES when on): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, else opens COMMAND
     # (Game.smart_command); off, A always opens COMMAND, as on the NES
     "SMART_A": False,
