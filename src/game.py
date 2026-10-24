@@ -23,6 +23,7 @@ from src.common import singular_or_plural
 from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
 from src.coordinates import Cell
+from src.crash_log import install as install_crash_log
 from src.debug_tools import DebugTools
 from src.constants import (
     TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT, TEMP_TEXT_MS,
@@ -1311,6 +1312,7 @@ class Game:
 
 
 def run():
+    install_crash_log()  # an exception nothing catches writes a crash log and says where it is (src/crash_log.py)
     parser = argparse.ArgumentParser(description="Dragon Warrior")
     parser.add_argument("--dev", action="store_true",
                         help="run with dev_config (god mode, no battles, coordinates visible, debug keys)")
