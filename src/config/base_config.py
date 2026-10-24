@@ -77,6 +77,9 @@ base_config = {
     # AUTOSAVE (not NES): write the autosave slot on entering a town or castle and every few minutes (src/autosave.py);
     # False is the NES, which only saves with King Lorik, and the default (the MODERN preset turns it on)
     "AUTOSAVE": False,
+    # BAG (not NES): the inventory's slots for everything but Herbs and Magic Keys: 8 (the NES) or 16
+    # (src/items.py bag_slots)
+    "BAG_SIZE": 8,
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on

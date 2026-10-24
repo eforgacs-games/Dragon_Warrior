@@ -16,9 +16,9 @@ NES flow (Bank03):
 
 What this game adds (none of it on the NES, so none of it asked here): the dialog style, NPCS MAKE WAY, the fade style,
 the stairs, the grind stop and the switches for this game's other conveniences (SWITCHES: the music, the game speed
-keys, save states, rewind, auto-grind, the cheat keys, the shop preview and the quest journal) and AUTOSAVE. They are
-changed during play, in the options overlay (src/options_overlay.py: SELECT or Tab on the map), and kept per
-adventure log beside the message speed (Options below). A new quest starts with their defaults.
+keys, save states, rewind, auto-grind, the cheat keys, the shop preview, the quest journal and the bag size) and
+AUTOSAVE. They are changed during play, in the options overlay (src/options_overlay.py: SELECT or Tab on the map), and
+kept per adventure log beside the message speed (Options below). A new quest starts with their defaults.
 
 The windows read the joypad like every NES selection window (src/cursor.py SelectionButtons, WndProcessInput): one
 button per press, up and down in a one-column window, left and right in a one-row window, stopping at the edges.
@@ -34,6 +34,7 @@ from src.command_window import COMMAND_WINDOW_BUTTON_KEYS
 from src.common import Graphics, set_gettext_language
 from src.directories import Directories
 from src.quest_journal import JOURNAL_GOALS, JOURNAL_SETTINGS
+from src.items import BAG_SIZES, INVENTORY_SLOTS
 from src.cursor import IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, draw_cursor_tile
 from src.selection import run_selection
 from src.sound import Sound
@@ -52,6 +53,10 @@ AUTO_STAIRS_SAVE_KEY = 'AutoStairs'
 AUTO_GRIND_STOP_SAVE_KEY = 'AutoGrindStop'
 MENU_SPEED_SAVE_KEY = 'MenuSpeed'
 AUTOSAVE_SAVE_KEY = 'Autosave'
+BAG_SIZE_SAVE_KEY = 'BagSize'
+
+# BAG_SIZE (base_config, src/items.py bag_slots): the NES's 8 slots by default; a save without the setting loads as 8
+DEFAULT_BAG_SIZE = INVENTORY_SLOTS
 
 # MessageSpeed: #$00-fast, #$01-normal, #$02-slow; the window lists them in that order (WndRow = MessageSpeed)
 MESSAGE_SPEED_NAMES = ('Fast', 'Normal', 'Slow')
@@ -141,6 +146,9 @@ SWITCHES = (
     # QUEST JOURNAL (#410): what Q shows on the map (src/quest_journal.py): nothing (the NES), the goals, or the goals
     # with where to go. GOALS by default, since it only shows information when Q is pressed
     Switch('quest_journal', 'QUEST_JOURNAL', 'QuestJournal', JOURNAL_SETTINGS, JOURNAL_GOALS),
+    # BAG (#413): the inventory's slots for everything but Herbs and Magic Keys (src/items.py bag_slots): the NES's 8,
+    # the default, or 16
+    Switch('bag_size', 'BAG_SIZE', BAG_SIZE_SAVE_KEY, BAG_SIZES, DEFAULT_BAG_SIZE),
 )
 
 # AUTOSAVE (base_config, src/autosave.py): OFF by default, which is the NES (it only saves with King Lorik); the MODERN
@@ -173,6 +181,7 @@ class Options:
     status_window: str = STATUS_WINDOW_NES
     shop_preview: bool = True
     quest_journal: str = JOURNAL_GOALS
+    bag_size: int = DEFAULT_BAG_SIZE
     autosave: bool | None = None  # None: the config's AUTOSAVE is kept
 
 
@@ -305,8 +314,8 @@ def apply_options(config: dict, options: Options) -> None:
     fade, MapManager.handle_warps reads AUTO_STAIRS for every step, auto-grind reads AUTO_GRIND_STOP for every check
     and the menu clock reads MENU_SPEED (src/waiting.py menu_speed). Each of the SWITCHES goes into its config key,
     which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once); the
-    shops read SHOP_PREVIEW whenever their list opens, Q reads QUEST_JOURNAL each time it's pressed, and Game.map_frame
-    reads AUTOSAVE every frame."""
+    shops read SHOP_PREVIEW whenever their list opens, Q reads QUEST_JOURNAL each time it's pressed, Game.map_frame
+    reads AUTOSAVE every frame, and the inventory checks read BAG_SIZE for every item added."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way

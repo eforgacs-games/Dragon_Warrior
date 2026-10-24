@@ -17,8 +17,8 @@ from src.command_window import WND_ABORT, CommandWindow
 from src.cursor import IN_A, DialogArrowBlink, draw_cursor_tile
 from src.waiting import NES_FPS, is_any_key_held, wait, wait_until
 from src.directories import Directories
-from src.items import DEATH_NECKLACE_GOLD, GOLD, INVENTORY_SLOTS, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
-    NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, hidden_items, inventory_list, roll_treasure_gold, treasure
+from src.items import DEATH_NECKLACE_GOLD, GOLD, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
+    NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, bag_slots, hidden_items, inventory_list, roll_treasure_gold, treasure
 from src.coordinates import Cell
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, MAX_LEVEL, OUTSIDE_DESTINATIONS, \
     RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES, \
@@ -39,7 +39,7 @@ from src.translated_window import draw_translated_window
 from src.window_renderer import draw_window
 from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENTRIES, COMMAND_LAYOUT, COMMAND_TITLE, \
     COMMAND_WINDOW, COUNTED_ITEMS, DIALOG_LAYOUT, DIALOG_WINDOW, ITEM_COUNT_TILE_COLUMN, ITEM_MENU_CURSOR_TILE_COLUMN, \
-    ITEM_MENU_TEXT_TILE_COLUMN, \
+    ITEM_MENU_MAX_ENTRIES, ITEM_MENU_TEXT_TILE_COLUMN, first_shown_entry, \
     ITEM_MENU_X, ITEM_MENU_Y, POPUP_WINDOW, SPELL_MENU_TITLE_TILE_COLUMN, \
     STATUS_EQUIPMENT_TILE_COLUMN, STATUS_EQUIPMENT_TILE_ROWS, STATUS_LAYOUT, STATUS_NAME_TILE_COLUMN, \
     STATUS_NAME_TILE_ROW, STATUS_VALUE_RIGHT_TILE_COLUMN, STATUS_VALUE_TILE_ROWS, STATUS_WINDOW, YES_NO_LAYOUT, \
@@ -675,7 +675,9 @@ class CommandMenu:
         self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
 
     def inventory_is_full(self) -> bool:
-        return len([item for item in self.player.inventory if item not in UNSLOTTED_ITEMS]) >= INVENTORY_SLOTS
+        """Every slot of the bag used (8 on the NES, or 16 with BAG set to 16: src/items.py bag_slots)."""
+        return len([item for item in self.player.inventory if item not in UNSLOTTED_ITEMS]) >= \
+            bag_slots(self.game.game_state.config)
 
     def take_item(self, item_name: str):
         """NES SetTrsrDescByte: tell the player what was found, then add it to the inventory."""
@@ -1484,16 +1486,18 @@ class CommandMenu:
             raise ValueError(f"Invalid menu name: {menu_name}")
         drawn_index: int | None = None
         window_rect = Rect(0, 0, 0, 0)
+        first = 0  # the first entry shown: more than ITEM_MENU_MAX_ENTRIES (a bag of 16) scroll
 
         def draw(index: int, cursor_visible: bool) -> None:
-            nonlocal drawn_index, window_rect
+            nonlocal drawn_index, window_rect, first
             if index != drawn_index:
                 # Redraw the window to erase the cursor from the entry it left
-                window_rect = self.draw_item_menu(menu_name, entries)
+                first = first_shown_entry(index, first, len(entries))
+                window_rect = self.draw_item_menu(menu_name, entries, first)
                 drawn_index = index
             # The NES cursor (src/cursor.py): visible when the window opens (WndInitSelect)
             self.draw_window_cursor(ITEM_MENU_X, ITEM_MENU_Y[menu_name], ITEM_MENU_CURSOR_TILE_COLUMN,
-                                    item_menu_entry_tile_row(menu_name, index), cursor_visible)
+                                    item_menu_entry_tile_row(menu_name, index - first), cursor_visible)
             display.update(window_rect)
 
         # Up and down stop at the first and last entries; A chooses, with the menu button sound (WndAPressed), B
@@ -1641,11 +1645,13 @@ class CommandMenu:
             return Rect(x, y, nes_tile, nes_tile)
         return draw_cursor_tile(self.screen, x, y, config['TILE_SIZE'] // 16, self.color, visible)
 
-    def draw_item_menu(self, menu_name: str, entries: list) -> Rect:
+    def draw_item_menu(self, menu_name: str, entries: list, first: int = 0) -> Rect:
         """
         Draw the SPELL or ITEM window and its entries, without the cursor (NES SpellDat, PlayerInvDat).
         :param menu_name: 'spells', 'inventory' or 'discard'.
         :param entries: The spells or items to list, in order (for items, inventory_list).
+        :param first: The first entry shown, when there are more than the window shows (ITEM_MENU_MAX_ENTRIES: only
+            with a bag of 16); the window shows that many from it.
         :return: The window's rect on the screen.
         """
         config = self.game.game_state.config
@@ -1660,7 +1666,7 @@ class CommandMenu:
             draw_text(text, *self.window_text_position(x, y, column, row), self.screen, config, color=self.color,
                       letter_by_letter=False)
 
-        for index, entry in enumerate(entries):
+        for index, entry in enumerate(entries[first:first + ITEM_MENU_MAX_ENTRIES]):
             row = item_menu_entry_tile_row(menu_name, index)
             if menu_name == 'spells':
                 draw_in_window(self._(str(entry)), ITEM_MENU_TEXT_TILE_COLUMN, row)
