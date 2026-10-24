@@ -85,6 +85,9 @@ DEFAULT_AUTO_GRIND_STOP = 'RedHP'
 # MENU_SPEED (base_config, #440): NORMAL by default, the selection windows at 1x whatever the game speed
 # (src/waiting.py menu_ticks); a save without the setting loads as NORMAL
 DEFAULT_MENU_SPEED = MENU_SPEED_NORMAL
+# SMART_A (base_config): off by default, the NES, where A on the map always opens COMMAND; on, A does TALK, TAKE, DOOR
+# or STAIRS when one applies (Game.smart_command). A save without the setting loads as OFF.
+DEFAULT_SMART_A = False
 
 
 # ENCOUNTERS, EXP/GOLD and STATUS WINDOW's values
@@ -149,6 +152,9 @@ SWITCHES = (
     # BAG (#413): the inventory's slots for everything but Herbs and Magic Keys (src/items.py bag_slots): the NES's 8,
     # the default, or 16
     Switch('bag_size', 'BAG_SIZE', BAG_SIZE_SAVE_KEY, BAG_SIZES, DEFAULT_BAG_SIZE),
+    # SMART A (#404): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, instead of opening COMMAND
+    # (Game.smart_command); off, the NES and the default, A always opens COMMAND
+    Switch('smart_a', 'SMART_A', 'SmartA', (False, True), False),
 )
 
 # AUTOSAVE (base_config, src/autosave.py): OFF by default, which is the NES (it only saves with King Lorik); the MODERN
@@ -182,6 +188,7 @@ class Options:
     shop_preview: bool = True
     quest_journal: str = JOURNAL_GOALS
     bag_size: int = DEFAULT_BAG_SIZE
+    smart_a: bool = False
     autosave: bool | None = None  # None: the config's AUTOSAVE is kept
 
 
@@ -315,7 +322,8 @@ def apply_options(config: dict, options: Options) -> None:
     and the menu clock reads MENU_SPEED (src/waiting.py menu_speed). Each of the SWITCHES goes into its config key,
     which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once); the
     shops read SHOP_PREVIEW whenever their list opens, Q reads QUEST_JOURNAL each time it's pressed, Game.map_frame
-    reads AUTOSAVE every frame, and the inventory checks read BAG_SIZE for every item added."""
+    reads AUTOSAVE every frame, the inventory checks read BAG_SIZE for every item added, and Game.handle_a_button reads
+    SMART_A for every press."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way
