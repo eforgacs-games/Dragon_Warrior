@@ -311,19 +311,23 @@ class TestSlots(SaveStateTestCase):
         self.assertEqual(["State 3 is empty"], self.messages)
         self.assertEqual(before, comparable(take_snapshot(game)))
 
-    def test_old_version_is_refused(self):
+    def test_a_newer_or_unversioned_state_is_refused(self):
+        # States from 1.0 on (version 1 and up) migrate (tests/test_save_compatibility.py); one from before them, or
+        # from a newer build, can't be loaded
         game = self.game
         self.go_to(game, 'Brecconary')
-        game.save_state(1)
-        with open(state_path(self.save_dir, 1)) as state_file:
-            snapshot = json.load(state_file)
-        snapshot[VERSION_KEY] = STATE_FORMAT_VERSION - 1
-        with open(state_path(self.save_dir, 1), 'w') as state_file:
-            json.dump(snapshot, state_file)
-        game.player.gold = 77
-        game.load_state(1)
-        self.assertEqual("State 1 is from another version\nand can't be loaded", self.messages[-1])
-        self.assertEqual(77, game.player.gold)
+        for version in (0, None, STATE_FORMAT_VERSION + 1):
+            with self.subTest(version):
+                game.save_state(1)
+                with open(state_path(self.save_dir, 1)) as state_file:
+                    snapshot = json.load(state_file)
+                snapshot[VERSION_KEY] = version
+                with open(state_path(self.save_dir, 1), 'w') as state_file:
+                    json.dump(snapshot, state_file)
+                game.player.gold = 77
+                game.load_state(1)
+                self.assertEqual("State 1 is from another version\nand can't be loaded", self.messages[-1])
+                self.assertEqual(77, game.player.gold)
 
     def test_corrupt_files_are_refused(self):
         game = self.game

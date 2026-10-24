@@ -1,0 +1,35 @@
+{
+    "Name": "Erdrick",
+    "Experience": 26000,
+    "Gold": 3000,
+    "CurrentHP": 120,
+    "CurrentMP": 80,
+    "Weapon": "Flame Sword",
+    "Armor": "Magic Armor",
+    "Shield": "Large Shield",
+    "WearingDragonScale": true,
+    "WearingFightersRing": true,
+    "Inventory": [
+        "Dragon's Scale",
+        "Fighter's Ring",
+        "Gwaelin's Love",
+        "Rainbow Drop",
+        "Herb"
+    ],
+    "Spells": [
+        "HEAL",
+        "HURT",
+        "SLEEP",
+        "RADIANT",
+        "STOPSPELL",
+        "OUTSIDE",
+        "RETURN",
+        "REPEL",
+        "HEALMORE"
+    ],
+    "CurrentMap": "TantegelThroneRoom",
+    "PlayerRow": 10,
+    "PlayerColumn": 13,
+    "RainbowBridgeBuilt": true,
+    "CharlockStairsRevealed": false
+}

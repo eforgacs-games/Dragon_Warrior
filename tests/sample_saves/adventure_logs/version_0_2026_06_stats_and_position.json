@@ -1,0 +1,24 @@
+{
+    "Name": "Loto",
+    "Experience": 1100,
+    "Gold": 250,
+    "CurrentHP": 40,
+    "CurrentMP": 12,
+    "Weapon": "Copper Sword",
+    "Armor": "Chain Mail",
+    "Shield": "Small Shield",
+    "Inventory": [
+        "Torch",
+        "Magic Key",
+        "Wings",
+        "Dragon's Scale"
+    ],
+    "Spells": [
+        "HEAL",
+        "HURT",
+        "SLEEP"
+    ],
+    "CurrentMap": "TantegelThroneRoom",
+    "PlayerRow": 10,
+    "PlayerColumn": 13
+}

@@ -1,0 +1,10 @@
+{
+    "Name": "Ed",
+    "Experience": 7,
+    "Gold": 120,
+    "Inventory": [
+        "Torch",
+        "Herb",
+        "Herb"
+    ]
+}
