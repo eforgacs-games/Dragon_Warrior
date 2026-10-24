@@ -11,12 +11,12 @@ like every NES selection window: WndDoSelect, WndGetButtons and WndProcessInput 
 - WndAPressed returns WndSelResults, WndCalcSelResult's WndCol * 4 rows + WndRow (NCC_TALK $00 to NCC_TAKE $07);
   WndBPressed returns WND_ABORT. Both draw the arrow one last time (WndUpdateCrsrPos), so it stays on.
 """
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Collection, Iterable
 
-from pygame import KEYDOWN, K_DOWN, K_LEFT, K_RETURN, K_RIGHT, K_UP, K_a, K_d, K_k, K_s, K_w, key
+from pygame import KEYDOWN, key
 from pygame.event import Event
 
-from src.common import reject_keys
+from src.common import A_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, reject_keys
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, BlinkingCursor, SelectionButtons, first_button
 from src.windows import COMMAND_COLUMNS, COMMAND_ROWS
 from src.waiting import with_virtual_keys
@@ -26,13 +26,13 @@ WND_ABORT = 0xFF
 
 # The joypad on the keyboard. K is A, and Enter also chooses (it always has in this window). START (I) doesn't:
 # WndProcessInput skips it.
-COMMAND_WINDOW_BUTTON_KEYS: tuple[tuple[int, tuple[int, ...]], ...] = (
-    (IN_A, (K_k, K_RETURN)),
-    (IN_B, tuple(reject_keys)),
-    (IN_UP, (K_UP, K_w)),
-    (IN_DOWN, (K_DOWN, K_s)),
-    (IN_LEFT, (K_LEFT, K_a)),
-    (IN_RIGHT, (K_RIGHT, K_d)),
+COMMAND_WINDOW_BUTTON_KEYS: tuple[tuple[int, Collection[int]], ...] = (
+    (IN_A, A_BUTTON_KEYS),
+    (IN_B, reject_keys),
+    (IN_UP, UP_KEYS),
+    (IN_DOWN, DOWN_KEYS),
+    (IN_LEFT, LEFT_KEYS),
+    (IN_RIGHT, RIGHT_KEYS),
 )
 
 

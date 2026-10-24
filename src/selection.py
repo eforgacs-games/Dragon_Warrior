@@ -40,14 +40,14 @@ from src.waiting import handle_speed_key, menu_frame_in_game_frames, poll_virtua
     wait_frames, with_virtual_keys
 from src.zoom import handle_zoom_event
 
-ButtonKeys = tuple[tuple[int, tuple[int, ...]], ...]
+ButtonKeys = tuple[tuple[int, Collection[int]], ...]
 
 # The joypad on the keyboard, in WndProcessInput's order (A, B, up, down, left, right). A is K, and Enter chooses too,
 # as it always has in these windows; B is reject_keys, Escape included. START (I) and SELECT are no button: Bank01
 # WndProcessInput skips them, so they don't choose.
 SELECTION_KEYS: ButtonKeys = (
     (IN_A, A_BUTTON_KEYS),
-    (IN_B, tuple(reject_keys)),
+    (IN_B, reject_keys),
     (IN_UP, UP_KEYS),
     (IN_DOWN, DOWN_KEYS),
     (IN_LEFT, LEFT_KEYS),

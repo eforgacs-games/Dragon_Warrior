@@ -3,7 +3,8 @@
 They are the window zoom (Ctrl + / Ctrl -, src/zoom.py), fullscreen (F11, Game.handle_fullscreen_toggle), the game
 speed (keys 1 to 5, src/waiting.py), the language, the display filters, the view and the dungeon map (the options
 overlay's LANGUAGE, SCANLINES, SCALING, VIEW and DUNGEON MAP rows, src/options_overlay.py, src/display_filters.py,
-src/view.py and src/dungeon_map.py).
+src/view.py and src/dungeon_map.py), and the controls (the CONTROLS screen, src/controls_screen.py; "controls" is null
+until a key is changed).
 They belong to whoever plays on this computer, not to an adventure, so they are kept apart from the adventure logs
 (src/save_file.py), which carry the per-adventure options (message speed, dialog style and the rest).
 
@@ -11,7 +12,8 @@ The file is JSON, in the per-user config folder (src/paths.py user_config_dir), 
 ~/.config/dragon-warrior/settings.json:
 
     {"version": 1, "zoom": 3, "fullscreen": false, "game_speed": 1, "language": "Korean", "scanlines": false,
-     "scaling": "Smooth", "view": "NES", "dungeon_map": true}
+     "scaling": "Smooth", "view": "NES", "dungeon_map": true,
+     "controls": {"keys": {"A": ["k"], ...}, "pad": {"A": "b", ...}}}
 
 "zoom" and "language" can be null: the window opens at its normal size, and the language comes from the system locale
 (base_config language_from_locale). A saved language wins over the locale.
@@ -32,6 +34,7 @@ from dataclasses import asdict, dataclass, fields, replace
 from os.path import dirname, join
 from typing import Any
 
+from src.controls import Controls
 from src.display_filters import SCALING_MODES, SCALING_SMOOTH
 from src.paths import user_config_dir
 from src.view import VIEW_NES, VIEWS
@@ -56,6 +59,8 @@ class Settings:
     scaling: str = SCALING_SMOOTH  # src/display_filters.py SCALING_MODES
     view: str = VIEW_NES  # the VIEW row: src/view.py VIEWS
     dungeon_map: bool = True  # the DUNGEON MAP row: whether M shows the dungeon map (src/dungeon_map.py)
+    # The keys and controller buttons (src/controls.py Controls.to_json); None: the defaults
+    controls: dict[str, Any] | None = None
 
     def to_json(self) -> dict[str, Any]:
         return {'version': FORMAT_VERSION, **asdict(self)}
@@ -84,6 +89,9 @@ class Settings:
         values['view'] = view if view in VIEWS else default.view
         dungeon_map = data.get('dungeon_map')
         values['dungeon_map'] = dungeon_map if isinstance(dungeon_map, bool) else default.dungeon_map
+        controls = data.get('controls')
+        # Read back through Controls, so a bad entry is the default and the rest are kept (Controls.from_json)
+        values['controls'] = Controls.from_json(controls).to_json() if isinstance(controls, dict) else default.controls
         return cls(**values)
 
 
