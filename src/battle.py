@@ -306,13 +306,13 @@ class Battle:
             cmd_menu.show_line_in_dialog_box(
                 self._("Thy Response Speed increases by {}.\n").format(player.agility - old_stats["agility"]),
                 **BATTLE_LINE)
-        # NES TextBlock18 entries 0 and 1: PNTS prints "Point" for an increase of 1 (Bank01 DoPNTS)
-        if player.max_hp > old_stats["max_hp"]:
-            increase = player.max_hp - old_stats["max_hp"]
-            cmd_menu.wait_for_button(shows_arrow=True)
-            cmd_menu.show_line_in_dialog_box(
-                singular_or_plural(increase, self._("Thy Maximum Hit Point increase by {}.\n"),
-                                   self._("Thy Maximum Hit Points increase by {}.\n")).format(increase), **BATTLE_LINE)
+        # NES TextBlock18 entries 0 and 1: PNTS prints "Point" for an increase of 1 (Bank01 DoPNTS). ChkHPUp (LEAC8)
+        # doesn't check the increase ("Player's HP goes up every level"): the line is always printed, even for 0
+        increase = player.max_hp - old_stats["max_hp"]
+        cmd_menu.wait_for_button(shows_arrow=True)
+        cmd_menu.show_line_in_dialog_box(
+            singular_or_plural(increase, self._("Thy Maximum Hit Point increase by {}.\n"),
+                               self._("Thy Maximum Hit Points increase by {}.\n")).format(increase), **BATTLE_LINE)
         if player.max_mp > old_stats["max_mp"]:
             increase = player.max_mp - old_stats["max_mp"]
             cmd_menu.wait_for_button(shows_arrow=True)

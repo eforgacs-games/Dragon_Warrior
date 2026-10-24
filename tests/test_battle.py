@@ -102,6 +102,18 @@ class TestBattleMethods(unittest.TestCase):
         self.assertEqual([c.args[0] for c in cmd_menu.show_line_in_dialog_box.call_args_list],
                          ["Thy Maximum Hit Point increase by 1.\n", "Thy Maximum Magic Points increase by 2.\n"])
 
+    def test_the_max_hp_line_is_always_shown(self):
+        # NES ChkHPUp (LEAC8) doesn't check the increase: TB18E0 is printed on every level up, its WAIT first, even
+        # when the maximum Hit Points didn't go up (#429). The Magic Points line is checked (ChkMPUp's BEQ).
+        battle = Battle({**self.battle.config, 'LANGUAGE': 'English'}, self.enemy_name, self.current_map)
+        cmd_menu = Mock()
+        player = Mock(strength=4, agility=4, max_hp=15, max_mp=0, spells=[])
+        battle.display_stat_increases(cmd_menu, player, {"strength": 4, "agility": 4, "max_hp": 15, "max_mp": 0,
+                                                         "spells": []})
+        self.assertEqual([c.args[0] for c in cmd_menu.show_line_in_dialog_box.call_args_list],
+                         ["Thy Maximum Hit Points increase by 0.\n"])
+        cmd_menu.wait_for_button.assert_called_once_with(shows_arrow=True)
+
     def level_up(self, name, experience_before, experience_gained):
         from src.config.test_config import test_config
         from src.player.player import Player
