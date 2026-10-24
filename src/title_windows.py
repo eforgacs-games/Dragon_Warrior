@@ -12,7 +12,8 @@ from pygame import Surface
 
 from src.color import WHITE
 from src.translated_window import Translate, draw_translated_window
-from src.windows import CONTINUE_CHANGE_ERASE_LAYOUT, FULL_MENU_LAYOUT, NEW_QUEST_LAYOUT, WindowLayout
+from src.windows import CONTINUE_CHANGE_ERASE_LAYOUT, FULL_MENU_LAYOUT, NEW_QUEST_LAYOUT, WindowLayout, \
+    with_autosave_entry
 
 # An adventure log window's line (src/windows.py ADVENTURE_LOG_LINE, USED_ADVENTURE_LOG_LINE): the log's number, the
 # ":" of a used log and the hero's name after it
@@ -23,11 +24,14 @@ LOG_LINE = re.compile(r'ADVENTURE LOG (\d)(:?)(.*)', re.DOTALL)
 TitleWindow = tuple[WindowLayout, int | None, bool]
 
 
-def title_menu_layout(used_logs: int) -> WindowLayout:
-    """The title menu with this many adventure logs used (PreNoSaves, PreUnusedSaves, PreSavesUsed)."""
+def title_menu_layout(used_logs: int, autosave: bool = False) -> WindowLayout:
+    """The title menu with this many adventure logs used (PreNoSaves, PreUnusedSaves, PreSavesUsed), with CONTINUE
+    AUTOSAVE added at the bottom when there's an autosave (not NES, src/autosave.py)."""
     if used_logs == 0:
-        return NEW_QUEST_LAYOUT
-    return CONTINUE_CHANGE_ERASE_LAYOUT if used_logs >= 3 else FULL_MENU_LAYOUT
+        layout = NEW_QUEST_LAYOUT
+    else:
+        layout = CONTINUE_CHANGE_ERASE_LAYOUT if used_logs >= 3 else FULL_MENU_LAYOUT
+    return with_autosave_entry(layout) if autosave else layout
 
 
 def title_translate(_: Translate) -> Translate:
