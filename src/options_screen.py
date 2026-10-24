@@ -14,15 +14,18 @@ NES flow (Bank03):
 - A new quest (DoNewQuest -> NewQuest) shows the same window right after the name is entered, with the cursor on
   NORMAL (LF8D4: LDA #MSG_NORMAL), and InitNewGame saves the choice with the new log.
 
-What this game adds (none of it on the NES, so none of it asked here): the dialog style, NPCS MAKE WAY, the fade style
-and the stairs. They are changed during play, in the options overlay (src/options_overlay.py: SELECT or Tab on the
-map), and kept per adventure log beside the message speed (Options below). A new quest starts with their defaults.
+What this game adds (none of it on the NES, so none of it asked here): the dialog style, NPCS MAKE WAY, the fade style,
+the stairs, the grind stop and the switches for this game's other conveniences (SWITCHES: the music, the game speed
+keys, save states, rewind, auto-grind and the cheat keys). They are changed during play, in the options overlay
+(src/options_overlay.py: SELECT or Tab on the map), and kept per adventure log beside the message speed (Options
+below). A new quest starts with their defaults.
 
 The windows read the joypad like every NES selection window (src/cursor.py SelectionButtons, WndProcessInput): one
 button per press, up and down in a one-column window, left and right in a one-row window, stopping at the edges.
 """
 from dataclasses import dataclass
 from collections.abc import Callable, Iterable, Sequence
+from typing import Any
 
 from pygame import Rect, Surface, display
 
@@ -78,6 +81,47 @@ DEFAULT_MENU_SPEED = MENU_SPEED_NORMAL
 
 
 @dataclass(frozen=True, slots=True)
+class Switch:
+    """One of this game's conveniences, switched in the options overlay (#409, #437): the Options field, the config
+    key the game reads, the save file key, its values and its default (also what a save without it loads as). The
+    conveniences the game already had (the music, the key features, the Enter shortcut) default to how they were, so
+    nothing changes for a player who never opens the options; the NES preset (src/options_overlay.py) switches them all
+    to the NES. Options new with the overlay default to the NES."""
+    field_name: str
+    config_key: str
+    save_key: str
+    values: tuple[Any, ...]
+    default: Any
+
+    def valid(self, value: Any) -> Any:
+        """value if it's one of the values (a bool for an on/off switch, not 0 or 1), the default otherwise."""
+        if any(value == choice and type(value) is type(choice) for choice in self.values):
+            return value
+        return self.default
+
+
+SWITCHES = (
+    # MUSIC: the orchestral soundtrack (data/sound/music/orchestra) or the NES's (data/sound/music/NES). Orchestral by
+    # default, as the game has always started; the NES preset (src/options_overlay.py) picks the NES music
+    Switch('orchestra_music', 'ORCHESTRA_MUSIC_ENABLED', 'OrchestraMusic', (True, False), True),
+    # GAME SPEED: keys 1 to 5 set the game speed (src/waiting.py); off, they do nothing (the NES has one speed). This
+    # and the next five were there before the switches, so they default to on
+    Switch('game_speed_keys', 'GAME_SPEED_KEYS', 'GameSpeedKeys', (False, True), True),
+    # SAVE STATES: F1-F3 load and Shift+F1-F3 save a state; off, the keys do nothing
+    Switch('save_states', 'SAVE_STATES', 'SaveStates', (False, True), True),
+    # REWIND: Backspace rewinds; off, it does nothing
+    Switch('rewind', 'REWIND', 'Rewind', (False, True), True),
+    # AUTO-GRIND: G starts auto-grind (src/auto_grind.py); off, G does nothing
+    Switch('auto_grind', 'AUTO_GRIND', 'AutoGrind', (False, True), True),
+    # CHEATS: F4 auto-battle and F9 invulnerability; off, the keys do nothing and both are off
+    Switch('cheat_keys', 'CHEAT_KEYS', 'CheatKeys', (False, True), True),
+    # QUICK ACTION: Enter on the map takes a chest, opens a door or talks without the COMMAND window; off, Enter is
+    # the A button there too, as everywhere else
+    Switch('quick_action', 'QUICK_ACTION', 'QuickAction', (False, True), True),
+)
+
+
+@dataclass(frozen=True, slots=True)
 class Options:
     """The settings kept per adventure log."""
     message_speed: str = DEFAULT_MESSAGE_SPEED
@@ -87,6 +131,14 @@ class Options:
     auto_stairs: bool = DEFAULT_AUTO_STAIRS
     auto_grind_stop: str = DEFAULT_AUTO_GRIND_STOP
     menu_speed: str = DEFAULT_MENU_SPEED
+    # SWITCHES, each defaulting to its Switch.default
+    orchestra_music: bool = True
+    game_speed_keys: bool = True
+    save_states: bool = True
+    rewind: bool = True
+    auto_grind: bool = True
+    cheat_keys: bool = True
+    quick_action: bool = True
 
 
 # A new quest's settings when none are chosen: NewQuest's MSG_NORMAL, the NES dialog window, and base_config's
@@ -175,9 +227,11 @@ def menu_speed_from_save(save: dict) -> str:
 
 
 def options_from_save(save: dict) -> Options:
+    """The log's settings; each one a save from before it was kept doesn't have loads as its default."""
     return Options(message_speed_from_save(save), dialog_style_from_save(save), npcs_make_way_from_save(save),
                    fade_style_from_save(save), auto_stairs_from_save(save), auto_grind_stop_from_save(save),
-                   menu_speed_from_save(save))
+                   menu_speed_from_save(save),
+                   **{switch.field_name: switch.valid(save.get(switch.save_key)) for switch in SWITCHES})
 
 
 def options_to_save(options: Options) -> dict:
@@ -185,7 +239,8 @@ def options_to_save(options: Options) -> dict:
     return {MESSAGE_SPEED_SAVE_KEY: options.message_speed, DIALOG_STYLE_SAVE_KEY: options.dialog_style,
             NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way, FADE_STYLE_SAVE_KEY: options.fade_style,
             AUTO_STAIRS_SAVE_KEY: options.auto_stairs, AUTO_GRIND_STOP_SAVE_KEY: options.auto_grind_stop,
-            MENU_SPEED_SAVE_KEY: options.menu_speed}
+            MENU_SPEED_SAVE_KEY: options.menu_speed,
+            **{switch.save_key: getattr(options, switch.field_name) for switch in SWITCHES}}
 
 
 def options_from_config(config: dict) -> Options:
@@ -194,14 +249,16 @@ def options_from_config(config: dict) -> Options:
                    bool(config.get('NPCS_MAKE_WAY', DEFAULT_NPCS_MAKE_WAY)),
                    fade_style(config), bool(config.get('AUTO_STAIRS', DEFAULT_AUTO_STAIRS)),
                    auto_grind_stop_from_save({AUTO_GRIND_STOP_SAVE_KEY: config.get('AUTO_GRIND_STOP')}),
-                   menu_speed_from_save({MENU_SPEED_SAVE_KEY: config.get('MENU_SPEED')}))
+                   menu_speed_from_save({MENU_SPEED_SAVE_KEY: config.get('MENU_SPEED')}),
+                   **{switch.field_name: switch.valid(config.get(switch.config_key)) for switch in SWITCHES})
 
 
 def apply_options(config: dict, options: Options) -> None:
     """Use these settings from now on: the dialog code reads TEXT_SPEED and DIALOG_STYLE for every message, and
     MovementController.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump, screen_fade reads FADE_STYLE for every
     fade, MapManager.handle_warps reads AUTO_STAIRS for every step, auto-grind reads AUTO_GRIND_STOP for every check
-    and the menu clock reads MENU_SPEED (src/waiting.py menu_speed)."""
+    and the menu clock reads MENU_SPEED (src/waiting.py menu_speed). Each of the SWITCHES goes into its config key,
+    which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once)."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way
@@ -209,6 +266,8 @@ def apply_options(config: dict, options: Options) -> None:
     config['AUTO_STAIRS'] = options.auto_stairs
     config['AUTO_GRIND_STOP'] = options.auto_grind_stop
     config['MENU_SPEED'] = options.menu_speed
+    for switch in SWITCHES:
+        config[switch.config_key] = getattr(options, switch.field_name)
 
 
 class OptionWindow:

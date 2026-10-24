@@ -15,7 +15,7 @@ from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.game import Game
 from src.directories import Directories
-from src.options_overlay import OPTIONS_WINDOW, VALUE_COLUMN, options_layout
+from src.options_overlay import OPTION_PAGES, OPTION_ROWS, OPTIONS_WINDOW, VALUE_COLUMN, options_layout
 from src.options_screen import MESSAGE_SPEED_OPTIONS, OptionsScreen, adventure_log_options
 from src.text import NESFont, set_font_by_ascii_chars
 from src.translated_window import draw_translated_window
@@ -181,27 +181,33 @@ class TestKoreanOptionsScreen(KoreanTestCase):
         self.assertEqual(['표시 속도를', '어느 것으로', '하겠습니까?', '빠름', '보통', '느림'],
                          self.draw(MESSAGE_SPEED_OPTIONS))
 
-    def overlay_texts(self, config):
+    def overlay_texts(self, config, page=0):
         with patch('src.translated_window.draw_text') as draw_text:
-            draw_translated_window(self.game.screen, options_layout(config), (255, 255, 255), config, self.korean,
-                                   cursor_index=0)
+            draw_translated_window(self.game.screen, options_layout(config, page), (255, 255, 255), config,
+                                   self.korean, cursor_index=0)
         return self.drawn(draw_text)
 
     def test_options_overlay(self):
-        config = {**self.game.game_state.config, 'TEXT_SPEED': 'Fast', 'DIALOG_STYLE': 'Classic',
-                  'NPCS_MAKE_WAY': True, 'FADE_STYLE': 'NES', 'AUTO_STAIRS': True, 'AUTO_GRIND_STOP': 'RedHP',
-                  'MENU_SPEED': 'Normal', 'LANGUAGE': 'Korean', 'SCANLINES': False, 'SCALING': 'Smooth'}
-        self.assertEqual(['설정', '표시 속도', '빠름', '대화 방식', '클래식 (NES)', 'NPC가 길 비키기', '켜기',
-                          '페이드 방식', 'NES', '계단', '밟으면 이동', '사냥 멈춤', '빨간 HP', '메뉴 속도', '보통',
-                          '언어', '한국어', '주사선', '끄기', '화면 배율', '스무스'],
-                         [text for text, _, _ in self.overlay_texts(config)])
-        config.update(TEXT_SPEED='Slow', DIALOG_STYLE='Modern', NPCS_MAKE_WAY=False, FADE_STYLE='Smooth',
-                      AUTO_STAIRS=False, AUTO_GRIND_STOP='HalfHP', MENU_SPEED='FollowGameSpeed', LANGUAGE='English',
-                      SCANLINES=True, SCALING='PixelPerfect')
-        self.assertEqual(['설정', '표시 속도', '느림', '대화 방식', '모던', 'NPC가 길 비키기', '끄기 (NES)',
-                          '페이드 방식', '스무스', '계단', 'NES', '사냥 멈춤', 'HP 절반', '메뉴 속도', '게임 속도대로',
-                          '언어', 'ENGLISH', '주사선', '켜기', '화면 배율', '정수 배율'],
-                         [text for text, _, _ in self.overlay_texts(config)])
+        config = {**self.game.game_state.config, **{row.config_key: row.values[0] for row in OPTION_ROWS}}
+        self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/3', '표시 속도', '빠름', '대화 방식',
+                           '클래식 (NES)', '페이드 방식', 'NES', '음악', '오케스트라', '언어', 'ENGLISH', '주사선',
+                           '끄기', '화면 배율', '스무스'],
+                          ['게임 플레이', '프리셋', '커스텀', '페이지', '2/3', 'NPC가 길 비키기', '켜기', '계단',
+                           '밟으면 이동', '빠른 행동', '끄기 (NES)'],
+                          ['조작', '프리셋', '커스텀', '페이지', '3/3', '게임 속도', '끄기 (NES)', '상태 저장',
+                           '끄기 (NES)', '되감기', '끄기 (NES)', '자동 사냥', '끄기 (NES)', '사냥 멈춤', '빨간 HP',
+                           '메뉴 속도', '보통', '치트', '끄기 (NES)']],
+                         [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(3)])
+        config.update({row.config_key: row.values[1] for row in OPTION_ROWS})
+        self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/3', '표시 속도', '보통', '대화 방식', '모던',
+                           '페이드 방식', '스무스', '음악', 'NES', '언어', '한국어', '주사선', '켜기',
+                           '화면 배율', '정수 배율'],
+                          ['게임 플레이', '프리셋', '커스텀', '페이지', '2/3', 'NPC가 길 비키기', '끄기 (NES)', '계단',
+                           'NES', '빠른 행동', '켜기'],
+                          ['조작', '프리셋', '커스텀', '페이지', '3/3', '게임 속도', '켜기', '상태 저장', '켜기',
+                           '되감기', '켜기', '자동 사냥', '켜기', '사냥 멈춤', 'HP 절반', '메뉴 속도', '게임 속도대로',
+                           '치트', '켜기']],
+                         [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(3)])
 
     def test_a_translated_window_draws_every_line_in_one_font(self):
         # "NES" stays in English. Picked by its own characters it was drawn in the NES font, bigger than the Korean
@@ -217,21 +223,23 @@ class TestKoreanOptionsScreen(KoreanTestCase):
 
     def test_options_overlay_text_fits(self):
         # Each label ends before its value starts, and each value inside the window's right border, in the window's
-        # one font (Unifont)
+        # one font (Unifont), with every value of every row, on every page
         directories = Directories(test_config)
         right_border = (OPTIONS_WINDOW.x + OPTIONS_WINDOW.width) * 2 - 1
-        for overrides in ({'NPCS_MAKE_WAY': True, 'AUTO_STAIRS': True, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': 'Normal',
-                           'LANGUAGE': 'Korean'},
-                          {'NPCS_MAKE_WAY': False, 'AUTO_STAIRS': False, 'AUTO_GRIND_STOP': 'HalfHP',
-                           'MENU_SPEED': 'FollowGameSpeed', 'LANGUAGE': 'English', 'SCANLINES': True,
-                           'SCALING': 'PixelPerfect'},
-                          {'AUTO_GRIND_STOP': 'ThreeQuartersHP'}):
-            config = {**self.game.game_state.config, 'DIALOG_STYLE': 'Classic', 'FADE_STYLE': 'Smooth', **overrides}
-            for text, column, row in self.overlay_texts(config)[1:]:
-                width = set_font_by_ascii_chars(['설정'], 16, None, directories).size(text)[0] / self.nes_tile
-                end = OPTIONS_WINDOW.x * 2 + (VALUE_COLUMN - 1 if column < VALUE_COLUMN else right_border)
-                with self.subTest(text=text):
-                    self.assertLessEqual(column + width, end)
+        title_end = OPTIONS_WINDOW.x * 2 + OPTIONS_WINDOW.width * 2 - 1
+        font = set_font_by_ascii_chars(['설정'], 16, None, directories)
+        for choice in range(3):
+            config = {**self.game.game_state.config,
+                      **{row.config_key: row.values[choice % len(row.values)] for row in OPTION_ROWS}}
+            for page in range(len(OPTION_PAGES)):
+                title, *texts = self.overlay_texts(config, page)
+                with self.subTest(text=title[0]):
+                    self.assertLessEqual(title[1] + font.size(title[0])[0] / self.nes_tile, title_end)
+                for text, column, row in texts:
+                    width = font.size(text)[0] / self.nes_tile
+                    end = OPTIONS_WINDOW.x * 2 + (VALUE_COLUMN - 1 if column < VALUE_COLUMN else right_border)
+                    with self.subTest(text=text):
+                        self.assertLessEqual(column + width, end)
 
     def test_adventure_log_window(self):
         self.assertEqual(['모험의 서 1:ERDR', '모험의 서 3:LORA'],

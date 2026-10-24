@@ -313,6 +313,7 @@ class TestCommandsOnlyBetweenSteps(FreezeTestCase):
 
     def setUp(self):
         super().setUp()
+        self.enterContext(patch.dict(self.game.game_state.config, QUICK_ACTION=True))  # the Enter shortcut
         self.commands_used = []
         cmd_menu = self.game.cmd_menu
         for name in self.COMMANDS:

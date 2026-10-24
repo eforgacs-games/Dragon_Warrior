@@ -15,6 +15,9 @@ taken between two map frames, so putting one back and pressing the same keys pla
   hero's step, a hill's pause or a scripted fight might start a fight in this frame, and ``fight_starts`` keeps it).
   After the fight, rewinding reaches it first, unless a periodic one was taken since.
 
+It only runs with the options overlay's REWIND switch on (REWIND, off on the NES): off, no snapshot is taken and
+Backspace does nothing; switching it off drops the snapshots (Game.apply_option).
+
 Snapshots are small (no surfaces; see save_state), so 60 of them take a few hundred KB (tests/test_rewind.py
 measures them).
 """
@@ -46,6 +49,11 @@ class Rewind:
         self.position = 0
         self.shown_at = 0
 
+    @property
+    def enabled(self) -> bool:
+        """The REWIND switch (src/options_overlay.py)."""
+        return bool(self.game.game_state.config.get('REWIND'))
+
     def on_the_map(self) -> bool:
         """Whether the map is being played: nothing open, asked for or waiting, as when START would be accepted."""
         movement = self.game.movement
@@ -59,7 +67,7 @@ class Rewind:
 
     def before_frame(self) -> None:
         """At the start of a map frame: keep a snapshot if a fight may start in it."""
-        self.fight_candidate = take_snapshot(self.game) if self.fight_may_start() else None
+        self.fight_candidate = take_snapshot(self.game) if self.enabled and self.fight_may_start() else None
 
     def fight_may_start(self) -> bool:
         """Whether this map frame may start a fight: a scripted fight is waiting (Game.handle_battles), a hill's pause
@@ -85,7 +93,7 @@ class Rewind:
     def after_frame(self) -> None:
         """At the end of a map frame: count it, if the map was being played, and take a snapshot every
         REWIND_INTERVAL_FRAMES of them."""
-        if not self.on_the_map():
+        if not self.enabled or not self.on_the_map():
             return
         self.frames_since_snapshot += 1
         if self.frames_since_snapshot >= REWIND_INTERVAL_FRAMES:
@@ -95,7 +103,7 @@ class Rewind:
 
     def start(self) -> bool:
         """Backspace pressed on the map: put the newest snapshot back. Returns whether rewinding started."""
-        if self.active or not self.snapshots or not self.on_the_map():
+        if self.active or not self.enabled or not self.snapshots or not self.on_the_map():
             return False
         self.active = True
         self.show(len(self.snapshots) - 1)

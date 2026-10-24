@@ -125,8 +125,9 @@ K (A button): Open the command menu on the map; select a menu option
 
 J (B button): Close a menu or window, or answer NO
 
-Enter: Select a menu option, like K. On the map it's a shortcut instead of opening the command menu: it does TAKE
-when standing on a treasure chest, DOOR when facing a door, or TALK when facing someone
+Enter: Select a menu option, like K. With QUICK ACTION on (in the options), on the map it's a shortcut instead of
+opening the command menu: it does TAKE when standing on a treasure chest, DOOR when facing a door, or TALK when facing
+someone
 
 Esc: Close a menu or window, or answer NO, like J. Esc also cancels name entry
 
@@ -134,49 +135,67 @@ I (Start): Pause
 
 U (Select) or Tab: Open the options over the map, and close them again (J and Esc close them too). Up and down pick
 a setting; left, right or K change it, and the change applies at once. Each adventure log saves its own the next time
-you save with the king:
+you save with the king. Every convenience this game adds can be switched on or off on its own, with the NES behaviour
+as one of its values, and the settings are in three pages: PAGE (or I, Page Up and Page Down) turns the page.
+
+- PRESET: NES sets every setting below but the message speed to the NES's behaviour, MODERN to the recommended
+  conveniences. It shows CUSTOM once any setting differs from both, and choosing it again brings back your CUSTOM set.
+
+LOOK & SOUND:
 - MESSAGE SPEED: FAST, NORMAL or SLOW, the NES's own setting, which you also choose when you begin a quest or with
   CHANGE MESSAGE SPEED on the title menu
-
-The rest are settings this game adds, none of them on the NES:
 - DIALOG STYLE: CLASSIC (NES), the NES dialog window whose text scrolls, or MODERN, each message on a fresh window
-- NPCS MAKE WAY: ON, a townsperson you walk into steps aside, or OFF (NES), they stay in your way
 - FADE STYLE: NES, fades through the NES palette, or SMOOTH, a black fade
+- MUSIC: ORCHESTRA, the orchestral soundtrack, or NES, the NES music
+
+GAMEPLAY:
+- NPCS MAKE WAY: ON, a townsperson you walk into steps aside, or OFF (NES), they stay in your way
 - STAIRS: STEP ON, stepping onto stairs takes them, or NES, only the STAIRS command does
+- QUICK ACTION: ON, Enter on the map takes, opens a door or talks (see Enter), or OFF (NES), Enter is K there too
+
+CONTROLS (off, which is the NES, their keys do nothing):
+- GAME SPEED: keys 1 to 5
+- SAVE STATES: F1 to F3 and Shift+F1 to F3
+- REWIND: Backspace
+- AUTO-GRIND: G
 - GRIND STOP: when auto-grind (G) stops: RED HP, the NES's low HP where the windows turn red (HP at or below a quarter
   of the maximum, plus 1), HALF HP or 3/4 HP
 - MENU SPEED: NORMAL, the menus' cursor (its blink and how fast a held direction or button repeats) stays at normal
   speed whatever the game speed, or FOLLOW GAME, it speeds up with the game as everything else does
+- CHEATS: F4 auto-battle and F9 invulnerability (off in both presets)
 
 H: Show the controls
 
-G: Auto-grind, not on the NES. On a map with random fights, the hero walks back and forth between his tile and a safe
+G: Auto-grind (with AUTO-GRIND on), not on the NES. On a map with random fights, the hero walks back and forth between his tile and a safe
 one next to it and chooses FIGHT in every fight, moving every message on by itself, until a decision is yours: HP at
 or below the GRIND STOP setting (checked at the start of every turn, so you get the battle's command window to HEAL
 or RUN, and after every fight and step), the hero asleep or STOPSPELLed, a guardian or the Dragonlord, or a level up
 (press G to go on). G or any other key stops it too; 1 to 5 still change the game speed. F4 auto-battle is ignored
 while it runs.
 
-F4 / F9 / F11: Turn auto-battle, invulnerability or fullscreen on or off
+F4 / F9: Turn auto-battle or invulnerability on or off (with CHEATS on)
 
-Shift + F1 / F2 / F3: Save state 1, 2 or 3, and F1 / F2 / F3: load it. Not on the NES: a save state is like an
-emulator's, a complete snapshot of the game that loading puts back exactly (the map and where everyone stands, the
-hero, every story flag, the opened doors and chests, the timers, the NPCs' movement and the random number generator,
-so the same keys play out the same way again). It works on the map whenever START would pause the game, once the hero
+F11: Turn fullscreen on or off
+
+Shift + F1 / F2 / F3: Save state 1, 2 or 3, and F1 / F2 / F3: load it, with SAVE STATES on. Not on the NES: a save
+state is like an emulator's, a complete snapshot of the game that loading puts back exactly (the map and where everyone
+stands, the hero, every story flag, the opened doors and chests, the timers, the NPCs' movement and the random number
+generator, so the same keys play out the same way again). It works on the map whenever START would pause the game, once the hero
 has finished his step; not in a fight, a dialog or a menu. States are kept in the save folder as `state_1.json` to
 `state_3.json`, apart from the adventure logs, which save as the NES does. A state saved by an older version of the
 game, after its format has changed, is refused with a message. The game speed, auto-battle, invulnerability and
 fullscreen aren't part of a state.
 
-Backspace (hold): Rewind, not on the NES. On the map, the game keeps a snapshot like a save state's every 30 frames
+Backspace (hold): Rewind, with REWIND on. Not on the NES. On the map, the game keeps a snapshot like a save state's every 30 frames
 (the last 60, about 30 seconds at normal speed) and one just before every fight. Holding Backspace steps back through
 them, a few frames apart; let go and play goes on from the one on screen (the ones after it are forgotten). It works
 when START would pause the game, not in a fight, a dialog or a menu; after a fight, rewinding goes back to just before
 it. The snapshots are only kept in memory, for this session.
 
-1 / 2 / 3 / 4 / 5: Game speed (normal, 2x, 4x, 8x, 16x). This works anywhere, including battles, dialogs and
-menus, and speeds up everything: walking, text, battle effects and pauses. The menus' cursor keeps normal speed, so
-choosing doesn't overshoot, unless MENU SPEED (in the options) is FOLLOW GAME. On the map the higher speeds go as fast as
+1 / 2 / 3 / 4 / 5: Game speed (normal, 2x, 4x, 8x, 16x), with GAME SPEED on. This works anywhere, including battles,
+dialogs and menus, and speeds up everything: walking, text, battle effects and pauses. The menus' cursor keeps normal
+speed, so choosing doesn't overshoot, unless MENU SPEED (in the options) is FOLLOW GAME. On the map the higher speeds go
+as fast as
 the computer can draw it, up to the speed you chose. Only timing changes, not what happens in
 the game. Music and sound effects play at normal speed. The speed lasts until you close the game and isn't saved.
 

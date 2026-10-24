@@ -2636,3 +2636,58 @@ msgstr "메뉴 속도"
 #: src/options_overlay.py
 msgid "FOLLOW GAME"
 msgstr "게임 속도대로"
+#: src/options_overlay.py
+msgid "LOOK & SOUND"
+msgstr "화면과 소리"
+
+#: src/options_overlay.py
+msgid "GAMEPLAY"
+msgstr "게임 플레이"
+
+#: src/options_overlay.py
+msgid "CONTROLS"
+msgstr "조작"
+
+#: src/options_overlay.py
+msgid "PRESET"
+msgstr "프리셋"
+
+#: src/options_overlay.py
+msgid "CUSTOM"
+msgstr "커스텀"
+
+#: src/options_overlay.py
+msgid "PAGE"
+msgstr "페이지"
+
+#: src/options_overlay.py
+msgid "MUSIC"
+msgstr "음악"
+
+#: src/options_overlay.py
+msgid "ORCHESTRA"
+msgstr "오케스트라"
+
+#: src/options_overlay.py
+msgid "QUICK ACTION"
+msgstr "빠른 행동"
+
+#: src/options_overlay.py
+msgid "GAME SPEED"
+msgstr "게임 속도"
+
+#: src/options_overlay.py
+msgid "SAVE STATES"
+msgstr "상태 저장"
+
+#: src/options_overlay.py
+msgid "REWIND"
+msgstr "되감기"
+
+#: src/options_overlay.py
+msgid "AUTO-GRIND"
+msgstr "자동 사냥"
+
+#: src/options_overlay.py
+msgid "CHEATS"
+msgstr "치트"
