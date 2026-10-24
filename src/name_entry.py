@@ -38,9 +38,14 @@ END = 'END'
 
 class NameEntry:
     """What WndEnterName keeps track of: the 8 characters of the name (TempBuffer), where the next one goes
-    (WndNameIndex), and the alphabet window's cursor (WndRow and WndCol)."""
+    (WndNameIndex), and the alphabet window's cursor (WndRow and WndCol).
 
-    def __init__(self) -> None:
+    With confirm (the CONFIRM NAME option, not NES), the 8th character doesn't end the name: the cursor goes to END
+    and the name waits there, so BACK can still change it, until END is chosen (or START, src/menu_functions.py)."""
+
+    def __init__(self, confirm: bool = False) -> None:
+        self.confirm = confirm
+        self.done = False  # END chosen (with confirm, a full name isn't done until then)
         # None is a character never entered, still showing its placeholder; InitNameWindow fills TempBuffer with
         # blank tiles, so it is a blank in the name
         self.characters: list[str | None] = [None] * NAME_LENGTH
@@ -55,8 +60,9 @@ class NameEntry:
 
     @property
     def finished(self) -> bool:
-        """WndMaxNameLength: the name is done once the index reaches 8, after END or the 8th character."""
-        return self.index >= NAME_LENGTH
+        """WndMaxNameLength: the name is done once the index reaches 8, after END or the 8th character. With confirm,
+        only END ends it."""
+        return self.done or (not self.confirm and self.index >= NAME_LENGTH)
 
     @property
     def cursor_index(self) -> int:
@@ -138,9 +144,11 @@ class NameEntry:
 
     def enter(self, character: str) -> None:
         """WndUpdateName: the character replaces the one at the index, which moves on to the next one."""
-        if not self.finished:
+        if not self.finished and self.index < NAME_LENGTH:
             self.characters[self.index] = character
             self.index += 1
+            if self.confirm and self.index == NAME_LENGTH:
+                self.move_to_end()  # the name is full: the cursor waits on END
 
     def back(self) -> None:
         """WndDoBackspace (B or BACK): only the index moves back. The character stays in the name and on the screen
@@ -158,6 +166,7 @@ class NameEntry:
     def end(self) -> None:
         """END: LAE6B sets the index to 8."""
         self.index = NAME_LENGTH
+        self.done = True
 
 
 def window_origin(window: Window) -> tuple[int, int]:
@@ -201,7 +210,7 @@ def render_name_entry_screen(entry: NameEntry, color: tuple, nes_pixel: int, cur
         pattern = TL_NAME_PLACEHOLDER if character is None else glyph_tile(character)
         screen.blit(tile_surface(pattern, color, nes_pixel),
                     ((name_column + NAME_FIRST_TILE_COLUMN + slot) * tile, (name_row + NAME_TILE_ROW) * tile))
-    if not entry.finished:
+    if not entry.finished and entry.index < NAME_LENGTH:
         screen.blit(tile_surface(TL_TOP1, color, nes_pixel), ((name_column + NAME_FIRST_TILE_COLUMN + entry.index) * tile,
                                                               (name_row + NAME_UNDERSCORE_TILE_ROW) * tile))
     if cursor_visible is not None:
