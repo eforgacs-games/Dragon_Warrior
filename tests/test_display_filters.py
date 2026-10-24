@@ -267,7 +267,8 @@ class TestOverlayRows(TestCase):
         self.assertEqual(SCALING_PIXEL_PERFECT, PRESENTER.scaling)
         self.assertEqual(SCALING_PIXEL_PERFECT, load_settings(self.path).scaling)
         texts = [text.text for text in options_layout(game.config).texts]
-        self.assertEqual(["SCALING", "PIXEL PERFECT"], texts[texts.index("SCALING"):texts.index("SCALING") + 2])
+        start = texts.index("SCALING")
+        self.assertEqual(["SCALING", "PIXEL PERFECT"], texts[start:start + 2])
 
     def test_saved_filters_are_on_at_start(self):
         save_settings(self.path, Settings(scanlines=True, scaling=SCALING_PIXEL_PERFECT))
