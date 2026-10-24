@@ -8,9 +8,9 @@ A controller doesn't get a code path of its own: it presses keyboard keys. Every
   (``check_devices``, which only compares ``pygame.joystick.get_count()`` when nothing changed, so with no controller
   a poll costs one call);
 - reads its state (``PadState``: the buttons down, named the way SDL's GameController API names them, and the left
-  stick) and turns it into the keys it stands for (``pad_keys``): the NES buttons' first keys (A is K, B is J, START
-  is I, SELECT is U), the arrows, one direction at a time, and the keys of the extra buttons (``EXTRA_BUTTONS``: F1,
-  Shift+F1 and Backspace for the save states and rewind);
+  stick) and turns it into the keys it stands for (``pad_keys``): each button presses the first key of the action
+  it's bound to (src/controls.py: by default A is K, B is J, START is I, SELECT is U, and F1, Shift+F1 and Backspace
+  for the save states and rewind), and the D-pad or the stick the first key of one direction at a time;
 - posts a KEYDOWN for every key that went down since the last poll and a KEYUP for every one let go, and keeps the
   keys down in ``held``, which ``with_virtual_keys`` adds to the keyboard state.
 
@@ -29,9 +29,9 @@ from collections.abc import Iterable
 from typing import Any, NamedTuple, Protocol
 
 import pygame
-from pygame import KEYDOWN, KEYUP, KMOD_LSHIFT, K_BACKSPACE, K_DOWN, K_F1, K_LEFT, K_RIGHT, K_UP, K_m
+from pygame import KEYDOWN, KEYUP, K_DOWN, K_LEFT, K_RIGHT, K_UP
 
-from src import common
+from src import controls
 from src.waiting import SPEED_KEYS, game_speed, set_game_speed, set_gamepad, speed_keys_enabled
 
 # SDL names the face buttons by where they are on an Xbox pad, whatever the pad's labels say ('a' bottom, 'b' right,
@@ -42,40 +42,41 @@ os.environ.setdefault('SDL_GAMECONTROLLER_USE_BUTTON_LABELS', '0')
 # Set on the events the gamepad posts
 GAMEPAD = 'gamepad'
 
-# The NES joypad's buttons (what a pad button stands for)
-NES_A, NES_B, NES_START, NES_SELECT = 'A', 'B', 'START', 'SELECT'
+# The D-pad's directions (the NES joypad's, src/controls.py actions)
 UP, DOWN, LEFT, RIGHT = 'UP', 'DOWN', 'LEFT', 'RIGHT'
 
-# NES A and B are laid out the Nintendo way, by position: A is the right face button, B the bottom one (on an Xbox
-# pad, A is the B button and B is the A button). For the Xbox labels instead, swap these two.
-NES_A_PAD_BUTTON = 'b'  # right face button
-NES_B_PAD_BUTTON = 'a'  # bottom face button
+# Which pad button does what is the player's (src/controls.py, the CONTROLS screen's PAD column). By default NES A and
+# B are laid out the Nintendo way, by position: A is the right face button ('b'), B the bottom one ('a'); START is
+# Start, SELECT is Back, the D-pad is the D-pad, the right trigger steps through the game speeds, the left and right
+# shoulder buttons load and save state 1 (F1, Shift+F1) and the left trigger, held, rewinds (Backspace). A button
+# presses its action's first key, with its modifiers, for as long as it's held: the save states read the KEYDOWN's
+# modifiers, and the rewind runs from the KEYDOWN until the KEYUP. An action with no key has nothing to press.
+DIRECTIONS = (UP, DOWN, LEFT, RIGHT)
+# The action that steps through the game speeds (1x, 2x, 4x, 8x, 16x, then 1x again), done by the gamepad itself
+NEXT_SPEED = 'NEXT_SPEED'
 
-# Pad button (SDL GameController name) -> NES button
-BUTTON_MAP: dict[str, str] = {
-    NES_A_PAD_BUTTON: NES_A,
-    NES_B_PAD_BUTTON: NES_B,
-    'start': NES_START,
-    'back': NES_SELECT,
-}
-# The D-pad, in the order the NES reads it when two are down (CheckJoyUp ...: up wins over down, down over left, left
-# over right, as on the keyboard, src/movement.py)
-D_PAD: tuple[tuple[str, str], ...] = (('dpup', UP), ('dpdown', DOWN), ('dpleft', LEFT), ('dpright', RIGHT))
 
-# Pressing it steps through the game speeds (the keys 1 to 5: 1x, 2x, 4x, 8x, 16x, then 1x again), with the options
-# overlay's GAME SPEED on, as the keys are
-SPEED_PAD_BUTTON = 'righttrigger'
+def d_pad() -> tuple[tuple[str, str], ...]:
+    """The D-pad's buttons, in the order the NES reads them when two are down (CheckJoyUp ...: up wins over down, down
+    over left, left over right, as on the keyboard, src/movement.py)."""
+    pad = controls.current_controls().pad
+    return tuple((button, direction) for direction in DIRECTIONS if (button := pad.get(direction)))
 
-# The buttons left over, for what the keyboard has beyond the NES pad: pad button -> (key, modifiers) it presses, held
-# for as long as the button is. The save states (src/save_state.py, Game.handle_save_state_keys) read the KEYDOWN's
-# modifiers, and the rewind (src/rewind.py) runs from Backspace's KEYDOWN until its KEYUP, so the posted events are
-# all they need.
-EXTRA_BUTTONS: dict[str, tuple[int, int] | None] = {
-    'leftshoulder': (K_F1, 0),  # load state 1 (F1)
-    'rightshoulder': (K_F1, KMOD_LSHIFT),  # save state 1 (Shift+F1)
-    'lefttrigger': (K_BACKSPACE, 0),  # rewind, while held (Backspace held)
-    'y': (K_m, 0),  # the top face button: the dungeon map on a dark floor (M, src/dungeon_map.py)
-}
+
+def button_bindings(buttons: Iterable[str]) -> dict[int, int]:
+    """The key (and its modifiers) each action of these pad buttons presses: its first key."""
+    pressed: dict[int, int] = {}
+    held = set(buttons)
+    pad = controls.current_controls().pad
+    for action in controls.ACTIONS:
+        button = pad.get(action.name)
+        if action.name in DIRECTIONS or action.name == NEXT_SPEED or button is None or button not in held:
+            continue
+        binding = controls.first_binding(action.name)
+        if binding is not None:
+            pressed.setdefault(binding.key, binding.mod)
+    return pressed
+
 
 # The left stick: pushed past STICK_PRESS it presses a direction, and it lets go once back under STICK_RELEASE, so a
 # stick resting near the edge doesn't flicker. The NES has no diagonals: the axis pushed furthest wins, and the
@@ -84,16 +85,18 @@ EXTRA_BUTTONS: dict[str, tuple[int, int] | None] = {
 STICK_PRESS = 0.5
 STICK_RELEASE = 0.35
 AXIS_SWITCH_MARGIN = 0.15
+POLL_WAIT_MS = 10  # how often read_button looks at the pad
 # How far a trigger is pulled before it counts as pressed
 TRIGGER_PRESS = 0.5
 
 
-def nes_keys() -> dict[str, int]:
-    """The key each NES button presses: the first key of each button (src/common.py), read when pressed, so a remap
-    of the keys carries over."""
-    return {NES_A: common.A_BUTTON_KEYS[0], NES_B: common.B_BUTTON_KEYS[0],
-            NES_START: common.START_BUTTON_KEYS[0], NES_SELECT: common.SELECT_BUTTON_KEYS[0],
-            UP: K_UP, DOWN: K_DOWN, LEFT: K_LEFT, RIGHT: K_RIGHT}
+def direction_key(direction: str) -> int:
+    """The key a direction presses: its first key (an NES direction always has one, src/controls.py)."""
+    binding = controls.first_binding(direction)
+    return binding.key if binding is not None else DEFAULT_DIRECTION_KEYS[direction]
+
+
+DEFAULT_DIRECTION_KEYS = {UP: K_UP, DOWN: K_DOWN, LEFT: K_LEFT, RIGHT: K_RIGHT}
 
 
 class PadState(NamedTuple):
@@ -122,7 +125,7 @@ def stick_direction(stick_x: float, stick_y: float, previous: str | None) -> str
 
 def pad_direction(state: PadState, previous: str | None) -> str | None:
     """The one direction the pad presses: the D-pad's if it is pressed (NES order), else the left stick's."""
-    for pad_button, direction in D_PAD:
+    for pad_button, direction in d_pad():
         if pad_button in state.buttons:
             return direction
     return stick_direction(state.stick_x, state.stick_y, previous)
@@ -217,27 +220,51 @@ class Gamepad:
             self.press(set())
             return
         self.direction = pad_direction(state, self.direction)
-        speed_pressed = SPEED_PAD_BUTTON in state.buttons
+        speed_button = controls.current_controls().pad.get(NEXT_SPEED)
+        speed_pressed = speed_button is not None and speed_button in state.buttons
         if speed_pressed and not self.speed_pressed and speed_keys_enabled():
             set_game_speed(next_speed())
         self.speed_pressed = speed_pressed
-        self.press(self.pad_keys(state), self.extra_modifiers(state.buttons))
+        bindings = button_bindings(state.buttons)
+        self.press(self.pad_keys(state, bindings), bindings)
 
-    def pad_keys(self, state: PadState) -> set[int]:
-        """The keys the pad holds down: its NES buttons', its one direction's and the extra buttons'."""
-        keys_by_button = nes_keys()
-        keys = {keys_by_button[button] for pad_button, button in BUTTON_MAP.items() if pad_button in state.buttons}
+    def pad_keys(self, state: PadState, bindings: dict[int, int] | None = None) -> set[int]:
+        """The keys the pad holds down: its buttons' actions' and its one direction's."""
+        keys = set(button_bindings(state.buttons) if bindings is None else bindings)
         if self.direction is not None:
-            keys.add(keys_by_button[self.direction])
-        keys.update(extra[0] for pad_button, extra in EXTRA_BUTTONS.items()
-                    if extra is not None and pad_button in state.buttons)
+            keys.add(direction_key(self.direction))
         return keys
 
-    @staticmethod
-    def extra_modifiers(buttons: Iterable[str]) -> dict[int, int]:
-        """The modifiers (Shift ...) the extra buttons down press their keys with."""
-        return {extra[0]: extra[1] for pad_button, extra in EXTRA_BUTTONS.items()
-                if extra is not None and pad_button in buttons}
+    def read_button(self, timeout_ms: int) -> str | None:
+        """The next pad button pressed within ``timeout_ms`` (a D-pad button or a trigger counts; the stick doesn't),
+        for the CONTROLS screen. Nothing is pressed for the game meanwhile, and the button is waited out (up to
+        timeout_ms more), so it doesn't also press its key once the screen reads the pad again."""
+        if self.device is None:
+            return None
+        self.polling = True
+        try:
+            baseline = set(self.device.read().buttons)
+            deadline = pygame.time.get_ticks() + timeout_ms
+            chosen: str | None = None
+            while chosen is None and pygame.time.get_ticks() < deadline and self.device.attached():
+                pygame.time.wait(POLL_WAIT_MS)
+                pygame.event.pump()
+                buttons = self.device.read().buttons
+                new = sorted(set(buttons) - baseline)
+                if new:
+                    chosen = new[0]
+                baseline &= set(buttons)  # a button let go can be pressed again
+            release_by = pygame.time.get_ticks() + timeout_ms
+            while chosen is not None and chosen in self.device.read().buttons and pygame.time.get_ticks() < release_by:
+                pygame.time.wait(POLL_WAIT_MS)
+                pygame.event.pump()
+            # Whatever is still held stays held without a new press when polling goes on
+            state = self.device.read()
+            self.direction = pad_direction(state, self.direction)
+            self.held = self.pad_keys(state)
+            return chosen
+        finally:
+            self.polling = False
 
     def press(self, keys: set[int], modifiers: dict[int, int] | None = None) -> None:
         """Hold ``keys`` and nothing else: post a KEYUP for each held key not in them, then a KEYDOWN for each new
@@ -389,4 +416,6 @@ def connect_gamepad() -> Gamepad:
     if _gamepad is None:
         _gamepad = Gamepad(SdlBackend())
     _gamepad.connect()
+    gamepad = _gamepad
+    controls.set_pad_reader(gamepad.read_button, lambda: gamepad.device is not None)
     return _gamepad

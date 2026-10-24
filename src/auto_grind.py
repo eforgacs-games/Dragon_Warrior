@@ -24,10 +24,12 @@ It stops, with the menu button sound and a message saying why, and hands the gam
 from enum import Enum
 
 from pygame import K_CAPSLOCK, K_LALT, K_LCTRL, K_LGUI, K_LSHIFT, K_MODE, K_NUMLOCK, K_RALT, K_RCTRL, K_RGUI, \
-    K_RSHIFT, K_g, K_k, KMOD_CTRL
+    K_RSHIFT, KMOD_CTRL
 from pygame.event import Event
 
 from src.color import is_low_hp
+from src.common import A_BUTTON_KEYS, D_PAD_KEYS
+from src.controls import KeySet, first_binding
 from src.coordinates import Cell
 from src.encounters import encounter_group
 from src.guardians import guardian_at
@@ -42,8 +44,7 @@ from src.waiting import MAP_CONTEXT, SPEED_KEYS
 # HP <= max HP * 3 / 4.
 GRIND_STOP_RED_HP, GRIND_STOP_HALF_HP, GRIND_STOP_THREE_QUARTERS_HP = AUTO_GRIND_STOP_VALUES
 
-AUTO_GRIND_KEYS = (K_g,)
-A_KEY = K_k
+AUTO_GRIND_KEYS = KeySet('AUTO_GRIND')  # G, unless the player has bound it elsewhere (src/controls.py)
 TAP_HOLD_FRAMES = 2  # an A tap is held this long
 TAP_PERIOD_FRAMES = 8  # and one starts this often
 # Keys that don't count as "any key": the modifiers on their own (Ctrl for the zoom keys, say)
@@ -52,11 +53,21 @@ MODIFIER_KEYS = frozenset((K_LSHIFT, K_RSHIFT, K_LCTRL, K_RCTRL, K_LALT, K_RALT,
 
 # The hero never paces onto these: they hurt (swamp, force field) or take him off the map (stairs)
 UNSAFE_TILES = frozenset(('MARSH', 'BARRIER', 'BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN'))
-# The key for each direction (the first of its keys) and every direction key
-WALK_KEYS = {direction: keys[0] for direction, keys in DIRECTION_KEYS}
-ALL_DIRECTION_KEYS = frozenset(direction_key for _direction, keys in DIRECTION_KEYS for direction_key in keys)
+# Every direction key, as bound now
+ALL_DIRECTION_KEYS = D_PAD_KEYS
 # The order the partner tile is looked for in, after the direction the hero faces
 PARTNER_ORDER = tuple(direction for direction, _keys in DIRECTION_KEYS)
+
+
+def a_key() -> int:
+    """The key auto-grind taps for A: the A button's first key (src/controls.py)."""
+    binding = first_binding('A')
+    return binding.key if binding is not None else A_BUTTON_KEYS[0]
+
+
+def walk_key_for(direction: int) -> int:
+    """The key auto-grind holds to walk this way: the direction's first key."""
+    return next(keys[0] for walking, keys in DIRECTION_KEYS if walking == direction)
 
 
 def at_grind_stop_hp(current_hp: int, max_hp: int, setting: str | None) -> bool:
@@ -277,7 +288,7 @@ class AutoGrind:
         else:
             joypad.release_all(ALL_DIRECTION_KEYS & joypad.held)
             if joypad.now >= self.next_tap_frame:
-                joypad.tap(A_KEY, TAP_HOLD_FRAMES)
+                joypad.tap(a_key(), TAP_HOLD_FRAMES)
                 self.next_tap_frame = joypad.now + TAP_PERIOD_FRAMES
 
     def walk(self, joypad: VirtualJoypad) -> None:
@@ -301,7 +312,7 @@ class AutoGrind:
         if direction is None:
             self.stop(StopReason.INTERRUPTED, show_now=False)
             return
-        walk_key = WALK_KEYS[direction]
+        walk_key = walk_key_for(direction)
         joypad.release_all(ALL_DIRECTION_KEYS - {walk_key})
         joypad.hold(walk_key)
 
