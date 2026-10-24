@@ -40,6 +40,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
                                              src/waiting.py menu_ticks)
     CHEATS         OFF (NES) / ON           (CHEAT_KEYS: F4 auto-battle, F9 invulnerability)
     RUN BUTTON     OFF (NES) / ON           (RUN_BUTTON: hold B to walk twice as fast, src/movement.py)
+    DUNGEON MAP    OFF (NES) / ON           (DUNGEON_MAP: whether M shows the dungeon map, src/dungeon_map.py; global)
 
 Above every page's rows are two more:
 
@@ -59,10 +60,11 @@ Up and down move the NES cursor (src/cursor.py) between the rows, stopping at th
 change the row's value, with the menu button sound. A change goes into the game config at once, so the next dialog,
 fade, bump, step or key press uses it (Game.apply_option does what can't wait for that: the music, the game speed and
 the cheats), and is saved with the adventure log the next time the game is saved (options_from_config). LANGUAGE,
-SCANLINES, SCALING and VIEW are the player's, not the adventure's, kept in the global settings file: Game.apply_option
-switches the game to the new language at once (Game.set_language), this window included, and the display filters from
-the next frame on; the VIEW is shown once the overlay closes (Game.set_view). B, Esc, SELECT or Tab close it, and the
-map frame is put back exactly as it was. Everything is on the NES buttons, so a gamepad works it as the keyboard does.
+SCANLINES, SCALING, VIEW and DUNGEON MAP are the player's, not the adventure's, kept in the global settings file:
+Game.apply_option switches the game to the new language at once (Game.set_language), this window included, the display
+filters from the next frame on, and DUNGEON MAP from the next M; the VIEW is shown once the overlay closes
+(Game.set_view). B, Esc, SELECT or Tab close it, and the map frame is put back exactly as it was. Everything is on the
+NES buttons, so a gamepad works it as the keyboard does.
 
 The overlay runs its own loop, so nothing else runs while it's open: the map, the NPCs, the timers and the pop-up
 window wait, as they do for a dialog.
@@ -195,6 +197,8 @@ OPTION_PAGES = (
         # F4 and F9 are cheats, not conveniences: off in both presets
         switch_row("CHEATS", 'CHEAT_KEYS', modern=False),
         switch_row("RUN BUTTON", 'RUN_BUTTON'),
+        # The player's, kept in the global settings (src/settings.py): M shows the dark floor's map (src/dungeon_map.py)
+        switch_row("DUNGEON MAP", 'DUNGEON_MAP'),
     )),
 )
 OPTION_ROWS = tuple(row for page in OPTION_PAGES for row in page.rows)

@@ -69,6 +69,8 @@ class MovementGame(Protocol):
     options_requested: bool
     # G: auto-grind (src/auto_grind.py), which starts at the same moment as the pause
     auto_grind_requested: bool
+    # M: the dungeon map (src/dungeon_map.py), which opens at the same moment as the pause
+    dungeon_map_requested: bool
     cmd_menu_requested: bool
     # Shift + F1/F2/F3 or F1/F2/F3: a save state to save or load (Game.handle_save_state_keys), and once it's due
     state_request: tuple[str, int] | None
@@ -77,6 +79,8 @@ class MovementGame(Protocol):
     def count_step(self) -> None: ...
 
     def open_options(self) -> None: ...
+
+    def open_dungeon_map(self) -> None: ...
 
     def start_auto_grind(self) -> None: ...
 
@@ -177,6 +181,7 @@ class MovementController:
     def freeze_pending(self) -> bool:
         return (self.game.pause_requested or self.game.options_requested or self.game.cmd_menu_requested
                 or getattr(self.game, 'auto_grind_requested', False) is True
+                or getattr(self.game, 'dungeon_map_requested', False) is True
                 or getattr(self.game, 'state_request', None) is not None
                 or getattr(self.game, 'state_request_due', None) is not None)
 
@@ -224,6 +229,10 @@ class MovementController:
         if self.game.options_requested:
             self.game.options_requested = False
             self.game.open_options()
+            return
+        if getattr(self.game, 'dungeon_map_requested', False) is True:
+            self.game.dungeon_map_requested = False
+            self.game.open_dungeon_map()
             return
         if getattr(self.game, 'auto_grind_requested', False) is True:
             self.game.auto_grind_requested = False

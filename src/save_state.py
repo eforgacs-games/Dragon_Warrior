@@ -40,6 +40,7 @@ from typing import Any
 from pygame import Rect
 
 from src.camera import Camera
+from src.dungeon_map import DungeonMap
 from src.items import TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import CharlockB1, map_lookup
@@ -229,6 +230,8 @@ def take_snapshot(game: Any) -> dict[str, Any]:
         'pop_up_window': game.drawer.display_hovering_stats,
         'options': options_to_save(options_from_config(game.game_state.config)),
         'random': encode_random_state(random.getstate()),
+        # What the hero has seen of each dark floor (src/dungeon_map.py)
+        'dungeon_map': game.dungeon_map.to_save() if hasattr(game, 'dungeon_map') else {},
     }
 
 
@@ -299,6 +302,8 @@ def decode_snapshot(snapshot: Any) -> dict[str, Any]:
             'pop_up_window': bool(snapshot['pop_up_window']),
             'options': options_from_save(dict(snapshot['options'])),
             'random': decode_random_state(snapshot['random']),
+            # a state saved before the dungeon map has none: every floor unexplored
+            'dungeon_map': DungeonMap.from_save(snapshot.get('dungeon_map', {})),
         }
         if len(decoded['chest_history']) != len(TreasureChestHistory().slots) or len(decoded['camera']) != 2 \
                 or len(decoded['color']) != 3:
@@ -391,6 +396,7 @@ def _restore_values(game: Any, state: dict[str, Any]) -> None:
     number generator."""
     player = game.player
     hero = state['hero']
+    game.dungeon_map = state['dungeon_map'].copy()  # a copy: the rewind can put the same snapshot back again
     for name in (*PLAYER_VALUES, *PLAYER_CELLS):
         setattr(player, name, hero[name])
     for name in PLAYER_LISTS:
