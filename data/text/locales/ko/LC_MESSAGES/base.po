@@ -2743,3 +2743,142 @@ msgstr "공격력"
 #: src/shop_preview.py
 msgid "DEFENSE"
 msgstr "수비력"
+#: data/text/intro_lookup_table.py
+msgid "Q: Quest Journal"
+msgstr "Q: 모험 일지"
+
+#: src/options_overlay.py
+msgid "QUEST JOURNAL"
+msgstr "모험 일지"
+
+#: src/options_overlay.py
+msgid "GOALS"
+msgstr "목표"
+
+#: src/options_overlay.py
+msgid "HINTS"
+msgstr "힌트"
+
+#: src/quest_journal.py
+msgid "If thou wishest:"
+msgstr "원한다면:"
+
+#: src/quest_journal.py
+msgid "Rescue Princess Gwaelin."
+msgstr "로라 공주를 구출하자."
+
+#: src/quest_journal.py
+msgid "She is held in the Swamp Cave, south of Kol, behind a locked door. A dragon guards her."
+msgstr "마이라 남쪽 늪지 동굴의 잠긴 문 너머에 갇혀 있다. 드래곤이 지키고 있다."
+
+#: src/quest_journal.py
+msgid "Carry Princess Gwaelin back to King Lorik."
+msgstr "로라 공주를 로릭 왕에게 데려가자."
+
+#: src/quest_journal.py
+msgid "King Lorik waits in Tantegel Castle."
+msgstr "로릭 왕은 라다톰 성에서 기다리고 있다."
+
+#: src/quest_journal.py
+msgid "Get a Magic Key."
+msgstr "열쇠를 구하자."
+
+#: src/quest_journal.py
+msgid "Magic Keys are sold in Tantegel Castle, Rimuldar and Cantlin."
+msgstr "열쇠는 라다톰 성, 리무르다, 메르키드에서 판다."
+
+#: src/quest_journal.py
+msgid "Find the Silver Harp."
+msgstr "은 하프를 찾자."
+
+#: src/quest_journal.py
+msgid "It lies deep in Garin's Grave. The way down is behind a locked door in Garinham."
+msgstr "가라이의 무덤 깊은 곳에 있다. 무덤으로 내려가는 길은 가라이 마을의 잠긴 문 너머에 있다."
+
+#: src/quest_journal.py
+msgid "Take the Silver Harp to the old man in the shrine."
+msgstr "은 하프를 성소의 노인에게 가져가자."
+
+#: src/quest_journal.py
+msgid "The shrine is north and west of Kol. He gives the Staff of Rain for the harp."
+msgstr "성소는 마이라 북서쪽에 있다. 노인은 하프를 받고 비구름 지팡이를 준다."
+
+#: src/quest_journal.py
+msgid "Find the Stones of Sunlight."
+msgstr "태양의 돌을 찾자."
+
+#: src/quest_journal.py
+msgid "They are in the cellar of Tantegel Castle, behind a locked door."
+msgstr "라다톰 성 지하실의 잠긴 문 너머에 있다."
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Token."
+msgstr "로토의 증표를 찾자."
+
+#: src/quest_journal.py
+msgid "From Tantegel Castle travel 70 leagues to the south and 40 to the east, and search."
+msgstr "라다톰 성에서 남쪽으로 70, 동쪽으로 40만큼 가서 발밑을 조사하자."
+
+#: src/quest_journal.py
+msgid "Take the Stones of Sunlight, the Staff of Rain and Erdrick's Token to the old man in the shrine."
+msgstr "태양의 돌, 비구름 지팡이, 로토의 증표를 성소의 노인에게 가져가자."
+
+#: src/quest_journal.py
+msgid "The shrine is far to the south of Rimuldar. He gives the Rainbow Drop."
+msgstr "성소는 리무르다 훨씬 남쪽에 있다. 노인은 무지개 방울을 준다."
+
+#: src/quest_journal.py
+msgid "Use the Rainbow Drop to make a bridge to Charlock."
+msgstr "무지개 방울로 용왕의 성까지 다리를 놓자."
+
+#: src/quest_journal.py
+msgid "Hold it up at the water's edge east of Charlock, on the western shore of Rimuldar's land."
+msgstr "용왕의 성 동쪽, 리무르다가 있는 땅의 서쪽 물가에서 치켜들자."
+
+#: src/quest_journal.py
+msgid "Find the hidden way down in Charlock."
+msgstr "용왕의 성에서 숨겨진 아래로 가는 길을 찾자."
+
+#: src/quest_journal.py
+msgid "Search behind the Dragonlord's throne."
+msgstr "용왕의 옥좌 뒤를 조사하자."
+
+#: src/quest_journal.py
+msgid "Defeat the Dragonlord."
+msgstr "용왕을 물리치자."
+
+#: src/quest_journal.py
+msgid "He waits in the deepest part of Charlock."
+msgstr "용왕은 용왕의 성 가장 깊은 곳에서 기다리고 있다."
+
+#: src/quest_journal.py
+msgid "Return to King Lorik."
+msgstr "로릭 왕에게 돌아가자."
+
+#: src/quest_journal.py
+msgid "Tantegel Castle awaits thy return."
+msgstr "라다톰 성이 그대의 귀환을 기다리고 있다."
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Armor."
+msgstr "로토의 갑옷을 찾자."
+
+#: src/quest_journal.py
+msgid "It is hidden in the ruins of Hauksness, far to the south. Beware its guardian."
+msgstr "저 멀리 남쪽, 폐허가 된 도무도라에 숨겨져 있다. 지키는 자를 조심하자."
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Sword."
+msgstr "로토의 검을 찾자."
+
+#: src/quest_journal.py
+msgid "It lies deep within Charlock."
+msgstr "용왕의 성 깊은 곳에 있다."
+
+#: src/quest_journal.py
+msgid "Defeat the Golem guarding Cantlin."
+msgstr "메르키드를 지키는 골렘을 물리치자."
+
+#: src/quest_journal.py
+msgid "Golem fears the music of the flute. The Fairy Flute is in Kol, four steps south of the bath."
+msgstr "골렘은 피리 소리를 무서워한다. 요정의 피리는 마이라의 온천에서 남쪽으로 네 걸음 간 곳에 있다."
