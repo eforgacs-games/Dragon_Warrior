@@ -346,6 +346,17 @@ class TestHandleBattles(unittest.TestCase):
         _, run_battle = self.fight_roll()
         run_battle.assert_not_called()
 
+    def test_the_first_step_after_a_map_change_rolls(self):
+        # NES: every step onto a block runs CheckBlockDmg, the first one on a new map included, even when the old map
+        # was left after exactly one step (the step count was 1 there and is 1 again after this step, #395)
+        self.step_onto('GarinsGraveB2', 3, 12)
+        _, run_battle = self.fight_roll()
+        run_battle.assert_called_once()
+        self.step_onto('CharlockB1', 25, 17)
+        self.assertEqual(self.game.tiles_moved_since_spawn, 1)
+        _, run_battle = self.fight_roll()
+        run_battle.assert_called_once_with(ENEMY_GROUPS[0x10])
+
     def test_charlock_ground_floor_has_fights(self):
         self.step_onto('CharlockB1', 25, 17)
         _, run_battle = self.fight_roll()

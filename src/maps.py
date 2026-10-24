@@ -56,6 +56,26 @@ TILESET_COLUMNS = 11  # tiles to a row in tileset.png
 # Which way each stairs tile goes (GRASS_STAIR_DOWN is the overworld shrine entrance)
 STAIR_DIRECTIONS = {BRICK_STAIR_DOWN: 'down', BRICK_STAIR_UP: 'up', GRASS_STAIR_DOWN: 'down'}
 
+# NES MapDatTbl (Bank00): each map's boundary block, the block GetBlockID gives for every block off the map
+# (TrgtOutOfBounds, BoundsChkEnd LABDF; on the overworld, the water just past the edge gets its shore first). The NES
+# draws it out to the edge of the screen (Drawer.draw_boundary). The layouts are padded with it too. Every map not
+# listed here has $10, stone (this project's WALL): Tantegel's cellar and all the caves and dungeons, the Magic Temple
+# and the Staff of Rain cave included.
+MAP_BOUNDARY_TILES = {
+    'Alefgard': 'WATER',  # map $01: $0F, water
+    'CharlockB1': 'MARSH',  # map $02: $06, swamp
+    'Hauksness': 'SAND',  # map $03: $01, sand
+    'TantegelCourtyard': 'GRASS',  # map $04: $00, grass
+    'TantegelThroneRoom': 'ROOF',  # map $05: $15, BLK_SML_TILES (this project's ROOF)
+    'CharlockB8': 'WATER',  # map $06: $0F, water
+    'Kol': 'TREES',  # map $07: $0B, trees
+    'Brecconary': 'GRASS',  # map $08: $00, grass
+    'Garinham': 'GRASS',  # map $09: $00, grass
+    'Cantlin': 'BRICK',  # map $0A: $04, brick
+    'Rimuldar': 'GRASS',  # map $0B: $00, grass
+}
+DEFAULT_BOUNDARY_TILE = 'WALL'  # $10, stone
+
 
 class DragonWarriorMap:
     # Where the NES map (MapDatTbl, Bank00) is in this layout, which pads it: the layout (row, column) of NES (0, 0)
@@ -244,6 +264,11 @@ class DragonWarriorMap:
     def exclude_npc(self, name: str) -> None:
         """Leave an NPC out of the ones load_map places."""
         self.npcs = [npc for npc in self.npcs if npc.name != name]
+
+    @property
+    def boundary_tile(self) -> str:
+        """The map's boundary block (MAP_BOUNDARY_TILES), drawn everywhere off the layout."""
+        return MAP_BOUNDARY_TILES.get(self.identifier, DEFAULT_BOUNDARY_TILE)
 
     def get_tile_by_value(self, position: int) -> str:
         """Returns the tile name from the integer value associated with it."""
