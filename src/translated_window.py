@@ -66,6 +66,7 @@ def draw_translated_window(screen: Surface, layout: WindowLayout, color: tuple, 
             width = window_font.size(translated)[0]
             left = x - width if alignment == 'right' else x
             screen.fill(BLACK, (left - scale, window_row * nes_tile, width + 2 * scale, nes_tile))
+        # One line at its tile: never wrapped, however long (draw_text wraps at WRAP_LENGTH characters by default)
         draw_text(translated, x, y, screen, config, color=color, alignment=alignment, letter_by_letter=False,
-                  text_font=window_font)
+                  text_font=window_font, text_wrap_length=max(1, len(translated)))
     return rect

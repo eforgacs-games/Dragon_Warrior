@@ -30,6 +30,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     QUEST JOURNAL  OFF (NES) / GOALS / HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
     AUTOSAVE       OFF (NES) / ON           (AUTOSAVE: the autosave slot, src/autosave.py)
     BAG            NES (8) / 16             (BAG_SIZE: the inventory slots, src/items.py bag_slots)
+    RUN BUTTON     OFF (NES) / ON           (RUN_BUTTON: hold B to walk twice as fast, src/movement.py)
 
     CONTROLS
     GAME SPEED     OFF (NES) / ON           (GAME_SPEED_KEYS: keys 1 to 5, src/waiting.py)
@@ -40,8 +41,8 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     MENU SPEED     NORMAL / FOLLOW GAME     (MENU_SPEED: the selection windows at 1x, or at the game speed,
                                              src/waiting.py menu_ticks)
     CHEATS         OFF (NES) / ON           (CHEAT_KEYS: F4 auto-battle, F9 invulnerability)
-    RUN BUTTON     OFF (NES) / ON           (RUN_BUTTON: hold B to walk twice as fast, src/movement.py)
     DUNGEON MAP    OFF (NES) / ON           (DUNGEON_MAP: whether M shows the dungeon map, src/dungeon_map.py; global)
+    MESSAGE LOG    OFF (NES) / ON           (MESSAGE_LOG: the L key shows the last messages, src/message_log.py)
     CONTROLS                                (A opens the CONTROLS screen to rebind the keys, src/controls_screen.py)
 
 Above every page's rows are two more:
@@ -202,6 +203,8 @@ OPTION_PAGES = (
         switch_row("AUTOSAVE", 'AUTOSAVE'),
         # The inventory slots (src/items.py bag_slots): the NES's 8, or 16 in the MODERN preset
         OptionRow("BAG", 'BAG_SIZE', BAG_SIZES, ("NES (8)", "16"), (INVENTORY_SLOTS, BIG_BAG_SLOTS)),
+        # Walking (MovementController.run_button_held): on this page, as CONTROLS is full
+        switch_row("RUN BUTTON", 'RUN_BUTTON'),
     )),
     OptionPage("CONTROLS", (
         switch_row("GAME SPEED", 'GAME_SPEED_KEYS'),
@@ -215,9 +218,10 @@ OPTION_PAGES = (
                   (MENU_SPEED_NORMAL, MENU_SPEED_NORMAL)),
         # F4 and F9 are cheats, not conveniences: off in both presets
         switch_row("CHEATS", 'CHEAT_KEYS', modern=False),
-        switch_row("RUN BUTTON", 'RUN_BUTTON'),
         # The player's, kept in the global settings (src/settings.py): M shows the dark floor's map (src/dungeon_map.py)
         switch_row("DUNGEON MAP", 'DUNGEON_MAP'),
+        # The MESSAGE LOG key (L) on the map shows the last messages (src/message_log.py)
+        switch_row("MESSAGE LOG", 'MESSAGE_LOG'),
         # A opens the CONTROLS screen to rebind the keys (src/controls_screen.py)
         CONTROLS_ROW,
     )),
