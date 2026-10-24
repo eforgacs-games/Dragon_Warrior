@@ -68,11 +68,15 @@ class MovementGame(Protocol):
     pause_requested: bool
     # SELECT or Tab: the options overlay, which waits for the same moment as the pause
     options_requested: bool
+    # The MESSAGE LOG key: the message log, which waits for the same moment as the pause
+    message_log_requested: bool
     # G: auto-grind (src/auto_grind.py), which starts at the same moment as the pause
     auto_grind_requested: bool
     # M: the dungeon map (src/dungeon_map.py), which opens at the same moment as the pause
     dungeon_map_requested: bool
     cmd_menu_requested: bool
+    # A with SMART A on: run_smart_command when the COMMAND window would open
+    smart_a_pending: bool
     # Shift + F1/F2/F3 or F1/F2/F3: a save state to save or load (Game.handle_save_state_keys), and once it's due
     state_request: tuple[str, int] | None
     state_request_due: tuple[str, int] | None
@@ -82,8 +86,11 @@ class MovementGame(Protocol):
     def open_options(self) -> None: ...
 
     def open_dungeon_map(self) -> None: ...
+    def open_message_log(self) -> None: ...
 
     def start_auto_grind(self) -> None: ...
+
+    def run_smart_command(self) -> bool: ...
 
     def roll_for_fight(self, column: int, row: int, tile: str | None) -> None: ...
 
@@ -181,6 +188,7 @@ class MovementController:
     @property
     def freeze_pending(self) -> bool:
         return (self.game.pause_requested or self.game.options_requested or self.game.cmd_menu_requested
+                or getattr(self.game, 'message_log_requested', False) is True
                 or getattr(self.game, 'auto_grind_requested', False) is True
                 or getattr(self.game, 'dungeon_map_requested', False) is True
                 or getattr(self.game, 'state_request', None) is not None
@@ -234,6 +242,9 @@ class MovementController:
         if getattr(self.game, 'dungeon_map_requested', False) is True:
             self.game.dungeon_map_requested = False
             self.game.open_dungeon_map()
+        if getattr(self.game, 'message_log_requested', False) is True:
+            self.game.message_log_requested = False
+            self.game.open_message_log()
             return
         if getattr(self.game, 'auto_grind_requested', False) is True:
             self.game.auto_grind_requested = False
@@ -247,6 +258,11 @@ class MovementController:
         if getattr(self.game, 'state_request_due', None) is not None:
             return
         self.game.cmd_menu_requested = False
+        if getattr(self.game, 'smart_a_pending', False) is True:
+            # SMART A (Game.handle_a_button): the command that applies here runs instead of the COMMAND window
+            self.game.smart_a_pending = False
+            if self.game.run_smart_command():
+                return
         self.game.drawer.display_hovering_stats = True
         self.game.cmd_menu.launch_signaled = True
         self.game_state.pause_all_movement()
