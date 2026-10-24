@@ -16,9 +16,9 @@ NES flow (Bank03):
 
 What this game adds (none of it on the NES, so none of it asked here): the dialog style, NPCS MAKE WAY, the fade style,
 the stairs, the grind stop and the switches for this game's other conveniences (SWITCHES: the music, the game speed
-keys, save states, rewind, auto-grind, the cheat keys and the shop preview). They are changed during play, in the
-options overlay (src/options_overlay.py: SELECT or Tab on the map), and kept per adventure log beside the message
-speed (Options below). A new quest starts with their defaults.
+keys, save states, rewind, auto-grind, the cheat keys, the shop preview and the quest journal). They are changed
+during play, in the options overlay (src/options_overlay.py: SELECT or Tab on the map), and kept per adventure log
+beside the message speed (Options below). A new quest starts with their defaults.
 
 The windows read the joypad like every NES selection window (src/cursor.py SelectionButtons, WndProcessInput): one
 button per press, up and down in a one-column window, left and right in a one-row window, stopping at the edges.
@@ -33,6 +33,7 @@ from src.color import BLACK, WHITE
 from src.command_window import COMMAND_WINDOW_BUTTON_KEYS
 from src.common import Graphics, set_gettext_language
 from src.directories import Directories
+from src.quest_journal import JOURNAL_GOALS, JOURNAL_SETTINGS
 from src.cursor import IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, draw_cursor_tile
 from src.selection import run_selection
 from src.sound import Sound
@@ -136,6 +137,9 @@ SWITCHES = (
     # SHOP PREVIEW (#401): a weapon and armor shop's list shows the attack or defense power the highlighted item would
     # give (src/shop_preview.py). On by default, since it only shows information; off is the NES
     Switch('shop_preview', 'SHOP_PREVIEW', 'ShopPreview', (False, True), True),
+    # QUEST JOURNAL (#410): what Q shows on the map (src/quest_journal.py): nothing (the NES), the goals, or the goals
+    # with where to go. GOALS by default, since it only shows information when Q is pressed
+    Switch('quest_journal', 'QUEST_JOURNAL', 'QuestJournal', JOURNAL_SETTINGS, JOURNAL_GOALS),
 )
 
 
@@ -162,6 +166,7 @@ class Options:
     run_button: bool = False
     status_window: str = STATUS_WINDOW_NES
     shop_preview: bool = True
+    quest_journal: str = JOURNAL_GOALS
 
 
 # A new quest's settings when none are chosen: NewQuest's MSG_NORMAL, the NES dialog window, and base_config's
@@ -282,7 +287,7 @@ def apply_options(config: dict, options: Options) -> None:
     fade, MapManager.handle_warps reads AUTO_STAIRS for every step, auto-grind reads AUTO_GRIND_STOP for every check
     and the menu clock reads MENU_SPEED (src/waiting.py menu_speed). Each of the SWITCHES goes into its config key,
     which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once); the
-    shops read SHOP_PREVIEW whenever their list opens."""
+    shops read SHOP_PREVIEW whenever their list opens, and Q reads QUEST_JOURNAL each time it's pressed."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way

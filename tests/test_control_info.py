@@ -28,8 +28,8 @@ class TestControlInfoHelpPages(TestCase):
         return ControlInfo({**test_config, 'DEBUG_KEYS': debug_keys, 'LANGUAGE': language}).help_pages
 
     def test_page_count(self):
-        self.assertEqual(7, len(self.help_pages(debug_keys=False)))
-        self.assertEqual(8, len(self.help_pages(debug_keys=True)))
+        self.assertEqual(8, len(self.help_pages(debug_keys=False)))
+        self.assertEqual(9, len(self.help_pages(debug_keys=True)))
 
     def test_every_control_is_on_a_page(self):
         for debug_keys in (False, True):

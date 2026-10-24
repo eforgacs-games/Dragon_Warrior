@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 
-from pygame import FULLSCREEN, K_h, K_i, K_k, RESIZABLE, display, event, image, init, K_F1, K_F2, K_F3, K_F4, K_F9, \
+from pygame import FULLSCREEN, K_h, K_i, K_k, K_q, RESIZABLE, display, event, image, init, K_F1, K_F2, K_F3, K_F4, K_F9, \
     K_F11, K_BACKSPACE, KEYDOWN, KEYUP, KMOD_SHIFT, SCALED, K_RETURN, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
@@ -45,6 +45,7 @@ from src.music_player import MusicPlayer
 from src.npc_movement import step
 from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
 from src.options_screen import ENCOUNTERS_HALF, ENCOUNTERS_OFF, apply_options
+from src.quest_journal import JOURNAL_HINTS, JOURNAL_OFF, game_progress, journal_pages
 from src.rewind import Rewind
 from src.save_file import SaveFile
 from src.save_state import OLD_VERSION, StateError, read_state, restore_snapshot, take_snapshot, write_state
@@ -850,6 +851,7 @@ class Game:
         self.handle_select_button(current_keydown_event)
         self.handle_auto_grind_key(current_keydown_event)
         self.handle_help_button(current_keydown_event)
+        self.handle_quest_journal_key(current_keydown_event)
         self.handle_enter_key(current_keydown_event)
         self.handle_fps_changes(current_keydown_event)
         self.handle_fullscreen_toggle(current_keydown_event)
@@ -867,6 +869,18 @@ class Game:
             control_info = ControlInfo(self.config)
             # one page per group of keys, so nothing runs past the bottom of the dialog box
             self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
+
+    def handle_quest_journal_key(self, keydown_event) -> None:
+        """Q: the quest journal (src/quest_journal.py), not NES: one dialog box page per open goal, with where to go
+        if QUEST JOURNAL is set to HINTS. With it OFF (the NES), Q does nothing."""
+        if keydown_event.key != K_q:
+            return
+        setting = self.config.get('QUEST_JOURNAL', JOURNAL_OFF)
+        if setting == JOURNAL_OFF:
+            return
+        pages = journal_pages(game_progress(self), hints=setting == JOURNAL_HINTS, _=self._)
+        if pages:
+            self.cmd_menu.show_text_in_dialog_box(pages)
 
     def handle_a_button(self, keydown_event):
         # Enter is the A button on the map too unless QUICK ACTION is on (handle_enter_key)
