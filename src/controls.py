@@ -91,6 +91,10 @@ ACTIONS: tuple[Action, ...] = (
     # Tab: the options overlay, like SELECT (src/options_overlay.py)
     _extra('OPTIONS', "OPTIONS", ('TAB',), modifiers=False),
     _extra('HELP', "HELP", ('h',)),
+    # Q: the quest journal (src/quest_journal.py)
+    _extra('QUEST_JOURNAL', "JOURNAL", ('q',)),
+    # M, or the pad's top face button: the dungeon map on a dark floor (src/dungeon_map.py)
+    _extra('MAP', "MAP", ('m',), 'y'),
     _extra('AUTO_GRIND', "AUTO GRIND", ('g',)),
     _extra('AUTO_BATTLE', "AUTO FIGHT", ('F4',)),
     _extra('INVULNERABLE', "INVINCIBLE", ('F9',)),

@@ -11,8 +11,8 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
 from pygame import K_1, K_2, K_3, K_4, K_5, K_DELETE, K_DOWN, K_ESCAPE, K_F1, K_F2, K_F4, K_F9, K_F11, K_LEFT, \
-    K_LSHIFT, K_RETURN, K_RIGHT, K_TAB, K_UP, K_a, K_d, K_g, K_h, K_i, K_j, K_k, K_l, K_p, K_s, K_u, K_w, KEYDOWN, \
-    KEYUP, KMOD_LSHIFT, KMOD_SHIFT
+    K_LSHIFT, K_RETURN, K_RIGHT, K_TAB, K_UP, K_a, K_d, K_g, K_h, K_i, K_j, K_k, K_l, K_m, K_p, K_q, K_s, K_u, \
+    K_w, KEYDOWN, KEYUP, KMOD_LSHIFT, KMOD_SHIFT
 from pygame.event import Event
 
 from data.text.intro_lookup_table import ControlInfo
@@ -72,7 +72,8 @@ class TestDefaults(ControlsTestCase):
 
     def test_the_extra_actions(self):
         expected = {'SMART_A': K_RETURN, 'OPTIONS': K_TAB, 'HELP': K_h, 'AUTO_GRIND': K_g, 'AUTO_BATTLE': K_F4,
-                    'INVULNERABLE': K_F9, 'FULLSCREEN': K_F11, 'LOAD_STATE_1': K_F1, 'LOAD_STATE_2': K_F2}
+                    'INVULNERABLE': K_F9, 'FULLSCREEN': K_F11, 'LOAD_STATE_1': K_F1, 'LOAD_STATE_2': K_F2,
+                    'QUEST_JOURNAL': K_q, 'MAP': K_m}
         for name, expected_key in expected.items():
             with self.subTest(name):
                 self.assertEqual([name], actions_for_event(key(expected_key)))
@@ -99,6 +100,11 @@ class TestDefaults(ControlsTestCase):
         self.assertEqual('righttrigger', pad['NEXT_SPEED'])
         self.assertEqual(('leftshoulder', 'rightshoulder', 'lefttrigger'),
                          (pad['LOAD_STATE_1'], pad['SAVE_STATE_1'], pad['REWIND']))
+        self.assertEqual('y', pad['MAP'])  # the top face button: the dungeon map (#408)
+
+    def test_no_two_default_pad_buttons_clash(self):
+        buttons = [button for button in Controls.defaults().pad.values() if button is not None]
+        self.assertEqual(len(buttons), len(set(buttons)), buttons)
 
 
 class TestModifiers(ControlsTestCase):
