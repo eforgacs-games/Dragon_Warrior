@@ -1,7 +1,6 @@
 """Auto-grind (src/auto_grind.py): G on the map, driven by the virtual joypad (src/virtual_joypad.py). Not NES."""
 import os
 import random
-import time
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock, patch
 
@@ -252,9 +251,12 @@ class TestPacing(GrindTestCase):
         def count_step():
             cells.append(self.grind.hero_cell())
             real_count_step()
+        clock = helpers.fake_game_clock()
         with patch.object(self.game, 'count_step', side_effect=count_step):
-            deadline = time.monotonic() + 20
-            while len(cells) < 6 and time.monotonic() < deadline:
+            for _ in range(1000):  # 6 steps of 16 frames, and the turns between them
+                if len(cells) >= 6:
+                    break
+                clock.advance_frames()
                 self.game.run_due_frames()
         self.assertEqual([(51, 44), GRASS] * 3, cells[:6])
         self.assertTrue(self.grind.active)
@@ -569,7 +571,8 @@ class TestHeadlessGrind(GrindTestCase):
 
     def test_fights_until_hp_is_low_and_hands_over_the_command_window(self):
         random.seed(1)
-        set_game_speed(8)
+        # Game time, one NES frame per pass of the main loop: the same frames, steps and fights on any machine
+        clock = helpers.fake_game_clock()
         cells, fights, stops = set(), [], []
         game = self.game
         real_count_step, real_fight, real_open = game.count_step, game.battle_ctrl.fight_enemy, \
@@ -593,9 +596,9 @@ class TestHeadlessGrind(GrindTestCase):
         with patch.object(game, 'count_step', side_effect=count_step), \
                 patch.object(game.battle_ctrl, 'fight_enemy', side_effect=fight_enemy), \
                 patch.object(game.battle_ctrl, 'open_command_window', side_effect=open_command_window):
-            deadline = time.monotonic() + 45
             with self.assertRaises(Done):
-                while time.monotonic() < deadline:
+                for _ in range(100_000):
+                    clock.advance_frames()
                     game.run_due_frames()  # the main loop, without drawing the map (NO_BLIT draws nothing anyway)
         self.assertGreaterEqual(len(fights), 3)
         self.assertEqual([StopReason.HP_LOW], stops)

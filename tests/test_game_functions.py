@@ -148,8 +148,5 @@ class TestGameFunctions(TestCase):
         self.assertEqual(2, self.select([K_s, K_s, K_RETURN]))
         self.assertEqual(1, self.select([K_s, K_s, K_w, K_RETURN]))
         # a window of one entry
-        start_time = get_ticks()
-        while get_ticks() - start_time <= 64:
-            # just to hit the blink_start reset line
-            self.assertEqual(0, self.select([K_s, K_s, K_w, K_RETURN], NEW_QUEST_LAYOUT, start_time))
-        self.assertEqual(0, self.select([K_s, K_s, K_w, K_RETURN], NEW_QUEST_LAYOUT, start_time))
+        # a blink that started a while ago (past one blink, 64 ms)
+        self.assertEqual(0, self.select([K_s, K_s, K_w, K_RETURN], NEW_QUEST_LAYOUT, get_ticks() - 65))
