@@ -196,10 +196,10 @@ class TestKoreanOptionsScreen(KoreanTestCase):
                           ['게임 플레이', '프리셋', '커스텀', '페이지', '2/3', 'NPC가 길 비키기', '켜기', '계단',
                            '밟으면 이동', '빠른 행동', '끄기 (NES)', '스마트 A', '끄기 (NES)', '적 출현', 'NES',
                            '경험치/골드', 'x1 (NES)', '모험 일지', '끄기 (NES)', '자동 저장', '끄기 (NES)', '소지품',
-                           'NES (8개)'],
+                           'NES (8개)', '달리기 버튼', '끄기 (NES)'],
                           ['조작', '프리셋', '커스텀', '페이지', '3/3', '게임 속도', '끄기 (NES)', '상태 저장',
                            '끄기 (NES)', '되감기', '끄기 (NES)', '자동 사냥', '끄기 (NES)', '사냥 멈춤', '빨간 HP',
-                           '메뉴 속도', '보통', '치트', '끄기 (NES)', '달리기 버튼', '끄기 (NES)', '던전 지도',
+                           '메뉴 속도', '보통', '치트', '끄기 (NES)', '던전 지도', '끄기 (NES)', '대화 기록',
                            '끄기 (NES)', '조작']],
                          [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(3)])
         config.update({row.config_key: row.values[1] for row in OPTION_ROWS})
@@ -208,10 +208,10 @@ class TestKoreanOptionsScreen(KoreanTestCase):
                            '화면 배율', '정수 배율', '화면', '와이드', '능력치 창', '항상', '상점 미리보기', '켜기'],
                           ['게임 플레이', '프리셋', '커스텀', '페이지', '2/3', 'NPC가 길 비키기', '끄기 (NES)', '계단',
                            'NES', '빠른 행동', '켜기', '스마트 A', '켜기', '적 출현', '절반', '경험치/골드', 'x2',
-                           '모험 일지', '목표', '자동 저장', '켜기', '소지품', '16개'],
+                           '모험 일지', '목표', '자동 저장', '켜기', '소지품', '16개', '달리기 버튼', '켜기'],
                           ['조작', '프리셋', '커스텀', '페이지', '3/3', '게임 속도', '켜기', '상태 저장', '켜기',
                            '되감기', '켜기', '자동 사냥', '켜기', '사냥 멈춤', 'HP 절반', '메뉴 속도', '게임 속도대로',
-                           '치트', '켜기', '달리기 버튼', '켜기', '던전 지도', '켜기', '조작']],
+                           '치트', '켜기', '던전 지도', '켜기', '대화 기록', '켜기', '조작']],
                          [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(3)])
 
     def test_a_translated_window_draws_every_line_in_one_font(self):
@@ -298,3 +298,21 @@ class TestKoreanControlsScreen(KoreanTestCase):
                 with self.subTest(text=translated):
                     self.assertLessEqual(text.column + width, end)
                     self.assertLessEqual(len(translated), WRAP_LENGTH)  # draw_text would wrap it
+
+
+class TestKoreanMessageLog(KoreanTestCase):
+
+    def test_text_fits(self):
+        # Every line, the title and the bottom line inside the right border
+        from src.message_log import LOG_WINDOW, LogEntry, log_layout, log_lines
+        entries = [LogEntry(self.korean("I am Gwaelin, daughter of Lorik.") * 3, 'PRINCESS_GWAELIN'),
+                   LogEntry("Thou hast found the Silver Harp. " * 3, 'WISE_MAN')]
+        lines = log_lines(entries, self.korean)
+        self.assertTrue(lines[0].startswith('로라 공주: '))
+        right_border = (LOG_WINDOW.x + LOG_WINDOW.width) * 2 - 1
+        font = set_font_by_ascii_chars(['대화'], 16, None, Directories(test_config))
+        for layout in (log_layout(lines, 0, self.korean("UP/DOWN:SCROLL  B:CLOSE")), log_layout([], 0)):
+            for text in (layout.title, *layout.texts):
+                translated = self.korean(text.text)
+                with self.subTest(text=translated):
+                    self.assertLessEqual(text.column + font.size(translated)[0] / self.nes_tile, right_border)

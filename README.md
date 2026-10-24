@@ -148,7 +148,13 @@ LOOK & SOUND:
 - DIALOG STYLE: CLASSIC (NES), the NES dialog window whose text scrolls, or MODERN, each message on a fresh window
 - FADE STYLE: NES, fades through the NES palette, or SMOOTH, a black fade
 - MUSIC: ORCHESTRA, the orchestral soundtrack, or NES, the NES music
+- LANGUAGE, SCANLINES and SCALING: yours rather than the adventure's, kept for every adventure, and no preset changes
+  them
+- VIEW: NES (4:3), or WIDE, more of the map to the left and right for a 16:9 or 16:10 screen (kept for every
+  adventure; both presets keep NES)
 - STATUS WINDOW: NES, the HP/MP window pops up after you stand still a moment, or ALWAYS, it stays up while you walk
+- SHOP PREVIEW: ON, a weapon or armor shop's list shows the attack or defense power the highlighted item would give,
+  or OFF (NES)
 
 GAMEPLAY:
 - NPCS MAKE WAY: ON, a townsperson you walk into steps aside, or OFF (NES), they stay in your way
@@ -160,6 +166,12 @@ GAMEPLAY:
 - ENCOUNTERS: NES, the NES's random fights; HALF, every other one is skipped; or OFF, none (guardians, the Dragonlord
   and the other set fights still happen, and auto-grind won't start)
 - EXP/GOLD: x1 (NES), x2 or x4 the experience and gold a won fight gives, still at most 65535 each
+- QUEST JOURNAL: what Q shows: OFF (NES), nothing; GOALS, what to do next; or HINTS, and where to go
+- AUTOSAVE: OFF (NES), or ON, a separate autosave on entering a town or castle and every 3 minutes, which CONTINUE
+  AUTOSAVE on the title menu loads
+- BAG: NES (8) or 16 item slots (Herbs and Magic Keys are kept apart, as on the NES)
+- RUN BUTTON: hold J (B) while walking on the map to walk twice as fast; the fights, the NPCs and the timers keep
+  their own pace
 
 CONTROLS (off, which is the NES, their keys do nothing):
 - GAME SPEED: keys 1 to 5
@@ -171,13 +183,19 @@ CONTROLS (off, which is the NES, their keys do nothing):
 - MENU SPEED: NORMAL, the menus' cursor (its blink and how fast a held direction or button repeats) stays at normal
   speed whatever the game speed, or FOLLOW GAME, it speeds up with the game as everything else does
 - CHEATS: F4 auto-battle and F9 invulnerability (off in both presets)
-- RUN BUTTON: hold J (B) while walking on the map to walk twice as fast; the fights, the NPCs and the timers keep
-  their own pace
+- DUNGEON MAP: ON, M on a dark floor shows the blocks you've seen there, or OFF (NES); kept for every adventure
+- MESSAGE LOG: ON, L shows the last messages (see below), or OFF (NES)
 - CONTROLS: K opens the CONTROLS screen (see below)
 
 MODERN leaves ENCOUNTERS and EXP/GOLD at the NES's: they change the game's balance rather than its conveniences.
 
 H: Show the controls
+
+L: The message log, not on the NES (with the MESSAGE LOG option ON). On the map, when START would pause the game, it
+shows the last 50 messages of the dialog window, newest at the bottom, with who said them: what the townspeople, the
+king and the princess told you and what you found or read, so a hint you skipped through can be read again. A fight's
+messages aren't kept. Up and down scroll a line, left and right a page; J, Esc, I or L close it. A controller's left
+face button opens it too.
 
 G: Auto-grind (with AUTO-GRIND on), not on the NES. On a map with random fights, the hero walks back and forth between his tile and a safe
 one next to it and chooses FIGHT in every fight, moving every message on by itself, until a decision is yours: HP at
@@ -235,6 +253,8 @@ labelled, as on the NES and SNES:
 | Left shoulder button (LB, L1, L) | Load state 1 (F1) |
 | Right shoulder button (RB, R1, R) | Save state 1 (Shift+F1) |
 | Left trigger, held | Rewind (Backspace held) |
+| Top face button (Xbox Y, PlayStation triangle, Switch X) | The dungeon map on a dark floor (M) |
+| Left face button (Xbox X, PlayStation square, Switch Y) | The message log (L) |
 
 These are the defaults: every button but the stick can be changed on the CONTROLS screen (its PAD column, see
 below). On the name entry screen a controller button switches to joystick input (the arrows and A pick the letters) without
