@@ -68,6 +68,9 @@ base_config = {
     "EXP_GOLD": 1,  # EXP/GOLD: a won fight's experience and gold times 1 (NES), 2 or 4
     "RUN_BUTTON": False,  # RUN BUTTON: B held while walking on the map walks twice as fast
     "STATUS_WINDOW": "NES",  # STATUS WINDOW: "NES" (the pop-up after standing still) or "Always" (always on the map)
+    # SHOP PREVIEW (not NES): a weapon and armor shop's list shows the attack or defense power the highlighted item
+    # would give (src/shop_preview.py); False is the NES
+    "SHOP_PREVIEW": True,
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on
