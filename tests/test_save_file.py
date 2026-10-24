@@ -64,7 +64,11 @@ CURRENT_FORMAT_SAVE = '''{
     "Rewind": true,
     "AutoGrind": false,
     "CheatKeys": true,
-    "QuickAction": true
+    "QuickAction": true,
+    "Encounters": "Half",
+    "ExpGold": 4,
+    "RunButton": true,
+    "StatusWindow": "Always"
 }'''
 
 
@@ -93,7 +97,8 @@ class TestSaveFileRoundTrip(TestCase):
         self.assertEqual(('TantegelThroneRoom', 10, 13), (save.current_map, save.player_row, save.player_column))
         self.assertEqual(StoryFlags(left_throne_room=True), save.story_flags)
         self.assertEqual(Options('Fast', 'Modern', False, 'Smooth', False, 'HalfHP', 'FollowGameSpeed',
-                                 orchestra_music=False, save_states=False, auto_grind=False), save.options)
+                                 orchestra_music=False, save_states=False, auto_grind=False, encounters='Half',
+                                 exp_gold=4, run_button=True, status_window='Always'), save.options)
 
     def test_every_checkpoint_round_trips(self):
         """A checkpoint has no HP, MP or options (they load as full, NORMAL, CLASSIC, ON and NES) and may have Facing,
