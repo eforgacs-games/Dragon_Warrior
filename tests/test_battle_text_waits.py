@@ -19,7 +19,7 @@ from src.cursor import IN_A
 from src.menu import CommandMenu
 from src.selection import Answer
 from src.spells import Spell
-from tests.helpers import new_game, skip_window_frame_waits
+from tests.helpers import fake_game_clock, new_game, skip_window_frame_waits
 
 
 def setUpModule():
@@ -69,7 +69,7 @@ class TestOnePressATurn(unittest.TestCase):
 
         patch('src.battle_controller.next_frame').start()
         patch('src.battle_controller.time').start()
-        patch('src.waiting.time.wait').start()
+        fake_game_clock()  # the dialogs' and the fight's waits take no real time, and the game clock is the test's
         # No dodge, no excellent move, no running away: the turns go as scripted
         patch('src.battle_controller.enemy_dodges', return_value=False).start()
         patch('src.battle_controller.enemy_flees', return_value=False).start()
