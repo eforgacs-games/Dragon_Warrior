@@ -49,6 +49,8 @@ from src.nes_random import one_in
 # The COMMAND window's commands, in WndSelResults order (NCC_TALK $00 to NCC_TAKE $07; src/windows.py COMMAND_ENTRIES):
 # the CommandMenu methods Bank03 NCCmdSelected and CheckCmdWndResults run for each
 COMMAND_METHODS = ('talk', 'status', 'stairs', 'search', 'spell', 'item', 'door', 'take')
+# The stairs the STAIRS command takes (Bank03 CheckStairs)
+STAIR_TILES = ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN')
 
 
 
@@ -1326,7 +1328,7 @@ class CommandMenu:
         :return: None
         """
         # this might be something we could turn off as one of the "modernization" updates
-        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN'):
+        if self.player.current_tile in STAIR_TILES:
             self.game.process_staircase_warps(staircase_location=(self.game.player.row, self.game.player.column),
                                               staircase_dict=self.game.current_map.staircases[
                                                   (self.game.player.row, self.game.player.column)])
