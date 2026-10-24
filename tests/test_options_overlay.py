@@ -216,7 +216,8 @@ class TestRows(OverlayTestCase):
                                         ("CHEATS", 'CHEAT_KEYS', ("OFF (NES)", "ON")),
                                         ("DUNGEON MAP", 'DUNGEON_MAP', ("OFF (NES)", "ON")),
                                         ("MESSAGE LOG", 'MESSAGE_LOG', ("OFF (NES)", "ON")),
-                                        ("CONTROLS", None, ())])],
+                                        ("CONTROLS", None, ())]),
+                          ("OTHER", [("CONFIRM NAME", 'NAME_CONFIRM', ("OFF (NES)", "ON"))])],
                          [(page.title, [(row.label, getattr(row, 'config_key', None), row.value_labels)
                                         for row in page.rows])
                           for page in OPTION_PAGES])
@@ -226,16 +227,17 @@ class TestRows(OverlayTestCase):
             with self.subTest(page=number):
                 layout = options_layout(self.config, number)
                 self.assertEqual(OPTION_PAGES[number].title, layout.title.text)
-                self.assertEqual(["PRESET", "CUSTOM", "PAGE", f"{number + 1}/3"], page_texts(self.config, number)[:4])
+                self.assertEqual(["PRESET", "CUSTOM", "PAGE", f"{number + 1}/{len(OPTION_PAGES)}"],
+                                 page_texts(self.config, number)[:4])
                 self.assertEqual(FIXED_ROWS + len(OPTION_PAGES[number].rows), len(layout.cursor_tiles))
 
     def test_window_shows_the_current_values(self):
-        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/3", "MESSAGE SPEED", "FAST", "DIALOG STYLE", "CLASSIC (NES)",
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/4", "MESSAGE SPEED", "FAST", "DIALOG STYLE", "CLASSIC (NES)",
                           "FADE STYLE", "NES", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
                           "SCALING", "SMOOTH", "VIEW", "NES (4:3)", "STATUS WINDOW", "NES", "SHOP PREVIEW",
                           "OFF (NES)"],
                          page_texts(self.config))
-        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "ON", "STAIRS", "STEP ON",
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/4", "NPCS MAKE WAY", "ON", "STAIRS", "STEP ON",
                           "QUICK ACTION", "OFF (NES)", "SMART A", "OFF (NES)", "ENCOUNTERS", "NES", "EXP/GOLD",
                           "x1 (NES)", "QUEST JOURNAL", "OFF (NES)", "AUTOSAVE", "OFF (NES)", "BAG", "NES (8)",
                           "RUN BUTTON", "OFF (NES)"],
@@ -243,20 +245,21 @@ class TestRows(OverlayTestCase):
         self.config.update(TEXT_SPEED='Slow', DIALOG_STYLE=MODERN, NPCS_MAKE_WAY=False, FADE_STYLE=FADE_STYLE_SMOOTH,
                            AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP', CHEAT_KEYS=True, REWIND=True,
                            STATUS_WINDOW='Always', ENCOUNTERS='Half', EXP_GOLD=4, RUN_BUTTON=True)
-        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/3", "MESSAGE SPEED", "SLOW", "DIALOG STYLE", "MODERN",
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/4", "MESSAGE SPEED", "SLOW", "DIALOG STYLE", "MODERN",
                           "FADE STYLE", "SMOOTH", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
                           "SCALING", "SMOOTH", "VIEW", "NES (4:3)", "STATUS WINDOW", "ALWAYS", "SHOP PREVIEW",
                           "OFF (NES)"],
                          page_texts(self.config))
-        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "OFF (NES)", "STAIRS", "NES",
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/4", "NPCS MAKE WAY", "OFF (NES)", "STAIRS", "NES",
                           "QUICK ACTION", "OFF (NES)", "SMART A", "OFF (NES)", "ENCOUNTERS", "HALF", "EXP/GOLD",
                           "x4", "QUEST JOURNAL", "OFF (NES)", "AUTOSAVE", "OFF (NES)", "BAG", "NES (8)",
                           "RUN BUTTON", "ON"],
                          page_texts(self.config, 1))
-        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "3/3", "GAME SPEED", "OFF (NES)", "SAVE STATES", "OFF (NES)",
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "3/4", "GAME SPEED", "OFF (NES)", "SAVE STATES", "OFF (NES)",
                           "REWIND", "ON", "AUTO-GRIND", "OFF (NES)", "GRIND STOP", "3/4 HP", "MENU SPEED", "NORMAL",
                           "CHEATS", "ON", "DUNGEON MAP", "OFF (NES)", "MESSAGE LOG", "OFF (NES)", "CONTROLS"],
                          page_texts(self.config, 2))
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "4/4", "CONFIRM NAME", "OFF (NES)"], page_texts(self.config, 3))
 
     def test_the_window_is_the_same_size_on_every_page_and_fits_the_screen(self):
         self.assertEqual(MOST_ROWS + 2, OPTIONS_WINDOW.height)
@@ -363,7 +366,7 @@ class TestRows(OverlayTestCase):
         # the language, the display filters, the view and the dungeon map are the player's, kept in the global settings
         # (src/settings.py)
         self.assertEqual({**changed, 'LANGUAGE': 'English', 'SCANLINES': False, 'SCALING': 'Smooth', 'VIEW': 'NES',
-                          'DUNGEON_MAP': False},
+                          'DUNGEON_MAP': False, 'NAME_CONFIRM': False},
                          own_settings(loaded.game_state.config))
         # The language is the player's, kept in the global settings (src/settings.py), not the adventure's
         self.assertEqual(('Korean', True, SCALING_PIXEL_PERFECT),
@@ -396,13 +399,13 @@ class TestPages(OverlayTestCase):
     def test_page_row_turns_the_page_both_ways_going_round(self):
         self.assertEqual((1, 1), self.last_page(K_DOWN, K_RIGHT))
         self.assertEqual((2, 1), self.last_page(K_DOWN, K_RIGHT, K_k))
-        self.assertEqual((0, 1), self.last_page(K_DOWN, K_RIGHT, K_RIGHT, K_RIGHT))
-        self.assertEqual((2, 1), self.last_page(K_DOWN, K_LEFT))
+        self.assertEqual((0, 1), self.last_page(K_DOWN, K_RIGHT, K_RIGHT, K_RIGHT, K_RIGHT))
+        self.assertEqual((3, 1), self.last_page(K_DOWN, K_LEFT))
 
     def test_start_and_page_down_turn_to_the_next_page_and_page_up_to_the_previous_from_any_row(self):
         self.assertEqual((1, 3), self.last_page(K_DOWN, K_DOWN, K_DOWN, K_i))
         self.assertEqual((1, 0), self.last_page(K_PAGEDOWN))
-        self.assertEqual((2, 0), self.last_page(K_PAGEUP))
+        self.assertEqual((3, 0), self.last_page(K_PAGEUP))
 
     def test_the_cursor_goes_to_a_shorter_pages_last_row(self):
         # the CONTROLS page's last row (CHEATS) is lower than any row of the GAMEPLAY page
@@ -429,7 +432,7 @@ class TestPreset(OverlayTestCase):
                           'CHEAT_KEYS': False, 'RUN_BUTTON': False, 'SHOP_PREVIEW': False,
                           'QUEST_JOURNAL': JOURNAL_OFF, 'AUTOSAVE': False, 'BAG_SIZE': 8,
                           'VIEW': 'NES', 'DUNGEON_MAP': False, 'SMART_A': False,
-                          'MESSAGE_LOG': False},
+                          'MESSAGE_LOG': False, 'NAME_CONFIRM': False},
                          preset_values(PRESET_NES))
         # MODERN: every convenience but the cheats; the number of fights and what they give stay the NES's
         self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': True,
@@ -439,7 +442,7 @@ class TestPreset(OverlayTestCase):
                           'CHEAT_KEYS': False, 'RUN_BUTTON': True, 'SHOP_PREVIEW': True,
                           'QUEST_JOURNAL': JOURNAL_GOALS, 'AUTOSAVE': True, 'BAG_SIZE': 16,
                           'VIEW': 'NES', 'DUNGEON_MAP': True, 'SMART_A': True,
-                          'MESSAGE_LOG': True},
+                          'MESSAGE_LOG': True, 'NAME_CONFIRM': True},
                          preset_values(PRESET_MODERN))
         # the message speed is the NES's own setting, and the language the player's: no preset changes them
         self.assertNotIn('TEXT_SPEED', [row.config_key for row in PRESET_ROWS])
@@ -459,13 +462,13 @@ class TestPreset(OverlayTestCase):
         from src.config.base_config import base_config
         from src.options_screen import DEFAULT_OPTIONS, apply_options
         # a new quest keeps the config's AUTOSAVE (OFF, the NES), and the player's VIEW and DUNGEON MAP
-        config = {key: base_config[key] for key in ('AUTOSAVE', 'VIEW', 'DUNGEON_MAP')}
+        config = {key: base_config[key] for key in ('AUTOSAVE', 'VIEW', 'DUNGEON_MAP', 'NAME_CONFIRM')}
         apply_options(config, DEFAULT_OPTIONS)
         nes = preset_values(PRESET_NES)
         differences = {config_key for config_key, value in nes.items() if config[config_key] != value}
         self.assertEqual({'ORCHESTRA_MUSIC_ENABLED', 'AUTO_STAIRS', 'NPCS_MAKE_WAY', 'QUICK_ACTION', 'GAME_SPEED_KEYS',
                           'SAVE_STATES', 'REWIND', 'AUTO_GRIND', 'CHEAT_KEYS', 'SHOP_PREVIEW', 'QUEST_JOURNAL',
-                          'DUNGEON_MAP', 'MESSAGE_LOG'},
+                          'DUNGEON_MAP', 'MESSAGE_LOG', 'NAME_CONFIRM'},
                          differences)
         self.assertEqual(PRESET_CUSTOM, current_preset(config))
 

@@ -185,6 +185,8 @@ CONTROLS (off, which is the NES, their keys do nothing):
 - CHEATS: F4 auto-battle and F9 invulnerability (off in both presets)
 - DUNGEON MAP: ON, M on a dark floor shows the blocks you've seen there, or OFF (NES); kept for every adventure
 - MESSAGE LOG: ON, L shows the last messages (see below), or OFF (NES)
+- CONFIRM NAME (on the OTHER page): ON, a full name waits on END so you can still change it, and START ends the
+  name from anywhere; or OFF (NES), the 8th letter ends the name; kept for every adventure
 - CONTROLS: K opens the CONTROLS screen (see below)
 
 MODERN leaves ENCOUNTERS and EXP/GOLD at the NES's: they change the game's balance rather than its conveniences.

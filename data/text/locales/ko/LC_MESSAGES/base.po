@@ -2915,6 +2915,14 @@ msgstr "M: 던전 지도"
 msgid "DUNGEON MAP"
 msgstr "던전 지도"
 
+#: src/options_overlay.py
+msgid "CONFIRM NAME"
+msgstr "이름 확정"
+
+#: src/options_overlay.py
+msgid "OTHER"
+msgstr "기타"
+
 #: src/dungeon_map.py
 msgid "MAP"
 msgstr "지도"
