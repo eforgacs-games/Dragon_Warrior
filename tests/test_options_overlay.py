@@ -352,8 +352,9 @@ class TestRows(OverlayTestCase):
         loaded = new_game()
         with patch.object(loaded.map_mgr, 'change_map'):
             loaded.load_game(save)
-        # the language and the display filters are the player's, kept in the global settings (src/settings.py)
-        self.assertEqual({**changed, 'LANGUAGE': 'English', 'SCANLINES': False, 'SCALING': 'Smooth'},
+        # the language, the display filters and the view are the player's, kept in the global settings
+        # (src/settings.py)
+        self.assertEqual({**changed, 'LANGUAGE': 'English', 'SCANLINES': False, 'SCALING': 'Smooth', 'VIEW': 'NES'},
                          own_settings(loaded.game_state.config))
         # The language is the player's, kept in the global settings (src/settings.py), not the adventure's
         self.assertEqual(('Korean', True, SCALING_PIXEL_PERFECT),
@@ -446,7 +447,8 @@ class TestPreset(OverlayTestCase):
         # preset switches them all off
         from src.config.base_config import base_config
         from src.options_screen import DEFAULT_OPTIONS, apply_options
-        config = {'AUTOSAVE': base_config['AUTOSAVE']}  # a new quest keeps the config's AUTOSAVE: OFF, the NES
+        # a new quest keeps the config's AUTOSAVE (OFF, the NES) and the player's VIEW (NES unless changed)
+        config = {'AUTOSAVE': base_config['AUTOSAVE'], 'VIEW': base_config['VIEW']}
         apply_options(config, DEFAULT_OPTIONS)
         nes = preset_values(PRESET_NES)
         differences = {config_key for config_key, value in nes.items() if config[config_key] != value}
