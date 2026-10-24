@@ -200,11 +200,13 @@ class TestRows(OverlayTestCase):
                           ("GAMEPLAY", [("NPCS MAKE WAY", 'NPCS_MAKE_WAY', ("ON", "OFF (NES)")),
                                         ("STAIRS", 'AUTO_STAIRS', ("STEP ON", "NES")),
                                         ("QUICK ACTION", 'QUICK_ACTION', ("OFF (NES)", "ON")),
+                                        ("SMART A", 'SMART_A', ("OFF (NES)", "ON")),
                                         ("ENCOUNTERS", 'ENCOUNTERS', ("NES", "HALF", "OFF")),
                                         ("EXP/GOLD", 'EXP_GOLD', ("x1 (NES)", "x2", "x4")),
                                         ("QUEST JOURNAL", 'QUEST_JOURNAL', ("OFF (NES)", "GOALS", "HINTS")),
                                         ("AUTOSAVE", 'AUTOSAVE', ("OFF (NES)", "ON")),
-                                        ("BAG", 'BAG_SIZE', ("NES (8)", "16"))]),
+                                        ("BAG", 'BAG_SIZE', ("NES (8)", "16")),
+                                        ("RUN BUTTON", 'RUN_BUTTON', ("OFF (NES)", "ON"))]),
                           ("CONTROLS", [("GAME SPEED", 'GAME_SPEED_KEYS', ("OFF (NES)", "ON")),
                                         ("SAVE STATES", 'SAVE_STATES', ("OFF (NES)", "ON")),
                                         ("REWIND", 'REWIND', ("OFF (NES)", "ON")),
@@ -212,8 +214,8 @@ class TestRows(OverlayTestCase):
                                         ("GRIND STOP", 'AUTO_GRIND_STOP', ("RED HP", "HALF HP", "3/4 HP")),
                                         ("MENU SPEED", 'MENU_SPEED', ("NORMAL", "FOLLOW GAME")),
                                         ("CHEATS", 'CHEAT_KEYS', ("OFF (NES)", "ON")),
-                                        ("RUN BUTTON", 'RUN_BUTTON', ("OFF (NES)", "ON")),
                                         ("DUNGEON MAP", 'DUNGEON_MAP', ("OFF (NES)", "ON")),
+                                        ("MESSAGE LOG", 'MESSAGE_LOG', ("OFF (NES)", "ON")),
                                         ("CONTROLS", None, ())])],
                          [(page.title, [(row.label, getattr(row, 'config_key', None), row.value_labels)
                                         for row in page.rows])
@@ -234,8 +236,9 @@ class TestRows(OverlayTestCase):
                           "OFF (NES)"],
                          page_texts(self.config))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "ON", "STAIRS", "STEP ON",
-                          "QUICK ACTION", "OFF (NES)", "ENCOUNTERS", "NES", "EXP/GOLD", "x1 (NES)", "QUEST JOURNAL",
-                          "OFF (NES)", "AUTOSAVE", "OFF (NES)", "BAG", "NES (8)"],
+                          "QUICK ACTION", "OFF (NES)", "SMART A", "OFF (NES)", "ENCOUNTERS", "NES", "EXP/GOLD",
+                          "x1 (NES)", "QUEST JOURNAL", "OFF (NES)", "AUTOSAVE", "OFF (NES)", "BAG", "NES (8)",
+                          "RUN BUTTON", "OFF (NES)"],
                          page_texts(self.config, 1))
         self.config.update(TEXT_SPEED='Slow', DIALOG_STYLE=MODERN, NPCS_MAKE_WAY=False, FADE_STYLE=FADE_STYLE_SMOOTH,
                            AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP', CHEAT_KEYS=True, REWIND=True,
@@ -246,12 +249,13 @@ class TestRows(OverlayTestCase):
                           "OFF (NES)"],
                          page_texts(self.config))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "2/3", "NPCS MAKE WAY", "OFF (NES)", "STAIRS", "NES",
-                          "QUICK ACTION", "OFF (NES)", "ENCOUNTERS", "HALF", "EXP/GOLD", "x4", "QUEST JOURNAL",
-                          "OFF (NES)", "AUTOSAVE", "OFF (NES)", "BAG", "NES (8)"],
+                          "QUICK ACTION", "OFF (NES)", "SMART A", "OFF (NES)", "ENCOUNTERS", "HALF", "EXP/GOLD",
+                          "x4", "QUEST JOURNAL", "OFF (NES)", "AUTOSAVE", "OFF (NES)", "BAG", "NES (8)",
+                          "RUN BUTTON", "ON"],
                          page_texts(self.config, 1))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "3/3", "GAME SPEED", "OFF (NES)", "SAVE STATES", "OFF (NES)",
                           "REWIND", "ON", "AUTO-GRIND", "OFF (NES)", "GRIND STOP", "3/4 HP", "MENU SPEED", "NORMAL",
-                          "CHEATS", "ON", "RUN BUTTON", "ON", "DUNGEON MAP", "OFF (NES)", "CONTROLS"],
+                          "CHEATS", "ON", "DUNGEON MAP", "OFF (NES)", "MESSAGE LOG", "OFF (NES)", "CONTROLS"],
                          page_texts(self.config, 2))
 
     def test_the_window_is_the_same_size_on_every_page_and_fits_the_screen(self):
@@ -424,7 +428,8 @@ class TestPreset(OverlayTestCase):
                           'REWIND': False, 'AUTO_GRIND': False, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
                           'CHEAT_KEYS': False, 'RUN_BUTTON': False, 'SHOP_PREVIEW': False,
                           'QUEST_JOURNAL': JOURNAL_OFF, 'AUTOSAVE': False, 'BAG_SIZE': 8,
-                          'VIEW': 'NES', 'DUNGEON_MAP': False},
+                          'VIEW': 'NES', 'DUNGEON_MAP': False, 'SMART_A': False,
+                          'MESSAGE_LOG': False},
                          preset_values(PRESET_NES))
         # MODERN: every convenience but the cheats; the number of fights and what they give stay the NES's
         self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': True,
@@ -433,7 +438,8 @@ class TestPreset(OverlayTestCase):
                           'REWIND': True, 'AUTO_GRIND': True, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
                           'CHEAT_KEYS': False, 'RUN_BUTTON': True, 'SHOP_PREVIEW': True,
                           'QUEST_JOURNAL': JOURNAL_GOALS, 'AUTOSAVE': True, 'BAG_SIZE': 16,
-                          'VIEW': 'NES', 'DUNGEON_MAP': True},
+                          'VIEW': 'NES', 'DUNGEON_MAP': True, 'SMART_A': True,
+                          'MESSAGE_LOG': True},
                          preset_values(PRESET_MODERN))
         # the message speed is the NES's own setting, and the language the player's: no preset changes them
         self.assertNotIn('TEXT_SPEED', [row.config_key for row in PRESET_ROWS])
@@ -459,7 +465,7 @@ class TestPreset(OverlayTestCase):
         differences = {config_key for config_key, value in nes.items() if config[config_key] != value}
         self.assertEqual({'ORCHESTRA_MUSIC_ENABLED', 'AUTO_STAIRS', 'NPCS_MAKE_WAY', 'QUICK_ACTION', 'GAME_SPEED_KEYS',
                           'SAVE_STATES', 'REWIND', 'AUTO_GRIND', 'CHEAT_KEYS', 'SHOP_PREVIEW', 'QUEST_JOURNAL',
-                          'DUNGEON_MAP'},
+                          'DUNGEON_MAP', 'MESSAGE_LOG'},
                          differences)
         self.assertEqual(PRESET_CUSTOM, current_preset(config))
 
@@ -642,9 +648,9 @@ class TestDevOnly(TestCase):
         # on: the speed keys, save states, rewind, auto-grind, F4/F9 and the Enter shortcut worked before the switches
         from src.config.prod_config import prod_config
         for switch in SWITCHES:
-            if switch.config_key in ('ENCOUNTERS', 'EXP_GOLD', 'RUN_BUTTON', 'STATUS_WINDOW'):
+            if switch.config_key in ('ENCOUNTERS', 'EXP_GOLD', 'RUN_BUTTON', 'STATUS_WINDOW', 'BAG_SIZE', 'SMART_A'):
                 # new options: the NES's
-                self.assertIn(switch.default, (False, 'NES', 1), switch.config_key)
+                self.assertIn(switch.default, (False, 'NES', 1, 8), switch.config_key)
             else:
                 self.assertTrue(prod_config[switch.config_key], switch.config_key)
             self.assertEqual(switch.default, prod_config[switch.config_key], switch.config_key)
@@ -782,14 +788,25 @@ class TestNoGhosting(OverlayTestCase):
         self.assertEqual(before, shown[-1])
 
     def test_overlay_darkens_the_map_behind_the_window(self):
+        # The window itself isn't drawn here, so the map shows everywhere (the window, with all its rows, can reach
+        # the screen's edges)
+        point = (2, self.game.screen.get_height() - 3)
         draw_frame(self.game)
-        corner = self.game.screen.get_at((2, self.game.screen.get_height() - 3))
+        corner = self.game.screen.get_at(point)
         frames = []
         with patch('src.options_overlay.display.update',
-                   side_effect=lambda *args: frames.append(self.game.screen.get_at((2, self.game.screen.get_height()
-                                                                                    - 3)))):
+                   side_effect=lambda *args: frames.append(self.game.screen.get_at(point))), \
+                patch('src.options_overlay.draw_translated_window'):
             self.run_overlay(K_u)
         darkened = frames[0]
         self.assertTrue(all(dark <= light for dark, light in zip(darkened[:3], corner[:3])))
         if any(corner[:3]):
             self.assertLess(sum(darkened[:3]), sum(corner[:3]))
+
+
+class TestWindowFitsTheScreen(TestCase):
+
+    def test_it_ends_on_the_screen(self):
+        from src.options_overlay import OPTIONS_WINDOW
+        self.assertLessEqual(OPTIONS_WINDOW.y + OPTIONS_WINDOW.height, 15)
+        self.assertEqual(MOST_ROWS + 2, OPTIONS_WINDOW.height)

@@ -28,9 +28,9 @@ class TestControlInfoHelpPages(TestCase):
         return ControlInfo({**test_config, 'DEBUG_KEYS': debug_keys, 'LANGUAGE': language}).help_pages
 
     def test_page_count(self):
-        # the quest journal (#410) and the dungeon map (#408) have a page each
-        self.assertEqual(9, len(self.help_pages(debug_keys=False)))
-        self.assertEqual(10, len(self.help_pages(debug_keys=True)))
+        # the quest journal (#410), the dungeon map (#408) and H with the message log (#405) have a page each
+        self.assertEqual(10, len(self.help_pages(debug_keys=False)))
+        self.assertEqual(11, len(self.help_pages(debug_keys=True)))
 
     def test_every_control_is_on_a_page(self):
         for debug_keys in (False, True):
