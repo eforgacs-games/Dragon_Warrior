@@ -921,9 +921,9 @@ class Game:
             self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
 
     def handle_quest_journal_key(self, keydown_event) -> None:
-        """Q: the quest journal (src/quest_journal.py), not NES: one dialog box page per open goal, with where to go
-        if QUEST JOURNAL is set to HINTS. With it OFF (the NES), Q does nothing."""
-        if keydown_event.key != K_q:
+        """Q (the JOURNAL key): the quest journal (src/quest_journal.py), not NES: one dialog box page per open goal,
+        with where to go if QUEST JOURNAL is set to HINTS. With it OFF (the NES), Q does nothing."""
+        if not pressed(keydown_event, 'QUEST_JOURNAL'):
             return
         setting = self.config.get('QUEST_JOURNAL', JOURNAL_OFF)
         if setting == JOURNAL_OFF:
