@@ -14,14 +14,15 @@ surface), and the biggest is what fits on the desktop, or the size the window op
 In fullscreen (F11) the keys do nothing: the screen fills the monitor there. Leaving fullscreen puts the window back
 at the size it had before (remember_windowed_size, restore_windowed_size). The zoom is kept with the global settings
 (src/settings.py): set_zoom tells the zoom listener (set_zoom_listener), and the game opens the window at the saved zoom
-the next time.
+the next time. So is a size the window is given by dragging its edge (or maximizing it): SCALED stretches the screen
+to it as it is, and the nearest whole zoom is saved (note_window_resized), which the window opens at the next time.
 
 This module imports nothing from ``src``, so src/waiting.py can use it without an import cycle.
 """
 from collections.abc import Callable
 
 from pygame import FULLSCREEN, K_0, K_EQUALS, K_KP0, K_KP_MINUS, K_KP_PLUS, K_MINUS, K_PLUS, KEYDOWN, KMOD_CTRL, \
-    MOUSEWHEEL, display, error as pygame_error, event, key
+    MOUSEWHEEL, VIDEORESIZE, WINDOWSIZECHANGED, display, error as pygame_error, event, key
 from pygame._sdl2.video import Window
 
 NES_WIDTH, NES_HEIGHT = 256, 240
@@ -182,9 +183,22 @@ def restore_windowed_size() -> None:
         display.flip()
 
 
+def note_window_resized() -> None:
+    """The window has a new size, perhaps one the player dragged its edge to: tell the zoom listener the nearest whole
+    zoom (between min_zoom and max_zoom), so the next launch opens at it. The window itself is left at the size it
+    was given (SCALED stretches the screen to fit it), and a fullscreen window's size isn't a zoom."""
+    if _zoom_listener is None or _window() is None or is_fullscreen():
+        return
+    _zoom_listener(max(min_zoom(), min(round(window_zoom()), max_zoom())))
+
+
 def handle_zoom_event(current_event: event.Event) -> bool:
     """If ``current_event`` is Ctrl +, Ctrl -, Ctrl 0 or the mouse wheel turned with Ctrl held, zoom the window and
-    return True (the event is used up, so no window reads it as a key). Any other event: False."""
+    return True (the event is used up, so no window reads it as a key). A window resize is noted (note_window_resized)
+    and left for the loop to read. Any other event: False."""
+    if current_event.type in (VIDEORESIZE, WINDOWSIZECHANGED):
+        note_window_resized()
+        return False
     if current_event.type == KEYDOWN:
         if not getattr(current_event, 'mod', 0) & KMOD_CTRL:
             return False

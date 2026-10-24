@@ -153,6 +153,31 @@ class TestZoomKeys(ZoomTestCase):
         zoom.zoom_out()
         self.assertEqual(self.zoomed(3), self.window_size())
 
+    def test_a_window_dragged_to_a_new_size_saves_the_nearest_zoom(self):
+        # Dragging the window's edge (#430): the window stays as dragged, SCALED stretching the screen to it, and the
+        # nearest whole zoom goes to the listener (the global settings), for the next launch
+        zooms = []
+        zoom.set_zoom_listener(zooms.append)
+        self.addCleanup(zoom.set_zoom_listener, None)
+        window = pygame._sdl2.video.Window.from_display_module()
+        for size, expected in (((900, 840), 4), ((800, 730), 3), ((300, 280), SCALE), ((5000, 4000), 4)):
+            with self.subTest(size=size):
+                window.size = size
+                actual = self.window_size()
+                for resize_event in (Event(pygame.VIDEORESIZE, w=size[0], h=size[1], size=size),
+                                     Event(pygame.WINDOWSIZECHANGED, x=size[0], y=size[1])):
+                    self.assertFalse(zoom.handle_zoom_event(resize_event))  # left for the loop
+                self.assertEqual([expected, expected], zooms[-2:])
+                self.assertEqual(actual, self.window_size())  # not snapped to a whole zoom
+
+    def test_a_resize_in_fullscreen_saves_nothing(self):
+        zooms = []
+        zoom.set_zoom_listener(zooms.append)
+        self.addCleanup(zoom.set_zoom_listener, None)
+        with patch('src.zoom.is_fullscreen', return_value=True):
+            zoom.handle_zoom_event(Event(pygame.VIDEORESIZE, w=1920, h=1080, size=(1920, 1080)))
+        self.assertEqual([], zooms)
+
     def test_the_screen_surface_is_unchanged(self):
         zoom.handle_zoom_event(ctrl_key(K_EQUALS))
         self.assertIs(self.screen, pygame.display.get_surface())
