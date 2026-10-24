@@ -30,7 +30,7 @@ from src.npc_movement import step
 from src.player.player import Player
 from src.spells import Spell
 from src.sprites.roaming_character import RoamingCharacter
-from src.waiting import NES_FPS, game_speed, reset_game_speed
+from src.waiting import NES_FPS, game_speed, reset_game_speed, set_speed_keys_enabled
 from tests.mock_map import MockMap
 from tests.helpers import new_game
 
@@ -554,6 +554,7 @@ class TestGame(TestCase):
     def test_handle_fps_changes(self, mock_show_text_in_dialog_box):
         """Keys 1 to 4 set the game speed to 1x, 2x, 4x or 8x: the main loop runs at NES_FPS (60.0988) times the speed."""
         self.addCleanup(reset_game_speed)
+        set_speed_keys_enabled(True)  # GAME SPEED on (it's off on the NES, tests/test_options_overlay.py)
         for key_code, speed, label in ((pygame.K_2, 2, '2x'), (pygame.K_3, 4, '4x'),
                                        (pygame.K_4, 8, '8x'), (pygame.K_1, 1, 'normal')):
             with self.subTest(speed=speed):
@@ -829,6 +830,7 @@ class TestGame(TestCase):
         mock_show_text_in_dialog_box.assert_not_called()
 
     def test_f4_toggles_auto_battle(self):
+        self.enterContext(patch.dict(self.game.game_state.config, CHEAT_KEYS=True))
         auto_battle = self.game.auto_battle
         with patch.object(self.game, 'draw_temporary_text') as draw_temporary_text:
             self.game.handle_keypresses(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F4, mod=pygame.KMOD_NONE))
@@ -838,6 +840,7 @@ class TestGame(TestCase):
         self.assertEqual(2, draw_temporary_text.call_count)
 
     def test_f9_toggles_invulnerability(self):
+        self.enterContext(patch.dict(self.game.game_state.config, CHEAT_KEYS=True))
         invulnerable = self.game.invulnerable
         with patch.object(self.game, 'draw_temporary_text') as draw_temporary_text:
             self.game.handle_keypresses(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F9, mod=pygame.KMOD_NONE))

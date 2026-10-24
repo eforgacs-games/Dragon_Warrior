@@ -323,7 +323,9 @@ class TestEnding(TestCase):
                         patch.object(self.game.music_player, 'load_and_play_music',
                                      side_effect=load_and_play_music):
                     self.game.ending.roll_credits()
-                self.assertEqual([(self.game.directories.ending_music, start)], started_at)
+                    # the music paths follow the MUSIC option (Directories.music_paths), so read it while it's set
+                    ending_music = self.game.directories.ending_music
+                self.assertEqual([(ending_music, start)], started_at)
 
     def test_a_timing_event_already_waiting_is_caught_at_once(self):
         # The note before the no-op is still playing when the wait starts: WaitForMusicEnd returns on the next frame

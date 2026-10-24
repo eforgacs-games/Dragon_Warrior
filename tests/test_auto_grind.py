@@ -71,7 +71,8 @@ class GrindTestCase(TestCase):
     def new_game(self, **overrides):
         # A copy of test_config, so nothing these tests change leaks into other tests
         return helpers.new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
-                                 'AUTO_GRIND_STOP': GRIND_STOP_RED_HP, **overrides})
+                                 'AUTO_GRIND_STOP': GRIND_STOP_RED_HP, 'AUTO_GRIND': True, 'GAME_SPEED_KEYS': True,
+                                 **overrides})
 
     def go_to(self, map_name, coordinates, direction=Direction.DOWN.value):
         self.game.change_map(map_lookup[map_name](self.game.config), destination_coordinates=coordinates,

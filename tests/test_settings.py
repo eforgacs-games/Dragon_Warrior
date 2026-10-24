@@ -17,7 +17,7 @@ from pygame.event import Event
 from src import settings as settings_module
 from src.common import set_gettext_language
 from src.config.test_config import test_config
-from src.options_overlay import OPTION_ROWS, OPTIONS_TITLE
+from src.options_overlay import FIXED_ROWS, OPTION_PAGES
 from src.settings import SETTINGS_ENV_VAR, USER_SETTINGS, Settings, SettingsStore, load_settings, save_settings, \
     settings_path
 from src.waiting import NES_FPS, game_speed, get_events, reset_game_speed, set_speed_listener
@@ -150,8 +150,9 @@ class GameTestCase(TempDirTestCase):
         self.addCleanup(reset_game_speed)
 
     def new_game(self, **overrides):
+        # GAME SPEED on: keys 1 to 5 set the speed the settings keep (it's off on the NES)
         config = {**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True, 'LANGUAGE': 'English',
-                  'SETTINGS_PATH': self.path, **overrides}
+                  'SETTINGS_PATH': self.path, 'GAME_SPEED_KEYS': True, **overrides}
         return helpers.new_game(config)
 
 
@@ -237,8 +238,7 @@ class TestSavedWhenChanged(GameTestCase):
 
     def test_language(self):
         game = self.new_game()
-        rows = [row.label for row in OPTION_ROWS]
-        with patch('src.selection.event.get', side_effect=presses(*(K_DOWN,) * rows.index("LANGUAGE"), K_RIGHT, K_u)), \
+        with patch('src.selection.event.get', side_effect=presses(*to_language(), K_u)), \
                 patch('src.selection.wait_frames'):
             from src.options_overlay import OptionsOverlay
             OptionsOverlay(game).run()
@@ -247,6 +247,20 @@ class TestSavedWhenChanged(GameTestCase):
         self.assertEqual({'version': 1, 'zoom': None, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
                           'scanlines': False, 'scaling': 'Smooth'},
                          self.saved())
+
+    def test_game_speed_off_plays_at_normal_speed_and_keeps_the_saved_one(self):
+        save_settings(self.path, Settings(game_speed=4))
+        game = self.new_game(GAME_SPEED_KEYS=False)
+        self.assertEqual(1, game_speed())
+        self.assertEqual(4, self.saved()['game_speed'])
+        # switched on in the options overlay: back to the speed kept
+        game.game_state.config['GAME_SPEED_KEYS'] = True
+        game.apply_option('GAME_SPEED_KEYS')
+        self.assertEqual(4, game_speed())
+        game.game_state.config['GAME_SPEED_KEYS'] = False
+        game.apply_option('GAME_SPEED_KEYS')
+        self.assertEqual(1, game_speed())
+        self.assertEqual(4, self.saved()['game_speed'])
 
     def test_a_new_game_starts_with_what_was_saved(self):
         game = self.new_game()
@@ -257,6 +271,12 @@ class TestSavedWhenChanged(GameTestCase):
         reset_game_speed()
         again = self.new_game()
         self.assertEqual(('Korean', 4), (again.config['LANGUAGE'], game_speed()))
+
+
+def to_language():
+    """The presses that go to the options overlay's LANGUAGE row, on its first page, and change it."""
+    rows = [row.label for row in OPTION_PAGES[0].rows]
+    return (*(K_DOWN,) * (FIXED_ROWS + rows.index("LANGUAGE")), K_RIGHT)
 
 
 class TestLanguageSwitch(GameTestCase):
@@ -280,21 +300,17 @@ class TestLanguageSwitch(GameTestCase):
                 patch.object(OptionsOverlay, 'draw', autospec=True, side_effect=draw):
             OptionsOverlay(self.game).run()
 
-    def to_language(self):
-        rows = [row.label for row in OPTION_ROWS]
-        return (*(K_DOWN,) * rows.index("LANGUAGE"), K_RIGHT)
-
     def test_the_overlay_redraws_in_the_new_language(self):
         translations = []
-        self.run_overlay(*self.to_language(), K_u, translations=translations)
-        self.assertEqual("OPTIONS", translations[0](OPTIONS_TITLE.text))
-        self.assertEqual(KOREAN(OPTIONS_TITLE.text), translations[-1](OPTIONS_TITLE.text))
+        self.run_overlay(*to_language(), K_u, translations=translations)
+        self.assertEqual("LOOK & SOUND", translations[0](OPTION_PAGES[0].title))
+        self.assertEqual(KOREAN(OPTION_PAGES[0].title), translations[-1](OPTION_PAGES[0].title))
         self.assertEqual("언어", translations[-1]("LANGUAGE"))
         # and back
         translations.clear()
-        self.run_overlay(*self.to_language(), K_u, translations=translations)
-        self.assertEqual("설정", translations[0](OPTIONS_TITLE.text))
-        self.assertEqual("OPTIONS", translations[-1](OPTIONS_TITLE.text))
+        self.run_overlay(*to_language(), K_u, translations=translations)
+        self.assertEqual("화면과 소리", translations[0](OPTION_PAGES[0].title))
+        self.assertEqual("LOOK & SOUND", translations[-1](OPTION_PAGES[0].title))
         self.assertEqual('English', self.config['LANGUAGE'])
 
     def dialog_entry(self):
@@ -309,7 +325,7 @@ class TestLanguageSwitch(GameTestCase):
     def test_dialog_after_the_switch(self):
         line = "If thou art planning to take a rest, first see King Lorik."
         self.assertEqual(line, self.dialog_entry())
-        self.run_overlay(*self.to_language(), K_u)
+        self.run_overlay(*to_language(), K_u)
         self.assertEqual(KOREAN(line), self.dialog_entry())
         self.assertNotEqual(line, KOREAN(line))
         # and a line the game itself shows
@@ -321,12 +337,12 @@ class TestLanguageSwitch(GameTestCase):
     def test_king_loriks_line_carries_over(self):
         cmd_menu = self.game.cmd_menu
         cmd_menu.set_king_lorik_dialog(left_throne_room=True)
-        self.run_overlay(*self.to_language(), K_u)
+        self.run_overlay(*to_language(), K_u)
         king_lorik = cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']
         self.assertIs(king_lorik['returned_dialog'], king_lorik['dialog'])
 
     def test_menu_after_the_switch(self):
-        self.run_overlay(*self.to_language(), K_u)
+        self.run_overlay(*to_language(), K_u)
         cmd_menu = self.game.cmd_menu
         self.assertFalse(cmd_menu.command_window_in_nes_font())
         with patch('src.menu.draw_text') as draw_text, patch('src.menu.draw_window', return_value=Rect(0, 0, 1, 1)):
@@ -335,14 +351,14 @@ class TestLanguageSwitch(GameTestCase):
         self.assertEqual([KOREAN(COMMAND_TITLE.text)] + [KOREAN(entry) for entry in COMMAND_ENTRIES], drawn)
 
     def test_a_battle_after_the_switch(self):
-        self.run_overlay(*self.to_language(), K_u)
+        self.run_overlay(*to_language(), K_u)
         from src.battle import Battle
         battle = Battle(self.config, 'Slime', self.game.current_map)
         self.assertEqual(KOREAN("FIGHT"), battle._("FIGHT"))
         self.assertEqual(KOREAN("FIGHT"), self.game.battle_ctrl._("FIGHT"))
 
     def test_window_caption(self):
-        self.run_overlay(*self.to_language(), K_u)
+        self.run_overlay(*to_language(), K_u)
         self.assertEqual(KOREAN("Dragon Warrior"), pygame.display.get_caption()[0])
         self.game.set_language('English')
         self.assertEqual("Dragon Warrior", pygame.display.get_caption()[0])
