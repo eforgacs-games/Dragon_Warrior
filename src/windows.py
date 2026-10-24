@@ -380,6 +380,20 @@ FULL_MENU_LAYOUT = title_menu_layout(FULL_MENU_WINDOW, (CONTINUE_A_QUEST, CHANGE
 CONTINUE_CHANGE_ERASE_LAYOUT = title_menu_layout(CONTINUE_CHANGE_ERASE_WINDOW,
                                                  (CONTINUE_A_QUEST, CHANGE_MESSAGE_SPEED, ERASE_A_QUEST))
 TITLE_MENU_LAYOUTS = (NEW_QUEST_LAYOUT, FULL_MENU_LAYOUT, CONTINUE_CHANGE_ERASE_LAYOUT)
+# Not NES: the last entry when there's an autosave (src/autosave.py); the window grows a block to fit it. 17 tiles, in
+# the 22 the title menu has from its text column to its right border.
+CONTINUE_AUTOSAVE = "CONTINUE AUTOSAVE"
+
+
+def with_autosave_entry(layout: WindowLayout) -> WindowLayout:
+    """A title menu window with CONTINUE AUTOSAVE added under its entries, a block lower."""
+    column, row = layout.cursor_tiles[-1]
+    return layout._replace(window=layout.window._replace(height=layout.window.height + 1),
+                           texts=layout.texts + (WindowText(CONTINUE_AUTOSAVE, TITLE_MENU_TEXT_COLUMN, row + 2),),
+                           cursor_tiles=layout.cursor_tiles + ((column, row + 2),))
+
+
+TITLE_MENU_LAYOUTS_WITH_AUTOSAVE = tuple(with_autosave_entry(layout) for layout in TITLE_MENU_LAYOUTS)
 
 # The adventure log windows (Bank03 ShowOpenLogs and ShowUsedLogs show one of 7 windows each, picked by which logs are
 # open or used) are selection windows (options $81) of 1 column, cursor home Y = 2 tiles, X = 1 tile ($21), as high

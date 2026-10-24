@@ -26,5 +26,6 @@ dev_config = {
     "SHOW_COORDINATES": True,
     "GOD_MODE": True,
     "DEBUG_KEYS": True,
+    "AUTOSAVE": False,  # a dev run doesn't replace the autosave of a real game
     # "LANGUAGE": 'Korean',
 }
