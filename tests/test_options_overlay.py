@@ -643,9 +643,9 @@ class TestDevOnly(TestCase):
         # on: the speed keys, save states, rewind, auto-grind, F4/F9 and the Enter shortcut worked before the switches
         from src.config.prod_config import prod_config
         for switch in SWITCHES:
-            if switch.config_key in ('ENCOUNTERS', 'EXP_GOLD', 'RUN_BUTTON', 'STATUS_WINDOW'):
+            if switch.config_key in ('ENCOUNTERS', 'EXP_GOLD', 'RUN_BUTTON', 'STATUS_WINDOW', 'BAG_SIZE', 'SMART_A'):
                 # new options: the NES's
-                self.assertIn(switch.default, (False, 'NES', 1), switch.config_key)
+                self.assertIn(switch.default, (False, 'NES', 1, 8), switch.config_key)
             else:
                 self.assertTrue(prod_config[switch.config_key], switch.config_key)
             self.assertEqual(switch.default, prod_config[switch.config_key], switch.config_key)
