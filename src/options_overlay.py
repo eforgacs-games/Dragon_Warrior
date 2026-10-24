@@ -24,11 +24,13 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     NPCS MAKE WAY  ON / OFF (NES)           (NPCS_MAKE_WAY, MovementController.ask_npc_to_make_way)
     STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps)
     QUICK ACTION   OFF (NES) / ON           (QUICK_ACTION: Enter takes, opens or talks, Game.handle_enter_key)
+    SMART A        OFF (NES) / ON           (SMART_A: A does TALK, TAKE, DOOR or STAIRS, Game.smart_command)
     ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, Game.thin_encounters)
     EXP/GOLD       x1 (NES) / x2 / x4       (EXP_GOLD: what a won fight gives, Battle.enemy_defeated)
     QUEST JOURNAL  OFF (NES) / GOALS / HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
     AUTOSAVE       OFF (NES) / ON           (AUTOSAVE: the autosave slot, src/autosave.py)
     BAG            NES (8) / 16             (BAG_SIZE: the inventory slots, src/items.py bag_slots)
+    RUN BUTTON     OFF (NES) / ON           (RUN_BUTTON: hold B to walk twice as fast, src/movement.py)
 
     CONTROLS
     GAME SPEED     OFF (NES) / ON           (GAME_SPEED_KEYS: keys 1 to 5, src/waiting.py)
@@ -39,8 +41,8 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     MENU SPEED     NORMAL / FOLLOW GAME     (MENU_SPEED: the selection windows at 1x, or at the game speed,
                                              src/waiting.py menu_ticks)
     CHEATS         OFF (NES) / ON           (CHEAT_KEYS: F4 auto-battle, F9 invulnerability)
-    RUN BUTTON     OFF (NES) / ON           (RUN_BUTTON: hold B to walk twice as fast, src/movement.py)
     DUNGEON MAP    OFF (NES) / ON           (DUNGEON_MAP: whether M shows the dungeon map, src/dungeon_map.py; global)
+    MESSAGE LOG    OFF (NES) / ON           (MESSAGE_LOG: the L key shows the last messages, src/message_log.py)
     CONTROLS                                (A opens the CONTROLS screen to rebind the keys, src/controls_screen.py)
 
 Above every page's rows are two more:
@@ -189,6 +191,8 @@ OPTION_PAGES = (
         OptionRow("NPCS MAKE WAY", 'NPCS_MAKE_WAY', (True, False), ("ON", "OFF (NES)"), (False, True)),
         OptionRow("STAIRS", 'AUTO_STAIRS', (True, False), ("STEP ON", "NES"), (False, True)),
         switch_row("QUICK ACTION", 'QUICK_ACTION'),
+        # A on the map does what applies, as Enter does, instead of opening COMMAND (Game.smart_command)
+        switch_row("SMART A", 'SMART_A'),
         # How many fights, and what they give, are the game's balance, not conveniences: NES in both presets
         OptionRow("ENCOUNTERS", 'ENCOUNTERS', ENCOUNTER_SETTINGS, ("NES", "HALF", "OFF"), (ENCOUNTERS_NES, ENCOUNTERS_NES)),
         OptionRow("EXP/GOLD", 'EXP_GOLD', EXP_GOLD_MULTIPLIERS, ("x1 (NES)", "x2", "x4"), (1, 1)),
@@ -199,6 +203,8 @@ OPTION_PAGES = (
         switch_row("AUTOSAVE", 'AUTOSAVE'),
         # The inventory slots (src/items.py bag_slots): the NES's 8, or 16 in the MODERN preset
         OptionRow("BAG", 'BAG_SIZE', BAG_SIZES, ("NES (8)", "16"), (INVENTORY_SLOTS, BIG_BAG_SLOTS)),
+        # Walking (MovementController.run_button_held): on this page, as CONTROLS is full
+        switch_row("RUN BUTTON", 'RUN_BUTTON'),
     )),
     OptionPage("CONTROLS", (
         switch_row("GAME SPEED", 'GAME_SPEED_KEYS'),
@@ -212,9 +218,10 @@ OPTION_PAGES = (
                   (MENU_SPEED_NORMAL, MENU_SPEED_NORMAL)),
         # F4 and F9 are cheats, not conveniences: off in both presets
         switch_row("CHEATS", 'CHEAT_KEYS', modern=False),
-        switch_row("RUN BUTTON", 'RUN_BUTTON'),
         # The player's, kept in the global settings (src/settings.py): M shows the dark floor's map (src/dungeon_map.py)
         switch_row("DUNGEON MAP", 'DUNGEON_MAP'),
+        # The MESSAGE LOG key (L) on the map shows the last messages (src/message_log.py)
+        switch_row("MESSAGE LOG", 'MESSAGE_LOG'),
         # A opens the CONTROLS screen to rebind the keys (src/controls_screen.py)
         CONTROLS_ROW,
     )),

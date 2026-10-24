@@ -171,7 +171,8 @@ class TestKeys(GamepadTestCase):
         self.assertEqual({K_k, K_LEFT}, self.gamepad.held)
 
     def test_unmapped_buttons_do_nothing(self):
-        self.pad.state = pad('x', 'guide')  # 'y' is the dungeon map's M (tests/test_dungeon_map.py)
+        # 'y' (the top button) is the dungeon map's M and 'x' (the left one) the message log's L
+        self.pad.state = pad('guide', 'leftstick', 'rightstick')
         poll_virtual_joypad()
         self.assertEqual([], queued())
         self.assertEqual(set(), self.gamepad.held)
@@ -582,7 +583,9 @@ class TestRebound(GamepadTestCase):
         self.rebind(lambda controls: controls.bind_pad('A', 'x'))
         self.assertEqual([(K_k, 0)], self.pressed_keys(pad('x')))
         self.pressed_keys(pad())
-        self.assertEqual([], self.pressed_keys(pad(PAD_A)))  # 'b' isn't bound any more
+        # 'x' was the message log's (L): binding it swaps, so 'b' is the message log's now
+        from pygame import K_l
+        self.assertEqual([(K_l, 0)], self.pressed_keys(pad(PAD_A)))
 
     def test_it_presses_the_actions_first_key(self):
         from pygame import K_l

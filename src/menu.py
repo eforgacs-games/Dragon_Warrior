@@ -31,6 +31,7 @@ from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.options_screen import MODERN, options_from_config
 from src.save_file import ADVENTURE_LOGS, SaveFile, log_for_unchosen_save, save_path, write_save
+from src.message_log import speaker_of
 from src.selection import YES, frame_events, next_game_frame, run_selection, stop_at_edges
 from src.sound import SPELL_SFX_FRAMES, Sound
 from src.visual_effects import bw_screen_flash, rainbow_bridge_flash
@@ -49,6 +50,8 @@ from src.nes_random import one_in
 # The COMMAND window's commands, in WndSelResults order (NCC_TALK $00 to NCC_TAKE $07; src/windows.py COMMAND_ENTRIES):
 # the CommandMenu methods Bank03 NCCmdSelected and CheckCmdWndResults run for each
 COMMAND_METHODS = ('talk', 'status', 'stairs', 'search', 'spell', 'item', 'door', 'take')
+# The stairs the STAIRS command takes (Bank03 CheckStairs)
+STAIR_TILES = ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN')
 
 
 
@@ -93,6 +96,8 @@ class CommandMenu:
         self.screen = self.game.screen
         self.current_map: DragonWarriorMap = self.game.current_map
         self.current_battle = None
+        # The NPC whose dialog is showing (launch_dialog), for the message log
+        self.speaker: str | None = None
         self.current_tile = self.player.current_tile
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
@@ -263,6 +268,14 @@ class CommandMenu:
             character_dict['character'].row, character_dict['character'].column) == self.player.next_next_coordinates
 
     def launch_dialog(self, dialog_character, current_map):
+        """An NPC's dialog. What it says is kept in the message log as theirs (log_message)."""
+        self.speaker = dialog_character
+        try:
+            self.run_dialog(dialog_character, current_map)
+        finally:
+            self.speaker = None
+
+    def run_dialog(self, dialog_character, current_map):
         if self.game.story_flags.dragonlord_defeated and self.game.ending.has_victory_dialog(dialog_character,
                                                                                               current_map):
             # NES LD134: once the Dragonlord is dead, every NPC says one of the victory lines instead (but not
@@ -325,6 +338,7 @@ class CommandMenu:
         it goes below whatever the window already shows, letter by letter, scrolling the window up when it reaches
         the bottom. Then it waits for a key, with the blinking down arrow unless hide_arrow is set (DoWait)."""
         config = self.game.game_state.config
+        self.log_message(line, quoted=add_quotes, temporary=bool(temp_text_start))
         if add_quotes:
             line = self.add_dialog_quotes(line)
         animate = letter_by_letter and not config['NO_WAIT']
@@ -353,6 +367,14 @@ class CommandMenu:
             self.draw_dialog_arrow(False)  # DoWait: TxtClearArrow
             if not self.modern_dialog:  # (the next modern message clears the window anyway, so it needn't scroll)
                 self.run_dialog_steps(self.dialog_buffer.finish_wait(), animate, frames, disable_sound)
+
+    def log_message(self, line: str, quoted: bool, temporary: bool) -> None:
+        """Keep the message for the message log (src/message_log.py): the NPC talking says a quoted one. Not a fight's
+        messages, nor the ones shown over the map for a moment (temporary)."""
+        message_log = getattr(self.game, 'message_log', None)
+        if message_log is None or temporary or self.current_battle is not None:
+            return
+        message_log.record(line, speaker_of(self.speaker) if quoted else None)
 
     @property
     def modern_dialog(self) -> bool:
@@ -1326,7 +1348,7 @@ class CommandMenu:
         :return: None
         """
         # this might be something we could turn off as one of the "modernization" updates
-        if self.player.current_tile in ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN'):
+        if self.player.current_tile in STAIR_TILES:
             self.game.process_staircase_warps(staircase_location=(self.game.player.row, self.game.player.column),
                                               staircase_dict=self.game.current_map.staircases[
                                                   (self.game.player.row, self.game.player.column)])

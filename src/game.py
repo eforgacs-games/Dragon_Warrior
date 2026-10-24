@@ -41,8 +41,9 @@ from src.intro import Intro
 from src.items import OpenDoorHistory, TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
-from src.menu import BATTLE_LINE, CommandMenu
+from src.menu import BATTLE_LINE, STAIR_TILES, CommandMenu
 from src.movement import HILL_PAUSE_FRAMES, RUN_SPEED_FACTOR, STEP_SYNC_FRAMES, MovementController
+from src.message_log import MessageLog, MessageLogScreen
 from src.music_player import MusicPlayer
 from src.npc_movement import step
 from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
@@ -166,6 +167,13 @@ class Game:
         # has finished their step (NES PausePrepLoop / DoNCCmdWindow), see resolve_pending_freezes
         self.pause_requested = False
         self.cmd_menu_requested = False
+        # A pressed with SMART A on: when the command window would open, TALK, TAKE, DOOR or STAIRS runs instead if one
+        # applies (run_smart_command)
+        self.smart_a_pending = False
+        # The MESSAGE LOG key on the map: the log (src/message_log.py) opens once everyone has finished their step,
+        # like the options overlay
+        self.message_log_requested = False
+        self.message_log = MessageLog()
         # SELECT or Tab pressed on the map: the options overlay (src/options_overlay.py) opens once everyone has finished
         # their step, like the pause (resolve_pending_freezes)
         self.options_requested = False
@@ -897,6 +905,7 @@ class Game:
         self.handle_a_button(current_keydown_event)
         self.handle_start_button(current_keydown_event)
         self.handle_select_button(current_keydown_event)
+        self.handle_message_log_key(current_keydown_event)
         self.handle_auto_grind_key(current_keydown_event)
         self.handle_dungeon_map_key(current_keydown_event)
         self.handle_help_button(current_keydown_event)
@@ -939,8 +948,11 @@ class Game:
             if self.movement.world_frozen or self.pause_requested or self.options_requested or \
                     self.auto_grind_requested:
                 return
-            # The window opens once the hero and the NPCs have finished their steps (resolve_pending_freezes)
+            # The window opens once the hero and the NPCs have finished their steps (resolve_pending_freezes). With
+            # SMART A on (not NES), that's when TALK, TAKE, DOOR or STAIRS runs instead, if one applies there
+            # (MovementController.resolve_pending_freezes, run_smart_command).
             self.cmd_menu_requested = True
+            self.smart_a_pending = bool(self.config.get('SMART_A'))
             self.movement.resolve_pending_freezes()
 
     def handle_start_button(self, keydown_event):
@@ -953,6 +965,7 @@ class Game:
                 self.pause_requested = True
                 self.cmd_menu_requested = False
                 self.options_requested = False
+                self.message_log_requested = False
                 self.auto_grind_requested = False
                 self.dungeon_map_requested = False
                 self.movement.resolve_pending_freezes()
@@ -967,6 +980,21 @@ class Game:
             return
         self.options_requested = True
         self.movement.resolve_pending_freezes()
+
+    def handle_message_log_key(self, keydown_event) -> None:
+        """L (MESSAGE LOG): the message log (src/message_log.py), not NES, when the MESSAGE LOG option is on. Like the options
+        overlay, it opens from the map only when START would pause the game, once the hero and the NPCs have finished
+        their steps (resolve_pending_freezes)."""
+        if not pressed(keydown_event, 'MESSAGE_LOG') or not self.config.get('MESSAGE_LOG'):
+            return
+        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+            return
+        self.message_log_requested = True
+        self.movement.resolve_pending_freezes()
+
+    def open_message_log(self) -> None:
+        """Show the message log over the map until it's closed; nothing else runs meanwhile."""
+        MessageLogScreen(self).run()
 
     def handle_auto_grind_key(self, keydown_event) -> None:
         """G: auto-grind (src/auto_grind.py), not NES. It starts from the map only when START would pause the game, and
@@ -1066,26 +1094,45 @@ class Game:
         self.set_view()  # the VIEW row: the map is drawn across the new width from the next frame
 
     def handle_enter_key(self, keydown_event):
-        """QUICK ACTION (not NES): the SMART A key (Enter) on the map takes, opens a door or talks without the COMMAND
-        window. With it off the key is the A button (handle_a_button)."""
+        """QUICK ACTION (not NES): the SMART A key (Enter, src/controls.py) on the map runs TALK, TAKE, DOOR or STAIRS
+        when one applies (smart_command). Unlike A with SMART A on, it opens nothing when none does. With QUICK ACTION
+        off the key is the A button (handle_a_button)."""
         if pressed(keydown_event, 'SMART_A') and self.game_state.config.get('QUICK_ACTION'):
-            # A shortcut for TAKE/DOOR/TALK, so it follows the same rule as the A button: NES GameEngineLoop only reads
-            # commands between steps (DoJoyUp etc. move a whole tile before returning to CheckInputs). Mid-step, or
-            # while a pause or the command window is pending or open (where Enter picks a menu item), it does nothing.
-            if self.player.is_moving or self.movement.world_frozen or self.movement.freeze_pending:
-                return
-            # It sounds like choosing the command in the COMMAND window (WndAPressed's menu button sound)
-            if self.player.current_tile == 'TREASURE_BOX':
-                self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
-                self.cmd_menu.play_menu_button_sound()
-                self.cmd_menu.take()
-            elif self.player.next_tile_id == 'DOOR':
-                self.cmd_menu.play_menu_button_sound()
-                self.cmd_menu.door()
-            elif self.cmd_menu.check_across_from_npc() and not self.game_state.is_initial_dialog:
-                self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
-                self.cmd_menu.play_menu_button_sound()
-                self.cmd_menu.talk()
+            self.run_smart_command()
+
+    def smart_command(self) -> str | None:
+        """The command that applies where the hero stands, in this order: TALK if someone is in front of him (or
+        across a counter), TAKE on a treasure chest, DOOR next to a locked door with a Magic Key to open it, STAIRS on
+        stairs; None if none does."""
+        if self.cmd_menu.check_across_from_npc() and not self.game_state.is_initial_dialog:
+            return 'TALK'
+        if self.player.current_tile == 'TREASURE_BOX':
+            return 'TAKE'
+        if self.cmd_menu.find_door() is not None and 'Magic Key' in self.player.inventory:
+            return 'DOOR'
+        if self.player.current_tile in STAIR_TILES and \
+                (self.player.row, self.player.column) in self.current_map.staircases:
+            return 'STAIRS'
+        return None
+
+    def run_smart_command(self) -> bool:
+        """Do the smart command (smart_command), as if chosen in the COMMAND window: the menu button sound
+        (WndAPressed), and the stats window for the ones that show a dialog. Returns whether one ran.
+
+        It follows the A button's rule: NES GameEngineLoop only reads commands between steps (DoJoyUp etc. move a
+        whole tile before returning to CheckInputs). Mid-step, or while a pause or the command window is pending or
+        open (where Enter picks a menu item), nothing runs."""
+        if self.player.is_moving or self.movement.world_frozen or self.movement.freeze_pending:
+            return False
+        command = self.smart_command()
+        if command is None:
+            return False
+        if command in ('TALK', 'TAKE'):
+            self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
+        self.cmd_menu.play_menu_button_sound()
+        {'TALK': self.cmd_menu.talk, 'TAKE': self.cmd_menu.take, 'DOOR': self.cmd_menu.door,
+         'STAIRS': self.cmd_menu.stairs}[command]()
+        return True
 
     @property
     def fps(self) -> float:
