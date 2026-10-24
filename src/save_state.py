@@ -28,13 +28,17 @@ is up and its tiles haven't changed, when it just moves everyone back (the rewin
 (``decode_snapshot``) before anything is changed, so a state that can't be read is refused, not half loaded.
 
 A state file is ``state_<slot>.json`` in the save folder (SAVE_DIR), holding the snapshot with its format version
-(STATE_FORMAT_VERSION). A state with another version, or one that can't be read, is refused with a message.
+(STATE_FORMAT_VERSION). From 1.0 on, a state saved by any 1.x build loads in every later one: a state in an older
+format is brought up to date by STATE_MIGRATIONS (``migrate_snapshot``) before it is checked. One from a newer build,
+or one that can't be read, is refused with a message. tests/test_save_compatibility.py loads a sample state of every
+format, kept in tests/sample_saves/.
 """
 import base64
 import json
 import os
 import random
 from array import array
+from collections.abc import Callable
 from typing import Any
 
 from pygame import Rect
@@ -50,7 +54,8 @@ from src.sprites.animated_sprite import AnimatedSprite
 from src.story_flags import StoryFlags
 from src.visual_effects import cut_to_black, screen_fade
 
-# Raise it whenever what a snapshot holds changes, so states saved before are refused rather than loaded wrong
+# Raise it whenever what a snapshot holds changes, with a STATE_MIGRATIONS step from the version before (and a sample
+# state of that version in tests/sample_saves/), so states saved before load as they should rather than wrong
 STATE_FORMAT_VERSION = 1
 VERSION_KEY = 'version'
 SAVE_STATE_SLOTS = (1, 2, 3)
@@ -96,6 +101,23 @@ class StateError(Exception):
 
 OLD_VERSION = 'old version'
 UNREADABLE = 'unreadable'
+
+
+# STATE_MIGRATIONS[n] turns a snapshot in format n into format n + 1, for every version from 1 (the first, in 1.0) up to
+# STATE_FORMAT_VERSION
+STATE_MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {}
+
+
+def migrate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """A snapshot in the current format: the STATE_MIGRATIONS from its own format on, in order. Raises StateError
+    (OLD_VERSION) for one with no version, or from a newer build than this one."""
+    version = snapshot.get(VERSION_KEY)
+    if not isinstance(version, int) or isinstance(version, bool) or not 1 <= version <= STATE_FORMAT_VERSION:
+        raise StateError(OLD_VERSION)
+    for from_version in range(version, STATE_FORMAT_VERSION):
+        snapshot = STATE_MIGRATIONS[from_version](snapshot)
+        snapshot[VERSION_KEY] = from_version + 1
+    return snapshot
 
 
 def pristine_layouts() -> dict[str, list[list[int]]]:
@@ -191,6 +213,7 @@ def take_snapshot(game: Any) -> dict[str, Any]:
     hero = {name: getattr(player, name) for name in PLAYER_VALUES}
     hero.update({name: _json_cell(getattr(player, name)) for name in PLAYER_CELLS})
     hero.update({name: list(getattr(player, name)) for name in PLAYER_LISTS})
+    hero['inventory'] = player.inventory.with_empty_slots()  # the NES slots, with None for an emptied one (#390)
     hero['rect'] = _rect(player)
     roaming = []
     for character in current_map.roaming_characters:
@@ -237,11 +260,10 @@ def take_snapshot(game: Any) -> dict[str, Any]:
 
 def decode_snapshot(snapshot: Any) -> dict[str, Any]:
     """Check a snapshot and turn its JSON values back into the game's (tuples, the random state), without changing
-    the game. Raises StateError for one from another format version or one that can't be read."""
+    the game. Raises StateError for one from a newer format version or one that can't be read."""
     if not isinstance(snapshot, dict):
         raise StateError(UNREADABLE)
-    if snapshot.get(VERSION_KEY) != STATE_FORMAT_VERSION:
-        raise StateError(OLD_VERSION)
+    snapshot = migrate_snapshot(snapshot)
     try:
         if snapshot['map'] not in map_lookup:
             raise ValueError(f"unknown map {snapshot['map']!r}")
@@ -258,7 +280,7 @@ def decode_snapshot(snapshot: Any) -> dict[str, Any]:
         for name in PLAYER_CELLS:
             hero[name] = _cell(hero[name])
         for name in PLAYER_LISTS:
-            hero[name] = [str(value) for value in hero[name]]
+            hero[name] = [None if value is None and name == 'inventory' else str(value) for value in hero[name]]
         hero['rect'] = [int(value) for value in hero['rect']]
         roaming = []
         for values in snapshot['roaming']:
@@ -478,7 +500,7 @@ def write_snapshot(path: str, snapshot: dict[str, Any]) -> None:
 
 def read_state(save_dir: str, slot: int) -> dict[str, Any] | None:
     """The snapshot saved in a slot, or None if the slot is empty. Raises StateError if the file can't be read or is
-    from another format version (decode_snapshot checks the rest)."""
+    from a newer format version (decode_snapshot checks the rest)."""
     return read_snapshot(state_path(save_dir, slot))
 
 
@@ -493,6 +515,4 @@ def read_snapshot(path: str) -> dict[str, Any] | None:
         raise StateError(UNREADABLE) from error
     if not isinstance(snapshot, dict):
         raise StateError(UNREADABLE)
-    if snapshot.get(VERSION_KEY) != STATE_FORMAT_VERSION:
-        raise StateError(OLD_VERSION)
-    return snapshot
+    return migrate_snapshot(snapshot)
