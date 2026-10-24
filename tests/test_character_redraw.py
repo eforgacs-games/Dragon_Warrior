@@ -12,7 +12,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 import pygame
-from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP
+from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_j
 
 from src.config.test_config import test_config
 from src.direction import Direction
@@ -136,9 +136,11 @@ def walk_and_find_ghosts(game: Game, npc_identifier: str, npc_direction: Directi
     return ghost_frames
 
 
-def walk_hero_and_find_ghosts(game: Game, walk: list) -> list:
-    """Walk the hero (the camera scrolling with him) the given (key, blocks) legs, with the NPCs standing still. Returns
-    the frames on which anything on screen differed from a clean redraw."""
+def walk_hero_and_find_ghosts(game: Game, walk: list, run: bool = False) -> list:
+    """Walk the hero (the camera scrolling with him) the given (key, blocks) legs, with the NPCs standing still; with
+    run, holding B with RUN BUTTON on (the legs are then twice as long). Returns the frames on which anything on screen
+    differed from a clean redraw."""
+    game.game_state.config['RUN_BUTTON'] = run
     held_keys = defaultdict(int)
     ghost_frames = []
     frame = 0
@@ -147,6 +149,7 @@ def walk_hero_and_find_ghosts(game: Game, walk: list) -> list:
         for walk_key, blocks in walk:
             held_keys.clear()
             held_keys[walk_key] = 1
+            held_keys[K_j] = int(run)
             for _ in range(blocks * game.tile_size // game.movement.speed + 1):
                 frame += 1
                 game.movement.handle_player_movement()
@@ -233,6 +236,21 @@ class TestCharacterRedraw(TestCase):
                                                                       (K_LEFT, 3)]))
                 self.assertEqual(start, (game.player.row, game.player.column))
 
+    def test_the_running_hero_leaves_no_trail(self):
+        # RUN BUTTON (not NES): 2 NES pixels a frame, in every direction, onto other tile types too
+        for scale in (1, 2):
+            with self.subTest(scale=scale):
+                game = make_game('Garinham', scale)
+                start = (game.player.row, game.player.column)
+                self.assertEqual([], walk_hero_and_find_ghosts(game, [(K_RIGHT, 2), (K_LEFT, 2)], run=True))
+                self.assertEqual(start, (game.player.row, game.player.column))
+                game = make_game('Alefgard', scale)
+                game.game_state.config['NO_BATTLES'] = True
+                game.change_map(map_lookup['Alefgard'](game.config), destination_coordinates=(50, 44),
+                                direction=Direction.UP.value)
+                self.assertEqual([], walk_hero_and_find_ghosts(game, [(K_UP, 3)], run=True))
+                self.assertLessEqual(game.player.row, 50 - 6)  # 3 blocks of walking time run 6 or more
+
     def test_the_hero_leaves_no_trail_crossing_onto_another_tile_type(self):
         # A step ends on its last moving frame (#237), so on the next frame only the tile type the hero stands on was
         # redrawn. Where his last frame overlapped a block of another type (grass into the trees north-west of
@@ -266,13 +284,16 @@ class TestCharacterRedraw(TestCase):
                 self.assertEqual([], wrong_tiles)
 
 
-def find_ghosts_drawing_every(game: Game, frames_per_draw: int, frames: int, held_key: int | None = None) -> list:
+def find_ghosts_drawing_every(game: Game, frames_per_draw: int, frames: int, held_key: int | None = None,
+                              run: bool = False) -> list:
     """Run frames on the map (the hero, holding held_key, and the roaming NPCs) and draw only every frames_per_draw-th
-    one, as the main loop does when drawing can't keep up with the game speed (Game.run_due_frames). Returns the draws
-    on which anything on screen differed from a clean redraw."""
+    one, as the main loop does when drawing can't keep up with the game speed (Game.run_due_frames); with run, holding
+    B with RUN BUTTON on. Returns the draws on which anything on screen differed from a clean redraw."""
+    game.game_state.config['RUN_BUTTON'] = run
     held_keys = defaultdict(int)
     if held_key is not None:
         held_keys[held_key] = 1
+    held_keys[K_j] = int(run)
     ghost_frames = []
     with patch('src.movement.random', random.Random(1)), patch('src.movement.key.get_pressed', return_value=held_keys):
         for frame in range(1, frames + 1):
@@ -307,6 +328,15 @@ class TestSkippedDraws(TestCase):
                 start_column = game.player.column
                 self.assertEqual([], find_ghosts_drawing_every(game, frames_per_draw, 4 * 16, K_RIGHT))
                 self.assertGreater(game.player.column, start_column + 2)
+
+    def test_the_running_hero_leaves_no_trail(self):
+        # RUN BUTTON: the main loop then runs at most 4 frames between draws (Game.run_due_frames), half a running step
+        for frames_per_draw in (2, 3, 4):
+            with self.subTest(frames_per_draw=frames_per_draw):
+                game = make_game('Garinham')
+                start_column = game.player.column
+                self.assertEqual([], find_ghosts_drawing_every(game, frames_per_draw, 4 * 16, K_RIGHT, run=True))
+                self.assertGreater(game.player.column, start_column + 4)
 
     def test_roaming_npcs_leave_no_ghosts(self):
         for frames_per_draw in (2, 3, 5, 8):

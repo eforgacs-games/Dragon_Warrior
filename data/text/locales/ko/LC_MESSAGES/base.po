@@ -2691,3 +2691,43 @@ msgstr "자동 사냥"
 #: src/options_overlay.py
 msgid "CHEATS"
 msgstr "치트"
+
+#: src/options_overlay.py
+msgid "STATUS WINDOW"
+msgstr "능력치 창"
+
+#: src/options_overlay.py
+msgid "ALWAYS"
+msgstr "항상"
+
+#: src/options_overlay.py
+msgid "ENCOUNTERS"
+msgstr "적 출현"
+
+#: src/options_overlay.py
+msgid "HALF"
+msgstr "절반"
+
+#: src/options_overlay.py
+msgid "EXP/GOLD"
+msgstr "경험치/골드"
+
+#: src/options_overlay.py
+msgid "x1 (NES)"
+msgstr "x1 (NES)"
+
+#: src/options_overlay.py
+msgid "x2"
+msgstr "x2"
+
+#: src/options_overlay.py
+msgid "x4"
+msgstr "x4"
+
+#: src/options_overlay.py
+msgid "RUN BUTTON"
+msgstr "달리기 버튼"
+
+#: src/auto_grind.py
+msgid "Auto-grind: ENCOUNTERS are off"
+msgstr "자동 사냥: 적 출현이 꺼져 있다"

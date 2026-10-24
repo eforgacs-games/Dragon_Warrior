@@ -63,6 +63,11 @@ base_config = {
     "AUTO_GRIND": True,  # AUTO-GRIND: G starts auto-grind (src/auto_grind.py)
     "CHEAT_KEYS": True,  # CHEATS: F4 auto-battle and F9 invulnerability
     "QUICK_ACTION": True,  # QUICK ACTION: Enter on the map takes, opens a door or talks; off, Enter is A there too
+    # GAMEPLAY switches (src/options_screen.py SWITCHES), each at its NES value
+    "ENCOUNTERS": "NES",  # ENCOUNTERS: "NES", "Half" (every other random fight skipped) or "Off" (none)
+    "EXP_GOLD": 1,  # EXP/GOLD: a won fight's experience and gold times 1 (NES), 2 or 4
+    "RUN_BUTTON": False,  # RUN BUTTON: B held while walking on the map walks twice as fast
+    "STATUS_WINDOW": "NES",  # STATUS WINDOW: "NES" (the pop-up after standing still) or "Always" (always on the map)
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on
