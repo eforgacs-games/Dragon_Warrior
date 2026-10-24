@@ -80,6 +80,12 @@ DEFAULT_AUTO_GRIND_STOP = 'RedHP'
 DEFAULT_MENU_SPEED = MENU_SPEED_NORMAL
 
 
+# ENCOUNTERS, EXP/GOLD and STATUS WINDOW's values
+ENCOUNTERS_NES, ENCOUNTERS_HALF, ENCOUNTERS_OFF = ENCOUNTER_SETTINGS = ('NES', 'Half', 'Off')
+EXP_GOLD_MULTIPLIERS = (1, 2, 4)
+STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS = STATUS_WINDOW_SETTINGS = ('NES', 'Always')
+
+
 @dataclass(frozen=True, slots=True)
 class Switch:
     """One of this game's conveniences, switched in the options overlay (#409, #437): the Options field, the config
@@ -118,6 +124,15 @@ SWITCHES = (
     # QUICK ACTION: Enter on the map takes a chest, opens a door or talks without the COMMAND window; off, Enter is
     # the A button there too, as everywhere else
     Switch('quick_action', 'QUICK_ACTION', 'QuickAction', (False, True), True),
+    # ENCOUNTERS: the NES's random fights, half as many (every other one that would start is skipped, so the NES's
+    # rolls and enemy choice are untouched) or none (Game.roll_for_fight); scripted fights always happen
+    Switch('encounters', 'ENCOUNTERS', 'Encounters', ENCOUNTER_SETTINGS, ENCOUNTERS_NES),
+    # EXP/GOLD: the experience and gold a won fight gives, times 1 (the NES), 2 or 4 (Battle.enemy_defeated)
+    Switch('exp_gold', 'EXP_GOLD', 'ExpGold', EXP_GOLD_MULTIPLIERS, 1),
+    # RUN BUTTON: B held while walking on the map walks twice as fast (MovementController.run_button_held)
+    Switch('run_button', 'RUN_BUTTON', 'RunButton', (False, True), False),
+    # STATUS WINDOW: the NES pop-up after standing still, or always on the map (Drawer.status_window_always)
+    Switch('status_window', 'STATUS_WINDOW', 'StatusWindow', STATUS_WINDOW_SETTINGS, STATUS_WINDOW_NES),
 )
 
 
@@ -139,6 +154,10 @@ class Options:
     auto_grind: bool = True
     cheat_keys: bool = True
     quick_action: bool = True
+    encounters: str = ENCOUNTERS_NES
+    exp_gold: int = 1
+    run_button: bool = False
+    status_window: str = STATUS_WINDOW_NES
 
 
 # A new quest's settings when none are chosen: NewQuest's MSG_NORMAL, the NES dialog window, and base_config's

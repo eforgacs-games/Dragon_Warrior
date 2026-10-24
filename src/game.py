@@ -40,11 +40,11 @@ from src.items import OpenDoorHistory, TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.menu import BATTLE_LINE, CommandMenu
-from src.movement import HILL_PAUSE_FRAMES, STEP_SYNC_FRAMES, MovementController
+from src.movement import HILL_PAUSE_FRAMES, RUN_SPEED_FACTOR, STEP_SYNC_FRAMES, MovementController
 from src.music_player import MusicPlayer
 from src.npc_movement import step
 from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
-from src.options_screen import apply_options
+from src.options_screen import ENCOUNTERS_HALF, ENCOUNTERS_OFF, apply_options
 from src.rewind import Rewind
 from src.save_file import SaveFile
 from src.save_state import OLD_VERSION, StateError, read_state, restore_snapshot, take_snapshot, write_state
@@ -136,6 +136,8 @@ class Game:
         self.repel_tick_pending = False  # a step has been taken, and CheckRepelTimer is still to come for it
         # NES MjArmrHP: counts steps taken in Magic Armor; every 4th one heals 1 HP (see armor_step_heal)
         self.magic_armor_steps = 0
+        # ENCOUNTERS on HALF (not NES): whether the next random fight that would start is skipped (roll_for_fight)
+        self.skip_next_encounter = False
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.door_history = OpenDoorHistory()  # which locked doors have been opened since the last overworld visit
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
@@ -352,6 +354,9 @@ class Game:
         time while drawing keeps up with NES_FPS * N, more when it doesn't, so walking and the NPCs keep pace with the
         game speed and the game clock everything else reads. A frame that changes the map, or opens something with a
         loop of its own (a battle, a dialog), ends the run: the next one starts after the next draw."""
+        # Half a step at most between two draws, a running one too (RUN BUTTON)
+        running = self.config.get('RUN_BUTTON') is True
+        self.frame_pacer.max_frames = STEP_SYNC_FRAMES // 2 // (RUN_SPEED_FACTOR if running else 1)
         frames = self.frame_pacer.frames_due()
         self.read_events()
         if self.rewind.active:
@@ -663,7 +668,7 @@ class Game:
             return
         self.last_zone = group
         enemies_in_current_zone = ENEMY_GROUPS[group] if self.game_state.config["FORCE_BATTLE"] else \
-            roll_encounter(self.current_map.identifier, tile, column, row)
+            self.thin_encounters(roll_encounter(self.current_map.identifier, tile, column, row))
         if enemies_in_current_zone is not None and not self.game_state.config["NO_BATTLES"]:
             if self.battle_ctrl.run_battle(enemies_in_current_zone) != BattleOutcome.REPELLED:
                 # NES: after the fight the hero is still on this block; stairs wait for STAIRS (or a step off them)
@@ -671,6 +676,22 @@ class Game:
                 self.auto_grind.after_fight()
         self.battle_ctrl.battle_menu_row = 0
         self.battle_ctrl.battle_menu_column = 0
+
+    def thin_encounters(self, enemies: tuple[str, ...] | None) -> tuple[str, ...] | None:
+        """The ENCOUNTERS option (not NES) on a random fight the NES's roll has just started: NES keeps it, OFF skips
+        it, HALF skips every other one. The roll itself, the random numbers it takes and the enemy it picks are the
+        NES's, so the fights that do start are the ones the NES would start; guardians, the Dragonlord and every other
+        scripted fight don't come through here."""
+        if enemies is None:
+            return None
+        setting = self.game_state.config.get('ENCOUNTERS')
+        if setting == ENCOUNTERS_OFF:
+            return None
+        if setting == ENCOUNTERS_HALF:
+            skipped, self.skip_next_encounter = self.skip_next_encounter, not self.skip_next_encounter
+            if skipped:
+                return None
+        return enemies
 
     def receive_damage(self, attack_damage):
         # God mode or invulnerable: take no damage
