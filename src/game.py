@@ -28,7 +28,7 @@ from src.constants import (
 )
 from src.direction import Direction
 from src.display_filters import PRESENTER, SCALING_KEY, SCALING_SMOOTH, SCANLINES_KEY
-from src.directories import Directories
+from src.directories import Directories, music_name
 from src.drawer import Drawer
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_functions import set_character_position, GameFunctions
@@ -57,7 +57,7 @@ from src.ending import Ending
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
 from src.waiting import NES_FPS, SPEED_KEYS, FrameClock, FramePacer, clear_events_keeping_quit, game_speed, \
-    reset_game_speed, set_game_speed
+    reset_game_speed, set_game_speed, set_speed_keys_enabled, speed_keys_enabled
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.visual_effects import flash_transparent_color, force_field_flash
@@ -113,11 +113,12 @@ class Game:
         self.initial_dialog_enabled = self.game_state.config["INITIAL_DIALOG_ENABLED"]
         self.skip_text = False
 
-        # engine: keys 1 to 5 change the game speed (self.fps); it's kept with the global settings
+        # engine: keys 1 to 5 change the game speed (self.fps), if GAME SPEED is on; it's kept with the global settings
         set_speed_listener(None)
         reset_game_speed()
         set_game_speed(self.settings.settings.game_speed)
         set_speed_listener(self.settings.updater('game_speed'))
+        set_speed_keys_enabled(bool(config.get('GAME_SPEED_KEYS')))
         set_virtual_joypad(None)  # no auto-grind (src/auto_grind.py) left driving from an earlier game
         connect_gamepad()  # a controller works like the keyboard (src/gamepad.py), plugged in now or later
         follow_menu_speed_option(self.game_state.config)  # MENU SPEED: the selection windows at 1x or the game speed
@@ -252,6 +253,40 @@ class Game:
     def auto_stairs(self, value: bool) -> None:
         self.game_state.config['AUTO_STAIRS'] = value
 
+    def apply_option(self, config_key: str) -> None:
+        """An option has just been changed in the options overlay (src/options_overlay.py). Most are read from the config
+        when they're next needed; these are made to follow at once:
+
+        - LANGUAGE, a global setting: switched to at once (set_language) and saved with the global settings.
+        - SCANLINES and SCALING, global settings: the display filters change from the next frame on, and are saved.
+        - MUSIC (ORCHESTRA_MUSIC_ENABLED): every Directories reads the music from the config (src/directories.py), so
+          the next music played is from the new set; the map's music is started again from the new set now.
+        - GAME SPEED (GAME_SPEED_KEYS): keys 1 to 5 are switched on or off; off goes back to normal speed, and on to
+          the speed kept in the global settings.
+        - CHEATS (CHEAT_KEYS): switched off, auto-battle and invulnerability are switched off too.
+        - REWIND: switched off, the snapshots kept so far are dropped (src/rewind.py takes none while it's off)."""
+        config = self.game_state.config
+        if config_key == 'LANGUAGE':
+            self.set_language(config['LANGUAGE'])
+        elif config_key in (SCANLINES_KEY, SCALING_KEY):
+            PRESENTER.configure_from(config)
+            self.settings.update(scanlines=bool(config.get(SCANLINES_KEY)),
+                                 scaling=config.get(SCALING_KEY, SCALING_SMOOTH))
+        elif config_key == 'ORCHESTRA_MUSIC_ENABLED':
+            name = music_name(self.current_map.music_file_path)
+            if name is not None:
+                self.current_map.music_file_path = getattr(self.directories, name)
+                self.music_player.load_and_play_music(self.current_map.music_file_path)
+        elif config_key == 'GAME_SPEED_KEYS':
+            set_speed_keys_enabled(bool(config.get('GAME_SPEED_KEYS')))
+            if config.get('GAME_SPEED_KEYS'):
+                set_game_speed(self.settings.settings.game_speed)
+        elif config_key == 'CHEAT_KEYS' and not config.get('CHEAT_KEYS'):
+            self.auto_battle = False
+            self.invulnerable = False
+        elif config_key == 'REWIND' and not config.get('REWIND'):
+            self.rewind.snapshots.clear()
+
     def set_screen(self, win_height, win_width):
         """Stub for setting the screen."""
         return set_mode((win_width, win_height), self.flags)
@@ -267,17 +302,6 @@ class Game:
             else:
                 set_zoom(saved_zoom)
         set_zoom_listener(self.settings.updater('zoom'))
-
-    def apply_option(self, config_key: str) -> None:
-        """The options overlay (src/options_overlay.py) has just changed this config key. Most need nothing more (the
-        game reads them where they're used); the global settings are switched on and saved."""
-        config = self.game_state.config
-        if config_key == 'LANGUAGE':
-            self.set_language(config['LANGUAGE'])
-        elif config_key in (SCANLINES_KEY, SCALING_KEY):
-            PRESENTER.configure_from(config)
-            self.settings.update(scanlines=bool(config.get(SCANLINES_KEY)),
-                                 scaling=config.get(SCALING_KEY, SCALING_SMOOTH))
 
     def set_language(self, language: str) -> None:
         """Play in ``language`` ('English' or 'Korean') from now on, without a restart: the options overlay's LANGUAGE
@@ -824,7 +848,8 @@ class Game:
             self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
 
     def handle_a_button(self, keydown_event):
-        if keydown_event.key == K_k:
+        # Enter is the A button on the map too unless QUICK ACTION is on (handle_enter_key)
+        if keydown_event.key == K_k or (keydown_event.key == K_RETURN and not self.game_state.config.get('QUICK_ACTION')):
             # A button
             # print("K key pressed (A button).")
             if self.movement.world_frozen or self.pause_requested or self.options_requested or \
@@ -863,8 +888,8 @@ class Game:
         """G: auto-grind (src/auto_grind.py), not NES. It starts from the map only when START would pause the game, and
         like the pause it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes). While it
         runs, G (or any key but 1 to 5) stops it before it gets here (AutoGrind.real_key)."""
-        if keydown_event.key not in AUTO_GRIND_KEYS:
-            return
+        if keydown_event.key not in AUTO_GRIND_KEYS or not self.game_state.config.get('AUTO_GRIND'):
+            return  # AUTO-GRIND off: G does nothing
         if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
             return
         self.auto_grind_requested = True
@@ -875,8 +900,8 @@ class Game:
         on the map, when START would pause the game: no window open or about to open, the light not growing. Like
         the pause, it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes)."""
         slot = SAVE_STATE_KEYS.get(keydown_event.key)
-        if slot is None:
-            return
+        if slot is None or not self.game_state.config.get('SAVE_STATES'):
+            return  # SAVE STATES off: the keys do nothing
         if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
             return
         self.state_request = ('save' if getattr(keydown_event, 'mod', 0) & KMOD_SHIFT else 'load', slot)
@@ -933,7 +958,9 @@ class Game:
         OptionsOverlay(self).run()
 
     def handle_enter_key(self, keydown_event):
-        if keydown_event.key == K_RETURN:
+        """QUICK ACTION (not NES): Enter on the map takes, opens a door or talks without the COMMAND window. With it off
+        Enter is the A button (handle_a_button)."""
+        if keydown_event.key == K_RETURN and self.game_state.config.get('QUICK_ACTION'):
             # A shortcut for TAKE/DOOR/TALK, so it follows the same rule as the A button: NES GameEngineLoop only reads
             # commands between steps (DoJoyUp etc. move a whole tile before returning to CheckInputs). Mid-step, or
             # while a pause or the command window is pending or open (where Enter picks a menu item), it does nothing.
@@ -965,8 +992,8 @@ class Game:
         everywhere: the map, battles, dialogs, menus and effects (src/waiting.py reads these keys in their loops and
         waits too, without this text)."""
         speed = SPEED_KEYS.get(keydown_event.key)
-        if speed is None:
-            return
+        if speed is None or not speed_keys_enabled():
+            return  # GAME SPEED off: the keys do nothing
         set_game_speed(speed)
         if speed == 1:
             speed_text = self._("Game set to normal speed.\n({} FPS)").format(f'{self.fps:.1f}')
@@ -1001,8 +1028,8 @@ class Game:
             self.draw_temporary_text(mode_text)
 
     def handle_auto_battle_toggle(self, keydown_event) -> None:
-        """Toggle auto-battle mode when F4 is pressed."""
-        if keydown_event.key == K_F4:
+        """Toggle auto-battle mode when F4 is pressed, with CHEATS on."""
+        if keydown_event.key == K_F4 and self.game_state.config.get('CHEAT_KEYS'):
             self.auto_battle = not self.auto_battle
             if self.auto_battle:
                 mode_text = self._("Auto-battle enabled\n(Repeats: {})").format(self.battle_ctrl.last_battle_action)
@@ -1011,8 +1038,8 @@ class Game:
             self.draw_temporary_text(mode_text)
 
     def handle_invulnerability_toggle(self, keydown_event) -> None:
-        """Toggle invulnerability mode when F9 is pressed."""
-        if keydown_event.key == K_F9:
+        """Toggle invulnerability mode when F9 is pressed, with CHEATS on."""
+        if keydown_event.key == K_F9 and self.game_state.config.get('CHEAT_KEYS'):
             self.invulnerable = not self.invulnerable
             if self.invulnerable:
                 mode_text = self._("Invulnerability enabled")
@@ -1079,6 +1106,9 @@ class Game:
         # NES LoadSavedData (LFBC8): the log's message speed; and this game's dialog style and NPCS MAKE WAY. Older
         # saves: NORMAL, CLASSIC, ON
         apply_options(self.game_state.config, save.options)
+        # the loaded map below starts its own music, from the log's MUSIC setting
+        for config_key in ('GAME_SPEED_KEYS', 'CHEAT_KEYS'):
+            self.apply_option(config_key)
         self.chest_history = TreasureChestHistory()
         self.door_history = OpenDoorHistory()
         self.repel_timer = 0

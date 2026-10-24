@@ -22,7 +22,7 @@ from pygame.event import Event
 
 from src.catalog import compile_po, po_path
 from src.checkpoints import CHECKPOINT_NAMES, checkpoint_hero_name, checkpoint_path, read_checkpoint
-from src.directories import Directories
+from src.directories import MUSIC_NAMES, Directories
 from src.paths import data_path
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import MAP_CONTEXT, reset_game_speed, set_game_speed
@@ -40,7 +40,8 @@ def game_file_paths(config: dict) -> set[str]:
     data_dir = data_path()
     for orchestra in (False, True):
         directories = Directories({**config, 'ORCHESTRA_MUSIC_ENABLED': orchestra})
-        values = list(vars(directories).values()) + list(directories.item_menu_background_lookup.values())
+        values = list(vars(directories).values()) + list(directories.item_menu_background_lookup.values()) + \
+            [getattr(directories, name) for name in MUSIC_NAMES]
         paths.update(value for value in values if isinstance(value, str) and value.startswith(data_dir)
                      and os.path.splitext(value)[1])
     paths.update(checkpoint_path(name) for name in CHECKPOINT_NAMES)

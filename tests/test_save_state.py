@@ -73,7 +73,8 @@ class SaveStateTestCase(TestCase):
 
     def new_game(self):
         game = helpers.new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
-                                 'SAVE_DIR': self.save_dir})
+                                 'SAVE_DIR': self.save_dir, 'SAVE_STATES': True,
+                                 'REWIND': True})
         patch.object(game, 'draw_temporary_text', side_effect=self.messages.append).start()
         return game
 
@@ -386,6 +387,15 @@ class TestKeys(SaveStateTestCase):
         self.until_message()
         self.assertEqual("State 2 loaded", self.messages[-1])
         self.assertEqual(20, game.player.gold)
+
+    def test_save_states_off_the_keys_do_nothing(self):
+        # the options overlay's SAVE STATES switch (src/options_overlay.py), off on the NES
+        self.game.game_state.config['SAVE_STATES'] = False
+        self.press(K_F1, KMOD_SHIFT)
+        self.press(K_F1)
+        self.run_frames(self.game, 20, script=lambda frame: set())
+        self.assertFalse(os.path.exists(state_path(self.save_dir, 1)))
+        self.assertEqual([], self.messages)
 
     def test_waits_for_the_step_to_finish(self):
         game = self.game
