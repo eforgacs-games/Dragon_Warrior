@@ -47,6 +47,19 @@ NON_DISCARDABLE_ITEMS = ("Herb", "Magic Key", "Fairy Flute", "Erdrick's Token", 
                          "Stones of Sunlight", "Staff of Rain", "Rainbow Drop")
 UNSLOTTED_ITEMS = ("Herb", "Magic Key")
 INVENTORY_SLOTS = 8  # NES AddInvItem: 4 bytes of 2 items each
+# BAG (not NES, the options overlay): the NES's 8 slots, or 16. Herbs and Magic Keys stay outside the slots either way.
+BIG_BAG_SLOTS = 16
+BAG_SIZES = (INVENTORY_SLOTS, BIG_BAG_SLOTS)
+
+
+def bag_slots(config: dict) -> int:
+    """How many inventory slots the bag has: the config's BAG_SIZE, 8 (the NES) unless it's 16.
+
+    Going back from 16 to 8 with more than 8 items loses nothing: every item stays in the bag, in its slot, and can be
+    used, sold or dropped as before. The bag counts as full until it holds fewer than 8, so nothing new goes in until
+    then (a chest's item, or one found with SEARCH, offers to discard something, as on the NES)."""
+    size = config.get('BAG_SIZE', INVENTORY_SLOTS)
+    return size if size in BAG_SIZES else INVENTORY_SLOTS
 MAX_HERBS = 6
 MAX_KEYS = 6
 MAX_GOLD = 65535
