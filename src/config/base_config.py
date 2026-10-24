@@ -85,6 +85,9 @@ base_config = {
     "BAG_SIZE": 8,
     # DUNGEON MAP (not NES): True lets M show the map of the dark floor the hero is on (src/dungeon_map.py)
     "DUNGEON_MAP": True,
+    # SMART A (not NES when on): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, else opens COMMAND
+    # (Game.smart_command); off, A always opens COMMAND, as on the NES
+    "SMART_A": False,
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on

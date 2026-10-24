@@ -126,8 +126,9 @@ K (A button): Open the command menu on the map; select a menu option
 J (B button): Close a menu or window, or answer NO
 
 Enter: Select a menu option, like K. With QUICK ACTION on (in the options), on the map it's a shortcut instead of
-opening the command menu: it does TAKE when standing on a treasure chest, DOOR when facing a door, or TALK when facing
-someone
+opening the command menu: it does TALK when facing someone (or someone across a counter), TAKE when standing on a
+treasure chest, DOOR next to a locked door when you have a Magic Key, or STAIRS when standing on stairs, the first of
+these that applies, and nothing otherwise
 
 Esc: Close a menu or window, or answer NO, like J. Esc also cancels name entry
 
@@ -152,7 +153,10 @@ LOOK & SOUND:
 GAMEPLAY:
 - NPCS MAKE WAY: ON, a townsperson you walk into steps aside, or OFF (NES), they stay in your way
 - STAIRS: STEP ON, stepping onto stairs takes them, or NES, only the STAIRS command does
-- QUICK ACTION: ON, Enter on the map takes, opens a door or talks (see Enter), or OFF (NES), Enter is K there too
+- QUICK ACTION: ON, Enter on the map talks, takes, opens a door or takes the stairs (see Enter), or OFF (NES), Enter
+  is K there too
+- SMART A: OFF (NES), K always opens the command menu, or ON, K does what Enter does when something applies (TALK,
+  TAKE, DOOR or STAIRS, at the moment the command menu would have opened) and opens the command menu otherwise
 - ENCOUNTERS: NES, the NES's random fights; HALF, every other one is skipped; or OFF, none (guardians, the Dragonlord
   and the other set fights still happen, and auto-grind won't start)
 - EXP/GOLD: x1 (NES), x2 or x4 the experience and gold a won fight gives, still at most 65535 each
