@@ -43,13 +43,17 @@ class ControlInfo:
         self.controller_load_state = _("LB: Load state 1")
         self.controller_save_state = _("RB: Save state 1")
         self.controller_rewind = _("LT (hold): Rewind")
+        # The dungeon map (src/dungeon_map.py): M, or the controller's top face button, on a dark floor
+        self.dungeon_map_key = _("M: Dungeon map")
+        self.controller_dungeon_map = _("Top Button: Dungeon map")
         self.controls: tuple[str, ...] = (
             self.a_button, self.b_button, self.start_button, self.select_button, self.arrow_keys_move_buttons,
             self.help_button, self.auto_battle_toggle, self.invulnerability_toggle,
             self.fullscreen_toggle, self.speed_controls, self.auto_grind_key, self.quest_journal_key, self.zoom_controls,
             self.zoom_reset, self.save_state_keys, self.load_state_keys, self.rewind_key,
             self.controller_a, self.controller_b, self.controller_start, self.controller_select, self.controller_move,
-            self.controller_speed, self.controller_load_state, self.controller_save_state, self.controller_rewind)
+            self.controller_speed, self.controller_load_state, self.controller_save_state, self.controller_rewind,
+            self.dungeon_map_key, self.controller_dungeon_map)
         # The H help, one string per dialog box page (the A button turns the page). The dialog box fits five rows
         # above the continue arrow, so each page is a short group of related keys. "Controls:\n" keeps its newline
         # so it still matches the existing Korean translation.
@@ -66,6 +70,7 @@ class ControlInfo:
                        self.controller_select)),
             "\n".join((self.controller_move, self.controller_speed, self.controller_load_state,
                        self.controller_save_state, self.controller_rewind)),
+            "\n".join((_("Dungeon map:"), self.dungeon_map_key, self.controller_dungeon_map)),
         )
         if config.get('DEBUG_KEYS'):
             # Dev config only (src/debug_tools.py), on a page of their own

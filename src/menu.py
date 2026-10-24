@@ -244,7 +244,8 @@ class CommandMenu:
             # later saves go to the same log
             self.player.adventure_log = log
         save = SaveFile.from_game(self.player, self.game.current_map.identifier, self.game.story_flags,
-                                  options_from_config(self.game.game_state.config))
+                                  options_from_config(self.game.game_state.config),
+                                  self.game.dungeon_map.to_save())
         write_save(save_path(self.directories.save_dir, self.player.adventure_log), save.to_save())
 
     def set_king_lorik_dialog(self, left_throne_room: bool = False):

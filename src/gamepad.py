@@ -29,7 +29,7 @@ from collections.abc import Iterable
 from typing import Any, NamedTuple, Protocol
 
 import pygame
-from pygame import KEYDOWN, KEYUP, KMOD_LSHIFT, K_BACKSPACE, K_DOWN, K_F1, K_LEFT, K_RIGHT, K_UP
+from pygame import KEYDOWN, KEYUP, KMOD_LSHIFT, K_BACKSPACE, K_DOWN, K_F1, K_LEFT, K_RIGHT, K_UP, K_m
 
 from src import common
 from src.waiting import SPEED_KEYS, game_speed, set_game_speed, set_gamepad, speed_keys_enabled
@@ -74,6 +74,7 @@ EXTRA_BUTTONS: dict[str, tuple[int, int] | None] = {
     'leftshoulder': (K_F1, 0),  # load state 1 (F1)
     'rightshoulder': (K_F1, KMOD_LSHIFT),  # save state 1 (Shift+F1)
     'lefttrigger': (K_BACKSPACE, 0),  # rewind, while held (Backspace held)
+    'y': (K_m, 0),  # the top face button: the dungeon map on a dark floor (M, src/dungeon_map.py)
 }
 
 # The left stick: pushed past STICK_PRESS it presses a direction, and it lets go once back under STICK_RELEASE, so a
