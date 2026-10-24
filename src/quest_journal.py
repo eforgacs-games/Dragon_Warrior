@@ -96,21 +96,18 @@ class Progress:
                 not self.flags.gwaelin_rescued or not self.has_silver_harp or not self.has_stones_of_sunlight)
 
 
-def always(_progress: Progress) -> bool:
-    return True
-
-
 @dataclass(frozen=True, slots=True)
 class Goal:
-    """One thing to do: what to do (text), where (hint), when it's done and when it can be started."""
+    """One thing to do: what to do (text), where (hint), when it's done and when it can be started (None: from the
+    start)."""
     text: str
     hint: str
     done: Callable[[Progress], bool]
-    available: Callable[[Progress], bool] = always
+    available: Callable[[Progress], bool] | None = None
     optional: bool = False
 
     def is_open(self, progress: Progress) -> bool:
-        return self.available(progress) and not self.done(progress)
+        return (self.available is None or self.available(progress)) and not self.done(progress)
 
 
 GOALS = (
