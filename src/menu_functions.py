@@ -7,7 +7,7 @@ from src.waiting import game_ticks as get_ticks  # game time: runs N times as fa
 from data.text.intro_lookup_table import ControlInfo
 from src.calculation import Calculation
 from src.color import WHITE
-from src.common import DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, accept_keys, reject_keys
+from src.common import DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, START_BUTTON_KEYS, UP_KEYS, accept_keys, reject_keys
 from src.cursor import BlinkingCursor
 from src.gamepad import is_gamepad
 from src.directories import Directories
@@ -56,7 +56,9 @@ class NameSelection:
 
     def select_name(self, blink_start, screen, command_menu) -> str | None:
         """The name entered, or None if Escape was pressed to leave the name entry (back to the title menu)."""
-        entry = NameEntry()
+        # CONFIRM NAME (not NES): a full name waits on END, and START ends the name from anywhere
+        confirm = bool(self.config.get('NAME_CONFIRM'))
+        entry = NameEntry(confirm)
         enable_joystick_input = False
         # No cursor until the alphabet window's selection starts (WndDoSelect)
         self.draw(screen, entry, cursor_visible=None)
@@ -88,7 +90,14 @@ class NameSelection:
                             command_menu, partial(self.draw, screen, entry, cursor.visible()), enable_joystick_input,
                             screen)
                     if enable_joystick_input:
-                        if current_event.key in accept_keys:
+                        if confirm and current_event.key in START_BUTTON_KEYS:
+                            # START (I, or a controller's Start) ends the name, as Return does on the keyboard. On the
+                            # NES START does nothing here (WndProcessInput skips it).
+                            if entry.name:
+                                self.sound.play_sound(self.directories.menu_button_sfx)
+                                entry.move_to_end()
+                                entry.end()
+                        elif current_event.key in accept_keys:
                             # WndAPressed: the menu button sound, and the selection is processed (WndProcessChar)
                             self.sound.play_sound(self.directories.menu_button_sfx)
                             entry.select()
