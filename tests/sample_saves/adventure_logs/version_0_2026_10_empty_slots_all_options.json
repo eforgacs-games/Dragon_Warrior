@@ -1,0 +1,44 @@
+{
+    "Name": "Lora",
+    "Experience": 9000,
+    "Gold": 1500,
+    "CurrentHP": 90,
+    "CurrentMP": 50,
+    "Weapon": "Hand Axe",
+    "Armor": "Full Plate",
+    "Shield": "Silver Shield",
+    "WearingDragonScale": false,
+    "WearingFightersRing": false,
+    "WearingCursedBelt": false,
+    "WearingDeathNecklace": false,
+    "Inventory": [
+        "Torch",
+        null,
+        "Fairy Flute",
+        "Magic Key"
+    ],
+    "Spells": [
+        "HEAL",
+        "HURT"
+    ],
+    "CurrentMap": "TantegelThroneRoom",
+    "PlayerRow": 10,
+    "PlayerColumn": 13,
+    "StoryFlags": {
+        "charlock_stairs_revealed": false,
+        "rainbow_bridge_built": true,
+        "carrying_gwaelin": false,
+        "gwaelin_returned": false,
+        "death_necklace_found": false,
+        "left_throne_room": true,
+        "golem_defeated": false,
+        "dragonlord_defeated": false,
+        "green_dragon_defeated": true
+    },
+    "MessageSpeed": "Fast",
+    "DialogStyle": "Classic",
+    "NpcsMakeWay": true,
+    "FadeStyle": "Smooth",
+    "AutoStairs": false,
+    "AutoGrindStop": "HalfHP"
+}
