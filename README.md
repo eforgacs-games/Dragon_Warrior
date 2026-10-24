@@ -253,7 +253,8 @@ labelled, as on the NES and SNES:
 | Left shoulder button (LB, L1, L) | Load state 1 (F1) |
 | Right shoulder button (RB, R1, R) | Save state 1 (Shift+F1) |
 | Left trigger, held | Rewind (Backspace held) |
-| Top face button (Xbox Y, PlayStation triangle, Switch X) | The message log (M) |
+| Top face button (Xbox Y, PlayStation triangle, Switch X) | The dungeon map on a dark floor (M) |
+| Left face button (Xbox X, PlayStation square, Switch Y) | The message log (L) |
 
 These are the defaults: every button but the stick can be changed on the CONTROLS screen (its PAD column, see
 below). On the name entry screen a controller button switches to joystick input (the arrows and A pick the letters) without
