@@ -31,7 +31,7 @@ from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.options_screen import MODERN, options_from_config
 from src.save_file import ADVENTURE_LOGS, SaveFile, log_for_unchosen_save, save_path, write_save
-from src.selection import YES, frame_events, next_frame, run_selection, stop_at_edges
+from src.selection import YES, frame_events, next_game_frame, run_selection, stop_at_edges
 from src.sound import SPELL_SFX_FRAMES, Sound
 from src.visual_effects import bw_screen_flash, rainbow_bridge_flash
 from src.text import draw_text, in_nes_font, set_font_by_ascii_chars
@@ -385,7 +385,7 @@ class CommandMenu:
             if shows_arrow and arrow_blink.visible() != drawn_arrow:  # drawn only when the blink changes
                 drawn_arrow = arrow_blink.visible()
                 self.draw_dialog_arrow(drawn_arrow)
-            next_frame()  # one pass per NES frame (src/selection.py)
+            next_game_frame()  # one pass per NES frame of game time (src/selection.py)
             if self.read_dialog_events(advance_keys):
                 break
         if not disable_sound:
@@ -1252,7 +1252,7 @@ class CommandMenu:
         window_rect = self.draw_status_window()
         display.update(window_rect)
         while show_status:
-            next_frame()  # one pass per NES frame (src/selection.py)
+            next_game_frame()  # one pass per NES frame of game time (src/selection.py)
             # NES LCFA4: the status window waits in WaitForBtnRelease, so any button closes it
             show_status = not any(current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS
                                   for current_event in frame_events())

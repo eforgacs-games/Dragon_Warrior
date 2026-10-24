@@ -5,8 +5,9 @@ windows, the message speed windows) runs ``run_selection``. Once per pass it
 
 - draws the window, but only when something it shows changed: the selected entry, or the cursor's blink
   (src/cursor.py BlinkingCursor), which only changes every 16 frames;
-- waits for the next NES frame of game time (``next_frame``, the WaitForNMI of WndGetButtons), so the loop no longer
-  spins at full speed: at game speed N the frames come N times as often, like every other wait (src/waiting.py);
+- waits for the next NES frame of menu time (``next_frame``, the WaitForNMI of WndGetButtons), so the loop no longer
+  spins at full speed: menu time keeps 1x whatever the game speed (src/waiting.py menu_ticks), unless MENU SPEED is
+  FOLLOW GAME SPEED, when the frames come N times as often at game speed N;
 - reads the events (``frame_events``): closing the window quits (quit_if_requested), the keys 1 to 5 set the game
   speed (handle_speed_key) and are no button to the window;
 - maps keys to the NES buttons (``SELECTION_KEYS``: A is K and Enter, B is reject_keys, Escape included, and the
@@ -35,7 +36,8 @@ from pygame.event import Event
 
 from src.common import A_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, reject_keys
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, BlinkingCursor, SelectionButtons, first_button
-from src.waiting import handle_speed_key, poll_virtual_joypad, quit_if_requested, wait_frames, with_virtual_keys
+from src.waiting import handle_speed_key, menu_frame_in_game_frames, poll_virtual_joypad, quit_if_requested, \
+    wait_frames, with_virtual_keys
 from src.zoom import handle_zoom_event
 
 ButtonKeys = tuple[tuple[int, tuple[int, ...]], ...]
@@ -67,9 +69,16 @@ class Answer(NamedTuple):
 
 
 def next_frame() -> None:
-    """WaitForNMI: wait one NES frame of game time (1/NES_FPS s, 1/(NES_FPS N) s at game speed N), still quitting if the window
-    is closed meanwhile (src/waiting.py wait). The game's NO_WAIT doesn't skip it: it is the loop's frame pacing, not
-    a pause in the game."""
+    """WaitForNMI of a selection window: wait one NES frame of menu time (1/NES_FPS s whatever the game speed, or
+    1/(NES_FPS N) s at game speed N with MENU SPEED on FOLLOW GAME SPEED, src/waiting.py menu_ticks), still quitting if
+    the window is closed meanwhile (src/waiting.py wait). The game's NO_WAIT doesn't skip it: it is the loop's frame
+    pacing, not a pause in the game."""
+    wait_frames(menu_frame_in_game_frames())
+
+
+def next_game_frame() -> None:
+    """WaitForNMI of a loop that is no selection (a dialog's wait for a button, the status window): one NES frame of
+    game time, 1/(NES_FPS N) s at game speed N, like every other wait."""
     wait_frames(1)
 
 

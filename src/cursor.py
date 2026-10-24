@@ -17,7 +17,9 @@ window stays on the screen (behind the windows the selection opens, for example)
 from pygame import Rect, Surface
 
 from src.color import BLACK
-from src.waiting import frame_at, game_ticks as get_ticks  # game time: runs N times as fast at speed N
+# The selection cursor counts menu time (1x whatever the game speed, unless MENU SPEED is FOLLOW GAME SPEED); the
+# dialog's arrow, which is a wait and no selection, counts game time (N times as fast at speed N)
+from src.waiting import frame_at, game_ticks, menu_ticks as get_ticks
 
 # TL_RIGHT_ARROW ($42), as the NES draws it: 8x8 pixels, its point 2 pixels in from the tile's left edge and one row
 # lower than the letters (which use rows 0 to 6), so it lines up with the middle of the entry's text.
@@ -65,14 +67,15 @@ def dialog_arrow_visible_on_frame(frame_counter: int) -> bool:
 
 class DialogArrowBlink:
     """The blink of the dialog's down arrow during one wait for A or B (DoWait). It counts NES frames of game time
-    (src/waiting.py game_ticks), like BlinkingCursor, so it blinks N times as fast at game speed N."""
+    (src/waiting.py game_ticks), so it blinks N times as fast at game speed N: a dialog's wait is no selection, and its
+    one press isn't read again (BlinkingCursor counts menu time instead)."""
 
     def __init__(self, ticks: int | None = None):
-        self.start_ticks = get_ticks() if ticks is None else ticks
+        self.start_ticks = game_ticks() if ticks is None else ticks
 
     def frame_counter(self, ticks: int | None = None) -> int:
         """FrameCounter: #$10 when the wait started, plus one per NES frame since (counted as BlinkingCursor does)."""
-        now = get_ticks() if ticks is None else ticks
+        now = game_ticks() if ticks is None else ticks
         frames = max(0, frame_at(now) - frame_at(self.start_ticks))
         return (TXT_WAIT_START_FRAME + frames) & 0xFF
 
@@ -86,7 +89,9 @@ def cursor_visible_on_frame(frame_counter: int) -> bool:
 
 
 class BlinkingCursor:
-    """A selection window's cursor blink, timed like the NES frame counter (see the module docstring).
+    """A selection window's cursor blink, timed like the NES frame counter (see the module docstring), in frames of
+    menu time (src/waiting.py menu_ticks): 1x whatever the game speed, unless MENU SPEED is FOLLOW GAME SPEED. The
+    joypad reading (SelectionButtons) counts its frames, so the held button's retrigger keeps 1x time too.
 
     restart() is WndInitSelect/WndUpdateCrsrPos (the window opened, or the cursor moved); hold() is the last
     WndUpdateCrsrPos of WndAPressed/WndBPressed, after which the arrow stays on."""
