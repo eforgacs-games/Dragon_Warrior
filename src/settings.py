@@ -59,6 +59,7 @@ class Settings:
     scaling: str = SCALING_SMOOTH  # src/display_filters.py SCALING_MODES
     view: str = VIEW_NES  # the VIEW row: src/view.py VIEWS
     dungeon_map: bool = True  # the DUNGEON MAP row: whether M shows the dungeon map (src/dungeon_map.py)
+    name_confirm: bool = True  # the CONFIRM NAME row: a full name waits on END (src/name_entry.py)
     # The keys and controller buttons (src/controls.py Controls.to_json); None: the defaults
     controls: dict[str, Any] | None = None
 
@@ -89,6 +90,8 @@ class Settings:
         values['view'] = view if view in VIEWS else default.view
         dungeon_map = data.get('dungeon_map')
         values['dungeon_map'] = dungeon_map if isinstance(dungeon_map, bool) else default.dungeon_map
+        name_confirm = data.get('name_confirm')
+        values['name_confirm'] = name_confirm if isinstance(name_confirm, bool) else default.name_confirm
         controls = data.get('controls')
         # Read back through Controls, so a bad entry is the default and the rest are kept (Controls.from_json)
         values['controls'] = Controls.from_json(controls).to_json() if isinstance(controls, dict) else default.controls
