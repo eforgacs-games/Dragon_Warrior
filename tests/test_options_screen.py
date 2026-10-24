@@ -108,16 +108,16 @@ class TestMessageSpeedRules(TestCase):
 
     def test_defaults(self):
         # NewQuest: LDA #MSG_NORMAL; Classic (the NES dialog window) is the default style; NPCs make way by default
-        self.assertEqual(('Normal', CLASSIC), (DEFAULT_MESSAGE_SPEED, DEFAULT_DIALOG_STYLE))
-        self.assertEqual(Options('Normal', CLASSIC, True, FADE_STYLE_NES, True), DEFAULT_OPTIONS)
+        self.assertEqual(('Fast', CLASSIC), (DEFAULT_MESSAGE_SPEED, DEFAULT_DIALOG_STYLE))
+        self.assertEqual(Options('Fast', CLASSIC, True, FADE_STYLE_NES, True), DEFAULT_OPTIONS)
         # base_config's FADE_STYLE: the NES palette fade
         self.assertEqual(FADE_STYLE_NES, DEFAULT_FADE_STYLE)
 
     def test_old_saves_load_with_the_defaults(self):
-        self.assertEqual('Normal', message_speed_from_save({'Name': 'Ed'}))
+        self.assertEqual('Fast', message_speed_from_save({'Name': 'Ed'}))
         self.assertEqual(CLASSIC, dialog_style_from_save({'Name': 'Ed'}))
         self.assertTrue(npcs_make_way_from_save({'Name': 'Ed'}))
-        self.assertEqual('Normal', message_speed_from_save({MESSAGE_SPEED_SAVE_KEY: 'Warp'}))
+        self.assertEqual('Fast', message_speed_from_save({MESSAGE_SPEED_SAVE_KEY: 'Warp'}))
         self.assertEqual('Slow', message_speed_from_save({MESSAGE_SPEED_SAVE_KEY: 'Slow'}))
         self.assertEqual(MODERN, dialog_style_from_save({DIALOG_STYLE_SAVE_KEY: MODERN}))
         self.assertFalse(npcs_make_way_from_save({NPCS_MAKE_WAY_SAVE_KEY: False}))
@@ -259,14 +259,14 @@ class TestNewQuestOptions(OptionsTestCase):
         # the cursor starts on NORMAL (NewQuest: LDA #MSG_NORMAL), whatever the last game used
         with patch('src.selection.event.get', side_effect=presses(DOWN, ENTER)):
             self.game.title_menu.choose_new_quest_options()
-        self.assertEqual(('Slow',) + DEFAULT_OWN_SETTINGS, settings(self.config))
+        self.assertEqual(('Normal',) + DEFAULT_OWN_SETTINGS, settings(self.config))
 
     def test_new_quest_without_a_choice_uses_the_defaults(self):
-        self.config['TEXT_SPEED'] = 'Fast'
+        self.config['TEXT_SPEED'] = 'Slow'
         set_own_settings(self.config, OTHER_OWN_SETTINGS)
         with patch('src.selection.event.get', side_effect=presses(B)):
             self.game.title_menu.choose_new_quest_options()
-        self.assertEqual(('Normal',) + DEFAULT_OWN_SETTINGS, settings(self.config))
+        self.assertEqual(('Fast',) + DEFAULT_OWN_SETTINGS, settings(self.config))
 
     def test_begin_new_quest_shows_the_options_after_the_name(self):
         calls = []
@@ -311,11 +311,11 @@ class TestSaveRoundTrip(OptionsTestCase):
                             self.assertEqual(expected, settings(loaded_config))
 
     def test_old_save_loads_with_the_defaults(self):
-        self.config['TEXT_SPEED'] = 'Fast'
+        self.config['TEXT_SPEED'] = 'Slow'
         set_own_settings(self.config, OTHER_OWN_SETTINGS)
         with patch.object(self.game.map_mgr, 'change_map'):
             self.game.load_game({'Name': 'Ed', 'Experience': 0, 'Gold': 0, 'Inventory': []})
-        self.assertEqual(('Normal',) + DEFAULT_OWN_SETTINGS, settings(self.config))
+        self.assertEqual(('Fast',) + DEFAULT_OWN_SETTINGS, settings(self.config))
 
     def test_loaded_stairs_setting_reaches_the_game(self):
         # MapManager.handle_warps reads Game.auto_stairs, which is the config's AUTO_STAIRS
