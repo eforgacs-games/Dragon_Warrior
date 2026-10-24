@@ -71,6 +71,7 @@ CURRENT_FORMAT_SAVE = '''{
     "StatusWindow": "Always",
     "ShopPreview": false,
     "QuestJournal": "Hints",
+    "BagSize": 16,
     "Autosave": false
 }'''
 
@@ -102,7 +103,7 @@ class TestSaveFileRoundTrip(TestCase):
         self.assertEqual(Options('Fast', 'Modern', False, 'Smooth', False, 'HalfHP', 'FollowGameSpeed',
                                  orchestra_music=False, save_states=False, auto_grind=False, encounters='Half',
                                  exp_gold=4, run_button=True, status_window='Always', shop_preview=False,
-                                 quest_journal='Hints', autosave=False),
+                                 quest_journal='Hints', autosave=False, bag_size=16),
                          save.options)
 
     def test_every_checkpoint_round_trips(self):

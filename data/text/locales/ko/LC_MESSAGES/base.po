@@ -2888,3 +2888,13 @@ msgstr "자동 저장"
 #: src/windows.py
 msgid "CONTINUE AUTOSAVE"
 msgstr "자동 저장으로 시작"
+msgid "BAG"
+msgstr "소지품"
+
+#: src/options_overlay.py
+msgid "NES (8)"
+msgstr "NES (8개)"
+
+#: src/options_overlay.py
+msgid "16"
+msgstr "16개"
