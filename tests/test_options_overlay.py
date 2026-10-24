@@ -353,9 +353,10 @@ class TestRows(OverlayTestCase):
         loaded = new_game()
         with patch.object(loaded.map_mgr, 'change_map'):
             loaded.load_game(save)
-        # the language, the display filters and the view are the player's, kept in the global settings
+        # the language, the display filters, the view and the dungeon map are the player's, kept in the global settings
         # (src/settings.py)
-        self.assertEqual({**changed, 'LANGUAGE': 'English', 'SCANLINES': False, 'SCALING': 'Smooth', 'VIEW': 'NES'},
+        self.assertEqual({**changed, 'LANGUAGE': 'English', 'SCANLINES': False, 'SCALING': 'Smooth', 'VIEW': 'NES',
+                          'DUNGEON_MAP': False},
                          own_settings(loaded.game_state.config))
         # The language is the player's, kept in the global settings (src/settings.py), not the adventure's
         self.assertEqual(('Korean', True, SCALING_PIXEL_PERFECT),
