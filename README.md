@@ -102,6 +102,8 @@ Each one opens a list: type to filter, press Enter to pick, Esc to close.
 
 [PLAYTEST.md](PLAYTEST.md) is a checklist for a pass through the whole game in about 40 minutes.
 
+[docs/multiplayer.md](docs/multiplayer.md) is the design for online co-op (not built yet).
+
 ## Running in VS Code
 
 If you're using Visual Studio Code:
