@@ -13,27 +13,22 @@ from src.waiting import reset_game_speed, set_game_speed
 class TestMusicPlayerInitialization(unittest.TestCase):
 
     def test_music_enabled_true(self):
-        config = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'ORCHESTRA_MUSIC_ENABLED': False}
+        config = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'SOUNDTRACK': 'NES'}
         player = MusicPlayer(config)
         self.assertTrue(player.music_enabled)
 
     def test_music_enabled_false(self):
-        config = {'MUSIC_ENABLED': False, 'SOUND_ENABLED': False, 'ORCHESTRA_MUSIC_ENABLED': False}
+        config = {'MUSIC_ENABLED': False, 'SOUND_ENABLED': False, 'SOUNDTRACK': 'NES'}
         player = MusicPlayer(config)
         self.assertFalse(player.music_enabled)
 
     def test_sound_enabled(self):
-        config = {'MUSIC_ENABLED': False, 'SOUND_ENABLED': True, 'ORCHESTRA_MUSIC_ENABLED': False}
+        config = {'MUSIC_ENABLED': False, 'SOUND_ENABLED': True, 'SOUNDTRACK': 'NES'}
         player = MusicPlayer(config)
         self.assertTrue(player.sound_enabled)
 
-    def test_orchestra_music_enabled(self):
-        config = {'MUSIC_ENABLED': False, 'SOUND_ENABLED': False, 'ORCHESTRA_MUSIC_ENABLED': True}
-        player = MusicPlayer(config)
-        self.assertTrue(player.orchestra_music_enabled)
-
     def test_default_volume(self):
-        config = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'ORCHESTRA_MUSIC_ENABLED': False}
+        config = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'SOUNDTRACK': 'NES'}
         player = MusicPlayer(config)
         self.assertAlmostEqual(player.music_volume, 0.5)
 
@@ -41,7 +36,7 @@ class TestMusicPlayerInitialization(unittest.TestCase):
 class TestMusicPlayerControls(unittest.TestCase):
 
     def setUp(self):
-        self.config = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'ORCHESTRA_MUSIC_ENABLED': False}
+        self.config = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'SOUNDTRACK': 'NES'}
         self.player = MusicPlayer(self.config)
 
     @patch('src.music_player.mixer')
@@ -134,7 +129,7 @@ class TestMusicPlayerControls(unittest.TestCase):
 class TestPlayUntilEnd(unittest.TestCase):
     """NES InitMusicSFX with a music clip, then WaitForMusicEnd (the inn's MSC_INN)."""
 
-    CONFIG = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'ORCHESTRA_MUSIC_ENABLED': False, 'NO_WAIT': False}
+    CONFIG = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'SOUNDTRACK': 'NES', 'NO_WAIT': False}
 
     def test_plays_once_and_waits_until_the_clip_ends(self):
         player = MusicPlayer(self.CONFIG)

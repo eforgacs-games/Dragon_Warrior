@@ -117,7 +117,7 @@ class TestExpGold(TestCase):
 
     def win(self, multiplier, experience=0, gold=0, enemy_xp=10, enemy_gold=5):
         battle = Battle({'LANGUAGE': 'English', 'TILE_SIZE': 32, 'MUSIC_ENABLED': False,
-                         'ORCHESTRA_MUSIC_ENABLED': False, 'SOUND_ENABLED': False, 'EXP_GOLD': multiplier},
+                         'SOUNDTRACK': 'NES', 'SOUND_ENABLED': False, 'EXP_GOLD': multiplier},
                         'Slime', Mock())
         cmd_menu = Mock()
         player = Mock(total_experience=experience, gold=gold, level=1, spells=[])

@@ -27,7 +27,7 @@ class TestBattleMethods(unittest.TestCase):
             'LANGUAGE': 'Korean',
             'TILE_SIZE': 32,
             'MUSIC_ENABLED': True,
-            'ORCHESTRA_MUSIC_ENABLED': False,
+            'SOUNDTRACK': 'NES',
             'SOUND_ENABLED': False,
         }
         self.enemy_name = 'Slime'
@@ -458,7 +458,7 @@ class TestRandomizeEnemyHp(unittest.TestCase):
 
     def test_battle_uses_randomized_hp(self):
         config = {'LANGUAGE': 'English', 'TILE_SIZE': 32, 'MUSIC_ENABLED': False,
-                  'ORCHESTRA_MUSIC_ENABLED': False, 'SOUND_ENABLED': False}
+                  'SOUNDTRACK': 'NES', 'SOUND_ENABLED': False}
         with patch('src.battle.random.randint', return_value=255):
             battle = Battle(config, 'Golem', Mock())
         self.assertEqual(battle.enemy.hp, 53)
@@ -583,7 +583,7 @@ class TestVictoryRewards(unittest.TestCase):
         pygame.display.set_mode((800, 600))  # Player loads its sprite sheet
 
     def setUp(self):
-        config = {'LANGUAGE': 'English', 'TILE_SIZE': 32, 'MUSIC_ENABLED': False, 'ORCHESTRA_MUSIC_ENABLED': False,
+        config = {'LANGUAGE': 'English', 'TILE_SIZE': 32, 'MUSIC_ENABLED': False, 'SOUNDTRACK': 'NES',
                   'SOUND_ENABLED': False}
         self.battle = Battle(config, 'Slime', Mock())
         self.cmd_menu = Mock()
