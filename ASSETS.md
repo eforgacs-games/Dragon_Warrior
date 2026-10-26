@@ -61,8 +61,8 @@ Used by the game at runtime (`pyproject.toml` dependencies):
 - [libgme (Game_Music_Emu)](https://github.com/libgme/game-music-emu), which plays the NES and SFC music: GNU LGPL
   v2.1 or later. The game loads it as a shared library (`src/chiptune.py`); from source it is the system's. The release
   builds bundle a copy built from the unmodified source of its
-  [0.6.4 tag](https://github.com/libgme/game-music-emu/tree/0.6.4) (`.github/workflows/release.yml`), with only its
-  NSF and SPC emulators, next to its license (`libgme-license.txt`). Being a separate shared library (`libgme.so.0`,
+  [0.6.4 tag](https://github.com/libgme/game-music-emu/tree/0.6.4) (`.github/workflows/release.yml`), with its LGPL
+  Nuked YM2612 emulator (not MAME's, which is GPL) and without zlib, next to its license (`libgme-license.txt`). Being a separate shared library (`libgme.so.0`,
   `libgme.0.dylib` or `gme.dll` in the build's folder), it can be replaced with another build of libgme.
 
 Release builds are made with [PyInstaller](https://pyinstaller.org/) (GPL v2 or later with an exception for the
