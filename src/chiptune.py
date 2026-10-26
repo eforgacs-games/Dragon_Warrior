@@ -186,9 +186,11 @@ def library_candidates(platform: str | None = None) -> Iterator[str]:
         for directory in MACOS_LIBRARY_DIRS:
             for name in names:
                 yield join(directory, name)
-    found = ctypes.util.find_library('gme')
-    if found:
-        yield found
+    # find_library searches the PATH on Windows, which loading by name alone no longer does (Python 3.8 and later)
+    for name in ('gme', 'libgme'):
+        found = ctypes.util.find_library(name)
+        if found:
+            yield found
 
 
 _ERROR = ctypes.c_char_p  # libgme returns NULL on success, or an error message
@@ -223,9 +225,20 @@ class GmeLibrary:
         return getattr(self.library, name)
 
 
+def allow_dependencies_next_to(library_path: str) -> None:
+    """On Windows, lets a library found by its full path load the DLLs next to it (an MSYS2 libgme.dll needs its C++
+    runtime): Python 3.8 and later only look for a DLL's dependencies in the folders added this way."""
+    add_dll_directory = getattr(os, 'add_dll_directory', None)
+    if add_dll_directory is not None and os.path.isabs(library_path):
+        add_dll_directory(dirname(library_path))
+
+
 def load_library(candidates: Iterator[str]) -> GmeLibrary | None:
     """The first candidate that loads as libgme, or None."""
     for candidate in candidates:
+        if os.path.isabs(candidate) and not os.path.isfile(candidate):
+            continue
+        allow_dependencies_next_to(candidate)
         try:
             return GmeLibrary(ctypes.CDLL(candidate), candidate)
         except (OSError, AttributeError):  # not there, or not libgme
