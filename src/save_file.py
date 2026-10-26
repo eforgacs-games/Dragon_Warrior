@@ -277,12 +277,6 @@ def read_save(save_dir: str, save_file_name: str) -> dict | None:
     return save if isinstance(save, dict) else None
 
 
-def load_save(save_path: str) -> dict:
-    """The save file's JSON object; unlike read_save, an unreadable file raises."""
-    with open(save_path) as save_file:
-        return json.load(save_file)
-
-
 def read_save_name(save_path: str) -> str | None:
     """The hero's name in a save file, or None if there is no readable save there."""
     try:

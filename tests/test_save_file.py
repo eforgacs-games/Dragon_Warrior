@@ -224,6 +224,13 @@ class TestSaveSlots(TestCase):
         self.write(2, 'Ed')
         self.assertIsNone(log_for_unchosen_save(self.save_dir, 'Ed'))
 
+    def test_a_failed_write_leaves_the_log_whole(self):
+        # It used to open the file for writing (emptying it) before the save was turned into JSON
+        self.write(1, 'Ed')
+        with self.assertRaises(TypeError):
+            write_save(os.path.join(self.save_dir, 'save_slot_1.json'), {'Name': object()})
+        self.assertEqual([(1, 'Ed')], used_logs(self.save_dir, save_files(self.save_dir)))
+
     def test_a_damaged_log_is_used(self):
         # A log that can't be read is never taken for an open one (it's listed as damaged, to be erased)
         with open(os.path.join(self.save_dir, 'save_slot_1.json'), 'w') as save_file:

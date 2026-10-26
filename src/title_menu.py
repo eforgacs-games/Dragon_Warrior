@@ -162,7 +162,8 @@ class TitleMenu:
     def continue_quest(self) -> object:
         """CONTINUE A QUEST: choose a used adventure log (ShowUsedLogs) and load it. With one log, its window with the
         hero's name (LogList1Dat2, LogList2Dat2 or LogList3Dat2) over the title menu; with several, the log window of
-        src/options_screen.py. B in either goes back to the title menu (WndBackToMain)."""
+        src/options_screen.py. B in either goes back to the title menu (WndBackToMain), as does choosing a damaged
+        log (not NES: one whose file can't be read, listed to be erased)."""
         if len(self.save_dir_contents) == 1:
             logs = self.used_logs(include_damaged=True)
             selection = self.game_functions.main_menu_selection(menu_ticks(), self.screen,
