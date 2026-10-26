@@ -242,6 +242,7 @@ class MovementController:
         if getattr(self.game, 'dungeon_map_requested', False) is True:
             self.game.dungeon_map_requested = False
             self.game.open_dungeon_map()
+            return
         if getattr(self.game, 'message_log_requested', False) is True:
             self.game.message_log_requested = False
             self.game.open_message_log()

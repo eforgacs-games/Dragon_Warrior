@@ -12,7 +12,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from data.text.intro_lookup_table import ControlInfo
 from src import maps
 from src.calculation import Calculation, get_tile_id_by_coordinates
-from src.auto_grind import AUTO_GRIND_KEYS, AutoGrind
+from src.auto_grind import AutoGrind
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
 from src.color import LOW_HP_RED, RED, WHITE, is_low_hp, window_color
@@ -32,7 +32,7 @@ from src.direction import Direction
 from src.display_filters import PRESENTER, SCALING_KEY, SCALING_SMOOTH, SCANLINES_KEY
 from src.directories import Directories, music_name
 from src.drawer import Drawer
-from src.dungeon_map import DUNGEON_MAP_KEYS, DungeonMap, DungeonMapOverlay, dungeon_map_enabled
+from src.dungeon_map import DungeonMap, DungeonMapOverlay, dungeon_map_enabled
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
@@ -1006,7 +1006,7 @@ class Game:
         """G: auto-grind (src/auto_grind.py), not NES. It starts from the map only when START would pause the game, and
         like the pause it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes). While it
         runs, G (or any key but 1 to 5) stops it before it gets here (AutoGrind.real_key)."""
-        if keydown_event.key not in AUTO_GRIND_KEYS or not self.game_state.config.get('AUTO_GRIND'):
+        if not pressed(keydown_event, 'AUTO_GRIND') or not self.game_state.config.get('AUTO_GRIND'):
             return  # AUTO-GRIND off: G does nothing
         if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
             return
@@ -1017,7 +1017,7 @@ class Game:
         """M: the dungeon map (src/dungeon_map.py), not NES. Only on a dark map, with the DUNGEON MAP option ON, and
         only when START would pause the game; like the pause it waits for the hero and the NPCs to finish their steps
         (resolve_pending_freezes)."""
-        if keydown_event.key not in DUNGEON_MAP_KEYS:
+        if not pressed(keydown_event, 'MAP'):
             return
         if not (self.current_map.is_dark and dungeon_map_enabled(self.game_state.config)):
             return
