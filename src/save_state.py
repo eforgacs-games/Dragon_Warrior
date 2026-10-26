@@ -11,11 +11,15 @@ surfaces, no sprites; a map is named, not copied). It holds everything the game'
 - every story flag (src/story_flags.py), the treasure chest and door histories, and the map layouts' changes: the
   doors and chests shown open on the map (the histories redraw them as each map is entered, apply_to_layout) and the
   Rainbow Bridge;
-- the repel, radiant and light timers and the curse (the hero's worn cursed items);
+- the repel, radiant and light timers (and whether the repel timer is still to tick for the step just taken), and the
+  curse (the hero's worn cursed items);
 - the NPCs on the map: which are there, their pixel positions, facings, steps under way and mobile slots, and the NPC
   schedule (src/npc_schedule.py: FrameCounter, NPCUpdateCntr and the shared walking frame);
 - the frame counters step timing depends on (the hill pause, the pop-up window's wait, the step counts the fight rolls
-  and the Magic Armor read), the options in force (src/options_screen.py) and the window color;
+  and the Magic Armor read) and whether the hero's step is a running one, ENCOUNTERS HALF's turn (whether the next
+  fight is skipped), the options in force (src/options_screen.py) and the window color;
+- the message log (src/message_log.py): putting a snapshot back puts back the messages shown up to then, so the log
+  never shows what a rewind undid;
 - the random number generator (Python's ``random``, which every roll in the game reads), so that loading a state and
   pressing the same keys plays out the same way, fights included.
 
@@ -38,7 +42,7 @@ import json
 import os
 import random
 from array import array
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import Any
 
 from pygame import Rect
@@ -46,9 +50,11 @@ from pygame import Rect
 from src.camera import Camera
 from src.dungeon_map import DungeonMap
 from src.items import TreasureChestHistory
+from src.json_files import atomic_write_json
 from src.map_layouts import MapLayouts
 from src.maps import CharlockB1, map_lookup
 from src.menu import CommandMenu
+from src.message_log import decoded_entries
 from src.options_screen import apply_options, options_from_config, options_from_save, options_to_save
 from src.sprites.animated_sprite import AnimatedSprite
 from src.soundtrack import SOUNDTRACK_KEY, soundtrack
@@ -57,7 +63,7 @@ from src.visual_effects import cut_to_black, screen_fade
 
 # Raise it whenever what a snapshot holds changes, with a STATE_MIGRATIONS step from the version before (and a sample
 # state of that version in tests/sample_saves/), so states saved before load as they should rather than wrong
-STATE_FORMAT_VERSION = 1
+STATE_FORMAT_VERSION = 2
 VERSION_KEY = 'version'
 SAVE_STATE_SLOTS = (1, 2, 3)
 
@@ -83,11 +89,16 @@ FIXED_VALUES = ('row', 'column', 'direction_value', 'current_frame', 'bumped')
 GAME_STATE_VALUES = ('tiles_moved_total', 'light_diameter', 'radiant_timer', 'lit_diameter', 'light_redraw_frame',
                      'is_initial_dialog', 'is_post_death_dialog', 'automatic_initial_dialog_run', 'enable_movement',
                      'enable_animate', 'enable_roaming')
-# Game's values: the step counts the fight rolls read, the repel timer, Magic Armor's step count
-GAME_VALUES = ('tiles_moved_since_spawn', 'last_amount_of_tiles_moved', 'repel_timer', 'magic_armor_steps',
-               'last_zone', 'initial_dialog_enabled')
-# MovementController's frame counters (src/movement.py)
-MOVEMENT_VALUES = ('hero_standing', 'step_ends', 'hill_pause_frames', 'freeze_wait_frames')
+# Game's values: the step counts the fight rolls read, the repel timer and whether it's still to tick for the step
+# just taken, Magic Armor's step count, and whether ENCOUNTERS HALF skips the next fight
+GAME_VALUES = ('tiles_moved_since_spawn', 'last_amount_of_tiles_moved', 'repel_timer', 'repel_tick_pending',
+               'magic_armor_steps', 'last_zone', 'initial_dialog_enabled', 'skip_next_encounter')
+# The Game and MovementController values version 2 added, and what a version 1 state had in effect (_from_version_1)
+GAME_VALUES_ADDED_IN_VERSION_2 = {'repel_tick_pending': False, 'skip_next_encounter': False}
+MOVEMENT_VALUES_ADDED_IN_VERSION_2 = {'running_step': False}
+# MovementController's frame counters (src/movement.py), and whether the hero's step under way is a running one
+# (RUN BUTTON)
+MOVEMENT_VALUES = ('hero_standing', 'step_ends', 'hill_pause_frames', 'freeze_wait_frames', 'running_step')
 
 _pristine_layouts: dict[str, list[list[int]]] | None = None
 
@@ -104,9 +115,22 @@ OLD_VERSION = 'old version'
 UNREADABLE = 'unreadable'
 
 
+def _from_version_1(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Version 1 to 2: the repel timer's pending tick, ENCOUNTERS HALF's skip and whether the hero's step is a running
+    one, which version 1 didn't keep (loading one left them as they were in the running game; here they're as after a
+    step's tick, with the next fight not skipped and a walking step), and the message log (empty)."""
+    migrated = dict(snapshot)
+    migrated['game'] = {**GAME_VALUES_ADDED_IN_VERSION_2, **snapshot['game']}
+    migrated['movement'] = {**MOVEMENT_VALUES_ADDED_IN_VERSION_2, **snapshot['movement']}
+    migrated['message_log'] = []
+    return migrated
+
+
 # STATE_MIGRATIONS[n] turns a snapshot in format n into format n + 1, for every version from 1 (the first, in 1.0) up to
 # STATE_FORMAT_VERSION
-STATE_MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {}
+STATE_MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {
+    1: _from_version_1,
+}
 
 
 def migrate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
@@ -116,7 +140,10 @@ def migrate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(version, int) or isinstance(version, bool) or not 1 <= version <= STATE_FORMAT_VERSION:
         raise StateError(OLD_VERSION)
     for from_version in range(version, STATE_FORMAT_VERSION):
-        snapshot = STATE_MIGRATIONS[from_version](snapshot)
+        try:
+            snapshot = STATE_MIGRATIONS[from_version](snapshot)
+        except (KeyError, TypeError, ValueError) as error:
+            raise StateError(UNREADABLE) from error
         snapshot[VERSION_KEY] = from_version + 1
     return snapshot
 
@@ -255,6 +282,8 @@ def take_snapshot(game: Any) -> dict[str, Any]:
         'random': encode_random_state(random.getstate()),
         # What the hero has seen of each dark floor (src/dungeon_map.py)
         'dungeon_map': game.dungeon_map.to_save() if hasattr(game, 'dungeon_map') else {},
+        # The messages shown so far (src/message_log.py), so the log doesn't show what a rewind undid
+        'message_log': game.message_log.to_save(),
     }
 
 
@@ -326,6 +355,7 @@ def decode_snapshot(snapshot: Any) -> dict[str, Any]:
             'random': decode_random_state(snapshot['random']),
             # a state saved before the dungeon map has none: every floor unexplored
             'dungeon_map': DungeonMap.from_save(snapshot.get('dungeon_map', {})),
+            'message_log': decoded_entries(snapshot['message_log']),
         }
         if len(decoded['chest_history']) != len(TreasureChestHistory().slots) or len(decoded['camera']) != 2 \
                 or len(decoded['color']) != 3:
@@ -419,6 +449,7 @@ def _restore_values(game: Any, state: dict[str, Any]) -> None:
     player = game.player
     hero = state['hero']
     game.dungeon_map = state['dungeon_map'].copy()  # a copy: the rewind can put the same snapshot back again
+    game.message_log.restore(state['message_log'])
     for name in (*PLAYER_VALUES, *PLAYER_CELLS):
         setattr(player, name, hero[name])
     for name in PLAYER_LISTS:
@@ -490,12 +521,8 @@ def write_state(save_dir: str, slot: int, snapshot: dict[str, Any]) -> None:
 
 def write_snapshot(path: str, snapshot: dict[str, Any]) -> None:
     """Write a snapshot to a file (a save state slot's, or the autosave's: src/autosave.py), replacing what was there.
-    It's written to a temporary file first, so a state is never left half written."""
-    os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
-    temporary_path = path + '.tmp'
-    with open(temporary_path, 'w') as state_file:
-        json.dump(snapshot, state_file, separators=(',', ':'))
-    os.replace(temporary_path, path)
+    It's written in one step (src/json_files.py), so a state is never left half written."""
+    atomic_write_json(path, snapshot, separators=(',', ':'))
 
 
 def read_state(save_dir: str, slot: int) -> dict[str, Any] | None:
@@ -516,3 +543,23 @@ def read_snapshot(path: str) -> dict[str, Any] | None:
     if not isinstance(snapshot, dict):
         raise StateError(UNREADABLE)
     return migrate_snapshot(snapshot)
+
+
+def snapshot_log(path: str) -> int | None:
+    """The adventure log the hero in a snapshot file plays from (Player.adventure_log, 0 for none chosen), or None if
+    there's no such file or it can't be read. Read straight from the file, so a state from any format version (all
+    keep the hero's adventure_log) or from a newer build is read too."""
+    try:
+        with open(path) as state_file:
+            log = json.load(state_file)['hero']['adventure_log']
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return log if isinstance(log, int) and not isinstance(log, bool) else None
+
+
+def remove_snapshots_of_log(paths: Iterable[str], log: int) -> None:
+    """Delete the snapshot files (save states, the autosave) whose hero plays from this adventure log: the log is being
+    erased, or a copy put in it, and loading one of them would carry on a hero who is no longer in that log."""
+    for path in paths:
+        if snapshot_log(path) == log:
+            os.remove(path)
