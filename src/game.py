@@ -12,12 +12,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from data.text.intro_lookup_table import ControlInfo
 from src import maps
 from src.calculation import Calculation, get_tile_id_by_coordinates
-from src.auto_grind import AUTO_GRIND_KEYS, AutoGrind
+from src.auto_grind import AutoGrind
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
 from src.color import LOW_HP_RED, RED, WHITE, is_low_hp, window_color
 from src.common import A_OR_START_KEYS, Graphics, set_gettext_language
-from src.controls import LOAD_STATE_ACTIONS, SAVE_STATE_ACTIONS, SPEED_ACTIONS, Controls, KeySet, actions_for_event, \
+from src.controls import LOAD_STATE_ACTIONS, SAVE_STATE_ACTIONS, Controls, KeySet, actions_for_event, \
     pressed, set_controls, set_controls_listener
 from src.common import singular_or_plural
 from src.config.dev_config import dev_config
@@ -31,8 +31,9 @@ from src.constants import (
 from src.direction import Direction
 from src.display_filters import PRESENTER, SCALING_KEY, SCALING_SMOOTH, SCANLINES_KEY
 from src.directories import Directories, music_name
+from src.soundtrack import SOUNDTRACK_KEY, migrate_legacy_music_config
 from src.drawer import Drawer
-from src.dungeon_map import DUNGEON_MAP_KEYS, DungeonMap, DungeonMapOverlay, dungeon_map_enabled
+from src.dungeon_map import DungeonMap, DungeonMapOverlay, dungeon_map_enabled
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
@@ -62,8 +63,8 @@ from src.ending import Ending
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
 from src.autosave import Autosave
-from src.waiting import NES_FPS, FrameClock, FramePacer, clear_events_keeping_quit, game_speed, \
-    next_game_speed, reset_game_speed, set_game_speed, set_speed_keys_enabled, speed_keys_enabled
+from src.waiting import NES_FPS, SPEED_CHANGED, FrameClock, FramePacer, clear_events_keeping_quit, game_speed, \
+    requested_speed, reset_game_speed, set_game_speed, set_speed_keys_enabled, speed_keys_enabled
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.visual_effects import flash_transparent_color, force_field_flash
@@ -88,6 +89,7 @@ MAGIC_ARMOR_HEAL_STEPS = 4
 class Game:
     def __init__(self, config):
 
+        migrate_legacy_music_config(config)  # a config with the old ORCHESTRA_MUSIC_ENABLED switch (src/soundtrack.py)
         self.config = config
         self.sound = Sound(config)
         self.graphics = Graphics(config)
@@ -294,7 +296,7 @@ class Game:
         - VIEW, a global setting: saved now, and shown once the overlay closes (set_view).
         - DUNGEON MAP, a global setting: saved now; M reads it each time it's pressed.
         - CONFIRM NAME, a global setting: saved now; the next name entry reads it.
-        - MUSIC (ORCHESTRA_MUSIC_ENABLED): every Directories reads the music from the config (src/directories.py), so
+        - MUSIC (SOUNDTRACK): every Directories reads the music from the config (src/directories.py), so
           the next music played is from the new set; the map's music is started again from the new set now.
         - GAME SPEED (GAME_SPEED_KEYS): keys 1 to 5 are switched on or off; off goes back to normal speed, and on to
           the speed kept in the global settings.
@@ -313,7 +315,7 @@ class Game:
             self.settings.update(dungeon_map=dungeon_map_enabled(config))
         elif config_key == 'NAME_CONFIRM':
             self.settings.update(name_confirm=bool(config.get('NAME_CONFIRM')))
-        elif config_key == 'ORCHESTRA_MUSIC_ENABLED':
+        elif config_key == SOUNDTRACK_KEY:
             name = music_name(self.current_map.music_file_path)
             if name is not None:
                 self.current_map.music_file_path = getattr(self.directories, name)
@@ -539,6 +541,8 @@ class Game:
             quit_if_requested(current_event)
             if current_event.type == KEYDOWN:
                 self.handle_keypresses(current_event)
+            elif current_event.type == SPEED_CHANGED:
+                self.announce_game_speed(current_event.speed)
             elif current_event.type == KEYUP and current_event.key in REWIND_KEYS:
                 self.rewind.stop()  # play on from the snapshot on screen
             elif current_event.type == VIDEORESIZE:
@@ -932,8 +936,10 @@ class Game:
         (data/text/intro_lookup_table.py)."""
         if pressed(keydown_event, 'HELP'):
             control_info = ControlInfo(self.config)
-            # one page per group of keys, so nothing runs past the bottom of the dialog box
-            self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
+            # one page per group of keys, so nothing runs past the bottom of the dialog box; not kept in the
+            # message log, which is for what the NPCs said
+            with self.cmd_menu.not_logged():
+                self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
 
     def handle_quest_journal_key(self, keydown_event) -> None:
         """Q (the JOURNAL key): the quest journal (src/quest_journal.py), not NES: one dialog box page per open goal,
@@ -945,7 +951,8 @@ class Game:
             return
         pages = journal_pages(game_progress(self), hints=setting == JOURNAL_HINTS, _=self._)
         if pages:
-            self.cmd_menu.show_text_in_dialog_box(pages)
+            with self.cmd_menu.not_logged():  # the message log is for what the NPCs said
+                self.cmd_menu.show_text_in_dialog_box(pages)
 
     def handle_a_button(self, keydown_event):
         # The SMART A key (Enter) is the A button on the map too unless QUICK ACTION is on (handle_enter_key)
@@ -982,7 +989,7 @@ class Game:
         growing. Like the pause, it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes)."""
         if keydown_event.key not in OPTIONS_KEYS:
             return
-        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+        if self.movement.map_held:
             return
         self.options_requested = True
         self.movement.resolve_pending_freezes()
@@ -993,7 +1000,7 @@ class Game:
         their steps (resolve_pending_freezes)."""
         if not pressed(keydown_event, 'MESSAGE_LOG') or not self.config.get('MESSAGE_LOG'):
             return
-        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+        if self.movement.map_held:
             return
         self.message_log_requested = True
         self.movement.resolve_pending_freezes()
@@ -1006,9 +1013,9 @@ class Game:
         """G: auto-grind (src/auto_grind.py), not NES. It starts from the map only when START would pause the game, and
         like the pause it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes). While it
         runs, G (or any key but 1 to 5) stops it before it gets here (AutoGrind.real_key)."""
-        if keydown_event.key not in AUTO_GRIND_KEYS or not self.game_state.config.get('AUTO_GRIND'):
+        if not pressed(keydown_event, 'AUTO_GRIND') or not self.game_state.config.get('AUTO_GRIND'):
             return  # AUTO-GRIND off: G does nothing
-        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+        if self.movement.map_held:
             return
         self.auto_grind_requested = True
         self.movement.resolve_pending_freezes()
@@ -1017,11 +1024,11 @@ class Game:
         """M: the dungeon map (src/dungeon_map.py), not NES. Only on a dark map, with the DUNGEON MAP option ON, and
         only when START would pause the game; like the pause it waits for the hero and the NPCs to finish their steps
         (resolve_pending_freezes)."""
-        if keydown_event.key not in DUNGEON_MAP_KEYS:
+        if not pressed(keydown_event, 'MAP'):
             return
         if not (self.current_map.is_dark and dungeon_map_enabled(self.game_state.config)):
             return
-        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+        if self.movement.map_held:
             return
         self.dungeon_map_requested = True
         self.movement.resolve_pending_freezes()
@@ -1039,7 +1046,7 @@ class Game:
                         (('save', SAVE_STATE_ACTIONS), ('load', LOAD_STATE_ACTIONS)) if name in slots), None)
         if request is None or not self.game_state.config.get('SAVE_STATES'):
             return  # SAVE STATES off: the keys do nothing
-        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+        if self.movement.map_held:
             return
         self.state_request = request
         self.movement.resolve_pending_freezes()
@@ -1063,8 +1070,15 @@ class Game:
             self.load_state(slot)
 
     def save_state(self, slot: int) -> None:
-        """Save the game as it is into a save state slot (src/save_state.py), and say so."""
-        write_state(self.directories.save_dir, slot, take_snapshot(self))
+        """Save the game as it is into a save state slot (src/save_state.py), and say so. A state that can't be written
+        (a full disk, a read-only save folder) is only said so, as a failed autosave is: play goes on, and the slot
+        keeps what it had."""
+        try:
+            write_state(self.directories.save_dir, slot, take_snapshot(self))
+        except OSError as error:
+            print(f"Save state {slot} failed: {error}")
+            self.draw_temporary_text(self._("State {} couldn't be saved").format(slot))
+            return
         self.draw_temporary_text(self._("State {} saved").format(slot))
 
     def load_state(self, slot: int) -> None:
@@ -1152,15 +1166,15 @@ class Game:
         """Keys 1 to 5: normal, 2x, 4x, 8x or 16x game speed (60.1, 120.2, 240.4, 480.8 or 961.6 FPS). It applies
         everywhere: the map, battles, dialogs, menus and effects (src/waiting.py reads these keys in their loops and
         waits too, without this text)."""
-        names = actions_for_event(keydown_event)
-        speed = next((SPEED_ACTIONS[name] for name in names if name in SPEED_ACTIONS), None)
-        if speed is None:
-            if 'NEXT_SPEED' not in names:
-                return
-            speed = next_game_speed()
-        if not speed_keys_enabled():
+        speed = requested_speed(keydown_event)
+        if speed is None or not speed_keys_enabled():
             return  # GAME SPEED off: the keys do nothing
         set_game_speed(speed)
+        self.announce_game_speed(speed)
+
+    def announce_game_speed(self, speed: int) -> None:
+        """Say the new game speed over the map: after a speed key (handle_fps_changes), or the gamepad's NEXT SPEED
+        button (SPEED_CHANGED, src/waiting.py step_game_speed)."""
         if speed == 1:
             speed_text = self._("Game set to normal speed.\n({} FPS)").format(f'{self.fps:.1f}')
         else:

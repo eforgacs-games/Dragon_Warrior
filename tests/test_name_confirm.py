@@ -7,6 +7,7 @@ import pygame
 from pygame import K_BACKSPACE, K_RETURN, K_TAB, K_i, K_k
 
 from src.config.test_config import test_config
+from src.controls import Binding, Controls, reset_controls, set_controls
 from src.menu_functions import NameSelection
 from src.name_entry import END, NAME_LENGTH, NameEntry
 from src.options_overlay import OPTION_PAGES
@@ -84,6 +85,14 @@ class TestConfirmSelectName(TestCase):
         # START with nothing entered does nothing; then A on A, START
         events = [key_event(K_TAB), key_event(K_i), key_event(K_k), key_event(K_i)]
         self.assertEqual('A', self.select_name(events, joystick=True))
+
+    def test_tab_only_switches_to_the_joypad_whatever_it_is_bound_to(self):
+        # A on K and Tab (an old settings file: the CONTROLS screen refuses Tab for A now)
+        controls = Controls.defaults()
+        controls.keys['A'] = [Binding(K_k), Binding(K_TAB)]
+        set_controls(controls)
+        self.addCleanup(reset_controls)
+        self.assertEqual('A', self.select_name([key_event(K_TAB), key_event(K_k), key_event(K_i)], joystick=True))
 
     def test_a_after_the_8th_character_chooses_end(self):
         # Tab, A on A eight times: the cursor goes to END, so the next A ends the name
