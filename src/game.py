@@ -982,7 +982,7 @@ class Game:
         growing. Like the pause, it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes)."""
         if keydown_event.key not in OPTIONS_KEYS:
             return
-        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+        if self.movement.map_held:
             return
         self.options_requested = True
         self.movement.resolve_pending_freezes()
@@ -993,7 +993,7 @@ class Game:
         their steps (resolve_pending_freezes)."""
         if not pressed(keydown_event, 'MESSAGE_LOG') or not self.config.get('MESSAGE_LOG'):
             return
-        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+        if self.movement.map_held:
             return
         self.message_log_requested = True
         self.movement.resolve_pending_freezes()
@@ -1008,7 +1008,7 @@ class Game:
         runs, G (or any key but 1 to 5) stops it before it gets here (AutoGrind.real_key)."""
         if keydown_event.key not in AUTO_GRIND_KEYS or not self.game_state.config.get('AUTO_GRIND'):
             return  # AUTO-GRIND off: G does nothing
-        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+        if self.movement.map_held:
             return
         self.auto_grind_requested = True
         self.movement.resolve_pending_freezes()
@@ -1021,7 +1021,7 @@ class Game:
             return
         if not (self.current_map.is_dark and dungeon_map_enabled(self.game_state.config)):
             return
-        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+        if self.movement.map_held:
             return
         self.dungeon_map_requested = True
         self.movement.resolve_pending_freezes()
@@ -1039,7 +1039,7 @@ class Game:
                         (('save', SAVE_STATE_ACTIONS), ('load', LOAD_STATE_ACTIONS)) if name in slots), None)
         if request is None or not self.game_state.config.get('SAVE_STATES'):
             return  # SAVE STATES off: the keys do nothing
-        if self.movement.world_frozen or self.movement.freeze_pending or self.movement.light_growing:
+        if self.movement.map_held:
             return
         self.state_request = request
         self.movement.resolve_pending_freezes()
@@ -1063,8 +1063,15 @@ class Game:
             self.load_state(slot)
 
     def save_state(self, slot: int) -> None:
-        """Save the game as it is into a save state slot (src/save_state.py), and say so."""
-        write_state(self.directories.save_dir, slot, take_snapshot(self))
+        """Save the game as it is into a save state slot (src/save_state.py), and say so. A state that can't be written
+        (a full disk, a read-only save folder) is only said so, as a failed autosave is: play goes on, and the slot
+        keeps what it had."""
+        try:
+            write_state(self.directories.save_dir, slot, take_snapshot(self))
+        except OSError as error:
+            print(f"Save state {slot} failed: {error}")
+            self.draw_temporary_text(self._("State {} couldn't be saved").format(slot))
+            return
         self.draw_temporary_text(self._("State {} saved").format(slot))
 
     def load_state(self, slot: int) -> None:

@@ -20,7 +20,7 @@ from collections.abc import Callable
 
 from pygame import Surface
 
-from src.autosave import has_autosave, read_autosave
+from src.autosave import has_autosave, read_autosave, snapshot_paths
 from src.directories import Directories
 from src.common import set_gettext_language
 from src.game_functions import MENU_BACK, GameFunctions
@@ -28,9 +28,9 @@ from src.menu_functions import NameSelection
 from src.options_screen import DEFAULT_OPTIONS, MESSAGE_SPEED_SAVE_KEY, OptionsScreen, apply_options, \
     message_speed_from_save
 from src.player.player_stats import get_level_by_experience
-from src.save_state import StateError, restore_snapshot
-from src.save_file import ADVENTURE_LOGS, EXPERIENCE_KEY, NAME_KEY, load_save, read_save, save_files, save_path, \
-    save_slot_number, used_logs, write_save
+from src.save_state import StateError, remove_snapshots_of_log, restore_snapshot
+from src.save_file import ADVENTURE_LOGS, DAMAGED_LOG_NAME, EXPERIENCE_KEY, NAME_KEY, read_save, save_path, \
+    save_files, save_slot_number, used_logs, write_save
 from src.save_file import save_file_name as save_file_name_for
 from src.sound import Sound
 from src.title_windows import draw_title_windows, title_menu_layout, title_translate
@@ -152,15 +152,19 @@ class TitleMenu:
         """The adventure log save files in the save folder, ignoring anything else that might be there."""
         return save_files(self.directories.save_dir)
 
+    def forget_snapshots_of_log(self, log: int) -> None:
+        """Not NES: delete the save states and the autosave of the hero who played from this log (it's being erased,
+        or a copy put in it), so none of them can later carry that hero on, and save him over the log's new one."""
+        save_dir = self.directories.save_dir
+        remove_snapshots_of_log(snapshot_paths(save_dir), log)
+        self.autosave_present = has_autosave(save_dir)
+
     def continue_quest(self) -> object:
         """CONTINUE A QUEST: choose a used adventure log (ShowUsedLogs) and load it. With one log, its window with the
         hero's name (LogList1Dat2, LogList2Dat2 or LogList3Dat2) over the title menu; with several, the log window of
         src/options_screen.py. B in either goes back to the title menu (WndBackToMain)."""
         if len(self.save_dir_contents) == 1:
-            logs = self.used_logs()
-            if not logs:
-                # its save can't be read: there is nothing to continue
-                return BACK_TO_TITLE_MENU
+            logs = self.used_logs(include_damaged=True)
             selection = self.game_functions.main_menu_selection(menu_ticks(), self.screen,
                                                                 used_logs_layout(tuple(logs)),
                                                                 below=[(self.title_layout(), 0)], b_goes_back=True)
@@ -169,7 +173,7 @@ class TitleMenu:
             save_file_name = save_file_name_for(logs[selection][0])
         elif self.save_dir_contents:
             options_screen = OptionsScreen(self.screen, self.config, self.title_menu_background(0))
-            slot = options_screen.choose_log(self.used_logs())
+            slot = options_screen.choose_log(self.used_logs(include_damaged=True))
             if slot is None:
                 return BACK_TO_TITLE_MENU
             save_file_name = save_file_name_for(slot)
@@ -177,7 +181,10 @@ class TitleMenu:
             self.sound.play_sound(self.directories.menu_button_sfx)
             self.game.start_at_throne_room()
             return None
-        loaded_save = load_save(os.path.join(self.directories.save_dir, save_file_name))
+        loaded_save = read_save(self.directories.save_dir, save_file_name)
+        if loaded_save is None:
+            # A damaged log (listed as DAMAGED_LOG_NAME): there's nothing to continue, only to erase
+            return BACK_TO_TITLE_MENU
         self.sound.play_sound(self.directories.menu_button_sfx)
         # load_game has already cut to black, faded the starting map in, started its music and made a new
         # CommandMenu, as NES StartAtThroneRoom does; fading out again here would show the map twice
@@ -200,9 +207,11 @@ class TitleMenu:
             return BACK_TO_TITLE_MENU
         return None
 
-    def used_logs(self) -> list[tuple[int, str]]:
-        """ShowUsedLogs: each used adventure log's number and hero's name, for the log window."""
-        return used_logs(self.directories.save_dir, self.save_dir_contents or self.save_files())
+    def used_logs(self, include_damaged: bool = False) -> list[tuple[int, str]]:
+        """ShowUsedLogs: each used adventure log's number and hero's name, for the log window. Not NES: a log whose
+        file can't be read is listed too with include_damaged (CONTINUE A QUEST and ERASE AN ADVENTURE LOG), as
+        DAMAGED_LOG_NAME, so the player can see it and erase it; it's never written over."""
+        return used_logs(self.directories.save_dir, self.save_dir_contents or self.save_files(), include_damaged)
 
     def change_message_speed(self) -> object:
         """NES DoChngMsgSpeed (Bank03): choose a used adventure log (ShowUsedLogs), then its message speed in the NES
@@ -270,6 +279,7 @@ class TitleMenu:
         if dst_slot is None or not options_screen.confirm():
             return BACK_TO_TITLE_MENU
         shutil.copy2(save_path(self.directories.save_dir, src_slot), save_path(self.directories.save_dir, dst_slot))
+        self.forget_snapshots_of_log(dst_slot)
         self.save_dir_contents = self.save_files()
         return BACK_TO_TITLE_MENU
 
@@ -277,7 +287,7 @@ class TitleMenu:
         """NES DoEraseGame (Bank03): choose a used log (ShowUsedLogs), then VerifyErase shows its hero's name and
         level (EraseLogDat) and asks YES or NO (YesNo2Dat). Erases it on YES (ClearValidSaves). B, or NO, erases
         nothing. Either way it's back to the title menu (WndBackToMain), never on into a game with no log."""
-        logs = self.used_logs()
+        logs = self.used_logs(include_damaged=True)
         if not logs:
             return BACK_TO_TITLE_MENU
         options_screen = OptionsScreen(self.screen, self.config,
@@ -286,11 +296,13 @@ class TitleMenu:
         if slot is None:
             return BACK_TO_TITLE_MENU
         save_file_name = save_file_name_for(slot)
-        save = read_save(self.directories.save_dir, save_file_name) or {}
-        experience = save.get(EXPERIENCE_KEY)
+        save = read_save(self.directories.save_dir, save_file_name)
+        name = DAMAGED_LOG_NAME if save is None else str(save.get(NAME_KEY, ''))
+        experience = (save or {}).get(EXPERIENCE_KEY)
         level = get_level_by_experience(experience if isinstance(experience, int) else 0)
-        if options_screen.confirm_erase(str(save.get(NAME_KEY, '')), level):
+        if options_screen.confirm_erase(name, level):
             os.remove(os.path.join(self.directories.save_dir, save_file_name))
+            self.forget_snapshots_of_log(slot)
             self.save_dir_contents = self.save_files()
         return BACK_TO_TITLE_MENU
 
