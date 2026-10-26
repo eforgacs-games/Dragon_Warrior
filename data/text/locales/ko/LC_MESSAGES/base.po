@@ -3259,3 +3259,7 @@ msgstr "상태 {}: 저장 실패"
 #: data/text/dialog_lookup_table.py
 msgid "Alas, thy deeds could not be recorded."
 msgstr "안타깝지만 모험의 서에 기록하지 못했네."
+
+#: src/options_overlay.py
+msgid "SFC"
+msgstr "SFC"
