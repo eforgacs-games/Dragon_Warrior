@@ -121,8 +121,9 @@ ACTIONS: tuple[Action, ...] = (
 )
 ACTION_NAMES = tuple(action.name for action in ACTIONS)
 ACTIONS_BY_NAME: dict[str, Action] = {action.name: action for action in ACTIONS}
-# The game speed each speed action sets (src/waiting.py)
+# The game speed each speed action sets (src/waiting.py), and the action that steps to the next speed
 SPEED_ACTIONS = {'SPEED_1': 1, 'SPEED_2': 2, 'SPEED_4': 4, 'SPEED_8': 8, 'SPEED_16': 16}
+NEXT_SPEED_ACTION = 'NEXT_SPEED'
 # The save state slot each save state action saves or loads (Game.handle_save_state_keys)
 SAVE_STATE_ACTIONS = {'SAVE_STATE_1': 1, 'SAVE_STATE_2': 2, 'SAVE_STATE_3': 3}
 LOAD_STATE_ACTIONS = {'LOAD_STATE_1': 1, 'LOAD_STATE_2': 2, 'LOAD_STATE_3': 3}
@@ -488,6 +489,11 @@ def set_controls(controls: Controls) -> None:
     global _controls, _version
     _controls = controls.copy()
     _version += 1
+
+
+def controls_version() -> int:
+    """Counts the changes to the controls in use, so what is worked out from them can be kept until they change."""
+    return _version
 
 
 def reset_controls() -> None:

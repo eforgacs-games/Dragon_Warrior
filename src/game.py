@@ -17,7 +17,7 @@ from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
 from src.color import LOW_HP_RED, RED, WHITE, is_low_hp, window_color
 from src.common import A_OR_START_KEYS, Graphics, set_gettext_language
-from src.controls import LOAD_STATE_ACTIONS, SAVE_STATE_ACTIONS, SPEED_ACTIONS, Controls, KeySet, actions_for_event, \
+from src.controls import LOAD_STATE_ACTIONS, SAVE_STATE_ACTIONS, Controls, KeySet, actions_for_event, \
     pressed, set_controls, set_controls_listener
 from src.common import singular_or_plural
 from src.config.dev_config import dev_config
@@ -62,8 +62,8 @@ from src.ending import Ending
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
 from src.autosave import Autosave
-from src.waiting import NES_FPS, FrameClock, FramePacer, clear_events_keeping_quit, game_speed, \
-    next_game_speed, reset_game_speed, set_game_speed, set_speed_keys_enabled, speed_keys_enabled
+from src.waiting import NES_FPS, SPEED_CHANGED, FrameClock, FramePacer, clear_events_keeping_quit, game_speed, \
+    requested_speed, reset_game_speed, set_game_speed, set_speed_keys_enabled, speed_keys_enabled
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.visual_effects import flash_transparent_color, force_field_flash
@@ -539,6 +539,8 @@ class Game:
             quit_if_requested(current_event)
             if current_event.type == KEYDOWN:
                 self.handle_keypresses(current_event)
+            elif current_event.type == SPEED_CHANGED:
+                self.announce_game_speed(current_event.speed)
             elif current_event.type == KEYUP and current_event.key in REWIND_KEYS:
                 self.rewind.stop()  # play on from the snapshot on screen
             elif current_event.type == VIDEORESIZE:
@@ -1155,15 +1157,15 @@ class Game:
         """Keys 1 to 5: normal, 2x, 4x, 8x or 16x game speed (60.1, 120.2, 240.4, 480.8 or 961.6 FPS). It applies
         everywhere: the map, battles, dialogs, menus and effects (src/waiting.py reads these keys in their loops and
         waits too, without this text)."""
-        names = actions_for_event(keydown_event)
-        speed = next((SPEED_ACTIONS[name] for name in names if name in SPEED_ACTIONS), None)
-        if speed is None:
-            if 'NEXT_SPEED' not in names:
-                return
-            speed = next_game_speed()
-        if not speed_keys_enabled():
+        speed = requested_speed(keydown_event)
+        if speed is None or not speed_keys_enabled():
             return  # GAME SPEED off: the keys do nothing
         set_game_speed(speed)
+        self.announce_game_speed(speed)
+
+    def announce_game_speed(self, speed: int) -> None:
+        """Say the new game speed over the map: after a speed key (handle_fps_changes), or the gamepad's NEXT SPEED
+        button (SPEED_CHANGED, src/waiting.py step_game_speed)."""
         if speed == 1:
             speed_text = self._("Game set to normal speed.\n({} FPS)").format(f'{self.fps:.1f}')
         else:

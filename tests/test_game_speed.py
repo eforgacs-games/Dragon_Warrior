@@ -123,7 +123,8 @@ class TestSpeedKeys(GameSpeedTestCase):
     def test_keys_held_during_a_wait_set_the_speed(self):
         with patch('src.waiting.display.get_init', return_value=True), \
                 patch('src.waiting.event.peek', return_value=False), \
-                patch('src.waiting.key.get_pressed', return_value=defaultdict(int, {K_4: 1})):
+                patch('src.waiting.key.get_pressed', return_value=defaultdict(int, {K_4: 1})), \
+                patch('src.waiting.key.get_mods', return_value=0):
             wait(400)
         self.assertEqual(8, game_speed())
         self.assertLess(self.clock.now, 400 / 8 + 20)  # and the rest of the wait ran at the new speed
