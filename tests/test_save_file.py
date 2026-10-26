@@ -11,6 +11,7 @@ from src.config.test_config import test_config
 from src.options_screen import Options
 from src.save_file import SaveFile, first_open_log, log_for_unchosen_save, logs_named, save_files, save_slot_number, \
     used_logs, write_save
+from src.soundtrack import Soundtrack
 from src.story_flags import StoryFlags
 from tests.helpers import new_game
 
@@ -59,7 +60,7 @@ CURRENT_FORMAT_SAVE = '''{
     "AutoStairs": false,
     "AutoGrindStop": "HalfHP",
     "MenuSpeed": "FollowGameSpeed",
-    "OrchestraMusic": false,
+    "Soundtrack": "SFC",
     "GameSpeedKeys": true,
     "SaveStates": false,
     "Rewind": true,
@@ -104,7 +105,7 @@ class TestSaveFileRoundTrip(TestCase):
         self.assertEqual(('TantegelThroneRoom', 10, 13), (save.current_map, save.player_row, save.player_column))
         self.assertEqual(StoryFlags(left_throne_room=True), save.story_flags)
         self.assertEqual(Options('Fast', 'Modern', False, 'Smooth', False, 'HalfHP', 'FollowGameSpeed',
-                                 orchestra_music=False, save_states=False, auto_grind=False, encounters='Half',
+                                 soundtrack=Soundtrack.SFC, save_states=False, auto_grind=False, encounters='Half',
                                  exp_gold=4, run_button=True, status_window='Always', shop_preview=False,
                                  quest_journal='Hints', autosave=False, bag_size=16, smart_a=True,
                                  message_log=False),

@@ -4,32 +4,61 @@ from os.path import join
 from pygame import font
 
 from src.paths import data_path, default_save_dir, project_root
+from src.soundtrack import SOUNDTRACKS, Soundtrack, soundtrack
+
+
+# Each soundtrack's folder under data/sound/music
+SOUNDTRACK_FOLDERS = {Soundtrack.NES: 'NES', Soundtrack.SFC: 'SFC', Soundtrack.ORCHESTRA: 'orchestra'}
+DUNGEON_FLOOR_MUSIC_NAMES = tuple(f'dungeon_floor_{floor}_music' for floor in range(1, 9))
+
+
+def _arrangement_paths(folder: str, overture: str, intermezzo: str, castle: str, village: str, overworld: str,
+                       fight: str, dungeon: str, end_boss: str, ending: str) -> dict[str, str]:
+    """The music of a soundtrack with one track per moment (SFC, ORCHESTRA): both castle maps share the castle
+    track, the fight music has no separate start, and every dungeon floor has the dungeon track."""
+    def track(name: str) -> str:
+        return join(folder, name)
+    return {
+        'intro_overture': track(overture),
+        'intermezzo': track(intermezzo),
+        'tantegel_castle_throne_room_music': track(castle),
+        'tantegel_castle_courtyard_music': track(castle),
+        'village_music': track(village),
+        'overworld_music': track(overworld),
+        'battle_music': track(fight),
+        'regular_fight_music': track(fight),
+        'end_boss_music': track(end_boss),
+        'ending_music': track(ending),
+        **{name: track(dungeon) for name in DUNGEON_FLOOR_MUSIC_NAMES},
+    }
 
 
 @cache
-def music_paths(orchestra: bool) -> dict[str, str]:
-    """The music files for the MUSIC setting (ORCHESTRA_MUSIC_ENABLED): the orchestral soundtrack or the NES's."""
+def music_paths(chosen: Soundtrack) -> dict[str, str]:
+    """The music files for the MUSIC setting (SOUNDTRACK, src/soundtrack.py): the NES's, the Super Famicom's or the
+    orchestral soundtrack. The jingles aren't here: every soundtrack uses the NES's (Directories)."""
     sound_dir = join(data_path(), 'sound')
     sfx_dir = join(sound_dir, 'sfx')
     music_dir = join(sound_dir, 'music')
-    if orchestra:
-        orchestra_dir = join(music_dir, 'orchestra')
-        dungeon = join(orchestra_dir, '06 Dungeon.mp3')
-        fight = join(orchestra_dir, '05 Fight.mp3')
-        return {
-            'intro_overture': join(orchestra_dir, '01 Overture March (London Philharmonic Orchestra Version).mp3'),
-            'intermezzo': join(orchestra_dir, 'Android_iOS', 'Dragon Quest (Android_iOS) - Intermezzo.mp3'),
-            'tantegel_castle_throne_room_music': join(orchestra_dir, '02 Chateau Ladutorm.mp3'),
-            'tantegel_castle_courtyard_music': join(orchestra_dir, '02 Chateau Ladutorm.mp3'),
-            'village_music': join(orchestra_dir, '03 People.mp3'),
-            'overworld_music': join(orchestra_dir, '04 Unknown World.mp3'),
-            'battle_music': fight,
-            'regular_fight_music': fight,
-            'end_boss_music': join(orchestra_dir, '07 King Dragon.mp3'),
-            'ending_music': join(orchestra_dir, '08 Finale.mp3'),
-            **{f'dungeon_floor_{floor}_music': dungeon for floor in range(1, 9)},
-        }
-    nes_dir = join(music_dir, 'NES')
+    if chosen is Soundtrack.ORCHESTRA:
+        return _arrangement_paths(
+            join(music_dir, SOUNDTRACK_FOLDERS[Soundtrack.ORCHESTRA]),
+            overture='01 Overture March (London Philharmonic Orchestra Version).mp3',
+            # The orchestral album has no Intermezzo: the Android/iOS version's
+            intermezzo=join('Android_iOS', 'Dragon Quest (Android_iOS) - Intermezzo.mp3'),
+            castle='02 Chateau Ladutorm.mp3', village='03 People.mp3', overworld='04 Unknown World.mp3',
+            fight='05 Fight.mp3', dungeon='06 Dungeon.mp3', end_boss='07 King Dragon.mp3', ending='08 Finale.mp3')
+    if chosen is Soundtrack.SFC:
+        # The Super Famicom remake's tracks. "18 ME Sound Collection.mp3", its jingles in one recording, is kept for
+        # when it is split into the jingles; until then the SFC soundtrack uses the NES's, as the orchestral one does.
+        return _arrangement_paths(
+            join(music_dir, SOUNDTRACK_FOLDERS[Soundtrack.SFC]),
+            overture='09 Overture March (Original Game Sound).mp3', intermezzo='10 Intermezzo (SFC Version).mp3',
+            castle='11 Chateau Ladutorm (SFC Version).mp3', village='12 People (SFC Version).mp3',
+            overworld='13 Unknown World (SFC Version).mp3', fight='14 Fight (SFC Version).mp3',
+            dungeon='15 Dungeon (SFC Version).mp3', end_boss='16 King Dragon (SFC Version).mp3',
+            ending='17 Finale (SFC Version).mp3')
+    nes_dir = join(music_dir, SOUNDTRACK_FOLDERS[Soundtrack.NES])
     village = join(nes_dir, '04 Dragon Quest 1 - Peaceful Village.mp3')
     return {
         'intro_overture': join(nes_dir, '01 Dragon Quest 1 - Intro ~ Overture.mp3'),
@@ -51,20 +80,24 @@ def music_paths(orchestra: bool) -> dict[str, str]:
     }
 
 
-MUSIC_NAMES = tuple(music_paths(False))
+MUSIC_NAMES = tuple(music_paths(Soundtrack.NES))
+# The music a map can have: not the title's overture or the intermezzo (which, on the NES, is the village music's file,
+# so a village's music would otherwise be taken for it)
+MAP_MUSIC_NAMES = tuple(name for name in MUSIC_NAMES if name not in ('intro_overture', 'intermezzo'))
 
 
 def music_name(path: str) -> str | None:
-    """Which music a file is (its Directories attribute), with either MUSIC setting; None if it's no map music."""
-    for orchestra in (False, True):
-        for name, music_path in music_paths(orchestra).items():
-            if music_path == path:
+    """Which map music a file is (its Directories attribute), with any MUSIC setting; None if it's no map music."""
+    for chosen in SOUNDTRACKS:
+        paths = music_paths(chosen)
+        for name in MAP_MUSIC_NAMES:
+            if paths[name] == path:
                 return name
     return None
 
 
 class Directories:
-    # The music (music_paths): read from the config each time, so the MUSIC option (ORCHESTRA_MUSIC_ENABLED) switches
+    # The music (music_paths): read from the config each time, so the MUSIC option (SOUNDTRACK) switches
     # every one at once, in every Directories the game holds
     intro_overture: str
     intermezzo: str
@@ -100,7 +133,7 @@ class Directories:
         self.death_music = join(sfx_dir, '20 Dragon Quest 1 - Thou Hast Died.mp3')
         # NES MSC_INN ($15), the inn's jingle (BuyInnStay). The soundtrack calls it "Special Item"; it is the track
         # between Thou Hast Died (MSC_DEATH, $14) and Princess Gwaelin's Love (MSC_PRNCS_LOVE, $16), and the only place
-        # the game plays it is the inn. There is no orchestral version, so it is used with either music setting.
+        # the game plays it is the inn. Like every jingle, it is the NES's with every soundtrack.
         self.inn_music = join(sfx_dir, '21 Dragon Quest 1 - Special Item.mp3')
         # The NES plays these clips as music, not as sound effects (InitMusicSFX with an MSC_ number, then usually
         # WaitForMusicEnd), so they go through MusicPlayer.play_clip / play_until_end, never Sound.play_sound.
@@ -324,7 +357,7 @@ class Directories:
 
 
 def _music_property(name: str) -> property:
-    return property(lambda directories: music_paths(bool(directories.config["ORCHESTRA_MUSIC_ENABLED"]))[name])
+    return property(lambda directories: music_paths(soundtrack(directories.config))[name])
 
 
 for _name in MUSIC_NAMES:
