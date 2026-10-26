@@ -212,7 +212,7 @@ class TestCheckpoints(story_run.StoryRunMixin, TestCase):
         with patch.object(self.game.ending, 'show_credit_screen', side_effect=credit_screens.append), \
                 patch('src.ending.screen_fade'), \
                 patch('src.ending.event.get', return_value=[pygame.event.Event(pygame.QUIT)]), \
-                patch('src.ending.pygame_quit'), \
+                patch('src.waiting.pygame_quit'), \
                 self.assertRaises(SystemExit):
             self.game.ending.check_for_end_game_trigger()
         self.assertEqual(credit_screens, list(CREDITS))

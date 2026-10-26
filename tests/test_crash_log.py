@@ -156,6 +156,15 @@ class TestShowDialog(TestCase):
         self.assertEqual('osascript', command[0])
         self.assertEqual(['the message', 'Dragon Warrior crashed'], command[-2:])
 
+    def test_the_music_thread_stops_before_pygame_quits(self):
+        # src/waiting.py quit_pygame's callbacks (the chiptune music's thread) run before pygame.quit, or the thread
+        # would queue music on a freed mixer channel and crash the game before the message box
+        order = []
+        with patch('src.waiting.run_quit_callbacks', side_effect=lambda: order.append('callbacks')), \
+                patch('pygame.quit', side_effect=lambda: order.append('pygame.quit')):
+            show_dialog('the message', 'darwin', MagicMock())
+        self.assertEqual(['callbacks', 'pygame.quit'], order)
+
     def test_linux_tries_each_dialog_program(self):
         run = MagicMock(side_effect=[FileNotFoundError, None])
         self.assertTrue(show_dialog('the message', 'linux', run))
