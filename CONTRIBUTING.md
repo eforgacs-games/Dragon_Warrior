@@ -8,7 +8,9 @@ ruff, pre-commit), into `.venv`. A `.venv` made with an older Python is rebuilt.
 
 Install libgme too, for the NES and SFC music (the README's [Installing libgme](README.md#installing-libgme)). The tests
 that play its emulated music skip themselves without it (CI installs it, and sets `REQUIRE_LIBGME=1` so they fail
-there instead of skipping); every other test runs the same with or without it.
+there instead of skipping); every other test runs the same with or without it. Without libgme the game still runs, but
+the NES and SFC music options play the orchestral recordings instead, and the jingles (the inn, the fanfares, the death
+and item tunes) are silent with every music option, keeping their timing. The release builds always bundle libgme.
 
 ## Checks
 
