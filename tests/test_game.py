@@ -31,6 +31,7 @@ from src.player.player import Player
 from src.spells import Spell
 from src.sprites.roaming_character import RoamingCharacter
 from src.waiting import NES_FPS, game_speed, reset_game_speed, set_speed_keys_enabled
+from src.windows import COMMAND_WINDOW, DIALOG_WINDOW, POPUP_WINDOW
 from tests.mock_map import MockMap
 from tests.helpers import new_game
 
@@ -291,6 +292,29 @@ class TestGame(TestCase):
             self.game.cmd_menu.wings()
         self.assertEqual(['text', 'flash', 'return'], events)
 
+    def test_wings_wait_for_no_button_and_keep_the_dialog_up_through_the_flash(self):
+        # NES TB4E9 (Bank02) ends in END with no WAIT, and UseWings (LDD8B-LDD92) goes straight on to BWScreenFlash and
+        # DoReturn: no button is waited for, and the dialog window is still up during the flash
+        self.game.player.inventory = ['Wings']
+        self.go_to('Garinham', (12, 29))
+        menu = self.game.cmd_menu
+        events = []
+
+        def wait_for_dialog_key(shows_arrow, skip_text, temp_text_start, *_args):
+            if not skip_text and not temp_text_start:
+                events.append('button')
+
+        def drop_up(*window):
+            if window == tuple(DIALOG_WINDOW):
+                events.append('dialog closed')
+
+        with patch.object(menu, 'wait_for_dialog_key', side_effect=wait_for_dialog_key), \
+                patch.object(menu, 'window_drop_up_effect', side_effect=drop_up), \
+                patch('src.menu.bw_screen_flash', side_effect=lambda *a: events.append('flash')), \
+                patch.object(menu, 'return_to_tantegel', side_effect=lambda: events.append('return')):
+            menu.wings()
+        self.assertEqual(['flash', 'return'], events)
+
     def test_wings_cannot_be_used_in_dungeons(self):
         self.game.player.inventory = ['Wings']
         self.go_to('ErdricksCaveB1', (3, 3))
@@ -359,6 +383,29 @@ class TestGame(TestCase):
         self.assertFalse(self.game.movement.is_impassable(self.bridge_tile()))
         # NES ChkDrop never removes the Rainbow Drop
         self.assertEqual(self.game.player.inventory, ['Rainbow Drop'])
+
+    def test_rainbow_drop_takes_the_windows_off_before_the_flash(self):
+        # NES ChkDrop (LDEA3-LDEAF): RemoveWindow WND_DIALOG, WND_CMD_NONCMB and WND_POPUP, then MSC_RNBW_BRDG and
+        # the rainbow flash, which shows the map alone
+        self.game.player.inventory = ['Rainbow Drop']
+        self.stand_on('Alefgard', (56, 73))
+        menu, drawer = self.game.cmd_menu, self.game.drawer
+        # ITEM chosen from the COMMAND window, with the pop-up window up
+        menu.launch_signaled = True
+        menu.menu.enable()
+        drawer.display_hovering_stats = drawer.hovering_stats_displayed = True
+        window_names = {tuple(DIALOG_WINDOW): 'dialog', tuple(COMMAND_WINDOW): 'COMMAND', tuple(POPUP_WINDOW): 'pop-up'}
+        events = []
+
+        def flash(*_args):
+            events.append(('flash', menu.menu.is_enabled(), drawer.display_hovering_stats))
+
+        with patch.object(menu, 'wait_for_dialog_key'), \
+                patch.object(menu, 'window_drop_up_effect', side_effect=lambda *window: events.append(
+                    window_names[window])), \
+                patch('src.menu.rainbow_bridge_flash', side_effect=flash):
+            menu.rainbow_drop()
+        self.assertEqual(['dialog', 'COMMAND', 'pop-up', ('flash', False, False)], events)
 
     def test_rainbow_drop_does_nothing_elsewhere(self):
         self.game.player.inventory = ['Rainbow Drop']
