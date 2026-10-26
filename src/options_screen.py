@@ -16,7 +16,7 @@ NES flow (Bank03):
   and InitNewGame saves the choice with the new log.
 
 What this game adds (none of it on the NES, so none of it asked here): the dialog style, NPCS MAKE WAY, the fade style,
-the stairs, the grind stop and the switches for this game's other conveniences (SWITCHES: the music, the game speed
+the stairs, the grind stop, the soundtrack and the switches for this game's other conveniences (SWITCHES: the game speed
 keys, save states, rewind, auto-grind, the cheat keys, the shop preview, the quest journal and the bag size) and
 AUTOSAVE. They are changed during play, in the options overlay (src/options_overlay.py: SELECT or Tab on the map), and
 kept per adventure log beside the message speed (Options below). A new quest starts with their defaults.
@@ -39,6 +39,8 @@ from src.items import BAG_SIZES, INVENTORY_SLOTS
 from src.cursor import IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, draw_cursor_tile
 from src.selection import run_selection
 from src.sound import Sound
+from src.soundtrack import DEFAULT_SOUNDTRACK, SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, Soundtrack, \
+    soundtrack, soundtrack_from_save
 from src.text import draw_text
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLES, fade_style
 from src.waiting import MENU_SPEED_NORMAL, MENU_SPEEDS
@@ -106,7 +108,7 @@ STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS = STATUS_WINDOW_SETTINGS = ('NES', 'Alwa
 class Switch:
     """One of this game's conveniences, switched in the options overlay (#409, #437): the Options field, the config
     key the game reads, the save file key, its values and its default (also what a save without it loads as). The
-    conveniences the game already had (the music, the key features, the Enter shortcut) default to how they were, so
+    conveniences the game already had (the key features, the Enter shortcut) default to how they were, so
     nothing changes for a player who never opens the options; the NES preset (src/options_overlay.py) switches them all
     to the NES. Options new with the overlay default to the NES."""
     field_name: str
@@ -123,9 +125,6 @@ class Switch:
 
 
 SWITCHES = (
-    # MUSIC: the orchestral soundtrack (data/sound/music/orchestra) or the NES's (data/sound/music/NES). Orchestral by
-    # default, as the game has always started; the NES preset (src/options_overlay.py) picks the NES music
-    Switch('orchestra_music', 'ORCHESTRA_MUSIC_ENABLED', 'OrchestraMusic', (True, False), True),
     # GAME SPEED: keys 1 to 5 set the game speed (src/waiting.py); off, they do nothing (the NES has one speed). This
     # and the next five were there before the switches, so they default to on
     Switch('game_speed_keys', 'GAME_SPEED_KEYS', 'GameSpeedKeys', (False, True), True),
@@ -182,8 +181,9 @@ class Options:
     auto_stairs: bool = DEFAULT_AUTO_STAIRS
     auto_grind_stop: str = DEFAULT_AUTO_GRIND_STOP
     menu_speed: str = DEFAULT_MENU_SPEED
+    # MUSIC (src/soundtrack.py): a save from before there were three soundtracks loads its OrchestraMusic switch
+    soundtrack: Soundtrack = DEFAULT_SOUNDTRACK
     # SWITCHES, each defaulting to its Switch.default
-    orchestra_music: bool = True
     game_speed_keys: bool = True
     save_states: bool = True
     rewind: bool = True
@@ -298,7 +298,7 @@ def options_from_save(save: dict) -> Options:
     """The log's settings; each one a save from before it was kept doesn't have loads as its default."""
     return Options(message_speed_from_save(save), dialog_style_from_save(save), npcs_make_way_from_save(save),
                    fade_style_from_save(save), auto_stairs_from_save(save), auto_grind_stop_from_save(save),
-                   menu_speed_from_save(save), autosave=autosave_from_save(save),
+                   menu_speed_from_save(save), soundtrack_from_save(save), autosave=autosave_from_save(save),
                    **{switch.field_name: switch.valid(save.get(switch.save_key)) for switch in SWITCHES})
 
 
@@ -307,7 +307,7 @@ def options_to_save(options: Options) -> dict:
     entries = {MESSAGE_SPEED_SAVE_KEY: options.message_speed, DIALOG_STYLE_SAVE_KEY: options.dialog_style,
                NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way, FADE_STYLE_SAVE_KEY: options.fade_style,
                AUTO_STAIRS_SAVE_KEY: options.auto_stairs, AUTO_GRIND_STOP_SAVE_KEY: options.auto_grind_stop,
-               MENU_SPEED_SAVE_KEY: options.menu_speed,
+               MENU_SPEED_SAVE_KEY: options.menu_speed, SOUNDTRACK_SAVE_KEY: options.soundtrack.value,
                **{switch.save_key: getattr(options, switch.field_name) for switch in SWITCHES}}
     if options.autosave is not None:
         entries[AUTOSAVE_SAVE_KEY] = options.autosave
@@ -320,7 +320,7 @@ def options_from_config(config: dict) -> Options:
                    bool(config.get('NPCS_MAKE_WAY', DEFAULT_NPCS_MAKE_WAY)),
                    fade_style(config), bool(config.get('AUTO_STAIRS', DEFAULT_AUTO_STAIRS)),
                    auto_grind_stop_from_save({AUTO_GRIND_STOP_SAVE_KEY: config.get('AUTO_GRIND_STOP')}),
-                   menu_speed_from_save({MENU_SPEED_SAVE_KEY: config.get('MENU_SPEED')}),
+                   menu_speed_from_save({MENU_SPEED_SAVE_KEY: config.get('MENU_SPEED')}), soundtrack(config),
                    autosave=bool(config.get('AUTOSAVE', DEFAULT_AUTOSAVE)),
                    **{switch.field_name: switch.valid(config.get(switch.config_key)) for switch in SWITCHES})
 
@@ -329,7 +329,8 @@ def apply_options(config: dict, options: Options) -> None:
     """Use these settings from now on: the dialog code reads TEXT_SPEED and DIALOG_STYLE for every message, and
     MovementController.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump, screen_fade reads FADE_STYLE for every
     fade, MapManager.handle_warps reads AUTO_STAIRS for every step, auto-grind reads AUTO_GRIND_STOP for every check
-    and the menu clock reads MENU_SPEED (src/waiting.py menu_speed). Each of the SWITCHES goes into its config key,
+    and the menu clock reads MENU_SPEED (src/waiting.py menu_speed); the music is read from SOUNDTRACK each time
+    one starts (src/directories.py). Each of the SWITCHES goes into its config key,
     which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once); the
     shops read SHOP_PREVIEW whenever their list opens, Q reads QUEST_JOURNAL each time it's pressed, Game.map_frame
     reads AUTOSAVE every frame, the inventory checks read BAG_SIZE for every item added, and Game.handle_a_button and
@@ -341,6 +342,7 @@ def apply_options(config: dict, options: Options) -> None:
     config['AUTO_STAIRS'] = options.auto_stairs
     config['AUTO_GRIND_STOP'] = options.auto_grind_stop
     config['MENU_SPEED'] = options.menu_speed
+    config[SOUNDTRACK_KEY] = options.soundtrack
     for switch in SWITCHES:
         config[switch.config_key] = getattr(options, switch.field_name)
     if options.autosave is not None:

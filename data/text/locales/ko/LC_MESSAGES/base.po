@@ -3247,3 +3247,7 @@ msgstr "용왕"
 #: data/text/intro_lookup_table.py
 msgid "Left Button: Message log"
 msgstr "왼쪽 버튼: 대화 기록"
+
+#: src/options_overlay.py
+msgid "SFC"
+msgstr "SFC"
