@@ -53,8 +53,7 @@ From each font's name table (read with fontTools):
 |---|---|---|---|
 | `dragon-quest.ttf` | "Dragon Quest" by Dale Thiessen (gnarizard), made with FontStruct: <https://fontstruct.com/fontstructions/show/919302/dragon_quest_1> | "Copyright Dale Thiessen 2013", FontStruct Non-Commercial License | Yes: the NES-style font for English text |
 | `super_mario_bros__nes_font.ttf` | "Super Mario Bros. NES" by TheWolfBunny, made with FontStruct, based on "Arcade Classic" and "KonaM" by igorcbarros: <https://fontstruct.com/fontstructions/show/1332355/arcade-classic-2-19> | "Copyright TheWolfBunny 2016", Open Font License | Yes: the "(↑ ← ↓ →)" line on the title screen |
-| `unifont.ttf` | GNU Unifont, a 2008 TrueType build ("FontForge 2.0 : GNU Unifont : 7-9-2008") | No copyright or license string in the file. GNU Unifont is distributed under the GNU GPL v2 or later with the GNU font embedding exception; the SIL Open Font License 1.1 option was only added in later releases (13.0.04) | Yes: Korean and other text the NES font lacks |
-| `Knigqst.ttf` | "Knights Quest" 1.02 | "©GemFonts98"; no license given; source unknown | No (but bundled in the release builds, which include all of `data/fonts/`) |
+| `unifont.otf` | GNU Unifont 18.0.01 (OpenType), from the official release: <https://unifoundry.com/unifont/> (`font-builds/unifont-18.0.01.otf`, GPG signature checked) | "Copyright © 1998-2026 Roman Czyborra, Paul Hardy, Qianqian Fang, Andrew Miller, Johnnie Weaver, David Corbett, and others"; dual license: SIL Open Font License 1.1 (used here; its text is in `OFL-unifont.txt`, next to the font), or GNU GPL v2 or later with the GNU font embedding exception | Yes: Korean and other text the NES font lacks |
 
 ## Libraries
 
@@ -63,8 +62,8 @@ Used by the game at runtime (`pyproject.toml` dependencies):
 - [pygame](https://www.pygame.org/) and the SDL libraries it bundles: GNU LGPL v2.1.
 
 Release builds are made with [PyInstaller](https://pyinstaller.org/) (GPL v2 or later with an exception for the
-bootloader it adds to the built program). The development tools (pytest, ruff, mypy, pre-commit) aren't distributed
-with the game.
+bootloader it adds to the built program). The development tools (pytest, ruff, mypy, pre-commit, fontTools) aren't
+distributed with the game.
 
 ## `reference/`
 
@@ -73,8 +72,5 @@ Notes and documents by other authors, kept for development. Each is under its ow
 | Path | What it is | Author and terms |
 |---|---|---|
 | `reference/sram-doc.txt` | Dragon Warrior SRAM (save) format | John David Ratliff / emuWorks, 2007, GNU Free Documentation License 1.2 or later |
-| `reference/DragonWarriorFormulas.txt` | Dragon Warrior (NES) Formulas v1.0 | Ryan8bit, 2011; no license given |
-| `reference/dwbytes.txt` | Dragon Warrior Bytes v1.0 (RAM/ROM addresses) | Sliver X; no license given |
-| `reference/names_stats_and_levels.txt` | Names, Stats, and Levels for Dragon Warrior (GameFAQs) | Akira Speirs, 2002, "All rights reserved" |
 | `reference/raw_levels_lists/`, `reference/converted_levels_lists/` | Level-up stat tables, by name group | Game data; source of the tables unknown |
 | `reference/reference_images/` | Screenshots, maps and tiles from the NES game (Square Enix) | Collected from various websites; sources unknown |

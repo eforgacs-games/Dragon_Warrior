@@ -353,7 +353,7 @@ class Directories:
         self.SMB_FONT_PATH = join(fonts_dir, 'super_mario_bros__nes_font.ttf')
         self.SMB_FONT = font.Font(self.SMB_FONT_PATH, 15)
 
-        self.UNIFONT_PATH = join(fonts_dir, 'unifont.ttf')
+        self.UNIFONT_PATH = join(fonts_dir, 'unifont.otf')
 
 
 def _music_property(name: str) -> property:
