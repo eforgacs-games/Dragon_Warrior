@@ -7,9 +7,10 @@ from unittest import TestCase
 from unittest.mock import patch
 
 import pygame
-from pygame import K_DOWN, K_ESCAPE, K_j, K_m, Rect
+from pygame import K_DOWN, K_ESCAPE, K_F1, K_j, K_m, KMOD_CTRL, KMOD_LCTRL, Rect
 
 from src.config.test_config import test_config
+from src.controls import Binding, Controls, reset_controls, set_controls
 from src.dungeon_map import CHEST_COLOR, FLOOR_COLOR, HERO_COLOR, MAP_WINDOW, STAIRS_UP_COLOR, WALL_COLOR, \
     DungeonMap, DungeonMapOverlay, Floor, block_pixels, draw_floor
 from src.save_file import read_save, save_path
@@ -171,9 +172,9 @@ class TestInTheGame(DungeonTestCase):
 
 class TestKey(DungeonTestCase):
 
-    def press_m(self, game):
+    def press_m(self, game, press=None):
         with patch.object(game, 'open_dungeon_map') as open_dungeon_map:
-            game.handle_dungeon_map_key(key(K_m))
+            game.handle_dungeon_map_key(key(K_m) if press is None else press)
             with patch('src.movement.key') as movement_key:
                 movement_key.get_pressed.return_value = HeldKeys()
                 for _ in range(20):
@@ -184,6 +185,24 @@ class TestKey(DungeonTestCase):
         game = self.game
         self.go_to(game, 'SwampCave', SWAMP_CAVE_START)
         self.assertEqual(1, self.press_m(game))
+
+    def test_closing_it_leaves_the_command_window_shut(self):
+        game = self.game
+        self.go_to(game, 'SwampCave', SWAMP_CAVE_START)
+        self.assertEqual(1, self.press_m(game))
+        self.assertFalse(game.cmd_menu.launch_signaled)
+        self.assertFalse(game.cmd_menu.menu.is_enabled())
+
+    def test_a_key_bound_with_a_modifier_needs_the_modifier(self):
+        # MAP on Ctrl+F1: plain F1 (LOAD 1) doesn't open it
+        game = self.game
+        self.go_to(game, 'SwampCave', SWAMP_CAVE_START)
+        controls = Controls.defaults()
+        self.assertTrue(controls.bind_key('MAP', 0, Binding(K_F1, KMOD_CTRL)))
+        set_controls(controls)
+        self.addCleanup(reset_controls)
+        self.assertEqual(0, self.press_m(game, key(K_F1)))
+        self.assertEqual(1, self.press_m(game, key(K_F1, KMOD_LCTRL)))
 
     def test_not_on_a_lit_map(self):
         game = self.game

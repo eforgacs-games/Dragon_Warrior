@@ -10,8 +10,8 @@ with black borders. That is the SCALING option's SMOOTH, and with both filters o
 
 With either filter on, the Presenter takes over those two functions on the ``pygame.display`` module (the way
 src/frame_recorder.py does: the game always presents through them) and shows the screen surface itself, on the same
-SDL renderer (``pygame._sdl2.video.Renderer.from_window``), with no logical size set so it can say where every window
-pixel goes:
+SDL renderer (``pygame._sdl2.video.Renderer.from_window``, of the Window src/display_window.py keeps alive), with no
+logical size set so it can say where every window pixel goes:
 - PIXEL PERFECT scales by whole multiples of the NES's 256x240 only (presentation_rect), centred, black around it,
   in a window and in fullscreen, so every NES pixel is the same square of window pixels. (SMOOTH at SCALE 2 can't show
   a 3x window, 768x720: pygame's integer scaling only knows multiples of 512x480, so it shows 2x with a border.)
@@ -26,14 +26,16 @@ with tools/benchmark.py --display: on a GPU (X11) neither filter costs a measura
 renderer (the dummy driver) SCANLINES costs about 0.5 ms a frame and PIXEL PERFECT about 0.15 ms. Without a renderer
 (a window opened without SCALED, as some tests and tools do), the filters do nothing and pygame presents as always.
 
-This module imports nothing from ``src``.
+This module imports nothing from ``src`` but src/display_window.py (which imports nothing from ``src``).
 """
 from collections.abc import Callable
 from functools import cache
 from typing import Any
 
 from pygame import FULLSCREEN, Rect, Surface, display, error as pygame_error
-from pygame._sdl2.video import Renderer, Texture, Window
+from pygame._sdl2.video import Renderer, Texture
+
+from src.display_window import display_window
 
 SCANLINES_KEY = 'SCANLINES'
 SCALING_KEY = 'SCALING'
@@ -88,7 +90,10 @@ class _RendererState:
 
     def __init__(self, surface: Surface):
         self.surface = surface
-        self.renderer = Renderer.from_window(Window.from_display_module())
+        window = display_window()
+        if window is None:
+            raise pygame_error("No window to show the screen in")
+        self.renderer = Renderer.from_window(window)
         self.pygame_logical_size = tuple(self.renderer.logical_size)
         self.renderer.logical_size = (0, 0)  # window pixels: presentation_rect says where the picture goes
         self.texture = Texture(self.renderer, surface.get_size(), streaming=True)

@@ -22,6 +22,7 @@ from src.options_overlay import FIXED_ROWS, MOST_ROWS, OPTION_PAGES, OPTION_ROWS
     preset_values
 from src.options_screen import CLASSIC, MODERN, SWITCHES, options_from_config
 from src.quest_journal import JOURNAL_GOALS, JOURNAL_OFF
+from src.soundtrack import Soundtrack
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
 from src.waiting import MENU_SPEED_FOLLOW as FOLLOW, MENU_SPEED_NORMAL as NORMAL
 from tests import helpers
@@ -190,7 +191,7 @@ class TestRows(OverlayTestCase):
         self.assertEqual([("LOOK & SOUND", [("MESSAGE SPEED", 'TEXT_SPEED', ("FAST", "NORMAL", "SLOW")),
                                             ("DIALOG STYLE", 'DIALOG_STYLE', ("CLASSIC (NES)", "MODERN")),
                                             ("FADE STYLE", 'FADE_STYLE', ("NES", "SMOOTH")),
-                                            ("MUSIC", 'ORCHESTRA_MUSIC_ENABLED', ("ORCHESTRA", "NES")),
+                                            ("MUSIC", 'SOUNDTRACK', ("NES", "SFC", "ORCHESTRA")),
                                             ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어")),
                                             ("SCANLINES", 'SCANLINES', ("OFF", "ON")),
                                             ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT")),
@@ -233,7 +234,7 @@ class TestRows(OverlayTestCase):
 
     def test_window_shows_the_current_values(self):
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/4", "MESSAGE SPEED", "FAST", "DIALOG STYLE", "CLASSIC (NES)",
-                          "FADE STYLE", "NES", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
+                          "FADE STYLE", "NES", "MUSIC", "NES", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
                           "SCALING", "SMOOTH", "VIEW", "NES (4:3)", "STATUS WINDOW", "NES", "SHOP PREVIEW",
                           "OFF (NES)"],
                          page_texts(self.config))
@@ -244,9 +245,10 @@ class TestRows(OverlayTestCase):
                          page_texts(self.config, 1))
         self.config.update(TEXT_SPEED='Slow', DIALOG_STYLE=MODERN, NPCS_MAKE_WAY=False, FADE_STYLE=FADE_STYLE_SMOOTH,
                            AUTO_STAIRS=False, AUTO_GRIND_STOP='ThreeQuartersHP', CHEAT_KEYS=True, REWIND=True,
-                           STATUS_WINDOW='Always', ENCOUNTERS='Half', EXP_GOLD=4, RUN_BUTTON=True)
+                           STATUS_WINDOW='Always', ENCOUNTERS='Half', EXP_GOLD=4, RUN_BUTTON=True,
+                           SOUNDTRACK=Soundtrack.SFC)
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "1/4", "MESSAGE SPEED", "SLOW", "DIALOG STYLE", "MODERN",
-                          "FADE STYLE", "SMOOTH", "MUSIC", "ORCHESTRA", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
+                          "FADE STYLE", "SMOOTH", "MUSIC", "SFC", "LANGUAGE", "ENGLISH", "SCANLINES", "OFF",
                           "SCALING", "SMOOTH", "VIEW", "NES (4:3)", "STATUS WINDOW", "ALWAYS", "SHOP PREVIEW",
                           "OFF (NES)"],
                          page_texts(self.config))
@@ -425,7 +427,7 @@ class TestPages(OverlayTestCase):
 class TestPreset(OverlayTestCase):
 
     def test_the_presets(self):
-        self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': False,
+        self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'SOUNDTRACK': 'NES',
                           'STATUS_WINDOW': 'NES', 'NPCS_MAKE_WAY': False, 'AUTO_STAIRS': False, 'QUICK_ACTION': False,
                           'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': False, 'SAVE_STATES': False,
                           'REWIND': False, 'AUTO_GRIND': False, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
@@ -435,7 +437,7 @@ class TestPreset(OverlayTestCase):
                           'MESSAGE_LOG': False, 'NAME_CONFIRM': False},
                          preset_values(PRESET_NES))
         # MODERN: every convenience but the cheats; the number of fights and what they give stay the NES's
-        self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'ORCHESTRA_MUSIC_ENABLED': True,
+        self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'SOUNDTRACK': 'Orchestra',
                           'STATUS_WINDOW': 'Always', 'NPCS_MAKE_WAY': True, 'AUTO_STAIRS': True, 'QUICK_ACTION': True,
                           'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': True, 'SAVE_STATES': True,
                           'REWIND': True, 'AUTO_GRIND': True, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
@@ -466,7 +468,7 @@ class TestPreset(OverlayTestCase):
         apply_options(config, DEFAULT_OPTIONS)
         nes = preset_values(PRESET_NES)
         differences = {config_key for config_key, value in nes.items() if config[config_key] != value}
-        self.assertEqual({'ORCHESTRA_MUSIC_ENABLED', 'AUTO_STAIRS', 'NPCS_MAKE_WAY', 'QUICK_ACTION', 'GAME_SPEED_KEYS',
+        self.assertEqual({'SOUNDTRACK', 'AUTO_STAIRS', 'NPCS_MAKE_WAY', 'QUICK_ACTION', 'GAME_SPEED_KEYS',
                           'SAVE_STATES', 'REWIND', 'AUTO_GRIND', 'CHEAT_KEYS', 'SHOP_PREVIEW', 'QUEST_JOURNAL',
                           'DUNGEON_MAP', 'MESSAGE_LOG', 'NAME_CONFIRM'},
                          differences)
@@ -475,8 +477,8 @@ class TestPreset(OverlayTestCase):
     def test_an_older_save_loads_with_them_on(self):
         from src.options_screen import options_from_save
         options = options_from_save({'Name': 'Ed'})
-        self.assertEqual((True, True, True, True, True, True, True),
-                         (options.orchestra_music, options.game_speed_keys, options.save_states, options.rewind,
+        self.assertEqual((Soundtrack.ORCHESTRA, True, True, True, True, True, True),
+                         (options.soundtrack, options.game_speed_keys, options.save_states, options.rewind,
                           options.auto_grind, options.cheat_keys, options.quick_action))
 
     def test_preset_sets_every_row_at_once(self):
@@ -522,7 +524,7 @@ class TestPreset(OverlayTestCase):
         with patch.object(self.game, 'apply_option', wraps=self.game.apply_option) as apply_option:
             self.run_overlay(K_RIGHT, K_RIGHT, K_u)  # CUSTOM -> NES -> MODERN
         applied = {call.args[0] for call in apply_option.call_args_list}
-        self.assertIn('ORCHESTRA_MUSIC_ENABLED', applied)
+        self.assertIn('SOUNDTRACK', applied)
         self.assertIn('GAME_SPEED_KEYS', applied)
         from src.waiting import speed_keys_enabled
         self.assertTrue(speed_keys_enabled())
@@ -600,19 +602,28 @@ class TestSwitches(OverlayTestCase):
         self.assertTrue(self.game.cmd_menu_requested)
 
     def test_music(self):
+        # The map's music starts again from the chosen soundtrack, and every music path after it is from that one
         directories = self.game.directories
-        self.assertTrue(self.config['ORCHESTRA_MUSIC_ENABLED'])
-        self.assertIn('orchestra', self.game.current_map.music_file_path)
-        with patch.object(self.game.music_player, 'load_and_play_music') as load_and_play_music:
-            self.set_switch("MUSIC", False)
-        # the map's music starts again, from the NES set, and every music path after it is from that set
-        load_and_play_music.assert_called_once_with(directories.tantegel_castle_throne_room_music)
         self.assertIn(os.path.join('music', 'NES'), self.game.current_map.music_file_path)
-        self.assertIn(os.path.join('music', 'NES'), self.game.battle_ctrl.directories.overworld_music)
-        self.assertIn(os.path.join('music', 'NES'), map_lookup['Alefgard'](self.config).music_file_path)
+        for chosen, folder in ((Soundtrack.SFC, os.path.join('music', 'SFC')),
+                               (Soundtrack.ORCHESTRA, os.path.join('music', 'orchestra')),
+                               (Soundtrack.NES, os.path.join('music', 'NES'))):
+            with self.subTest(soundtrack=chosen):
+                with patch.object(self.game.music_player, 'load_and_play_music') as load_and_play_music:
+                    self.set_switch("MUSIC", chosen)
+                load_and_play_music.assert_called_once_with(directories.tantegel_castle_throne_room_music)
+                self.assertIn(folder, self.game.current_map.music_file_path)
+                self.assertIn(folder, self.game.battle_ctrl.directories.overworld_music)
+                self.assertIn(folder, map_lookup['Alefgard'](self.config).music_file_path)
+
+    def test_music_goes_round_nes_sfc_orchestra(self):
+        self.config['SOUNDTRACK'] = Soundtrack.NES
+        seen = []
         with patch.object(self.game.music_player, 'load_and_play_music'):
-            self.set_switch("MUSIC", True)
-        self.assertIn('orchestra', self.game.current_map.music_file_path)
+            for _ in range(3):
+                self.run_overlay(*down_to("MUSIC"), K_RIGHT, K_u)
+                seen.append(self.config['SOUNDTRACK'])
+        self.assertEqual([Soundtrack.SFC, Soundtrack.ORCHESTRA, Soundtrack.NES], seen)
 
     def test_save_states_and_rewind_have_switches(self):
         for label in ("SAVE STATES", "REWIND"):
