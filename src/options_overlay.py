@@ -12,7 +12,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     MESSAGE SPEED  FAST / NORMAL / SLOW     (TEXT_SPEED, src/dialog_box.py; the NES's own setting)
     DIALOG STYLE   CLASSIC (NES) / MODERN   (DIALOG_STYLE, src/dialog_box.py)
     FADE STYLE     NES / SMOOTH             (FADE_STYLE, src/visual_effects.py screen_fade)
-    MUSIC          ORCHESTRA / NES          (ORCHESTRA_MUSIC_ENABLED, src/directories.py music_paths)
+    MUSIC          NES / SFC / ORCHESTRA    (SOUNDTRACK, src/soundtrack.py, src/directories.py music_paths)
     LANGUAGE       ENGLISH / 한국어          (LANGUAGE: a global setting, src/settings.py)
     SCANLINES      OFF / ON                 (SCANLINES: a display filter, src/display_filters.py; global)
     SCALING        SMOOTH / PIXEL PERFECT   (SCALING: pygame's SCALED, or whole multiples of 256x240 only; global)
@@ -97,6 +97,7 @@ from src.selection import frame_events, next_frame
 from src.settings import LANGUAGES
 from src.translated_window import draw_translated_window
 from src.view import VIEW_NES, VIEW_WIDE, full_screen
+from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACKS, Soundtrack
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
 from src.waiting import MENU_SPEED_FOLLOW, MENU_SPEED_NORMAL
 from src.windows import Window, WindowLayout, WindowText
@@ -175,7 +176,9 @@ OPTION_PAGES = (
         OptionRow("DIALOG STYLE", 'DIALOG_STYLE', (CLASSIC, MODERN), ("CLASSIC (NES)", "MODERN"), (CLASSIC, CLASSIC)),
         OptionRow("FADE STYLE", 'FADE_STYLE', (FADE_STYLE_NES, FADE_STYLE_SMOOTH), ("NES", "SMOOTH"),
                   (FADE_STYLE_NES, FADE_STYLE_NES)),
-        OptionRow("MUSIC", 'ORCHESTRA_MUSIC_ENABLED', (True, False), ("ORCHESTRA", "NES"), (False, True)),
+        # The soundtrack (src/soundtrack.py): the NES preset plays the NES's, MODERN the orchestral one
+        OptionRow("MUSIC", SOUNDTRACK_KEY, SOUNDTRACKS, ("NES", "SFC", "ORCHESTRA"),
+                  (Soundtrack.NES, Soundtrack.ORCHESTRA)),
         # The player's, not the adventure's: kept in the global settings (src/settings.py), and no preset's. Each
         # language's name is in that language, so it can be found whichever is on.
         OptionRow("LANGUAGE", 'LANGUAGE', LANGUAGES, ("ENGLISH", "한국어")),

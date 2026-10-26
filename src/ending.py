@@ -26,6 +26,7 @@ from src.direction import Direction
 from src.maps import map_lookup
 from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE, SEARCHED_FOR_GWAELIN
+from src.soundtrack import Soundtrack, soundtrack
 from src.text import draw_text
 from src.visual_effects import screen_fade
 from src.waiting import NES_FPS, POLL_INTERVAL_MS, game_ticks, wait_frames
@@ -54,8 +55,8 @@ END_MUSIC_TIMING_EVENTS = (
 # (G5) starts at frame 58, while the mp3's first sound is 0.23 s in. Laying every note start of the music over the
 # mp3's onsets (reference/reference_utility_scripts/end_music_frame_rate.py, #391) puts the mp3's start 0.72 to 0.74 s
 # after the NES music's frame 0, the same at every frame rate tried; the first notes give 0.73 s. So the mp3 starts 44
-# frames into the music, and the credits, timed from frame 0, keep in step with it (#429). The orchestral finale is
-# another arrangement and isn't timed to the NES music at all, so it starts at frame 0.
+# frames into the music, and the credits, timed from frame 0, keep in step with it (#429). The orchestral and SFC
+# finales are other arrangements and aren't timed to the NES music at all, so they start at frame 0.
 END_MUSIC_RECORDING_START_FRAME = 44
 
 # NES GwaelinMoveLoop: Gwaelin walks to the king one NES pixel (16 to a block) every 2 frames
@@ -361,7 +362,7 @@ class Ending:
         (credit_screen_music_events) and fades out. The last one, THE END, stays up."""
         # NES InitMusicSFX MSC_END: frame 0 of the end music, which the timing events count from
         music_events = EndMusicTimingEvents(self.config)
-        if not self.config['ORCHESTRA_MUSIC_ENABLED']:
+        if soundtrack(self.config) is Soundtrack.NES:
             self.game.music_player.stop_music()
             self.wait_frames(END_MUSIC_RECORDING_START_FRAME)  # the NES music is still silent here
         self.game.music_player.load_and_play_music(self.game.directories.ending_music, loop=0)

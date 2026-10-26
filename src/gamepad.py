@@ -32,7 +32,7 @@ import pygame
 from pygame import KEYDOWN, KEYUP, K_DOWN, K_LEFT, K_RIGHT, K_UP
 
 from src import controls
-from src.waiting import SPEED_KEYS, game_speed, set_game_speed, set_gamepad, speed_keys_enabled
+from src.waiting import set_gamepad, step_game_speed
 
 # SDL names the face buttons by where they are on an Xbox pad, whatever the pad's labels say ('a' bottom, 'b' right,
 # 'x' left, 'y' top). Nintendo pads swap them to match their labels unless this hint is off; off, every pad is read
@@ -53,7 +53,8 @@ UP, DOWN, LEFT, RIGHT = 'UP', 'DOWN', 'LEFT', 'RIGHT'
 # modifiers, and the rewind runs from the KEYDOWN until the KEYUP. An action with no key has nothing to press.
 DIRECTIONS = (UP, DOWN, LEFT, RIGHT)
 # The action that steps through the game speeds (1x, 2x, 4x, 8x, 16x, then 1x again), done by the gamepad itself
-NEXT_SPEED = 'NEXT_SPEED'
+# (src/waiting.py step_game_speed)
+NEXT_SPEED = controls.NEXT_SPEED_ACTION
 
 
 def d_pad() -> tuple[tuple[str, str], ...]:
@@ -129,13 +130,6 @@ def pad_direction(state: PadState, previous: str | None) -> str | None:
         if pad_button in state.buttons:
             return direction
     return stick_direction(state.stick_x, state.stick_y, previous)
-
-
-def next_speed() -> int:
-    """The game speed after the current one, back to 1x after the fastest."""
-    speeds = sorted(SPEED_KEYS.values())
-    later = [speed for speed in speeds if speed > game_speed()]
-    return later[0] if later else speeds[0]
 
 
 class PadDevice(Protocol):
@@ -222,8 +216,8 @@ class Gamepad:
         self.direction = pad_direction(state, self.direction)
         speed_button = controls.current_controls().pad.get(NEXT_SPEED)
         speed_pressed = speed_button is not None and speed_button in state.buttons
-        if speed_pressed and not self.speed_pressed and speed_keys_enabled():
-            set_game_speed(next_speed())
+        if speed_pressed and not self.speed_pressed:
+            step_game_speed()
         self.speed_pressed = speed_pressed
         bindings = button_bindings(state.buttons)
         self.press(self.pad_keys(state, bindings), bindings)

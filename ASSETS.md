@@ -62,8 +62,8 @@ Used by the game at runtime (`pyproject.toml` dependencies):
 - [pygame](https://www.pygame.org/) and the SDL libraries it bundles: GNU LGPL v2.1.
 
 Release builds are made with [PyInstaller](https://pyinstaller.org/) (GPL v2 or later with an exception for the
-bootloader it adds to the built program). The development tools (pytest, ruff, mypy, pre-commit, fontTools) aren't distributed
-with the game.
+bootloader it adds to the built program). The development tools (pytest, ruff, mypy, pre-commit, fontTools) aren't
+distributed with the game.
 
 ## `reference/`
 

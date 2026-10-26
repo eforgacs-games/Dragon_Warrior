@@ -152,7 +152,8 @@ LOOK & SOUND:
   CHANGE MESSAGE SPEED on the title menu
 - DIALOG STYLE: CLASSIC (NES), the NES dialog window whose text scrolls, or MODERN, each message on a fresh window
 - FADE STYLE: NES, fades through the NES palette, or SMOOTH, a black fade
-- MUSIC: ORCHESTRA, the orchestral soundtrack, or NES, the NES music
+- MUSIC: NES, the NES music; SFC, the Super Famicom remake's soundtrack; or ORCHESTRA, the London Philharmonic
+  Orchestra's recording (the default). The jingles (the inn, level up, victory and the rest) are the NES's with all three
 - LANGUAGE, SCANLINES and SCALING: yours rather than the adventure's, kept for every adventure, and no preset changes
   them
 - VIEW: NES (4:3), or WIDE, more of the map to the left and right for a 16:9 or 16:10 screen (kept for every
