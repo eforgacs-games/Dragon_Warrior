@@ -2,6 +2,7 @@ import locale
 
 from src.display_filters import SCALING_SMOOTH
 from src.settings import USER_SETTINGS
+from src.soundtrack import Soundtrack
 
 SCALE = 2
 LOCALE, ENCODING = locale.getlocale()
@@ -34,7 +35,9 @@ base_config = {
     "FORCE_ENEMY": None,  # e.g. "Metal Slime"; overrides the random enemy for the zone
     "NO_BATTLES": False,
     "NPCS_MAKE_WAY": True,  # not NES: a roaming NPC the hero walks into steps aside (MovementController.ask_npc_to_make_way)
-    "ORCHESTRA_MUSIC_ENABLED": True,
+    # MUSIC (not NES): "NES", "SFC" (the Super Famicom remake's) or "Orchestra" (src/soundtrack.py). Orchestral, as
+    # the game has always started; the old ORCHESTRA_MUSIC_ENABLED switch still loads (True as Orchestra)
+    "SOUNDTRACK": Soundtrack.ORCHESTRA,
     "SHOW_FPS": False,
     "LANGUAGE": language_from_locale(LOCALE),
     "SHOW_COORDINATES": False,

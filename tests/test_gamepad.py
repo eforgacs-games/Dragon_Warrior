@@ -17,8 +17,8 @@ from src.cursor import IN_A, IN_B
 from src.direction import Direction
 from src.gamepad import DOWN, LEFT, RIGHT, UP, Gamepad, PadState, SdlBackend, is_gamepad, pad_direction, \
     stick_direction
-from src.selection import Answer, run_selection, stop_at_edges
-from src.waiting import NES_FPS, WINDOW_CONTEXT, game_speed, gamepad, poll_virtual_joypad, reset_game_speed, \
+from src.selection import Answer, frame_events, run_selection, stop_at_edges
+from src.waiting import NES_FPS, WINDOW_CONTEXT, game_speed, gamepad, get_events, poll_virtual_joypad, reset_game_speed, \
     set_gamepad, set_speed_keys_enabled, with_virtual_keys
 from tests.test_battle_controller import BattlePromptFrames, RUN
 
@@ -220,6 +220,16 @@ class TestKeys(GamepadTestCase):
         self.assertEqual([2, 4, 8, 16, 1, 2], speeds)
         self.assertEqual([], queued())  # no key, so no window reads it and auto-grind carries on
 
+    def test_no_window_reads_the_speed_change(self):
+        for read_events in (get_events, frame_events):
+            with self.subTest(loop=read_events.__name__):
+                reset_game_speed()
+                self.pad.state = pad('righttrigger')
+                self.assertEqual([], read_events())
+                self.assertEqual(2, game_speed())
+                self.pad.state = pad()
+                poll_virtual_joypad()
+
     def test_the_speed_trigger_does_nothing_with_game_speed_off(self):
         # the options overlay's GAME SPEED switch (src/options_overlay.py), off on the NES, as for the keys 1 to 5
         set_speed_keys_enabled(False)
@@ -363,6 +373,14 @@ class TestMapFrame(GamepadTestCase):
         self.game.read_events()
         self.pad.state = pad()
         self.game.read_events()
+
+    def test_right_trigger_says_the_new_speed(self):
+        # as the speed keys do on the map (Game.handle_fps_changes)
+        with patch.object(self.game, 'draw_temporary_text') as temporary_text:
+            self.press('righttrigger')
+        self.assertEqual(2, game_speed())
+        temporary_text.assert_called_once()
+        self.assertIn("2x speed", temporary_text.call_args.args[0])
 
     def test_a_opens_the_command_window(self):
         with patch.object(self.game.movement, 'resolve_pending_freezes'):

@@ -8,7 +8,7 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
-from pygame import K_DOWN, K_ESCAPE, K_LEFT, K_RIGHT, K_UP, K_i, K_j, K_l, K_p, KEYDOWN
+from pygame import K_DOWN, K_ESCAPE, K_LEFT, K_RIGHT, K_UP, K_h, K_i, K_j, K_l, K_p, K_q, KEYDOWN
 from pygame.event import Event
 
 from src.config.test_config import test_config
@@ -16,6 +16,7 @@ from src.controls import Binding, Controls, reset_controls, set_controls
 from src.message_log import EMPTY, HINT, HINT_ROW, LINE_WIDTH, MAX_ENTRIES, VISIBLE_LINES, LogEntry, MessageLog, \
     MessageLogScreen, log_layout, log_lines, speaker_of, text_width, wrap
 from src.options_overlay import OPTION_ROWS
+from src.quest_journal import JOURNAL_HINTS
 from src.options_screen import DEFAULT_OPTIONS, options_from_save, options_to_save
 from src.window_renderer import window_tiles
 from tests import helpers
@@ -140,6 +141,23 @@ class TestRecording(GameTestCase):
     def test_not_a_temporary_message(self):
         self.game.draw_temporary_text("Game set to 2x speed.")
         self.assertEqual(0, len(self.game.message_log))
+
+    def test_not_the_quest_journal_nor_the_help(self):
+        # the game's own pages would push what the NPCs said out of the log (it keeps MAX_ENTRIES)
+        self.game.message_log.record("Thou must find the Silver Harp.", 'GUARD')
+        self.game.config['QUEST_JOURNAL'] = JOURNAL_HINTS
+        self.game.handle_quest_journal_key(Event(KEYDOWN, key=K_q, mod=0))
+        self.game.handle_help_button(Event(KEYDOWN, key=K_h, mod=0))
+        self.assertEqual([LogEntry("Thou must find the Silver Harp.", 'GUARD')], list(self.game.message_log.entries))
+        # and the next message is logged again
+        self.cmd_menu.show_text_in_dialog_box("Narration.")
+        self.assertEqual(LogEntry("Narration."), self.game.message_log.entries[-1])
+
+    def test_a_page_that_fails_still_logs_the_next_message(self):
+        with self.assertRaises(RuntimeError), self.cmd_menu.not_logged():
+            raise RuntimeError
+        self.cmd_menu.show_text_in_dialog_box("Narration.")
+        self.assertEqual([LogEntry("Narration.")], list(self.game.message_log.entries))
 
 
 class TestTheKey(GameTestCase):

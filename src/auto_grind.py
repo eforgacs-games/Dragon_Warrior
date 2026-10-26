@@ -29,7 +29,7 @@ from pygame.event import Event
 
 from src.color import is_low_hp
 from src.common import A_BUTTON_KEYS, D_PAD_KEYS
-from src.controls import KeySet, first_binding
+from src.controls import first_binding
 from src.coordinates import Cell
 from src.encounters import encounter_group
 from src.guardians import guardian_at
@@ -37,14 +37,13 @@ from src.movement import DIRECTION_KEYS
 from src.npc_movement import step
 from src.options_screen import AUTO_GRIND_STOP_VALUES, ENCOUNTERS_OFF
 from src.virtual_joypad import VirtualJoypad
-from src.waiting import MAP_CONTEXT, SPEED_KEYS
+from src.waiting import MAP_CONTEXT, requested_speed
 
 # The GRIND STOP option (src/options_overlay.py, AUTO_GRIND_STOP): when HP is low enough to stop. RED HP is the NES's
 # low HP, where the windows turn red (ChkLowHPPal): HP <= max HP / 4 + 1. HALF HP: HP <= max HP / 2. 3/4 HP:
 # HP <= max HP * 3 / 4.
 GRIND_STOP_RED_HP, GRIND_STOP_HALF_HP, GRIND_STOP_THREE_QUARTERS_HP = AUTO_GRIND_STOP_VALUES
 
-AUTO_GRIND_KEYS = KeySet('AUTO_GRIND')  # G, unless the player has bound it elsewhere (src/controls.py)
 TAP_HOLD_FRAMES = 2  # an A tap is held this long
 TAP_PERIOD_FRAMES = 8  # and one starts this often
 # Keys that don't count as "any key": the modifiers on their own (Ctrl for the zoom keys, say)
@@ -88,6 +87,12 @@ class StopReason(Enum):
     KEY = 'key'
     INTERRUPTED = 'interrupted'
     DEATH = 'death'
+
+
+# The stops that hand a fight back to the player because it has turned dangerous (or special): auto-battle (F4, a
+# cheat) is turned off with them, or it would pick the last command again the moment auto-grind lets go, and the
+# COMMAND window wouldn't really be the player's
+SAFETY_STOPS = frozenset({StopReason.HP_LOW, StopReason.ASLEEP, StopReason.STOPSPELL, StopReason.SCRIPTED_FIGHT})
 
 
 class AutoGrind:
@@ -161,11 +166,13 @@ class AutoGrind:
 
     def stop(self, reason: StopReason, show_now: bool = True) -> None:
         """Hand the game back where it is: let go of every key, play the menu button sound and say why (at once, or
-        at the next safe point)."""
+        at the next safe point). A stop for safety (SAFETY_STOPS) turns auto-battle off too."""
         if not self.active:
             return
         self.joypad.disconnect()
         self.last_stop = reason
+        if reason in SAFETY_STOPS:
+            self.game.auto_battle = False
         if reason == StopReason.DEATH:
             return
         self.game.sound.play_sound(self.game.directories.menu_button_sfx)
@@ -320,7 +327,8 @@ class AutoGrind:
         """The player pressed a key: the speed keys and the zoom keys go on to the game as usual; any other key (G too)
         stops auto-grind and is used up."""
         pressed = getattr(current_event, 'key', None)
-        if pressed in SPEED_KEYS or pressed in MODIFIER_KEYS or getattr(current_event, 'mod', 0) & KMOD_CTRL:
+        if requested_speed(current_event) is not None or pressed in MODIFIER_KEYS or \
+                getattr(current_event, 'mod', 0) & KMOD_CTRL:
             return True
         self.stop(StopReason.KEY, show_now=False)
         return False

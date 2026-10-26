@@ -26,7 +26,10 @@ after "Shift+", "Ctrl+" or "Alt+" for the modifiers, and the controller button b
      "pad": {"A": "b", "B": "a", "START": "start", ...}}
 
 An action missing from the file keeps its default keys (a newer version's actions, say), unless one of them was given
-to another action. A key name that isn't a key, or one bound twice, is dropped.
+to another action. A key name that isn't a key, one bound twice, or one the game always reads as itself
+(FIXED_SHORTCUTS: Escape, Tab, Enter, Backspace, the arrows, Delete, Page Up and Down, F5 to F8, Ctrl with the zoom
+keys) for an action that does something else is dropped, and so is a controller button bound twice (the first action
+in ACTIONS keeps it).
 
 This module imports nothing from ``src``, so src/common.py and src/waiting.py can use it.
 """
@@ -121,8 +124,9 @@ ACTIONS: tuple[Action, ...] = (
 )
 ACTION_NAMES = tuple(action.name for action in ACTIONS)
 ACTIONS_BY_NAME: dict[str, Action] = {action.name: action for action in ACTIONS}
-# The game speed each speed action sets (src/waiting.py)
+# The game speed each speed action sets (src/waiting.py), and the action that steps to the next speed
 SPEED_ACTIONS = {'SPEED_1': 1, 'SPEED_2': 2, 'SPEED_4': 4, 'SPEED_8': 8, 'SPEED_16': 16}
+NEXT_SPEED_ACTION = 'NEXT_SPEED'
 # The save state slot each save state action saves or loads (Game.handle_save_state_keys)
 SAVE_STATE_ACTIONS = {'SAVE_STATE_1': 1, 'SAVE_STATE_2': 2, 'SAVE_STATE_3': 3}
 LOAD_STATE_ACTIONS = {'LOAD_STATE_1': 1, 'LOAD_STATE_2': 2, 'LOAD_STATE_3': 3}
@@ -283,6 +287,65 @@ def bindings_clash(first: Binding, first_action: Action, second: Binding, second
     return first.mod == second.mod or not first_action.modifiers or not second_action.modifiers
 
 
+@dataclass(frozen=True, slots=True)
+class FixedShortcut:
+    """A key the game always reads as itself, whatever is bound (so a player can't lock themselves out of a screen):
+    what it does, and the actions that may have it too, because they do the same wherever it is read. ``mod``: the
+    modifiers it needs held (the zoom keys' Ctrl; any binding with them clashes), or 0 if it is read whatever is
+    held (any binding of the key clashes)."""
+    key: int
+    use: str
+    shares_with: frozenset[str] = frozenset()
+    mod: int = 0
+
+
+def _fixed(key_name: str, use: str, *shares_with: str, mod: int = 0) -> FixedShortcut:
+    return FixedShortcut(_key(key_name), use, frozenset(shares_with), mod)
+
+
+# The fixed keys, and where they're read. The default controls share some of them with an action that does the same
+# there: Escape is B, Tab is OPTIONS, Enter is SMART A (an extra A), Backspace is REWIND (on the map only, where the
+# name entry and the debug lists aren't), the arrows are the D-pad.
+FIXED_SHORTCUTS: tuple[FixedShortcut, ...] = (
+    # Back out: the name entry (cancel), the CONTROLS screen, the dungeon map, the message log, the debug lists
+    _fixed('ESCAPE', "back", 'B'),
+    # The name entry: Tab switches between typing and the joypad, Enter ends the name, Backspace erases
+    _fixed('TAB', "name entry: joypad", 'OPTIONS'),
+    _fixed('RETURN', "choose, end the name", 'A', 'SMART_A'),
+    _fixed('KP_ENTER', "choose", 'A', 'SMART_A'),
+    _fixed('BACKSPACE', "erase", 'B', 'REWIND'),
+    # The CONTROLS screen (src/controls_screen.py): the arrows move, Delete clears
+    _fixed('UP', "move", 'UP'),
+    _fixed('DOWN', "move", 'DOWN'),
+    _fixed('LEFT', "move", 'LEFT'),
+    _fixed('RIGHT', "move", 'RIGHT'),
+    _fixed('DELETE', "clear", 'SELECT'),
+    # The options overlay's pages (src/options_overlay.py)
+    _fixed('PAGEUP', "previous page"),
+    _fixed('PAGEDOWN', "next page", 'START'),
+    # The debug keys (src/debug_tools.py, with DEBUG_KEYS)
+    _fixed('F5', "debug: warp"),
+    _fixed('F6', "debug: give"),
+    _fixed('F7', "debug: checkpoint"),
+    _fixed('F8', "debug: record frames"),
+    # The window zoom (src/zoom.py), with Ctrl
+    *(_fixed(key_name, "zoom", mod=KMOD_CTRL) for key_name in ('EQUALS', 'PLUS', 'KP_PLUS', 'MINUS', 'KP_MINUS', '0',
+                                                                 'KP0')),
+)
+
+
+def fixed_shortcut_for(binding: Binding, action: Action) -> FixedShortcut | None:
+    """The fixed key (FIXED_SHORTCUTS) the binding would clash with, if the action can't share it: one key press
+    would do both, and the fixed key wins wherever it's read."""
+    for shortcut in FIXED_SHORTCUTS:
+        if shortcut.key != binding.key or action.name in shortcut.shares_with:
+            continue
+        if shortcut.mod and not binding.mod & shortcut.mod:
+            continue  # the zoom keys: only with Ctrl held
+        return shortcut
+    return None
+
+
 @dataclass(slots=True)
 class Controls:
     """The keys and controller button of each action (see the module docstring)."""
@@ -323,9 +386,12 @@ class Controls:
         """Put the key in the action's slot (the next free slot if ``slot`` is past its keys). If another action has
         it, the two swap: that action gets the key this slot had, so no NES button is left without a key. If this
         slot was empty, the other action loses the key, unless it's an NES button whose only key it is: then nothing
-        changes. Returns whether the controls changed."""
+        changes. A key the game always reads as itself (FIXED_SHORTCUTS), unless the action does the same, is
+        refused. Returns whether the controls changed."""
         action = ACTIONS_BY_NAME[name]
         binding = normalized(binding, action)
+        if fixed_shortcut_for(binding, action) is not None:
+            return False
         own = self.keys.setdefault(name, [])
         slot = min(slot, len(own), KEY_SLOTS - 1)
         previous = own[slot] if slot < len(own) else None
@@ -407,7 +473,7 @@ class Controls:
                     if binding is None:
                         continue
                     binding = normalized(binding, action)
-                    if binding in bindings or any(
+                    if binding in bindings or fixed_shortcut_for(binding, action) is not None or any(
                             bindings_clash(binding, action, bound, ACTIONS_BY_NAME[other])
                             for other, bounds in saved.items() for bound in bounds):
                         continue
@@ -429,7 +495,11 @@ class Controls:
                 if action.name not in pads:
                     continue
                 button = pads[action.name]
-                controls.pad[action.name] = button if button in PAD_BUTTONS and button not in taken else None
+                if button in PAD_BUTTONS and button not in taken:
+                    controls.pad[action.name] = button
+                    taken.add(button)
+                else:
+                    controls.pad[action.name] = None  # no button, one that isn't, or one bound twice
             # The defaults of the actions the file doesn't have, unless a saved one took that button
             taken = {button for name, button in controls.pad.items() if name in pads and button}
             for action in ACTIONS:
@@ -488,6 +558,11 @@ def set_controls(controls: Controls) -> None:
     global _controls, _version
     _controls = controls.copy()
     _version += 1
+
+
+def controls_version() -> int:
+    """Counts the changes to the controls in use, so what is worked out from them can be kept until they change."""
+    return _version
 
 
 def reset_controls() -> None:
