@@ -125,11 +125,11 @@ class TestSetFontByAsciiChars(unittest.TestCase):
 
     def test_non_ascii_chunks_uses_unifont(self):
         mock_dirs = MagicMock()
-        mock_dirs.UNIFONT_PATH = 'some/unifont.ttf'
+        mock_dirs.UNIFONT_PATH = 'some/unifont.otf'
         mock_font_instance = MagicMock()
         with patch('src.text.font.Font', return_value=mock_font_instance) as mock_font_class:
             set_font_by_ascii_chars(['한글 텍스트'], 16, None, mock_dirs)
-            mock_font_class.assert_called_with('some/unifont.ttf', 16)
+            mock_font_class.assert_called_with('some/unifont.otf', 16)
 
     def test_explicit_font_name_overrides_selection(self):
         mock_dirs = MagicMock()
@@ -141,7 +141,7 @@ class TestSetFontByAsciiChars(unittest.TestCase):
 
     def test_non_ascii_sets_bold(self):
         mock_dirs = MagicMock()
-        mock_dirs.UNIFONT_PATH = 'unifont.ttf'
+        mock_dirs.UNIFONT_PATH = 'unifont.otf'
         mock_font_instance = MagicMock()
         mock_font_instance.bold = False
         with patch('src.text.font.Font', return_value=mock_font_instance):
