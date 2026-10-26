@@ -198,8 +198,9 @@ _EMULATOR = ctypes.c_void_p  # Music_Emu*
 class GmeLibrary:
     """The few libgme functions the game uses, with their C signatures (gme.h)."""
 
-    def __init__(self, library: ctypes.CDLL):
+    def __init__(self, library: ctypes.CDLL, path: str):
         self.library = library
+        self.path = path  # what it was loaded as: a bundled copy's full path, or the system's by name
         self._declare('gme_open_data', _ERROR, ctypes.c_void_p, ctypes.c_long, ctypes.POINTER(_EMULATOR), ctypes.c_int)
         self._declare('gme_track_count', ctypes.c_int, _EMULATOR)
         self._declare('gme_start_track', _ERROR, _EMULATOR, ctypes.c_int)
@@ -226,7 +227,7 @@ def load_library(candidates: Iterator[str]) -> GmeLibrary | None:
     """The first candidate that loads as libgme, or None."""
     for candidate in candidates:
         try:
-            return GmeLibrary(ctypes.CDLL(candidate))
+            return GmeLibrary(ctypes.CDLL(candidate), candidate)
         except (OSError, AttributeError):  # not there, or not libgme
             continue
     return None
