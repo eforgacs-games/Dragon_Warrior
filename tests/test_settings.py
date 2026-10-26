@@ -136,6 +136,21 @@ class TestSettingsFile(TempDirTestCase):
         with self.assertRaises(TypeError):
             store.update(volume=11)
 
+    def test_a_newer_builds_settings_are_kept(self):
+        # Going back to an older build for a while, and changing a setting there, mustn't lose the newer one's
+        self.write(json.dumps({'version': 3, 'zoom': 2, 'volume': 7, 'theme': {'name': 'dark'}}))
+        store = SettingsStore(self.path)
+        self.assertEqual(2, store.settings.zoom)
+        self.assertTrue(store.update(zoom=4))
+        self.assertEqual({**Settings(zoom=4).to_json(), 'version': 3, 'volume': 7, 'theme': {'name': 'dark'}},
+                         self.saved())
+
+    def test_written_in_one_step(self):
+        save_settings(self.path, Settings(zoom=2))
+        with patch('src.json_files.os.replace', side_effect=OSError("crash")), patch('builtins.print'):
+            self.assertFalse(save_settings(self.path, Settings(zoom=5)))
+        self.assertEqual(2, self.saved()['zoom'])
+
 
 class GameTestCase(TempDirTestCase):
     """A Game whose settings file is in the temporary folder."""

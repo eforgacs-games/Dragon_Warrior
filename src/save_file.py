@@ -22,6 +22,14 @@ tests/sample_saves/ (tests/test_save_compatibility.py loads every one).
   inventory was the items alone, packed, rather than the slots with None for an emptied one.
 - Version 1: the same keys as the last version 0 saves, with VERSION_KEY, the story flags always as the StoryFlags
   entry and the inventory always as slots.
+
+A save from a newer build is read as far as this build can, but never written over by it (is_from_a_newer_build,
+CommandMenu.save): this build would write it back in its own, older format and lose what it doesn't know of it, and
+the newer build's migrations would then read it wrong.
+
+Every log is written in one step (write_save, src/json_files.py), so a crash part way through leaves it as it was. A
+log file that can't be read anyway (damaged outside the game, or by a build from before) is still a used log, never
+written over, and the title menu lists it as damaged (DAMAGED_LOG_NAME) so that it can be erased.
 """
 import json
 import os
@@ -31,6 +39,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.dungeon_map import SAVE_KEY as DUNGEON_MAP_SAVE_KEY
+from src.json_files import atomic_write_json
 from src.options_screen import Options, options_from_save, options_to_save
 from src.story_flags import LEGACY_SAVE_KEYS as LEGACY_STORY_FLAG_KEYS
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
@@ -62,6 +71,9 @@ PLAYER_COLUMN_KEY = 'PlayerColumn'
 
 # The NES has three adventure logs (reference/sram-doc.txt), numbered 1 to 3 on screen
 ADVENTURE_LOGS = (1, 2, 3)
+# What the log windows show in place of the hero's name (its first 4 letters) for a log whose file can't be read
+# (used_logs)
+DAMAGED_LOG_NAME = '????'
 # Only the three adventure logs are saves; a save_slot_0.json or save_slot_4.json is ignored like any other stray file
 SAVE_FILE_PATTERN = re.compile(r'save_slot_([123])\.json')
 
@@ -217,7 +229,8 @@ MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {
 def migrate_save(save: dict[str, Any]) -> dict[str, Any]:
     """A save's JSON object in the current format (SAVE_FORMAT_VERSION), as a new dict: the MIGRATIONS from its own
     format on, in order. A save from a newer build than this one is read as it is, as far as this build can: the keys
-    it knows read as they always have, and the rest is ignored."""
+    it knows read as they always have, and the rest is ignored (and the log is never saved over by this build:
+    is_from_a_newer_build)."""
     version = save_format_version(save)
     if version > SAVE_FORMAT_VERSION:
         print(f"This adventure log was saved by a newer version of the game (save format {version}); "
@@ -281,28 +294,46 @@ def read_save_name(save_path: str) -> str | None:
 
 
 def write_save(save_path: str, save: dict) -> None:
-    """Write a save file's JSON object, indented by 4 as every save has been."""
-    with open(save_path, 'w') as save_file:
-        save_file.write(json.dumps(save, indent=4))
+    """Write a save file's JSON object, indented by 4 as every save has been. It's written in one step
+    (src/json_files.py), so a crash or a full disk part way through leaves the log as it was. Raises OSError if it
+    can't be written."""
+    atomic_write_json(save_path, save, indent=4)
 
 
-def used_logs(save_dir: str, file_names: list[str]) -> list[tuple[int, str]]:
+def used_logs(save_dir: str, file_names: list[str], include_damaged: bool = False) -> list[tuple[int, str]]:
     """ShowUsedLogs: each used adventure log's number and hero's name, for the log window. A save that can't be read
-    isn't listed."""
+    is listed as DAMAGED_LOG_NAME with include_damaged (to be erased), and not at all otherwise."""
     logs = []
     for file_name in file_names:
         save = read_save(save_dir, file_name)
         if save is not None:
             logs.append((save_slot_number(file_name), str(save.get(NAME_KEY, ''))))
+        elif include_damaged:
+            logs.append((save_slot_number(file_name), DAMAGED_LOG_NAME))
     return logs
 
 
+def is_open_log(save_dir: str, log: int) -> bool:
+    """Whether an adventure log holds no save. A log whose file can't be read is used (see the module docstring)."""
+    return not os.path.exists(save_path(save_dir, log))
+
+
 def first_open_log(save_dir: str) -> int | None:
-    """ShowOpenLogs: the lowest adventure log with no save in save_dir, or None if all three are used."""
-    for log in ADVENTURE_LOGS:
-        if not os.path.exists(save_path(save_dir, log)):
-            return log
-    return None
+    """ShowOpenLogs: the lowest open adventure log in save_dir (is_open_log), or None if all three are used."""
+    return next((log for log in ADVENTURE_LOGS if is_open_log(save_dir, log)), None)
+
+
+def log_belongs_to(save_dir: str, log: int, name: str) -> bool:
+    """Whether the hero called name may save to this adventure log: it's open, or its hero has that name (the rule
+    log_for_unchosen_save goes by). A log with another hero is never written over."""
+    return is_open_log(save_dir, log) or read_save_name(save_path(save_dir, log)) == name
+
+
+def is_from_a_newer_build(save_dir: str, log: int) -> bool:
+    """Whether the save in this adventure log is in a newer format than this build writes. This build reads it as far
+    as it can (migrate_save) but never writes over it: what it doesn't know of it would be lost."""
+    save = read_save(save_dir, save_file_name(log))
+    return save is not None and save_format_version(save) > SAVE_FORMAT_VERSION
 
 
 def logs_named(save_dir: str, name: str) -> list[int]:

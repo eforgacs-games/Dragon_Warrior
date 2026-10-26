@@ -92,8 +92,28 @@ class MessageLog:
     def clear(self) -> None:
         self.entries.clear()
 
+    def to_save(self) -> list[list[str | None]]:
+        """The messages as JSON values, oldest first: [text, speaker] each (a save state, src/save_state.py)."""
+        return [[entry.text, entry.speaker] for entry in self.entries]
+
+    def restore(self, entries: Iterable[LogEntry]) -> None:
+        """Put back the messages a snapshot kept (decoded_entries), in place of the ones there now."""
+        self.entries.clear()
+        self.entries.extend(entries)
+
     def __len__(self) -> int:
         return len(self.entries)
+
+
+def decoded_entries(saved: Iterable[Iterable[str | None]]) -> list[LogEntry]:
+    """MessageLog.to_save's messages read back, checked: a speaker that isn't a string is none. Raises ValueError for
+    an entry that isn't a [text, speaker] pair."""
+    entries = []
+    for text, speaker in saved:
+        if not isinstance(text, str):
+            raise ValueError(f"not a message: {text!r}")
+        entries.append(LogEntry(text, speaker if isinstance(speaker, str) else None))
+    return entries
 
 
 def text_width(text: str) -> int:
