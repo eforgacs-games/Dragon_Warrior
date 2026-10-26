@@ -826,9 +826,12 @@ class DialogLookup:
                                    show_arrow=self.command_menu.game.show_arrow, color=self.color)
 
     def save_game(self):
-        self.command_menu.save()
-        self.command_menu.show_line_in_dialog_box(
-            self._("Thy deeds have been recorded on the Imperial Scrolls of Honor."))
+        if self.command_menu.save():
+            self.command_menu.show_line_in_dialog_box(
+                self._("Thy deeds have been recorded on the Imperial Scrolls of Honor."))
+        else:
+            # Not NES: the save couldn't be made (CommandMenu.save says why on the console)
+            self.command_menu.show_line_in_dialog_box(self._("Alas, thy deeds could not be recorded."))
 
     def prompt_to_continue_quest(self):
         return confirmation_prompt(self.command_menu, self._("Dost thou wish to continue thy quest?"),
