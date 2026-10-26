@@ -2,7 +2,7 @@
 # finds and loads all of its files, plays every NES and SFC track through its bundled libgme and plays a few scripted
 # scenes, in English and in Korean (--smoke-test, src/smoke_test.py), before anything is uploaded.
 # libgme (Game_Music_Emu, LGPL 2.1+), which plays the NES and SFC music (src/chiptune.py), is built here from its
-# source at GME_TAG, as a shared library with only the NSF and SPC emulators, and bundled next to its license.
+# source at GME_TAG, as a shared library, and bundled next to its license.
 # - A pushed vX.Y.Z tag also publishes the builds as a GitHub Release for that tag.
 # - Run by hand (Actions > Release builds > Run workflow), or on a PR that changes the build or what it bundles, the
 #   builds are uploaded as workflow artifacts only, to try them without making a release.
@@ -75,22 +75,22 @@ jobs:
       # The game's dependencies and the build group, without the dev tools
       run: uv sync --locked --no-dev --group build
     - name: Build libgme
-      # A shared library, so a player can swap in another build of it (LGPL). Only the NSF and SPC emulators: no zlib,
-      # and none of the others (the YM2612 ones some builds use are GPL). On Linux the C++ runtime is linked in, so
-      # the build runs on systems with an older libstdc++; on Windows the MSVC runtime is, so no msvcp140.dll is needed.
+      # A shared library, so a player can swap in another build of it (LGPL). No zlib (only compressed VGM files need
+      # it), and the Nuked YM2612 emulator, which is LGPL like the rest (MAME's is GPL). Its build with only some
+      # emulators doesn't link on macOS (the exported symbols list names them all), so it has them all. On Linux the
+      # C++ runtime is linked in, so the build runs on systems with an older libstdc++; on Windows the MSVC runtime is,
+      # so no msvcp140.dll is needed.
       # GME_LIBRARY and GME_LICENSE tell dragon_warrior.spec what to bundle.
       run: |
         git clone --depth 1 --branch "$GME_TAG" https://github.com/libgme/game-music-emu.git gme-source
-        emulators=""
-        for emulator in AY GBS GYM HES KSS SAP VGM; do emulators="$emulators -DUSE_GME_$emulator=OFF"; done
         case "$RUNNER_OS" in
           Linux) platform_flags=(-DCMAKE_SHARED_LINKER_FLAGS="-static-libstdc++ -static-libgcc") ;;
           Windows) platform_flags=(-DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded) ;;
           macOS) platform_flags=(-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0) ;;
         esac
         cmake -S gme-source -B gme-build -DCMAKE_BUILD_TYPE=Release -DGME_BUILD_SHARED=ON -DGME_BUILD_STATIC=OFF \
-          -DGME_BUILD_TESTING=OFF -DGME_BUILD_EXAMPLES=OFF -DGME_ZLIB=OFF -DUSE_GME_NSF=ON -DUSE_GME_NSFE=ON \
-          -DUSE_GME_SPC=ON $emulators "${platform_flags[@]}"
+          -DGME_BUILD_TESTING=OFF -DGME_BUILD_EXAMPLES=OFF -DGME_ZLIB=OFF -DGME_YM2612_EMU=Nuked \
+          "${platform_flags[@]}"
         cmake --build gme-build --config Release
         cmake --install gme-build --config Release --prefix gme-install
         # The file name src/chiptune.py loads (a real file, not the install's symlink)
