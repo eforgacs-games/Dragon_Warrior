@@ -357,8 +357,15 @@ class OpenDoorHistory:
     (ChkOverworldMap/ClrOpenDoorsLoop, LAF2B-LAF3A) clears the list when the overworld is entered, so doors lock
     again and every visit costs another key, and UseKey (DoorCheckLoop, Bank03 LDCA8-LDCB7) takes the key but
     doesn't open the door when all 8 slots are in use.
-    As with TreasureChestHistory, the map name is kept with the position, which behaves the same as the NES (x, y),
-    and the history isn't saved: MainGameEngine (LCA0F-LCA18) clears it whenever a game is started or continued.
+    The history isn't saved: MainGameEngine (LCA0F-LCA18) clears it whenever a game is started or continued.
+
+    The NES keeps only each door's (x, y), with no map number, so an opened door would also show as opened at the same
+    (x, y) on another map visited before the overworld clears the list. Here each door is kept with its map's name
+    instead, deliberately: no two doors that can be reached between overworld visits share an (x, y), so it plays
+    the same. The maps with doors that are reached from one another without the overworld are Tantegel's ground
+    floor (doors at NES (18, 6) and (4, 13)) and throne room ((4, 7)); Charlock's ground floor ((4, 8), (15, 8)) and
+    bottom floor ((17, 12)); and Garinham ((4, 6), (17, 10)) and Garin's Grave B1 ((17, 17)). Every other map with a
+    door (the other towns, the Swamp Cave) is entered only from the overworld.
     """
 
     def __init__(self):

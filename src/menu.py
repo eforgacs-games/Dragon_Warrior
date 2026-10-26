@@ -893,9 +893,11 @@ class CommandMenu:
                                          skip_text=self.skip_text)
             return
         self.player.inventory.remove("Wings")
+        # NES UseWings (LDD8B): TextBlock4 entry 9 ends without a WAIT, so no button is waited for, and the dialog window
+        # stays up through BWScreenFlash (LDD8F) until DoReturn's map change fades the screen out
         self.show_text_in_dialog_box(
-            self._("{} threw The Wings of the Wyvern up into the sky.").format(self.player.name))
-        # NES UseWings (LDD8F): BWScreenFlash, then DoReturn
+            self._("{} threw The Wings of the Wyvern up into the sky.").format(self.player.name),
+            skip_text=True, drop_up=False)
         bw_screen_flash(self.screen, self.game.game_state.config)
         self.return_to_tantegel()
 
@@ -981,14 +983,18 @@ class CommandMenu:
     def rainbow_drop(self):
         # NES ChkDrop: the bridge appears only on the overworld, with the hero on the one tile east of it, and only
         # once (F_RNBW_BRDG). The hero's facing doesn't matter, and the Rainbow Drop is kept either way.
+        # The dialog window stays up after the line (and its WAIT): RainbowFail carries on in it, and ChkDrop removes it
         self.show_text_in_dialog_box(self._("{} held the Rainbow Drop toward the sky.").format(self.player.name),
-                                     skip_text=self.skip_text)
+                                     skip_text=self.skip_text, drop_up=False)
         if self.current_map.identifier != 'Alefgard' or self.game.story_flags.rainbow_bridge_built or \
                 (self.player.row, self.player.column) != RAINBOW_DROP_COORDINATES:
-            # NES RainbowFail
-            self.show_text_in_dialog_box(self._("But no rainbow appeared here."), skip_text=self.skip_text)
+            # NES RainbowFail: DoFinalDialog, in the same dialog window
+            self.show_text_in_dialog_box(self._("But no rainbow appeared here."), skip_text=self.skip_text,
+                                         drop_down=False)
             return
         self.game.story_flags.rainbow_bridge_built = True
+        # NES ChkDrop (LDEA3-LDEAF): the dialog, COMMAND and pop-up windows all come off the screen before the flash
+        self.remove_field_windows()
         # NES ChkDrop: MSC_RNBW_BRDG starts, the water flashes through the rainbow colors (LDEC5-LDEFB), WaitForMusicEnd
         # lets the music finish, then MSC_OUTDOOR (the overworld music, from the start), and only then does ModMapBlock
         # put the bridge on the map
@@ -999,6 +1005,18 @@ class CommandMenu:
         self.game.music_player.load_and_play_music(self.directories.overworld_music)
         bridge_row, bridge_column = RAINBOW_BRIDGE_COORDINATES
         self.set_tile_by_coordinates('BRIDGE', bridge_column, bridge_row, self.player)
+
+    def remove_field_windows(self) -> None:
+        """Take the dialog window, the COMMAND window and the pop-up window off the screen, in that order (NES
+        RemoveWindow WND_DIALOG, WND_CMD_NONCMB, WND_POPUP), leaving the map alone on the screen. The COMMAND window
+        is closed here, so the map's game loop (unlaunch_menu) doesn't close it again."""
+        self.window_drop_up_effect(*DIALOG_WINDOW)
+        # Not chosen any more: the COMMAND window's rows are not redrawn behind its own drop-up
+        self.launch_signaled = False
+        if self.menu.is_enabled():
+            self.window_drop_up_effect(*COMMAND_WINDOW)
+            self.menu.disable()
+        self.game.drawer.remove_pop_up(self)
 
     def hold_item_tightly(self, item_name: str):
         # NES DoItemDescription: TextBlock5 entry 0 ("<name> held the <item> tightly.") then "But nothing happened."
@@ -1266,8 +1284,21 @@ class CommandMenu:
         tiles.draw(self.background)  # the old image off the block first: the sprites are see-through
         if draw_character:
             self.background.blit(character.image, character.rect)
-        display.update(self.screen.blit(self.background, character.rect.move(self.camera_position),
-                                        area=character.rect))
+        block_on_screen = self.screen.blit(self.background, character.rect.move(self.camera_position),
+                                           area=character.rect)
+        self.darken_unlit(block_on_screen)
+        display.update(block_on_screen)
+
+    def darken_unlit(self, area: Rect) -> None:
+        """On a dark map, black out the part of ``area`` outside the hero's light (Drawer.draw_darkness), so a block
+        redrawn there stays dark. NES ModMapBlock (Bank00) checks the light like the map drawing does
+        (ChkLightDiameterX2/ChkLightDiameterY2, LADBE/LADF0) and puts a blank block outside it."""
+        if not (self.current_map.is_dark and self.game.game_state.config['ENABLE_DARKNESS']):
+            return
+        previous_clip = self.screen.get_clip()
+        self.screen.set_clip(area)
+        self.game.drawer.draw_darkness(self.screen)
+        self.screen.set_clip(previous_clip)
 
     def check_across_from_npc(self):
         character_coordinates = [(character_dict['character'].row, character_dict['character'].column) for
