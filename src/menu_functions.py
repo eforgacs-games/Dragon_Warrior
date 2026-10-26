@@ -86,9 +86,11 @@ class NameSelection:
                         # A controller (src/gamepad.py) can't type: its buttons are joystick input, without Tab
                         enable_joystick_input = True
                     if current_event.key == K_TAB:
+                        # Always the switch, whatever Tab is bound to: a fixed key (src/controls.py FIXED_SHORTCUTS)
                         enable_joystick_input = toggle_joystick_input(
                             command_menu, partial(self.draw, screen, entry, cursor.visible()), enable_joystick_input,
                             screen)
+                        continue
                     if enable_joystick_input:
                         if confirm and current_event.key in START_BUTTON_KEYS:
                             # START (I, or a controller's Start) ends the name, as Return does on the keyboard. On the

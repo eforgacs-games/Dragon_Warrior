@@ -24,6 +24,7 @@ from src.catalog import compile_po, po_path
 from src.checkpoints import CHECKPOINT_NAMES, checkpoint_hero_name, checkpoint_path, read_checkpoint
 from src.directories import MUSIC_NAMES, Directories
 from src.paths import data_path
+from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACKS
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import MAP_CONTEXT, reset_game_speed, set_game_speed
 
@@ -35,11 +36,11 @@ KOREAN_CHECK_LINE = "Thou art a fool!"
 
 
 def game_file_paths(config: dict) -> set[str]:
-    """Every file under data/ that Directories names, with both music settings (NES and orchestra)."""
+    """Every file under data/ that Directories names, with every soundtrack (NES, SFC and orchestra)."""
     paths: set[str] = set()
     data_dir = data_path()
-    for orchestra in (False, True):
-        directories = Directories({**config, 'ORCHESTRA_MUSIC_ENABLED': orchestra})
+    for chosen in SOUNDTRACKS:
+        directories = Directories({**config, SOUNDTRACK_KEY: chosen})
         values = list(vars(directories).values()) + list(directories.item_menu_background_lookup.values()) + \
             [getattr(directories, name) for name in MUSIC_NAMES]
         paths.update(value for value in values if isinstance(value, str) and value.startswith(data_dir)

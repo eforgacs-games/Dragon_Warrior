@@ -3,7 +3,8 @@ import random
 
 from src.spells import Spell
 from typing import Any, TypedDict
-from collections.abc import Callable, Collection, Iterable
+from collections.abc import Callable, Collection, Iterable, Iterator
+from contextlib import contextmanager
 
 from pygame import Surface, display, KEYDOWN, Rect, event, transform
 from pygame.sprite import Group
@@ -30,7 +31,8 @@ from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
 from src.options_screen import MODERN, options_from_config
-from src.save_file import ADVENTURE_LOGS, SaveFile, log_for_unchosen_save, save_path, write_save
+from src.save_file import ADVENTURE_LOGS, SaveFile, is_from_a_newer_build, log_belongs_to, log_for_unchosen_save, \
+    save_path, write_save
 from src.message_log import speaker_of
 from src.selection import YES, frame_events, next_game_frame, run_selection, stop_at_edges
 from src.sound import SPELL_SFX_FRAMES, Sound
@@ -98,6 +100,8 @@ class CommandMenu:
         self.current_battle = None
         # The NPC whose dialog is showing (launch_dialog), for the message log
         self.speaker: str | None = None
+        # While the game shows pages of its own (not_logged), nothing goes to the message log
+        self.logging_paused = False
         self.current_tile = self.player.current_tile
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
@@ -237,21 +241,42 @@ class CommandMenu:
         screen.set_clip(previous_clip)
         display.update(rect)
 
-    def save(self):
+    def save(self) -> bool:
         """NES SaveData (Bank03): the hero's experience, gold, items, equipment, name, HP and MP, plus the ModsnSpells,
         PlayerFlags and StoryFlags bytes whole (game slot offsets $00-$18 in reference/sram-doc.txt). The worn items
         are saved with the hero and the story bits as one StoryFlags entry. Like the NES, the treasure chest history
-        and the repel timer aren't saved (Game.load_game)."""
-        if self.player.adventure_log not in ADVENTURE_LOGS:
-            log = log_for_unchosen_save(self.directories.save_dir, self.player.name)
+        and the repel timer aren't saved (Game.load_game).
+
+        Not NES: a log is never written over with a different hero. The hero's log may hold another one by now (an
+        autosave or a save state from before the log was erased and a new quest begun in it); then the save goes
+        where it would with no log chosen (log_for_unchosen_save: the log with this hero's name, else an open one).
+        Nor is a log saved by a newer build written over, or the save made when the file can't be written. Returns
+        whether the deeds were recorded."""
+        save_dir = self.directories.save_dir
+        name = self.player.name
+        log: int | None = self.player.adventure_log
+        if log in ADVENTURE_LOGS and not log_belongs_to(save_dir, log, name):
+            print(f"Adventure log {log} holds another hero now; {name} is saved where a new log would go.")
+            log = None
+        if log not in ADVENTURE_LOGS:
+            log = log_for_unchosen_save(save_dir, name)
             if log is None:
-                return
-            # later saves go to the same log
-            self.player.adventure_log = log
+                return False
+        if is_from_a_newer_build(save_dir, log):
+            print(f"Not saved: adventure log {log} was saved by a newer version of the game, which this one "
+                  f"would downgrade.")
+            return False
         save = SaveFile.from_game(self.player, self.game.current_map.identifier, self.game.story_flags,
                                   options_from_config(self.game.game_state.config),
                                   self.game.dungeon_map.to_save())
-        write_save(save_path(self.directories.save_dir, self.player.adventure_log), save.to_save())
+        try:
+            write_save(save_path(save_dir, log), save.to_save())
+        except OSError as error:
+            print(f"Not saved: adventure log {log} could not be written: {error}")
+            return False
+        # later saves go to the same log
+        self.player.adventure_log = log
+        return True
 
     def set_king_lorik_dialog(self, left_throne_room: bool = False):
         # NES DoKingDialog: carrying Gwaelin comes first, then whether the hero has left the throne room yet
@@ -370,11 +395,21 @@ class CommandMenu:
 
     def log_message(self, line: str, quoted: bool, temporary: bool) -> None:
         """Keep the message for the message log (src/message_log.py): the NPC talking says a quoted one. Not a fight's
-        messages, nor the ones shown over the map for a moment (temporary)."""
+        messages, nor the ones shown over the map for a moment (temporary), nor the game's own pages (not_logged)."""
         message_log = getattr(self.game, 'message_log', None)
-        if message_log is None or temporary or self.current_battle is not None:
+        if message_log is None or temporary or self.logging_paused or self.current_battle is not None:
             return
         message_log.record(line, speaker_of(self.speaker) if quoted else None)
+
+    @contextmanager
+    def not_logged(self) -> Iterator[None]:
+        """Show the game's own pages (the help, the quest journal) without keeping them in the message log, where they
+        would push out what the NPCs said."""
+        self.logging_paused = True
+        try:
+            yield
+        finally:
+            self.logging_paused = False
 
     @property
     def modern_dialog(self) -> bool:

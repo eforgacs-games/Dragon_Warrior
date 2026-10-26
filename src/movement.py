@@ -195,6 +195,13 @@ class MovementController:
                 or getattr(self.game, 'state_request_due', None) is not None)
 
     @property
+    def map_held(self) -> bool:
+        """Whether the map isn't being played just now: a window open or about to open, the game paused or about to
+        be, or the light growing. Then START wouldn't pause the game, and nothing else that opens from the map (the
+        options overlay, the message log, a save state) does; nor is the autosave written (src/autosave.py)."""
+        return self.world_frozen or self.freeze_pending or self.light_growing
+
+    @property
     def sprites_animate(self) -> bool:
         return self.game_state.enable_animate and not self.world_frozen
 
@@ -242,6 +249,7 @@ class MovementController:
         if getattr(self.game, 'dungeon_map_requested', False) is True:
             self.game.dungeon_map_requested = False
             self.game.open_dungeon_map()
+            return
         if getattr(self.game, 'message_log_requested', False) is True:
             self.game.message_log_requested = False
             self.game.open_message_log()
