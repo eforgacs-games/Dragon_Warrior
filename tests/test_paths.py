@@ -13,9 +13,10 @@ from unittest.mock import MagicMock, patch
 from src import paths
 from src.chiptune import ChiptuneError
 from src.config.test_config import test_config
-from src.directories import Directories
+from src.directories import Directories, clip_paths, music_paths
 from src.paths import data_path, default_save_dir, is_frozen, project_root, user_config_dir, user_data_dir
-from src.smoke_test import check_chiptune_tracks, check_game_files, check_save_dir, game_file_paths
+from src.chiptune_soundtracks import MSC_END, MSC_VICTORY, nes_track
+from src.smoke_test import check_chiptune_tracks, check_game_files, check_save_dir, game_file_paths, untagged_clips
 
 REPO_ROOT = dirname(dirname(realpath(__file__)))
 HOME = os.path.expanduser('~')
@@ -35,6 +36,10 @@ class FrozenTestCase(TestCase):
         for frozen_patch in patches:
             frozen_patch.start()
             self.addCleanup(frozen_patch.stop)
+        # the music tables are cached with the paths they were first made with: a build's are under its _MEIPASS
+        for cached in (music_paths, clip_paths):
+            cached.cache_clear()
+            self.addCleanup(cached.cache_clear)
 
 
 class TestFromSource(TestCase):
@@ -123,8 +128,16 @@ class TestSmokeTest(FrozenTestCase):
                                            ('libgme.so.0', ["libgme isn't bundled: the build loaded libgme.so.0"])):
                 with self.subTest(library=library_path), \
                         patch('src.smoke_test.chiptune_library', return_value=MagicMock(path=library_path)), \
-                        patch('src.smoke_test.chiptune_tracks', return_value=[]):
+                        patch('src.smoke_test.chiptune_tracks', return_value=[]), \
+                        patch('src.smoke_test.untagged_clips', return_value=[]):
                     self.assertEqual(problems, check_chiptune_tracks())
+
+    def test_every_clip_must_have_its_length(self):
+        self.assertEqual([], untagged_clips())
+        with patch('src.smoke_test.tagged_length_seconds', return_value=None):
+            problems = untagged_clips()
+        self.assertIn(f"{nes_track(MSC_VICTORY)} has no tagged length", problems)
+        self.assertIn(f"{nes_track(MSC_END)} has no tagged length", problems)
 
     def test_a_build_without_libgme_fails(self):
         with patch('src.smoke_test.chiptune_library', return_value=None):

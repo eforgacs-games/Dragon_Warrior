@@ -356,5 +356,5 @@ class TestEnding(TestCase):
 
     def test_wait_for_reset_ends_on_quit(self):
         with patch('src.ending.event.get', return_value=[pygame.event.Event(pygame.QUIT)]), \
-                patch('src.ending.pygame_quit'), self.assertRaises(SystemExit):
+                patch('src.waiting.pygame_quit'), self.assertRaises(SystemExit):
             self.game.ending.wait_for_reset()

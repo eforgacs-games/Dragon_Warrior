@@ -1,6 +1,9 @@
 """src/music_stream.py: the chiptune music streamed to its mixer channel. A fake emulator and a fake channel show what
 is rendered and queued, chunk by chunk; the last tests stream the real NSF through libgme to the dummy audio device."""
 import array
+import subprocess
+import sys
+import textwrap
 import time
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -10,8 +13,10 @@ from pygame import mixer
 
 from src.chiptune import ChiptuneError, chiptune_library
 from src.chiptune_soundtracks import MSC_OUTDOOR, nes_track
-from src.music_stream import CHUNK_SECONDS, MusicStream, Segment, convert_channels
+from src.music_stream import CHUNK_SECONDS, MusicStream, Segment, close_all_streams, convert_channels
+from src.paths import project_root
 from src.sound import music_channel
+from src.waiting import quit_pygame
 from tests.helpers import requires_libgme
 
 SAMPLE_RATE = 44100
@@ -231,6 +236,64 @@ class TestControls(StreamTestCase):
         self.stream.play([Segment(LOOP)])
         mixer.quit()
         self.assertFalse(self.stream.get_busy())
+
+
+class TestClosing(StreamTestCase):
+
+    def test_close_stops_the_music_and_the_pump_does_nothing_after(self):
+        self.stream.play([Segment(LOOP)])
+        self.stream.close()
+        self.assertFalse(self.stream.get_busy())
+        self.channel.finish_sound()
+        self.stream.pump()
+        self.assertIsNone(self.channel.playing)
+
+    def test_close_all_streams_before_pygame_quits(self):
+        self.stream.play([Segment(LOOP)])
+        with patch('src.waiting.pygame_quit') as pygame_quit:
+            quit_pygame()
+        pygame_quit.assert_called_once()
+        self.assertFalse(self.stream.get_busy())
+
+    def test_a_closed_stream_plays_again_with_the_mixer_back(self):
+        self.stream.play([Segment(LOOP)])
+        close_all_streams()
+        self.stream.play([Segment(JINGLE, 1)])
+        self.assertTrue(self.stream.get_busy())
+
+
+# Run in a process of its own, so a crash fails the test rather than killing pytest: the game's music streaming while
+# the window is closed (quit_game), several times over
+QUIT_WHILE_STREAMING = textwrap.dedent("""
+    import os, sys, time
+    os.environ['SDL_VIDEODRIVER'] = os.environ['SDL_AUDIODRIVER'] = 'dummy'
+    sys.path.insert(0, sys.argv[1])
+    import pygame
+    from src.chiptune_soundtracks import MSC_OUTDOOR, nes_track
+    from src.music_player import MusicPlayer
+    from src.waiting import quit_game, quit_pygame
+    for _ in range(5):
+        pygame.init()
+        player = MusicPlayer({'MUSIC_ENABLED': True, 'SOUND_ENABLED': False})
+        player.load_and_play_music(nes_track(MSC_OUTDOOR))
+        time.sleep(0.2)
+        assert player.music_busy()
+        quit_pygame()
+        time.sleep(0.05)
+    pygame.init()
+    MusicPlayer({'MUSIC_ENABLED': True, 'SOUND_ENABLED': False}).load_and_play_music(nes_track(MSC_OUTDOOR))
+    time.sleep(0.2)
+    quit_game()
+""")
+
+
+@requires_libgme
+class TestQuitWhileStreaming(TestCase):
+
+    def test_the_game_closes_cleanly_while_the_music_streams(self):
+        result = subprocess.run([sys.executable, '-c', QUIT_WHILE_STREAMING, project_root()], capture_output=True,
+                                text=True, timeout=30)
+        self.assertEqual(0, result.returncode, result.stderr)
 
 
 class TestChannels(TestCase):

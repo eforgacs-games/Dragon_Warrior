@@ -8,7 +8,7 @@ from src.chiptune_soundtracks import (MSC_END, MSC_ENTR_FGHT, MSC_INN, MSC_LEVEL
                                       MSC_VICTORY, nes_track, sfc_track)
 from src.config.test_config import test_config
 from src.directories import Directories
-from src.music_player import MusicPlayer, clip_length_ms
+from src.music_player import UNTAGGED_CLIP_SECONDS, MusicPlayer, clip_length_ms, played_once_seconds
 from src.music_stream import Segment
 from src.waiting import reset_game_speed, set_game_speed
 from tests.helpers import requires_libgme
@@ -269,6 +269,16 @@ class TestChiptuneMusic(unittest.TestCase):
     def test_an_sfc_clip_plays_for_its_id666_length(self):
         self.player.play_clip(sfc_track('good_night.spc'))
         self.stream.play.assert_called_once_with([Segment(sfc_track('good_night.spc'), 3.0)])
+
+    def test_a_clip_with_no_tagged_length_still_ends(self):
+        # an unreadable playlist, say: the clip plays a fixed time instead of looping for ever (and it is said)
+        with patch('src.music_player.tagged_length_seconds', return_value=None), \
+                patch('sys.stderr') as stderr:
+            self.player.play_clip(VICTORY)
+            self.assertEqual(UNTAGGED_CLIP_SECONDS, played_once_seconds(VICTORY))
+            self.assertEqual(UNTAGGED_CLIP_SECONDS * 1000, clip_length_ms(VICTORY))
+        self.stream.play.assert_called_once_with([Segment(VICTORY, UNTAGGED_CLIP_SECONDS)])
+        self.assertTrue(stderr.write.called)
 
     def test_wait_for_music_end_waits_for_the_stream(self):
         self.stream.get_busy.side_effect = [True, True, False]

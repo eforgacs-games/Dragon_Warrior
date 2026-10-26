@@ -405,10 +405,31 @@ def poll_speed_keys() -> None:
             return
 
 
+_before_quit: list[Callable[[], None]] = []
+
+
+def on_quit(callback: Callable[[], None]) -> None:
+    """Have callback run just before pygame is closed (quit_pygame), e.g. to stop a thread that uses the mixer
+    (src/music_stream.py). A module that needs it registers itself, so this one imports nothing more."""
+    _before_quit.append(callback)
+
+
+def run_quit_callbacks() -> None:
+    for callback in _before_quit:
+        callback()
+
+
+def quit_pygame() -> None:
+    """``pygame.quit()``, once whatever still uses pygame (the chiptune music's thread) has stopped. Every place that
+    closes pygame goes through here."""
+    run_quit_callbacks()
+    pygame_quit()
+
+
 def quit_game() -> None:
     """Close the game: the main loop's ``pygame.quit()``, then exit so the code after a wait doesn't run on a
     closed display."""
-    pygame_quit()
+    quit_pygame()
     sys.exit()
 
 

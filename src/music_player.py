@@ -1,3 +1,5 @@
+import sys
+
 from pygame import mixer
 
 from src.chiptune import chiptune_library, is_chiptune, tagged_length_seconds
@@ -62,10 +64,10 @@ class MusicPlayer:
     @staticmethod
     def _chiptune_segments(path: str, loop: int, then_loop: str | None) -> list[Segment]:
         if loop == 0:
-            return [Segment(path, tagged_length_seconds(path))]
+            return [Segment(path, played_once_seconds(path))]
         if then_loop is None or then_loop == path or not is_clip(path):
             return [Segment(path)]
-        return [Segment(path, tagged_length_seconds(path)), Segment(then_loop)]
+        return [Segment(path, played_once_seconds(path)), Segment(then_loop)]
 
     def _play_chiptune(self, segments: list[Segment]) -> bool:
         """Plays chiptune segments; False if they can't be heard (no libgme)."""
@@ -94,7 +96,7 @@ class MusicPlayer:
                 mixer.music.set_volume(self.music_volume)
                 mixer.music.play()
                 return
-            if self._play_chiptune([Segment(path, tagged_length_seconds(path))]):
+            if self._play_chiptune([Segment(path, played_once_seconds(path))]):
                 return
         self._clip_end_ticks = game_ticks() + clip_length_ms(path)
 
@@ -159,11 +161,27 @@ class MusicPlayer:
         return self.music_volume
 
 
+# How long a chiptune track played once lasts when its length isn't tagged (a playlist that can't be read, an SPC with
+# no ID666 length): about as long as the longer jingles, so the game never waits for ever on one (the smoke test checks
+# every clip has its length)
+UNTAGGED_CLIP_SECONDS = 6.0
+
+
+def played_once_seconds(path: str) -> float:
+    """How long a chiptune track plays when it plays once: its tagged length, or UNTAGGED_CLIP_SECONDS (said on
+    stderr) when it has none."""
+    seconds = tagged_length_seconds(path)
+    if seconds is None:
+        print(f"No length is tagged for {path}: it plays for {UNTAGGED_CLIP_SECONDS} s", file=sys.stderr)
+        return UNTAGGED_CLIP_SECONDS
+    return seconds
+
+
 def clip_length_ms(path: str) -> float:
     """How long a clip plays, in milliseconds: a chiptune track's tagged length (src/chiptune.py), or how long an audio
     file plays (0 if the mixer isn't running)."""
     if is_chiptune(path):
-        return (tagged_length_seconds(path) or 0) * 1000
+        return played_once_seconds(path) * 1000
     if not mixer.get_init():
         return 0
     return mixer.Sound(path).get_length() * 1000

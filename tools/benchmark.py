@@ -53,7 +53,7 @@ import pygame  # noqa: E402 (the SDL drivers are chosen before pygame starts)
 from src.checkpoints import read_checkpoint  # noqa: E402
 from src.config.prod_config import prod_config  # noqa: E402
 from src.soundtrack import SOUNDTRACK_SAVE_KEY, SOUNDTRACKS  # noqa: E402
-from src.waiting import frame_at, game_ticks, reset_game_speed, set_game_speed  # noqa: E402
+from src.waiting import frame_at, game_ticks, quit_pygame, reset_game_speed, set_game_speed  # noqa: E402
 from tools.benchmark_results import NOT_AVAILABLE, SceneResult, TimeStats, format_comparison, format_report, \
     results_from_json, results_to_json  # noqa: E402
 from tools.scripted_input import SceneOver, ScriptedInput, parse_script  # noqa: E402
@@ -427,7 +427,7 @@ def main(argv: list[str] | None = None) -> int:
         results = run_benchmark(args.scenes, args.speeds, args.frames, args.seed, args.repeat, args.profile,
                                 print_progress, args.display, args.music)
     finally:
-        pygame.quit()
+        quit_pygame()  # the music's thread stops first (src/waiting.py)
     print(format_report(results))
     if args.json:
         with open(args.json, 'w') as json_file:
