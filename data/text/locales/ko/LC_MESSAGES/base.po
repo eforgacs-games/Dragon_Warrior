@@ -3026,6 +3026,10 @@ msgid "{}: NEEDS A KEY"
 msgstr "{}: 키가 필요함"
 
 #: src/controls_screen.py
+msgid "{}: FIXED KEY"
+msgstr "{}: 고정된 키"
+
+#: src/controls_screen.py
 msgid "DEFAULTS RESTORED"
 msgstr "기본값으로 되돌림"
 
