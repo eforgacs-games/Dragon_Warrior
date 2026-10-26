@@ -21,7 +21,7 @@ class TextPaths:
     """The files draw_text uses, the same as Directories' (src/directories.py), without making a Directories (which
     loads two fonts and builds every other path of the game) for every line of text drawn."""
     DRAGON_QUEST_FONT_PATH = DRAGON_QUEST_FONT_PATH
-    UNIFONT_PATH = data_path('fonts', 'unifont.ttf')
+    UNIFONT_PATH = data_path('fonts', 'unifont.otf')
     text_beep_sfx = data_path('sound', 'sfx', 'text_beep.wav')
 
 

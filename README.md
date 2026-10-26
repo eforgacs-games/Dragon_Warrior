@@ -7,6 +7,11 @@
 
 This is a clone of Dragon Warrior for the Nintendo Entertainment System, done in Python.
 
+This is an unofficial fan project, not affiliated with or endorsed by Square Enix or Nintendo. *Dragon Warrior* and
+*Dragon Quest* are trademarks of Square Enix. The game's graphics, music, text and other assets belong to their owners
+and aren't covered by this project's license: see [ASSETS.md](ASSETS.md). The source code is licensed under the
+[GNU General Public License v3.0 or later](LICENSE).
+
 
 # DOWNLOAD
 
