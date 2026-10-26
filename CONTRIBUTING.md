@@ -6,6 +6,12 @@ Install [uv](https://docs.astral.sh/uv/), then run `uv sync` from the repository
 `.python-version`) if needed, then the locked dependencies from `uv.lock`, including the dev tools (pytest, mypy,
 ruff, pre-commit), into `.venv`. A `.venv` made with an older Python is rebuilt.
 
+Install libgme too, for the NES and SFC music (the README's [Installing libgme](README.md#installing-libgme)). The tests
+that play its emulated music skip themselves without it (CI installs it, and sets `REQUIRE_LIBGME=1` so they fail
+there instead of skipping); every other test runs the same with or without it. Without libgme the game still runs, but
+the NES and SFC music options play the orchestral recordings instead, and the jingles (the inn, the fanfares, the death
+and item tunes) are silent with every music option, keeping their timing. The release builds always bundle libgme.
+
 ## Checks
 
 CI (`.github/workflows/python-app.yml`) runs these on Python 3.13. Run them before opening a pull request:
@@ -138,6 +144,9 @@ uv run python -m tools.benchmark --compare before.json after.json
 # One scene, profiled: the 20 functions with the most time of their own
 uv run python -m tools.benchmark --scenes brecconary --speeds 8 --profile 20
 ```
+
+`--music NES` (or `SFC`, `Orchestra`) plays the scenes with the music on, so the CPU column includes the music: the
+NES and SFC soundtracks are emulated on a thread of their own (`src/music_stream.py`).
 
 Timings depend on the machine and on what else runs on it, so compare runs made on the same machine, close together,
 and with `--repeat 3` (each scene's fastest run is kept) when the machine is busy.

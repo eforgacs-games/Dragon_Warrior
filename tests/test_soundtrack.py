@@ -7,7 +7,8 @@ import pygame
 
 from src.config.base_config import base_config
 from src.config.test_config import test_config
-from src.directories import MUSIC_NAMES, Directories, music_name, music_paths
+from src.chiptune import parse_track_ref
+from src.directories import CLIP_NAMES, MUSIC_NAMES, Directories, clip_paths, music_name, music_paths
 from src.options_screen import Options, apply_options, options_from_config, options_from_save, options_to_save
 from src.paths import data_path
 from src.save_state import restore_snapshot, take_snapshot
@@ -17,12 +18,15 @@ from src.soundtrack import DEFAULT_SOUNDTRACK, LEGACY_ORCHESTRA_CONFIG_KEY, LEGA
 from tests import helpers
 
 SFC_DIR = data_path('sound', 'music', 'SFC')
-# The jingles: the same NES clips with every soundtrack
-JINGLE_NAMES = ('death_music', 'inn_music', 'princess_gwaelins_love_music', 'victory_music', 'level_up_music')
 
 
 def sfc_track(name: str) -> str:
     return os.path.join(SFC_DIR, name)
+
+
+def file_of(path_or_track: str) -> str:
+    track = parse_track_ref(path_or_track)
+    return track.path if track else path_or_track
 
 
 class TestMusicPaths(TestCase):
@@ -32,52 +36,46 @@ class TestMusicPaths(TestCase):
             with self.subTest(soundtrack=chosen):
                 paths = music_paths(chosen)
                 self.assertEqual(set(MUSIC_NAMES), set(paths))
-                for name, path in paths.items():
-                    self.assertTrue(os.path.isfile(path), f"{name}: {path}")
+                for name, path in {**paths, **clip_paths(chosen)}.items():
+                    self.assertTrue(os.path.isfile(file_of(path)), f"{name}: {path}")
 
     def test_each_soundtrack_plays_from_its_own_folder(self):
-        # the NES's fight loop is in the sound effects folder, with the rest of the soundtrack's later tracks
-        folders = {Soundtrack.NES: (data_path('sound', 'music', 'NES'), data_path('sound', 'sfx')),
-                   Soundtrack.SFC: (SFC_DIR,), Soundtrack.ORCHESTRA: (data_path('sound', 'music', 'orchestra'),)}
-        for chosen, allowed in folders.items():
+        folders = {Soundtrack.NES: data_path('sound', 'music', 'NES'), Soundtrack.SFC: SFC_DIR,
+                   Soundtrack.ORCHESTRA: data_path('sound', 'music', 'orchestra')}
+        for chosen, folder in folders.items():
             for name, path in music_paths(chosen).items():
                 with self.subTest(soundtrack=chosen, music=name):
-                    self.assertTrue(path.startswith(allowed), path)
+                    self.assertTrue(path.startswith(folder), path)
 
-    def test_the_sfc_soundtrack_maps_each_moment_to_its_track(self):
-        paths = music_paths(Soundtrack.SFC)
-        self.assertEqual({
-            'intro_overture': sfc_track('09 Overture March (Original Game Sound).mp3'),
-            'intermezzo': sfc_track('10 Intermezzo (SFC Version).mp3'),
-            'tantegel_castle_throne_room_music': sfc_track('11 Chateau Ladutorm (SFC Version).mp3'),
-            'tantegel_castle_courtyard_music': sfc_track('11 Chateau Ladutorm (SFC Version).mp3'),
-            'village_music': sfc_track('12 People (SFC Version).mp3'),
-            'overworld_music': sfc_track('13 Unknown World (SFC Version).mp3'),
-            'battle_music': sfc_track('14 Fight (SFC Version).mp3'),
-            'regular_fight_music': sfc_track('14 Fight (SFC Version).mp3'),
-            'end_boss_music': sfc_track('16 King Dragon (SFC Version).mp3'),
-            'ending_music': sfc_track('17 Finale (SFC Version).mp3'),
-            **{f'dungeon_floor_{floor}_music': sfc_track('15 Dungeon (SFC Version).mp3') for floor in range(1, 9)},
-        }, paths)
+    def test_the_nes_soundtrack_is_the_nsf_and_the_sfc_soundtrack_is_spc_files(self):
+        nsf = data_path('sound', 'music', 'NES', 'dragon_warrior.nsf')
+        for name, path in {**music_paths(Soundtrack.NES), **clip_paths(Soundtrack.NES)}.items():
+            with self.subTest(music=name):
+                self.assertEqual(nsf, file_of(path))
+        for name, path in {**music_paths(Soundtrack.SFC), **clip_paths(Soundtrack.SFC)}.items():
+            if name != 'intro_overture':  # the Dragon Quest I & II overture has no SPC here: its recording
+                with self.subTest(music=name):
+                    self.assertTrue(path.endswith('.spc'), path)
 
-    def test_the_me_sound_collection_is_kept_but_not_played_yet(self):
-        me_collection = sfc_track('18 ME Sound Collection.mp3')
-        self.assertTrue(os.path.isfile(me_collection))
-        self.assertNotIn(me_collection, music_paths(Soundtrack.SFC).values())
+    def test_the_sfc_mp3s_are_gone_but_the_overture(self):
+        self.assertEqual(['09 Overture March (Original Game Sound).mp3'],
+                         [name for name in os.listdir(SFC_DIR) if name.endswith('.mp3')])
+
+    def test_every_soundtrack_has_jingles(self):
+        nes = Directories({**test_config, SOUNDTRACK_KEY: Soundtrack.NES})
+        orchestra = Directories({**test_config, SOUNDTRACK_KEY: Soundtrack.ORCHESTRA})
+        sfc = Directories({**test_config, SOUNDTRACK_KEY: Soundtrack.SFC})
+        for name in CLIP_NAMES:
+            with self.subTest(jingle=name):
+                # the orchestral album has none: the NES's
+                self.assertEqual(getattr(nes, name), getattr(orchestra, name))
+                self.assertTrue(getattr(nes, name).startswith(data_path('sound', 'music', 'NES')))
+                self.assertTrue(getattr(sfc, name).startswith(SFC_DIR))
 
     def test_the_orchestra_folder_holds_only_the_orchestral_set(self):
         orchestra_dir = data_path('sound', 'music', 'orchestra')
         self.assertEqual(['01', '02', '03', '04', '05', '06', '07', '08', 'Android_iOS'],
                          sorted(name[:2] if name[0].isdigit() else name for name in os.listdir(orchestra_dir)))
-
-    def test_every_soundtrack_uses_the_nes_jingles(self):
-        nes = Directories({**test_config, SOUNDTRACK_KEY: Soundtrack.NES})
-        for chosen in (Soundtrack.SFC, Soundtrack.ORCHESTRA):
-            directories = Directories({**test_config, SOUNDTRACK_KEY: chosen})
-            for name in JINGLE_NAMES:
-                with self.subTest(soundtrack=chosen, jingle=name):
-                    self.assertEqual(getattr(nes, name), getattr(directories, name))
-                    self.assertIn(os.path.join('sound', 'sfx'), getattr(directories, name))
 
     def test_directories_follow_the_config(self):
         config = {**test_config, SOUNDTRACK_KEY: Soundtrack.NES}
@@ -172,4 +170,5 @@ class TestSmokeTestCoversEverySoundtrack(TestCase):
         file_paths = game_file_paths(test_config)
         for chosen in SOUNDTRACKS:
             with self.subTest(soundtrack=chosen):
-                self.assertLessEqual(set(music_paths(chosen).values()), file_paths)
+                tracks = {*music_paths(chosen).values(), *clip_paths(chosen).values()}
+                self.assertLessEqual({file_of(track) for track in tracks}, file_paths)

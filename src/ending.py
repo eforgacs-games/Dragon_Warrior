@@ -14,9 +14,8 @@ The story flags themselves live in src/story_flags.py.
 """
 
 import random
-import sys
 
-from pygame import QUIT, display, event, quit as pygame_quit, time
+from pygame import QUIT, display, event, time
 
 from data.text.dialog import confirmation_prompt
 from src.common import BLACK, WHITE
@@ -26,10 +25,9 @@ from src.direction import Direction
 from src.maps import map_lookup
 from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE, SEARCHED_FOR_GWAELIN
-from src.soundtrack import Soundtrack, soundtrack
 from src.text import draw_text
 from src.visual_effects import screen_fade
-from src.waiting import NES_FPS, POLL_INTERVAL_MS, game_ticks, wait_frames
+from src.waiting import NES_FPS, POLL_INTERVAL_MS, game_ticks, quit_game, wait_frames
 from src.windows import DIALOG_WINDOW
 from src.zoom import handle_zoom_event
 
@@ -49,15 +47,6 @@ END_MUSIC_TIMING_EVENTS = (
     (5924, 5956), (6054, 6087), (6185, 6218), (6316, 6349), (6447, 6480), (6577, 6593), (6697, 6712), (6813, 6843),
     (6945, 6963), (7120, 7137),
 )
-
-# The end music recording (directories.ending_music, "16 ... Hero's Fanfare.mp3") leaves out most of the silence the
-# NES's end music starts with: SQ1EndGame's first byte after the tempo is a 48-count rest at volume 0, so the first note
-# (G5) starts at frame 58, while the mp3's first sound is 0.23 s in. Laying every note start of the music over the
-# mp3's onsets (reference/reference_utility_scripts/end_music_frame_rate.py, #391) puts the mp3's start 0.72 to 0.74 s
-# after the NES music's frame 0, the same at every frame rate tried; the first notes give 0.73 s. So the mp3 starts 44
-# frames into the music, and the credits, timed from frame 0, keep in step with it (#429). The orchestral and SFC
-# finales are other arrangements and aren't timed to the NES music at all, so they start at frame 0.
-END_MUSIC_RECORDING_START_FRAME = 44
 
 # NES GwaelinMoveLoop: Gwaelin walks to the king one NES pixel (16 to a block) every 2 frames
 NES_PIXELS_PER_BLOCK = 16
@@ -362,9 +351,6 @@ class Ending:
         (credit_screen_music_events) and fades out. The last one, THE END, stays up."""
         # NES InitMusicSFX MSC_END: frame 0 of the end music, which the timing events count from
         music_events = EndMusicTimingEvents(self.config)
-        if soundtrack(self.config) is Soundtrack.NES:
-            self.game.music_player.stop_music()
-            self.wait_frames(END_MUSIC_RECORDING_START_FRAME)  # the NES music is still silent here
         self.game.music_player.load_and_play_music(self.game.directories.ending_music, loop=0)
         music_events.wait(1)
         screen_fade(fade_out=True, screen=self.game.screen, config=self.config)  # LoadCreditsPals ($AA62)
@@ -392,6 +378,5 @@ class Ending:
             for current_event in event.get():
                 handle_zoom_event(current_event)  # the window can still be zoomed (src/zoom.py)
                 if current_event.type == QUIT:
-                    pygame_quit()
-                    sys.exit()
+                    quit_game()
             time.wait(POLL_INTERVAL_MS)  # idle about a frame between checks

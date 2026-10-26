@@ -408,7 +408,7 @@ class StoryRunMixin:
                                  wraps=game.ending.walk_gwaelin_to_king) as walk_gwaelin_to_king, \
                     patch('src.ending.screen_fade'), \
                     patch('src.ending.event.get', return_value=[pygame.event.Event(pygame.QUIT)]), \
-                    patch('src.ending.pygame_quit'), \
+                    patch('src.waiting.pygame_quit'), \
                     self.assertRaises(SystemExit):  # the game waits on THE END until it's closed
                 game.ending.check_for_end_game_trigger()
             self.assertIn("The legends have proven true.", ''.join(self.shown_text))

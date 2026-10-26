@@ -163,6 +163,10 @@ def show_dialog(message: str, platform_name: str | None = None, run: Callable[..
     pygame = sys.modules.get('pygame')
     if pygame is not None:
         with contextlib.suppress(Exception):
+            # src/waiting.py quit_pygame, without importing the game here: what still uses pygame stops first
+            waiting = sys.modules.get('src.waiting')
+            if waiting is not None:
+                waiting.run_quit_callbacks()
             pygame.quit()
     platform_name = sys.platform if platform_name is None else platform_name
     title = f"{APP_NAME} crashed"

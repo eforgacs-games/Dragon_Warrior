@@ -20,6 +20,10 @@ Per scene and game speed it reports:
 - wall and CPU time (time.process_time): a CPU share near 100% while the game only waits is a busy loop;
 - how many times display.flip and display.update were called.
 
+--music NES (or SFC, Orchestra) plays the scenes with the music on, from that soundtrack, to measure what the music
+costs: the NES and SFC soundtracks are emulated and streamed on a thread of their own (src/music_stream.py), which the
+CPU time includes.
+
 The window is opened without SCALED by default, as tools/record_frames.py does. --display opens it SCALED, as the game
 does (under the dummy driver SDL draws with its software renderer), with or without the display filters
 (src/display_filters.py), to measure what they cost: scaled (no filter), scanlines, pixel-perfect or both.
@@ -48,7 +52,8 @@ import pygame  # noqa: E402 (the SDL drivers are chosen before pygame starts)
 
 from src.checkpoints import read_checkpoint  # noqa: E402
 from src.config.prod_config import prod_config  # noqa: E402
-from src.waiting import frame_at, game_ticks, reset_game_speed, set_game_speed  # noqa: E402
+from src.soundtrack import SOUNDTRACK_SAVE_KEY, SOUNDTRACKS  # noqa: E402
+from src.waiting import frame_at, game_ticks, quit_pygame, reset_game_speed, set_game_speed  # noqa: E402
 from tools.benchmark_results import NOT_AVAILABLE, SceneResult, TimeStats, format_comparison, format_report, \
     results_from_json, results_to_json  # noqa: E402
 from tools.scripted_input import SceneOver, ScriptedInput, parse_script  # noqa: E402
@@ -181,34 +186,37 @@ def map_frame_method(game) -> str:
     return 'map_frame' if hasattr(game, 'map_frame') else 'get_events'
 
 
-def scene_config(scene: Scene, save_dir: str) -> dict:
-    return {**prod_config, 'MUSIC_ENABLED': False, 'SOUND_ENABLED': False, 'SPLASH_SCREEN_ENABLED': False,
+def scene_config(scene: Scene, save_dir: str, music: str | None = None) -> dict:
+    return {**prod_config, 'MUSIC_ENABLED': music is not None, 'SOUND_ENABLED': False, 'SPLASH_SCREEN_ENABLED': False,
             'INITIAL_DIALOG_ENABLED': False, 'SAVE_DIR': save_dir, 'SETTINGS_PATH': None, **scene.config}
 
 
-def scene_save(scene: Scene) -> dict:
-    """The throne_room checkpoint, moved to the scene's map (load_game starts at the map's own start for no row)."""
+def scene_save(scene: Scene, music: str | None = None) -> dict:
+    """The throne_room checkpoint, moved to the scene's map (load_game starts at the map's own start for no row), with
+    the soundtrack to play if the music is on."""
     save = read_checkpoint('throne_room')
     row, column = scene.position or (None, None)
     save.update(CurrentMap=scene.map_name, PlayerRow=row, PlayerColumn=column)
+    if music is not None:
+        save[SOUNDTRACK_SAVE_KEY] = music
     return save
 
 
-def start_game(scene: Scene, save_dir: str, display: str = 'unscaled'):
+def start_game(scene: Scene, save_dir: str, display: str = 'unscaled', music: str | None = None):
     from src.game import Game
     filters = DISPLAYS[display]
     if filters is None:
         # Without SCALED, which can't always make its renderer headless (as tools/record_frames.py)
         with patch('src.game.SCALED', 0):
-            game = Game(scene_config(scene, save_dir))
+            game = Game(scene_config(scene, save_dir, music))
     else:
         from src.display_filters import PRESENTER
         # A SCALED window can't be opened over another one under the dummy driver: start the display again
         PRESENTER.release()
         pygame.display.quit()
         scanlines, scaling = filters
-        game = Game({**scene_config(scene, save_dir), 'SCANLINES': scanlines, 'SCALING': scaling})
-    game.load_game(scene_save(scene))
+        game = Game({**scene_config(scene, save_dir, music), 'SCANLINES': scanlines, 'SCALING': scaling})
+    game.load_game(scene_save(scene, music))
     return game
 
 
@@ -275,16 +283,20 @@ def scene_length(scene: Scene, frames: int) -> tuple[list, int]:
 
 
 def run_scene(scene: Scene, speed: int, frames: int, seed: int,
-              profiler: cProfile.Profile | None = None, display: str = 'unscaled') -> SceneResult:
+              profiler: cProfile.Profile | None = None, display: str = 'unscaled',
+              music: str | None = None) -> SceneResult:
     """Play the scene at the game speed and measure it. A scene the game can't run (an older commit) is n/a."""
     random.seed(seed)
     reset_game_speed()
     meter = SceneMeter()
     try:
         with tempfile.TemporaryDirectory(prefix='dragon_warrior_benchmark_') as save_dir:
-            game = start_game(scene, save_dir, display)
+            game = start_game(scene, save_dir, display, music)
             set_game_speed(speed)
-            wall_seconds, cpu_seconds = play(game, scene, frames, meter, profiler)
+            try:
+                wall_seconds, cpu_seconds = play(game, scene, frames, meter, profiler)
+            finally:
+                game.music_player.stop_music()
     except (Exception, SystemExit) as error:
         return SceneResult(scene=scene.name, speed=speed, status=f'{NOT_AVAILABLE}: {type(error).__name__}: {error}')
     finally:
@@ -314,13 +326,13 @@ def play(game, scene: Scene, frames: int, meter: SceneMeter, profiler: cProfile.
 def run_benchmark(scenes: list[Scene], speeds: list[int], frames: int, seed: int, repeat: int = 1,
                   profile_lines: int = 0,
                   on_result: Callable[[SceneResult], None] = lambda _result: None,
-                  display: str = 'unscaled') -> list[SceneResult]:
+                  display: str = 'unscaled', music: str | None = None) -> list[SceneResult]:
     """Each scene at each speed, ``repeat`` times, keeping the best run of each (see best_run)."""
     results = []
     for scene in scenes:
         for speed in speeds:
             profiler = cProfile.Profile() if profile_lines else None
-            result = best_run([run_scene(scene, speed, frames, seed, profiler, display) for _ in range(repeat)])
+            result = best_run([run_scene(scene, speed, frames, seed, profiler, display, music) for _ in range(repeat)])
             results.append(result)
             on_result(result)
             if profiler:
@@ -350,7 +362,7 @@ def run_metadata(args) -> dict:
     return {'commit': git_commit(), 'date': datetime.now(UTC).isoformat(timespec='seconds'),
             'python': platform.python_version(), 'pygame': pygame.version.ver, 'machine': platform.machine(),
             'processor': platform.processor() or platform.machine(), 'frames': args.frames, 'seed': args.seed,
-            'repeat': args.repeat, 'display': args.display}
+            'repeat': args.repeat, 'display': args.display, 'music': args.music or 'off'}
 
 
 def parse_names(text: str) -> list[Scene]:
@@ -384,6 +396,8 @@ def make_parser() -> argparse.ArgumentParser:
                         help="run each scene this many times and keep the run with the shortest mean frame time")
     parser.add_argument('--display', choices=list(DISPLAYS), default='unscaled',
                         help="open the window SCALED, with these display filters (default: unscaled, no filters)")
+    parser.add_argument('--music', choices=[chosen.value for chosen in SOUNDTRACKS],
+                        help="play the music from this soundtrack (default: no music)")
     parser.add_argument('--json', metavar='OUT', help="also write the results to this JSON file")
     parser.add_argument('--profile', type=int, metavar='LINES', default=0,
                         help="run each scene under cProfile and print its LINES slowest functions by own time")
@@ -411,9 +425,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     try:
         results = run_benchmark(args.scenes, args.speeds, args.frames, args.seed, args.repeat, args.profile,
-                                print_progress, args.display)
+                                print_progress, args.display, args.music)
     finally:
-        pygame.quit()
+        quit_pygame()  # the music's thread stops first (src/waiting.py)
     print(format_report(results))
     if args.json:
         with open(args.json, 'w') as json_file:

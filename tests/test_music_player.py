@@ -1,13 +1,17 @@
-import os
+import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from pygame import mixer
 
+from src.chiptune_soundtracks import (MSC_END, MSC_ENTR_FGHT, MSC_INN, MSC_LEVEL_UP, MSC_OUTDOOR, MSC_REG_FGHT,
+                                      MSC_VICTORY, nes_track, sfc_track)
 from src.config.test_config import test_config
 from src.directories import Directories
-from src.music_player import MusicPlayer, clip_length_ms
+from src.music_player import UNTAGGED_CLIP_SECONDS, MusicPlayer, clip_length_ms, played_once_seconds
+from src.music_stream import Segment
 from src.waiting import reset_game_speed, set_game_speed
+from tests.helpers import requires_libgme
 
 
 class TestMusicPlayerInitialization(unittest.TestCase):
@@ -208,13 +212,155 @@ class TestPlayUntilEnd(unittest.TestCase):
         mock_wait.assert_not_called()
 
     def test_inn_jingle_is_the_nes_track(self):
-        # MSC_INN ($15) is the soundtrack's track 21, between MSC_DEATH ($14, track 20) and MSC_PRNCS_LOVE ($16)
+        # MSC_INN ($15) is the NSF's track 21, between MSC_DEATH ($14, track 20) and MSC_PRNCS_LOVE ($16). The NSF's
+        # playlist didn't tag it, so dragon_warrior.m3u has a line of the game's own for it
         directories = Directories(test_config)
-        self.assertTrue(directories.inn_music.endswith('21 Dragon Quest 1 - Special Item.mp3'))
-        self.assertTrue(os.path.exists(directories.inn_music))
-        mixer.init()
+        self.assertEqual(nes_track(MSC_INN), directories.inn_music)
+        self.assertTrue(directories.inn_music.endswith('dragon_warrior.nsf#21'))
+        self.assertAlmostEqual(2950, clip_length_ms(directories.inn_music))
+
+
+OVERWORLD = nes_track(MSC_OUTDOOR)
+VICTORY = nes_track(MSC_VICTORY)
+
+
+class TestChiptuneMusic(unittest.TestCase):
+    """The NES and SFC soundtracks: chiptune tracks go to the music stream (src/music_stream.py), mp3s to
+    pygame.mixer.music, and starting either stops the other."""
+
+    CONFIG = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'SOUNDTRACK': 'NES', 'NO_WAIT': False}
+
+    def setUp(self):
+        self.player = MusicPlayer(self.CONFIG)
+        self.stream = MagicMock()
+        self.player._stream = self.stream
+        self.mixer = patch('src.music_player.mixer').start()
+        self.mixer.music.get_busy.return_value = False
+        self.addCleanup(patch.stopall)
+
+    def test_map_music_loops_for_ever(self):
+        self.player.load_and_play_music(OVERWORLD)
+        self.stream.play.assert_called_once_with([Segment(OVERWORLD)])
+        self.mixer.music.stop.assert_called_once()  # the mp3 music stops too
+        self.mixer.music.load.assert_not_called()
+
+    def test_a_clip_plays_for_its_tagged_length(self):
+        self.player.play_clip(VICTORY)
+        self.stream.play.assert_called_once_with([Segment(VICTORY, 2.0)])
+
+    def test_the_ending_plays_once(self):
+        self.player.load_and_play_music(nes_track(MSC_END), loop=0)
+        self.stream.play.assert_called_once_with([Segment(nes_track(MSC_END), 121.355)])
+
+    def test_a_clip_then_the_music_it_runs_into(self):
+        self.player.load_and_play_music(VICTORY, then_loop=OVERWORLD)
+        self.stream.play.assert_called_once_with([Segment(VICTORY, 2.0), Segment(OVERWORLD)])
+
+    def test_the_fight_music_runs_into_its_loop_by_itself(self):
+        # NES MSC_ENTR_FGHT falls through into the fight loop in the NES's own music data, so the track loops on
+        # instead of being cut over to MSC_REG_FGHT
+        self.player.load_and_play_music(nes_track(MSC_ENTR_FGHT), then_loop=nes_track(MSC_REG_FGHT))
+        self.stream.play.assert_called_once_with([Segment(nes_track(MSC_ENTR_FGHT))])
+
+    def test_the_same_music_twice_just_loops(self):
+        self.player.load_and_play_music(VICTORY, then_loop=VICTORY)
+        self.stream.play.assert_called_once_with([Segment(VICTORY)])
+
+    def test_an_sfc_clip_plays_for_its_id666_length(self):
+        self.player.play_clip(sfc_track('good_night.spc'))
+        self.stream.play.assert_called_once_with([Segment(sfc_track('good_night.spc'), 3.0)])
+
+    def test_a_clip_with_no_tagged_length_still_ends(self):
+        # an unreadable playlist, say: the clip plays a fixed time instead of looping for ever (and it is said)
+        with patch('src.music_player.tagged_length_seconds', return_value=None), \
+                patch('sys.stderr') as stderr:
+            self.player.play_clip(VICTORY)
+            self.assertEqual(UNTAGGED_CLIP_SECONDS, played_once_seconds(VICTORY))
+            self.assertEqual(UNTAGGED_CLIP_SECONDS * 1000, clip_length_ms(VICTORY))
+        self.stream.play.assert_called_once_with([Segment(VICTORY, UNTAGGED_CLIP_SECONDS)])
+        self.assertTrue(stderr.write.called)
+
+    def test_wait_for_music_end_waits_for_the_stream(self):
+        self.stream.get_busy.side_effect = [True, True, False]
+        with patch('src.music_player.wait') as mock_wait:
+            self.player.play_until_end(VICTORY, self.CONFIG)
+        self.assertEqual(2, mock_wait.call_count)
+
+    def test_an_mp3_stops_the_chiptune_music(self):
+        self.player.load_and_play_music(OVERWORLD)
+        self.player.load_and_play_music('orchestra/04 Unknown World.mp3')
+        self.assertEqual(2, self.stream.stop.call_count)
+        self.mixer.music.load.assert_called_once_with('orchestra/04 Unknown World.mp3')
+        self.assertEqual(1, self.stream.play.call_count)
+
+    def test_controls_reach_the_stream(self):
+        self.player.load_and_play_music(OVERWORLD)
+        self.player.pause_music()
+        self.stream.pause.assert_called_once()
+        self.player.unpause_music()
+        self.stream.unpause.assert_called_once()
+        self.player.set_music_volume(0.25)
+        self.stream.set_volume.assert_called_with(0.25)
+        self.player.fadeout_music(800)
+        self.stream.fadeout.assert_called_once_with(800)
+        self.player.stop_music()
+        self.stream.stop.assert_called()
+
+    def test_music_off_never_touches_the_stream(self):
+        self.player.music_enabled = False
+        self.player.load_and_play_music(OVERWORLD)
+        with patch('src.music_player.wait'), patch('src.music_player.game_ticks', return_value=0):
+            self.player.play_until_end(VICTORY, self.CONFIG)
+        self.player.pause_music()
+        self.player.stop_music()
+        self.assertEqual([], self.stream.method_calls)
+
+
+class TestWithoutLibgme(unittest.TestCase):
+    """No libgme: the chiptune music can't be heard, but the game goes on, and its clips keep their timing."""
+
+    CONFIG = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'SOUNDTRACK': 'NES', 'NO_WAIT': False}
+
+    def setUp(self):
+        patch('src.music_player.chiptune_library', return_value=None).start()
+        self.mixer = patch('src.music_player.mixer').start()
+        self.addCleanup(patch.stopall)
+        self.player = MusicPlayer(self.CONFIG)
+
+    def test_no_stream(self):
+        self.assertIsNone(self.player.stream)
+        self.player.load_and_play_music(OVERWORLD)  # nothing to hear, nothing raised
+        self.player.stop_music()
+        self.mixer.music.load.assert_not_called()
+
+    def test_a_clip_is_silent_but_waited_for_in_game_time(self):
+        with patch('src.music_player.wait') as mock_wait, patch('src.music_player.game_ticks', return_value=500):
+            self.player.play_until_end(VICTORY, self.CONFIG)
+        mock_wait.assert_called_once_with(2000.0, self.CONFIG)
+
+
+@requires_libgme
+class TestRealChiptuneTiming(unittest.TestCase):
+    """The real NSF through libgme on the dummy audio device: a clip is waited for as long as it plays."""
+
+    CONFIG = {'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'SOUNDTRACK': 'NES', 'NO_WAIT': False}
+
+    def setUp(self):
+        mixer.quit()
+        mixer.init(44100, -16, 2, 1024)
+        self.player = MusicPlayer(self.CONFIG)
         self.addCleanup(mixer.quit)
-        self.assertTrue(2000 < clip_length_ms(directories.inn_music) < 3000)
+        self.addCleanup(self.player.stop_music)
+
+    def test_the_victory_fanfare_is_waited_for_its_two_seconds(self):
+        started = time.monotonic()
+        self.player.play_until_end(VICTORY, self.CONFIG)
+        self.assertAlmostEqual(2.0, time.monotonic() - started, delta=0.3)
+
+    def test_the_level_up_fanfare_then_the_map_music(self):
+        self.player.load_and_play_music(nes_track(MSC_LEVEL_UP), then_loop=OVERWORLD)
+        time.sleep(3)  # past the fanfare's 2.45 s
+        self.assertTrue(self.player.music_busy())
 
 
 if __name__ == '__main__':
