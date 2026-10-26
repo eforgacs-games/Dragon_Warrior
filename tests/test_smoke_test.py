@@ -76,7 +76,8 @@ class TestSmokeScenesEnglish(SmokeGameTestCase):
         self.assertEqual(1, game_speed())
 
     def test_run_smoke_test_passes(self):
-        with patch('builtins.print') as printed:
+        # Every chiptune track rendering is tests/test_chiptune_soundtracks.py's, where libgme is installed
+        with patch('builtins.print') as printed, patch('src.smoke_test.check_chiptune_tracks', return_value=[]):
             status = run_smoke_test(self.game)
         self.assertEqual(0, status, printed.call_args_list)
 

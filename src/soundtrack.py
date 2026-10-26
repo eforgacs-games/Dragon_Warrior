@@ -1,11 +1,11 @@
 """The MUSIC setting: which soundtrack plays (not NES, the NES has only its own).
 
-- NES: the NES music (data/sound/music/NES).
-- SFC: the Super Famicom remake's soundtrack (data/sound/music/SFC).
+- NES: the NES music, emulated from the game's NSF (data/sound/music/NES, src/chiptune_soundtracks.py).
+- SFC: the Super Famicom remake's soundtrack, emulated from its SPC files (data/sound/music/SFC).
 - ORCHESTRA: the London Philharmonic Orchestra's recording (data/sound/music/orchestra), the default.
 
-The jingles (the inn, the level up, the victory, the death and the rest) are the NES's with every soundtrack
-(src/directories.py Directories); only the map, fight and story music changes (music_paths).
+The jingles (the inn, the level up, the victory, the death and the rest) are the SFC's with SFC and the NES's with the
+others (src/directories.py clip_paths). Without libgme, NES and SFC play the orchestral music (playable_soundtrack).
 
 The setting used to be a switch, ORCHESTRA_MUSIC_ENABLED in the config and OrchestraMusic in the saves and save states:
 on loads as ORCHESTRA and off as NES (soundtrack_from_legacy_switch).

@@ -1,10 +1,12 @@
 """
 `python src/game.py --smoke-test` (or `DragonWarrior --smoke-test` in a build, with `--language Korean` for the Korean
-game): checks that the game finds and can load all of its files, then plays a few hundred frames of it with scripted
+game): checks that the game finds and can load all of its files and that the emulated soundtracks (the NES's and the
+SFC's, through libgme: src/chiptune.py) render every track, then plays a few hundred frames of it with scripted
 button presses (SMOKE_SCENES) and exits with 0, or with 1 if anything is missing, doesn't load or raises. The release
 workflow runs it on every build, headless (SDL_VIDEODRIVER and SDL_AUDIODRIVER set to dummy), to prove the build
 bundles everything it needs: the fonts (the NES font for English, Unifont for Korean), the images, map tiles, music,
-sounds and the translations a player meets in the first minutes.
+sounds, the libgme library and the translations a player meets in the first minutes. The scenes each play with
+another soundtrack, so the music streams in the game with each.
 
 The scenes are played through the virtual joypad (src/virtual_joypad.py, which auto-grind drives), so every loop of
 the game (the map, a dialog, the COMMAND window, a battle) reads the presses as it reads the player's keys, in a build
@@ -22,15 +24,21 @@ from pygame.event import Event
 
 from src.catalog import compile_po, po_path
 from src.checkpoints import CHECKPOINT_NAMES, checkpoint_hero_name, checkpoint_path, read_checkpoint
-from src.directories import MUSIC_NAMES, Directories
-from src.paths import data_path
-from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACKS
+from src.chiptune import (ChiptuneError, Emulator, bundled_library_dirs, chiptune_library, parse_track_ref,
+                          tagged_length_seconds)
+from src.directories import CHIPTUNE_SOUNDTRACKS, CLIP_NAMES, MUSIC_NAMES, Directories, clip_paths, music_paths
+from src.paths import data_path, is_frozen
+from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, SOUNDTRACKS, Soundtrack
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import MAP_CONTEXT, reset_game_speed, set_game_speed
 
 IMAGE_EXTENSIONS = ('.png', '.gif')
 SOUND_EXTENSIONS = ('.mp3', '.wav')
 FONT_EXTENSIONS = ('.ttf', '.otf')
+# How much of each chiptune track check_chiptune_tracks renders: long enough to be past the silence a track can start
+# with (the NES's end music has almost a second of it)
+CHIPTUNE_CHECK_SECONDS = 2
+CHIPTUNE_CHECK_SAMPLE_RATE = 44100
 # A line the Korean catalog translates, to check it loaded
 KOREAN_CHECK_LINE = "Thou art a fool!"
 
@@ -43,9 +51,9 @@ def game_file_paths(config: dict) -> set[str]:
     for chosen in SOUNDTRACKS:
         directories = Directories({**config, SOUNDTRACK_KEY: chosen})
         values = list(vars(directories).values()) + list(directories.item_menu_background_lookup.values()) + \
-            [getattr(directories, name) for name in MUSIC_NAMES]
-        paths.update(value for value in values if isinstance(value, str) and value.startswith(data_dir)
-                     and os.path.splitext(value)[1])
+            [getattr(directories, name) for name in MUSIC_NAMES + CLIP_NAMES]
+        paths.update(file_path(value) for value in values if isinstance(value, str) and value.startswith(data_dir)
+                     and os.path.splitext(file_path(value))[1])
     paths.update(checkpoint_path(name) for name in CHECKPOINT_NAMES)
     # Unifont's license (SIL OFL 1.1) has to ship with the font
     paths.add(data_path('fonts', 'OFL-unifont.txt'))
@@ -53,6 +61,55 @@ def game_file_paths(config: dict) -> set[str]:
     if os.path.isdir(sparkle_dir):
         paths.update(os.path.join(sparkle_dir, name) for name in os.listdir(sparkle_dir))
     return paths
+
+
+def file_path(path_or_track: str) -> str:
+    """The file a path or a chiptune track reference ('...nsf#14') names."""
+    track = parse_track_ref(path_or_track)
+    return track.path if track else path_or_track
+
+
+def chiptune_tracks() -> list[str]:
+    """Every chiptune track the game plays, of every emulated soundtrack."""
+    tracks = {value for chosen in CHIPTUNE_SOUNDTRACKS
+              for value in (*music_paths(chosen).values(), *clip_paths(chosen).values())}
+    return sorted(track for track in tracks if parse_track_ref(track))
+
+
+def untagged_clips() -> list[str]:
+    """The chiptune tracks the game plays once (the clips and the ending) whose length can't be read: the NSF's
+    playlist (.m3u) is missing or doesn't tag one, or an SPC's ID666 tag has none."""
+    played_once = {value for chosen in CHIPTUNE_SOUNDTRACKS
+                   for value in (*clip_paths(chosen).values(), music_paths(chosen)['ending_music'])}
+    return [f'{track} has no tagged length' for track in sorted(played_once)
+            if parse_track_ref(track) and tagged_length_seconds(track) is None]
+
+
+def check_chiptune_tracks() -> list[str]:
+    """Loads libgme and renders the first seconds of every chiptune track; returns what failed (libgme missing, a
+    track that doesn't load, or one that renders only silence)."""
+    library = chiptune_library()
+    problems = untagged_clips()
+    if library is None:
+        return ["libgme isn't bundled or installed: the NES and SFC soundtracks can't play", *problems]
+    if is_frozen() and os.path.dirname(library.path) not in bundled_library_dirs():
+        problems.append(f"libgme isn't bundled: the build loaded {library.path}")
+    frame_count = CHIPTUNE_CHECK_SECONDS * CHIPTUNE_CHECK_SAMPLE_RATE
+    for ref in chiptune_tracks():
+        track = parse_track_ref(ref)
+        assert track is not None
+        try:
+            emulator = Emulator(library, track, CHIPTUNE_CHECK_SAMPLE_RATE)
+            try:
+                rendered = emulator.render(frame_count)
+            finally:
+                emulator.close()
+        except (ChiptuneError, OSError) as error:
+            problems.append(f"can't play {ref}: {error}")
+            continue
+        if not any(rendered):
+            problems.append(f'{ref} renders only silence')
+    return problems
 
 
 def check_game_files(config: dict) -> list[str]:
@@ -77,6 +134,7 @@ def check_game_files(config: dict) -> list[str]:
                     json.load(json_file)
         except Exception as error:  # every failure is reported, not just the first
             problems.append(f"can't load {path}: {error}")
+    problems.extend(check_chiptune_tracks())
     problems.extend(check_korean_translations())
     return problems
 
@@ -236,19 +294,20 @@ SMOKE_SCENES = (
     # A step down to the guard below, TALK to him (a dialog, in the NES font or Unifont), then the COMMAND window
     # opened and closed
     SmokeScene('throne_room', 'wait:20,down,down,wait:30,a,wait:40,a,wait:120,a,wait:60,a,wait:40,b,wait:30',
-               check=expect_window),
+               save_changes={SOUNDTRACK_SAVE_KEY: Soundtrack.NES.value}, check=expect_window),
     # Right, three steps, onto the throne room's stairs and down to the courtyard (a fade, a new map, its tiles, NPCs
     # and music), then on into the courtyard. The direction is held well past the three steps, as a player would: a
     # loaded machine runs fewer map frames per frame of game time, and the steps take longer.
     SmokeScene('stairs', 'wait:20,right:150,wait:60',
-               save_changes={'PlayerRow': 14, 'PlayerColumn': 15},
+               save_changes={'PlayerRow': 14, 'PlayerColumn': 15, SOUNDTRACK_SAVE_KEY: Soundtrack.SFC.value},
                check=expect_maps('TantegelThroneRoom', 'TantegelCourtyard')),
     # Walking left on Alefgard into a Slime fight (the battle window, the enemy, battle music and sounds), then FIGHT.
     # Held for several steps: after a map change the first step may not roll for a fight (Game.handle_battles compares
     # the steps taken since the change with the count at the last roll). Left in the battle's command window keeps
     # FIGHT chosen.
     SmokeScene('overworld_fight', 'wait:20,left:100,wait:120,a,wait:10,a,wait:120,a,wait:10,a,wait:120',
-               save_changes={'CurrentMap': 'Alefgard', 'PlayerRow': 50, 'PlayerColumn': 47},
+               save_changes={'CurrentMap': 'Alefgard', 'PlayerRow': 50, 'PlayerColumn': 47,
+                             SOUNDTRACK_SAVE_KEY: Soundtrack.ORCHESTRA.value},
                config={'NO_BATTLES': False, 'FORCE_BATTLE': True, 'FORCE_ENEMY': 'Slime'},
                check=expect_fight),
 )

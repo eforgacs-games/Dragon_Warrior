@@ -70,15 +70,29 @@ class Sound:
         return self.sfx_volume
 
 
+# The mixer channels kept for the game's two kinds of sound: the NES SFX slot, and the chiptune music
+# (src/music_stream.py; the mp3 music plays through pygame.mixer.music, which uses no channel)
 SFX_CHANNEL = 0
+MUSIC_CHANNEL = 1
+RESERVED_CHANNELS = 2
+
+
+def reserved_channel(number: int) -> mixer.Channel:
+    """One of the reserved mixer channels. Reserving them keeps a Sound.play() elsewhere from picking one; the
+    reservation is renewed on each call because it resets whenever the mixer is initialized again, so it holds from
+    the first sound after any mixer start."""
+    mixer.set_reserved(RESERVED_CHANNELS)
+    return mixer.Channel(number)
 
 
 def sfx_channel() -> mixer.Channel:
-    """The NES SFX slot: the one mixer channel every sound effect plays on. Reserving it keeps a Sound.play()
-    elsewhere from picking it; the reservation is renewed on each call because it resets whenever the mixer is
-    initialized again, so it holds from the first sound effect after any mixer start."""
-    mixer.set_reserved(SFX_CHANNEL + 1)
-    return mixer.Channel(SFX_CHANNEL)
+    """The NES SFX slot: the one mixer channel every sound effect plays on."""
+    return reserved_channel(SFX_CHANNEL)
+
+
+def music_channel() -> mixer.Channel:
+    """The channel the chiptune music streams to (src/music_stream.py)."""
+    return reserved_channel(MUSIC_CHANNEL)
 
 
 def retrieve_audio_resource(_sound_library, path, sound):

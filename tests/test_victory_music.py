@@ -10,8 +10,9 @@ They used to be played as sound effects (Sound.play_sound, any free mixer channe
 3 seconds long, so a few quick ones (the A press, the attack, the hit, the enemy's attack) could leave no free channel,
 and then the fanfare just didn't play. Here the sound effects play on the real mixer (SDL's dummy driver), with NO_WAIT
 on, so they come one right after another; they now all take turns in the one SFX slot (NES DoSFX, #317), and none is
-left playing on another channel. The music track is a recording stand-in for pygame.mixer.music, so the test can see
-exactly when each piece of music starts and stops.
+left playing on another channel. The music track is a recording stand-in for pygame.mixer.music and the chiptune
+stream (the fanfares are the NES's emulated tracks, src/chiptune.py), so the test can see exactly when each piece of
+music starts and stops.
 """
 import random
 from os.path import basename
@@ -21,6 +22,7 @@ from unittest.mock import patch
 import pygame
 
 from src.battle_controller import BattleOutcome
+from src.chiptune_soundtracks import MSC_LEVEL_UP, MSC_VICTORY, nes_track
 from src.config.test_config import test_config
 from src.maps import map_lookup
 from src.menu import CommandMenu
@@ -29,8 +31,8 @@ from src.player.player_stats import levels_list
 from src.sound import SFX_CHANNEL, Sound, sfx_channel
 from tests.helpers import new_game, skip_window_frame_waits
 
-VICTORY = '25 Dragon Quest 1 - Victory.mp3'
-LEVEL_UP = '26 Dragon Quest 1 - Improvement.mp3'
+VICTORY = basename(nes_track(MSC_VICTORY))
+LEVEL_UP = basename(nes_track(MSC_LEVEL_UP))
 FANFARES = (VICTORY, LEVEL_UP)
 
 
@@ -78,6 +80,29 @@ class MusicTrack:
     pause = unpause = fadeout = set_volume
 
 
+class ChiptuneStreamStandIn:
+    """Stand-in for the chiptune music stream (src/music_stream.py MusicStream), playing on the same one music track:
+    a stream's music is the music, as pygame's is."""
+
+    def __init__(self, track: MusicTrack):
+        self.track = track
+
+    def play(self, segments):
+        self.track.load(segments[0].ref)
+        self.track.play()
+
+    def stop(self):
+        self.track.stop()
+
+    def get_busy(self):
+        return self.track.get_busy()
+
+    def set_volume(self, *_args):
+        pass
+
+    pause = unpause = fadeout = set_volume
+
+
 class TestVictoryMusic(TestCase):
 
     def setUp(self):
@@ -91,7 +116,9 @@ class TestVictoryMusic(TestCase):
         self.player.name = "Erdrick"
         self.events: list = []
         self.full_channel_sounds = 0  # sound effects that left a channel other than the SFX slot playing
-        patch('pygame.mixer.music', MusicTrack(self.events)).start()
+        music_track = MusicTrack(self.events)
+        patch('pygame.mixer.music', music_track).start()
+        self.game.music_player._stream = ChiptuneStreamStandIn(music_track)
         # Real sounds on the real mixer, not ones another test's mocks may have left in the cache
         patch.dict('src.sound._sound_library', clear=True).start()
         # The hero always gets the first turn (no opening flee or ambush roll, #232), so the fights go as scripted

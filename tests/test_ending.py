@@ -7,7 +7,7 @@ from src.battle import Battle
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.ending import (
-    CREDITS, END_MUSIC_RECORDING_START_FRAME, END_MUSIC_TIMING_EVENTS, EndMusicTimingEvents, credit_screen_music_events,
+    CREDITS, END_MUSIC_TIMING_EVENTS, EndMusicTimingEvents, credit_screen_music_events,
 )
 from src.maps import map_lookup
 from src.soundtrack import SOUNDTRACK_KEY, Soundtrack
@@ -303,9 +303,9 @@ class TestEnding(TestCase):
         self.assertEqual(END_MUSIC_TIMING_EVENTS[-1][0] + 20 + 3, shown[-1])
         self.assertEqual(shown[-1] + 16 + 160, end)
 
-    def test_the_end_music_recording_starts_where_it_does_in_the_nes_music(self):
-        # The mp3 leaves out the first 0.73 s of the NES music's opening rest (#429): it starts 44 frames after the
-        # frame the timing events count from, so the credits stay in step with what is heard
+    def test_the_end_music_starts_at_the_frame_the_timing_events_count_from(self):
+        # The NES's end music is emulated from its start, opening rest and all (src/chiptune.py), so it starts at
+        # frame 0 of the timing events, as InitMusicSFX MSC_END does
         clock = [0.0]
         started_at = []
 
@@ -314,9 +314,8 @@ class TestEnding(TestCase):
 
         def load_and_play_music(path, **kwargs):
             started_at.append((path, round(clock[0] * NES_FPS / 1000)))
-        # the SFC and orchestral finales are other arrangements, not timed to the NES music: they start at frame 0
-        for chosen, start in ((Soundtrack.NES, END_MUSIC_RECORDING_START_FRAME), (Soundtrack.SFC, 0),
-                              (Soundtrack.ORCHESTRA, 0)):
+        # the SFC and orchestral finales are other arrangements, not timed to the NES music: they start at frame 0 too
+        for chosen, start in ((Soundtrack.NES, 0), (Soundtrack.SFC, 0), (Soundtrack.ORCHESTRA, 0)):
             with self.subTest(soundtrack=chosen):
                 clock[0], started_at[:] = 0.0, []
                 with patch.dict(self.game.config, {SOUNDTRACK_KEY: chosen}), \
@@ -357,5 +356,5 @@ class TestEnding(TestCase):
 
     def test_wait_for_reset_ends_on_quit(self):
         with patch('src.ending.event.get', return_value=[pygame.event.Event(pygame.QUIT)]), \
-                patch('src.ending.pygame_quit'), self.assertRaises(SystemExit):
+                patch('src.waiting.pygame_quit'), self.assertRaises(SystemExit):
             self.game.ending.wait_for_reset()
