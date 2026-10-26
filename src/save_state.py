@@ -8,9 +8,9 @@ life feature, like an emulator's: Shift + F1/F2/F3 saves one into slot 1/2/3 and
 surfaces, no sprites; a map is named, not copied). It holds everything the game's next frames depend on:
 - the map and the hero's pixel position, facing and step under way, the camera, and the hero's stats, HP and MP,
   gold, experience, items, equipment, spells and statuses;
-- every story flag (src/story_flags.py), the treasure chest history, the door history once the game has one (#369),
-  and the map layouts' changes: the doors opened (CommandMenu.door writes them into the layouts), the chests shown
-  open and the Rainbow Bridge;
+- every story flag (src/story_flags.py), the treasure chest and door histories, and the map layouts' changes: the
+  doors and chests shown open on the map (the histories redraw them as each map is entered, apply_to_layout) and the
+  Rainbow Bridge;
 - the repel, radiant and light timers (and whether the repel timer is still to tick for the step just taken), and the
   curse (the hero's worn cursed items);
 - the NPCs on the map: which are there, their pixel positions, facings, steps under way and mobile slots, and the NPC
@@ -207,9 +207,8 @@ def _history(slots: list) -> list[tuple[str, tuple[int, int] | None] | None]:
 
 def _restore_histories(game: Any, state: dict[str, Any]) -> None:
     game.chest_history.slots = list(state['chest_history'])
-    door_history = getattr(game, 'door_history', None)
-    if door_history is not None and state['door_history'] is not None:
-        door_history.slots = list(state['door_history'])
+    if state['door_history'] is not None:
+        game.door_history.slots = list(state['door_history'])
 
 
 def _rect(sprite: Any) -> list[int]:
@@ -265,8 +264,8 @@ def take_snapshot(game: Any) -> dict[str, Any]:
         'camera': list(game.camera.pos),
         'story_flags': game.story_flags.to_save(),
         'chest_history': _json_history(game.chest_history),
-        # The door history (OpenDoorHistory, #369), once the game has one; the opened doors are in the layouts too
-        'door_history': _json_history(getattr(game, 'door_history', None)),
+        # The door history (OpenDoorHistory); the opened doors are in the layouts too
+        'door_history': _json_history(game.door_history),
         'game': {name: getattr(game, name) for name in GAME_VALUES},
         'color': list(game.color),
         'game_state': {**{name: getattr(game.game_state, name) for name in GAME_STATE_VALUES},
