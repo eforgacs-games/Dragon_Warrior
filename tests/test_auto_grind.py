@@ -382,6 +382,37 @@ class TestStops(GrindTestCase):
         self.grind.player_turn_starts()
         self.assert_stopped(StopReason.HP_LOW, "Auto-grind stopped: HP low")
 
+    def test_a_safety_stop_turns_auto_battle_off(self):
+        # Auto-battle (F4) would otherwise repeat the last command as soon as auto-grind lets go of the fight
+        for reason, stop in ((StopReason.HP_LOW, self.lower_hp_at_turn_start),
+                             (StopReason.ASLEEP, self.fall_asleep_at_turn_start),
+                             (StopReason.STOPSPELL, self.grind.stopspell_hit),
+                             (StopReason.SCRIPTED_FIGHT, self.grind.scripted_fight_starts)):
+            with self.subTest(reason=reason):
+                self.player.current_hp, self.player.is_asleep = self.player.max_hp, False
+                self.game.cmd_menu.current_battle = None
+                if not self.grind.active:
+                    self.start()
+                self.in_battle()
+                self.game.auto_battle = True
+                stop()
+                self.assertEqual(reason, self.grind.last_stop)
+                self.assertFalse(self.game.auto_battle)
+
+    def test_a_key_leaves_auto_battle_on(self):
+        self.in_battle()
+        self.game.auto_battle = True
+        self.grind.stop(StopReason.KEY)
+        self.assertTrue(self.game.auto_battle)
+
+    def lower_hp_at_turn_start(self):
+        self.player.current_hp = self.player.max_hp // 4 + 1
+        self.grind.player_turn_starts()
+
+    def fall_asleep_at_turn_start(self):
+        self.player.is_asleep = True
+        self.grind.player_turn_starts()
+
     def test_the_threshold_is_the_option(self):
         self.in_battle()
         self.player.max_hp, self.player.current_hp = 100, 60
