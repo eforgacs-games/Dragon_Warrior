@@ -37,8 +37,9 @@ ZOOM_RESET_KEYS = (K_0, K_KP0)
 
 # The zoom the window opened at (remember_default_zoom), which Ctrl 0 goes back to
 _default_zoom: int | None = None
-# The window's size before it went fullscreen (remember_windowed_size)
-_windowed_size: tuple[int, int] | None = None
+# The window's size before it went fullscreen (remember_windowed_size), in window pixels per NES pixel across and
+# down, so it is the same zoom in whichever view (src/view.py) the window comes back in
+_windowed_scale: tuple[float, float] | None = None
 # Told the new zoom each time set_zoom changes the window's size: the game saves it with the global settings
 _zoom_listener: Callable[[int], None] | None = None
 
@@ -149,23 +150,27 @@ def reset_zoom() -> bool:
 
 def remember_windowed_size() -> None:
     """Note the window's size before it goes fullscreen (F11), for restore_windowed_size."""
-    global _windowed_size
+    global _windowed_scale
     if display_window() is not None and not is_fullscreen():
-        _windowed_size = display.get_window_size()
+        width, height = display.get_window_size()
+        _windowed_scale = (width / nes_width(), height / NES_HEIGHT)
 
 
 def set_windowed_zoom(zoom: int) -> None:
-    """The window size to go back to on leaving fullscreen: ``zoom`` times the NES's 256x240. For a game that opens in
-    fullscreen with a saved zoom, whose window has never had a size of its own."""
-    global _windowed_size
-    _windowed_size = (NES_WIDTH * zoom, NES_HEIGHT * zoom)
+    """The window size to go back to on leaving fullscreen: ``zoom`` times the NES picture (256x240, wider in the WIDE
+    view). For a game that opens in fullscreen with a saved zoom, whose window has never had a size of its own."""
+    global _windowed_scale
+    _windowed_scale = (zoom, zoom)
 
 
 def restore_windowed_size() -> None:
-    """Back from fullscreen: give the window the size it had before (set_mode alone opens it at its first size)."""
+    """Back from fullscreen: give the window the size it had before (set_mode alone opens it at its first size), as
+    many window pixels per NES pixel as it had, in the view it is in now: the VIEW option may have changed meanwhile
+    (src/view.py), and a WIDE window is wider at the same zoom."""
     window = display_window()
-    if window is not None and not is_fullscreen() and _windowed_size is not None:
-        window.size = _windowed_size
+    if window is not None and not is_fullscreen() and _windowed_scale is not None:
+        scale_x, scale_y = _windowed_scale
+        window.size = (round(nes_width() * scale_x), round(NES_HEIGHT * scale_y))
         display.flip()
 
 
