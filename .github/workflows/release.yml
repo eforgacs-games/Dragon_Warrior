@@ -1,6 +1,8 @@
 # Builds the game with PyInstaller (dragon_warrior.spec) for Windows, macOS and Linux, and checks each build starts,
-# finds and loads all of its files and plays a few scripted scenes, in English and in Korean (--smoke-test,
-# src/smoke_test.py), before anything is uploaded.
+# finds and loads all of its files, plays every NES and SFC track through its bundled libgme and plays a few scripted
+# scenes, in English and in Korean (--smoke-test, src/smoke_test.py), before anything is uploaded.
+# libgme (Game_Music_Emu, LGPL 2.1+), which plays the NES and SFC music (src/chiptune.py), is built here from its
+# source at GME_TAG, as a shared library with only the NSF and SPC emulators, and bundled next to its license.
 # - A pushed vX.Y.Z tag also publishes the builds as a GitHub Release for that tag.
 # - Run by hand (Actions > Release builds > Run workflow), or on a PR that changes the build or what it bundles, the
 #   builds are uploaded as workflow artifacts only, to try them without making a release.
@@ -18,6 +20,9 @@ on:
       - "src/paths.py"
       - "src/catalog.py"
       - "src/directories.py"
+      - "src/chiptune.py"
+      - "src/chiptune_soundtracks.py"
+      - "src/music_stream.py"
       - "src/smoke_test.py"
       - "data/**"
       - "pyproject.toml"
@@ -27,6 +32,9 @@ on:
 
 permissions:
   contents: read
+
+env:
+  GME_TAG: "0.6.4"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -66,6 +74,38 @@ jobs:
     - name: Install the game and PyInstaller
       # The game's dependencies and the build group, without the dev tools
       run: uv sync --locked --no-dev --group build
+    - name: Build libgme
+      # A shared library, so a player can swap in another build of it (LGPL). Only the NSF and SPC emulators: no zlib,
+      # and none of the others (the YM2612 ones some builds use are GPL). On Linux the C++ runtime is linked in, so
+      # the build runs on systems with an older libstdc++; on Windows the MSVC runtime is, so no msvcp140.dll is needed.
+      # GME_LIBRARY and GME_LICENSE tell dragon_warrior.spec what to bundle.
+      run: |
+        git clone --depth 1 --branch "$GME_TAG" https://github.com/libgme/game-music-emu.git gme-source
+        emulators=""
+        for emulator in AY GBS GYM HES KSS SAP VGM; do emulators="$emulators -DUSE_GME_$emulator=OFF"; done
+        case "$RUNNER_OS" in
+          Linux) platform_flags=(-DCMAKE_SHARED_LINKER_FLAGS="-static-libstdc++ -static-libgcc") ;;
+          Windows) platform_flags=(-DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded) ;;
+          macOS) platform_flags=(-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0) ;;
+        esac
+        cmake -S gme-source -B gme-build -DCMAKE_BUILD_TYPE=Release -DGME_BUILD_SHARED=ON -DGME_BUILD_STATIC=OFF \
+          -DGME_BUILD_TESTING=OFF -DGME_BUILD_EXAMPLES=OFF -DGME_ZLIB=OFF -DUSE_GME_NSF=ON -DUSE_GME_NSFE=ON \
+          -DUSE_GME_SPC=ON $emulators "${platform_flags[@]}"
+        cmake --build gme-build --config Release
+        cmake --install gme-build --config Release --prefix gme-install
+        # The file name src/chiptune.py loads (a real file, not the install's symlink)
+        case "$RUNNER_OS" in
+          Linux) installed=(gme-install/lib*/libgme.so.0) library=libgme.so.0 ;;
+          Windows) installed=(gme-install/bin/gme.dll) library=gme.dll ;;
+          macOS) installed=(gme-install/lib/libgme.0.dylib) library=libgme.0.dylib ;;
+        esac
+        mkdir libgme
+        cp -L "${installed[0]}" "libgme/$library"
+        cp gme-source/license.txt libgme/libgme-license.txt
+        ls -l libgme
+        # Relative to the repository root, where PyInstaller runs (an absolute path from bash isn't one on Windows)
+        echo "GME_LIBRARY=libgme/$library" >> "$GITHUB_ENV"
+        echo "GME_LICENSE=libgme/libgme-license.txt" >> "$GITHUB_ENV"
     - name: Name the build
       id: name
       env:
@@ -92,7 +132,7 @@ jobs:
         ls -l package
     - name: Smoke test the packaged build
       # Unpacks the archive and runs the game from it, so it proves the download itself works. Each run checks every
-      # data file loads, then plays the throne room (TALK, the COMMAND window), the stairs down to the courtyard and a
+      # data file loads and renders the start of every NES and SFC track with the bundled libgme, then plays the throne room (TALK, the COMMAND window), the stairs down to the courtyard and a
       # fight on Alefgard through the virtual joypad, and exits with 1 on a missing file or any exception. Once in
       # English (the NES font) and once in Korean (Unifont and the catalog compiled from the bundled base.po). The
       # runners have no display or sound card, so SDL's dummy drivers (the job's env) stand in on all three OSes.

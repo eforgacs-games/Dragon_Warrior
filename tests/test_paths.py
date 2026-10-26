@@ -8,13 +8,14 @@ import sys
 import tempfile
 from os.path import dirname, join, realpath
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from src import paths
+from src.chiptune import ChiptuneError
 from src.config.test_config import test_config
 from src.directories import Directories
 from src.paths import data_path, default_save_dir, is_frozen, project_root, user_config_dir, user_data_dir
-from src.smoke_test import check_game_files, check_save_dir, game_file_paths
+from src.smoke_test import check_chiptune_tracks, check_game_files, check_save_dir, game_file_paths
 
 REPO_ROOT = dirname(dirname(realpath(__file__)))
 HOME = os.path.expanduser('~')
@@ -111,7 +112,32 @@ class TestUserDataDir(TestCase):
 
 class TestSmokeTest(FrozenTestCase):
     def test_finds_every_game_file_from_source(self):
-        self.assertEqual(check_game_files(test_config), [])
+        # every chiptune track renders: tests/test_chiptune_soundtracks.py, where libgme is installed
+        with patch('src.smoke_test.check_chiptune_tracks', return_value=[]):
+            self.assertEqual(check_game_files(test_config), [])
+
+    def test_a_build_must_play_the_music_with_its_own_libgme(self):
+        with tempfile.TemporaryDirectory() as meipass:
+            self.freeze(meipass)
+            for library_path, problems in ((join(meipass, 'libgme.so.0'), []),
+                                           ('libgme.so.0', ["libgme isn't bundled: the build loaded libgme.so.0"])):
+                with self.subTest(library=library_path), \
+                        patch('src.smoke_test.chiptune_library', return_value=MagicMock(path=library_path)), \
+                        patch('src.smoke_test.chiptune_tracks', return_value=[]):
+                    self.assertEqual(problems, check_chiptune_tracks())
+
+    def test_a_build_without_libgme_fails(self):
+        with patch('src.smoke_test.chiptune_library', return_value=None):
+            self.assertEqual(["libgme isn't bundled or installed: the NES and SFC soundtracks can't play"],
+                             check_chiptune_tracks())
+
+    def test_a_silent_or_broken_track_fails(self):
+        emulator = MagicMock()
+        emulator.render.side_effect = [bytes(8), ChiptuneError('bad track')]
+        with patch('src.smoke_test.chiptune_library', return_value=MagicMock(path='libgme.so.0')), \
+                patch('src.smoke_test.chiptune_tracks', return_value=['a.spc', 'b.spc']), \
+                patch('src.smoke_test.Emulator', return_value=emulator):
+            self.assertEqual(['a.spc renders only silence', "can't play b.spc: bad track"], check_chiptune_tracks())
 
     def test_checks_every_soundtrack_and_the_checkpoints(self):
         file_paths = game_file_paths(test_config)
