@@ -90,6 +90,7 @@ class HeldKey(NamedTuple):
     key: int
     mod: int
 
+
 _speed = 1
 # game_ticks() == _game_anchor + (get_ticks() - _real_anchor) * _speed, re-anchored on every speed change, so the game
 # clock never jumps: it only starts running faster or slower from that moment on.
