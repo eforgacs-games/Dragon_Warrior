@@ -99,7 +99,7 @@ class TestSmokeScenesEnglish(SmokeGameTestCase):
             self.assertEqual(1, run_smoke_test(self.game))
 
     def test_run_smoke_test_fails_on_a_missing_file(self):
-        missing = ['missing: data/fonts/unifont.ttf']
+        missing = ['missing: data/fonts/unifont.otf']
         with patch.object(smoke_test, 'check_game_files', return_value=missing), \
                 patch.object(smoke_test, 'play_smoke_scenes') as play, patch('builtins.print') as printed:
             self.assertEqual(1, run_smoke_test(self.game))
