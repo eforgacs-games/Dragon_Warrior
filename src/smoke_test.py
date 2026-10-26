@@ -24,7 +24,8 @@ from pygame.event import Event
 
 from src.catalog import compile_po, po_path
 from src.checkpoints import CHECKPOINT_NAMES, checkpoint_hero_name, checkpoint_path, read_checkpoint
-from src.chiptune import ChiptuneError, Emulator, bundled_library_dirs, chiptune_library, parse_track_ref
+from src.chiptune import (ChiptuneError, Emulator, bundled_library_dirs, chiptune_library, parse_track_ref,
+                          tagged_length_seconds)
 from src.directories import CHIPTUNE_SOUNDTRACKS, CLIP_NAMES, MUSIC_NAMES, Directories, clip_paths, music_paths
 from src.paths import data_path, is_frozen
 from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, SOUNDTRACKS, Soundtrack
@@ -75,13 +76,22 @@ def chiptune_tracks() -> list[str]:
     return sorted(track for track in tracks if parse_track_ref(track))
 
 
+def untagged_clips() -> list[str]:
+    """The chiptune tracks the game plays once (the clips and the ending) whose length can't be read: the NSF's
+    playlist (.m3u) is missing or doesn't tag one, or an SPC's ID666 tag has none."""
+    played_once = {value for chosen in CHIPTUNE_SOUNDTRACKS
+                   for value in (*clip_paths(chosen).values(), music_paths(chosen)['ending_music'])}
+    return [f'{track} has no tagged length' for track in sorted(played_once)
+            if parse_track_ref(track) and tagged_length_seconds(track) is None]
+
+
 def check_chiptune_tracks() -> list[str]:
     """Loads libgme and renders the first seconds of every chiptune track; returns what failed (libgme missing, a
     track that doesn't load, or one that renders only silence)."""
     library = chiptune_library()
+    problems = untagged_clips()
     if library is None:
-        return ["libgme isn't bundled or installed: the NES and SFC soundtracks can't play"]
-    problems = []
+        return ["libgme isn't bundled or installed: the NES and SFC soundtracks can't play", *problems]
     if is_frozen() and os.path.dirname(library.path) not in bundled_library_dirs():
         problems.append(f"libgme isn't bundled: the build loaded {library.path}")
     frame_count = CHIPTUNE_CHECK_SECONDS * CHIPTUNE_CHECK_SAMPLE_RATE

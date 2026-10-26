@@ -10,17 +10,23 @@ chunk, so a track played once runs straight into the one that loops after it.
 
 The game's thread starts, stops, pauses and fades the stream; the streaming thread only renders and queues. A lock
 keeps them from changing the stream at the same time.
+
+Every stream is closed, and its thread finished, before pygame is closed (close_all_streams, run by
+src/waiting.py quit_pygame): pygame frees its mixer channels on quit, and a thread still queueing on one would crash
+the game.
 """
 import array
 import atexit
 import threading
 import time
+import weakref
 from collections.abc import Callable
 from dataclasses import dataclass
 
 from pygame import error as pygame_error, mixer
 
 from src.chiptune import (BYTES_PER_SAMPLE, EMULATOR_CHANNELS, ChiptuneError, Emulator, GmeLibrary, parse_track_ref)
+from src.waiting import on_quit
 
 # How much music each queued chunk holds. The channel plays one chunk while the next waits in its queue, so this is
 # also how far ahead of the speakers the emulator runs, and how long a volume change can take to be heard.
@@ -29,6 +35,20 @@ CHUNK_SECONDS = 0.1
 PUMP_INTERVAL_SECONDS = 0.01
 # The mixer's format the chunks are made in: signed 16-bit samples (pygame's default)
 SIGNED_16_BIT = -16
+# How long closing a stream waits for its thread to finish the step it is on (a step takes well under a millisecond)
+THREAD_JOIN_TIMEOUT_SECONDS = 1.0
+
+_open_streams: 'weakref.WeakSet[MusicStream]' = weakref.WeakSet()
+
+
+def close_all_streams() -> None:
+    """Stops every stream and finishes its thread: before pygame quits, so no thread touches a freed mixer channel."""
+    for stream in list(_open_streams):
+        stream.close()
+
+
+on_quit(close_all_streams)
+atexit.register(close_all_streams)
 
 
 @dataclass(frozen=True)
@@ -92,7 +112,7 @@ class MusicStream:
         self._fade: tuple[float, float] | None = None  # (start, seconds) of a fade out in progress
         self._thread: threading.Thread | None = None
         self._closed = False
-        atexit.register(self.close)
+        _open_streams.add(self)
 
     # The game's side
 
@@ -103,6 +123,7 @@ class MusicStream:
             mixer_format = mixer.get_init()
             if not mixer_format or not segments:
                 return
+            self._closed = False  # a stream closed with pygame plays again once the mixer is back
             sample_rate, sample_format, channels = mixer_format
             if sample_format != SIGNED_16_BIT:
                 return
@@ -162,11 +183,15 @@ class MusicStream:
             self._pump_locked()
 
     def close(self) -> None:
-        """Stops the music and the streaming thread (at exit, before the mixer goes away)."""
+        """Stops the music and the streaming thread, and waits for the thread to finish: before the mixer goes away.
+        Playing again (with the mixer running) starts a new thread."""
         with self._lock:
             self._closed = True
             self._stop_locked()
         self._wake.set()
+        thread = self._thread
+        if thread is not None and thread is not threading.current_thread():
+            thread.join(THREAD_JOIN_TIMEOUT_SECONDS)
 
     # Both sides, under the lock
 
@@ -250,8 +275,10 @@ class MusicStream:
             self._thread.start()
 
     def _run(self) -> None:
-        while not self._closed:
+        while True:
             with self._lock:
+                if self._closed:  # checked under the lock: close() may have run since the last step
+                    return
                 try:
                     self._pump_locked()
                 except pygame_error:  # the mixer went away (the game is closing)
