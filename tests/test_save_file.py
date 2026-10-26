@@ -3,14 +3,15 @@ import json
 import os
 import tempfile
 from unittest import TestCase
+from unittest.mock import patch
 
 import pygame
 
 from src.checkpoints import CHECKPOINT_NAMES, FACING_KEY, checkpoint_path
 from src.config.test_config import test_config
 from src.options_screen import Options
-from src.save_file import SaveFile, first_open_log, log_for_unchosen_save, logs_named, save_files, save_slot_number, \
-    used_logs, write_save
+from src.save_file import DAMAGED_LOG_NAME, SAVE_FORMAT_VERSION, VERSION_KEY, SaveFile, first_open_log, \
+    log_for_unchosen_save, logs_named, read_save_name, save_files, save_slot_number, used_logs, write_save
 from src.story_flags import StoryFlags
 from tests.helpers import new_game
 
@@ -222,3 +223,82 @@ class TestSaveSlots(TestCase):
         self.assertEqual(2, log_for_unchosen_save(self.save_dir, 'Loto'))
         self.write(2, 'Ed')
         self.assertIsNone(log_for_unchosen_save(self.save_dir, 'Ed'))
+
+    def test_a_failed_write_leaves_the_log_whole(self):
+        # It used to open the file for writing (emptying it) before the save was turned into JSON
+        self.write(1, 'Ed')
+        with self.assertRaises(TypeError):
+            write_save(os.path.join(self.save_dir, 'save_slot_1.json'), {'Name': object()})
+        self.assertEqual([(1, 'Ed')], used_logs(self.save_dir, save_files(self.save_dir)))
+
+    def test_a_damaged_log_is_used(self):
+        # A log that can't be read is never taken for an open one (it's listed as damaged, to be erased)
+        with open(os.path.join(self.save_dir, 'save_slot_1.json'), 'w') as save_file:
+            save_file.write('{"Name": "Ed"')
+        self.assertEqual(2, first_open_log(self.save_dir))
+        self.assertEqual([], used_logs(self.save_dir, save_files(self.save_dir)))
+        self.assertEqual([(1, DAMAGED_LOG_NAME)], used_logs(self.save_dir, save_files(self.save_dir),
+                                                            include_damaged=True))
+
+
+class TestSafeSaving(TestCase):
+    """CommandMenu.save never leaves a log half written, never writes over another hero's log or a newer build's,
+    and a save that can't be made is said."""
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+        pygame.mixer.init()
+        pygame.display.set_mode((800, 600))
+
+    def setUp(self):
+        saved_config = dict(test_config)
+        self.addCleanup(lambda: (test_config.clear(), test_config.update(saved_config)))
+        test_config['NO_WAIT'] = True
+        test_config['RENDER_TEXT'] = False
+        test_config['NO_BLIT'] = True
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp_dir.cleanup)
+        self.game = new_game()
+        self.game.cmd_menu.directories.save_dir = self.tmp_dir.name
+        self.game.player.name = 'Erdrick'
+        self.game.player.adventure_log = 1
+        self.path = os.path.join(self.tmp_dir.name, 'save_slot_1.json')
+
+    def read_log(self):
+        with open(self.path) as save_file:
+            return save_file.read()
+
+    def test_a_crash_while_writing_leaves_the_log_as_it_was(self):
+        self.assertTrue(self.game.cmd_menu.save())
+        before = self.read_log()
+        self.game.player.gold = 999
+        with patch('src.json_files.os.replace', side_effect=OSError("crash")), patch('builtins.print'):
+            self.assertFalse(self.game.cmd_menu.save())
+        self.assertEqual(before, self.read_log())
+        self.assertEqual(['save_slot_1.json'], os.listdir(self.tmp_dir.name))  # no temporary file left over
+
+    def test_a_full_disk_is_said(self):
+        with patch('src.save_file.atomic_write_json', side_effect=OSError("No space left on device")), \
+                patch('builtins.print'):
+            self.assertFalse(self.game.cmd_menu.save())
+        with patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as say, \
+                patch.object(self.game.cmd_menu, 'save', return_value=False):
+            self.game.cmd_menu.dialog_lookup.save_game()
+        say.assert_called_once_with("Alas, thy deeds could not be recorded.")
+
+    def test_a_log_from_a_newer_build_is_never_written_over(self):
+        newer = {VERSION_KEY: SAVE_FORMAT_VERSION + 1, 'Name': 'Erdrick', 'Experience': 0, 'Gold': 0,
+                 'Inventory': [], 'Pets': ['Slime']}
+        write_save(self.path, newer)
+        with patch('builtins.print'):
+            self.assertFalse(self.game.cmd_menu.save())
+        with open(self.path) as save_file:
+            self.assertEqual(newer, json.load(save_file))
+
+    def test_another_heros_log_is_never_written_over(self):
+        write_save(self.path, {'Name': 'Loto', 'Experience': 7, 'Gold': 5, 'Inventory': []})
+        with patch('builtins.print'):
+            self.assertTrue(self.game.cmd_menu.save())
+        self.assertEqual('Loto', read_save_name(self.path))
+        self.assertEqual('Erdrick', read_save_name(os.path.join(self.tmp_dir.name, 'save_slot_2.json')))

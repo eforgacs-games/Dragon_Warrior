@@ -21,7 +21,13 @@ The file is JSON, in the per-user config folder (src/paths.py user_config_dir), 
 The game reads it once at start (Game.__init__), before the window opens, so the window comes up at the saved zoom and
 in fullscreen if that was saved, and writes it whenever one of the settings changes. A missing file, one that isn't
 JSON, or a value that makes no sense means the default for that setting; the game never fails to start over it. A file
-that can't be written (a read-only folder) only prints a warning.
+that can't be written (a read-only folder) only prints a warning. The file is written in one step
+(src/json_files.py), so a crash halfway leaves the old one whole.
+
+A file from a newer build may have settings this build doesn't know, and a newer format version: they're kept as they
+are (Settings.other_entries) and written back with the settings this build changes, so going back to an older build
+for a while never loses them. (Unlike an adventure log, the settings are independent values with no migrations: the
+ones this build knows mean the same in a newer file.)
 
 The config's SETTINGS_PATH says where the file is: USER_SETTINGS (prod and dev) for the user's config folder, or
 $DRAGON_WARRIOR_SETTINGS if that is set; a path for that file; or None to keep nothing (test_config, the benchmark and
@@ -30,12 +36,13 @@ the frame recorder, which must never read or write the player's own settings).
 import json
 import os
 from collections.abc import Callable
-from dataclasses import asdict, dataclass, fields, replace
-from os.path import dirname, join
+from dataclasses import asdict, dataclass, field, fields, replace
+from os.path import join
 from typing import Any
 
 from src.controls import Controls
 from src.display_filters import SCALING_MODES, SCALING_SMOOTH
+from src.json_files import atomic_write_json
 from src.paths import user_config_dir
 from src.view import VIEW_NES, VIEWS
 
@@ -62,9 +69,13 @@ class Settings:
     name_confirm: bool = True  # the CONFIRM NAME row: a full name waits on END (src/name_entry.py)
     # The keys and controller buttons (src/controls.py Controls.to_json); None: the defaults
     controls: dict[str, Any] | None = None
+    # What the file has that this build doesn't know: a newer build's settings, and its format version if it's newer.
+    # They're written back as they were, so playing an older build never loses a newer one's settings.
+    other_entries: dict[str, Any] = field(default_factory=dict)
 
     def to_json(self) -> dict[str, Any]:
-        return {'version': FORMAT_VERSION, **asdict(self)}
+        known = {name: value for name, value in asdict(self).items() if name != OTHER_ENTRIES}
+        return {'version': FORMAT_VERSION, **self.other_entries, **known}
 
     @classmethod
     def from_json(cls, data: Any) -> 'Settings':
@@ -95,7 +106,22 @@ class Settings:
         controls = data.get('controls')
         # Read back through Controls, so a bad entry is the default and the rest are kept (Controls.from_json)
         values['controls'] = Controls.from_json(controls).to_json() if isinstance(controls, dict) else default.controls
+        values[OTHER_ENTRIES] = other_entries(data)
         return cls(**values)
+
+
+OTHER_ENTRIES = 'other_entries'
+
+
+def other_entries(data: dict[str, Any]) -> dict[str, Any]:
+    """The entries of a settings file this build doesn't read (Settings.other_entries): every key that isn't a setting
+    here, and the format version if it's newer than this build's."""
+    known = {setting.name for setting in fields(Settings)} | {'version'}
+    entries = {key: value for key, value in data.items() if key not in known}
+    version = data.get('version')
+    if type(version) is int and version > FORMAT_VERSION:
+        entries['version'] = version
+    return entries
 
 
 def default_settings_path() -> str:
@@ -124,15 +150,10 @@ def load_settings(path: str | None) -> Settings:
 
 
 def save_settings(path: str, settings: Settings) -> bool:
-    """Write the settings to the file, making its folder if need be. Written to a temporary file first and then moved
-    over the old one, so a crash halfway leaves the old file whole. Returns whether it was written."""
-    temporary = f'{path}.tmp'
+    """Write the settings to the file, making its folder if need be, in one step (src/json_files.py), so a crash
+    halfway leaves the old file whole. Returns whether it was written."""
     try:
-        os.makedirs(dirname(path) or '.', exist_ok=True)
-        with open(temporary, 'w', encoding='utf-8') as settings_file:
-            json.dump(settings.to_json(), settings_file, indent=2)
-            settings_file.write('\n')
-        os.replace(temporary, path)
+        atomic_write_json(path, settings.to_json(), indent=2, trailing_newline=True)
     except OSError as error:
         print(f"Could not save the settings to {path}: {error}")
         return False
@@ -153,7 +174,7 @@ class SettingsStore:
     def update(self, **changes: Any) -> bool:
         """Change some settings (by their Settings field names) and write the file if anything changed. Returns whether
         anything changed."""
-        unknown = set(changes) - {field.name for field in fields(Settings)}
+        unknown = set(changes) - {setting.name for setting in fields(Settings)}
         if unknown:
             raise TypeError(f"Unknown settings: {sorted(unknown)}")
         changed = replace(self.settings, **changes)

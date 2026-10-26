@@ -10,6 +10,7 @@ from pygame import K_ESCAPE, KEYDOWN
 from pygame.event import Event
 
 from src.common import set_gettext_language
+from src.save_file import DAMAGED_LOG_NAME
 from src.title_menu import BACK_TO_TITLE_MENU
 from src.options_screen import OptionsScreen, erase_log_window, open_log_options, yes_no_options
 from src.windows import ADVENTURE_LOG_WINDOW_1, CONTINUE_CHANGE_ERASE_LAYOUT, ERASE_LOG_WINDOW, YES_NO_2_WINDOW
@@ -142,6 +143,66 @@ class TestCopyAndErase(OptionsTestCase):
                 self.no_screenshot_menu():
             self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.erase_quest())
         confirm_erase.assert_called_once_with('Lotoroto', 2)
+
+    # The save states and the autosave of the hero who played from a log (not NES)
+
+    def write_snapshot_files(self, logs_by_file):
+        """A save state or autosave file for each name, its hero playing from that adventure log."""
+        for file_name, log in logs_by_file.items():
+            with open(os.path.join(self.tmp_dir.name, file_name), 'w') as snapshot_file:
+                json.dump({'version': 2, 'hero': {'name': 'Hero', 'adventure_log': log}}, snapshot_file)
+
+    def snapshot_files(self):
+        return sorted(name for name in os.listdir(self.tmp_dir.name) if not name.startswith('save_slot_'))
+
+    def test_erasing_a_log_deletes_its_heros_save_states_and_autosave(self):
+        self.write_snapshot_files({'state_1.json': 2, 'state_2.json': 1, 'state_3.json': 2, 'autosave.json': 2})
+        # log 2, then YES
+        self.run_title_menu(ERASE, [DOWN, ENTER, ENTER])
+        self.assertEqual(['state_2.json'], self.snapshot_files())
+
+    def test_erasing_nothing_deletes_nothing(self):
+        self.write_snapshot_files({'state_1.json': 2, 'autosave.json': 2})
+        self.run_title_menu(ERASE, [DOWN, ENTER, DOWN, ENTER])
+        self.assertEqual(['autosave.json', 'state_1.json'], self.snapshot_files())
+
+    def test_copying_into_a_log_deletes_the_save_states_of_a_hero_who_was_in_it(self):
+        # Log 3 was deleted outside the game, so its hero's state is still there
+        self.write_snapshot_files({'state_1.json': 3, 'state_2.json': 1})
+        self.run_title_menu(COPY, [ENTER, ENTER, ENTER])
+        self.assertEqual(self.saves[1], self.logs()[3])
+        self.assertEqual(['state_2.json'], self.snapshot_files())
+
+    # A log whose file can't be read (not NES): listed as damaged, to be erased, and never written over
+
+    def damage_log(self, slot):
+        with open(self.save_path(slot), 'w') as save_file:
+            save_file.write('{"Name": "Erd')
+
+    def test_a_damaged_log_is_listed_and_can_be_erased(self):
+        self.damage_log(3)
+        self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
+        with patch.object(OptionsScreen, 'choose_log', return_value=3) as choose_log, \
+                patch.object(OptionsScreen, 'confirm_erase', return_value=True) as confirm_erase, \
+                self.no_screenshot_menu():
+            self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.erase_quest())
+        self.assertEqual([(1, 'Erdrick'), (2, 'Lotoroto'), (3, DAMAGED_LOG_NAME)], choose_log.call_args.args[0])
+        confirm_erase.assert_called_once_with(DAMAGED_LOG_NAME, 1)
+        self.assertEqual({1: self.saves[1], 2: self.saves[2], 3: None}, self.logs())
+
+    def test_continuing_a_damaged_log_goes_back_to_the_title_menu(self):
+        self.damage_log(3)
+        self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
+        with patch.object(OptionsScreen, 'choose_log', return_value=3) as choose_log, \
+                patch.object(self.game, 'load_game') as load_game, self.no_screenshot_menu():
+            self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.continue_quest())
+        self.assertIn((3, DAMAGED_LOG_NAME), choose_log.call_args.args[0])
+        load_game.assert_not_called()
+
+    def test_a_damaged_log_cant_be_copied_or_have_its_speed_changed(self):
+        self.damage_log(3)
+        self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
+        self.assertEqual([(1, 'Erdrick'), (2, 'Lotoroto')], self.game.title_menu.used_logs())
 
 
 class TestLogWindows(OptionsTestCase):
