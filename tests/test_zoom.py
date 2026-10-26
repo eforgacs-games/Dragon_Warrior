@@ -23,12 +23,17 @@ SCALE = test_config['SCALE']
 LOGICAL_SIZE = (test_config['NES_RES'][0] * SCALE, test_config['NES_RES'][1] * SCALE)
 
 
-def open_window():
+# The WIDE view's screen (src/view.py): 426x240 NES pixels, 16:9
+WIDE_NES_WIDTH = 426
+WIDE_LOGICAL_SIZE = (WIDE_NES_WIDTH * SCALE, LOGICAL_SIZE[1])
+
+
+def open_window(size=LOGICAL_SIZE):
     """Open the game's window the way Game does (SCALED, at its normal size). Under SDL's dummy driver a SCALED window
     can't be opened again over another one (no renderer), so the display is restarted first."""
     pygame.display.quit()
     pygame.display.init()
-    return pygame.display.set_mode(LOGICAL_SIZE, RESIZABLE | SCALED)
+    return pygame.display.set_mode(size, RESIZABLE | SCALED)
 
 
 def ctrl_key(key_code, mod=KMOD_LCTRL):
@@ -203,6 +208,24 @@ class TestZoomKeys(ZoomTestCase):
         self.assertEqual(self.zoomed(SCALE), self.window_size())
         zoom.restore_windowed_size()
         self.assertEqual(self.zoomed(3), self.window_size())
+
+
+    def test_a_saved_zoom_for_a_game_opened_in_fullscreen_is_wide_in_the_wide_view(self):
+        self.addCleanup(open_window)
+        open_window(WIDE_LOGICAL_SIZE)
+        zoom.set_windowed_zoom(3)
+        zoom.restore_windowed_size()
+        self.assertEqual((WIDE_NES_WIDTH * 3, 240 * 3), self.window_size())
+
+    def test_a_view_changed_in_fullscreen_keeps_the_zoom(self):
+        # 3x in the NES view, then fullscreen, then VIEW: WIDE (Game.set_view makes the window again, still fullscreen),
+        # then back to a window: 3x of the wide picture
+        self.addCleanup(open_window)
+        zoom.zoom_in()
+        zoom.remember_windowed_size()
+        open_window(WIDE_LOGICAL_SIZE)
+        zoom.restore_windowed_size()
+        self.assertEqual((WIDE_NES_WIDTH * 3, 240 * 3), self.window_size())
 
 
 class TestZoomInEveryLoop(ZoomTestCase):
