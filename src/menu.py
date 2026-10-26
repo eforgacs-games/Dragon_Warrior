@@ -3,7 +3,8 @@ import random
 
 from src.spells import Spell
 from typing import Any, TypedDict
-from collections.abc import Callable, Collection, Iterable
+from collections.abc import Callable, Collection, Iterable, Iterator
+from contextlib import contextmanager
 
 from pygame import Surface, display, KEYDOWN, Rect, event, transform
 from pygame.sprite import Group
@@ -98,6 +99,8 @@ class CommandMenu:
         self.current_battle = None
         # The NPC whose dialog is showing (launch_dialog), for the message log
         self.speaker: str | None = None
+        # While the game shows pages of its own (not_logged), nothing goes to the message log
+        self.logging_paused = False
         self.current_tile = self.player.current_tile
         self.characters = self.current_map.characters
         self.map_name = self.current_map.__class__.__name__
@@ -370,11 +373,21 @@ class CommandMenu:
 
     def log_message(self, line: str, quoted: bool, temporary: bool) -> None:
         """Keep the message for the message log (src/message_log.py): the NPC talking says a quoted one. Not a fight's
-        messages, nor the ones shown over the map for a moment (temporary)."""
+        messages, nor the ones shown over the map for a moment (temporary), nor the game's own pages (not_logged)."""
         message_log = getattr(self.game, 'message_log', None)
-        if message_log is None or temporary or self.current_battle is not None:
+        if message_log is None or temporary or self.logging_paused or self.current_battle is not None:
             return
         message_log.record(line, speaker_of(self.speaker) if quoted else None)
+
+    @contextmanager
+    def not_logged(self) -> Iterator[None]:
+        """Show the game's own pages (the help, the quest journal) without keeping them in the message log, where they
+        would push out what the NPCs said."""
+        self.logging_paused = True
+        try:
+            yield
+        finally:
+            self.logging_paused = False
 
     @property
     def modern_dialog(self) -> bool:
