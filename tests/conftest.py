@@ -9,6 +9,7 @@ import atexit
 import os
 import shutil
 import tempfile
+from unittest.mock import patch
 
 import pytest
 
@@ -18,6 +19,15 @@ from src.settings import SETTINGS_ENV_VAR, SETTINGS_FILE_NAME
 _settings_dir = tempfile.mkdtemp(prefix='dragon_warrior_test_settings_')
 os.environ[SETTINGS_ENV_VAR] = os.path.join(_settings_dir, SETTINGS_FILE_NAME)
 atexit.register(shutil.rmtree, _settings_dir, ignore_errors=True)
+
+
+@pytest.fixture(autouse=True)
+def soundtrack_music_as_chosen():
+    """The NES and SFC soundtracks' music is the chosen soundtrack's whether or not libgme is installed (without it, the
+    game plays the orchestral recordings instead: src/directories.py playable_soundtrack), so the tests see the same
+    music on every machine. The tests of that fallback patch it themselves."""
+    with patch('src.directories.chiptune_available', return_value=True):
+        yield
 
 
 @pytest.fixture(autouse=True)
