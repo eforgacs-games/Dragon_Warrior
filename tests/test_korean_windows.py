@@ -190,7 +190,7 @@ class TestKoreanOptionsScreen(KoreanTestCase):
     def test_options_overlay(self):
         config = {**self.game.game_state.config, **{row.config_key: row.values[0] for row in OPTION_ROWS}}
         self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/4', '표시 속도', '빠름', '대화 방식',
-                           '클래식 (NES)', '페이드 방식', 'NES', '음악', '오케스트라', '언어', 'ENGLISH', '주사선',
+                           '클래식 (NES)', '페이드 방식', 'NES', '음악', 'NES', '언어', 'ENGLISH', '주사선',
                            '끄기', '화면 배율', '스무스', '화면', 'NES (4:3)', '능력치 창', 'NES', '상점 미리보기',
                            '끄기 (NES)'],
                           ['게임 플레이', '프리셋', '커스텀', '페이지', '2/4', 'NPC가 길 비키기', '켜기', '계단',
@@ -205,7 +205,7 @@ class TestKoreanOptionsScreen(KoreanTestCase):
                          [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(4)])
         config.update({row.config_key: row.values[1] for row in OPTION_ROWS})
         self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/4', '표시 속도', '보통', '대화 방식', '모던',
-                           '페이드 방식', '스무스', '음악', 'NES', '언어', '한국어', '주사선', '켜기',
+                           '페이드 방식', '스무스', '음악', 'SFC', '언어', '한국어', '주사선', '켜기',
                            '화면 배율', '정수 배율', '화면', '와이드', '능력치 창', '항상', '상점 미리보기', '켜기'],
                           ['게임 플레이', '프리셋', '커스텀', '페이지', '2/4', 'NPC가 길 비키기', '끄기 (NES)', '계단',
                            'NES', '빠른 행동', '켜기', '스마트 A', '켜기', '적 출현', '절반', '경험치/골드', 'x2',

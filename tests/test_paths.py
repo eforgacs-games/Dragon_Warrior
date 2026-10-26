@@ -113,9 +113,10 @@ class TestSmokeTest(FrozenTestCase):
     def test_finds_every_game_file_from_source(self):
         self.assertEqual(check_game_files(test_config), [])
 
-    def test_checks_both_music_settings_and_the_checkpoints(self):
+    def test_checks_every_soundtrack_and_the_checkpoints(self):
         file_paths = game_file_paths(test_config)
         self.assertIn(data_path('sound', 'music', 'orchestra', '05 Fight.mp3'), file_paths)
+        self.assertIn(data_path('sound', 'music', 'SFC', '14 Fight (SFC Version).mp3'), file_paths)
         self.assertIn(data_path('sound', 'music', 'NES', '14 Dragon Quest 1 - A Monster Draws Near.mp3'), file_paths)
         self.assertIn(data_path('checkpoints', 'rainbow_bridge.json'), file_paths)
         self.assertIn(data_path('fonts', 'unifont.ttf'), file_paths)
