@@ -1,9 +1,23 @@
 """Helpers shared by the test modules. Plain functions rather than pytest fixtures, so unittest TestCases can use them."""
+import os
+import unittest
 from unittest.mock import patch
 
+from src.chiptune import chiptune_available
 from src.config.test_config import test_config
 from src.game import Game
 from src.waiting import frames_to_ms, game_speed
+
+
+# Set (CI does) to make the tests that need libgme fail where it's missing, rather than skip
+REQUIRE_LIBGME_ENV_VAR = 'REQUIRE_LIBGME'
+
+
+def requires_libgme(test):
+    """For a test (or TestCase) that plays the NES or SFC music through the real libgme: skipped where libgme isn't
+    installed, unless REQUIRE_LIBGME is set."""
+    return unittest.skipUnless(chiptune_available() or os.environ.get(REQUIRE_LIBGME_ENV_VAR),
+                               "libgme isn't installed (README: Installing libgme)")(test)
 
 
 def new_game(config: dict = test_config) -> Game:

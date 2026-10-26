@@ -155,6 +155,12 @@ class MusicStream:
             self._update_locked()
             return self._playing
 
+    def pump(self) -> None:
+        """One step of the streaming thread: ends the music if it's over, and gives the channel its next chunk if it
+        has none waiting."""
+        with self._lock:
+            self._pump_locked()
+
     def close(self) -> None:
         """Stops the music and the streaming thread (at exit, before the mixer goes away)."""
         with self._lock:

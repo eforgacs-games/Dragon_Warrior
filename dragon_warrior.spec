@@ -7,6 +7,11 @@
 #
 # The game finds data/ through src/paths.py, which uses sys._MEIPASS in a build, so the files are bundled at the same
 # paths relative to it as in the repository. Saves go to a per-user folder in a build (src/paths.py default_save_dir).
+#
+# libgme, which plays the NES and SFC music (src/chiptune.py), is bundled from GME_LIBRARY (the shared library's path)
+# with its license from GME_LICENSE, both set by the release workflow after building it. src/chiptune.py looks for it in
+# sys._MEIPASS first. Without GME_LIBRARY the build has none, and its smoke test says so.
+import os
 import sys
 from glob import glob
 from os.path import dirname, join
@@ -24,10 +29,18 @@ for po_file in glob(join(ROOT, 'data', 'text', 'locales', '*', 'LC_MESSAGES', '*
 # The game's version, for the crash log (src/crash_log.py game_version)
 datas.append((join(ROOT, 'pyproject.toml'), '.'))
 
+binaries = []
+if os.environ.get('GME_LIBRARY'):
+    binaries.append((os.path.abspath(os.environ['GME_LIBRARY']), '.'))
+    datas.append((os.path.abspath(os.environ['GME_LICENSE']), '.'))  # LGPL: its license ships with it
+else:
+    print('GME_LIBRARY is not set: the build will have no libgme, so no NES or SFC music', file=sys.stderr)
+
 a = Analysis(  # noqa: F821
     [join(ROOT, 'src', 'game.py')],
     # src.* and data.text.* are imported from the repository root (src/game.py adds it to sys.path)
     pathex=[ROOT],
+    binaries=binaries,
     datas=datas,
     # Not used by the game (pygame only imports numpy for surfarray and sndarray)
     excludes=['tkinter', 'numpy'],

@@ -89,6 +89,9 @@ jobs:
     - name: Install dependencies
       # --locked fails if uv.lock is out of date with pyproject.toml
       run: uv sync --locked
+    - name: Install libgme
+      # The NES and SFC music's emulator (src/chiptune.py), so the tests play the real thing
+      run: sudo apt-get update && sudo apt-get install -y libgme0
     - name: Check requirements.txt matches uv.lock
       run: |
         diff <(grep -v '^#' requirements.txt) <(uv export --locked --no-dev --no-hashes --no-annotate | grep -v '^#') \
@@ -101,6 +104,7 @@ jobs:
     - name: Test with pytest
       env:
         COVERAGE_CORE: sysmon  # coverage.py's sys.monitoring tracer (Python 3.12+), much cheaper than its default
+        REQUIRE_LIBGME: "1"  # the tests that need libgme fail instead of skipping (tests/helpers.py requires_libgme)
       # -n auto: pytest-xdist runs the tests on every CPU (4 on GitHub's runners); --dist loadscope and the 60 s
       # per-test timeout (pytest-timeout) are in pyproject.toml.
       # --cov-fail-under: total line coverage was 96.9% when this was added; the floor is a couple of points below

@@ -55,6 +55,25 @@ To build locally: `uv sync --group build`, then `uv run pyinstaller dragon_warri
 Dependency versions are pinned in `uv.lock`. With [uv](https://docs.astral.sh/uv/), `uv sync` installs them, plus the dev tools
 (pytest, mypy, ruff), into `.venv`. Without uv, `pip install -r requirements.txt` installs the same game dependencies.
 
+## Installing libgme
+
+The NES and SFC soundtracks (the MUSIC option) aren't recordings: the game plays the NES game's own music data
+(`data/sound/music/NES/dragon_warrior.nsf`) and the Super Famicom remake's (`data/sound/music/SFC/*.spc`) by emulating
+the consoles' sound chips with [libgme (Game_Music_Emu)](https://github.com/libgme/game-music-emu). The release builds
+bundle it; from source, install it once:
+
+- Debian / Ubuntu: `sudo apt install libgme0`
+- Fedora: `sudo dnf install game-music-emu`
+- Arch: `sudo pacman -S libgme`
+- macOS ([Homebrew](https://brew.sh/)): `brew install game-music-emu`
+- Windows ([MSYS2](https://www.msys2.org/)): `pacman -S mingw-w64-ucrt-x86_64-libgme`, then put MSYS2's `ucrt64\bin`
+  (with `libgme.dll`) on the `PATH`; or build it with CMake from the [source](https://github.com/libgme/game-music-emu)
+  (`cmake -B build -DBUILD_SHARED_LIBS=ON && cmake --build build --config Release`) and copy `gme.dll` onto the `PATH`.
+
+Without libgme the game still runs: it says so once when it starts, the NES and SFC music options play the orchestral
+recordings instead, and the jingles (the inn, the fanfares) are silent but keep their timing.
+
+
 # INSTRUCTIONS
 
 
