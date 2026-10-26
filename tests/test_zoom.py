@@ -11,6 +11,7 @@ from pygame.event import Event
 
 from src import zoom
 from src.config.test_config import test_config
+from src.display_window import display_window
 from src.selection import frame_events
 from src.waiting import game_speed, get_events, reset_game_speed
 from tests.helpers import new_game
@@ -146,10 +147,10 @@ class TestZoomKeys(ZoomTestCase):
         self.assertEqual(self.zoomed(SCALE), self.window_size())
 
     def test_a_dragged_window_steps_to_the_next_whole_zoom(self):
-        pygame._sdl2.video.Window.from_display_module().size = (900, 840)  # 3.5x
+        display_window().size = (900, 840)  # 3.5x
         zoom.zoom_in()
         self.assertEqual(self.zoomed(4), self.window_size())
-        pygame._sdl2.video.Window.from_display_module().size = (900, 840)
+        display_window().size = (900, 840)
         zoom.zoom_out()
         self.assertEqual(self.zoomed(3), self.window_size())
 
@@ -159,7 +160,7 @@ class TestZoomKeys(ZoomTestCase):
         zooms = []
         zoom.set_zoom_listener(zooms.append)
         self.addCleanup(zoom.set_zoom_listener, None)
-        window = pygame._sdl2.video.Window.from_display_module()
+        window = display_window()
         for size, expected in (((900, 840), 4), ((800, 730), 3), ((300, 280), SCALE), ((5000, 4000), 4)):
             with self.subTest(size=size):
                 window.size = size

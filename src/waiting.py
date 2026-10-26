@@ -23,8 +23,8 @@ post its button presses and report its held keys from inside whichever loop is r
 gamepad (src/gamepad.py) plugs in at the same two places, polled just before the virtual joypad, so its presses reach
 the game, and auto-grind, as the player's own key presses.
 
-This module imports nothing from ``src`` but src/zoom.py (which imports nothing from ``src``), so any module can use it
-without an import cycle.
+This module imports nothing from ``src`` but src/controls.py and src/zoom.py (which import nothing from ``src`` but
+src/display_window.py), so any module can use it without an import cycle.
 
 The selection windows don't speed up (#440): their cursor (src/cursor.py: the blink, the held button's retrigger, the
 "let go first" of a button held as a window opens) and their loops (src/selection.py next_frame) run on the menu
