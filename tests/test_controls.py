@@ -10,20 +10,21 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
-from pygame import K_1, K_2, K_3, K_4, K_5, K_DELETE, K_DOWN, K_ESCAPE, K_F1, K_F2, K_F4, K_F9, K_F11, K_LEFT, \
-    K_LSHIFT, K_RETURN, K_RIGHT, K_TAB, K_UP, K_a, K_d, K_g, K_h, K_i, K_j, K_k, K_l, K_m, K_p, K_q, K_s, K_u, \
-    K_w, K_7, KEYDOWN, KEYUP, KMOD_CTRL, KMOD_LCTRL, KMOD_LSHIFT, KMOD_SHIFT
+from pygame import K_0, K_1, K_2, K_3, K_4, K_5, K_7, K_BACKSPACE, K_DELETE, K_DOWN, K_EQUALS, K_ESCAPE, K_F1, K_F2, \
+    K_F4, K_F5, K_F9, K_F11, K_LEFT, K_LSHIFT, K_PAGEDOWN, K_PAGEUP, K_RETURN, K_RIGHT, K_TAB, K_UP, K_a, K_d, K_g, \
+    K_h, K_i, K_j, K_k, K_l, K_m, K_p, K_q, K_s, K_u, K_w, KEYDOWN, KEYUP, KMOD_CTRL, KMOD_LCTRL, KMOD_LSHIFT, \
+    KMOD_SHIFT
 from pygame.event import Event
 
 from data.text.intro_lookup_table import ControlInfo
 from src import common
 from src.config.test_config import test_config
 from src.direction import Direction
-from src.controls import ACTIONS, ACTIONS_BY_NAME, KEY_SLOTS, Binding, Controls, KeySet, actions_for_event, \
-    apply_controls, current_controls, key_label, parse_binding, binding_name, pressed, \
-    reset_controls, set_controls, set_controls_listener
-from src.controls_screen import CELL_CURSOR_COLUMNS, CHANGED_TOO, CONTROLS_WINDOW, DEFAULTS_RESTORED, HINT, \
-    LABEL_COLUMN, NEEDS_A_KEY, VISIBLE_ROWS, Cell, ControlsScreen, controls_layout, screen_texts
+from src.controls import ACTIONS, ACTIONS_BY_NAME, FIXED_SHORTCUTS, KEY_SLOTS, Binding, Controls, KeySet, \
+    actions_for_event, apply_controls, binding_name, current_controls, fixed_shortcut_for, key_label, parse_binding, \
+    pressed, reset_controls, set_controls, set_controls_listener
+from src.controls_screen import CELL_CURSOR_COLUMNS, CHANGED_TOO, CONTROLS_WINDOW, DEFAULTS_RESTORED, FIXED_COMMANDS, \
+    FIXED_KEY, HINT, LABEL_COLUMN, NEEDS_A_KEY, VISIBLE_ROWS, Cell, ControlsScreen, controls_layout, screen_texts
 from src.settings import Settings, load_settings, save_settings
 from src.waiting import SPEED_KEYS, game_speed, handle_speed_key, poll_speed_keys, reset_game_speed, set_game_speed
 from src.window_renderer import window_tiles
@@ -219,9 +220,9 @@ class TestBinding(ControlsTestCase):
 
     def test_into_an_empty_slot_the_other_action_loses_it(self):
         controls = Controls.defaults()
-        self.assertTrue(controls.bind_key('A', 1, Binding(K_ESCAPE)))
-        self.assertEqual([Binding(K_k), Binding(K_ESCAPE)], controls.keys['A'])
-        self.assertEqual([Binding(K_j)], controls.keys['B'])
+        self.assertTrue(controls.bind_key('A', 1, Binding(K_j)))
+        self.assertEqual([Binding(K_k), Binding(K_j)], controls.keys['A'])
+        self.assertEqual([Binding(K_ESCAPE)], controls.keys['B'])
 
     def test_an_nes_button_keeps_its_last_key(self):
         controls = Controls.defaults()
@@ -262,6 +263,38 @@ class TestBinding(ControlsTestCase):
         self.assertIsNone(controls.pad['HELP'])
 
 
+class TestFixedShortcuts(ControlsTestCase):
+    """The keys the game always reads as itself (FIXED_SHORTCUTS) can't be bound where they'd do two things."""
+
+    def test_the_defaults_share_them_only_where_they_do_the_same(self):
+        for action in ACTIONS:
+            for binding in action.keys:
+                with self.subTest(action=action.name, key=binding_name(binding)):
+                    self.assertIsNone(fixed_shortcut_for(binding, action))
+
+    def test_a_fixed_key_is_refused(self):
+        controls = Controls.defaults()
+        refused = (('A', Binding(K_TAB)), ('START', Binding(K_ESCAPE)), ('A', Binding(K_BACKSPACE)),
+                   ('SELECT', Binding(K_PAGEUP)), ('HELP', Binding(K_F5)), ('HELP', Binding(K_EQUALS, KMOD_CTRL)),
+                   ('HELP', Binding(K_0, KMOD_CTRL | KMOD_SHIFT)), ('UP', Binding(K_DOWN)), ('A', Binding(K_DELETE)))
+        for name, binding in refused:
+            with self.subTest(action=name, key=binding_name(binding)):
+                self.assertFalse(controls.bind_key(name, 0, binding))
+                self.assertEqual(Controls.defaults(), controls)
+
+    def test_an_action_that_does_the_same_may_have_it(self):
+        controls = Controls.defaults()
+        allowed = (('B', Binding(K_BACKSPACE)), ('SELECT', Binding(K_DELETE)), ('START', Binding(K_PAGEDOWN)),
+                   ('A', Binding(K_RETURN)), ('HELP', Binding(K_EQUALS)), ('HELP', Binding(K_0, KMOD_SHIFT)))
+        for name, binding in allowed:
+            with self.subTest(action=name, key=binding_name(binding)):
+                self.assertTrue(controls.bind_key(name, 1, binding))
+
+    def test_the_controls_screen_fixed_keys_are_all_fixed(self):
+        fixed_keys = {shortcut.key for shortcut in FIXED_SHORTCUTS if not shortcut.mod}
+        self.assertLessEqual(set(FIXED_COMMANDS), fixed_keys)
+
+
 class TestFile(ControlsTestCase):
 
     def test_names(self):
@@ -294,6 +327,19 @@ class TestFile(ControlsTestCase):
         self.assertEqual([Binding(K_i)], controls.keys['START'])  # an NES button with no key keeps its own
         self.assertIsNone(controls.pad['A'])
         self.assertEqual('b', controls.pad['B'])
+
+    def test_fixed_keys_are_dropped(self):
+        controls = Controls.from_json({'keys': {'A': ["TAB", "l"], 'HELP': ["Ctrl+EQUALS"], 'B': ["BACKSPACE"]}})
+        self.assertEqual([Binding(K_l)], controls.keys['A'])
+        self.assertEqual([], controls.keys['HELP'])
+        self.assertEqual([Binding(K_BACKSPACE)], controls.keys['B'])  # erasing is what B does in the name entry
+
+    def test_a_pad_button_bound_twice_is_dropped(self):
+        controls = Controls.from_json({'pad': {'A': 'y', 'B': 'y', 'HELP': 'y'}})
+        self.assertEqual('y', controls.pad['A'])  # the first one in ACTIONS keeps it
+        self.assertIsNone(controls.pad['B'])
+        self.assertIsNone(controls.pad['HELP'])
+        self.assertIsNone(controls.pad['MAP'])  # its default, y, was taken
 
     def test_a_missing_action_keeps_its_defaults_unless_taken(self):
         controls = Controls.from_json({'keys': {'A': ["h"]}})
@@ -521,6 +567,19 @@ class TestControlsScreen(ScreenTestCase):
         self.run_screen(K_DOWN, K_RIGHT, K_LEFT, K_RETURN, K_g)
         self.assertEqual([Binding(K_g)], current_controls().keys['B'])
         self.assertEqual([Binding(K_p)], current_controls().keys['AUTO_GRIND'])  # swapped
+
+    def test_the_fixed_keys_win_over_the_bound_ones(self):
+        # an old settings file (the screen refuses these now): Enter is also B, Delete also DOWN
+        self.rebound(B=(K_j, K_RETURN), DOWN=(K_DOWN, K_DELETE))
+        self.run_screen(*(K_DOWN,) * row_of('HELP'), K_RETURN, K_p)  # Enter chooses, it doesn't close
+        self.assertEqual([Binding(K_p)], current_controls().keys['HELP'])
+        self.run_screen(*(K_DOWN,) * row_of('HELP'), K_DELETE)  # Delete clears, it doesn't move
+        self.assertEqual([], current_controls().keys['HELP'])
+
+    def test_a_fixed_key_is_refused_and_named(self):
+        screen = self.run_screen(K_RETURN, K_TAB)  # A, KEY 1: Tab
+        self.assertEqual(Controls.defaults(), current_controls())
+        self.assertEqual(FIXED_KEY.format("TAB"), screen.hint)
 
     def test_the_bound_keys_work_too(self):
         self.run_screen(K_s, K_d, K_k, K_p)  # B's KEY 2
