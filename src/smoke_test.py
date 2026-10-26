@@ -24,9 +24,9 @@ from pygame.event import Event
 
 from src.catalog import compile_po, po_path
 from src.checkpoints import CHECKPOINT_NAMES, checkpoint_hero_name, checkpoint_path, read_checkpoint
-from src.chiptune import (ChiptuneError, Emulator, chiptune_library, parse_track_ref)
+from src.chiptune import ChiptuneError, Emulator, bundled_library_dirs, chiptune_library, parse_track_ref
 from src.directories import CHIPTUNE_SOUNDTRACKS, CLIP_NAMES, MUSIC_NAMES, Directories, clip_paths, music_paths
-from src.paths import data_path
+from src.paths import data_path, is_frozen
 from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, SOUNDTRACKS, Soundtrack
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import MAP_CONTEXT, reset_game_speed, set_game_speed
@@ -79,6 +79,8 @@ def check_chiptune_tracks() -> list[str]:
     if library is None:
         return ["libgme isn't bundled or installed: the NES and SFC soundtracks can't play"]
     problems = []
+    if is_frozen() and os.path.dirname(library.path) not in bundled_library_dirs():
+        problems.append(f"libgme isn't bundled: the build loaded {library.path}")
     frame_count = CHIPTUNE_CHECK_SECONDS * CHIPTUNE_CHECK_SAMPLE_RATE
     for ref in chiptune_tracks():
         track = parse_track_ref(ref)
