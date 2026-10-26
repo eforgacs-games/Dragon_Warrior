@@ -12,7 +12,6 @@ class MusicPlayer:
     def __init__(self, config):
         self.music_enabled = config["MUSIC_ENABLED"]
         self.sound_enabled = config["SOUND_ENABLED"]
-        self.orchestra_music_enabled = config["ORCHESTRA_MUSIC_ENABLED"]
         self.music_volume = 0.5
         self._clip_end_ticks: float | None = None  # when a clip started with the music off would end (game time)
 

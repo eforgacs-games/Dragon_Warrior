@@ -10,6 +10,7 @@ from src.ending import (
     CREDITS, END_MUSIC_RECORDING_START_FRAME, END_MUSIC_TIMING_EVENTS, EndMusicTimingEvents, credit_screen_music_events,
 )
 from src.maps import map_lookup
+from src.soundtrack import SOUNDTRACK_KEY, Soundtrack
 from src.waiting import NES_FPS
 from tests.helpers import new_game
 
@@ -313,10 +314,12 @@ class TestEnding(TestCase):
 
         def load_and_play_music(path, **kwargs):
             started_at.append((path, round(clock[0] * NES_FPS / 1000)))
-        for orchestra, start in ((False, END_MUSIC_RECORDING_START_FRAME), (True, 0)):
-            with self.subTest(orchestra=orchestra):
+        # the SFC and orchestral finales are other arrangements, not timed to the NES music: they start at frame 0
+        for chosen, start in ((Soundtrack.NES, END_MUSIC_RECORDING_START_FRAME), (Soundtrack.SFC, 0),
+                              (Soundtrack.ORCHESTRA, 0)):
+            with self.subTest(soundtrack=chosen):
                 clock[0], started_at[:] = 0.0, []
-                with patch.dict(self.game.config, ORCHESTRA_MUSIC_ENABLED=orchestra), \
+                with patch.dict(self.game.config, {SOUNDTRACK_KEY: chosen}), \
                         patch('src.ending.game_ticks', side_effect=lambda: clock[0]), \
                         patch('src.ending.wait_frames', side_effect=frames_pass), \
                         patch('src.ending.screen_fade'), patch.object(self.game.ending, 'show_credit_screen'), \
