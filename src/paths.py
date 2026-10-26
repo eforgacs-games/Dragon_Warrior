@@ -28,7 +28,7 @@ def project_root() -> str:
 
 
 def data_path(*parts: str) -> str:
-    """A path under data/, e.g. data_path('fonts', 'unifont.ttf')."""
+    """A path under data/, e.g. data_path('fonts', 'unifont.otf')."""
     return join(project_root(), 'data', *parts)
 
 
