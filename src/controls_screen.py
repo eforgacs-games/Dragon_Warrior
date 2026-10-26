@@ -20,14 +20,16 @@ or what just happened.
   with Shift, Ctrl or Alt if they are held (for the actions that take modifiers). A modifier key alone is bound when
   it is let go. If nothing is pressed for CAPTURE_MS, nothing changes.
 - A key or button another action has is swapped: that action gets the key this cell had (Controls.bind_key), and the
-  bottom line names it. An NES button never loses its last key: that change is refused, and the line says so.
+  bottom line names it. An NES button never loses its last key: that change is refused, and the line says so. So is
+  a key the game always reads as itself (src/controls.py FIXED_SHORTCUTS: Escape, Tab, Enter, Backspace, the arrows,
+  Delete, Page Up and Down, F5 to F8, Ctrl with the zoom keys) for an action that does something else there.
 - SELECT (or Delete) clears the cell, except an NES button's last key.
 - A on RESET TO DEFAULTS puts every key and button back as they were.
 - B closes the screen, back to the options overlay.
 
-Whatever the keys are bound to, the arrows, Enter, Escape and Delete always move, choose, close and clear here, so a
-player can't lock themselves out of the screen. Every change applies at once and is saved with the global settings
-(``apply_controls``).
+Whatever the keys are bound to, the arrows, Enter, Escape and Delete always move, choose, close and clear here (read
+before the bound keys), so a player can't lock themselves out of the screen. Every change applies at once and is
+saved with the global settings (``apply_controls``).
 """
 from collections.abc import Callable
 from typing import NamedTuple
@@ -39,7 +41,7 @@ from src.common import A_BUTTON_KEYS, B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT
     set_gettext_language
 from src.color import BLACK
 from src.controls import ACTIONS, ACTIONS_BY_NAME, KEY_CODES, KEY_SLOTS, Action, Binding, Controls, apply_controls, \
-    current_controls, key_label, pad_connected, pad_label, read_pad_button
+    current_controls, fixed_shortcut_for, key_label, normalized, pad_connected, pad_label, read_pad_button
 from src.cursor import BlinkingCursor
 from src.selection import frame_events, next_frame
 from src.translated_window import draw_translated_window
@@ -64,11 +66,17 @@ RESET_LABEL = "RESET TO DEFAULTS"
 RESET_CURSOR_COLUMN = 1  # the reset row is chosen from any cell; its text starts after the cursor
 CAPTURE_MS = 5000  # how long A on a cell waits for a key (real time)
 
-# The keys that always work here, whatever is bound (see the module docstring)
-FIXED_UP, FIXED_DOWN, FIXED_LEFT, FIXED_RIGHT = (K_UP,), (K_DOWN,), (K_LEFT,), (K_RIGHT,)
-FIXED_CHOOSE = (K_RETURN, K_KP_ENTER)
-FIXED_BACK = (K_ESCAPE,)
-FIXED_CLEAR = (K_DELETE,)
+# What a key press does here
+MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, CHOOSE, BACK, CLEAR = \
+    'up', 'down', 'left', 'right', 'choose', 'back', 'clear'
+# The keys that always work here, whatever is bound (see the module docstring): read before the bound keys, so a key
+# bound to something else still does this (and the CONTROLS screen doesn't let one be bound where it would clash,
+# src/controls.py FIXED_SHORTCUTS)
+FIXED_COMMANDS = {K_UP: MOVE_UP, K_DOWN: MOVE_DOWN, K_LEFT: MOVE_LEFT, K_RIGHT: MOVE_RIGHT,
+                  K_RETURN: CHOOSE, K_KP_ENTER: CHOOSE, K_ESCAPE: BACK, K_DELETE: CLEAR}
+# The bound keys, in the order they're read
+BOUND_COMMANDS = ((B_BUTTON_KEYS, BACK), (UP_KEYS, MOVE_UP), (DOWN_KEYS, MOVE_DOWN), (LEFT_KEYS, MOVE_LEFT),
+                  (RIGHT_KEYS, MOVE_RIGHT), (A_BUTTON_KEYS, CHOOSE), (SELECT_BUTTON_KEYS, CLEAR))
 
 HINT = "A:SET  SELECT:CLEAR  B:BACK"
 PRESS_KEY = "PRESS A KEY"
@@ -76,6 +84,7 @@ PRESS_PAD_BUTTON = "PRESS A PAD BUTTON"
 NO_PAD = "NO CONTROLLER"
 CHANGED_TOO = "{}: CHANGED TOO"
 NEEDS_A_KEY = "{}: NEEDS A KEY"
+FIXED_KEY = "{}: FIXED KEY"  # a key the game always reads as itself (src/controls.py FIXED_SHORTCUTS)
 DEFAULTS_RESTORED = "DEFAULTS RESTORED"
 # Modifier keys: alone, they are bound when let go (a Shift held for Shift+F1 isn't bound on its own)
 MODIFIER_KEY_NAMES = ('LSHIFT', 'RSHIFT', 'LCTRL', 'RCTRL', 'LALT', 'RALT', 'LGUI', 'RGUI')
@@ -131,7 +140,7 @@ def controls_layout(controls: Controls, cell: Cell, top: int, hint: str) -> Wind
 def screen_texts() -> list[str]:
     """Every text the screen can show but the keys and the buttons, for the translation catalog."""
     return [CONTROLS_TITLE.text, *HEADINGS, RESET_LABEL, HINT, PRESS_KEY, PRESS_PAD_BUTTON, NO_PAD, CHANGED_TOO,
-            NEEDS_A_KEY, DEFAULTS_RESTORED, *[action.label for action in ACTIONS]]
+            NEEDS_A_KEY, FIXED_KEY, DEFAULTS_RESTORED, *[action.label for action in ACTIONS]]
 
 
 def changed_action(before: Controls, after: Controls, own: str) -> str | None:
@@ -154,10 +163,6 @@ class ControlsScreen:
         self.top = 0
         self.hint = HINT
 
-    @staticmethod
-    def is_key(pressed_key: int, bound, fixed: tuple[int, ...]) -> bool:
-        return pressed_key in fixed or pressed_key in bound
-
     def run(self) -> None:
         """Show the screen and read the buttons once a frame until it's closed."""
         cursor = BlinkingCursor()
@@ -176,25 +181,33 @@ class ControlsScreen:
                     return
                 cursor.restart()
 
+    @staticmethod
+    def command_for(pressed_key: int) -> str | None:
+        """What the key does here: a fixed key's command first, else a bound key's (None: nothing)."""
+        if pressed_key in FIXED_COMMANDS:
+            return FIXED_COMMANDS[pressed_key]
+        return next((command for keys, command in BOUND_COMMANDS if pressed_key in keys), None)
+
     def handle_key(self, pressed_key: int) -> bool:
         """Handle a key press on the screen. Returns True when it closes the screen."""
         rows = len(ACTIONS) + 1
         row, column = self.cell
-        if self.is_key(pressed_key, B_BUTTON_KEYS, FIXED_BACK):
+        command = self.command_for(pressed_key)
+        if command == BACK:
             return True
-        if self.is_key(pressed_key, UP_KEYS, FIXED_UP) or self.is_key(pressed_key, DOWN_KEYS, FIXED_DOWN):
-            row = max(0, min(rows - 1, row + (-1 if self.is_key(pressed_key, UP_KEYS, FIXED_UP) else 1)))
+        if command in (MOVE_UP, MOVE_DOWN):
+            row = max(0, min(rows - 1, row + (-1 if command == MOVE_UP else 1)))
             self.move_to(Cell(row, column))
-        elif self.is_key(pressed_key, LEFT_KEYS, FIXED_LEFT) or self.is_key(pressed_key, RIGHT_KEYS, FIXED_RIGHT):
-            step = -1 if self.is_key(pressed_key, LEFT_KEYS, FIXED_LEFT) else 1
+        elif command in (MOVE_LEFT, MOVE_RIGHT):
+            step = -1 if command == MOVE_LEFT else 1
             self.move_to(Cell(row, max(0, min(len(CELL_CURSOR_COLUMNS) - 1, column + step))))
-        elif self.is_key(pressed_key, A_BUTTON_KEYS, FIXED_CHOOSE):
+        elif command == CHOOSE:
             self.play_sound()
             if row == len(ACTIONS):
                 self.reset()
             else:
                 self.capture(ACTIONS[row], column)
-        elif self.is_key(pressed_key, SELECT_BUTTON_KEYS, FIXED_CLEAR) and row < len(ACTIONS):
+        elif command == CLEAR and row < len(ACTIONS):
             self.clear(ACTIONS[row], column)
         return False
 
@@ -235,6 +248,9 @@ class ControlsScreen:
         binding = self.read_key()
         if binding is None:
             self.hint = HINT
+            return
+        if fixed_shortcut_for(normalized(binding, action), action) is not None:
+            self.hint = self._(FIXED_KEY).format(key_label(normalized(binding, action)))
             return
         self.change(action, lambda controls: controls.bind_key(action.name, column, binding))
 
