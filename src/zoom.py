@@ -17,13 +17,15 @@ at the size it had before (remember_windowed_size, restore_windowed_size). The z
 the next time. So is a size the window is given by dragging its edge (or maximizing it): SCALED stretches the screen
 to it as it is, and the nearest whole zoom is saved (note_window_resized), which the window opens at the next time.
 
-This module imports nothing from ``src``, so src/waiting.py can use it without an import cycle.
+This module imports nothing from ``src`` but src/display_window.py (which imports nothing from ``src``), so
+src/waiting.py can use it without an import cycle.
 """
 from collections.abc import Callable
 
 from pygame import FULLSCREEN, K_0, K_EQUALS, K_KP0, K_KP_MINUS, K_KP_PLUS, K_MINUS, K_PLUS, KEYDOWN, KMOD_CTRL, \
-    MOUSEWHEEL, VIDEORESIZE, WINDOWSIZECHANGED, display, error as pygame_error, event, key
-from pygame._sdl2.video import Window
+    MOUSEWHEEL, VIDEORESIZE, WINDOWSIZECHANGED, display, event, key
+
+from src.display_window import display_window
 
 NES_WIDTH, NES_HEIGHT = 256, 240
 # Room left on the desktop for the window's title bar and the taskbar when working out the biggest zoom that fits
@@ -37,10 +39,6 @@ ZOOM_RESET_KEYS = (K_0, K_KP0)
 _default_zoom: int | None = None
 # The window's size before it went fullscreen (remember_windowed_size)
 _windowed_size: tuple[int, int] | None = None
-# The last Window object made for the display's window. It has to be kept alive: Window.from_display_module stores a
-# pointer to it in the SDL window without a reference, and pygame reads that pointer for every window event, so a
-# Window that was garbage collected makes the next event.get() crash.
-_window_object: Window | None = None
 # Told the new zoom each time set_zoom changes the window's size: the game saves it with the global settings
 _zoom_listener: Callable[[int], None] | None = None
 
@@ -49,18 +47,6 @@ def set_zoom_listener(listener: Callable[[int], None] | None) -> None:
     """Call ``listener`` with the zoom after every change set_zoom makes (None: no one is told)."""
     global _zoom_listener
     _zoom_listener = listener
-
-
-def _window() -> Window | None:
-    """The game's window, or None if there isn't one (a test that never opened the display)."""
-    global _window_object
-    if not display.get_init() or display.get_surface() is None:
-        return None
-    try:
-        _window_object = Window.from_display_module()
-    except pygame_error:
-        return None
-    return _window_object
 
 
 def is_fullscreen() -> bool:
@@ -105,7 +91,7 @@ def max_zoom() -> int:
 def remember_default_zoom() -> None:
     """Note the window's zoom as the one Ctrl 0 goes back to: call it once the game's window has been opened."""
     global _default_zoom
-    if _window() is not None and not is_fullscreen():
+    if display_window() is not None and not is_fullscreen():
         _default_zoom = max(min_zoom(), round(window_zoom()))
 
 
@@ -117,7 +103,7 @@ def default_zoom() -> int:
 def set_zoom(zoom: int) -> bool:
     """Make the window ``zoom`` times the NES's 256x240 (kept between min_zoom and max_zoom), keeping its center where
     it was. Returns whether the window changed size. Does nothing in fullscreen."""
-    window = _window()
+    window = display_window()
     if window is None or is_fullscreen():
         return False
     zoom = max(min_zoom(), min(zoom, max_zoom()))
@@ -141,7 +127,7 @@ def set_zoom(zoom: int) -> bool:
 def zoom_in() -> bool:
     """One step bigger: the next whole zoom above the window's size (a window dragged to 3.5x goes to 4x). A window
     already at max_zoom (or dragged past it) stays as it is."""
-    if _window() is None:
+    if display_window() is None:
         return False
     target = int(window_zoom()) + 1
     return target <= max_zoom() and set_zoom(target)
@@ -149,7 +135,7 @@ def zoom_in() -> bool:
 
 def zoom_out() -> bool:
     """One step smaller: the next whole zoom below the window's size (a window dragged to 3.5x goes to 3x)."""
-    if _window() is None:
+    if display_window() is None:
         return False
     current = window_zoom()
     target = int(current) - 1 if current == int(current) else int(current)
@@ -164,7 +150,7 @@ def reset_zoom() -> bool:
 def remember_windowed_size() -> None:
     """Note the window's size before it goes fullscreen (F11), for restore_windowed_size."""
     global _windowed_size
-    if _window() is not None and not is_fullscreen():
+    if display_window() is not None and not is_fullscreen():
         _windowed_size = display.get_window_size()
 
 
@@ -177,7 +163,7 @@ def set_windowed_zoom(zoom: int) -> None:
 
 def restore_windowed_size() -> None:
     """Back from fullscreen: give the window the size it had before (set_mode alone opens it at its first size)."""
-    window = _window()
+    window = display_window()
     if window is not None and not is_fullscreen() and _windowed_size is not None:
         window.size = _windowed_size
         display.flip()
@@ -187,7 +173,7 @@ def note_window_resized() -> None:
     """The window has a new size, perhaps one the player dragged its edge to: tell the zoom listener the nearest whole
     zoom (between min_zoom and max_zoom), so the next launch opens at it. The window itself is left at the size it
     was given (SCALED stretches the screen to fit it), and a fullscreen window's size isn't a zoom."""
-    if _zoom_listener is None or _window() is None or is_fullscreen():
+    if _zoom_listener is None or display_window() is None or is_fullscreen():
         return
     _zoom_listener(max(min_zoom(), min(round(window_zoom()), max_zoom())))
 
