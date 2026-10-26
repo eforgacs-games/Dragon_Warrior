@@ -41,8 +41,8 @@ from os.path import join
 from typing import Any
 
 from src.controls import Controls
-from src.json_files import atomic_write_json
 from src.display_filters import SCALING_MODES, SCALING_SMOOTH
+from src.json_files import atomic_write_json
 from src.paths import user_config_dir
 from src.view import VIEW_NES, VIEWS
 
