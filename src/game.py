@@ -31,6 +31,7 @@ from src.constants import (
 from src.direction import Direction
 from src.display_filters import PRESENTER, SCALING_KEY, SCALING_SMOOTH, SCANLINES_KEY
 from src.directories import Directories, music_name
+from src.soundtrack import SOUNDTRACK_KEY, migrate_legacy_music_config
 from src.drawer import Drawer
 from src.dungeon_map import DungeonMap, DungeonMapOverlay, dungeon_map_enabled
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
@@ -88,6 +89,7 @@ MAGIC_ARMOR_HEAL_STEPS = 4
 class Game:
     def __init__(self, config):
 
+        migrate_legacy_music_config(config)  # a config with the old ORCHESTRA_MUSIC_ENABLED switch (src/soundtrack.py)
         self.config = config
         self.sound = Sound(config)
         self.graphics = Graphics(config)
@@ -294,7 +296,7 @@ class Game:
         - VIEW, a global setting: saved now, and shown once the overlay closes (set_view).
         - DUNGEON MAP, a global setting: saved now; M reads it each time it's pressed.
         - CONFIRM NAME, a global setting: saved now; the next name entry reads it.
-        - MUSIC (ORCHESTRA_MUSIC_ENABLED): every Directories reads the music from the config (src/directories.py), so
+        - MUSIC (SOUNDTRACK): every Directories reads the music from the config (src/directories.py), so
           the next music played is from the new set; the map's music is started again from the new set now.
         - GAME SPEED (GAME_SPEED_KEYS): keys 1 to 5 are switched on or off; off goes back to normal speed, and on to
           the speed kept in the global settings.
@@ -313,7 +315,7 @@ class Game:
             self.settings.update(dungeon_map=dungeon_map_enabled(config))
         elif config_key == 'NAME_CONFIRM':
             self.settings.update(name_confirm=bool(config.get('NAME_CONFIRM')))
-        elif config_key == 'ORCHESTRA_MUSIC_ENABLED':
+        elif config_key == SOUNDTRACK_KEY:
             name = music_name(self.current_map.music_file_path)
             if name is not None:
                 self.current_map.music_file_path = getattr(self.directories, name)

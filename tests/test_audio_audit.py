@@ -68,7 +68,7 @@ RESUME_MUSIC_TBL = {
 class TestMapMusic(unittest.TestCase):
 
     def test_every_map_plays_its_resume_music_tbl_music(self):
-        config = {**test_config, 'ORCHESTRA_MUSIC_ENABLED': False}  # the NES music has a track for each floor
+        config = {**test_config, 'SOUNDTRACK': 'NES'}  # the NES music has a track for each floor
         directories = Directories(config)
         playable_maps = {name for name, map_class in map_lookup.items() if 'layout' not in
                          map_class.__init__.__code__.co_varnames}
@@ -78,7 +78,7 @@ class TestMapMusic(unittest.TestCase):
                 self.assertEqual(map_lookup[name](config).music_file_path, getattr(directories, attribute))
 
     def test_every_dungeon_floor_has_its_own_nes_music(self):
-        config = {**test_config, 'ORCHESTRA_MUSIC_ENABLED': False}
+        config = {**test_config, 'SOUNDTRACK': 'NES'}
         directories = Directories(config)
         floors = [getattr(directories, f'dungeon_floor_{floor}_music') for floor in range(1, 9)]
         self.assertEqual(len(set(floors)), 8)
@@ -92,7 +92,7 @@ class TestMapChangeMusic(unittest.TestCase):
         test_config['NO_WAIT'] = True
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
-        self.game = new_game({**test_config, 'ORCHESTRA_MUSIC_ENABLED': False})
+        self.game = new_game({**test_config, 'SOUNDTRACK': 'NES'})
 
     def test_the_new_maps_music_is_the_only_music_change(self):
         for (from_map, from_coordinates), (to_map, to_coordinates) in (
@@ -112,7 +112,7 @@ class TestFightMusic(unittest.TestCase):
     ChkUseHarp, ChkUseBelt and ChkUseNecklace (MSC_REG_FGHT, the loop without the opening)."""
 
     def setUp(self):
-        self.config = {**test_config, 'ORCHESTRA_MUSIC_ENABLED': False}
+        self.config = {**test_config, 'SOUNDTRACK': 'NES'}
         self.directories = Directories(self.config)
 
     def test_the_two_fight_tracks(self):
@@ -136,7 +136,7 @@ class TestFightMusic(unittest.TestCase):
 
     @patch('src.music_player.mixer')
     def test_music_player_queues_the_loop(self, mock_mixer):
-        player = MusicPlayer({'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'ORCHESTRA_MUSIC_ENABLED': False})
+        player = MusicPlayer({'MUSIC_ENABLED': True, 'SOUND_ENABLED': False, 'SOUNDTRACK': 'NES'})
         player.load_and_play_music('opening.mp3', then_loop='loop.mp3')
         self.assertEqual(mock_mixer.music.mock_calls, [call.stop(), call.load('opening.mp3'), call.set_volume(0.5),
                                                        call.play(), call.queue('loop.mp3', loops=-1)])

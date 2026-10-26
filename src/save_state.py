@@ -57,6 +57,7 @@ from src.menu import CommandMenu
 from src.message_log import decoded_entries
 from src.options_screen import apply_options, options_from_config, options_from_save, options_to_save
 from src.sprites.animated_sprite import AnimatedSprite
+from src.soundtrack import SOUNDTRACK_KEY, soundtrack
 from src.story_flags import StoryFlags
 from src.visual_effects import cut_to_black, screen_fade
 
@@ -376,7 +377,7 @@ def restore_snapshot(game: Any, snapshot: dict[str, Any], fade_in: bool = True) 
     apply_layout_changes(game.layouts.map_layout_lookup, state['layout_changes'])
     game.story_flags = state['story_flags']
     _restore_histories(game, state)
-    music_before = game.game_state.config.get('ORCHESTRA_MUSIC_ENABLED')
+    music_before = soundtrack(game.game_state.config)
     apply_options(game.game_state.config, state['options'])
     for config_key in ('GAME_SPEED_KEYS', 'CHEAT_KEYS'):  # the switches that act at once (Game.apply_option)
         game.apply_option(config_key)
@@ -399,8 +400,8 @@ def restore_snapshot(game: Any, snapshot: dict[str, Any], fade_in: bool = True) 
         screen_fade(fade_out=False, screen=game.screen, config=game.game_state.config)
     if fade_in or game.current_map.identifier != old_map.identifier:
         game.music_player.load_and_play_music(game.current_map.music_file_path)
-    elif game.game_state.config.get('ORCHESTRA_MUSIC_ENABLED') != music_before:
-        game.apply_option('ORCHESTRA_MUSIC_ENABLED')  # the state's MUSIC setting, on the map that stayed
+    elif soundtrack(game.game_state.config) != music_before:
+        game.apply_option(SOUNDTRACK_KEY)  # the state's MUSIC setting, on the map that stayed
 
 
 def _rebuild_map(game: Any, state: dict[str, Any], cut_to_black_first: bool) -> None:
