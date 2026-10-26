@@ -932,8 +932,10 @@ class Game:
         (data/text/intro_lookup_table.py)."""
         if pressed(keydown_event, 'HELP'):
             control_info = ControlInfo(self.config)
-            # one page per group of keys, so nothing runs past the bottom of the dialog box
-            self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
+            # one page per group of keys, so nothing runs past the bottom of the dialog box; not kept in the
+            # message log, which is for what the NPCs said
+            with self.cmd_menu.not_logged():
+                self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
 
     def handle_quest_journal_key(self, keydown_event) -> None:
         """Q (the JOURNAL key): the quest journal (src/quest_journal.py), not NES: one dialog box page per open goal,
@@ -945,7 +947,8 @@ class Game:
             return
         pages = journal_pages(game_progress(self), hints=setting == JOURNAL_HINTS, _=self._)
         if pages:
-            self.cmd_menu.show_text_in_dialog_box(pages)
+            with self.cmd_menu.not_logged():  # the message log is for what the NPCs said
+                self.cmd_menu.show_text_in_dialog_box(pages)
 
     def handle_a_button(self, keydown_event):
         # The SMART A key (Enter) is the A button on the map too unless QUICK ACTION is on (handle_enter_key)
