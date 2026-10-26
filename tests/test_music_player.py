@@ -1,9 +1,8 @@
-import os
 import unittest
 from unittest.mock import patch
 
-from pygame import mixer
 
+from src.chiptune_soundtracks import MSC_INN, nes_track
 from src.config.test_config import test_config
 from src.directories import Directories
 from src.music_player import MusicPlayer, clip_length_ms
@@ -208,13 +207,12 @@ class TestPlayUntilEnd(unittest.TestCase):
         mock_wait.assert_not_called()
 
     def test_inn_jingle_is_the_nes_track(self):
-        # MSC_INN ($15) is the soundtrack's track 21, between MSC_DEATH ($14, track 20) and MSC_PRNCS_LOVE ($16)
+        # MSC_INN ($15) is the NSF's track 21, between MSC_DEATH ($14, track 20) and MSC_PRNCS_LOVE ($16). The NSF's
+        # playlist didn't tag it, so dragon_warrior.m3u has a line of the game's own for it
         directories = Directories(test_config)
-        self.assertTrue(directories.inn_music.endswith('21 Dragon Quest 1 - Special Item.mp3'))
-        self.assertTrue(os.path.exists(directories.inn_music))
-        mixer.init()
-        self.addCleanup(mixer.quit)
-        self.assertTrue(2000 < clip_length_ms(directories.inn_music) < 3000)
+        self.assertEqual(nes_track(MSC_INN), directories.inn_music)
+        self.assertTrue(directories.inn_music.endswith('dragon_warrior.nsf#21'))
+        self.assertAlmostEqual(2950, clip_length_ms(directories.inn_music))
 
 
 if __name__ == '__main__':
