@@ -30,13 +30,14 @@ from src.waiting import MAP_CONTEXT, reset_game_speed, set_game_speed
 
 IMAGE_EXTENSIONS = ('.png', '.gif')
 SOUND_EXTENSIONS = ('.mp3', '.wav')
-FONT_EXTENSIONS = ('.ttf',)
+FONT_EXTENSIONS = ('.ttf', '.otf')
 # A line the Korean catalog translates, to check it loaded
 KOREAN_CHECK_LINE = "Thou art a fool!"
 
 
 def game_file_paths(config: dict) -> set[str]:
-    """Every file under data/ that Directories names, with every soundtrack (NES, SFC and orchestra)."""
+    """Every file under data/ that Directories names, with every soundtrack (NES, SFC and orchestra), and Unifont's
+    license."""
     paths: set[str] = set()
     data_dir = data_path()
     for chosen in SOUNDTRACKS:
@@ -46,6 +47,8 @@ def game_file_paths(config: dict) -> set[str]:
         paths.update(value for value in values if isinstance(value, str) and value.startswith(data_dir)
                      and os.path.splitext(value)[1])
     paths.update(checkpoint_path(name) for name in CHECKPOINT_NAMES)
+    # Unifont's license (SIL OFL 1.1) has to ship with the font
+    paths.add(data_path('fonts', 'OFL-unifont.txt'))
     sparkle_dir = data_path('images', 'intro_banner', 'sparkle')
     if os.path.isdir(sparkle_dir):
         paths.update(os.path.join(sparkle_dir, name) for name in os.listdir(sparkle_dir))
