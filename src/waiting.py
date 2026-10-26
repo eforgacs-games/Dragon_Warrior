@@ -35,13 +35,13 @@ drives the game, whose presses are timed on the game clock.
 """
 import sys
 
-from collections.abc import Callable, Collection, Iterator, Mapping
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
 from time import perf_counter, sleep
-from typing import Any, Protocol, override
+from typing import Any, NamedTuple, Protocol, override
 
 from pygame import KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
 
-from src.controls import SPEED_ACTIONS, action_keys, actions_for_event
+from src.controls import NEXT_SPEED_ACTION, SPEED_ACTIONS, action_keys, actions_for_event, controls_version
 from src.zoom import handle_zoom_event
 
 # The NTSC NES's frame rate, 60.0988 Hz: the PPU draws 341 x 262 dots a frame, one fewer every other frame (89,341.5 on
@@ -53,10 +53,18 @@ POLL_INTERVAL_MS = 16  # about one frame: how often the queue is checked for QUI
 
 class _SpeedKeys(Mapping[int, int]):
     """The speed each speed key sets, as the keys are bound now (src/controls.py): by default 1 to 5 set 1x, 2x, 4x, 8x
-    and 16x."""
+    and 16x. Worked out again only when the controls change, as the key sets are (src/controls.py KeySet)."""
+
+    def __init__(self) -> None:
+        self._cache: dict[int, int] = {}
+        self._cache_version = -1
 
     def _keys(self) -> dict[int, int]:
-        return {speed_key: speed for name, speed in SPEED_ACTIONS.items() for speed_key in action_keys(name)}
+        if self._cache_version != controls_version():
+            self._cache = {speed_key: speed for name, speed in SPEED_ACTIONS.items()
+                           for speed_key in action_keys(name)}
+            self._cache_version = controls_version()
+        return self._cache
 
     @override
     def __getitem__(self, speed_key: int) -> int:
@@ -73,6 +81,14 @@ class _SpeedKeys(Mapping[int, int]):
 
 SPEED_KEYS: Mapping[int, int] = _SpeedKeys()
 GAME_SPEEDS = tuple(SPEED_ACTIONS.values())
+# Posted when the gamepad's NEXT SPEED button has changed the game speed (step_game_speed), with the new ``speed``
+SPEED_CHANGED = event.custom_type()
+
+
+class HeldKey(NamedTuple):
+    """A key held down with these modifiers, read like a key press (src/controls.py actions_for_event)."""
+    key: int
+    mod: int
 
 _speed = 1
 # game_ticks() == _game_anchor + (get_ticks() - _real_anchor) * _speed, re-anchored on every speed change, so the game
@@ -310,27 +326,54 @@ def scaled_ms(milliseconds: float) -> int:
     return _whole_real_ms(milliseconds / _speed)
 
 
+def speed_for_actions(names: Iterable[str]) -> int | None:
+    """The game speed these actions ask for: a speed key's (1 to 5), or the one after the current speed for NEXT
+    SPEED; None if none of them is a speed action."""
+    for name in names:
+        if name in SPEED_ACTIONS:
+            return SPEED_ACTIONS[name]
+        if name == NEXT_SPEED_ACTION:
+            return next_game_speed()
+    return None
+
+
+def requested_speed(current_event: event.Event) -> int | None:
+    """The game speed a key press asks for (speed_for_actions), with its modifiers: None for any other event."""
+    if current_event.type != KEYDOWN:
+        return None
+    return speed_for_actions(actions_for_event(current_event))
+
+
 def handle_speed_key(current_event: event.Event) -> bool:
     """If ``current_event`` is a press of a speed key (1 to 5, or the NEXT SPEED key if one is bound), set the game
-    speed (if the keys are on: the GAME SPEED switch) and return True."""
-    if current_event.type != KEYDOWN:
+    speed (if the keys are on: the GAME SPEED switch) and return True. So it does for a gamepad's SPEED_CHANGED,
+    which only the map shows (Game.announce_game_speed)."""
+    if current_event.type == SPEED_CHANGED:
+        return True
+    speed = requested_speed(current_event)
+    if speed is None:
         return False
-    for name in actions_for_event(current_event):
-        if name in SPEED_ACTIONS:
-            if _speed_keys_enabled:
-                set_game_speed(SPEED_ACTIONS[name])
-            return True
-        if name == 'NEXT_SPEED':
-            if _speed_keys_enabled:
-                set_game_speed(next_game_speed())
-            return True
-    return False
+    if _speed_keys_enabled:
+        set_game_speed(speed)
+    return True
 
 
 def next_game_speed() -> int:
     """The game speed after the current one, back to 1x after the fastest."""
     later = [speed for speed in GAME_SPEEDS if speed > _speed]
     return later[0] if later else GAME_SPEEDS[0]
+
+
+def step_game_speed() -> None:
+    """The gamepad's NEXT SPEED button (src/gamepad.py), which has no key to press: the next game speed (if the speed
+    keys are on), at once, wherever the game is, and a SPEED_CHANGED event saying so, which the map shows the way it
+    shows a speed key's change and every other loop takes out (handle_speed_key)."""
+    if not _speed_keys_enabled:
+        return
+    speed = next_game_speed()
+    set_game_speed(speed)
+    if display.get_init():
+        event.post(event.Event(SPEED_CHANGED, speed=speed))
 
 
 def get_events(*args, **kwargs) -> list[event.Event]:
@@ -348,8 +391,15 @@ def poll_speed_keys() -> None:
     if not _speed_keys_enabled:
         return
     pressed = key.get_pressed()
-    for speed_key, speed in SPEED_KEYS.items():
-        if pressed[speed_key]:
+    held_modifiers = key.get_mods()
+    for speed_key in SPEED_KEYS:
+        if not pressed[speed_key]:
+            continue
+        # With the modifiers held, as a press of it would be read (src/controls.py actions_for_event): a speed on
+        # Ctrl+7 isn't set by 7 alone, nor is one on 1 while Ctrl+1 is bound to something else and Ctrl is held
+        names = actions_for_event(HeldKey(speed_key, held_modifiers))
+        speed = next((SPEED_ACTIONS[name] for name in names if name in SPEED_ACTIONS), None)
+        if speed is not None:
             set_game_speed(speed)
             return
 

@@ -37,7 +37,7 @@ from src.movement import DIRECTION_KEYS
 from src.npc_movement import step
 from src.options_screen import AUTO_GRIND_STOP_VALUES, ENCOUNTERS_OFF
 from src.virtual_joypad import VirtualJoypad
-from src.waiting import MAP_CONTEXT, SPEED_KEYS
+from src.waiting import MAP_CONTEXT, requested_speed
 
 # The GRIND STOP option (src/options_overlay.py, AUTO_GRIND_STOP): when HP is low enough to stop. RED HP is the NES's
 # low HP, where the windows turn red (ChkLowHPPal): HP <= max HP / 4 + 1. HALF HP: HP <= max HP / 2. 3/4 HP:
@@ -327,7 +327,8 @@ class AutoGrind:
         """The player pressed a key: the speed keys and the zoom keys go on to the game as usual; any other key (G too)
         stops auto-grind and is used up."""
         pressed = getattr(current_event, 'key', None)
-        if pressed in SPEED_KEYS or pressed in MODIFIER_KEYS or getattr(current_event, 'mod', 0) & KMOD_CTRL:
+        if requested_speed(current_event) is not None or pressed in MODIFIER_KEYS or \
+                getattr(current_event, 'mod', 0) & KMOD_CTRL:
             return True
         self.stop(StopReason.KEY, show_now=False)
         return False

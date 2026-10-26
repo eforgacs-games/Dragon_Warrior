@@ -12,7 +12,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 import pygame
 from pygame import K_1, K_2, K_3, K_4, K_5, K_DELETE, K_DOWN, K_ESCAPE, K_F1, K_F2, K_F4, K_F9, K_F11, K_LEFT, \
     K_LSHIFT, K_RETURN, K_RIGHT, K_TAB, K_UP, K_a, K_d, K_g, K_h, K_i, K_j, K_k, K_l, K_m, K_p, K_q, K_s, K_u, \
-    K_w, KEYDOWN, KEYUP, KMOD_LSHIFT, KMOD_SHIFT
+    K_w, K_7, KEYDOWN, KEYUP, KMOD_CTRL, KMOD_LCTRL, KMOD_LSHIFT, KMOD_SHIFT
 from pygame.event import Event
 
 from data.text.intro_lookup_table import ControlInfo
@@ -25,9 +25,10 @@ from src.controls import ACTIONS, ACTIONS_BY_NAME, KEY_SLOTS, Binding, Controls,
 from src.controls_screen import CELL_CURSOR_COLUMNS, CHANGED_TOO, CONTROLS_WINDOW, DEFAULTS_RESTORED, HINT, \
     LABEL_COLUMN, NEEDS_A_KEY, VISIBLE_ROWS, Cell, ControlsScreen, controls_layout, screen_texts
 from src.settings import Settings, load_settings, save_settings
-from src.waiting import SPEED_KEYS, game_speed, handle_speed_key, reset_game_speed
+from src.waiting import SPEED_KEYS, game_speed, handle_speed_key, poll_speed_keys, reset_game_speed, set_game_speed
 from src.window_renderer import window_tiles
 from tests import helpers
+from tests.test_save_state import HeldKeys
 
 
 def key(pressed_key, mod=0):
@@ -163,6 +164,27 @@ class TestLiveKeySets(ControlsTestCase):
         self.assertEqual(2, game_speed())
         self.assertFalse(handle_speed_key(key(K_2)))
         reset_game_speed()
+
+    def test_the_speed_keys_are_worked_out_once_per_change_of_the_controls(self):
+        keys = SPEED_KEYS._keys()
+        self.assertIs(keys, SPEED_KEYS._keys())
+        self.rebound(SPEED_2=(K_p,))
+        self.assertIsNot(keys, SPEED_KEYS._keys())
+        self.assertEqual(2, SPEED_KEYS[K_p])
+
+    def test_a_held_speed_key_needs_its_modifiers(self):
+        # poll_speed_keys reads the keys held during waits: SPEED 2 on Ctrl+7 isn't set by 7 alone, and Ctrl+1 bound
+        # to MAP isn't SPEED 1
+        self.rebound(SPEED_2=((K_7, KMOD_CTRL),), MAP=((K_1, KMOD_CTRL),))
+        self.addCleanup(reset_game_speed)
+        cases = ((K_7, 0, 4), (K_7, KMOD_LCTRL, 2), (K_1, KMOD_LCTRL, 4), (K_1, 0, 1))  # from 4x
+        for held, modifiers, expected in cases:
+            with self.subTest(held=pygame.key.name(held), modifiers=modifiers), \
+                    patch('src.waiting.key.get_pressed', return_value=HeldKeys({held})), \
+                    patch('src.waiting.key.get_mods', return_value=modifiers):
+                set_game_speed(4)
+                poll_speed_keys()
+                self.assertEqual(expected, game_speed())
 
     def test_next_speed_key(self):
         self.rebound(NEXT_SPEED=(K_p,))
