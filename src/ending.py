@@ -14,9 +14,8 @@ The story flags themselves live in src/story_flags.py.
 """
 
 import random
-import sys
 
-from pygame import QUIT, display, event, quit as pygame_quit, time
+from pygame import QUIT, display, event, time
 
 from data.text.dialog import confirmation_prompt
 from src.common import BLACK, WHITE
@@ -28,7 +27,7 @@ from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE, SEARCHED_FOR_GWAELIN
 from src.text import draw_text
 from src.visual_effects import screen_fade
-from src.waiting import NES_FPS, POLL_INTERVAL_MS, game_ticks, wait_frames
+from src.waiting import NES_FPS, POLL_INTERVAL_MS, game_ticks, quit_game, wait_frames
 from src.windows import DIALOG_WINDOW
 from src.zoom import handle_zoom_event
 
@@ -379,6 +378,5 @@ class Ending:
             for current_event in event.get():
                 handle_zoom_event(current_event)  # the window can still be zoomed (src/zoom.py)
                 if current_event.type == QUIT:
-                    pygame_quit()
-                    sys.exit()
+                    quit_game()
             time.wait(POLL_INTERVAL_MS)  # idle about a frame between checks
