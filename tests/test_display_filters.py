@@ -1,8 +1,12 @@
 """The display filters (src/display_filters.py): SCANLINES and SCALING in the options overlay, kept with the global
 settings; where the picture goes in windows of every size; and the scanlines are only ever drawn on the window, never
 on the game's own screen surface."""
+import ctypes
+import gc
+import glob
 import os
 import tempfile
+import unittest
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -14,8 +18,9 @@ from pygame import K_DOWN, K_RIGHT, K_u, KEYDOWN, RESIZABLE, SCALED, Rect
 from pygame._sdl2.video import Renderer, Window
 from pygame.event import Event
 
-from src import display_filters
+from src import display_filters, display_window as display_window_module
 from src.config.test_config import test_config
+from src.display_window import display_window
 from src.display_filters import PRESENTER, SCALING_PIXEL_PERFECT, SCALING_SMOOTH, presentation_rect
 from src.options_overlay import FIXED_ROWS, OPTION_PAGES, OptionsOverlay, options_layout
 from src.settings import Settings, load_settings, save_settings
@@ -25,6 +30,35 @@ from tests import helpers
 
 SCREEN = (512, 480)  # NES_RES * SCALE
 GAP = 2
+
+
+# SDL_KEYDOWN and the size of an SDL_Event, to push a key press for a window straight onto SDL's queue (SDL_PushEvent),
+# as the OS would: pygame.event.post makes events of its own, which don't look up their window
+SDL_KEYDOWN = 0x300
+SDL_EVENT_SIZE = 56
+SDL_KEYBOARD_EVENT_HEADER = 3  # type, timestamp, windowID: three Uint32
+
+
+def sdl_library() -> ctypes.CDLL | None:
+    """The SDL2 library pygame uses, or None if it can't be found (a pygame not built from the wheels)."""
+    pygame_dir = os.path.dirname(pygame.__file__)
+    patterns = ('../pygame.libs/libSDL2-2*', '.dylibs/libSDL2-2*', 'SDL2.dll')
+    for pattern in patterns:
+        for path in glob.glob(os.path.join(pygame_dir, pattern)):
+            return ctypes.CDLL(path)
+    return None
+
+
+def push_sdl_key_press(window_id: int) -> None:
+    """A key press in the window, as SDL gets it from the OS."""
+    sdl = sdl_library()
+    if sdl is None:
+        raise unittest.SkipTest("SDL2 library not found")
+    sdl_event = (ctypes.c_uint8 * SDL_EVENT_SIZE)()
+    header = (ctypes.c_uint32 * SDL_KEYBOARD_EVENT_HEADER)(SDL_KEYDOWN, 0, window_id)
+    ctypes.memmove(sdl_event, header, ctypes.sizeof(header))
+    sdl_event[ctypes.sizeof(header)] = 1  # state: SDL_PRESSED
+    assert sdl.SDL_PushEvent(sdl_event) == 1
 
 
 def presses(*keys):
@@ -126,7 +160,7 @@ class PresenterTestCase(TestCase):
 
     def shown(self):
         """What the window shows: read back from its renderer."""
-        return Renderer.from_window(Window.from_display_module()).to_surface()
+        return Renderer.from_window(display_window()).to_surface()
 
 
 class TestPresenter(PresenterTestCase):
@@ -149,7 +183,24 @@ class TestPresenter(PresenterTestCase):
         self.assertIs(real_update, pygame.display.update)
         # pygame's own flip works again, over the logical size it set
         pygame.display.flip()
-        self.assertEqual(SCREEN, tuple(Renderer.from_window(Window.from_display_module()).logical_size))
+        self.assertEqual(SCREEN, tuple(Renderer.from_window(display_window()).logical_size))
+
+    def test_turning_them_off_leaves_events_a_live_window(self):
+        # The presenter made a Window of its own for its renderer, which SDL's window points at; after it lets go of
+        # the renderer, the events of the window must still find a live Window, not freed memory
+        window_id = display_window().id
+        PRESENTER.configure(True, SCALING_SMOOTH)
+        pygame.display.flip()
+        PRESENTER.configure(False, SCALING_SMOOTH)
+        gc.collect()
+        pygame.event.clear()
+        push_sdl_key_press(window_id)
+        key_presses = pygame.event.get(KEYDOWN)
+        self.assertEqual(1, len(key_presses))
+        # the Window src/display_window.py keeps alive (a freed one may still look like a Window until it's reused)
+        self.assertIs(display_window_module._window, key_presses[0].window)
+        self.assertIsInstance(key_presses[0].window, Window)
+        self.assertEqual(window_id, key_presses[0].window.id)
 
     def test_scanlines_never_touch_the_game_surface(self):
         before = pygame.image.tobytes(self.screen, 'RGB')
@@ -177,7 +228,7 @@ class TestPresenter(PresenterTestCase):
         self.assertEqual(pygame.image.tobytes(self.screen, 'RGB'), pygame.image.tobytes(self.shown(), 'RGB'))
 
     def test_pixel_perfect_with_black_borders(self):
-        Window.from_display_module().size = (1000, 900)
+        display_window().size = (1000, 900)
         pygame.event.pump()
         PRESENTER.configure(False, SCALING_PIXEL_PERFECT)
         pygame.display.flip()

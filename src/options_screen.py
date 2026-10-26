@@ -246,7 +246,8 @@ ENTRY_SPACING = 2  # every window here is single spaced with a blank row between
 
 
 def message_speed_from_save(save: dict) -> str:
-    """The log's message speed (LoadSavedData, LFBC8); a save from before it was kept loads as NORMAL."""
+    """The log's message speed (LoadSavedData, LFBC8); a save from before it was kept loads at the default speed
+    (DEFAULT_MESSAGE_SPEED: FAST)."""
     speed = save.get(MESSAGE_SPEED_SAVE_KEY)
     return speed if speed in MESSAGE_SPEED_NAMES else DEFAULT_MESSAGE_SPEED
 
