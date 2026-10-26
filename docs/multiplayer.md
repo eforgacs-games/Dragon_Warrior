@@ -15,7 +15,8 @@ Contents:
 7. [Protocol sketch](#7-protocol-sketch)
 8. [Edge cases](#8-edge-cases)
 9. [Phased plan](#9-phased-plan)
-10. [Open questions](#10-open-questions)
+10. [More ideas](#10-more-ideas)
+11. [Open questions](#11-open-questions)
 
 ## 1. Summary
 
@@ -471,6 +472,19 @@ Tests:
   slides smoothly, stairs remove it, darkness hides it.
 - A bot client (a small script) that walks a fixed path, for testing presence without a second person.
 
+### Suggested first milestone: presence, race mode and ground messages
+
+Race mode and ground messages (section 10) don't need the battle rules refactor: in a race every game runs on its
+own and the server only relays progress, and a message is a small record the server stores and sends to everyone on
+that map. So a first playable milestone can come before Phase 1 is finished:
+
+1. Phase 2 (server and presence).
+2. Race mode.
+3. Ground messages and emotes.
+
+Join-in battles (Phase 3) then follow the refactor. Everything in this milestone can be tried on one LAN, or on one
+PC with two game windows, before anyone sets up Tailscale or ZeroTier.
+
 ### Phase 3: join-in battles
 
 `battle_started` / `battle_nearby` / `join_battle`, the server running `party.py` with its own `random.Random`, the
@@ -491,7 +505,53 @@ Small and independent, in any order:
 - A "help" flare: a player in a fight can send a call that shows on the overworld for everyone on the map, so a
   friend further than N tiles away knows where to go.
 
-## 10. Open questions
+## 10. More ideas
+
+Ideas that fit Dragon Warrior and the overlapping-worlds design, roughly from cheapest to biggest. None of them is
+decided; section 9 suggests where the first ones fit.
+
+### Cheap and social
+
+- **Messages on the ground** (like *Dark Souls* notes): a player leaves a short message on a tile, and friends see
+  it in their own world on the same tile. Messages are built from **fixed phrase templates** ("Beware of ____
+  ahead", "Try searching here", "____ is weak to ____"), not free text: they keep DW's voice, need no moderation,
+  and translate automatically, because each template and word is a catalog entry. Each client shows only messages on
+  its own map; the server stores them.
+- **Where friends fell**: a small marker on the tile where a friend's hero died, which can replay their last few
+  seconds (the hero's last steps and the battle text). Funny, and a useful warning.
+- **Emotes**: a handful of NES-style speech bubbles ("!", "?", a heart, "Help!") over a hero's head (this is the
+  Phase 4 quick chat).
+
+### Co-op beyond fighting
+
+- **Shared light in dark dungeons**: a player with a torch or RADIANT lights the area around them for anyone
+  walking nearby, in everyone's view. A natural reason to explore dungeons together. It changes only what is drawn,
+  not the dungeon or anyone's light timer.
+- **Field support**: HEAL on an adjacent friend, or handing them an Herb (see open question 5).
+- **Gifts by mail**: leave an item or gold at Tantegel for a friend to pick up the next time they visit; an
+  asynchronous version of Phase 4's trading, with no need to be online at the same time.
+- **A help flare for guardians**: a player at the Golem or the Green Dragon can ask for help, and a friend can join
+  that one fight. Opt-in per fight, so solo guardian fights stay exactly NES. (The Dragonlord stays single-player.)
+
+### Competitive
+
+- **Race mode**: everyone starts a new game with the **same random seed** and races to defeat the Dragonlord. A
+  sidebar shows each rival's level, map and key items, and the server broadcasts milestones ("Player 2 got the
+  Silver Harp!"). It builds on what the game already has or plans: deterministic randomness (src/nes_random.py and
+  the seeded tests), the speedrun timer (#424) and the randomizer (#422), which would give each race a fresh seed.
+  The server only relays progress, so it needs no shared battles.
+- **Small contests**: most Metal Slimes in 10 minutes, the lowest level to defeat the Dragonlord, the fewest steps
+  to the Rainbow Bridge.
+- **Ghost races**: race against a friend's recorded path, like ghost cars in a racing game.
+
+### Bigger, for later
+
+- **World events**: a broadcast like "A horde of Metal Slimes has appeared near Garinham!" for a few minutes, with
+  the encounter table nudged for everyone on that map while it lasts.
+- **Duels** in the Tantegel courtyard: opt-in PvP using the battle rules once they run on the server (see open
+  question 11).
+
+## 11. Open questions
 
 1. **N tiles**: is 8 (about half a screen) the right radius for join offers?
 2. **HP multiplier**: start at 1.75 per extra hero, or 2.0? Should the enemy also act twice a round with 3+ heroes?
