@@ -1,6 +1,7 @@
 from pygame import mixer
 
 from src.chiptune import chiptune_library, is_chiptune, tagged_length_seconds
+from src.chiptune_soundtracks import is_clip
 from src.music_stream import MusicStream, Segment
 from src.sound import music_channel
 from src.waiting import POLL_INTERVAL_MS, game_ticks, wait
@@ -43,7 +44,7 @@ class MusicPlayer:
         the NES's fight music runs into its loop (MSC_ENTR_FGHT falls through into SQ1Fight). loop=0 plays it once.
 
         A chiptune track loops by itself, as on the console: the NES's MSC_ENTR_FGHT track already runs into the fight
-        loop, so only a track that is played once (a clip, with a tagged length) is followed by then_loop."""
+        loop, so only a clip (src/chiptune_soundtracks.py), which ends, is followed by then_loop."""
         if not self.music_enabled:
             return
         self.stop_music()  # also drops anything queued
@@ -62,7 +63,7 @@ class MusicPlayer:
     def _chiptune_segments(path: str, loop: int, then_loop: str | None) -> list[Segment]:
         if loop == 0:
             return [Segment(path, tagged_length_seconds(path))]
-        if then_loop is None or then_loop == path or tagged_length_seconds(path) is None:
+        if then_loop is None or then_loop == path or not is_clip(path):
             return [Segment(path)]
         return [Segment(path, tagged_length_seconds(path)), Segment(then_loop)]
 

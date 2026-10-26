@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, call, patch
 import pygame
 
 from src.battle import Battle
+from src.chiptune_soundtracks import MSC_ENTR_FGHT, MSC_REG_FGHT, nes_track
 from src.config.test_config import test_config
 from src.directories import Directories
 from src.maps import map_lookup
@@ -60,8 +61,9 @@ RESUME_MUSIC_TBL = {
     'GarinsGraveB2': 'dungeon_floor_2_music',  # B2: MSC_DUNGEON2
     'GarinsGraveB3': 'dungeon_floor_3_music',  # B3: MSC_DUNGEON3
     'GarinsGraveB4': 'dungeon_floor_4_music',  # B4: MSC_DUNGEON4
-    'ErdricksCaveB1': 'dungeon_floor_1_music',  # MSC_DUNGEON1
-    'ErdricksCaveB2': 'dungeon_floor_2_music',  # MSC_DUNGEON2
+    # MSC_DUNGEON1 and 2 on the NES; the SFC remake plays its dungeon medley there (src/chiptune_soundtracks.py)
+    'ErdricksCaveB1': 'erdricks_cave_floor_1_music',
+    'ErdricksCaveB2': 'erdricks_cave_floor_2_music',
 }
 
 
@@ -116,8 +118,8 @@ class TestFightMusic(unittest.TestCase):
         self.directories = Directories(self.config)
 
     def test_the_two_fight_tracks(self):
-        self.assertTrue(self.directories.battle_music.endswith('14 Dragon Quest 1 - A Monster Draws Near.mp3'))
-        self.assertTrue(self.directories.regular_fight_music.endswith('24 Dragon Quest 1 - Monster Battle.mp3'))
+        self.assertEqual(nes_track(MSC_ENTR_FGHT), self.directories.battle_music)
+        self.assertEqual(nes_track(MSC_REG_FGHT), self.directories.regular_fight_music)
 
     def test_a_fight_starts_with_the_opening_then_loops_the_fight_music(self):
         music_player = MagicMock()

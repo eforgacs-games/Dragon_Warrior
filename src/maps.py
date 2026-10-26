@@ -1215,7 +1215,7 @@ class Cantlin(DragonWarriorMap):
 
 class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().erdricks_cave_b1, config, Directories(config).dungeon_floor_1_music, (1, 1),
+        super().__init__(MapLayouts().erdricks_cave_b1, config, Directories(config).erdricks_cave_floor_1_music, (1, 1),
                          staircases={(3, 3): {'map': 'Alefgard'},
                                      (12, 12): {'map': 'ErdricksCaveB2',
                                                 'destination_coordinates': (
@@ -1234,7 +1234,7 @@ class ErdricksCaveB1(MapWithoutNPCs, CaveMap):
 
 class ErdricksCaveB2(MapWithoutNPCs, CaveMap):
     def __init__(self, config):
-        super().__init__(MapLayouts().erdricks_cave_b2, config, Directories(config).dungeon_floor_2_music, (10, 9),
+        super().__init__(MapLayouts().erdricks_cave_b2, config, Directories(config).erdricks_cave_floor_2_music, (10, 9),
                          staircases={
                              (10, 9): {'map': 'ErdricksCaveB1', 'destination_coordinates': (12, 12)}})
         self.assign_stair_directions()
