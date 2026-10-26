@@ -29,7 +29,7 @@ from pygame.event import Event
 
 from src.color import is_low_hp
 from src.common import A_BUTTON_KEYS, D_PAD_KEYS
-from src.controls import KeySet, first_binding
+from src.controls import first_binding
 from src.coordinates import Cell
 from src.encounters import encounter_group
 from src.guardians import guardian_at
@@ -44,7 +44,6 @@ from src.waiting import MAP_CONTEXT, SPEED_KEYS
 # HP <= max HP * 3 / 4.
 GRIND_STOP_RED_HP, GRIND_STOP_HALF_HP, GRIND_STOP_THREE_QUARTERS_HP = AUTO_GRIND_STOP_VALUES
 
-AUTO_GRIND_KEYS = KeySet('AUTO_GRIND')  # G, unless the player has bound it elsewhere (src/controls.py)
 TAP_HOLD_FRAMES = 2  # an A tap is held this long
 TAP_PERIOD_FRAMES = 8  # and one starts this often
 # Keys that don't count as "any key": the modifiers on their own (Ctrl for the zoom keys, say)
