@@ -89,6 +89,12 @@ class StopReason(Enum):
     DEATH = 'death'
 
 
+# The stops that hand a fight back to the player because it has turned dangerous (or special): auto-battle (F4, a
+# cheat) is turned off with them, or it would pick the last command again the moment auto-grind lets go, and the
+# COMMAND window wouldn't really be the player's
+SAFETY_STOPS = frozenset({StopReason.HP_LOW, StopReason.ASLEEP, StopReason.STOPSPELL, StopReason.SCRIPTED_FIGHT})
+
+
 class AutoGrind:
     """Auto-grind for one game (see the module docstring); the virtual joypad's driver."""
 
@@ -160,11 +166,13 @@ class AutoGrind:
 
     def stop(self, reason: StopReason, show_now: bool = True) -> None:
         """Hand the game back where it is: let go of every key, play the menu button sound and say why (at once, or
-        at the next safe point)."""
+        at the next safe point). A stop for safety (SAFETY_STOPS) turns auto-battle off too."""
         if not self.active:
             return
         self.joypad.disconnect()
         self.last_stop = reason
+        if reason in SAFETY_STOPS:
+            self.game.auto_battle = False
         if reason == StopReason.DEATH:
             return
         self.game.sound.play_sound(self.game.directories.menu_button_sfx)
