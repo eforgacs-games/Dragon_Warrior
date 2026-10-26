@@ -15,8 +15,8 @@ from src.autosave import AUTOSAVE_INTERVAL_MS, AUTOSAVE_MAPS, autosave_path, has
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.maps import map_lookup
-from src.options_screen import AUTOSAVE_SAVE_KEY, DEFAULT_OPTIONS, apply_options, options_from_save
-from src.save_file import save_files
+from src.options_screen import AUTOSAVE_SAVE_KEY, DEFAULT_OPTIONS, OptionsScreen, apply_options, options_from_save
+from src.save_file import read_save_name, save_files, save_path
 from src.save_state import STATE_FORMAT_VERSION, VERSION_KEY, take_snapshot
 from src.title_menu import BACK_TO_TITLE_MENU
 from src.title_windows import title_menu_layout
@@ -273,3 +273,107 @@ class TestContinueAutosave(AutosaveTestCase):
         # no wider than the NES entries' translations, which fit
         widest = max(font.size(_(text.text))[0] for text in FULL_MENU_LAYOUT.texts)
         self.assertLessEqual(font.size(korean)[0], widest)
+
+
+class TestHeldMap(AutosaveTestCase):
+    """The autosave waits while the map is held, as a save state does (MovementController.map_held), and the time it's
+    held doesn't count."""
+
+    def test_not_written_while_paused(self):
+        self.go_to('Alefgard', ALEFGARD_GRASS)
+        self.frame()
+        self.game.paused = True
+        self.clock[0] = 10 * AUTOSAVE_INTERVAL_MS
+        self.frame()
+        self.assertFalse(has_autosave(self.save_dir.name))
+
+    def test_not_written_with_a_window_about_to_open(self):
+        self.go_to('Alefgard', ALEFGARD_GRASS)
+        self.frame()
+        self.go_to('Brecconary')
+        self.game.cmd_menu_requested = True
+        with patch.object(self.game.movement, 'resolve_pending_freezes'):
+            self.frame()
+        self.assertFalse(has_autosave(self.save_dir.name))
+        self.game.cmd_menu_requested = False
+        self.frame()
+        self.assertTrue(has_autosave(self.save_dir.name))
+
+    def test_paused_time_doesnt_count(self):
+        self.go_to('Alefgard', ALEFGARD_GRASS)
+        self.clock[0] = AUTOSAVE_INTERVAL_MS // 2
+        self.frame()
+        self.game.paused = True
+        self.clock[0] = 10 * AUTOSAVE_INTERVAL_MS
+        self.frame()
+        self.game.paused = False
+        self.frame()
+        self.assertFalse(has_autosave(self.save_dir.name))
+        # half the interval played before the pause, the other half after it
+        self.clock[0] += AUTOSAVE_INTERVAL_MS // 2
+        self.frame()
+        self.assertTrue(has_autosave(self.save_dir.name))
+
+
+class TestTiedToTheHero(AutosaveTestCase):
+    """An autosave is never saved over another hero's adventure log."""
+
+    def save_hero_in_log(self, game, name, log):
+        game.player.name = name
+        game.player.adventure_log = log
+        self.assertTrue(game.cmd_menu.save())
+
+    def write_autosave(self):
+        self.go_to('Alefgard', ALEFGARD_GRASS)
+        self.frame()
+        self.go_to('Brecconary')
+        self.frame()
+        self.assertTrue(has_autosave(self.save_dir.name))
+
+    def erase_log(self, game, log):
+        with patch.object(OptionsScreen, 'choose_log', return_value=log), \
+                patch.object(OptionsScreen, 'confirm_erase', return_value=True):
+            game.title_menu.save_dir_contents = game.title_menu.save_files()
+            self.assertIs(BACK_TO_TITLE_MENU, game.title_menu.erase_quest())
+
+    def log_names(self):
+        return {log: read_save_name(save_path(self.save_dir.name, log)) for log in (1, 2, 3)}
+
+    def continue_autosave(self, game):
+        with patch('src.save_state.screen_fade'), patch.object(game.music_player, 'load_and_play_music'):
+            return game.title_menu.continue_autosave()
+
+    def test_erasing_the_heros_log_erases_the_autosave(self):
+        # Aaa in log 1 with an autosave, log 1 erased, Bbb begun in log 1: CONTINUE AUTOSAVE and a save with King
+        # Lorik used to write Aaa over Bbb
+        self.save_hero_in_log(self.game, 'Aaa', 1)
+        self.write_autosave()
+        title_game = self.new_game()
+        self.erase_log(title_game, 1)
+        self.assertFalse(has_autosave(self.save_dir.name))
+        self.assertFalse(title_game.title_menu.autosave_present)
+        self.save_hero_in_log(self.new_game(), 'Bbb', 1)
+        self.assertIs(BACK_TO_TITLE_MENU, self.continue_autosave(self.new_game()))
+        self.assertEqual({1: 'Bbb', 2: None, 3: None}, self.log_names())
+
+    def test_erasing_another_log_keeps_the_autosave(self):
+        self.save_hero_in_log(self.game, 'Aaa', 1)
+        self.write_autosave()
+        self.save_hero_in_log(self.new_game(), 'Bbb', 2)
+        self.erase_log(self.new_game(), 2)
+        self.assertTrue(has_autosave(self.save_dir.name))
+
+    def test_a_log_that_holds_another_hero_now_is_never_saved_over(self):
+        # Log 1 deleted outside the game, so the autosave is still there, and Bbb begun in it
+        self.save_hero_in_log(self.game, 'Aaa', 1)
+        self.write_autosave()
+        os.remove(save_path(self.save_dir.name, 1))
+        self.save_hero_in_log(self.new_game(), 'Bbb', 1)
+        game = self.new_game()
+        self.assertIsNone(self.continue_autosave(game))
+        self.assertEqual(('Aaa', 1), (game.player.name, game.player.adventure_log))
+        with patch('builtins.print'):
+            self.assertTrue(game.cmd_menu.save())
+        # Aaa goes where a new log would (log_for_unchosen_save), and saves there from then on
+        self.assertEqual({1: 'Bbb', 2: 'Aaa', 3: None}, self.log_names())
+        self.assertEqual(2, game.player.adventure_log)

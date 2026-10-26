@@ -17,8 +17,9 @@ from src.battle_controller import BattleOutcome
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.maps import map_lookup
-from src.save_state import STATE_FORMAT_VERSION, VERSION_KEY, StateError, decode_snapshot, read_state, \
-    state_path, take_snapshot
+from src.message_log import LogEntry
+from src.save_state import GAME_VALUES, MOVEMENT_VALUES, STATE_FORMAT_VERSION, VERSION_KEY, StateError, \
+    decode_snapshot, migrate_snapshot, read_state, restore_snapshot, state_path, take_snapshot
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import WINDOW_CONTEXT
 from tests import helpers
@@ -475,3 +476,131 @@ class TestKeys(SaveStateTestCase):
         self.assertIn(outcome, (BattleOutcome.VICTORY, BattleOutcome.ESCAPED))
         self.assertIsNone(game.state_request)
         self.assertFalse(os.path.exists(state_path(self.save_dir, 1)))
+
+
+class TestAFailedSave(SaveStateTestCase):
+
+    def test_a_full_disk_or_read_only_folder_is_only_said(self):
+        game = self.game
+        self.go_to(game, 'Brecconary')
+        with patch('src.save_state.atomic_write_json', side_effect=OSError("No space left on device")), \
+                patch('builtins.print'):
+            game.save_state(2)
+        self.assertEqual(["State 2 couldn't be saved"], self.messages)
+        self.assertIsNone(read_state(self.save_dir, 2))
+
+
+# The Game attributes a snapshot keeps in entries of their own, rather than as GAME_VALUES
+GAME_KEPT_IN_THEIR_OWN_ENTRIES = {
+    'player',  # 'hero'
+    'current_map',  # 'map', 'roaming', 'fixed' and 'hero_underlying_tile'
+    'layouts',  # 'layout_changes'
+    'camera', 'story_flags', 'chest_history', 'door_history', 'color', 'dungeon_map', 'message_log',
+    'game_state',  # 'game_state': GAME_STATE_VALUES
+    'movement',  # 'movement': MOVEMENT_VALUES and the NPC schedule
+    'map_mgr',  # 'fought_on_stairs'
+    'battle_ctrl',  # 'last_battle_action' and 'pending_scripted_battle'
+    'drawer',  # 'pop_up_window'
+    'config',  # 'options': the options in force
+    'cmd_menu',  # made again with the map
+}
+# The Game attributes a snapshot deliberately doesn't keep
+GAME_NOT_KEPT = {
+    # Settings of the session, not of the game (see src/save_state.py)
+    '_', 'auto_battle', 'invulnerable', 'fullscreen_enabled', 'scale', 'flags', 'show_arrow', 'skip_text',
+    'show_coordinates', 'last_coordinates', 'debug_tools', 'splash_screen_enabled', 'start_time',
+    # Requests for a window or a state: a snapshot is taken with none asked for, and putting one back clears them
+    'paused', 'pause_requested', 'cmd_menu_requested', 'options_requested', 'message_log_requested',
+    'auto_grind_requested', 'dungeon_map_requested', 'smart_a_pending', 'state_request', 'state_request_due',
+    # Only set and read during a map change
+    'last_map',
+    # The snapshots' own machinery, and auto-grind, which drives the game rather than being part of it
+    'autosave', 'rewind', 'auto_grind',
+    # Drawing, timing and the game's other parts, which hold no state of the game
+    'screen', 'big_map', 'graphics', 'tile_size', 'foreground_rects', 'loop_count', 'events', 'clock', 'frame_clock',
+    'frame_pacer', 'calculation', 'directories', 'game_functions', 'music_player', 'sound', 'title_menu', 'ending',
+    'settings',
+}
+# The MovementController attributes a snapshot deliberately doesn't keep
+MOVEMENT_NOT_KEPT = {
+    'npc_schedule',  # kept as 'frame_counter' and 'update_counter'
+    'npc_asked_to_make_way',  # cleared when a snapshot is put back
+    'speed',  # from the config's tile size
+    'game', 'calculation', 'directories', 'sound',
+}
+
+
+class TestEverythingIsKept(SaveStateTestCase):
+    """A new Game or MovementController attribute has to be kept in snapshots, or listed above as not kept on
+    purpose: one forgotten makes loading a state or rewinding play on differently (skip_next_encounter and
+    repel_tick_pending once were)."""
+
+    def test_every_game_attribute_is_kept_or_left_out_on_purpose(self):
+        attributes = set(vars(self.game)) - {'draw_temporary_text'}  # patched in by setUp
+        accounted_for = set(GAME_VALUES) | GAME_KEPT_IN_THEIR_OWN_ENTRIES | GAME_NOT_KEPT
+        self.assertEqual(set(), attributes - accounted_for)
+        self.assertEqual(set(), accounted_for - attributes, "listed above, but no longer in the Game")
+
+    def test_every_movement_attribute_is_kept_or_left_out_on_purpose(self):
+        accounted_for = set(MOVEMENT_VALUES) | MOVEMENT_NOT_KEPT
+        self.assertEqual(set(), set(vars(self.game.movement)) - accounted_for)
+        self.assertEqual(set(), accounted_for - set(vars(self.game.movement)))
+
+    def test_encounters_half_and_the_repel_tick_are_put_back(self):
+        game = self.game
+        self.go_to(game, 'Alefgard', ALEFGARD_GRASS)
+        game.skip_next_encounter = True
+        game.repel_tick_pending = True
+        game.movement.running_step = True
+        game.save_state(1)
+        game.skip_next_encounter = game.repel_tick_pending = game.movement.running_step = False
+        game.load_state(1)
+        self.assertEqual((True, True, True),
+                         (game.skip_next_encounter, game.repel_tick_pending, game.movement.running_step))
+
+    def test_a_version_1_state_loads_with_them_off(self):
+        game = self.game
+        self.go_to(game, 'Brecconary')
+        snapshot = comparable(take_snapshot(game))
+        snapshot[VERSION_KEY] = 1
+        for name in ('skip_next_encounter', 'repel_tick_pending'):
+            del snapshot['game'][name]
+        del snapshot['movement']['running_step']
+        del snapshot['message_log']
+        game.skip_next_encounter = game.repel_tick_pending = game.movement.running_step = True
+        game.message_log.record("Welcome!")
+        restore_snapshot(game, migrate_snapshot(snapshot), fade_in=False)
+        self.assertEqual((False, False, False),
+                         (game.skip_next_encounter, game.repel_tick_pending, game.movement.running_step))
+        self.assertEqual(0, len(game.message_log))
+
+
+class TestMessageLog(SaveStateTestCase):
+    """Putting a snapshot back puts back the message log as it was then (src/message_log.py)."""
+
+    def test_loading_a_state_puts_the_messages_back(self):
+        game = self.game
+        self.go_to(game, 'Brecconary')
+        game.message_log.record("Welcome to the town of Brecconary.", 'MAN')
+        game.save_state(1)
+        game.message_log.record("Thou hast found 120 gold.")
+        game.load_state(1)
+        self.assertEqual([LogEntry("Welcome to the town of Brecconary.", 'MAN')], list(game.message_log.entries))
+
+    def test_a_rewind_takes_back_what_was_said_since(self):
+        game = self.game
+        self.go_to(game, 'Brecconary')
+        game.message_log.record("Welcome to the town of Brecconary.", 'MAN')
+        game.rewind.record()
+        game.message_log.record("Thou hast found 120 gold.")
+        self.assertTrue(game.rewind.start())
+        game.rewind.stop()
+        self.assertEqual([LogEntry("Welcome to the town of Brecconary.", 'MAN')], list(game.message_log.entries))
+
+    def test_a_message_that_isnt_text_is_refused(self):
+        game = self.game
+        self.go_to(game, 'Brecconary')
+        snapshot = comparable(take_snapshot(game))
+        for broken in ([[3, None]], [['text']], 'not a list'):
+            with self.subTest(broken=broken), self.assertRaises(StateError):
+                decode_snapshot({**snapshot, 'message_log': broken})
