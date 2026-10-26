@@ -42,8 +42,8 @@ class TestFromSource(TestCase):
 
     def test_data_is_in_the_repository(self):
         self.assertEqual(project_root(), REPO_ROOT)
-        self.assertEqual(data_path('fonts', 'unifont.ttf'), join(REPO_ROOT, 'data', 'fonts', 'unifont.ttf'))
-        self.assertTrue(os.path.isfile(data_path('fonts', 'unifont.ttf')))
+        self.assertEqual(data_path('fonts', 'unifont.otf'), join(REPO_ROOT, 'data', 'fonts', 'unifont.otf'))
+        self.assertTrue(os.path.isfile(data_path('fonts', 'unifont.otf')))
 
     def test_saves_stay_in_src_saves(self):
         self.assertEqual(default_save_dir(), join(REPO_ROOT, 'src', 'saves'))
@@ -77,7 +77,7 @@ class TestFrozen(FrozenTestCase):
         self.freeze(REPO_ROOT)
         directories = Directories(config_without_save_dir())
         self.assertEqual(directories.save_dir, join(user_data_dir(), 'saves'))
-        self.assertEqual(directories.UNIFONT_PATH, join(REPO_ROOT, 'data', 'fonts', 'unifont.ttf'))
+        self.assertEqual(directories.UNIFONT_PATH, join(REPO_ROOT, 'data', 'fonts', 'unifont.otf'))
         self.assertEqual(directories.root_project_path, REPO_ROOT)
         # A checkpoint's SAVE_DIR still redirects the saves
         self.assertEqual(Directories({**test_config, 'SAVE_DIR': '/somewhere'}).save_dir, '/somewhere')
@@ -118,7 +118,8 @@ class TestSmokeTest(FrozenTestCase):
         self.assertIn(data_path('sound', 'music', 'orchestra', '05 Fight.mp3'), file_paths)
         self.assertIn(data_path('sound', 'music', 'NES', '14 Dragon Quest 1 - A Monster Draws Near.mp3'), file_paths)
         self.assertIn(data_path('checkpoints', 'rainbow_bridge.json'), file_paths)
-        self.assertIn(data_path('fonts', 'unifont.ttf'), file_paths)
+        self.assertIn(data_path('fonts', 'unifont.otf'), file_paths)
+        self.assertIn(data_path('fonts', 'OFL-unifont.txt'), file_paths)
 
     def test_reports_what_a_build_is_missing(self):
         with tempfile.TemporaryDirectory() as meipass:
