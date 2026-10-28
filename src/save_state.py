@@ -66,6 +66,8 @@ from src.visual_effects import cut_to_black, screen_fade
 STATE_FORMAT_VERSION = 2
 VERSION_KEY = 'version'
 SAVE_STATE_SLOTS = (1, 2, 3)
+# What a save state key asks for (MapHotkeys.press_save_state): (SAVE or LOAD, slot)
+SAVE, LOAD = 'save', 'load'
 
 # The hero's values a snapshot keeps, as they are (numbers, strings, booleans and None)
 PLAYER_VALUES = (
@@ -563,3 +565,51 @@ def remove_snapshots_of_log(paths: Iterable[str], log: int) -> None:
     for path in paths:
         if snapshot_log(path) == log:
             os.remove(path)
+
+
+# Saving and loading from the map
+
+
+def run_due_state_request(game: Any) -> None:
+    """Save or load the save state asked for (MapHotkeys.press_save_state), once everyone is on a tile
+    (MovementController.resolve_pending_freezes), between two map frames (Game.run_map_frame)."""
+    request, game.state_request_due = game.state_request_due, None
+    if request is None:
+        return
+    action, slot = request
+    if action == SAVE:
+        save_to_slot(game, slot)
+    else:
+        load_from_slot(game, slot)
+
+
+def save_to_slot(game: Any, slot: int) -> None:
+    """Save the game as it is into a save state slot, and say so. A state that can't be written (a full disk, a
+    read-only save folder) is only said so, as a failed autosave is: play goes on, and the slot keeps what it had."""
+    try:
+        write_state(game.directories.save_dir, slot, take_snapshot(game))
+    except OSError as error:
+        print(f"Save state {slot} failed: {error}")
+        game.draw_temporary_text(game._("State {} couldn't be saved").format(slot))
+        return
+    game.draw_temporary_text(game._("State {} saved").format(slot))
+
+
+def load_from_slot(game: Any, slot: int) -> None:
+    """Load a save state slot, and say so: the game is put back as it was when it was saved, and play goes on from
+    there. An empty slot, or a state that can't be loaded (from an older version of the game, or unreadable), changes
+    nothing."""
+    try:
+        snapshot = read_state(game.directories.save_dir, slot)
+        if snapshot is None:
+            game.draw_temporary_text(game._("State {} is empty").format(slot))
+            return
+        restore_snapshot(game, snapshot)
+    except StateError as error:
+        if error.reason == OLD_VERSION:
+            message = game._("State {} is from another version\nand can't be loaded").format(slot)
+        else:
+            message = game._("State {} can't be read").format(slot)
+        game.draw_temporary_text(message)
+        return
+    game.draw_temporary_text(game._("State {} loaded").format(slot))

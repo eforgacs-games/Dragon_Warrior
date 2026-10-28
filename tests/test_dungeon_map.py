@@ -14,7 +14,7 @@ from src.controls import Binding, Controls, reset_controls, set_controls
 from src.dungeon_map import CHEST_COLOR, FLOOR_COLOR, HERO_COLOR, MAP_WINDOW, STAIRS_UP_COLOR, WALL_COLOR, \
     DungeonMap, DungeonMapOverlay, Floor, block_pixels, draw_floor
 from src.save_file import read_save, save_path
-from src.save_state import take_snapshot
+from src.save_state import load_from_slot, save_to_slot, take_snapshot
 from tests.test_save_state import HeldKeys, SaveStateTestCase, comparable, key
 
 SWAMP_CAVE_START = (9, 4)  # brick below the Swamp Cave's north stairs, as tools/benchmark.py's dungeon scene
@@ -153,10 +153,10 @@ class TestInTheGame(DungeonTestCase):
         self.enter_swamp_cave(game)
         self.run_frames(game, 32, script=down_script)
         saved = game.dungeon_map.to_save()
-        game.save_state(1)
+        save_to_slot(game, 1)
         self.run_frames(game, 64, script=down_script)
         self.assertNotEqual(saved, game.dungeon_map.to_save())
-        game.load_state(1)
+        load_from_slot(game, 1)
         self.assertEqual(saved, game.dungeon_map.to_save())
         self.assertEqual(saved, comparable(take_snapshot(game))['dungeon_map'])
 

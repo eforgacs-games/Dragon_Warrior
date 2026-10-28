@@ -51,7 +51,7 @@ from src.options_screen import ENCOUNTERS_HALF, ENCOUNTERS_OFF, apply_options
 from src.quest_journal import GOLEM_FIGHT, hear
 from src.rewind import Rewind
 from src.save_file import SaveFile
-from src.save_state import OLD_VERSION, StateError, read_state, restore_snapshot, take_snapshot, write_state
+from src.save_state import run_due_state_request
 from src.settings import SettingsStore
 from src.paths import data_path
 from src.player.player import Player
@@ -179,7 +179,7 @@ class Game:
         self.message_log_requested = False
         self.auto_grind_requested = False
         # ('save' or 'load', slot), until everyone is on a tile; then it's due, and the end of that frame carries it out
-        # (run_due_state_request)
+        # (src/save_state.py run_due_state_request)
         self.state_request: tuple[str, int] | None = None
         self.state_request_due: tuple[str, int] | None = None
         self.message_log = MessageLog()
@@ -463,7 +463,7 @@ class Game:
         self._handle_post_move_checks()
         self.ending.check_for_end_game_trigger()
         self._handle_debugging_info()
-        self.run_due_state_request()
+        run_due_state_request(self)
         self.autosave.frame()
         event.pump()
 
@@ -899,49 +899,6 @@ class Game:
     def handle_keypresses(self, current_keydown_event) -> None:
         """A key pressed on the map: src/map_hotkeys.py."""
         self.hotkeys.handle_keydown(current_keydown_event)
-
-    def run_due_state_request(self) -> None:
-        """Save or load the save state asked for, once everyone is on a tile (resolve_pending_freezes), between two
-        map frames."""
-        request, self.state_request_due = self.state_request_due, None
-        if request is None:
-            return
-        action, slot = request
-        if action == 'save':
-            self.save_state(slot)
-        else:
-            self.load_state(slot)
-
-    def save_state(self, slot: int) -> None:
-        """Save the game as it is into a save state slot (src/save_state.py), and say so. A state that can't be written
-        (a full disk, a read-only save folder) is only said so, as a failed autosave is: play goes on, and the slot
-        keeps what it had."""
-        try:
-            write_state(self.directories.save_dir, slot, take_snapshot(self))
-        except OSError as error:
-            print(f"Save state {slot} failed: {error}")
-            self.draw_temporary_text(self._("State {} couldn't be saved").format(slot))
-            return
-        self.draw_temporary_text(self._("State {} saved").format(slot))
-
-    def load_state(self, slot: int) -> None:
-        """Load a save state slot (src/save_state.py), and say so: the game is put back as it was when it was saved,
-        and play goes on from there. An empty slot, or a state that can't be loaded (from an older version of the
-        game, or unreadable), changes nothing."""
-        try:
-            snapshot = read_state(self.directories.save_dir, slot)
-            if snapshot is None:
-                self.draw_temporary_text(self._("State {} is empty").format(slot))
-                return
-            restore_snapshot(self, snapshot)
-        except StateError as error:
-            if error.reason == OLD_VERSION:
-                message = self._("State {} is from another version\nand can't be loaded").format(slot)
-            else:
-                message = self._("State {} can't be read").format(slot)
-            self.draw_temporary_text(message)
-            return
-        self.draw_temporary_text(self._("State {} loaded").format(slot))
 
     def save_controls(self, controls: Controls) -> None:
         """Keep the player's controls for the next time, with the global settings."""

@@ -24,6 +24,7 @@ from src.dungeon_map import DungeonMapOverlay, dungeon_map_enabled
 from src.menu import STAIR_TILES
 from src.message_log import MessageLogScreen
 from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
+from src.save_state import LOAD, SAVE
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_OFF, game_progress, journal_pages
 from src.waiting import requested_speed, set_game_speed, speed_keys_enabled
 from src.zoom import remember_windowed_size, restore_windowed_size
@@ -46,8 +47,7 @@ MAP_REQUESTS = (
     MapRequest('auto_grind_requested', 'start_auto_grind'),  # G
 )
 
-# A save state request: ('save' or 'load', slot)
-SAVE, LOAD = 'save', 'load'
+# The save state keys: (SAVE or LOAD, slot) for each action
 STATE_ACTIONS = ((SAVE, SAVE_STATE_ACTIONS), (LOAD, LOAD_STATE_ACTIONS))
 
 
