@@ -105,7 +105,7 @@ class Game:
         # global options, read before the window opens
         self.settings = SettingsStore.from_config(config)
         put_in_config(self.settings.settings, config)
-        self._ = _ = set_gettext_language(config['LANGUAGE'])
+        self._ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
         # map/graphics
         self.big_map = None
@@ -115,19 +115,7 @@ class Game:
         self.initial_dialog_enabled = self.game_state.config["INITIAL_DIALOG_ENABLED"]
         self.skip_text = False
 
-        # engine: keys 1 to 5 change the game speed (self.fps), if GAME SPEED is on; it's kept with the global settings
-        set_speed_listener(None)
-        reset_game_speed()
-        set_game_speed(self.settings.settings.game_speed)
-        set_speed_listener(self.settings.updater('game_speed'))
-        set_speed_keys_enabled(bool(config.get('GAME_SPEED_KEYS')))
-        set_virtual_joypad(None)  # no auto-grind (src/auto_grind.py) left driving from an earlier game
-        connect_gamepad()  # a controller works like the keyboard (src/gamepad.py), plugged in now or later
-        follow_menu_speed_option(self.game_state.config)  # MENU SPEED: the selection windows at 1x or the game speed
-        # the player's keys (src/controls.py), kept with the global settings: changed on the CONTROLS screen and saved
-        # at once
-        set_controls(Controls.from_json(self.settings.settings.controls))
-        set_controls_listener(self.save_controls)
+        self.set_up_speed_and_controls()
         # intro
         self.start_time = get_ticks()
         self.splash_screen_enabled = self.game_state.config["SPLASH_SCREEN_ENABLED"]
@@ -176,30 +164,7 @@ class Game:
         self.dungeon_map = DungeonMap()
         # Hold Backspace on the map to rewind (src/rewind.py): the snapshots it steps back through
         self.rewind = Rewind(self)
-        # Create the game window.
-        if self.fullscreen_enabled:
-            # according to pygame docs: "SCALED is considered an experimental API and may change in future releases."
-            self.flags = FULLSCREEN | SCALED
-            # self.flags = FULLSCREEN
-        else:
-            self.flags = RESIZABLE | SCALED
-            # self.flags = RESIZABLE
-        # flags = RESIZABLE | SCALED allows for the graphics to stretch to fit the window
-        # without SCALED, it will show more of the map, but will also not center the camera
-        # it might be a nice comfort addition to add to center the camera, while also showing more of the map
-        self.scale = self.game_state.config["SCALE"]
-        # video_infos = display.Info()
-        # current_screen_width, current_screen_height = video_infos.current_w, video_infos.current_h
-        nes_res = self.game_state.config["NES_RES"]
-        win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
-        self.screen = self.set_screen(win_height, win_width)
-        # SCANLINES and SCALING (src/display_filters.py): with both off, pygame presents the screen as always
-        PRESENTER.configure_from(config)
-        # Ctrl 0 puts the window back to this size (Ctrl + / Ctrl - / Ctrl and the mouse wheel zoom it, src/zoom.py)
-        remember_default_zoom()
-        self.apply_saved_zoom()
-        # self.screen.set_alpha(None)
-        set_caption(_("Dragon Warrior"))
+        self.open_window()
 
         # self.current_map can be changed to other maps for development purposes
 
@@ -255,6 +220,39 @@ class Game:
 
         display.set_icon(image.load(self.directories.ICON_PATH))
         # pg.event.set_allowed([pg.QUIT])
+
+    def set_up_speed_and_controls(self) -> None:
+        """The game speed, the controller and the keys, which the global settings keep. Keys 1 to 5 change the game
+        speed (self.fps) if GAME SPEED is on."""
+        config = self.config
+        set_speed_listener(None)
+        reset_game_speed()
+        set_game_speed(self.settings.settings.game_speed)
+        set_speed_listener(self.settings.updater('game_speed'))
+        set_speed_keys_enabled(bool(config.get('GAME_SPEED_KEYS')))
+        set_virtual_joypad(None)  # no auto-grind (src/auto_grind.py) left driving from an earlier game
+        connect_gamepad()  # a controller works like the keyboard (src/gamepad.py), plugged in now or later
+        follow_menu_speed_option(self.game_state.config)  # MENU SPEED: the selection windows at 1x or the game speed
+        # the player's keys (src/controls.py): changed on the CONTROLS screen and saved at once
+        set_controls(Controls.from_json(self.settings.settings.controls))
+        set_controls_listener(self.save_controls)
+
+    def open_window(self) -> None:
+        """Create the game window: NES_RES times SCALE, in fullscreen if it was left in fullscreen, at the saved zoom
+        otherwise. SCALED stretches the graphics to fit the window (pygame calls it an experimental API); without it
+        the window would show more of the map but not center the camera."""
+        config = self.game_state.config
+        self.flags = FULLSCREEN | SCALED if self.fullscreen_enabled else RESIZABLE | SCALED
+        self.scale = config["SCALE"]
+        nes_res = config["NES_RES"]
+        win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
+        self.screen = self.set_screen(win_height, win_width)
+        # SCANLINES and SCALING (src/display_filters.py): with both off, pygame presents the screen as always
+        PRESENTER.configure_from(config)
+        # Ctrl 0 puts the window back to this size (Ctrl + / Ctrl - / Ctrl and the mouse wheel zoom it, src/zoom.py)
+        remember_default_zoom()
+        self.apply_saved_zoom()
+        set_caption(self._("Dragon Warrior"))
 
     @property
     def auto_stairs(self) -> bool:
