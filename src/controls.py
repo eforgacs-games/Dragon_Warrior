@@ -89,7 +89,7 @@ ACTIONS: tuple[Action, ...] = (
     _nes('DOWN', "DOWN", ('DOWN', 's'), 'dpdown'),
     _nes('LEFT', "LEFT", ('LEFT', 'a'), 'dpleft'),
     _nes('RIGHT', "RIGHT", ('RIGHT', 'd'), 'dpright'),
-    # Enter: an extra A in the windows, and on the map TALK, TAKE or DOOR when one applies (Game.handle_enter_key)
+    # Enter: an extra A in the windows, and on the map TALK, TAKE or DOOR when one applies (MapHotkeys.press_smart_a_key)
     _extra('SMART_A', "SMART A", ('RETURN',), modifiers=False),
     # Tab: the options overlay, like SELECT (src/options_overlay.py)
     _extra('OPTIONS', "OPTIONS", ('TAB',), modifiers=False),
@@ -127,7 +127,7 @@ ACTIONS_BY_NAME: dict[str, Action] = {action.name: action for action in ACTIONS}
 # The game speed each speed action sets (src/waiting.py), and the action that steps to the next speed
 SPEED_ACTIONS = {'SPEED_1': 1, 'SPEED_2': 2, 'SPEED_4': 4, 'SPEED_8': 8, 'SPEED_16': 16}
 NEXT_SPEED_ACTION = 'NEXT_SPEED'
-# The save state slot each save state action saves or loads (Game.handle_save_state_keys)
+# The save state slot each save state action saves or loads (MapHotkeys.press_save_state)
 SAVE_STATE_ACTIONS = {'SAVE_STATE_1': 1, 'SAVE_STATE_2': 2, 'SAVE_STATE_3': 3}
 LOAD_STATE_ACTIONS = {'LOAD_STATE_1': 1, 'LOAD_STATE_2': 2, 'LOAD_STATE_3': 3}
 

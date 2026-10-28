@@ -348,7 +348,7 @@ def requested_speed(current_event: event.Event) -> int | None:
 def handle_speed_key(current_event: event.Event) -> bool:
     """If ``current_event`` is a press of a speed key (1 to 5, or the NEXT SPEED key if one is bound), set the game
     speed (if the keys are on: the GAME SPEED switch) and return True. So it does for a gamepad's SPEED_CHANGED,
-    which only the map shows (Game.announce_game_speed)."""
+    which only the map shows (MapHotkeys.announce_game_speed)."""
     if current_event.type == SPEED_CHANGED:
         return True
     speed = requested_speed(current_event)

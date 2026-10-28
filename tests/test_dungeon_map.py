@@ -174,8 +174,8 @@ class TestInTheGame(DungeonTestCase):
 class TestKey(DungeonTestCase):
 
     def press_m(self, game, press=None):
-        with patch.object(game, 'open_dungeon_map') as open_dungeon_map:
-            game.handle_dungeon_map_key(key(K_m) if press is None else press)
+        with patch.object(game.hotkeys, 'open_dungeon_map') as open_dungeon_map:
+            game.hotkeys.press_dungeon_map(key(K_m) if press is None else press)
             with patch('src.movement.key') as movement_key:
                 movement_key.get_pressed.return_value = HeldKeys()
                 for _ in range(20):

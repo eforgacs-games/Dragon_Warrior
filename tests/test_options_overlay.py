@@ -115,7 +115,8 @@ class TestOpening(OverlayTestCase):
 
     def test_select_or_tab_opens_it_on_the_map(self):
         for pressed_key in (K_u, K_TAB):
-            with self.subTest(key=pygame.key.name(pressed_key)), patch.object(self.game, 'open_options') as open_options:
+            with self.subTest(key=pygame.key.name(pressed_key)), \
+                    patch.object(self.game.hotkeys, 'open_options') as open_options:
                 self.press(pressed_key)
             open_options.assert_called_once()
             self.assertFalse(self.game.options_requested)
@@ -123,7 +124,7 @@ class TestOpening(OverlayTestCase):
     def test_it_waits_for_the_heros_step(self):
         # Like START (PausePrepLoop): mid-step it waits, and no new step starts meanwhile
         self.game.player.is_moving = True
-        with patch.object(self.game, 'open_options') as open_options:
+        with patch.object(self.game.hotkeys, 'open_options') as open_options:
             self.press(K_u)
             open_options.assert_not_called()
             self.assertTrue(self.game.movement.freeze_pending)
@@ -135,7 +136,7 @@ class TestOpening(OverlayTestCase):
         for attribute, owner in (('launch_signaled', self.game.cmd_menu), ('paused', self.game),
                                  ('cmd_menu_requested', self.game), ('pause_requested', self.game)):
             with self.subTest(attribute), patch.object(owner, attribute, True), \
-                    patch.object(self.game, 'open_options') as open_options:
+                    patch.object(self.game.hotkeys, 'open_options') as open_options:
                 self.press(K_u)
                 open_options.assert_not_called()
                 self.assertFalse(self.game.options_requested)
@@ -143,13 +144,13 @@ class TestOpening(OverlayTestCase):
     def test_not_while_the_command_window_is_up(self):
         self.game.cmd_menu.menu.enable()
         self.addCleanup(self.game.cmd_menu.menu.disable)
-        with patch.object(self.game, 'open_options') as open_options:
+        with patch.object(self.game.hotkeys, 'open_options') as open_options:
             self.press(K_TAB)
         open_options.assert_not_called()
 
     def test_start_while_it_is_pending_pauses_instead(self):
         self.game.player.is_moving = True
-        with patch.object(self.game, 'open_options') as open_options:
+        with patch.object(self.game.hotkeys, 'open_options') as open_options:
             self.press(K_u)
             self.press(pygame.K_i)
             self.game.player.is_moving = False
@@ -159,7 +160,7 @@ class TestOpening(OverlayTestCase):
 
     def test_a_while_it_is_pending_does_not_open_the_command_window_after(self):
         self.game.player.is_moving = True
-        with patch.object(self.game, 'open_options'):
+        with patch.object(self.game.hotkeys, 'open_options'):
             self.press(K_u)
             self.press(K_k)
         self.assertFalse(self.game.cmd_menu_requested)
@@ -590,7 +591,7 @@ class TestSwitches(OverlayTestCase):
         self.press(pygame.K_g)
         self.assertFalse(self.game.auto_grind_requested)
         self.set_switch("AUTO-GRIND", True)
-        with patch.object(self.game, 'start_auto_grind') as start_auto_grind:
+        with patch.object(self.game.hotkeys, 'start_auto_grind') as start_auto_grind:
             self.press(pygame.K_g)
         start_auto_grind.assert_called_once()
 

@@ -2,7 +2,7 @@
 
 The adventure log (src/save_file.py) is the NES's save and stays as it is. A save state is this game's own quality of
 life feature, like an emulator's: Shift + F1/F2/F3 saves one into slot 1/2/3 and F1/F2/F3 loads it
-(Game.handle_save_state_keys). The rewind (src/rewind.py) keeps the same snapshots in memory.
+(MapHotkeys.press_save_state). The rewind (src/rewind.py) keeps the same snapshots in memory.
 
 ``take_snapshot`` makes the snapshot: a plain dict of JSON values, small enough to keep many of in memory (no
 surfaces, no sprites; a map is named, not copied). It holds everything the game's next frames depend on:
@@ -491,8 +491,8 @@ def _restore_values(game: Any, state: dict[str, Any]) -> None:
     game.battle_ctrl.last_battle_action = state['last_battle_action']
     game.battle_ctrl.pending_scripted_battle = state['pending_scripted_battle']
     # Nothing is waiting to happen: the snapshot was taken with no window open or asked for
-    game.paused = game.pause_requested = game.cmd_menu_requested = game.options_requested = False
-    game.auto_grind_requested = game.message_log_requested = False
+    game.paused = game.pause_requested = game.cmd_menu_requested = False
+    game.hotkeys.clear_requests()
     game.cmd_menu.launch_signaled = False
     game.camera.pos = state['camera']
     # The map is drawn in full on the next frame, with the pop-up window already open if it was (no drop-down)

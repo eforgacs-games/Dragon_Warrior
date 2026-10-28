@@ -344,8 +344,8 @@ def apply_options(config: dict, options: Options) -> None:
     one starts (src/directories.py). Each of the SWITCHES goes into its config key,
     which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once); the
     shops read SHOP_PREVIEW whenever their list opens, Q reads QUEST_JOURNAL each time it's pressed, Game.map_frame
-    reads AUTOSAVE every frame, the inventory checks read BAG_SIZE for every item added, and Game.handle_a_button and
-    Game.handle_message_log_key read SMART_A and MESSAGE_LOG for every press."""
+    reads AUTOSAVE every frame, the inventory checks read BAG_SIZE for every item added, and MapHotkeys.press_a and
+    MapHotkeys.press_message_log read SMART_A and MESSAGE_LOG for every press."""
     config['TEXT_SPEED'] = options.message_speed
     config['DIALOG_STYLE'] = options.dialog_style
     config['NPCS_MAKE_WAY'] = options.npcs_make_way

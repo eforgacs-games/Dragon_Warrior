@@ -1,6 +1,6 @@
 """The options overlay: this game's own settings, changed during play. Not on the NES.
 
-SELECT (U) or Tab on the map opens it (Game.handle_select_button), when START would pause the game: no window open,
+SELECT (U) or Tab on the map opens it (MapHotkeys.press_select), when START would pause the game: no window open,
 and only once the hero and the NPCs have finished their steps (MovementController.resolve_pending_freezes). The map
 frame stays on screen, darkened by a translucent black overlay, with one NES-style window over it (src/windows.py,
 drawn by src/translated_window.py).
@@ -23,7 +23,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     GAMEPLAY
     NPCS MAKE WAY  ON / OFF (NES)           (NPCS_MAKE_WAY, MovementController.ask_npc_to_make_way)
     STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps)
-    QUICK ACTION   OFF (NES) / ON           (QUICK_ACTION: Enter takes, opens or talks, Game.handle_enter_key)
+    QUICK ACTION   OFF (NES) / ON           (QUICK_ACTION: Enter takes, opens or talks, MapHotkeys.press_smart_a_key)
     SMART A        OFF (NES) / ON           (SMART_A: A does TALK, TAKE, DOOR or STAIRS, Game.smart_command)
     ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, Game.thin_encounters)
     EXP/GOLD       x1 (NES) / x2 / x4       (EXP_GOLD: what a won fight gives, Battle.enemy_defeated)

@@ -1,6 +1,6 @@
 """The global settings: the player's own, kept from one launch to the next, in one small file. Not NES behavior.
 
-They are the window zoom (Ctrl + / Ctrl -, src/zoom.py), fullscreen (F11, Game.handle_fullscreen_toggle), the game
+They are the window zoom (Ctrl + / Ctrl -, src/zoom.py), fullscreen (F11, MapHotkeys.toggle_fullscreen), the game
 speed (keys 1 to 5, src/waiting.py), the language, the display filters, the view and the dungeon map (the options
 overlay's LANGUAGE, SCANLINES, SCALING, VIEW and DUNGEON MAP rows, src/options_overlay.py, src/display_filters.py,
 src/view.py and src/dungeon_map.py), and the controls (the CONTROLS screen, src/controls_screen.py; "controls" is null

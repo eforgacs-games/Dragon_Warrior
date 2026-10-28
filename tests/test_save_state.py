@@ -435,7 +435,7 @@ class TestKeys(SaveStateTestCase):
     def test_not_in_a_dialog(self):
         """A dialog reads the keys in its own loop, which doesn't save on Shift + F1 (A closes the dialog here)."""
         game = self.game
-        with patch.object(game, 'handle_save_state_keys') as handle_save_state_keys:
+        with patch.object(game.hotkeys, 'press_save_state') as handle_save_state_keys:
             pygame.event.post(key(K_F1, KMOD_SHIFT))
             pygame.event.post(key(K_k))
             game.cmd_menu.show_text_in_dialog_box("Hello")
@@ -470,7 +470,7 @@ class TestKeys(SaveStateTestCase):
         joypad = VirtualJoypad(FightDriver())
         joypad.connect()
         self.addCleanup(joypad.disconnect)
-        with patch.object(game, 'handle_save_state_keys') as handle_save_state_keys:
+        with patch.object(game.hotkeys, 'press_save_state') as handle_save_state_keys:
             outcome = game.battle_ctrl.launch_fight('Slime')
             handle_save_state_keys.assert_not_called()
         self.assertIn(outcome, (BattleOutcome.VICTORY, BattleOutcome.ESCAPED))
@@ -516,6 +516,8 @@ GAME_NOT_KEPT = {
     'last_map',
     # The snapshots' own machinery, and auto-grind, which drives the game rather than being part of it
     'autosave', 'rewind', 'auto_grind',
+    # The map's key handlers (src/map_hotkeys.py), which hold no state: their requests are listed above
+    'hotkeys',
     # Drawing, timing and the game's other parts, which hold no state of the game
     'screen', 'big_map', 'graphics', 'tile_size', 'foreground_rects', 'loop_count', 'events', 'clock', 'frame_clock',
     'frame_pacer', 'calculation', 'directories', 'game_functions', 'music_player', 'sound', 'title_menu', 'ending',

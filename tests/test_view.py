@@ -164,7 +164,7 @@ class TestScreen(DisplayTestCase):
         def choose_wide(overlay):
             overlay.config['VIEW'] = VIEW_WIDE
         with patch.object(OptionsOverlay, 'run', choose_wide), patch('src.view.wide_aspect', return_value=16 / 9):
-            game.open_options()
+            game.hotkeys.open_options()
         self.assertEqual(WIDE_16_9 * SCALE, pygame.display.get_surface().get_width())
 
     def test_fullscreen_toggle_keeps_the_view(self):
@@ -173,9 +173,9 @@ class TestScreen(DisplayTestCase):
         # it had
         game = make_game('Brecconary')
         for _ in range(2):
-            with patch('src.view.wide_aspect', return_value=16 / 9), patch('src.game.SCALED', 0), \
-                    patch('src.game.FULLSCREEN', 0), patch.object(game, 'draw_temporary_text'):
-                game.handle_fullscreen_toggle(Event(KEYDOWN, key=K_F11, mod=0))
+            with patch('src.view.wide_aspect', return_value=16 / 9), patch('src.map_hotkeys.SCALED', 0), \
+                    patch('src.map_hotkeys.FULLSCREEN', 0), patch.object(game, 'draw_temporary_text'):
+                game.hotkeys.toggle_fullscreen(Event(KEYDOWN, key=K_F11, mod=0))
             self.assertEqual((WIDE_16_9 * SCALE, 480), pygame.display.get_surface().get_size())
             self.assertIs(pygame.display.get_surface(), game.screen.get_parent())
             self.assertIs(game.screen, game.cmd_menu.screen)

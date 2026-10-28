@@ -131,9 +131,9 @@ class TestStarting(GrindTestCase):
         self.assertTrue(controls.bind_key('AUTO_GRIND', 0, Binding(K_F2, KMOD_CTRL)))
         set_controls(controls)
         self.addCleanup(reset_controls)
-        self.game.handle_auto_grind_key(key(K_F2))
+        self.game.hotkeys.press_auto_grind(key(K_F2))
         self.assertFalse(self.game.auto_grind_requested or self.grind.active)
-        self.game.handle_auto_grind_key(key(K_F2, KMOD_LCTRL))
+        self.game.hotkeys.press_auto_grind(key(K_F2, KMOD_LCTRL))
         self.assertTrue(self.game.auto_grind_requested or self.grind.active)
 
     def test_not_while_paused_or_a_window_is_open(self):

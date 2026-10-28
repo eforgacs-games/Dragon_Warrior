@@ -140,11 +140,11 @@ class TestEnter(SmartATestCase):
                 self.used.clear()
                 self.game.config['SMART_A'] = setting
                 self.game.player.current_tile = 'TREASURE_BOX'
-                self.game.handle_enter_key(keydown(K_RETURN))
+                self.game.hotkeys.press_smart_a_key(keydown(K_RETURN))
                 self.assertEqual(['take'], self.used)
 
     def test_enter_opens_nothing_when_nothing_applies(self):
-        self.game.handle_enter_key(keydown(K_RETURN))
+        self.game.hotkeys.press_smart_a_key(keydown(K_RETURN))
         self.assertEqual([], self.used)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
         self.assertFalse(self.game.cmd_menu_requested)
@@ -153,11 +153,11 @@ class TestEnter(SmartATestCase):
         position = (self.game.player.row, self.game.player.column)
         with patch.dict(self.game.current_map.staircases, {position: {'map': 'X'}}):
             self.game.player.current_tile = 'BRICK_STAIR_UP'
-            self.game.handle_enter_key(keydown(K_RETURN))
+            self.game.hotkeys.press_smart_a_key(keydown(K_RETURN))
         self.game.player.current_tile = 'BRICK'
         self.door.return_value = (1, 1)
         self.game.player.inventory.append('Magic Key')
-        self.game.handle_enter_key(keydown(K_RETURN))
+        self.game.hotkeys.press_smart_a_key(keydown(K_RETURN))
         self.assertEqual(['stairs', 'door'], self.used)
 
 

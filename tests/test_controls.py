@@ -419,13 +419,13 @@ class TestTheGameFollowsTheBindings(ControlsTestCase):
     def test_save_states(self):
         self.rebound(SAVE_STATE_2=((K_p, KMOD_SHIFT),), LOAD_STATE_2=(K_p,))
         with patch.object(self.game.movement, 'resolve_pending_freezes'):
-            self.game.handle_save_state_keys(key(K_p, KMOD_LSHIFT))
+            self.game.hotkeys.press_save_state(key(K_p, KMOD_LSHIFT))
             self.assertEqual(('save', 2), self.game.state_request)
             self.game.state_request = None
-            self.game.handle_save_state_keys(key(K_p))
+            self.game.hotkeys.press_save_state(key(K_p))
             self.assertEqual(('load', 2), self.game.state_request)
             self.game.state_request = None
-            self.game.handle_save_state_keys(key(K_F2))
+            self.game.hotkeys.press_save_state(key(K_F2))
         self.assertIsNone(self.game.state_request)
 
     def test_rewind(self):

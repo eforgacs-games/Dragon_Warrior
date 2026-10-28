@@ -9,7 +9,6 @@ from pygame.time import Clock
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from data.text.intro_lookup_table import ControlInfo
 from src import maps
 from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.auto_grind import AutoGrind
@@ -17,8 +16,7 @@ from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
 from src.color import LOW_HP_RED, RED, WHITE, is_low_hp, window_color
 from src.common import A_OR_START_KEYS, Graphics, set_gettext_language
-from src.controls import LOAD_STATE_ACTIONS, SAVE_STATE_ACTIONS, Controls, KeySet, actions_for_event, \
-    pressed, set_controls, set_controls_listener
+from src.controls import Controls, KeySet, set_controls, set_controls_listener
 from src.common import singular_or_plural
 from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
@@ -33,7 +31,7 @@ from src.display_filters import PRESENTER, SCALING_KEY, SCALING_SMOOTH, SCANLINE
 from src.directories import Directories, music_name
 from src.soundtrack import SOUNDTRACK_KEY, migrate_legacy_music_config
 from src.drawer import Drawer
-from src.dungeon_map import DungeonMap, DungeonMapOverlay, dungeon_map_enabled
+from src.dungeon_map import DungeonMap, dungeon_map_enabled
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
@@ -43,14 +41,14 @@ from src.intro import Intro
 from src.items import OpenDoorHistory, TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
+from src.map_hotkeys import MapHotkeys
 from src.menu import BATTLE_LINE, STAIR_TILES, CommandMenu
 from src.movement import HILL_PAUSE_FRAMES, RUN_SPEED_FACTOR, STEP_SYNC_FRAMES, MovementController
-from src.message_log import MessageLog, MessageLogScreen
+from src.message_log import MessageLog
 from src.music_player import MusicPlayer
 from src.npc_movement import step
-from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
 from src.options_screen import ENCOUNTERS_HALF, ENCOUNTERS_OFF, apply_options
-from src.quest_journal import GOLEM_FIGHT, JOURNAL_HINTS, JOURNAL_OFF, game_progress, hear, journal_pages
+from src.quest_journal import GOLEM_FIGHT, hear
 from src.rewind import Rewind
 from src.save_file import SaveFile
 from src.save_state import OLD_VERSION, StateError, read_state, restore_snapshot, take_snapshot, write_state
@@ -64,7 +62,7 @@ from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
 from src.autosave import Autosave
 from src.waiting import NES_FPS, SPEED_CHANGED, FrameClock, FramePacer, clear_events_keeping_quit, game_speed, \
-    requested_speed, reset_game_speed, set_game_speed, set_speed_keys_enabled, speed_keys_enabled
+    reset_game_speed, set_game_speed, set_speed_keys_enabled
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.visual_effects import flash_transparent_color, force_field_flash
@@ -72,8 +70,7 @@ from src.waiting import MAP_CONTEXT, follow_menu_speed_option, poll_virtual_joyp
     set_speed_listener, set_virtual_joypad
 from src.windows import COMMAND_WINDOW
 from src.view import NES_WIDTH, VIEW_NES, full_screen, reset_view, set_up_view, view_name, view_width
-from src.zoom import handle_zoom_event, remember_default_zoom, remember_windowed_size, restore_windowed_size, \
-    set_windowed_zoom, set_zoom, set_zoom_listener, window_zoom
+from src.zoom import handle_zoom_event, remember_default_zoom, set_windowed_zoom, set_zoom, set_zoom_listener, window_zoom
 
 
 # The rewind keys (Backspace, as bound, src/controls.py): rewinding goes on until one is let go
@@ -169,32 +166,25 @@ class Game:
         self.show_coordinates = self.game_state.config["SHOW_COORDINATES"]
         init()
         self.paused = False
-        # START or A pressed while the hero or an NPC is between tiles: the pause or command window waits until everyone
-        # has finished their step (NES PausePrepLoop / DoNCCmdWindow), see resolve_pending_freezes
+        # Keys pressed on the map (src/map_hotkeys.py), and what they ask for. START or A pressed while the hero or an
+        # NPC is between tiles: the pause or the COMMAND window waits until everyone has finished their step (NES
+        # PausePrepLoop / DoNCCmdWindow, MovementController.resolve_pending_freezes), and so does what the map's other
+        # keys open (MAP_REQUESTS: the options overlay, the dungeon map, the message log, auto-grind) and a save state
+        self.hotkeys = MapHotkeys(self)
         self.pause_requested = False
         self.cmd_menu_requested = False
-        # A pressed with SMART A on: when the command window would open, TALK, TAKE, DOOR or STAIRS runs instead if one
-        # applies (run_smart_command)
-        self.smart_a_pending = False
-        # The MESSAGE LOG key on the map: the log (src/message_log.py) opens once everyone has finished their step,
-        # like the options overlay
-        self.message_log_requested = False
-        self.message_log = MessageLog()
-        # SELECT or Tab pressed on the map: the options overlay (src/options_overlay.py) opens once everyone has finished
-        # their step, like the pause (resolve_pending_freezes)
+        self.smart_a_pending = False  # A with SMART A on: TALK, TAKE, DOOR or STAIRS instead of COMMAND, if one applies
         self.options_requested = False
-        # G pressed on the map: auto-grind (src/auto_grind.py) starts once everyone has finished their step, like the
-        # pause (resolve_pending_freezes)
-        self.auto_grind_requested = False
-        # M pressed on a dark map: the dungeon map (src/dungeon_map.py) opens once everyone has finished their step,
-        # like the pause (resolve_pending_freezes). What the hero has seen of each dark floor, kept with the adventure log
         self.dungeon_map_requested = False
-        self.dungeon_map = DungeonMap()
-        # Shift + F1/F2/F3 or F1/F2/F3 pressed on the map: ('save' or 'load', slot). Like the pause, it waits for the
-        # hero and the NPCs to finish their steps (resolve_pending_freezes), then becomes state_request_due, which the
-        # end of that frame carries out (run_due_state_request)
+        self.message_log_requested = False
+        self.auto_grind_requested = False
+        # ('save' or 'load', slot), until everyone is on a tile; then it's due, and the end of that frame carries it out
+        # (run_due_state_request)
         self.state_request: tuple[str, int] | None = None
         self.state_request_due: tuple[str, int] | None = None
+        self.message_log = MessageLog()
+        # What the hero has seen of each dark floor (src/dungeon_map.py), kept with the adventure log
+        self.dungeon_map = DungeonMap()
         # Hold Backspace on the map to rewind (src/rewind.py): the snapshots it steps back through
         self.rewind = Rewind(self)
         # Create the game window.
@@ -543,7 +533,7 @@ class Game:
             if current_event.type == KEYDOWN:
                 self.handle_keypresses(current_event)
             elif current_event.type == SPEED_CHANGED:
-                self.announce_game_speed(current_event.speed)
+                self.hotkeys.announce_game_speed(current_event.speed)
             elif current_event.type == KEYUP and current_event.key in REWIND_KEYS:
                 self.rewind.stop()  # play on from the snapshot on screen
             elif current_event.type == VIDEORESIZE:
@@ -906,159 +896,9 @@ class Game:
     def handle_warps(self):
         self.map_mgr.handle_warps()
 
-    def handle_keypresses(self, current_keydown_event):
-        if self.rewind.active:
-            return  # only letting go of Backspace does anything while rewinding
-        if self.paused:
-            # NES GamePaused only reads START until the game is unpaused
-            self.handle_start_button(current_keydown_event)
-            self.handle_fullscreen_toggle(current_keydown_event)
-            return
-        # B does nothing on the map: in the COMMAND window it is read with the other buttons (CommandMenu.select_command)
-        self.handle_a_button(current_keydown_event)
-        self.handle_start_button(current_keydown_event)
-        self.handle_select_button(current_keydown_event)
-        self.handle_message_log_key(current_keydown_event)
-        self.handle_auto_grind_key(current_keydown_event)
-        self.handle_dungeon_map_key(current_keydown_event)
-        self.handle_help_button(current_keydown_event)
-        self.handle_quest_journal_key(current_keydown_event)
-        self.handle_enter_key(current_keydown_event)
-        self.handle_fps_changes(current_keydown_event)
-        self.handle_fullscreen_toggle(current_keydown_event)
-        self.handle_auto_battle_toggle(current_keydown_event)
-        self.handle_invulnerability_toggle(current_keydown_event)
-        self.handle_save_state_keys(current_keydown_event)
-        self.handle_rewind_key(current_keydown_event)
-        if self.debug_tools is not None:
-            # Dev config only (DEBUG_KEYS): F5 warp, F6 give, F7 load a checkpoint
-            self.debug_tools.handle_keydown(current_keydown_event)
-
-    def handle_help_button(self, keydown_event):
-        """H: the controls, one dialog box page per group of keys, with the keys as they are bound
-        (data/text/intro_lookup_table.py)."""
-        if pressed(keydown_event, 'HELP'):
-            control_info = ControlInfo(self.config)
-            # one page per group of keys, so nothing runs past the bottom of the dialog box; not kept in the
-            # message log, which is for what the NPCs said
-            with self.cmd_menu.not_logged():
-                self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
-
-    def handle_quest_journal_key(self, keydown_event) -> None:
-        """Q (the JOURNAL key): the quest journal (src/quest_journal.py), not NES: one dialog box page per goal the hero
-        has learned of, with what was said of it if QUEST JOURNAL is set to HINTS. With it OFF (the NES), Q does
-        nothing."""
-        if not pressed(keydown_event, 'QUEST_JOURNAL'):
-            return
-        setting = self.config.get('QUEST_JOURNAL', JOURNAL_OFF)
-        if setting == JOURNAL_OFF:
-            return
-        pages = journal_pages(game_progress(self), hints=setting == JOURNAL_HINTS, _=self._)
-        with self.cmd_menu.not_logged():  # the message log is for what the NPCs said
-            self.cmd_menu.show_text_in_dialog_box(pages)
-
-    def handle_a_button(self, keydown_event):
-        # The SMART A key (Enter) is the A button on the map too unless QUICK ACTION is on (handle_enter_key)
-        if pressed(keydown_event, 'A') or (pressed(keydown_event, 'SMART_A')
-                                           and not self.game_state.config.get('QUICK_ACTION')):
-            if self.movement.world_frozen or self.pause_requested or self.options_requested or \
-                    self.auto_grind_requested:
-                return
-            # The window opens once the hero and the NPCs have finished their steps (resolve_pending_freezes). With
-            # SMART A on (not NES), that's when TALK, TAKE, DOOR or STAIRS runs instead, if one applies there
-            # (MovementController.resolve_pending_freezes, run_smart_command).
-            self.cmd_menu_requested = True
-            self.smart_a_pending = bool(self.config.get('SMART_A'))
-            self.movement.resolve_pending_freezes()
-
-    def handle_start_button(self, keydown_event):
-        if pressed(keydown_event, 'START'):
-            if self.paused:
-                self.paused = False
-            elif not (self.cmd_menu.launch_signaled or self.cmd_menu.menu.is_enabled() or self.movement.light_growing):
-                # NES CheckInputs: START only pauses from the map, not while a window is up or the light grows. The
-                # hero finishes the step under way first (resolve_pending_freezes).
-                self.pause_requested = True
-                self.cmd_menu_requested = False
-                self.options_requested = False
-                self.message_log_requested = False
-                self.auto_grind_requested = False
-                self.dungeon_map_requested = False
-                self.movement.resolve_pending_freezes()
-
-    def handle_select_button(self, keydown_event):
-        """SELECT (U) or Tab: the options overlay (src/options_overlay.py), not NES (the NES map ignores SELECT). It
-        opens from the map only when START would pause the game: no window open or about to open, the light not
-        growing. Like the pause, it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes)."""
-        if keydown_event.key not in OPTIONS_KEYS:
-            return
-        if self.movement.map_held:
-            return
-        self.options_requested = True
-        self.movement.resolve_pending_freezes()
-
-    def handle_message_log_key(self, keydown_event) -> None:
-        """L (MESSAGE LOG): the message log (src/message_log.py), not NES, when the MESSAGE LOG option is on. Like the options
-        overlay, it opens from the map only when START would pause the game, once the hero and the NPCs have finished
-        their steps (resolve_pending_freezes)."""
-        if not pressed(keydown_event, 'MESSAGE_LOG') or not self.config.get('MESSAGE_LOG'):
-            return
-        if self.movement.map_held:
-            return
-        self.message_log_requested = True
-        self.movement.resolve_pending_freezes()
-
-    def open_message_log(self) -> None:
-        """Show the message log over the map until it's closed; nothing else runs meanwhile."""
-        MessageLogScreen(self).run()
-
-    def handle_auto_grind_key(self, keydown_event) -> None:
-        """G: auto-grind (src/auto_grind.py), not NES. It starts from the map only when START would pause the game, and
-        like the pause it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes). While it
-        runs, G (or any key but 1 to 5) stops it before it gets here (AutoGrind.real_key)."""
-        if not pressed(keydown_event, 'AUTO_GRIND') or not self.game_state.config.get('AUTO_GRIND'):
-            return  # AUTO-GRIND off: G does nothing
-        if self.movement.map_held:
-            return
-        self.auto_grind_requested = True
-        self.movement.resolve_pending_freezes()
-
-    def handle_dungeon_map_key(self, keydown_event) -> None:
-        """M: the dungeon map (src/dungeon_map.py), not NES. Only on a dark map, with the DUNGEON MAP option ON, and
-        only when START would pause the game; like the pause it waits for the hero and the NPCs to finish their steps
-        (resolve_pending_freezes)."""
-        if not pressed(keydown_event, 'MAP'):
-            return
-        if not (self.current_map.is_dark and dungeon_map_enabled(self.game_state.config)):
-            return
-        if self.movement.map_held:
-            return
-        self.dungeon_map_requested = True
-        self.movement.resolve_pending_freezes()
-
-    def open_dungeon_map(self) -> None:
-        """Show the dungeon map over the map until it's closed (its loop is the only thing running meanwhile)."""
-        DungeonMapOverlay(self).run()
-
-    def handle_save_state_keys(self, keydown_event) -> None:
-        """Shift + F1/F2/F3 saves a save state in slot 1/2/3 and F1/F2/F3 loads it (src/save_state.py), not NES. Only
-        on the map, when START would pause the game: no window open or about to open, the light not growing. Like
-        the pause, it waits for the hero and the NPCs to finish their steps (resolve_pending_freezes)."""
-        names = actions_for_event(keydown_event)
-        request = next(((kind, slots[name]) for name in names for kind, slots in
-                        (('save', SAVE_STATE_ACTIONS), ('load', LOAD_STATE_ACTIONS)) if name in slots), None)
-        if request is None or not self.game_state.config.get('SAVE_STATES'):
-            return  # SAVE STATES off: the keys do nothing
-        if self.movement.map_held:
-            return
-        self.state_request = request
-        self.movement.resolve_pending_freezes()
-
-    def handle_rewind_key(self, keydown_event) -> None:
-        """Backspace: start rewinding (src/rewind.py), not NES. Only on the map, when START would be accepted and
-        nothing is waiting to open; it goes on until Backspace is let go (_handle_pygame_events)."""
-        if pressed(keydown_event, 'REWIND'):
-            self.rewind.start()
+    def handle_keypresses(self, current_keydown_event) -> None:
+        """A key pressed on the map: src/map_hotkeys.py."""
+        self.hotkeys.handle_keydown(current_keydown_event)
 
     def run_due_state_request(self) -> None:
         """Save or load the save state asked for, once everyone is on a tile (resolve_pending_freezes), between two
@@ -1107,22 +947,6 @@ class Game:
         """Keep the player's controls for the next time, with the global settings."""
         self.settings.update(controls=controls.to_json())
 
-    def start_auto_grind(self) -> None:
-        self.auto_grind.start()
-
-    def open_options(self) -> None:
-        """Show the options overlay over the map until it's closed. Its loop is the only thing running meanwhile, so
-        the map, the NPCs, the timers and the pop-up window all wait, as they do for a dialog."""
-        OptionsOverlay(self).run()
-        self.set_view()  # the VIEW row: the map is drawn across the new width from the next frame
-
-    def handle_enter_key(self, keydown_event):
-        """QUICK ACTION (not NES): the SMART A key (Enter, src/controls.py) on the map runs TALK, TAKE, DOOR or STAIRS
-        when one applies (smart_command). Unlike A with SMART A on, it opens nothing when none does. With QUICK ACTION
-        off the key is the A button (handle_a_button)."""
-        if pressed(keydown_event, 'SMART_A') and self.game_state.config.get('QUICK_ACTION'):
-            self.run_smart_command()
-
     def smart_command(self) -> str | None:
         """The command that applies where the hero stands, in this order: TALK if someone is in front of him (or
         across a counter), TAKE on a treasure chest, DOOR next to a locked door with a Magic Key to open it, STAIRS on
@@ -1164,73 +988,6 @@ class Game:
         run at that rate even when drawing can't keep up with it (run_due_frames), so they speed up with everything
         else."""
         return NES_FPS * game_speed()
-
-    def handle_fps_changes(self, keydown_event) -> None:
-        """Keys 1 to 5: normal, 2x, 4x, 8x or 16x game speed (60.1, 120.2, 240.4, 480.8 or 961.6 FPS). It applies
-        everywhere: the map, battles, dialogs, menus and effects (src/waiting.py reads these keys in their loops and
-        waits too, without this text)."""
-        speed = requested_speed(keydown_event)
-        if speed is None or not speed_keys_enabled():
-            return  # GAME SPEED off: the keys do nothing
-        set_game_speed(speed)
-        self.announce_game_speed(speed)
-
-    def announce_game_speed(self, speed: int) -> None:
-        """Say the new game speed over the map: after a speed key (handle_fps_changes), or the gamepad's NEXT SPEED
-        button (SPEED_CHANGED, src/waiting.py step_game_speed)."""
-        if speed == 1:
-            speed_text = self._("Game set to normal speed.\n({} FPS)").format(f'{self.fps:.1f}')
-        else:
-            speed_text = self._("Game set to {}x speed.\n({} FPS)").format(speed, f'{self.fps:.1f}')
-        self.draw_temporary_text(speed_text)
-
-    def handle_fullscreen_toggle(self, keydown_event) -> None:
-        """Toggle between fullscreen and windowed mode when F11 is pressed."""
-        if pressed(keydown_event, 'FULLSCREEN'):
-            self.fullscreen_enabled = not self.fullscreen_enabled
-            if self.fullscreen_enabled:
-                remember_windowed_size()
-                self.flags = FULLSCREEN | SCALED
-                mode_text = self._("Fullscreen mode enabled")
-            else:
-                self.flags = RESIZABLE | SCALED
-                mode_text = self._("Windowed mode enabled")
-
-            # Recreate the window with new flags, in the view it had (src/view.py). The display filters let go of the
-            # old window's renderer first, and take the new one at the next frame (src/display_filters.py).
-            PRESENTER.release()
-            nes_res = self.game_state.config["NES_RES"]
-            win_width, win_height = nes_res[0] * self.scale, nes_res[1] * self.scale
-            self.screen = self.set_screen(win_height, win_width)
-            self.cmd_menu.screen = self.screen
-            self.camera.screen = self.screen
-            # back in a window: the zoom it had before going fullscreen (src/zoom.py)
-            restore_windowed_size()
-            set_caption(self._("Dragon Warrior"))
-            self.settings.update(fullscreen=self.fullscreen_enabled)
-
-            # Show feedback to user
-            self.draw_temporary_text(mode_text)
-
-    def handle_auto_battle_toggle(self, keydown_event) -> None:
-        """Toggle auto-battle mode when F4 (AUTO FIGHT) is pressed, with CHEATS on."""
-        if pressed(keydown_event, 'AUTO_BATTLE') and self.game_state.config.get('CHEAT_KEYS'):
-            self.auto_battle = not self.auto_battle
-            if self.auto_battle:
-                mode_text = self._("Auto-battle enabled\n(Repeats: {})").format(self.battle_ctrl.last_battle_action)
-            else:
-                mode_text = self._("Auto-battle disabled")
-            self.draw_temporary_text(mode_text)
-
-    def handle_invulnerability_toggle(self, keydown_event) -> None:
-        """Toggle invulnerability mode when F9 (INVINCIBLE) is pressed, with CHEATS on."""
-        if pressed(keydown_event, 'INVULNERABLE') and self.game_state.config.get('CHEAT_KEYS'):
-            self.invulnerable = not self.invulnerable
-            if self.invulnerable:
-                mode_text = self._("Invulnerability enabled")
-            else:
-                mode_text = self._("Invulnerability disabled")
-            self.draw_temporary_text(mode_text)
 
     def draw_temporary_text(self, text: tuple[str] | list[str] | str, add_quotes=False) -> None:
         """Show a settings message (F4, keys 1 to 5, ...) for a second. It's not part of the game, so it stays up for a
