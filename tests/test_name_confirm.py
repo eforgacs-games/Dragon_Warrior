@@ -102,12 +102,12 @@ class TestConfirmSelectName(TestCase):
 
 class TestConfirmSetting(TestCase):
 
-    def test_on_by_default_and_saved_globally(self):
-        self.assertTrue(Settings().name_confirm)
-        self.assertTrue(Settings.from_json({}).name_confirm)
-        self.assertFalse(Settings.from_json({'name_confirm': False}).name_confirm)
-        self.assertTrue(Settings.from_json({'name_confirm': 'maybe'}).name_confirm)
-        self.assertFalse(Settings.from_json(Settings(name_confirm=False).to_json()).name_confirm)
+    def test_off_by_default_and_saved_globally(self):
+        self.assertFalse(Settings().name_confirm)
+        self.assertFalse(Settings.from_json({}).name_confirm)
+        self.assertTrue(Settings.from_json({"name_confirm": True}).name_confirm)
+        self.assertFalse(Settings.from_json({"name_confirm": "maybe"}).name_confirm)
+        self.assertTrue(Settings.from_json(Settings(name_confirm=True).to_json()).name_confirm)
 
     def test_options_row_on_other_off_in_the_nes_preset(self):
         other = next(page for page in OPTION_PAGES if page.title == 'OTHER')

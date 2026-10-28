@@ -123,7 +123,7 @@ class TestMigration(TestCase):
     def test_a_config_with_the_old_switch(self):
         self.assertEqual(Soundtrack.NES, soundtrack({**base_config, LEGACY_ORCHESTRA_CONFIG_KEY: False}))
         self.assertEqual(Soundtrack.ORCHESTRA, soundtrack({LEGACY_ORCHESTRA_CONFIG_KEY: True}))
-        self.assertEqual(Soundtrack.ORCHESTRA, soundtrack(base_config))
+        self.assertEqual(Soundtrack.NES, soundtrack(base_config))
         config = {**base_config, LEGACY_ORCHESTRA_CONFIG_KEY: False}
         migrate_legacy_music_config(config)
         self.assertEqual(Soundtrack.NES, config[SOUNDTRACK_KEY])

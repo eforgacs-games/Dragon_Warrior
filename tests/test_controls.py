@@ -26,7 +26,8 @@ from src.controls import ACTIONS, ACTIONS_BY_NAME, FIXED_SHORTCUTS, KEY_SLOTS, B
 from src.controls_screen import CELL_CURSOR_COLUMNS, CHANGED_TOO, CONTROLS_WINDOW, DEFAULTS_RESTORED, FIXED_COMMANDS, \
     FIXED_KEY, HINT, LABEL_COLUMN, NEEDS_A_KEY, VISIBLE_ROWS, Cell, ControlsScreen, controls_layout, screen_texts
 from src.settings import Settings, load_settings, save_settings
-from src.waiting import SPEED_KEYS, game_speed, handle_speed_key, poll_speed_keys, reset_game_speed, set_game_speed
+from src.waiting import SPEED_KEYS, game_speed, handle_speed_key, poll_speed_keys, reset_game_speed, set_game_speed, \
+    set_speed_keys_enabled, speed_keys_enabled
 from src.window_renderer import window_tiles
 from tests import helpers
 from tests.test_save_state import HeldKeys
@@ -177,6 +178,8 @@ class TestLiveKeySets(ControlsTestCase):
         # poll_speed_keys reads the keys held during waits: SPEED 2 on Ctrl+7 isn't set by 7 alone, and Ctrl+1 bound
         # to MAP isn't SPEED 1
         self.rebound(SPEED_2=((K_7, KMOD_CTRL),), MAP=((K_1, KMOD_CTRL),))
+        self.addCleanup(set_speed_keys_enabled, speed_keys_enabled())
+        set_speed_keys_enabled(True)  # GAME SPEED on (off on the NES, whatever the last game made set)
         self.addCleanup(reset_game_speed)
         cases = ((K_7, 0, 4), (K_7, KMOD_LCTRL, 2), (K_1, KMOD_LCTRL, 4), (K_1, 0, 1))  # from 4x
         for held, modifiers, expected in cases:
@@ -384,7 +387,10 @@ class TestTheGameFollowsTheBindings(ControlsTestCase):
 
     def setUp(self):
         super().setUp()
-        self.game = helpers.new_game({**test_config, 'NO_BLIT': True, 'RENDER_TEXT': False, 'NO_WAIT': True})
+        self.game = helpers.new_game({**test_config, 'NO_BLIT': True, 'RENDER_TEXT': False, 'NO_WAIT': True,
+                                      # the switched keys on (off on the NES)
+                                      'SAVE_STATES': True, 'REWIND': True, 'GAME_SPEED_KEYS': True, 'AUTO_GRIND': True,
+                                      'CHEAT_KEYS': True, 'DUNGEON_MAP': True, 'MESSAGE_LOG': True})
 
     def test_start(self):
         self.rebound(START=(K_p,))

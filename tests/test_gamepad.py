@@ -363,7 +363,8 @@ class TestMapFrame(GamepadTestCase):
         from tests.helpers import new_game
         from tests.mock_map import MockMap
         self.game = new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
-                                 'SAVE_STATES': True, 'REWIND': True})  # their switches on (off on the NES)
+                                 'SAVE_STATES': True, 'REWIND': True,
+                                 'GAME_SPEED_KEYS': True})  # their switches on (off on the NES)
         self.gamepad.connect()  # the game connected the real one
         self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
