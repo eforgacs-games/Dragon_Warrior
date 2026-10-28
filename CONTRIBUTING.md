@@ -123,20 +123,40 @@ uv export --locked --no-dev --no-hashes --no-annotate -o requirements.txt
 
 ## Making a release
 
-Push a tag named `vX.Y.Z` from `main`:
+The version is `version` in [pyproject.toml](pyproject.toml) (the builds bundle the file, and the crash log reports
+it), and [CHANGELOG.md](CHANGELOG.md) says what each version holds. Before tagging, make sure both match the tag, give
+the CHANGELOG entry its date (`## [1.0.0] - YYYY-MM-DD` instead of `Unreleased`), and merge that to `main`. A release
+candidate has the same `version` as the release it leads to: 1.0.0 for `v1.0.0-rc1`.
+
+Then push a tag from `main`. First a release candidate, to play-test the downloads (the v1.0 checklist, #433):
+
+```bash
+git switch main && git pull
+git tag v1.0.0-rc1
+git push origin v1.0.0-rc1
+```
+
+Once a full playthrough on an rc build finds nothing more to fix (otherwise fix it on `main` and tag `v1.0.0-rc2`),
+tag the release itself the same way:
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-The [Release builds](.github/workflows/release.yml) workflow builds the game with PyInstaller
-([dragon_warrior.spec](dragon_warrior.spec)) on Windows, macOS and Linux, with libgme built from source and bundled,
-checks that each packaged build starts, loads all of its files and plays a few scripted scenes headless in English and
-in Korean (`--smoke-test`, [src/smoke_test.py](src/smoke_test.py)), and publishes them as a GitHub Release for the
-tag, with notes generated from the merged PRs. To try the builds without a release, run the workflow from the Actions
-tab (Run workflow): the builds are then uploaded as the run's artifacts. PRs that change the build or data/ do the
-same.
+A pushed `v*` tag starts the [Release builds](.github/workflows/release.yml) workflow. It builds the game with
+PyInstaller ([dragon_warrior.spec](dragon_warrior.spec)) on Windows, macOS and Linux, with libgme built from source and
+bundled, checks that each packaged build starts, loads all of its files and plays a few scripted scenes headless in
+English and in Korean (`--smoke-test`, [src/smoke_test.py](src/smoke_test.py)), and publishes the three archives on the
+[Releases page](https://github.com/eforgacs-games/Dragon_Warrior/releases) as a GitHub Release for the tag ("Dragon
+Warrior v1.0.0-rc1"), with notes generated from the merged PRs; edit the release to put the CHANGELOG entry in them.
+The archives are named after the tag: `DragonWarrior-v1.0.0-rc1-windows-x64.zip`, `DragonWarrior-v1.0.0-rc1-macos-arm64.zip`
+and `DragonWarrior-v1.0.0-rc1-linux-x64.tar.gz`. A tag with a suffix, like `v1.0.0-rc1`, is published as a
+pre-release, so the Releases page never shows it as the latest release. If any build fails, nothing is published: a
+re-run of the failed jobs publishes once they pass, and a fix on `main` gets a new tag rather than a moved one.
+
+To try the builds without a release, run the workflow from the Actions tab (Run workflow): the builds are then
+uploaded as the run's artifacts, named after the commit. PRs that change the build or data/ do the same.
 
 To build locally: `uv sync --group build`, then `uv run pyinstaller dragon_warrior.spec --noconfirm`. The game is in
 `dist/DragonWarrior/` (and `dist/Dragon Warrior.app` on macOS). Check it the way CI does with

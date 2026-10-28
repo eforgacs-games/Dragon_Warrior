@@ -3,7 +3,7 @@
 # scenes, in English and in Korean (--smoke-test, src/smoke_test.py), before anything is uploaded.
 # libgme (Game_Music_Emu, LGPL 2.1+), which plays the NES and SFC music (src/chiptune.py), is built here from its
 # source at GME_TAG, as a shared library, and bundled next to its license.
-# - A pushed vX.Y.Z tag also publishes the builds as a GitHub Release for that tag.
+# - A pushed vX.Y.Z tag also publishes the builds as a GitHub Release for that tag; vX.Y.Z-rcN as a pre-release.
 # - Run by hand (Actions > Release builds > Run workflow), or on a PR that changes the build or what it bundles, the
 #   builds are uploaded as workflow artifacts only, to try them without making a release.
 
@@ -183,8 +183,14 @@ jobs:
         TAG: ${{ github.ref_name }}
       run: |
         ls -l package
+        # A tag with a suffix (v1.0.0-rc1) is a release candidate: a pre-release, never shown as the latest release
+        prerelease=()
+        if [[ "$TAG" == *-* ]]; then
+          prerelease=(--prerelease)
+        fi
         # A re-run uploads to the release made by the first run instead of failing
         if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "Dragon Warrior $TAG" --generate-notes
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "Dragon Warrior $TAG" --generate-notes \
+            "${prerelease[@]}"
         fi
         gh release upload "$TAG" package/* --repo "$GITHUB_REPOSITORY" --clobber

@@ -25,7 +25,7 @@ This is an unofficial fan project, not affiliated with or endorsed by Square Eni
 Ready-to-play builds for **Windows (x64)**, **macOS (Apple Silicon)** and **Linux (x64)** go on the
 [Releases page](https://github.com/eforgacs-games/Dragon_Warrior/releases). They don't need Python or anything else
 installed. Version 1.0 is still in progress, so there may not be a release yet; until then, [run it from
-source](#run-from-source).
+source](#run-from-source). What each version brings is in the [CHANGELOG](CHANGELOG.md).
 
 Download the archive for your system, unpack it and run the game:
 
