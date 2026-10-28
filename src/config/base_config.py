@@ -34,12 +34,19 @@ base_config = {
     "FIGHTERS_RING_ATTACK_BONUS": 0,  # 0 = NES (no effect); any other value is added to attack while worn
     "FORCE_ENEMY": None,  # e.g. "Metal Slime"; overrides the random enemy for the zone
     "NO_BATTLES": False,
-    "NPCS_MAKE_WAY": True,  # not NES: a roaming NPC the hero walks into steps aside (MovementController.ask_npc_to_make_way)
-    # MUSIC (not NES): "NES", "SFC" (the Super Famicom remake's) or "Orchestra" (src/soundtrack.py). Orchestral, as
-    # the game has always started; the old ORCHESTRA_MUSIC_ENABLED switch still loads (True as Orchestra)
-    "SOUNDTRACK": Soundtrack.ORCHESTRA,
+    # A new game starts as the NES preset (src/options_overlay.py) sets things: every option a preset sets is at its
+    # NES value below, so the options overlay's PRESET reads NES. The MODERN preset turns the conveniences on.
+    # NPCS MAKE WAY (not NES when on): a roaming NPC the hero walks into steps aside
+    # (MovementController.ask_npc_to_make_way)
+    "NPCS_MAKE_WAY": False,
+    # MUSIC (not NES): "NES", "SFC" (the Super Famicom remake's) or "Orchestra" (src/soundtrack.py); the old
+    # ORCHESTRA_MUSIC_ENABLED switch still loads (True as Orchestra)
+    "SOUNDTRACK": Soundtrack.NES,
     "SHOW_FPS": False,
     "LANGUAGE": language_from_locale(LOCALE),
+    # Set by --language (src/game.py run): the LANGUAGE above was chosen for this run, so it wins over the language kept
+    # in the global settings (src/settings.py), which is left as it is
+    "LANGUAGE_FROM_COMMAND_LINE": False,
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
     # "Fast", "Normal" or "Slow": NES MessageSpeed, 1, 2 or 3 frames per character. Normal, as a new NES quest starts
@@ -53,7 +60,7 @@ base_config = {
     "NO_WAIT": False,
     "GOD_MODE": False,
     "INVULNERABLE": False,
-    "AUTO_STAIRS": True,  # STAIRS: True steps onto stairs to take them (not NES); False needs the STAIRS command (NES)
+    "AUTO_STAIRS": False,  # STAIRS: True steps onto stairs to take them (not NES); False needs the STAIRS command (NES)
     "AUTO_BATTLE": False,
     # GRIND STOP (not NES): the HP at which auto-grind (G, src/auto_grind.py) stops: "RedHP" (the NES's low HP, where
     # the windows turn red), "HalfHP" or "ThreeQuartersHP"
@@ -62,13 +69,13 @@ base_config = {
     # 1x whatever the game speed (keys 1 to 5); "FollowGameSpeed" speeds them up with the game (src/waiting.py)
     "MENU_SPEED": "Normal",
     # The switches for this game's conveniences that act on a key (src/options_screen.py SWITCHES, the options
-    # overlay's CONTROLS page). On, as the game always had them; off (the NES, and the NES preset) their keys do nothing.
-    "GAME_SPEED_KEYS": True,  # GAME SPEED: keys 1 to 5 set the game speed (src/waiting.py)
-    "SAVE_STATES": True,  # SAVE STATES: F1-F3 load a state, Shift+F1-F3 save one
-    "REWIND": True,  # REWIND: Backspace rewinds
-    "AUTO_GRIND": True,  # AUTO-GRIND: G starts auto-grind (src/auto_grind.py)
-    "CHEAT_KEYS": True,  # CHEATS: F4 auto-battle and F9 invulnerability
-    "QUICK_ACTION": True,  # QUICK ACTION: Enter on the map takes, opens a door or talks; off, Enter is A there too
+    # overlay's CONTROLS page). Off, the NES: their keys do nothing. The MODERN preset turns them on (but CHEATS).
+    "GAME_SPEED_KEYS": False,  # GAME SPEED: keys 1 to 5 set the game speed (src/waiting.py)
+    "SAVE_STATES": False,  # SAVE STATES: F1-F3 load a state, Shift+F1-F3 save one
+    "REWIND": False,  # REWIND: Backspace rewinds
+    "AUTO_GRIND": False,  # AUTO-GRIND: G starts auto-grind (src/auto_grind.py)
+    "CHEAT_KEYS": False,  # CHEATS: F4 auto-battle and F9 invulnerability
+    "QUICK_ACTION": False,  # QUICK ACTION: Enter on the map takes, opens a door or talks; off, Enter is A there too
     # GAMEPLAY switches (src/options_screen.py SWITCHES), each at its NES value
     "ENCOUNTERS": "NES",  # ENCOUNTERS: "NES", "Half" (every other random fight skipped) or "Off" (none)
     "EXP_GOLD": 1,  # EXP/GOLD: a won fight's experience and gold times 1 (NES), 2 or 4
@@ -76,10 +83,10 @@ base_config = {
     "STATUS_WINDOW": "NES",  # STATUS WINDOW: "NES" (the pop-up after standing still) or "Always" (always on the map)
     # SHOP PREVIEW (not NES): a weapon and armor shop's list shows the attack or defense power the highlighted item
     # would give (src/shop_preview.py); False is the NES
-    "SHOP_PREVIEW": True,
-    # QUEST JOURNAL (not NES): what Q shows on the map (src/quest_journal.py): "Off" (the NES: nothing), "Goals" (what
-    # to do next) or "Hints" (and where to go)
-    "QUEST_JOURNAL": "Goals",
+    "SHOP_PREVIEW": False,
+    # QUEST JOURNAL (not NES): what Q shows on the map (src/quest_journal.py): "Off" (the NES: nothing), "Learned" (the
+    # goals the hero has been told of or come across) or "Hints" (and what was said about each)
+    "QUEST_JOURNAL": "Off",
     # AUTOSAVE (not NES): write the autosave slot on entering a town or castle and every few minutes (src/autosave.py);
     # False is the NES, which only saves with King Lorik, and the default (the MODERN preset turns it on)
     "AUTOSAVE": False,
@@ -87,15 +94,15 @@ base_config = {
     # (src/items.py bag_slots)
     "BAG_SIZE": 8,
     # DUNGEON MAP (not NES): True lets M show the map of the dark floor the hero is on (src/dungeon_map.py)
-    "DUNGEON_MAP": True,
+    "DUNGEON_MAP": False,
     # CONFIRM NAME (not NES when on): a full name waits on END instead of ending at the 8th character, and START ends
     # the name (src/name_entry.py NameEntry, src/menu_functions.py); a global setting, as names come before a log
-    "NAME_CONFIRM": True,
+    "NAME_CONFIRM": False,
     # SMART A (not NES when on): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, else opens COMMAND
     # (Game.smart_command); off, A always opens COMMAND, as on the NES
     "SMART_A": False,
     # MESSAGE LOG (not NES when on): the MESSAGE LOG key (L) opens the last messages on the map (src/message_log.py)
-    "MESSAGE_LOG": True,
+    "MESSAGE_LOG": False,
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on

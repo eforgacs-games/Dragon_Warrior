@@ -310,7 +310,8 @@ class TestHandleBattles(unittest.TestCase):
         test_config['NO_BLIT'] = True
         self.game = new_game()
         self.addCleanup(patch.stopall)
-        self.config = patch.dict(self.game.game_state.config, FORCE_BATTLE=False, NO_BATTLES=False)
+        self.config = patch.dict(self.game.game_state.config, FORCE_BATTLE=False, NO_BATTLES=False,
+                                 AUTO_STAIRS=True)  # stairs taken by stepping onto them (off on the NES)
         self.config.start()
 
     def step_onto(self, map_name, row, column):

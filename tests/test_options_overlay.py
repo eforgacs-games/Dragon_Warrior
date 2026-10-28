@@ -21,7 +21,7 @@ from src.options_overlay import FIXED_ROWS, MOST_ROWS, OPTION_PAGES, OPTION_ROWS
     PRESET_MODERN, PRESET_NES, PRESET_ROWS, OptionsOverlay, current_preset, options_layout, overlay_texts, \
     preset_values
 from src.options_screen import CLASSIC, MODERN, SWITCHES, options_from_config
-from src.quest_journal import JOURNAL_GOALS, JOURNAL_OFF
+from src.quest_journal import JOURNAL_HINTS, JOURNAL_LEARNED, JOURNAL_OFF
 from src.soundtrack import Soundtrack
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
 from src.waiting import MENU_SPEED_FOLLOW as FOLLOW, MENU_SPEED_NORMAL as NORMAL
@@ -204,7 +204,7 @@ class TestRows(OverlayTestCase):
                                         ("SMART A", 'SMART_A', ("OFF (NES)", "ON")),
                                         ("ENCOUNTERS", 'ENCOUNTERS', ("NES", "HALF", "OFF")),
                                         ("EXP/GOLD", 'EXP_GOLD', ("x1 (NES)", "x2", "x4")),
-                                        ("QUEST JOURNAL", 'QUEST_JOURNAL', ("OFF (NES)", "GOALS", "HINTS")),
+                                        ("QUEST JOURNAL", 'QUEST_JOURNAL', ("OFF (NES)", "LEARNED", "LEARNED+HINTS")),
                                         ("AUTOSAVE", 'AUTOSAVE', ("OFF (NES)", "ON")),
                                         ("BAG", 'BAG_SIZE', ("NES (8)", "16")),
                                         ("RUN BUTTON", 'RUN_BUTTON', ("OFF (NES)", "ON"))]),
@@ -442,7 +442,7 @@ class TestPreset(OverlayTestCase):
                           'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': True, 'SAVE_STATES': True,
                           'REWIND': True, 'AUTO_GRIND': True, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
                           'CHEAT_KEYS': False, 'RUN_BUTTON': True, 'SHOP_PREVIEW': True,
-                          'QUEST_JOURNAL': JOURNAL_GOALS, 'AUTOSAVE': True, 'BAG_SIZE': 16,
+                          'QUEST_JOURNAL': JOURNAL_HINTS, 'AUTOSAVE': True, 'BAG_SIZE': 16,
                           'VIEW': 'NES', 'DUNGEON_MAP': True, 'SMART_A': True,
                           'MESSAGE_LOG': True, 'NAME_CONFIRM': True},
                          preset_values(PRESET_MODERN))
@@ -458,28 +458,53 @@ class TestPreset(OverlayTestCase):
         self.config['MENU_SPEED'] = FOLLOW
         self.assertEqual(PRESET_CUSTOM, current_preset(self.config))
 
-    def test_a_new_quest_keeps_what_the_game_already_had(self):
-        # The conveniences there before the switches start on, as they always did; a new quest is CUSTOM, and the NES
-        # preset switches them all off
+    def test_a_new_quest_is_the_nes_preset(self):
+        # Every row a preset sets starts at its NES value, so PRESET reads NES, not CUSTOM
         from src.config.base_config import base_config
         from src.options_screen import DEFAULT_OPTIONS, apply_options
         # a new quest keeps the config's AUTOSAVE (OFF, the NES), and the player's VIEW and DUNGEON MAP
         config = {key: base_config[key] for key in ('AUTOSAVE', 'VIEW', 'DUNGEON_MAP', 'NAME_CONFIRM')}
         apply_options(config, DEFAULT_OPTIONS)
-        nes = preset_values(PRESET_NES)
-        differences = {config_key for config_key, value in nes.items() if config[config_key] != value}
-        self.assertEqual({'SOUNDTRACK', 'AUTO_STAIRS', 'NPCS_MAKE_WAY', 'QUICK_ACTION', 'GAME_SPEED_KEYS',
-                          'SAVE_STATES', 'REWIND', 'AUTO_GRIND', 'CHEAT_KEYS', 'SHOP_PREVIEW', 'QUEST_JOURNAL',
-                          'DUNGEON_MAP', 'MESSAGE_LOG', 'NAME_CONFIRM'},
-                         differences)
-        self.assertEqual(PRESET_CUSTOM, current_preset(config))
+        self.assertEqual(preset_values(PRESET_NES), {key: config[key] for key in preset_values(PRESET_NES)})
+        self.assertEqual(PRESET_NES, current_preset(config))
 
-    def test_an_older_save_loads_with_them_on(self):
+    def test_base_config_is_the_nes_preset(self):
+        from src.config.base_config import base_config
+        from src.config.prod_config import prod_config
+        for config in (base_config, prod_config):
+            self.assertEqual(PRESET_NES, current_preset(config))
+        self.assertFalse(base_config['CHEAT_KEYS'])
+
+    def test_a_fresh_game_reads_nes(self):
+        from src.config.prod_config import prod_config
+        game = helpers.new_game({**prod_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
+                                 'MUSIC_ENABLED': False, 'SOUND_ENABLED': False, 'SPLASH_SCREEN_ENABLED': False,
+                                 'INITIAL_DIALOG_ENABLED': False, 'SETTINGS_PATH': None})
+        self.assertEqual(["PRESET", "NES"], page_texts(game.game_state.config)[:2])
+        self.assertFalse(game.config['CHEAT_KEYS'])
+
+    def test_an_older_save_gets_the_nes_values_only_for_what_it_lacks(self):
         from src.options_screen import options_from_save
         options = options_from_save({'Name': 'Ed'})
-        self.assertEqual((Soundtrack.ORCHESTRA, True, True, True, True, True, True),
+        self.assertEqual((Soundtrack.NES, False, False, False, False, False, False, False, JOURNAL_OFF),
                          (options.soundtrack, options.game_speed_keys, options.save_states, options.rewind,
-                          options.auto_grind, options.cheat_keys, options.quick_action))
+                          options.auto_grind, options.cheat_keys, options.quick_action, options.shop_preview,
+                          options.quest_journal))
+        # what it has is kept
+        options = options_from_save({'Name': 'Ed', 'Soundtrack': 'Orchestra', 'CheatKeys': True, 'ShopPreview': True,
+                                     'QuestJournal': JOURNAL_HINTS, 'AutoStairs': True})
+        self.assertEqual((Soundtrack.ORCHESTRA, True, True, JOURNAL_HINTS, True),
+                         (options.soundtrack, options.cheat_keys, options.shop_preview, options.quest_journal,
+                          options.auto_stairs))
+
+    def test_an_older_saves_goals_journal_loads_as_learned(self):
+        from src.options_screen import options_from_save
+        self.assertEqual(JOURNAL_LEARNED, options_from_save({'QuestJournal': 'Goals'}).quest_journal)
+
+    def test_shop_preview_follows_the_presets(self):
+        self.assertFalse(preset_values(PRESET_NES)['SHOP_PREVIEW'])
+        self.assertTrue(preset_values(PRESET_MODERN)['SHOP_PREVIEW'])
+        self.assertIn('SHOP_PREVIEW', [row.config_key for row in PRESET_ROWS])
 
     def test_preset_sets_every_row_at_once(self):
         self.assertEqual(1, self.run_overlay(K_RIGHT, K_u))  # CUSTOM -> NES (the first)
@@ -658,15 +683,11 @@ class TestDevOnly(TestCase):
         self.assertFalse(prod_config['DEBUG_KEYS'])
         self.assertTrue(dev_config['DEBUG_KEYS'])
 
-    def test_prod_starts_with_every_key_convenience_as_it_was(self):
-        # on: the speed keys, save states, rewind, auto-grind, F4/F9 and the Enter shortcut worked before the switches
+    def test_prod_starts_with_every_switch_at_the_nes(self):
         from src.config.prod_config import prod_config
+        nes = preset_values(PRESET_NES)
         for switch in SWITCHES:
-            if switch.config_key in ('ENCOUNTERS', 'EXP_GOLD', 'RUN_BUTTON', 'STATUS_WINDOW', 'BAG_SIZE', 'SMART_A'):
-                # new options: the NES's
-                self.assertIn(switch.default, (False, 'NES', 1, 8), switch.config_key)
-            else:
-                self.assertTrue(prod_config[switch.config_key], switch.config_key)
+            self.assertEqual(nes[switch.config_key], switch.default, switch.config_key)
             self.assertEqual(switch.default, prod_config[switch.config_key], switch.config_key)
 
     def test_a_game_without_debug_keys_has_no_debug_tools(self):

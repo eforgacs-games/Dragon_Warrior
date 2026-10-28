@@ -262,11 +262,11 @@ class TestTheOption(TestCase):
         row = next(row for row in OPTION_ROWS if row.config_key == 'MESSAGE_LOG')
         self.assertEqual(("MESSAGE LOG", (False, True), ("OFF (NES)", "ON")), (row.label, row.values, row.value_labels))
 
-    def test_on_by_default_and_saved(self):
-        self.assertTrue(DEFAULT_OPTIONS.message_log)
-        self.assertTrue(options_from_save({}).message_log)
-        off = DEFAULT_OPTIONS.__class__(message_log=False)
-        self.assertEqual(off, options_from_save(options_to_save(off)))
+    def test_off_by_default_and_saved(self):
+        self.assertFalse(DEFAULT_OPTIONS.message_log)
+        self.assertFalse(options_from_save({}).message_log)
+        on = DEFAULT_OPTIONS.__class__(message_log=True)
+        self.assertEqual(on, options_from_save(options_to_save(on)))
 
 
 class TestThePadButton(TestCase):

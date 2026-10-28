@@ -2752,12 +2752,24 @@ msgid "QUEST JOURNAL"
 msgstr "모험 일지"
 
 #: src/options_overlay.py
-msgid "GOALS"
-msgstr "목표"
+msgid "LEARNED"
+msgstr "들은 목표"
 
 #: src/options_overlay.py
-msgid "HINTS"
-msgstr "힌트"
+msgid "LEARNED+HINTS"
+msgstr "목표+힌트"
+
+#: src/quest_journal.py
+msgid "Done: {}"
+msgstr "완료: {}"
+
+#: src/quest_journal.py
+msgid "Get the Rainbow Drop."
+msgstr "무지개 방울을 얻자."
+
+#: src/quest_journal.py
+msgid "Thou hast heard of nothing yet."
+msgstr "아직 아무것도 들은 바가 없다."
 
 #: src/quest_journal.py
 msgid "If thou wishest:"

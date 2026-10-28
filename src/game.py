@@ -38,7 +38,7 @@ from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
 from src.gamepad import connect_gamepad
-from src.guardians import guardian_at
+from src.guardians import GOLEM, guardian_at
 from src.intro import Intro
 from src.items import OpenDoorHistory, TreasureChestHistory
 from src.map_layouts import MapLayouts
@@ -50,7 +50,7 @@ from src.music_player import MusicPlayer
 from src.npc_movement import step
 from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
 from src.options_screen import ENCOUNTERS_HALF, ENCOUNTERS_OFF, apply_options
-from src.quest_journal import JOURNAL_HINTS, JOURNAL_OFF, game_progress, journal_pages
+from src.quest_journal import GOLEM_FIGHT, JOURNAL_HINTS, JOURNAL_OFF, game_progress, hear, journal_pages
 from src.rewind import Rewind
 from src.save_file import SaveFile
 from src.save_state import OLD_VERSION, StateError, read_state, restore_snapshot, take_snapshot, write_state
@@ -104,9 +104,10 @@ class Game:
         self.music_player = MusicPlayer(config)
 
         # The global settings (src/settings.py): zoom, fullscreen, game speed and language, read before the window
-        # opens. A saved language wins over the system locale's (base_config language_from_locale).
+        # opens. A saved language wins over the system locale's (base_config language_from_locale), but not over
+        # --language, which chooses this run's language without changing the saved one.
         self.settings = SettingsStore.from_config(config)
-        if self.settings.settings.language:
+        if self.settings.settings.language and not config.get('LANGUAGE_FROM_COMMAND_LINE'):
             config['LANGUAGE'] = self.settings.settings.language
         if self.settings.settings.scanlines:
             config[SCANLINES_KEY] = True
@@ -114,10 +115,10 @@ class Game:
             config[SCALING_KEY] = self.settings.settings.scaling
         if self.settings.settings.view != VIEW_NES:
             config['VIEW'] = self.settings.settings.view
-        if not self.settings.settings.dungeon_map:
-            config['DUNGEON_MAP'] = False
-        if not self.settings.settings.name_confirm:
-            config['NAME_CONFIRM'] = False
+        if self.settings.settings.dungeon_map:
+            config['DUNGEON_MAP'] = True
+        if self.settings.settings.name_confirm:
+            config['NAME_CONFIRM'] = True
         self._ = _ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
         # map/graphics
@@ -670,6 +671,8 @@ class Game:
         guardian = guardian_at(self.current_map.identifier, coordinates, self.story_flags)
         if guardian is not None:
             self.battle_ctrl.queue_scripted_battle(guardian.enemy_name)
+            if guardian is GOLEM:
+                hear(self.story_flags, GOLEM_FIGHT)  # the quest journal: the hero has met the Golem
 
     def leave_tantegel(self, direction: int | None = None):
         map_name, coordinates = TANTEGEL_OVERWORLD_EXIT
@@ -942,17 +945,17 @@ class Game:
                 self.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
 
     def handle_quest_journal_key(self, keydown_event) -> None:
-        """Q (the JOURNAL key): the quest journal (src/quest_journal.py), not NES: one dialog box page per open goal,
-        with where to go if QUEST JOURNAL is set to HINTS. With it OFF (the NES), Q does nothing."""
+        """Q (the JOURNAL key): the quest journal (src/quest_journal.py), not NES: one dialog box page per goal the hero
+        has learned of, with what was said of it if QUEST JOURNAL is set to HINTS. With it OFF (the NES), Q does
+        nothing."""
         if not pressed(keydown_event, 'QUEST_JOURNAL'):
             return
         setting = self.config.get('QUEST_JOURNAL', JOURNAL_OFF)
         if setting == JOURNAL_OFF:
             return
         pages = journal_pages(game_progress(self), hints=setting == JOURNAL_HINTS, _=self._)
-        if pages:
-            with self.cmd_menu.not_logged():  # the message log is for what the NPCs said
-                self.cmd_menu.show_text_in_dialog_box(pages)
+        with self.cmd_menu.not_logged():  # the message log is for what the NPCs said
+            self.cmd_menu.show_text_in_dialog_box(pages)
 
     def handle_a_button(self, keydown_event):
         # The SMART A key (Enter) is the A button on the map too unless QUICK ACTION is on (handle_enter_key)
@@ -1339,7 +1342,8 @@ def run():
                         help="start from a playtest checkpoint in data/checkpoints/ (see PLAYTEST.md); saves go to "
                              f"{CHECKPOINT_SAVE_DIR} instead of src/saves")
     parser.add_argument("--language", choices=("English", "Korean"),
-                        help="play in this language (default: the system's)")
+                        help="play in this language this time, whatever the options say (default: the language "
+                             "chosen in the options, or the system's)")
     parser.add_argument("--smoke-test", action="store_true",
                         help="check that every game file is there and loads, play a few scripted scenes headless and "
                              "exit with 0, or 1 on any problem (the release workflow runs this on each build; see "
@@ -1347,7 +1351,7 @@ def run():
     args = parser.parse_args()
     config = dev_config if args.dev else prod_config
     if args.language:
-        config = {**config, 'LANGUAGE': args.language}
+        config = {**config, 'LANGUAGE': args.language, 'LANGUAGE_FROM_COMMAND_LINE': True}
     if args.checkpoint:
         config = {**config, 'CHECKPOINT': args.checkpoint, 'SPLASH_SCREEN_ENABLED': False}
     if args.smoke_test:

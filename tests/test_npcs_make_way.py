@@ -232,9 +232,9 @@ class TestNpcsMakeWay(MakeWayTestCase):
         self.assertEqual((2, 2), self.tile(self.game.player))
         self.assertIsNone(self.game.movement.npc_asked_to_make_way)
 
-    def test_the_option_is_on_by_default(self):
+    def test_the_option_is_off_by_default_as_on_the_nes(self):
         from src.config.prod_config import prod_config
-        self.assertTrue(prod_config['NPCS_MAKE_WAY'])
+        self.assertFalse(prod_config['NPCS_MAKE_WAY'])
 
     def test_facing_an_npc_and_talking_does_not_move_it(self):
         self.make_game(CORRIDOR)

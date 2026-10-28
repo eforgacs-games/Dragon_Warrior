@@ -396,7 +396,7 @@ class MovementController:
         self.hero_standing = True
 
     def ask_npc_to_make_way(self) -> None:
-        """Quality of life, not NES (NPCS_MAKE_WAY, on by default): when the hero bumps into a roaming NPC, that NPC
+        """Quality of life, not NES (NPCS_MAKE_WAY, off by default): when the hero bumps into a roaming NPC, that NPC
         steps out of the way on the next frame (see make_way). On the NES it stays put and only moves when its own
         random turn comes. NPCs that never move (shopkeepers, guards at their posts, King Lorik: everyone not in the
         map's roaming list) never make way."""

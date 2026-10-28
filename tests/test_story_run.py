@@ -85,6 +85,7 @@ class StoryRunMixin:
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
         self.game = new_game()
+        self.game.config['AUTO_STAIRS'] = True  # the story walks onto stairs (STEP ON; off on the NES)
         self.player = self.game.player
         self.player.name = "Erdrick"
         self.shown_text: list = []

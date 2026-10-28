@@ -186,6 +186,8 @@ class TestStepWarps(StepTestCase):
         self.assertFalse(self.warp_after_steps('Garinham', (15, 8), (15, 8), 0))
 
     def test_stairs_still_wait_for_a_few_steps(self):
-        # Unchanged: this project takes stairs by stepping onto them (the NES only by STAIRS), after a few steps
+        # This project can take stairs by stepping onto them (STAIRS on STEP ON; the NES only by STAIRS), after a few
+        # steps
+        self.game.config['AUTO_STAIRS'] = True
         self.assertFalse(self.warp_after_steps('Garinham', (2, 28), (1, 28), 1))
         self.assertTrue(self.warp_after_steps('Garinham', (2, 28), (1, 28), 3))

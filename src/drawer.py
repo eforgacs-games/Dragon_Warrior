@@ -14,6 +14,7 @@ from src.game_functions import get_surrounding_rect
 from src.command_window import held_buttons
 from src.menu import CommandMenu
 from src.options_screen import STATUS_WINDOW_ALWAYS
+from src.quest_journal import KING_OPENING_SPEECH, hear
 from src.sound import Sound
 from src.text import draw_text
 from src.view import full_screen, screen_origin_x
@@ -254,6 +255,7 @@ class Drawer:
                 cmd_menu.show_text_in_dialog_box(
                     cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
                     skip_text=skip_text)
+                hear(cmd_menu.game.story_flags, KING_OPENING_SPEECH)  # "The Dragonlord must be defeated."
             self.set_to_post_initial_dialog(cmd_menu)
             self.game_state.automatic_initial_dialog_run = True
             self.show_pop_up_after_automatic_dialog()

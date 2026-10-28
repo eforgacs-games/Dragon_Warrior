@@ -19,7 +19,8 @@ What this game adds (none of it on the NES, so none of it asked here): the dialo
 the stairs, the grind stop, the soundtrack and the switches for this game's other conveniences (SWITCHES: the game speed
 keys, save states, rewind, auto-grind, the cheat keys, the shop preview, the quest journal and the bag size) and
 AUTOSAVE. They are changed during play, in the options overlay (src/options_overlay.py: SELECT or Tab on the map), and
-kept per adventure log beside the message speed (Options below). A new quest starts with their defaults.
+kept per adventure log beside the message speed (Options below). A new quest starts with their defaults, which are the
+NES preset's values, so a new quest plays as the NES does until the player switches something on.
 
 The windows read the joypad like every NES selection window (src/cursor.py SelectionButtons, WndProcessInput): one
 button per press, up and down in a one-column window, left and right in a one-row window, stopping at the edges.
@@ -34,7 +35,7 @@ from src.color import BLACK, WHITE
 from src.command_window import COMMAND_WINDOW_BUTTON_KEYS
 from src.common import Graphics, set_gettext_language
 from src.directories import Directories
-from src.quest_journal import JOURNAL_GOALS, JOURNAL_SETTINGS
+from src.quest_journal import JOURNAL_LEARNED, JOURNAL_OFF, JOURNAL_SETTINGS, LEGACY_JOURNAL_GOALS
 from src.items import BAG_SIZES, INVENTORY_SLOTS
 from src.cursor import IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, draw_cursor_tile
 from src.selection import run_selection
@@ -72,15 +73,15 @@ MODERN = 'Modern'  # each message replaces the last one, as this game drew dialo
 DIALOG_STYLES = (CLASSIC, MODERN)
 DEFAULT_DIALOG_STYLE = CLASSIC
 
-# NPCS_MAKE_WAY (base_config, #297): on by default; a save without the setting loads as ON
-DEFAULT_NPCS_MAKE_WAY = True
+# NPCS_MAKE_WAY (base_config, #297): off by default, the NES; a save without the setting loads as OFF
+DEFAULT_NPCS_MAKE_WAY = False
 
 # FADE_STYLE (base_config, #319): the NES palette fade by default; a save without the setting loads as NES
 DEFAULT_FADE_STYLE = FADE_STYLE_NES
 
-# AUTO_STAIRS (base_config): STEP ON by default, stairs are taken by stepping onto them; off is the NES, where only the
-# STAIRS command takes them (Bank03 CheckStairs). A save without the setting loads as STEP ON.
-DEFAULT_AUTO_STAIRS = True
+# AUTO_STAIRS (base_config): off by default, the NES, where only the STAIRS command takes stairs (Bank03 CheckStairs);
+# STEP ON takes them by stepping onto them. A save without the setting loads as off (NES).
+DEFAULT_AUTO_STAIRS = False
 
 # AUTO_GRIND_STOP (base_config): when auto-grind stops (src/auto_grind.py); a save without the setting loads as RED HP
 AUTO_GRIND_STOP_VALUES = ('RedHP', 'HalfHP', 'ThreeQuartersHP')
@@ -93,9 +94,9 @@ DEFAULT_MENU_SPEED = MENU_SPEED_NORMAL
 # or STAIRS when one applies (Game.smart_command). A save without the setting loads as OFF.
 DEFAULT_SMART_A = False
 
-# MESSAGE_LOG (base_config): on by default, the MESSAGE LOG key opens the log of the last messages
-# (src/message_log.py); off is the NES, which has none. A save without the setting loads as ON.
-DEFAULT_MESSAGE_LOG = True
+# MESSAGE_LOG (base_config): off by default, the NES, which has none; on, the MESSAGE LOG key opens the log of the last
+# messages (src/message_log.py). A save without the setting loads as OFF.
+DEFAULT_MESSAGE_LOG = False
 
 
 # ENCOUNTERS, EXP/GOLD and STATUS WINDOW's values
@@ -107,38 +108,45 @@ STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS = STATUS_WINDOW_SETTINGS = ('NES', 'Alwa
 @dataclass(frozen=True, slots=True)
 class Switch:
     """One of this game's conveniences, switched in the options overlay (#409, #437): the Options field, the config
-    key the game reads, the save file key, its values and its default (also what a save without it loads as). The
-    conveniences the game already had (the key features, the Enter shortcut) default to how they were, so
-    nothing changes for a player who never opens the options; the NES preset (src/options_overlay.py) switches them all
-    to the NES. Options new with the overlay default to the NES."""
+    key the game reads, the save file key, its values and its default (also what a save without it loads as). Every
+    default is the NES's value, as the NES preset (src/options_overlay.py) sets it, so a new quest plays as the NES
+    does. ``renamed`` maps a value an older build saved to the value it is now."""
     field_name: str
     config_key: str
     save_key: str
     values: tuple[Any, ...]
     default: Any
+    renamed: tuple[tuple[Any, Any], ...] = ()
 
     def valid(self, value: Any) -> Any:
-        """value if it's one of the values (a bool for an on/off switch, not 0 or 1), the default otherwise."""
-        if any(value == choice and type(value) is type(choice) for choice in self.values):
+        """value if it's one of the values (a bool for an on/off switch, not 0 or 1), what it was renamed to if an
+        older build saved it under another name, the default otherwise."""
+        value = next((new for old, new in self.renamed if same_value(value, old)), value)
+        if any(same_value(value, choice) for choice in self.values):
             return value
         return self.default
 
 
+def same_value(value: Any, choice: Any) -> bool:
+    """Equal and of the same type: True is not 1."""
+    return value == choice and type(value) is type(choice)
+
+
 SWITCHES = (
-    # GAME SPEED: keys 1 to 5 set the game speed (src/waiting.py); off, they do nothing (the NES has one speed). This
-    # and the next five were there before the switches, so they default to on
-    Switch('game_speed_keys', 'GAME_SPEED_KEYS', 'GameSpeedKeys', (False, True), True),
+    # GAME SPEED: keys 1 to 5 set the game speed (src/waiting.py); off, the default, they do nothing (the NES has one
+    # speed)
+    Switch('game_speed_keys', 'GAME_SPEED_KEYS', 'GameSpeedKeys', (False, True), False),
     # SAVE STATES: F1-F3 load and Shift+F1-F3 save a state; off, the keys do nothing
-    Switch('save_states', 'SAVE_STATES', 'SaveStates', (False, True), True),
+    Switch('save_states', 'SAVE_STATES', 'SaveStates', (False, True), False),
     # REWIND: Backspace rewinds; off, it does nothing
-    Switch('rewind', 'REWIND', 'Rewind', (False, True), True),
+    Switch('rewind', 'REWIND', 'Rewind', (False, True), False),
     # AUTO-GRIND: G starts auto-grind (src/auto_grind.py); off, G does nothing
-    Switch('auto_grind', 'AUTO_GRIND', 'AutoGrind', (False, True), True),
+    Switch('auto_grind', 'AUTO_GRIND', 'AutoGrind', (False, True), False),
     # CHEATS: F4 auto-battle and F9 invulnerability; off, the keys do nothing and both are off
-    Switch('cheat_keys', 'CHEAT_KEYS', 'CheatKeys', (False, True), True),
+    Switch('cheat_keys', 'CHEAT_KEYS', 'CheatKeys', (False, True), False),
     # QUICK ACTION: Enter on the map takes a chest, opens a door or talks without the COMMAND window; off, Enter is
     # the A button there too, as everywhere else
-    Switch('quick_action', 'QUICK_ACTION', 'QuickAction', (False, True), True),
+    Switch('quick_action', 'QUICK_ACTION', 'QuickAction', (False, True), False),
     # ENCOUNTERS: the NES's random fights, half as many (every other one that would start is skipped, so the NES's
     # rolls and enemy choice are untouched) or none (Game.roll_for_fight); scripted fights always happen
     Switch('encounters', 'ENCOUNTERS', 'Encounters', ENCOUNTER_SETTINGS, ENCOUNTERS_NES),
@@ -149,19 +157,21 @@ SWITCHES = (
     # STATUS WINDOW: the NES pop-up after standing still, or always on the map (Drawer.status_window_always)
     Switch('status_window', 'STATUS_WINDOW', 'StatusWindow', STATUS_WINDOW_SETTINGS, STATUS_WINDOW_NES),
     # SHOP PREVIEW (#401): a weapon and armor shop's list shows the attack or defense power the highlighted item would
-    # give (src/shop_preview.py). On by default, since it only shows information; off is the NES
-    Switch('shop_preview', 'SHOP_PREVIEW', 'ShopPreview', (False, True), True),
-    # QUEST JOURNAL (#410): what Q shows on the map (src/quest_journal.py): nothing (the NES), the goals, or the goals
-    # with where to go. GOALS by default, since it only shows information when Q is pressed
-    Switch('quest_journal', 'QUEST_JOURNAL', 'QuestJournal', JOURNAL_SETTINGS, JOURNAL_GOALS),
+    # give (src/shop_preview.py); off, the default, is the NES
+    Switch('shop_preview', 'SHOP_PREVIEW', 'ShopPreview', (False, True), False),
+    # QUEST JOURNAL (#410): what Q shows on the map (src/quest_journal.py): nothing (the NES, the default), the goals
+    # the hero has learned of, or those with what was said about them. Older builds' GOALS showed every open goal; it
+    # loads as LEARNED.
+    Switch('quest_journal', 'QUEST_JOURNAL', 'QuestJournal', JOURNAL_SETTINGS, JOURNAL_OFF,
+           renamed=((LEGACY_JOURNAL_GOALS, JOURNAL_LEARNED),)),
     # BAG (#413): the inventory's slots for everything but Herbs and Magic Keys (src/items.py bag_slots): the NES's 8,
     # the default, or 16
     Switch('bag_size', 'BAG_SIZE', BAG_SIZE_SAVE_KEY, BAG_SIZES, DEFAULT_BAG_SIZE),
     # SMART A (#404): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, instead of opening COMMAND
     # (Game.smart_command); off, the NES and the default, A always opens COMMAND
     Switch('smart_a', 'SMART_A', 'SmartA', (False, True), DEFAULT_SMART_A),
-    # MESSAGE LOG (#405): the MESSAGE LOG key (L) shows the last messages on the map (src/message_log.py). On by
-    # default, since it only shows information when the key is pressed; off is the NES
+    # MESSAGE LOG (#405): the MESSAGE LOG key (L) shows the last messages on the map (src/message_log.py); off, the
+    # default, is the NES
     Switch('message_log', 'MESSAGE_LOG', 'MessageLog', (False, True), DEFAULT_MESSAGE_LOG),
 )
 
@@ -184,26 +194,26 @@ class Options:
     # MUSIC (src/soundtrack.py): a save from before there were three soundtracks loads its OrchestraMusic switch
     soundtrack: Soundtrack = DEFAULT_SOUNDTRACK
     # SWITCHES, each defaulting to its Switch.default
-    game_speed_keys: bool = True
-    save_states: bool = True
-    rewind: bool = True
-    auto_grind: bool = True
-    cheat_keys: bool = True
-    quick_action: bool = True
+    game_speed_keys: bool = False
+    save_states: bool = False
+    rewind: bool = False
+    auto_grind: bool = False
+    cheat_keys: bool = False
+    quick_action: bool = False
     encounters: str = ENCOUNTERS_NES
     exp_gold: int = 1
     run_button: bool = False
     status_window: str = STATUS_WINDOW_NES
-    shop_preview: bool = True
-    quest_journal: str = JOURNAL_GOALS
+    shop_preview: bool = False
+    quest_journal: str = JOURNAL_OFF
     bag_size: int = DEFAULT_BAG_SIZE
     smart_a: bool = DEFAULT_SMART_A
     message_log: bool = DEFAULT_MESSAGE_LOG
     autosave: bool | None = None  # None: the config's AUTOSAVE is kept
 
 
-# A new quest's settings when none are chosen: the default message speed, the NES dialog window, and base_config's
-# defaults
+# A new quest's settings when none are chosen: the default message speed and the NES preset's values, as base_config
+# has them
 DEFAULT_OPTIONS = Options()
 
 # MsgSpeedDat ($B194): single spaced, 18 tiles wide. " Which Message", " Speed Do You" and " Want To Use?" on tile rows
@@ -259,7 +269,7 @@ def dialog_style_from_save(save: dict) -> str:
 
 
 def npcs_make_way_from_save(save: dict) -> bool:
-    """The log's NPCS MAKE WAY; a save from before it was kept loads as ON (the default)."""
+    """The log's NPCS MAKE WAY; a save from before it was kept loads as OFF (the default)."""
     make_way = save.get(NPCS_MAKE_WAY_SAVE_KEY)
     return make_way if isinstance(make_way, bool) else DEFAULT_NPCS_MAKE_WAY
 
@@ -271,7 +281,7 @@ def fade_style_from_save(save: dict) -> str:
 
 
 def auto_stairs_from_save(save: dict) -> bool:
-    """The log's STAIRS setting; a save from before it was kept loads as STEP ON (the default)."""
+    """The log's STAIRS setting; a save from before it was kept loads as NES (the default)."""
     auto_stairs = save.get(AUTO_STAIRS_SAVE_KEY)
     return auto_stairs if isinstance(auto_stairs, bool) else DEFAULT_AUTO_STAIRS
 

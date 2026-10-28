@@ -5,7 +5,6 @@ with the same stand-ins as the headless story run. If a checkpoint goes stale af
 """
 import json
 import os
-from dataclasses import fields
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -22,7 +21,7 @@ from src.ending import CREDITS
 from src.items import INVENTORY_SLOTS, UNSLOTTED_ITEMS, armor, shields, weapons
 from src.maps import CharlockB1
 from src.player.player_stats import get_total_name_score, levels_list
-from src.story_flags import StoryFlags
+from src.story_flags import story_bits
 
 UP, DOWN, LEFT, RIGHT = story_run.UP, story_run.DOWN, story_run.LEFT, story_run.RIGHT
 KEY_ITEMS = ("Silver Harp", "Stones of Sunlight", "Staff of Rain", "Erdrick's Token", "Rainbow Drop", "Gwaelin's Love")
@@ -79,7 +78,7 @@ class TestCheckpoints(story_run.StoryRunMixin, TestCase):
         self.assertEqual(self.where, (map_name, coordinates), name)
         if facing is not None:
             self.assertEqual(player.direction_value, facing, name)
-        self.assertEqual({flag.name for flag in fields(StoryFlags) if getattr(game.story_flags, flag.name)}, flags,
+        self.assertEqual({name for name in story_bits() if getattr(game.story_flags, name)}, flags,
                          name)
         self.assertEqual({item for item in player.inventory if item in KEY_ITEMS}, key_items, name)
         self.assertEqual(player.inventory, save['Inventory'], name)
@@ -110,7 +109,7 @@ class TestCheckpoints(story_run.StoryRunMixin, TestCase):
                 'Name', 'Experience', 'Gold', 'CurrentHP', 'CurrentMP', 'Weapon', 'Armor', 'Shield',
                 'WearingDragonScale', 'WearingFightersRing', 'WearingCursedBelt', 'WearingDeathNecklace', 'Inventory',
                 'Spells', 'CurrentMap', 'PlayerRow', 'PlayerColumn', 'StoryFlags'}, name)
-            self.assertEqual(set(save['StoryFlags']), {flag.name for flag in fields(StoryFlags)}, name)
+            self.assertEqual(set(save['StoryFlags']), set(story_bits()), name)
 
     def test_every_checkpoint_names_the_hero_arthur(self):
         # Not Erdrick: that's the hero's ancestor (로토 in Korean)
