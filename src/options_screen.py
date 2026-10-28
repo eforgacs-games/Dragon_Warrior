@@ -341,8 +341,8 @@ def apply_options(config: dict, options: Options) -> None:
     MovementController.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump, screen_fade reads FADE_STYLE for every
     fade, MapManager.handle_warps reads AUTO_STAIRS for every step, auto-grind reads AUTO_GRIND_STOP for every check
     and the menu clock reads MENU_SPEED (src/waiting.py menu_speed); the music is read from SOUNDTRACK each time
-    one starts (src/directories.py). Each of the SWITCHES goes into its config key,
-    which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once); the
+    one starts (src/directories.py). Each of the SWITCHES goes into its config key, which the game reads at each
+    key press (options_overlay.apply_option makes the music and the game speed follow at once); the
     shops read SHOP_PREVIEW whenever their list opens, Q reads QUEST_JOURNAL each time it's pressed, Game.map_frame
     reads AUTOSAVE every frame, the inventory checks read BAG_SIZE for every item added, and MapHotkeys.press_a and
     MapHotkeys.press_message_log read SMART_A and MESSAGE_LOG for every press."""

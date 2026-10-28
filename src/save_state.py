@@ -55,7 +55,8 @@ from src.map_layouts import MapLayouts
 from src.maps import CharlockB1, map_lookup
 from src.menu import CommandMenu
 from src.message_log import decoded_entries
-from src.options_screen import apply_options, options_from_config, options_from_save, options_to_save
+from src.options_overlay import apply_log_options, apply_option
+from src.options_screen import options_from_config, options_from_save, options_to_save
 from src.sprites.animated_sprite import AnimatedSprite
 from src.soundtrack import SOUNDTRACK_KEY, soundtrack
 from src.story_flags import StoryFlags
@@ -380,9 +381,7 @@ def restore_snapshot(game: Any, snapshot: dict[str, Any], fade_in: bool = True) 
     game.story_flags = state['story_flags']
     _restore_histories(game, state)
     music_before = soundtrack(game.game_state.config)
-    apply_options(game.game_state.config, state['options'])
-    for config_key in ('GAME_SPEED_KEYS', 'CHEAT_KEYS'):  # the switches that act at once (Game.apply_option)
-        game.apply_option(config_key)
+    apply_log_options(game, state['options'])
     same_map = (not fade_in and old_map.identifier == state['map'] and old_tiles is not None
                 and old_tiles == state['layout_changes'].get(state['map'], [])
                 and [character.identifier for character in old_map.roaming_characters]
@@ -403,7 +402,7 @@ def restore_snapshot(game: Any, snapshot: dict[str, Any], fade_in: bool = True) 
     if fade_in or game.current_map.identifier != old_map.identifier:
         game.music_player.load_and_play_music(game.current_map.music_file_path)
     elif soundtrack(game.game_state.config) != music_before:
-        game.apply_option(SOUNDTRACK_KEY)  # the state's MUSIC setting, on the map that stayed
+        apply_option(game, SOUNDTRACK_KEY)  # the state's MUSIC setting, on the map that stayed
 
 
 def _rebuild_map(game: Any, state: dict[str, Any], cut_to_black_first: bool) -> None:

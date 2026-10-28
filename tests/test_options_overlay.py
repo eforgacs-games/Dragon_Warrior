@@ -19,7 +19,7 @@ from src.map_layouts import GRASS_STAIR_DOWN
 from src.maps import STAIR_DIRECTIONS, map_lookup
 from src.options_overlay import FIXED_ROWS, MOST_ROWS, OPTION_PAGES, OPTION_ROWS, OPTIONS_WINDOW, PRESET_CUSTOM, \
     PRESET_MODERN, PRESET_NES, PRESET_ROWS, OptionsOverlay, current_preset, options_layout, overlay_texts, \
-    preset_values
+    apply_option, preset_values
 from src.options_screen import CLASSIC, MODERN, SWITCHES, options_from_config
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_LEARNED, JOURNAL_OFF
 from src.soundtrack import Soundtrack
@@ -547,9 +547,9 @@ class TestPreset(OverlayTestCase):
                          {config_key: self.config[config_key] for config_key in preset_values(PRESET_NES)})
 
     def test_presets_switch_the_music_and_the_speed_keys_at_once(self):
-        with patch.object(self.game, 'apply_option', wraps=self.game.apply_option) as apply_option:
+        with patch('src.options_overlay.apply_option', wraps=apply_option) as applied_option:
             self.run_overlay(K_RIGHT, K_RIGHT, K_u)  # CUSTOM -> NES -> MODERN
-        applied = {call.args[0] for call in apply_option.call_args_list}
+        applied = {call.args[1] for call in applied_option.call_args_list}
         self.assertIn('SOUNDTRACK', applied)
         self.assertIn('GAME_SPEED_KEYS', applied)
         from src.waiting import speed_keys_enabled

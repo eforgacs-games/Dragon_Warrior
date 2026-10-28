@@ -101,7 +101,7 @@ _rounding_carry = 0.0  # real milliseconds that rounding waits to whole millisec
 # settings (src/settings.py)
 _speed_listener: Callable[[int], None] | None = None
 # The options overlay's GAME SPEED switch (GAME_SPEED_KEYS, src/options_screen.py SWITCHES): off, keys 1 to 5 do nothing
-# (they are still taken out of the event loops, so they never count as "any key"). Game.apply_option sets it.
+# (they are still taken out of the event loops, so they never count as "any key"). options_overlay.apply_option sets it.
 _speed_keys_enabled = True
 
 # The MENU SPEED option (config['MENU_SPEED']): NORMAL keeps the selection windows at 1x; FOLLOW GAME SPEED runs them at

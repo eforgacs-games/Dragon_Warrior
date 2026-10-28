@@ -28,10 +28,10 @@ from src.constants import (
 )
 from src.direction import Direction
 from src.display_filters import PRESENTER, SCALING_KEY, SCALING_SMOOTH, SCANLINES_KEY
-from src.directories import Directories, music_name
-from src.soundtrack import SOUNDTRACK_KEY, migrate_legacy_music_config
+from src.directories import Directories
+from src.soundtrack import migrate_legacy_music_config
 from src.drawer import Drawer
-from src.dungeon_map import DungeonMap, dungeon_map_enabled
+from src.dungeon_map import DungeonMap
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
@@ -47,7 +47,8 @@ from src.movement import HILL_PAUSE_FRAMES, RUN_SPEED_FACTOR, STEP_SYNC_FRAMES, 
 from src.message_log import MessageLog
 from src.music_player import MusicPlayer
 from src.npc_movement import step
-from src.options_screen import ENCOUNTERS_HALF, ENCOUNTERS_OFF, apply_options
+from src.options_overlay import apply_log_options
+from src.options_screen import ENCOUNTERS_HALF, ENCOUNTERS_OFF
 from src.quest_journal import GOLEM_FIGHT, hear
 from src.rewind import Rewind
 from src.save_file import SaveFile
@@ -277,49 +278,6 @@ class Game:
     @auto_stairs.setter
     def auto_stairs(self, value: bool) -> None:
         self.game_state.config['AUTO_STAIRS'] = value
-
-    def apply_option(self, config_key: str) -> None:
-        """An option has just been changed in the options overlay (src/options_overlay.py). Most are read from the config
-        when they're next needed; these are made to follow at once:
-
-        - LANGUAGE, a global setting: switched to at once (set_language) and saved with the global settings.
-        - SCANLINES and SCALING, global settings: the display filters change from the next frame on, and are saved.
-        - VIEW, a global setting: saved now, and shown once the overlay closes (set_view).
-        - DUNGEON MAP, a global setting: saved now; M reads it each time it's pressed.
-        - CONFIRM NAME, a global setting: saved now; the next name entry reads it.
-        - MUSIC (SOUNDTRACK): every Directories reads the music from the config (src/directories.py), so
-          the next music played is from the new set; the map's music is started again from the new set now.
-        - GAME SPEED (GAME_SPEED_KEYS): keys 1 to 5 are switched on or off; off goes back to normal speed, and on to
-          the speed kept in the global settings.
-        - CHEATS (CHEAT_KEYS): switched off, auto-battle and invulnerability are switched off too.
-        - REWIND: switched off, the snapshots kept so far are dropped (src/rewind.py takes none while it's off)."""
-        config = self.game_state.config
-        if config_key == 'LANGUAGE':
-            self.set_language(config['LANGUAGE'])
-        elif config_key in (SCANLINES_KEY, SCALING_KEY):
-            PRESENTER.configure_from(config)
-            self.settings.update(scanlines=bool(config.get(SCANLINES_KEY)),
-                                 scaling=config.get(SCALING_KEY, SCALING_SMOOTH))
-        elif config_key == 'VIEW':
-            self.settings.update(view=view_name(config))  # shown once the overlay closes (set_view)
-        elif config_key == 'DUNGEON_MAP':
-            self.settings.update(dungeon_map=dungeon_map_enabled(config))
-        elif config_key == 'NAME_CONFIRM':
-            self.settings.update(name_confirm=bool(config.get('NAME_CONFIRM')))
-        elif config_key == SOUNDTRACK_KEY:
-            name = music_name(self.current_map.music_file_path)
-            if name is not None:
-                self.current_map.music_file_path = getattr(self.directories, name)
-                self.music_player.load_and_play_music(self.current_map.music_file_path)
-        elif config_key == 'GAME_SPEED_KEYS':
-            set_speed_keys_enabled(bool(config.get('GAME_SPEED_KEYS')))
-            if config.get('GAME_SPEED_KEYS'):
-                set_game_speed(self.settings.settings.game_speed)
-        elif config_key == 'CHEAT_KEYS' and not config.get('CHEAT_KEYS'):
-            self.auto_battle = False
-            self.invulnerable = False
-        elif config_key == 'REWIND' and not config.get('REWIND'):
-            self.rewind.snapshots.clear()
 
     def set_screen(self, win_height, win_width):
         """Open the window (or make it again) and return the game's screen. In the WIDE view (src/view.py) the window
@@ -971,10 +929,8 @@ class Game:
         self.dungeon_map = DungeonMap.from_save(save.dungeon_map)
         # NES LoadSavedData (LFBC8): the log's message speed; and this game's dialog style and NPCS MAKE WAY. Older
         # saves: NORMAL, CLASSIC, ON
-        apply_options(self.game_state.config, save.options)
-        # the loaded map below starts its own music, from the log's MUSIC setting
-        for config_key in ('GAME_SPEED_KEYS', 'CHEAT_KEYS'):
-            self.apply_option(config_key)
+        # The loaded map below starts its own music, from the log's MUSIC setting
+        apply_log_options(self, save.options)
         self.chest_history = TreasureChestHistory()
         self.door_history = OpenDoorHistory()
         self.repel_timer = 0

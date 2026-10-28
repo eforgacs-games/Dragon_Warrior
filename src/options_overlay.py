@@ -65,10 +65,10 @@ or goes to the new page's last row if it has fewer.
 
 Up and down move the NES cursor (src/cursor.py) between the rows, stopping at the first and last; left, right or A
 change the row's value, with the menu button sound. A change goes into the game config at once, so the next dialog,
-fade, bump, step or key press uses it (Game.apply_option does what can't wait for that: the music, the game speed and
+fade, bump, step or key press uses it (apply_option does what can't wait for that: the music, the game speed and
 the cheats), and is saved with the adventure log the next time the game is saved (options_from_config). LANGUAGE,
 SCANLINES, SCALING, VIEW and DUNGEON MAP are the player's, not the adventure's, kept in the global settings file:
-Game.apply_option switches the game to the new language at once (Game.set_language), this window included, the display
+apply_option switches the game to the new language at once (Game.set_language), this window included, the display
 filters from the next frame on, and DUNGEON MAP from the next M; the VIEW is shown once the overlay closes
 (Game.set_view). B, Esc, SELECT or Tab close it, and the map frame is put back exactly as it was. Everything is on the
 NES buttons, so a gamepad works it as the keyboard does.
@@ -88,19 +88,21 @@ from src.common import A_BUTTON_KEYS, B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT
 from src.controls import KeySet
 from src.controls_screen import ControlsScreen
 from src.cursor import BlinkingCursor
-from src.display_filters import SCALING_KEY, SCALING_MODES, SCANLINES_KEY
+from src.directories import music_name
+from src.display_filters import PRESENTER, SCALING_KEY, SCALING_MODES, SCALING_SMOOTH, SCANLINES_KEY
+from src.dungeon_map import dungeon_map_enabled
 from src.items import BAG_SIZES, BIG_BAG_SLOTS, INVENTORY_SLOTS
 from src.options_screen import AUTO_GRIND_STOP_VALUES, CLASSIC, ENCOUNTER_SETTINGS, ENCOUNTERS_NES, \
     EXP_GOLD_MULTIPLIERS, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN, STATUS_WINDOW_ALWAYS, \
-    STATUS_WINDOW_NES, STATUS_WINDOW_SETTINGS
+    STATUS_WINDOW_NES, STATUS_WINDOW_SETTINGS, Options, apply_options
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_OFF, JOURNAL_SETTINGS
 from src.selection import frame_events, next_frame
 from src.settings import LANGUAGES
 from src.translated_window import draw_translated_window
-from src.view import VIEW_NES, VIEW_WIDE, full_screen
+from src.view import VIEW_NES, VIEW_WIDE, full_screen, view_name
 from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACKS, Soundtrack
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
-from src.waiting import MENU_SPEED_FOLLOW, MENU_SPEED_NORMAL
+from src.waiting import MENU_SPEED_FOLLOW, MENU_SPEED_NORMAL, set_game_speed, set_speed_keys_enabled
 from src.windows import Window, WindowLayout, WindowText
 
 # The keys that open the overlay on the map, and close it again
@@ -268,6 +270,62 @@ def preset_settings(config: dict) -> dict[str, Any]:
     return {row.config_key: config.get(row.config_key) for row in PRESET_ROWS}
 
 
+# The switches that act on the game at once, beyond the config (apply_option), when an adventure log's or a save state's
+# options are put in force (apply_log_options)
+IMMEDIATE_SWITCHES = ('GAME_SPEED_KEYS', 'CHEAT_KEYS')
+
+
+def apply_option(game: Any, config_key: str) -> None:
+    """An option has just been changed (in the overlay, or by loading options). Most are read from the config when
+    they're next needed; these are made to follow at once:
+
+    - LANGUAGE, a global setting: switched to at once (Game.set_language) and saved with the global settings.
+    - SCANLINES and SCALING, global settings: the display filters change from the next frame on, and are saved.
+    - VIEW, a global setting: saved now, and shown once the overlay closes (Game.set_view).
+    - DUNGEON MAP, a global setting: saved now; M reads it each time it's pressed.
+    - CONFIRM NAME, a global setting: saved now; the next name entry reads it.
+    - MUSIC (SOUNDTRACK): every Directories reads the music from the config (src/directories.py), so
+      the next music played is from the new set; the map's music is started again from the new set now.
+    - GAME SPEED (GAME_SPEED_KEYS): keys 1 to 5 are switched on or off; off goes back to normal speed, and on to
+      the speed kept in the global settings.
+    - CHEATS (CHEAT_KEYS): switched off, auto-battle and invulnerability are switched off too.
+    - REWIND: switched off, the snapshots kept so far are dropped (src/rewind.py takes none while it's off)."""
+    config = game.game_state.config
+    if config_key == 'LANGUAGE':
+        game.set_language(config['LANGUAGE'])
+    elif config_key in (SCANLINES_KEY, SCALING_KEY):
+        PRESENTER.configure_from(config)
+        game.settings.update(scanlines=bool(config.get(SCANLINES_KEY)), scaling=config.get(SCALING_KEY, SCALING_SMOOTH))
+    elif config_key == 'VIEW':
+        game.settings.update(view=view_name(config))  # shown once the overlay closes (Game.set_view)
+    elif config_key == 'DUNGEON_MAP':
+        game.settings.update(dungeon_map=dungeon_map_enabled(config))
+    elif config_key == 'NAME_CONFIRM':
+        game.settings.update(name_confirm=bool(config.get('NAME_CONFIRM')))
+    elif config_key == SOUNDTRACK_KEY:
+        name = music_name(game.current_map.music_file_path)
+        if name is not None:
+            game.current_map.music_file_path = getattr(game.directories, name)
+            game.music_player.load_and_play_music(game.current_map.music_file_path)
+    elif config_key == 'GAME_SPEED_KEYS':
+        set_speed_keys_enabled(bool(config.get('GAME_SPEED_KEYS')))
+        if config.get('GAME_SPEED_KEYS'):
+            set_game_speed(game.settings.settings.game_speed)
+    elif config_key == 'CHEAT_KEYS' and not config.get('CHEAT_KEYS'):
+        game.auto_battle = False
+        game.invulnerable = False
+    elif config_key == 'REWIND' and not config.get('REWIND'):
+        game.rewind.snapshots.clear()
+
+
+def apply_log_options(game: Any, options: Options) -> None:
+    """Put an adventure log's (or a save state's) options in force (apply_options), with the switches that act at
+    once (IMMEDIATE_SWITCHES). The music isn't restarted: what loads them starts the map's music."""
+    apply_options(game.game_state.config, options)
+    for config_key in IMMEDIATE_SWITCHES:
+        apply_option(game, config_key)
+
+
 # The window: the screen's full 16 blocks wide (the longest labels and values, MESSAGE SPEED, NPCS MAKE WAY and
 # CLASSIC (NES), are 13 tiles each), one block high per row of the longest page plus a block of border at the top and
 # bottom, from block row 1, the same size on every page. Laid out like the NES selection windows: the page's title in
@@ -399,7 +457,7 @@ class OptionsOverlay:
             row = self.rows[self.index - FIXED_ROWS]
             assert isinstance(row, OptionRow)
             row.change(self.config, step)
-            self.game.apply_option(row.config_key)
+            apply_option(self.game, row.config_key)
             # The window's own text in the language just chosen
             self._ = set_gettext_language(self.config.get('LANGUAGE'))
             self.remember_custom()
@@ -414,7 +472,7 @@ class OptionsOverlay:
         for key, value in values.items():
             if self.config.get(key) != value:
                 self.config[key] = value
-                self.game.apply_option(key)
+                apply_option(self.game, key)
 
     def open_screen(self, row: ScreenRow) -> None:
         """Run the screen the row opens (CONTROLS: src/controls_screen.py) until it's closed."""

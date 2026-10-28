@@ -23,7 +23,7 @@ from src.frame_recorder import recording
 from src.game import Game
 from src.settings import load_settings
 from src.maps import map_lookup
-from src.options_overlay import OptionsOverlay
+from src.options_overlay import OptionsOverlay, apply_option
 from src.view import NES_WIDTH, VIEW_NES, VIEW_WIDE, full_screen, screen_origin_x, view_width, wide_aspect, \
     wide_view, wide_width
 from src.visual_effects import cut_to_black, nes_palette_fade
@@ -152,7 +152,7 @@ class TestScreen(DisplayTestCase):
             path = os.path.join(folder, 'settings.json')
             game = make_game('Brecconary', VIEW_NES, SETTINGS_PATH=path)
             game.game_state.config['VIEW'] = VIEW_WIDE
-            game.apply_option('VIEW')
+            apply_option(game, 'VIEW')
             self.assertEqual(VIEW_WIDE, load_settings(path).view)
             again = make_game('Brecconary', VIEW_NES, SETTINGS_PATH=path)
             self.assertEqual(VIEW_WIDE, again.game_state.config['VIEW'])

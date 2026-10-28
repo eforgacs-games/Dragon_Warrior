@@ -16,7 +16,7 @@ taken between two map frames, so putting one back and pressing the same keys pla
   After the fight, rewinding reaches it first, unless a periodic one was taken since.
 
 It only runs with the options overlay's REWIND switch on (REWIND, off on the NES): off, no snapshot is taken and
-Backspace does nothing; switching it off drops the snapshots (Game.apply_option).
+Backspace does nothing; switching it off drops the snapshots (options_overlay.apply_option).
 
 Snapshots are small (no surfaces; see save_state), so 60 of them take a few hundred KB (tests/test_rewind.py
 measures them).
