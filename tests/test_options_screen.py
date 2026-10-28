@@ -46,7 +46,7 @@ def presses(*keys):
 def new_game(**overrides) -> Game:
     # A copy of test_config, so the settings these tests change don't leak into other tests
     config = {**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True, 'TEXT_SPEED': 'Fast',
-              'DIALOG_STYLE': CLASSIC, 'NPCS_MAKE_WAY': True, 'FADE_STYLE': FADE_STYLE_NES, 'AUTO_STAIRS': True,
+              'DIALOG_STYLE': CLASSIC, 'NPCS_MAKE_WAY': False, 'FADE_STYLE': FADE_STYLE_NES, 'AUTO_STAIRS': False,
               **overrides}
     return helpers.new_game(config)
 
@@ -56,10 +56,10 @@ def settings(config):
             config['AUTO_STAIRS'])
 
 
-# What a new quest starts with besides its message speed: CLASSIC, NPCs making way, the NES fade, STAIRS on STEP ON
-DEFAULT_OWN_SETTINGS = (CLASSIC, True, FADE_STYLE_NES, True)
+# What a new quest starts with besides its message speed: CLASSIC, NPCs staying put, the NES fade, the NES stairs
+DEFAULT_OWN_SETTINGS = (CLASSIC, False, FADE_STYLE_NES, False)
 # Not the defaults, to see them replaced
-OTHER_OWN_SETTINGS = (MODERN, False, FADE_STYLE_SMOOTH, False)
+OTHER_OWN_SETTINGS = (MODERN, True, FADE_STYLE_SMOOTH, True)
 
 
 def set_own_settings(config, own_settings):
@@ -107,28 +107,28 @@ class TestMessageSpeedRules(TestCase):
         self.assertEqual(6, MESSAGE_SPEED_OPTIONS.cursor_column)
 
     def test_defaults(self):
-        # NewQuest: LDA #MSG_NORMAL; Classic (the NES dialog window) is the default style; NPCs make way by default
+        # NewQuest: LDA #MSG_NORMAL; the NES dialog window (CLASSIC), NPCs that stay put and the NES stairs by default
         self.assertEqual(('Fast', CLASSIC), (DEFAULT_MESSAGE_SPEED, DEFAULT_DIALOG_STYLE))
-        self.assertEqual(Options('Fast', CLASSIC, True, FADE_STYLE_NES, True), DEFAULT_OPTIONS)
+        self.assertEqual(Options('Fast', CLASSIC, False, FADE_STYLE_NES, False), DEFAULT_OPTIONS)
         # base_config's FADE_STYLE: the NES palette fade
         self.assertEqual(FADE_STYLE_NES, DEFAULT_FADE_STYLE)
 
     def test_old_saves_load_with_the_defaults(self):
         self.assertEqual('Fast', message_speed_from_save({'Name': 'Ed'}))
         self.assertEqual(CLASSIC, dialog_style_from_save({'Name': 'Ed'}))
-        self.assertTrue(npcs_make_way_from_save({'Name': 'Ed'}))
+        self.assertFalse(npcs_make_way_from_save({'Name': 'Ed'}))
         self.assertEqual('Fast', message_speed_from_save({MESSAGE_SPEED_SAVE_KEY: 'Warp'}))
         self.assertEqual('Slow', message_speed_from_save({MESSAGE_SPEED_SAVE_KEY: 'Slow'}))
         self.assertEqual(MODERN, dialog_style_from_save({DIALOG_STYLE_SAVE_KEY: MODERN}))
-        self.assertFalse(npcs_make_way_from_save({NPCS_MAKE_WAY_SAVE_KEY: False}))
-        self.assertTrue(npcs_make_way_from_save({NPCS_MAKE_WAY_SAVE_KEY: 'no'}))
+        self.assertTrue(npcs_make_way_from_save({NPCS_MAKE_WAY_SAVE_KEY: True}))
+        self.assertFalse(npcs_make_way_from_save({NPCS_MAKE_WAY_SAVE_KEY: 'no'}))
         self.assertEqual(FADE_STYLE_NES, fade_style_from_save({'Name': 'Ed'}))
         self.assertEqual(FADE_STYLE_SMOOTH, fade_style_from_save({FADE_STYLE_SAVE_KEY: FADE_STYLE_SMOOTH}))
         self.assertEqual(FADE_STYLE_NES, fade_style_from_save({FADE_STYLE_SAVE_KEY: 'Wipe'}))
-        # STAIRS: STEP ON unless the log says otherwise
-        self.assertTrue(auto_stairs_from_save({'Name': 'Ed'}))
-        self.assertFalse(auto_stairs_from_save({AUTO_STAIRS_SAVE_KEY: False}))
-        self.assertTrue(auto_stairs_from_save({AUTO_STAIRS_SAVE_KEY: 'NES'}))
+        # STAIRS: the NES unless the log says otherwise
+        self.assertFalse(auto_stairs_from_save({'Name': 'Ed'}))
+        self.assertTrue(auto_stairs_from_save({AUTO_STAIRS_SAVE_KEY: True}))
+        self.assertFalse(auto_stairs_from_save({AUTO_STAIRS_SAVE_KEY: 'NES'}))
 
 
 class TestOptionsScreen(OptionsTestCase):

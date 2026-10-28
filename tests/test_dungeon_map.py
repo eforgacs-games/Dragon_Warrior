@@ -97,6 +97,7 @@ class DungeonTestCase(SaveStateTestCase):
     def new_game(self):
         game = super().new_game()
         game.game_state.config['NO_BATTLES'] = True  # no fights in the Swamp Cave while walking
+        game.game_state.config['DUNGEON_MAP'] = True  # M shows it (off on the NES)
         return game
 
 

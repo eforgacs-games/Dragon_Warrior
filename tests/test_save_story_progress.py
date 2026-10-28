@@ -67,7 +67,7 @@ class TestSaveStoryProgress(TestCase):
         for name in FLAG_NAMES:
             setattr(self.game.story_flags, name, True)
         save = self.save()
-        self.assertEqual(save['StoryFlags'], {**{name: True for name in FLAG_NAMES}, 'heard_goals': {}})
+        self.assertEqual(save['StoryFlags'], {name: True for name in FLAG_NAMES})
         self.assertNotIn('RainbowBridgeBuilt', save)
         self.assertNotIn('CharlockStairsRevealed', save)
         self.assertEqual(self.load(save).story_flags, StoryFlags(**{name: True for name in FLAG_NAMES}))

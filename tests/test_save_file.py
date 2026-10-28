@@ -106,7 +106,8 @@ class TestSaveFileRoundTrip(TestCase):
         self.assertEqual(('TantegelThroneRoom', 10, 13), (save.current_map, save.player_row, save.player_column))
         self.assertEqual(StoryFlags(left_throne_room=True), save.story_flags)
         self.assertEqual(Options('Fast', 'Modern', False, 'Smooth', False, 'HalfHP', 'FollowGameSpeed',
-                                 soundtrack=Soundtrack.SFC, save_states=False, auto_grind=False, encounters='Half',
+                                 soundtrack=Soundtrack.SFC, game_speed_keys=True, save_states=False, rewind=True,
+                                 auto_grind=False, cheat_keys=True, quick_action=True, encounters='Half',
                                  exp_gold=4, run_button=True, status_window='Always', shop_preview=False,
                                  quest_journal='Hints', autosave=False, bag_size=16, smart_a=True,
                                  message_log=False),

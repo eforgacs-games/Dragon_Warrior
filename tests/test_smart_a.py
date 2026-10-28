@@ -130,6 +130,10 @@ class TestTheAButton(SmartATestCase):
 
 class TestEnter(SmartATestCase):
 
+    def setUp(self):
+        super().setUp()
+        self.game.config['QUICK_ACTION'] = True  # Enter on the map (off on the NES)
+
     def test_enter_does_the_command_whatever_the_setting(self):
         for setting in (False, True):
             with self.subTest(smart_a=setting):

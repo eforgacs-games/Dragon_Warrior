@@ -27,6 +27,7 @@ from src.checkpoints import CHECKPOINT_NAMES, checkpoint_hero_name, checkpoint_p
 from src.chiptune import (ChiptuneError, Emulator, bundled_library_dirs, chiptune_library, parse_track_ref,
                           tagged_length_seconds)
 from src.directories import CHIPTUNE_SOUNDTRACKS, CLIP_NAMES, MUSIC_NAMES, Directories, clip_paths, music_paths
+from src.options_screen import AUTO_STAIRS_SAVE_KEY
 from src.paths import data_path, is_frozen
 from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, SOUNDTRACKS, Soundtrack
 from src.virtual_joypad import VirtualJoypad
@@ -287,9 +288,12 @@ def expect_fight(_game: Any, log: SceneLog) -> list[str]:
     return [] if log.fights else ["no fight started"]
 
 
-# The config every scene starts from, before its own changes: no random fights, STAIRS on stepping, fast text
+# The config every scene starts from, before its own changes: no random fights, fast text
 SCENE_CONFIG = {'INITIAL_DIALOG_ENABLED': False, 'NO_BATTLES': True, 'FORCE_BATTLE': False, 'FORCE_ENEMY': None,
-                'AUTO_STAIRS': True, 'TEXT_SPEED': 'Fast'}
+                'TEXT_SPEED': 'Fast'}
+# The adventure log options every scene's save has, before its own changes: STAIRS on stepping. They're the log's, so
+# loading the save sets them (src/options_screen.py); a save without them loads with the NES's.
+SCENE_SAVE_OPTIONS = {AUTO_STAIRS_SAVE_KEY: True}
 SMOKE_SCENES = (
     # A step down to the guard below, TALK to him (a dialog, in the NES font or Unifont), then the COMMAND window
     # opened and closed
@@ -317,7 +321,7 @@ def play_scene(game: Any, scene: SmokeScene, max_seconds: float = SCENE_MAX_SECO
     """Load the scene's start into the game and play its script in Game.main's loop. Returns what went wrong; an
     exception from the game is raised."""
     game.config.update({**SCENE_CONFIG, **scene.config})
-    save = {**read_checkpoint('throne_room'), **scene.save_changes}
+    save = {**read_checkpoint('throne_room'), **SCENE_SAVE_OPTIONS, **scene.save_changes}
     save['Name'] = checkpoint_hero_name(save['Name'], game.config['LANGUAGE'])  # 검객 in Korean
     game.load_game(save)
     game.initial_dialog_enabled = bool(game.config.get('INITIAL_DIALOG_ENABLED'))

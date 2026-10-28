@@ -67,7 +67,12 @@ class StoryFlags:
         return self.carrying_gwaelin or self.gwaelin_returned
 
     def to_save(self) -> dict[str, Any]:
-        return asdict(self)  # a copy: heard_goals too
+        """The flags as saved: a copy, heard_goals too, which is left out while nothing has been heard (so a save
+        without it is written back as it was)."""
+        saved = asdict(self)
+        if not self.heard_goals:
+            del saved[HEARD_GOALS]
+        return saved
 
     @classmethod
     def from_save(cls, save_file: dict[str, Any]) -> 'StoryFlags':
