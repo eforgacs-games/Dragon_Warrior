@@ -17,7 +17,7 @@ surfaces, no sprites; a map is named, not copied). It holds everything the game'
   schedule (src/npc_schedule.py: FrameCounter, NPCUpdateCntr and the shared walking frame);
 - the frame counters step timing depends on (the hill pause, the pop-up window's wait, the step counts the fight rolls
   and the Magic Armor read) and whether the hero's step is a running one, ENCOUNTERS HALF's turn (whether the next
-  fight is skipped), the options in force (src/options_screen.py) and the window color;
+  fight is skipped), the options in force (src/game_options.py) and the window color;
 - the message log (src/message_log.py): putting a snapshot back puts back the messages shown up to then, so the log
   never shows what a rewind undid;
 - the random number generator (Python's ``random``, which every roll in the game reads), so that loading a state and
@@ -56,7 +56,7 @@ from src.maps import CharlockB1, map_lookup
 from src.menu import CommandMenu
 from src.message_log import decoded_entries
 from src.options_overlay import apply_log_options, apply_option
-from src.options_screen import options_from_config, options_from_save, options_to_save
+from src.game_options import options_from_config, options_from_save, options_to_save
 from src.sprites.animated_sprite import AnimatedSprite
 from src.soundtrack import SOUNDTRACK_KEY, soundtrack
 from src.story_flags import StoryFlags

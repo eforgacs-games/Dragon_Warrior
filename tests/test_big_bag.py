@@ -8,7 +8,7 @@ from pygame import KEYDOWN, K_DOWN, K_ESCAPE, K_RETURN, K_UP, event
 from src.config.base_config import base_config
 from src.config.test_config import test_config
 from src.items import BIG_BAG_SLOTS, INVENTORY_SLOTS, bag_is_full, bag_slots
-from src.options_screen import BAG_SIZE_SAVE_KEY, options_from_save
+from src.game_options import BAG_SIZE, options_from_save
 from src.windows import ITEM_MENU_MAX_ENTRIES, first_shown_entry, item_menu_window
 from tests.test_windows import WindowTestCase
 
@@ -46,9 +46,9 @@ class TestBagSlots(TestCase):
         self.assertFalse(bag_is_full(eight[1:], {}))
 
     def test_kept_per_adventure_log(self):
-        self.assertEqual(16, options_from_save({BAG_SIZE_SAVE_KEY: 16}).bag_size)
+        self.assertEqual(16, options_from_save({BAG_SIZE.save_key: 16}).bag_size)
         self.assertEqual(8, options_from_save({}).bag_size)
-        self.assertEqual(8, options_from_save({BAG_SIZE_SAVE_KEY: True}).bag_size)
+        self.assertEqual(8, options_from_save({BAG_SIZE.save_key: True}).bag_size)
 
 
 class TestFirstShownEntry(TestCase):
@@ -139,7 +139,7 @@ class TestBigBag(BagTestCase):
             self.cmd_menu.save()
             with open(os.path.join(tmp_dir, 'save_slot_1.json')) as save_file:
                 save = json.load(save_file)
-        self.assertEqual(16, save[BAG_SIZE_SAVE_KEY])
+        self.assertEqual(16, save[BAG_SIZE.save_key])
         self.config['BAG_SIZE'] = INVENTORY_SLOTS
         with patch.object(self.game.map_mgr, 'change_map'):
             self.game.load_game(save)

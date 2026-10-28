@@ -20,7 +20,7 @@ class Soundtrack(StrEnum):
     ORCHESTRA = 'Orchestra'
 
 
-# The config key, and the save file key (src/options_screen.py Options, kept per adventure log and in save states)
+# The config key, and the save file key (src/game_options.py MUSIC, kept per adventure log and in save states)
 SOUNDTRACK_KEY = 'SOUNDTRACK'
 SOUNDTRACK_SAVE_KEY = 'Soundtrack'
 # The old on/off switch these replace: True was the orchestral soundtrack, False the NES's

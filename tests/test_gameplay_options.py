@@ -1,4 +1,4 @@
-"""The options overlay's gameplay switches (src/options_overlay.py, src/options_screen.py SWITCHES), each with its NES
+"""The options overlay's gameplay switches (src/options_overlay.py, src/game_options.py), each with its NES
 value as the default: ENCOUNTERS (#399), EXP/GOLD (#400), RUN BUTTON (#403) and STATUS WINDOW (#406). The ghosting
 checks for running are with the others in tests/test_character_redraw.py."""
 import os
@@ -19,7 +19,7 @@ from src.direction import Direction
 from src.game_functions import set_character_position
 from src.maps import map_lookup
 from src.movement import RUN_STEP_FRAMES, STEP_SYNC_FRAMES
-from src.options_screen import DEFAULT_OPTIONS, ENCOUNTERS_HALF, ENCOUNTERS_NES, ENCOUNTERS_OFF, \
+from src.game_options import DEFAULT_OPTIONS, ENCOUNTERS_HALF, ENCOUNTERS_NES, ENCOUNTERS_OFF, \
     STATUS_WINDOW_ALWAYS, STATUS_WINDOW_NES
 from tests import helpers
 

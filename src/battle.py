@@ -9,7 +9,7 @@ from src.enemy_lookup import enemy_string_lookup
 from src.korean_particles import get_postposition, particle
 from src.maps import DragonWarriorMap
 from src.menu import BATTLE_LINE, CommandMenu
-from src.options_screen import EXP_GOLD_MULTIPLIERS
+from src.game_options import EXP_GOLD_MULTIPLIERS
 from src.windows import POPUP_WINDOW
 from src.player.player import Player
 from src.player.player_stats import get_level_by_experience

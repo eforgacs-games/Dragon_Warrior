@@ -30,7 +30,7 @@ from src.direction import Direction
 from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
-from src.options_screen import MODERN, options_from_config
+from src.game_options import MODERN, options_from_config
 from src.save_file import ADVENTURE_LOGS, SaveFile, is_from_a_newer_build, log_belongs_to, log_for_unchosen_save, \
     save_path, write_save
 from src.message_log import speaker_of
@@ -416,7 +416,7 @@ class CommandMenu:
 
     @property
     def modern_dialog(self) -> bool:
-        """The Modern dialog style (src/options_screen.py): each message replaces the last one, as this game drew dialog
+        """The Modern dialog style (src/game_options.py): each message replaces the last one, as this game drew dialog
         before it copied the NES window (src/menu.py and src/text.py before PR #245). Otherwise the text scrolls on below
         what the window shows, like the NES (Classic, the default). Both print letter by letter at the message speed,
         with the NES text beep."""

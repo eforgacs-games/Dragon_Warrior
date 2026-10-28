@@ -51,7 +51,7 @@ JOURNAL_OFF = 'Off'
 JOURNAL_LEARNED = 'Learned'
 JOURNAL_HINTS = 'Hints'
 JOURNAL_SETTINGS = (JOURNAL_OFF, JOURNAL_LEARNED, JOURNAL_HINTS)
-# Older builds' GOALS: every open goal, known or not. It loads as LEARNED (src/options_screen.py Switch.renamed).
+# Older builds' GOALS: every open goal, known or not. It loads as LEARNED (src/game_options.py Option.renamed).
 LEGACY_JOURNAL_GOALS = 'Goals'
 
 # The sources of what the hero is told that aren't an NPC's dialog byte

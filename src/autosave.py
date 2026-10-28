@@ -26,7 +26,7 @@ from typing import Any
 
 from pygame.time import get_ticks
 
-from src.options_screen import DEFAULT_AUTOSAVE
+from src.game_options import DEFAULT_AUTOSAVE
 from src.save_state import SAVE_STATE_SLOTS, read_snapshot, state_path, take_snapshot, write_snapshot
 
 AUTOSAVE_FILE_NAME = 'autosave.json'

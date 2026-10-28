@@ -17,7 +17,7 @@ from src.message_log import EMPTY, HINT, HINT_ROW, LINE_WIDTH, MAX_ENTRIES, VISI
     MessageLogScreen, log_layout, log_lines, speaker_of, text_width, wrap
 from src.options_overlay import OPTION_ROWS
 from src.quest_journal import JOURNAL_HINTS
-from src.options_screen import DEFAULT_OPTIONS, options_from_save, options_to_save
+from src.game_options import DEFAULT_OPTIONS, options_from_save, options_to_save
 from src.window_renderer import window_tiles
 from tests import helpers
 

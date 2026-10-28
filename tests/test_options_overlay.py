@@ -20,7 +20,7 @@ from src.maps import STAIR_DIRECTIONS, map_lookup
 from src.options_overlay import FIXED_ROWS, MOST_ROWS, OPTION_PAGES, OPTION_ROWS, OPTIONS_WINDOW, PRESET_CUSTOM, \
     PRESET_MODERN, PRESET_NES, PRESET_ROWS, OptionsOverlay, current_preset, options_layout, overlay_texts, \
     apply_option, preset_values
-from src.options_screen import CLASSIC, MODERN, SWITCHES, options_from_config
+from src.game_options import ALL_OPTIONS, CLASSIC, MODERN, PER_LOG_OPTIONS, options_from_config
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_LEARNED, JOURNAL_OFF
 from src.soundtrack import Soundtrack
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
@@ -362,7 +362,7 @@ class TestRows(OverlayTestCase):
             self.game.cmd_menu.save()
             with open(os.path.join(tmp_dir, 'save_slot_2.json')) as save_file:
                 save = json.load(save_file)
-        self.assertLessEqual({switch.save_key for switch in SWITCHES}, set(save))
+        self.assertLessEqual({option.save_key for option in PER_LOG_OPTIONS}, set(save))
         loaded = new_game()
         with patch.object(loaded.map_mgr, 'change_map'):
             loaded.load_game(save)
@@ -462,7 +462,7 @@ class TestPreset(OverlayTestCase):
     def test_a_new_quest_is_the_nes_preset(self):
         # Every row a preset sets starts at its NES value, so PRESET reads NES, not CUSTOM
         from src.config.base_config import base_config
-        from src.options_screen import DEFAULT_OPTIONS, apply_options
+        from src.game_options import DEFAULT_OPTIONS, apply_options
         # a new quest keeps the config's AUTOSAVE (OFF, the NES), and the player's VIEW and DUNGEON MAP
         config = {key: base_config[key] for key in ('AUTOSAVE', 'VIEW', 'DUNGEON_MAP', 'NAME_CONFIRM')}
         apply_options(config, DEFAULT_OPTIONS)
@@ -485,7 +485,7 @@ class TestPreset(OverlayTestCase):
         self.assertFalse(game.config['CHEAT_KEYS'])
 
     def test_an_older_save_gets_the_nes_values_only_for_what_it_lacks(self):
-        from src.options_screen import options_from_save
+        from src.game_options import options_from_save
         options = options_from_save({'Name': 'Ed'})
         self.assertEqual((Soundtrack.NES, False, False, False, False, False, False, False, JOURNAL_OFF),
                          (options.soundtrack, options.game_speed_keys, options.save_states, options.rewind,
@@ -499,7 +499,7 @@ class TestPreset(OverlayTestCase):
                           options.auto_stairs))
 
     def test_an_older_saves_goals_journal_loads_as_learned(self):
-        from src.options_screen import options_from_save
+        from src.game_options import options_from_save
         self.assertEqual(JOURNAL_LEARNED, options_from_save({'QuestJournal': 'Goals'}).quest_journal)
 
     def test_shop_preview_follows_the_presets(self):
@@ -687,9 +687,10 @@ class TestDevOnly(TestCase):
     def test_prod_starts_with_every_switch_at_the_nes(self):
         from src.config.prod_config import prod_config
         nes = preset_values(PRESET_NES)
-        for switch in SWITCHES:
-            self.assertEqual(nes[switch.config_key], switch.default, switch.config_key)
-            self.assertEqual(switch.default, prod_config[switch.config_key], switch.config_key)
+        for option in ALL_OPTIONS:
+            if option.presets is not None:
+                self.assertEqual(nes[option.config_key], option.presets[0], option.config_key)
+                self.assertEqual(option.presets[0], prod_config[option.config_key], option.config_key)
 
     def test_a_game_without_debug_keys_has_no_debug_tools(self):
         pygame.init()

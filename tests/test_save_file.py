@@ -9,7 +9,7 @@ import pygame
 
 from src.checkpoints import CHECKPOINT_NAMES, FACING_KEY, checkpoint_path
 from src.config.test_config import test_config
-from src.options_screen import Options
+from src.game_options import Options
 from src.save_file import DAMAGED_LOG_NAME, SAVE_FORMAT_VERSION, VERSION_KEY, SaveFile, first_open_log, \
     log_for_unchosen_save, logs_named, read_save_name, save_files, save_slot_number, used_logs, write_save
 from src.soundtrack import Soundtrack

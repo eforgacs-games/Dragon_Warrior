@@ -35,7 +35,7 @@ from src.encounters import encounter_group
 from src.guardians import guardian_at
 from src.movement import DIRECTION_KEYS
 from src.npc_movement import step
-from src.options_screen import AUTO_GRIND_STOP_VALUES, ENCOUNTERS_OFF
+from src.game_options import AUTO_GRIND_STOP_VALUES, ENCOUNTERS_OFF
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import MAP_CONTEXT, requested_speed
 

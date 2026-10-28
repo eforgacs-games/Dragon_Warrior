@@ -15,7 +15,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 import pygame
 
 from src.config.test_config import test_config
-from src.options_screen import Options
+from src.game_options import Options
 from src.save_file import SAVE_FORMAT_VERSION, VERSION_KEY, SaveFile, migrate_save, save_format_version, write_save
 from src.save_state import STATE_FORMAT_VERSION, VERSION_KEY as STATE_VERSION_KEY, load_from_slot, read_state, state_path
 from src.story_flags import StoryFlags

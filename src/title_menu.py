@@ -25,8 +25,8 @@ from src.directories import Directories
 from src.common import set_gettext_language
 from src.game_functions import MENU_BACK, GameFunctions
 from src.menu_functions import NameSelection
-from src.options_screen import DEFAULT_OPTIONS, MESSAGE_SPEED_SAVE_KEY, OptionsScreen, apply_options, \
-    message_speed_from_save
+from src.game_options import DEFAULT_OPTIONS, MESSAGE_SPEED, apply_options
+from src.options_screen import OptionsScreen
 from src.player.player_stats import get_level_by_experience
 from src.save_state import StateError, remove_snapshots_of_log, restore_snapshot
 from src.save_file import ADVENTURE_LOGS, DAMAGED_LOG_NAME, EXPERIENCE_KEY, NAME_KEY, read_save, save_path, \
@@ -227,9 +227,9 @@ class TitleMenu:
             return BACK_TO_TITLE_MENU
         log_path = save_path(self.directories.save_dir, slot)
         save = read_save(self.directories.save_dir, save_file_name_for(slot)) or {}
-        chosen = options_screen.choose_message_speed(message_speed_from_save(save))
+        chosen = options_screen.choose_message_speed(MESSAGE_SPEED.from_save(save))
         if chosen is not None:
-            save[MESSAGE_SPEED_SAVE_KEY] = chosen
+            save[MESSAGE_SPEED.save_key] = chosen
             write_save(log_path, save)
         return BACK_TO_TITLE_MENU
 

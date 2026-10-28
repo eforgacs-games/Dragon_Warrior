@@ -27,7 +27,7 @@ from src.constants import (
     TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT, TEMP_TEXT_MS,
 )
 from src.direction import Direction
-from src.display_filters import PRESENTER, SCALING_KEY, SCALING_SMOOTH, SCANLINES_KEY
+from src.display_filters import PRESENTER
 from src.directories import Directories
 from src.soundtrack import migrate_legacy_music_config
 from src.drawer import Drawer
@@ -48,12 +48,12 @@ from src.message_log import MessageLog
 from src.music_player import MusicPlayer
 from src.npc_movement import step
 from src.options_overlay import apply_log_options
-from src.options_screen import ENCOUNTERS_HALF, ENCOUNTERS_OFF
+from src.game_options import ENCOUNTERS_HALF, ENCOUNTERS_OFF
 from src.quest_journal import GOLEM_FIGHT, hear
 from src.rewind import Rewind
 from src.save_file import SaveFile
 from src.save_state import run_due_state_request
-from src.settings import SettingsStore
+from src.settings import SettingsStore, put_in_config
 from src.paths import data_path
 from src.player.player import Player
 from src.sound import Sound
@@ -101,22 +101,10 @@ class Game:
         self.game_state = GameState(config=config)
         self.music_player = MusicPlayer(config)
 
-        # The global settings (src/settings.py): zoom, fullscreen, game speed and language, read before the window
-        # opens. A saved language wins over the system locale's (base_config language_from_locale), but not over
-        # --language, which chooses this run's language without changing the saved one.
+        # The global settings (src/settings.py): zoom, fullscreen, game speed, the language and the overlay's other
+        # global options, read before the window opens
         self.settings = SettingsStore.from_config(config)
-        if self.settings.settings.language and not config.get('LANGUAGE_FROM_COMMAND_LINE'):
-            config['LANGUAGE'] = self.settings.settings.language
-        if self.settings.settings.scanlines:
-            config[SCANLINES_KEY] = True
-        if self.settings.settings.scaling != SCALING_SMOOTH:
-            config[SCALING_KEY] = self.settings.settings.scaling
-        if self.settings.settings.view != VIEW_NES:
-            config['VIEW'] = self.settings.settings.view
-        if self.settings.settings.dungeon_map:
-            config['DUNGEON_MAP'] = True
-        if self.settings.settings.name_confirm:
-            config['NAME_CONFIRM'] = True
+        put_in_config(self.settings.settings, config)
         self._ = _ = set_gettext_language(config['LANGUAGE'])
         self.drawer = Drawer(self.game_state)
         # map/graphics

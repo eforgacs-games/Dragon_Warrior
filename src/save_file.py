@@ -5,7 +5,7 @@ NES SaveData (Bank03) writes the hero's experience, gold, items, equipment, name
 PlayerFlags and StoryFlags bytes whole (game slot offsets $00-$18 in reference/sram-doc.txt), and the message speed
 (offset $16). Here each adventure log is one JSON file, save_slot_<n>.json in the save folder, holding SaveFile.to_save():
 the hero's stats and equipment under the *_KEY names below, the position (this game starts where the save was made),
-the story bits as one StoryFlags entry (src/story_flags.py) and the log's options (src/options_screen.py). Like the NES,
+the story bits as one StoryFlags entry (src/story_flags.py) and the log's options (src/game_options.py). Like the NES,
 the treasure chest history and the repel timer aren't saved.
 
 Saves and the playtest checkpoints in data/checkpoints/ (src/checkpoints.py) are read with SaveFile.from_save, which
@@ -40,7 +40,7 @@ from typing import Any
 
 from src.dungeon_map import SAVE_KEY as DUNGEON_MAP_SAVE_KEY
 from src.json_files import atomic_write_json
-from src.options_screen import Options, options_from_save, options_to_save
+from src.game_options import Options, options_from_save, options_to_save
 from src.story_flags import LEGACY_SAVE_KEYS as LEGACY_STORY_FLAG_KEYS
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.story_flags import StoryFlags
@@ -148,7 +148,7 @@ class SaveFile:
             PLAYER_COLUMN_KEY: self.player_column,
             STORY_FLAGS_SAVE_KEY: self.story_flags.to_save(),
             # NES SaveData (LFA7D): the message speed is saved with each log (offset $16); so are the dialog style
-            # and NPCS MAKE WAY (src/options_screen.py)
+            # and NPCS MAKE WAY (src/game_options.py)
             **options_to_save(self.options),
             # The dungeon map's record, once the hero has been in a dark dungeon (so other saves stay as they were)
             **({DUNGEON_MAP_SAVE_KEY: self.dungeon_map} if self.dungeon_map else {}),

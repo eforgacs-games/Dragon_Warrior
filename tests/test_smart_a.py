@@ -6,7 +6,7 @@ from unittest.mock import patch
 from pygame import K_RETURN, K_RIGHT, K_i, K_k
 
 from src.options_overlay import OPTION_ROWS
-from src.options_screen import DEFAULT_OPTIONS, options_from_save, options_to_save
+from src.game_options import DEFAULT_OPTIONS, options_from_save, options_to_save
 from tests.test_freeze_movement import FreezeTestCase, keydown
 
 
