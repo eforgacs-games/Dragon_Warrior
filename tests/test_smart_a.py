@@ -1,5 +1,5 @@
 """SMART A (the options overlay, SMART_A): with it on, A on the map does TALK, TAKE, DOOR or STAIRS when one applies,
-in that order, and otherwise opens COMMAND (Game.smart_command, run_smart_command). Off, the NES: A always opens
+in that order, and otherwise opens COMMAND (MapHotkeys.smart_command, run_smart_command). Off, the NES: A always opens
 COMMAND. Enter always does the smart command, and opens nothing when none applies."""
 from unittest.mock import patch
 
@@ -47,36 +47,36 @@ class SmartATestCase(FreezeTestCase):
 class TestOrder(SmartATestCase):
 
     def test_nothing_applies(self):
-        self.assertIsNone(self.game.smart_command())
+        self.assertIsNone(self.game.hotkeys.smart_command())
 
     def test_talk_first(self):
         self.npc.return_value = True
         self.game.player.current_tile = 'TREASURE_BOX'
-        self.assertEqual('TALK', self.game.smart_command())
+        self.assertEqual('TALK', self.game.hotkeys.smart_command())
 
     def test_not_talk_during_the_opening_dialog(self):
         self.npc.return_value = True
         self.game.game_state.is_initial_dialog = True
-        self.assertIsNone(self.game.smart_command())
+        self.assertIsNone(self.game.hotkeys.smart_command())
 
     def test_take_on_a_chest(self):
         self.game.player.current_tile = 'TREASURE_BOX'
         self.door.return_value = (1, 1)
         self.game.player.inventory.append('Magic Key')
-        self.assertEqual('TAKE', self.game.smart_command())
+        self.assertEqual('TAKE', self.game.hotkeys.smart_command())
 
     def test_door_only_with_a_key(self):
         self.door.return_value = (1, 1)
-        self.assertIsNone(self.game.smart_command())
+        self.assertIsNone(self.game.hotkeys.smart_command())
         self.game.player.inventory.append('Magic Key')
-        self.assertEqual('DOOR', self.game.smart_command())
+        self.assertEqual('DOOR', self.game.hotkeys.smart_command())
 
     def test_stairs(self):
         position = (self.game.player.row, self.game.player.column)
         with patch.dict(self.game.current_map.staircases, {position: {'map': 'X'}}):
             self.game.player.current_tile = 'BRICK_STAIR_DOWN'
-            self.assertEqual('STAIRS', self.game.smart_command())
-        self.assertIsNone(self.game.smart_command())  # a stair tile that leads nowhere
+            self.assertEqual('STAIRS', self.game.hotkeys.smart_command())
+        self.assertIsNone(self.game.hotkeys.smart_command())  # a stair tile that leads nowhere
 
 
 class TestTheAButton(SmartATestCase):
@@ -109,7 +109,7 @@ class TestTheAButton(SmartATestCase):
         self.assertTrue(self.game.player.is_moving)
         where = []
         self.game.cmd_menu.take.side_effect = lambda: where.append((self.game.player.rect.x, self.game.player.is_moving))
-        with patch.object(self.game, 'smart_command', return_value='TAKE'):
+        with patch.object(self.game.hotkeys, 'smart_command', return_value='TAKE'):
             self.frame(keydown(K_k))
             self.assertEqual([], where)
             for _ in range(self.tile_size * 2):

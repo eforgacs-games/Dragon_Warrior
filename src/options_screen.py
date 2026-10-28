@@ -91,7 +91,7 @@ DEFAULT_AUTO_GRIND_STOP = 'RedHP'
 # (src/waiting.py menu_ticks); a save without the setting loads as NORMAL
 DEFAULT_MENU_SPEED = MENU_SPEED_NORMAL
 # SMART_A (base_config): off by default, the NES, where A on the map always opens COMMAND; on, A does TALK, TAKE, DOOR
-# or STAIRS when one applies (Game.smart_command). A save without the setting loads as OFF.
+# or STAIRS when one applies (MapHotkeys.smart_command). A save without the setting loads as OFF.
 DEFAULT_SMART_A = False
 
 # MESSAGE_LOG (base_config): off by default, the NES, which has none; on, the MESSAGE LOG key opens the log of the last
@@ -168,7 +168,7 @@ SWITCHES = (
     # the default, or 16
     Switch('bag_size', 'BAG_SIZE', BAG_SIZE_SAVE_KEY, BAG_SIZES, DEFAULT_BAG_SIZE),
     # SMART A (#404): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, instead of opening COMMAND
-    # (Game.smart_command); off, the NES and the default, A always opens COMMAND
+    # (MapHotkeys.smart_command); off, the NES and the default, A always opens COMMAND
     Switch('smart_a', 'SMART_A', 'SmartA', (False, True), DEFAULT_SMART_A),
     # MESSAGE LOG (#405): the MESSAGE LOG key (L) shows the last messages on the map (src/message_log.py); off, the
     # default, is the NES

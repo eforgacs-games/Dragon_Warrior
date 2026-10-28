@@ -24,7 +24,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     NPCS MAKE WAY  ON / OFF (NES)           (NPCS_MAKE_WAY, MovementController.ask_npc_to_make_way)
     STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps)
     QUICK ACTION   OFF (NES) / ON           (QUICK_ACTION: Enter takes, opens or talks, MapHotkeys.press_smart_a_key)
-    SMART A        OFF (NES) / ON           (SMART_A: A does TALK, TAKE, DOOR or STAIRS, Game.smart_command)
+    SMART A        OFF (NES) / ON           (SMART_A: A does TALK, TAKE, DOOR or STAIRS, MapHotkeys.smart_command)
     ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, Game.thin_encounters)
     EXP/GOLD       x1 (NES) / x2 / x4       (EXP_GOLD: what a won fight gives, Battle.enemy_defeated)
     QUEST JOURNAL  OFF (NES) / LEARNED / LEARNED+HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
@@ -198,7 +198,7 @@ OPTION_PAGES = (
         OptionRow("NPCS MAKE WAY", 'NPCS_MAKE_WAY', (True, False), ("ON", "OFF (NES)"), (False, True)),
         OptionRow("STAIRS", 'AUTO_STAIRS', (True, False), ("STEP ON", "NES"), (False, True)),
         switch_row("QUICK ACTION", 'QUICK_ACTION'),
-        # A on the map does what applies, as Enter does, instead of opening COMMAND (Game.smart_command)
+        # A on the map does what applies, as Enter does, instead of opening COMMAND (MapHotkeys.smart_command)
         switch_row("SMART A", 'SMART_A'),
         # How many fights, and what they give, are the game's balance, not conveniences: NES in both presets
         OptionRow("ENCOUNTERS", 'ENCOUNTERS', ENCOUNTER_SETTINGS, ("NES", "HALF", "OFF"), (ENCOUNTERS_NES, ENCOUNTERS_NES)),

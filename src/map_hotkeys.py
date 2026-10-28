@@ -21,6 +21,7 @@ from data.text.intro_lookup_table import ControlInfo
 from src.controls import LOAD_STATE_ACTIONS, SAVE_STATE_ACTIONS, actions_for_event, pressed
 from src.display_filters import PRESENTER
 from src.dungeon_map import DungeonMapOverlay, dungeon_map_enabled
+from src.menu import STAIR_TILES
 from src.message_log import MessageLogScreen
 from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_OFF, game_progress, journal_pages
@@ -196,7 +197,43 @@ class MapHotkeys:
         applies (smart_command). Unlike A with SMART A on, it opens nothing when none does. With QUICK ACTION off the
         key is the A button (press_a)."""
         if pressed(keydown_event, 'SMART_A') and self.config.get('QUICK_ACTION'):
-            self.game.run_smart_command()
+            self.run_smart_command()
+
+    def smart_command(self) -> str | None:
+        """The command that applies where the hero stands, in this order: TALK if someone is in front of him (or
+        across a counter), TAKE on a treasure chest, DOOR next to a locked door with a Magic Key to open it, STAIRS on
+        stairs; None if none does."""
+        game = self.game
+        player = game.player
+        if game.cmd_menu.check_across_from_npc() and not game.game_state.is_initial_dialog:
+            return 'TALK'
+        if player.current_tile == 'TREASURE_BOX':
+            return 'TAKE'
+        if game.cmd_menu.find_door() is not None and 'Magic Key' in player.inventory:
+            return 'DOOR'
+        if player.current_tile in STAIR_TILES and (player.row, player.column) in game.current_map.staircases:
+            return 'STAIRS'
+        return None
+
+    def run_smart_command(self) -> bool:
+        """Do the smart command (smart_command), as if chosen in the COMMAND window: the menu button sound
+        (WndAPressed), and the stats window for the ones that show a dialog. Returns whether one ran.
+
+        It follows the A button's rule: NES GameEngineLoop only reads commands between steps (DoJoyUp etc. move a
+        whole tile before returning to CheckInputs). Mid-step, or while a pause or the command window is pending or
+        open (where Enter picks a menu item), nothing runs."""
+        game = self.game
+        if game.player.is_moving or game.movement.world_frozen or game.movement.freeze_pending:
+            return False
+        command = self.smart_command()
+        if command is None:
+            return False
+        cmd_menu = game.cmd_menu
+        if command in ('TALK', 'TAKE'):
+            game.drawer.draw_hovering_stats_window(game.screen, game.player, color=game.color)
+        cmd_menu.play_menu_button_sound()
+        {'TALK': cmd_menu.talk, 'TAKE': cmd_menu.take, 'DOOR': cmd_menu.door, 'STAIRS': cmd_menu.stairs}[command]()
+        return True
 
     def press_speed_key(self, keydown_event: Event) -> None:
         """Keys 1 to 5, when the GAME SPEED option is on: normal, 2x, 4x, 8x or 16x game speed (60.1, 120.2, 240.4,

@@ -42,7 +42,7 @@ from src.items import OpenDoorHistory, TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import map_lookup
 from src.map_hotkeys import MapHotkeys
-from src.menu import BATTLE_LINE, STAIR_TILES, CommandMenu
+from src.menu import BATTLE_LINE, CommandMenu
 from src.movement import HILL_PAUSE_FRAMES, RUN_SPEED_FACTOR, STEP_SYNC_FRAMES, MovementController
 from src.message_log import MessageLog
 from src.music_player import MusicPlayer
@@ -946,40 +946,6 @@ class Game:
     def save_controls(self, controls: Controls) -> None:
         """Keep the player's controls for the next time, with the global settings."""
         self.settings.update(controls=controls.to_json())
-
-    def smart_command(self) -> str | None:
-        """The command that applies where the hero stands, in this order: TALK if someone is in front of him (or
-        across a counter), TAKE on a treasure chest, DOOR next to a locked door with a Magic Key to open it, STAIRS on
-        stairs; None if none does."""
-        if self.cmd_menu.check_across_from_npc() and not self.game_state.is_initial_dialog:
-            return 'TALK'
-        if self.player.current_tile == 'TREASURE_BOX':
-            return 'TAKE'
-        if self.cmd_menu.find_door() is not None and 'Magic Key' in self.player.inventory:
-            return 'DOOR'
-        if self.player.current_tile in STAIR_TILES and \
-                (self.player.row, self.player.column) in self.current_map.staircases:
-            return 'STAIRS'
-        return None
-
-    def run_smart_command(self) -> bool:
-        """Do the smart command (smart_command), as if chosen in the COMMAND window: the menu button sound
-        (WndAPressed), and the stats window for the ones that show a dialog. Returns whether one ran.
-
-        It follows the A button's rule: NES GameEngineLoop only reads commands between steps (DoJoyUp etc. move a
-        whole tile before returning to CheckInputs). Mid-step, or while a pause or the command window is pending or
-        open (where Enter picks a menu item), nothing runs."""
-        if self.player.is_moving or self.movement.world_frozen or self.movement.freeze_pending:
-            return False
-        command = self.smart_command()
-        if command is None:
-            return False
-        if command in ('TALK', 'TAKE'):
-            self.drawer.draw_hovering_stats_window(self.screen, self.player, color=self.color)
-        self.cmd_menu.play_menu_button_sound()
-        {'TALK': self.cmd_menu.talk, 'TAKE': self.cmd_menu.take, 'DOOR': self.cmd_menu.door,
-         'STAIRS': self.cmd_menu.stairs}[command]()
-        return True
 
     @property
     def fps(self) -> float:

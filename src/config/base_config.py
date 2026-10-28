@@ -99,7 +99,7 @@ base_config = {
     # the name (src/name_entry.py NameEntry, src/menu_functions.py); a global setting, as names come before a log
     "NAME_CONFIRM": False,
     # SMART A (not NES when on): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, else opens COMMAND
-    # (Game.smart_command); off, A always opens COMMAND, as on the NES
+    # (MapHotkeys.smart_command); off, A always opens COMMAND, as on the NES
     "SMART_A": False,
     # MESSAGE LOG (not NES when on): the MESSAGE LOG key (L) opens the last messages on the map (src/message_log.py)
     "MESSAGE_LOG": False,
