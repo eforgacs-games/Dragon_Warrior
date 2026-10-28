@@ -27,7 +27,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     SMART A        OFF (NES) / ON           (SMART_A: A does TALK, TAKE, DOOR or STAIRS, Game.smart_command)
     ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, Game.thin_encounters)
     EXP/GOLD       x1 (NES) / x2 / x4       (EXP_GOLD: what a won fight gives, Battle.enemy_defeated)
-    QUEST JOURNAL  OFF (NES) / GOALS / HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
+    QUEST JOURNAL  OFF (NES) / LEARNED / LEARNED+HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
     AUTOSAVE       OFF (NES) / ON           (AUTOSAVE: the autosave slot, src/autosave.py)
     BAG            NES (8) / 16             (BAG_SIZE: the inventory slots, src/items.py bag_slots)
     RUN BUTTON     OFF (NES) / ON           (RUN_BUTTON: hold B to walk twice as fast, src/movement.py)
@@ -55,8 +55,9 @@ Above every page's rows are two more:
 
 PRESET sets every row that belongs to a preset at once (OptionRow.presets): NES to the NES behaviour, MODERN to the
 recommended conveniences. It reads NES or MODERN while every such row has that preset's value, and CUSTOM as soon as one
-differs from both. Choosing it goes round NES, MODERN and, once there has been one, the last CUSTOM set of values, so a
-custom set is never lost by trying a preset. The message speed (the NES's own setting, chosen on the title menu too)
+differs from both. A new game reads NES: every such row's default (base_config, src/options_screen.py) is its NES
+value. Choosing it goes round NES, MODERN and, once there has been one, the last CUSTOM set of values, so a custom set
+is never lost by trying a preset. The message speed (the NES's own setting, chosen on the title menu too)
 isn't part of either.
 
 PAGE (or START, Page Up and Page Down from any row) shows the next or the previous page; the cursor stays where it is,
@@ -92,7 +93,7 @@ from src.items import BAG_SIZES, BIG_BAG_SLOTS, INVENTORY_SLOTS
 from src.options_screen import AUTO_GRIND_STOP_VALUES, CLASSIC, ENCOUNTER_SETTINGS, ENCOUNTERS_NES, \
     EXP_GOLD_MULTIPLIERS, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN, STATUS_WINDOW_ALWAYS, \
     STATUS_WINDOW_NES, STATUS_WINDOW_SETTINGS
-from src.quest_journal import JOURNAL_GOALS, JOURNAL_OFF, JOURNAL_SETTINGS
+from src.quest_journal import JOURNAL_HINTS, JOURNAL_OFF, JOURNAL_SETTINGS
 from src.selection import frame_events, next_frame
 from src.settings import LANGUAGES
 from src.translated_window import draw_translated_window
@@ -190,7 +191,7 @@ OPTION_PAGES = (
         OptionRow("VIEW", 'VIEW', (VIEW_NES, VIEW_WIDE), ("NES (4:3)", "WIDE"), (VIEW_NES, VIEW_NES)),
         OptionRow("STATUS WINDOW", 'STATUS_WINDOW', STATUS_WINDOW_SETTINGS, ("NES", "ALWAYS"),
                   (STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS)),
-        # Information only (src/shop_preview.py): on by default, off in the NES preset
+        # Information only (src/shop_preview.py): off in the NES preset (and so by default), on in MODERN
         switch_row("SHOP PREVIEW", 'SHOP_PREVIEW'),
     )),
     OptionPage("GAMEPLAY", (
@@ -202,9 +203,10 @@ OPTION_PAGES = (
         # How many fights, and what they give, are the game's balance, not conveniences: NES in both presets
         OptionRow("ENCOUNTERS", 'ENCOUNTERS', ENCOUNTER_SETTINGS, ("NES", "HALF", "OFF"), (ENCOUNTERS_NES, ENCOUNTERS_NES)),
         OptionRow("EXP/GOLD", 'EXP_GOLD', EXP_GOLD_MULTIPLIERS, ("x1 (NES)", "x2", "x4"), (1, 1)),
-        # Information only, when Q is pressed: GOALS by default, off in the NES preset
-        OptionRow("QUEST JOURNAL", 'QUEST_JOURNAL', JOURNAL_SETTINGS, ("OFF (NES)", "GOALS", "HINTS"),
-                  (JOURNAL_OFF, JOURNAL_GOALS)),
+        # Information only, when Q is pressed: the goals the hero has learned of, and with HINTS what was said of them.
+        # Off in the NES preset (and so by default); MODERN shows the hints, since they're only what the hero was told
+        OptionRow("QUEST JOURNAL", 'QUEST_JOURNAL', JOURNAL_SETTINGS, ("OFF (NES)", "LEARNED", "LEARNED+HINTS"),
+                  (JOURNAL_OFF, JOURNAL_HINTS)),
         # The autosave slot (src/autosave.py): the NES only saves with King Lorik
         switch_row("AUTOSAVE", 'AUTOSAVE'),
         # The inventory slots (src/items.py bag_slots): the NES's 8, or 16 in the MODERN preset

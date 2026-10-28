@@ -11,14 +11,21 @@ the same way (game slot offsets $0B-$0D in reference/sram-doc.txt):
 
 Not story flags, and not saved by the NES: the treasure chest history (TrsrXPos, cleared by MainGameEngine on every
 start), the door history, and the repel and radiant timers (cleared by StartAtThroneRoom).
+
+One entry here isn't on the NES: heard_goals, the quest journal's (src/quest_journal.py) record of the goals the hero
+has been told of, kept with the story so it's saved and loaded with it.
 """
 
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any
 
 # The key the flags are saved under. Saves from before it existed stored the first two flags as flat keys.
 SAVE_KEY = 'StoryFlags'
 LEGACY_SAVE_KEYS = {'RainbowBridgeBuilt': 'rainbow_bridge_built', 'CharlockStairsRevealed': 'charlock_stairs_revealed'}
+HEARD_GOALS = 'heard_goals'
+
+# Who told the hero of a goal: an NPC's NES dialog byte (src/npcs.py), or a name for what isn't an NPC's dialog
+GoalSource = int | str
 
 
 @dataclass(slots=True)
@@ -50,13 +57,17 @@ class StoryFlags:
     # CheckGrnDragon no longer starts its fight. The Axe Knight has no flag: he fights every time.
     green_dragon_defeated: bool = False
 
+    # Not NES: each goal the hero has been told of (src/quest_journal.py Goal.key), with who told of it. Saves from
+    # before it existed load with nothing heard.
+    heard_goals: dict[str, GoalSource] = field(default_factory=dict)
+
     @property
     def gwaelin_rescued(self) -> bool:
         """NES F_DONE_GWAELIN: Gwaelin is being carried or has been returned."""
         return self.carrying_gwaelin or self.gwaelin_returned
 
-    def to_save(self) -> dict[str, bool]:
-        return asdict(self)
+    def to_save(self) -> dict[str, Any]:
+        return asdict(self)  # a copy: heard_goals too
 
     @classmethod
     def from_save(cls, save_file: dict[str, Any]) -> 'StoryFlags':
@@ -77,7 +88,21 @@ class StoryFlags:
             flags.gwaelin_returned = "Gwaelin's Love" in inventory
             flags.death_necklace_found = "Death Necklace" in inventory
             return flags
-        for field in fields(cls):
-            if field.name in saved_flags:
-                setattr(flags, field.name, bool(saved_flags[field.name]))
+        for name in story_bits():
+            if name in saved_flags:
+                setattr(flags, name, bool(saved_flags[name]))
+        flags.heard_goals = heard_goals_from_save(saved_flags.get(HEARD_GOALS))
         return flags
+
+
+def story_bits() -> tuple[str, ...]:
+    """The names of the flags that are the NES's story bits: every field but heard_goals."""
+    return tuple(flag.name for flag in fields(StoryFlags) if flag.name != HEARD_GOALS)
+
+
+def heard_goals_from_save(saved: Any) -> dict[str, GoalSource]:
+    """The heard goals a save has, leaving out any entry that isn't a goal's key and who told of it."""
+    if not isinstance(saved, dict):
+        return {}
+    return {goal: source for goal, source in saved.items()
+            if isinstance(goal, str) and type(source) in (int, str)}

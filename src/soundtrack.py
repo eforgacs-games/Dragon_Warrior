@@ -1,8 +1,8 @@
 """The MUSIC setting: which soundtrack plays (not NES, the NES has only its own).
 
-- NES: the NES music, emulated from the game's NSF (data/sound/music/NES, src/chiptune_soundtracks.py).
+- NES: the NES music, emulated from the game's NSF (data/sound/music/NES, src/chiptune_soundtracks.py), the default.
 - SFC: the Super Famicom remake's soundtrack, emulated from its SPC files (data/sound/music/SFC).
-- ORCHESTRA: the London Philharmonic Orchestra's recording (data/sound/music/orchestra), the default.
+- ORCHESTRA: the London Philharmonic Orchestra's recording (data/sound/music/orchestra), the MODERN preset's.
 
 The jingles (the inn, the level up, the victory, the death and the rest) are the SFC's with SFC and the NES's with the
 others (src/directories.py clip_paths). Without libgme, NES and SFC play the orchestral music (playable_soundtrack).
@@ -29,8 +29,8 @@ LEGACY_ORCHESTRA_SAVE_KEY = 'OrchestraMusic'
 
 # The order the options overlay's MUSIC row goes round in
 SOUNDTRACKS = (Soundtrack.NES, Soundtrack.SFC, Soundtrack.ORCHESTRA)
-# As the game has always started: a new quest, a config or a save without the setting
-DEFAULT_SOUNDTRACK = Soundtrack.ORCHESTRA
+# A new quest, a config or a save without the setting: the NES's, as the NES preset (src/options_overlay.py) sets it
+DEFAULT_SOUNDTRACK = Soundtrack.NES
 
 
 def parse_soundtrack(value: Any) -> Soundtrack | None:

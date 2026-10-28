@@ -1,7 +1,6 @@
 import json
 import os
 import tempfile
-from dataclasses import fields
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -14,10 +13,10 @@ from src.game import Game
 from src.items import treasure
 from src.map_layouts import BRICK, DOOR, TREASURE_BOX
 from src.maps import map_lookup
-from src.story_flags import StoryFlags
+from src.story_flags import StoryFlags, story_bits
 from tests.helpers import new_game
 
-FLAG_NAMES = [field.name for field in fields(StoryFlags)]
+FLAG_NAMES = list(story_bits())
 THRONE_ROOM_CHESTS = list(treasure['TantegelThroneRoom'])
 
 
@@ -68,7 +67,7 @@ class TestSaveStoryProgress(TestCase):
         for name in FLAG_NAMES:
             setattr(self.game.story_flags, name, True)
         save = self.save()
-        self.assertEqual(save['StoryFlags'], {name: True for name in FLAG_NAMES})
+        self.assertEqual(save['StoryFlags'], {**{name: True for name in FLAG_NAMES}, 'heard_goals': {}})
         self.assertNotIn('RainbowBridgeBuilt', save)
         self.assertNotIn('CharlockStairsRevealed', save)
         self.assertEqual(self.load(save).story_flags, StoryFlags(**{name: True for name in FLAG_NAMES}))

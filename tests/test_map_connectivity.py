@@ -16,7 +16,7 @@ import pygame
 
 from src.config.test_config import test_config
 from src.constants import RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES
-from src.map_layouts import MapLayouts
+from src.map_layouts import DOOR, MapLayouts
 from src.maps import CharlockB1, all_impassable_tiles, map_lookup
 from tests.nes_maps import NES_MAPS as NES_MAP_TABLE, boundary_tile, nes_tiles
 from tests.helpers import new_game
@@ -33,6 +33,9 @@ BLOCKING_TILES = tuple(tile for tile in all_impassable_tiles if tile != 'DOOR')
 # NES MapEntryTbl: DL castle SL6(9,0) -> DL castle SL6(0,0) is one way. Going up from SL6(0,0) finds its earlier
 # MapTargetTbl entry and leads back to SL5(5,5).
 ONE_WAY_STAIRS = {('CharlockB7Narrow', (3, 12))}
+# Charlock's first tile after the Rainbow Bridge, and Erdrick's Sword's chest (src/items.py treasure)
+CHARLOCK_ENTRANCE = ('CharlockB1', (25, 17))
+ERDRICKS_SWORD_CHEST = ('CharlockB3', (8, 8))
 # NES DLBFStatTbl: the Dragonlord sits at BF(16,24), CharlockB8 (28, 22), with large tiles (a counter, WOOD here) on
 # three sides. The hero can walk up beside him at BF(17,24).
 DRAGONLORD_AUDIENCE = ('CharlockB8', (28, 23))
@@ -155,11 +158,11 @@ def destination(world: dict, staircase: dict) -> tuple:
     return staircase.get('destination_coordinates') or world[staircase['map']].initial_coordinates
 
 
-def explore(world: dict) -> dict:
-    """Breadth-first search over (map, tile) from the hero's first tile in the throne room. Returns each reached
-    (map, tile) mapped to the one it was reached from."""
-    came_from: dict = {START: None}
-    queue = deque([START])
+def explore(world: dict, start: tuple = START, blocking: tuple = BLOCKING_TILES) -> dict:
+    """Breadth-first search over (map, tile) from start (the hero's first tile in the throne room), through every tile
+    not in blocking. Returns each reached (map, tile) mapped to the one it was reached from."""
+    came_from: dict = {start: None}
+    queue = deque([start])
     while queue:
         map_name, (row, column) = state = queue.popleft()
         current_map = world[map_name]
@@ -170,7 +173,7 @@ def explore(world: dict) -> dict:
             next_states.append((staircase['map'], destination(world, staircase)))
         for next_state in next_states:
             tile = tile_name(world, *next_state)
-            if next_state in came_from or tile is None or tile in BLOCKING_TILES:
+            if next_state in came_from or tile is None or tile in blocking:
                 continue
             came_from[next_state] = state
             queue.append(next_state)
@@ -365,3 +368,13 @@ class TestMapConnectivity(TestCase):
         self.assertEqual([name for name in floors if name.startswith('Charlock')],
                          ['CharlockB1', 'CharlockB2', 'CharlockB3', 'CharlockB4', 'CharlockB5', 'CharlockB6',
                           'CharlockB7Wide', 'CharlockB8'])
+
+    def test_charlocks_locked_doors_are_not_on_the_way_to_the_dragonlord_or_the_sword(self):
+        # Why the quest journal's "Get a Magic Key." leaves Charlock out (src/quest_journal.py Progress.needs_a_key):
+        # the hidden staircase behind the throne is reached through the barriers, with every door still locked
+        charlock = [current_map for name, current_map in self.world_at_the_end.items() if name.startswith('Charlock')]
+        self.assertEqual(3, sum(row.count(DOOR) for current_map in charlock for row in current_map.layout))
+        reached = explore(self.world_at_the_end, start=CHARLOCK_ENTRANCE, blocking=BLOCKING_TILES + ('DOOR',))
+        self.assertIn(('CharlockB1', CharlockB1.HIDDEN_STAIRCASE_COORDINATES), reached)
+        self.assertIn(ERDRICKS_SWORD_CHEST, reached)
+        self.assertIn(DRAGONLORD_AUDIENCE, reached)
