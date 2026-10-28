@@ -60,6 +60,17 @@ def bag_slots(config: dict) -> int:
     then (a chest's item, or one found with SEARCH, offers to discard something, as on the NES)."""
     size = config.get('BAG_SIZE', INVENTORY_SLOTS)
     return size if size in BAG_SIZES else INVENTORY_SLOTS
+
+
+def slots_used(inventory: list[str]) -> int:
+    """The inventory slots the items take: one each, but none for Herbs and Magic Keys (UNSLOTTED_ITEMS)."""
+    return sum(1 for item in inventory if item not in UNSLOTTED_ITEMS)
+
+
+def bag_is_full(inventory: list[str], config: dict) -> bool:
+    """No slot free in the bag (NES AddInvItem: 8 slots, or 16 with BAG set to 16: bag_slots). A bag holding more than
+    its size, after BAG was set back to 8, is full too."""
+    return slots_used(inventory) >= bag_slots(config)
 MAX_HERBS = 6
 MAX_KEYS = 6
 MAX_GOLD = 65535

@@ -3,9 +3,8 @@ import unittest
 import pygame
 
 from src.config.test_config import test_config
-from src.items import armor, inventory_list, shields, tools, weapons
-from src.shops import INVENTORY_SLOTS, MAX_GOLD, ShopInventories, buyback_price, inventory_is_full, \
-    inventory_slots_used, pay_player, sell_price
+from src.items import INVENTORY_SLOTS, armor, bag_is_full, inventory_list, shields, slots_used, tools, weapons
+from src.shops import MAX_GOLD, ShopInventories, buyback_price, pay_player, sell_price
 
 VALID_ITEM_TYPES = {'weapon', 'armor', 'shield'}
 EXPECTED_KEYS = {'cost', 'type'}
@@ -168,14 +167,14 @@ class TestShopRules(unittest.TestCase):
 
     def test_herbs_and_keys_take_no_inventory_slot(self):
         inventory = ['Herb'] * 6 + ['Magic Key'] * 6 + ['Torch']
-        self.assertEqual(inventory_slots_used(inventory), 1)
-        self.assertFalse(inventory_is_full(inventory))
+        self.assertEqual(slots_used(inventory), 1)
+        self.assertFalse(bag_is_full(inventory, {'BAG_SIZE': INVENTORY_SLOTS}))
 
     def test_inventory_holds_eight_items(self):
         # NES AddInvItem: 4 bytes of two items each; duplicates each take a slot
         self.assertEqual(INVENTORY_SLOTS, 8)
-        self.assertFalse(inventory_is_full(['Torch'] * 7))
-        self.assertTrue(inventory_is_full(['Torch'] * 7 + ["Dragon's Scale"]))
+        self.assertFalse(bag_is_full(['Torch'] * 7, {'BAG_SIZE': INVENTORY_SLOTS}))
+        self.assertTrue(bag_is_full(['Torch'] * 7 + ["Dragon's Scale"], {'BAG_SIZE': INVENTORY_SLOTS}))
 
     def test_sell_price_is_half_rounded_down(self):
         self.assertEqual(sell_price('Herb'), 12)

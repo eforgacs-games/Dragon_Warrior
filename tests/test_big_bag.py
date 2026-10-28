@@ -7,9 +7,8 @@ from pygame import KEYDOWN, K_DOWN, K_ESCAPE, K_RETURN, K_UP, event
 
 from src.config.base_config import base_config
 from src.config.test_config import test_config
-from src.items import BIG_BAG_SLOTS, INVENTORY_SLOTS, bag_slots
+from src.items import BIG_BAG_SLOTS, INVENTORY_SLOTS, bag_is_full, bag_slots
 from src.options_screen import BAG_SIZE_SAVE_KEY, options_from_save
-from src.shops import inventory_is_full
 from src.windows import ITEM_MENU_MAX_ENTRIES, first_shown_entry, item_menu_window
 from tests.test_windows import WindowTestCase
 
@@ -25,13 +24,26 @@ class TestBagSlots(TestCase):
         self.assertEqual(16, bag_slots({'BAG_SIZE': 16}))
 
     def test_full(self):
-        self.assertFalse(inventory_is_full(['Torch'] * 15, BIG_BAG_SLOTS))
-        self.assertTrue(inventory_is_full(['Torch'] * 16, BIG_BAG_SLOTS))
+        big_bag = {'BAG_SIZE': BIG_BAG_SLOTS}
+        nes_bag = {'BAG_SIZE': INVENTORY_SLOTS}
+        self.assertFalse(bag_is_full(['Torch'] * 15, big_bag))
+        self.assertTrue(bag_is_full(['Torch'] * 16, big_bag))
         # Herbs and Magic Keys never use a slot
-        self.assertFalse(inventory_is_full(['Torch'] * 15 + ['Herb'] * 6 + ['Magic Key'] * 6, BIG_BAG_SLOTS))
+        self.assertFalse(bag_is_full(['Torch'] * 15 + ['Herb'] * 6 + ['Magic Key'] * 6, big_bag))
         # back at 8 with more than 8: full, until it's down to 7
-        self.assertTrue(inventory_is_full(['Torch'] * 12, INVENTORY_SLOTS))
-        self.assertFalse(inventory_is_full(['Torch'] * 7, INVENTORY_SLOTS))
+        self.assertTrue(bag_is_full(['Torch'] * 12, nes_bag))
+        self.assertFalse(bag_is_full(['Torch'] * 7, nes_bag))
+
+    def test_full_follows_the_bag_option(self):
+        # One check everywhere (chests, SEARCH, shops, Gwaelin's Love), always at the bag's size: the same 8 items fill
+        # the NES bag, but not the big one. A config without BAG_SIZE, or with a size the option doesn't have, is the
+        # NES's 8.
+        eight = ['Torch'] * 4 + ['Wings'] * 4
+        self.assertTrue(bag_is_full(eight, {'BAG_SIZE': INVENTORY_SLOTS}))
+        self.assertFalse(bag_is_full(eight, {'BAG_SIZE': BIG_BAG_SLOTS}))
+        self.assertTrue(bag_is_full(eight, {}))
+        self.assertTrue(bag_is_full(eight, {'BAG_SIZE': 12}))
+        self.assertFalse(bag_is_full(eight[1:], {}))
 
     def test_kept_per_adventure_log(self):
         self.assertEqual(16, options_from_save({BAG_SIZE_SAVE_KEY: 16}).bag_size)
