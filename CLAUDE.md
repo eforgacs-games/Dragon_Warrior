@@ -28,6 +28,12 @@ The goal is to match the NES game. Formulas, messages and behavior are checked a
 - **Install**: `uv sync` (managed by uv, locked in `uv.lock`). `requirements.txt` is generated from the lock with `uv export` (the command is in its header); CI fails if it's out of date, except on Dependabot's PRs, where a CI job regenerates and commits it.
 - **Core dependency**: pygame. pygame-menu was removed (#299); menus and windows are drawn by `src/window_renderer.py`.
 
+### Git and GitHub
+- **Commit identity**: commits must use the owner's personal identity: the same author name and email as the existing commits on `main` (see `git log -1 --format='%an <%ae>' origin/main`). The machine's global git config is a different (work) identity, so in a fresh clone or a new worktree, set `user.name` and `user.email` in the repository's own config (`git config user.name ...`, `git config user.email ...`) to match before committing, and check `git log origin/main..HEAD --format='%an <%ae>'` before pushing.
+- **GitHub account**: pushes, PRs and issues are made as the owner's personal GitHub account (the owner of the commits above), never a work account. The `gh` setup for that is in the local, untracked `.claude/settings.local.json`; check `gh api user --jq .login` before any `gh` write. `gh pr create` needs `--repo eforgacs-games/Dragon_Warrior --head <branch>`, because the remote uses an SSH host alias that gh can't resolve.
+- **No AI attribution**: no `Co-Authored-By` trailers or "Generated with" lines in commits or PR descriptions.
+- **Branches and PRs**: descriptive kebab-case branch names (no ticket numbers), English PR titles and descriptions. `main` is protected by rulesets (PRs required, CI must pass, no force pushes); don't force-push or rewrite history unless the owner asks for it.
+
 ## Architecture
 
 ### Configuration System
