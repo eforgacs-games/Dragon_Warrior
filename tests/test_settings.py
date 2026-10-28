@@ -3,6 +3,7 @@ config folder, read at start and written when one changes; and the LANGUAGE row 
 the language at once. Every test here keeps its settings file in a temporary folder (SETTINGS_PATH)."""
 import json
 import os
+import sys
 import tempfile
 from unittest import TestCase
 from unittest.mock import patch
@@ -68,7 +69,7 @@ class TestSettingsFile(TempDirTestCase):
     def test_format(self):
         save_settings(self.path, Settings(zoom=3, language='Korean'))
         self.assertEqual({'version': 1, 'zoom': 3, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
-                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': True, 'name_confirm': True,
+                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': False, 'name_confirm': False,
                           'controls': None},
                          self.saved())
         self.assertEqual(['settings.json'], os.listdir(os.path.dirname(self.path)))  # no temporary file left over
@@ -195,6 +196,23 @@ class TestReadAtStart(GameTestCase):
         save_settings(self.path, Settings(language='English'))
         self.assertEqual('English', self.new_game(LANGUAGE='Korean').config['LANGUAGE'])
 
+    def test_language_flag_wins_over_the_saved_language_without_changing_it(self):
+        save_settings(self.path, Settings(language='Korean'))
+        game = self.new_game(LANGUAGE='English', LANGUAGE_FROM_COMMAND_LINE=True)
+        self.assertEqual('English', game.config['LANGUAGE'])
+        self.assertEqual("TALK", game.cmd_menu._("TALK"))
+        self.assertEqual('Korean', load_settings(self.path).language)
+        # without the flag, the saved language is back
+        self.assertEqual('Korean', self.new_game(LANGUAGE='English').config['LANGUAGE'])
+
+    def test_run_marks_language_as_from_the_command_line(self):
+        from src import game as game_module
+        with patch.object(sys, 'argv', ['dragon_warrior', '--language', 'English']), \
+                patch.object(game_module, 'install_crash_log'), patch.object(game_module, 'Game') as game_class:
+            game_module.run()
+        config = game_class.call_args.kwargs['config']
+        self.assertEqual(('English', True), (config['LANGUAGE'], config['LANGUAGE_FROM_COMMAND_LINE']))
+
     def test_without_a_saved_language_the_locale_decides(self):
         save_settings(self.path, Settings(zoom=3))
         for language in ('English', 'Korean'):
@@ -272,7 +290,7 @@ class TestSavedWhenChanged(GameTestCase):
         self.assertEqual('Korean', self.saved()['language'])
         # and nothing else was written
         self.assertEqual({'version': 1, 'zoom': None, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
-                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': True, 'name_confirm': True,
+                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': False, 'name_confirm': False,
                           'controls': None},
                          self.saved())
 
@@ -292,10 +310,15 @@ class TestSavedWhenChanged(GameTestCase):
 
     def test_dungeon_map(self):
         game = self.new_game()
-        # switched off in the options overlay (OptionsOverlay changes the config, then calls apply_option)
+        self.assertFalse(game.game_state.config['DUNGEON_MAP'])  # the NES's, by default
+        # switched on in the options overlay (OptionsOverlay changes the config, then calls apply_option)
+        game.game_state.config['DUNGEON_MAP'] = True
+        game.apply_option('DUNGEON_MAP')
+        self.assertTrue(self.saved()['dungeon_map'])
+        self.assertTrue(self.new_game().game_state.config['DUNGEON_MAP'])
+        # and off again
         game.game_state.config['DUNGEON_MAP'] = False
         game.apply_option('DUNGEON_MAP')
-        self.assertFalse(game.game_state.config['DUNGEON_MAP'])
         self.assertFalse(self.saved()['dungeon_map'])
         self.assertFalse(self.new_game().game_state.config['DUNGEON_MAP'])
 

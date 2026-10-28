@@ -12,11 +12,12 @@ The file is JSON, in the per-user config folder (src/paths.py user_config_dir), 
 ~/.config/dragon-warrior/settings.json:
 
     {"version": 1, "zoom": 3, "fullscreen": false, "game_speed": 1, "language": "Korean", "scanlines": false,
-     "scaling": "Smooth", "view": "NES", "dungeon_map": true,
+     "scaling": "Smooth", "view": "NES", "dungeon_map": true, "name_confirm": false,
      "controls": {"keys": {"A": ["k"], ...}, "pad": {"A": "b", ...}}}
 
 "zoom" and "language" can be null: the window opens at its normal size, and the language comes from the system locale
-(base_config language_from_locale). A saved language wins over the locale.
+(base_config language_from_locale). A saved language wins over the locale, and --language on the command line wins over
+both for that run (without changing the file).
 
 The game reads it once at start (Game.__init__), before the window opens, so the window comes up at the saved zoom and
 in fullscreen if that was saved, and writes it whenever one of the settings changes. A missing file, one that isn't
@@ -65,8 +66,11 @@ class Settings:
     scanlines: bool = False
     scaling: str = SCALING_SMOOTH  # src/display_filters.py SCALING_MODES
     view: str = VIEW_NES  # the VIEW row: src/view.py VIEWS
-    dungeon_map: bool = True  # the DUNGEON MAP row: whether M shows the dungeon map (src/dungeon_map.py)
-    name_confirm: bool = True  # the CONFIRM NAME row: a full name waits on END (src/name_entry.py)
+    # The DUNGEON MAP row: whether M shows the dungeon map (src/dungeon_map.py). Off, the NES, until the player turns it
+    # on; a file that has it keeps it.
+    dungeon_map: bool = False
+    # The CONFIRM NAME row: a full name waits on END (src/name_entry.py). Off, the NES, like DUNGEON MAP.
+    name_confirm: bool = False
     # The keys and controller buttons (src/controls.py Controls.to_json); None: the defaults
     controls: dict[str, Any] | None = None
     # What the file has that this build doesn't know: a newer build's settings, and its format version if it's newer.

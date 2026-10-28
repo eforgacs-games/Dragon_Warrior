@@ -432,13 +432,15 @@ class DialogLookup:
                                         self.take_to_castle_confirmation_prompt)},
         }
         # Map name -> NPC identifier -> what it says, for every NPC in the maps' NPC tables. Each NPC gets its own copy
-        # of its dialog byte's entry (set_king_lorik_dialog changes King Lorik's 'dialog').
+        # of its dialog byte's entry (set_king_lorik_dialog changes King Lorik's 'dialog'), with the byte itself, which
+        # tells the quest journal what the NPC spoke of (src/quest_journal.py hear).
         self.lookup_table: dict[str, dict[str, dict]] = {}
         for map_name, map_class in maps.map_lookup.items():
             for npc in map_class.npc_table:  # type: ignore[attr-defined]
                 if npc.dialog in npc_dialog:
                     self.lookup_table.setdefault(map_name, {})[npc.name] = {**npc_dialog[npc.dialog],
-                                                                            'dialog_character': npc.name}
+                                                                            'dialog_character': npc.name,
+                                                                            'dialog_byte': npc.dialog}
 
     def take_to_castle_confirmation_prompt(self):
         return confirmation_prompt(

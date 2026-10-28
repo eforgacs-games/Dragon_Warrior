@@ -34,6 +34,7 @@ from src.options_screen import MODERN, options_from_config
 from src.save_file import ADVENTURE_LOGS, SaveFile, is_from_a_newer_build, log_belongs_to, log_for_unchosen_save, \
     save_path, write_save
 from src.message_log import speaker_of
+from src.quest_journal import hear
 from src.selection import YES, frame_events, next_game_frame, run_selection, stop_at_edges
 from src.sound import SPELL_SFX_FRAMES, Sound
 from src.visual_effects import bw_screen_flash, rainbow_bridge_flash
@@ -313,6 +314,8 @@ class CommandMenu:
             if character.get('dialog'):
                 self.dialog_lookup.camera_position = self.camera_position
                 self.show_text_in_dialog_box(character['dialog'], add_quotes=True, skip_text=self.skip_text)
+                # The quest journal remembers the goals the NPC spoke of
+                hear(self.game.story_flags, character.get('dialog_byte'))
             else:
                 print(f"Character has no dialog: {dialog_character}")
                 self.show_text_in_dialog_box(self._("I have nothing to say."), add_quotes=True,
