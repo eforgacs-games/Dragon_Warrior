@@ -41,7 +41,7 @@ An item counts as found once anything it leads to is done too: the Silver Harp i
 and the Staff and the Stones are given away for the Rainbow Drop.
 """
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from src.story_flags import GoalSource, StoryFlags
 
@@ -157,9 +157,11 @@ class Goal:
     text: str
     hint: str
     done: Callable[[Progress], bool]
-    found_out: Callable[[Progress], bool] = never
+    # Function fields default through default_factory, so the class holds no function attribute that would read as
+    # a method (self.found_out(progress) calls the stored function, not a bound method)
+    found_out: Callable[[Progress], bool] = field(default_factory=lambda: never)
     told_by: tuple[Told, ...] = ()
-    missed: Callable[[Progress], bool] = never
+    missed: Callable[[Progress], bool] = field(default_factory=lambda: never)
     optional: bool = False
     short_text: str | None = None
 
