@@ -1,6 +1,6 @@
 [project]
 name = "dragon-warrior"
-version = "0.1.0"
+version = "1.0.0"
 description = "A Python remake of Dragon Warrior for the NES, built with Pygame"
 readme = "README.md"
 # PEP 639: the code is GPLv3 or later. Game assets aren't covered by it; see ASSETS.md
