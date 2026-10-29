@@ -25,7 +25,7 @@ dev = [
     "pytest-cov~=7.1",
     "pytest-timeout~=2.4",
     "pytest-xdist~=3.8",
-    "ruff==0.16.10",  # exact: new ruff releases can add lint rules
+    "ruff==0.17.0",  # exact: new ruff releases can add lint rules
 ]
 
 [tool.uv]
