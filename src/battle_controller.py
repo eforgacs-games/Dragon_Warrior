@@ -659,7 +659,7 @@ class BattleController:
                         case Spell.HURT | Spell.HURTMORE:
                             if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
                                 spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
-                            self.game.receive_damage(spell_effect)
+                            self.game.hero_damage.receive_damage(spell_effect)
                         case Spell.STOPSPELL:
                             # NES EnCastStopspell: Erdrick's Armor always blocks it; otherwise it works when bit 0 of a
                             # random byte is set (50%). It lasts for the rest of the fight.
@@ -674,7 +674,7 @@ class BattleController:
                         case Spell.FIREBREATH | Spell.FIREBREATH2:
                             if self.player.armor == "Erdrick's Armor":
                                 spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
-                            self.game.receive_damage(spell_effect)
+                            self.game.hero_damage.receive_damage(spell_effect)
                 else:
                     self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
             else:
@@ -700,7 +700,7 @@ class BattleController:
         if attack_damage <= 0:
             current_battle.enemy_missed_attack(self.cmd_menu)
         else:
-            self.game.receive_damage(attack_damage)
+            self.game.hero_damage.receive_damage(attack_damage)
 
     def player_hit_effect(self):
         """NES PlayerHit ($ED20): after the hero's HP drops, the screen shakes, and on a deathblow it also flashes

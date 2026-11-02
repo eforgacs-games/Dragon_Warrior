@@ -372,14 +372,14 @@ class TestHandleBattles(unittest.TestCase):
         player.current_hp, player.armor, player.is_moving = hp, None, False
         player.received_environment_damage = False
         hp_at_fight = []
-        with patch.object(self.game, 'drawer'), patch('src.game.display'), patch('src.game.flash_transparent_color'), \
-                patch.object(self.game.sound, 'play_sound'), \
+        with patch.object(self.game, 'drawer'), patch('src.hero_damage.display'), \
+                patch('src.hero_damage.flash_transparent_color'), patch.object(self.game.sound, 'play_sound'), \
                 patch.object(self.game.battle_ctrl, 'run_battle',
                              side_effect=lambda _: hp_at_fight.append(player.current_hp)) as run_battle:
             self.game.handle_battles()
             # later in the frame (_handle_post_move_checks): the step has already done its damage
             player.current_tile = 'MARSH'
-            self.game.handle_environment_damage()
+            self.game.hero_damage.handle_environment_damage()
         return run_battle, hp_at_fight
 
     def test_swamp_damage_comes_before_the_fight_roll(self):

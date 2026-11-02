@@ -408,9 +408,9 @@ class TestEnvironmentDamageSound(unittest.TestCase):
             with self.subTest(tile=tile):
                 self.game.player.received_environment_damage = False
                 with patch.object(self.game.sound, 'play_sound') as play_sound, \
-                        patch('src.game.flash_transparent_color'), patch.object(self.game, 'drawer'), \
-                        patch('src.game.display'):
-                    self.game.handle_environment_damage(tile)
+                        patch('src.hero_damage.flash_transparent_color'), patch.object(self.game, 'drawer'), \
+                        patch('src.hero_damage.display'):
+                    self.game.hero_damage.handle_environment_damage(tile)
                 play_sound.assert_called_once_with(sfx)
 
 

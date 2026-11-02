@@ -115,9 +115,9 @@ class TestMovementUpdates(TestCase):
         self.player.is_moving = False
         self.player.received_environment_damage = False
         self.player.current_tile = tile
-        with patch.object(self.game, 'drawer'), patch('src.game.display'), \
-                patch('src.game.flash_transparent_color'), patch.object(self.game.sound, 'play_sound'):
-            self.game.handle_environment_damage()
+        with patch.object(self.game, 'drawer'), patch('src.hero_damage.display'), \
+                patch('src.hero_damage.flash_transparent_color'), patch.object(self.game.sound, 'play_sound'):
+            self.game.hero_damage.handle_environment_damage()
         return 50 - self.player.current_hp
 
     def test_swamp_and_barrier_hurt_while_the_dragonlord_is_alive(self):
@@ -131,10 +131,11 @@ class TestMovementUpdates(TestCase):
                                      ('BARRIER', 'force_field_flash', 'flash_transparent_color')):
             self.player.armor, self.player.is_moving, self.player.received_environment_damage = "Full Plate", False, False
             self.player.current_tile = tile
-            with self.subTest(tile), patch(f'src.game.{flashes}') as used, patch(f'src.game.{other}') as unused, \
-                    patch.object(self.game, 'drawer'), patch('src.game.display'), \
+            with self.subTest(tile), patch(f'src.hero_damage.{flashes}') as used, \
+                    patch(f'src.hero_damage.{other}') as unused, \
+                    patch.object(self.game, 'drawer'), patch('src.hero_damage.display'), \
                     patch.object(self.game.sound, 'play_sound'):
-                self.game.handle_environment_damage()
+                self.game.hero_damage.handle_environment_damage()
                 used.assert_called_once()
                 unused.assert_not_called()
 

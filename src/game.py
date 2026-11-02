@@ -14,10 +14,9 @@ from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.auto_grind import AutoGrind
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
-from src.color import LOW_HP_RED, RED, WHITE, is_low_hp, window_color
+from src.color import LOW_HP_RED, WHITE, is_low_hp, window_color
 from src.common import A_OR_START_KEYS, Graphics, set_gettext_language
 from src.controls import Controls, KeySet, set_controls, set_controls_listener
-from src.common import singular_or_plural
 from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
 from src.coordinates import Cell
@@ -36,12 +35,13 @@ from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
 from src.gamepad import connect_gamepad
+from src.hero_damage import HeroDamage
 from src.intro import Intro
 from src.items import OpenDoorHistory, TreasureChestHistory
 from src.map_layouts import MapLayouts
 from src.maps import DragonWarriorMap, map_lookup
 from src.map_hotkeys import MapHotkeys
-from src.menu import BATTLE_LINE, CommandMenu
+from src.menu import CommandMenu
 from src.movement import HILL_PAUSE_FRAMES, RUN_SPEED_FACTOR, STEP_SYNC_FRAMES, MovementController
 from src.message_log import MessageLog
 from src.music_player import MusicPlayer
@@ -65,7 +65,6 @@ from src.waiting import NES_FPS, SPEED_CHANGED, FrameClock, FramePacer, clear_ev
     reset_game_speed, set_game_speed, set_speed_keys_enabled
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
-from src.visual_effects import flash_transparent_color, force_field_flash
 from src.waiting import MAP_CONTEXT, follow_menu_speed_option, poll_virtual_joypad, quit_if_requested, \
     set_speed_listener, set_virtual_joypad
 from src.windows import COMMAND_WINDOW
@@ -75,10 +74,6 @@ from src.zoom import handle_zoom_event, remember_default_zoom, set_windowed_zoom
 
 # The rewind keys (Backspace, as bound, src/controls.py): rewinding goes on until one is let go
 REWIND_KEYS = KeySet('REWIND')
-
-# NES ChkOtherBlocks: a swamp step costs 2 HP (DoSwampDamage, LCDD4), a force field step 15 (LCE2B)
-SWAMP_DAMAGE = 2
-FORCE_FIELD_DAMAGE = 15
 
 
 class Game:
@@ -174,6 +169,7 @@ class Game:
 
         self.battle_ctrl = BattleController(self)
         self.step_triggers = StepTriggers(self)
+        self.hero_damage = HeroDamage(self)
         self.auto_grind = AutoGrind(self)
         self.ending = Ending(self)
         self.map_mgr = MapManager(self)
@@ -457,7 +453,7 @@ class Game:
                                                  self.player.rect.x // self.tile_size, self.player.direction_value,
                                                  offset=2)
         self.set_player_images_by_equipment()
-        self.handle_environment_damage()
+        self.hero_damage.handle_environment_damage()
         self.handle_death()
 
     def _handle_map_updates(self) -> None:
@@ -551,7 +547,7 @@ class Game:
             tile = get_tile_id_by_coordinates(column, row, self.current_map)
             # NES CheckBlockDmg: swamp and force field damage come before the fight roll, and a hero they kill
             # doesn't fight (handle_death, later this frame, shows the death on the map)
-            self.handle_environment_damage(tile)
+            self.hero_damage.handle_environment_damage(tile)
             if self.player.current_hp <= 0:
                 return
             if tile == 'HILLS':
@@ -591,25 +587,6 @@ class Game:
             if skipped:
                 return None
         return enemies
-
-    def receive_damage(self, attack_damage):
-        # God mode or invulnerable: take no damage
-        if self.player.god_mode or self.invulnerable:
-            return
-
-        self.sound.play_sound(self.directories.receive_damage_2_sfx)
-        self.player.current_hp -= attack_damage
-        if self.player.current_hp < 0:
-            self.player.current_hp = 0
-        self.battle_ctrl.player_hit_effect()  # NES PlayerHit: screen shake, red flash on a deathblow
-        self.load_window_palette()  # NES PlayerHit: LoadRegBGPal, after the screen shake (red if HP is now low)
-        self.drawer.draw_hovering_stats_window(self.screen, self.player, self.color)
-        # NES TextBlock16 entry 10: "Thy Hit" + PLRL, which adds an "s" unless the damage is 1 (Bank01 DoPLRL)
-        damage_line = singular_or_plural(attack_damage, self._("Thy Hit decreased by {}.\n"),
-                                         self._("Thy Hits decreased by {}.\n")).format(attack_damage)
-        # It ends with no WAIT: PlayerHit goes on to the pop-up and the next player turn (or the death music) at once
-        self.cmd_menu.show_line_in_dialog_box(damage_line, **BATTLE_LINE)
-        # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
 
     def set_player_images_by_equipment(self) -> None:
         """Give the hero the sprite sheet for what he carries: the princess, or his weapon and shield."""
@@ -683,50 +660,6 @@ class Game:
             self.leave_tantegel(direction=Direction.DOWN.value)
             return
         self.game_state.is_post_death_dialog = True
-
-    def handle_environment_damage(self, tile: str | None = None):
-        """Swamp and force field damage for the block the hero stands on (current_tile unless tile is given), once
-        per step. handle_battles calls it with the block just stepped onto, before the fight roll."""
-        # NES ChkOtherBlocks: once the Dragonlord is dead, swamps and barriers no longer hurt
-        if self.story_flags.dragonlord_defeated:
-            return
-        if tile is None:
-            tile = self.player.current_tile
-        if not self.player.armor == "Erdrick's Armor":
-            if not self.player.is_moving:
-                if tile == 'MARSH':
-                    if not self.player.received_environment_damage:
-                        self.damage_step(damage_amount=SWAMP_DAMAGE)
-                elif tile == 'BARRIER':
-                    if not self.player.received_environment_damage:
-                        self.damage_step(damage_amount=FORCE_FIELD_DAMAGE, force_field=True)
-            else:
-                self.player.received_environment_damage = False
-
-    def damage_step(self, damage_amount, force_field=False):
-        # God mode or invulnerable: take no damage
-        if self.player.god_mode or self.invulnerable:
-            return
-
-        # NES ChkOtherBlocks: SFX_FFDAMAGE on a force field (LCE2B), SFX_SWMP_DMG on a swamp (LCDD4)
-        self.sound.play_sound(self.directories.barrier_sfx if force_field else self.directories.swamp_sfx)
-        self.player.received_environment_damage = True
-        if force_field:
-            # NES force field damage (LCE30): the screen flashes red three times, each flash followed by
-            # LoadRegBGPal, all before the 15 HP are taken (LCE44). After that the palette is only loaded again if
-            # the hero is dead (LCE55; handle_death), so a force field step that leaves HP low doesn't turn the
-            # windows red: they stay as they were until the next palette load.
-            force_field_flash(RED, self.screen, self.game_state.config)
-            self.load_window_palette()
-            self.player.current_hp = max(self.player.current_hp - damage_amount, 0)
-        else:
-            # NES DoSwampDamage: one red flash (RedFlashScreen), then the 2 HP (LCDDF), then LoadRegBGPal with the
-            # new HP (LCDED)
-            flash_transparent_color(RED, self.screen, self.game_state.config)
-            self.player.current_hp = max(self.player.current_hp - damage_amount, 0)
-            self.load_window_palette()
-        self.drawer.draw_all(self, self.game_state.enable_animate)
-        display.flip()
 
     def handle_warps(self):
         self.map_mgr.handle_warps()

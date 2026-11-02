@@ -163,15 +163,15 @@ class TestLowHPMapSwitching(LowHPMapTestCase):
     def test_damage(self):
         with patch.object(self.game.cmd_menu, 'show_line_in_dialog_box'), \
                 patch.object(self.game.battle_ctrl, 'player_hit_effect'):
-            self.game.receive_damage(10)
+            self.game.hero_damage.receive_damage(10)
             self.assert_map_red(False)  # 5 of 15 isn't low
-            self.game.receive_damage(1)
+            self.game.hero_damage.receive_damage(1)
         self.assert_map_red(True)
 
     def test_swamp_damage(self):
         self.player.current_hp = 6
-        with patch('src.game.flash_transparent_color'), patch.object(self.game.drawer, 'draw_all'):
-            self.game.damage_step(damage_amount=2)
+        with patch('src.hero_damage.flash_transparent_color'), patch.object(self.game.drawer, 'draw_all'):
+            self.game.hero_damage.damage_step(damage_amount=2)
         self.assert_map_red(True)
 
     def test_healing(self):

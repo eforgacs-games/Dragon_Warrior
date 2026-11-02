@@ -210,18 +210,18 @@ class TestLowHPWindowColor(TestCase):
 
     def test_damage_turns_windows_red_at_once(self):
         with patch.object(self.cmd_menu, 'show_line_in_dialog_box'):
-            self.game.receive_damage(10)
+            self.game.hero_damage.receive_damage(10)
         self.assertEqual(self.player.current_hp, 5)
         self.assertEqual(self.game.color, WHITE)
         with patch.object(self.cmd_menu, 'show_line_in_dialog_box'):
-            self.game.receive_damage(1)
+            self.game.hero_damage.receive_damage(1)
         self.assertEqual(self.game.color, LOW_HP_RED)
         self.assert_command_window_color(LOW_HP_RED)
 
     def test_swamp_damage_turns_windows_red(self):
         self.player.current_hp = 6
-        with patch('src.game.flash_transparent_color'), patch.object(self.game.drawer, 'draw_all'):
-            self.game.damage_step(damage_amount=2)
+        with patch('src.hero_damage.flash_transparent_color'), patch.object(self.game.drawer, 'draw_all'):
+            self.game.hero_damage.damage_step(damage_amount=2)
         self.assertEqual(self.game.color, LOW_HP_RED)
 
     def test_healing_turns_windows_white(self):
@@ -276,7 +276,7 @@ class TestLowHPWindowColor(TestCase):
 
     def test_death_and_revival(self):
         with patch.object(self.cmd_menu, 'show_line_in_dialog_box'):
-            self.game.receive_damage(15)
+            self.game.hero_damage.receive_damage(15)
         self.assertEqual(self.game.color, LOW_HP_RED)
         self.player.is_dead = True
         self.game.set_post_death_attributes()

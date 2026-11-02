@@ -52,9 +52,9 @@ class TestBlockDamage(StepTestCase):
         self.player.received_environment_damage = False
         self.player.current_tile = tile
         hp = self.player.current_hp
-        with patch.object(self.game, 'drawer'), patch('src.game.display'), patch('src.game.force_field_flash'), \
-                patch('src.game.flash_transparent_color'), patch.object(self.game.sound, 'play_sound'):
-            self.game.handle_environment_damage()
+        with patch.object(self.game, 'drawer'), patch('src.hero_damage.display'), patch('src.hero_damage.force_field_flash'), \
+                patch('src.hero_damage.flash_transparent_color'), patch.object(self.game.sound, 'play_sound'):
+            self.game.hero_damage.handle_environment_damage()
         return hp - self.player.current_hp
 
     def test_erdricks_armor_stops_swamp_and_force_field_damage(self):
@@ -149,7 +149,7 @@ class TestMapExits(StepTestCase):
         self.game.tiles_moved_since_spawn += 1
         with patch.dict(test_config, FORCE_BATTLE=True), \
                 patch.object(self.game.battle_ctrl, 'run_battle') as run_battle, \
-                patch.object(self.game, 'damage_step') as damage_step:
+                patch.object(self.game.hero_damage, 'damage_step') as damage_step:
             self.game.handle_battles()
         run_battle.assert_not_called()
         damage_step.assert_not_called()

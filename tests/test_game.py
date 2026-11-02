@@ -191,8 +191,8 @@ class TestGame(TestCase):
         self.game.player.current_hp = self.game.player.max_hp = 50
         with patch.object(self.game.battle_ctrl, 'player_hit_effect'), \
                 patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
-            self.game.receive_damage(1)
-            self.game.receive_damage(3)
+            self.game.hero_damage.receive_damage(1)
+            self.game.hero_damage.receive_damage(3)
         self.assertEqual([c.args[0] for c in show_line.call_args_list],
                          ["Thy Hit decreased by 1.\n", "Thy Hits decreased by 3.\n"])
 
