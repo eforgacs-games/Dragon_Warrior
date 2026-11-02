@@ -184,13 +184,16 @@ BAG_SIZE = Option('bag_size', 'BAG_SIZE', BAG_SIZES, INVENTORY_SLOTS, (INVENTORY
 SMART_A = Option('smart_a', 'SMART_A', ON_OFF, False, (False, True), 'SmartA')
 # MESSAGE LOG (#405): the MESSAGE LOG key (L) shows the last messages on the map (src/message_log.py)
 MESSAGE_LOG = Option('message_log', 'MESSAGE_LOG', ON_OFF, False, (False, True), 'MessageLog')
+# STATS PAGE (#414): the STATS key (P) shows the adventure's play statistics on the map (src/stats_screen.py). They're
+# counted whatever it says (src/play_stats.py). Information only: on in MODERN.
+STATS_PAGE = Option('stats_page', 'STATS_PAGE', ON_OFF, False, (False, True), 'StatsPage')
 # AUTOSAVE: the autosave slot (src/autosave.py); the NES only saves with King Lorik
 AUTOSAVE = AutosaveOption('autosave', 'AUTOSAVE', ON_OFF, None, (False, True), 'Autosave')
 
 PER_LOG_OPTIONS = (MESSAGE_SPEED, DIALOG_STYLE, NPCS_MAKE_WAY, FADE_STYLE, AUTO_STAIRS, AUTO_GRIND_STOP, MENU_SPEED,
                    MUSIC, GAME_SPEED_KEYS, SAVE_STATES, REWIND, AUTO_GRIND, CHEAT_KEYS, QUICK_ACTION, ENCOUNTERS,
                    EXP_GOLD, RUN_BUTTON, STATUS_WINDOW, SHOP_PREVIEW, QUEST_JOURNAL, BAG_SIZE, SMART_A, MESSAGE_LOG,
-                   AUTOSAVE)
+                   STATS_PAGE, AUTOSAVE)
 
 # Global, in the order of Settings' fields
 
@@ -240,6 +243,7 @@ class Options:
     bag_size: int = BAG_SIZE.default
     smart_a: bool = SMART_A.default
     message_log: bool = MESSAGE_LOG.default
+    stats_page: bool = STATS_PAGE.default
     autosave: bool | None = AUTOSAVE.default  # None: the config's AUTOSAVE is kept
 
 

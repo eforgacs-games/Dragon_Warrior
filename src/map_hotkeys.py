@@ -4,11 +4,12 @@ Each key press goes through every handler in KEY_HANDLERS, in order; a handler d
 key. While the game is paused only START and the fullscreen key are read (NES GamePaused only reads START), and while
 rewinding, nothing is (only letting go of Backspace does anything, Game._handle_pygame_events).
 
-Some keys open a window or start a mode on the map (MAP_REQUESTS: the options overlay, the dungeon map, the message log
-and auto-grind), and a save state is saved or loaded from it. They're only taken when START would pause the game
-(MovementController.map_held: no window open or about to open, the game not paused, the light not growing), and like the
-pause (NES PausePrepLoop) they wait for the hero and the NPCs to finish their steps: the key sets a request on the game
-(request), and MovementController.resolve_pending_freezes opens what was asked for once everyone is on a tile.
+Some keys open a window or start a mode on the map (MAP_REQUESTS: the options overlay, the dungeon map, the message log,
+the stats page and auto-grind), and a save state is saved or loaded from it. They're only taken when START would pause
+the game (MovementController.map_held: no window open or about to open, the game not paused, the light not growing), and
+like the pause (NES PausePrepLoop) they wait for the hero and the NPCs to finish their steps: the key sets a request on
+the game (request), and MovementController.resolve_pending_freezes opens what was asked for once everyone is on a tile.
+The play time (src/play_stats.py) doesn't count while what they open is up.
 """
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -25,6 +26,7 @@ from src.menu import STAIR_TILES
 from src.message_log import MessageLogScreen
 from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
 from src.save_state import LOAD, SAVE
+from src.stats_screen import StatsScreen
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_OFF, game_progress, journal_pages
 from src.waiting import requested_speed, set_game_speed, speed_keys_enabled
 from src.zoom import remember_windowed_size, restore_windowed_size
@@ -47,6 +49,7 @@ MAP_REQUESTS = (
     MapRequest('options_requested', 'open_options'),  # SELECT or Tab
     MapRequest('dungeon_map_requested', 'open_dungeon_map'),  # M
     MapRequest('message_log_requested', 'open_message_log'),  # L
+    MapRequest('play_stats_requested', 'open_play_stats'),  # P
     MapRequest('auto_grind_requested', 'start_auto_grind'),  # G
 )
 
@@ -90,11 +93,12 @@ class MapHotkeys:
 
     def open_requested(self) -> bool:
         """Open the first of MAP_REQUESTS that is waiting, if one is (resolve_pending_freezes, once everyone is on a
-        tile). Returns whether one was."""
+        tile). Returns whether one was. The play time doesn't count while it's up."""
         for map_request in MAP_REQUESTS:
-            if getattr(self.game, map_request.flag, False) is True:
+            if getattr(self.game, map_request.flag) is True:
                 setattr(self.game, map_request.flag, False)
-                getattr(self, map_request.opener)()
+                with self.game.play_clock.stopped():
+                    getattr(self, map_request.opener)()
                 return True
         return False
 
@@ -146,6 +150,11 @@ class MapHotkeys:
         if pressed(keydown_event, 'MESSAGE_LOG') and self.game.config.get('MESSAGE_LOG'):
             self.request('message_log_requested')
 
+    def press_play_stats(self, keydown_event: Event) -> None:
+        """P (STATS): the stats page (src/stats_screen.py), when the STATS PAGE option is on."""
+        if pressed(keydown_event, 'PLAY_STATS') and self.config.get('STATS_PAGE'):
+            self.request('play_stats_requested')
+
     def press_auto_grind(self, keydown_event: Event) -> None:
         """G: auto-grind (src/auto_grind.py), when the AUTO-GRIND option is on. While it runs, G (or any key but 1 to
         5) stops it before it gets here (AutoGrind.real_key)."""
@@ -179,7 +188,7 @@ class MapHotkeys:
             control_info = ControlInfo(self.game.config)
             # one page per group of keys, so nothing runs past the bottom of the dialog box; not kept in the
             # message log, which is for what the NPCs said
-            with self.game.cmd_menu.not_logged():
+            with self.game.cmd_menu.not_logged(), self.game.play_clock.stopped():
                 self.game.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
 
     def press_quest_journal(self, keydown_event: Event) -> None:
@@ -192,7 +201,8 @@ class MapHotkeys:
         if setting == JOURNAL_OFF:
             return
         pages = journal_pages(game_progress(self.game), hints=setting == JOURNAL_HINTS, _=self.game._)
-        with self.game.cmd_menu.not_logged():  # the message log is for what the NPCs said
+        # the message log is for what the NPCs said, and the play time for what is played
+        with self.game.cmd_menu.not_logged(), self.game.play_clock.stopped():
             self.game.cmd_menu.show_text_in_dialog_box(pages)
 
     def press_smart_a_key(self, keydown_event: Event) -> None:
@@ -321,6 +331,9 @@ class MapHotkeys:
     def open_message_log(self) -> None:
         MessageLogScreen(self.game).run()
 
+    def open_play_stats(self) -> None:
+        StatsScreen(self.game).run()
+
     def start_auto_grind(self) -> None:
         self.game.auto_grind.start()
 
@@ -332,6 +345,7 @@ KEY_HANDLERS = (
     'press_start',
     'press_select',
     'press_message_log',
+    'press_play_stats',
     'press_auto_grind',
     'press_dungeon_map',
     'press_help',

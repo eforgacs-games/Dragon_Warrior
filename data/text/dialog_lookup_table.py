@@ -18,6 +18,7 @@ from src import maps
 from src.maps import DragonWarriorMap
 from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE
+from src.play_stats import PlayStats
 from src.window_renderer import draw_window as generated_window
 from src.windows import BUY_SELL_LAYOUT, WindowLayout, shop_inventory_layout
 from src.menu_functions import draw_player_sprites, draw_character_sprites
@@ -42,6 +43,11 @@ class DialogLookup:
     def color(self) -> tuple[int, int, int]:
         """The window color, red when HP is low (Game.load_window_palette)."""
         return self.command_menu.color
+
+    @property
+    def play_stats(self) -> PlayStats:
+        """The stats page's counts (src/play_stats.py): the gold the shops and inns are paid, and pay."""
+        return self.command_menu.game.play_stats
 
     def __init__(self, command_menu, config: dict):
         self.config = config
@@ -1113,6 +1119,8 @@ class DialogLookup:
         item_dict = current_store_inventory[item]
         item_type = item_dict['type']
         self.player.gold = pay_player(self.player.gold - item_dict['cost'], old_item_cost or 0)
+        self.play_stats.spend_gold(item_dict['cost'])
+        self.play_stats.earn_gold(old_item_cost or 0)  # the shop buys back what the hero had
         if item_type == 'weapon':
             self.player.weapon = item
         elif item_type == 'armor':
@@ -1162,6 +1170,7 @@ class DialogLookup:
             self.say(_("Thou cannot carry anymore."))
         else:
             self.player.gold -= cost
+            self.play_stats.spend_gold(cost)
             self.player.inventory.append(selected_item)
             self.say(_("The {}?\nThank you very much.").format(_(selected_item)))
             self.command_menu.show_popup_window()  # NES PurchaseTool: the thanks, then Dowindow WND_POPUP
@@ -1204,6 +1213,7 @@ class DialogLookup:
             # NES DoSellTool only removes the item; a sold Dragon's Scale or Fighter's Ring stays "worn"
             self.player.inventory.remove(item)
             self.player.gold = pay_player(self.player.gold, price)
+            self.play_stats.earn_gold(price)
             self.command_menu.show_popup_window()  # NES DoneSellingTool: Dowindow WND_POPUP
         self.sell_more(current_store_inventory)
 
@@ -1233,6 +1243,7 @@ class DialogLookup:
             self.fairy_water_goodbye()
         else:
             self.player.gold -= FAIRY_WATER_COST
+            self.play_stats.spend_gold(FAIRY_WATER_COST)
             self.player.inventory.append('Fairy Water')
             self.command_menu.show_popup_window()  # NES BuyFairyWater: Dowindow WND_POPUP, then the thanks
             self.confirm(_("I thank thee.\nWon't thou buy one more bottle?"),
@@ -1258,6 +1269,7 @@ class DialogLookup:
             self.magic_key_goodbye()
         else:
             self.player.gold -= magic_key_cost
+            self.play_stats.spend_gold(magic_key_cost)
             self.player.inventory.append('Magic Key')
             self.command_menu.show_popup_window()  # NES BuyKey: Dowindow WND_POPUP, then "Here,take this key."
             self.confirm(_("Here,take this key.\nDost thou wish to purchase more?"),
@@ -1299,6 +1311,7 @@ class DialogLookup:
         game = self.command_menu.game
         config = game.game_state.config
         self.player.gold -= inn_cost
+        self.play_stats.spend_gold(inn_cost)
         self.command_menu.show_popup_window()
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
         screen_fade(fade_out=True, screen=self.screen, config=self.config)  # PalFadeOut (LD8DC)
