@@ -167,7 +167,7 @@ sequenceDiagram
     participant A as Player 1 (starter)
     participant S as Server
     participant B as Player 2 (nearby)
-    A->>A: step roll starts a fight (Game.roll_for_fight)
+    A->>A: step roll starts a fight (FieldEncounters.roll_for_fight)
     A->>A: pick_enemy, repel check (own RNG, as today)
     A->>S: battle_started {enemy, hero}
     S->>A: battle_state (round 1, enemy HP)
@@ -185,7 +185,7 @@ sequenceDiagram
     S->>B: battle_ended {rewards for Player 2}
 ```
 
-1. The encounter roll stays local and NES-exact: `Game.roll_for_fight` → `roll_encounter` → `pick_enemy`, then the
+1. The encounter roll stays local and NES-exact: `FieldEncounters.roll_for_fight` → `roll_encounter` → `pick_enemy`, then the
    repel check (`BattleController.is_repelled`). Each player's encounters come from their own world and their own
    RNG.
 2. If multiplayer is on and another connected player is on the same map within **N tiles** (proposed N = 8, about half
@@ -291,9 +291,9 @@ the rules are already pure functions and can be reused as they are:
 | `battle_controller.py`: `start_fight` | the flee and first-strike rolls with the "attacked before ... was ready" line and the low-HP palette |
 | `battle_controller.py`: `handle_battle_prompts` | input reading, the turn flow (the `no_op` flag decides whether the enemy moves), and the command window |
 | `battle_controller.py`: `hero_attack` | the dodge roll and HP change with sounds, `Drawer.flash_enemy` and text |
-| `battle_controller.py`: `enemy_move`, `enemy_turn`, `execute_enemy_pattern`, `enemy_attack`, `execute_enemy_attack` | the enemy AI, its spell rolls and effects with lines, sounds, `Drawer.flash_enemy_spell` and `Game.receive_damage` |
+| `battle_controller.py`: `enemy_move`, `enemy_turn`, `execute_enemy_pattern`, `enemy_attack`, `execute_enemy_attack` | the enemy AI, its spell rolls and effects with lines, sounds, `Drawer.flash_enemy_spell` and `HeroDamage.receive_damage` |
 | `battle_controller.py`: `sleeping_player_turn`, `enemy_run_away` | wake and flee results with lines, sounds and button waits |
-| `game.py`: `Game.receive_damage` | the hero's HP change with the hit sound, screen shake, window palette and the damage line |
+| `hero_damage.py`: `HeroDamage.receive_damage` | the hero's HP change with the hit sound, screen shake, window palette and the damage line |
 | `menu.py`: `CommandMenu.cast_damage_spell`, `sleep`, `stopspell`, `battle_spell_resisted`, `use_item_in_battle`, `herb` and the other battle items | the hero's spell and item effects and their rolls, inside the menu class, with text and flashes; they end turns by setting `current_battle.no_op` |
 
 ### Target split
@@ -425,7 +425,7 @@ Even with a handful of players this is a few kilobytes a second at most.
 | Case | Behavior |
 |---|---|
 | **A player disconnects mid-battle** | For the others, the hero stays in for the rest of the fight and does FIGHT every round (as on a timer timeout), so the fight doesn't suddenly get harder or easier. On the disconnected player's side, the client says the connection was lost and ends the fight as an escape, keeping the HP, MP and items from the last round it received, with no reward. If nobody is left connected, the server drops the battle. |
-| **A player dies in a group fight** | Their hero is down until the end of the fight: no commands, the enemy doesn't target them, their pop-up window turns to the low-HP color with 0 HP. If the party wins, the downed hero gets no EXP or gold. Once the fight ends, their game runs the normal death rules in their own world (`Game.handle_death`: the death music, "Thou art dead.", back to King Lorik with half the gold). If everyone is down, it's a defeat for all. |
+| **A player dies in a group fight** | Their hero is down until the end of the fight: no commands, the enemy doesn't target them, their pop-up window turns to the low-HP color with 0 HP. If the party wins, the downed hero gets no EXP or gold. Once the fight ends, their game runs the normal death rules in their own world (`HeroDeath.handle_death`: the death music, "Thou art dead.", back to King Lorik with half the gold). If everyone is down, it's a defeat for all. |
 | **Different levels** | No scaling by level for now. The enemy comes from the starter's encounter zone, so a strong helper makes an easy fight easier and a weak helper is in danger; both choose to join. The HP multiplier is per hero, not per level. Revisit after playtesting. |
 | **Running away** | RUN is per hero: the hero who runs uses the NES run check (`can_run_away` with their own agility; always works against a sleeping enemy) and, on success, leaves the fight with no reward; their client returns to the map as after a normal run. The others keep fighting. The enemy's HP is not scaled back down. When the last hero runs, the fight is over. |
 | **Scripted, guardian and Dragonlord fights** | Single-player only: `BattleController.start_scripted_battle` (the Golem, the Green Dragon, the Axe Knight, the Dragonlord, `Dragonlord 2`) never sends `battle_started`, so nobody can join. These fights carry story flags (`record_victory`), the run-back rules (`step_back_after_running`) and the ending. |
