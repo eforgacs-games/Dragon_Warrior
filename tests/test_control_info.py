@@ -3,7 +3,7 @@ from unittest import TestCase
 import pygame
 
 from data.text.intro_lookup_table import ControlInfo
-from src.languages import LANGUAGE_NAMES
+from src.languages import LANGUAGE_NAMES, language_named
 from src.config.test_config import test_config
 from src.directories import Directories
 from src.text import DialogBoxWrapper, WRAP_LENGTH, set_font_by_ascii_chars
@@ -14,9 +14,10 @@ MAX_ROWS_PER_PAGE = 5
 DEBUG_KEY_LINES = ("F5: Warp", "F6: Give item/gold/level", "F7: Load checkpoint")
 
 
-def wrapped_rows(page: str) -> list[str]:
+def wrapped_rows(page: str, language: str = 'English') -> list[str]:
     """The rows draw_text puts on screen for one page."""
-    return DialogBoxWrapper(width=WRAP_LENGTH, break_long_words=False).wrap(page)
+    return DialogBoxWrapper(width=WRAP_LENGTH, break_long_words=False,
+                            breaks_anywhere=language_named(language).breaks_anywhere).wrap(page)
 
 
 class TestControlInfoHelpPages(TestCase):
@@ -56,7 +57,7 @@ class TestControlInfoHelpPages(TestCase):
         directories = Directories(test_config)
         for language in LANGUAGE_NAMES:
             for page in self.help_pages(debug_keys=True, language=language):
-                rows = wrapped_rows(page)
+                rows = wrapped_rows(page, language)
                 with self.subTest(language=language, page=page):
                     self.assertLessEqual(len(rows), MAX_ROWS_PER_PAGE)
                     current_font = set_font_by_ascii_chars(rows, 16, None, directories)

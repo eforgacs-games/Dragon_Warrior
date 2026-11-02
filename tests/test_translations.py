@@ -19,7 +19,7 @@ from data.text.locales import catalog_tools
 from src import catalog
 from src.common import set_gettext_language
 from src.config.test_config import test_config
-from src.languages import CATALOG_LANGUAGES
+from src.languages import CATALOG_LANGUAGES, language_named
 from src.text import WRAP_LENGTH, DialogBoxWrapper
 
 # Translations that may leave a placeholder out on purpose (the Korean line reads better without the hero's name)
@@ -117,8 +117,10 @@ class TestCatalogs(TestCase):
         # draw_text wraps at spaces only (break_long_words=False), so a run of text with no space in it longer than
         # the dialog box would run past its edge. A Hangul syllable or a kana or kanji is one NES tile wide in
         # Unifont, like an English letter in the NES font.
-        wrapper = DialogBoxWrapper(width=WRAP_LENGTH, break_long_words=False)
+        # A Chinese line also breaks between characters (Language.breaks_anywhere).
         for name, translations in self.translations.items():
+            wrapper = DialogBoxWrapper(width=WRAP_LENGTH, break_long_words=False,
+                                       breaks_anywhere=language_named(name).breaks_anywhere)
             too_long = [line for msgstr in translations.values() for line in wrapper.wrap(msgstr)
                         if len(line) > WRAP_LENGTH]
             with self.subTest(language=name):

@@ -171,7 +171,7 @@ class TestMessageLog(TranslatedTestCase):
         for language, translate in self.languages():
             entries = [LogEntry(translate("I am Gwaelin, daughter of Lorik.") * 3, 'PRINCESS_GWAELIN'),
                        LogEntry("Thou hast found the Silver Harp. " * 3, 'WISE_MAN')]
-            lines = log_lines(entries, translate)
+            lines = log_lines(entries, translate, language.breaks_anywhere)
             self.assertTrue(lines[0].startswith(translate('GWAELIN')))
             for layout in (log_layout(lines, 0, translate("UP/DOWN:SCROLL  B:CLOSE")), log_layout([], 0)):
                 for text in (layout.title, *layout.texts):
