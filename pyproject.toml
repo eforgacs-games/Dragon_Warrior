@@ -38,6 +38,10 @@ addopts = "--dist loadscope"
 # hanging CI. Mark one that legitimately needs longer with @pytest.mark.timeout(N)
 timeout = 60
 
+[tool.coverage.run]
+# coverage.py's sys.monitoring tracer (Python 3.12+), much cheaper than its default; CI and local --cov runs both use it
+core = "sysmon"
+
 [tool.mypy]
 python_version = "3.13"
 files = ["src", "tools"]

@@ -203,6 +203,11 @@ class TestTables(TestCase):
         self.assertEqual(29, get_level_by_experience(65534))
         self.assertEqual(30, get_level_by_experience(65535))
 
+    def test_get_level_by_experience_below_every_entry_is_level_1(self):
+        """Experience below level 1's entry (0) can't happen in play, since the NES keeps it in an unsigned 16-bit
+        word; the loop then finds no entry and the hero is still level 1, never level 0."""
+        self.assertEqual(1, get_level_by_experience(-1))
+
 
 class TestNameValues(TestCase):
 

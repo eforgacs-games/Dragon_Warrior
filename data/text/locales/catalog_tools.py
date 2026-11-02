@@ -2,11 +2,16 @@
 
     uv run --frozen python data/text/locales/catalog_tools.py missing   # list untranslated messages
     uv run --frozen python data/text/locales/catalog_tools.py add       # append them to the .po with empty msgstr
+    uv run --frozen python data/text/locales/catalog_tools.py references  # rewrite the #: source references
 
 Messages are found the way xgettext would find them: the first argument of every _("...") or self._("...") call in
 src/ and data/. Some text is translated through a variable (_(item_name), self._(enemy.name)), so item, spell and
 enemy names are added from the game's own tables. tests/test_translations.py fails when any of these has no Korean
 translation.
+
+The #: comment above each entry names the files its text comes from, without line numbers (like xgettext
+--add-location=file): line numbers would go stale with every edit to those files. The references command rewrites them
+in every catalog here and touches nothing else; tests/test_translations.py fails when they're out of date.
 
 There's no compile step: the game reads base.po and compiles it in memory when it runs (src/catalog.py).
 """
@@ -22,6 +27,8 @@ from src import catalog  # noqa: E402
 
 LOCALES_DIR = Path(__file__).resolve().parent
 KOREAN_PO = LOCALES_DIR / 'ko' / 'LC_MESSAGES' / 'base.po'
+# The catalogs whose #: references are kept up to date: each language's .po, and the template
+CATALOGS = (*sorted(LOCALES_DIR.glob('*/LC_MESSAGES/*.po')), LOCALES_DIR / 'base.pot')
 SOURCE_DIRS = ('src', 'data')
 
 # Enemy spells that are never named on screen (the breath attacks print their own line)
@@ -54,7 +61,7 @@ def gettext_calls(root: Path = ROOT):
         tree = ast.parse(path.read_text(encoding='utf-8'), str(path))
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and node.args and _is_gettext_call(node):
-                yield f"{path.relative_to(root)}:{node.lineno}", node.args[0]
+                yield f"{path.relative_to(root).as_posix()}:{node.lineno}", node.args[0]
 
 
 def extract_literal_messages(root: Path = ROOT) -> dict[str, list[str]]:
@@ -137,6 +144,13 @@ def extract_messages(root: Path = ROOT) -> dict[str, list[str]]:
     return messages
 
 
+def reference_files(messages: dict[str, list[str]] | None = None) -> dict[str, list[str]]:
+    """msgid -> the files its text comes from, sorted, without line numbers: what its #: references should be."""
+    messages = extract_messages() if messages is None else messages
+    return {msgid: sorted({location.partition(':')[0] for location in locations})
+            for msgid, locations in messages.items()}
+
+
 # .po reading and writing
 
 def read_po(path: Path = KOREAN_PO) -> dict[str, str]:
@@ -168,13 +182,64 @@ def missing_translations(catalog: dict[str, str] | None = None, root: Path = ROO
 def add_missing_entries(path: Path = KOREAN_PO) -> list[str]:
     """Append an empty entry for every extracted message the .po doesn't have yet. Returns the msgids added."""
     catalog = read_po(path)
-    new = {msgid: locations for msgid, locations in extract_messages().items()
+    new = {msgid: files for msgid, files in reference_files().items()
            if msgid not in catalog and msgid not in ENGLISH_ONLY}
     if new:
         text = path.read_text(encoding='utf-8').rstrip('\n') + '\n'
-        text += ''.join('\n' + po_entry(msgid, '', locations[:3]) for msgid, locations in new.items())
+        text += ''.join('\n' + po_entry(msgid, '', files) for msgid, files in new.items())
         path.write_text(text, encoding='utf-8')
     return list(new)
+
+
+def _msgid_starting_at(lines: list[str], index: int) -> str:
+    """The msgid of the entry whose msgid line is lines[index], joined with the quoted lines that continue it."""
+    msgid: str = ast.literal_eval(lines[index].removeprefix('msgid ').strip())
+    for line in lines[index + 1:]:
+        if not line.startswith('"'):
+            break
+        msgid += ast.literal_eval(line.strip())
+    return msgid
+
+
+def _with_references(comments: list[str], files: list[str]) -> list[str]:
+    """An entry's comment lines with its #: lines replaced by one per file. As gettext orders them, references go
+    after translator (#) and extracted (#.) comments and before flags (#,) and previous msgids (#|)."""
+    kept = [line for line in comments if not line.startswith('#:')]
+    position = next((i for i, line in enumerate(kept) if line.startswith(('#,', '#|'))), len(kept))
+    return kept[:position] + [f"#: {file}\n" for file in files] + kept[position:]
+
+
+def with_references(po_text: str, references: dict[str, list[str]]) -> str:
+    """The catalog with each entry's #: lines set to references[msgid]: none for the header, for text the game no
+    longer has, or for a comment block that isn't followed by an entry (a commented-out entry, say). Every other line
+    is left exactly as it was."""
+    lines = po_text.splitlines(keepends=True)
+    output: list[str] = []
+    comments: list[str] = []
+    for index, line in enumerate(lines):
+        if line.startswith('#'):
+            comments.append(line)
+            continue
+        files = []
+        if line.startswith('msgid '):
+            msgid = _msgid_starting_at(lines, index)
+            files = references.get(msgid, []) if msgid else []
+        output += _with_references(comments, files) + [line]
+        comments = []
+    return ''.join(output + _with_references(comments, []))
+
+
+def update_references(paths: tuple[Path, ...] = CATALOGS) -> list[Path]:
+    """Rewrite the #: references in each catalog from the game's source. Returns the catalogs that changed."""
+    references = reference_files()
+    changed = []
+    for path in paths:
+        text = path.read_text(encoding='utf-8')
+        updated = with_references(text, references)
+        if updated != text:
+            path.write_text(updated, encoding='utf-8')
+            changed.append(path)
+    return changed
 
 
 def main(argv: list[str]) -> int:
@@ -188,6 +253,12 @@ def main(argv: list[str]) -> int:
     if command == 'add':
         added = add_missing_entries()
         print(f"Added {len(added)} empty entr{'y' if len(added) == 1 else 'ies'} to {KOREAN_PO.relative_to(ROOT)}")
+        return 0
+    if command == 'references':
+        changed = update_references()
+        print(f"Updated the #: references in {len(changed)} catalog(s)")
+        for path in changed:
+            print(f"  {path.relative_to(ROOT)}")
         return 0
     print(__doc__)
     return 2

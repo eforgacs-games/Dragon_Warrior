@@ -144,7 +144,6 @@ jobs:
       run: uv run mypy
     - name: Test with pytest
       env:
-        COVERAGE_CORE: sysmon  # coverage.py's sys.monitoring tracer (Python 3.12+), much cheaper than its default
         REQUIRE_LIBGME: "1"  # the tests that need libgme fail instead of skipping (tests/helpers.py requires_libgme)
       # -n auto: pytest-xdist runs the tests on every CPU (4 on GitHub's runners); --dist loadscope and the 60 s
       # per-test timeout (pytest-timeout) are in pyproject.toml.
