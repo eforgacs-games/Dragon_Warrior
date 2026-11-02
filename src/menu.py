@@ -19,6 +19,7 @@ from src.command_window import WND_ABORT, CommandWindow
 from src.cursor import IN_A, DialogArrowBlink, draw_cursor_tile
 from src.waiting import NES_FPS, is_any_key_held, wait, wait_until
 from src.directories import Directories
+from src.languages import language_named
 from src.items import DEATH_NECKLACE_GOLD, GOLD, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
     NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, bag_is_full, hidden_items, inventory_list, roll_treasure_gold, treasure
 from src.coordinates import Cell
@@ -363,9 +364,7 @@ class CommandMenu:
                 line()
 
     def add_dialog_quotes(self, line: str) -> str:
-        if self.game.game_state.config['LANGUAGE'] == 'Korean' and not line.isascii():
-            return f"'{line}'"
-        return f"`{line}’"
+        return language_named(self.game.game_state.config['LANGUAGE']).quote(line)
 
     def show_text_line_in_dialog_box(self, line, add_quotes, disable_sound, hide_arrow, letter_by_letter, skip_text,
                                      temp_text_start, tile_size, advance_keys: Collection[int] | None = None):

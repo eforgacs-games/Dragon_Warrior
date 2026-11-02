@@ -22,6 +22,7 @@ from src.common import BLACK, WHITE
 from src.constants import DRAGONLORD_DEFEATED_DESTINATION, ENDING_GWAELIN_BESIDE_KING, ENDING_GWAELIN_STAIRS, \
     ENDING_TRIGGER_COORDINATES
 from src.direction import Direction
+from src.languages import language_named
 from src.maps import map_lookup
 from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE, SEARCHED_FOR_GWAELIN
@@ -149,9 +150,7 @@ class Ending:
 
     def quote(self, text: str) -> str:
         """Quote marks the way CommandMenu adds them, for lines that are only partly quoted."""
-        if self.config['LANGUAGE'] == 'Korean' and not text.isascii():
-            return f"'{text}'"
-        return f"`{text}’"
+        return language_named(self.config['LANGUAGE']).quote(text)
 
     def say(self, line: str, quoted: bool = True, wait_for_key: bool = True, hide_arrow: bool = False) -> None:
         """One message. It waits with the arrow for A or B (TXT_WAIT, DoWait), or with hide_arrow for any button, the

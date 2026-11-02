@@ -17,6 +17,7 @@ import json
 import tempfile
 from os.path import join
 
+from src.languages import LANGUAGES
 from src.paths import data_path
 
 CHECKPOINTS_DIR = data_path('checkpoints')
@@ -36,13 +37,15 @@ CHECKPOINT_NAMES = (
 
 FACING_KEY = 'Facing'
 
-# The hero's name in every checkpoint, and what it becomes in each other language (config LANGUAGE). Not Erdrick:
+# The hero's name in every checkpoint, and what it becomes in each other language (Language.checkpoint_hero_name,
+# src/languages.py). Not Erdrick:
 # that's the hero's ancestor (로토 in Korean). The names are picked for the strongest stats, so playtests go quickly:
 # NES LoadStats sums the first four name tiles, and a sum ending in $D cuts agility and MP but keeps full strength and
 # HP, with the largest bonus (+3). "Arthur" sums to $6D. 검객 (swordsman) sums to $5D with this game's Korean mapping
 # (low byte of each code point); 용사 would sum to $15, which cuts agility and MP for only +1.
 CHECKPOINT_HERO_NAME = 'Arthur'
-LOCALIZED_HERO_NAMES = {'Korean': '검객'}
+LOCALIZED_HERO_NAMES = {language.name: language.checkpoint_hero_name for language in LANGUAGES
+                        if language.checkpoint_hero_name}
 
 # Where saves made in a game started from a checkpoint go, so the real save slots stay as they are
 CHECKPOINT_SAVE_DIR = join(tempfile.gettempdir(), 'dragon_warrior_checkpoint_saves')

@@ -11,7 +11,7 @@ from src.color import WHITE, BLACK
 from src.controls import KeySet
 from src.direction import Direction
 from src.directories import Directories
-from src.korean_particles import KoreanText
+from src.languages import language_named
 
 
 def find_file(name, path):
@@ -187,15 +187,18 @@ def singular_or_plural(count: int, singular: str, plural: str) -> str:
 
 
 def set_gettext_language(language):
-    """The gettext function for the language; Korean also installs it as the builtin _. The Korean catalog is compiled
-    from its .po once per run (src/catalog.py), however often this is called."""
-    if language == 'Korean':
-        ko = load_translations('ko')
-        ko.install()
+    """The gettext function for the language (a name, config LANGUAGE); a translated language also installs its
+    catalog as the builtin _. A catalog is compiled from its .po once per run (src/catalog.py), however often this is
+    called."""
+    language = language_named(language)
+    if language.locale_code is None:
+        return gettext.gettext
+    translations = load_translations(language.locale_code)
+    translations.install()
+    text_type = language.text_type
 
-        def _(message):
-            # KoreanText: .format() makes a particle after a placeholder agree with the value (src/korean_particles.py)
-            return KoreanText(ko.gettext(message))
-    else:
-        _ = gettext.gettext
+    def _(message):
+        # Korean's KoreanText: .format() makes a particle after a placeholder agree with the value
+        # (src/korean_particles.py)
+        return text_type(translations.gettext(message))
     return _
