@@ -645,7 +645,7 @@ class KeySet(Sequence[int]):
         return len(self.keys())
 
     @override
-    def __getitem__(self, index):  # type: ignore[override]
+    def __getitem__(self, index):
         return self.keys()[index]
 
     def __add__(self, other: Union['KeySet', Iterable[int]]) -> 'KeySet':
