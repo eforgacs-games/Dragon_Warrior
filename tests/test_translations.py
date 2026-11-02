@@ -7,6 +7,7 @@ compile step: the game compiles base.po in memory when it runs (src/catalog.py).
 English (a dev-only debug key, say) goes in ENGLISH_ONLY in catalog_tools.py, with the reason.
 """
 import builtins
+import difflib
 import string
 import tempfile
 from pathlib import Path
@@ -93,6 +94,50 @@ class TestKoreanCatalog(TestCase):
         too_long = [line for msgstr in self.translations.values() for line in wrapper.wrap(msgstr)
                     if len(line) > WRAP_LENGTH]
         self.assertFalse(too_long, too_long)
+
+
+class TestSourceReferences(TestCase):
+    """The #: comments name the files each message comes from (catalog_tools.py references rewrites them)."""
+
+    def test_references_are_up_to_date(self):
+        references = catalog_tools.reference_files()
+        for path in catalog_tools.CATALOGS:
+            with self.subTest(catalog=path.name):
+                text = path.read_text(encoding='utf-8')
+                diff = difflib.unified_diff(text.splitlines(), catalog_tools.with_references(text, references).splitlines(),
+                                            str(path.relative_to(catalog_tools.ROOT)), 'expected', n=1, lineterm='')
+                stale = '\n'.join(diff)
+                self.assertFalse(stale, "\n#: references are out of date; run\n"
+                                 "    uv run --frozen python data/text/locales/catalog_tools.py references\n" + stale)
+
+    def test_referenced_files_exist(self):
+        for path in catalog_tools.CATALOGS:
+            for line in path.read_text(encoding='utf-8').splitlines():
+                if line.startswith('#:'):
+                    for reference in line.removeprefix('#:').split():
+                        with self.subTest(catalog=path.name, reference=reference):
+                            self.assertTrue((catalog_tools.ROOT / reference.partition(':')[0]).is_file())
+
+    def test_only_reference_lines_change(self):
+        po_text = (
+            'msgid ""\nmsgstr "Content-Type: text/plain; charset=UTF-8\\n"\n\n'
+            '# translator comment\n#. extracted comment\n#: .\\old_file.py:30\n#, fuzzy\nmsgid ""\n"Two\\n"\n"lines"\n'
+            'msgstr "두\\n줄"\n'
+            '#: src/gone.py:3\nmsgid "Gone"\nmsgstr "없음"\n\n'
+            '# commented out\n#: ..\\old.py:9\n#msgid "Old"\n#msgstr "옛"\n\n'
+            'msgid "New"\nmsgstr ""\n'
+        )
+        expected = (
+            'msgid ""\nmsgstr "Content-Type: text/plain; charset=UTF-8\\n"\n\n'
+            '# translator comment\n#. extracted comment\n#: src/a.py\n#: src/b.py\n#, fuzzy\nmsgid ""\n"Two\\n"\n'
+            '"lines"\nmsgstr "두\\n줄"\n'
+            'msgid "Gone"\nmsgstr "없음"\n\n'
+            '# commented out\n#msgid "Old"\n#msgstr "옛"\n\n'
+            '#: data/c.py\nmsgid "New"\nmsgstr ""\n'
+        )
+        references = {'': ['src/header.py'], 'Two\nlines': ['src/a.py', 'src/b.py'], 'New': ['data/c.py']}
+        self.assertEqual(expected, catalog_tools.with_references(po_text, references))
+        self.assertEqual(expected, catalog_tools.with_references(expected, references))
 
 
 class TestRuntimeCatalog(TestCase):
