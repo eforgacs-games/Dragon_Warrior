@@ -672,6 +672,7 @@ class DialogLookup:
 
     def remove_curse(self):
         """NES ChkCursedDialog: the Brecconary wizard (dialog $67, NES (24, 10)) lifts any curse, free of charge."""
+        lines: tuple[str | Callable, ...]
         if not self.player.is_cursed:
             lines = (self._("If thou art cursed, come again."),)
         else:
