@@ -92,7 +92,7 @@ class MapHotkeys:
         """Open the first of MAP_REQUESTS that is waiting, if one is (resolve_pending_freezes, once everyone is on a
         tile). Returns whether one was. The play time doesn't count while it's up."""
         for map_request in MAP_REQUESTS:
-            if getattr(self.game, map_request.flag, False) is True:
+            if getattr(self.game, map_request.flag) is True:
                 setattr(self.game, map_request.flag, False)
                 getattr(self, map_request.opener)()
                 self.game.play_stats.stop_clock()

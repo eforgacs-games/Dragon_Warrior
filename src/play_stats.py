@@ -9,10 +9,11 @@ They're always counted, whatever the STATS PAGE option says (it only decides whe
 on shows everything done so far. Each is counted where it happens, in one line:
 
 - play time: Game.run_map_frame ticks the clock (tick) every map frame. It's real time, the same at any game speed
-  (keys 1 to 5), and it counts what happens between two map frames too, so fights and dialogs are play. It doesn't
-  count while the game is paused (START), nor while one of the screens the map's keys open is up (the options
-  overlay, the dungeon map, the message log, the stats page: MapHotkeys.open_requested stops the clock), nor on the
-  title screen;
+  (keys 1 to 5), at most MAX_COUNTED_FRAME_MS a tick, so a machine left asleep, a debugger's pause or a window being
+  dragged doesn't add hours. A fight or a dialog runs inside one map frame, so it adds at most that much too: the play
+  time is mostly time on the map. It doesn't count while the game is paused (START), nor while one of the screens the
+  map's keys open is up (the options overlay, the dungeon map, the message log, the stats page:
+  MapHotkeys.open_requested stops the clock), nor on the title screen;
 - steps: Game.count_step, every step that ends on a new block;
 - fights won, fled and lost: BattleController.fight_enemy. Fled is the hero running away; an enemy that runs away is
   none of the three. A fight won counts its enemy as a monster defeated, by name; the Dragonlord's two forms are one
@@ -35,6 +36,8 @@ MONSTERS_DEFEATED = 'monsters_defeated'
 SAME_MONSTER = {'Dragonlord 2': 'Dragonlord'}
 
 MS_PER_SECOND = 1000
+# The most real time one tick counts: a map frame is 1/60 s, so anything longer is the game not running
+MAX_COUNTED_FRAME_MS = 1000
 SECONDS_PER_MINUTE = 60
 MINUTES_PER_HOUR = 60
 
@@ -56,11 +59,11 @@ class PlayStats:
     clock_at: int | None = field(default=None, compare=False, repr=False)
 
     def tick(self, counting: bool = True, now: int | None = None) -> None:
-        """Count the real time since the last tick as play, unless not ``counting`` (the game is paused) or the clock
-        was stopped; the clock runs on from now either way."""
+        """Count the real time since the last tick as play, up to MAX_COUNTED_FRAME_MS, unless not ``counting`` (the
+        game is paused) or the clock was stopped; the clock runs on from now either way."""
         now = get_ticks() if now is None else now
         if counting and self.clock_at is not None:
-            self.play_time_ms += max(0, now - self.clock_at)
+            self.play_time_ms += min(max(0, now - self.clock_at), MAX_COUNTED_FRAME_MS)
         self.clock_at = now
 
     def stop_clock(self) -> None:

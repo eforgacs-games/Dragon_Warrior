@@ -21,7 +21,7 @@ from src.controls import reset_controls
 from src.game_options import DEFAULT_OPTIONS, STATS_PAGE, options_from_save, options_to_save
 from src.message_log import LINE_WIDTH, VISIBLE_LINES, log_layout, text_width
 from src.options_overlay import OPTION_ROWS, PRESET_MODERN, PRESET_NES, preset_values
-from src.play_stats import SAVE_KEY, PlayStats, count_or_zero, play_time_text
+from src.play_stats import MAX_COUNTED_FRAME_MS, SAVE_KEY, PlayStats, count_or_zero, play_time_text
 from src.save_file import SaveFile
 from src.save_state import decode_snapshot, take_snapshot
 from src.stats_screen import STATS_TITLE, StatsScreen, aligned, monsters_in_order, screen_texts, stat_lines
@@ -112,6 +112,15 @@ class TestThePlayTime(TestCase):
             stats.tick()
             stats.tick()
         self.assertEqual(500, stats.play_time_ms)
+
+    def test_a_long_gap_counts_at_most_one_frame_cap(self):
+        # a machine asleep, a debugger's pause or a window being dragged between two map frames
+        stats = PlayStats()
+        stats.tick(now=0)
+        stats.tick(now=3 * 60 * 60 * 1000)
+        self.assertEqual(MAX_COUNTED_FRAME_MS, stats.play_time_ms)
+        stats.tick(now=3 * 60 * 60 * 1000 + MAX_COUNTED_FRAME_MS - 1)
+        self.assertEqual(2 * MAX_COUNTED_FRAME_MS - 1, stats.play_time_ms)
 
     def test_the_clock_never_runs_backwards(self):
         stats = PlayStats()

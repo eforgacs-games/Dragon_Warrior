@@ -161,6 +161,7 @@ class Game:
         self.options_requested = False
         self.dungeon_map_requested = False
         self.message_log_requested = False
+        self.play_stats_requested = False
         self.auto_grind_requested = False
         # ('save' or 'load', slot), until everyone is on a tile; then it's due, and the end of that frame carries it out
         # (src/save_state.py run_due_state_request)
