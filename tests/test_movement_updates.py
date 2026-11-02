@@ -75,7 +75,7 @@ class TestMovementUpdates(TestCase):
         game_state.radiant_timer, game_state.light_diameter = 1, 3
         at_roll = []
         with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.step_triggers.count_step), \
-                patch.object(self.game, 'handle_battles',
+                patch.object(self.game.field_encounters, 'handle_battles',
                              side_effect=lambda: at_roll.append((game_state.radiant_timer, game_state.light_diameter))), \
                 patch.object(self.game, '_handle_map_updates'), patch.object(self.game, '_handle_post_move_checks'):
             self.game.map_frame()

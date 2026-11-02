@@ -31,7 +31,7 @@ from src.directories import Directories
 from src.soundtrack import migrate_legacy_music_config
 from src.drawer import Drawer
 from src.dungeon_map import DungeonMap
-from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
+from src.field_encounters import FieldEncounters
 from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
 from src.gamepad import connect_gamepad
@@ -42,12 +42,11 @@ from src.map_layouts import MapLayouts
 from src.maps import DragonWarriorMap, map_lookup
 from src.map_hotkeys import MapHotkeys
 from src.menu import CommandMenu
-from src.movement import HILL_PAUSE_FRAMES, RUN_SPEED_FACTOR, STEP_SYNC_FRAMES, MovementController
+from src.movement import RUN_SPEED_FACTOR, STEP_SYNC_FRAMES, MovementController
 from src.message_log import MessageLog
 from src.music_player import MusicPlayer
 from src.npc_movement import step
 from src.options_overlay import apply_log_options
-from src.game_options import ENCOUNTERS_HALF, ENCOUNTERS_OFF
 from src.rewind import Rewind
 from src.save_file import SaveFile
 from src.save_state import run_due_state_request
@@ -55,7 +54,7 @@ from src.settings import SettingsStore, put_in_config
 from src.paths import data_path
 from src.player.player import Player
 from src.sound import Sound
-from src.battle_controller import BattleController, BattleOutcome
+from src.battle_controller import BattleController
 from src.ending import Ending
 from src.step_triggers import StepTriggers
 from src.story_flags import StoryFlags
@@ -170,6 +169,7 @@ class Game:
         self.battle_ctrl = BattleController(self)
         self.step_triggers = StepTriggers(self)
         self.hero_damage = HeroDamage(self)
+        self.field_encounters = FieldEncounters(self)
         self.auto_grind = AutoGrind(self)
         self.ending = Ending(self)
         self.map_mgr = MapManager(self)
@@ -395,7 +395,7 @@ class Game:
             event.pump()
             return
         self.movement.handle_player_movement()
-        self.handle_battles()
+        self.field_encounters.handle_battles()
         if not self.movement.hill_pause_frames:
             self.step_triggers.tick_repel_timer_after_step()
         if not self.player.is_moving:
@@ -525,68 +525,6 @@ class Game:
     def leave_tantegel(self, direction: int | None = None):
         map_name, coordinates = TANTEGEL_OVERWORLD_EXIT
         self.change_map(map_lookup[map_name](self.config), destination_coordinates=coordinates, direction=direction)
-
-    def handle_battles(self):
-        if self.battle_ctrl.pending_scripted_battle:
-            # A fixed fight: the Dragonlord or the Silver Harp, asked for by a dialog that has now closed, or a guardian
-            # the hero has just stepped up to.
-            self.battle_ctrl.run_pending_scripted_battle()
-            # NES: InitFight takes the place of CheckBlockDmg, so this step can't also bring a random fight
-            self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
-            return
-        # NES ChkOtherBlocks: once the Dragonlord is dead, no more random fights
-        if self.story_flags.dragonlord_defeated:
-            return
-        if self.tiles_moved_since_spawn > 0 and self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
-            self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
-            if self.step_triggers.stepped_off_the_map():
-                return  # NES ChkSpecialLoc -> CheckMapExit: handle_warps leaves the map, with no damage or fight
-            # NES CheckBlockDmg runs once per step, on the block the player has just stepped onto. The player's
-            # column/row and current_tile aren't updated until later in the frame, so read them from the sprite.
-            column, row = self.player.rect.x // self.tile_size, self.player.rect.y // self.tile_size
-            tile = get_tile_id_by_coordinates(column, row, self.current_map)
-            # NES CheckBlockDmg: swamp and force field damage come before the fight roll, and a hero they kill
-            # doesn't fight (handle_death, later this frame, shows the death on the map)
-            self.hero_damage.handle_environment_damage(tile)
-            if self.player.current_hp <= 0:
-                return
-            if tile == 'HILLS':
-                # NES ChkBlkSand: the fight roll waits for the hill's pause (hill_pause_frame)
-                self.movement.hill_pause_frames = HILL_PAUSE_FRAMES
-                return
-            self.roll_for_fight(column, row, tile)
-
-    def roll_for_fight(self, column: int, row: int, tile: str | None) -> None:
-        """NES CheckBlockDmg's fight roll for the block the hero has just stepped onto, and the fight if it starts."""
-        group = encounter_group(self.current_map.identifier, column, row)
-        if group is None:
-            return
-        self.last_zone = group
-        enemies_in_current_zone = ENEMY_GROUPS[group] if self.game_state.config["FORCE_BATTLE"] else \
-            self.thin_encounters(roll_encounter(self.current_map.identifier, tile, column, row))
-        if enemies_in_current_zone is not None and not self.game_state.config["NO_BATTLES"]:
-            if self.battle_ctrl.run_battle(enemies_in_current_zone) != BattleOutcome.REPELLED:
-                # NES: after the fight the hero is still on this block; stairs wait for STAIRS (or a step off them)
-                self.map_mgr.stay_on_stairs(row, column)
-                self.auto_grind.after_fight()
-        self.battle_ctrl.battle_menu_row = 0
-        self.battle_ctrl.battle_menu_column = 0
-
-    def thin_encounters(self, enemies: tuple[str, ...] | None) -> tuple[str, ...] | None:
-        """The ENCOUNTERS option (not NES) on a random fight the NES's roll has just started: NES keeps it, OFF skips
-        it, HALF skips every other one. The roll itself, the random numbers it takes and the enemy it picks are the
-        NES's, so the fights that do start are the ones the NES would start; guardians, the Dragonlord and every other
-        scripted fight don't come through here."""
-        if enemies is None:
-            return None
-        setting = self.game_state.config.get('ENCOUNTERS')
-        if setting == ENCOUNTERS_OFF:
-            return None
-        if setting == ENCOUNTERS_HALF:
-            skipped, self.skip_next_encounter = self.skip_next_encounter, not self.skip_next_encounter
-            if skipped:
-                return None
-        return enemies
 
     def set_player_images_by_equipment(self) -> None:
         """Give the hero the sprite sheet for what he carries: the princess, or his weapon and shield."""

@@ -478,7 +478,7 @@ class TestGame(TestCase):
 
         self.game.repel_timer = 255
         with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.step_triggers.count_step), \
-                patch.object(self.game, 'handle_battles', side_effect=roll), \
+                patch.object(self.game.field_encounters, 'handle_battles', side_effect=roll), \
                 patch.object(self.game, '_handle_map_updates'), patch.object(self.game, '_handle_post_move_checks'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box',
                              side_effect=lambda text, **_: messages.append((len(rolls), text))):

@@ -150,7 +150,7 @@ class TestMapExits(StepTestCase):
         with patch.dict(test_config, FORCE_BATTLE=True), \
                 patch.object(self.game.battle_ctrl, 'run_battle') as run_battle, \
                 patch.object(self.game.hero_damage, 'damage_step') as damage_step:
-            self.game.handle_battles()
+            self.game.field_encounters.handle_battles()
         run_battle.assert_not_called()
         damage_step.assert_not_called()
 

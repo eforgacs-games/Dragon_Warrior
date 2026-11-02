@@ -70,8 +70,9 @@ class Rewind:
         self.fight_candidate = take_snapshot(self.game) if self.enabled and self.fight_may_start() else None
 
     def fight_may_start(self) -> bool:
-        """Whether this map frame may start a fight: a scripted fight is waiting (Game.handle_battles), a hill's pause
-        ends (MovementController.hill_pause_frame) or the hero's step ends (Game.handle_battles, the guardians)."""
+        """Whether this map frame may start a fight: a scripted fight is waiting (FieldEncounters.handle_battles), a
+        hill's pause ends (MovementController.hill_pause_frame) or the hero's step ends (FieldEncounters.handle_battles,
+        the guardians)."""
         game = self.game
         if game.battle_ctrl.pending_scripted_battle is not None or game.movement.hill_pause_frames == 1:
             return True

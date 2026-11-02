@@ -58,11 +58,11 @@ class TestEncounters(GameTestCase):
     def fights_in(self, rolls):
         """How many fights start from these steps' rolls (None: no fight, otherwise the rolled enemies)."""
         self.game.change_map(map_lookup['Alefgard'](self.config), destination_coordinates=(50, 44))
-        with patch('src.game.roll_encounter', side_effect=rolls), \
+        with patch('src.field_encounters.roll_encounter', side_effect=rolls), \
                 patch.object(self.game.battle_ctrl, 'run_battle') as run_battle, \
                 patch.object(self.game.map_mgr, 'stay_on_stairs'):
             for _ in rolls:
-                self.game.roll_for_fight(47, 43, 'GRASS')
+                self.game.field_encounters.roll_for_fight(47, 43, 'GRASS')
         return [call.args[0] for call in run_battle.call_args_list]
 
     def test_nes_fights_every_roll(self):
@@ -82,16 +82,16 @@ class TestEncounters(GameTestCase):
         for setting in (ENCOUNTERS_HALF, ENCOUNTERS_OFF):
             with self.subTest(setting):
                 self.config['ENCOUNTERS'] = setting
-                with patch('src.game.roll_encounter', return_value=None) as roll_encounter:
+                with patch('src.field_encounters.roll_encounter', return_value=None) as roll_encounter:
                     self.game.change_map(map_lookup['Alefgard'](self.config), destination_coordinates=(50, 44))
-                    self.game.roll_for_fight(47, 43, 'GRASS')
+                    self.game.field_encounters.roll_for_fight(47, 43, 'GRASS')
                 roll_encounter.assert_called_once()
 
     def test_scripted_fights_still_happen(self):
         self.config['ENCOUNTERS'] = ENCOUNTERS_OFF
         self.game.battle_ctrl.queue_scripted_battle('Golem')
         with patch.object(self.game.battle_ctrl, 'run_pending_scripted_battle') as run_scripted_battle:
-            self.game.handle_battles()
+            self.game.field_encounters.handle_battles()
         run_scripted_battle.assert_called_once()
 
     def test_auto_grind_refuses_to_start_with_encounters_off(self):

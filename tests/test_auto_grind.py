@@ -471,7 +471,7 @@ class TestStops(GrindTestCase):
             return BattleOutcome.VICTORY
         self.game.config['FORCE_BATTLE'] = True
         with patch.object(self.game.battle_ctrl, 'run_battle', side_effect=fight):
-            self.game.roll_for_fight(44, 50, 'GRASS')
+            self.game.field_encounters.roll_for_fight(44, 50, 'GRASS')
         self.assert_stopped(StopReason.HP_LOW)
         self.temporary_text.assert_called_once_with("Auto-grind stopped: HP low")
 
@@ -481,7 +481,7 @@ class TestStops(GrindTestCase):
             return BattleOutcome.DEFEAT
         self.game.config['FORCE_BATTLE'] = True
         with patch.object(self.game.battle_ctrl, 'run_battle', side_effect=fight):
-            self.game.roll_for_fight(44, 50, 'GRASS')
+            self.game.field_encounters.roll_for_fight(44, 50, 'GRASS')
         self.assertFalse(self.grind.active)
         self.assertEqual(StopReason.DEATH, self.grind.last_stop)
         self.sound.assert_not_called()

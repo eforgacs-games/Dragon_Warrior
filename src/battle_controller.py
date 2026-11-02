@@ -222,7 +222,7 @@ class BattleController:
 
     def queue_scripted_battle(self, enemy_name: str) -> None:
         """Ask for a scripted fight to start as soon as the current dialog has closed (the NES removes the dialog,
-        command and pop-up windows before InitFight). Game.handle_battles picks it up on the next frame."""
+        command and pop-up windows before InitFight). FieldEncounters.handle_battles picks it up on the next frame."""
         self.pending_scripted_battle = enemy_name
 
     def run_pending_scripted_battle(self) -> BattleOutcome | None:
