@@ -12,7 +12,7 @@ The goal is to match the NES game. Formulas, messages and behavior are checked a
 ## Development Commands
 
 ### Running the Game
-- **Main game**: `uv run python -m src.game` (or `python src/game.py`). Flags: `--dev` (`dev_config`), `--checkpoint <name>` (start from a playtest checkpoint; see `PLAYTEST.md`), `--language English|Korean`, `--smoke-test` (load every game file, play a few scenes headless, exit 0 or 1; the release workflow runs it)
+- **Main game**: `uv run python -m src.game` (or `python src/game.py`). Flags: `--dev` (`dev_config`), `--checkpoint <name>` (start from a playtest checkpoint; see `PLAYTEST.md`), `--language English|Korean|Japanese`, `--smoke-test` (load every game file, play a few scenes headless, exit 0 or 1; the release workflow runs it)
 - **Entry point**: `uv run python -m src.main` starts the game with `prod_config` and no flags (`python src/main.py` fails: it doesn't put the repository root on `sys.path` the way `src/game.py` does)
 
 ### Testing
@@ -86,7 +86,7 @@ The main `Game` class in `src/game.py` orchestrates:
 **Data Organization**:
 - `data/images/`: All game sprites and UI elements
 - `data/sound/`: Music (`NES`, `SFC` and `orchestra` soundtracks, chosen by the `SOUNDTRACK` setting) and sound effects
-- `data/text/`: Dialog, internationalization (English/Korean support)
+- `data/text/`: Dialog, internationalization (English/Korean/Japanese support)
 - `data/fonts/`: Game fonts
 - `data/checkpoints/`: Playtest checkpoint saves (see `PLAYTEST.md`)
 
@@ -122,4 +122,4 @@ Maps are defined as 2D arrays in `map_layouts.py` with tile IDs corresponding to
 4. Music assignment
 
 ### Internationalization
-Text system supports multiple languages via gettext. Dialog is stored in `data/text/dialog_lookup_table.py` with translation files in `data/text/locales/`.
+Text system supports multiple languages via gettext. Dialog is stored in `data/text/dialog_lookup_table.py` with translation files in `data/text/locales/`. Each language is declared once in `src/languages.py` (name, options label, catalog code, quote marks, battle-line grammar); adding one is a catalog plus a declaration there.

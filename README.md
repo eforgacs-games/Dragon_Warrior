@@ -301,7 +301,7 @@ Thanks to:
   game's behaviour is checked against.
 - [pygame](https://www.pygame.org/) and SDL, which the game runs on.
 - [libgme (Game_Music_Emu)](https://github.com/libgme/game-music-emu), which plays the NES and SFC music.
-- [GNU Unifont](https://unifoundry.com/unifont/), for the Korean text.
+- [GNU Unifont](https://unifoundry.com/unifont/), for the Korean and Japanese text.
 - The font, music and sprite makers credited in [ASSETS.md](ASSETS.md).
 
 

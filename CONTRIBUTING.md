@@ -28,7 +28,7 @@ uv run python -m src.game --language Korean
 
 - `--dev` runs with `src/config/dev_config.py`: god mode, no random battles, your coordinates printed in the
   terminal, no splash screen or opening dialog, darkness off, no autosave, and the debug keys below.
-- `--language English`, `--language Korean` or another language's name (`src/languages.py`) plays in that language
+- `--language English`, `--language Korean`, `--language Japanese` (any name in `src/languages.py`) plays in that language
   for this run (it wins over a language saved from the options overlay, which stays as it was).
 - `--smoke-test` loads every game file, plays a few scripted scenes headless and exits with 0, or 1 on any problem;
   the release workflow runs it on every build (`src/smoke_test.py`).
