@@ -164,7 +164,7 @@ class Game:
         # (src/save_state.py run_due_state_request)
         self.state_request: tuple[str, int] | None = None
         self.state_request_due: tuple[str, int] | None = None
-        self.message_log = MessageLog()
+        self.message_log: MessageLog = MessageLog()
         # What the hero has seen of each dark floor (src/dungeon_map.py), kept with the adventure log
         self.dungeon_map = DungeonMap()
         # Hold Backspace on the map to rewind (src/rewind.py): the snapshots it steps back through

@@ -43,7 +43,7 @@ import os
 import random
 from array import array
 from collections.abc import Callable, Iterable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pygame import Rect
 
@@ -61,6 +61,9 @@ from src.sprites.animated_sprite import AnimatedSprite
 from src.soundtrack import SOUNDTRACK_KEY, soundtrack
 from src.story_flags import StoryFlags
 from src.visual_effects import cut_to_black, screen_fade
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 # Raise it whenever what a snapshot holds changes, with a STATE_MIGRATIONS step from the version before (and a sample
 # state of that version in tests/sample_saves/), so states saved before load as they should rather than wrong
@@ -209,7 +212,7 @@ def _history(slots: list) -> list[tuple[str, tuple[int, int] | None] | None]:
     return [None if slot is None else (str(slot[0]), _cell(slot[1])) for slot in slots]
 
 
-def _restore_histories(game: Any, state: dict[str, Any]) -> None:
+def _restore_histories(game: 'Game', state: dict[str, Any]) -> None:
     game.chest_history.slots = list(state['chest_history'])
     if state['door_history'] is not None:
         game.door_history.slots = list(state['door_history'])
@@ -236,7 +239,7 @@ def decode_random_state(encoded: list) -> tuple:
     return int(version), tuple(words), None if gauss_next is None else float(gauss_next)
 
 
-def take_snapshot(game: Any) -> dict[str, Any]:
+def take_snapshot(game: 'Game') -> dict[str, Any]:
     """The game as it is now (see the module docstring), as JSON values. Taken between two map frames."""
     current_map = game.current_map
     player = game.player
@@ -368,7 +371,7 @@ def decode_snapshot(snapshot: Any) -> dict[str, Any]:
     return decoded
 
 
-def restore_snapshot(game: Any, snapshot: dict[str, Any], fade_in: bool = True) -> None:
+def restore_snapshot(game: 'Game', snapshot: dict[str, Any], fade_in: bool = True) -> None:
     """Put the game back as it was when the snapshot was taken (see the module docstring). fade_in, for loading a save
     state: the screen cuts to black and the map fades in, as when a saved game is loaded (Game.load_game), and its
     music starts. Without it (the rewind), the map is just drawn, and its music only restarts if the map changes.
@@ -405,7 +408,7 @@ def restore_snapshot(game: Any, snapshot: dict[str, Any], fade_in: bool = True) 
         apply_option(game, SOUNDTRACK_KEY)  # the state's MUSIC setting, on the map that stayed
 
 
-def _rebuild_map(game: Any, state: dict[str, Any], cut_to_black_first: bool) -> None:
+def _rebuild_map(game: 'Game', state: dict[str, Any], cut_to_black_first: bool) -> None:
     """Load the snapshot's map the way MapManager.change_map does, with the restored story flags, chest history and
     layouts, and only the NPCs that were on it."""
     map_mgr = game.map_mgr
@@ -444,7 +447,7 @@ def _rebuild_map(game: Any, state: dict[str, Any], cut_to_black_first: bool) -> 
     game.cmd_menu = CommandMenu(game)
 
 
-def _restore_values(game: Any, state: dict[str, Any]) -> None:
+def _restore_values(game: 'Game', state: dict[str, Any]) -> None:
     """Everything but the map itself: the hero, the NPCs, the counters, the camera, the window color and the random
     number generator."""
     player = game.player
@@ -569,7 +572,7 @@ def remove_snapshots_of_log(paths: Iterable[str], log: int) -> None:
 # Saving and loading from the map
 
 
-def run_due_state_request(game: Any) -> None:
+def run_due_state_request(game: 'Game') -> None:
     """Save or load the save state asked for (MapHotkeys.press_save_state), once everyone is on a tile
     (MovementController.resolve_pending_freezes), between two map frames (Game.run_map_frame)."""
     request, game.state_request_due = game.state_request_due, None
@@ -582,7 +585,7 @@ def run_due_state_request(game: Any) -> None:
         load_from_slot(game, slot)
 
 
-def save_to_slot(game: Any, slot: int) -> None:
+def save_to_slot(game: 'Game', slot: int) -> None:
     """Save the game as it is into a save state slot, and say so. A state that can't be written (a full disk, a
     read-only save folder) is only said so, as a failed autosave is: play goes on, and the slot keeps what it had."""
     try:
@@ -594,7 +597,7 @@ def save_to_slot(game: Any, slot: int) -> None:
     game.draw_temporary_text(game._("State {} saved").format(slot))
 
 
-def load_from_slot(game: Any, slot: int) -> None:
+def load_from_slot(game: 'Game', slot: int) -> None:
     """Load a save state slot, and say so: the game is put back as it was when it was saved, and play goes on from
     there. An empty slot, or a state that can't be loaded (from an older version of the game, or unreadable), changes
     nothing."""

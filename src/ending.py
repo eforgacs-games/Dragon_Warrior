@@ -14,6 +14,7 @@ The story flags themselves live in src/story_flags.py.
 """
 
 import random
+from typing import TYPE_CHECKING
 
 from pygame import QUIT, display, event, time
 
@@ -30,6 +31,9 @@ from src.visual_effects import screen_fade
 from src.waiting import NES_FPS, POLL_INTERVAL_MS, game_ticks, quit_game, wait_frames
 from src.windows import DIALOG_WINDOW
 from src.zoom import handle_zoom_event
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 
 # NES DoEndCredits (Bank01) moves on to the next credits screen after a number of "music timing events" in the end
@@ -128,7 +132,7 @@ class EndMusicTimingEvents:
 
 
 class Ending:
-    def __init__(self, game):
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         self.started = False
 

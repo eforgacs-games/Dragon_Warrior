@@ -42,8 +42,12 @@ and the Staff and the Stones are given away for the Rainbow Drop.
 """
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from src.story_flags import GoalSource, StoryFlags
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 # QUEST_JOURNAL (base_config): OFF is the NES (Q does nothing); LEARNED shows the goals the hero knows of; HINTS adds
 # what was said about each
@@ -398,7 +402,7 @@ def journal_pages(progress: Progress, hints: bool, _: Callable[[str], str] = str
     return pages or [_(NOTHING_HEARD)]
 
 
-def game_progress(game) -> Progress:
+def game_progress(game: 'Game') -> Progress:
     player = game.player
     return Progress.of(game.story_flags, player.inventory, player.weapon, player.armor)
 
