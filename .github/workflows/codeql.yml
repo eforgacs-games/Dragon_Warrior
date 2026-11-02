@@ -1,10 +1,22 @@
 name: "CodeQL"
 
 on:
+  # CodeQL analyzes the Python code only, so documentation and game data can't change its result. It isn't a required
+  # check, so a skipped run doesn't block merging; the weekly scheduled run still analyzes everything.
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "LICENSE"
+      - "data/**"
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "LICENSE"
+      - "data/**"
   schedule:
     - cron: "37 7 * * 1"
 
