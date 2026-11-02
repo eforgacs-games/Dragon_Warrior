@@ -20,6 +20,7 @@ from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.controls import reset_controls
 from src.game_options import DEFAULT_OPTIONS, STATS_PAGE, options_from_save, options_to_save
+from src.languages import ENGLISH, LANGUAGES
 from src.message_log import LINE_WIDTH, VISIBLE_LINES, log_layout, text_width
 from src.options_overlay import OPTION_ROWS, PRESET_MODERN, PRESET_NES, preset_values
 from src.quest_journal import JOURNAL_LEARNED
@@ -483,10 +484,22 @@ class TestThePage(TestCase):
         lines = stat_lines(counted(), _)
         self.assertEqual(aligned("플레이 시간", "1:02:03"), lines[0])
         self.assertEqual(aligned(" 슬라임", "12"), lines[-2])
-        for line in lines:
-            self.assertLessEqual(text_width(line), LINE_WIDTH)
-        for text in screen_texts():
-            self.assertNotEqual(text, _(text))
+
+    def test_japanese(self):
+        _ = set_gettext_language('Japanese')
+        lines = stat_lines(counted(), _)
+        self.assertEqual(aligned("プレイ時間", "1:02:03"), lines[0])
+        self.assertEqual("やっつけたまもの", lines[10])
+
+    def test_every_language_fits_and_is_translated(self):
+        for language in LANGUAGES:
+            with self.subTest(language.name):
+                _ = set_gettext_language(language.name)
+                for line in stat_lines(counted(), _):
+                    self.assertLessEqual(text_width(line), LINE_WIDTH, line)
+                if language is not ENGLISH:
+                    for text in screen_texts():
+                        self.assertNotEqual(text, _(text))
 
     def test_fits_the_window(self):
         window_tiles(log_layout(stat_lines(counted()), 0, title=STATS_TITLE))
@@ -494,7 +507,7 @@ class TestThePage(TestCase):
     def test_drawn(self):
         pygame.init()
         screen = pygame.Surface((512, 480))
-        for language in ('English', 'Korean'):
+        for language in [language.name for language in LANGUAGES]:
             with self.subTest(language):
                 config = {**test_config, 'LANGUAGE': language, 'RENDER_TEXT': True}
                 layout = log_layout(stat_lines(counted(), set_gettext_language(language)), 0, title=STATS_TITLE)
