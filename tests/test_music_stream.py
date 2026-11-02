@@ -287,13 +287,94 @@ QUIT_WHILE_STREAMING = textwrap.dedent("""
 """)
 
 
+# The same with pygame closed directly, as tests and any other code may do, not through quit_pygame: plain
+# pygame.quit() and pygame.mixer.quit(), with several streams playing at once (one per MusicPlayer, as when a test makes
+# several Games), many times over
+PLAIN_QUIT_WHILE_STREAMING = textwrap.dedent("""
+    import os, sys, time
+    os.environ['SDL_VIDEODRIVER'] = os.environ['SDL_AUDIODRIVER'] = 'dummy'
+    sys.path.insert(0, sys.argv[1])
+    import pygame
+    from src.chiptune_soundtracks import MSC_OUTDOOR, nes_track
+    from src.music_player import MusicPlayer
+
+    def start_music():
+        players = [MusicPlayer({'MUSIC_ENABLED': True, 'SOUND_ENABLED': False}) for _ in range(4)]
+        for player in players:
+            player.load_and_play_music(nes_track(MSC_OUTDOOR))
+        time.sleep(0.1)
+        assert all(player.music_busy() for player in players)
+        return players
+
+    for _ in range(10):
+        pygame.init()
+        start_music()
+        pygame.quit()
+    pygame.init()
+    for _ in range(10):
+        pygame.mixer.init()
+        start_music()
+        pygame.mixer.quit()
+    pygame.mixer.init()
+    start_music()
+    pygame.quit()
+""")
+QUIT_TIMEOUT_SECONDS = 30
+
+
+def run_in_own_process(script: str) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, '-c', script, project_root()], capture_output=True, text=True,
+                          timeout=QUIT_TIMEOUT_SECONDS)
+
+
 @requires_libgme
 class TestQuitWhileStreaming(TestCase):
 
     def test_the_game_closes_cleanly_while_the_music_streams(self):
-        result = subprocess.run([sys.executable, '-c', QUIT_WHILE_STREAMING, project_root()], capture_output=True,
-                                text=True, timeout=30)
+        result = run_in_own_process(QUIT_WHILE_STREAMING)
         self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_plain_pygame_quit_and_mixer_quit_close_the_streams_first(self):
+        result = run_in_own_process(PLAIN_QUIT_WHILE_STREAMING)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+
+class TestClosedBeforeTheMixerQuits(StreamTestCase):
+    """However pygame or its mixer is closed, the streams are closed while the mixer is still running."""
+
+    def setUp(self):
+        super().setUp()
+        self.mixer_running_at_close: list[bool] = []
+        patch('src.music_stream.close_all_streams', side_effect=self.record_close).start()
+
+    def record_close(self) -> None:
+        self.mixer_running_at_close.append(bool(mixer.get_init()))
+
+    def unguarded_mixer_quit(self):
+        """pygame.mixer.quit as pygame has it, so the test sees pygame.quit's own hook (pygame.quit also calls
+        pygame.mixer.quit, today, and so the replacement too)."""
+        return patch('pygame.mixer.quit', mixer.quit.__wrapped__)
+
+    def test_pygame_quit_closes_the_streams_first(self):
+        self.stream.play([Segment(LOOP)])
+        with self.unguarded_mixer_quit():
+            pygame.quit()
+        self.assertEqual([True], self.mixer_running_at_close)
+
+    def test_every_pygame_quit_after_music_closes_the_streams_first(self):
+        with self.unguarded_mixer_quit():
+            for _ in range(3):
+                pygame.init()
+                self.stream.play([Segment(LOOP)])
+                self.stream.play([Segment(JINGLE, 1)])  # one hook per quit, however often the music starts
+                pygame.quit()
+        self.assertEqual([True] * 3, self.mixer_running_at_close)
+
+    def test_mixer_quit_closes_the_streams_first(self):
+        self.stream.play([Segment(LOOP)])
+        mixer.quit()
+        self.assertEqual([True], self.mixer_running_at_close)
+        self.assertIsNone(mixer.get_init())
 
 
 class TestChannels(TestCase):
