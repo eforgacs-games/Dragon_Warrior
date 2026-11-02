@@ -116,7 +116,8 @@ class TestOptionsOverlay(TranslatedTestCase):
         title_end = OPTIONS_WINDOW.x * 2 + OPTIONS_WINDOW.width * 2 - 1
         for language, translate in self.languages():
             for choice in range(3):
-                config = {**self.game.game_state.config, 'LANGUAGE': language.name,
+                # NO_BLIT off, whatever another test left in test_config: draw_translated_window draws nothing with it
+                config = {**self.game.game_state.config, 'LANGUAGE': language.name, 'NO_BLIT': False,
                           **{row.config_key: row.values[choice % len(row.values)] for row in OPTION_ROWS}}
                 for page in range(len(OPTION_PAGES)):
                     title, *texts = self.overlay_texts(config, page, translate)
