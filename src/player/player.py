@@ -4,6 +4,7 @@ from typing import cast
 from pygame import Surface
 
 from src.calculation import Calculation
+from src.coordinates import Cell
 from src.direction import Direction
 from src.items import Inventory, weapons, armor, shields
 from src.maps import DragonWarriorMap
@@ -23,9 +24,9 @@ class Player(AnimatedSprite):
         self.row, self.column = current_map.initial_coordinates
         self.next_tile_checked = False
         self.is_moving = False
-        self.next_coordinates = None
-        self.next_next_coordinates = None
-        self.current_tile = None
+        self.next_coordinates: Cell | None = None
+        self.next_next_coordinates: Cell | None = None
+        self.current_tile: str | None = None
         self.calculation = Calculation(current_map.config)
         self.next_tile_id = self.calculation.get_next_tile_identifier(self.column, self.row, self.direction_value,
                                                                       current_map)
@@ -155,7 +156,7 @@ class Player(AnimatedSprite):
     def get_points_to_next_level(self) -> int:
         """GetExpRemaining (LF134): the next level's LevelUpTbl entry minus the experience. 0 at level 30."""
         if levels_list.get(self.level + 1):
-            return max(0, cast(int, levels_list[self.level + 1]['total_exp']) - self.total_experience)
+            return max(0, levels_list[self.level + 1]['total_exp'] - self.total_experience)
         return 0
 
     @property
@@ -184,9 +185,9 @@ class Player(AnimatedSprite):
         name, worked out afresh each time, so a saved game only needs the name and the experience."""
         self.update_stats_by_level(level)
         for i in range(1, level + 1):
-            if levels_list[i].get('spell'):
-                if levels_list[i]['spell'] not in self.spells:
-                    self.spells.append(levels_list[i]['spell'])
+            spell = levels_list[i]['spell']
+            if spell and spell not in self.spells:
+                self.spells.append(spell)
 
     def update_stats_by_level(self, level: int | None = None):
         stats = get_stats_for_level(self.name, self.level if level is None else level)
