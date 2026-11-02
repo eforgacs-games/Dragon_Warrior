@@ -464,8 +464,8 @@ class TestGame(TestCase):
     def walk(self, steps):
         with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
             for _ in range(steps):
-                self.game.count_step()
-                self.game.tick_repel_timer_after_step()
+                self.game.step_triggers.count_step()
+                self.game.step_triggers.tick_repel_timer_after_step()
         return [c.args[0] for c in show_text.call_args_list]
 
     def test_repel_protects_the_127th_steps_fight_roll(self):
@@ -477,7 +477,7 @@ class TestGame(TestCase):
             rolls.append(self.game.repel_timer)
 
         self.game.repel_timer = 255
-        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.count_step), \
+        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.step_triggers.count_step), \
                 patch.object(self.game, 'handle_battles', side_effect=roll), \
                 patch.object(self.game, '_handle_map_updates'), patch.object(self.game, '_handle_post_move_checks'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box',

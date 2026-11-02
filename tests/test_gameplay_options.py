@@ -161,7 +161,7 @@ class TestRunButton(GameTestCase):
         held_keys = defaultdict(int, {held_key: 1 for held_key in held})
         steps = []
         with patch('src.movement.key.get_pressed', return_value=held_keys), \
-                patch.object(self.game, 'count_step', side_effect=lambda: steps.append(frame)):
+                patch.object(self.game.step_triggers, 'count_step', side_effect=lambda: steps.append(frame)):
             for frame in range(1, frames + 1):
                 self.game.movement.handle_player_movement()
                 if not self.game.player.is_moving:

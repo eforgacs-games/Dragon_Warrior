@@ -25,6 +25,7 @@ from src.player.player import Player
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
+from src.step_triggers import StepTriggers
 from src.waiting import MAP_CONTEXT, with_virtual_keys
 
 
@@ -76,8 +77,8 @@ class MovementGame(Protocol):
     # The map's keys (src/map_hotkeys.py), and what they open once everyone is on a tile (MAP_REQUESTS: each request's
     # flag is a bool on the game too)
     hotkeys: Any
-
-    def count_step(self) -> None: ...
+    # What a finished step leads to (src/step_triggers.py)
+    step_triggers: StepTriggers
 
     def roll_for_fight(self, column: int, row: int, tile: str | None) -> None: ...
 
@@ -328,7 +329,7 @@ class MovementController:
         else:
             # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning -
             #  should always be 0 when the map starts.
-            self.game.count_step()
+            self.game.step_triggers.count_step()
             # FrameCounter goes back to 0 once this frame's DoSprites has run (see sprites_frame)
             self.step_ends = True
         self.finish_step(self.player)

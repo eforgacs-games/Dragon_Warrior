@@ -198,7 +198,7 @@ class StoryRunMixin:
             return self.fight_to_the_end(run_away, current_battle)
         self.stand_at(guardian.escape_coordinates)
         self.stand_at(guardian.coordinates)
-        self.game.count_step()  # the end of the step, as move_player counts it
+        self.game.step_triggers.count_step()  # the end of the step, as move_player counts it
         with patch.object(self.game.battle_ctrl, 'handle_battle_prompts', side_effect=win):
             self.game.handle_battles()  # the queued fight starts this same frame
         self.settle()

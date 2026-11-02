@@ -232,9 +232,9 @@ class TestInTheGame(GameTestCase):
         self.assertEqual({'silver_harp': HARP_RUMOR}, self.game.story_flags.heard_goals)
 
     def test_the_golem_fight_counts_as_meeting_him(self):
-        with patch('src.game.guardian_at', return_value=GOLEM), \
+        with patch('src.step_triggers.guardian_at', return_value=GOLEM), \
                 patch.object(self.game.battle_ctrl, 'queue_scripted_battle'):
-            self.game.check_guardian_fight()
+            self.game.step_triggers.check_guardian_fight()
         self.assertEqual({'golem': GOLEM_FIGHT}, self.game.story_flags.heard_goals)
 
     def test_saved_and_loaded_with_the_adventure_log(self):

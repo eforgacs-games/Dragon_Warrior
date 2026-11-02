@@ -24,7 +24,7 @@ from src.coordinates import Cell
 from src.crash_log import install as install_crash_log
 from src.debug_tools import DebugTools
 from src.constants import (
-    TANTEGEL_CURSED_ROW, TANTEGEL_OVERWORLD_EXIT, TEMP_TEXT_MS,
+    TANTEGEL_OVERWORLD_EXIT, TEMP_TEXT_MS,
 )
 from src.direction import Direction
 from src.display_filters import PRESENTER
@@ -36,7 +36,6 @@ from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
 from src.gamepad import connect_gamepad
-from src.guardians import GOLEM, guardian_at
 from src.intro import Intro
 from src.items import OpenDoorHistory, TreasureChestHistory
 from src.map_layouts import MapLayouts
@@ -49,7 +48,6 @@ from src.music_player import MusicPlayer
 from src.npc_movement import step
 from src.options_overlay import apply_log_options
 from src.game_options import ENCOUNTERS_HALF, ENCOUNTERS_OFF
-from src.quest_journal import GOLEM_FIGHT, hear
 from src.rewind import Rewind
 from src.save_file import SaveFile
 from src.save_state import run_due_state_request
@@ -59,6 +57,7 @@ from src.player.player import Player
 from src.sound import Sound
 from src.battle_controller import BattleController, BattleOutcome
 from src.ending import Ending
+from src.step_triggers import StepTriggers
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
 from src.autosave import Autosave
@@ -80,8 +79,6 @@ REWIND_KEYS = KeySet('REWIND')
 # NES ChkOtherBlocks: a swamp step costs 2 HP (DoSwampDamage, LCDD4), a force field step 15 (LCE2B)
 SWAMP_DAMAGE = 2
 FORCE_FIELD_DAMAGE = 15
-# NES MjArmrHP: Magic Armor heals 1 HP every 4th step (when the counter's low 2 bits wrap to 0)
-MAGIC_ARMOR_HEAL_STEPS = 4
 
 
 class Game:
@@ -176,6 +173,7 @@ class Game:
         self.current_map = maps.map_lookup[self.game_state.config["START_MAP"]](self.game_state.config)
 
         self.battle_ctrl = BattleController(self)
+        self.step_triggers = StepTriggers(self)
         self.auto_grind = AutoGrind(self)
         self.ending = Ending(self)
         self.map_mgr = MapManager(self)
@@ -397,13 +395,13 @@ class Game:
         if self.movement.hill_pause_frames:
             self.movement.hill_pause_frame()
             if not self.movement.hill_pause_frames:
-                self.tick_repel_timer_after_step()  # the hill's fight roll has just been made
+                self.step_triggers.tick_repel_timer_after_step()  # the hill's fight roll has just been made
             event.pump()
             return
         self.movement.handle_player_movement()
         self.handle_battles()
         if not self.movement.hill_pause_frames:
-            self.tick_repel_timer_after_step()
+            self.step_triggers.tick_repel_timer_after_step()
         if not self.player.is_moving:
             set_character_position(self.player, tile_size=self.tile_size)
         self._handle_map_updates()
@@ -528,118 +526,9 @@ class Game:
         if not is_low_hp(self.player.current_hp, self.player.max_hp):
             self.set_window_color(WHITE)
 
-    def reset_step_count(self):
-        """Start counting steps again from 0, as on arriving on a map (stairs then wait for a step off them).
-        handle_battles' record of the last step it rolled for goes back to 0 with it: otherwise, a count that reached it
-        again (one step after leaving a map after one step) would look like that already-rolled step, and the step
-        would get no CheckBlockDmg (no damage and no fight roll), when on the NES every step onto a block runs it."""
-        self.tiles_moved_since_spawn = 0
-        self.last_amount_of_tiles_moved = 0
-
-    def count_step(self):
-        self.tiles_moved_since_spawn += 1
-        self.game_state.tiles_moved_total += 1
-        # NES GameEngineLoop: the radiant timer (#216) and CheckRepelTimer are outside CheckForTriggers, so they keep
-        # ticking (and wear off) after the Dragonlord's defeat. Both run at the top of the loop (LCA56, LCA6C), after
-        # ChkSpecialLoc has rolled this step's fight, so they tick once that roll (and any fight) is done: see
-        # tick_repel_timer_after_step
-        self.repel_tick_pending = True
-        # NES ChkSpecialLoc: a step off the map's edge goes to CheckMapExit instead of CheckForTriggers, so it doesn't
-        # heal (MovmtIncHP) or count a Magic Armor step, and gets no damage or fight roll (see handle_battles)
-        if not self.stepped_off_the_map():
-            self.check_for_triggers()
-        self.auto_grind.after_step()
-
-    def stepped_off_the_map(self) -> bool:
-        """NES ChkSpecialLoc: whether the step that has just finished took the hero off the map's edge (a town gate).
-        The step has only just finished, so the hero's row and column haven't caught up with its rect yet."""
-        return self.current_map.is_map_exit(self.player.rect.y // self.tile_size, self.player.rect.x // self.tile_size)
-
-    def check_for_triggers(self):
-        """NES CheckForTriggers (Bank03, reached from ChkSpecialLoc after every completed step): MovementUpdates only
-        runs while F_DGNLRD_DEAD is clear. Once the Dragonlord is dead it branches to ChkCstlEnd instead, which only
-        checks for the end-game trigger in front of King Lorik (Ending.check_for_end_game_trigger) and then falls into
-        CheckBlockDmg like before.
-
-        CheckBlockDmg isn't here: it's split between handle_warps (map-changing tiles, still checked after the
-        Dragonlord), handle_environment_damage and handle_battles, which each stop at ChkOtherBlocks' own
-        F_DGNLRD_DEAD check, as the NES does."""
-        if self.story_flags.dragonlord_defeated:
-            return
-        self.movement_updates()
-
-    def movement_updates(self):
-        """NES MovementUpdates, in order: the armor's HP regeneration (MovmtIncHP), ChkLowHP (clear_low_hp_palette),
-        CheckTantCursed, then the guardian checks (CheckAxeKnight, CheckGrnDragon, CheckGolem). Only runs while the
-        Dragonlord is alive (check_for_triggers)."""
-        self.armor_step_heal()
-        self.clear_low_hp_palette()  # NES MovementUpdates: ChkLowHP comes just before CheckTantCursed
-        self.check_tantegel_cursed()
-        self.check_guardian_fight()
-
-    def armor_step_heal(self):
-        """NES MovementUpdates/MovmtIncHP: Erdrick's Armor heals 1 HP every step. Magic Armor increments MjArmrHP every
-        step and heals 1 HP when its low 2 bits wrap to 0, i.e. every 4th step in it. HP is capped at the maximum.
-        (ChkLowHP, which comes next, is clear_low_hp_palette.)"""
-        if self.player.armor == "Erdrick's Armor":
-            heal = True
-        elif self.player.armor == "Magic Armor":
-            self.magic_armor_steps = (self.magic_armor_steps + 1) % 256  # MjArmrHP is one byte
-            heal = self.magic_armor_steps % MAGIC_ARMOR_HEAL_STEPS == 0
-        else:
-            heal = False
-        if heal:
-            self.player.current_hp = min(self.player.current_hp + 1, self.player.max_hp)
-
-    def check_tantegel_cursed(self):
-        """NES CheckTantCursed (part of MovementUpdates, run every step while the Dragonlord is alive): a cursed player
-        who reaches Y=27 of Tantegel's ground floor is told "Cursed one,be gone!" and CheckMapExit forces them out of
-        the castle."""
-        if self.current_map.identifier != 'TantegelCourtyard' or not self.player.is_cursed:
-            return
-        if self.player.rect.y // self.tile_size != TANTEGEL_CURSED_ROW:
-            return
-        self.cmd_menu.show_text_in_dialog_box(self._("Cursed one,be gone!"), add_quotes=True,
-                                              skip_text=self.skip_text)
-        self.leave_tantegel()
-
-    def check_guardian_fight(self):
-        """NES MovementUpdates (CheckAxeKnight, CheckGrnDragon, CheckGolem): stepping onto a guardian's tile starts
-        its fixed fight (InitFight). It's queued so handle_battles starts it this same frame."""
-        # The step has only just finished, so the hero's row and column haven't caught up with its rect yet
-        coordinates = self.player.rect.y // self.tile_size, self.player.rect.x // self.tile_size
-        guardian = guardian_at(self.current_map.identifier, coordinates, self.story_flags)
-        if guardian is not None:
-            self.battle_ctrl.queue_scripted_battle(guardian.enemy_name)
-            if guardian is GOLEM:
-                hear(self.story_flags, GOLEM_FIGHT)  # the quest journal: the hero has met the Golem
-
     def leave_tantegel(self, direction: int | None = None):
         map_name, coordinates = TANTEGEL_OVERWORLD_EXIT
         self.change_map(map_lookup[map_name](self.config), destination_coordinates=coordinates, direction=direction)
-
-    def tick_repel_timer_after_step(self):
-        """NES GameEngineLoop (LCA56) -> CheckRepelTimer (LCA6C), once per step, after that step's fight roll
-        (ChkSpecialLoc -> CheckBlockDmg): the radiant timer first, then the repel timer. The step that brings REPEL's
-        255 down to 1 is still protected, so it lasts 127 steps, and its message comes after that step's roll; the
-        light shrinks after the roll too (#429)."""
-        if self.repel_tick_pending:
-            self.repel_tick_pending = False
-            self.game_state.tick_radiant_timer()
-            self.tick_repel_timer()
-
-    def tick_repel_timer(self):
-        """NES CheckRepelTimer: the timer drops by 2 per step. REPEL (odd start) ends at 1, Fairy Water (even) at 0."""
-        if not self.repel_timer:
-            return
-        self.repel_timer -= 2
-        if self.repel_timer in (0, 1):
-            if self.repel_timer:
-                message = self._("REPEL has lost its effect.")
-            else:
-                message = self._("The Fairy Water has lost its effect.")
-            self.repel_timer = 0
-            self.cmd_menu.show_text_in_dialog_box(message, skip_text=self.skip_text)
 
     def handle_battles(self):
         if self.battle_ctrl.pending_scripted_battle:
@@ -654,7 +543,7 @@ class Game:
             return
         if self.tiles_moved_since_spawn > 0 and self.tiles_moved_since_spawn != self.last_amount_of_tiles_moved:
             self.last_amount_of_tiles_moved = self.tiles_moved_since_spawn
-            if self.stepped_off_the_map():
+            if self.step_triggers.stepped_off_the_map():
                 return  # NES ChkSpecialLoc -> CheckMapExit: handle_warps leaves the map, with no damage or fight
             # NES CheckBlockDmg runs once per step, on the block the player has just stepped onto. The player's
             # column/row and current_tile aren't updated until later in the frame, so read them from the sprite.

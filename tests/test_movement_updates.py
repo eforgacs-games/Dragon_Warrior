@@ -27,7 +27,7 @@ class TestMovementUpdates(TestCase):
 
     def steps(self, count):
         for _ in range(count):
-            self.game.count_step()
+            self.game.step_triggers.count_step()
 
     # MovmtIncHP
 
@@ -74,7 +74,7 @@ class TestMovementUpdates(TestCase):
         game_state = self.game.game_state
         game_state.radiant_timer, game_state.light_diameter = 1, 3
         at_roll = []
-        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.count_step), \
+        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.step_triggers.count_step), \
                 patch.object(self.game, 'handle_battles',
                              side_effect=lambda: at_roll.append((game_state.radiant_timer, game_state.light_diameter))), \
                 patch.object(self.game, '_handle_map_updates'), patch.object(self.game, '_handle_post_move_checks'):
@@ -91,21 +91,21 @@ class TestMovementUpdates(TestCase):
 
     def test_movement_updates_are_skipped_after_the_dragonlord_is_dead(self):
         self.game.story_flags.dragonlord_defeated = True
-        with patch.object(self.game, 'movement_updates') as movement_updates:
-            self.game.count_step()
+        with patch.object(self.game.step_triggers, 'movement_updates') as movement_updates:
+            self.game.step_triggers.count_step()
         movement_updates.assert_not_called()
 
     def test_movement_updates_run_while_the_dragonlord_is_alive(self):
-        with patch.object(self.game, 'movement_updates') as movement_updates:
-            self.game.count_step()
+        with patch.object(self.game.step_triggers, 'movement_updates') as movement_updates:
+            self.game.step_triggers.count_step()
         movement_updates.assert_called_once()
 
     def test_repel_timer_still_ticks_after_the_dragonlord_is_dead(self):
         # NES CheckRepelTimer is in GameEngineLoop, outside CheckForTriggers
         self.game.story_flags.dragonlord_defeated = True
         self.game.repel_timer = 9
-        self.game.count_step()
-        self.game.tick_repel_timer_after_step()
+        self.game.step_triggers.count_step()
+        self.game.step_triggers.tick_repel_timer_after_step()
         self.assertEqual(self.game.repel_timer, 7)
 
     # CheckBlockDmg/ChkOtherBlocks: its own F_DGNLRD_DEAD check ends swamp and barrier damage

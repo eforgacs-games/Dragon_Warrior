@@ -176,7 +176,7 @@ class TestCurses(TestCase):
     def walk_onto(self, map_name, coordinates):
         self.go_to(map_name, coordinates)
         with patch('src.menu.CommandMenu.show_text_in_dialog_box') as show_text:
-            self.game.count_step()
+            self.game.step_triggers.count_step()
         return [c.args[0] for c in show_text.call_args_list]
 
     def test_cursed_player_is_thrown_out_of_tantegel(self):

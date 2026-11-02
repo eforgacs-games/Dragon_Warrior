@@ -188,11 +188,11 @@ class TestLowHPMapSwitching(LowHPMapTestCase):
     def test_step_only_clears_red(self):
         # NES ChkLowHP: a step turns $3F01 white if HP isn't low, but never red
         self.player.current_hp = 2
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assert_map_red(False)
         self.set_hp(2)
         self.player.current_hp = 10
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assert_map_red(False)
 
     def test_new_map_at_low_hp_is_red(self):

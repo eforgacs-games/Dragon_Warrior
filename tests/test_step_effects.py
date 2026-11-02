@@ -128,17 +128,17 @@ class TestMapExits(StepTestCase):
         self.player.armor = "Erdrick's Armor"
         self.go_to('Garinham', (15, 9))
         self.end_step_on((15, 8))  # the west gate
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assertEqual(self.player.current_hp, 50)
         self.end_step_on((15, 10))
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assertEqual(self.player.current_hp, 51)
 
     def test_a_step_off_the_map_skips_movement_updates(self):
         self.go_to('Garinham', (15, 9))
         self.end_step_on((15, 8))
-        with patch.object(self.game, 'movement_updates') as movement_updates:
-            self.game.count_step()
+        with patch.object(self.game.step_triggers, 'movement_updates') as movement_updates:
+            self.game.step_triggers.count_step()
         movement_updates.assert_not_called()
 
     def test_leaving_charlock_through_its_swamp_does_no_damage_and_starts_no_fight(self):

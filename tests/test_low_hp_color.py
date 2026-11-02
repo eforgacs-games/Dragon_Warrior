@@ -241,10 +241,10 @@ class TestLowHPWindowColor(TestCase):
         # NES ChkLowHP: a step turns the windows white if HP isn't low, but never turns them red
         self.set_hp(2)
         self.player.current_hp = 10
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assertEqual(self.game.color, WHITE)
         self.player.current_hp = 2
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assertEqual(self.game.color, WHITE)
 
     def test_level_up_waits_for_the_next_palette_load(self):
