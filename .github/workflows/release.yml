@@ -1,6 +1,6 @@
 # Builds the game with PyInstaller (dragon_warrior.spec) for Windows, macOS and Linux, and checks each build starts,
 # finds and loads all of its files, plays every NES and SFC track through its bundled libgme and plays a few scripted
-# scenes, in English and in Korean (--smoke-test, src/smoke_test.py), before anything is uploaded.
+# scenes, in English, Korean and Japanese (--smoke-test, src/smoke_test.py), before anything is uploaded.
 # libgme (Game_Music_Emu, LGPL 2.1+), which plays the NES and SFC music (src/chiptune.py), is built here from its
 # source at GME_TAG, as a shared library, and bundled next to its license.
 # - A pushed vX.Y.Z tag also publishes the builds as a GitHub Release for that tag.
@@ -24,6 +24,7 @@ on:
       - "src/chiptune_soundtracks.py"
       - "src/music_stream.py"
       - "src/smoke_test.py"
+      - "src/languages.py"
       - "data/**"
       - "pyproject.toml"
       - "uv.lock"
@@ -134,9 +135,10 @@ jobs:
       # Unpacks the archive and runs the game from it, so it proves the download itself works. Each run checks every
       # data file loads and renders the start of every NES and SFC track with the bundled libgme, then plays the throne room (TALK, the COMMAND window), the stairs down to the courtyard and a
       # fight on Alefgard through the virtual joypad, and exits with 1 on a missing file or any exception. Once in
-      # English (the NES font) and once in Korean (Unifont and the catalog compiled from the bundled base.po). The
+      # English (the NES font) and once in each translation, Korean and Japanese (Unifont and the catalog compiled from
+      # the bundled base.po). The
       # runners have no display or sound card, so SDL's dummy drivers (the job's env) stand in on all three OSes.
-      timeout-minutes: 5
+      timeout-minutes: 7
       env:
         ARCHIVE: ${{ steps.name.outputs.archive }}
       run: |
@@ -157,6 +159,7 @@ jobs:
         cd smoke
         "$game" --smoke-test --language English
         "$game" --smoke-test --language Korean
+        "$game" --smoke-test --language Japanese
     - name: Upload the build
       uses: actions/upload-artifact@v7
       with:

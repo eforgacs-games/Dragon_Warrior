@@ -6,7 +6,7 @@ from src.common import BLACK, set_gettext_language, singular_or_plural
 from src.directories import Directories
 from src.enemy import enemy_groups
 from src.enemy_lookup import enemy_string_lookup
-from src.korean_particles import get_postposition, particle
+from src.languages import Grammar, language_named
 from src.maps import DragonWarriorMap
 from src.menu import BATTLE_LINE, CommandMenu
 from src.game_options import EXP_GOLD_MULTIPLIERS
@@ -44,6 +44,11 @@ class Battle:
         # Add graphics for image caching
         from src.common import Graphics
         self.graphics = Graphics(config)
+
+    @property
+    def grammar(self) -> Grammar:
+        """How the game's language words the battle lines made of a name and a catalog line (src/languages.py)."""
+        return language_named(self.config['LANGUAGE']).grammar
 
     def play_battle_music(self, music_player):
         """NES InitFight: the Dragonlord's final form gets the end boss music (MSC_END_BOSS); every other fight,
@@ -233,11 +238,7 @@ class Battle:
         """Get the enemy defeated string based on language."""
         # NES: both of the Dragonlord's forms are named "Dragonlord"
         enemy_name = 'Dragonlord' if enemy.name == 'Dragonlord 2' else enemy.name
-        if self.config['LANGUAGE'] == 'Korean':
-            ko_enemy_name = self._(enemy_name)
-            ko_enemy_name += get_postposition(ko_enemy_name, "을", "를")
-            return f"{ko_enemy_name} 물리쳤다!\n"
-        return self._("Thou hast done well in defeating the {}.\n").format(self._(enemy_name))
+        return self.grammar.enemy_defeated(self._, enemy_name)
 
     def check_player_level_up(self, cmd_menu, player):
         """NES ChkLevelUp (RegEnDefeated). LoadStats works the level out from the experience again, so the level can
@@ -278,14 +279,10 @@ class Battle:
     def display_level_up_message(self, cmd_menu, player, new_level=None):
         """TB16E1, "Courage and wit have served thee well. Thou hast been promoted to the next level.", ends with a
         WAIT: the arrow and A or B. (Its leading WAIT is check_player_level_up's.)"""
-        if self.config['LANGUAGE'] == 'English':
-            cmd_menu.show_line_in_dialog_box(
-                self._("Courage and wit have served thee well.\nThou hast been promoted to the next level.\n"),
-                add_quotes=False, disable_sound=True)
-        elif self.config['LANGUAGE'] == 'Korean':
-            new_level = player.level + 1 if new_level is None else new_level
-            hero = player.name + particle(player.name, '은/는')
-            cmd_menu.show_line_in_dialog_box(f"{hero} {new_level}레벨로 올랐다!", add_quotes=False)
+        new_level = player.level + 1 if new_level is None else new_level
+        grammar = self.grammar
+        cmd_menu.show_line_in_dialog_box(grammar.level_up(self._, player.name, new_level), add_quotes=False,
+                                         disable_sound=not grammar.level_up_beeps)
 
     @staticmethod
     def get_player_stats(player):
@@ -343,19 +340,7 @@ class Battle:
         if self.enemy.name == 'Dragonlord 2':
             return self._('The Dragonlord revealed his true self!\n')
 
-        if self.config['LANGUAGE'] == 'English':
-            enemy_draws_near_string = self._('{} draws near!\n').format(self._(self.enemy.name))
-            vowels = 'AEIOU'
-            if self.enemy.name[0] in vowels:
-                return self._('An {}').format(enemy_draws_near_string)
-            return self._('A {}').format(enemy_draws_near_string)
-
-        if self.config['LANGUAGE'] == 'Korean':
-            ko_enemy_name = self._(self.enemy.name)
-            ko_enemy_name += get_postposition(ko_enemy_name, "이", "가")
-            return self._('{} draws near!\n').format(ko_enemy_name)
-
-        return self._('{} draws near!\n').format(self._(self.enemy.name))
+        return self.grammar.enemy_draws_near(self._, self.enemy.name)
 
     def display_battle_window(self, screen, drawer, cmd_menu, graphics, directories, color, player):
         """Display the battle window."""

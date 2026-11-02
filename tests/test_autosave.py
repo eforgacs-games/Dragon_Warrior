@@ -263,17 +263,20 @@ class TestContinueAutosave(AutosaveTestCase):
         for used in range(4):
             window_tiles(title_menu_layout(used, autosave=True))  # ValueError for text outside the window
 
-    def test_korean_entry_fits(self):
+    def test_translated_entry_fits(self):
         from src.common import set_gettext_language
         from src.directories import Directories
+        from src.languages import CATALOG_LANGUAGES
         from src.text import set_font_by_ascii_chars
-        _ = set_gettext_language('Korean')
-        korean = _(CONTINUE_AUTOSAVE)
-        self.assertNotEqual(CONTINUE_AUTOSAVE, korean)
-        font = set_font_by_ascii_chars([korean], 16, None, Directories(test_config))
-        # no wider than the NES entries' translations, which fit
-        widest = max(font.size(_(text.text))[0] for text in FULL_MENU_LAYOUT.texts)
-        self.assertLessEqual(font.size(korean)[0], widest)
+        for language in CATALOG_LANGUAGES:
+            _ = set_gettext_language(language.name)
+            translated = _(CONTINUE_AUTOSAVE)
+            with self.subTest(language=language.name, entry=translated):
+                self.assertNotEqual(CONTINUE_AUTOSAVE, translated)
+                font = set_font_by_ascii_chars([translated], 16, None, Directories(test_config))
+                # no wider than the NES entries' translations, which fit
+                widest = max(font.size(_(text.text))[0] for text in FULL_MENU_LAYOUT.texts)
+                self.assertLessEqual(font.size(translated)[0], widest)
 
 
 class TestHeldMap(AutosaveTestCase):

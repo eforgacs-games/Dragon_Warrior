@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from typing import Any, override
 
 from src.display_filters import SCALING_KEY, SCALING_MODES, SCALING_SMOOTH, SCANLINES_KEY
+from src.languages import LANGUAGE_NAMES
 from src.items import BAG_SIZES, BIG_BAG_SLOTS, INVENTORY_SLOTS
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_LEARNED, JOURNAL_OFF, JOURNAL_SETTINGS, LEGACY_JOURNAL_GOALS
 from src.soundtrack import DEFAULT_SOUNDTRACK, SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, SOUNDTRACKS, Soundtrack, \
@@ -39,7 +40,6 @@ AUTO_GRIND_STOP_VALUES = ('RedHP', 'HalfHP', 'ThreeQuartersHP')
 ENCOUNTERS_NES, ENCOUNTERS_HALF, ENCOUNTERS_OFF = ENCOUNTER_SETTINGS = ('NES', 'Half', 'Off')
 EXP_GOLD_MULTIPLIERS = (1, 2, 4)
 STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS = STATUS_WINDOW_SETTINGS = ('NES', 'Always')
-LANGUAGES = ('English', 'Korean')
 
 # AUTOSAVE in a config that doesn't set it: OFF, the NES (it only saves with King Lorik). Every config sets it OFF, so
 # the tests and dev runs never write an autosave.
@@ -198,7 +198,7 @@ PER_LOG_OPTIONS = (MESSAGE_SPEED, DIALOG_STYLE, NPCS_MAKE_WAY, FADE_STYLE, AUTO_
 # Global, in the order of Settings' fields
 
 # None: from the system locale (base_config language_from_locale). No preset changes it.
-LANGUAGE = Option('language', 'LANGUAGE', LANGUAGES, None)
+LANGUAGE = Option('language', 'LANGUAGE', LANGUAGE_NAMES, None)
 # The display filters (src/display_filters.py). Neither is on the NES or off it (the NES drew to a TV), so no preset
 # changes them.
 SCANLINES = Option('scanlines', SCANLINES_KEY, ON_OFF, False)

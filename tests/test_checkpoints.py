@@ -120,8 +120,11 @@ class TestCheckpoints(story_run.StoryRunMixin, TestCase):
     def test_the_checkpoint_names_give_the_strongest_name_stats(self):
         # NES LoadStats: a first-four-tile sum ending in $D keeps full strength and HP and adds the +3 bonus
         self.assertEqual(get_total_name_score(CHECKPOINT_HERO_NAME) & 0x0F, 0x0D)
-        # Korean names count each character as the low byte of its code point (name_character_value)
-        self.assertEqual(get_total_name_score(LOCALIZED_HERO_NAMES['Korean']) & 0x0F, 0x0D)
+        # Korean (or Japanese) names count each character as the low byte of its code point (name_character_value)
+        self.assertIn('Korean', LOCALIZED_HERO_NAMES)
+        for language, name in LOCALIZED_HERO_NAMES.items():
+            with self.subTest(language=language, name=name):
+                self.assertEqual(get_total_name_score(name) & 0x0F, 0x0D)
 
     def test_the_hero_is_named_arthur_in_english(self):
         with patch.dict(self.game.config, {'LANGUAGE': 'English'}):

@@ -1,6 +1,7 @@
 import locale
 
 from src.display_filters import SCALING_SMOOTH
+from src.languages import language_for_locale
 from src.settings import USER_SETTINGS
 from src.soundtrack import Soundtrack
 
@@ -9,11 +10,9 @@ LOCALE, ENCODING = locale.getlocale()
 
 
 def language_from_locale(locale_name: str | None) -> str:
-    """The game compares LANGUAGE against language names ('English', 'Korean'), not locale codes like 'en_US' or
-    'ko_KR', so map the system locale to one of those names. Anything that isn't Korean plays in English."""
-    if locale_name and locale_name.lower().startswith('ko'):
-        return 'Korean'
-    return 'English'
+    """LANGUAGE is a language's name ('English', 'Korean', src/languages.py), not a locale code like 'en_US' or
+    'ko_KR', so map the system locale to one of those names. A locale with no language of its own plays in English."""
+    return language_for_locale(locale_name).name
 
 
 base_config = {

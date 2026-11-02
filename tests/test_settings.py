@@ -18,6 +18,7 @@ from pygame.event import Event
 from src import settings as settings_module
 from src.common import set_gettext_language
 from src.config.test_config import test_config
+from src.languages import LANGUAGE_NAMES, LANGUAGES
 from src.options_overlay import FIXED_ROWS, OPTION_PAGES, apply_option
 from src.settings import SETTINGS_ENV_VAR, USER_SETTINGS, Settings, SettingsStore, load_settings, save_settings, \
     settings_path
@@ -207,15 +208,17 @@ class TestReadAtStart(GameTestCase):
 
     def test_run_marks_language_as_from_the_command_line(self):
         from src import game as game_module
-        with patch.object(sys, 'argv', ['dragon_warrior', '--language', 'English']), \
-                patch.object(game_module, 'install_crash_log'), patch.object(game_module, 'Game') as game_class:
-            game_module.run()
-        config = game_class.call_args.kwargs['config']
-        self.assertEqual(('English', True), (config['LANGUAGE'], config['LANGUAGE_FROM_COMMAND_LINE']))
+        for language in LANGUAGES:
+            with patch.object(sys, 'argv', ['dragon_warrior', '--language', language.name]), \
+                    patch.object(game_module, 'install_crash_log'), patch.object(game_module, 'Game') as game_class:
+                game_module.run()
+            config = game_class.call_args.kwargs['config']
+            with self.subTest(language=language.name):
+                self.assertEqual((language.name, True), (config['LANGUAGE'], config['LANGUAGE_FROM_COMMAND_LINE']))
 
     def test_without_a_saved_language_the_locale_decides(self):
         save_settings(self.path, Settings(zoom=3))
-        for language in ('English', 'Korean'):
+        for language in LANGUAGE_NAMES:
             with self.subTest(language=language):
                 self.assertEqual(language, self.new_game(LANGUAGE=language).config['LANGUAGE'])
 
@@ -366,12 +369,15 @@ class TestLanguageSwitch(GameTestCase):
         self.assertEqual("LOOK & SOUND", translations[0](OPTION_PAGES[0].title))
         self.assertEqual(KOREAN(OPTION_PAGES[0].title), translations[-1](OPTION_PAGES[0].title))
         self.assertEqual("언어", translations[-1]("LANGUAGE"))
-        # and back
-        translations.clear()
-        self.run_overlay(*to_language(), K_u, translations=translations)
-        self.assertEqual("화면과 소리", translations[0](OPTION_PAGES[0].title))
-        self.assertEqual("LOOK & SOUND", translations[-1](OPTION_PAGES[0].title))
-        self.assertEqual('English', self.config['LANGUAGE'])
+        # on through every other language, and back to English
+        title = OPTION_PAGES[0].title
+        for previous, language in zip(LANGUAGES[1:], (*LANGUAGES[2:], LANGUAGES[0])):
+            translations.clear()
+            self.run_overlay(*to_language(), K_u, translations=translations)
+            self.assertEqual(language.name, self.config['LANGUAGE'])
+            self.assertEqual(set_gettext_language(previous.name)(title), translations[0](title))
+            self.assertEqual(set_gettext_language(language.name)(title), translations[-1](title))
+        self.assertEqual("LOOK & SOUND", translations[-1](title))
 
     def dialog_entry(self):
         """A guard's line (GuardDialog1), as the next TALK would show it."""

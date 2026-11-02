@@ -122,3 +122,7 @@ class TestSmokeScenesKorean(SmokeGameTestCase):
     def test_untranslated_game_is_reported(self):
         with patch.object(self.game, '_', lambda text: text):
             self.assertEqual(1, len(smoke_test.check_game_language(self.game)))
+
+
+class TestSmokeScenesJapanese(TestSmokeScenesKorean):
+    language = 'Japanese'

@@ -15,6 +15,7 @@ from pygame.event import Event
 
 from src.config.test_config import test_config
 from src.display_filters import SCALING_PIXEL_PERFECT, SCALING_SMOOTH
+from src.languages import LANGUAGES
 from src.map_layouts import GRASS_STAIR_DOWN
 from src.maps import STAIR_DIRECTIONS, map_lookup
 from src.options_overlay import FIXED_ROWS, MOST_ROWS, OPTION_PAGES, OPTION_ROWS, OPTIONS_WINDOW, PRESET_CUSTOM, \
@@ -193,7 +194,7 @@ class TestRows(OverlayTestCase):
                                             ("DIALOG STYLE", 'DIALOG_STYLE', ("CLASSIC (NES)", "MODERN")),
                                             ("FADE STYLE", 'FADE_STYLE', ("NES", "SMOOTH")),
                                             ("MUSIC", 'SOUNDTRACK', ("NES", "SFC", "ORCHESTRA")),
-                                            ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어")),
+                                            ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어", "日本語")),
                                             ("SCANLINES", 'SCANLINES', ("OFF", "ON")),
                                             ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT")),
                                             ("VIEW", 'VIEW', ("NES (4:3)", "WIDE")),
@@ -286,11 +287,16 @@ class TestRows(OverlayTestCase):
 
     def test_each_text_is_in_the_catalog(self):
         texts = overlay_texts()
+        language_names = [language.option_label for language in LANGUAGES]
         for number in range(len(OPTION_PAGES)):
-            layout = options_layout(self.config, number)
-            for text in (layout.title, *layout.texts):
-                if '/' not in text.text or text.text == "3/4 HP":  # the page number isn't translated
-                    self.assertIn(text.text, texts)
+            for language in LANGUAGES:
+                layout = options_layout({**self.config, 'LANGUAGE': language.name}, number)
+                for text in (layout.title, *layout.texts):
+                    # The page number and the languages' names (each in its own language) aren't translated
+                    if text.text in language_names:
+                        self.assertNotIn(text.text, texts)
+                    elif '/' not in text.text or text.text == "3/4 HP":
+                        self.assertIn(text.text, texts)
 
     def test_each_row_changes_its_setting_with_a_sound(self):
         for row in OPTION_ROWS:

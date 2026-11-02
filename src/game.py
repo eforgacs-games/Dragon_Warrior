@@ -48,6 +48,7 @@ from src.message_log import MessageLog
 from src.music_player import MusicPlayer
 from src.npc_movement import step
 from src.options_overlay import apply_log_options
+from src.languages import LANGUAGE_NAMES
 from src.rewind import Rewind
 from src.save_file import SaveFile
 from src.save_state import run_due_state_request
@@ -308,11 +309,12 @@ class Game:
         set_zoom_listener(self.settings.updater('zoom'))
 
     def set_language(self, language: str) -> None:
-        """Play in ``language`` ('English' or 'Korean') from now on, without a restart: the options overlay's LANGUAGE
-        row. Every text the game shows is translated when it is shown, through the ``_`` the game, its CommandMenu and
-        the CommandMenu's DialogLookup hold (the battle, the ending, auto-grind and the title menu use the game's or
-        make their own), so those are made again; the rendered text caches (src/text.py, src/window_renderer.py) are
-        keyed by the text itself, so they need nothing. The language is saved with the global settings."""
+        """Play in ``language`` (a name from src/languages.py: 'English', 'Korean', ...) from now on, without a
+        restart: the options overlay's LANGUAGE row. Every text the game shows is translated when it is shown, through
+        the ``_`` the game, its CommandMenu and the CommandMenu's DialogLookup hold (the battle, the ending, auto-grind
+        and the title menu use the game's or make their own), so those are made again; the rendered text caches
+        (src/text.py, src/window_renderer.py) are keyed by the text itself, so they need nothing. The language is saved
+        with the global settings."""
         config = self.game_state.config
         config['LANGUAGE'] = language
         self._ = set_gettext_language(language)
@@ -677,7 +679,7 @@ def run():
     parser.add_argument("--checkpoint", choices=CHECKPOINT_NAMES,
                         help="start from a playtest checkpoint in data/checkpoints/ (see PLAYTEST.md); saves go to "
                              f"{CHECKPOINT_SAVE_DIR} instead of src/saves")
-    parser.add_argument("--language", choices=("English", "Korean"),
+    parser.add_argument("--language", choices=LANGUAGE_NAMES,
                         help="play in this language this time, whatever the options say (default: the language "
                              "chosen in the options, or the system's)")
     parser.add_argument("--smoke-test", action="store_true",
