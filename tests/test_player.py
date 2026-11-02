@@ -1,3 +1,5 @@
+import io
+from contextlib import redirect_stdout
 from unittest import TestCase
 
 import pygame
@@ -6,6 +8,7 @@ from src.config.test_config import test_config
 from src.direction import Direction
 from src.maps import MapWithoutNPCs
 from src.player.player import Player
+from src.player.player_stats import get_stats_for_level, levels_list
 
 layout = [[3, 0, 3],
           [1, 2, 3],
@@ -76,6 +79,43 @@ class TestPlayer(TestCase):
         self.player.wearing_fighters_ring = True
         self.player.update_attack_power()
         self.assertEqual(self.player.attack_power, self.player.strength + 4 + 2)
+
+    def test_unknown_weapon_is_reported_and_adds_nothing(self):
+        """A weapon name that isn't in the weapons table (a typo, or an old save) is reported, and the attack power
+        is the bare strength, as with no weapon."""
+        self.player.weapon = "Wooden Spoon"
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.player.update_attack_power()
+        self.assertEqual("ERROR: Wooden Spoon is not a valid weapon.\n", output.getvalue())
+        self.assertEqual(self.player.strength, self.player.attack_power)
+
+    def test_no_weapon_is_not_reported(self):
+        self.player.weapon = ""
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.player.update_attack_power()
+        self.assertEqual("", output.getvalue())
+        self.assertEqual(self.player.strength, self.player.attack_power)
+
+    def test_god_mode_starts_at_level_30_with_every_spell_and_99999_hp_mp_and_gold(self):
+        player = Player(center_point=None, images=None, current_map=MockMap(test_config), god_mode=True)
+        self.assertTrue(player.god_mode)
+        self.assertEqual(65536, player.total_experience)
+        self.assertEqual(30, player.level)
+        level_30 = get_stats_for_level(player.name, 30)
+        self.assertEqual((level_30['strength'], level_30['agility']), (player.strength, player.agility))
+        every_spell = [row['spell'] for row in levels_list.values() if row['spell']]
+        self.assertEqual(every_spell, player.spells)
+        self.assertEqual((99_999, 99_999), (player.max_hp, player.current_hp))
+        self.assertEqual((99_999, 99_999), (player.max_mp, player.current_mp))
+        self.assertEqual(99_999, player.gold)
+
+    def test_without_god_mode_the_hero_starts_at_level_1_with_nothing(self):
+        player = Player(center_point=None, images=None, current_map=MockMap(test_config), god_mode=False)
+        self.assertFalse(player.god_mode)
+        self.assertEqual((0, 1, 0), (player.total_experience, player.level, player.gold))
+        self.assertEqual([], player.spells)
 
     def test_set_initial_stats_fills_hp_and_mp_and_works_out_the_powers_for_the_name(self):
         """Ann = A $24 + n $17 + n $17 + blank $60 = $B2 -> %10: strength and max HP cut, bonus 0. At level 1 that's
