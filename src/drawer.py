@@ -82,7 +82,7 @@ class Drawer:
         self.game_state = game_state
         self.scale = self.game_state.config["SCALE"]
         self.display_hovering_stats = False
-        self.background = None
+        self.background: Surface | None = None
         # Where the hero was drawn on the last frame, so the frame a step ends on also redraws it (see draw_all)
         self.last_player_rect: Rect | None = None
         self.hovering_stats_displayed = False
@@ -419,12 +419,14 @@ class Drawer:
                                 cover_cells_to_draw.add(cell)
                             continue
                     group_to_draw.add(tile_to_draw)
-        group_to_draw.draw(self.background)
+        background = self.background
+        assert background is not None, "the first frame (loop_count 1) makes the background"
+        group_to_draw.draw(background)
         if cover_cells_to_draw:
-            draw_cover(current_map, self.background, cover_cells_to_draw)
+            draw_cover(current_map, background, cover_cells_to_draw)
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
-        self.handle_sprite_drawing_and_animation(current_map, foreground_rects, self.background,
+        self.handle_sprite_drawing_and_animation(current_map, foreground_rects, background,
                                                  enable_animate)
         if not self.game_state.config['NO_BLIT']:
             # the whole view in WIDE (src/view.py), with the map's boundary block past its edges (draw_boundary)

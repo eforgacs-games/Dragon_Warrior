@@ -172,13 +172,13 @@ class Inventory(list[str]):
         self._close_gaps()
 
     @override
-    def __iadd__(self, items: Iterable[str]) -> 'Inventory':  # type: ignore[override,misc]
+    def __iadd__(self, items: Iterable[str]) -> 'Inventory':  # type: ignore[override]
         super().__iadd__(items)
         self._close_gaps()
         return self
 
     @override
-    def __imul__(self, count: SupportsIndex) -> 'Inventory':  # type: ignore[override,misc]
+    def __imul__(self, count: SupportsIndex) -> 'Inventory':
         super().__imul__(count)
         self._close_gaps()
         return self

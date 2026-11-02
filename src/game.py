@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 
-from pygame import FULLSCREEN, RESIZABLE, display, event, image, init, KEYDOWN, KEYUP, SCALED, VIDEORESIZE
+from pygame import FULLSCREEN, RESIZABLE, Surface, display, event, image, init, KEYDOWN, KEYUP, SCALED, VIDEORESIZE
 from pygame.display import set_mode, set_caption
 from pygame.event import get
 from pygame.time import Clock
@@ -40,7 +40,7 @@ from src.guardians import GOLEM, guardian_at
 from src.intro import Intro
 from src.items import OpenDoorHistory, TreasureChestHistory
 from src.map_layouts import MapLayouts
-from src.maps import map_lookup
+from src.maps import DragonWarriorMap, map_lookup
 from src.map_hotkeys import MapHotkeys
 from src.menu import BATTLE_LINE, CommandMenu
 from src.movement import HILL_PAUSE_FRAMES, RUN_SPEED_FACTOR, STEP_SYNC_FRAMES, MovementController
@@ -85,6 +85,11 @@ MAGIC_ARMOR_HEAL_STEPS = 4
 
 
 class Game:
+    screen: Surface  # the NES-sized screen everything is drawn on, made by open_window
+    game_state: GameState
+    current_map: DragonWarriorMap
+    player: Player
+
     def __init__(self, config):
 
         migrate_legacy_music_config(config)  # a config with the old ORCHESTRA_MUSIC_ENABLED switch (src/soundtrack.py)
@@ -265,7 +270,7 @@ class Game:
     def auto_stairs(self, value: bool) -> None:
         self.game_state.config['AUTO_STAIRS'] = value
 
-    def set_screen(self, win_height, win_width):
+    def set_screen(self, win_height: int, win_width: int) -> Surface:
         """Open the window (or make it again) and return the game's screen. In the WIDE view (src/view.py) the window
         is wider than win_width, and the screen is the NES-sized area in its middle."""
         if view_name(self.game_state.config) == VIEW_NES:
@@ -372,7 +377,8 @@ class Game:
         self.map_frame()
 
     def read_events(self) -> None:
-        """Take the events off the queue (draw_all reads them too) and handle the keys and the window's events."""
+        """Take the events off the queue (draw_all reads them too) and handle the keys and the window's events. Unlike
+        the other loops (src/waiting.py get_events), the speed keys stay in: the map's hotkeys handle them."""
         # Auto-grind's virtual joypad (src/virtual_joypad.py) posts its presses and sees the player's keys first
         poll_virtual_joypad(MAP_CONTEXT)
         # The zoom keys only zoom the window (src/zoom.py), so they are taken out like any other window's loop does
@@ -716,24 +722,20 @@ class Game:
         self.cmd_menu.show_line_in_dialog_box(damage_line, **BATTLE_LINE)
         # print(f"{self.player.name} HP: {self.player.current_hp}/{self.player.max_hp}")
 
-    def set_player_images_by_equipment(self):
+    def set_player_images_by_equipment(self) -> None:
+        """Give the hero the sprite sheet for what he carries: the princess, or his weapon and shield."""
         if self.story_flags.carrying_gwaelin:
-            self.player.images = self.current_map.scale_sprite_sheet(self.directories.HERO_CARRYING_PRINCESS_PATH)
-            self.player.set_images(self.player.images)
+            sprite_sheet_path = self.directories.HERO_CARRYING_PRINCESS_PATH
         elif self.player.weapon:
             if self.player.shield:
-                self.player.images = self.current_map.scale_sprite_sheet(self.directories.ARMED_HERO_WITH_SHIELD_PATH)
-                self.player.set_images(self.player.images)
-
+                sprite_sheet_path = self.directories.ARMED_HERO_WITH_SHIELD_PATH
             else:
-                self.player.images = self.current_map.scale_sprite_sheet(self.directories.ARMED_HERO_PATH)
-                self.player.set_images(self.player.images)
+                sprite_sheet_path = self.directories.ARMED_HERO_PATH
         elif self.player.shield:
-            self.player.images = self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_WITH_SHIELD_PATH)
-            self.player.set_images(self.player.images)
+            sprite_sheet_path = self.directories.UNARMED_HERO_WITH_SHIELD_PATH
         else:
-            self.player.images = self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH)
-            self.player.set_images(self.player.images)
+            sprite_sheet_path = self.directories.UNARMED_HERO_PATH
+        self.player.set_images(self.current_map.scale_sprite_sheet(sprite_sheet_path))
 
     def handle_death(self):
         if self.player.current_hp <= 0:
@@ -928,9 +930,10 @@ class Game:
         # Reload the starting map even if it's the one already shown, so the loaded flags apply to it
         if save.current_map in map_lookup:
             next_map = map_lookup[save.current_map](self.config)
-            destination = (save.player_row, save.player_column)
-            if destination[0] is None:
+            if save.player_row is None or save.player_column is None:
                 destination = next_map.initial_coordinates
+            else:
+                destination = (save.player_row, save.player_column)
         elif self.current_map.identifier in map_lookup:
             next_map = map_lookup[self.current_map.identifier](self.config)
             destination = (self.player.row, self.player.column)

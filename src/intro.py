@@ -3,7 +3,7 @@ from os.path import join
 
 from pygame import image, display, Rect, Surface, KEYDOWN
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
-from src.waiting import NES_FPS, FrameClock, get_events, quit_if_requested, wait_until
+from src.waiting import NES_FPS, FrameClock, get_events, wait_until
 from pygame.transform import scale
 
 from data.text.intro_lookup_table import ControlInfo
@@ -66,8 +66,7 @@ class Intro:
         waiting = True
         while waiting:
             self.frame_clock.tick()  # NES_FPS x the game speed
-            for current_event in get_events():
-                quit_if_requested(current_event)
+            for current_event in get_events(quit_on_close=True):
                 if current_event.type == KEYDOWN:
                     if current_event.key in accept_keys:
                         waiting = False
@@ -86,8 +85,7 @@ class Intro:
         while intro_banner_with_text_enabled:
             self.handle_all_sparkles(intro_banner_with_text_enabled_start_time, screen)
             self.frame_clock.tick()  # NES_FPS x the game speed
-            for current_event in get_events():
-                quit_if_requested(current_event)
+            for current_event in get_events(quit_on_close=True):
                 if current_event.type == KEYDOWN:
                     if current_event.key in accept_keys:
                         intro_banner_with_text_enabled = False

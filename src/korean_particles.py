@@ -133,5 +133,5 @@ class KoreanText(str):
     """A translated string whose .format() makes the particles after its placeholders agree with the values."""
 
     @override
-    def format(self, *args: Any, **kwargs: Any) -> str:  # type: ignore[override]
+    def format(self, *args: Any, **kwargs: Any) -> str:
         return format_with_particles(str(self), args, kwargs)

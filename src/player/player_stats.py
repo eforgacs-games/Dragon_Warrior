@@ -18,7 +18,7 @@ So two stats always grow at the full rate ("fast") and the other two at 90% plus
 the low four bits of the sum matter, so a name falls into one of 16 groups: 4 growth patterns x 4 bonuses.
 """
 import unicodedata
-from typing import Literal, TypedDict, cast
+from typing import Literal, NotRequired, TypedDict
 
 from src.spells import Spell
 
@@ -68,9 +68,20 @@ def get_name_tiles(name: str) -> tuple[int, ...]:
     return tuple(tiles + [BLANK_TILE] * (NAME_STAT_LETTERS - len(tiles)))
 
 
+class LevelRow(TypedDict):
+    """One level's row: the experience it takes, the base stats and the spell learned there."""
+    total_exp: int
+    strength: int
+    agility: int
+    max_hp: int
+    max_mp: int
+    spell: Spell | None
+    exp: NotRequired[int]  # the experience from the level below, filled in by set_exp
+
+
 # BaseStatsTbl (Bank01, $A0CD) and LevelUpTbl (Bank03, $F35B), plus the spell learned at each level.
 # These are the base values: never change them, use get_stats_for_level for a named hero.
-levels_list: dict[int, dict[str, int | Spell | None]] = {
+levels_list: dict[int, LevelRow] = {
     1: {'total_exp': 0, 'strength': 4, 'agility': 4, 'max_hp': 15, 'max_mp': 0, 'spell': None},
     2: {'total_exp': 7, 'strength': 5, 'agility': 4, 'max_hp': 22, 'max_mp': 0, 'spell': None},
     3: {'total_exp': 23, 'strength': 7, 'agility': 6, 'max_hp': 24, 'max_mp': 5, 'spell': Spell.HEAL},
@@ -104,7 +115,7 @@ levels_list: dict[int, dict[str, int | Spell | None]] = {
 }
 
 
-def set_exp():
+def set_exp() -> None:
     for level_int, level_dict in levels_list.items():
         if level_int == 1:
             level_dict['exp'] = 0
@@ -150,8 +161,7 @@ def reduce_stat(stat: int, bonus: int) -> int:
 def get_base_stats(level: int) -> LevelStats:
     """SetBaseStats (L99B4): the BaseStatsTbl row for the level, before the name is applied."""
     row = levels_list[level]
-    return LevelStats(strength=cast(int, row['strength']), agility=cast(int, row['agility']),
-                      max_hp=cast(int, row['max_hp']), max_mp=cast(int, row['max_mp']))
+    return LevelStats(strength=row['strength'], agility=row['agility'], max_hp=row['max_hp'], max_mp=row['max_mp'])
 
 
 def get_stats_for_level(name: str, level: int) -> LevelStats:
@@ -169,6 +179,6 @@ def get_stats_for_level(name: str, level: int) -> LevelStats:
 def get_level_by_experience(total_experience: int) -> int:
     """GetLevelLoop (LF056): count down from level 30 to the first LevelUpTbl entry the experience reaches."""
     for level in reversed(levels_list):
-        if total_experience >= cast(int, levels_list[level]['total_exp']):
+        if total_experience >= levels_list[level]['total_exp']:
             return level
     return 1

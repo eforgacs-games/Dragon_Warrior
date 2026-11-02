@@ -67,7 +67,7 @@ class TestConfirmSelectName(TestCase):
         self.screen = pygame.Surface((256, 240))
 
     def select_name(self, events: list, joystick: bool = False) -> str | None:
-        with patch('src.selection.event.get', side_effect=[[current_event] for current_event in events]), \
+        with patch('src.waiting.event.get', side_effect=[[current_event] for current_event in events]), \
                 patch('src.menu_functions.display'), patch('src.menu_functions.Sound'), \
                 patch('src.menu_functions.toggle_joystick_input', return_value=joystick):
             return NameSelection(self.config).select_name(0, self.screen, self.command_menu)

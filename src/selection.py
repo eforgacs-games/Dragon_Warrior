@@ -31,14 +31,12 @@ they are read one frame at a time from the map loop and the fight loop, so they 
 from collections.abc import Callable, Collection, Iterable, Mapping
 from typing import NamedTuple
 
-from pygame import KEYDOWN, event, key
+from pygame import KEYDOWN, key
 from pygame.event import Event
 
 from src.common import A_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, reject_keys
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, BlinkingCursor, SelectionButtons, first_button
-from src.waiting import handle_speed_key, menu_frame_in_game_frames, poll_virtual_joypad, quit_if_requested, \
-    wait_frames, with_virtual_keys
-from src.zoom import handle_zoom_event
+from src.waiting import get_events, menu_frame_in_game_frames, wait_frames, with_virtual_keys
 
 ButtonKeys = tuple[tuple[int, Collection[int]], ...]
 
@@ -83,16 +81,9 @@ def next_game_frame() -> None:
 
 
 def frame_events() -> list[Event]:
-    """The events queued since the last pass: quits if the window was closed (quit_if_requested), and takes out the
-    presses of 1 to 5 after setting the game speed (handle_speed_key) and the zoom keys after zooming the window
-    (handle_zoom_event, src/zoom.py), so no window reads them as a key."""
-    events = []
-    poll_virtual_joypad()
-    for current_event in event.get():
-        quit_if_requested(current_event)
-        if not handle_speed_key(current_event) and not handle_zoom_event(current_event):
-            events.append(current_event)
-    return events
+    """The events queued since the last pass: quits if the window was closed, and takes out the speed and zoom keys
+    after acting on them, so no window reads them as a key (src/waiting.py get_events)."""
+    return get_events(quit_on_close=True)
 
 
 def key_buttons(pressed_key: int, keys: ButtonKeys = SELECTION_KEYS) -> int:

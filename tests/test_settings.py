@@ -283,7 +283,7 @@ class TestSavedWhenChanged(GameTestCase):
 
     def test_language(self):
         game = self.new_game()
-        with patch('src.selection.event.get', side_effect=presses(*to_language(), K_u)), \
+        with patch('src.waiting.event.get', side_effect=presses(*to_language(), K_u)), \
                 patch('src.selection.wait_frames'):
             from src.options_overlay import OptionsOverlay
             OptionsOverlay(game).run()
@@ -356,7 +356,7 @@ class TestLanguageSwitch(GameTestCase):
 
         def draw(overlay, *_args):
             drawn.append(overlay._)
-        with patch('src.selection.event.get', side_effect=presses(*keys)), \
+        with patch('src.waiting.event.get', side_effect=presses(*keys)), \
                 patch.object(OptionsOverlay, 'draw', autospec=True, side_effect=draw):
             OptionsOverlay(self.game).run()
 

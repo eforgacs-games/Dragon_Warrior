@@ -6,6 +6,9 @@ class AnimatedSprite(BaseSprite):
     # NES CharLeftRight bit 3 (DoSprites, Bank00): the walking frame (which leg is forward), one for every character
     # on the map, hero and NPCs alike. NPCSchedule.start_frame swaps it every 16 frames.
     walk_frame = 0
+    # The block a character stands on, set by whoever places it on the map (DragonWarriorMap.map_npc, Player)
+    row: int
+    column: int
 
     def __init__(self, center_point, direction_value, images, identifier):
         self.identifier = identifier

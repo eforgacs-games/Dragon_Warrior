@@ -170,7 +170,7 @@ class Presenter:
     def _install(self) -> None:
         if not self._installed:
             self._previous_flip, self._previous_update = display.flip, display.update
-            display.flip, display.update = self._flip, self._update  # type: ignore[assignment]
+            display.flip, display.update = self._flip, self._update
             self._installed = True
 
     def _uninstall(self) -> None:

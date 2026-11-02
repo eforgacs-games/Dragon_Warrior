@@ -36,7 +36,7 @@ class TestDragonWarriorMap(TestCase):
             # excluding non-map classes (imported ones, like collections.abc.Callable, and the map base classes)
             if map_class.__module__ == maps.__name__ and dw_map not in (
                     'ABC', 'AnimatedSprite', 'BaseSprite', 'BasementWithNPCs', 'BasementWithoutNPCs', 'CaveMap',
-                    'Direction', 'Directories', 'DragonWarriorMap', 'FixedCharacter',
+                    'Direction', 'Directories', 'DragonWarriorMap', 'FixedCharacter', 'FloorTile',
                     'Graphics', 'Group', 'LayeredDirty', 'MapLayouts', 'MapWithoutNPCs', 'NPC', 'Player',
                     'RoamingCharacter'):
                 initialized_map_class = map_class(self.game.config)

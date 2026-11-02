@@ -57,7 +57,7 @@ class SelectionTestCase(TestCase):
                 raise AssertionError("still selecting")
             return queue.pop(0) if queue else []
         kwargs.setdefault('move', stop_at_edges(3))
-        with patch('src.selection.event.get', side_effect=get):
+        with patch('src.waiting.event.get', side_effect=get):
             return run_selection(self.draw, **kwargs)
 
 
@@ -158,7 +158,7 @@ class TestKeys(SelectionTestCase):
 
     def test_frame_events(self):
         events = [press(K_1), press(K_RETURN), Event(KEYUP, key=K_RETURN)]
-        with patch('src.selection.event.get', return_value=events):
+        with patch('src.waiting.event.get', return_value=events):
             self.assertEqual(events[1:], frame_events())
         self.assertEqual(1, game_speed())
 
@@ -195,7 +195,7 @@ class TestBlinkAndPacing(SelectionTestCase):
             nonlocal passes
             passes += 1
             return [press(K_RETURN)] if real_time.perf_counter() - start >= 0.25 else []
-        with patch('src.selection.event.get', side_effect=get):
+        with patch('src.waiting.event.get', side_effect=get):
             run_selection(lambda *_: None, move=toggle)
         elapsed = real_time.perf_counter() - start
         self.assertLessEqual(passes, elapsed * NES_FPS + 2)
@@ -217,7 +217,7 @@ class TestJoypad(SelectionTestCase):
                 self.held[K_RETURN] = 0
                 queue.extend([[], [press(K_ESCAPE)]])
             return queue.pop(0)
-        with patch('src.selection.event.get', side_effect=get):
+        with patch('src.waiting.event.get', side_effect=get):
             self.assertEqual(Answer(IN_B, 0), run_selection(self.draw, joypad=True, move=toggle))
 
     def test_one_button_per_frame(self):
