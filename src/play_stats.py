@@ -8,12 +8,13 @@ so does a log saved before the counts were kept.
 They're always counted, whatever the STATS PAGE option says (it only decides whether P shows them), so turning the page
 on shows everything done so far. Each is counted where it happens, in one line:
 
-- play time: Game.run_map_frame ticks the clock (tick) every map frame. It's real time, the same at any game speed
-  (keys 1 to 5), at most MAX_COUNTED_FRAME_MS a tick, so a machine left asleep, a debugger's pause or a window being
-  dragged doesn't add hours. A fight or a dialog runs inside one map frame, so it adds at most that much too: the play
-  time is mostly time on the map. It doesn't count while the game is paused (START), nor while one of the screens the
-  map's keys open is up (the options overlay, the dungeon map, the message log, the stats page:
-  MapHotkeys.open_requested stops the clock), nor on the title screen;
+- play time: PlayClock ticks it (tick) whenever any of the game's loops passes a frame or a wait polls (src/waiting.py
+  frame_passed: the map, fights, dialogs, menus, shops), so everything played counts. It's real time, the same at any
+  game speed (keys 1 to 5), and each tick counts the time since the one before, so ticking more than once a frame
+  counts nothing twice; a tick counts at most MAX_COUNTED_FRAME_MS, so a machine left asleep, a debugger's pause or a
+  window being dragged doesn't add hours. The clock only runs once Game.main has started play (not on the title
+  screen), and not while the game is paused (START) or while one of the pages the map's keys open is up (the options
+  overlay, the dungeon map, the message log, the stats page, the quest journal, the help: PlayClock.stopped);
 - steps: Game.count_step, every step that ends on a new block;
 - fights won, fled and lost: BattleController.fight_enemy. Fled is the hero running away; an enemy that runs away is
   none of the three. A fight won counts its enemy as a monster defeated, by name; the Dragonlord's two forms are one
@@ -24,10 +25,14 @@ on shows everything done so far. Each is counted where it happens, in one line:
   paid. The gold lost on dying isn't spent;
 - chests opened: CommandMenu.open_chest, every chest taken, an empty one too.
 """
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field, fields
 from typing import Any
 
 from pygame.time import get_ticks
+
+from src.waiting import set_frame_listener
 
 SAVE_KEY = 'PlayStats'
 MONSTERS_DEFEATED = 'monsters_defeated'
@@ -65,10 +70,6 @@ class PlayStats:
         if counting and self.clock_at is not None:
             self.play_time_ms += min(max(0, now - self.clock_at), MAX_COUNTED_FRAME_MS)
         self.clock_at = now
-
-    def stop_clock(self) -> None:
-        """Count nothing until the next tick (a screen opened over the map has just closed)."""
-        self.clock_at = None
 
     def take_step(self) -> None:
         self.steps += 1
@@ -118,6 +119,28 @@ class PlayStats:
 
     def copy(self) -> 'PlayStats':
         return PlayStats.from_save(self.to_save())
+
+
+class PlayClock:
+    """Ticks the game's play time (its PlayStats, which loading a log or a state replaces) on every frame of every loop
+    (src/waiting.py frame_passed), counting only while ``running`` and the game isn't paused."""
+
+    def __init__(self, game: Any) -> None:
+        self.game = game
+        self.running = False  # off on the title screen: Game.main starts it once play starts
+        set_frame_listener(self.frame)
+
+    def frame(self) -> None:
+        self.game.play_stats.tick(counting=self.running and not self.game.paused)
+
+    @contextmanager
+    def stopped(self) -> Iterator[None]:
+        """Count nothing while a page opened from the map is up."""
+        was_running, self.running = self.running, False
+        try:
+            yield
+        finally:
+            self.running = was_running
 
 
 def counter_names() -> tuple[str, ...]:

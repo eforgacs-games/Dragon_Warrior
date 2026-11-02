@@ -59,7 +59,7 @@ from src.player.player import Player
 from src.sound import Sound
 from src.battle_controller import BattleController, BattleOutcome
 from src.ending import Ending
-from src.play_stats import PlayStats
+from src.play_stats import PlayClock, PlayStats
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
 from src.autosave import Autosave
@@ -142,6 +142,7 @@ class Game:
         self.door_history = OpenDoorHistory()  # which locked doors have been opened since the last overworld visit
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
         self.play_stats = PlayStats()  # the stats page's counts (src/play_stats.py), kept with the adventure log
+        self.play_clock = PlayClock(self)  # ticks the play time on every loop's frames, once play has started
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
         self.invulnerable = self.game_state.config["INVULNERABLE"]
@@ -336,6 +337,7 @@ class Game:
         if self.config.get('CHECKPOINT'):
             self.load_checkpoint(self.config['CHECKPOINT'])
         self.drawer.draw_all(self, self.game_state.enable_animate)
+        self.play_clock.running = True  # the title screen is behind: the play time counts from here
         while True:
             self.frame_clock.tick()  # NES_FPS x the game speed (src/waiting.py)
             self.clock.tick()  # only measures, for SHOW_FPS
@@ -396,7 +398,6 @@ class Game:
         self.rewind.after_frame()
 
     def run_map_frame(self) -> None:
-        self.play_stats.tick(counting=not self.paused)  # the play time: what has happened since the last map frame
         self.auto_grind.show_pending()  # why auto-grind stopped, if it stopped where a message couldn't be shown
         if self.movement.hill_pause_frames:
             self.movement.hill_pause_frame()

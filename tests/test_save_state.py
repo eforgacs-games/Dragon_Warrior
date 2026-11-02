@@ -519,7 +519,7 @@ GAME_NOT_KEPT = {
     # Only set and read during a map change
     'last_map',
     # The snapshots' own machinery, and auto-grind, which drives the game rather than being part of it
-    'autosave', 'rewind', 'auto_grind',
+    'autosave', 'rewind', 'auto_grind', 'play_clock',
     # The map's key handlers (src/map_hotkeys.py), which hold no state: their requests are listed above
     'hotkeys',
     # Drawing, timing and the game's other parts, which hold no state of the game

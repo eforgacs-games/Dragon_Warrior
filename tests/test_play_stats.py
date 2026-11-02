@@ -10,9 +10,10 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
-from pygame import K_DOWN, K_ESCAPE, K_UP, K_i, K_j, K_p, KEYDOWN
+from pygame import K_DOWN, K_ESCAPE, K_UP, K_h, K_i, K_j, K_p, K_q, KEYDOWN
 from pygame.event import Event
 
+from src import waiting
 from src.battle import Battle
 from src.battle_controller import BattleController
 from src.common import set_gettext_language
@@ -21,6 +22,7 @@ from src.controls import reset_controls
 from src.game_options import DEFAULT_OPTIONS, STATS_PAGE, options_from_save, options_to_save
 from src.message_log import LINE_WIDTH, VISIBLE_LINES, log_layout, text_width
 from src.options_overlay import OPTION_ROWS, PRESET_MODERN, PRESET_NES, preset_values
+from src.quest_journal import JOURNAL_LEARNED
 from src.play_stats import MAX_COUNTED_FRAME_MS, SAVE_KEY, PlayStats, count_or_zero, play_time_text
 from src.save_file import SaveFile
 from src.save_state import decode_snapshot, take_snapshot
@@ -96,15 +98,6 @@ class TestThePlayTime(TestCase):
         stats.tick(counting=False, now=60_000)
         stats.tick(now=60_100)
         self.assertEqual(100, stats.play_time_ms)
-
-    def test_not_while_a_screen_is_up(self):
-        stats = PlayStats()
-        stats.tick(now=0)
-        stats.tick(now=100)
-        stats.stop_clock()
-        stats.tick(now=50_000)
-        stats.tick(now=50_016)
-        self.assertEqual(116, stats.play_time_ms)
 
     def test_real_time_by_default(self):
         stats = PlayStats()
@@ -212,16 +205,6 @@ class TestTheGameCounts(GameTestCase):
             self.game.handle_death()
         self.assertEqual(1, self.game.play_stats.deaths)
 
-    def test_play_time_on_the_map_but_not_while_paused(self):
-        with patch('src.play_stats.get_ticks', side_effect=[0, 100, 200, 300]):
-            self.game.run_map_frame()
-            self.game.run_map_frame()
-            self.game.paused = True
-            self.game.run_map_frame()
-            self.game.paused = False
-            self.game.run_map_frame()
-        self.assertEqual(200, self.game.play_stats.play_time_ms)
-
     def test_chests_and_their_gold(self):
         cmd_menu = self.game.cmd_menu
         with patch.object(cmd_menu, 'show_text_in_dialog_box'), patch.object(cmd_menu, 'show_popup_window'), \
@@ -260,6 +243,89 @@ class TestTheGameCounts(GameTestCase):
         self.assertEqual(counted(), decode_snapshot(snapshot)['play_stats'])
         del snapshot['play_stats']  # a state saved before they were kept
         self.assertEqual(PlayStats(), decode_snapshot(snapshot)['play_stats'])
+
+
+FRAME_MS = 16
+
+
+class TestThePlayClock(GameTestCase):
+    """The play time ticks on every loop's frames (src/waiting.py frame_passed), with a clock the test moves."""
+
+    def setUp(self):
+        super().setUp()
+        self.now = 0
+        patch('src.play_stats.get_ticks', side_effect=lambda: self.now).start()
+        self.game.play_clock.running = True  # as Game.main does once the title screen is behind
+        waiting.frame_passed()
+
+    def frames(self, count: int, frame_ms: int = FRAME_MS) -> None:
+        """A loop running ``count`` frames, reading the events each one, as every loop does."""
+        for _ in range(count):
+            self.now += frame_ms
+            waiting.get_events()
+
+    def test_the_map(self):
+        with patch.object(waiting.time, 'wait'):
+            for _ in range(10):
+                self.now += FRAME_MS
+                waiting.FrameClock(sleep=lambda seconds: None).tick()
+        self.assertEqual(10 * FRAME_MS, self.game.play_stats.play_time_ms)
+
+    def test_a_fight_adds_its_duration(self):
+        def fight(run_away, current_battle):
+            self.frames(300)  # five seconds of turns, messages and waits
+            return True
+        with patch('src.battle_controller.Battle') as battle_class, \
+                patch.object(self.game.battle_ctrl, 'start_fight', return_value=False), \
+                patch.object(self.game.battle_ctrl, 'step_back_after_running', return_value=False), \
+                patch.object(self.game.battle_ctrl, 'handle_battle_prompts', side_effect=fight):
+            battle_class.return_value.enemy.hp = 3
+            self.game.battle_ctrl.run_battle(['Slime'])
+        self.assertEqual(300 * FRAME_MS, self.game.play_stats.play_time_ms)
+
+    def test_a_dialog_adds_its_duration(self):
+        cmd_menu = self.game.cmd_menu
+        with patch.object(cmd_menu, 'window_drop_down_effect'), patch.object(cmd_menu, 'window_drop_up_effect'), \
+                patch.object(cmd_menu, 'wait_for_dialog_key', side_effect=lambda *args, **kwargs: self.frames(120)):
+            cmd_menu.show_text_in_dialog_box("Welcome to Tantegel Castle.")
+        self.assertEqual(120 * FRAME_MS, self.game.play_stats.play_time_ms)
+
+    def test_a_wait_adds_its_duration(self):
+        self.now += 500
+        waiting.check_for_quit()
+        self.assertEqual(500, self.game.play_stats.play_time_ms)
+
+    def test_not_while_paused(self):
+        self.game.paused = True
+        self.frames(600)
+        self.game.paused = False
+        self.frames(1)
+        self.assertEqual(FRAME_MS, self.game.play_stats.play_time_ms)
+
+    def test_not_on_the_title_screen(self):
+        self.game.play_clock.running = False
+        self.frames(600)
+        self.assertEqual(0, self.game.play_stats.play_time_ms)
+
+    def test_not_while_a_page_is_up(self):
+        self.game.play_stats_requested = True
+        with patch.object(self.game.hotkeys, 'open_play_stats', side_effect=lambda: self.frames(600)):
+            self.game.hotkeys.open_requested()
+        self.game.config['QUEST_JOURNAL'] = JOURNAL_LEARNED
+        with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box', side_effect=lambda *_: self.frames(600)):
+            self.game.hotkeys.press_quest_journal(key(K_q))
+            self.game.hotkeys.press_help(key(K_h))
+        self.frames(1)
+        self.assertEqual(FRAME_MS, self.game.play_stats.play_time_ms)
+
+    def test_a_long_gap_adds_at_most_a_second(self):
+        self.frames(1, frame_ms=3 * 60 * 60 * 1000)  # the machine asleep for three hours
+        self.assertLessEqual(self.game.play_stats.play_time_ms, 1000)
+
+    def test_a_loaded_game_ticks_its_own_stats(self):
+        self.game.play_stats = counted()
+        self.frames(2)  # its clock starts at its first frame
+        self.assertEqual(counted().play_time_ms + FRAME_MS, self.game.play_stats.play_time_ms)
 
 
 @patch('src.battle_controller.Battle')
@@ -365,10 +431,13 @@ class TestTheKey(GameTestCase):
         open_stats.assert_not_called()
 
     def test_the_play_time_stops_while_it_is_open(self):
+        self.game.play_clock.running = True
         self.game.play_stats.tick(now=0)
-        with patch.object(self.game.hotkeys, 'open_play_stats'):
+        with patch.object(self.game.hotkeys, 'open_play_stats',
+                          side_effect=lambda: self.assertFalse(self.game.play_clock.running)) as open_stats:
             self.game.handle_keypresses(key(K_p))
-        self.assertIsNone(self.game.play_stats.clock_at)
+        open_stats.assert_called_once()
+        self.assertTrue(self.game.play_clock.running)
 
 
 class TestTheOption(TestCase):

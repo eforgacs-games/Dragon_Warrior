@@ -94,8 +94,8 @@ class MapHotkeys:
         for map_request in MAP_REQUESTS:
             if getattr(self.game, map_request.flag) is True:
                 setattr(self.game, map_request.flag, False)
-                getattr(self, map_request.opener)()
-                self.game.play_stats.stop_clock()
+                with self.game.play_clock.stopped():
+                    getattr(self, map_request.opener)()
                 return True
         return False
 
@@ -185,7 +185,7 @@ class MapHotkeys:
             control_info = ControlInfo(self.game.config)
             # one page per group of keys, so nothing runs past the bottom of the dialog box; not kept in the
             # message log, which is for what the NPCs said
-            with self.game.cmd_menu.not_logged():
+            with self.game.cmd_menu.not_logged(), self.game.play_clock.stopped():
                 self.game.cmd_menu.show_text_in_dialog_box(control_info.help_pages)
 
     def press_quest_journal(self, keydown_event: Event) -> None:
@@ -198,7 +198,8 @@ class MapHotkeys:
         if setting == JOURNAL_OFF:
             return
         pages = journal_pages(game_progress(self.game), hints=setting == JOURNAL_HINTS, _=self.game._)
-        with self.game.cmd_menu.not_logged():  # the message log is for what the NPCs said
+        # the message log is for what the NPCs said, and the play time for what is played
+        with self.game.cmd_menu.not_logged(), self.game.play_clock.stopped():
             self.game.cmd_menu.show_text_in_dialog_box(pages)
 
     def press_smart_a_key(self, keydown_event: Event) -> None:

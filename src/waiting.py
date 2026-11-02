@@ -23,6 +23,10 @@ post its button presses and report its held keys from inside whichever loop is r
 gamepad (src/gamepad.py) plugs in at the same two places, polled just before the virtual joypad, so its presses reach
 the game, and auto-grind, as the player's own key presses.
 
+Every loop passes through here each frame (the map's FrameClock.tick, the other loops' get_events, and every wait), so
+it's also where the play time (src/play_stats.py PlayClock) is told that time has gone by: the frame listener
+(set_frame_listener).
+
 This module imports nothing from ``src`` but src/controls.py and src/zoom.py (which import nothing from ``src`` but
 src/display_window.py), so any module can use it without an import cycle.
 
@@ -100,6 +104,8 @@ _rounding_carry = 0.0  # real milliseconds that rounding waits to whole millisec
 # Told the new speed after each change by set_game_speed (not reset_game_speed): the game saves it with the global
 # settings (src/settings.py)
 _speed_listener: Callable[[int], None] | None = None
+# Called whenever a loop passes a frame or a wait polls (frame_passed): the play time's clock (src/play_stats.py)
+_frame_listener: Callable[[], None] | None = None
 # The options overlay's GAME SPEED switch (GAME_SPEED_KEYS, src/game_options.py): off, keys 1 to 5 do nothing
 # (they are still taken out of the event loops, so they never count as "any key"). options_overlay.apply_option sets it.
 _speed_keys_enabled = True
@@ -233,6 +239,18 @@ def set_speed_listener(listener: Callable[[int], None] | None) -> None:
     """Call ``listener`` with the new speed after every change set_game_speed makes (None: no one is told)."""
     global _speed_listener
     _speed_listener = listener
+
+
+def set_frame_listener(listener: Callable[[], None] | None) -> None:
+    """Have listener called whenever a loop passes a frame or a wait polls (None for nothing)."""
+    global _frame_listener
+    _frame_listener = listener
+
+
+def frame_passed() -> None:
+    """Tell the frame listener that time has gone by in one of the game's loops."""
+    if _frame_listener is not None:
+        _frame_listener()
 
 
 def set_speed_keys_enabled(enabled: bool) -> None:
@@ -386,6 +404,7 @@ def get_events(*args: Any, quit_on_close: bool = False, **kwargs: Any) -> list[e
     The two loops that read the queue themselves on purpose: Game.read_events (the map) keeps the speed keys, which
     the map's hotkeys announce (SPEED_CHANGED), and polls the virtual joypad for the map; ControlsScreen.read_key
     reads the speed keys as keys to bind, and skips the gamepad's key events."""
+    frame_passed()
     poll_virtual_joypad()
     events = []
     for current_event in event.get(*args, **kwargs):
@@ -463,6 +482,7 @@ def check_for_quit() -> None:
     """Quit if the window has been closed, and change the game speed if 1 to 5 is held. Nothing is taken off the
     queue: ``event.peek`` only looks (and pumps), so other events stay queued, and tests that script ``event.get``
     aren't fed this check's calls."""
+    frame_passed()
     if display.get_init():
         if event.peek(QUIT):
             quit_game()
@@ -579,6 +599,7 @@ class FrameClock:
 
     def tick(self) -> None:
         """Wait until a frame begins that the last pass didn't start in, unless one already has."""
+        frame_passed()
         frame = frame_at(game_ticks())
         if self._last_frame is not None and frame <= self._last_frame:
             next_frame = self._last_frame + 1
