@@ -47,6 +47,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
 
     OTHER
     CONFIRM NAME   OFF (NES) / ON           (NAME_CONFIRM: a full name waits on END, START ends it; global)
+    STATS PAGE     OFF (NES) / ON           (STATS_PAGE: the P key shows the play statistics, src/stats_screen.py)
 
 Above every page's rows are two more:
 
@@ -93,7 +94,8 @@ from src.display_filters import PRESENTER, SCALING_KEY, SCANLINES_KEY
 from src.game_options import AUTO_GRIND, AUTO_GRIND_STOP, AUTO_STAIRS, AUTOSAVE, BAG_SIZE, CHEAT_KEYS, DIALOG_STYLE, \
     DUNGEON_MAP, ENCOUNTERS, EXP_GOLD, FADE_STYLE, GAME_SPEED_KEYS, LANGUAGE, MENU_SPEED, MESSAGE_LOG, MESSAGE_SPEED, \
     MUSIC, NAME_CONFIRM, NPCS_MAKE_WAY, OPTIONS_BY_CONFIG_KEY, QUEST_JOURNAL, QUICK_ACTION, REWIND, RUN_BUTTON, \
-    SAVE_STATES, SCALING, SCANLINES, SHOP_PREVIEW, SMART_A, STATUS_WINDOW, VIEW, Option, Options, apply_options
+    SAVE_STATES, SCALING, SCANLINES, SHOP_PREVIEW, SMART_A, STATS_PAGE, STATUS_WINDOW, VIEW, Option, Options, \
+    apply_options
 from src.options_screen import MESSAGE_SPEED_LABELS
 from src.selection import frame_events, next_frame
 from src.translated_window import draw_translated_window
@@ -220,9 +222,10 @@ OPTION_PAGES = (
         # A opens the CONTROLS screen to rebind the keys (src/controls_screen.py)
         CONTROLS_ROW,
     )),
-    # The other pages are full (each fits 10 rows): settings that don't belong to the map
+    # The other pages are full (each fits 10 rows): the rest
     OptionPage("OTHER", (
         switch_row("CONFIRM NAME", NAME_CONFIRM),
+        switch_row("STATS PAGE", STATS_PAGE),
     )),
 )
 # The rows with a setting (every row but CONTROLS)

@@ -276,7 +276,7 @@ class CommandMenu:
             return False
         save = SaveFile.from_game(self.player, self.game.current_map.identifier, self.game.story_flags,
                                   options_from_config(self.game.game_state.config),
-                                  self.game.dungeon_map.to_save())
+                                  self.game.dungeon_map.to_save(), self.game.play_stats.to_save())
         try:
             write_save(save_path(save_dir, log), save.to_save())
         except OSError as error:
@@ -720,6 +720,7 @@ class CommandMenu:
     def open_chest(self) -> None:
         """NES GetTreasure: record the chest as taken, then play the chest sound and turn the chest into brick.
         With all 8 history slots in use the NES records nothing and leaves the chest where it is."""
+        self.game.play_stats.open_chest()
         if self.chest_history.record(self.map_name, (self.player.row, self.player.column)):
             self.sound.play_sound(self.directories.open_treasure_sfx)
             self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
@@ -853,6 +854,7 @@ class CommandMenu:
         gold_amount = roll_treasure_gold(treasure_info['gold'])
         self.open_chest()
         self.player.gold = min(self.player.gold + gold_amount, MAX_GOLD)
+        self.game.play_stats.earn_gold(gold_amount)
         # NES GainGoldDialog: the message, then Dowindow WND_POPUP with the new gold, then ResumeGamePlay closes the
         # dialog window
         self.show_text_in_dialog_box(self._("Of GOLD thou hast gained {}").format(gold_amount),

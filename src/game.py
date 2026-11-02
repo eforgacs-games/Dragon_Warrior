@@ -59,6 +59,7 @@ from src.player.player import Player
 from src.sound import Sound
 from src.battle_controller import BattleController, BattleOutcome
 from src.ending import Ending
+from src.play_stats import PlayStats
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
 from src.autosave import Autosave
@@ -140,6 +141,7 @@ class Game:
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.door_history = OpenDoorHistory()  # which locked doors have been opened since the last overworld visit
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
+        self.play_stats = PlayStats()  # the stats page's counts (src/play_stats.py), kept with the adventure log
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
         self.invulnerable = self.game_state.config["INVULNERABLE"]
@@ -393,6 +395,7 @@ class Game:
         self.rewind.after_frame()
 
     def run_map_frame(self) -> None:
+        self.play_stats.tick(counting=not self.paused)  # the play time: what has happened since the last map frame
         self.auto_grind.show_pending()  # why auto-grind stopped, if it stopped where a message couldn't be shown
         if self.movement.hill_pause_frames:
             self.movement.hill_pause_frame()
@@ -539,6 +542,7 @@ class Game:
     def count_step(self):
         self.tiles_moved_since_spawn += 1
         self.game_state.tiles_moved_total += 1
+        self.play_stats.take_step()
         # NES GameEngineLoop: the radiant timer (#216) and CheckRepelTimer are outside CheckForTriggers, so they keep
         # ticking (and wear off) after the Dragonlord's defeat. Both run at the top of the loop (LCA56, LCA6C), after
         # ChkSpecialLoc has rolled this step's fight, so they tick once that roll (and any fight) is done: see
@@ -741,6 +745,7 @@ class Game:
         if self.player.current_hp <= 0:
             self.player.current_hp = 0
             self.player.is_dead = True
+            self.play_stats.died()
             self.auto_grind.hero_died()
             self.load_window_palette()  # 0 HP is always low
             if self.battle_ctrl.launch_battle and not self.game_state.config["NO_BATTLES"]:
@@ -915,6 +920,7 @@ class Game:
         save.restore_player(self.player)
         self.story_flags = save.story_flags
         self.dungeon_map = DungeonMap.from_save(save.dungeon_map)
+        self.play_stats = PlayStats.from_save(save.play_stats)
         # NES LoadSavedData (LFBC8): the log's message speed; and this game's dialog style and NPCS MAKE WAY. Older
         # saves: NORMAL, CLASSIC, ON
         # The loaded map below starts its own music, from the log's MUSIC setting

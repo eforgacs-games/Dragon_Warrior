@@ -210,6 +210,7 @@ class Battle:
                                          skip_text=True)
         player.total_experience = min(player.total_experience + experience, MAX_EXPERIENCE)
         player.gold = min(player.gold + gold, MAX_GOLD)
+        cmd_menu.game.play_stats.earn_gold(gold)
         self.check_player_level_up(cmd_menu, player)
 
     def dragonlord_first_form_defeated(self, cmd_menu, screen):

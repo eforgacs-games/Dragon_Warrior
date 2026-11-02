@@ -54,8 +54,11 @@ def walk_script(frame: int) -> set[int]:
 
 
 def comparable(snapshot: dict) -> dict:
-    """A snapshot as it reads back from a state file."""
-    return json.loads(json.dumps(snapshot))
+    """A snapshot as it reads back from a state file, without the play time: it's real time (src/play_stats.py),
+    which no two runs share."""
+    readback = json.loads(json.dumps(snapshot))
+    readback.get('play_stats', {}).pop('play_time_ms', None)
+    return readback
 
 
 class SaveStateTestCase(TestCase):
@@ -495,7 +498,7 @@ GAME_KEPT_IN_THEIR_OWN_ENTRIES = {
     'player',  # 'hero'
     'current_map',  # 'map', 'roaming', 'fixed' and 'hero_underlying_tile'
     'layouts',  # 'layout_changes'
-    'camera', 'story_flags', 'chest_history', 'door_history', 'color', 'dungeon_map', 'message_log',
+    'camera', 'story_flags', 'chest_history', 'door_history', 'color', 'dungeon_map', 'message_log', 'play_stats',
     'game_state',  # 'game_state': GAME_STATE_VALUES
     'movement',  # 'movement': MOVEMENT_VALUES and the NPC schedule
     'map_mgr',  # 'fought_on_stairs'
