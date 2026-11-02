@@ -132,8 +132,8 @@ git push origin v1.0.0
 
 The [Release builds](.github/workflows/release.yml) workflow builds the game with PyInstaller
 ([dragon_warrior.spec](dragon_warrior.spec)) on Windows, macOS and Linux, with libgme built from source and bundled,
-checks that each packaged build starts, loads all of its files and plays a few scripted scenes headless in English and
-in Korean (`--smoke-test`, [src/smoke_test.py](src/smoke_test.py)), and publishes them as a GitHub Release for the
+checks that each packaged build starts, loads all of its files and plays a few scripted scenes headless in English,
+Korean and Japanese (`--smoke-test`, [src/smoke_test.py](src/smoke_test.py)), and publishes them as a GitHub Release for the
 tag, with notes generated from the merged PRs. To try the builds without a release, run the workflow from the Actions
 tab (Run workflow): the builds are then uploaded as the run's artifacts. PRs that change the build or data/ do the
 same.
