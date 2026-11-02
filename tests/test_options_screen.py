@@ -133,7 +133,7 @@ class TestOptionsScreen(OptionsTestCase):
 
     def choose(self, events, speed='Normal'):
         options_screen = OptionsScreen(self.game.screen, self.config)
-        with patch('src.selection.event.get', side_effect=presses(*events)):
+        with patch('src.waiting.event.get', side_effect=presses(*events)):
             return options_screen.choose_message_speed(speed)
 
     def test_cursor_starts_on_the_current_speed(self):
@@ -148,7 +148,7 @@ class TestOptionsScreen(OptionsTestCase):
     def test_only_the_speed_window_opens(self):
         # The message speed is the only question: A in it answers the whole screen
         options_screen = OptionsScreen(self.game.screen, self.config)
-        with patch('src.selection.event.get', side_effect=presses(ENTER)):
+        with patch('src.waiting.event.get', side_effect=presses(ENTER)):
             options_screen.choose_message_speed('Normal')
         self.assertEqual([MESSAGE_SPEED_OPTIONS], [window for window, _ in options_screen.windows])
 
@@ -192,7 +192,7 @@ class TestTitleMenuFlow(OptionsTestCase):
         """Choose CHANGE MESSAGE SPEED (1) on the title menu, play the events, then choose `then` (BEGIN A NEW QUEST)."""
         with patch.object(self.game.game_functions, 'main_menu_selection', side_effect=[1, then]) as title_menu, \
                 patch.object(self.game.title_menu, 'begin_new_quest') as begin_new_quest, \
-                patch('src.selection.event.get', side_effect=presses(*events)):
+                patch('src.waiting.event.get', side_effect=presses(*events)):
             self.game.title_menu.show_main_menu_screen(self.game.screen)
         return title_menu, begin_new_quest
 
@@ -255,14 +255,14 @@ class TestNewQuestOptions(OptionsTestCase):
     def test_new_quest_uses_the_chosen_speed(self):
         self.config['TEXT_SPEED'] = 'Fast'
         # the cursor starts on NORMAL (NewQuest: LDA #MSG_NORMAL), whatever the last game used
-        with patch('src.selection.event.get', side_effect=presses(DOWN, ENTER)):
+        with patch('src.waiting.event.get', side_effect=presses(DOWN, ENTER)):
             self.game.title_menu.choose_new_quest_options()
         self.assertEqual(('Normal',) + DEFAULT_OWN_SETTINGS, settings(self.config))
 
     def test_new_quest_without_a_choice_uses_the_defaults(self):
         self.config['TEXT_SPEED'] = 'Slow'
         set_own_settings(self.config, OTHER_OWN_SETTINGS)
-        with patch('src.selection.event.get', side_effect=presses(B)):
+        with patch('src.waiting.event.get', side_effect=presses(B)):
             self.game.title_menu.choose_new_quest_options()
         self.assertEqual(('Fast',) + DEFAULT_OWN_SETTINGS, settings(self.config))
 

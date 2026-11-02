@@ -102,7 +102,7 @@ class OverlayTestCase(TestCase):
 
     def run_overlay(self, *keys):
         """Run the overlay with these key presses; returns how many times the menu button sound played."""
-        with patch('src.selection.event.get', side_effect=presses(*keys)), \
+        with patch('src.waiting.event.get', side_effect=presses(*keys)), \
                 patch.object(self.game.sound, 'play_sound') as play_sound:
             OptionsOverlay(self.game).run()
         return [call.args[0] for call in play_sound.call_args_list].count(self.game.directories.menu_button_sfx)
@@ -166,7 +166,7 @@ class TestOpening(OverlayTestCase):
         self.assertFalse(self.game.cmd_menu_requested)
 
     def test_select_opens_and_closes_it(self):
-        with patch('src.selection.event.get', side_effect=presses(K_u)), \
+        with patch('src.waiting.event.get', side_effect=presses(K_u)), \
                 patch('src.options_overlay.OptionsOverlay.close', autospec=True) as close:
             self.press(K_u)
         close.assert_called_once()
@@ -178,7 +178,7 @@ class TestOpening(OverlayTestCase):
                   [character.rect.copy() for character in self.game.current_map.roaming_characters])
         with patch.object(self.game, 'map_frame') as map_frame, \
                 patch.object(self.game.drawer, 'draw_all') as draw_all, \
-                patch('src.selection.event.get', side_effect=presses(K_DOWN, K_RIGHT, K_UP, K_u)):
+                patch('src.waiting.event.get', side_effect=presses(K_DOWN, K_RIGHT, K_UP, K_u)):
             self.press(K_u)
         map_frame.assert_not_called()
         draw_all.assert_not_called()
@@ -387,14 +387,14 @@ class TestPages(OverlayTestCase):
         pages = []
         with patch.object(OptionsOverlay, 'draw', autospec=True,
                           side_effect=lambda shown, *_args: pages.append((shown.page, shown.index))), \
-                patch('src.selection.event.get', side_effect=presses(*keys, K_u)), \
+                patch('src.waiting.event.get', side_effect=presses(*keys, K_u)), \
                 patch.object(self.game.sound, 'play_sound'):
             overlay.run()
         return pages
 
     def last_page(self, *keys):
         overlay = OptionsOverlay(self.game)
-        with patch('src.selection.event.get', side_effect=presses(*keys, K_u)), \
+        with patch('src.waiting.event.get', side_effect=presses(*keys, K_u)), \
                 patch.object(self.game.sound, 'play_sound'):
             overlay.run()
         return overlay.page, overlay.index

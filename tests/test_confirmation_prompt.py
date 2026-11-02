@@ -25,7 +25,7 @@ class TestConfirmationPrompt(unittest.TestCase):
         yes, no = MagicMock(), MagicMock()
         command_menu = MagicMock()
         command_menu._ = lambda text: text  # English: the YES/NO window is generated in the NES font
-        with patch('src.selection.event.get', side_effect=[events]), \
+        with patch('src.waiting.event.get', side_effect=[events]), \
                 patch('data.text.dialog.display'), patch('data.text.dialog.event'):
             confirmation_prompt(command_menu, "Dost thou want a room?", yes, no, CONFIG, show_arrow=True,
                                 color=(255, 255, 255))
@@ -95,7 +95,7 @@ class TestConfirmationSound(unittest.TestCase):
         command_menu.window_drop_down_effect.side_effect = lambda *window: order.append(window)
         with patch('data.text.dialog.display'), patch('data.text.dialog.event'), \
                 patch('data.text.dialog.draw_translated_window'), \
-                patch('src.selection.event.get', side_effect=lambda *_, **__: [accept()]):
+                patch('src.waiting.event.get', side_effect=lambda *_, **__: [accept()]):
             confirmation_prompt(command_menu, "Dost thou want a room?", MagicMock(), MagicMock(), config,
                                 color=(255, 255, 255))
         self.assertEqual(order[:2], [command_menu.directories.confirmation_sfx, YES_NO_WINDOW])
@@ -121,7 +121,7 @@ class TestConfirmationSound(unittest.TestCase):
             return [accept()]
 
         with patch('data.text.dialog.display') as display, patch('data.text.dialog.event'), \
-                patch('src.selection.event.get', side_effect=selection_events), \
+                patch('src.waiting.event.get', side_effect=selection_events), \
                 patch.object(sound, 'play_sound', side_effect=play_and_note_the_time):
             display.update.side_effect = lambda *args: window_drawn_at.append(game_ticks())
             confirmation_prompt(command_menu, "Dost thou want a room?", MagicMock(), MagicMock(), config,

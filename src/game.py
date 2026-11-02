@@ -377,7 +377,8 @@ class Game:
         self.map_frame()
 
     def read_events(self) -> None:
-        """Take the events off the queue (draw_all reads them too) and handle the keys and the window's events."""
+        """Take the events off the queue (draw_all reads them too) and handle the keys and the window's events. Unlike
+        the other loops (src/waiting.py get_events), the speed keys stay in: the map's hotkeys handle them."""
         # Auto-grind's virtual joypad (src/virtual_joypad.py) posts its presses and sees the player's keys first
         poll_virtual_joypad(MAP_CONTEXT)
         # The zoom keys only zoom the window (src/zoom.py), so they are taken out like any other window's loop does

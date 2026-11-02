@@ -502,7 +502,7 @@ class ScreenTestCase(ControlsTestCase):
     def run_screen(self, *events):
         """Run the screen through these events (it must close by the end); returns the screen."""
         screen = ControlsScreen(self.game)
-        with patch('src.selection.event.get', side_effect=script(*events) + [[key(K_ESCAPE)]]), \
+        with patch('src.waiting.event.get', side_effect=script(*events) + [[key(K_ESCAPE)]]), \
                 patch.object(self.game.sound, 'play_sound'):
             screen.run()
         return screen
@@ -592,7 +592,7 @@ class TestControlsScreen(ScreenTestCase):
         self.assertEqual([Binding(K_j), Binding(K_p)], current_controls().keys['B'])
 
     def test_b_closes_it(self):
-        with patch('src.selection.event.get', side_effect=script(K_j)), patch.object(self.game.sound, 'play_sound'):
+        with patch('src.waiting.event.get', side_effect=script(K_j)), patch.object(self.game.sound, 'play_sound'):
             ControlsScreen(self.game).run()
 
     def test_every_change_is_applied_and_saved(self):
@@ -663,7 +663,7 @@ class TestOptionsOverlayOpensIt(ScreenTestCase):
     def test_controls_row(self):
         from src.options_overlay import OptionsOverlay
         downs = to_controls_row()
-        with patch('src.selection.event.get', side_effect=script(*downs, K_k, K_RETURN, K_l, K_ESCAPE, K_u)), \
+        with patch('src.waiting.event.get', side_effect=script(*downs, K_k, K_RETURN, K_l, K_ESCAPE, K_u)), \
                 patch.object(self.game.sound, 'play_sound'):
             OptionsOverlay(self.game).run()
         self.assertEqual([Binding(K_l)], current_controls().keys['A'])
@@ -672,7 +672,7 @@ class TestOptionsOverlayOpensIt(ScreenTestCase):
         from src.options_overlay import OptionsOverlay
         before = dict(self.game.game_state.config)
         downs = to_controls_row()
-        with patch('src.selection.event.get', side_effect=script(*downs, K_LEFT, K_RIGHT, K_u)), \
+        with patch('src.waiting.event.get', side_effect=script(*downs, K_LEFT, K_RIGHT, K_u)), \
                 patch.object(self.game.sound, 'play_sound'), \
                 patch('src.options_overlay.ControlsScreen') as screen:
             OptionsOverlay(self.game).run()

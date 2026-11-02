@@ -377,13 +377,23 @@ def step_game_speed() -> None:
         event.post(event.Event(SPEED_CHANGED, speed=speed))
 
 
-def get_events(*args, **kwargs) -> list[event.Event]:
+def get_events(*args: Any, quit_on_close: bool = False, **kwargs: Any) -> list[event.Event]:
     """``pygame.event.get`` for the game's own event loops (battle, dialogs, menus, shops): presses of 1 to 5 set the
     game speed, and the zoom keys zoom the window (src/zoom.py); both are taken out, so they work everywhere and never
-    count as "any key" to close a dialog."""
+    count as "any key" to close a dialog. With ``quit_on_close``, the game quits if the window was closed
+    (quit_if_requested).
+
+    The two loops that read the queue themselves on purpose: Game.read_events (the map) keeps the speed keys, which
+    the map's hotkeys announce (SPEED_CHANGED), and polls the virtual joypad for the map; ControlsScreen.read_key
+    reads the speed keys as keys to bind, and skips the gamepad's key events."""
     poll_virtual_joypad()
-    return [current_event for current_event in event.get(*args, **kwargs)
-            if not handle_speed_key(current_event) and not handle_zoom_event(current_event)]
+    events = []
+    for current_event in event.get(*args, **kwargs):
+        if quit_on_close:
+            quit_if_requested(current_event)
+        if not handle_speed_key(current_event) and not handle_zoom_event(current_event):
+            events.append(current_event)
+    return events
 
 
 def poll_speed_keys() -> None:

@@ -506,7 +506,7 @@ class TestNameEntry(TestCase):
             return pygame.event.Event(KEYDOWN, key=pressed_key, mod=0, unicode='', gamepad=True)
         # A on A, right, A on B, then A on B six more times: the 8th character ends the name
         events = [button(K_k), button(K_RIGHT)] + [button(K_k)] * 7
-        with patch('src.selection.event.get', side_effect=[[current_event] for current_event in events]), \
+        with patch('src.waiting.event.get', side_effect=[[current_event] for current_event in events]), \
                 patch('src.selection.wait_frames'), patch('src.menu_functions.display'), \
                 patch('src.menu_functions.Sound'), patch('src.menu_functions.toggle_joystick_input') as toggle:
             name = NameSelection(config).select_name(0, pygame.Surface((256, 240)), command_menu)

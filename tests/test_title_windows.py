@@ -216,13 +216,13 @@ class TestTitleMenuFlow(OptionsTestCase):
     def test_begin_a_new_quest_with_the_keys(self):
         # Log 1 used: logs 2 and 3 are listed; down and A is log 3
         self.write_saves((1,))
-        with patch('src.selection.event.get', side_effect=presses(DOWN, ENTER)):
+        with patch('src.waiting.event.get', side_effect=presses(DOWN, ENTER)):
             self.assertEqual((open_logs_layout((2, 3)), 1), self.game.title_menu.select_adventure_log(self.game.screen))
         self.assertEqual(3, self.game.player.adventure_log)
 
     def test_b_in_the_open_logs_window_goes_back(self):
         self.write_saves(())
-        with patch('src.selection.event.get', side_effect=presses(B)):
+        with patch('src.waiting.event.get', side_effect=presses(B)):
             self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.select_adventure_log(self.game.screen))
 
     def test_the_name_entry_draws_the_open_logs_window_behind_it(self):
@@ -250,7 +250,7 @@ class TestTitleMenuFlow(OptionsTestCase):
     def test_b_in_the_one_log_window_goes_back(self):
         self.write_saves((2,))
         self.game.title_menu.save_dir_contents = self.game.title_menu.save_files()
-        with patch('src.selection.event.get', side_effect=presses(B)), \
+        with patch('src.waiting.event.get', side_effect=presses(B)), \
                 patch.object(self.game, 'load_game') as load_game:
             self.assertIs(BACK_TO_TITLE_MENU, self.game.title_menu.continue_quest())
         load_game.assert_not_called()

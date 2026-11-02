@@ -189,7 +189,7 @@ class TestSelectionWindow(RealClock):
                 held_keys.clear()
             return [Event(KEYDOWN, key=K_RETURN)] if count[0] == passes + 2 else []
         with patch('src.selection.wait_frames', side_effect=self.wait), \
-                patch('src.selection.event.get', side_effect=get), \
+                patch('src.waiting.event.get', side_effect=get), \
                 patch('src.selection.key.get_pressed', side_effect=lambda: held_keys):
             run_selection(lambda index, visible: draws.append((self.real, index, visible)), move=stop_at_edges(8),
                           joypad=joypad)
@@ -296,7 +296,7 @@ class TestNameEntry(RealClock):
             return [Event(KEYDOWN, key=K_RETURN, unicode='\r', mod=0)] if count[0] == 52 else []
         command_menu = MagicMock()
         with patch('src.selection.wait_frames', side_effect=self.wait), \
-                patch('src.selection.event.get', side_effect=get), \
+                patch('src.waiting.event.get', side_effect=get), \
                 patch.object(selection, 'draw', side_effect=lambda _screen, _entry, cursor_visible=True:
                              shown.append((self.real, cursor_visible))), \
                 patch.object(selection.sound, 'play_sound'):

@@ -256,7 +256,8 @@ class ControlsScreen:
 
     def read_key(self) -> Binding | None:
         """The next key pressed, with the modifiers held (a modifier alone when it's let go), or None if nothing is
-        pressed for CAPTURE_MS. The game speed keys are read as keys here, not as speeds."""
+        pressed for CAPTURE_MS. The game speed keys are read as keys here, not as speeds, so it reads the queue itself
+        instead of with src/waiting.py get_events."""
         deadline = time.get_ticks() + CAPTURE_MS
         modifier_down: int | None = None
         while time.get_ticks() < deadline:
