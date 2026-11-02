@@ -15,9 +15,9 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 import pygame
 
 from src.config.test_config import test_config
-from src.options_screen import Options
+from src.game_options import Options
 from src.save_file import SAVE_FORMAT_VERSION, VERSION_KEY, SaveFile, migrate_save, save_format_version, write_save
-from src.save_state import STATE_FORMAT_VERSION, VERSION_KEY as STATE_VERSION_KEY, read_state, state_path
+from src.save_state import STATE_FORMAT_VERSION, VERSION_KEY as STATE_VERSION_KEY, load_from_slot, read_state, state_path
 from src.story_flags import StoryFlags
 from tests import helpers
 
@@ -216,7 +216,7 @@ class TestSampleSaveStates(GameTestCase):
                 shutil.copy(os.path.join(SAVE_STATES_DIR, name), state_path(self.save_dir, 2))
                 game = self.new_game()
                 self.assertIsNotNone(read_state(self.save_dir, 2))
-                game.load_state(2)
+                load_from_slot(game, 2)
                 game.draw_temporary_text.assert_called_with("State 2 loaded")
                 player = game.player
                 self.assertEqual(('Gwen', 321, 180), (player.name, player.gold, player.total_experience))

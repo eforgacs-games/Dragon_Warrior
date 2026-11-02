@@ -17,7 +17,7 @@ from src.message_log import EMPTY, HINT, HINT_ROW, LINE_WIDTH, MAX_ENTRIES, VISI
     MessageLogScreen, log_layout, log_lines, speaker_of, text_width, wrap
 from src.options_overlay import OPTION_ROWS
 from src.quest_journal import JOURNAL_HINTS
-from src.options_screen import DEFAULT_OPTIONS, options_from_save, options_to_save
+from src.game_options import DEFAULT_OPTIONS, options_from_save, options_to_save
 from src.window_renderer import window_tiles
 from tests import helpers
 
@@ -146,8 +146,8 @@ class TestRecording(GameTestCase):
         # the game's own pages would push what the NPCs said out of the log (it keeps MAX_ENTRIES)
         self.game.message_log.record("Thou must find the Silver Harp.", 'GUARD')
         self.game.config['QUEST_JOURNAL'] = JOURNAL_HINTS
-        self.game.handle_quest_journal_key(Event(KEYDOWN, key=K_q, mod=0))
-        self.game.handle_help_button(Event(KEYDOWN, key=K_h, mod=0))
+        self.game.hotkeys.press_quest_journal(Event(KEYDOWN, key=K_q, mod=0))
+        self.game.hotkeys.press_help(Event(KEYDOWN, key=K_h, mod=0))
         self.assertEqual([LogEntry("Thou must find the Silver Harp.", 'GUARD')], list(self.game.message_log.entries))
         # and the next message is logged again
         self.cmd_menu.show_text_in_dialog_box("Narration.")
@@ -163,21 +163,21 @@ class TestRecording(GameTestCase):
 class TestTheKey(GameTestCase):
 
     def test_m_opens_it_on_the_map(self):
-        with patch.object(self.game, 'open_message_log') as open_log:
+        with patch.object(self.game.hotkeys, 'open_message_log') as open_log:
             self.game.handle_keypresses(key(K_l))
         open_log.assert_called_once()
         self.assertFalse(self.game.message_log_requested)
 
     def test_not_with_the_option_off(self):
         self.game.config['MESSAGE_LOG'] = False
-        with patch.object(self.game, 'open_message_log') as open_log:
+        with patch.object(self.game.hotkeys, 'open_message_log') as open_log:
             self.game.handle_keypresses(key(K_l))
         open_log.assert_not_called()
         self.assertFalse(self.game.message_log_requested)
 
     def test_it_waits_for_the_heros_step(self):
         self.game.player.is_moving = True
-        with patch.object(self.game, 'open_message_log') as open_log:
+        with patch.object(self.game.hotkeys, 'open_message_log') as open_log:
             self.game.handle_keypresses(key(K_l))
             open_log.assert_not_called()
             self.assertTrue(self.game.movement.freeze_pending)
@@ -187,7 +187,7 @@ class TestTheKey(GameTestCase):
 
     def test_start_while_pending_pauses_instead(self):
         self.game.player.is_moving = True
-        with patch.object(self.game, 'open_message_log') as open_log:
+        with patch.object(self.game.hotkeys, 'open_message_log') as open_log:
             self.game.handle_keypresses(key(K_l))
             self.game.handle_keypresses(key(K_i))
             self.game.player.is_moving = False
@@ -198,7 +198,7 @@ class TestTheKey(GameTestCase):
     def test_not_while_a_window_is_open(self):
         self.cmd_menu.launch_signaled = True
         self.addCleanup(setattr, self.cmd_menu, 'launch_signaled', False)
-        with patch.object(self.game, 'open_message_log') as open_log:
+        with patch.object(self.game.hotkeys, 'open_message_log') as open_log:
             self.game.handle_keypresses(key(K_l))
         open_log.assert_not_called()
 
@@ -206,7 +206,7 @@ class TestTheKey(GameTestCase):
         controls = Controls.defaults()
         controls.bind_key('MESSAGE_LOG', 0, Binding(K_p))
         set_controls(controls)
-        with patch.object(self.game, 'open_message_log') as open_log:
+        with patch.object(self.game.hotkeys, 'open_message_log') as open_log:
             self.game.handle_keypresses(key(K_l))
             open_log.assert_not_called()
             self.game.handle_keypresses(key(K_p))
@@ -252,7 +252,7 @@ class TestTheScreen(GameTestCase):
     def test_time_stops_while_it_is_open(self):
         with patch.object(self.game, 'map_frame') as map_frame, \
                 patch('src.selection.event.get', side_effect=[[], [], [key(K_j)]]):
-            self.game.open_message_log()
+            self.game.hotkeys.open_message_log()
         map_frame.assert_not_called()
 
 

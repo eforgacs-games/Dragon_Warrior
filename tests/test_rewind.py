@@ -15,6 +15,7 @@ from pygame.event import Event
 from src.battle_controller import BattleOutcome
 from src.debug_tools import DebugTools
 from src.rewind import REWIND_CAPACITY, REWIND_INTERVAL_FRAMES
+from src.options_overlay import apply_option
 from src.save_state import take_snapshot
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import WINDOW_CONTEXT
@@ -70,7 +71,7 @@ class TestRecording(RewindTestCase):
         self.run_frames(self.game, REWIND_INTERVAL_FRAMES)
         self.assertEqual(1, len(self.rewind.snapshots))
         self.game.game_state.config['REWIND'] = False
-        self.game.apply_option('REWIND')
+        apply_option(self.game, 'REWIND')
         self.assertEqual(0, len(self.rewind.snapshots))  # switching it off drops them
         self.run_frames(self.game, REWIND_INTERVAL_FRAMES * 2, first_frame=REWIND_INTERVAL_FRAMES)
         self.assertEqual(0, len(self.rewind.snapshots))

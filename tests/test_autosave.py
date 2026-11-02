@@ -15,7 +15,8 @@ from src.autosave import AUTOSAVE_INTERVAL_MS, AUTOSAVE_MAPS, autosave_path, has
 from src.config.test_config import test_config
 from src.direction import Direction
 from src.maps import map_lookup
-from src.options_screen import AUTOSAVE_SAVE_KEY, DEFAULT_OPTIONS, OptionsScreen, apply_options, options_from_save
+from src.game_options import AUTOSAVE, DEFAULT_OPTIONS, apply_options, options_from_save
+from src.options_screen import OptionsScreen
 from src.save_file import read_save_name, save_files, save_path
 from src.save_state import STATE_FORMAT_VERSION, VERSION_KEY, take_snapshot
 from src.title_menu import BACK_TO_TITLE_MENU
@@ -179,8 +180,8 @@ class TestWhenItsWritten(AutosaveTestCase):
 class TestSetting(AutosaveTestCase):
 
     def test_kept_per_adventure_log(self):
-        self.assertTrue(options_from_save({AUTOSAVE_SAVE_KEY: True}).autosave)
-        self.assertFalse(options_from_save({AUTOSAVE_SAVE_KEY: False}).autosave)
+        self.assertTrue(options_from_save({AUTOSAVE.save_key: True}).autosave)
+        self.assertFalse(options_from_save({AUTOSAVE.save_key: False}).autosave)
 
     def test_an_older_save_keeps_the_configs(self):
         # A save from before AUTOSAVE was kept, or a new quest, leaves the config's (base_config: ON)

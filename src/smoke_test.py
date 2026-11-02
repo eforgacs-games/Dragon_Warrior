@@ -27,7 +27,7 @@ from src.checkpoints import CHECKPOINT_NAMES, checkpoint_hero_name, checkpoint_p
 from src.chiptune import (ChiptuneError, Emulator, bundled_library_dirs, chiptune_library, parse_track_ref,
                           tagged_length_seconds)
 from src.directories import CHIPTUNE_SOUNDTRACKS, CLIP_NAMES, MUSIC_NAMES, Directories, clip_paths, music_paths
-from src.options_screen import AUTO_STAIRS_SAVE_KEY
+from src.game_options import AUTO_STAIRS
 from src.paths import data_path, is_frozen
 from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, SOUNDTRACKS, Soundtrack
 from src.virtual_joypad import VirtualJoypad
@@ -292,8 +292,8 @@ def expect_fight(_game: Any, log: SceneLog) -> list[str]:
 SCENE_CONFIG = {'INITIAL_DIALOG_ENABLED': False, 'NO_BATTLES': True, 'FORCE_BATTLE': False, 'FORCE_ENEMY': None,
                 'TEXT_SPEED': 'Fast'}
 # The adventure log options every scene's save has, before its own changes: STAIRS on stepping. They're the log's, so
-# loading the save sets them (src/options_screen.py); a save without them loads with the NES's.
-SCENE_SAVE_OPTIONS = {AUTO_STAIRS_SAVE_KEY: True}
+# loading the save sets them (src/game_options.py); a save without them loads with the NES's.
+SCENE_SAVE_OPTIONS = {AUTO_STAIRS.save_key: True}
 SMOKE_SCENES = (
     # A step down to the guard below, TALK to him (a dialog, in the NES font or Unifont), then the COMMAND window
     # opened and closed

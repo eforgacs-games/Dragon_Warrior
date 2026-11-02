@@ -13,7 +13,7 @@ from src.enemy_lookup import enemy_image_position_lookup
 from src.game_functions import get_surrounding_rect
 from src.command_window import held_buttons
 from src.menu import CommandMenu
-from src.options_screen import STATUS_WINDOW_ALWAYS
+from src.game_options import STATUS_WINDOW_ALWAYS
 from src.quest_journal import KING_OPENING_SPEECH, hear
 from src.sound import Sound
 from src.text import draw_text

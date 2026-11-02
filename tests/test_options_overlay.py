@@ -19,8 +19,8 @@ from src.map_layouts import GRASS_STAIR_DOWN
 from src.maps import STAIR_DIRECTIONS, map_lookup
 from src.options_overlay import FIXED_ROWS, MOST_ROWS, OPTION_PAGES, OPTION_ROWS, OPTIONS_WINDOW, PRESET_CUSTOM, \
     PRESET_MODERN, PRESET_NES, PRESET_ROWS, OptionsOverlay, current_preset, options_layout, overlay_texts, \
-    preset_values
-from src.options_screen import CLASSIC, MODERN, SWITCHES, options_from_config
+    apply_option, preset_values
+from src.game_options import ALL_OPTIONS, CLASSIC, MODERN, PER_LOG_OPTIONS, options_from_config
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_LEARNED, JOURNAL_OFF
 from src.soundtrack import Soundtrack
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
@@ -115,7 +115,8 @@ class TestOpening(OverlayTestCase):
 
     def test_select_or_tab_opens_it_on_the_map(self):
         for pressed_key in (K_u, K_TAB):
-            with self.subTest(key=pygame.key.name(pressed_key)), patch.object(self.game, 'open_options') as open_options:
+            with self.subTest(key=pygame.key.name(pressed_key)), \
+                    patch.object(self.game.hotkeys, 'open_options') as open_options:
                 self.press(pressed_key)
             open_options.assert_called_once()
             self.assertFalse(self.game.options_requested)
@@ -123,7 +124,7 @@ class TestOpening(OverlayTestCase):
     def test_it_waits_for_the_heros_step(self):
         # Like START (PausePrepLoop): mid-step it waits, and no new step starts meanwhile
         self.game.player.is_moving = True
-        with patch.object(self.game, 'open_options') as open_options:
+        with patch.object(self.game.hotkeys, 'open_options') as open_options:
             self.press(K_u)
             open_options.assert_not_called()
             self.assertTrue(self.game.movement.freeze_pending)
@@ -135,7 +136,7 @@ class TestOpening(OverlayTestCase):
         for attribute, owner in (('launch_signaled', self.game.cmd_menu), ('paused', self.game),
                                  ('cmd_menu_requested', self.game), ('pause_requested', self.game)):
             with self.subTest(attribute), patch.object(owner, attribute, True), \
-                    patch.object(self.game, 'open_options') as open_options:
+                    patch.object(self.game.hotkeys, 'open_options') as open_options:
                 self.press(K_u)
                 open_options.assert_not_called()
                 self.assertFalse(self.game.options_requested)
@@ -143,13 +144,13 @@ class TestOpening(OverlayTestCase):
     def test_not_while_the_command_window_is_up(self):
         self.game.cmd_menu.menu.enable()
         self.addCleanup(self.game.cmd_menu.menu.disable)
-        with patch.object(self.game, 'open_options') as open_options:
+        with patch.object(self.game.hotkeys, 'open_options') as open_options:
             self.press(K_TAB)
         open_options.assert_not_called()
 
     def test_start_while_it_is_pending_pauses_instead(self):
         self.game.player.is_moving = True
-        with patch.object(self.game, 'open_options') as open_options:
+        with patch.object(self.game.hotkeys, 'open_options') as open_options:
             self.press(K_u)
             self.press(pygame.K_i)
             self.game.player.is_moving = False
@@ -159,7 +160,7 @@ class TestOpening(OverlayTestCase):
 
     def test_a_while_it_is_pending_does_not_open_the_command_window_after(self):
         self.game.player.is_moving = True
-        with patch.object(self.game, 'open_options'):
+        with patch.object(self.game.hotkeys, 'open_options'):
             self.press(K_u)
             self.press(K_k)
         self.assertFalse(self.game.cmd_menu_requested)
@@ -361,7 +362,7 @@ class TestRows(OverlayTestCase):
             self.game.cmd_menu.save()
             with open(os.path.join(tmp_dir, 'save_slot_2.json')) as save_file:
                 save = json.load(save_file)
-        self.assertLessEqual({switch.save_key for switch in SWITCHES}, set(save))
+        self.assertLessEqual({option.save_key for option in PER_LOG_OPTIONS}, set(save))
         loaded = new_game()
         with patch.object(loaded.map_mgr, 'change_map'):
             loaded.load_game(save)
@@ -461,7 +462,7 @@ class TestPreset(OverlayTestCase):
     def test_a_new_quest_is_the_nes_preset(self):
         # Every row a preset sets starts at its NES value, so PRESET reads NES, not CUSTOM
         from src.config.base_config import base_config
-        from src.options_screen import DEFAULT_OPTIONS, apply_options
+        from src.game_options import DEFAULT_OPTIONS, apply_options
         # a new quest keeps the config's AUTOSAVE (OFF, the NES), and the player's VIEW and DUNGEON MAP
         config = {key: base_config[key] for key in ('AUTOSAVE', 'VIEW', 'DUNGEON_MAP', 'NAME_CONFIRM')}
         apply_options(config, DEFAULT_OPTIONS)
@@ -484,7 +485,7 @@ class TestPreset(OverlayTestCase):
         self.assertFalse(game.config['CHEAT_KEYS'])
 
     def test_an_older_save_gets_the_nes_values_only_for_what_it_lacks(self):
-        from src.options_screen import options_from_save
+        from src.game_options import options_from_save
         options = options_from_save({'Name': 'Ed'})
         self.assertEqual((Soundtrack.NES, False, False, False, False, False, False, False, JOURNAL_OFF),
                          (options.soundtrack, options.game_speed_keys, options.save_states, options.rewind,
@@ -498,7 +499,7 @@ class TestPreset(OverlayTestCase):
                           options.auto_stairs))
 
     def test_an_older_saves_goals_journal_loads_as_learned(self):
-        from src.options_screen import options_from_save
+        from src.game_options import options_from_save
         self.assertEqual(JOURNAL_LEARNED, options_from_save({'QuestJournal': 'Goals'}).quest_journal)
 
     def test_shop_preview_follows_the_presets(self):
@@ -546,9 +547,9 @@ class TestPreset(OverlayTestCase):
                          {config_key: self.config[config_key] for config_key in preset_values(PRESET_NES)})
 
     def test_presets_switch_the_music_and_the_speed_keys_at_once(self):
-        with patch.object(self.game, 'apply_option', wraps=self.game.apply_option) as apply_option:
+        with patch('src.options_overlay.apply_option', wraps=apply_option) as applied_option:
             self.run_overlay(K_RIGHT, K_RIGHT, K_u)  # CUSTOM -> NES -> MODERN
-        applied = {call.args[0] for call in apply_option.call_args_list}
+        applied = {call.args[1] for call in applied_option.call_args_list}
         self.assertIn('SOUNDTRACK', applied)
         self.assertIn('GAME_SPEED_KEYS', applied)
         from src.waiting import speed_keys_enabled
@@ -590,7 +591,7 @@ class TestSwitches(OverlayTestCase):
         self.press(pygame.K_g)
         self.assertFalse(self.game.auto_grind_requested)
         self.set_switch("AUTO-GRIND", True)
-        with patch.object(self.game, 'start_auto_grind') as start_auto_grind:
+        with patch.object(self.game.hotkeys, 'start_auto_grind') as start_auto_grind:
             self.press(pygame.K_g)
         start_auto_grind.assert_called_once()
 
@@ -686,9 +687,10 @@ class TestDevOnly(TestCase):
     def test_prod_starts_with_every_switch_at_the_nes(self):
         from src.config.prod_config import prod_config
         nes = preset_values(PRESET_NES)
-        for switch in SWITCHES:
-            self.assertEqual(nes[switch.config_key], switch.default, switch.config_key)
-            self.assertEqual(switch.default, prod_config[switch.config_key], switch.config_key)
+        for option in ALL_OPTIONS:
+            if option.presets is not None:
+                self.assertEqual(nes[option.config_key], option.presets[0], option.config_key)
+                self.assertEqual(option.presets[0], prod_config[option.config_key], option.config_key)
 
     def test_a_game_without_debug_keys_has_no_debug_tools(self):
         pygame.init()

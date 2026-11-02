@@ -50,7 +50,7 @@ base_config = {
     "SHOW_COORDINATES": False,
     "COLOR_KEY": (0, 128, 128),
     # "Fast", "Normal" or "Slow": NES MessageSpeed, 1, 2 or 3 frames per character. Normal, as a new NES quest starts
-    # with (NewQuest); a game started or loaded from the title menu sets it per adventure log (src/options_screen.py)
+    # with (NewQuest); a game started or loaded from the title menu sets it per adventure log (src/game_options.py)
     "TEXT_SPEED": "Fast",
     # "Classic": the NES dialog window, whose text scrolls; "Modern": each message replaces the last (not NES)
     "DIALOG_STYLE": "Classic",
@@ -68,7 +68,7 @@ base_config = {
     # MENU SPEED (not NES, #440): "Normal" keeps the selection windows (their cursor's blink and held button repeat) at
     # 1x whatever the game speed (keys 1 to 5); "FollowGameSpeed" speeds them up with the game (src/waiting.py)
     "MENU_SPEED": "Normal",
-    # The switches for this game's conveniences that act on a key (src/options_screen.py SWITCHES, the options
+    # The switches for this game's conveniences that act on a key (src/game_options.py, the options
     # overlay's CONTROLS page). Off, the NES: their keys do nothing. The MODERN preset turns them on (but CHEATS).
     "GAME_SPEED_KEYS": False,  # GAME SPEED: keys 1 to 5 set the game speed (src/waiting.py)
     "SAVE_STATES": False,  # SAVE STATES: F1-F3 load a state, Shift+F1-F3 save one
@@ -76,7 +76,7 @@ base_config = {
     "AUTO_GRIND": False,  # AUTO-GRIND: G starts auto-grind (src/auto_grind.py)
     "CHEAT_KEYS": False,  # CHEATS: F4 auto-battle and F9 invulnerability
     "QUICK_ACTION": False,  # QUICK ACTION: Enter on the map takes, opens a door or talks; off, Enter is A there too
-    # GAMEPLAY switches (src/options_screen.py SWITCHES), each at its NES value
+    # GAMEPLAY switches (src/game_options.py), each at its NES value
     "ENCOUNTERS": "NES",  # ENCOUNTERS: "NES", "Half" (every other random fight skipped) or "Off" (none)
     "EXP_GOLD": 1,  # EXP/GOLD: a won fight's experience and gold times 1 (NES), 2 or 4
     "RUN_BUTTON": False,  # RUN BUTTON: B held while walking on the map walks twice as fast
@@ -99,7 +99,7 @@ base_config = {
     # the name (src/name_entry.py NameEntry, src/menu_functions.py); a global setting, as names come before a log
     "NAME_CONFIRM": False,
     # SMART A (not NES when on): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, else opens COMMAND
-    # (Game.smart_command); off, A always opens COMMAND, as on the NES
+    # (MapHotkeys.smart_command); off, A always opens COMMAND, as on the NES
     "SMART_A": False,
     # MESSAGE LOG (not NES when on): the MESSAGE LOG key (L) opens the last messages on the map (src/message_log.py)
     "MESSAGE_LOG": False,

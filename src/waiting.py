@@ -100,8 +100,8 @@ _rounding_carry = 0.0  # real milliseconds that rounding waits to whole millisec
 # Told the new speed after each change by set_game_speed (not reset_game_speed): the game saves it with the global
 # settings (src/settings.py)
 _speed_listener: Callable[[int], None] | None = None
-# The options overlay's GAME SPEED switch (GAME_SPEED_KEYS, src/options_screen.py SWITCHES): off, keys 1 to 5 do nothing
-# (they are still taken out of the event loops, so they never count as "any key"). Game.apply_option sets it.
+# The options overlay's GAME SPEED switch (GAME_SPEED_KEYS, src/game_options.py): off, keys 1 to 5 do nothing
+# (they are still taken out of the event loops, so they never count as "any key"). options_overlay.apply_option sets it.
 _speed_keys_enabled = True
 
 # The MENU SPEED option (config['MENU_SPEED']): NORMAL keeps the selection windows at 1x; FOLLOW GAME SPEED runs them at
@@ -348,7 +348,7 @@ def requested_speed(current_event: event.Event) -> int | None:
 def handle_speed_key(current_event: event.Event) -> bool:
     """If ``current_event`` is a press of a speed key (1 to 5, or the NEXT SPEED key if one is bound), set the game
     speed (if the keys are on: the GAME SPEED switch) and return True. So it does for a gamepad's SPEED_CHANGED,
-    which only the map shows (Game.announce_game_speed)."""
+    which only the map shows (MapHotkeys.announce_game_speed)."""
     if current_event.type == SPEED_CHANGED:
         return True
     speed = requested_speed(current_event)

@@ -376,7 +376,7 @@ class TestMapFrame(GamepadTestCase):
         self.game.read_events()
 
     def test_right_trigger_says_the_new_speed(self):
-        # as the speed keys do on the map (Game.handle_fps_changes)
+        # as the speed keys do on the map (MapHotkeys.press_speed_key)
         with patch.object(self.game, 'draw_temporary_text') as temporary_text:
             self.press('righttrigger')
         self.assertEqual(2, game_speed())
@@ -413,7 +413,7 @@ class TestMapFrame(GamepadTestCase):
             stop.assert_called_once_with()
 
     def test_select_opens_the_options(self):
-        with patch('src.game.OptionsOverlay') as overlay:
+        with patch('src.map_hotkeys.OptionsOverlay') as overlay:
             self.press(PAD_SELECT)
         overlay.return_value.run.assert_called_once_with()
 

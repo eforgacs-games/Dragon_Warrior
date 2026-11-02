@@ -2,7 +2,7 @@
 
 The adventure log (src/save_file.py) is the NES's save and stays as it is. A save state is this game's own quality of
 life feature, like an emulator's: Shift + F1/F2/F3 saves one into slot 1/2/3 and F1/F2/F3 loads it
-(Game.handle_save_state_keys). The rewind (src/rewind.py) keeps the same snapshots in memory.
+(MapHotkeys.press_save_state). The rewind (src/rewind.py) keeps the same snapshots in memory.
 
 ``take_snapshot`` makes the snapshot: a plain dict of JSON values, small enough to keep many of in memory (no
 surfaces, no sprites; a map is named, not copied). It holds everything the game's next frames depend on:
@@ -17,7 +17,7 @@ surfaces, no sprites; a map is named, not copied). It holds everything the game'
   schedule (src/npc_schedule.py: FrameCounter, NPCUpdateCntr and the shared walking frame);
 - the frame counters step timing depends on (the hill pause, the pop-up window's wait, the step counts the fight rolls
   and the Magic Armor read) and whether the hero's step is a running one, ENCOUNTERS HALF's turn (whether the next
-  fight is skipped), the options in force (src/options_screen.py) and the window color;
+  fight is skipped), the options in force (src/game_options.py) and the window color;
 - the message log (src/message_log.py): putting a snapshot back puts back the messages shown up to then, so the log
   never shows what a rewind undid;
 - the random number generator (Python's ``random``, which every roll in the game reads), so that loading a state and
@@ -55,7 +55,8 @@ from src.map_layouts import MapLayouts
 from src.maps import CharlockB1, map_lookup
 from src.menu import CommandMenu
 from src.message_log import decoded_entries
-from src.options_screen import apply_options, options_from_config, options_from_save, options_to_save
+from src.options_overlay import apply_log_options, apply_option
+from src.game_options import options_from_config, options_from_save, options_to_save
 from src.sprites.animated_sprite import AnimatedSprite
 from src.soundtrack import SOUNDTRACK_KEY, soundtrack
 from src.story_flags import StoryFlags
@@ -66,6 +67,8 @@ from src.visual_effects import cut_to_black, screen_fade
 STATE_FORMAT_VERSION = 2
 VERSION_KEY = 'version'
 SAVE_STATE_SLOTS = (1, 2, 3)
+# What a save state key asks for (MapHotkeys.press_save_state): (SAVE or LOAD, slot)
+SAVE, LOAD = 'save', 'load'
 
 # The hero's values a snapshot keeps, as they are (numbers, strings, booleans and None)
 PLAYER_VALUES = (
@@ -378,9 +381,7 @@ def restore_snapshot(game: Any, snapshot: dict[str, Any], fade_in: bool = True) 
     game.story_flags = state['story_flags']
     _restore_histories(game, state)
     music_before = soundtrack(game.game_state.config)
-    apply_options(game.game_state.config, state['options'])
-    for config_key in ('GAME_SPEED_KEYS', 'CHEAT_KEYS'):  # the switches that act at once (Game.apply_option)
-        game.apply_option(config_key)
+    apply_log_options(game, state['options'])
     same_map = (not fade_in and old_map.identifier == state['map'] and old_tiles is not None
                 and old_tiles == state['layout_changes'].get(state['map'], [])
                 and [character.identifier for character in old_map.roaming_characters]
@@ -401,7 +402,7 @@ def restore_snapshot(game: Any, snapshot: dict[str, Any], fade_in: bool = True) 
     if fade_in or game.current_map.identifier != old_map.identifier:
         game.music_player.load_and_play_music(game.current_map.music_file_path)
     elif soundtrack(game.game_state.config) != music_before:
-        game.apply_option(SOUNDTRACK_KEY)  # the state's MUSIC setting, on the map that stayed
+        apply_option(game, SOUNDTRACK_KEY)  # the state's MUSIC setting, on the map that stayed
 
 
 def _rebuild_map(game: Any, state: dict[str, Any], cut_to_black_first: bool) -> None:
@@ -491,8 +492,8 @@ def _restore_values(game: Any, state: dict[str, Any]) -> None:
     game.battle_ctrl.last_battle_action = state['last_battle_action']
     game.battle_ctrl.pending_scripted_battle = state['pending_scripted_battle']
     # Nothing is waiting to happen: the snapshot was taken with no window open or asked for
-    game.paused = game.pause_requested = game.cmd_menu_requested = game.options_requested = False
-    game.auto_grind_requested = game.message_log_requested = False
+    game.paused = game.pause_requested = game.cmd_menu_requested = False
+    game.hotkeys.clear_requests()
     game.cmd_menu.launch_signaled = False
     game.camera.pos = state['camera']
     # The map is drawn in full on the next frame, with the pop-up window already open if it was (no drop-down)
@@ -563,3 +564,51 @@ def remove_snapshots_of_log(paths: Iterable[str], log: int) -> None:
     for path in paths:
         if snapshot_log(path) == log:
             os.remove(path)
+
+
+# Saving and loading from the map
+
+
+def run_due_state_request(game: Any) -> None:
+    """Save or load the save state asked for (MapHotkeys.press_save_state), once everyone is on a tile
+    (MovementController.resolve_pending_freezes), between two map frames (Game.run_map_frame)."""
+    request, game.state_request_due = game.state_request_due, None
+    if request is None:
+        return
+    action, slot = request
+    if action == SAVE:
+        save_to_slot(game, slot)
+    else:
+        load_from_slot(game, slot)
+
+
+def save_to_slot(game: Any, slot: int) -> None:
+    """Save the game as it is into a save state slot, and say so. A state that can't be written (a full disk, a
+    read-only save folder) is only said so, as a failed autosave is: play goes on, and the slot keeps what it had."""
+    try:
+        write_state(game.directories.save_dir, slot, take_snapshot(game))
+    except OSError as error:
+        print(f"Save state {slot} failed: {error}")
+        game.draw_temporary_text(game._("State {} couldn't be saved").format(slot))
+        return
+    game.draw_temporary_text(game._("State {} saved").format(slot))
+
+
+def load_from_slot(game: Any, slot: int) -> None:
+    """Load a save state slot, and say so: the game is put back as it was when it was saved, and play goes on from
+    there. An empty slot, or a state that can't be loaded (from an older version of the game, or unreadable), changes
+    nothing."""
+    try:
+        snapshot = read_state(game.directories.save_dir, slot)
+        if snapshot is None:
+            game.draw_temporary_text(game._("State {} is empty").format(slot))
+            return
+        restore_snapshot(game, snapshot)
+    except StateError as error:
+        if error.reason == OLD_VERSION:
+            message = game._("State {} is from another version\nand can't be loaded").format(slot)
+        else:
+            message = game._("State {} can't be read").format(slot)
+        game.draw_temporary_text(message)
+        return
+    game.draw_temporary_text(game._("State {} loaded").format(slot))

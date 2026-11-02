@@ -18,7 +18,7 @@ from pygame.event import Event
 from src import settings as settings_module
 from src.common import set_gettext_language
 from src.config.test_config import test_config
-from src.options_overlay import FIXED_ROWS, OPTION_PAGES
+from src.options_overlay import FIXED_ROWS, OPTION_PAGES, apply_option
 from src.settings import SETTINGS_ENV_VAR, USER_SETTINGS, Settings, SettingsStore, load_settings, save_settings, \
     settings_path
 from src.waiting import NES_FPS, game_speed, get_events, reset_game_speed, set_speed_listener
@@ -301,10 +301,10 @@ class TestSavedWhenChanged(GameTestCase):
         self.assertEqual(4, self.saved()['game_speed'])
         # switched on in the options overlay: back to the speed kept
         game.game_state.config['GAME_SPEED_KEYS'] = True
-        game.apply_option('GAME_SPEED_KEYS')
+        apply_option(game, 'GAME_SPEED_KEYS')
         self.assertEqual(4, game_speed())
         game.game_state.config['GAME_SPEED_KEYS'] = False
-        game.apply_option('GAME_SPEED_KEYS')
+        apply_option(game, 'GAME_SPEED_KEYS')
         self.assertEqual(1, game_speed())
         self.assertEqual(4, self.saved()['game_speed'])
 
@@ -313,12 +313,12 @@ class TestSavedWhenChanged(GameTestCase):
         self.assertFalse(game.game_state.config['DUNGEON_MAP'])  # the NES's, by default
         # switched on in the options overlay (OptionsOverlay changes the config, then calls apply_option)
         game.game_state.config['DUNGEON_MAP'] = True
-        game.apply_option('DUNGEON_MAP')
+        apply_option(game, 'DUNGEON_MAP')
         self.assertTrue(self.saved()['dungeon_map'])
         self.assertTrue(self.new_game().game_state.config['DUNGEON_MAP'])
         # and off again
         game.game_state.config['DUNGEON_MAP'] = False
-        game.apply_option('DUNGEON_MAP')
+        apply_option(game, 'DUNGEON_MAP')
         self.assertFalse(self.saved()['dungeon_map'])
         self.assertFalse(self.new_game().game_state.config['DUNGEON_MAP'])
 

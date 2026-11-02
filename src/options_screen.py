@@ -1,5 +1,6 @@
-"""The title menu's CHANGE MESSAGE SPEED: pick an adventure log, then its message speed (the NES window); and the
-settings kept per adventure log.
+"""The title menu's CHANGE MESSAGE SPEED: pick an adventure log, then its message speed (the NES window), and the title
+menu's other windows over the adventure logs (copy, erase, YES/NO). The settings kept per adventure log are
+src/game_options.py.
 
 NES flow (Bank03):
 
@@ -15,19 +16,16 @@ NES flow (Bank03):
   NORMAL on the NES (LF8D4: LDA #MSG_NORMAL); here it starts on FAST, the game's default speed (DEFAULT_MESSAGE_SPEED),
   and InitNewGame saves the choice with the new log.
 
-What this game adds (none of it on the NES, so none of it asked here): the dialog style, NPCS MAKE WAY, the fade style,
-the stairs, the grind stop, the soundtrack and the switches for this game's other conveniences (SWITCHES: the game speed
-keys, save states, rewind, auto-grind, the cheat keys, the shop preview, the quest journal and the bag size) and
-AUTOSAVE. They are changed during play, in the options overlay (src/options_overlay.py: SELECT or Tab on the map), and
-kept per adventure log beside the message speed (Options below). A new quest starts with their defaults, which are the
-NES preset's values, so a new quest plays as the NES does until the player switches something on.
+What this game adds (none of it on the NES, so none of it asked here): the options kept per adventure log beside the
+message speed (src/game_options.py PER_LOG_OPTIONS: the dialog style, NPCS MAKE WAY, the soundtrack, the switches for
+this game's conveniences and the rest). They are changed during play, in the options overlay (src/options_overlay.py:
+SELECT or Tab on the map). A new quest starts with their defaults, which are the NES preset's values, so a new quest
+plays as the NES does until the player switches something on.
 
 The windows read the joypad like every NES selection window (src/cursor.py SelectionButtons, WndProcessInput): one
 button per press, up and down in a one-column window, left and right in a one-row window, stopping at the edges.
 """
-from dataclasses import dataclass
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any
 
 from pygame import Rect, Surface, display
 
@@ -35,186 +33,13 @@ from src.color import BLACK, WHITE
 from src.command_window import COMMAND_WINDOW_BUTTON_KEYS
 from src.common import Graphics, set_gettext_language
 from src.directories import Directories
-from src.quest_journal import JOURNAL_LEARNED, JOURNAL_OFF, JOURNAL_SETTINGS, LEGACY_JOURNAL_GOALS
-from src.items import BAG_SIZES, INVENTORY_SLOTS
+from src.game_options import MESSAGE_SPEED_NAMES
 from src.cursor import IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, draw_cursor_tile
 from src.selection import run_selection
 from src.sound import Sound
-from src.soundtrack import DEFAULT_SOUNDTRACK, SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, Soundtrack, \
-    soundtrack, soundtrack_from_save
 from src.text import draw_text
-from src.visual_effects import FADE_STYLE_NES, FADE_STYLES, fade_style
-from src.waiting import MENU_SPEED_NORMAL, MENU_SPEEDS
 from src.windows import ADVENTURE_LOG_WINDOW_1, ADVENTURE_LOG_WINDOW_2, ERASE_LOG_WINDOW, ITEM_MENU_BORDER, \
     MESSAGE_SPEED_WINDOW, YES_NO_2_WINDOW, Window, variable_height_window
-
-# The save file keys (CommandMenu.save, Game.load_game): one per adventure log, like the NES MessageSpeed byte
-MESSAGE_SPEED_SAVE_KEY = 'MessageSpeed'
-DIALOG_STYLE_SAVE_KEY = 'DialogStyle'
-NPCS_MAKE_WAY_SAVE_KEY = 'NpcsMakeWay'
-FADE_STYLE_SAVE_KEY = 'FadeStyle'
-AUTO_STAIRS_SAVE_KEY = 'AutoStairs'
-AUTO_GRIND_STOP_SAVE_KEY = 'AutoGrindStop'
-MENU_SPEED_SAVE_KEY = 'MenuSpeed'
-AUTOSAVE_SAVE_KEY = 'Autosave'
-BAG_SIZE_SAVE_KEY = 'BagSize'
-
-# BAG_SIZE (base_config, src/items.py bag_slots): the NES's 8 slots by default; a save without the setting loads as 8
-DEFAULT_BAG_SIZE = INVENTORY_SLOTS
-
-# MessageSpeed: #$00-fast, #$01-normal, #$02-slow; the window lists them in that order (WndRow = MessageSpeed)
-MESSAGE_SPEED_NAMES = ('Fast', 'Normal', 'Slow')
-# The default speed: a new quest's window starts on it, and a save without the setting loads with it. The NES starts a
-# new quest on NORMAL (NewQuest, LF8D4: LDA #MSG_NORMAL); this game defaults to FAST, and NORMAL is a choice away.
-DEFAULT_MESSAGE_SPEED = 'Fast'
-
-CLASSIC = 'Classic'  # the NES dialog window (src/dialog_box.py), the default
-MODERN = 'Modern'  # each message replaces the last one, as this game drew dialog before it matched the NES
-DIALOG_STYLES = (CLASSIC, MODERN)
-DEFAULT_DIALOG_STYLE = CLASSIC
-
-# NPCS_MAKE_WAY (base_config, #297): off by default, the NES; a save without the setting loads as OFF
-DEFAULT_NPCS_MAKE_WAY = False
-
-# FADE_STYLE (base_config, #319): the NES palette fade by default; a save without the setting loads as NES
-DEFAULT_FADE_STYLE = FADE_STYLE_NES
-
-# AUTO_STAIRS (base_config): off by default, the NES, where only the STAIRS command takes stairs (Bank03 CheckStairs);
-# STEP ON takes them by stepping onto them. A save without the setting loads as off (NES).
-DEFAULT_AUTO_STAIRS = False
-
-# AUTO_GRIND_STOP (base_config): when auto-grind stops (src/auto_grind.py); a save without the setting loads as RED HP
-AUTO_GRIND_STOP_VALUES = ('RedHP', 'HalfHP', 'ThreeQuartersHP')
-DEFAULT_AUTO_GRIND_STOP = 'RedHP'
-
-# MENU_SPEED (base_config, #440): NORMAL by default, the selection windows at 1x whatever the game speed
-# (src/waiting.py menu_ticks); a save without the setting loads as NORMAL
-DEFAULT_MENU_SPEED = MENU_SPEED_NORMAL
-# SMART_A (base_config): off by default, the NES, where A on the map always opens COMMAND; on, A does TALK, TAKE, DOOR
-# or STAIRS when one applies (Game.smart_command). A save without the setting loads as OFF.
-DEFAULT_SMART_A = False
-
-# MESSAGE_LOG (base_config): off by default, the NES, which has none; on, the MESSAGE LOG key opens the log of the last
-# messages (src/message_log.py). A save without the setting loads as OFF.
-DEFAULT_MESSAGE_LOG = False
-
-
-# ENCOUNTERS, EXP/GOLD and STATUS WINDOW's values
-ENCOUNTERS_NES, ENCOUNTERS_HALF, ENCOUNTERS_OFF = ENCOUNTER_SETTINGS = ('NES', 'Half', 'Off')
-EXP_GOLD_MULTIPLIERS = (1, 2, 4)
-STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS = STATUS_WINDOW_SETTINGS = ('NES', 'Always')
-
-
-@dataclass(frozen=True, slots=True)
-class Switch:
-    """One of this game's conveniences, switched in the options overlay (#409, #437): the Options field, the config
-    key the game reads, the save file key, its values and its default (also what a save without it loads as). Every
-    default is the NES's value, as the NES preset (src/options_overlay.py) sets it, so a new quest plays as the NES
-    does. ``renamed`` maps a value an older build saved to the value it is now."""
-    field_name: str
-    config_key: str
-    save_key: str
-    values: tuple[Any, ...]
-    default: Any
-    renamed: tuple[tuple[Any, Any], ...] = ()
-
-    def valid(self, value: Any) -> Any:
-        """value if it's one of the values (a bool for an on/off switch, not 0 or 1), what it was renamed to if an
-        older build saved it under another name, the default otherwise."""
-        value = next((new for old, new in self.renamed if same_value(value, old)), value)
-        if any(same_value(value, choice) for choice in self.values):
-            return value
-        return self.default
-
-
-def same_value(value: Any, choice: Any) -> bool:
-    """Equal and of the same type: True is not 1."""
-    return value == choice and type(value) is type(choice)
-
-
-SWITCHES = (
-    # GAME SPEED: keys 1 to 5 set the game speed (src/waiting.py); off, the default, they do nothing (the NES has one
-    # speed)
-    Switch('game_speed_keys', 'GAME_SPEED_KEYS', 'GameSpeedKeys', (False, True), False),
-    # SAVE STATES: F1-F3 load and Shift+F1-F3 save a state; off, the keys do nothing
-    Switch('save_states', 'SAVE_STATES', 'SaveStates', (False, True), False),
-    # REWIND: Backspace rewinds; off, it does nothing
-    Switch('rewind', 'REWIND', 'Rewind', (False, True), False),
-    # AUTO-GRIND: G starts auto-grind (src/auto_grind.py); off, G does nothing
-    Switch('auto_grind', 'AUTO_GRIND', 'AutoGrind', (False, True), False),
-    # CHEATS: F4 auto-battle and F9 invulnerability; off, the keys do nothing and both are off
-    Switch('cheat_keys', 'CHEAT_KEYS', 'CheatKeys', (False, True), False),
-    # QUICK ACTION: Enter on the map takes a chest, opens a door or talks without the COMMAND window; off, Enter is
-    # the A button there too, as everywhere else
-    Switch('quick_action', 'QUICK_ACTION', 'QuickAction', (False, True), False),
-    # ENCOUNTERS: the NES's random fights, half as many (every other one that would start is skipped, so the NES's
-    # rolls and enemy choice are untouched) or none (Game.roll_for_fight); scripted fights always happen
-    Switch('encounters', 'ENCOUNTERS', 'Encounters', ENCOUNTER_SETTINGS, ENCOUNTERS_NES),
-    # EXP/GOLD: the experience and gold a won fight gives, times 1 (the NES), 2 or 4 (Battle.enemy_defeated)
-    Switch('exp_gold', 'EXP_GOLD', 'ExpGold', EXP_GOLD_MULTIPLIERS, 1),
-    # RUN BUTTON: B held while walking on the map walks twice as fast (MovementController.run_button_held)
-    Switch('run_button', 'RUN_BUTTON', 'RunButton', (False, True), False),
-    # STATUS WINDOW: the NES pop-up after standing still, or always on the map (Drawer.status_window_always)
-    Switch('status_window', 'STATUS_WINDOW', 'StatusWindow', STATUS_WINDOW_SETTINGS, STATUS_WINDOW_NES),
-    # SHOP PREVIEW (#401): a weapon and armor shop's list shows the attack or defense power the highlighted item would
-    # give (src/shop_preview.py); off, the default, is the NES
-    Switch('shop_preview', 'SHOP_PREVIEW', 'ShopPreview', (False, True), False),
-    # QUEST JOURNAL (#410): what Q shows on the map (src/quest_journal.py): nothing (the NES, the default), the goals
-    # the hero has learned of, or those with what was said about them. Older builds' GOALS showed every open goal; it
-    # loads as LEARNED.
-    Switch('quest_journal', 'QUEST_JOURNAL', 'QuestJournal', JOURNAL_SETTINGS, JOURNAL_OFF,
-           renamed=((LEGACY_JOURNAL_GOALS, JOURNAL_LEARNED),)),
-    # BAG (#413): the inventory's slots for everything but Herbs and Magic Keys (src/items.py bag_slots): the NES's 8,
-    # the default, or 16
-    Switch('bag_size', 'BAG_SIZE', BAG_SIZE_SAVE_KEY, BAG_SIZES, DEFAULT_BAG_SIZE),
-    # SMART A (#404): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, instead of opening COMMAND
-    # (Game.smart_command); off, the NES and the default, A always opens COMMAND
-    Switch('smart_a', 'SMART_A', 'SmartA', (False, True), DEFAULT_SMART_A),
-    # MESSAGE LOG (#405): the MESSAGE LOG key (L) shows the last messages on the map (src/message_log.py); off, the
-    # default, is the NES
-    Switch('message_log', 'MESSAGE_LOG', 'MessageLog', (False, True), DEFAULT_MESSAGE_LOG),
-)
-
-# AUTOSAVE (base_config, src/autosave.py): OFF by default, which is the NES (it only saves with King Lorik); the MODERN
-# preset turns it on. A new quest, or a save without the setting, keeps the config's (OFF in every config, so the tests
-# and dev runs never write an autosave)
-DEFAULT_AUTOSAVE = False
-
-
-@dataclass(frozen=True, slots=True)
-class Options:
-    """The settings kept per adventure log."""
-    message_speed: str = DEFAULT_MESSAGE_SPEED
-    dialog_style: str = DEFAULT_DIALOG_STYLE
-    npcs_make_way: bool = DEFAULT_NPCS_MAKE_WAY
-    fade_style: str = DEFAULT_FADE_STYLE
-    auto_stairs: bool = DEFAULT_AUTO_STAIRS
-    auto_grind_stop: str = DEFAULT_AUTO_GRIND_STOP
-    menu_speed: str = DEFAULT_MENU_SPEED
-    # MUSIC (src/soundtrack.py): a save from before there were three soundtracks loads its OrchestraMusic switch
-    soundtrack: Soundtrack = DEFAULT_SOUNDTRACK
-    # SWITCHES, each defaulting to its Switch.default
-    game_speed_keys: bool = False
-    save_states: bool = False
-    rewind: bool = False
-    auto_grind: bool = False
-    cheat_keys: bool = False
-    quick_action: bool = False
-    encounters: str = ENCOUNTERS_NES
-    exp_gold: int = 1
-    run_button: bool = False
-    status_window: str = STATUS_WINDOW_NES
-    shop_preview: bool = False
-    quest_journal: str = JOURNAL_OFF
-    bag_size: int = DEFAULT_BAG_SIZE
-    smart_a: bool = DEFAULT_SMART_A
-    message_log: bool = DEFAULT_MESSAGE_LOG
-    autosave: bool | None = None  # None: the config's AUTOSAVE is kept
-
-
-# A new quest's settings when none are chosen: the default message speed and the NES preset's values, as base_config
-# has them
-DEFAULT_OPTIONS = Options()
 
 # MsgSpeedDat ($B194): single spaced, 18 tiles wide. " Which Message", " Speed Do You" and " Want To Use?" on tile rows
 # 1, 3 and 5 (a blank tile, then the text from column 2); FAST, NORMAL and SLOW on rows 8, 10 and 12 after 6 blank
@@ -253,111 +78,6 @@ YES_NO_CURSOR_COLUMN = 1
 YES = 0  # WND_YES: the first entry
 
 ENTRY_SPACING = 2  # every window here is single spaced with a blank row between entries: 2 tile rows per entry
-
-
-def message_speed_from_save(save: dict) -> str:
-    """The log's message speed (LoadSavedData, LFBC8); a save from before it was kept loads at the default speed
-    (DEFAULT_MESSAGE_SPEED: FAST)."""
-    speed = save.get(MESSAGE_SPEED_SAVE_KEY)
-    return speed if speed in MESSAGE_SPEED_NAMES else DEFAULT_MESSAGE_SPEED
-
-
-def dialog_style_from_save(save: dict) -> str:
-    """The log's dialog style; a save from before it was kept loads as CLASSIC (the NES)."""
-    style = save.get(DIALOG_STYLE_SAVE_KEY)
-    return style if style in DIALOG_STYLES else DEFAULT_DIALOG_STYLE
-
-
-def npcs_make_way_from_save(save: dict) -> bool:
-    """The log's NPCS MAKE WAY; a save from before it was kept loads as OFF (the default)."""
-    make_way = save.get(NPCS_MAKE_WAY_SAVE_KEY)
-    return make_way if isinstance(make_way, bool) else DEFAULT_NPCS_MAKE_WAY
-
-
-def fade_style_from_save(save: dict) -> str:
-    """The log's fade style; a save from before it was kept loads as NES (the default)."""
-    style = save.get(FADE_STYLE_SAVE_KEY)
-    return style if style in FADE_STYLES else DEFAULT_FADE_STYLE
-
-
-def auto_stairs_from_save(save: dict) -> bool:
-    """The log's STAIRS setting; a save from before it was kept loads as NES (the default)."""
-    auto_stairs = save.get(AUTO_STAIRS_SAVE_KEY)
-    return auto_stairs if isinstance(auto_stairs, bool) else DEFAULT_AUTO_STAIRS
-
-
-def auto_grind_stop_from_save(save: dict) -> str:
-    """The log's GRIND STOP setting; a save from before it was kept loads as RED HP (the default)."""
-    setting = save.get(AUTO_GRIND_STOP_SAVE_KEY)
-    return setting if setting in AUTO_GRIND_STOP_VALUES else DEFAULT_AUTO_GRIND_STOP
-
-
-def menu_speed_from_save(save: dict) -> str:
-    """The log's MENU SPEED setting; a save from before it was kept loads as NORMAL (the default)."""
-    setting = save.get(MENU_SPEED_SAVE_KEY)
-    return setting if setting in MENU_SPEEDS else DEFAULT_MENU_SPEED
-
-
-def autosave_from_save(save: dict) -> bool | None:
-    """The log's AUTOSAVE setting (src/autosave.py); None for a save from before it was kept, which leaves the
-    config's as it is."""
-    autosave = save.get(AUTOSAVE_SAVE_KEY)
-    return autosave if isinstance(autosave, bool) else None
-
-
-def options_from_save(save: dict) -> Options:
-    """The log's settings; each one a save from before it was kept doesn't have loads as its default."""
-    return Options(message_speed_from_save(save), dialog_style_from_save(save), npcs_make_way_from_save(save),
-                   fade_style_from_save(save), auto_stairs_from_save(save), auto_grind_stop_from_save(save),
-                   menu_speed_from_save(save), soundtrack_from_save(save), autosave=autosave_from_save(save),
-                   **{switch.field_name: switch.valid(save.get(switch.save_key)) for switch in SWITCHES})
-
-
-def options_to_save(options: Options) -> dict:
-    """The save file entries for these settings (CommandMenu.save, TitleMenu.change_message_speed)."""
-    entries = {MESSAGE_SPEED_SAVE_KEY: options.message_speed, DIALOG_STYLE_SAVE_KEY: options.dialog_style,
-               NPCS_MAKE_WAY_SAVE_KEY: options.npcs_make_way, FADE_STYLE_SAVE_KEY: options.fade_style,
-               AUTO_STAIRS_SAVE_KEY: options.auto_stairs, AUTO_GRIND_STOP_SAVE_KEY: options.auto_grind_stop,
-               MENU_SPEED_SAVE_KEY: options.menu_speed, SOUNDTRACK_SAVE_KEY: options.soundtrack.value,
-               **{switch.save_key: getattr(options, switch.field_name) for switch in SWITCHES}}
-    if options.autosave is not None:
-        entries[AUTOSAVE_SAVE_KEY] = options.autosave
-    return entries
-
-
-def options_from_config(config: dict) -> Options:
-    """The settings the running game uses."""
-    return Options(config.get('TEXT_SPEED', DEFAULT_MESSAGE_SPEED), config.get('DIALOG_STYLE', DEFAULT_DIALOG_STYLE),
-                   bool(config.get('NPCS_MAKE_WAY', DEFAULT_NPCS_MAKE_WAY)),
-                   fade_style(config), bool(config.get('AUTO_STAIRS', DEFAULT_AUTO_STAIRS)),
-                   auto_grind_stop_from_save({AUTO_GRIND_STOP_SAVE_KEY: config.get('AUTO_GRIND_STOP')}),
-                   menu_speed_from_save({MENU_SPEED_SAVE_KEY: config.get('MENU_SPEED')}), soundtrack(config),
-                   autosave=bool(config.get('AUTOSAVE', DEFAULT_AUTOSAVE)),
-                   **{switch.field_name: switch.valid(config.get(switch.config_key)) for switch in SWITCHES})
-
-
-def apply_options(config: dict, options: Options) -> None:
-    """Use these settings from now on: the dialog code reads TEXT_SPEED and DIALOG_STYLE for every message, and
-    MovementController.ask_npc_to_make_way reads NPCS_MAKE_WAY for every bump, screen_fade reads FADE_STYLE for every
-    fade, MapManager.handle_warps reads AUTO_STAIRS for every step, auto-grind reads AUTO_GRIND_STOP for every check
-    and the menu clock reads MENU_SPEED (src/waiting.py menu_speed); the music is read from SOUNDTRACK each time
-    one starts (src/directories.py). Each of the SWITCHES goes into its config key,
-    which the game reads at each key press (Game.apply_option makes the music and the game speed follow at once); the
-    shops read SHOP_PREVIEW whenever their list opens, Q reads QUEST_JOURNAL each time it's pressed, Game.map_frame
-    reads AUTOSAVE every frame, the inventory checks read BAG_SIZE for every item added, and Game.handle_a_button and
-    Game.handle_message_log_key read SMART_A and MESSAGE_LOG for every press."""
-    config['TEXT_SPEED'] = options.message_speed
-    config['DIALOG_STYLE'] = options.dialog_style
-    config['NPCS_MAKE_WAY'] = options.npcs_make_way
-    config['FADE_STYLE'] = options.fade_style
-    config['AUTO_STAIRS'] = options.auto_stairs
-    config['AUTO_GRIND_STOP'] = options.auto_grind_stop
-    config['MENU_SPEED'] = options.menu_speed
-    config[SOUNDTRACK_KEY] = options.soundtrack
-    for switch in SWITCHES:
-        config[switch.config_key] = getattr(options, switch.field_name)
-    if options.autosave is not None:
-        config['AUTOSAVE'] = options.autosave
 
 
 class OptionWindow:

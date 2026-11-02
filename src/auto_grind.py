@@ -1,6 +1,6 @@
 """Auto-grind: G on the map walks back and forth and fights until a decision is the player's to make. Not NES.
 
-G starts it when START or the COMMAND window would be accepted on the map (Game.handle_auto_grind_key, resolved
+G starts it when START or the COMMAND window would be accepted on the map (MapHotkeys.press_auto_grind, resolved
 with the pause and the options overlay in MovementController.resolve_pending_freezes), on a map with random fights,
 with HP above the GRIND STOP threshold and a safe tile next to the hero (``safe_partner``). It then drives the game
 with a virtual joypad (src/virtual_joypad.py), so everything runs through the game's own code: the walking, the
@@ -35,7 +35,7 @@ from src.encounters import encounter_group
 from src.guardians import guardian_at
 from src.movement import DIRECTION_KEYS
 from src.npc_movement import step
-from src.options_screen import AUTO_GRIND_STOP_VALUES, ENCOUNTERS_OFF
+from src.game_options import AUTO_GRIND_STOP_VALUES, ENCOUNTERS_OFF
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import MAP_CONTEXT, requested_speed
 

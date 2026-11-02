@@ -18,6 +18,7 @@ from src.direction import Direction
 from src.directories import Directories
 from src.game_functions import set_character_position
 from src.game_state import GameState
+from src.map_hotkeys import MAP_REQUESTS
 from src.npc_movement import npc_may_step_onto, step
 from src.npc_schedule import NPCSchedule, POP_UP_FRAME
 from src.player.player import Player
@@ -66,31 +67,17 @@ class MovementGame(Protocol):
     paused: bool
     # START or A pressed while someone is between tiles: see MovementController.resolve_pending_freezes
     pause_requested: bool
-    # SELECT or Tab: the options overlay, which waits for the same moment as the pause
-    options_requested: bool
-    # The MESSAGE LOG key: the message log, which waits for the same moment as the pause
-    message_log_requested: bool
-    # G: auto-grind (src/auto_grind.py), which starts at the same moment as the pause
-    auto_grind_requested: bool
-    # M: the dungeon map (src/dungeon_map.py), which opens at the same moment as the pause
-    dungeon_map_requested: bool
     cmd_menu_requested: bool
-    # A with SMART A on: run_smart_command when the COMMAND window would open
+    # A with SMART A on: MapHotkeys.run_smart_command when the COMMAND window would open
     smart_a_pending: bool
-    # Shift + F1/F2/F3 or F1/F2/F3: a save state to save or load (Game.handle_save_state_keys), and once it's due
+    # Shift + F1/F2/F3 or F1/F2/F3: a save state to save or load (MapHotkeys.press_save_state), and once it's due
     state_request: tuple[str, int] | None
     state_request_due: tuple[str, int] | None
+    # The map's keys (src/map_hotkeys.py), and what they open once everyone is on a tile (MAP_REQUESTS: each request's
+    # flag is a bool on the game too)
+    hotkeys: Any
 
     def count_step(self) -> None: ...
-
-    def open_options(self) -> None: ...
-
-    def open_dungeon_map(self) -> None: ...
-    def open_message_log(self) -> None: ...
-
-    def start_auto_grind(self) -> None: ...
-
-    def run_smart_command(self) -> bool: ...
 
     def roll_for_fight(self, column: int, row: int, tile: str | None) -> None: ...
 
@@ -187,10 +174,10 @@ class MovementController:
 
     @property
     def freeze_pending(self) -> bool:
-        return (self.game.pause_requested or self.game.options_requested or self.game.cmd_menu_requested
-                or getattr(self.game, 'message_log_requested', False) is True
-                or getattr(self.game, 'auto_grind_requested', False) is True
-                or getattr(self.game, 'dungeon_map_requested', False) is True
+        """Whether the pause, the COMMAND window, a save state or something a map key opens (MAP_REQUESTS) is waiting
+        for everyone to finish their step (resolve_pending_freezes)."""
+        return (self.game.pause_requested or self.game.cmd_menu_requested
+                or any(getattr(self.game, map_request.flag, False) is True for map_request in MAP_REQUESTS)
                 or getattr(self.game, 'state_request', None) is not None
                 or getattr(self.game, 'state_request_due', None) is not None)
 
@@ -242,24 +229,10 @@ class MovementController:
             self.game.pause_requested = False
             self.game.paused = True
             return
-        if self.game.options_requested:
-            self.game.options_requested = False
-            self.game.open_options()
-            return
-        if getattr(self.game, 'dungeon_map_requested', False) is True:
-            self.game.dungeon_map_requested = False
-            self.game.open_dungeon_map()
-            return
-        if getattr(self.game, 'message_log_requested', False) is True:
-            self.game.message_log_requested = False
-            self.game.open_message_log()
-            return
-        if getattr(self.game, 'auto_grind_requested', False) is True:
-            self.game.auto_grind_requested = False
-            self.game.start_auto_grind()
+        if self.game.hotkeys.open_requested():
             return
         if getattr(self.game, 'state_request', None) is not None:
-            # A save state (Game.handle_save_state_keys): saved or loaded at the end of this map frame (Game.map_frame,
+            # A save state (MapHotkeys.press_save_state): saved or loaded at the end of this map frame (Game.map_frame,
             # or of the next one when the key was read between frames), with nobody starting a step meanwhile
             self.game.state_request_due, self.game.state_request = self.game.state_request, None
             return
@@ -267,9 +240,9 @@ class MovementController:
             return
         self.game.cmd_menu_requested = False
         if getattr(self.game, 'smart_a_pending', False) is True:
-            # SMART A (Game.handle_a_button): the command that applies here runs instead of the COMMAND window
+            # SMART A (MapHotkeys.press_a): the command that applies here runs instead of the COMMAND window
             self.game.smart_a_pending = False
-            if self.game.run_smart_command():
+            if self.game.hotkeys.run_smart_command():
                 return
         self.game.drawer.display_hovering_stats = True
         self.game.cmd_menu.launch_signaled = True

@@ -13,7 +13,7 @@ from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACE
 from src.cursor import IN_A
 from src.direction import Direction
 from src.directories import Directories
-from src.items import MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS, bag_slots, inventory_list
+from src.items import MAX_HERBS, MAX_KEYS, bag_is_full, inventory_list
 from src import maps
 from src.maps import DragonWarriorMap
 from src.maps_functions import get_center_point
@@ -22,7 +22,7 @@ from src.window_renderer import draw_window as generated_window
 from src.windows import BUY_SELL_LAYOUT, WindowLayout, shop_inventory_layout
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_price, \
-    inventory_is_full, pay_player, sell_price
+    pay_player, sell_price
 from src.selection import run_selection, stop_at_edges
 from src.shop_preview import SHOP_PREVIEW_WINDOW, StatPreview, draw_shop_preview, stat_preview
 from src.sound import Sound
@@ -584,8 +584,7 @@ class DialogLookup:
         item from InvListTbl that the hero has to make room, and TextBlock12 entry 10 asks for it. If none of those
         items is there, Gwaelin's Love isn't given at all."""
         _ = self._
-        used_slots = [item for item in self.player.inventory if item not in UNSLOTTED_ITEMS]
-        if len(used_slots) >= bag_slots(self.config):
+        if bag_is_full(self.player.inventory, self.config):
             taken_item = next((item for item in GWAELINS_LOVE_REPLACEABLE_ITEMS if item in self.player.inventory),
                               None)
             if taken_item is None:
@@ -1157,7 +1156,7 @@ class DialogLookup:
         elif selected_item == 'Herb' and self.player.inventory.count('Herb') >= MAX_HERBS:
             # NES ChkToolPurchase
             self.say(_("Thou cannot hold more Herbs."))
-        elif selected_item != 'Herb' and inventory_is_full(self.player.inventory, bag_slots(self.config)):
+        elif selected_item != 'Herb' and bag_is_full(self.player.inventory, self.config):
             # NES DoOthrToolPurchase: AddInvItem returns INV_FULL. Nothing stops buying a second Dragon's Scale.
             self.say(_("Thou cannot carry anymore."))
         else:
@@ -1228,7 +1227,7 @@ class DialogLookup:
         if self.player.gold < FAIRY_WATER_COST:
             self.say(_("Thou hast not enough money."))
             self.fairy_water_goodbye()
-        elif inventory_is_full(self.player.inventory, bag_slots(self.config)):
+        elif bag_is_full(self.player.inventory, self.config):
             self.say(_("Thou cannot carry anymore."))
             self.fairy_water_goodbye()
         else:

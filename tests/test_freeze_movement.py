@@ -374,21 +374,21 @@ class TestCommandsOnlyBetweenSteps(FreezeTestCase):
     def test_enter_shortcut_does_nothing_mid_step(self):
         self.start_a_step()
         self.game.player.current_tile = 'TREASURE_BOX'
-        self.game.handle_enter_key(keydown(K_RETURN))
+        self.game.hotkeys.press_smart_a_key(keydown(K_RETURN))
         self.assertEqual([], self.commands_used)
 
     def test_enter_shortcut_still_works_standing_still(self):
         self.game.player.current_tile = 'TREASURE_BOX'
-        self.game.handle_enter_key(keydown(K_RETURN))
+        self.game.hotkeys.press_smart_a_key(keydown(K_RETURN))
         self.assertEqual(['take'], [name for name, *_ in self.commands_used])
 
     def test_enter_shortcut_does_nothing_while_the_command_menu_is_pending_or_open(self):
         self.game.player.current_tile = 'TREASURE_BOX'
         self.game.cmd_menu_requested = True
-        self.game.handle_enter_key(keydown(K_RETURN))
+        self.game.hotkeys.press_smart_a_key(keydown(K_RETURN))
         self.game.cmd_menu_requested = False
         self.game.cmd_menu.launch_signaled = True
-        self.game.handle_enter_key(keydown(K_RETURN))
+        self.game.hotkeys.press_smart_a_key(keydown(K_RETURN))
         self.assertEqual([], self.commands_used)
 
     def test_enter_shortcut_does_nothing_while_paused(self):

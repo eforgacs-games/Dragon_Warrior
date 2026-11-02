@@ -16,7 +16,7 @@ class ControlInfo:
         self.select_button = _("{}: Options").format(keys_label('SELECT') + '/' + keys_label('OPTIONS')
                                                      if action_keys('OPTIONS') else keys_label('SELECT'))
         self.arrow_keys_move_buttons = _("{}: Move").format(directions_label(_("ARROWS")))
-        # Enter: TALK, TAKE or DOOR when one applies (Game.handle_enter_key)
+        # Enter: TALK, TAKE or DOOR when one applies (MapHotkeys.press_smart_a_key)
         self.smart_a_button = _("{}: Smart A").format(keys_label('SMART_A'))
         self.help_button = _("{}: Show Controls").format(keys_label('HELP'))
         # F4, F9 and F11 are on/off toggles, listed under "Toggle on/off:" in the H help. The STAIRS setting has no key

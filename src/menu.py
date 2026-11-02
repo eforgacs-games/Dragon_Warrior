@@ -19,7 +19,7 @@ from src.cursor import IN_A, DialogArrowBlink, draw_cursor_tile
 from src.waiting import NES_FPS, is_any_key_held, wait, wait_until
 from src.directories import Directories
 from src.items import DEATH_NECKLACE_GOLD, GOLD, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
-    NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, bag_slots, hidden_items, inventory_list, roll_treasure_gold, treasure
+    NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, bag_is_full, hidden_items, inventory_list, roll_treasure_gold, treasure
 from src.coordinates import Cell
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, MAX_LEVEL, OUTSIDE_DESTINATIONS, \
     RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES, \
@@ -30,7 +30,7 @@ from src.direction import Direction
 from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
-from src.options_screen import MODERN, options_from_config
+from src.game_options import MODERN, options_from_config
 from src.save_file import ADVENTURE_LOGS, SaveFile, is_from_a_newer_build, log_belongs_to, log_for_unchosen_save, \
     save_path, write_save
 from src.message_log import speaker_of
@@ -416,7 +416,7 @@ class CommandMenu:
 
     @property
     def modern_dialog(self) -> bool:
-        """The Modern dialog style (src/options_screen.py): each message replaces the last one, as this game drew dialog
+        """The Modern dialog style (src/game_options.py): each message replaces the last one, as this game drew dialog
         before it copied the NES window (src/menu.py and src/text.py before PR #245). Otherwise the text scrolls on below
         what the window shows, like the NES (Classic, the default). Both print letter by letter at the message speed,
         with the NES text beep."""
@@ -735,16 +735,11 @@ class CommandMenu:
         self.open_chest()
         self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
 
-    def inventory_is_full(self) -> bool:
-        """Every slot of the bag used (8 on the NES, or 16 with BAG set to 16: src/items.py bag_slots)."""
-        return len([item for item in self.player.inventory if item not in UNSLOTTED_ITEMS]) >= \
-            bag_slots(self.game.game_state.config)
-
     def take_item(self, item_name: str):
         """NES SetTrsrDescByte: tell the player what was found, then add it to the inventory."""
         self.open_chest()
         self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
-        if item_name in UNSLOTTED_ITEMS or not self.inventory_is_full():
+        if item_name in UNSLOTTED_ITEMS or not bag_is_full(self.player.inventory, self.game.game_state.config):
             self.player.inventory.append(item_name)  # NES AddInvItem: the first empty slot
         else:
             self.discard_for_item(item_name)
@@ -1497,7 +1492,7 @@ class CommandMenu:
             # NES FoundItem/ItemAlreadyFound: found only if it isn't already in the inventory
             if item_name in self.player.inventory:
                 return self._("But there found nothing."), False
-            if self.inventory_is_full():
+            if bag_is_full(self.player.inventory, self.game.game_state.config):
                 return self._("{} discovers the {}.").format(self.player.name, self._(item_name)), True
             self.player.inventory.append(item_name)
         return self._("{} discovers the {}.").format(self.player.name, self._(item_name)), False

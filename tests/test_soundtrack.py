@@ -9,7 +9,7 @@ from src.config.base_config import base_config
 from src.config.test_config import test_config
 from src.chiptune import parse_track_ref
 from src.directories import CLIP_NAMES, MUSIC_NAMES, Directories, clip_paths, music_name, music_paths
-from src.options_screen import Options, apply_options, options_from_config, options_from_save, options_to_save
+from src.game_options import Options, apply_options, options_from_config, options_from_save, options_to_save
 from src.paths import data_path
 from src.save_state import restore_snapshot, take_snapshot
 from src.smoke_test import game_file_paths

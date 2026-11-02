@@ -7,7 +7,7 @@ map for a moment (the game speed, a save state).
 
 The MESSAGE LOG key (L, as bound, src/controls.py) opens the log on the map, when the MESSAGE LOG option is ON (the
 options overlay; OFF is the NES, which has none). Like the options overlay, it opens only when START would pause the
-game, once the hero and the NPCs have finished their steps (Game.handle_message_log_key,
+game, once the hero and the NPCs have finished their steps (MapHotkeys.press_message_log,
 MovementController.resolve_pending_freezes). One NES-style window fills the screen, titled MESSAGE LOG, the newest
 message at the bottom:
 
