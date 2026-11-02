@@ -156,9 +156,9 @@ class TestDeathWait(DialogWaitTestCase):
     def test_handle_death_waits_for_a_or_start(self):
         self.game.player.current_hp = 0
         with patch.object(self.cmd_menu, 'show_text_in_dialog_box') as show_text, \
-                patch.object(self.game, 'set_post_death_attributes'), \
+                patch.object(self.game.hero_death, 'set_post_death_attributes'), \
                 patch.object(self.game.music_player, 'load_and_play_music'):
-            self.game.handle_death()
+            self.game.hero_death.handle_death()
         self.assertEqual(A_OR_START_KEYS, show_text.call_args.kwargs['advance_keys'])
 
 

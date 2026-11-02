@@ -25,7 +25,7 @@ Window data labels are from Bank01 `WndwDataPtrTbl`. Line numbers are as of this
 The game now draws this window with `draw_window(..., COMBAT_COMMAND_LAYOUT, ...)` in three places:
 - `BattleController.draw_command_window`;
 - `Battle.display_battle_window`;
-- `Game.handle_death`.
+- `HeroDeath.handle_death`.
 
 ## Title, main menu and adventure logs (18 files): done
 

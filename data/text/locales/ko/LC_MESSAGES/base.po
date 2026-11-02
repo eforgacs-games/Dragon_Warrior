@@ -67,7 +67,7 @@ msgstr "철 갑옷"
 msgid "Full Plate"
 msgstr "강철 갑옷"
 
-#: src/game.py
+#: src/hero_death.py
 msgid "Thou art dead."
 msgstr "당신은 죽었습니다."
 
@@ -746,11 +746,11 @@ msgstr "{}에게 {}포인트의 대미지!\n"
 msgid "The {} attacks!\n"
 msgstr "{}의 공격!\n"
 
-#: src/game.py
+#: src/hero_damage.py
 msgid "Thy Hits decreased by {}.\n"
 msgstr "{}포인트의 대미지를 입었다!\n"
 
-#: src/game.py
+#: src/hero_damage.py
 msgid "Thy Hit decreased by {}.\n"
 msgstr "{}포인트의 대미지를 입었다!\n"
 
@@ -1096,15 +1096,15 @@ msgstr "저는 그럴 수 없습니다."
 msgid "said {}."
 msgstr "{}은/는 말했다."
 
-#: src/game.py
+#: src/step_triggers.py
 msgid "Cursed one,be gone!"
 msgstr "저주받은 자여, 썩 물러가라!"
 
-#: src/game.py
+#: src/step_triggers.py
 msgid "REPEL has lost its effect."
 msgstr "토헤로스의 효과가 사라졌다."
 
-#: src/game.py
+#: src/step_triggers.py
 msgid "The Fairy Water has lost its effect."
 msgstr "성수의 효과가 사라졌다."
 
@@ -1128,11 +1128,11 @@ msgstr "무적 모드 켜짐"
 msgid "Invulnerability disabled"
 msgstr "무적 모드 꺼짐"
 
-#: src/game.py
+#: src/hero_death.py
 msgid "Thou hast failed and thou art cursed."
 msgstr "자네는 실패한 데다 저주까지 받았군."
 
-#: src/game.py
+#: src/hero_death.py
 msgid "Leave at once!"
 msgstr "당장 떠나게!"
 

@@ -65,11 +65,13 @@ The main `Game` class in `src/game.py` orchestrates:
 - `battle.py`: one battle: enemy setup, damage formulas, running away, victory
 - `battle_controller.py`: the battle loop, player commands and the enemy's turn
 - `encounters.py`: random encounters after each step
+- `field_encounters.py`: the fights a step starts (a waiting scripted fight, the step's damage and fight roll)
 
 **Other key modules** (`src/` has many more; this list isn't complete):
 - `map_manager.py`: map changes, staircases and warps
 - `menu.py`: the command menu, spells and items
 - `map_hotkeys.py`: the keys read on the map (A, START, SELECT and this game's own keys) and what they open
+- `step_triggers.py`, `hero_damage.py`, `hero_death.py`: what each step leads to (NES MovementUpdates, the repel timer), the hero's damage from enemies, swamps and force fields, and his death
 - `game_options.py`: every option of the options overlay, declared once (per adventure log or global settings)
 - `story_flags.py`: story progress (`StoryFlags`), saved with the game
 - `save_state.py`: full snapshots of the game on the map (not an NES feature)

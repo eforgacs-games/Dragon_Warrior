@@ -56,7 +56,7 @@ LEGACY_JOURNAL_GOALS = 'Goals'
 
 # The sources of what the hero is told that aren't an NPC's dialog byte
 KING_OPENING_SPEECH = 'KING_OPENING_SPEECH'  # King Lorik's words as a new quest starts (Drawer.run_automatic_initial_dialog)
-GOLEM_FIGHT = 'GOLEM_FIGHT'  # stepping in front of the Golem (Game.check_guardian_fight)
+GOLEM_FIGHT = 'GOLEM_FIGHT'  # stepping in front of the Golem (StepTriggers.check_guardian_fight, src/step_triggers.py)
 
 # The throne room guard at 5,6 (dialog byte $24) speaks of the key only until the hero has left the throne room
 # (ThrnRmDialog2: TextBlock17 entry 0, then TextBlock6 entry 3, which doesn't)

@@ -25,7 +25,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps)
     QUICK ACTION   OFF (NES) / ON           (QUICK_ACTION: Enter takes, opens or talks, MapHotkeys.press_smart_a_key)
     SMART A        OFF (NES) / ON           (SMART_A: A does TALK, TAKE, DOOR or STAIRS, MapHotkeys.smart_command)
-    ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, Game.thin_encounters)
+    ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, FieldEncounters.thin_encounters)
     EXP/GOLD       x1 (NES) / x2 / x4       (EXP_GOLD: what a won fight gives, Battle.enemy_defeated)
     QUEST JOURNAL  OFF (NES) / LEARNED / LEARNED+HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
     AUTOSAVE       OFF (NES) / ON           (AUTOSAVE: the autosave slot, src/autosave.py)

@@ -210,18 +210,18 @@ class TestLowHPWindowColor(TestCase):
 
     def test_damage_turns_windows_red_at_once(self):
         with patch.object(self.cmd_menu, 'show_line_in_dialog_box'):
-            self.game.receive_damage(10)
+            self.game.hero_damage.receive_damage(10)
         self.assertEqual(self.player.current_hp, 5)
         self.assertEqual(self.game.color, WHITE)
         with patch.object(self.cmd_menu, 'show_line_in_dialog_box'):
-            self.game.receive_damage(1)
+            self.game.hero_damage.receive_damage(1)
         self.assertEqual(self.game.color, LOW_HP_RED)
         self.assert_command_window_color(LOW_HP_RED)
 
     def test_swamp_damage_turns_windows_red(self):
         self.player.current_hp = 6
-        with patch('src.game.flash_transparent_color'), patch.object(self.game.drawer, 'draw_all'):
-            self.game.damage_step(damage_amount=2)
+        with patch('src.hero_damage.flash_transparent_color'), patch.object(self.game.drawer, 'draw_all'):
+            self.game.hero_damage.damage_step(damage_amount=2)
         self.assertEqual(self.game.color, LOW_HP_RED)
 
     def test_healing_turns_windows_white(self):
@@ -241,10 +241,10 @@ class TestLowHPWindowColor(TestCase):
         # NES ChkLowHP: a step turns the windows white if HP isn't low, but never turns them red
         self.set_hp(2)
         self.player.current_hp = 10
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assertEqual(self.game.color, WHITE)
         self.player.current_hp = 2
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assertEqual(self.game.color, WHITE)
 
     def test_level_up_waits_for_the_next_palette_load(self):
@@ -276,10 +276,10 @@ class TestLowHPWindowColor(TestCase):
 
     def test_death_and_revival(self):
         with patch.object(self.cmd_menu, 'show_line_in_dialog_box'):
-            self.game.receive_damage(15)
+            self.game.hero_damage.receive_damage(15)
         self.assertEqual(self.game.color, LOW_HP_RED)
         self.player.is_dead = True
-        self.game.set_post_death_attributes()
+        self.game.hero_death.set_post_death_attributes()
         self.assertEqual(self.player.current_hp, self.player.max_hp)
         self.assertEqual(self.game.color, WHITE)
         self.assert_command_window_color(WHITE)
@@ -293,7 +293,7 @@ class TestLowHPWindowColor(TestCase):
         with patch('src.menu.CommandMenu.show_text_in_dialog_box',
                    side_effect=lambda *a, **k: colors.append(self.game.color)), \
                 patch.object(self.game, 'leave_tantegel'):
-            self.game.set_post_death_attributes()
+            self.game.hero_death.set_post_death_attributes()
         self.assertEqual(self.player.current_hp, 1)
         self.assertEqual(colors, [LOW_HP_RED])
         self.assert_command_window_color(LOW_HP_RED)

@@ -306,9 +306,9 @@ SMOKE_SCENES = (
                save_changes={'PlayerRow': 14, 'PlayerColumn': 15, SOUNDTRACK_SAVE_KEY: Soundtrack.SFC.value},
                check=expect_maps('TantegelThroneRoom', 'TantegelCourtyard')),
     # Walking left on Alefgard into a Slime fight (the battle window, the enemy, battle music and sounds), then FIGHT.
-    # Held for several steps: after a map change the first step may not roll for a fight (Game.handle_battles compares
-    # the steps taken since the change with the count at the last roll). Left in the battle's command window keeps
-    # FIGHT chosen.
+    # Held for several steps: after a map change the first step may not roll for a fight
+    # (FieldEncounters.handle_battles compares the steps taken since the change with the count at the last roll). Left
+    # in the battle's command window keeps FIGHT chosen.
     SmokeScene('overworld_fight', 'wait:20,left:100,wait:120,a,wait:10,a,wait:120,a,wait:10,a,wait:120',
                save_changes={'CurrentMap': 'Alefgard', 'PlayerRow': 50, 'PlayerColumn': 47,
                              SOUNDTRACK_SAVE_KEY: Soundtrack.ORCHESTRA.value},

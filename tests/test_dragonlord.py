@@ -101,7 +101,7 @@ class TestDragonlordDialog(unittest.TestCase):
     def test_pending_battle_starts_on_next_frame(self):
         self.game.battle_ctrl.queue_scripted_battle('Dragonlord')
         with patch.object(self.game.battle_ctrl, 'start_scripted_battle') as start:
-            self.game.handle_battles()
+            self.game.field_encounters.handle_battles()
         start.assert_called_once_with('Dragonlord')
         self.assertIsNone(self.game.battle_ctrl.pending_scripted_battle)
 

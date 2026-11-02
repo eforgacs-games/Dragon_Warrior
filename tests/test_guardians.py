@@ -126,7 +126,7 @@ class TestGuardianFights(TestCase):
         patch('src.battle_controller.time').start()
         patch('src.waiting.time.wait').start()  # the battle transition and the level-up pause
         # No random fights: the guardians' tiles are in enemy zones, and a random fight would wait for battle input
-        patch('src.game.roll_encounter', return_value=None).start()
+        patch('src.field_encounters.roll_encounter', return_value=None).start()
         # Nor the opening flee and ambush rolls (#232): the hero always gets the first turn
         patch('src.battle_controller.BattleController.start_fight', return_value=False).start()
         self.addCleanup(patch.stopall)
@@ -158,7 +158,7 @@ class TestGuardianFights(TestCase):
                 break
             self.game.movement.move_player(keys)
         self.assertFalse(self.player.is_moving)
-        self.game.handle_battles()
+        self.game.field_encounters.handle_battles()
         self.settle()
 
     def step_onto(self, guardian, prompts):
@@ -216,7 +216,7 @@ class TestGuardianFights(TestCase):
         self.game._handle_post_move_checks()
         with patch.object(self.game.battle_ctrl, 'start_scripted_battle') as start:
             self.game.cmd_menu.search()
-            self.game.handle_battles()
+            self.game.field_encounters.handle_battles()
         start.assert_not_called()
         self.assertEqual(self.player.armor, "Erdrick's Armor")
 
@@ -225,7 +225,7 @@ class TestGuardianFights(TestCase):
         with patch.object(self.game.game_state, 'config', test_config_force):
             self.step_onto(GOLEM, self.win)
             with patch.object(self.game.battle_ctrl, 'run_battle') as random_fight:
-                self.game.handle_battles()  # the next frame
+                self.game.field_encounters.handle_battles()  # the next frame
         random_fight.assert_not_called()
         self.assertEqual(self.enemies_fought, ['Golem'])
 

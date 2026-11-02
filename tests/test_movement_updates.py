@@ -27,7 +27,7 @@ class TestMovementUpdates(TestCase):
 
     def steps(self, count):
         for _ in range(count):
-            self.game.count_step()
+            self.game.step_triggers.count_step()
 
     # MovmtIncHP
 
@@ -74,8 +74,8 @@ class TestMovementUpdates(TestCase):
         game_state = self.game.game_state
         game_state.radiant_timer, game_state.light_diameter = 1, 3
         at_roll = []
-        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.count_step), \
-                patch.object(self.game, 'handle_battles',
+        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.step_triggers.count_step), \
+                patch.object(self.game.field_encounters, 'handle_battles',
                              side_effect=lambda: at_roll.append((game_state.radiant_timer, game_state.light_diameter))), \
                 patch.object(self.game, '_handle_map_updates'), patch.object(self.game, '_handle_post_move_checks'):
             self.game.map_frame()
@@ -91,21 +91,21 @@ class TestMovementUpdates(TestCase):
 
     def test_movement_updates_are_skipped_after_the_dragonlord_is_dead(self):
         self.game.story_flags.dragonlord_defeated = True
-        with patch.object(self.game, 'movement_updates') as movement_updates:
-            self.game.count_step()
+        with patch.object(self.game.step_triggers, 'movement_updates') as movement_updates:
+            self.game.step_triggers.count_step()
         movement_updates.assert_not_called()
 
     def test_movement_updates_run_while_the_dragonlord_is_alive(self):
-        with patch.object(self.game, 'movement_updates') as movement_updates:
-            self.game.count_step()
+        with patch.object(self.game.step_triggers, 'movement_updates') as movement_updates:
+            self.game.step_triggers.count_step()
         movement_updates.assert_called_once()
 
     def test_repel_timer_still_ticks_after_the_dragonlord_is_dead(self):
         # NES CheckRepelTimer is in GameEngineLoop, outside CheckForTriggers
         self.game.story_flags.dragonlord_defeated = True
         self.game.repel_timer = 9
-        self.game.count_step()
-        self.game.tick_repel_timer_after_step()
+        self.game.step_triggers.count_step()
+        self.game.step_triggers.tick_repel_timer_after_step()
         self.assertEqual(self.game.repel_timer, 7)
 
     # CheckBlockDmg/ChkOtherBlocks: its own F_DGNLRD_DEAD check ends swamp and barrier damage
@@ -115,9 +115,9 @@ class TestMovementUpdates(TestCase):
         self.player.is_moving = False
         self.player.received_environment_damage = False
         self.player.current_tile = tile
-        with patch.object(self.game, 'drawer'), patch('src.game.display'), \
-                patch('src.game.flash_transparent_color'), patch.object(self.game.sound, 'play_sound'):
-            self.game.handle_environment_damage()
+        with patch.object(self.game, 'drawer'), patch('src.hero_damage.display'), \
+                patch('src.hero_damage.flash_transparent_color'), patch.object(self.game.sound, 'play_sound'):
+            self.game.hero_damage.handle_environment_damage()
         return 50 - self.player.current_hp
 
     def test_swamp_and_barrier_hurt_while_the_dragonlord_is_alive(self):
@@ -131,10 +131,11 @@ class TestMovementUpdates(TestCase):
                                      ('BARRIER', 'force_field_flash', 'flash_transparent_color')):
             self.player.armor, self.player.is_moving, self.player.received_environment_damage = "Full Plate", False, False
             self.player.current_tile = tile
-            with self.subTest(tile), patch(f'src.game.{flashes}') as used, patch(f'src.game.{other}') as unused, \
-                    patch.object(self.game, 'drawer'), patch('src.game.display'), \
+            with self.subTest(tile), patch(f'src.hero_damage.{flashes}') as used, \
+                    patch(f'src.hero_damage.{other}') as unused, \
+                    patch.object(self.game, 'drawer'), patch('src.hero_damage.display'), \
                     patch.object(self.game.sound, 'play_sound'):
-                self.game.handle_environment_damage()
+                self.game.hero_damage.handle_environment_damage()
                 used.assert_called_once()
                 unused.assert_not_called()
 

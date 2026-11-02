@@ -125,8 +125,8 @@ class AutoGrind:
         return at_grind_stop_hp(player.current_hp, player.max_hp, self.game.game_state.config.get('AUTO_GRIND_STOP'))
 
     def has_random_fights(self) -> bool:
-        """Whether a step here can start a random fight (Game.roll_for_fight): a map with an encounter group, and the
-        Dragonlord alive (ChkOtherBlocks)."""
+        """Whether a step here can start a random fight (FieldEncounters.roll_for_fight): a map with an encounter
+        group, and the Dragonlord alive (ChkOtherBlocks)."""
         row, column = self.hero_cell()
         return (not self.game.story_flags.dragonlord_defeated and
                 encounter_group(self.game.current_map.identifier, column, row) is not None)

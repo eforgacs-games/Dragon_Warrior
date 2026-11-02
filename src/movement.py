@@ -6,7 +6,7 @@ player, the map, the camera) from it each time, since the game replaces some of 
 Where an NPC may step, as far as the map goes, is src/npc_movement.py; when the NPCs move is src/npc_schedule.py.
 """
 import random
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from pygame import key
 
@@ -25,7 +25,11 @@ from src.player.player import Player
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
+from src.step_triggers import StepTriggers
 from src.waiting import MAP_CONTEXT, with_virtual_keys
+
+if TYPE_CHECKING:
+    from src.field_encounters import FieldEncounters  # src.field_encounters imports this module
 
 
 # A tile is 16 NES pixels across, and the hero and the NPCs walk one NES pixel a frame
@@ -76,10 +80,10 @@ class MovementGame(Protocol):
     # The map's keys (src/map_hotkeys.py), and what they open once everyone is on a tile (MAP_REQUESTS: each request's
     # flag is a bool on the game too)
     hotkeys: Any
-
-    def count_step(self) -> None: ...
-
-    def roll_for_fight(self, column: int, row: int, tile: str | None) -> None: ...
+    # What a finished step leads to (src/step_triggers.py)
+    step_triggers: StepTriggers
+    # The fight roll after a step (src/field_encounters.py), which a hill's pause puts off
+    field_encounters: 'FieldEncounters'
 
 
 class MovementController:
@@ -328,7 +332,7 @@ class MovementController:
         else:
             # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning -
             #  should always be 0 when the map starts.
-            self.game.count_step()
+            self.game.step_triggers.count_step()
             # FrameCounter goes back to 0 once this frame's DoSprites has run (see sprites_frame)
             self.step_ends = True
         self.finish_step(self.player)
@@ -389,7 +393,7 @@ class MovementController:
         if self.hill_pause_frames:
             return
         column, row = self.player.rect.x // self.tile_size, self.player.rect.y // self.tile_size
-        self.game.roll_for_fight(column, row, get_tile_id_by_coordinates(column, row, self.current_map))
+        self.game.field_encounters.roll_for_fight(column, row, get_tile_id_by_coordinates(column, row, self.current_map))
 
     # A character's step, pixel by pixel
 
