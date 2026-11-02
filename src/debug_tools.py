@@ -11,6 +11,7 @@ F5 to F7 each open a small list: type to filter it, ↑/↓ to choose, Enter to 
 import os
 import time
 from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING
 
 from pygame import KEYDOWN, K_BACKSPACE, K_DOWN, K_ESCAPE, K_F5, K_F6, K_F7, K_F8, K_KP_ENTER, K_RETURN, K_UP, QUIT, \
     Rect, display, draw, event
@@ -26,6 +27,9 @@ from src.items import MAX_GOLD, MAX_HERBS, MAX_KEYS
 from src.maps import map_lookup
 from src.player.player_stats import levels_list
 from src.text import draw_text
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 # Items that F6 can give, key items first
 GIVABLE_ITEMS = ("Magic Key", "Silver Harp", "Stones of Sunlight", "Staff of Rain", "Erdrick's Token", "Rainbow Drop",
@@ -49,7 +53,7 @@ RECORDING_CAPTION = " - recording frames (F8 to stop)"
 
 
 class DebugTools:
-    def __init__(self, game) -> None:
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         self._entrances: dict[str, Cell] | None = None
         self.frame_recorder: FrameRecorder | None = None

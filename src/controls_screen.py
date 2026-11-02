@@ -32,7 +32,7 @@ before the bound keys), so a player can't lock themselves out of the screen. Eve
 saved with the global settings (``apply_controls``).
 """
 from collections.abc import Callable
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 from pygame import K_DELETE, K_DOWN, K_ESCAPE, K_KP_ENTER, K_LEFT, K_RETURN, K_RIGHT, K_UP, KEYDOWN, KEYUP, Rect, \
     Surface, display, event, time
@@ -48,6 +48,9 @@ from src.translated_window import draw_translated_window
 from src.waiting import quit_if_requested
 from src.windows import Window, WindowLayout, WindowText
 from src.zoom import handle_zoom_event
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module (through src.options_overlay)
 
 # The whole screen: 16 blocks wide and 15 high
 CONTROLS_WINDOW = Window(0, 0, 16, 15)
@@ -155,7 +158,7 @@ def changed_action(before: Controls, after: Controls, own: str) -> str | None:
 class ControlsScreen:
     """The screen, run until it's closed (see the module docstring)."""
 
-    def __init__(self, game):
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         self.config: dict = game.game_state.config
         self._: Callable[[str], str] = set_gettext_language(self.config.get('LANGUAGE'))

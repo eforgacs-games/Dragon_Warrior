@@ -22,12 +22,15 @@ Snapshots are small (no surfaces; see save_state), so 60 of them take a few hund
 measures them).
 """
 from collections import deque
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pygame import time
 
 from src.direction import Direction
 from src.save_state import restore_snapshot, take_snapshot
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 REWIND_INTERVAL_FRAMES = 30
 REWIND_CAPACITY = 60
@@ -38,7 +41,7 @@ REWIND_STEP_MS = 4 * 1000 // 60
 class Rewind:
     """The snapshots and the rewinding (see the module docstring)."""
 
-    def __init__(self, game: Any) -> None:
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         self.snapshots: deque[dict[str, Any]] = deque(maxlen=REWIND_CAPACITY)
         self.frames_since_snapshot = 0
