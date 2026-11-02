@@ -239,6 +239,9 @@ start and the end are played in full. Times are rough.
       the orchestra instead. The jingles (inn, level up, victory) are the SFC's with SFC.
 - [ ] **Korean**: switch LANGUAGE to 한국어, and also start once with `--language Korean`. Every window is Korean
       (Unifont), with no missing glyphs or boxes, and the text fits its windows. Play at least one leg in Korean.
+- [ ] **English (2014)**: switch LANGUAGE to ENGLISH (2014), or start with `--language English2014`. The text is the
+      remake's (a she-slime appears, Medicinal Herb, Sizz) in the NES font, item names split in two lines in the ITEM,
+      status and shop windows, and nothing runs past a window's border.
 - [ ] **Options persisting**: change MUSIC, save with the king, quit and CONTINUE: it's kept with the adventure log.
       Change SCANLINES or SCALING and restart: it's kept in `settings.json` for every adventure.
 - [ ] **Window**: resize the window, toggle fullscreen with **F11**, change the game speed (1 to 5, with GAME SPEED

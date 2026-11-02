@@ -3,9 +3,12 @@ import os
 import unittest
 from unittest.mock import patch
 
+from src.catalog import po_path, read_po
 from src.chiptune import chiptune_available
 from src.config.test_config import test_config
 from src.game import Game
+from src.languages import Language
+from src.text import in_nes_font
 from src.waiting import frames_to_ms, game_speed
 
 
@@ -18,6 +21,15 @@ def requires_libgme(test):
     installed, unless REQUIRE_LIBGME is set."""
     return unittest.skipUnless(chiptune_available() or os.environ.get(REQUIRE_LIBGME_ENV_VAR),
                                "libgme isn't installed (README: Installing libgme)")(test)
+
+
+def drawn_in_nes_font(language: Language) -> bool:
+    """Whether every line of the language's catalog is drawn in the NES font (src/text.py in_nes_font), as the English
+    (2014) catalog is: its windows are then drawn in the NES font too, one tile a letter. A line left as its msgid is
+    drawn just as the English game draws it."""
+    return all(in_nes_font(line) or msgstr == msgid
+               for msgid, msgstr in read_po(po_path(language.locale_code or '')).items() if msgid
+               for line in msgstr.split('\n'))
 
 
 def new_game(config: dict = test_config) -> Game:

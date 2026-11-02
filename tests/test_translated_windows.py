@@ -1,7 +1,8 @@
 """Every translation (each catalog language in src/languages.py) fits the windows it's drawn in: the generated windows
 drawn translated (src/translated_window.py), the status window's equipment, the options overlay, the CONTROLS screen and
-the message log. Translated text is drawn in Unifont, where a Hangul syllable, a kana or a kanji is one NES tile wide
-and an ASCII character half of one."""
+the message log. Korean and Japanese are drawn in Unifont, where a Hangul syllable, a kana or a kanji is one NES tile
+wide and an ASCII character half of one; English (2014) in the NES font, one tile a letter (tests/helpers.py
+drawn_in_nes_font)."""
 import builtins
 import os
 from unittest import TestCase
@@ -12,25 +13,30 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
 
+from data.text.locales.catalog_tools import UNNAMED_SPELLS
 from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.directories import Directories
 from src.game import Game
-from src.items import armor, shields, weapons
+from src.items import armor, shields, tools, weapons
 from src.languages import CATALOG_LANGUAGES, Language
 from src.options_overlay import OPTION_PAGES, OPTION_ROWS, OPTIONS_WINDOW, VALUE_COLUMN, options_layout
 from src.text import WRAP_LENGTH, set_font_by_ascii_chars
-from src.translated_window import draw_translated_window, layout_texts
-from src.windows import COMBAT_COMMAND_LAYOUT, COMMAND_LAYOUT, STATUS_LAYOUT, STATUS_WINDOW, TITLE_MENU_LAYOUTS, \
-    TITLE_MENU_LAYOUTS_WITH_AUTOSAVE, YES_NO_LAYOUT, WindowLayout
+from src.spells import Spell
+from src.translated_window import draw_translated_window, layout_in_nes_font, layout_texts
+from src.windows import COMBAT_COMMAND_LAYOUT, COMMAND_LAYOUT, COUNTED_ITEMS, ITEM_COUNT_TILE_COLUMN, \
+    ITEM_MENU_TEXT_TILE_COLUMN, ITEM_MENU_WIDTH, NAME_FIRST_HALF_TILES, NAME_SECOND_HALF_TILES, STATUS_LAYOUT, \
+    TITLE_MENU_LAYOUTS, TITLE_MENU_LAYOUTS_WITH_AUTOSAVE, YES_NO_LAYOUT, WindowLayout, item_count_tile_row, \
+    translated_name_halves
+from tests.helpers import drawn_in_nes_font
 
 NES_TILE = test_config['TILE_SIZE'] / 2  # screen pixels
 # The generated windows drawn translated, and whether their text lines up on its right edge (the status labels)
 TRANSLATED_LAYOUTS = ((COMMAND_LAYOUT, False), (COMBAT_COMMAND_LAYOUT, False), (STATUS_LAYOUT, True),
                       (YES_NO_LAYOUT, False), *((layout, False) for layout in TITLE_MENU_LAYOUTS),
                       *((layout, False) for layout in TITLE_MENU_LAYOUTS_WITH_AUTOSAVE))
-# Where StatusDat puts the weapon, armor and shield (CommandMenu.draw_status_window): from tile column 10
-STATUS_EQUIPMENT_COLUMN = 10
+# The SPELL window's right border: its entries end before it (CommandMenu.draw_item_menu)
+ITEM_MENU_RIGHT_BORDER = ITEM_MENU_WIDTH * 2 - 1
 
 
 class TranslatedTestCase(TestCase):
@@ -39,7 +45,11 @@ class TranslatedTestCase(TestCase):
     def setUpClass(cls):
         pygame.init()
         pygame.display.set_mode((800, 600))
-        cls.font = set_font_by_ascii_chars(['設定'], 16, None, Directories(test_config))
+        directories = Directories(test_config)
+        cls.unifont = set_font_by_ascii_chars(['設定'], 16, None, directories)
+        cls.nes_font = set_font_by_ascii_chars(['ENGLISH'], 16, None, directories)
+        cls.fonts = {language.name: cls.nes_font if drawn_in_nes_font(language) else cls.unifont
+                     for language in CATALOG_LANGUAGES}
 
     @classmethod
     def tearDownClass(cls):
@@ -57,9 +67,9 @@ class TranslatedTestCase(TestCase):
         elif hasattr(builtins, '_'):
             del builtins._  # type: ignore[attr-defined]
 
-    def width(self, text: str) -> float:
-        """How many NES tiles the text takes in Unifont."""
-        return self.font.size(text)[0] / NES_TILE
+    def width(self, text: str, language: Language) -> float:
+        """How many NES tiles the text takes in the font the language's windows are drawn in."""
+        return self.fonts[language.name].size(text)[0] / NES_TILE
 
     def languages(self):
         """(language, its gettext function) for each translation."""
@@ -73,7 +83,7 @@ class TestGeneratedWindows(TranslatedTestCase):
         right_border = layout.window.width * 2 - 1
         for text in layout_texts(layout):
             translated = translate(text.text)
-            width = self.width(translated)
+            width = self.width(translated, language)
             end = text.column + len(text.text) if right_aligned else text.column + width
             start = end - width
             next_cursor = min((other.column - 1 for other in layout.texts
@@ -87,12 +97,25 @@ class TestGeneratedWindows(TranslatedTestCase):
             for layout, right_aligned in TRANSLATED_LAYOUTS:
                 self.assert_fits(layout, right_aligned, language, translate)
 
-    def test_status_window_equipment_fits(self):
-        right_border = STATUS_WINDOW.width * 2 - 1
+    def test_item_names_fit(self):
+        # The ITEM, status and shop windows show a name in two halves (translated_name_halves), each in the tiles the
+        # NES gives it; a translation in Unifont whole on the first line. A counted item's count comes after its name.
         for language, translate in self.languages():
-            for name in (*weapons, *armor, *shields):
+            for name in (*weapons, *armor, *shields, *tools):
+                first_half, second_half = translated_name_halves(name, translate(name))
                 with self.subTest(language=language.name, name=translate(name)):
-                    self.assertLessEqual(STATUS_EQUIPMENT_COLUMN + self.width(translate(name)), right_border)
+                    self.assertLessEqual(self.width(first_half, language), NAME_FIRST_HALF_TILES)
+                    self.assertLessEqual(self.width(second_half, language), NAME_SECOND_HALF_TILES)
+                    if name in COUNTED_ITEMS and item_count_tile_row(first_half, 0) == 0:
+                        self.assertLessEqual(ITEM_MENU_TEXT_TILE_COLUMN + self.width(first_half, language),
+                                             ITEM_COUNT_TILE_COLUMN)
+
+    def test_spell_names_fit(self):
+        for language, translate in self.languages():
+            for spell in (spell for spell in Spell if spell.value not in UNNAMED_SPELLS):
+                with self.subTest(language=language.name, spell=translate(spell.value)):
+                    self.assertLessEqual(ITEM_MENU_TEXT_TILE_COLUMN + self.width(translate(spell.value), language),
+                                         ITEM_MENU_RIGHT_BORDER)
 
 
 class TestOptionsOverlay(TranslatedTestCase):
@@ -120,13 +143,15 @@ class TestOptionsOverlay(TranslatedTestCase):
                 config = {**self.game.game_state.config, 'LANGUAGE': language.name, 'NO_BLIT': False,
                           **{row.config_key: row.values[choice % len(row.values)] for row in OPTION_ROWS}}
                 for page in range(len(OPTION_PAGES)):
+                    if layout_in_nes_font(options_layout(config, page), translate):
+                        continue  # generated tile by tile, as the English game draws it (tests/test_options_overlay.py)
                     title, *texts = self.overlay_texts(config, page, translate)
                     with self.subTest(language=language.name, text=title[0]):
-                        self.assertLessEqual(title[1] + self.width(title[0]), title_end)
+                        self.assertLessEqual(title[1] + self.width(title[0], language), title_end)
                     for text, column, row in texts:
                         end = OPTIONS_WINDOW.x * 2 + (VALUE_COLUMN - 1 if column < VALUE_COLUMN else right_border)
                         with self.subTest(language=language.name, text=text):
-                            self.assertLessEqual(column + self.width(text), end)
+                            self.assertLessEqual(column + self.width(text, language), end)
 
 
 class TestControlsScreen(TranslatedTestCase):
@@ -152,13 +177,15 @@ class TestControlsScreen(TranslatedTestCase):
         right_border = (CONTROLS_WINDOW.x + CONTROLS_WINDOW.width) * 2 - 1
         for language, translate in self.languages():
             for layout in self.layouts(translate):
+                if layout_in_nes_font(layout, translate):
+                    continue  # generated tile by tile, as the English game draws it
                 for text in layout.texts:
                     translated = translate(text.text)
                     spans_the_row = text.row == HINT_ROW or text.text == RESET_LABEL
                     end = right_border if spans_the_row else next(
                         (column for column in CELL_CURSOR_COLUMNS if column > text.column), right_border)
                     with self.subTest(language=language.name, text=translated):
-                        self.assertLessEqual(text.column + self.width(translated), end)
+                        self.assertLessEqual(text.column + self.width(translated, language), end)
                         self.assertLessEqual(len(translated), WRAP_LENGTH)  # draw_text would wrap it
 
 
@@ -177,4 +204,4 @@ class TestMessageLog(TranslatedTestCase):
                 for text in (layout.title, *layout.texts):
                     translated = translate(text.text)
                     with self.subTest(language=language.name, text=translated):
-                        self.assertLessEqual(text.column + self.width(translated), right_border)
+                        self.assertLessEqual(text.column + self.width(translated, language), right_border)

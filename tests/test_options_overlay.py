@@ -194,7 +194,7 @@ class TestRows(OverlayTestCase):
                                             ("DIALOG STYLE", 'DIALOG_STYLE', ("CLASSIC (NES)", "MODERN")),
                                             ("FADE STYLE", 'FADE_STYLE', ("NES", "SMOOTH")),
                                             ("MUSIC", 'SOUNDTRACK', ("NES", "SFC", "ORCHESTRA")),
-                                            ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어", "日本語")),
+                                            ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어", "日本語", "ENGLISH (2014)")),
                                             ("SCANLINES", 'SCANLINES', ("OFF", "ON")),
                                             ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT")),
                                             ("VIEW", 'VIEW', ("NES (4:3)", "WIDE")),

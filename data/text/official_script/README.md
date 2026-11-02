@@ -14,7 +14,9 @@ Every message of Square Enix's smartphone *DRAGON QUEST* (the 2014 remake of the
 The Nintendo Switch *DRAGON QUEST* (2019) is a port of this version, so it has the same script; the Korean is the
 official Korean translation. It isn't the NES script this project reproduces: the remake rewrote the dialog, so lines
 correspond in meaning more or less closely, and names and terms carry over (Gwaelin is 로라, the Dragonlord 용왕). The
-project's own Korean translation (`data/text/locales/ko/`) takes its names and terms from this script.
+project's own Korean translation (`data/text/locales/ko/`) takes its names and terms from this script, and the
+English (2014) language (`data/text/locales/en_2014/`, names and terms in `glossary_en_2014.tsv`) is this English script
+fitted to the NES windows.
 
 ## Layout
 

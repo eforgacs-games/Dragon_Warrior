@@ -247,6 +247,28 @@ def name_halves(name: str) -> tuple[str, str]:
     return ITEM_NAME_HALVES.get(name) or EQUIPMENT_NAME_HALVES.get(name) or (name, "")
 
 
+# The most tiles each half of a name takes (ShopInvDat: "at most 9 tiles"; the second half starts a tile further in)
+NAME_FIRST_HALF_TILES = 9
+NAME_SECOND_HALF_TILES = 8
+
+
+def translated_name_halves(name: str, translated: str) -> tuple[str, str]:
+    """
+    How the ITEM, status and shop windows show a name in the game's language. Untranslated, in the NES's halves
+    (name_halves). Translated into English words (English (2014)), which are drawn in the NES font, one tile a letter,
+    split the way the NES tables split names: at the last space ("Staff of", "Rain"). Any other translation is drawn in
+    Unifont, where it fits whole on the first line.
+    :param name: The item's NES name.
+    :param translated: Its name in the game's language.
+    """
+    if translated == name:
+        return name_halves(name)
+    if translated.isascii() and ' ' in translated:
+        first_half, _, second_half = translated.rpartition(' ')
+        return first_half, second_half
+    return translated, ""
+
+
 # ShopInvDat ($B0DA): a selection window (options $A0: single spaced), 1 column, cursor home Y = 1 tile, X = 1 tile
 # ($11). After the top border ($88), each item (one block, $D5 then $E8 repeat the item lines for the shop's
 # ShopItemsTbl entries) is: 1 blank tile ($81), the first half of its name ($BC, ItemNames11TbL/ItemNames21TbL, at
@@ -295,6 +317,12 @@ BUY_SELL_LAYOUT = WindowLayout(
 # NES WndItemDesc: herbs and keys show how many the hero has, in the tile column after an 8 tile name
 COUNTED_ITEMS = ("Herb", "Magic Key")
 ITEM_COUNT_TILE_COLUMN = 10
+
+
+def item_count_tile_row(first_half: str, row: int) -> int:
+    """The tile row of a counted item's count: its name's first row, or, when the first half of a translated name
+    reaches the count's column (English (2014)'s "Medicinal"), the second row (not NES: no NES name is that long)."""
+    return row if ITEM_MENU_TEXT_TILE_COLUMN + len(first_half) <= ITEM_COUNT_TILE_COLUMN else row + 1
 
 # The status window (NES StatusDat): single spaced, but every line but the equipment is followed by a blank row ($80).
 # The name follows "NAME:" (tile columns 6-10); the numbers are 3 tiles wide and end at column 18, the last one before

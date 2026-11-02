@@ -12,7 +12,7 @@ The goal is to match the NES game. Formulas, messages and behavior are checked a
 ## Development Commands
 
 ### Running the Game
-- **Main game**: `uv run python -m src.game` (or `python src/game.py`). Flags: `--dev` (`dev_config`), `--checkpoint <name>` (start from a playtest checkpoint; see `PLAYTEST.md`), `--language English|Korean|Japanese`, `--smoke-test` (load every game file, play a few scenes headless, exit 0 or 1; the release workflow runs it)
+- **Main game**: `uv run python -m src.game` (or `python src/game.py`). Flags: `--dev` (`dev_config`), `--checkpoint <name>` (start from a playtest checkpoint; see `PLAYTEST.md`), `--language English|Korean|Japanese|English2014`, `--smoke-test` (load every game file, play a few scenes headless, exit 0 or 1; the release workflow runs it)
 - **Entry point**: `uv run python -m src.main` starts the game with `prod_config` and no flags (`python src/main.py` fails: it doesn't put the repository root on `sys.path` the way `src/game.py` does)
 
 ### Testing
@@ -88,7 +88,7 @@ The main `Game` class in `src/game.py` orchestrates:
 **Data Organization**:
 - `data/images/`: All game sprites and UI elements
 - `data/sound/`: Music (`NES`, `SFC` and `orchestra` soundtracks, chosen by the `SOUNDTRACK` setting) and sound effects
-- `data/text/`: Dialog, internationalization (English/Korean/Japanese support)
+- `data/text/`: Dialog, internationalization (English/Korean/Japanese support, and English (2014): the remake's official English)
 - `data/fonts/`: Game fonts
 - `data/checkpoints/`: Playtest checkpoint saves (see `PLAYTEST.md`)
 

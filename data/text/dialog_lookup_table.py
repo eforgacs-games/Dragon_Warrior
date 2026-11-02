@@ -30,7 +30,7 @@ from src.story_flags import StoryFlags
 from src.text import draw_text
 from src.windows import BUY_SELL_WINDOW, DIALOG_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, \
     ITEM_MENU_MAX_ENTRIES, SHOP_COST_RIGHT_TILE_COLUMN, SHOP_INVENTORY_WINDOW, Window, first_shown_entry, \
-    item_menu_window, name_halves, variable_height_window
+    item_menu_window, translated_name_halves, variable_height_window
 from src.visual_effects import NES_RED, bw_screen_flash, greyscale_screen, screen_fade
 from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait_frames
 
@@ -1028,8 +1028,7 @@ class DialogLookup:
             self.draw_window_background(window)
             for index, (name, cost) in enumerate(zip(item_names, costs)):
                 row = 1 + 2 * index
-                translated_name = self._(name)
-                first_half, second_half = name_halves(name) if translated_name == name else (translated_name, '')
+                first_half, second_half = translated_name_halves(name, self._(name))
                 self.draw_in_window(window, first_half, 2, row)
                 self.draw_in_window(window, str(cost), SHOP_COST_RIGHT_TILE_COLUMN, row, alignment='right')
                 if second_half:
