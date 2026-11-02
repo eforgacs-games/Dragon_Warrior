@@ -11,9 +11,20 @@ chunk, so a track played once runs straight into the one that loops after it.
 The game's thread starts, stops, pauses and fades the stream; the streaming thread only renders and queues. A lock
 keeps them from changing the stream at the same time.
 
-Every stream is closed, and its thread finished, before pygame is closed (close_all_streams, run by
-src/waiting.py quit_pygame): pygame frees its mixer channels on quit, and a thread still queueing on one would crash
-the game.
+Every stream is closed, and its thread finished, before pygame or its mixer is closed (close_all_streams), however
+that is done. pygame frees its mixer channels on quit, and a thread still queueing on one crashes the game: pygame's
+mixer quit frees the channels' data and then closes the audio device with the GIL released, and in that time the
+streaming thread, which saw the mixer running, calls Channel.get_queue, which reads the freed data without checking
+(pygame 2.6 src_c/mixer.c mixer_quit and chan_get_queue). No check from this side can close that gap, so the streams
+are closed before the mixer starts to quit:
+- pygame.quit() closes the streams first through pygame's own hook for that, pygame.register_quit, which runs before
+  pygame closes any of its modules. pygame forgets the hooks once it has run them, so a stream registers it again when
+  it next plays (_close_streams_when_pygame_quits).
+- pygame.mixer.quit() has no such hook, so this module replaces it, once, when it is imported, with one that closes
+  the streams first (_close_streams_before_mixer_quit). Everything that calls it as pygame.mixer.quit or mixer.quit
+  looks the function up when it calls it, so it gets the replacement. (pygame.quit() looks it up too, in pygame 2.6,
+  but that is pygame's own business, so pygame.quit() keeps its hook as well; closing the streams twice is harmless.)
+- src/waiting.py quit_pygame, the game's way out, also closes them (on_quit), and so does Python's exit (atexit).
 """
 import array
 import atexit
@@ -22,8 +33,9 @@ import time
 import weakref
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import wraps
 
-from pygame import error as pygame_error, mixer
+from pygame import error as pygame_error, mixer, register_quit
 
 from src.chiptune import (BYTES_PER_SAMPLE, EMULATOR_CHANNELS, ChiptuneError, Emulator, GmeLibrary, parse_track_ref)
 from src.waiting import on_quit
@@ -49,6 +61,40 @@ def close_all_streams() -> None:
 
 on_quit(close_all_streams)
 atexit.register(close_all_streams)
+
+_pygame_quit_hook_registered = False
+
+
+def _close_streams_as_pygame_quits() -> None:
+    global _pygame_quit_hook_registered
+    _pygame_quit_hook_registered = False  # pygame runs each hook once, then forgets it
+    close_all_streams()
+
+
+def _close_streams_when_pygame_quits() -> None:
+    """Has the next pygame.quit() close the streams before it frees the mixer (once per quit, however often the music
+    starts)."""
+    global _pygame_quit_hook_registered
+    if not _pygame_quit_hook_registered:
+        register_quit(_close_streams_as_pygame_quits)
+        _pygame_quit_hook_registered = True
+
+
+def _close_streams_before_mixer_quit() -> None:
+    """Makes pygame.mixer.quit() close the streams before it frees the channels (it has no hook of its own)."""
+    unguarded_quit = mixer.quit
+    if hasattr(unguarded_quit, '__wrapped__'):  # wrapped already (the module was imported again)
+        return
+
+    @wraps(unguarded_quit)
+    def quit_after_closing_streams() -> None:
+        close_all_streams()
+        unguarded_quit()
+
+    mixer.quit = quit_after_closing_streams
+
+
+_close_streams_before_mixer_quit()
 
 
 @dataclass(frozen=True)
@@ -124,6 +170,7 @@ class MusicStream:
             if not mixer_format or not segments:
                 return
             self._closed = False  # a stream closed with pygame plays again once the mixer is back
+            _close_streams_when_pygame_quits()
             sample_rate, sample_format, channels = mixer_format
             if sample_format != SIGNED_16_BIT:
                 return

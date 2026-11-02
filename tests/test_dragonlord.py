@@ -7,6 +7,7 @@ import pygame
 from src.battle import Battle, can_run_away
 from src.battle_controller import BattleController, BattleOutcome
 from src.config.test_config import test_config
+from src.smoke_test import file_path
 from tests.helpers import new_game
 
 
@@ -235,7 +236,7 @@ class TestDragonlordBattle(unittest.TestCase):
         second = Battle(self.config, 'Dragonlord 2', Mock())
         second.play_battle_music(music_player)
         music_player.load_and_play_music.assert_called_with(second.directories.end_boss_music)
-        self.assertTrue(os.path.exists(second.directories.end_boss_music))
+        self.assertTrue(os.path.exists(file_path(second.directories.end_boss_music)))  # an mp3, or an NSF's track
 
     def test_final_form_has_full_hp_and_reveal_text(self):
         battle = Battle(self.config, 'Dragonlord 2', Mock())

@@ -118,6 +118,8 @@ class TestVictoryMusic(TestCase):
         self.full_channel_sounds = 0  # sound effects that left a channel other than the SFX slot playing
         music_track = MusicTrack(self.events)
         patch('pygame.mixer.music', music_track).start()
+        if self.game.music_player._stream is not None:
+            self.game.music_player._stream.close()  # the map music new_game started, which the stand-in replaces
         self.game.music_player._stream = ChiptuneStreamStandIn(music_track)
         # Real sounds on the real mixer, not ones another test's mocks may have left in the cache
         patch.dict('src.sound._sound_library', clear=True).start()
