@@ -10,6 +10,7 @@ reach shared resources (player, cmd_menu, screen, sound, drawer, …).
 import random
 from collections.abc import Callable
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from pygame import KEYDOWN, Surface, display, event, key, time
 
@@ -38,6 +39,9 @@ from src.zoom import handle_zoom_event
 
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, SelectionButtons, first_button
 from src.nes_random import coin_flip
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 
 class BattleOutcome(Enum):
@@ -84,7 +88,7 @@ def held_joypad_buttons() -> int:
 
 
 class BattleController:
-    def __init__(self, game):
+    def __init__(self, game: 'Game') -> None:
         self.game = game
 
         # Battle state (moved from Game.__init__)
