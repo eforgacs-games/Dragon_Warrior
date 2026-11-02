@@ -20,6 +20,7 @@ from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.controls import reset_controls
 from src.game_options import DEFAULT_OPTIONS, STATS_PAGE, options_from_save, options_to_save
+from src.catalog import po_path, read_po
 from src.languages import ENGLISH, LANGUAGES
 from src.message_log import LINE_WIDTH, VISIBLE_LINES, log_layout, text_width
 from src.options_overlay import OPTION_ROWS, PRESET_MODERN, PRESET_NES, preset_values
@@ -497,8 +498,13 @@ class TestThePage(TestCase):
                 _ = set_gettext_language(language.name)
                 for line in stat_lines(counted(), _):
                     self.assertLessEqual(text_width(line), LINE_WIDTH, line)
-                if language is not ENGLISH:
-                    for text in screen_texts():
+                if language is ENGLISH:
+                    continue
+                catalog = read_po(po_path(language.locale_code or ''))
+                for text in screen_texts():
+                    self.assertTrue(catalog.get(text), text)
+                    # English (2014) keeps the NES words where the remake has none of its own (STEPS, ...)
+                    if not helpers.drawn_in_nes_font(language):
                         self.assertNotEqual(text, _(text))
 
     def test_fits_the_window(self):

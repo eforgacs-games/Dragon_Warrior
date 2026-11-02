@@ -3646,3 +3646,57 @@ msgstr "Alas, thy deeds could not be recorded in the adventure log."
 #: src/options_overlay.py
 msgid "SFC"
 msgstr "SFC"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Play stats"
+msgstr "{}: Play stats"
+
+#: src/options_overlay.py
+msgid "STATS PAGE"
+msgstr "STATS PAGE"
+
+#: src/controls_screen.py
+#: src/stats_screen.py
+msgid "STATS"
+msgstr "STATS"
+
+#: src/stats_screen.py
+msgid "PLAY TIME"
+msgstr "PLAY TIME"
+
+#: src/stats_screen.py
+msgid "STEPS"
+msgstr "STEPS"
+
+#: src/stats_screen.py
+msgid "FIGHTS WON"
+msgstr "FIGHTS WON"
+
+#: src/stats_screen.py
+msgid "FIGHTS FLED"
+msgstr "FIGHTS FLED"
+
+#: src/stats_screen.py
+msgid "FIGHTS LOST"
+msgstr "FIGHTS LOST"
+
+#. official: data.1.0.6
+#: src/stats_screen.py
+msgid "DEATHS"
+msgstr "DEFEATS"
+
+#: src/stats_screen.py
+msgid "GOLD EARNED"
+msgstr "GOLD EARNED"
+
+#: src/stats_screen.py
+msgid "GOLD SPENT"
+msgstr "GOLD SPENT"
+
+#: src/stats_screen.py
+msgid "CHESTS OPENED"
+msgstr "CHESTS OPENED"
+
+#: src/stats_screen.py
+msgid "MONSTERS DEFEATED"
+msgstr "MONSTERS DEFEATED"
