@@ -53,7 +53,7 @@ class TestMenuSoundCount(TestCase):
                      'use_item_in_battle', 'window_drop_down_effect', 'window_drop_up_effect'):
             patch.object(self.cmd_menu, stub).start()
         # The spell or item window: A chooses the first entry
-        patch('src.selection.event.get', return_value=[accept()]).start()
+        patch('src.waiting.event.get', return_value=[accept()]).start()
 
     def menu_sounds(self) -> int:
         menu_sound = self.cmd_menu.directories.menu_button_sfx

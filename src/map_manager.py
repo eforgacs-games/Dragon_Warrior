@@ -6,6 +6,8 @@ delegates to it; MapManager holds a back-reference to Game so it can reach
 shared resources (player, camera, screen, music_player, …).
 """
 
+from typing import TYPE_CHECKING
+
 from src import maps
 from src.camera import Camera
 from src.constants import RAINBOW_BRIDGE_COORDINATES, THRONE_ROOM_DOOR_COORDINATES, THRONE_ROOM_START_COORDINATES
@@ -18,9 +20,12 @@ from src.maps import map_lookup
 from src.menu import CommandMenu
 from src.visual_effects import cut_to_black, screen_fade
 
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
+
 
 class MapManager:
-    def __init__(self, game):
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         # The (row, column) of the stairs a random fight started on: the hero stays there after the fight, and the
         # stairs aren't taken until the hero steps off them (or uses STAIRS). See stay_on_stairs.

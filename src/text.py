@@ -117,7 +117,7 @@ class NESFont(Font):
         self.font_size = size
 
     @override
-    def render(self, text, antialias, color, bgcolor=None) -> Surface:  # type: ignore[override]
+    def render(self, text, antialias, color, bgcolor=None) -> Surface:
         if not isinstance(text, str):
             return super().render(text, antialias, color, bgcolor)
         text = font_characters(text)
@@ -159,6 +159,7 @@ def set_font_by_ascii_chars(chunks, size, font_name, directories):
     if font_name is not None:
         return nes_font(font_name, size)
     else:
+        current_font: Font
         if all(in_nes_font(chunk) for chunk in chunks):
             current_font = NESFont(directories.DRAGON_QUEST_FONT_PATH, size)
         else:

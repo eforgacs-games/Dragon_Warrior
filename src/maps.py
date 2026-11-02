@@ -2,7 +2,7 @@ import inspect
 import sys
 from abc import ABC
 from collections.abc import Callable
-from typing import override
+from typing import Any, NotRequired, TypedDict, override
 
 from pygame import surface
 from pygame.sprite import Group, LayeredDirty
@@ -77,6 +77,12 @@ MAP_BOUNDARY_TILES = {
 DEFAULT_BOUNDARY_TILE = 'WALL'  # $10, stone
 
 
+class FloorTile(TypedDict):
+    """A floor tile type: its tile value and, once the map is drawn, the sprites of every block of that type."""
+    val: int
+    group: NotRequired[Group]
+
+
 class DragonWarriorMap:
     # Where the NES map (MapDatTbl, Bank00) is in this layout, which pads it: the layout (row, column) of NES (0, 0)
     # (an NES X,Y is at (Y + row, X + column) here), and the NES map's size in blocks, (columns, rows), i.e.
@@ -99,7 +105,7 @@ class DragonWarriorMap:
 
         # Character variables
 
-        self.tile_types_in_current_map = []
+        self.tile_types_in_current_map: set[str] = set()
         self.scale = self.config['SCALE']
         self.player = None
         self.player_sprites = None
@@ -121,7 +127,7 @@ class DragonWarriorMap:
                                          tile_size=config['TILE_SIZE'],
                                          graphics=self.graphics,
                                          configured_scale=config['SCALE'])
-        self.impassable_tiles = all_impassable_tiles
+        self.impassable_tiles: tuple[str, ...] = all_impassable_tiles
         self.tile_group_dict = {}
         if staircases is None:
             staircases = {}
@@ -146,7 +152,7 @@ class DragonWarriorMap:
         # Tile Key:
         # Index values for the map tiles corresponding to location on tile sheet.
 
-        self.floor_tile_key = {
+        self.floor_tile_key: dict[str, FloorTile] = {
             'ROOF': {'val': 0},
             'WALL': {'val': 1},
             'WOOD': {'val': 2},
@@ -185,7 +191,7 @@ class DragonWarriorMap:
             'BOTTOM_TOP_COAST': {'val': 34},
             'TOP_LEFT_RIGHT_COAST': {'val': 35},
         }
-        self.character_key = {
+        self.character_key: dict[str, dict[str, Any]] = {
             'HERO': {'val': 36, 'path': self.directories.UNARMED_HERO_PATH},
             'KING_LORIK': {'val': 37, 'path': self.directories.KING_LORIK_PATH},
             'GUARD': {'val': 38, 'path': self.directories.GUARD_PATH},
@@ -208,7 +214,7 @@ class DragonWarriorMap:
                 character_dict['underlying_tile'] = self.hero_underlying_tile()
             else:
                 character_dict['underlying_tile'] = 'BRICK'
-        self.tile_key = dict(list(self.floor_tile_key.items()) + list(self.character_key.items()))
+        self.tile_key: dict[str, Any] = {**self.floor_tile_key, **self.character_key}
         self._tile_key_list = list(self.tile_key.keys())
 
     def in_nes_map(self, row: int, column: int) -> bool:
@@ -318,7 +324,7 @@ class DragonWarriorMap:
         """NES NPC movement ($B839-$B84F): an NPC can't step between a covered and an uncovered block."""
         return self.is_covered(row, column) != self.is_covered(next_row, next_column)
 
-    def get_tiles_in_current_map(self) -> set:
+    def get_tiles_in_current_map(self) -> set[str]:
         return set(self.get_tile_by_value(tile) for row in self.layout for tile in row)
 
     def scale_sprite_sheet(self, image_path):
@@ -344,7 +350,7 @@ class DragonWarriorMap:
                 self.fixed_characters.append(character)
         else:
             character = AnimatedSprite(self.center_pt, Direction.DOWN.value, images, identifier)
-            character.row, character.column = coordinates  # type: ignore[attr-defined]
+            character.row, character.column = coordinates
             self.fixed_characters.append(character)
         character_sprites.add(character)
         tile_value = \

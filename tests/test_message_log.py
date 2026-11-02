@@ -228,7 +228,7 @@ class TestTheScreen(GameTestCase):
     def run_screen(self, *keys):
         screen = MessageLogScreen(self.game)
         events = [[key(pressed_key)] for pressed_key in keys]
-        with patch('src.selection.event.get', side_effect=[[]] + events):
+        with patch('src.waiting.event.get', side_effect=[[]] + events):
             screen.run()
         return screen
 
@@ -251,7 +251,7 @@ class TestTheScreen(GameTestCase):
 
     def test_time_stops_while_it_is_open(self):
         with patch.object(self.game, 'map_frame') as map_frame, \
-                patch('src.selection.event.get', side_effect=[[], [], [key(K_j)]]):
+                patch('src.waiting.event.get', side_effect=[[], [], [key(K_j)]]):
             self.game.hotkeys.open_message_log()
         map_frame.assert_not_called()
 

@@ -234,7 +234,7 @@ class TestInTheShop(PreviewTestCase):
                 return draw(index)
             return draw_for
 
-        with patch('src.selection.event.get', side_effect=presses(*keys)), \
+        with patch('src.waiting.event.get', side_effect=presses(*keys)), \
                 patch.object(self.dialog_lookup, 'shop_preview_drawer', recording_drawer), \
                 patch('data.text.dialog_lookup_table.draw_shop_preview', return_value=Rect(0, 0, 1, 1)) as draw:
             self.dialog_lookup.open_store_inventory(inventory)
@@ -302,7 +302,7 @@ class TestInTheShop(PreviewTestCase):
         for shop_preview in (False, True):
             self.config['SHOP_PREVIEW'] = shop_preview
             with self.subTest(shop_preview=shop_preview), \
-                    patch('src.selection.event.get', side_effect=presses(K_DOWN, K_DOWN, pygame.K_k)):
+                    patch('src.waiting.event.get', side_effect=presses(K_DOWN, K_DOWN, pygame.K_k)):
                 self.assertEqual("Broad Sword", self.dialog_lookup.open_store_inventory(inventory))
 
 
@@ -318,7 +318,7 @@ class TestScreen(PreviewTestCase):
         screen = self.game.screen
         screen.fill((0, 64, 0))
         # the list and the preview stay on the screen (no RemoveWindow), to compare them
-        with patch('src.selection.event.get', side_effect=presses(K_DOWN, K_DOWN, K_ESCAPE)), \
+        with patch('src.waiting.event.get', side_effect=presses(K_DOWN, K_DOWN, K_ESCAPE)), \
                 patch.object(self.game.cmd_menu, 'remove_window'):
             self.dialog_lookup.open_store_inventory(inventory)
         return screen.copy()

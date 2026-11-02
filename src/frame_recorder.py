@@ -124,7 +124,7 @@ class FrameRecorder(Sequence[Frame]):
         if self.recording:
             return self
         self._real_flip, self._real_update = display.flip, display.update
-        display.flip, display.update = self._flip, self._update  # type: ignore[assignment]
+        display.flip, display.update = self._flip, self._update
         return self
 
     def stop(self) -> None:

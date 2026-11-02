@@ -2,11 +2,12 @@ import functools
 import random
 
 from src.spells import Spell
-from typing import Any, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 from collections.abc import Callable, Collection, Iterable, Iterator
 from contextlib import contextmanager
 
 from pygame import Surface, display, KEYDOWN, Rect, event, transform
+from pygame.font import Font
 from pygame.sprite import Group
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
@@ -50,6 +51,10 @@ from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENT
     YES_NO_WINDOW, item_menu_entry_tile_row, item_menu_layout, item_menu_window, Window, name_halves
 from src.nes_random import one_in
 
+if TYPE_CHECKING:
+    from src.battle import Battle  # src.battle imports this module
+    from src.game import Game  # src.game imports this module
+
 # The COMMAND window's commands, in WndSelResults order (NCC_TALK $00 to NCC_TAKE $07; src/windows.py COMMAND_ENTRIES):
 # the CommandMenu methods Bank03 NCCmdSelected and CheckCmdWndResults run for each
 COMMAND_METHODS = ('talk', 'status', 'stairs', 'search', 'spell', 'item', 'door', 'take')
@@ -90,7 +95,7 @@ def wait_for_next_window_row(row_started: float, config: dict) -> None:
 
 class CommandMenu:
 
-    def __init__(self, game):
+    def __init__(self, game: 'Game') -> None:
         self.launch_signaled = False
         self.skip_text = False
         self.game = game
@@ -98,7 +103,7 @@ class CommandMenu:
 
         self.screen = self.game.screen
         self.current_map: DragonWarriorMap = self.game.current_map
-        self.current_battle = None
+        self.current_battle: Battle | None = None
         # The NPC whose dialog is showing (launch_dialog), for the message log
         self.speaker: str | None = None
         # While the game shows pages of its own (not_logged), nothing goes to the message log
@@ -110,7 +115,7 @@ class CommandMenu:
         self.graphics = Graphics(self.current_map.config)
         self.dialog_buffer = DialogBuffer()
         self._dialog_frame_deadline = 0.0
-        self._dialog_fonts = {}
+        self._dialog_fonts: dict[bool, Font] = {}  # the dialog font for ASCII text (True) and the rest
         self.directories = Directories(self.current_map.config)
         self.sound = Sound(self.current_map.config)
         self.calculation = Calculation(self.current_map.config)
@@ -155,7 +160,9 @@ class CommandMenu:
     def background(self) -> Surface:
         """The surface the map is drawn on, the game's own: Drawer.draw_all replaces it on a map's first frame, after
         the new map's CommandMenu is made, so a copy taken here would be the previous one."""
-        return self.game.drawer.background
+        background = self.game.drawer.background
+        assert background is not None, "the map is drawn before anything is drawn over it"
+        return background
 
     @property
     def color(self) -> tuple[int, int, int]:
@@ -854,7 +861,7 @@ class CommandMenu:
         self.window_drop_up_effect(*DIALOG_WINDOW)
 
     def set_tile_by_coordinates(self, new_tile_identifier, column, row, player):
-        old_tile_identifier = get_tile_id_by_coordinates(column, row, self.current_map)
+        old_tile_identifier = self.current_map.get_tile_by_value(self.current_map.layout[row][column])
         if column == player.column and row == player.row:
             self.current_tile = new_tile_identifier
             player.current_tile = new_tile_identifier
@@ -883,6 +890,13 @@ class CommandMenu:
 
     # Items
 
+    @property
+    def active_battle(self) -> 'Battle':
+        """The fight in progress, for the code that only runs during one."""
+        if self.current_battle is None:
+            raise RuntimeError("There is no battle in progress.")
+        return self.current_battle
+
     def item_message(self, *pages: str):
         """Show an item's text as a battle line during a fight, or in the dialog box in the field. Each page but the
         last ends in a TXT_WAIT: the arrow blinks until a button is pressed."""
@@ -909,7 +923,7 @@ class CommandMenu:
         item_function = battle_items.get(item_name)
         if item_function is None:
             self.show_battle_line(self._("That cannot be used in battle."))
-            self.current_battle.no_op = True
+            self.active_battle.no_op = True
             return
         item_function()
 
@@ -986,7 +1000,7 @@ class CommandMenu:
         self.show_battle_line(self._("{} played a sweet melody on the harp.").format(self.player.name))
         self.game.music_player.play_until_end(self.directories.harp_music, self.game.game_state.config)
         self.resume_music()
-        self.show_battle_line(self._("The {} looks happy.").format(self._(self.current_battle.enemy.name)))
+        self.show_battle_line(self._("The {} looks happy.").format(self._(self.active_battle.enemy.name)))
 
     def fairy_flute(self):
         # NES ChkFryFlt (field) / ChkUseFlute (battle): play the flute tune to the end (WaitForMusicEnd), then resume
@@ -999,13 +1013,14 @@ class CommandMenu:
         self.game.music_player.play_until_end(self.directories.flute_music, self.game.game_state.config)
         self.game.game_state.unpause_all_movement()
         self.resume_music()
-        if in_battle and self.current_battle.enemy.name == 'Golem':
+        battle = self.current_battle
+        if battle is not None and battle.enemy.name == 'Golem':
             # NES ChkUseFlute: the Golem always falls asleep and loses its turn (jumps to EnStillAsleep)
-            enemy = self.current_battle.enemy
+            enemy = battle.enemy
             enemy.is_asleep = True
             say(self._("Quietly Golem closes his eyes and settles into sleep."))
             say(self._("The {} is asleep.").format(self._(enemy.name)))
-            self.current_battle.no_op = True
+            battle.no_op = True
             return
         say(self._("But nothing happened."))
 
@@ -1616,14 +1631,14 @@ class CommandMenu:
             elif self.player.current_mp < spell_mp_cost:
                 # TB4E2 and TB4E0 below end with no WAIT: in a fight, nothing waits for a button after them. In the
                 # field, DoSpell (LDA44) goes on to ResumeGamePlay, which waits for a new press
-                in_battle = self.current_battle is not None
+                battle = self.current_battle
                 self.show_line_in_dialog_box(self._("Thy MP is too low."),
-                                             skip_text=self.skip_text or in_battle,
+                                             skip_text=self.skip_text or battle is not None,
                                              disable_sound=True,
                                              hide_arrow=True,
                                              add_quotes=False)
-                if in_battle:
-                    self.current_battle.no_op = True
+                if battle is not None:
+                    battle.no_op = True
             else:
                 # Nowhere, in a fight or in the field: PlyrCastSpell (LDBA0) goes straight on to the spell's sound,
                 # and any press comes after the spell (FIELD_SPELLS_ENDING_WITH_A_PRESS)
@@ -1670,10 +1685,10 @@ class CommandMenu:
         :return: The window's rect on the screen, for display.update.
         """
         config = self.game.game_state.config
-        cursor = {'cursor_index': self.menu.selected, 'cursor_visible': self.cursor.visible()}
+        cursor_index, cursor_visible = self.menu.selected, self.cursor.visible()
         if self.command_window_in_nes_font():
-            return draw_window(self.screen, COMMAND_LAYOUT, self.color, config, **cursor)
-        rect = draw_window(self.screen, COMMAND_BORDER_LAYOUT, self.color, config, **cursor)
+            return draw_window(self.screen, COMMAND_LAYOUT, self.color, config, cursor_index, cursor_visible)
+        rect = draw_window(self.screen, COMMAND_BORDER_LAYOUT, self.color, config, cursor_index, cursor_visible)
         x, y = COMMAND_WINDOW.x, COMMAND_WINDOW.y
         self.draw_window_title(self._(COMMAND_TITLE.text), x, y, COMMAND_TITLE.column)
         for entry, (column, row) in zip(COMMAND_ENTRIES, COMMAND_CURSOR_TILES):

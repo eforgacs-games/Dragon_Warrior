@@ -190,7 +190,7 @@ class TestScrollingItemWindow(BagTestCase):
     def test_the_sell_window_scrolls_too(self):
         self.player.inventory = list(SIXTEEN)
         events = [[MagicMock(type=KEYDOWN, key=key)] for key in [K_DOWN] * 12 + [K_RETURN]]
-        with patch('src.selection.event.get', side_effect=events), patch('src.menu.draw_text'), \
+        with patch('src.waiting.event.get', side_effect=events), patch('src.menu.draw_text'), \
                 patch('src.menu.draw_window'), patch.object(self.cmd_menu, 'window_drop_down_effect'), \
                 patch.object(self.cmd_menu, 'draw_window_cursor') as cursor:
             index = self.dialog_lookup.select_from_inventory(list(SIXTEEN))
