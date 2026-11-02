@@ -17,7 +17,7 @@ import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_i, K_j, K_k, K_u, font, image, mixer
 from pygame.event import Event
@@ -32,6 +32,9 @@ from src.paths import data_path, is_frozen
 from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, SOUNDTRACKS, Soundtrack
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import MAP_CONTEXT, reset_game_speed, set_game_speed
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 IMAGE_EXTENSIONS = ('.png', '.gif')
 SOUND_EXTENSIONS = ('.mp3', '.wav')
@@ -153,7 +156,7 @@ def check_korean_translations() -> list[str]:
     return []
 
 
-def check_game_language(game: Any) -> list[str]:
+def check_game_language(game: 'Game') -> list[str]:
     """The running game translates its text into the language it was started in (only Korean has a catalog)."""
     if game.config['LANGUAGE'] == 'Korean' and game._(KOREAN_CHECK_LINE) == KOREAN_CHECK_LINE:
         return [f"the game started in Korean doesn't translate {KOREAN_CHECK_LINE!r}"]
@@ -217,7 +220,7 @@ class SmokeScene:
     script: str
     save_changes: dict = field(default_factory=dict)
     config: dict = field(default_factory=dict)
-    check: Callable[[Any, SceneLog], list[str]] | None = None
+    check: Callable[['Game', SceneLog], list[str]] | None = None
 
 
 def parse_smoke_script(script: str) -> tuple[list[tuple[int, int, int]], int]:
@@ -243,7 +246,7 @@ class ScriptDriver:
     """Drives the virtual joypad (a src/virtual_joypad.py JoypadDriver) through a scene's script, keeps a SceneLog,
     and raises SceneOver once the script is over (or TimeoutError when the scene runs too long in real time)."""
 
-    def __init__(self, game: Any, script: str, log: SceneLog, max_seconds: float = SCENE_MAX_SECONDS) -> None:
+    def __init__(self, game: 'Game', script: str, log: SceneLog, max_seconds: float = SCENE_MAX_SECONDS) -> None:
         self.game = game
         self.presses, self.end_frame = parse_smoke_script(script)
         self.log = log
@@ -270,20 +273,20 @@ class ScriptDriver:
         return True
 
 
-def expect_maps(*identifiers: str) -> Callable[[Any, SceneLog], list[str]]:
+def expect_maps(*identifiers: str) -> Callable[['Game', SceneLog], list[str]]:
     """A scene check: the hero was on each of these maps."""
-    def check(_game: Any, log: SceneLog) -> list[str]:
+    def check(_game: 'Game', log: SceneLog) -> list[str]:
         missed = [identifier for identifier in identifiers if identifier not in log.maps]
         return [f"never reached {', '.join(missed)} (maps seen: {', '.join(log.maps)})"] if missed else []
     return check
 
 
-def expect_window(_game: Any, log: SceneLog) -> list[str]:
+def expect_window(_game: 'Game', log: SceneLog) -> list[str]:
     """A scene check: a window or dialog was open and read the presses."""
     return [] if log.window_polls else ["no window or dialog opened"]
 
 
-def expect_fight(_game: Any, log: SceneLog) -> list[str]:
+def expect_fight(_game: 'Game', log: SceneLog) -> list[str]:
     """A scene check: a fight started."""
     return [] if log.fights else ["no fight started"]
 
@@ -306,9 +309,9 @@ SMOKE_SCENES = (
                save_changes={'PlayerRow': 14, 'PlayerColumn': 15, SOUNDTRACK_SAVE_KEY: Soundtrack.SFC.value},
                check=expect_maps('TantegelThroneRoom', 'TantegelCourtyard')),
     # Walking left on Alefgard into a Slime fight (the battle window, the enemy, battle music and sounds), then FIGHT.
-    # Held for several steps: after a map change the first step may not roll for a fight (Game.handle_battles compares
-    # the steps taken since the change with the count at the last roll). Left in the battle's command window keeps
-    # FIGHT chosen.
+    # Held for several steps: after a map change the first step may not roll for a fight
+    # (FieldEncounters.handle_battles compares the steps taken since the change with the count at the last roll). Left
+    # in the battle's command window keeps FIGHT chosen.
     SmokeScene('overworld_fight', 'wait:20,left:100,wait:120,a,wait:10,a,wait:120,a,wait:10,a,wait:120',
                save_changes={'CurrentMap': 'Alefgard', 'PlayerRow': 50, 'PlayerColumn': 47,
                              SOUNDTRACK_SAVE_KEY: Soundtrack.ORCHESTRA.value},
@@ -317,7 +320,7 @@ SMOKE_SCENES = (
 )
 
 
-def play_scene(game: Any, scene: SmokeScene, max_seconds: float = SCENE_MAX_SECONDS) -> list[str]:
+def play_scene(game: 'Game', scene: SmokeScene, max_seconds: float = SCENE_MAX_SECONDS) -> list[str]:
     """Load the scene's start into the game and play its script in Game.main's loop. Returns what went wrong; an
     exception from the game is raised."""
     game.config.update({**SCENE_CONFIG, **scene.config})
@@ -338,7 +341,7 @@ def play_scene(game: Any, scene: SmokeScene, max_seconds: float = SCENE_MAX_SECO
     return [f"{scene.name}: the game left its main loop before the scene was over"]
 
 
-def play_smoke_scenes(game: Any, scenes: tuple[SmokeScene, ...] = SMOKE_SCENES) -> list[str]:
+def play_smoke_scenes(game: 'Game', scenes: tuple[SmokeScene, ...] = SMOKE_SCENES) -> list[str]:
     """Play each scene in turn in the same game, at SMOKE_SPEED. Returns what went wrong; an exception from the game
     is raised."""
     problems = check_game_language(game)

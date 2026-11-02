@@ -191,8 +191,8 @@ class TestGame(TestCase):
         self.game.player.current_hp = self.game.player.max_hp = 50
         with patch.object(self.game.battle_ctrl, 'player_hit_effect'), \
                 patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
-            self.game.receive_damage(1)
-            self.game.receive_damage(3)
+            self.game.hero_damage.receive_damage(1)
+            self.game.hero_damage.receive_damage(3)
         self.assertEqual([c.args[0] for c in show_line.call_args_list],
                          ["Thy Hit decreased by 1.\n", "Thy Hits decreased by 3.\n"])
 
@@ -464,8 +464,8 @@ class TestGame(TestCase):
     def walk(self, steps):
         with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
             for _ in range(steps):
-                self.game.count_step()
-                self.game.tick_repel_timer_after_step()
+                self.game.step_triggers.count_step()
+                self.game.step_triggers.tick_repel_timer_after_step()
         return [c.args[0] for c in show_text.call_args_list]
 
     def test_repel_protects_the_127th_steps_fight_roll(self):
@@ -477,8 +477,8 @@ class TestGame(TestCase):
             rolls.append(self.game.repel_timer)
 
         self.game.repel_timer = 255
-        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.count_step), \
-                patch.object(self.game, 'handle_battles', side_effect=roll), \
+        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.step_triggers.count_step), \
+                patch.object(self.game.field_encounters, 'handle_battles', side_effect=roll), \
                 patch.object(self.game, '_handle_map_updates'), patch.object(self.game, '_handle_post_move_checks'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box',
                              side_effect=lambda text, **_: messages.append((len(rolls), text))):
@@ -531,9 +531,9 @@ class TestGame(TestCase):
         self.game.player.gold = 101
         with patch.object(self.game.battle_ctrl, 'draw_command_window') as command_window, \
                 patch.object(self.game, 'drawer') as drawer, \
-                patch.object(self.game, 'music_player'), patch('src.game.display'), \
+                patch.object(self.game, 'music_player'), patch('src.hero_death.display'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
-            self.game.handle_death()
+            self.game.hero_death.handle_death()
         return command_window, drawer, show_text
 
     def test_death_in_battle(self):

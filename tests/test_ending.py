@@ -112,7 +112,7 @@ class TestEnding(TestCase):
         self.game.tiles_moved_since_spawn = 1
         with patch.object(self.game.battle_ctrl, 'run_battle') as run_battle, \
                 patch.dict(self.game.game_state.config, FORCE_BATTLE=True):
-            self.game.handle_battles()
+            self.game.field_encounters.handle_battles()
         run_battle.assert_not_called()
 
     def test_tantegel_after_the_dragonlord(self):

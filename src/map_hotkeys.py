@@ -12,7 +12,7 @@ the game (request), and MovementController.resolve_pending_freezes opens what wa
 The play time (src/play_stats.py) doesn't count while what they open is up.
 """
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pygame import FULLSCREEN, RESIZABLE, SCALED
 from pygame.display import set_caption
@@ -30,6 +30,9 @@ from src.stats_screen import StatsScreen
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_OFF, game_progress, journal_pages
 from src.waiting import requested_speed, set_game_speed, speed_keys_enabled
 from src.zoom import remember_windowed_size, restore_windowed_size
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,7 +61,7 @@ class MapHotkeys:
     """The map's key handlers (see the module docstring). The requests they make are kept on the game, where
     MovementController reads them."""
 
-    def __init__(self, game: Any) -> None:
+    def __init__(self, game: 'Game') -> None:
         self.game = game
 
     @property

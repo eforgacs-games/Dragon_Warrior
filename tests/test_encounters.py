@@ -293,7 +293,7 @@ class TestPickEnemy(unittest.TestCase):
 
 
 class TestHandleBattles(unittest.TestCase):
-    """Game.handle_battles checks the block the player has just stepped onto, once per step."""
+    """FieldEncounters.handle_battles checks the block the player has just stepped onto, once per step."""
 
     @classmethod
     def setUpClass(cls):
@@ -324,7 +324,7 @@ class TestHandleBattles(unittest.TestCase):
     def fight_roll(self):
         with patch('src.encounters.random.randint', return_value=0) as randint, \
                 patch.object(self.game.battle_ctrl, 'run_battle') as run_battle:
-            self.game.handle_battles()
+            self.game.field_encounters.handle_battles()
             while self.game.movement.hill_pause_frames:  # on a hill, the roll comes after the pause
                 self.game.movement.hill_pause_frame()
         return randint, run_battle
@@ -372,14 +372,14 @@ class TestHandleBattles(unittest.TestCase):
         player.current_hp, player.armor, player.is_moving = hp, None, False
         player.received_environment_damage = False
         hp_at_fight = []
-        with patch.object(self.game, 'drawer'), patch('src.game.display'), patch('src.game.flash_transparent_color'), \
-                patch.object(self.game.sound, 'play_sound'), \
+        with patch.object(self.game, 'drawer'), patch('src.hero_damage.display'), \
+                patch('src.hero_damage.flash_transparent_color'), patch.object(self.game.sound, 'play_sound'), \
                 patch.object(self.game.battle_ctrl, 'run_battle',
                              side_effect=lambda _: hp_at_fight.append(player.current_hp)) as run_battle:
-            self.game.handle_battles()
+            self.game.field_encounters.handle_battles()
             # later in the frame (_handle_post_move_checks): the step has already done its damage
             player.current_tile = 'MARSH'
-            self.game.handle_environment_damage()
+            self.game.hero_damage.handle_environment_damage()
         return run_battle, hp_at_fight
 
     def test_swamp_damage_comes_before_the_fight_roll(self):
@@ -400,7 +400,7 @@ class TestHandleBattles(unittest.TestCase):
         self.game.game_state.config['FORCE_BATTLE'] = True
         self.step_onto('Alefgard', 37, 62)
         with patch.object(self.game.battle_ctrl, 'is_repelled', return_value=True):
-            self.game.handle_battles()
+            self.game.field_encounters.handle_battles()
         self.assertFalse(self.game.battle_ctrl.launch_battle)
 
     def step_onto_stairs_and_fight(self, outcome):
@@ -411,7 +411,7 @@ class TestHandleBattles(unittest.TestCase):
         self.game.tiles_moved_since_spawn = self.game.last_amount_of_tiles_moved + 5  # past a new map's wait for stairs
         with patch('src.encounters.random.randint', return_value=0), \
                 patch.object(self.game.battle_ctrl, 'run_battle', return_value=outcome) as run_battle:
-            self.game.handle_battles()
+            self.game.field_encounters.handle_battles()
         run_battle.assert_called_once()
         self.game.player.row, self.game.player.column = 3, 12  # set_character_position, later in the frame
         with patch.object(self.game.map_mgr, 'process_warp') as process_warp:

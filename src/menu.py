@@ -1488,7 +1488,7 @@ class CommandMenu:
         self.set_tile_by_coordinates('BRICK_STAIR_DOWN', self.player.column, self.player.row, self.player)
         charlock_ground_floor.reveal_hidden_staircase()
         # Like arriving on a map: don't auto-take the new stairs until the player steps off and back on (or uses STAIRS)
-        self.game.reset_step_count()
+        self.game.step_triggers.reset_step_count()
         return True
 
     def find_hidden_item(self, item_name: str) -> tuple[str, bool]:

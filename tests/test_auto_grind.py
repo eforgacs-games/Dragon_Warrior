@@ -258,13 +258,13 @@ class TestPacing(GrindTestCase):
         self.start()
         self.game.config['NO_BATTLES'] = True  # only once it's walking (it won't start with it): no fight interrupts
         cells = []
-        real_count_step = self.game.count_step
+        real_count_step = self.game.step_triggers.count_step
 
         def count_step():
             cells.append(self.grind.hero_cell())
             real_count_step()
         clock = helpers.fake_game_clock()
-        with patch.object(self.game, 'count_step', side_effect=count_step):
+        with patch.object(self.game.step_triggers, 'count_step', side_effect=count_step):
             for _ in range(1000):  # 6 steps of 16 frames, and the turns between them
                 if len(cells) >= 6:
                     break
@@ -458,10 +458,10 @@ class TestStops(GrindTestCase):
         self.assertEqual("Auto-grind stopped\n", self.battle_line.call_args.args[0])
 
     def test_after_a_step(self):
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assertTrue(self.grind.active)
         self.player.current_hp = self.player.max_hp // 4 + 1
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assert_stopped(StopReason.HP_LOW)
         self.temporary_text.assert_called_once_with("Auto-grind stopped: HP low")
 
@@ -471,7 +471,7 @@ class TestStops(GrindTestCase):
             return BattleOutcome.VICTORY
         self.game.config['FORCE_BATTLE'] = True
         with patch.object(self.game.battle_ctrl, 'run_battle', side_effect=fight):
-            self.game.roll_for_fight(44, 50, 'GRASS')
+            self.game.field_encounters.roll_for_fight(44, 50, 'GRASS')
         self.assert_stopped(StopReason.HP_LOW)
         self.temporary_text.assert_called_once_with("Auto-grind stopped: HP low")
 
@@ -481,7 +481,7 @@ class TestStops(GrindTestCase):
             return BattleOutcome.DEFEAT
         self.game.config['FORCE_BATTLE'] = True
         with patch.object(self.game.battle_ctrl, 'run_battle', side_effect=fight):
-            self.game.roll_for_fight(44, 50, 'GRASS')
+            self.game.field_encounters.roll_for_fight(44, 50, 'GRASS')
         self.assertFalse(self.grind.active)
         self.assertEqual(StopReason.DEATH, self.grind.last_stop)
         self.sound.assert_not_called()
@@ -618,7 +618,7 @@ class TestHeadlessGrind(GrindTestCase):
         clock = helpers.fake_game_clock()
         cells, fights, stops = set(), [], []
         game = self.game
-        real_count_step, real_fight, real_open = game.count_step, game.battle_ctrl.fight_enemy, \
+        real_count_step, real_fight, real_open = game.step_triggers.count_step, game.battle_ctrl.fight_enemy, \
             game.battle_ctrl.open_command_window
 
         def count_step():
@@ -636,7 +636,7 @@ class TestHeadlessGrind(GrindTestCase):
                 raise Done
 
         pygame.event.post(key(K_g))
-        with patch.object(game, 'count_step', side_effect=count_step), \
+        with patch.object(game.step_triggers, 'count_step', side_effect=count_step), \
                 patch.object(game.battle_ctrl, 'fight_enemy', side_effect=fight_enemy), \
                 patch.object(game.battle_ctrl, 'open_command_window', side_effect=open_command_window):
             with self.assertRaises(Done):

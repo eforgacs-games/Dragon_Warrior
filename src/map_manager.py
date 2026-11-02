@@ -196,7 +196,7 @@ class MapManager:
                                   current_map=self.current_map, screen=self.screen, tile_size=self.tile_size)
         self.game.loop_count = 1
         self.game_state.unpause_all_movement()
-        self.game.reset_step_count()
+        self.game.step_triggers.reset_step_count()
         self.fought_on_stairs = None
         # NES PalFadeIn: fading the new map in loads the palettes, so the windows turn red or white for the current HP
         # (ChkLowHPPal). This is where a level up's new max HP first changes the window color.

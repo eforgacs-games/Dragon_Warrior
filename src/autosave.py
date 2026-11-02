@@ -22,12 +22,15 @@ log still holds that hero, and erasing a log (or copying another into it) delete
 of the hero who played from it (TitleMenu.forget_snapshots_of_log).
 """
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pygame.time import get_ticks
 
 from src.game_options import DEFAULT_AUTOSAVE
 from src.save_state import SAVE_STATE_SLOTS, read_snapshot, state_path, take_snapshot, write_snapshot
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 AUTOSAVE_FILE_NAME = 'autosave.json'
 # Every 3 minutes of real time on the map
@@ -60,7 +63,7 @@ def read_autosave(save_dir: str) -> dict[str, Any] | None:
 class Autosave:
     """When to write the autosave (see the module docstring); Game.map_frame calls frame() at the end of each frame."""
 
-    def __init__(self, game: Any):
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         # The real time the map has been played since the last autosave, and when the last frame was
         self.played_ms = 0

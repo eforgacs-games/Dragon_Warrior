@@ -193,16 +193,16 @@ class GameTestCase(TestCase):
 class TestTheGameCounts(GameTestCase):
 
     def test_steps(self):
-        self.game.count_step()
-        self.game.count_step()
+        self.game.step_triggers.count_step()
+        self.game.step_triggers.count_step()
         self.assertEqual(2, self.game.play_stats.steps)
 
     def test_deaths(self):
         self.game.player.current_hp = 0
-        with patch.object(self.game, 'set_post_death_attributes'), \
+        with patch.object(self.game.hero_death, 'set_post_death_attributes'), \
                 patch.object(self.game.music_player, 'play_until_end'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
-            self.game.handle_death()
+            self.game.hero_death.handle_death()
         self.assertEqual(1, self.game.play_stats.deaths)
 
     def test_chests_and_their_gold(self):

@@ -178,7 +178,7 @@ class TestNoOneFrameFlickers(TransitionTestCase):
 
     def test_opening_and_closing_the_command_window(self):
         self.game.load_checkpoint('swamp_cave')
-        self.game.handle_battles = MagicMock()  # type: ignore[method-assign]
+        self.game.field_encounters.handle_battles = MagicMock()  # type: ignore[method-assign]
         self.frames(3)
         # Everyone is on a tile, between two NPC turns (#289), so the window opens on the frame K is pressed
         with patch.object(self.game.movement, 'everyone_on_a_tile', return_value=True), \

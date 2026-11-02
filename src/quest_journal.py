@@ -42,8 +42,12 @@ and the Staff and the Stones are given away for the Rainbow Drop.
 """
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from src.story_flags import GoalSource, StoryFlags
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 # QUEST_JOURNAL (base_config): OFF is the NES (Q does nothing); LEARNED shows the goals the hero knows of; HINTS adds
 # what was said about each
@@ -56,7 +60,7 @@ LEGACY_JOURNAL_GOALS = 'Goals'
 
 # The sources of what the hero is told that aren't an NPC's dialog byte
 KING_OPENING_SPEECH = 'KING_OPENING_SPEECH'  # King Lorik's words as a new quest starts (Drawer.run_automatic_initial_dialog)
-GOLEM_FIGHT = 'GOLEM_FIGHT'  # stepping in front of the Golem (Game.check_guardian_fight)
+GOLEM_FIGHT = 'GOLEM_FIGHT'  # stepping in front of the Golem (StepTriggers.check_guardian_fight, src/step_triggers.py)
 
 # The throne room guard at 5,6 (dialog byte $24) speaks of the key only until the hero has left the throne room
 # (ThrnRmDialog2: TextBlock17 entry 0, then TextBlock6 entry 3, which doesn't)
@@ -398,7 +402,7 @@ def journal_pages(progress: Progress, hints: bool, _: Callable[[str], str] = str
     return pages or [_(NOTHING_HEARD)]
 
 
-def game_progress(game) -> Progress:
+def game_progress(game: 'Game') -> Progress:
     player = game.player
     return Progress.of(game.story_flags, player.inventory, player.weapon, player.armor)
 

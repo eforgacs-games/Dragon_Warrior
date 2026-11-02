@@ -27,7 +27,7 @@ import re
 import unicodedata
 from collections import deque
 from collections.abc import Callable, Iterable
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 from pygame import K_ESCAPE, K_DOWN, K_LEFT, K_RIGHT, K_UP, KEYDOWN, Rect, Surface, display
 
@@ -39,6 +39,9 @@ from src.options_overlay import darken
 from src.selection import frame_events, next_frame
 from src.translated_window import draw_translated_window
 from src.windows import Window, WindowLayout, WindowText
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 MAX_ENTRIES = 50
 
@@ -173,7 +176,7 @@ class MessageLogScreen:
     title = LOG_TITLE
     close_keys = CLOSE_KEYS
 
-    def __init__(self, game):
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         self.config: dict = game.game_state.config
         self._: Callable[[str], str] = set_gettext_language(self.config.get('LANGUAGE'))

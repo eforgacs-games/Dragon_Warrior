@@ -158,8 +158,8 @@ CHEAT_KEYS = Option('cheat_keys', 'CHEAT_KEYS', ON_OFF, False, (False, False), '
 # button there too, as everywhere else
 QUICK_ACTION = Option('quick_action', 'QUICK_ACTION', ON_OFF, False, (False, True), 'QuickAction')
 # ENCOUNTERS: the NES's random fights, half as many (every other one that would start is skipped, so the NES's rolls
-# and enemy choice are untouched) or none (Game.thin_encounters); scripted fights always happen. How many fights, and
-# what they give, are the game's balance, not conveniences: NES in both presets.
+# and enemy choice are untouched) or none (FieldEncounters.thin_encounters); scripted fights always happen. How many
+# fights, and what they give, are the game's balance, not conveniences: NES in both presets.
 ENCOUNTERS = Option('encounters', 'ENCOUNTERS', ENCOUNTER_SETTINGS, ENCOUNTERS_NES, (ENCOUNTERS_NES, ENCOUNTERS_NES),
                     'Encounters')
 # EXP/GOLD: the experience and gold a won fight gives, times 1 (the NES), 2 or 4 (Battle.enemy_defeated)

@@ -28,7 +28,8 @@ class TestHillPause(FreezeTestCase):
         patch.dict(self.game.game_state.config, NO_BATTLES=True).start()
         patch.object(self.game.movement.sound, 'play_sound').start()
         self.rolls: list[int] = []  # the frame numbers of the fight rolls
-        patch.object(self.game, 'roll_for_fight', side_effect=lambda *_: self.rolls.append(self.frame_number)).start()
+        patch.object(self.game.field_encounters, 'roll_for_fight',
+                     side_effect=lambda *_: self.rolls.append(self.frame_number)).start()
         self.game.movement.frame_counter = 0
 
     def hero_tile(self):

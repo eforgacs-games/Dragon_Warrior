@@ -15,11 +15,11 @@ on shows everything done so far. Each is counted where it happens, in one line:
   window being dragged doesn't add hours. The clock only runs once Game.main has started play (not on the title
   screen), and not while the game is paused (START) or while one of the pages the map's keys open is up (the options
   overlay, the dungeon map, the message log, the stats page, the quest journal, the help: PlayClock.stopped);
-- steps: Game.count_step, every step that ends on a new block;
+- steps: StepTriggers.count_step (src/step_triggers.py), every step that ends on a new block;
 - fights won, fled and lost: BattleController.fight_enemy. Fled is the hero running away; an enemy that runs away is
   none of the three. A fight won counts its enemy as a monster defeated, by name; the Dragonlord's two forms are one
   fight, counted once, as the Dragonlord;
-- deaths: Game.handle_death, in a fight or on the map (a swamp or barrier step);
+- deaths: HeroDeath.handle_death (src/hero_death.py), in a fight or on the map (a swamp or barrier step);
 - gold earned: a won fight's gold (Battle.enemy_defeated), a treasure chest's (CommandMenu.take_gold) and what shops
   pay for what the hero sells or trades in (data/text/dialog_lookup_table.py); gold spent: what shops and inns are
   paid. The gold lost on dying isn't spent;

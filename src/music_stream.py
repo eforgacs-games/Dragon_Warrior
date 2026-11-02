@@ -9,7 +9,14 @@ fight music, which the console's music engine loops). When a segment's time is u
 chunk, so a track played once runs straight into the one that loops after it.
 
 The game's thread starts, stops, pauses and fades the stream; the streaming thread only renders and queues. A lock
-keeps them from changing the stream at the same time.
+keeps them from changing the stream at the same time. It is one lock for every stream, as every stream plays on the
+same music channel (each MusicPlayer has its own stream, and tests make several), and two streams must not queue on
+the channel at once: both would see its queue empty and queue a chunk, and the second Channel.queue would replace the
+first one's. pygame frees the replaced Sound while the channel still points at it, and lets other threads run while it
+does (pygame 2.6 src_c/mixer.c chan_queue drops the old Sound, whose sound_dealloc releases the GIL in Mix_FreeChunk,
+before it stores the new one). Another stream's Channel.get_queue, or pygame's own callback on the audio thread when
+a chunk ends (endsound_callback), then takes the half-freed Sound, and it is freed twice: the game aborts with
+"free(): invalid pointer". With the shared lock, a stream checks the queue and fills it while no other stream can.
 
 Every stream is closed, and its thread finished, before pygame or its mixer is closed (close_all_streams), however
 that is done. pygame frees its mixer channels on quit, and a thread still queueing on one crashes the game: pygame's
@@ -51,6 +58,8 @@ SIGNED_16_BIT = -16
 THREAD_JOIN_TIMEOUT_SECONDS = 1.0
 
 _open_streams: 'weakref.WeakSet[MusicStream]' = weakref.WeakSet()
+# Every stream's lock: one stream at a time changes its stream and touches the music channel they all share
+_channel_lock = threading.RLock()
 
 
 def close_all_streams() -> None:
@@ -146,7 +155,7 @@ class MusicStream:
         self.library = library
         self.channel = channel
         self.volume = 1.0
-        self._lock = threading.RLock()
+        self._lock = _channel_lock  # shared by every stream (see the module docstring)
         self._wake = threading.Event()
         self._segments: list[Segment] = []
         self._player: _SegmentPlayer | None = None

@@ -67,7 +67,7 @@ msgstr "철 갑옷"
 msgid "Full Plate"
 msgstr "강철 갑옷"
 
-#: src/game.py
+#: src/hero_death.py
 msgid "Thou art dead."
 msgstr "당신은 죽었습니다."
 
