@@ -15,7 +15,7 @@ from src.auto_grind import AutoGrind
 from src.camera import Camera
 from src.checkpoints import CHECKPOINT_NAMES, CHECKPOINT_SAVE_DIR, FACING_KEY, checkpoint_hero_name, read_checkpoint
 from src.color import LOW_HP_RED, WHITE, is_low_hp, window_color
-from src.common import A_OR_START_KEYS, Graphics, set_gettext_language
+from src.common import Graphics, set_gettext_language
 from src.controls import Controls, KeySet, set_controls, set_controls_listener
 from src.config.dev_config import dev_config
 from src.config.prod_config import prod_config
@@ -36,6 +36,7 @@ from src.game_functions import set_character_position, GameFunctions
 from src.game_state import GameState
 from src.gamepad import connect_gamepad
 from src.hero_damage import HeroDamage
+from src.hero_death import HeroDeath
 from src.intro import Intro
 from src.items import OpenDoorHistory, TreasureChestHistory
 from src.map_layouts import MapLayouts
@@ -60,7 +61,7 @@ from src.step_triggers import StepTriggers
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
 from src.autosave import Autosave
-from src.waiting import NES_FPS, SPEED_CHANGED, FrameClock, FramePacer, clear_events_keeping_quit, game_speed, \
+from src.waiting import NES_FPS, SPEED_CHANGED, FrameClock, FramePacer, game_speed, \
     reset_game_speed, set_game_speed, set_speed_keys_enabled
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
@@ -169,6 +170,7 @@ class Game:
         self.battle_ctrl = BattleController(self)
         self.step_triggers = StepTriggers(self)
         self.hero_damage = HeroDamage(self)
+        self.hero_death = HeroDeath(self)
         self.field_encounters = FieldEncounters(self)
         self.auto_grind = AutoGrind(self)
         self.ending = Ending(self)
@@ -454,7 +456,7 @@ class Game:
                                                  offset=2)
         self.set_player_images_by_equipment()
         self.hero_damage.handle_environment_damage()
-        self.handle_death()
+        self.hero_death.handle_death()
 
     def _handle_map_updates(self) -> None:
         """
@@ -540,64 +542,6 @@ class Game:
         else:
             sprite_sheet_path = self.directories.UNARMED_HERO_PATH
         self.player.set_images(self.current_map.scale_sprite_sheet(sprite_sheet_path))
-
-    def handle_death(self):
-        if self.player.current_hp <= 0:
-            self.player.current_hp = 0
-            self.player.is_dead = True
-            self.auto_grind.hero_died()
-            self.load_window_palette()  # 0 HP is always low
-            if self.battle_ctrl.launch_battle and not self.game_state.config["NO_BATTLES"]:
-                # NES PlayerHasDied (LED9C): the battle screen stays as the deathblow left it. The command window isn't
-                # drawn again: every command removed it (PlyrFight LE5FE and the others), and the death music and
-                # "Thou art dead." follow in the dialog window.
-                self.battle_ctrl.launch_battle = False
-                display.flip()
-            else:
-                self.drawer.draw_all_tiles_in_current_map(self.current_map, self.drawer.background)
-                display.flip()
-            self.game_state.enable_movement = False
-            # NES PlayerHasDied / InitDeathSequence: MSC_DEATH, then WaitForMusicEnd. It plays once, and "Thou art
-            # dead." only comes once it has finished.
-            self.music_player.play_until_end(self.directories.death_music, self.game_state.config)
-            clear_events_keeping_quit()  # keys pressed during the death music are dropped (a window close isn't)
-
-            # NES DeathText: the game then loops until JoypadBtns AND #$09, A or START (held or not)
-            self.cmd_menu.show_text_in_dialog_box(self._("Thou art dead."), disable_sound=True,
-                                                  advance_keys=A_OR_START_KEYS)
-            self.set_post_death_attributes()
-        else:
-            self.player.is_dead = False
-
-    def set_post_death_attributes(self):
-        # NES DeathText: dying clears F_GOT_GWAELIN, so Gwaelin is back in the Swamp Cave (F_RTN_GWAELIN is untouched)
-        self.story_flags.carrying_gwaelin = False
-        self.repel_timer = 0  # NES StartAtThroneRoom (SetStartPos) clears RepelTimer
-        self.player.gold = self.player.gold // 2
-        # NES StartAtThroneRoom sets HP before MapChngNoSound fades the throne room in, so the fade's palette load
-        # (ChkLowHPPal) sees the new HP: a cursed hero comes back with 1 HP, which is always low, so the king's words
-        # are in red windows; anyone else comes back with full HP and white windows. DeathText sets ThisStrtStat to
-        # STRT_FULL_HP, so StartAtThroneRoom (LCB78-LCB87) fills MP as well as HP; for a cursed hero it sets HP to 1
-        # and skips that step (LCB71-LCB75), so MP stays as it was.
-        if self.player.is_cursed:
-            self.player.current_hp = 1
-        else:
-            self.player.current_hp = self.player.max_hp
-            self.player.current_mp = self.player.max_mp
-        self.load_window_palette()
-        # NES DeathText -> StartAtThroneRoom (LEDDE): the screen cuts to black and the throne room fades in once
-        next_map = map_lookup['TantegelThroneRoom'](self.config)
-        self.change_map(next_map, fade_out_first=False)
-        self.player.is_dead = False
-        if self.player.is_cursed:
-            # NES DeathText: the king then says "Thou hast failed and thou art cursed." and ChangeMaps puts the player
-            # outside the castle, facing down.
-            self.cmd_menu.show_text_in_dialog_box(
-                (self._("Thou hast failed and thou art cursed."), self._("Leave at once!")), add_quotes=True,
-                skip_text=self.skip_text)
-            self.leave_tantegel(direction=Direction.DOWN.value)
-            return
-        self.game_state.is_post_death_dialog = True
 
     def handle_warps(self):
         self.map_mgr.handle_warps()

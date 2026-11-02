@@ -209,7 +209,7 @@ class TestTransitionsUseTheSelectedFade(TestCase):
         def run():
             self.game.player.is_dead = True
             with patch.object(self.game.cmd_menu.__class__, 'show_text_in_dialog_box'):
-                self.game.set_post_death_attributes()
+                self.game.hero_death.set_post_death_attributes()
 
         self.assert_fades(run, [False])
 

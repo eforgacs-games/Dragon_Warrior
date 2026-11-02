@@ -279,7 +279,7 @@ class TestLowHPWindowColor(TestCase):
             self.game.hero_damage.receive_damage(15)
         self.assertEqual(self.game.color, LOW_HP_RED)
         self.player.is_dead = True
-        self.game.set_post_death_attributes()
+        self.game.hero_death.set_post_death_attributes()
         self.assertEqual(self.player.current_hp, self.player.max_hp)
         self.assertEqual(self.game.color, WHITE)
         self.assert_command_window_color(WHITE)
@@ -293,7 +293,7 @@ class TestLowHPWindowColor(TestCase):
         with patch('src.menu.CommandMenu.show_text_in_dialog_box',
                    side_effect=lambda *a, **k: colors.append(self.game.color)), \
                 patch.object(self.game, 'leave_tantegel'):
-            self.game.set_post_death_attributes()
+            self.game.hero_death.set_post_death_attributes()
         self.assertEqual(self.player.current_hp, 1)
         self.assertEqual(colors, [LOW_HP_RED])
         self.assert_command_window_color(LOW_HP_RED)

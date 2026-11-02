@@ -296,7 +296,7 @@ class TestPrincessGwaelin(TestCase):
         self.go_to('Alefgard', (50, 50))
         self.carry_princess()
         self.player.is_dead = True
-        self.game.set_post_death_attributes()
+        self.game.hero_death.set_post_death_attributes()
         self.assertFalse(self.game.story_flags.carrying_gwaelin)
         self.assertFalse(self.game.story_flags.gwaelin_returned)
         self.assertFalse(self.game.story_flags.gwaelin_rescued)
@@ -307,7 +307,7 @@ class TestPrincessGwaelin(TestCase):
         self.go_to('Alefgard', (50, 50))
         self.game.story_flags.gwaelin_returned = True
         self.player.is_dead = True
-        self.game.set_post_death_attributes()
+        self.game.hero_death.set_post_death_attributes()
         self.assertTrue(self.game.story_flags.gwaelin_returned)
         self.assertIn('PRINCESS_GWAELIN', self.game.current_map.characters)
 

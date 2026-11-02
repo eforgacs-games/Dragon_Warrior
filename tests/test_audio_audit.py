@@ -377,12 +377,12 @@ class TestDeathMusic(unittest.TestCase):
         self.game.player.current_hp = 0
         events = []
         with patch.object(self.game, 'drawer'), patch.object(self.game, 'music_player') as music_player, \
-                patch('src.game.display'), \
+                patch('src.hero_death.display'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box',
                              side_effect=lambda *args, **kwargs: events.append('Thou art dead.')), \
-                patch.object(self.game, 'set_post_death_attributes'):
+                patch.object(self.game.hero_death, 'set_post_death_attributes'):
             music_player.play_until_end.side_effect = lambda *args: events.append('death music')
-            self.game.handle_death()
+            self.game.hero_death.handle_death()
         music_player.play_until_end.assert_called_once_with(self.game.directories.death_music,
                                                             self.game.game_state.config)
         music_player.load_and_play_music.assert_not_called()

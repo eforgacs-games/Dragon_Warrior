@@ -519,7 +519,7 @@ GAME_NOT_KEPT = {
     # The map's key handlers (src/map_hotkeys.py), which hold no state: their requests are listed above
     'hotkeys',
     # The step, damage, fight and death logic moved out of Game, which keeps its state on the game (GAME_VALUES)
-    'step_triggers', 'hero_damage', 'field_encounters',
+    'step_triggers', 'hero_damage', 'field_encounters', 'hero_death',
     # Drawing, timing and the game's other parts, which hold no state of the game
     'screen', 'big_map', 'graphics', 'tile_size', 'foreground_rects', 'loop_count', 'events', 'clock', 'frame_clock',
     'frame_pacer', 'calculation', 'directories', 'game_functions', 'music_player', 'sound', 'title_menu', 'ending',

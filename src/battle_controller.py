@@ -209,7 +209,7 @@ class BattleController:
         return outcome
 
     def launch_fight(self, enemy_name: str) -> BattleOutcome:
-        """Fight enemy_name with launch_battle set. It stays set only on a defeat, so Game.handle_death draws the
+        """Fight enemy_name with launch_battle set. It stays set only on a defeat, so HeroDeath.handle_death draws the
         in-battle death screen; after a win or an escape a death on the map (a swamp step) is shown on the map."""
         rewind = getattr(self.game, 'rewind', None)
         if rewind is not None:
@@ -277,7 +277,7 @@ class BattleController:
             # has already let the victory (or level-up) music end and resumed it, the way the NES does before
             # ExitFight, and beating the Dragonlord's final form ends in Ending.final_boss_defeated's change of map,
             # which starts the overworld music: starting it again here would restart it. A defeat goes on to the death
-            # music (Game.handle_death).
+            # music (HeroDeath.handle_death).
             self.music_player.load_and_play_music(self.current_map.music_file_path)
             if current_battle.enemy.name == 'Dragonlord 2':
                 self.reload_map_after_running_from_final_form()

@@ -531,9 +531,9 @@ class TestGame(TestCase):
         self.game.player.gold = 101
         with patch.object(self.game.battle_ctrl, 'draw_command_window') as command_window, \
                 patch.object(self.game, 'drawer') as drawer, \
-                patch.object(self.game, 'music_player'), patch('src.game.display'), \
+                patch.object(self.game, 'music_player'), patch('src.hero_death.display'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
-            self.game.handle_death()
+            self.game.hero_death.handle_death()
         return command_window, drawer, show_text
 
     def test_death_in_battle(self):

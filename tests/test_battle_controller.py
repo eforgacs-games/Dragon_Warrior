@@ -713,7 +713,7 @@ class TestRunBattle(unittest.TestCase):
         battle.enemy_defeated.assert_not_called()
         self.game.music_player.load_and_play_music.assert_called_once()
 
-    # launch_battle tells Game.handle_death whether to draw the in-battle death screen: only a defeat keeps it set
+    # launch_battle tells HeroDeath.handle_death whether to draw the in-battle death screen: only a defeat keeps it set
 
     def test_launch_battle_is_cleared_after_a_win_or_an_escape(self, mock_battle_class):
         battle = mock_battle_class.return_value
