@@ -103,8 +103,10 @@ ENGLISH = Language('English', 'ENGLISH', system_locales=('en',), grammar=English
 # The checkpoint hero names give the strongest stats, like Arthur (see src/checkpoints.py)
 KOREAN = Language('Korean', '한국어', 'ko', system_locales=('ko',), text_type=KoreanText, quote_marks=("'", "'"),
                   grammar=KoreanGrammar(), checkpoint_hero_name='검객')
+JAPANESE = Language('Japanese', '日本語', 'ja', system_locales=('ja',), quote_marks=('「', '」'),
+                    checkpoint_hero_name='たびびと')
 
-LANGUAGES = (ENGLISH, KOREAN)
+LANGUAGES = (ENGLISH, KOREAN, JAPANESE)
 LANGUAGE_NAMES = tuple(language.name for language in LANGUAGES)
 CATALOG_LANGUAGES = tuple(language for language in LANGUAGES if language.has_catalog)
 _BY_NAME = {language.name: language for language in LANGUAGES}

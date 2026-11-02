@@ -42,7 +42,8 @@ FACING_KEY = 'Facing'
 # that's the hero's ancestor (로토 in Korean). The names are picked for the strongest stats, so playtests go quickly:
 # NES LoadStats sums the first four name tiles, and a sum ending in $D cuts agility and MP but keeps full strength and
 # HP, with the largest bonus (+3). "Arthur" sums to $6D. 검객 (swordsman) sums to $5D with this game's Korean mapping
-# (low byte of each code point); 용사 would sum to $15, which cuts agility and MP for only +1.
+# (low byte of each code point); 용사 would sum to $15, which cuts agility and MP for only +1. たびびと (traveler) sums
+# to $AD the same way.
 CHECKPOINT_HERO_NAME = 'Arthur'
 LOCALIZED_HERO_NAMES = {language.name: language.checkpoint_hero_name for language in LANGUAGES
                         if language.checkpoint_hero_name}

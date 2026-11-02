@@ -13,7 +13,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     DIALOG STYLE   CLASSIC (NES) / MODERN   (DIALOG_STYLE, src/dialog_box.py)
     FADE STYLE     NES / SMOOTH             (FADE_STYLE, src/visual_effects.py screen_fade)
     MUSIC          NES / SFC / ORCHESTRA    (SOUNDTRACK, src/soundtrack.py, src/directories.py music_paths)
-    LANGUAGE       ENGLISH / 한국어 / ...  (LANGUAGE: a global setting, src/settings.py, src/languages.py)
+    LANGUAGE       ENGLISH / 한국어 / 日本語  (LANGUAGE: a global setting, src/settings.py, src/languages.py)
     SCANLINES      OFF / ON                 (SCANLINES: a display filter, src/display_filters.py; global)
     SCALING        SMOOTH / PIXEL PERFECT   (SCALING: pygame's SCALED, or whole multiples of 256x240 only; global)
     VIEW           NES (4:3) / WIDE         (VIEW: more of the map left and right, src/view.py; global)
