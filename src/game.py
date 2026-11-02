@@ -125,9 +125,10 @@ class Game:
         self.foreground_rects = []
         self.repel_timer = 0  # NES RepelTimer, set by REPEL or Fairy Water
         self.repel_tick_pending = False  # a step has been taken, and CheckRepelTimer is still to come for it
-        # NES MjArmrHP: counts steps taken in Magic Armor; every 4th one heals 1 HP (see armor_step_heal)
+        # NES MjArmrHP: counts steps taken in Magic Armor; every 4th one heals 1 HP (StepTriggers.armor_step_heal)
         self.magic_armor_steps = 0
-        # ENCOUNTERS on HALF (not NES): whether the next random fight that would start is skipped (roll_for_fight)
+        # ENCOUNTERS on HALF (not NES): whether the next random fight that would start is skipped
+        # (FieldEncounters.thin_encounters)
         self.skip_next_encounter = False
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.door_history = OpenDoorHistory()  # which locked doors have been opened since the last overworld visit
