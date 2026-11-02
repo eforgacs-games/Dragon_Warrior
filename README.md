@@ -9,7 +9,7 @@ speed, a quest journal and a message log. Each one has its NES behaviour as one 
 or off on its own. A new game starts as the NES game and nothing else; choose the MODERN preset in the options to turn
 the recommended conveniences on at once.
 
-It plays in English, Korean or Japanese.
+It plays in English, Korean, Japanese, Traditional Chinese or Simplified Chinese.
 
 | | |
 | --- | --- |
@@ -62,8 +62,9 @@ is. Please attach it to a [new issue](https://github.com/eforgacs-games/Dragon_W
    and go into the folder.
 3. Run `uv sync`. It installs Python 3.13 if you don't have it (pygame doesn't support 3.14 yet) and the game's
    dependencies, in a `.venv` folder inside the project.
-4. Start the game with `uv run python -m src.game`. Add `--language English`, `--language Korean` or
-   `--language Japanese` to choose the language.
+4. Start the game with `uv run python -m src.game`. Add `--language English`, `--language Korean`,
+   `--language Japanese`, `--language "Traditional Chinese"` or `--language "Simplified Chinese"` to choose the
+   language.
 
 For the NES and SFC music, also install libgme (below). [CONTRIBUTING.md](CONTRIBUTING.md) has the rest: running
 without uv, the tests, playtest checkpoints and debug keys.
@@ -203,7 +204,7 @@ starts at its default.
 | DIALOG STYLE | CLASSIC (NES): the NES dialog window, whose text scrolls; MODERN: each message on a fresh window | CLASSIC | CLASSIC | CLASSIC |
 | FADE STYLE | NES: fades through the NES palette; SMOOTH: a fade to black | NES | NES | NES |
 | MUSIC | NES, SFC or ORCHESTRA (see below) | NES | NES | ORCHESTRA |
-| LANGUAGE | ENGLISH, 한국어 (Korean) or 日本語 (Japanese) | your system's | not changed | not changed |
+| LANGUAGE | ENGLISH, 한국어 (Korean), 日本語 (Japanese), 繁體中文 (Traditional Chinese) or 简体中文 (Simplified Chinese) | your system's | not changed | not changed |
 | SCANLINES | OFF or ON: darkens half of each of the NES's 240 lines, like an old TV | OFF | not changed | not changed |
 | SCALING | SMOOTH, or PIXEL PERFECT: whole multiples of the NES's 256x240 only | SMOOTH | not changed | not changed |
 | VIEW | NES (4:3), or WIDE: more of the map to the left and right, for a 16:9 or 16:10 screen | NES | NES | NES |
@@ -272,16 +273,19 @@ With one of these OFF, its key does nothing, as on the NES.
 
 ## Languages
 
-The game plays in **English** (the NES script), **Korean** (한국어) or **Japanese** (日本語). The translations follow
-the names and terms of the official translations of Square Enix's *Dragon Quest* remake (the smartphone version, also
-on Nintendo Switch): Gwaelin is 로라 and ローラ姫, the Dragonlord 용왕 and 竜王, Erdrick 로토 and ロト. Translated text
-is drawn with GNU Unifont, since the NES font has no Hangul, kana or kanji. The name entry is the NES's in every
+The game plays in **English** (the NES script), **Korean** (한국어), **Japanese** (日本語), **Traditional Chinese**
+(繁體中文) or **Simplified Chinese** (简体中文). The translations follow the names and terms of the official translations
+of Square Enix's *Dragon Quest* remake (the smartphone version, also on Nintendo Switch): Gwaelin is 로라, ローラ姫 and
+蘿拉公主, the Dragonlord 용왕, 竜王 and 龍王, Erdrick 로토, ロト and 洛特. Translated text is drawn with GNU Unifont,
+since the NES font has no Hangul, kana or Chinese characters. Chinese text, written without spaces, wraps between any
+two characters, never putting closing punctuation at the start of a line. The name entry is the NES's in every
 language.
 
-The game starts in your system's language (Korean or Japanese if the system is set to it, English otherwise). To
-switch, change **LANGUAGE** in the options: it applies at once and is remembered. From the command line,
-`--language English`, `--language Korean` or `--language Japanese` chooses it for that run, even over a language chosen
-in the options, which stays as it was for the next time.
+The game starts in your system's language (Korean, Japanese or Chinese if the system is set to it, English otherwise;
+a Taiwan, Hong Kong or Macau Chinese system starts in Traditional Chinese, any other in Simplified). To switch, change
+**LANGUAGE** in the options: it applies at once and is remembered. From the command line, `--language` with a
+language's name (`English`, `Korean`, `Japanese`, `"Traditional Chinese"`, `"Simplified Chinese"`) chooses it for that
+run, even over a language chosen in the options, which stays as it was for the next time.
 
 
 ## About, credits and legal
@@ -301,7 +305,7 @@ Thanks to:
   game's behaviour is checked against.
 - [pygame](https://www.pygame.org/) and SDL, which the game runs on.
 - [libgme (Game_Music_Emu)](https://github.com/libgme/game-music-emu), which plays the NES and SFC music.
-- [GNU Unifont](https://unifoundry.com/unifont/), for the Korean and Japanese text.
+- [GNU Unifont](https://unifoundry.com/unifont/), for the Korean, Japanese and Chinese text.
 - The font, music and sprite makers credited in [ASSETS.md](ASSETS.md).
 
 
