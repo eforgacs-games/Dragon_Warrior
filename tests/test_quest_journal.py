@@ -14,6 +14,7 @@ from pygame import K_h, K_q, KEYDOWN
 from pygame.event import Event
 
 from src.common import set_gettext_language
+from src.languages import LANGUAGE_NAMES
 from src.config.test_config import test_config
 from src.guardians import GOLEM
 from src.maps import map_lookup
@@ -174,7 +175,7 @@ class TestHints(TestCase):
     def test_every_page_fits_the_dialog_box(self):
         # The dialog box fits 5 rows above the continue arrow (tests/test_control_info.py). The NPCs' words aren't
         # checked: they're shown as the NPC shows them, scrolling on as they do then.
-        for language in ('English', 'Korean'):
+        for language in LANGUAGE_NAMES:
             _ = set_gettext_language(language)
             heading = _(OPTIONAL_HEADING) + "\n"
             texts = ([(heading if goal.optional else "") + _(goal.text) for goal in GOALS] +

@@ -1,0 +1,140 @@
+kind	english_nes	english_remake	japanese_official	ours	notes
+item	Bamboo Pole	Bamboo Spear	たけざお	たけざお	official
+item	Club	Oaken Club	こんぼう	こんぼう	official
+item	Copper Sword	Copper Sword	どうのつるぎ	どうのつるぎ	official
+item	Hand Axe	Iron Axe	てつのおの	てつのおの	official
+item	Broad Sword	Steel Broadsword	はがねのつるぎ	はがねのつるぎ	official
+item	Flame Sword	Fire Blade	ほのおのつるぎ	ほのおのつるぎ	official
+item	Erdrick's Sword	Erdrick's Sword	ロトのつるぎ	ロトのつるぎ	official
+item	Clothes	Plain Clothes	ぬののふく	ぬののふく	official
+item	Leather Armor	Leather Suit	かわのふく	かわのふく	official
+item	Chain Mail	Chain Mail	くさりかたびら	くさりかたびら	official
+item	Half Plate	Iron Armour	てつのよろい	てつのよろい	official
+item	Full Plate	Full Plate Armour	はがねのよろい	はがねのよろい	official
+item	Magic Armor	Magic Armour	まほうのよろい	まほうのよろい	official
+item	Erdrick's Armor	Erdrick's Armour	ロトのよろい	ロトのよろい	official
+item	Small Shield	Leather Shield	かわのたて	かわのたて	official
+item	Large Shield	Iron Shield	てつのたて	てつのたて	official
+item	Silver Shield	Silver Shield	みかがみのたて	みかがみのたて	official
+item	Herb	Medicinal Herb	やくそう	やくそう	official
+item	Torch	Torch	たいまつ	たいまつ	official
+item	Dragon's Scale	Dragon Scale	りゅうのうろこ	りゅうのうろこ	official
+item	Wings	Chimaera Wing	キメラのつばさ	キメラのつばさ	official
+item	Magic Key	Magic Key	かぎ	かぎ	official
+item	Fairy Water	Holy Water	せいすい	せいすい	official
+item	Ball of Light	Sphere of Light	ひかりのたま	ひかりのたま	official
+item	Tablet			せきばん	not in the remake; ours
+item	Fairy Flute	Faerie Flute	ようせいのふえ	ようせいのふえ	official
+item	Silver Harp	Lyre of Ire	ぎんのたてごと	ぎんのたてごと	official
+item	Staff of Rain	Staff of Rain	あまぐものつえ	あまぐものつえ	official
+item	Stones of Sunlight	Sunstone	たいようのいし	たいようのいし	official
+item	Gwaelin's Love	Princess's Pledge	おうじょのあい	おうじょのあい	official
+item	Erdrick's Token	Mark of Erdrick	ロトのしるし	ロトのしるし	official
+item	Rainbow Drop	Rainbow Drop	にじのしずく	にじのしずく	official
+item	Cursed Belt	Wasteband	のろいのベルト	のろいのベルト	official
+item	Death Necklace	Choker	しのくびかざり	しのくびかざり	official
+item	Fighter's Ring	Warrior's Ring	せんしのゆびわ	せんしのゆびわ	official
+spell	HEAL	Heal	ホイミ	ホイミ	official
+spell	HURT	Sizz	ギラ	ギラ	official
+spell	SLEEP	Snooze	ラリホー	ラリホー	official
+spell	RADIANT	Glow	レミーラ	レミーラ	official
+spell	STOPSPELL	Fizzle	マホトーン	マホトーン	official
+spell	OUTSIDE	Evac	リレミト	リレミト	official
+spell	RETURN	Zoom	ルーラ	ルーラ	official
+spell	REPEL	Holy Protection	トヘロス	トヘロス	official
+spell	HEALMORE	Midheal	ベホイミ	ベホイミ	official
+spell	HURTMORE	Sizzle	ベギラマ	ベギラマ	official
+monster	Slime	slime	スライム	スライム	official
+monster	Red Slime	she-slime	スライムベス	スライムベス	official
+monster	Drakee	dracky	ドラキー	ドラキー	official
+monster	Ghost	ghost	ゴースト	ゴースト	official
+monster	Magician	prestidigitator	まほうつかい	まほうつかい	official
+monster	Magidrakee	drackolyte	メイジドラキー	メイジドラキー	official
+monster	Scorpion	scorpion	おおさそり	おおさそり	official
+monster	Druin	lunatick	メーダ	メーダ	official
+monster	Poltergeist	fightgeist	メトロゴースト	メトロゴースト	official
+monster	Droll	drohl drone	ドロル	ドロル	official
+monster	Drakeema	drackyma	ドラキーマ	ドラキーマ	official
+monster	Skeleton	skeleton	がいこつ	がいこつ	official
+monster	Warlock	legerdeman	まどうし	まどうし	official
+monster	Metal Scorpion	iron scorpion	てつのさそり	てつのさそり	official
+monster	Wolf	bewarewolf	リカント	リカント	official
+monster	Wraith	skeleton scrapper	しりょう	しりょう	official
+monster	Metal Slime	metal slime	メタルスライム	メタルスライム	official
+monster	Specter	spitegeist	ヘルゴースト	ヘルゴースト	official
+monster	Wolflord	scarewolf	リカントマムル	リカントマムル	official
+monster	Druinlord	raving lunatick	メーダロード	メーダロード	official
+monster	Drollmagi	drohl diabolist	ドロルメイジ	ドロルメイジ	official
+monster	Wyvern	chimaera	キメラ	キメラ	official
+monster	Rogue Scorpion	death scorpion	しのさそり	しのさそり	official
+monster	Wraith Knight	skeleton soldier	しりょうのきし	しりょうのきし	official
+monster	Golem	golem	ゴーレム	ゴーレム	official
+monster	Goldman	gold golem	ゴールドマン	ゴールドマン	official
+monster	Knight	knight errant	よろいのきし	よろいのきし	official
+monster	Magiwyvern	hocus chimaera	メイジキメラ	メイジキメラ	official
+monster	Demon Knight	dark skeleton	かげのきし	かげのきし	official
+monster	Werewolf	tearwolf	キラーリカント	キラーリカント	official
+monster	Green Dragon	green dragon	ドラゴン	ドラゴン	official
+monster	Starwyvern	cosmic chimaera	スターキメラ	スターキメラ	official
+monster	Wizard	vis mager	だいまどう	だいまどう	official
+monster	Axe Knight	knight aberrant	あくまのきし	あくまのきし	official
+monster	Blue Dragon	blue dragon	キースドラゴン	キースドラゴン	official
+monster	Stoneman	stone golem	ストーンマン	ストーンマン	official
+monster	Armored Knight	knight abhorrent	しにがみのきし	しにがみのきし	official
+monster	Red Dragon	red dragon	ダースドラゴン	ダースドラゴン	official
+monster	Dragonlord	Dragonlord	りゅうおう	りゅうおう	official
+monster	Dragonlord 2	Dragonlord	りゅうおう	りゅうおう	official
+label	FIGHT	Attack	こうげき	こうげき	official
+label	RUN	Flee	にげる	にげる	official
+label	SPELL	Spells	じゅもん	じゅもん	official
+label	ITEM	Items	どうぐ	どうぐ	official
+label	STATUS	Status	つよさ	つよさ	official
+label	YES	Yes	はい	はい	official
+label	NO	No	いいえ	いいえ	official
+label	MESSAGE SPEED	Message Speed	ひょうじそくど	ひょうじそくど	official
+label	FAST	Fast	はやい	はやい	official
+label	SLOW	Slow	おそい	おそい	official
+label	BUY	Buy	かいにきた	かう	shortened: the BUY/SELL window is too narrow for the remake's かいにきた/うりにきた
+label	SELL	Sell	うりにきた	うる	shortened: the BUY/SELL window is too narrow for the remake's かいにきた/うりにきた
+line	When the sun and rain meet, a Rainbow Bridge shall appear.	‘When rain and sun, the twain do meet, the rain's bow shall a bridge complete.’	雨と太陽が 合わさる時 虹の橋が できる…。 古くからの 言い伝えですわ。	雨と太陽が 合わさる時 虹の橋が できる…。	whole line, official map.1.19.0#0
+line	Now, Gwaelin, come to my side.	<11King: Come now, Gwaelin. Return thee to thy rightful place at my side.	王「おお ！ よくぞ 姫を 助け出してくれた！ 心から 礼をいうぞ！ 王「さあ ローラ。 わしの となりへ。	さあ ローラ。 わしの となりへ。	whole line, official map.2.6.0#2
+line	In this temple do the sun and rain meet.	There shall rain and sun, the twain meet at last...	雨と 太陽が 合わさる ほこらじゃ。	雨と 太陽が 合わさる ほこらじゃ。	whole line, official map.6.7.1#0
+person	hero	hero	勇者	勇者	official (in labels: ゆうしゃ)
+person	Erdrick	Erdrick	ロト	ロト	official
+person	Gwaelin	Princess Lora	ローラ姫	ローラ姫	official; she calls herself ローラ
+person	King Lorik	King Lorik XVI	王	ラルス16世	the remake doesn't name him; the NES manual's name, only where the NES line names him
+person	Dragonlord	Dragonlord	竜王	竜王	official, in dialog (the monster name is りゅうおう)
+person	Wynn	Wynn	ゆきのふ	ゆきのふ	official
+place	Alefgard	Alefgard	アレフガルド	アレフガルド	official
+place	Tantegel Castle	Tantegel Castle	ラダトームの城	ラダトームの城	official
+place	Brecconary	Tantegel	ラダトームの町	ラダトームの町	official
+place	Garinham	Garinham	ガライの町	ガライの町	official
+place	Kol	Kol	マイラの村	マイラの村	official
+place	Rimuldar	Rimuldar	リムルダール	リムルダール	official
+place	Hauksness	Damdara	ドムドーラ	ドムドーラ	official
+place	Cantlin	Cantlin	メルキド	メルキド	official
+place	Charlock	Dragonlord's Castle	竜王の城	竜王の城	official
+place	Erdrick's Cave	Erdrick's Dungeon	ロトの洞窟	ロトの洞窟	official
+place	Garin's Grave	Garin's Grave	ガライの墓	ガライの墓	official
+place	Shrine of Rain	Shrine of Rain	雨のほこら	雨のほこら	official
+term	Adventure Log	Adventure Log	冒険の書	冒険の書	official
+term	GOLD	gold	ゴールド	ゴールド	official
+term	Experience	Experience	経験値	経験値	official
+term	spell (in dialog)	spell	呪文	呪文	official (in menus: じゅもん)
+label	COMMAND		コマンド	コマンド	official
+label	TALK			はなす	not in the remake's menus; the NES Japanese word
+label	STATUS		つよさ	つよさ	official
+label	STAIRS			かいだん	not in the remake's menus; the NES Japanese word
+label	SEARCH			しらべる	not in the remake's menus; the NES Japanese word
+label	DOOR			とびら	not in the remake's menus; the NES Japanese word
+label	TAKE			とる	not in the remake's menus; the NES Japanese word
+label	NAME:			なまえ:	not in the remake's menus; the NES Japanese word
+label	STRENGTH:		ちから	ちから:	official
+label	AGILITY:		すばやさ	すばやさ:	official
+label	MAXIMUM HP:		さいだいHP	さいだいHP:	official
+label	MAXIMUM MP:		さいだいMP	さいだいMP:	official
+label	ATTACK POWER:		こうげき力	こうげき力:	official
+label	DEFENSE POWER:		しゅび力	しゅび力:	official
+label	WEAPON:		ぶき	ぶき:	official
+label	ARMOR:		よろい	よろい:	official
+label	SHIELD:		たて	たて:	official

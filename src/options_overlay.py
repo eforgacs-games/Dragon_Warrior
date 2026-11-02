@@ -13,7 +13,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     DIALOG STYLE   CLASSIC (NES) / MODERN   (DIALOG_STYLE, src/dialog_box.py)
     FADE STYLE     NES / SMOOTH             (FADE_STYLE, src/visual_effects.py screen_fade)
     MUSIC          NES / SFC / ORCHESTRA    (SOUNDTRACK, src/soundtrack.py, src/directories.py music_paths)
-    LANGUAGE       ENGLISH / 한국어          (LANGUAGE: a global setting, src/settings.py)
+    LANGUAGE       ENGLISH / 한국어 / 日本語  (LANGUAGE: a global setting, src/settings.py, src/languages.py)
     SCANLINES      OFF / ON                 (SCANLINES: a display filter, src/display_filters.py; global)
     SCALING        SMOOTH / PIXEL PERFECT   (SCALING: pygame's SCALED, or whole multiples of 256x240 only; global)
     VIEW           NES (4:3) / WIDE         (VIEW: more of the map left and right, src/view.py; global)
@@ -94,6 +94,7 @@ from src.game_options import AUTO_GRIND, AUTO_GRIND_STOP, AUTO_STAIRS, AUTOSAVE,
     DUNGEON_MAP, ENCOUNTERS, EXP_GOLD, FADE_STYLE, GAME_SPEED_KEYS, LANGUAGE, MENU_SPEED, MESSAGE_LOG, MESSAGE_SPEED, \
     MUSIC, NAME_CONFIRM, NPCS_MAKE_WAY, OPTIONS_BY_CONFIG_KEY, QUEST_JOURNAL, QUICK_ACTION, REWIND, RUN_BUTTON, \
     SAVE_STATES, SCALING, SCANLINES, SHOP_PREVIEW, SMART_A, STATUS_WINDOW, VIEW, Option, Options, apply_options
+from src.languages import LANGUAGES
 from src.options_screen import MESSAGE_SPEED_LABELS
 from src.selection import frame_events, next_frame
 from src.translated_window import draw_translated_window
@@ -190,7 +191,7 @@ OPTION_PAGES = (
         OptionRow("FADE STYLE", FADE_STYLE, ("NES", "SMOOTH")),
         OptionRow("MUSIC", MUSIC, ("NES", "SFC", "ORCHESTRA")),
         # Each language's name is in that language, so it can be found whichever is on
-        OptionRow("LANGUAGE", LANGUAGE, ("ENGLISH", "한국어")),
+        OptionRow("LANGUAGE", LANGUAGE, tuple(language.option_label for language in LANGUAGES)),
         OptionRow("SCANLINES", SCANLINES, ("OFF", "ON")),
         OptionRow("SCALING", SCALING, ("SMOOTH", "PIXEL PERFECT")),
         OptionRow("VIEW", VIEW, ("NES (4:3)", "WIDE")),
@@ -342,9 +343,11 @@ def options_layout(config: dict, page: int = 0) -> WindowLayout:
 
 
 def overlay_texts() -> list[str]:
-    """Every text the window can show, for the translation catalog (catalog_tools.dynamic_messages)."""
+    """Every text the window can show, for the translation catalog (catalog_tools.dynamic_messages). The languages'
+    names aren't translated: each is shown in its own language in every language."""
     return ([page.title for page in OPTION_PAGES] + [PRESET_LABEL, *PRESET_LABELS.values(), PAGE_LABEL] +
-            [text for page in OPTION_PAGES for row in page.rows for text in (row.label, *row.value_labels)])
+            [text for page in OPTION_PAGES for row in page.rows
+             for text in (row.label, *(() if isinstance(row, OptionRow) and row.option is LANGUAGE else row.value_labels))])
 
 
 def darken(screen: Surface) -> None:

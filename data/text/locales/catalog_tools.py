@@ -1,13 +1,16 @@
-"""Keep the Korean gettext catalog in step with the game's text, without needing GNU gettext installed.
+"""Keep the gettext catalogs in step with the game's text, without needing GNU gettext installed.
 
-    uv run --frozen python data/text/locales/catalog_tools.py missing   # list untranslated messages
-    uv run --frozen python data/text/locales/catalog_tools.py add       # append them to the .po with empty msgstr
-    uv run --frozen python data/text/locales/catalog_tools.py references  # rewrite the #: source references
+    uv run --frozen python data/text/locales/catalog_tools.py missing [ko]   # list untranslated messages
+    uv run --frozen python data/text/locales/catalog_tools.py add [ko]       # append them to the .po with empty msgstr
+    uv run --frozen python data/text/locales/catalog_tools.py references    # rewrite the #: source references
+
+The last argument of missing and add is the catalog's locale code (src/languages.py: ko, ja, ...); without it, the
+Korean catalog.
 
 Messages are found the way xgettext would find them: the first argument of every _("...") or self._("...") call in
 src/ and data/. Some text is translated through a variable (_(item_name), self._(enemy.name)), so item, spell and
-enemy names are added from the game's own tables. tests/test_translations.py fails when any of these has no Korean
-translation.
+enemy names are added from the game's own tables. tests/test_translations.py fails when any of these has no
+translation in any catalog.
 
 The #: comment above each entry names the files its text comes from, without line numbers (like xgettext
 --add-location=file): line numbers would go stale with every edit to those files. The references command rewrites them
@@ -26,7 +29,14 @@ if str(ROOT) not in sys.path:  # run as a script, only data/text/locales is on t
 from src import catalog  # noqa: E402
 
 LOCALES_DIR = Path(__file__).resolve().parent
-KOREAN_PO = LOCALES_DIR / 'ko' / 'LC_MESSAGES' / 'base.po'
+
+
+def catalog_path(locale_code: str) -> Path:
+    """The .po of a language, e.g. data/text/locales/ja/LC_MESSAGES/base.po for 'ja'."""
+    return LOCALES_DIR / locale_code / 'LC_MESSAGES' / 'base.po'
+
+
+KOREAN_PO = catalog_path('ko')
 # The catalogs whose #: references are kept up to date: each language's .po, and the template
 CATALOGS = (*sorted(LOCALES_DIR.glob('*/LC_MESSAGES/*.po')), LOCALES_DIR / 'base.pot')
 SOURCE_DIRS = ('src', 'data')
@@ -244,15 +254,16 @@ def update_references(paths: tuple[Path, ...] = CATALOGS) -> list[Path]:
 
 def main(argv: list[str]) -> int:
     command = argv[1] if len(argv) > 1 else 'missing'
+    path = catalog_path(argv[2] if len(argv) > 2 else 'ko')
     if command == 'missing':
-        missing = missing_translations()
+        missing = missing_translations(read_po(path))
         for msgid, locations in missing.items():
             print(po_entry(msgid, '', locations))
-        print(f"{len(missing)} message(s) without a Korean translation", file=sys.stderr)
+        print(f"{len(missing)} message(s) without a translation in {path.relative_to(ROOT)}", file=sys.stderr)
         return 1 if missing else 0
     if command == 'add':
-        added = add_missing_entries()
-        print(f"Added {len(added)} empty entr{'y' if len(added) == 1 else 'ies'} to {KOREAN_PO.relative_to(ROOT)}")
+        added = add_missing_entries(path)
+        print(f"Added {len(added)} empty entr{'y' if len(added) == 1 else 'ies'} to {path.relative_to(ROOT)}")
         return 0
     if command == 'references':
         changed = update_references()

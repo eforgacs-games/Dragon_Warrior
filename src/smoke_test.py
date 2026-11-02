@@ -1,12 +1,12 @@
 """
-`python src/game.py --smoke-test` (or `DragonWarrior --smoke-test` in a build, with `--language Korean` for the Korean
-game): checks that the game finds and can load all of its files and that the emulated soundtracks (the NES's and the
-SFC's, through libgme: src/chiptune.py) render every track, then plays a few hundred frames of it with scripted
-button presses (SMOKE_SCENES) and exits with 0, or with 1 if anything is missing, doesn't load or raises. The release
-workflow runs it on every build, headless (SDL_VIDEODRIVER and SDL_AUDIODRIVER set to dummy), to prove the build
-bundles everything it needs: the fonts (the NES font for English, Unifont for Korean), the images, map tiles, music,
-sounds, the libgme library and the translations a player meets in the first minutes. The scenes each play with
-another soundtrack, so the music streams in the game with each.
+`python src/game.py --smoke-test` (or `DragonWarrior --smoke-test` in a build, with `--language Korean` or another
+language for that language's game): checks that the game finds and can load all of its files and that the emulated
+soundtracks (the NES's and the SFC's, through libgme: src/chiptune.py) render every track, then plays a few hundred
+frames of it with scripted button presses (SMOKE_SCENES) and exits with 0, or with 1 if anything is missing, doesn't
+load or raises. The release workflow runs it on every build, headless (SDL_VIDEODRIVER and SDL_AUDIODRIVER set to
+dummy), to prove the build bundles everything it needs: the fonts (the NES font for English, Unifont for the other
+languages), the images, map tiles, music, sounds, the libgme library and the translations a player meets in the
+first minutes. The scenes each play with another soundtrack, so the music streams in the game with each.
 
 The scenes are played through the virtual joypad (src/virtual_joypad.py, which auto-grind drives), so every loop of
 the game (the map, a dialog, the COMMAND window, a battle) reads the presses as it reads the player's keys, in a build
@@ -28,6 +28,7 @@ from src.chiptune import (ChiptuneError, Emulator, bundled_library_dirs, chiptun
                           tagged_length_seconds)
 from src.directories import CHIPTUNE_SOUNDTRACKS, CLIP_NAMES, MUSIC_NAMES, Directories, clip_paths, music_paths
 from src.game_options import AUTO_STAIRS
+from src.languages import CATALOG_LANGUAGES, Language, language_named
 from src.paths import data_path, is_frozen
 from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, SOUNDTRACKS, Soundtrack
 from src.virtual_joypad import VirtualJoypad
@@ -43,8 +44,8 @@ FONT_EXTENSIONS = ('.ttf', '.otf')
 # with (the NES's end music has almost a second of it)
 CHIPTUNE_CHECK_SECONDS = 2
 CHIPTUNE_CHECK_SAMPLE_RATE = 44100
-# A line the Korean catalog translates, to check it loaded
-KOREAN_CHECK_LINE = "Thou art a fool!"
+# A line every catalog translates, to check it loaded
+CHECK_LINE = "Thou art a fool!"
 
 
 def game_file_paths(config: dict) -> set[str]:
@@ -139,27 +140,28 @@ def check_game_files(config: dict) -> list[str]:
         except Exception as error:  # every failure is reported, not just the first
             problems.append(f"can't load {path}: {error}")
     problems.extend(check_chiptune_tracks())
-    problems.extend(check_korean_translations())
+    for language in CATALOG_LANGUAGES:
+        problems.extend(check_translations(language))
     return problems
 
 
-def check_korean_translations() -> list[str]:
-    """Compiles the bundled Korean .po (as the game does when Korean is chosen) and translates a line with it. Not
-    through load_translations' cache, so it checks the files of the build that's running."""
+def check_translations(language: Language) -> list[str]:
+    """Compiles the language's bundled .po (as the game does when the language is chosen) and translates a line with
+    it. Not through load_translations' cache, so it checks the files of the build that's running."""
     try:
-        translations = compile_po(po_path('ko'))
+        translations = compile_po(po_path(language.locale_code or ''))
     except (OSError, ValueError) as error:
-        return [f"can't load the Korean translations: {error}"]
-    translated = translations.gettext(KOREAN_CHECK_LINE)
-    if translated == KOREAN_CHECK_LINE:
-        return [f"the Korean translations don't translate {KOREAN_CHECK_LINE!r}"]
+        return [f"can't load the {language.name} translations: {error}"]
+    if translations.gettext(CHECK_LINE) == CHECK_LINE:
+        return [f"the {language.name} translations don't translate {CHECK_LINE!r}"]
     return []
 
 
 def check_game_language(game: 'Game') -> list[str]:
-    """The running game translates its text into the language it was started in (only Korean has a catalog)."""
-    if game.config['LANGUAGE'] == 'Korean' and game._(KOREAN_CHECK_LINE) == KOREAN_CHECK_LINE:
-        return [f"the game started in Korean doesn't translate {KOREAN_CHECK_LINE!r}"]
+    """The running game translates its text into the language it was started in (English has no catalog)."""
+    language = language_named(game.config['LANGUAGE'])
+    if language.has_catalog and game._(CHECK_LINE) == CHECK_LINE:
+        return [f"the game started in {language.name} doesn't translate {CHECK_LINE!r}"]
     return []
 
 
@@ -325,7 +327,7 @@ def play_scene(game: 'Game', scene: SmokeScene, max_seconds: float = SCENE_MAX_S
     exception from the game is raised."""
     game.config.update({**SCENE_CONFIG, **scene.config})
     save = {**read_checkpoint('throne_room'), **SCENE_SAVE_OPTIONS, **scene.save_changes}
-    save['Name'] = checkpoint_hero_name(save['Name'], game.config['LANGUAGE'])  # 검객 in Korean
+    save['Name'] = checkpoint_hero_name(save['Name'], game.config['LANGUAGE'])  # 검객 in Korean, たびびと in Japanese
     game.load_game(save)
     game.initial_dialog_enabled = bool(game.config.get('INITIAL_DIALOG_ENABLED'))
     log = SceneLog()

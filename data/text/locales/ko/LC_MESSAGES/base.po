@@ -489,7 +489,7 @@ msgstr ""
 msgid "Excellent move!\n"
 msgstr "회심의 일격!\n"
 
-#: src/battle.py
+#: src/languages.py
 msgid ""
 "{} draws near!\n"
 msgstr ""
@@ -541,7 +541,7 @@ msgstr "그러나 저지되고 말았다!"
 msgid "A miss! No damage hath been scored!"
 msgstr "공격이 빗나갔다!"
 
-#: src/battle.py
+#: src/languages.py
 msgid "Thou hast done well in defeating the {}.\n"
 msgstr "{} 물리쳤다!\n"
 
@@ -942,7 +942,7 @@ msgstr "열쇠를 가지고 있지 않다!"
 msgid "There is nothing to take here, {}."
 msgstr "여기서 가져갈 것이 없다, {}님."
 
-#: src/battle.py
+#: src/languages.py
 msgid ""
 "Courage and wit have served thee well.\n"
 "Thou hast been promoted to the next level.\n"
@@ -958,11 +958,11 @@ msgstr "새로운 주문을 익혔다!\n"
 msgid "The Dragonlord revealed his true self!\n"
 msgstr "용왕이 정체를 드러냈다!\n"
 
-#: src/battle.py
+#: src/languages.py
 msgid "A {}"
 msgstr "{}"
 
-#: src/battle.py
+#: src/languages.py
 msgid "An {}"
 msgstr "{}"
 
@@ -2550,11 +2550,9 @@ msgstr "Backspace: 되감기"
 msgid "LANGUAGE"
 msgstr "언어"
 
-#: src/options_overlay.py
 msgid "ENGLISH"
 msgstr "ENGLISH"
 
-#: src/options_overlay.py
 msgid "한국어"
 msgstr "한국어"
 

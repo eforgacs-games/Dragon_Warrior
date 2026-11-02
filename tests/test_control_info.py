@@ -3,6 +3,7 @@ from unittest import TestCase
 import pygame
 
 from data.text.intro_lookup_table import ControlInfo
+from src.languages import LANGUAGE_NAMES
 from src.config.test_config import test_config
 from src.directories import Directories
 from src.text import DialogBoxWrapper, WRAP_LENGTH, set_font_by_ascii_chars
@@ -53,7 +54,7 @@ class TestControlInfoHelpPages(TestCase):
         # from the text's left edge (tile 3) to inside the right border (half a tile in from tile 14)
         max_row_width = (2 + 12) * tile_size - tile_size // 2 - 3 * tile_size
         directories = Directories(test_config)
-        for language in ('English', 'Korean'):
+        for language in LANGUAGE_NAMES:
             for page in self.help_pages(debug_keys=True, language=language):
                 rows = wrapped_rows(page)
                 with self.subTest(language=language, page=page):

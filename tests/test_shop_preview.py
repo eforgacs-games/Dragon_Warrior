@@ -12,6 +12,7 @@ from pygame import KEYDOWN, K_DOWN, K_ESCAPE, K_UP, Rect
 from pygame.event import Event
 
 from src.common import set_gettext_language
+from src.languages import CATALOG_LANGUAGES, LANGUAGE_NAMES
 from src.config.test_config import test_config
 from src.directories import Directories
 from src.shop_preview import ARROW, ATTACK_LABEL, DEFENSE_LABEL, SHOP_PREVIEW_WINDOW, StatPreview, \
@@ -172,18 +173,22 @@ class TestWindow(PreviewTestCase):
 
     def test_the_biggest_numbers_fit(self):
         # Level 30 strength (140) with Erdrick's Sword, and the most defense power a hero can have, in English (one
-        # NES tile a character; window_tiles raises ValueError for text outside the window) and in Korean (Unifont)
-        korean = set_gettext_language('Korean')
+        # NES tile a character; window_tiles raises ValueError for text outside the window) and in every translation
+        # (Unifont)
         font = set_font_by_ascii_chars(['공격력'], 16, None, Directories(test_config))
         nes_tile = test_config['TILE_SIZE'] / 2
         right_border = SHOP_PREVIEW_WINDOW.width * 2 - 1
         for preview in (StatPreview(ATTACK_LABEL, 180, 168), StatPreview(DEFENSE_LABEL, 115, 111)):
-            with self.subTest(preview=preview):
-                layout = preview_layout(preview)
-                window_tiles(layout._replace(texts=tuple(text._replace(text=text.text.replace(ARROW, ' '))
-                                                         for text in layout.texts)))
+            layout = preview_layout(preview)
+            window_tiles(layout._replace(texts=tuple(text._replace(text=text.text.replace(ARROW, ' '))
+                                                     for text in layout.texts)))
+            for language in CATALOG_LANGUAGES:
+                translate = set_gettext_language(language.name)
                 for text in layout.texts:
-                    self.assertLessEqual(text.column + font.size(korean(text.text))[0] / nes_tile, right_border)
+                    with self.subTest(preview=preview, language=language.name, text=translate(text.text)):
+                        self.assertLessEqual(text.column + font.size(translate(text.text))[0] / nes_tile,
+                                             right_border)
+        korean = set_gettext_language('Korean')
         self.assertEqual(("공격력", "수비력"), (korean(ATTACK_LABEL), korean(DEFENSE_LABEL)))
 
     def test_english_is_drawn_in_nes_tiles_with_the_arrow(self):
@@ -257,7 +262,7 @@ class TestInTheShop(PreviewTestCase):
                           StatPreview(ATTACK_LABEL, 4, 14)], shown)  # back on the Copper Sword
 
     def test_in_every_weapon_and_armor_shop_and_in_korean(self):
-        for language in ('English', 'Korean'):
+        for language in LANGUAGE_NAMES:
             self.dialog_lookup._ = set_gettext_language(language)
             for name, inventory in weapon_and_armor_shops(self.config).items():
                 with self.subTest(language=language, shop=name):

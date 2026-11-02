@@ -25,6 +25,8 @@ import re
 from dataclasses import dataclass
 from collections.abc import Iterator
 
+from src.languages import LANGUAGES
+
 DIALOG_ROWS = 8  # DialogToScreenBuf: "Total rows=8"
 DIALOG_COLUMNS = 22  # CalcWndYByteNum: "22 text characters per line"
 ARROW_COLUMN = 11  # TxtWaitAnim: the arrow goes in screen column $10; dialog columns start at screen column 5
@@ -35,7 +37,8 @@ MESSAGE_SPEEDS = {'Fast': 0, 'Normal': 1, 'Slow': 2}
 SCROLL_ROWS_PER_FRAME = 2
 SCROLL_FRAMES = 1 + DIALOG_ROWS // SCROLL_ROWS_PER_FRAME
 
-OPEN_QUOTES = ('`', "'", '‘', '“')
+# The NES's open quote (`) and the ones a translated line opens with (each language's quote_marks, e.g. 「)
+OPEN_QUOTES = tuple(dict.fromkeys(('`', "'", '‘', '“', *(language.quote_marks[0] for language in LANGUAGES))))
 BLANK = ' '
 PERIOD_END_QUOTE = '.’'  # TXT_PRD_QUOTE ($52): one tile, '.'' in the disassembly's text comments
 

@@ -496,7 +496,7 @@ msgstr ""
 msgid "Excellent move!\n"
 msgstr "회심의 일격!\n"
 
-#: src/battle.py
+#: src/languages.py
 msgid "{} draws near!\n"
 msgstr "{} 나타났다!\n"
 
@@ -535,7 +535,7 @@ msgstr "그러나 저지되고 말았다!"
 msgid "A miss! No damage hath been scored!"
 msgstr "공격이 빗나갔다!"
 
-#: src/battle.py
+#: src/languages.py
 msgid "Thou hast done well in defeating the {}.\n"
 msgstr "{} 물리쳤다!\n"
 
