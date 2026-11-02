@@ -43,6 +43,15 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
+          # The cyclic-import queries count imports under `if TYPE_CHECKING:` (type hints only, never run) as real ones,
+          # so every module that types its `game: 'Game'` "closes a cycle" through src.game. A real import cycle would
+          # fail on import, which the tests and the smoke test catch.
+          config: |
+            query-filters:
+              - exclude:
+                  id: py/unsafe-cyclic-import
+              - exclude:
+                  id: py/cyclic-import
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
