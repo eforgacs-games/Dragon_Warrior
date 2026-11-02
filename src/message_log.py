@@ -171,11 +171,11 @@ def log_lines(entries: Iterable[LogEntry], translate: Callable[[str], str], brea
     return lines
 
 
-def log_layout(lines: list[str], top: int, hint: str = HINT) -> WindowLayout:
-    """The window with the lines from ``top``."""
+def log_layout(lines: list[str], top: int, hint: str = HINT, title: WindowText = LOG_TITLE) -> WindowLayout:
+    """The window with the lines from ``top`` (the stats page, src/stats_screen.py, has its own title)."""
     shown = lines[top:top + VISIBLE_LINES] or [EMPTY]
     texts = tuple(WindowText(line, TEXT_COLUMN, FIRST_ROW + 2 * number) for number, line in enumerate(shown) if line)
-    return WindowLayout(window=LOG_WINDOW, title=LOG_TITLE, texts=texts + (WindowText(hint, TEXT_COLUMN, HINT_ROW),))
+    return WindowLayout(window=LOG_WINDOW, title=title, texts=texts + (WindowText(hint, TEXT_COLUMN, HINT_ROW),))
 
 
 def screen_texts() -> list[str]:
@@ -184,15 +184,25 @@ def screen_texts() -> list[str]:
 
 
 class MessageLogScreen:
-    """The log over the map, run until it's closed (see the module docstring)."""
+    """The log over the map, run until it's closed (see the module docstring). The stats page (src/stats_screen.py)
+    is drawn and scrolled the same way, with its own title, lines and keys."""
+    title = LOG_TITLE
+    close_keys = CLOSE_KEYS
 
     def __init__(self, game: 'Game') -> None:
         self.game = game
         self.config: dict = game.game_state.config
         self._: Callable[[str], str] = set_gettext_language(self.config.get('LANGUAGE'))
-        self.lines = log_lines(game.message_log.entries, self._,
-                               language_named(self.config.get('LANGUAGE')).breaks_anywhere)
-        self.top = self.last_top()
+        self.lines = self.screen_lines()
+        self.top = self.first_top()
+
+    def screen_lines(self) -> list[str]:
+        return log_lines(self.game.message_log.entries, self._,
+                         language_named(self.config.get('LANGUAGE')).breaks_anywhere)
+
+    def first_top(self) -> int:
+        """The newest messages are shown first."""
+        return self.last_top()
 
     def last_top(self) -> int:
         return max(0, len(self.lines) - VISIBLE_LINES)
@@ -217,7 +227,7 @@ class MessageLogScreen:
 
     def handle_key(self, pressed_key: int) -> bool:
         """Scroll, or return True to close."""
-        if pressed_key in CLOSE_KEYS:
+        if pressed_key in self.close_keys:
             return True
         if pressed_key in UP_KEYS or pressed_key == K_UP:
             self.top = max(0, self.top - 1)
@@ -235,7 +245,8 @@ class MessageLogScreen:
         screen = self.game.screen
         screen.blit(background, (0, 0))
         darken(screen)
-        draw_translated_window(screen, log_layout(self.lines, self.top), self.game.color, self.config, self._)
+        layout = log_layout(self.lines, self.top, title=self.title)
+        draw_translated_window(screen, layout, self.game.color, self.config, self._)
         display.update(Rect(0, 0, screen.get_width(), screen.get_height()))
 
     def close(self, background: Surface) -> None:

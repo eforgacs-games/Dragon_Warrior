@@ -3266,3 +3266,56 @@ msgstr "안타깝지만 모험의 서에 기록하지 못했네."
 #: src/options_overlay.py
 msgid "SFC"
 msgstr "SFC"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Play stats"
+msgstr "{}: 플레이 기록"
+
+#: src/options_overlay.py
+msgid "STATS PAGE"
+msgstr "플레이 기록"
+
+#: src/controls_screen.py
+#: src/stats_screen.py
+msgid "STATS"
+msgstr "플레이 기록"
+
+#: src/stats_screen.py
+msgid "PLAY TIME"
+msgstr "플레이 시간"
+
+#: src/stats_screen.py
+msgid "STEPS"
+msgstr "걸음 수"
+
+#: src/stats_screen.py
+msgid "FIGHTS WON"
+msgstr "이긴 전투"
+
+#: src/stats_screen.py
+msgid "FIGHTS FLED"
+msgstr "도망친 전투"
+
+#: src/stats_screen.py
+msgid "FIGHTS LOST"
+msgstr "진 전투"
+
+#: src/stats_screen.py
+msgid "DEATHS"
+msgstr "죽은 횟수"
+
+#: src/stats_screen.py
+msgid "GOLD EARNED"
+msgstr "얻은 골드"
+
+#: src/stats_screen.py
+msgid "GOLD SPENT"
+msgstr "쓴 골드"
+
+#: src/stats_screen.py
+msgid "CHESTS OPENED"
+msgstr "연 보물 상자"
+
+#: src/stats_screen.py
+msgid "MONSTERS DEFEATED"
+msgstr "물리친 마물"

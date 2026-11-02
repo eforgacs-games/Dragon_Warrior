@@ -20,6 +20,7 @@ surfaces, no sprites; a map is named, not copied). It holds everything the game'
   fight is skipped), the options in force (src/game_options.py) and the window color;
 - the message log (src/message_log.py): putting a snapshot back puts back the messages shown up to then, so the log
   never shows what a rewind undid;
+- the play statistics (src/play_stats.py), the play time too: they're the adventure's as it was then;
 - the random number generator (Python's ``random``, which every roll in the game reads), so that loading a state and
   pressing the same keys plays out the same way, fights included.
 
@@ -56,6 +57,7 @@ from src.maps import CharlockB1, map_lookup
 from src.menu import CommandMenu
 from src.message_log import decoded_entries
 from src.options_overlay import apply_log_options, apply_option
+from src.play_stats import PlayStats
 from src.game_options import options_from_config, options_from_save, options_to_save
 from src.sprites.animated_sprite import AnimatedSprite
 from src.soundtrack import SOUNDTRACK_KEY, soundtrack
@@ -290,6 +292,8 @@ def take_snapshot(game: 'Game') -> dict[str, Any]:
         'dungeon_map': game.dungeon_map.to_save() if hasattr(game, 'dungeon_map') else {},
         # The messages shown so far (src/message_log.py), so the log doesn't show what a rewind undid
         'message_log': game.message_log.to_save(),
+        # The play statistics (src/play_stats.py)
+        'play_stats': game.play_stats.to_save(),
     }
 
 
@@ -362,6 +366,8 @@ def decode_snapshot(snapshot: Any) -> dict[str, Any]:
             # a state saved before the dungeon map has none: every floor unexplored
             'dungeon_map': DungeonMap.from_save(snapshot.get('dungeon_map', {})),
             'message_log': decoded_entries(snapshot['message_log']),
+            # a state saved before the play statistics has none: all 0
+            'play_stats': PlayStats.from_save(snapshot.get('play_stats', {})),
         }
         if len(decoded['chest_history']) != len(TreasureChestHistory().slots) or len(decoded['camera']) != 2 \
                 or len(decoded['color']) != 3:
@@ -454,6 +460,7 @@ def _restore_values(game: 'Game', state: dict[str, Any]) -> None:
     hero = state['hero']
     game.dungeon_map = state['dungeon_map'].copy()  # a copy: the rewind can put the same snapshot back again
     game.message_log.restore(state['message_log'])
+    game.play_stats = state['play_stats'].copy()  # a copy: the rewind can put the same snapshot back again
     for name in (*PLAYER_VALUES, *PLAYER_CELLS):
         setattr(player, name, hero[name])
     for name in PLAYER_LISTS:

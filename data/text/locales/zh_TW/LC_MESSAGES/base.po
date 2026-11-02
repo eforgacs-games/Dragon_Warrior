@@ -3469,3 +3469,56 @@ msgstr "很遺憾，無法記錄到冒險之書。"
 #: src/options_overlay.py
 msgid "SFC"
 msgstr "SFC"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Play stats"
+msgstr "{}: 遊戲記錄"
+
+#: src/options_overlay.py
+msgid "STATS PAGE"
+msgstr "遊戲記錄"
+
+#: src/controls_screen.py
+#: src/stats_screen.py
+msgid "STATS"
+msgstr "遊戲記錄"
+
+#: src/stats_screen.py
+msgid "PLAY TIME"
+msgstr "遊戲時間"
+
+#: src/stats_screen.py
+msgid "STEPS"
+msgstr "步數"
+
+#: src/stats_screen.py
+msgid "FIGHTS WON"
+msgstr "獲勝的戰鬥"
+
+#: src/stats_screen.py
+msgid "FIGHTS FLED"
+msgstr "逃跑的戰鬥"
+
+#: src/stats_screen.py
+msgid "FIGHTS LOST"
+msgstr "戰敗的戰鬥"
+
+#: src/stats_screen.py
+msgid "DEATHS"
+msgstr "死亡次數"
+
+#: src/stats_screen.py
+msgid "GOLD EARNED"
+msgstr "獲得的金幣"
+
+#: src/stats_screen.py
+msgid "GOLD SPENT"
+msgstr "花費的金幣"
+
+#: src/stats_screen.py
+msgid "CHESTS OPENED"
+msgstr "打開的寶箱"
+
+#: src/stats_screen.py
+msgid "MONSTERS DEFEATED"
+msgstr "打倒的魔物"

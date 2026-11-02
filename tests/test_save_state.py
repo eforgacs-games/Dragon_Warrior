@@ -54,8 +54,11 @@ def walk_script(frame: int) -> set[int]:
 
 
 def comparable(snapshot: dict) -> dict:
-    """A snapshot as it reads back from a state file."""
-    return json.loads(json.dumps(snapshot))
+    """A snapshot as it reads back from a state file, without the play time: it's real time (src/play_stats.py),
+    which no two runs share."""
+    readback = json.loads(json.dumps(snapshot))
+    readback.get('play_stats', {}).pop('play_time_ms', None)
+    return readback
 
 
 class SaveStateTestCase(TestCase):
@@ -495,7 +498,7 @@ GAME_KEPT_IN_THEIR_OWN_ENTRIES = {
     'player',  # 'hero'
     'current_map',  # 'map', 'roaming', 'fixed' and 'hero_underlying_tile'
     'layouts',  # 'layout_changes'
-    'camera', 'story_flags', 'chest_history', 'door_history', 'color', 'dungeon_map', 'message_log',
+    'camera', 'story_flags', 'chest_history', 'door_history', 'color', 'dungeon_map', 'message_log', 'play_stats',
     'game_state',  # 'game_state': GAME_STATE_VALUES
     'movement',  # 'movement': MOVEMENT_VALUES and the NPC schedule
     'map_mgr',  # 'fought_on_stairs'
@@ -511,11 +514,12 @@ GAME_NOT_KEPT = {
     'show_coordinates', 'last_coordinates', 'debug_tools', 'splash_screen_enabled', 'start_time',
     # Requests for a window or a state: a snapshot is taken with none asked for, and putting one back clears them
     'paused', 'pause_requested', 'cmd_menu_requested', 'options_requested', 'message_log_requested',
-    'auto_grind_requested', 'dungeon_map_requested', 'smart_a_pending', 'state_request', 'state_request_due',
+    'auto_grind_requested', 'dungeon_map_requested', 'play_stats_requested', 'smart_a_pending', 'state_request',
+    'state_request_due',
     # Only set and read during a map change
     'last_map',
     # The snapshots' own machinery, and auto-grind, which drives the game rather than being part of it
-    'autosave', 'rewind', 'auto_grind',
+    'autosave', 'rewind', 'auto_grind', 'play_clock',
     # The map's key handlers (src/map_hotkeys.py), which hold no state: their requests are listed above
     'hotkeys',
     # The step, damage, fight and death logic moved out of Game, which keeps its state on the game (GAME_VALUES)
