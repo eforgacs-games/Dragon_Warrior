@@ -165,6 +165,14 @@ need grammar, like Korean particles). Adding one is a catalog with every message
 declaration. Its text is drawn in GNU Unifont; `tests/test_unifont.py` checks the font has every character the
 catalog uses, and `tests/test_translated_windows.py` that every window's text fits.
 
+The `#:` comment above each entry names the files the text comes from (no line numbers, so they don't go stale with
+every edit). When text moves to another file, the test fails until they're rewritten from the source, which changes
+nothing but those lines:
+
+```bash
+uv run python data/text/locales/catalog_tools.py references
+```
+
 ## Reference scripts
 
 `reference/reference_utility_scripts/` has offline scripts that regenerate checked-in files from the NES data:

@@ -25,7 +25,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps)
     QUICK ACTION   OFF (NES) / ON           (QUICK_ACTION: Enter takes, opens or talks, MapHotkeys.press_smart_a_key)
     SMART A        OFF (NES) / ON           (SMART_A: A does TALK, TAKE, DOOR or STAIRS, MapHotkeys.smart_command)
-    ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, Game.thin_encounters)
+    ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, FieldEncounters.thin_encounters)
     EXP/GOLD       x1 (NES) / x2 / x4       (EXP_GOLD: what a won fight gives, Battle.enemy_defeated)
     QUEST JOURNAL  OFF (NES) / LEARNED / LEARNED+HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
     AUTOSAVE       OFF (NES) / ON           (AUTOSAVE: the autosave slot, src/autosave.py)
@@ -78,7 +78,7 @@ window wait, as they do for a dialog.
 """
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pygame import K_PAGEDOWN, K_PAGEUP, KEYDOWN, SRCALPHA, Rect, Surface, display
 
@@ -102,6 +102,9 @@ from src.view import full_screen
 from src.soundtrack import SOUNDTRACK_KEY
 from src.waiting import set_game_speed, set_speed_keys_enabled
 from src.windows import Window, WindowLayout, WindowText
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 # The keys that open the overlay on the map, and close it again
 OPTIONS_KEYS = SELECT_BUTTON_KEYS + KeySet('OPTIONS')  # U and Tab, as bound (src/controls.py)
@@ -260,7 +263,7 @@ def preset_settings(config: dict) -> dict[str, Any]:
 IMMEDIATE_SWITCHES = ('GAME_SPEED_KEYS', 'CHEAT_KEYS')
 
 
-def apply_option(game: Any, config_key: str) -> None:
+def apply_option(game: 'Game', config_key: str) -> None:
     """An option has just been changed (in the overlay, or by loading options). Most are read from the config when
     they're next needed; these are made to follow at once:
 
@@ -298,7 +301,7 @@ def apply_option(game: Any, config_key: str) -> None:
         game.rewind.snapshots.clear()
 
 
-def apply_log_options(game: Any, options: Options) -> None:
+def apply_log_options(game: 'Game', options: Options) -> None:
     """Put an adventure log's (or a save state's) options in force (apply_options), with the switches that act at
     once (IMMEDIATE_SWITCHES). The music isn't restarted: what loads them starts the map's music."""
     apply_options(game.game_state.config, options)
@@ -357,7 +360,7 @@ def darken(screen: Surface) -> None:
 class OptionsOverlay:
     """The overlay over the map, run until it's closed (see the module docstring)."""
 
-    def __init__(self, game, pages: Sequence[OptionPage] = OPTION_PAGES):
+    def __init__(self, game: 'Game', pages: Sequence[OptionPage] = OPTION_PAGES) -> None:
         self.game = game
         self.pages = tuple(pages)
         self.config: dict = game.game_state.config

@@ -108,10 +108,10 @@ class TestQuitDuringGameWaits(TestCase):
         self.game.player.current_hp = 0
         self.post_quit()
         with patch.object(self.game, 'drawer'), patch.object(self.game, 'music_player'), \
-                patch('src.game.display'), \
+                patch('src.hero_death.display'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text, \
                 self.assertRaises(SystemExit):
-            self.game.handle_death()
+            self.game.hero_death.handle_death()
         show_text.assert_not_called()
 
     def test_quit_right_after_the_death_music_still_quits(self):
@@ -121,10 +121,10 @@ class TestQuitDuringGameWaits(TestCase):
         with patch.object(self.game, 'drawer'), \
                 patch.object(self.game, 'music_player',
                              **{'play_until_end.side_effect': lambda *args: self.post_quit()}), \
-                patch('src.game.display'), \
+                patch('src.hero_death.display'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text, \
                 self.assertRaises(SystemExit):
-            self.game.handle_death()
+            self.game.hero_death.handle_death()
         show_text.assert_not_called()
 
     def test_quit_right_after_the_kings_opening_words_still_quits(self):
@@ -153,8 +153,8 @@ class TestQuitDuringGameWaits(TestCase):
         self.game.player.current_hp = 0
         pygame.event.post(Event(KEYDOWN, key=K_RETURN))
         with patch.object(self.game, 'drawer'), patch.object(self.game, 'music_player') as music_player, \
-                patch('src.game.display'), patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
-            self.game.handle_death()
+                patch('src.hero_death.display'), patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
+            self.game.hero_death.handle_death()
         music_player.play_until_end.assert_called_once()  # the death music, played to the end
         self.assertEqual(pygame.event.get(KEYDOWN), [])
 

@@ -123,7 +123,7 @@ class TestHandleBattlePrompts(BattlePromptFrames):
     def test_no_input_does_nothing(self, mock_time, mock_display):
         self.assertFalse(self.controller.handle_battle_prompts(False, self.battle))
         self.assertEqual(self.battle.turn, 0)
-        self.game.receive_damage.assert_not_called()
+        self.game.hero_damage.receive_damage.assert_not_called()
 
     def test_down_moves_to_run_without_taking_turn(self, mock_time, mock_display):
         self.press(K_DOWN)
@@ -713,7 +713,7 @@ class TestRunBattle(unittest.TestCase):
         battle.enemy_defeated.assert_not_called()
         self.game.music_player.load_and_play_music.assert_called_once()
 
-    # launch_battle tells Game.handle_death whether to draw the in-battle death screen: only a defeat keeps it set
+    # launch_battle tells HeroDeath.handle_death whether to draw the in-battle death screen: only a defeat keeps it set
 
     def test_launch_battle_is_cleared_after_a_win_or_an_escape(self, mock_battle_class):
         battle = mock_battle_class.return_value
@@ -1022,7 +1022,7 @@ class TestEnemyMove(unittest.TestCase):
 
     def test_enemy_without_pattern_attacks(self, mock_time):
         self.move(enemies.Slime())
-        self.game.receive_damage.assert_called_once_with(2)
+        self.game.hero_damage.receive_damage.assert_called_once_with(2)
         self.assertEqual(self.last_message(), 'The Slime attacks!\n')
 
     def test_enemy_attack_can_miss(self, mock_time):
@@ -1031,29 +1031,29 @@ class TestEnemyMove(unittest.TestCase):
             self.controller.enemy_move(battle)
         battle.enemy_missed_attack.assert_called_once_with(self.game.cmd_menu)
         battle.missed_attack.assert_not_called()
-        self.game.receive_damage.assert_not_called()
+        self.game.hero_damage.receive_damage.assert_not_called()
 
     def test_successful_hurt_damages_player(self, mock_time):
         self.move(enemies.Magician(), roll=0, effect=7)
-        self.game.receive_damage.assert_called_once_with(7)
+        self.game.hero_damage.receive_damage.assert_called_once_with(7)
         self.game.sound.play_sound.assert_any_call(self.game.directories.spell_sfx)
 
     def test_failed_spell_roll_falls_through_to_attack(self, mock_time):
         self.move(enemies.Magician(), roll=99)
-        self.game.receive_damage.assert_called_once_with(2)
+        self.game.hero_damage.receive_damage.assert_called_once_with(2)
         self.assertEqual(self.last_message(), 'The Magician attacks!\n')
 
     def test_magic_armor_reduces_hurt(self, mock_time):
         self.game.player.armor = "Magic Armor"
         self.move(enemies.Magician(), roll=0, effect=10)
-        self.assertEqual(self.game.receive_damage.call_args.args[0], 6)
+        self.assertEqual(self.game.hero_damage.receive_damage.call_args.args[0], 6)
 
     def test_sleep_puts_player_to_sleep_and_the_enemy_moves_again(self, mock_time):
         # NES EnCastSleep -> PlayerAsleepDialog -> StartEnemyTurn: the hero gets no wake roll before the enemy's
         # next turn. SLEEP is skipped on that turn (the hero is asleep), so the enemy attacks.
         self.move(patterned_enemy([(100, Spell.SLEEP, True), Spell.ATTACK]))
         self.assertTrue(self.game.player.is_asleep)
-        self.game.receive_damage.assert_called_once_with(2)
+        self.game.hero_damage.receive_damage.assert_called_once_with(2)
         shown = [c.args[0] for c in self.game.cmd_menu.show_line_in_dialog_box.call_args_list]
         self.assertEqual(shown[1:3], ['Thou art asleep.\n', 'Thou art still asleep.\n'])
 
@@ -1066,7 +1066,7 @@ class TestEnemyMove(unittest.TestCase):
     def test_sleep_skipped_when_player_already_asleep(self, mock_time):
         self.game.player.is_asleep = True
         self.move(patterned_enemy([(100, Spell.SLEEP, True), Spell.ATTACK]))
-        self.game.receive_damage.assert_called_once_with(2)
+        self.game.hero_damage.receive_damage.assert_called_once_with(2)
 
     def test_stopspell(self, mock_time):
         self.move(patterned_enemy([(100, Spell.STOPSPELL, True), Spell.ATTACK]), effect=1)
@@ -1079,7 +1079,7 @@ class TestEnemyMove(unittest.TestCase):
 
     def test_firebreath(self, mock_time):
         self.move(patterned_enemy([(100, Spell.FIREBREATH, True), Spell.ATTACK]), effect=20)
-        self.game.receive_damage.assert_called_once_with(20)
+        self.game.hero_damage.receive_damage.assert_called_once_with(20)
         self.game.sound.play_sound.assert_any_call(self.game.directories.breathe_fire_sfx)
         self.assertEqual(self.game.cmd_menu.show_line_in_dialog_box.call_args_list[0].args[0],
                          'The Magician is breathing fire.\n')
@@ -1120,12 +1120,12 @@ class TestEnemyMove(unittest.TestCase):
     def test_erdricks_armor_reduces_firebreath(self, mock_time):
         self.game.player.armor = "Erdrick's Armor"
         self.move(patterned_enemy([(100, Spell.FIREBREATH, True), Spell.ATTACK]), effect=20)
-        self.assertEqual(self.game.receive_damage.call_args.args[0], 12)
+        self.assertEqual(self.game.hero_damage.receive_damage.call_args.args[0], 12)
 
     def test_heal_condition_false_skips_to_next_entry(self, mock_time):
         self.move(enemies.Drakeema(), roll=0, effect=5)
         # HEAL is skipped at full HP, so HURT is cast instead
-        self.game.receive_damage.assert_called_once_with(5)
+        self.game.hero_damage.receive_damage.assert_called_once_with(5)
 
     def test_heal_recovers_enemy_hp(self, mock_time):
         # HP drops after the pattern was last built; the heal check must still see the new HP.
@@ -1133,7 +1133,7 @@ class TestEnemyMove(unittest.TestCase):
         drakeema.hp = 1
         self.move(drakeema, roll=0, effect=5)
         self.assertEqual(drakeema.hp, 6)
-        self.game.receive_damage.assert_not_called()
+        self.game.hero_damage.receive_damage.assert_not_called()
 
     def test_heal_does_not_exceed_max_hp(self, mock_time):
         drakeema = enemies.Drakeema()
@@ -1157,15 +1157,15 @@ class TestEnemyMove(unittest.TestCase):
     def test_spell_chance_is_exact_percentage(self, mock_time):
         # A 75% spell casts on rolls 0-74 of 0-99.
         self.move(patterned_enemy([(75, Spell.HURT, True), Spell.ATTACK]), roll=74, effect=7)
-        self.game.receive_damage.assert_called_once_with(7)
+        self.game.hero_damage.receive_damage.assert_called_once_with(7)
         self.game.reset_mock()
         self.move(patterned_enemy([(75, Spell.HURT, True), Spell.ATTACK]), roll=75, effect=7)
-        self.game.receive_damage.assert_called_once_with(2)
+        self.game.hero_damage.receive_damage.assert_called_once_with(2)
 
     def test_stopspell_skipped_when_already_stopspelled(self, mock_time):
         self.game.player.is_stopspelled = True
         self.move(patterned_enemy([(100, Spell.STOPSPELL, True), Spell.ATTACK]), effect=1)
-        self.game.receive_damage.assert_called_once_with(2)
+        self.game.hero_damage.receive_damage.assert_called_once_with(2)
         self.assertEqual(self.last_message(), 'The Magician attacks!\n')
 
     def test_sleeping_enemy_stays_asleep(self, mock_time):
@@ -1176,7 +1176,7 @@ class TestEnemyMove(unittest.TestCase):
                 patch('src.battle_controller.calculate_enemy_attack_damage', return_value=2):
             self.assertFalse(self.controller.enemy_move(battle))
         self.assertTrue(slime.is_asleep)
-        self.game.receive_damage.assert_not_called()
+        self.game.hero_damage.receive_damage.assert_not_called()
         self.assertEqual(self.last_message(), 'The Slime is asleep.')
 
     def test_sleeping_enemy_wakes_and_attacks(self, mock_time):
@@ -1189,7 +1189,7 @@ class TestEnemyMove(unittest.TestCase):
         self.assertFalse(slime.is_asleep)
         messages = [c.args[0] for c in self.game.cmd_menu.show_line_in_dialog_box.call_args_list]
         self.assertEqual(messages[0], 'Slime hath woken up.')
-        self.game.receive_damage.assert_called_once_with(2)
+        self.game.hero_damage.receive_damage.assert_called_once_with(2)
 
     def test_sleeping_enemy_wakes_one_time_in_three(self, mock_time):
         slime = enemies.Slime()
@@ -1213,7 +1213,7 @@ class TestEnemyMove(unittest.TestCase):
         enemy = patterned_enemy([(100, Spell.HURT, True), Spell.ATTACK])
         enemy.is_stopspelled = True
         self.move(enemy, effect=7)
-        self.game.receive_damage.assert_not_called()
+        self.game.hero_damage.receive_damage.assert_not_called()
         messages = [c.args[0] for c in self.game.cmd_menu.show_line_in_dialog_box.call_args_list]
         self.assertEqual(messages, ['Magician chants the spell of HURT.', 'But that spell hath been blocked.'])
 
@@ -1221,7 +1221,7 @@ class TestEnemyMove(unittest.TestCase):
         enemy = patterned_enemy([(100, Spell.FIREBREATH, True), Spell.ATTACK])
         enemy.is_stopspelled = True
         self.move(enemy, effect=20)
-        self.game.receive_damage.assert_called_once_with(20)
+        self.game.hero_damage.receive_damage.assert_called_once_with(20)
 
     def test_enemy_flees_from_strong_player(self, mock_time):
         self.game.player.strength = 10
@@ -1230,7 +1230,7 @@ class TestEnemyMove(unittest.TestCase):
                 patch.object(self.controller, 'enemy_run_away', return_value=True) as run_away:
             self.assertTrue(self.controller.enemy_move(battle))
         run_away.assert_called_once_with(battle, battle.enemy)
-        self.game.receive_damage.assert_not_called()
+        self.game.hero_damage.receive_damage.assert_not_called()
 
     def test_enemy_attacks_when_flee_roll_fails(self, mock_time):
         self.game.player.strength = 10
@@ -1238,7 +1238,7 @@ class TestEnemyMove(unittest.TestCase):
         with patch('src.battle_controller.random.randint', return_value=1), \
                 patch('src.battle_controller.calculate_enemy_attack_damage', return_value=2):
             self.assertFalse(self.controller.enemy_move(battle))
-        self.game.receive_damage.assert_called_once_with(2)
+        self.game.hero_damage.receive_damage.assert_called_once_with(2)
 
     def test_enemy_does_not_flee_from_weak_player(self, mock_time):
         self.game.player.strength = 9
@@ -1246,7 +1246,7 @@ class TestEnemyMove(unittest.TestCase):
         with patch('src.battle_controller.random.randint', return_value=0), \
                 patch('src.battle_controller.calculate_enemy_attack_damage', return_value=2):
             self.assertFalse(self.controller.enemy_move(battle))
-        self.game.receive_damage.assert_called_once_with(2)
+        self.game.hero_damage.receive_damage.assert_called_once_with(2)
 
     def test_every_enemy_can_take_a_turn(self, mock_time):
         # Every pattern entry must be ATTACK or a (chance, spell, condition) 3-tuple;
@@ -1269,12 +1269,12 @@ class TestEnemyMove(unittest.TestCase):
     def test_starwyvern_acts_at_full_hp(self, mock_time):
         # A bare "FIREBREATH" in Starwyvern's pattern used to make it skip its turn.
         self.move(enemies.Starwyvern(), roll=99)
-        self.game.receive_damage.assert_called_once()
+        self.game.hero_damage.receive_damage.assert_called_once()
 
     def test_armor_reduced_damage_is_whole_number(self, mock_time):
         self.game.player.armor = "Magic Armor"
         self.move(enemies.Magician(), roll=0, effect=10)
-        self.assertIsInstance(self.game.receive_damage.call_args.args[0], int)
+        self.assertIsInstance(self.game.hero_damage.receive_damage.call_args.args[0], int)
 
 
 class TestStartFight(unittest.TestCase):

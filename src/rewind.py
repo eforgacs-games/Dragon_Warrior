@@ -22,12 +22,15 @@ Snapshots are small (no surfaces; see save_state), so 60 of them take a few hund
 measures them).
 """
 from collections import deque
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pygame import time
 
 from src.direction import Direction
 from src.save_state import restore_snapshot, take_snapshot
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 REWIND_INTERVAL_FRAMES = 30
 REWIND_CAPACITY = 60
@@ -38,7 +41,7 @@ REWIND_STEP_MS = 4 * 1000 // 60
 class Rewind:
     """The snapshots and the rewinding (see the module docstring)."""
 
-    def __init__(self, game: Any) -> None:
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         self.snapshots: deque[dict[str, Any]] = deque(maxlen=REWIND_CAPACITY)
         self.frames_since_snapshot = 0
@@ -70,8 +73,9 @@ class Rewind:
         self.fight_candidate = take_snapshot(self.game) if self.enabled and self.fight_may_start() else None
 
     def fight_may_start(self) -> bool:
-        """Whether this map frame may start a fight: a scripted fight is waiting (Game.handle_battles), a hill's pause
-        ends (MovementController.hill_pause_frame) or the hero's step ends (Game.handle_battles, the guardians)."""
+        """Whether this map frame may start a fight: a scripted fight is waiting (FieldEncounters.handle_battles), a
+        hill's pause ends (MovementController.hill_pause_frame) or the hero's step ends (FieldEncounters.handle_battles,
+        the guardians)."""
         game = self.game
         if game.battle_ctrl.pending_scripted_battle is not None or game.movement.hill_pause_frames == 1:
             return True

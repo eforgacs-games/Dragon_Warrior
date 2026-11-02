@@ -1,6 +1,7 @@
 # Playtest checklist
 
-A pass through the whole critical path in about 40 minutes, using checkpoints instead of a full playthrough.
+A pass through the whole critical path in about 40 minutes, using checkpoints instead of a full playthrough. Before a
+release, also play a release candidate start to finish: see [Release-candidate playthrough](#release-candidate-playthrough-on-a-downloaded-build).
 
 `tests/test_story_run.py` and `tests/test_checkpoints.py` already check the story logic headless: items, flags,
 warps, dialog order and the credits list. This checklist covers what they can't check: how it **looks**, how it
@@ -161,6 +162,95 @@ The same as 8, but you never brought her back. Gwaelin's Love isn't in the inven
 - The window drop-down and drop-up effects, the fades between maps, and the hero's sprite (armed, with or without a
   shield, or carrying Gwaelin).
 
+## Release-candidate playthrough on a downloaded build
+
+Before tagging a release (#433), play the whole game on a **downloaded** release-candidate build, not from source. It
+catches what only a build can get wrong: a file left out of the bundle, libgme, the saves and settings folders, the
+unsigned app on each OS. Allow about 4 to 5 hours, spread over several sessions.
+
+### Getting the build
+
+Pushing a tag such as `v1.0-rc1` runs the release workflow (`.github/workflows/release.yml`). It builds Windows (x64),
+macOS (Apple Silicon) and Linux (x64) with PyInstaller (`dragon_warrior.spec`), smoke tests each archive, and
+publishes them on the [Releases page](https://github.com/eforgacs-games/Dragon_Warrior/releases) under that tag:
+
+```bash
+gh release download v1.0-rc1 --repo eforgacs-games/Dragon_Warrior --pattern '*linux-x64*'  # or windows-x64, macos-arm64
+```
+
+Unpack it and start it as [README.md](README.md#download-and-play) says, the way a player would. The first start is
+the first thing to check:
+
+- [ ] **Windows**: run `DragonWarrior\DragonWarrior.exe`. The build isn't signed, so SmartScreen may block it: **More
+      info**, then **Run anyway**. Started from Explorer, no console window stays open.
+- [ ] **macOS**: `Dragon Warrior.app` isn't signed, so the first open is refused. Right-click it and choose **Open**,
+      or, on newer macOS, try once and then **System Settings > Privacy & Security > Open Anyway**. After that it
+      opens normally.
+- [ ] **Linux**: `tar -xzf DragonWarrior-*.tar.gz`, then `DragonWarrior/DragonWarrior`.
+
+The builds accept the same flags as `src/game.py` (`--checkpoint`, `--dev`, `--language`, `--smoke-test`), and the
+checkpoints are bundled. Pass flags from a terminal: `DragonWarrior\DragonWarrior.exe --checkpoint dragonlord` in a
+Command Prompt, `"Dragon Warrior.app/Contents/MacOS/DragonWarrior" --checkpoint dragonlord` on macOS (once the app
+has been allowed to open). `--smoke-test --language English`, then `--language Korean`, is a quick check that the
+download is complete before you start.
+
+**Where things go in a build** (not `src/saves/`): adventure logs and save states in `%APPDATA%\Dragon Warrior\saves`,
+`~/Library/Application Support/Dragon Warrior/saves` or `~/.local/share/dragon-warrior/saves`; `settings.json` and
+crash logs in `%APPDATA%\Dragon Warrior`, `~/Library/Application Support/Dragon Warrior` or
+`~/.config/dragon-warrior`. A game started with `--checkpoint` saves to the temp folder instead
+(`dragon_warrior_checkpoint_saves`), and a normal start can't continue it, so play each checkpoint leg in one sitting.
+
+### The route
+
+Without `--dev` throughout, and with the options left at the NES preset unless a step says otherwise, so the real
+encounter rate, damage, difficulty and music are what you play. The long middle of the game uses checkpoints; the
+start and the end are played in full. Times are rough.
+
+| Leg | How | Time |
+| --- | --- | --- |
+| 1. New game to Garinham | In full, from the title screen | 1.5 h |
+| 2. Garin's Grave, the Silver Harp | `--checkpoint garins_grave` | 20 min |
+| 3. Swamp Cave, rescuing Gwaelin and bringing her home | `--checkpoint swamp_cave` | 20 min |
+| 4. The Rainbow Drop | `--checkpoint rainbow_drop_shrine` | 10 min |
+| 5. Charlock to the credits | In full, `--checkpoint rainbow_bridge` | 1 h |
+| 6. The other ending, bad ending | `--checkpoint ending_carrying_gwaelin`, `--checkpoint dragonlord` | 15 min |
+| 7. Settings, languages and soundtracks | Across all the legs, and a final pass on the save from leg 1 | 30 min |
+
+1. **New game to Garinham.** Start with no flags. Title screen, a new adventure log, name entry, King Lorik's opening.
+   Take the throne room chests, level up around Tantegel and Brecconary (buy gear, use the inn), then go on to
+   Garinham. Along the way:
+   - [ ] Save with King Lorik, close the window, start the game again and CONTINUE: the hero, items, gold and position
+         are as saved, and the adventure log appears in the save folder above.
+   - [ ] Die once (on purpose is fine): you wake in front of the king with half your gold, as on the NES.
+   - [ ] Random fights, the music for each area, the dark caves and the torch, buying and selling.
+2. **The Silver Harp**, 3. **Gwaelin** and 4. **the Rainbow Drop**: play sections 2 to 4 of the checklist above, but
+   without `--dev`, so you walk and fight your way there and back.
+5. **Charlock to the credits.** From `rainbow_bridge`: build the bridge, cross it, fight your way down Charlock, find
+   the hidden stairs, beat the Dragonlord's two forms, walk back to Tantegel and watch the ending to THE END. This
+   checkpoint has a Broad Sword and Full Plate, not Erdrick's gear, so expect a hard fight; that's the point.
+6. **The other endings.** `ending_carrying_gwaelin` for the ending while carrying her, and `dragonlord` answering YES
+   twice for the bad ending (section 7 of the checklist).
+7. **Settings and the rest**: the checks below, spread over the legs.
+
+### What to check on a build
+
+- [ ] **Soundtracks**: switch MUSIC to NES, SFC and ORCHESTRA (U or Tab opens the options) in a town, a dungeon and a
+      fight. NES and SFC come from the bundled libgme: if it were missing, the game would say so at startup and play
+      the orchestra instead. The jingles (inn, level up, victory) are the SFC's with SFC.
+- [ ] **Korean**: switch LANGUAGE to 한국어, and also start once with `--language Korean`. Every window is Korean
+      (Unifont), with no missing glyphs or boxes, and the text fits its windows. Play at least one leg in Korean.
+- [ ] **Options persisting**: change MUSIC, save with the king, quit and CONTINUE: it's kept with the adventure log.
+      Change SCANLINES or SCALING and restart: it's kept in `settings.json` for every adventure.
+- [ ] **Window**: resize the window, toggle fullscreen with **F11**, change the game speed (1 to 5, with GAME SPEED
+      on). Restart: the window size, fullscreen and speed are remembered.
+- [ ] **The MODERN preset**: turn it on for part of a leg. Save states (Shift+F1, F1), autosave and CONTINUE AUTOSAVE
+      on the title menu, the run button and rewind all work, and their files land in the save folder.
+- [ ] **Quest journal**: press **Q** with QUEST JOURNAL at OFF (nothing), LEARNED and LEARNED+HINTS. On a new game it
+      lists only what you've heard of, and goals are marked done as you finish them.
+- [ ] **Controller**, if you have one: plug it in while the game runs. Moving, Start (the command window), Select (the
+      options), and choosing letters on the name entry screen.
+- [ ] **Quitting**: close the window on the map, in a fight and in a menu. The game exits cleanly, with no crash log.
+
 ## Reporting a bug
 
 Write down:
@@ -174,3 +264,7 @@ Write down:
 
 Example: *`charlock_throne`, `--dev`, CharlockB1, `Current coordinates: (17, 7)`: searched behind the throne, the
 stairs appeared but no sound played.*
+
+Open each bug as an [issue](https://github.com/eforgacs-games/Dragon_Warrior/issues) with the `bug` label (and `v1.0`
+if it should block the release). From a build, also give the OS, the release tag (e.g. `v1.0-rc1`), and attach the
+crash log if the game wrote one (it says where).

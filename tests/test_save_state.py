@@ -236,13 +236,13 @@ class TestReplay(SaveStateTestCase):
         fights: list = []
 
         def start(game):
-            real_roll = __import__('src.game', fromlist=['roll_encounter']).roll_encounter
+            real_roll = __import__('src.field_encounters', fromlist=['roll_encounter']).roll_encounter
 
             def roll(*args):
                 result = real_roll(*args)
                 rolls.append((game.current_map.identifier, args[2:], result))
                 return result
-            patch('src.game.roll_encounter', side_effect=roll).start()
+            patch('src.field_encounters.roll_encounter', side_effect=roll).start()
             patch.object(game.battle_ctrl, 'run_battle',
                          side_effect=lambda enemies: fights.append(enemies) or BattleOutcome.ESCAPED).start()
             self.go_to(game, map_name, coordinates)
@@ -518,6 +518,8 @@ GAME_NOT_KEPT = {
     'autosave', 'rewind', 'auto_grind',
     # The map's key handlers (src/map_hotkeys.py), which hold no state: their requests are listed above
     'hotkeys',
+    # The step, damage, fight and death logic moved out of Game, which keeps its state on the game (GAME_VALUES)
+    'step_triggers', 'hero_damage', 'field_encounters', 'hero_death',
     # Drawing, timing and the game's other parts, which hold no state of the game
     'screen', 'big_map', 'graphics', 'tile_size', 'foreground_rects', 'loop_count', 'events', 'clock', 'frame_clock',
     'frame_pacer', 'calculation', 'directories', 'game_functions', 'music_player', 'sound', 'title_menu', 'ending',

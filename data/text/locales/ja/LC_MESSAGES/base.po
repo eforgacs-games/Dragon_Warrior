@@ -66,7 +66,7 @@ msgid "Full Plate"
 msgstr "はがねのよろい"
 
 #. official: data.1.0.6
-#: src/game.py
+#: src/hero_death.py
 msgid "Thou art dead."
 msgstr "あなたは 死にました。"
 
@@ -773,12 +773,12 @@ msgid "The {} attacks!\n"
 msgstr "{}の こうげき！\n"
 
 #. official: data.1.0.18
-#: src/game.py
+#: src/hero_damage.py
 msgid "Thy Hits decreased by {}.\n"
 msgstr "{}ポイントの ダメージを うけた！\n"
 
 #. official: data.1.0.18
-#: src/game.py
+#: src/hero_damage.py
 msgid "Thy Hit decreased by {}.\n"
 msgstr "{}ポイントの ダメージを うけた！\n"
 
@@ -1173,17 +1173,17 @@ msgid "said {}."
 msgstr "と {}は いいました。"
 
 #. official: map.2.7.1
-#: src/game.py
+#: src/step_triggers.py
 msgid "Cursed one,be gone!"
 msgstr "呪われし者よ 出てゆけ！"
 
 #. official: data.5.44.0
-#: src/game.py
+#: src/step_triggers.py
 msgid "REPEL has lost its effect."
 msgstr "トヘロスの 効力が なくなった。"
 
 #. official: data.5.19.0
-#: src/game.py
+#: src/step_triggers.py
 msgid "The Fairy Water has lost its effect."
 msgstr "せいすいの 効力が なくなった。"
 
@@ -1207,11 +1207,11 @@ msgstr "むてきモード オン"
 msgid "Invulnerability disabled"
 msgstr "むてきモード オフ"
 
-#: src/game.py
+#: src/hero_death.py
 msgid "Thou hast failed and thou art cursed."
 msgstr "死んだうえに 呪われて おるではないか！"
 
-#: src/game.py
+#: src/hero_death.py
 msgid "Leave at once!"
 msgstr "すぐに 出てゆけ！"
 

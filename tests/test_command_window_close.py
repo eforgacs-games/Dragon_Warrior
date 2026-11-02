@@ -46,7 +46,7 @@ class TestCommandWindowClose(TestCase):
         self.addCleanup(test_config.__setitem__, 'SAVE_DIR', test_config['SAVE_DIR'])
         self.game = new_game()
         self.game.game_state.is_initial_dialog = False
-        self.game.handle_battles = MagicMock()  # type: ignore[method-assign]
+        self.game.field_encounters.handle_battles = MagicMock()  # type: ignore[method-assign]
         pygame.event.clear()
 
     def run_and_record(self, walk_loops: int):
