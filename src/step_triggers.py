@@ -39,6 +39,7 @@ class StepTriggers:
         game = self.game
         game.tiles_moved_since_spawn += 1
         game.game_state.tiles_moved_total += 1
+        game.play_stats.take_step()
         # NES GameEngineLoop: the radiant timer (#216) and CheckRepelTimer are outside CheckForTriggers, so they keep
         # ticking (and wear off) after the Dragonlord's defeat. Both run at the top of the loop (LCA56, LCA6C), after
         # ChkSpecialLoc has rolled this step's fight, so they tick once that roll (and any fight) is done: see

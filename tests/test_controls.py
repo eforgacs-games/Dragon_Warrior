@@ -12,7 +12,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 import pygame
 from pygame import K_0, K_1, K_2, K_3, K_4, K_5, K_7, K_BACKSPACE, K_DELETE, K_DOWN, K_EQUALS, K_ESCAPE, K_F1, K_F2, \
     K_F4, K_F5, K_F9, K_F11, K_LEFT, K_LSHIFT, K_PAGEDOWN, K_PAGEUP, K_RETURN, K_RIGHT, K_TAB, K_UP, K_a, K_d, K_g, \
-    K_h, K_i, K_j, K_k, K_l, K_m, K_p, K_q, K_s, K_u, K_w, KEYDOWN, KEYUP, KMOD_CTRL, KMOD_LCTRL, KMOD_LSHIFT, \
+    K_h, K_i, K_j, K_k, K_l, K_m, K_o, K_p, K_q, K_s, K_u, K_w, KEYDOWN, KEYUP, KMOD_CTRL, KMOD_LCTRL, KMOD_LSHIFT, \
     KMOD_SHIFT
 from pygame.event import Event
 
@@ -569,10 +569,10 @@ class TestControlsScreen(ScreenTestCase):
 
     def test_the_arrows_enter_and_escape_always_work(self):
         # the D-pad, A and B moved off them: they still move, choose and close here
-        self.rebound(UP=(K_w,), DOWN=(K_s,), LEFT=(K_a,), RIGHT=(K_d,), A=(K_l,), B=(K_p,), SMART_A=())
+        self.rebound(UP=(K_w,), DOWN=(K_s,), LEFT=(K_a,), RIGHT=(K_d,), A=(K_l,), B=(K_o,), SMART_A=())
         self.run_screen(K_DOWN, K_RIGHT, K_LEFT, K_RETURN, K_g)
         self.assertEqual([Binding(K_g)], current_controls().keys['B'])
-        self.assertEqual([Binding(K_p)], current_controls().keys['AUTO_GRIND'])  # swapped
+        self.assertEqual([Binding(K_o)], current_controls().keys['AUTO_GRIND'])  # swapped
 
     def test_the_fixed_keys_win_over_the_bound_ones(self):
         # an old settings file (the screen refuses these now): Enter is also B, Delete also DOWN

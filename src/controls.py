@@ -119,6 +119,8 @@ ACTIONS: tuple[Action, ...] = (
     # The message log (src/message_log.py), on the map
     # L, or the pad's left face button (M and the top button are the dungeon map's, MAP)
     _extra('MESSAGE_LOG', "MSG LOG", ('l',), 'x'),
+    # P: the stats page (src/stats_screen.py), on the map
+    _extra('PLAY_STATS', "STATS", ('p',)),
     # The next game speed, back to 1x after 16x
     _extra('NEXT_SPEED', "NEXT SPEED", (), 'righttrigger'),
 )

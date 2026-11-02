@@ -58,6 +58,7 @@ from src.player.player import Player
 from src.sound import Sound
 from src.battle_controller import BattleController
 from src.ending import Ending
+from src.play_stats import PlayClock, PlayStats
 from src.step_triggers import StepTriggers
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
@@ -134,6 +135,8 @@ class Game:
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.door_history = OpenDoorHistory()  # which locked doors have been opened since the last overworld visit
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
+        self.play_stats = PlayStats()  # the stats page's counts (src/play_stats.py), kept with the adventure log
+        self.play_clock = PlayClock(self)  # ticks the play time on every loop's frames, once play has started
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
         self.invulnerable = self.game_state.config["INVULNERABLE"]
@@ -153,6 +156,7 @@ class Game:
         self.options_requested = False
         self.dungeon_map_requested = False
         self.message_log_requested = False
+        self.play_stats_requested = False
         self.auto_grind_requested = False
         # ('save' or 'load', slot), until everyone is on a tile; then it's due, and the end of that frame carries it out
         # (src/save_state.py run_due_state_request)
@@ -332,6 +336,7 @@ class Game:
         if self.config.get('CHECKPOINT'):
             self.load_checkpoint(self.config['CHECKPOINT'])
         self.drawer.draw_all(self, self.game_state.enable_animate)
+        self.play_clock.running = True  # the title screen is behind: the play time counts from here
         while True:
             self.frame_clock.tick()  # NES_FPS x the game speed (src/waiting.py)
             self.clock.tick()  # only measures, for SHOW_FPS
@@ -622,6 +627,7 @@ class Game:
         save.restore_player(self.player)
         self.story_flags = save.story_flags
         self.dungeon_map = DungeonMap.from_save(save.dungeon_map)
+        self.play_stats = PlayStats.from_save(save.play_stats)
         # NES LoadSavedData (LFBC8): the log's message speed; and this game's dialog style and NPCS MAKE WAY. Older
         # saves: NORMAL, CLASSIC, ON
         # The loaded map below starts its own music, from the log's MUSIC setting

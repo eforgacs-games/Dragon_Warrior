@@ -102,6 +102,9 @@ base_config = {
     "SMART_A": False,
     # MESSAGE LOG (not NES when on): the MESSAGE LOG key (L) opens the last messages on the map (src/message_log.py)
     "MESSAGE_LOG": False,
+    # STATS PAGE (not NES when on): the STATS key (P) shows the adventure's play statistics on the map
+    # (src/stats_screen.py); they're counted either way (src/play_stats.py)
+    "STATS_PAGE": False,
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on

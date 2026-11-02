@@ -99,7 +99,7 @@ def unextractable_gettext_calls(root: Path = ROOT) -> list[str]:
 def dynamic_messages() -> dict[str, list[str]]:
     """Text that reaches _() through a variable: item, spell and enemy names, the text of the generated windows
     that are drawn translated (src/translated_window.py), the options screen's and the options overlay's text, the
-    shop stat preview's labels and the dungeon map's text."""
+    shop stat preview's labels, the dungeon map's text and the stats page's."""
     from src.dungeon_map import overlay_texts as dungeon_map_texts
     from src.enemy_lookup import enemy_string_lookup
     from src.items import armor, shields, tools, weapons
@@ -109,6 +109,7 @@ def dynamic_messages() -> dict[str, list[str]]:
     from src.options_screen import MESSAGE_SPEED_OPTIONS
     from src.shop_preview import preview_texts
     from src.quest_journal import journal_texts
+    from src.stats_screen import screen_texts as stats_texts
     from src.spells import Spell
     from src.translated_window import layout_texts
     from src.windows import COMBAT_COMMAND_LAYOUT, COMMAND_LAYOUT, STATUS_LAYOUT, TITLE_MENU_LAYOUTS, \
@@ -144,6 +145,9 @@ def dynamic_messages() -> dict[str, list[str]]:
     for text in log_texts():
         if 'src/message_log.py' not in messages.get(text, []):
             messages.setdefault(text, []).append('src/message_log.py')
+    for text in stats_texts():
+        if 'src/stats_screen.py' not in messages.get(text, []):
+            messages.setdefault(text, []).append('src/stats_screen.py')
     return messages
 
 

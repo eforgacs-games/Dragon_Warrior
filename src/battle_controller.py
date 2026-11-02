@@ -264,11 +264,15 @@ class BattleController:
                 return self.fight_enemy('Dragonlord 2')
             # NES EnemyDefeated: the Green Dragon and Golem guardians' story flags
             record_victory(current_battle.enemy.name, self.current_map.identifier, self.game.story_flags)
+            self.game.play_stats.won_fight(current_battle.enemy.name)
             current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, current_battle.enemy)
             outcome = BattleOutcome.VICTORY
         elif self.player.is_dead:
+            self.game.play_stats.lost_fight()
             outcome = BattleOutcome.DEFEAT
         else:
+            if self.player_ran_away:
+                self.game.play_stats.ran_away()
             outcome = BattleOutcome.ESCAPED
         self.cmd_menu.current_battle = None
         if outcome == BattleOutcome.ESCAPED and not current_battle.enemy_fled:

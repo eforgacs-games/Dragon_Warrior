@@ -29,6 +29,7 @@ class HeroDeath:
         if player.current_hp <= 0:
             player.current_hp = 0
             player.is_dead = True
+            game.play_stats.died()
             game.auto_grind.hero_died()
             game.load_window_palette()  # 0 HP is always low
             if game.battle_ctrl.launch_battle and not game.game_state.config["NO_BATTLES"]:
