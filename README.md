@@ -5,7 +5,7 @@
 A faithful remake of *Dragon Warrior* for the NES, written in Python with [pygame](https://www.pygame.org/). The goal
 is to play exactly like the NES game: the maps, the formulas, the enemies and the messages are checked against a
 disassembly of the original. On top of that come optional modern conveniences, such as save states, a faster game
-speed, a quest journal and a message log. Each one has its NES behaviour as one of its values and can be switched on
+speed, a quest journal, a message log and a stats page. Each one has its NES behaviour as one of its values and can be switched on
 or off on its own. A new game starts as the NES game and nothing else; choose the MODERN preset in the options to turn
 the recommended conveniences on at once.
 
@@ -109,6 +109,7 @@ them bound.
 | Q | The quest journal: the goals you've learned of (QUEST JOURNAL option) |
 | L | The message log: the last 50 messages, to read a hint again (MESSAGE LOG option) |
 | M | The dungeon map, on a dark floor: the blocks you've seen there (DUNGEON MAP option) |
+| P | The stats page: play time, steps, fights, gold, chests and monsters defeated (STATS PAGE option) |
 | 1 to 5 | Game speed: 1x, 2x, 4x, 8x or 16x (GAME SPEED option) |
 | Shift+F1 / F2 / F3 | Save state 1, 2 or 3 (SAVE STATES option) |
 | F1 / F2 / F3 | Load save state 1, 2 or 3 |
@@ -270,6 +271,7 @@ With one of these OFF, its key does nothing, as on the NES.
 | Setting | Values | Default | NES | MODERN |
 | --- | --- | --- | --- | --- |
 | CONFIRM NAME | OFF (NES): the 8th letter ends the name; ON: a full name waits on END so you can still change it, and START ends the name from anywhere | OFF | OFF | ON |
+| STATS PAGE | P shows the adventure's play statistics (play time, steps, fights won, fled and lost, deaths, gold earned and spent, chests opened, monsters defeated); they're counted either way | OFF | OFF | ON |
 
 
 ## Languages
