@@ -295,8 +295,8 @@ class TestZoomOnTheMap(ZoomTestCase):
                 patch.object(self.game, 'draw_temporary_text'), \
                 patch('src.zoom.is_fullscreen', return_value=False):
             self.game.fullscreen_enabled = False
-            self.game.handle_fullscreen_toggle(Event(KEYDOWN, key=pygame.K_F11, mod=KMOD_NONE))  # to fullscreen
+            self.game.hotkeys.toggle_fullscreen(Event(KEYDOWN, key=pygame.K_F11, mod=KMOD_NONE))  # to fullscreen
             open_window()  # the window opens at its first size again
-            self.game.handle_fullscreen_toggle(Event(KEYDOWN, key=pygame.K_F11, mod=KMOD_NONE))  # back
+            self.game.hotkeys.toggle_fullscreen(Event(KEYDOWN, key=pygame.K_F11, mod=KMOD_NONE))  # back
         self.assertEqual(2, set_mode.call_count)
         self.assertEqual(self.zoomed(3), self.window_size())

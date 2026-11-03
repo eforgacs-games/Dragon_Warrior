@@ -14,6 +14,7 @@ The story flags themselves live in src/story_flags.py.
 """
 
 import random
+from typing import TYPE_CHECKING
 
 from pygame import QUIT, display, event, time
 
@@ -22,6 +23,7 @@ from src.common import BLACK, WHITE
 from src.constants import DRAGONLORD_DEFEATED_DESTINATION, ENDING_GWAELIN_BESIDE_KING, ENDING_GWAELIN_STAIRS, \
     ENDING_TRIGGER_COORDINATES
 from src.direction import Direction
+from src.languages import language_named
 from src.maps import map_lookup
 from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE, SEARCHED_FOR_GWAELIN
@@ -30,6 +32,9 @@ from src.visual_effects import screen_fade
 from src.waiting import NES_FPS, POLL_INTERVAL_MS, game_ticks, quit_game, wait_frames
 from src.windows import DIALOG_WINDOW
 from src.zoom import handle_zoom_event
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 
 # NES DoEndCredits (Bank01) moves on to the next credits screen after a number of "music timing events" in the end
@@ -128,7 +133,7 @@ class EndMusicTimingEvents:
 
 
 class Ending:
-    def __init__(self, game):
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         self.started = False
 
@@ -149,9 +154,7 @@ class Ending:
 
     def quote(self, text: str) -> str:
         """Quote marks the way CommandMenu adds them, for lines that are only partly quoted."""
-        if self.config['LANGUAGE'] == 'Korean' and not text.isascii():
-            return f"'{text}'"
-        return f"`{text}’"
+        return language_named(self.config['LANGUAGE']).quote(text)
 
     def say(self, line: str, quoted: bool = True, wait_for_key: bool = True, hide_arrow: bool = False) -> None:
         """One message. It waits with the arrow for A or B (TXT_WAIT, DoWait), or with hide_arrow for any button, the

@@ -9,7 +9,7 @@ from src.config.base_config import base_config
 from src.config.test_config import test_config
 from src.chiptune import parse_track_ref
 from src.directories import CLIP_NAMES, MUSIC_NAMES, Directories, clip_paths, music_name, music_paths
-from src.options_screen import Options, apply_options, options_from_config, options_from_save, options_to_save
+from src.game_options import Options, apply_options, options_from_config, options_from_save, options_to_save
 from src.paths import data_path
 from src.save_state import restore_snapshot, take_snapshot
 from src.smoke_test import game_file_paths
@@ -123,7 +123,7 @@ class TestMigration(TestCase):
     def test_a_config_with_the_old_switch(self):
         self.assertEqual(Soundtrack.NES, soundtrack({**base_config, LEGACY_ORCHESTRA_CONFIG_KEY: False}))
         self.assertEqual(Soundtrack.ORCHESTRA, soundtrack({LEGACY_ORCHESTRA_CONFIG_KEY: True}))
-        self.assertEqual(Soundtrack.ORCHESTRA, soundtrack(base_config))
+        self.assertEqual(Soundtrack.NES, soundtrack(base_config))
         config = {**base_config, LEGACY_ORCHESTRA_CONFIG_KEY: False}
         migrate_legacy_music_config(config)
         self.assertEqual(Soundtrack.NES, config[SOUNDTRACK_KEY])

@@ -1,12 +1,12 @@
 """
-`python src/game.py --smoke-test` (or `DragonWarrior --smoke-test` in a build, with `--language Korean` for the Korean
-game): checks that the game finds and can load all of its files and that the emulated soundtracks (the NES's and the
-SFC's, through libgme: src/chiptune.py) render every track, then plays a few hundred frames of it with scripted
-button presses (SMOKE_SCENES) and exits with 0, or with 1 if anything is missing, doesn't load or raises. The release
-workflow runs it on every build, headless (SDL_VIDEODRIVER and SDL_AUDIODRIVER set to dummy), to prove the build
-bundles everything it needs: the fonts (the NES font for English, Unifont for Korean), the images, map tiles, music,
-sounds, the libgme library and the translations a player meets in the first minutes. The scenes each play with
-another soundtrack, so the music streams in the game with each.
+`python src/game.py --smoke-test` (or `DragonWarrior --smoke-test` in a build, with `--language Korean` or another
+language for that language's game): checks that the game finds and can load all of its files and that the emulated
+soundtracks (the NES's and the SFC's, through libgme: src/chiptune.py) render every track, then plays a few hundred
+frames of it with scripted button presses (SMOKE_SCENES) and exits with 0, or with 1 if anything is missing, doesn't
+load or raises. The release workflow runs it on every build, headless (SDL_VIDEODRIVER and SDL_AUDIODRIVER set to
+dummy), to prove the build bundles everything it needs: the fonts (the NES font for English, Unifont for the other
+languages), the images, map tiles, music, sounds, the libgme library and the translations a player meets in the
+first minutes. The scenes each play with another soundtrack, so the music streams in the game with each.
 
 The scenes are played through the virtual joypad (src/virtual_joypad.py, which auto-grind drives), so every loop of
 the game (the map, a dialog, the COMMAND window, a battle) reads the presses as it reads the player's keys, in a build
@@ -17,7 +17,7 @@ import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pygame import K_DOWN, K_LEFT, K_RIGHT, K_UP, K_i, K_j, K_k, K_u, font, image, mixer
 from pygame.event import Event
@@ -27,10 +27,15 @@ from src.checkpoints import CHECKPOINT_NAMES, checkpoint_hero_name, checkpoint_p
 from src.chiptune import (ChiptuneError, Emulator, bundled_library_dirs, chiptune_library, parse_track_ref,
                           tagged_length_seconds)
 from src.directories import CHIPTUNE_SOUNDTRACKS, CLIP_NAMES, MUSIC_NAMES, Directories, clip_paths, music_paths
+from src.game_options import AUTO_STAIRS
+from src.languages import CATALOG_LANGUAGES, Language, language_named
 from src.paths import data_path, is_frozen
 from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, SOUNDTRACKS, Soundtrack
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import MAP_CONTEXT, reset_game_speed, set_game_speed
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 IMAGE_EXTENSIONS = ('.png', '.gif')
 SOUND_EXTENSIONS = ('.mp3', '.wav')
@@ -39,8 +44,8 @@ FONT_EXTENSIONS = ('.ttf', '.otf')
 # with (the NES's end music has almost a second of it)
 CHIPTUNE_CHECK_SECONDS = 2
 CHIPTUNE_CHECK_SAMPLE_RATE = 44100
-# A line the Korean catalog translates, to check it loaded
-KOREAN_CHECK_LINE = "Thou art a fool!"
+# A line every catalog translates, to check it loaded
+CHECK_LINE = "Thou art a fool!"
 
 
 def game_file_paths(config: dict) -> set[str]:
@@ -135,27 +140,28 @@ def check_game_files(config: dict) -> list[str]:
         except Exception as error:  # every failure is reported, not just the first
             problems.append(f"can't load {path}: {error}")
     problems.extend(check_chiptune_tracks())
-    problems.extend(check_korean_translations())
+    for language in CATALOG_LANGUAGES:
+        problems.extend(check_translations(language))
     return problems
 
 
-def check_korean_translations() -> list[str]:
-    """Compiles the bundled Korean .po (as the game does when Korean is chosen) and translates a line with it. Not
-    through load_translations' cache, so it checks the files of the build that's running."""
+def check_translations(language: Language) -> list[str]:
+    """Compiles the language's bundled .po (as the game does when the language is chosen) and translates a line with
+    it. Not through load_translations' cache, so it checks the files of the build that's running."""
     try:
-        translations = compile_po(po_path('ko'))
+        translations = compile_po(po_path(language.locale_code or ''))
     except (OSError, ValueError) as error:
-        return [f"can't load the Korean translations: {error}"]
-    translated = translations.gettext(KOREAN_CHECK_LINE)
-    if translated == KOREAN_CHECK_LINE:
-        return [f"the Korean translations don't translate {KOREAN_CHECK_LINE!r}"]
+        return [f"can't load the {language.name} translations: {error}"]
+    if translations.gettext(CHECK_LINE) == CHECK_LINE:
+        return [f"the {language.name} translations don't translate {CHECK_LINE!r}"]
     return []
 
 
-def check_game_language(game: Any) -> list[str]:
-    """The running game translates its text into the language it was started in (only Korean has a catalog)."""
-    if game.config['LANGUAGE'] == 'Korean' and game._(KOREAN_CHECK_LINE) == KOREAN_CHECK_LINE:
-        return [f"the game started in Korean doesn't translate {KOREAN_CHECK_LINE!r}"]
+def check_game_language(game: 'Game') -> list[str]:
+    """The running game translates its text into the language it was started in (English has no catalog)."""
+    language = language_named(game.config['LANGUAGE'])
+    if language.has_catalog and game._(CHECK_LINE) == CHECK_LINE:
+        return [f"the game started in {language.name} doesn't translate {CHECK_LINE!r}"]
     return []
 
 
@@ -216,7 +222,7 @@ class SmokeScene:
     script: str
     save_changes: dict = field(default_factory=dict)
     config: dict = field(default_factory=dict)
-    check: Callable[[Any, SceneLog], list[str]] | None = None
+    check: Callable[['Game', SceneLog], list[str]] | None = None
 
 
 def parse_smoke_script(script: str) -> tuple[list[tuple[int, int, int]], int]:
@@ -242,7 +248,7 @@ class ScriptDriver:
     """Drives the virtual joypad (a src/virtual_joypad.py JoypadDriver) through a scene's script, keeps a SceneLog,
     and raises SceneOver once the script is over (or TimeoutError when the scene runs too long in real time)."""
 
-    def __init__(self, game: Any, script: str, log: SceneLog, max_seconds: float = SCENE_MAX_SECONDS) -> None:
+    def __init__(self, game: 'Game', script: str, log: SceneLog, max_seconds: float = SCENE_MAX_SECONDS) -> None:
         self.game = game
         self.presses, self.end_frame = parse_smoke_script(script)
         self.log = log
@@ -269,27 +275,30 @@ class ScriptDriver:
         return True
 
 
-def expect_maps(*identifiers: str) -> Callable[[Any, SceneLog], list[str]]:
+def expect_maps(*identifiers: str) -> Callable[['Game', SceneLog], list[str]]:
     """A scene check: the hero was on each of these maps."""
-    def check(_game: Any, log: SceneLog) -> list[str]:
+    def check(_game: 'Game', log: SceneLog) -> list[str]:
         missed = [identifier for identifier in identifiers if identifier not in log.maps]
         return [f"never reached {', '.join(missed)} (maps seen: {', '.join(log.maps)})"] if missed else []
     return check
 
 
-def expect_window(_game: Any, log: SceneLog) -> list[str]:
+def expect_window(_game: 'Game', log: SceneLog) -> list[str]:
     """A scene check: a window or dialog was open and read the presses."""
     return [] if log.window_polls else ["no window or dialog opened"]
 
 
-def expect_fight(_game: Any, log: SceneLog) -> list[str]:
+def expect_fight(_game: 'Game', log: SceneLog) -> list[str]:
     """A scene check: a fight started."""
     return [] if log.fights else ["no fight started"]
 
 
-# The config every scene starts from, before its own changes: no random fights, STAIRS on stepping, fast text
+# The config every scene starts from, before its own changes: no random fights, fast text
 SCENE_CONFIG = {'INITIAL_DIALOG_ENABLED': False, 'NO_BATTLES': True, 'FORCE_BATTLE': False, 'FORCE_ENEMY': None,
-                'AUTO_STAIRS': True, 'TEXT_SPEED': 'Fast'}
+                'TEXT_SPEED': 'Fast'}
+# The adventure log options every scene's save has, before its own changes: STAIRS on stepping. They're the log's, so
+# loading the save sets them (src/game_options.py); a save without them loads with the NES's.
+SCENE_SAVE_OPTIONS = {AUTO_STAIRS.save_key: True}
 SMOKE_SCENES = (
     # A step down to the guard below, TALK to him (a dialog, in the NES font or Unifont), then the COMMAND window
     # opened and closed
@@ -302,9 +311,9 @@ SMOKE_SCENES = (
                save_changes={'PlayerRow': 14, 'PlayerColumn': 15, SOUNDTRACK_SAVE_KEY: Soundtrack.SFC.value},
                check=expect_maps('TantegelThroneRoom', 'TantegelCourtyard')),
     # Walking left on Alefgard into a Slime fight (the battle window, the enemy, battle music and sounds), then FIGHT.
-    # Held for several steps: after a map change the first step may not roll for a fight (Game.handle_battles compares
-    # the steps taken since the change with the count at the last roll). Left in the battle's command window keeps
-    # FIGHT chosen.
+    # Held for several steps: after a map change the first step may not roll for a fight
+    # (FieldEncounters.handle_battles compares the steps taken since the change with the count at the last roll). Left
+    # in the battle's command window keeps FIGHT chosen.
     SmokeScene('overworld_fight', 'wait:20,left:100,wait:120,a,wait:10,a,wait:120,a,wait:10,a,wait:120',
                save_changes={'CurrentMap': 'Alefgard', 'PlayerRow': 50, 'PlayerColumn': 47,
                              SOUNDTRACK_SAVE_KEY: Soundtrack.ORCHESTRA.value},
@@ -313,12 +322,12 @@ SMOKE_SCENES = (
 )
 
 
-def play_scene(game: Any, scene: SmokeScene, max_seconds: float = SCENE_MAX_SECONDS) -> list[str]:
+def play_scene(game: 'Game', scene: SmokeScene, max_seconds: float = SCENE_MAX_SECONDS) -> list[str]:
     """Load the scene's start into the game and play its script in Game.main's loop. Returns what went wrong; an
     exception from the game is raised."""
     game.config.update({**SCENE_CONFIG, **scene.config})
-    save = {**read_checkpoint('throne_room'), **scene.save_changes}
-    save['Name'] = checkpoint_hero_name(save['Name'], game.config['LANGUAGE'])  # 검객 in Korean
+    save = {**read_checkpoint('throne_room'), **SCENE_SAVE_OPTIONS, **scene.save_changes}
+    save['Name'] = checkpoint_hero_name(save['Name'], game.config['LANGUAGE'])  # 검객 in Korean, たびびと in Japanese, ...
     game.load_game(save)
     game.initial_dialog_enabled = bool(game.config.get('INITIAL_DIALOG_ENABLED'))
     log = SceneLog()
@@ -334,7 +343,7 @@ def play_scene(game: Any, scene: SmokeScene, max_seconds: float = SCENE_MAX_SECO
     return [f"{scene.name}: the game left its main loop before the scene was over"]
 
 
-def play_smoke_scenes(game: Any, scenes: tuple[SmokeScene, ...] = SMOKE_SCENES) -> list[str]:
+def play_smoke_scenes(game: 'Game', scenes: tuple[SmokeScene, ...] = SMOKE_SCENES) -> list[str]:
     """Play each scene in turn in the same game, at SMOKE_SPEED. Returns what went wrong; an exception from the game
     is raised."""
     problems = check_game_language(game)

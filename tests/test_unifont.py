@@ -1,5 +1,5 @@
-"""data/fonts/unifont.otf (GNU Unifont), the font the game draws Korean and other non-NES text in, has a glyph for every
-character the Korean catalog uses, and comes with its license (data/fonts/OFL-unifont.txt)."""
+"""data/fonts/unifont.otf (GNU Unifont), the font the game draws every translation and other non-NES text in, has a
+glyph for every character each catalog uses, and comes with its license (data/fonts/OFL-unifont.txt)."""
 import os
 import unicodedata
 from os.path import isfile
@@ -12,20 +12,29 @@ import pygame
 from fontTools.ttLib import TTFont
 
 from src.catalog import po_path, read_po
+from src.languages import CATALOG_LANGUAGES
 from src.paths import data_path
 from src.text import TextPaths
+from tests.helpers import drawn_in_nes_font
 
 UNIFONT_PATH = data_path('fonts', 'unifont.otf')
 HANGUL_SYLLABLES = range(0xAC00, 0xD7A4)
 CJK_UNIFIED_IDEOGRAPHS = range(0x4E00, 0xA000)
 HIRAGANA_AND_KATAKANA = range(0x3040, 0x3100)
+# The catalogs drawn in Unifont (English (2014) is drawn in the NES font, tests/test_english_2014.py)
+UNIFONT_LANGUAGES = tuple(language for language in CATALOG_LANGUAGES if not drawn_in_nes_font(language))
 
 
-def korean_characters() -> set[str]:
-    """Every character of every msgstr in the Korean catalog (the header excepted), but line breaks."""
+def catalog_characters(locale_code: str) -> set[str]:
+    """Every character of every msgstr in a catalog (the header excepted), but line breaks."""
     return {character
-            for msgid, msgstr in read_po(po_path('ko')).items() if msgid
+            for msgid, msgstr in read_po(po_path(locale_code)).items() if msgid
             for character in msgstr if character != '\n'}
+
+
+def missing_glyph_code_point(cmap: dict[int, str]) -> int:
+    """A character the font has no glyph for (pygame draws it as the font's .notdef box, "tofu")."""
+    return next(code_point for code_point in range(0xE000, 0xF900) if code_point not in cmap)
 
 
 class TestUnifont(TestCase):
@@ -38,11 +47,30 @@ class TestUnifont(TestCase):
     def test_text_draws_in_this_file(self):
         self.assertEqual(TextPaths.UNIFONT_PATH, UNIFONT_PATH)
 
-    def test_every_korean_character_has_a_glyph(self):
-        characters = korean_characters()
-        self.assertGreater(len(characters), 500)
-        missing = sorted(f'U+{ord(c):04X} {unicodedata.name(c, "?")}' for c in characters if ord(c) not in self.cmap)
-        self.assertEqual([], missing)
+    def test_every_catalog_character_has_a_glyph(self):
+        for language in UNIFONT_LANGUAGES:
+            characters = catalog_characters(language.locale_code or '')
+            missing = sorted(f'U+{ord(c):04X} {unicodedata.name(c, "?")}' for c in characters
+                             if ord(c) not in self.cmap)
+            with self.subTest(language=language.name):
+                self.assertGreater(len(characters), 300)
+                self.assertEqual([], missing)
+
+    def test_pygame_draws_every_catalog_character(self):
+        # Each character renders as its own glyph, not as the box drawn for a character the font hasn't got
+        pygame.font.init()
+        self.addCleanup(pygame.font.quit)
+        font = pygame.font.Font(UNIFONT_PATH, 16)
+
+        def picture(character: str) -> bytes:
+            return pygame.image.tobytes(font.render(character, False, (255, 255, 255), (0, 0, 0)), 'RGB')
+        tofu = picture(chr(missing_glyph_code_point(self.cmap)))
+        for language in UNIFONT_LANGUAGES:
+            drawn_as_tofu = sorted(f'U+{ord(c):04X} {unicodedata.name(c, "?")}'
+                                   for c in catalog_characters(language.locale_code or '')
+                                   if not c.isspace() and picture(c) == tofu)
+            with self.subTest(language=language.name):
+                self.assertEqual([], drawn_as_tofu)
 
     def test_covers_all_hangul_syllables_and_bmp_cjk(self):
         # All of Hangul for Korean text; kana and the CJK ideographs for a Japanese or Chinese translation

@@ -16,7 +16,7 @@ class ControlInfo:
         self.select_button = _("{}: Options").format(keys_label('SELECT') + '/' + keys_label('OPTIONS')
                                                      if action_keys('OPTIONS') else keys_label('SELECT'))
         self.arrow_keys_move_buttons = _("{}: Move").format(directions_label(_("ARROWS")))
-        # Enter: TALK, TAKE or DOOR when one applies (Game.handle_enter_key)
+        # Enter: TALK, TAKE or DOOR when one applies (MapHotkeys.press_smart_a_key)
         self.smart_a_button = _("{}: Smart A").format(keys_label('SMART_A'))
         self.help_button = _("{}: Show Controls").format(keys_label('HELP'))
         # F4, F9 and F11 are on/off toggles, listed under "Toggle on/off:" in the H help. The STAIRS setting has no key
@@ -29,6 +29,8 @@ class ControlInfo:
         self.auto_grind_key = _("{}: Auto-grind").format(keys_label('AUTO_GRIND'))
         # Q shows the quest journal (src/quest_journal.py), unless QUEST JOURNAL is OFF in the options overlay
         self.quest_journal_key = _("{}: Quest Journal").format(keys_label('QUEST_JOURNAL'))
+        # P shows the stats page (src/stats_screen.py), when STATS PAGE is ON in the options overlay
+        self.play_stats_key = _("{}: Play stats").format(keys_label('PLAY_STATS'))
         # Window zoom (src/zoom.py): Ctrl + / Ctrl - or Ctrl and the mouse wheel, and Ctrl 0 for the normal size
         self.zoom_controls = _("Ctrl +/-/Wheel: Zoom")
         self.zoom_reset = _("Ctrl 0: Reset Zoom")
@@ -75,7 +77,8 @@ class ControlInfo:
             self.zoom_reset, self.save_state_keys, self.load_state_keys, self.rewind_key,
             self.controller_a, self.controller_b, self.controller_start, self.controller_select, self.controller_move,
             self.controller_speed, self.controller_load_state, self.controller_save_state, self.controller_rewind,
-            self.dungeon_map_key, self.controller_dungeon_map, self.message_log_key, self.controller_message_log)
+            self.dungeon_map_key, self.controller_dungeon_map, self.message_log_key, self.controller_message_log,
+            self.play_stats_key)
         # The H help, one string per dialog box page (the A button turns the page). The dialog box fits five rows
         # above the continue arrow, so each page is a short group of related keys. "Controls:\n" keeps its newline
         # so it still matches the existing Korean translation.
@@ -87,7 +90,7 @@ class ControlInfo:
                        self.fullscreen_toggle)),
             "\n".join((_("Window zoom:"), self.zoom_controls, self.zoom_reset)),
             "\n".join((_("Save states:"), self.save_state_keys, self.load_state_keys, self.rewind_key)),
-            self.quest_journal_key,
+            "\n".join((self.quest_journal_key, self.play_stats_key)),
             "\n".join((_("Controller:"), self.controller_a, self.controller_b, self.controller_start,
                        self.controller_select)),
             "\n".join((self.controller_move, self.controller_speed, self.controller_load_state,

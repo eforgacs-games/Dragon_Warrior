@@ -28,8 +28,9 @@ uv run python -m src.game --language Korean
 
 - `--dev` runs with `src/config/dev_config.py`: god mode, no random battles, your coordinates printed in the
   terminal, no splash screen or opening dialog, darkness off, no autosave, and the debug keys below.
-- `--language English` or `--language Korean` plays in that language (a language saved from the options overlay
-  wins over it).
+- `--language English`, `--language Korean`, `--language Japanese`, `--language "Traditional Chinese"`,
+  `--language "Simplified Chinese"`, `--language English2014` (any name in `src/languages.py`) plays in that language
+  for this run (it wins over a language saved from the options overlay, which stays as it was).
 - `--smoke-test` loads every game file, plays a few scripted scenes headless and exits with 0, or 1 on any problem;
   the release workflow runs it on every build (`src/smoke_test.py`).
 
@@ -147,7 +148,8 @@ git push origin v1.0.0
 A pushed `v*` tag starts the [Release builds](.github/workflows/release.yml) workflow. It builds the game with
 PyInstaller ([dragon_warrior.spec](dragon_warrior.spec)) on Windows, macOS and Linux, with libgme built from source and
 bundled, checks that each packaged build starts, loads all of its files and plays a few scripted scenes headless in
-English and in Korean (`--smoke-test`, [src/smoke_test.py](src/smoke_test.py)), and publishes the three archives on the
+every language (English, Korean, Japanese, Traditional Chinese, Simplified Chinese and English (2014); `--smoke-test`,
+[src/smoke_test.py](src/smoke_test.py)), and publishes the three archives on the
 [Releases page](https://github.com/eforgacs-games/Dragon_Warrior/releases) as a GitHub Release for the tag ("Dragon
 Warrior v1.0.0-rc1"), with notes generated from the merged PRs; edit the release to put the CHANGELOG entry in them.
 The archives are named after the tag: `DragonWarrior-v1.0.0-rc1-windows-x64.zip`, `DragonWarrior-v1.0.0-rc1-macos-arm64.zip`
@@ -166,17 +168,36 @@ it, as the workflow sets them.
 
 ## Translations
 
-The Korean text is in `data/text/locales/ko/LC_MESSAGES/base.po`. Editing it is all there is to do: the game compiles
-it in memory when it runs (`src/catalog.py`), so there's no `.mo` file to build or commit (`*.mo` is ignored).
+Each translation is in `data/text/locales/<code>/LC_MESSAGES/base.po` (`ko`: Korean, `ja`: Japanese, `en_2014`:
+English (2014), the remake's official English; `en` is an early English catalog the game doesn't load). Editing it is all there is to
+do: the game compiles it in memory when it runs (`src/catalog.py`), so there's no `.mo` file to build or commit (`*.mo`
+is ignored).
 
-`tests/test_translations.py` fails when new text has no Korean translation. To add empty entries for it to the end of
-`base.po`, ready to fill in:
+`tests/test_translations.py` fails when new text has no translation in a catalog. To add empty entries for it to the
+end of a `base.po`, ready to fill in:
 
 ```bash
-uv run python data/text/locales/catalog_tools.py add
+uv run python data/text/locales/catalog_tools.py add ko   # the catalog's locale code; ko when left out
 ```
 
-`catalog_tools.py missing` lists the untranslated text without changing anything.
+`catalog_tools.py missing ko` lists the untranslated text without changing anything.
+
+A language is declared once, in `src/languages.py`: its name (the LANGUAGE setting and `--language`), the name the
+options show, its catalog's locale code, and what a catalog can't say (how spoken lines are quoted, battle lines that
+need grammar, like Korean particles). Adding one is a catalog with every message of the others plus that
+declaration. Its text is drawn in GNU Unifont; `tests/test_unifont.py` checks the font has every character the
+catalog uses, and `tests/test_translated_windows.py` that every window's text fits. English (2014) is drawn in the NES
+font, like the NES English, so its names are split in two halves in the item, status and shop windows as the NES's are
+(`translated_name_halves` in `src/windows.py`), and a name or label longer than the NES windows allow is shortened
+(`data/text/official_script/glossary_en_2014.tsv` says which).
+
+The `#:` comment above each entry names the files the text comes from (no line numbers, so they don't go stale with
+every edit). When text moves to another file, the test fails until they're rewritten from the source, which changes
+nothing but those lines:
+
+```bash
+uv run python data/text/locales/catalog_tools.py references
+```
 
 ## Reference scripts
 

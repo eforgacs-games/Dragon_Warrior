@@ -10,6 +10,7 @@ reach shared resources (player, cmd_menu, screen, sound, drawer, …).
 import random
 from collections.abc import Callable
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from pygame import KEYDOWN, Surface, display, event, key, time
 
@@ -38,6 +39,9 @@ from src.zoom import handle_zoom_event
 
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, SelectionButtons, first_button
 from src.nes_random import coin_flip
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 
 class BattleOutcome(Enum):
@@ -84,7 +88,7 @@ def held_joypad_buttons() -> int:
 
 
 class BattleController:
-    def __init__(self, game):
+    def __init__(self, game: 'Game') -> None:
         self.game = game
 
         # Battle state (moved from Game.__init__)
@@ -205,7 +209,7 @@ class BattleController:
         return outcome
 
     def launch_fight(self, enemy_name: str) -> BattleOutcome:
-        """Fight enemy_name with launch_battle set. It stays set only on a defeat, so Game.handle_death draws the
+        """Fight enemy_name with launch_battle set. It stays set only on a defeat, so HeroDeath.handle_death draws the
         in-battle death screen; after a win or an escape a death on the map (a swamp step) is shown on the map."""
         rewind = getattr(self.game, 'rewind', None)
         if rewind is not None:
@@ -218,7 +222,7 @@ class BattleController:
 
     def queue_scripted_battle(self, enemy_name: str) -> None:
         """Ask for a scripted fight to start as soon as the current dialog has closed (the NES removes the dialog,
-        command and pop-up windows before InitFight). Game.handle_battles picks it up on the next frame."""
+        command and pop-up windows before InitFight). FieldEncounters.handle_battles picks it up on the next frame."""
         self.pending_scripted_battle = enemy_name
 
     def run_pending_scripted_battle(self) -> BattleOutcome | None:
@@ -260,11 +264,15 @@ class BattleController:
                 return self.fight_enemy('Dragonlord 2')
             # NES EnemyDefeated: the Green Dragon and Golem guardians' story flags
             record_victory(current_battle.enemy.name, self.current_map.identifier, self.game.story_flags)
+            self.game.play_stats.won_fight(current_battle.enemy.name)
             current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, current_battle.enemy)
             outcome = BattleOutcome.VICTORY
         elif self.player.is_dead:
+            self.game.play_stats.lost_fight()
             outcome = BattleOutcome.DEFEAT
         else:
+            if self.player_ran_away:
+                self.game.play_stats.ran_away()
             outcome = BattleOutcome.ESCAPED
         self.cmd_menu.current_battle = None
         if outcome == BattleOutcome.ESCAPED and not current_battle.enemy_fled:
@@ -273,7 +281,7 @@ class BattleController:
             # has already let the victory (or level-up) music end and resumed it, the way the NES does before
             # ExitFight, and beating the Dragonlord's final form ends in Ending.final_boss_defeated's change of map,
             # which starts the overworld music: starting it again here would restart it. A defeat goes on to the death
-            # music (Game.handle_death).
+            # music (HeroDeath.handle_death).
             self.music_player.load_and_play_music(self.current_map.music_file_path)
             if current_battle.enemy.name == 'Dragonlord 2':
                 self.reload_map_after_running_from_final_form()
@@ -655,7 +663,7 @@ class BattleController:
                         case Spell.HURT | Spell.HURTMORE:
                             if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
                                 spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
-                            self.game.receive_damage(spell_effect)
+                            self.game.hero_damage.receive_damage(spell_effect)
                         case Spell.STOPSPELL:
                             # NES EnCastStopspell: Erdrick's Armor always blocks it; otherwise it works when bit 0 of a
                             # random byte is set (50%). It lasts for the rest of the fight.
@@ -670,7 +678,7 @@ class BattleController:
                         case Spell.FIREBREATH | Spell.FIREBREATH2:
                             if self.player.armor == "Erdrick's Armor":
                                 spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
-                            self.game.receive_damage(spell_effect)
+                            self.game.hero_damage.receive_damage(spell_effect)
                 else:
                     self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
             else:
@@ -696,7 +704,7 @@ class BattleController:
         if attack_damage <= 0:
             current_battle.enemy_missed_attack(self.cmd_menu)
         else:
-            self.game.receive_damage(attack_damage)
+            self.game.hero_damage.receive_damage(attack_damage)
 
     def player_hit_effect(self):
         """NES PlayerHit ($ED20): after the hero's HP drops, the screen shakes, and on a deathblow it also flashes

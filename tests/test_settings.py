@@ -3,6 +3,7 @@ config folder, read at start and written when one changes; and the LANGUAGE row 
 the language at once. Every test here keeps its settings file in a temporary folder (SETTINGS_PATH)."""
 import json
 import os
+import sys
 import tempfile
 from unittest import TestCase
 from unittest.mock import patch
@@ -17,7 +18,8 @@ from pygame.event import Event
 from src import settings as settings_module
 from src.common import set_gettext_language
 from src.config.test_config import test_config
-from src.options_overlay import FIXED_ROWS, OPTION_PAGES
+from src.languages import LANGUAGE_NAMES, LANGUAGES
+from src.options_overlay import FIXED_ROWS, OPTION_PAGES, apply_option
 from src.settings import SETTINGS_ENV_VAR, USER_SETTINGS, Settings, SettingsStore, load_settings, save_settings, \
     settings_path
 from src.waiting import NES_FPS, game_speed, get_events, reset_game_speed, set_speed_listener
@@ -68,7 +70,7 @@ class TestSettingsFile(TempDirTestCase):
     def test_format(self):
         save_settings(self.path, Settings(zoom=3, language='Korean'))
         self.assertEqual({'version': 1, 'zoom': 3, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
-                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': True, 'name_confirm': True,
+                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': False, 'name_confirm': False,
                           'controls': None},
                          self.saved())
         self.assertEqual(['settings.json'], os.listdir(os.path.dirname(self.path)))  # no temporary file left over
@@ -195,9 +197,28 @@ class TestReadAtStart(GameTestCase):
         save_settings(self.path, Settings(language='English'))
         self.assertEqual('English', self.new_game(LANGUAGE='Korean').config['LANGUAGE'])
 
+    def test_language_flag_wins_over_the_saved_language_without_changing_it(self):
+        save_settings(self.path, Settings(language='Korean'))
+        game = self.new_game(LANGUAGE='English', LANGUAGE_FROM_COMMAND_LINE=True)
+        self.assertEqual('English', game.config['LANGUAGE'])
+        self.assertEqual("TALK", game.cmd_menu._("TALK"))
+        self.assertEqual('Korean', load_settings(self.path).language)
+        # without the flag, the saved language is back
+        self.assertEqual('Korean', self.new_game(LANGUAGE='English').config['LANGUAGE'])
+
+    def test_run_marks_language_as_from_the_command_line(self):
+        from src import game as game_module
+        for language in LANGUAGES:
+            with patch.object(sys, 'argv', ['dragon_warrior', '--language', language.name]), \
+                    patch.object(game_module, 'install_crash_log'), patch.object(game_module, 'Game') as game_class:
+                game_module.run()
+            config = game_class.call_args.kwargs['config']
+            with self.subTest(language=language.name):
+                self.assertEqual((language.name, True), (config['LANGUAGE'], config['LANGUAGE_FROM_COMMAND_LINE']))
+
     def test_without_a_saved_language_the_locale_decides(self):
         save_settings(self.path, Settings(zoom=3))
-        for language in ('English', 'Korean'):
+        for language in LANGUAGE_NAMES:
             with self.subTest(language=language):
                 self.assertEqual(language, self.new_game(LANGUAGE=language).config['LANGUAGE'])
 
@@ -265,14 +286,14 @@ class TestSavedWhenChanged(GameTestCase):
 
     def test_language(self):
         game = self.new_game()
-        with patch('src.selection.event.get', side_effect=presses(*to_language(), K_u)), \
+        with patch('src.waiting.event.get', side_effect=presses(*to_language(), K_u)), \
                 patch('src.selection.wait_frames'):
             from src.options_overlay import OptionsOverlay
             OptionsOverlay(game).run()
         self.assertEqual('Korean', self.saved()['language'])
         # and nothing else was written
         self.assertEqual({'version': 1, 'zoom': None, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
-                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': True, 'name_confirm': True,
+                          'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': False, 'name_confirm': False,
                           'controls': None},
                          self.saved())
 
@@ -283,19 +304,24 @@ class TestSavedWhenChanged(GameTestCase):
         self.assertEqual(4, self.saved()['game_speed'])
         # switched on in the options overlay: back to the speed kept
         game.game_state.config['GAME_SPEED_KEYS'] = True
-        game.apply_option('GAME_SPEED_KEYS')
+        apply_option(game, 'GAME_SPEED_KEYS')
         self.assertEqual(4, game_speed())
         game.game_state.config['GAME_SPEED_KEYS'] = False
-        game.apply_option('GAME_SPEED_KEYS')
+        apply_option(game, 'GAME_SPEED_KEYS')
         self.assertEqual(1, game_speed())
         self.assertEqual(4, self.saved()['game_speed'])
 
     def test_dungeon_map(self):
         game = self.new_game()
-        # switched off in the options overlay (OptionsOverlay changes the config, then calls apply_option)
+        self.assertFalse(game.game_state.config['DUNGEON_MAP'])  # the NES's, by default
+        # switched on in the options overlay (OptionsOverlay changes the config, then calls apply_option)
+        game.game_state.config['DUNGEON_MAP'] = True
+        apply_option(game, 'DUNGEON_MAP')
+        self.assertTrue(self.saved()['dungeon_map'])
+        self.assertTrue(self.new_game().game_state.config['DUNGEON_MAP'])
+        # and off again
         game.game_state.config['DUNGEON_MAP'] = False
-        game.apply_option('DUNGEON_MAP')
-        self.assertFalse(game.game_state.config['DUNGEON_MAP'])
+        apply_option(game, 'DUNGEON_MAP')
         self.assertFalse(self.saved()['dungeon_map'])
         self.assertFalse(self.new_game().game_state.config['DUNGEON_MAP'])
 
@@ -333,7 +359,7 @@ class TestLanguageSwitch(GameTestCase):
 
         def draw(overlay, *_args):
             drawn.append(overlay._)
-        with patch('src.selection.event.get', side_effect=presses(*keys)), \
+        with patch('src.waiting.event.get', side_effect=presses(*keys)), \
                 patch.object(OptionsOverlay, 'draw', autospec=True, side_effect=draw):
             OptionsOverlay(self.game).run()
 
@@ -343,12 +369,15 @@ class TestLanguageSwitch(GameTestCase):
         self.assertEqual("LOOK & SOUND", translations[0](OPTION_PAGES[0].title))
         self.assertEqual(KOREAN(OPTION_PAGES[0].title), translations[-1](OPTION_PAGES[0].title))
         self.assertEqual("언어", translations[-1]("LANGUAGE"))
-        # and back
-        translations.clear()
-        self.run_overlay(*to_language(), K_u, translations=translations)
-        self.assertEqual("화면과 소리", translations[0](OPTION_PAGES[0].title))
-        self.assertEqual("LOOK & SOUND", translations[-1](OPTION_PAGES[0].title))
-        self.assertEqual('English', self.config['LANGUAGE'])
+        # on through every other language, and back to English
+        title = OPTION_PAGES[0].title
+        for previous, language in zip(LANGUAGES[1:], (*LANGUAGES[2:], LANGUAGES[0])):
+            translations.clear()
+            self.run_overlay(*to_language(), K_u, translations=translations)
+            self.assertEqual(language.name, self.config['LANGUAGE'])
+            self.assertEqual(set_gettext_language(previous.name)(title), translations[0](title))
+            self.assertEqual(set_gettext_language(language.name)(title), translations[-1](title))
+        self.assertEqual("LOOK & SOUND", translations[-1](title))
 
     def dialog_entry(self):
         """A guard's line (GuardDialog1), as the next TALK would show it."""

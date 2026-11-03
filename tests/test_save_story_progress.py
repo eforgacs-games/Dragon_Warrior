@@ -1,7 +1,6 @@
 import json
 import os
 import tempfile
-from dataclasses import fields
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -14,10 +13,10 @@ from src.game import Game
 from src.items import treasure
 from src.map_layouts import BRICK, DOOR, TREASURE_BOX
 from src.maps import map_lookup
-from src.story_flags import StoryFlags
+from src.story_flags import StoryFlags, story_bits
 from tests.helpers import new_game
 
-FLAG_NAMES = [field.name for field in fields(StoryFlags)]
+FLAG_NAMES = list(story_bits())
 THRONE_ROOM_CHESTS = list(treasure['TantegelThroneRoom'])
 
 
@@ -177,7 +176,7 @@ class TestSaveStoryProgress(TestCase):
         self.game.repel_timer = 200
         self.game.player.is_dead = True
         with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
-            self.game.set_post_death_attributes()
+            self.game.hero_death.set_post_death_attributes()
         self.assertEqual(self.game.repel_timer, 0)
 
     def test_dying_refills_hp_and_mp(self):
@@ -188,7 +187,7 @@ class TestSaveStoryProgress(TestCase):
         player.current_hp, player.current_mp = 0, 4
         player.is_dead = True
         with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
-            self.game.set_post_death_attributes()
+            self.game.hero_death.set_post_death_attributes()
         self.assertEqual((player.current_hp, player.current_mp), (30, 20))
 
     def test_dying_cursed_leaves_mp_alone(self):
@@ -199,7 +198,7 @@ class TestSaveStoryProgress(TestCase):
         player.current_hp, player.current_mp = 0, 4
         player.is_dead = True
         with patch('src.menu.CommandMenu.show_text_in_dialog_box'), patch.object(self.game, 'leave_tantegel'):
-            self.game.set_post_death_attributes()
+            self.game.hero_death.set_post_death_attributes()
         self.assertEqual((player.current_hp, player.current_mp), (1, 4))
 
     def test_continue_while_carrying_gwaelin(self):

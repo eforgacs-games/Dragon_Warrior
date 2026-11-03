@@ -7,7 +7,7 @@ map for a moment (the game speed, a save state).
 
 The MESSAGE LOG key (L, as bound, src/controls.py) opens the log on the map, when the MESSAGE LOG option is ON (the
 options overlay; OFF is the NES, which has none). Like the options overlay, it opens only when START would pause the
-game, once the hero and the NPCs have finished their steps (Game.handle_message_log_key,
+game, once the hero and the NPCs have finished their steps (MapHotkeys.press_message_log,
 MovementController.resolve_pending_freezes). One NES-style window fills the screen, titled MESSAGE LOG, the newest
 message at the bottom:
 
@@ -24,10 +24,9 @@ right a page. B, Esc, START or the MESSAGE LOG key close it, and the map is put 
 one running while it's open, so the map, the NPCs and the timers wait, as they do for the options overlay.
 """
 import re
-import unicodedata
 from collections import deque
 from collections.abc import Callable, Iterable
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 from pygame import K_ESCAPE, K_DOWN, K_LEFT, K_RIGHT, K_UP, KEYDOWN, Rect, Surface, display
 
@@ -35,10 +34,15 @@ from src.common import B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, START_BU
     set_gettext_language
 from src.controls import KeySet
 from src.cursor import BlinkingCursor
+from src.languages import language_named
+from src.line_breaks import break_units, is_wide
 from src.options_overlay import darken
 from src.selection import frame_events, next_frame
 from src.translated_window import draw_translated_window
 from src.windows import Window, WindowLayout, WindowText
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 MAX_ENTRIES = 50
 
@@ -118,16 +122,28 @@ def decoded_entries(saved: Iterable[Iterable[str | None]]) -> list[LogEntry]:
 
 def text_width(text: str) -> int:
     """How many NES tiles the text takes: Hangul and other wide characters take two (Unifont)."""
-    return sum(2 if unicodedata.east_asian_width(character) in ('W', 'F') else 1 for character in text)
+    return sum(2 if is_wide(character) else 1 for character in text)
 
 
-def wrap(text: str, width: int, indent: int = 0) -> list[str]:
+def pieces(text: str, breaks_anywhere: bool = False) -> list[tuple[str, str]]:
+    """The text's words, each with what joins it to the one before (a blank, or nothing at the first word). With
+    breaks_anywhere, each word is split into the pieces a line may end between (src/line_breaks.py), joined by
+    nothing."""
+    joined: list[tuple[str, str]] = []
+    for number, word in enumerate(text.split(' ')):
+        units = break_units(word) if breaks_anywhere and word else [word]
+        joined += [(' ' if number and not index else '', unit) for index, unit in enumerate(units)]
+    return joined
+
+
+def wrap(text: str, width: int, indent: int = 0, breaks_anywhere: bool = False) -> list[str]:
     """The text in lines of at most ``width`` tiles, broken between words (a word too long for a line is cut), every
-    line after the first starting ``indent`` blanks in."""
+    line after the first starting ``indent`` blanks in. With breaks_anywhere, also between the characters of a word
+    (pieces)."""
     lines: list[str] = []
     line = ''
-    for word in text.split(' '):
-        candidate = f'{line} {word}' if line else word
+    for separator, word in pieces(text, breaks_anywhere):
+        candidate = f'{line}{separator}{word}' if line else word
         limit = width - (indent if lines else 0)
         if text_width(candidate) <= limit:
             line = candidate
@@ -146,20 +162,20 @@ def wrap(text: str, width: int, indent: int = 0) -> list[str]:
     return [(' ' * indent if number else '') + text for number, text in enumerate(lines)]
 
 
-def log_lines(entries: Iterable[LogEntry], translate: Callable[[str], str]) -> list[str]:
+def log_lines(entries: Iterable[LogEntry], translate: Callable[[str], str], breaks_anywhere: bool = False) -> list[str]:
     """Every message, wrapped to the window, oldest first: the speaker's name, a colon and what was said."""
     lines: list[str] = []
     for entry in entries:
         text = f'{translate(SPEAKERS[entry.speaker])}: {entry.text}' if entry.speaker in SPEAKERS else entry.text
-        lines += wrap(text, LINE_WIDTH, CONTINUATION_INDENT)
+        lines += wrap(text, LINE_WIDTH, CONTINUATION_INDENT, breaks_anywhere)
     return lines
 
 
-def log_layout(lines: list[str], top: int, hint: str = HINT) -> WindowLayout:
-    """The window with the lines from ``top``."""
+def log_layout(lines: list[str], top: int, hint: str = HINT, title: WindowText = LOG_TITLE) -> WindowLayout:
+    """The window with the lines from ``top`` (the stats page, src/stats_screen.py, has its own title)."""
     shown = lines[top:top + VISIBLE_LINES] or [EMPTY]
     texts = tuple(WindowText(line, TEXT_COLUMN, FIRST_ROW + 2 * number) for number, line in enumerate(shown) if line)
-    return WindowLayout(window=LOG_WINDOW, title=LOG_TITLE, texts=texts + (WindowText(hint, TEXT_COLUMN, HINT_ROW),))
+    return WindowLayout(window=LOG_WINDOW, title=title, texts=texts + (WindowText(hint, TEXT_COLUMN, HINT_ROW),))
 
 
 def screen_texts() -> list[str]:
@@ -168,14 +184,25 @@ def screen_texts() -> list[str]:
 
 
 class MessageLogScreen:
-    """The log over the map, run until it's closed (see the module docstring)."""
+    """The log over the map, run until it's closed (see the module docstring). The stats page (src/stats_screen.py)
+    is drawn and scrolled the same way, with its own title, lines and keys."""
+    title = LOG_TITLE
+    close_keys = CLOSE_KEYS
 
-    def __init__(self, game):
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         self.config: dict = game.game_state.config
         self._: Callable[[str], str] = set_gettext_language(self.config.get('LANGUAGE'))
-        self.lines = log_lines(game.message_log.entries, self._)
-        self.top = self.last_top()
+        self.lines = self.screen_lines()
+        self.top = self.first_top()
+
+    def screen_lines(self) -> list[str]:
+        return log_lines(self.game.message_log.entries, self._,
+                         language_named(self.config.get('LANGUAGE')).breaks_anywhere)
+
+    def first_top(self) -> int:
+        """The newest messages are shown first."""
+        return self.last_top()
 
     def last_top(self) -> int:
         return max(0, len(self.lines) - VISIBLE_LINES)
@@ -200,7 +227,7 @@ class MessageLogScreen:
 
     def handle_key(self, pressed_key: int) -> bool:
         """Scroll, or return True to close."""
-        if pressed_key in CLOSE_KEYS:
+        if pressed_key in self.close_keys:
             return True
         if pressed_key in UP_KEYS or pressed_key == K_UP:
             self.top = max(0, self.top - 1)
@@ -218,7 +245,8 @@ class MessageLogScreen:
         screen = self.game.screen
         screen.blit(background, (0, 0))
         darken(screen)
-        draw_translated_window(screen, log_layout(self.lines, self.top), self.game.color, self.config, self._)
+        layout = log_layout(self.lines, self.top, title=self.title)
+        draw_translated_window(screen, layout, self.game.color, self.config, self._)
         display.update(Rect(0, 0, screen.get_width(), screen.get_height()))
 
     def close(self, background: Surface) -> None:

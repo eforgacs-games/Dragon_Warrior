@@ -15,13 +15,14 @@ from pygame.event import Event
 
 from src.config.test_config import test_config
 from src.display_filters import SCALING_PIXEL_PERFECT, SCALING_SMOOTH
+from src.languages import LANGUAGES
 from src.map_layouts import GRASS_STAIR_DOWN
 from src.maps import STAIR_DIRECTIONS, map_lookup
 from src.options_overlay import FIXED_ROWS, MOST_ROWS, OPTION_PAGES, OPTION_ROWS, OPTIONS_WINDOW, PRESET_CUSTOM, \
     PRESET_MODERN, PRESET_NES, PRESET_ROWS, OptionsOverlay, current_preset, options_layout, overlay_texts, \
-    preset_values
-from src.options_screen import CLASSIC, MODERN, SWITCHES, options_from_config
-from src.quest_journal import JOURNAL_GOALS, JOURNAL_OFF
+    apply_option, preset_values
+from src.game_options import ALL_OPTIONS, CLASSIC, MODERN, PER_LOG_OPTIONS, options_from_config
+from src.quest_journal import JOURNAL_HINTS, JOURNAL_LEARNED, JOURNAL_OFF
 from src.soundtrack import Soundtrack
 from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
 from src.waiting import MENU_SPEED_FOLLOW as FOLLOW, MENU_SPEED_NORMAL as NORMAL
@@ -102,7 +103,7 @@ class OverlayTestCase(TestCase):
 
     def run_overlay(self, *keys):
         """Run the overlay with these key presses; returns how many times the menu button sound played."""
-        with patch('src.selection.event.get', side_effect=presses(*keys)), \
+        with patch('src.waiting.event.get', side_effect=presses(*keys)), \
                 patch.object(self.game.sound, 'play_sound') as play_sound:
             OptionsOverlay(self.game).run()
         return [call.args[0] for call in play_sound.call_args_list].count(self.game.directories.menu_button_sfx)
@@ -115,7 +116,8 @@ class TestOpening(OverlayTestCase):
 
     def test_select_or_tab_opens_it_on_the_map(self):
         for pressed_key in (K_u, K_TAB):
-            with self.subTest(key=pygame.key.name(pressed_key)), patch.object(self.game, 'open_options') as open_options:
+            with self.subTest(key=pygame.key.name(pressed_key)), \
+                    patch.object(self.game.hotkeys, 'open_options') as open_options:
                 self.press(pressed_key)
             open_options.assert_called_once()
             self.assertFalse(self.game.options_requested)
@@ -123,7 +125,7 @@ class TestOpening(OverlayTestCase):
     def test_it_waits_for_the_heros_step(self):
         # Like START (PausePrepLoop): mid-step it waits, and no new step starts meanwhile
         self.game.player.is_moving = True
-        with patch.object(self.game, 'open_options') as open_options:
+        with patch.object(self.game.hotkeys, 'open_options') as open_options:
             self.press(K_u)
             open_options.assert_not_called()
             self.assertTrue(self.game.movement.freeze_pending)
@@ -135,7 +137,7 @@ class TestOpening(OverlayTestCase):
         for attribute, owner in (('launch_signaled', self.game.cmd_menu), ('paused', self.game),
                                  ('cmd_menu_requested', self.game), ('pause_requested', self.game)):
             with self.subTest(attribute), patch.object(owner, attribute, True), \
-                    patch.object(self.game, 'open_options') as open_options:
+                    patch.object(self.game.hotkeys, 'open_options') as open_options:
                 self.press(K_u)
                 open_options.assert_not_called()
                 self.assertFalse(self.game.options_requested)
@@ -143,13 +145,13 @@ class TestOpening(OverlayTestCase):
     def test_not_while_the_command_window_is_up(self):
         self.game.cmd_menu.menu.enable()
         self.addCleanup(self.game.cmd_menu.menu.disable)
-        with patch.object(self.game, 'open_options') as open_options:
+        with patch.object(self.game.hotkeys, 'open_options') as open_options:
             self.press(K_TAB)
         open_options.assert_not_called()
 
     def test_start_while_it_is_pending_pauses_instead(self):
         self.game.player.is_moving = True
-        with patch.object(self.game, 'open_options') as open_options:
+        with patch.object(self.game.hotkeys, 'open_options') as open_options:
             self.press(K_u)
             self.press(pygame.K_i)
             self.game.player.is_moving = False
@@ -159,13 +161,13 @@ class TestOpening(OverlayTestCase):
 
     def test_a_while_it_is_pending_does_not_open_the_command_window_after(self):
         self.game.player.is_moving = True
-        with patch.object(self.game, 'open_options'):
+        with patch.object(self.game.hotkeys, 'open_options'):
             self.press(K_u)
             self.press(K_k)
         self.assertFalse(self.game.cmd_menu_requested)
 
     def test_select_opens_and_closes_it(self):
-        with patch('src.selection.event.get', side_effect=presses(K_u)), \
+        with patch('src.waiting.event.get', side_effect=presses(K_u)), \
                 patch('src.options_overlay.OptionsOverlay.close', autospec=True) as close:
             self.press(K_u)
         close.assert_called_once()
@@ -177,7 +179,7 @@ class TestOpening(OverlayTestCase):
                   [character.rect.copy() for character in self.game.current_map.roaming_characters])
         with patch.object(self.game, 'map_frame') as map_frame, \
                 patch.object(self.game.drawer, 'draw_all') as draw_all, \
-                patch('src.selection.event.get', side_effect=presses(K_DOWN, K_RIGHT, K_UP, K_u)):
+                patch('src.waiting.event.get', side_effect=presses(K_DOWN, K_RIGHT, K_UP, K_u)):
             self.press(K_u)
         map_frame.assert_not_called()
         draw_all.assert_not_called()
@@ -192,7 +194,8 @@ class TestRows(OverlayTestCase):
                                             ("DIALOG STYLE", 'DIALOG_STYLE', ("CLASSIC (NES)", "MODERN")),
                                             ("FADE STYLE", 'FADE_STYLE', ("NES", "SMOOTH")),
                                             ("MUSIC", 'SOUNDTRACK', ("NES", "SFC", "ORCHESTRA")),
-                                            ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어")),
+                                            ("LANGUAGE", 'LANGUAGE', ("ENGLISH", "한국어", "日本語", "繁體中文", "简体中文",
+                                                                        "ENGLISH (2014)")),
                                             ("SCANLINES", 'SCANLINES', ("OFF", "ON")),
                                             ("SCALING", 'SCALING', ("SMOOTH", "PIXEL PERFECT")),
                                             ("VIEW", 'VIEW', ("NES (4:3)", "WIDE")),
@@ -204,7 +207,7 @@ class TestRows(OverlayTestCase):
                                         ("SMART A", 'SMART_A', ("OFF (NES)", "ON")),
                                         ("ENCOUNTERS", 'ENCOUNTERS', ("NES", "HALF", "OFF")),
                                         ("EXP/GOLD", 'EXP_GOLD', ("x1 (NES)", "x2", "x4")),
-                                        ("QUEST JOURNAL", 'QUEST_JOURNAL', ("OFF (NES)", "GOALS", "HINTS")),
+                                        ("QUEST JOURNAL", 'QUEST_JOURNAL', ("OFF (NES)", "LEARNED", "LEARNED+HINTS")),
                                         ("AUTOSAVE", 'AUTOSAVE', ("OFF (NES)", "ON")),
                                         ("BAG", 'BAG_SIZE', ("NES (8)", "16")),
                                         ("RUN BUTTON", 'RUN_BUTTON', ("OFF (NES)", "ON"))]),
@@ -218,7 +221,8 @@ class TestRows(OverlayTestCase):
                                         ("DUNGEON MAP", 'DUNGEON_MAP', ("OFF (NES)", "ON")),
                                         ("MESSAGE LOG", 'MESSAGE_LOG', ("OFF (NES)", "ON")),
                                         ("CONTROLS", None, ())]),
-                          ("OTHER", [("CONFIRM NAME", 'NAME_CONFIRM', ("OFF (NES)", "ON"))])],
+                          ("OTHER", [("CONFIRM NAME", 'NAME_CONFIRM', ("OFF (NES)", "ON")),
+                                     ("STATS PAGE", 'STATS_PAGE', ("OFF (NES)", "ON"))])],
                          [(page.title, [(row.label, getattr(row, 'config_key', None), row.value_labels)
                                         for row in page.rows])
                           for page in OPTION_PAGES])
@@ -261,7 +265,8 @@ class TestRows(OverlayTestCase):
                           "REWIND", "ON", "AUTO-GRIND", "OFF (NES)", "GRIND STOP", "3/4 HP", "MENU SPEED", "NORMAL",
                           "CHEATS", "ON", "DUNGEON MAP", "OFF (NES)", "MESSAGE LOG", "OFF (NES)", "CONTROLS"],
                          page_texts(self.config, 2))
-        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "4/4", "CONFIRM NAME", "OFF (NES)"], page_texts(self.config, 3))
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "4/4", "CONFIRM NAME", "OFF (NES)", "STATS PAGE", "OFF (NES)"],
+                         page_texts(self.config, 3))
 
     def test_the_window_is_the_same_size_on_every_page_and_fits_the_screen(self):
         self.assertEqual(MOST_ROWS + 2, OPTIONS_WINDOW.height)
@@ -283,11 +288,16 @@ class TestRows(OverlayTestCase):
 
     def test_each_text_is_in_the_catalog(self):
         texts = overlay_texts()
+        language_names = [language.option_label for language in LANGUAGES]
         for number in range(len(OPTION_PAGES)):
-            layout = options_layout(self.config, number)
-            for text in (layout.title, *layout.texts):
-                if '/' not in text.text or text.text == "3/4 HP":  # the page number isn't translated
-                    self.assertIn(text.text, texts)
+            for language in LANGUAGES:
+                layout = options_layout({**self.config, 'LANGUAGE': language.name}, number)
+                for text in (layout.title, *layout.texts):
+                    # The page number and the languages' names (each in its own language) aren't translated
+                    if text.text in language_names:
+                        self.assertNotIn(text.text, texts)
+                    elif '/' not in text.text or text.text == "3/4 HP":
+                        self.assertIn(text.text, texts)
 
     def test_each_row_changes_its_setting_with_a_sound(self):
         for row in OPTION_ROWS:
@@ -361,7 +371,7 @@ class TestRows(OverlayTestCase):
             self.game.cmd_menu.save()
             with open(os.path.join(tmp_dir, 'save_slot_2.json')) as save_file:
                 save = json.load(save_file)
-        self.assertLessEqual({switch.save_key for switch in SWITCHES}, set(save))
+        self.assertLessEqual({option.save_key for option in PER_LOG_OPTIONS}, set(save))
         loaded = new_game()
         with patch.object(loaded.map_mgr, 'change_map'):
             loaded.load_game(save)
@@ -386,14 +396,14 @@ class TestPages(OverlayTestCase):
         pages = []
         with patch.object(OptionsOverlay, 'draw', autospec=True,
                           side_effect=lambda shown, *_args: pages.append((shown.page, shown.index))), \
-                patch('src.selection.event.get', side_effect=presses(*keys, K_u)), \
+                patch('src.waiting.event.get', side_effect=presses(*keys, K_u)), \
                 patch.object(self.game.sound, 'play_sound'):
             overlay.run()
         return pages
 
     def last_page(self, *keys):
         overlay = OptionsOverlay(self.game)
-        with patch('src.selection.event.get', side_effect=presses(*keys, K_u)), \
+        with patch('src.waiting.event.get', side_effect=presses(*keys, K_u)), \
                 patch.object(self.game.sound, 'play_sound'):
             overlay.run()
         return overlay.page, overlay.index
@@ -434,7 +444,7 @@ class TestPreset(OverlayTestCase):
                           'CHEAT_KEYS': False, 'RUN_BUTTON': False, 'SHOP_PREVIEW': False,
                           'QUEST_JOURNAL': JOURNAL_OFF, 'AUTOSAVE': False, 'BAG_SIZE': 8,
                           'VIEW': 'NES', 'DUNGEON_MAP': False, 'SMART_A': False,
-                          'MESSAGE_LOG': False, 'NAME_CONFIRM': False},
+                          'MESSAGE_LOG': False, 'NAME_CONFIRM': False, 'STATS_PAGE': False},
                          preset_values(PRESET_NES))
         # MODERN: every convenience but the cheats; the number of fights and what they give stay the NES's
         self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'SOUNDTRACK': 'Orchestra',
@@ -442,9 +452,9 @@ class TestPreset(OverlayTestCase):
                           'ENCOUNTERS': 'NES', 'EXP_GOLD': 1, 'GAME_SPEED_KEYS': True, 'SAVE_STATES': True,
                           'REWIND': True, 'AUTO_GRIND': True, 'AUTO_GRIND_STOP': 'RedHP', 'MENU_SPEED': NORMAL,
                           'CHEAT_KEYS': False, 'RUN_BUTTON': True, 'SHOP_PREVIEW': True,
-                          'QUEST_JOURNAL': JOURNAL_GOALS, 'AUTOSAVE': True, 'BAG_SIZE': 16,
+                          'QUEST_JOURNAL': JOURNAL_HINTS, 'AUTOSAVE': True, 'BAG_SIZE': 16,
                           'VIEW': 'NES', 'DUNGEON_MAP': True, 'SMART_A': True,
-                          'MESSAGE_LOG': True, 'NAME_CONFIRM': True},
+                          'MESSAGE_LOG': True, 'NAME_CONFIRM': True, 'STATS_PAGE': True},
                          preset_values(PRESET_MODERN))
         # the message speed is the NES's own setting, and the language the player's: no preset changes them
         self.assertNotIn('TEXT_SPEED', [row.config_key for row in PRESET_ROWS])
@@ -458,28 +468,53 @@ class TestPreset(OverlayTestCase):
         self.config['MENU_SPEED'] = FOLLOW
         self.assertEqual(PRESET_CUSTOM, current_preset(self.config))
 
-    def test_a_new_quest_keeps_what_the_game_already_had(self):
-        # The conveniences there before the switches start on, as they always did; a new quest is CUSTOM, and the NES
-        # preset switches them all off
+    def test_a_new_quest_is_the_nes_preset(self):
+        # Every row a preset sets starts at its NES value, so PRESET reads NES, not CUSTOM
         from src.config.base_config import base_config
-        from src.options_screen import DEFAULT_OPTIONS, apply_options
+        from src.game_options import DEFAULT_OPTIONS, apply_options
         # a new quest keeps the config's AUTOSAVE (OFF, the NES), and the player's VIEW and DUNGEON MAP
         config = {key: base_config[key] for key in ('AUTOSAVE', 'VIEW', 'DUNGEON_MAP', 'NAME_CONFIRM')}
         apply_options(config, DEFAULT_OPTIONS)
-        nes = preset_values(PRESET_NES)
-        differences = {config_key for config_key, value in nes.items() if config[config_key] != value}
-        self.assertEqual({'SOUNDTRACK', 'AUTO_STAIRS', 'NPCS_MAKE_WAY', 'QUICK_ACTION', 'GAME_SPEED_KEYS',
-                          'SAVE_STATES', 'REWIND', 'AUTO_GRIND', 'CHEAT_KEYS', 'SHOP_PREVIEW', 'QUEST_JOURNAL',
-                          'DUNGEON_MAP', 'MESSAGE_LOG', 'NAME_CONFIRM'},
-                         differences)
-        self.assertEqual(PRESET_CUSTOM, current_preset(config))
+        self.assertEqual(preset_values(PRESET_NES), {key: config[key] for key in preset_values(PRESET_NES)})
+        self.assertEqual(PRESET_NES, current_preset(config))
 
-    def test_an_older_save_loads_with_them_on(self):
-        from src.options_screen import options_from_save
+    def test_base_config_is_the_nes_preset(self):
+        from src.config.base_config import base_config
+        from src.config.prod_config import prod_config
+        for config in (base_config, prod_config):
+            self.assertEqual(PRESET_NES, current_preset(config))
+        self.assertFalse(base_config['CHEAT_KEYS'])
+
+    def test_a_fresh_game_reads_nes(self):
+        from src.config.prod_config import prod_config
+        game = helpers.new_game({**prod_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
+                                 'MUSIC_ENABLED': False, 'SOUND_ENABLED': False, 'SPLASH_SCREEN_ENABLED': False,
+                                 'INITIAL_DIALOG_ENABLED': False, 'SETTINGS_PATH': None})
+        self.assertEqual(["PRESET", "NES"], page_texts(game.game_state.config)[:2])
+        self.assertFalse(game.config['CHEAT_KEYS'])
+
+    def test_an_older_save_gets_the_nes_values_only_for_what_it_lacks(self):
+        from src.game_options import options_from_save
         options = options_from_save({'Name': 'Ed'})
-        self.assertEqual((Soundtrack.ORCHESTRA, True, True, True, True, True, True),
+        self.assertEqual((Soundtrack.NES, False, False, False, False, False, False, False, JOURNAL_OFF),
                          (options.soundtrack, options.game_speed_keys, options.save_states, options.rewind,
-                          options.auto_grind, options.cheat_keys, options.quick_action))
+                          options.auto_grind, options.cheat_keys, options.quick_action, options.shop_preview,
+                          options.quest_journal))
+        # what it has is kept
+        options = options_from_save({'Name': 'Ed', 'Soundtrack': 'Orchestra', 'CheatKeys': True, 'ShopPreview': True,
+                                     'QuestJournal': JOURNAL_HINTS, 'AutoStairs': True})
+        self.assertEqual((Soundtrack.ORCHESTRA, True, True, JOURNAL_HINTS, True),
+                         (options.soundtrack, options.cheat_keys, options.shop_preview, options.quest_journal,
+                          options.auto_stairs))
+
+    def test_an_older_saves_goals_journal_loads_as_learned(self):
+        from src.game_options import options_from_save
+        self.assertEqual(JOURNAL_LEARNED, options_from_save({'QuestJournal': 'Goals'}).quest_journal)
+
+    def test_shop_preview_follows_the_presets(self):
+        self.assertFalse(preset_values(PRESET_NES)['SHOP_PREVIEW'])
+        self.assertTrue(preset_values(PRESET_MODERN)['SHOP_PREVIEW'])
+        self.assertIn('SHOP_PREVIEW', [row.config_key for row in PRESET_ROWS])
 
     def test_preset_sets_every_row_at_once(self):
         self.assertEqual(1, self.run_overlay(K_RIGHT, K_u))  # CUSTOM -> NES (the first)
@@ -521,9 +556,9 @@ class TestPreset(OverlayTestCase):
                          {config_key: self.config[config_key] for config_key in preset_values(PRESET_NES)})
 
     def test_presets_switch_the_music_and_the_speed_keys_at_once(self):
-        with patch.object(self.game, 'apply_option', wraps=self.game.apply_option) as apply_option:
+        with patch('src.options_overlay.apply_option', wraps=apply_option) as applied_option:
             self.run_overlay(K_RIGHT, K_RIGHT, K_u)  # CUSTOM -> NES -> MODERN
-        applied = {call.args[0] for call in apply_option.call_args_list}
+        applied = {call.args[1] for call in applied_option.call_args_list}
         self.assertIn('SOUNDTRACK', applied)
         self.assertIn('GAME_SPEED_KEYS', applied)
         from src.waiting import speed_keys_enabled
@@ -565,7 +600,7 @@ class TestSwitches(OverlayTestCase):
         self.press(pygame.K_g)
         self.assertFalse(self.game.auto_grind_requested)
         self.set_switch("AUTO-GRIND", True)
-        with patch.object(self.game, 'start_auto_grind') as start_auto_grind:
+        with patch.object(self.game.hotkeys, 'start_auto_grind') as start_auto_grind:
             self.press(pygame.K_g)
         start_auto_grind.assert_called_once()
 
@@ -658,16 +693,13 @@ class TestDevOnly(TestCase):
         self.assertFalse(prod_config['DEBUG_KEYS'])
         self.assertTrue(dev_config['DEBUG_KEYS'])
 
-    def test_prod_starts_with_every_key_convenience_as_it_was(self):
-        # on: the speed keys, save states, rewind, auto-grind, F4/F9 and the Enter shortcut worked before the switches
+    def test_prod_starts_with_every_switch_at_the_nes(self):
         from src.config.prod_config import prod_config
-        for switch in SWITCHES:
-            if switch.config_key in ('ENCOUNTERS', 'EXP_GOLD', 'RUN_BUTTON', 'STATUS_WINDOW', 'BAG_SIZE', 'SMART_A'):
-                # new options: the NES's
-                self.assertIn(switch.default, (False, 'NES', 1, 8), switch.config_key)
-            else:
-                self.assertTrue(prod_config[switch.config_key], switch.config_key)
-            self.assertEqual(switch.default, prod_config[switch.config_key], switch.config_key)
+        nes = preset_values(PRESET_NES)
+        for option in ALL_OPTIONS:
+            if option.presets is not None:
+                self.assertEqual(nes[option.config_key], option.presets[0], option.config_key)
+                self.assertEqual(option.presets[0], prod_config[option.config_key], option.config_key)
 
     def test_a_game_without_debug_keys_has_no_debug_tools(self):
         pygame.init()

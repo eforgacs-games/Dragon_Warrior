@@ -1,12 +1,13 @@
-"""The Korean catalog has to keep up with the game's text.
+"""Every catalog (the Korean, the Japanese, ...: src/languages.py) has to keep up with the game's text.
 
 When a test here fails because of new text, run
-    uv run --frozen python data/text/locales/catalog_tools.py add
-fill in the new msgstr entries at the end of data/text/locales/ko/LC_MESSAGES/base.po and commit it. There's no
+    uv run --frozen python data/text/locales/catalog_tools.py add <locale code: ko, ja, ...>
+fill in the new msgstr entries at the end of data/text/locales/<code>/LC_MESSAGES/base.po and commit it. There's no
 compile step: the game compiles base.po in memory when it runs (src/catalog.py). A message that really should stay
 English (a dev-only debug key, say) goes in ENGLISH_ONLY in catalog_tools.py, with the reason.
 """
 import builtins
+import difflib
 import string
 import tempfile
 from pathlib import Path
@@ -18,9 +19,10 @@ from data.text.locales import catalog_tools
 from src import catalog
 from src.common import set_gettext_language
 from src.config.test_config import test_config
+from src.languages import CATALOG_LANGUAGES, language_named
 from src.text import WRAP_LENGTH, DialogBoxWrapper
 
-# Translations that leave a placeholder out on purpose (the Korean line reads better without the hero's name)
+# Translations that may leave a placeholder out on purpose (the Korean line reads better without the hero's name)
 PLACEHOLDER_DROPPED = ("Return to the Inn for a rest if thou art wounded in battle, {}.",)
 
 
@@ -42,19 +44,40 @@ def keep_builtin_gettext():
     return restore
 
 
-class TestKoreanCatalog(TestCase):
+def catalogs() -> dict[str, dict[str, str]]:
+    """Each catalog's msgid -> msgstr (header included), by language name."""
+    return {language.name: catalog_tools.read_po(catalog_tools.catalog_path(language.locale_code or ''))
+            for language in CATALOG_LANGUAGES}
+
+
+class TestCatalogs(TestCase):
+    """The checks every catalog passes, each language a subTest."""
 
     @classmethod
     def setUpClass(cls):
-        cls.po = catalog_tools.read_po()
-        cls.translations = {msgid: msgstr for msgid, msgstr in cls.po.items() if msgid and msgstr}
+        cls.catalogs = catalogs()
+        cls.translations = {name: {msgid: msgstr for msgid, msgstr in po.items() if msgid and msgstr}
+                            for name, po in cls.catalogs.items()}
 
-    def test_every_message_has_a_korean_translation(self):
-        missing = catalog_tools.missing_translations(self.po)
-        self.assertFalse(missing, "\n{} message(s) have no Korean translation in {}:\n\n{}\n{}".format(
-            len(missing), catalog_tools.KOREAN_PO.relative_to(catalog_tools.ROOT),
-            '\n'.join(catalog_tools.po_entry(msgid, '', locations) for msgid, locations in missing.items()),
-            __doc__))
+    def test_every_language_has_a_catalog(self):
+        self.assertIn('Korean', self.catalogs)
+        self.assertGreater(len(self.translations['Korean']), 700)
+
+    def test_every_message_has_a_translation(self):
+        for name, po in self.catalogs.items():
+            missing = catalog_tools.missing_translations(po)
+            with self.subTest(language=name):
+                self.assertFalse(missing, "\n{} message(s) have no {} translation:\n\n{}\n{}".format(
+                    len(missing), name,
+                    '\n'.join(catalog_tools.po_entry(msgid, '', locations) for msgid, locations in missing.items()),
+                    __doc__))
+
+    def test_every_catalog_has_the_korean_catalogs_messages(self):
+        # Messages no longer in the game stay in a catalog until they're cleaned up from all of them at once
+        korean = set(self.catalogs['Korean'])
+        for name, po in self.catalogs.items():
+            with self.subTest(language=name):
+                self.assertEqual(sorted(korean - set(po)), [])
 
     def test_english_only_messages_are_still_in_the_game(self):
         extracted = catalog_tools.extract_messages()
@@ -67,32 +90,85 @@ class TestKoreanCatalog(TestCase):
         self.assertFalse(catalog_tools.unextractable_gettext_calls())
 
     def test_translations_keep_placeholders(self):
-        problems = []
-        for msgid, msgstr in self.translations.items():
-            count = placeholder_count(msgid)
-            markers = [f"<{i}>" for i in range(count)]
-            try:
-                formatted = msgstr.format(*markers)
-            except (IndexError, KeyError, ValueError) as error:
-                problems.append(f"{msgid!r} -> {msgstr!r}: {error!r}")
-                continue
-            if msgid not in PLACEHOLDER_DROPPED and not all(marker in formatted for marker in markers):
-                problems.append(f"{msgid!r} -> {msgstr!r}: a placeholder is missing")
-        self.assertFalse(problems, '\n'.join(problems))
+        for name, translations in self.translations.items():
+            problems = []
+            for msgid, msgstr in translations.items():
+                count = placeholder_count(msgid)
+                markers = [f"<{i}>" for i in range(count)]
+                try:
+                    formatted = msgstr.format(*markers)
+                except (IndexError, KeyError, ValueError) as error:
+                    problems.append(f"{msgid!r} -> {msgstr!r}: {error!r}")
+                    continue
+                if msgid not in PLACEHOLDER_DROPPED and not all(marker in formatted for marker in markers):
+                    problems.append(f"{msgid!r} -> {msgstr!r}: a placeholder is missing")
+            with self.subTest(language=name):
+                self.assertFalse(problems, '\n'.join(problems))
 
     def test_translations_keep_trailing_newlines(self):
         # Battle lines ending in \n are joined with the next line ("... draws near!\n" + "Command?\n")
-        problems = [f"{msgid!r} -> {msgstr!r}" for msgid, msgstr in self.translations.items()
-                    if msgid.endswith('\n') != msgstr.endswith('\n')]
-        self.assertFalse(problems, '\n'.join(problems))
+        for name, translations in self.translations.items():
+            problems = [f"{msgid!r} -> {msgstr!r}" for msgid, msgstr in translations.items()
+                        if msgid.endswith('\n') != msgstr.endswith('\n')]
+            with self.subTest(language=name):
+                self.assertFalse(problems, '\n'.join(problems))
 
-    def test_korean_lines_fit_the_dialog_box(self):
+    def test_lines_fit_the_dialog_box(self):
         # draw_text wraps at spaces only (break_long_words=False), so a run of text with no space in it longer than
-        # the dialog box would run past its edge
-        wrapper = DialogBoxWrapper(width=WRAP_LENGTH, break_long_words=False)
-        too_long = [line for msgstr in self.translations.values() for line in wrapper.wrap(msgstr)
-                    if len(line) > WRAP_LENGTH]
-        self.assertFalse(too_long, too_long)
+        # the dialog box would run past its edge. A Hangul syllable or a kana or kanji is one NES tile wide in
+        # Unifont, like an English letter in the NES font.
+        # A Chinese line also breaks between characters (Language.breaks_anywhere).
+        for name, translations in self.translations.items():
+            wrapper = DialogBoxWrapper(width=WRAP_LENGTH, break_long_words=False,
+                                       breaks_anywhere=language_named(name).breaks_anywhere)
+            too_long = [line for msgstr in translations.values() for line in wrapper.wrap(msgstr)
+                        if len(line) > WRAP_LENGTH]
+            with self.subTest(language=name):
+                self.assertFalse(too_long, too_long)
+
+
+class TestSourceReferences(TestCase):
+    """The #: comments name the files each message comes from (catalog_tools.py references rewrites them)."""
+
+    def test_references_are_up_to_date(self):
+        references = catalog_tools.reference_files()
+        for path in catalog_tools.CATALOGS:
+            with self.subTest(catalog=path.name):
+                text = path.read_text(encoding='utf-8')
+                diff = difflib.unified_diff(text.splitlines(), catalog_tools.with_references(text, references).splitlines(),
+                                            str(path.relative_to(catalog_tools.ROOT)), 'expected', n=1, lineterm='')
+                stale = '\n'.join(diff)
+                self.assertFalse(stale, "\n#: references are out of date; run\n"
+                                 "    uv run --frozen python data/text/locales/catalog_tools.py references\n" + stale)
+
+    def test_referenced_files_exist(self):
+        for path in catalog_tools.CATALOGS:
+            for line in path.read_text(encoding='utf-8').splitlines():
+                if line.startswith('#:'):
+                    for reference in line.removeprefix('#:').split():
+                        with self.subTest(catalog=path.name, reference=reference):
+                            self.assertTrue((catalog_tools.ROOT / reference.partition(':')[0]).is_file())
+
+    def test_only_reference_lines_change(self):
+        po_text = (
+            'msgid ""\nmsgstr "Content-Type: text/plain; charset=UTF-8\\n"\n\n'
+            '# translator comment\n#. extracted comment\n#: .\\old_file.py:30\n#, fuzzy\nmsgid ""\n"Two\\n"\n"lines"\n'
+            'msgstr "두\\n줄"\n'
+            '#: src/gone.py:3\nmsgid "Gone"\nmsgstr "없음"\n\n'
+            '# commented out\n#: ..\\old.py:9\n#msgid "Old"\n#msgstr "옛"\n\n'
+            'msgid "New"\nmsgstr ""\n'
+        )
+        expected = (
+            'msgid ""\nmsgstr "Content-Type: text/plain; charset=UTF-8\\n"\n\n'
+            '# translator comment\n#. extracted comment\n#: src/a.py\n#: src/b.py\n#, fuzzy\nmsgid ""\n"Two\\n"\n'
+            '"lines"\nmsgstr "두\\n줄"\n'
+            'msgid "Gone"\nmsgstr "없음"\n\n'
+            '# commented out\n#msgid "Old"\n#msgstr "옛"\n\n'
+            '#: data/c.py\nmsgid "New"\nmsgstr ""\n'
+        )
+        references = {'': ['src/header.py'], 'Two\nlines': ['src/a.py', 'src/b.py'], 'New': ['data/c.py']}
+        self.assertEqual(expected, catalog_tools.with_references(po_text, references))
+        self.assertEqual(expected, catalog_tools.with_references(expected, references))
 
 
 class TestRuntimeCatalog(TestCase):
@@ -100,32 +176,43 @@ class TestRuntimeCatalog(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.po = catalog_tools.read_po()
-        cls.korean = catalog.load_translations('ko')
+        cls.catalogs = catalogs()
+        cls.compiled = {language.name: catalog.load_translations(language.locale_code or '')
+                        for language in CATALOG_LANGUAGES}
 
     def test_every_translated_message_comes_out_as_in_the_po(self):
-        wrong = [msgid for msgid, msgstr in self.po.items() if msgid and msgstr and self.korean.gettext(msgid) != msgstr]
-        self.assertFalse(wrong, f"compiled differently from base.po: {wrong}")
+        for name, po in self.catalogs.items():
+            compiled = self.compiled[name]
+            wrong = [msgid for msgid, msgstr in po.items() if msgid and msgstr and compiled.gettext(msgid) != msgstr]
+            with self.subTest(language=name):
+                self.assertFalse(wrong, f"compiled differently from base.po: {wrong}")
 
     def test_untranslated_messages_fall_back_to_english(self):
-        untranslated = [msgid for msgid, msgstr in self.po.items() if msgid and not msgstr]
-        self.assertEqual(untranslated, [self.korean.gettext(msgid) for msgid in untranslated])
+        for name, po in self.catalogs.items():
+            untranslated = [msgid for msgid, msgstr in po.items() if msgid and not msgstr]
+            with self.subTest(language=name):
+                self.assertEqual(untranslated, [self.compiled[name].gettext(msgid) for msgid in untranslated])
 
     def test_placeholders_survive_compiling(self):
-        for msgid, msgstr in self.po.items():
-            if msgid and msgstr and placeholder_count(msgid):
-                with self.subTest(msgid=msgid):
-                    self.assertEqual(placeholder_count(msgstr), placeholder_count(self.korean.gettext(msgid)))
+        for name, po in self.catalogs.items():
+            for msgid, msgstr in po.items():
+                if msgid and msgstr and placeholder_count(msgid):
+                    with self.subTest(language=name, msgid=msgid):
+                        self.assertEqual(placeholder_count(msgstr),
+                                         placeholder_count(self.compiled[name].gettext(msgid)))
 
     def test_header_is_read(self):
-        self.assertEqual('utf-8', self.korean.charset().lower())
+        for name, compiled in self.compiled.items():
+            with self.subTest(language=name):
+                self.assertEqual('utf-8', compiled.charset().lower())
 
     def test_po_has_no_contexts_or_plurals(self):
         # src/catalog.py reads plain msgid/msgstr entries only
-        po_text = catalog_tools.KOREAN_PO.read_text(encoding='utf-8')
-        for keyword in ('msgctxt', 'msgid_plural'):
-            with self.subTest(keyword=keyword):
-                self.assertNotIn(f'\n{keyword} ', po_text)
+        for language in CATALOG_LANGUAGES:
+            po_text = catalog_tools.catalog_path(language.locale_code or '').read_text(encoding='utf-8')
+            for keyword in ('msgctxt', 'msgid_plural'):
+                with self.subTest(language=language.name, keyword=keyword):
+                    self.assertNotIn(f'\n{keyword} ', po_text)
 
     def test_tricky_strings_compile(self):
         po_text = (

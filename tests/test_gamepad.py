@@ -363,7 +363,8 @@ class TestMapFrame(GamepadTestCase):
         from tests.helpers import new_game
         from tests.mock_map import MockMap
         self.game = new_game({**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True,
-                                 'SAVE_STATES': True, 'REWIND': True})  # their switches on (off on the NES)
+                                 'SAVE_STATES': True, 'REWIND': True,
+                                 'GAME_SPEED_KEYS': True})  # their switches on (off on the NES)
         self.gamepad.connect()  # the game connected the real one
         self.game.current_map = MockMap(self.game.config)
         self.game.current_map.load_map(self.game.player, (0, 0), self.game.game_state.config["TILE_SIZE"])
@@ -375,7 +376,7 @@ class TestMapFrame(GamepadTestCase):
         self.game.read_events()
 
     def test_right_trigger_says_the_new_speed(self):
-        # as the speed keys do on the map (Game.handle_fps_changes)
+        # as the speed keys do on the map (MapHotkeys.press_speed_key)
         with patch.object(self.game, 'draw_temporary_text') as temporary_text:
             self.press('righttrigger')
         self.assertEqual(2, game_speed())
@@ -412,7 +413,7 @@ class TestMapFrame(GamepadTestCase):
             stop.assert_called_once_with()
 
     def test_select_opens_the_options(self):
-        with patch('src.game.OptionsOverlay') as overlay:
+        with patch('src.map_hotkeys.OptionsOverlay') as overlay:
             self.press(PAD_SELECT)
         overlay.return_value.run.assert_called_once_with()
 
@@ -505,7 +506,7 @@ class TestNameEntry(TestCase):
             return pygame.event.Event(KEYDOWN, key=pressed_key, mod=0, unicode='', gamepad=True)
         # A on A, right, A on B, then A on B six more times: the 8th character ends the name
         events = [button(K_k), button(K_RIGHT)] + [button(K_k)] * 7
-        with patch('src.selection.event.get', side_effect=[[current_event] for current_event in events]), \
+        with patch('src.waiting.event.get', side_effect=[[current_event] for current_event in events]), \
                 patch('src.selection.wait_frames'), patch('src.menu_functions.display'), \
                 patch('src.menu_functions.Sound'), patch('src.menu_functions.toggle_joystick_input') as toggle:
             name = NameSelection(config).select_name(0, pygame.Surface((256, 240)), command_menu)

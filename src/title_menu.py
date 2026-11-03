@@ -15,7 +15,7 @@ puts the game back as it was when the autosave was written (src/save_state.py re
 from dataclasses import replace
 import os
 import shutil
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
 from pygame import Surface
@@ -25,8 +25,9 @@ from src.directories import Directories
 from src.common import set_gettext_language
 from src.game_functions import MENU_BACK, GameFunctions
 from src.menu_functions import NameSelection
-from src.options_screen import DEFAULT_OPTIONS, MESSAGE_SPEED_SAVE_KEY, OptionsScreen, apply_options, \
-    message_speed_from_save
+from src.game_options import DEFAULT_OPTIONS, MESSAGE_SPEED, apply_options
+from src.options_screen import OptionsScreen
+from src.player.player import Player
 from src.player.player_stats import get_level_by_experience
 from src.save_state import StateError, remove_snapshots_of_log, restore_snapshot
 from src.save_file import ADVENTURE_LOGS, DAMAGED_LOG_NAME, EXPERIENCE_KEY, NAME_KEY, read_save, save_path, \
@@ -37,6 +38,9 @@ from src.title_windows import draw_title_windows, title_menu_layout, title_trans
 from src.waiting import menu_ticks  # the cursor blink starts on menu time (src/cursor.py BlinkingCursor)
 from src.windows import WindowLayout, open_logs_layout, used_logs_layout
 
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
+
 # Returned by a title menu entry that goes back to the title menu when it's done (NES WndBackToMain)
 BACK_TO_TITLE_MENU = object()
 # COPY A QUEST's place in the title menu with a log open (FullMenuDat); with none open it isn't there
@@ -46,26 +50,10 @@ BEGIN_ENTRY_WITH_NO_LOG = 0
 BEGIN_ENTRY = 2
 
 
-class TitleMenuGame(Protocol):
-    """What the title menu uses of the Game. TitleMenu reads them from the Game each time, since the Game replaces some
-    of them (a fullscreen toggle makes a new screen, a map change a new CommandMenu)."""
-    config: dict
-    screen: Surface
-    player: Any
-    cmd_menu: Any
-    sound: Sound
-    directories: Directories
-    game_functions: GameFunctions
-
-    def load_game(self, save_file: dict, direction: int | None = None) -> None: ...
-
-    def start_at_throne_room(self) -> None: ...
-
-
 class TitleMenu:
     """The title menu, run by Game.main before the game starts (show_main_menu_screen)."""
 
-    def __init__(self, game: TitleMenuGame):
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         # The adventure log save files (a list of names), read each time the title menu is shown (show_title_menu);
         # None until then
@@ -73,7 +61,8 @@ class TitleMenu:
         # Whether there's an autosave, read with the save files (show_title_menu)
         self.autosave_present = False
 
-    # What the title menu uses of the Game, read from it each time, as the Game's own methods did
+    # What the title menu uses of the Game, read from it each time, as the Game's own methods did, since the Game
+    # replaces some of them (a fullscreen toggle makes a new screen, a map change a new CommandMenu)
     @property
     def config(self) -> dict:
         return self.game.config
@@ -83,7 +72,7 @@ class TitleMenu:
         return self.game.screen
 
     @property
-    def player(self) -> Any:
+    def player(self) -> Player:
         return self.game.player
 
     @property
@@ -227,9 +216,9 @@ class TitleMenu:
             return BACK_TO_TITLE_MENU
         log_path = save_path(self.directories.save_dir, slot)
         save = read_save(self.directories.save_dir, save_file_name_for(slot)) or {}
-        chosen = options_screen.choose_message_speed(message_speed_from_save(save))
+        chosen = options_screen.choose_message_speed(MESSAGE_SPEED.from_save(save))
         if chosen is not None:
-            save[MESSAGE_SPEED_SAVE_KEY] = chosen
+            save[MESSAGE_SPEED.save_key] = chosen
             write_save(log_path, save)
         return BACK_TO_TITLE_MENU
 

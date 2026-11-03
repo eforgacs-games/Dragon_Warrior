@@ -126,6 +126,7 @@ class TestKoreanCatalogParticles(TestCase):
         from src.battle import Battle
         battle = Battle.__new__(Battle)
         battle.config = {'LANGUAGE': 'Korean'}
+        battle._ = self._
         cmd_menu = Mock()
         battle.display_level_up_message(cmd_menu, SimpleNamespace(level=1, name='Edward'), 2)
         battle.display_level_up_message(cmd_menu, SimpleNamespace(level=1, name='검객'), 2)

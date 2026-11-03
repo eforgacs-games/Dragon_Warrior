@@ -1,6 +1,6 @@
 """The options overlay: this game's own settings, changed during play. Not on the NES.
 
-SELECT (U) or Tab on the map opens it (Game.handle_select_button), when START would pause the game: no window open,
+SELECT (U) or Tab on the map opens it (MapHotkeys.press_select), when START would pause the game: no window open,
 and only once the hero and the NPCs have finished their steps (MovementController.resolve_pending_freezes). The map
 frame stays on screen, darkened by a translucent black overlay, with one NES-style window over it (src/windows.py,
 drawn by src/translated_window.py).
@@ -13,7 +13,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     DIALOG STYLE   CLASSIC (NES) / MODERN   (DIALOG_STYLE, src/dialog_box.py)
     FADE STYLE     NES / SMOOTH             (FADE_STYLE, src/visual_effects.py screen_fade)
     MUSIC          NES / SFC / ORCHESTRA    (SOUNDTRACK, src/soundtrack.py, src/directories.py music_paths)
-    LANGUAGE       ENGLISH / 한국어          (LANGUAGE: a global setting, src/settings.py)
+    LANGUAGE       ENGLISH / 한국어 / 日本語 / ENGLISH (2014)  (LANGUAGE: a global setting, src/settings.py, src/languages.py)
     SCANLINES      OFF / ON                 (SCANLINES: a display filter, src/display_filters.py; global)
     SCALING        SMOOTH / PIXEL PERFECT   (SCALING: pygame's SCALED, or whole multiples of 256x240 only; global)
     VIEW           NES (4:3) / WIDE         (VIEW: more of the map left and right, src/view.py; global)
@@ -23,11 +23,11 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     GAMEPLAY
     NPCS MAKE WAY  ON / OFF (NES)           (NPCS_MAKE_WAY, MovementController.ask_npc_to_make_way)
     STAIRS         STEP ON / NES            (AUTO_STAIRS, MapManager.handle_warps)
-    QUICK ACTION   OFF (NES) / ON           (QUICK_ACTION: Enter takes, opens or talks, Game.handle_enter_key)
-    SMART A        OFF (NES) / ON           (SMART_A: A does TALK, TAKE, DOOR or STAIRS, Game.smart_command)
-    ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, Game.thin_encounters)
+    QUICK ACTION   OFF (NES) / ON           (QUICK_ACTION: Enter takes, opens or talks, MapHotkeys.press_smart_a_key)
+    SMART A        OFF (NES) / ON           (SMART_A: A does TALK, TAKE, DOOR or STAIRS, MapHotkeys.smart_command)
+    ENCOUNTERS     NES / HALF / OFF         (ENCOUNTERS: the random fights, FieldEncounters.thin_encounters)
     EXP/GOLD       x1 (NES) / x2 / x4       (EXP_GOLD: what a won fight gives, Battle.enemy_defeated)
-    QUEST JOURNAL  OFF (NES) / GOALS / HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
+    QUEST JOURNAL  OFF (NES) / LEARNED / LEARNED+HINTS  (QUEST_JOURNAL: what Q shows, src/quest_journal.py)
     AUTOSAVE       OFF (NES) / ON           (AUTOSAVE: the autosave slot, src/autosave.py)
     BAG            NES (8) / 16             (BAG_SIZE: the inventory slots, src/items.py bag_slots)
     RUN BUTTON     OFF (NES) / ON           (RUN_BUTTON: hold B to walk twice as fast, src/movement.py)
@@ -47,6 +47,7 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
 
     OTHER
     CONFIRM NAME   OFF (NES) / ON           (NAME_CONFIRM: a full name waits on END, START ends it; global)
+    STATS PAGE     OFF (NES) / ON           (STATS_PAGE: the P key shows the play statistics, src/stats_screen.py)
 
 Above every page's rows are two more:
 
@@ -55,8 +56,9 @@ Above every page's rows are two more:
 
 PRESET sets every row that belongs to a preset at once (OptionRow.presets): NES to the NES behaviour, MODERN to the
 recommended conveniences. It reads NES or MODERN while every such row has that preset's value, and CUSTOM as soon as one
-differs from both. Choosing it goes round NES, MODERN and, once there has been one, the last CUSTOM set of values, so a
-custom set is never lost by trying a preset. The message speed (the NES's own setting, chosen on the title menu too)
+differs from both. A new game reads NES: every such row's default (base_config, src/game_options.py) is its NES
+value. Choosing it goes round NES, MODERN and, once there has been one, the last CUSTOM set of values, so a custom set
+is never lost by trying a preset. The message speed (the NES's own setting, chosen on the title menu too)
 isn't part of either.
 
 PAGE (or START, Page Up and Page Down from any row) shows the next or the previous page; the cursor stays where it is,
@@ -64,10 +66,10 @@ or goes to the new page's last row if it has fewer.
 
 Up and down move the NES cursor (src/cursor.py) between the rows, stopping at the first and last; left, right or A
 change the row's value, with the menu button sound. A change goes into the game config at once, so the next dialog,
-fade, bump, step or key press uses it (Game.apply_option does what can't wait for that: the music, the game speed and
+fade, bump, step or key press uses it (apply_option does what can't wait for that: the music, the game speed and
 the cheats), and is saved with the adventure log the next time the game is saved (options_from_config). LANGUAGE,
 SCANLINES, SCALING, VIEW and DUNGEON MAP are the player's, not the adventure's, kept in the global settings file:
-Game.apply_option switches the game to the new language at once (Game.set_language), this window included, the display
+apply_option switches the game to the new language at once (Game.set_language), this window included, the display
 filters from the next frame on, and DUNGEON MAP from the next M; the VIEW is shown once the overlay closes
 (Game.set_view). B, Esc, SELECT or Tab close it, and the map frame is put back exactly as it was. Everything is on the
 NES buttons, so a gamepad works it as the keyboard does.
@@ -77,7 +79,7 @@ window wait, as they do for a dialog.
 """
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pygame import K_PAGEDOWN, K_PAGEUP, KEYDOWN, SRCALPHA, Rect, Surface, display
 
@@ -87,20 +89,24 @@ from src.common import A_BUTTON_KEYS, B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT
 from src.controls import KeySet
 from src.controls_screen import ControlsScreen
 from src.cursor import BlinkingCursor
-from src.display_filters import SCALING_KEY, SCALING_MODES, SCANLINES_KEY
-from src.items import BAG_SIZES, BIG_BAG_SLOTS, INVENTORY_SLOTS
-from src.options_screen import AUTO_GRIND_STOP_VALUES, CLASSIC, ENCOUNTER_SETTINGS, ENCOUNTERS_NES, \
-    EXP_GOLD_MULTIPLIERS, MESSAGE_SPEED_LABELS, MESSAGE_SPEED_NAMES, MODERN, STATUS_WINDOW_ALWAYS, \
-    STATUS_WINDOW_NES, STATUS_WINDOW_SETTINGS
-from src.quest_journal import JOURNAL_GOALS, JOURNAL_OFF, JOURNAL_SETTINGS
+from src.directories import music_name
+from src.display_filters import PRESENTER, SCALING_KEY, SCANLINES_KEY
+from src.game_options import AUTO_GRIND, AUTO_GRIND_STOP, AUTO_STAIRS, AUTOSAVE, BAG_SIZE, CHEAT_KEYS, DIALOG_STYLE, \
+    DUNGEON_MAP, ENCOUNTERS, EXP_GOLD, FADE_STYLE, GAME_SPEED_KEYS, LANGUAGE, MENU_SPEED, MESSAGE_LOG, MESSAGE_SPEED, \
+    MUSIC, NAME_CONFIRM, NPCS_MAKE_WAY, OPTIONS_BY_CONFIG_KEY, QUEST_JOURNAL, QUICK_ACTION, REWIND, RUN_BUTTON, \
+    SAVE_STATES, SCALING, SCANLINES, SHOP_PREVIEW, SMART_A, STATS_PAGE, STATUS_WINDOW, VIEW, Option, Options, \
+    apply_options
+from src.languages import LANGUAGES
+from src.options_screen import MESSAGE_SPEED_LABELS
 from src.selection import frame_events, next_frame
-from src.settings import LANGUAGES
 from src.translated_window import draw_translated_window
-from src.view import VIEW_NES, VIEW_WIDE, full_screen
-from src.soundtrack import SOUNDTRACK_KEY, SOUNDTRACKS, Soundtrack
-from src.visual_effects import FADE_STYLE_NES, FADE_STYLE_SMOOTH
-from src.waiting import MENU_SPEED_FOLLOW, MENU_SPEED_NORMAL
+from src.view import full_screen
+from src.soundtrack import SOUNDTRACK_KEY
+from src.waiting import set_game_speed, set_speed_keys_enabled
 from src.windows import Window, WindowLayout, WindowText
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 # The keys that open the overlay on the map, and close it again
 OPTIONS_KEYS = SELECT_BUTTON_KEYS + KeySet('OPTIONS')  # U and Tab, as bound (src/controls.py)
@@ -118,19 +124,29 @@ PRESET_MODERN = 'Modern'
 PRESET_CUSTOM = 'Custom'
 PRESET_LABELS = {PRESET_NES: "NES", PRESET_MODERN: "MODERN", PRESET_CUSTOM: "CUSTOM"}
 
-ON_OFF = (False, True)
 ON_OFF_LABELS = ("OFF (NES)", "ON")
 
 
 @dataclass(frozen=True, slots=True)
 class OptionRow:
-    """One row: its label, the config key it sets, and its values with their labels, in the order they're cycled.
-    ``presets`` is its (NES, MODERN) values, or None for a row the presets leave alone."""
+    """One row: its label, the option it sets (src/game_options.py: its config key, its values in the order they're
+    cycled and its presets), and its values' labels."""
     label: str
-    config_key: str
-    values: tuple[Any, ...]
+    option: Option
     value_labels: tuple[str, ...]
-    presets: tuple[Any, Any] | None = None
+
+    @property
+    def config_key(self) -> str:
+        return self.option.config_key
+
+    @property
+    def values(self) -> tuple[Any, ...]:
+        return self.option.values
+
+    @property
+    def presets(self) -> tuple[Any, Any] | None:
+        """Its (NES, MODERN) values, or None for a row the presets leave alone."""
+        return self.option.presets
 
     def index(self, config: dict) -> int:
         """The current value's place in values (the first value if the config holds something else)."""
@@ -145,9 +161,9 @@ class OptionRow:
         config[self.config_key] = self.values[(self.index(config) + step) % len(self.values)]
 
 
-def switch_row(label: str, config_key: str, modern: bool = True) -> OptionRow:
-    """An OFF (NES) / ON row for a convenience, off in the NES preset."""
-    return OptionRow(label, config_key, ON_OFF, ON_OFF_LABELS, (False, modern))
+def switch_row(label: str, option: Option) -> OptionRow:
+    """An OFF (NES) / ON row for a convenience."""
+    return OptionRow(label, option, ON_OFF_LABELS)
 
 
 @dataclass(frozen=True, slots=True)
@@ -169,72 +185,51 @@ class OptionPage:
     rows: tuple[OptionRow | ScreenRow, ...]
 
 
+# What each option does, its values and its presets are in src/game_options.py
 OPTION_PAGES = (
     OptionPage("LOOK & SOUND", (
-        OptionRow("MESSAGE SPEED", 'TEXT_SPEED', MESSAGE_SPEED_NAMES, MESSAGE_SPEED_LABELS),
-        # The MODERN dialog style is how this game drew dialog before it matched the NES, not a convenience
-        OptionRow("DIALOG STYLE", 'DIALOG_STYLE', (CLASSIC, MODERN), ("CLASSIC (NES)", "MODERN"), (CLASSIC, CLASSIC)),
-        OptionRow("FADE STYLE", 'FADE_STYLE', (FADE_STYLE_NES, FADE_STYLE_SMOOTH), ("NES", "SMOOTH"),
-                  (FADE_STYLE_NES, FADE_STYLE_NES)),
-        # The soundtrack (src/soundtrack.py): the NES preset plays the NES's, MODERN the orchestral one
-        OptionRow("MUSIC", SOUNDTRACK_KEY, SOUNDTRACKS, ("NES", "SFC", "ORCHESTRA"),
-                  (Soundtrack.NES, Soundtrack.ORCHESTRA)),
-        # The player's, not the adventure's: kept in the global settings (src/settings.py), and no preset's. Each
-        # language's name is in that language, so it can be found whichever is on.
-        OptionRow("LANGUAGE", 'LANGUAGE', LANGUAGES, ("ENGLISH", "한국어")),
-        # The display filters (src/display_filters.py): the player's screen, kept in the global settings too. Neither
-        # is on the NES or off it (the NES drew to a TV), so no preset changes them.
-        OptionRow("SCANLINES", SCANLINES_KEY, (False, True), ("OFF", "ON")),
-        OptionRow("SCALING", SCALING_KEY, SCALING_MODES, ("SMOOTH", "PIXEL PERFECT")),
-        # The player's too (src/view.py). WIDE is a display preference, not a convenience: both presets keep NES (4:3)
-        OptionRow("VIEW", 'VIEW', (VIEW_NES, VIEW_WIDE), ("NES (4:3)", "WIDE"), (VIEW_NES, VIEW_NES)),
-        OptionRow("STATUS WINDOW", 'STATUS_WINDOW', STATUS_WINDOW_SETTINGS, ("NES", "ALWAYS"),
-                  (STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS)),
-        # Information only (src/shop_preview.py): on by default, off in the NES preset
-        switch_row("SHOP PREVIEW", 'SHOP_PREVIEW'),
+        OptionRow("MESSAGE SPEED", MESSAGE_SPEED, MESSAGE_SPEED_LABELS),
+        OptionRow("DIALOG STYLE", DIALOG_STYLE, ("CLASSIC (NES)", "MODERN")),
+        OptionRow("FADE STYLE", FADE_STYLE, ("NES", "SMOOTH")),
+        OptionRow("MUSIC", MUSIC, ("NES", "SFC", "ORCHESTRA")),
+        # Each language's name is in that language, so it can be found whichever is on
+        OptionRow("LANGUAGE", LANGUAGE, tuple(language.option_label for language in LANGUAGES)),
+        OptionRow("SCANLINES", SCANLINES, ("OFF", "ON")),
+        OptionRow("SCALING", SCALING, ("SMOOTH", "PIXEL PERFECT")),
+        OptionRow("VIEW", VIEW, ("NES (4:3)", "WIDE")),
+        OptionRow("STATUS WINDOW", STATUS_WINDOW, ("NES", "ALWAYS")),
+        switch_row("SHOP PREVIEW", SHOP_PREVIEW),
     )),
     OptionPage("GAMEPLAY", (
-        OptionRow("NPCS MAKE WAY", 'NPCS_MAKE_WAY', (True, False), ("ON", "OFF (NES)"), (False, True)),
-        OptionRow("STAIRS", 'AUTO_STAIRS', (True, False), ("STEP ON", "NES"), (False, True)),
-        switch_row("QUICK ACTION", 'QUICK_ACTION'),
-        # A on the map does what applies, as Enter does, instead of opening COMMAND (Game.smart_command)
-        switch_row("SMART A", 'SMART_A'),
-        # How many fights, and what they give, are the game's balance, not conveniences: NES in both presets
-        OptionRow("ENCOUNTERS", 'ENCOUNTERS', ENCOUNTER_SETTINGS, ("NES", "HALF", "OFF"), (ENCOUNTERS_NES, ENCOUNTERS_NES)),
-        OptionRow("EXP/GOLD", 'EXP_GOLD', EXP_GOLD_MULTIPLIERS, ("x1 (NES)", "x2", "x4"), (1, 1)),
-        # Information only, when Q is pressed: GOALS by default, off in the NES preset
-        OptionRow("QUEST JOURNAL", 'QUEST_JOURNAL', JOURNAL_SETTINGS, ("OFF (NES)", "GOALS", "HINTS"),
-                  (JOURNAL_OFF, JOURNAL_GOALS)),
-        # The autosave slot (src/autosave.py): the NES only saves with King Lorik
-        switch_row("AUTOSAVE", 'AUTOSAVE'),
-        # The inventory slots (src/items.py bag_slots): the NES's 8, or 16 in the MODERN preset
-        OptionRow("BAG", 'BAG_SIZE', BAG_SIZES, ("NES (8)", "16"), (INVENTORY_SLOTS, BIG_BAG_SLOTS)),
-        # Walking (MovementController.run_button_held): on this page, as CONTROLS is full
-        switch_row("RUN BUTTON", 'RUN_BUTTON'),
+        OptionRow("NPCS MAKE WAY", NPCS_MAKE_WAY, ("ON", "OFF (NES)")),
+        OptionRow("STAIRS", AUTO_STAIRS, ("STEP ON", "NES")),
+        switch_row("QUICK ACTION", QUICK_ACTION),
+        switch_row("SMART A", SMART_A),
+        OptionRow("ENCOUNTERS", ENCOUNTERS, ("NES", "HALF", "OFF")),
+        OptionRow("EXP/GOLD", EXP_GOLD, ("x1 (NES)", "x2", "x4")),
+        OptionRow("QUEST JOURNAL", QUEST_JOURNAL, ("OFF (NES)", "LEARNED", "LEARNED+HINTS")),
+        switch_row("AUTOSAVE", AUTOSAVE),
+        OptionRow("BAG", BAG_SIZE, ("NES (8)", "16")),
+        # Walking: on this page, as CONTROLS is full
+        switch_row("RUN BUTTON", RUN_BUTTON),
     )),
     OptionPage("CONTROLS", (
-        switch_row("GAME SPEED", 'GAME_SPEED_KEYS'),
-        switch_row("SAVE STATES", 'SAVE_STATES'),
-        switch_row("REWIND", 'REWIND'),
-        switch_row("AUTO-GRIND", 'AUTO_GRIND'),
-        OptionRow("GRIND STOP", 'AUTO_GRIND_STOP', AUTO_GRIND_STOP_VALUES, ("RED HP", "HALF HP", "3/4 HP"),
-                  (AUTO_GRIND_STOP_VALUES[0], AUTO_GRIND_STOP_VALUES[0])),
-        # On the NES there is only 1x, so NORMAL is as faithful as FOLLOW GAME; both presets keep the menus at NORMAL
-        OptionRow("MENU SPEED", 'MENU_SPEED', (MENU_SPEED_NORMAL, MENU_SPEED_FOLLOW), ("NORMAL", "FOLLOW GAME"),
-                  (MENU_SPEED_NORMAL, MENU_SPEED_NORMAL)),
-        # F4 and F9 are cheats, not conveniences: off in both presets
-        switch_row("CHEATS", 'CHEAT_KEYS', modern=False),
-        # The player's, kept in the global settings (src/settings.py): M shows the dark floor's map (src/dungeon_map.py)
-        switch_row("DUNGEON MAP", 'DUNGEON_MAP'),
-        # The MESSAGE LOG key (L) on the map shows the last messages (src/message_log.py)
-        switch_row("MESSAGE LOG", 'MESSAGE_LOG'),
+        switch_row("GAME SPEED", GAME_SPEED_KEYS),
+        switch_row("SAVE STATES", SAVE_STATES),
+        switch_row("REWIND", REWIND),
+        switch_row("AUTO-GRIND", AUTO_GRIND),
+        OptionRow("GRIND STOP", AUTO_GRIND_STOP, ("RED HP", "HALF HP", "3/4 HP")),
+        OptionRow("MENU SPEED", MENU_SPEED, ("NORMAL", "FOLLOW GAME")),
+        switch_row("CHEATS", CHEAT_KEYS),
+        switch_row("DUNGEON MAP", DUNGEON_MAP),
+        switch_row("MESSAGE LOG", MESSAGE_LOG),
         # A opens the CONTROLS screen to rebind the keys (src/controls_screen.py)
         CONTROLS_ROW,
     )),
-    # The other pages are full (each fits 10 rows): settings that don't belong to the map
+    # The other pages are full (each fits 10 rows): the rest
     OptionPage("OTHER", (
-        # The player's, kept in the global settings (src/settings.py): a full name waits on END, START ends the name
-        switch_row("CONFIRM NAME", 'NAME_CONFIRM'),
+        switch_row("CONFIRM NAME", NAME_CONFIRM),
+        switch_row("STATS PAGE", STATS_PAGE),
     )),
 )
 # The rows with a setting (every row but CONTROLS)
@@ -264,6 +259,57 @@ def current_preset(config: dict) -> str:
 def preset_settings(config: dict) -> dict[str, Any]:
     """The preset rows' current values, to go back to with CUSTOM."""
     return {row.config_key: config.get(row.config_key) for row in PRESET_ROWS}
+
+
+# The switches that act on the game at once, beyond the config (apply_option), when an adventure log's or a save state's
+# options are put in force (apply_log_options)
+IMMEDIATE_SWITCHES = ('GAME_SPEED_KEYS', 'CHEAT_KEYS')
+
+
+def apply_option(game: 'Game', config_key: str) -> None:
+    """An option has just been changed (in the overlay, or by loading options). Most are read from the config when
+    they're next needed; these are made to follow at once:
+
+    - The global settings (src/game_options.py GLOBAL_OPTIONS) are saved with the global settings at once. LANGUAGE
+      is switched to at once (Game.set_language); the display filters (SCANLINES and SCALING) change from the next
+      frame on; VIEW is shown once the overlay closes (Game.set_view); M reads DUNGEON MAP each time it's pressed, and
+      the next name entry reads CONFIRM NAME.
+    - MUSIC (SOUNDTRACK): every Directories reads the music from the config (src/directories.py), so
+      the next music played is from the new set; the map's music is started again from the new set now.
+    - GAME SPEED (GAME_SPEED_KEYS): keys 1 to 5 are switched on or off; off goes back to normal speed, and on to
+      the speed kept in the global settings.
+    - CHEATS (CHEAT_KEYS): switched off, auto-battle and invulnerability are switched off too.
+    - REWIND: switched off, the snapshots kept so far are dropped (src/rewind.py takes none while it's off)."""
+    config = game.game_state.config
+    option = OPTIONS_BY_CONFIG_KEY.get(config_key)
+    if option is not None and not option.per_log:
+        game.settings.update(**{option.name: option.from_config(config)})  # kept with the global settings
+    if config_key == 'LANGUAGE':
+        game.set_language(config['LANGUAGE'])
+    elif config_key in (SCANLINES_KEY, SCALING_KEY):
+        PRESENTER.configure_from(config)
+    elif config_key == SOUNDTRACK_KEY:
+        name = music_name(game.current_map.music_file_path)
+        if name is not None:
+            game.current_map.music_file_path = getattr(game.directories, name)
+            game.music_player.load_and_play_music(game.current_map.music_file_path)
+    elif config_key == 'GAME_SPEED_KEYS':
+        set_speed_keys_enabled(bool(config.get('GAME_SPEED_KEYS')))
+        if config.get('GAME_SPEED_KEYS'):
+            set_game_speed(game.settings.settings.game_speed)
+    elif config_key == 'CHEAT_KEYS' and not config.get('CHEAT_KEYS'):
+        game.auto_battle = False
+        game.invulnerable = False
+    elif config_key == 'REWIND' and not config.get('REWIND'):
+        game.rewind.snapshots.clear()
+
+
+def apply_log_options(game: 'Game', options: Options) -> None:
+    """Put an adventure log's (or a save state's) options in force (apply_options), with the switches that act at
+    once (IMMEDIATE_SWITCHES). The music isn't restarted: what loads them starts the map's music."""
+    apply_options(game.game_state.config, options)
+    for config_key in IMMEDIATE_SWITCHES:
+        apply_option(game, config_key)
 
 
 # The window: the screen's full 16 blocks wide (the longest labels and values, MESSAGE SPEED, NPCS MAKE WAY and
@@ -300,9 +346,11 @@ def options_layout(config: dict, page: int = 0) -> WindowLayout:
 
 
 def overlay_texts() -> list[str]:
-    """Every text the window can show, for the translation catalog (catalog_tools.dynamic_messages)."""
+    """Every text the window can show, for the translation catalog (catalog_tools.dynamic_messages). The languages'
+    names aren't translated: each is shown in its own language in every language."""
     return ([page.title for page in OPTION_PAGES] + [PRESET_LABEL, *PRESET_LABELS.values(), PAGE_LABEL] +
-            [text for page in OPTION_PAGES for row in page.rows for text in (row.label, *row.value_labels)])
+            [text for page in OPTION_PAGES for row in page.rows
+             for text in (row.label, *(() if isinstance(row, OptionRow) and row.option is LANGUAGE else row.value_labels))])
 
 
 def darken(screen: Surface) -> None:
@@ -315,7 +363,7 @@ def darken(screen: Surface) -> None:
 class OptionsOverlay:
     """The overlay over the map, run until it's closed (see the module docstring)."""
 
-    def __init__(self, game, pages: Sequence[OptionPage] = OPTION_PAGES):
+    def __init__(self, game: 'Game', pages: Sequence[OptionPage] = OPTION_PAGES) -> None:
         self.game = game
         self.pages = tuple(pages)
         self.config: dict = game.game_state.config
@@ -397,7 +445,7 @@ class OptionsOverlay:
             row = self.rows[self.index - FIXED_ROWS]
             assert isinstance(row, OptionRow)
             row.change(self.config, step)
-            self.game.apply_option(row.config_key)
+            apply_option(self.game, row.config_key)
             # The window's own text in the language just chosen
             self._ = set_gettext_language(self.config.get('LANGUAGE'))
             self.remember_custom()
@@ -412,7 +460,7 @@ class OptionsOverlay:
         for key, value in values.items():
             if self.config.get(key) != value:
                 self.config[key] = value
-                self.game.apply_option(key)
+                apply_option(self.game, key)
 
     def open_screen(self, row: ScreenRow) -> None:
         """Run the screen the row opens (CONTROLS: src/controls_screen.py) until it's closed."""

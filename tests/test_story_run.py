@@ -85,6 +85,7 @@ class StoryRunMixin:
         test_config['RENDER_TEXT'] = False
         test_config['NO_BLIT'] = True
         self.game = new_game()
+        self.game.config['AUTO_STAIRS'] = True  # the story walks onto stairs (STEP ON; off on the NES)
         self.player = self.game.player
         self.player.name = "Erdrick"
         self.shown_text: list = []
@@ -197,9 +198,9 @@ class StoryRunMixin:
             return self.fight_to_the_end(run_away, current_battle)
         self.stand_at(guardian.escape_coordinates)
         self.stand_at(guardian.coordinates)
-        self.game.count_step()  # the end of the step, as move_player counts it
+        self.game.step_triggers.count_step()  # the end of the step, as move_player counts it
         with patch.object(self.game.battle_ctrl, 'handle_battle_prompts', side_effect=win):
-            self.game.handle_battles()  # the queued fight starts this same frame
+            self.game.field_encounters.handle_battles()  # the queued fight starts this same frame
         self.settle()
         self.enemies_fought.clear()  # only the Dragonlord's fight is checked against this list
         return fought
@@ -384,7 +385,7 @@ class StoryRunMixin:
             # The hero always gets the first turn (no CheckEnRun / CalcWhoIsNext ambush), so the fight can't go wrong
             with patch.object(game.battle_ctrl, 'handle_battle_prompts', side_effect=self.fight_to_the_end), \
                     patch.object(game.battle_ctrl, 'start_fight', return_value=False):
-                game.handle_battles()  # the next frame starts the queued fight
+                game.field_encounters.handle_battles()  # the next frame starts the queued fight
             self.settle()
             self.assertEqual(self.enemies_fought, ['Dragonlord', 'Dragonlord 2'])
             self.assertTrue(dragonlord_defeated(game))

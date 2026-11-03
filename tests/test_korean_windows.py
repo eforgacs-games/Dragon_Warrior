@@ -14,10 +14,9 @@ from src.battle_controller import BattleController
 from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.game import Game
-from src.directories import Directories
-from src.options_overlay import OPTION_PAGES, OPTION_ROWS, OPTIONS_WINDOW, VALUE_COLUMN, options_layout
+from src.options_overlay import OPTION_ROWS, options_layout
 from src.options_screen import MESSAGE_SPEED_OPTIONS, OptionsScreen, adventure_log_options
-from src.text import WRAP_LENGTH, NESFont, set_font_by_ascii_chars
+from src.text import NESFont
 from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT, STATUS_LAYOUT, YES_NO_LAYOUT
 
@@ -170,6 +169,7 @@ class TestKoreanSelectionWindows(KoreanTestCase):
 
 
 class TestKoreanOptionsScreen(KoreanTestCase):
+    """The overlay fits in every language: tests/test_translated_windows.py."""
 
     def draw(self, options, index=0):
         options_screen = OptionsScreen(self.game.screen, {**self.game.game_state.config, 'LANGUAGE': 'Korean'})
@@ -201,7 +201,8 @@ class TestKoreanOptionsScreen(KoreanTestCase):
                            '끄기 (NES)', '되감기', '끄기 (NES)', '자동 사냥', '끄기 (NES)', '사냥 멈춤', '빨간 HP',
                            '메뉴 속도', '보통', '치트', '끄기 (NES)', '던전 지도', '끄기 (NES)', '대화 기록',
                            '끄기 (NES)', '조작'],
-                          ['기타', '프리셋', '커스텀', '페이지', '4/4', '이름 확정', '끄기 (NES)']],
+                          ['기타', '프리셋', '커스텀', '페이지', '4/4', '이름 확정', '끄기 (NES)', '플레이 기록',
+                           '끄기 (NES)']],
                          [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(4)])
         config.update({row.config_key: row.values[1] for row in OPTION_ROWS})
         self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/4', '표시 속도', '보통', '대화 방식', '모던',
@@ -209,11 +210,11 @@ class TestKoreanOptionsScreen(KoreanTestCase):
                            '화면 배율', '정수 배율', '화면', '와이드', '능력치 창', '항상', '상점 미리보기', '켜기'],
                           ['게임 플레이', '프리셋', '커스텀', '페이지', '2/4', 'NPC가 길 비키기', '끄기 (NES)', '계단',
                            'NES', '빠른 행동', '켜기', '스마트 A', '켜기', '적 출현', '절반', '경험치/골드', 'x2',
-                           '모험 일지', '목표', '자동 저장', '켜기', '소지품', '16개', '달리기 버튼', '켜기'],
+                           '모험 일지', '들은 목표', '자동 저장', '켜기', '소지품', '16개', '달리기 버튼', '켜기'],
                           ['조작', '프리셋', '커스텀', '페이지', '3/4', '게임 속도', '켜기', '상태 저장', '켜기',
                            '되감기', '켜기', '자동 사냥', '켜기', '사냥 멈춤', 'HP 절반', '메뉴 속도', '게임 속도대로',
                            '치트', '켜기', '던전 지도', '켜기', '대화 기록', '켜기', '조작'],
-                          ['기타', '프리셋', '커스텀', '페이지', '4/4', '이름 확정', '켜기']],
+                          ['기타', '프리셋', '커스텀', '페이지', '4/4', '이름 확정', '켜기', '플레이 기록', '켜기']],
                          [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(4)])
 
     def test_a_translated_window_draws_every_line_in_one_font(self):
@@ -227,26 +228,6 @@ class TestKoreanOptionsScreen(KoreanTestCase):
         self.assertIn('NES', [call.args[0] for call in draw_text.call_args_list])
         self.assertEqual(1, len(fonts))
         self.assertNotIsInstance(fonts.pop(), NESFont)
-
-    def test_options_overlay_text_fits(self):
-        # Each label ends before its value starts, and each value inside the window's right border, in the window's
-        # one font (Unifont), with every value of every row, on every page
-        directories = Directories(test_config)
-        right_border = (OPTIONS_WINDOW.x + OPTIONS_WINDOW.width) * 2 - 1
-        title_end = OPTIONS_WINDOW.x * 2 + OPTIONS_WINDOW.width * 2 - 1
-        font = set_font_by_ascii_chars(['설정'], 16, None, directories)
-        for choice in range(3):
-            config = {**self.game.game_state.config,
-                      **{row.config_key: row.values[choice % len(row.values)] for row in OPTION_ROWS}}
-            for page in range(len(OPTION_PAGES)):
-                title, *texts = self.overlay_texts(config, page)
-                with self.subTest(text=title[0]):
-                    self.assertLessEqual(title[1] + font.size(title[0])[0] / self.nes_tile, title_end)
-                for text, column, row in texts:
-                    width = font.size(text)[0] / self.nes_tile
-                    end = OPTIONS_WINDOW.x * 2 + (VALUE_COLUMN - 1 if column < VALUE_COLUMN else right_border)
-                    with self.subTest(text=text):
-                        self.assertLessEqual(column + width, end)
 
     def test_adventure_log_window(self):
         self.assertEqual(['모험의 서 1:ERDR', '모험의 서 3:LORA'],
@@ -262,6 +243,7 @@ class TestKoreanOptionsScreen(KoreanTestCase):
 
 
 class TestKoreanControlsScreen(KoreanTestCase):
+    """The window fits in every language: tests/test_translated_windows.py."""
 
     def layouts(self):
         """The CONTROLS window scrolled to each place, and with each bottom line, in Korean."""
@@ -284,37 +266,4 @@ class TestKoreanControlsScreen(KoreanTestCase):
         texts = self.texts(draw_text)
         self.assertEqual(['조작', '키 1', '키 2', '패드', 'A 버튼'], texts[:5])
 
-    def test_text_fits(self):
-        # Each label ends before KEY 1's cursor, each cell before the next cell's cursor, and the rest (the reset
-        # row, the bottom line, the PAD cell) inside the right border
-        from src.controls_screen import CELL_CURSOR_COLUMNS, CONTROLS_WINDOW, HINT_ROW, RESET_LABEL
-        right_border = (CONTROLS_WINDOW.x + CONTROLS_WINDOW.width) * 2 - 1
-        font = set_font_by_ascii_chars(['조작'], 16, None, Directories(test_config))
-        for layout in self.layouts():
-            for text in layout.texts:
-                translated = self.korean(text.text)
-                width = font.size(translated)[0] / self.nes_tile
-                spans_the_row = text.row == HINT_ROW or text.text == RESET_LABEL
-                end = right_border if spans_the_row else next(
-                    (column for column in CELL_CURSOR_COLUMNS if column > text.column), right_border)
-                with self.subTest(text=translated):
-                    self.assertLessEqual(text.column + width, end)
-                    self.assertLessEqual(len(translated), WRAP_LENGTH)  # draw_text would wrap it
 
-
-class TestKoreanMessageLog(KoreanTestCase):
-
-    def test_text_fits(self):
-        # Every line, the title and the bottom line inside the right border
-        from src.message_log import LOG_WINDOW, LogEntry, log_layout, log_lines
-        entries = [LogEntry(self.korean("I am Gwaelin, daughter of Lorik.") * 3, 'PRINCESS_GWAELIN'),
-                   LogEntry("Thou hast found the Silver Harp. " * 3, 'WISE_MAN')]
-        lines = log_lines(entries, self.korean)
-        self.assertTrue(lines[0].startswith('로라 공주: '))
-        right_border = (LOG_WINDOW.x + LOG_WINDOW.width) * 2 - 1
-        font = set_font_by_ascii_chars(['대화'], 16, None, Directories(test_config))
-        for layout in (log_layout(lines, 0, self.korean("UP/DOWN:SCROLL  B:CLOSE")), log_layout([], 0)):
-            for text in (layout.title, *layout.texts):
-                translated = self.korean(text.text)
-                with self.subTest(text=translated):
-                    self.assertLessEqual(text.column + font.size(translated)[0] / self.nes_tile, right_border)

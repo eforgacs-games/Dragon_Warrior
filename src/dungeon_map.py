@@ -17,6 +17,7 @@ was. Off (NES), M does nothing; the record is kept all the same, so turning it o
 """
 import base64
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from pygame import K_ESCAPE, KEYDOWN, SRCALPHA, Rect, Surface, display
 
@@ -27,6 +28,9 @@ from src.cursor import BlinkingCursor
 from src.selection import frame_events, next_frame
 from src.translated_window import draw_translated_window
 from src.windows import Window, WindowLayout, WindowText
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 DUNGEON_MAP_KEYS = KeySet('MAP')  # M, as bound (src/controls.py)
 CLOSE_KEYS = DUNGEON_MAP_KEYS + B_BUTTON_KEYS + SELECT_BUTTON_KEYS + (K_ESCAPE,)
@@ -189,7 +193,7 @@ def overlay_texts() -> list[str]:
 class DungeonMapOverlay:
     """The map over the dungeon, run until it's closed (see the module docstring)."""
 
-    def __init__(self, game) -> None:
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         self.config: dict = game.game_state.config
         self._: Callable[[str], str] = set_gettext_language(self.config.get('LANGUAGE'))

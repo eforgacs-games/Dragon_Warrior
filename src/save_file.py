@@ -5,8 +5,9 @@ NES SaveData (Bank03) writes the hero's experience, gold, items, equipment, name
 PlayerFlags and StoryFlags bytes whole (game slot offsets $00-$18 in reference/sram-doc.txt), and the message speed
 (offset $16). Here each adventure log is one JSON file, save_slot_<n>.json in the save folder, holding SaveFile.to_save():
 the hero's stats and equipment under the *_KEY names below, the position (this game starts where the save was made),
-the story bits as one StoryFlags entry (src/story_flags.py) and the log's options (src/options_screen.py). Like the NES,
-the treasure chest history and the repel timer aren't saved.
+the story bits as one StoryFlags entry (src/story_flags.py), the log's options (src/game_options.py) and, not NES, the
+dungeon map and the play statistics (src/play_stats.py). Like the NES, the treasure chest history and the repel timer
+aren't saved.
 
 Saves and the playtest checkpoints in data/checkpoints/ (src/checkpoints.py) are read with SaveFile.from_save, which
 gives a key a save doesn't have the value Game.load_game always gave it, so older saves load as they always have.
@@ -40,7 +41,8 @@ from typing import Any
 
 from src.dungeon_map import SAVE_KEY as DUNGEON_MAP_SAVE_KEY
 from src.json_files import atomic_write_json
-from src.options_screen import Options, options_from_save, options_to_save
+from src.play_stats import SAVE_KEY as PLAY_STATS_SAVE_KEY
+from src.game_options import Options, options_from_save, options_to_save
 from src.story_flags import LEGACY_SAVE_KEYS as LEGACY_STORY_FLAG_KEYS
 from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.story_flags import StoryFlags
@@ -84,6 +86,12 @@ def dungeon_map_from_save(save: dict[str, Any]) -> dict[str, Any]:
     return record if isinstance(record, dict) else {}
 
 
+def play_stats_from_save(save: dict[str, Any]) -> dict[str, Any]:
+    """The log's play statistics (src/play_stats.py), or none for a save from before they were kept (all 0)."""
+    record = save.get(PLAY_STATS_SAVE_KEY)
+    return record if isinstance(record, dict) else {}
+
+
 @dataclass(slots=True, kw_only=True)
 class SaveFile:
     """One adventure log's save. A key the save doesn't have reads as the default here; CurrentHP and CurrentMP read
@@ -110,10 +118,12 @@ class SaveFile:
     options: Options = field(default_factory=Options)
     # What the hero has seen of each dark floor (src/dungeon_map.py DungeonMap.to_save); none in an older save
     dungeon_map: dict[str, Any] = field(default_factory=dict)
+    # The play statistics (src/play_stats.py PlayStats.to_save); none in an older save
+    play_stats: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_game(cls, player: Any, current_map: str, story_flags: StoryFlags, options: Options,
-                  dungeon_map: dict[str, Any] | None = None) -> 'SaveFile':
+                  dungeon_map: dict[str, Any] | None = None, play_stats: dict[str, Any] | None = None) -> 'SaveFile':
         """What CommandMenu.save keeps of the running game."""
         return cls(name=player.name, experience=player.total_experience, gold=player.gold,
                    inventory=player.inventory.with_empty_slots(),
@@ -123,7 +133,8 @@ class SaveFile:
                    wearing_cursed_belt=player.wearing_cursed_belt,
                    wearing_death_necklace=player.wearing_death_necklace, spells=player.spells,
                    current_map=current_map, player_row=player.row, player_column=player.column,
-                   story_flags=story_flags, options=options, dungeon_map=dungeon_map or {})
+                   story_flags=story_flags, options=options, dungeon_map=dungeon_map or {},
+                   play_stats=play_stats or {})
 
     def to_save(self) -> dict[str, Any]:
         """The save file's JSON object, key for key as CommandMenu.save has always written it."""
@@ -148,10 +159,11 @@ class SaveFile:
             PLAYER_COLUMN_KEY: self.player_column,
             STORY_FLAGS_SAVE_KEY: self.story_flags.to_save(),
             # NES SaveData (LFA7D): the message speed is saved with each log (offset $16); so are the dialog style
-            # and NPCS MAKE WAY (src/options_screen.py)
+            # and NPCS MAKE WAY (src/game_options.py)
             **options_to_save(self.options),
             # The dungeon map's record, once the hero has been in a dark dungeon (so other saves stay as they were)
             **({DUNGEON_MAP_SAVE_KEY: self.dungeon_map} if self.dungeon_map else {}),
+            **({PLAY_STATS_SAVE_KEY: self.play_stats} if self.play_stats else {}),
         }
 
     @classmethod
@@ -172,7 +184,7 @@ class SaveFile:
                    spells=save.get(SPELLS_KEY, []), current_map=save.get(CURRENT_MAP_KEY),
                    player_row=save.get(PLAYER_ROW_KEY), player_column=save.get(PLAYER_COLUMN_KEY),
                    story_flags=StoryFlags.from_save(save), options=options_from_save(save),
-                   dungeon_map=dungeon_map_from_save(save))
+                   dungeon_map=dungeon_map_from_save(save), play_stats=play_stats_from_save(save))
 
     def restore_player(self, player: Any) -> None:
         """NES LoadSavedData: the hero as saved. The stats are worked out again from the name and experience, and HP

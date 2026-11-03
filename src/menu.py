@@ -2,11 +2,12 @@ import functools
 import random
 
 from src.spells import Spell
-from typing import Any, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 from collections.abc import Callable, Collection, Iterable, Iterator
 from contextlib import contextmanager
 
 from pygame import Surface, display, KEYDOWN, Rect, event, transform
+from pygame.font import Font
 from pygame.sprite import Group
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 
@@ -18,8 +19,9 @@ from src.command_window import WND_ABORT, CommandWindow
 from src.cursor import IN_A, DialogArrowBlink, draw_cursor_tile
 from src.waiting import NES_FPS, is_any_key_held, wait, wait_until
 from src.directories import Directories
+from src.languages import language_named
 from src.items import DEATH_NECKLACE_GOLD, GOLD, MAX_GOLD, MAX_HERBS, MAX_KEYS, \
-    NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, bag_slots, hidden_items, inventory_list, roll_treasure_gold, treasure
+    NON_DISCARDABLE_ITEMS, UNSLOTTED_ITEMS, armor, bag_is_full, hidden_items, inventory_list, roll_treasure_gold, treasure
 from src.coordinates import Cell
 from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, MAX_LEVEL, OUTSIDE_DESTINATIONS, \
     RAINBOW_BRIDGE_COORDINATES, RAINBOW_DROP_COORDINATES, REPEL_SPELL_TIMER, RETURN_DESTINATION, SILVER_HARP_ENEMIES, \
@@ -30,10 +32,11 @@ from src.direction import Direction
 from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
 from src.menu_functions import get_opposite_direction
-from src.options_screen import MODERN, options_from_config
+from src.game_options import MODERN, options_from_config
 from src.save_file import ADVENTURE_LOGS, SaveFile, is_from_a_newer_build, log_belongs_to, log_for_unchosen_save, \
     save_path, write_save
 from src.message_log import speaker_of
+from src.quest_journal import hear
 from src.selection import YES, frame_events, next_game_frame, run_selection, stop_at_edges
 from src.sound import SPELL_SFX_FRAMES, Sound
 from src.visual_effects import bw_screen_flash, rainbow_bridge_flash
@@ -46,8 +49,13 @@ from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENT
     ITEM_MENU_X, ITEM_MENU_Y, POPUP_WINDOW, SPELL_MENU_TITLE_TILE_COLUMN, \
     STATUS_EQUIPMENT_TILE_COLUMN, STATUS_EQUIPMENT_TILE_ROWS, STATUS_LAYOUT, STATUS_NAME_TILE_COLUMN, \
     STATUS_NAME_TILE_ROW, STATUS_VALUE_RIGHT_TILE_COLUMN, STATUS_VALUE_TILE_ROWS, STATUS_WINDOW, YES_NO_LAYOUT, \
-    YES_NO_WINDOW, item_menu_entry_tile_row, item_menu_layout, item_menu_window, Window, name_halves
+    YES_NO_WINDOW, item_menu_entry_tile_row, item_count_tile_row, item_menu_layout, item_menu_window, Window, \
+    translated_name_halves
 from src.nes_random import one_in
+
+if TYPE_CHECKING:
+    from src.battle import Battle  # src.battle imports this module
+    from src.game import Game  # src.game imports this module
 
 # The COMMAND window's commands, in WndSelResults order (NCC_TALK $00 to NCC_TAKE $07; src/windows.py COMMAND_ENTRIES):
 # the CommandMenu methods Bank03 NCCmdSelected and CheckCmdWndResults run for each
@@ -89,7 +97,7 @@ def wait_for_next_window_row(row_started: float, config: dict) -> None:
 
 class CommandMenu:
 
-    def __init__(self, game):
+    def __init__(self, game: 'Game') -> None:
         self.launch_signaled = False
         self.skip_text = False
         self.game = game
@@ -97,7 +105,7 @@ class CommandMenu:
 
         self.screen = self.game.screen
         self.current_map: DragonWarriorMap = self.game.current_map
-        self.current_battle = None
+        self.current_battle: Battle | None = None
         # The NPC whose dialog is showing (launch_dialog), for the message log
         self.speaker: str | None = None
         # While the game shows pages of its own (not_logged), nothing goes to the message log
@@ -109,7 +117,7 @@ class CommandMenu:
         self.graphics = Graphics(self.current_map.config)
         self.dialog_buffer = DialogBuffer()
         self._dialog_frame_deadline = 0.0
-        self._dialog_fonts = {}
+        self._dialog_fonts: dict[bool, Font] = {}  # the dialog font for ASCII text (True) and the rest
         self.directories = Directories(self.current_map.config)
         self.sound = Sound(self.current_map.config)
         self.calculation = Calculation(self.current_map.config)
@@ -154,7 +162,9 @@ class CommandMenu:
     def background(self) -> Surface:
         """The surface the map is drawn on, the game's own: Drawer.draw_all replaces it on a map's first frame, after
         the new map's CommandMenu is made, so a copy taken here would be the previous one."""
-        return self.game.drawer.background
+        background = self.game.drawer.background
+        assert background is not None, "the map is drawn before anything is drawn over it"
+        return background
 
     @property
     def color(self) -> tuple[int, int, int]:
@@ -268,7 +278,7 @@ class CommandMenu:
             return False
         save = SaveFile.from_game(self.player, self.game.current_map.identifier, self.game.story_flags,
                                   options_from_config(self.game.game_state.config),
-                                  self.game.dungeon_map.to_save())
+                                  self.game.dungeon_map.to_save(), self.game.play_stats.to_save())
         try:
             write_save(save_path(save_dir, log), save.to_save())
         except OSError as error:
@@ -313,6 +323,8 @@ class CommandMenu:
             if character.get('dialog'):
                 self.dialog_lookup.camera_position = self.camera_position
                 self.show_text_in_dialog_box(character['dialog'], add_quotes=True, skip_text=self.skip_text)
+                # The quest journal remembers the goals the NPC spoke of
+                hear(self.game.story_flags, character.get('dialog_byte'))
             else:
                 print(f"Character has no dialog: {dialog_character}")
                 self.show_text_in_dialog_box(self._("I have nothing to say."), add_quotes=True,
@@ -353,9 +365,7 @@ class CommandMenu:
                 line()
 
     def add_dialog_quotes(self, line: str) -> str:
-        if self.game.game_state.config['LANGUAGE'] == 'Korean' and not line.isascii():
-            return f"'{line}'"
-        return f"`{line}’"
+        return language_named(self.game.game_state.config['LANGUAGE']).quote(line)
 
     def show_text_line_in_dialog_box(self, line, add_quotes, disable_sound, hide_arrow, letter_by_letter, skip_text,
                                      temp_text_start, tile_size, advance_keys: Collection[int] | None = None):
@@ -377,7 +387,9 @@ class CommandMenu:
             # Modern dialog style: every message starts on a fresh window, replacing the one before it
             self.dialog_buffer.clear()
         self.draw_dialog_window()
-        self.run_dialog_steps(self.dialog_buffer.print_message(line, quoted=line.startswith(OPEN_QUOTES)),
+        breaks_anywhere = language_named(config['LANGUAGE']).breaks_anywhere
+        self.run_dialog_steps(self.dialog_buffer.print_message(line, quoted=line.startswith(OPEN_QUOTES),
+                                                               breaks_anywhere=breaks_anywhere),
                               animate, frames, disable_sound)
         if shows_arrow:
             self.run_dialog_steps(self.dialog_buffer.start_wait(), animate, frames, disable_sound)
@@ -413,7 +425,7 @@ class CommandMenu:
 
     @property
     def modern_dialog(self) -> bool:
-        """The Modern dialog style (src/options_screen.py): each message replaces the last one, as this game drew dialog
+        """The Modern dialog style (src/game_options.py): each message replaces the last one, as this game drew dialog
         before it copied the NES window (src/menu.py and src/text.py before PR #245). Otherwise the text scrolls on below
         what the window shows, like the NES (Classic, the default). Both print letter by letter at the message speed,
         with the NES text beep."""
@@ -710,6 +722,7 @@ class CommandMenu:
     def open_chest(self) -> None:
         """NES GetTreasure: record the chest as taken, then play the chest sound and turn the chest into brick.
         With all 8 history slots in use the NES records nothing and leaves the chest where it is."""
+        self.game.play_stats.open_chest()
         if self.chest_history.record(self.map_name, (self.player.row, self.player.column)):
             self.sound.play_sound(self.directories.open_treasure_sfx)
             self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
@@ -732,16 +745,11 @@ class CommandMenu:
         self.open_chest()
         self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
 
-    def inventory_is_full(self) -> bool:
-        """Every slot of the bag used (8 on the NES, or 16 with BAG set to 16: src/items.py bag_slots)."""
-        return len([item for item in self.player.inventory if item not in UNSLOTTED_ITEMS]) >= \
-            bag_slots(self.game.game_state.config)
-
     def take_item(self, item_name: str):
         """NES SetTrsrDescByte: tell the player what was found, then add it to the inventory."""
         self.open_chest()
         self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
-        if item_name in UNSLOTTED_ITEMS or not self.inventory_is_full():
+        if item_name in UNSLOTTED_ITEMS or not bag_is_full(self.player.inventory, self.game.game_state.config):
             self.player.inventory.append(item_name)  # NES AddInvItem: the first empty slot
         else:
             self.discard_for_item(item_name)
@@ -848,6 +856,7 @@ class CommandMenu:
         gold_amount = roll_treasure_gold(treasure_info['gold'])
         self.open_chest()
         self.player.gold = min(self.player.gold + gold_amount, MAX_GOLD)
+        self.game.play_stats.earn_gold(gold_amount)
         # NES GainGoldDialog: the message, then Dowindow WND_POPUP with the new gold, then ResumeGamePlay closes the
         # dialog window
         self.show_text_in_dialog_box(self._("Of GOLD thou hast gained {}").format(gold_amount),
@@ -856,7 +865,7 @@ class CommandMenu:
         self.window_drop_up_effect(*DIALOG_WINDOW)
 
     def set_tile_by_coordinates(self, new_tile_identifier, column, row, player):
-        old_tile_identifier = get_tile_id_by_coordinates(column, row, self.current_map)
+        old_tile_identifier = self.current_map.get_tile_by_value(self.current_map.layout[row][column])
         if column == player.column and row == player.row:
             self.current_tile = new_tile_identifier
             player.current_tile = new_tile_identifier
@@ -885,6 +894,13 @@ class CommandMenu:
 
     # Items
 
+    @property
+    def active_battle(self) -> 'Battle':
+        """The fight in progress, for the code that only runs during one."""
+        if self.current_battle is None:
+            raise RuntimeError("There is no battle in progress.")
+        return self.current_battle
+
     def item_message(self, *pages: str):
         """Show an item's text as a battle line during a fight, or in the dialog box in the field. Each page but the
         last ends in a TXT_WAIT: the arrow blinks until a button is pressed."""
@@ -911,7 +927,7 @@ class CommandMenu:
         item_function = battle_items.get(item_name)
         if item_function is None:
             self.show_battle_line(self._("That cannot be used in battle."))
-            self.current_battle.no_op = True
+            self.active_battle.no_op = True
             return
         item_function()
 
@@ -988,7 +1004,7 @@ class CommandMenu:
         self.show_battle_line(self._("{} played a sweet melody on the harp.").format(self.player.name))
         self.game.music_player.play_until_end(self.directories.harp_music, self.game.game_state.config)
         self.resume_music()
-        self.show_battle_line(self._("The {} looks happy.").format(self._(self.current_battle.enemy.name)))
+        self.show_battle_line(self._("The {} looks happy.").format(self._(self.active_battle.enemy.name)))
 
     def fairy_flute(self):
         # NES ChkFryFlt (field) / ChkUseFlute (battle): play the flute tune to the end (WaitForMusicEnd), then resume
@@ -1001,13 +1017,14 @@ class CommandMenu:
         self.game.music_player.play_until_end(self.directories.flute_music, self.game.game_state.config)
         self.game.game_state.unpause_all_movement()
         self.resume_music()
-        if in_battle and self.current_battle.enemy.name == 'Golem':
+        battle = self.current_battle
+        if battle is not None and battle.enemy.name == 'Golem':
             # NES ChkUseFlute: the Golem always falls asleep and loses its turn (jumps to EnStillAsleep)
-            enemy = self.current_battle.enemy
+            enemy = battle.enemy
             enemy.is_asleep = True
             say(self._("Quietly Golem closes his eyes and settles into sleep."))
             say(self._("The {} is asleep.").format(self._(enemy.name)))
-            self.current_battle.no_op = True
+            battle.no_op = True
             return
         say(self._("But nothing happened."))
 
@@ -1473,7 +1490,7 @@ class CommandMenu:
         self.set_tile_by_coordinates('BRICK_STAIR_DOWN', self.player.column, self.player.row, self.player)
         charlock_ground_floor.reveal_hidden_staircase()
         # Like arriving on a map: don't auto-take the new stairs until the player steps off and back on (or uses STAIRS)
-        self.game.reset_step_count()
+        self.game.step_triggers.reset_step_count()
         return True
 
     def find_hidden_item(self, item_name: str) -> tuple[str, bool]:
@@ -1494,7 +1511,7 @@ class CommandMenu:
             # NES FoundItem/ItemAlreadyFound: found only if it isn't already in the inventory
             if item_name in self.player.inventory:
                 return self._("But there found nothing."), False
-            if self.inventory_is_full():
+            if bag_is_full(self.player.inventory, self.game.game_state.config):
                 return self._("{} discovers the {}.").format(self.player.name, self._(item_name)), True
             self.player.inventory.append(item_name)
         return self._("{} discovers the {}.").format(self.player.name, self._(item_name)), False
@@ -1618,14 +1635,14 @@ class CommandMenu:
             elif self.player.current_mp < spell_mp_cost:
                 # TB4E2 and TB4E0 below end with no WAIT: in a fight, nothing waits for a button after them. In the
                 # field, DoSpell (LDA44) goes on to ResumeGamePlay, which waits for a new press
-                in_battle = self.current_battle is not None
+                battle = self.current_battle
                 self.show_line_in_dialog_box(self._("Thy MP is too low."),
-                                             skip_text=self.skip_text or in_battle,
+                                             skip_text=self.skip_text or battle is not None,
                                              disable_sound=True,
                                              hide_arrow=True,
                                              add_quotes=False)
-                if in_battle:
-                    self.current_battle.no_op = True
+                if battle is not None:
+                    battle.no_op = True
             else:
                 # Nowhere, in a fight or in the field: PlyrCastSpell (LDBA0) goes straight on to the spell's sound,
                 # and any press comes after the spell (FIELD_SPELLS_ENDING_WITH_A_PRESS)
@@ -1672,10 +1689,10 @@ class CommandMenu:
         :return: The window's rect on the screen, for display.update.
         """
         config = self.game.game_state.config
-        cursor = {'cursor_index': self.menu.selected, 'cursor_visible': self.cursor.visible()}
+        cursor_index, cursor_visible = self.menu.selected, self.cursor.visible()
         if self.command_window_in_nes_font():
-            return draw_window(self.screen, COMMAND_LAYOUT, self.color, config, **cursor)
-        rect = draw_window(self.screen, COMMAND_BORDER_LAYOUT, self.color, config, **cursor)
+            return draw_window(self.screen, COMMAND_LAYOUT, self.color, config, cursor_index, cursor_visible)
+        rect = draw_window(self.screen, COMMAND_BORDER_LAYOUT, self.color, config, cursor_index, cursor_visible)
         x, y = COMMAND_WINDOW.x, COMMAND_WINDOW.y
         self.draw_window_title(self._(COMMAND_TITLE.text), x, y, COMMAND_TITLE.column)
         for entry, (column, row) in zip(COMMAND_ENTRIES, COMMAND_CURSOR_TILES):
@@ -1763,16 +1780,16 @@ class CommandMenu:
             first_half, second_half = self.name_halves(entry)
             draw_in_window(first_half, ITEM_MENU_TEXT_TILE_COLUMN, row)
             if entry in COUNTED_ITEMS:
-                draw_in_window(str(self.player.inventory.count(entry)), ITEM_COUNT_TILE_COLUMN, row)
+                draw_in_window(str(self.player.inventory.count(entry)), ITEM_COUNT_TILE_COLUMN,
+                               item_count_tile_row(first_half, row))
             if second_half:
                 draw_in_window(second_half, ITEM_MENU_TEXT_TILE_COLUMN + 1, row + 1)
         return Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
 
     def name_halves(self, name: str) -> tuple[str, str]:
         """An item's or a piece of equipment's name as the ITEM and status windows show it: in the NES's two halves
-        (src/windows.py name_halves), or, translated, whole on the first line (as the shop windows show it)."""
-        translated = self._(name)
-        return name_halves(name) if translated == name else (translated, "")
+        (src/windows.py name_halves), or translated (translated_name_halves)."""
+        return translated_name_halves(name, self._(name))
 
     def window_text_position(self, window_x: int, window_y: int, column: int, row: int) -> tuple[float, float]:
         """

@@ -4,8 +4,6 @@ from src.sprites.animated_sprite import AnimatedSprite
 class RoamingCharacter(AnimatedSprite):
     def __init__(self, center_point, direction_value, images, identifier):
         super().__init__(center_point, direction_value, images, identifier)
-        self.column = None
-        self.row = None
         self.is_moving = False
         self.previous_previous_tile = None
         self.previous_tile = None

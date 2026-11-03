@@ -1,0 +1,3524 @@
+# Japanese translation of Dragon Warrior.
+# Names and terms follow the official DRAGON QUEST script (data/text/official_script/ja.json, glossary_ja.tsv).
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. official: data.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"We deal in weapons and armor.\n"
+" Dost thou wish to buy anything today?"
+msgstr ""
+"ここは 武器と防具の店だ。\n"
+"どんな用だね？"
+
+#. official: map.1.21.0
+#: data/text/dialog_lookup_table.py
+msgid "Never does a brave person steal."
+msgstr "まことの勇者なら 盗みなど せぬはずだ。"
+
+#. official: data.3.0.4
+#: data/text/dialog_lookup_table.py
+msgid "The {}?"
+msgstr "{} だな？"
+
+#: src/items.py
+msgid "Bamboo Pole"
+msgstr "たけざお"
+
+#: src/items.py
+msgid "Club"
+msgstr "こんぼう"
+
+#: src/items.py
+msgid "Copper Sword"
+msgstr "どうのつるぎ"
+
+#: src/items.py
+msgid "Clothes"
+msgstr "ぬののふく"
+
+#: src/items.py
+msgid "Leather Armor"
+msgstr "かわのふく"
+
+#: src/items.py
+msgid "Small Shield"
+msgstr "かわのたて"
+
+#: src/items.py
+msgid "Hand Axe"
+msgstr "てつのおの"
+
+#: src/items.py
+msgid "Half Plate"
+msgstr "てつのよろい"
+
+#: src/items.py
+msgid "Full Plate"
+msgstr "はがねのよろい"
+
+#. official: data.1.0.6
+#: src/hero_death.py
+msgid "Thou art dead."
+msgstr "あなたは 死にました。"
+
+#: src/map_hotkeys.py
+msgid ""
+"Game set to normal speed.\n"
+"({} FPS)"
+msgstr ""
+"ゲーム速度を ふつうに した。\n"
+"({} FPS)"
+
+#: src/menu.py
+msgid "There is no one there."
+msgstr "そのほうこうには だれも いない。"
+
+#: src/menu.py
+msgid "There are no stairs here."
+msgstr "ここには かいだんが ない。"
+
+#. official: map.1.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Where oh where can I find Princess Gwaelin?"
+msgstr "ああ ローラ姫…。 いったい 姫さまは どこへ……。"
+
+#. official: map.1.4.0
+#: data/text/dialog_lookup_table.py
+msgid "Welcome to Tantegel Castle."
+msgstr "ラダトームの城に ようこそ！"
+
+#. official: data.3.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome.\n"
+"We deal in tools.\n"
+"What can I do for thee?"
+msgstr ""
+"いらっしゃいませ！\n"
+"ここは 道具屋です。\n"
+"どんな ご用でしょう？"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Descendant of Erdrick, listen now to my words."
+msgstr "勇者ロトの 血をひきし者よ！ そなたが来るのを 待っておった。"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
+msgstr "その昔 伝説の勇者ロトは 神から ひかりのたまを さずかり この世界を おおっていた まものたちを封じこめたという。"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Then came the Dragonlord who stole the precious globe and hid it in the darkness."
+msgstr "しかし いずこともなく現れた 悪魔の化身 竜王が その玉を 闇にとざしてしまったのじゃ！ このままでは 世界は 闇に のみこまれ やがて ほろんでしまうことだろう。"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Now, {}, thou must help us recover the Ball of Light and restore peace to our land."
+msgstr "勇者{}よ！ 竜王をたおし その手から ひかりのたまを 取りもどしてくれ！"
+
+#: data/text/dialog_lookup_table.py
+msgid "The Dragonlord must be defeated."
+msgstr "竜王を たおさねば ならぬ。"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."
+msgstr "わしからの おくり物じゃ！ そこにある宝箱を 開けるがよい。 そなたの役に立つ物が 入っておるはずじゃ。"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Then speak with the guards, for they have much knowledge that may aid thee."
+msgstr "そして この部屋にいる者に たずねれば 旅の心得を 教えてくれよう。"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "May the light shine upon thee, {}."
+msgstr "では また会おう！ 勇者{}よ！"
+
+#. official: map.3.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"When thou art finished preparing for thy departure, please see me.\n"
+"I shall wait."
+msgstr ""
+"旅のしたくが できたなら また わしに 会いに来るがよい。\n"
+"まっておるぞ。"
+
+#. official: map.2.0.0
+#: data/text/dialog_lookup_table.py
+msgid "I am greatly pleased that thou hast returned, {}."
+msgstr "おお {}！ よくぞ もどって来た！ わしは とても うれしいぞ。"
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Before reaching thy next level of experience thou must gain {} Points."
+msgstr "そなたが 次のレベルになるには あと {}ポイントの 経験が 必要じゃ。"
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Before reaching thy next level of experience thou must gain {} Point."
+msgstr "そなたが 次のレベルになるには あと {}ポイントの 経験が 必要じゃ。"
+
+#. official: data.3.7.2
+#: data/text/dialog_lookup_table.py
+msgid "Will thou tell me now of thy deeds so they won't be forgotten?"
+msgstr "そなたの これまでの旅を 冒険の書に 記録してよいな？"
+
+#. official: data.3.7.10
+#: data/text/dialog_lookup_table.py
+msgid "Thy deeds have been recorded on the Imperial Scrolls of Honor."
+msgstr "確かに書きとめておいたぞ！"
+
+#. official: data.3.7.6
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou wish to continue thy quest?"
+msgstr "まだ 休まずに 冒険を 続けるつもりかっ？"
+
+#. official: data.3.7.8
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Goodbye now, {}.\n"
+"'Take care and tempt not the Fates."
+msgstr "では また会おう！ 勇者{}よ！"
+
+#. official: map.2.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Death should not have taken thee, {}."
+msgstr "おお {}！ 死んでしまうとは なにごとだ！"
+
+#. official: map.2.7.0
+#: data/text/dialog_lookup_table.py
+msgid "I will give thee another chance."
+msgstr "しかたのない やつじゃな。 そなたに もう一度 きかいを与えよう！"
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "To reach the next level, thy Experience Points must increase by {}."
+msgstr "そなたが 次のレベルになるには あと {}ポイントの 経験が 必要じゃ。"
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "To reach the next level, thy Experience Point must increase by {}."
+msgstr "そなたが 次のレベルになるには あと {}ポイントの 経験が 必要じゃ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Now, go, {}!"
+msgstr "さあ ゆけ！ {}よ！"
+
+#. official: map.3.2.0
+#: data/text/dialog_lookup_table.py
+msgid "East of this castle is a town where armor, weapons, and many other items may be purchased."
+msgstr "この城を出ると となりに 町が 見えます。 そこで まず 武器や防具を 買いそろえるといいですよ。"
+
+#. official: map.3.2.0
+#: data/text/dialog_lookup_table.py
+msgid "Return to the Inn for a rest if thou art wounded in battle, {}."
+msgstr "{}さま。 戦いで キズついたときは 町にもどり 宿屋に泊まれば キズが 回復するでしょう。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Sleep heals all."
+msgstr "眠れば キズは すべて 回復します。"
+
+#. official: map.3.3.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"If thou hast collected all the Treasure Chests,\n"
+"a key will be found."
+msgstr ""
+"宝箱を すべて 調べたなら\n"
+"その中に まほうのカギが 入っていたはずです。"
+
+#. official: map.3.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Once used, the key will disappear, but the door will be open and thou may pass through."
+msgstr "カギは いちど使うと なくなりますが そのカギで とびらを 開けた時… あなたの旅が 始まるでしょう。"
+
+#. official: data.3.3.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Magic keys!\n"
+"They will unlock any door.\n"
+"Dost thou wish to purchase one for {} GOLD?"
+msgstr ""
+"どんなトビラも 開けてしまう\n"
+"まほうの カギは いらんかな？\n"
+"ひとつ {}ゴールドじゃ。"
+
+#. official: map.1.8.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"We are merchants who have traveled much in this land.\n"
+"Many of our colleagues have been killed by servants of the Dragonlord."
+msgstr ""
+"私は 旅の商人です。\n"
+"これまでにも 多くの仲間が まものたちに 殺されました。"
+
+#. official: map.1.9.3
+#: data/text/dialog_lookup_table.py
+msgid "Rumor has it that entire towns have been destroyed by the Dragonlord's servants."
+msgstr "ウワサだと まものたちに ほろぼされちゃった町も あるんだってね！"
+
+#. official: map.1.10.0
+#: data/text/dialog_lookup_table.py
+msgid "To become strong enough to face future trials thou must first battle many foes."
+msgstr "まずは まものたちと戦って 経験を つむことだ。 そうすれば 勇者としての レベルが 次々と上がり 強くなってゆくだろう。"
+
+#. official: map.1.2.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"There was a time when Brecconary was a paradise.\n"
+"Then the Dragonlord's minions came."
+msgstr ""
+"ここラダトームは たくさんの人々が あつまる 楽園でした。\n"
+"それを まものたちが…。 うっ うっ うっ…。"
+
+#. official: map.1.19.0
+#: data/text/dialog_lookup_table.py
+msgid "It's a legend."
+msgstr "古くからの 言い伝えですわ。"
+
+#. official: map.1.19.0
+#: data/text/dialog_lookup_table.py
+msgid "When the sun and rain meet, a Rainbow Bridge shall appear."
+msgstr "雨と太陽が 合わさる時 虹の橋が できる…。"
+
+#. official: map.1.0.0
+#: data/text/dialog_lookup_table.py
+msgid "King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."
+msgstr "冒険の書に 旅の記録をしておけば いつでも 記録したところから 旅を再開することができますよ。"
+
+#. official: map.1.1.0
+#: data/text/dialog_lookup_table.py
+msgid "If thou art planning to take a rest, first see King Lorik."
+msgstr "旅を いちど やめたい時は 王さまに会い 冒険の書に 記録してもらうといいでしょう。"
+
+#. official: map.1.7.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"{}'s coming was foretold by legend.\n"
+"May the light shine upon this brave warrior."
+msgstr ""
+"闇の竜 つばさ広げる時 ロトの血をひく者 来たりて 闇を照らす 光とならん。\n"
+"おお 神よ！ 古き 言い伝えの勇者 {}に 光あれ！！"
+
+#. official: map.14.0.1
+#: data/text/dialog_lookup_table.py
+msgid "I have been waiting long for one such as thee."
+msgstr "わしは 長い間 待っておった。 そなたのような 若者が 現れることを…。"
+
+#. official: map.4.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Take the Treasure Chest."
+msgstr "宝箱を 開けるがよい！"
+
+#. official: map.5.5.2
+#: data/text/dialog_lookup_table.py
+msgid "There is a town where magic keys can be purchased."
+msgstr "ウワサでは どこかに まほうのカギを売ってる町が あるらしいですよ。"
+
+#. official: map.5.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Thou art most welcome in Brecconary."
+msgstr "ラダトームの町に ようこそ。"
+
+#. official: map.5.11.0
+#: data/text/dialog_lookup_table.py
+msgid "Enter where thou can."
+msgstr "これは いらっしゃいませ！ どうぞ 中へ お入りください。"
+
+#. official: map.5.6.0
+#: data/text/dialog_lookup_table.py
+msgid "If thou art cursed, come again."
+msgstr "わしは 呪いをとくまほうを 研究しておる。 もし そなたが 呪われたなら ここに 来るがよい。"
+
+#. official: map.5.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Tell King Lorik that the search for his daughter hath failed."
+msgstr "ど…どなたかは 知らぬが 王さまに つたえてくれ…。 ローラ姫の そうさく隊は 全滅したと…。"
+
+#. official: map.5.7.0
+#: data/text/dialog_lookup_table.py
+msgid "I am almost gone...."
+msgstr "私も もう だめだ… ぐふっ…。"
+
+#. official: map.5.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome! \n"
+"Enter the shop and speak to its keeper across the desk."
+msgstr ""
+"いらっしゃいませ。\n"
+"中に進んで カウンターごしに 話しかけてくださいな。"
+
+#. official: map.2.1.1
+#: data/text/dialog_lookup_table.py
+msgid "{}, please save the Princess."
+msgstr "{}どの！ どうか ローラ姫を 助け出してくだされ！"
+
+#. official: map.2.1.0
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou know about Princess Gwaelin?"
+msgstr "ローラ姫のことを ごぞんじか？"
+
+#. official: map.2.1.2
+#: data/text/dialog_lookup_table.py
+msgid "Half a year now hath passed since the Princess was kidnapped by the enemy."
+msgstr "ローラ姫は 王さまの 大切な ひとり娘じゃ。 王妃さまが 亡くなられてからは ローラ姫が 王さまの心の支えに なっておられたのだが…。 その姫さまが まものたちに さらわれて 半年になる。"
+
+#. official: map.2.1.2
+#: data/text/dialog_lookup_table.py
+msgid "Never does the King speak of it, but he must be suffering much."
+msgstr "王さまは 何も おっしゃらないが 心の中では どれほど 苦しんでおられることか…。"
+
+#. official: map.7.1.0
+msgid "Welcome to Garinham. May thy stay be a peaceful one."
+msgstr "むかし語りの町 ガライへ ようこそ！"
+
+#. official: map.7.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Garin, a wandering minstrel of legendary fame, is said to have built this town."
+msgstr "はるか昔 ぎんゆう詩人ガライは 長い旅の終わりに この地に たどりつき そして この町を つくったそうじゃ。"
+
+#. official: data.3.0.3
+#: data/text/dialog_lookup_table.py
+msgid "What dost thou wish to buy?"
+msgstr "どれに するかね？"
+
+#. official: data.3.0.1
+#: data/text/dialog_lookup_table.py
+msgid "Please, come again."
+msgstr "また 来てくれよ！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Is that Okay.?"
+msgstr "それで いいかね？"
+
+#. official: data.3.0.15
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Oh, yes?\n"
+"That's too bad."
+msgstr ""
+"そうかい。\n"
+"そいつは 残念だ…。"
+
+#. official: data.3.0.5
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Sorry.\n"
+"Thou hast not enough money."
+msgstr ""
+"しかし こいつを 買うには\n"
+"お金が たりないようだぞ。"
+
+#. official: data.3.0.2
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou wish to buy anything more?"
+msgstr "ほかにも 何か 用は あるかね？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Then I will buy thy {} for {} GOLD."
+msgstr "では {}を {}ゴールドで 引き取ろう。"
+
+#. official: data.3.0.14
+#: data/text/dialog_lookup_table.py
+msgid "I thank thee."
+msgstr "まいど ありがとよ！"
+
+#. official: data.3.5.5
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Okay.\n"
+"Good-bye, traveler."
+msgstr ""
+"さようなら 旅の人。\n"
+"あまり 無理を なさいませぬように…。"
+
+#. official: data.3.5.2
+#: data/text/dialog_lookup_table.py
+msgid "Thou hast not enough money."
+msgstr "でも お金が たりないようですね。"
+
+#. official: data.3.5.1
+#: data/text/dialog_lookup_table.py
+msgid "Good night."
+msgstr "それでは ごゆっくり おやすみください。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Good morning.\n"
+"Thou seems to have spent a good night."
+msgstr ""
+"おはようございます。\n"
+"ゆうべは よく 眠れたようですね。"
+
+#. official: data.3.5.3
+#: data/text/dialog_lookup_table.py
+msgid "I shall see thee again."
+msgstr "では いってらっしゃいませ。"
+
+#. official: data.3.5.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome to the traveler's Inn.\n"
+"Room and board is {} GOLD per night.\n"
+"Dost thou want a room?"
+msgstr ""
+"旅びとの 宿屋に ようこそ。\n"
+"ひと晩 {}ゴールドですが\n"
+"お泊まりに なりますか？"
+
+#: data/text/intro_lookup_table.py
+msgid "-PUSH START-"
+msgstr "-スタートボタンを おしてください-"
+
+msgid "K key: A Button"
+msgstr "Kキー: Aボタン"
+
+msgid "J key: B Button"
+msgstr "Jキー: Bボタン"
+
+msgid "I key: Start"
+msgstr "Iキー: スタート"
+
+msgid "U key/Tab: Options"
+msgstr "Uキー/Tab: せってい"
+
+msgid "WASD / Arrow Keys: Move"
+msgstr "WASD / やじるしキー: いどう"
+
+#: data/text/intro_lookup_table.py
+msgid ""
+"Type your name using the keyboard.\n"
+"If you are using a joystick, press TAB to switch to joystick input."
+msgstr ""
+"キーボードで なまえを 入力してください。\n"
+"ジョイスティックを 使うときは TABキーで ジョイスティック入力に きりかえます。"
+
+#. official: data.1.0.11
+#: src/battle.py
+msgid "Excellent move!\n"
+msgstr "かいしんの いちげき！\n"
+
+#. official: data.1.0.0
+#: src/languages.py
+msgid "{} draws near!\n"
+msgstr "{}が あらわれた！\n"
+
+#: src/battle_controller.py
+msgid "Command?\n"
+msgstr "コマンド？\n"
+
+#. official: data.1.0.41
+#: src/battle.py
+msgid "Thy power increases by {}.\n"
+msgstr "ちからが {}ポイント 上がった！\n"
+
+#. official: data.1.0.42
+#: src/battle.py
+msgid "Thy Response Speed increases by {}.\n"
+msgstr "すばやさが {}ポイント 上がった！\n"
+
+#. official: data.1.0.44
+#: src/battle.py
+msgid "Thy Maximum Hit Points increase by {}.\n"
+msgstr "さいだいHPが {}ポイント 上がった！\n"
+
+#. official: data.1.0.44
+#: src/battle.py
+msgid "Thy Maximum Hit Point increase by {}.\n"
+msgstr "さいだいHPが {}ポイント 上がった！\n"
+
+#. official: data.1.0.45
+#: src/battle.py
+msgid "Thy Maximum Magic Points increase by {}.\n"
+msgstr "さいだいMPが {}ポイント 上がった！\n"
+
+#. official: data.1.0.45
+#: src/battle.py
+msgid "Thy Maximum Magic Point increase by {}.\n"
+msgstr "さいだいMPが {}ポイント 上がった！\n"
+
+#. official: data.1.0.4
+#: src/battle.py
+msgid "{} started to run away.\n"
+msgstr "{}は 逃げだした！\n"
+
+#. official: data.1.0.5
+#: src/battle.py
+msgid "But was blocked in front."
+msgstr "しかし まわりこまれてしまった！"
+
+#. official: data.1.0.9
+#: src/battle.py
+msgid "A miss! No damage hath been scored!"
+msgstr "ミス！ ダメージを あたえられない！"
+
+#. official: data.1.0.37
+#: src/languages.py
+msgid "Thou hast done well in defeating the {}.\n"
+msgstr "{}を やっつけた！\n"
+
+#. official: data.1.0.38
+#: src/battle.py
+msgid ""
+"Thy Experience\n"
+"increases by {}.\n"
+msgstr "{}ポイントの 経験値を かくとく！\n"
+
+#. official: data.1.0.39
+#: src/battle.py
+msgid ""
+"Thy GOLD\n"
+"increases by {}.\n"
+msgstr "{}ゴールドを 手に入れた！\n"
+
+#: src/enemy_lookup.py
+msgid "Slime"
+msgstr "スライム"
+
+#: src/enemy_lookup.py
+msgid "Red Slime"
+msgstr "スライムベス"
+
+#: src/enemy_lookup.py
+msgid "Metal Slime"
+msgstr "メタルスライム"
+
+#: src/enemy_lookup.py
+msgid "Drakee"
+msgstr "ドラキー"
+
+#: src/enemy_lookup.py
+msgid "Magidrakee"
+msgstr "メイジドラキー"
+
+#: src/enemy_lookup.py
+msgid "Drakeema"
+msgstr "ドラキーマ"
+
+#: src/enemy_lookup.py
+msgid "Ghost"
+msgstr "ゴースト"
+
+#: src/enemy_lookup.py
+msgid "Poltergeist"
+msgstr "メトロゴースト"
+
+#: src/enemy_lookup.py
+msgid "Magician"
+msgstr "まほうつかい"
+
+#: src/enemy_lookup.py
+msgid "Warlock"
+msgstr "まどうし"
+
+#: src/enemy_lookup.py
+msgid "Wizard"
+msgstr "だいまどう"
+
+#: src/enemy_lookup.py
+msgid "Specter"
+msgstr "ヘルゴースト"
+
+#: src/enemy_lookup.py
+msgid "Scorpion"
+msgstr "おおさそり"
+
+#: src/enemy_lookup.py
+msgid "Metal Scorpion"
+msgstr "てつのさそり"
+
+#: src/enemy_lookup.py
+msgid "Rogue Scorpion"
+msgstr "しのさそり"
+
+#: src/enemy_lookup.py
+msgid "Druin"
+msgstr "メーダ"
+
+#: src/enemy_lookup.py
+msgid "Druinlord"
+msgstr "メーダロード"
+
+#: src/enemy_lookup.py
+msgid "Droll"
+msgstr "ドロル"
+
+#: src/enemy_lookup.py
+msgid "Drollmagi"
+msgstr "ドロルメイジ"
+
+#: src/enemy_lookup.py
+msgid "Skeleton"
+msgstr "がいこつ"
+
+#: src/enemy_lookup.py
+msgid "Wraith"
+msgstr "しりょう"
+
+#: src/enemy_lookup.py
+msgid "Wraith Knight"
+msgstr "しりょうのきし"
+
+#: src/enemy_lookup.py
+msgid "Demon Knight"
+msgstr "かげのきし"
+
+#: src/enemy_lookup.py
+msgid "Wolf"
+msgstr "リカント"
+
+#: src/enemy_lookup.py
+msgid "Wolflord"
+msgstr "リカントマムル"
+
+#: src/enemy_lookup.py
+msgid "Werewolf"
+msgstr "キラーリカント"
+
+#: src/enemy_lookup.py
+msgid "Goldman"
+msgstr "ゴールドマン"
+
+#: src/enemy_lookup.py
+msgid "Golem"
+msgstr "ゴーレム"
+
+#: src/enemy_lookup.py
+msgid "Stoneman"
+msgstr "ストーンマン"
+
+#: src/enemy_lookup.py
+msgid "Wyvern"
+msgstr "キメラ"
+
+#: src/enemy_lookup.py
+msgid "Magiwyvern"
+msgstr "メイジキメラ"
+
+#: src/enemy_lookup.py
+msgid "Starwyvern"
+msgstr "スターキメラ"
+
+#: src/enemy_lookup.py
+msgid "Knight"
+msgstr "よろいのきし"
+
+#: src/enemy_lookup.py
+msgid "Axe Knight"
+msgstr "あくまのきし"
+
+#: src/enemy_lookup.py
+msgid "Armored Knight"
+msgstr "しにがみのきし"
+
+#: src/enemy_lookup.py
+msgid "Green Dragon"
+msgstr "ドラゴン"
+
+#: src/enemy_lookup.py
+msgid "Blue Dragon"
+msgstr "キースドラゴン"
+
+#: src/enemy_lookup.py
+msgid "Red Dragon"
+msgstr "ダースドラゴン"
+
+#: src/enemy_lookup.py
+msgid "Dragonlord"
+msgstr "りゅうおう"
+
+#. official: data.1.0.10
+#: src/battle_controller.py
+msgid "It is dodging!"
+msgstr "すばやく みをかわした！"
+
+#: src/game.py
+#: src/map_hotkeys.py
+msgid "Dragon Warrior"
+msgstr "ドラゴンクエスト"
+
+#. official: data.1.0.7
+#: src/battle_controller.py
+msgid "{} attacks!\n"
+msgstr "{}の こうげき！\n"
+
+#. official: data.1.0.8
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The {}'s Hit Points have been reduced by {}.\n"
+msgstr "{}に {}ポイントの ダメージ！\n"
+
+#. official: data.1.0.8
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The {}'s Hit Point have been reduced by {}.\n"
+msgstr "{}に {}ポイントの ダメージ！\n"
+
+#. official: data.1.0.7
+#: src/battle_controller.py
+msgid "The {} attacks!\n"
+msgstr "{}の こうげき！\n"
+
+#. official: data.1.0.18
+#: src/hero_damage.py
+msgid "Thy Hits decreased by {}.\n"
+msgstr "{}ポイントの ダメージを うけた！\n"
+
+#. official: data.1.0.18
+#: src/hero_damage.py
+msgid "Thy Hit decreased by {}.\n"
+msgstr "{}ポイントの ダメージを うけた！\n"
+
+#. official: data.1.0.22
+#: src/battle_controller.py
+msgid "The {} is running away."
+msgstr "{}は 逃げだした！"
+
+#: data/text/intro_lookup_table.py
+msgid "Controls:\n"
+msgstr "そうさ:\n"
+
+#. official: data.1.0.17
+#: src/battle_controller.py
+msgid "{} chants the spell of {}."
+msgstr "{}は {}を となえた！"
+
+#: src/windows.py
+msgid "COMMAND"
+msgstr "コマンド"
+
+#: src/windows.py
+msgid "TALK"
+msgstr "はなす"
+
+#: src/windows.py
+msgid "STATUS"
+msgstr "つよさ"
+
+#: src/options_overlay.py
+#: src/windows.py
+msgid "STAIRS"
+msgstr "かいだん"
+
+#: src/windows.py
+msgid "SEARCH"
+msgstr "しらべる"
+
+#: src/menu.py
+#: src/windows.py
+msgid "SPELL"
+msgstr "じゅもん"
+
+#: src/windows.py
+msgid "ITEM"
+msgstr "どうぐ"
+
+#: src/windows.py
+msgid "DOOR"
+msgstr "とびら"
+
+#: src/windows.py
+msgid "TAKE"
+msgstr "とる"
+
+#: src/menu.py
+msgid "I have nothing to say."
+msgstr "なにも 話すことは ない。"
+
+#. official: data.0.1.6
+#: src/menu.py
+msgid ""
+"Fortune smiles upon thee, {}.\n"
+"Thou hast found the {}."
+msgstr ""
+"{}は 宝箱を開けた。\n"
+"なんと！ {}を 見つけた！"
+
+#: src/items.py
+msgid "Torch"
+msgstr "たいまつ"
+
+#: src/items.py
+msgid "Magic Key"
+msgstr "かぎ"
+
+#: src/items.py
+msgid "Herb"
+msgstr "やくそう"
+
+#: src/items.py
+msgid "Fairy Water"
+msgstr "せいすい"
+
+#: src/items.py
+msgid "Wings"
+msgstr "キメラのつばさ"
+
+#: src/items.py
+msgid "Dragon's Scale"
+msgstr "りゅうのうろこ"
+
+#: src/items.py
+msgid "Fighter's Ring"
+msgstr "せんしのゆびわ"
+
+msgid "Erdrick's Tablet"
+msgstr "ロトの石板"
+
+msgid "Tablet"
+msgstr "せきばん"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "The tablet reads as follows:"
+msgstr "石板には こう 書かれている。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "I am Erdrick and thou art my descendant."
+msgstr ""
+"わたしの名は ロト。\n"
+"わたしの 血をひきし者よ。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "Three items were needed to reach the Isle of Dragons, which is south of Brecconary."
+msgstr "ラダトームから見える 魔の島に わたるには 3つの物が 必要だった。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "I gathered these items, reached the island, and there defeated a creature of great evil."
+msgstr "わたしは それらを あつめ 魔の島に わたり 魔王を たおした。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "Now I have entrusted the three items to three worthy keepers."
+msgstr "そして 今 その3つの しんぴなる物を 3人の 賢者に たくす。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "Their descendants will protect the items until thy quest leads thee to seek them out."
+msgstr "かれらの 子孫が それらを 守ってゆくだろう。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "When a new evil arises, find the three items, then fight!"
+msgstr ""
+"ふたたび 魔の島に 悪が よみがえったとき\n"
+"それらを あつめ 戦うがよい。"
+
+#: src/items.py
+msgid "Cursed Belt"
+msgstr "のろいのベルト"
+
+#: src/items.py
+msgid "Silver Harp"
+msgstr "ぎんのたてごと"
+
+#: src/items.py
+msgid "Staff of Rain"
+msgstr "あまぐものつえ"
+
+#: src/items.py
+msgid "Stones of Sunlight"
+msgstr "たいようのいし"
+
+#: src/items.py
+msgid "Rainbow Drop"
+msgstr "にじのしずく"
+
+#: src/items.py
+msgid "Gwaelin's Love"
+msgstr "おうじょのあい"
+
+msgid "Ball of Light"
+msgstr "ひかりのたま"
+
+#. official: data.0.1.2
+#: src/menu.py
+msgid "Of GOLD thou hast gained {}"
+msgstr "{}ゴールドを 手に入れた。"
+
+#. official: data.5.4.0
+#: src/menu.py
+msgid "But nothing happened."
+msgstr "しかし 何も おこらなかった…！"
+
+#. official: data.6.7.0
+#: src/battle.py
+#: src/menu.py
+msgid "{} cannot yet use the spell."
+msgstr "{}は まだ 呪文を 使えない。"
+
+#. official: data.5.8.0
+#: src/menu.py
+msgid "Nothing of use has yet been given to thee."
+msgstr "道具を 持っていない。"
+
+#. official: data.6.8.0
+#: src/menu.py
+msgid "Thy MP is too low."
+msgstr "MPが足りないようだ。"
+
+#. official: data.6.0.0
+#: src/menu.py
+msgid "{} chanted the spell of {}."
+msgstr "{}は {}を となえた！"
+
+#. official: data.5.17.0
+#: src/menu.py
+msgid "There is no door here."
+msgstr "そこには トビラがない！"
+
+#. official: data.16.53.0
+#: src/menu.py
+msgid "Thou hast not a key to use."
+msgstr "カギを 持っていない！"
+
+#: src/menu.py
+msgid "There is nothing to take here, {}."
+msgstr "{}よ。 ここには とれるものは ない。"
+
+#: src/languages.py
+msgid ""
+"Courage and wit have served thee well.\n"
+"Thou hast been promoted to the next level.\n"
+msgstr ""
+"ゆうきと ちえが そなたを みちびいた。\n"
+"レベルが 上がった！\n"
+
+#: src/battle.py
+msgid "Thou hast learned a new spell.\n"
+msgstr "あたらしい 呪文を おぼえた！\n"
+
+#. official: map.33.1.1
+#: src/battle.py
+msgid "The Dragonlord revealed his true self!\n"
+msgstr "竜王が 正体を あらわした！\n"
+
+#: src/languages.py
+msgid "A {}"
+msgstr "{}"
+
+#: src/languages.py
+msgid "An {}"
+msgstr "{}"
+
+#. official: data.1.0.14
+#: src/battle_controller.py
+msgid "{} hath woken up."
+msgstr "{}は 目をさました！"
+
+#. official: data.1.0.15
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The {} is asleep."
+msgstr "{}は 眠っている。"
+
+#. official: data.1.0.12
+#: src/battle_controller.py
+#: src/menu.py
+msgid "But that spell hath been blocked."
+msgstr "しかし 呪文は 封じこまれている！"
+
+#. official: data.1.0.25
+#: src/battle_controller.py
+msgid "Thou art asleep.\n"
+msgstr "眠ってしまった！\n"
+
+#. official: data.5.8.0
+#: src/battle_controller.py
+msgid "Nothing of use has yet been given to thee.\n"
+msgstr "道具を 持っていない。\n"
+
+#. official: data.1.0.13
+#: src/battle_controller.py
+msgid "Thou art still asleep.\n"
+msgstr "まだ 眠っている……。\n"
+
+#. official: data.1.0.29
+#: src/battle_controller.py
+msgid "The {} is breathing fire.\n"
+msgstr "{}は ひの いきを はきだした！\n"
+
+#. official: data.1.0.14
+#: src/battle_controller.py
+msgid "{} awakes.\n"
+msgstr "{}は 目をさました！\n"
+
+#. official: map.0.1.1
+#: src/ending.py
+msgid "Thou hast brought us peace, again."
+msgstr "あなたさまの おかげで 平和が もどりました。"
+
+#. official: map.33.2.0
+#: src/ending.py
+msgid "Thou hast found the Ball of Light."
+msgstr "ひかりのたまを 取りもどした！"
+
+#. official: map.33.2.0
+#: src/ending.py
+msgid "Radiance streams forth as thy hands touch the object and hold it aloft."
+msgstr "ひかりのたまを かざすと まばゆいばかりの光が あたりに あふれだす……。"
+
+#: src/ending.py
+msgid "Across the land spreads the brilliance until all shadows are banished and peace is restored."
+msgstr "光は 世界中に ひろがり すべての闇を はらって 平和が もどったのだ！"
+
+#. official: map.0.1.19
+#: src/ending.py
+msgid "Come now, King Lorik awaits."
+msgstr "さあ はやく 王さまのもとへ！"
+
+#. official: map.34.1.1
+#: src/ending.py
+msgid "The legends have proven true."
+msgstr "すべては 古い言い伝えの ままであった！"
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "Thou art indeed of the line of Erdrick."
+msgstr "すなわち そなたこそは 勇者ロトの血をひく者！"
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "It is thy right to rule over this land."
+msgstr "そなたこそ この世界を 治めるに ふさわしいお方 なのじゃ！"
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "Will thou take my place?"
+msgstr "どうじゃ？ このわしに かわって この国を治めてくれるな？"
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "If ever I am to rule a country, it must be a land that I myself find."
+msgstr "いいえ もし私の 治める国があるなら それは 私自身で さがしたいのです。"
+
+#. official: map.34.1.5
+#: src/ending.py
+msgid "I wish to go with thee on thy journey."
+msgstr "その あなたの旅に ローラも お供しとう ございます。"
+
+#. official: map.34.1.5
+#: src/ending.py
+msgid "May I travel as thy companion?"
+msgstr ""
+"その あなたの旅に ローラも お供しとう ございます。\n"
+"このローラも 連れてってくださいますね？"
+
+#. official: map.34.1.6
+#: data/text/dialog_lookup_table.py
+#: src/ending.py
+msgid "But thou must."
+msgstr "そんな ひどい……。"
+
+#. official: map.34.1.7
+#: data/text/dialog_lookup_table.py
+#: src/ending.py
+msgid "I'm so happy!"
+msgstr "うれしゅうございます。"
+
+#: src/ending.py
+msgid "unless the dragons return again."
+msgstr "竜が ふたたび よみがえらぬ かぎりは。"
+
+#. official: map.0.1.0
+#: src/ending.py
+msgid ""
+"Hurrah!\n"
+"Hurrah!\n"
+"Long live {}!"
+msgstr ""
+"ばんざい！\n"
+"ばんざい！\n"
+"勇者{} ばんざい！"
+
+#: src/ending.py
+msgid "{} thought carefully before answering."
+msgstr "{}は しばらく 考えてから 答えた。"
+
+#: src/ending.py
+msgid "Gwaelin said:"
+msgstr "ローラ姫は いいました。"
+
+#. official: map.34.1.4
+#: src/ending.py
+msgid "Please, wait."
+msgstr "まってくださいませ！"
+
+#: src/ending.py
+msgid "And thus the tale comes to an end...."
+msgstr "こうして 物語は 終わりを むかえるのである……。"
+
+#: src/ending.py
+msgid "I cannot,"
+msgstr "それは できません。"
+
+#: src/ending.py
+msgid "said {}."
+msgstr "と {}は いいました。"
+
+#. official: map.2.7.1
+#: src/step_triggers.py
+msgid "Cursed one,be gone!"
+msgstr "呪われし者よ 出てゆけ！"
+
+#. official: data.5.44.0
+#: src/step_triggers.py
+msgid "REPEL has lost its effect."
+msgstr "トヘロスの 効力が なくなった。"
+
+#. official: data.5.19.0
+#: src/step_triggers.py
+msgid "The Fairy Water has lost its effect."
+msgstr "せいすいの 効力が なくなった。"
+
+#: src/map_hotkeys.py
+msgid "Fullscreen mode enabled"
+msgstr "フルスクリーンに しました"
+
+#: src/map_hotkeys.py
+msgid "Windowed mode enabled"
+msgstr "ウィンドウ表示に しました"
+
+#: src/map_hotkeys.py
+msgid "Auto-battle disabled"
+msgstr "オートバトル オフ"
+
+#: src/map_hotkeys.py
+msgid "Invulnerability enabled"
+msgstr "むてきモード オン"
+
+#: src/map_hotkeys.py
+msgid "Invulnerability disabled"
+msgstr "むてきモード オフ"
+
+#: src/hero_death.py
+msgid "Thou hast failed and thou art cursed."
+msgstr "死んだうえに 呪われて おるではないか！"
+
+#: src/hero_death.py
+msgid "Leave at once!"
+msgstr "すぐに 出てゆけ！"
+
+#: src/map_hotkeys.py
+msgid ""
+"Auto-battle enabled\n"
+"(Repeats: {})"
+msgstr ""
+"オートバトル オン\n"
+"(くりかえし: {})"
+
+#: src/menu.py
+msgid "Unfortunately, it is empty."
+msgstr "残念ながら からっぽだった。"
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "From where thou art now, my castle lies..\n"
+msgstr "わたしのいる お城は..\n"
+
+#: src/menu.py
+msgid "That cannot be used in battle."
+msgstr "それは 戦いの中では 使えない。"
+
+#: src/menu.py
+msgid "The Wings of the Wyvern cannot be used here."
+msgstr "ここでは キメラのつばさは 使えない。"
+
+#: src/menu.py
+msgid "A torch can be used only in dark places."
+msgstr "たいまつは 暗い場所でしか 使えない。"
+
+#. official: data.5.43.0
+#: src/menu.py
+msgid "Thou art already wearing the scale of the dragon."
+msgstr "りゅうのうろこは すでに身につけています。"
+
+#. official: data.5.38.0
+#: src/menu.py
+msgid "Quietly Golem closes his eyes and settles into sleep."
+msgstr ""
+"ゴーレムは しずかに めをとじる…\n"
+"ゴーレムは ねむってしまった！"
+
+#: src/items.py
+#: src/menu.py
+msgid "Erdrick's Token"
+msgstr "ロトのしるし"
+
+#: src/menu.py
+msgid "But no rainbow appeared here."
+msgstr "しかし ここでは 虹は かからなかった。"
+
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The spell will not work."
+msgstr "呪文は きかなかった！"
+
+#: src/menu.py
+msgid "There is a treasure box."
+msgstr "宝箱が ある。"
+
+#: src/menu.py
+msgid "Feel the wind blowing from behind the throne."
+msgstr "玉座の うしろから 風が ふいてくる。"
+
+#. official: data.0.0.0
+#: src/menu.py
+msgid "But there found nothing."
+msgstr "しかし 何も 見つからなかった。"
+
+#. official: data.0.0.1
+#: src/menu.py
+msgid "{} discovers the {}."
+msgstr "{}は {}を 見つけた！"
+
+#: src/menu.py
+msgid ""
+"If thou would take the {}, thou must now discard some other item.\n"
+"Dost thou wish to have the {}?"
+msgstr ""
+"{}を 持つには 何かを すてなければ ならない。\n"
+"{}を 持っていきますか？"
+
+#. official: data.3.6.2
+#: src/menu.py
+msgid "What shall thou drop?"
+msgstr "何を すてますか？"
+
+#. official: data.3.6.6
+#: src/menu.py
+msgid "Thou hast given up thy {}."
+msgstr "{}を あきらめた。"
+
+#. official: data.5.1.0
+#: src/menu.py
+msgid "{} used the Herb."
+msgstr "{}は やくそうを 使った！"
+
+#. official: data.5.15.0
+#: src/menu.py
+msgid "{} threw The Wings of the Wyvern up into the sky."
+msgstr "{}は キメラのつばさを ほうりなげた。"
+
+#. official: data.5.2.0
+#: src/menu.py
+msgid "{} donned the scale of the dragon."
+msgstr "{}は りゅうのうろこを 身につけた！"
+
+#. official: data.5.18.0
+#: src/menu.py
+msgid "{} sprinkled the Fairy Water over his body."
+msgstr "{}は せいすいを 身体に ふりかけた。"
+
+#. official: data.5.21.0
+#: src/menu.py
+msgid "{} played a sweet melody on the harp."
+msgstr "{}は ぎんのたてごとを かなでた。"
+
+#. official: data.5.39.0
+#: src/menu.py
+msgid "The {} looks happy."
+msgstr "{}は うれしそうだ！"
+
+#. official: data.5.20.0
+#: src/menu.py
+msgid "{} blew the Fairies' Flute."
+msgstr "{}は ようせいのふえを ふいた！"
+
+#. official: data.5.24.0
+#: src/menu.py
+msgid ""
+"{} held the {} tightly.\n"
+"But nothing happened."
+msgstr ""
+"{}は {}を にぎりしめた。\n"
+"しかし 何も おこらなかった…！"
+
+#. official: data.5.26.0
+#: src/menu.py
+msgid "{} held the Rainbow Drop toward the sky."
+msgstr "{}は にじのしずくを 天に かざした！"
+
+#. official: data.5.2.0
+#: src/menu.py
+msgid "{} put on the Fighter's Ring."
+msgstr "{}は せんしのゆびわを 身につけた！"
+
+#. official: data.5.28.0
+#: src/menu.py
+msgid "The {} is squeezing thy body."
+msgstr "{}が 身体を しめつける！"
+
+#. official: data.5.27.0
+#: src/menu.py
+msgid "{} put on the {} and was cursed!."
+msgstr ""
+"{}は {}を 身につけた。\n"
+"しかし 呪われてしまった！"
+
+#: src/menu.py
+msgid "Thy body is being squeezed."
+msgstr "身体が しめつけられている。"
+
+#. official: data.0.5.3
+#: src/menu.py
+msgid ""
+"Heed my voice,\n"
+"'{}, for this is Gwaelin.\n"
+"To reach the next level thou must raise thy Experience Points by {}.\n"
+"My hope is with thee.'"
+msgstr ""
+"ローラ姫の 声が 聞こえる。\n"
+"「{}さま… ローラです。\n"
+"あなたが レベルを 上げるには あと {}ポイントの 経験が 必要です。\n"
+"ご無事を お祈りしています。」"
+
+#. official: data.0.5.3
+#: src/menu.py
+msgid ""
+"Heed my voice,\n"
+"'{}, for this is Gwaelin.\n"
+"To reach the next level thou must raise thy Experience Point by {}.\n"
+"My hope is with thee.'"
+msgstr ""
+"ローラ姫の 声が 聞こえる。\n"
+"「{}さま… ローラです。\n"
+"あなたが レベルを 上げるには あと {}ポイントの 経験が 必要です。\n"
+"ご無事を お祈りしています。」"
+
+#. official: data.0.5.4
+#: src/menu.py
+msgid ""
+"'{}?\n"
+"This is Gwaelin.\n"
+"Know that thou hath reached the final level.'"
+msgstr ""
+"「{}さま？\n"
+"ローラです。\n"
+"あなたは もう 十分に 強く おなりですわ。」"
+
+#. official: map.2.5.1
+#: data/text/dialog_lookup_table.py
+#: src/menu.py
+msgid "I love thee, {}."
+msgstr "{}さま…。 ローラは あなたを おしたいしています。"
+
+#. official: data.5.38.0
+#: src/menu.py
+msgid "Thou hast put the {} to sleep."
+msgstr "{}は ねむってしまった！"
+
+#: src/menu.py
+msgid "The {}'s spell hath been blocked."
+msgstr "{}の 呪文を 封じこめた！"
+
+#. official: data.0.0.0
+#: src/menu.py
+msgid "{} searched the ground all about."
+msgstr "{}は 自分の足元を 調べた。"
+
+#: src/menu.py
+msgid "{} discovers the Secret Passage."
+msgstr "{}は かくし通路を 見つけた！"
+
+#. official: data.5.10.0
+#: src/menu.py
+msgid "That is much too important to throw away."
+msgstr "それを すてるなんて とんでもない！"
+
+#: data/text/dialog_lookup_table.py
+#: src/menu.py
+msgid "A curse is upon thy body."
+msgstr "身体に 呪いが かけられている。"
+
+#: src/menu.py
+msgid "{} adjusted the position of the Fighter's Ring."
+msgstr "{}は せんしのゆびわを はめなおした。"
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the south and.."
+msgstr "南に {}.."
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the west."
+msgstr "西に {} の 方向です。"
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the north and.."
+msgstr "北に {}.."
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the east."
+msgstr "東に {} の 方向です。"
+
+#: src/menu.py
+msgid "Thou hast dropped thy {}."
+msgstr "{}を すてた。"
+
+#. official: data.3.6.5
+#: src/menu.py
+msgid "And obtained the {}."
+msgstr "そして {}を 手に入れた！"
+
+#: src/menu_functions.py
+msgid "Joystick input disabled."
+msgstr "ジョイスティック入力を オフにしました。"
+
+#: src/menu_functions.py
+msgid "Joystick input enabled."
+msgstr "ジョイスティック入力を オンにしました。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thy journey is over.\n"
+"Take now a long, long rest.\n"
+"Hahahaha...."
+msgstr ""
+"そなたの 旅は 終わった。\n"
+"さあ ゆっくりと 休むがよい！\n"
+"わあっ はっ はっ はっ……。"
+
+#. official: map.21.0.1
+#: data/text/dialog_lookup_table.py
+msgid "Will thou take me to the castle?"
+msgstr "わたしを お城まで 連れて 帰ってくださいますのね？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Princess Gwaelin embraces thee.\n"
+msgstr "ローラ姫が あなたを 抱きしめた。\n"
+
+#. official: map.33.0.2
+#: data/text/dialog_lookup_table.py
+msgid ""
+"What sayest thou?\n"
+"Will the great warrior stand with me?"
+msgstr ""
+"どうじゃ？\n"
+"わしの味方に なるか？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Really?"
+msgstr "本当だな？"
+
+#. official: map.33.0.8
+#: data/text/dialog_lookup_table.py
+msgid "Thou art a fool!"
+msgstr "おろか者め！"
+
+#. official: map.33.0.7
+#: data/text/dialog_lookup_table.py
+msgid "Then half of this world is thine, half of the darkness, and...."
+msgstr "では そなたに 世界の半分 闇の世界を あたえよう……。"
+
+#: data/text/dialog_lookup_table.py
+msgid "If thou dies I can bring thee back for another attempt without loss of thy deeds to date."
+msgstr "そなたが 死んでも これまでの 冒険を 失わずに もう一度 きかいを 与えよう。"
+
+#. official: map.2.5.0
+#: data/text/dialog_lookup_table.py
+msgid "Even when we two are parted by great distances, I shall be with thee."
+msgstr "たとえ はなれていても ローラは いつも あなたと共に あります。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou hast no business here.\n"
+"Go away."
+msgstr ""
+"ここに 用は ないはずだ。\n"
+"立ち去れ！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thou hast brought the harp. Good."
+msgstr "おお 竪琴を 持ち帰ったか。 よろしい。"
+
+#. official: map.16.0.3
+#: data/text/dialog_lookup_table.py
+msgid "Now the sun and rain shall meet and the Rainbow Drop passes to thy keeping."
+msgstr "今こそ 雨と太陽が 合わさる時じゃ！ にじのしずくを そなたに さずけよう。"
+
+#. official: data.3.7.9
+#: data/text/dialog_lookup_table.py
+msgid "Rest then for awhile."
+msgstr "では ゆっくり 休息をとるがよい。"
+
+#. official: map.9.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou still wish to go on?"
+msgstr "それでも 行くのか？"
+
+#: data/text/dialog_lookup_table.py
+msgid "I will be waiting for thy next visit."
+msgstr "またの おこしを お待ちしております。"
+
+#. official: data.3.1.17
+#: data/text/dialog_lookup_table.py
+msgid "What dost thou want?"
+msgstr "どれに いたしましょう？"
+
+#. official: data.3.1.2
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou want anything else?"
+msgstr "ほかにも 何か ご用は？"
+
+#. official: data.3.1.10
+#: data/text/dialog_lookup_table.py
+msgid "What art thou selling?"
+msgstr "どの品物を 売って下さいます？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Wilt thou sell anything else?"
+msgstr "ほかにも 何か 売って下さいます？"
+
+#. official: data.3.4.1
+#: data/text/dialog_lookup_table.py
+msgid "All the best to thee."
+msgstr "あなたに 神の ごかごが ありますように…。"
+
+#. official: data.3.3.1
+#: data/text/dialog_lookup_table.py
+msgid "I will see thee later."
+msgstr "では またきなされよ。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Good morning.\n"
+"Thou hast had a good night's sleep I hope."
+msgstr ""
+"おはようございます。\n"
+"ゆうべは ゆっくり お休みに なれましたか？"
+
+#: data/text/dialog_lookup_table.py
+msgid "And I would like to have something of thine--a token."
+msgstr "そして あなたの物を 何か ひとつ…… 思い出の しるしに いただきとうございます。"
+
+#. official: map.5.6.1
+#: data/text/dialog_lookup_table.py
+msgid "I will free thee from thy curse."
+msgstr "わしが 呪いをといて しんぜよう。"
+
+#. official: map.5.6.2
+#: data/text/dialog_lookup_table.py
+msgid "Now, go."
+msgstr "さあ もう大丈夫じゃ。 気をつけて 行きなされよ。"
+
+#. official: map.14.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Thy bravery must be proven."
+msgstr "そなたの チカラを ためさせてほしい。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thus, I propose a test."
+msgstr "そこで ひとつ 試練を 与えよう。"
+
+#. official: map.14.0.0
+#: data/text/dialog_lookup_table.py
+msgid "There is a Silver Harp that beckons to the creatures of the Dragonlord."
+msgstr "この地の どこかに まものたちを 呼びよせる ぎんのたてごとが あるときく。"
+
+#. official: map.14.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Bring this to me and I will reward thee with the Staff of Rain."
+msgstr "それを 持ち帰ったとき そなたを 勇者とみとめ あまぐものつえを さずけよう。"
+
+#: data/text/dialog_lookup_table.py
+msgid "In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted would save us."
+msgstr "そなたは 試練に しくじったようじゃな。 ああ そなたは ロトの 予言した 勇者では ないのかもしれぬ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Go now!"
+msgstr "さあ 行くがよい！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thou may go and search."
+msgstr "さがしに 行くがよい。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Please push RESET, hold it in, then turn off the POWER."
+msgstr "RESETボタンを おしながら 電源を 切ってください。"
+
+#: data/text/dialog_lookup_table.py
+msgid "If you turn the power off first, the Imperial Scroll of Honor containing your deeds may be lost."
+msgstr "先に 電源を 切ると 冒険の書の 記録が 消えてしまうことが あります。"
+
+#: data/text/dialog_lookup_table.py
+msgid "BUY"
+msgstr "かう"
+
+#: data/text/dialog_lookup_table.py
+msgid "SELL"
+msgstr "うる"
+
+#. official: data.3.1.11
+#: data/text/dialog_lookup_table.py
+msgid "Thou hast no possessions."
+msgstr "えっ？ 何も 持ってないようですが。"
+
+#. official: data.3.0.12
+#: data/text/dialog_lookup_table.py
+msgid "I cannot buy it."
+msgstr "うーん…。 悪いが そいつは 引き取れないな。"
+
+#: data/text/dialog_lookup_table.py
+msgid "I am sorry."
+msgstr "申しわけありません。"
+
+#. official: data.3.3.5
+#: data/text/dialog_lookup_table.py
+msgid "I am sorry, but I cannot sell thee anymore."
+msgstr "わるいが これ以上 売るわけには いかんな。"
+
+#: data/text/dialog_lookup_table.py
+msgid "I suggest making a map if thy path leads into the darkness."
+msgstr "暗い 洞窟に 入るなら 地図を つくって おくと いいでしょう。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I'm too busy.\n"
+"Ask the other guard."
+msgstr ""
+"わしは いそがしいのだ。\n"
+"ほかの 兵士に 聞いてくれ。"
+
+#. official: map.7.8.0
+msgid "The harp attracts enemies. Stay away from the grave in Garinham."
+msgstr "竪琴の音色は まものたちを 呼びよせるといいます。 ガライの墓には 近づかない方が いいですよ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Many believe that Princess Gwaelin is hidden away in a cave."
+msgstr "ローラ姫は どこかの 洞窟に とらわれていると 多くの者が 信じておる。"
+
+#. official: map.5.14.0
+#: data/text/dialog_lookup_table.py
+msgid "In legends it is said that fairies know how to put Golem to sleep."
+msgstr "古い書物によると 妖精たちは ゴーレムを 眠らせたという。"
+
+#. official: map.8.0.0
+#: data/text/dialog_lookup_table.py
+msgid "This is the village of Kol."
+msgstr "ここは マイラの村です。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Golem is afraid of the music of the flute, so ʼtis said."
+msgstr "ゴーレムは ふえの音を おそれると いわれておる。"
+
+#: data/text/dialog_lookup_table.py
+msgid "This bath cures rheumatism."
+msgstr "この温泉は リウマチに よく効くのよ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Please,save us from the minions of the Dragonlord."
+msgstr "どうか 竜王の 手下たちから わたしたちを 救ってください。"
+
+#. official: map.5.9.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Art thou the descendant of Erdrick?\n"
+"Hast thou any proof?"
+msgstr ""
+"お前が ロトの 血をひく者？\n"
+"何か しるしが あるのか？"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Hast thou seen Nester?\n"
+"I think he may need help."
+msgstr ""
+"ネスターを 見なかったか？\n"
+"助けが 必要かもしれん。"
+
+#: data/text/dialog_lookup_table.py
+msgid "East of Hauksness there is a town, ʼtis said, where one may purchase weapons of extraordinary quality."
+msgstr "ドムドーラの 東には すばらしい武器を 売っている 町が あるそうだ。"
+
+#. official: map.9.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Welcome to Cantlin, the castle town."
+msgstr "城塞都市 メルキドへ ようこそ！"
+
+#. official: map.9.4.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Come buy my radishes! They are fresh and cheap.\n"
+"Buy thy radishes today!"
+msgstr ""
+"まいど！ 今日は だいこんが 安いよ！\n"
+"とれたての だいこん 買っとくれ！"
+
+#: data/text/dialog_lookup_table.py
+msgid "What shall I get for thy dinner?"
+msgstr "夕ごはんは 何に しましょうか？"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I'm Nester.\n"
+"Hey, where am I? No, don't tell me!"
+msgstr ""
+"わしは ネスターじゃ。\n"
+"はて ここは どこじゃ？ いや 言わんでくれ！"
+
+#: data/text/dialog_lookup_table.py
+msgid "I know nothing."
+msgstr "わたしは 何も 知りません。"
+
+#: data/text/dialog_lookup_table.py
+msgid "To learn how proof may be obtained that thy ancestor was the great Erdrick, see a man in this very town."
+msgstr "そなたの 祖先が 偉大なる ロトである しるしを 得たければ この町に いる 男を たずねるがよい。"
+
+#. official: map.9.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Grandfather used to say that his friend, Wynn, had buried something of great value at the foot of a tree behind his shop."
+msgstr "昔 うちの じいさんが よく いってたんです。 友だちの ゆきのふさんが 何か すごい宝を 自分の店の うらの木に うめたらしいと。"
+
+#: data/text/dialog_lookup_table.py
+msgid "ʼTis said that Erdrick's sword could cleave steel."
+msgstr "ロトのつるぎは はがねをも 切りさくと いわれておる。"
+
+#: data/text/dialog_lookup_table.py
+msgid "My Grandfather Wynn once had a shop on the east side of Hauksness."
+msgstr "わたしの じいさんの ゆきのふは むかし ドムドーラの 東側で 店を やっていたんです。"
+
+#. official: map.2.5.2
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou love me, {}?"
+msgstr "{}さま…。 あなたは ローラのことを 想ってくださいますか？"
+
+#. official: map.9.3.1
+#: data/text/dialog_lookup_table.py
+msgid "Thou art truly brave."
+msgstr "おお！ あなたこそ まことの 勇者だ！！"
+
+#. official: map.9.3.2
+#: data/text/dialog_lookup_table.py
+msgid ""
+"That is good.’\n"
+"`No one will say thou art afraid."
+msgstr ""
+"それが いい。」\n"
+"「誰も お前を おくびょうとは いわないだろう。"
+
+#. official: data.3.1.7
+#: data/text/dialog_lookup_table.py
+msgid "Thou cannot hold more Herbs."
+msgstr "それ以上 やくそうは 持てませんが。"
+
+#. official: data.3.1.13
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou said the {}.\n"
+"I will buy thy {} for {} GOLD.\n"
+"Is that all right?"
+msgstr ""
+"{}ですね。\n"
+"その {}なら {}ゴールドで 引き取りますが いいですか？"
+
+#. official: data.3.4.0
+#: data/text/dialog_lookup_table.py
+msgid "Will thou buy some Fairy Water for {} GOLD to keep the Dragonlord's minions away?"
+msgstr "まものよけの せいすいは いかがでしょう？ 1びん {}ゴールドですが。"
+
+#. official: data.3.4.3
+#: data/text/dialog_lookup_table.py
+msgid "Thou cannot carry anymore."
+msgstr "お客さまは それ以上 お持ちになれないようですわ。"
+
+#. official: data.3.4.4
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I thank thee.\n"
+"Won't thou buy one more bottle?"
+msgstr ""
+"ありがとうございます。\n"
+"もう 1びん お買いになりますか？"
+
+#. official: data.3.3.4
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Here,take this key.\n"
+"Dost thou wish to purchase more?"
+msgstr ""
+"ほれ。 カギをひとつ わたそう。\n"
+"まだ カギを 買うかの？"
+
+#. official: map.2.8.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I am glad thou hast returned.\n"
+"All our hopes are riding on thee."
+msgstr ""
+"よくぞ もどって来た！ わしは とても うれしいぞ。\n"
+"世界の みなが そなたに 望みを たくしておるぞ。"
+
+#. official: data.3.7.11
+#: data/text/dialog_lookup_table.py
+msgid "See me again when thy level has increased."
+msgstr "レベルが 上がった時には わしに 会いに来るようにな。"
+
+#. official: map.2.6.0
+#: data/text/dialog_lookup_table.py
+msgid "Now, Gwaelin, come to my side."
+msgstr "さあ ローラ。 わしの となりへ。"
+
+#. official: map.5.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Beware the bridges!"
+msgstr "橋に 気をつけろ！"
+
+#. official: map.5.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Danger grows when thou crosses."
+msgstr "橋を渡って 遠くへ行くほど 恐ろしい まものたちが おそってくるだろう。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thou shouldst come here again."
+msgstr "また ここへ 来るがよい。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Dreadful is the South Island."
+msgstr "南の島は おそろしい ところじゃ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Great strength and skill and wit only will bring thee back from that place."
+msgstr "強い力と わざと 知恵が なければ あそこから 生きて 帰れまい。"
+
+#. official: map.9.3.0
+#: data/text/dialog_lookup_table.py
+msgid "ʼTis said that the Dragonlord hath claws that can cleave iron and fiery breath that can melt stone."
+msgstr "竜王の ツメは 鉄を 引きさき そして はき出す炎は 岩をも とかすという。"
+
+#. official: map.9.2.0
+#: data/text/dialog_lookup_table.py
+msgid "It is said that many have held Erdrick's armor."
+msgstr "聞いた話では ロトのよろいは 人から 人へ わたったそうだ。"
+
+#. official: map.9.2.0
+#: data/text/dialog_lookup_table.py
+msgid "The last to have it was a fellow named Wynn."
+msgstr "最後は ゆきのふ という男の手に わたったらしい。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Let us wish the warrior well!"
+msgstr "勇者の 無事を いのりましょう！"
+
+#: data/text/dialog_lookup_table.py
+msgid "May the light be thy strength!"
+msgstr "光が そなたの 力と ならんことを！"
+
+#: data/text/dialog_lookup_table.py
+msgid "From Tantegel Castle travel 70 leagues to the south and 40 to the east."
+msgstr "ラダトームの城から 南に70 東に40 行ってみるがよい。"
+
+#. official: map.21.0.0
+#: data/text/dialog_lookup_table.py
+msgid "I am Gwaelin, daughter of Lorik."
+msgstr "私は ラダトームの王 ラルス16世の娘 ローラと申します。"
+
+#. official: map.33.0.2
+#: data/text/dialog_lookup_table.py
+msgid "I give thee now a chance to share this world and to rule half of it if thou will now stand beside me."
+msgstr "もし わしの味方になれば 世界の半分を そなたに やろう。"
+
+#. official: map.2.6.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Gwaelin then whispers:\n"
+"`Wait a moment,please.\n"
+"I would give a present to {}.’"
+msgstr ""
+"ローラ姫は ささやいた。\n"
+"「待ってくださいませ。\n"
+"ローラは {}さまに おくり物をしとうございます。」"
+
+#: data/text/dialog_lookup_table.py
+msgid "Please give me thy {}."
+msgstr "あなたの {}を わたしに くださいませ。"
+
+#. official: map.2.1.4
+#: data/text/dialog_lookup_table.py
+msgid "Oh, brave {}."
+msgstr "おお {}！ すばらしき勇者よ！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thank you for saving the Princess."
+msgstr "姫を 助けてくださって ありがとうございました。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Who touches me?’\n"
+"`I see nothing, nor can I hear."
+msgstr ""
+"だれだ？ わしに さわるのは。」\n"
+"「わしは 目も 見えず 耳も 聞こえぬ。"
+
+#. official: map.2.0.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Forever shall I be grateful for the gift of my daughter returned to her home, {}.\n"
+"Accept my thanks."
+msgstr ""
+"{}よ よくぞ 姫を 助けてくれた。\n"
+"今日という日を わしは 一生 わすれないであろう。 本当に 心から 礼をいうぞ！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Please accept my love, {}."
+msgstr "{}さま わたしの 愛を 受けとってください。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Farewell, {}."
+msgstr "お元気で {}さま。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Though thou art as brave as thy ancestor, {}, thou cannot defeat the great Dragonlord with such weapons."
+msgstr "{}よ。 そなたが 先祖のように 勇敢でも そのような 武器では 竜王は たおせぬぞ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thou art brave indeed to rescue me, {}."
+msgstr "{}さま。 わたしを 助けに 来てくださるなんて 本当に 勇敢な お方ですわ。"
+
+#. official: map.33.0.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome, {}.\n"
+"I am the Dragonlord--King of Kings."
+msgstr ""
+"よくぞ来た {}よ！\n"
+"わしが 王のなかの王 竜王である。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"The {}?\n"
+"Thank you very much."
+msgstr ""
+"{}ですって？\n"
+"本当に ありがとうございます。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Oh, my dearest Gwaelin!’\n"
+"`I hate thee, {}."
+msgstr ""
+"おお いとしの ローラ姫！」\n"
+"「{}なんか きらいだ！"
+
+msgid "H: Show Controls"
+msgstr "H: 操作方法を 見る"
+
+msgid "F11: Toggle Fullscreen"
+msgstr "F11: 全画面 オン/オフ"
+
+msgid "1-5: Adjust Game Speed"
+msgstr "1-5: ゲーム速度の 調整"
+
+#: src/items.py
+msgid "Broad Sword"
+msgstr "はがねのつるぎ"
+
+#: src/items.py
+msgid "Flame Sword"
+msgstr "ほのおのつるぎ"
+
+#: src/items.py
+msgid "Erdrick's Sword"
+msgstr "ロトのつるぎ"
+
+#: src/items.py
+msgid "Erdricks Sword"
+msgstr "ロトのつるぎ"
+
+#: src/items.py
+msgid "Chain Mail"
+msgstr "くさりかたびら"
+
+#: src/items.py
+msgid "Magic Armor"
+msgstr "まほうのよろい"
+
+#: src/items.py
+msgid "Erdrick's Armor"
+msgstr "ロトのよろい"
+
+#: src/items.py
+msgid "Large Shield"
+msgstr "てつのたて"
+
+#: src/items.py
+msgid "Silver Shield"
+msgstr "みかがみのたて"
+
+#: src/items.py
+msgid "Fairy Flute"
+msgstr "ようせいのふえ"
+
+#: src/items.py
+msgid "Death Necklace"
+msgstr "しのくびかざり"
+
+#: src/enemy_lookup.py
+msgid "Dragonlord 2"
+msgstr "りゅうおう"
+
+#: src/spells.py
+msgid "HEAL"
+msgstr "ホイミ"
+
+#: src/spells.py
+msgid "HEALMORE"
+msgstr "ベホイミ"
+
+#: src/spells.py
+msgid "HURT"
+msgstr "ギラ"
+
+#: src/spells.py
+msgid "HURTMORE"
+msgstr "ベギラマ"
+
+#: src/spells.py
+msgid "SLEEP"
+msgstr "ラリホー"
+
+#: src/spells.py
+msgid "RADIANT"
+msgstr "レミーラ"
+
+#: src/spells.py
+msgid "STOPSPELL"
+msgstr "マホトーン"
+
+#: src/spells.py
+msgid "OUTSIDE"
+msgstr "リレミト"
+
+#: src/spells.py
+msgid "RETURN"
+msgstr "ルーラ"
+
+#: src/spells.py
+msgid "REPEL"
+msgstr "トヘロス"
+
+#: src/battle.py
+msgid "The attack failed and there was no loss of Hit Points!"
+msgstr "攻撃は 失敗した！ HPは へらなかった！"
+
+#: src/battle_controller.py
+msgid "The {} attacked before {} was ready."
+msgstr "{}は {}が 身がまえる前に おそいかかってきた！"
+
+#. official: data.1.0.24
+#: src/battle_controller.py
+msgid "The {} hath recovered."
+msgstr "{}の キズが 回復した！"
+
+#. official: data.1.0.27
+#: src/battle_controller.py
+msgid "{}'s spell is blocked."
+msgstr "{}の呪文は 封じこめられて しまった！"
+
+#: src/map_hotkeys.py
+msgid ""
+"Game set to {}x speed.\n"
+"({} FPS)"
+msgstr ""
+"ゲーム速度を {}倍に した。\n"
+"({} FPS)"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou art strong enough!\n"
+"Why can thou not defeat the Dragonlord?"
+msgstr ""
+"そなたは もう 十分に 強い！\n"
+"なぜ 竜王を たおせぬのだ？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Hast thou found the flute?"
+msgstr "ふえは 見つかったかの？"
+
+#. official: map.8.9.0
+#: data/text/dialog_lookup_table.py
+msgid "Hast thou been to the southern island?"
+msgstr "南の島へは もう 行きましたか？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Hast thou found a magic temple?"
+msgstr "まほうの 神殿は 見つかったかね？"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Is that a wedding ring?’\n"
+"`Thou seems too young to be married."
+msgstr ""
+"それは 結婚指輪かい？」\n"
+"「結婚するには 若すぎるようだが。"
+
+#. official: map.6.8.0
+#: data/text/dialog_lookup_table.py
+msgid "All true warriors wear a ring."
+msgstr "戦士も 指輪くらいは 身につけなくては。"
+
+#. official: map.1.13.0
+#: data/text/dialog_lookup_table.py
+msgid "Thou must have a key to open a door."
+msgstr "とびらを 開けるには カギが 必要だ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "If thy Hit Points are high enough, by all means, enter."
+msgstr "HPが 十分に あるなら ぜひ 入ってみなされ。"
+
+#. official: map.1.5.0
+#: data/text/dialog_lookup_table.py
+msgid "When entering the cave, take with thee a torch."
+msgstr "洞くつへ 入るときには たいまつを 持って行った方が よいですぞ。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"In Garinham,look for the grave of Garin.\n"
+"Thou must push on a wall of darkness there."
+msgstr ""
+"ガライの町へ 行き ガライの墓を さがすがいい。\n"
+"そこで 暗やみのカベを 押すのだ。"
+
+#. official: map.1.14.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I am looking for the castle cellar.\n"
+"I heard it is not easily found."
+msgstr ""
+"私は 地下室を さがしている。\n"
+"この城の どこかに あるらしいのだが…。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Some say that Garin's grave is home to a Silver Harp."
+msgstr "ガライの墓には ぎんのたてごとが あるそうだ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Watch thy Hit Points when in the Poisonous Marsh."
+msgstr "毒の沼地では HPに 気をつけなされ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Go north to the seashore, then follow the coastline west until thou hath reached Garinham."
+msgstr "北の 海辺へ 出て 海岸ぞいに 西へ 進めば ガライの町に 着くだろう。"
+
+#: data/text/dialog_lookup_table.py
+msgid "See King Lorik when thy experience levels are raised."
+msgstr "レベルが 上がったら 王さまに 会いに 行くがよい。"
+
+#: data/text/dialog_lookup_table.py
+msgid "No,I am not Princess Gwaelin."
+msgstr "いいえ わたしは ローラ姫では ありません。"
+
+#. official: map.7.8.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"The harp attracts enemies.\n"
+"Stay away from the grave in Garinham."
+msgstr ""
+"竪琴の音色は まものたちを 呼びよせるといいます。\n"
+"ガライの墓には 近づかない方が いいですよ。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I hate people!\n"
+"Go! Leave me!"
+msgstr ""
+"人間なんて きらいだ！\n"
+"行け！ ほっといてくれ！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Once there was a town called Hauksness far to the south,but I do not know if it still exists."
+msgstr "昔 はるか南に ドムドーラという 町が あったが 今も あるのかは わからん。"
+
+#: data/text/dialog_lookup_table.py
+msgid "They say that Erdrick's armor was hidden long ago."
+msgstr "ロトのよろいは ずっと昔に かくされたそうだ。"
+
+#. official: map.7.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome to Garinham.\n"
+"May thy stay be a peaceful one."
+msgstr ""
+"むかし語りの町 ガライへ ようこそ！\n"
+"ゆっくり 休んでいってください。"
+
+#: data/text/dialog_lookup_table.py
+msgid "It is said that the Princess was kidnapped and taken eastward."
+msgstr "姫さまは さらわれて 東へ 連れていかれたそうです。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I have heard of one named Nester.\n"
+"Dost thou know such a one?"
+msgstr ""
+"ネスターという者の 話を 聞いたことが ある。\n"
+"そなたは 知っておるか？"
+
+#. official: map.8.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Rimuldar is the place to buy keys."
+msgstr "ウワサでは リムルダールの町に カギを売る店が あるらしいぞ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "I am Orwick, and I am waiting for my girl friend."
+msgstr "おれは オーウィック。 カノジョを 待ってるんだ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Welcome!"
+msgstr "いらっしゃいませ！"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Who art thou?\n"
+"Leave at once or I will call my friends."
+msgstr ""
+"あなた だれなの？\n"
+"すぐ 出ていかないと 仲間を 呼ぶわよ！"
+
+#. official: map.6.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Welcome to the town of Rimuldar."
+msgstr "ここは リムルダールの町ですわ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "The scales of the Dragonlord are as hard as steel."
+msgstr "竜王の うろこは はがねのように かたいそうだ。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"No, I have no tomatoes.\n"
+"I have no tomatoes today."
+msgstr ""
+"いいえ トマトは ないわ。\n"
+"今日は トマトは ないのよ。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou shalt find the Stones of Sunlight in Tantegel Castle,\n"
+"if thou has not found them yet."
+msgstr ""
+"たいようのいしは ラダトーム城に 眠っておる。\n"
+"まだ 見つけて おらぬならな。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Before long the enemy will arrive."
+msgstr "もうすぐ 敵が やってくるわ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Heed my warning! Travel not to the south for there the monsters are fierce and terrible."
+msgstr "わしの 忠告を 聞け！ 南へは 行くな。 あそこの まものは どうもうで おそろしいぞ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Good day,I am Howard. Four steps south of the bath in Kol thou shalt find a magic item."
+msgstr "やあ わしは ハワードじゃ。 マイラの 温泉から 南へ 4歩の所に ふしぎな 道具が あるぞ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "In this world is there any sword that can pierce the scales of the Dragonlord?"
+msgstr "竜王の うろこを つらぬける 剣など この世に あるのだろうか？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Orwick is late again. I'm starving."
+msgstr "オーウィックったら また 遅刻だわ。 おなか ペコペコ。"
+
+#. official: map.8.16.1
+#: data/text/dialog_lookup_table.py
+msgid "Go to the town of Cantlin."
+msgstr "メルキドの町へ 行ってみるがよい。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Howard had it, but he went to Rimuldar and never returned."
+msgstr "ハワードが 持っていたけど リムルダールへ 行ったきり 帰ってこないの。"
+
+#. official: map.8.9.1
+#: data/text/dialog_lookup_table.py
+msgid "I have heard that powerful enemies live there."
+msgstr "とても強い まものたちが いると 聞きましたが…。"
+
+#. official: map.8.9.2
+#: data/text/dialog_lookup_table.py
+msgid "To the south, I believe, there is a town called Rimuldar."
+msgstr "南には リムルダールという 町が あるそうですよ。"
+
+#. official: map.6.7.1
+#: data/text/dialog_lookup_table.py
+msgid "In this temple do the sun and rain meet."
+msgstr "雨と 太陽が 合わさる ほこらじゃ。"
+
+#. official: map.6.7.2
+#: data/text/dialog_lookup_table.py
+msgid "Go to the south."
+msgstr "南へ 行ってみるがよい。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Many have been the warriors who have perished on this quest."
+msgstr "この旅で 命を 落とした 戦士は 数知れぬ。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Within sight of Tantegel Castle to the south is Charlock,"
+msgstr "ラダトーム城の 南に 見える お城…"
+
+#. official: map.5.12.0
+#: data/text/dialog_lookup_table.py
+msgid "The fortress of the Dragonlord."
+msgstr "あれが 竜王の城だとか…。"
+
+#. official: map.6.9.0
+#: data/text/dialog_lookup_table.py
+msgid "Over the western part of this island Erdrick created a rainbow."
+msgstr "古き 言い伝えでは ロトは この地の 西のはずれに 虹の橋を かけたそうじゃ。"
+
+#. official: map.6.9.0
+#: data/text/dialog_lookup_table.py
+msgid "ʼTis also said that he entered the darkness from a hidden entrance in the room of the Dragonlord."
+msgstr "また 魔王の部屋の かくされたる 入口より 闇に入ったとも 聞く。"
+
+#: data/text/dialog_lookup_table.py
+msgid "This is a magic place."
+msgstr "ここは ふしぎな 場所じゃ。"
+
+#. official: map.8.10.1
+#: data/text/dialog_lookup_table.py
+msgid "Finally thou hast obtained it, {}."
+msgstr "ついに 手に入れたな {}よ。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"You are {}?\n"
+"It has been long since last we met."
+msgstr ""
+"そなたが {}か？\n"
+"会うのは ひさしぶりじゃな。"
+
+#: data/text/dialog_lookup_table.py
+msgid "A word of advice."
+msgstr "ひとこと 忠告しておこう。"
+
+#. official: map.2.2.0
+#: data/text/dialog_lookup_table.py
+msgid "Save thy money for more expensive armor."
+msgstr "お金が たまったら 武器や防具を 高いものに 買いかえることです。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Listen to what people say.\n"
+"It can be of great help."
+msgstr ""
+"人々の話に 耳を かたむけるのだ。\n"
+"きっと 大きな 助けに なるだろう。"
+
+#: data/text/dialog_lookup_table.py
+msgid "But for thee I wish success, {}."
+msgstr "だが そなたの 成功を いのっておるぞ {}よ。"
+
+msgid "F4: Auto-Battle"
+msgstr "F4: 自動戦闘"
+
+msgid "F9: Invulnerability"
+msgstr "F9: 無敵"
+
+msgid "F11: Fullscreen"
+msgstr "F11: 全画面"
+
+msgid "1-5: Game Speed"
+msgstr "1-5: ゲーム速度"
+
+#: data/text/intro_lookup_table.py
+msgid "Toggle on/off:"
+msgstr "オン/オフ:"
+
+#: src/options_screen.py
+#: src/title_windows.py
+msgid "ADVENTURE LOG {}:"
+msgstr "冒険の書 {}:"
+
+#: src/windows.py
+msgid "FIGHT"
+msgstr "こうげき"
+
+#: src/windows.py
+msgid "RUN"
+msgstr "にげる"
+
+#: src/windows.py
+msgid "NAME:"
+msgstr "なまえ:"
+
+#: src/windows.py
+msgid "STRENGTH:"
+msgstr "ちから:"
+
+#: src/windows.py
+msgid "AGILITY:"
+msgstr "すばやさ:"
+
+#: src/windows.py
+msgid "MAXIMUM HP:"
+msgstr "さいだいHP:"
+
+#: src/windows.py
+msgid "MAXIMUM MP:"
+msgstr "さいだいMP:"
+
+#: src/windows.py
+msgid "ATTACK POWER:"
+msgstr "こうげき力:"
+
+#: src/windows.py
+msgid "DEFENSE POWER:"
+msgstr "しゅび力:"
+
+#: src/windows.py
+msgid "WEAPON:"
+msgstr "ぶき:"
+
+#: src/windows.py
+msgid "ARMOR:"
+msgstr "よろい:"
+
+#: src/windows.py
+msgid "SHIELD:"
+msgstr "たて:"
+
+#: src/options_screen.py
+#: src/windows.py
+msgid "YES"
+msgstr "はい"
+
+#: src/options_screen.py
+#: src/windows.py
+msgid "NO"
+msgstr "いいえ"
+
+#: src/options_screen.py
+msgid "Which Message"
+msgstr "おこのみの"
+
+#: src/options_screen.py
+msgid "Speed Do You"
+msgstr "ひょうじそくどは"
+
+#: src/options_screen.py
+msgid "Want To Use?"
+msgstr "どれに しますか？"
+
+#: src/options_overlay.py
+#: src/options_screen.py
+msgid "FAST"
+msgstr "はやい"
+
+#: src/options_overlay.py
+#: src/options_screen.py
+msgid "NORMAL"
+msgstr "ふつう"
+
+#: src/options_overlay.py
+#: src/options_screen.py
+msgid "SLOW"
+msgstr "おそい"
+
+#: src/controls_screen.py
+msgid "OPTIONS"
+msgstr "せってい"
+
+#: src/options_overlay.py
+msgid "MESSAGE SPEED"
+msgstr "ひょうじそくど"
+
+#: src/options_overlay.py
+msgid "DIALOG STYLE"
+msgstr "会話方式"
+
+#: src/options_overlay.py
+msgid "CLASSIC (NES)"
+msgstr "クラシック (NES)"
+
+#: src/options_overlay.py
+msgid "MODERN"
+msgstr "モダン"
+
+#: src/options_overlay.py
+msgid "NPCS MAKE WAY"
+msgstr "NPCが よける"
+
+#: src/options_overlay.py
+msgid "ON"
+msgstr "オン"
+
+#: src/options_overlay.py
+msgid "OFF (NES)"
+msgstr "オフ (NES)"
+
+#: src/options_overlay.py
+msgid "FADE STYLE"
+msgstr "フェード方式"
+
+#: src/options_overlay.py
+msgid "NES"
+msgstr "NES"
+
+#: src/options_overlay.py
+msgid "SMOOTH"
+msgstr "なめらか"
+
+#: src/options_overlay.py
+msgid "STEP ON"
+msgstr "ふむと 移動"
+
+#: src/options_screen.py
+msgid ""
+"Do You Want To\n"
+"Erase This\n"
+"Character?"
+msgstr ""
+"この キャラを\n"
+"消しますか？"
+
+#: src/options_screen.py
+msgid "LEVEL"
+msgstr "LV"
+
+#: src/options_screen.py
+#: src/title_windows.py
+msgid "ADVENTURE LOG {}"
+msgstr "冒険の書 {}"
+
+#: src/windows.py
+msgid "BEGIN A NEW QUEST"
+msgstr "冒険の書を つくる"
+
+#: src/windows.py
+msgid "CONTINUE A QUEST"
+msgstr "冒険をする"
+
+#: src/windows.py
+msgid "CHANGE MESSAGE SPEED"
+msgstr "ひょうじそくどを かえる"
+
+#: src/windows.py
+msgid "COPY A QUEST"
+msgstr "冒険の書を うつす"
+
+#: src/windows.py
+msgid "ERASE A QUEST"
+msgstr "冒険の書を けす"
+
+#: data/text/intro_lookup_table.py
+msgid "Ctrl +/-/Wheel: Zoom"
+msgstr "Ctrl +/-/ホイール: 拡大/縮小"
+
+#: data/text/intro_lookup_table.py
+msgid "Ctrl 0: Reset Zoom"
+msgstr "Ctrl 0: 元の大きさ"
+
+#: data/text/intro_lookup_table.py
+msgid "Window zoom:"
+msgstr "画面の 拡大/縮小:"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped"
+msgstr "自動レベル上げ 停止"
+
+#: src/auto_grind.py
+msgid ""
+"Auto-grind on\n"
+"(G or any key to stop)"
+msgstr ""
+"自動レベル上げ 開始\n"
+"(G か 何かの キーで 停止)"
+
+#: src/auto_grind.py
+msgid "Auto-grind: battles are off (NO_BATTLES)"
+msgstr "自動レベル上げ: 戦闘が オフです (NO_BATTLES)"
+
+#: src/auto_grind.py
+msgid "Auto-grind: no fights here"
+msgstr "自動レベル上げ: ここでは 敵が 出ない"
+
+#: src/auto_grind.py
+msgid "Auto-grind: HP is already low"
+msgstr "自動レベル上げ: HPが すでに 少ない"
+
+#: src/auto_grind.py
+msgid "Auto-grind: no safe tile to walk to"
+msgstr "自動レベル上げ: 安全に 歩ける 場所が ない"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: HP low"
+msgstr "自動レベル上げ 停止: HPが 少ない"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: asleep"
+msgstr "自動レベル上げ 停止: ねむった"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: STOPSPELL"
+msgstr "自動レベル上げ 停止: マホトーン"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: special fight"
+msgstr "自動レベル上げ 停止: 特別な 戦闘"
+
+#: src/auto_grind.py
+msgid ""
+"Auto-grind stopped: level up\n"
+"(G to go on)"
+msgstr ""
+"自動レベル上げ 停止: レベルアップ\n"
+"(Gで 続ける)"
+
+msgid "G: Auto-grind"
+msgstr "G: 自動レベル上げ"
+
+#: src/options_overlay.py
+msgid "GRIND STOP"
+msgstr "停止条件"
+
+#: src/options_overlay.py
+msgid "RED HP"
+msgstr "赤いHP"
+
+#: src/options_overlay.py
+msgid "HALF HP"
+msgstr "HP半分"
+
+#: src/options_overlay.py
+msgid "3/4 HP"
+msgstr "HP 3/4"
+
+#: data/text/intro_lookup_table.py
+msgid "Save states:"
+msgstr "状態セーブ:"
+
+msgid "Shift+F1-F3: Save state"
+msgstr "Shift+F1-F3: ステートセーブ"
+
+msgid "F1-F3: Load state"
+msgstr "F1-F3: ステートロード"
+
+#: src/save_state.py
+msgid "State {} saved"
+msgstr "ステート{}を セーブした"
+
+#: src/save_state.py
+msgid "State {} loaded"
+msgstr "ステート{}を ロードした"
+
+#: src/save_state.py
+msgid "State {} is empty"
+msgstr "ステート{}は からっぽ"
+
+#: src/save_state.py
+msgid ""
+"State {} is from another version\n"
+"and can't be loaded"
+msgstr ""
+"ステート{}は 別の バージョンなので\n"
+"ロードできない"
+
+#: src/save_state.py
+msgid "State {} can't be read"
+msgstr "ステート{}を 読みこめない"
+
+msgid "Backspace: Rewind"
+msgstr "Backspace: 巻き戻し"
+
+#: src/options_overlay.py
+msgid "LANGUAGE"
+msgstr "言語"
+
+msgid "ENGLISH"
+msgstr "ENGLISH"
+
+msgid "한국어"
+msgstr "한국어"
+
+#: src/options_overlay.py
+msgid "SCANLINES"
+msgstr "走査線"
+
+#: src/options_overlay.py
+msgid "OFF"
+msgstr "オフ"
+
+#: src/options_overlay.py
+msgid "SCALING"
+msgstr "拡大方式"
+
+#: src/options_overlay.py
+msgid "PIXEL PERFECT"
+msgstr "整数倍"
+
+#: data/text/intro_lookup_table.py
+msgid "Right Button: A"
+msgstr "右ボタン: A"
+
+#: data/text/intro_lookup_table.py
+msgid "Bottom Button: B"
+msgstr "下ボタン: B"
+
+#: data/text/intro_lookup_table.py
+msgid "Start Button: Start"
+msgstr "Start ボタン: スタート"
+
+#: data/text/intro_lookup_table.py
+msgid "Back Button: Select"
+msgstr "Back ボタン: セレクト"
+
+#: data/text/intro_lookup_table.py
+msgid "D-Pad/Stick: Move"
+msgstr "十字キー/スティック: 移動"
+
+#: data/text/intro_lookup_table.py
+msgid "Right Trigger: Speed"
+msgstr "右トリガー: ゲーム速度"
+
+#: data/text/intro_lookup_table.py
+msgid "Controller:"
+msgstr "コントローラー:"
+
+#: data/text/intro_lookup_table.py
+msgid "LB: Load state 1"
+msgstr "LB: 状態1 ロード"
+
+#: data/text/intro_lookup_table.py
+msgid "RB: Save state 1"
+msgstr "RB: 状態1 セーブ"
+
+#: data/text/intro_lookup_table.py
+msgid "LT (hold): Rewind"
+msgstr "LT (長押し): 巻き戻し"
+
+#: src/options_overlay.py
+msgid "MENU SPEED"
+msgstr "メニュー速度"
+
+#: src/options_overlay.py
+msgid "FOLLOW GAME"
+msgstr "ゲーム速度"
+
+#: src/options_overlay.py
+msgid "LOOK & SOUND"
+msgstr "画面と音"
+
+#: src/options_overlay.py
+msgid "GAMEPLAY"
+msgstr "ゲームプレイ"
+
+#: src/controls_screen.py
+#: src/options_overlay.py
+msgid "CONTROLS"
+msgstr "操作"
+
+#: src/options_overlay.py
+msgid "PRESET"
+msgstr "プリセット"
+
+#: src/options_overlay.py
+msgid "CUSTOM"
+msgstr "カスタム"
+
+#: src/options_overlay.py
+msgid "PAGE"
+msgstr "ページ"
+
+#: src/options_overlay.py
+msgid "MUSIC"
+msgstr "音楽"
+
+#: src/options_overlay.py
+msgid "ORCHESTRA"
+msgstr "オーケストラ"
+
+#: src/options_overlay.py
+msgid "QUICK ACTION"
+msgstr "すばやい行動"
+
+#: src/options_overlay.py
+msgid "GAME SPEED"
+msgstr "ゲーム速度"
+
+#: src/options_overlay.py
+msgid "SAVE STATES"
+msgstr "ステートセーブ"
+
+#: src/controls_screen.py
+#: src/options_overlay.py
+msgid "REWIND"
+msgstr "巻き戻し"
+
+#: src/options_overlay.py
+msgid "AUTO-GRIND"
+msgstr "自動レベル上げ"
+
+#: src/options_overlay.py
+msgid "CHEATS"
+msgstr "チート"
+
+#: src/options_overlay.py
+msgid "STATUS WINDOW"
+msgstr "つよさ表示"
+
+#: src/options_overlay.py
+msgid "ALWAYS"
+msgstr "常に"
+
+#: src/options_overlay.py
+msgid "ENCOUNTERS"
+msgstr "敵の出現"
+
+#: src/options_overlay.py
+msgid "HALF"
+msgstr "半分"
+
+#: src/options_overlay.py
+msgid "EXP/GOLD"
+msgstr "経験値/ゴールド"
+
+#: src/options_overlay.py
+msgid "x1 (NES)"
+msgstr "x1 (NES)"
+
+#: src/options_overlay.py
+msgid "x2"
+msgstr "x2"
+
+#: src/options_overlay.py
+msgid "x4"
+msgstr "x4"
+
+#: src/options_overlay.py
+msgid "RUN BUTTON"
+msgstr "ダッシュボタン"
+
+#: src/auto_grind.py
+msgid "Auto-grind: ENCOUNTERS are off"
+msgstr "自動レベル上げ: 敵の出現が オフに なっている"
+
+#: src/options_overlay.py
+msgid "SHOP PREVIEW"
+msgstr "装備の比較"
+
+#: src/shop_preview.py
+msgid "ATTACK"
+msgstr "こうげき力"
+
+#: src/shop_preview.py
+msgid "DEFENSE"
+msgstr "しゅび力"
+
+msgid "Q: Quest Journal"
+msgstr "Q: 旅のメモ"
+
+#: src/options_overlay.py
+msgid "QUEST JOURNAL"
+msgstr "旅のメモ"
+
+#: src/options_overlay.py
+msgid "LEARNED"
+msgstr "聞いた目標"
+
+#: src/options_overlay.py
+msgid "LEARNED+HINTS"
+msgstr "目標+ヒント"
+
+#: src/quest_journal.py
+msgid "Done: {}"
+msgstr "完了: {}"
+
+#: src/quest_journal.py
+msgid "Get the Rainbow Drop."
+msgstr "にじのしずくを 手に入れよう。"
+
+#: src/quest_journal.py
+msgid "Thou hast heard of nothing yet."
+msgstr "まだ 何も 聞いていない。"
+
+#: src/quest_journal.py
+msgid "If thou wishest:"
+msgstr "望むなら:"
+
+#: src/quest_journal.py
+msgid "Rescue Princess Gwaelin."
+msgstr "ローラ姫を 助け出そう。"
+
+#: src/quest_journal.py
+msgid "She is held in the Swamp Cave, south of Kol, behind a locked door. A dragon guards her."
+msgstr "マイラの南 沼地の洞窟の カギのかかった とびらの奥に とらわれている。 ドラゴンが 守っている。"
+
+#: src/quest_journal.py
+msgid "Carry Princess Gwaelin back to King Lorik."
+msgstr "ローラ姫を ラルス16世の もとへ 連れ帰ろう。"
+
+#: src/quest_journal.py
+msgid "King Lorik waits in Tantegel Castle."
+msgstr "ラルス16世は ラダトームの城で 待っている。"
+
+#: src/quest_journal.py
+msgid "Get a Magic Key."
+msgstr "かぎを 手に入れよう。"
+
+#: src/quest_journal.py
+msgid "Magic Keys are sold in Tantegel Castle, Rimuldar and Cantlin."
+msgstr "かぎは ラダトームの城、 リムルダール、 メルキドで 売っている。"
+
+#: src/quest_journal.py
+msgid "Find the Silver Harp."
+msgstr "ぎんのたてごとを 探そう。"
+
+#: src/quest_journal.py
+msgid "It lies deep in Garin's Grave. The way down is behind a locked door in Garinham."
+msgstr "ガライの墓の 奥深くに ある。 墓へ 下りる道は ガライの町の カギのかかった とびらの奥に ある。"
+
+#: src/quest_journal.py
+msgid "Take the Silver Harp to the old man in the shrine."
+msgstr "ぎんのたてごとを ほこらの 老人に 届けよう。"
+
+#: src/quest_journal.py
+msgid "The shrine is north and west of Kol. He gives the Staff of Rain for the harp."
+msgstr "ほこらは マイラの 北西に ある。 老人は たてごとと 引きかえに あまぐものつえを くれる。"
+
+#: src/quest_journal.py
+msgid "Find the Stones of Sunlight."
+msgstr "たいようのいしを 探そう。"
+
+#: src/quest_journal.py
+msgid "They are in the cellar of Tantegel Castle, behind a locked door."
+msgstr "ラダトームの城の 地下室の カギのかかった とびらの奥に ある。"
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Token."
+msgstr "ロトのしるしを 探そう。"
+
+#: src/quest_journal.py
+msgid "From Tantegel Castle travel 70 leagues to the south and 40 to the east, and search."
+msgstr "ラダトームの城から 南へ 70、 東へ 40 進んで 足元を 調べよう。"
+
+#: src/quest_journal.py
+msgid "Take the Stones of Sunlight, the Staff of Rain and Erdrick's Token to the old man in the shrine."
+msgstr "たいようのいし、 あまぐものつえ、 ロトのしるしを ほこらの 老人に 届けよう。"
+
+#: src/quest_journal.py
+msgid "The shrine is far to the south of Rimuldar. He gives the Rainbow Drop."
+msgstr "ほこらは リムルダールの はるか南に ある。 老人は にじのしずくを くれる。"
+
+#: src/quest_journal.py
+msgid "Use the Rainbow Drop to make a bridge to Charlock."
+msgstr "にじのしずくで 竜王の城への 橋を かけよう。"
+
+#: src/quest_journal.py
+msgid "Hold it up at the water's edge east of Charlock, on the western shore of Rimuldar's land."
+msgstr "竜王の城の 東、 リムルダールの ある大陸の 西の岸辺で かかげよう。"
+
+#: src/quest_journal.py
+msgid "Find the hidden way down in Charlock."
+msgstr "竜王の城の 隠された 下り道を 探そう。"
+
+#: src/quest_journal.py
+msgid "Search behind the Dragonlord's throne."
+msgstr "竜王の 玉座の 後ろを 調べよう。"
+
+#: src/quest_journal.py
+msgid "Defeat the Dragonlord."
+msgstr "竜王を 倒そう。"
+
+#: src/quest_journal.py
+msgid "He waits in the deepest part of Charlock."
+msgstr "竜王は 竜王の城の いちばん奥で 待っている。"
+
+#: src/quest_journal.py
+msgid "Return to King Lorik."
+msgstr "ラルス16世の もとへ 帰ろう。"
+
+#: src/quest_journal.py
+msgid "Tantegel Castle awaits thy return."
+msgstr "ラダトームの城が そなたの 帰りを 待っている。"
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Armor."
+msgstr "ロトのよろいを 探そう。"
+
+#: src/quest_journal.py
+msgid "It is hidden in the ruins of Hauksness, far to the south. Beware its guardian."
+msgstr "はるか南の 廃墟 ドムドーラに 隠されている。 守る者に 気をつけよう。"
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Sword."
+msgstr "ロトのつるぎを 探そう。"
+
+#: src/quest_journal.py
+msgid "It lies deep within Charlock."
+msgstr "竜王の城の 奥深くに ある。"
+
+#: src/quest_journal.py
+msgid "Defeat the Golem guarding Cantlin."
+msgstr "メルキドを 守る ゴーレムを 倒そう。"
+
+#: src/quest_journal.py
+msgid "Golem fears the music of the flute. The Fairy Flute is in Kol, four steps south of the bath."
+msgstr "ゴーレムは 笛の音を 恐れている。 ようせいのふえは マイラの 温泉から 南へ 4歩の 場所に ある。"
+
+#: src/options_overlay.py
+msgid "AUTOSAVE"
+msgstr "オートセーブ"
+
+#: src/windows.py
+msgid "CONTINUE AUTOSAVE"
+msgstr "オートセーブ 再開"
+
+#: src/options_overlay.py
+msgid "BAG"
+msgstr "持ち物"
+
+#: src/options_overlay.py
+msgid "NES (8)"
+msgstr "NES (8個)"
+
+#: src/options_overlay.py
+msgid "16"
+msgstr "16個"
+
+#: src/options_overlay.py
+msgid "VIEW"
+msgstr "画面"
+
+#: src/options_overlay.py
+msgid "NES (4:3)"
+msgstr "NES (4:3)"
+
+#: src/options_overlay.py
+msgid "WIDE"
+msgstr "ワイド"
+
+msgid "M: Dungeon map"
+msgstr "M: ダンジョン地図"
+
+#: src/options_overlay.py
+msgid "DUNGEON MAP"
+msgstr "ダンジョン地図"
+
+#: src/options_overlay.py
+msgid "CONFIRM NAME"
+msgstr "名前の確定"
+
+#: src/options_overlay.py
+msgid "OTHER"
+msgstr "その他"
+
+#: src/controls_screen.py
+#: src/dungeon_map.py
+msgid "MAP"
+msgstr "地図"
+
+#: data/text/intro_lookup_table.py
+msgid "Top Button: Dungeon map"
+msgstr "上ボタン: ダンジョン地図"
+
+#: data/text/intro_lookup_table.py
+msgid "Dungeon map:"
+msgstr "ダンジョン地図:"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: A Button"
+msgstr "{}: Aボタン"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: B Button"
+msgstr "{}: Bボタン"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Start"
+msgstr "{}: スタート"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Options"
+msgstr "{}: 設定"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Move"
+msgstr "{}: 移動"
+
+#: data/text/intro_lookup_table.py
+msgid "ARROWS"
+msgstr "矢印キー"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Smart A"
+msgstr "{}: スマートA"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Show Controls"
+msgstr "{}: 操作方法を 見る"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Auto-Battle"
+msgstr "{}: 自動戦闘"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Invulnerability"
+msgstr "{}: 無敵モード"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Fullscreen"
+msgstr "{}: 全画面"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Game Speed"
+msgstr "{}: ゲーム速度の 調整"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Auto-grind"
+msgstr "{}: 自動レベル上げ"
+
+#: src/controls_screen.py
+msgid "KEY 1"
+msgstr "キー1"
+
+#: src/controls_screen.py
+msgid "KEY 2"
+msgstr "キー2"
+
+#: src/controls_screen.py
+msgid "PAD"
+msgstr "パッド"
+
+#: src/controls_screen.py
+msgid "RESET TO DEFAULTS"
+msgstr "初期設定に 戻す"
+
+#: src/controls_screen.py
+msgid "A:SET  SELECT:CLEAR  B:BACK"
+msgstr "A:変更 SELECT:消去 B:戻る"
+
+#: src/controls_screen.py
+msgid "PRESS A KEY"
+msgstr "キーを押して"
+
+#: src/controls_screen.py
+msgid "PRESS A PAD BUTTON"
+msgstr "ボタンを押して"
+
+#: src/controls_screen.py
+msgid "NO CONTROLLER"
+msgstr "パッドなし"
+
+#: src/controls_screen.py
+msgid "{}: CHANGED TOO"
+msgstr "{}: 連動変更"
+
+#: src/controls_screen.py
+msgid "{}: NEEDS A KEY"
+msgstr "{}: キー必須"
+
+#: src/controls_screen.py
+msgid "{}: FIXED KEY"
+msgstr "{}: 固定キー"
+
+#: src/controls_screen.py
+msgid "DEFAULTS RESTORED"
+msgstr "初期値に 戻した"
+
+#: src/controls_screen.py
+msgid "A BUTTON"
+msgstr "Aボタン"
+
+#: src/controls_screen.py
+msgid "B BUTTON"
+msgstr "Bボタン"
+
+#: src/controls_screen.py
+msgid "START"
+msgstr "スタート"
+
+#: src/controls_screen.py
+msgid "SELECT"
+msgstr "セレクト"
+
+#: src/controls_screen.py
+msgid "UP"
+msgstr "上"
+
+#: src/controls_screen.py
+msgid "DOWN"
+msgstr "下"
+
+#: src/controls_screen.py
+msgid "LEFT"
+msgstr "左"
+
+#: src/controls_screen.py
+msgid "RIGHT"
+msgstr "右"
+
+#: src/controls_screen.py
+#: src/options_overlay.py
+msgid "SMART A"
+msgstr "スマートA"
+
+#: src/controls_screen.py
+msgid "HELP"
+msgstr "ヘルプ"
+
+#: src/controls_screen.py
+msgid "AUTO GRIND"
+msgstr "自動レベル上げ"
+
+#: src/controls_screen.py
+msgid "AUTO FIGHT"
+msgstr "自動戦闘"
+
+#: src/controls_screen.py
+msgid "INVINCIBLE"
+msgstr "無敵"
+
+#: src/controls_screen.py
+msgid "FULLSCREEN"
+msgstr "全画面"
+
+#: src/controls_screen.py
+msgid "SPEED 1X"
+msgstr "速度 1X"
+
+#: src/controls_screen.py
+msgid "SPEED 2X"
+msgstr "速度 2X"
+
+#: src/controls_screen.py
+msgid "SPEED 4X"
+msgstr "速度 4X"
+
+#: src/controls_screen.py
+msgid "SPEED 8X"
+msgstr "速度 8X"
+
+#: src/controls_screen.py
+msgid "SPEED 16X"
+msgstr "速度 16X"
+
+#: src/controls_screen.py
+msgid "NEXT SPEED"
+msgstr "次の速度"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Save state"
+msgstr "{}: ステートセーブ"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Load state"
+msgstr "{}: ステートロード"
+
+#: src/controls_screen.py
+msgid "LOAD 1"
+msgstr "ロード 1"
+
+#: src/controls_screen.py
+msgid "LOAD 2"
+msgstr "ロード 2"
+
+#: src/controls_screen.py
+msgid "LOAD 3"
+msgstr "ロード 3"
+
+#: src/controls_screen.py
+msgid "SAVE 1"
+msgstr "セーブ 1"
+
+#: src/controls_screen.py
+msgid "SAVE 2"
+msgstr "セーブ 2"
+
+#: src/controls_screen.py
+msgid "SAVE 3"
+msgstr "セーブ 3"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Rewind"
+msgstr "{}: 巻き戻し"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: A"
+msgstr "{}: A"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: B"
+msgstr "{}: B"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Select"
+msgstr "{}: セレクト"
+
+#: data/text/intro_lookup_table.py
+msgid "{}/Stick: Move"
+msgstr "{}/スティック: 移動"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Speed"
+msgstr "{}: ゲーム速度"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Load state 1"
+msgstr "{}: ステート1 ロード"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Save state 1"
+msgstr "{}: ステート1 セーブ"
+
+#: data/text/intro_lookup_table.py
+msgid "{} (hold): Rewind"
+msgstr "{} (長押し): 巻き戻し"
+
+#: src/controls_screen.py
+msgid "JOURNAL"
+msgstr "旅のメモ"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Quest Journal"
+msgstr "{}: 旅のメモ"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Dungeon map"
+msgstr "{}: ダンジョン地図"
+
+#: src/controls_screen.py
+msgid "MSG LOG"
+msgstr "会話記録"
+
+#: src/message_log.py
+#: src/options_overlay.py
+msgid "MESSAGE LOG"
+msgstr "会話の記録"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Message log"
+msgstr "{}: 会話の記録"
+
+#: src/message_log.py
+msgid "UP/DOWN:SCROLL  B:CLOSE"
+msgstr "上下:移動 B:閉じる"
+
+#: src/message_log.py
+msgid "NO MESSAGES YET"
+msgstr "まだ 会話は ない"
+
+#: src/message_log.py
+msgid "KING LORIK"
+msgstr "王さま"
+
+#: src/message_log.py
+msgid "GWAELIN"
+msgstr "ローラ姫"
+
+#: src/message_log.py
+msgid "GUARD"
+msgstr "番兵"
+
+#: src/message_log.py
+msgid "SOLDIER"
+msgstr "兵士"
+
+#: src/message_log.py
+msgid "MERCHANT"
+msgstr "商人"
+
+#: src/message_log.py
+msgid "MAN"
+msgstr "男"
+
+#: src/message_log.py
+msgid "WOMAN"
+msgstr "女"
+
+#: src/message_log.py
+msgid "WISE MAN"
+msgstr "賢者"
+
+#: src/message_log.py
+msgid "DRAGONLORD"
+msgstr "竜王"
+
+#: data/text/intro_lookup_table.py
+msgid "Left Button: Message log"
+msgstr "左ボタン: 会話の記録"
+
+#: src/save_state.py
+msgid "State {} couldn't be saved"
+msgstr "ステート{}を セーブできなかった"
+
+#: data/text/dialog_lookup_table.py
+msgid "Alas, thy deeds could not be recorded."
+msgstr "残念じゃが 冒険の書に 記録 できなかった。"
+
+#: src/options_overlay.py
+msgid "SFC"
+msgstr "SFC"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Play stats"
+msgstr "{}: プレイ記録"
+
+#: src/options_overlay.py
+msgid "STATS PAGE"
+msgstr "プレイ記録"
+
+#: src/controls_screen.py
+#: src/stats_screen.py
+msgid "STATS"
+msgstr "プレイ記録"
+
+#: src/stats_screen.py
+msgid "PLAY TIME"
+msgstr "プレイ時間"
+
+#: src/stats_screen.py
+msgid "STEPS"
+msgstr "歩数"
+
+#: src/stats_screen.py
+msgid "FIGHTS WON"
+msgstr "勝った戦い"
+
+#: src/stats_screen.py
+msgid "FIGHTS FLED"
+msgstr "逃げた戦い"
+
+#: src/stats_screen.py
+msgid "FIGHTS LOST"
+msgstr "負けた戦い"
+
+#: src/stats_screen.py
+msgid "DEATHS"
+msgstr "死んだ回数"
+
+#: src/stats_screen.py
+msgid "GOLD EARNED"
+msgstr "手に入れたゴールド"
+
+#: src/stats_screen.py
+msgid "GOLD SPENT"
+msgstr "使ったゴールド"
+
+#: src/stats_screen.py
+msgid "CHESTS OPENED"
+msgstr "開けた宝箱"
+
+#: src/stats_screen.py
+msgid "MONSTERS DEFEATED"
+msgstr "やっつけたまもの"

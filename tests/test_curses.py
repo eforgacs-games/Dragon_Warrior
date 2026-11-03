@@ -176,7 +176,7 @@ class TestCurses(TestCase):
     def walk_onto(self, map_name, coordinates):
         self.go_to(map_name, coordinates)
         with patch('src.menu.CommandMenu.show_text_in_dialog_box') as show_text:
-            self.game.count_step()
+            self.game.step_triggers.count_step()
         return [c.args[0] for c in show_text.call_args_list]
 
     def test_cursed_player_is_thrown_out_of_tantegel(self):
@@ -212,9 +212,9 @@ class TestCurses(TestCase):
         self.player.gold = 101
         self.game.battle_ctrl.launch_battle = False
         with patch.object(self.game, 'drawer'), patch.object(self.game, 'music_player'), \
-                patch('src.game.display'), \
+                patch('src.hero_death.display'), \
                 patch('src.menu.CommandMenu.show_text_in_dialog_box') as show_text:
-            self.game.handle_death()
+            self.game.hero_death.handle_death()
         return [c.args[0] for c in show_text.call_args_list]
 
     def test_cursed_death_sends_player_outside_with_1_hp(self):

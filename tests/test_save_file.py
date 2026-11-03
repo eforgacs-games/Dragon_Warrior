@@ -9,7 +9,7 @@ import pygame
 
 from src.checkpoints import CHECKPOINT_NAMES, FACING_KEY, checkpoint_path
 from src.config.test_config import test_config
-from src.options_screen import Options
+from src.game_options import Options
 from src.save_file import DAMAGED_LOG_NAME, SAVE_FORMAT_VERSION, VERSION_KEY, SaveFile, first_open_log, \
     log_for_unchosen_save, logs_named, read_save_name, save_files, save_slot_number, used_logs, write_save
 from src.soundtrack import Soundtrack
@@ -77,7 +77,23 @@ CURRENT_FORMAT_SAVE = '''{
     "BagSize": 16,
     "SmartA": true,
     "MessageLog": false,
-    "Autosave": false
+    "StatsPage": true,
+    "Autosave": false,
+    "PlayStats": {
+        "play_time_ms": 3723000,
+        "steps": 1234,
+        "fights_won": 15,
+        "fights_fled": 4,
+        "fights_lost": 1,
+        "deaths": 2,
+        "gold_earned": 980,
+        "gold_spent": 600,
+        "chests_opened": 3,
+        "monsters_defeated": {
+            "Slime": 12,
+            "Drakee": 3
+        }
+    }
 }'''
 
 
@@ -106,10 +122,11 @@ class TestSaveFileRoundTrip(TestCase):
         self.assertEqual(('TantegelThroneRoom', 10, 13), (save.current_map, save.player_row, save.player_column))
         self.assertEqual(StoryFlags(left_throne_room=True), save.story_flags)
         self.assertEqual(Options('Fast', 'Modern', False, 'Smooth', False, 'HalfHP', 'FollowGameSpeed',
-                                 soundtrack=Soundtrack.SFC, save_states=False, auto_grind=False, encounters='Half',
+                                 soundtrack=Soundtrack.SFC, game_speed_keys=True, save_states=False, rewind=True,
+                                 auto_grind=False, cheat_keys=True, quick_action=True, encounters='Half',
                                  exp_gold=4, run_button=True, status_window='Always', shop_preview=False,
                                  quest_journal='Hints', autosave=False, bag_size=16, smart_a=True,
-                                 message_log=False),
+                                 message_log=False, stats_page=True),
                          save.options)
 
     def test_every_checkpoint_round_trips(self):

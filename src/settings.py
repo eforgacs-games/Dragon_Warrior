@@ -1,6 +1,6 @@
 """The global settings: the player's own, kept from one launch to the next, in one small file. Not NES behavior.
 
-They are the window zoom (Ctrl + / Ctrl -, src/zoom.py), fullscreen (F11, Game.handle_fullscreen_toggle), the game
+They are the window zoom (Ctrl + / Ctrl -, src/zoom.py), fullscreen (F11, MapHotkeys.toggle_fullscreen), the game
 speed (keys 1 to 5, src/waiting.py), the language, the display filters, the view and the dungeon map (the options
 overlay's LANGUAGE, SCANLINES, SCALING, VIEW and DUNGEON MAP rows, src/options_overlay.py, src/display_filters.py,
 src/view.py and src/dungeon_map.py), and the controls (the CONTROLS screen, src/controls_screen.py; "controls" is null
@@ -12,11 +12,12 @@ The file is JSON, in the per-user config folder (src/paths.py user_config_dir), 
 ~/.config/dragon-warrior/settings.json:
 
     {"version": 1, "zoom": 3, "fullscreen": false, "game_speed": 1, "language": "Korean", "scanlines": false,
-     "scaling": "Smooth", "view": "NES", "dungeon_map": true,
+     "scaling": "Smooth", "view": "NES", "dungeon_map": true, "name_confirm": false,
      "controls": {"keys": {"A": ["k"], ...}, "pad": {"A": "b", ...}}}
 
 "zoom" and "language" can be null: the window opens at its normal size, and the language comes from the system locale
-(base_config language_from_locale). A saved language wins over the locale.
+(base_config language_from_locale). A saved language wins over the locale, and --language on the command line wins over
+both for that run (without changing the file).
 
 The game reads it once at start (Game.__init__), before the window opens, so the window comes up at the saved zoom and
 in fullscreen if that was saved, and writes it whenever one of the settings changes. A missing file, one that isn't
@@ -41,17 +42,15 @@ from os.path import join
 from typing import Any
 
 from src.controls import Controls
-from src.display_filters import SCALING_MODES, SCALING_SMOOTH
+from src.game_options import DUNGEON_MAP, GLOBAL_OPTIONS, LANGUAGE, NAME_CONFIRM, SCALING, SCANLINES, VIEW
 from src.json_files import atomic_write_json
 from src.paths import user_config_dir
-from src.view import VIEW_NES, VIEWS
 
 SETTINGS_FILE_NAME = 'settings.json'
 SETTINGS_ENV_VAR = 'DRAGON_WARRIOR_SETTINGS'
 USER_SETTINGS = 'user'  # SETTINGS_PATH: the file in the user's config folder (or $DRAGON_WARRIOR_SETTINGS)
 FORMAT_VERSION = 1
 
-LANGUAGES = ('English', 'Korean')
 GAME_SPEEDS = (1, 2, 4, 8, 16)  # src/waiting.py SPEED_KEYS' values
 MAX_ZOOM = 64  # anything bigger is a corrupt file, not a monitor
 
@@ -61,12 +60,14 @@ class Settings:
     zoom: int | None = None  # None: the window's normal size (NES_RES * SCALE)
     fullscreen: bool = False
     game_speed: int = 1
-    language: str | None = None  # None: from the system locale
-    scanlines: bool = False
-    scaling: str = SCALING_SMOOTH  # src/display_filters.py SCALING_MODES
-    view: str = VIEW_NES  # the VIEW row: src/view.py VIEWS
-    dungeon_map: bool = True  # the DUNGEON MAP row: whether M shows the dungeon map (src/dungeon_map.py)
-    name_confirm: bool = True  # the CONFIRM NAME row: a full name waits on END (src/name_entry.py)
+    # The options overlay's global options (src/game_options.py GLOBAL_OPTIONS), one field each, named and defaulting
+    # as the option is
+    language: str | None = LANGUAGE.default  # None: from the system locale
+    scanlines: bool = SCANLINES.default
+    scaling: str = SCALING.default
+    view: str = VIEW.default
+    dungeon_map: bool = DUNGEON_MAP.default
+    name_confirm: bool = NAME_CONFIRM.default
     # The keys and controller buttons (src/controls.py Controls.to_json); None: the defaults
     controls: dict[str, Any] | None = None
     # What the file has that this build doesn't know: a newer build's settings, and its format version if it's newer.
@@ -91,18 +92,8 @@ class Settings:
         values['fullscreen'] = fullscreen if isinstance(fullscreen, bool) else default.fullscreen
         speed = data.get('game_speed')
         values['game_speed'] = speed if type(speed) is int and speed in GAME_SPEEDS else default.game_speed
-        language = data.get('language')
-        values['language'] = language if language in LANGUAGES else default.language
-        scanlines = data.get('scanlines')
-        values['scanlines'] = scanlines if isinstance(scanlines, bool) else default.scanlines
-        scaling = data.get('scaling')
-        values['scaling'] = scaling if scaling in SCALING_MODES else default.scaling
-        view = data.get('view')
-        values['view'] = view if view in VIEWS else default.view
-        dungeon_map = data.get('dungeon_map')
-        values['dungeon_map'] = dungeon_map if isinstance(dungeon_map, bool) else default.dungeon_map
-        name_confirm = data.get('name_confirm')
-        values['name_confirm'] = name_confirm if isinstance(name_confirm, bool) else default.name_confirm
+        for option in GLOBAL_OPTIONS:
+            values[option.name] = option.valid(data.get(option.name))
         controls = data.get('controls')
         # Read back through Controls, so a bad entry is the default and the rest are kept (Controls.from_json)
         values['controls'] = Controls.from_json(controls).to_json() if isinstance(controls, dict) else default.controls
@@ -158,6 +149,20 @@ def save_settings(path: str, settings: Settings) -> bool:
         print(f"Could not save the settings to {path}: {error}")
         return False
     return True
+
+
+def put_in_config(settings: Settings, config: dict) -> None:
+    """Give the config the global options the settings have (Game.__init__, before the window opens). One at its
+    default leaves the config's as it is. A saved language wins over the system locale's (base_config
+    language_from_locale), but not over --language, which chooses this run's language without changing the saved
+    one."""
+    for option in GLOBAL_OPTIONS:
+        value = getattr(settings, option.name)
+        if value == option.default:
+            continue
+        if option is LANGUAGE and config.get('LANGUAGE_FROM_COMMAND_LINE'):
+            continue
+        config[option.config_key] = value
 
 
 class SettingsStore:

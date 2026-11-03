@@ -191,8 +191,8 @@ class TestGame(TestCase):
         self.game.player.current_hp = self.game.player.max_hp = 50
         with patch.object(self.game.battle_ctrl, 'player_hit_effect'), \
                 patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
-            self.game.receive_damage(1)
-            self.game.receive_damage(3)
+            self.game.hero_damage.receive_damage(1)
+            self.game.hero_damage.receive_damage(3)
         self.assertEqual([c.args[0] for c in show_line.call_args_list],
                          ["Thy Hit decreased by 1.\n", "Thy Hits decreased by 3.\n"])
 
@@ -464,8 +464,8 @@ class TestGame(TestCase):
     def walk(self, steps):
         with patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
             for _ in range(steps):
-                self.game.count_step()
-                self.game.tick_repel_timer_after_step()
+                self.game.step_triggers.count_step()
+                self.game.step_triggers.tick_repel_timer_after_step()
         return [c.args[0] for c in show_text.call_args_list]
 
     def test_repel_protects_the_127th_steps_fight_roll(self):
@@ -477,8 +477,8 @@ class TestGame(TestCase):
             rolls.append(self.game.repel_timer)
 
         self.game.repel_timer = 255
-        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.count_step), \
-                patch.object(self.game, 'handle_battles', side_effect=roll), \
+        with patch.object(self.game.movement, 'handle_player_movement', side_effect=self.game.step_triggers.count_step), \
+                patch.object(self.game.field_encounters, 'handle_battles', side_effect=roll), \
                 patch.object(self.game, '_handle_map_updates'), patch.object(self.game, '_handle_post_move_checks'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box',
                              side_effect=lambda text, **_: messages.append((len(rolls), text))):
@@ -531,9 +531,9 @@ class TestGame(TestCase):
         self.game.player.gold = 101
         with patch.object(self.game.battle_ctrl, 'draw_command_window') as command_window, \
                 patch.object(self.game, 'drawer') as drawer, \
-                patch.object(self.game, 'music_player'), patch('src.game.display'), \
+                patch.object(self.game, 'music_player'), patch('src.hero_death.display'), \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
-            self.game.handle_death()
+            self.game.hero_death.handle_death()
         return command_window, drawer, show_text
 
     def test_death_in_battle(self):
@@ -605,7 +605,7 @@ class TestGame(TestCase):
         for key_code, speed, label in ((pygame.K_2, 2, '2x'), (pygame.K_3, 4, '4x'),
                                        (pygame.K_4, 8, '8x'), (pygame.K_1, 1, 'normal')):
             with self.subTest(speed=speed):
-                self.game.handle_fps_changes(pygame.event.Event(pygame.KEYDOWN, key=key_code))
+                self.game.hotkeys.press_speed_key(pygame.event.Event(pygame.KEYDOWN, key=key_code))
                 self.assertEqual(speed, game_speed())
                 self.assertEqual(NES_FPS * speed, self.game.fps)
                 self.assertEqual(f"Game set to {label} speed.\n({NES_FPS * speed:.1f} FPS)",
@@ -614,17 +614,17 @@ class TestGame(TestCase):
     def test_handle_start_button(self):
         self.assertFalse(self.game.paused)
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="i", key=pygame.K_i, mod=pygame.KMOD_NONE)
-        self.game.handle_start_button(keydown_event)
+        self.game.hotkeys.press_start(keydown_event)
         self.assertTrue(self.game.paused)
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="i", key=pygame.K_i, mod=pygame.KMOD_NONE)
-        self.game.handle_start_button(keydown_event)
+        self.game.hotkeys.press_start(keydown_event)
         self.assertFalse(self.game.paused)
 
     def test_handle_a_button(self):
         # B closes the COMMAND window from inside it (CommandMenu.select_command; see tests/test_command_window.py)
         self.assertFalse(self.game.cmd_menu.launch_signaled)
         keydown_event = pygame.event.Event(pygame.KEYDOWN, unicode="k", key=pygame.K_k, mod=pygame.KMOD_NONE)
-        self.game.handle_a_button(keydown_event)
+        self.game.hotkeys.press_a(keydown_event)
         self.assertTrue(self.game.cmd_menu.launch_signaled)
 
     def test_replace_characters_with_underlying_tiles(self):
@@ -865,7 +865,7 @@ class TestGame(TestCase):
     def test_handle_help_button(self):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
             keydown_event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_h, mod=pygame.KMOD_NONE)
-            self.game.handle_help_button(keydown_event)
+            self.game.hotkeys.press_help(keydown_event)
         # a tuple, so the dialog box shows one page at a time and waits for the A button between them
         mock_show_text_in_dialog_box.assert_called_once_with(ControlInfo(test_config).help_pages)
 
@@ -873,7 +873,7 @@ class TestGame(TestCase):
         with patch.object(CommandMenu, 'show_text_in_dialog_box', return_value=None) as mock_show_text_in_dialog_box:
             # F1 was the help key before the save states took it
             for other_key in (pygame.K_F1, pygame.K_F2):
-                self.game.handle_help_button(pygame.event.Event(pygame.KEYDOWN, key=other_key, mod=pygame.KMOD_NONE))
+                self.game.hotkeys.press_help(pygame.event.Event(pygame.KEYDOWN, key=other_key, mod=pygame.KMOD_NONE))
         mock_show_text_in_dialog_box.assert_not_called()
 
     def test_f4_toggles_auto_battle(self):

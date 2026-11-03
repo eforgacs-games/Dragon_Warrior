@@ -30,6 +30,9 @@ Owned by Square Enix (formerly Enix). Taken or derived from the games.
 | `src/map_layouts.py`, `tests/nes_map_data.py`, `tests/nes_maps.py`, and the stat, item, spell and monster tables in `src/` | Maps, NPC placements and game data | Derived from the NES game's data (largely via the [nmikstas disassembly](https://github.com/nmikstas/dragon-warrior-disassembly), which has no license) |
 | `data/text/official_script/` (`en.json`, `ja.json`, `ko.json`, `zh1.json`, `zh2.json`, `script.tsv`) | The script of Square Enix's 2014 smartphone *DRAGON QUEST*, in five languages | Extracted from the Android app (see its [README](data/text/official_script/README.md)) |
 | `data/text/official_script/glossary_ko.tsv`, the names and terms in `data/text/locales/ko/` | Korean names and terms | Taken from the official Korean script above |
+| `data/text/official_script/glossary_ja.tsv`, the names, terms and the lines marked `#. official:` in `data/text/locales/ja/` | Japanese names, terms and lines | Taken from the official Japanese script above |
+| `data/text/official_script/glossary_zh_Hant.tsv`, `glossary_zh_Hans.tsv`, the names, terms and the lines marked `#. official:` in `data/text/locales/zh_TW/` and `zh_CN/` | Traditional and Simplified Chinese names, terms and lines | Taken from the official Chinese script above (`zh1.json` is Traditional, `zh2.json` Simplified) |
+| `data/text/official_script/glossary_en_2014.tsv`, the names, terms and the lines marked `#. official:` in `data/text/locales/en_2014/` | English (2014) names, terms and lines | Taken from the official English script above (`en.json`), shortened where the NES windows need it |
 
 ## Orchestral and Super Famicom recordings
 

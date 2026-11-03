@@ -5,11 +5,12 @@
 A faithful remake of *Dragon Warrior* for the NES, written in Python with [pygame](https://www.pygame.org/). The goal
 is to play exactly like the NES game: the maps, the formulas, the enemies and the messages are checked against a
 disassembly of the original. On top of that come optional modern conveniences, such as save states, a faster game
-speed, a quest journal and a message log. Each one has its NES behaviour as one of its values, each can be switched on
-or off on its own, and the ones that are on from the start only do something when you press their key. Choose the NES
-preset in the options for the NES game and nothing else.
+speed, a quest journal and a message log. Each one has its NES behaviour as one of its values and can be switched on
+or off on its own. A new game starts as the NES game and nothing else; choose the MODERN preset in the options to turn
+the recommended conveniences on at once.
 
-It plays in English or in Korean.
+It plays in English, Korean, Japanese, Traditional Chinese or Simplified Chinese, or in the English of the 2014
+remake.
 
 | | |
 | --- | --- |
@@ -62,8 +63,9 @@ is. Please attach it to a [new issue](https://github.com/eforgacs-games/Dragon_W
    and go into the folder.
 3. Run `uv sync`. It installs Python 3.13 if you don't have it (pygame doesn't support 3.14 yet) and the game's
    dependencies, in a `.venv` folder inside the project.
-4. Start the game with `uv run python -m src.game`. Add `--language English` or `--language Korean` to choose the
-   language.
+4. Start the game with `uv run python -m src.game`. Add `--language English`, `--language Korean`,
+   `--language Japanese`, `--language "Traditional Chinese"`, `--language "Simplified Chinese"` or
+   `--language English2014` to choose the language.
 
 For the NES and SFC music, also install libgme (below). [CONTRIBUTING.md](CONTRIBUTING.md) has the rest: running
 without uv, the tests, playtest checkpoints and debug keys.
@@ -104,7 +106,7 @@ them bound.
 | U or Tab | **Select**: open the [options](#options) on the map, and close them again |
 | Enter | Like K in menus. On the map, with QUICK ACTION on, it talks to whoever you face, takes a chest, opens a locked door (with a Magic Key) or takes the stairs, whichever applies, without opening the COMMAND window |
 | H | Show the controls |
-| Q | The quest journal: what to do next (QUEST JOURNAL option) |
+| Q | The quest journal: the goals you've learned of (QUEST JOURNAL option) |
 | L | The message log: the last 50 messages, to read a hint again (MESSAGE LOG option) |
 | M | The dungeon map, on a dark floor: the blocks you've seen there (DUNGEON MAP option) |
 | 1 to 5 | Game speed: 1x, 2x, 4x, 8x or 16x (GAME SPEED option) |
@@ -154,7 +156,8 @@ action: Esc, Tab, Enter, Backspace, the arrows, Delete, Page Up and Page Down, F
 
 ### Save states, rewind, game speed and auto-grind
 
-None of these are on the NES, and each can be switched off in the options.
+None of these are on the NES. Each is off in a new game; switch it on in the options (the MODERN preset turns them all
+on).
 
 - **Save states** work like an emulator's: a complete snapshot of the game (the map, where everyone stands, every
   story flag, the opened doors and chests, the random number generator), so loading one puts everything back exactly.
@@ -190,9 +193,9 @@ Most settings belong to the adventure log and are saved with it the next time yo
 SCANLINES, SCALING, VIEW, DUNGEON MAP, CONFIRM NAME and your keys are yours instead: they're kept for every adventure,
 in `settings.json`.
 
-A new game starts with the **Default** column. It's close to the NES: of the conveniences on from the start, NPCS MAKE
-WAY, STAIRS, QUICK ACTION (Enter only) and SHOP PREVIEW change how the map and shops behave, and the rest only do
-something when you press their key.
+A new game starts with the **Default** column, which is the NES preset: PRESET reads NES until you change something.
+An adventure log saved by an older version keeps the settings it was saved with; only a setting it doesn't have yet
+starts at its default.
 
 ### LOOK & SOUND
 
@@ -201,13 +204,13 @@ something when you press their key.
 | MESSAGE SPEED | FAST, NORMAL, SLOW: the NES's own setting, also chosen when you begin a quest and with CHANGE MESSAGE SPEED on the title menu | FAST | not changed | not changed |
 | DIALOG STYLE | CLASSIC (NES): the NES dialog window, whose text scrolls; MODERN: each message on a fresh window | CLASSIC | CLASSIC | CLASSIC |
 | FADE STYLE | NES: fades through the NES palette; SMOOTH: a fade to black | NES | NES | NES |
-| MUSIC | NES, SFC or ORCHESTRA (see below) | ORCHESTRA | NES | ORCHESTRA |
-| LANGUAGE | ENGLISH or 한국어 (Korean) | your system's | not changed | not changed |
+| MUSIC | NES, SFC or ORCHESTRA (see below) | NES | NES | ORCHESTRA |
+| LANGUAGE | ENGLISH, 한국어 (Korean), 日本語 (Japanese), 繁體中文 (Traditional Chinese), 简体中文 (Simplified Chinese) or ENGLISH (2014) (the remake's English) | your system's | not changed | not changed |
 | SCANLINES | OFF or ON: darkens half of each of the NES's 240 lines, like an old TV | OFF | not changed | not changed |
 | SCALING | SMOOTH, or PIXEL PERFECT: whole multiples of the NES's 256x240 only | SMOOTH | not changed | not changed |
 | VIEW | NES (4:3), or WIDE: more of the map to the left and right, for a 16:9 or 16:10 screen | NES | NES | NES |
 | STATUS WINDOW | NES: the HP/MP window pops up once you stand still; ALWAYS: it stays up on the map | NES | NES | ALWAYS |
-| SHOP PREVIEW | OFF (NES), or ON: a weapon or armor shop shows the attack or defense power the highlighted item would give you | ON | OFF | ON |
+| SHOP PREVIEW | OFF (NES), or ON: a weapon or armor shop shows the attack or defense power the highlighted item would give you | OFF | OFF | ON |
 
 The three soundtracks:
 
@@ -222,18 +225,28 @@ SFC need libgme, which the release builds include (see [Installing libgme](#inst
 
 | Setting | Values | Default | NES | MODERN |
 | --- | --- | --- | --- | --- |
-| NPCS MAKE WAY | ON: a townsperson you walk into steps aside; OFF (NES): they stay in your way | ON | OFF | ON |
-| STAIRS | STEP ON: stepping onto stairs takes them; NES: only the STAIRS command does | STEP ON | NES | STEP ON |
-| QUICK ACTION | OFF (NES), or ON: Enter on the map talks, takes, opens a door or takes the stairs (see [Keyboard](#keyboard)) | ON | OFF | ON |
+| NPCS MAKE WAY | ON: a townsperson you walk into steps aside; OFF (NES): they stay in your way | OFF | OFF | ON |
+| STAIRS | STEP ON: stepping onto stairs takes them; NES: only the STAIRS command does | NES | NES | STEP ON |
+| QUICK ACTION | OFF (NES), or ON: Enter on the map talks, takes, opens a door or takes the stairs (see [Keyboard](#keyboard)) | OFF | OFF | ON |
 | SMART A | OFF (NES): K always opens the COMMAND window; ON: K does what Enter does when something applies, and opens the COMMAND window otherwise | OFF | OFF | ON |
 | ENCOUNTERS | NES: the NES's random fights; HALF: every other one is skipped; OFF: none. The guardians, the Dragonlord and the other set fights always happen | NES | NES | NES |
 | EXP/GOLD | x1 (NES), x2 or x4 the experience and gold a won fight gives (still at most 65535 each) | x1 | x1 | x1 |
-| QUEST JOURNAL | What Q shows: OFF (NES), nothing; GOALS, what to do next; HINTS, and where to go | GOALS | OFF | GOALS |
+| QUEST JOURNAL | What Q shows: OFF (NES), nothing; LEARNED, the goals you've learned of (see [The quest journal](#the-quest-journal)); LEARNED+HINTS, and what you were told about each | OFF | OFF | LEARNED+HINTS |
 | AUTOSAVE | OFF (NES), or ON: a separate autosave when you enter a town or castle and every 3 minutes, loaded with CONTINUE AUTOSAVE on the title menu | OFF | OFF | ON |
 | BAG | NES (8) or 16 item slots (Herbs and Magic Keys are counted apart, as on the NES) | NES (8) | NES (8) | 16 |
 | RUN BUTTON | OFF (NES), or ON: hold J (B) while walking on the map to walk twice as fast | OFF | OFF | ON |
 
 MODERN leaves ENCOUNTERS and EXP/GOLD at the NES's values: they change the game's balance rather than its convenience.
+
+#### The quest journal
+
+The journal only lists what you'd know on the NES. A goal shows up once someone has told you about it (the
+townspeople's hints, King Lorik's opening words), or once you've come across it yourself: you hold the item, you've
+been where it is, or you've met the enemy. Goals you've done stay in the list, marked done. Before you've heard of
+anything it says "Thou hast heard of nothing yet." With LEARNED+HINTS, each open goal is followed by what you were told
+about it, in the townsperson's own words (or a short hint, for something you found out yourself). What you've heard is
+saved with the adventure log and in save states; an adventure log from an older version starts having heard nothing,
+but still lists what it has done and the items it holds.
 
 ### CONTROLS
 
@@ -241,34 +254,41 @@ With one of these OFF, its key does nothing, as on the NES.
 
 | Setting | Values | Default | NES | MODERN |
 | --- | --- | --- | --- | --- |
-| GAME SPEED | Keys 1 to 5 | ON | OFF | ON |
-| SAVE STATES | F1 to F3 and Shift+F1 to F3 | ON | OFF | ON |
-| REWIND | Backspace | ON | OFF | ON |
-| AUTO-GRIND | G | ON | OFF | ON |
+| GAME SPEED | Keys 1 to 5 | OFF | OFF | ON |
+| SAVE STATES | F1 to F3 and Shift+F1 to F3 | OFF | OFF | ON |
+| REWIND | Backspace | OFF | OFF | ON |
+| AUTO-GRIND | G | OFF | OFF | ON |
 | GRIND STOP | When auto-grind stops: RED HP (the NES's low HP, where the windows turn red), HALF HP or 3/4 HP | RED HP | RED HP | RED HP |
 | MENU SPEED | NORMAL: the menus' cursor stays at normal speed whatever the game speed; FOLLOW GAME: it speeds up too | NORMAL | NORMAL | NORMAL |
-| CHEATS | F4 auto-battle and F9 invulnerability | ON | OFF | OFF |
-| DUNGEON MAP | M on a dark floor shows the blocks you've seen there | ON | OFF | ON |
-| MESSAGE LOG | L shows the last messages | ON | OFF | ON |
+| CHEATS | F4 auto-battle and F9 invulnerability | OFF | OFF | OFF |
+| DUNGEON MAP | M on a dark floor shows the blocks you've seen there | OFF | OFF | ON |
+| MESSAGE LOG | L shows the last messages | OFF | OFF | ON |
 | CONTROLS | Opens the CONTROLS screen ([Changing the keys](#changing-the-keys)) | | | |
 
 ### OTHER
 
 | Setting | Values | Default | NES | MODERN |
 | --- | --- | --- | --- | --- |
-| CONFIRM NAME | OFF (NES): the 8th letter ends the name; ON: a full name waits on END so you can still change it, and START ends the name from anywhere | ON | OFF | ON |
+| CONFIRM NAME | OFF (NES): the 8th letter ends the name; ON: a full name waits on END so you can still change it, and START ends the name from anywhere | OFF | OFF | ON |
 
 
 ## Languages
 
-The game plays in **English** (the NES script) or **Korean** (한국어). The Korean translation follows the names and
-terms of the official Korean translation of Square Enix's *Dragon Quest* remake (the smartphone version, also on
-Nintendo Switch): Gwaelin is 로라, the Dragonlord 용왕, Erdrick 로토. Korean text is drawn with GNU Unifont, since the
-NES font has no Hangul.
+The game plays in **English** (the NES script), **Korean** (한국어), **Japanese** (日本語), **Traditional Chinese**
+(繁體中文) or **Simplified Chinese** (简体中文), or in **English (2014)**: the official English of Square Enix's
+*Dragon Quest* remake (the 2014 smartphone version, also on Nintendo Switch), with its names and wording (Medicinal
+Herb, Sizz, a she-slime, Galenholm, adventure logs) fitted to the NES windows and drawn in the NES font. The other
+translations follow the names and terms of the remake's official translations: Gwaelin is 로라, ローラ姫 and
+蘿拉公主, the Dragonlord 용왕, 竜王 and 龍王, Erdrick 로토, ロト and 洛特. They are drawn with GNU Unifont, since the NES
+font has no Hangul, kana or Chinese characters. Chinese text, written without spaces, wraps between any two
+characters, never putting closing punctuation at the start of a line. The name entry is the NES's in every language.
 
-The game starts in your system's language (Korean if the system is set to Korean, English otherwise). To switch,
-change **LANGUAGE** in the options: it applies at once and is remembered. From the command line, `--language English`
-or `--language Korean` chooses it for a run, unless you've already chosen a language in the options, which wins.
+The game starts in your system's language (Korean, Japanese or Chinese if the system is set to it, English otherwise:
+an English system starts in the NES English; a Taiwan, Hong Kong or Macau Chinese system starts in Traditional Chinese,
+any other in Simplified). To switch, change **LANGUAGE** in the options: it applies at once and is remembered. From the
+command line, `--language` with a language's name (`English`, `Korean`, `Japanese`, `"Traditional Chinese"`,
+`"Simplified Chinese"`, `English2014`) chooses it for that run, even over a language chosen in the options, which stays
+as it was for the next time.
 
 
 ## About, credits and legal
@@ -288,7 +308,7 @@ Thanks to:
   game's behaviour is checked against.
 - [pygame](https://www.pygame.org/) and SDL, which the game runs on.
 - [libgme (Game_Music_Emu)](https://github.com/libgme/game-music-emu), which plays the NES and SFC music.
-- [GNU Unifont](https://unifoundry.com/unifont/), for the Korean text.
+- [GNU Unifont](https://unifoundry.com/unifont/), for the Korean, Japanese and Chinese text.
 - The font, music and sprite makers credited in [ASSETS.md](ASSETS.md).
 
 

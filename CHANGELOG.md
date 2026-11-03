@@ -42,6 +42,8 @@ off on its own.
 - **Auto-grind** (G): walk and fight until HP gets low or something needs you.
 - A **quest journal** (Q) with what to do next, and a mode that only shows what the hero has learned so far; a
   **message log** (L) of the last 50 messages; a **dungeon map** (M) that fills in as you explore.
+- A **stats page** (P) for each adventure: play time, steps, fights won, fled and lost, deaths, gold earned and
+  spent, chests opened and monsters defeated by type ([#488](https://github.com/eforgacs-games/Dragon_Warrior/pull/488)).
 - A **shop preview** of the attack or defense power a weapon or armor would give you, part of the presets (off with
   NES, on with MODERN).
 - Townspeople who step aside, stairs taken by stepping on them, QUICK ACTION and SMART A (talk, take, open a door or
@@ -73,15 +75,24 @@ off on its own.
 
 ### Languages
 
-- **English** (the NES script) and **Korean** (한국어), switched at any time in the options. The Korean translation uses
-  the names and terms of the official Korean *Dragon Quest*, drawn with GNU Unifont.
-- The game starts in your system's language; `--language English` or `--language Korean` on the command line chooses
-  the language for that run.
+- Six languages, switched at any time in the options:
+  - **English**, the NES script.
+  - **Korean** (한국어), **Japanese** (日本語), **Traditional Chinese** (繁體中文) and **Simplified Chinese** (简体中文), with
+    the names and terms of the official *Dragon Quest* in each language
+    ([#491](https://github.com/eforgacs-games/Dragon_Warrior/pull/491),
+    [#494](https://github.com/eforgacs-games/Dragon_Warrior/pull/494)).
+  - **English (2014)**: the wording and names of the 2014 remake's official English script, drawn in the NES font
+    ([#495](https://github.com/eforgacs-games/Dragon_Warrior/pull/495)).
+- The translations are drawn with GNU Unifont, and every window is checked to fit in every language. Chinese text
+  wraps between characters, as Chinese is written.
+- The game starts in your system's language; `--language` on the command line (`English`, `Korean`, `Japanese`,
+  `"Traditional Chinese"`, `"Simplified Chinese"` or `English2014`) chooses the language for that run.
 
 ### Platforms and builds
 
 - Ready-to-play downloads for **Windows (x64)**, **macOS (Apple Silicon)** and **Linux (x64)**, with nothing else to
-  install. Every build is tested before release by starting it and playing a few scenes in English and in Korean.
+  install. Every build is tested before release by starting it and playing a few scenes in every
+  language.
 - Saves and settings go in your user folders (see the README). Adventure logs from earlier versions of the game still
   load, and a save from a newer version is never written over.
 - If the game crashes, it writes a crash log and tells you where it is, to attach to a bug report.

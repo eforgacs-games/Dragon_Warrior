@@ -287,7 +287,7 @@ class TestOverlayRows(TestCase):
                                  'LANGUAGE': 'English', 'SETTINGS_PATH': self.path})
 
     def run_overlay(self, game, *keys):
-        with patch('src.selection.event.get', side_effect=presses(*keys)):
+        with patch('src.waiting.event.get', side_effect=presses(*keys)):
             OptionsOverlay(game).run()
 
     def down_to(self, label):

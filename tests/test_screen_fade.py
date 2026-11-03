@@ -9,7 +9,7 @@ from src.config.test_config import test_config
 from src.ending import CREDITS
 from src.intro import Intro
 from src.maps import Brecconary
-from src.options_screen import FADE_STYLE_SAVE_KEY
+from src.game_options import FADE_STYLE
 from src.visual_effects import FADE_IN_STEPS, FADE_OUT_STEPS, FADE_STEP_FRAMES, FADE_STYLE_NES, FADE_STYLE_SMOOTH, \
     NES_FPS, NES_PALETTE, PAL_BLACK, fade_style, nes_fade_palette, nes_palette_fade, screen_fade
 from tests.helpers import new_game
@@ -200,7 +200,7 @@ class TestTransitionsUseTheSelectedFade(TestCase):
         def run():
             # the log's own fade style (#301), which loading applies before the map fades in
             self.game.load_game({'Name': 'Erdrick', 'Experience': 0, 'Gold': 0, 'Inventory': [],
-                                 FADE_STYLE_SAVE_KEY: test_config['FADE_STYLE']})
+                                 FADE_STYLE.save_key: test_config['FADE_STYLE']})
 
         self.assert_fades(run, [False])
 
@@ -209,7 +209,7 @@ class TestTransitionsUseTheSelectedFade(TestCase):
         def run():
             self.game.player.is_dead = True
             with patch.object(self.game.cmd_menu.__class__, 'show_text_in_dialog_box'):
-                self.game.set_post_death_attributes()
+                self.game.hero_death.set_post_death_attributes()
 
         self.assert_fades(run, [False])
 

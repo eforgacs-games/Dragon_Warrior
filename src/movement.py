@@ -6,7 +6,7 @@ player, the map, the camera) from it each time, since the game replaces some of 
 Where an NPC may step, as far as the map goes, is src/npc_movement.py; when the NPCs move is src/npc_schedule.py.
 """
 import random
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from pygame import key
 
@@ -18,13 +18,18 @@ from src.direction import Direction
 from src.directories import Directories
 from src.game_functions import set_character_position
 from src.game_state import GameState
+from src.map_hotkeys import MAP_REQUESTS
 from src.npc_movement import npc_may_step_onto, step
 from src.npc_schedule import NPCSchedule, POP_UP_FRAME
 from src.player.player import Player
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
+from src.step_triggers import StepTriggers
 from src.waiting import MAP_CONTEXT, with_virtual_keys
+
+if TYPE_CHECKING:
+    from src.field_encounters import FieldEncounters  # src.field_encounters imports this module
 
 
 # A tile is 16 NES pixels across, and the hero and the NPCs walk one NES pixel a frame
@@ -66,33 +71,19 @@ class MovementGame(Protocol):
     paused: bool
     # START or A pressed while someone is between tiles: see MovementController.resolve_pending_freezes
     pause_requested: bool
-    # SELECT or Tab: the options overlay, which waits for the same moment as the pause
-    options_requested: bool
-    # The MESSAGE LOG key: the message log, which waits for the same moment as the pause
-    message_log_requested: bool
-    # G: auto-grind (src/auto_grind.py), which starts at the same moment as the pause
-    auto_grind_requested: bool
-    # M: the dungeon map (src/dungeon_map.py), which opens at the same moment as the pause
-    dungeon_map_requested: bool
     cmd_menu_requested: bool
-    # A with SMART A on: run_smart_command when the COMMAND window would open
+    # A with SMART A on: MapHotkeys.run_smart_command when the COMMAND window would open
     smart_a_pending: bool
-    # Shift + F1/F2/F3 or F1/F2/F3: a save state to save or load (Game.handle_save_state_keys), and once it's due
+    # Shift + F1/F2/F3 or F1/F2/F3: a save state to save or load (MapHotkeys.press_save_state), and once it's due
     state_request: tuple[str, int] | None
     state_request_due: tuple[str, int] | None
-
-    def count_step(self) -> None: ...
-
-    def open_options(self) -> None: ...
-
-    def open_dungeon_map(self) -> None: ...
-    def open_message_log(self) -> None: ...
-
-    def start_auto_grind(self) -> None: ...
-
-    def run_smart_command(self) -> bool: ...
-
-    def roll_for_fight(self, column: int, row: int, tile: str | None) -> None: ...
+    # The map's keys (src/map_hotkeys.py), and what they open once everyone is on a tile (MAP_REQUESTS: each request's
+    # flag is a bool on the game too)
+    hotkeys: Any
+    # What a finished step leads to (src/step_triggers.py)
+    step_triggers: StepTriggers
+    # The fight roll after a step (src/field_encounters.py), which a hill's pause puts off
+    field_encounters: 'FieldEncounters'
 
 
 class MovementController:
@@ -187,10 +178,10 @@ class MovementController:
 
     @property
     def freeze_pending(self) -> bool:
-        return (self.game.pause_requested or self.game.options_requested or self.game.cmd_menu_requested
-                or getattr(self.game, 'message_log_requested', False) is True
-                or getattr(self.game, 'auto_grind_requested', False) is True
-                or getattr(self.game, 'dungeon_map_requested', False) is True
+        """Whether the pause, the COMMAND window, a save state or something a map key opens (MAP_REQUESTS) is waiting
+        for everyone to finish their step (resolve_pending_freezes)."""
+        return (self.game.pause_requested or self.game.cmd_menu_requested
+                or any(getattr(self.game, map_request.flag, False) is True for map_request in MAP_REQUESTS)
                 or getattr(self.game, 'state_request', None) is not None
                 or getattr(self.game, 'state_request_due', None) is not None)
 
@@ -242,24 +233,10 @@ class MovementController:
             self.game.pause_requested = False
             self.game.paused = True
             return
-        if self.game.options_requested:
-            self.game.options_requested = False
-            self.game.open_options()
-            return
-        if getattr(self.game, 'dungeon_map_requested', False) is True:
-            self.game.dungeon_map_requested = False
-            self.game.open_dungeon_map()
-            return
-        if getattr(self.game, 'message_log_requested', False) is True:
-            self.game.message_log_requested = False
-            self.game.open_message_log()
-            return
-        if getattr(self.game, 'auto_grind_requested', False) is True:
-            self.game.auto_grind_requested = False
-            self.game.start_auto_grind()
+        if self.game.hotkeys.open_requested():
             return
         if getattr(self.game, 'state_request', None) is not None:
-            # A save state (Game.handle_save_state_keys): saved or loaded at the end of this map frame (Game.map_frame,
+            # A save state (MapHotkeys.press_save_state): saved or loaded at the end of this map frame (Game.map_frame,
             # or of the next one when the key was read between frames), with nobody starting a step meanwhile
             self.game.state_request_due, self.game.state_request = self.game.state_request, None
             return
@@ -267,9 +244,9 @@ class MovementController:
             return
         self.game.cmd_menu_requested = False
         if getattr(self.game, 'smart_a_pending', False) is True:
-            # SMART A (Game.handle_a_button): the command that applies here runs instead of the COMMAND window
+            # SMART A (MapHotkeys.press_a): the command that applies here runs instead of the COMMAND window
             self.game.smart_a_pending = False
-            if self.game.run_smart_command():
+            if self.game.hotkeys.run_smart_command():
                 return
         self.game.drawer.display_hovering_stats = True
         self.game.cmd_menu.launch_signaled = True
@@ -355,7 +332,7 @@ class MovementController:
         else:
             # TODO(ELF): sometimes self.tiles_moved_since_spawn gets set to 1 when spawning -
             #  should always be 0 when the map starts.
-            self.game.count_step()
+            self.game.step_triggers.count_step()
             # FrameCounter goes back to 0 once this frame's DoSprites has run (see sprites_frame)
             self.step_ends = True
         self.finish_step(self.player)
@@ -396,7 +373,7 @@ class MovementController:
         self.hero_standing = True
 
     def ask_npc_to_make_way(self) -> None:
-        """Quality of life, not NES (NPCS_MAKE_WAY, on by default): when the hero bumps into a roaming NPC, that NPC
+        """Quality of life, not NES (NPCS_MAKE_WAY, off by default): when the hero bumps into a roaming NPC, that NPC
         steps out of the way on the next frame (see make_way). On the NES it stays put and only moves when its own
         random turn comes. NPCs that never move (shopkeepers, guards at their posts, King Lorik: everyone not in the
         map's roaming list) never make way."""
@@ -416,7 +393,7 @@ class MovementController:
         if self.hill_pause_frames:
             return
         column, row = self.player.rect.x // self.tile_size, self.player.rect.y // self.tile_size
-        self.game.roll_for_fight(column, row, get_tile_id_by_coordinates(column, row, self.current_map))
+        self.game.field_encounters.roll_for_fight(column, row, get_tile_id_by_coordinates(column, row, self.current_map))
 
     # A character's step, pixel by pixel
 

@@ -1,4 +1,4 @@
-"""The options overlay's gameplay switches (src/options_overlay.py, src/options_screen.py SWITCHES), each with its NES
+"""The options overlay's gameplay switches (src/options_overlay.py, src/game_options.py), each with its NES
 value as the default: ENCOUNTERS (#399), EXP/GOLD (#400), RUN BUTTON (#403) and STATUS WINDOW (#406). The ghosting
 checks for running are with the others in tests/test_character_redraw.py."""
 import os
@@ -19,7 +19,7 @@ from src.direction import Direction
 from src.game_functions import set_character_position
 from src.maps import map_lookup
 from src.movement import RUN_STEP_FRAMES, STEP_SYNC_FRAMES
-from src.options_screen import DEFAULT_OPTIONS, ENCOUNTERS_HALF, ENCOUNTERS_NES, ENCOUNTERS_OFF, \
+from src.game_options import DEFAULT_OPTIONS, ENCOUNTERS_HALF, ENCOUNTERS_NES, ENCOUNTERS_OFF, \
     STATUS_WINDOW_ALWAYS, STATUS_WINDOW_NES
 from tests import helpers
 
@@ -58,11 +58,11 @@ class TestEncounters(GameTestCase):
     def fights_in(self, rolls):
         """How many fights start from these steps' rolls (None: no fight, otherwise the rolled enemies)."""
         self.game.change_map(map_lookup['Alefgard'](self.config), destination_coordinates=(50, 44))
-        with patch('src.game.roll_encounter', side_effect=rolls), \
+        with patch('src.field_encounters.roll_encounter', side_effect=rolls), \
                 patch.object(self.game.battle_ctrl, 'run_battle') as run_battle, \
                 patch.object(self.game.map_mgr, 'stay_on_stairs'):
             for _ in rolls:
-                self.game.roll_for_fight(47, 43, 'GRASS')
+                self.game.field_encounters.roll_for_fight(47, 43, 'GRASS')
         return [call.args[0] for call in run_battle.call_args_list]
 
     def test_nes_fights_every_roll(self):
@@ -82,16 +82,16 @@ class TestEncounters(GameTestCase):
         for setting in (ENCOUNTERS_HALF, ENCOUNTERS_OFF):
             with self.subTest(setting):
                 self.config['ENCOUNTERS'] = setting
-                with patch('src.game.roll_encounter', return_value=None) as roll_encounter:
+                with patch('src.field_encounters.roll_encounter', return_value=None) as roll_encounter:
                     self.game.change_map(map_lookup['Alefgard'](self.config), destination_coordinates=(50, 44))
-                    self.game.roll_for_fight(47, 43, 'GRASS')
+                    self.game.field_encounters.roll_for_fight(47, 43, 'GRASS')
                 roll_encounter.assert_called_once()
 
     def test_scripted_fights_still_happen(self):
         self.config['ENCOUNTERS'] = ENCOUNTERS_OFF
         self.game.battle_ctrl.queue_scripted_battle('Golem')
         with patch.object(self.game.battle_ctrl, 'run_pending_scripted_battle') as run_scripted_battle:
-            self.game.handle_battles()
+            self.game.field_encounters.handle_battles()
         run_scripted_battle.assert_called_once()
 
     def test_auto_grind_refuses_to_start_with_encounters_off(self):
@@ -161,7 +161,7 @@ class TestRunButton(GameTestCase):
         held_keys = defaultdict(int, {held_key: 1 for held_key in held})
         steps = []
         with patch('src.movement.key.get_pressed', return_value=held_keys), \
-                patch.object(self.game, 'count_step', side_effect=lambda: steps.append(frame)):
+                patch.object(self.game.step_triggers, 'count_step', side_effect=lambda: steps.append(frame)):
             for frame in range(1, frames + 1):
                 self.game.movement.handle_player_movement()
                 if not self.game.player.is_moving:

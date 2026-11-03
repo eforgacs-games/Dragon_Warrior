@@ -19,7 +19,7 @@ from src.direction import Direction
 from src.maps import map_lookup
 from src.message_log import LogEntry
 from src.save_state import GAME_VALUES, MOVEMENT_VALUES, STATE_FORMAT_VERSION, VERSION_KEY, StateError, \
-    decode_snapshot, migrate_snapshot, read_state, restore_snapshot, state_path, take_snapshot
+    decode_snapshot, load_from_slot, migrate_snapshot, read_state, restore_snapshot, save_to_slot, state_path, take_snapshot
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import WINDOW_CONTEXT
 from tests import helpers
@@ -54,8 +54,11 @@ def walk_script(frame: int) -> set[int]:
 
 
 def comparable(snapshot: dict) -> dict:
-    """A snapshot as it reads back from a state file."""
-    return json.loads(json.dumps(snapshot))
+    """A snapshot as it reads back from a state file, without the play time: it's real time (src/play_stats.py),
+    which no two runs share."""
+    readback = json.loads(json.dumps(snapshot))
+    readback.get('play_stats', {}).pop('play_time_ms', None)
+    return readback
 
 
 class SaveStateTestCase(TestCase):
@@ -112,7 +115,7 @@ class TestSnapshot(SaveStateTestCase):
         game.game_state.radiant_timer = 12
         player.wearing_cursed_belt = True
         saved = comparable(take_snapshot(game))
-        game.save_state(1)
+        save_to_slot(game, 1)
         self.assertEqual(["State 1 saved"], self.messages)
         self.assertTrue(os.path.exists(state_path(self.save_dir, 1)))
 
@@ -135,7 +138,7 @@ class TestSnapshot(SaveStateTestCase):
         random.seed(99)
         self.go_to(game, 'Alefgard', ALEFGARD_GRASS, direction=Direction.RIGHT.value)
 
-        game.load_state(1)
+        load_from_slot(game, 1)
         self.assertEqual("State 1 loaded", self.messages[-1])
         self.assertEqual(saved, comparable(take_snapshot(game)))
         self.assertEqual('Brecconary', game.current_map.identifier)
@@ -153,9 +156,9 @@ class TestSnapshot(SaveStateTestCase):
         positions = [(npc.identifier, npc.rect.topleft, npc.direction_value, npc.is_moving)
                      for npc in game.current_map.roaming_characters]
         hero = game.player.rect.topleft, game.player.direction_value, game.camera.pos
-        game.save_state(2)
+        save_to_slot(game, 2)
         self.run_frames(game, 100, first_frame=60)
-        game.load_state(2)
+        load_from_slot(game, 2)
         self.assertEqual(positions, [(npc.identifier, npc.rect.topleft, npc.direction_value, npc.is_moving)
                                      for npc in game.current_map.roaming_characters])
         self.assertEqual(hero, (game.player.rect.topleft, game.player.direction_value, game.camera.pos))
@@ -166,9 +169,9 @@ class TestSnapshot(SaveStateTestCase):
         door_row, door_column = 3, 3
         layout = game.layouts.map_layout_lookup['Brecconary']
         layout[door_row][door_column] = game.current_map.floor_tile_key['BRICK']['val']
-        game.save_state(1)
+        save_to_slot(game, 1)
         layout[door_row][door_column] = game.current_map.floor_tile_key['DOOR']['val']
-        game.load_state(1)
+        load_from_slot(game, 1)
         self.assertEqual(game.current_map.floor_tile_key['BRICK']['val'],
                          game.layouts.map_layout_lookup['Brecconary'][door_row][door_column])
         self.assertIs(game.current_map.layout, game.layouts.map_layout_lookup['Brecconary'])
@@ -184,9 +187,9 @@ class TestSnapshot(SaveStateTestCase):
         if getattr(game, 'door_history', None) is None:
             game.door_history = DoorHistory()
         game.door_history.slots = [('Brecconary', (3, 3))] + [None] * 7
-        game.save_state(1)
+        save_to_slot(game, 1)
         game.door_history.slots = [None] * 8
-        game.load_state(1)
+        load_from_slot(game, 1)
         self.assertEqual([('Brecconary', (3, 3))] + [None] * 7, game.door_history.slots)
 
     def test_a_removed_npc_stays_removed(self):
@@ -195,9 +198,9 @@ class TestSnapshot(SaveStateTestCase):
         removed = game.current_map.roaming_characters[0]
         game.cmd_menu.dialog_lookup.remove_npc(removed.identifier)
         slots = [(npc.identifier, npc.slot) for npc in game.current_map.roaming_characters]
-        game.save_state(1)
+        save_to_slot(game, 1)
         self.go_to(game, 'Alefgard', ALEFGARD_GRASS)
-        game.load_state(1)
+        load_from_slot(game, 1)
         self.assertNotIn(removed.identifier, game.current_map.characters)
         self.assertEqual(slots, [(npc.identifier, npc.slot) for npc in game.current_map.roaming_characters])
 
@@ -216,14 +219,14 @@ class TestRedraw(SaveStateTestCase):
         self.run_frames(game, 70)
         saved_screen = pygame.image.tobytes(game.screen, 'RGB')
         self.assertGreater(len(set(saved_screen)), 3)  # the map is on it
-        game.save_state(1)
+        save_to_slot(game, 1)
         for other_map in ('Brecconary', 'TantegelCourtyard'):
             with self.subTest(other_map=other_map):
                 if other_map != 'Brecconary':
                     self.go_to(game, other_map)
                 self.run_frames(game, 45, first_frame=70)
                 self.assertNotEqual(saved_screen, pygame.image.tobytes(game.screen, 'RGB'))
-                game.load_state(1)
+                load_from_slot(game, 1)
                 game.drawer.draw_all(game, game.movement.sprites_animate)
                 self.assertEqual(saved_screen, pygame.image.tobytes(game.screen, 'RGB'))
 
@@ -236,13 +239,13 @@ class TestReplay(SaveStateTestCase):
         fights: list = []
 
         def start(game):
-            real_roll = __import__('src.game', fromlist=['roll_encounter']).roll_encounter
+            real_roll = __import__('src.field_encounters', fromlist=['roll_encounter']).roll_encounter
 
             def roll(*args):
                 result = real_roll(*args)
                 rolls.append((game.current_map.identifier, args[2:], result))
                 return result
-            patch('src.game.roll_encounter', side_effect=roll).start()
+            patch('src.field_encounters.roll_encounter', side_effect=roll).start()
             patch.object(game.battle_ctrl, 'run_battle',
                          side_effect=lambda enemies: fights.append(enemies) or BattleOutcome.ESCAPED).start()
             self.go_to(game, map_name, coordinates)
@@ -262,7 +265,7 @@ class TestReplay(SaveStateTestCase):
         saver = self.new_game()
         start(saver)
         self.run_frames(saver, 50)
-        saver.save_state(1)
+        save_to_slot(saver, 1)
         rolls.clear()
         self.assertEqual(expected, self.run_frames(saver, 200, first_frame=50))
         self.assertEqual(expected_rolls, rolls)
@@ -274,7 +277,7 @@ class TestReplay(SaveStateTestCase):
         start(loader)
         random.seed(5)
         self.go_to(loader, 'TantegelCourtyard')
-        loader.load_state(1)
+        load_from_slot(loader, 1)
         rolls.clear()
         self.assertEqual(expected, self.run_frames(loader, 200, first_frame=50))
         self.assertEqual(expected_rolls, rolls)
@@ -294,13 +297,13 @@ class TestSlots(SaveStateTestCase):
         game = self.game
         self.go_to(game, 'Brecconary')
         game.player.gold = 1
-        game.save_state(1)
+        save_to_slot(game, 1)
         game.player.gold = 2
-        game.save_state(2)
+        save_to_slot(game, 2)
         game.player.gold = 3
-        game.save_state(3)
+        save_to_slot(game, 3)
         for slot in (2, 1, 3, 2):
-            game.load_state(slot)
+            load_from_slot(game, slot)
             self.assertEqual(slot, game.player.gold)
         self.assertEqual({1, 2, 3}, {slot for slot in (1, 2, 3) if os.path.exists(state_path(self.save_dir, slot))})
 
@@ -308,7 +311,7 @@ class TestSlots(SaveStateTestCase):
         game = self.game
         self.go_to(game, 'Brecconary')
         before = comparable(take_snapshot(game))
-        game.load_state(3)
+        load_from_slot(game, 3)
         self.assertEqual(["State 3 is empty"], self.messages)
         self.assertEqual(before, comparable(take_snapshot(game)))
 
@@ -319,21 +322,21 @@ class TestSlots(SaveStateTestCase):
         self.go_to(game, 'Brecconary')
         for version in (0, None, STATE_FORMAT_VERSION + 1):
             with self.subTest(version):
-                game.save_state(1)
+                save_to_slot(game, 1)
                 with open(state_path(self.save_dir, 1)) as state_file:
                     snapshot = json.load(state_file)
                 snapshot[VERSION_KEY] = version
                 with open(state_path(self.save_dir, 1), 'w') as state_file:
                     json.dump(snapshot, state_file)
                 game.player.gold = 77
-                game.load_state(1)
+                load_from_slot(game, 1)
                 self.assertEqual("State 1 is from another version\nand can't be loaded", self.messages[-1])
                 self.assertEqual(77, game.player.gold)
 
     def test_corrupt_files_are_refused(self):
         game = self.game
         self.go_to(game, 'Brecconary')
-        game.save_state(1)
+        save_to_slot(game, 1)
         with open(state_path(self.save_dir, 1)) as state_file:
             snapshot = json.load(state_file)
         broken_snapshots = [
@@ -350,7 +353,7 @@ class TestSlots(SaveStateTestCase):
             with self.subTest(broken=broken[:40]):
                 with open(state_path(self.save_dir, 1), 'w') as state_file:
                     state_file.write(broken)
-                game.load_state(1)
+                load_from_slot(game, 1)
                 self.assertEqual("State 1 can't be read", self.messages[-1])
                 self.assertEqual(before, comparable(take_snapshot(game)))
 
@@ -435,7 +438,7 @@ class TestKeys(SaveStateTestCase):
     def test_not_in_a_dialog(self):
         """A dialog reads the keys in its own loop, which doesn't save on Shift + F1 (A closes the dialog here)."""
         game = self.game
-        with patch.object(game, 'handle_save_state_keys') as handle_save_state_keys:
+        with patch.object(game.hotkeys, 'press_save_state') as handle_save_state_keys:
             pygame.event.post(key(K_F1, KMOD_SHIFT))
             pygame.event.post(key(K_k))
             game.cmd_menu.show_text_in_dialog_box("Hello")
@@ -470,7 +473,7 @@ class TestKeys(SaveStateTestCase):
         joypad = VirtualJoypad(FightDriver())
         joypad.connect()
         self.addCleanup(joypad.disconnect)
-        with patch.object(game, 'handle_save_state_keys') as handle_save_state_keys:
+        with patch.object(game.hotkeys, 'press_save_state') as handle_save_state_keys:
             outcome = game.battle_ctrl.launch_fight('Slime')
             handle_save_state_keys.assert_not_called()
         self.assertIn(outcome, (BattleOutcome.VICTORY, BattleOutcome.ESCAPED))
@@ -485,7 +488,7 @@ class TestAFailedSave(SaveStateTestCase):
         self.go_to(game, 'Brecconary')
         with patch('src.save_state.atomic_write_json', side_effect=OSError("No space left on device")), \
                 patch('builtins.print'):
-            game.save_state(2)
+            save_to_slot(game, 2)
         self.assertEqual(["State 2 couldn't be saved"], self.messages)
         self.assertIsNone(read_state(self.save_dir, 2))
 
@@ -495,7 +498,7 @@ GAME_KEPT_IN_THEIR_OWN_ENTRIES = {
     'player',  # 'hero'
     'current_map',  # 'map', 'roaming', 'fixed' and 'hero_underlying_tile'
     'layouts',  # 'layout_changes'
-    'camera', 'story_flags', 'chest_history', 'door_history', 'color', 'dungeon_map', 'message_log',
+    'camera', 'story_flags', 'chest_history', 'door_history', 'color', 'dungeon_map', 'message_log', 'play_stats',
     'game_state',  # 'game_state': GAME_STATE_VALUES
     'movement',  # 'movement': MOVEMENT_VALUES and the NPC schedule
     'map_mgr',  # 'fought_on_stairs'
@@ -511,11 +514,16 @@ GAME_NOT_KEPT = {
     'show_coordinates', 'last_coordinates', 'debug_tools', 'splash_screen_enabled', 'start_time',
     # Requests for a window or a state: a snapshot is taken with none asked for, and putting one back clears them
     'paused', 'pause_requested', 'cmd_menu_requested', 'options_requested', 'message_log_requested',
-    'auto_grind_requested', 'dungeon_map_requested', 'smart_a_pending', 'state_request', 'state_request_due',
+    'auto_grind_requested', 'dungeon_map_requested', 'play_stats_requested', 'smart_a_pending', 'state_request',
+    'state_request_due',
     # Only set and read during a map change
     'last_map',
     # The snapshots' own machinery, and auto-grind, which drives the game rather than being part of it
-    'autosave', 'rewind', 'auto_grind',
+    'autosave', 'rewind', 'auto_grind', 'play_clock',
+    # The map's key handlers (src/map_hotkeys.py), which hold no state: their requests are listed above
+    'hotkeys',
+    # The step, damage, fight and death logic moved out of Game, which keeps its state on the game (GAME_VALUES)
+    'step_triggers', 'hero_damage', 'field_encounters', 'hero_death',
     # Drawing, timing and the game's other parts, which hold no state of the game
     'screen', 'big_map', 'graphics', 'tile_size', 'foreground_rects', 'loop_count', 'events', 'clock', 'frame_clock',
     'frame_pacer', 'calculation', 'directories', 'game_functions', 'music_player', 'sound', 'title_menu', 'ending',
@@ -552,9 +560,9 @@ class TestEverythingIsKept(SaveStateTestCase):
         game.skip_next_encounter = True
         game.repel_tick_pending = True
         game.movement.running_step = True
-        game.save_state(1)
+        save_to_slot(game, 1)
         game.skip_next_encounter = game.repel_tick_pending = game.movement.running_step = False
-        game.load_state(1)
+        load_from_slot(game, 1)
         self.assertEqual((True, True, True),
                          (game.skip_next_encounter, game.repel_tick_pending, game.movement.running_step))
 
@@ -582,9 +590,9 @@ class TestMessageLog(SaveStateTestCase):
         game = self.game
         self.go_to(game, 'Brecconary')
         game.message_log.record("Welcome to the town of Brecconary.", 'MAN')
-        game.save_state(1)
+        save_to_slot(game, 1)
         game.message_log.record("Thou hast found 120 gold.")
-        game.load_state(1)
+        load_from_slot(game, 1)
         self.assertEqual([LogEntry("Welcome to the town of Brecconary.", 'MAN')], list(game.message_log.entries))
 
     def test_a_rewind_takes_back_what_was_said_since(self):

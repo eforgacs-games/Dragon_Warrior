@@ -1,6 +1,6 @@
 """Auto-grind: G on the map walks back and forth and fights until a decision is the player's to make. Not NES.
 
-G starts it when START or the COMMAND window would be accepted on the map (Game.handle_auto_grind_key, resolved
+G starts it when START or the COMMAND window would be accepted on the map (MapHotkeys.press_auto_grind, resolved
 with the pause and the options overlay in MovementController.resolve_pending_freezes), on a map with random fights,
 with HP above the GRIND STOP threshold and a safe tile next to the hero (``safe_partner``). It then drives the game
 with a virtual joypad (src/virtual_joypad.py), so everything runs through the game's own code: the walking, the
@@ -22,6 +22,7 @@ It stops, with the menu button sound and a message saying why, and hands the gam
 - the hero dying, or being somewhere he wasn't walking to (a map change), without a message for a death.
 """
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from pygame import K_CAPSLOCK, K_LALT, K_LCTRL, K_LGUI, K_LSHIFT, K_MODE, K_NUMLOCK, K_RALT, K_RCTRL, K_RGUI, \
     K_RSHIFT, KMOD_CTRL
@@ -35,9 +36,12 @@ from src.encounters import encounter_group
 from src.guardians import guardian_at
 from src.movement import DIRECTION_KEYS
 from src.npc_movement import step
-from src.options_screen import AUTO_GRIND_STOP_VALUES, ENCOUNTERS_OFF
+from src.game_options import AUTO_GRIND_STOP_VALUES, ENCOUNTERS_OFF
 from src.virtual_joypad import VirtualJoypad
 from src.waiting import MAP_CONTEXT, requested_speed
+
+if TYPE_CHECKING:
+    from src.game import Game  # src.game imports this module
 
 # The GRIND STOP option (src/options_overlay.py, AUTO_GRIND_STOP): when HP is low enough to stop. RED HP is the NES's
 # low HP, where the windows turn red (ChkLowHPPal): HP <= max HP / 4 + 1. HALF HP: HP <= max HP / 2. 3/4 HP:
@@ -98,7 +102,7 @@ SAFETY_STOPS = frozenset({StopReason.HP_LOW, StopReason.ASLEEP, StopReason.STOPS
 class AutoGrind:
     """Auto-grind for one game (see the module docstring); the virtual joypad's driver."""
 
-    def __init__(self, game) -> None:
+    def __init__(self, game: 'Game') -> None:
         self.game = game
         self.joypad = VirtualJoypad(self)
         self.map_identifier: str | None = None
@@ -125,8 +129,8 @@ class AutoGrind:
         return at_grind_stop_hp(player.current_hp, player.max_hp, self.game.game_state.config.get('AUTO_GRIND_STOP'))
 
     def has_random_fights(self) -> bool:
-        """Whether a step here can start a random fight (Game.roll_for_fight): a map with an encounter group, and the
-        Dragonlord alive (ChkOtherBlocks)."""
+        """Whether a step here can start a random fight (FieldEncounters.roll_for_fight): a map with an encounter
+        group, and the Dragonlord alive (ChkOtherBlocks)."""
         row, column = self.hero_cell()
         return (not self.game.story_flags.dragonlord_defeated and
                 encounter_group(self.game.current_map.identifier, column, row) is not None)

@@ -13,16 +13,17 @@ from src.constants import GWAELIN_THRONE_ROOM_COORDINATES, GWAELINS_LOVE_REPLACE
 from src.cursor import IN_A
 from src.direction import Direction
 from src.directories import Directories
-from src.items import MAX_HERBS, MAX_KEYS, UNSLOTTED_ITEMS, bag_slots, inventory_list
+from src.items import MAX_HERBS, MAX_KEYS, bag_is_full, inventory_list
 from src import maps
 from src.maps import DragonWarriorMap
 from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE
+from src.play_stats import PlayStats
 from src.window_renderer import draw_window as generated_window
 from src.windows import BUY_SELL_LAYOUT, WindowLayout, shop_inventory_layout
 from src.menu_functions import draw_player_sprites, draw_character_sprites
 from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_price, \
-    inventory_is_full, pay_player, sell_price
+    pay_player, sell_price
 from src.selection import run_selection, stop_at_edges
 from src.shop_preview import SHOP_PREVIEW_WINDOW, StatPreview, draw_shop_preview, stat_preview
 from src.sound import Sound
@@ -30,7 +31,7 @@ from src.story_flags import StoryFlags
 from src.text import draw_text
 from src.windows import BUY_SELL_WINDOW, DIALOG_WINDOW, ITEM_MENU_BORDER, ITEM_MENU_FIRST_TILE_ROW, \
     ITEM_MENU_MAX_ENTRIES, SHOP_COST_RIGHT_TILE_COLUMN, SHOP_INVENTORY_WINDOW, Window, first_shown_entry, \
-    item_menu_window, name_halves, variable_height_window
+    item_menu_window, translated_name_halves, variable_height_window
 from src.visual_effects import NES_RED, bw_screen_flash, greyscale_screen, screen_fade
 from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait_frames
 
@@ -42,6 +43,11 @@ class DialogLookup:
     def color(self) -> tuple[int, int, int]:
         """The window color, red when HP is low (Game.load_window_palette)."""
         return self.command_menu.color
+
+    @property
+    def play_stats(self) -> PlayStats:
+        """The stats page's counts (src/play_stats.py): the gold the shops and inns are paid, and pay."""
+        return self.command_menu.game.play_stats
 
     def __init__(self, command_menu, config: dict):
         self.config = config
@@ -432,13 +438,15 @@ class DialogLookup:
                                         self.take_to_castle_confirmation_prompt)},
         }
         # Map name -> NPC identifier -> what it says, for every NPC in the maps' NPC tables. Each NPC gets its own copy
-        # of its dialog byte's entry (set_king_lorik_dialog changes King Lorik's 'dialog').
+        # of its dialog byte's entry (set_king_lorik_dialog changes King Lorik's 'dialog'), with the byte itself, which
+        # tells the quest journal what the NPC spoke of (src/quest_journal.py hear).
         self.lookup_table: dict[str, dict[str, dict]] = {}
         for map_name, map_class in maps.map_lookup.items():
             for npc in map_class.npc_table:  # type: ignore[attr-defined]
                 if npc.dialog in npc_dialog:
                     self.lookup_table.setdefault(map_name, {})[npc.name] = {**npc_dialog[npc.dialog],
-                                                                            'dialog_character': npc.name}
+                                                                            'dialog_character': npc.name,
+                                                                            'dialog_byte': npc.dialog}
 
     def take_to_castle_confirmation_prompt(self):
         return confirmation_prompt(
@@ -582,8 +590,7 @@ class DialogLookup:
         item from InvListTbl that the hero has to make room, and TextBlock12 entry 10 asks for it. If none of those
         items is there, Gwaelin's Love isn't given at all."""
         _ = self._
-        used_slots = [item for item in self.player.inventory if item not in UNSLOTTED_ITEMS]
-        if len(used_slots) >= bag_slots(self.config):
+        if bag_is_full(self.player.inventory, self.config):
             taken_item = next((item for item in GWAELINS_LOVE_REPLACEABLE_ITEMS if item in self.player.inventory),
                               None)
             if taken_item is None:
@@ -671,6 +678,7 @@ class DialogLookup:
 
     def remove_curse(self):
         """NES ChkCursedDialog: the Brecconary wizard (dialog $67, NES (24, 10)) lifts any curse, free of charge."""
+        lines: tuple[str | Callable, ...]
         if not self.player.is_cursed:
             lines = (self._("If thou art cursed, come again."),)
         else:
@@ -1026,8 +1034,7 @@ class DialogLookup:
             self.draw_window_background(window)
             for index, (name, cost) in enumerate(zip(item_names, costs)):
                 row = 1 + 2 * index
-                translated_name = self._(name)
-                first_half, second_half = name_halves(name) if translated_name == name else (translated_name, '')
+                first_half, second_half = translated_name_halves(name, self._(name))
                 self.draw_in_window(window, first_half, 2, row)
                 self.draw_in_window(window, str(cost), SHOP_COST_RIGHT_TILE_COLUMN, row, alignment='right')
                 if second_half:
@@ -1111,6 +1118,8 @@ class DialogLookup:
         item_dict = current_store_inventory[item]
         item_type = item_dict['type']
         self.player.gold = pay_player(self.player.gold - item_dict['cost'], old_item_cost or 0)
+        self.play_stats.spend_gold(item_dict['cost'])
+        self.play_stats.earn_gold(old_item_cost or 0)  # the shop buys back what the hero had
         if item_type == 'weapon':
             self.player.weapon = item
         elif item_type == 'armor':
@@ -1155,11 +1164,12 @@ class DialogLookup:
         elif selected_item == 'Herb' and self.player.inventory.count('Herb') >= MAX_HERBS:
             # NES ChkToolPurchase
             self.say(_("Thou cannot hold more Herbs."))
-        elif selected_item != 'Herb' and inventory_is_full(self.player.inventory, bag_slots(self.config)):
+        elif selected_item != 'Herb' and bag_is_full(self.player.inventory, self.config):
             # NES DoOthrToolPurchase: AddInvItem returns INV_FULL. Nothing stops buying a second Dragon's Scale.
             self.say(_("Thou cannot carry anymore."))
         else:
             self.player.gold -= cost
+            self.play_stats.spend_gold(cost)
             self.player.inventory.append(selected_item)
             self.say(_("The {}?\nThank you very much.").format(_(selected_item)))
             self.command_menu.show_popup_window()  # NES PurchaseTool: the thanks, then Dowindow WND_POPUP
@@ -1202,6 +1212,7 @@ class DialogLookup:
             # NES DoSellTool only removes the item; a sold Dragon's Scale or Fighter's Ring stays "worn"
             self.player.inventory.remove(item)
             self.player.gold = pay_player(self.player.gold, price)
+            self.play_stats.earn_gold(price)
             self.command_menu.show_popup_window()  # NES DoneSellingTool: Dowindow WND_POPUP
         self.sell_more(current_store_inventory)
 
@@ -1226,11 +1237,12 @@ class DialogLookup:
         if self.player.gold < FAIRY_WATER_COST:
             self.say(_("Thou hast not enough money."))
             self.fairy_water_goodbye()
-        elif inventory_is_full(self.player.inventory, bag_slots(self.config)):
+        elif bag_is_full(self.player.inventory, self.config):
             self.say(_("Thou cannot carry anymore."))
             self.fairy_water_goodbye()
         else:
             self.player.gold -= FAIRY_WATER_COST
+            self.play_stats.spend_gold(FAIRY_WATER_COST)
             self.player.inventory.append('Fairy Water')
             self.command_menu.show_popup_window()  # NES BuyFairyWater: Dowindow WND_POPUP, then the thanks
             self.confirm(_("I thank thee.\nWon't thou buy one more bottle?"),
@@ -1256,6 +1268,7 @@ class DialogLookup:
             self.magic_key_goodbye()
         else:
             self.player.gold -= magic_key_cost
+            self.play_stats.spend_gold(magic_key_cost)
             self.player.inventory.append('Magic Key')
             self.command_menu.show_popup_window()  # NES BuyKey: Dowindow WND_POPUP, then "Here,take this key."
             self.confirm(_("Here,take this key.\nDost thou wish to purchase more?"),
@@ -1297,6 +1310,7 @@ class DialogLookup:
         game = self.command_menu.game
         config = game.game_state.config
         self.player.gold -= inn_cost
+        self.play_stats.spend_gold(inn_cost)
         self.command_menu.show_popup_window()
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
         screen_fade(fade_out=True, screen=self.screen, config=self.config)  # PalFadeOut (LD8DC)

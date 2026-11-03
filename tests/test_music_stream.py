@@ -4,6 +4,7 @@ import array
 import subprocess
 import sys
 import textwrap
+import threading
 import time
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -53,12 +54,14 @@ class FakeChannel:
         self.volume = 1.0
         self.paused = False
         self.stops = 0
+        self.replaced = 0  # sounds queued over one already waiting (pygame can free the replaced one twice)
 
     def queue(self, sound) -> None:
         samples = list(array.array('h', sound.get_raw()))
         if self.playing is None:
             self.playing = samples
         else:
+            self.replaced += self.queued is not None
             self.queued = samples
 
     def get_queue(self):
@@ -287,13 +290,129 @@ QUIT_WHILE_STREAMING = textwrap.dedent("""
 """)
 
 
+# The same with pygame closed directly, as tests and any other code may do, not through quit_pygame: plain
+# pygame.quit() and pygame.mixer.quit(), with several streams playing at once (one per MusicPlayer, as when a test makes
+# several Games), many times over
+PLAIN_QUIT_WHILE_STREAMING = textwrap.dedent("""
+    import os, sys, time
+    os.environ['SDL_VIDEODRIVER'] = os.environ['SDL_AUDIODRIVER'] = 'dummy'
+    sys.path.insert(0, sys.argv[1])
+    import pygame
+    from src.chiptune_soundtracks import MSC_OUTDOOR, nes_track
+    from src.music_player import MusicPlayer
+
+    def start_music():
+        players = [MusicPlayer({'MUSIC_ENABLED': True, 'SOUND_ENABLED': False}) for _ in range(4)]
+        for player in players:
+            player.load_and_play_music(nes_track(MSC_OUTDOOR))
+        time.sleep(0.1)
+        assert all(player.music_busy() for player in players)
+        return players
+
+    for _ in range(10):
+        pygame.init()
+        start_music()
+        pygame.quit()
+    pygame.init()
+    for _ in range(10):
+        pygame.mixer.init()
+        start_music()
+        pygame.mixer.quit()
+    pygame.mixer.init()
+    start_music()
+    pygame.quit()
+""")
+QUIT_TIMEOUT_SECONDS = 30
+
+
+def run_in_own_process(script: str) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, '-c', script, project_root()], capture_output=True, text=True,
+                          timeout=QUIT_TIMEOUT_SECONDS)
+
+
 @requires_libgme
+class TestStreamsSharingTheChannel(StreamTestCase):
+    """Several streams on the one music channel (a MusicPlayer each) take turns at it, so none queues over another's
+    chunk (see the module docstring)."""
+
+    def test_a_stream_waits_while_another_renders_the_chunk_it_will_queue(self):
+        other = MusicStream(MagicMock(), lambda: self.channel)
+        patch.object(other, '_ensure_thread').start()
+        self.addCleanup(other.close)
+        self.stream.play([Segment(LOOP)])
+        other.play([Segment(JINGLE)])  # queued after the stream's first chunk
+        self.channel.finish_sound()  # the jingle's chunk plays, and nothing waits in the queue
+
+        rendering, rendered = threading.Event(), threading.Event()
+        emulator = FakeEmulator.instances[0]
+        render = emulator.render
+
+        def slow_render(frame_count: int) -> bytes:
+            rendering.set()
+            rendered.wait(5)
+            return render(frame_count)
+
+        emulator.render = slow_render
+        streams = [threading.Thread(target=self.stream.pump), threading.Thread(target=other.pump)]
+        streams[0].start()
+        self.assertTrue(rendering.wait(5))  # the stream saw the queue empty and is rendering its chunk
+        streams[1].start()
+        streams[1].join(0.2)
+        self.assertTrue(streams[1].is_alive())  # the other stream waits for its turn
+        rendered.set()
+        for stream in streams:
+            stream.join(5)
+        self.assertEqual(0, self.channel.replaced)
+        self.assertEqual([5] * FRAMES_PER_CHUNK * 2, self.channel.queued)
+
+
 class TestQuitWhileStreaming(TestCase):
 
     def test_the_game_closes_cleanly_while_the_music_streams(self):
-        result = subprocess.run([sys.executable, '-c', QUIT_WHILE_STREAMING, project_root()], capture_output=True,
-                                text=True, timeout=30)
+        result = run_in_own_process(QUIT_WHILE_STREAMING)
         self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_plain_pygame_quit_and_mixer_quit_close_the_streams_first(self):
+        result = run_in_own_process(PLAIN_QUIT_WHILE_STREAMING)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+
+class TestClosedBeforeTheMixerQuits(StreamTestCase):
+    """However pygame or its mixer is closed, the streams are closed while the mixer is still running."""
+
+    def setUp(self):
+        super().setUp()
+        self.mixer_running_at_close: list[bool] = []
+        patch('src.music_stream.close_all_streams', side_effect=self.record_close).start()
+
+    def record_close(self) -> None:
+        self.mixer_running_at_close.append(bool(mixer.get_init()))
+
+    def unguarded_mixer_quit(self):
+        """pygame.mixer.quit as pygame has it, so the test sees pygame.quit's own hook (pygame.quit also calls
+        pygame.mixer.quit, today, and so the replacement too)."""
+        return patch('pygame.mixer.quit', mixer.quit.__wrapped__)
+
+    def test_pygame_quit_closes_the_streams_first(self):
+        self.stream.play([Segment(LOOP)])
+        with self.unguarded_mixer_quit():
+            pygame.quit()
+        self.assertEqual([True], self.mixer_running_at_close)
+
+    def test_every_pygame_quit_after_music_closes_the_streams_first(self):
+        with self.unguarded_mixer_quit():
+            for _ in range(3):
+                pygame.init()
+                self.stream.play([Segment(LOOP)])
+                self.stream.play([Segment(JINGLE, 1)])  # one hook per quit, however often the music starts
+                pygame.quit()
+        self.assertEqual([True] * 3, self.mixer_running_at_close)
+
+    def test_mixer_quit_closes_the_streams_first(self):
+        self.stream.play([Segment(LOOP)])
+        mixer.quit()
+        self.assertEqual([True], self.mixer_running_at_close)
+        self.assertIsNone(mixer.get_init())
 
 
 class TestChannels(TestCase):

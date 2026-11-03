@@ -12,7 +12,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 import pygame
 from pygame import K_0, K_1, K_2, K_3, K_4, K_5, K_7, K_BACKSPACE, K_DELETE, K_DOWN, K_EQUALS, K_ESCAPE, K_F1, K_F2, \
     K_F4, K_F5, K_F9, K_F11, K_LEFT, K_LSHIFT, K_PAGEDOWN, K_PAGEUP, K_RETURN, K_RIGHT, K_TAB, K_UP, K_a, K_d, K_g, \
-    K_h, K_i, K_j, K_k, K_l, K_m, K_p, K_q, K_s, K_u, K_w, KEYDOWN, KEYUP, KMOD_CTRL, KMOD_LCTRL, KMOD_LSHIFT, \
+    K_h, K_i, K_j, K_k, K_l, K_m, K_o, K_p, K_q, K_s, K_u, K_w, KEYDOWN, KEYUP, KMOD_CTRL, KMOD_LCTRL, KMOD_LSHIFT, \
     KMOD_SHIFT
 from pygame.event import Event
 
@@ -26,7 +26,8 @@ from src.controls import ACTIONS, ACTIONS_BY_NAME, FIXED_SHORTCUTS, KEY_SLOTS, B
 from src.controls_screen import CELL_CURSOR_COLUMNS, CHANGED_TOO, CONTROLS_WINDOW, DEFAULTS_RESTORED, FIXED_COMMANDS, \
     FIXED_KEY, HINT, LABEL_COLUMN, NEEDS_A_KEY, VISIBLE_ROWS, Cell, ControlsScreen, controls_layout, screen_texts
 from src.settings import Settings, load_settings, save_settings
-from src.waiting import SPEED_KEYS, game_speed, handle_speed_key, poll_speed_keys, reset_game_speed, set_game_speed
+from src.waiting import SPEED_KEYS, game_speed, handle_speed_key, poll_speed_keys, reset_game_speed, set_game_speed, \
+    set_speed_keys_enabled, speed_keys_enabled
 from src.window_renderer import window_tiles
 from tests import helpers
 from tests.test_save_state import HeldKeys
@@ -177,6 +178,8 @@ class TestLiveKeySets(ControlsTestCase):
         # poll_speed_keys reads the keys held during waits: SPEED 2 on Ctrl+7 isn't set by 7 alone, and Ctrl+1 bound
         # to MAP isn't SPEED 1
         self.rebound(SPEED_2=((K_7, KMOD_CTRL),), MAP=((K_1, KMOD_CTRL),))
+        self.addCleanup(set_speed_keys_enabled, speed_keys_enabled())
+        set_speed_keys_enabled(True)  # GAME SPEED on (off on the NES, whatever the last game made set)
         self.addCleanup(reset_game_speed)
         cases = ((K_7, 0, 4), (K_7, KMOD_LCTRL, 2), (K_1, KMOD_LCTRL, 4), (K_1, 0, 1))  # from 4x
         for held, modifiers, expected in cases:
@@ -384,7 +387,10 @@ class TestTheGameFollowsTheBindings(ControlsTestCase):
 
     def setUp(self):
         super().setUp()
-        self.game = helpers.new_game({**test_config, 'NO_BLIT': True, 'RENDER_TEXT': False, 'NO_WAIT': True})
+        self.game = helpers.new_game({**test_config, 'NO_BLIT': True, 'RENDER_TEXT': False, 'NO_WAIT': True,
+                                      # the switched keys on (off on the NES)
+                                      'SAVE_STATES': True, 'REWIND': True, 'GAME_SPEED_KEYS': True, 'AUTO_GRIND': True,
+                                      'CHEAT_KEYS': True, 'DUNGEON_MAP': True, 'MESSAGE_LOG': True})
 
     def test_start(self):
         self.rebound(START=(K_p,))
@@ -413,13 +419,13 @@ class TestTheGameFollowsTheBindings(ControlsTestCase):
     def test_save_states(self):
         self.rebound(SAVE_STATE_2=((K_p, KMOD_SHIFT),), LOAD_STATE_2=(K_p,))
         with patch.object(self.game.movement, 'resolve_pending_freezes'):
-            self.game.handle_save_state_keys(key(K_p, KMOD_LSHIFT))
+            self.game.hotkeys.press_save_state(key(K_p, KMOD_LSHIFT))
             self.assertEqual(('save', 2), self.game.state_request)
             self.game.state_request = None
-            self.game.handle_save_state_keys(key(K_p))
+            self.game.hotkeys.press_save_state(key(K_p))
             self.assertEqual(('load', 2), self.game.state_request)
             self.game.state_request = None
-            self.game.handle_save_state_keys(key(K_F2))
+            self.game.hotkeys.press_save_state(key(K_F2))
         self.assertIsNone(self.game.state_request)
 
     def test_rewind(self):
@@ -496,7 +502,7 @@ class ScreenTestCase(ControlsTestCase):
     def run_screen(self, *events):
         """Run the screen through these events (it must close by the end); returns the screen."""
         screen = ControlsScreen(self.game)
-        with patch('src.selection.event.get', side_effect=script(*events) + [[key(K_ESCAPE)]]), \
+        with patch('src.waiting.event.get', side_effect=script(*events) + [[key(K_ESCAPE)]]), \
                 patch.object(self.game.sound, 'play_sound'):
             screen.run()
         return screen
@@ -563,10 +569,10 @@ class TestControlsScreen(ScreenTestCase):
 
     def test_the_arrows_enter_and_escape_always_work(self):
         # the D-pad, A and B moved off them: they still move, choose and close here
-        self.rebound(UP=(K_w,), DOWN=(K_s,), LEFT=(K_a,), RIGHT=(K_d,), A=(K_l,), B=(K_p,), SMART_A=())
+        self.rebound(UP=(K_w,), DOWN=(K_s,), LEFT=(K_a,), RIGHT=(K_d,), A=(K_l,), B=(K_o,), SMART_A=())
         self.run_screen(K_DOWN, K_RIGHT, K_LEFT, K_RETURN, K_g)
         self.assertEqual([Binding(K_g)], current_controls().keys['B'])
-        self.assertEqual([Binding(K_p)], current_controls().keys['AUTO_GRIND'])  # swapped
+        self.assertEqual([Binding(K_o)], current_controls().keys['AUTO_GRIND'])  # swapped
 
     def test_the_fixed_keys_win_over_the_bound_ones(self):
         # an old settings file (the screen refuses these now): Enter is also B, Delete also DOWN
@@ -586,7 +592,7 @@ class TestControlsScreen(ScreenTestCase):
         self.assertEqual([Binding(K_j), Binding(K_p)], current_controls().keys['B'])
 
     def test_b_closes_it(self):
-        with patch('src.selection.event.get', side_effect=script(K_j)), patch.object(self.game.sound, 'play_sound'):
+        with patch('src.waiting.event.get', side_effect=script(K_j)), patch.object(self.game.sound, 'play_sound'):
             ControlsScreen(self.game).run()
 
     def test_every_change_is_applied_and_saved(self):
@@ -657,7 +663,7 @@ class TestOptionsOverlayOpensIt(ScreenTestCase):
     def test_controls_row(self):
         from src.options_overlay import OptionsOverlay
         downs = to_controls_row()
-        with patch('src.selection.event.get', side_effect=script(*downs, K_k, K_RETURN, K_l, K_ESCAPE, K_u)), \
+        with patch('src.waiting.event.get', side_effect=script(*downs, K_k, K_RETURN, K_l, K_ESCAPE, K_u)), \
                 patch.object(self.game.sound, 'play_sound'):
             OptionsOverlay(self.game).run()
         self.assertEqual([Binding(K_l)], current_controls().keys['A'])
@@ -666,7 +672,7 @@ class TestOptionsOverlayOpensIt(ScreenTestCase):
         from src.options_overlay import OptionsOverlay
         before = dict(self.game.game_state.config)
         downs = to_controls_row()
-        with patch('src.selection.event.get', side_effect=script(*downs, K_LEFT, K_RIGHT, K_u)), \
+        with patch('src.waiting.event.get', side_effect=script(*downs, K_LEFT, K_RIGHT, K_u)), \
                 patch.object(self.game.sound, 'play_sound'), \
                 patch('src.options_overlay.ControlsScreen') as screen:
             OptionsOverlay(self.game).run()

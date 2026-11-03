@@ -13,7 +13,9 @@ from unittest.mock import patch
 
 import pytest
 
+from src.config.test_config import test_config
 from src.display_filters import PRESENTER, SCALING_SMOOTH
+from src.music_stream import close_all_streams
 from src.settings import SETTINGS_ENV_VAR, SETTINGS_FILE_NAME
 
 _settings_dir = tempfile.mkdtemp(prefix='dragon_warrior_test_settings_')
@@ -37,3 +39,23 @@ def display_filters_off():
     yield
     if PRESENTER.active:
         PRESENTER.configure(False, SCALING_SMOOTH)
+
+
+@pytest.fixture(autouse=True)
+def test_config_restored():
+    """Many tests make a Game from test_config itself (not a copy), and loading a save applies its options, with the
+    defaults for any it lacks, to that config. Put it back after every test, so no test sees another's soundtrack,
+    message speed or other option (the tests run in a different order with and without pytest-xdist)."""
+    saved = dict(test_config)
+    yield
+    test_config.clear()
+    test_config.update(saved)
+
+
+@pytest.fixture(autouse=True)
+def music_streams_closed():
+    """A test that turns the music on leaves no chiptune stream (src/music_stream.py) playing into the next test, or
+    into its class's or module's own pygame.quit(). The game closes them itself however pygame is closed; this keeps one
+    test's music thread out of the others' way too."""
+    yield
+    close_all_streams()

@@ -25,6 +25,9 @@ import re
 from dataclasses import dataclass
 from collections.abc import Iterator
 
+from src.languages import LANGUAGES
+from src.line_breaks import break_units
+
 DIALOG_ROWS = 8  # DialogToScreenBuf: "Total rows=8"
 DIALOG_COLUMNS = 22  # CalcWndYByteNum: "22 text characters per line"
 ARROW_COLUMN = 11  # TxtWaitAnim: the arrow goes in screen column $10; dialog columns start at screen column 5
@@ -35,7 +38,8 @@ MESSAGE_SPEEDS = {'Fast': 0, 'Normal': 1, 'Slow': 2}
 SCROLL_ROWS_PER_FRAME = 2
 SCROLL_FRAMES = 1 + DIALOG_ROWS // SCROLL_ROWS_PER_FRAME
 
-OPEN_QUOTES = ('`', "'", '‘', '“')
+# The NES's open quote (`) and the ones a translated line opens with (each language's quote_marks, e.g. 「)
+OPEN_QUOTES = tuple(dict.fromkeys(('`', "'", '‘', '“', *(language.quote_marks[0] for language in LANGUAGES))))
 BLANK = ' '
 PERIOD_END_QUOTE = '.’'  # TXT_PRD_QUOTE ($52): one tile, '.'' in the disassembly's text comments
 
@@ -43,6 +47,15 @@ PERIOD_END_QUOTE = '.’'  # TXT_PRD_QUOTE ($52): one tile, '.'' in the disassem
 def tiles(word: str) -> list[str]:
     """Splits text into the tiles it takes on screen: one per character, except a period and closing quote together."""
     return re.findall(re.escape(PERIOD_END_QUOTE) + '|.', word)
+
+
+def words(paragraph: str, breaks_anywhere: bool = False) -> list[str]:
+    """The paragraph's words and blanks, in order: what wraps whole. With breaks_anywhere, each word is split further
+    into the pieces a row may end between (break_units)."""
+    tokens = re.findall(r' |[^ ]+', paragraph)
+    if not breaks_anywhere:
+        return tokens
+    return [unit for token in tokens for unit in ([token] if token == BLANK else break_units(token))]
 
 
 def frames_per_character(text_speed: str) -> int:
@@ -105,15 +118,17 @@ class DialogBuffer:
         """The rows that have text on them, top to bottom."""
         return [line for line in self.lines if line]
 
-    def print_message(self, text: str, quoted: bool) -> Iterator[DialogStep]:
+    def print_message(self, text: str, quoted: bool, breaks_anywhere: bool = False) -> Iterator[DialogStep]:
         """Print one message (DoDialog's CalcWordCoord/WordToScreen loop). ``quoted`` text starts with an open quote,
-        which turns on the indent (GetTxtWord: TxtSetIndent). A "\\n" is a TXT_NEWL (DoNewline)."""
+        which turns on the indent (GetTxtWord: TxtSetIndent). A "\\n" is a TXT_NEWL (DoNewline). With
+        ``breaks_anywhere`` (Chinese, src/line_breaks.py), a row may also end between two characters with no blank
+        between them: each piece break_units makes wraps as a word would."""
         self.indent = 1 if quoted else 0
         first_char = True
         for paragraph_index, paragraph in enumerate(text.split('\n')):
             if paragraph_index:
                 yield from self.do_newline()
-            for token in re.findall(r' |[^ ]+', paragraph):
+            for token in words(paragraph, breaks_anywhere):
                 if token == BLANK:
                     yield from self._put_blank()
                     first_char = False

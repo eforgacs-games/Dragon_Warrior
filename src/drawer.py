@@ -13,7 +13,8 @@ from src.enemy_lookup import enemy_image_position_lookup
 from src.game_functions import get_surrounding_rect
 from src.command_window import held_buttons
 from src.menu import CommandMenu
-from src.options_screen import STATUS_WINDOW_ALWAYS
+from src.game_options import STATUS_WINDOW_ALWAYS
+from src.quest_journal import KING_OPENING_SPEECH, hear
 from src.sound import Sound
 from src.text import draw_text
 from src.view import full_screen, screen_origin_x
@@ -81,7 +82,7 @@ class Drawer:
         self.game_state = game_state
         self.scale = self.game_state.config["SCALE"]
         self.display_hovering_stats = False
-        self.background = None
+        self.background: Surface | None = None
         # Where the hero was drawn on the last frame, so the frame a step ends on also redraws it (see draw_all)
         self.last_player_rect: Rect | None = None
         self.hovering_stats_displayed = False
@@ -254,6 +255,7 @@ class Drawer:
                 cmd_menu.show_text_in_dialog_box(
                     cmd_menu.dialog_lookup.lookup_table['TantegelThroneRoom']['KING_LORIK']['dialog'], add_quotes=True,
                     skip_text=skip_text)
+                hear(cmd_menu.game.story_flags, KING_OPENING_SPEECH)  # "The Dragonlord must be defeated."
             self.set_to_post_initial_dialog(cmd_menu)
             self.game_state.automatic_initial_dialog_run = True
             self.show_pop_up_after_automatic_dialog()
@@ -417,12 +419,14 @@ class Drawer:
                                 cover_cells_to_draw.add(cell)
                             continue
                     group_to_draw.add(tile_to_draw)
-        group_to_draw.draw(self.background)
+        background = self.background
+        assert background is not None, "the first frame (loop_count 1) makes the background"
+        group_to_draw.draw(background)
         if cover_cells_to_draw:
-            draw_cover(current_map, self.background, cover_cells_to_draw)
+            draw_cover(current_map, background, cover_cells_to_draw)
         # to make this work in all maps: draw tile under hero, AND tiles under NPCs
         # in addition to the trajectory of the NPCs
-        self.handle_sprite_drawing_and_animation(current_map, foreground_rects, self.background,
+        self.handle_sprite_drawing_and_animation(current_map, foreground_rects, background,
                                                  enable_animate)
         if not self.game_state.config['NO_BLIT']:
             # the whole view in WIDE (src/view.py), with the map's boundary block past its edges (draw_boundary)

@@ -52,9 +52,9 @@ class TestBlockDamage(StepTestCase):
         self.player.received_environment_damage = False
         self.player.current_tile = tile
         hp = self.player.current_hp
-        with patch.object(self.game, 'drawer'), patch('src.game.display'), patch('src.game.force_field_flash'), \
-                patch('src.game.flash_transparent_color'), patch.object(self.game.sound, 'play_sound'):
-            self.game.handle_environment_damage()
+        with patch.object(self.game, 'drawer'), patch('src.hero_damage.display'), patch('src.hero_damage.force_field_flash'), \
+                patch('src.hero_damage.flash_transparent_color'), patch.object(self.game.sound, 'play_sound'):
+            self.game.hero_damage.handle_environment_damage()
         return hp - self.player.current_hp
 
     def test_erdricks_armor_stops_swamp_and_force_field_damage(self):
@@ -128,17 +128,17 @@ class TestMapExits(StepTestCase):
         self.player.armor = "Erdrick's Armor"
         self.go_to('Garinham', (15, 9))
         self.end_step_on((15, 8))  # the west gate
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assertEqual(self.player.current_hp, 50)
         self.end_step_on((15, 10))
-        self.game.count_step()
+        self.game.step_triggers.count_step()
         self.assertEqual(self.player.current_hp, 51)
 
     def test_a_step_off_the_map_skips_movement_updates(self):
         self.go_to('Garinham', (15, 9))
         self.end_step_on((15, 8))
-        with patch.object(self.game, 'movement_updates') as movement_updates:
-            self.game.count_step()
+        with patch.object(self.game.step_triggers, 'movement_updates') as movement_updates:
+            self.game.step_triggers.count_step()
         movement_updates.assert_not_called()
 
     def test_leaving_charlock_through_its_swamp_does_no_damage_and_starts_no_fight(self):
@@ -149,8 +149,8 @@ class TestMapExits(StepTestCase):
         self.game.tiles_moved_since_spawn += 1
         with patch.dict(test_config, FORCE_BATTLE=True), \
                 patch.object(self.game.battle_ctrl, 'run_battle') as run_battle, \
-                patch.object(self.game, 'damage_step') as damage_step:
-            self.game.handle_battles()
+                patch.object(self.game.hero_damage, 'damage_step') as damage_step:
+            self.game.field_encounters.handle_battles()
         run_battle.assert_not_called()
         damage_step.assert_not_called()
 
@@ -186,6 +186,8 @@ class TestStepWarps(StepTestCase):
         self.assertFalse(self.warp_after_steps('Garinham', (15, 8), (15, 8), 0))
 
     def test_stairs_still_wait_for_a_few_steps(self):
-        # Unchanged: this project takes stairs by stepping onto them (the NES only by STAIRS), after a few steps
+        # This project can take stairs by stepping onto them (STAIRS on STEP ON; the NES only by STAIRS), after a few
+        # steps
+        self.game.config['AUTO_STAIRS'] = True
         self.assertFalse(self.warp_after_steps('Garinham', (2, 28), (1, 28), 1))
         self.assertTrue(self.warp_after_steps('Garinham', (2, 28), (1, 28), 3))

@@ -14,7 +14,7 @@ from src.controls import Binding, Controls, reset_controls, set_controls
 from src.dungeon_map import CHEST_COLOR, FLOOR_COLOR, HERO_COLOR, MAP_WINDOW, STAIRS_UP_COLOR, WALL_COLOR, \
     DungeonMap, DungeonMapOverlay, Floor, block_pixels, draw_floor
 from src.save_file import read_save, save_path
-from src.save_state import take_snapshot
+from src.save_state import load_from_slot, save_to_slot, take_snapshot
 from tests.test_save_state import HeldKeys, SaveStateTestCase, comparable, key
 
 SWAMP_CAVE_START = (9, 4)  # brick below the Swamp Cave's north stairs, as tools/benchmark.py's dungeon scene
@@ -97,6 +97,7 @@ class DungeonTestCase(SaveStateTestCase):
     def new_game(self):
         game = super().new_game()
         game.game_state.config['NO_BATTLES'] = True  # no fights in the Swamp Cave while walking
+        game.game_state.config['DUNGEON_MAP'] = True  # M shows it (off on the NES)
         return game
 
 
@@ -152,10 +153,10 @@ class TestInTheGame(DungeonTestCase):
         self.enter_swamp_cave(game)
         self.run_frames(game, 32, script=down_script)
         saved = game.dungeon_map.to_save()
-        game.save_state(1)
+        save_to_slot(game, 1)
         self.run_frames(game, 64, script=down_script)
         self.assertNotEqual(saved, game.dungeon_map.to_save())
-        game.load_state(1)
+        load_from_slot(game, 1)
         self.assertEqual(saved, game.dungeon_map.to_save())
         self.assertEqual(saved, comparable(take_snapshot(game))['dungeon_map'])
 
@@ -173,8 +174,8 @@ class TestInTheGame(DungeonTestCase):
 class TestKey(DungeonTestCase):
 
     def press_m(self, game, press=None):
-        with patch.object(game, 'open_dungeon_map') as open_dungeon_map:
-            game.handle_dungeon_map_key(key(K_m) if press is None else press)
+        with patch.object(game.hotkeys, 'open_dungeon_map') as open_dungeon_map:
+            game.hotkeys.press_dungeon_map(key(K_m) if press is None else press)
             with patch('src.movement.key') as movement_key:
                 movement_key.get_pressed.return_value = HeldKeys()
                 for _ in range(20):

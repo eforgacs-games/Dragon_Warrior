@@ -7,6 +7,7 @@ import pygame
 from src.battle import Battle, can_run_away
 from src.battle_controller import BattleController, BattleOutcome
 from src.config.test_config import test_config
+from src.smoke_test import file_path
 from tests.helpers import new_game
 
 
@@ -100,7 +101,7 @@ class TestDragonlordDialog(unittest.TestCase):
     def test_pending_battle_starts_on_next_frame(self):
         self.game.battle_ctrl.queue_scripted_battle('Dragonlord')
         with patch.object(self.game.battle_ctrl, 'start_scripted_battle') as start:
-            self.game.handle_battles()
+            self.game.field_encounters.handle_battles()
         start.assert_called_once_with('Dragonlord')
         self.assertIsNone(self.game.battle_ctrl.pending_scripted_battle)
 
@@ -235,7 +236,7 @@ class TestDragonlordBattle(unittest.TestCase):
         second = Battle(self.config, 'Dragonlord 2', Mock())
         second.play_battle_music(music_player)
         music_player.load_and_play_music.assert_called_with(second.directories.end_boss_music)
-        self.assertTrue(os.path.exists(second.directories.end_boss_music))
+        self.assertTrue(os.path.exists(file_path(second.directories.end_boss_music)))  # an mp3, or an NSF's track
 
     def test_final_form_has_full_hp_and_reveal_text(self):
         battle = Battle(self.config, 'Dragonlord 2', Mock())
