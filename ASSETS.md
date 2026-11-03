@@ -32,6 +32,7 @@ Owned by Square Enix (formerly Enix). Taken or derived from the games.
 | `data/text/official_script/glossary_ko.tsv`, the names and terms in `data/text/locales/ko/` | Korean names and terms | Taken from the official Korean script above |
 | `data/text/official_script/glossary_ja.tsv`, the names, terms and the lines marked `#. official:` in `data/text/locales/ja/` | Japanese names, terms and lines | Taken from the official Japanese script above |
 | `data/text/official_script/glossary_zh_Hant.tsv`, `glossary_zh_Hans.tsv`, the names, terms and the lines marked `#. official:` in `data/text/locales/zh_TW/` and `zh_CN/` | Traditional and Simplified Chinese names, terms and lines | Taken from the official Chinese script above (`zh1.json` is Traditional, `zh2.json` Simplified) |
+| `data/text/official_script/glossary_en_2014.tsv`, the names, terms and the lines marked `#. official:` in `data/text/locales/en_2014/` | English (2014) names, terms and lines | Taken from the official English script above (`en.json`), shortened where the NES windows need it |
 
 ## Orchestral and Super Famicom recordings
 

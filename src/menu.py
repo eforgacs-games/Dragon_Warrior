@@ -49,7 +49,8 @@ from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENT
     ITEM_MENU_X, ITEM_MENU_Y, POPUP_WINDOW, SPELL_MENU_TITLE_TILE_COLUMN, \
     STATUS_EQUIPMENT_TILE_COLUMN, STATUS_EQUIPMENT_TILE_ROWS, STATUS_LAYOUT, STATUS_NAME_TILE_COLUMN, \
     STATUS_NAME_TILE_ROW, STATUS_VALUE_RIGHT_TILE_COLUMN, STATUS_VALUE_TILE_ROWS, STATUS_WINDOW, YES_NO_LAYOUT, \
-    YES_NO_WINDOW, item_menu_entry_tile_row, item_menu_layout, item_menu_window, Window, name_halves
+    YES_NO_WINDOW, item_menu_entry_tile_row, item_count_tile_row, item_menu_layout, item_menu_window, Window, \
+    translated_name_halves
 from src.nes_random import one_in
 
 if TYPE_CHECKING:
@@ -1779,16 +1780,16 @@ class CommandMenu:
             first_half, second_half = self.name_halves(entry)
             draw_in_window(first_half, ITEM_MENU_TEXT_TILE_COLUMN, row)
             if entry in COUNTED_ITEMS:
-                draw_in_window(str(self.player.inventory.count(entry)), ITEM_COUNT_TILE_COLUMN, row)
+                draw_in_window(str(self.player.inventory.count(entry)), ITEM_COUNT_TILE_COLUMN,
+                               item_count_tile_row(first_half, row))
             if second_half:
                 draw_in_window(second_half, ITEM_MENU_TEXT_TILE_COLUMN + 1, row + 1)
         return Rect(x * tile_size, y * tile_size, width * tile_size, height * tile_size)
 
     def name_halves(self, name: str) -> tuple[str, str]:
         """An item's or a piece of equipment's name as the ITEM and status windows show it: in the NES's two halves
-        (src/windows.py name_halves), or, translated, whole on the first line (as the shop windows show it)."""
-        translated = self._(name)
-        return name_halves(name) if translated == name else (translated, "")
+        (src/windows.py name_halves), or translated (translated_name_halves)."""
+        return translated_name_halves(name, self._(name))
 
     def window_text_position(self, window_x: int, window_y: int, column: int, row: int) -> tuple[float, float]:
         """

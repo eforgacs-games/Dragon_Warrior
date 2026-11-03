@@ -118,7 +118,7 @@ class TestWrappingChinese(TestCase):
 
 
 class TestOtherLanguagesWrapAsBefore(TestCase):
-    """English, Korean and Japanese break at blanks only, byte for byte as before breaks_anywhere."""
+    """English, Korean, Japanese and English (2014) break at blanks only, byte for byte as before breaks_anywhere."""
 
     def test_only_chinese_breaks_anywhere(self):
         self.assertEqual({'Traditional Chinese', 'Simplified Chinese'},

@@ -15,11 +15,14 @@ from src.catalog import po_path, read_po
 from src.languages import CATALOG_LANGUAGES
 from src.paths import data_path
 from src.text import TextPaths
+from tests.helpers import drawn_in_nes_font
 
 UNIFONT_PATH = data_path('fonts', 'unifont.otf')
 HANGUL_SYLLABLES = range(0xAC00, 0xD7A4)
 CJK_UNIFIED_IDEOGRAPHS = range(0x4E00, 0xA000)
 HIRAGANA_AND_KATAKANA = range(0x3040, 0x3100)
+# The catalogs drawn in Unifont (English (2014) is drawn in the NES font, tests/test_english_2014.py)
+UNIFONT_LANGUAGES = tuple(language for language in CATALOG_LANGUAGES if not drawn_in_nes_font(language))
 
 
 def catalog_characters(locale_code: str) -> set[str]:
@@ -45,7 +48,7 @@ class TestUnifont(TestCase):
         self.assertEqual(TextPaths.UNIFONT_PATH, UNIFONT_PATH)
 
     def test_every_catalog_character_has_a_glyph(self):
-        for language in CATALOG_LANGUAGES:
+        for language in UNIFONT_LANGUAGES:
             characters = catalog_characters(language.locale_code or '')
             missing = sorted(f'U+{ord(c):04X} {unicodedata.name(c, "?")}' for c in characters
                              if ord(c) not in self.cmap)
@@ -62,7 +65,7 @@ class TestUnifont(TestCase):
         def picture(character: str) -> bytes:
             return pygame.image.tobytes(font.render(character, False, (255, 255, 255), (0, 0, 0)), 'RGB')
         tofu = picture(chr(missing_glyph_code_point(self.cmap)))
-        for language in CATALOG_LANGUAGES:
+        for language in UNIFONT_LANGUAGES:
             drawn_as_tofu = sorted(f'U+{ord(c):04X} {unicodedata.name(c, "?")}'
                                    for c in catalog_characters(language.locale_code or '')
                                    if not c.isspace() and picture(c) == tofu)

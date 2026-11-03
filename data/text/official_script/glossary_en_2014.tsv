@@ -1,0 +1,120 @@
+kind	english_nes	english_2014	official_id	notes
+item	Bamboo Pole	Bamboo Spear	data.7.1.0	official
+item	Club	Oaken Club	data.7.2.0	official
+item	Copper Sword	Copper Sword	data.7.3.0	official
+item	Hand Axe	Iron Axe	data.7.4.0	official
+item	Broad Sword	Steel Sword	data.7.5.0	official: Steel Broadsword. Broadsword is 10 letters; a name's second half has 8 tiles
+item	Flame Sword	Fire Blade	data.7.6.0	official
+item	Erdrick's Sword	Erdrick's Sword	data.7.7.0	official
+item	Clothes	Plain Clothes	data.7.8.0	official
+item	Leather Armor	Leather Suit	data.7.9.0	official
+item	Chain Mail	Chain Mail	data.7.10.0	official
+item	Half Plate	Iron Armour	data.7.11.0	official
+item	Full Plate	Plate Armour	data.7.12.0	official: Full Plate Armour. Full Plate is 10 letters; a name's first half has 9 tiles
+item	Magic Armor	Magic Armour	data.7.13.0	official
+item	Erdrick's Armor	Erdrick's Armour	data.7.14.0	official
+item	Small Shield	Leather Shield	data.7.15.0	official
+item	Large Shield	Iron Shield	data.7.16.0	official
+item	Silver Shield	Silver Shield	data.7.17.0	official
+item	Herb	Medicinal Herb	data.7.18.0	official
+item	Torch	Torch	data.7.19.0	official
+item	Dragon's Scale	Dragon Scale	data.7.20.0	official
+item	Wings	Chimaera Wing	data.7.21.0	official
+item	Magic Key	Magic Key	data.7.22.0	official
+item	Fairy Water	Holy Water	data.7.23.0	official
+item	Ball of Light	Sphere of Light	data.7.24.0	official
+item	Fairy Flute	Faerie Flute	data.7.26.0	official
+item	Silver Harp	Lyre of Ire	data.7.27.0	official
+item	Staff of Rain	Staff of Rain	data.7.28.0	official
+item	Stones of Sunlight	Sunstone	data.7.29.0	official
+item	Gwaelin's Love	Princess' Pledge	data.7.30.0	official: Princess's Pledge. Princess's is 10 letters; a name's first half has 9 tiles
+item	Erdrick's Token	Mark of Erdrick	data.7.31.0	official
+item	Rainbow Drop	Rainbow Drop	data.7.32.0	official
+item	Cursed Belt	Wasteband	data.7.33.0	official
+item	Death Necklace	Choker	data.7.34.0	official
+item	Fighter's Ring	Warrior's Ring	data.7.35.0	official
+item	Tablet	Stone Tablet	map.18.0.0	not an item in the remake; the tablet's own words
+spell	HEAL	Heal	data.10.0.0	official
+spell	HURT	Sizz	data.10.1.0	official
+spell	SLEEP	Snooze	data.10.2.0	official
+spell	RADIANT	Glow	data.10.3.0	official
+spell	STOPSPELL	Fizzle	data.10.4.0	official
+spell	OUTSIDE	Evac	data.10.5.0	official
+spell	RETURN	Zoom	data.10.6.0	official
+spell	REPEL	Holy Prot	data.10.7.0	official: Holy Protection, shortened: the SPELL window has 9 tiles. Dialog says Holy Protection
+spell	HEALMORE	Midheal	data.10.8.0	official
+spell	HURTMORE	Sizzle	data.10.9.0	official
+monster	Slime	slime	data.12.0.0	official; lower case, as the remake writes them
+monster	Red Slime	she-slime	data.12.1.0	official; lower case, as the remake writes them
+monster	Drakee	dracky	data.12.2.0	official; lower case, as the remake writes them
+monster	Ghost	ghost	data.12.3.0	official; lower case, as the remake writes them
+monster	Magician	prestidigitator	data.12.4.0	official; lower case, as the remake writes them
+monster	Magidrakee	drackolyte	data.12.5.0	official; lower case, as the remake writes them
+monster	Scorpion	scorpion	data.12.6.0	official; lower case, as the remake writes them
+monster	Druin	lunatick	data.12.7.0	official; lower case, as the remake writes them
+monster	Poltergeist	fightgeist	data.12.8.0	official; lower case, as the remake writes them
+monster	Droll	drohl drone	data.12.9.0	official; lower case, as the remake writes them
+monster	Drakeema	drackyma	data.12.10.0	official; lower case, as the remake writes them
+monster	Skeleton	skeleton	data.12.11.0	official; lower case, as the remake writes them
+monster	Warlock	legerdeman	data.12.12.0	official; lower case, as the remake writes them
+monster	Metal Scorpion	iron scorpion	data.12.13.0	official; lower case, as the remake writes them
+monster	Wolf	bewarewolf	data.12.14.0	official; lower case, as the remake writes them
+monster	Wraith	skeleton scrapper	data.12.15.0	official; lower case, as the remake writes them
+monster	Metal Slime	metal slime	data.12.16.0	official; lower case, as the remake writes them
+monster	Specter	spitegeist	data.12.17.0	official; lower case, as the remake writes them
+monster	Wolflord	scarewolf	data.12.18.0	official; lower case, as the remake writes them
+monster	Druinlord	raving lunatick	data.12.19.0	official; lower case, as the remake writes them
+monster	Drollmagi	drohl diabolist	data.12.20.0	official; lower case, as the remake writes them
+monster	Wyvern	chimaera	data.12.21.0	official; lower case, as the remake writes them
+monster	Rogue Scorpion	death scorpion	data.12.22.0	official; lower case, as the remake writes them
+monster	Wraith Knight	skeleton soldier	data.12.23.0	official; lower case, as the remake writes them
+monster	Golem	golem	data.12.24.0	official; lower case, as the remake writes them
+monster	Goldman	gold golem	data.12.25.0	official; lower case, as the remake writes them
+monster	Knight	knight errant	data.12.26.0	official; lower case, as the remake writes them
+monster	Magiwyvern	hocus chimaera	data.12.27.0	official; lower case, as the remake writes them
+monster	Demon Knight	dark skeleton	data.12.28.0	official; lower case, as the remake writes them
+monster	Werewolf	tearwolf	data.12.29.0	official; lower case, as the remake writes them
+monster	Green Dragon	green dragon	data.12.30.0	official; lower case, as the remake writes them
+monster	Starwyvern	cosmic chimaera	data.12.31.0	official; lower case, as the remake writes them
+monster	Wizard	vis mager	data.12.32.0	official; lower case, as the remake writes them
+monster	Axe Knight	knight aberrant	data.12.33.0	official; lower case, as the remake writes them
+monster	Blue Dragon	blue dragon	data.12.34.0	official; lower case, as the remake writes them
+monster	Stoneman	stone golem	data.12.35.0	official; lower case, as the remake writes them
+monster	Armored Knight	knight abhorrent	data.12.36.0	official; lower case, as the remake writes them
+monster	Red Dragon	red dragon	data.12.37.0	official; lower case, as the remake writes them
+monster	Dragonlord	Dragonlord	data.12.38.0	official; lower case, as the remake writes them
+monster	Dragonlord 2	Dragonlord	data.12.39.0	official; lower case, as the remake writes them
+label	FIGHT	ATTACK	data.16.0.0	official, in NES capitals
+label	RUN	FLEE	data.16.2.0	official, in NES capitals
+label	SPELL	SPELL	data.16.12.0	kept: the remake's Spells doesn't fit the COMMAND window
+label	ITEM	ITEM	data.16.11.0	kept, to match SPELL
+label	MAXIMUM HP:	MAX. HP:	data.16.38.0	official
+label	MAXIMUM MP:	MAX. MP:	data.16.39.0	official
+label	ATTACK POWER:	ATTACK:	data.16.40.0	official
+label	DEFENSE POWER:	DEFENCE:	data.16.41.0	official (British spelling, as the remake)
+label	ARMOR:	ARMOUR:	data.16.21.0	official
+label	CONTINUE A QUEST	VENTURE FORTH	data.16.89.0	official
+label	BEGIN A NEW QUEST	NEW ADVENTURE LOG	data.16.93.0	official, shortened
+label	ERASE A QUEST	DELETE ADVENTURE LOG	data.16.95.0	official, shortened
+person	Gwaelin	Gwaelin	map.21.0.0	official (Princess Gwaelin)
+person	King Lorik	the King	map.2.1.2	the remake never names him: His Majesty the King
+person	Garin	Galen	map.7.3.0	official
+person	Wynn	Magog	map.9.7.0	official
+person	Orwick	Orwick		kept: the remake's Roderick also takes Howard's part
+person	Howard	Howard		kept (see Orwick)
+person	Nester	Nester		not in the remake
+person	Erdrick	Erdrick	map.3.0.0	official
+person	Dragonlord	Dragonlord	map.33.0.1	official
+place	Brecconary	Tantegel	map.5.0.0	official: the castle town of Tantegel
+place	Garinham	Galenholm	map.7.1.0	official
+place	Hauksness	Damdara	map.9.19.2	official
+place	Charlock	Dragonlord's Castle	data.16.221.0	official
+place	Garin's Grave	grave of Galen	map.7.13.0	official
+place	Swamp Cave	cave in the marshes	data.16.216.0	the remake: Dungeon of the marshes
+place	Isle of Dragons	the evil island	map.18.0.0	official
+term	Imperial Scroll of Honor	adventure log	data.3.7.2	official
+term	GOLD	gold coins	data.3.0.4	official
+term	Experience Points	experience points	data.1.0.38	official
+term	Hit Points	HP	data.1.0.44	official
+term	leagues	paces	map.9.18.0	official (the NES distances are kept)
+term	Rainbow Bridge	the rain's bow	map.1.19.0	official

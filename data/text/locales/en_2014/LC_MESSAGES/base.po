@@ -1,0 +1,3702 @@
+# English (2014) translation of Dragon Warrior: the official English script of the 2014 DRAGON QUEST remake (also the
+# Switch version), data/text/official_script/en.json, in the NES windows. Names and terms: glossary_en_2014.tsv.
+# "#. official: <id>" marks an entry based on that message of the official script (script.tsv id).
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Language-Team: English (2014)\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. official: data.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"We deal in weapons and armor.\n"
+" Dost thou wish to buy anything today?"
+msgstr ""
+"Thou art welcome, wanderer, in this, our humble armoury.\n"
+" How may we be of use to thee this day?"
+
+#. official: map.1.21.0
+#: data/text/dialog_lookup_table.py
+msgid "Never does a brave person steal."
+msgstr "A true hero would not stoop to petty thievery..."
+
+#. official: data.3.0.4
+#: data/text/dialog_lookup_table.py
+msgid "The {}?"
+msgstr ""
+"The {}?\n"
+"An exquisite article."
+
+#. official: data.7.1.0
+#: src/items.py
+msgid "Bamboo Pole"
+msgstr "Bamboo Spear"
+
+#. official: data.7.2.0
+#: src/items.py
+msgid "Club"
+msgstr "Oaken Club"
+
+#. official: data.7.3.0
+#: src/items.py
+msgid "Copper Sword"
+msgstr "Copper Sword"
+
+#. official: data.7.8.0
+#: src/items.py
+msgid "Clothes"
+msgstr "Plain Clothes"
+
+#. official: data.7.9.0
+#: src/items.py
+msgid "Leather Armor"
+msgstr "Leather Suit"
+
+#. official: data.7.15.0
+#: src/items.py
+msgid "Small Shield"
+msgstr "Leather Shield"
+
+#. official: data.7.4.0
+#: src/items.py
+msgid "Hand Axe"
+msgstr "Iron Axe"
+
+#. official: data.7.11.0
+#: src/items.py
+msgid "Half Plate"
+msgstr "Iron Armour"
+
+#. official: data.7.12.0
+#: src/items.py
+msgid "Full Plate"
+msgstr "Plate Armour"
+
+#. official: data.1.0.6
+#: src/hero_death.py
+msgid "Thou art dead."
+msgstr "Thou art defeated."
+
+#: src/map_hotkeys.py
+msgid ""
+"Game set to normal speed.\n"
+"({} FPS)"
+msgstr ""
+"Game set to normal speed.\n"
+"({} FPS)"
+
+#: src/menu.py
+msgid "There is no one there."
+msgstr "There is no one there."
+
+#: src/menu.py
+msgid "There are no stairs here."
+msgstr "There are no stairs here."
+
+#. official: map.1.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Where oh where can I find Princess Gwaelin?"
+msgstr "O Princess... Princess Gwaelin, where art thou...?"
+
+#. official: map.1.4.0
+#: data/text/dialog_lookup_table.py
+msgid "Welcome to Tantegel Castle."
+msgstr "The castle of Tantegel bids thee welcome, wanderer."
+
+#. official: data.3.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome.\n"
+"We deal in tools.\n"
+"What can I do for thee?"
+msgstr ""
+"Thou art welcome, wanderer, in this, our humble item shop.\n"
+"How may we be of service to thee this day?"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Descendant of Erdrick, listen now to my words."
+msgstr "Scion of the bloodline of Erdrick, hero of legend! Long have I awaited thy coming!"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
+msgstr "In days of yore, thy revered ancestor did receive of the Almighty Goddess the Sphere of Light, and by its power was our world rid of the menace which did beset it."
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Then came the Dragonlord who stole the precious globe and hid it in the darkness."
+msgstr "Yet, alas, there did arise a new threat--the Dragonlord. With his cunning, he did steal away the Sphere of Light from us, plunging the land into darkness once more."
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Now, {}, thou must help us recover the Ball of Light and restore peace to our land."
+msgstr "So I say unto thee, {}, vanquish the accursed Dragonlord, and reclaim the Sphere of Light!"
+
+#: data/text/dialog_lookup_table.py
+msgid "The Dragonlord must be defeated."
+msgstr "The accursed Dragonlord must be vanquished."
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."
+msgstr "In the chests o'er yonder wilt thou find items to aid thee on thy quest. Take what thou wilt, with my blessing."
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Then speak with the guards, for they have much knowledge that may aid thee."
+msgstr "Partake thee also of the wisdom of those loyal subjects gathered here. Their knowledge will serve thee as well as any shield."
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "May the light shine upon thee, {}."
+msgstr "May the Goddess guide thee to victory, brave {}!"
+
+#. official: map.3.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"When thou art finished preparing for thy departure, please see me.\n"
+"I shall wait."
+msgstr ""
+"Come before me once more when thou art ready to embark upon thy quest.\n"
+"I shall await thy return."
+
+#. official: map.2.0.0
+#: data/text/dialog_lookup_table.py
+msgid "I am greatly pleased that thou hast returned, {}."
+msgstr "Brave {}, thou art returned to us! Full glad am I to see thee!"
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Before reaching thy next level of experience thou must gain {} Points."
+msgstr "Earn another {} points of experience, and thou shalt attain a new level."
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Before reaching thy next level of experience thou must gain {} Point."
+msgstr "Earn but {} more point of experience, and thou shalt attain a new level."
+
+#. official: data.3.7.2
+#: data/text/dialog_lookup_table.py
+msgid "Will thou tell me now of thy deeds so they won't be forgotten?"
+msgstr "Wilt thou record thy tale thus far in an adventure log?"
+
+#. official: data.3.7.10
+#: data/text/dialog_lookup_table.py
+msgid "Thy deeds have been recorded on the Imperial Scrolls of Honor."
+msgstr "It is written! The record is made!"
+
+#. official: data.3.7.6
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou wish to continue thy quest?"
+msgstr "Wilt thou continue on thy quest?"
+
+#. official: data.3.7.8
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Goodbye now, {}.\n"
+"'Take care and tempt not the Fates."
+msgstr "May destiny bring thee before us again ere long, brave {}!"
+
+#. official: map.2.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Death should not have taken thee, {}."
+msgstr "But what is this, brave {}? Defeat doth ill become thee!"
+
+#. official: map.2.7.0
+#: data/text/dialog_lookup_table.py
+msgid "I will give thee another chance."
+msgstr "There is naught for it--thou must be set upon thy path anew."
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "To reach the next level, thy Experience Points must increase by {}."
+msgstr "Earn another {} points of experience, and thou shalt attain a new level."
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "To reach the next level, thy Experience Point must increase by {}."
+msgstr "Earn but {} more point of experience, and thou shalt attain a new level."
+
+#: data/text/dialog_lookup_table.py
+msgid "Now, go, {}!"
+msgstr "Now, go forth, brave {}!"
+
+#. official: map.3.2.0
+#: data/text/dialog_lookup_table.py
+msgid "East of this castle is a town where armor, weapons, and many other items may be purchased."
+msgstr "To the east of the castle lieth a sizeable settlement. Therein shalt thou find establishments offering weapons and armour."
+
+#. official: map.3.2.0
+#: data/text/dialog_lookup_table.py
+msgid "Return to the Inn for a rest if thou art wounded in battle, {}."
+msgstr "Shouldst thou ever come to harm in battle, {}, lay thy head to rest at the inn."
+
+#. official: map.3.2.0
+#: data/text/dialog_lookup_table.py
+msgid "Sleep heals all."
+msgstr "Thy wounds will be healed ere thou wakest."
+
+#. official: map.3.3.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"If thou hast collected all the Treasure Chests,\n"
+"a key will be found."
+msgstr ""
+"If thou hast partaken of the contents of each and every chest,\n"
+"thou shalt by now have found a magic key."
+
+#. official: map.3.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Once used, the key will disappear, but the door will be open and thou may pass through."
+msgstr "Use thee this key to open yonder door and thou shalt lose it forever--yet use it thou must..."
+
+#. official: data.3.3.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Magic keys!\n"
+"They will unlock any door.\n"
+"Dost thou wish to purchase one for {} GOLD?"
+msgstr ""
+"Hast thou need of a magic key capable of opening any door?\n"
+"One such wonder will set thee back a mere {} gold coins."
+
+#. official: map.1.8.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"We are merchants who have traveled much in this land.\n"
+"Many of our colleagues have been killed by servants of the Dragonlord."
+msgstr ""
+"I ply the trade of the travelling merchant.\n"
+"Lo, countless of our brotherhood are fallen at the hands of roaming beasts of late..."
+
+#. official: map.1.9.3
+#: data/text/dialog_lookup_table.py
+msgid "Rumor has it that entire towns have been destroyed by the Dragonlord's servants."
+msgstr "They speak of a town laid to ruin by marauding monsters!"
+
+#. official: map.1.10.0
+#: data/text/dialog_lookup_table.py
+msgid "To become strong enough to face future trials thou must first battle many foes."
+msgstr "Thy first priority must ever be to hone thy skills by battling beasts."
+
+#. official: map.1.2.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"There was a time when Brecconary was a paradise.\n"
+"Then the Dragonlord's minions came."
+msgstr ""
+"In days of yore, the fair city of Tantegel was a veritable fairground!\n"
+"And yet now, we are beset on all sides by foul fiends..."
+
+#. official: map.1.19.0
+#: data/text/dialog_lookup_table.py
+msgid "It's a legend."
+msgstr "Thus spake the foretellings of old..."
+
+#. official: map.1.19.0
+#: data/text/dialog_lookup_table.py
+msgid "When the sun and rain meet, a Rainbow Bridge shall appear."
+msgstr "When rain and sun, the twain do meet, the rain's bow shall a bridge complete."
+
+#. official: map.1.0.0
+#: data/text/dialog_lookup_table.py
+msgid "King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."
+msgstr "If thou wouldst rejoin thy quest later, thou must needs record thy deeds in an adventure log."
+
+#. official: map.1.1.0
+#: data/text/dialog_lookup_table.py
+msgid "If thou art planning to take a rest, first see King Lorik."
+msgstr "If thou wouldst rest from thy quest awhile, thou must request of the King that thy deeds be recorded."
+
+#. official: map.1.7.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"{}'s coming was foretold by legend.\n"
+"May the light shine upon this brave warrior."
+msgstr ""
+"When dark doth spread across the land, light shall return by Erdrick's hand...\n"
+"May the Goddess's light shine upon brave {}'s quest!"
+
+#. official: map.14.0.1
+#: data/text/dialog_lookup_table.py
+msgid "I have been waiting long for one such as thee."
+msgstr "Long have we awaited the coming of one such as thee."
+
+#. official: map.4.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Take the Treasure Chest."
+msgstr "This stout chest doth house the holy Sunstone. Take it! Claim thy birthright!"
+
+#. official: map.5.5.2
+#: data/text/dialog_lookup_table.py
+msgid "There is a town where magic keys can be purchased."
+msgstr "ʼTis said that in a town far distant from this place, magic keys are sold!"
+
+#. official: map.5.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Thou art most welcome in Brecconary."
+msgstr "The castle town of Tantegel bids thee welcome, wanderer."
+
+#. official: map.5.11.0
+#: data/text/dialog_lookup_table.py
+msgid "Enter where thou can."
+msgstr "Welcome, friend! Prithee, make thy way inside!"
+
+#. official: map.5.6.0
+#: data/text/dialog_lookup_table.py
+msgid "If thou art cursed, come again."
+msgstr "I study the removal of curses. Shouldst thou ever find thyself afflicted, prithee seek me out."
+
+#. official: map.5.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Tell King Lorik that the search for his daughter hath failed."
+msgstr "Deliver unto His Majesty the King this news... The force tasked with the rescue of Princess Gwaelin is...no more..."
+
+#. official: map.5.7.1
+#: data/text/dialog_lookup_table.py
+msgid "I am almost gone...."
+msgstr "I am no more for this world..."
+
+#. official: map.5.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome! \n"
+"Enter the shop and speak to its keeper across the desk."
+msgstr ""
+"Welcome unto thee, friend! \n"
+"Prithee, make thy way inside and state thy business o'er the counter!"
+
+#. official: map.2.1.1
+#: data/text/dialog_lookup_table.py
+msgid "{}, please save the Princess."
+msgstr "Brave {}, I beg of thee! Deliver the Princess from her plight!"
+
+#. official: map.2.1.0
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou know about Princess Gwaelin?"
+msgstr "Dost thou know aught of poor Princess Gwaelin?"
+
+#. official: map.2.1.2
+#: data/text/dialog_lookup_table.py
+msgid "Half a year now hath passed since the Princess was kidnapped by the enemy."
+msgstr "A half-year prior to this day, foul monsters saw fit to tear the Princess from the bosom of we, her people!"
+
+#. official: map.2.1.2
+#: data/text/dialog_lookup_table.py
+msgid "Never does the King speak of it, but he must be suffering much."
+msgstr "His Majesty speaketh not of the tragedy, but ʼtis plain the loss doth pain him deeply..."
+
+#. official: map.7.1.0
+msgid "Welcome to Garinham. May thy stay be a peaceful one."
+msgstr "Welcome, wanderer, to the storied settlement of Galenholm!"
+
+#. official: map.7.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Garin, a wandering minstrel of legendary fame, is said to have built this town."
+msgstr "When the great bard Galen did at last bring his wand'rings to an end, ʼtwas here that he did settle."
+
+#. official: data.3.0.3
+#: data/text/dialog_lookup_table.py
+msgid "What dost thou wish to buy?"
+msgstr "Which of our fine items tickleth thy fancy?"
+
+#. official: data.3.0.1
+#: data/text/dialog_lookup_table.py
+msgid "Please, come again."
+msgstr "We shall await thy next coming most eagerly!"
+
+#. official: data.3.1.4
+#: data/text/dialog_lookup_table.py
+msgid "Is that Okay.?"
+msgstr "Findest thou this price agreeable?"
+
+#. official: data.3.0.15
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Oh, yes?\n"
+"That's too bad."
+msgstr ""
+"Alas and alack,\n"
+"a great shame indeed..."
+
+#. official: data.3.0.5
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Sorry.\n"
+"Thou hast not enough money."
+msgstr ""
+"Alas,\n"
+"thou lackest the necessary funds, good sir!"
+
+#. official: data.3.0.2
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou wish to buy anything more?"
+msgstr "Might we assist thee in some other manner?"
+
+#. official: data.3.0.13
+#: data/text/dialog_lookup_table.py
+msgid "Then I will buy thy {} for {} GOLD."
+msgstr "Then I can offer thee {1} gold coins for thy {0}."
+
+#. official: data.3.0.14
+#: data/text/dialog_lookup_table.py
+msgid "I thank thee."
+msgstr "As ever, a thousand thanks!"
+
+#. official: data.3.5.5
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Okay.\n"
+"Good-bye, traveler."
+msgstr ""
+"Very well.\n"
+"Fare thee well, wanderer."
+
+#. official: data.3.5.2
+#: data/text/dialog_lookup_table.py
+msgid "Thou hast not enough money."
+msgstr "Ah... I fear thy purse will not stretch to a room, friend."
+
+#. official: data.3.5.1
+#: data/text/dialog_lookup_table.py
+msgid "Good night."
+msgstr "Then may thy sleep be sound, and thy dreams pleasant..."
+
+#. official: data.3.5.4
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Good morning.\n"
+"Thou seems to have spent a good night."
+msgstr ""
+"Good morrow, friend.\n"
+"I trust that thou didst sleep soundly."
+
+#. official: data.3.5.3
+#: data/text/dialog_lookup_table.py
+msgid "I shall see thee again."
+msgstr "Pray, go forth with our thanks, and fare thee well."
+
+#. official: data.3.5.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome to the traveler's Inn.\n"
+"Room and board is {} GOLD per night.\n"
+"Dost thou want a room?"
+msgstr ""
+"Welcome, wanderer, unto this, our humble hostelry.\n"
+"A night's lodging may be had for a mere {} gold coins.\n"
+"Wilt thou lay thy weary head to rest?"
+
+#: data/text/intro_lookup_table.py
+msgid "-PUSH START-"
+msgstr "-PUSH START-"
+
+msgid "K key: A Button"
+msgstr "K key: A Button"
+
+msgid "J key: B Button"
+msgstr "J key: B Button"
+
+msgid "I key: Start"
+msgstr "I key: Start"
+
+msgid "U key/Tab: Options"
+msgstr "U key/Tab: Options"
+
+msgid "WASD / Arrow Keys: Move"
+msgstr "WASD / Arrow Keys: Move"
+
+#: data/text/intro_lookup_table.py
+msgid ""
+"Type your name using the keyboard.\n"
+"If you are using a joystick, press TAB to switch to joystick input."
+msgstr ""
+"Type your name using the keyboard.\n"
+"If you are using a joystick, press TAB to switch to joystick input."
+
+#. official: data.1.0.11
+#: src/battle.py
+msgid "Excellent move!\n"
+msgstr "Critical hit!\n"
+
+#. official: data.1.0.0
+#: src/languages.py
+msgid "{} draws near!\n"
+msgstr "{} appears!\n"
+
+#: src/battle_controller.py
+msgid "Command?\n"
+msgstr "Command?\n"
+
+#. official: data.1.0.41
+#: src/battle.py
+msgid "Thy power increases by {}.\n"
+msgstr "Thy strength increases by {}!\n"
+
+#. official: data.1.0.42
+#: src/battle.py
+msgid "Thy Response Speed increases by {}.\n"
+msgstr "Thy agility increases by {}!\n"
+
+#. official: data.1.0.44
+#: src/battle.py
+msgid "Thy Maximum Hit Points increase by {}.\n"
+msgstr "Thy maximum HP increase by {}!\n"
+
+#. official: data.1.0.44
+#: src/battle.py
+msgid "Thy Maximum Hit Point increase by {}.\n"
+msgstr "Thy maximum HP increase by {}!\n"
+
+#. official: data.1.0.45
+#: src/battle.py
+msgid "Thy Maximum Magic Points increase by {}.\n"
+msgstr "Thy maximum MP increase by {}!\n"
+
+#. official: data.1.0.45
+#: src/battle.py
+msgid "Thy Maximum Magic Point increase by {}.\n"
+msgstr "Thy maximum MP increase by {}!\n"
+
+#. official: data.1.0.4
+#: src/battle.py
+msgid "{} started to run away.\n"
+msgstr "{} makes a break for safety!\n"
+
+#. official: data.1.0.5
+#: src/battle.py
+msgid "But was blocked in front."
+msgstr "...But the enemy blocks his path!"
+
+#. official: data.1.0.9
+#: src/battle.py
+msgid "A miss! No damage hath been scored!"
+msgstr "Miss! The enemy takes no damage!"
+
+#. official: data.1.0.36
+#: src/languages.py
+msgid "Thou hast done well in defeating the {}.\n"
+msgstr "The {} is defeated!\n"
+
+#. official: data.1.0.38
+#: src/battle.py
+msgid ""
+"Thy Experience\n"
+"increases by {}.\n"
+msgstr "Thou earnest {} experience points!\n"
+
+#. official: data.1.0.39
+#: src/battle.py
+msgid ""
+"Thy GOLD\n"
+"increases by {}.\n"
+msgstr "Thou obtainest {} gold coins!\n"
+
+#. official: data.12.0.0
+#: src/enemy_lookup.py
+msgid "Slime"
+msgstr "slime"
+
+#. official: data.12.1.0
+#: src/enemy_lookup.py
+msgid "Red Slime"
+msgstr "she-slime"
+
+#. official: data.12.16.0
+#: src/enemy_lookup.py
+msgid "Metal Slime"
+msgstr "metal slime"
+
+#. official: data.12.2.0
+#: src/enemy_lookup.py
+msgid "Drakee"
+msgstr "dracky"
+
+#. official: data.12.5.0
+#: src/enemy_lookup.py
+msgid "Magidrakee"
+msgstr "drackolyte"
+
+#. official: data.12.10.0
+#: src/enemy_lookup.py
+msgid "Drakeema"
+msgstr "drackyma"
+
+#. official: data.12.3.0
+#: src/enemy_lookup.py
+msgid "Ghost"
+msgstr "ghost"
+
+#. official: data.12.8.0
+#: src/enemy_lookup.py
+msgid "Poltergeist"
+msgstr "fightgeist"
+
+#. official: data.12.4.0
+#: src/enemy_lookup.py
+msgid "Magician"
+msgstr "prestidigitator"
+
+#. official: data.12.12.0
+#: src/enemy_lookup.py
+msgid "Warlock"
+msgstr "legerdeman"
+
+#. official: data.12.32.0
+#: src/enemy_lookup.py
+msgid "Wizard"
+msgstr "vis mager"
+
+#. official: data.12.17.0
+#: src/enemy_lookup.py
+msgid "Specter"
+msgstr "spitegeist"
+
+#. official: data.12.6.0
+#: src/enemy_lookup.py
+msgid "Scorpion"
+msgstr "scorpion"
+
+#. official: data.12.13.0
+#: src/enemy_lookup.py
+msgid "Metal Scorpion"
+msgstr "iron scorpion"
+
+#. official: data.12.22.0
+#: src/enemy_lookup.py
+msgid "Rogue Scorpion"
+msgstr "death scorpion"
+
+#. official: data.12.7.0
+#: src/enemy_lookup.py
+msgid "Druin"
+msgstr "lunatick"
+
+#. official: data.12.19.0
+#: src/enemy_lookup.py
+msgid "Druinlord"
+msgstr "raving lunatick"
+
+#. official: data.12.9.0
+#: src/enemy_lookup.py
+msgid "Droll"
+msgstr "drohl drone"
+
+#. official: data.12.20.0
+#: src/enemy_lookup.py
+msgid "Drollmagi"
+msgstr "drohl diabolist"
+
+#. official: data.12.11.0
+#: src/enemy_lookup.py
+msgid "Skeleton"
+msgstr "skeleton"
+
+#. official: data.12.15.0
+#: src/enemy_lookup.py
+msgid "Wraith"
+msgstr "skeleton scrapper"
+
+#. official: data.12.23.0
+#: src/enemy_lookup.py
+msgid "Wraith Knight"
+msgstr "skeleton soldier"
+
+#. official: data.12.28.0
+#: src/enemy_lookup.py
+msgid "Demon Knight"
+msgstr "dark skeleton"
+
+#. official: data.12.14.0
+#: src/enemy_lookup.py
+msgid "Wolf"
+msgstr "bewarewolf"
+
+#. official: data.12.18.0
+#: src/enemy_lookup.py
+msgid "Wolflord"
+msgstr "scarewolf"
+
+#. official: data.12.29.0
+#: src/enemy_lookup.py
+msgid "Werewolf"
+msgstr "tearwolf"
+
+#. official: data.12.25.0
+#: src/enemy_lookup.py
+msgid "Goldman"
+msgstr "gold golem"
+
+#. official: data.12.24.0
+#: src/enemy_lookup.py
+msgid "Golem"
+msgstr "golem"
+
+#. official: data.12.35.0
+#: src/enemy_lookup.py
+msgid "Stoneman"
+msgstr "stone golem"
+
+#. official: data.12.21.0
+#: src/enemy_lookup.py
+msgid "Wyvern"
+msgstr "chimaera"
+
+#. official: data.12.27.0
+#: src/enemy_lookup.py
+msgid "Magiwyvern"
+msgstr "hocus chimaera"
+
+#. official: data.12.31.0
+#: src/enemy_lookup.py
+msgid "Starwyvern"
+msgstr "cosmic chimaera"
+
+#. official: data.12.26.0
+#: src/enemy_lookup.py
+msgid "Knight"
+msgstr "knight errant"
+
+#. official: data.12.33.0
+#: src/enemy_lookup.py
+msgid "Axe Knight"
+msgstr "knight aberrant"
+
+#. official: data.12.36.0
+#: src/enemy_lookup.py
+msgid "Armored Knight"
+msgstr "knight abhorrent"
+
+#. official: data.12.30.0
+#: src/enemy_lookup.py
+msgid "Green Dragon"
+msgstr "green dragon"
+
+#. official: data.12.34.0
+#: src/enemy_lookup.py
+msgid "Blue Dragon"
+msgstr "blue dragon"
+
+#. official: data.12.37.0
+#: src/enemy_lookup.py
+msgid "Red Dragon"
+msgstr "red dragon"
+
+#. official: data.12.38.0
+#: src/enemy_lookup.py
+msgid "Dragonlord"
+msgstr "Dragonlord"
+
+#. official: data.1.0.10
+#: src/battle_controller.py
+msgid "It is dodging!"
+msgstr "The enemy dodges nimbly!"
+
+#. official: data.15.0.0
+#: src/game.py
+#: src/map_hotkeys.py
+msgid "Dragon Warrior"
+msgstr "Dragon Quest"
+
+#. official: data.1.0.7
+#: src/battle_controller.py
+msgid "{} attacks!\n"
+msgstr "{} attacks!\n"
+
+#. official: data.1.0.8
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The {}'s Hit Points have been reduced by {}.\n"
+msgstr "The {} takes {} points of damage!\n"
+
+#. official: data.1.0.8
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The {}'s Hit Point have been reduced by {}.\n"
+msgstr "The {} takes {} point of damage!\n"
+
+#. official: data.1.0.16
+#: src/battle_controller.py
+msgid "The {} attacks!\n"
+msgstr "The {} attacks!\n"
+
+#. official: data.1.0.18
+#: src/hero_damage.py
+msgid "Thy Hits decreased by {}.\n"
+msgstr "Thou takest {} points of damage!\n"
+
+#. official: data.1.0.18
+#: src/hero_damage.py
+msgid "Thy Hit decreased by {}.\n"
+msgstr "Thou takest {} point of damage!\n"
+
+#. official: data.1.0.22
+#: src/battle_controller.py
+msgid "The {} is running away."
+msgstr "The {} flees!"
+
+#: data/text/intro_lookup_table.py
+msgid "Controls:\n"
+msgstr "Controls:\n"
+
+#. official: data.1.0.17
+#: src/battle_controller.py
+msgid "{} chants the spell of {}."
+msgstr "The {} casts {}!"
+
+#: src/windows.py
+msgid "COMMAND"
+msgstr "COMMAND"
+
+#: src/windows.py
+msgid "TALK"
+msgstr "TALK"
+
+#: src/windows.py
+msgid "STATUS"
+msgstr "STATUS"
+
+#: src/options_overlay.py
+#: src/windows.py
+msgid "STAIRS"
+msgstr "STAIRS"
+
+#: src/windows.py
+msgid "SEARCH"
+msgstr "SEARCH"
+
+#: src/menu.py
+#: src/windows.py
+msgid "SPELL"
+msgstr "SPELL"
+
+#: src/windows.py
+msgid "ITEM"
+msgstr "ITEM"
+
+#: src/windows.py
+msgid "DOOR"
+msgstr "DOOR"
+
+#: src/windows.py
+msgid "TAKE"
+msgstr "TAKE"
+
+#: src/menu.py
+msgid "I have nothing to say."
+msgstr "I have nothing to say."
+
+#. official: data.0.1.6
+#: src/menu.py
+msgid ""
+"Fortune smiles upon thee, {}.\n"
+"Thou hast found the {}."
+msgstr ""
+"{} opens the treasure chest...\n"
+"What luck! He finds the {}!"
+
+#. official: data.7.19.0
+#: src/items.py
+msgid "Torch"
+msgstr "Torch"
+
+#. official: data.7.22.0
+#: src/items.py
+msgid "Magic Key"
+msgstr "Magic Key"
+
+#. official: data.7.18.0
+#: src/items.py
+msgid "Herb"
+msgstr "Medicinal Herb"
+
+#. official: data.7.23.0
+#: src/items.py
+msgid "Fairy Water"
+msgstr "Holy Water"
+
+#. official: data.7.21.0
+#: src/items.py
+msgid "Wings"
+msgstr "Chimaera Wing"
+
+#. official: data.7.20.0
+#: src/items.py
+msgid "Dragon's Scale"
+msgstr "Dragon Scale"
+
+#. official: data.7.35.0
+#: src/items.py
+msgid "Fighter's Ring"
+msgstr "Warrior's Ring"
+
+msgid "Erdrick's Tablet"
+msgstr "Erdrick's Tablet"
+
+msgid "Tablet"
+msgstr "Stone Tablet"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "The tablet reads as follows:"
+msgstr "The following message is etched into its surface:"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "I am Erdrick and thou art my descendant."
+msgstr "I am Erdrick. Hear me well, bearer of my blood, heir to my destiny..."
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "Three items were needed to reach the Isle of Dragons, which is south of Brecconary."
+msgstr "If you would reach the evil island visible from Tantegel's shore, you will require the three sacred artefacts."
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "I gathered these items, reached the island, and there defeated a creature of great evil."
+msgstr "I gathered them, crossed to that accursed isle, and destroyed the source of all evil."
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "Now I have entrusted the three items to three worthy keepers."
+msgstr "Before my passing, I entrusted the three objects to three great sages."
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "Their descendants will protect the items until thy quest leads thee to seek them out."
+msgstr "If the fates have been kind, their descendants guard them still. Seek them out!"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "When a new evil arises, find the three items, then fight!"
+msgstr "When evil rules the ill-starred isle once more, gather the hallowed triad, and strike a blow for the cause of light."
+
+#. official: data.7.33.0
+#: src/items.py
+msgid "Cursed Belt"
+msgstr "Wasteband"
+
+#. official: data.7.27.0
+#: src/items.py
+msgid "Silver Harp"
+msgstr "Lyre of Ire"
+
+#. official: data.7.28.0
+#: src/items.py
+msgid "Staff of Rain"
+msgstr "Staff of Rain"
+
+#. official: data.7.29.0
+#: src/items.py
+msgid "Stones of Sunlight"
+msgstr "Sunstone"
+
+#. official: data.7.32.0
+#: src/items.py
+msgid "Rainbow Drop"
+msgstr "Rainbow Drop"
+
+#. official: data.7.30.0
+#: src/items.py
+msgid "Gwaelin's Love"
+msgstr "Princess' Pledge"
+
+#. official: data.7.24.0
+msgid "Ball of Light"
+msgstr "Sphere of Light"
+
+#. official: data.0.1.2
+#: src/menu.py
+msgid "Of GOLD thou hast gained {}"
+msgstr "What luck! He finds {} gold coins!"
+
+#. official: data.5.4.0
+#: src/menu.py
+msgid "But nothing happened."
+msgstr "...But nothing happens."
+
+#. official: data.6.7.0
+#: src/battle.py
+#: src/menu.py
+msgid "{} cannot yet use the spell."
+msgstr "{} can't cast spells yet."
+
+#. official: data.5.8.0
+#: src/menu.py
+msgid "Nothing of use has yet been given to thee."
+msgstr "Thou art not carrying any items."
+
+#. official: data.6.8.0
+#: src/menu.py
+msgid "Thy MP is too low."
+msgstr "Not enough MP!"
+
+#. official: data.6.0.0
+#: src/menu.py
+msgid "{} chanted the spell of {}."
+msgstr "{} casts {}!"
+
+#. official: data.5.17.0
+#: src/menu.py
+msgid "There is no door here."
+msgstr "There's no door there!"
+
+#. official: data.16.53.0
+#: src/menu.py
+msgid "Thou hast not a key to use."
+msgstr "Thou hast no keys!"
+
+#: src/menu.py
+msgid "There is nothing to take here, {}."
+msgstr "There's nothing here to take, {}."
+
+#: src/languages.py
+msgid ""
+"Courage and wit have served thee well.\n"
+"Thou hast been promoted to the next level.\n"
+msgstr ""
+"Courage and wit have served thee well.\n"
+"Thou hast been promoted to the next level.\n"
+
+#. official: data.1.0.46
+#: src/battle.py
+msgid "Thou hast learned a new spell.\n"
+msgstr "Thou learnest a new spell!\n"
+
+#. official: map.33.1.1
+#: src/battle.py
+msgid "The Dragonlord revealed his true self!\n"
+msgstr ""
+"The Dragonlord flickers and fades...\n"
+"...Only to reveal his terrifying true form!\n"
+
+#: src/languages.py
+msgid "A {}"
+msgstr "A {}"
+
+#: src/languages.py
+msgid "An {}"
+msgstr "An {}"
+
+#. official: data.1.0.14
+#: src/battle_controller.py
+msgid "{} hath woken up."
+msgstr "{} wakes up!"
+
+#. official: data.1.0.15
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The {} is asleep."
+msgstr "The {} is asleep..."
+
+#. official: data.1.0.12
+#: src/battle_controller.py
+#: src/menu.py
+msgid "But that spell hath been blocked."
+msgstr "...But it fizzles away harmlessly!"
+
+#. official: data.1.0.25
+#: src/battle_controller.py
+msgid "Thou art asleep.\n"
+msgstr "Thou fallest asleep!\n"
+
+#. official: data.5.8.0
+#: src/battle_controller.py
+msgid "Nothing of use has yet been given to thee.\n"
+msgstr "Thou art not carrying any items.\n"
+
+#. official: data.1.0.13
+#: src/battle_controller.py
+msgid "Thou art still asleep.\n"
+msgstr "Thou art asleep...\n"
+
+#. official: data.1.0.29
+#: src/battle_controller.py
+msgid "The {} is breathing fire.\n"
+msgstr "The {} breathes fire!\n"
+
+#. official: data.1.0.14
+#: src/battle_controller.py
+msgid "{} awakes.\n"
+msgstr "{} wakes up!\n"
+
+#. official: map.0.1.1
+#: src/ending.py
+msgid "Thou hast brought us peace, again."
+msgstr "Lo, peace hath returned unto our realm, and all is thanks to thee!"
+
+#. official: map.33.2.0
+#: src/ending.py
+msgid "Thou hast found the Ball of Light."
+msgstr "Thou hast wrested the Sphere of Light from the Dragonlord's death grip!"
+
+#. official: map.33.2.0
+#: src/ending.py
+msgid "Radiance streams forth as thy hands touch the object and hold it aloft."
+msgstr "As thou holdest the sphere aloft, a blinding light radiates from deep within its core..."
+
+#. official: map.33.2.1
+#: src/ending.py
+msgid "Across the land spreads the brilliance until all shadows are banished and peace is restored."
+msgstr "The great evil has been banished, and the world knows peace once more!"
+
+#. official: map.0.1.19
+#: src/ending.py
+msgid "Come now, King Lorik awaits."
+msgstr "Tarry not! Hie thee to His Majesty, post-haste!"
+
+#. official: map.34.1.1
+#: src/ending.py
+msgid "The legends have proven true."
+msgstr "All is as the prophecies foretold. The words of the ancients do ring clear and true!"
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "Thou art indeed of the line of Erdrick."
+msgstr "The promised hero in whose veins floweth the blood of mighty Erdrick is none other than thee."
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "It is thy right to rule over this land."
+msgstr "If there be a better man to rule this land, I know him not."
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "Will thou take my place?"
+msgstr "Wilt thou take the throne in my stead?"
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "If ever I am to rule a country, it must be a land that I myself find."
+msgstr "Were I ever to rule, it must needs be o'er a realm of mine own founding."
+
+#. official: map.34.1.5
+#: src/ending.py
+msgid "I wish to go with thee on thy journey."
+msgstr "Take me with thee, my dearest heart!"
+
+#. official: map.34.1.5
+#: src/ending.py
+msgid "May I travel as thy companion?"
+msgstr "Pray, forsake me not! Wilt thou take me for thy companion?"
+
+#. official: map.34.1.6
+#: data/text/dialog_lookup_table.py
+#: src/ending.py
+msgid "But thou must."
+msgstr "Thou wilt not!? Hmph! Perhaps thou didst not hear me correctly, beloved..."
+
+#. official: map.34.1.7
+#: data/text/dialog_lookup_table.py
+#: src/ending.py
+msgid "I'm so happy!"
+msgstr "Thou wilt? Oh, joy! Then let us away, my love!"
+
+#: src/ending.py
+msgid "unless the dragons return again."
+msgstr "unless the dragons return again."
+
+#. official: map.0.1.0
+#: src/ending.py
+msgid ""
+"Hurrah!\n"
+"Hurrah!\n"
+"Long live {}!"
+msgstr ""
+"All hail mighty Erdrick!\n"
+"Long live the hero {}!"
+
+#: src/ending.py
+msgid "{} thought carefully before answering."
+msgstr "{} thought carefully before answering."
+
+#: src/ending.py
+msgid "Gwaelin said:"
+msgstr "Princess Gwaelin said:"
+
+#. official: map.34.1.4
+#: src/ending.py
+msgid "Please, wait."
+msgstr "Wait! Wait, I prithee!"
+
+#: src/ending.py
+msgid "And thus the tale comes to an end...."
+msgstr "And thus the tale comes to an end...."
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "I cannot,"
+msgstr "My thanks, Majesty, but no,"
+
+#: src/ending.py
+msgid "said {}."
+msgstr "said {}."
+
+#. official: map.1.22.0
+#: src/step_triggers.py
+msgid "Cursed one,be gone!"
+msgstr "Begone, accursed one!"
+
+#. official: data.5.44.0
+#: src/step_triggers.py
+msgid "REPEL has lost its effect."
+msgstr "The Holy Protection effect wears off."
+
+#. official: data.5.19.0
+#: src/step_triggers.py
+msgid "The Fairy Water has lost its effect."
+msgstr "The effect of the holy water wears off."
+
+#: src/map_hotkeys.py
+msgid "Fullscreen mode enabled"
+msgstr "Fullscreen mode enabled"
+
+#: src/map_hotkeys.py
+msgid "Windowed mode enabled"
+msgstr "Windowed mode enabled"
+
+#: src/map_hotkeys.py
+msgid "Auto-battle disabled"
+msgstr "Auto-battle disabled"
+
+#: src/map_hotkeys.py
+msgid "Invulnerability enabled"
+msgstr "Invulnerability enabled"
+
+#: src/map_hotkeys.py
+msgid "Invulnerability disabled"
+msgstr "Invulnerability disabled"
+
+#: src/hero_death.py
+msgid "Thou hast failed and thou art cursed."
+msgstr "Thou hast failed and thou art cursed."
+
+#: src/hero_death.py
+msgid "Leave at once!"
+msgstr "Leave at once!"
+
+#: src/map_hotkeys.py
+msgid ""
+"Auto-battle enabled\n"
+"(Repeats: {})"
+msgstr ""
+"Auto-battle enabled\n"
+"(Repeats: {})"
+
+#. official: data.0.1.1
+#: src/menu.py
+msgid "Unfortunately, it is empty."
+msgstr "But it's empty."
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "From where thou art now, my castle lies..\n"
+msgstr "From where thou art now, the castle of Tantegel standeth a mere...\n"
+
+#. official: data.5.5.0
+#: src/menu.py
+msgid "That cannot be used in battle."
+msgstr "...But that can't be used right now."
+
+#. official: data.5.6.0
+#: src/menu.py
+msgid "The Wings of the Wyvern cannot be used here."
+msgstr "The chimaera wing can't be used here."
+
+#: src/menu.py
+msgid "A torch can be used only in dark places."
+msgstr "A torch can be lit only in dark places."
+
+#. official: data.5.43.0
+#: src/menu.py
+msgid "Thou art already wearing the scale of the dragon."
+msgstr "The dragon scale is already equipped!"
+
+#. official: data.5.38.0
+#: src/menu.py
+msgid "Quietly Golem closes his eyes and settles into sleep."
+msgstr ""
+"The golem is overcome with drowsiness...\n"
+"...And falls fast asleep!"
+
+#. official: data.7.31.0
+#: src/items.py
+#: src/menu.py
+msgid "Erdrick's Token"
+msgstr "Mark of Erdrick"
+
+#: src/menu.py
+msgid "But no rainbow appeared here."
+msgstr "...But no rainbow appears here."
+
+#. official: data.6.9.0
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The spell will not work."
+msgstr "The enemy isn't affected!"
+
+#: src/menu.py
+msgid "There is a treasure box."
+msgstr "There is a treasure chest."
+
+#. official: map.26.0.0
+#: src/menu.py
+msgid "Feel the wind blowing from behind the throne."
+msgstr "The faintest of draughts can be felt coming from behind the throne..."
+
+#. official: data.0.0.0
+#: src/menu.py
+msgid "But there found nothing."
+msgstr "But there's nothing there."
+
+#. official: data.0.0.1
+#: src/menu.py
+msgid "{} discovers the {}."
+msgstr "What luck! {} finds the {}!"
+
+#. official: data.3.6.0
+#: src/menu.py
+msgid ""
+"If thou would take the {}, thou must now discard some other item.\n"
+"Dost thou wish to have the {}?"
+msgstr ""
+"Thou wilt need to free up some space if thou wouldst carry the {}.\n"
+"Wilt thou throw something away for the {}?"
+
+#. official: data.3.6.2
+#: src/menu.py
+msgid "What shall thou drop?"
+msgstr "What wilt thou discard?"
+
+#. official: data.3.6.6
+#: src/menu.py
+msgid "Thou hast given up thy {}."
+msgstr "Thou changest thy mind, and puttest the {} back."
+
+#. official: data.5.1.0
+#: src/menu.py
+msgid "{} used the Herb."
+msgstr "{} uses a medicinal herb."
+
+#. official: data.5.15.0
+#: src/menu.py
+msgid "{} threw The Wings of the Wyvern up into the sky."
+msgstr ""
+"{} throws the chimaera wing\n"
+"into the air."
+
+#. official: data.5.2.0
+#: src/menu.py
+msgid "{} donned the scale of the dragon."
+msgstr "{} equips the dragon scale."
+
+#. official: data.5.18.0
+#: src/menu.py
+msgid "{} sprinkled the Fairy Water over his body."
+msgstr "{} sprinkles holy water over himself."
+
+#. official: data.5.21.0
+#: src/menu.py
+msgid "{} played a sweet melody on the harp."
+msgstr "{} deftly plucks the Lyre of Ire..."
+
+#. official: data.5.39.0
+#: src/menu.py
+msgid "The {} looks happy."
+msgstr "The {} looks as pleased as punch!"
+
+#. official: data.5.20.0
+#: src/menu.py
+msgid "{} blew the Fairies' Flute."
+msgstr "{} plays a soothing melody on the faerie flute..."
+
+#. official: data.5.24.0
+#: src/menu.py
+msgid ""
+"{} held the {} tightly.\n"
+"But nothing happened."
+msgstr ""
+"{} grips the {} tightly.\n"
+"...But nothing happens."
+
+#. official: data.5.26.0
+#: src/menu.py
+msgid "{} held the Rainbow Drop toward the sky."
+msgstr "{} holds the Rainbow Drop aloft..."
+
+#. official: data.5.2.0
+#: src/menu.py
+msgid "{} put on the Fighter's Ring."
+msgstr "{} equips the warrior's ring."
+
+#. official: data.5.28.0
+#: src/menu.py
+msgid "The {} is squeezing thy body."
+msgstr "The {} sticks fast, and cannot be removed!"
+
+#. official: data.5.27.0
+#: src/menu.py
+msgid "{} put on the {} and was cursed!."
+msgstr ""
+"{} puts on the {}...\n"
+"And is afflicted by a terrible curse!"
+
+#. official: data.5.28.0
+#: src/menu.py
+msgid "Thy body is being squeezed."
+msgstr "It sticks fast, and cannot be removed!"
+
+#. official: data.0.5.3
+#: src/menu.py
+msgid ""
+"Heed my voice,\n"
+"'{}, for this is Gwaelin.\n"
+"To reach the next level thou must raise thy Experience Points by {}.\n"
+"My hope is with thee.'"
+msgstr ""
+"The benevolent winds bear Princess Gwaelin's words to {}'s waiting ear...\n"
+"`To attain the next level, my beloved, thou must needs earn another {} experience points...’"
+
+#. official: data.0.5.3
+#: src/menu.py
+msgid ""
+"Heed my voice,\n"
+"'{}, for this is Gwaelin.\n"
+"To reach the next level thou must raise thy Experience Point by {}.\n"
+"My hope is with thee.'"
+msgstr ""
+"The benevolent winds bear Princess Gwaelin's words to {}'s waiting ear...\n"
+"`To attain the next level, my beloved, thou must needs earn but {} more experience point...’"
+
+#. official: data.0.5.4
+#: src/menu.py
+msgid ""
+"'{}?\n"
+"This is Gwaelin.\n"
+"Know that thou hath reached the final level.'"
+msgstr "`Thou needest grow no stronger, {}, my hero...’"
+
+#. official: map.2.5.1
+#: data/text/dialog_lookup_table.py
+#: src/menu.py
+msgid "I love thee, {}."
+msgstr "O {}, my hero! Thy beloved princess adoreth thee so!"
+
+#. official: data.6.5.0
+#: src/menu.py
+msgid "Thou hast put the {} to sleep."
+msgstr "The {} is sent to sleep!"
+
+#. official: data.6.6.0
+#: src/menu.py
+msgid "The {}'s spell hath been blocked."
+msgstr "The {} is prevented from casting spells!"
+
+#. official: data.0.0.0
+#: src/menu.py
+msgid "{} searched the ground all about."
+msgstr "{} examines the ground at his feet..."
+
+#. official: map.26.1.1
+#: src/menu.py
+msgid "{} discovers the Secret Passage."
+msgstr "Well, look at that! {} finds a hidden staircase!"
+
+#. official: data.5.10.0
+#: src/menu.py
+msgid "That is much too important to throw away."
+msgstr "Don't be ridiculous! Thou canst not get rid of that!"
+
+#. official: map.5.6.1
+#: data/text/dialog_lookup_table.py
+#: src/menu.py
+msgid "A curse is upon thy body."
+msgstr "A foul curse afflicteth thee!"
+
+#: src/menu.py
+msgid "{} adjusted the position of the Fighter's Ring."
+msgstr "{} adjusts the warrior's ring."
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the south and.."
+msgstr "{} paces to the south, and..."
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the west."
+msgstr "{} paces to the west of thy current position..."
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the north and.."
+msgstr "{} paces to the north, and..."
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the east."
+msgstr "{} paces to the east of thy current position..."
+
+#. official: data.3.6.5
+#: src/menu.py
+msgid "Thou hast dropped thy {}."
+msgstr "Thou throwest away the {}..."
+
+#. official: data.3.6.5
+#: src/menu.py
+msgid "And obtained the {}."
+msgstr "...And grabbest the {} instead!"
+
+#: src/menu_functions.py
+msgid "Joystick input disabled."
+msgstr "Joystick input disabled."
+
+#: src/menu_functions.py
+msgid "Joystick input enabled."
+msgstr "Joystick input enabled."
+
+#. official: map.33.0.7
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thy journey is over.\n"
+"Take now a long, long rest.\n"
+"Hahahaha...."
+msgstr ""
+"Thy journey is over.\n"
+"May the darkness engulf thee for all eternity!\n"
+"Ha ha ha! HAHAHAHAHAAA!"
+
+#. official: map.21.0.1
+#: data/text/dialog_lookup_table.py
+msgid "Will thou take me to the castle?"
+msgstr "Mighty hero, thou wilt, of course, escort me to my home, the palace?"
+
+#. official: map.21.0.3
+#: data/text/dialog_lookup_table.py
+msgid "Princess Gwaelin embraces thee.\n"
+msgstr "Thou takest the Princess in thy big, strong arms.\n"
+
+#. official: map.33.0.2
+#: data/text/dialog_lookup_table.py
+msgid ""
+"What sayest thou?\n"
+"Will the great warrior stand with me?"
+msgstr ""
+"What say'st thou?\n"
+"Wilt thou rule beside me?"
+
+#: data/text/dialog_lookup_table.py
+msgid "Really?"
+msgstr "Thou wouldst truly rule beside me?"
+
+#. official: map.33.0.8
+#: data/text/dialog_lookup_table.py
+msgid "Thou art a fool!"
+msgstr "So be it. Come, fool! Know thy insignificance!"
+
+#. official: map.33.0.7
+#: data/text/dialog_lookup_table.py
+msgid "Then half of this world is thine, half of the darkness, and...."
+msgstr "Thou shalt receive thy just reward. This world shall be cleft in twain, and its blackest pits and dankest recesses rendered unto thee..."
+
+#: data/text/dialog_lookup_table.py
+msgid "If thou dies I can bring thee back for another attempt without loss of thy deeds to date."
+msgstr "Shouldst thou die, I can bring thee back for another attempt without loss of thy deeds to date."
+
+#. official: map.2.5.0
+#: data/text/dialog_lookup_table.py
+msgid "Even when we two are parted by great distances, I shall be with thee."
+msgstr "My love! Though we may be apart, I am ever by thy side!"
+
+#. official: map.16.0.6
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou hast no business here.\n"
+"Go away."
+msgstr ""
+"There is no more for thee here.\n"
+"Go forth unto thy destiny!"
+
+#. official: map.14.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Thou hast brought the harp. Good."
+msgstr "Thou art in possession of the Lyre? Very well..."
+
+#. official: map.16.0.3
+#: data/text/dialog_lookup_table.py
+msgid "Now the sun and rain shall meet and the Rainbow Drop passes to thy keeping."
+msgstr "Now, at last, rain and sun shall be conjoined! Take thee the Rainbow Drop, and go forth!"
+
+#. official: data.3.7.9
+#: data/text/dialog_lookup_table.py
+msgid "Rest then for awhile."
+msgstr "It serveth even the mighty to take pause and reflect upon their deeds from time to time."
+
+#. official: map.9.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou still wish to go on?"
+msgstr "Knowing this, art thou still resolved to face him?"
+
+#. official: data.3.1.1
+#: data/text/dialog_lookup_table.py
+msgid "I will be waiting for thy next visit."
+msgstr "Thanks unto thee! May fate guide thee unto our door once more!"
+
+#. official: data.3.1.17
+#: data/text/dialog_lookup_table.py
+msgid "What dost thou want?"
+msgstr "And what, pray, might be thy pleasure this day?"
+
+#. official: data.3.1.2
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou want anything else?"
+msgstr "Is there aught else in which we might assist thee?"
+
+#. official: data.3.1.10
+#: data/text/dialog_lookup_table.py
+msgid "What art thou selling?"
+msgstr "Thou wouldst sell me something? And what might it be?"
+
+#: data/text/dialog_lookup_table.py
+msgid "Wilt thou sell anything else?"
+msgstr "Wilt thou sell me aught else?"
+
+#. official: data.3.4.1
+#: data/text/dialog_lookup_table.py
+msgid "All the best to thee."
+msgstr "May the most holy on high watch over thee."
+
+#. official: data.3.3.1
+#: data/text/dialog_lookup_table.py
+msgid "I will see thee later."
+msgstr "We await thy next coming with great anticipation."
+
+#. official: data.3.5.4
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Good morning.\n"
+"Thou hast had a good night's sleep I hope."
+msgstr ""
+"Good morrow, friend.\n"
+"I trust that thou didst sleep soundly."
+
+#: data/text/dialog_lookup_table.py
+msgid "And I would like to have something of thine--a token."
+msgstr "And I would have something of thine in return--a token."
+
+#. official: map.5.6.1
+#: data/text/dialog_lookup_table.py
+msgid "I will free thee from thy curse."
+msgstr "A foul curse afflicteth thee! Allow me to alleviate thy suffering!"
+
+#. official: map.5.6.2
+#: data/text/dialog_lookup_table.py
+msgid "Now, go."
+msgstr "Be not afeared, friend. Thou art cursed no longer!"
+
+#. official: map.14.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Thy bravery must be proven."
+msgstr "Thy foe is blessed with strength beyond reckoning. Therefore, thou must first be tested."
+
+#: data/text/dialog_lookup_table.py
+msgid "Thus, I propose a test."
+msgstr "Thus, I propose a test."
+
+#. official: map.14.0.4
+#: data/text/dialog_lookup_table.py
+msgid "There is a Silver Harp that beckons to the creatures of the Dragonlord."
+msgstr "Somewhere in this world, there is a harp unto whose melody the beasts of the wild do flock as moths to a flame."
+
+#. official: map.14.0.4
+#: data/text/dialog_lookup_table.py
+msgid "Bring this to me and I will reward thee with the Staff of Rain."
+msgstr "Bring me this curious instrument, and the Staff of Rain shall be thine."
+
+#. official: map.16.0.0
+#: data/text/dialog_lookup_table.py
+msgid "In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted would save us."
+msgstr "Thou hast no proof of thy birthright. Alas, I fear thou art not the one Erdrick foretold would save us."
+
+#. official: map.16.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Go now!"
+msgstr "Then begone!"
+
+#. official: map.16.0.2
+#: data/text/dialog_lookup_table.py
+msgid "Thou may go and search."
+msgstr "Now go thee forth, and seek out sun and rain!"
+
+#: data/text/dialog_lookup_table.py
+msgid "Please push RESET, hold it in, then turn off the POWER."
+msgstr "Please push RESET, hold it in, then turn off the POWER."
+
+#: data/text/dialog_lookup_table.py
+msgid "If you turn the power off first, the Imperial Scroll of Honor containing your deeds may be lost."
+msgstr "If you turn the power off first, the adventure log containing your deeds may be lost."
+
+#: data/text/dialog_lookup_table.py
+msgid "BUY"
+msgstr "BUY"
+
+#: data/text/dialog_lookup_table.py
+msgid "SELL"
+msgstr "SELL"
+
+#. official: data.3.1.11
+#: data/text/dialog_lookup_table.py
+msgid "Thou hast no possessions."
+msgstr "But what is this? Thou carriest not a thing!"
+
+#. official: data.3.0.12
+#: data/text/dialog_lookup_table.py
+msgid "I cannot buy it."
+msgstr "Alas, friend, I cannot in good conscience take such an item from thee."
+
+#: data/text/dialog_lookup_table.py
+msgid "I am sorry."
+msgstr "Alas, I am sorry."
+
+#. official: data.3.3.5
+#: data/text/dialog_lookup_table.py
+msgid "I am sorry, but I cannot sell thee anymore."
+msgstr "Alas, I am not permitted to sell thee any more keys at present."
+
+#: data/text/dialog_lookup_table.py
+msgid "I suggest making a map if thy path leads into the darkness."
+msgstr "I suggest making a map if thy path leads into the darkness."
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I'm too busy.\n"
+"Ask the other guard."
+msgstr ""
+"I'm too busy.\n"
+"Ask the other guard."
+
+#. official: map.7.8.0
+msgid "The harp attracts enemies. Stay away from the grave in Garinham."
+msgstr "The sound of Galen's harp is said to draw monsters from miles around. Stay away from the grave of Galen."
+
+#. official: map.8.11.0
+#: data/text/dialog_lookup_table.py
+msgid "Many believe that Princess Gwaelin is hidden away in a cave."
+msgstr "A traveller did tell me of a cave at the sea's edge, in which languisheth a maiden most fair."
+
+#. official: map.5.14.0
+#: data/text/dialog_lookup_table.py
+msgid "In legends it is said that fairies know how to put Golem to sleep."
+msgstr "The tales of the ancient times do tell of towering golems laid aslumber by tiny faeries."
+
+#. official: map.8.0.0
+#: data/text/dialog_lookup_table.py
+msgid "This is the village of Kol."
+msgstr "Good day, friend. Thou hast found thy way to the humble village of Kol."
+
+#. official: map.8.12.0
+#: data/text/dialog_lookup_table.py
+msgid "Golem is afraid of the music of the flute, so ʼtis said."
+msgstr "The towering golem feareth but one thing: the painfully pure tones of the faerie flute."
+
+#. official: map.8.7.0
+#: data/text/dialog_lookup_table.py
+msgid "This bath cures rheumatism."
+msgstr "Behold, the public baths! Enter, wanderer, and cleanse thyself!"
+
+#: data/text/dialog_lookup_table.py
+msgid "Please,save us from the minions of the Dragonlord."
+msgstr "Prithee, deliver us from the Dragonlord's foul fiends."
+
+#. official: map.5.9.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Art thou the descendant of Erdrick?\n"
+"Hast thou any proof?"
+msgstr ""
+"Thou art of the bloodline of mighty Erdrick, thou say'st?\n"
+"Hast thou proof?"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Hast thou seen Nester?\n"
+"I think he may need help."
+msgstr ""
+"Hast thou seen Nester?\n"
+"I think he may need help."
+
+#. official: map.8.11.1
+#: data/text/dialog_lookup_table.py
+msgid "East of Hauksness there is a town, ʼtis said, where one may purchase weapons of extraordinary quality."
+msgstr "East of Damdara there towereth the ramparts of proud Cantlin, wherein weapons of surpassing might are made."
+
+#. official: map.9.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Welcome to Cantlin, the castle town."
+msgstr "The impenetrable fortress of Cantlin doth bid thee welcome!"
+
+#. official: map.9.4.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Come buy my radishes! They are fresh and cheap.\n"
+"Buy thy radishes today!"
+msgstr ""
+"Welcome, friend, welcome! If thou likest carrots, thou hast come to the right place!\n"
+"Buy thy carrots today!"
+
+#. official: map.9.5.0
+#: data/text/dialog_lookup_table.py
+msgid "What shall I get for thy dinner?"
+msgstr "Hmm... What to prepare, I wonder..."
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I'm Nester.\n"
+"Hey, where am I? No, don't tell me!"
+msgstr ""
+"I'm Nester.\n"
+"A pox on my memory! Where am I? No, don't tell me!"
+
+#: data/text/dialog_lookup_table.py
+msgid "I know nothing."
+msgstr "I know nothing."
+
+#. official: map.9.17.0
+#: data/text/dialog_lookup_table.py
+msgid "To learn how proof may be obtained that thy ancestor was the great Erdrick, see a man in this very town."
+msgstr "If thou wand'rest in search of proof of thy lineage, see a man in this very town."
+
+#. official: map.9.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Grandfather used to say that his friend, Wynn, had buried something of great value at the foot of a tree behind his shop."
+msgstr "My father's father spoke of his friend Magog, and of a great treasure which he did bury beneath the tree behind his shop..."
+
+#: data/text/dialog_lookup_table.py
+msgid "ʼTis said that Erdrick's sword could cleave steel."
+msgstr "ʼTis said that the Sword of Erdrick could cleave steel."
+
+#. official: map.9.19.2
+#: data/text/dialog_lookup_table.py
+msgid "My Grandfather Wynn once had a shop on the east side of Hauksness."
+msgstr "My grandfather, Magog, did once tend a shop in the east of the desert town of Damdara."
+
+#. official: map.2.5.2
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou love me, {}?"
+msgstr "{}... Thinkest thou often of thy beloved princess?"
+
+#. official: map.9.3.1
+#: data/text/dialog_lookup_table.py
+msgid "Thou art truly brave."
+msgstr "Verily, thou art a hero indeed!"
+
+#. official: map.9.3.2
+#: data/text/dialog_lookup_table.py
+msgid ""
+"That is good.’\n"
+"`No one will say thou art afraid."
+msgstr ""
+"Well, mayhap ʼtis for the best.’\n"
+"`The hero who goeth blithely to his certain doom is but a heroical fool."
+
+#. official: data.3.1.7
+#: data/text/dialog_lookup_table.py
+msgid "Thou cannot hold more Herbs."
+msgstr "Alas, thou already bearest all the medicinal herbs a man might carry..."
+
+#. official: data.3.1.13
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou said the {}.\n"
+"I will buy thy {} for {} GOLD.\n"
+"Is that all right?"
+msgstr ""
+"The {}, thou say'st?\n"
+"Pray, permit me a moment to consider thy {}...\n"
+"Would {} gold coins suffice?"
+
+#. official: data.3.4.0
+#: data/text/dialog_lookup_table.py
+msgid "Will thou buy some Fairy Water for {} GOLD to keep the Dragonlord's minions away?"
+msgstr "Might a phial of holy water with the power to repel foul beasts interest thee? At a mere {} gold coins, surely it must?"
+
+#. official: data.3.4.3
+#: data/text/dialog_lookup_table.py
+msgid "Thou cannot carry anymore."
+msgstr "Hm? Thy burden is too great already. Pray, lighten thy load and come unto me once more."
+
+#. official: data.3.4.4
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I thank thee.\n"
+"Won't thou buy one more bottle?"
+msgstr ""
+"Thanks unto thee, friend.\n"
+"Another phial, perhaps?"
+
+#. official: data.3.3.4
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Here,take this key.\n"
+"Dost thou wish to purchase more?"
+msgstr ""
+"Excellent. I present unto thee one magic key.\n"
+"Desirest thou another?"
+
+#. official: map.2.8.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I am glad thou hast returned.\n"
+"All our hopes are riding on thee."
+msgstr ""
+"Thou art returned to us! Full glad am I!\n"
+"If it be in the power of any man to deliver us from the Dragonlord's tyranny, that man is surely thee!"
+
+#. official: data.3.7.11
+#: data/text/dialog_lookup_table.py
+msgid "See me again when thy level has increased."
+msgstr "When thy level groweth greater, come before me and record thine adventure."
+
+#. official: map.2.6.0
+#: data/text/dialog_lookup_table.py
+msgid "Now, Gwaelin, come to my side."
+msgstr "Come now, Gwaelin. Return thee to thy rightful place at my side."
+
+#. official: map.5.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Beware the bridges!"
+msgstr "Wherever the path of adventure leadeth thee, beware of bridges!"
+
+#. official: map.5.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Danger grows when thou crosses."
+msgstr "For verily, beyond each bridge wilt thou find ever more fierce and fearsome beasts!"
+
+#. official: map.8.10.0
+#: data/text/dialog_lookup_table.py
+msgid "Thou shouldst come here again."
+msgstr "Seek out the sword of thine ancestor, and come here again."
+
+#: data/text/dialog_lookup_table.py
+msgid "Dreadful is the South Island."
+msgstr "Dreadful is the isle to the south."
+
+#. official: map.8.9.1
+#: data/text/dialog_lookup_table.py
+msgid "Great strength and skill and wit only will bring thee back from that place."
+msgstr "ʼTis said that land is rife with beasts of incomparable ferocity! Only great strength and skill and wit will bring thee back."
+
+#. official: map.9.3.0
+#: data/text/dialog_lookup_table.py
+msgid "ʼTis said that the Dragonlord hath claws that can cleave iron and fiery breath that can melt stone."
+msgstr "The claws of the Dragonlord rendeth steel as if ʼtwere parchment, while his breath melteth stone as if ʼtwere ice."
+
+#. official: map.9.2.0
+#: data/text/dialog_lookup_table.py
+msgid "It is said that many have held Erdrick's armor."
+msgstr "The legends do tell that the armour of mighty Erdrick was passed down from hand to hand..."
+
+#. official: map.9.2.0
+#: data/text/dialog_lookup_table.py
+msgid "The last to have it was a fellow named Wynn."
+msgstr "Until it came finally into the hand of one who bore the name of Magog..."
+
+#. official: map.1.16.0
+#: data/text/dialog_lookup_table.py
+msgid "Let us wish the warrior well!"
+msgstr "Let us pray for the success of this, our hero!"
+
+#. official: map.1.16.0
+#: data/text/dialog_lookup_table.py
+msgid "May the light be thy strength!"
+msgstr "May the light of the heavens shine upon thee..."
+
+#. official: map.9.18.0
+#: data/text/dialog_lookup_table.py
+msgid "From Tantegel Castle travel 70 leagues to the south and 40 to the east."
+msgstr "From Tantegel Castle travel 70 paces to the south and 40 paces to the east."
+
+#. official: map.21.0.0
+#: data/text/dialog_lookup_table.py
+msgid "I am Gwaelin, daughter of Lorik."
+msgstr "At long last! Brave hero, I am Gwaelin, Princess of Tantegel."
+
+#. official: map.33.0.2
+#: data/text/dialog_lookup_table.py
+msgid "I give thee now a chance to share this world and to rule half of it if thou will now stand beside me."
+msgstr "Come! Take thy rightful place at my side! Do so, and I will grant unto thee dominion over half this world!"
+
+#. official: map.2.6.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Gwaelin then whispers:\n"
+"`Wait a moment,please.\n"
+"I would give a present to {}.’"
+msgstr ""
+"Princess Gwaelin then whispers:\n"
+"`I shall, Father--but first I must give brave {} a token of my undying... appreciation!’"
+
+#: data/text/dialog_lookup_table.py
+msgid "Please give me thy {}."
+msgstr "Pray, give me thy {}."
+
+#. official: map.2.1.4
+#: data/text/dialog_lookup_table.py
+msgid "Oh, brave {}."
+msgstr "Brave {}! Beloved saviour and hero of the people!"
+
+#. official: map.1.2.3
+#: data/text/dialog_lookup_table.py
+msgid "Thank you for saving the Princess."
+msgstr "Zounds! Praise be! The Princess is saved! Thou art a hero indeed, friend!"
+
+#. official: map.5.7.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Who touches me?’\n"
+"`I see nothing, nor can I hear."
+msgstr ""
+"Who...? Who toucheth now mine hand?’\n"
+"`I see not... I hear not... I am no more for this world..."
+
+#. official: map.2.0.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Forever shall I be grateful for the gift of my daughter returned to her home, {}.\n"
+"Accept my thanks."
+msgstr ""
+"Brave {}--thou didst deliver my beloved daughter from her plight, and return her safely unto me.\n"
+"I shall not forget this great gift."
+
+#. official: map.2.6.2
+#: data/text/dialog_lookup_table.py
+msgid "Please accept my love, {}."
+msgstr "Brave {}! Pray accept this modest symbol of mine affection, humble though it may be!"
+
+#. official: map.2.6.3
+#: data/text/dialog_lookup_table.py
+msgid "Farewell, {}."
+msgstr "Now, brave {}, go forth upon thy quest!"
+
+#. official: map.8.10.0
+#: data/text/dialog_lookup_table.py
+msgid "Though thou art as brave as thy ancestor, {}, thou cannot defeat the great Dragonlord with such weapons."
+msgstr "Brave {}, bearer of the blood of Erdrick! Know that thy weapon will not serve to vanquish the Dragonlord!"
+
+#. official: map.21.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Thou art brave indeed to rescue me, {}."
+msgstr "At long last! One has come who will deliver me from my plight! Brave {}!"
+
+#. official: map.33.0.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome, {}.\n"
+"I am the Dragonlord--King of Kings."
+msgstr ""
+"So, thou art come before me at last, {}!\n"
+"I am the Dragonlord, master of masters, king of kings!"
+
+#. official: data.3.1.9
+#: data/text/dialog_lookup_table.py
+msgid ""
+"The {}?\n"
+"Thank you very much."
+msgstr ""
+"The {}?\n"
+"With our humblest compliments!"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Oh, my dearest Gwaelin!’\n"
+"`I hate thee, {}."
+msgstr ""
+"Oh, my dearest Gwaelin!’\n"
+"`A pox upon thee, {}!"
+
+msgid "H: Show Controls"
+msgstr "H: Show Controls"
+
+msgid "F11: Toggle Fullscreen"
+msgstr "F11: Toggle Fullscreen"
+
+msgid "1-5: Adjust Game Speed"
+msgstr "1-5: Adjust Game Speed"
+
+#. official: data.7.5.0
+#: src/items.py
+msgid "Broad Sword"
+msgstr "Steel Sword"
+
+#. official: data.7.6.0
+#: src/items.py
+msgid "Flame Sword"
+msgstr "Fire Blade"
+
+#. official: data.7.7.0
+#: src/items.py
+msgid "Erdrick's Sword"
+msgstr "Erdrick's Sword"
+
+#. official: data.7.7.0
+#: src/items.py
+msgid "Erdricks Sword"
+msgstr "Erdrick's Sword"
+
+#. official: data.7.10.0
+#: src/items.py
+msgid "Chain Mail"
+msgstr "Chain Mail"
+
+#. official: data.7.13.0
+#: src/items.py
+msgid "Magic Armor"
+msgstr "Magic Armour"
+
+#. official: data.7.14.0
+#: src/items.py
+msgid "Erdrick's Armor"
+msgstr "Erdrick's Armour"
+
+#. official: data.7.16.0
+#: src/items.py
+msgid "Large Shield"
+msgstr "Iron Shield"
+
+#. official: data.7.17.0
+#: src/items.py
+msgid "Silver Shield"
+msgstr "Silver Shield"
+
+#. official: data.7.26.0
+#: src/items.py
+msgid "Fairy Flute"
+msgstr "Faerie Flute"
+
+#. official: data.7.34.0
+#: src/items.py
+msgid "Death Necklace"
+msgstr "Choker"
+
+#. official: data.12.39.0
+#: src/enemy_lookup.py
+msgid "Dragonlord 2"
+msgstr "Dragonlord"
+
+#. official: data.10.0.0
+#: src/spells.py
+msgid "HEAL"
+msgstr "Heal"
+
+#. official: data.10.8.0
+#: src/spells.py
+msgid "HEALMORE"
+msgstr "Midheal"
+
+#. official: data.10.1.0
+#: src/spells.py
+msgid "HURT"
+msgstr "Sizz"
+
+#. official: data.10.9.0
+#: src/spells.py
+msgid "HURTMORE"
+msgstr "Sizzle"
+
+#. official: data.10.2.0
+#: src/spells.py
+msgid "SLEEP"
+msgstr "Snooze"
+
+#. official: data.10.3.0
+#: src/spells.py
+msgid "RADIANT"
+msgstr "Glow"
+
+#. official: data.10.4.0
+#: src/spells.py
+msgid "STOPSPELL"
+msgstr "Fizzle"
+
+#. official: data.10.5.0
+#: src/spells.py
+msgid "OUTSIDE"
+msgstr "Evac"
+
+#. official: data.10.6.0
+#: src/spells.py
+msgid "RETURN"
+msgstr "Zoom"
+
+#. official: data.10.7.0
+#: src/spells.py
+msgid "REPEL"
+msgstr "Holy Prot"
+
+#. official: data.1.0.19
+#: src/battle.py
+msgid "The attack failed and there was no loss of Hit Points!"
+msgstr "Miss! Thou takest no damage!"
+
+#. official: data.1.0.2
+#: src/battle_controller.py
+msgid "The {} attacked before {} was ready."
+msgstr "The {} suddenly attacks before {} is ready!"
+
+#. official: data.1.0.24
+#: src/battle_controller.py
+msgid "The {} hath recovered."
+msgstr "The {} recovers HP!"
+
+#. official: data.1.0.27
+#: src/battle_controller.py
+msgid "{}'s spell is blocked."
+msgstr "{} is prevented from casting spells!"
+
+#: src/map_hotkeys.py
+msgid ""
+"Game set to {}x speed.\n"
+"({} FPS)"
+msgstr ""
+"Game set to {}x speed.\n"
+"({} FPS)"
+
+#. official: data.3.7.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou art strong enough!\n"
+"Why can thou not defeat the Dragonlord?"
+msgstr ""
+"Thou art more than mighty enough to face the Dragonlord!\n"
+"Go forth unto certain victory!"
+
+#. official: map.8.16.0
+#: data/text/dialog_lookup_table.py
+msgid "Hast thou found the flute?"
+msgstr "Is the fabled faerie flute perhaps in thy possession already?"
+
+#. official: map.8.9.0
+#: data/text/dialog_lookup_table.py
+msgid "Hast thou been to the southern island?"
+msgstr "Hast thou set foot upon the isle to the south of this place?"
+
+#. official: map.6.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Hast thou found a magic temple?"
+msgstr "Hast thou happened yet upon that most holy of shrines?"
+
+#. official: map.6.8.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Is that a wedding ring?’\n"
+"`Thou seems too young to be married."
+msgstr ""
+"Is that a ring I spy upon thy finger, friend?’\n"
+"`Thou seemest too young to be married."
+
+#. official: map.6.8.0
+#: data/text/dialog_lookup_table.py
+msgid "All true warriors wear a ring."
+msgstr "To wear a ring is prudent, even for a mighty warrior."
+
+#. official: map.1.13.0
+#: data/text/dialog_lookup_table.py
+msgid "Thou must have a key to open a door."
+msgstr "No door may be opened without a key."
+
+#. official: map.1.17.0
+#: data/text/dialog_lookup_table.py
+msgid "If thy Hit Points are high enough, by all means, enter."
+msgstr "If thou hast the utmost faith in thy physical hardiness, by all means, enter."
+
+#. official: map.1.5.0
+#: data/text/dialog_lookup_table.py
+msgid "When entering the cave, take with thee a torch."
+msgstr "If thou questeth in caves or dungeons dank, a torch or two will serve thee well, friend."
+
+#. official: map.1.18.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"In Garinham,look for the grave of Garin.\n"
+"Thou must push on a wall of darkness there."
+msgstr ""
+"Get thee to Galenholm, and look for the grave of Galen.\n"
+"There press thee 'pon the wall of darkness till the path groweth clear."
+
+#. official: map.1.14.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I am looking for the castle cellar.\n"
+"I heard it is not easily found."
+msgstr ""
+"A pox on my memory!\n"
+"I could have sworn that the castle dungeon was around here somewhere..."
+
+#. official: map.5.8.0
+#: data/text/dialog_lookup_table.py
+msgid "Some say that Garin's grave is home to a Silver Harp."
+msgstr "They say great Galen took his beloved lyre unto his grave."
+
+#. official: map.5.13.0
+#: data/text/dialog_lookup_table.py
+msgid "Watch thy Hit Points when in the Poisonous Marsh."
+msgstr "Beware the poisonous marshes, friend... Cross them only when thou art in full good health."
+
+#. official: map.5.4.0
+#: data/text/dialog_lookup_table.py
+msgid "Go north to the seashore, then follow the coastline west until thou hath reached Garinham."
+msgstr "Fair Galenholm is far to the north of here, and west along the coast."
+
+#. official: data.3.7.11
+#: data/text/dialog_lookup_table.py
+msgid "See King Lorik when thy experience levels are raised."
+msgstr "When thy level groweth greater, go before the King."
+
+#. official: map.5.10.0
+#: data/text/dialog_lookup_table.py
+msgid "No,I am not Princess Gwaelin."
+msgstr "Nay, nay! Thou art mistaken! I am not the fair Princess Gwaelin!"
+
+#. official: map.7.8.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"The harp attracts enemies.\n"
+"Stay away from the grave in Garinham."
+msgstr ""
+"The sound of Galen's harp is said to draw monsters from miles around.\n"
+"Stay away from the grave of Galen."
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I hate people!\n"
+"Go! Leave me!"
+msgstr ""
+"I hate people!\n"
+"Go! Leave me!"
+
+#. official: map.7.9.0
+#: data/text/dialog_lookup_table.py
+msgid "Once there was a town called Hauksness far to the south,but I do not know if it still exists."
+msgstr "Oft did I lay my head at the inn of fair Damdara in the south. I wonder if it stands still..."
+
+#. official: map.7.8.1
+#: data/text/dialog_lookup_table.py
+msgid "They say that Erdrick's armor was hidden long ago."
+msgstr "Wand'ring merchants do tell that the armour of mighty Erdrick surviveth to this day somewhere in the land."
+
+#. official: map.7.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome to Garinham.\n"
+"May thy stay be a peaceful one."
+msgstr ""
+"Welcome, wanderer,\n"
+"to the storied settlement of Galenholm!"
+
+#. official: map.7.4.0
+#: data/text/dialog_lookup_table.py
+msgid "It is said that the Princess was kidnapped and taken eastward."
+msgstr "The foul fiends that did bear off the Princess Gwaelin flew eastward. Ever eastward..."
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I have heard of one named Nester.\n"
+"Dost thou know such a one?"
+msgstr ""
+"I have heard of one named Nester.\n"
+"Dost thou know such a one?"
+
+#. official: map.8.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Rimuldar is the place to buy keys."
+msgstr "Know'st thou of Rimuldar? I hear a merchant there doth ply a trade in keys!"
+
+#. official: map.6.14.0
+#: data/text/dialog_lookup_table.py
+msgid "I am Orwick, and I am waiting for my girl friend."
+msgstr "I am Orwick. Where art thou, my love? And wherefore art thou so very tardy?"
+
+#. official: map.5.11.0
+#: data/text/dialog_lookup_table.py
+msgid "Welcome!"
+msgstr "Welcome, friend!"
+
+#. official: map.6.11.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Who art thou?\n"
+"Leave at once or I will call my friends."
+msgstr ""
+"Who art thou!? What business hast thou here!?\n"
+"Begone, lest I call the guard!"
+
+#. official: map.6.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Welcome to the town of Rimuldar."
+msgstr "Thou art come unto the town of Rimuldar, stranger. We bid thee welcome."
+
+#: data/text/dialog_lookup_table.py
+msgid "The scales of the Dragonlord are as hard as steel."
+msgstr "The scales of the Dragonlord are as hard as steel."
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"No, I have no tomatoes.\n"
+"I have no tomatoes today."
+msgstr ""
+"No, I have no tomatoes.\n"
+"I have no tomatoes today."
+
+#. official: map.6.18.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou shalt find the Stones of Sunlight in Tantegel Castle,\n"
+"if thou has not found them yet."
+msgstr "The legends speak of a stone betokening the sun which doth slumber within the keep of Tantegel's castle."
+
+#. official: map.6.5.0
+#: data/text/dialog_lookup_table.py
+msgid "Before long the enemy will arrive."
+msgstr "Doubt not that the fiends are coming. Our town too will surely be laid waste ere long..."
+
+#. official: map.5.4.1
+#: data/text/dialog_lookup_table.py
+msgid "Heed my warning! Travel not to the south for there the monsters are fierce and terrible."
+msgstr "South of this place wilt thou encounter fiends yet more fearsome even than those that do roam these parts!"
+
+#. official: map.6.14.2
+#: data/text/dialog_lookup_table.py
+msgid "Good day,I am Howard. Four steps south of the bath in Kol thou shalt find a magic item."
+msgstr "Good day, I am Howard. From the baths of Kol, walk thee four paces south. There shalt thou find a true treasure."
+
+#. official: map.6.6.0
+#: data/text/dialog_lookup_table.py
+msgid "In this world is there any sword that can pierce the scales of the Dragonlord?"
+msgstr "Can there truly exist any weapon mighty enough to slay the Dragonlord?"
+
+#. official: map.6.13.0
+#: data/text/dialog_lookup_table.py
+msgid "Orwick is late again. I'm starving."
+msgstr "Oh, Orwick! What art thou about? Wherefore tarry'st thou so? I'm starving."
+
+#. official: map.8.16.1
+#: data/text/dialog_lookup_table.py
+msgid "Go to the town of Cantlin."
+msgstr "Then make haste unto the city of Cantlin--there wilt thou find out its use!"
+
+#. official: map.8.1.0
+#: data/text/dialog_lookup_table.py
+msgid "Howard had it, but he went to Rimuldar and never returned."
+msgstr "Howard had it, but he went to Rimuldar, and hath yet to return."
+
+#. official: map.8.9.1
+#: data/text/dialog_lookup_table.py
+msgid "I have heard that powerful enemies live there."
+msgstr "But ʼtis said that land is rife with beasts of incomparable ferocity!"
+
+#. official: map.8.9.2
+#: data/text/dialog_lookup_table.py
+msgid "To the south, I believe, there is a town called Rimuldar."
+msgstr "ʼTis famed for the town of Rimuldar, which standeth proudly upon it."
+
+#. official: map.6.7.1
+#: data/text/dialog_lookup_table.py
+msgid "In this temple do the sun and rain meet."
+msgstr "There shall rain and sun, the twain meet at last..."
+
+#. official: map.6.7.2
+#: data/text/dialog_lookup_table.py
+msgid "Go to the south."
+msgstr "Then journey thee south from this place. There shalt thou find it."
+
+#. official: map.5.2.0
+#: data/text/dialog_lookup_table.py
+msgid "Many have been the warriors who have perished on this quest."
+msgstr "Many a courageous young adventurer hath set forth from Tantegel town. Alas, nary a one of them hath returned."
+
+#. official: map.5.12.0
+#: data/text/dialog_lookup_table.py
+msgid "Within sight of Tantegel Castle to the south is Charlock,"
+msgstr "To the south, within sight of Tantegel Castle, there lieth a great fortress shrouded in mist,"
+
+#. official: map.5.12.0
+#: data/text/dialog_lookup_table.py
+msgid "The fortress of the Dragonlord."
+msgstr "The Dragonlord's Castle."
+
+#. official: map.6.9.0
+#: data/text/dialog_lookup_table.py
+msgid "Over the western part of this island Erdrick created a rainbow."
+msgstr "Legends tell of how mighty Erdrick did use the rain's bow as a bridge to reach the forsaken isle."
+
+#. official: map.6.9.0
+#: data/text/dialog_lookup_table.py
+msgid "ʼTis also said that he entered the darkness from a hidden entrance in the room of the Dragonlord."
+msgstr "They speak also of how he did descend into the darkness through a hidden doorway in the throne room of his foe."
+
+#. official: map.6.7.0
+#: data/text/dialog_lookup_table.py
+msgid "This is a magic place."
+msgstr "Thou art come unto a place of foretelling... Of sight beyond sight."
+
+#. official: map.8.10.1
+#: data/text/dialog_lookup_table.py
+msgid "Finally thou hast obtained it, {}."
+msgstr "So, thou hast recovered the Sword of Erdrick at long last, brave {}."
+
+#. official: map.4.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"You are {}?\n"
+"It has been long since last we met."
+msgstr ""
+"Thou art {}, art thou not?\n"
+"Thou art the very spit of thy storied forebear."
+
+#. official: map.3.0.2
+#: data/text/dialog_lookup_table.py
+msgid "A word of advice."
+msgstr "I would fain furnish thee with such counsel as may be of use on thy quest."
+
+#. official: map.2.2.0
+#: data/text/dialog_lookup_table.py
+msgid "Save thy money for more expensive armor."
+msgstr "When thou hast accrued sufficient funds, thou wouldst be well advised to purchase better weapons and armour."
+
+#. official: map.2.3.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Listen to what people say.\n"
+"It can be of great help."
+msgstr ""
+"No hero should ever deem himself too busy to engage in idle conversation.\n"
+"Naught is e'er as trivial as it may seem..."
+
+#. official: map.1.15.0
+#: data/text/dialog_lookup_table.py
+msgid "But for thee I wish success, {}."
+msgstr "I shall remain here and pray for thy success, {}."
+
+msgid "F4: Auto-Battle"
+msgstr "F4: Auto-Battle"
+
+msgid "F9: Invulnerability"
+msgstr "F9: Invulnerability"
+
+msgid "F11: Fullscreen"
+msgstr "F11: Fullscreen"
+
+msgid "1-5: Game Speed"
+msgstr "1-5: Game Speed"
+
+#: data/text/intro_lookup_table.py
+msgid "Toggle on/off:"
+msgstr "Toggle on/off:"
+
+#: src/options_screen.py
+#: src/title_windows.py
+msgid "ADVENTURE LOG {}:"
+msgstr "ADVENTURE LOG {}:"
+
+#. official: data.16.0.0
+#: src/windows.py
+msgid "FIGHT"
+msgstr "ATTACK"
+
+#. official: data.16.2.0
+#: src/windows.py
+msgid "RUN"
+msgstr "FLEE"
+
+#: src/windows.py
+msgid "NAME:"
+msgstr "NAME:"
+
+#. official: data.16.35.0
+#: src/windows.py
+msgid "STRENGTH:"
+msgstr "STRENGTH:"
+
+#. official: data.16.36.0
+#: src/windows.py
+msgid "AGILITY:"
+msgstr "AGILITY:"
+
+#. official: data.16.38.0
+#: src/windows.py
+msgid "MAXIMUM HP:"
+msgstr "MAX. HP:"
+
+#. official: data.16.39.0
+#: src/windows.py
+msgid "MAXIMUM MP:"
+msgstr "MAX. MP:"
+
+#. official: data.16.40.0
+#: src/windows.py
+msgid "ATTACK POWER:"
+msgstr "ATTACK:"
+
+#. official: data.16.41.0
+#: src/windows.py
+msgid "DEFENSE POWER:"
+msgstr "DEFENCE:"
+
+#. official: data.16.20.0
+#: src/windows.py
+msgid "WEAPON:"
+msgstr "WEAPON:"
+
+#. official: data.16.21.0
+#: src/windows.py
+msgid "ARMOR:"
+msgstr "ARMOUR:"
+
+#. official: data.16.22.0
+#: src/windows.py
+msgid "SHIELD:"
+msgstr "SHIELD:"
+
+#. official: data.16.54.0
+#: src/options_screen.py
+#: src/windows.py
+msgid "YES"
+msgstr "YES"
+
+#. official: data.16.55.0
+#: src/options_screen.py
+#: src/windows.py
+msgid "NO"
+msgstr "NO"
+
+#: src/options_screen.py
+msgid "Which Message"
+msgstr "Which Message"
+
+#: src/options_screen.py
+msgid "Speed Do You"
+msgstr "Speed Do You"
+
+#: src/options_screen.py
+msgid "Want To Use?"
+msgstr "Want To Use?"
+
+#. official: data.16.79.0
+#: src/options_overlay.py
+#: src/options_screen.py
+msgid "FAST"
+msgstr "FAST"
+
+#: src/options_overlay.py
+#: src/options_screen.py
+msgid "NORMAL"
+msgstr "NORMAL"
+
+#. official: data.16.80.0
+#: src/options_overlay.py
+#: src/options_screen.py
+msgid "SLOW"
+msgstr "SLOW"
+
+#: src/controls_screen.py
+msgid "OPTIONS"
+msgstr "OPTIONS"
+
+#. official: data.16.81.0
+#: src/options_overlay.py
+msgid "MESSAGE SPEED"
+msgstr "MESSAGE SPEED"
+
+#: src/options_overlay.py
+msgid "DIALOG STYLE"
+msgstr "DIALOG STYLE"
+
+#: src/options_overlay.py
+msgid "CLASSIC (NES)"
+msgstr "CLASSIC (NES)"
+
+#: src/options_overlay.py
+msgid "MODERN"
+msgstr "MODERN"
+
+#: src/options_overlay.py
+msgid "NPCS MAKE WAY"
+msgstr "NPCS MAKE WAY"
+
+#: src/options_overlay.py
+msgid "ON"
+msgstr "ON"
+
+#: src/options_overlay.py
+msgid "OFF (NES)"
+msgstr "OFF (NES)"
+
+#: src/options_overlay.py
+msgid "FADE STYLE"
+msgstr "FADE STYLE"
+
+#: src/options_overlay.py
+msgid "NES"
+msgstr "NES"
+
+#: src/options_overlay.py
+msgid "SMOOTH"
+msgstr "SMOOTH"
+
+#: src/options_overlay.py
+msgid "STEP ON"
+msgstr "STEP ON"
+
+#: src/options_screen.py
+msgid ""
+"Do You Want To\n"
+"Erase This\n"
+"Character?"
+msgstr ""
+"Do You Want To\n"
+"Erase This\n"
+"Character?"
+
+#: src/options_screen.py
+msgid "LEVEL"
+msgstr "LEVEL"
+
+#: src/options_screen.py
+#: src/title_windows.py
+msgid "ADVENTURE LOG {}"
+msgstr "ADVENTURE LOG {}"
+
+#. official: data.16.93.0
+#: src/windows.py
+msgid "BEGIN A NEW QUEST"
+msgstr "NEW ADVENTURE LOG"
+
+#. official: data.16.89.0
+#: src/windows.py
+msgid "CONTINUE A QUEST"
+msgstr "VENTURE FORTH"
+
+#. official: data.16.81.0
+#: src/windows.py
+msgid "CHANGE MESSAGE SPEED"
+msgstr "MESSAGE SPEED"
+
+#: src/windows.py
+msgid "COPY A QUEST"
+msgstr "COPY ADVENTURE LOG"
+
+#. official: data.16.95.0
+#: src/windows.py
+msgid "ERASE A QUEST"
+msgstr "DELETE ADVENTURE LOG"
+
+#: data/text/intro_lookup_table.py
+msgid "Ctrl +/-/Wheel: Zoom"
+msgstr "Ctrl +/-/Wheel: Zoom"
+
+#: data/text/intro_lookup_table.py
+msgid "Ctrl 0: Reset Zoom"
+msgstr "Ctrl 0: Reset Zoom"
+
+#: data/text/intro_lookup_table.py
+msgid "Window zoom:"
+msgstr "Window zoom:"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped"
+msgstr "Auto-grind stopped"
+
+#: src/auto_grind.py
+msgid ""
+"Auto-grind on\n"
+"(G or any key to stop)"
+msgstr ""
+"Auto-grind on\n"
+"(G or any key to stop)"
+
+#: src/auto_grind.py
+msgid "Auto-grind: battles are off (NO_BATTLES)"
+msgstr "Auto-grind: battles are off (NO_BATTLES)"
+
+#: src/auto_grind.py
+msgid "Auto-grind: no fights here"
+msgstr "Auto-grind: no fights here"
+
+#: src/auto_grind.py
+msgid "Auto-grind: HP is already low"
+msgstr "Auto-grind: HP is already low"
+
+#: src/auto_grind.py
+msgid "Auto-grind: no safe tile to walk to"
+msgstr "Auto-grind: no safe tile to walk to"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: HP low"
+msgstr "Auto-grind stopped: HP low"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: asleep"
+msgstr "Auto-grind stopped: asleep"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: STOPSPELL"
+msgstr "Auto-grind stopped: Fizzle"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: special fight"
+msgstr "Auto-grind stopped: special fight"
+
+#: src/auto_grind.py
+msgid ""
+"Auto-grind stopped: level up\n"
+"(G to go on)"
+msgstr ""
+"Auto-grind stopped: level up\n"
+"(G to go on)"
+
+msgid "G: Auto-grind"
+msgstr "G: Auto-grind"
+
+#: src/options_overlay.py
+msgid "GRIND STOP"
+msgstr "GRIND STOP"
+
+#: src/options_overlay.py
+msgid "RED HP"
+msgstr "RED HP"
+
+#: src/options_overlay.py
+msgid "HALF HP"
+msgstr "HALF HP"
+
+#: src/options_overlay.py
+msgid "3/4 HP"
+msgstr "3/4 HP"
+
+#: data/text/intro_lookup_table.py
+msgid "Save states:"
+msgstr "Save states:"
+
+msgid "Shift+F1-F3: Save state"
+msgstr "Shift+F1-F3: Save state"
+
+msgid "F1-F3: Load state"
+msgstr "F1-F3: Load state"
+
+#: src/save_state.py
+msgid "State {} saved"
+msgstr "State {} saved"
+
+#: src/save_state.py
+msgid "State {} loaded"
+msgstr "State {} loaded"
+
+#: src/save_state.py
+msgid "State {} is empty"
+msgstr "State {} is empty"
+
+#: src/save_state.py
+msgid ""
+"State {} is from another version\n"
+"and can't be loaded"
+msgstr ""
+"State {} is from another version\n"
+"and can't be loaded"
+
+#: src/save_state.py
+msgid "State {} can't be read"
+msgstr "State {} can't be read"
+
+msgid "Backspace: Rewind"
+msgstr "Backspace: Rewind"
+
+#: src/options_overlay.py
+msgid "LANGUAGE"
+msgstr "LANGUAGE"
+
+msgid "ENGLISH"
+msgstr "ENGLISH"
+
+msgid "한국어"
+msgstr "한국어"
+
+#: src/options_overlay.py
+msgid "SCANLINES"
+msgstr "SCANLINES"
+
+#: src/options_overlay.py
+msgid "OFF"
+msgstr "OFF"
+
+#: src/options_overlay.py
+msgid "SCALING"
+msgstr "SCALING"
+
+#: src/options_overlay.py
+msgid "PIXEL PERFECT"
+msgstr "PIXEL PERFECT"
+
+#: data/text/intro_lookup_table.py
+msgid "Right Button: A"
+msgstr "Right Button: A"
+
+#: data/text/intro_lookup_table.py
+msgid "Bottom Button: B"
+msgstr "Bottom Button: B"
+
+#: data/text/intro_lookup_table.py
+msgid "Start Button: Start"
+msgstr "Start Button: Start"
+
+#: data/text/intro_lookup_table.py
+msgid "Back Button: Select"
+msgstr "Back Button: Select"
+
+#: data/text/intro_lookup_table.py
+msgid "D-Pad/Stick: Move"
+msgstr "D-Pad/Stick: Move"
+
+#: data/text/intro_lookup_table.py
+msgid "Right Trigger: Speed"
+msgstr "Right Trigger: Speed"
+
+#: data/text/intro_lookup_table.py
+msgid "Controller:"
+msgstr "Controller:"
+
+#: data/text/intro_lookup_table.py
+msgid "LB: Load state 1"
+msgstr "LB: Load state 1"
+
+#: data/text/intro_lookup_table.py
+msgid "RB: Save state 1"
+msgstr "RB: Save state 1"
+
+#: data/text/intro_lookup_table.py
+msgid "LT (hold): Rewind"
+msgstr "LT (hold): Rewind"
+
+#: src/options_overlay.py
+msgid "MENU SPEED"
+msgstr "MENU SPEED"
+
+#: src/options_overlay.py
+msgid "FOLLOW GAME"
+msgstr "FOLLOW GAME"
+
+#: src/options_overlay.py
+msgid "LOOK & SOUND"
+msgstr "LOOK & SOUND"
+
+#: src/options_overlay.py
+msgid "GAMEPLAY"
+msgstr "GAMEPLAY"
+
+#: src/controls_screen.py
+#: src/options_overlay.py
+msgid "CONTROLS"
+msgstr "CONTROLS"
+
+#: src/options_overlay.py
+msgid "PRESET"
+msgstr "PRESET"
+
+#: src/options_overlay.py
+msgid "CUSTOM"
+msgstr "CUSTOM"
+
+#: src/options_overlay.py
+msgid "PAGE"
+msgstr "PAGE"
+
+#: src/options_overlay.py
+msgid "MUSIC"
+msgstr "MUSIC"
+
+#: src/options_overlay.py
+msgid "ORCHESTRA"
+msgstr "ORCHESTRA"
+
+#: src/options_overlay.py
+msgid "QUICK ACTION"
+msgstr "QUICK ACTION"
+
+#: src/options_overlay.py
+msgid "GAME SPEED"
+msgstr "GAME SPEED"
+
+#: src/options_overlay.py
+msgid "SAVE STATES"
+msgstr "SAVE STATES"
+
+#: src/controls_screen.py
+#: src/options_overlay.py
+msgid "REWIND"
+msgstr "REWIND"
+
+#: src/options_overlay.py
+msgid "AUTO-GRIND"
+msgstr "AUTO-GRIND"
+
+#: src/options_overlay.py
+msgid "CHEATS"
+msgstr "CHEATS"
+
+#: src/options_overlay.py
+msgid "STATUS WINDOW"
+msgstr "STATUS WINDOW"
+
+#: src/options_overlay.py
+msgid "ALWAYS"
+msgstr "ALWAYS"
+
+#: src/options_overlay.py
+msgid "ENCOUNTERS"
+msgstr "ENCOUNTERS"
+
+#: src/options_overlay.py
+msgid "HALF"
+msgstr "HALF"
+
+#: src/options_overlay.py
+msgid "EXP/GOLD"
+msgstr "EXP/GOLD"
+
+#: src/options_overlay.py
+msgid "x1 (NES)"
+msgstr "x1 (NES)"
+
+#: src/options_overlay.py
+msgid "x2"
+msgstr "x2"
+
+#: src/options_overlay.py
+msgid "x4"
+msgstr "x4"
+
+#: src/options_overlay.py
+msgid "RUN BUTTON"
+msgstr "RUN BUTTON"
+
+#: src/auto_grind.py
+msgid "Auto-grind: ENCOUNTERS are off"
+msgstr "Auto-grind: ENCOUNTERS are off"
+
+#: src/options_overlay.py
+msgid "SHOP PREVIEW"
+msgstr "SHOP PREVIEW"
+
+#. official: data.16.27.0
+#: src/shop_preview.py
+msgid "ATTACK"
+msgstr "ATTACK"
+
+#. official: data.16.28.0
+#: src/shop_preview.py
+msgid "DEFENSE"
+msgstr "DEFENCE"
+
+msgid "Q: Quest Journal"
+msgstr "Q: Quest Journal"
+
+#: src/options_overlay.py
+msgid "QUEST JOURNAL"
+msgstr "QUEST JOURNAL"
+
+#: src/options_overlay.py
+msgid "LEARNED"
+msgstr "LEARNED"
+
+#: src/options_overlay.py
+msgid "LEARNED+HINTS"
+msgstr "LEARNED+HINTS"
+
+#: src/quest_journal.py
+msgid "Done: {}"
+msgstr "Done: {}"
+
+#: src/quest_journal.py
+msgid "Get the Rainbow Drop."
+msgstr "Get the Rainbow Drop."
+
+#: src/quest_journal.py
+msgid "Thou hast heard of nothing yet."
+msgstr "Thou hast heard of nothing yet."
+
+#: src/quest_journal.py
+msgid "If thou wishest:"
+msgstr "If thou wishest:"
+
+#: src/quest_journal.py
+msgid "Rescue Princess Gwaelin."
+msgstr "Rescue Princess Gwaelin."
+
+#: src/quest_journal.py
+msgid "She is held in the Swamp Cave, south of Kol, behind a locked door. A dragon guards her."
+msgstr "She is held in the cave in the marshes, south of Kol, behind a locked door. A dragon guards her."
+
+#: src/quest_journal.py
+msgid "Carry Princess Gwaelin back to King Lorik."
+msgstr "Carry Princess Gwaelin back to the King."
+
+#: src/quest_journal.py
+msgid "King Lorik waits in Tantegel Castle."
+msgstr "His Majesty the King waits in Tantegel Castle."
+
+#: src/quest_journal.py
+msgid "Get a Magic Key."
+msgstr "Get a Magic Key."
+
+#: src/quest_journal.py
+msgid "Magic Keys are sold in Tantegel Castle, Rimuldar and Cantlin."
+msgstr "Magic keys are sold in Tantegel Castle, Rimuldar and Cantlin."
+
+#: src/quest_journal.py
+msgid "Find the Silver Harp."
+msgstr "Find the Lyre of Ire."
+
+#: src/quest_journal.py
+msgid "It lies deep in Garin's Grave. The way down is behind a locked door in Garinham."
+msgstr "It lies deep in the grave of Galen. The way down is behind a locked door in Galenholm."
+
+#: src/quest_journal.py
+msgid "Take the Silver Harp to the old man in the shrine."
+msgstr "Take the Lyre of Ire to the old man in the shrine."
+
+#: src/quest_journal.py
+msgid "The shrine is north and west of Kol. He gives the Staff of Rain for the harp."
+msgstr "The shrine is north and west of Kol. He gives the Staff of Rain for the Lyre."
+
+#: src/quest_journal.py
+msgid "Find the Stones of Sunlight."
+msgstr "Find the Sunstone."
+
+#: src/quest_journal.py
+msgid "They are in the cellar of Tantegel Castle, behind a locked door."
+msgstr "It is in the dungeon of Tantegel Castle, behind a locked door."
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Token."
+msgstr "Find the Mark of Erdrick."
+
+#: src/quest_journal.py
+msgid "From Tantegel Castle travel 70 leagues to the south and 40 to the east, and search."
+msgstr "From Tantegel Castle travel 70 paces to the south and 40 paces to the east, and search."
+
+#: src/quest_journal.py
+msgid "Take the Stones of Sunlight, the Staff of Rain and Erdrick's Token to the old man in the shrine."
+msgstr "Take the Sunstone, the Staff of Rain and the Mark of Erdrick to the old man in the holy shrine."
+
+#: src/quest_journal.py
+msgid "The shrine is far to the south of Rimuldar. He gives the Rainbow Drop."
+msgstr "The shrine is far to the south of Rimuldar. He gives the Rainbow Drop."
+
+#: src/quest_journal.py
+msgid "Use the Rainbow Drop to make a bridge to Charlock."
+msgstr "Use the Rainbow Drop to make a bridge to the Dragonlord's Castle."
+
+#: src/quest_journal.py
+msgid "Hold it up at the water's edge east of Charlock, on the western shore of Rimuldar's land."
+msgstr "Hold it up on the western shore of Rimuldar's land, facing the Dragonlord's Castle."
+
+#: src/quest_journal.py
+msgid "Find the hidden way down in Charlock."
+msgstr "Find the hidden staircase in the Dragonlord's Castle."
+
+#: src/quest_journal.py
+msgid "Search behind the Dragonlord's throne."
+msgstr "Search behind the Dragonlord's throne."
+
+#: src/quest_journal.py
+msgid "Defeat the Dragonlord."
+msgstr "Defeat the Dragonlord."
+
+#: src/quest_journal.py
+msgid "He waits in the deepest part of Charlock."
+msgstr "He waits in the deepest part of his castle."
+
+#: src/quest_journal.py
+msgid "Return to King Lorik."
+msgstr "Return to the King."
+
+#: src/quest_journal.py
+msgid "Tantegel Castle awaits thy return."
+msgstr "Tantegel Castle awaits thy return."
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Armor."
+msgstr "Find Erdrick's Armour."
+
+#: src/quest_journal.py
+msgid "It is hidden in the ruins of Hauksness, far to the south. Beware its guardian."
+msgstr "It is hidden in the ruins of Damdara, far to the south. Beware its guardian."
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Sword."
+msgstr "Find Erdrick's Sword."
+
+#: src/quest_journal.py
+msgid "It lies deep within Charlock."
+msgstr "It lies deep within the Dragonlord's Castle."
+
+#: src/quest_journal.py
+msgid "Defeat the Golem guarding Cantlin."
+msgstr "Defeat the golem guarding Cantlin."
+
+#: src/quest_journal.py
+msgid "Golem fears the music of the flute. The Fairy Flute is in Kol, four steps south of the bath."
+msgstr "The golem fears the music of the faerie flute. It is in Kol, four paces south of the baths."
+
+#: src/options_overlay.py
+msgid "AUTOSAVE"
+msgstr "AUTOSAVE"
+
+#: src/windows.py
+msgid "CONTINUE AUTOSAVE"
+msgstr "LOAD AUTOSAVE"
+
+#: src/options_overlay.py
+msgid "BAG"
+msgstr "BAG"
+
+#: src/options_overlay.py
+msgid "NES (8)"
+msgstr "NES (8)"
+
+#: src/options_overlay.py
+msgid "16"
+msgstr "16"
+
+#: src/options_overlay.py
+msgid "VIEW"
+msgstr "VIEW"
+
+#: src/options_overlay.py
+msgid "NES (4:3)"
+msgstr "NES (4:3)"
+
+#: src/options_overlay.py
+msgid "WIDE"
+msgstr "WIDE"
+
+msgid "M: Dungeon map"
+msgstr "M: Dungeon map"
+
+#: src/options_overlay.py
+msgid "DUNGEON MAP"
+msgstr "DUNGEON MAP"
+
+#: src/options_overlay.py
+msgid "CONFIRM NAME"
+msgstr "CONFIRM NAME"
+
+#: src/options_overlay.py
+msgid "OTHER"
+msgstr "OTHER"
+
+#: src/controls_screen.py
+#: src/dungeon_map.py
+msgid "MAP"
+msgstr "MAP"
+
+#: data/text/intro_lookup_table.py
+msgid "Top Button: Dungeon map"
+msgstr "Top Button: Dungeon map"
+
+#: data/text/intro_lookup_table.py
+msgid "Dungeon map:"
+msgstr "Dungeon map:"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: A Button"
+msgstr "{}: A Button"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: B Button"
+msgstr "{}: B Button"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Start"
+msgstr "{}: Start"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Options"
+msgstr "{}: Options"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Move"
+msgstr "{}: Move"
+
+#: data/text/intro_lookup_table.py
+msgid "ARROWS"
+msgstr "ARROWS"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Smart A"
+msgstr "{}: Smart A"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Show Controls"
+msgstr "{}: Show Controls"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Auto-Battle"
+msgstr "{}: Auto-Battle"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Invulnerability"
+msgstr "{}: Invulnerability"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Fullscreen"
+msgstr "{}: Fullscreen"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Game Speed"
+msgstr "{}: Game Speed"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Auto-grind"
+msgstr "{}: Auto-grind"
+
+#: src/controls_screen.py
+msgid "KEY 1"
+msgstr "KEY 1"
+
+#: src/controls_screen.py
+msgid "KEY 2"
+msgstr "KEY 2"
+
+#: src/controls_screen.py
+msgid "PAD"
+msgstr "PAD"
+
+#: src/controls_screen.py
+msgid "RESET TO DEFAULTS"
+msgstr "RESET TO DEFAULTS"
+
+#: src/controls_screen.py
+msgid "A:SET  SELECT:CLEAR  B:BACK"
+msgstr "A:SET  SELECT:CLEAR  B:BACK"
+
+#: src/controls_screen.py
+msgid "PRESS A KEY"
+msgstr "PRESS A KEY"
+
+#: src/controls_screen.py
+msgid "PRESS A PAD BUTTON"
+msgstr "PRESS A PAD BUTTON"
+
+#: src/controls_screen.py
+msgid "NO CONTROLLER"
+msgstr "NO CONTROLLER"
+
+#: src/controls_screen.py
+msgid "{}: CHANGED TOO"
+msgstr "{}: CHANGED TOO"
+
+#: src/controls_screen.py
+msgid "{}: NEEDS A KEY"
+msgstr "{}: NEEDS A KEY"
+
+#: src/controls_screen.py
+msgid "{}: FIXED KEY"
+msgstr "{}: FIXED KEY"
+
+#: src/controls_screen.py
+msgid "DEFAULTS RESTORED"
+msgstr "DEFAULTS RESTORED"
+
+#: src/controls_screen.py
+msgid "A BUTTON"
+msgstr "A BUTTON"
+
+#: src/controls_screen.py
+msgid "B BUTTON"
+msgstr "B BUTTON"
+
+#: src/controls_screen.py
+msgid "START"
+msgstr "START"
+
+#: src/controls_screen.py
+msgid "SELECT"
+msgstr "SELECT"
+
+#: src/controls_screen.py
+msgid "UP"
+msgstr "UP"
+
+#: src/controls_screen.py
+msgid "DOWN"
+msgstr "DOWN"
+
+#: src/controls_screen.py
+msgid "LEFT"
+msgstr "LEFT"
+
+#: src/controls_screen.py
+msgid "RIGHT"
+msgstr "RIGHT"
+
+#: src/controls_screen.py
+#: src/options_overlay.py
+msgid "SMART A"
+msgstr "SMART A"
+
+#: src/controls_screen.py
+msgid "HELP"
+msgstr "HELP"
+
+#: src/controls_screen.py
+msgid "AUTO GRIND"
+msgstr "AUTO GRIND"
+
+#: src/controls_screen.py
+msgid "AUTO FIGHT"
+msgstr "AUTO FIGHT"
+
+#: src/controls_screen.py
+msgid "INVINCIBLE"
+msgstr "INVINCIBLE"
+
+#: src/controls_screen.py
+msgid "FULLSCREEN"
+msgstr "FULLSCREEN"
+
+#: src/controls_screen.py
+msgid "SPEED 1X"
+msgstr "SPEED 1X"
+
+#: src/controls_screen.py
+msgid "SPEED 2X"
+msgstr "SPEED 2X"
+
+#: src/controls_screen.py
+msgid "SPEED 4X"
+msgstr "SPEED 4X"
+
+#: src/controls_screen.py
+msgid "SPEED 8X"
+msgstr "SPEED 8X"
+
+#: src/controls_screen.py
+msgid "SPEED 16X"
+msgstr "SPEED 16X"
+
+#: src/controls_screen.py
+msgid "NEXT SPEED"
+msgstr "NEXT SPEED"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Save state"
+msgstr "{}: Save state"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Load state"
+msgstr "{}: Load state"
+
+#: src/controls_screen.py
+msgid "LOAD 1"
+msgstr "LOAD 1"
+
+#: src/controls_screen.py
+msgid "LOAD 2"
+msgstr "LOAD 2"
+
+#: src/controls_screen.py
+msgid "LOAD 3"
+msgstr "LOAD 3"
+
+#: src/controls_screen.py
+msgid "SAVE 1"
+msgstr "SAVE 1"
+
+#: src/controls_screen.py
+msgid "SAVE 2"
+msgstr "SAVE 2"
+
+#: src/controls_screen.py
+msgid "SAVE 3"
+msgstr "SAVE 3"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Rewind"
+msgstr "{}: Rewind"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: A"
+msgstr "{}: A"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: B"
+msgstr "{}: B"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Select"
+msgstr "{}: Select"
+
+#: data/text/intro_lookup_table.py
+msgid "{}/Stick: Move"
+msgstr "{}/Stick: Move"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Speed"
+msgstr "{}: Speed"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Load state 1"
+msgstr "{}: Load state 1"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Save state 1"
+msgstr "{}: Save state 1"
+
+#: data/text/intro_lookup_table.py
+msgid "{} (hold): Rewind"
+msgstr "{} (hold): Rewind"
+
+#: src/controls_screen.py
+msgid "JOURNAL"
+msgstr "JOURNAL"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Quest Journal"
+msgstr "{}: Quest Journal"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Dungeon map"
+msgstr "{}: Dungeon map"
+
+#: src/controls_screen.py
+msgid "MSG LOG"
+msgstr "MSG LOG"
+
+#: src/message_log.py
+#: src/options_overlay.py
+msgid "MESSAGE LOG"
+msgstr "MESSAGE LOG"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Message log"
+msgstr "{}: Message log"
+
+#: src/message_log.py
+msgid "UP/DOWN:SCROLL  B:CLOSE"
+msgstr "UP/DOWN:SCROLL  B:CLOSE"
+
+#: src/message_log.py
+msgid "NO MESSAGES YET"
+msgstr "NO MESSAGES YET"
+
+#: src/message_log.py
+msgid "KING LORIK"
+msgstr "KING"
+
+#: src/message_log.py
+msgid "GWAELIN"
+msgstr "GWAELIN"
+
+#: src/message_log.py
+msgid "GUARD"
+msgstr "GUARD"
+
+#: src/message_log.py
+msgid "SOLDIER"
+msgstr "SOLDIER"
+
+#: src/message_log.py
+msgid "MERCHANT"
+msgstr "MERCHANT"
+
+#: src/message_log.py
+msgid "MAN"
+msgstr "MAN"
+
+#: src/message_log.py
+msgid "WOMAN"
+msgstr "WOMAN"
+
+#: src/message_log.py
+msgid "WISE MAN"
+msgstr "WISE MAN"
+
+#: src/message_log.py
+msgid "DRAGONLORD"
+msgstr "DRAGONLORD"
+
+#: data/text/intro_lookup_table.py
+msgid "Left Button: Message log"
+msgstr "Left Button: Message log"
+
+#: src/save_state.py
+msgid "State {} couldn't be saved"
+msgstr "State {} couldn't be saved"
+
+#: data/text/dialog_lookup_table.py
+msgid "Alas, thy deeds could not be recorded."
+msgstr "Alas, thy deeds could not be recorded in the adventure log."
+
+#: src/options_overlay.py
+msgid "SFC"
+msgstr "SFC"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Play stats"
+msgstr "{}: Play stats"
+
+#: src/options_overlay.py
+msgid "STATS PAGE"
+msgstr "STATS PAGE"
+
+#: src/controls_screen.py
+#: src/stats_screen.py
+msgid "STATS"
+msgstr "STATS"
+
+#: src/stats_screen.py
+msgid "PLAY TIME"
+msgstr "PLAY TIME"
+
+#: src/stats_screen.py
+msgid "STEPS"
+msgstr "STEPS"
+
+#: src/stats_screen.py
+msgid "FIGHTS WON"
+msgstr "FIGHTS WON"
+
+#: src/stats_screen.py
+msgid "FIGHTS FLED"
+msgstr "FIGHTS FLED"
+
+#: src/stats_screen.py
+msgid "FIGHTS LOST"
+msgstr "FIGHTS LOST"
+
+#. official: data.1.0.6
+#: src/stats_screen.py
+msgid "DEATHS"
+msgstr "DEFEATS"
+
+#: src/stats_screen.py
+msgid "GOLD EARNED"
+msgstr "GOLD EARNED"
+
+#: src/stats_screen.py
+msgid "GOLD SPENT"
+msgstr "GOLD SPENT"
+
+#: src/stats_screen.py
+msgid "CHESTS OPENED"
+msgstr "CHESTS OPENED"
+
+#: src/stats_screen.py
+msgid "MONSTERS DEFEATED"
+msgstr "MONSTERS DEFEATED"

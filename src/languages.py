@@ -8,7 +8,8 @@ instead of comparing its name.
 
 Adding a language: write its catalog (data/text/locales/catalog_tools.py add <code> lists what to translate) and
 add a Language to LANGUAGES. Its text is drawn in Unifont (src/text.py draws anything the NES font hasn't got in
-it), which has every CJK character a catalog uses (tests/test_unifont.py).
+it), which has every CJK character a catalog uses (tests/test_unifont.py); a catalog in English words, English (2014),
+is drawn in the NES font, as the NES English is.
 """
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -44,12 +45,27 @@ class Grammar:
 
 
 class EnglishGrammar(Grammar):
-    """The NES text: "A" or "An" before the enemy's name (EnAppearText's ENM2 is the name with its article)."""
+    """The NES text: "A" or "An" before the enemy's name (EnAppearText's ENM2 is the name with its article). The
+    article goes with the name as it's shown, so it agrees in English (2014) too: an iron scorpion, a knight aberrant."""
 
     @override
     def enemy_draws_near(self, _: Translate, enemy_name: str) -> str:
-        line = _('{} draws near!\n').format(_(enemy_name))
-        return _('An {}').format(line) if enemy_name[0] in ENGLISH_VOWELS else _('A {}').format(line)
+        shown_name = _(enemy_name)
+        line = _('{} draws near!\n').format(shown_name)
+        return _('An {}').format(line) if starts_with_vowel(shown_name) else _('A {}').format(line)
+
+
+class English2014Grammar(EnglishGrammar):
+    """The remake's level up line, which names the hero and the new level (official script data.1.0.40), where the NES
+    line names neither."""
+
+    @override
+    def level_up(self, _: Translate, hero_name: str, new_level: int) -> str:
+        return f"{hero_name} reaches level {new_level}!\n"
+
+
+def starts_with_vowel(name: str) -> bool:
+    return name[:1].upper() in ENGLISH_VOWELS
 
 
 class KoreanGrammar(Grammar):
@@ -108,7 +124,6 @@ KOREAN = Language('Korean', '한국어', 'ko', system_locales=('ko',), text_type
                   grammar=KoreanGrammar(), checkpoint_hero_name='검객')
 JAPANESE = Language('Japanese', '日本語', 'ja', system_locales=('ja',), quote_marks=('「', '」'),
                     checkpoint_hero_name='たびびと')
-
 # The official Chinese script quotes nothing (it puts the speaker's name before a line, 國王：…), so speech is quoted
 # the way each script usually is: 「…」 in Traditional, “…” in Simplified. Traditional's system locales come first, so
 # any other Chinese locale (zh_CN, zh_SG, plain zh) is Simplified.
@@ -117,8 +132,11 @@ TRADITIONAL_CHINESE = Language('Traditional Chinese', '繁體中文', 'zh_TW',
                                checkpoint_hero_name='劍俠', breaks_anywhere=True)
 SIMPLIFIED_CHINESE = Language('Simplified Chinese', '简体中文', 'zh_CN', system_locales=('zh',),
                               quote_marks=('“', '”'), checkpoint_hero_name='勇将', breaks_anywhere=True)
+# The official English script of the 2014 remake (data/text/official_script/en.json), as a second English. It has no
+# system locales: an English system plays the NES English.
+ENGLISH_2014 = Language('English2014', 'ENGLISH (2014)', 'en_2014', grammar=English2014Grammar())
 
-LANGUAGES = (ENGLISH, KOREAN, JAPANESE, TRADITIONAL_CHINESE, SIMPLIFIED_CHINESE)
+LANGUAGES = (ENGLISH, KOREAN, JAPANESE, TRADITIONAL_CHINESE, SIMPLIFIED_CHINESE, ENGLISH_2014)
 LANGUAGE_NAMES = tuple(language.name for language in LANGUAGES)
 CATALOG_LANGUAGES = tuple(language for language in LANGUAGES if language.has_catalog)
 _BY_NAME = {language.name: language for language in LANGUAGES}
