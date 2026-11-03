@@ -1,0 +1,137 @@
+kind	english_nes	english_remake	chinese_official	ours	notes
+item	Bamboo Pole	Bamboo Spear	竹竿	竹竿	official
+item	Club	Oaken Club	棍棒	棍棒	official
+item	Copper Sword	Copper Sword	铜剑	铜剑	official
+item	Hand Axe	Iron Axe	铁斧	铁斧	official
+item	Broad Sword	Steel Broadsword	钢铁之剑	钢铁之剑	official
+item	Flame Sword	Fire Blade	火焰剑	火焰剑	official
+item	Erdrick's Sword	Erdrick's Sword	洛特之剑	洛特之剑	official
+item	Clothes	Plain Clothes	布衣	布衣	official
+item	Leather Armor	Leather Suit	皮衣	皮衣	official
+item	Chain Mail	Chain Mail	锁链甲	锁链甲	official
+item	Half Plate	Iron Armour	铁制铠甲	铁制铠甲	official
+item	Full Plate	Full Plate Armour	钢铁铠甲	钢铁铠甲	official
+item	Magic Armor	Magic Armour	魔法铠甲	魔法铠甲	official
+item	Erdrick's Armor	Erdrick's Armour	洛特之铠	洛特之铠	official
+item	Small Shield	Leather Shield	皮盾	皮盾	official
+item	Large Shield	Iron Shield	铁盾	铁盾	official
+item	Silver Shield	Silver Shield	水镜之盾	水镜之盾	official
+item	Herb	Medicinal Herb	药草	药草	official
+item	Torch	Torch	火把	火把	official
+item	Dragon's Scale	Dragon Scale	龙鳞	龙鳞	official
+item	Wings	Chimaera Wing	奇美拉之翼	奇美拉之翼	official
+item	Magic Key	Magic Key	钥匙	钥匙	official
+item	Fairy Water	Holy Water	圣水	圣水	official
+item	Ball of Light	Sphere of Light	光之石	光之石	official
+item	Tablet			石板	not in the remake; ours
+item	Fairy Flute	Faerie Flute	妖精之笛	妖精之笛	official
+item	Silver Harp	Lyre of Ire	银之竖琴	银之竖琴	official
+item	Staff of Rain	Staff of Rain	雨云法杖	雨云法杖	official
+item	Stones of Sunlight	Sunstone	太阳石	太阳石	official
+item	Gwaelin's Love	Princess's Pledge	公主的爱	公主的爱	official
+item	Erdrick's Token	Mark of Erdrick	洛特之印	洛特之印	official
+item	Rainbow Drop	Rainbow Drop	彩虹之露	彩虹之露	official
+item	Cursed Belt	Wasteband	诅咒腰带	诅咒腰带	official
+item	Death Necklace	Choker	死之项链	死之项链	official
+item	Fighter's Ring	Warrior's Ring	战士的戒指	战士的戒指	official
+spell	HEAL	Heal	霍伊米	霍伊米	official
+spell	HURT	Sizz	基拉	基拉	official
+spell	SLEEP	Snooze	拉里霍	拉里霍	official
+spell	RADIANT	Glow	雷米拉	雷米拉	official
+spell	STOPSPELL	Fizzle	玛霍托恩	玛霍托恩	official
+spell	OUTSIDE	Evac	里雷米特	里雷米特	official
+spell	RETURN	Zoom	鲁拉	鲁拉	official
+spell	REPEL	Holy Protection	托黑洛斯	托黑洛斯	official
+spell	HEALMORE	Midheal	贝霍伊米	贝霍伊米	official
+spell	HURTMORE	Sizzle	贝基拉玛	贝基拉玛	official
+monster	Slime	slime	史莱姆	史莱姆	official
+monster	Red Slime	she-slime	史莱姆贝斯	史莱姆贝斯	official
+monster	Drakee	dracky	多拉奇	多拉奇	official
+monster	Ghost	ghost	鬼魂	鬼魂	official
+monster	Magician	prestidigitator	魔法师	魔法师	official
+monster	Magidrakee	drackolyte	法师多拉奇	法师多拉奇	official
+monster	Scorpion	scorpion	巨蝎	巨蝎	official
+monster	Druin	lunatick	巨目虫	巨目虫	official
+monster	Poltergeist	fightgeist	恶作剧鬼魂	恶作剧鬼魂	official
+monster	Droll	drohl drone	黏液怪	黏液怪	official
+monster	Drakeema	drackyma	多拉奇玛	多拉奇玛	official
+monster	Skeleton	skeleton	骸骨	骸骨	official
+monster	Warlock	legerdeman	魔道士	魔道士	official
+monster	Metal Scorpion	iron scorpion	铁蝎	铁蝎	official
+monster	Wolf	bewarewolf	兽人	兽人	official
+monster	Wraith	skeleton scrapper	死灵	死灵	official
+monster	Metal Slime	metal slime	金属史莱姆	金属史莱姆	official
+monster	Specter	spitegeist	地狱鬼魂	地狱鬼魂	official
+monster	Wolflord	scarewolf	赤色兽人	赤色兽人	official
+monster	Druinlord	raving lunatick	巨目虫领主	巨目虫领主	official
+monster	Drollmagi	drohl diabolist	法师黏液怪	法师黏液怪	official
+monster	Wyvern	chimaera	奇美拉	奇美拉	official
+monster	Rogue Scorpion	death scorpion	死蝎	死蝎	official
+monster	Wraith Knight	skeleton soldier	死灵骑士	死灵骑士	official
+monster	Golem	golem	巨像兵	巨像兵	official
+monster	Goldman	gold golem	黄金人	黄金人	official
+monster	Knight	knight errant	铠甲骑士	铠甲骑士	official
+monster	Magiwyvern	hocus chimaera	法师奇美拉	法师奇美拉	official
+monster	Demon Knight	dark skeleton	阴影骑士	阴影骑士	official
+monster	Werewolf	tearwolf	黄金兽人	黄金兽人	official
+monster	Green Dragon	green dragon	龙	龙	official
+monster	Starwyvern	cosmic chimaera	明星奇美拉	明星奇美拉	official
+monster	Wizard	vis mager	大魔道	大魔道	official
+monster	Axe Knight	knight aberrant	恶魔骑士	恶魔骑士	official
+monster	Blue Dragon	blue dragon	蓝龙	蓝龙	official
+monster	Stoneman	stone golem	石头人	石头人	official
+monster	Armored Knight	knight abhorrent	死神骑士	死神骑士	official
+monster	Red Dragon	red dragon	红龙	红龙	official
+monster	Dragonlord	Dragonlord	龙王	龙王	official
+monster	Dragonlord 2	Dragonlord	龙王	龙王	official
+label	FIGHT	Attack	攻击	攻击	official
+label	RUN	Flee	逃跑	逃跑	official
+label	SPELL	Spells	咒文	咒文	official
+label	ITEM	Items	道具	道具	official
+label	STATUS	Status	能力	能力	official
+label	YES	Yes	是	是	official
+label	NO	No	否	否	official
+label	MESSAGE SPEED	Message Speed	显示速度	显示速度	official
+label	FAST	Fast	快	快	official
+label	SLOW	Slow	慢	慢	official
+label	BUY	Buy	买东西	买东西	official
+label	SELL	Sell	卖东西	卖东西	official
+person	hero	hero	勇者	勇者	official
+person	Erdrick	Erdrick	洛特	洛特	official
+person	Gwaelin	Princess Lora	萝拉公主	萝拉公主	official; she calls herself 蘿拉
+person	King Lorik	King Lorik XVI		拉鲁斯十六世	the remake doesn't name him; the NES manual's name, only where the NES line names him
+person	Dragonlord	Dragonlord	龙王	龙王	official
+person	Wynn	Wynn	幸信	幸信	official
+place	Alefgard	Alefgard	阿雷夫戈尔德	阿雷夫戈尔德	official
+place	Tantegel Castle	Tantegel Castle	拉达托姆城	拉达托姆城	official
+place	Brecconary	Tantegel	拉达托姆镇	拉达托姆镇	official
+place	Garinham	Garinham	加雷镇	加雷镇	official
+place	Kol	Kol	麦拉村	麦拉村	official
+place	Rimuldar	Rimuldar	利姆尔达镇	利姆尔达镇	official
+place	Hauksness	Damdara	多姆多拉	多姆多拉	official
+place	Cantlin	Cantlin	麦尔基德	麦尔基德	official
+place	Charlock	Dragonlord's Castle	龙王城	龙王城	official
+place	Erdrick's Cave	Erdrick's Dungeon	洛特洞窟	洛特洞窟	the remake's map name is untranslated; 洞窟 as in its spell descriptions
+place	Garin's Grave	Garin's Grave	加雷之墓	加雷之墓	official
+place	Shrine of Rain	Shrine of Rain	雨之祠堂	雨之祠堂	the remake's map name is untranslated; 祠堂 as in its dialog (神聖祠堂)
+term	Adventure Log	Adventure Log	冒险之书	冒险之书	official
+term	GOLD	gold	金币	金币	official
+term	Experience	Experience	经验值	经验值	official
+term	spell (in dialog)	spell	咒文	咒文	official
+label	COMMAND		指令	指令	official
+label	TALK			对话	not in the remake's menus; ours
+label	STATUS		能力	能力	official
+label	STAIRS			楼梯	not in the remake's menus; ours
+label	SEARCH			调查	not in the remake's menus; ours (調查 as in its 調查了自己的腳下)
+label	DOOR			开门	not in the remake's menus; ours
+label	TAKE			拿取	not in the remake's menus; ours
+label	NAME:			名字:	not in the remake's menus; ours
+label	STRENGTH:		力量	力量:	official
+label	AGILITY:		敏捷	敏捷:	official
+label	MAXIMUM HP:		最大ＨＰ	最大HP:	official, with ASCII HP/MP
+label	MAXIMUM MP:		最大ＭＰ	最大MP:	official, with ASCII HP/MP
+label	ATTACK POWER:		攻击力	攻击力:	official
+label	DEFENSE POWER:		防御力	防御力:	official
+label	WEAPON:		武器	武器:	official
+label	ARMOR:		铠甲	铠甲:	official
+label	SHIELD:		盾牌	盾牌:	official

@@ -327,7 +327,7 @@ def play_scene(game: 'Game', scene: SmokeScene, max_seconds: float = SCENE_MAX_S
     exception from the game is raised."""
     game.config.update({**SCENE_CONFIG, **scene.config})
     save = {**read_checkpoint('throne_room'), **SCENE_SAVE_OPTIONS, **scene.save_changes}
-    save['Name'] = checkpoint_hero_name(save['Name'], game.config['LANGUAGE'])  # 검객 in Korean, たびびと in Japanese
+    save['Name'] = checkpoint_hero_name(save['Name'], game.config['LANGUAGE'])  # 검객 in Korean, たびびと in Japanese, ...
     game.load_game(save)
     game.initial_dialog_enabled = bool(game.config.get('INITIAL_DIALOG_ENABLED'))
     log = SceneLog()
