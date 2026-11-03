@@ -104,6 +104,9 @@ class Language:
     grammar: Grammar = field(default_factory=Grammar)
     # The playtest checkpoints' hero, CHECKPOINT_HERO_NAME, in this language (src/checkpoints.py); None: unchanged
     checkpoint_hero_name: str | None = None
+    # Whether a line may break between any two characters, not only at blanks: Chinese, written without blanks
+    # between words (src/line_breaks.py)
+    breaks_anywhere: bool = False
 
     @property
     def has_catalog(self) -> bool:
@@ -121,11 +124,19 @@ KOREAN = Language('Korean', '한국어', 'ko', system_locales=('ko',), text_type
                   grammar=KoreanGrammar(), checkpoint_hero_name='검객')
 JAPANESE = Language('Japanese', '日本語', 'ja', system_locales=('ja',), quote_marks=('「', '」'),
                     checkpoint_hero_name='たびびと')
+# The official Chinese script quotes nothing (it puts the speaker's name before a line, 國王：…), so speech is quoted
+# the way each script usually is: 「…」 in Traditional, “…” in Simplified. Traditional's system locales come first, so
+# any other Chinese locale (zh_CN, zh_SG, plain zh) is Simplified.
+TRADITIONAL_CHINESE = Language('Traditional Chinese', '繁體中文', 'zh_TW',
+                               system_locales=('zh_tw', 'zh_hk', 'zh_mo', 'zh_hant'), quote_marks=('「', '」'),
+                               checkpoint_hero_name='劍俠', breaks_anywhere=True)
+SIMPLIFIED_CHINESE = Language('Simplified Chinese', '简体中文', 'zh_CN', system_locales=('zh',),
+                              quote_marks=('“', '”'), checkpoint_hero_name='勇将', breaks_anywhere=True)
 # The official English script of the 2014 remake (data/text/official_script/en.json), as a second English. It has no
 # system locales: an English system plays the NES English.
 ENGLISH_2014 = Language('English2014', 'ENGLISH (2014)', 'en_2014', grammar=English2014Grammar())
 
-LANGUAGES = (ENGLISH, KOREAN, JAPANESE, ENGLISH_2014)
+LANGUAGES = (ENGLISH, KOREAN, JAPANESE, TRADITIONAL_CHINESE, SIMPLIFIED_CHINESE, ENGLISH_2014)
 LANGUAGE_NAMES = tuple(language.name for language in LANGUAGES)
 CATALOG_LANGUAGES = tuple(language for language in LANGUAGES if language.has_catalog)
 _BY_NAME = {language.name: language for language in LANGUAGES}
@@ -137,6 +148,6 @@ def language_named(name: str | None) -> Language:
 
 
 def language_for_locale(locale_name: str | None) -> Language:
-    """The language a system locale (e.g. 'ko_KR', 'ja_JP') plays in; English for any other."""
+    """The language a system locale (e.g. 'ko_KR', 'ja_JP', 'zh_TW') plays in; English for any other."""
     lowered = (locale_name or '').lower()
     return next((language for language in LANGUAGES if lowered.startswith(language.system_locales)), ENGLISH)

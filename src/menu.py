@@ -387,7 +387,9 @@ class CommandMenu:
             # Modern dialog style: every message starts on a fresh window, replacing the one before it
             self.dialog_buffer.clear()
         self.draw_dialog_window()
-        self.run_dialog_steps(self.dialog_buffer.print_message(line, quoted=line.startswith(OPEN_QUOTES)),
+        breaks_anywhere = language_named(config['LANGUAGE']).breaks_anywhere
+        self.run_dialog_steps(self.dialog_buffer.print_message(line, quoted=line.startswith(OPEN_QUOTES),
+                                                               breaks_anywhere=breaks_anywhere),
                               animate, frames, disable_sound)
         if shows_arrow:
             self.run_dialog_steps(self.dialog_buffer.start_wait(), animate, frames, disable_sound)

@@ -14,7 +14,7 @@ from pygame import K_h, K_q, KEYDOWN
 from pygame.event import Event
 
 from src.common import set_gettext_language
-from src.languages import LANGUAGE_NAMES
+from src.languages import LANGUAGE_NAMES, language_named
 from src.config.test_config import test_config
 from src.guardians import GOLEM
 from src.maps import map_lookup
@@ -182,7 +182,8 @@ class TestHints(TestCase):
                      [_(DONE_FORMAT).format(_(goal.done_text)) for goal in GOALS] +
                      [_(goal.hint) for goal in GOALS] + [_(NOTHING_HEARD)])
             for text in texts:
-                rows = DialogBoxWrapper(width=WRAP_LENGTH, break_long_words=False).wrap(text)
+                rows = DialogBoxWrapper(width=WRAP_LENGTH, break_long_words=False,
+                                        breaks_anywhere=language_named(language).breaks_anywhere).wrap(text)
                 with self.subTest(language=language, text=text):
                     self.assertLessEqual(len(rows), 5)
 

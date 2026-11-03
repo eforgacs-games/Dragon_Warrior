@@ -35,6 +35,8 @@ NES_TILE = test_config['TILE_SIZE'] / 2  # screen pixels
 TRANSLATED_LAYOUTS = ((COMMAND_LAYOUT, False), (COMBAT_COMMAND_LAYOUT, False), (STATUS_LAYOUT, True),
                       (YES_NO_LAYOUT, False), *((layout, False) for layout in TITLE_MENU_LAYOUTS),
                       *((layout, False) for layout in TITLE_MENU_LAYOUTS_WITH_AUTOSAVE))
+# The most values an options row has (LANGUAGE)
+MOST_VALUES = max(len(row.values) for row in OPTION_ROWS)
 # The SPELL window's right border: its entries end before it (CommandMenu.draw_item_menu)
 ITEM_MENU_RIGHT_BORDER = ITEM_MENU_WIDTH * 2 - 1
 
@@ -138,7 +140,7 @@ class TestOptionsOverlay(TranslatedTestCase):
         right_border = (OPTIONS_WINDOW.x + OPTIONS_WINDOW.width) * 2 - 1
         title_end = OPTIONS_WINDOW.x * 2 + OPTIONS_WINDOW.width * 2 - 1
         for language, translate in self.languages():
-            for choice in range(3):
+            for choice in range(MOST_VALUES):  # every value of every row, LANGUAGE's six too
                 # NO_BLIT off, whatever another test left in test_config: draw_translated_window draws nothing with it
                 config = {**self.game.game_state.config, 'LANGUAGE': language.name, 'NO_BLIT': False,
                           **{row.config_key: row.values[choice % len(row.values)] for row in OPTION_ROWS}}
@@ -198,7 +200,7 @@ class TestMessageLog(TranslatedTestCase):
         for language, translate in self.languages():
             entries = [LogEntry(translate("I am Gwaelin, daughter of Lorik.") * 3, 'PRINCESS_GWAELIN'),
                        LogEntry("Thou hast found the Silver Harp. " * 3, 'WISE_MAN')]
-            lines = log_lines(entries, translate)
+            lines = log_lines(entries, translate, language.breaks_anywhere)
             self.assertTrue(lines[0].startswith(translate('GWAELIN')))
             for layout in (log_layout(lines, 0, translate("UP/DOWN:SCROLL  B:CLOSE")), log_layout([], 0)):
                 for text in (layout.title, *layout.texts):

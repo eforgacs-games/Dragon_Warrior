@@ -492,6 +492,14 @@ class TestThePage(TestCase):
         self.assertEqual(aligned("プレイ時間", "1:02:03"), lines[0])
         self.assertEqual("やっつけたまもの", lines[10])
 
+    def test_chinese(self):
+        for language, play_time, monsters in (('Traditional Chinese', "遊戲時間", "打倒的魔物"),
+                                              ('Simplified Chinese', "游戏时间", "打倒的魔物")):
+            with self.subTest(language):
+                lines = stat_lines(counted(), set_gettext_language(language))
+                self.assertEqual(aligned(play_time, "1:02:03"), lines[0])
+                self.assertEqual(monsters, lines[10])
+
     def test_every_language_fits_and_is_translated(self):
         for language in LANGUAGES:
             with self.subTest(language.name):

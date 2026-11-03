@@ -1,0 +1,3524 @@
+# Traditional Chinese translation of Dragon Warrior.
+# Names and terms follow the official DRAGON QUEST script (data/text/official_script/zh1.json, glossary_zh_Hant.tsv).
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Language-Team: Chinese (Traditional)\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. official: data.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"We deal in weapons and armor.\n"
+" Dost thou wish to buy anything today?"
+msgstr ""
+"這裡是武器與防具店。\n"
+"有什麼事嗎？"
+
+#. official: map.1.21.0
+#: data/text/dialog_lookup_table.py
+msgid "Never does a brave person steal."
+msgstr "真正的勇者是不會行竊的。"
+
+#: data/text/dialog_lookup_table.py
+msgid "The {}?"
+msgstr "{}嗎？"
+
+#: src/items.py
+msgid "Bamboo Pole"
+msgstr "竹竿"
+
+#: src/items.py
+msgid "Club"
+msgstr "棍棒"
+
+#: src/items.py
+msgid "Copper Sword"
+msgstr "銅劍"
+
+#: src/items.py
+msgid "Clothes"
+msgstr "布衣"
+
+#: src/items.py
+msgid "Leather Armor"
+msgstr "皮衣"
+
+#: src/items.py
+msgid "Small Shield"
+msgstr "皮盾"
+
+#: src/items.py
+msgid "Hand Axe"
+msgstr "鐵斧"
+
+#: src/items.py
+msgid "Half Plate"
+msgstr "鐵製鎧甲"
+
+#: src/items.py
+msgid "Full Plate"
+msgstr "鋼鐵鎧甲"
+
+#. official: data.1.0.6
+#: src/hero_death.py
+msgid "Thou art dead."
+msgstr "你死掉了。"
+
+#: src/map_hotkeys.py
+msgid ""
+"Game set to normal speed.\n"
+"({} FPS)"
+msgstr ""
+"遊戲速度恢復正常。\n"
+"({} FPS)"
+
+#: src/menu.py
+msgid "There is no one there."
+msgstr "那個方向沒有人。"
+
+#: src/menu.py
+msgid "There are no stairs here."
+msgstr "這裡沒有樓梯。"
+
+#. official: map.1.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Where oh where can I find Princess Gwaelin?"
+msgstr "啊啊，蘿拉公主……公主殿下到底被帶去了哪裡……"
+
+#. official: map.1.4.0
+#: data/text/dialog_lookup_table.py
+msgid "Welcome to Tantegel Castle."
+msgstr "歡迎來到拉達托姆城！"
+
+#. official: data.3.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome.\n"
+"We deal in tools.\n"
+"What can I do for thee?"
+msgstr ""
+"歡迎光臨！\n"
+"這裡是道具店。\n"
+"有什麼需要嗎？"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Descendant of Erdrick, listen now to my words."
+msgstr "繼承了勇者洛特之血的人啊！我正在等你。"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
+msgstr "很久以前，傳說中的勇者洛特被神賜予了光之石，將世界上肆虐的魔物們都給封印了起來。"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Then came the Dragonlord who stole the precious globe and hid it in the darkness."
+msgstr "但是不知從何處而來的惡魔的化身——龍王卻將光之石封在了黑暗之中！"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Now, {}, thou must help us recover the Ball of Light and restore peace to our land."
+msgstr "勇者{}！去打倒龍王，把光之石取回來吧！"
+
+#: data/text/dialog_lookup_table.py
+msgid "The Dragonlord must be defeated."
+msgstr "必須打倒龍王。"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."
+msgstr "我給你準備了一些東西！去打開那邊的寶箱吧。都是一些應該能幫得上你的東西。"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Then speak with the guards, for they have much knowledge that may aid thee."
+msgstr "還有，這個房間裏的人們會告訴你一些旅行心得。"
+
+#. official: map.3.0.0
+#: data/text/dialog_lookup_table.py
+msgid "May the light shine upon thee, {}."
+msgstr "那就再見了！勇者{}！"
+
+#. official: map.3.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"When thou art finished preparing for thy departure, please see me.\n"
+"I shall wait."
+msgstr ""
+"做好旅行的準備後，你可以再來見我。\n"
+"我等著你。"
+
+#. official: map.2.0.0
+#: data/text/dialog_lookup_table.py
+msgid "I am greatly pleased that thou hast returned, {}."
+msgstr "啊，{}！你回來真是太好了！我真是非常高興。"
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Before reaching thy next level of experience thou must gain {} Points."
+msgstr "距離你升到下一級，還差{}點經驗。"
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Before reaching thy next level of experience thou must gain {} Point."
+msgstr "距離你升到下一級，還差{}點經驗。"
+
+#. official: data.3.7.2
+#: data/text/dialog_lookup_table.py
+msgid "Will thou tell me now of thy deeds so they won't be forgotten?"
+msgstr "要將你至今的旅行記錄到冒險之書嗎？"
+
+#. official: data.3.7.10
+#: data/text/dialog_lookup_table.py
+msgid "Thy deeds have been recorded on the Imperial Scrolls of Honor."
+msgstr "記錄完畢！"
+
+#. official: data.3.7.6
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou wish to continue thy quest?"
+msgstr "你不休息還要繼續冒險嗎？"
+
+#. official: data.3.7.8
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Goodbye now, {}.\n"
+"'Take care and tempt not the Fates."
+msgstr ""
+"那就再見了！勇者{}！\n"
+"千萬小心，不要逞強。"
+
+#. official: map.2.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Death should not have taken thee, {}."
+msgstr "啊啊，{}！你怎麼能夠死掉呢！"
+
+#. official: map.2.7.0
+#: data/text/dialog_lookup_table.py
+msgid "I will give thee another chance."
+msgstr "真拿你沒辦法啊。讓我再給你一次機會吧！"
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "To reach the next level, thy Experience Points must increase by {}."
+msgstr "距離你升到下一級，還差{}點經驗。"
+
+#. official: data.3.7.0
+#: data/text/dialog_lookup_table.py
+msgid "To reach the next level, thy Experience Point must increase by {}."
+msgstr "距離你升到下一級，還差{}點經驗。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Now, go, {}!"
+msgstr "去吧！{}！"
+
+#. official: map.3.2.0
+#: data/text/dialog_lookup_table.py
+msgid "East of this castle is a town where armor, weapons, and many other items may be purchased."
+msgstr "出城後，您可以看到旁邊有一處城鎮。在那裡可以購置武器、防具和各種道具。"
+
+#. official: map.3.2.0
+#: data/text/dialog_lookup_table.py
+msgid "Return to the Inn for a rest if thou art wounded in battle, {}."
+msgstr "{}大人，在戰鬥中負傷了的話，返回鎮上在旅店休息就可以得到治療。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Sleep heals all."
+msgstr "睡一覺傷勢就會全部恢復。"
+
+#. official: map.3.3.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"If thou hast collected all the Treasure Chests,\n"
+"a key will be found."
+msgstr ""
+"將寶箱全部都打開後，\n"
+"您應該能從裏面獲得一把鑰匙。"
+
+#. official: map.3.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Once used, the key will disappear, but the door will be open and thou may pass through."
+msgstr "鑰匙使用過一次後就會消失，但是門會打開，您就可以通過了。"
+
+#. official: data.3.3.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Magic keys!\n"
+"They will unlock any door.\n"
+"Dost thou wish to purchase one for {} GOLD?"
+msgstr ""
+"要不要能打開所有門的\n"
+"魔法的鑰匙？\n"
+"一個{}金幣。"
+
+#. official: map.1.8.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"We are merchants who have traveled much in this land.\n"
+"Many of our colleagues have been killed by servants of the Dragonlord."
+msgstr ""
+"我是個旅行商人。\n"
+"我有很多的同伴都被龍王的手下奪去了性命。"
+
+#. official: map.1.9.3
+#: data/text/dialog_lookup_table.py
+msgid "Rumor has it that entire towns have been destroyed by the Dragonlord's servants."
+msgstr "傳聞中說有的鎮子已經被龍王的手下給毀了呢！"
+
+#. official: map.1.10.0
+#: data/text/dialog_lookup_table.py
+msgid "To become strong enough to face future trials thou must first battle many foes."
+msgstr "首先就去和魔物們戰鬥來積累經驗吧。這樣才能變得足夠強大，面對今後的考驗。"
+
+#. official: map.1.2.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"There was a time when Brecconary was a paradise.\n"
+"Then the Dragonlord's minions came."
+msgstr ""
+"拉達托姆鎮曾是一片樂土。\n"
+"直到龍王的爪牙來了……"
+
+#. official: map.1.19.0
+#: data/text/dialog_lookup_table.py
+msgid "It's a legend."
+msgstr "這是古時候傳下來的一句話。"
+
+#. official: map.1.19.0
+#: data/text/dialog_lookup_table.py
+msgid "When the sun and rain meet, a Rainbow Bridge shall appear."
+msgstr "雨和太陽合二為一之時，彩虹橋就會出現。"
+
+#. official: map.1.0.0
+#: data/text/dialog_lookup_table.py
+msgid "King Lorik will record thy deeds in his Imperial Scroll so thou may return to thy quest later."
+msgstr "國王陛下會在冒險之書上記錄你的事蹟，之後就可以從記錄的地方重新開始旅程。"
+
+#. official: map.1.1.0
+#: data/text/dialog_lookup_table.py
+msgid "If thou art planning to take a rest, first see King Lorik."
+msgstr "在旅途中想要休息一下的話，可以先去見國王陛下。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"{}'s coming was foretold by legend.\n"
+"May the light shine upon this brave warrior."
+msgstr ""
+"傳說早已預言了{}的到來。\n"
+"願光明與這位勇敢的戰士同在。"
+
+#. official: map.14.0.1
+#: data/text/dialog_lookup_table.py
+msgid "I have been waiting long for one such as thee."
+msgstr "長久以來，我一直在等待像你這樣的人出現。"
+
+#. official: map.4.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Take the Treasure Chest."
+msgstr "去打開寶箱吧！"
+
+#. official: map.5.5.2
+#: data/text/dialog_lookup_table.py
+msgid "There is a town where magic keys can be purchased."
+msgstr "據說在某個鎮上有出售魔法的鑰匙。"
+
+#. official: map.5.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Thou art most welcome in Brecconary."
+msgstr "歡迎來到拉達托姆鎮。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Enter where thou can."
+msgstr "能進去的地方就請進吧。"
+
+#: data/text/dialog_lookup_table.py
+msgid "If thou art cursed, come again."
+msgstr "萬一你中了詛咒，就再來找我吧。"
+
+#. official: map.5.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Tell King Lorik that the search for his daughter hath failed."
+msgstr "請你轉告國王陛下……蘿拉公主的搜查隊全軍覆沒了……"
+
+#. official: map.5.7.0
+#: data/text/dialog_lookup_table.py
+msgid "I am almost gone...."
+msgstr "我也、我也不行了……"
+
+#. official: map.5.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome! \n"
+"Enter the shop and speak to its keeper across the desk."
+msgstr ""
+"歡迎光臨。\n"
+"請進到裏面去，隔著櫃檯和店主對話。"
+
+#. official: map.2.1.1
+#: data/text/dialog_lookup_table.py
+msgid "{}, please save the Princess."
+msgstr "{}大人，請一定要救出蘿拉公主！"
+
+#. official: map.2.1.0
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou know about Princess Gwaelin?"
+msgstr "大人知道蘿拉公主的事情嗎？"
+
+#. official: map.2.1.2
+#: data/text/dialog_lookup_table.py
+msgid "Half a year now hath passed since the Princess was kidnapped by the enemy."
+msgstr "公主被魔物們擄走已經有半年了。"
+
+#. official: map.2.1.2
+#: data/text/dialog_lookup_table.py
+msgid "Never does the King speak of it, but he must be suffering much."
+msgstr "國王陛下雖然嘴上不說，但他心中會是多麼悲痛啊……"
+
+msgid "Welcome to Garinham. May thy stay be a peaceful one."
+msgstr "歡迎來到加雷鎮。願你在此度過平靜的時光。"
+
+#. official: map.7.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Garin, a wandering minstrel of legendary fame, is said to have built this town."
+msgstr "傳說中的吟遊詩人加雷，據說就是這個鎮的建立者。"
+
+#. official: data.3.0.3
+#: data/text/dialog_lookup_table.py
+msgid "What dost thou wish to buy?"
+msgstr "要買什麼？"
+
+#. official: data.3.0.1
+#: data/text/dialog_lookup_table.py
+msgid "Please, come again."
+msgstr "下次再來吧！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Is that Okay.?"
+msgstr "這樣可以嗎？"
+
+#. official: data.3.0.15
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Oh, yes?\n"
+"That's too bad."
+msgstr ""
+"是嗎？\n"
+"那真是遺憾啊……"
+
+#. official: data.3.0.5
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Sorry.\n"
+"Thou hast not enough money."
+msgstr ""
+"不過，要買這個\n"
+"你好像錢不夠。"
+
+#. official: data.3.0.2
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou wish to buy anything more?"
+msgstr "還有什麼事嗎？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Then I will buy thy {} for {} GOLD."
+msgstr "那麼，{}我就用{}金幣收購吧。"
+
+#. official: data.3.0.14
+#: data/text/dialog_lookup_table.py
+msgid "I thank thee."
+msgstr "謝謝惠顧！"
+
+#. official: data.3.5.5
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Okay.\n"
+"Good-bye, traveler."
+msgstr ""
+"再見了，旅行者。\n"
+"希望您不要太勉強自己……"
+
+#. official: data.3.5.2
+#: data/text/dialog_lookup_table.py
+msgid "Thou hast not enough money."
+msgstr "但是您的錢好像不夠啊。"
+
+#. official: data.3.5.1
+#: data/text/dialog_lookup_table.py
+msgid "Good night."
+msgstr "那麼請好好休息。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Good morning.\n"
+"Thou seems to have spent a good night."
+msgstr ""
+"早上好。\n"
+"您昨晚似乎睡得很好呢。"
+
+#. official: data.3.5.3
+#: data/text/dialog_lookup_table.py
+msgid "I shall see thee again."
+msgstr "請您慢走。"
+
+#. official: data.3.5.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome to the traveler's Inn.\n"
+"Room and board is {} GOLD per night.\n"
+"Dost thou want a room?"
+msgstr ""
+"歡迎來到旅行者的旅店。\n"
+"一晚是{}金幣。\n"
+"您要留宿嗎？"
+
+#: data/text/intro_lookup_table.py
+msgid "-PUSH START-"
+msgstr "-請按START鍵-"
+
+msgid "K key: A Button"
+msgstr "K鍵: A按鈕"
+
+msgid "J key: B Button"
+msgstr "J鍵: B按鈕"
+
+msgid "I key: Start"
+msgstr "I鍵: START"
+
+msgid "U key/Tab: Options"
+msgstr "U鍵/Tab: 設定"
+
+msgid "WASD / Arrow Keys: Move"
+msgstr "WASD / 方向鍵: 移動"
+
+#: data/text/intro_lookup_table.py
+msgid ""
+"Type your name using the keyboard.\n"
+"If you are using a joystick, press TAB to switch to joystick input."
+msgstr ""
+"請用鍵盤輸入名字。\n"
+"使用搖桿時，請按TAB鍵切換為搖桿輸入。"
+
+#. official: data.1.0.11
+#: src/battle.py
+msgid "Excellent move!\n"
+msgstr "會心一擊！\n"
+
+#. official: data.1.0.0
+#: src/languages.py
+msgid "{} draws near!\n"
+msgstr "{}出現了！\n"
+
+#: src/battle_controller.py
+msgid "Command?\n"
+msgstr "指令？\n"
+
+#. official: data.1.0.41
+#: src/battle.py
+msgid "Thy power increases by {}.\n"
+msgstr "力量提升了{}點！\n"
+
+#. official: data.1.0.42
+#: src/battle.py
+msgid "Thy Response Speed increases by {}.\n"
+msgstr "敏捷提升了{}點！\n"
+
+#. official: data.1.0.44
+#: src/battle.py
+msgid "Thy Maximum Hit Points increase by {}.\n"
+msgstr "最大HP提升了{}點！\n"
+
+#. official: data.1.0.44
+#: src/battle.py
+msgid "Thy Maximum Hit Point increase by {}.\n"
+msgstr "最大HP提升了{}點！\n"
+
+#. official: data.1.0.45
+#: src/battle.py
+msgid "Thy Maximum Magic Points increase by {}.\n"
+msgstr "最大MP提升了{}點！\n"
+
+#. official: data.1.0.45
+#: src/battle.py
+msgid "Thy Maximum Magic Point increase by {}.\n"
+msgstr "最大MP提升了{}點！\n"
+
+#. official: data.1.0.4
+#: src/battle.py
+msgid "{} started to run away.\n"
+msgstr "{}逃走了！\n"
+
+#. official: data.1.0.5
+#: src/battle.py
+msgid "But was blocked in front."
+msgstr "但是被堵截了！"
+
+#. official: data.1.0.9
+#: src/battle.py
+msgid "A miss! No damage hath been scored!"
+msgstr "失誤！未能造成傷害！"
+
+#. official: data.1.0.37
+#: src/languages.py
+msgid "Thou hast done well in defeating the {}.\n"
+msgstr "幹掉了{}！\n"
+
+#. official: data.1.0.38
+#: src/battle.py
+msgid ""
+"Thy Experience\n"
+"increases by {}.\n"
+msgstr ""
+"獲得了{}點\n"
+"經驗值！\n"
+
+#. official: data.1.0.39
+#: src/battle.py
+msgid ""
+"Thy GOLD\n"
+"increases by {}.\n"
+msgstr "得到了{}金幣！\n"
+
+#: src/enemy_lookup.py
+msgid "Slime"
+msgstr "史萊姆"
+
+#: src/enemy_lookup.py
+msgid "Red Slime"
+msgstr "史萊姆貝斯"
+
+#: src/enemy_lookup.py
+msgid "Metal Slime"
+msgstr "金屬史萊姆"
+
+#: src/enemy_lookup.py
+msgid "Drakee"
+msgstr "多拉奇"
+
+#: src/enemy_lookup.py
+msgid "Magidrakee"
+msgstr "法師多拉奇"
+
+#: src/enemy_lookup.py
+msgid "Drakeema"
+msgstr "多拉奇瑪"
+
+#: src/enemy_lookup.py
+msgid "Ghost"
+msgstr "鬼魂"
+
+#: src/enemy_lookup.py
+msgid "Poltergeist"
+msgstr "惡作劇鬼魂"
+
+#: src/enemy_lookup.py
+msgid "Magician"
+msgstr "魔法師"
+
+#: src/enemy_lookup.py
+msgid "Warlock"
+msgstr "魔道士"
+
+#: src/enemy_lookup.py
+msgid "Wizard"
+msgstr "大魔道"
+
+#: src/enemy_lookup.py
+msgid "Specter"
+msgstr "地獄鬼魂"
+
+#: src/enemy_lookup.py
+msgid "Scorpion"
+msgstr "巨蝎"
+
+#: src/enemy_lookup.py
+msgid "Metal Scorpion"
+msgstr "鐵蝎"
+
+#: src/enemy_lookup.py
+msgid "Rogue Scorpion"
+msgstr "死蝎"
+
+#: src/enemy_lookup.py
+msgid "Druin"
+msgstr "巨目蟲"
+
+#: src/enemy_lookup.py
+msgid "Druinlord"
+msgstr "巨目蟲領主"
+
+#: src/enemy_lookup.py
+msgid "Droll"
+msgstr "黏液怪"
+
+#: src/enemy_lookup.py
+msgid "Drollmagi"
+msgstr "法師粘液怪"
+
+#: src/enemy_lookup.py
+msgid "Skeleton"
+msgstr "骸骨"
+
+#: src/enemy_lookup.py
+msgid "Wraith"
+msgstr "死靈"
+
+#: src/enemy_lookup.py
+msgid "Wraith Knight"
+msgstr "死靈騎士"
+
+#: src/enemy_lookup.py
+msgid "Demon Knight"
+msgstr "陰影騎士"
+
+#: src/enemy_lookup.py
+msgid "Wolf"
+msgstr "獸人"
+
+#: src/enemy_lookup.py
+msgid "Wolflord"
+msgstr "赤色獸人"
+
+#: src/enemy_lookup.py
+msgid "Werewolf"
+msgstr "黃金獸人"
+
+#: src/enemy_lookup.py
+msgid "Goldman"
+msgstr "黃金人"
+
+#: src/enemy_lookup.py
+msgid "Golem"
+msgstr "巨像兵"
+
+#: src/enemy_lookup.py
+msgid "Stoneman"
+msgstr "石頭人"
+
+#: src/enemy_lookup.py
+msgid "Wyvern"
+msgstr "奇美拉"
+
+#: src/enemy_lookup.py
+msgid "Magiwyvern"
+msgstr "法師奇美拉"
+
+#: src/enemy_lookup.py
+msgid "Starwyvern"
+msgstr "明星奇美拉"
+
+#: src/enemy_lookup.py
+msgid "Knight"
+msgstr "鎧甲騎士"
+
+#: src/enemy_lookup.py
+msgid "Axe Knight"
+msgstr "惡魔騎士"
+
+#: src/enemy_lookup.py
+msgid "Armored Knight"
+msgstr "死神騎士"
+
+#: src/enemy_lookup.py
+msgid "Green Dragon"
+msgstr "龍"
+
+#: src/enemy_lookup.py
+msgid "Blue Dragon"
+msgstr "藍龍"
+
+#: src/enemy_lookup.py
+msgid "Red Dragon"
+msgstr "紅龍"
+
+#: src/enemy_lookup.py
+msgid "Dragonlord"
+msgstr "龍王"
+
+#. official: data.1.0.10
+#: src/battle_controller.py
+msgid "It is dodging!"
+msgstr "敏捷地躲過了！"
+
+#: src/game.py
+#: src/map_hotkeys.py
+msgid "Dragon Warrior"
+msgstr "勇者鬥惡龍"
+
+#. official: data.1.0.7
+#: src/battle_controller.py
+msgid "{} attacks!\n"
+msgstr "{}發動攻擊！\n"
+
+#. official: data.1.0.8
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The {}'s Hit Points have been reduced by {}.\n"
+msgstr "對{}造成{}點傷害！\n"
+
+#. official: data.1.0.8
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The {}'s Hit Point have been reduced by {}.\n"
+msgstr "對{}造成{}點傷害！\n"
+
+#. official: data.1.0.7
+#: src/battle_controller.py
+msgid "The {} attacks!\n"
+msgstr "{}發動攻擊！\n"
+
+#. official: data.1.0.18
+#: src/hero_damage.py
+msgid "Thy Hits decreased by {}.\n"
+msgstr "受到了{}點傷害！\n"
+
+#. official: data.1.0.18
+#: src/hero_damage.py
+msgid "Thy Hit decreased by {}.\n"
+msgstr "受到了{}點傷害！\n"
+
+#. official: data.1.0.22
+#: src/battle_controller.py
+msgid "The {} is running away."
+msgstr "{}逃走了！"
+
+#: data/text/intro_lookup_table.py
+msgid "Controls:\n"
+msgstr "操作:\n"
+
+#. official: data.1.0.17
+#: src/battle_controller.py
+msgid "{} chants the spell of {}."
+msgstr "{}詠唱了{}！"
+
+#: src/windows.py
+msgid "COMMAND"
+msgstr "指令"
+
+#: src/windows.py
+msgid "TALK"
+msgstr "對話"
+
+#: src/windows.py
+msgid "STATUS"
+msgstr "能力"
+
+#: src/options_overlay.py
+#: src/windows.py
+msgid "STAIRS"
+msgstr "樓梯"
+
+#: src/windows.py
+msgid "SEARCH"
+msgstr "調查"
+
+#: src/menu.py
+#: src/windows.py
+msgid "SPELL"
+msgstr "咒文"
+
+#: src/windows.py
+msgid "ITEM"
+msgstr "道具"
+
+#: src/windows.py
+msgid "DOOR"
+msgstr "開門"
+
+#: src/windows.py
+msgid "TAKE"
+msgstr "拿取"
+
+#: src/menu.py
+msgid "I have nothing to say."
+msgstr "沒有什麼好說的。"
+
+#. official: data.0.1.6
+#: src/menu.py
+msgid ""
+"Fortune smiles upon thee, {}.\n"
+"Thou hast found the {}."
+msgstr ""
+"{}打開了寶箱。\n"
+"發現了{}！"
+
+#: src/items.py
+msgid "Torch"
+msgstr "火把"
+
+#: src/items.py
+msgid "Magic Key"
+msgstr "鑰匙"
+
+#: src/items.py
+msgid "Herb"
+msgstr "藥草"
+
+#: src/items.py
+msgid "Fairy Water"
+msgstr "聖水"
+
+#: src/items.py
+msgid "Wings"
+msgstr "奇美拉之翼"
+
+#: src/items.py
+msgid "Dragon's Scale"
+msgstr "龍鱗"
+
+#: src/items.py
+msgid "Fighter's Ring"
+msgstr "戰士的戒指"
+
+msgid "Erdrick's Tablet"
+msgstr "洛特之石板"
+
+msgid "Tablet"
+msgstr "石板"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "The tablet reads as follows:"
+msgstr "石板上寫著這樣的內容。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "I am Erdrick and thou art my descendant."
+msgstr ""
+"我的名字是洛特。\n"
+"繼承了我的血脈的人啊。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "Three items were needed to reach the Isle of Dragons, which is south of Brecconary."
+msgstr "如果想要登上拉達托姆南方的魔島，需要3件東西。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "I gathered these items, reached the island, and there defeated a creature of great evil."
+msgstr "我集齊了這3樣東西登上了魔島，並打倒了魔王。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "Now I have entrusted the three items to three worthy keepers."
+msgstr "然後，我將這3樣神秘的東西託付給了3位賢者。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "Their descendants will protect the items until thy quest leads thee to seek them out."
+msgstr "他們的子孫應該會守護著這些東西，直到你前去尋找。"
+
+#. official: map.18.0.0
+#: src/menu.py
+msgid "When a new evil arises, find the three items, then fight!"
+msgstr "如果魔島上的邪惡再次復蘇，就找齊這些東西去戰鬥吧！"
+
+#: src/items.py
+msgid "Cursed Belt"
+msgstr "詛咒腰帶"
+
+#: src/items.py
+msgid "Silver Harp"
+msgstr "銀之豎琴"
+
+#: src/items.py
+msgid "Staff of Rain"
+msgstr "雨雲法杖"
+
+#: src/items.py
+msgid "Stones of Sunlight"
+msgstr "太陽石"
+
+#: src/items.py
+msgid "Rainbow Drop"
+msgstr "彩虹之露"
+
+#: src/items.py
+msgid "Gwaelin's Love"
+msgstr "公主的愛"
+
+msgid "Ball of Light"
+msgstr "光之石"
+
+#. official: data.0.1.2
+#: src/menu.py
+msgid "Of GOLD thou hast gained {}"
+msgstr "得到了{}金幣。"
+
+#. official: data.5.4.0
+#: src/menu.py
+msgid "But nothing happened."
+msgstr "但是什麼也沒有發生！"
+
+#. official: data.6.7.0
+#: src/battle.py
+#: src/menu.py
+msgid "{} cannot yet use the spell."
+msgstr "{}還不能使用咒文。"
+
+#. official: data.5.8.0
+#: src/menu.py
+msgid "Nothing of use has yet been given to thee."
+msgstr "沒有攜帶道具。"
+
+#. official: data.6.8.0
+#: src/menu.py
+msgid "Thy MP is too low."
+msgstr "MP不足。"
+
+#. official: data.6.0.0
+#: src/menu.py
+msgid "{} chanted the spell of {}."
+msgstr "{}詠唱了{}！"
+
+#. official: data.5.17.0
+#: src/menu.py
+msgid "There is no door here."
+msgstr "那裡沒有門！"
+
+#. official: data.16.53.0
+#: src/menu.py
+msgid "Thou hast not a key to use."
+msgstr "沒有攜帶鑰匙！"
+
+#: src/menu.py
+msgid "There is nothing to take here, {}."
+msgstr "{}啊，這裡沒有可以拿的東西。"
+
+#: src/languages.py
+msgid ""
+"Courage and wit have served thee well.\n"
+"Thou hast been promoted to the next level.\n"
+msgstr ""
+"勇氣與智慧引導了你。\n"
+"等級提升了！\n"
+
+#: src/battle.py
+msgid "Thou hast learned a new spell.\n"
+msgstr "學會了新的咒文！\n"
+
+#. official: map.33.1.1
+#: src/battle.py
+msgid "The Dragonlord revealed his true self!\n"
+msgstr "龍王現出了真身！\n"
+
+#: src/languages.py
+msgid "A {}"
+msgstr "{}"
+
+#: src/languages.py
+msgid "An {}"
+msgstr "{}"
+
+#. official: data.1.0.14
+#: src/battle_controller.py
+msgid "{} hath woken up."
+msgstr "{}醒了！"
+
+#. official: data.1.0.15
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The {} is asleep."
+msgstr "{}正在睡覺。"
+
+#. official: data.1.0.12
+#: src/battle_controller.py
+#: src/menu.py
+msgid "But that spell hath been blocked."
+msgstr "但是咒文被封住了！"
+
+#. official: data.1.0.25
+#: src/battle_controller.py
+msgid "Thou art asleep.\n"
+msgstr "睡著了！\n"
+
+#. official: data.5.8.0
+#: src/battle_controller.py
+msgid "Nothing of use has yet been given to thee.\n"
+msgstr "沒有攜帶道具。\n"
+
+#. official: data.1.0.13
+#: src/battle_controller.py
+msgid "Thou art still asleep.\n"
+msgstr "還在睡覺……\n"
+
+#. official: data.1.0.29
+#: src/battle_controller.py
+msgid "The {} is breathing fire.\n"
+msgstr "{}吐出了火之氣息！\n"
+
+#. official: data.1.0.14
+#: src/battle_controller.py
+msgid "{} awakes.\n"
+msgstr "{}醒了！\n"
+
+#. official: map.0.1.1
+#: src/ending.py
+msgid "Thou hast brought us peace, again."
+msgstr "多虧了您，和平才能重回大地。"
+
+#. official: map.33.2.0
+#: src/ending.py
+msgid "Thou hast found the Ball of Light."
+msgstr "取回了光之石！"
+
+#. official: map.33.2.0
+#: src/ending.py
+msgid "Radiance streams forth as thy hands touch the object and hold it aloft."
+msgstr "舉起光之石後，從中射出的耀眼光芒充滿了四周……"
+
+#: src/ending.py
+msgid "Across the land spreads the brilliance until all shadows are banished and peace is restored."
+msgstr "光芒擴散到全世界，驅散了所有的黑暗，和平終於回來了！"
+
+#. official: map.0.1.19
+#: src/ending.py
+msgid "Come now, King Lorik awaits."
+msgstr "請您快點去見國王陛下吧！"
+
+#. official: map.34.1.1
+#: src/ending.py
+msgid "The legends have proven true."
+msgstr "一切都和古代傳說裡說的一樣！"
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "Thou art indeed of the line of Erdrick."
+msgstr "你正是繼承了勇者洛特血脈的人！"
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "It is thy right to rule over this land."
+msgstr "這個世界更應該交給你來治理！"
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "Will thou take my place?"
+msgstr "你意下如何？願意取代我來治理這個國家嗎？"
+
+#. official: map.34.1.3
+#: src/ending.py
+msgid "If ever I am to rule a country, it must be a land that I myself find."
+msgstr "不，如果有國家需要我來治理的話，我想由我自己去找到它。"
+
+#. official: map.34.1.5
+#: src/ending.py
+msgid "I wish to go with thee on thy journey."
+msgstr "蘿拉也想要和您一起去旅行。"
+
+#. official: map.34.1.5
+#: src/ending.py
+msgid "May I travel as thy companion?"
+msgstr ""
+"蘿拉也想要和您一起去旅行。\n"
+"您能帶蘿拉一起走嗎？"
+
+#. official: map.34.1.6
+#: data/text/dialog_lookup_table.py
+#: src/ending.py
+msgid "But thou must."
+msgstr "為什麼，太過分了……"
+
+#. official: map.34.1.7
+#: data/text/dialog_lookup_table.py
+#: src/ending.py
+msgid "I'm so happy!"
+msgstr "蘿拉我好高興。"
+
+#: src/ending.py
+msgid "unless the dragons return again."
+msgstr "只要龍不再復活的話。"
+
+#. official: map.0.1.0
+#: src/ending.py
+msgid ""
+"Hurrah!\n"
+"Hurrah!\n"
+"Long live {}!"
+msgstr ""
+"萬歲！\n"
+"萬歲！\n"
+"勇者{}萬歲！"
+
+#: src/ending.py
+msgid "{} thought carefully before answering."
+msgstr "{}思考了一會兒才回答。"
+
+#: src/ending.py
+msgid "Gwaelin said:"
+msgstr "蘿拉公主說："
+
+#. official: map.34.1.4
+#: src/ending.py
+msgid "Please, wait."
+msgstr "請等一下！"
+
+#: src/ending.py
+msgid "And thus the tale comes to an end...."
+msgstr "就這樣，故事迎來了結局……"
+
+#: src/ending.py
+msgid "I cannot,"
+msgstr "我不能這麼做。"
+
+#: src/ending.py
+msgid "said {}."
+msgstr "{}這樣說道。"
+
+#. official: map.2.7.1
+#: src/step_triggers.py
+msgid "Cursed one,be gone!"
+msgstr "被詛咒的人啊，快快離去！"
+
+#. official: data.5.44.0
+#: src/step_triggers.py
+msgid "REPEL has lost its effect."
+msgstr "托黑洛斯的效果消失了。"
+
+#. official: data.5.19.0
+#: src/step_triggers.py
+msgid "The Fairy Water has lost its effect."
+msgstr "聖水的效果消失了。"
+
+#: src/map_hotkeys.py
+msgid "Fullscreen mode enabled"
+msgstr "已切換為全螢幕"
+
+#: src/map_hotkeys.py
+msgid "Windowed mode enabled"
+msgstr "已切換為視窗模式"
+
+#: src/map_hotkeys.py
+msgid "Auto-battle disabled"
+msgstr "自動戰鬥 關"
+
+#: src/map_hotkeys.py
+msgid "Invulnerability enabled"
+msgstr "無敵模式 開"
+
+#: src/map_hotkeys.py
+msgid "Invulnerability disabled"
+msgstr "無敵模式 關"
+
+#. official: map.2.7.1
+#: src/hero_death.py
+msgid "Thou hast failed and thou art cursed."
+msgstr "你不但死了，還被詛咒了啊！"
+
+#: src/hero_death.py
+msgid "Leave at once!"
+msgstr "快快離去！"
+
+#: src/map_hotkeys.py
+msgid ""
+"Auto-battle enabled\n"
+"(Repeats: {})"
+msgstr ""
+"自動戰鬥 開\n"
+"(重複: {})"
+
+#: src/menu.py
+msgid "Unfortunately, it is empty."
+msgstr "很遺憾，裡面是空的。"
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "From where thou art now, my castle lies..\n"
+msgstr "我所在的城在..\n"
+
+#: src/menu.py
+msgid "That cannot be used in battle."
+msgstr "戰鬥中無法使用。"
+
+#: src/menu.py
+msgid "The Wings of the Wyvern cannot be used here."
+msgstr "這裡無法使用奇美拉之翼。"
+
+#: src/menu.py
+msgid "A torch can be used only in dark places."
+msgstr "火把只能在黑暗的地方使用。"
+
+#. official: data.5.43.0
+#: src/menu.py
+msgid "Thou art already wearing the scale of the dragon."
+msgstr "龍鱗已經裝備在身上了。"
+
+#. official: data.5.38.0
+#: src/menu.py
+msgid "Quietly Golem closes his eyes and settles into sleep."
+msgstr ""
+"巨像兵安靜地閉上眼睛……\n"
+"巨像兵睡著了！"
+
+#: src/items.py
+#: src/menu.py
+msgid "Erdrick's Token"
+msgstr "洛特之印"
+
+#: src/menu.py
+msgid "But no rainbow appeared here."
+msgstr "但是這裡沒有出現彩虹。"
+
+#: src/battle_controller.py
+#: src/menu.py
+msgid "The spell will not work."
+msgstr "咒文沒有效果！"
+
+#: src/menu.py
+msgid "There is a treasure box."
+msgstr "這裡有寶箱。"
+
+#: src/menu.py
+msgid "Feel the wind blowing from behind the throne."
+msgstr "王座後面吹來了一陣風。"
+
+#. official: data.0.0.0
+#: src/menu.py
+msgid "But there found nothing."
+msgstr "但是什麼也沒有找到。"
+
+#. official: data.0.0.1
+#: src/menu.py
+msgid "{} discovers the {}."
+msgstr "{}發現了{}！"
+
+#: src/menu.py
+msgid ""
+"If thou would take the {}, thou must now discard some other item.\n"
+"Dost thou wish to have the {}?"
+msgstr ""
+"要拿{}的話，就必須扔掉其他東西。\n"
+"要帶走{}嗎？"
+
+#. official: data.3.6.2
+#: src/menu.py
+msgid "What shall thou drop?"
+msgstr "要扔什麼東西？"
+
+#. official: data.3.6.6
+#: src/menu.py
+msgid "Thou hast given up thy {}."
+msgstr "放棄了{}。"
+
+#. official: data.5.1.0
+#: src/menu.py
+msgid "{} used the Herb."
+msgstr "{}使用了藥草！"
+
+#. official: data.5.15.0
+#: src/menu.py
+msgid "{} threw The Wings of the Wyvern up into the sky."
+msgstr "{}拋出了奇美拉之翼。"
+
+#. official: data.5.2.0
+#: src/menu.py
+msgid "{} donned the scale of the dragon."
+msgstr "{}裝備上了龍鱗！"
+
+#. official: data.5.18.0
+#: src/menu.py
+msgid "{} sprinkled the Fairy Water over his body."
+msgstr "{}在身上灑了聖水。"
+
+#. official: data.5.21.0
+#: src/menu.py
+msgid "{} played a sweet melody on the harp."
+msgstr "{}奏響了銀之豎琴。"
+
+#. official: data.5.39.0
+#: src/menu.py
+msgid "The {} looks happy."
+msgstr "{}好像很高興！"
+
+#. official: data.5.20.0
+#: src/menu.py
+msgid "{} blew the Fairies' Flute."
+msgstr "{}吹響了妖精之笛！"
+
+#. official: data.5.24.0
+#: src/menu.py
+msgid ""
+"{} held the {} tightly.\n"
+"But nothing happened."
+msgstr ""
+"{}緊握住{}。\n"
+"但是什麼也沒有發生！"
+
+#. official: data.5.26.0
+#: src/menu.py
+msgid "{} held the Rainbow Drop toward the sky."
+msgstr "{}將彩虹之露舉向天空！"
+
+#. official: data.5.2.0
+#: src/menu.py
+msgid "{} put on the Fighter's Ring."
+msgstr "{}裝備上了戰士的戒指！"
+
+#. official: data.5.28.0
+#: src/menu.py
+msgid "The {} is squeezing thy body."
+msgstr "{}緊緊裹住了身體！"
+
+#. official: data.5.27.0
+#: src/menu.py
+msgid "{} put on the {} and was cursed!."
+msgstr ""
+"{}裝備上了{}。\n"
+"但是被詛咒了！"
+
+#: src/menu.py
+msgid "Thy body is being squeezed."
+msgstr "身體被緊緊裹住了。"
+
+#. official: data.0.5.3
+#: src/menu.py
+msgid ""
+"Heed my voice,\n"
+"'{}, for this is Gwaelin.\n"
+"To reach the next level thou must raise thy Experience Points by {}.\n"
+"My hope is with thee.'"
+msgstr ""
+"傳來了蘿拉公主的聲音。\n"
+"「{}大人……我是蘿拉。\n"
+"距離您升到下一級，還差{}點經驗。\n"
+"我會為您的平安祈禱。」"
+
+#. official: data.0.5.3
+#: src/menu.py
+msgid ""
+"Heed my voice,\n"
+"'{}, for this is Gwaelin.\n"
+"To reach the next level thou must raise thy Experience Point by {}.\n"
+"My hope is with thee.'"
+msgstr ""
+"傳來了蘿拉公主的聲音。\n"
+"「{}大人……我是蘿拉。\n"
+"距離您升到下一級，還差{}點經驗。\n"
+"我會為您的平安祈禱。」"
+
+#. official: data.0.5.4
+#: src/menu.py
+msgid ""
+"'{}?\n"
+"This is Gwaelin.\n"
+"Know that thou hath reached the final level.'"
+msgstr ""
+"「{}大人？\n"
+"我是蘿拉。\n"
+"您已經足夠強了。」"
+
+#. official: map.2.5.1
+#: data/text/dialog_lookup_table.py
+#: src/menu.py
+msgid "I love thee, {}."
+msgstr "{}大人，蘿拉愛著您。"
+
+#. official: data.5.38.0
+#: src/menu.py
+msgid "Thou hast put the {} to sleep."
+msgstr "{}睡著了！"
+
+#: src/menu.py
+msgid "The {}'s spell hath been blocked."
+msgstr "封住了{}的咒文！"
+
+#. official: data.0.0.0
+#: src/menu.py
+msgid "{} searched the ground all about."
+msgstr "{}調查了自己的腳下。"
+
+#: src/menu.py
+msgid "{} discovers the Secret Passage."
+msgstr "{}發現了隱藏的通道！"
+
+#. official: data.5.10.0
+#: src/menu.py
+msgid "That is much too important to throw away."
+msgstr "怎麼能把這個扔掉呢！"
+
+#: data/text/dialog_lookup_table.py
+#: src/menu.py
+msgid "A curse is upon thy body."
+msgstr "身上被施加了詛咒。"
+
+#: src/menu.py
+msgid "{} adjusted the position of the Fighter's Ring."
+msgstr "{}重新戴好了戰士的戒指。"
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the south and.."
+msgstr "往南{}.."
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the west."
+msgstr "往西{}的方向。"
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the north and.."
+msgstr "往北{}.."
+
+#. official: data.0.5.5
+#: src/menu.py
+msgid "{} to the east."
+msgstr "往東{}的方向。"
+
+#: src/menu.py
+msgid "Thou hast dropped thy {}."
+msgstr "扔掉了{}。"
+
+#. official: data.3.6.5
+#: src/menu.py
+msgid "And obtained the {}."
+msgstr "並且得到了{}！"
+
+#: src/menu_functions.py
+msgid "Joystick input disabled."
+msgstr "已關閉搖桿輸入。"
+
+#: src/menu_functions.py
+msgid "Joystick input enabled."
+msgstr "已開啟搖桿輸入。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thy journey is over.\n"
+"Take now a long, long rest.\n"
+"Hahahaha...."
+msgstr ""
+"你的旅程結束了。\n"
+"好好地長眠吧！\n"
+"哇哈哈哈……"
+
+#. official: map.21.0.1
+#: data/text/dialog_lookup_table.py
+msgid "Will thou take me to the castle?"
+msgstr "您能帶我回城裡去嗎？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Princess Gwaelin embraces thee.\n"
+msgstr "蘿拉公主緊緊抱住了你。\n"
+
+#. official: map.33.0.2
+#: data/text/dialog_lookup_table.py
+msgid ""
+"What sayest thou?\n"
+"Will the great warrior stand with me?"
+msgstr ""
+"怎麼樣？\n"
+"要加入我嗎？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Really?"
+msgstr "當真？"
+
+#. official: map.33.0.8
+#: data/text/dialog_lookup_table.py
+msgid "Thou art a fool!"
+msgstr "蠢貨！！"
+
+#. official: map.33.0.7
+#: data/text/dialog_lookup_table.py
+msgid "Then half of this world is thine, half of the darkness, and...."
+msgstr "那麼，我就把一半的世界，也就是黑暗的世界給你……"
+
+#: data/text/dialog_lookup_table.py
+msgid "If thou dies I can bring thee back for another attempt without loss of thy deeds to date."
+msgstr "即使你死了，也不會失去至今的冒險，我會再給你一次機會。"
+
+#. official: map.2.5.0
+#: data/text/dialog_lookup_table.py
+msgid "Even when we two are parted by great distances, I shall be with thee."
+msgstr "即使身隔兩地，蘿拉也會一直陪伴著您的。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou hast no business here.\n"
+"Go away."
+msgstr ""
+"你在這裡應該沒有事吧。\n"
+"快離開！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thou hast brought the harp. Good."
+msgstr "哦，你把豎琴帶回來了啊。很好。"
+
+#. official: map.16.0.3
+#: data/text/dialog_lookup_table.py
+msgid "Now the sun and rain shall meet and the Rainbow Drop passes to thy keeping."
+msgstr "現在就是雨和太陽合二為一之時！我將彩虹之露授予你。"
+
+#. official: data.3.7.9
+#: data/text/dialog_lookup_table.py
+msgid "Rest then for awhile."
+msgstr "那麼，好好休息吧。"
+
+#. official: map.9.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou still wish to go on?"
+msgstr "即使這樣你也要去嗎？"
+
+#: data/text/dialog_lookup_table.py
+msgid "I will be waiting for thy next visit."
+msgstr "期待您再次光臨。"
+
+#. official: data.3.1.17
+#: data/text/dialog_lookup_table.py
+msgid "What dost thou want?"
+msgstr "要買哪件商品呢？"
+
+#. official: data.3.1.2
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou want anything else?"
+msgstr "還有什麼事嗎？"
+
+#. official: data.3.1.10
+#: data/text/dialog_lookup_table.py
+msgid "What art thou selling?"
+msgstr "要賣哪件商品呢？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Wilt thou sell anything else?"
+msgstr "還有什麼要賣的嗎？"
+
+#. official: data.3.4.1
+#: data/text/dialog_lookup_table.py
+msgid "All the best to thee."
+msgstr "願神保佑您……"
+
+#. official: data.3.3.1
+#: data/text/dialog_lookup_table.py
+msgid "I will see thee later."
+msgstr "歡迎下次再來。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Good morning.\n"
+"Thou hast had a good night's sleep I hope."
+msgstr ""
+"早上好。\n"
+"昨晚休息得好嗎？"
+
+#: data/text/dialog_lookup_table.py
+msgid "And I would like to have something of thine--a token."
+msgstr "還有，請把您的一樣東西……送給我作為紀念。"
+
+#. official: map.5.6.1
+#: data/text/dialog_lookup_table.py
+msgid "I will free thee from thy curse."
+msgstr "那就讓我來幫你解除詛咒吧。"
+
+#. official: map.5.6.2
+#: data/text/dialog_lookup_table.py
+msgid "Now, go."
+msgstr "好，這就沒問題了。路上一定要多加小心啊。"
+
+#. official: map.14.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Thy bravery must be proven."
+msgstr "我必須要試一試你的力量。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thus, I propose a test."
+msgstr "所以，我要給你一個試煉。"
+
+#. official: map.14.0.0
+#: data/text/dialog_lookup_table.py
+msgid "There is a Silver Harp that beckons to the creatures of the Dragonlord."
+msgstr "我聽說這個世界上的某處，有一個能夠吸引魔物們的銀之豎琴。"
+
+#. official: map.14.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Bring this to me and I will reward thee with the Staff of Rain."
+msgstr "如果你能把它帶來，我就承認你是勇者，把雨雲法杖交給你。"
+
+#: data/text/dialog_lookup_table.py
+msgid "In thy task thou hast failed. Alas, I fear thou art not the one Erdrick predicted would save us."
+msgstr "看來你在試煉中失敗了。啊啊，或許你並不是洛特所預言的勇者。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Go now!"
+msgstr "去吧！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thou may go and search."
+msgstr "去找找看吧。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Please push RESET, hold it in, then turn off the POWER."
+msgstr "請按住RESET鍵，再關掉電源。"
+
+#: data/text/dialog_lookup_table.py
+msgid "If you turn the power off first, the Imperial Scroll of Honor containing your deeds may be lost."
+msgstr "如果先關掉電源，冒險之書的記錄可能會消失。"
+
+#: data/text/dialog_lookup_table.py
+msgid "BUY"
+msgstr "買東西"
+
+#: data/text/dialog_lookup_table.py
+msgid "SELL"
+msgstr "賣東西"
+
+#. official: data.3.1.11
+#: data/text/dialog_lookup_table.py
+msgid "Thou hast no possessions."
+msgstr "誒？您什麼也沒帶啊。"
+
+#. official: data.3.0.12
+#: data/text/dialog_lookup_table.py
+msgid "I cannot buy it."
+msgstr "唔……不好意思，我無法收購那個。"
+
+#: data/text/dialog_lookup_table.py
+msgid "I am sorry."
+msgstr "非常抱歉。"
+
+#. official: data.3.3.5
+#: data/text/dialog_lookup_table.py
+msgid "I am sorry, but I cannot sell thee anymore."
+msgstr "不好意思，不能賣給你更多了。"
+
+#: data/text/dialog_lookup_table.py
+msgid "I suggest making a map if thy path leads into the darkness."
+msgstr "如果要進入黑暗的洞窟，最好先畫好地圖。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I'm too busy.\n"
+"Ask the other guard."
+msgstr ""
+"我很忙。\n"
+"去問其他士兵吧。"
+
+#. official: map.7.8.0
+msgid "The harp attracts enemies. Stay away from the grave in Garinham."
+msgstr "據說那豎琴的聲音會喚來魔物。還是不要靠近加雷之墓比較好。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Many believe that Princess Gwaelin is hidden away in a cave."
+msgstr "很多人都相信，蘿拉公主被囚禁在某個洞窟裡。"
+
+#. official: map.5.14.0
+#: data/text/dialog_lookup_table.py
+msgid "In legends it is said that fairies know how to put Golem to sleep."
+msgstr "據古代文獻所說，妖精們能夠讓巨像兵陷入沉睡。"
+
+#. official: map.8.0.0
+#: data/text/dialog_lookup_table.py
+msgid "This is the village of Kol."
+msgstr "這裡是麥拉村。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Golem is afraid of the music of the flute, so ʼtis said."
+msgstr "據說巨像兵害怕笛子的聲音。"
+
+#: data/text/dialog_lookup_table.py
+msgid "This bath cures rheumatism."
+msgstr "這個溫泉對風濕很有效哦。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Please,save us from the minions of the Dragonlord."
+msgstr "請從龍王的手下們手中救救我們吧。"
+
+#. official: map.5.9.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Art thou the descendant of Erdrick?\n"
+"Hast thou any proof?"
+msgstr ""
+"你是洛特血脈的繼承者？\n"
+"有沒有什麼證據啊？"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Hast thou seen Nester?\n"
+"I think he may need help."
+msgstr ""
+"你有沒有看到內斯特？\n"
+"他可能需要幫助。"
+
+#: data/text/dialog_lookup_table.py
+msgid "East of Hauksness there is a town, ʼtis said, where one may purchase weapons of extraordinary quality."
+msgstr "據說在多姆多拉的東邊，有一個販賣很優質的武器的城鎮。"
+
+#. official: map.9.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Welcome to Cantlin, the castle town."
+msgstr "歡迎來到要塞城市麥爾基德！"
+
+#. official: map.9.4.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Come buy my radishes! They are fresh and cheap.\n"
+"Buy thy radishes today!"
+msgstr ""
+"歡迎！今天的蘿蔔很便宜哦！\n"
+"快來買剛採收的蘿蔔吧！"
+
+#: data/text/dialog_lookup_table.py
+msgid "What shall I get for thy dinner?"
+msgstr "晚飯要做什麼好呢？"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I'm Nester.\n"
+"Hey, where am I? No, don't tell me!"
+msgstr ""
+"我是內斯特。\n"
+"咦，這裡是哪裡？不，別告訴我！"
+
+#: data/text/dialog_lookup_table.py
+msgid "I know nothing."
+msgstr "我什麼也不知道。"
+
+#: data/text/dialog_lookup_table.py
+msgid "To learn how proof may be obtained that thy ancestor was the great Erdrick, see a man in this very town."
+msgstr "如果想得到你的祖先是偉大的洛特的證明，就去拜訪這個鎮上的一個男人吧。"
+
+#. official: map.9.7.0
+#: data/text/dialog_lookup_table.py
+msgid "Grandfather used to say that his friend, Wynn, had buried something of great value at the foot of a tree behind his shop."
+msgstr "以前我爺爺老是會說起一件事。他的朋友幸信先生好像把某樣很珍貴的寶物埋藏在了自己店後面的樹下。"
+
+#: data/text/dialog_lookup_table.py
+msgid "ʼTis said that Erdrick's sword could cleave steel."
+msgstr "據說洛特之劍連鋼鐵都能斬斷。"
+
+#: data/text/dialog_lookup_table.py
+msgid "My Grandfather Wynn once had a shop on the east side of Hauksness."
+msgstr "我的爺爺幸信以前在多姆多拉的東邊開店。"
+
+#. official: map.2.5.2
+#: data/text/dialog_lookup_table.py
+msgid "Dost thou love me, {}?"
+msgstr "{}大人……您有沒有想念蘿拉？"
+
+#. official: map.9.3.1
+#: data/text/dialog_lookup_table.py
+msgid "Thou art truly brave."
+msgstr "啊！你才是真正的勇者！"
+
+#. official: map.9.3.2
+#: data/text/dialog_lookup_table.py
+msgid ""
+"That is good.’\n"
+"`No one will say thou art afraid."
+msgstr ""
+"這樣也好。」\n"
+"「我想沒有人會說你是膽小鬼的。"
+
+#. official: data.3.1.7
+#: data/text/dialog_lookup_table.py
+msgid "Thou cannot hold more Herbs."
+msgstr "不能再拿更多藥草了。"
+
+#. official: data.3.1.13
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou said the {}.\n"
+"I will buy thy {} for {} GOLD.\n"
+"Is that all right?"
+msgstr ""
+"{}嗎。\n"
+"那件{}的話，我就用{}金幣收下吧。\n"
+"可以嗎？"
+
+#. official: data.3.4.0
+#: data/text/dialog_lookup_table.py
+msgid "Will thou buy some Fairy Water for {} GOLD to keep the Dragonlord's minions away?"
+msgstr "請問要買驅魔的聖水嗎？一瓶{}金幣。"
+
+#. official: data.3.4.3
+#: data/text/dialog_lookup_table.py
+msgid "Thou cannot carry anymore."
+msgstr "客人您好像拿不下更多東西了。"
+
+#. official: data.3.4.4
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I thank thee.\n"
+"Won't thou buy one more bottle?"
+msgstr ""
+"謝謝惠顧。\n"
+"要不要再買1瓶？"
+
+#. official: data.3.3.4
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Here,take this key.\n"
+"Dost thou wish to purchase more?"
+msgstr ""
+"喏，給你一個鑰匙。\n"
+"還想買鑰匙嗎？"
+
+#. official: map.2.8.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I am glad thou hast returned.\n"
+"All our hopes are riding on thee."
+msgstr ""
+"你回來啦！我非常高興！\n"
+"全世界的人們都把希望寄託在你身上了。"
+
+#. official: data.3.7.11
+#: data/text/dialog_lookup_table.py
+msgid "See me again when thy level has increased."
+msgstr "升級後再來見我吧。"
+
+#. official: map.2.6.0
+#: data/text/dialog_lookup_table.py
+msgid "Now, Gwaelin, come to my side."
+msgstr "好了，蘿拉。快到我的身邊來。"
+
+#. official: map.5.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Beware the bridges!"
+msgstr "要當心橋樑！"
+
+#. official: map.5.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Danger grows when thou crosses."
+msgstr "過了橋到了越遠的地方，就會有越可怕的魔物們來襲擊你。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thou shouldst come here again."
+msgstr "你可以再來這裡。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Dreadful is the South Island."
+msgstr "南方的島嶼是個可怕的地方。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Great strength and skill and wit only will bring thee back from that place."
+msgstr "若沒有強大的力量、技巧和智慧，是無法從那裡活著回來的。"
+
+#. official: map.9.3.0
+#: data/text/dialog_lookup_table.py
+msgid "ʼTis said that the Dragonlord hath claws that can cleave iron and fiery breath that can melt stone."
+msgstr "據說龍王的爪子能抓破鐵板，噴出的火炎能把岩石燒化。"
+
+#. official: map.9.2.0
+#: data/text/dialog_lookup_table.py
+msgid "It is said that many have held Erdrick's armor."
+msgstr "根據我得到的消息，洛特之鎧多次易主。"
+
+#. official: map.9.2.0
+#: data/text/dialog_lookup_table.py
+msgid "The last to have it was a fellow named Wynn."
+msgstr "最後好像是落在了一個叫幸信的人手裏。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Let us wish the warrior well!"
+msgstr "讓我們為勇者的平安祈禱吧！"
+
+#: data/text/dialog_lookup_table.py
+msgid "May the light be thy strength!"
+msgstr "願光明成為你的力量！"
+
+#: data/text/dialog_lookup_table.py
+msgid "From Tantegel Castle travel 70 leagues to the south and 40 to the east."
+msgstr "從拉達托姆城向南走70步，再向東走40步看看吧。"
+
+#. official: map.21.0.0
+#: data/text/dialog_lookup_table.py
+msgid "I am Gwaelin, daughter of Lorik."
+msgstr "我叫蘿拉，是拉達托姆國王拉魯斯十六世的女兒。"
+
+#. official: map.33.0.2
+#: data/text/dialog_lookup_table.py
+msgid "I give thee now a chance to share this world and to rule half of it if thou will now stand beside me."
+msgstr "如果你願意加入我的話，我就把世界分給你一半。"
+
+#. official: map.2.6.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Gwaelin then whispers:\n"
+"`Wait a moment,please.\n"
+"I would give a present to {}.’"
+msgstr ""
+"蘿拉公主小聲說道：\n"
+"「請等一下。\n"
+"蘿拉有東西要送給{}大人。」"
+
+#: data/text/dialog_lookup_table.py
+msgid "Please give me thy {}."
+msgstr "請把您的{}給我吧。"
+
+#. official: map.2.1.4
+#: data/text/dialog_lookup_table.py
+msgid "Oh, brave {}."
+msgstr "哦哦，{}！多麼出色的勇者啊！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thank you for saving the Princess."
+msgstr "謝謝您救出了公主。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Who touches me?’\n"
+"`I see nothing, nor can I hear."
+msgstr ""
+"是誰在碰我？」\n"
+"「我的眼睛看不見，耳朵也聽不到。"
+
+#. official: map.2.0.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Forever shall I be grateful for the gift of my daughter returned to her home, {}.\n"
+"Accept my thanks."
+msgstr ""
+"{}，真是多虧你把公主給救了回來啊。\n"
+"我一生也不會忘記今天這個日子的。我真是衷心感謝你！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Please accept my love, {}."
+msgstr "{}大人，請接受我的愛。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Farewell, {}."
+msgstr "請多保重，{}大人。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Though thou art as brave as thy ancestor, {}, thou cannot defeat the great Dragonlord with such weapons."
+msgstr "{}啊，即使你像你的祖先一樣勇敢，用那樣的武器也是打不倒龍王的。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Thou art brave indeed to rescue me, {}."
+msgstr "{}大人，您竟然來救我，真是一位勇敢的人。"
+
+#. official: map.33.0.1
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome, {}.\n"
+"I am the Dragonlord--King of Kings."
+msgstr ""
+"來得好，{}！\n"
+"我正是王中之王，龍王！"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"The {}?\n"
+"Thank you very much."
+msgstr ""
+"您說{}嗎？\n"
+"真是太感謝了。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Oh, my dearest Gwaelin!’\n"
+"`I hate thee, {}."
+msgstr ""
+"哦哦，我親愛的蘿拉公主！」\n"
+"「我討厭{}！"
+
+msgid "H: Show Controls"
+msgstr "H: 查看操作方法"
+
+msgid "F11: Toggle Fullscreen"
+msgstr "F11: 切換全螢幕"
+
+msgid "1-5: Adjust Game Speed"
+msgstr "1-5: 調整遊戲速度"
+
+#: src/items.py
+msgid "Broad Sword"
+msgstr "鋼鐵之劍"
+
+#: src/items.py
+msgid "Flame Sword"
+msgstr "火焰劍"
+
+#: src/items.py
+msgid "Erdrick's Sword"
+msgstr "洛特之劍"
+
+#: src/items.py
+msgid "Erdricks Sword"
+msgstr "洛特之劍"
+
+#: src/items.py
+msgid "Chain Mail"
+msgstr "鎖鏈甲"
+
+#: src/items.py
+msgid "Magic Armor"
+msgstr "魔法鎧甲"
+
+#: src/items.py
+msgid "Erdrick's Armor"
+msgstr "洛特之鎧"
+
+#: src/items.py
+msgid "Large Shield"
+msgstr "鐵盾"
+
+#: src/items.py
+msgid "Silver Shield"
+msgstr "水鏡之盾"
+
+#: src/items.py
+msgid "Fairy Flute"
+msgstr "妖精之笛"
+
+#: src/items.py
+msgid "Death Necklace"
+msgstr "死之項鏈"
+
+#: src/enemy_lookup.py
+msgid "Dragonlord 2"
+msgstr "龍王"
+
+#: src/spells.py
+msgid "HEAL"
+msgstr "霍伊米"
+
+#: src/spells.py
+msgid "HEALMORE"
+msgstr "貝霍伊米"
+
+#: src/spells.py
+msgid "HURT"
+msgstr "基拉"
+
+#: src/spells.py
+msgid "HURTMORE"
+msgstr "貝基拉瑪"
+
+#: src/spells.py
+msgid "SLEEP"
+msgstr "拉裡霍"
+
+#: src/spells.py
+msgid "RADIANT"
+msgstr "雷米拉"
+
+#: src/spells.py
+msgid "STOPSPELL"
+msgstr "瑪霍托恩"
+
+#: src/spells.py
+msgid "OUTSIDE"
+msgstr "裡雷米特"
+
+#: src/spells.py
+msgid "RETURN"
+msgstr "魯拉"
+
+#: src/spells.py
+msgid "REPEL"
+msgstr "托黑洛斯"
+
+#: src/battle.py
+msgid "The attack failed and there was no loss of Hit Points!"
+msgstr "攻擊失敗了！HP沒有減少！"
+
+#: src/battle_controller.py
+msgid "The {} attacked before {} was ready."
+msgstr "{}趁{}還沒準備好就襲擊過來了！"
+
+#. official: data.1.0.24
+#: src/battle_controller.py
+msgid "The {} hath recovered."
+msgstr "{}受的傷恢復了！"
+
+#. official: data.1.0.27
+#: src/battle_controller.py
+msgid "{}'s spell is blocked."
+msgstr "{}的咒文被封住了！"
+
+#: src/map_hotkeys.py
+msgid ""
+"Game set to {}x speed.\n"
+"({} FPS)"
+msgstr ""
+"遊戲速度調為{}倍。\n"
+"({} FPS)"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou art strong enough!\n"
+"Why can thou not defeat the Dragonlord?"
+msgstr ""
+"你已經夠強了！\n"
+"為什麼還打不倒龍王呢？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Hast thou found the flute?"
+msgstr "找到笛子了嗎？"
+
+#. official: map.8.9.0
+#: data/text/dialog_lookup_table.py
+msgid "Hast thou been to the southern island?"
+msgstr "你去過南面的島上了嗎？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Hast thou found a magic temple?"
+msgstr "找到魔法的神殿了嗎？"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Is that a wedding ring?’\n"
+"`Thou seems too young to be married."
+msgstr ""
+"那是結婚戒指嗎？」\n"
+"「你看起來還太年輕，不像結了婚啊。"
+
+#. official: map.6.8.0
+#: data/text/dialog_lookup_table.py
+msgid "All true warriors wear a ring."
+msgstr "身為一個戰士，也不應忘記裝備上戒指。"
+
+#. official: map.1.13.0
+#: data/text/dialog_lookup_table.py
+msgid "Thou must have a key to open a door."
+msgstr "開門的話要用到鑰匙。"
+
+#: data/text/dialog_lookup_table.py
+msgid "If thy Hit Points are high enough, by all means, enter."
+msgstr "如果你的HP夠多，就務必進去看看吧。"
+
+#. official: map.1.5.0
+#: data/text/dialog_lookup_table.py
+msgid "When entering the cave, take with thee a torch."
+msgstr "要進入洞窟的時候帶上火把會比較好。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"In Garinham,look for the grave of Garin.\n"
+"Thou must push on a wall of darkness there."
+msgstr ""
+"去加雷鎮，找找加雷之墓吧。\n"
+"在那裡用力推暗墻。"
+
+#. official: map.1.14.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I am looking for the castle cellar.\n"
+"I heard it is not easily found."
+msgstr ""
+"我正在尋找地下室。\n"
+"聽說它就在這座城裏的某個地方……"
+
+#: data/text/dialog_lookup_table.py
+msgid "Some say that Garin's grave is home to a Silver Harp."
+msgstr "聽說加雷之墓裏有銀之豎琴。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Watch thy Hit Points when in the Poisonous Marsh."
+msgstr "在毒沼澤裡要注意HP。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Go north to the seashore, then follow the coastline west until thou hath reached Garinham."
+msgstr "向北走到海邊，再沿著海岸向西走，就能到達加雷鎮。"
+
+#: data/text/dialog_lookup_table.py
+msgid "See King Lorik when thy experience levels are raised."
+msgstr "等級提升後，就去見國王陛下吧。"
+
+#: data/text/dialog_lookup_table.py
+msgid "No,I am not Princess Gwaelin."
+msgstr "不，我不是蘿拉公主。"
+
+#. official: map.7.8.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"The harp attracts enemies.\n"
+"Stay away from the grave in Garinham."
+msgstr ""
+"據說那豎琴的聲音會喚來魔物。\n"
+"還是不要靠近加雷之墓比較好。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I hate people!\n"
+"Go! Leave me!"
+msgstr ""
+"我討厭人類！\n"
+"走開！別管我！"
+
+#: data/text/dialog_lookup_table.py
+msgid "Once there was a town called Hauksness far to the south,but I do not know if it still exists."
+msgstr "很久以前，遙遠的南方有個叫多姆多拉的鎮子，但不知道現在還在不在。"
+
+#: data/text/dialog_lookup_table.py
+msgid "They say that Erdrick's armor was hidden long ago."
+msgstr "聽說洛特之鎧很久以前就被藏起來了。"
+
+#. official: map.7.1.0
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Welcome to Garinham.\n"
+"May thy stay be a peaceful one."
+msgstr ""
+"歡迎來到訴說過往的城鎮，加雷！\n"
+"請好好休息吧。"
+
+#: data/text/dialog_lookup_table.py
+msgid "It is said that the Princess was kidnapped and taken eastward."
+msgstr "聽說公主被擄走，帶到東方去了。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"I have heard of one named Nester.\n"
+"Dost thou know such a one?"
+msgstr ""
+"我聽說過一個叫內斯特的人。\n"
+"你認識他嗎？"
+
+#. official: map.8.3.0
+#: data/text/dialog_lookup_table.py
+msgid "Rimuldar is the place to buy keys."
+msgstr "傳聞中說利姆爾達鎮上有販賣鑰匙的店。"
+
+#: data/text/dialog_lookup_table.py
+msgid "I am Orwick, and I am waiting for my girl friend."
+msgstr "我是歐威克，正在等我的女朋友。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Welcome!"
+msgstr "歡迎光臨！"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Who art thou?\n"
+"Leave at once or I will call my friends."
+msgstr ""
+"你是誰？\n"
+"再不馬上出去，我就要叫同伴來了！"
+
+#. official: map.6.0.0
+#: data/text/dialog_lookup_table.py
+msgid "Welcome to the town of Rimuldar."
+msgstr "這裡是利姆爾達鎮。"
+
+#: data/text/dialog_lookup_table.py
+msgid "The scales of the Dragonlord are as hard as steel."
+msgstr "聽說龍王的鱗片像鋼鐵一樣堅硬。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"No, I have no tomatoes.\n"
+"I have no tomatoes today."
+msgstr ""
+"不，沒有番茄。\n"
+"今天沒有番茄喔。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Thou shalt find the Stones of Sunlight in Tantegel Castle,\n"
+"if thou has not found them yet."
+msgstr ""
+"太陽石就隱藏在拉達托姆城，\n"
+"如果你還沒找到的話。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Before long the enemy will arrive."
+msgstr "敵人馬上就要來了。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Heed my warning! Travel not to the south for there the monsters are fierce and terrible."
+msgstr "聽我的忠告！不要往南走。那裡的魔物又兇猛又可怕。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Good day,I am Howard. Four steps south of the bath in Kol thou shalt find a magic item."
+msgstr "你好，我是霍華德。從麥拉村的溫泉往南走4步的地方，有神奇的道具喔。"
+
+#: data/text/dialog_lookup_table.py
+msgid "In this world is there any sword that can pierce the scales of the Dragonlord?"
+msgstr "這世上真的有能刺穿龍王鱗片的劍嗎？"
+
+#: data/text/dialog_lookup_table.py
+msgid "Orwick is late again. I'm starving."
+msgstr "歐威克又遲到了。我肚子好餓。"
+
+#. official: map.8.16.1
+#: data/text/dialog_lookup_table.py
+msgid "Go to the town of Cantlin."
+msgstr "那麼你就可以去麥爾基德啦。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Howard had it, but he went to Rimuldar and never returned."
+msgstr "霍華德本來帶著它，但他去了利姆爾達鎮就再也沒回來。"
+
+#. official: map.8.9.1
+#: data/text/dialog_lookup_table.py
+msgid "I have heard that powerful enemies live there."
+msgstr "聽說那邊的魔物們都很厲害啊……"
+
+#. official: map.8.9.2
+#: data/text/dialog_lookup_table.py
+msgid "To the south, I believe, there is a town called Rimuldar."
+msgstr "南邊好像有個叫做利姆爾達的鎮子。"
+
+#. official: map.6.7.1
+#: data/text/dialog_lookup_table.py
+msgid "In this temple do the sun and rain meet."
+msgstr "那個祠堂可以將雨和太陽合二為一。"
+
+#. official: map.6.7.2
+#: data/text/dialog_lookup_table.py
+msgid "Go to the south."
+msgstr "向南走去看看吧。"
+
+#: data/text/dialog_lookup_table.py
+msgid "Many have been the warriors who have perished on this quest."
+msgstr "在這趟旅途中喪命的戰士多不勝數。"
+
+#. official: map.5.12.0
+#: data/text/dialog_lookup_table.py
+msgid "Within sight of Tantegel Castle to the south is Charlock,"
+msgstr "從拉達托姆城向南看，能看到一座城……"
+
+#. official: map.5.12.0
+#: data/text/dialog_lookup_table.py
+msgid "The fortress of the Dragonlord."
+msgstr "那好像就是龍王城。"
+
+#. official: map.6.9.0
+#: data/text/dialog_lookup_table.py
+msgid "Over the western part of this island Erdrick created a rainbow."
+msgstr "古代傳說裏提到，洛特在這片土地的西邊架起了彩虹橋。"
+
+#. official: map.6.9.0
+#: data/text/dialog_lookup_table.py
+msgid "ʼTis also said that he entered the darkness from a hidden entrance in the room of the Dragonlord."
+msgstr "又聽說他在魔王之間裏找到了隱藏入口，從那裡進入了黑暗之中。"
+
+#: data/text/dialog_lookup_table.py
+msgid "This is a magic place."
+msgstr "這裡是個神奇的地方。"
+
+#. official: map.8.10.1
+#: data/text/dialog_lookup_table.py
+msgid "Finally thou hast obtained it, {}."
+msgstr "你終於拿到了啊，{}。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"You are {}?\n"
+"It has been long since last we met."
+msgstr ""
+"你就是{}嗎？\n"
+"好久不見了啊。"
+
+#: data/text/dialog_lookup_table.py
+msgid "A word of advice."
+msgstr "給你一句忠告吧。"
+
+#. official: map.2.2.0
+#: data/text/dialog_lookup_table.py
+msgid "Save thy money for more expensive armor."
+msgstr "有了錢的話，就去換更貴的武器和防具吧。"
+
+#: data/text/dialog_lookup_table.py
+msgid ""
+"Listen to what people say.\n"
+"It can be of great help."
+msgstr ""
+"要仔細聽人們說的話。\n"
+"一定會幫上你的大忙。"
+
+#: data/text/dialog_lookup_table.py
+msgid "But for thee I wish success, {}."
+msgstr "不過，我祝你成功，{}。"
+
+msgid "F4: Auto-Battle"
+msgstr "F4: 自動戰鬥"
+
+msgid "F9: Invulnerability"
+msgstr "F9: 無敵"
+
+msgid "F11: Fullscreen"
+msgstr "F11: 全螢幕"
+
+msgid "1-5: Game Speed"
+msgstr "1-5: 遊戲速度"
+
+#: data/text/intro_lookup_table.py
+msgid "Toggle on/off:"
+msgstr "開啟/關閉:"
+
+#: src/options_screen.py
+#: src/title_windows.py
+msgid "ADVENTURE LOG {}:"
+msgstr "冒險之書 {}:"
+
+#: src/windows.py
+msgid "FIGHT"
+msgstr "攻擊"
+
+#: src/windows.py
+msgid "RUN"
+msgstr "逃跑"
+
+#: src/windows.py
+msgid "NAME:"
+msgstr "名字:"
+
+#: src/windows.py
+msgid "STRENGTH:"
+msgstr "力量:"
+
+#: src/windows.py
+msgid "AGILITY:"
+msgstr "敏捷:"
+
+#: src/windows.py
+msgid "MAXIMUM HP:"
+msgstr "最大HP:"
+
+#: src/windows.py
+msgid "MAXIMUM MP:"
+msgstr "最大MP:"
+
+#: src/windows.py
+msgid "ATTACK POWER:"
+msgstr "攻擊力:"
+
+#: src/windows.py
+msgid "DEFENSE POWER:"
+msgstr "防禦力:"
+
+#: src/windows.py
+msgid "WEAPON:"
+msgstr "武器:"
+
+#: src/windows.py
+msgid "ARMOR:"
+msgstr "鎧甲:"
+
+#: src/windows.py
+msgid "SHIELD:"
+msgstr "盾牌:"
+
+#: src/options_screen.py
+#: src/windows.py
+msgid "YES"
+msgstr "是"
+
+#: src/options_screen.py
+#: src/windows.py
+msgid "NO"
+msgstr "否"
+
+#: src/options_screen.py
+msgid "Which Message"
+msgstr "您喜歡的"
+
+#: src/options_screen.py
+msgid "Speed Do You"
+msgstr "顯示速度是"
+
+#: src/options_screen.py
+msgid "Want To Use?"
+msgstr "哪一種？"
+
+#: src/options_overlay.py
+#: src/options_screen.py
+msgid "FAST"
+msgstr "快"
+
+#: src/options_overlay.py
+#: src/options_screen.py
+msgid "NORMAL"
+msgstr "普通"
+
+#: src/options_overlay.py
+#: src/options_screen.py
+msgid "SLOW"
+msgstr "慢"
+
+#: src/controls_screen.py
+msgid "OPTIONS"
+msgstr "設定"
+
+#: src/options_overlay.py
+msgid "MESSAGE SPEED"
+msgstr "顯示速度"
+
+#: src/options_overlay.py
+msgid "DIALOG STYLE"
+msgstr "對話方式"
+
+#: src/options_overlay.py
+msgid "CLASSIC (NES)"
+msgstr "經典 (NES)"
+
+#: src/options_overlay.py
+msgid "MODERN"
+msgstr "現代"
+
+#: src/options_overlay.py
+msgid "NPCS MAKE WAY"
+msgstr "NPC會讓路"
+
+#: src/options_overlay.py
+msgid "ON"
+msgstr "開"
+
+#: src/options_overlay.py
+msgid "OFF (NES)"
+msgstr "關 (NES)"
+
+#: src/options_overlay.py
+msgid "FADE STYLE"
+msgstr "淡出方式"
+
+#: src/options_overlay.py
+msgid "NES"
+msgstr "NES"
+
+#: src/options_overlay.py
+msgid "SMOOTH"
+msgstr "平滑"
+
+#: src/options_overlay.py
+msgid "STEP ON"
+msgstr "踩上移動"
+
+#: src/options_screen.py
+msgid ""
+"Do You Want To\n"
+"Erase This\n"
+"Character?"
+msgstr ""
+"要刪除\n"
+"這個角色嗎？"
+
+#: src/options_screen.py
+msgid "LEVEL"
+msgstr "LV"
+
+#: src/options_screen.py
+#: src/title_windows.py
+msgid "ADVENTURE LOG {}"
+msgstr "冒險之書 {}"
+
+#: src/windows.py
+msgid "BEGIN A NEW QUEST"
+msgstr "創建冒險之書"
+
+#: src/windows.py
+msgid "CONTINUE A QUEST"
+msgstr "開始冒險"
+
+#: src/windows.py
+msgid "CHANGE MESSAGE SPEED"
+msgstr "變更顯示速度"
+
+#: src/windows.py
+msgid "COPY A QUEST"
+msgstr "複製冒險之書"
+
+#: src/windows.py
+msgid "ERASE A QUEST"
+msgstr "刪除冒險之書"
+
+#: data/text/intro_lookup_table.py
+msgid "Ctrl +/-/Wheel: Zoom"
+msgstr "Ctrl +/-/滾輪: 縮放"
+
+#: data/text/intro_lookup_table.py
+msgid "Ctrl 0: Reset Zoom"
+msgstr "Ctrl 0: 原始大小"
+
+#: data/text/intro_lookup_table.py
+msgid "Window zoom:"
+msgstr "畫面縮放:"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped"
+msgstr "自動升級 停止"
+
+#: src/auto_grind.py
+msgid ""
+"Auto-grind on\n"
+"(G or any key to stop)"
+msgstr ""
+"自動升級 開始\n"
+"(按G或任意鍵停止)"
+
+#: src/auto_grind.py
+msgid "Auto-grind: battles are off (NO_BATTLES)"
+msgstr "自動升級: 戰鬥已關閉 (NO_BATTLES)"
+
+#: src/auto_grind.py
+msgid "Auto-grind: no fights here"
+msgstr "自動升級: 這裡不會遇敵"
+
+#: src/auto_grind.py
+msgid "Auto-grind: HP is already low"
+msgstr "自動升級: HP已經很少"
+
+#: src/auto_grind.py
+msgid "Auto-grind: no safe tile to walk to"
+msgstr "自動升級: 沒有能安全行走的地方"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: HP low"
+msgstr "自動升級 停止: HP很少"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: asleep"
+msgstr "自動升級 停止: 睡著了"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: STOPSPELL"
+msgstr "自動升級 停止: 瑪霍托恩"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: special fight"
+msgstr "自動升級 停止: 特殊戰鬥"
+
+#: src/auto_grind.py
+msgid ""
+"Auto-grind stopped: level up\n"
+"(G to go on)"
+msgstr ""
+"自動升級 停止: 升級了\n"
+"(按G繼續)"
+
+msgid "G: Auto-grind"
+msgstr "G: 自動升級"
+
+#: src/options_overlay.py
+msgid "GRIND STOP"
+msgstr "停止條件"
+
+#: src/options_overlay.py
+msgid "RED HP"
+msgstr "HP變紅"
+
+#: src/options_overlay.py
+msgid "HALF HP"
+msgstr "HP一半"
+
+#: src/options_overlay.py
+msgid "3/4 HP"
+msgstr "HP 3/4"
+
+#: data/text/intro_lookup_table.py
+msgid "Save states:"
+msgstr "即時存檔:"
+
+msgid "Shift+F1-F3: Save state"
+msgstr "Shift+F1-F3: 即時存檔"
+
+msgid "F1-F3: Load state"
+msgstr "F1-F3: 即時讀檔"
+
+#: src/save_state.py
+msgid "State {} saved"
+msgstr "已存入存檔{}"
+
+#: src/save_state.py
+msgid "State {} loaded"
+msgstr "已讀取存檔{}"
+
+#: src/save_state.py
+msgid "State {} is empty"
+msgstr "存檔{}是空的"
+
+#: src/save_state.py
+msgid ""
+"State {} is from another version\n"
+"and can't be loaded"
+msgstr ""
+"存檔{}是其他版本的\n"
+"無法讀取"
+
+#: src/save_state.py
+msgid "State {} can't be read"
+msgstr "無法讀取存檔{}"
+
+msgid "Backspace: Rewind"
+msgstr "Backspace: 倒帶"
+
+#: src/options_overlay.py
+msgid "LANGUAGE"
+msgstr "語言"
+
+msgid "ENGLISH"
+msgstr "ENGLISH"
+
+msgid "한국어"
+msgstr "한국어"
+
+#: src/options_overlay.py
+msgid "SCANLINES"
+msgstr "掃描線"
+
+#: src/options_overlay.py
+msgid "OFF"
+msgstr "關"
+
+#: src/options_overlay.py
+msgid "SCALING"
+msgstr "縮放方式"
+
+#: src/options_overlay.py
+msgid "PIXEL PERFECT"
+msgstr "整數倍"
+
+#: data/text/intro_lookup_table.py
+msgid "Right Button: A"
+msgstr "右按鈕: A"
+
+#: data/text/intro_lookup_table.py
+msgid "Bottom Button: B"
+msgstr "下按鈕: B"
+
+#: data/text/intro_lookup_table.py
+msgid "Start Button: Start"
+msgstr "Start按鈕: 開始"
+
+#: data/text/intro_lookup_table.py
+msgid "Back Button: Select"
+msgstr "Back按鈕: 選擇"
+
+#: data/text/intro_lookup_table.py
+msgid "D-Pad/Stick: Move"
+msgstr "十字鍵/搖桿: 移動"
+
+#: data/text/intro_lookup_table.py
+msgid "Right Trigger: Speed"
+msgstr "右扳機: 遊戲速度"
+
+#: data/text/intro_lookup_table.py
+msgid "Controller:"
+msgstr "控制器:"
+
+#: data/text/intro_lookup_table.py
+msgid "LB: Load state 1"
+msgstr "LB: 即時讀檔1"
+
+#: data/text/intro_lookup_table.py
+msgid "RB: Save state 1"
+msgstr "RB: 即時存檔1"
+
+#: data/text/intro_lookup_table.py
+msgid "LT (hold): Rewind"
+msgstr "LT (按住): 倒帶"
+
+#: src/options_overlay.py
+msgid "MENU SPEED"
+msgstr "選單速度"
+
+#: src/options_overlay.py
+msgid "FOLLOW GAME"
+msgstr "跟隨遊戲"
+
+#: src/options_overlay.py
+msgid "LOOK & SOUND"
+msgstr "畫面音效"
+
+#: src/options_overlay.py
+msgid "GAMEPLAY"
+msgstr "遊戲"
+
+#: src/controls_screen.py
+#: src/options_overlay.py
+msgid "CONTROLS"
+msgstr "操作"
+
+#: src/options_overlay.py
+msgid "PRESET"
+msgstr "預設"
+
+#: src/options_overlay.py
+msgid "CUSTOM"
+msgstr "自訂"
+
+#: src/options_overlay.py
+msgid "PAGE"
+msgstr "頁"
+
+#: src/options_overlay.py
+msgid "MUSIC"
+msgstr "音樂"
+
+#: src/options_overlay.py
+msgid "ORCHESTRA"
+msgstr "管弦樂"
+
+#: src/options_overlay.py
+msgid "QUICK ACTION"
+msgstr "快速行動"
+
+#: src/options_overlay.py
+msgid "GAME SPEED"
+msgstr "遊戲速度"
+
+#: src/options_overlay.py
+msgid "SAVE STATES"
+msgstr "即時存檔"
+
+#: src/controls_screen.py
+#: src/options_overlay.py
+msgid "REWIND"
+msgstr "倒帶"
+
+#: src/options_overlay.py
+msgid "AUTO-GRIND"
+msgstr "自動升級"
+
+#: src/options_overlay.py
+msgid "CHEATS"
+msgstr "作弊"
+
+#: src/options_overlay.py
+msgid "STATUS WINDOW"
+msgstr "能力顯示"
+
+#: src/options_overlay.py
+msgid "ALWAYS"
+msgstr "總是"
+
+#: src/options_overlay.py
+msgid "ENCOUNTERS"
+msgstr "遇敵"
+
+#: src/options_overlay.py
+msgid "HALF"
+msgstr "減半"
+
+#: src/options_overlay.py
+msgid "EXP/GOLD"
+msgstr "經驗值/金幣"
+
+#: src/options_overlay.py
+msgid "x1 (NES)"
+msgstr "x1 (NES)"
+
+#: src/options_overlay.py
+msgid "x2"
+msgstr "x2"
+
+#: src/options_overlay.py
+msgid "x4"
+msgstr "x4"
+
+#: src/options_overlay.py
+msgid "RUN BUTTON"
+msgstr "奔跑按鈕"
+
+#: src/auto_grind.py
+msgid "Auto-grind: ENCOUNTERS are off"
+msgstr "自動升級: 遇敵已關閉"
+
+#: src/options_overlay.py
+msgid "SHOP PREVIEW"
+msgstr "裝備比較"
+
+#: src/shop_preview.py
+msgid "ATTACK"
+msgstr "攻擊力"
+
+#: src/shop_preview.py
+msgid "DEFENSE"
+msgstr "防禦力"
+
+msgid "Q: Quest Journal"
+msgstr "Q: 旅行筆記"
+
+#: src/options_overlay.py
+msgid "QUEST JOURNAL"
+msgstr "旅行筆記"
+
+#: src/options_overlay.py
+msgid "LEARNED"
+msgstr "已知目標"
+
+#: src/options_overlay.py
+msgid "LEARNED+HINTS"
+msgstr "目標+提示"
+
+#: src/quest_journal.py
+msgid "Done: {}"
+msgstr "完成: {}"
+
+#: src/quest_journal.py
+msgid "Get the Rainbow Drop."
+msgstr "取得彩虹之露。"
+
+#: src/quest_journal.py
+msgid "Thou hast heard of nothing yet."
+msgstr "還什麼都沒聽說。"
+
+#: src/quest_journal.py
+msgid "If thou wishest:"
+msgstr "若有意願:"
+
+#: src/quest_journal.py
+msgid "Rescue Princess Gwaelin."
+msgstr "救出蘿拉公主。"
+
+#: src/quest_journal.py
+msgid "She is held in the Swamp Cave, south of Kol, behind a locked door. A dragon guards her."
+msgstr "她被關在麥拉南方沼地洞窟裏上了鎖的門後面，由龍看守著。"
+
+#: src/quest_journal.py
+msgid "Carry Princess Gwaelin back to King Lorik."
+msgstr "把蘿拉公主帶回拉魯斯十六世身邊。"
+
+#: src/quest_journal.py
+msgid "King Lorik waits in Tantegel Castle."
+msgstr "拉魯斯十六世在拉達托姆城等著。"
+
+#: src/quest_journal.py
+msgid "Get a Magic Key."
+msgstr "取得鑰匙。"
+
+#: src/quest_journal.py
+msgid "Magic Keys are sold in Tantegel Castle, Rimuldar and Cantlin."
+msgstr "拉達托姆城、利姆爾達鎮和麥爾基德有賣鑰匙。"
+
+#: src/quest_journal.py
+msgid "Find the Silver Harp."
+msgstr "找到銀之豎琴。"
+
+#: src/quest_journal.py
+msgid "It lies deep in Garin's Grave. The way down is behind a locked door in Garinham."
+msgstr "它在加雷之墓的深處。通往墓室的路在加雷鎮上了鎖的門後面。"
+
+#: src/quest_journal.py
+msgid "Take the Silver Harp to the old man in the shrine."
+msgstr "把銀之豎琴交給祠堂裏的老人。"
+
+#: src/quest_journal.py
+msgid "The shrine is north and west of Kol. He gives the Staff of Rain for the harp."
+msgstr "祠堂在麥拉的西北方。老人會用雨雲法杖交換豎琴。"
+
+#: src/quest_journal.py
+msgid "Find the Stones of Sunlight."
+msgstr "找到太陽石。"
+
+#: src/quest_journal.py
+msgid "They are in the cellar of Tantegel Castle, behind a locked door."
+msgstr "它在拉達托姆城地下室上了鎖的門後面。"
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Token."
+msgstr "找到洛特之印。"
+
+#: src/quest_journal.py
+msgid "From Tantegel Castle travel 70 leagues to the south and 40 to the east, and search."
+msgstr "從拉達托姆城往南走70步、往東走40步，然後調查腳下。"
+
+#: src/quest_journal.py
+msgid "Take the Stones of Sunlight, the Staff of Rain and Erdrick's Token to the old man in the shrine."
+msgstr "把太陽石、雨雲法杖和洛特之印交給祠堂裏的老人。"
+
+#: src/quest_journal.py
+msgid "The shrine is far to the south of Rimuldar. He gives the Rainbow Drop."
+msgstr "祠堂在利姆爾達鎮的遙遠南方。老人會給你彩虹之露。"
+
+#: src/quest_journal.py
+msgid "Use the Rainbow Drop to make a bridge to Charlock."
+msgstr "用彩虹之露架起通往龍王城的橋。"
+
+#: src/quest_journal.py
+msgid "Hold it up at the water's edge east of Charlock, on the western shore of Rimuldar's land."
+msgstr "在龍王城東邊、利姆爾達鎮所在大陸的西岸舉起它。"
+
+#: src/quest_journal.py
+msgid "Find the hidden way down in Charlock."
+msgstr "找到龍王城裏隱藏的下行通道。"
+
+#: src/quest_journal.py
+msgid "Search behind the Dragonlord's throne."
+msgstr "調查龍王王座的後面。"
+
+#: src/quest_journal.py
+msgid "Defeat the Dragonlord."
+msgstr "打倒龍王。"
+
+#: src/quest_journal.py
+msgid "He waits in the deepest part of Charlock."
+msgstr "龍王在龍王城的最深處等著。"
+
+#: src/quest_journal.py
+msgid "Return to King Lorik."
+msgstr "回到拉魯斯十六世身邊。"
+
+#: src/quest_journal.py
+msgid "Tantegel Castle awaits thy return."
+msgstr "拉達托姆城正等著你歸來。"
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Armor."
+msgstr "找到洛特之鎧。"
+
+#: src/quest_journal.py
+msgid "It is hidden in the ruins of Hauksness, far to the south. Beware its guardian."
+msgstr "它藏在遙遠南方的廢墟多姆多拉。小心守護它的魔物。"
+
+#: src/quest_journal.py
+msgid "Find Erdrick's Sword."
+msgstr "找到洛特之劍。"
+
+#: src/quest_journal.py
+msgid "It lies deep within Charlock."
+msgstr "它在龍王城的深處。"
+
+#: src/quest_journal.py
+msgid "Defeat the Golem guarding Cantlin."
+msgstr "打倒守護麥爾基德的巨像兵。"
+
+#: src/quest_journal.py
+msgid "Golem fears the music of the flute. The Fairy Flute is in Kol, four steps south of the bath."
+msgstr "巨像兵害怕笛聲。妖精之笛在麥拉溫泉往南4步的地方。"
+
+#: src/options_overlay.py
+msgid "AUTOSAVE"
+msgstr "自動存檔"
+
+#: src/windows.py
+msgid "CONTINUE AUTOSAVE"
+msgstr "讀取自動存檔"
+
+#: src/options_overlay.py
+msgid "BAG"
+msgstr "持有物"
+
+#: src/options_overlay.py
+msgid "NES (8)"
+msgstr "NES (8個)"
+
+#: src/options_overlay.py
+msgid "16"
+msgstr "16個"
+
+#: src/options_overlay.py
+msgid "VIEW"
+msgstr "畫面"
+
+#: src/options_overlay.py
+msgid "NES (4:3)"
+msgstr "NES (4:3)"
+
+#: src/options_overlay.py
+msgid "WIDE"
+msgstr "寬螢幕"
+
+msgid "M: Dungeon map"
+msgstr "M: 地城地圖"
+
+#: src/options_overlay.py
+msgid "DUNGEON MAP"
+msgstr "地城地圖"
+
+#: src/options_overlay.py
+msgid "CONFIRM NAME"
+msgstr "確定名字"
+
+#: src/options_overlay.py
+msgid "OTHER"
+msgstr "其他"
+
+#: src/controls_screen.py
+#: src/dungeon_map.py
+msgid "MAP"
+msgstr "地圖"
+
+#: data/text/intro_lookup_table.py
+msgid "Top Button: Dungeon map"
+msgstr "上按鈕: 地城地圖"
+
+#: data/text/intro_lookup_table.py
+msgid "Dungeon map:"
+msgstr "地城地圖:"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: A Button"
+msgstr "{}: A按鈕"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: B Button"
+msgstr "{}: B按鈕"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Start"
+msgstr "{}: 開始"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Options"
+msgstr "{}: 設定"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Move"
+msgstr "{}: 移動"
+
+#: data/text/intro_lookup_table.py
+msgid "ARROWS"
+msgstr "方向鍵"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Smart A"
+msgstr "{}: 智慧A"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Show Controls"
+msgstr "{}: 查看操作方法"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Auto-Battle"
+msgstr "{}: 自動戰鬥"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Invulnerability"
+msgstr "{}: 無敵模式"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Fullscreen"
+msgstr "{}: 全螢幕"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Game Speed"
+msgstr "{}: 調整遊戲速度"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Auto-grind"
+msgstr "{}: 自動升級"
+
+#: src/controls_screen.py
+msgid "KEY 1"
+msgstr "按鍵1"
+
+#: src/controls_screen.py
+msgid "KEY 2"
+msgstr "按鍵2"
+
+#: src/controls_screen.py
+msgid "PAD"
+msgstr "手把"
+
+#: src/controls_screen.py
+msgid "RESET TO DEFAULTS"
+msgstr "恢復預設設定"
+
+#: src/controls_screen.py
+msgid "A:SET  SELECT:CLEAR  B:BACK"
+msgstr "A:變更 SELECT:清除 B:返回"
+
+#: src/controls_screen.py
+msgid "PRESS A KEY"
+msgstr "請按下按鍵"
+
+#: src/controls_screen.py
+msgid "PRESS A PAD BUTTON"
+msgstr "請按下按鈕"
+
+#: src/controls_screen.py
+msgid "NO CONTROLLER"
+msgstr "沒有手把"
+
+#: src/controls_screen.py
+msgid "{}: CHANGED TOO"
+msgstr "{}: 連動變更"
+
+#: src/controls_screen.py
+msgid "{}: NEEDS A KEY"
+msgstr "{}: 需要按鍵"
+
+#: src/controls_screen.py
+msgid "{}: FIXED KEY"
+msgstr "{}: 固定按鍵"
+
+#: src/controls_screen.py
+msgid "DEFAULTS RESTORED"
+msgstr "已恢復預設值"
+
+#: src/controls_screen.py
+msgid "A BUTTON"
+msgstr "A按鈕"
+
+#: src/controls_screen.py
+msgid "B BUTTON"
+msgstr "B按鈕"
+
+#: src/controls_screen.py
+msgid "START"
+msgstr "開始"
+
+#: src/controls_screen.py
+msgid "SELECT"
+msgstr "選擇"
+
+#: src/controls_screen.py
+msgid "UP"
+msgstr "上"
+
+#: src/controls_screen.py
+msgid "DOWN"
+msgstr "下"
+
+#: src/controls_screen.py
+msgid "LEFT"
+msgstr "左"
+
+#: src/controls_screen.py
+msgid "RIGHT"
+msgstr "右"
+
+#: src/controls_screen.py
+#: src/options_overlay.py
+msgid "SMART A"
+msgstr "智慧A"
+
+#: src/controls_screen.py
+msgid "HELP"
+msgstr "說明"
+
+#: src/controls_screen.py
+msgid "AUTO GRIND"
+msgstr "自動升級"
+
+#: src/controls_screen.py
+msgid "AUTO FIGHT"
+msgstr "自動戰鬥"
+
+#: src/controls_screen.py
+msgid "INVINCIBLE"
+msgstr "無敵"
+
+#: src/controls_screen.py
+msgid "FULLSCREEN"
+msgstr "全螢幕"
+
+#: src/controls_screen.py
+msgid "SPEED 1X"
+msgstr "速度 1X"
+
+#: src/controls_screen.py
+msgid "SPEED 2X"
+msgstr "速度 2X"
+
+#: src/controls_screen.py
+msgid "SPEED 4X"
+msgstr "速度 4X"
+
+#: src/controls_screen.py
+msgid "SPEED 8X"
+msgstr "速度 8X"
+
+#: src/controls_screen.py
+msgid "SPEED 16X"
+msgstr "速度 16X"
+
+#: src/controls_screen.py
+msgid "NEXT SPEED"
+msgstr "下個速度"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Save state"
+msgstr "{}: 即時存檔"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Load state"
+msgstr "{}: 即時讀檔"
+
+#: src/controls_screen.py
+msgid "LOAD 1"
+msgstr "讀檔 1"
+
+#: src/controls_screen.py
+msgid "LOAD 2"
+msgstr "讀檔 2"
+
+#: src/controls_screen.py
+msgid "LOAD 3"
+msgstr "讀檔 3"
+
+#: src/controls_screen.py
+msgid "SAVE 1"
+msgstr "存檔 1"
+
+#: src/controls_screen.py
+msgid "SAVE 2"
+msgstr "存檔 2"
+
+#: src/controls_screen.py
+msgid "SAVE 3"
+msgstr "存檔 3"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Rewind"
+msgstr "{}: 倒帶"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: A"
+msgstr "{}: A"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: B"
+msgstr "{}: B"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Select"
+msgstr "{}: 選擇"
+
+#: data/text/intro_lookup_table.py
+msgid "{}/Stick: Move"
+msgstr "{}/搖桿: 移動"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Speed"
+msgstr "{}: 遊戲速度"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Load state 1"
+msgstr "{}: 即時讀檔1"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Save state 1"
+msgstr "{}: 即時存檔1"
+
+#: data/text/intro_lookup_table.py
+msgid "{} (hold): Rewind"
+msgstr "{} (按住): 倒帶"
+
+#: src/controls_screen.py
+msgid "JOURNAL"
+msgstr "旅行筆記"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Quest Journal"
+msgstr "{}: 旅行筆記"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Dungeon map"
+msgstr "{}: 地城地圖"
+
+#: src/controls_screen.py
+msgid "MSG LOG"
+msgstr "對話記錄"
+
+#: src/message_log.py
+#: src/options_overlay.py
+msgid "MESSAGE LOG"
+msgstr "對話記錄"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Message log"
+msgstr "{}: 對話記錄"
+
+#: src/message_log.py
+msgid "UP/DOWN:SCROLL  B:CLOSE"
+msgstr "上下:捲動 B:關閉"
+
+#: src/message_log.py
+msgid "NO MESSAGES YET"
+msgstr "還沒有對話"
+
+#: src/message_log.py
+msgid "KING LORIK"
+msgstr "國王"
+
+#: src/message_log.py
+msgid "GWAELIN"
+msgstr "蘿拉公主"
+
+#: src/message_log.py
+msgid "GUARD"
+msgstr "衛兵"
+
+#: src/message_log.py
+msgid "SOLDIER"
+msgstr "士兵"
+
+#: src/message_log.py
+msgid "MERCHANT"
+msgstr "商人"
+
+#: src/message_log.py
+msgid "MAN"
+msgstr "男子"
+
+#: src/message_log.py
+msgid "WOMAN"
+msgstr "女子"
+
+#: src/message_log.py
+msgid "WISE MAN"
+msgstr "賢者"
+
+#: src/message_log.py
+msgid "DRAGONLORD"
+msgstr "龍王"
+
+#: data/text/intro_lookup_table.py
+msgid "Left Button: Message log"
+msgstr "左按鈕: 對話記錄"
+
+#: src/save_state.py
+msgid "State {} couldn't be saved"
+msgstr "無法存入存檔{}"
+
+#: data/text/dialog_lookup_table.py
+msgid "Alas, thy deeds could not be recorded."
+msgstr "很遺憾，無法記錄到冒險之書。"
+
+#: src/options_overlay.py
+msgid "SFC"
+msgstr "SFC"
+
+#: data/text/intro_lookup_table.py
+msgid "{}: Play stats"
+msgstr "{}: 遊戲記錄"
+
+#: src/options_overlay.py
+msgid "STATS PAGE"
+msgstr "遊戲記錄"
+
+#: src/controls_screen.py
+#: src/stats_screen.py
+msgid "STATS"
+msgstr "遊戲記錄"
+
+#: src/stats_screen.py
+msgid "PLAY TIME"
+msgstr "遊戲時間"
+
+#: src/stats_screen.py
+msgid "STEPS"
+msgstr "步數"
+
+#: src/stats_screen.py
+msgid "FIGHTS WON"
+msgstr "獲勝的戰鬥"
+
+#: src/stats_screen.py
+msgid "FIGHTS FLED"
+msgstr "逃跑的戰鬥"
+
+#: src/stats_screen.py
+msgid "FIGHTS LOST"
+msgstr "戰敗的戰鬥"
+
+#: src/stats_screen.py
+msgid "DEATHS"
+msgstr "死亡次數"
+
+#: src/stats_screen.py
+msgid "GOLD EARNED"
+msgstr "獲得的金幣"
+
+#: src/stats_screen.py
+msgid "GOLD SPENT"
+msgstr "花費的金幣"
+
+#: src/stats_screen.py
+msgid "CHESTS OPENED"
+msgstr "打開的寶箱"
+
+#: src/stats_screen.py
+msgid "MONSTERS DEFEATED"
+msgstr "打倒的魔物"

@@ -28,8 +28,8 @@ uv run python -m src.game --language Korean
 
 - `--dev` runs with `src/config/dev_config.py`: god mode, no random battles, your coordinates printed in the
   terminal, no splash screen or opening dialog, darkness off, no autosave, and the debug keys below.
-- `--language English`, `--language Korean`, `--language Japanese`, `--language English2014` (any name in
-  `src/languages.py`) plays in that language
+- `--language English`, `--language Korean`, `--language Japanese`, `--language "Traditional Chinese"`,
+  `--language "Simplified Chinese"`, `--language English2014` (any name in `src/languages.py`) plays in that language
   for this run (it wins over a language saved from the options overlay, which stays as it was).
 - `--smoke-test` loads every game file, plays a few scripted scenes headless and exits with 0, or 1 on any problem;
   the release workflow runs it on every build (`src/smoke_test.py`).
@@ -134,7 +134,7 @@ git push origin v1.0.0
 The [Release builds](.github/workflows/release.yml) workflow builds the game with PyInstaller
 ([dragon_warrior.spec](dragon_warrior.spec)) on Windows, macOS and Linux, with libgme built from source and bundled,
 checks that each packaged build starts, loads all of its files and plays a few scripted scenes headless in English,
-Korean, Japanese and English (2014) (`--smoke-test`, [src/smoke_test.py](src/smoke_test.py)), and publishes them as a GitHub Release for the
+Korean, Japanese, Traditional Chinese, Simplified Chinese and English (2014) (`--smoke-test`, [src/smoke_test.py](src/smoke_test.py)), and publishes them as a GitHub Release for the
 tag, with notes generated from the merged PRs. To try the builds without a release, run the workflow from the Actions
 tab (Run workflow): the builds are then uploaded as the run's artifacts. PRs that change the build or data/ do the
 same.

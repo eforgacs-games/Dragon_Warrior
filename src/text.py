@@ -7,6 +7,8 @@ from pygame import font, display, Surface
 from pygame.font import Font
 
 from src.color import WHITE, BLACK
+from src.languages import language_named
+from src.line_breaks import break_units
 from src.paths import data_path
 from src.sound import Sound
 from src.waiting import wait
@@ -26,12 +28,27 @@ class TextPaths:
 
 
 class DialogBoxWrapper(textwrap.TextWrapper):
+    """Wraps each line of the text (a "\\n" always starts a new one) at blanks, or with ``breaks_anywhere`` (Chinese,
+    src/line_breaks.py) also between the characters break_units splits a word into."""
+
+    def __init__(self, *args, breaks_anywhere: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.breaks_anywhere = breaks_anywhere
 
     @override
     def wrap(self, text):
         split_text = text.split('\n')
         lines = [line for para in split_text for line in textwrap.TextWrapper.wrap(self, para)]
         return lines
+
+    @override
+    def _split(self, text):
+        """The chunks TextWrapper puts lines together from: its words and blanks, and with breaks_anywhere each word
+        in the pieces a line may end between."""
+        chunks = super()._split(text)
+        if not self.breaks_anywhere:
+            return chunks
+        return [unit for chunk in chunks for unit in (break_units(chunk) if chunk.strip() else [chunk])]
 
 
 def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, color: tuple = WHITE, size: int = 16,
@@ -43,7 +60,8 @@ def draw_text(text: str, x: float, y: float, screen: Surface, config: dict, colo
     # 21? appears to be the actual max in the original game
     # chunks = [text[i:i + n] for i in range(0, len(text), n)]
     directories = TextPaths
-    dialog_box_wrapper = DialogBoxWrapper(width=text_wrap_length, break_long_words=False)
+    dialog_box_wrapper = DialogBoxWrapper(width=text_wrap_length, break_long_words=False,
+                                          breaks_anywhere=language_named(config.get('LANGUAGE')).breaks_anywhere)
     chunks = dialog_box_wrapper.wrap(text)
     item_gained_matches = ("thou hast gained", "Thou hast found")
     if any([x in text for x in item_gained_matches]):
