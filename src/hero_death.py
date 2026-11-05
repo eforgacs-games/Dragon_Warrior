@@ -12,6 +12,7 @@ from src.common import A_OR_START_KEYS
 from src.direction import Direction
 from src.game_events import HeroDied
 from src.maps import map_lookup
+from src.party import heroes
 from src.waiting import clear_events_keeping_quit
 
 if TYPE_CHECKING:
@@ -67,11 +68,15 @@ class HeroDeath:
         # are in red windows; anyone else comes back with full HP and white windows. DeathText sets ThisStrtStat to
         # STRT_FULL_HP, so StartAtThroneRoom (LCB78-LCB87) fills MP as well as HP; for a cursed hero it sets HP to 1
         # and skips that step (LCB71-LCB75), so MP stays as it was.
-        if player.is_cursed:
-            player.current_hp = 1
-        else:
-            player.current_hp = player.max_hp
-            player.current_mp = player.max_mp
+        # A party (src/party.py): the second hero comes back with the first, the same way
+        for hero in heroes(game):
+            if hero is not player:
+                hero.is_dead = False  # the first hero's is cleared once the throne room is loaded
+            if hero.is_cursed:
+                hero.current_hp = 1
+            else:
+                hero.current_hp = hero.max_hp
+                hero.current_mp = hero.max_mp
         game.load_window_palette()
         # NES DeathText -> StartAtThroneRoom (LEDDE): the screen cuts to black and the throne room fades in once
         next_map = map_lookup['TantegelThroneRoom'](game.config)

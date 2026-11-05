@@ -4021,3 +4021,63 @@ msgstr "1 (NES)"
 #: src/options_overlay.py
 msgid "2"
 msgstr "2"
+
+#: src/battle_controller.py
+msgid "Command for {}?\n"
+msgstr "What will {} do?\n"
+
+#: src/battle_controller.py
+msgid "{} is still asleep.\n"
+msgstr "{} is asleep...\n"
+
+#: src/battle_controller.py
+msgid "{} is asleep.\n"
+msgstr "{} falls asleep!\n"
+
+#: src/battle_controller.py
+msgid "{} hath fallen.\n"
+msgstr "{} has been defeated!\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Point decreased by {}.\n"
+msgstr "{} takes {} point of damage!\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Points decreased by {}.\n"
+msgstr "{} takes {} points of damage!\n"
+
+#: src/controls_screen.py
+msgid "P2 A"
+msgstr "P2 A"
+
+#: src/controls_screen.py
+msgid "P2 B"
+msgstr "P2 B"
+
+#: src/controls_screen.py
+msgid "P2 START"
+msgstr "P2 START"
+
+#: src/controls_screen.py
+msgid "P2 SELECT"
+msgstr "P2 SELECT"
+
+#: src/controls_screen.py
+msgid "P2 UP"
+msgstr "P2 UP"
+
+#: src/controls_screen.py
+msgid "P2 DOWN"
+msgstr "P2 DOWN"
+
+#: src/controls_screen.py
+msgid "P2 LEFT"
+msgstr "P2 LEFT"
+
+#: src/controls_screen.py
+msgid "P2 RIGHT"
+msgstr "P2 RIGHT"
+
+#: data/text/dialog_lookup_table.py
+msgid "Who will it be?"
+msgstr "Who will it be?"

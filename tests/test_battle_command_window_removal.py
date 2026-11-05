@@ -99,7 +99,7 @@ class TestBattleCommandWindowRemoval(TestCase):
 
     def test_run_removes_the_window(self):
         self.choose(None)
-        self.battle.battle_run.side_effect = lambda *args: self.seen_with_lines.append(self.window_area()) or True
+        self.battle.battle_run.side_effect = lambda *args, **_kwargs: self.seen_with_lines.append(self.window_area()) or True
         self.choose('Run')
         self.assertEqual([self.battle_scene], self.seen_with_lines)
 

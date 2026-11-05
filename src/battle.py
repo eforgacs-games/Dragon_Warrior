@@ -11,6 +11,7 @@ from src.menu import BATTLE_LINE, CommandMenu
 from src.game_options import EXP_GOLD_MULTIPLIERS
 from src.random_streams import hero_random
 from src.windows import POPUP_WINDOW
+from src.party import heroes as party_heroes
 from src.player.player import Player
 from src.player.player_stats import get_level_by_experience
 from src.sound import Sound
@@ -133,10 +134,11 @@ class Battle:
             (4, 0), (5, 0), (6, 0), (6, 1), (6, 2), (6, 3), (6, 4), (6, 5), (6, 6)
         )
 
-    def battle_run(self, cmd_menu: CommandMenu, player: Player, current_battle):
+    def battle_run(self, cmd_menu: CommandMenu, player: Player, current_battle, enemy_moves: bool = True):
         """Attempt to run from a battle (NES PlyrRun). "started to run away." (TB16E5) and "But was blocked in front."
         (TB16E6) end with no WAIT: a successful run goes straight back to the map (RunSuccessful ends in ExitFight2,
-        which doesn't wait for a button), a blocked one straight into the enemy's turn."""
+        which doesn't wait for a button), a blocked one straight into the enemy's turn (unless not ``enemy_moves``: a
+        party's round goes on)."""
         self.sound.play_sound(self.directories.run_away_sfx)  # SFX_RUN
         cmd_menu.show_line_in_dialog_box(self._("{} started to run away.\n").format(player.name), **BATTLE_LINE)
 
@@ -147,6 +149,9 @@ class Battle:
         if not can_run_away(player.agility, current_battle.enemy.defense,
                             self.get_group_factor(current_battle.enemy.name)):
             cmd_menu.show_line_in_dialog_box(self._("But was blocked in front."), **BATTLE_LINE)
+            if not enemy_moves:
+                # A party (src/party.py): the round goes on, the other hero then the enemy
+                return False
             if cmd_menu.game.battle_ctrl.enemy_move(current_battle):
                 return True
             if player.current_hp <= 0:
@@ -196,8 +201,10 @@ class Battle:
         else:
             cmd_menu.display_item_menu('spells')
 
-    def enemy_defeated(self, cmd_menu, screen, player, enemy):
-        """Handle an enemy being defeated."""
+    def enemy_defeated(self, cmd_menu, screen, player, enemy, heroes=None):
+        """Handle an enemy being defeated. ``player`` gets the gold (the party's); each of ``heroes`` (the heroes still
+        standing, src/party.py; by default ``player`` alone) gets the experience."""
+        heroes = [player] if heroes is None else heroes
         self.announce_enemy_defeated(cmd_menu, screen, enemy)
         if enemy.name == 'Dragonlord 2':
             # NES NotDL1Defeated: the final boss gives no experience or gold; the ending takes over from here
@@ -213,10 +220,14 @@ class Battle:
         # TB15E15 and TB16E0 end with no WAIT: the victory music goes on playing while they print
         cmd_menu.show_line_in_dialog_box(exp_and_gold, add_quotes=False, disable_sound=True, hide_arrow=True,
                                          skip_text=True)
-        player.total_experience = min(player.total_experience + experience, MAX_EXPERIENCE)
+        for hero in heroes:
+            hero.total_experience = min(hero.total_experience + experience, MAX_EXPERIENCE)
         player.gold = min(player.gold + gold, MAX_GOLD)
         cmd_menu.game.event_bus.emit(GoldEarned(gold))
-        self.check_player_level_up(cmd_menu, player)
+        if len(heroes) == 1:
+            self.check_player_level_up(cmd_menu, heroes[0])
+        else:
+            self.check_party_level_up(cmd_menu, heroes)
 
     def dragonlord_first_form_defeated(self, cmd_menu, screen):
         """NES EnemyDefeated for EN_DRAGONLORD1: "Thou hast done well in defeating the Dragonlord.", the victory
@@ -247,23 +258,32 @@ class Battle:
         DoLevelUp starts MSC_LEVEL_UP, which cuts the victory music off, waits for it to end (WaitForMusicEnd), resumes
         the map's music, and only then says "Thou hast been promoted to the next level." and the stat increases
         (ChkStrengthUp-ChkMPUp), then goes to ExitFight too."""
+        Battle.check_party_level_up(self, cmd_menu, [player])
+
+    def check_party_level_up(self, cmd_menu, heroes):
+        """check_player_level_up for each of ``heroes`` (src/party.py): the level-up music plays once if any of them
+        goes up a level, and each one's promotion and stat increases follow, one after the other, each waiting for a
+        button first."""
         music_player = cmd_menu.game.music_player
-        new_level = get_level_by_experience(player.total_experience)
-        if new_level > player.level:
+        promoted = [(hero, get_level_by_experience(hero.total_experience)) for hero in heroes]
+        promoted = [(hero, new_level) for hero, new_level in promoted if new_level > hero.level]
+        if promoted:
             # Auto-grind stops here: the promotion and the stat lines wait for the player's own buttons
             cmd_menu.game.auto_grind.level_up()
             music_player.play_until_end(self.directories.level_up_music, self.config)
             self.resume_map_music(music_player)
-            # TB16E1 starts with a WAIT: the experience and gold lines stay up, with the arrow, until A or B
-            cmd_menu.wait_for_button(shows_arrow=True)
-            self.display_level_up_message(cmd_menu, player, new_level)
-            old_stats = self.get_player_stats(player)
-            player.level = new_level
-            cmd_menu.game.event_bus.emit(LevelUp(new_level))
-            player.set_stats_by_level(player.level)
-            player.update_attack_power()
-            player.update_defense_power()
-            self.display_stat_increases(cmd_menu, player, old_stats)
+            party = party_heroes(cmd_menu.game)
+            for player, new_level in promoted:
+                # TB16E1 starts with a WAIT: the experience and gold lines stay up, with the arrow, until A or B
+                cmd_menu.wait_for_button(shows_arrow=True)
+                self.display_level_up_message(cmd_menu, player, new_level)
+                old_stats = self.get_player_stats(player)
+                player.level = new_level
+                cmd_menu.game.event_bus.emit(LevelUp(new_level, hero=party.index(player) if player in party else 0))
+                player.set_stats_by_level(player.level)
+                player.update_attack_power()
+                player.update_defense_power()
+                self.display_stat_increases(cmd_menu, player, old_stats)
             # ExitFight (DoLevelUp's JMP ExitFight, LEB18): a new press returns to the map
             cmd_menu.wait_for_button(shows_arrow=False)
         else:

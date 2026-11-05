@@ -12,6 +12,7 @@ from pygame import display
 from src.color import RED
 from src.common import singular_or_plural
 from src.menu import BATTLE_LINE
+from src.party import in_party_mode
 from src.visual_effects import flash_transparent_color, force_field_flash
 
 if TYPE_CHECKING:
@@ -43,8 +44,14 @@ class HeroDamage:
         game.load_window_palette()  # NES PlayerHit: LoadRegBGPal, after the screen shake (red if HP is now low)
         game.drawer.draw_hovering_stats_window(game.screen, player, game.color)
         # NES TextBlock16 entry 10: "Thy Hit" + PLRL, which adds an "s" unless the damage is 1 (Bank01 DoPLRL)
-        damage_line = singular_or_plural(attack_damage, game._("Thy Hit decreased by {}.\n"),
-                                         game._("Thy Hits decreased by {}.\n")).format(attack_damage)
+        if in_party_mode(game):
+            # A party (src/party.py): whose HP
+            damage_line = singular_or_plural(attack_damage, game._("{}'s Hit Point decreased by {}.\n"),
+                                             game._("{}'s Hit Points decreased by {}.\n")).format(player.name,
+                                                                                                   attack_damage)
+        else:
+            damage_line = singular_or_plural(attack_damage, game._("Thy Hit decreased by {}.\n"),
+                                             game._("Thy Hits decreased by {}.\n")).format(attack_damage)
         # It ends with no WAIT: PlayerHit goes on to the pop-up and the next player turn (or the death music) at once
         game.cmd_menu.show_line_in_dialog_box(damage_line, **BATTLE_LINE)
 

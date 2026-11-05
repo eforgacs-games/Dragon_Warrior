@@ -3843,3 +3843,63 @@ msgstr "1 (NES)"
 #: src/options_overlay.py
 msgid "2"
 msgstr "2"
+
+#: src/battle_controller.py
+msgid "Command for {}?\n"
+msgstr "{}要做什麼？\n"
+
+#: src/battle_controller.py
+msgid "{} is still asleep.\n"
+msgstr "{}還在睡覺……\n"
+
+#: src/battle_controller.py
+msgid "{} is asleep.\n"
+msgstr "{}睡著了！\n"
+
+#: src/battle_controller.py
+msgid "{} hath fallen.\n"
+msgstr "{}倒下了！\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Point decreased by {}.\n"
+msgstr "{}受到了{}點傷害！\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Points decreased by {}.\n"
+msgstr "{}受到了{}點傷害！\n"
+
+#: src/controls_screen.py
+msgid "P2 A"
+msgstr "P2 A按鈕"
+
+#: src/controls_screen.py
+msgid "P2 B"
+msgstr "P2 B按鈕"
+
+#: src/controls_screen.py
+msgid "P2 START"
+msgstr "P2 開始"
+
+#: src/controls_screen.py
+msgid "P2 SELECT"
+msgstr "P2 選擇"
+
+#: src/controls_screen.py
+msgid "P2 UP"
+msgstr "P2 上"
+
+#: src/controls_screen.py
+msgid "P2 DOWN"
+msgstr "P2 下"
+
+#: src/controls_screen.py
+msgid "P2 LEFT"
+msgstr "P2 左"
+
+#: src/controls_screen.py
+msgid "P2 RIGHT"
+msgstr "P2 右"
+
+#: data/text/dialog_lookup_table.py
+msgid "Who will it be?"
+msgstr "要讓誰來？"

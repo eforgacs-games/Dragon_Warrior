@@ -55,7 +55,7 @@ from src.languages import LANGUAGE_NAMES
 from src.rewind import Rewind
 from src.save_file import SaveFile
 from src.save_state import run_due_state_request
-from src.settings import SettingsStore, put_in_config
+from src.settings import SettingsStore, load_settings, put_in_config, settings_path
 from src.paths import data_path
 from src.player.player import Player
 from src.sound import Sound
@@ -63,6 +63,7 @@ from src.battle_controller import BattleController
 from src.ending import Ending
 from src.achievements import Achievements
 from src.follower import Follower
+from src.netplay import PORT, run_client, start_host
 from src.party import new_hero, party_of
 from src.play_stats import PlayClock, PlayStats, subscribe_play_stats
 from src.step_triggers import StepTriggers
@@ -213,6 +214,7 @@ class Game:
                              fighters_ring_attack_bonus=self.game_state.config['FIGHTERS_RING_ATTACK_BONUS'])
         # The party's second hero (src/party.py), with HEROES on 2; None for the NES's one
         self.companion: Player | None = None
+        self.first_hero: Player | None = None  # the first hero while the second is game.player (src/party.py acting)
         self.follower = Follower(self)  # the second hero on the map, one step behind the first (src/follower.py)
         self.last_coordinates = None
         self.player.restore_hp()
@@ -352,7 +354,7 @@ class Game:
     @property
     def party(self) -> list[Player]:
         """The heroes (src/party.py): the first, then the second if there is one."""
-        return party_of(self.player, self.companion)
+        return party_of(self.first_hero or self.player, self.companion)
 
     def main(self) -> None:
         """
@@ -723,12 +725,21 @@ def run():
                              "chosen in the options, or the system's)")
     parser.add_argument("--seed", type=int,
                         help="seed the random numbers, so the same play meets the same rolls (src/random_streams.py)")
+    parser.add_argument("--host", nargs='?', type=int, const=PORT, metavar='PORT',
+                        help=f"host network play: player 2 joins from another computer with --join (port {PORT} by "
+                             "default; src/netplay.py)")
+    parser.add_argument("--join", metavar='HOST[:PORT]',
+                        help="join a game hosted with --host as player 2: this window shows the host's game and "
+                             "sends your buttons (src/netplay.py)")
     parser.add_argument("--smoke-test", action="store_true",
                         help="check that every game file is there and loads, play a few scripted scenes headless and "
                              "exit with 0, or 1 on any problem (the release workflow runs this on each build; see "
                              "src/smoke_test.py)")
     args = parser.parse_args()
     config = dev_config if args.dev else prod_config
+    if args.join:
+        # Player 2's window: no game of its own, the player's own keys from their settings
+        sys.exit(run_client(args.join, load_settings(settings_path(config)).controls))
     if args.language:
         config = {**config, 'LANGUAGE': args.language, 'LANGUAGE_FROM_COMMAND_LINE': True}
     if args.checkpoint:
@@ -741,6 +752,8 @@ def run():
     game = Game(config=config)
     if args.smoke_test:
         sys.exit(run_smoke_test(game))
+    if args.host is not None:
+        start_host(game, args.host)
     game.main()
 
 
