@@ -106,6 +106,24 @@ class TestTasks(TestCase):
         self.assertRaises(ValueError, scheduler.run_frame)
         self.assertTrue(task.done)
 
+    def test_closing_ends_a_waiting_task_at_once(self):
+        log = []
+
+        def waiter():
+            try:
+                wait_frames(100)
+            finally:
+                log.append('unwound')
+        scheduler = Scheduler()
+        task = scheduler.add(Task('waiter', waiter))
+        scheduler.run_frame()
+        self.assertEqual([], log)
+        scheduler.close()
+        self.assertEqual(['unwound'], log)
+        self.assertTrue(task.done)
+        self.assertEqual([], scheduler.tasks)
+        task.close()  # twice is nothing
+
     def test_a_real_wait_outside_a_task_still_waits(self):
         start = self.clock.ms
         wait(100)

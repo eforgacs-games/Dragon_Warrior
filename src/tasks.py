@@ -55,6 +55,13 @@ class Task:
         events, self.events = self.events, []
         return events
 
+    def close(self) -> None:
+        """End the task now if it isn't done: GreenletExit is raised where it waits, so its ``finally`` blocks and
+        ``with`` blocks run at once, not whenever its greenlet is garbage collected."""
+        if self._greenlet is not None and not self._greenlet.dead:
+            self._greenlet.throw()
+        self.done = True
+
     def resume(self) -> None:
         """Run the task until it waits for its next frame, or ends."""
         assert self._greenlet is not None
@@ -79,6 +86,12 @@ class Scheduler:
             if not task.done:
                 task.resume()
         self.tasks = [task for task in self.tasks if not task.done]
+
+    def close(self) -> None:
+        """End every task that isn't done (Task.close) and let them go."""
+        for task in self.tasks:
+            task.close()
+        self.tasks = []
 
     def run_until_done(self, frames: int, between_frames: Callable[[], Any] | None = None) -> None:
         """Run frames until every task is done (at most ``frames``), ``between_frames`` after each (a test moving its

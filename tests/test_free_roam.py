@@ -36,6 +36,12 @@ class FreeRoamTestCase(TestCase):
         movement_key = patch('src.movement.key').start()
         movement_key.get_pressed.return_value = self.held
         self.game.update_free_roam()
+        self.addCleanup(self.stop_roaming)
+
+    def stop_roaming(self):
+        """Each hero's task ended with the test, not left waiting in its greenlet for the garbage collector."""
+        if self.game.free_roam_active:
+            self.game.stop_free_roam()
 
     def frames(self, count, events=()):
         for number in range(count):
@@ -91,6 +97,15 @@ class TestStartingAndStopping(FreeRoamTestCase):
     def test_the_option(self):
         self.assertEqual(COOP_PARTY, COOP.default)
         self.assertIsNone(COOP.presets)
+
+
+class TestStoppingEndsTheTasks(FreeRoamTestCase):
+
+    def test_both_heroes_tasks_end_with_free_roam(self):
+        self.frames(2)
+        tasks = list(self.game.free_roam_tasks)
+        self.game.stop_free_roam()
+        self.assertTrue(all(task.done for task in tasks))
 
 
 class TestEachPlayersKeys(FreeRoamTestCase):
