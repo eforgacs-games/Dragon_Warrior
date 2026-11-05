@@ -35,6 +35,7 @@ This module imports nothing from ``src``, so src/common.py and src/waiting.py ca
 """
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Any, NamedTuple, Union, override
 
@@ -529,7 +530,8 @@ class Controls:
 # The controls in use
 _controls = Controls.defaults()
 _version = 0  # counts the changes, so the key sets know when to look again
-_input_player = PLAYER_ONE  # whose joypad the key sets read (player_input)
+# Whose joypad the key sets read (player_input): a context variable, so each task (src/tasks.py) has its own
+_input_player: ContextVar[int] = ContextVar('input_player', default=PLAYER_ONE)
 
 
 _listener: Callable[[Controls], None] | None = None  # told of every change the player makes (to save it)
@@ -589,16 +591,15 @@ def player_input(player: int) -> Iterator[None]:
     """For the length of the block, the key sets of the NES buttons (src/common.py A_BUTTON_KEYS ...) read
     ``player``'s joypad: player 2's actions (PLAYER_TWO_ACTIONS) for player 2. Co-op's second hero's turns in a fight
     run under it (src/battle_controller.py)."""
-    global _input_player
-    before, _input_player = _input_player, player
+    token = _input_player.set(player)
     try:
         yield
     finally:
-        _input_player = before
+        _input_player.reset(token)
 
 
 def input_player() -> int:
-    return _input_player
+    return _input_player.get()
 
 
 def reset_controls() -> None:
@@ -661,8 +662,9 @@ class KeySet(Sequence[int]):
     def keys(self) -> tuple[int, ...]:
         """The keys bound now, for the player whose input is in use (player_input): player 2's NES buttons stand for
         the NES buttons, and this game's own actions aren't player 2's."""
-        if self._cache_version != (_version, _input_player):
-            if _input_player == PLAYER_TWO:
+        player = _input_player.get()
+        if self._cache_version != (_version, player):
+            if player == PLAYER_TWO:
                 names = [PLAYER_TWO_ACTIONS[name] for name in self.names if name in PLAYER_TWO_ACTIONS]
             else:
                 names = list(self.names)
@@ -671,7 +673,7 @@ class KeySet(Sequence[int]):
                 keys += [key for key in action_keys(name) if key not in keys]
             keys += [key for key in self.fixed if key not in keys]
             self._cache = tuple(keys)
-            self._cache_version = (_version, _input_player)
+            self._cache_version = (_version, player)
         return self._cache
 
     @override
