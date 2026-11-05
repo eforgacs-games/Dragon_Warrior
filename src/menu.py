@@ -291,7 +291,8 @@ class CommandMenu:
             return False
         save = SaveFile.from_game(self.player, self.game.current_map.identifier, self.game.story_flags,
                                   options_from_config(self.game.game_state.config),
-                                  self.game.dungeon_map.to_save(), self.game.play_stats.to_save())
+                                  self.game.dungeon_map.to_save(), self.game.play_stats.to_save(),
+                                  companion=self.game.companion)
         try:
             write_save(save_path(save_dir, log), save.to_save())
         except OSError as error:

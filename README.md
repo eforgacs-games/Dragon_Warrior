@@ -282,6 +282,7 @@ With one of these OFF, its key does nothing, as on the NES.
 | AUTO-INN | When auto-grind can't go on (HP low with no heal, or no MP left for one): OFF (NES): it stops; ON: it goes to the nearest inn it can pay for and back | OFF | OFF | ON |
 | RANDOMNESS | NES: every roll comes from the NES's own random number, which moves on every frame as well as every roll, so when you press a button changes what happens, as on the NES; SEEDED: the hero's rolls and the world's (the townspeople's wandering) come from two separate generators, so the same play with the same `--seed` gets the same rolls. A seed keeps it on SEEDED (grayed out) | NES | NES | NES |
 | ACHIEVEMENTS | OFF (NES), or ON: achievements unlock as you play (story milestones, every monster, a low-level or deathless Dragonlord, and more), with a banner at the top of the map, and T lists them. They're kept for whoever plays on this computer, across every adventure log, in `achievements.json` next to the settings. Nothing unlocks while a cheat is on (CHEATS, `--dev`) | OFF | OFF | ON |
+| HEROES | How many heroes the next new quest starts with: 1 (NES), or 2, a co-op party (in progress: for now the second hero is named, has stats, items and spells of their own and is saved with the adventure log, but doesn't follow on the map or fight yet). An adventure log keeps the party it started with | 1 | | |
 
 
 ## Languages

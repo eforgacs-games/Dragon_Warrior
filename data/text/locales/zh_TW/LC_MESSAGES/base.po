@@ -3827,3 +3827,19 @@ msgstr "你死了"
 #: src/achievements.py
 msgid "Die for the first time."
 msgstr "第一次死亡。"
+
+#: src/title_menu.py
+msgid "Now the second hero's name.\n"
+msgstr "接下來決定第二位勇者的名字。\n"
+
+#: src/options_overlay.py
+msgid "HEROES"
+msgstr "勇者"
+
+#: src/options_overlay.py
+msgid "1 (NES)"
+msgstr "1 (NES)"
+
+#: src/options_overlay.py
+msgid "2"
+msgstr "2"

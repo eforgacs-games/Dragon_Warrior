@@ -21,6 +21,7 @@ surfaces, no sprites; a map is named, not copied). It holds everything the game'
 - the message log (src/message_log.py): putting a snapshot back puts back the messages shown up to then, so the log
   never shows what a rewind undid;
 - the play statistics (src/play_stats.py), the play time too: they're the adventure's as it was then;
+- the party's second hero (src/party.py), as an adventure log keeps them;
 - the random number streams (src/random_streams.py: the hero's and the world's, which every roll in the game reads),
   so that loading a state and pressing the same keys plays out the same way, fights included.
 
@@ -55,7 +56,9 @@ from src.maps import CharlockB1, map_lookup
 from src.menu import CommandMenu
 from src.message_log import decoded_entries
 from src.options_overlay import apply_log_options, apply_option
+from src.party import new_hero
 from src.play_stats import PlayStats
+from src.save_file import HeroSave
 from src.game_options import options_from_config, options_from_save, options_to_save
 from src.random_streams import RandomStreams, Stream, decode_random_state, encode_random_state
 from src.sprites.animated_sprite import AnimatedSprite
@@ -68,7 +71,7 @@ if TYPE_CHECKING:
 
 # Raise it whenever what a snapshot holds changes, with a STATE_MIGRATIONS step from the version before (and a sample
 # state of that version in tests/sample_saves/), so states saved before load as they should rather than wrong
-STATE_FORMAT_VERSION = 4
+STATE_FORMAT_VERSION = 5
 VERSION_KEY = 'version'
 SAVE_STATE_SLOTS = (1, 2, 3)
 # What a save state key asks for (MapHotkeys.press_save_state): (SAVE or LOAD, slot)
@@ -154,12 +157,18 @@ def _from_version_3(snapshot: dict[str, Any]) -> dict[str, Any]:
             'random': {**snapshot['random'], 'nes': 0}}
 
 
+def _from_version_4(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Version 4 to 5: the party's second hero (src/party.py), which no version 4 state had."""
+    return {**snapshot, 'companion': None}
+
+
 # STATE_MIGRATIONS[n] turns a snapshot in format n into format n + 1, for every version from 1 (the first, in 1.0) up to
 # STATE_FORMAT_VERSION
 STATE_MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {
     1: _from_version_1,
     2: _from_version_2,
     3: _from_version_3,
+    4: _from_version_4,
 }
 
 
@@ -299,6 +308,8 @@ def take_snapshot(game: 'Game') -> dict[str, Any]:
         'message_log': game.message_log.to_save(),
         # The play statistics (src/play_stats.py)
         'play_stats': game.play_stats.to_save(),
+        # The party's second hero (src/party.py), as an adventure log keeps them; None for one hero
+        'companion': None if game.companion is None else HeroSave.from_player(game.companion).to_save(),
     }
 
 
@@ -373,6 +384,7 @@ def decode_snapshot(snapshot: Any) -> dict[str, Any]:
             'message_log': decoded_entries(snapshot['message_log']),
             # a state saved before the play statistics has none: all 0
             'play_stats': PlayStats.from_save(snapshot.get('play_stats', {})),
+            'companion': None if snapshot['companion'] is None else HeroSave.from_save(snapshot['companion']),
         }
         if len(decoded['chest_history']) != len(TreasureChestHistory().slots) or len(decoded['camera']) != 2 \
                 or len(decoded['color']) != 3:
@@ -466,6 +478,10 @@ def _restore_values(game: 'Game', state: dict[str, Any]) -> None:
     game.dungeon_map = state['dungeon_map'].copy()  # a copy: the rewind can put the same snapshot back again
     game.message_log.restore(state['message_log'])
     game.play_stats = state['play_stats'].copy()  # a copy: the rewind can put the same snapshot back again
+    game.companion = None
+    if state['companion'] is not None:
+        game.companion = new_hero(game)
+        state['companion'].restore(game.companion)
     for name in (*PLAYER_VALUES, *PLAYER_CELLS):
         setattr(player, name, hero[name])
     for name in PLAYER_LISTS:

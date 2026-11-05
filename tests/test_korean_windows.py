@@ -203,7 +203,7 @@ class TestKoreanOptionsScreen(KoreanTestCase):
                            '끄기 (NES)', '조작'],
                           ['기타', '프리셋', '커스텀', '페이지', '4/4', '이름 확정', '끄기 (NES)', '플레이 기록',
                            '끄기 (NES)', '자동 회복', '끄기 (NES)', '자동 여관', '끄기 (NES)', '난수', 'NES',
-                           '업적', '끄기 (NES)']],
+                           '업적', '끄기 (NES)', '용사', '1 (NES)']],
                          [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(4)])
         config.update({row.config_key: row.values[1] for row in OPTION_ROWS})
         self.assertEqual([['화면과 소리', '프리셋', '커스텀', '페이지', '1/4', '표시 속도', '보통', '대화 방식', '모던',
@@ -216,7 +216,7 @@ class TestKoreanOptionsScreen(KoreanTestCase):
                            '되감기', '켜기', '자동 사냥', '켜기', '사냥 멈춤', 'HP 절반', '메뉴 속도', '게임 속도대로',
                            '치트', '켜기', '던전 지도', '켜기', '대화 기록', '켜기', '조작'],
                           ['기타', '프리셋', '커스텀', '페이지', '4/4', '이름 확정', '켜기', '플레이 기록', '켜기',
-                           '자동 회복', '켜기', '자동 여관', '켜기', '난수', '시드 고정', '업적', '켜기']],
+                           '자동 회복', '켜기', '자동 여관', '켜기', '난수', '시드 고정', '업적', '켜기', '용사', '2']],
                          [[text for text, _, _ in self.overlay_texts(config, page)] for page in range(4)])
 
     def test_a_translated_window_draws_every_line_in_one_font(self):

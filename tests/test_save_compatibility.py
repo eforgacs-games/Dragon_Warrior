@@ -67,6 +67,13 @@ EXPECTED_LOGS = {
         ['HEAL', 'HURT', 'SLEEP', 'RADIANT', 'STOPSPELL', 'OUTSIDE', 'RETURN'],
         StoryFlags(gwaelin_returned=True, left_throne_room=True),
         Options('Normal', 'Modern', True, 'NES', True, 'ThreeQuartersHP')),
+    # A party's log (src/party.py): the version 1 log with a second hero, Gwen (COMPANION_KEY)
+    'version_2.json': (
+        ('Gwaelin', 12000, 2400, 100, 70), ('Broad Sword', 'Magic Armor', 'Silver Shield'),
+        ["Dragon's Scale", None, 'Silver Harp', 'Wings', 'Herb', 'Magic Key'],
+        ['HEAL', 'HURT', 'SLEEP', 'RADIANT', 'STOPSPELL', 'OUTSIDE', 'RETURN'],
+        StoryFlags(gwaelin_returned=True, left_throne_room=True),
+        Options('Normal', 'Modern', True, 'NES', True, 'ThreeQuartersHP')),
 }
 
 
