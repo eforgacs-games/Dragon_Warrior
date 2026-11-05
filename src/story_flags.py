@@ -12,8 +12,10 @@ the same way (game slot offsets $0B-$0D in reference/sram-doc.txt):
 Not story flags, and not saved by the NES: the treasure chest history (TrsrXPos, cleared by MainGameEngine on every
 start), the door history, and the repel and radiant timers (cleared by StartAtThroneRoom).
 
-One entry here isn't on the NES: heard_goals, the quest journal's (src/quest_journal.py) record of the goals the hero
-has been told of, kept with the story so it's saved and loaded with it.
+Three entries here aren't on the NES, kept with the story so they're saved and loaded with it: heard_goals, the quest
+journal's (src/quest_journal.py) record of the goals the hero has been told of; heard_where, the map each of them was
+told on, so the journal can say who told it; and read_records, the journal's records (src/records.py) the hero has
+read, such as Erdrick's Tablet.
 """
 
 from dataclasses import asdict, dataclass, field, fields
@@ -23,6 +25,10 @@ from typing import Any
 SAVE_KEY = 'StoryFlags'
 LEGACY_SAVE_KEYS = {'RainbowBridgeBuilt': 'rainbow_bridge_built', 'CharlockStairsRevealed': 'charlock_stairs_revealed'}
 HEARD_GOALS = 'heard_goals'
+HEARD_WHERE = 'heard_where'
+READ_RECORDS = 'read_records'
+# The entries that aren't NES story bits, each left out of the save while it's empty
+NOT_STORY_BITS = (HEARD_GOALS, HEARD_WHERE, READ_RECORDS)
 
 # Who told the hero of a goal: an NPC's NES dialog byte (src/npcs.py), or a name for what isn't an NPC's dialog
 GoalSource = int | str
@@ -60,6 +66,11 @@ class StoryFlags:
     # Not NES: each goal the hero has been told of (src/quest_journal.py Goal.key), with who told of it. Saves from
     # before it existed load with nothing heard.
     heard_goals: dict[str, GoalSource] = field(default_factory=dict)
+    # Not NES: the map (its identifier) each heard goal was told on, for the journal's "A guard in Rimuldar said:".
+    # Goals heard before it existed have none.
+    heard_where: dict[str, str] = field(default_factory=dict)
+    # Not NES: the records (src/records.py Record.key) the hero has read, in the order read
+    read_records: list[str] = field(default_factory=list)
 
     @property
     def gwaelin_rescued(self) -> bool:
@@ -67,11 +78,12 @@ class StoryFlags:
         return self.carrying_gwaelin or self.gwaelin_returned
 
     def to_save(self) -> dict[str, Any]:
-        """The flags as saved: a copy, heard_goals too, which is left out while nothing has been heard (so a save
-        without it is written back as it was)."""
+        """The flags as saved: a copy, heard_goals, heard_where and read_records too, each left out while it's empty
+        (so a save without them is written back as it was)."""
         saved = asdict(self)
-        if not self.heard_goals:
-            del saved[HEARD_GOALS]
+        for name in NOT_STORY_BITS:
+            if not saved[name]:
+                del saved[name]
         return saved
 
     @classmethod
@@ -97,12 +109,15 @@ class StoryFlags:
             if name in saved_flags:
                 setattr(flags, name, bool(saved_flags[name]))
         flags.heard_goals = heard_goals_from_save(saved_flags.get(HEARD_GOALS))
+        flags.heard_where = heard_where_from_save(saved_flags.get(HEARD_WHERE))
+        flags.read_records = read_records_from_save(saved_flags.get(READ_RECORDS))
         return flags
 
 
 def story_bits() -> tuple[str, ...]:
-    """The names of the flags that are the NES's story bits: every field but heard_goals."""
-    return tuple(flag.name for flag in fields(StoryFlags) if flag.name != HEARD_GOALS)
+    """The names of the flags that are the NES's story bits: every field but heard_goals, heard_where and
+    read_records."""
+    return tuple(flag.name for flag in fields(StoryFlags) if flag.name not in NOT_STORY_BITS)
 
 
 def heard_goals_from_save(saved: Any) -> dict[str, GoalSource]:
@@ -111,3 +126,17 @@ def heard_goals_from_save(saved: Any) -> dict[str, GoalSource]:
         return {}
     return {goal: source for goal, source in saved.items()
             if isinstance(goal, str) and type(source) in (int, str)}
+
+
+def heard_where_from_save(saved: Any) -> dict[str, str]:
+    """The maps the heard goals were told on, leaving out any entry that isn't a goal's key and a map's name."""
+    if not isinstance(saved, dict):
+        return {}
+    return {goal: map_name for goal, map_name in saved.items() if isinstance(goal, str) and isinstance(map_name, str)}
+
+
+def read_records_from_save(saved: Any) -> list[str]:
+    """The records a save has read, each once, leaving out anything that isn't a record's key."""
+    if not isinstance(saved, list):
+        return []
+    return list(dict.fromkeys(record for record in saved if isinstance(record, str)))

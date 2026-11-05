@@ -19,8 +19,8 @@ from src.config.test_config import test_config
 from src.guardians import GOLEM
 from src.maps import map_lookup
 from src.quest_journal import DONE_FORMAT, GOALS, GOLEM_FIGHT, JOURNAL_HINTS, JOURNAL_LEARNED, JOURNAL_OFF, \
-    KING_OPENING_SPEECH, NOTHING_HEARD, OPTIONAL_HEADING, THRONE_ROOM_KEY_ADVICE, Progress, hear, journal_pages, \
-    journal_texts, open_goals, told_lines
+    KING_OPENING_SPEECH, NOTHING_HEARD, OPTIONAL_HEADING, PLACES, THRONE_ROOM_KEY_ADVICE, Progress, hear, \
+    journal_pages, journal_texts, npc_places, open_goals, said_by, teller, told_lines
 from src.save_file import SaveFile
 from src.save_state import decode_snapshot, take_snapshot
 from src.story_flags import StoryFlags, story_bits
@@ -46,6 +46,10 @@ GOLEM_GOAL = "Defeat the Golem guarding Cantlin."
 # Garin's grave and the Silver Harp (Brecconary: the mobile fighter at 3,26)
 HARP_RUMOR = 0x27
 HARP_RUMOR_LINE = "Some say that Garin's grave is home to a Silver Harp."
+HARP_RUMOR_TELLER = "A soldier in Brecconary said:"
+# "Art thou the descendant of Erdrick?": a soldier in Brecconary, a man in Kol and a man in Rimuldar
+PROOF = 0x30
+PROOF_LINE = "Art thou the descendant of Erdrick?\nHast thou any proof?"
 # The Staff of Rain shrine's old man
 STAFF_SHRINE = 0x6C
 # A Magic Key shop: no words to quote
@@ -152,8 +156,49 @@ class TestHints(TestCase):
     def setUpClass(cls):
         pygame.font.init()
 
-    def test_hints_show_the_npcs_words(self):
-        self.assertEqual([HARP, HARP_RUMOR_LINE], pages(told(HARP_RUMOR), hints=True))
+    def test_hints_show_the_npcs_words_under_who_said_them(self):
+        self.assertEqual([HARP, HARP_RUMOR_TELLER + "\n" + HARP_RUMOR_LINE], pages(told(HARP_RUMOR), hints=True))
+
+    def test_the_words_are_quoted(self):
+        progress = Progress.of(told(HARP_RUMOR), [])
+        self.assertEqual(HARP_RUMOR_TELLER + "\n<" + HARP_RUMOR_LINE + ">",
+                         journal_pages(progress, hints=True, quote=lambda line: f"<{line}>")[1])
+
+    def test_the_teller_is_where_the_hero_heard_it(self):
+        flags = StoryFlags()
+        hear(flags, PROOF, 'Kol')
+        self.assertEqual({'erdricks_token': 'Kol'}, flags.heard_where)
+        self.assertEqual([TOKEN, "A man in Kol said:\n" + PROOF_LINE], pages(flags, hints=True))
+
+    def test_a_teller_on_several_maps_heard_before_the_map_was_kept(self):
+        # Without the map there's no telling which of the three said it: the words alone
+        self.assertEqual([TOKEN, PROOF_LINE], pages(told(PROOF), hints=True))
+
+    def test_king_lorik(self):
+        self.assertEqual("King Lorik said:", said_by(KING_OPENING_SPEECH, None))
+        self.assertEqual("King Lorik said:\nThe Dragonlord must be defeated.",
+                         pages(told(KING_OPENING_SPEECH), hints=True)[1])
+
+    def test_the_shrines_keepers_are_old_men(self):
+        self.assertEqual("An old man in a shrine said:", said_by(STAFF_SHRINE, 'StaffOfRainCave'))
+
+    def test_a_better_teller_moves_the_map_too(self):
+        flags = StoryFlags()
+        hear(flags, KEY_SHOP, 'TantegelCourtyard')
+        hear(flags, 0x34, 'Kol')  # "Rimuldar is the place to buy keys.": words this time
+        self.assertEqual({'magic_key': 'Kol'}, flags.heard_where)
+        hear(flags, 0x26)  # kept: the Kol guard had words too
+        self.assertEqual({'magic_key': 'Kol'}, flags.heard_where)
+
+    def test_every_npc_with_words_can_be_named(self):
+        for goal in GOALS:
+            for told_by in goal.told_by:
+                if told_by.line is None or not isinstance(told_by.source, int):
+                    continue
+                for map_name, _sprite in npc_places()[told_by.source]:
+                    with self.subTest(goal=goal.key, source=hex(told_by.source), map=map_name):
+                        self.assertIsNotNone(teller(told_by.source, map_name))
+                        self.assertIn(map_name, PLACES)
 
     def test_without_words_the_goals_own_hint(self):
         self.assertEqual([KEY, "Magic Keys are sold in Tantegel Castle, Rimuldar and Cantlin."],
@@ -166,7 +211,7 @@ class TestHints(TestCase):
 
     def test_korean(self):
         _ = set_gettext_language('Korean')
-        self.assertEqual(["은 하프를 찾자.", _(HARP_RUMOR_LINE)],
+        self.assertEqual(["은 하프를 찾자.", "라다톰 마을의 전사의 말:\n" + _(HARP_RUMOR_LINE)],
                          journal_pages(Progress.of(told(HARP_RUMOR), []), hints=True, _=_))
         self.assertEqual([_(NOTHING_HEARD)], journal_pages(Progress.of(StoryFlags(), []), hints=True, _=_))
         for text in journal_texts() + told_lines():
@@ -206,9 +251,18 @@ class TestOldSaves(TestCase):
         self.assertIn(done(RESCUE), pages(flags))
 
     def test_bad_entries_are_left_out(self):
-        flags = StoryFlags.from_save({'StoryFlags': {'heard_goals': {'silver_harp': 39, 'golem': [1], '3': None}}})
+        flags = StoryFlags.from_save({'StoryFlags': {'heard_goals': {'silver_harp': 39, 'golem': [1], '3': None},
+                                                     'heard_where': {'silver_harp': 'Brecconary', 'golem': 3},
+                                                     'read_records': ['tablet', 4, 'tablet']}})
         self.assertEqual({'silver_harp': 39}, flags.heard_goals)
+        self.assertEqual({'silver_harp': 'Brecconary'}, flags.heard_where)
+        self.assertEqual(['tablet'], flags.read_records)
         self.assertEqual({}, StoryFlags.from_save({'StoryFlags': {'heard_goals': 'harp'}}).heard_goals)
+        self.assertEqual({}, StoryFlags.from_save({'StoryFlags': {'heard_where': ['Kol']}}).heard_where)
+        self.assertEqual([], StoryFlags.from_save({'StoryFlags': {'read_records': 'tablet'}}).read_records)
+
+    def test_empty_entries_are_left_out_of_the_save(self):
+        self.assertEqual(set(story_bits()), set(StoryFlags().to_save()))
 
 
 class GameTestCase(TestCase):
@@ -232,6 +286,7 @@ class TestInTheGame(GameTestCase):
     def test_talking_to_an_npc_unlocks_the_goal(self):
         self.talk_to('Brecconary', 'SOLDIER_2')  # dialog byte $27
         self.assertEqual({'silver_harp': HARP_RUMOR}, self.game.story_flags.heard_goals)
+        self.assertEqual({'silver_harp': 'Brecconary'}, self.game.story_flags.heard_where)
 
     def test_the_golem_fight_counts_as_meeting_him(self):
         with patch('src.step_triggers.guardian_at', return_value=GOLEM), \
@@ -240,12 +295,15 @@ class TestInTheGame(GameTestCase):
         self.assertEqual({'golem': GOLEM_FIGHT}, self.game.story_flags.heard_goals)
 
     def test_saved_and_loaded_with_the_adventure_log(self):
-        hear(self.game.story_flags, HARP_RUMOR)
+        hear(self.game.story_flags, HARP_RUMOR, 'Brecconary')
         hear(self.game.story_flags, GOLEM_FIGHT)
+        self.game.story_flags.read_records.append('tablet')
         saved = json.loads(json.dumps({'Name': 'Ed', 'Experience': 0, 'Gold': 0, 'Inventory': [],
                                        'StoryFlags': self.game.story_flags.to_save()}))
         loaded = SaveFile.from_save(saved).story_flags
         self.assertEqual({'silver_harp': HARP_RUMOR, 'golem': GOLEM_FIGHT}, loaded.heard_goals)
+        self.assertEqual({'silver_harp': 'Brecconary'}, loaded.heard_where)
+        self.assertEqual(['tablet'], loaded.read_records)
         self.assertEqual([HARP, OPTIONAL_HEADING + "\n" + GOLEM_GOAL], pages(loaded))
 
     def test_kept_in_save_states(self):
@@ -278,7 +336,9 @@ class TestQKey(GameTestCase):
 
     def test_learned_with_hints(self):
         hear(self.game.story_flags, HARP_RUMOR)
-        self.assertEqual([HARP, HARP_RUMOR_LINE], self.press_q(JOURNAL_HINTS).call_args.args[0])
+        # Quoted the way the NPC said it (src/languages.py NES_QUOTE_MARKS)
+        self.assertEqual([HARP, HARP_RUMOR_TELLER + "\n`" + HARP_RUMOR_LINE + "’"],
+                         self.press_q(JOURNAL_HINTS).call_args.args[0])
 
     def test_follows_the_story(self):
         self.game.story_flags.carrying_gwaelin = True
@@ -296,7 +356,7 @@ class TestNpcTables(TestCase):
         bytes_in_maps = {npc.dialog for map_class in map_lookup.values()
                          for npc in getattr(map_class, 'npc_table', ())}
         for goal in GOALS:
-            for teller in goal.told_by:
-                if isinstance(teller.source, int):
-                    with self.subTest(goal=goal.key, source=hex(teller.source)):
-                        self.assertIn(teller.source, bytes_in_maps)
+            for told_by in goal.told_by:
+                if isinstance(told_by.source, int):
+                    with self.subTest(goal=goal.key, source=hex(told_by.source)):
+                        self.assertIn(told_by.source, bytes_in_maps)

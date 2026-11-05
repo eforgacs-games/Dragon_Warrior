@@ -109,6 +109,7 @@ def dynamic_messages() -> dict[str, list[str]]:
     from src.options_screen import MESSAGE_SPEED_OPTIONS
     from src.shop_preview import preview_texts
     from src.quest_journal import journal_texts
+    from src.records import record_texts
     from src.stats_screen import screen_texts as stats_texts
     from src.spells import Spell
     from src.translated_window import layout_texts
@@ -137,6 +138,8 @@ def dynamic_messages() -> dict[str, list[str]]:
         messages.setdefault(text, []).append('src/shop_preview.py')
     for text in journal_texts():
         messages.setdefault(text, []).append('src/quest_journal.py')
+    for text in record_texts():
+        messages.setdefault(text, []).append('src/records.py')
     for text in dungeon_map_texts():
         messages.setdefault(text, []).append('src/dungeon_map.py')
     for text in screen_texts():

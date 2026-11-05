@@ -119,41 +119,41 @@ msgstr ""
 "How may we be of service to thee this day?"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Descendant of Erdrick, listen now to my words."
 msgstr "Scion of the bloodline of Erdrick, hero of legend! Long have I awaited thy coming!"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
 msgstr "In days of yore, thy revered ancestor did receive of the Almighty Goddess the Sphere of Light, and by its power was our world rid of the menace which did beset it."
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Then came the Dragonlord who stole the precious globe and hid it in the darkness."
 msgstr "Yet, alas, there did arise a new threat--the Dragonlord. With his cunning, he did steal away the Sphere of Light from us, plunging the land into darkness once more."
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Now, {}, thou must help us recover the Ball of Light and restore peace to our land."
 msgstr "So I say unto thee, {}, vanquish the accursed Dragonlord, and reclaim the Sphere of Light!"
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "The Dragonlord must be defeated."
 msgstr "The accursed Dragonlord must be vanquished."
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."
 msgstr "In the chests o'er yonder wilt thou find items to aid thee on thy quest. Take what thou wilt, with my blessing."
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Then speak with the guards, for they have much knowledge that may aid thee."
 msgstr "Partake thee also of the wisdom of those loyal subjects gathered here. Their knowledge will serve thee as well as any shield."
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "May the light shine upon thee, {}."
 msgstr "May the Goddess guide thee to victory, brave {}!"
 
@@ -943,37 +943,37 @@ msgid "Tablet"
 msgstr "Stone Tablet"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "The tablet reads as follows:"
 msgstr "The following message is etched into its surface:"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "I am Erdrick and thou art my descendant."
 msgstr "I am Erdrick. Hear me well, bearer of my blood, heir to my destiny..."
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Three items were needed to reach the Isle of Dragons, which is south of Brecconary."
 msgstr "If you would reach the evil island visible from Tantegel's shore, you will require the three sacred artefacts."
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "I gathered these items, reached the island, and there defeated a creature of great evil."
 msgstr "I gathered them, crossed to that accursed isle, and destroyed the source of all evil."
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Now I have entrusted the three items to three worthy keepers."
 msgstr "Before my passing, I entrusted the three objects to three great sages."
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Their descendants will protect the items until thy quest leads thee to seek them out."
 msgstr "If the fates have been kind, their descendants guard them still. Seek them out!"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "When a new evil arises, find the three items, then fight!"
 msgstr "When evil rules the ill-starred isle once more, gather the hallowed triad, and strike a blow for the cause of light."
 
@@ -3563,6 +3563,7 @@ msgid "{} (hold): Rewind"
 msgstr "{} (hold): Rewind"
 
 #: src/controls_screen.py
+#: src/records.py
 msgid "JOURNAL"
 msgstr "JOURNAL"
 
@@ -3596,6 +3597,7 @@ msgid "NO MESSAGES YET"
 msgstr "NO MESSAGES YET"
 
 #: src/message_log.py
+#: src/records.py
 msgid "KING LORIK"
 msgstr "KING"
 
@@ -3740,3 +3742,79 @@ msgstr "Auto-grind: back to grinding"
 #: src/options_overlay.py
 msgid "AUTO-INN"
 msgstr "AUTO-INN"
+
+#: src/quest_journal.py
+msgid "{} said:"
+msgstr "{} said:"
+
+#: src/quest_journal.py
+msgid "{} in {}"
+msgstr "{} in {}"
+
+#: src/quest_journal.py
+msgid "An old man"
+msgstr "An old man"
+
+#: src/quest_journal.py
+msgid "King Lorik"
+msgstr "His Majesty the King"
+
+#: src/quest_journal.py
+msgid "A guard"
+msgstr "A guard"
+
+#: src/quest_journal.py
+msgid "A soldier"
+msgstr "A soldier"
+
+#: src/quest_journal.py
+msgid "A wizard"
+msgstr "A wizard"
+
+#: src/quest_journal.py
+msgid "A merchant"
+msgstr "A merchant"
+
+#: src/quest_journal.py
+msgid "A man"
+msgstr "A man"
+
+#: src/quest_journal.py
+msgid "A woman"
+msgstr "A woman"
+
+#: src/quest_journal.py
+msgid "Tantegel Castle"
+msgstr "Tantegel Castle"
+
+#: src/quest_journal.py
+msgid "Brecconary"
+msgstr "the town of Tantegel"
+
+#: src/quest_journal.py
+msgid "Garinham"
+msgstr "Galenholm"
+
+#: src/quest_journal.py
+msgid "Kol"
+msgstr "Kol"
+
+#: src/quest_journal.py
+msgid "Rimuldar"
+msgstr "Rimuldar"
+
+#: src/quest_journal.py
+msgid "Cantlin"
+msgstr "Cantlin"
+
+#: src/quest_journal.py
+msgid "a shrine"
+msgstr "a shrine"
+
+#: src/records.py
+msgid "GOALS"
+msgstr "GOALS"
+
+#: src/records.py
+msgid "ERDRICK'S TABLET"
+msgstr "ERDRICK'S TABLET"
