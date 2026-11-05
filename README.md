@@ -295,8 +295,7 @@ on port 52528; `--host 6000` for another). Player 2 starts the game with `--join
 controller are player 2's joypad, so they choose the second hero's commands in a fight, and their A opens the second
 hero's ITEM, SPELL and STATUS on the map. There is one game, the host's; player 2's window plays its music and sounds
 from player 2's own copy of the game (the NES and SFC soundtracks need libgme there too). Play on a local network or
-over a VPN such as Tailscale rather than opening the
-port to the internet: whoever connects is player 2.
+over a VPN such as Tailscale rather than opening the port to the internet: whoever connects is player 2.
 
 ## Languages
 
