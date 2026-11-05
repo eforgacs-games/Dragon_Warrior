@@ -183,7 +183,10 @@ def virtual_joypad() -> VirtualJoypadHook | None:
 def poll_virtual_joypad(context: str = WINDOW_CONTEXT) -> None:
     """Let the connected virtual joypad post the presses that are due on the game clock, and look at the keys the
     player pressed, before the caller reads the event queue. ``context`` says who is reading. The gamepad, if one is
-    connected, posts its presses first, so the virtual joypad sees them as the player's."""
+    connected, posts its presses first, so the virtual joypad sees them as the player's. Inside a task (src/tasks.py)
+    nothing is polled: whoever runs the tasks polls once a frame and gives the tasks the events."""
+    if current_task() is not None:
+        return
     if _gamepad is not None:
         _gamepad.poll()
     if _virtual_joypad is not None:
@@ -430,6 +433,17 @@ def get_events(*args: Any, quit_on_close: bool = False, **kwargs: Any) -> list[e
         if not handle_speed_key(current_event) and not handle_zoom_event(current_event):
             events.append(current_event)
     return events
+
+
+def queued_key_presses() -> list[event.Event]:
+    """Take the key presses queued so far off the queue (inside a task, off the task's own events: src/tasks.py), for
+    a window that drops what was pressed before it opened."""
+    task = current_task()
+    if task is not None:
+        presses = [current_event for current_event in task.events if current_event.type == KEYDOWN]
+        task.events = [current_event for current_event in task.events if current_event.type != KEYDOWN]
+        return presses
+    return event.get(KEYDOWN)
 
 
 def poll_speed_keys() -> None:

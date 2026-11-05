@@ -215,3 +215,94 @@ class TestTheirLook(FreeRoamTestCase):
         image = self.gwen.image
         colors = {tuple(image.get_at((x, y)))[:3] for x in range(image.get_width()) for y in range(image.get_height())}
         self.assertIn(COMPANION_GREEN, colors)
+
+
+class TestSavingWhileRoaming(FreeRoamTestCase):
+
+    def test_the_log_is_the_first_heros_whoever_is_at_the_king(self):
+        import json
+        import os
+        import tempfile
+        from src.maps import map_lookup
+        with use_session(self.gwens), patch('src.map_manager.screen_fade'):
+            self.game.map_mgr.change_map(map_lookup['Brecconary'](self.game.config), destination_coordinates=(23, 10))
+        with tempfile.TemporaryDirectory() as save_dir, use_session(self.gwens):
+            self.game.cmd_menu.directories.save_dir = save_dir
+            self.ann.adventure_log = 2
+            self.assertTrue(self.game.cmd_menu.save())
+            with open(os.path.join(save_dir, 'save_slot_2.json')) as save_file:
+                save = json.load(save_file)
+        self.assertEqual('Ann', save['Name'])
+        self.assertEqual('TantegelThroneRoom', save['CurrentMap'])  # where Ann is, not Gwen in Brecconary
+        self.assertEqual('Gwen', save['Companion']['Name'])
+
+    def test_the_autosave_is_the_first_heros(self):
+        from src.autosave import Autosave
+        autosave = self.game.autosave
+        autosave.last_frame_at = 12345
+        with use_session(self.gwens), patch.object(Autosave, 'write') as write:
+            Autosave.frame(autosave)  # the real one (setUp patched the instance's)
+        write.assert_not_called()
+        self.assertEqual(12345, autosave.last_frame_at)  # not even counted: Gwen's frames aren't the autosave's
+
+    def test_no_rewind_snapshots_while_roaming(self):
+        self.game.config['REWIND'] = True
+        self.assertFalse(self.game.rewind.enabled)
+
+
+class TestFullscreen(FreeRoamTestCase):
+
+    def test_both_halves_again(self):
+        # F11 and every other change to the window make it again with set_screen (the dummy video driver can't make a
+        # fullscreen window, so the window is made again as it is)
+        width, height = self.game.screen.get_size()
+        self.game.screen = self.game.set_screen(height, width)
+        display_surface = pygame.display.get_surface()
+        width, height = self.game.screen.get_size()
+        self.assertEqual((width * 2, height), display_surface.get_size())
+        self.assertIs(display_surface, self.game.screen.get_parent())
+        with use_session(self.gwens):
+            self.assertIs(display_surface, self.game.screen.get_parent())
+            self.assertEqual((width, 0), self.game.screen.get_abs_offset())
+            self.assertIs(self.game.screen, self.game.cmd_menu.screen)
+
+
+class TestGwaelin(FreeRoamTestCase):
+
+    def test_carried_by_the_hero_who_took_her(self):
+        from src.party import carries_gwaelin
+        self.game.story_flags.carrying_gwaelin = True
+        self.game.gwaelin_carrier = self.gwen
+        self.assertFalse(carries_gwaelin(self.game))  # Ann
+        with use_session(self.gwens):
+            self.assertTrue(carries_gwaelin(self.game))
+            self.game.set_player_images_by_equipment()
+            carrying = self.gwen.images_map
+        self.game.set_player_images_by_equipment()
+        self.assertIsNot(carrying, self.ann.images_map)
+
+    def test_the_first_hero_by_default(self):
+        from src.party import carries_gwaelin
+        self.game.story_flags.carrying_gwaelin = True
+        self.assertTrue(carries_gwaelin(self.game))
+        with use_session(self.gwens):
+            self.assertFalse(carries_gwaelin(self.game))
+
+    def test_the_other_heros_death_leaves_her_carried(self):
+        self.game.story_flags.carrying_gwaelin = True
+        self.game.gwaelin_carrier = self.ann
+        with use_session(self.gwens), patch.object(self.game, 'change_map'), \
+                patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
+            self.game.hero_death.set_post_death_attributes()
+        self.assertTrue(self.game.story_flags.carrying_gwaelin)
+
+
+class TestTheControllers(FreeRoamTestCase):
+
+    def test_polled_once_a_frame_for_both(self):
+        from src import waiting
+        polls = []
+        with patch.object(waiting, '_gamepad', type('Pad', (), {'held': set(),
+                                                                 'poll': lambda pad: polls.append(1)})()):
+            self.frames(1)
+        self.assertEqual([1], polls)  # the main loop's; the heroes' tasks poll nothing

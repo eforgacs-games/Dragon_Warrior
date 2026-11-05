@@ -12,7 +12,7 @@ from src.common import A_OR_START_KEYS
 from src.direction import Direction
 from src.game_events import HeroDied
 from src.maps import map_lookup
-from src.party import heroes, other_hero_standing
+from src.party import carries_gwaelin, heroes, other_hero_standing
 from src.waiting import clear_events_keeping_quit
 
 if TYPE_CHECKING:
@@ -65,8 +65,10 @@ class HeroDeath:
     def set_post_death_attributes(self) -> None:
         game = self.game
         player = game.player
-        # NES DeathText: dying clears F_GOT_GWAELIN, so Gwaelin is back in the Swamp Cave (F_RTN_GWAELIN is untouched)
-        game.story_flags.carrying_gwaelin = False
+        # NES DeathText: dying clears F_GOT_GWAELIN, so Gwaelin is back in the Swamp Cave (F_RTN_GWAELIN is untouched);
+        # while the heroes roam apart, only if the hero who died carried her (src/party.py)
+        if carries_gwaelin(game, player):
+            game.story_flags.carrying_gwaelin = False
         game.repel_timer = 0  # NES StartAtThroneRoom (SetStartPos) clears RepelTimer
         player.gold = player.gold // 2
         # NES StartAtThroneRoom sets HP before MapChngNoSound fades the throne room in, so the fade's palette load

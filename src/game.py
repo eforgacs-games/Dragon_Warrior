@@ -69,7 +69,7 @@ from src.sessions import HeroSession, RoamTask, add_session_attributes, session_
 from src.tasks import Scheduler
 from src.controls import PLAYER_ONE, PLAYER_TWO
 from src.netplay import PORT, run_client, start_host
-from src.party import in_party_mode, new_hero, party_of
+from src.party import carries_gwaelin, in_party_mode, new_hero, party_of
 from src.play_stats import PlayClock, PlayStats, subscribe_play_stats
 from src.step_triggers import StepTriggers
 from src.story_flags import StoryFlags
@@ -228,6 +228,8 @@ class Game:
                              fighters_ring_attack_bonus=self.game_state.config['FIGHTERS_RING_ATTACK_BONUS'])
         # The party's second hero (src/party.py), with HEROES on 2; None for the NES's one
         self.companion: Player | None = None
+        # Who carries Gwaelin while the heroes roam apart (src/party.py carries_gwaelin); None: the first hero
+        self.gwaelin_carrier: Player | None = None
         self.first_hero: Player | None = None  # the first hero while the second is game.player (src/party.py acting)
         self.follower = Follower(self)  # the second hero on the map, one step behind the first (src/follower.py)
         # A fallen first hero's grey sprite sheets (set_player_images_by_equipment)
@@ -315,7 +317,11 @@ class Game:
 
     def set_screen(self, win_height: int, win_width: int) -> Surface:
         """Open the window (or make it again) and return the game's screen. In the WIDE view (src/view.py) the window
-        is wider than win_width, and the screen is the NES-sized area in its middle."""
+        is wider than win_width, and the screen is the NES-sized area in its middle. While the heroes roam apart (free
+        roam co-op, src/sessions.py) it's two screens wide, whatever the view: each hero's session gets their half
+        again (with their windows and camera), and the session in use's is returned."""
+        if self.free_roam_active:
+            return self.split_screen(win_width, win_height)
         if view_name(self.game_state.config) == VIEW_NES:
             reset_view()
             return set_mode((win_width, win_height), self.flags)
@@ -475,6 +481,20 @@ class Game:
         for task in self.free_roam_tasks:
             self.free_roam_scheduler.add(task)
 
+    def split_screen(self, width: int, height: int) -> Surface:
+        """The window two screens wide, the first hero's half on the left and the second's on the right: each session's
+        screen, and its COMMAND window's and camera's. Returns the session in use's."""
+        display_surface = set_mode((width * 2, height), self.flags)
+        reset_view()
+        for number, session in enumerate(self.sessions[:2]):
+            half = display_surface.subsurface((width * number, 0, width, height))
+            with use_session(session):
+                self.screen = half
+                for holder in ('cmd_menu', 'camera'):
+                    if hasattr(session, holder):
+                        getattr(self, holder).screen = half
+        return self.screen
+
     def stop_free_roam(self) -> None:
         """The heroes travel together again: the second hero back behind the first, one screen."""
         for session in list(self.sessions[1:]):
@@ -491,6 +511,7 @@ class Game:
     def free_roam_frame(self) -> None:
         """One frame of the main loop while the heroes roam apart: the window's events to both heroes' tasks (each
         reads its own player's keys), a frame of each, then both halves of the window shown."""
+        poll_virtual_joypad(MAP_CONTEXT)  # the controllers, once for both heroes (a task polls nothing)
         events = [current_event for current_event in get() if not handle_zoom_event(current_event)]
         for current_event in events:
             quit_if_requested(current_event)
@@ -776,7 +797,7 @@ class Game:
 
     def set_player_images_by_equipment(self) -> None:
         """Give the hero the sprite sheet for what he carries: the princess, or his weapon and shield."""
-        if self.story_flags.carrying_gwaelin:
+        if carries_gwaelin(self):
             sprite_sheet_path = self.directories.HERO_CARRYING_PRINCESS_PATH
         elif self.player.weapon:
             if self.player.shield:

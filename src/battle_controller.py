@@ -11,7 +11,7 @@ from collections.abc import Callable
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from pygame import KEYDOWN, Surface, display, event, key, time
+from pygame import KEYDOWN, Surface, display, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
@@ -37,7 +37,8 @@ from src.spells import Spell
 from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT, COMBAT_COMMAND_WINDOW
 from src.visual_effects import player_hit_shake
-from src.waiting import handle_speed_key, poll_virtual_joypad, scaled_ms, with_virtual_keys
+from src.tasks import current_task
+from src.waiting import handle_speed_key, poll_virtual_joypad, queued_key_presses, scaled_ms, wait, with_virtual_keys
 from src.zoom import handle_zoom_event
 
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, SelectionButtons, first_button
@@ -462,7 +463,10 @@ class BattleController:
                 self.drawn_command_window = drawn
             if self.auto_battle and not self.grinding:
                 selected_executed_option = self.last_battle_action
-                time.wait(scaled_ms(AUTO_BATTLE_DELAY_MS))
+                if current_task() is not None:
+                    wait(AUTO_BATTLE_DELAY_MS)  # in a hero's task (free roam): frames for the other hero meanwhile
+                else:
+                    time.wait(scaled_ms(AUTO_BATTLE_DELAY_MS))
             else:
                 next_frame()  # one pass of the fight loop per NES frame (src/selection.py)
                 tapped = 0  # keys pressed since the last call, which may have been let go already
@@ -556,7 +560,7 @@ class BattleController:
         self.battle_menu_row = 0
         self.battle_menu_column = 0
         poll_virtual_joypad()  # a key the player pressed stops auto-grind before the queue is dropped
-        for queued_event in event.get(KEYDOWN):
+        for queued_event in queued_key_presses():
             # the speed keys (1 to 5) and the zoom keys (src/zoom.py) still count; every other key is dropped
             handle_speed_key(queued_event) or handle_zoom_event(queued_event)
         self.command_buttons.open(held_joypad_buttons())

@@ -79,6 +79,8 @@ class Autosave:
         """Write the autosave if it's due (a town or castle entered from the overworld, or the interval gone by) and
         AUTOSAVE is ON. A due autosave waits for the hero to finish the step under way, so it's always written with
         the hero on a tile, as a save state is, and none is written (or time counted) while the map is held."""
+        if getattr(self.game, 'current_session', None) is not getattr(self.game, 'main_session', None):
+            return  # free roam co-op: the autosave is the adventure's, kept from the first hero's play (src/sessions.py)
         now = get_ticks()
         elapsed, self.last_frame_at = now - self.last_frame_at, now
         current = self.game.current_map.identifier
