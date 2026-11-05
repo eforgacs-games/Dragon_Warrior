@@ -79,7 +79,7 @@ The main `Game` class in `src/game.py` orchestrates:
 - `game_events.py`, `play_stats.py`, `achievements.py`: the event bus, the play statistics counted from its events, and the achievements (kept globally, next to the settings) checked on every event
 - `party.py`: co-op's party (the HEROES option): the second hero, `game.companion`, saved with the log as `Companion` (save format 2); `game.player` is the first hero, who leads on the map; `follower.py` walks the second one step behind; in a fight each hero's turn runs with them as `game.player` (`party.acting`), the second's on player 2's joypad (`controls.player_input`: key sets of NES buttons read the `P2_` actions)
 - `player_two_menu.py`: co-op's player 2's A on the map: the second hero's ITEM, SPELL and STATUS, on player 2's joypad
-- `netplay.py`: network play: the host streams its screen (wrapping `display.flip`/`update`) and presses player 2's keys for the client's buttons (`RemoteJoypad`, added to `gamepad.Gamepads`); the client runs no game
+- `netplay.py`: network play: the host streams its screen (wrapping `display.flip`/`update`) and presses player 2's keys for the client's buttons (`RemoteJoypad`, added to `gamepad.Gamepads`) and sends the sound and music events (`sound.audio_event`); the client runs no game and plays them from its own files
 - `window_renderer.py`: draws NES windows tile by tile
 - `npc_movement.py`: where roaming NPCs may step
 - `checkpoints.py`: named playtest checkpoints in `data/checkpoints/`

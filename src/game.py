@@ -740,7 +740,7 @@ def run():
     config = dev_config if args.dev else prod_config
     if args.join:
         # Player 2's window: no game of its own, the player's own keys from their settings
-        sys.exit(run_client(args.join, load_settings(settings_path(config)).controls))
+        sys.exit(run_client(args.join, load_settings(settings_path(config)).controls, config))
     if args.language:
         config = {**config, 'LANGUAGE': args.language, 'LANGUAGE_FROM_COMMAND_LINE': True}
     if args.checkpoint:

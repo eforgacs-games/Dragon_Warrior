@@ -292,9 +292,10 @@ With one of these OFF, its key does nothing, as on the NES.
 Player 2 can play the co-op party from another computer. The host plays as usual, started with `--host` (it listens
 on port 52528; `--host 6000` for another). Player 2 starts the game with `--join` and the host's address
 (`--join 192.168.0.5`, or `--join 192.168.0.5:6000`): their window shows the host's game, and their own keys and
-controller are player 2's joypad, so they choose the second hero's commands in a fight, and their A opens the second hero's ITEM, SPELL and STATUS
-on the map. There is one game, the host's,
-and player 2's window has no sound. Play on a local network or over a VPN such as Tailscale rather than opening the
+controller are player 2's joypad, so they choose the second hero's commands in a fight, and their A opens the second
+hero's ITEM, SPELL and STATUS on the map. There is one game, the host's; player 2's window plays its music and sounds
+from player 2's own copy of the game (the NES and SFC soundtracks need libgme there too). Play on a local network or
+over a VPN such as Tailscale rather than opening the
 port to the internet: whoever connects is player 2.
 
 ## Languages
