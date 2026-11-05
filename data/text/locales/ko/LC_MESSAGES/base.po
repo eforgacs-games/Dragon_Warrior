@@ -3640,3 +3640,27 @@ msgstr "1 (NES)"
 #: src/options_overlay.py
 msgid "2"
 msgstr "2"
+
+#: src/battle_controller.py
+msgid "Command for {}?\n"
+msgstr "{}은/는 무엇을 할까?\n"
+
+#: src/battle_controller.py
+msgid "{} is still asleep.\n"
+msgstr "{}은/는 아직 잠들어 있다.\n"
+
+#: src/battle_controller.py
+msgid "{} is asleep.\n"
+msgstr "{}은/는 잠들어 버렸다!\n"
+
+#: src/battle_controller.py
+msgid "{} hath fallen.\n"
+msgstr "{}은/는 쓰러졌다!\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Point decreased by {}.\n"
+msgstr "{}은/는 {}포인트의 대미지를 입었다!\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Points decreased by {}.\n"
+msgstr "{}은/는 {}포인트의 대미지를 입었다!\n"

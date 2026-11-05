@@ -213,6 +213,7 @@ class Game:
                              fighters_ring_attack_bonus=self.game_state.config['FIGHTERS_RING_ATTACK_BONUS'])
         # The party's second hero (src/party.py), with HEROES on 2; None for the NES's one
         self.companion: Player | None = None
+        self.first_hero: Player | None = None  # the first hero while the second is game.player (src/party.py acting)
         self.follower = Follower(self)  # the second hero on the map, one step behind the first (src/follower.py)
         self.last_coordinates = None
         self.player.restore_hp()
@@ -352,7 +353,7 @@ class Game:
     @property
     def party(self) -> list[Player]:
         """The heroes (src/party.py): the first, then the second if there is one."""
-        return party_of(self.player, self.companion)
+        return party_of(self.first_hero or self.player, self.companion)
 
     def main(self) -> None:
         """

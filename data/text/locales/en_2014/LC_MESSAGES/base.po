@@ -4021,3 +4021,27 @@ msgstr "1 (NES)"
 #: src/options_overlay.py
 msgid "2"
 msgstr "2"
+
+#: src/battle_controller.py
+msgid "Command for {}?\n"
+msgstr "What will {} do?\n"
+
+#: src/battle_controller.py
+msgid "{} is still asleep.\n"
+msgstr "{} is asleep...\n"
+
+#: src/battle_controller.py
+msgid "{} is asleep.\n"
+msgstr "{} falls asleep!\n"
+
+#: src/battle_controller.py
+msgid "{} hath fallen.\n"
+msgstr "{} has been defeated!\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Point decreased by {}.\n"
+msgstr "{} takes {} point of damage!\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Points decreased by {}.\n"
+msgstr "{} takes {} points of damage!\n"

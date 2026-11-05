@@ -7,10 +7,18 @@ MP, equipment, items and spells of their own, worked out from their own name as 
 the party's, kept with the first hero. A log keeps the party it was started with, whatever HEROES says later: the
 second hero is saved with it (src/save_file.py COMPANION_KEY), and with the save states, the rewind and the autosave.
 
-The second hero is kept and saved, and follows the first one step behind on the map (src/follower.py). Fighting beside
-them (each choosing a command, the enemy choosing whom it attacks), player 2's controls and the inns, shops and
-chests that ask which hero come next.
+The second hero is kept and saved, follows the first one step behind on the map (src/follower.py) and fights beside
+them (src/battle_controller.py): each round, each hero still standing chooses a command and acts, the first first,
+then the enemy acts against one of them, chosen at random. The battle code acts on ``game.player``, so a hero's turn,
+and the enemy's turn against a hero, run with that hero as ``game.player`` (``acting``). A hero brought to 0 HP has
+fallen and sits the fight out; the fight is lost only when both have fallen. Winning gives each hero still standing
+the enemy's experience, and the party its gold, once. A hero who fell gets back up with 1 HP once the fight is won or
+fled. A lost fight takes both back to King Lorik, as on the NES. One successful run gets the party away.
+
+Player 2's controls and the inns, shops and chests that ask which hero come next.
 """
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
 from src.player.player import Player
@@ -41,3 +49,58 @@ def party_of(player: Player, companion: Player | None) -> list[Player]:
 def starts_as_party(config: dict[str, Any]) -> bool:
     """Whether a new quest starts with two heroes (HEROES)."""
     return config.get('PARTY') == PAIR
+
+
+def companion_of(game: Any) -> Player | None:
+    """The game's second hero, if it has one."""
+    companion = getattr(game, 'companion', None)
+    return companion if isinstance(companion, Player) else None
+
+
+def in_party_mode(game: Any) -> bool:
+    """Whether the game has a second hero."""
+    return companion_of(game) is not None
+
+
+def first_hero(game: Any) -> Any:
+    """The first hero, ``game.player`` but while another hero is acting (``acting``)."""
+    first = getattr(game, 'first_hero', None)
+    return first if isinstance(first, Player) else game.player
+
+
+def heroes(game: Any) -> list[Player]:
+    """The heroes, the first first (Game.party, for any game), whoever is acting."""
+    return party_of(first_hero(game), companion_of(game))
+
+
+def living(game: Any) -> list[Player]:
+    """The heroes still standing, the first first."""
+    return [hero for hero in heroes(game) if not hero.is_dead]
+
+
+@contextmanager
+def acting(game: Any, hero: Player) -> Iterator[None]:
+    """For the length of the block, ``hero`` is the hero the game acts on: ``game.player``, and the CommandMenu's and
+    its DialogLookup's ``player``, which the fight, the spells and the items read (src/battle_controller.py), while
+    ``game.first_hero`` keeps the first hero (``heroes``). The hero before is put back afterwards, whatever happens.
+    With ``hero`` the one acting already, nothing changes."""
+    previous = game.player
+    if hero is previous:
+        yield
+        return
+    cmd_menu = game.cmd_menu
+    dialog_lookup = getattr(cmd_menu, 'dialog_lookup', None)
+    outermost = not isinstance(getattr(game, 'first_hero', None), Player)
+    if outermost:
+        game.first_hero = previous
+    game.player = cmd_menu.player = hero
+    if dialog_lookup is not None:
+        dialog_lookup.player = hero
+    try:
+        yield
+    finally:
+        game.player = cmd_menu.player = previous
+        if dialog_lookup is not None:
+            dialog_lookup.player = previous
+        if outermost:
+            game.first_hero = None

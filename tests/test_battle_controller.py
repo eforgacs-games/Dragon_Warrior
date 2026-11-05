@@ -227,7 +227,7 @@ class TestHandleBattlePrompts(BattlePromptFrames):
         # battle_run returns True when the enemy ran away on its turn after "But was blocked in front."
         self.controller.battle_menu_row = 1
 
-        def blocked_then_enemy_flees(*args):
+        def blocked_then_enemy_flees(*args, **_kwargs):
             return self.controller.enemy_run_away(self.battle, self.battle.enemy)
         self.battle.battle_run.side_effect = blocked_then_enemy_flees
         self.assertTrue(self.press(K_RETURN))
@@ -795,7 +795,7 @@ class TestMapMusicAfterAFight(unittest.TestCase):
 
     def test_enemy_running_away_after_a_blocked_run(self, mock_battle_class, mixer_music):
         battle = self.battle(mock_battle_class)
-        battle.battle_run.side_effect = lambda *args: self.controller.enemy_run_away(battle, battle.enemy)
+        battle.battle_run.side_effect = lambda *args, **_kwargs: self.controller.enemy_run_away(battle, battle.enemy)
         self.assertEqual(self.controller.run_battle(['Slime']).value, 'escaped')
         self.assertEqual(self.map_music_starts(mixer_music), [(self.game.current_map.music_file_path,)])
         # NES: the hero didn't escape, so he isn't moved back off a guardian's block
@@ -808,7 +808,7 @@ class TestMapMusicAfterAFight(unittest.TestCase):
             current_battle.enemy.hp = 0
             return False
 
-        def final_boss_defeated(*args):
+        def final_boss_defeated(*args, **_kwargs):
             # Ending.final_boss_defeated -> change_map, which starts the overworld music
             self.game.music_player.load_and_play_music('overworld')
         battle.enemy_defeated.side_effect = final_boss_defeated
