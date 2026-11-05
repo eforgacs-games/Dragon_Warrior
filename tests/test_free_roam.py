@@ -191,6 +191,8 @@ class TestStatesWhileRoaming(FreeRoamTestCase):
             self.game.handle_keypresses(Event(KEYDOWN, key=K_BACKSPACE, mod=0))
         self.assertIsNone(self.game.state_request)
         rewind.assert_not_called()
+
+
 class TestTheirLook(FreeRoamTestCase):
 
     def test_green_from_the_start(self):
