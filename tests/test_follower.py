@@ -22,14 +22,14 @@ class FollowerTestCase(FreezeTestCase):
     def cell(self, character):
         return character.row, character.column
 
-    def walk(self, direction_key):
-        """Hold a direction until the first hero has taken one step; returns the frames it took."""
+    def walk(self, direction_key) -> None:
+        """Hold a direction until the first hero has taken one step."""
         start = self.cell(self.hero)
-        for frame in range(1, 40):
+        for _ in range(40):
             self.frame(held=(direction_key,))
             if not self.hero.is_moving and self.cell(self.hero) != start:
                 self.frame()  # let go
-                return frame
+                return
         self.fail("the hero didn't step")
 
 
