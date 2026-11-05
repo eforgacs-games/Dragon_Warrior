@@ -506,8 +506,10 @@ def _restore_values(game: 'Game', state: dict[str, Any]) -> None:
     game.hotkeys.clear_requests()
     game.cmd_menu.launch_signaled = False
     game.camera.pos = state['camera']
-    # The map is drawn in full on the next frame, with the pop-up window already open if it was (no drop-down)
+    # The map is drawn in full on the next frame (the hero and the NPCs may have left their last frames anywhere on
+    # it), with the pop-up window already open if it was (no drop-down)
     game.loop_count = 1
+    game.drawer.forget_drawn_in_full()
     game.drawer.display_hovering_stats = game.drawer.hovering_stats_displayed = state['pop_up_window']
     game.drawer.last_player_rect = None
     game.set_window_color(state['color'])
