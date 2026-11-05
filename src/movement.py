@@ -310,7 +310,7 @@ class MovementController:
             self.player.is_moving = True
             self.running_step = running
         # not sure if setting the player sprites to dirty makes a difference
-        self.current_map.player_sprites.dirty = 1
+        self.player.dirty = 1
         if is_facing_medially(self.player):
             self.move_medially(self.player)
             on_a_tile = self.camera.pos[1] % self.tile_size == 0
@@ -319,7 +319,7 @@ class MovementController:
             on_a_tile = self.camera.pos[0] % self.tile_size == 0
         else:
             on_a_tile = True
-        self.current_map.player_sprites.dirty = 1
+        self.player.dirty = 1
         if not on_a_tile:
             return
         if self.player.bumped:
@@ -453,7 +453,7 @@ class MovementController:
                 # this causes the fade out to happen a square before the player touches a staircase
                 next_cam_pos_y = curr_cam_pos_y + delta_y
                 # character.row += -delta_y // 2
-        if character.identifier == 'HERO' and self.game_state.enable_movement:
+        if character is self.player and self.game_state.enable_movement:
             self.camera.pos = self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y)
 
     @staticmethod
@@ -483,6 +483,10 @@ class MovementController:
         if companion is not None and character is not self.player:
             # The party's second hero (src/follower.py) blocks the NPCs, not the first hero, who may step onto them
             others.append(companion)
+        heroes_on = getattr(self.game, 'heroes_on', None)
+        if heroes_on is not None and follower is not None and follower.roaming_apart():
+            # Free roam co-op: the other hero on this map blocks everyone (src/sessions.py)
+            others += [hero for hero in heroes_on(self.current_map) if hero not in others]
         for other in others:
             if other is character:
                 continue
@@ -541,7 +545,7 @@ class MovementController:
         self.bump(character)
 
     def bump(self, character):
-        if character.identifier == 'HERO':
+        if str(character.identifier).startswith('HERO'):  # a hero, not an NPC (free roam: each session's own)
             # NES CheckCollision (DirectionBlocked) plays SFX_WALL_BUMP on every blocked step. move_player only
             # tries a step every 16 frames while the hero is held against something, so that's how often it plays.
             if character.current_tile not in ('BRICK_STAIR_UP', 'BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
@@ -578,7 +582,10 @@ class MovementController:
     def update_sprites(self) -> None:
         """NES DoSprites: the walking animation and the roaming NPCs."""
         self.npc_schedule.start_sprites()
-        if self.game_state.enable_roaming and self.current_map.roaming_characters:
+        moves_npcs = getattr(self.game, 'moves_npcs', None)
+        if self.game_state.enable_roaming and self.current_map.roaming_characters and (
+                moves_npcs is None or moves_npcs(self.current_map) is True):
+            # On a map two heroes share (free roam co-op), the NPCs move once a frame, in the first's session
             # NES UpdateNPCs1: no NPC starts a new step once a pause or the command window has been asked for
             self.move_roaming_characters(start_new_steps=not self.freeze_pending)
             self.update_roaming_character_positions()
