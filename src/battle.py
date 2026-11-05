@@ -1,5 +1,3 @@
-import random
-
 from pygame import display, Surface
 
 from src.common import BLACK, set_gettext_language, singular_or_plural
@@ -10,6 +8,7 @@ from src.languages import Grammar, language_named
 from src.maps import DragonWarriorMap
 from src.menu import BATTLE_LINE, CommandMenu
 from src.game_options import EXP_GOLD_MULTIPLIERS
+from src.random_streams import hero_random
 from src.windows import POPUP_WINDOW
 from src.player.player import Player
 from src.player.player_stats import get_level_by_experience
@@ -179,11 +178,11 @@ class Battle:
     def calculate_attack_damage(self, cmd_menu, player, enemy):
         """The hero's FIGHT damage, per NES PlyrFight ($E5FE)."""
         # NES PlyrFight: no excellent moves against either form of the Dragonlord (EN_DRAGONLORD1/2)
-        if enemy.name not in ('Dragonlord', 'Dragonlord 2') and is_excellent_move(random.randint(0, 255)):
+        if enemy.name not in ('Dragonlord', 'Dragonlord 2') and is_excellent_move(hero_random.randint(0, 255)):
             self.sound.play_sound(self.directories.excellent_move_sfx)
             # TB17E4 ends with no WAIT: no arrow and no button, the damage line follows
             cmd_menu.show_line_in_dialog_box(self._("Excellent move!\n"), **BATTLE_LINE)
-            return excellent_move_damage(player.attack_power, random.randint(0, 255))
+            return excellent_move_damage(player.attack_power, hero_random.randint(0, 255))
         return player_hit_damage(player.attack_power, enemy.defense)
 
     def battle_spell(self, cmd_menu: CommandMenu, player: Player, current_battle):
@@ -363,7 +362,7 @@ def randomize_enemy_hp(enemy) -> int:
     The Dragonlord's final form always starts at full HP."""
     if enemy.name == 'Dragonlord 2':
         return enemy.max_hp
-    return enemy.max_hp - (enemy.max_hp * random.randint(0, 255) // 256) // 4
+    return enemy.max_hp - (enemy.max_hp * hero_random.randint(0, 255) // 256) // 4
 
 
 def exp_gold_multiplier(config: dict) -> int:
@@ -375,7 +374,7 @@ def exp_gold_multiplier(config: dict) -> int:
 def randomize_enemy_gold(base_gold: int) -> int:
     """Gold dropped by a defeated enemy, per the NES CalcPlyrGold routine (Bank03 RegEnDefeated): the base gold
     byte times (192 + rand(0-63)) / 256, i.e. 75% to just under 100% of the base value, rounded down."""
-    return base_gold * (192 + random.randint(0, 63)) // 256
+    return base_gold * (192 + hero_random.randint(0, 63)) // 256
 
 
 def can_run_away(player_agility: int, enemy_defense: int, enemy_group: int) -> bool:
@@ -384,14 +383,14 @@ def can_run_away(player_agility: int, enemy_defense: int, enemy_group: int) -> b
     0-94 for Drollmagi to Werewolf, 0-127 for Green Dragon to Blue Dragon, and the full 0-255 for Stoneman,
     Armored Knight, Red Dragon and both forms of the Dragonlord (CalcNextOdds)."""
     if enemy_group == 4:
-        enemy_roll = random.randint(0, 255)
+        enemy_roll = hero_random.randint(0, 255)
     elif enemy_group == 3:
-        enemy_roll = random.randint(0, 255) & 0x7F
+        enemy_roll = hero_random.randint(0, 255) & 0x7F
     elif enemy_group == 2:
-        enemy_roll = (random.randint(0, 255) & 0x3F) + (random.randint(0, 255) & 0x1F)
+        enemy_roll = (hero_random.randint(0, 255) & 0x3F) + (hero_random.randint(0, 255) & 0x1F)
     else:
-        enemy_roll = random.randint(0, 255) & 0x3F
-    player_roll = random.randint(0, 255)
+        enemy_roll = hero_random.randint(0, 255) & 0x3F
+    player_roll = hero_random.randint(0, 255)
     return player_roll * player_agility >= enemy_roll * enemy_defense
 
 
@@ -418,7 +417,7 @@ def player_hit_damage(attack_power: int, enemy_defense: int) -> int:
     base_attack = attack_power - enemy_defense // 2
     if base_attack < 2:
         return int(coin_flip())  # PlyrWeakAttack: 0 or 1
-    return normal_attack_damage(base_attack, random.randint(0, 255))
+    return normal_attack_damage(base_attack, hero_random.randint(0, 255))
 
 
 def calculate_enemy_attack_damage(player, enemy):
@@ -427,7 +426,7 @@ def calculate_enemy_attack_damage(player, enemy):
     ((attack / 2 + 1) * rand(0-255) / 256 + 2) / 3, otherwise NormalAttack. The hero can't dodge (EnPhysAttack has no
     dodge check)."""
     base_attack = enemy.attack - player.defense_power // 2
-    random_number = random.randint(0, 255)
+    random_number = hero_random.randint(0, 255)
     if base_attack < enemy.attack // 2 + 1:
         # Weak attack: the player's defense is high compared to the enemy's attack.
         return ((enemy.attack // 2 + 1) * random_number // 256 + 2) // 3

@@ -126,7 +126,7 @@ class TestExpGold(TestCase):
         # NES CalcPlyrGold: 5 * (192 + 63) // 256 = 4 on the highest roll
         with patch.object(battle, 'make_enemy_image_disappear'), \
                 patch.object(battle, 'check_player_level_up') as level_up, \
-                patch('src.battle.random.randint', return_value=63):
+                patch('src.battle.hero_random.randint', return_value=63):
             battle.enemy_defeated(cmd_menu, Mock(), player, enemy)
         level_up.assert_called_once()  # the level up comes after, as it does on the NES
         return player, cmd_menu.show_line_in_dialog_box.call_args_list[-1].args[0]

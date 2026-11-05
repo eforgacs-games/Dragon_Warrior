@@ -21,8 +21,8 @@ surfaces, no sprites; a map is named, not copied). It holds everything the game'
 - the message log (src/message_log.py): putting a snapshot back puts back the messages shown up to then, so the log
   never shows what a rewind undid;
 - the play statistics (src/play_stats.py), the play time too: they're the adventure's as it was then;
-- the random number generator (Python's ``random``, which every roll in the game reads), so that loading a state and
-  pressing the same keys plays out the same way, fights included.
+- the random number streams (src/random_streams.py: the hero's and the world's, which every roll in the game reads),
+  so that loading a state and pressing the same keys plays out the same way, fights included.
 
 Not kept: the game speed (keys 1 to 5), auto-battle and invulnerability (F4, F9), fullscreen and the zoom, which are
 settings of the session rather than of the game, as they aren't saved with the adventure log either.
@@ -38,11 +38,9 @@ format is brought up to date by STATE_MIGRATIONS (``migrate_snapshot``) before i
 or one that can't be read, is refused with a message. tests/test_save_compatibility.py loads a sample state of every
 format, kept in tests/sample_saves/.
 """
-import base64
 import json
 import os
 import random
-from array import array
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any
 
@@ -59,6 +57,7 @@ from src.message_log import decoded_entries
 from src.options_overlay import apply_log_options, apply_option
 from src.play_stats import PlayStats
 from src.game_options import options_from_config, options_from_save, options_to_save
+from src.random_streams import RandomStreams, Stream, decode_random_state, encode_random_state
 from src.sprites.animated_sprite import AnimatedSprite
 from src.soundtrack import SOUNDTRACK_KEY, soundtrack
 from src.story_flags import StoryFlags
@@ -69,7 +68,7 @@ if TYPE_CHECKING:
 
 # Raise it whenever what a snapshot holds changes, with a STATE_MIGRATIONS step from the version before (and a sample
 # state of that version in tests/sample_saves/), so states saved before load as they should rather than wrong
-STATE_FORMAT_VERSION = 2
+STATE_FORMAT_VERSION = 3
 VERSION_KEY = 'version'
 SAVE_STATE_SLOTS = (1, 2, 3)
 # What a save state key asks for (MapHotkeys.press_save_state): (SAVE or LOAD, slot)
@@ -134,10 +133,22 @@ def _from_version_1(snapshot: dict[str, Any]) -> dict[str, Any]:
     return migrated
 
 
+def _from_version_2(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Version 2 to 3: the random number streams (src/random_streams.py) in place of Python's one generator. The old
+    generator rolled for everything, so the HERO stream carries on from it, and the hero's next rolls are the ones
+    version 2 would have made (unless an NPC would have rolled first). The WORLD stream starts from a generator seeded
+    with the old state, so a state loads the same way every time. The seed they came from isn't known (None)."""
+    old_state = decode_random_state(snapshot['random'])
+    world = random.Random(f"{snapshot['random'][1]}/{Stream.WORLD}")
+    return {**snapshot, 'random': {'seed': None, Stream.HERO.value: encode_random_state(old_state),
+                                   Stream.WORLD.value: encode_random_state(world.getstate())}}
+
+
 # STATE_MIGRATIONS[n] turns a snapshot in format n into format n + 1, for every version from 1 (the first, in 1.0) up to
 # STATE_FORMAT_VERSION
 STATE_MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {
     1: _from_version_1,
+    2: _from_version_2,
 }
 
 
@@ -224,23 +235,6 @@ def _rect(sprite: Any) -> list[int]:
     return [sprite.rect.x, sprite.rect.y]
 
 
-def encode_random_state(state: tuple) -> list:
-    """random.getstate() as JSON: the Mersenne Twister's 625 words packed into base64 (3.3 KB, where a list of them
-    would be about 7 KB of JSON and 25 KB of Python ints in memory)."""
-    version, internal_state, gauss_next = state
-    words = array('I', internal_state)
-    return [version, base64.b64encode(words.tobytes()).decode('ascii'), gauss_next]
-
-
-def decode_random_state(encoded: list) -> tuple:
-    version, packed, gauss_next = encoded
-    words = array('I')
-    words.frombytes(base64.b64decode(packed))
-    if len(words) != 625:
-        raise ValueError("not a random number generator state")
-    return int(version), tuple(words), None if gauss_next is None else float(gauss_next)
-
-
 def take_snapshot(game: 'Game') -> dict[str, Any]:
     """The game as it is now (see the module docstring), as JSON values. Taken between two map frames."""
     current_map = game.current_map
@@ -287,7 +281,7 @@ def take_snapshot(game: 'Game') -> dict[str, Any]:
         'pending_scripted_battle': game.battle_ctrl.pending_scripted_battle,
         'pop_up_window': game.drawer.display_hovering_stats,
         'options': options_to_save(options_from_config(game.game_state.config)),
-        'random': encode_random_state(random.getstate()),
+        'random': game.random_streams.to_save(),
         # What the hero has seen of each dark floor (src/dungeon_map.py)
         'dungeon_map': game.dungeon_map.to_save() if hasattr(game, 'dungeon_map') else {},
         # The messages shown so far (src/message_log.py), so the log doesn't show what a rewind undid
@@ -362,7 +356,7 @@ def decode_snapshot(snapshot: Any) -> dict[str, Any]:
             'pending_scripted_battle': snapshot['pending_scripted_battle'],
             'pop_up_window': bool(snapshot['pop_up_window']),
             'options': options_from_save(dict(snapshot['options'])),
-            'random': decode_random_state(snapshot['random']),
+            'random': RandomStreams.decode_save(snapshot['random']),
             # a state saved before the dungeon map has none: every floor unexplored
             'dungeon_map': DungeonMap.from_save(snapshot.get('dungeon_map', {})),
             'message_log': decoded_entries(snapshot['message_log']),
@@ -516,7 +510,7 @@ def _restore_values(game: 'Game', state: dict[str, Any]) -> None:
     game.set_player_images_by_equipment()
     for character_dict in current_map.characters.values():
         character_dict['character'].show_facing()
-    random.setstate(state['random'])
+    game.random_streams.restore(state['random'])
 
 
 def state_file_name(slot: int) -> str:

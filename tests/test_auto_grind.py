@@ -1,6 +1,5 @@
 """Auto-grind (src/auto_grind.py): G on the map, driven by the virtual joypad (src/virtual_joypad.py). Not NES."""
 import os
-import random
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock, patch
 
@@ -26,6 +25,7 @@ from src.grind_safety import worst_enemy_damage, worst_group_damage
 from src.inn_trip import ATTEMPTS, COMMAND_STAIRS, STUCK_FRAMES, TripResult
 from src.maps import map_lookup
 from src.maps_functions import get_center_point
+from src.random_streams import seed_all
 from src.spells import Spell
 from src.virtual_joypad import is_virtual
 from src.waiting import MAP_CONTEXT, WINDOW_CONTEXT, game_speed, poll_virtual_joypad, set_game_speed, \
@@ -561,7 +561,7 @@ class TestBattleHooks(TestCase):
                 enemy = Mock(is_stopspelled=False)
                 enemy.name = 'Magician'
                 with patch('src.battle_controller.coin_flip', return_value=works), \
-                        patch('src.battle_controller.random.randint', return_value=0):
+                        patch('src.battle_controller.hero_random.randint', return_value=0):
                     controller.execute_enemy_pattern(Mock(), (100, Spell.STOPSPELL, True), 0, enemy)
                 self.assertEqual(works, game.auto_grind.stopspell_hit.called)
 
@@ -636,7 +636,7 @@ class TestHeadlessGrind(HeadlessTestCase):
     """G, then nothing until auto-grind hands the game back."""
 
     def test_fights_until_hp_is_low_and_hands_over_the_command_window(self):
-        random.seed(1)
+        seed_all(1)
         # Game time, one NES frame per pass of the main loop: the same frames, steps and fights on any machine
         clock = helpers.fake_game_clock()
         cells, fights, stops = set(), [], []
@@ -687,7 +687,7 @@ class TestHeadlessAutoHeal(HeadlessTestCase):
         return super().new_game(AUTO_HEAL=AUTO_HEAL_ON, **overrides)
 
     def run_until_stopped(self, seed):
-        random.seed(seed)
+        seed_all(seed)
         game = self.game
         heals, stops = [], []
         real_heal, real_open = game.cmd_menu.heal, game.battle_ctrl.open_command_window
@@ -866,7 +866,7 @@ class TestHeadlessInnTrip(HeadlessTestCase):
         return super().new_game(AUTO_INN=True, AUTO_GRIND_STOP=GRIND_STOP_DANGER, **overrides)
 
     def test_to_the_inn_and_back(self):
-        random.seed(2)
+        seed_all(2)
         game, player, grind = self.game, self.player, self.grind
         player.gold = 100
         maps, nights = [], []

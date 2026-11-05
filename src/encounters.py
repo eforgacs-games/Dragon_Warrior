@@ -7,10 +7,10 @@
 3. Zone 0 of the overworld (around Tantegel) gets one more roll to skip the fight (passes_zone_zero_check).
 4. GetEnemyInRow picks one of the row's five slots (pick_enemy).
 """
-import random
 from collections.abc import Sequence
 
 from src.coordinates import NesPosition
+from src.random_streams import hero_random
 
 
 # NES EnemyGroupsTbl (Bank03): five slots per row. A repeated enemy is that much more likely, since each slot is
@@ -143,18 +143,18 @@ def fight_mask(tile: str | None, nes_x: int, nes_y: int) -> int | None:
 def step_starts_fight(map_identifier: str, tile: str | None, column: int, row: int) -> bool:
     """The per-step roll: does stepping onto this block start a fight?"""
     mask = fight_mask(tile, *nes_coordinates(map_identifier, column, row))
-    return mask is not None and random.randint(0, mask) == 0
+    return mask is not None and hero_random.randint(0, mask) == 0
 
 
 def passes_zone_zero_check(tile: str | None) -> bool:
     """DoRandomFight, zone 0 only: one more roll that lets the fight go ahead 1 time in 4 on hills
     (HighFightModifier, RandNumUB AND 3) and 1 time in 2 elsewhere (NormFightModifier, RandNumUB AND 1)."""
-    return random.randint(0, 3 if tile == 'HILLS' else 1) == 0
+    return hero_random.randint(0, 3 if tile == 'HILLS' else 1) == 0
 
 
 def pick_enemy(group: Sequence[str]) -> str:
     """GetEnemyInRow: roll 0-7 (RandNumUB AND 7) and roll again until the slot is in the row (0-4 for a full row)."""
-    while (slot := random.randint(0, 7)) >= len(group):
+    while (slot := hero_random.randint(0, 7)) >= len(group):
         pass
     return group[slot]
 

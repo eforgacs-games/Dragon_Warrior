@@ -1,5 +1,4 @@
 """How much HP auto-grind keeps and which heal it casts (src/grind_safety.py). Not NES."""
-import random
 from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
@@ -9,6 +8,7 @@ from src.encounters import ENEMY_GROUPS
 from src.enemy_lookup import enemy_string_lookup
 from src.grind_safety import HEALMORE_WORTH, choose_heal, heal_reserve, worst_enemy_damage, worst_group_damage, \
     worst_physical_hit, worst_spell_hit
+from src.random_streams import hero_random
 from src.spells import Spell
 
 HEALS = (Spell.HEAL, Spell.HEALMORE)
@@ -24,7 +24,7 @@ class TestWorstHit(TestCase):
                 hero = SimpleNamespace(defense_power=defense)
                 damages = set()
                 for roll in range(256):
-                    with patch.object(random, 'randint', return_value=roll):
+                    with patch.object(hero_random, 'randint', return_value=roll):
                         damages.add(calculate_enemy_attack_damage(hero, enemy))
                 with self.subTest(enemy=name, defense=defense):
                     self.assertEqual(max(damages), worst_physical_hit(enemy.attack, defense))

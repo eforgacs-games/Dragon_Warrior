@@ -70,7 +70,7 @@ class TestNpcScheduleInTown(TestCase):
             decisions[self.npcs.index(npc)].append(frame[0])
             start_npc_step(npc)
 
-        with patch('src.movement.random', random.Random(seed)), patch.object(self.game.movement, 'start_npc_step', spy):
+        with patch('src.movement.world_random', random.Random(seed)), patch.object(self.game.movement, 'start_npc_step', spy):
             for frame[0] in range(1, frames + 1):
                 self.game.movement.sprites_frame()
                 positions.append([npc.rect.topleft for npc in self.npcs])
@@ -117,7 +117,7 @@ class TestNpcScheduleInTown(TestCase):
         characters = [character_dict['character'] for character_dict in self.game.current_map.characters.values()]
         self.assertIn(self.game.player, characters)
         first = AnimatedSprite.walk_frame
-        with patch('src.movement.random', random.Random(5)):
+        with patch('src.movement.world_random', random.Random(5)):
             for frame in range(1, 3 * FRAMES_PER_TURN + 1):
                 self.game.movement.sprites_frame()
                 for character in characters:
@@ -193,7 +193,8 @@ class TestNpcWalkingRate(TestCase):
             deciding[0] = npc
             start_npc_step(npc)
 
-        with patch('src.movement.random.choice', side_effect=choose), patch.object(self.game.movement, 'start_npc_step', spy):
+        with patch('src.movement.world_random.choice', side_effect=choose), \
+                patch.object(self.game.movement, 'start_npc_step', spy):
             for _ in range(cycles * FRAMES_PER_CYCLE):
                 tiles = [(npc.row, npc.column) for npc in npcs]
                 self.game.movement.sprites_frame()
@@ -214,7 +215,7 @@ class TestNpcWalkingRate(TestCase):
     def test_both_npcs_of_a_pair_step_together_and_the_pairs_one_after_another(self):
         npcs = self.add_npcs(MOBILE_NPC_SLOTS)
         offsets = []  # each frame: how far each NPC is from its tile, in NES pixels
-        with patch('src.movement.random.choice', return_value=Direction.RIGHT.value):
+        with patch('src.movement.world_random.choice', return_value=Direction.RIGHT.value):
             for _ in range(FRAMES_PER_CYCLE):
                 self.game.movement.sprites_frame()
                 offsets.append([npc.rect.x % self.tile_size // (self.tile_size // 16) for npc in npcs])
@@ -292,7 +293,7 @@ class TestHeroAndNpcsShareTheFrameCounter(FreezeTestCase):
         self.game.game_state.enable_roaming = True
         self.game.movement.npc_schedule.update_counter = 0  # the guard's turn is next
         offsets = []
-        with patch('src.movement.random.choice', return_value=Direction.LEFT.value):
+        with patch('src.movement.world_random.choice', return_value=Direction.LEFT.value):
             for _ in range(FRAMES_PER_TURN - 1):
                 self.frame()
                 offsets.append((self.guard.last_rect.x - self.guard.rect.x) // (self.tile_size // 16))

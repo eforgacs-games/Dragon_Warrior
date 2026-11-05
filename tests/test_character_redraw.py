@@ -113,7 +113,7 @@ def walk_and_find_ghosts(game: Game, npc_identifier: str, npc_direction: Directi
     ghost_frames = []
     hero_start_x = game.player.rect.x
     frame = 0
-    with patch('src.movement.random.choice', return_value=npc_direction.value), \
+    with patch('src.movement.world_random.choice', return_value=npc_direction.value), \
             patch('src.movement.key.get_pressed', return_value=held_keys):
         while frame < 300 and (steps_started < npc_steps or npc.is_moving or game.player.is_moving or
                                game.player.rect.x < hero_start_x + hero_steps * game.tile_size):
@@ -295,7 +295,7 @@ def find_ghosts_drawing_every(game: Game, frames_per_draw: int, frames: int, hel
         held_keys[held_key] = 1
     held_keys[K_j] = int(run)
     ghost_frames = []
-    with patch('src.movement.random', random.Random(1)), patch('src.movement.key.get_pressed', return_value=held_keys):
+    with patch('src.movement.world_random', random.Random(1)), patch('src.movement.key.get_pressed', return_value=held_keys):
         for frame in range(1, frames + 1):
             game.movement.handle_player_movement()
             if not game.player.is_moving:
