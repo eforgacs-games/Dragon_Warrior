@@ -15,9 +15,9 @@ from src.directories import Directories
 from src.items import MAX_HERBS, MAX_KEYS, bag_is_full, inventory_list
 from src import maps
 from src.maps import DragonWarriorMap
+from src.game_events import EventBus, GoldEarned, GoldSpent
 from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE
-from src.play_stats import PlayStats
 from src.random_streams import world_random
 from src.records import king_lorik_charge
 from src.window_renderer import draw_window as generated_window
@@ -46,9 +46,9 @@ class DialogLookup:
         return self.command_menu.color
 
     @property
-    def play_stats(self) -> PlayStats:
-        """The stats page's counts (src/play_stats.py): the gold the shops and inns are paid, and pay."""
-        return self.command_menu.game.play_stats
+    def event_bus(self) -> EventBus:
+        """The game's events (src/game_events.py): the gold the shops and inns are paid, and pay."""
+        return self.command_menu.game.event_bus
 
     def __init__(self, command_menu, config: dict):
         self.config = config
@@ -1109,8 +1109,8 @@ class DialogLookup:
         item_dict = current_store_inventory[item]
         item_type = item_dict['type']
         self.player.gold = pay_player(self.player.gold - item_dict['cost'], old_item_cost or 0)
-        self.play_stats.spend_gold(item_dict['cost'])
-        self.play_stats.earn_gold(old_item_cost or 0)  # the shop buys back what the hero had
+        self.event_bus.emit(GoldSpent(item_dict['cost']))
+        self.event_bus.emit(GoldEarned(old_item_cost or 0))  # the shop buys back what the hero had
         if item_type == 'weapon':
             self.player.weapon = item
         elif item_type == 'armor':
@@ -1160,7 +1160,7 @@ class DialogLookup:
             self.say(_("Thou cannot carry anymore."))
         else:
             self.player.gold -= cost
-            self.play_stats.spend_gold(cost)
+            self.event_bus.emit(GoldSpent(cost))
             self.player.inventory.append(selected_item)
             self.say(_("The {}?\nThank you very much.").format(_(selected_item)))
             self.command_menu.show_popup_window()  # NES PurchaseTool: the thanks, then Dowindow WND_POPUP
@@ -1203,7 +1203,7 @@ class DialogLookup:
             # NES DoSellTool only removes the item; a sold Dragon's Scale or Fighter's Ring stays "worn"
             self.player.inventory.remove(item)
             self.player.gold = pay_player(self.player.gold, price)
-            self.play_stats.earn_gold(price)
+            self.event_bus.emit(GoldEarned(price))
             self.command_menu.show_popup_window()  # NES DoneSellingTool: Dowindow WND_POPUP
         self.sell_more(current_store_inventory)
 
@@ -1233,7 +1233,7 @@ class DialogLookup:
             self.fairy_water_goodbye()
         else:
             self.player.gold -= FAIRY_WATER_COST
-            self.play_stats.spend_gold(FAIRY_WATER_COST)
+            self.event_bus.emit(GoldSpent(FAIRY_WATER_COST))
             self.player.inventory.append('Fairy Water')
             self.command_menu.show_popup_window()  # NES BuyFairyWater: Dowindow WND_POPUP, then the thanks
             self.confirm(_("I thank thee.\nWon't thou buy one more bottle?"),
@@ -1259,7 +1259,7 @@ class DialogLookup:
             self.magic_key_goodbye()
         else:
             self.player.gold -= magic_key_cost
-            self.play_stats.spend_gold(magic_key_cost)
+            self.event_bus.emit(GoldSpent(magic_key_cost))
             self.player.inventory.append('Magic Key')
             self.command_menu.show_popup_window()  # NES BuyKey: Dowindow WND_POPUP, then "Here,take this key."
             self.confirm(_("Here,take this key.\nDost thou wish to purchase more?"),
@@ -1301,7 +1301,7 @@ class DialogLookup:
         game = self.command_menu.game
         config = game.game_state.config
         self.player.gold -= inn_cost
-        self.play_stats.spend_gold(inn_cost)
+        self.event_bus.emit(GoldSpent(inn_cost))
         self.command_menu.show_popup_window()
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
         screen_fade(fade_out=True, screen=self.screen, config=self.config)  # PalFadeOut (LD8DC)

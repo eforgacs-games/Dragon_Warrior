@@ -10,6 +10,7 @@ from pygame import display
 
 from src.common import A_OR_START_KEYS
 from src.direction import Direction
+from src.game_events import HeroDied
 from src.maps import map_lookup
 from src.waiting import clear_events_keeping_quit
 
@@ -29,7 +30,7 @@ class HeroDeath:
         if player.current_hp <= 0:
             player.current_hp = 0
             player.is_dead = True
-            game.play_stats.died()
+            game.event_bus.emit(HeroDied())
             game.auto_grind.hero_died()
             game.load_window_palette()  # 0 HP is always low
             if game.battle_ctrl.launch_battle and not game.game_state.config["NO_BATTLES"]:

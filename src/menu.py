@@ -28,6 +28,7 @@ from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, MAX_LEVEL, OUTSIDE_DE
     TEMP_TEXT_MS
 from src.dialog_box import ARROW_COLUMN, DIALOG_COLUMNS, DIALOG_ROWS, OPEN_QUOTES, SCROLL_ROWS_PER_FRAME, \
     DialogBuffer, DialogStep, ScrollStep, frames_per_character
+from src.game_events import ChestOpened, GoldEarned
 from src.direction import Direction
 from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
@@ -726,7 +727,7 @@ class CommandMenu:
     def open_chest(self) -> None:
         """NES GetTreasure: record the chest as taken, then play the chest sound and turn the chest into brick.
         With all 8 history slots in use the NES records nothing and leaves the chest where it is."""
-        self.game.play_stats.open_chest()
+        self.game.event_bus.emit(ChestOpened())
         if self.chest_history.record(self.map_name, (self.player.row, self.player.column)):
             self.sound.play_sound(self.directories.open_treasure_sfx)
             self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
@@ -854,7 +855,7 @@ class CommandMenu:
         gold_amount = roll_treasure_gold(treasure_info['gold'])
         self.open_chest()
         self.player.gold = min(self.player.gold + gold_amount, MAX_GOLD)
-        self.game.play_stats.earn_gold(gold_amount)
+        self.game.event_bus.emit(GoldEarned(gold_amount))
         # NES GainGoldDialog: the message, then Dowindow WND_POPUP with the new gold, then ResumeGamePlay closes the
         # dialog window
         self.show_text_in_dialog_box(self._("Of GOLD thou hast gained {}").format(gold_amount),

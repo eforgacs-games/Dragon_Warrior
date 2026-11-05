@@ -2,6 +2,7 @@ from pygame import display, Surface
 
 from src.common import BLACK, set_gettext_language, singular_or_plural
 from src.directories import Directories
+from src.game_events import GoldEarned, LevelUp
 from src.enemy import enemy_groups
 from src.enemy_lookup import enemy_string_lookup
 from src.languages import Grammar, language_named
@@ -214,7 +215,7 @@ class Battle:
                                          skip_text=True)
         player.total_experience = min(player.total_experience + experience, MAX_EXPERIENCE)
         player.gold = min(player.gold + gold, MAX_GOLD)
-        cmd_menu.game.play_stats.earn_gold(gold)
+        cmd_menu.game.event_bus.emit(GoldEarned(gold))
         self.check_player_level_up(cmd_menu, player)
 
     def dragonlord_first_form_defeated(self, cmd_menu, screen):
@@ -258,6 +259,7 @@ class Battle:
             self.display_level_up_message(cmd_menu, player, new_level)
             old_stats = self.get_player_stats(player)
             player.level = new_level
+            cmd_menu.game.event_bus.emit(LevelUp(new_level))
             player.set_stats_by_level(player.level)
             player.update_attack_power()
             player.update_defense_power()
