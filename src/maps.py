@@ -280,7 +280,7 @@ class DragonWarriorMap:
         """Returns the tile name from the integer value associated with it."""
         return self._tile_key_list[position]
 
-    def load_map(self, player, destination_coordinates: Cell | None, tile_size) -> None:
+    def load_map(self, player, destination_coordinates: Cell | None, tile_size, hero_key: str = 'HERO') -> None:
         self.destination_coordinates = destination_coordinates
         self.tile_types_in_current_map = self.get_tiles_in_current_map()
         self.impassable_tiles = tuple(self.tile_types_in_current_map & set(all_impassable_tiles))
@@ -306,8 +306,8 @@ class DragonWarriorMap:
             self.center_pt = get_center_point(hero_col, hero_row, tile_size=tile_size)
             AnimatedSprite.__init__(player, self.center_pt, player.direction_value,
                                     images=self.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
-                                    identifier='HERO')
-            self.map_player(self.character_key['HERO']['underlying_tile'], player, hero_coords)
+                                    identifier=hero_key)
+            self.map_player(self.character_key['HERO']['underlying_tile'], player, hero_coords, hero_key)
         self.set_characters_initial_directions()
 
     def is_covered(self, row: int, column: int) -> bool:
@@ -367,15 +367,28 @@ class DragonWarriorMap:
         if not self.has_floor_tile(*coordinates):
             self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
 
-    def map_player(self, underlying_tile, player, coordinates) -> None:
-        self.player_sprites = LayeredDirty(player)
+    def map_player(self, underlying_tile, player, coordinates, hero_key: str = 'HERO') -> None:
+        sprites = LayeredDirty(player)
+        if hero_key == 'HERO':
+            self.player_sprites = sprites
         player.direction_value = self.hero_initial_direction()
         if not self.has_floor_tile(*coordinates):
             self.add_tile(self.floor_tile_key[underlying_tile], self.center_pt)
-        self.characters['HERO'] = {'character': player,
-                                   'character_sprites': self.player_sprites,
+        self.characters[hero_key] = {'character': player,
+                                   'character_sprites': sprites,
                                    'tile_value': self.character_key['HERO']['val'],
                                    'coordinates': coordinates}
+
+    def join_map(self, player, coordinates: Cell, tile_size: int, hero_key: str) -> None:
+        """A second hero arriving on a map another hero is on (free roam co-op, src/sessions.py): placed at
+        ``coordinates`` among its characters under ``hero_key``, without loading the map again (its NPCs are where
+        they are)."""
+        row, column = coordinates
+        self.center_pt = get_center_point(column, row, tile_size=tile_size)
+        player.row, player.column = row, column
+        AnimatedSprite.__init__(player, self.center_pt, player.direction_value,
+                                images=self.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH), identifier=hero_key)
+        self.map_player(self.character_key['HERO']['underlying_tile'], player, coordinates, hero_key)
 
     def has_floor_tile(self, row: int, column: int) -> bool:
         """Whether the layout already has a floor tile at (row, column), i.e. not a character's tile value.

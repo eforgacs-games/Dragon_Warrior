@@ -163,7 +163,7 @@ class Drawer:
         for identifier, character_dict in current_map.characters.items():
             character = character_dict['character']
             # NES $B957: an NPC on the other side of the cover from the hero isn't drawn
-            if identifier == 'HERO' or not current_map.is_hidden_by_cover(character.row, character.column):
+            if identifier.startswith('HERO') or not current_map.is_hidden_by_cover(character.row, character.column):
                 foreground_rects.append(character_dict['character_sprites'].draw(background)[0])
             self.handle_sprite_animation(enable_animate, character_dict)
 

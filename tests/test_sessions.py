@@ -129,3 +129,60 @@ class TestASecondHero(SessionTestCase):
             self.assertIs(self.gwen, self.game.player)
         self.assertEqual('TantegelThroneRoom', self.game.current_map.identifier)
         self.assertIs(self.ann, self.game.player)
+
+
+class TestASharedMap(SessionTestCase):
+    """Gwen roaming on her own, in the throne room with Ann: one map for both."""
+
+    def setUp(self):
+        super().setUp()
+        self.session = self.game.add_hero_session(self.gwen, 'TantegelThroneRoom', coordinates=(11, 13))
+        self.throne_room = self.game.current_map
+
+    def change_gwens_map(self, map_name, coordinates):
+        from src.maps import map_lookup
+        with use_session(self.session), patch('src.map_manager.screen_fade'), \
+                patch.object(self.game.music_player, 'load_and_play_music'):
+            self.game.map_mgr.change_map(map_lookup[map_name](self.game.config), destination_coordinates=coordinates)
+
+    def test_one_map_for_both(self):
+        with use_session(self.session):
+            self.assertIs(self.throne_room, self.game.current_map)
+        self.assertIs(self.ann, self.throne_room.characters['HERO']['character'])
+        self.assertIs(self.gwen, self.throne_room.characters['HERO_2']['character'])
+        self.assertEqual([self.ann, self.gwen], self.game.heroes_on(self.throne_room))
+
+    def test_the_npcs_move_once_a_frame(self):
+        self.assertTrue(self.game.moves_npcs(self.throne_room))
+        with use_session(self.session):
+            self.assertFalse(self.game.moves_npcs(self.throne_room))
+
+    def test_the_heroes_block_each_other(self):
+        from src.direction import Direction
+        self.gwen.direction_value = Direction.UP.value  # Ann is at (10, 13), Gwen at (11, 13)
+        with use_session(self.session):
+            self.assertTrue(self.game.movement.character_in_path(self.gwen))
+        self.ann.direction_value = Direction.DOWN.value
+        self.assertTrue(self.game.movement.character_in_path(self.ann))
+
+    def test_leaving_takes_the_hero_off_the_other_heros_map(self):
+        self.change_gwens_map('Brecconary', (23, 10))
+        self.assertNotIn('HERO_2', self.throne_room.characters)
+        self.assertIs(self.ann, self.throne_room.characters['HERO']['character'])
+        with use_session(self.session):
+            self.assertEqual('Brecconary', self.game.current_map.identifier)
+
+    def test_coming_back_joins_the_map_as_it_is(self):
+        self.change_gwens_map('Brecconary', (23, 10))
+        guard = self.throne_room.roaming_characters[0]
+        guard.row, guard.column = 12, 14  # where the guard has wandered to meanwhile
+        self.change_gwens_map('TantegelThroneRoom', (11, 13))
+        with use_session(self.session):
+            self.assertIs(self.throne_room, self.game.current_map)
+        self.assertEqual((12, 14), (guard.row, guard.column))  # not loaded again: the guard is where he was
+        self.assertIs(self.gwen, self.throne_room.characters['HERO_2']['character'])
+
+    def test_letting_a_session_go(self):
+        self.game.remove_hero_session(self.session)
+        self.assertNotIn('HERO_2', self.throne_room.characters)
+        self.assertEqual([self.game.main_session], self.game.sessions)
